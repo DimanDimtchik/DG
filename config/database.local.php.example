@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Kopie als config/database.local.php anlegen (wird von Git ignoriert).
+ */
+return [
+    'password' => 'DEIN_KAS_PASSWORT',
+];

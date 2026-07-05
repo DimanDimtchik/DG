@@ -1,0 +1,18 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Veraltet — Firmendaten werden in der Datenbank (dg_settings) gespeichert.
+ */
+return [
+    'name' => '',
+    'email' => '',
+    'phone' => '',
+    'website' => '',
+    'street' => '',
+    'postal' => '',
+    'city' => '',
+    'country' => 'DE',
+    'tax_number' => '',
+    'vat_id' => '',
+];

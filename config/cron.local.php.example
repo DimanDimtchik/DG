@@ -1,0 +1,10 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Geheimer Token für cron.php (HTTP-Cron im KAS).
+ * Kopieren nach config/cron.local.php und Token anpassen.
+ */
+return [
+    'retention_token' => 'HIER_SICHEREN_TOKEN_EINTRAGEN',
+];

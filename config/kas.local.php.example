@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * KAS-API für automatische Postfach-Anlage bei Kasserver.
+ * Kopieren nach config/kas.local.php und Zugangsdaten eintragen.
+ */
+return [
+    'kas_login' => 'w123456',
+    'kas_auth_type' => 'plain',
+    'kas_auth_data' => 'HIER_KAS_PASSWORT',
+];

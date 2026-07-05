@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Veraltet — Einstellungen werden in der Datenbank (dg_settings) gespeichert.
+ * Falls diese Datei noch existiert, wird sie beim ersten Aufruf einmalig importiert.
+ */
+return [
+    'enabled' => false,
+    'smtp_host' => '',
+    'smtp_port' => 587,
+    'smtp_encryption' => 'tls',
+    'smtp_username' => '',
+    'smtp_password' => '',
+];

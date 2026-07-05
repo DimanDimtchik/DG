@@ -1,0 +1,16 @@
+DirectoryIndex index.php index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Geschützte Verzeichnisse nicht direkt aufrufbar
+  RewriteRule ^(config|src|views|admin)/ - [F,L]
+
+  # Statische Dateien direkt ausliefern
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Routing über index.php
+  RewriteRule ^ index.php [L]
+</IfModule>

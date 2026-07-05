@@ -1,0 +1,225 @@
+<?php
+declare(strict_types=1);
+
+final class PasswordResetService
+{
+    private const TOKEN_BYTES = 32;
+    private const EXPIRY_SECONDS = 3600;
+    private const RATE_LIMIT_MAX = 5;
+    private const RATE_LIMIT_WINDOW = 900;
+
+    /** @var string Einheitliche Meldung – verrät nicht, ob Konto existiert. */
+    public const REQUEST_SUCCESS_MESSAGE =
+        'Falls ein passendes Konto mit hinterlegter E-Mail existiert, erhalten Sie in Kürze eine Nachricht mit weiteren Schritten.';
+
+    public static function requestReset(string $identifier): void
+    {
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Passwort-Zurücksetzen ist nur mit Datenbankverbindung verfügbar.');
+        }
+
+        if (!MailSettings::isConfigured()) {
+            throw new RuntimeException(
+                'E-Mail-Versand ist nicht konfiguriert. Bitte wenden Sie sich an den Administrator (Einstellungen → E-Mail / SMTP).'
+            );
+        }
+
+        self::enforceRateLimit($identifier);
+
+        MigrationRunner::runPending();
+
+        $user = UserRepository::findByEmailOrUsername($identifier);
+        if ($user === null || !RoleResolver::canAccessCrm($user)) {
+            return;
+        }
+
+        $email = trim($user->email);
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return;
+        }
+
+        $token = bin2hex(random_bytes(self::TOKEN_BYTES));
+        self::storeToken($user->id, $token);
+        self::sendResetEmail($user, $email, $token);
+    }
+
+    public static function validateToken(string $token): ?User
+    {
+        if (!Database::isConfigured()) {
+            return null;
+        }
+
+        MigrationRunner::runPending();
+
+        $hash = self::hashToken($token);
+        $stmt = Database::pdo()->prepare(
+            'SELECT t.user_id
+             FROM dg_password_reset_tokens t
+             WHERE t.token_hash = :token_hash
+               AND t.used_at IS NULL
+               AND t.expires_at > NOW()
+             LIMIT 1'
+        );
+        $stmt->execute(['token_hash' => $hash]);
+        $userId = (int) $stmt->fetchColumn();
+        if ($userId < 1) {
+            return null;
+        }
+
+        $user = UserRepository::findById($userId);
+        if ($user === null || !RoleResolver::canAccessCrm($user)) {
+            return null;
+        }
+
+        return $user;
+    }
+
+    public static function resetPassword(string $token, string $password, string $confirm): void
+    {
+        if ($password === '' || $confirm === '') {
+            throw new InvalidArgumentException('Bitte neues Passwort eingeben und bestätigen.');
+        }
+        if ($password !== $confirm) {
+            throw new InvalidArgumentException('Passwörter stimmen nicht überein.');
+        }
+        if (strlen($password) < 8) {
+            throw new InvalidArgumentException('Passwort mindestens 8 Zeichen.');
+        }
+
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Passwort-Zurücksetzen ist nur mit Datenbankverbindung verfügbar.');
+        }
+
+        MigrationRunner::runPending();
+
+        $hash = self::hashToken($token);
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, user_id
+                 FROM dg_password_reset_tokens
+                 WHERE token_hash = :token_hash
+                   AND used_at IS NULL
+                   AND expires_at > NOW()
+                 LIMIT 1
+                 FOR UPDATE'
+            );
+            $stmt->execute(['token_hash' => $hash]);
+            $row = $stmt->fetch();
+            if (!$row) {
+                throw new InvalidArgumentException('Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.');
+            }
+
+            $userId = (int) $row['user_id'];
+            $tokenId = (int) $row['id'];
+            $user = UserRepository::findById($userId);
+            if ($user === null || !RoleResolver::canAccessCrm($user)) {
+                throw new InvalidArgumentException('Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.');
+            }
+
+            UserRepository::updatePassword($userId, $password);
+
+            $mark = $pdo->prepare('UPDATE dg_password_reset_tokens SET used_at = NOW() WHERE id = :id');
+            $mark->execute(['id' => $tokenId]);
+
+            $invalidate = $pdo->prepare(
+                'UPDATE dg_password_reset_tokens
+                 SET used_at = NOW()
+                 WHERE user_id = :user_id AND used_at IS NULL AND id <> :id'
+            );
+            $invalidate->execute(['user_id' => $userId, 'id' => $tokenId]);
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    private static function storeToken(int $userId, string $token): void
+    {
+        $pdo = Database::pdo();
+        $pdo->prepare(
+            'UPDATE dg_password_reset_tokens SET used_at = NOW() WHERE user_id = :user_id AND used_at IS NULL'
+        )->execute(['user_id' => $userId]);
+
+        $expiresAt = (new DateTimeImmutable('now'))->modify('+' . self::EXPIRY_SECONDS . ' seconds');
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_password_reset_tokens (user_id, token_hash, expires_at)
+             VALUES (:user_id, :token_hash, :expires_at)'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'token_hash' => self::hashToken($token),
+            'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private static function sendResetEmail(User $user, string $email, string $token): void
+    {
+        $baseUrl = App::publicBaseUrl();
+        if ($baseUrl === '') {
+            throw new RuntimeException('Öffentliche Basis-URL konnte nicht ermittelt werden.');
+        }
+
+        $resetUrl = $baseUrl . '/passwort-zuruecksetzen?token=' . rawurlencode($token);
+        $crmName = (string) App::config('crm_name', 'DG');
+        $subject = 'Passwort zurücksetzen – ' . $crmName;
+
+        $html = '<p>Hallo ' . htmlspecialchars($user->displayName !== '' ? $user->displayName : $user->username, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>Sie haben angefordert, Ihr Passwort für ' . htmlspecialchars($crmName, ENT_QUOTES, 'UTF-8') . ' zurückzusetzen.</p>'
+            . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">Neues Passwort festlegen</a></p>'
+            . '<p>Der Link ist eine Stunde gültig. Falls Sie keine Anfrage gestellt haben, können Sie diese E-Mail ignorieren.</p>'
+            . '<p style="font-size:12px;color:#666;">Falls der Link nicht funktioniert, kopieren Sie diese Adresse in den Browser:<br>'
+            . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '</p>';
+
+        $text = "Hallo {$user->displayName},\n\n"
+            . "Passwort zurücksetzen für {$crmName}:\n{$resetUrl}\n\n"
+            . "Der Link ist eine Stunde gültig.\n";
+
+        $message = new MailMessage(
+            subject: $subject,
+            htmlBody: $html,
+            to: [$email],
+            textBody: $text,
+        );
+
+        MailService::send($message);
+    }
+
+    private static function hashToken(string $token): string
+    {
+        return hash('sha256', $token);
+    }
+
+    private static function enforceRateLimit(string $identifier): void
+    {
+        $now = time();
+        $key = 'dg_pw_reset_attempts';
+        $attempts = $_SESSION[$key] ?? [];
+        if (!is_array($attempts)) {
+            $attempts = [];
+        }
+
+        $attempts = array_values(array_filter(
+            $attempts,
+            static fn ($entry) => is_array($entry)
+                && isset($entry['at'])
+                && ($now - (int) $entry['at']) < self::RATE_LIMIT_WINDOW
+        ));
+
+        if (count($attempts) >= self::RATE_LIMIT_MAX) {
+            throw new RuntimeException('Zu viele Anfragen. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
+        }
+
+        $attempts[] = [
+            'at' => $now,
+            'id' => hash('sha256', strtolower(trim($identifier))),
+        ];
+        $_SESSION[$key] = $attempts;
+    }
+}

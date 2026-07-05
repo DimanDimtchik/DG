@@ -3,6 +3,12 @@ Thumbs.db
 .env
 .env.*
 *.log
+db-setup-log.txt
+bin/_curl-cookies*.txt
+bin/pw-cookies.txt
+bin/pw-*.html
+bin/_forgot.html
+bin/search-results.txt
 node_modules/
 dist/
 build/
@@ -10,3 +16,9 @@ __pycache__/
 *.pyc
 .venv/
 .vscode/
+config/users.local.php
+config/database.local.php
+config/cron.local.php
+config/mail.local.php
+config/company.local.php
+config/kas.local.php

@@ -1,0 +1,43 @@
+/* DG – minimale Styles für die öffentliche Offline-Seite (nicht angemeldet) */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body.dg-offline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-align: center;
+}
+
+.dg-offline__main {
+  max-width: 32rem;
+}
+
+.dg-offline__text {
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.dg-offline__link {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.dg-offline__link:hover {
+  opacity: 0.85;
+}
