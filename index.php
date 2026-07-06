@@ -203,6 +203,10 @@ switch ($path) {
         MediaApi::handle();
         exit;
 
+    case '/api/chart-account':
+        ChartAccountApi::handle();
+        exit;
+
     case '/api/number-range-preview':
         NumberRangeApi::handlePreview();
         exit;
@@ -329,6 +333,7 @@ switch ($path) {
         $departments = RoleResolver::departmentsFor($user);
         $menuItems = MenuRegistry::modules($user);
         $settingsItem = MenuRegistry::settingsItem($user);
+        $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
         $flash = Flash::pull();
         $canEdit = RoleResolver::canEdit($user);
         $sidebarItems = MenuRegistry::sidebarItems($user);
@@ -436,6 +441,28 @@ switch ($path) {
                 try {
                     TaxAdvisorSettings::saveFromPost($_POST);
                     Flash::set('success', 'Steuerkanzlei gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Kontenrahmen
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['chart_of_accounts_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('chart-of-accounts');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'UngÃ¼ltiges Formular (CSRF).');
+            } else {
+                try {
+                    ChartOfAccountsSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Kontenrahmen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -1243,6 +1270,14 @@ switch ($path) {
         $companyExtended = CompanyExtendedSettings::forForm();
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
+        $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
+        if (Database::isConfigured()) {
+            try {
+                ChartAccountRepository::ensureSeeded($chartOfAccountsConfig['skr_type']);
+            } catch (Throwable) {
+                // Konten optional bis Migration
+            }
+        }
         $numberRangeTypes = NumberRangeSettings::documentTypes();
         $numberRangeType = isset($_GET['ntype']) && is_string($_GET['ntype']) && NumberRangeSettings::isValidType($_GET['ntype'])
             ? $_GET['ntype']
@@ -1298,6 +1333,25 @@ switch ($path) {
             $title = 'Artikel & Leistungen';
             $currentPage = 'artikel-leistungen';
         } elseif ($page === 'artikel-leistungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {
+            $chartAccountCount = 0;
+            $chartCatalogCount = ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
+            $chartHintCount = ChartAccountSeedData::seedCount(ChartOfAccountsSettings::activeSkrType());
+            if (Database::isConfigured()) {
+                try {
+                    ChartAccountRepository::ensureSeeded(ChartOfAccountsSettings::activeSkrType());
+                    $chartAccountCount = ChartAccountRepository::countForSkr();
+                } catch (Throwable) {
+                    // Konten optional bis Migration
+                }
+            }
+            $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
+            $contentTemplate = 'modules/buchhaltung-konten';
+            $title = 'Konten';
+            $currentPage = 'buchhaltung-konten';
+        } elseif ($page === 'buchhaltung-konten') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'einstellungen') {
@@ -1738,6 +1792,11 @@ switch ($path) {
         $postIsSentFolder = $postIsSentFolder ?? false;
         $postImapLive = $postImapLive ?? false;
         $postImapAsync = $postImapAsync ?? false;
+        $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
+        $chartOfAccountsConfig = $chartOfAccountsConfig ?? ChartOfAccountsSettings::forForm();
+        $chartAccountCount = $chartAccountCount ?? 0;
+        $chartCatalogCount = $chartCatalogCount ?? ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
+        $chartHintCount = $chartHintCount ?? ChartAccountSeedData::seedCount(ChartOfAccountsSettings::activeSkrType());
 
         View::render('layout/app', compact(
             'title',
@@ -1749,6 +1808,7 @@ switch ($path) {
             'dept',
             'menuItems',
             'settingsItem',
+            'buchhaltungSection',
             'currentPage',
             'settingsNav',
             'settingsSelection',
@@ -1797,6 +1857,10 @@ switch ($path) {
             'companyExtended',
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
+            'chartOfAccountsConfig',
+            'chartAccountCount',
+            'chartCatalogCount',
+            'chartHintCount',
             'numberRangeType',
             'numberRangeDoc',
             'numberRangeTypes',

@@ -64,6 +64,39 @@ final class MenuRegistry
         return $items;
     }
 
+    /**
+     * Buchhaltungs-Bereich in der Seitenleiste (eigene Sektion mit Untermenü).
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function buchhaltungSection(User $user): ?array
+    {
+        if (!self::canAccessBuchhaltung($user)) {
+            return null;
+        }
+
+        return [
+            'label' => 'Buchhaltung',
+            'items' => [
+                [
+                    'slug' => 'buchhaltung-konten',
+                    'label' => 'Konten',
+                    'icon' => 'accounting',
+                    'href' => '/app?page=buchhaltung-konten',
+                ],
+            ],
+        ];
+    }
+
+    public static function canAccessBuchhaltung(User $user): bool
+    {
+        if (RoleResolver::isCustomer($user)) {
+            return false;
+        }
+
+        return RoleResolver::isAdmin($user) || DepartmentAccess::canAccessModule($user, 'buchhaltung');
+    }
+
     /** Kurztexte für Dashboard-Kacheln (gleiche Reihenfolge wie Seitennavigation). */
     /** @return array<string, string> */
     public static function moduleDescriptions(): array
@@ -75,6 +108,7 @@ final class MenuRegistry
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'bilder' => 'Medien, Logos und Bilder verwalten.',
+            'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
         ];
     }
@@ -100,6 +134,19 @@ final class MenuRegistry
                 'href' => $item['href'],
                 'description' => $descriptions[$item['slug']] ?? '',
             ];
+        }
+
+        $buchhaltung = self::buchhaltungSection($user);
+        if ($buchhaltung !== null) {
+            foreach ($buchhaltung['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => $descriptions[$item['slug']] ?? '',
+                ];
+            }
         }
 
         $settings = self::settingsItem($user);
@@ -142,6 +189,10 @@ final class MenuRegistry
 
         if ($slug === 'bilder') {
             return RoleResolver::isAdmin($user);
+        }
+
+        if ($slug === 'buchhaltung-konten') {
+            return self::canAccessBuchhaltung($user);
         }
 
         if ($slug === 'artikel-leistungen') {

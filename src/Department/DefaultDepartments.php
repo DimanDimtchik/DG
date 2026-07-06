@@ -58,11 +58,22 @@ final class DefaultDepartments
                 'is_purchasing' => (bool) ($definition['is_purchasing'] ?? false),
                 'allow_article_catalog' => (bool) ($definition['allow_article_catalog'] ?? false),
                 'members' => $membersByDepartmentId[$id] ?? [],
-                'modules' => DepartmentAccess::defaultModules(),
+                'modules' => self::modulesForDepartment($id),
             ];
         }
 
         return $departments;
+    }
+
+    /** @return array<string, string> */
+    public static function modulesForDepartment(string $departmentId): array
+    {
+        $modules = DepartmentAccess::defaultModules();
+        if ($departmentId === 'dept-buchhaltung') {
+            $modules['buchhaltung'] = 'full';
+        }
+
+        return $modules;
     }
 
     /**

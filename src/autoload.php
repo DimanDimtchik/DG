@@ -120,6 +120,12 @@ spl_autoload_register(static function (string $class): void {
         'MediaScanner' => '/src/Media/MediaScanner.php',
         'MediaApi' => '/src/Media/MediaApi.php',
         'MediaFaviconGenerator' => '/src/Media/MediaFaviconGenerator.php',
+        'ChartOfAccountsSettings' => '/src/Accounting/ChartOfAccountsSettings.php',
+        'ChartAccountRepository' => '/src/Accounting/ChartAccountRepository.php',
+        'ChartAccountSeedData' => '/src/Accounting/ChartAccountSeedData.php',
+        'ChartAccountCatalog' => '/src/Accounting/ChartAccountCatalog.php',
+        'ChartAccountApi' => '/src/Accounting/ChartAccountApi.php',
+        'SkrDigitLegend' => '/src/Accounting/SkrDigitLegend.php',
     ];
 
     if (!isset($map[$class])) {

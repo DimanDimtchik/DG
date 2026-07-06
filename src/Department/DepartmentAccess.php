@@ -10,6 +10,7 @@ final class DepartmentAccess
         'kontakte' => 'Kontakte',
         'terminkalender' => 'Terminkalender',
         'post' => 'Post',
+        'buchhaltung' => 'Buchhaltung',
     ];
 
     /** @var array<string, int> */
@@ -30,6 +31,7 @@ final class DepartmentAccess
             'kontakte' => 'partial',
             'terminkalender' => 'full',
             'post' => 'full',
+            'buchhaltung' => 'none',
         ];
     }
 

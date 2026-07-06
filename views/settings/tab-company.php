@@ -32,6 +32,83 @@ $institutionLabels = [
     'union' => 'Gewerkschaft',
     'works_council' => 'Betriebsrat',
 ];
+$countFilledByName = static function (array $rows, string $key = 'name'): int {
+    $count = 0;
+    foreach ($rows as $row) {
+        if (trim((string) ($row[$key] ?? '')) !== '') {
+            ++$count;
+        }
+    }
+    return $count;
+};
+$stammdatenParts = array_filter([
+    trim($companyConfig['name']),
+    trim($companyConfig['city']),
+    trim($companyConfig['email']),
+]);
+$stammdatenSummary = $stammdatenParts !== [] ? implode(' · ', $stammdatenParts) : 'Noch nicht ausgefüllt';
+$filledOwners = $countFilledByName($owners);
+$ownersSummaryParts = [];
+if ($filledOwners > 0) {
+    $ownersSummaryParts[] = $filledOwners === 1 ? '1 Inhaber' : $filledOwners . ' Inhaber';
+}
+if ($ownersShareTotal > 0) {
+    $ownersSummaryParts[] = 'Summe ' . number_format($ownersShareTotal, 0, ',', '.') . ' %';
+}
+$ownersSummary = $ownersSummaryParts !== [] ? implode(' · ', $ownersSummaryParts) : 'Keine Inhaber';
+$filledAddresses = 0;
+foreach ($addresses as $addr) {
+    if (trim((string) ($addr['street'] ?? '')) !== '' || trim((string) ($addr['city'] ?? '')) !== '') {
+        ++$filledAddresses;
+    }
+}
+$addressesSummary = $filledAddresses > 0
+    ? ($filledAddresses === 1 ? '1 Standort' : $filledAddresses . ' Standorte')
+    : 'Keine Standorte';
+$taxSummaryParts = [];
+$estTax = trim((string) ($taxNumbers['est'] ?? $companyConfig['tax_number'] ?? ''));
+if ($estTax !== '') {
+    $taxSummaryParts[] = 'ESt: ' . $estTax;
+}
+$filledFinanzaemter = $countFilledByName($finanzaemter);
+if ($filledFinanzaemter > 0) {
+    $taxSummaryParts[] = $filledFinanzaemter === 1 ? '1 Finanzamt' : $filledFinanzaemter . ' Finanzämter';
+}
+$taxSummary = $taxSummaryParts !== [] ? implode(' · ', $taxSummaryParts) : 'Noch keine Steuerdaten';
+$uvCarrier = $bgCarrierKey !== '' ? UvCarriers::get($bgCarrierKey) : null;
+$uvSummary = $uvCarrier ? ($uvCarrier['short'] . ' – ' . $uvCarrier['name']) : 'Nicht zugeordnet';
+$employmentParts = array_filter([
+    trim((string) ($employmentAgency['name'] ?? '')),
+    trim((string) ($employmentAgency['betriebsnummer'] ?? '')) !== ''
+        ? 'BN ' . trim((string) ($employmentAgency['betriebsnummer'] ?? ''))
+        : '',
+]);
+$employmentSummary = $employmentParts !== [] ? implode(' · ', $employmentParts) : 'Noch nicht ausgefüllt';
+$filledInstitutions = $countFilledByName($institutions);
+$institutionsSummary = $filledInstitutions > 0
+    ? ($filledInstitutions === 1 ? '1 Eintrag' : $filledInstitutions . ' Einträge')
+    : 'Keine Kammern hinterlegt';
+$filledProfChambers = $countFilledByName($professionalChambers);
+$profChambersSummary = $filledProfChambers > 0
+    ? ($filledProfChambers === 1 ? '1 Kammer' : $filledProfChambers . ' Kammern')
+    : 'Keine Kammern';
+$filledTradeAssoc = $countFilledByName($tradeAssociations);
+$tradeAssocSummary = $filledTradeAssoc > 0
+    ? ($filledTradeAssoc === 1 ? '1 Verband' : $filledTradeAssoc . ' Verbände')
+    : 'Keine Verbände';
+$filledMemberships = $countFilledByName($memberships);
+$membershipsSummary = $filledMemberships > 0
+    ? ($filledMemberships === 1 ? '1 Mitgliedschaft' : $filledMemberships . ' Mitgliedschaften')
+    : 'Keine Mitgliedschaften';
+$filledBanks = 0;
+foreach ($bankAccounts as $account) {
+    if (trim((string) ($account['iban'] ?? '')) !== '' || trim((string) ($account['bank_name'] ?? '')) !== '') {
+        ++$filledBanks;
+    }
+}
+$bankSummary = $filledBanks > 0
+    ? ($filledBanks === 1 ? '1 Konto' : $filledBanks . ' Konten')
+    : 'Keine Bankverbindung';
 ?>
 <form class="dg-form dg-company-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('firmendaten')) ?>">
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -41,8 +118,24 @@ $institutionLabels = [
     <strong>Absendername und Absender-Adresse</strong> für E-Mails sowie für Behörden, Kammern und Versicherungsträger.
   </p>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Stammdaten</h3>
+  <div class="dg-dept-accordion__toolbar">
+    <button type="button" class="dg-button dg-button--small" id="dg-company-expand-all">Alle aufklappen</button>
+    <button type="button" class="dg-button dg-button--small" id="dg-company-collapse-all">Alle zuklappen</button>
+  </div>
+
+  <div id="dg-company-accordion" class="dg-dept-accordion">
+
+  <section class="dg-dept-card is-open" data-dept-card data-company-section="stammdaten">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="true">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Stammdaten</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($stammdatenSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--wide">
         <span>Firmenname *</span>
@@ -121,10 +214,20 @@ $institutionLabels = [
         <small class="dg-field-hint">Aktuell verwendet: <strong><?= (int) $displayEmployeeCount ?></strong></small>
       </div>
     </div>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Inhaber / Gesellschafter</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="owners">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Inhaber / Gesellschafter</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($ownersSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <p class="dg-field-hint">Ein oder mehrere Inhaber mit prozentualem Anteil am Unternehmen.</p>
     <div class="dg-company-repeater" id="dg-owners-repeater" data-repeater="owners">
       <?php foreach ($owners as $i => $owner) : ?>
@@ -150,10 +253,20 @@ $institutionLabels = [
         Summe Anteile: <?= View::escape(number_format($ownersShareTotal, 2, ',', '.')) ?> %
       </span>
     </p>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Standorte / Adressen</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="addresses">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Standorte / Adressen</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($addressesSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <p class="dg-field-hint">Zentrale, Lager, Büros und weitere Standorte. Der Hauptsitz wird mit den Stammdaten oben synchronisiert.</p>
     <div class="dg-company-repeater" id="dg-addresses-repeater" data-repeater="addresses">
       <?php foreach ($addresses as $i => $addr) : ?>
@@ -176,10 +289,20 @@ $institutionLabels = [
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-repeater-add="addresses">+ Adresse hinzufügen</button></p>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Steuernummern &amp; Handelsregister</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="tax">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Steuernummern &amp; Handelsregister</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($taxSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--wide">
         <span>ESt-Steuernummer (Finanzamt-Zuordnung)</span>
@@ -273,10 +396,20 @@ $institutionLabels = [
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-repeater-add="finanzaemter">+ Finanzamt hinzufügen</button></p>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Unfallversicherung (Berufsgenossenschaft / Unfallkasse)</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="uv">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Unfallversicherung (Berufsgenossenschaft / Unfallkasse)</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($uvSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <p class="dg-field-hint">
       <?= count(UvCarriers::all()) ?> UV-Träger.
       <?php if ($industryUvSuggestion !== '') :
@@ -321,10 +454,20 @@ $institutionLabels = [
       <label class="dg-field"><span>Telefon</span><input type="text" name="bg_data[phone]" value="<?= View::escape((string) ($bgData['phone'] ?? '')) ?>"></label>
       <label class="dg-field"><span>E-Mail</span><input type="email" name="bg_data[email]" value="<?= View::escape((string) ($bgData['email'] ?? '')) ?>"></label>
     </div>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Agentur für Arbeit</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="employment">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Agentur für Arbeit</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($employmentSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--wide">
         <span>Bezeichnung</span>
@@ -338,10 +481,20 @@ $institutionLabels = [
       <label class="dg-field"><span>Telefon</span><input type="text" name="employment_agency[phone]" value="<?= View::escape((string) ($employmentAgency['phone'] ?? '')) ?>"></label>
       <label class="dg-field"><span>E-Mail</span><input type="email" name="employment_agency[email]" value="<?= View::escape((string) ($employmentAgency['email'] ?? '')) ?>"></label>
     </div>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Kammern, Gewerkschaft &amp; Betriebsrat</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="institutions">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Kammern, Gewerkschaft &amp; Betriebsrat</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($institutionsSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <div class="dg-institutions-grid">
       <?php foreach ($institutionLabels as $instKey => $instTitle) :
           $inst = $institutions[$instKey] ?? [];
@@ -359,10 +512,20 @@ $institutionLabels = [
         </div>
       <?php endforeach; ?>
     </div>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Berufsständische Kammern</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="professional_chambers">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Berufsständische Kammern</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($profChambersSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <p class="dg-field-hint">Z. B. Ärztekammer, Rechtsanwaltskammer, Architektenkammer — branchenabhängig.</p>
     <div class="dg-company-repeater" id="dg-professional-chambers-repeater" data-repeater="professional_chambers">
       <?php foreach ($professionalChambers as $i => $row) : ?>
@@ -377,10 +540,20 @@ $institutionLabels = [
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-repeater-add="professional_chambers">+ Kammer hinzufügen</button></p>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Berufsverbände / Innungen</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="trade_associations">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Berufsverbände / Innungen</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($tradeAssocSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <div class="dg-company-repeater" id="dg-trade-associations-repeater" data-repeater="trade_associations">
       <?php foreach ($tradeAssociations as $i => $row) : ?>
         <div class="dg-company-repeater__row" data-repeater-row>
@@ -394,10 +567,20 @@ $institutionLabels = [
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-repeater-add="trade_associations">+ Verband / Innung hinzufügen</button></p>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Pflicht- und freiwillige Mitgliedschaften</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="memberships">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Pflicht- und freiwillige Mitgliedschaften</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($membershipsSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <p class="dg-field-hint">Allgemein für branchenspezifische Organisationen (z. B. VDE, TÜV-Mitgliedschaft, Fachverband).</p>
     <div class="dg-company-repeater" id="dg-memberships-repeater" data-repeater="memberships">
       <?php foreach ($memberships as $i => $row) : ?>
@@ -420,10 +603,20 @@ $institutionLabels = [
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-repeater-add="memberships">+ Mitgliedschaft hinzufügen</button></p>
+    </div>
   </section>
 
-  <section class="dg-settings-section">
-    <h3 class="dg-settings-section__title">Bankverbindungen &amp; Zahlungsdienstleister</h3>
+  <section class="dg-dept-card" data-dept-card data-company-section="bank">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Bankverbindungen &amp; Zahlungsdienstleister</strong>
+          <span class="dg-dept-accordion__meta" data-dept-summary><?= View::escape($bankSummary) ?></span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <p class="dg-field-hint">IBAN-, BIC- und Bankname-Vorschläge wie in den Kontakten.</p>
     <div id="dg-company-bank-repeater" class="dg-bank-repeater">
       <?php foreach ($bankAccounts as $i => $account) : ?>
@@ -431,7 +624,10 @@ $institutionLabels = [
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-bank-add data-bank-repeater="dg-company-bank-repeater">+ Konto / Zahlungsdienst hinzufügen</button></p>
+    </div>
   </section>
+
+  </div>
 
   <div class="dg-form-actions">
     <button type="submit" name="company_save" value="1" class="dg-button dg-button--primary">Firmendaten speichern</button>

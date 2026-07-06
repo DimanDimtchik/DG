@@ -1,0 +1,22 @@
+SKR-Katalogdaten (DATEV 2026)
+=============================
+
+SKR03:
+- assets/data/skr03-datev.json — Parser aus PDF
+- assets/data/source/Kontenrahmen_DATEV_SKR_3_2026.pdf
+
+SKR04:
+- assets/data/skr04-datev.json — Parser aus PDF
+- assets/data/source/Kontenrahmen_DATEV_SKR_4_2026.pdf
+
+Zusatzreferenzen (noch nicht importiert):
+- assets/data/source/DATEV_Steuerschluessel_2026.xlsx
+- assets/data/source/DATEV_Kontenfunktionen_2026.xlsx
+
+Parser:
+  python bin/parse-datev-skr.py all
+
+Import:
+  php bin/import-chart-catalog.php all
+
+Hinweise (25 Konten): ChartAccountSeedData.php

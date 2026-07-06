@@ -185,7 +185,17 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
           <p class="dg-post-folders__hint">Für alle Ordner (Gesendet, Spam, …) oben ein Postfach wählen.</p>
         <?php elseif (!ImapMailboxClient::isAvailable()) : ?>
           <p class="dg-post-folders__hint">PHP-IMAP nicht aktiv — Standardordner angezeigt.</p>
-        <?php endif; ?>
+        <?php else :
+          $postSelectedHasImap = false;
+          foreach ($postMailboxes as $box) {
+              if ((int) ($box['id'] ?? 0) === $postMailboxFilter) {
+                  $postSelectedHasImap = ImapMailboxClient::hasCredentials($box);
+                  break;
+              }
+          }
+          if ($postSelectedHasImap && count($postFolders) <= 2) : ?>
+          <p class="dg-post-folders__hint">IMAP-Ordner nicht geladen. <a href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder) . '&refresh=1') ?>">Erneut abrufen</a></p>
+        <?php endif; endif; ?>
       </aside>
 
       <div

@@ -104,10 +104,10 @@ final class SettingsRegistry
             'buchhaltung' => [
                 'label' => 'Buchhaltung',
                 'tabs' => [
-                    'buchhaltung' => [
-                        'label' => 'Buchhaltung & Steuern',
-                        'lead' => 'Buchhaltung, Konten und steuerliche Voreinstellungen.',
-                        'template' => 'placeholder',
+                    'chart-of-accounts' => [
+                        'label' => 'Kontenrahmen',
+                        'lead' => 'Standardkontenrahmen SKR03 oder SKR04 für die Buchhaltung.',
+                        'template' => 'chart-of-accounts',
                     ],
                     'steuerkanzlei' => [
                         'label' => 'Steuerkanzlei',
@@ -199,6 +199,9 @@ final class SettingsRegistry
             if (isset($_POST['company_save'])) {
                 return 'firmendaten';
             }
+            if (isset($_POST['chart_of_accounts_save'])) {
+                return 'chart-of-accounts';
+            }
             if (isset($_POST['tax_advisor_save'])) {
                 return 'steuerkanzlei';
             }
@@ -256,7 +259,7 @@ final class SettingsRegistry
             'kontakte:company' => 'firmendaten',
             'kontakte:general' => 'allgemein',
             'kontakte:departments' => 'abteilungen',
-            'kontakte:accounting' => 'buchhaltung',
+            'kontakte:accounting' => 'chart-of-accounts',
             'kontakte:tax_advisor' => 'steuerkanzlei',
             'kontakte:legal' => 'agb',
             'kontakte:numbering' => 'nummernkreise',

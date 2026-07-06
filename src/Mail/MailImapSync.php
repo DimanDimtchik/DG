@@ -62,23 +62,7 @@ final class MailImapSync
      */
     private static function refreshFolderCache(array $mailbox): void
     {
-        $mailboxId = (int) ($mailbox['id'] ?? 0);
-        if ($mailboxId <= 0) {
-            return;
-        }
-
-        $folders = ImapMailboxClient::listFolders($mailbox);
-        $rows = [];
-        foreach ($folders as $folder) {
-            $rows[] = [
-                'path' => (string) ($folder['path'] ?? ''),
-                'label' => (string) ($folder['label'] ?? ''),
-                'source' => 'imap',
-            ];
-        }
-        if ($rows !== []) {
-            MailFolderCatalog::storeFoldersCache($mailboxId, $rows);
-        }
+        MailFolderCatalog::refreshFoldersFromImap($mailbox);
     }
 
     private static function syncedRecently(int $mailboxId, string $imapPath): bool

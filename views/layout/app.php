@@ -6,6 +6,7 @@
 /** @var string $contentTemplate */
 /** @var list<array{slug: string, label: string, icon: string, href: string}> $sidebarItems */
 /** @var array{slug: string, label: string, icon: string}|null $settingsItem */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $buchhaltungSection */
 /** @var string $currentPage */
 $homeHref = RoleResolver::isCustomer($user) ? '/app?area=profile' : '/app';
 $pageTitle = $title . ' – ' . App::config('crm_name');
@@ -94,6 +95,22 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
           <?php endforeach; ?>
         </ul>
       </section>
+
+      <?php if (!empty($buchhaltungSection)) : ?>
+        <section class="dg-sidebar__section dg-sidebar__section--buchhaltung" aria-labelledby="dg-sidebar-buchhaltung">
+          <h2 id="dg-sidebar-buchhaltung" class="dg-sidebar__heading"><?= View::escape($buchhaltungSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($buchhaltungSection['items'] as $item) : ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $currentPage === $item['slug'] ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
 
       <?php if ($settingsItem) : ?>
         <section class="dg-sidebar__section dg-sidebar__section--system" aria-labelledby="dg-sidebar-system">
@@ -220,6 +237,15 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/kontakte-form') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/contact-company-links.js')) ?>" defer></script>
+  <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-konten') : ?>
+    <script>
+      window.dgBuchhaltungKonten = {
+        apiUrl: '/api/chart-account',
+        accountDigits: <?= (int) ChartOfAccountsSettings::accountDigits() ?>
+      };
+    </script>
+    <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-konten.js')) ?>" defer></script>
   <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
 </body>

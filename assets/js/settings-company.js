@@ -197,6 +197,11 @@
     setRowValue(row, 'phone', office.phone || '');
     setRowValue(row, 'email', office.email || '');
     setRowValue(row, 'opening_hours', office.opening_hours || '');
+
+    const taxSection = document.querySelector('[data-company-section="tax"]');
+    if (taxSection) {
+      updateCompanySummary(taxSection);
+    }
   }
 
   function setRowValue(row, field, value) {
@@ -283,9 +288,19 @@
     const select = document.getElementById('dg-uv-carrier');
     const suggestBtn = document.getElementById('dg-suggest-uv-carrier');
     const industry = document.getElementById('dg-company-industry');
+    const uvSection = document.querySelector('[data-company-section="uv"]');
+
+    function refreshUvSummary() {
+      if (uvSection) {
+        updateCompanySummary(uvSection);
+      }
+    }
 
     if (select) {
-      select.addEventListener('change', () => fillUvCarrier(select.value));
+      select.addEventListener('change', () => {
+        fillUvCarrier(select.value);
+        refreshUvSummary();
+      });
     }
 
     if (suggestBtn && industry) {
@@ -296,6 +311,7 @@
         }
         select.value = key;
         fillUvCarrier(key);
+        refreshUvSummary();
       });
     }
   }
@@ -356,6 +372,7 @@
     if (removeBtn) {
       removeBtn.addEventListener('click', () => {
         const repeater = row.closest('[data-repeater]');
+        const section = row.closest('[data-company-section]');
         row.remove();
         if (repeater) {
           reindexRepeater(repeater);
@@ -363,10 +380,27 @@
             updateOwnersShareTotal();
           }
         }
+        if (section) {
+          updateCompanySummary(section);
+        }
       });
     }
     row.querySelectorAll('[data-owner-share]').forEach((input) => {
-      input.addEventListener('input', updateOwnersShareTotal);
+      input.addEventListener('input', () => {
+        updateOwnersShareTotal();
+        const section = row.closest('[data-company-section]');
+        if (section) {
+          updateCompanySummary(section);
+        }
+      });
+    });
+    row.querySelectorAll('[data-owner-name]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const section = row.closest('[data-company-section]');
+        if (section) {
+          updateCompanySummary(section);
+        }
+      });
     });
   }
 
@@ -392,8 +426,272 @@
     });
 
     document.querySelectorAll('[data-repeater-add]').forEach((btn) => {
-      btn.addEventListener('click', () => addRepeaterRow(btn.dataset.repeaterAdd));
+      btn.addEventListener('click', () => {
+        addRepeaterRow(btn.dataset.repeaterAdd);
+        const section = btn.closest('[data-company-section]');
+        if (section) {
+          updateCompanySummary(section);
+        }
+      });
     });
+  }
+
+  function setCompanyOpen(card, open) {
+    const panel = card.querySelector('[data-dept-panel]');
+    const toggle = card.querySelector('[data-dept-toggle]');
+    if (!panel || !toggle) {
+      return;
+    }
+    panel.hidden = !open;
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    card.classList.toggle('is-open', open);
+  }
+
+  function countFilledNames(card, selector) {
+    let count = 0;
+    card.querySelectorAll(selector).forEach((input) => {
+      if (input.value.trim() !== '') {
+        count += 1;
+      }
+    });
+    return count;
+  }
+
+  function updateCompanySummary(card) {
+    const summary = card.querySelector('[data-dept-summary]');
+    if (!summary) {
+      return;
+    }
+
+    const section = card.dataset.companySection || '';
+    let text = '';
+
+    switch (section) {
+      case 'stammdaten': {
+        const parts = [];
+        const name = card.querySelector('input[name="name"]');
+        const city = card.querySelector('input[name="city"]');
+        const email = card.querySelector('input[name="email"]');
+        if (name && name.value.trim()) {
+          parts.push(name.value.trim());
+        }
+        if (city && city.value.trim()) {
+          parts.push(city.value.trim());
+        }
+        if (email && email.value.trim()) {
+          parts.push(email.value.trim());
+        }
+        text = parts.length > 0 ? parts.join(' · ') : 'Noch nicht ausgefüllt';
+        break;
+      }
+      case 'owners': {
+        const filled = countFilledNames(card, '[data-owner-name]');
+        const parts = [];
+        if (filled > 0) {
+          parts.push(filled === 1 ? '1 Inhaber' : filled + ' Inhaber');
+        }
+        let total = 0;
+        card.querySelectorAll('[data-owner-share]').forEach((input) => {
+          const value = parseFloat(String(input.value).replace(',', '.'));
+          if (!Number.isNaN(value)) {
+            total += value;
+          }
+        });
+        if (total > 0) {
+          parts.push(
+            'Summe ' +
+              total.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) +
+              ' %'
+          );
+        }
+        text = parts.length > 0 ? parts.join(' · ') : 'Keine Inhaber';
+        break;
+      }
+      case 'addresses': {
+        let filled = 0;
+        card.querySelectorAll('[data-repeater-row]').forEach((row) => {
+          const street = row.querySelector('input[name*="[street]"]');
+          const city = row.querySelector('input[name*="[city]"]');
+          if (
+            (street && street.value.trim()) ||
+            (city && city.value.trim())
+          ) {
+            filled += 1;
+          }
+        });
+        text =
+          filled > 0
+            ? filled === 1
+              ? '1 Standort'
+              : filled + ' Standorte'
+            : 'Keine Standorte';
+        break;
+      }
+      case 'tax': {
+        const parts = [];
+        const est = card.querySelector('#dg-tax-number-est, [data-tax-est]');
+        if (est && est.value.trim()) {
+          parts.push('ESt: ' + est.value.trim());
+        }
+        const faCount = countFilledNames(card, '#dg-finanzaemter-repeater input[name*="[name]"]');
+        if (faCount > 0) {
+          parts.push(faCount === 1 ? '1 Finanzamt' : faCount + ' Finanzämter');
+        }
+        text = parts.length > 0 ? parts.join(' · ') : 'Noch keine Steuerdaten';
+        break;
+      }
+      case 'uv': {
+        const select = card.querySelector('#dg-uv-carrier');
+        if (select && select.value) {
+          const option = select.options[select.selectedIndex];
+          text = option ? option.textContent.trim() : 'Nicht zugeordnet';
+        } else {
+          text = 'Nicht zugeordnet';
+        }
+        break;
+      }
+      case 'employment': {
+        const parts = [];
+        const name = card.querySelector('input[name="employment_agency[name]"]');
+        const bn = card.querySelector('input[name="employment_agency[betriebsnummer]"]');
+        if (name && name.value.trim()) {
+          parts.push(name.value.trim());
+        }
+        if (bn && bn.value.trim()) {
+          parts.push('BN ' + bn.value.trim());
+        }
+        text = parts.length > 0 ? parts.join(' · ') : 'Noch nicht ausgefüllt';
+        break;
+      }
+      case 'institutions': {
+        const filled = countFilledNames(card, 'input[name*="institutions"][name*="[name]"]');
+        text =
+          filled > 0
+            ? filled === 1
+              ? '1 Eintrag'
+              : filled + ' Einträge'
+            : 'Keine Kammern hinterlegt';
+        break;
+      }
+      case 'professional_chambers': {
+        const filled = countFilledNames(card, 'input[name*="professional_chambers"][name*="[name]"]');
+        text =
+          filled > 0
+            ? filled === 1
+              ? '1 Kammer'
+              : filled + ' Kammern'
+            : 'Keine Kammern';
+        break;
+      }
+      case 'trade_associations': {
+        const filled = countFilledNames(card, 'input[name*="trade_associations"][name*="[name]"]');
+        text =
+          filled > 0
+            ? filled === 1
+              ? '1 Verband'
+              : filled + ' Verbände'
+            : 'Keine Verbände';
+        break;
+      }
+      case 'memberships': {
+        const filled = countFilledNames(card, 'input[name*="memberships"][name*="[name]"]');
+        text =
+          filled > 0
+            ? filled === 1
+              ? '1 Mitgliedschaft'
+              : filled + ' Mitgliedschaften'
+            : 'Keine Mitgliedschaften';
+        break;
+      }
+      case 'bank': {
+        let filled = 0;
+        card.querySelectorAll('[data-bank-card]').forEach((bankCard) => {
+          const iban = bankCard.querySelector('.dg-bank-iban, input[name*="[iban]"]');
+          const bankName = bankCard.querySelector('.dg-bank-name, input[name*="[bank_name]"]');
+          if (
+            (iban && iban.value.trim()) ||
+            (bankName && bankName.value.trim())
+          ) {
+            filled += 1;
+          }
+        });
+        text =
+          filled > 0
+            ? filled === 1
+              ? '1 Konto'
+              : filled + ' Konten'
+            : 'Keine Bankverbindung';
+        break;
+      }
+      default:
+        return;
+    }
+
+    summary.textContent = text;
+  }
+
+  function initCompanyAccordion() {
+    const accordion = document.getElementById('dg-company-accordion');
+    const expandAllBtn = document.getElementById('dg-company-expand-all');
+    const collapseAllBtn = document.getElementById('dg-company-collapse-all');
+    if (!accordion) {
+      return;
+    }
+
+    function setAllOpen(open) {
+      accordion.querySelectorAll('[data-dept-card]').forEach((card) => {
+        setCompanyOpen(card, open);
+      });
+    }
+
+    if (expandAllBtn) {
+      expandAllBtn.addEventListener('click', () => setAllOpen(true));
+    }
+    if (collapseAllBtn) {
+      collapseAllBtn.addEventListener('click', () => setAllOpen(false));
+    }
+
+    accordion.addEventListener('click', (event) => {
+      const toggle = event.target.closest('[data-dept-toggle]');
+      if (!toggle || !accordion.contains(toggle)) {
+        return;
+      }
+      const card = toggle.closest('[data-dept-card]');
+      if (card) {
+        const panel = card.querySelector('[data-dept-panel]');
+        setCompanyOpen(card, panel ? panel.hidden : true);
+      }
+      event.preventDefault();
+    });
+
+    accordion.addEventListener('input', (event) => {
+      const card = event.target.closest('[data-dept-card]');
+      if (card) {
+        updateCompanySummary(card);
+      }
+    });
+
+    accordion.addEventListener('change', (event) => {
+      const card = event.target.closest('[data-dept-card]');
+      if (card) {
+        updateCompanySummary(card);
+      }
+    });
+
+    accordion.querySelectorAll('[data-dept-card]').forEach((card) => {
+      updateCompanySummary(card);
+    });
+
+    const bankRepeater = document.getElementById('dg-company-bank-repeater');
+    if (bankRepeater) {
+      const bankCard = accordion.querySelector('[data-company-section="bank"]');
+      const observer = new MutationObserver(() => {
+        if (bankCard) {
+          updateCompanySummary(bankCard);
+        }
+      });
+      observer.observe(bankRepeater, { childList: true, subtree: true });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -404,6 +702,7 @@
     initFinanzamtLookup();
     initUvCarrier();
     initRepeaters();
+    initCompanyAccordion();
     updateOwnersShareTotal();
   });
 })();

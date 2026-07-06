@@ -1,0 +1,1 @@
+-- Migration 025: Kontonamen-Index (idx_chart_name_search) wird bei Bedarf manuell angelegt.

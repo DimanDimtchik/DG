@@ -3826,3 +3826,196 @@ body.dg-login-page {
     width: 100%;
   }
 }
+
+/* Buchhaltung — Kontenhinweise */
+.dg-buchhaltung-konten__layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dg-buchhaltung-konten__search .dg-field {
+  margin-bottom: 14px;
+}
+
+.dg-buchhaltung-konten__detail {
+  min-width: 0;
+}
+
+.dg-account-status {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  color: var(--dg-text-muted, #5c6678);
+}
+
+.dg-account-status--error {
+  color: var(--dg-danger, #b42318);
+}
+
+.dg-account-status--loading {
+  color: var(--dg-accent, #2f6fed);
+}
+
+.dg-account-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.dg-account-search-results__item {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 8px;
+  background: var(--dg-surface, #fff);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dg-account-search-results__item:hover,
+.dg-account-search-results__item:focus-visible {
+  border-color: var(--dg-accent, #2f6fed);
+  background: var(--dg-surface-muted, #f6f8fb);
+}
+
+.dg-account-search-results__number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dg-account-search-results__name {
+  font-size: 0.92rem;
+}
+
+.dg-account-hint__header {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--dg-border, #d8dee8);
+}
+
+.dg-account-hint__number {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--dg-text-muted, #5c6678);
+  margin: 0 0 4px;
+}
+
+.dg-account-hint__title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.dg-account-hint__meta {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: var(--dg-text-muted, #5c6678);
+}
+
+.dg-account-hint__summary {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--dg-surface-muted, #f6f8fb);
+  line-height: 1.5;
+}
+
+.dg-account-hint__block + .dg-account-hint__block {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--dg-border, #d8dee8);
+}
+
+.dg-account-hint__block-title {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.dg-account-hint__digits {
+  display: grid;
+  gap: 10px;
+}
+
+.dg-account-hint__digit {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.dg-account-hint__digit-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--dg-accent-soft, #e8f0fe);
+  color: var(--dg-accent, #2f6fed);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-account-hint__digit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.dg-account-hint__digit-detail {
+  color: var(--dg-text-muted, #5c6678);
+  font-size: 0.85rem;
+}
+
+.dg-account-hint__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dg-account-hint__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--dg-surface-muted, #f6f8fb);
+  border: 1px solid var(--dg-border, #d8dee8);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.dg-account-hint__list {
+  margin: 0;
+  padding-left: 1.2rem;
+  line-height: 1.5;
+}
+
+.dg-account-hint__list li + li {
+  margin-top: 6px;
+}
+
+.dg-dl--compact dt {
+  font-size: 0.85rem;
+}
+
+.dg-dl--compact dd {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .dg-buchhaltung-konten__layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -434,7 +434,7 @@ final class DepartmentRepository
                     'sort_order' => $sortOrder,
                 ]);
 
-                foreach (DepartmentAccess::defaultModules() as $moduleKey => $level) {
+                foreach (DefaultDepartments::modulesForDepartment($definition['id']) as $moduleKey => $level) {
                     $moduleStmt->execute([
                         'department_id' => $definition['id'],
                         'module_key' => $moduleKey,

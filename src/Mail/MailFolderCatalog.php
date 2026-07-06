@@ -49,7 +49,57 @@ final class MailFolderCatalog
             return $cached;
         }
 
+        if (self::refreshFoldersFromImap($mailbox)) {
+            $cached = self::cacheGet($mailboxId);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         return self::defaultFolders();
+    }
+
+    /**
+     * IMAP-Ordnerliste laden und in der Session cachen.
+     *
+     * @param array<string, mixed> $mailbox
+     */
+    public static function refreshFoldersFromImap(array $mailbox): bool
+    {
+        $mailboxId = (int) ($mailbox['id'] ?? 0);
+        if ($mailboxId <= 0 || !ImapMailboxClient::hasCredentials($mailbox)) {
+            return false;
+        }
+
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(60);
+        }
+
+        $folders = ImapMailboxClient::listFolders($mailbox);
+        if ($folders === []) {
+            return false;
+        }
+
+        $rows = [];
+        foreach ($folders as $folder) {
+            $path = (string) ($folder['path'] ?? '');
+            if ($path === '') {
+                continue;
+            }
+            $rows[] = [
+                'path' => $path,
+                'label' => (string) ($folder['label'] ?? MailFolderLabels::labelForPath($path)),
+                'source' => 'imap',
+            ];
+        }
+
+        if ($rows === []) {
+            return false;
+        }
+
+        self::storeFoldersCache($mailboxId, $rows);
+
+        return true;
     }
 
     /** @param list<array{path: string, label: string, source: string}> $folders */
