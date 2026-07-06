@@ -126,6 +126,9 @@ spl_autoload_register(static function (string $class): void {
         'ChartAccountCatalog' => '/src/Accounting/ChartAccountCatalog.php',
         'ChartAccountApi' => '/src/Accounting/ChartAccountApi.php',
         'SkrDigitLegend' => '/src/Accounting/SkrDigitLegend.php',
+        'VoucherRepository' => '/src/Accounting/VoucherRepository.php',
+        'VoucherTaxKeys' => '/src/Accounting/VoucherTaxKeys.php',
+        'VoucherApi' => '/src/Accounting/VoucherApi.php',
     ];
 
     if (!isset($map[$class])) {

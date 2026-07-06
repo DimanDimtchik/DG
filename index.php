@@ -207,6 +207,10 @@ switch ($path) {
         ChartAccountApi::handle();
         exit;
 
+    case '/api/voucher':
+        VoucherApi::handle();
+        exit;
+
     case '/api/number-range-preview':
         NumberRangeApi::handlePreview();
         exit;
@@ -1180,6 +1184,56 @@ switch ($path) {
             }
         }
 
+        // POST: Beleg speichern
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_save'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=buchhaltung-belege', true, 302);
+                exit;
+            }
+            if (!RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung zum Bearbeiten.');
+                header('Location: /app?page=buchhaltung-belege', true, 302);
+                exit;
+            }
+            $editId = (int) ($_POST['id'] ?? 0);
+            try {
+                $newId = VoucherRepository::save($_POST, $editId > 0 ? $editId : null, $user->id);
+                Flash::set('success', 'Beleg gespeichert.');
+                header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $newId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $contentTemplate = 'modules/buchhaltung-beleg-form';
+                $title = $editId > 0 ? 'Beleg bearbeiten' : 'Neuer Beleg';
+                $currentPage = 'buchhaltung-belege';
+                $voucherId = $editId > 0 ? $editId : null;
+                $form = array_merge(VoucherRepository::emptyForm(), $_POST);
+                $formError = $e->getMessage();
+                $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
+                $dbConfig = DatabaseSettings::forForm();
+                $dbConnected = Database::isConfigured();
+                try {
+                    if ($dbConnected) {
+                        Database::pdo()->query('SELECT 1');
+                    }
+                } catch (Throwable) {
+                    $dbConnected = false;
+                }
+                View::render('layout/app', compact(
+                    'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
+                    'menuItems', 'settingsItem', 'buchhaltungSection', 'currentPage', 'settingsNav', 'settingsSelection',
+                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
+                    'chartOfAccountsConfig'
+                ));
+                break;
+            }
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -1352,6 +1406,55 @@ switch ($path) {
             $title = 'Konten';
             $currentPage = 'buchhaltung-konten';
         } elseif ($page === 'buchhaltung-konten') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-belege' && MenuRegistry::canAccess($user, 'buchhaltung-belege')) {
+            $voucherSearch = trim((string) ($_GET['s'] ?? ''));
+            $voucherPage = max(1, (int) ($_GET['paged'] ?? 1));
+            $voucherYear = max(2000, (int) ($_GET['year'] ?? date('Y')));
+            $voucherTypeFilter = preg_replace('/[^a-z]/', '', (string) ($_GET['type'] ?? ''));
+            $voucherList = VoucherRepository::list([
+                'year' => $voucherYear,
+                'type' => $voucherTypeFilter,
+                'search' => $voucherSearch,
+                'page' => $voucherPage,
+            ]);
+            $voucherYears = VoucherRepository::availableYears();
+            $contentTemplate = 'modules/buchhaltung-belege';
+            $title = 'Belege';
+            $currentPage = 'buchhaltung-belege';
+        } elseif ($page === 'buchhaltung-belege') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-beleg-form' && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')) {
+            $voucherId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+            if ($action === 'new') {
+                if (!$canEdit) {
+                    header('Location: ' . RoleResolver::homePath($user), true, 302);
+                    exit;
+                }
+                $contentTemplate = 'modules/buchhaltung-beleg-form';
+                $title = 'Neuer Beleg';
+                $currentPage = 'buchhaltung-belege';
+                $form = VoucherRepository::emptyForm();
+                $formError = null;
+            } elseif ($action === 'edit' && $voucherId > 0) {
+                $voucher = VoucherRepository::findById($voucherId);
+                if ($voucher === null) {
+                    Flash::set('error', 'Beleg nicht gefunden.');
+                    header('Location: /app?page=buchhaltung-belege', true, 302);
+                    exit;
+                }
+                $contentTemplate = 'modules/buchhaltung-beleg-form';
+                $title = $canEdit ? 'Beleg bearbeiten' : 'Beleg anzeigen';
+                $currentPage = 'buchhaltung-belege';
+                $form = VoucherRepository::toForm($voucher);
+                $formError = null;
+            } else {
+                header('Location: /app?page=buchhaltung-belege', true, 302);
+                exit;
+            }
+        } elseif ($page === 'buchhaltung-beleg-form') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'einstellungen') {
@@ -1797,6 +1900,19 @@ switch ($path) {
         $chartAccountCount = $chartAccountCount ?? 0;
         $chartCatalogCount = $chartCatalogCount ?? ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
         $chartHintCount = $chartHintCount ?? ChartAccountSeedData::seedCount(ChartOfAccountsSettings::activeSkrType());
+        $voucherSearch = $voucherSearch ?? '';
+        $voucherPage = $voucherPage ?? 1;
+        $voucherYear = $voucherYear ?? (int) date('Y');
+        $voucherTypeFilter = $voucherTypeFilter ?? '';
+        $voucherYears = $voucherYears ?? [(int) date('Y')];
+        $voucherList = $voucherList ?? [
+            'items' => [],
+            'total' => 0,
+            'page' => 1,
+            'per_page' => 25,
+            'total_pages' => 1,
+        ];
+        $voucherId = $voucherId ?? null;
 
         View::render('layout/app', compact(
             'title',
@@ -1861,6 +1977,13 @@ switch ($path) {
             'chartAccountCount',
             'chartCatalogCount',
             'chartHintCount',
+            'voucherList',
+            'voucherSearch',
+            'voucherPage',
+            'voucherYear',
+            'voucherTypeFilter',
+            'voucherYears',
+            'voucherId',
             'numberRangeType',
             'numberRangeDoc',
             'numberRangeTypes',

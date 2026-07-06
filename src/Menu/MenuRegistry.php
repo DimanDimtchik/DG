@@ -84,6 +84,12 @@ final class MenuRegistry
                     'icon' => 'accounting',
                     'href' => '/app?page=buchhaltung-konten',
                 ],
+                [
+                    'slug' => 'buchhaltung-belege',
+                    'label' => 'Belege',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=buchhaltung-belege',
+                ],
             ],
         ];
     }
@@ -109,6 +115,7 @@ final class MenuRegistry
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'bilder' => 'Medien, Logos und Bilder verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
+            'buchhaltung-belege' => 'Belege erfassen mit Steuerfeldern und Kontenzuordnung.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
         ];
     }
@@ -191,7 +198,7 @@ final class MenuRegistry
             return RoleResolver::isAdmin($user);
         }
 
-        if ($slug === 'buchhaltung-konten') {
+        if ($slug === 'buchhaltung-konten' || $slug === 'buchhaltung-belege' || $slug === 'buchhaltung-beleg-form') {
             return self::canAccessBuchhaltung($user);
         }
 

@@ -247,6 +247,15 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-konten.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (in_array(($contentTemplate ?? ''), ['modules/buchhaltung-belege', 'modules/buchhaltung-beleg-form'], true)) : ?>
+    <script>
+      window.dgBuchhaltungBelege = {
+        apiUrl: '/api/voucher',
+        chartApiUrl: '/api/chart-account'
+      };
+    </script>
+    <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-belege.js')) ?>" defer></script>
+  <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
 </body>
 </html>

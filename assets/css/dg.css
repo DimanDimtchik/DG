@@ -4019,3 +4019,89 @@ body.dg-login-page {
     grid-template-columns: 1fr;
   }
 }
+
+/* Buchhaltung — Belegerfassung */
+.dg-buchhaltung-belege__filters {
+  margin-bottom: 16px;
+}
+
+.dg-buchhaltung-belege__toolbar {
+  margin-bottom: 12px;
+}
+
+.dg-buchhaltung-belege__table .dg-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dg-buchhaltung-belege__account {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dg-form-grid--compact {
+  align-items: end;
+}
+
+.dg-field--actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dg-field__spacer {
+  display: block;
+  height: 0;
+  width: 100%;
+}
+
+.dg-form-section + .dg-form-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--dg-border, #d8dee8);
+}
+
+.dg-input--computed {
+  background: var(--dg-surface-muted, #f6f8fb);
+  color: var(--dg-text-muted, #5c6678);
+}
+
+.dg-field-hint--error {
+  color: var(--dg-danger, #b42318);
+}
+
+.dg-voucher-contact-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.dg-voucher-contact-results__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 8px;
+  background: var(--dg-surface, #fff);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dg-voucher-contact-results__item:hover,
+.dg-voucher-contact-results__item:focus-visible {
+  border-color: var(--dg-accent, #2f6fed);
+  background: var(--dg-surface-muted, #f6f8fb);
+}
+
+.dg-voucher-contact-results__meta {
+  font-size: 0.85rem;
+  color: var(--dg-text-muted, #5c6678);
+}
