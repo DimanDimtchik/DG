@@ -121,6 +121,17 @@ final class MigrationRunner
             '021_mailbox_smtp.sql' => self::columnExists($pdo, 'dg_mailboxes', 'smtp_host'),
             '022_password_reset.sql' => self::tableExists($pdo, 'dg_password_reset_tokens'),
             '023_mail_imap_folders.sql' => self::columnExists($pdo, 'dg_mail_log', 'imap_folder'),
+            '024_chart_of_accounts.sql' => self::tableExists($pdo, 'dg_chart_accounts'),
+            '025_chart_account_name_index.sql' => self::tableExists($pdo, 'dg_chart_accounts'),
+            '026_vouchers.sql' => self::tableExists($pdo, 'dg_vouchers'),
+            '027_voucher_lines_and_types.sql' => self::tableExists($pdo, 'dg_voucher_lines'),
+            '028_voucher_reverse_charge.sql' => self::columnExists($pdo, 'dg_vouchers', 'reverse_charge_type')
+                && self::columnExists($pdo, 'dg_voucher_lines', 'line_kind'),
+            '029_voucher_payment_status.sql' => self::columnExists($pdo, 'dg_vouchers', 'payment_status')
+                && self::columnTypeAllows($pdo, 'dg_vouchers', 'payment_status', 'varchar'),
+            '030_voucher_items.sql' => self::tableExists($pdo, 'dg_voucher_items'),
+            '031_voucher_delivery_date.sql' => self::columnExists($pdo, 'dg_vouchers', 'delivery_date'),
+            '032_voucher_arap.sql' => self::columnExists($pdo, 'dg_vouchers', 'arap_enabled'),
             default => false,
         };
     }
@@ -153,6 +164,18 @@ final class MigrationRunner
         $stmt = $pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '', $table) . '` LIKE ' . $pdo->quote($column));
 
         return $stmt !== false && $stmt->fetchColumn() !== false;
+    }
+
+    private static function columnTypeAllows(PDO $pdo, string $table, string $column, string $typeFragment): bool
+    {
+        $stmt = $pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '', $table) . '` LIKE ' . $pdo->quote($column));
+        $row = $stmt !== false ? $stmt->fetch(PDO::FETCH_ASSOC) : false;
+        if (!is_array($row)) {
+            return false;
+        }
+        $fieldType = strtolower((string) ($row['Type'] ?? ''));
+
+        return str_contains($fieldType, strtolower($typeFragment));
     }
 
     private static function departmentFlagEnabled(PDO $pdo, string $column): bool

@@ -3,42 +3,43 @@
     "source": "DATEV SKR04 PDF",
     "source_file": "Kontenrahmen_DATEV_SKR_4_2026.pdf",
     "version": "2026",
-    "account_count": 1505
+    "account_count": 1505,
+    "parser": "2026-07-06-v3"
   },
   "konten": [
     {
       "account_number": "0050",
-      "name": "Ausstehende Einlagen auf das eingefordert (Vollhafter)",
+      "name": "Ausstehende Einlagen auf das Komplementär-Kapital, nicht",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0060",
-      "name": "Ausstehende Einlagen auf das dert (Vollhafter)",
+      "name": "Ausstehende Einlagen auf das Komplementär-Kapital, eingefordert (Vollhafter)",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0070",
-      "name": "Ausstehende Einlagen auf das dert (Teilhafter)",
+      "name": "Ausstehende Einlagen auf das Kommandit-Kapital, nicht eingefordert (Teilhafter)",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0080",
-      "name": "Ausstehende Einlagen auf das lige Einzahlungen auf Geschäftsanteile",
+      "name": "Ausstehende Einlagen auf das Kommandit-Kapital, eingefordert",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0090",
-      "name": "Rückständige fällige Einzahlungen auf Geschäftsanteile stände bene Konzessionen, gewerbliche ähnliche Rechte und Werte sowie chen Rechten und Werten",
+      "name": "Rückständige fällige Einzahlungen",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0100",
-      "name": "Entgeltlich erworbene Konzessionen, gewerbliche Schutzrechte und ähnliche Rechte und Werte sowie Lizenzen an solchen",
+      "name": "Entgeltlich erworbene Konzessionen, gewerbliche Schutzrechte",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -68,7 +69,7 @@
     },
     {
       "account_number": "0140",
-      "name": "Lizenzen an gewerblichen Schutzrechten und ähnlichen Rechten und Werten fene gewerbliche ähnliche Rechte und Werte",
+      "name": "Lizenzen an gewerblichen Schutzrechten und ähnlichen Rechten",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -92,13 +93,13 @@
     },
     {
       "account_number": "0146",
-      "name": "Konzessionen und gewerbliche",
+      "name": "Konzessionen und gewerbliche Schutzrechte",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0147",
-      "name": "Rezepte, Verfahren, Prototypen lung befindliche immaterielle Vermögensgegenstände",
+      "name": "Rezepte, Verfahren, Prototypen",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -110,7 +111,7 @@
     },
     {
       "account_number": "0150",
-      "name": "Geschäfts- oder Firmenwert lungen",
+      "name": "Geschäfts- oder Firmenwert",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -122,19 +123,19 @@
     },
     {
       "account_number": "0179",
-      "name": "Anzahlungen auf Geschäfts- oder grundstücksgleiche Rechte und schließlich der den Grundstücken",
+      "name": "Anzahlungen auf Geschäfts",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0200",
-      "name": "Grundstücke, grundstücksgleiche der Bauten auf fremden Grundstücken",
+      "name": "Grundstücke, grundstücksgleiche",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0210",
-      "name": "Grundstücksgleiche Rechte ohne",
+      "name": "Grundstücksgleiche Rechte ohne Bauten",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -146,7 +147,7 @@
     },
     {
       "account_number": "0220",
-      "name": "Grundstücksgleiche Rechte unbebaute Grundstücke)",
+      "name": "Grundstücksgleiche Rechte",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -164,7 +165,7 @@
     },
     {
       "account_number": "0230",
-      "name": "Bauten auf eigenen Grundstücken und grundstücksgleichen Rechten",
+      "name": "Bauten auf eigenen Grundstücken",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -200,7 +201,7 @@
     },
     {
       "account_number": "0280",
-      "name": "Außenanlagen für Geschäfts-,",
+      "name": "Außenanlagen für Geschäfts-, Fabrik- und andere Bauten",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -212,7 +213,7 @@
     },
     {
       "account_number": "0290",
-      "name": "Einrichtungen für Geschäfts-,",
+      "name": "Einrichtungen für Geschäfts-, Fabrik- und andere Bauten",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -302,13 +303,13 @@
     },
     {
       "account_number": "0398",
-      "name": "Einrichtungen für Geschäfts-,",
+      "name": "Einrichtungen für Geschäfts-, Fabrik-, Wohn- und andere Bauten",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0400",
-      "name": "Technische Anlagen und",
+      "name": "Technische Anlagen und Maschinen",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -338,13 +339,13 @@
     },
     {
       "account_number": "0470",
-      "name": "Betriebsvorrichtungen tung",
+      "name": "Betriebsvorrichtungen",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0500",
-      "name": "Andere Anlagen, Betriebs- und",
+      "name": "Andere Anlagen, Betriebs- und Geschäftsausstattung",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -428,19 +429,19 @@
     },
     {
       "account_number": "0690",
-      "name": "Sonstige Betriebs- und Geschäftsausstattung lungen und",
+      "name": "Sonstige Betriebs- und Geschäftsausstattung",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0700",
-      "name": "Geleistete Anzahlungen und",
+      "name": "Geleistete Anzahlungen",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0705",
-      "name": "Anzahlungen auf Grund und",
+      "name": "Anzahlungen auf Grund und Boden",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -452,7 +453,7 @@
     },
     {
       "account_number": "0720",
-      "name": "Anzahlungen auf Geschäfts-,",
+      "name": "Anzahlungen auf Geschäfts-, Fabrik- und andere Bauten auf eigenen Grundstücken",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -476,7 +477,7 @@
     },
     {
       "account_number": "0750",
-      "name": "Anzahlungen auf Geschäfts-,",
+      "name": "Anzahlungen auf Geschäfts-, Fabrik- und andere Bauten auf fremden Grundstücken",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -506,13 +507,13 @@
     },
     {
       "account_number": "0785",
-      "name": "Andere Anlagen, Betriebs- und",
+      "name": "Andere Anlagen, Betriebs- und Geschäftsausstattung im Bau",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0795",
-      "name": "Anzahlungen auf andere Anlagen,",
+      "name": "Anzahlungen auf andere Anlagen Betriebs- und Geschäftsausstattung",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -536,7 +537,7 @@
     },
     {
       "account_number": "0805",
-      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft,",
+      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft Personengesellschaften",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -548,13 +549,13 @@
     },
     {
       "account_number": "0808",
-      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft,",
+      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft Kapitalgesellschaften",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0809",
-      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft verbundene",
+      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -566,7 +567,7 @@
     },
     {
       "account_number": "0813",
-      "name": "Ausleihungen an verbundene schaften",
+      "name": "Ausleihungen an verbundene",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -590,7 +591,7 @@
     },
     {
       "account_number": "0829",
-      "name": "Beteiligung einer GmbH & Co. KG",
+      "name": "Beteiligung einer GmbH & Co. KG an einer Komplementär-GmbH",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -614,25 +615,25 @@
     },
     {
       "account_number": "0860",
-      "name": "Beteiligungen an Personengesellschaften mit denen ein hältnis besteht",
+      "name": "Beteiligungen an Personengesellschaften",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0880",
-      "name": "Ausleihungen an Unternehmen, mit denen ein Beteiligungsverhältnis besteht",
+      "name": "Ausleihungen an Unternehmen, mit denen ein Beteiligungsverhältnis",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0883",
-      "name": "Ausleihungen an Unternehmen, mit denen ein Beteiligungsverhältnis besteht, Personengesellschaften",
+      "name": "Ausleihungen an Unternehmen, mit denen ein Beteiligungsverhältnis",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0885",
-      "name": "Ausleihungen an Unternehmen, mit denen ein Beteiligungsverhältnis besteht, Kapitalgesellschaften gens",
+      "name": "Ausleihungen an Unternehmen, mit denen ein Beteiligungsverhältnis",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -650,7 +651,7 @@
     },
     {
       "account_number": "0920",
-      "name": "Festverzinsliche Wertpapiere hungen",
+      "name": "Festverzinsliche Wertpapiere",
       "account_class": "0",
       "section": "aktiva"
     },
@@ -680,61 +681,61 @@
     },
     {
       "account_number": "0962",
-      "name": "Ausleihungen an persönlich haftende Gesellschafter",
+      "name": "Ausleihungen an persönlich",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0963",
-      "name": "Ausleihungen an Kommanditisten hungen",
+      "name": "Ausleihungen an Kommanditisten",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0970",
-      "name": "Ausleihungen an nahe stehende anteile",
+      "name": "Ausleihungen an nahe stehende",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0980",
-      "name": "Genossenschaftsanteile zum langfristigen Verbleib sprüche aus rungen",
+      "name": "Genossenschaftsanteile zum langfristigen Verbleib",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "0990",
-      "name": "Rückdeckungsansprüche aus langfristigen Verbleib nisse, unfertige befindliche Bauaufträge träge che Aufträge nisse und Waren lungen",
+      "name": "Rückdeckungsansprüche aus Lebensversicherungen zum langfristigen Verbleib",
       "account_class": "0",
       "section": "aktiva"
     },
     {
       "account_number": "1180",
-      "name": "Geleistete Anzahlungen auf",
+      "name": "Geleistete Anzahlungen auf Vorräte",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1181",
-      "name": "Geleistete Anzahlungen 7 %",
+      "name": "Geleistete Anzahlungen 7 % Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1182",
-      "name": "Geleistete Anzahlungen, 5 %",
+      "name": "Geleistete Anzahlungen, 5 % Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1184",
-      "name": "Geleistete Anzahlungen, 16 %",
+      "name": "Geleistete Anzahlungen, 16 % Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1186",
-      "name": "Geleistete Anzahlungen 19 %",
+      "name": "Geleistete Anzahlungen 19 % Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -746,25 +747,25 @@
     },
     {
       "account_number": "1215",
-      "name": "Forderungen aus Lieferungen und satzsteuersatz oder eines Kleinunternehmers (EÜR)",
+      "name": "Forderungen aus Lieferungen und Leistungen zum allgemeinen Umsatzsteuersatz oder eines Kleinunternehmers (EÜR)",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1216",
-      "name": "Forderungen aus Lieferungen und satzsteuersatz (EÜR)",
+      "name": "Forderungen aus Lieferungen und Leistungen zum ermäßigten Umsatzsteuersatz (EÜR)",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1217",
-      "name": "Forderungen aus steuerfreien oder nicht steuerbaren Lieferungen und",
+      "name": "Forderungen aus steuerfreien",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1218",
-      "name": "Forderungen aus Lieferungen und zen nach § 24 UStG (EÜR)",
+      "name": "Forderungen aus Lieferungen und Leistungen nach Durchschnittssätzen nach § 24 UStG (EÜR)",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -776,13 +777,13 @@
     },
     {
       "account_number": "1220",
-      "name": "Forderungen nach § 11 Abs. 1",
+      "name": "Forderungen nach § 11 Abs. 1 Lieferungen und Leistungen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1221",
-      "name": "Forderungen aus Lieferungen und",
+      "name": "Forderungen aus Lieferungen und Leistungen ohne Kontokorrent",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -812,7 +813,7 @@
     },
     {
       "account_number": "1246",
-      "name": "Einzelwertberichtigungen auf",
+      "name": "Einzelwertberichtigungen auf Forderungen",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -824,19 +825,19 @@
     },
     {
       "account_number": "1248",
-      "name": "Pauschalwertberichtigung auf",
+      "name": "Pauschalwertberichtigung auf Forderungen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1249",
-      "name": "– Restlaufzeit größer 1 Jahr gen gegen Gesellschafter oder lichkeiten gegenüber Gesellschaftern oder Verbindlichkeiten gegenüber Gesellschaftern oder lichkeiten",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1250",
-      "name": "Forderungen aus Lieferungen und",
+      "name": "Forderungen aus Lieferungen und Leistungen gegen Gesellschafter",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -854,13 +855,13 @@
     },
     {
       "account_number": "1258",
-      "name": "Gegenkonto zu sonstigen lichkeiten S-Saldo",
+      "name": "Gegenkonto zu sonstigen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1259",
-      "name": "Gegenkonto 1221-1229,",
+      "name": "Gegenkonto 1221-1229 Aufteilung Debitorenkonto",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -884,7 +885,7 @@
     },
     {
       "account_number": "1270",
-      "name": "Forderungen aus Lieferungen und",
+      "name": "Forderungen aus Lieferungen und Leistungen gegen verbundene",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -896,19 +897,19 @@
     },
     {
       "account_number": "1275",
-      "name": "– Restlaufzeit größer 1 Jahr gen verbundene",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1276",
-      "name": "Wertberichtigungen auf Forderungen gegen verbundene Unternehmen",
+      "name": "Wertberichtigungen auf Forderungen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1277",
-      "name": "– Restlaufzeit größer 1 Jahr gen Unternehmen, mit denen ein Beteiligungsverhältnis besteht oder gegenüber Unternehmen, mit denen ein Beteiligungsverhältnis besteht",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -932,7 +933,7 @@
     },
     {
       "account_number": "1290",
-      "name": "Forderungen aus Lieferungen und mit denen ein Beteiligungsverhältnis besteht",
+      "name": "Forderungen aus Lieferungen und Leistungen gegen Unternehmen mit denen ein Beteiligungsverhältnis besteht",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -944,31 +945,31 @@
     },
     {
       "account_number": "1295",
-      "name": "– Restlaufzeit größer 1 Jahr gen Unternehmen, mit denen ein Beteiligungsverhältnis besteht",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1296",
-      "name": "Wertberichtigungen auf Forderungen gegen Unternehmen, mit denen ein Beteiligungsverhältnis besteht",
+      "name": "Wertberichtigungen auf Forderungen gegen Unternehmen, mit denen ein Beteiligungsverhältnis",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1297",
-      "name": "– Restlaufzeit größer 1 Jahr noch ausstehende Kapitaleinlagen",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1298",
-      "name": "Ausstehende Einlagen auf das gezeichnete Kapital, eingefordert derte ausstehende Einlagen s.",
+      "name": "Ausstehende Einlagen auf das gezeichnete Kapital, eingefordert",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1299",
-      "name": "Nachschüsse (Forderungen,",
+      "name": "Nachschüsse (Forderungen Sonstige Vermögensgegenstände",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -980,13 +981,13 @@
     },
     {
       "account_number": "1301",
-      "name": "– Restlaufzeit bis 1 Jahr gensgegenstände",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1305",
-      "name": "– Restlaufzeit größer 1 Jahr gen Gesellschafter oder Verbindlichkeiten gegenüber Gesellschaftern",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1004,7 +1005,7 @@
     },
     {
       "account_number": "1309",
-      "name": "– Restlaufzeit größer 1 Jahr gensgegenstände oder sonstige",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1016,19 +1017,19 @@
     },
     {
       "account_number": "1311",
-      "name": "– Restlaufzeit bis 1 Jahr gensgegenstände",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1315",
-      "name": "– Restlaufzeit größer 1 Jahr gen persönlich haftende Gesellschafter oder gegenüber persönlich haftenden",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1317",
-      "name": "Forderungen gegen persönlich haftende Gesellschafter",
+      "name": "Forderungen gegen persönlich",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1040,7 +1041,7 @@
     },
     {
       "account_number": "1319",
-      "name": "– Restlaufzeit größer 1 Jahr gensgegenstände oder Sonstige",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1052,19 +1053,19 @@
     },
     {
       "account_number": "1321",
-      "name": "– Restlaufzeit bis 1 Jahr gensgegenstände",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1325",
-      "name": "– Restlaufzeit größer 1 Jahr gen Kommanditisten oder gegenüber Kommanditisten gen gegen Gesellschafter oder lichkeiten gegenüber Gesellschaftern oder Verbindlichkeiten gegenüber Gesellschaftern oder lichkeiten",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1330",
-      "name": "Forderungen gegen sonstige",
+      "name": "Forderungen gegen sonstige Gesellschafter",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1076,7 +1077,7 @@
     },
     {
       "account_number": "1335",
-      "name": "– Restlaufzeit größer 1 Jahr gensgegenstände",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1100,7 +1101,7 @@
     },
     {
       "account_number": "1340",
-      "name": "Forderungen gegen Personal aus",
+      "name": "Forderungen gegen Personal aus Lohn- und Gehaltsabrechnung",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1118,7 +1119,7 @@
     },
     {
       "account_number": "1349",
-      "name": "Ansprüche aus betrieblicher Altersversorgung und Pensionsansprüche gensgegenstände",
+      "name": "Ansprüche aus betrieblicher Altersversorgung und Pensionsansprüche",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1154,7 +1155,7 @@
     },
     {
       "account_number": "1365",
-      "name": "– Restlaufzeit größer 1 Jahr gensgegenstände oder Sonstige",
+      "name": "– Restlaufzeit größer 1 Jahr",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1184,13 +1185,13 @@
     },
     {
       "account_number": "1376",
-      "name": "Nachträglich abziehbare Vorsteuer nach § 15a Abs. 2 UStG",
+      "name": "Nachträglich abziehbare Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1377",
-      "name": "Zurückzuzahlende Vorsteuer nach gensgegenstände",
+      "name": "Zurückzuzahlende Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1202,19 +1203,19 @@
     },
     {
       "account_number": "1380",
-      "name": "Vermögensgegenstände zur Erfüllung von Pensionsrückstellungen und ähnlichen Verpflichtungen zum langfristigen Verbleib schiedsbetrag aus der Vermögensverrechnung oder für Pensionen und ähnliche Verpflichtungen",
+      "name": "Vermögensgegenstände zur Erfüllung von Pensionsrückstellungen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1381",
-      "name": "Vermögensgegenstände zur Saldierung mit Pensionsrückstellungen und ähnlichen Verpflichtungen zum langfristigen Verbleib nach gensgegenstände",
+      "name": "Vermögensgegenstände zur Saldierung mit Pensionsrückstellungen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1382",
-      "name": "Vermögensgegenstände zur Erfüllung von mit der Altersversorgung vergleichbaren langfristigen schiedsbetrag aus rechnung oder lungen",
+      "name": "Vermögensgegenstände zur Erfüllung von mit der Altersversorgung vergleichbaren langfristigen",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1226,13 +1227,13 @@
     },
     {
       "account_number": "1390",
-      "name": "GmbH-Anteile zum kurzfristigen gensgegenstände oder Sonstige",
+      "name": "GmbH-Anteile zum kurzfristigen",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1391",
-      "name": "Forderungen gegen Arbeitsgemeinschaften gensgegenstände",
+      "name": "Forderungen gegen Arbeitsgemeinschaften",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1250,31 +1251,31 @@
     },
     {
       "account_number": "1395",
-      "name": "Genossenschaftsanteile zum kurzfristigen Verbleib gensgegenstände oder lichkeiten",
+      "name": "Genossenschaftsanteile zum kurzfristigen Verbleib",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1396",
-      "name": "Nachträglich abziehbare Vorsteuer nach § 15a Abs. 1 UStG, bewegliche r",
+      "name": "Nachträglich abziehbare Vorsteuer r",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1397",
-      "name": "Zurückzuzahlende Vorsteuer nach",
+      "name": "Zurückzuzahlende Vorsteuer nach Wirtschaftsgüter",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1398",
-      "name": "Nachträglich abziehbare Vorsteuer nach § 15a Abs. 1 UStG, unbewegliche Wirtschaftsgüter",
+      "name": "Nachträglich abziehbare Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1399",
-      "name": "Zurückzuzahlende Vorsteuer nach",
+      "name": "Zurückzuzahlende Vorsteuer nach Wirtschaftsgüter",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1310,13 +1311,13 @@
     },
     {
       "account_number": "1407",
-      "name": "Abziehbare Vorsteuer nach",
+      "name": "Abziehbare Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1408",
-      "name": "Abziehbare Vorsteuer nach",
+      "name": "Abziehbare Vorsteuer nach § 13b UStG",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1352,19 +1353,19 @@
     },
     {
       "account_number": "1417",
-      "name": "Aufzuteilende Vorsteuer nach",
+      "name": "Aufzuteilende Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1419",
-      "name": "Aufzuteilende Vorsteuer nach gensgegenstände",
+      "name": "Aufzuteilende Vorsteuer",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1420",
-      "name": "Forderungen aus UmsatzsteuerVorauszahlungen gensgegenstände oder Sonstige",
+      "name": "Forderungen aus UmsatzsteuerVorauszahlungen",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1376,7 +1377,7 @@
     },
     {
       "account_number": "1425",
-      "name": "Umsatzsteuerforderungen frühere gensgegenstände oder lichkeiten",
+      "name": "Umsatzsteuerforderungen frühere",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1394,7 +1395,7 @@
     },
     {
       "account_number": "1432",
-      "name": "Abziehbare Vorsteuer aus innergemeinschaftlichem Erwerb von Neufahrzeugen von Lieferanten ohne",
+      "name": "Abziehbare Vorsteuer aus innergemeinschaftlichem Erwerb von Neufahrzeugen von Lieferanten ohne USt-Identifikationsnummer",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1418,25 +1419,25 @@
     },
     {
       "account_number": "1436",
-      "name": "Vorsteuer aus Erwerb als letzter ecksgeschäfts gensgegenstände",
+      "name": "Vorsteuer aus Erwerb als letzter",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1440",
-      "name": "Steuererstattungsansprüche gegenüber anderen Ländern gensgegenstände oder Sonstige",
+      "name": "Steuererstattungsansprüche",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1450",
-      "name": "Körperschaftsteuerrückforderung gensgegenstände",
+      "name": "Körperschaftsteuerrückforderung",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1456",
-      "name": "Forderungen an das Finanzamt aus abgeführtem Bauabzugsbetrag gensgegenstände oder Sonstige",
+      "name": "Forderungen an das Finanzamt aus abgeführtem Bauabzugsbetrag",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1472,7 +1473,7 @@
     },
     {
       "account_number": "1486",
-      "name": "Verrechnungskonto für Gewinnermittlung § 4 Abs. 3 EStG, nicht ergebniswirksam",
+      "name": "Verrechnungskonto für Gewinnermittlung § 4 Abs. 3 EStG, nicht",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1502,13 +1503,13 @@
     },
     {
       "account_number": "1495",
-      "name": "Verrechnungskonto erhaltene gensgegenstände oder Sonstige",
+      "name": "Verrechnungskonto erhaltene",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1498",
-      "name": "Überleitungskonto Kostenstellen bundenen Unternehmen",
+      "name": "Überleitungskonto Kostenstellen",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1520,7 +1521,7 @@
     },
     {
       "account_number": "1504",
-      "name": "Anteile an herrschender oder mehrheitlich beteiligter Gesellschaft piere",
+      "name": "Anteile an herrschender",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1538,7 +1539,7 @@
     },
     {
       "account_number": "1530",
-      "name": "Wertpapieranlagen im Rahmen der kurzfristigen Finanzdisposition haben, Guthaben bei Kreditinstituten und Schecks haben, Guthaben bei Kreditinstituten und Schecks",
+      "name": "Wertpapieranlagen im Rahmen der kurzfristigen Finanzdisposition",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1556,7 +1557,7 @@
     },
     {
       "account_number": "1620",
-      "name": "Nebenkasse 2",
+      "name": "Nebenkasse 2 Kassenbestand Bundesbankguthaben, Guthaben",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1634,13 +1635,13 @@
     },
     {
       "account_number": "1890",
-      "name": "Finanzmittelanlagen im Rahmen der kurzfristigen Finanzdisposition ten)",
+      "name": "Finanzmittelanlagen im Rahmen der kurzfristigen Finanzdisposition",
       "account_class": "1",
       "section": "aktiva"
     },
     {
       "account_number": "1895",
-      "name": "Verbindlichkeiten gegenüber mittelfonds enthalten)",
+      "name": "Verbindlichkeiten gegenüber Kreditinstituten (nicht im Finanzmittelfonds enthalten)",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1652,7 +1653,7 @@
     },
     {
       "account_number": "1920",
-      "name": "Als Aufwand berücksichtigte Zölle und Verbrauchsteuern auf Vorräte",
+      "name": "Als Aufwand berücksichtigte Zölle",
       "account_class": "1",
       "section": "aktiva"
     },
@@ -1694,13 +1695,13 @@
     },
     {
       "account_number": "2011",
-      "name": "Kapital (variabler Anteil, nur gegenüber persönlich haftenden oder Forderungen gegen persönlich haftende Gesellschafter",
+      "name": "Kapital (variabler Anteil, nur Einzelunternehmen)22)",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2020",
-      "name": "Gesellschafter-Darlehen mer",
+      "name": "Gesellschafter-Darlehen mer (zur freien Verfügung)",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1712,13 +1713,13 @@
     },
     {
       "account_number": "2060",
-      "name": "Verlustausgleichskonto gegenüber Kommanditisten oder gen Kommanditisten",
+      "name": "Verlustausgleichskonto ten",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2070",
-      "name": "Gesellschafter-Darlehen persönlich haftenden Gesellschafter",
+      "name": "Gesellschafter-Darlehen",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1730,7 +1731,7 @@
     },
     {
       "account_number": "2101",
-      "name": "Privatentnahmen allgemein persönlich haftenden Gesellschafter",
+      "name": "Privatentnahmen allgemein",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1742,7 +1743,7 @@
     },
     {
       "account_number": "2111",
-      "name": "Privatentnahmen allgemein persönlich haftenden Gesellschafter",
+      "name": "Privatentnahmen allgemein",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1754,7 +1755,7 @@
     },
     {
       "account_number": "2121",
-      "name": "Privatentnahmen allgemein persönlich haftenden Gesellschafter",
+      "name": "Privatentnahmen allgemein",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1766,7 +1767,7 @@
     },
     {
       "account_number": "2131",
-      "name": "Unentgeltliche Wertabgaben persönlich haftenden Gesellschafter",
+      "name": "Unentgeltliche Wertabgaben",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1778,7 +1779,7 @@
     },
     {
       "account_number": "2141",
-      "name": "Unentgeltliche Wertabgaben persönlich haftenden Gesellschafter",
+      "name": "Unentgeltliche Wertabgaben",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1790,7 +1791,7 @@
     },
     {
       "account_number": "2151",
-      "name": "Privatsteuern persönlich haftenden Gesellschafter",
+      "name": "Privatsteuern",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1802,7 +1803,7 @@
     },
     {
       "account_number": "2161",
-      "name": "Privatsteuern persönlich haftenden Gesellschafter",
+      "name": "Privatsteuern",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1814,7 +1815,7 @@
     },
     {
       "account_number": "2171",
-      "name": "Privatsteuern persönlich haftenden Gesellschafter",
+      "name": "Privatsteuern",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1826,7 +1827,7 @@
     },
     {
       "account_number": "2181",
-      "name": "Privateinlagen persönlich haftenden Gesellschafter",
+      "name": "Privateinlagen",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1838,67 +1839,67 @@
     },
     {
       "account_number": "2191",
-      "name": "Privateinlagen persönlich haftenden Gesellschafter",
+      "name": "Privateinlagen",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2200",
-      "name": "Sonderausgaben beschränkt abzugsfähig",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2201",
-      "name": "Sonderausgaben beschränkt abzugsfähig (nur Einzelunternehmen)22)",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2210",
-      "name": "Sonderausgaben beschränkt abzugsfähig",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2211",
-      "name": "Sonderausgaben beschränkt abzugsfähig (nur Einzelunternehmen)",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2220",
-      "name": "Sonderausgaben beschränkt abzugsfähig",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2221",
-      "name": "Sonderausgaben beschränkt abzugsfähig (nur Einzelunternehmen)22)",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2230",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2231",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig (nur Einzelunternehmen)22)",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2240",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2241",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig (nur Einzelunternehmen)",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1910,7 +1911,7 @@
     },
     {
       "account_number": "2251",
-      "name": "Zuwendungen, Spenden persönlich haftenden Gesellschafter",
+      "name": "Zuwendungen, Spenden",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1922,7 +1923,7 @@
     },
     {
       "account_number": "2261",
-      "name": "Zuwendungen, Spenden persönlich haftenden Gesellschafter",
+      "name": "Zuwendungen, Spenden",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1934,7 +1935,7 @@
     },
     {
       "account_number": "2271",
-      "name": "Zuwendungen, Spenden persönlich haftenden Gesellschafter",
+      "name": "Zuwendungen, Spenden",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1946,7 +1947,7 @@
     },
     {
       "account_number": "2281",
-      "name": "Außergewöhnliche Belastungen persönlich haftenden Gesellschafter",
+      "name": "Außergewöhnliche Belastungen",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1958,7 +1959,7 @@
     },
     {
       "account_number": "2291",
-      "name": "Außergewöhnliche Belastungen persönlich haftenden Gesellschafter",
+      "name": "Außergewöhnliche Belastungen",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1976,7 +1977,7 @@
     },
     {
       "account_number": "2309",
-      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur persönlich haftenden Gesellschafter",
+      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)",
       "account_class": "2",
       "section": "passiva"
     },
@@ -1994,7 +1995,7 @@
     },
     {
       "account_number": "2319",
-      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur persönlich haftenden Gesellschafter",
+      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)10)22)",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2012,7 +2013,7 @@
     },
     {
       "account_number": "2329",
-      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur persönlich haftenden Gesellschafter",
+      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)10)22)",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2030,7 +2031,7 @@
     },
     {
       "account_number": "2339",
-      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur persönlich haftenden Gesellschafter",
+      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)10)22)",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2048,7 +2049,7 @@
     },
     {
       "account_number": "2349",
-      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur persönlich haftenden Gesellschafter",
+      "name": "Grundstücksaufwand (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2138,7 +2139,7 @@
     },
     {
       "account_number": "2399",
-      "name": "Grundstücksertrag (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)10)22)",
+      "name": "Grundstücksertrag (Umsatzsteuerschlüssel möglich, nur Einzelunternehmen)10)22) ten",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2162,7 +2163,7 @@
     },
     {
       "account_number": "2530",
-      "name": "Unentgeltliche Wertabgaben gegenüber Kommanditisten oder gen Kommanditisten",
+      "name": "Unentgeltliche Wertabgaben ten",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2204,31 +2205,31 @@
     },
     {
       "account_number": "2600",
-      "name": "Sonderausgaben beschränkt abzugsfähig (Teilhafter), Fremdkapital",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2610",
-      "name": "Sonderausgaben beschränkt abzugsfähig (Teilhafter), Fremdkapital",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2620",
-      "name": "Sonderausgaben beschränkt abzugsfähig (Teilhafter), Fremdkapital",
+      "name": "Sonderausgaben beschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2630",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig (Teilhafter), Fremdkapital",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2640",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig (Teilhafter), Fremdkapital",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2264,61 +2265,61 @@
     },
     {
       "account_number": "2700",
-      "name": "Grundstücksaufwand (Teilhafter),",
+      "name": "Grundstücksaufwand (Teilhafter) Fremdkapital ten",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2710",
-      "name": "Grundstücksaufwand (Teilhafter),",
+      "name": "Grundstücksaufwand (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2720",
-      "name": "Grundstücksaufwand (Teilhafter),",
+      "name": "Grundstücksaufwand (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2730",
-      "name": "Grundstücksaufwand (Teilhafter),",
+      "name": "Grundstücksaufwand (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2740",
-      "name": "Grundstücksaufwand (Teilhafter),",
+      "name": "Grundstücksaufwand (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2750",
-      "name": "Grundstücksertrag (Teilhafter),",
+      "name": "Grundstücksertrag (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2760",
-      "name": "Grundstücksertrag (Teilhafter),",
+      "name": "Grundstücksertrag (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2770",
-      "name": "Grundstücksertrag (Teilhafter),",
+      "name": "Grundstücksertrag (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2780",
-      "name": "Grundstücksertrag (Teilhafter),",
+      "name": "Grundstücksertrag (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2790",
-      "name": "Grundstücksertrag (Teilhafter),",
+      "name": "Grundstücksertrag (Teilhafter) Fremdkapital",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2354,7 +2355,7 @@
     },
     {
       "account_number": "2907",
-      "name": "Gegenkonto Rückständige fällige teile, vermerkt",
+      "name": "Gegenkonto Rückständige fällige",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2378,13 +2379,13 @@
     },
     {
       "account_number": "2925",
-      "name": "Kapitalrücklage durch Ausgabe von Anteilen über Nennbetrag17)",
+      "name": "Kapitalrücklage durch Ausgabe",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2926",
-      "name": "Kapitalrücklage durch Ausgabe von Schuldverschreibungen für rechte zum Erwerb von Anteilen",
+      "name": "Kapitalrücklage durch Ausgabe len",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2402,7 +2403,7 @@
     },
     {
       "account_number": "2929",
-      "name": "Nachschusskapital lage",
+      "name": "Nachschusskapital",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2414,7 +2415,7 @@
     },
     {
       "account_number": "2935",
-      "name": "Rücklage für Anteile an einem herrschenden oder mehrheitlich beteiligten Unternehmen rücklagen",
+      "name": "Rücklage für Anteile an einem",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2432,7 +2433,7 @@
     },
     {
       "account_number": "2959",
-      "name": "Gesamthänderisch gebundene rücklagen",
+      "name": "Gesamthänderisch gebundene",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2474,25 +2475,25 @@
     },
     {
       "account_number": "2966",
-      "name": "Gewinnrücklagen aus den Übergangsvorschriften BilMoG (Auflösung der Sonderposten mit",
+      "name": "Gewinnrücklagen aus den Übergangsvorschriften BilMoG (Auflösung der Sonderposten mit Rücklageanteil)",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2967",
-      "name": "Latente Steuern (Gewinnrücklage rechnungen",
+      "name": "Latente Steuern (Gewinnrücklage",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2968",
-      "name": "Latente Steuern (Gewinnrücklage rechnungen",
+      "name": "Latente Steuern (Gewinnrücklage",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2969",
-      "name": "Rechnungsabgrenzungsposten folgsneutralen Verrechnungen vor Verwendung",
+      "name": "Rechnungsabgrenzungsposten",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2504,13 +2505,13 @@
     },
     {
       "account_number": "2975",
-      "name": "Gewinnvortrag vor Verwendung tenentwicklung)",
+      "name": "Gewinnvortrag vor Verwendung",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "2977",
-      "name": "Verlustvortrag vor Verwendung tenentwicklung)",
+      "name": "Verlustvortrag vor Verwendung",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2528,7 +2529,7 @@
     },
     {
       "account_number": "2981",
-      "name": "Steuerfreie Rücklagen nach",
+      "name": "Steuerfreie Rücklagen nach § 6b EStG",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2558,7 +2559,7 @@
     },
     {
       "account_number": "2997",
-      "name": "Sonderposten mit Rücklageanteil nach § 7g Abs. 5 EStG",
+      "name": "Sonderposten mit Rücklageanteil",
       "account_class": "2",
       "section": "passiva"
     },
@@ -2570,25 +2571,25 @@
     },
     {
       "account_number": "2999",
-      "name": "Sonderposten für Investitionszulagen für Pensionen und ähnliche Verpflichtungen",
+      "name": "Sonderposten für Investitionszulagen",
       "account_class": "2",
       "section": "passiva"
     },
     {
       "account_number": "3000",
-      "name": "Rückstellungen für Pensionen und ähnliche Verpflichtungen",
+      "name": "Rückstellungen für Pensionen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3005",
-      "name": "Rückstellungen für Pensionen und ähnliche Verpflichtungen gegenüber Gesellschaftern oder nahe stehenden Personen für Pensionen und ähnliche Verpflichtungen oder schiedsbetrag aus der Vermögensverrechnung",
+      "name": "Rückstellungen für Pensionen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3009",
-      "name": "Rückstellungen für Pensionen und ähnliche Verpflichtungen zur genständen zum langfristigen für Pensionen und ähnliche Verpflichtungen",
+      "name": "Rückstellungen für Pensionen",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2600,13 +2601,13 @@
     },
     {
       "account_number": "3011",
-      "name": "Rückstellungen für Zuschussverpflichtungen für Pensionskassen und Lebensversicherungen",
+      "name": "Rückstellungen für Zuschussverpflichtungen für Pensionskassen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3015",
-      "name": "Rückstellungen für pensionsähnliche Verpflichtungen gen",
+      "name": "Rückstellungen für pensionsähnliche Verpflichtungen",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2618,7 +2619,7 @@
     },
     {
       "account_number": "3035",
-      "name": "Gewerbesteuerrückstellung nach",
+      "name": "Gewerbesteuerrückstellung",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2642,7 +2643,7 @@
     },
     {
       "account_number": "3065",
-      "name": "Passive latente Steuern stellungen",
+      "name": "Passive latente Steuern",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2660,19 +2661,19 @@
     },
     {
       "account_number": "3075",
-      "name": "Rückstellungen für unterlassene tung, Nachholung in den ersten drei Monaten",
+      "name": "Rückstellungen für unterlassene",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3076",
-      "name": "Rückstellungen für mit der langfristige Verpflichtungen zum langfristigen Verbleib stellungen oder schiedsbetrag aus der Vermögensverrechnung",
+      "name": "Rückstellungen für mit der Altersversorgung vergleichbare",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3077",
-      "name": "Rückstellungen für mit der langfristige Verpflichtungen zur genständen zum langfristigen stellungen",
+      "name": "Rückstellungen für mit der Altersversorgung vergleichbare",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2684,7 +2685,7 @@
     },
     {
       "account_number": "3085",
-      "name": "Rückstellungen für Abraum- und",
+      "name": "Rückstellungen für Abraum- und Abfallbeseitigung",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2708,7 +2709,7 @@
     },
     {
       "account_number": "3096",
-      "name": "Rückstellungen zur Erfüllung der stellungen",
+      "name": "Rückstellungen zur Erfüllung der Aufbewahrungspflichten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2762,13 +2763,13 @@
     },
     {
       "account_number": "3130",
-      "name": "– Restlaufzeit größer 5 Jahre gegenüber Kreditinstituten oder haben, Guthaben bei Kreditinstituten und Schecks",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3150",
-      "name": "Verbindlichkeiten gegenüber",
+      "name": "Verbindlichkeiten gegenüber Kreditinstituten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2792,7 +2793,7 @@
     },
     {
       "account_number": "3180",
-      "name": "Verbindlichkeiten gegenüber verträgen",
+      "name": "Verbindlichkeiten gegenüber Kreditinstituten aus Teilzahlungsverträgen",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2816,7 +2817,7 @@
     },
     {
       "account_number": "3210",
-      "name": "Verbindlichkeiten gegenüber differenzierung gegenüber",
+      "name": "Verbindlichkeiten gegenüber Kreditinstituten, vor Restlaufzeitdifferenzierung",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2882,13 +2883,13 @@
     },
     {
       "account_number": "3285",
-      "name": "– Restlaufzeit größer 5 Jahre aus Lieferungen und Leistungen oder gensgegenstände",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3300",
-      "name": "Verbindlichkeiten aus Lieferungen und Leistungen gen und Leistungen",
+      "name": "Verbindlichkeiten aus Lieferungen und Leistungen",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2906,13 +2907,13 @@
     },
     {
       "account_number": "3307",
-      "name": "Verbindlichkeiten aus Lieferungen und Leistungen ohne",
+      "name": "Verbindlichkeiten aus Lieferungen und Leistungen ohne Vorsteuer (EÜR)",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3309",
-      "name": "Gegenkonto 3305-3307 bei Aufteilung der Verbindlichkeiten nach Steuersätzen (EÜR)",
+      "name": "Gegenkonto 3305-3307 bei Aufteilung der Verbindlichkeiten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2930,13 +2931,13 @@
     },
     {
       "account_number": "3338",
-      "name": "– Restlaufzeit größer 5 Jahre lichkeiten gegenüber Gesellschaftern oder Sonstige stände oder Andere",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3340",
-      "name": "Verbindlichkeiten aus Lieferungen und Leistungen gegenüber",
+      "name": "Verbindlichkeiten aus Lieferungen und Leistungen gegenüber Gesellschaftern",
       "account_class": "3",
       "section": "passiva"
     },
@@ -2954,13 +2955,13 @@
     },
     {
       "account_number": "3348",
-      "name": "– Restlaufzeit größer 5 Jahre aus Lieferungen und Leistungen gensgegenstände",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3349",
-      "name": "Gegenkonto 3335-3348, 3420Kreditorenkonto aus der Annahme gezogener Wechsel und aus der ner Wechsel gegenüber verbundenen Unternehmen oder gen verbundene",
+      "name": "Gegenkonto 3335-3348, 3420Kreditorenkonto",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3008,13 +3009,13 @@
     },
     {
       "account_number": "3430",
-      "name": "– Restlaufzeit größer 5 Jahre gegenüber Unternehmen, mit denen ein Beteiligungsverhältnis besteht oder gen Unternehmen,",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3450",
-      "name": "Verbindlichkeiten gegenüber",
+      "name": "Verbindlichkeiten gegenüber Unternehmen, mit denen ein Beteiligungsverhältnis besteht",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3038,7 +3039,7 @@
     },
     {
       "account_number": "3470",
-      "name": "Verbindlichkeiten aus Lieferungen und Leistungen gegenüber",
+      "name": "Verbindlichkeiten aus Lieferungen und Leistungen gegenüber Unternehmen, mit denen ein Beteiligungsverhältnis besteht",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3056,7 +3057,7 @@
     },
     {
       "account_number": "3480",
-      "name": "– Restlaufzeit größer 5 Jahre lichkeiten oder gensgegenstände",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3068,7 +3069,7 @@
     },
     {
       "account_number": "3501",
-      "name": "– Restlaufzeit bis 1 Jahr lichkeiten",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3086,19 +3087,19 @@
     },
     {
       "account_number": "3509",
-      "name": "Sonstige Verbindlichkeiten nach lichkeiten gegenüber Gesellschaftern oder Andere gen Gesellschafter oder Forderungen gegen Gesellschafter oder gensgegenstände",
+      "name": "Sonstige Verbindlichkeiten nach lichkeiten gegenüber Gesellschaftern",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3510",
-      "name": "Verbindlichkeiten gegenüber",
+      "name": "Verbindlichkeiten gegenüber Gesellschaftern",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3511",
-      "name": "– Restlaufzeit bis 1 Jahr lichkeiten gegenüber Gesellschaftern",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3116,7 +3117,7 @@
     },
     {
       "account_number": "3519",
-      "name": "Verbindlichkeiten gegenüber lichkeiten",
+      "name": "Verbindlichkeiten gegenüber Gesellschaftern für offene",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3242,13 +3243,13 @@
     },
     {
       "account_number": "3570",
-      "name": "Sonstige Verbindlichkeiten, vor",
+      "name": "Sonstige Verbindlichkeiten, vor Restlaufzeitdifferenzierung",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3599",
-      "name": "Gegenkonto 3500-3569 und lichkeiten oder gensgegenstände",
+      "name": "Gegenkonto 3500-3569 und lichkeiten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3266,25 +3267,25 @@
     },
     {
       "account_number": "3611",
-      "name": "Verbindlichkeiten gegenüber",
+      "name": "Verbindlichkeiten gegenüber Arbeitsgemeinschaften",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3612",
-      "name": "Neutralisierung aufwandswirksamer Sachverhalte für",
+      "name": "Neutralisierung aufwandswirksamer Sachverhalte",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3613",
-      "name": "Ergebnisneutrale Sachverhalte für § 4 Abs. 3 EStG",
+      "name": "Ergebnisneutrale Sachverhalte",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3620",
-      "name": "Gewinnverfügungskonto stille bindlichkeiten",
+      "name": "Gewinnverfügungskonto stille",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3296,25 +3297,25 @@
     },
     {
       "account_number": "3634",
-      "name": "Verbindlichkeiten gegenüber lichkeiten",
+      "name": "Verbindlichkeiten gegenüber Gesellschaft/Gesamthand",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3635",
-      "name": "Sonstige Verbindlichkeiten aus genossenschaftlicher Rückvergütung gegenüber Gesellschaftern oder gen Gesellschafter",
+      "name": "Sonstige Verbindlichkeiten aus genossenschaftlicher Rückvergütung",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3640",
-      "name": "Verbindlichkeiten gegenüber",
+      "name": "Verbindlichkeiten gegenüber GmbH-Gesellschaftern",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3641",
-      "name": "– Restlaufzeit bis 1 Jahr gegenüber Gesellschaftern",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3326,7 +3327,7 @@
     },
     {
       "account_number": "3643",
-      "name": "– Restlaufzeit größer 5 Jahre gegenüber persönlich haftenden oder Forderungen gegen persönlich haftende Gesellschafter",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3350,13 +3351,13 @@
     },
     {
       "account_number": "3648",
-      "name": "– Restlaufzeit größer 5 Jahre gegenüber Kommanditisten oder gen Kommanditisten",
+      "name": "– Restlaufzeit größer 5 Jahre ten",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3650",
-      "name": "Verbindlichkeiten gegenüber",
+      "name": "Verbindlichkeiten gegenüber Kommanditisten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3374,7 +3375,7 @@
     },
     {
       "account_number": "3653",
-      "name": "– Restlaufzeit größer 5 Jahre lichkeiten",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3398,25 +3399,25 @@
     },
     {
       "account_number": "3658",
-      "name": "– Restlaufzeit größer 5 Jahre gensgegenstände",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3695",
-      "name": "Verrechnungskonto geleistete lichkeiten oder gensgegenstände",
+      "name": "Verrechnungskonto geleistete",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3700",
-      "name": "Verbindlichkeiten aus Steuern und Abgaben",
+      "name": "Verbindlichkeiten aus Steuern",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3701",
-      "name": "– Restlaufzeit bis 1 Jahr lichkeiten",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3428,13 +3429,13 @@
     },
     {
       "account_number": "3715",
-      "name": "– Restlaufzeit größer 5 Jahre lichkeiten oder gensgegenstände",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3720",
-      "name": "Verbindlichkeiten aus Lohn und",
+      "name": "Verbindlichkeiten aus Lohn und Gehalt",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3452,7 +3453,7 @@
     },
     {
       "account_number": "3730",
-      "name": "Verbindlichkeiten aus Lohn- und",
+      "name": "Verbindlichkeiten aus Lohn- und Kirchensteuer",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3476,19 +3477,19 @@
     },
     {
       "account_number": "3755",
-      "name": "– Restlaufzeit größer 5 Jahre lichkeiten oder gensgegenstände",
+      "name": "– Restlaufzeit größer 5 Jahre",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3759",
-      "name": "Voraussichtliche Beitragsschuld gegenüber den Sozialversicherungsträgern",
+      "name": "Voraussichtliche Beitragsschuld",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3760",
-      "name": "Verbindlichkeiten aus Einbehaltungen (KapESt und SolZ, KiSt auf KapESt) für offene Ausschüttungen",
+      "name": "Verbindlichkeiten aus Einbehaltungen (KapESt und SolZ, KiSt",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3506,7 +3507,7 @@
     },
     {
       "account_number": "3771",
-      "name": "– Restlaufzeit bis 1 Jahr lichkeiten",
+      "name": "– Restlaufzeit bis 1 Jahr",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3524,7 +3525,7 @@
     },
     {
       "account_number": "3786",
-      "name": "Ausgegebene Geschenkgutscheine lichkeiten oder gensgegenstände",
+      "name": "Ausgegebene Geschenkgutscheine",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3536,7 +3537,7 @@
     },
     {
       "account_number": "3791",
-      "name": "Lohn- und Gehaltsverrechnung nach § 11 Abs. 2 Satz 2 EStG für",
+      "name": "Lohn- und Gehaltsverrechnung",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3548,13 +3549,13 @@
     },
     {
       "account_number": "3798",
-      "name": "Umsatzsteuer aus im anderen ronischen Dienstleistungen",
+      "name": "Umsatzsteuer aus im anderen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3799",
-      "name": "Steuerzahlungen aus im anderen tungen lichkeiten oder gensgegenstände",
+      "name": "Steuerzahlungen aus im anderen",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3602,7 +3603,7 @@
     },
     {
       "account_number": "3809",
-      "name": "Umsatzsteuer aus innergemeinschaftlichem Erwerb ohne gen (allgemein)",
+      "name": "Umsatzsteuer aus innergemeinschaftlichem Erwerb ohne Vorsteuerabzug",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3620,19 +3621,19 @@
     },
     {
       "account_number": "3812",
-      "name": "Umsatzsteuer nicht fällig aus im rungen",
+      "name": "Umsatzsteuer nicht fällig aus im Inland steuerpflichtigen EU-Lieferungen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3814",
-      "name": "Umsatzsteuer nicht fällig aus im rungen 19 %",
+      "name": "Umsatzsteuer nicht fällig aus im Inland steuerpflichtigen EU-Lieferungen 19 %",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3816",
-      "name": "Umsatzsteuer nicht fällig 19 %",
+      "name": "Umsatzsteuer nicht fällig 19 % lichkeiten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3644,13 +3645,13 @@
     },
     {
       "account_number": "3818",
-      "name": "Umsatzsteuer aus im anderen gen Leistungen/Werklieferungen lichkeiten oder gensgegenstände",
+      "name": "Umsatzsteuer aus im anderen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3819",
-      "name": "Umsatzsteuer aus Erwerb als letzter Abnehmer innerhalb eines Dreiecksgeschäfts",
+      "name": "Umsatzsteuer aus Erwerb als letzter Abnehmer innerhalb",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3662,13 +3663,13 @@
     },
     {
       "account_number": "3830",
-      "name": "Umsatzsteuer-Vorauszahlungen lichkeiten",
+      "name": "Umsatzsteuer-Vorauszahlungen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3831",
-      "name": "Umsatzsteuer aus im Inland steuerpflichtigen EU-Lieferungen, nur lichkeiten oder gensgegenstände",
+      "name": "Umsatzsteuer aus im Inland steuerpflichtigen EU-Lieferungen, nur lichkeiten",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3680,7 +3681,7 @@
     },
     {
       "account_number": "3834",
-      "name": "Umsatzsteuer aus innergemeinschaftlichem Erwerb von Neufahrzeugen von Lieferanten ohne Umsatzsteue r-Identifikationsnummer",
+      "name": "Umsatzsteuer aus innergemeinschaftlichem Erwerb von Neufahrzeugen von Lieferanten ohne Umsatzsteue",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3716,31 +3717,31 @@
     },
     {
       "account_number": "3845",
-      "name": "Umsatzsteuerverbindlichkeiten frühere Jahre",
+      "name": "Umsatzsteuerverbindlichkeiten",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3851",
-      "name": "In Rechnung unrichtig oder unberechtigt ausgewiesene lichkeiten",
+      "name": "In Rechnung unrichtig",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3854",
-      "name": "Steuerzahlungen an andere",
+      "name": "Steuerzahlungen an andere Länder",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3860",
-      "name": "Verbindlichkeiten aus Umsatzsteuer-Vorauszahlungen lichkeiten oder gensgegenstände",
+      "name": "Verbindlichkeiten aus Umsatz-, steuer-Vorauszahlungen",
       "account_class": "3",
       "section": "passiva"
     },
     {
       "account_number": "3865",
-      "name": "Umsatzsteuer in Folgeperiode fällig (§§ 13 Abs. 1 Nr. 6 und grenzungsposten",
+      "name": "Umsatzsteuer in Folgeperiode",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3752,7 +3753,7 @@
     },
     {
       "account_number": "3950",
-      "name": "Abgrenzung unterjährig pauschal gebuchter Abschreibungen für",
+      "name": "Abgrenzung unterjährig pauschal",
       "account_class": "3",
       "section": "passiva"
     },
@@ -3770,7 +3771,7 @@
     },
     {
       "account_number": "4120",
-      "name": "Steuerfreie Umsätze nach",
+      "name": "Steuerfreie Umsätze",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -3782,7 +3783,7 @@
     },
     {
       "account_number": "4130",
-      "name": "Lieferungen des ersten Abnehmers bei innergemeinschaftlichen Dreiecksgeschäften § 25b Abs. 2 UStG",
+      "name": "Lieferungen des ersten Abnehmers",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -3812,19 +3813,19 @@
     },
     {
       "account_number": "4135",
-      "name": "Steuerfreie innergemeinschaftliche Lieferungen von Neufahrzeugen an Abnehmer ohne Umsatzsteuer-Identifikationsnummer",
+      "name": "Steuerfreie innergemeinschaftliche Lieferungen von Neufahrzeugen an Abnehmer ohne Umsatz-, steuer-Identifikationsnummer",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4136",
-      "name": "Umsatzerlöse nach §§ 25 und 25a",
+      "name": "Umsatzerlöse nach §§ 25 und 25a UStG 19 % USt11)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4138",
-      "name": "Umsatzerlöse nach §§ 25 und 25a",
+      "name": "Umsatzerlöse nach §§ 25 und 25a UStG ohne USt11)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -3848,13 +3849,13 @@
     },
     {
       "account_number": "4160",
-      "name": "Steuerfreie Umsätze ohne Vorsteuerabzug zum Gesamtumsatz gehörend, § 4 UStG",
+      "name": "Steuerfreie Umsätze ohne Vorsteuerabzug zum Gesamtumsatz",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4165",
-      "name": "Steuerfreie Umsätze ohne Vorsteuerabzug zum Gesamtumsatz gehörend",
+      "name": "Steuerfreie Umsätze ohne Vorsteuerabzug zum Gesamtumsatz",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -3878,13 +3879,13 @@
     },
     {
       "account_number": "4290",
-      "name": "Erlöse 0 % USt tigen EU-Lieferungen 7 % USt tigen EU-Lieferungen 19 % USt steuerpflichtigen Lieferungen,",
+      "name": "Erlöse 0 % USt tigen EU-Lieferungen 7 % USt tigen EU-Lieferungen 19 % USt steuerpflichtigen Lieferungen im Inland nicht steuerbar3)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4331",
-      "name": "Erlöse aus im anderen EU-Land steuerpflichtigen elektronischen",
+      "name": "Erlöse aus im anderen EU-Land",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -3896,31 +3897,31 @@
     },
     {
       "account_number": "4335",
-      "name": "Erlöse aus Lieferungen von Mobilfunkgeräten, Tablet-Computern, Spielekonsolen und integrierten Schaltkreisen, für die der steuer nach § 13b UStG schuldet",
+      "name": "Erlöse aus Lieferungen von Mobilfunkgeräten, Tablet-Computern, Spielekonsolen und integrierten Schaltkreisen, für die der Leistungsempfänger die Umsatzsteuer nach § 13b UStG schuldet",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4336",
-      "name": "Erlöse aus im anderen EU-Land steuerpflichtigen sonstigen Leistungen, für die der Leistungsempfänger die Umsatzsteuer schuldet",
+      "name": "Erlöse aus im anderen EU-Land",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4337",
-      "name": "Erlöse aus Leistungen, für die der steuer nach § 13b UStG schuldet",
+      "name": "Erlöse aus Leistungen, für die der Leistungsempfänger die Umsatzsteuer nach § 13b UStG schuldet",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4338",
-      "name": "Erlöse aus im Drittland steuerbaren Leistungen, im Inland nicht steuerbare Umsätze",
+      "name": "Erlöse aus im Drittland steuerbaren Leistungen, im Inland nicht",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4339",
-      "name": "Erlöse aus im anderen EU-Land steuerbaren Leistungen, im Inland nicht steuerbare Umsätze",
+      "name": "Erlöse aus im anderen EU-Land",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -3938,31 +3939,31 @@
     },
     {
       "account_number": "4500",
-      "name": "Sonderbetriebseinnahmen,",
+      "name": "Sonderbetriebseinnahmen Tätigkeitsvergütung28)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4501",
-      "name": "Sonderbetriebseinnahmen,",
+      "name": "Sonderbetriebseinnahmen Miet-/Pachteinnahmen28)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4502",
-      "name": "Sonderbetriebseinnahmen,",
+      "name": "Sonderbetriebseinnahmen Zinseinnahmen28)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4503",
-      "name": "Sonderbetriebseinnahmen,",
+      "name": "Sonderbetriebseinnahmen Haftungsvergütung28)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4504",
-      "name": "Sonderbetriebseinnahmen,",
+      "name": "Sonderbetriebseinnahmen Pensionszahlungen28)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4010,7 +4011,7 @@
     },
     {
       "account_number": "4570",
-      "name": "Sonstige Erträge aus Provisionen,",
+      "name": "Sonstige Erträge aus Provisionen Lizenzen und Patenten",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4034,7 +4035,7 @@
     },
     {
       "account_number": "4589",
-      "name": "Gegenkonto 4580-4582 bei",
+      "name": "Gegenkonto 4580-4582 bei Aufteilung der Erlöse nach Steuersätzen (EÜR)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4046,7 +4047,7 @@
     },
     {
       "account_number": "4605",
-      "name": "Entnahme von Gegenständen ohne USt mer für Zwecke außerhalb des",
+      "name": "Entnahme von Gegenständen ohne USt Entnahme durch den Unternehmer für Zwecke außerhalb des",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4058,7 +4059,7 @@
     },
     {
       "account_number": "4619",
-      "name": "Entnahme durch den Unternehmer für Zwecke außerhalb des mer für Zwecke außerhalb des für Zwecke außerhalb des Unternehmens 7 % USt",
+      "name": "Entnahme durch den Unternehmer für Zwecke außerhalb des Unternehmens (Waren) ohne USt Entnahme durch den Unternehmer für Zwecke außerhalb des Verwendung von Gegenständen für Zwecke außerhalb des Unternehmens 7 % USt",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4100,31 +4101,31 @@
     },
     {
       "account_number": "4656",
-      "name": "Unentgeltliche Erbringung einer sonstigen Leistung 7 % USt",
+      "name": "Unentgeltliche Erbringung einer",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4659",
-      "name": "Unentgeltliche Erbringung einer sonstigen Leistung ohne USt sonstigen Leistung 19 % USt",
+      "name": "Unentgeltliche Erbringung einer",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4676",
-      "name": "Unentgeltliche Zuwendung von",
+      "name": "Unentgeltliche Zuwendung von Waren 7 % USt",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4679",
-      "name": "Unentgeltliche Zuwendung von",
+      "name": "Unentgeltliche Zuwendung von Waren ohne USt",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4689",
-      "name": "Unentgeltliche Zuwendung von",
+      "name": "Unentgeltliche Zuwendung von Gegenständen ohne USt Umsatzerlöse",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4136,7 +4137,7 @@
     },
     {
       "account_number": "4695",
-      "name": "Umsatzsteuervergütungen nach",
+      "name": "Umsatzsteuervergütungen nach § 24 UStG8)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4154,19 +4155,19 @@
     },
     {
       "account_number": "4701",
-      "name": "Erlösschmälerungen für steuerfreie Umsätze nach § 4 Nr. 8 ff.",
+      "name": "Erlösschmälerungen für steuerfreie Umsätze nach § 4 Nr. 8 ff. UStG",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4702",
-      "name": "Erlösschmälerungen für steuerfreie Umsätze nach § 4 Nr. 2 bis 7",
+      "name": "Erlösschmälerungen für steuerfreie Umsätze nach § 4 Nr. 2 bis 7 UStG",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4703",
-      "name": "Erlösschmälerungen für sonstige steuerfreie Umsätze ohne",
+      "name": "Erlösschmälerungen für sonstige steuerfreie Umsätze ohne Vorsteuerabzug",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4184,31 +4185,31 @@
     },
     {
       "account_number": "4706",
-      "name": "Erlösschmälerungen für steuerfreie innergemeinschaftliche",
+      "name": "Erlösschmälerungen für steuerfreie innergemeinschaftliche Dreiecksgeschäfte",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4707",
-      "name": "Erlösschmälerungen für steuerfreie Umsätze nach § 19 Abs. 1",
+      "name": "Erlösschmälerungen für steuerfreie Umsätze nach § 19 Abs. 1 UStG1)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4708",
-      "name": "Erlösschmälerungen für Umsätze nach § 25 UStG 19 % USt1)",
+      "name": "Erlösschmälerungen für Umsätze",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4709",
-      "name": "Erlösschmälerungen für Umsätze nach § 25a UStG 19 % USt1)",
+      "name": "Erlösschmälerungen für Umsätze",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4719",
-      "name": "Erlösschmälerungen 0 % USt",
+      "name": "Erlösschmälerungen 0 % USt GuVBetriebliche Erträge",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4220,19 +4221,19 @@
     },
     {
       "account_number": "4725",
-      "name": "Erlösschmälerungen aus im",
+      "name": "Erlösschmälerungen aus im Inland steuerpflichtigen EU-Lieferungen 7 % USt",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4726",
-      "name": "Erlösschmälerungen aus im",
+      "name": "Erlösschmälerungen aus im Inland steuerpflichtigen EU-Lieferungen 19 % USt",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4727",
-      "name": "Erlösschmälerungen aus im anderen EU-Land steuerpflichtigen von Mobilfunkgeräten etc., für die der Leistungsempfänger die für die der Leistungsempfänger die Umsatzsteuer nach im anderen EU-Land steuerpflichtigen sonstigen Leistungen,",
+      "name": "Erlösschmälerungen aus im anderen EU-Land steuerpflichtigen Lieferungen",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4244,7 +4245,7 @@
     },
     {
       "account_number": "4770",
-      "name": "Gewährte Rabatte des Bestands an fertigen und unfertigen Erzeugnissen des Bestandes an fertigen und unfertigen Erzeugnissen",
+      "name": "Gewährte Rabatte",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4268,13 +4269,13 @@
     },
     {
       "account_number": "4816",
-      "name": "Bestandsveränderungen in",
+      "name": "Bestandsveränderungen in Ausführung befindliche Bauaufträge",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4818",
-      "name": "Bestandsveränderungen in gen",
+      "name": "Bestandsveränderungen in Arbeit befindlicher Aufträge gen Eigenleistungen",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4292,7 +4293,7 @@
     },
     {
       "account_number": "4825",
-      "name": "Aktivierte Eigenleistungen zur nen immateriellen Vermögensgegenständen liche Erträge",
+      "name": "Aktivierte Eigenleistungen zur Erstellung von selbst geschaffenen immateriellen Vermögensgegenständen",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4358,7 +4359,7 @@
     },
     {
       "account_number": "4842",
-      "name": "Sonstige betriebliche Erträge,",
+      "name": "Sonstige betriebliche Erträge steuerfrei z. B. § 4 Nr. 2 bis 7 UStG",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4370,13 +4371,13 @@
     },
     {
       "account_number": "4844",
-      "name": "Erlöse aus Verkäufen Sachanlagevermögen steuerfrei § 4 Nr. 1a",
+      "name": "Erlöse aus Verkäufen Sachanlagevermögen steuerfrei § 4 Nr. 1a UStG (bei Buchgewinn)",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4845",
-      "name": "Erlöse aus Verkäufen Sachanlagevermögen 19 % USt",
+      "name": "Erlöse aus Verkäufen Sachanlagevermögen 19 % USt (bei Buchgewinn)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4388,7 +4389,7 @@
     },
     {
       "account_number": "4848",
-      "name": "Erlöse aus Verkäufen Sachanlagevermögen steuerfrei § 4 Nr. 1b",
+      "name": "Erlöse aus Verkäufen Sachanlagevermögen steuerfrei § 4 Nr. 1b UStG (bei Buchgewinn)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4424,7 +4425,7 @@
     },
     {
       "account_number": "4856",
-      "name": "Anlagenabgänge immaterielle",
+      "name": "Anlagenabgänge immaterielle (Restbuchwert bei Buchgewinn)",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4436,7 +4437,7 @@
     },
     {
       "account_number": "4858",
-      "name": "Anlagenabgänge Finanzanlagen bei Buchgewinn)",
+      "name": "Anlagenabgänge Finanzanlagen",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4448,19 +4449,19 @@
     },
     {
       "account_number": "4861",
-      "name": "Erlöse aus Vermietung und",
+      "name": "Erlöse aus Vermietung und Verpachtung, umsatzsteuerfrei",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4862",
-      "name": "Erlöse aus Vermietung und",
+      "name": "Erlöse aus Vermietung und Verpachtung 19 % USt",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4865",
-      "name": "Erlöse aus Verkäufen von Wirtschaftsgütern des Umlaufvermögens 19 % USt für",
+      "name": "Erlöse aus Verkäufen von Wirtschaftsgütern des Umlaufvermögens 19 % USt",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4490,7 +4491,7 @@
     },
     {
       "account_number": "4905",
-      "name": "Erträge aus dem Abgang von mögens außer Vorräte",
+      "name": "Erträge aus dem Abgang von Gegenständen des Umlaufvermögens außer Vorräte",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4502,7 +4503,7 @@
     },
     {
       "account_number": "4910",
-      "name": "Erträge aus Zuschreibungen des",
+      "name": "Erträge aus Zuschreibungen des Sachanlagevermögens",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4514,7 +4515,7 @@
     },
     {
       "account_number": "4912",
-      "name": "Erträge aus Zuschreibungen des",
+      "name": "Erträge aus Zuschreibungen des Finanzanlagevermögens",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4532,7 +4533,7 @@
     },
     {
       "account_number": "4915",
-      "name": "Erträge aus Zuschreibungen des Umlaufvermögens",
+      "name": "Erträge aus Zuschreibungen",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4544,13 +4545,13 @@
     },
     {
       "account_number": "4920",
-      "name": "Erträge aus der Herabsetzung der Pauschalwertberichtigung auf Forderungen",
+      "name": "Erträge aus der Herabsetzung",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4923",
-      "name": "Erträge aus der Herabsetzung der Einzelwertberichtigung auf",
+      "name": "Erträge aus der Herabsetzung",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4562,31 +4563,31 @@
     },
     {
       "account_number": "4927",
-      "name": "Erträge aus der Auflösung einer steuerlichen Rücklage nach",
+      "name": "Erträge aus der Auflösung einer",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4928",
-      "name": "Erträge aus der Auflösung einer steuerlichen Rücklage nach",
+      "name": "Erträge aus der Auflösung einer",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4929",
-      "name": "Erträge aus der Auflösung der",
+      "name": "Erträge aus der Auflösung der Rücklage für Ersatzbeschaffung R 6.6 EStR",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4930",
-      "name": "Erträge aus der Auflösung von",
+      "name": "Erträge aus der Auflösung von Rückstellungen",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4932",
-      "name": "Erträge aus der Herabsetzung von Verbindlichkeiten",
+      "name": "Erträge aus der Herabsetzung",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4598,13 +4599,13 @@
     },
     {
       "account_number": "4937",
-      "name": "Erträge aus der Auflösung steuerrechtlicher Sonderabschreibungen",
+      "name": "Erträge aus der Auflösung",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "4938",
-      "name": "Erträge aus der Auflösung einer steuerlichen Rücklage nach",
+      "name": "Erträge aus der Auflösung einer",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4658,7 +4659,7 @@
     },
     {
       "account_number": "4970",
-      "name": "Versicherungsentschädigungen und Schadenersatzleistungen",
+      "name": "Versicherungsentschädigungen",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4694,7 +4695,7 @@
     },
     {
       "account_number": "4987",
-      "name": "Erträge aus der Aktivierung unentgeltlich erworbener",
+      "name": "Erträge aus der Aktivierung",
       "account_class": "4",
       "section": "aufwand"
     },
@@ -4706,25 +4707,25 @@
     },
     {
       "account_number": "4992",
-      "name": "Erträge aus Verwaltungskostenumlagen für Roh-, Hilfsund Betriebsstoffe und für bezogene Waren und Betriebsstoffe und für bezogene Waren",
+      "name": "Erträge aus Verwaltungskostenumlagen",
       "account_class": "4",
       "section": "aufwand"
     },
     {
       "account_number": "5100",
-      "name": "Einkauf Roh-, Hilfs- und Betriebsstoffe stoffe 7 % Vorsteuer",
+      "name": "Einkauf Roh-, Hilfs- und Betriebsstoffe",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5129",
-      "name": "Einkauf Roh-, Hilfs- und Betriebsstoffe ohne Vorsteuerabzug stoffe 19 % Vorsteuer",
+      "name": "Einkauf Roh-, Hilfs- und Betriebsstoffe ohne Vorsteuerabzug",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5160",
-      "name": "Einkauf Roh-, Hilfs- und Betriebsstoffe, innergemeinschaftlicher stoffe, innergemeinschaftlicher",
+      "name": "Einkauf Roh-, Hilfs- und Betriebsstoffe, innergemeinschaftlicher",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -4808,25 +4809,25 @@
     },
     {
       "account_number": "5418",
-      "name": "Wareneingang 19 % Vorsteuer steuer satzsteuer",
+      "name": "Wareneingang 19 % Vorsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5430",
-      "name": "Innergemeinschaftlicher Erwerb ohne Vorsteuer und 7 % Umsatzsteuer",
+      "name": "Innergemeinschaftlicher Erwerb",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5435",
-      "name": "Innergemeinschaftlicher Erwerb ohne Vorsteuer und 19 % Umsatzsteuer",
+      "name": "Innergemeinschaftlicher Erwerb",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5440",
-      "name": "Innergemeinschaftlicher Erwerb von Neufahrzeugen von Lieferanten ohne Umsatzsteuer-Identifikationsnummer 19 % Vorsteuer und 19 % Umsatzsteuer schnittssatz nach § 24 UStG",
+      "name": "Innergemeinschaftlicher Erwerb",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -4838,19 +4839,19 @@
     },
     {
       "account_number": "5551",
-      "name": "Wareneingang im Drittland steuerbar",
+      "name": "Wareneingang im Drittland",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5552",
-      "name": "Erwerb 1. Abnehmer innerhalb eines Dreiecksgeschäftes",
+      "name": "Erwerb 1. Abnehmer innerhalb",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5553",
-      "name": "Erwerb Waren als letzter Abnehmer innerhalb Dreiecksgeschäft satzsteuer",
+      "name": "Erwerb Waren als letzter Abnehmer innerhalb Dreiecksgeschäft",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -4874,7 +4875,7 @@
     },
     {
       "account_number": "5565",
-      "name": "Waren aus einem Umsatzsteuerlager, § 13a UStG 19 % Vorsteuer und 19 % Umsatzsteuer für Roh-, Hilfsund Betriebsstoffe und für bezogene Waren",
+      "name": "Waren aus einem Umsatzsteuerlager, § 13a UStG 19 % Vorsteuer und 19 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -4886,31 +4887,31 @@
     },
     {
       "account_number": "5701",
-      "name": "Nachlässe aus Einkauf Roh-, Hilfsund Betriebsstoffe",
+      "name": "Nachlässe aus Einkauf Roh-, Hilfs- und Betriebsstoffe",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5714",
-      "name": "Nachlässe aus Einkauf Roh-, Hilfsund Betriebsstoffe 7 % Vorsteuer",
+      "name": "Nachlässe aus Einkauf Roh-, Hilfs- und Betriebsstoffe 7 % Vorsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5715",
-      "name": "Nachlässe aus Einkauf Roh-, Hilfsund Betriebsstoffe 19 % Vorsteuer",
+      "name": "Nachlässe aus Einkauf Roh-, Hilfs- und Betriebsstoffe 19 % Vorsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5717",
-      "name": "Nachlässe aus Einkauf Roh-, Hilfsund Betriebsstoffe, innergemeinschaftlicher Erwerb 7 % Vorsteuer und 7 % Umsatzsteuer",
+      "name": "Nachlässe aus Einkauf Roh-, Hilfs- und Betriebsstoffe, innergemeinschaftlicher Erwerb 7 % Vorsteuer und 7 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5718",
-      "name": "Nachlässe aus Einkauf Roh-, Hilfsund Betriebsstoffe, innergemeinschaftlicher Erwerb 19 % Vorsteuer und 19 % Umsatzsteuer",
+      "name": "Nachlässe aus Einkauf Roh-, Hilfs- und Betriebsstoffe, innergemeinschaftlicher Erwerb 19 % Vorsteuer und 19 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -4922,25 +4923,25 @@
     },
     {
       "account_number": "5725",
-      "name": "Nachlässe aus innergemeinschaftlichem Erwerb 19 % Vorsteuer und 19 % Umsatzsteuer steuer erpflichtigem innergemeinschaftlichem Erwerb 19 % Vorsteuer und für Roh-, Hilfsund Betriebsstoffe und für bezogene Waren erpflichtigem innergemeinschaftlichem Erwerb 7 % Vorsteuer und aus steuerpflichtigem innergemeinschaftlichem Erwerb tigem innergemeinschaftlichem tigem innergemeinschaftlichem tigem innergemeinschaftlichem",
+      "name": "Nachlässe aus innergemeinschaftlichem Erwerb 19 % Vorsteuer und 19 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5753",
-      "name": "Erhaltene Boni aus Einkauf Roh-,",
+      "name": "Erhaltene Boni aus Einkauf Roh-, Hilfs- und Betriebsstoffe",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5754",
-      "name": "Erhaltene Boni aus Einkauf Roh-,",
+      "name": "Erhaltene Boni aus Einkauf Roh-, Hilfs- und Betriebsstoffe 7 % Vorsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5755",
-      "name": "Erhaltene Boni aus Einkauf Roh-,",
+      "name": "Erhaltene Boni aus Einkauf Roh-, Hilfs- und Betriebsstoffe 19 % Vorsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -4970,13 +4971,13 @@
     },
     {
       "account_number": "5785",
-      "name": "Erhaltene Rabatte aus Einkauf für Roh-, Hilfsund Betriebsstoffe und für bezogene Waren steuer",
+      "name": "Erhaltene Rabatte aus Einkauf",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5792",
-      "name": "Erhaltene Skonti aus Erwerb als letzter Abnehmer innerhalb und 19 % Umsatzsteuer",
+      "name": "Erhaltene Skonti aus Erwerb",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -5012,7 +5013,7 @@
     },
     {
       "account_number": "5880",
-      "name": "Bestandsveränderungen Roh-,",
+      "name": "Bestandsveränderungen Roh-, Hilfs- und Betriebsstoffe sowie",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -5024,7 +5025,7 @@
     },
     {
       "account_number": "5885",
-      "name": "Bestandsveränderungen Roh-,",
+      "name": "Bestandsveränderungen Roh-, Hilfs- und Betriebsstoffe",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -5048,55 +5049,55 @@
     },
     {
       "account_number": "5909",
-      "name": "Fremdleistungen ohne Vorsteuer empfänger die Steuer nach",
+      "name": "Fremdleistungen ohne Vorsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5910",
-      "name": "Bauleistungen eines im Inland ansässigen Unternehmers 7 %",
+      "name": "Bauleistungen eines im Inland",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5913",
-      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen Unternehmers 7 % Vorsteuer und 7 %",
+      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen Unternehmers 7 % Vorsteuer und 7 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5915",
-      "name": "Leistungen eines im Ausland ansässigen Unternehmers 7 % Vorsteuer und 7 % Umsatzsteuer ansässigen Unternehmers 19 %",
+      "name": "Leistungen eines im Ausland ansässigen Unternehmers 7 % Vorsteuer und 7 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5923",
-      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen Unternehmers 19 % Vorsteuer und sässigen Unternehmers 19 %",
+      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen Unternehmers 19 % Vorsteuer und 19 % Umsatzsteuer",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5930",
-      "name": "Bauleistungen eines im Inland ansässigen Unternehmers ohne",
+      "name": "Bauleistungen eines im Inland",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5933",
-      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen und 7 % Umsatzsteuer",
+      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5935",
-      "name": "Leistungen eines im Ausland ansässigen Unternehmers ohne ansässigen Unternehmers ohne steuer",
+      "name": "Leistungen eines im Ausland",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5943",
-      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen und 19 % Umsatzsteuer ansässigen Unternehmers ohne steuer für die als Leistungsempfänger die Steuer nach § 13b UStG",
+      "name": "Sonstige Leistungen eines im anderen EU-Land ansässigen",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -5114,25 +5115,25 @@
     },
     {
       "account_number": "5970",
-      "name": "Fremdleistungen (Miet- und schaftsgüter)",
+      "name": "Fremdleistungen (Miet- und Pachtzinsen bewegliche Wirtschaftsgüter)",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5975",
-      "name": "Fremdleistungen (Miet- und schaftsgüter)",
+      "name": "Fremdleistungen (Miet- und Pachtzinsen unbewegliche Wirtschaftsgüter)",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5980",
-      "name": "Fremdleistungen (Entgelte für",
+      "name": "Fremdleistungen (Entgelte für Rechte und Lizenzen)",
       "account_class": "5",
       "section": "aufwand"
     },
     {
       "account_number": "5985",
-      "name": "Fremdleistungen (Vergütungen für die Überlassung von Wirtschaftsgütern - mit Sonderbetriebseinnahme korrespondierend)",
+      "name": "Fremdleistungen (Vergütungen",
       "account_class": "5",
       "section": "aufwand"
     },
@@ -5156,7 +5157,7 @@
     },
     {
       "account_number": "6024",
-      "name": "Geschäftsführergehälter der",
+      "name": "Geschäftsführergehälter der GmbH-Gesellschafter",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5174,7 +5175,7 @@
     },
     {
       "account_number": "6028",
-      "name": "Vergütungen an angestellte korrespondierend)",
+      "name": "Vergütungen an angestellte",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5204,13 +5205,13 @@
     },
     {
       "account_number": "6037",
-      "name": "Pauschale Steuer für Gesellschafter-Geschäftsführer",
+      "name": "Pauschale Steuer für Gesellschaf-, ter-Geschäftsführer",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6038",
-      "name": "Pauschale Steuer für angestellte korrespondierend)",
+      "name": "Pauschale Steuer für angestellte",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5246,25 +5247,25 @@
     },
     {
       "account_number": "6066",
-      "name": "Freiwillige Zuwendungen an",
+      "name": "Freiwillige Zuwendungen an Minijobber",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6067",
-      "name": "Freiwillige Zuwendungen an",
+      "name": "Freiwillige Zuwendungen an Gesellschafter-Geschäftsführer",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6068",
-      "name": "Freiwillige Zuwendungen an angestellte Mitunternehmer einnahme korrespondierend)",
+      "name": "Freiwillige Zuwendungen an angestellte Mitunternehmer",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6069",
-      "name": "Pauschale Steuer auf sonstige schüsse)",
+      "name": "Pauschale Steuer auf sonstige Bezüge (z. B. Fahrtkostenzuschüsse)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5300,7 +5301,7 @@
     },
     {
       "account_number": "6075",
-      "name": "Zuschüsse der Agenturen für",
+      "name": "Zuschüsse der Agenturen für Arbeit (Haben)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5312,19 +5313,19 @@
     },
     {
       "account_number": "6077",
-      "name": "Aufwendungen aus der Veränderung von Urlaubsrückstellungen für Gesellschafter-Geschäftsführer",
+      "name": "Aufwendungen aus der Veränderung von Urlaubsrückstellungen rer GuVBetriebliche Aufwendungen",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6078",
-      "name": "Aufwendungen aus der Veränderung von Urlaubsrückstellungen für angestellte Mitunternehmer einnahme korrespondierend)",
+      "name": "Aufwendungen aus der Veränderung von Urlaubsrückstellungen",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6079",
-      "name": "Aufwendungen aus der Veränderung von Urlaubsrückstellungen für Minijobber",
+      "name": "Aufwendungen aus der Veränderung von Urlaubsrückstellungen",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5354,7 +5355,7 @@
     },
     {
       "account_number": "6118",
-      "name": "Gesetzliche soziale Aufwendungen für Mitunternehmer einnahme korrespondierend)",
+      "name": "Gesetzliche soziale Aufwendungen für Mitunternehmer",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5384,7 +5385,7 @@
     },
     {
       "account_number": "6148",
-      "name": "Aufwendungen für Altersversorgung für Mitunternehmer § 15",
+      "name": "Aufwendungen für Altersversorgung für Mitunternehmer § 15 EStG (mit Sonderbetriebseinnahme korrespondierend)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5414,7 +5415,7 @@
     },
     {
       "account_number": "6171",
-      "name": "Soziale Abgaben für Minijobber elle Vermögensgegenstände des Anlagevermögens und auf immaterielle genstände des und Sachanlagen",
+      "name": "Soziale Abgaben für Minijobber",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5426,19 +5427,19 @@
     },
     {
       "account_number": "6201",
-      "name": "Abschreibungen auf selbst geschaffene immaterielle",
+      "name": "Abschreibungen auf selbst",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6205",
-      "name": "Abschreibungen auf den",
+      "name": "Abschreibungen auf den Geschäfts- oder Firmenwert",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6209",
-      "name": "Außerplanmäßige Abschreibungen auf den Geschäfts- oder",
+      "name": "Außerplanmäßige Abschreibungen auf den Geschäfts",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5474,7 +5475,7 @@
     },
     {
       "account_number": "6223",
-      "name": "Abschreibungen auf Gebäudeteil des häuslichen Arbeitszimmers",
+      "name": "Abschreibungen auf Gebäudeteil",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5486,25 +5487,25 @@
     },
     {
       "account_number": "6231",
-      "name": "Absetzung für außergewöhnliche technische und wirtschaftliche auf immaterielle genstände des und Sachanlagen",
+      "name": "Absetzung für außergewöhnliche",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6232",
-      "name": "Absetzung für außergewöhnliche technische und wirtschaftliche",
+      "name": "Absetzung für außergewöhnliche",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6233",
-      "name": "Absetzung für außergewöhnliche technische und wirtschaftliche güter",
+      "name": "Absetzung für außergewöhnliche",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6240",
-      "name": "Abschreibungen auf Sachanlagen auf Grund steuerlicher Sondervorschriften",
+      "name": "Abschreibungen auf Sachanlagen",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5516,25 +5517,25 @@
     },
     {
       "account_number": "6242",
-      "name": "Sonderabschreibungen nach",
+      "name": "Sonderabschreibungen",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6243",
-      "name": "Kürzung der Anschaffungs- oder",
+      "name": "Kürzung der Anschaffungs",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6244",
-      "name": "Kürzung der Anschaffungs- oder",
+      "name": "Kürzung der Anschaffungs",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6245",
-      "name": "Sonderabschreibungen nach § 7b",
+      "name": "Sonderabschreibungen nach § 7b EStG (Mietwohnungsneubau)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5558,7 +5559,7 @@
     },
     {
       "account_number": "6262",
-      "name": "Abschreibungen auf aktivierte,",
+      "name": "Abschreibungen auf aktivierte geringwertige Wirtschaftsgüter",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5570,7 +5571,7 @@
     },
     {
       "account_number": "6266",
-      "name": "Außerplanmäßige Abschreibungen auf aktivierte, geringwertige gensgegenstände des Umlaufvermögens, soweit diese die in der Kapitalgesellschaft üblichen Abschreibungen überschreiten genstände des gens, soweit diese die üblichen überschreiten",
+      "name": "Außerplanmäßige Abschreibungen auf aktivierte, geringwertige",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5588,43 +5589,43 @@
     },
     {
       "account_number": "6278",
-      "name": "Abschreibungen auf Roh-, Hilfsund Betriebsstoffe/Waren (soweit unüblich hoch)",
+      "name": "Abschreibungen auf Roh-, Hilfs- und Betriebsstoffe/Waren (soweit",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6279",
-      "name": "Abschreibungen auf fertige und unfertige Erzeugnisse (soweit unüblich hoch)",
+      "name": "Abschreibungen auf fertige und unüblich hoch)",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6280",
-      "name": "Forderungsverluste (soweit unüblich hoch)",
+      "name": "Forderungsverluste (soweit",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6281",
-      "name": "Forderungsverluste 7 % USt",
+      "name": "Forderungsverluste 7 % USt (soweit unüblich hoch)",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6286",
-      "name": "Forderungsverluste 19 % USt",
+      "name": "Forderungsverluste 19 % USt (soweit unüblich hoch)",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6290",
-      "name": "Abschreibungen auf Forderungen gegenüber Kapitalgesellschaften, an denen eine Beteiligung besteht (soweit unüblich hoch), § 3c EStG bzw.",
+      "name": "Abschreibungen auf Forderungen gegenüber Kapitalgesellschaften, an denen eine Beteiligung besteht (soweit unüblich",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6291",
-      "name": "Abschreibungen auf Forderungen gegenüber Gesellschaftern und nahe stehende Personen betriebliche dungen",
+      "name": "Abschreibungen auf Forderungen gegenüber Gesellschaftern",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5636,7 +5637,7 @@
     },
     {
       "account_number": "6302",
-      "name": "Interimskonto für Aufwendungen in einem anderen Land, bei denen eine Vorsteuervergütung möglich ist",
+      "name": "Interimskonto für Aufwendungen",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5666,13 +5667,13 @@
     },
     {
       "account_number": "6313",
-      "name": "Vergütungen an Gesellschafter für die miet- oder pachtweise r",
+      "name": "Vergütungen an Gesellschafter r",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6314",
-      "name": "Vergütungen an Mitunternehmer für die mietweise Überlassung ihrer unbeweglichen Wirtschaftsgüter § 15 EStG (mit Sonderbetriebseinnahme korrespondierend)",
+      "name": "Vergütungen an Mitunternehmer",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5690,7 +5691,7 @@
     },
     {
       "account_number": "6317",
-      "name": "Aufwendungen für gemietete oder gepachtete unbewegliche steuerlich hinzuzurechnen sind",
+      "name": "Aufwendungen für gemietete",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5702,7 +5703,7 @@
     },
     {
       "account_number": "6319",
-      "name": "Vergütungen an Mitunternehmer für die pachtweise Überlassung ihrer unbeweglichen Wirtschaftsgüter § 15 EStG (mit Sonderbetriebseinnahme korrespondierend)",
+      "name": "Vergütungen an Mitunternehmer",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5744,13 +5745,13 @@
     },
     {
       "account_number": "6347",
-      "name": "Tagespauschale für die Tätigkeit in der häuslichen Wohnung",
+      "name": "Tagespauschale für die Tätigkeit",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6348",
-      "name": "Aufwendungen für ein häusliches teil)",
+      "name": "Aufwendungen für ein häusliches",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5762,7 +5763,7 @@
     },
     {
       "account_number": "6350",
-      "name": "Grundstücksaufwendungen,",
+      "name": "Grundstücksaufwendungen betrieblich",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5816,7 +5817,7 @@
     },
     {
       "account_number": "6398",
-      "name": "Zuwendungen, Spenden an Stiftungen in das zu erhaltende Vermögen (Vermögensstock) für wissenschaftliche, mildtätige,",
+      "name": "Zuwendungen, Spenden an Stiftungen in das zu erhaltende Vermögen (Vermögensstock) für wissenschaftliche, mildtätige kulturelle Zwecke",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5834,7 +5835,7 @@
     },
     {
       "account_number": "6410",
-      "name": "Netto-Prämie für Rückdeckung künftiger Versorgungsleistungen",
+      "name": "Netto-Prämie für Rückdeckung",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5864,25 +5865,25 @@
     },
     {
       "account_number": "6440",
-      "name": "Ausgleichsabgabe nach dem",
+      "name": "Ausgleichsabgabe nach dem Schwerbehindertengesetz",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6450",
-      "name": "Reparaturen und Instandhaltung von Bauten",
+      "name": "Reparaturen und Instandhaltung",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6460",
-      "name": "Reparaturen und Instandhaltung von technischen Anlagen und",
+      "name": "Reparaturen und Instandhaltung",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6470",
-      "name": "Reparaturen und Instandhaltung von anderen Anlagen und Betriebs- und Geschäftsausstattung",
+      "name": "Reparaturen und Instandhaltung",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5894,7 +5895,7 @@
     },
     {
       "account_number": "6485",
-      "name": "Reparaturen und Instandhaltung von anderen Anlagen",
+      "name": "Reparaturen und Instandhaltung",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5906,7 +5907,7 @@
     },
     {
       "account_number": "6495",
-      "name": "Wartungskosten für Hard- und",
+      "name": "Wartungskosten für Hard- und Software",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5954,7 +5955,7 @@
     },
     {
       "account_number": "6565",
-      "name": "Mietleasingaufwendungen für die gewerbesteuerlich hinzuzurechnen sind",
+      "name": "Mietleasingaufwendungen für Elektrofahrzeuge und Fahrräder die gewerbesteuerlich hinzuzurechnen sind",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5972,7 +5973,7 @@
     },
     {
       "account_number": "6590",
-      "name": "Kosten für betrieblich genutzte zum Privatvermögen gehörende",
+      "name": "Kosten für betrieblich genutzte",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -5996,43 +5997,43 @@
     },
     {
       "account_number": "6610",
-      "name": "Geschenke abzugsfähig ohne",
+      "name": "Geschenke abzugsfähig ohne § 37b EStG",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6611",
-      "name": "Geschenke abzugsfähig mit",
+      "name": "Geschenke abzugsfähig mit § 37b EStG",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6612",
-      "name": "Pauschale Steuer für Geschenke und Zuwendungen abzugsfähig",
+      "name": "Pauschale Steuer für Geschenke",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6620",
-      "name": "Geschenke nicht abzugsfähig ohne § 37b EStG",
+      "name": "Geschenke nicht abzugsfähig",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6621",
-      "name": "Geschenke nicht abzugsfähig mit",
+      "name": "Geschenke nicht abzugsfähig mit § 37b EStG",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6622",
-      "name": "Pauschale Steuer für Geschenke und Zuwendungen nicht abzugsfähig",
+      "name": "Pauschale Steuer für Geschenke",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6625",
-      "name": "Geschenke ausschließlich betrieblich genutzt",
+      "name": "Geschenke ausschließlich",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6062,7 +6063,7 @@
     },
     {
       "account_number": "6642",
-      "name": "Sonstige eingeschränkt abziehbare Betriebsausgaben (nicht abziehbarer Anteil)",
+      "name": "Sonstige eingeschränkt abziehbare Betriebsausgaben (nicht",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6146,19 +6147,19 @@
     },
     {
       "account_number": "6688",
-      "name": "Fahrten zwischen Wohnung und fahrten (abziehbarer Anteil)",
+      "name": "Fahrten zwischen Wohnung und Betriebsstätte und Familienheimfahrten (abziehbarer Anteil)",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6689",
-      "name": "Fahrten zwischen Wohnung und fahrten (nicht abziehbarer Anteil)",
+      "name": "Fahrten zwischen Wohnung und Betriebsstätte und Familienheimfahrten (nicht abziehbarer Anteil)",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6690",
-      "name": "Fahrten zwischen Wohnung und fahrten (Haben) - Fahrzeuge im",
+      "name": "Fahrten zwischen Wohnung und Betriebsstätte und Familienheimfahrten (Haben) - Fahrzeuge im Betriebsvermögen",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6284,13 +6285,13 @@
     },
     {
       "account_number": "6833",
-      "name": "Vergütungen an Gesellschafter für die miet- oder pachtweise",
+      "name": "Vergütungen an Gesellschafter",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6834",
-      "name": "Vergütungen an Mitunternehmer für die miet- oder pachtweise korrespondierend)",
+      "name": "Vergütungen an Mitunternehmer",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6308,19 +6309,19 @@
     },
     {
       "account_number": "6837",
-      "name": "Aufwendungen für die zeitlich befristete Überlassung von Rechten (Lizenzen, Konzessionen)",
+      "name": "Aufwendungen für die zeitlich",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6838",
-      "name": "Aufwendungen für gemietete oder gepachtete bewegliche steuerlich hinzuzurechnen sind",
+      "name": "Aufwendungen für gemietete",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6840",
-      "name": "Mietleasing bewegliche Wirtschaftsgüter für Betriebs- und",
+      "name": "Mietleasing bewegliche Wirtschaftsgüter für Betriebs- und Geschäftsausstattung",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6332,7 +6333,7 @@
     },
     {
       "account_number": "6850",
-      "name": "Sonstiger Betriebsbedarf che Rückvergütung",
+      "name": "Sonstiger Betriebsbedarf",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6350,13 +6351,13 @@
     },
     {
       "account_number": "6856",
-      "name": "Aufwendungen aus Anteilen an",
+      "name": "Aufwendungen aus Anteilen an Kapitalgesellschaften",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6857",
-      "name": "Veräußerungskosten § 3 Nr. 40",
+      "name": "Veräußerungskosten § 3 Nr. 40 (bei Buchgewinn)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6368,7 +6369,7 @@
     },
     {
       "account_number": "6859",
-      "name": "Aufwendungen für Abraum- und",
+      "name": "Aufwendungen für Abraum- und Abfallbeseitigung",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6392,7 +6393,7 @@
     },
     {
       "account_number": "6875",
-      "name": "Nicht abziehbare Hälfte der",
+      "name": "Nicht abziehbare Hälfte der Aufsichtsratsvergütungen",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6410,13 +6411,13 @@
     },
     {
       "account_number": "6880",
-      "name": "Aufwendungen aus der",
+      "name": "Aufwendungen aus der Währungsumrechnung",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6881",
-      "name": "Aufwendungen aus der",
+      "name": "Aufwendungen aus der Währungsumrechnung",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6434,7 +6435,7 @@
     },
     {
       "account_number": "6885",
-      "name": "Erlöse aus Verkäufen Sachanlagevermögen 19 % USt",
+      "name": "Erlöse aus Verkäufen Sachanlagevermögen 19 % USt (bei Buchverlust)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6500,25 +6501,25 @@
     },
     {
       "account_number": "6905",
-      "name": "Verluste aus dem Abgang von mögens außer Vorräte",
+      "name": "Verluste aus dem Abgang von Gegenständen des Umlaufvermögens außer Vorräte",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6906",
-      "name": "Verluste aus dem Abgang von mögens (außer Vorräte) § 3 Nr.",
+      "name": "Verluste aus dem Abgang von Gegenständen des Umlaufvermögens (außer Vorräte) § 3 Nr. i. V. m. § 8b Abs. 3 S. 3 KStG",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6907",
-      "name": "Abgang von Wirtschaftsgütern des Umlaufvermögens nach",
+      "name": "Abgang von Wirtschaftsgütern",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6908",
-      "name": "Abgang von Wirtschaftsgütern des Umlaufvermögens § 3 Nr. 40",
+      "name": "Abgang von Wirtschaftsgütern",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6536,7 +6537,7 @@
     },
     {
       "account_number": "6918",
-      "name": "Aufwendungen aus dem Erwerb eigener Anteile",
+      "name": "Aufwendungen aus dem Erwerb",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6572,7 +6573,7 @@
     },
     {
       "account_number": "6928",
-      "name": "Einstellungen in die Rücklage für Ersatzbeschaffung nach",
+      "name": "Einstellungen in die Rücklage",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6590,7 +6591,7 @@
     },
     {
       "account_number": "6931",
-      "name": "Forderungsverluste 7 % USt",
+      "name": "Forderungsverluste 7 % USt (übliche Höhe)",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6602,19 +6603,19 @@
     },
     {
       "account_number": "6933",
-      "name": "Forderungsverluste aus im Inland steuerpflichtigen EU-Lieferungen",
+      "name": "Forderungsverluste aus im Inland",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6936",
-      "name": "Forderungsverluste 19 % USt",
+      "name": "Forderungsverluste 19 % USt (übliche Höhe)",
       "account_class": "6",
       "section": "aufwand"
     },
     {
       "account_number": "6938",
-      "name": "Forderungsverluste aus im Inland steuerpflichtigen EU-Lieferungen",
+      "name": "Forderungsverluste aus im Inland",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6698,7 +6699,7 @@
     },
     {
       "account_number": "6989",
-      "name": "Verrechneter kalkulatorischer ter",
+      "name": "Verrechneter kalkulatorischer ter Kosten bei Anwendung des Umsatzkostenverfahrens",
       "account_class": "6",
       "section": "aufwand"
     },
@@ -6764,31 +6765,31 @@
     },
     {
       "account_number": "7008",
-      "name": "Gewinnanteile aus gewerblichen und selbständigen Mitunternehmerschaften, § 9 GewStG bzw.",
+      "name": "Gewinnanteile aus gewerblichen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7009",
-      "name": "Erträge aus Beteiligungen an verbundenen Unternehmen pieren und Ausleihungen des anderen Wertpapieren und Ausleihungen des mögens",
+      "name": "Erträge aus Beteiligungen an verbundenen Unternehmen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7010",
-      "name": "Erträge aus anderen Wertpapieren und Ausleihungen des",
+      "name": "Erträge aus anderen Wertpapieren und Ausleihungen des Finanzanlagevermögens",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7011",
-      "name": "Erträge aus Ausleihungen des",
+      "name": "Erträge aus Ausleihungen des Finanzanlagevermögens",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7012",
-      "name": "Erträge aus Ausleihungen des verbundenen Unternehmen",
+      "name": "Erträge aus Ausleihungen des Finanzanlagevermögens an verbundenen Unternehmen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6806,7 +6807,7 @@
     },
     {
       "account_number": "7015",
-      "name": "Erträge aus Anteilen an Kapitalgesellschaften (verbundene bzw. § 8b Abs. 1 KStG",
+      "name": "Erträge aus Anteilen an Kapitalgesellschaften (verbundene",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6818,19 +6819,19 @@
     },
     {
       "account_number": "7017",
-      "name": "Erträge aus anderen Wertpapieren des Finanzanlagevermögens an Kapitalgesellschaften (verbundene Unternehmen)",
+      "name": "Erträge aus anderen Wertpapieren des Finanzanlagevermögens",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7018",
-      "name": "Erträge aus anderen Wertpapieren des Finanzanlagevermögens an Personengesellschaften",
+      "name": "Erträge aus anderen Wertpapieren des Finanzanlagevermögens",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7019",
-      "name": "Erträge aus anderen Wertpapieren und Ausleihungen des verbundenen Unternehmen",
+      "name": "Erträge aus anderen Wertpapieren und Ausleihungen des Finanzanlagevermögens aus verbundenen Unternehmen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6842,7 +6843,7 @@
     },
     {
       "account_number": "7030",
-      "name": "Erhaltene Ausgleichszahlungen und ähnliche",
+      "name": "Erhaltene Ausgleichszahlungen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6860,7 +6861,7 @@
     },
     {
       "account_number": "7104",
-      "name": "Erträge aus Anteilen an Kapitalgesellschaften (verbundene bzw. § 8b Abs. 1 KStG",
+      "name": "Erträge aus Anteilen an Kapitalgesellschaften (verbundene",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6878,13 +6879,13 @@
     },
     {
       "account_number": "7107",
-      "name": "Zinserträge § 233a AO und",
+      "name": "Zinserträge § 233a AO",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7109",
-      "name": "Sonstige Zinsen und ähnliche nehmen",
+      "name": "Sonstige Zinsen und ähnliche",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6920,55 +6921,55 @@
     },
     {
       "account_number": "7140",
-      "name": "Steuerfreie Zinserträge aus der",
+      "name": "Steuerfreie Zinserträge aus der Abzinsung von Rückstellungen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7141",
-      "name": "Zinserträge aus der Abzinsung von auf Rentenverpflichtungen beruhenden Verbindlichkeiten,",
+      "name": "Zinserträge aus der Abzinsung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7142",
-      "name": "Zinserträge aus der Abzinsung von Rückstellungen",
+      "name": "Zinserträge aus der Abzinsung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7143",
-      "name": "Zinserträge aus der Abzinsung von Pensionsrückstellungen und ähnlichen/vergleichbaren Verpflichtungen und ähnliche che Aufwendungen",
+      "name": "Zinserträge aus der Abzinsung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7144",
-      "name": "Zinserträge aus der Abzinsung von Pensionsrückstellungen und ähnlichen/vergleichbaren Verpflichtungen zur Verrechnung nach § 246 Abs. 2 HGB",
+      "name": "Zinserträge aus der Abzinsung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7145",
-      "name": "Erträge aus Vermögensgegenständen zur Verrechnung nach und auf Grund einer Gewinngemeinschaft, eines Gewinnoder Teilgewinnabführungsvertrags erhaltene Gewinne lustübernahme",
+      "name": "Erträge aus Vermögensgegenständen zur Verrechnung nach Erträge aus Verlustübernahme",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7190",
-      "name": "Erträge aus Verlustübernahme schaft, eines Gewinn- oder Teilgewinnabführungsvertrags erhaltene Gewinne",
+      "name": "Erträge aus Verlustübernahme",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7192",
-      "name": "Erhaltene Gewinne auf Grund einer Gewinngemeinschaft",
+      "name": "Erhaltene Gewinne auf Grund",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7194",
-      "name": "Erhaltene Gewinne auf Grund eines Gewinn- oder Teilgewinnabführungsvertrags lagen und auf Wertpapiere des auf Finanzanlagen und auf Wertpapiere des Umlaufvermögens",
+      "name": "Erhaltene Gewinne auf Grund",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -6998,25 +6999,25 @@
     },
     {
       "account_number": "7208",
-      "name": "Aufwendungen auf Grund von und selbständigen Mitunternehmerschaften, § 8 GewStG bzw.",
+      "name": "Aufwendungen auf Grund von Verlustanteilen an gewerblichen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7210",
-      "name": "Abschreibungen auf Wertpapiere des Umlaufvermögens",
+      "name": "Abschreibungen auf Wertpapiere",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7214",
-      "name": "Abschreibungen auf Wertpapiere des Umlaufvermögens § 3 Nr. 40",
+      "name": "Abschreibungen auf Wertpapiere",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7217",
-      "name": "Abschreibungen auf Wertpapiere des Umlaufvermögens - verbundene Unternehmen",
+      "name": "Abschreibungen auf Wertpapiere",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7046,7 +7047,7 @@
     },
     {
       "account_number": "7303",
-      "name": "Steuerlich abzugsfähige andere",
+      "name": "Steuerlich abzugsfähige andere Nebenleistungen zu Steuern",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7058,19 +7059,19 @@
     },
     {
       "account_number": "7305",
-      "name": "Zinsaufwendungen § 233a AO",
+      "name": "Zinsaufwendungen § 233a AO abzugsfähig",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7306",
-      "name": "Zinsaufwendungen §§ 234 bis",
+      "name": "Zinsaufwendungen §§ 234 bis 237 AO nicht abzugsfähig",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7308",
-      "name": "Zinsaufwendungen § 233a AO",
+      "name": "Zinsaufwendungen § 233a AO nicht abzugsfähig",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7088,13 +7089,13 @@
     },
     {
       "account_number": "7311",
-      "name": "Zinsaufwendungen §§ 234 bis",
+      "name": "Zinsaufwendungen §§ 234 bis 237 AO abzugsfähig",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7313",
-      "name": "Nicht abzugsfähige Schuldzinsen nach § 4 Abs. 4a EStG (Hinzurechnungsbetrag)",
+      "name": "Nicht abzugsfähige Schuldzinsen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7106,7 +7107,7 @@
     },
     {
       "account_number": "7317",
-      "name": "Zinsen an Gesellschafter mit einer Beteiligung von mehr als che Aufwendungen",
+      "name": "Zinsen an Gesellschafter mit einer Beteiligung von mehr als Personen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7130,25 +7131,25 @@
     },
     {
       "account_number": "7323",
-      "name": "Abschreibungen auf ein Agio oder Disagio/Damnum zur",
+      "name": "Abschreibungen auf ein Agio",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7324",
-      "name": "Abschreibungen auf ein Agio oder Disagio/Damnum zur Finanzierung des Anlagevermögens",
+      "name": "Abschreibungen auf ein Agio",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7325",
-      "name": "Zinsaufwendungen für Gebäude,",
+      "name": "Zinsaufwendungen für Gebäude die zum Betriebsvermögen gehören",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7326",
-      "name": "Zinsen zur Finanzierung des",
+      "name": "Zinsen zur Finanzierung des Anlagevermögens",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7202,7 +7203,7 @@
     },
     {
       "account_number": "7360",
-      "name": "Zinsanteil der Zuführungen zu",
+      "name": "Zinsanteil der Zuführungen zu Pensionsrückstellungen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7220,7 +7221,7 @@
     },
     {
       "account_number": "7363",
-      "name": "Zinsaufwendungen aus der Abzinsung von Pensionsrückstellungen und ähnlichen/vergleichbaren Verpflichtungen che Aufwendungen oder und ähnliche",
+      "name": "Zinsaufwendungen aus der Abzinsung von Pensionsrückstellungen und ähnlichen/vergleichbaren Verpflichtungen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7232,97 +7233,97 @@
     },
     {
       "account_number": "7365",
-      "name": "Aufwendungen aus Vermögensgegenständen zur Verrechnung nach § 246 Abs. 2 HGB",
+      "name": "Aufwendungen aus Vermögensgegenständen zur Verrechnung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7366",
-      "name": "Steuerlich nicht abzugsfähige übernahme und auf Grund einer Gewinngemeinschaft,",
+      "name": "Steuerlich nicht abzugsfähige",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7390",
-      "name": "Aufwendungen aus Verlustübernahme schaft, eines Gewinnabführungsoder Teilgewinnabführungsvertrags abgeführte",
+      "name": "Aufwendungen aus Verlustübernahme",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7392",
-      "name": "Abgeführte Gewinne auf Grund einer Gewinngemeinschaft",
+      "name": "Abgeführte Gewinne auf Grund",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7394",
-      "name": "Abgeführte Gewinne auf Grund eines Gewinn- oder Teilgewinnabführungsvertrags Auf Grund einer schaft, eines Gewinnabführungsoder Teilgewinnabführungsvertrags abgeführte lustübernahme",
+      "name": "Abgeführte Gewinne auf Grund",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7398",
-      "name": "Abgeführte Gewinnanteile (Soll) /",
+      "name": "Abgeführte Gewinnanteile (Soll) / ausgeglichene Verlustanteile",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7399",
-      "name": "Abgeführte Gewinnanteile (Soll) /",
+      "name": "Abgeführte Gewinnanteile (Soll) / ausgeglichene Verlustanteile",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7451",
-      "name": "Erträge durch Verschmelzung und Umwandlung von Übergangsvorschriften i. S. d. BilMoG",
+      "name": "Erträge durch Verschmelzung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7551",
-      "name": "Verluste durch Verschmelzung und Umwandlung",
+      "name": "Verluste durch Verschmelzung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7553",
-      "name": "Aufwendungen für Restrukturierungs- und Sanierungsmaßnahmen wendung von Übergangsvorschriften i. S. d. BilMoG",
+      "name": "Aufwendungen für Restrukturie-, rungs- und Sanierungsmaßnahmen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7600",
-      "name": "Körperschaftsteuer kommen und vom Ertrag oder kommen und vom",
+      "name": "Körperschaftsteuer",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7603",
-      "name": "Körperschaft steuer für Vorjahre kommen und vom Ertrag",
+      "name": "Körperschaft steuer für Vorjahre",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7604",
-      "name": "Körperschaftsteuererstattungen für Vorjahre",
+      "name": "Körperschaftsteuererstattungen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7607",
-      "name": "Solidaritätszuschlagerstattungen für Vorjahre",
+      "name": "Solidaritätszuschlagerstattungen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7608",
-      "name": "Solidaritätszuschlag kommen und vom vom Einkommen und vom Ertrag",
+      "name": "Solidaritätszuschlag",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7609",
-      "name": "Solidaritätszuschlag für Vorjahre kommen und vom Ertrag",
+      "name": "Solidaritätszuschlag für Vorjahre",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7352,19 +7353,19 @@
     },
     {
       "account_number": "7639",
-      "name": "Anrechnung/Abzug ausländischer Quellensteuer kommen und vom vom Einkommen und vom Ertrag",
+      "name": "Anrechnung/Abzug ausländischer Quellensteuer",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7641",
-      "name": "Gewerbesteuernachzahlungen und Gewerbesteuererstattungen für Vorjahre nach kommen und vom Ertrag",
+      "name": "Gewerbesteuernachzahlungen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7643",
-      "name": "Erträge aus der Auflösung von nach § 4 Abs. 5b EStG",
+      "name": "Erträge aus der Auflösung von Gewerbesteuerrückstellungen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7376,19 +7377,19 @@
     },
     {
       "account_number": "7646",
-      "name": "Aufwendungen aus der Zuführung zu Steuerrückstellungen für",
+      "name": "Aufwendungen aus der Zuführung zu Steuerrückstellungen für Steuerstundung (BStBK)",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7648",
-      "name": "Erträge aus der Auflösung von stundung (BStBK)",
+      "name": "Erträge aus der Auflösung von Steuerrückstellungen für Steuerstundung (BStBK)",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7649",
-      "name": "Erträge aus der Zuführung und",
+      "name": "Erträge aus der Zuführung und Auflösung von latenten Steuern",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7424,19 +7425,19 @@
     },
     {
       "account_number": "7690",
-      "name": "Steuernachzahlungen Vorjahre für sonstige Steuern",
+      "name": "Steuernachzahlungen Vorjahre",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7692",
-      "name": "Steuererstattungen Vorjahre für sonstige Steuern",
+      "name": "Steuererstattungen Vorjahre",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7694",
-      "name": "Erträge aus der Auflösung von",
+      "name": "Erträge aus der Auflösung von Steuern",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7448,7 +7449,7 @@
     },
     {
       "account_number": "7705",
-      "name": "Gewinnvortrag nach Verwendung tenentwicklung)",
+      "name": "Gewinnvortrag nach Verwendung",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7460,19 +7461,19 @@
     },
     {
       "account_number": "7725",
-      "name": "Verlustvortrag nach Verwendung tenentwicklung)",
+      "name": "Verlustvortrag nach Verwendung",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7730",
-      "name": "Entnahmen aus der Kapitalrücklage gen der gesetzlichen",
+      "name": "Entnahmen aus der Kapitalrücklage gen Entnahmen aus der gesetzlichen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7735",
-      "name": "Entnahmen aus der gesetzlichen Rücklage der Rücklage für herrschenden oder mehrheitlich beteiligten Unternehmen",
+      "name": "Entnahmen aus der gesetzlichen Rücklage",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7484,43 +7485,43 @@
     },
     {
       "account_number": "7743",
-      "name": "Entnahmen aus der Rücklage für Anteile an einem herrschenden oder mehrheitlich beteiligten Unternehmen anderen Ergebnisrücklagen",
+      "name": "Entnahmen aus der Rücklage",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7744",
-      "name": "Entnahmen aus anderen satzungsmäßigen",
+      "name": "Entnahmen aus anderen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7745",
-      "name": "Entnahmen aus satzungsmäßigen Rücklagen anderen",
+      "name": "Entnahmen aus satzungsmäßigen Rücklagen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7750",
-      "name": "Entnahmen aus anderen anderen Rücklagen",
+      "name": "Entnahmen aus anderen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7751",
-      "name": "Entnahmen aus gesamthänderisch gebundenen Rücklagen tenentwicklung)",
+      "name": "Entnahmen aus gesamthänderisch gebundenen Rücklagen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7760",
-      "name": "Einstellungen in die Kapitalrücklage nach den Vorschriften über die vereinfachte Kapitalherabsetzung gen die gesetzliche",
+      "name": "Einstellungen in die Kapitalrücklage nach den Vorschriften gen Einstellungen in die gesetzliche",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7765",
-      "name": "Einstellungen in die gesetzliche die Rücklage für herrschenden oder mehrheitlich beteiligten Unternehmen",
+      "name": "Einstellungen in die gesetzliche",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7532,31 +7533,31 @@
     },
     {
       "account_number": "7773",
-      "name": "Einstellungen in die Rücklage für Anteile an einem herrschenden oder mehrheitlich beteiligten Unternehmen satzungsmäßige",
+      "name": "Einstellungen in die Rücklage",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7775",
-      "name": "Einstellungen in satzungsmäßige Rücklagen andere Gewinnrücklagen",
+      "name": "Einstellungen in satzungsmäßige Rücklagen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7780",
-      "name": "Einstellungen in andere andere Rücklagen",
+      "name": "Einstellungen in andere Gewinnrücklagen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7781",
-      "name": "Einstellungen in gesamthänderisch gebundene Rücklagen tenentwicklung)",
+      "name": "Einstellungen in gesamthänderisch gebundene Rücklagen",
       "account_class": "7",
       "section": "aufwand"
     },
     {
       "account_number": "7785",
-      "name": "Einstellungen in andere gebnis lfd. Jahr gleichsposten)",
+      "name": "Einstellungen in andere Ergebnisrücklagen",
       "account_class": "7",
       "section": "aufwand"
     },
@@ -7676,7 +7677,7 @@
     },
     {
       "account_number": "9142",
-      "name": "Variables Kapital - Anteil Teilhafter anrechenbare",
+      "name": "Variables Kapital - Anteil Teilhafter",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7694,7 +7695,7 @@
     },
     {
       "account_number": "9145",
-      "name": "Privatsteuern Kirchensteuer persönlich haftenden Gesellschafter",
+      "name": "Privatsteuern Kirchensteuer",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7706,7 +7707,7 @@
     },
     {
       "account_number": "9147",
-      "name": "Variables Kapital Teilhafter statistische Konten sungen:",
+      "name": "Variables Kapital Teilhafter",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7724,25 +7725,25 @@
     },
     {
       "account_number": "9152",
-      "name": "Verlust-/Vortragskonto - andere",
+      "name": "Verlust-/Vortragskonto - andere Kapitalkontenanpassungen VH",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9153",
-      "name": "Kapitalkonto III - andere Kapitalkontenanpassungen VH",
+      "name": "Kapitalkonto III - andere Kapitalkontenanpassungen VH Nicht eingeforderte ausstehende Einlagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9154",
-      "name": "Ausstehende Einlagen auf das gefordert - andere Kapitalkontenanpassungen VH",
+      "name": "Ausstehende Einlagen auf das Komplementär-Kapital, nicht eingefordert - andere Kapitalkontenanpassungen VH Kapitalanteil der persönlich haftenden Gesellschafter",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9155",
-      "name": "Verrechnungskonto für Einzahlungsverpflichtungen - andere persönlich haftenden Gesellschafter",
+      "name": "Verrechnungskonto für Einzahlungsverpflichtungen - andere Kapitalkontenanpassungen VH Anrechenbare Privatsteuern",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7760,43 +7761,43 @@
     },
     {
       "account_number": "9159",
-      "name": "Privatsteuern Kirchensteuer sungen:",
+      "name": "Privatsteuern Kirchensteuer",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9160",
-      "name": "Kommandit-Kapital - andere",
+      "name": "Kommandit-Kapital - andere Kapitalkontenanpassungen TH",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9161",
-      "name": "Variables Kapital - andere",
+      "name": "Variables Kapital - andere Kapitalkontenanpassungen TH",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9162",
-      "name": "Verlustausgleichskonto - andere",
+      "name": "Verlustausgleichskonto - andere Kapitalkontenanpassungen TH",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9163",
-      "name": "Kapitalkonto III - andere Kapitalkontenanpassungen TH",
+      "name": "Kapitalkonto III - andere Kapitalkontenanpassungen TH Nicht eingeforderte ausstehende Einlagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9164",
-      "name": "Ausstehende Einlagen auf das fordert - andere Kapitalkontenanpassungen TH",
+      "name": "Ausstehende Einlagen auf das Kommandit-Kapital, nicht eingefordert - andere Kapitalkontenanpassungen TH Kapitalanteile der Kommanditisten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9165",
-      "name": "Verrechnungskonto für Einzahlungsverpflichtungen - andere",
+      "name": "Verrechnungskonto für Einzahlungsverpflichtungen - andere Kapitalkontenanpassungen TH Anrechenbare Privatsteuern",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7814,7 +7815,7 @@
     },
     {
       "account_number": "9169",
-      "name": "Privatsteuern Kirchensteuer statistische Konten r persönlich haftenden Gesellschafter",
+      "name": "Privatsteuern Kirchensteuer r Kapitalanteil der persönlich haftenden Gesellschafter",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7838,13 +7839,13 @@
     },
     {
       "account_number": "9173",
-      "name": "Kapitalkonto III",
+      "name": "Kapitalkonto III - Umbuchungen VH Nicht eingeforderte ausstehende Einlagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9174",
-      "name": "Ausstehende Einlagen auf das gefordert - Umbuchungen VH",
+      "name": "Ausstehende Einlagen auf das Komplementär-Kapital, nicht eingefordert - Umbuchungen VH Kapitalanteil der persönlich haftenden Gesellschafter",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7874,19 +7875,19 @@
     },
     {
       "account_number": "9183",
-      "name": "Kapitalkonto III",
+      "name": "Kapitalkonto III - Umbuchungen TH Nicht eingeforderte ausstehende Einlagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9184",
-      "name": "Ausstehende Einlagen auf das fordert - Umbuchungen TH",
+      "name": "Ausstehende Einlagen auf das Kommandit-Kapital, nicht eingefordert - Umbuchungen TH Kapitalanteile der Kommanditisten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9185",
-      "name": "Verrechnungskonto für Einzahlungsverpflichtungen gegenüber Kommanditisten oder gen Kommanditisten",
+      "name": "Verrechnungskonto für Einzahlungsverpflichtungen ten",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7904,13 +7905,13 @@
     },
     {
       "account_number": "9188",
-      "name": "Privatsteuern kapital",
+      "name": "Privatsteuern",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9189",
-      "name": "Verrechnungskonto für Umbuchungen zwischen Gesellschafter-Eigenkapitalkonten liche Auswertungen",
+      "name": "Verrechnungskonto für Umbuchungen zwischen Gesellschaf-, ter-Eigenkapitalkonten",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -7976,19 +7977,19 @@
     },
     {
       "account_number": "9241",
-      "name": "Investitionsverbindlichkeiten aus verbindlichkeiten",
+      "name": "Investitionsverbindlichkeiten aus Sachanlagekäufen bei Leistungsverbindlichkeiten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9242",
-      "name": "Investitionsverbindlichkeiten aus",
+      "name": "Investitionsverbindlichkeiten aus Käufen von immateriellen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9243",
-      "name": "Investitionsverbindlichkeiten aus",
+      "name": "Investitionsverbindlichkeiten aus Käufen von Finanzanlagen bei Leistungsverbindlichkeiten",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8012,7 +8013,7 @@
     },
     {
       "account_number": "9247",
-      "name": "Forderungen aus Verkäufen von mögensgegenständen",
+      "name": "Forderungen aus Verkäufen von Finanzanlagen bei sonstigen Vermögensgegenständen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8036,13 +8037,13 @@
     },
     {
       "account_number": "9264",
-      "name": "Langfristige Rückstellungen,",
+      "name": "Langfristige Rückstellungen außer Pensionen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9269",
-      "name": "Gegenkonto zu Konten statistische Konten der Bilanz auszuweisende",
+      "name": "Gegenkonto zu Konten",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8054,13 +8055,13 @@
     },
     {
       "account_number": "9271",
-      "name": "Verbindlichkeiten aus der Begebung und Übertragung von",
+      "name": "Verbindlichkeiten aus der Begebung und Übertragung von Wechseln",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9272",
-      "name": "Verbindlichkeiten aus der Begebung und Übertragung von nen/assoziierten Unternehmen",
+      "name": "Verbindlichkeiten aus der Begebung und Übertragung von Wechseln gegenüber verbundenen/assoziierten Unternehmen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8090,19 +8091,19 @@
     },
     {
       "account_number": "9277",
-      "name": "Haftung aus der Bestellung von lichkeiten",
+      "name": "Haftung aus der Bestellung von Sicherheiten für fremde Verbindlichkeiten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9278",
-      "name": "Haftung aus der Bestellung von lichkeiten gegenüber verbundenen/assoziierten Unternehmen",
+      "name": "Haftung aus der Bestellung von Sicherheiten für fremde Verbindlichkeiten gegenüber verbundenen/assoziierten Unternehmen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9279",
-      "name": "Verpflichtungen aus Treuhandvermögen gen finanziellen Verpflichtungen",
+      "name": "Verpflichtungen aus Treuhandvermögen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8114,31 +8115,31 @@
     },
     {
       "account_number": "9281",
-      "name": "Verpflichtungen aus Miet- und",
+      "name": "Verpflichtungen aus Miet- und Leasingverträgen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9282",
-      "name": "Verpflichtungen aus Miet- und verbundenen Unternehmen",
+      "name": "Verpflichtungen aus Miet- und Leasingverträgen gegenüber verbundenen Unternehmen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9283",
-      "name": "Andere Verpflichtungen nach",
+      "name": "Andere Verpflichtungen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9284",
-      "name": "Andere Verpflichtungen nach verbundenen Unternehmen gungsverpflichtungen nach",
+      "name": "Andere Verpflichtungen nach verbundenen Unternehmen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9285",
-      "name": "Unterschiedsbetrag aus der gungsverpflichtungen nach",
+      "name": "Unterschiedsbetrag aus der Abzinsung von Altersversorgungsverpflichtungen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8156,7 +8157,7 @@
     },
     {
       "account_number": "9288",
-      "name": "Mahngebühren bei Buchungen über Debitoren bei",
+      "name": "Mahngebühren bei Buchungen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8180,7 +8181,7 @@
     },
     {
       "account_number": "9292",
-      "name": "Statistisches Konto Fremdgeld lichkeiten",
+      "name": "Statistisches Konto Fremdgeld",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8192,7 +8193,7 @@
     },
     {
       "account_number": "9295",
-      "name": "Einlagen atypisch stiller Gesellschafter gleichsposten",
+      "name": "Einlagen atypisch stiller Gesellschafter",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8210,7 +8211,7 @@
     },
     {
       "account_number": "9299",
-      "name": "Steuerlicher Ausgleichsposten TH",
+      "name": "Steuerlicher Ausgleichsposten TH (Personengesellschaften)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8270,7 +8271,7 @@
     },
     {
       "account_number": "9399",
-      "name": "Gegenkonto für Branchenlösungen für Verrechnung mit KapitalKapitalanteile der",
+      "name": "Gegenkonto für Branchenlösungen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8282,7 +8283,7 @@
     },
     {
       "account_number": "9410",
-      "name": "Privatsteuern (Teilhafter),",
+      "name": "Privatsteuern (Teilhafter) Eigenkapital",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8294,7 +8295,7 @@
     },
     {
       "account_number": "9430",
-      "name": "Sonderausgaben unbeschränkt abzugsfähig (Teilhafter), Eigenkapital statistische Konten",
+      "name": "Sonderausgaben unbeschränkt",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8312,7 +8313,7 @@
     },
     {
       "account_number": "9460",
-      "name": "Grundstücksaufwand (Teilhafter),",
+      "name": "Grundstücksaufwand (Teilhafter) Eigenkapital",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8330,7 +8331,7 @@
     },
     {
       "account_number": "9490",
-      "name": "Privateinlagen (Teilhafter), Eigenkapital persönlich haftenden Gesellschafter",
+      "name": "Privateinlagen (Teilhafter), Eigenkapital",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8510,7 +8511,7 @@
     },
     {
       "account_number": "9790",
-      "name": "Restanteil Teilhafter lagen bei KapCo sönlich haftende",
+      "name": "Restanteil Teilhafter",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8522,7 +8523,7 @@
     },
     {
       "account_number": "9792",
-      "name": "Anteil Rücklagen Kapitalkonto III",
+      "name": "Anteil Rücklagen Kapitalkonto III Vollhafter1)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8546,7 +8547,7 @@
     },
     {
       "account_number": "9796",
-      "name": "Anteil Rücklagen Kapitalkonto III",
+      "name": "Anteil Rücklagen Kapitalkonto III Teilhafter1)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8558,13 +8559,13 @@
     },
     {
       "account_number": "9798",
-      "name": "Gegenkonto Anteil Rücklagen vortrag",
+      "name": "Gegenkonto Anteil Rücklagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9802",
-      "name": "Gesamthänderisch gebundene tenanpassungen vortrag vor Verwendung",
+      "name": "Gesamthänderisch gebundene",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8576,13 +8577,13 @@
     },
     {
       "account_number": "9804",
-      "name": "Gesamthänderisch gebundene vortrag vor Verwendung",
+      "name": "Gesamthänderisch gebundene",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9805",
-      "name": "Gewinnvortrag/Verlustvortrag –",
+      "name": "Gewinnvortrag/Verlustvortrag – Umbuchungen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8594,7 +8595,7 @@
     },
     {
       "account_number": "9807",
-      "name": "Zuzurechnender Anteil am",
+      "name": "Zuzurechnender Anteil am Bilanzgewinn/Bilanzverlust",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8606,7 +8607,7 @@
     },
     {
       "account_number": "9809",
-      "name": "Gegenkonto für zuzurechnenden verlust statistische Konten schaft Vollhafter persönlich haftenden Gesellschafter",
+      "name": "Gegenkonto für zuzurechnenden",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8624,7 +8625,7 @@
     },
     {
       "account_number": "9830",
-      "name": "Verrechnungskonto für Einzahlungsverpflichtungen schaft Teilhafter",
+      "name": "Verrechnungskonto für Einzahlungsverpflichtungen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8636,49 +8637,49 @@
     },
     {
       "account_number": "9850",
-      "name": "Verrechnungskonto für Einzahlungsverpflichtungen pflichtungen persönlich haftender",
+      "name": "Verrechnungskonto für Einzahlungsverpflichtungen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9860",
-      "name": "Einzahlungsverpflichtungen persönlich haftender Gesellschafter pflichtungen",
+      "name": "Einzahlungsverpflichtungen persönlich haftender Gesellschafter",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9870",
-      "name": "Einzahlungsverpflichtungen eigene Anteile für aktivierte eigene Anteile",
+      "name": "Einzahlungsverpflichtungen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9880",
-      "name": "Ausgleichsposten für aktivierte eigene Anteile gen gedeckte Entnahmen mögenseinlagen gedeckte Entnahmen persönlich haftender Gesellschafter",
+      "name": "Ausgleichsposten für aktivierte eigene Anteile",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9883",
-      "name": "Nicht durch Vermögenseinlagen gedeckte Entnahmen persönlich haftender Gesellschafter Nicht durch Vermögenseinlagen gedeckte Entnahmen Kommanditisten",
+      "name": "Nicht durch Vermögenseinlagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9884",
-      "name": "Nicht durch Vermögenseinlagen gedeckte Entnahmen Kommanditisten durch Vermögenseinlagen gedeckte Entnahmen entstandenes negatives Kapital",
+      "name": "Nicht durch Vermögenseinlagen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9885",
-      "name": "Verrechnungskonto für nicht durch Vermögenseinlagen gedeckte Entnahmen persönlich haftender Gesellschafter",
+      "name": "Verrechnungskonto für nicht",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9886",
-      "name": "Verrechnungskonto für nicht durch Vermögenseinlagen gedeckte Entnahmen Kommanditisten statistische Konten schafter",
+      "name": "Verrechnungskonto für nicht ten Vortrags-, Kapital-, Korrektur- und statistische Konten",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8696,19 +8697,19 @@
     },
     {
       "account_number": "9890",
-      "name": "Statistisches Konto für den Gewinnzuschlag nach §§ 6b Abs. 7",
+      "name": "Statistisches Konto für den Gewinnzuschlag nach §§ 6b Abs. 7 und 6c EStG (Haben)",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9891",
-      "name": "Gegenkonto zu statistischen derisch gebundenen Rücklagen",
+      "name": "Gegenkonto zu statistischen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9892",
-      "name": "Veränderung der gesamthänderisch gebundenen Rücklagen zur Korrektur der Forderungen/Verbindlichkeiten (EÜR)",
+      "name": "Veränderung der gesamthänderisch gebundenen Rücklagen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8726,7 +8727,7 @@
     },
     {
       "account_number": "9895",
-      "name": "Gegenkonto 9893-9894 für die",
+      "name": "Gegenkonto 9893-9894 für die Aufteilung der Umsatzsteuer",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8750,7 +8751,7 @@
     },
     {
       "account_number": "9899",
-      "name": "Gegenkonto 9896-9897 für die",
+      "name": "Gegenkonto 9896-9897 für die Aufteilung der Vorsteuer (EÜR)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8774,7 +8775,7 @@
     },
     {
       "account_number": "9906",
-      "name": "Steuerfreie Einnahmen und",
+      "name": "Steuerfreie Einnahmen und (Soll)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8786,19 +8787,19 @@
     },
     {
       "account_number": "9908",
-      "name": "Nicht abzugsfähige Betriebsausgaben nach § 3c Abs. 1 EStG i. V.",
+      "name": "Nicht abzugsfähige Betriebsausgaben nach § 3c Abs. 1 EStG i. V. m. § 3 Nr. 72 EStG (Haben)",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9909",
-      "name": "Gegenkonto zu nicht abzugsfähigen Betriebsausgaben nach statistische Konten",
+      "name": "Gegenkonto zu nicht abzugsfähigen Betriebsausgaben",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9910",
-      "name": "Gegenkonto zur Minderung der",
+      "name": "Gegenkonto zur Minderung",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8816,7 +8817,7 @@
     },
     {
       "account_number": "9913",
-      "name": "Gegenkonto zur Erhöhung der ßerhalb der Bilanz zu berücksichtigenden Investitionsabzugsbetrag nach § 7g EStG",
+      "name": "Gegenkonto zur Erhöhung der (Haben)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8834,13 +8835,13 @@
     },
     {
       "account_number": "9918",
-      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und",
+      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und Wirtschaftsjahr",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9919",
-      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und turen",
+      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und Wirtschaftsjahr",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8852,13 +8853,13 @@
     },
     {
       "account_number": "9961",
-      "name": "Bewertungskorrektur zu sonstigen Verbindlichkeiten haben, Guthaben bei Kreditinstituten und Schecks",
+      "name": "Bewertungskorrektur zu sonstigen Verbindlichkeiten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9962",
-      "name": "Bewertungskorrektur zu Guthaben bei Kreditinstituten gegenüber Kreditinstituten",
+      "name": "Bewertungskorrektur zu Guthaben bei Kreditinstituten",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8870,13 +8871,13 @@
     },
     {
       "account_number": "9964",
-      "name": "Bewertungskorrektur zu Verbindlichkeiten aus Lieferungen und nung)",
+      "name": "Bewertungskorrektur zu Verbindlichkeiten aus Lieferungen und Leistungen (Währungsumrechnung)",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9965",
-      "name": "Bewertungskorrektur zu sonstigen Vermögensgegenständen statistische Konten außerhalb der Bilanz zu berücksichtigenden Investitionsabzugsbetrag nach § 7g EStG",
+      "name": "Bewertungskorrektur zu sonstigen Vermögensgegenständen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8888,13 +8889,13 @@
     },
     {
       "account_number": "9971",
-      "name": "Investitionsabzugsbetrag § 7g",
+      "name": "Investitionsabzugsbetrag § 7g § 7g EStG",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9972",
-      "name": "Hinzurechnung Investitionsabzugsbetrag § 7g Abs. 2 EStG aus dem vorangegangenen Wirtschaftsjahr,",
+      "name": "Hinzurechnung Investitionsabzugsbetrag § 7g Abs. 2 EStG aus dem vorangegangenen Wirtschaftsjahr außerbilanziell (Haben)",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8906,13 +8907,13 @@
     },
     {
       "account_number": "9974",
-      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und 4",
+      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und 4 EStG im vorangegangenen Wirtschaftsjahr",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9975",
-      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und 4",
+      "name": "Rückgängigmachung Investitionsabzugsbetrag § 7g Abs. 3 und 4 EStG in den vorangegangenen",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -8930,43 +8931,43 @@
     },
     {
       "account_number": "9978",
-      "name": "Abziehbare Zinsaufwendungen aus Vorjahren nach § 4h EStG",
+      "name": "Abziehbare Zinsaufwendungen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9979",
-      "name": "Abziehbare Zinsaufwendungen aus Vorjahren nach § 4h EStG",
+      "name": "Abziehbare Zinsaufwendungen",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9980",
-      "name": "Anteil Belastung auf Verbindlichkeitskonten oder Ergebnisverwendung",
+      "name": "Anteil Belastung auf Verbindlichkeitskonten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9981",
-      "name": "Verrechnungskonto für Anteil konten konten oder dung",
+      "name": "Verrechnungskonto für Anteil",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9982",
-      "name": "Anteil Gutschrift auf Verbindlichkeitskonten statistische Konten oder Ergebnisverwendung",
+      "name": "Anteil Gutschrift auf Verbindlichkeitskonten",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9983",
-      "name": "Verrechnungskonto für Anteil konten",
+      "name": "Verrechnungskonto für Anteil",
       "account_class": "9",
       "section": "ertrag"
     },
     {
       "account_number": "9984",
-      "name": "Gewinnkorrektur nach",
+      "name": "Gewinnkorrektur nach - Erhöhung handelsrechtliches",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -9014,7 +9015,7 @@
     },
     {
       "account_number": "9993",
-      "name": "Aufwendungen von außergewöhnlicher Größenordnung oder",
+      "name": "Aufwendungen von außergewöhnlicher Größenordnung",
       "account_class": "9",
       "section": "ertrag"
     },
@@ -9026,7 +9027,7 @@
     },
     {
       "account_number": "9995",
-      "name": "Aufwendungen von außergewöhnlicher Größenordnung oder",
+      "name": "Aufwendungen von außergewöhnlicher Größenordnung",
       "account_class": "9",
       "section": "ertrag"
     },

@@ -32,7 +32,7 @@ final class InvoiceNumberTokens
                     ['label' => 'Länderkürzel', 'codes' => ['{LAND}']],
                     ['label' => 'Timestamp', 'codes' => ['{TS}']],
                     ['label' => 'Kundennummer', 'codes' => ['{KUNDE}']],
-                    ['label' => 'Firmen-ID', 'codes' => ['{FIRMA}']],
+                    ['label' => 'Firmen-ID', 'hint' => 'GOM', 'codes' => ['{FIRMA}']],
                 ],
             ],
         ];
@@ -205,10 +205,27 @@ final class InvoiceNumberTokens
             'KUNDE', 'KUNDENNUMMER' => !empty($context['preview'])
                 ? '{KUNDE}'
                 : (string) ($context['customer_id'] ?? ''),
-            'FIRMA', 'FIRMENID' => !empty($context['preview'])
-                ? '{FIRMA}'
-                : (string) ($context['company_id'] ?? ''),
+            'FIRMA', 'FIRMENID' => self::resolveCompanyId($context),
             default => '{' . $key . '}',
         };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function resolveCompanyId(array $context): string
+    {
+        $companyId = trim((string) ($context['company_id'] ?? ''));
+        if ($companyId !== '') {
+            return $companyId;
+        }
+
+        if (!empty($context['preview'])) {
+            return '{FIRMA}';
+        }
+
+        throw new InvalidArgumentException(
+            'Firmen-ID fehlt — bitte unter Einstellungen → Firmendaten das Kürzel für {FIRMA} pflegen.'
+        );
     }
 }

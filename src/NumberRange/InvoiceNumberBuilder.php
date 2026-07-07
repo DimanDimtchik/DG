@@ -45,10 +45,22 @@ final class InvoiceNumberBuilder
             'country_code' => $country,
             'preview' => true,
             'customer_id' => '',
-            'company_id' => '',
+            'company_id' => CompanySettings::numberRangeCompanyId(),
             'number_display' => $document['number_display'] ?? 'decimal',
             'number_pad' => (int) ($document['number_pad'] ?? 0),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $document
+     * @return array<string, mixed>
+     */
+    public static function allocationContext(array $document, array $overrides = []): array
+    {
+        return array_merge(self::previewContext($document), $overrides, [
+            'preview' => false,
+            'company_id' => CompanySettings::numberRangeCompanyId(),
+        ]);
     }
 
     /** @param array<string, mixed> $document */
@@ -92,12 +104,14 @@ final class InvoiceNumberBuilder
      * @param array<string, mixed> $document
      * @return array{number: string, sequence: int, sequence_display: string, next_sequence: int}
      */
-    public static function peekNext(array $document): array
+    public static function peekNext(array $document, bool $preview = true): array
     {
         $sequence = self::sequenceCounter($document);
         $base = (string) ($document['number_display'] ?? 'decimal');
         $pad = max(0, (int) ($document['number_pad'] ?? 0));
-        $context = self::previewContext($document);
+        $context = $preview
+            ? self::previewContext($document)
+            : self::allocationContext($document);
 
         return [
             'number' => self::build($document, array_merge($context, ['sequence' => $sequence])),

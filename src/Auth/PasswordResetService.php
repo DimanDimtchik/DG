@@ -169,17 +169,34 @@ final class PasswordResetService
         $resetUrl = $baseUrl . '/passwort-zuruecksetzen?token=' . rawurlencode($token);
         $crmName = (string) App::config('crm_name', 'DG');
         $subject = 'Passwort zurücksetzen – ' . $crmName;
+        $displayName = $user->displayName !== '' ? $user->displayName : $user->username;
+        $crmNameEsc = htmlspecialchars($crmName, ENT_QUOTES, 'UTF-8');
+        $resetUrlEsc = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
+        $theme = EmailLayoutSettings::emailTheme();
+        $buttonBg = htmlspecialchars((string) ($theme['primary'] ?? '#2271b1'), ENT_QUOTES, 'UTF-8');
+        $mutedColor = htmlspecialchars((string) ($theme['text_muted'] ?? '#666666'), ENT_QUOTES, 'UTF-8');
 
-        $html = '<p>Hallo ' . htmlspecialchars($user->displayName !== '' ? $user->displayName : $user->username, ENT_QUOTES, 'UTF-8') . ',</p>'
-            . '<p>Sie haben angefordert, Ihr Passwort für ' . htmlspecialchars($crmName, ENT_QUOTES, 'UTF-8') . ' zurückzusetzen.</p>'
-            . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">Neues Passwort festlegen</a></p>'
+        $inner = '<p>Sie haben angefordert, Ihr Passwort für ' . $crmNameEsc . ' zurückzusetzen.</p>'
+            . '<p style="margin:24px 0;">'
+            . '<a href="' . $resetUrlEsc . '" style="display:inline-block;padding:12px 24px;background-color:' . $buttonBg
+            . ';color:#ffffff;text-decoration:none;border-radius:4px;font-weight:600;">Neues Passwort festlegen</a>'
+            . '</p>'
             . '<p>Der Link ist eine Stunde gültig. Falls Sie keine Anfrage gestellt haben, können Sie diese E-Mail ignorieren.</p>'
-            . '<p style="font-size:12px;color:#666;">Falls der Link nicht funktioniert, kopieren Sie diese Adresse in den Browser:<br>'
-            . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '</p>';
+            . '<p style="font-size:12px;line-height:1.5;color:' . $mutedColor . ';">Falls der Link nicht funktioniert, kopieren Sie diese Adresse in den Browser:<br>'
+            . $resetUrlEsc . '</p>';
 
-        $text = "Hallo {$user->displayName},\n\n"
-            . "Passwort zurücksetzen für {$crmName}:\n{$resetUrl}\n\n"
-            . "Der Link ist eine Stunde gültig.\n";
+        $footer = EmailLayoutSettings::resolvedFooter();
+        $footer['opening_greeting'] = 'Hallo ' . $displayName . ',';
+        $html = CalendarEmailLayout::renderPostMessage($inner, $footer);
+
+        $text = "Hallo {$displayName},\n\n"
+            . "Sie haben angefordert, Ihr Passwort für {$crmName} zurückzusetzen.\n\n"
+            . "Neues Passwort festlegen:\n{$resetUrl}\n\n"
+            . "Der Link ist eine Stunde gültig. Falls Sie keine Anfrage gestellt haben, können Sie diese E-Mail ignorieren.\n";
+        $plainClosing = CalendarEmailLayout::closingPlainText($footer);
+        if ($plainClosing !== '') {
+            $text .= "\n" . $plainClosing;
+        }
 
         $message = new MailMessage(
             subject: $subject,

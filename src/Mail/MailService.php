@@ -36,22 +36,7 @@ final class MailService
         }
 
         $htmlBody = self::prepareHtmlBody($message->htmlBody, $mailbox, $actor);
-        $textBody = $message->textBody;
-        if ($mailbox !== null) {
-            $footer = EmailLayoutSettings::resolvedFooter();
-            $footer['signature'] = MailSignatureResolver::resolve($mailbox, $actor);
-            $plainClosing = CalendarEmailLayout::closingPlainText($footer);
-            $opening = trim((string) ($footer['opening_greeting'] ?? ''));
-            $baseText = $textBody !== '' ? $textBody : strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message->htmlBody));
-            if ($opening !== '') {
-                $baseText = $opening . "\n\n" . ltrim($baseText);
-            }
-            if ($plainClosing !== '') {
-                $textBody = rtrim($baseText) . "\n\n" . $plainClosing;
-            } else {
-                $textBody = $baseText;
-            }
-        }
+        $textBody = self::applyPlainTextLayout($message, $mailbox, $actor);
         $preview = MailMessage::bodyPreview($htmlBody);
         $logId = MailLogRepository::createQueued(
             $fromEmail,
@@ -173,7 +158,32 @@ final class MailService
             return CalendarEmailLayout::renderPostMessage($html, $footer);
         }
 
-        return AppearanceSettings::wrapEmailHtml($html);
+        return CalendarEmailLayout::renderPostMessage($html, EmailLayoutSettings::resolvedFooter());
+    }
+
+    private static function applyPlainTextLayout(MailMessage $message, ?array $mailbox, ?User $actor): string
+    {
+        $textBody = $message->textBody;
+        if (stripos($message->htmlBody, '<html') !== false) {
+            return $textBody;
+        }
+
+        $footer = EmailLayoutSettings::resolvedFooter();
+        if ($mailbox !== null) {
+            $footer['signature'] = MailSignatureResolver::resolve($mailbox, $actor);
+        }
+
+        $plainClosing = CalendarEmailLayout::closingPlainText($footer);
+        $opening = trim((string) ($footer['opening_greeting'] ?? ''));
+        $baseText = $textBody !== '' ? $textBody : strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message->htmlBody));
+        if ($opening !== '') {
+            $baseText = $opening . "\n\n" . ltrim($baseText);
+        }
+        if ($plainClosing !== '') {
+            return rtrim($baseText) . "\n\n" . $plainClosing;
+        }
+
+        return $baseText;
     }
 
     public static function sendTest(string $to, ?User $sender = null): int

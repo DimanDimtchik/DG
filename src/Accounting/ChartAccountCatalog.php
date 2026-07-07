@@ -4,6 +4,49 @@ declare(strict_types=1);
 /** Vollständiger SKR-Katalog (GnuCash + german-accounting, MIT). */
 final class ChartAccountCatalog
 {
+    /** Fehlende Standardkonten aus DATEV-PDF-Import (Lücken bei 312x/592x). */
+    private const SUPPLEMENT_VERSION = '2026-07-06-13b';
+
+    /**
+     * @var array<string, list<array{account_number: string, name: string, account_class: string, section: string}>>
+     */
+    private const SUPPLEMENT_ACCOUNTS = [
+        'skr03' => [
+            [
+                'account_number' => '3120',
+                'name' => 'Bauleistungen eines im Inland ansässigen Unternehmers 19 % Vorsteuer und 19 % Umsatzsteuer',
+                'section' => 'aufwand',
+            ],
+            [
+                'account_number' => '3125',
+                'name' => 'Leistungen eines im Ausland ansässigen Unternehmens 19 % Vorsteuer und 19 % Umsatzsteuer',
+                'section' => 'aufwand',
+            ],
+            [
+                'account_number' => '3140',
+                'name' => 'Bauleistungen eines im Inland ansässigen Unternehmers ohne Vorsteuer und 19 % Umsatzsteuer',
+                'section' => 'aufwand',
+            ],
+        ],
+        'skr04' => [
+            [
+                'account_number' => '5920',
+                'name' => 'Bauleistungen eines im Inland ansässigen Unternehmers 19 % Vorsteuer und 19 % Umsatzsteuer',
+                'section' => 'aufwand',
+            ],
+            [
+                'account_number' => '5925',
+                'name' => 'Leistungen eines im Ausland ansässigen Unternehmens 19 % Vorsteuer und 19 % Umsatzsteuer',
+                'section' => 'aufwand',
+            ],
+            [
+                'account_number' => '5940',
+                'name' => 'Bauleistungen eines im Inland ansässigen Unternehmers ohne Vorsteuer und 19 % Umsatzsteuer',
+                'section' => 'aufwand',
+            ],
+        ],
+    ];
+
     /** @var list<array{file: string, format: string}> */
     private const SOURCES = [
         'skr03' => [
@@ -51,6 +94,42 @@ final class ChartAccountCatalog
             }
         }
 
+        foreach (self::SUPPLEMENT_ACCOUNTS[$skrType] ?? [] as $row) {
+            if (isset($byNumber[$row['account_number']])) {
+                continue;
+            }
+            $code = $row['account_number'];
+            $byNumber[$code] = [
+                'account_number' => $code,
+                'name' => $row['name'],
+                'account_class' => substr($code, 0, 1),
+                'section' => $row['section'],
+                'hints' => [
+                    'summary' => $row['name'],
+                    'classification' => self::classificationForSection($row['section']),
+                    'catalog_source' => 'supplement',
+                ],
+            ];
+        }
+
+        foreach (ChartAccountCatalogNameCorrections::forSkr($skrType) as $accountNumber => $correctedName) {
+            if (!isset($byNumber[$accountNumber])) {
+                continue;
+            }
+            $previousName = (string) ($byNumber[$accountNumber]['name'] ?? '');
+            $byNumber[$accountNumber]['name'] = $correctedName;
+            $hints = $byNumber[$accountNumber]['hints'] ?? [];
+            if (!is_array($hints)) {
+                $hints = [];
+            }
+            $oldSummary = trim((string) ($hints['summary'] ?? ''));
+            if ($oldSummary === '' || $oldSummary === $previousName || ($hints['catalog_source'] ?? '') === 'datev-pdf') {
+                $hints['summary'] = $correctedName;
+            }
+            $hints['name_corrected'] = true;
+            $byNumber[$accountNumber]['hints'] = $hints;
+        }
+
         $accounts = array_values($byNumber);
         usort($accounts, static fn (array $a, array $b): int => strcmp($a['account_number'], $b['account_number']));
         self::$cache[$skrType] = $accounts;
@@ -74,7 +153,10 @@ final class ChartAccountCatalog
             }
         }
 
-        return implode('|', $parts);
+        return implode('|', $parts)
+            . '|supplement:' . self::SUPPLEMENT_VERSION
+            . '|repair:' . ChartAccountNameRepair::VERSION
+            . '|names:' . ChartAccountCatalogNameCorrections::VERSION;
     }
 
     /**
@@ -91,7 +173,7 @@ final class ChartAccountCatalog
             }
 
             $code = self::normalizeCode((string) ($row['konto'] ?? $row['account_number'] ?? ''));
-            $name = trim((string) ($row['name'] ?? ''));
+            $name = ChartAccountNameRepair::repair(trim((string) ($row['name'] ?? '')));
             if ($code === '' || $name === '') {
                 continue;
             }

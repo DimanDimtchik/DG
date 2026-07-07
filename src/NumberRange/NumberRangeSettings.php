@@ -12,6 +12,7 @@ final class NumberRangeSettings
             'offer' => 'Angebot',
             'invoice' => 'Rechnung',
             'final_invoice' => 'Schlussrechnung',
+            'credit_note' => 'Kundengutschrift',
             'article' => 'Artikel',
             'service' => 'Leistung',
             'customer' => 'Kundennummer',
@@ -23,7 +24,7 @@ final class NumberRangeSettings
     public static function typeGroups(): array
     {
         return [
-            'Belege' => ['offer', 'invoice', 'final_invoice'],
+            'Belege' => ['offer', 'invoice', 'final_invoice', 'credit_note'],
             'Stammdaten' => ['article', 'service', 'customer', 'supplier'],
         ];
     }
@@ -112,7 +113,7 @@ final class NumberRangeSettings
     public static function allocateNext(string $type, bool $persist = true): array
     {
         $document = self::document($type);
-        $peek = InvoiceNumberBuilder::peekNext($document);
+        $peek = InvoiceNumberBuilder::peekNext($document, !$persist);
         if ($persist) {
             $document['counter'] = (string) $peek['next_sequence'];
             self::persistDocument($type, $document);

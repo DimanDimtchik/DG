@@ -1140,6 +1140,12 @@ switch ($path) {
                     }
                 }
                 Flash::set('success', $flashMessage);
+                $returnTo = trim((string) ($_POST['return_to'] ?? ''));
+                if ($returnTo !== '' && str_starts_with($returnTo, '/app?') && !str_contains($returnTo, '//')) {
+                    $separator = str_contains($returnTo, '?') ? '&' : '?';
+                    header('Location: ' . $returnTo . $separator . 'contact_id=' . $newId, true, 302);
+                    exit;
+                }
                 header('Location: /app?page=kontakte', true, 302);
                 exit;
             } catch (Throwable $e) {
@@ -1392,7 +1398,7 @@ switch ($path) {
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {
             $chartAccountCount = 0;
             $chartCatalogCount = ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
-            $chartHintCount = ChartAccountSeedData::seedCount(ChartOfAccountsSettings::activeSkrType());
+            $chartHintCount = ChartAccountRepository::countWithDetailedHints(ChartOfAccountsSettings::activeSkrType());
             if (Database::isConfigured()) {
                 try {
                     ChartAccountRepository::ensureSeeded(ChartOfAccountsSettings::activeSkrType());
@@ -1412,7 +1418,10 @@ switch ($path) {
             $voucherSearch = trim((string) ($_GET['s'] ?? ''));
             $voucherPage = max(1, (int) ($_GET['paged'] ?? 1));
             $voucherYear = max(2000, (int) ($_GET['year'] ?? date('Y')));
-            $voucherTypeFilter = preg_replace('/[^a-z]/', '', (string) ($_GET['type'] ?? ''));
+            $voucherTypeFilter = (string) ($_GET['type'] ?? '');
+            if (!array_key_exists($voucherTypeFilter, VoucherRepository::voucherTypeOptions())) {
+                $voucherTypeFilter = '';
+            }
             $voucherList = VoucherRepository::list([
                 'year' => $voucherYear,
                 'type' => $voucherTypeFilter,
@@ -1437,6 +1446,21 @@ switch ($path) {
                 $title = 'Neuer Beleg';
                 $currentPage = 'buchhaltung-belege';
                 $form = VoucherRepository::emptyForm();
+                $prefillContactId = (int) ($_GET['contact_id'] ?? 0);
+                if ($prefillContactId > 0) {
+                    $prefillContact = ContactRepository::findById($prefillContactId);
+                    if ($prefillContact !== null) {
+                        $label = trim($prefillContact->companyName);
+                        if ($label === '') {
+                            $label = trim($prefillContact->displayName);
+                        }
+                        $form['contact_id'] = (string) $prefillContactId;
+                        $form['contact_label'] = $label;
+                        if (trim($form['supplier_name']) === '') {
+                            $form['supplier_name'] = $label;
+                        }
+                    }
+                }
                 $formError = null;
             } elseif ($action === 'edit' && $voucherId > 0) {
                 $voucher = VoucherRepository::findById($voucherId);
@@ -1482,6 +1506,10 @@ switch ($path) {
                 $title = 'Neuer Kontakt';
                 $currentPage = 'kontakte';
                 $form = ContactRepository::emptyForm();
+                $kontakteReturnTo = trim((string) ($_GET['return_to'] ?? ''));
+                if ($kontakteReturnTo !== '' && (!str_starts_with($kontakteReturnTo, '/app?') || str_contains($kontakteReturnTo, '//'))) {
+                    $kontakteReturnTo = '';
+                }
                 $formError = null;
                 $bankAccounts = ContactRepository::defaultBankAccounts();
                 $employeeData = EmployeeData::empty();
@@ -1899,7 +1927,7 @@ switch ($path) {
         $chartOfAccountsConfig = $chartOfAccountsConfig ?? ChartOfAccountsSettings::forForm();
         $chartAccountCount = $chartAccountCount ?? 0;
         $chartCatalogCount = $chartCatalogCount ?? ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
-        $chartHintCount = $chartHintCount ?? ChartAccountSeedData::seedCount(ChartOfAccountsSettings::activeSkrType());
+        $chartHintCount = $chartHintCount ?? ChartAccountRepository::countWithDetailedHints(ChartOfAccountsSettings::activeSkrType());
         $voucherSearch = $voucherSearch ?? '';
         $voucherPage = $voucherPage ?? 1;
         $voucherYear = $voucherYear ?? (int) date('Y');

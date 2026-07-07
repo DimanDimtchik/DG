@@ -14,9 +14,15 @@ final class ChartAccountApi
             return;
         }
 
-        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        if ($method === 'POST') {
+            self::handlePost();
+            return;
+        }
+
+        if ($method !== 'GET') {
             http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Nur GET erlaubt.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'Methode nicht erlaubt.'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
@@ -72,9 +78,74 @@ final class ChartAccountApi
         }
     }
 
+    private static function handlePost(): void
+    {
+        $payload = self::readJsonPayload();
+        if (!Csrf::verify(is_string($payload['_csrf'] ?? null) ? $payload['_csrf'] : null)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Sitzung abgelaufen. Bitte Seite neu laden.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $action = trim((string) ($payload['action'] ?? ''));
+        if ($action !== 'update_search_terms') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Unbekannte Aktion.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $accountNumber = trim((string) ($payload['account_number'] ?? ''));
+        if ($accountNumber === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Kontonummer fehlt.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $terms = $payload['search_terms'] ?? [];
+        if (!is_array($terms)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Suchbegriffe ungültig.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $skrType = ChartOfAccountsSettings::activeSkrType();
+            $account = ChartAccountRepository::updateSearchTerms($accountNumber, $terms, $skrType);
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'account' => self::publicAccount($account),
+                ],
+                'message' => 'Suchbegriffe gespeichert.',
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private static function readJsonPayload(): array
+    {
+        $raw = file_get_contents('php://input');
+        if (!is_string($raw) || trim($raw) === '') {
+            return $_POST;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : $_POST;
+    }
+
     /** @param array<string, mixed> $account */
     private static function publicAccount(array $account): array
     {
+        $hints = is_array($account['hints'] ?? null) ? $account['hints'] : [];
+        $searchTerms = ChartAccountHintTerms::normalizeList($hints['search_terms'] ?? []);
+
         return [
             'id' => (int) ($account['id'] ?? 0),
             'account_number' => (string) ($account['account_number'] ?? ''),
@@ -82,7 +153,9 @@ final class ChartAccountApi
             'section' => (string) ($account['section'] ?? ''),
             'section_label' => (string) ($account['section_label'] ?? ''),
             'skr_type' => (string) ($account['skr_type'] ?? ''),
-            'hints' => is_array($account['hints'] ?? null) ? $account['hints'] : [],
+            'hints' => $hints,
+            'search_terms' => $searchTerms,
+            'search_terms_edited' => ($hints['search_terms_edited'] ?? false) === true,
             'digit_breakdown' => is_array($account['digit_breakdown'] ?? null) ? $account['digit_breakdown'] : [],
         ];
     }

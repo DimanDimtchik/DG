@@ -43,6 +43,9 @@ if ($isCompanyForm && $companyEmployees === []) {
 
   <form class="dg-form dg-panel" method="post" action="/app?page=kontakte" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+    <?php if (!empty($kontakteReturnTo ?? '')) : ?>
+      <input type="hidden" name="return_to" value="<?= View::escape($kontakteReturnTo) ?>">
+    <?php endif; ?>
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $contactId ?>"><?php endif; ?>
 
     <h2>Stamm</h2>

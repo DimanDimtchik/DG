@@ -1044,6 +1044,11 @@ code {
   font-weight: 600;
 }
 
+.dg-badge--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .dg-badge--ok {
   background: #edfaef;
   color: #1e4620;
@@ -4006,6 +4011,65 @@ body.dg-login-page {
   margin-top: 6px;
 }
 
+.dg-account-hint__block-head {
+  margin-bottom: 10px;
+}
+
+.dg-account-search-terms__add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dg-account-search-terms__add .dg-input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.dg-account-search-terms__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dg-account-hint__tag--editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 4px;
+}
+
+.dg-account-hint__tag-remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.dg-account-hint__tag-remove:hover {
+  opacity: 1;
+}
+
+.dg-account-search-terms__status--success {
+  color: var(--dg-success, #1a7f37);
+}
+
+.dg-account-search-terms__status--error {
+  color: var(--dg-danger, #c62828);
+}
+
+.dg-account-search-terms__status--info,
+.dg-account-search-terms__status--loading {
+  color: var(--dg-muted, #666);
+}
+
 .dg-dl--compact dt {
   font-size: 0.85rem;
 }
@@ -4023,6 +4087,35 @@ body.dg-login-page {
 /* Buchhaltung — Belegerfassung */
 .dg-buchhaltung-belege__filters {
   margin-bottom: 16px;
+}
+
+.dg-buchhaltung-belege__filters .dg-form-grid--compact {
+  grid-template-columns: 130px minmax(160px, 220px) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px 16px;
+}
+
+.dg-buchhaltung-belege__filters .dg-field--wide {
+  grid-column: auto;
+}
+
+.dg-buchhaltung-belege__filters .dg-field--actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  align-self: end;
+}
+
+@media (max-width: 900px) {
+  .dg-buchhaltung-belege__filters .dg-form-grid--compact {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dg-buchhaltung-belege__filters .dg-field--wide,
+  .dg-buchhaltung-belege__filters .dg-field--actions {
+    grid-column: 1 / -1;
+  }
 }
 
 .dg-buchhaltung-belege__toolbar {
@@ -4104,4 +4197,202 @@ body.dg-login-page {
 .dg-voucher-contact-results__meta {
   font-size: 0.85rem;
   color: var(--dg-text-muted, #5c6678);
+}
+
+.dg-voucher-contact-results__empty {
+  padding: 10px 12px;
+  border: 1px dashed var(--dg-border, #d8dee8);
+  border-radius: 8px;
+  color: var(--dg-text-muted, #5c6678);
+  background: var(--dg-surface-muted, #f6f8fb);
+}
+
+.dg-form-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.dg-form-section__head .dg-subsection-title {
+  margin: 0;
+}
+
+.dg-voucher-split,
+.dg-voucher-booking {
+  margin-top: 12px;
+}
+
+.dg-voucher-split__table input,
+.dg-voucher-split__table select {
+  width: 100%;
+  min-width: 0;
+}
+
+.dg-voucher-split-account-cell {
+  min-width: 260px;
+}
+
+.dg-voucher-split-account-wrap {
+  position: relative;
+}
+
+.dg-voucher-split-account-query.dg-input--error {
+  border-color: #c0392b;
+}
+
+#dg-voucher-contact-search.dg-input--error {
+  border-color: #c0392b;
+}
+
+.dg-voucher-split-search-results {
+  position: relative;
+  z-index: 2;
+}
+
+.dg-voucher-items__table input,
+.dg-voucher-items__table select {
+  width: 100%;
+  min-width: 0;
+}
+
+.dg-voucher-items-article-cell {
+  min-width: 220px;
+}
+
+.dg-voucher-items-article-wrap {
+  position: relative;
+}
+
+.dg-voucher-items-search-results {
+  position: relative;
+  z-index: 2;
+  margin-top: 4px;
+  background: var(--dg-surface, #fff);
+}
+
+#dg-voucher-invoice-items-section .dg-table-wrap {
+  overflow: visible;
+}
+
+#dg-voucher-invoice-items-section .dg-voucher-items__table {
+  overflow: visible;
+}
+
+.dg-voucher-items__row:has(.dg-voucher-items-search-results:not([hidden])) {
+  position: relative;
+  z-index: 3;
+}
+
+.dg-article-search-results__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.dg-article-search-results__item .dg-account-search-results__number {
+  font-size: 0.85rem;
+}
+
+.dg-account-search-results__meta {
+  display: block;
+  font-size: 0.85em;
+  color: var(--dg-muted);
+}
+
+.dg-voucher-booking--derived .dg-voucher-split-account-query,
+.dg-voucher-booking--derived .dg-voucher-split-gross,
+.dg-voucher-booking--derived .dg-voucher-split-tax {
+  opacity: 0.85;
+}
+
+.dg-voucher-booking-derived-hint {
+  margin: 0 0 10px;
+}
+
+.dg-voucher-arap-fields {
+  margin-top: 12px;
+}
+
+.dg-voucher-arap-panel {
+  margin-top: 16px;
+}
+
+.dg-voucher-arap-panel__title {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.dg-voucher-arap-toggle .dg-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dg-table__tax-breakdown {
+  font-size: 0.92em;
+  vertical-align: top;
+}
+
+.dg-table__tax-breakdown-line {
+  display: block;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.dg-table__tax-breakdown-line + .dg-table__tax-breakdown-line {
+  margin-top: 2px;
+}
+
+.dg-voucher-tax-breakdown__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dg-voucher-tax-breakdown__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dg-voucher-tax-breakdown__rate {
+  font-size: 0.85rem;
+  color: var(--dg-muted, #6b7280);
+  font-weight: 600;
+}
+
+.dg-voucher-tax-breakdown__amount {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--dg-border, #d1d5db);
+  border-radius: 6px;
+  background: var(--dg-surface-muted, #f3f4f6);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-voucher-tax-breakdown__total {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.dg-voucher-rc-panels {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.dg-voucher-rc-panel__title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dg-table__empty {
+  color: var(--dg-muted, #6b7280);
+  font-style: italic;
 }

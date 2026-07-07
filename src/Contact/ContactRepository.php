@@ -29,24 +29,8 @@ final class ContactRepository
         $page = max(1, $page);
         $perPage = self::PER_PAGE;
         $offset = ($page - 1) * $perPage;
+        [$where, $params] = self::buildSearchWhere($search, $viewer);
         $pdo = Database::pdo();
-
-        $whereParts = [];
-        $params = [];
-
-        if ($viewer !== null && !ContactAccessResolver::canViewAllContactTypes($viewer)) {
-            $whereParts[] = "contact_role IN ('dg_kunde', 'kunde', 'lieferant')";
-        }
-
-        if ($search !== '') {
-            $whereParts[] = '(
-                login LIKE :q OR display_name LIKE :q OR company_name LIKE :q
-                OR email LIKE :q OR customer_number LIKE :q OR first_name LIKE :q OR last_name LIKE :q
-            )';
-            $params['q'] = '%' . $search . '%';
-        }
-
-        $where = $whereParts !== [] ? 'WHERE ' . implode(' AND ', $whereParts) : '';
 
         $countSql = 'SELECT COUNT(*) FROM dg_contacts ' . $where;
         $stmt = $pdo->prepare($countSql);
@@ -84,6 +68,34 @@ final class ContactRepository
         ];
     }
 
+    /** @return list<Contact> */
+    public static function searchPicker(string $search, int $limit = 15, ?User $viewer = null): array
+    {
+        $limit = max(1, min(50, $limit));
+        [$where, $params] = self::buildSearchWhere($search, $viewer);
+        if ($search === '') {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_contacts ' . $where . ' ORDER BY display_name ASC, company_name ASC LIMIT ' . $limit
+        );
+        $stmt->execute($params);
+
+        $items = [];
+        while ($row = $stmt->fetch()) {
+            $contactId = (int) $row['id'];
+            if (EmployeeRetentionService::applyIfExpired($contactId)) {
+                $refetch = Database::pdo()->prepare('SELECT * FROM dg_contacts WHERE id = :id LIMIT 1');
+                $refetch->execute(['id' => $contactId]);
+                $row = $refetch->fetch() ?: $row;
+            }
+            $items[] = self::map($row);
+        }
+
+        return $items;
+    }
+
     public static function findById(int $id): ?Contact
     {
         self::$retentionPurgedOnLastFind = EmployeeRetentionService::applyIfExpired($id);
@@ -107,6 +119,45 @@ final class ContactRepository
         $stmt->execute($params);
 
         return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, string>}
+     */
+    private static function buildSearchWhere(string $search, ?User $viewer = null): array
+    {
+        $whereParts = [];
+        $params = [];
+
+        if ($viewer !== null && !ContactAccessResolver::canViewAllContactTypes($viewer)) {
+            $whereParts[] = "contact_role IN ('dg_kunde', 'kunde', 'lieferant')";
+        }
+
+        if ($search !== '') {
+            $searchFields = [
+                'login',
+                'display_name',
+                'company_name',
+                'email',
+                'customer_number',
+                'first_name',
+                'last_name',
+            ];
+            $searchLikes = [];
+            foreach ($searchFields as $index => $field) {
+                $param = 'q' . $index;
+                $searchLikes[] = $field . ' LIKE :' . $param;
+                $params[$param] = '%' . $search . '%';
+            }
+            $whereParts[] = '(
+                ' . implode(' OR ', $searchLikes) . '
+            )';
+        }
+
+        return [
+            $whereParts !== [] ? 'WHERE ' . implode(' AND ', $whereParts) : '',
+            $params,
+        ];
     }
 
     /** @param array<string, mixed> $data */

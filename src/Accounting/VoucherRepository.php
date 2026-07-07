@@ -9,20 +9,31 @@ final class VoucherRepository
     public static function voucherTypeOptions(): array
     {
         return [
-            'receipt' => 'Quittung',
-            'expense' => 'Ausgabe / Beleg',
-            'invoice' => 'Eingangsrechnung',
-            'credit' => 'Gutschrift',
+            'income' => 'Einnahmen',
+            'income_reduction' => 'Einnahmenminderung',
+            'expense' => 'Ausgaben',
+            'expense_reduction' => 'Ausgabenminderung',
+            'credit' => 'Kundengutschrift',
         ];
+    }
+
+    /** Kurz erklärung je Belegart (Lexoffice / EÜR-Logik). */
+    public static function voucherTypeHint(string $type): string
+    {
+        return match (self::sanitizeVoucherType($type)) {
+            'income' => 'Geldzufluss bzw. Ertrag — z. B. Barverkauf, sonstige Betriebseinnahmen.',
+            'income_reduction' => 'Mindert eine frühere Einnahme — z. B. Erlösschmälerung, Skonto von Kunden.',
+            'expense' => 'Geldabfluss bzw. Aufwand — z. B. Eingangsrechnung, Quittung, Betriebsausgabe.',
+            'expense_reduction' => 'Mindert eine frühere Ausgabe — z. B. Erstattung, Skonto vom Lieferanten.',
+            'credit' => 'Kundengutschrift an einen Kunden — mindert einen früheren Umsatz (z. B. Korrektur zu Ihrer Ausgangsrechnung). Nicht für Lieferantengutschriften — dafür „Ausgabenminderung“.',
+            default => '',
+        };
     }
 
     /** @return array<string, string> */
     public static function paymentStatusOptions(): array
     {
-        return [
-            'open' => 'Offen',
-            'paid' => 'Bezahlt',
-        ];
+        return VoucherPaymentStatus::options();
     }
 
     /**
@@ -45,7 +56,7 @@ final class VoucherRepository
 
         $page = max(1, (int) ($filters['page'] ?? 1));
         $year = isset($filters['year']) && (int) $filters['year'] > 0 ? (int) $filters['year'] : null;
-        $type = self::sanitizeVoucherType((string) ($filters['type'] ?? ''));
+        $type = self::sanitizeVoucherTypeFilter((string) ($filters['type'] ?? ''));
         $search = trim((string) ($filters['search'] ?? ''));
 
         $where = [];
@@ -63,11 +74,17 @@ final class VoucherRepository
 
         if ($search !== '') {
             $where[] = '(
-                v.supplier_name LIKE :q OR v.invoice_number LIKE :q
-                OR v.description LIKE :q OR v.account_number LIKE :q
-                OR c.display_name LIKE :q OR c.company_name LIKE :q
+                v.supplier_name LIKE :q1 OR v.invoice_number LIKE :q2
+                OR v.description LIKE :q3 OR v.account_number LIKE :q4
+                OR c.display_name LIKE :q5 OR c.company_name LIKE :q6
             )';
-            $params['q'] = '%' . $search . '%';
+            $like = '%' . $search . '%';
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+            $params['q3'] = $like;
+            $params['q4'] = $like;
+            $params['q5'] = $like;
+            $params['q6'] = $like;
         }
 
         $whereSql = $where !== [] ? 'WHERE ' . implode(' AND ', $where) : '';
@@ -148,7 +165,191 @@ final class VoucherRepository
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
-        return $row ? self::enrichRow($row) : null;
+        if (!$row) {
+            return null;
+        }
+
+        $enriched = self::enrichRow($row);
+        $enriched['lines'] = self::linesForVoucher($id, true);
+        $enriched['system_lines'] = self::linesForVoucher($id, false, true);
+        $enriched['items'] = self::itemsForVoucher($id);
+
+        return $enriched;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function linesForVoucher(int $voucherId, bool $bookingOnly = false, bool $systemOnly = false): array
+    {
+        if (!Database::isConfigured() || $voucherId < 1) {
+            return [];
+        }
+
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_voucher_lines WHERE voucher_id = :id ORDER BY line_no ASC, id ASC'
+        );
+        $stmt->execute(['id' => $voucherId]);
+        $lines = [];
+        $skrType = ChartOfAccountsSettings::activeSkrType();
+        while ($row = $stmt->fetch()) {
+            $lineKind = (string) ($row['line_kind'] ?? VoucherReverseCharge::LINE_BOOKING);
+            if ($bookingOnly && $lineKind !== VoucherReverseCharge::LINE_BOOKING) {
+                continue;
+            }
+            if ($systemOnly && $lineKind === VoucherReverseCharge::LINE_BOOKING) {
+                continue;
+            }
+            $accountName = '';
+            $accountNumber = (string) ($row['account_number'] ?? '');
+            if ($accountNumber !== '') {
+                $account = ChartAccountRepository::findByNumber($accountNumber, $skrType);
+                if ($account !== null) {
+                    $accountName = (string) ($account['name'] ?? '');
+                }
+            }
+            $lines[] = [
+                'line_kind' => $lineKind,
+                'account_number' => $accountNumber,
+                'account_name' => $accountName,
+                'description' => (string) ($row['description'] ?? ''),
+                'gross_amount' => self::formatMoney((float) ($row['gross_amount'] ?? 0)),
+                'net_amount' => self::formatMoney((float) ($row['net_amount'] ?? 0)),
+                'tax_amount' => self::formatMoney((float) ($row['tax_amount'] ?? 0)),
+                'tax_rate' => (string) ($row['tax_rate'] ?? '19'),
+                'ustva_kz' => (string) ($row['ustva_kz'] ?? ''),
+                'posting_side' => (string) ($row['posting_side'] ?? ''),
+            ];
+        }
+
+        return $lines;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function itemsForVoucher(int $voucherId): array
+    {
+        if (!Database::isConfigured() || $voucherId < 1) {
+            return [];
+        }
+
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_voucher_items WHERE voucher_id = :id ORDER BY line_no ASC, id ASC'
+        );
+        $stmt->execute(['id' => $voucherId]);
+        $items = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $items[] = [
+                'article_id' => (string) ($row['article_id'] ?? ''),
+                'catalog_kind' => (string) ($row['catalog_kind'] ?? ''),
+                'article_number' => (string) ($row['article_number'] ?? ''),
+                'title' => (string) ($row['title'] ?? ''),
+                'area_id' => (string) ($row['area_id'] ?? ''),
+                'area_name' => (string) ($row['area_name'] ?? ''),
+                'unit' => (string) ($row['unit'] ?? 'Stück'),
+                'quantity' => self::formatQuantity((float) ($row['quantity'] ?? 1)),
+                'unit_price_gross' => self::formatMoney((float) ($row['unit_price_gross'] ?? 0)),
+                'gross_amount' => self::formatMoney((float) ($row['gross_amount'] ?? 0)),
+                'tax_rate' => (string) ($row['tax_rate'] ?? '19'),
+                'tax_type' => (string) ($row['tax_type'] ?? 'ust19'),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $itemRows
+     */
+    private static function replaceItems(int $voucherId, array $itemRows): void
+    {
+        MigrationRunner::runPending();
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM dg_voucher_items WHERE voucher_id = :id')->execute(['id' => $voucherId]);
+        if ($itemRows === []) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_voucher_items (
+                voucher_id, line_no, article_id, catalog_kind, article_number, title,
+                area_id, area_name, unit, quantity, unit_price_gross, gross_amount, tax_rate, tax_type
+            ) VALUES (
+                :voucher_id, :line_no, :article_id, :catalog_kind, :article_number, :title,
+                :area_id, :area_name, :unit, :quantity, :unit_price_gross, :gross_amount, :tax_rate, :tax_type
+            )'
+        );
+
+        $lineNo = 1;
+        foreach ($itemRows as $row) {
+            $stmt->execute([
+                'voucher_id' => $voucherId,
+                'line_no' => $lineNo,
+                'article_id' => max(0, (int) ($row['article_id'] ?? 0)),
+                'catalog_kind' => (string) ($row['catalog_kind'] ?? CalendarArticleCatalog::KIND_SERVICE),
+                'article_number' => (string) ($row['article_number'] ?? ''),
+                'title' => (string) ($row['title'] ?? ''),
+                'area_id' => max(0, (int) ($row['area_id'] ?? 0)),
+                'area_name' => (string) ($row['area_name'] ?? ''),
+                'unit' => (string) ($row['unit'] ?? 'Stück'),
+                'quantity' => (float) ($row['quantity'] ?? 1),
+                'unit_price_gross' => (float) ($row['unit_price_gross'] ?? 0),
+                'gross_amount' => (float) ($row['gross_amount'] ?? 0),
+                'tax_rate' => (int) ($row['tax_rate'] ?? 19),
+                'tax_type' => (string) ($row['tax_type'] ?? 'ust19'),
+            ]);
+            $lineNo++;
+        }
+    }
+
+    public static function formatQuantity(float $quantity): string
+    {
+        $formatted = number_format($quantity, 3, ',', '.');
+        $formatted = rtrim(rtrim($formatted, '0'), ',');
+
+        return $formatted === '' ? '0' : $formatted;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rawLines
+     * @return array{lines: list<array<string, mixed>>, ustva_positions: list<array{kz: string, net: float, tax: float}>}
+     */
+    public static function previewReverseChargePostings(array $rawLines, string $reverseChargeType): array
+    {
+        $type = VoucherReverseCharge::sanitizeType($reverseChargeType);
+        if ($type === '') {
+            return ['lines' => [], 'ustva_positions' => []];
+        }
+
+        $bookingLines = self::parseLineRows(['lines' => $rawLines], true, $type);
+
+        return VoucherReverseCharge::buildPostings($bookingLines, $type, ChartOfAccountsSettings::activeSkrType());
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rawLines
+     * @return list<array<string, mixed>>
+     */
+    public static function previewAccrualPostings(
+        array $rawLines,
+        string $voucherType,
+        int $currentPercent,
+        int $nextPercent,
+        string $voucherDate,
+    ): array {
+        $bookingLines = self::parseLineRows(['lines' => $rawLines], false);
+        $fiscalYear = (int) date('Y', strtotime($voucherDate !== '' ? $voucherDate : 'today'));
+
+        return VoucherAccrual::previewRows(
+            $bookingLines,
+            $voucherType,
+            ChartOfAccountsSettings::activeSkrType(),
+            $currentPercent,
+            $nextPercent,
+            $fiscalYear,
+            $fiscalYear + 1,
+        );
     }
 
     /** @param array<string, mixed> $data */
@@ -166,6 +367,7 @@ final class VoucherRepository
             throw new InvalidArgumentException('Belegdatum ist erforderlich.');
         }
         $voucherDate = date('Y-m-d', strtotime($voucherDate));
+        $deliveryDate = self::parseOptionalDate((string) ($data['delivery_date'] ?? ''));
 
         $contactId = max(0, (int) ($data['contact_id'] ?? 0));
         $contactId = $contactId > 0 ? $contactId : null;
@@ -174,45 +376,121 @@ final class VoucherRepository
         }
 
         $supplierName = trim((string) ($data['supplier_name'] ?? ''));
-        if ($supplierName === '' && $contactId === null) {
-            throw new InvalidArgumentException('Lieferant / Kontakt oder Name ist erforderlich.');
+        if ($contactId === null) {
+            throw new InvalidArgumentException('Bitte einen gespeicherten Kontakt aus dem CRM auswählen. Ein Freitext ohne Kontaktverknüpfung reicht nicht.');
+        }
+        if ($supplierName === '') {
+            $contact = ContactRepository::findById($contactId);
+            if ($contact !== null) {
+                $supplierName = trim($contact->companyName);
+                if ($supplierName === '') {
+                    $supplierName = trim($contact->displayName);
+                }
+            }
+        }
+        if ($supplierName === '') {
+            throw new InvalidArgumentException('Name des Kontakts / Lieferanten ist erforderlich.');
         }
 
         $taxRate = VoucherTaxKeys::sanitizeTaxRate((int) ($data['tax_rate'] ?? 19));
+        $reverseChargeType = VoucherReverseCharge::sanitizeType((string) ($data['reverse_charge_type'] ?? ''));
+        if ($reverseChargeType === '' && (!empty($data['reverse_charge']) || VoucherTaxKeys::isReverseChargeKey((string) ($data['tax_key'] ?? '')))) {
+            $reverseChargeType = VoucherReverseCharge::TYPE_EU;
+        }
+        $reverseCharge = VoucherReverseCharge::isActive($reverseChargeType);
+        $taxKey = $reverseCharge ? VoucherTaxKeys::KEY_REVERSE_CHARGE : '';
+        $arap = VoucherAccrual::parseFromData($data);
+        if (VoucherAccrual::isIncomeType($voucherType)) {
+            $arap = [
+                'enabled' => false,
+                'current_year_percent' => 100,
+                'next_year_percent' => 0,
+            ];
+        }
+        if ($arap['enabled'] && $reverseCharge) {
+            throw new InvalidArgumentException('Rechnungsabgrenzung und Reverse Charge können nicht gleichzeitig aktiv sein.');
+        }
+        $skrType = ChartOfAccountsSettings::activeSkrType();
+        ChartAccountRepository::ensureSeeded($skrType);
+        $usesInvoiceItems = VoucherIncomePositions::usesInvoiceItems($voucherType);
+        /** @var list<array<string, mixed>> $itemRows */
+        $itemRows = $usesInvoiceItems ? VoucherIncomePositions::parseItemRows($data) : [];
         $gross = round((float) str_replace(',', '.', (string) ($data['gross_amount'] ?? '0')), 2);
-        if ($gross <= 0) {
-            throw new InvalidArgumentException('Bruttobetrag muss größer als 0 sein.');
+        /** @var list<array<string, mixed>> $lineRows */
+        if ($usesInvoiceItems && $itemRows !== []) {
+            $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType);
+            if ($bookingLines === []) {
+                throw new InvalidArgumentException('Mindestens eine Rechnungsposition mit Betrag ist erforderlich.');
+            }
+        } else {
+            $bookingLines = self::parseLineRows($data, $reverseCharge, $reverseChargeType);
+        }
+        $ustvaSnapshot = null;
+        if ($reverseCharge) {
+            $built = VoucherReverseCharge::buildPostings($bookingLines, $reverseChargeType, ChartOfAccountsSettings::activeSkrType());
+            $lineRows = $built['lines'];
+            $ustvaSnapshot = json_encode($built['ustva_positions'], JSON_THROW_ON_ERROR);
+        } elseif ($arap['enabled']) {
+            $fiscalYear = (int) date('Y', strtotime($voucherDate));
+            $lineRows = VoucherAccrual::buildPostings(
+                $bookingLines,
+                $voucherType,
+                $skrType,
+                $arap['current_year_percent'],
+                $arap['next_year_percent'],
+                $fiscalYear + 1,
+            );
+        } else {
+            $lineRows = $bookingLines;
+        }
+
+        if ($gross <= 0 && $bookingLines !== []) {
+            $gross = round(array_sum(array_map(static fn (array $row): float => (float) $row['gross_amount'], $bookingLines)), 2);
         }
 
         $amounts = VoucherTaxKeys::calcTaxFromGross($gross, $taxRate);
-        if (isset($data['net_amount']) && (string) $data['net_amount'] !== '') {
-            $amounts['net_amount'] = round((float) str_replace(',', '.', (string) $data['net_amount']), 2);
-            $amounts['tax_amount'] = round($gross - $amounts['net_amount'], 2);
+        $accountNumber = preg_replace('/\D/', '', (string) ($data['account_number'] ?? '')) ?? '';
+        if ($lineRows !== []) {
+            $accountNumber = (string) ($bookingLines[0]['account_number'] ?? '');
+            $amounts = self::sumLineAmounts($bookingLines);
+            $gross = $amounts['gross_amount'];
+            $taxRate = (int) ($bookingLines[0]['tax_rate'] ?? 19);
+        } elseif ($gross <= 0) {
+            throw new InvalidArgumentException('Bruttobetrag muss größer als 0 sein.');
         }
 
-        $accountNumber = preg_replace('/\D/', '', (string) ($data['account_number'] ?? '')) ?? '';
         if ($accountNumber === '') {
             throw new InvalidArgumentException('Kontonummer ist erforderlich.');
         }
-
-        $skrType = ChartOfAccountsSettings::activeSkrType();
-        ChartAccountRepository::ensureSeeded($skrType);
         if (ChartAccountRepository::findByNumber($accountNumber, $skrType) === null) {
             throw new InvalidArgumentException('Kontonummer nicht im aktiven Kontenrahmen gefunden.');
+        }
+
+        foreach ($lineRows as $lineRow) {
+            $lineAccount = (string) ($lineRow['account_number'] ?? '');
+            if ($lineAccount === '' || ChartAccountRepository::findByNumber($lineAccount, $skrType) === null) {
+                throw new InvalidArgumentException('Buchungszeile: Kontonummer nicht im Kontenrahmen gefunden.');
+            }
         }
 
         $fields = [
             'voucher_type' => $voucherType,
             'voucher_date' => $voucherDate,
+            'delivery_date' => $deliveryDate,
+            'arap_enabled' => $arap['enabled'] ? 1 : 0,
+            'arap_current_year_percent' => $arap['current_year_percent'],
+            'arap_next_year_percent' => $arap['next_year_percent'],
             'contact_id' => $contactId,
             'supplier_name' => $supplierName,
-            'invoice_number' => trim((string) ($data['invoice_number'] ?? '')),
+            'invoice_number' => self::resolveInvoiceNumber($voucherType, $data, $id),
             'description' => trim((string) ($data['description'] ?? '')),
             'gross_amount' => $amounts['gross_amount'],
             'net_amount' => $amounts['net_amount'],
             'tax_amount' => $amounts['tax_amount'],
             'tax_rate' => $taxRate,
-            'tax_key' => VoucherTaxKeys::sanitizeTaxKey((string) ($data['tax_key'] ?? '')),
+            'tax_key' => $taxKey,
+            'reverse_charge_type' => $reverseChargeType,
+            'ustva_snapshot' => $ustvaSnapshot,
             'account_number' => $accountNumber,
             'payment_status' => self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open')),
             'notes' => trim((string) ($data['notes'] ?? '')),
@@ -225,6 +503,10 @@ final class VoucherRepository
                 'UPDATE dg_vouchers SET
                     voucher_type = :voucher_type,
                     voucher_date = :voucher_date,
+                    delivery_date = :delivery_date,
+                    arap_enabled = :arap_enabled,
+                    arap_current_year_percent = :arap_current_year_percent,
+                    arap_next_year_percent = :arap_next_year_percent,
                     contact_id = :contact_id,
                     supplier_name = :supplier_name,
                     invoice_number = :invoice_number,
@@ -234,6 +516,8 @@ final class VoucherRepository
                     tax_amount = :tax_amount,
                     tax_rate = :tax_rate,
                     tax_key = :tax_key,
+                    reverse_charge_type = :reverse_charge_type,
+                    ustva_snapshot = :ustva_snapshot,
                     account_number = :account_number,
                     payment_status = :payment_status,
                     notes = :notes
@@ -241,6 +525,8 @@ final class VoucherRepository
             );
             $fields['id'] = $id;
             $stmt->execute($fields);
+            self::replaceLines($id, $lineRows);
+            self::replaceItems($id, $itemRows);
 
             return $id;
         }
@@ -248,18 +534,153 @@ final class VoucherRepository
         $fields['created_by'] = $userId;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_vouchers (
-                voucher_type, voucher_date, contact_id, supplier_name, invoice_number, description,
-                gross_amount, net_amount, tax_amount, tax_rate, tax_key, account_number,
-                payment_status, notes, created_by
+                voucher_type, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
+                contact_id, supplier_name, invoice_number, description,
+                gross_amount, net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
+                account_number, payment_status, notes, created_by
             ) VALUES (
-                :voucher_type, :voucher_date, :contact_id, :supplier_name, :invoice_number, :description,
-                :gross_amount, :net_amount, :tax_amount, :tax_rate, :tax_key, :account_number,
-                :payment_status, :notes, :created_by
+                :voucher_type, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
+                :contact_id, :supplier_name, :invoice_number, :description,
+                :gross_amount, :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
+                :account_number, :payment_status, :notes, :created_by
             )'
         );
         $stmt->execute($fields);
+        $newId = (int) $pdo->lastInsertId();
+        self::replaceLines($newId, $lineRows);
+        self::replaceItems($newId, $itemRows);
 
-        return (int) $pdo->lastInsertId();
+        return $newId;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return list<array{account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int}>
+     */
+    private static function parseLineRows(array $data, bool $reverseCharge, string $reverseChargeType = ''): array
+    {
+        $rawLines = $data['lines'] ?? [];
+        if (!is_array($rawLines)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($rawLines as $line) {
+            if (!is_array($line)) {
+                continue;
+            }
+            $accountNumber = preg_replace('/\D/', '', (string) ($line['account_number'] ?? '')) ?? '';
+            $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+            if ($accountNumber === '' || $gross <= 0) {
+                continue;
+            }
+            $rate = $reverseCharge
+                ? VoucherReverseCharge::sanitizeLineTaxRate($reverseChargeType, (int) ($line['tax_rate'] ?? 19))
+                : VoucherTaxKeys::sanitizeTaxRate((int) ($line['tax_rate'] ?? 19));
+            $amounts = VoucherTaxKeys::calcLineAmounts($gross, $rate, $reverseCharge);
+            $rows[] = [
+                'line_kind' => VoucherReverseCharge::LINE_BOOKING,
+                'account_number' => $accountNumber,
+                'description' => trim((string) ($line['description'] ?? '')),
+                'gross_amount' => $amounts['gross_amount'],
+                'net_amount' => $amounts['net_amount'],
+                'tax_amount' => $amounts['tax_amount'],
+                'tax_rate' => $rate,
+                'ustva_kz' => '',
+                'posting_side' => 'debit',
+            ];
+        }
+
+        if ($rows === []) {
+            throw new InvalidArgumentException('Mindestens eine Buchungszeile mit Konto und Betrag ist erforderlich.');
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $bookingLines
+     * @return array{gross_amount: float, net_amount: float, tax_amount: float}
+     */
+    private static function amountsFromBookingLines(array $bookingLines, bool $reverseCharge): array
+    {
+        $rows = [];
+        foreach ($bookingLines as $line) {
+            if (!is_array($line)) {
+                continue;
+            }
+            $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+            if ($gross <= 0) {
+                continue;
+            }
+            $rate = (int) ($line['tax_rate'] ?? 19);
+            $amounts = VoucherTaxKeys::calcLineAmounts($gross, $rate, $reverseCharge);
+            $rows[] = $amounts;
+        }
+
+        return $rows === [] ? ['gross_amount' => 0.0, 'net_amount' => 0.0, 'tax_amount' => 0.0] : self::sumLineAmounts($rows);
+    }
+
+    /**
+     * @param list<array{gross_amount: float, net_amount: float, tax_amount: float}> $lineRows
+     * @return array{gross_amount: float, net_amount: float, tax_amount: float}
+     */
+    private static function sumLineAmounts(array $lineRows): array
+    {
+        $gross = 0.0;
+        $net = 0.0;
+        $tax = 0.0;
+        foreach ($lineRows as $row) {
+            $gross += (float) $row['gross_amount'];
+            $net += (float) $row['net_amount'];
+            $tax += (float) $row['tax_amount'];
+        }
+
+        return [
+            'gross_amount' => round($gross, 2),
+            'net_amount' => round($net, 2),
+            'tax_amount' => round($tax, 2),
+        ];
+    }
+
+    /**
+     * @param list<array{account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int}> $lineRows
+     */
+    private static function replaceLines(int $voucherId, array $lineRows): void
+    {
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM dg_voucher_lines WHERE voucher_id = :id')->execute(['id' => $voucherId]);
+        if ($lineRows === []) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_voucher_lines (
+                voucher_id, line_no, line_kind, account_number, description,
+                gross_amount, net_amount, tax_amount, tax_rate, ustva_kz, posting_side
+            ) VALUES (
+                :voucher_id, :line_no, :line_kind, :account_number, :description,
+                :gross_amount, :net_amount, :tax_amount, :tax_rate, :ustva_kz, :posting_side
+            )'
+        );
+
+        $lineNo = 1;
+        foreach ($lineRows as $row) {
+            $stmt->execute([
+                'voucher_id' => $voucherId,
+                'line_no' => $lineNo,
+                'line_kind' => (string) ($row['line_kind'] ?? VoucherReverseCharge::LINE_BOOKING),
+                'account_number' => $row['account_number'],
+                'description' => $row['description'] ?? '',
+                'gross_amount' => $row['gross_amount'],
+                'net_amount' => $row['net_amount'],
+                'tax_amount' => $row['tax_amount'],
+                'tax_rate' => $row['tax_rate'],
+                'ustva_kz' => (string) ($row['ustva_kz'] ?? ''),
+                'posting_side' => ($row['posting_side'] ?? '') !== '' ? $row['posting_side'] : null,
+            ]);
+            $lineNo++;
+        }
     }
 
     public static function delete(int $id): void
@@ -278,6 +699,10 @@ final class VoucherRepository
         return [
             'voucher_type' => 'expense',
             'voucher_date' => date('Y-m-d'),
+            'delivery_date' => date('Y-m-d'),
+            'arap_enabled' => '0',
+            'arap_current_year_percent' => '100',
+            'arap_next_year_percent' => '0',
             'contact_id' => '',
             'contact_label' => '',
             'supplier_name' => '',
@@ -287,20 +712,88 @@ final class VoucherRepository
             'net_amount' => '',
             'tax_amount' => '',
             'tax_rate' => '19',
-            'tax_key' => VoucherTaxKeys::KEY_VST_19,
+            'tax_key' => '',
+            'reverse_charge_type' => '',
+            'ustva_snapshot' => '',
             'account_number' => '',
             'account_name' => '',
             'payment_status' => 'open',
             'notes' => '',
+            'lines' => [
+                [
+                    'account_number' => '',
+                    'account_name' => '',
+                    'gross_amount' => '',
+                    'tax_rate' => '19',
+                ],
+            ],
+            'items' => [
+                [
+                    'article_id' => '',
+                    'catalog_kind' => '',
+                    'article_number' => '',
+                    'title' => '',
+                    'area_id' => '',
+                    'area_name' => '',
+                    'unit' => 'Stück',
+                    'quantity' => '1',
+                    'unit_price_gross' => '',
+                    'gross_amount' => '',
+                    'tax_rate' => '19',
+                    'tax_type' => 'ust19',
+                ],
+            ],
         ];
     }
 
     /** @param array<string, mixed> $row */
     public static function toForm(array $row): array
     {
+        $lines = is_array($row['lines'] ?? null) ? $row['lines'] : self::linesForVoucher((int) ($row['id'] ?? 0), true);
+        $items = is_array($row['items'] ?? null) ? $row['items'] : self::itemsForVoucher((int) ($row['id'] ?? 0));
+        if ($items === [] && VoucherIncomePositions::usesInvoiceItems((string) ($row['voucher_type'] ?? ''))) {
+            $items = [
+                [
+                    'article_id' => '',
+                    'catalog_kind' => '',
+                    'article_number' => '',
+                    'title' => '',
+                    'area_id' => '',
+                    'area_name' => '',
+                    'unit' => 'Stück',
+                    'quantity' => '1',
+                    'unit_price_gross' => '',
+                    'gross_amount' => '',
+                    'tax_rate' => '19',
+                    'tax_type' => 'ust19',
+                ],
+            ];
+        }
+        if ($lines === [] && (string) ($row['account_number'] ?? '') !== '') {
+            $lines = [[
+                'account_number' => (string) ($row['account_number'] ?? ''),
+                'account_name' => (string) ($row['account_name'] ?? ''),
+                'gross_amount' => self::formatMoney((float) ($row['gross_amount'] ?? 0)),
+                'tax_rate' => (string) ($row['tax_rate'] ?? '19'),
+            ]];
+        }
+
+        $ustvaPositions = [];
+        $snapshot = (string) ($row['ustva_snapshot'] ?? '');
+        if ($snapshot !== '') {
+            $decoded = json_decode($snapshot, true);
+            if (is_array($decoded)) {
+                $ustvaPositions = $decoded;
+            }
+        }
+
         return [
-            'voucher_type' => (string) ($row['voucher_type'] ?? 'expense'),
+            'voucher_type' => self::sanitizeVoucherType((string) ($row['voucher_type'] ?? 'expense')),
             'voucher_date' => (string) ($row['voucher_date'] ?? ''),
+            'delivery_date' => (string) ($row['delivery_date'] ?? ''),
+            'arap_enabled' => !empty($row['arap_enabled']) ? '1' : '0',
+            'arap_current_year_percent' => (string) ($row['arap_current_year_percent'] ?? '100'),
+            'arap_next_year_percent' => (string) ($row['arap_next_year_percent'] ?? '0'),
             'contact_id' => $row['contact_id'] !== null ? (string) $row['contact_id'] : '',
             'contact_label' => (string) ($row['supplier_display'] ?? ''),
             'supplier_name' => (string) ($row['supplier_name'] ?? ''),
@@ -311,10 +804,16 @@ final class VoucherRepository
             'tax_amount' => self::formatMoney((float) ($row['tax_amount'] ?? 0)),
             'tax_rate' => (string) ($row['tax_rate'] ?? '19'),
             'tax_key' => (string) ($row['tax_key'] ?? ''),
+            'reverse_charge_type' => VoucherReverseCharge::sanitizeType((string) ($row['reverse_charge_type'] ?? '')),
+            'ustva_snapshot' => (string) ($row['ustva_snapshot'] ?? ''),
             'account_number' => (string) ($row['account_number'] ?? ''),
             'account_name' => (string) ($row['account_name'] ?? ''),
             'payment_status' => (string) ($row['payment_status'] ?? 'open'),
             'notes' => (string) ($row['notes'] ?? ''),
+            'lines' => $lines,
+            'items' => $items,
+            'system_lines' => is_array($row['system_lines'] ?? null) ? $row['system_lines'] : [],
+            'ustva_positions' => $ustvaPositions,
         ];
     }
 
@@ -323,9 +822,81 @@ final class VoucherRepository
         return self::voucherTypeOptions()[self::sanitizeVoucherType($type)] ?? $type;
     }
 
+    public static function normalizeVoucherType(string $type): string
+    {
+        return self::sanitizeVoucherType($type);
+    }
+
+    public static function numberRangeTypeForVoucher(string $voucherType): ?string
+    {
+        return match (self::sanitizeVoucherType($voucherType)) {
+            'income' => 'invoice',
+            'credit' => 'credit_note',
+            default => null,
+        };
+    }
+
+    /** @return array<string, string> Belegart => Nummernkreis-Bezeichnung */
+    public static function autoInvoiceNumberLabels(): array
+    {
+        $labels = [];
+        foreach (self::voucherTypeOptions() as $voucherType => $_label) {
+            $rangeType = self::numberRangeTypeForVoucher($voucherType);
+            if ($rangeType !== null) {
+                $labels[$voucherType] = NumberRangeSettings::documentTypes()[$rangeType] ?? $rangeType;
+            }
+        }
+
+        return $labels;
+    }
+
+    public static function usesAutoInvoiceNumber(string $voucherType): bool
+    {
+        return self::numberRangeTypeForVoucher($voucherType) !== null;
+    }
+
+    public static function peekInvoiceNumber(string $voucherType): string
+    {
+        $rangeType = self::numberRangeTypeForVoucher($voucherType);
+        if ($rangeType === null) {
+            throw new InvalidArgumentException('Für diese Belegart gibt es keinen Nummernkreis.');
+        }
+
+        return NumberRangeSettings::allocateNext($rangeType, false)['number'];
+    }
+
+    private static function parseOptionalDate(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '' || strtotime($value) === false) {
+            return null;
+        }
+
+        return date('Y-m-d', strtotime($value));
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function resolveInvoiceNumber(string $voucherType, array $data, ?int $id): string
+    {
+        $rangeType = self::numberRangeTypeForVoucher($voucherType);
+        if ($rangeType === null) {
+            return trim((string) ($data['invoice_number'] ?? ''));
+        }
+
+        if ($id) {
+            $existing = self::findById($id);
+            $existingNumber = trim((string) ($existing['invoice_number'] ?? ''));
+            if ($existingNumber !== '') {
+                return $existingNumber;
+            }
+        }
+
+        return NumberRangeSettings::allocateNext($rangeType, true)['number'];
+    }
+
     public static function paymentLabel(string $status): string
     {
-        return self::paymentStatusOptions()[self::sanitizePaymentStatus($status)] ?? $status;
+        return VoucherPaymentStatus::label($status);
     }
 
     public static function formatMoney(float $amount): string
@@ -336,15 +907,27 @@ final class VoucherRepository
     private static function sanitizeVoucherType(string $type): string
     {
         $type = strtolower(trim($type));
+        if ($type === 'receipt' || $type === 'invoice') {
+            return 'expense';
+        }
 
         return isset(self::voucherTypeOptions()[$type]) ? $type : 'expense';
     }
 
+    /** Leerer Filter = alle Belegarten (nicht auf „Ausgaben“ einschränken). */
+    private static function sanitizeVoucherTypeFilter(string $type): string
+    {
+        $type = strtolower(trim($type));
+        if ($type === 'receipt' || $type === 'invoice') {
+            return 'expense';
+        }
+
+        return isset(self::voucherTypeOptions()[$type]) ? $type : '';
+    }
+
     private static function sanitizePaymentStatus(string $status): string
     {
-        $status = strtolower(trim($status));
-
-        return isset(self::paymentStatusOptions()[$status]) ? $status : 'open';
+        return VoucherPaymentStatus::sanitize($status);
     }
 
     /** @param array<string, mixed> $row */
@@ -373,6 +956,30 @@ final class VoucherRepository
         $row['account_name'] = $accountName;
         $row['type_label'] = self::typeLabel((string) ($row['voucher_type'] ?? ''));
         $row['payment_label'] = self::paymentLabel((string) ($row['payment_status'] ?? ''));
+        $row['payment_badge_class'] = VoucherPaymentStatus::badgeClass((string) ($row['payment_status'] ?? ''));
+        $row['payment_settlement_kind'] = VoucherPaymentStatus::settlementKind((string) ($row['payment_status'] ?? ''));
+
+        $voucherId = (int) ($row['id'] ?? 0);
+        $reverseCharge = VoucherReverseCharge::isActive((string) ($row['reverse_charge_type'] ?? ''));
+        if ($voucherId > 0 && Database::isConfigured()) {
+            $bookingLines = self::linesForVoucher($voucherId, true);
+            if ($bookingLines !== []) {
+                $breakdown = VoucherTaxKeys::taxBreakdownFromLines($bookingLines, $reverseCharge);
+                $amounts = self::amountsFromBookingLines($bookingLines, $reverseCharge);
+                $row['gross_amount'] = $amounts['gross_amount'];
+                $row['net_amount'] = $amounts['net_amount'];
+                $row['tax_amount'] = $amounts['tax_amount'];
+                $row['tax_display_lines'] = VoucherTaxKeys::taxBreakdownDisplayLines($breakdown);
+            } else {
+                $headerRate = VoucherTaxKeys::sanitizeTaxRate((int) ($row['tax_rate'] ?? 19));
+                $headerTax = round((float) ($row['tax_amount'] ?? 0), 2);
+                $fallback = array_fill_keys(VoucherTaxKeys::allowedTaxRates(), 0.0);
+                $fallback[$headerRate] = $headerTax;
+                $row['tax_display_lines'] = VoucherTaxKeys::taxBreakdownDisplayLines($fallback);
+            }
+        } else {
+            $row['tax_display_lines'] = [];
+        }
 
         return $row;
     }

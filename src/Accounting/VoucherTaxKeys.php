@@ -78,4 +78,86 @@ final class VoucherTaxKeys
             'tax_amount' => $tax,
         ];
     }
+
+    public static function isReverseChargeKey(string $taxKey): bool
+    {
+        return self::sanitizeTaxKey($taxKey) === self::KEY_REVERSE_CHARGE;
+    }
+
+    /**
+     * Zeilenbetrag aus Buchungszeile: normal inkl. USt., bei §13b netto (Rechnungsbetrag ohne USt.).
+     *
+     * @return array{gross_amount: float, net_amount: float, tax_amount: float}
+     */
+    public static function calcLineAmounts(float $amount, int $taxRate, bool $reverseCharge): array
+    {
+        $amount = round(max(0, $amount), 2);
+        if ($reverseCharge) {
+            $tax = $taxRate > 0 ? round($amount * $taxRate / 100, 2) : 0.0;
+
+            return [
+                'gross_amount' => $amount,
+                'net_amount' => $amount,
+                'tax_amount' => $tax,
+            ];
+        }
+
+        return self::calcTaxFromGross($amount, $taxRate);
+    }
+
+    /**
+     * MwSt.-Summen je Steuersatz aus Buchungszeilen (Formular-Anzeige).
+     *
+     * @param list<array<string, mixed>> $lines
+     * @return array<int, float>
+     */
+    public static function taxBreakdownFromLines(array $lines, bool $reverseCharge): array
+    {
+        $breakdown = array_fill_keys(self::allowedTaxRates(), 0.0);
+        foreach ($lines as $line) {
+            if (!is_array($line)) {
+                continue;
+            }
+            $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+            if ($gross <= 0) {
+                continue;
+            }
+            $rate = self::sanitizeTaxRate((int) ($line['tax_rate'] ?? 19));
+            $amounts = self::calcLineAmounts($gross, $rate, $reverseCharge);
+            $breakdown[$rate] += (float) $amounts['tax_amount'];
+        }
+
+        foreach ($breakdown as $rate => $amount) {
+            $breakdown[$rate] = round($amount, 2);
+        }
+
+        return $breakdown;
+    }
+
+    /**
+     * @param array<int, float> $breakdown
+     * @return list<string>
+     */
+    public static function taxBreakdownDisplayLines(array $breakdown): array
+    {
+        $lines = [];
+        foreach (self::allowedTaxRates() as $rate) {
+            $amount = round((float) ($breakdown[$rate] ?? 0), 2);
+            if ($amount > 0) {
+                $lines[] = (int) $rate . ' %: ' . number_format($amount, 2, ',', '.') . ' €';
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<int, float> $breakdown
+     */
+    public static function formatTaxBreakdownDisplay(array $breakdown): string
+    {
+        $lines = self::taxBreakdownDisplayLines($breakdown);
+
+        return $lines !== [] ? implode(' · ', $lines) : '—';
+    }
 }

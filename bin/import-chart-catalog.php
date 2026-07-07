@@ -32,7 +32,7 @@ foreach ($types as $skrType) {
     ChartAccountRepository::ensureSeeded($skrType);
     $dbCount = ChartAccountRepository::countForSkr($skrType);
     $catalogCount = ChartAccountCatalog::catalogCount($skrType);
-    $hintCount = ChartAccountSeedData::seedCount($skrType);
+    $hintCount = ChartAccountRepository::countWithDetailedHints($skrType);
     echo strtoupper($skrType) . ": {$dbCount} Konten in DB (Katalog: {$catalogCount}, mit Hinweisen: {$hintCount})\n";
 }
 

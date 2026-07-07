@@ -123,12 +123,23 @@ spl_autoload_register(static function (string $class): void {
         'ChartOfAccountsSettings' => '/src/Accounting/ChartOfAccountsSettings.php',
         'ChartAccountRepository' => '/src/Accounting/ChartAccountRepository.php',
         'ChartAccountSeedData' => '/src/Accounting/ChartAccountSeedData.php',
+        'ChartAccountHintBuilder' => '/src/Accounting/ChartAccountHintBuilder.php',
+        'ChartAccountHintTerms' => '/src/Accounting/ChartAccountHintTerms.php',
+        'ChartAccountSearchLexicon' => '/src/Accounting/ChartAccountSearchLexicon.php',
+        'ChartAccountSearchNormalizer' => '/src/Accounting/ChartAccountSearchNormalizer.php',
+        'ChartAccountBookingEligibility' => '/src/Accounting/ChartAccountBookingEligibility.php',
         'ChartAccountCatalog' => '/src/Accounting/ChartAccountCatalog.php',
+        'ChartAccountCatalogNameCorrections' => '/src/Accounting/ChartAccountCatalogNameCorrections.php',
+        'ChartAccountNameRepair' => '/src/Accounting/ChartAccountNameRepair.php',
         'ChartAccountApi' => '/src/Accounting/ChartAccountApi.php',
         'SkrDigitLegend' => '/src/Accounting/SkrDigitLegend.php',
         'VoucherRepository' => '/src/Accounting/VoucherRepository.php',
         'VoucherTaxKeys' => '/src/Accounting/VoucherTaxKeys.php',
+        'VoucherPaymentStatus' => '/src/Accounting/VoucherPaymentStatus.php',
+        'VoucherReverseCharge' => '/src/Accounting/VoucherReverseCharge.php',
         'VoucherApi' => '/src/Accounting/VoucherApi.php',
+        'VoucherIncomePositions' => '/src/Accounting/VoucherIncomePositions.php',
+        'VoucherAccrual' => '/src/Accounting/VoucherAccrual.php',
     ];
 
     if (!isset($map[$class])) {

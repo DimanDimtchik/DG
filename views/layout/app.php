@@ -242,7 +242,8 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script>
       window.dgBuchhaltungKonten = {
         apiUrl: '/api/chart-account',
-        accountDigits: <?= (int) ChartOfAccountsSettings::accountDigits() ?>
+        accountDigits: <?= (int) ChartOfAccountsSettings::accountDigits() ?>,
+        csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-konten.js')) ?>" defer></script>
@@ -251,7 +252,39 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script>
       window.dgBuchhaltungBelege = {
         apiUrl: '/api/voucher',
-        chartApiUrl: '/api/chart-account'
+        chartApiUrl: '/api/chart-account',
+        typeHints: <?= json_encode(VoucherRepository::voucherTypeOptions(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        typeDescriptions: <?= json_encode(array_combine(
+            array_keys(VoucherRepository::voucherTypeOptions()),
+            array_map(static fn (string $key): string => VoucherRepository::voucherTypeHint($key), array_keys(VoucherRepository::voucherTypeOptions()))
+        ), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        reverseCharge: <?= json_encode(
+            VoucherReverseCharge::clientConfig($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        paymentStatusHints: <?= json_encode(array_combine(
+            array_keys(VoucherPaymentStatus::options()),
+            array_map(
+                static fn (string $key): string => VoucherPaymentStatus::hint($key),
+                array_keys(VoucherPaymentStatus::options())
+            )
+        ), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        autoInvoiceTypes: <?= json_encode(
+            VoucherRepository::autoInvoiceNumberLabels(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        incomeVoucherTypes: <?= json_encode(
+            VoucherIncomePositions::voucherTypesWithItems(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        revenueAccounts: <?= json_encode(
+            VoucherIncomePositions::defaultRevenueAccounts($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        accrual: <?= json_encode(
+            VoucherAccrual::clientConfig($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-belege.js')) ?>" defer></script>

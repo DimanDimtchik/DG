@@ -23,6 +23,108 @@ ACCOUNT_RE = re.compile(
     r"^(?:[RF]\s+)?(?:(?:[A-Z]{1,3}\s+){0,8})(\d{4})\s+(.+)$"
 )
 
+NEW_ACCOUNT_LINE = re.compile(
+    r"^(In |Fertige |Unfertige |Sonstige |Verbindlichkeiten |Forderungen |Bestands|"
+    r"Geleistete |Abziehbare |Andere |Restlaufzeit |Aufwendungen |Erlöse |Anlagen|"
+    r"Technische |Grundst|Rückstellungen |Vermögens|Aktivierte |Gegenkonto |"
+    r"Innergemeinschaft|Nachlässe |Zölle |Mietleasing |Abschreibungen )",
+    re.IGNORECASE,
+)
+
+COMPLETE_ENDINGS = (
+    "Aufträge",
+    "Bauaufträge",
+    "Waren",
+    "Leistungen",
+    "Erzeugnisse",
+    "Eigenleistungen",
+    "(Bestand)",
+    "Umsatzsteuer",
+    "Vorsteuer",
+    "Verpflichtungen",
+    "Rückstellungen",
+    "Kontokorrent",
+    "Finanzdisposition",
+    "Umsatzsteuerlager",
+    "Konten",
+    "EÜR)",
+)
+
+INCOMPLETE_ENDINGS = {
+    "befindliche",
+    "unfertige",
+    "andere",
+    "sonstige",
+    "gewerbliche",
+    "immaterielle",
+    "technische",
+    "zahlungen",
+    "ohne",
+    "nach",
+    "für",
+    "mit",
+    "und",
+    "der",
+    "die",
+    "das",
+    "an",
+    "auf",
+    "in",
+    "zum",
+    "zur",
+    "gegenüber",
+    "einschließlich",
+    "entwicklung",
+    "verträgen",
+    "lieferungen",
+    "gegenständen",
+    "geschäfts-",
+    "roh-",
+    "rahmen",
+    "bürgschaften",
+    "stillen",
+    "aktivierte",
+    "altersversorgung",
+    "unternehmers",
+    "investitionen",
+    "allgemeinen",
+    "ermäßigten",
+    "steuerpflichtigen",
+    "innergemeinschaftliche",
+    "ausführung",
+    "arbeit",
+    "fremd",
+    "gelieferte",
+    "bezogene",
+    "bau-",
+}
+
+BLEED_MARKERS = [
+    r"\s+mögensgegenstände\b.*$",
+    r"\s+bindlichkeiten\b.*$",
+    r"\s+gensgegenstände\b.*$",
+    r"\s+gen-stände\b.*$",
+    r"\s+genstände\b.*$",
+    r"\s+oder Sonstige\b.*$",
+    r"\s+oder Andere\b.*$",
+    r"\s+oder Verbindlichkeiten\b.*$",
+    r"\s+oder Forderungen\b.*$",
+    r"\s+oder bindlichkeiten\b.*$",
+    r"\s+nisse und\b.*$",
+    r"\s+träge che Aufträge\b.*$",
+    r"\s+zahlungen und\b.*$",
+    r"\s+ten gegenüber\b.*$",
+    r"\s+ten aus Lieferungen\b.*$",
+    r"\s+runger gegen\b.*$",
+    r"\s+lichbkeiten\b.*$",
+    r"\s+schiedsbetrag\b.*$",
+    r"\s+stellungen\b.*$",
+    r"\s+In Arbeit be-.*$",
+    r"\s+für aus Lieferungen und Leistungen oder Sonstige\b.*$",
+    r"\s+gegenüber Gesellschaftern oder\b.*$",
+    r"\s+haben, Guthaben bei\b.*$",
+]
+
 NOISE_PATTERNS = [
     re.compile(r"^-- \d+ of \d+ --$"),
     re.compile(r"^Seite \d+"),
@@ -85,6 +187,153 @@ def section_for(number: str, skr: str) -> str:
     return "ertrag"
 
 
+def name_looks_complete(name: str) -> bool:
+    name = name.strip()
+    if not name or name.endswith("-"):
+        return False
+    for end in COMPLETE_ENDINGS:
+        if name.endswith(end):
+            return True
+    if re.search(r"\d\s*%\s*Vorsteuer\s*$", name, flags=re.IGNORECASE):
+        return "Umsatzsteuer" in name
+    if re.search(
+        r"(Vorsteuer|Umsatzsteuer)\s*$", name, flags=re.IGNORECASE
+    ) and not re.search(r"\b(nach|ohne|für|und)$", name, flags=re.IGNORECASE):
+        return True
+    return False
+
+
+def ends_incomplete(name: str) -> bool:
+    stripped = name.strip()
+    if stripped.endswith("-"):
+        return True
+    words = stripped.split()
+    if not words:
+        return True
+    last = words[-1].lower().rstrip(".,;")
+    if last in INCOMPLETE_ENDINGS:
+        return True
+    return len(last) <= 3
+
+
+def repair_account_name(name: str) -> str:
+    name = name.replace("\u00ad", "")
+    name = re.sub(r"\s+", " ", name).strip(" -")
+
+    name = re.sub(r"\bHilfsund\b", "Hilfs- und", name, flags=re.IGNORECASE)
+    name = re.sub(r"\bf\s+ür\b", "für", name, flags=re.IGNORECASE)
+    name = re.sub(r"\bo\s+hne\b", "ohne", name, flags=re.IGNORECASE)
+    name = re.sub(r"\bVorsteue\s+r\b", "Vorsteuer", name, flags=re.IGNORECASE)
+    name = re.sub(r"\bAn\s+dere\b", "Andere", name)
+    name = re.sub(r"^B\s+estandsveränderungen", "Bestandsveränderungen", name, flags=re.IGNORECASE)
+    name = re.sub(
+        r"^Bestandsveränderungen\s*-\s*",
+        "Bestandsveränderungen ",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(r"Vorsteuerabzug\d+\)", "Vorsteuerabzug", name, flags=re.IGNORECASE)
+    name = re.sub(r"\s+\d{1,2}\)\s*$", "", name)
+    name = re.sub(r"\begenständen\b", "Gegenständen", name, flags=re.IGNORECASE)
+    name = re.sub(r"\bWar en\b", "Waren", name)
+    name = re.sub(
+        r"aus tungsverbindlichkeiten",
+        "aus Käufen von Finanzanlagen bei Leistungsverbindlichkeiten",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r"in Ausführung befindlicher$",
+        "in Ausführung befindliche Bauaufträge",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(r"Gesamthand\d+\)", "Gesamthand", name, flags=re.IGNORECASE)
+    name = re.sub(r"\bG K\b", "§ 7g EStG", name)
+    name = re.sub(
+        r" in Entwicklung Sachanlagen\b",
+        " in Entwicklung",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r" in Entwicklung Geschäfts\b",
+        " in Entwicklung",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r"\s+HGB Sonstige Vermögensgegenstände\b.*$",
+        "",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r"nach und ähnliche\b",
+        "nach § 231 Abs. 2 Satz 2 HGB Zinsen und ähnliche Erträge",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r"(ohne|mit)\s+sässigen Unternehmers\s+(ohne|mit)\s+",
+        r"\1 ",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(r"\s+gen$", "", name, flags=re.IGNORECASE)
+    name = re.sub(r"RohHilfs-", "Roh-, Hilfs-", name, flags=re.IGNORECASE)
+    name = re.sub(
+        r"Forderungen nach § 11 Abs\. 1 Forderungen",
+        "Forderungen nach § 11 Abs. 1 EStG",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(r"verbundenen/$", "verbundenen Unternehmen", name, flags=re.IGNORECASE)
+
+    for prefix in ("Erlösschmälerungen", "Unentgeltliche Zuwendung"):
+        match = re.match(
+            rf"^({re.escape(prefix)}.+?)(?:\s+{re.escape(prefix)})",
+            name,
+            flags=re.IGNORECASE,
+        )
+        if match:
+            name = match.group(1).strip()
+
+    if re.search(r"ansässigen Unternehmers", name, flags=re.IGNORECASE):
+        parts = re.split(
+            r"\s+(?=ansässigen Unternehmers)",
+            name,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )
+        if len(parts) == 2 and re.search(r"\d\s*%", parts[0]):
+            name = parts[0].strip()
+
+    for marker in BLEED_MARKERS:
+        name = re.sub(marker, "", name, flags=re.IGNORECASE)
+
+    name = re.sub(
+        r"\s+und Leistungen\s+und Leistungen",
+        " und Leistungen",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r"\s+für Investitionen\s+für\b",
+        " für Investitionen",
+        name,
+        flags=re.IGNORECASE,
+    )
+    name = re.sub(
+        r"\s+(und|oder|für|mit|nach|aus|an|auf|in|der|die|das|zum|zur|ohne|gegenüber|nach|vom|zur)$",
+        "",
+        name,
+        flags=re.IGNORECASE,
+    )
+
+    return re.sub(r"\s+", " ", name).strip(" -")
+
+
 def clean_name(name: str) -> str:
     name = name.replace("\u00ad", "")
     name = re.sub(r"\s+", " ", name).strip(" -")
@@ -95,7 +344,7 @@ def clean_name(name: str) -> str:
     name = re.split(r"\s+\d{1,2}\)\s*", name)[0]
     name = re.sub(r"\s+AV\s+.*$", "", name)
     name = re.sub(r"\s+betriebliche\s*$", "", name, flags=re.IGNORECASE)
-    return name.strip()
+    return repair_account_name(name.strip())
 
 
 def should_continue_name(current_name: str, line: str) -> bool:
@@ -107,18 +356,64 @@ def should_continue_name(current_name: str, line: str) -> bool:
         return False
     if len(line) > 70:
         return False
+
+    stripped = current_name.rstrip()
+    if stripped.endswith(",") or stripped.endswith("-,"):
+        return True
+    if re.match(r"^und Leistungen\b", line, flags=re.IGNORECASE) and re.search(
+        r"aus Lieferungen\s*$", current_name, flags=re.IGNORECASE
+    ):
+        return True
+    if re.match(r"^(und|sowie)\s+\d", line, flags=re.IGNORECASE) and re.search(
+        r"Vorsteuer\s*$", current_name, flags=re.IGNORECASE
+    ):
+        return True
+    if re.match(r"^(für|ür)\b", line, flags=re.IGNORECASE) and re.search(
+        r"Gegenständen\s*$", current_name, flags=re.IGNORECASE
+    ):
+        return True
+    if re.match(r"^(Vorsteuer|Umsatzsteuer)\b", line, flags=re.IGNORECASE) and re.search(
+        r"\b(ohne|mit|nach|für|ansässigen Unternehmers)$",
+        current_name,
+        flags=re.IGNORECASE,
+    ):
+        return True
+    if len(line) <= 3 and line and line[0].islower():
+        return True
+
+    if len(current_name.strip()) <= 2:
+        return True
+    if name_looks_complete(current_name):
+        return False
+    if NEW_ACCOUNT_LINE.match(line) and not current_name.rstrip().endswith("-"):
+        return False
+
     if current_name.endswith("-"):
         return True
-    if current_name and current_name[-1].islower() and line[0].islower():
+
+    if not ends_incomplete(current_name):
+        return False
+
+    if line[0].islower():
         return True
+
+    # Kurze Fortsetzung wie „Bauaufträge“ nach „…befindliche“
+    if len(line.split()) <= 4 and not NEW_ACCOUNT_LINE.match(line):
+        return True
+
     return False
 
 
 def join_continuation(current_name: str, line: str) -> str:
     line = line.strip()
-    if current_name.endswith("-"):
-        return current_name[:-1] + line
-    return f"{current_name} {line}"
+    current = current_name.rstrip()
+    if current.endswith(","):
+        current = current[:-1].rstrip()
+    if current.endswith("-"):
+        if re.match(r"^[A-Za-zÄÖÜäöüß]+-", line):
+            return f"{current}, {line}"
+        return current[:-1] + line
+    return f"{current} {line}"
 
 
 def parse_accounts(text: str, skr: str) -> list[dict]:
@@ -171,6 +466,7 @@ def parse_pdf(pdf_path: Path, skr: str, out_json: Path) -> int:
             "source_file": pdf_path.name,
             "version": version,
             "account_count": len(accounts),
+            "parser": "2026-07-06-v3",
         },
         "konten": accounts,
     }

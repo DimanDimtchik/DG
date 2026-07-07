@@ -14,9 +14,21 @@ final class VoucherApi
             return;
         }
 
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            $action = trim((string) ($_GET['action'] ?? ''));
+            if ($action === 'reverse_charge_preview') {
+                self::handleReverseChargePreview();
+                return;
+            }
+
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Unbekannte POST-Aktion.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
             http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Nur GET erlaubt.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'Nur GET oder POST erlaubt.'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
@@ -33,10 +45,25 @@ final class VoucherApi
                 return;
             }
 
+            if ($action === 'account_search') {
+                self::handleAccountSearch();
+                return;
+            }
+
+            if ($action === 'invoice_number_preview') {
+                self::handleInvoiceNumberPreview();
+                return;
+            }
+
+            if ($action === 'article_search') {
+                self::handleArticleSearch();
+                return;
+            }
+
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Parameter action erforderlich (contacts, account).',
+                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search).',
             ], JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(500);
@@ -49,8 +76,9 @@ final class VoucherApi
 
     private static function handleContactSearch(): void
     {
+        $user = AuthService::user();
         $query = trim((string) ($_GET['q'] ?? ''));
-        if (mb_strlen($query) < 2) {
+        if (mb_strlen($query) < 1) {
             echo json_encode([
                 'success' => true,
                 'data' => ['items' => []],
@@ -66,33 +94,38 @@ final class VoucherApi
             return;
         }
 
-        $pdo = Database::pdo();
-        $stmt = $pdo->prepare(
-            'SELECT id, display_name, company_name, email, supplier_number, customer_number
-             FROM dg_contacts
-             WHERE display_name LIKE :q OR company_name LIKE :q OR email LIKE :q
-                OR supplier_number LIKE :q OR customer_number LIKE :q
-             ORDER BY company_name ASC, display_name ASC
-             LIMIT 15'
-        );
-        $stmt->execute(['q' => '%' . $query . '%']);
-
         $items = [];
-        while ($row = $stmt->fetch()) {
-            $label = trim((string) ($row['company_name'] ?? ''));
+        foreach (ContactRepository::searchPicker($query, 15, $user) as $contact) {
+            $label = trim($contact->companyName);
             if ($label === '') {
-                $label = trim((string) ($row['display_name'] ?? ''));
+                $label = trim($contact->displayName);
             }
+            if ($label === '') {
+                $label = trim($contact->firstName . ' ' . $contact->lastName);
+            }
+            if ($label === '') {
+                $label = trim($contact->email);
+            }
+
             $meta = [];
-            if ((string) ($row['email'] ?? '') !== '') {
-                $meta[] = (string) $row['email'];
+            if ($contact->email !== '') {
+                $meta[] = $contact->email;
             }
-            if ((string) ($row['supplier_number'] ?? '') !== '') {
-                $meta[] = 'Lief.-Nr. ' . (string) $row['supplier_number'];
+            if ($contact->companyName !== '' && $label !== $contact->companyName) {
+                $meta[] = $contact->companyName;
+            }
+            if ($contact->supplierNumber !== '') {
+                $meta[] = 'Lief.-Nr. ' . $contact->supplierNumber;
+            }
+            if ($contact->customerNumber !== '') {
+                $meta[] = 'Kd.-Nr. ' . $contact->customerNumber;
+            }
+            if ($contact->login !== '') {
+                $meta[] = 'Login ' . $contact->login;
             }
 
             $items[] = [
-                'id' => (int) $row['id'],
+                'id' => $contact->id,
                 'label' => $label,
                 'meta' => implode(' · ', $meta),
             ];
@@ -102,6 +135,16 @@ final class VoucherApi
             'success' => true,
             'data' => ['items' => $items],
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function voucherTypeFromRequest(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        return VoucherRepository::normalizeVoucherType($raw);
     }
 
     private static function handleAccountLookup(): void
@@ -116,18 +159,22 @@ final class VoucherApi
             return;
         }
 
+        $voucherType = self::voucherTypeFromRequest((string) ($_GET['voucher_type'] ?? ''));
         $skrType = ChartOfAccountsSettings::activeSkrType();
         ChartAccountRepository::ensureSeeded($skrType);
         $account = ChartAccountRepository::findByNumber($number, $skrType);
-        if ($account === null) {
+        if ($account === null
+            || ($voucherType !== '' && !ChartAccountBookingEligibility::isSearchableRowForVoucherType($account, $voucherType))) {
             http_response_code(404);
             echo json_encode([
                 'success' => false,
-                'message' => 'Konto nicht gefunden.',
+                'message' => 'Konto nicht gefunden oder für diese Belegart nicht buchbar.',
                 'valid' => false,
             ], JSON_UNESCAPED_UNICODE);
             return;
         }
+
+        $suggestedTaxRate = ChartAccountBookingEligibility::inferTaxRateFromAccountName((string) ($account['name'] ?? ''));
 
         echo json_encode([
             'success' => true,
@@ -136,7 +183,112 @@ final class VoucherApi
                 'account_number' => (string) ($account['account_number'] ?? ''),
                 'name' => (string) ($account['name'] ?? ''),
                 'section_label' => (string) ($account['section_label'] ?? ''),
+                'suggested_tax_rate' => $suggestedTaxRate,
             ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function handleAccountSearch(): void
+    {
+        $query = trim((string) ($_GET['q'] ?? ''));
+        if (mb_strlen($query) < 2) {
+            echo json_encode([
+                'success' => true,
+                'data' => ['items' => []],
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $skrType = ChartOfAccountsSettings::activeSkrType();
+        ChartAccountRepository::ensureSeeded($skrType);
+        $voucherType = self::voucherTypeFromRequest((string) ($_GET['voucher_type'] ?? ''));
+        $taxRate = isset($_GET['tax_rate']) && $_GET['tax_rate'] !== '' ? (int) $_GET['tax_rate'] : null;
+        $results = ChartAccountRepository::search($query, $skrType, 20, $voucherType, $taxRate);
+        $items = [];
+        foreach ($results as $account) {
+            $suggestedTaxRate = ChartAccountBookingEligibility::inferTaxRateFromAccountName((string) ($account['name'] ?? ''));
+            $items[] = [
+                'account_number' => (string) ($account['account_number'] ?? ''),
+                'name' => (string) ($account['name'] ?? ''),
+                'section_label' => (string) ($account['section_label'] ?? ''),
+                'suggested_tax_rate' => $suggestedTaxRate,
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => ['items' => $items],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function handleInvoiceNumberPreview(): void
+    {
+        $voucherType = VoucherRepository::normalizeVoucherType((string) ($_GET['voucher_type'] ?? ''));
+        if (!VoucherRepository::usesAutoInvoiceNumber($voucherType)) {
+            echo json_encode([
+                'success' => true,
+                'data' => ['number' => '', 'auto' => false],
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $rangeType = VoucherRepository::numberRangeTypeForVoucher($voucherType);
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'number' => VoucherRepository::peekInvoiceNumber($voucherType),
+                'auto' => true,
+                'range_type' => $rangeType,
+                'range_label' => NumberRangeSettings::documentTypes()[$rangeType ?? ''] ?? '',
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function handleArticleSearch(): void
+    {
+        $query = trim((string) ($_GET['q'] ?? ''));
+
+        echo json_encode([
+            'success' => true,
+            'data' => ['items' => VoucherIncomePositions::searchArticles($query, 15)],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function handleReverseChargePreview(): void
+    {
+        $raw = file_get_contents('php://input');
+        $body = is_string($raw) && $raw !== '' ? json_decode($raw, true) : [];
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        $type = VoucherReverseCharge::sanitizeType((string) ($body['type'] ?? ''));
+        $lines = is_array($body['lines'] ?? null) ? $body['lines'] : [];
+        $built = VoucherRepository::previewReverseChargePostings($lines, $type);
+        $skrType = ChartOfAccountsSettings::activeSkrType();
+
+        foreach ($built['lines'] as &$line) {
+            $accountNumber = (string) ($line['account_number'] ?? '');
+            $line['account_name'] = '';
+            if ($accountNumber !== '') {
+                $account = ChartAccountRepository::findByNumber($accountNumber, $skrType);
+                if ($account !== null) {
+                    $line['account_name'] = (string) ($account['name'] ?? '');
+                }
+            }
+            $line['gross_amount'] = VoucherRepository::formatMoney((float) ($line['gross_amount'] ?? 0));
+        }
+        unset($line);
+
+        foreach ($built['ustva_positions'] as &$pos) {
+            $pos['net'] = round((float) ($pos['net'] ?? 0), 2);
+            $pos['tax'] = round((float) ($pos['tax'] ?? 0), 2);
+        }
+        unset($pos);
+
+        echo json_encode([
+            'success' => true,
+            'data' => $built,
         ], JSON_UNESCAPED_UNICODE);
     }
 }

@@ -21,6 +21,7 @@ final class ChartAccountRepository
 
         self::syncCatalogAccounts($skrType);
         self::syncHintAccounts($skrType);
+        self::syncGeneratedHints($skrType);
 
         self::$seedChecked[$skrType] = true;
     }
@@ -81,7 +82,9 @@ final class ChartAccountRepository
         );
 
         foreach (ChartAccountSeedData::accountsForSkr($skrType) as $account) {
-            $hintsJson = json_encode($account['hints'], JSON_UNESCAPED_UNICODE);
+            $hints = $account['hints'];
+            $hints['dg_hint_level'] = 'manual';
+            $hintsJson = json_encode($hints, JSON_UNESCAPED_UNICODE);
             if ($hintsJson === false) {
                 throw new RuntimeException('Konten-Hinweise konnten nicht serialisiert werden.');
             }
@@ -94,6 +97,98 @@ final class ChartAccountRepository
                 'hints_json' => $hintsJson,
             ]);
         }
+    }
+
+    private static function syncGeneratedHints(string $skrType): void
+    {
+        $version = ChartAccountHintBuilder::generatorVersion();
+        $key = 'chart_hints_gen_' . $skrType;
+        $stored = SettingsStore::get('chart_catalog_sync', []);
+        if (($stored[$key] ?? '') === $version) {
+            return;
+        }
+
+        $manualNumbers = [];
+        foreach (ChartAccountSeedData::accountsForSkr($skrType) as $account) {
+            $manualNumbers[(string) $account['account_number']] = true;
+        }
+
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare(
+            'SELECT account_number, name, section, hints_json
+             FROM dg_chart_accounts
+             WHERE skr_type = :skr_type AND is_active = 1'
+        );
+        $stmt->execute(['skr_type' => $skrType]);
+
+        $update = $pdo->prepare(
+            'UPDATE dg_chart_accounts
+             SET hints_json = :hints_json
+             WHERE skr_type = :skr_type AND account_number = :account_number'
+        );
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $number = (string) ($row['account_number'] ?? '');
+            if ($number === '' || isset($manualNumbers[$number])) {
+                continue;
+            }
+
+            $existing = [];
+            $rawHints = $row['hints_json'] ?? '';
+            if (is_string($rawHints) && $rawHints !== '') {
+                $decoded = json_decode($rawHints, true);
+                if (is_array($decoded)) {
+                    $existing = $decoded;
+                }
+            }
+
+            if (!ChartAccountHintBuilder::needsEnhancement($existing)) {
+                continue;
+            }
+
+            $hints = ChartAccountHintBuilder::build(
+                $skrType,
+                $number,
+                (string) ($row['name'] ?? ''),
+                (string) ($row['section'] ?? ''),
+                $existing
+            );
+
+            $hintsJson = json_encode($hints, JSON_UNESCAPED_UNICODE);
+            if ($hintsJson === false) {
+                continue;
+            }
+
+            $update->execute([
+                'hints_json' => $hintsJson,
+                'skr_type' => $skrType,
+                'account_number' => $number,
+            ]);
+        }
+
+        $stored[$key] = $version;
+        SettingsStore::set('chart_catalog_sync', $stored);
+    }
+
+    public static function countWithDetailedHints(?string $skrType = null): int
+    {
+        if (!Database::isConfigured()) {
+            return ChartAccountSeedData::seedCount($skrType ?? ChartOfAccountsSettings::activeSkrType());
+        }
+
+        self::ensureSeeded($skrType);
+        $skrType = ChartOfAccountsSettings::sanitizeSkrType($skrType ?? ChartOfAccountsSettings::activeSkrType());
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM dg_chart_accounts
+             WHERE skr_type = :skr_type AND is_active = 1
+               AND hints_json LIKE :has_digits'
+        );
+        $stmt->execute([
+            'skr_type' => $skrType,
+            'has_digits' => '%digit_explanations%',
+        ]);
+
+        return (int) $stmt->fetchColumn();
     }
 
     public static function countForSkr(?string $skrType = null): int
@@ -138,9 +233,73 @@ final class ChartAccountRepository
     }
 
     /**
+     * @param list<string> $terms
+     * @return array<string, mixed>
+     */
+    public static function updateSearchTerms(string $accountNumber, array $terms, ?string $skrType = null): array
+    {
+        self::ensureSeeded($skrType);
+
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht verbunden.');
+        }
+
+        $skrType = ChartOfAccountsSettings::sanitizeSkrType($skrType ?? ChartOfAccountsSettings::activeSkrType());
+        $number = self::normalizeAccountNumber($accountNumber);
+        $normalizedTerms = ChartAccountHintTerms::normalizeList($terms);
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT id, skr_type, account_number, name, account_class, section, is_active, hints_json
+             FROM dg_chart_accounts
+             WHERE skr_type = :skr_type AND account_number = :account_number AND is_active = 1
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'skr_type' => $skrType,
+            'account_number' => $number,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            throw new InvalidArgumentException('Konto nicht gefunden.');
+        }
+
+        $hints = [];
+        $rawHints = $row['hints_json'] ?? '';
+        if (is_string($rawHints) && $rawHints !== '') {
+            $decoded = json_decode($rawHints, true);
+            if (is_array($decoded)) {
+                $hints = $decoded;
+            }
+        }
+
+        $hints['search_terms'] = $normalizedTerms;
+        $hints['search_terms_edited'] = true;
+        if (($hints['dg_hint_level'] ?? '') !== 'manual') {
+            $hints['dg_hint_level'] = 'generated';
+        }
+
+        $hintsJson = json_encode($hints, JSON_UNESCAPED_UNICODE);
+        if ($hintsJson === false) {
+            throw new RuntimeException('Suchbegriffe konnten nicht gespeichert werden.');
+        }
+
+        $update = Database::pdo()->prepare(
+            'UPDATE dg_chart_accounts SET hints_json = :hints_json WHERE id = :id'
+        );
+        $update->execute([
+            'hints_json' => $hintsJson,
+            'id' => (int) ($row['id'] ?? 0),
+        ]);
+
+        $row['hints_json'] = $hintsJson;
+
+        return self::hydrateRow($row);
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
-    public static function search(string $query, ?string $skrType = null, int $limit = 20): array
+    public static function search(string $query, ?string $skrType = null, int $limit = 20, string $voucherType = '', ?int $taxRate = null): array
     {
         self::ensureSeeded($skrType);
 
@@ -149,11 +308,22 @@ final class ChartAccountRepository
         }
 
         $skrType = ChartOfAccountsSettings::sanitizeSkrType($skrType ?? ChartOfAccountsSettings::activeSkrType());
+        $voucherType = trim($voucherType);
+        if ($taxRate !== null) {
+            $taxRate = VoucherTaxKeys::sanitizeTaxRate($taxRate);
+        }
         $query = trim($query);
         $limit = max(1, min(50, $limit));
 
         if ($query === '') {
             return [];
+        }
+
+        $effectiveTaxRate = $taxRate;
+        if ($effectiveTaxRate !== null
+            && VoucherIncomePositions::usesInvoiceItems($voucherType)
+            && in_array(mb_strtolower($query), ['erlös', 'erloes', 'umsatz', 'einnahme', 'einnahmen', 'gutschrift'], true)) {
+            $effectiveTaxRate = null;
         }
 
         $pdo = Database::pdo();
@@ -171,149 +341,277 @@ final class ChartAccountRepository
                 'number_prefix' => $query . '%',
             ]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $rows = self::filterRowsForVoucherBooking($rows, $voucherType, $effectiveTaxRate);
         } else {
-            $like = '%' . $query . '%';
-            $prefix = $query . '%';
-            $stmt = $pdo->prepare(
-                'SELECT id, skr_type, account_number, name, account_class, section, is_active, hints_json
-                 FROM dg_chart_accounts
-                 WHERE skr_type = :skr_type AND is_active = 1
-                   AND (name LIKE :name_like OR account_number LIKE :num_prefix)
-                 ORDER BY
-                   CASE
-                     WHEN LOWER(name) = LOWER(:q_exact) THEN 0
-                     WHEN LOWER(name) LIKE LOWER(:name_prefix) THEN 1
-                     WHEN name LIKE :name_like_ord THEN 2
-                     WHEN account_number LIKE :num_prefix_ord THEN 3
-                     ELSE 4
-                   END,
-                   account_number ASC
-                 LIMIT ' . $limit
-            );
-            $stmt->execute([
-                'skr_type' => $skrType,
-                'name_like' => $like,
-                'name_like_ord' => $like,
-                'num_prefix' => $prefix,
-                'num_prefix_ord' => $prefix,
-                'q_exact' => $query,
-                'name_prefix' => $prefix,
-            ]);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-            if (count($rows) < $limit) {
-                $rows = self::mergeSearchRows($rows, self::searchByHintTerms($query, $skrType, $limit), $limit);
-            }
+            $rows = self::searchByText($query, $skrType, $limit, $voucherType, $effectiveTaxRate);
         }
 
         return array_map(self::hydrateRow(...), $rows);
     }
 
-    /** @param list<array<string, mixed>> $rows */
-    private static function searchByHintTerms(string $query, string $skrType, int $limit): array
+    /**
+     * @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private static function filterRowsForVoucherBooking(array $rows, string $voucherType, ?int $taxRate = null): array
     {
-        $stmt = Database::pdo()->prepare(
-            'SELECT id, skr_type, account_number, name, account_class, section, is_active, hints_json
-             FROM dg_chart_accounts
-             WHERE skr_type = :skr_type AND is_active = 1
-               AND hints_json LIKE :has_terms
-             ORDER BY account_number ASC'
-        );
-        $stmt->execute([
-            'skr_type' => $skrType,
-            'has_terms' => '%"search_terms"%',
-        ]);
-
-        $needle = mb_strtolower(trim($query));
-        $matches = [];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
-            $score = self::searchScore($query, $row);
-            if ($score !== null && $score >= 30) {
-                $matches[] = ['score' => $score, 'row' => $row];
+        $filtered = [];
+        foreach ($rows as $row) {
+            if (!ChartAccountBookingEligibility::isSearchableRowForVoucherType($row, $voucherType)) {
+                continue;
             }
+            if ($taxRate !== null && VoucherIncomePositions::usesInvoiceItems($voucherType)
+                && !ChartAccountBookingEligibility::matchesVoucherTaxRate((string) ($row['name'] ?? ''), $taxRate)) {
+                continue;
+            }
+            $filtered[] = $row;
         }
 
-        usort($matches, static fn (array $a, array $b): int => $a['score'] <=> $b['score']);
-
-        return array_map(
-            static fn (array $item): array => $item['row'],
-            array_slice($matches, 0, $limit)
-        );
+        return $filtered;
     }
 
     /**
-     * @param list<array<string, mixed>> $primary
-     * @param list<array<string, mixed>> $secondary
      * @return list<array<string, mixed>>
      */
-    private static function mergeSearchRows(array $primary, array $secondary, int $limit): array
+    private static function searchByText(string $query, string $skrType, int $limit, string $voucherType = '', ?int $taxRate = null): array
     {
-        $seen = [];
-        $merged = [];
-        foreach ([$primary, $secondary] as $group) {
-            foreach ($group as $row) {
-                $key = (string) ($row['account_number'] ?? '');
-                if ($key === '' || isset($seen[$key])) {
+        $pdo = Database::pdo();
+        $needle = mb_strtolower(trim($query));
+        $targets = ChartAccountSearchLexicon::resolveBookingTargets($query, $skrType);
+        $scoreByNumber = [];
+        foreach ($targets as $target) {
+            $scoreByNumber[(string) $target['account_number']] = (int) $target['score'];
+        }
+
+        $rows = [];
+
+        if ($scoreByNumber !== []) {
+            $placeholders = [];
+            $params = ['skr_type' => $skrType];
+            $index = 0;
+            foreach (array_keys($scoreByNumber) as $accountNumber) {
+                $key = 'num_' . $index;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $accountNumber;
+                ++$index;
+            }
+
+            $stmt = $pdo->prepare(
+                'SELECT id, skr_type, account_number, name, account_class, section, is_active, hints_json
+                 FROM dg_chart_accounts
+                 WHERE skr_type = :skr_type AND is_active = 1
+                   AND account_number IN (' . implode(', ', $placeholders) . ')'
+            );
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+
+        $effectiveLimit = ChartAccountSearchNormalizer::isReverseChargeQuery($query)
+            ? max($limit, min(50, count($targets) + 5))
+            : $limit;
+
+        if (count($rows) < $effectiveLimit && $scoreByNumber === []
+            && (mb_strlen($needle) >= 3 || ChartAccountSearchNormalizer::isReverseChargeQuery($query))) {
+            $patterns = ChartAccountSearchNormalizer::sqlNamePatterns($query);
+            $conditions = [];
+            $params = ['skr_type' => $skrType, 'q_exact' => $needle, 'name_prefix' => $needle . '%'];
+            foreach ($patterns as $index => $pattern) {
+                $key = 'name_like_' . $index;
+                $conditions[] = 'LOWER(name) LIKE :' . $key;
+                $params[$key] = $pattern;
+            }
+
+            $stmt = $pdo->prepare(
+                'SELECT id, skr_type, account_number, name, account_class, section, is_active, hints_json
+                 FROM dg_chart_accounts
+                 WHERE skr_type = :skr_type AND is_active = 1
+                   AND (' . implode(' OR ', $conditions) . ')
+                 ORDER BY
+                   CASE
+                     WHEN LOWER(name) = :q_exact THEN 0
+                     WHEN LOWER(name) LIKE :name_prefix THEN 1
+                     ELSE 2
+                   END,
+                   account_number ASC
+                 LIMIT ' . max($effectiveLimit * 2, 30)
+            );
+            $stmt->execute($params);
+
+            $existing = [];
+            foreach ($rows as $row) {
+                $existing[(string) ($row['account_number'] ?? '')] = true;
+            }
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+                if (!ChartAccountBookingEligibility::isSearchableRowForVoucherType($row, $voucherType)) {
                     continue;
                 }
-                $seen[$key] = true;
-                $merged[] = $row;
-                if (count($merged) >= $limit) {
-                    return $merged;
+                if ($taxRate !== null && VoucherIncomePositions::usesInvoiceItems($voucherType)
+                    && !ChartAccountBookingEligibility::matchesVoucherTaxRate((string) ($row['name'] ?? ''), $taxRate)) {
+                    continue;
                 }
+                $key = (string) ($row['account_number'] ?? '');
+                if ($key !== '' && !isset($existing[$key])) {
+                    $rows[] = $row;
+                    $existing[$key] = true;
+                }
+            }
+        }
+
+        foreach (self::searchByStoredTerms($query, $skrType, $voucherType, $taxRate) as $item) {
+            $key = (string) ($item['row']['account_number'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+            if (!isset($scoreByNumber[$key]) || $item['score'] < $scoreByNumber[$key]) {
+                $scoreByNumber[$key] = $item['score'];
+            }
+            $found = false;
+            foreach ($rows as $row) {
+                if ((string) ($row['account_number'] ?? '') === $key) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $rows[] = $item['row'];
+            }
+        }
+
+        $scored = [];
+        foreach ($rows as $row) {
+            if (!ChartAccountBookingEligibility::isSearchableRowForVoucherType($row, $voucherType)) {
+                continue;
+            }
+            if ($taxRate !== null && VoucherIncomePositions::usesInvoiceItems($voucherType)
+                && !ChartAccountBookingEligibility::matchesVoucherTaxRate((string) ($row['name'] ?? ''), $taxRate)) {
+                continue;
+            }
+            $score = self::searchScore($query, $row, $skrType, $scoreByNumber);
+            if ($score === null) {
+                continue;
+            }
+            $scored[] = ['score' => $score, 'row' => $row];
+        }
+
+        usort($scored, static function (array $a, array $b): int {
+            $cmp = $a['score'] <=> $b['score'];
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+
+            return strcmp((string) ($a['row']['account_number'] ?? ''), (string) ($b['row']['account_number'] ?? ''));
+        });
+
+        $merged = [];
+        $seen = [];
+        foreach ($scored as $item) {
+            $key = (string) ($item['row']['account_number'] ?? '');
+            if ($key === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $merged[] = $item['row'];
+            if (count($merged) >= $effectiveLimit) {
+                break;
             }
         }
 
         return $merged;
     }
 
-    /** @param array<string, mixed> $row */
-    private static function searchScore(string $query, array $row): ?int
+    /** @param array<string, int> $bookingScores */
+    private static function searchScore(string $query, array $row, ?string $skrType = null, array $bookingScores = []): ?int
     {
         $needle = mb_strtolower(trim($query));
         if ($needle === '') {
             return null;
         }
 
-        $name = mb_strtolower((string) ($row['name'] ?? ''));
+        $accountNumber = str_pad(preg_replace('/\D/', '', (string) ($row['account_number'] ?? '')) ?? '', 4, '0', STR_PAD_LEFT);
+        $skrType = ChartOfAccountsSettings::sanitizeSkrType($skrType ?? (string) ($row['skr_type'] ?? 'skr03'));
 
-        if ($name === $needle) {
+        if (isset($bookingScores[$accountNumber])) {
+            return $bookingScores[$accountNumber];
+        }
+
+        $bookingScore = ChartAccountSearchLexicon::synonymScore($query, $skrType, $accountNumber, (string) ($row['name'] ?? ''));
+        if ($bookingScore !== null) {
+            return $bookingScore;
+        }
+
+        $hintScore = ChartAccountHintTerms::scoreQuery($query, ChartAccountHintTerms::fromRow($row));
+        if ($hintScore !== null) {
+            return $hintScore;
+        }
+
+        $name = (string) ($row['name'] ?? '');
+        if (ChartAccountSearchNormalizer::nameMatchesQuery($query, $name)) {
+            return 18;
+        }
+
+        $nameLower = mb_strtolower($name);
+        if ($nameLower === $needle) {
             return 0;
         }
-        if (str_starts_with($name, $needle)) {
+        if (str_starts_with($nameLower, $needle)) {
             return 10;
         }
-        if (str_contains($name, $needle)) {
+        if (mb_strlen($needle) >= 3 && str_contains($nameLower, $needle)) {
             return 20;
         }
 
-        $hints = [];
-        $rawHints = $row['hints_json'] ?? '';
-        if (is_string($rawHints) && $rawHints !== '') {
-            $decoded = json_decode($rawHints, true);
-            if (is_array($decoded)) {
-                $hints = $decoded;
-            }
+        return null;
+    }
+
+    /**
+     * @return list<array{score: int, row: array<string, mixed>}>
+     */
+    private static function searchByStoredTerms(string $query, string $skrType, string $voucherType = '', ?int $taxRate = null): array
+    {
+        $needle = mb_strtolower(trim($query));
+        if ($needle === '' || mb_strlen($needle) < 2) {
+            return [];
         }
 
-        $terms = is_array($hints['search_terms'] ?? null) ? $hints['search_terms'] : [];
-        foreach ($terms as $term) {
-            $termLower = mb_strtolower(trim((string) $term));
-            if ($termLower === '') {
+        $stmt = Database::pdo()->prepare(
+            'SELECT id, skr_type, account_number, name, account_class, section, is_active, hints_json
+             FROM dg_chart_accounts
+             WHERE skr_type = :skr_type AND is_active = 1
+               AND hints_json IS NOT NULL
+               AND hints_json <> \'\'
+               AND hints_json LIKE :has_terms'
+        );
+        $stmt->execute([
+            'skr_type' => $skrType,
+            'has_terms' => '%"search_terms"%',
+        ]);
+
+        $hits = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            if (!ChartAccountBookingEligibility::isSearchableRowForVoucherType($row, $voucherType)) {
                 continue;
             }
-            if ($termLower === $needle) {
-                return 30;
+            if ($taxRate !== null && VoucherIncomePositions::usesInvoiceItems($voucherType)
+                && !ChartAccountBookingEligibility::matchesVoucherTaxRate((string) ($row['name'] ?? ''), $taxRate)) {
+                continue;
             }
-            if (str_starts_with($termLower, $needle) || str_starts_with($needle, $termLower)) {
-                return 40;
+            $score = ChartAccountHintTerms::scoreQuery($query, ChartAccountHintTerms::fromRow($row));
+            if ($score === null) {
+                continue;
             }
-            if (str_contains($termLower, $needle) || str_contains($needle, $termLower)) {
-                return 50;
-            }
+            $hits[] = ['score' => $score, 'row' => $row];
         }
 
-        return null;
+        usort($hits, static function (array $a, array $b): int {
+            $cmp = $a['score'] <=> $b['score'];
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+
+            return strcmp((string) ($a['row']['account_number'] ?? ''), (string) ($b['row']['account_number'] ?? ''));
+        });
+
+        return $hits;
     }
 
     /** @return list<string> */

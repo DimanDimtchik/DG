@@ -60,11 +60,11 @@ $skrLabel = ChartOfAccountsSettings::skrTypeOptions()[$chartOfAccountsConfig['sk
         <input
           type="search"
           id="dg-account-search"
-          placeholder="z. B. Fahrzeug, Erlöse, Vorsteuer …"
+          placeholder="z. B. Briefmarke, Fahrzeug, Porto …"
           autocomplete="off"
           <?= !$dbConnected ? ' disabled' : '' ?>
         >
-        <small class="dg-field-hint">Durchsucht alle <?= (int) $chartAccountCount ?> Konten des gewählten Rahmens.</small>
+      <small class="dg-field-hint">Nur direkt bebuchbare Konten — Buchungsbegriffe und DATEV-Namen (z.&nbsp;B. „Briefmarke“ → Porto). AfA, Vorsteuer und Verrechnungskonten erscheinen nicht.</small>
       </label>
 
       <div id="dg-account-search-results" class="dg-account-search-results" hidden></div>
@@ -82,6 +82,31 @@ $skrLabel = ChartOfAccountsSettings::skrTypeOptions()[$chartOfAccountsConfig['sk
       </header>
 
       <div class="dg-account-hint__summary" id="dg-account-hint-summary"></div>
+
+      <section class="dg-account-hint__block" id="dg-account-hint-search-wrap">
+        <div class="dg-account-hint__block-head">
+          <h3 class="dg-account-hint__block-title">Suchbegriffe &amp; Synonyme</h3>
+          <p class="dg-field-hint">Steuern die Kontensuche (z.&nbsp;B. „Briefmarke“ → Porto). Bearbeitbar wie in Lexoffice.</p>
+        </div>
+        <div id="dg-account-hint-search-editor" class="dg-account-search-terms">
+          <div id="dg-account-hint-search-tags" class="dg-account-hint__tags" aria-live="polite"></div>
+          <div class="dg-account-search-terms__add">
+            <input
+              type="text"
+              id="dg-account-hint-search-input"
+              class="dg-input"
+              placeholder="Begriff hinzufügen …"
+              autocomplete="off"
+              maxlength="80"
+            >
+            <button type="button" class="dg-btn dg-btn--secondary" id="dg-account-hint-search-add">Hinzufügen</button>
+          </div>
+          <div class="dg-account-search-terms__actions">
+            <button type="button" class="dg-btn dg-btn--primary" id="dg-account-hint-search-save" hidden>Suchbegriffe speichern</button>
+            <span id="dg-account-hint-search-status" class="dg-field-hint" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
 
       <section class="dg-account-hint__block">
         <h3 class="dg-account-hint__block-title">Kontenziffern</h3>

@@ -10,6 +10,7 @@ final class CompanySettings
   {
     return [
       'name' => '',
+      'company_id' => '',
       'email' => '',
       'phone' => '',
       'website' => '',
@@ -41,6 +42,36 @@ final class CompanySettings
     return trim(self::config()['name'] ?? '');
   }
 
+  public static function numberRangeCompanyId(): string
+  {
+    $explicit = self::sanitizeCompanyId(self::config()['company_id'] ?? '');
+    if ($explicit !== '') {
+      return $explicit;
+    }
+
+    return self::deriveCompanyIdFromName(self::displayName());
+  }
+
+  public static function deriveCompanyIdFromName(string $name): string
+  {
+    $name = trim($name);
+    if ($name === '') {
+      return '';
+    }
+
+    $parts = preg_split('/\s+/u', $name) ?: [];
+    $acronym = '';
+    foreach ($parts as $part) {
+      $token = strtoupper((string) preg_replace('/[^A-Za-z0-9ÄÖÜäöüß]/u', '', $part));
+      if ($token === '') {
+        continue;
+      }
+      $acronym .= strlen($token) <= 3 ? $token : $token[0];
+    }
+
+    return (string) preg_replace('/[^A-Z0-9_-]/', '', strtoupper($acronym));
+  }
+
   public static function mailEmail(): string
   {
     $email = trim(self::config()['email'] ?? '');
@@ -58,6 +89,7 @@ final class CompanySettings
   {
     $data = [
       'name' => trim((string) ($input['name'] ?? '')),
+      'company_id' => self::sanitizeCompanyId((string) ($input['company_id'] ?? '')),
       'email' => trim((string) ($input['email'] ?? '')),
       'phone' => trim((string) ($input['phone'] ?? '')),
       'website' => self::normalizeWebsite(trim((string) ($input['website'] ?? ''))),
@@ -77,6 +109,16 @@ final class CompanySettings
     }
 
     SettingsStore::set(self::STORE_KEY, $data);
+  }
+
+  private static function sanitizeCompanyId(string $value): string
+  {
+    $value = strtoupper(trim($value));
+    if ($value === '') {
+      return '';
+    }
+
+    return (string) preg_replace('/[^A-Z0-9_-]/', '', $value);
   }
 
   private static function normalizeWebsite(string $url): string

@@ -4,6 +4,7 @@
   var config = window.dgBuchhaltungKonten || {};
   var apiUrl = config.apiUrl || '/api/chart-account';
   var accountDigits = config.accountDigits || 4;
+  var csrfToken = config.csrf || '';
 
   var numberInput = document.getElementById('dg-account-number');
   var searchInput = document.getElementById('dg-account-search');
@@ -11,6 +12,11 @@
   var hintPanel = document.getElementById('dg-account-hint-panel');
   var emptyPanel = document.getElementById('dg-account-empty');
   var statusEl = document.getElementById('dg-account-status');
+  var searchTermsTags = document.getElementById('dg-account-hint-search-tags');
+  var searchTermsInput = document.getElementById('dg-account-hint-search-input');
+  var searchTermsAddBtn = document.getElementById('dg-account-hint-search-add');
+  var searchTermsSaveBtn = document.getElementById('dg-account-hint-search-save');
+  var searchTermsStatus = document.getElementById('dg-account-hint-search-status');
 
   if (!numberInput || !searchInput) {
     return;
@@ -19,6 +25,9 @@
   var debounceTimer = null;
   var numberTimer = null;
   var activeRequest = null;
+  var currentAccount = null;
+  var editableSearchTerms = [];
+  var savedSearchTerms = [];
 
   function debounce(fn, delay) {
     return function () {
@@ -129,6 +138,161 @@
     renderList('dg-account-hint-examples', 'dg-account-hint-examples-wrap', account.hints && account.hints.examples);
     renderList('dg-account-hint-edge', 'dg-account-hint-edge-wrap', account.hints && account.hints.edge_cases);
     renderList('dg-account-hint-deps', 'dg-account-hint-deps-wrap', account.hints && account.hints.dependencies);
+    renderSearchTermsEditor(account);
+  }
+
+  function normalizeSearchTerm(term) {
+    return String(term || '').trim().toLowerCase();
+  }
+
+  function searchTermsFromAccount(account) {
+    if (account && Array.isArray(account.search_terms)) {
+      return account.search_terms.map(normalizeSearchTerm).filter(Boolean);
+    }
+    var hints = account && account.hints ? account.hints : {};
+    if (!Array.isArray(hints.search_terms)) {
+      return [];
+    }
+    return hints.search_terms.map(normalizeSearchTerm).filter(Boolean);
+  }
+
+  function setSearchTermsStatus(message, type) {
+    if (!searchTermsStatus) {
+      return;
+    }
+    searchTermsStatus.textContent = message || '';
+    searchTermsStatus.className = 'dg-field-hint' + (type ? ' dg-account-search-terms__status--' + type : '');
+  }
+
+  function searchTermsDirty() {
+    if (editableSearchTerms.length !== savedSearchTerms.length) {
+      return true;
+    }
+    var saved = savedSearchTerms.slice().sort().join('\n');
+    var current = editableSearchTerms.slice().sort().join('\n');
+    return saved !== current;
+  }
+
+  function updateSearchTermsSaveState() {
+    if (!searchTermsSaveBtn) {
+      return;
+    }
+    searchTermsSaveBtn.hidden = !searchTermsDirty();
+    if (!searchTermsDirty()) {
+      setSearchTermsStatus('');
+    }
+  }
+
+  function renderSearchTermsEditor(account) {
+    currentAccount = account;
+    savedSearchTerms = searchTermsFromAccount(account);
+    editableSearchTerms = savedSearchTerms.slice();
+
+    if (!searchTermsTags) {
+      return;
+    }
+
+    if (!editableSearchTerms.length) {
+      searchTermsTags.innerHTML = '<p class="dg-field-hint">Noch keine Suchbegriffe hinterlegt.</p>';
+    } else {
+      searchTermsTags.innerHTML = editableSearchTerms.map(function (term, index) {
+        return (
+          '<span class="dg-account-hint__tag dg-account-hint__tag--editable">' +
+            '<span>' + escapeHtml(term) + '</span>' +
+            '<button type="button" class="dg-account-hint__tag-remove" data-index="' + index + '" aria-label="Begriff entfernen">×</button>' +
+          '</span>'
+        );
+      }).join('');
+    }
+
+    searchTermsTags.querySelectorAll('.dg-account-hint__tag-remove').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var index = parseInt(button.getAttribute('data-index') || '', 10);
+        if (Number.isNaN(index)) {
+          return;
+        }
+        editableSearchTerms.splice(index, 1);
+        renderSearchTermsEditor(Object.assign({}, currentAccount, { search_terms: editableSearchTerms }));
+      });
+    });
+
+    if (searchTermsInput) {
+      searchTermsInput.value = '';
+    }
+    updateSearchTermsSaveState();
+  }
+
+  function addSearchTermFromInput() {
+    if (!searchTermsInput || !currentAccount) {
+      return;
+    }
+    var value = normalizeSearchTerm(searchTermsInput.value);
+    if (value.length < 2) {
+      setSearchTermsStatus('Mindestens 2 Zeichen.', 'info');
+      return;
+    }
+    if (editableSearchTerms.indexOf(value) !== -1) {
+      setSearchTermsStatus('Begriff ist bereits vorhanden.', 'info');
+      return;
+    }
+    editableSearchTerms.push(value);
+    searchTermsInput.value = '';
+    renderSearchTermsEditor(Object.assign({}, currentAccount, { search_terms: editableSearchTerms }));
+    setSearchTermsStatus('Begriff hinzugefügt — bitte speichern.', 'info');
+  }
+
+  function saveSearchTerms() {
+    if (!currentAccount || !searchTermsSaveBtn) {
+      return;
+    }
+    if (!csrfToken) {
+      setSearchTermsStatus('Sitzung abgelaufen. Bitte Seite neu laden.', 'error');
+      return;
+    }
+
+    searchTermsSaveBtn.disabled = true;
+    setSearchTermsStatus('Speichern …', 'loading');
+
+    fetch(apiUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        _csrf: csrfToken,
+        action: 'update_search_terms',
+        account_number: currentAccount.account_number,
+        search_terms: editableSearchTerms,
+      }),
+    }).then(function (response) {
+      return response.text().then(function (text) {
+        var data = null;
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseError) {
+            throw new Error('Ungültige Server-Antwort.');
+          }
+        }
+        return { ok: response.ok, status: response.status, data: data };
+      });
+    }).then(function (result) {
+      if (result.ok && result.data && result.data.success && result.data.data && result.data.data.account) {
+        showHint(result.data.data.account);
+        setSearchTermsStatus(result.data.message || 'Gespeichert.', 'success');
+        return;
+      }
+      setSearchTermsStatus((result.data && result.data.message) || 'Speichern fehlgeschlagen.', 'error');
+    }).catch(function (err) {
+      setSearchTermsStatus(err.message || 'Speichern fehlgeschlagen.', 'error');
+    }).finally(function () {
+      if (searchTermsSaveBtn) {
+        searchTermsSaveBtn.disabled = false;
+      }
+      updateSearchTermsSaveState();
+    });
   }
 
   function renderDigits(breakdown) {
@@ -387,6 +551,21 @@
   searchInput.addEventListener('input', debounce(function () {
     searchAccounts(searchInput.value);
   }, 300));
+
+  if (searchTermsAddBtn) {
+    searchTermsAddBtn.addEventListener('click', addSearchTermFromInput);
+  }
+  if (searchTermsInput) {
+    searchTermsInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addSearchTermFromInput();
+      }
+    });
+  }
+  if (searchTermsSaveBtn) {
+    searchTermsSaveBtn.addEventListener('click', saveSearchTerms);
+  }
 
   numberInput.addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {

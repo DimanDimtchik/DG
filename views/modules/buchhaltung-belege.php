@@ -59,7 +59,6 @@ $baseUrl = '/app?page=buchhaltung-belege';
         <input type="search" name="s" value="<?= View::escape($search) ?>" placeholder="Lieferant, Rechnungsnr., Buchungstext, Konto …">
       </label>
       <div class="dg-field dg-field--actions">
-        <span class="dg-field__spacer" aria-hidden="true">&nbsp;</span>
         <button type="submit" class="dg-button dg-button--primary">Filtern</button>
         <?php if ($search !== '' || $typeFilter !== '') : ?>
           <a class="dg-button" href="<?= View::escape($baseUrl . '&year=' . $year) ?>">Zurücksetzen</a>
@@ -102,7 +101,18 @@ $baseUrl = '/app?page=buchhaltung-belege';
               <td><?= View::escape((string) ($voucher['invoice_number'] ?? '') ?: '—') ?></td>
               <td><?= View::escape((string) ($voucher['description'] ?? '') ?: '—') ?></td>
               <td class="dg-table__num"><?= View::escape(VoucherRepository::formatMoney((float) ($voucher['gross_amount'] ?? 0))) ?> €</td>
-              <td class="dg-table__num"><?= (int) ($voucher['tax_rate'] ?? 0) ?> % · <?= View::escape(VoucherRepository::formatMoney((float) ($voucher['tax_amount'] ?? 0))) ?> €</td>
+              <td class="dg-table__num dg-table__tax-breakdown">
+                <?php
+                $taxLines = $voucher['tax_display_lines'] ?? [];
+                if ($taxLines === []) :
+                ?>
+                  —
+                <?php else : ?>
+                  <?php foreach ($taxLines as $taxLine) : ?>
+                    <span class="dg-table__tax-breakdown-line"><?= View::escape($taxLine) ?></span>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </td>
               <td>
                 <span class="dg-buchhaltung-belege__account"><?= View::escape((string) ($voucher['account_number'] ?? '')) ?></span>
                 <?php if ((string) ($voucher['account_name'] ?? '') !== '') : ?>
@@ -110,7 +120,7 @@ $baseUrl = '/app?page=buchhaltung-belege';
                 <?php endif; ?>
               </td>
               <td>
-                <span class="dg-badge<?= ($voucher['payment_status'] ?? '') === 'paid' ? ' dg-badge--ok' : ' dg-badge--muted' ?>">
+                <span class="dg-badge <?= View::escape((string) ($voucher['payment_badge_class'] ?? 'dg-badge--muted')) ?>">
                   <?= View::escape((string) ($voucher['payment_label'] ?? '')) ?>
                 </span>
               </td>
