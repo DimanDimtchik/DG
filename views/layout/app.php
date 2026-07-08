@@ -289,6 +289,10 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-belege.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-ueberweisungen') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/vendor/qrcode.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-ueberweisungen.js')) ?>" defer></script>
+  <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
 </body>
 </html>

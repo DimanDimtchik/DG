@@ -4396,3 +4396,211 @@ body.dg-login-page {
   color: var(--dg-muted, #6b7280);
   font-style: italic;
 }
+
+/* Überweisungen (SEPA / GiroCode) */
+.dg-page-header__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dg-transfer-section + .dg-transfer-section {
+  margin-top: 18px;
+}
+
+.dg-transfer-section .dg-count {
+  color: var(--dg-muted);
+  font-weight: 400;
+}
+
+.dg-transfer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.dg-transfer {
+  border: 1px solid var(--dg-border);
+  border-radius: var(--dg-radius-sm, 8px);
+  background: var(--dg-panel-bg, #fff);
+  overflow: hidden;
+}
+
+.dg-transfer[open] {
+  border-color: var(--dg-border-accent, #c7c7cc);
+}
+
+.dg-transfer__summary {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dg-transfer__summary::-webkit-details-marker {
+  display: none;
+}
+
+.dg-transfer__recipient {
+  font-weight: 600;
+}
+
+.dg-transfer__amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dg-transfer__meta {
+  color: var(--dg-muted);
+  font-size: 12px;
+}
+
+.dg-transfer__body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--dg-border);
+}
+
+.dg-transfer__details {
+  flex: 1 1 320px;
+}
+
+.dg-transfer__dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 8px 0 14px;
+}
+
+.dg-transfer__dl dt {
+  color: var(--dg-muted);
+  font-size: 12px;
+}
+
+.dg-transfer__dl dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.dg-transfer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dg-transfer__actions form {
+  margin: 0;
+}
+
+.dg-transfer__qrbox {
+  flex: 0 0 200px;
+  text-align: center;
+}
+
+.dg-transfer-qr__img {
+  width: 180px;
+  height: 180px;
+  border: 1px solid var(--dg-border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.dg-transfer__qrhint {
+  font-size: 12px;
+  margin: 6px 0 8px;
+}
+
+.dg-transfer__qractions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.dg-transfer__qrwarn {
+  text-align: left;
+}
+
+.dg-payment-reference {
+  margin-top: 18px;
+}
+
+.dg-payment-reference-preview {
+  display: inline-block;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .dg-transfer__summary {
+    grid-template-columns: 1fr auto;
+    row-gap: 4px;
+  }
+}
+
+/* Kontenübersicht & Kontoauszug (Buchungsjournal) */
+.dg-mono {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.dg-ledger-filters .dg-field--check {
+  align-self: end;
+}
+.dg-ledger-overview__table td,
+.dg-ledger-statement__table td,
+.dg-ledger-overview__table th,
+.dg-ledger-statement__table th {
+  white-space: nowrap;
+}
+.dg-ledger-overview__table .dg-table__num,
+.dg-ledger-statement__table .dg-table__num {
+  font-variant-numeric: tabular-nums;
+}
+.dg-ledger-overview__table tfoot td,
+.dg-ledger-statement__table tfoot td {
+  font-weight: 600;
+  border-top: 2px solid var(--dg-border, #d8dee9);
+  background: var(--dg-surface-muted, #f6f8fb);
+}
+.dg-ledger-statement__carry td {
+  background: var(--dg-surface-muted, #f6f8fb);
+  font-style: italic;
+}
+.dg-ledger-statement__table tbody tr:hover {
+  background: var(--dg-surface-muted, #f6f8fb);
+}
+
+/* Jahresabschluss */
+.dg-year-close__figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 16px 0;
+}
+.dg-year-close__figures > div {
+  min-width: 160px;
+}
+.dg-year-close__figures dt {
+  font-size: 0.85rem;
+  color: var(--dg-muted, #6b7280);
+  margin: 0 0 2px;
+}
+.dg-year-close__figures dd {
+  margin: 0;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+.dg-year-close__result dd {
+  color: var(--dg-accent, #2563eb);
+}
+.dg-year-close__actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+}

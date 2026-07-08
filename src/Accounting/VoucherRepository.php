@@ -392,6 +392,10 @@ final class VoucherRepository
             throw new InvalidArgumentException('Name des Kontakts / Lieferanten ist erforderlich.');
         }
 
+        if (self::isExpenseType($voucherType) && trim((string) ($data['invoice_number'] ?? '')) === '') {
+            throw new InvalidArgumentException('Bei Ausgaben ist die Rechnungsnummer erforderlich.');
+        }
+
         $taxRate = VoucherTaxKeys::sanitizeTaxRate((int) ($data['tax_rate'] ?? 19));
         $reverseChargeType = VoucherReverseCharge::sanitizeType((string) ($data['reverse_charge_type'] ?? ''));
         if ($reverseChargeType === '' && (!empty($data['reverse_charge']) || VoucherTaxKeys::isReverseChargeKey((string) ($data['tax_key'] ?? '')))) {
@@ -527,6 +531,7 @@ final class VoucherRepository
             $stmt->execute($fields);
             self::replaceLines($id, $lineRows);
             self::replaceItems($id, $itemRows);
+            self::syncLedger($id);
 
             return $id;
         }
@@ -549,6 +554,7 @@ final class VoucherRepository
         $newId = (int) $pdo->lastInsertId();
         self::replaceLines($newId, $lineRows);
         self::replaceItems($newId, $itemRows);
+        self::syncLedger($newId);
 
         return $newId;
     }
@@ -689,8 +695,19 @@ final class VoucherRepository
             throw new RuntimeException('Datenbank nicht verbunden.');
         }
 
+        LedgerPostingService::deleteForVoucher($id);
         $stmt = Database::pdo()->prepare('DELETE FROM dg_vouchers WHERE id = :id');
         $stmt->execute(['id' => $id]);
+    }
+
+    /** Journalbuchungen des Belegs neu aufbauen (fehlerresistent). */
+    private static function syncLedger(int $voucherId): void
+    {
+        try {
+            LedgerPostingService::rebuildForVoucher($voucherId);
+        } catch (Throwable) {
+            // Journal darf das Speichern des Belegs nie blockieren.
+        }
     }
 
     /** @return array<string, string> */
@@ -825,6 +842,12 @@ final class VoucherRepository
     public static function normalizeVoucherType(string $type): string
     {
         return self::sanitizeVoucherType($type);
+    }
+
+    /** Ausgaben-Belegarten (Aufwand) – hier ist die Rechnungsnummer Pflicht. */
+    public static function isExpenseType(string $voucherType): bool
+    {
+        return in_array(self::sanitizeVoucherType($voucherType), ['expense', 'expense_reduction'], true);
     }
 
     public static function numberRangeTypeForVoucher(string $voucherType): ?string

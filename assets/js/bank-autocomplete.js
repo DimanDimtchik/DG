@@ -78,20 +78,33 @@
       }
       const data = response.data || {};
       if (data.suggestion) {
+        const bankNameInput = findInput(card, 'dg-bank-name');
+        const bicInput = findInput(card, 'dg-bank-bic');
+
+        // Leere Felder automatisch aus der IBAN füllen (BIC + Bankname).
+        let autoFilled = false;
+        if (bicInput && bicInput.value.trim() === '' && data.suggestion.bic) {
+          bicInput.value = data.suggestion.bic;
+          autoFilled = true;
+        }
+        if (bankNameInput && bankNameInput.value.trim() === '' && data.suggestion.bankName) {
+          bankNameInput.value = data.suggestion.bankName;
+          autoFilled = true;
+        }
+
+        const label = data.suggestion.bankName + (data.suggestion.bic ? ' (' + data.suggestion.bic + ')' : '');
         hint.innerHTML =
           '<p class="dg-bank-hint">' +
-          escapeHtml('Aus IBAN erkannt: ' + data.suggestion.bankName + ' (' + data.suggestion.bic + ')') +
-          ' <button type="button" class="dg-bank-apply">Übernehmen</button></p>';
+          escapeHtml((autoFilled ? 'Aus IBAN übernommen: ' : 'Aus IBAN erkannt: ') + label) +
+          ' <button type="button" class="dg-bank-apply">Erneut übernehmen</button></p>';
         hint.hidden = false;
         hint.querySelector('.dg-bank-apply')?.addEventListener('click', (e) => {
           e.preventDefault();
-          const bankName = findInput(card, 'dg-bank-name');
-          const bic = findInput(card, 'dg-bank-bic');
-          if (bankName) {
-            bankName.value = data.suggestion.bankName;
+          if (bankNameInput) {
+            bankNameInput.value = data.suggestion.bankName;
           }
-          if (bic) {
-            bic.value = data.suggestion.bic;
+          if (bicInput) {
+            bicInput.value = data.suggestion.bic;
           }
         });
       } else {

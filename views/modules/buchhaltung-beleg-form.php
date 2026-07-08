@@ -80,6 +80,7 @@ if ($autoInvoiceNumber && !$isEdit) {
         $invoiceNumberValue = '';
     }
 }
+$invoiceNumberRequired = VoucherRepository::isExpenseType($selectedType) && !$autoInvoiceNumber && !$readOnly;
 $newContactUrl = '/app?page=kontakte&action=new&return_to=' . rawurlencode('/app?page=buchhaltung-beleg-form&action=new');
 $arapEnabled = !empty($form['arap_enabled']);
 $arapCurrentPercent = max(0, min(100, (int) ($form['arap_current_year_percent'] ?? 100)));
@@ -92,6 +93,10 @@ $nextFiscalYear = $fiscalYear + 1;
 $arapTypeLabel = VoucherAccrual::labelForType($selectedType);
 $arapTypeHint = VoucherAccrual::hintForType($selectedType);
 $showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $readOnly);
+$transferSupported = $isEdit
+    && $paymentStatus === VoucherPaymentStatus::OPEN
+    && in_array($selectedType, ['expense', 'expense_reduction'], true);
+$existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferRepository::findByVoucher((int) $voucherId) : null;
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -106,6 +111,19 @@ $showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $r
       <h1 class="dg-page-title"><?= $isEdit ? ($readOnly ? 'Beleg anzeigen' : 'Beleg bearbeiten') : 'Neuer Beleg' ?></h1>
       <p class="dg-lead">Belegerfassung — Kontenrahmen <?= View::escape($skrLabel) ?></p>
     </div>
+    <?php if ($transferSupported && !$readOnly) : ?>
+      <div class="dg-page-header__actions">
+        <?php if ($existingTransfer !== null) : ?>
+          <a class="dg-button" href="/app?page=buchhaltung-ueberweisungen&open=<?= (int) $existingTransfer['id'] ?>#transfer-<?= (int) $existingTransfer['id'] ?>">Überweisung ansehen</a>
+        <?php else : ?>
+          <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form">
+            <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+            <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+            <button type="submit" name="voucher_transfer_prepare" value="1" class="dg-button dg-button--primary">Überweisung vorbereiten</button>
+          </form>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
   </header>
 
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -142,13 +160,14 @@ $showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $r
           <small class="dg-field-hint">Leistungs- oder Lieferdatum — z. B. auf der Ausgangsrechnung.</small>
         </label>
         <label class="dg-field" id="dg-voucher-invoice-field">
-          <span>Rechnungsnummer</span>
+          <span id="dg-voucher-invoice-label">Rechnungsnummer<?= $invoiceNumberRequired ? ' *' : '' ?></span>
           <input
             type="text"
             <?= $autoInvoiceNumber ? '' : 'name="invoice_number"' ?>
             id="dg-voucher-invoice-number"
             value="<?= View::escape($invoiceNumberValue) ?>"
             maxlength="100"
+            <?= $invoiceNumberRequired ? ' required' : '' ?>
             <?= ($readOnly || $autoInvoiceNumber) ? ' readonly' : '' ?>
             class="<?= $autoInvoiceNumber ? 'dg-input--computed' : '' ?>"
             <?= $isEdit && $autoInvoiceNumber ? ' data-saved-invoice="1"' : '' ?>

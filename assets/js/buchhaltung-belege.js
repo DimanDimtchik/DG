@@ -1027,7 +1027,19 @@
   var arapNextLabel = document.getElementById('dg-voucher-arap-next-label');
   var arapHint = document.getElementById('dg-voucher-arap-hint');
   var voucherDateInput = document.getElementById('dg-voucher-date');
+  var deliveryDateInput = document.getElementById('dg-voucher-delivery-date');
   var accrualConfig = config.accrual || {};
+
+  // Beim Laden gespeicherte Verteilung merken (nur wenn ARAP bereits aktiv war).
+  // Daran erkennen wir, dass eine Neuberechnung eine bestehende Verteilung
+  // überschreiben würde – dann fragen wir vorher nach.
+  var arapSavedCurrent = null;
+  if (arapEnabledInput && arapEnabledInput.checked && arapCurrentInput) {
+    var arapSavedInit = parseInt(arapCurrentInput.value, 10);
+    if (!isNaN(arapSavedInit)) {
+      arapSavedCurrent = arapSavedInit;
+    }
+  }
 
   function fiscalYearFromDate(value) {
     if (!value) {
@@ -1069,6 +1081,119 @@
     current = Math.max(0, Math.min(100, current));
     arapCurrentInput.value = String(current);
     arapNextInput.value = String(100 - current);
+  }
+
+  // Für die ARAP-Verteilung maßgebliches Datum: bevorzugt das Lieferdatum,
+  // ersatzweise das Belegdatum.
+  function arapBaseDate() {
+    if (deliveryDateInput && deliveryDateInput.value) {
+      return deliveryDateInput.value;
+    }
+    return voucherDateInput ? voucherDateInput.value : '';
+  }
+
+  // Anteil des aktuellen Jahres: Resttage vom Basisdatum bis Jahresende,
+  // geteilt durch die Tage im Jahr, kaufmännisch nach oben gerundet.
+  function computeArapCurrentPercent() {
+    var raw = arapBaseDate();
+    if (!raw) {
+      return null;
+    }
+    var parts = String(raw).split('-');
+    if (parts.length < 3) {
+      return null;
+    }
+    var year = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    var day = parseInt(parts[2], 10);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      return null;
+    }
+    var base = new Date(year, month - 1, day);
+    var endOfYear = new Date(year, 11, 31);
+    var msPerDay = 86400000;
+    var daysRemaining = Math.round((endOfYear.getTime() - base.getTime()) / msPerDay);
+    if (daysRemaining < 0) {
+      daysRemaining = 0;
+    }
+    var isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    var daysInYear = isLeap ? 366 : 365;
+    var percent = Math.ceil((daysRemaining / daysInYear) * 100);
+    return Math.max(0, Math.min(100, percent));
+  }
+
+  // Schlägt die Verteilung automatisch anhand des Lieferdatums vor.
+  function proposeArapDistribution() {
+    var percent = computeArapCurrentPercent();
+    if (percent === null || !arapCurrentInput) {
+      return;
+    }
+    // Für eine echte Abgrenzung muss ein Anteil fürs Folgejahr übrig bleiben.
+    if (percent >= 100) {
+      percent = 99;
+    }
+    arapCurrentInput.value = String(percent);
+    syncArapNextPercent();
+  }
+
+  // Gibt es eine gespeicherte Verteilung, die eine Neuberechnung überschreiben würde?
+  function hasStoredArapDistribution() {
+    return arapSavedCurrent !== null;
+  }
+
+  // Popup mit Hinweis und zwei Optionen: beibehalten oder neu berechnen.
+  function showArapRecalcDialog(message, onRecalc, onKeep) {
+    var modal = document.createElement('div');
+    modal.className = 'dg-modal dg-arap-recalc-modal';
+    modal.innerHTML =
+      '<div class="dg-modal__backdrop" data-arap-keep></div>' +
+      '<div class="dg-modal__dialog" role="dialog" aria-modal="true" aria-label="Rechnungsabgrenzung" ' +
+        'style="width:min(520px,calc(100vw - 32px));grid-template-rows:auto auto auto;">' +
+        '<div class="dg-modal__head">' +
+          '<strong>Rechnungsabgrenzung (ARAP)</strong>' +
+          '<button type="button" class="dg-modal__close" data-arap-keep aria-label="Schließen">&times;</button>' +
+        '</div>' +
+        '<div style="padding:16px;line-height:1.5;">' + escapeHtml(message) + '</div>' +
+        '<div class="dg-modal__foot">' +
+          '<button type="button" class="dg-button" data-arap-keep>Alte Verteilung beibehalten</button>' +
+          '<button type="button" class="dg-button dg-button--primary" data-arap-recalc>Verteilung neu berechnen</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    function close() {
+      if (modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
+      document.removeEventListener('keydown', onKey);
+    }
+    function keep() {
+      close();
+      if (typeof onKeep === 'function') {
+        onKeep();
+      }
+    }
+    function recalc() {
+      close();
+      if (typeof onRecalc === 'function') {
+        onRecalc();
+      }
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') {
+        keep();
+      }
+    }
+
+    modal.querySelectorAll('[data-arap-keep]').forEach(function (el) {
+      el.addEventListener('click', keep);
+    });
+    var recalcBtn = modal.querySelector('[data-arap-recalc]');
+    if (recalcBtn) {
+      recalcBtn.addEventListener('click', recalc);
+      recalcBtn.focus();
+    }
+    document.addEventListener('keydown', onKey);
   }
 
   function collectBookingLinesForPreview() {
@@ -1163,7 +1288,36 @@
   }
 
   function onArapChange() {
+    // Beim Aktivieren automatisch eine Verteilung nach Lieferdatum vorschlagen.
+    if (arapEnabledInput && arapEnabledInput.checked) {
+      if (hasStoredArapDistribution()) {
+        syncArapUi();
+        showArapRecalcDialog(
+          'Für diesen Beleg ist bereits eine ARAP-Verteilung gespeichert. Möchten Sie die gespeicherte Verteilung beibehalten oder anhand des Lieferdatums neu berechnen?',
+          function () { proposeArapDistribution(); refreshArapPreview(); },
+          function () { refreshArapPreview(); }
+        );
+        return;
+      }
+      proposeArapDistribution();
+    }
     syncArapUi();
+  }
+
+  function onArapDateChange() {
+    syncArapYearLabels();
+    if (arapEnabledInput && arapEnabledInput.checked) {
+      if (hasStoredArapDistribution()) {
+        showArapRecalcDialog(
+          'Das Datum wurde geändert. Möchten Sie die gespeicherte ARAP-Verteilung beibehalten oder anhand des neuen Lieferdatums neu berechnen?',
+          function () { proposeArapDistribution(); refreshArapPreview(); },
+          function () { refreshArapPreview(); }
+        );
+        return;
+      }
+      proposeArapDistribution();
+    }
+    refreshArapPreview();
   }
 
   function onArapPercentChange() {
@@ -1585,6 +1739,21 @@
     });
   }
 
+  function setInvoiceRequired(required) {
+    var invoiceInput = document.getElementById('dg-voucher-invoice-number');
+    var invoiceLabel = document.getElementById('dg-voucher-invoice-label');
+    if (invoiceInput) {
+      if (required) {
+        invoiceInput.setAttribute('required', 'required');
+      } else {
+        invoiceInput.removeAttribute('required');
+      }
+    }
+    if (invoiceLabel) {
+      invoiceLabel.textContent = required ? 'Rechnungsnummer *' : 'Rechnungsnummer';
+    }
+  }
+
   function syncInvoiceNumberField() {
     var invoiceInput = document.getElementById('dg-voucher-invoice-number');
     var invoiceHint = document.getElementById('dg-voucher-invoice-hint');
@@ -1596,8 +1765,11 @@
     var rangeLabel = autoTypes[typeSelect.value] || '';
     var isAuto = rangeLabel !== '';
     var isSaved = invoiceInput.getAttribute('data-saved-invoice') === '1';
+    var isExpense = typeSelect.value === 'expense' || typeSelect.value === 'expense_reduction';
 
     if (isAuto) {
+      // Automatische Nummer aus dem Nummernkreis – nie Pflichtfeld.
+      setInvoiceRequired(false);
       invoiceInput.readOnly = true;
       invoiceInput.classList.add('dg-input--computed');
       invoiceInput.removeAttribute('name');
@@ -1633,6 +1805,8 @@
       invoiceHint.textContent = '';
     }
     invoiceInput.setAttribute('data-was-auto', '0');
+    // Bei Ausgaben ist die Rechnungsnummer Pflicht.
+    setInvoiceRequired(isExpense);
   }
 
   if (typeSelect) {
@@ -1671,10 +1845,10 @@
     arapCurrentInput.addEventListener('change', onArapPercentChange);
   }
   if (voucherDateInput) {
-    voucherDateInput.addEventListener('change', function () {
-      syncArapYearLabels();
-      refreshArapPreview();
-    });
+    voucherDateInput.addEventListener('change', onArapDateChange);
+  }
+  if (deliveryDateInput) {
+    deliveryDateInput.addEventListener('change', onArapDateChange);
   }
   syncArapUi();
   syncContactValidation();

@@ -251,3 +251,83 @@ $historyArchive = array_values(array_filter(
     </div>
   <?php endif; ?>
 </section>
+
+<?php
+$paymentReferenceFormula = PaymentReferenceFormula::formula();
+$paymentReferenceTokens = PaymentReferenceFormula::tokens();
+$paymentReferencePreview = PaymentReferenceFormula::resolve($paymentReferenceFormula, [
+    'invoice_number' => 'R-2026-0815',
+    'invoice_date' => date('Y-m-d'),
+    'customer_number' => 'K-4711',
+    'company_name' => CompanySettings::displayName() ?: 'Meine Firma',
+    'supplier_name' => 'Muster Lieferant GmbH',
+    'amount' => 199.00,
+]);
+?>
+<section class="dg-panel dg-payment-reference">
+  <h3 class="dg-subsection-title">Verwendungszweck für Überweisungen</h3>
+  <p class="dg-lead">
+    Formel für den Verwendungszweck, wenn aus einem offenen Lieferantenbeleg eine Überweisung vorbereitet wird.
+    Platzhalter in eckigen Klammern <code>[…]</code> entfallen automatisch, wenn der Wert leer ist
+    (z. B. <code>[ / KdNr {KUNDENNR}]</code>).
+  </p>
+
+  <form
+    class="dg-form"
+    method="post"
+    action="<?= View::escape(SettingsRegistry::tabUrl('nummernkreise')) ?>"
+    id="dg-payment-reference-form"
+  >
+    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+
+    <section class="dg-number-range-codes" aria-label="Verfügbare Platzhalter">
+      <h4 class="dg-subsection-title">Code-Kürzel</h4>
+      <ul class="dg-number-range-code-list">
+        <?php foreach ($paymentReferenceTokens as $code => $desc) : ?>
+          <li class="dg-number-range-code-list__item">
+            <span class="dg-number-range-code-list__codes">
+              <button type="button" class="dg-code-chip" data-insert-reference="<?= View::escape($code) ?>"><?= View::escape($code) ?></button>
+            </span>
+            <span class="dg-number-range-code-list__label"><?= View::escape($desc) ?></span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
+
+    <label class="dg-field dg-field--wide">
+      <span>Formel</span>
+      <input
+        type="text"
+        class="dg-input"
+        name="payment_reference_formula"
+        id="dg-payment-reference-input"
+        value="<?= View::escape($paymentReferenceFormula) ?>"
+        placeholder="RE {RENR} vom {REDATUM}[ / KdNr {KUNDENNR}] / {FIRMA}"
+      >
+      <small class="dg-field-hint">
+        Beispiel: <code class="dg-payment-reference-preview" id="dg-payment-reference-preview"><?= View::escape($paymentReferencePreview) ?></code>
+      </small>
+    </label>
+
+    <div class="dg-form-actions">
+      <button type="submit" name="payment_reference_save" value="1" class="dg-button dg-button--primary">Verwendungszweck-Formel speichern</button>
+    </div>
+  </form>
+</section>
+
+<script>
+  (function () {
+    var input = document.getElementById('dg-payment-reference-input');
+    if (!input) { return; }
+    document.querySelectorAll('[data-insert-reference]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.getAttribute('data-insert-reference');
+        var start = input.selectionStart != null ? input.selectionStart : input.value.length;
+        var end = input.selectionEnd != null ? input.selectionEnd : input.value.length;
+        input.value = input.value.slice(0, start) + code + input.value.slice(end);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + code.length;
+      });
+    });
+  })();
+</script>

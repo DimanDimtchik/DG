@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Buchhaltung – Offene Aufgaben</title>
+<style>
+  @page { size: A4; margin: 15mm 14mm 13mm 14mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1c2330;
+    font-size: 10.5pt;
+    line-height: 1.38;
+  }
+  h1 { font-size: 19pt; margin: 0 0 2mm; color: #7a5b12; }
+  .sub { color: #5c6678; font-size: 9.5pt; margin: 0 0 4mm; }
+  .legend {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: 9pt; color: #3a4252;
+    border: 1px solid #e0d6bd; background: #faf6ec;
+    border-radius: 6px; padding: 6px 10px; margin-bottom: 5mm;
+  }
+  section { margin-bottom: 4.5mm; break-inside: avoid; }
+  h2 {
+    font-size: 12pt; margin: 0 0 1.5mm;
+    padding-bottom: 1.2mm; border-bottom: 2px solid #b8942f; color: #6b4f10;
+  }
+  h2 .tag { float: right; font-size: 8pt; font-weight: 600; color: #7a828f; padding-top: 2px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 1.5mm 0; border-bottom: 1px dotted #dfe3ea; break-inside: avoid;
+  }
+  li:last-child { border-bottom: none; }
+  .box {
+    flex: 0 0 auto; width: 4.8mm; height: 4.8mm;
+    border: 1.7px solid #566; border-radius: 3px; margin-top: 0.3mm;
+  }
+  .txt { flex: 1; }
+  .txt .t { font-weight: 600; }
+  .txt .d { color: #5c6678; font-size: 9pt; display: block; margin-top: 0.3mm; }
+  .pill {
+    display: inline-block; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.4px;
+    padding: 0.5mm 1.8mm; border-radius: 10px; margin-left: 4px; vertical-align: middle;
+  }
+  .p-part { background: #fdf1d8; color: #8a6410; }
+  .p-open { background: #fde3e0; color: #a1352a; }
+  .foot {
+    margin-top: 5mm; font-size: 8pt; color: #8a919c;
+    border-top: 1px solid #e3e7ee; padding-top: 2mm;
+  }
+</style>
+</head>
+<body>
+  <h1>Buchhaltung – Offene Aufgaben</h1>
+  <p class="sub">DG CRM · nur noch nicht (vollständig) umgesetzte Punkte aus der Anforderungsliste · Stand 08.07.2026</p>
+
+  <div class="legend">
+    <span><span class="pill p-open">OFFEN</span> noch nicht implementiert</span>
+    <span><span class="pill p-part">TEILWEISE</span> Grundlage steht, Rest fehlt</span>
+    <span>☐ Kästchen zum Abhaken</span>
+  </div>
+
+  <section>
+    <h2>3 · Überweisung vorbereiten (QR-Code) <span class="tag">offen</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Funktion „Überweisung vorbereiten“ am Beleg</span> <span class="pill p-open">OFFEN</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">GiroCode / EPC-QR-Code erzeugen (Scan per Smartphone-Banking)</span> <span class="pill p-open">OFFEN</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Verwendungszweck automatisch zusammensetzen</span> <span class="pill p-open">OFFEN</span><span class="d">Rechnungsnr. + Rechnungsdatum + Kundennr. (falls vorhanden) + CRM-User-Firmenname</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Empfänger-IBAN/BIC aus Kontakt bzw. Firmendaten übernehmen</span> <span class="pill p-open">OFFEN</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4 · Rechnungsabgrenzung (ARAP/PRAP) <span class="tag">teilweise</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Automatischer Prozent-Vorschlag aus dem Belegdatum</span> <span class="pill p-open">OFFEN</span><span class="d">z. B. Kfz-Steuer: 38 % laufendes Jahr / 62 % Folgejahr aus Restlaufzeit berechnen</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">PRAP für Einnahmen/Vorausrechnungen aktiv schalten</span> <span class="pill p-part">TEILWEISE</span><span class="d">Backend vorbereitet, UI bei Einnahmen noch ausgeblendet</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>5 · Gutschrift / Rabatt / Skonto / Trinkgeld <span class="tag">teilweise</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Gutschrift &amp; Rabatte mit negativen Werten erfassen</span> <span class="pill p-part">TEILWEISE</span><span class="d">Kundengutschrift als Belegart vorhanden; automatische Minus-Position/-buchung fehlt</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Skonto automatisch buchhalterisch korrekt verarbeiten</span> <span class="pill p-open">OFFEN</span><span class="d">Skontobetrag + Konten + USt-Korrektur automatisch</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Trinkgeld korrekt verarbeiten</span> <span class="pill p-open">OFFEN</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6 · Belege hochladen · Bildbearbeitung · OCR <span class="tag">offen</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Beleg-Upload im Belegformular (Bild/PDF anhängen &amp; speichern)</span> <span class="pill p-open">OFFEN</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Bildbearbeitung übernehmen</span> <span class="pill p-open">OFFEN</span><span class="d">aus der WG-App prüfen, was wiederverwendbar ist</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">OCR/Auslesen für Web umsetzen</span> <span class="pill p-open">OFFEN</span><span class="d">Web-OCR-Optionen prüfen; Erweiterungen kostenlos, Verkauf eigener OCR erlaubt</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Erkannte Felder automatisch ins Belegformular übernehmen</span> <span class="pill p-open">OFFEN</span><span class="d">Betrag, Datum, Rechnungsnr., Lieferant</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>7 · Kasse <span class="tag">teilweise</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Kassenbuch-Modul wie Lexoffice</span> <span class="pill p-part">TEILWEISE</span><span class="d">Zahlungsstatus „Per Kasse bezahlt“ vorhanden; eigenes Kassenbuch (Ein-/Auszahlungen, Bestand) fehlt</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Kassenbestand fortschreiben &amp; Tagesabschluss</span> <span class="pill p-open">OFFEN</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>8 · Buchungskonto-Darstellung <span class="tag">teilweise</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Darstellung der Buchungskonten wie Lexoffice (Funktion, eigenes Design)</span> <span class="pill p-part">TEILWEISE</span><span class="d">Split-Tabelle vorhanden; Feinschliff Darstellung/Übersicht offen</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>9 · Filterung (Belege, Konten, Kasse) <span class="tag">teilweise</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Freier Zeitraum (frei wählbar) für Belege</span> <span class="pill p-open">OFFEN</span><span class="d">zusätzlich zu Jahr auch von–bis, Monat, Woche</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Zeitraum-Filter für Konten-Einträge</span> <span class="pill p-open">OFFEN</span><span class="d">z. B. alle Einträge eines Kontos nur für einen Monat/eine Woche</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Filterung für Kasse</span> <span class="pill p-open">OFFEN</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Belegerfassung – Ausbau <span class="tag">offen</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Vollständige DATEV-Doppelbuchung</span> <span class="pill p-open">OFFEN</span><span class="d">Gegenkonto Forderung/Kreditor + USt/Vorsteuer automatisch buchen</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Offene Posten / Banking-Zuordnung</span> <span class="pill p-open">OFFEN</span><span class="d">Lastschrift/Zahlungseingang automatisch zuordnen &amp; als bezahlt markieren</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Sonstiges <span class="tag">prüfen</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Steuerberater kennzeichnen / verknüpfen</span> <span class="pill p-part">TEILWEISE</span><span class="d">Steuerkanzlei-Einstellungen vorhanden – Markierung im Workflow prüfen</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Kontohinweise redaktionell prüfen</span> <span class="pill p-part">TEILWEISE</span><span class="d">automatisch generiert; nicht jedes Konto manuell kuratiert</span></span></li>
+    </ul>
+  </section>
+
+  <div class="foot">
+    DG CRM · dg.ganz-om.de — Arbeits-Checkliste offener Punkte. Erledigte Grundfunktionen sind hier bewusst nicht aufgeführt.
+  </div>
+</body>
+</html>

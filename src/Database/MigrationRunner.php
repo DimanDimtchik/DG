@@ -132,6 +132,9 @@ final class MigrationRunner
             '030_voucher_items.sql' => self::tableExists($pdo, 'dg_voucher_items'),
             '031_voucher_delivery_date.sql' => self::columnExists($pdo, 'dg_vouchers', 'delivery_date'),
             '032_voucher_arap.sql' => self::columnExists($pdo, 'dg_vouchers', 'arap_enabled'),
+            '033_bank_transfers.sql' => self::tableExists($pdo, 'dg_bank_transfers'),
+            '034_ledger.sql' => self::tableExists($pdo, 'dg_ledger_postings')
+                && self::tableExists($pdo, 'dg_fiscal_years'),
             default => false,
         };
     }

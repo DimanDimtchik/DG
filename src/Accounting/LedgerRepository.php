@@ -1,0 +1,278 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Auswertung des Buchungsjournals: Kontenübersicht (Salden je Konto) und
+ * Kontoauszug (Einzelbuchungen mit Saldenvortrag), inkl. Saldenübertragung
+ * aus Vorjahren.
+ */
+final class LedgerRepository
+{
+    /** Journal für alle Belege neu aufbauen. Gibt Anzahl verarbeiteter Belege zurück. */
+    public static function backfillAll(): int
+    {
+        if (!Database::isConfigured()) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+
+        $ids = Database::pdo()->query('SELECT id FROM dg_vouchers ORDER BY id ASC')->fetchAll(PDO::FETCH_COLUMN);
+        $count = 0;
+        foreach ($ids as $id) {
+            LedgerPostingService::rebuildForVoucher((int) $id);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /** @return list<int> Jahre mit Buchungen, absteigend, inkl. aktuellem Jahr. */
+    public static function availableYears(): array
+    {
+        $years = [];
+        if (Database::isConfigured()) {
+            MigrationRunner::runPending();
+            $rows = Database::pdo()->query('SELECT DISTINCT fiscal_year FROM dg_ledger_postings ORDER BY fiscal_year DESC')->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($rows as $y) {
+                $years[] = (int) $y;
+            }
+        }
+        $current = (int) date('Y');
+        if (!in_array($current, $years, true)) {
+            $years[] = $current;
+        }
+        rsort($years);
+
+        return $years;
+    }
+
+    /**
+     * Kontenübersicht: pro Konto Umsatz Soll/Haben, Saldenvortrag und Saldo.
+     *
+     * @param array{search?: string, show_empty?: bool} $opts
+     * @return array{accounts: list<array<string, mixed>>, totals: array<string, float>}
+     */
+    public static function accountOverview(int $year, array $opts = []): array
+    {
+        $result = ['accounts' => [], 'totals' => ['debit' => 0.0, 'credit' => 0.0, 'opening' => 0.0, 'balance' => 0.0]];
+        if (!Database::isConfigured()) {
+            return $result;
+        }
+        MigrationRunner::runPending();
+        $pdo = Database::pdo();
+        $meta = self::accountMeta();
+
+        // Bewegungen des Jahres (ohne Saldenvortrag).
+        $movement = [];
+        $stmt = $pdo->prepare(
+            "SELECT account_number, side, SUM(amount) AS total, COUNT(*) AS cnt
+             FROM dg_ledger_postings
+             WHERE fiscal_year = :y AND source <> 'opening_balance'
+             GROUP BY account_number, side"
+        );
+        $stmt->execute(['y' => $year]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $acc = (string) $row['account_number'];
+            $movement[$acc] ??= ['debit' => 0.0, 'credit' => 0.0, 'cnt' => 0];
+            $movement[$acc][(string) $row['side']] = round((float) $row['total'], 2);
+            $movement[$acc]['cnt'] += (int) $row['cnt'];
+        }
+
+        // Explizite Saldenvorträge des Jahres.
+        $opening = self::openingBalances($year);
+
+        $accounts = array_unique(array_merge(array_keys($movement), array_keys($opening)));
+        $search = mb_strtolower(trim((string) ($opts['search'] ?? '')));
+        $showEmpty = (bool) ($opts['show_empty'] ?? false);
+
+        if ($showEmpty) {
+            $accounts = array_unique(array_merge($accounts, array_keys($meta)));
+        }
+
+        $list = [];
+        foreach ($accounts as $acc) {
+            $acc = (string) $acc;
+            $mov = $movement[$acc] ?? ['debit' => 0.0, 'credit' => 0.0, 'cnt' => 0];
+            $open = $opening[$acc] ?? 0.0;
+            $debit = round((float) $mov['debit'], 2);
+            $credit = round((float) $mov['credit'], 2);
+            $balance = round($open + $debit - $credit, 2);
+            $hasActivity = $debit != 0.0 || $credit != 0.0 || $open != 0.0;
+            if (!$showEmpty && !$hasActivity) {
+                continue;
+            }
+            $name = (string) ($meta[$acc]['name'] ?? '');
+            $section = (string) ($meta[$acc]['section'] ?? '');
+            if ($search !== '') {
+                $haystack = mb_strtolower($acc . ' ' . $name);
+                if (!str_contains($haystack, $search)) {
+                    continue;
+                }
+            }
+            $list[] = [
+                'account_number' => $acc,
+                'name' => $name,
+                'section' => $section,
+                'debit' => $debit,
+                'credit' => $credit,
+                'opening' => round($open, 2),
+                'balance' => $balance,
+                'count' => (int) $mov['cnt'],
+            ];
+            $result['totals']['debit'] = round($result['totals']['debit'] + $debit, 2);
+            $result['totals']['credit'] = round($result['totals']['credit'] + $credit, 2);
+            $result['totals']['opening'] = round($result['totals']['opening'] + $open, 2);
+            $result['totals']['balance'] = round($result['totals']['balance'] + $balance, 2);
+        }
+
+        usort($list, static fn (array $a, array $b): int => strnatcmp((string) $a['account_number'], (string) $b['account_number']));
+        $result['accounts'] = $list;
+
+        return $result;
+    }
+
+    /**
+     * Kontoauszug eines Kontos: Saldenvortrag + chronologische Einzelbuchungen mit laufendem Saldo.
+     *
+     * @return array{account: array<string, mixed>, opening: float, rows: list<array<string, mixed>>, closing: float, debit: float, credit: float}
+     */
+    public static function accountStatement(string $accountNumber, int $year): array
+    {
+        $accountNumber = preg_replace('/\s+/', '', $accountNumber) ?? '';
+        $meta = self::accountMeta();
+        $account = [
+            'account_number' => $accountNumber,
+            'name' => (string) ($meta[$accountNumber]['name'] ?? ''),
+            'section' => (string) ($meta[$accountNumber]['section'] ?? ''),
+        ];
+        $out = ['account' => $account, 'opening' => 0.0, 'rows' => [], 'closing' => 0.0, 'debit' => 0.0, 'credit' => 0.0];
+        if (!Database::isConfigured() || $accountNumber === '') {
+            return $out;
+        }
+        MigrationRunner::runPending();
+        $pdo = Database::pdo();
+
+        $opening = self::openingBalances($year)[$accountNumber] ?? 0.0;
+        $out['opening'] = round($opening, 2);
+        $running = round($opening, 2);
+
+        $stmt = $pdo->prepare(
+            "SELECT p.*, v.voucher_type, v.supplier_name, v.invoice_number
+             FROM dg_ledger_postings p
+             LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
+             WHERE p.account_number = :acc AND p.fiscal_year = :y AND p.source <> 'opening_balance'
+             ORDER BY p.posting_date ASC, p.id ASC"
+        );
+        $stmt->execute(['acc' => $accountNumber, 'y' => $year]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $side = (string) $row['side'];
+            $amount = round((float) $row['amount'], 2);
+            $debit = $side === 'debit' ? $amount : 0.0;
+            $credit = $side === 'credit' ? $amount : 0.0;
+            $running = round($running + $debit - $credit, 2);
+            $out['debit'] = round($out['debit'] + $debit, 2);
+            $out['credit'] = round($out['credit'] + $credit, 2);
+            $out['rows'][] = [
+                'id' => (int) $row['id'],
+                'date' => (string) $row['posting_date'],
+                'voucher_id' => $row['voucher_id'] !== null ? (int) $row['voucher_id'] : null,
+                'contra_account' => (string) $row['contra_account'],
+                'contra_name' => (string) ($meta[(string) $row['contra_account']]['name'] ?? ''),
+                'description' => (string) $row['description'],
+                'invoice_number' => (string) ($row['invoice_number'] ?? ''),
+                'tax_rate' => (int) $row['tax_rate'],
+                'debit' => $debit,
+                'credit' => $credit,
+                'balance' => $running,
+                'source' => (string) $row['source'],
+            ];
+        }
+
+        $out['closing'] = $running;
+
+        return $out;
+    }
+
+    /**
+     * Saldenvortrag je Konto für ein Jahr (vorzeichenbehaftet: Soll − Haben).
+     * Fällt auf kumulierten Vorjahressaldo der Bestandskonten zurück, falls kein
+     * expliziter Abschluss existiert.
+     *
+     * @return array<string, float>
+     */
+    public static function openingBalances(int $year): array
+    {
+        $result = [];
+        if (!Database::isConfigured()) {
+            return $result;
+        }
+        $pdo = Database::pdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT account_number,
+                    SUM(CASE WHEN side='debit' THEN amount ELSE -amount END) AS signed
+             FROM dg_ledger_postings
+             WHERE fiscal_year = :y AND source = 'opening_balance'
+             GROUP BY account_number"
+        );
+        $stmt->execute(['y' => $year]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $result[(string) $row['account_number']] = round((float) $row['signed'], 2);
+        }
+        if ($result !== []) {
+            return $result;
+        }
+
+        // Kein formeller Abschluss: kumulierte Bestandskonten-Salden aus Vorjahren übernehmen.
+        $meta = self::accountMeta();
+        $stmt = $pdo->prepare(
+            "SELECT account_number,
+                    SUM(CASE WHEN side='debit' THEN amount ELSE -amount END) AS signed
+             FROM dg_ledger_postings
+             WHERE fiscal_year < :y
+             GROUP BY account_number"
+        );
+        $stmt->execute(['y' => $year]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $acc = (string) $row['account_number'];
+            $section = (string) ($meta[$acc]['section'] ?? '');
+            if (!LedgerAccounts::carriesForward($acc, $section)) {
+                continue;
+            }
+            $signed = round((float) $row['signed'], 2);
+            if ($signed != 0.0) {
+                $result[$acc] = $signed;
+            }
+        }
+
+        return $result;
+    }
+
+    /** @return array<string, array{name: string, section: string}> */
+    public static function accountMeta(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $cache = [];
+        if (!Database::isConfigured()) {
+            return $cache;
+        }
+        try {
+            $skr = ChartOfAccountsSettings::activeSkrType();
+            $stmt = Database::pdo()->prepare('SELECT account_number, name, section FROM dg_chart_accounts WHERE skr_type = :skr');
+            $stmt->execute(['skr' => $skr]);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $cache[(string) $row['account_number']] = [
+                    'name' => (string) ($row['name'] ?? ''),
+                    'section' => (string) ($row['section'] ?? ''),
+                ];
+            }
+        } catch (Throwable) {
+            $cache = [];
+        }
+
+        return $cache;
+    }
+}

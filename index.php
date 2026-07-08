@@ -1240,6 +1240,111 @@ switch ($path) {
             }
         }
 
+        // POST: Überweisung aus Beleg vorbereiten
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_transfer_prepare'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+                exit;
+            }
+            try {
+                $existing = BankTransferRepository::findByVoucher($voucherId);
+                $transferId = $existing !== null
+                    ? (int) $existing['id']
+                    : BankTransferRepository::prepareFromVoucher($voucherId, $user->id);
+                Flash::set('success', $existing !== null
+                    ? 'Überweisung ist bereits vorbereitet.'
+                    : 'Überweisung vorbereitet.');
+                header('Location: /app?page=buchhaltung-ueberweisungen&open=' . $transferId . '#transfer-' . $transferId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+                exit;
+            }
+        }
+
+        // POST: Überweisung Status ändern / löschen
+        if (
+            $page === 'buchhaltung-ueberweisungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'buchhaltung-ueberweisungen')
+        ) {
+            $transferId = (int) ($_POST['transfer_id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } elseif (isset($_POST['transfer_mark_executed'])) {
+                BankTransferRepository::markExecuted($transferId);
+                Flash::set('success', 'Überweisung als ausgeführt markiert.');
+            } elseif (isset($_POST['transfer_mark_prepared'])) {
+                BankTransferRepository::markPrepared($transferId);
+                Flash::set('success', 'Überweisung zurück auf „vorbereitet“ gesetzt.');
+            } elseif (isset($_POST['transfer_delete'])) {
+                BankTransferRepository::delete($transferId);
+                Flash::set('success', 'Überweisung gelöscht.');
+            }
+            header('Location: /app?page=buchhaltung-ueberweisungen', true, 302);
+            exit;
+        }
+
+        // POST: Jahresabschluss (Jahr abschließen / Abschluss zurücknehmen)
+        if (
+            $page === 'buchhaltung-jahresabschluss'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'buchhaltung-jahresabschluss')
+        ) {
+            $closeYear = max(2000, (int) ($_POST['year'] ?? 0));
+            $redirect = '/app?page=buchhaltung-jahresabschluss&year=' . $closeYear;
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::isAdmin($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } elseif (isset($_POST['fiscal_year_close'])) {
+                try {
+                    $res = FiscalYearService::closeYear($closeYear, (int) $user->id);
+                    Flash::set('success', sprintf(
+                        'Geschäftsjahr %d abgeschlossen. %d Bestandskonten nach %d vorgetragen.',
+                        $closeYear,
+                        $res['carried'],
+                        $res['next_year']
+                    ));
+                } catch (Throwable $e) {
+                    Flash::set('error', 'Abschluss fehlgeschlagen: ' . $e->getMessage());
+                }
+            } elseif (isset($_POST['fiscal_year_reopen'])) {
+                try {
+                    FiscalYearService::reopenYear($closeYear);
+                    Flash::set('success', 'Abschluss ' . $closeYear . ' zurückgenommen.');
+                } catch (Throwable $e) {
+                    Flash::set('error', 'Rücknahme fehlgeschlagen: ' . $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Verwendungszweck-Formel speichern
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['payment_reference_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('nummernkreise');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                PaymentReferenceFormula::save((string) ($_POST['payment_reference_formula'] ?? ''));
+                Flash::set('success', 'Verwendungszweck-Formel gespeichert.');
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -1479,6 +1584,50 @@ switch ($path) {
                 exit;
             }
         } elseif ($page === 'buchhaltung-beleg-form') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-ueberweisungen' && MenuRegistry::canAccess($user, 'buchhaltung-ueberweisungen')) {
+            $transfersPrepared = BankTransferRepository::list('prepared');
+            $transfersExecuted = BankTransferRepository::list('executed');
+            $openTransferId = (int) ($_GET['open'] ?? 0);
+            $contentTemplate = 'modules/buchhaltung-ueberweisungen';
+            $title = 'Überweisungen';
+            $currentPage = 'buchhaltung-ueberweisungen';
+        } elseif ($page === 'buchhaltung-ueberweisungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-kontenuebersicht' && MenuRegistry::canAccess($user, 'buchhaltung-kontenuebersicht')) {
+            $ledgerYears = LedgerRepository::availableYears();
+            $ledgerYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $ledgerAccount = preg_replace('/[^0-9A-Za-z]/', '', (string) ($_GET['account'] ?? '')) ?? '';
+            $ledgerSearch = trim((string) ($_GET['s'] ?? ''));
+            $ledgerShowEmpty = !empty($_GET['empty']);
+            $ledgerYearStatus = FiscalYearService::status($ledgerYear);
+            if ($ledgerAccount !== '') {
+                $ledgerStatement = LedgerRepository::accountStatement($ledgerAccount, $ledgerYear);
+            } else {
+                $ledgerOverview = LedgerRepository::accountOverview($ledgerYear, [
+                    'search' => $ledgerSearch,
+                    'show_empty' => $ledgerShowEmpty,
+                ]);
+            }
+            $contentTemplate = 'modules/buchhaltung-kontenuebersicht';
+            $title = 'Kontenübersicht';
+            $currentPage = 'buchhaltung-kontenuebersicht';
+        } elseif ($page === 'buchhaltung-kontenuebersicht') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-jahresabschluss' && MenuRegistry::canAccess($user, 'buchhaltung-jahresabschluss')) {
+            $ledgerYears = LedgerRepository::availableYears();
+            $jaYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $jaPreview = FiscalYearService::profitLossPreview($jaYear);
+            $jaYearStatus = FiscalYearService::status($jaYear);
+            $fiscalYears = FiscalYearService::list();
+            $isAdmin = RoleResolver::isAdmin($user);
+            $contentTemplate = 'modules/buchhaltung-jahresabschluss';
+            $title = 'Jahresabschluss';
+            $currentPage = 'buchhaltung-jahresabschluss';
+        } elseif ($page === 'buchhaltung-jahresabschluss') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'einstellungen') {
@@ -1941,6 +2090,22 @@ switch ($path) {
             'total_pages' => 1,
         ];
         $voucherId = $voucherId ?? null;
+        $transfersPrepared = $transfersPrepared ?? [];
+        $transfersExecuted = $transfersExecuted ?? [];
+        $openTransferId = $openTransferId ?? 0;
+        $ledgerYear = $ledgerYear ?? (int) date('Y');
+        $ledgerYears = $ledgerYears ?? [(int) date('Y')];
+        $ledgerSearch = $ledgerSearch ?? '';
+        $ledgerShowEmpty = $ledgerShowEmpty ?? false;
+        $ledgerAccount = $ledgerAccount ?? '';
+        $ledgerYearStatus = $ledgerYearStatus ?? 'open';
+        $ledgerOverview = $ledgerOverview ?? ['accounts' => [], 'totals' => ['debit' => 0.0, 'credit' => 0.0, 'opening' => 0.0, 'balance' => 0.0]];
+        $ledgerStatement = $ledgerStatement ?? ['account' => ['account_number' => '', 'name' => '', 'section' => ''], 'opening' => 0.0, 'rows' => [], 'closing' => 0.0, 'debit' => 0.0, 'credit' => 0.0];
+        $jaYear = $jaYear ?? (int) date('Y');
+        $jaPreview = $jaPreview ?? ['income' => 0.0, 'expense' => 0.0, 'result' => 0.0];
+        $fiscalYears = $fiscalYears ?? [];
+        $jaYearStatus = $jaYearStatus ?? 'open';
+        $isAdmin = $isAdmin ?? RoleResolver::isAdmin($user);
 
         View::render('layout/app', compact(
             'title',
@@ -2012,6 +2177,22 @@ switch ($path) {
             'voucherTypeFilter',
             'voucherYears',
             'voucherId',
+            'transfersPrepared',
+            'transfersExecuted',
+            'openTransferId',
+            'ledgerYear',
+            'ledgerYears',
+            'ledgerSearch',
+            'ledgerShowEmpty',
+            'ledgerAccount',
+            'ledgerYearStatus',
+            'ledgerOverview',
+            'ledgerStatement',
+            'jaYear',
+            'jaPreview',
+            'fiscalYears',
+            'jaYearStatus',
+            'isAdmin',
             'numberRangeType',
             'numberRangeDoc',
             'numberRangeTypes',

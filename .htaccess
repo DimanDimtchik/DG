@@ -4,7 +4,7 @@ DirectoryIndex index.php index.html
   RewriteEngine On
 
   # Geschützte Verzeichnisse nicht direkt aufrufbar
-  RewriteRule ^(config|src|views|admin)/ - [F,L]
+  RewriteRule ^(config|src|views|admin|bin|database)/ - [F,L]
 
   # Statische Dateien direkt ausliefern
   RewriteCond %{REQUEST_FILENAME} -f [OR]

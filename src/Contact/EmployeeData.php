@@ -68,7 +68,7 @@ final class EmployeeData
             'salary' => ['label' => 'Lohn / Gehalt', 'type' => 'text', 'section' => 'contract'],
             'subsidy_amount' => ['label' => 'Beihilfebetrag', 'type' => 'text', 'section' => 'subsidy'],
             'subsidy_carrier' => ['label' => 'Beihilfeträger', 'type' => 'text', 'section' => 'subsidy'],
-            'qualifications' => ['label' => 'Qualifikationen (Ausbildung, Erfahrung, Zertifizierungen)', 'type' => 'textarea', 'section' => 'qualification', 'required' => true],
+            'qualifications' => ['label' => 'Qualifikationen (Ausbildung, Erfahrung, Zertifizierungen)', 'type' => 'textarea', 'section' => 'qualification'],
             'performance_notes' => ['label' => 'Leistungen (Aufgaben, Kommunikation)', 'type' => 'textarea', 'section' => 'assessment'],
             'behavior_notes' => ['label' => 'Verhalten (Pünktlichkeit, Teamarbeit)', 'type' => 'textarea', 'section' => 'assessment'],
             'driver_license_classes' => ['label' => 'Führerscheinklassen', 'type' => 'text', 'section' => 'license'],

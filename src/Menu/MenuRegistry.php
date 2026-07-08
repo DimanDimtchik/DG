@@ -90,6 +90,24 @@ final class MenuRegistry
                     'icon' => 'receipt',
                     'href' => '/app?page=buchhaltung-belege',
                 ],
+                [
+                    'slug' => 'buchhaltung-ueberweisungen',
+                    'label' => 'Überweisungen',
+                    'icon' => 'transfer',
+                    'href' => '/app?page=buchhaltung-ueberweisungen',
+                ],
+                [
+                    'slug' => 'buchhaltung-kontenuebersicht',
+                    'label' => 'Kontenübersicht',
+                    'icon' => 'ledger',
+                    'href' => '/app?page=buchhaltung-kontenuebersicht',
+                ],
+                [
+                    'slug' => 'buchhaltung-jahresabschluss',
+                    'label' => 'Jahresabschluss',
+                    'icon' => 'yearclose',
+                    'href' => '/app?page=buchhaltung-jahresabschluss',
+                ],
             ],
         ];
     }
@@ -116,6 +134,9 @@ final class MenuRegistry
             'bilder' => 'Medien, Logos und Bilder verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Belege erfassen mit Steuerfeldern und Kontenzuordnung.',
+            'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
+            'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
+            'buchhaltung-jahresabschluss' => 'Geschäftsjahr abschließen und Salden vortragen.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
         ];
     }
@@ -198,7 +219,14 @@ final class MenuRegistry
             return RoleResolver::isAdmin($user);
         }
 
-        if ($slug === 'buchhaltung-konten' || $slug === 'buchhaltung-belege' || $slug === 'buchhaltung-beleg-form') {
+        if (
+            $slug === 'buchhaltung-konten'
+            || $slug === 'buchhaltung-belege'
+            || $slug === 'buchhaltung-beleg-form'
+            || $slug === 'buchhaltung-ueberweisungen'
+            || $slug === 'buchhaltung-kontenuebersicht'
+            || $slug === 'buchhaltung-jahresabschluss'
+        ) {
             return self::canAccessBuchhaltung($user);
         }
 

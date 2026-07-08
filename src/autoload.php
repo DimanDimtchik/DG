@@ -140,6 +140,13 @@ spl_autoload_register(static function (string $class): void {
         'VoucherApi' => '/src/Accounting/VoucherApi.php',
         'VoucherIncomePositions' => '/src/Accounting/VoucherIncomePositions.php',
         'VoucherAccrual' => '/src/Accounting/VoucherAccrual.php',
+        'EpcQrCode' => '/src/Accounting/EpcQrCode.php',
+        'PaymentReferenceFormula' => '/src/Accounting/PaymentReferenceFormula.php',
+        'BankTransferRepository' => '/src/Accounting/BankTransferRepository.php',
+        'LedgerAccounts' => '/src/Accounting/LedgerAccounts.php',
+        'LedgerPostingService' => '/src/Accounting/LedgerPostingService.php',
+        'LedgerRepository' => '/src/Accounting/LedgerRepository.php',
+        'FiscalYearService' => '/src/Accounting/FiscalYearService.php',
     ];
 
     if (!isset($map[$class])) {
