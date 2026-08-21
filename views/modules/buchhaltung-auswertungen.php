@@ -9,6 +9,7 @@
  * @var array{type: string, message: string}|null $flash
  */
 $year = (int) ($reportYear ?? (int) date('Y'));
+$period = $reportPeriod ?? AccountingPeriodFilter::fromRequest(['year' => $year]);
 $years = $reportYears ?? [(int) date('Y')];
 $type = (string) ($reportType ?? 'guv');
 $bs = $balanceSheet ?? ['aktiva' => [], 'passiva' => [], 'totals' => ['aktiva' => 0.0, 'passiva' => 0.0], 'result' => 0.0];
@@ -21,9 +22,10 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Bilanz &amp; GuV</h1>
-      <p class="dg-lead">Auswertungen aus dem Buchungsjournal — Geschäftsjahr <?= (int) $year ?></p>
+      <p class="dg-lead">Auswertungen aus dem Buchungsjournal — <?= View::escape($period->label) ?></p>
     </div>
     <div class="dg-page-header__actions">
+      <a class="dg-button" href="<?= View::escape($period->appendToUrl('/app?page=buchhaltung-auswertungen&type=' . rawurlencode($type) . '&download=print')) ?>" target="_blank" rel="noopener">Drucken / PDF</a>
       <a class="dg-button" href="/app?page=buchhaltung-jahresabschluss&year=<?= (int) $year ?>">Jahresabschluss</a>
     </div>
   </header>
@@ -31,14 +33,12 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
   <form class="dg-panel dg-ledger-filters" method="get" action="/app">
     <input type="hidden" name="page" value="buchhaltung-auswertungen">
     <div class="dg-form-grid dg-form-grid--compact">
-      <label class="dg-field">
-        <span>Geschäftsjahr</span>
-        <select name="year">
-          <?php foreach ($years as $y) : ?>
-            <option value="<?= (int) $y ?>"<?= $year === (int) $y ? ' selected' : '' ?>><?= (int) $y ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+      <?php View::render('partials/accounting-period-filter', [
+          'period' => $period,
+          'pageSlug' => 'buchhaltung-auswertungen',
+          'years' => $years,
+          'extraHidden' => ['type' => $type],
+      ]); ?>
       <label class="dg-field">
         <span>Report</span>
         <select name="type">

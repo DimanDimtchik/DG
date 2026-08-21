@@ -68,16 +68,33 @@ final class LedgerRepository
         MigrationRunner::runPending();
         $pdo = Database::pdo();
         $meta = self::accountMeta();
+        $dateFrom = trim((string) ($opts['date_from'] ?? ''));
+        $dateTo = trim((string) ($opts['date_to'] ?? ''));
+        $usePeriod = $dateFrom !== '' && $dateTo !== ''
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) === 1
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) === 1
+            && ($dateFrom !== sprintf('%04d-01-01', $year) || $dateTo !== sprintf('%04d-12-31', $year));
 
-        // Bewegungen des Jahres (ohne Saldenvortrag).
+        // Bewegungen (ohne Saldenvortrag), optional mit Zeitraum.
         $movement = [];
-        $stmt = $pdo->prepare(
-            "SELECT account_number, side, SUM(amount) AS total, COUNT(*) AS cnt
-             FROM dg_ledger_postings
-             WHERE fiscal_year = :y AND source <> 'opening_balance'
-             GROUP BY account_number, side"
-        );
-        $stmt->execute(['y' => $year]);
+        if ($usePeriod) {
+            $stmt = $pdo->prepare(
+                "SELECT account_number, side, SUM(amount) AS total, COUNT(*) AS cnt
+                 FROM dg_ledger_postings
+                 WHERE fiscal_year = :y AND source <> 'opening_balance'
+                   AND posting_date BETWEEN :from AND :to
+                 GROUP BY account_number, side"
+            );
+            $stmt->execute(['y' => $year, 'from' => $dateFrom, 'to' => $dateTo]);
+        } else {
+            $stmt = $pdo->prepare(
+                "SELECT account_number, side, SUM(amount) AS total, COUNT(*) AS cnt
+                 FROM dg_ledger_postings
+                 WHERE fiscal_year = :y AND source <> 'opening_balance'
+                 GROUP BY account_number, side"
+            );
+            $stmt->execute(['y' => $year]);
+        }
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $acc = (string) $row['account_number'];
             $movement[$acc] ??= ['debit' => 0.0, 'credit' => 0.0, 'cnt' => 0];
@@ -85,8 +102,13 @@ final class LedgerRepository
             $movement[$acc]['cnt'] += (int) $row['cnt'];
         }
 
-        // Explizite Saldenvorträge des Jahres.
+        // Explizite Saldenvorträge des Jahres, ggf. um Vorperioden-Bewegungen ergänzt.
         $opening = self::openingBalances($year);
+        if ($usePeriod && $dateFrom !== sprintf('%04d-01-01', $year)) {
+            foreach (self::movementTotalsBefore($year, $dateFrom) as $acc => $mov) {
+                $opening[$acc] = round(($opening[$acc] ?? 0.0) + (float) $mov['debit'] - (float) $mov['credit'], 2);
+            }
+        }
 
         $accounts = array_unique(array_merge(array_keys($movement), array_keys($opening)));
         $search = mb_strtolower(trim((string) ($opts['search'] ?? '')));
@@ -191,7 +213,7 @@ final class LedgerRepository
      * @param int $year Geschäftsjahr
      * @return array{account: array<string, mixed>, opening: float, rows: list<array<string, mixed>>, closing: float, debit: float, credit: float}
      */
-    public static function accountStatement(string $accountNumber, int $year): array
+    public static function accountStatement(string $accountNumber, int $year, array $opts = []): array
     {
         $accountNumber = preg_replace('/\s+/', '', $accountNumber) ?? '';
         $meta = self::accountMeta();
@@ -207,18 +229,40 @@ final class LedgerRepository
         MigrationRunner::runPending();
         $pdo = Database::pdo();
 
+        $dateFrom = trim((string) ($opts['date_from'] ?? ''));
+        $dateTo = trim((string) ($opts['date_to'] ?? ''));
+        $usePeriod = $dateFrom !== '' && $dateTo !== ''
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) === 1
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) === 1;
+
         $opening = self::openingBalances($year)[$accountNumber] ?? 0.0;
+        if ($usePeriod && $dateFrom !== sprintf('%04d-01-01', $year)) {
+            $prior = self::movementTotalsBefore($year, $dateFrom)[$accountNumber] ?? ['debit' => 0.0, 'credit' => 0.0];
+            $opening = round($opening + (float) $prior['debit'] - (float) $prior['credit'], 2);
+        }
         $out['opening'] = round($opening, 2);
         $running = round($opening, 2);
 
-        $stmt = $pdo->prepare(
-            "SELECT p.*, v.voucher_type, v.supplier_name, v.invoice_number
-             FROM dg_ledger_postings p
-             LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
-             WHERE p.account_number = :acc AND p.fiscal_year = :y AND p.source <> 'opening_balance'
-             ORDER BY p.posting_date ASC, p.id ASC"
-        );
-        $stmt->execute(['acc' => $accountNumber, 'y' => $year]);
+        if ($usePeriod) {
+            $stmt = $pdo->prepare(
+                "SELECT p.*, v.voucher_type, v.supplier_name, v.invoice_number
+                 FROM dg_ledger_postings p
+                 LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
+                 WHERE p.account_number = :acc AND p.fiscal_year = :y AND p.source <> 'opening_balance'
+                   AND p.posting_date BETWEEN :from AND :to
+                 ORDER BY p.posting_date ASC, p.id ASC"
+            );
+            $stmt->execute(['acc' => $accountNumber, 'y' => $year, 'from' => $dateFrom, 'to' => $dateTo]);
+        } else {
+            $stmt = $pdo->prepare(
+                "SELECT p.*, v.voucher_type, v.supplier_name, v.invoice_number
+                 FROM dg_ledger_postings p
+                 LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
+                 WHERE p.account_number = :acc AND p.fiscal_year = :y AND p.source <> 'opening_balance'
+                 ORDER BY p.posting_date ASC, p.id ASC"
+            );
+            $stmt->execute(['acc' => $accountNumber, 'y' => $year]);
+        }
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $side = (string) $row['side'];
             $amount = round((float) $row['amount'], 2);
@@ -297,6 +341,37 @@ final class LedgerRepository
             if ($signed != 0.0) {
                 $result[$acc] = $signed;
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, array{debit: float, credit: float}>
+     */
+    private static function movementTotalsBefore(int $year, string $dateFrom): array
+    {
+        $result = [];
+        if (!Database::isConfigured() || $dateFrom === sprintf('%04d-01-01', $year)) {
+            return $result;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            "SELECT account_number, side, SUM(amount) AS total
+             FROM dg_ledger_postings
+             WHERE fiscal_year = :y AND source <> 'opening_balance'
+               AND posting_date >= :year_start AND posting_date < :from
+             GROUP BY account_number, side"
+        );
+        $stmt->execute([
+            'y' => $year,
+            'year_start' => sprintf('%04d-01-01', $year),
+            'from' => $dateFrom,
+        ]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $acc = (string) ($row['account_number'] ?? '');
+            $result[$acc] ??= ['debit' => 0.0, 'credit' => 0.0];
+            $result[$acc][(string) ($row['side'] ?? 'debit')] = round((float) ($row['total'] ?? 0), 2);
         }
 
         return $result;

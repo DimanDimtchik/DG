@@ -94,7 +94,7 @@ final class LedgerAccounts
         $isIncome = self::isIncomeDirection($voucherType);
 
         if ($skr === 'skr04') {
-            return $isIncome ? '5730' : '5730';
+            return $isIncome ? '5740' : '5730';
         }
 
         return $isIncome ? '4736' : '4730';

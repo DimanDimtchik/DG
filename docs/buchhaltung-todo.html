@@ -34,9 +34,10 @@
   }
   li:last-child { border-bottom: none; }
   .box {
-    flex: 0 0 auto; width: 4.8mm; height: 4.8mm;
+    flex:  0 0 auto; width: 4.8mm; height: 4.8mm;
     border: 1.7px solid #566; border-radius: 3px; margin-top: 0.3mm;
   }
+  .box.done { background: #2d8a4e; border-color: #2d8a4e; }
   .txt { flex: 1; }
   .txt .t { font-weight: 600; }
   .txt .d { color: #5c6678; font-size: 9pt; display: block; margin-top: 0.3mm; }
@@ -44,8 +45,10 @@
     display: inline-block; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.4px;
     padding: 0.5mm 1.8mm; border-radius: 10px; margin-left: 4px; vertical-align: middle;
   }
+  .p-done { background: #e3f5ea; color: #1f6b3a; }
   .p-part { background: #fdf1d8; color: #8a6410; }
   .p-open { background: #fde3e0; color: #a1352a; }
+  .p-backlog { background: #e8ecf4; color: #4a5568; }
   .foot {
     margin-top: 5mm; font-size: 8pt; color: #8a919c;
     border-top: 1px solid #e3e7ee; padding-top: 2mm;
@@ -54,93 +57,82 @@
 </head>
 <body>
   <h1>Buchhaltung – Offene Aufgaben</h1>
-  <p class="sub">DG CRM · nur noch nicht (vollständig) umgesetzte Punkte aus der Anforderungsliste · Stand 08.07.2026</p>
+  <p class="sub">DG CRM · Arbeits-Checkliste · Stand 21.08.2026 · Erledigtes ist ausgegraut oder entfernt</p>
 
   <div class="legend">
-    <span><span class="pill p-open">OFFEN</span> noch nicht implementiert</span>
-    <span><span class="pill p-part">TEILWEISE</span> Grundlage steht, Rest fehlt</span>
-    <span>☐ Kästchen zum Abhaken</span>
+    <span><span class="pill p-done">ERLEDIGT</span> umgesetzt</span>
+    <span><span class="pill p-part">TEILWEISE</span> Grundlage steht</span>
+    <span><span class="pill p-open">OFFEN</span> noch offen</span>
+    <span><span class="pill p-backlog">ZURÜCKGESTELLT</span> bewusst später</span>
   </div>
 
   <section>
-    <h2>3 · Überweisung vorbereiten (QR-Code) <span class="tag">offen</span></h2>
+    <h2>Erledigt (Kernfunktionen) <span class="tag">done</span></h2>
     <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Funktion „Überweisung vorbereiten“ am Beleg</span> <span class="pill p-open">OFFEN</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">GiroCode / EPC-QR-Code erzeugen (Scan per Smartphone-Banking)</span> <span class="pill p-open">OFFEN</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Verwendungszweck automatisch zusammensetzen</span> <span class="pill p-open">OFFEN</span><span class="d">Rechnungsnr. + Rechnungsdatum + Kundennr. (falls vorhanden) + CRM-User-Firmenname</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Empfänger-IBAN/BIC aus Kontakt bzw. Firmendaten übernehmen</span> <span class="pill p-open">OFFEN</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">DATEV-Doppelbuchung, Journal, EXTF-Export</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Überweisung vorbereiten (GiroCode / EPC-QR, Verwendungszweck)</span> <span class="pill p-done">ERLEDIGT</span><span class="d">Modul buchhaltung-ueberweisungen</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Kassenbuch (Bar-Ein-/Ausgänge)</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Offene Posten / Bankabgleich (CAMT.053)</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">UStVA, EÜR-CSV, Jahresabschluss-Checkliste</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Steuerberater-Export (DATEV, Agenda, Addison, Beleg-ZIP)</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Zeitraum-Filter (Jahr, Monat, von–bis) Belege / Konten / Kasse</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Skonto mit USt-Korrektur im Journal</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Druck/PDF-Auswertungen (HTML-Druck)</span> <span class="pill p-done">ERLEDIGT</span><span class="d">Bilanz, GuV, UStVA, Kasse, Kontoauszug, BWA, SuSa</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">BWA, SuSa, MT940-Import, Steuerberater-Komplett-Paket</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">Kassenbuch Tagesabschluss</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">UStVA: Nullmeldung-Hinweis, Berichtigung, Skonto in Kennziffern</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+      <li><span class="box done"></span><span class="txt"><span class="t">OPOS Auto-Match: IBAN, Rechnungsnr., Datumsfenster, Skontobetrag</span> <span class="pill p-done">ERLEDIGT</span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6 · Belege · OCR <span class="tag">zurückgestellt</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Beleg-Upload, Bildbearbeitung, OCR/Auslesen</span> <span class="pill p-backlog">ZURÜCKGESTELLT</span><span class="d">Belege werden manuell vorbereitet — Upload/OCR folgt später</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Erkannte Felder automatisch ins Belegformular</span> <span class="pill p-backlog">ZURÜCKGESTELLT</span></span></li>
     </ul>
   </section>
 
   <section>
     <h2>4 · Rechnungsabgrenzung (ARAP/PRAP) <span class="tag">teilweise</span></h2>
     <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Automatischer Prozent-Vorschlag aus dem Belegdatum</span> <span class="pill p-open">OFFEN</span><span class="d">z. B. Kfz-Steuer: 38 % laufendes Jahr / 62 % Folgejahr aus Restlaufzeit berechnen</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">PRAP für Einnahmen/Vorausrechnungen aktiv schalten</span> <span class="pill p-part">TEILWEISE</span><span class="d">Backend vorbereitet, UI bei Einnahmen noch ausgeblendet</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Automatischer Prozent-Vorschlag aus Belegdatum</span> <span class="pill p-open">OFFEN</span><span class="d">z. B. Kfz-Steuer Restlaufzeit</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">PRAP für Einnahmen aktiv schalten</span> <span class="pill p-part">TEILWEISE</span><span class="d">Backend vorhanden, UI bei Einnahmen ausgeblendet</span></span></li>
     </ul>
   </section>
 
   <section>
-    <h2>5 · Gutschrift / Rabatt / Skonto / Trinkgeld <span class="tag">teilweise</span></h2>
+    <h2>5 · Gutschrift / Rabatt / Trinkgeld <span class="tag">teilweise</span></h2>
     <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Gutschrift &amp; Rabatte mit negativen Werten erfassen</span> <span class="pill p-part">TEILWEISE</span><span class="d">Kundengutschrift als Belegart vorhanden; automatische Minus-Position/-buchung fehlt</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Skonto automatisch buchhalterisch korrekt verarbeiten</span> <span class="pill p-open">OFFEN</span><span class="d">Skontobetrag + Konten + USt-Korrektur automatisch</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Gutschrift &amp; Rabatte mit negativen Werten</span> <span class="pill p-part">TEILWEISE</span><span class="d">Kundengutschrift vorhanden; automatische Minus-Buchung fehlt</span></span></li>
       <li><span class="box"></span><span class="txt"><span class="t">Trinkgeld korrekt verarbeiten</span> <span class="pill p-open">OFFEN</span></span></li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>6 · Belege hochladen · Bildbearbeitung · OCR <span class="tag">offen</span></h2>
-    <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Beleg-Upload im Belegformular (Bild/PDF anhängen &amp; speichern)</span> <span class="pill p-open">OFFEN</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Bildbearbeitung übernehmen</span> <span class="pill p-open">OFFEN</span><span class="d">aus der WG-App prüfen, was wiederverwendbar ist</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">OCR/Auslesen für Web umsetzen</span> <span class="pill p-open">OFFEN</span><span class="d">Web-OCR-Optionen prüfen; Erweiterungen kostenlos, Verkauf eigener OCR erlaubt</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Erkannte Felder automatisch ins Belegformular übernehmen</span> <span class="pill p-open">OFFEN</span><span class="d">Betrag, Datum, Rechnungsnr., Lieferant</span></span></li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>7 · Kasse <span class="tag">teilweise</span></h2>
-    <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Kassenbuch-Modul wie Lexoffice</span> <span class="pill p-part">TEILWEISE</span><span class="d">Zahlungsstatus „Per Kasse bezahlt“ vorhanden; eigenes Kassenbuch (Ein-/Auszahlungen, Bestand) fehlt</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Kassenbestand fortschreiben &amp; Tagesabschluss</span> <span class="pill p-open">OFFEN</span></span></li>
     </ul>
   </section>
 
   <section>
     <h2>8 · Buchungskonto-Darstellung <span class="tag">teilweise</span></h2>
     <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Darstellung der Buchungskonten wie Lexoffice (Funktion, eigenes Design)</span> <span class="pill p-part">TEILWEISE</span><span class="d">Split-Tabelle vorhanden; Feinschliff Darstellung/Übersicht offen</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Darstellung wie Lexoffice (Feinschliff)</span> <span class="pill p-part">TEILWEISE</span></span></li>
     </ul>
   </section>
 
   <section>
-    <h2>9 · Filterung (Belege, Konten, Kasse) <span class="tag">teilweise</span></h2>
+    <h2>ELSTER / Server <span class="tag">nach Umzug</span></h2>
     <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Freier Zeitraum (frei wählbar) für Belege</span> <span class="pill p-open">OFFEN</span><span class="d">zusätzlich zu Jahr auch von–bis, Monat, Woche</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Zeitraum-Filter für Konten-Einträge</span> <span class="pill p-open">OFFEN</span><span class="d">z. B. alle Einträge eines Kontos nur für einen Monat/eine Woche</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Filterung für Kasse</span> <span class="pill p-open">OFFEN</span></span></li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>Belegerfassung – Ausbau <span class="tag">offen</span></h2>
-    <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Vollständige DATEV-Doppelbuchung</span> <span class="pill p-open">OFFEN</span><span class="d">Gegenkonto Forderung/Kreditor + USt/Vorsteuer automatisch buchen</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Offene Posten / Banking-Zuordnung</span> <span class="pill p-open">OFFEN</span><span class="d">Lastschrift/Zahlungseingang automatisch zuordnen &amp; als bezahlt markieren</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">ERiC direkt (ohne manuelle CSV)</span> <span class="pill p-part">TEILWEISE</span><span class="d">Vorbereitung auf Branch server-elster-prep; Live nach Hetzner-Umzug — siehe docs/ELSTER-ERIC-TODO.md</span></span></li>
     </ul>
   </section>
 
   <section>
     <h2>Sonstiges <span class="tag">prüfen</span></h2>
     <ul>
-      <li><span class="box"></span><span class="txt"><span class="t">Steuerberater kennzeichnen / verknüpfen</span> <span class="pill p-part">TEILWEISE</span><span class="d">Steuerkanzlei-Einstellungen vorhanden – Markierung im Workflow prüfen</span></span></li>
-      <li><span class="box"></span><span class="txt"><span class="t">Kontohinweise redaktionell prüfen</span> <span class="pill p-part">TEILWEISE</span><span class="d">automatisch generiert; nicht jedes Konto manuell kuratiert</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Steuerberater kennzeichnen / verknüpfen</span> <span class="pill p-part">TEILWEISE</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Kontohinweise redaktionell prüfen</span> <span class="pill p-part">TEILWEISE</span></span></li>
     </ul>
   </section>
 
   <div class="foot">
-    DG CRM · dg.ganz-om.de — Arbeits-Checkliste offener Punkte. Erledigte Grundfunktionen sind hier bewusst nicht aufgeführt.
+    DG CRM · dg.ganz-om.de — Phasen A–C (Filter, Skonto-USt, Druck, BWA, SuSa, MT940, OPOS, Steuerberater-Paket) umgesetzt auf Branch cursor/buchhaltung-phase-abc-6a0c
   </div>
 </body>
 </html>

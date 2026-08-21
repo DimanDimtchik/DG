@@ -63,6 +63,7 @@ $base = '/app?page=buchhaltung-steuerberater-export&year=' . (int) $year;
       <a class="dg-button" href="<?= View::escape($base . '&download=stammdaten') ?>"<?= !$configured ? ' aria-disabled="true"' : '' ?>>Kontenbeschriftungen (EXTF)</a>
       <a class="dg-button" href="<?= View::escape($base . '&download=personen') ?>">Personenkonten CSV</a>
       <a class="dg-button" href="<?= View::escape($base . '&download=belege') ?>"<?= !$configured ? ' aria-disabled="true"' : '' ?>>ZIP mit Belegbildern</a>
+      <a class="dg-button dg-button--primary" href="<?= View::escape($base . '&download=paket') ?>"<?= !$configured ? ' aria-disabled="true"' : '' ?>>Komplett-Paket (ZIP)</a>
     </div>
     <p class="dg-field-hint">Agenda und Addison importieren über Transfer → DATEV-Import-Assistent in der Kanzlei-Software.</p>
   </section>

@@ -1888,6 +1888,22 @@ switch ($path) {
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
+            } elseif (isset($_POST['mt940_import'])) {
+                try {
+                    $file = $_FILES['mt940_file'] ?? null;
+                    if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                        throw new InvalidArgumentException('Bitte eine gültige MT940-Datei wählen.');
+                    }
+                    $content = (string) file_get_contents((string) ($file['tmp_name'] ?? ''));
+                    $res = Mt940Importer::import($content);
+                    Flash::set('success', sprintf(
+                        'MT940 importiert: %d Umsätze (%d übersprungen). Automatischer Abgleich durchgeführt.',
+                        $res['imported'],
+                        $res['skipped']
+                    ));
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
             } elseif (isset($_POST['bank_match_manual'])) {
                 try {
                     BankReconciliationService::matchManually(
@@ -1901,6 +1917,32 @@ switch ($path) {
             } elseif (isset($_POST['bank_tx_ignore'])) {
                 BankTransactionRepository::markIgnored((int) ($_POST['bank_tx_id'] ?? 0));
                 Flash::set('success', 'Umsatz ignoriert.');
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Kassenbuch Tagesabschluss
+        if (
+            $page === 'buchhaltung-kassenbuch'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'buchhaltung-kassenbuch')
+        ) {
+            $redirect = '/app?page=buchhaltung-kassenbuch&year=' . max(2000, (int) ($_POST['year'] ?? date('Y')));
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } elseif (isset($_POST['cash_day_close'])) {
+                try {
+                    CashDayCloseService::closeDay(
+                        trim((string) ($_POST['closing_date'] ?? '')),
+                        (float) ($_POST['counted_balance'] ?? 0),
+                        trim((string) ($_POST['closing_note'] ?? '')),
+                        (int) ($user->id ?? 0) ?: null
+                    );
+                    Flash::set('success', 'Kassentagesabschluss gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
             }
             header('Location: ' . $redirect, true, 302);
             exit;
@@ -2136,7 +2178,8 @@ switch ($path) {
         } elseif ($page === 'buchhaltung-belege' && MenuRegistry::canAccess($user, 'buchhaltung-belege')) {
             $voucherSearch = trim((string) ($_GET['s'] ?? ''));
             $voucherPage = max(1, (int) ($_GET['paged'] ?? 1));
-            $voucherYear = max(2000, (int) ($_GET['year'] ?? date('Y')));
+            $voucherPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $voucherYear = $voucherPeriod->year;
             $voucherTypeFilter = (string) ($_GET['type'] ?? '');
             if (!array_key_exists($voucherTypeFilter, VoucherRepository::voucherTypeOptions())) {
                 $voucherTypeFilter = '';
@@ -2146,7 +2189,8 @@ switch ($path) {
                 $voucherDraftFilter = '';
             }
             $voucherList = VoucherRepository::list([
-                'year' => $voucherYear,
+                'date_from' => $voucherPeriod->dateFrom,
+                'date_to' => $voucherPeriod->dateTo,
                 'type' => $voucherTypeFilter,
                 'search' => $voucherSearch,
                 'page' => $voucherPage,
@@ -2236,18 +2280,31 @@ switch ($path) {
             exit;
         } elseif ($page === 'buchhaltung-kontenuebersicht' && MenuRegistry::canAccess($user, 'buchhaltung-kontenuebersicht')) {
             $ledgerYears = LedgerRepository::availableYears();
-            $ledgerYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $ledgerPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $ledgerYear = $ledgerPeriod->year;
             $ledgerAccount = preg_replace('/[^0-9A-Za-z]/', '', (string) ($_GET['account'] ?? '')) ?? '';
             $ledgerSearch = trim((string) ($_GET['s'] ?? ''));
             $ledgerShowEmpty = !empty($_GET['empty']);
             $ledgerYearStatus = FiscalYearService::status($ledgerYear);
+            $periodOpts = [
+                'search' => $ledgerSearch,
+                'show_empty' => $ledgerShowEmpty,
+                'date_from' => $ledgerPeriod->dateFrom,
+                'date_to' => $ledgerPeriod->dateTo,
+            ];
             if ($ledgerAccount !== '') {
-                $ledgerStatement = LedgerRepository::accountStatement($ledgerAccount, $ledgerYear);
+                $ledgerStatement = LedgerRepository::accountStatement($ledgerAccount, $ledgerYear, $periodOpts);
             } else {
-                $ledgerOverview = LedgerRepository::accountOverview($ledgerYear, [
-                    'search' => $ledgerSearch,
-                    'show_empty' => $ledgerShowEmpty,
-                ]);
+                $ledgerOverview = LedgerRepository::accountOverview($ledgerYear, $periodOpts);
+            }
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'print' && $ledgerAccount !== '' && Database::isConfigured()) {
+                $html = AccountingPrintService::render('kontoauszug', [
+                    'statement' => $ledgerStatement ?? [],
+                    'periodLabel' => $ledgerPeriod->label,
+                ], 'Kontoauszug ' . $ledgerAccount);
+                AccountingPrintService::send('Kontoauszug_' . $ledgerAccount . '.html', $html);
+                exit;
             }
             $contentTemplate = 'modules/buchhaltung-kontenuebersicht';
             $title = 'Kontenübersicht';
@@ -2273,16 +2330,27 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-ustva' && MenuRegistry::canAccess($user, 'buchhaltung-ustva')) {
-            $ustvaYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
-            $ustvaMonthRaw = (int) ($_GET['month'] ?? (int) date('n'));
-            $ustvaMonth = $ustvaMonthRaw >= 1 && $ustvaMonthRaw <= 12 ? $ustvaMonthRaw : 0;
+            $ustvaPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $ustvaYear = $ustvaPeriod->year;
+            $ustvaMonth = $ustvaPeriod->month;
+            $ustvaBerichtigung = !empty($_GET['berichtigung']);
             $download = trim((string) ($_GET['download'] ?? ''));
             if ($download !== '' && Database::isConfigured()) {
                 try {
+                    if ($download === 'print') {
+                        $report = UstvaReportService::report(
+                            $ustvaYear,
+                            $ustvaMonth,
+                            ['berichtigung' => $ustvaBerichtigung]
+                        );
+                        $html = AccountingPrintService::render('ustva', ['report' => $report], 'UStVA ' . $report['period_label']);
+                        AccountingPrintService::send('UStVA_' . $ustvaYear . '.html', $html);
+                        exit;
+                    }
                     $export = match ($download) {
                         'ustva' => ElsterExportService::exportUstva(
                             $ustvaYear,
-                            $ustvaMonth > 0 ? $ustvaMonth : null
+                            $ustvaMonth
                         ),
                         'euer' => ElsterExportService::exportEuer($ustvaYear),
                         default => throw new InvalidArgumentException('Unbekannter Export-Typ.'),
@@ -2294,7 +2362,7 @@ switch ($path) {
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                     header(
-                        'Location: /app?page=buchhaltung-ustva&year=' . $ustvaYear . '&month=' . $ustvaMonth,
+                        'Location: /app?page=buchhaltung-ustva&year=' . $ustvaYear . '&month=' . ($ustvaMonth ?? 0),
                         true,
                         302
                     );
@@ -2304,7 +2372,8 @@ switch ($path) {
             $ustvaYears = LedgerRepository::availableYears();
             $ustvaReport = UstvaReportService::report(
                 $ustvaYear,
-                $ustvaMonth > 0 ? $ustvaMonth : null
+                $ustvaMonth,
+                ['berichtigung' => $ustvaBerichtigung]
             );
             $isDiyMode = TaxAdvisorSettings::isDiyMode();
             $contentTemplate = 'modules/buchhaltung-ustva';
@@ -2336,6 +2405,14 @@ switch ($path) {
                 try {
                     if ($download === 'belege') {
                         $zip = DatevBelegExportService::buildZip($exportYear);
+                        header('Content-Type: application/zip');
+                        header('Content-Disposition: attachment; filename="' . $zip['filename'] . '"');
+                        readfile($zip['path']);
+                        @unlink($zip['path']);
+                        exit;
+                    }
+                    if ($download === 'paket') {
+                        $zip = SteuerberaterPaketService::buildZip($exportYear);
                         header('Content-Type: application/zip');
                         header('Content-Disposition: attachment; filename="' . $zip['filename'] . '"');
                         readfile($zip['path']);
@@ -2380,15 +2457,59 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-auswertungen' && MenuRegistry::canAccess($user, 'buchhaltung-auswertungen')) {
-            $reportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $reportPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $reportYear = $reportPeriod->year;
             $reportYears = LedgerRepository::availableYears();
             $reportType = in_array($_GET['type'] ?? '', ['bilanz', 'guv'], true) ? (string) $_GET['type'] : 'guv';
             $balanceSheet = FinancialReportsService::balanceSheet($reportYear);
             $profitLoss = FinancialReportsService::profitLoss($reportYear);
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'print' && Database::isConfigured()) {
+                $html = AccountingPrintService::render('auswertungen', [
+                    'reportType' => $reportType,
+                    'balanceSheet' => $balanceSheet,
+                    'profitLoss' => $profitLoss,
+                    'periodLabel' => $reportPeriod->label,
+                ], ($reportType === 'bilanz' ? 'Bilanz ' : 'GuV ') . $reportPeriod->label);
+                AccountingPrintService::send('Auswertung_' . $reportYear . '.html', $html);
+                exit;
+            }
             $contentTemplate = 'modules/buchhaltung-auswertungen';
             $title = 'Bilanz & GuV';
             $currentPage = 'buchhaltung-auswertungen';
         } elseif ($page === 'buchhaltung-auswertungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-bwa' && MenuRegistry::canAccess($user, 'buchhaltung-bwa')) {
+            $bwaPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $bwaYears = LedgerRepository::availableYears();
+            $bwaReport = BwaReportService::report($bwaPeriod);
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'print' && Database::isConfigured()) {
+                $html = AccountingPrintService::render('bwa', ['report' => $bwaReport], 'BWA ' . $bwaPeriod->label);
+                AccountingPrintService::send('BWA_' . $bwaPeriod->year . '.html', $html);
+                exit;
+            }
+            $contentTemplate = 'modules/buchhaltung-bwa';
+            $title = 'BWA';
+            $currentPage = 'buchhaltung-bwa';
+        } elseif ($page === 'buchhaltung-bwa') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-susa' && MenuRegistry::canAccess($user, 'buchhaltung-susa')) {
+            $susaPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $susaYears = LedgerRepository::availableYears();
+            $susaReport = SusaReportService::report($susaPeriod);
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'print' && Database::isConfigured()) {
+                $html = AccountingPrintService::render('susa', ['report' => $susaReport], 'SuSa ' . $susaPeriod->label);
+                AccountingPrintService::send('SuSa_' . $susaPeriod->year . '.html', $html);
+                exit;
+            }
+            $contentTemplate = 'modules/buchhaltung-susa';
+            $title = 'SuSa';
+            $currentPage = 'buchhaltung-susa';
+        } elseif ($page === 'buchhaltung-susa') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-bankabgleich' && MenuRegistry::canAccess($user, 'buchhaltung-bankabgleich')) {
@@ -2408,10 +2529,24 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-kassenbuch' && MenuRegistry::canAccess($user, 'buchhaltung-kassenbuch')) {
-            $cashYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $cashPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
+            $cashYear = $cashPeriod->year;
             $cashYears = LedgerRepository::availableYears();
-            $cashEntries = CashJournalRepository::listForYear($cashYear);
-            $cashTotals = CashJournalRepository::totalsForYear($cashYear);
+            $cashEntries = CashJournalRepository::listForPeriod($cashPeriod);
+            $cashTotals = CashJournalRepository::totalsForPeriod($cashPeriod);
+            $cashClosings = CashDayCloseService::listClosings($cashYear);
+            $cashCloseDate = trim((string) ($_GET['close_date'] ?? date('Y-m-d')));
+            $cashDaySummary = CashDayCloseService::daySummary($cashCloseDate);
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'print' && Database::isConfigured()) {
+                $html = AccountingPrintService::render('kassenbuch', [
+                    'entries' => $cashEntries,
+                    'totals' => $cashTotals,
+                    'periodLabel' => $cashPeriod->label,
+                ], 'Kassenbuch ' . $cashPeriod->label);
+                AccountingPrintService::send('Kassenbuch_' . $cashYear . '.html', $html);
+                exit;
+            }
             $contentTemplate = 'modules/buchhaltung-kassenbuch';
             $title = 'Kassenbuch';
             $currentPage = 'buchhaltung-kassenbuch';

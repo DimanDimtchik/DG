@@ -78,7 +78,15 @@ final class VoucherRepository
         $where = [];
         $params = [];
 
-        if ($year !== null) {
+        $dateFrom = trim((string) ($filters['date_from'] ?? ''));
+        $dateTo = trim((string) ($filters['date_to'] ?? ''));
+        if ($dateFrom !== '' && $dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) === 1
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) === 1
+        ) {
+            $where[] = 'v.voucher_date BETWEEN :date_from AND :date_to';
+            $params['date_from'] = $dateFrom;
+            $params['date_to'] = $dateTo;
+        } elseif ($year !== null) {
             $where[] = 'YEAR(v.voucher_date) = :year';
             $params['year'] = $year;
         }

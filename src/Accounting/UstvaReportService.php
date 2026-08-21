@@ -29,18 +29,21 @@ final class UstvaReportService
     }
 
     /**
+     * @param array{berichtigung?: bool} $opts
      * @return array{
      *   year: int,
      *   month: int|null,
      *   period_label: string,
      *   positions: list<array{kz: string, label: string, net: float, tax: float, amount: float}>,
-     *   payable: float
+     *   payable: float,
+     *   is_nullmeldung: bool,
+     *   berichtigung: bool
      * }
      */
-    public static function report(int $year, ?int $month = null): array
+    public static function report(int $year, ?int $month = null, array $opts = []): array
     {
         if (!Database::isConfigured()) {
-            return self::emptyReport($year, $month);
+            return self::emptyReport($year, $month, $opts);
         }
         MigrationRunner::runPending();
 
@@ -115,6 +118,8 @@ final class UstvaReportService
             }
         }
 
+        self::mergeSkontoFromLedger($agg, $year, $month);
+
         $inputTotal = round(
             ($agg['62']['tax'] ?? 0.0) + ($agg['63']['tax'] ?? 0.0) + ($agg['67']['tax'] ?? 0.0),
             2
@@ -156,13 +161,58 @@ final class UstvaReportService
         }
         usort($positions, static fn (array $a, array $b): int => strnatcmp($a['kz'], $b['kz']));
 
+        $isNullmeldung = $positions === [] || ($payable == 0.0 && $outputTotal == 0.0 && $inputTotal == 0.0);
+
         return [
             'year' => $year,
             'month' => $month,
             'period_label' => self::periodLabel($year, $month),
             'positions' => $positions,
             'payable' => $payable,
+            'is_nullmeldung' => $isNullmeldung,
+            'berichtigung' => !empty($opts['berichtigung']),
         ];
+    }
+
+    /**
+     * @param array<string, array{net: float, tax: float}> $agg
+     */
+    private static function mergeSkontoFromLedger(array &$agg, int $year, ?int $month): void
+    {
+        $where = "p.description LIKE 'Skonto%' AND p.fiscal_year = :y";
+        $params = ['y' => $year];
+        if ($month !== null && $month >= 1 && $month <= 12) {
+            $where .= ' AND MONTH(p.posting_date) = :m';
+            $params['m'] = $month;
+        }
+
+        $sql = "SELECT p.account_number, p.side, p.amount, p.tax_rate, v.voucher_type
+                FROM dg_ledger_postings p
+                LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
+                WHERE {$where} AND p.tax_rate > 0";
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        $meta = LedgerRepository::accountMeta();
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $amount = round((float) ($row['amount'] ?? 0), 2);
+            if ($amount <= 0.0) {
+                continue;
+            }
+            $rate = (int) ($row['tax_rate'] ?? 19);
+            $section = (string) ($meta[(string) ($row['account_number'] ?? '')]['section'] ?? '');
+            $isIncome = LedgerAccounts::isIncomeDirection((string) ($row['voucher_type'] ?? 'expense'))
+                || $section === 'passiva';
+
+            if ($isIncome) {
+                self::addAgg($agg, $rate === 7 ? '35' : '83', 0.0, -$amount);
+            } else {
+                self::addAgg($agg, $rate === 7 ? '63' : '62', 0.0, -$amount);
+            }
+        }
     }
 
     /**
@@ -237,9 +287,10 @@ final class UstvaReportService
     }
 
     /**
-     * @return array{year: int, month: int|null, period_label: string, positions: list<array<string, mixed>>, payable: float}
+     * @param array{berichtigung?: bool} $opts
+     * @return array{year: int, month: int|null, period_label: string, positions: list<array<string, mixed>>, payable: float, is_nullmeldung: bool, berichtigung: bool}
      */
-    private static function emptyReport(int $year, ?int $month): array
+    private static function emptyReport(int $year, ?int $month, array $opts = []): array
     {
         return [
             'year' => $year,
@@ -247,6 +298,8 @@ final class UstvaReportService
             'period_label' => self::periodLabel($year, $month),
             'positions' => [],
             'payable' => 0.0,
+            'is_nullmeldung' => true,
+            'berichtigung' => !empty($opts['berichtigung']),
         ];
     }
 }

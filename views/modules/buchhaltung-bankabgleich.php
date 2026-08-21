@@ -17,7 +17,7 @@ $csrf = Csrf::token();
 
   <header class="dg-page-header">
     <h1 class="dg-page-title">Bankabgleich</h1>
-    <p class="dg-lead">CAMT.053 Kontoauszug importieren und offene Belege automatisch zuordnen.</p>
+    <p class="dg-lead">CAMT.053 oder MT940 importieren und offene Belege automatisch zuordnen.</p>
   </header>
 
   <?php if ($canEdit && $dbConnected) : ?>
@@ -31,6 +31,18 @@ $csrf = Csrf::token();
         <input type="file" name="camt_file" accept=".xml,text/xml,application/xml" required>
       </label>
       <button type="submit" class="dg-button dg-button--primary">Importieren &amp; abgleichen</button>
+    </form>
+  </section>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">MT940 importieren</h2>
+    <form method="post" action="/app?page=buchhaltung-bankabgleich" enctype="multipart/form-data" class="dg-form">
+      <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+      <input type="hidden" name="mt940_import" value="1">
+      <label class="dg-field dg-field--wide">
+        <span>SWIFT MT940 Kontoauszug</span>
+        <input type="file" name="mt940_file" accept=".sta,.940,.txt,text/plain" required>
+      </label>
+      <button type="submit" class="dg-button">Importieren &amp; abgleichen</button>
     </form>
   </section>
   <?php endif; ?>

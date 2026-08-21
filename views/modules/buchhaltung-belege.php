@@ -15,6 +15,7 @@
 $list = $voucherList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 25, 'total_pages' => 1];
 $search = $voucherSearch ?? '';
 $year = (int) ($voucherYear ?? (int) date('Y'));
+$period = $voucherPeriod ?? AccountingPeriodFilter::fromRequest(['year' => $year]);
 $typeFilter = $voucherTypeFilter ?? '';
 $draftFilter = $voucherDraftFilter ?? '';
 $draftCount = (int) ($voucherDraftCount ?? 0);
@@ -29,7 +30,7 @@ $baseUrl = '/app?page=buchhaltung-belege';
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Belege</h1>
-      <p class="dg-lead">Belegerfassung mit Steuerfeldern — <?= (int) $list['total'] ?> Einträge<?= $year > 0 ? ' in ' . $year : '' ?></p>
+      <p class="dg-lead">Belegerfassung mit Steuerfeldern — <?= (int) $list['total'] ?> Einträge · <?= View::escape($period->label) ?></p>
     </div>
   </header>
 
@@ -54,14 +55,11 @@ $baseUrl = '/app?page=buchhaltung-belege';
   <form class="dg-buchhaltung-belege__filters dg-panel" method="get" action="/app">
     <input type="hidden" name="page" value="buchhaltung-belege">
     <div class="dg-form-grid dg-form-grid--compact">
-      <label class="dg-field">
-        <span>Jahr</span>
-        <select name="year" id="dg-voucher-year">
-          <?php foreach ($years as $y) : ?>
-            <option value="<?= (int) $y ?>"<?= $year === (int) $y ? ' selected' : '' ?>><?= (int) $y ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+      <?php View::render('partials/accounting-period-filter', [
+          'period' => $period,
+          'pageSlug' => 'buchhaltung-belege',
+          'years' => $years,
+      ]); ?>
       <label class="dg-field">
         <span>Belegart</span>
         <select name="type" id="dg-voucher-type-filter">

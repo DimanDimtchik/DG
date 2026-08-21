@@ -14,6 +14,7 @@
  * @var array{type: string, message: string}|null $flash
  */
 $year = (int) ($ledgerYear ?? (int) date('Y'));
+$period = $ledgerPeriod ?? AccountingPeriodFilter::fromRequest(['year' => $year]);
 $years = $ledgerYears ?? [(int) date('Y')];
 $search = (string) ($ledgerSearch ?? '');
 $showEmpty = (bool) ($ledgerShowEmpty ?? false);
@@ -36,7 +37,7 @@ $accountLink = static fn (string $acc): string => $baseUrl . '&year=' . $year . 
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Kontenübersicht</h1>
-      <p class="dg-lead">Salden und Buchungen je Konto — Geschäftsjahr <?= (int) $year ?>
+      <p class="dg-lead">Salden und Buchungen je Konto — <?= View::escape($period->label) ?>
         <?php if ($yearStatus === 'closed') : ?>
           <span class="dg-badge dg-badge--muted">abgeschlossen</span>
         <?php endif; ?>
@@ -53,18 +54,13 @@ $accountLink = static fn (string $acc): string => $baseUrl . '&year=' . $year . 
 
   <form class="dg-panel dg-ledger-filters" method="get" action="/app">
     <input type="hidden" name="page" value="buchhaltung-kontenuebersicht">
-    <?php if ($selectedAccount !== '') : ?>
-      <input type="hidden" name="account" value="<?= View::escape($selectedAccount) ?>">
-    <?php endif; ?>
     <div class="dg-form-grid dg-form-grid--compact">
-      <label class="dg-field">
-        <span>Geschäftsjahr</span>
-        <select name="year">
-          <?php foreach ($years as $y) : ?>
-            <option value="<?= (int) $y ?>"<?= $year === (int) $y ? ' selected' : '' ?>><?= (int) $y ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+      <?php View::render('partials/accounting-period-filter', [
+          'period' => $period,
+          'pageSlug' => 'buchhaltung-kontenuebersicht',
+          'years' => $years,
+          'extraHidden' => $selectedAccount !== '' ? ['account' => $selectedAccount] : [],
+      ]); ?>
       <?php if ($selectedAccount === '') : ?>
         <label class="dg-field dg-field--wide">
           <span>Suche</span>
@@ -87,7 +83,8 @@ $accountLink = static fn (string $acc): string => $baseUrl . '&year=' . $year . 
   ?>
     <!-- Kontoauszug -->
     <div class="dg-toolbar">
-      <a class="dg-button" href="<?= View::escape($baseUrl . '&year=' . $year) ?>">&laquo; Zur Übersicht</a>
+      <a class="dg-button" href="<?= View::escape($period->appendToUrl($baseUrl)) ?>">&laquo; Zur Übersicht</a>
+      <a class="dg-button" href="<?= View::escape($period->appendToUrl($baseUrl . '&account=' . rawurlencode($selectedAccount) . '&download=print')) ?>" target="_blank" rel="noopener">Drucken / PDF</a>
     </div>
     <section class="dg-panel dg-ledger-statement">
       <h2 class="dg-subsection-title">

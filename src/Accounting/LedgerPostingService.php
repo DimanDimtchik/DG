@@ -231,18 +231,39 @@ final class LedgerPostingService
         $voucherType = (string) ($voucher['voucher_type'] ?? 'expense');
         $skontoAccount = LedgerAccounts::skontoAccount($skrType, $voucherType);
         $isIncome = LedgerAccounts::isIncomeDirection($voucherType);
+        $rate = (int) ($voucher['tax_rate'] ?? 19);
+        if ($rate <= 0) {
+            $rate = 19;
+        }
+        $taxKey = self::taxKeyForLine($voucher, $rate, false);
+        $taxAccount = LedgerAccounts::taxAccount($skrType, $voucherType, $rate);
+        $hasTax = $rate > 0 && self::accountExists($taxAccount, $skrType);
 
-        if ($isIncome) {
-            return [
-                self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $skontoAccount, $personAccount, 'debit', $discount, 0, '', 'Skonto ' . $description, $docFields),
-                self::row($fiscalYear, $voucherDate, $voucherId, $skontoAccount, $contraAccount, $personAccount, 'credit', $discount, 0, '', 'Skonto ' . $description, $docFields),
-            ];
+        $netDiscount = $discount;
+        $taxDiscount = 0.0;
+        if ($hasTax) {
+            $netDiscount = round($discount / (1 + ($rate / 100)), 2);
+            $taxDiscount = round($discount - $netDiscount, 2);
         }
 
-        return [
-            self::row($fiscalYear, $voucherDate, $voucherId, $skontoAccount, $contraAccount, $personAccount, 'credit', $discount, 0, '', 'Skonto ' . $description, $docFields),
-            self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $skontoAccount, $personAccount, 'debit', $discount, 0, '', 'Skonto ' . $description, $docFields),
-        ];
+        $skontoDesc = 'Skonto ' . $description;
+        $postings = [];
+
+        if ($isIncome) {
+            $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $skontoAccount, $personAccount, 'debit', $discount, 0, '', $skontoDesc, $docFields);
+            $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $skontoAccount, $contraAccount, $personAccount, 'credit', $netDiscount, $rate, $taxKey, $skontoDesc, $docFields);
+            if ($taxDiscount > 0.0) {
+                $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $taxAccount, $contraAccount, $personAccount, 'debit', $taxDiscount, $rate, $taxKey, $skontoDesc, $docFields);
+            }
+        } else {
+            $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $skontoAccount, $personAccount, 'credit', $discount, 0, '', $skontoDesc, $docFields);
+            $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $skontoAccount, $contraAccount, $personAccount, 'debit', $netDiscount, $rate, $taxKey, $skontoDesc, $docFields);
+            if ($taxDiscount > 0.0) {
+                $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $taxAccount, $contraAccount, $personAccount, 'credit', $taxDiscount, $rate, $taxKey, $skontoDesc, $docFields);
+            }
+        }
+
+        return $postings;
     }
 
     /**

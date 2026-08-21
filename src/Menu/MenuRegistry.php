@@ -235,6 +235,18 @@ final class MenuRegistry
                     'href' => '/app?page=buchhaltung-auswertungen',
                 ],
                 [
+                    'slug' => 'buchhaltung-bwa',
+                    'label' => 'BWA',
+                    'icon' => 'ledger',
+                    'href' => '/app?page=buchhaltung-bwa',
+                ],
+                [
+                    'slug' => 'buchhaltung-susa',
+                    'label' => 'SuSa',
+                    'icon' => 'ledger',
+                    'href' => '/app?page=buchhaltung-susa',
+                ],
+                [
                     'slug' => 'buchhaltung-bankabgleich',
                     'label' => 'Bankabgleich',
                     'icon' => 'transfer',
@@ -411,6 +423,8 @@ final class MenuRegistry
             || $slug === 'buchhaltung-kassenbuch'
             || $slug === 'buchhaltung-manuelle-buchung'
             || $slug === 'buchhaltung-auswertungen'
+            || $slug === 'buchhaltung-bwa'
+            || $slug === 'buchhaltung-susa'
             || $slug === 'buchhaltung-bankabgleich'
             || $slug === 'buchhaltung-steuerberater-export'
             || $slug === 'buchhaltung-datev-export'

@@ -9,6 +9,22 @@ final class CashJournalRepository
      */
     public static function listForYear(int $year): array
     {
+        return self::listForPeriod(AccountingPeriodFilter::fromRequest(['year' => $year]));
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listForPeriod(AccountingPeriodFilter $period): array
+    {
+        return self::listForDateRange($period->dateFrom, $period->dateTo);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listForDateRange(string $dateFrom, string $dateTo): array
+    {
         if (!Database::isConfigured()) {
             return [];
         }
@@ -18,10 +34,10 @@ final class CashJournalRepository
             'SELECT j.*, v.invoice_number, v.supplier_name, v.voucher_type
              FROM dg_cash_journal j
              LEFT JOIN dg_vouchers v ON v.id = j.voucher_id
-             WHERE YEAR(j.entry_date) = :y
+             WHERE j.entry_date BETWEEN :from AND :to
              ORDER BY j.entry_date ASC, j.id ASC'
         );
-        $stmt->execute(['y' => $year]);
+        $stmt->execute(['from' => $dateFrom, 'to' => $dateTo]);
         $rows = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $rows[] = self::enrich($row);
@@ -35,8 +51,16 @@ final class CashJournalRepository
      */
     public static function totalsForYear(int $year): array
     {
+        return self::totalsForPeriod(AccountingPeriodFilter::fromRequest(['year' => $year]));
+    }
+
+    /**
+     * @return array{in: float, out: float, balance: float}
+     */
+    public static function totalsForPeriod(AccountingPeriodFilter $period): array
+    {
         $totals = ['in' => 0.0, 'out' => 0.0, 'balance' => 0.0];
-        foreach (self::listForYear($year) as $row) {
+        foreach (self::listForPeriod($period) as $row) {
             $amount = round((float) ($row['amount'] ?? 0), 2);
             if (($row['side'] ?? '') === 'in') {
                 $totals['in'] = round($totals['in'] + $amount, 2);

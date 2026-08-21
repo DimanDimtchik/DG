@@ -11,7 +11,9 @@
  * @var array{type: string, message: string}|null $flash
  */
 $year = (int) ($ustvaYear ?? (int) date('Y'));
-$month = (int) ($ustvaMonth ?? (int) date('n'));
+$month = $ustvaMonth ?? null;
+$period = $ustvaPeriod ?? AccountingPeriodFilter::fromRequest(['year' => $year, 'month' => $month ?? 0]);
+$berichtigung = !empty($ustvaBerichtigung);
 $years = $ustvaYears ?? [(int) date('Y')];
 $report = $ustvaReport ?? ['positions' => [], 'payable' => 0.0, 'period_label' => ''];
 $diy = (bool) ($isDiyMode ?? true);
@@ -34,25 +36,32 @@ $baseUrl = '/app?page=buchhaltung-ustva';
     </div>
     <div class="dg-page-header__actions">
       <?php if ($dbConnected) : ?>
-        <a class="dg-button dg-button--primary" href="<?= View::escape($baseUrl . '&year=' . $year . '&month=' . $month . '&download=ustva') ?>">ELSTER-CSV</a>
+        <a class="dg-button dg-button--primary" href="<?= View::escape($period->appendToUrl($baseUrl . '&download=ustva' . ($berichtigung ? '&berichtigung=1' : ''))) ?>">ELSTER-CSV</a>
+        <a class="dg-button" href="<?= View::escape($period->appendToUrl($baseUrl . '&download=print' . ($berichtigung ? '&berichtigung=1' : ''))) ?>" target="_blank" rel="noopener">Drucken / PDF</a>
         <a class="dg-button" href="<?= View::escape(ElsterExportService::elsterPortalUrl()) ?>" target="_blank" rel="noopener">ELSTER öffnen</a>
       <?php endif; ?>
     </div>
   </header>
 
-  <?php if (!$readiness['ready'] && $diy) : ?>
-    <p class="dg-field-hint">
-      Direkte ELSTER-Abgabe (ERiC) folgt nach Server-Umzug — Vorbereitung unter
+  <?php if (!$elsterReady && $diy) : ?>
+    <div class="dg-flash dg-flash--info">
+      Direkte ELSTER-Abgabe (ERiC) folgt nach Server-Umzug —
       <a href="/app?page=einstellungen&amp;tab=elster">Einstellungen → ELSTER / ERiC</a>.
-    </p>
-  <?php endif; ?>
-      <p>
-        Sie haben keine Steuerkanzlei hinterlegt — wir lassen Sie nicht im Stich.
-        Die Kennziffern werden aus Ihren Belegen berechnet. Übertragen Sie sie manuell in
-        <a href="<?= View::escape(ElsterExportService::elsterPortalUrl()) ?>" target="_blank" rel="noopener">ELSTER</a>
-        oder geben Sie die CSV an Ihren Steuerberater weiter.
-      </p>
     </div>
+  <?php endif; ?>
+
+  <?php if ($diy) : ?>
+    <div class="dg-flash dg-flash--info">
+      DIY-Modus: Kennziffern aus Belegen berechnet — manuell in ELSTER übertragen oder CSV an Steuerberater geben.
+    </div>
+  <?php endif; ?>
+
+  <?php if (!empty($report['is_nullmeldung'])) : ?>
+    <div class="dg-flash dg-flash--info">Nullmeldung möglich — alle Kennziffern im Zeitraum sind null.</div>
+  <?php endif; ?>
+
+  <?php if ($berichtigung) : ?>
+    <div class="dg-flash dg-flash--warning">Berichtigungsanzeige — Kennziffern als Korrektur behandeln.</div>
   <?php endif; ?>
 
   <?php if (!$dbConnected) : ?>
@@ -62,25 +71,14 @@ $baseUrl = '/app?page=buchhaltung-ustva';
   <form class="dg-panel dg-ledger-filters" method="get" action="/app">
     <input type="hidden" name="page" value="buchhaltung-ustva">
     <div class="dg-form-grid dg-form-grid--compact">
-      <label class="dg-field">
-        <span>Jahr</span>
-        <select name="year">
-          <?php foreach ($years as $y) : ?>
-            <option value="<?= (int) $y ?>"<?= $year === (int) $y ? ' selected' : '' ?>><?= (int) $y ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-      <label class="dg-field">
-        <span>Zeitraum</span>
-        <select name="month">
-          <option value="0"<?= $month === 0 ? ' selected' : '' ?>>Ganzes Jahr</option>
-          <?php
-            $monthNames = ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
-            for ($m = 1; $m <= 12; $m++) :
-          ?>
-            <option value="<?= $m ?>"<?= $month === $m ? ' selected' : '' ?>><?= $monthNames[$m] ?></option>
-          <?php endfor; ?>
-        </select>
+      <?php View::render('partials/accounting-period-filter', [
+          'period' => $period,
+          'pageSlug' => 'buchhaltung-ustva',
+          'years' => $years,
+      ]); ?>
+      <label class="dg-field dg-field--check">
+        <span>Berichtigung</span>
+        <input type="checkbox" name="berichtigung" value="1"<?= $berichtigung ? ' checked' : '' ?>>
       </label>
       <div class="dg-field dg-field--actions">
         <button type="submit" class="dg-button dg-button--primary">Anzeigen</button>
