@@ -8,7 +8,8 @@ declare(strict_types=1);
 return [
     'company_name' => 'Dietrich Ganz',
     'brand' => 'DG CRM',
-    'street' => '', // bitte ergänzen
+    // Anschrift bitte vollständig eintragen (Pflicht für Impressum)
+    'street' => '',
     'postal' => '',
     'city' => '',
     'country' => 'Deutschland',

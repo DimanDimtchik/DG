@@ -145,9 +145,9 @@ ssh allinkl-ganzom
 
 | Prio | Thema | Doku |
 |------|-------|------|
-| 1 | Stripe Keys in `shop/config/stripe.local.php` + Webhook testen | `docs/SHOP-TODO.md` Phase 2 |
-| 2 | Wartungsmodus auf Live-Instanzen abschalten (nach Check) | Website → Seiten |
-| 3 | AGB Shop / Widerruf | `docs/SHOP-TODO.md` Phase 0 |
+| 1 | Stripe Keys in `shop/config/stripe.local.php` + Webhook (bewusst zurückgestellt) | `docs/SHOP-TODO.md` Phase 2 |
+| 2 | Anschrift / USt-Id in `shop/config/legal.php` ergänzen | Shop-Impressum |
+| 3 | AGB/Widerruf juristisch prüfen lassen | `/agb`, `/widerruf` |
 | 4 | DATEV EXTF / API ShiftBase (später) | `docs/IMPORT-FORMATE.md` |
 
 ---

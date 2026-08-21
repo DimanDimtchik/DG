@@ -448,6 +448,16 @@ a:hover {
   color: var(--shop-muted);
 }
 
+.shop-legal-box {
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--shop-line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--shop-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
 .shop-plan__img {
   width: 100%;
   aspect-ratio: 16 / 10;

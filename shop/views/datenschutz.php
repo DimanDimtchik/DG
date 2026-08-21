@@ -39,17 +39,22 @@ $email = (string) ($legal['email'] ?? ShopApp::config('contact_email'));
     Optionale Statistik-Cookies setzen wir nur, wenn Sie im Cookie-Banner zustimmen. Sie können Ihre Wahl jederzeit ändern, indem Sie die Cookies in Ihrem Browser löschen und die Seite neu laden.</p>
 
   <h2>5. Weitergabe</h2>
-  <p>Zur Einrichtung Ihres CRM können Bestelldaten an unsere interne Kundenverwaltung (KDV) und an unseren Hosting-Partner (All-Inkl) übermittelt werden – nur soweit für die Leistung nötig.
+  <p>Zur Einrichtung Ihres CRM können Bestelldaten an unsere interne Kundenverwaltung (KDV) und an unseren Hosting-Partner (All-Inkl) übermittelt werden – nur soweit für die Leistung nötig.</p>
+  <p>Die Zahlung wird über <strong>Stripe</strong> (Stripe Payments Europe, Ltd. / Stripe, Inc.) abgewickelt. Dabei werden Zahlungs- und Vertragsdaten an Stripe übermittelt. Es gelten die Datenschutzhinweise von Stripe.
     Eine Weitergabe zu Werbezwecken an Dritte findet nicht statt.</p>
 
   <h2>6. Speicherdauer</h2>
   <p>Bestell- und Vertragsdaten speichern wir für die Dauer der Geschäftsbeziehung und den gesetzlichen Aufbewahrungsfristen (häufig 6–10 Jahre im Steuer-/Handelsrecht).
     Cookie-Einwilligungen speichern wir etwa ein Jahr.</p>
 
-  <h2>7. Ihre Rechte</h2>
+  <h2>7. Auftragsverarbeitung</h2>
+  <p>Verarbeiten wir Daten in Ihrer CRM-Instanz in Ihrem Auftrag, schließen wir auf Wunsch einen AVV (Art. 28 DSGVO). Siehe auch <a href="/impressum">Impressum</a>.</p>
+
+  <h2>8. Ihre Rechte</h2>
   <p>Sie haben Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch sowie das Recht, eine Einwilligung zu widerrufen.
     Außerdem können Sie sich bei einer Datenschutzaufsichtsbehörde beschweren.</p>
 
-  <h2>8. Kontakt</h2>
+  <h2>9. Kontakt</h2>
   <p>Fragen zum Datenschutz: <a href="mailto:<?= ShopView::escape($email) ?>"><?= ShopView::escape($email) ?></a></p>
+  <p><a href="/agb">AGB</a> · <a href="/widerruf">Widerruf</a> · <a href="/impressum">Impressum</a></p>
 </section>

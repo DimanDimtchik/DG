@@ -47,8 +47,9 @@ Anzeige wie Marketing-Seite: **zzgl. 19 % MwSt.** Stripe später mit Brutto (`
 
 - [x] Feature-Vergleich Starter / Business / Premium aus [ganz-soft.de/preise](https://ganz-soft.de/preise) übernommen
 - [x] Laufzeiten: monatlich / jährlich (1 Monat gratis = ×11)
-- [ ] AGB Shop + Widerrufsbelehrung (Fernabsatz) + Datenschutzerklärung Shop
-- [ ] Impressum / AVV-Hinweis für Hosting-Kunden
+- [x] AGB Shop + Widerrufsbelehrung (Fernabsatz) + Datenschutzerklärung Shop (`/agb`, `/widerruf`, `/datenschutz`)
+- [x] Impressum / AVV-Hinweis für Hosting-Kunden (`/impressum`)
+- [ ] Anschrift / USt-Id in `shop/config/legal.php` vollständig eintragen
 - [x] Im Kauf enthalten (laut Preisseite): Domain, E-Mail, SSL, Hosting, Backups, Updates, Support
 
 ---

@@ -51,6 +51,24 @@ switch ($path) {
         ]);
         break;
 
+    case '/agb':
+        ShopView::render('agb', [
+            'title' => 'AGB – ' . $appName,
+            'legal' => $legal,
+            'marketingUrl' => $marketingUrl,
+            'contactEmail' => $contactEmail,
+        ]);
+        break;
+
+    case '/widerruf':
+        ShopView::render('widerruf', [
+            'title' => 'Widerruf – ' . $appName,
+            'legal' => $legal,
+            'marketingUrl' => $marketingUrl,
+            'contactEmail' => $contactEmail,
+        ]);
+        break;
+
     case '/checkout':
         $planId = trim((string) ($_GET['plan'] ?? $_POST['plan'] ?? 'starter'));
         $billing = trim((string) ($_GET['billing'] ?? $_POST['billing_cycle'] ?? 'monatlich'));
@@ -75,6 +93,7 @@ switch ($path) {
             'contact_phone' => '',
             'business_profile' => '',
             'privacy' => '',
+            'agb' => '',
         ];
         $preview = null;
         $domainCheck = null;

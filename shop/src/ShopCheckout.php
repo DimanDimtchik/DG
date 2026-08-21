@@ -27,6 +27,7 @@ final class ShopCheckout
             'contact_phone' => trim((string) ($input['contact_phone'] ?? '')),
             'business_profile' => trim((string) ($input['business_profile'] ?? '')),
             'privacy' => !empty($input['privacy']) ? '1' : '',
+            'agb' => !empty($input['agb']) ? '1' : '',
         ];
 
         if (ShopPlans::get($data['plan']) === null) {
@@ -49,6 +50,9 @@ final class ShopCheckout
         }
         if ($data['privacy'] !== '1') {
             $errors[] = 'Bitte bestätigen Sie die Datenschutzerklärung.';
+        }
+        if ($data['agb'] !== '1') {
+            $errors[] = 'Bitte akzeptieren Sie die AGB und die Widerrufsbelehrung.';
         }
         if ($normalized !== '' && self::isWebsiteIntent($normalized) && $data['business_profile'] === '') {
             $errors[] = 'Bitte wählen Sie, welche Art von Unternehmen Sie sind (für die Startseite).';

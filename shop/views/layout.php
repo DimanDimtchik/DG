@@ -54,10 +54,12 @@ $logoShape = ShopApp::logoShape();
       <p>
         <a href="/impressum">Impressum</a>
         · <a href="/datenschutz">Datenschutz</a>
+        · <a href="/agb">AGB</a>
+        · <a href="/widerruf">Widerruf</a>
         · <a href="<?= ShopView::escape($marketingUrl) ?>/preise">Preisliste</a>
         · <a href="mailto:<?= ShopView::escape($contactEmail) ?>"><?= ShopView::escape($contactEmail) ?></a>
       </p>
-      <p class="shop-foot__note">Preise gemäß <a href="https://ganz-soft.de/preise">ganz-soft.de/preise</a>. Zahlung (Stripe) folgt.</p>
+      <p class="shop-foot__note">Preise gemäß <a href="https://ganz-soft.de/preise">ganz-soft.de/preise</a>. Zahlung über Stripe, sobald freigeschaltet.</p>
     </div>
   </footer>
   <?= ShopCookieConsent::bannerHtml() ?>

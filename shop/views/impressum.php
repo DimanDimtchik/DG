@@ -48,9 +48,16 @@ $appName = (string) ShopApp::config('name');
   <h2>Hosting</h2>
   <p><?= ShopView::escape((string) ($legal['hosting'] ?? '')) ?></p>
 
+  <h2>Auftragsverarbeitung (AVV)</h2>
+  <p>Soweit wir personenbezogene Daten im Auftrag unserer SaaS-Kunden verarbeiten (Hosting der CRM-Instanz),
+    schließen wir auf Anfrage einen Auftragsverarbeitungsvertrag gemäß Art. 28 DSGVO.
+    Anfragen bitte an
+    <a href="mailto:<?= ShopView::escape((string) ($legal['email'] ?? '')) ?>"><?= ShopView::escape((string) ($legal['email'] ?? '')) ?></a>.</p>
+
   <h2>Haftung für Inhalte und Links</h2>
   <p>Als Diensteanbieter sind wir für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich.
     Für Inhalte verlinkter Seiten übernehmen wir keine Gewähr. Bei Bekanntwerden von Rechtsverletzungen entfernen wir entsprechende Inhalte umgehend.</p>
 
-  <p class="shop-vat">Marke: <?= ShopView::escape($appName) ?> / <?= ShopView::escape((string) ($legal['brand'] ?? '')) ?></p>
+  <p class="shop-vat">Marke: <?= ShopView::escape($appName) ?> / <?= ShopView::escape((string) ($legal['brand'] ?? '')) ?>
+    · <a href="/agb">AGB</a> · <a href="/widerruf">Widerruf</a> · <a href="/datenschutz">Datenschutz</a></p>
 </section>

@@ -133,6 +133,11 @@ $profileOptions = ShopCheckout::businessProfileOptions();
       <span>Ich habe die <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und bin damit einverstanden. <span class="shop-req">*</span></span>
     </label>
 
+    <label class="shop-check">
+      <input type="checkbox" name="agb" value="1" required<?= ($form['agb'] ?? '') === '1' ? ' checked' : '' ?>>
+      <span>Ich akzeptiere die <a href="/agb" target="_blank" rel="noopener">AGB</a> und habe die <a href="/widerruf" target="_blank" rel="noopener">Widerrufsbelehrung</a> zur Kenntnis genommen. <span class="shop-req">*</span></span>
+    </label>
+
     <p class="shop-vat"><?= ShopView::escape(ShopPlans::vatNote()) ?>
       <?= $stripeReady
         ? ' Nach der Prüfung zahlen Sie sicher über Stripe (Abo monatlich oder jährlich).'
