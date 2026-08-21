@@ -498,6 +498,14 @@ final class VoucherRepository
         $voucherDate = date('Y-m-d', strtotime($voucherDate));
         $deliveryDate = self::parseOptionalDate((string) ($data['delivery_date'] ?? ''));
 
+        self::assertEditableFiscalYear($voucherDate);
+        if ($id !== null && $id > 0) {
+            $existing = self::findById($id);
+            if ($existing !== null) {
+                self::assertEditableFiscalYear((string) ($existing['voucher_date'] ?? ''));
+            }
+        }
+
         $contactId = max(0, (int) ($data['contact_id'] ?? 0));
         $contactId = $contactId > 0 ? $contactId : null;
         if ($contactId !== null && ContactRepository::findById($contactId) === null) {
@@ -875,6 +883,11 @@ final class VoucherRepository
             throw new RuntimeException('Datenbank nicht verbunden.');
         }
 
+        $existing = self::findById($id);
+        if ($existing !== null) {
+            self::assertEditableFiscalYear((string) ($existing['voucher_date'] ?? ''));
+        }
+
         LedgerPostingService::deleteForVoucher($id);
         $stmt = Database::pdo()->prepare('DELETE FROM dg_vouchers WHERE id = :id');
         $stmt->execute(['id' => $id]);
@@ -1120,6 +1133,19 @@ final class VoucherRepository
         }
 
         return NumberRangeSettings::allocateNext($rangeType, false)['number'];
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private static function assertEditableFiscalYear(string $voucherDate): void
+    {
+        $year = (int) date('Y', strtotime($voucherDate));
+        if ($year >= 2000 && FiscalYearService::isClosed($year)) {
+            throw new InvalidArgumentException(
+                'Geschäftsjahr ' . $year . ' ist abgeschlossen — Belege können nicht mehr geändert werden.'
+            );
+        }
     }
 
     /**

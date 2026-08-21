@@ -2238,11 +2238,56 @@ switch ($path) {
             $jaPreview = FiscalYearService::profitLossPreview($jaYear);
             $jaYearStatus = FiscalYearService::status($jaYear);
             $fiscalYears = FiscalYearService::list();
+            $closeChecklist = FiscalCloseService::checklist($jaYear);
+            $closeSummary = FiscalCloseService::summary($jaYear);
+            $canCloseYear = FiscalCloseService::canClose($jaYear);
+            $isDiyMode = TaxAdvisorSettings::isDiyMode();
             $isAdmin = RoleResolver::isAdmin($user);
             $contentTemplate = 'modules/buchhaltung-jahresabschluss';
             $title = 'Jahresabschluss';
             $currentPage = 'buchhaltung-jahresabschluss';
         } elseif ($page === 'buchhaltung-jahresabschluss') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-ustva' && MenuRegistry::canAccess($user, 'buchhaltung-ustva')) {
+            $ustvaYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $ustvaMonthRaw = (int) ($_GET['month'] ?? (int) date('n'));
+            $ustvaMonth = $ustvaMonthRaw >= 1 && $ustvaMonthRaw <= 12 ? $ustvaMonthRaw : 0;
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download !== '' && Database::isConfigured()) {
+                try {
+                    $export = match ($download) {
+                        'ustva' => ElsterExportService::exportUstva(
+                            $ustvaYear,
+                            $ustvaMonth > 0 ? $ustvaMonth : null
+                        ),
+                        'euer' => ElsterExportService::exportEuer($ustvaYear),
+                        default => throw new InvalidArgumentException('Unbekannter Export-Typ.'),
+                    };
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $export['filename'] . '"');
+                    echo $export['content'];
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header(
+                        'Location: /app?page=buchhaltung-ustva&year=' . $ustvaYear . '&month=' . $ustvaMonth,
+                        true,
+                        302
+                    );
+                    exit;
+                }
+            }
+            $ustvaYears = LedgerRepository::availableYears();
+            $ustvaReport = UstvaReportService::report(
+                $ustvaYear,
+                $ustvaMonth > 0 ? $ustvaMonth : null
+            );
+            $isDiyMode = TaxAdvisorSettings::isDiyMode();
+            $contentTemplate = 'modules/buchhaltung-ustva';
+            $title = 'UStVA';
+            $currentPage = 'buchhaltung-ustva';
+        } elseif ($page === 'buchhaltung-ustva') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-opos' && MenuRegistry::canAccess($user, 'buchhaltung-opos')) {

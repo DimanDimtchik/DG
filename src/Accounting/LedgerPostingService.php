@@ -22,6 +22,11 @@ final class LedgerPostingService
             return;
         }
 
+        $fiscalYear = (int) substr((string) ($voucher['voucher_date'] ?? ''), 0, 4);
+        if ($fiscalYear >= 2000 && FiscalYearService::isClosed($fiscalYear)) {
+            return;
+        }
+
         $postings = self::buildPostings($voucher);
         if ($postings === []) {
             return;

@@ -80,6 +80,7 @@ final class FiscalYearService
             throw new RuntimeException('Geschäftsjahr ' . $year . ' ist bereits abgeschlossen.');
         }
 
+        FiscalCloseService::assertCanClose($year);
         self::bookClosingEntries($year);
 
         $nextYear = $year + 1;

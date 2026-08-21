@@ -12,8 +12,9 @@ $selectedContactId = (int) ($taxAdvisorConfig['contact_id'] ?? 0);
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 
   <p class="dg-lead">
-    Wählen Sie Ihre <strong>Steuerkanzlei</strong> als Firmen-Kontakt. Die Mitarbeiterliste wird aus den
-    unter <a href="/app?page=kontakte">Kontakte</a> verknüpften Personen dieser Firma übernommen.
+    Wählen Sie Ihre <strong>Steuerkanzlei</strong> als Firmen-Kontakt — oder lassen Sie das Feld leer:
+    Dann stehen Ihnen <strong>UStVA</strong>, <strong>ELSTER-CSV</strong> und der <strong>Jahresabschluss-Assistent</strong>
+    direkt in der Buchhaltung zur Verfügung (DIY ohne Steuerberater).
   </p>
 
   <?php if (!$dbConnected) : ?>

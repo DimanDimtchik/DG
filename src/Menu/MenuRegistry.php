@@ -247,6 +247,12 @@ final class MenuRegistry
                     'href' => '/app?page=buchhaltung-steuerberater-export',
                 ],
                 [
+                    'slug' => 'buchhaltung-ustva',
+                    'label' => 'UStVA',
+                    'icon' => 'document',
+                    'href' => '/app?page=buchhaltung-ustva',
+                ],
+                [
                     'slug' => 'buchhaltung-jahresabschluss',
                     'label' => 'Jahresabschluss',
                     'icon' => 'yearclose',
@@ -289,7 +295,8 @@ final class MenuRegistry
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr.',
             'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Belege zuordnen.',
             'buchhaltung-steuerberater-export' => 'DATEV, Agenda, Addison — Buchungsstapel und Belege.',
-            'buchhaltung-jahresabschluss' => 'Geschäftsjahr abschließen und Salden vortragen.',
+            'buchhaltung-ustva' => 'Umsatzsteuer-Voranmeldung und ELSTER-CSV — auch ohne Steuerberater.',
+            'buchhaltung-jahresabschluss' => 'Checkliste, GuV-Abschluss, Saldenvortrag — DIY-Assistent.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
             'website-seiten' => 'Seiten der öffentlichen Website anlegen und gestalten.',
             'website-formulare' => 'Formulare visuell bauen, Einträge empfangen und in Seiten einbinden.',
@@ -407,6 +414,7 @@ final class MenuRegistry
             || $slug === 'buchhaltung-bankabgleich'
             || $slug === 'buchhaltung-steuerberater-export'
             || $slug === 'buchhaltung-datev-export'
+            || $slug === 'buchhaltung-ustva'
             || $slug === 'buchhaltung-jahresabschluss'
         ) {
             return self::canAccessBuchhaltung($user);

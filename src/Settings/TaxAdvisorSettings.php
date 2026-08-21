@@ -53,6 +53,17 @@ final class TaxAdvisorSettings
         return self::forForm()['contact_id'];
     }
 
+    public static function hasAdvisor(): bool
+    {
+        return self::selectedContactId() > 0;
+    }
+
+    /** Kunde ohne Steuerberater — DIY-Modus mit Kanzlei-Funktionen in der App. */
+    public static function isDiyMode(): bool
+    {
+        return !self::hasAdvisor();
+    }
+
     /**
      * Speichert Formulardaten.
      * @param array $input
