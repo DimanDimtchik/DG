@@ -49,6 +49,40 @@ Plugins (falls Repos als Geschwisterordner liegen):
 
 **Kaspersky:** `deploy.ps1` kann fälschlich als `PDM:Trojan.Win32.Generic` gemeldet werden (Heuristik wegen ssh/scp). Das ist ein **Fehlalarm** — kein Trojaner. Lösung: `deploy.bat` nutzen oder in Kaspersky eine Ausnahme für `C:\Users\dietr\Projects\DG` setzen und die Datei aus der Quarantäne wiederherstellen.
 
+### Website: Pflichtseiten & Bootstrap
+
+Nach der Installation (oder für bestehende Instanzen) legt das CRM automatisch an:
+
+- **Impressum**, **Datenschutz**, **AGB** (aus Firmendaten, Generator in `src/Legal/LegalPageGenerator.php`)
+- **Startseite** (branchenspezifische Vorlage je `business_kind`)
+- **Kontaktseite** mit Formular inkl. Datenschutz-Checkbox
+- **Menü** (Start, Kontakt, Rechtliches)
+- **Wartungsmodus** standardmäßig **ein** — Besucher sehen eine Aufbau-Seite
+
+**Im CRM:** Website → Seiten → „Pflichtseiten jetzt anlegen“
+
+**Per SSH (nach Deploy auf dem Server):**
+
+```bash
+# Code auf alle Instanzen syncen
+bash bin/sync-crm-from-master.sh
+
+# Pflichtseiten auf ganz-soft.de, kontur-cosmetics.de, Master
+bash bin/run-website-bootstrap-on-instances.sh --overwrite
+```
+
+Einzelne Instanz:
+
+```bash
+php bin/seed-website-defaults.php              # nur Fehlendes
+php bin/seed-website-defaults.php --overwrite  # alles neu generieren
+php bin/seed-website-defaults.php --no-maintenance  # ohne Wartungsmodus
+```
+
+Rechtstexte sind **Generator-Entwürfe** — bitte juristisch prüfen. Wartungsmodus abschalten: Website → Seiten.
+
+Manuelle Testliste: `docs/TESTLISTE-2026-08-21.md` (Abschnitte G + H).
+
 ### Demo-Accounts (Passwort: `demo`)
 
 | Benutzer | Rolle | Menü |
