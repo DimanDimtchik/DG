@@ -317,7 +317,11 @@ final class KdvDeployService
             . 'style="display:inline-block;padding:12px 24px;background:#6e6258;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">'
             . 'Installation starten</a></p>'
             . '<p style="font-size:13px;color:#64748b">Sie werden durch einen Assistenten geführt. '
-            . 'Für Ihr CRM-Benutzerkonto wählen Sie später selbst ein Passwort (Link per E-Mail).</p>';
+            . 'Für Ihr CRM-Benutzerkonto wählen Sie später selbst ein Passwort (Link per E-Mail).</p>'
+            . '<p style="font-size:13px;color:#64748b;margin-top:16px"><strong>Öffentliche Website:</strong> '
+            . 'Nach der Installation legt das CRM automatisch Impressum, Datenschutz, eine Startseite und ein Kontaktformular an. '
+            . 'Die Website startet im <strong>Wartungsmodus</strong> (Besucher sehen eine Aufbau-Seite). '
+            . 'Wenn Sie bereit sind, schalten Sie den Wartungsmodus im CRM unter <em>Website → Seiten</em> aus.</p>';
 
         if ($mailboxEmail !== '' && $mailboxPassword !== '') {
             $html .= '<hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0">'

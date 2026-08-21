@@ -709,6 +709,13 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
     <?php endforeach; ?>
     <p style="margin-top:1rem;font-size:.85rem;color:#64748b">Jeder eingeladene Benutzer erhält eine E-Mail mit einem Bestätigungslink. Nach Klick auf den Link wird ein Passwort vergeben und das Konto aktiviert.</p>
 
+    <div class="hint-box" style="text-align:left;margin-top:1.5rem">
+        <h3>Ihre Website</h3>
+        <p>Impressum, Datenschutz, AGB, Startseite und Kontaktformular wurden automatisch angelegt.</p>
+        <p>Die öffentliche Website ist im <strong>Wartungsmodus</strong> – Besucher sehen eine Aufbau-Seite, bis Sie im CRM unter <strong>Website → Seiten</strong> den Wartungsmodus ausschalten.</p>
+        <p style="font-size:.85rem;color:#64748b">Rechtstexte sind Generator-Entwürfe. Bitte prüfen und bei Bedarf anpassen.</p>
+    </div>
+
     <?php if (!empty($wizard['hints'])): ?>
     <div class="hint-box" style="text-align:left;margin-top:1.5rem">
         <h3>Fehlende Angaben – bitte später ergänzen</h3>

@@ -120,6 +120,35 @@ Je Instanz:
 | Shop → KDV | Noch **keine** automatische Provisionierung |
 | Statistik ohne Consent | Bleibt leer / steigt nicht |
 | Preise Shop vs. Marketing | Gleich wie [ganz-soft.de/preise](https://ganz-soft.de/preise); Shop-Jahresabo zusätzlich mit ×11 |
+| Rechtstexte Bootstrap | Generator-Entwurf – juristisch prüfen |
+| Wartungsmodus nach Install | Standard **an** – unter Website → Seiten abschaltbar |
+
+---
+
+## G. Website-Bootstrap (Pflichtseiten, Stand 2026-08-21)
+
+Nach Deploy von `seed-website-defaults.php` / neuer Installation:
+
+- [ ] CRM → **Website → Seiten** → Panel „Pflichtseiten & Startseite“ sichtbar
+- [ ] Seiten vorhanden: **Startseite**, **Kontakt**, **Impressum**, **Datenschutz**, **AGB**
+- [ ] **Wartungsmodus** ist eingeschaltet (Badge „Aktiv“ unter Website → Seiten)
+- [ ] Öffentlich `/` zeigt Wartungsseite (nicht eingeloggt)
+- [ ] Vorschau `/vorschau/startseite` zeigt Startseite (eingeloggt im CRM)
+- [ ] `/kontakt` (Vorschau): Kontaktformular mit **Datenschutz-Checkbox** und Captcha
+- [ ] Menü: Start, Kontakt, Rechtliches (Impressum, Datenschutz, AGB)
+- [ ] Button „Pflichtseiten jetzt anlegen“ auf bestehender Instanz (mit `--overwrite` testen)
+
+**Server (SSH):** nach Code-Deploy  
+`bash bin/run-website-bootstrap-on-instances.sh`  
+oder pro Instanz: `php bin/seed-website-defaults.php --overwrite`
+
+---
+
+## H. Shop – Unternehmenstyp (volle Domain)
+
+- [ ] Checkout mit `meine-firma.de` → Feld „Ihr Unternehmen“ erscheint (Pflicht)
+- [ ] Checkout mit `crm.firma.de` oder leerer Domain → Feld **nicht** sichtbar
+- [ ] KDV-Payload enthält `business_profile` / `business_kind` (wenn Website-Intent)
 
 ---
 
