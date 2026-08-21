@@ -1,0 +1,187 @@
+# PC-Handoff — Stand 2026-08-21
+
+> Alles Wichtige zum Weiterarbeiten am lokalen PC. Zwei Feature-Branches sind fertig implementiert und gepusht — noch **nicht** auf `master` gemergt.
+
+---
+
+## 1. Git — Branches checkouten
+
+```powershell
+cd C:\Users\dietr\Projects\DG   # oder dein Pfad
+git fetch origin
+```
+
+### Branch A: Website-Bootstrap (bereits auf master?)
+
+Prüfen: `git log master --oneline -3`  
+Falls Pflichtseiten schon auf master: nichts tun.
+
+Falls noch separater Branch:
+
+```powershell
+git checkout cursor/website-bootstrap-pflichtseiten-6a0c
+```
+
+### Branch B: Datenimport Installation (aktuell)
+
+```powershell
+git checkout cursor/install-data-import-6a0c
+git pull origin cursor/install-data-import-6a0c
+```
+
+**Merge nach master (wenn Tests OK):**
+
+```powershell
+git checkout master
+git pull origin master
+git merge cursor/install-data-import-6a0c
+git push origin master
+```
+
+**PR manuell:** https://github.com/DimanDimtchik/DG/compare/master...cursor/install-data-import-6a0c
+
+---
+
+## 2. Was ist implementiert?
+
+### Website-Bootstrap (master)
+
+| Was | Wo |
+|-----|-----|
+| Impressum, Datenschutz, AGB | `src/Legal/LegalPageGenerator.php` |
+| Startseite je Branche | `src/Website/WebsiteHomepageTemplates.php` |
+| Bootstrap nach Install | `src/Website/WebsiteBootstrapService.php` |
+| CLI + Server-Skript | `bin/seed-website-defaults.php`, `bin/run-website-bootstrap-on-instances.sh` |
+| CRM-Button | Website → Seiten → „Pflichtseiten jetzt anlegen“ |
+| Shop Unternehmenstyp | `shop/` bei voller Domain |
+
+### Datenimport Installation (Branch `cursor/install-data-import-6a0c`)
+
+| Was | Status |
+|-----|--------|
+| Install-Schritt 5: Datenimport | ✅ |
+| Install-Schritt 6: Benutzer | ✅ |
+| Fortschritts-UI nach Installation | ✅ (`assets/js/install-import.js`) |
+| Kontakte, Mitarbeiter, Termine | ✅ Excel, CSV, XML, JSON |
+| Artikel/Leistungen | ✅ inkl. PDF |
+| Quellsystem-Presets (DATEV, Lexware, ShiftBase, …) | ✅ |
+| Belege/Rechnungen | ⏳ nur Staging (`docs/IMPORT-BELEGE-TODO.md`) |
+
+**Neue Dateien:**
+
+```
+src/Install/
+  InstallImportQueue.php
+  InstallImportRunner.php
+  InstallImportSourcePresets.php
+  InstallContactImporter.php
+  InstallEmployeeImporter.php
+  InstallBookingImporter.php
+  InstallVoucherImporter.php      # Stub
+  InstallCsvHelper.php
+assets/js/install-import.js
+docs/IMPORT-FORMATE.md
+docs/IMPORT-BELEGE-TODO.md
+```
+
+---
+
+## 3. Lokal testen (Installationsassistent)
+
+```powershell
+# PHP built-in server (im Repo-Root)
+php -S localhost:8080
+```
+
+1. `storage/.installed` löschen (falls vorhanden)
+2. `config/database.local.php` + `config/app.local.php` ggf. umbenennen/entfernen für frische Installation
+3. Browser: http://localhost:8080/install.php
+4. Schritte 1–4 wie gewohnt
+5. **Schritt 5:** Import-Typ wählen, Quellsystem, Datei hochladen (Test-Excel)
+6. **Schritt 6:** Benutzer → Installation
+7. Fortschrittsanzeige abwarten → Login
+
+**Beispiel-Vorlagen:** `install.php?action=import-template&type=contacts` (employees, bookings, articles)
+
+**Ohne echte DB:** Nur UI/Flow prüfbar; Import braucht laufende MySQL + KAS oder `database.local.php`.
+
+---
+
+## 4. Deploy auf Live-Instanzen
+
+### Code deployen
+
+```powershell
+.\deploy.ps1 -WithPlugins
+```
+
+oder Server:
+
+```bash
+bash bin/sync-crm-from-master.sh
+```
+
+### Website-Bootstrap auf bestehenden Instanzen
+
+```bash
+bash bin/run-website-bootstrap-on-instances.sh --overwrite
+```
+
+### SSH-Problem (noch offen!)
+
+Cloud-Agent konnte **nicht** per SSH auf DG/All-Inkl zugreifen (`DG_ALLINKL_SSH_*` Key abgelehnt).  
+`IQ_ALLINKL_SSH_*` funktioniert, ist aber der **falsche Server** (iq-strom).
+
+**Am PC prüfen:**
+
+- SSH-Key in KAS / `~/.ssh/` für `w01xxxx.kasserver.com`
+- `deploy.ps1` / Umgebungsvariablen `DG_ALLINKL_SSH_*`
+- Manuell: `ssh w01xxxx@w01xxxx.kasserver.com`
+
+---
+
+## 5. Offene TODOs (Priorität)
+
+| Prio | Thema | Doku |
+|------|-------|------|
+| 1 | **Beleg-Import-Verarbeitung** (OCR, VoucherRepository) | `docs/IMPORT-BELEGE-TODO.md` |
+| 2 | Branch **Datenimport** mergen + auf Testinstanz installieren | diese Datei |
+| 3 | Live-Deploy Bootstrap (ganz-soft, kontur-cosmetics) | README, Abschnitt G Testliste |
+| 4 | SSH-Key DG-Server fixen | oben |
+| 5 | Stripe Shop Phase 2 | `docs/SHOP-TODO.md` |
+| 6 | DATEV EXTF / API ShiftBase (später) | `docs/IMPORT-FORMATE.md` |
+
+---
+
+## 6. Testliste
+
+Manuelle Tests: **`docs/TESTLISTE-2026-08-21.md`**
+
+- Abschnitt **G** — Website-Bootstrap
+- Abschnitt **H** — Shop Unternehmenstyp
+- Abschnitt **I** — Datenimport Installation (neu)
+
+---
+
+## 7. Commits (Referenz)
+
+```
+ad96af5 Import: Excel und Quellsystem-Presets statt nur CSV
+454b262 Datenimport im Installationsassistenten mit Fortschrittsanzeige
+97d1a46 README: Anleitung Website-Bootstrap und Pflichtseiten
+5509dbd Hinweise Wartungsmodus, Testliste und Server-Bootstrap-Skript
+050347b Automatische Pflichtseiten, Startseite und Kontaktformular nach Installation
+```
+
+---
+
+## 8. Schnellstart am PC (5 Min)
+
+```powershell
+git fetch origin
+git checkout cursor/install-data-import-6a0c
+git pull
+# Testen oder mergen — siehe oben
+```
+
+Fragen / Blocker: Branch-Namen und Dateipfade in dieser Datei sind die Ankerpunkte.

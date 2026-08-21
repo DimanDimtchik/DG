@@ -81,7 +81,19 @@ php bin/seed-website-defaults.php --no-maintenance  # ohne Wartungsmodus
 
 Rechtstexte sind **Generator-Entwürfe** — bitte juristisch prüfen. Wartungsmodus abschalten: Website → Seiten.
 
-Manuelle Testliste: `docs/TESTLISTE-2026-08-21.md` (Abschnitte G + H).
+Manuelle Testliste: `docs/TESTLISTE-2026-08-21.md` (Abschnitte G, H, I).
+
+### Installation: Datenimport (Branch `cursor/install-data-import-6a0c`)
+
+Optionaler Schritt im Installationsassistenten (Schritt 5 von 6):
+
+- **Kontakte, Mitarbeiter, Termine, Artikel** — Excel (.xlsx), CSV, XML, JSON hochladen
+- **Quellsystem wählen** (DATEV, Lexware, ShiftBase, Outlook, …) mit Export-Hinweis
+- **Fortschrittsanzeige** nach der Installation
+- **Belege:** nur Datei-Staging, Verarbeitung folgt (`docs/IMPORT-BELEGE-TODO.md`)
+
+Details: `docs/IMPORT-FORMATE.md` · PC-Handoff: `docs/PC-HANDOFF.md`
+
 
 ### Demo-Accounts (Passwort: `demo`)
 

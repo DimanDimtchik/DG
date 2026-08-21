@@ -152,6 +152,24 @@ oder pro Instanz: `php bin/seed-website-defaults.php --overwrite`
 
 ---
 
+## I. Installations-Datenimport (Branch `cursor/install-data-import-6a0c`)
+
+Frische Installation oder Test-VM (`storage/.installed` entfernen):
+
+- [ ] Install-Schritte 1–4 unverändert durchlaufbar
+- [ ] **Schritt 5** „Datenimport“ sichtbar (6 Schritte insgesamt)
+- [ ] Quellsystem-Dropdown zeigt Hinweis-Text (z. B. DATEV, Excel)
+- [ ] Beispiel-Vorlage herunterladbar (`?action=import-template&type=contacts`)
+- [ ] Kontakte: Excel-Datei hochladen → Schritt 6 → Installation
+- [ ] Fortschrittsbalken + Schritte während Import
+- [ ] Nach Import: Login möglich, Kontakte in CRM sichtbar
+- [ ] Installation **ohne** Import: direkt Erfolgsseite, kein Import-Panel
+- [ ] Belege: PDF hochladen → Hinweis „zwischengespeichert“, keine Verarbeitung
+
+**Ohne Import (Skip):** Schritt 5 leer lassen → weiter zu Benutzer.
+
+---
+
 ## Schnellpfad (ca. 15 Minuten)
 
 1. Shop: Start + Preise Monat/Jahr + ein Checkout mit Testdaten  
