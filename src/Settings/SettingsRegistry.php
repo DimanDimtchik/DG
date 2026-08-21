@@ -116,6 +116,11 @@ final class SettingsRegistry
                         'lead' => 'Steuerkanzlei als Firmen-Kontakt zuordnen und verknüpfte Ansprechpartner einsehen.',
                         'template' => 'steuerkanzlei',
                     ],
+                    'elster' => [
+                        'label' => 'ELSTER / ERiC',
+                        'lead' => 'Vorbereitung direkter ELSTER-Übermittlung — bis Server-Umzug: CSV-Modus.',
+                        'template' => 'elster',
+                    ],
                 ],
             ],
             'recht' => [

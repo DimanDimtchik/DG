@@ -624,6 +624,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen ELSTER (Vorbereitung)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['elster_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('elster');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    ElsterSettings::saveFromPost($_POST);
+                    Flash::set('success', 'ELSTER-Vorbereitung gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Kontenrahmen
         if (
             $page === 'einstellungen'
@@ -2026,6 +2048,7 @@ switch ($path) {
         $companyExtended = CompanyExtendedSettings::forForm();
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
+        $elsterConfig = ElsterSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
             try {
@@ -3347,6 +3370,7 @@ switch ($path) {
             'companyExtended',
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
+            'elsterConfig',
             'chartOfAccountsConfig',
             'chartAccountCount',
             'chartCatalogCount',

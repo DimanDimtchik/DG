@@ -75,6 +75,8 @@
           <?php View::render('settings/tab-calendar-embed', compact('calendarEmbedConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'steuerkanzlei') : ?>
           <?php View::render('settings/tab-steuerkanzlei', compact('taxAdvisorConfig', 'taxAdvisorCompanyOptions', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'elster') : ?>
+          <?php View::render('settings/tab-elster', compact('elsterConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'chart-of-accounts') : ?>
           <?php View::render('settings/tab-chart-of-accounts', compact('chartOfAccountsConfig', 'dbConnected', 'datevExportSettings')); ?>
         <?php else : ?>

@@ -227,7 +227,7 @@ final class FiscalCloseService
         $open = BankTransactionRepository::list('open');
         $yearOpen = array_filter(
             $open,
-            static fn (array $row): bool => (int) substr((string) ($row['booking_date'] ?? ''), 0, 4) === $year
+            static fn (array $row): bool => (int) substr((string) ($row['transaction_date'] ?? ''), 0, 4) === $year
         );
         $count = count($yearOpen);
 

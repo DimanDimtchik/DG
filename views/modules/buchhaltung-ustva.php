@@ -15,6 +15,7 @@ $month = (int) ($ustvaMonth ?? (int) date('n'));
 $years = $ustvaYears ?? [(int) date('Y')];
 $report = $ustvaReport ?? ['positions' => [], 'payable' => 0.0, 'period_label' => ''];
 $diy = (bool) ($isDiyMode ?? true);
+$elsterReady = ElsterEricClient::isReady();
 $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
 $baseUrl = '/app?page=buchhaltung-ustva';
 ?>
@@ -39,8 +40,12 @@ $baseUrl = '/app?page=buchhaltung-ustva';
     </div>
   </header>
 
-  <?php if ($diy) : ?>
-    <div class="dg-panel dg-panel--notice">
+  <?php if (!$readiness['ready'] && $diy) : ?>
+    <p class="dg-field-hint">
+      Direkte ELSTER-Abgabe (ERiC) folgt nach Server-Umzug — Vorbereitung unter
+      <a href="/app?page=einstellungen&amp;tab=elster">Einstellungen → ELSTER / ERiC</a>.
+    </p>
+  <?php endif; ?>
       <p>
         Sie haben keine Steuerkanzlei hinterlegt — wir lassen Sie nicht im Stich.
         Die Kennziffern werden aus Ihren Belegen berechnet. Übertragen Sie sie manuell in

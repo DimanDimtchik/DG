@@ -1,0 +1,35 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * ELSTER / ERiC — lokale Server-Konfiguration (nicht ins Git committen).
+ *
+ * Kopie: cp config/elster.local.php.example config/elster.local.php
+ *
+ * @see docs/SERVER-MIGRATION.md
+ * @see docs/ELSTER-ERIC-TODO.md
+ */
+return [
+    // Erst nach Umzug auf Root-Server (z. B. Hetzner SX65-2) auf true setzen:
+    'server_ready' => false,
+
+    // Nur für lokale Entwicklung an echtem Root-Server — nicht auf Kasserver:
+    // 'force_enable_eric' => true,
+
+    // Pfad zur entpackten ERiC-Linux-Bibliothek auf dem Server:
+    'eric_path' => '/opt/eric',
+
+    // ELSTER-Hersteller-ID (nach Registrierung als Softwarehersteller):
+    'manufacturer_id' => '',
+
+    // Interner ERiC-Worker (localhost, nicht öffentlich ohne Auth):
+    'worker_url' => 'http://127.0.0.1:9109',
+    'worker_health_path' => '/health',
+
+    // Testmerker UStVA (nur mit Test-Zertifikat):
+    'test_merker_ustva' => '700000004',
+
+    // Zertifikat-Pfade (Dateien nie ins Git):
+    'certificate_path' => '/etc/dg/elster/certificate.pfx',
+    // PIN separat in SettingsStore (verschlüsselt) — folgt in Phase 3
+];

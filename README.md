@@ -94,6 +94,15 @@ Optionaler Schritt im Installationsassistenten (Schritt 5 von 6):
 
 Details: `docs/IMPORT-FORMATE.md` · PC-Handoff: `docs/PC-HANDOFF.md`
 
+### Server-Umzug & ELSTER (ERiC)
+
+- **Derzeit:** Kasserver Shared Hosting — CSV-UStVA, kein Docker, kein ERiC
+- **Ziel-Server (Favorit):** Hetzner **SX65-2** (Dedicated Storage)
+- **Plan:** `docs/SERVER-MIGRATION.md`
+- **Todo nach Umzug:** `docs/ELSTER-ERIC-TODO.md`
+- **Readiness:** `php bin/elster-readiness.php`
+- **Einstellungen:** Buchhaltung → ELSTER / ERiC (Vorbereitung)
+
 
 ### Demo-Accounts (Passwort: `demo`)
 
