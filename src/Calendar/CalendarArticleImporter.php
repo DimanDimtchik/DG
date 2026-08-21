@@ -84,11 +84,42 @@ final class CalendarArticleImporter
             );
         }
 
-        $rows = CalendarArticleImportReader::readFile($tmpName, $ext);
+        return self::importFromPath($tmpName, $defaultAreaId, $ext);
+    }
+
+    /**
+     * Importiert Artikel/Leistungen aus einer lokalen Datei (z. B. Installationsimport).
+     *
+     * @return array{imported: int, updated: int, errors: list<string>, message: string}
+     */
+    public static function importFromPath(string $path, int $defaultAreaId = 0, ?string $extension = null): array
+    {
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht konfiguriert.');
+        }
+
+        $ext = $extension ?? strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if (!CalendarArticleImportReader::isSupportedExtension($ext)) {
+            throw new InvalidArgumentException(
+                'Nicht unterstütztes Format. Erlaubt: '
+                . implode(', ', CalendarArticleImportReader::supportedExtensions()) . '.'
+            );
+        }
+
+        $rows = CalendarArticleImportReader::readFile($path, $ext);
         if (count($rows) < 2) {
             throw new InvalidArgumentException('Die Datei enthält keine Datenzeilen.');
         }
 
+        return self::importRows($rows, $defaultAreaId);
+    }
+
+    /**
+     * @param list<list<string>> $rows
+     * @return array{imported: int, updated: int, errors: list<string>, message: string}
+     */
+    private static function importRows(array $rows, int $defaultAreaId): array
+    {
         $header = array_map(self::normalizeHeader(...), $rows[0]);
         $map = self::mapImportColumns($header);
 

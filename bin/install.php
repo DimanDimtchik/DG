@@ -9,6 +9,62 @@ declare(strict_types=1);
 
 define('DG_ROOT', dirname(__DIR__));
 
+session_start();
+require_once DG_ROOT . '/src/autoload.php';
+
+// ── API (Import-Fortschritt, Vorlagen) ──────────────────────────
+
+$apiAction = (string) ($_GET['action'] ?? '');
+if ($apiAction !== '') {
+    if ($apiAction === 'import-template') {
+        $type = (string) ($_GET['type'] ?? '');
+        $csv = InstallImportQueue::templateDownload($type);
+        if ($csv === null) {
+            http_response_code(404);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => false, 'error' => 'Vorlage nicht verfügbar.']);
+            exit;
+        }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="import-vorlage-' . $type . '.csv"');
+        echo $csv;
+        exit;
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    $wizardSession = $_SESSION['install_wizard'] ?? [];
+    if (empty($wizardSession['install_ready'])) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Installation nicht bereit.']);
+        exit;
+    }
+
+    if ($apiAction === 'import-run') {
+        $result = InstallImportRunner::processNext();
+        $state = $result['state'] ?? [];
+        echo json_encode([
+            'ok' => (bool) ($result['ok'] ?? false),
+            'done' => (bool) ($result['done'] ?? false),
+            'progress' => InstallImportQueue::overallProgress($state),
+            'state' => $state,
+            'message' => $result['message'] ?? '',
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($apiAction === 'import-finish') {
+        InstallImportRunner::finalizeInstallation($wizardSession);
+        $_SESSION['install_wizard']['done'] = true;
+        $_SESSION['install_wizard']['import_running'] = false;
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    http_response_code(404);
+    echo json_encode(['ok' => false, 'error' => 'Unbekannte Aktion.']);
+    exit;
+}
+
 $lockFile = DG_ROOT . '/storage/.installed';
 if (is_file($lockFile)) {
     http_response_code(403);
@@ -18,8 +74,6 @@ if (is_file($lockFile)) {
     echo '<p>Diese Seite ist gesperrt. <a href="/login">Zum Login</a></p></body></html>';
     exit;
 }
-
-session_start();
 
 // Vorausfüllung aus Shop/KDV (storage/install-prefill.json)
 $installPrefillFile = DG_ROOT . '/storage/install-prefill.json';
@@ -55,7 +109,7 @@ if (is_readable($installPrefillFile)) {
 // ── Wizard state ────────────────────────────────────────────────
 
 $wizard = $_SESSION['install_wizard'] ?? [];
-$step = max(1, min(5, (int) ($_POST['step'] ?? $_GET['step'] ?? $wizard['current_step'] ?? 1)));
+$step = max(1, min(6, (int) ($_POST['step'] ?? $_GET['step'] ?? $wizard['current_step'] ?? 1)));
 $errors = [];
 $hints = [];
 
@@ -238,6 +292,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($postedStep === 5) {
+        $wizard['import'] = ['enabled' => []];
+        foreach (array_keys(InstallImportQueue::TYPES) as $importType) {
+            if (($_POST['import_' . $importType] ?? '') === '1') {
+                $wizard['import']['enabled'][$importType] = true;
+            }
+        }
+
+        if (!empty($wizard['import']['enabled'])) {
+            try {
+                $jobs = InstallImportQueue::buildJobsFromUploads($wizard['import']['enabled'], $_FILES);
+                InstallImportQueue::saveManifest($jobs);
+                InstallImportQueue::saveState([
+                    'jobs' => $jobs,
+                    'current_index' => 0,
+                    'phase' => 'pending',
+                ]);
+                $wizard['import']['job_count'] = count($jobs);
+            } catch (Throwable $e) {
+                $errors[] = $e->getMessage();
+            }
+        } else {
+            $wizard['import']['skipped'] = true;
+        }
+
+        $step = empty($errors) ? 6 : 5;
+    }
+
+    if ($postedStep === 6) {
         $wizard['users'] = [];
         $userEmails = $_POST['user_email'] ?? [];
         $userNames  = $_POST['user_display_name'] ?? [];
@@ -265,9 +347,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($errors)) {
-            $result = performInstallation($wizard);
+            $hasImport = !empty($wizard['import']['job_count']);
+            $result = performInstallation($wizard, deferLock: $hasImport);
             if ($result['success']) {
-                $wizard['done'] = true;
+                $wizard['install_ready'] = true;
+                if ($hasImport) {
+                    $wizard['import_running'] = true;
+                } else {
+                    $wizard['done'] = true;
+                }
                 $wizard['invited'] = $result['invited'];
             } else {
                 $errors[] = $result['error'];
@@ -275,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!empty($errors)) {
-            $step = 5;
+            $step = 6;
         }
     }
 
@@ -285,7 +373,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ── Installation logic ──────────────────────────────────────────
 
-function performInstallation(array $wizard): array
+function performInstallation(array $wizard, bool $deferLock = false): array
 {
     try {
         $db = $wizard['db'];
@@ -322,7 +410,7 @@ function performInstallation(array $wizard): array
 
         // Storage dirs
         $storageDirs = ['storage/logs', 'storage/media', 'storage/contacts', 'storage/vouchers',
-                        'storage/mail/sent', 'storage/mail/inbox', 'tmp-upload'];
+                        'storage/mail/sent', 'storage/mail/inbox', 'storage/install-import', 'tmp-upload'];
         foreach ($storageDirs as $d) {
             $path = DG_ROOT . '/' . $d;
             if (!is_dir($path)) {
@@ -493,12 +581,10 @@ function performInstallation(array $wizard): array
             SettingsStore::set('install_hints', $wizard['hints']);
         }
 
-        // Lock installer
-        file_put_contents(DG_ROOT . '/storage/.installed', json_encode([
-            'installed_at' => date('Y-m-d H:i:s'),
-            'version'      => is_readable(DG_ROOT . '/config/version.php') ? (string) require DG_ROOT . '/config/version.php' : '?',
-            'company'      => $company['name'],
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        // Lock installer (nach Datenimport, falls vorhanden)
+        if (!$deferLock) {
+            InstallImportRunner::finalizeInstallation($wizard);
+        }
 
         return ['success' => true, 'invited' => $invited];
 
@@ -627,14 +713,16 @@ $userRoles = [
 // ── Render ───────────────────────────────────────────────────────
 
 $done = !empty($wizard['done']);
+$importRunning = !empty($wizard['import_running']);
 $version = is_readable(DG_ROOT . '/config/version.php') ? (string) require DG_ROOT . '/config/version.php' : '?';
+$importJobs = InstallImportQueue::loadState()['jobs'] ?? [];
 
 ?><!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CRM Installation – Schritt <?= $step ?> von 5</title>
+<title>CRM Installation<?= $done ? '' : (' – Schritt ' . $step . ' von 6') ?></title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f4f5f7;color:#1e293b;line-height:1.6}
@@ -644,13 +732,14 @@ h1{font-size:1.5rem;margin-bottom:.25rem}
 h2{font-size:1.1rem;margin:1.5rem 0 .75rem;color:#475569;border-bottom:1px solid #e2e8f0;padding-bottom:.4rem}
 h2:first-child{margin-top:0}
 label{display:block;font-size:.875rem;font-weight:600;margin-bottom:.25rem;color:#334155}
-input[type=text],input[type=email],input[type=password],input[type=tel],select{
+input[type=text],input[type=email],input[type=password],input[type=tel],input[type=file],select{
   width:100%;padding:.5rem .75rem;border:1px solid #cbd5e1;border-radius:6px;font-size:.9rem;margin-bottom:.75rem}
 input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
 .hint{font-size:.8rem;color:#64748b;margin-top:-.5rem;margin-bottom:.75rem}
-.btn{display:inline-block;padding:.6rem 1.5rem;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:600}
+.btn{display:inline-block;padding:.6rem 1.5rem;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:600;text-decoration:none}
 .btn:hover{background:#1d4ed8}
 .btn-secondary{background:#64748b}.btn-secondary:hover{background:#475569}
+.btn-link{background:none;color:#2563eb;padding:0;font-size:.85rem;font-weight:600}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .check{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;font-size:.9rem}
 .check .ok{color:#16a34a}
@@ -663,18 +752,37 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
 .hint-box h3{font-size:.9rem;color:#92400e;margin-bottom:.5rem}
 .hint-box p{font-size:.85rem;color:#78350f;margin-bottom:.5rem}
 .hint-box a{color:#2563eb}
-.steps{display:flex;gap:0;margin-bottom:1.5rem}
-.step-indicator{flex:1;text-align:center;padding:.5rem;font-size:.8rem;font-weight:600;color:#94a3b8;border-bottom:3px solid #e2e8f0}
+.steps{display:flex;gap:0;margin-bottom:1.5rem;overflow-x:auto}
+.step-indicator{flex:1;text-align:center;padding:.5rem .25rem;font-size:.72rem;font-weight:600;color:#94a3b8;border-bottom:3px solid #e2e8f0;white-space:nowrap}
 .step-indicator.active{color:#2563eb;border-bottom-color:#2563eb}
 .step-indicator.done{color:#16a34a;border-bottom-color:#16a34a}
-.checkbox-group{display:grid;grid-template-columns:1fr 1fr;gap:.25rem .75rem;margin-bottom:.75rem}
-.checkbox-group label{display:flex;align-items:center;gap:.4rem;font-weight:400;font-size:.875rem;cursor:pointer}
+.checkbox-group{display:grid;grid-template-columns:1fr;gap:.25rem .75rem;margin-bottom:.75rem}
+.checkbox-group label{display:flex;align-items:flex-start;gap:.4rem;font-weight:400;font-size:.875rem;cursor:pointer}
+.import-block{border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin-bottom:1rem;background:#f8fafc}
+.import-block.is-disabled{opacity:.55}
+.import-block__head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}
+.import-block__file{margin-top:.75rem}
 .owner-row,.user-row{display:grid;grid-template-columns:1fr 1fr auto;gap:.5rem;align-items:start;margin-bottom:.5rem}
 .user-row{grid-template-columns:1fr 1fr 1fr auto}
 .remove-btn{background:none;border:none;color:#dc2626;cursor:pointer;font-size:1.2rem;padding:.5rem;line-height:1}
 .add-btn{background:none;border:none;color:#2563eb;cursor:pointer;font-size:.9rem;font-weight:600;padding:.25rem 0}
 .add-btn:hover{text-decoration:underline}
 .nav-buttons{display:flex;gap:1rem;margin-top:1.5rem}
+.dg-install-sync{margin:1rem 0;padding:1rem 1.1rem;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+.dg-install-sync__bar{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-bottom:1rem}
+.dg-install-sync__bar-fill{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:999px;transition:width .35s ease}
+.dg-install-sync.is-error .dg-install-sync__bar-fill{background:#dc2626}
+.dg-install-sync__steps{list-style:none;display:grid;gap:.45rem;margin:0 0 .75rem;padding:0}
+.dg-install-sync__step{font-size:.85rem;color:#64748b;display:flex;align-items:center;gap:.5rem}
+.dg-install-sync__step::before{content:'';width:.55rem;height:.55rem;border-radius:50%;background:#cbd5e1;flex-shrink:0}
+.dg-install-sync__step.is-active{color:#1e40af;font-weight:600}
+.dg-install-sync__step.is-active::before{background:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.2)}
+.dg-install-sync__step.is-done{color:#166534}
+.dg-install-sync__step.is-done::before{background:#16a34a}
+.dg-install-sync__step.is-error{color:#b91c1c}
+.dg-install-sync__step.is-error::before{background:#dc2626}
+.dg-install-sync__status{font-size:.9rem;color:#334155;margin:0}
+.dg-install-sync__error{font-size:.85rem;color:#b91c1c;margin:.5rem 0 0}
 </style>
 </head>
 <body>
@@ -685,12 +793,14 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
 <p style="color:#64748b;font-size:.85rem">Version <?= htmlspecialchars($version) ?></p>
 </div>
 
-<?php if (!$done): ?>
+<?php if (!$done && !$importRunning): ?>
 <div class="steps">
-    <div class="step-indicator <?= $step === 1 ? 'active' : ($step > 1 ? 'done' : '') ?>">1. Datenbank</div>
-    <div class="step-indicator <?= $step === 2 ? 'active' : ($step > 2 ? 'done' : '') ?>">2. Firma</div>
-    <div class="step-indicator <?= $step === 3 ? 'active' : ($step > 3 ? 'done' : '') ?>">3. Rechtliches</div>
-    <div class="step-indicator <?= $step === 4 ? 'active' : '' ?>">4. Benutzer</div>
+    <div class="step-indicator <?= $step === 1 ? 'active' : ($step > 1 ? 'done' : '') ?>">1. DB</div>
+    <div class="step-indicator <?= $step === 2 ? 'active' : ($step > 2 ? 'done' : '') ?>">2. Domain</div>
+    <div class="step-indicator <?= $step === 3 ? 'active' : ($step > 3 ? 'done' : '') ?>">3. Firma</div>
+    <div class="step-indicator <?= $step === 4 ? 'active' : ($step > 4 ? 'done' : '') ?>">4. Recht</div>
+    <div class="step-indicator <?= $step === 5 ? 'active' : ($step > 5 ? 'done' : '') ?>">5. Import</div>
+    <div class="step-indicator <?= $step === 6 ? 'active' : '' ?>">6. Benutzer</div>
 </div>
 <?php endif; ?>
 
@@ -700,7 +810,41 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
 </ul></div>
 <?php endif; ?>
 
-<?php if ($done): ?>
+<?php if ($importRunning): ?>
+<div class="card" data-install-import-root data-install-import="1">
+    <h2>Daten werden importiert …</h2>
+    <p class="hint">Die Installation ist abgeschlossen. Ihre Daten werden jetzt importiert — bitte dieses Fenster geöffnet lassen.</p>
+
+    <div class="dg-install-sync" data-install-sync-panel aria-live="polite">
+        <div class="dg-install-sync__bar" aria-hidden="true">
+            <span class="dg-install-sync__bar-fill" data-install-sync-bar style="width:8%"></span>
+        </div>
+        <ol class="dg-install-sync__steps" data-install-sync-steps>
+            <?php foreach ($importJobs as $job): ?>
+            <li class="dg-install-sync__step" data-job="<?= htmlspecialchars((string) ($job['type'] ?? '')) ?>">
+                <?= htmlspecialchars((string) ($job['label'] ?? 'Import')) ?>
+            </li>
+            <?php endforeach; ?>
+            <li class="dg-install-sync__step" data-job="done">Abschluss</li>
+        </ol>
+        <p class="dg-install-sync__status" data-install-sync-status>Import wird vorbereitet …</p>
+        <p class="dg-install-sync__error" data-install-sync-error hidden></p>
+    </div>
+</div>
+
+<div class="card" id="install-success-panel" hidden>
+    <div class="success" style="border:none;background:transparent;padding:0">
+        <h2>Installation erfolgreich!</h2>
+        <p style="margin-bottom:1rem">Einladungen wurden an folgende E-Mail-Adressen gesendet:</p>
+        <?php foreach ($wizard['invited'] ?? [] as $inv): ?>
+        <p><strong><?= htmlspecialchars($inv['name']) ?></strong> – <?= htmlspecialchars($inv['email']) ?></p>
+        <?php endforeach; ?>
+        <p style="margin-top:1rem"><a href="/login" class="btn">Zum Login</a></p>
+    </div>
+</div>
+<script src="/assets/js/install-import.js" defer></script>
+
+<?php elseif ($done): ?>
 <div class="success">
     <h2>Installation erfolgreich!</h2>
     <p style="margin-bottom:1rem">Einladungen wurden an folgende E-Mail-Adressen gesendet:</p>
@@ -1080,6 +1224,58 @@ function addOwner(){
 
 <?php elseif ($step === 5): ?>
 
+<form method="post" enctype="multipart/form-data" class="card">
+<input type="hidden" name="step" value="5">
+<h2>Bestehende Daten importieren (optional)</h2>
+<p class="hint">Wählen Sie die Datentypen, die Sie aus Ihrem bisherigen System übernehmen möchten. Der Import startet nach der Installation und kann einige Minuten dauern.</p>
+
+<?php foreach (InstallImportQueue::TYPES as $type => $meta): ?>
+<?php $checked = !empty($wizard['import']['enabled'][$type]); ?>
+<div class="import-block" data-import-block="<?= htmlspecialchars($type) ?>">
+    <div class="import-block__head">
+        <label style="margin:0">
+            <input type="checkbox" name="import_<?= htmlspecialchars($type) ?>" value="1" <?= $checked ? 'checked' : '' ?>
+                   data-import-toggle="<?= htmlspecialchars($type) ?>">
+            <strong><?= htmlspecialchars($meta['label']) ?></strong><br>
+            <span style="font-weight:400;color:#64748b;font-size:.8rem"><?= htmlspecialchars($meta['description']) ?></span>
+        </label>
+        <?php if ($type !== InstallImportQueue::TYPE_VOUCHERS && InstallImportQueue::templateDownload($type) !== null): ?>
+        <a class="btn-link" href="?action=import-template&amp;type=<?= urlencode($type) ?>">CSV-Vorlage</a>
+        <?php endif; ?>
+    </div>
+    <div class="import-block__file" data-import-file="<?= htmlspecialchars($type) ?>" <?= $checked ? '' : 'hidden' ?>>
+        <?php if ($type === InstallImportQueue::TYPE_VOUCHERS): ?>
+        <label>Belegdateien (PDF, JPG, PNG — mehrere möglich)</label>
+        <input type="file" name="file_vouchers[]" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff" multiple>
+        <p class="hint">Die Verarbeitung von Belegen/Rechnungen folgt in einer späteren Version. Dateien werden zwischengespeichert.</p>
+        <?php else: ?>
+        <label>Importdatei</label>
+        <input type="file" name="file_<?= htmlspecialchars($type) ?>" <?= $type === InstallImportQueue::TYPE_ARTICLES ? 'accept=".csv,.txt,.xlsx,.xls,.xml,.json,.pdf"' : 'accept=".csv,.txt"' ?>>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endforeach; ?>
+
+<div class="nav-buttons">
+    <a href="?step=4" class="btn btn-secondary">← Zurück</a>
+    <button type="submit" class="btn">Weiter →</button>
+</div>
+</form>
+
+<script>
+document.querySelectorAll('[data-import-toggle]').forEach(function (el) {
+    el.addEventListener('change', function () {
+        var type = el.getAttribute('data-import-toggle');
+        var block = document.querySelector('[data-import-file="' + type + '"]');
+        var wrap = document.querySelector('[data-import-block="' + type + '"]');
+        if (block) { block.hidden = !el.checked; }
+        if (wrap) { wrap.classList.toggle('is-disabled', !el.checked); }
+    });
+});
+</script>
+
+<?php elseif ($step === 6): ?>
+
 <?php if (!empty($wizard['hints'])): ?>
 <div class="hint-box">
     <h3>Hinweise zu fehlenden Angaben</h3>
@@ -1091,7 +1287,7 @@ function addOwner(){
 <?php endif; ?>
 
 <form method="post" class="card">
-<input type="hidden" name="step" value="5">
+<input type="hidden" name="step" value="6">
 
 <h2>Hauptbenutzer anlegen (Pflicht)</h2>
 <p class="hint">Dieser Benutzer erhält vollen Administratorzugang. Eine Einladungs-E-Mail mit Bestätigungslink wird gesendet.</p>
@@ -1139,7 +1335,7 @@ foreach ($extraUsers as $i => $u):
 <button type="button" class="add-btn" onclick="addUser()">+ Weiteren Benutzer hinzufügen</button>
 
 <div class="nav-buttons">
-    <a href="?step=3" class="btn btn-secondary">← Zurück</a>
+    <a href="?step=5" class="btn btn-secondary">← Zurück</a>
     <button type="submit" class="btn">Installation abschließen</button>
 </div>
 </form>
