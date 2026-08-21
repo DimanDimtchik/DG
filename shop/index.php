@@ -73,6 +73,7 @@ switch ($path) {
             'contact_name' => '',
             'contact_email' => '',
             'contact_phone' => '',
+            'business_profile' => '',
             'privacy' => '',
         ];
         $preview = null;
@@ -106,6 +107,11 @@ switch ($path) {
                         'tariff' => (string) $chosen['kdv_tariff'],
                         'billing_cycle' => $form['billing_cycle'],
                         'monthly_price' => (float) $chosen['monthly_net'],
+                        'business_profile' => $form['business_profile'],
+                        'business_kind' => $form['business_profile'] !== ''
+                            ? ShopCheckout::businessKindsForProfile($form['business_profile'])
+                            : [],
+                        'website_intent' => $form['domain'] !== '' && ShopCheckout::isWebsiteIntent($form['domain']),
                     ],
                 ];
                 $_SESSION['shop_checkout_draft'] = $preview;

@@ -117,8 +117,8 @@ final class KdvDeployService
 
         // 6. Write config files on remote
         try {
-            self::writeRemoteConfig($kasLogin, $domain, $sshHost, $dbName, $dbPass);
-            $steps[] = ['step' => 'Konfiguration schreiben', 'ok' => true, 'detail' => 'database.local.php + app.local.php'];
+            self::writeRemoteConfig($kasLogin, $domain, $sshHost, $dbName, $dbPass, $params);
+            $steps[] = ['step' => 'Konfiguration schreiben', 'ok' => true, 'detail' => 'database.local.php + app.local.php + Install-Vorausfüllung'];
         } catch (Throwable $e) {
             $steps[] = ['step' => 'Konfiguration schreiben', 'ok' => false, 'detail' => $e->getMessage()];
             return ['success' => false, 'steps' => $steps];
@@ -256,7 +256,7 @@ final class KdvDeployService
     }
 
     /** Schreibt database.local.php und app.local.php auf dem Remote-Server. */
-    private static function writeRemoteConfig(string $kasLogin, string $domain, string $sshHost, string $dbName, string $dbPass): void
+    private static function writeRemoteConfig(string $kasLogin, string $domain, string $sshHost, string $dbName, string $dbPass, array $params = []): void
     {
         $sshKey = self::resolveKeyPath();
         $remotePath = "~/www/htdocs/$kasLogin/$domain";
@@ -280,6 +280,20 @@ final class KdvDeployService
         self::execSsh($sshKey, $sshHost,
             "printf " . escapeshellarg($appConfig) . " > $remotePath/config/app.local.php"
         );
+
+        $prefill = [
+            'company_name' => trim((string) ($params['company_name'] ?? '')),
+            'contact_email' => trim((string) ($params['contact_email'] ?? '')),
+            'contact_phone' => trim((string) ($params['contact_phone'] ?? '')),
+            'business_profile' => trim((string) ($params['business_profile'] ?? '')),
+            'business_kind' => is_array($params['business_kind'] ?? null) ? $params['business_kind'] : [],
+        ];
+        if ($prefill['company_name'] !== '' || $prefill['business_profile'] !== '' || $prefill['business_kind'] !== []) {
+            $prefillJson = json_encode($prefill, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            self::execSsh($sshKey, $sshHost,
+                "mkdir -p $remotePath/storage && printf " . escapeshellarg($prefillJson) . " > $remotePath/storage/install-prefill.json"
+            );
+        }
     }
 
     // ── E-Mail ──────────────────────────────────────────────────────

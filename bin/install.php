@@ -21,6 +21,37 @@ if (is_file($lockFile)) {
 
 session_start();
 
+// Vorausfüllung aus Shop/KDV (storage/install-prefill.json)
+$installPrefillFile = DG_ROOT . '/storage/install-prefill.json';
+if (is_readable($installPrefillFile)) {
+    $prefillRaw = json_decode((string) file_get_contents($installPrefillFile), true);
+    if (is_array($prefillRaw)) {
+        $wizardPrefill = $_SESSION['install_wizard'] ?? [];
+        if (!isset($wizardPrefill['company']) || !is_array($wizardPrefill['company'])) {
+            $wizardPrefill['company'] = [];
+        }
+        if (!empty($prefillRaw['company_name']) && ($wizardPrefill['company']['name'] ?? '') === '') {
+            $wizardPrefill['company']['name'] = trim((string) $prefillRaw['company_name']);
+        }
+        if (!empty($prefillRaw['contact_email']) && ($wizardPrefill['company']['email'] ?? '') === '') {
+            $wizardPrefill['company']['email'] = trim((string) $prefillRaw['contact_email']);
+        }
+        if (!empty($prefillRaw['contact_phone']) && ($wizardPrefill['company']['phone'] ?? '') === '') {
+            $wizardPrefill['company']['phone'] = trim((string) $prefillRaw['contact_phone']);
+        }
+        $kinds = $prefillRaw['business_kind'] ?? null;
+        if (is_array($kinds) && empty($wizardPrefill['company']['business_kind'])) {
+            $wizardPrefill['company']['business_kind'] = array_values(array_filter(array_map('strval', $kinds)));
+        } elseif (!empty($prefillRaw['business_profile']) && empty($wizardPrefill['company']['business_kind'])) {
+            require_once DG_ROOT . '/src/autoload.php';
+            $wizardPrefill['company']['business_kind'] = WebsiteHomepageTemplates::businessKindsFromProfile(
+                (string) $prefillRaw['business_profile']
+            );
+        }
+        $_SESSION['install_wizard'] = $wizardPrefill;
+    }
+}
+
 // ── Wizard state ────────────────────────────────────────────────
 
 $wizard = $_SESSION['install_wizard'] ?? [];
@@ -357,6 +388,25 @@ function performInstallation(array $wizard): array
 
         // Save business kind for AGB/Impressum generator
         SettingsStore::set('install_business_kind', $company['business_kind']);
+
+        // Pflichtseiten, Startseite, Kontaktformular, Menü, Wartungsmodus
+        try {
+            WebsiteBootstrapService::bootstrap(1, [
+                'overwrite' => false,
+                'enable_maintenance' => true,
+            ]);
+        } catch (Throwable $bootstrapError) {
+            $existingHints = SettingsStore::get('install_hints', []);
+            if (!is_array($existingHints)) {
+                $existingHints = [];
+            }
+            $existingHints[] = [
+                'field' => 'Website',
+                'text' => 'Pflichtseiten konnten nicht automatisch angelegt werden: '
+                    . htmlspecialchars($bootstrapError->getMessage(), ENT_QUOTES, 'UTF-8'),
+            ];
+            SettingsStore::set('install_hints', $existingHints);
+        }
 
         // Configure SMTP from KAS-Login
         $smtp = $wizard['smtp'] ?? [];

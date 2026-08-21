@@ -171,6 +171,8 @@ spl_autoload_register(static function (string $class): void {
         'WebsiteFormSubmitHandler' => '/src/Website/WebsiteFormSubmitHandler.php',
         'WebsiteFormPublicApi' => '/src/Website/WebsiteFormPublicApi.php',
         'WebsiteFormCaptcha' => '/src/Website/WebsiteFormCaptcha.php',
+        'WebsiteHomepageTemplates' => '/src/Website/WebsiteHomepageTemplates.php',
+        'WebsiteBootstrapService' => '/src/Website/WebsiteBootstrapService.php',
         'UpdateChecker' => '/src/Update/UpdateChecker.php',
         'LegalPageGenerator' => '/src/Legal/LegalPageGenerator.php',
         'CookieConsent' => '/src/Legal/CookieConsent.php',

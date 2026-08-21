@@ -9,6 +9,10 @@ $net = $isYearly ? (float) $plan['yearly_net'] : (float) $plan['monthly_net'];
 $gross = $isYearly ? (float) $plan['yearly_gross'] : (float) $plan['monthly_gross'];
 $domainValue = (string) ($form['domain_raw'] ?? $form['domain'] ?? '');
 $domainCheck = $domainCheck ?? null;
+$showBusinessProfile = $domainValue !== '' && ShopCheckout::isWebsiteIntent(
+    ShopCheckout::normalizeDomain($domainValue) ?: $domainValue
+);
+$profileOptions = ShopCheckout::businessProfileOptions();
 ?>
 <section class="shop-section shop-section--tight">
   <h1>Bestellung</h1>
@@ -85,6 +89,17 @@ $domainCheck = $domainCheck ?? null;
       </div>
     </div>
 
+    <fieldset id="shop-business-profile" class="shop-field-block"<?= $showBusinessProfile ? '' : ' hidden' ?>>
+      <legend>Ihr Unternehmen <span class="shop-req">*</span></legend>
+      <p class="shop-help">Sie haben eine vollständige Domain angegeben – wir richten dafür auch Ihre Website ein. Damit die Startseite passt, wählen Sie bitte:</p>
+      <?php foreach ($profileOptions as $key => $label) : ?>
+        <label class="shop-radio">
+          <input type="radio" name="business_profile" value="<?= ShopView::escape($key) ?>"<?= ($form['business_profile'] ?? '') === $key ? ' checked' : '' ?>>
+          <?= ShopView::escape($label) ?>
+        </label>
+      <?php endforeach; ?>
+    </fieldset>
+
     <label>
       <span>Ansprechpartner <span class="shop-req">*</span></span>
       <input type="text" name="contact_name" required value="<?= ShopView::escape($form['contact_name']) ?>" autocomplete="name">
@@ -110,4 +125,31 @@ $domainCheck = $domainCheck ?? null;
       <a class="shop-btn shop-btn--ghost" href="/preise">Zurück zu den Preisen</a>
     </div>
   </form>
+  <script>
+  (function () {
+    var domainInput = document.querySelector('input[name="domain"]');
+    var profileBlock = document.getElementById('shop-business-profile');
+    if (!domainInput || !profileBlock) return;
+
+    function isWebsiteIntent(value) {
+      value = (value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+      if (!value || value.indexOf('/') !== -1) return false;
+      var parts = value.split('.').filter(Boolean);
+      return parts.length === 2;
+    }
+
+    function syncProfileVisibility() {
+      var show = isWebsiteIntent(domainInput.value);
+      profileBlock.hidden = !show;
+      profileBlock.querySelectorAll('input[name="business_profile"]').forEach(function (radio) {
+        radio.required = show;
+        if (!show) radio.checked = false;
+      });
+    }
+
+    domainInput.addEventListener('input', syncProfileVisibility);
+    domainInput.addEventListener('change', syncProfileVisibility);
+    syncProfileVisibility();
+  })();
+  </script>
 </section>

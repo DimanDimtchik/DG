@@ -1599,6 +1599,37 @@ switch ($path) {
             }
         }
 
+        if ($page === 'website-seiten' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_bootstrap_defaults'])) {
+            $guardWebsitePost();
+            try {
+                $overwrite = !empty($_POST['bootstrap_overwrite']);
+                $enableMaintenance = !empty($_POST['bootstrap_maintenance']);
+                $result = WebsiteBootstrapService::bootstrap($user->id, [
+                    'overwrite' => $overwrite,
+                    'enable_maintenance' => $enableMaintenance,
+                ]);
+                $summary = [];
+                foreach ($result['legal'] as $legalPage) {
+                    $summary[] = $legalPage['title'] . ': ' . $legalPage['action'];
+                }
+                if (is_array($result['homepage'])) {
+                    $summary[] = 'Startseite: ' . $result['homepage']['action'];
+                }
+                if (is_array($result['contact_page'])) {
+                    $summary[] = 'Kontakt: ' . $result['contact_page']['action'];
+                }
+                $msg = 'Pflichtseiten eingerichtet. ' . implode(' · ', $summary);
+                if (!empty($result['maintenance'])) {
+                    $msg .= ' · Wartungsmodus eingeschaltet';
+                }
+                Flash::set('success', $msg);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=website-seiten', true, 302);
+            exit;
+        }
+
         if ($page === 'website-seiten' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_maintenance_save'])) {
             $guardWebsitePost();
             try {

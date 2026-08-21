@@ -377,33 +377,30 @@ final class LegalPageGenerator
     }
 
     /**
-     * Generates all legal pages and saves them as website pages.
+     * Generates all legal pages and saves them as published website pages.
      *
-     * @return list<array{slug: string, title: string, content: string}>
+     * @return list<array{slug: string, title: string, id: int, action: string}>
      */
-    public static function generateAndSave(): array
+    public static function generateAndSave(?int $userId = null, bool $overwrite = true): array
     {
-        $pages = [];
-
-        $pages[] = [
-            'slug'    => 'impressum',
-            'title'   => 'Impressum',
-            'content' => self::impressum(),
+        $definitions = [
+            ['slug' => 'impressum', 'title' => 'Impressum', 'content' => self::impressum()],
+            ['slug' => 'datenschutz', 'title' => 'Datenschutzerklärung', 'content' => self::datenschutz()],
+            ['slug' => 'agb', 'title' => 'Allgemeine Geschäftsbedingungen', 'content' => self::agb()],
         ];
 
-        $pages[] = [
-            'slug'    => 'datenschutz',
-            'title'   => 'Datenschutzerklärung',
-            'content' => self::datenschutz(),
-        ];
+        $saved = [];
+        foreach ($definitions as $page) {
+            $saved[] = WebsitePageRepository::upsertHtmlPage(
+                $page['slug'],
+                $page['title'],
+                $page['content'],
+                $userId,
+                $overwrite
+            );
+        }
 
-        $pages[] = [
-            'slug'    => 'agb',
-            'title'   => 'Allgemeine Geschäftsbedingungen',
-            'content' => self::agb(),
-        ];
-
-        return $pages;
+        return $saved;
     }
 
     // ── Data helpers ────────────────────────────────────────────────

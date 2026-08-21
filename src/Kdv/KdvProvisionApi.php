@@ -67,11 +67,29 @@ final class KdvProvisionApi
         $tariff       = (string) ($body['tariff'] ?? 'basic');
         $billingCycle = (string) ($body['billing_cycle'] ?? 'monatlich');
         $monthlyPrice = (float) ($body['monthly_price'] ?? 0);
+        $businessProfile = trim((string) ($body['business_profile'] ?? ''));
+        $businessKind = $body['business_kind'] ?? [];
+        if (!is_array($businessKind)) {
+            $businessKind = [];
+        }
+        $businessKind = array_values(array_filter(array_map('strval', $businessKind)));
+        if ($businessProfile !== '' && $businessKind === []) {
+            $businessKind = WebsiteHomepageTemplates::businessKindsFromProfile($businessProfile);
+        }
 
         if ($companyName === '') self::error(422, 'company_name ist erforderlich.');
         if ($domain === '')     self::error(422, 'domain ist erforderlich.');
         if ($contactEmail === '' || !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
             self::error(422, 'Gültige contact_email ist erforderlich.');
+        }
+
+        $provisionNotes = null;
+        if ($businessProfile !== '' || $businessKind !== []) {
+            $provisionNotes = json_encode([
+                'business_profile' => $businessProfile,
+                'business_kind' => $businessKind,
+                'website_intent' => !empty($body['website_intent']),
+            ], JSON_UNESCAPED_UNICODE);
         }
 
         // 1. Create customer in KDV
@@ -87,6 +105,7 @@ final class KdvProvisionApi
                 'monthly_price' => $monthlyPrice,
                 'status'        => 'neu',
                 'contract_start'=> date('Y-m-d'),
+                'notes'         => $provisionNotes,
             ]);
         } catch (Throwable $e) {
             self::error(500, 'Kunde konnte nicht angelegt werden: ' . $e->getMessage());
@@ -116,6 +135,9 @@ final class KdvProvisionApi
             'company_name'  => $companyName,
             'contact_email' => $contactEmail,
             'contact_name'  => $contactName,
+            'contact_phone' => $contactPhone,
+            'business_profile' => $businessProfile,
+            'business_kind' => $businessKind,
         ]);
 
         echo json_encode([

@@ -77,6 +77,90 @@ final class WebsitePageRepository
     }
 
     /**
+     * Published pages for sitemap and SEO (slug + updated_at).
+     *
+     * @return list<array{slug: string, updated_at: string}>
+     */
+    public static function listAll(): array
+    {
+        if (!Database::isConfigured()) {
+            return [];
+        }
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->query(
+            "SELECT slug, updated_at FROM dg_website_pages WHERE status = 'published' ORDER BY title ASC, id ASC"
+        );
+        $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+
+        return is_array($rows) ? $rows : [];
+    }
+
+    /**
+     * Create or update a page whose body is a single HTML block (legal pages, generated content).
+     *
+     * @return array{slug: string, title: string, id: int, action: string}
+     */
+    public static function upsertHtmlPage(
+        string $slug,
+        string $title,
+        string $html,
+        ?int $userId = null,
+        bool $overwrite = true,
+        string $status = self::STATUS_PUBLISHED
+    ): array {
+        $slug = self::sanitizeSlug($slug);
+        if ($slug === '') {
+            throw new InvalidArgumentException('Ungültiger Seiten-Slug.');
+        }
+
+        $existing = self::findBySlugAnyStatus($slug);
+        if ($existing !== null && !$overwrite) {
+            return [
+                'slug' => $slug,
+                'title' => $title,
+                'id' => (int) $existing['id'],
+                'action' => 'skipped',
+            ];
+        }
+
+        $layout = [
+            'rows' => [
+                [
+                    'id' => self::newId('row'),
+                    'columns' => [
+                        [
+                            'id' => self::newId('col'),
+                            'width' => 12,
+                            'blocks' => [
+                                [
+                                    'id' => self::newId('blk'),
+                                    'type' => 'html',
+                                    'code' => $html,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $id = self::save([
+            'title' => $title,
+            'slug' => $slug,
+            'status' => $status,
+            'layout' => $layout,
+        ], $existing !== null ? (int) $existing['id'] : null, $userId);
+
+        return [
+            'slug' => $slug,
+            'title' => $title,
+            'id' => $id,
+            'action' => $existing !== null ? 'updated' : 'created',
+        ];
+    }
+
+    /**
      * List all pages (summary columns only).
      *
      * @return list<array<string, mixed>>

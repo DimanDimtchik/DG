@@ -36,6 +36,30 @@ if ($previewImage === '') {
     </div>
   <?php endif; ?>
 
+  <section class="dg-panel" aria-labelledby="wb-heading">
+    <h2 id="wb-heading" class="dg-website-maintenance__title">Pflichtseiten &amp; Startseite</h2>
+    <p class="dg-lead dg-website-maintenance__lead">
+      Legt Impressum, Datenschutz, AGB, eine branchenspezifische Startseite, Kontaktformular mit Datenschutz-Hinweis
+      und das Navigationsmenü an. Nutzt Ihre Firmendaten aus den Einstellungen.
+    </p>
+    <?php if ($canEdit && $dbConnected) : ?>
+      <form class="dg-form" method="post" action="/app?page=website-seiten" onsubmit="return confirm('Pflichtseiten jetzt anlegen oder aktualisieren?');">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="website_bootstrap_defaults" value="1">
+        <label class="dg-field dg-field--checkbox">
+          <span><input type="checkbox" name="bootstrap_overwrite" value="1"> Bestehende Seiten überschreiben (Startseite, Kontakt, Rechtstexte)</span>
+        </label>
+        <label class="dg-field dg-field--checkbox">
+          <span><input type="checkbox" name="bootstrap_maintenance" value="1" checked> Wartungsmodus einschalten</span>
+        </label>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">Pflichtseiten jetzt anlegen</button>
+        </div>
+        <p class="dg-muted">Alternativ per SSH: <code>php bin/seed-website-defaults.php --overwrite</code></p>
+      </form>
+    <?php endif; ?>
+  </section>
+
   <section class="dg-panel dg-website-maintenance" aria-labelledby="wm-heading">
     <div class="dg-website-maintenance__head">
       <div>

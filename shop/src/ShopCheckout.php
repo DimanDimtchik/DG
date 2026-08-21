@@ -25,6 +25,7 @@ final class ShopCheckout
             'contact_name' => trim((string) ($input['contact_name'] ?? '')),
             'contact_email' => trim((string) ($input['contact_email'] ?? '')),
             'contact_phone' => trim((string) ($input['contact_phone'] ?? '')),
+            'business_profile' => trim((string) ($input['business_profile'] ?? '')),
             'privacy' => !empty($input['privacy']) ? '1' : '',
         ];
 
@@ -49,8 +50,57 @@ final class ShopCheckout
         if ($data['privacy'] !== '1') {
             $errors[] = 'Bitte bestätigen Sie die Datenschutzerklärung.';
         }
+        if ($normalized !== '' && self::isWebsiteIntent($normalized) && $data['business_profile'] === '') {
+            $errors[] = 'Bitte wählen Sie, welche Art von Unternehmen Sie sind (für die Startseite).';
+        }
 
         return ['ok' => $errors === [], 'errors' => $errors, 'data' => $data];
+    }
+
+    /**
+     * Volle Domain (z. B. firma.de) = neue Website gewünscht; Subdomain (crm.firma.de) = nur CRM.
+     */
+    public static function isWebsiteIntent(string $domain): bool
+    {
+        $domain = strtolower(trim($domain));
+        if ($domain === '') {
+            return false;
+        }
+
+        return count(explode('.', $domain)) === 2;
+    }
+
+    /** @return list<string> */
+    public static function businessKindsForProfile(string $profile): array
+    {
+        $map = [
+            'praxis' => ['medical'],
+            'agentur' => ['it'],
+            'produktion' => ['products'],
+            'lokal' => ['gastro'],
+            'handwerk' => ['crafts'],
+            'dienstleistung' => ['services'],
+            'beratung' => ['consulting'],
+            'kanzlei' => ['law'],
+        ];
+        $profile = strtolower(trim($profile));
+
+        return $map[$profile] ?? ['services'];
+    }
+
+    /** @return array<string, string> */
+    public static function businessProfileOptions(): array
+    {
+        return [
+            'praxis' => 'Praxis / Gesundheit',
+            'agentur' => 'Agentur / IT / Kreativ',
+            'produktion' => 'Produktion / Handel',
+            'lokal' => 'Lokal vor Ort (Gastronomie, Einzelhandel)',
+            'handwerk' => 'Handwerk / Meisterbetrieb',
+            'dienstleistung' => 'Dienstleistung (allgemein)',
+            'beratung' => 'Beratung / Coaching',
+            'kanzlei' => 'Kanzlei / Steuerberatung',
+        ];
     }
 
     public static function normalizeDomain(string $input): string
