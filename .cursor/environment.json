@@ -1,0 +1,5 @@
+{
+  "name": "DG CRM",
+  "install": "bash bin/cloud-agent-ssh-setup.sh || true",
+  "terminals": []
+}

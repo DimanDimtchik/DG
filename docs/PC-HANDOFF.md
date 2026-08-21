@@ -1,6 +1,9 @@
 # PC-Handoff — Stand 2026-08-21
 
-> Alles Wichtige zum Weiterarbeiten am lokalen PC. Zwei Feature-Branches sind fertig implementiert und gepusht — noch **nicht** auf `master` gemergt.
+> **Aktuell:** Arbeit liegt auf **`master`** (Import, Deploy, Shop-Recht, Wartung).  
+> Handy/Cloud: [`docs/HANDY-HANDOFF.md`](HANDY-HANDOFF.md) · SSH/Secrets: [`docs/CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
+
+> Historisch: Zwei Feature-Branches waren unterwegs; Website-Bootstrap und Datenimport sind inzwischen auf `master`.
 
 ---
 

@@ -30,3 +30,7 @@ backup-*/
 tmp-*
 docs/Kontur-Cosmetics-Zugangsdaten.html
 docs/Kontur-Cosmetics-Zugangsdaten.pdf
+
+# Local credential paste files (never commit)
+secrets/
+
