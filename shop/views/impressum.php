@@ -9,7 +9,11 @@ $appName = (string) ShopApp::config('name');
 
   <h2>Anbieter</h2>
   <p>
-    <?= ShopView::escape((string) ($legal['company_name'] ?? '')) ?><br>
+    <?= ShopView::escape((string) ($legal['company_name'] ?? '')) ?>
+    <?php if (trim((string) ($legal['legal_form'] ?? '')) !== '') : ?>
+      (<?= ShopView::escape((string) $legal['legal_form']) ?>)
+    <?php endif; ?>
+    <br>
     <?php if (trim((string) ($legal['street'] ?? '')) !== '') : ?>
       <?= ShopView::escape((string) $legal['street']) ?><br>
       <?= ShopView::escape(trim(($legal['postal'] ?? '') . ' ' . ($legal['city'] ?? ''))) ?><br>
@@ -30,11 +34,19 @@ $appName = (string) ShopApp::config('name');
     <?php endif; ?>
   </p>
 
-  <?php if (trim((string) ($legal['vat_id'] ?? '')) !== '' || trim((string) ($legal['tax_number'] ?? '')) !== '') : ?>
+  <?php
+    $hasTax = trim((string) ($legal['vat_id'] ?? '')) !== ''
+        || trim((string) ($legal['tax_number'] ?? '')) !== ''
+        || trim((string) ($legal['w_idnr'] ?? '')) !== '';
+  ?>
+  <?php if ($hasTax) : ?>
     <h2>Steuerliche Angaben</h2>
     <p>
       <?php if (trim((string) ($legal['vat_id'] ?? '')) !== '') : ?>
         USt-IdNr.: <?= ShopView::escape((string) $legal['vat_id']) ?><br>
+      <?php endif; ?>
+      <?php if (trim((string) ($legal['w_idnr'] ?? '')) !== '') : ?>
+        W-IdNr.: <?= ShopView::escape((string) $legal['w_idnr']) ?><br>
       <?php endif; ?>
       <?php if (trim((string) ($legal['tax_number'] ?? '')) !== '') : ?>
         Steuernummer: <?= ShopView::escape((string) $legal['tax_number']) ?>
