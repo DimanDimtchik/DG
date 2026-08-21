@@ -9,7 +9,7 @@ final class DatevExtfExporter
     /**
      * @return array{filename: string, content: string, count: int}
      */
-    public static function export(int $year, ?string $fromDate = null, ?string $toDate = null): array
+    public static function export(int $year, ?string $fromDate = null, ?string $toDate = null, bool $includeManual = true): array
     {
         if (!Database::isConfigured()) {
             throw new RuntimeException('Datenbank nicht verbunden.');
@@ -24,17 +24,9 @@ final class DatevExtfExporter
         $start = $fromDate !== null && $fromDate !== '' ? $fromDate : sprintf('%04d-01-01', $year);
         $end = $toDate !== null && $toDate !== '' ? $toDate : sprintf('%04d-12-31', $year);
 
-        $stmt = Database::pdo()->prepare(
-            "SELECT p.*, v.invoice_number, v.supplier_name
-             FROM dg_ledger_postings p
-             LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
-             WHERE p.fiscal_year = :y
-               AND p.source = 'voucher'
-               AND p.posting_date BETWEEN :start AND :end
-             ORDER BY p.posting_date ASC, p.id ASC"
-        );
-        $stmt->execute(['y' => $year, 'start' => $start, 'end' => $end]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $includeManual
+            ? LedgerExportRepository::postingsForExport($year, $start, $end)
+            : self::voucherOnlyPostings($year, $start, $end);
 
         $created = date('YmdHis');
         $startDatev = self::datevDate($start);
@@ -156,5 +148,24 @@ final class DatevExtfExporter
         }
 
         return implode(';', $parts);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function voucherOnlyPostings(int $year, string $start, string $end): array
+    {
+        $stmt = Database::pdo()->prepare(
+            "SELECT p.*, v.invoice_number, v.supplier_name
+             FROM dg_ledger_postings p
+             LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
+             WHERE p.fiscal_year = :y
+               AND p.source = 'voucher'
+               AND p.posting_date BETWEEN :start AND :end
+             ORDER BY p.posting_date ASC, p.id ASC"
+        );
+        $stmt->execute(['y' => $year, 'start' => $start, 'end' => $end]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 }

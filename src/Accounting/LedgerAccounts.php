@@ -110,6 +110,12 @@ final class LedgerAccounts
         return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '9000' : '9000';
     }
 
+    /** Ergebniskonto für Jahresabschluss (GuV → Eigenkapital). */
+    public static function equityResultAccount(string $skrType): string
+    {
+        return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '9008' : '9008';
+    }
+
         /**
      * Buchungsseite der Primärzeile (Aufwand/Ertrag) je Belegart.
      * @param string $voucherType Belegtyp

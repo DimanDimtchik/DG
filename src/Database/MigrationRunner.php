@@ -176,6 +176,8 @@ final class MigrationRunner
             '051_ledger_datev.sql' => self::columnExists($pdo, 'dg_ledger_postings', 'tax_key')
                 && self::columnExists($pdo, 'dg_contacts', 'debtor_account')
                 && self::tableExists($pdo, 'dg_cash_journal'),
+            '052_banking_manual.sql' => self::tableExists($pdo, 'dg_bank_transactions')
+                && self::tableExists($pdo, 'dg_manual_journal_batches'),
             default => false,
         };
     }
@@ -258,6 +260,7 @@ final class MigrationRunner
             '049_kdv_mailbox_credentials.sql' => true,
             '050_support_access.sql' => true,
             '051_ledger_datev.sql' => true,
+            '052_banking_manual.sql' => true,
         ];
     }
 

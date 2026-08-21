@@ -80,6 +80,8 @@ final class FiscalYearService
             throw new RuntimeException('Geschäftsjahr ' . $year . ' ist bereits abgeschlossen.');
         }
 
+        self::bookClosingEntries($year);
+
         $nextYear = $year + 1;
         $openingDate = sprintf('%04d-01-01', $nextYear);
         $carryAccount = LedgerAccounts::carryForwardAccount(ChartOfAccountsSettings::activeSkrType());
@@ -205,6 +207,67 @@ final class FiscalYearService
         }
 
         return ['income' => $income, 'expense' => $expense, 'result' => round($income - $expense, 2)];
+    }
+
+    /**
+     * GuV-Abschluss: Erfolgskonten auf Ergebniskonto umbuchen (source=closing).
+     */
+    public static function bookClosingEntries(int $year): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+        MigrationRunner::runPending();
+        $pdo = Database::pdo();
+
+        $pdo->prepare("DELETE FROM dg_ledger_postings WHERE fiscal_year = :y AND source = 'closing'")
+            ->execute(['y' => $year]);
+
+        $movement = self::movementSigned($year);
+        $meta = LedgerRepository::accountMeta();
+        $skr = ChartOfAccountsSettings::activeSkrType();
+        $equity = LedgerAccounts::equityResultAccount($skr);
+        $closingDate = sprintf('%04d-12-31', $year);
+
+        $insert = $pdo->prepare(
+            'INSERT INTO dg_ledger_postings
+                (fiscal_year, posting_date, voucher_id, account_number, contra_account, side, amount, tax_rate, description, source)
+             VALUES
+                (:fiscal_year, :posting_date, NULL, :account_number, :contra_account, :side, :amount, 0, :description, :source)'
+        );
+
+        foreach ($movement as $acc => $signed) {
+            $section = (string) ($meta[$acc]['section'] ?? '');
+            if (!LedgerAccounts::isProfitLossSection($section)) {
+                continue;
+            }
+            $signed = round((float) $signed, 2);
+            if ($signed == 0.0) {
+                continue;
+            }
+            $side = $signed > 0 ? 'credit' : 'debit';
+            $amount = round(abs($signed), 2);
+            $insert->execute([
+                'fiscal_year' => $year,
+                'posting_date' => $closingDate,
+                'account_number' => $acc,
+                'contra_account' => $equity,
+                'side' => $side,
+                'amount' => $amount,
+                'description' => 'GuV-Abschluss ' . $year,
+                'source' => 'closing',
+            ]);
+            $insert->execute([
+                'fiscal_year' => $year,
+                'posting_date' => $closingDate,
+                'account_number' => $equity,
+                'contra_account' => $acc,
+                'side' => $side === 'debit' ? 'credit' : 'debit',
+                'amount' => $amount,
+                'description' => 'GuV-Abschluss ' . $year . ' · ' . $acc,
+                'source' => 'closing',
+            ]);
+        }
     }
 
         /**

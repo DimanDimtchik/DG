@@ -1806,6 +1806,84 @@ switch ($path) {
             exit;
         }
 
+        // POST: Manuelle Buchung
+        if (
+            $page === 'buchhaltung-manuelle-buchung'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'buchhaltung-manuelle-buchung')
+        ) {
+            $manualYear = max(2000, (int) ($_GET['year'] ?? $_POST['year'] ?? (int) date('Y')));
+            $redirect = '/app?page=buchhaltung-manuelle-buchung&year=' . $manualYear;
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } elseif (isset($_POST['manual_journal_delete'])) {
+                try {
+                    ManualLedgerService::deleteBatch((int) ($_POST['manual_batch_id'] ?? 0));
+                    Flash::set('success', 'Manuelle Buchung gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            } elseif (isset($_POST['manual_journal_save'])) {
+                try {
+                    $lines = is_array($_POST['lines'] ?? null) ? $_POST['lines'] : [];
+                    ManualLedgerService::createBatch(
+                        (string) ($_POST['batch_date'] ?? date('Y-m-d')),
+                        (string) ($_POST['batch_description'] ?? ''),
+                        $lines,
+                        (int) $user->id
+                    );
+                    Flash::set('success', 'Manuelle Buchung gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Bankabgleich (CAMT / manuelle Zuordnung)
+        if (
+            $page === 'buchhaltung-bankabgleich'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'buchhaltung-bankabgleich')
+        ) {
+            $redirect = '/app?page=buchhaltung-bankabgleich';
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } elseif (isset($_POST['camt_import'])) {
+                try {
+                    $file = $_FILES['camt_file'] ?? null;
+                    if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                        throw new InvalidArgumentException('Bitte eine gültige CAMT.053 XML-Datei wählen.');
+                    }
+                    $xml = (string) file_get_contents((string) ($file['tmp_name'] ?? ''));
+                    $res = Camt053Importer::import($xml);
+                    Flash::set('success', sprintf(
+                        'CAMT importiert: %d Umsätze (%d übersprungen). Automatischer Abgleich durchgeführt.',
+                        $res['imported'],
+                        $res['skipped']
+                    ));
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            } elseif (isset($_POST['bank_match_manual'])) {
+                try {
+                    BankReconciliationService::matchManually(
+                        (int) ($_POST['bank_tx_id'] ?? 0),
+                        (int) ($_POST['bank_match_voucher_id'] ?? 0)
+                    );
+                    Flash::set('success', 'Bankumsatz zugeordnet — Beleg als bezahlt verbucht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            } elseif (isset($_POST['bank_tx_ignore'])) {
+                BankTransactionRepository::markIgnored((int) ($_POST['bank_tx_id'] ?? 0));
+                Flash::set('success', 'Umsatz ignoriert.');
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Jahresabschluss (Jahr abschließen / Abschluss zurücknehmen)
         if (
             $page === 'buchhaltung-jahresabschluss'
@@ -2180,28 +2258,85 @@ switch ($path) {
         } elseif ($page === 'buchhaltung-opos') {
             header('Location: /app', true, 302);
             exit;
-        } elseif ($page === 'buchhaltung-datev-export' && MenuRegistry::canAccess($user, 'buchhaltung-datev-export')) {
-            if (isset($_GET['download']) && Database::isConfigured()) {
-                $exportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+        } elseif ($page === 'buchhaltung-datev-export') {
+            header('Location: /app?page=buchhaltung-steuerberater-export' . (isset($_GET['year']) ? '&year=' . (int) $_GET['year'] : ''), true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-steuerberater-export' && MenuRegistry::canAccess($user, 'buchhaltung-steuerberater-export')) {
+            $exportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download !== '' && Database::isConfigured()) {
                 try {
-                    $export = DatevExtfExporter::export($exportYear);
+                    if ($download === 'belege') {
+                        $zip = DatevBelegExportService::buildZip($exportYear);
+                        header('Content-Type: application/zip');
+                        header('Content-Disposition: attachment; filename="' . $zip['filename'] . '"');
+                        readfile($zip['path']);
+                        @unlink($zip['path']);
+                        exit;
+                    }
+                    $export = match ($download) {
+                        'datev' => DatevExtfExporter::export($exportYear, includeManual: true),
+                        'agenda' => AgendaExporter::export($exportYear),
+                        'addison' => AddisonExporter::export($exportYear),
+                        'stammdaten' => DatevStammdatenExporter::exportAccounts($exportYear),
+                        'personen' => DatevStammdatenExporter::exportPersonAccounts(),
+                        default => throw new InvalidArgumentException('Unbekannter Export-Typ.'),
+                    };
                     header('Content-Type: text/csv; charset=utf-8');
                     header('Content-Disposition: attachment; filename="' . $export['filename'] . '"');
                     echo $export['content'];
                     exit;
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
-                    header('Location: /app?page=buchhaltung-datev-export&year=' . $exportYear, true, 302);
+                    header('Location: /app?page=buchhaltung-steuerberater-export&year=' . $exportYear, true, 302);
                     exit;
                 }
             }
-            $datevExportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $datevExportYear = $exportYear;
             $datevExportSettings = DatevExportSettings::forForm();
             $datevExportYears = LedgerRepository::availableYears();
-            $contentTemplate = 'modules/buchhaltung-datev-export';
-            $title = 'DATEV-Export';
-            $currentPage = 'buchhaltung-datev-export';
-        } elseif ($page === 'buchhaltung-datev-export') {
+            $contentTemplate = 'modules/buchhaltung-steuerberater-export';
+            $title = 'Steuerberater-Export';
+            $currentPage = 'buchhaltung-steuerberater-export';
+        } elseif ($page === 'buchhaltung-steuerberater-export') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-manuelle-buchung' && MenuRegistry::canAccess($user, 'buchhaltung-manuelle-buchung')) {
+            $manualYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $manualYears = LedgerRepository::availableYears();
+            $manualBatches = ManualLedgerService::listBatches($manualYear);
+            $contentTemplate = 'modules/buchhaltung-manuelle-buchung';
+            $title = 'Manuelle Buchungen';
+            $currentPage = 'buchhaltung-manuelle-buchung';
+        } elseif ($page === 'buchhaltung-manuelle-buchung') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-auswertungen' && MenuRegistry::canAccess($user, 'buchhaltung-auswertungen')) {
+            $reportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $reportYears = LedgerRepository::availableYears();
+            $reportType = in_array($_GET['type'] ?? '', ['bilanz', 'guv'], true) ? (string) $_GET['type'] : 'guv';
+            $balanceSheet = FinancialReportsService::balanceSheet($reportYear);
+            $profitLoss = FinancialReportsService::profitLoss($reportYear);
+            $contentTemplate = 'modules/buchhaltung-auswertungen';
+            $title = 'Bilanz & GuV';
+            $currentPage = 'buchhaltung-auswertungen';
+        } elseif ($page === 'buchhaltung-auswertungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-bankabgleich' && MenuRegistry::canAccess($user, 'buchhaltung-bankabgleich')) {
+            $bankTransactionsOpen = BankTransactionRepository::list('open');
+            $bankTransactionsMatched = BankTransactionRepository::list('matched');
+            $bankMatchVouchers = Database::isConfigured()
+                ? (Database::pdo()->query(
+                    "SELECT id, invoice_number, gross_amount FROM dg_vouchers
+                     WHERE is_draft = 0 AND payment_status IN ('open', 'direct_debit')
+                     ORDER BY voucher_date DESC LIMIT 200"
+                )->fetchAll(PDO::FETCH_ASSOC) ?: [])
+                : [];
+            $contentTemplate = 'modules/buchhaltung-bankabgleich';
+            $title = 'Bankabgleich';
+            $currentPage = 'buchhaltung-bankabgleich';
+        } elseif ($page === 'buchhaltung-bankabgleich') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-kassenbuch' && MenuRegistry::canAccess($user, 'buchhaltung-kassenbuch')) {
@@ -3085,6 +3220,17 @@ switch ($path) {
         $cashYears = $cashYears ?? [(int) date('Y')];
         $cashEntries = $cashEntries ?? [];
         $cashTotals = $cashTotals ?? ['in' => 0.0, 'out' => 0.0, 'balance' => 0.0];
+        $manualYear = $manualYear ?? (int) date('Y');
+        $manualYears = $manualYears ?? [(int) date('Y')];
+        $manualBatches = $manualBatches ?? [];
+        $reportYear = $reportYear ?? (int) date('Y');
+        $reportYears = $reportYears ?? [(int) date('Y')];
+        $reportType = $reportType ?? 'guv';
+        $balanceSheet = $balanceSheet ?? ['aktiva' => [], 'passiva' => [], 'totals' => ['aktiva' => 0.0, 'passiva' => 0.0], 'result' => 0.0];
+        $profitLoss = $profitLoss ?? ['income' => [], 'expense' => [], 'totals' => ['income' => 0.0, 'expense' => 0.0, 'result' => 0.0]];
+        $bankTransactionsOpen = $bankTransactionsOpen ?? [];
+        $bankTransactionsMatched = $bankTransactionsMatched ?? [];
+        $bankMatchVouchers = $bankMatchVouchers ?? [];
         $isAdmin = $isAdmin ?? RoleResolver::isAdmin($user);
         $kontakteReturnTo = $kontakteReturnTo ?? '';
         $kontakteSupplierNumberPreview = $kontakteSupplierNumberPreview ?? '';
@@ -3190,6 +3336,17 @@ switch ($path) {
             'cashYears',
             'cashEntries',
             'cashTotals',
+            'manualYear',
+            'manualYears',
+            'manualBatches',
+            'reportYear',
+            'reportYears',
+            'reportType',
+            'balanceSheet',
+            'profitLoss',
+            'bankTransactionsOpen',
+            'bankTransactionsMatched',
+            'bankMatchVouchers',
             'jaYear',
             'jaPreview',
             'fiscalYears',

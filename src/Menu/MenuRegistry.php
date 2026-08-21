@@ -223,10 +223,28 @@ final class MenuRegistry
                     'href' => '/app?page=buchhaltung-kassenbuch',
                 ],
                 [
-                    'slug' => 'buchhaltung-datev-export',
-                    'label' => 'DATEV-Export',
+                    'slug' => 'buchhaltung-manuelle-buchung',
+                    'label' => 'Manuelle Buchungen',
+                    'icon' => 'ledger',
+                    'href' => '/app?page=buchhaltung-manuelle-buchung',
+                ],
+                [
+                    'slug' => 'buchhaltung-auswertungen',
+                    'label' => 'Bilanz & GuV',
+                    'icon' => 'ledger',
+                    'href' => '/app?page=buchhaltung-auswertungen',
+                ],
+                [
+                    'slug' => 'buchhaltung-bankabgleich',
+                    'label' => 'Bankabgleich',
+                    'icon' => 'transfer',
+                    'href' => '/app?page=buchhaltung-bankabgleich',
+                ],
+                [
+                    'slug' => 'buchhaltung-steuerberater-export',
+                    'label' => 'Steuerberater-Export',
                     'icon' => 'document',
-                    'href' => '/app?page=buchhaltung-datev-export',
+                    'href' => '/app?page=buchhaltung-steuerberater-export',
                 ],
                 [
                     'slug' => 'buchhaltung-jahresabschluss',
@@ -267,7 +285,10 @@ final class MenuRegistry
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',
             'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen.',
-            'buchhaltung-datev-export' => 'Buchungsstapel im DATEV EXTF-Format exportieren.',
+            'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg (Soll = Haben).',
+            'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr.',
+            'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Belege zuordnen.',
+            'buchhaltung-steuerberater-export' => 'DATEV, Agenda, Addison — Buchungsstapel und Belege.',
             'buchhaltung-jahresabschluss' => 'Geschäftsjahr abschließen und Salden vortragen.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
             'website-seiten' => 'Seiten der öffentlichen Website anlegen und gestalten.',
@@ -381,6 +402,10 @@ final class MenuRegistry
             || $slug === 'buchhaltung-kontenuebersicht'
             || $slug === 'buchhaltung-opos'
             || $slug === 'buchhaltung-kassenbuch'
+            || $slug === 'buchhaltung-manuelle-buchung'
+            || $slug === 'buchhaltung-auswertungen'
+            || $slug === 'buchhaltung-bankabgleich'
+            || $slug === 'buchhaltung-steuerberater-export'
             || $slug === 'buchhaltung-datev-export'
             || $slug === 'buchhaltung-jahresabschluss'
         ) {

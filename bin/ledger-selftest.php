@@ -131,6 +131,16 @@ if (!$arapVouchers) {
 }
 
 line('');
+line('== Erweiterte Buchhaltung ==');
+foreach (['dg_bank_transactions', 'dg_manual_journal_batches'] as $t) {
+    $exists = $pdo->query("SHOW TABLES LIKE " . $pdo->quote($t))->fetchColumn() !== false;
+    line("Tabelle {$t}: " . ($exists ? 'OK' : 'FEHLT'));
+}
+$manualCnt = (int) $pdo->query("SELECT COUNT(*) FROM dg_ledger_postings WHERE source='manual'")->fetchColumn();
+$closingCnt = (int) $pdo->query("SELECT COUNT(*) FROM dg_ledger_postings WHERE source='closing'")->fetchColumn();
+line('Manuelle Buchungen: ' . $manualCnt . ' · GuV-Abschluss: ' . $closingCnt);
+
+line('');
 line('== DATEV Journal-Qualität ==');
 $sammel = (int) $pdo->query("SELECT COUNT(*) FROM dg_ledger_postings WHERE source='voucher' AND contra_account='Sammel'")->fetchColumn();
 line('Zeilen mit Gegenkonto „Sammel“: ' . $sammel . ($sammel === 0 ? ' (OK)' : ' (sollte 0 sein nach Backfill)'));
