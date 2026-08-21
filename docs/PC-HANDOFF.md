@@ -127,28 +127,28 @@ bash bin/sync-crm-from-master.sh
 bash bin/run-website-bootstrap-on-instances.sh --overwrite
 ```
 
-### SSH-Problem (noch offen!)
+### SSH-Problem (gelöst am PC)
 
-Cloud-Agent konnte **nicht** per SSH auf DG/All-Inkl zugreifen (`DG_ALLINKL_SSH_*` Key abgelehnt).  
-`IQ_ALLINKL_SSH_*` funktioniert, ist aber der **falsche Server** (iq-strom).
+SSH funktioniert lokal mit Host **`allinkl-ganzom`** / Key `~/.ssh/id_ed25519_ganzom`  
+(`ssh-w0217246@w0217246.kasserver.com`). Cloud-Agent hatte den falschen Key.
 
-**Am PC prüfen:**
+```powershell
+ssh allinkl-ganzom
+.\deploy.bat
+.\deploy-shop.bat
+```
 
-- SSH-Key in KAS / `~/.ssh/` für `w01xxxx.kasserver.com`
-- `deploy.ps1` / Umgebungsvariablen `DG_ALLINKL_SSH_*`
-- Manuell: `ssh w01xxxx@w01xxxx.kasserver.com`
-
+**Wichtig:** `bin/sync-crm-from-master.sh` syncronisiert den Live-Root **ohne** `--delete` (sonst würden Geschwister-Domains gelöscht).
 ---
 
 ## 5. Offene TODOs (Priorität)
 
 | Prio | Thema | Doku |
 |------|-------|------|
-| 1 | Branch **Datenimport** mergen + auf Testinstanz prüfen | diese Datei |
-| 2 | Live-Deploy Bootstrap (ganz-soft, kontur-cosmetics) | README, Abschnitt G Testliste |
-| 3 | SSH-Key DG-Server fixen | oben |
-| 4 | Stripe Shop Phase 2 | `docs/SHOP-TODO.md` |
-| 5 | DATEV EXTF / API ShiftBase (später) | `docs/IMPORT-FORMATE.md` |
+| 1 | Stripe Keys in `shop/config/stripe.local.php` + Webhook testen | `docs/SHOP-TODO.md` Phase 2 |
+| 2 | Wartungsmodus auf Live-Instanzen abschalten (nach Check) | Website → Seiten |
+| 3 | AGB Shop / Widerruf | `docs/SHOP-TODO.md` Phase 0 |
+| 4 | DATEV EXTF / API ShiftBase (später) | `docs/IMPORT-FORMATE.md` |
 
 ---
 

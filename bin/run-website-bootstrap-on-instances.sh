@@ -1,11 +1,11 @@
 #!/bin/bash
-# Auf dem All-Inkl-Server ausführen (nach Code-Deploy):
+# Auf dem All-Inkl-Server ausfuehren (nach Code-Deploy):
 #   bash bin/run-website-bootstrap-on-instances.sh
 #
 # Legt Pflichtseiten auf allen CRM-Instanzen an bzw. aktualisiert sie mit --overwrite.
 set -euo pipefail
 
-ROOT="${CRM_ROOT:-/www/htdocs/[REDACTED]}"
+ROOT="${CRM_ROOT:-/www/htdocs/w0217246}"
 OVERWRITE=""
 if [ "${1:-}" = "--overwrite" ]; then
   OVERWRITE="--overwrite"

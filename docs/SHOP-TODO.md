@@ -66,13 +66,15 @@ Anzeige wie Marketing-Seite: **zzgl. 19 % MwSt.** Stripe später mit Brutto (`
 
 ## Phase 2: Zahlung (Stripe only)
 
-- [ ] Stripe Checkout / Subscriptions (monatlich + jährlich ×11)
-- [ ] Testmodus + Live-Keys in lokaler Config (nicht im Repo)
-- [ ] MwSt. 19 % DE korrekt in Stripe (Tax oder brutto eingepreist – einheitlich wählen)
-- [ ] Erfolgreiche Zahlung → Webhook / Success-Handler
-- [ ] Abbruch / Fehlerseite mit Retry
-- [ ] Rechnung/Beleg an Käufer (Stripe Invoice / Receipt)
+- [x] Stripe Checkout / Subscriptions (monatlich + jährlich ×11) — `ShopStripe`, `/checkout/pay`
+- [x] Testmodus + Live-Keys in lokaler Config (nicht im Repo) — `shop/config/stripe.example.php` → `stripe.local.php`
+- [x] MwSt. 19 % DE: Brutto an Stripe (`unit_amount` inkl. MwSt.)
+- [x] Erfolgreiche Zahlung → Webhook `/webhook/stripe` + Success-Handler `/checkout/success`
+- [x] Abbruch `/checkout/cancel` mit Retry
+- [ ] Rechnung/Beleg an Käufer (Stripe Invoice / Receipt) — Stripe sendet Receipts automatisch bei aktivierter Option
 - [ ] Abo-Verlängerung / Kundenportal-Kündigung (Stripe Customer Portal)
+
+**Aktivierung:** `shop/config/stripe.local.php` aus Example anlegen (Keys + `kdv_api_key`), Webhook auf `https://shop.ganz-soft.de/webhook/stripe` (Event `checkout.session.completed`), dann `deploy-shop.bat`.
 
 ---
 

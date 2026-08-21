@@ -4,11 +4,15 @@
 /** @var list<string> $errors */
 /** @var array<string, mixed>|null $preview */
 /** @var array{ok?: bool, domain?: string, status?: string, message?: string, blocks?: bool}|null $domainCheck */
+/** @var bool $stripeReady */
 $isYearly = ($form['billing_cycle'] ?? '') === 'jaehrlich';
 $net = $isYearly ? (float) $plan['yearly_net'] : (float) $plan['monthly_net'];
 $gross = $isYearly ? (float) $plan['yearly_gross'] : (float) $plan['monthly_gross'];
 $domainValue = (string) ($form['domain_raw'] ?? $form['domain'] ?? '');
 $domainCheck = $domainCheck ?? null;
+$stripeReady = !empty($stripeReady);
+$payError = $_SESSION['shop_checkout_pay_error'] ?? null;
+unset($_SESSION['shop_checkout_pay_error']);
 $showBusinessProfile = $domainValue !== '' && ShopCheckout::isWebsiteIntent(
     ShopCheckout::normalizeDomain($domainValue) ?: $domainValue
 );
@@ -34,6 +38,12 @@ $profileOptions = ShopCheckout::businessProfileOptions();
     </div>
   <?php endif; ?>
 
+  <?php if (is_string($payError) && $payError !== '') : ?>
+    <div class="shop-alert" role="alert">
+      <p><?= ShopView::escape($payError) ?></p>
+    </div>
+  <?php endif; ?>
+
   <?php if ($preview !== null) : ?>
     <div class="shop-alert shop-alert--ok">
       <p><strong>Angaben geprüft.</strong> <?= ShopView::escape((string) $preview['note']) ?></p>
@@ -41,6 +51,11 @@ $profileOptions = ShopCheckout::businessProfileOptions();
         <p>Domain / Subdomain: <strong><?= ShopView::escape((string) $preview['kdv_payload']['domain']) ?></strong></p>
       <?php else : ?>
         <p>Keine Domain angegeben – wir richten bei Bedarf eine Subdomain auf unserem Server ein.</p>
+      <?php endif; ?>
+      <?php if ($stripeReady) : ?>
+        <form method="post" action="/checkout/pay" style="margin-top:1rem">
+          <button type="submit" class="shop-btn shop-btn--primary">Zur sicheren Zahlung (Stripe)</button>
+        </form>
       <?php endif; ?>
     </div>
   <?php endif; ?>
@@ -118,7 +133,11 @@ $profileOptions = ShopCheckout::businessProfileOptions();
       <span>Ich habe die <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und bin damit einverstanden. <span class="shop-req">*</span></span>
     </label>
 
-    <p class="shop-vat"><?= ShopView::escape(ShopPlans::vatNote()) ?> Die Bezahlung mit Stripe folgt in einem nächsten Schritt.</p>
+    <p class="shop-vat"><?= ShopView::escape(ShopPlans::vatNote()) ?>
+      <?= $stripeReady
+        ? ' Nach der Prüfung zahlen Sie sicher über Stripe (Abo monatlich oder jährlich).'
+        : ' Stripe-Keys fehlen noch (config/stripe.local.php) – Zahlung folgt, sobald konfiguriert.' ?>
+    </p>
 
     <div class="shop-form__actions">
       <button type="submit" class="shop-btn shop-btn--primary">Angaben prüfen</button>

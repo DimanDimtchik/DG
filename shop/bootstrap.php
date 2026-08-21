@@ -12,5 +12,6 @@ require_once SHOP_ROOT . '/src/ShopDomainCheck.php';
 require_once SHOP_ROOT . '/src/ShopCookieConsent.php';
 require_once SHOP_ROOT . '/src/ShopAccountApi.php';
 require_once SHOP_ROOT . '/src/ShopAccountSession.php';
+require_once SHOP_ROOT . '/src/ShopStripe.php';
 
 ShopApp::boot();

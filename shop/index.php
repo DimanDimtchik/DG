@@ -121,6 +121,11 @@ switch ($path) {
             }
         }
 
+        $stripeReady = ShopStripe::isConfigured();
+        if ($preview !== null && $stripeReady) {
+            $preview['note'] = 'Angaben geprüft. Klicken Sie auf „Zur sicheren Zahlung“, um mit Stripe zu bezahlen.';
+        }
+
         ShopView::render('checkout', [
             'title' => 'Bestellen – ' . $appName,
             'plan' => $plan,
@@ -129,10 +134,71 @@ switch ($path) {
             'errors' => $errors,
             'preview' => $preview,
             'domainCheck' => $domainCheck,
+            'stripeReady' => $stripeReady,
             'marketingUrl' => $marketingUrl,
             'contactEmail' => $contactEmail,
         ]);
         break;
+
+    case '/checkout/pay':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /checkout', true, 302);
+            exit;
+        }
+        $draft = $_SESSION['shop_checkout_draft'] ?? null;
+        if (!is_array($draft)) {
+            header('Location: /preise', true, 302);
+            exit;
+        }
+        $session = ShopStripe::createCheckoutSession($draft);
+        if (!$session['ok'] || empty($session['url'])) {
+            $_SESSION['shop_checkout_pay_error'] = $session['error'] ?? 'Zahlung konnte nicht gestartet werden.';
+            header('Location: /checkout?plan=' . rawurlencode((string) ($draft['plan']['id'] ?? 'starter')), true, 302);
+            exit;
+        }
+        header('Location: ' . $session['url'], true, 303);
+        exit;
+
+    case '/checkout/success':
+        $sessionId = trim((string) ($_GET['session_id'] ?? ''));
+        $ok = false;
+        $message = 'Wir prüfen Ihre Zahlung …';
+        if ($sessionId !== '') {
+            $sess = ShopStripe::retrieveSession($sessionId);
+            if ($sess['ok'] && (($sess['data']['payment_status'] ?? '') === 'paid' || ($sess['data']['status'] ?? '') === 'complete')) {
+                $ok = true;
+                $message = 'Zahlung bestätigt. Die Einrichtung Ihres CRM startet automatisch; Sie erhalten eine E-Mail.';
+                // Best-effort provision if webhook delayed
+                $prov = ShopStripe::provisionFromSession($sess['data'] ?? []);
+                if (!$prov['ok']) {
+                    $message .= ' (Hinweis: Einrichtung folgt in Kürze – Support: ' . $contactEmail . ')';
+                }
+                unset($_SESSION['shop_checkout_draft']);
+            } else {
+                $message = $sess['error'] ?? 'Zahlung noch nicht bestätigt. Bitte Seite in einer Minute neu laden.';
+            }
+        }
+        ShopView::render('checkout-success', [
+            'title' => ($ok ? 'Erfolg' : 'Zahlung') . ' – ' . $appName,
+            'ok' => $ok,
+            'message' => $message,
+            'sessionId' => $sessionId,
+            'marketingUrl' => $marketingUrl,
+            'contactEmail' => $contactEmail,
+        ]);
+        break;
+
+    case '/checkout/cancel':
+        ShopView::render('checkout-cancel', [
+            'title' => 'Abgebrochen – ' . $appName,
+            'marketingUrl' => $marketingUrl,
+            'contactEmail' => $contactEmail,
+        ]);
+        break;
+
+    case '/webhook/stripe':
+        ShopStripe::handleWebhook();
+        exit;
 
     case '/konto':
     case '/konto/login':
