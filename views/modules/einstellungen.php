@@ -76,7 +76,7 @@
         <?php elseif ($settingsSelection['template'] === 'steuerkanzlei') : ?>
           <?php View::render('settings/tab-steuerkanzlei', compact('taxAdvisorConfig', 'taxAdvisorCompanyOptions', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'chart-of-accounts') : ?>
-          <?php View::render('settings/tab-chart-of-accounts', compact('chartOfAccountsConfig', 'dbConnected')); ?>
+          <?php View::render('settings/tab-chart-of-accounts', compact('chartOfAccountsConfig', 'dbConnected', 'datevExportSettings')); ?>
         <?php else : ?>
           <?php View::render('settings/tab-placeholder', [
               'tabLabel' => $settingsSelection['tabLabel'],

@@ -55,6 +55,28 @@ $accountDigits = (int) ($chartOfAccountsConfig['account_digits'] ?? 4);
       Kontenrahmen speichern
     </button>
   </p>
+
+  <hr class="dg-form-divider">
+
+  <h3 class="dg-subsection-title">DATEV-Export</h3>
+  <p class="dg-field-hint">Berater- und Mandantennummer für den EXTF-Buchungsstapel-Export an die Steuerkanzlei.</p>
+  <?php
+  $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
+  ?>
+  <div class="dg-form-grid">
+    <label class="dg-field">
+      <span>Beraternummer</span>
+      <input type="text" name="datev_consultant_number" maxlength="7" pattern="\d*"
+             value="<?= View::escape((string) ($datevExportSettings['consultant_number'] ?? '')) ?>"
+             placeholder="z. B. 1001"<?= !$dbConnected ? ' disabled' : '' ?>>
+    </label>
+    <label class="dg-field">
+      <span>Mandantennummer</span>
+      <input type="text" name="datev_client_number" maxlength="7" pattern="\d*"
+             value="<?= View::escape((string) ($datevExportSettings['client_number'] ?? '')) ?>"
+             placeholder="z. B. 101"<?= !$dbConnected ? ' disabled' : '' ?>>
+    </label>
+  </div>
 </form>
 
 <section class="dg-panel" style="margin-top: 20px;">

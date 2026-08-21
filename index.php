@@ -637,6 +637,7 @@ switch ($path) {
             } else {
                 try {
                     ChartOfAccountsSettings::saveFromPost($_POST);
+                    DatevExportSettings::saveFromPost($_POST);
                     Flash::set('success', 'Kontenrahmen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -1788,8 +1789,12 @@ switch ($path) {
             if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
                 Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
             } elseif (isset($_POST['transfer_mark_executed'])) {
-                BankTransferRepository::markExecuted($transferId);
-                Flash::set('success', 'Überweisung als ausgeführt markiert.');
+                try {
+                    VoucherSettlementService::settleFromTransfer($transferId);
+                    Flash::set('success', 'Überweisung ausgeführt — Beleg als bezahlt verbucht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', 'Ausführung fehlgeschlagen: ' . $e->getMessage());
+                }
             } elseif (isset($_POST['transfer_mark_prepared'])) {
                 BankTransferRepository::markPrepared($transferId);
                 Flash::set('success', 'Überweisung zurück auf „vorbereitet“ gesetzt.');
@@ -2094,6 +2099,7 @@ switch ($path) {
                 $form = VoucherRepository::emptyForm();
                 $applyBelegContactPrefill($form);
                 $formError = null;
+                $ledgerPostings = [];
             } elseif ($action === 'edit' && $voucherId > 0) {
                 $voucher = VoucherRepository::findById($voucherId);
                 if ($voucher === null) {
@@ -2107,6 +2113,7 @@ switch ($path) {
                 $currentPage = 'buchhaltung-belege';
                 $form = VoucherRepository::toForm($voucher);
                 $form['files'] = VoucherFileStorage::listForVoucher($voucherId);
+                $ledgerPostings = $isDraftVoucher ? [] : LedgerRepository::postingsForVoucher($voucherId);
                 $applyBelegContactPrefill($form);
                 $formError = null;
             } else {
@@ -2158,6 +2165,54 @@ switch ($path) {
             $title = 'Jahresabschluss';
             $currentPage = 'buchhaltung-jahresabschluss';
         } elseif ($page === 'buchhaltung-jahresabschluss') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-opos' && MenuRegistry::canAccess($user, 'buchhaltung-opos')) {
+            $oposDirection = trim((string) ($_GET['direction'] ?? ''));
+            $oposSearch = trim((string) ($_GET['s'] ?? ''));
+            $oposData = OpenItemsRepository::list([
+                'direction' => $oposDirection,
+                'search' => $oposSearch,
+            ]);
+            $contentTemplate = 'modules/buchhaltung-opos';
+            $title = 'Offene Posten';
+            $currentPage = 'buchhaltung-opos';
+        } elseif ($page === 'buchhaltung-opos') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-datev-export' && MenuRegistry::canAccess($user, 'buchhaltung-datev-export')) {
+            if (isset($_GET['download']) && Database::isConfigured()) {
+                $exportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+                try {
+                    $export = DatevExtfExporter::export($exportYear);
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $export['filename'] . '"');
+                    echo $export['content'];
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=buchhaltung-datev-export&year=' . $exportYear, true, 302);
+                    exit;
+                }
+            }
+            $datevExportYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $datevExportSettings = DatevExportSettings::forForm();
+            $datevExportYears = LedgerRepository::availableYears();
+            $contentTemplate = 'modules/buchhaltung-datev-export';
+            $title = 'DATEV-Export';
+            $currentPage = 'buchhaltung-datev-export';
+        } elseif ($page === 'buchhaltung-datev-export') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'buchhaltung-kassenbuch' && MenuRegistry::canAccess($user, 'buchhaltung-kassenbuch')) {
+            $cashYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
+            $cashYears = LedgerRepository::availableYears();
+            $cashEntries = CashJournalRepository::listForYear($cashYear);
+            $cashTotals = CashJournalRepository::totalsForYear($cashYear);
+            $contentTemplate = 'modules/buchhaltung-kassenbuch';
+            $title = 'Kassenbuch';
+            $currentPage = 'buchhaltung-kassenbuch';
+        } elseif ($page === 'buchhaltung-kassenbuch') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'einstellungen') {
@@ -3019,6 +3074,17 @@ switch ($path) {
         $jaPreview = $jaPreview ?? ['income' => 0.0, 'expense' => 0.0, 'result' => 0.0];
         $fiscalYears = $fiscalYears ?? [];
         $jaYearStatus = $jaYearStatus ?? 'open';
+        $ledgerPostings = $ledgerPostings ?? [];
+        $oposDirection = $oposDirection ?? '';
+        $oposSearch = $oposSearch ?? '';
+        $oposData = $oposData ?? ['items' => [], 'totals' => ['receivable' => 0.0, 'payable' => 0.0]];
+        $datevExportYear = $datevExportYear ?? (int) date('Y');
+        $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
+        $datevExportYears = $datevExportYears ?? [(int) date('Y')];
+        $cashYear = $cashYear ?? (int) date('Y');
+        $cashYears = $cashYears ?? [(int) date('Y')];
+        $cashEntries = $cashEntries ?? [];
+        $cashTotals = $cashTotals ?? ['in' => 0.0, 'out' => 0.0, 'balance' => 0.0];
         $isAdmin = $isAdmin ?? RoleResolver::isAdmin($user);
         $kontakteReturnTo = $kontakteReturnTo ?? '';
         $kontakteSupplierNumberPreview = $kontakteSupplierNumberPreview ?? '';
@@ -3113,6 +3179,17 @@ switch ($path) {
             'ledgerYearStatus',
             'ledgerOverview',
             'ledgerStatement',
+            'ledgerPostings',
+            'oposDirection',
+            'oposSearch',
+            'oposData',
+            'datevExportYear',
+            'datevExportSettings',
+            'datevExportYears',
+            'cashYear',
+            'cashYears',
+            'cashEntries',
+            'cashTotals',
             'jaYear',
             'jaPreview',
             'fiscalYears',

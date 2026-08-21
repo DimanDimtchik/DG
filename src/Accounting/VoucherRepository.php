@@ -599,6 +599,26 @@ final class VoucherRepository
             throw new InvalidArgumentException('Kontonummer nicht im aktiven Kontenrahmen gefunden.');
         }
 
+        $discountPercent = max(0, min(100, (int) ($data['discount_percent'] ?? 0)));
+        $discountAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['discount_amount'] ?? '0'))), 2);
+        if ($discountPercent > 0 && $discountAmount <= 0.0 && $gross > 0) {
+            $discountAmount = round($gross * $discountPercent / 100, 2);
+        }
+        $paidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+        $paidAt = trim((string) ($data['paid_at'] ?? ''));
+        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
+        if (VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK) {
+            if ($paidAmount <= 0.0) {
+                $paidAmount = round(max(0, $gross - $discountAmount), 2);
+            }
+            if ($paidAt === '') {
+                $paidAt = date('Y-m-d');
+            }
+        } else {
+            $paidAmount = 0.0;
+            $paidAt = '';
+        }
+
         foreach ($lineRows as $lineRow) {
             $lineAccount = (string) ($lineRow['account_number'] ?? '');
             if ($lineAccount === '' || ChartAccountRepository::findByNumber($lineAccount, $skrType) === null) {
@@ -618,6 +638,10 @@ final class VoucherRepository
             'invoice_number' => self::resolveInvoiceNumber($voucherType, $data, $id),
             'description' => trim((string) ($data['description'] ?? '')),
             'gross_amount' => $amounts['gross_amount'],
+            'discount_percent' => $discountPercent,
+            'discount_amount' => $discountAmount,
+            'paid_amount' => $paidAmount,
+            'paid_at' => $paidAt !== '' ? $paidAt : null,
             'net_amount' => $amounts['net_amount'],
             'tax_amount' => $amounts['tax_amount'],
             'tax_rate' => $taxRate,
@@ -625,9 +649,14 @@ final class VoucherRepository
             'reverse_charge_type' => $reverseChargeType,
             'ustva_snapshot' => $ustvaSnapshot,
             'account_number' => $accountNumber,
-            'payment_status' => self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open')),
+            'payment_status' => $paymentStatus,
             'notes' => trim((string) ($data['notes'] ?? '')),
         ];
+
+        if ($contactId !== null) {
+            PersonAccountService::ensureCreditorAccount($contactId);
+            PersonAccountService::ensureDebtorAccount($contactId);
+        }
 
         $pdo = Database::pdo();
 
@@ -646,6 +675,10 @@ final class VoucherRepository
                     invoice_number = :invoice_number,
                     description = :description,
                     gross_amount = :gross_amount,
+                    discount_percent = :discount_percent,
+                    discount_amount = :discount_amount,
+                    paid_amount = :paid_amount,
+                    paid_at = :paid_at,
                     net_amount = :net_amount,
                     tax_amount = :tax_amount,
                     tax_rate = :tax_rate,
@@ -671,12 +704,14 @@ final class VoucherRepository
             'INSERT INTO dg_vouchers (
                 voucher_type, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
                 contact_id, supplier_name, invoice_number, description,
-                gross_amount, net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
+                gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
+                net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
                 account_number, payment_status, notes, created_by
             ) VALUES (
                 :voucher_type, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
-                :gross_amount, :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
+                :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
+                :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
                 :account_number, :payment_status, :notes, :created_by
             )'
         );
@@ -879,6 +914,10 @@ final class VoucherRepository
             'invoice_number' => '',
             'description' => '',
             'gross_amount' => '',
+            'discount_percent' => '0',
+            'discount_amount' => '',
+            'paid_amount' => '',
+            'paid_at' => '',
             'net_amount' => '',
             'tax_amount' => '',
             'tax_rate' => '19',
@@ -974,6 +1013,10 @@ final class VoucherRepository
             'invoice_number' => (string) ($row['invoice_number'] ?? ''),
             'description' => (string) ($row['description'] ?? ''),
             'gross_amount' => self::formatMoney((float) ($row['gross_amount'] ?? 0)),
+            'discount_percent' => (string) ($row['discount_percent'] ?? '0'),
+            'discount_amount' => self::formatMoney((float) ($row['discount_amount'] ?? 0)),
+            'paid_amount' => self::formatMoney((float) ($row['paid_amount'] ?? 0)),
+            'paid_at' => (string) ($row['paid_at'] ?? ''),
             'net_amount' => self::formatMoney((float) ($row['net_amount'] ?? 0)),
             'tax_amount' => self::formatMoney((float) ($row['tax_amount'] ?? 0)),
             'tax_rate' => (string) ($row['tax_rate'] ?? '19'),

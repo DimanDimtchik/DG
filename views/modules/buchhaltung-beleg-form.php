@@ -97,6 +97,8 @@ $transferSupported = $isEdit
     && $paymentStatus === VoucherPaymentStatus::OPEN
     && in_array($selectedType, ['expense', 'expense_reduction'], true);
 $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferRepository::findByVoucher((int) $voucherId) : null;
+/** @var list<array<string, mixed>> $ledgerPostings */
+$ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -226,6 +228,27 @@ $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferReposito
             <?php endforeach; ?>
           </select>
           <small class="dg-field-hint" id="dg-voucher-payment-status-hint"><?= View::escape($paymentStatusHint) ?></small>
+        </label>
+      </div>
+      <div class="dg-form-grid" id="dg-voucher-settlement-fields">
+        <label class="dg-field">
+          <span>Skonto %</span>
+          <input type="number" name="discount_percent" min="0" max="100" step="1"
+                 value="<?= View::escape((string) ($form['discount_percent'] ?? '0')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+        </label>
+        <label class="dg-field">
+          <span>Skontobetrag</span>
+          <input type="text" name="discount_amount" inputmode="decimal"
+                 value="<?= View::escape((string) ($form['discount_amount'] ?? '')) ?>" placeholder="0,00"<?= $readOnly ? ' readonly' : '' ?>>
+        </label>
+        <label class="dg-field">
+          <span>Gezahlt (Brutto − Skonto)</span>
+          <input type="text" name="paid_amount" inputmode="decimal"
+                 value="<?= View::escape((string) ($form['paid_amount'] ?? '')) ?>" placeholder="0,00"<?= $readOnly ? ' readonly' : '' ?>>
+        </label>
+        <label class="dg-field">
+          <span>Zahlungsdatum</span>
+          <input type="date" name="paid_at" value="<?= View::escape((string) ($form['paid_at'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
         </label>
       </div>
     </section>
@@ -695,6 +718,57 @@ $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferReposito
         </div>
       </div>
     </section>
+
+    <?php if ($isEdit && empty($isDraftVoucher)) : ?>
+    <section class="dg-form-section dg-voucher-ledger-postings">
+      <h2 class="dg-subsection-title">Buchungssätze (Journal)</h2>
+      <p class="dg-field-hint">Automatisch erzeugt beim Speichern — Soll = Haben, mit DATEV-Steuerschlüssel und Belegfeldern.</p>
+      <?php if ($ledgerPostings === []) : ?>
+        <p class="dg-muted">Noch keine Buchungen — Beleg speichern oder Beträge prüfen.</p>
+      <?php else : ?>
+        <div class="dg-table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th>S/H</th>
+                <th>Konto</th>
+                <th>Gegenkonto</th>
+                <th>BU</th>
+                <th>Belegfeld 1</th>
+                <th>Belegfeld 2</th>
+                <th class="dg-table__num">Betrag</th>
+                <th>Text</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($ledgerPostings as $posting) : ?>
+                <tr>
+                  <td><?= View::escape((string) ($posting['side_label'] ?? '')) ?></td>
+                  <td>
+                    <?= View::escape((string) ($posting['account_number'] ?? '')) ?>
+                    <?php if (($posting['account_name'] ?? '') !== '') : ?>
+                      <span class="dg-muted"><?= View::escape((string) $posting['account_name']) ?></span>
+                    <?php endif; ?>
+                  </td>
+                  <td>
+                    <?= View::escape((string) ($posting['contra_account'] ?? '')) ?>
+                    <?php if (($posting['contra_name'] ?? '') !== '') : ?>
+                      <span class="dg-muted"><?= View::escape((string) $posting['contra_name']) ?></span>
+                    <?php endif; ?>
+                  </td>
+                  <td><?= View::escape((string) ($posting['tax_key'] ?? '')) ?></td>
+                  <td><?= View::escape((string) ($posting['document_field1'] ?? '')) ?></td>
+                  <td><?= View::escape((string) ($posting['document_field2'] ?? '')) ?></td>
+                  <td class="dg-table__num"><?= View::escape(VoucherRepository::formatMoney((float) ($posting['amount'] ?? 0))) ?> €</td>
+                  <td><?= View::escape((string) ($posting['description'] ?? '')) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </section>
+    <?php endif; ?>
 
     <section class="dg-form-section">
       <h2 class="dg-subsection-title">Notizen</h2>

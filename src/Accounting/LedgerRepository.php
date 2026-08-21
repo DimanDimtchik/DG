@@ -138,6 +138,53 @@ final class LedgerRepository
         return $result;
     }
 
+    /**
+     * Buchungssätze eines Belegs (für Anzeige im Belegformular).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function postingsForVoucher(int $voucherId): array
+    {
+        if (!Database::isConfigured() || $voucherId < 1) {
+            return [];
+        }
+        MigrationRunner::runPending();
+        $meta = self::accountMeta();
+
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM dg_ledger_postings
+             WHERE voucher_id = :id AND source = 'voucher'
+             ORDER BY fiscal_year ASC, posting_date ASC, id ASC"
+        );
+        $stmt->execute(['id' => $voucherId]);
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $acc = (string) ($row['account_number'] ?? '');
+            $contra = (string) ($row['contra_account'] ?? '');
+            $rows[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'fiscal_year' => (int) ($row['fiscal_year'] ?? 0),
+                'date' => (string) ($row['posting_date'] ?? ''),
+                'account_number' => $acc,
+                'account_name' => (string) ($meta[$acc]['name'] ?? ''),
+                'contra_account' => $contra,
+                'contra_name' => (string) ($meta[$contra]['name'] ?? ''),
+                'person_account' => (string) ($row['person_account'] ?? ''),
+                'side' => (string) ($row['side'] ?? 'debit'),
+                'side_label' => (string) ($row['side'] ?? 'debit') === 'credit' ? 'H' : 'S',
+                'amount' => round((float) ($row['amount'] ?? 0), 2),
+                'tax_rate' => (int) ($row['tax_rate'] ?? 0),
+                'tax_key' => (string) ($row['tax_key'] ?? ''),
+                'tax_key_label' => VoucherTaxKeys::label((string) ($row['tax_key'] ?? '')),
+                'document_field1' => (string) ($row['document_field1'] ?? ''),
+                'document_field2' => (string) ($row['document_field2'] ?? ''),
+                'description' => (string) ($row['description'] ?? ''),
+            ];
+        }
+
+        return $rows;
+    }
+
         /**
      * Kontoauszug eines Kontos: Saldenvortrag + chronologische Einzelbuchungen mit laufendem Saldo.
      * @param string $accountNumber Kontonummer
@@ -189,6 +236,7 @@ final class LedgerRepository
                 'description' => (string) $row['description'],
                 'invoice_number' => (string) ($row['invoice_number'] ?? ''),
                 'tax_rate' => (int) $row['tax_rate'],
+                'tax_key' => (string) ($row['tax_key'] ?? ''),
                 'debit' => $debit,
                 'credit' => $credit,
                 'balance' => $running,

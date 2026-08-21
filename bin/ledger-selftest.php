@@ -131,4 +131,11 @@ if (!$arapVouchers) {
 }
 
 line('');
+line('== DATEV Journal-Qualität ==');
+$sammel = (int) $pdo->query("SELECT COUNT(*) FROM dg_ledger_postings WHERE source='voucher' AND contra_account='Sammel'")->fetchColumn();
+line('Zeilen mit Gegenkonto „Sammel“: ' . $sammel . ($sammel === 0 ? ' (OK)' : ' (sollte 0 sein nach Backfill)'));
+$withTaxKey = (int) $pdo->query("SELECT COUNT(*) FROM dg_ledger_postings WHERE source='voucher' AND tax_key <> ''")->fetchColumn();
+line('Zeilen mit BU-Schlüssel: ' . $withTaxKey);
+
+line('');
 line('Fertig.');

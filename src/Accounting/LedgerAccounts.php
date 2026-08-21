@@ -85,6 +85,21 @@ final class LedgerAccounts
         return $taxRate === 7 ? '1571' : '1576';
     }
 
+    /**
+     * Skontokonto je Belegart (Erhaltene Skonti / Gewährte Skonti).
+     */
+    public static function skontoAccount(string $skrType, string $voucherType): string
+    {
+        $skr = ChartOfAccountsSettings::sanitizeSkrType($skrType);
+        $isIncome = self::isIncomeDirection($voucherType);
+
+        if ($skr === 'skr04') {
+            return $isIncome ? '5730' : '5730';
+        }
+
+        return $isIncome ? '4736' : '4730';
+    }
+
         /**
      * Sammelkonto für Saldenvorträge (Eröffnungsbilanzwerte).
      * @param string $skrType Kontenrahmen (skr03/skr04)

@@ -71,10 +71,15 @@ final class VoucherApi
                 return;
             }
 
+            if ($action === 'ledger_preview') {
+                self::handleLedgerPreview();
+                return;
+            }
+
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search).',
+                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search, ledger_preview).',
             ], JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(500);
@@ -398,6 +403,68 @@ final class VoucherApi
         echo json_encode([
             'success' => true,
             'data' => $built,
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Vorschau der Buchungssätze aus Formulardaten (ohne Speichern).
+     */
+    private static function handleLedgerPreview(): void
+    {
+        $voucherId = max(0, (int) ($_GET['voucher_id'] ?? 0));
+        $voucher = [
+            'id' => $voucherId,
+            'voucher_type' => VoucherRepository::normalizeVoucherType((string) ($_GET['voucher_type'] ?? 'expense')),
+            'voucher_date' => trim((string) ($_GET['voucher_date'] ?? date('Y-m-d'))),
+            'payment_status' => VoucherPaymentStatus::sanitize((string) ($_GET['payment_status'] ?? 'open')),
+            'contact_id' => max(0, (int) ($_GET['contact_id'] ?? 0)),
+            'supplier_name' => trim((string) ($_GET['supplier_name'] ?? '')),
+            'invoice_number' => trim((string) ($_GET['invoice_number'] ?? '')),
+            'description' => trim((string) ($_GET['description'] ?? '')),
+            'tax_key' => VoucherTaxKeys::sanitizeTaxKey((string) ($_GET['tax_key'] ?? '')),
+            'reverse_charge_type' => VoucherReverseCharge::sanitizeType((string) ($_GET['reverse_charge_type'] ?? '')),
+            'gross_amount' => (float) str_replace(',', '.', (string) ($_GET['gross_amount'] ?? '0')),
+            'net_amount' => (float) str_replace(',', '.', (string) ($_GET['net_amount'] ?? '0')),
+            'tax_amount' => (float) str_replace(',', '.', (string) ($_GET['tax_amount'] ?? '0')),
+            'tax_rate' => VoucherTaxKeys::sanitizeTaxRate((int) ($_GET['tax_rate'] ?? 19)),
+            'account_number' => preg_replace('/\D/', '', (string) ($_GET['account_number'] ?? '')) ?? '',
+            'discount_amount' => (float) str_replace(',', '.', (string) ($_GET['discount_amount'] ?? '0')),
+            'paid_amount' => (float) str_replace(',', '.', (string) ($_GET['paid_amount'] ?? '0')),
+        ];
+
+        $linesJson = trim((string) ($_GET['lines_json'] ?? ''));
+        if ($linesJson !== '') {
+            $decoded = json_decode($linesJson, true);
+            if (is_array($decoded)) {
+                $voucher['lines'] = $decoded;
+            }
+        }
+
+        $raw = LedgerPostingService::previewPostings($voucher);
+        $meta = LedgerRepository::accountMeta();
+        $items = [];
+        foreach ($raw as $row) {
+            $acc = (string) ($row['account_number'] ?? '');
+            $contra = (string) ($row['contra_account'] ?? '');
+            $items[] = [
+                'side' => (string) ($row['side'] ?? 'debit'),
+                'side_label' => (string) ($row['side'] ?? 'debit') === 'credit' ? 'H' : 'S',
+                'account_number' => $acc,
+                'account_name' => (string) ($meta[$acc]['name'] ?? ''),
+                'contra_account' => $contra,
+                'contra_name' => (string) ($meta[$contra]['name'] ?? ''),
+                'amount' => VoucherRepository::formatMoney((float) ($row['amount'] ?? 0)),
+                'tax_key' => (string) ($row['tax_key'] ?? ''),
+                'tax_key_label' => VoucherTaxKeys::label((string) ($row['tax_key'] ?? '')),
+                'document_field1' => (string) ($row['document_field1'] ?? ''),
+                'document_field2' => (string) ($row['document_field2'] ?? ''),
+                'description' => (string) ($row['description'] ?? ''),
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => ['items' => $items],
         ], JSON_UNESCAPED_UNICODE);
     }
 }

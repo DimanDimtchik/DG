@@ -211,6 +211,24 @@ final class MenuRegistry
                     'href' => '/app?page=buchhaltung-kontenuebersicht',
                 ],
                 [
+                    'slug' => 'buchhaltung-opos',
+                    'label' => 'Offene Posten',
+                    'icon' => 'transfer',
+                    'href' => '/app?page=buchhaltung-opos',
+                ],
+                [
+                    'slug' => 'buchhaltung-kassenbuch',
+                    'label' => 'Kassenbuch',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=buchhaltung-kassenbuch',
+                ],
+                [
+                    'slug' => 'buchhaltung-datev-export',
+                    'label' => 'DATEV-Export',
+                    'icon' => 'document',
+                    'href' => '/app?page=buchhaltung-datev-export',
+                ],
+                [
                     'slug' => 'buchhaltung-jahresabschluss',
                     'label' => 'Jahresabschluss',
                     'icon' => 'yearclose',
@@ -247,6 +265,9 @@ final class MenuRegistry
             'buchhaltung-belege' => 'Belege erfassen mit Steuerfeldern und Kontenzuordnung.',
             'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
+            'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',
+            'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen.',
+            'buchhaltung-datev-export' => 'Buchungsstapel im DATEV EXTF-Format exportieren.',
             'buchhaltung-jahresabschluss' => 'Geschäftsjahr abschließen und Salden vortragen.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
             'website-seiten' => 'Seiten der öffentlichen Website anlegen und gestalten.',
@@ -358,6 +379,9 @@ final class MenuRegistry
             || $slug === 'buchhaltung-beleg-form'
             || $slug === 'buchhaltung-ueberweisungen'
             || $slug === 'buchhaltung-kontenuebersicht'
+            || $slug === 'buchhaltung-opos'
+            || $slug === 'buchhaltung-kassenbuch'
+            || $slug === 'buchhaltung-datev-export'
             || $slug === 'buchhaltung-jahresabschluss'
         ) {
             return self::canAccessBuchhaltung($user);

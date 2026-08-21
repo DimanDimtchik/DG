@@ -10,6 +10,7 @@ final class VoucherPaymentStatus
     public const CASH = 'cash';
     public const PRIVATE = 'private';
     public const DIRECT_DEBIT = 'direct_debit';
+    public const BANK = 'bank';
 
     /**
      * Liefert Auswahloptionen.
@@ -23,6 +24,7 @@ final class VoucherPaymentStatus
             self::CASH => 'Per Kasse bezahlt',
             self::PRIVATE => 'Privat bezahlt',
             self::DIRECT_DEBIT => 'Wird abgebucht',
+            self::BANK => 'Per Überweisung bezahlt',
         ];
     }
 
@@ -63,6 +65,7 @@ final class VoucherPaymentStatus
             self::CASH => 'Barzahlung über die Kasse — Beleg gilt als bezahlt, Kassenbuch-Buchung vorgesehen.',
             self::PRIVATE => 'Privat bezahlt — Verrechnungskonto EÜR (z. B. 1371) statt Geschäftskonto.',
             self::DIRECT_DEBIT => 'Lastschrift erwartet — wird beim Bankumsatz automatisch zugeordnet und als bezahlt markiert.',
+            self::BANK => 'Überweisung ausgeführt — Beleg ist bezahlt, Gegenkonto Bank.',
             default => '',
         };
     }
@@ -84,7 +87,7 @@ final class VoucherPaymentStatus
      */
     public static function isSettled(string $status): bool
     {
-        return in_array(self::sanitize($status), [self::CASH, self::PRIVATE], true);
+        return in_array(self::sanitize($status), [self::CASH, self::PRIVATE, self::BANK], true);
     }
 
         /**
@@ -118,6 +121,7 @@ final class VoucherPaymentStatus
             self::CASH => 'cash',
             self::PRIVATE => 'private',
             self::DIRECT_DEBIT => 'bank_debit',
+            self::BANK => 'bank_debit',
             default => 'none',
         };
     }
@@ -140,7 +144,7 @@ final class VoucherPaymentStatus
     public static function badgeClass(string $status): string
     {
         return match (self::sanitize($status)) {
-            self::CASH, self::PRIVATE => 'dg-badge--ok',
+            self::CASH, self::PRIVATE, self::BANK => 'dg-badge--ok',
             self::DIRECT_DEBIT => 'dg-badge--pending',
             default => 'dg-badge--muted',
         };

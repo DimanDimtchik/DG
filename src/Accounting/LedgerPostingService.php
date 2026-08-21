@@ -4,18 +4,10 @@ declare(strict_types=1);
 /**
  * Erzeugt aus einem Beleg balancierte Journalbuchungen (Soll = Haben) im
  * dg_ledger_postings-Journal. Modell: Netto auf Aufwand/Ertrag, Steuer auf
- * Vorsteuer/Umsatzsteuer, Brutto auf das Geldkonto/Gegenkonto (je Zahlungsart).
- *
- * Bewusst EÜR-orientiert und robust: Konten müssen nicht zwingend im Kontenrahmen
- * existieren; fehlende Steuerkonten werden in die Primärzeile eingerechnet.
+ * Vorsteuer/Umsatzsteuer, Brutto auf Gegenkonto (Bank/Kasse/Personenkonto).
  */
 final class LedgerPostingService
 {
-        /**
-     * Journal für genau einen Beleg neu aufbauen (idempotent).
-     * @param int $voucherId Beleg-ID
-     * @return void
-     */
     public static function rebuildForVoucher(int $voucherId): void
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -37,20 +29,19 @@ final class LedgerPostingService
 
         $stmt = $pdo->prepare(
             'INSERT INTO dg_ledger_postings
-                (fiscal_year, posting_date, voucher_id, account_number, contra_account, side, amount, tax_rate, description, source)
+                (fiscal_year, posting_date, voucher_id, account_number, contra_account, person_account,
+                 side, amount, tax_rate, tax_key, description, document_field1, document_field2, source)
              VALUES
-                (:fiscal_year, :posting_date, :voucher_id, :account_number, :contra_account, :side, :amount, :tax_rate, :description, :source)'
+                (:fiscal_year, :posting_date, :voucher_id, :account_number, :contra_account, :person_account,
+                 :side, :amount, :tax_rate, :tax_key, :description, :document_field1, :document_field2, :source)'
         );
         foreach ($postings as $p) {
             $stmt->execute($p);
         }
+
+        CashJournalRepository::syncForVoucher($voucherId);
     }
 
-    /**
-     * Entfernt Journalbuchungen eines Belegs
-     * @param int $voucherId Beleg-ID
-     * @return void
-     */
     public static function deleteForVoucher(int $voucherId): void
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -63,6 +54,17 @@ final class LedgerPostingService
     }
 
     /**
+     * Vorschau aus Belegdaten (ohne DB-Schreiben).
+     *
+     * @param array<string, mixed> $voucher
+     * @return list<array<string, mixed>>
+     */
+    public static function previewPostings(array $voucher): array
+    {
+        return self::buildPostings($voucher);
+    }
+
+    /**
      * @param array<string, mixed> $voucher
      * @return list<array<string, mixed>>
      */
@@ -71,7 +73,6 @@ final class LedgerPostingService
         $voucherId = (int) ($voucher['id'] ?? 0);
         $voucherType = (string) ($voucher['voucher_type'] ?? 'expense');
         $voucherDate = (string) ($voucher['voucher_date'] ?? date('Y-m-d'));
-        $paymentStatus = (string) ($voucher['payment_status'] ?? 'open');
         $reverseCharge = trim((string) ($voucher['reverse_charge_type'] ?? '')) !== '';
         $skrType = ChartOfAccountsSettings::activeSkrType();
         $fiscalYear = (int) substr($voucherDate, 0, 4);
@@ -84,20 +85,20 @@ final class LedgerPostingService
 
         $primarySide = LedgerAccounts::primarySide($voucherType);
         $contraSide = LedgerAccounts::oppositeSide($primarySide);
-        $contraAccount = LedgerAccounts::contraAccount($skrType, $voucherType, $paymentStatus);
+        $paymentStatus = (string) ($voucher['payment_status'] ?? 'open');
+        $fallbackContra = LedgerAccounts::contraAccount($skrType, $voucherType, $paymentStatus);
+        $contraAccount = PersonAccountService::contraForVoucher($voucher, $fallbackContra);
+        $personAccount = $contraAccount !== $fallbackContra ? $contraAccount : '';
         $accrualAccount = VoucherAccrual::accrualAccount($voucherType, $skrType);
         $description = self::describe($voucher);
+        $docFields = self::documentFields($voucher);
 
         $lines = self::journalLines($voucherId, $voucher, $reverseCharge);
         if ($lines === []) {
             return [];
         }
 
-        $distinctPrimary = array_unique(array_map(static fn (array $l): string => (string) $l['account_number'], $lines));
-        $singleAccount = count($distinctPrimary) === 1 ? (string) reset($distinctPrimary) : 'Sammel';
-
         $postings = [];
-        $totalGross = 0.0;
         $prevBookingAccount = null;
 
         foreach ($lines as $line) {
@@ -110,20 +111,63 @@ final class LedgerPostingService
             $gross = round((float) $line['gross_amount'], 2);
             $rate = (int) $line['tax_rate'];
             $kind = (string) $line['kind'];
-            $totalGross = round($totalGross + $gross, 2);
+            $taxKey = self::taxKeyForLine($voucher, $rate, $reverseCharge);
 
             $primaryAmount = $net;
             $taxAccount = LedgerAccounts::taxAccount($skrType, $voucherType, $rate);
             $bookTaxSeparately = !$reverseCharge && $tax > 0.0 && self::accountExists($taxAccount, $skrType);
             if (!$bookTaxSeparately) {
-                $primaryAmount = $gross; // Steuer in Primärzeile einrechnen
+                $primaryAmount = $gross;
             }
 
             if ($primaryAmount != 0.0) {
-                $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $account, $contraAccount, $primarySide, $primaryAmount, $rate, $description);
+                $postings[] = self::row(
+                    $fiscalYear,
+                    $voucherDate,
+                    $voucherId,
+                    $account,
+                    $contraAccount,
+                    $personAccount,
+                    $primarySide,
+                    $primaryAmount,
+                    $rate,
+                    $taxKey,
+                    $description,
+                    $docFields
+                );
             }
             if ($bookTaxSeparately) {
-                $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $taxAccount, $contraAccount, $primarySide, $tax, $rate, $description);
+                $postings[] = self::row(
+                    $fiscalYear,
+                    $voucherDate,
+                    $voucherId,
+                    $taxAccount,
+                    $contraAccount,
+                    $personAccount,
+                    $primarySide,
+                    $tax,
+                    $rate,
+                    $taxKey,
+                    $description,
+                    $docFields
+                );
+            }
+
+            if ($gross != 0.0) {
+                $postings[] = self::row(
+                    $fiscalYear,
+                    $voucherDate,
+                    $voucherId,
+                    $contraAccount,
+                    $account,
+                    $personAccount,
+                    $contraSide,
+                    $gross,
+                    0,
+                    '',
+                    $description,
+                    $docFields
+                );
             }
 
             if ($kind === VoucherReverseCharge::LINE_BOOKING) {
@@ -131,42 +175,144 @@ final class LedgerPostingService
                 continue;
             }
 
-            // Rechnungsabgrenzung: Folgejahr-Anteil (netto) im neuen Jahr auf den
-            // ursprünglichen Aufwand umbuchen (Auflösung des ARAP-Bestandskontos).
             if ($kind === VoucherAccrual::LINE_ACCRUAL && $net != 0.0) {
                 $target = $prevBookingAccount ?? $account;
                 if ($target !== $accrualAccount) {
                     $releaseDesc = 'ARAP-Auflösung ' . $fiscalYear . ' → ' . $nextYear
                         . ($description !== '' ? ' · ' . $description : '');
-                    $postings[] = self::row($nextYear, $nextDate, $voucherId, $target, $accrualAccount, $primarySide, $net, $rate, $releaseDesc);
-                    $postings[] = self::row($nextYear, $nextDate, $voucherId, $accrualAccount, $target, $contraSide, $net, 0, $releaseDesc);
+                    $postings[] = self::row($nextYear, $nextDate, $voucherId, $target, $accrualAccount, '', $primarySide, $net, $rate, $taxKey, $releaseDesc, $docFields);
+                    $postings[] = self::row($nextYear, $nextDate, $voucherId, $accrualAccount, $target, '', $contraSide, $net, 0, '', $releaseDesc, $docFields);
                 }
             }
         }
 
-        if ($totalGross != 0.0) {
-            $postings[] = self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $singleAccount, $contraSide, $totalGross, 0, $description);
-        }
+        $postings = array_merge($postings, self::skontoPostings($voucher, $fiscalYear, $voucherDate, $voucherId, $contraAccount, $personAccount, $docFields, $description, $skrType));
 
         return $postings;
     }
 
-        /**
-     * Journalrelevante Zeilen des Belegs (Aufwand/Ertrag + Rechnungsabgrenzung).
-     * @param int $voucherId Beleg-ID
-     * @param array $voucher Belegdaten
-     * @param bool $reverseCharge Reverse-Charge-Modus
+    /**
+     * @param array<string, mixed> $voucher
      * @return list<array<string, mixed>>
+     */
+    private static function skontoPostings(
+        array $voucher,
+        int $fiscalYear,
+        string $voucherDate,
+        int $voucherId,
+        string $contraAccount,
+        string $personAccount,
+        array $docFields,
+        string $description,
+        string $skrType
+    ): array {
+        $discount = round((float) ($voucher['discount_amount'] ?? 0), 2);
+        if ($discount <= 0.0) {
+            $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
+            $paid = round((float) ($voucher['paid_amount'] ?? 0), 2);
+            if ($paid > 0.0 && $paid < $gross) {
+                $discount = round($gross - $paid, 2);
+            }
+        }
+        if ($discount <= 0.0) {
+            return [];
+        }
+
+        $paymentStatus = VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? ''));
+        if (VoucherPaymentStatus::isOpen($paymentStatus)) {
+            return [];
+        }
+
+        $voucherType = (string) ($voucher['voucher_type'] ?? 'expense');
+        $skontoAccount = LedgerAccounts::skontoAccount($skrType, $voucherType);
+        $isIncome = LedgerAccounts::isIncomeDirection($voucherType);
+
+        if ($isIncome) {
+            return [
+                self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $skontoAccount, $personAccount, 'debit', $discount, 0, '', 'Skonto ' . $description, $docFields),
+                self::row($fiscalYear, $voucherDate, $voucherId, $skontoAccount, $contraAccount, $personAccount, 'credit', $discount, 0, '', 'Skonto ' . $description, $docFields),
+            ];
+        }
+
+        return [
+            self::row($fiscalYear, $voucherDate, $voucherId, $skontoAccount, $contraAccount, $personAccount, 'credit', $discount, 0, '', 'Skonto ' . $description, $docFields),
+            self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $skontoAccount, $personAccount, 'debit', $discount, 0, '', 'Skonto ' . $description, $docFields),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $voucher
+     */
+    private static function taxKeyForLine(array $voucher, int $rate, bool $reverseCharge): string
+    {
+        $key = VoucherTaxKeys::sanitizeTaxKey((string) ($voucher['tax_key'] ?? ''));
+        if ($key !== '') {
+            return $key;
+        }
+        if ($reverseCharge) {
+            return VoucherTaxKeys::KEY_REVERSE_CHARGE;
+        }
+        $isIncome = LedgerAccounts::isIncomeDirection((string) ($voucher['voucher_type'] ?? 'expense'));
+        if ($rate === 0) {
+            return VoucherTaxKeys::KEY_ZERO;
+        }
+        if ($isIncome) {
+            return $rate === 7 ? VoucherTaxKeys::KEY_UST_7 : VoucherTaxKeys::KEY_UST_19;
+        }
+
+        return $rate === 7 ? VoucherTaxKeys::KEY_VST_7 : VoucherTaxKeys::KEY_VST_19;
+    }
+
+    /**
+     * @param array<string, mixed> $voucher
+     * @return array{field1: string, field2: string}
+     */
+    private static function documentFields(array $voucher): array
+    {
+        $field1 = trim((string) ($voucher['invoice_number'] ?? ''));
+        $field2 = trim((string) ($voucher['supplier_name'] ?? ''));
+        $contactId = (int) ($voucher['contact_id'] ?? 0);
+        if ($contactId > 0) {
+            $contact = ContactRepository::findById($contactId);
+            if ($contact !== null) {
+                if ($field2 === '') {
+                    $field2 = trim($contact->companyName) !== '' ? trim($contact->companyName) : trim($contact->displayName);
+                }
+                $isIncome = LedgerAccounts::isIncomeDirection((string) ($voucher['voucher_type'] ?? 'expense'));
+                $number = $isIncome ? trim($contact->customerNumber) : trim($contact->supplierNumber);
+                if ($number !== '' && $field2 === '') {
+                    $field2 = $number;
+                }
+            }
+        }
+
+        return [
+            'field1' => mb_substr($field1, 0, 36),
+            'field2' => mb_substr($field2, 0, 36),
+        ];
+    }
+
+    /**
+     * @param int $voucherId Beleg-ID
+     * @param array<string, mixed> $voucher Belegdaten
      */
     private static function journalLines(int $voucherId, array $voucher, bool $reverseCharge): array
     {
-        $lines = VoucherRepository::linesForVoucher($voucherId, false);
+        if ($voucherId > 0) {
+            $lines = VoucherRepository::linesForVoucher($voucherId, false);
+        } else {
+            $lines = is_array($voucher['lines'] ?? null) ? $voucher['lines'] : [];
+        }
+
         $normalized = [];
         foreach ($lines as $line) {
+            if (!is_array($line)) {
+                continue;
+            }
             $kind = (string) ($line['line_kind'] ?? VoucherReverseCharge::LINE_BOOKING);
             if ($reverseCharge) {
                 if ($kind !== VoucherReverseCharge::LINE_BOOKING) {
-                    continue; // 13b-System-Steuerzeilen nicht als Geldbewegung buchen
+                    continue;
                 }
             } elseif (!in_array($kind, [VoucherReverseCharge::LINE_BOOKING, VoucherAccrual::LINE_ACCRUAL], true)) {
                 continue;
@@ -204,11 +350,6 @@ final class LedgerPostingService
         ]];
     }
 
-        /**
-     * Deutsche/englische Zahl robust in float (2 Nachkommastellen).
-     * @param mixed $value Eingabewert
-     * @return float
-     */
     private static function money(mixed $value): float
     {
         if (is_int($value) || is_float($value)) {
@@ -226,10 +367,8 @@ final class LedgerPostingService
         return round((float) $str, 2);
     }
 
-        /**
-     * describe
-     * @param array $voucher Belegdaten
-     * @return string
+    /**
+     * @param array<string, mixed> $voucher
      */
     private static function describe(array $voucher): string
     {
@@ -249,41 +388,42 @@ final class LedgerPostingService
         return mb_substr(implode(' · ', $parts), 0, 500);
     }
 
-        /**
-     * row
-     * @param int $year Geschäftsjahr
-     * @param string $date
-     * @param int $voucherId Beleg-ID
-     * @param string $account Kontonummer
-     * @param string $contra
-     * @param string $side Buchungsseite
-     * @param float $amount Betrag
-     * @param int $rate Steuersatz in Prozent
-     * @param string $description
+    /**
+     * @param array{field1: string, field2: string} $docFields
      * @return array<string, mixed>
      */
-    private static function row(int $year, string $date, int $voucherId, string $account, string $contra, string $side, float $amount, int $rate, string $description): array
-    {
+    private static function row(
+        int $year,
+        string $date,
+        int $voucherId,
+        string $account,
+        string $contra,
+        string $personAccount,
+        string $side,
+        float $amount,
+        int $rate,
+        string $taxKey,
+        string $description,
+        array $docFields
+    ): array {
         return [
             'fiscal_year' => $year,
             'posting_date' => $date,
-            'voucher_id' => $voucherId,
+            'voucher_id' => $voucherId > 0 ? $voucherId : null,
             'account_number' => $account,
             'contra_account' => mb_substr($contra, 0, 16),
+            'person_account' => mb_substr($personAccount, 0, 8),
             'side' => $side === 'credit' ? 'credit' : 'debit',
             'amount' => round(abs($amount), 2),
             'tax_rate' => max(0, $rate),
+            'tax_key' => VoucherTaxKeys::sanitizeTaxKey($taxKey),
             'description' => $description,
+            'document_field1' => $docFields['field1'],
+            'document_field2' => $docFields['field2'],
             'source' => 'voucher',
         ];
     }
 
-    /**
-     * accountExists
-     * @param string $accountNumber Kontonummer
-     * @param string $skrType Kontenrahmen (skr03/skr04)
-     * @return bool
-     */
     private static function accountExists(string $accountNumber, string $skrType): bool
     {
         if ($accountNumber === '') {
@@ -296,9 +436,7 @@ final class LedgerPostingService
         }
     }
 
-        /**
-     * loadVoucher
-     * @param int $voucherId Beleg-ID
+    /**
      * @return array<string, mixed>|null
      */
     private static function loadVoucher(int $voucherId): ?array

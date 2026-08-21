@@ -173,6 +173,9 @@ final class MigrationRunner
             '050_support_access.sql' => self::tableExists($pdo, 'dg_support_access')
                 && self::tableExists($pdo, 'dg_support_signals')
                 && self::tableExists($pdo, 'dg_kdv_support_sessions'),
+            '051_ledger_datev.sql' => self::columnExists($pdo, 'dg_ledger_postings', 'tax_key')
+                && self::columnExists($pdo, 'dg_contacts', 'debtor_account')
+                && self::tableExists($pdo, 'dg_cash_journal'),
             default => false,
         };
     }
@@ -254,6 +257,7 @@ final class MigrationRunner
             '048_kdv_shop_password_reset.sql' => true,
             '049_kdv_mailbox_credentials.sql' => true,
             '050_support_access.sql' => true,
+            '051_ledger_datev.sql' => true,
         ];
     }
 
