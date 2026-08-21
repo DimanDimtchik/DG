@@ -2035,13 +2035,20 @@ switch ($path) {
             if (!array_key_exists($voucherTypeFilter, VoucherRepository::voucherTypeOptions())) {
                 $voucherTypeFilter = '';
             }
+            $voucherDraftFilter = (string) ($_GET['draft'] ?? '');
+            if ($voucherDraftFilter !== '1' && $voucherDraftFilter !== '0') {
+                $voucherDraftFilter = '';
+            }
             $voucherList = VoucherRepository::list([
                 'year' => $voucherYear,
                 'type' => $voucherTypeFilter,
                 'search' => $voucherSearch,
                 'page' => $voucherPage,
+                'draft' => $voucherDraftFilter,
             ]);
             $voucherYears = VoucherRepository::availableYears();
+            $voucherDraftCount = VoucherRepository::countDrafts();
+            $voucherImportPending = SettingsStore::get('install_voucher_import_pending', []);
             $voucherFileCounts = VoucherFileStorage::countsForVouchers(
                 array_map(static fn (array $v): int => (int) ($v['id'] ?? 0), $voucherList['items'] ?? [])
             );

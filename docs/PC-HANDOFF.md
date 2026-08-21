@@ -65,7 +65,7 @@ git push origin master
 | Kontakte, Mitarbeiter, Termine | ✅ Excel, CSV, XML, JSON |
 | Artikel/Leistungen | ✅ inkl. PDF |
 | Quellsystem-Presets (DATEV, Lexware, ShiftBase, …) | ✅ |
-| Belege/Rechnungen | ⏳ nur Staging (`docs/IMPORT-BELEGE-TODO.md`) |
+| Belege/Rechnungen | ✅ Entwürfe + Dateianhang (`docs/IMPORT-BELEGE-TODO.md`) |
 
 **Neue Dateien:**
 
@@ -144,12 +144,11 @@ Cloud-Agent konnte **nicht** per SSH auf DG/All-Inkl zugreifen (`DG_ALLINKL_SSH_
 
 | Prio | Thema | Doku |
 |------|-------|------|
-| 1 | **Beleg-Import-Verarbeitung** (OCR, VoucherRepository) | `docs/IMPORT-BELEGE-TODO.md` |
-| 2 | Branch **Datenimport** mergen + auf Testinstanz installieren | diese Datei |
-| 3 | Live-Deploy Bootstrap (ganz-soft, kontur-cosmetics) | README, Abschnitt G Testliste |
-| 4 | SSH-Key DG-Server fixen | oben |
-| 5 | Stripe Shop Phase 2 | `docs/SHOP-TODO.md` |
-| 6 | DATEV EXTF / API ShiftBase (später) | `docs/IMPORT-FORMATE.md` |
+| 1 | Branch **Datenimport** mergen + auf Testinstanz prüfen | diese Datei |
+| 2 | Live-Deploy Bootstrap (ganz-soft, kontur-cosmetics) | README, Abschnitt G Testliste |
+| 3 | SSH-Key DG-Server fixen | oben |
+| 4 | Stripe Shop Phase 2 | `docs/SHOP-TODO.md` |
+| 5 | DATEV EXTF / API ShiftBase (später) | `docs/IMPORT-FORMATE.md` |
 
 ---
 

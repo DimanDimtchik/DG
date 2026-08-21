@@ -111,7 +111,7 @@ final class InstallImportRunner
             InstallImportQueue::TYPE_EMPLOYEES => InstallEmployeeImporter::importBatch($path, $offset, $source),
             InstallImportQueue::TYPE_BOOKINGS => InstallBookingImporter::importBatch($path, $offset, $source),
             InstallImportQueue::TYPE_ARTICLES => self::importArticles($path),
-            InstallImportQueue::TYPE_VOUCHERS => InstallVoucherImporter::importBatch($path),
+            InstallImportQueue::TYPE_VOUCHERS => InstallVoucherImporter::importBatch($path, $offset),
             default => throw new InvalidArgumentException('Unbekannter Importtyp: ' . $type),
         };
     }

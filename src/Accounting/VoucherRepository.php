@@ -52,7 +52,7 @@ final class VoucherRepository
     }
 
     /**
-     * @param array{year?: int|null, type?: string, search?: string, page?: int} $filters
+     * @param array{year?: int|null, type?: string, search?: string, page?: int, draft?: string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int}
      */
     public static function list(array $filters = []): array
@@ -73,6 +73,7 @@ final class VoucherRepository
         $year = isset($filters['year']) && (int) $filters['year'] > 0 ? (int) $filters['year'] : null;
         $type = self::sanitizeVoucherTypeFilter((string) ($filters['type'] ?? ''));
         $search = trim((string) ($filters['search'] ?? ''));
+        $draft = (string) ($filters['draft'] ?? '');
 
         $where = [];
         $params = [];
@@ -85,6 +86,12 @@ final class VoucherRepository
         if ($type !== '') {
             $where[] = 'v.voucher_type = :voucher_type';
             $params['voucher_type'] = $type;
+        }
+
+        if ($draft === '1') {
+            $where[] = 'v.is_draft = 1';
+        } elseif ($draft === '0') {
+            $where[] = 'v.is_draft = 0';
         }
 
         if ($search !== '') {
@@ -137,6 +144,71 @@ final class VoucherRepository
             'per_page' => self::PER_PAGE,
             'total_pages' => max(1, (int) ceil($total / self::PER_PAGE)),
         ];
+    }
+
+    /**
+     * Anzahl offener Beleg-Entwürfe.
+     */
+    public static function countDrafts(): int
+    {
+        if (!Database::isConfigured()) {
+            return 0;
+        }
+
+        MigrationRunner::runPending();
+        $stmt = Database::pdo()->query('SELECT COUNT(*) FROM dg_vouchers WHERE is_draft = 1');
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Legt einen Beleg-Entwurf an (ohne Kontakt/Betrag/Konto-Pflicht).
+     * Für Install-Import und sofortigen Datei-Upload vor dem Ausfüllen.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function createDraft(array $data = [], ?int $userId = null): int
+    {
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht verbunden.');
+        }
+
+        MigrationRunner::runPending();
+
+        $voucherType = self::sanitizeVoucherType((string) ($data['voucher_type'] ?? 'expense'));
+        $voucherDate = trim((string) ($data['voucher_date'] ?? ''));
+        if ($voucherDate === '' || strtotime($voucherDate) === false) {
+            $voucherDate = date('Y-m-d');
+        } else {
+            $voucherDate = date('Y-m-d', strtotime($voucherDate));
+        }
+
+        $supplierName = trim((string) ($data['supplier_name'] ?? ''));
+        if ($supplierName === '') {
+            $supplierName = 'Import (offen)';
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_vouchers (
+                voucher_type, is_draft, voucher_date, contact_id, supplier_name, invoice_number, description,
+                gross_amount, net_amount, tax_amount, tax_rate, tax_key, account_number, payment_status, notes, created_by
+            ) VALUES (
+                :voucher_type, 1, :voucher_date, NULL, :supplier_name, :invoice_number, :description,
+                0, 0, 0, 19, \'\', \'\', :payment_status, :notes, :created_by
+            )'
+        );
+        $stmt->execute([
+            'voucher_type' => $voucherType,
+            'voucher_date' => $voucherDate,
+            'supplier_name' => mb_substr($supplierName, 0, 191),
+            'invoice_number' => mb_substr(trim((string) ($data['invoice_number'] ?? '')), 0, 100),
+            'description' => mb_substr(trim((string) ($data['description'] ?? '')), 0, 500),
+            'payment_status' => 'open',
+            'notes' => trim((string) ($data['notes'] ?? '')),
+            'created_by' => $userId !== null && $userId > 0 ? $userId : null,
+        ]);
+
+        return (int) Database::pdo()->lastInsertId();
     }
 
     /**
@@ -563,6 +635,7 @@ final class VoucherRepository
             $stmt = $pdo->prepare(
                 'UPDATE dg_vouchers SET
                     voucher_type = :voucher_type,
+                    is_draft = 0,
                     voucher_date = :voucher_date,
                     delivery_date = :delivery_date,
                     arap_enabled = :arap_enabled,
@@ -1134,6 +1207,7 @@ final class VoucherRepository
 
         $row['supplier_display'] = $supplierDisplay;
         $row['account_name'] = $accountName;
+        $row['is_draft'] = !empty($row['is_draft']);
         $row['type_label'] = self::typeLabel((string) ($row['voucher_type'] ?? ''));
         $row['payment_label'] = self::paymentLabel((string) ($row['payment_status'] ?? ''));
         $row['payment_badge_class'] = VoucherPaymentStatus::badgeClass((string) ($row['payment_status'] ?? ''));

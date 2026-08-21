@@ -1,21 +1,24 @@
-# Belege-Import — TODO
+# Belege-Import — Stand
 
-Die Verarbeitung von Belegen und Rechnungen beim Installationsimport ist **noch nicht implementiert**.
+## Implementiert
 
-## Aktueller Stand
+Beim Installationsimport (Schritt „Datenimport“) werden Belegdateien (PDF, JPG, PNG, …) als **Beleg-Entwürfe** angelegt:
 
-- Im Installationsassistenten (Schritt „Datenimport“) können Belegdateien (PDF, JPG, PNG) hochgeladen werden.
-- Dateien werden nach `storage/vouchers/import-pending/` kopiert.
-- In den Einstellungen wird `install_voucher_import_pending` gesetzt (Status: `todo`).
+1. `VoucherRepository::createDraft()` — ohne Kontakt/Betrag/Konto
+2. `VoucherFileStorage::attachFromPath()` — Datei am Entwurf
+3. Fortschritt über `InstallImportRunner` / `install-import.js`
+4. Hinweis + Filter „Nur Entwürfe“ unter **Buchhaltung → Belege**
+5. API `POST /api/voucher?action=file_upload` für Sofort-Upload im Belegformular
 
-## Geplante Verarbeitung
+OCR bleibt **clientseitig** (`assets/js/buchhaltung-import.mjs` / Tesseract) — beim Öffnen eines Entwurfs kann die angehängte Datei ausgewertet und das Formular vervollständigt werden.
 
-1. OCR / Texterkennung (analog `assets/js/buchhaltung-import.mjs`)
-2. Zuordnung zu Kontakten und Buchungskonten
-3. Anlage als Belege in der Buchhaltung (`VoucherRepository`)
-4. Fortschrittsanzeige im CRM (nicht nur Installation)
+## Status in Settings
+
+`install_voucher_import_pending`: `status` = `processing` | `done` | `partial`, plus `voucher_ids`, `processed`, `file_count`.
 
 ## Referenzen
 
-- `src/Install/InstallVoucherImporter.php` — Staging-Logik
-- `assets/js/buchhaltung-import.mjs` — Einzelbeleg-OCR im CRM
+- `src/Install/InstallVoucherImporter.php`
+- `src/Accounting/VoucherRepository.php` (`createDraft`)
+- `src/Accounting/VoucherFileStorage.php` (`attachFromPath`)
+- `assets/js/buchhaltung-import.mjs`

@@ -30,7 +30,7 @@ final class InstallImportQueue
         ],
         self::TYPE_VOUCHERS => [
             'label' => 'Belege & Rechnungen',
-            'description' => 'PDF oder Bilder — Verarbeitung folgt (Dateien werden gespeichert)',
+            'description' => 'PDF oder Bilder — werden als Entwürfe angelegt (OCR im CRM)',
         ],
     ];
 

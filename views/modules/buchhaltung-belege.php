@@ -4,6 +4,9 @@
  * @var string $voucherSearch
  * @var int $voucherYear
  * @var string $voucherTypeFilter
+ * @var string $voucherDraftFilter
+ * @var int $voucherDraftCount
+ * @var array<string, mixed> $voucherImportPending
  * @var list<int> $voucherYears
  * @var bool $dbConnected
  * @var bool $canEdit
@@ -13,6 +16,9 @@ $list = $voucherList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' =>
 $search = $voucherSearch ?? '';
 $year = (int) ($voucherYear ?? (int) date('Y'));
 $typeFilter = $voucherTypeFilter ?? '';
+$draftFilter = $voucherDraftFilter ?? '';
+$draftCount = (int) ($voucherDraftCount ?? 0);
+$importPending = is_array($voucherImportPending ?? null) ? $voucherImportPending : [];
 $years = $voucherYears ?? [(int) date('Y')];
 $typeOptions = VoucherRepository::voucherTypeOptions();
 $baseUrl = '/app?page=buchhaltung-belege';
@@ -31,6 +37,17 @@ $baseUrl = '/app?page=buchhaltung-belege';
     <div class="dg-flash dg-flash--warning">
       Datenbank nicht verbunden. Belege können erst nach Konfiguration unter
       <a href="<?= View::escape(SettingsRegistry::tabUrl('datenbank')) ?>">Einstellungen → Datenbank</a> erfasst werden.
+    </div>
+  <?php endif; ?>
+
+  <?php if ($draftCount > 0) : ?>
+    <div class="dg-flash dg-flash--info">
+      <?= (int) $draftCount ?> Beleg-Entwurf<?= $draftCount === 1 ? '' : 'e' ?>
+      <?php if (($importPending['status'] ?? '') !== '' && ($importPending['status'] ?? '') !== 'todo') : ?>
+        aus dem Installationsimport
+      <?php endif; ?>
+      — bitte Kontakt, Betrag und Konto ergänzen.
+      <a href="<?= View::escape($baseUrl . '&year=' . $year . '&draft=1') ?>">Nur Entwürfe anzeigen</a>
     </div>
   <?php endif; ?>
 
@@ -54,13 +71,21 @@ $baseUrl = '/app?page=buchhaltung-belege';
           <?php endforeach; ?>
         </select>
       </label>
+      <label class="dg-field">
+        <span>Status</span>
+        <select name="draft" id="dg-voucher-draft-filter">
+          <option value=""<?= $draftFilter === '' ? ' selected' : '' ?>>Alle</option>
+          <option value="1"<?= $draftFilter === '1' ? ' selected' : '' ?>>Nur Entwürfe</option>
+          <option value="0"<?= $draftFilter === '0' ? ' selected' : '' ?>>Ohne Entwürfe</option>
+        </select>
+      </label>
       <label class="dg-field dg-field--wide">
         <span>Suche</span>
         <input type="search" name="s" value="<?= View::escape($search) ?>" placeholder="Lieferant, Rechnungsnr., Buchungstext, Konto …">
       </label>
       <div class="dg-field dg-field--actions">
         <button type="submit" class="dg-button dg-button--primary">Filtern</button>
-        <?php if ($search !== '' || $typeFilter !== '') : ?>
+        <?php if ($search !== '' || $typeFilter !== '' || $draftFilter !== '') : ?>
           <a class="dg-button" href="<?= View::escape($baseUrl . '&year=' . $year) ?>">Zurücksetzen</a>
         <?php endif; ?>
       </div>
@@ -95,9 +120,14 @@ $baseUrl = '/app?page=buchhaltung-belege';
           <tr><td colspan="11" class="dg-table__empty">Keine Belege gefunden.</td></tr>
         <?php else : ?>
           <?php foreach ($list['items'] as $voucher) : ?>
-            <tr>
+            <tr<?= !empty($voucher['is_draft']) ? ' class="dg-buchhaltung-belege__row--draft"' : '' ?>>
               <td><?= View::escape(date('d.m.Y', strtotime((string) $voucher['voucher_date']))) ?></td>
-              <td><?= View::escape((string) ($voucher['type_label'] ?? '')) ?></td>
+              <td>
+                <?= View::escape((string) ($voucher['type_label'] ?? '')) ?>
+                <?php if (!empty($voucher['is_draft'])) : ?>
+                  <span class="dg-badge dg-badge--muted">Entwurf</span>
+                <?php endif; ?>
+              </td>
               <td><?= View::escape((string) ($voucher['supplier_display'] ?? '—')) ?></td>
               <td><?= View::escape((string) ($voucher['invoice_number'] ?? '') ?: '—') ?></td>
               <td><?= View::escape((string) ($voucher['description'] ?? '') ?: '—') ?></td>
@@ -155,6 +185,7 @@ $baseUrl = '/app?page=buchhaltung-belege';
       <?php
         $pageQuery = $baseUrl . '&year=' . $year
             . ($typeFilter !== '' ? '&type=' . rawurlencode($typeFilter) : '')
+            . ($draftFilter !== '' ? '&draft=' . rawurlencode($draftFilter) : '')
             . ($search !== '' ? '&s=' . rawurlencode($search) : '');
       ?>
       <?php if ($list['page'] > 1) : ?>

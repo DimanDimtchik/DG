@@ -27,6 +27,10 @@ final class VoucherApi
                 self::handleReverseChargePreview();
                 return;
             }
+            if ($action === 'file_upload') {
+                self::handleFileUpload();
+                return;
+            }
 
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Unbekannte POST-Aktion.'], JSON_UNESCAPED_UNICODE);
@@ -284,6 +288,75 @@ final class VoucherApi
             'success' => true,
             'data' => ['items' => VoucherIncomePositions::searchArticles($query, 15)],
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Sofortiger Datei-Upload: legt bei Bedarf einen Entwurf an und hängt die Datei an.
+     */
+    private static function handleFileUpload(): void
+    {
+        $user = AuthService::user();
+        if ($user === null || !RoleResolver::canEdit($user)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'CSRF ungültig.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!Database::isConfigured()) {
+            http_response_code(503);
+            echo json_encode(['success' => false, 'message' => 'Datenbank nicht verbunden.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $file = $_FILES['file'] ?? null;
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Keine Datei hochgeladen.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $voucherId = max(0, (int) ($_POST['voucher_id'] ?? 0));
+            if ($voucherId > 0) {
+                if (VoucherRepository::findById($voucherId) === null) {
+                    throw new InvalidArgumentException('Beleg nicht gefunden.');
+                }
+            } else {
+                $original = (string) ($file['name'] ?? 'beleg');
+                $voucherId = VoucherRepository::createDraft([
+                    'supplier_name' => pathinfo($original, PATHINFO_FILENAME) ?: 'Neuer Beleg',
+                    'description' => 'Entwurf aus Datei-Upload: ' . $original,
+                    'notes' => 'Datei hochgeladen — bitte Kontakt und Beträge ergänzen.',
+                ], $user->id);
+            }
+
+            VoucherFileStorage::processUploads($voucherId, [
+                'name' => $file['name'] ?? 'beleg',
+                'type' => $file['type'] ?? '',
+                'tmp_name' => $file['tmp_name'] ?? '',
+                'error' => $file['error'] ?? UPLOAD_ERR_NO_FILE,
+                'size' => $file['size'] ?? 0,
+            ], $user->id);
+
+            $files = VoucherFileStorage::listForVoucher($voucherId);
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'voucher_id' => $voucherId,
+                    'files' => $files,
+                    'file' => $files !== [] ? $files[array_key_last($files)] : null,
+                ],
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     /**
