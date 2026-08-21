@@ -65,7 +65,11 @@ final class DefaultDepartments
         return $departments;
     }
 
-    /** @return array<string, string> */
+        /**
+     * Liefert Modulrechte für eine Abteilung
+     * @param string $departmentId Abteilungs-ID
+     * @return array<string, string>
+     */
     public static function modulesForDepartment(string $departmentId): array
     {
         $modules = DepartmentAccess::defaultModules();

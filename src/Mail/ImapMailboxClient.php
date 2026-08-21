@@ -11,16 +11,28 @@ final class ImapMailboxClient
 
     private static bool $shutdownRegistered = false;
 
+    /**
+     * Prüft: is available.
+     * @return bool
+     */
     public static function isAvailable(): bool
     {
         return function_exists('imap_open');
     }
 
+    /**
+     * Methode last error.
+     * @return string
+     */
     public static function lastError(): string
     {
         return self::$lastError;
     }
 
+    /**
+     * Prüft: is auth failure.
+     * @return bool
+     */
     public static function isAuthFailure(): bool
     {
         $error = strtolower(self::$lastError);
@@ -31,7 +43,9 @@ final class ImapMailboxClient
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode probe inbox.
+     * @param array $mailbox
+     * @return bool
      */
     public static function probeInbox(array $mailbox): bool
     {
@@ -53,7 +67,11 @@ final class ImapMailboxClient
         return $connection !== false;
     }
 
-    /** @param array<string, mixed> $mailbox */
+    /**
+     * Prüft: has credentials.
+     * @param array $mailbox
+     * @return bool
+     */
     public static function hasCredentials(array $mailbox): bool
     {
         return trim((string) ($mailbox['imap_host'] ?? '')) !== ''
@@ -62,7 +80,8 @@ final class ImapMailboxClient
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode list folders.
+     * @param array $mailbox
      * @return list<array{path: string, label: string}>
      */
     public static function listFolders(array $mailbox): array
@@ -106,8 +125,11 @@ final class ImapMailboxClient
     }
 
     /**
-     * @param array<string, mixed> $mailbox
-     * @return list<array<string, mixed>>
+     * Methode fetch headers.
+     * @param array $mailbox
+     * @param string $folder
+     * @param int $limit
+     * @return array<string, mixed>
      */
     public static function fetchHeaders(array $mailbox, string $folder, int $limit = 50): array
     {
@@ -166,8 +188,11 @@ final class ImapMailboxClient
     }
 
     /**
-     * @param array<string, mixed> $mailbox
-     * @return array<string, mixed>|null
+     * Methode fetch message.
+     * @param array $mailbox
+     * @param string $folder
+     * @param int $uid
+     * @return array|null
      */
     public static function fetchMessage(array $mailbox, string $folder, int $uid): ?array
     {
@@ -221,6 +246,10 @@ final class ImapMailboxClient
         ];
     }
 
+    /**
+     * Methode release connections.
+     * @return void
+     */
     public static function releaseConnections(): void
     {
         foreach (self::$connections as $connection) {
@@ -231,7 +260,10 @@ final class ImapMailboxClient
         self::$connections = [];
     }
 
-    /** @return list<array{path: string, label: string}> */
+    /**
+     * Methode fallback folders.
+     * @return array<string, mixed>
+     */
     public static function fallbackFolders(): array
     {
         return [
@@ -243,7 +275,12 @@ final class ImapMailboxClient
         ];
     }
 
-    /** @param array<string, mixed> $mailbox */
+    /**
+     * Methode acquire.
+     * @param array $mailbox
+     * @param string $folder
+     * @return mixed
+     */
     private static function acquire(array $mailbox, string $folder): mixed
     {
         self::configureTimeouts();
@@ -281,6 +318,10 @@ final class ImapMailboxClient
         return false;
     }
 
+    /**
+     * Methode clear imap errors.
+     * @return void
+     */
     private static function clearImapErrors(): void
     {
         if (function_exists('imap_errors')) {
@@ -291,6 +332,10 @@ final class ImapMailboxClient
         }
     }
 
+    /**
+     * Methode record imap error.
+     * @return void
+     */
     private static function recordImapError(): void
     {
         $parts = [];
@@ -314,6 +359,10 @@ final class ImapMailboxClient
         self::$lastError = $parts !== [] ? implode(' — ', array_unique($parts)) : 'IMAP-Verbindung fehlgeschlagen.';
     }
 
+    /**
+     * Methode configure timeouts.
+     * @return void
+     */
     private static function configureTimeouts(): void
     {
         static $configured = false;
@@ -327,6 +376,10 @@ final class ImapMailboxClient
         imap_timeout(IMAP_CLOSETIMEOUT, 5);
     }
 
+    /**
+     * Methode register shutdown.
+     * @return void
+     */
     private static function registerShutdown(): void
     {
         if (self::$shutdownRegistered) {
@@ -336,13 +389,22 @@ final class ImapMailboxClient
         register_shutdown_function([self::class, 'releaseConnections']);
     }
 
-    /** @param array<string, mixed> $mailbox */
+    /**
+     * Methode mailbox string.
+     * @param array $mailbox
+     * @param string $folder
+     * @return string
+     */
     private static function mailboxString(array $mailbox, string $folder): string
     {
         return self::serverRef($mailbox) . $folder;
     }
 
-    /** @param array<string, mixed> $mailbox */
+    /**
+     * Methode server ref.
+     * @param array $mailbox
+     * @return string
+     */
     private static function serverRef(array $mailbox): string
     {
         $port = max(1, min(65535, (int) ($mailbox['imap_port'] ?? 993)));
@@ -352,6 +414,12 @@ final class ImapMailboxClient
         return '{' . trim((string) ($mailbox['imap_host'] ?? '')) . ':' . $port . $flags . '}';
     }
 
+    /**
+     * Methode path from full mailbox.
+     * @param string $full
+     * @param string $ref
+     * @return string
+     */
     private static function pathFromFullMailbox(string $full, string $ref): string
     {
         if (str_starts_with($full, $ref)) {
@@ -361,6 +429,11 @@ final class ImapMailboxClient
         return MailFolderLabels::decodePath($full);
     }
 
+    /**
+     * Methode sort rank.
+     * @param string $path
+     * @return int
+     */
     private static function sortRank(string $path): int
     {
         if (MailFolderLabels::isInbox($path)) {
@@ -386,6 +459,11 @@ final class ImapMailboxClient
         return 5;
     }
 
+    /**
+     * Methode decode mime.
+     * @param string $value
+     * @return string
+     */
     private static function decodeMime(string $value): string
     {
         if ($value === '') {

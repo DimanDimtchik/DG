@@ -1,22 +1,32 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Crm Theme Presets.
+ */
 final class CrmThemePresets
 {
-    /** @return list<string> */
+    /**
+     * Methode color keys.
+     * @return array<string, mixed>
+     */
     public static function colorKeys(): array
     {
         return array_keys(self::defaultColors());
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode default colors.
+     * @return array<string, mixed>
+     */
     public static function defaultColors(): array
     {
         return self::presets()['kaffee_braun']['colors'];
     }
 
     /**
-     * @return array<string, array{name: string, desc: string, colors: array<string, string>}>
+     * Liefert vordefinierte Presets.
+     * @return array<string, array<string, string>>
      */
     public static function presets(): array
     {
@@ -168,7 +178,11 @@ final class CrmThemePresets
         ];
     }
 
-    /** @param array<string, string> $colors */
+    /**
+     * Methode expand colors.
+     * @param array $colors
+     * @return array<string, mixed>
+     */
     public static function expandColors(array $colors): array
     {
         $defaults = self::defaultColors();

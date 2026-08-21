@@ -1,10 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Mail Address Builder.
+ */
 final class MailAddressBuilder
 {
     /**
-     * @param array{first_name?: string, last_name?: string, login?: string} $person
+     * Führt aus: build local part.
+     * @param array $person
+     * @param int $collisionNr
+     * @return string
      */
     public static function buildLocalPart(array $person, int $collisionNr = 0): string
     {
@@ -19,7 +25,11 @@ final class MailAddressBuilder
     }
 
     /**
-     * @param array{first_name?: string, last_name?: string, login?: string} $person
+     * Führt aus: build email.
+     * @param array $person
+     * @param int $collisionNr
+     * @return string
+     * @throws InvalidArgumentException
      */
     public static function buildEmail(array $person, int $collisionNr = 0): string
     {
@@ -37,7 +47,10 @@ final class MailAddressBuilder
     }
 
     /**
-     * @param array{first_name?: string, last_name?: string, login?: string} $person
+     * Methode allocate unique email.
+     * @param array $person
+     * @return string
+     * @throws RuntimeException
      */
     public static function allocateUniqueEmail(array $person): string
     {
@@ -51,7 +64,11 @@ final class MailAddressBuilder
         throw new RuntimeException('Keine freie E-Mail-Adresse nach Formel gefunden.');
     }
 
-    /** @return array{first_name: string, last_name: string, login: string} */
+    /**
+     * Methode person context from contact.
+     * @param Contact $contact
+     * @return array<string, mixed>
+     */
     public static function personContextFromContact(Contact $contact): array
     {
         return [
@@ -62,7 +79,10 @@ final class MailAddressBuilder
     }
 
     /**
-     * @param array{first_name?: string, last_name?: string, login?: string} $person
+     * Methode matches formula.
+     * @param string $email E-Mail-Adresse
+     * @param array $person
+     * @return bool
      */
     public static function matchesFormula(string $email, array $person): bool
     {
@@ -90,6 +110,12 @@ final class MailAddressBuilder
         return false;
     }
 
+    /**
+     * Prüft: is email taken.
+     * @param string $email
+     * @param int|null $excludeContactId
+     * @return bool
+     */
     public static function isEmailTaken(string $email, ?int $excludeContactId = null): bool
     {
         $email = strtolower(trim($email));
@@ -102,7 +128,11 @@ final class MailAddressBuilder
             || ContactCompanyLinkRepository::isWorkEmailInUse($email, $excludeContactId);
     }
 
-    /** @return list<array{email: string, label: string}> */
+    /**
+     * Methode entered mail candidates.
+     * @param Contact $contact
+     * @return array<string, mixed>
+     */
     private static function enteredMailCandidates(Contact $contact): array
     {
         $candidates = [
@@ -125,9 +155,9 @@ final class MailAddressBuilder
     }
 
     /**
-     * Prüft, ob eine automatische Adresse angelegt werden darf (ohne Kollisions-Zähler).
-     *
-     * @return array{ok: bool, email: string, reason: string}
+     * Methode evaluate auto create.
+     * @param Contact $contact
+     * @return array<string, mixed>
      */
     public static function evaluateAutoCreate(Contact $contact): array
     {
@@ -198,7 +228,9 @@ final class MailAddressBuilder
     }
 
     /**
-     * @param array{first_name?: string, last_name?: string, login?: string} $person
+     * Methode preview.
+     * @param array $person
+     * @return string
      */
     public static function preview(array $person): string
     {

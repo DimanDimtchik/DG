@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** Platzhalter für Kalender-E-Mail-Vorlagen. */
 final class CalendarEmailTokens
 {
-    /** @return array<string, string> */
+    /**
+     * Methode labels.
+     * @return array<string, mixed>
+     */
     public static function labels(): array
     {
         return [
@@ -18,11 +21,16 @@ final class CalendarEmailTokens
             '{firma}' => 'Firmenname',
             '{firma_adresse}' => 'Firmenadresse (mehrzeilig)',
             '{firma_website}' => 'Website der Firma',
-            '{buchung_id}' => 'Buchungsnummer',
+            '{buchung_id}' => 'Buchungsnummer (z. B. DG-7K2M9P4Q)',
+            '{buchungsnummer}' => 'Buchungsnummer (Alias)',
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode context for booking.
+     * @param Booking $booking
+     * @return array<string, mixed>
+     */
     public static function contextForBooking(Booking $booking): array
     {
         $company = CompanySettings::config();
@@ -34,6 +42,7 @@ final class CalendarEmailTokens
         $employee = $booking->employeeId > 0 ? CalendarStaffRepository::getEmployeeById($booking->employeeId) : null;
         $employeeName = $employee ? trim((string) ($employee['name'] ?? '')) : '';
         $articleTitle = $booking->articleId > 0 ? CalendarArticleRepository::title($booking->articleId) : '';
+        $code = $booking->publicCode();
 
         return [
             'termin_datum' => $formatted['datum'],
@@ -46,11 +55,16 @@ final class CalendarEmailTokens
             'firma' => $company['name'] !== '' ? $company['name'] : CompanySettings::displayName(),
             'firma_adresse' => $address,
             'firma_website' => trim($company['website'] ?? ''),
-            'buchung_id' => (string) $booking->id,
+            'buchung_id' => $code,
+            'buchungsnummer' => $code,
         ];
     }
 
-    /** @return array{datum: string, zeit: string} */
+    /**
+     * Methode format german slot.
+     * @param string $slotDatetime
+     * @return array<string, mixed>
+     */
     private static function formatGermanSlot(string $slotDatetime): array
     {
         $ts = strtotime($slotDatetime);
@@ -66,7 +80,10 @@ final class CalendarEmailTokens
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode demo context.
+     * @return array<string, mixed>
+     */
     public static function demoContext(): array
     {
         $company = CompanySettings::config();
@@ -86,10 +103,17 @@ final class CalendarEmailTokens
             'firma' => $company['name'] !== '' ? $company['name'] : 'Musterfirma GmbH',
             'firma_adresse' => $address !== '' ? $address : "Musterstraße 1\n12345 Musterstadt",
             'firma_website' => trim($company['website'] ?? '') !== '' ? trim($company['website']) : 'https://www.beispiel.de',
-            'buchung_id' => '1042',
+            'buchung_id' => 'DG-7K2M9P4Q',
+            'buchungsnummer' => 'DG-7K2M9P4Q',
         ];
     }
 
+    /**
+     * Methode replace.
+     * @param string $text
+     * @param array|null $context
+     * @return string
+     */
     public static function replace(string $text, ?array $context = null): string
     {
         $context = $context ?? self::demoContext();
@@ -101,7 +125,10 @@ final class CalendarEmailTokens
         return strtr($text, $map);
     }
 
-    /** @return list<array{title: string, items: list<array{label: string, codes: list<string>}>}> */
+    /**
+     * Methode reference groups.
+     * @return array<string, mixed>
+     */
     public static function referenceGroups(): array
     {
         $items = [];

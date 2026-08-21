@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Department Repository.
+ */
 final class DepartmentRepository
 {
     /**
@@ -99,8 +102,12 @@ final class DepartmentRepository
         return $departments;
     }
 
-    /** @return list<User> */
-    public static function assignableEmployees(): array
+    /**
+     * assignableEmployees.
+     *
+     * @return list<User>
+     */
+        public static function assignableEmployees(): array
     {
         $employeeRole = (string) App::config('roles.employee', 'dg_eigenmitarbeiter');
         $users = [];
@@ -114,7 +121,11 @@ final class DepartmentRepository
         return $users;
     }
 
-    /** @return list<int> */
+        /**
+     * Liefert Benutzer-IDs einer Abteilung
+     * @param string $departmentId Abteilungs-ID
+     * @return list<int>
+     */
     public static function userIdsForDepartment(string $departmentId): array
     {
         $departmentId = trim($departmentId);
@@ -130,6 +141,11 @@ final class DepartmentRepository
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }
 
+    /**
+     * Liefert den Abteilungsnamen
+     * @param string $departmentId Abteilungs-ID
+     * @return string
+     */
     public static function departmentName(string $departmentId): string
     {
         $departmentId = trim($departmentId);
@@ -144,6 +160,11 @@ final class DepartmentRepository
         return $name ? (string) $name : '';
     }
 
+    /**
+     * Prüft, ob eine Abteilung existiert
+     * @param string $departmentId Abteilungs-ID
+     * @return bool
+     */
     public static function exists(string $departmentId): bool
     {
         $departmentId = trim($departmentId);
@@ -157,8 +178,12 @@ final class DepartmentRepository
         return (bool) $stmt->fetchColumn();
     }
 
-    /** @return list<array{id: string, name: string}> */
-    public static function optionsForSelect(): array
+    /**
+     * optionsForSelect.
+     *
+     * @return list<array{id: string, name: string}>
+     */
+        public static function optionsForSelect(): array
     {
         $options = [];
         foreach (self::allWithMembers() as $department) {
@@ -171,7 +196,13 @@ final class DepartmentRepository
         return $options;
     }
 
-    /** @param array<string, mixed> $input */
+        /**
+     * Speichert Formulardaten
+     * @param array $input Formulardaten
+     * @return void
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     */
     public static function saveFromPost(array $input): void
     {
         if (!Database::isConfigured()) {
@@ -251,9 +282,11 @@ final class DepartmentRepository
         }
     }
 
-    /**
-     * @param array<int|string, mixed> $raw
+        /**
+     * Bereinigt Abteilungs-Formulardaten
+     * @param array $raw Rohdaten
      * @return list<array{id: string, name: string, description: string, members: list<array{user_id: int, role: string}>}>
+     * @throws InvalidArgumentException
      */
     private static function sanitizeDepartments(array $raw): array
     {
@@ -329,7 +362,12 @@ final class DepartmentRepository
         return $out;
     }
 
-    /** @param list<array{id: string}> $batch */
+        /**
+     * Prüft, ob eine ID bereits in der Charge vorkommt
+     * @param string $id Datensatz-ID
+     * @param array $batch Aktuelle Charge
+     * @return bool
+     */
     private static function idInCurrentBatch(string $id, array $batch): bool
     {
         foreach ($batch as $row) {
@@ -341,7 +379,12 @@ final class DepartmentRepository
         return false;
     }
 
-    /** @param array<string, true> $used */
+        /**
+     * Erzeugt eine eindeutige Abteilungs-ID
+     * @param string $name Name
+     * @param mixed $used Bereits vergebene IDs
+     * @return string
+     */
     private static function generateId(string $name, array &$used): string
     {
         $slug = preg_replace('/[^a-z0-9]+/', '-', strtolower($name)) ?? '';
@@ -363,6 +406,10 @@ final class DepartmentRepository
         return $id;
     }
 
+    /**
+     * Stellt Standarddaten in der Datenbank sicher
+     * @return void
+     */
     public static function ensureSeeded(): void
     {
         if (!self::useDatabase()) {
@@ -377,7 +424,11 @@ final class DepartmentRepository
         self::ensureMissingDefaults();
     }
 
-    /** Fehlende Standard-Abteilungen ergänzen (bestehende bleiben unverändert). */
+        /**
+     * Fehlende Standard-Abteilungen ergänzen (bestehende bleiben unverändert).
+     * @return int
+     * @throws RuntimeException
+     */
     public static function ensureMissingDefaults(): int
     {
         if (!Database::isConfigured()) {
@@ -453,12 +504,20 @@ final class DepartmentRepository
         return count($toInsert);
     }
 
-    /** @return list<array{id: string, name: string, description: string, sort_order: int, members: list<array{user_id: int, role: string}>}> */
-    private static function fromFile(): array
+    /**
+     * fromFile.
+     *
+     * @return list<array{id: string, name: string, description: string, sort_order: int, members: list<array{user_id: int, role: string}>}>
+     */
+        private static function fromFile(): array
     {
         return DefaultDepartments::withModulesAndMembers(DefaultDepartments::membersFromConfigFile());
     }
 
+    /**
+     * Prüft, ob die Abteilungstabelle verfügbar ist
+     * @return bool
+     */
     private static function useDatabase(): bool
     {
         if (!Database::isConfigured()) {

@@ -59,64 +59,96 @@
     container.hidden = false;
   }
 
+  function applyIbanSuggestion(card, suggestion) {
+    const bankNameInput = findInput(card, 'dg-bank-name');
+    const bicInput = findInput(card, 'dg-bank-bic');
+    let changed = false;
+
+    if (bicInput && bicInput.value.trim() === '' && suggestion.bic) {
+      bicInput.value = suggestion.bic;
+      bicInput.dispatchEvent(new Event('input', { bubbles: true }));
+      bicInput.dispatchEvent(new Event('change', { bubbles: true }));
+      changed = true;
+    }
+    if (bankNameInput && bankNameInput.value.trim() === '' && suggestion.bankName) {
+      bankNameInput.value = suggestion.bankName;
+      bankNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      bankNameInput.dispatchEvent(new Event('change', { bubbles: true }));
+      changed = true;
+    }
+
+    return changed;
+  }
+
+  function enrichFromIban(card, options) {
+    const opts = options || {};
+    const input = findInput(card, 'dg-bank-iban');
+    if (!input) {
+      return Promise.resolve(false);
+    }
+
+    const iban = input.value;
+    if (iban.replace(/\s/g, '').length < 12) {
+      return Promise.resolve(false);
+    }
+
+    return postBank('iban', iban).then((response) => {
+      if (!response.success) {
+        return false;
+      }
+
+      const data = response.data || {};
+      if (data.suggestion) {
+        const changed = applyIbanSuggestion(card, data.suggestion);
+        if (!opts.silent) {
+          const hint = findSuggest(card, 'dg-bank-iban-suggest');
+          if (hint) {
+            const label = data.suggestion.bankName + (data.suggestion.bic ? ' (' + data.suggestion.bic + ')' : '');
+            hint.innerHTML =
+              '<p class="dg-bank-hint">' +
+              escapeHtml((changed ? 'Aus IBAN übernommen: ' : 'Aus IBAN erkannt: ') + label) +
+              ' <button type="button" class="dg-bank-apply">Erneut übernehmen</button></p>';
+            hint.hidden = false;
+            hint.querySelector('.dg-bank-apply')?.addEventListener('click', (e) => {
+              e.preventDefault();
+              applyIbanSuggestion(card, data.suggestion);
+            });
+          }
+        }
+        if (data.valid === false && iban.replace(/\s/g, '').length >= 15) {
+          input.classList.add('dg-bank-invalid');
+        } else {
+          input.classList.remove('dg-bank-invalid');
+        }
+        return changed;
+      }
+
+      if (!opts.silent) {
+        const hint = findSuggest(card, 'dg-bank-iban-suggest');
+        if (hint) {
+          hint.innerHTML = '<p class="dg-bank-hint dg-bank-hint-warn">Keine Bank zur IBAN gefunden.</p>';
+          hint.hidden = false;
+        }
+      }
+      return false;
+    });
+  }
+
   function handleIban(card) {
     const input = findInput(card, 'dg-bank-iban');
     const hint = findSuggest(card, 'dg-bank-iban-suggest');
-    if (!input || !hint) {
+    if (!input) {
       return;
     }
     const iban = input.value;
     if (iban.replace(/\s/g, '').length < 12) {
-      hint.innerHTML = '';
-      hint.hidden = true;
+      if (hint) {
+        hint.innerHTML = '';
+        hint.hidden = true;
+      }
       return;
     }
-
-    postBank('iban', iban).then((response) => {
-      if (!response.success) {
-        return;
-      }
-      const data = response.data || {};
-      if (data.suggestion) {
-        const bankNameInput = findInput(card, 'dg-bank-name');
-        const bicInput = findInput(card, 'dg-bank-bic');
-
-        // Leere Felder automatisch aus der IBAN füllen (BIC + Bankname).
-        let autoFilled = false;
-        if (bicInput && bicInput.value.trim() === '' && data.suggestion.bic) {
-          bicInput.value = data.suggestion.bic;
-          autoFilled = true;
-        }
-        if (bankNameInput && bankNameInput.value.trim() === '' && data.suggestion.bankName) {
-          bankNameInput.value = data.suggestion.bankName;
-          autoFilled = true;
-        }
-
-        const label = data.suggestion.bankName + (data.suggestion.bic ? ' (' + data.suggestion.bic + ')' : '');
-        hint.innerHTML =
-          '<p class="dg-bank-hint">' +
-          escapeHtml((autoFilled ? 'Aus IBAN übernommen: ' : 'Aus IBAN erkannt: ') + label) +
-          ' <button type="button" class="dg-bank-apply">Erneut übernehmen</button></p>';
-        hint.hidden = false;
-        hint.querySelector('.dg-bank-apply')?.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (bankNameInput) {
-            bankNameInput.value = data.suggestion.bankName;
-          }
-          if (bicInput) {
-            bicInput.value = data.suggestion.bic;
-          }
-        });
-      } else {
-        hint.innerHTML = '<p class="dg-bank-hint dg-bank-hint-warn">Keine Bank zur IBAN gefunden.</p>';
-        hint.hidden = false;
-      }
-      if (data.valid === false && iban.replace(/\s/g, '').length >= 15) {
-        input.classList.add('dg-bank-invalid');
-      } else {
-        input.classList.remove('dg-bank-invalid');
-      }
-    });
+    enrichFromIban(card, { silent: false });
   }
 
   function handleBankName(card) {
@@ -218,5 +250,5 @@
     scope.querySelectorAll('[data-bank-card]').forEach(bindBlock);
   }
 
-  window.dgBankAutocomplete = { init, bindBlock };
+  window.dgBankAutocomplete = { init, bindBlock, enrichFromIban };
 })();

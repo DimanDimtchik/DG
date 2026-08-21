@@ -7,19 +7,31 @@ final class CalendarArticleImportReader
     /** @var list<string> */
     private const SUPPORTED_EXTENSIONS = ['csv', 'txt', 'xlsx', 'xls', 'xml', 'json', 'pdf'];
 
-    /** @return list<string> */
+    /**
+     * Methode supported extensions.
+     * @return array<string, mixed>
+     */
     public static function supportedExtensions(): array
     {
         return self::SUPPORTED_EXTENSIONS;
     }
 
+    /**
+     * Prüft: is supported extension.
+     * @param string $extension
+     * @return bool
+     */
     public static function isSupportedExtension(string $extension): bool
     {
         return in_array(strtolower($extension), self::SUPPORTED_EXTENSIONS, true);
     }
 
     /**
-     * @return list<list<string>>
+     * Methode read file.
+     * @param string $path
+     * @param string $extension
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     public static function readFile(string $path, string $extension): array
     {
@@ -46,6 +58,13 @@ final class CalendarArticleImportReader
         };
     }
 
+    /**
+     * Führt aus: resolve format.
+     * @param string $path
+     * @param string $extension
+     * @return string
+     * @throws InvalidArgumentException
+     */
     private static function resolveFormat(string $path, string $extension): string
     {
         $head = file_get_contents($path, false, null, 0, 8);
@@ -71,7 +90,10 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Methode read delimited file.
+     * @param string $path
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function readDelimitedFile(string $path): array
     {
@@ -84,7 +106,9 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Führt aus: parse delimited with encoding detection.
+     * @param string $rawContent
+     * @return array<string, mixed>
      */
     public static function parseDelimitedWithEncodingDetection(string $rawContent): array
     {
@@ -116,7 +140,11 @@ final class CalendarArticleImportReader
         return $lastRows;
     }
 
-    /** @param list<string> $row */
+    /**
+     * Methode row looks like header.
+     * @param array $row
+     * @return bool
+     */
     private static function rowLooksLikeHeader(array $row): bool
     {
         $joined = strtolower(implode(' ', $row));
@@ -128,7 +156,9 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Führt aus: parse delimited records.
+     * @param string $content
+     * @return array<string, mixed>
      */
     private static function parseDelimitedRecords(string $content): array
     {
@@ -159,6 +189,11 @@ final class CalendarArticleImportReader
         return $rows;
     }
 
+    /**
+     * Methode detect delimiter from content.
+     * @param string $content
+     * @return string
+     */
     private static function detectDelimiterFromContent(string $content): string
     {
         $firstLine = strtok($content, "\r\n");
@@ -182,7 +217,11 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Methode read xlsx.
+     * @param string $path
+     * @return array<string, mixed>
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     private static function readXlsx(string $path): array
     {
@@ -206,6 +245,11 @@ final class CalendarArticleImportReader
         return self::parseXlsxSheet($sheetXml, $sharedStrings);
     }
 
+    /**
+     * Liefert first sheet path.
+     * @param ZipArchive $zip
+     * @return string
+     */
     private static function findFirstSheetPath(ZipArchive $zip): string
     {
         $workbook = $zip->getFromName('xl/workbook.xml');
@@ -240,7 +284,11 @@ final class CalendarArticleImportReader
         return 'xl/worksheets/sheet1.xml';
     }
 
-    /** @return list<string> */
+    /**
+     * Methode read xlsx shared strings.
+     * @param ZipArchive $zip
+     * @return array<string, mixed>
+     */
     private static function readXlsxSharedStrings(ZipArchive $zip): array
     {
         $xml = $zip->getFromName('xl/sharedStrings.xml');
@@ -271,8 +319,11 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @param list<string> $sharedStrings
-     * @return list<list<string>>
+     * Führt aus: parse xlsx sheet.
+     * @param string $xml
+     * @param array $sharedStrings
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function parseXlsxSheet(string $xml, array $sharedStrings): array
     {
@@ -311,7 +362,11 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @param list<string> $sharedStrings
+     * Methode xlsx cell value.
+     * @param SimpleXMLElement $cell
+     * @param array $sharedStrings
+     * @param string $ns
+     * @return string
      */
     private static function xlsxCellValue(SimpleXMLElement $cell, array $sharedStrings, string $ns): string
     {
@@ -331,6 +386,11 @@ final class CalendarArticleImportReader
         return (string) ($children->v ?? '');
     }
 
+    /**
+     * Column Index From Cell Ref.
+     * @param string $cellRef
+     * @return int
+     */
     private static function columnIndexFromCellRef(string $cellRef): int
     {
         if (!preg_match('/^([A-Z]+)/i', strtoupper($cellRef), $match)) {
@@ -348,7 +408,10 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Methode read xml file.
+     * @param string $path
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function readXmlFile(string $path): array
     {
@@ -388,8 +451,10 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @param list<SimpleXMLElement> $elements
-     * @return list<list<string>>
+     * Methode xml elements to rows.
+     * @param array $elements
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function xmlElementsToRows(array $elements): array
     {
@@ -433,7 +498,12 @@ final class CalendarArticleImportReader
         return $rows;
     }
 
-    /** @return list<list<string>> */
+    /**
+     * Methode read spreadsheet ml.
+     * @param SimpleXMLElement $xml
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     */
     private static function readSpreadsheetMl(SimpleXMLElement $xml): array
     {
         $rows = [];
@@ -458,7 +528,10 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Methode read json file.
+     * @param string $path
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function readJsonFile(string $path): array
     {
@@ -529,7 +602,10 @@ final class CalendarArticleImportReader
     }
 
     /**
-     * @return list<list<string>>
+     * Methode read pdf file.
+     * @param string $path
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function readPdfFile(string $path): array
     {
@@ -564,6 +640,11 @@ final class CalendarArticleImportReader
         return $rows;
     }
 
+    /**
+     * Methode extract pdf text.
+     * @param string $binary
+     * @return string
+     */
   private static function extractPdfText(string $binary): string
     {
         $text = self::extractPdfTextFromContent($binary);
@@ -583,6 +664,11 @@ final class CalendarArticleImportReader
         return $text;
     }
 
+    /**
+     * Extract Pdf Text From Content.
+     * @param string $content
+     * @return string
+     */
     private static function extractPdfTextFromContent(string $content): string
     {
         $parts = [];
@@ -603,13 +689,20 @@ final class CalendarArticleImportReader
         return implode("\n", $parts);
     }
 
+    /**
+     * Methode unescape pdf string.
+     * @param string $value
+     * @return string
+     */
     private static function unescapePdfString(string $value): string
     {
         return stripcslashes(str_replace(['\\(', '\\)', '\\n', '\\r', '\\t'], ["\n", ')', "\n", "\r", "\t"], $value));
     }
 
     /**
-     * @return list<list<string>>
+     * Führt aus: parse pdf lines as rows.
+     * @param string $text
+     * @return array<string, mixed>
      */
     private static function parsePdfLinesAsRows(string $text): array
     {
@@ -632,6 +725,11 @@ final class CalendarArticleImportReader
         return $rows;
     }
 
+    /**
+     * Führt aus: normalize encoding.
+     * @param string $content
+     * @return string
+     */
     public static function normalizeEncoding(string $content): string
     {
         if (str_starts_with($content, "\xFF\xFE")) {
@@ -663,6 +761,11 @@ final class CalendarArticleImportReader
         return $content;
     }
 
+    /**
+     * Looks Like Utf16Le.
+     * @param string $content
+     * @return bool
+     */
     private static function looksLikeUtf16Le(string $content): bool
     {
         $len = min(strlen($content), 4000);
@@ -673,6 +776,11 @@ final class CalendarArticleImportReader
         return substr_count(substr($content, 0, $len), "\0") > ($len / 10);
     }
 
+    /**
+     * Convert Utf16Le To Utf8.
+     * @param string $content
+     * @return string
+     */
     private static function convertUtf16LeToUtf8(string $content): string
     {
         if (function_exists('mb_convert_encoding')) {
@@ -692,6 +800,11 @@ final class CalendarArticleImportReader
         return $content;
     }
 
+    /**
+     * Methode clean cell.
+     * @param mixed $value
+     * @return string
+     */
     public static function cleanCell(mixed $value): string
     {
         $value = str_replace("\0", '', (string) $value);

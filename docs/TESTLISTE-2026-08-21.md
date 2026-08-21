@@ -1,0 +1,134 @@
+# Testliste – Stand nach 2026-08-20/21
+
+> Zum Abhaken beim manuellen Test. Nach Deploy immer **Shift+Strg+R**.  
+> CRM-Version erwartet: **1.0.12** · Shop: Phase 1 auf **shop.ganz-soft.de**
+
+### Instanzen (CRM)
+
+| Kurz | URL |
+|------|-----|
+| Master | https://dg.ganz-om.de |
+| ganz-soft Live | https://ganz-soft.de |
+| Kontur | https://kontur-cosmetics.de |
+| Shop | https://shop.ganz-soft.de |
+
+Empfehlung: **eine** CRM-Instanz gründlich (z. B. ganz-soft.de), die anderen nur Spot-Check (Login + Statistik-Menü + eine öffentliche Seite).
+
+---
+
+## A. CRM – Version & Navigation
+
+- [ ] Login funktioniert
+- [ ] Unter Website erscheint Menüpunkt **Statistik**
+- [ ] Version irgendwo / Update-Hinweis zeigt **1.0.12** (falls sichtbar)
+- [ ] Seiten, Formulare, Menü, Kopf & Fuß öffnen ohne Fehler
+
+---
+
+## B. Website → Statistik (lokal)
+
+Voraussetzung: Cookie-Banner auf der **öffentlichen** Website.
+
+### B1 Ohne Statistik-Consent
+
+- [ ] Öffentliche Seite öffnen, Cookies **ablehnen** bzw. Statistik nicht erlauben
+- [ ] Seite neu laden (normale Navigation)
+- [ ] Im CRM unter **Website → Statistik**: Aufrufzahl steigt **nicht** (oder nur durch andere Besucher mit Consent)
+
+### B2 Mit Statistik-Consent
+
+- [ ] Öffentliche Seite, Cookie-Banner: **Statistik akzeptieren**
+- [ ] 2–3 verschiedene Seiten/Pfade aufrufen
+- [ ] CRM → **Website → Statistik**
+- [ ] „Heute“ / Balken / Top-Pfade zeigen neue Aufrufe
+- [ ] Umschalter **7 / 30 / 90 Tage** wechselt die Ansicht ohne Fehler
+- [ ] Referrer: von einer **fremden** Domain kommen (z. B. Link aus Notepad) – optional Top-Referrer prüfen
+- [ ] **Vorschau** einer Seite (`/vorschau/…`): zählt **nicht** als Aufruf
+
+### B3 Google-Links
+
+- [ ] Unter **Kopf & Fuß**: GA-Mess-ID und/oder GTM-Container leer → Statistik zeigt Hinweis + Link zu Kopf & Fuß
+- [ ] IDs eintragen, speichern → Statistik zeigt Buttons **Google Analytics** / **Tag Manager** (öffnen Google-Login, kein CRM-Fehler)
+
+---
+
+## C. Analytics-Skripte (nur mit Consent)
+
+- [ ] Consent **an**: im Browser DevTools → Netzwerk: Requests zu `googletagmanager.com` / `google-analytics.com` (wenn IDs gesetzt)
+- [ ] Consent **aus** / abgelehnt: **keine** GA/GTM-Requests
+- [ ] Freies Header-/Footer-JS (falls genutzt) lädt weiterhin unabhängig vom Statistik-Consent
+
+---
+
+## D. Formulare (falls noch nicht getestet)
+
+- [ ] Website → Formulare: Liste öffnet
+- [ ] Formular anlegen / bearbeiten, Felder speichern
+- [ ] Formular in einer Seite einbinden (Block oder Shortcode)
+- [ ] Öffentlich absenden mit **Mathe-Captcha** (richtig / falsch)
+- [ ] Eingang erscheint unter Formular-Inbox
+- [ ] Datei-Upload (wenn Feld vorhanden): Datei kommt an / Download im CRM
+
+---
+
+## E. Shop (shop.ganz-soft.de) – Phase 1
+
+### E1 Erreichbarkeit
+
+- [ ] https://shop.ganz-soft.de/ lädt (kein WordPress, kein 500)
+- [ ] https://shop.ganz-soft.de/preise lädt
+- [ ] Alte WP-URLs (z. B. `/wp-admin`) → 404 oder Shop-404, **kein** WP-Login
+
+### E2 Preise
+
+- [ ] Drei Pakete: **Starter 29 €**, **Business 49 €**, **Premium 89 €** / Monat netto
+- [ ] Hinweis **zzgl. 19 % MwSt.**
+- [ ] Toggle **Monatlich** / **Jährlich**
+- [ ] Jährlich: Preis = 11× Monat (29→319, 49→539, 89→979), Badge „1 Monat gratis“
+- [ ] „Jetzt starten“ führt zu `/checkout?plan=…`
+
+### E3 Checkout (ohne Stripe)
+
+- [ ] Tarif + Laufzeit vorausgefüllt / umschaltbar
+- [ ] Leeres Absenden → Fehlermeldungen (Firma, Domain, Name, E-Mail)
+- [ ] Ungültige Domain (z. B. `firma` ohne TLD) → Fehler
+- [ ] Gültige Testdaten → „Angaben geprüft“ / Hinweis Phase 2 (noch **keine** echte Zahlung, keine KDV-Anlage)
+- [ ] Handy/schmale Breite: Layout nutzbar
+
+### E4 Sicherheit kurz
+
+- [ ] https://shop.ganz-soft.de/config/database.local.php → **403/gesperrt**, kein Klartext-Passwort
+
+---
+
+## F. Spot-Check andere CRM-Instanzen
+
+Je Instanz:
+
+- [ ] Login
+- [ ] Website → Statistik öffnet
+- [ ] Eine öffentliche Seite lädt
+- [ ] Cookie-Banner erscheint (falls noch nicht entschieden)
+
+---
+
+## G. Bekannte Grenzen (kein Bug, wenn so)
+
+| Thema | Erwartung |
+|--------|-----------|
+| Shop-Zahlung | Noch **kein** Stripe |
+| Shop → KDV | Noch **keine** automatische Provisionierung |
+| Statistik ohne Consent | Bleibt leer / steigt nicht |
+| Preise Shop vs. Marketing | Gleich wie [ganz-soft.de/preise](https://ganz-soft.de/preise); Shop-Jahresabo zusätzlich mit ×11 |
+
+---
+
+## Schnellpfad (ca. 15 Minuten)
+
+1. Shop: Start + Preise Monat/Jahr + ein Checkout mit Testdaten  
+2. CRM (eine Instanz): Statistik-Menü  
+3. Öffentlich: Consent an → 2 Seiten klicken → Statistik prüfen  
+4. Consent aus / neu (anderes Profil/Inkognito): keine GA-Requests  
+5. Optional: ein Formular absenden  
+
+Wenn etwas rot wird: URL, was du geklickt hast, und Screenshot/Fehlertext notieren.

@@ -7,7 +7,11 @@ declare(strict_types=1);
  */
 final class LedgerAccounts
 {
-    /** Erlösrichtung (Ertrag): Einnahme, Einnahmenminderung, Kundengutschrift. */
+        /**
+     * Erlösrichtung (Ertrag): Einnahme, Einnahmenminderung, Kundengutschrift.
+     * @param string $voucherType Belegtyp
+     * @return bool
+     */
     public static function isIncomeDirection(string $voucherType): bool
     {
         return in_array(
@@ -17,7 +21,13 @@ final class LedgerAccounts
         );
     }
 
-    /** Geldkonto / Gegenkonto je Zahlungsart und Belegrichtung. */
+        /**
+     * Geldkonto / Gegenkonto je Zahlungsart und Belegrichtung.
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param string $voucherType Belegtyp
+     * @param string $paymentStatus Zahlungsstatus
+     * @return string
+     */
     public static function contraAccount(string $skrType, string $voucherType, string $paymentStatus): string
     {
         $skr = ChartOfAccountsSettings::sanitizeSkrType($skrType);
@@ -48,7 +58,13 @@ final class LedgerAccounts
         };
     }
 
-    /** Steuerkonto (Vorsteuer bei Ausgabe, Umsatzsteuer bei Einnahme) je Satz. */
+        /**
+     * Steuerkonto (Vorsteuer bei Ausgabe, Umsatzsteuer bei Einnahme) je Satz.
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param string $voucherType Belegtyp
+     * @param int $taxRate Steuersatz in Prozent
+     * @return string
+     */
     public static function taxAccount(string $skrType, string $voucherType, int $taxRate): string
     {
         $skr = ChartOfAccountsSettings::sanitizeSkrType($skrType);
@@ -69,15 +85,19 @@ final class LedgerAccounts
         return $taxRate === 7 ? '1571' : '1576';
     }
 
-    /** Sammelkonto für Saldenvorträge (Eröffnungsbilanzwerte). */
+        /**
+     * Sammelkonto für Saldenvorträge (Eröffnungsbilanzwerte).
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return string
+     */
     public static function carryForwardAccount(string $skrType): string
     {
         return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '9000' : '9000';
     }
 
-    /**
+        /**
      * Buchungsseite der Primärzeile (Aufwand/Ertrag) je Belegart.
-     *
+     * @param string $voucherType Belegtyp
      * @return 'debit'|'credit'
      */
     public static function primarySide(string $voucherType): string
@@ -91,26 +111,40 @@ final class LedgerAccounts
         };
     }
 
+    /**
+     * Liefert die gegenüberliegende Buchungsseite
+     * @param string $side Buchungsseite
+     * @return string
+     */
     public static function oppositeSide(string $side): string
     {
         return $side === 'debit' ? 'credit' : 'debit';
     }
 
-    /** Ist das Konto ein Bestandskonto (Aktiva/Passiva → Saldenvortrag ins Folgejahr)? */
+        /**
+     * Ist das Konto ein Bestandskonto (Aktiva/Passiva → Saldenvortrag ins Folgejahr)?
+     * @param string $section Kontenabschnitt
+     * @return bool
+     */
     public static function isBalanceSheetSection(string $section): bool
     {
         return in_array($section, ['aktiva', 'passiva'], true);
     }
 
-    /** Rechnungsabgrenzungskonten (ARAP/PRAP) über alle Kontenrahmen. */
+        /**
+     * Rechnungsabgrenzungskonten (ARAP/PRAP) über alle Kontenrahmen.
+     * @return array
+     */
     public static function accrualAccounts(): array
     {
         return ['0980', '0990', '1900', '3900'];
     }
 
-    /**
+        /**
      * Konto ins Folgejahr vortragen? Bestandskonten + Rechnungsabgrenzung
-     * (auch wenn das RAP-Konto nicht im Kontenrahmen klassifiziert ist).
+     * @param string $account Kontonummer
+     * @param string $section Kontenabschnitt
+     * @return bool
      */
     public static function carriesForward(string $account, string $section): bool
     {
@@ -121,7 +155,11 @@ final class LedgerAccounts
         return in_array($account, self::accrualAccounts(), true);
     }
 
-    /** Ist das Konto ein Erfolgskonto (Aufwand/Ertrag → GuV, kein Vortrag)? */
+        /**
+     * Ist das Konto ein Erfolgskonto (Aufwand/Ertrag → GuV, kein Vortrag)?
+     * @param string $section Kontenabschnitt
+     * @return bool
+     */
     public static function isProfitLossSection(string $section): bool
     {
         return in_array($section, ['aufwand', 'ertrag'], true);

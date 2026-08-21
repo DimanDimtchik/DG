@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Website im Aufbau">
+  <!-- Dekorative Aufbau-Grafik (Gebäude + Gerüst + Kran), hellbeige -->
+  <rect width="640" height="420" fill="#f4efe8"/>
+  <g fill="none" stroke="#6e6258" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Boden -->
+    <path d="M40 340 H600" opacity="0.9"/>
+    <!-- Gerüst links/rechts -->
+    <path d="M120 340 V120 M520 340 V120" opacity="0.45"/>
+    <path d="M120 120 H520 M120 190 H520 M120 260 H520" opacity="0.4"/>
+    <!-- Gebäude -->
+    <path d="M200 340 V160 H440 V340" opacity="0.95"/>
+    <path d="M175 160 L320 70 L465 160" opacity="0.95"/>
+    <!-- Fenster -->
+    <rect x="235" y="200" width="50" height="50" opacity="0.55"/>
+    <rect x="355" y="200" width="50" height="50" opacity="0.55"/>
+    <!-- Tür-Andeutung -->
+    <path d="M300 340 V280 H340 V340" opacity="0.7"/>
+    <!-- Kran -->
+    <path d="M320 70 V20 H470" opacity="0.9"/>
+    <path d="M470 20 V70" opacity="0.65" stroke-dasharray="8 10"/>
+    <circle cx="470" cy="78" r="6" fill="#6e6258" stroke="none" opacity="0.75"/>
+  </g>
+</svg>

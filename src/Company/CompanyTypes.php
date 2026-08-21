@@ -1,10 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Rechtsformen und Unternehmenstypen (Labels für Formulare).
+ */
 final class CompanyTypes
 {
-    /** @return array<string, string> */
-    public static function labels(): array
+    /**
+     * Liefert Bezeichnungen.
+     *
+     * @return array<string, string>
+     */
+        public static function labels(): array
     {
         return [
             'gewerbetreibender' => 'Gewerbetreibender',

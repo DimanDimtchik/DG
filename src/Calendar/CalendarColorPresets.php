@@ -1,9 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Calendar Color Presets.
+ */
 final class CalendarColorPresets
 {
-    /** @return array<string, array{name: string, desc: string, colors: array<string, string>}> */
+    /**
+     * Liefert vordefinierte Presets.
+     * @return array<string, array<string, string>>
+     */
     public static function presets(): array
     {
         return [
@@ -114,13 +120,19 @@ final class CalendarColorPresets
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode default colors.
+     * @return array<string, mixed>
+     */
     public static function defaultColors(): array
     {
         return self::presets()['kaffee_braun']['colors'];
     }
 
-    /** @return list<string> */
+    /**
+     * Methode color keys.
+     * @return array<string, mixed>
+     */
     public static function colorKeys(): array
     {
         return array_keys(self::defaultColors());

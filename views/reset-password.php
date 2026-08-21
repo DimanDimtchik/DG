@@ -28,7 +28,7 @@ $pageTitle = 'Neues Passwort – ' . App::config('crm_name');
 
       <div class="dg-login__brand">
 
-        <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" width="44" height="44">
+        <img class="dg-login__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>" src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>">
 
         <div>
 
@@ -68,7 +68,9 @@ $pageTitle = 'Neues Passwort – ' . App::config('crm_name');
 
             <span>Neues Passwort</span>
 
-            <input type="password" name="password" autocomplete="new-password" required minlength="8" autofocus>
+            <input type="password" name="password" autocomplete="new-password" required minlength="<?= (int) PasswordPolicy::MIN_LENGTH ?>" autofocus>
+
+            <small class="dg-login__hint"><?= View::escape(PasswordPolicy::hint()) ?></small>
 
           </label>
 
@@ -76,7 +78,7 @@ $pageTitle = 'Neues Passwort – ' . App::config('crm_name');
 
             <span>Passwort wiederholen</span>
 
-            <input type="password" name="password_confirm" autocomplete="new-password" required minlength="8">
+            <input type="password" name="password_confirm" autocomplete="new-password" required minlength="<?= (int) PasswordPolicy::MIN_LENGTH ?>">
 
           </label>
 

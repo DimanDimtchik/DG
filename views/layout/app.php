@@ -7,6 +7,7 @@
 /** @var list<array{slug: string, label: string, icon: string, href: string}> $sidebarItems */
 /** @var array{slug: string, label: string, icon: string}|null $settingsItem */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $buchhaltungSection */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $websiteSection */
 /** @var string $currentPage */
 $homeHref = RoleResolver::isCustomer($user) ? '/app?area=profile' : '/app';
 $pageTitle = $title . ' – ' . App::config('crm_name');
@@ -17,10 +18,29 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
 <?php View::render('partials/head', compact('pageTitle')); ?>
 </head>
 <body class="dg-app">
+  <?php
+    $supportBannerGrant = null;
+    $supportSessionActive = class_exists('SupportSession') && SupportSession::isActive();
+    if (!$supportSessionActive && class_exists('SupportAccessService')) {
+      $supportBannerGrant = SupportAccessService::activeGrant();
+    }
+  ?>
+  <?php if ($supportSessionActive) : ?>
+    <div class="dg-support-banner dg-support-banner--active" role="status">
+      Ganz Soft Support-Session aktiv ·
+      <a href="/app?page=support-zuschauen">Bildschirm zuschauen</a> ·
+      <a href="/logout">Session beenden</a>
+    </div>
+  <?php elseif (is_array($supportBannerGrant)) : ?>
+    <div class="dg-support-banner" role="status">
+      Support-Freigabe aktiv (noch <?= View::escape(SupportAccessService::remainingLabel($supportBannerGrant)) ?>) ·
+      <a href="/app?page=support-freigabe">Verwalten</a>
+    </div>
+  <?php endif; ?>
   <header id="dg-adminbar" class="dg-adminbar" role="banner">
     <div class="dg-adminbar__left">
       <a class="dg-adminbar__brand" href="<?= View::escape($homeHref) ?>">
-        <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" width="22" height="22" class="dg-adminbar__logo">
+        <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" class="dg-adminbar__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>">
         <span class="dg-adminbar__name"><?= View::escape((string) App::config('crm_name')) ?></span>
       </a>
     </div>
@@ -112,7 +132,42 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
         </section>
       <?php endif; ?>
 
-      <?php if ($settingsItem) : ?>
+      <?php if (!empty($websiteSection)) : ?>
+        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-website">
+          <h2 id="dg-sidebar-website" class="dg-sidebar__heading"><?= View::escape($websiteSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($websiteSection['items'] as $item) : ?>
+              <?php
+                $isWebsiteActive = $currentPage === $item['slug']
+                    || ($item['slug'] === 'website-seiten' && $currentPage === 'website-seite-form')
+                    || ($item['slug'] === 'website-formulare' && ($currentPage === 'website-formular-form' || $currentPage === 'website-formular-inbox'));
+              ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isWebsiteActive ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+      <?php if (!empty($kdvSection)) : ?>
+        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kdv">
+          <h2 id="dg-sidebar-kdv" class="dg-sidebar__heading"><?= View::escape($kdvSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($kdvSection['items'] as $item) : ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $currentPage === $item['slug'] ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+      <?php if (!empty($settingsItem)) : ?>
         <section class="dg-sidebar__section dg-sidebar__section--system" aria-labelledby="dg-sidebar-system">
           <h2 id="dg-sidebar-system" class="dg-sidebar__heading">System</h2>
           <ul class="dg-sidebar__list">
@@ -236,7 +291,13 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script src="<?= View::escape(Asset::url('/assets/js/bilder.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/kontakte-form') : ?>
+    <script>
+      window.dgKontakteForm = {
+        supplierNumberPreview: <?= json_encode($kontakteSupplierNumberPreview ?? '', JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>
+      };
+    </script>
     <script src="<?= View::escape(Asset::url('/assets/js/contact-company-links.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/voucher-contact-bridge.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-konten') : ?>
     <script>
@@ -284,15 +345,45 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
         accrual: <?= json_encode(
             VoucherAccrual::clientConfig($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        voucherId: <?= ($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form' ? (int) ($voucherId ?? 0) : 0 ?>,
+        csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
+        initialFiles: <?= json_encode(
+            ($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form' && is_array($form['files'] ?? null)
+                ? $form['files']
+                : [],
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-belege.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/voucher-contact-bridge.js')) ?>" defer></script>
+    <script type="module" src="<?= View::escape(Asset::url('/assets/js/buchhaltung-import.mjs')) ?>"></script>
+  <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-ueberweisungen') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/vendor/qrcode.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-ueberweisungen.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/website-seite-form') : ?>
+    <script>
+      window.dgWebsiteBuilder = {
+        mediaListUrl: '/api/media?action=list',
+        csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
+        forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>
+      };
+    </script>
+    <script src="<?= View::escape(Asset::url('/assets/js/website-builder.js')) ?>" defer></script>
+  <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/website-formular-form') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/website-form-builder.js')) ?>" defer></script>
+  <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
+  <?php if (!CookieConsent::hasDecided()) : ?>
+    <style><?= CookieConsent::bannerCss() ?></style>
+    <?= CookieConsent::bannerHtml() ?>
+    <script><?= CookieConsent::bannerJs() ?></script>
+  <?php endif; ?>
 </body>
 </html>

@@ -1,10 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Datenzugriff für Kalender-Mitarbeiter, Bereiche und Einsatzplanung.
+ */
 final class CalendarStaffRepository
 {
     private const SLOT_STEP_MINUTES = 15;
 
+    /**
+     * Stellt Standarddaten in der Datenbank sicher.
+     * @return void
+     */
     public static function ensureSeeded(): void
     {
         if (!self::useDatabase()) {
@@ -24,7 +31,11 @@ final class CalendarStaffRepository
         }
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Liefert Kalender-Bereiche.
+     * @param bool $activeOnly
+     * @return list<array<string, mixed>>
+     */
     public static function getAreas(bool $activeOnly = false): array
     {
         self::ensureSeeded();
@@ -47,7 +58,11 @@ final class CalendarStaffRepository
         return $rows;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Liefert Kalender-Mitarbeiter.
+     * @param bool $activeOnly
+     * @return list<array<string, mixed>>
+     */
     public static function getEmployees(bool $activeOnly = false): array
     {
         if (!self::useDatabase()) {
@@ -70,7 +85,10 @@ final class CalendarStaffRepository
         return $employees;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Liefert all absences.
+     * @return array<string, mixed>
+     */
     public static function getAllAbsences(): array
     {
         if (!self::useDatabase()) {
@@ -87,37 +105,28 @@ final class CalendarStaffRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
-    /** @return list<User> */
+    /**
+     * Methode linkable users.
+     * @return array<string, mixed>
+     */
     public static function linkableUsers(): array
     {
         return UserRepository::all();
     }
 
-    /** @return list<array{id: int, label: string}> */
+    /**
+     * Methode linkable contacts.
+     * @param int $forEmployeeId
+     * @return array<string, mixed>
+     */
     public static function linkableContacts(int $forEmployeeId = 0): array
     {
         return ContactRepository::calendarLinkableContacts($forEmployeeId);
     }
 
     /**
-     * Kalender-Mitarbeiter aus Abteilungsmitgliedern vorschlagen (Kontakt per E-Mail/Login).
-     *
-     * @return list<array{
-     *   department_id: string,
-     *   department_name: string,
-     *   member_role: string,
-     *   user_id: int,
-     *   user_label: string,
-     *   contact_id: int,
-     *   contact_label: string,
-     *   area_ids: list<int>,
-     *   area_names: list<string>,
-     *   has_contact: bool,
-     *   already_employee: bool,
-     *   calendar_employee_id: int,
-     *   can_add: bool,
-     *   hint: string
-     * }>
+     * Methode department member suggestions.
+     * @return array<string, mixed>
      */
     public static function departmentMemberSuggestions(): array
     {
@@ -230,7 +239,10 @@ final class CalendarStaffRepository
         return $suggestions;
     }
 
-    /** @return array<string, string> area_id => department_id */
+    /**
+     * Methode area department map.
+     * @return array<string, mixed>
+     */
     public static function areaDepartmentMap(): array
     {
         $map = [];
@@ -244,7 +256,13 @@ final class CalendarStaffRepository
         return $map;
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert einen Kalender-Bereich.
+     * @param array $input
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function saveArea(array $input): array
     {
         $id = (int) ($input['area_id'] ?? 0);
@@ -295,6 +313,12 @@ final class CalendarStaffRepository
         return ['message' => 'Bereich gespeichert.'];
     }
 
+    /**
+     * Löscht einen Kalender-Bereich.
+     * @param int $id
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     */
     public static function deleteArea(int $id): array
     {
         if ($id < 1) {
@@ -308,7 +332,13 @@ final class CalendarStaffRepository
         return ['message' => 'Bereich gelöscht.'];
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert einen Kalender-Mitarbeiter.
+     * @param array $input
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function saveEmployee(array $input): array
     {
         $id = (int) ($input['employee_id'] ?? 0);
@@ -418,6 +448,13 @@ final class CalendarStaffRepository
         return ['message' => 'Mitarbeiter gespeichert.'];
     }
 
+    /**
+     * Löscht einen Kalender-Mitarbeiter.
+     * @param int $id
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function deleteEmployee(int $id): array
     {
         if ($id < 1) {
@@ -442,7 +479,12 @@ final class CalendarStaffRepository
         return ['message' => 'Mitarbeiter gelöscht.'];
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert absence.
+     * @param array $input
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     */
     public static function saveAbsence(array $input): array
     {
         $employeeId = (int) ($input['employee_id'] ?? 0);
@@ -479,6 +521,12 @@ final class CalendarStaffRepository
         return ['message' => 'Abwesenheit gespeichert.'];
     }
 
+    /**
+     * Führt aus: delete absence.
+     * @param int $id
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     */
     public static function deleteAbsence(int $id): array
     {
         if ($id < 1) {
@@ -490,7 +538,11 @@ final class CalendarStaffRepository
     }
 
     /**
-     * @param list<array{weekday: int, start_time: string, end_time: string}> $windows
+     * Speichert Arbeitszeiten eines Mitarbeiters.
+     * @param int $employeeId Mitarbeiter-/Benutzer-ID
+     * @param array $windows Zeitfenster
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     public static function saveEmployeeHours(int $employeeId, array $windows): array
     {
@@ -529,7 +581,11 @@ final class CalendarStaffRepository
         return ['message' => 'Arbeitszeiten gespeichert.', 'count' => $saved];
     }
 
-    /** @param array<string, mixed> $input @return list<array{weekday: int, start_time: string, end_time: string}> */
+    /**
+     * Führt aus: parse hours windows.
+     * @param array $input Eingabedaten
+     * @return list<array{weekday: int, start_time: string, end_time: string}>
+     */
     public static function parseHoursWindows(array $input): array
     {
         $raw = [];
@@ -555,6 +611,12 @@ final class CalendarStaffRepository
         return $windows;
     }
 
+    /**
+     * Führt aus: render hours editor html.
+     * @param int $employeeId
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function renderHoursEditorHtml(int $employeeId): string
     {
         $employee = self::getEmployee($employeeId);
@@ -611,11 +673,21 @@ final class CalendarStaffRepository
         return (string) ob_get_clean();
     }
 
+    /**
+     * Methode employee has hours.
+     * @param int $employeeId
+     * @return bool
+     */
     public static function employeeHasHours(int $employeeId): bool
     {
         return self::getEmployeeHours($employeeId) !== [];
     }
 
+    /**
+     * Methode hours summary.
+     * @param int $employeeId
+     * @return string
+     */
     public static function hoursSummary(int $employeeId): string
     {
         $hours = self::getEmployeeHours($employeeId);
@@ -640,6 +712,11 @@ final class CalendarStaffRepository
         return implode('; ', $parts);
     }
 
+    /**
+     * Methode absence type label.
+     * @param string $type
+     * @return string
+     */
     public static function absenceTypeLabel(string $type): string
     {
         return match ($type) {
@@ -649,12 +726,22 @@ final class CalendarStaffRepository
         };
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Liefert employee by id.
+     * @param int $id
+     * @return array|null
+     */
     public static function getEmployeeById(int $id): ?array
     {
         return self::getEmployee($id);
     }
 
+    /**
+     * Prüft: is employee absent on date.
+     * @param int $employeeId
+     * @param string $dateYmd
+     * @return bool
+     */
     public static function isEmployeeAbsentOnDate(int $employeeId, string $dateYmd): bool
     {
         if ($employeeId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd) || !self::useDatabase()) {
@@ -670,7 +757,12 @@ final class CalendarStaffRepository
         return (int) $stmt->fetchColumn() > 0;
     }
 
-    /** @return list<array{start_time: string, end_time: string}> */
+    /**
+     * Liefert hours for weekday.
+     * @param int $employeeId
+     * @param int $weekday
+     * @return array<string, mixed>
+     */
     public static function getHoursForWeekday(int $employeeId, int $weekday): array
     {
         $windows = [];
@@ -687,8 +779,12 @@ final class CalendarStaffRepository
         return $windows;
     }
 
-  /**
-     * @return array{0: DateTimeImmutable, 1: DateTimeImmutable}|null
+    /**
+     * Methode window bounds on day.
+     * @param DateTimeImmutable $day
+     * @param string $startTime
+     * @param string $endTime
+     * @return array|null
      */
     public static function windowBoundsOnDay(DateTimeImmutable $day, string $startTime, string $endTime): ?array
     {
@@ -709,6 +805,13 @@ final class CalendarStaffRepository
         return [$windowStart, $windowEnd];
     }
 
+    /**
+     * Prüft: is employee working at.
+     * @param int $employeeId
+     * @param DateTimeImmutable $slotStart
+     * @param DateTimeImmutable $slotEnd
+     * @return bool
+     */
     public static function isEmployeeWorkingAt(
         int $employeeId,
         DateTimeImmutable $slotStart,
@@ -739,6 +842,13 @@ final class CalendarStaffRepository
         return false;
     }
 
+    /**
+     * Prüft: is employee schedulable at.
+     * @param int $employeeId
+     * @param string $slotDatetime
+     * @param int $durationMinutes
+     * @return bool
+     */
     public static function isEmployeeSchedulableAt(int $employeeId, string $slotDatetime, int $durationMinutes): bool
     {
         if ($employeeId < 1 || $durationMinutes < 1) {
@@ -761,7 +871,9 @@ final class CalendarStaffRepository
     }
 
     /**
+     * Liefert merged day windows for employees.
      * @param list<int> $employeeIds
+     * @param DateTimeImmutable $day
      * @return list<array{0: DateTimeImmutable, 1: DateTimeImmutable}>
      */
     public static function getMergedDayWindowsForEmployees(array $employeeIds, DateTimeImmutable $day): array
@@ -813,13 +925,20 @@ final class CalendarStaffRepository
     }
 
     /**
-     * @return list<array{0: DateTimeImmutable, 1: DateTimeImmutable}>
+     * Liefert employee day windows.
+     * @param int $employeeId
+     * @param DateTimeImmutable $day
+     * @return array<string, mixed>
      */
     public static function getEmployeeDayWindows(int $employeeId, DateTimeImmutable $day): array
     {
         return self::getMergedDayWindowsForEmployees([$employeeId], $day);
     }
 
+    /**
+     * Prüft: has active employees.
+     * @return bool
+     */
     public static function hasActiveEmployees(): bool
     {
         if (!self::useDatabase()) {
@@ -831,7 +950,11 @@ final class CalendarStaffRepository
         return $count > 0;
     }
 
-    /** @return list<int> */
+    /**
+     * Liefert employee ids for area.
+     * @param int $areaId
+     * @return array<string, mixed>
+     */
     public static function getEmployeeIdsForArea(int $areaId): array
     {
         if ($areaId < 1 || !self::useDatabase()) {
@@ -878,6 +1001,11 @@ final class CalendarStaffRepository
         ));
     }
 
+    /**
+     * Uses Employee Scheduling For Article.
+     * @param int $articleId
+     * @return bool
+     */
     public static function usesEmployeeSchedulingForArticle(int $articleId): bool
     {
         if ($articleId < 1 || !self::hasActiveEmployees()) {
@@ -889,21 +1017,31 @@ final class CalendarStaffRepository
         return $areaId > 0 && self::getEmployeeIdsForArea($areaId) !== [];
     }
 
-    /** @return list<int> */
+    /**
+     * Liefert qualified employee ids for article.
+     * @param int $articleId
+     * @return array<string, mixed>
+     */
     public static function getQualifiedEmployeeIdsForArticle(int $articleId): array
     {
         return self::getEmployeeIdsForArea(CalendarArticleRepository::getAreaId($articleId));
     }
 
     /**
-     * @return list<array{0: DateTimeImmutable, 1: DateTimeImmutable}>
+     * Liefert merged day windows for article.
+     * @param int $articleId
+     * @param DateTimeImmutable $day
+     * @return array<string, mixed>
      */
     public static function getMergedDayWindowsForArticle(int $articleId, DateTimeImmutable $day): array
     {
         return self::getMergedDayWindowsForEmployees(self::getQualifiedEmployeeIdsForArticle($articleId), $day);
     }
 
-    /** @return list<array{id: int, name: string, area_ids: list<int>}> */
+    /**
+     * Methode booking employee options.
+     * @return array<string, mixed>
+     */
     public static function bookingEmployeeOptions(): array
     {
         $options = [];
@@ -922,6 +1060,11 @@ final class CalendarStaffRepository
         return $options;
     }
 
+    /**
+     * Methode employee name.
+     * @param int $employeeId
+     * @return string
+     */
     public static function employeeName(int $employeeId): string
     {
         $employee = self::getEmployeeById($employeeId);
@@ -929,7 +1072,10 @@ final class CalendarStaffRepository
         return $employee ? (string) ($employee['name'] ?? '') : '';
     }
 
-    /** @return list<string> */
+    /**
+     * Liefert Uhrzeit-Optionen für Select-Felder.
+     * @return list<string>
+     */
     public static function timeOptions(): array
     {
         $options = [];
@@ -942,7 +1088,10 @@ final class CalendarStaffRepository
         return $options;
     }
 
-    /** @return array<int, string> */
+    /**
+     * Liefert Wochentags-Bezeichnungen.
+     * @return array<int, string>
+     */
     public static function weekdayLabels(): array
     {
         return [
@@ -956,7 +1105,11 @@ final class CalendarStaffRepository
         ];
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Liefert einen Kalender-Bereich.
+     * @param int $id
+     * @return array|null
+     */
     private static function getArea(int $id): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM dg_calendar_areas WHERE id = :id LIMIT 1');
@@ -966,7 +1119,11 @@ final class CalendarStaffRepository
         return $row ?: null;
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Liefert einen Kalender-Mitarbeiter.
+     * @param int $id
+     * @return array|null
+     */
     private static function getEmployee(int $id): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM dg_calendar_employees WHERE id = :id LIMIT 1');
@@ -980,7 +1137,11 @@ final class CalendarStaffRepository
         return $row;
     }
 
-    /** @return list<int> */
+    /**
+     * Liefert employee area ids.
+     * @param int $employeeId
+     * @return array<string, mixed>
+     */
     private static function getEmployeeAreaIds(int $employeeId): array
     {
         $stmt = Database::pdo()->prepare(
@@ -991,7 +1152,12 @@ final class CalendarStaffRepository
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }
 
-    /** @param list<int> $areaIds */
+    /**
+     * Speichert employee areas.
+     * @param int $employeeId
+     * @param array $areaIds
+     * @return void
+     */
     private static function saveEmployeeAreas(int $employeeId, array $areaIds): void
     {
         $pdo = Database::pdo();
@@ -1006,7 +1172,11 @@ final class CalendarStaffRepository
         }
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Liefert Arbeitszeiten eines Mitarbeiters.
+     * @param int $employeeId
+     * @return list<array<string, mixed>>
+     */
     private static function getEmployeeHours(int $employeeId): array
     {
         $stmt = Database::pdo()->prepare(
@@ -1017,6 +1187,12 @@ final class CalendarStaffRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    /**
+     * Erzeugt HTML für eine Uhrzeit-Auswahl.
+     * @param string $class
+     * @param string $selected
+     * @return string
+     */
     private static function timeSelectHtml(string $class, string $selected): string
     {
         $html = '<select class="' . View::escape($class) . '"><option value="">—</option>';
@@ -1029,6 +1205,11 @@ final class CalendarStaffRepository
         return $html;
     }
 
+    /**
+     * Führt aus: normalize time.
+     * @param string $value
+     * @return string
+     */
     private static function normalizeTime(string $value): string
     {
         if (!preg_match('/^(\d{1,2}):(\d{2})/', trim($value), $m)) {
@@ -1043,6 +1224,11 @@ final class CalendarStaffRepository
         return sprintf('%02d:%02d:00', intdiv($snapped, 60), $snapped % 60);
     }
 
+    /**
+     * Methode format time hm.
+     * @param string $time
+     * @return string
+     */
     private static function formatTimeHm(string $time): string
     {
         if (!preg_match('/^(\d{1,2}):(\d{2})/', $time, $m)) {
@@ -1052,6 +1238,10 @@ final class CalendarStaffRepository
         return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
     }
 
+    /**
+     * Prüft, ob die Datenbanktabelle verfügbar ist.
+     * @return bool
+     */
     private static function useDatabase(): bool
     {
         if (!Database::isConfigured()) {
@@ -1066,6 +1256,11 @@ final class CalendarStaffRepository
         }
     }
 
+    /**
+     * Methode contact label.
+     * @param int $contactId
+     * @return string
+     */
     private static function contactLabel(int $contactId): string
     {
         if ($contactId < 1) {

@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** CRM-Benutzer mit aktivem Mitarbeiter-Konto für Postfach-Rechte. */
 final class MailboxMemberResolver
 {
-    /** @return list<array{user_id: int, label: string, contact_id: int|null, email: string}> */
+    /**
+     * Methode staff options.
+     * @return array<string, mixed>
+     */
     public static function staffOptions(): array
     {
         $options = [];
@@ -33,6 +36,11 @@ final class MailboxMemberResolver
         return $options;
     }
 
+    /**
+     * Prüft: is active staff user.
+     * @param int $userId
+     * @return bool
+     */
     public static function isActiveStaffUser(int $userId): bool
     {
         $user = UserRepository::findById($userId);
@@ -46,6 +54,11 @@ final class MailboxMemberResolver
         return RoleResolver::isAdmin($user) || RoleResolver::isActiveEmployee($user);
     }
 
+    /**
+     * Liefert user id for contact.
+     * @param Contact $contact
+     * @return int|null
+     */
     public static function findUserIdForContact(Contact $contact): ?int
     {
         $email = trim($contact->email);

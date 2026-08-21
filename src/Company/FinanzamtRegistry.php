@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Finanzamt Registry.
+ */
 final class FinanzamtRegistry {
 
     /** @var array<string, mixed>|null */

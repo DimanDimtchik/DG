@@ -1,11 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Mail Address Settings.
+ */
 final class MailAddressSettings
 {
     public const STORE_KEY = 'mail_address';
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return [
@@ -18,7 +24,10 @@ final class MailAddressSettings
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         $cfg = SettingsStore::get(self::STORE_KEY, self::defaults());
@@ -37,7 +46,10 @@ final class MailAddressSettings
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         $cfg = self::config();
@@ -53,6 +65,10 @@ final class MailAddressSettings
         ]);
     }
 
+    /**
+     * Methode effective domain.
+     * @return string
+     */
     public static function effectiveDomain(): string
     {
         $domain = self::config()['domain'];
@@ -63,6 +79,10 @@ final class MailAddressSettings
         return self::domainFromCompanyEmail();
     }
 
+    /**
+     * Methode domain from company email.
+     * @return string
+     */
     public static function domainFromCompanyEmail(): string
     {
         $email = CompanySettings::mailEmail();
@@ -75,7 +95,11 @@ final class MailAddressSettings
         return self::normalizeDomain($parts[1] ?? '');
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     */
     public static function save(array $input): void
     {
         $preset = trim((string) ($input['preset'] ?? 'v1_dot_nn'));
@@ -95,6 +119,11 @@ final class MailAddressSettings
         ]);
     }
 
+    /**
+     * Führt aus: normalize domain.
+     * @param string $domain
+     * @return string
+     */
     private static function normalizeDomain(string $domain): string
     {
         $domain = strtolower(trim($domain));
@@ -103,6 +132,11 @@ final class MailAddressSettings
         return $domain;
     }
 
+    /**
+     * Führt aus: normalize separator.
+     * @param string $separator
+     * @return string
+     */
     private static function normalizeSeparator(string $separator): string
     {
         $separator = trim($separator);

@@ -5,7 +5,10 @@ declare(strict_types=1);
 final class MailSignatureResolver
 {
     /**
-     * @param array<string, mixed>|null $mailbox
+     * Führt aus: resolve.
+     * @param array|null $mailbox
+     * @param User|null $actor
+     * @return string
      */
     public static function resolve(?array $mailbox, ?User $actor = null): string
     {
@@ -19,13 +22,19 @@ final class MailSignatureResolver
         return self::genericSignature();
     }
 
+    /**
+     * Methode generic signature.
+     * @return string
+     */
     public static function genericSignature(): string
     {
         return EmailLayoutSettings::resolvedFooter()['signature'];
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode mailbox uses formula email.
+     * @param array $mailbox
+     * @return bool
      */
     private static function mailboxUsesFormulaEmail(array $mailbox): bool
     {
@@ -44,7 +53,8 @@ final class MailSignatureResolver
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode person context for mailbox.
+     * @param array $mailbox
      * @return array{first_name: string, last_name: string, login: string}|null
      */
     private static function personContextForMailbox(array $mailbox): ?array
@@ -58,7 +68,9 @@ final class MailSignatureResolver
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode mailbox contact.
+     * @param array $mailbox
+     * @return Contact|null
      */
     private static function mailboxContact(array $mailbox): ?Contact
     {
@@ -86,7 +98,10 @@ final class MailSignatureResolver
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode personal name.
+     * @param array $mailbox
+     * @param User|null $actor
+     * @return string
      */
     private static function personalName(array $mailbox, ?User $actor): string
     {
@@ -111,15 +126,8 @@ final class MailSignatureResolver
     }
 
     /**
-     * Beispiele für Einstellungs-Oberfläche (Post-Versand).
-     *
-     * @return array{
-     *   formula_email: string,
-     *   formula_signature_example: string,
-     *   generic_signature: string,
-     *   thanks_line: string,
-     *   salutation: string
-     * }
+     * Methode settings examples.
+     * @return array<string, mixed>
      */
     public static function settingsExamples(): array
     {

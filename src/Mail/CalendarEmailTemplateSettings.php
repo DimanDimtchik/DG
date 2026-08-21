@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-/** @deprecated Nutzen Sie NotificationTemplateSettings — Kompatibilität für Kalender-Versand. */
+/**
+ * Calendar Email Template Settings.
+ */
 final class CalendarEmailTemplateSettings
 {
     public const STORE_KEY = 'calendar_email_templates';
@@ -10,7 +12,10 @@ final class CalendarEmailTemplateSettings
     public const TEMPLATE_CANCELLATION = NotificationTemplateSettings::SLUG_CANCELLATION;
     public const TEMPLATE_ADMIN = NotificationTemplateSettings::SLUG_ADMIN;
 
-    /** @return array<string, string> */
+    /**
+     * Methode template labels.
+     * @return array<string, mixed>
+     */
     public static function templateLabels(): array
     {
         $out = [];
@@ -21,7 +26,12 @@ final class CalendarEmailTemplateSettings
         return $out;
     }
 
-    /** @return array{subject: string, title: string, intro: string} */
+    /**
+     * Führt aus: resolved template.
+     * @param string $departmentId
+     * @param string $templateKey
+     * @return array<string, mixed>
+     */
     public static function resolvedTemplate(string $departmentId, string $templateKey): array
     {
         $resolved = NotificationTemplateSettings::resolvedTemplate(
@@ -51,13 +61,20 @@ final class CalendarEmailTemplateSettings
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         return NotificationTemplateSettings::forForm();
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert Formulardaten.
+     * @param array $input
+     * @return void
+     */
     public static function saveFromPost(array $input): void
     {
         NotificationTemplateSettings::saveFromPost($input);

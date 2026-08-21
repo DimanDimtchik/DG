@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Server &amp; Domains – ganz soft / DG</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 10.5pt;
+    color: #1a1816;
+    line-height: 1.35;
+    margin: 0;
+  }
+  h1 { font-size: 18pt; margin: 0 0 4px; }
+  h2 { font-size: 12pt; margin: 18px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  .meta { color: #555; font-size: 9pt; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  th, td { border: 1px solid #bbb; padding: 5px 6px; vertical-align: top; text-align: left; }
+  th { background: #eee; font-size: 9pt; }
+  td { font-size: 9.5pt; }
+  .yes { color: #1a6b2e; font-weight: 600; }
+  .no { color: #777; }
+  .note { font-size: 8.5pt; color: #555; margin-top: 12px; }
+  ul.users { margin: 0; padding-left: 1.1em; }
+  .page-break { page-break-before: always; }
+  @media print {
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <h1>Server &amp; Domains</h1>
+  <div class="meta">
+    Account: w0217246 (All-Inkl / Kasserver)<br>
+    SSH: ssh-w0217246@w0217246.kasserver.com<br>
+    Document-Root: /www/htdocs/w0217246<br>
+    Erstellt: 21.08.2026 08:43 Uhr<br>
+    Regel: Bei mehr als 5 login-fähigen CRM-Benutzern nur die Anzahl.
+  </div>
+
+  <h2>1. Domains &amp; Subdomains</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Domain</th>
+        <th style="width:12%">CRM?</th>
+        <th style="width:14%">System</th>
+        <th style="width:10%">Version</th>
+        <th style="width:22%">Benutzer (Login)</th>
+        <th>Zweck</th>
+      </tr>
+    </thead>
+    <tbody>
+          <tr>
+        <td>
+          <strong>cloud.ganz-om.de</strong>
+                    <br><span style="font-size:8pt">https://cloud.ganz-om.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>Nextcloud</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>Nextcloud (Datei-/Cloud-Speicher)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>dg-user.ganz-soft.de</strong>
+                    <br><span style="font-size:8pt">https://dg-user.ganz-soft.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>License-Server / API</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>License-Server / API (JSON), kein CRM-Frontend</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>dg.ganz-om.de</strong>
+                    <br><span style="font-size:8pt">https://dg.ganz-om.de</span>
+        </td>
+        <td class="yes">Ja</td>
+        <td>CRM</td>
+        <td>1.0.12</td>
+        <td>
+                      <strong>6</strong> Benutzer
+                  </td>
+        <td>CRM-Master, Update-Server, KDV-Zentrale</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>dietrichganz.de</strong>
+                    <br><span style="font-size:8pt">https://dietrichganz.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>Web (sonstig)</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>Persönliche Domain Dietrich Ganz (Platzhalterseite)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>ganz-om.de</strong>
+                    <br><span style="font-size:8pt">https://ganz-om.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>WordPress</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>WordPress-Marke ganz om</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>ganz-soft.de</strong>
+                      <br><span style="font-size:8pt;color:#666">Live-Root</span>
+                    <br><span style="font-size:8pt">https://ganz-soft.de</span>
+        </td>
+        <td class="yes">Ja</td>
+        <td>CRM</td>
+        <td>1.0.12</td>
+        <td>
+                      <ul class="users">
+                              <li>admin                                      <span style="color:#666">(administrator)</span>
+                                  </li>
+                              <li>info@ganz-om.de                                      <span style="color:#666">(administrator)</span>
+                                  </li>
+                          </ul>
+                  </td>
+        <td>Live-Website &amp; CRM von ganz-soft.de (Document-Root des Accounts)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>ganz-soft.de</strong>
+                      <br><span style="font-size:8pt;color:#666">Ordner-Spiegel</span>
+                    <br><span style="font-size:8pt">https://ganz-soft.de</span>
+        </td>
+        <td class="yes">Ja</td>
+        <td>CRM</td>
+        <td>1.0.12</td>
+        <td>
+                      <strong>6</strong> Benutzer
+                  </td>
+        <td>CRM-Spiegelordner (Live-Traffic läuft über den Account-Root, nicht diesen Ordner)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>hr.ganz-soft.de</strong>
+                    <br><span style="font-size:8pt">https://hr.ganz-soft.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>WordPress</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>WordPress HR/Personal (Alt oder Vorbereitung)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>kasse.ganz-soft.de</strong>
+                    <br><span style="font-size:8pt">https://kasse.ganz-soft.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>WordPress</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>WordPress Kasse/POS (Alt oder Vorbereitung)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>kontur-cosmetics.de</strong>
+                    <br><span style="font-size:8pt">https://kontur-cosmetics.de</span>
+        </td>
+        <td class="yes">Ja</td>
+        <td>CRM</td>
+        <td>1.0.12</td>
+        <td>
+                      <ul class="users">
+                              <li>admin                                      <span style="color:#666">(administrator)</span>
+                                  </li>
+                          </ul>
+                  </td>
+        <td>Kunden-CRM Kontur Cosmetics</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>shop.ganz-soft.de</strong>
+                    <br><span style="font-size:8pt">https://shop.ganz-soft.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>Shop (PHP)</td>
+        <td>Shop Phase 1</td>
+        <td>
+                      –
+                  </td>
+        <td>SaaS-Shop zum Verkauf der CRM-Tarife (PHP, Stripe folgt)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>terminkalender.ganz-soft.de</strong>
+                    <br><span style="font-size:8pt">https://terminkalender.ganz-soft.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>WordPress</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>WordPress Terminkalender (Alt/Demo)</td>
+      </tr>
+          <tr>
+        <td>
+          <strong>wg.ganz-soft.de</strong>
+                    <br><span style="font-size:8pt">https://wg.ganz-soft.de</span>
+        </td>
+        <td class="no">Nein</td>
+        <td>Web-App / Platzhalter</td>
+        <td>–</td>
+        <td>
+                      –
+                  </td>
+        <td>Wohngemeinschaft-App / Experimente</td>
+      </tr>
+        </tbody>
+  </table>
+
+  <h2>2. Infrastruktur-Ordner (kein öffentliches Domain-Ziel)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">Ordner</th>
+        <th style="width:18%">Art</th>
+        <th>Zweck</th>
+      </tr>
+    </thead>
+    <tbody>
+          <tr>
+        <td>admin</td>
+        <td>Ordner / Infrastruktur</td>
+        <td>Interne Admin-/Plugin-Ablage</td>
+      </tr>
+          <tr>
+        <td>cursor-transfer</td>
+        <td>Web (sonstig)</td>
+        <td>Deploy-Zwischenablage (kein öffentlicher Dienst)</td>
+      </tr>
+          <tr>
+        <td>ganz-soft-shared</td>
+        <td>Ordner / Infrastruktur</td>
+        <td>Gemeinsame Dateien (kein öffentlicher Dienst)</td>
+      </tr>
+          <tr>
+        <td>wp-backup-archive</td>
+        <td>WordPress</td>
+        <td>WordPress-Backup-Archiv</td>
+      </tr>
+        </tbody>
+  </table>
+
+  <p class="note">
+    Quelle: Dateisystem unter /www/htdocs/w0217246 am 21.08.2026 08:43 Uhr.
+    CRM-Benutzer = Accounts mit CRM-Login (RoleResolver::canAccessCrm). Keine Passwörter.
+    Zwecke bei Bedarf manuell in der Inventar-Config nachpflegen.
+  </p>
+</body>
+</html>

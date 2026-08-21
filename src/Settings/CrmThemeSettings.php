@@ -1,17 +1,26 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Crm Theme Settings.
+ */
 final class CrmThemeSettings
 {
     public const STORE_KEY = 'crm_theme';
 
-    /** @return array<string, string> */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return CrmThemePresets::defaultColors();
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode colors.
+     * @return array<string, mixed>
+     */
     public static function colors(): array
     {
         $stored = self::storedColors();
@@ -19,7 +28,10 @@ final class CrmThemeSettings
         return CrmThemePresets::expandColors($stored);
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         $stored = self::storedColors();
@@ -34,7 +46,10 @@ final class CrmThemeSettings
         return $normalized;
     }
 
-    /** @return array<string, string> */
+    /**
+     * Führt aus: stored colors.
+     * @return array<string, mixed>
+     */
     private static function storedColors(): array
     {
         if (!Database::isConfigured()) {
@@ -50,7 +65,11 @@ final class CrmThemeSettings
         return self::normalizeLegacyKaffeeBraun($stored);
     }
 
-    /** @param array<string, mixed> $stored */
+    /**
+     * Führt aus: normalize legacy kaffee braun.
+     * @param array $stored
+     * @return array<string, mixed>
+     */
     private static function normalizeLegacyKaffeeBraun(array $stored): array
     {
         $menuBg = ThemeColor::sanitizeHex((string) ($stored['menu_bg'] ?? ''), '');
@@ -68,7 +87,11 @@ final class CrmThemeSettings
         return $stored;
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     */
     public static function save(array $input): void
     {
         $defaults = self::defaults();
@@ -81,7 +104,10 @@ final class CrmThemeSettings
         SettingsStore::set(self::STORE_KEY, $colors);
     }
 
-    /** @return array<string, array{label: string, hint: string, group: string}> */
+    /**
+     * Methode field definitions.
+     * @return array<string, mixed>
+     */
     public static function fieldDefinitions(): array
     {
         return [
@@ -148,7 +174,10 @@ final class CrmThemeSettings
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode group labels.
+     * @return array<string, mixed>
+     */
     public static function groupLabels(): array
     {
         return [

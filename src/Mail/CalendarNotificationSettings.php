@@ -6,7 +6,10 @@ final class CalendarNotificationSettings
 {
     public const STORE_KEY = 'calendar_notification_delivery';
 
-    /** @return array{send_customer_email: bool, send_admin_email: bool, notify_admin_email: string} */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return [
@@ -16,7 +19,10 @@ final class CalendarNotificationSettings
         ];
     }
 
-    /** @return array{send_customer_email: bool, send_admin_email: bool, notify_admin_email: string} */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         if (!Database::isConfigured()) {
@@ -32,12 +38,19 @@ final class CalendarNotificationSettings
         ];
     }
 
-    /** @return array{send_customer_email: bool, send_admin_email: bool, notify_admin_email: string} */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         return self::config();
     }
 
+    /**
+     * Methode notify admin email.
+     * @return string
+     */
     public static function notifyAdminEmail(): string
     {
         $configured = trim(self::config()['notify_admin_email']);
@@ -48,7 +61,11 @@ final class CalendarNotificationSettings
         return CompanySettings::mailEmail();
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert Formulardaten.
+     * @param array $input
+     * @return void
+     */
     public static function saveFromPost(array $input): void
     {
         SettingsStore::set(self::STORE_KEY, [

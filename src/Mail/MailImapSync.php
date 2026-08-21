@@ -7,7 +7,12 @@ final class MailImapSync
     private const SYNC_TTL = 90;
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Führt aus: sync folder.
+     * @param array $mailbox
+     * @param string $viewFolder
+     * @param bool $force
+     * @return int
+     * @throws RuntimeException
      */
     public static function syncFolder(array $mailbox, string $viewFolder, bool $force = false): int
     {
@@ -58,13 +63,21 @@ final class MailImapSync
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode refresh folder cache.
+     * @param array $mailbox
+     * @return void
      */
     private static function refreshFolderCache(array $mailbox): void
     {
         MailFolderCatalog::refreshFoldersFromImap($mailbox);
     }
 
+    /**
+     * Führt aus: synced recently.
+     * @param int $mailboxId
+     * @param string $imapPath
+     * @return bool
+     */
     private static function syncedRecently(int $mailboxId, string $imapPath): bool
     {
         if (!isset($_SESSION) || session_status() !== PHP_SESSION_ACTIVE) {
@@ -77,6 +90,12 @@ final class MailImapSync
         return $at > 0 && (time() - $at) < self::SYNC_TTL;
     }
 
+    /**
+     * Methode mark synced.
+     * @param int $mailboxId
+     * @param string $imapPath
+     * @return void
+     */
     private static function markSynced(int $mailboxId, string $imapPath): void
     {
         if (!isset($_SESSION) || session_status() !== PHP_SESSION_ACTIVE) {

@@ -6,6 +6,10 @@ final class CalendarWorkingHoursRepository
 {
     private const SLOT_STEP_MINUTES = 15;
 
+    /**
+     * Stellt Standarddaten in der Datenbank sicher.
+     * @return void
+     */
     public static function ensureSeeded(): void
     {
         if (!Database::isConfigured()) {
@@ -31,7 +35,10 @@ final class CalendarWorkingHoursRepository
         ]);
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Methode all.
+     * @return array<string, mixed>
+     */
     public static function all(): array
     {
         self::ensureSeeded();
@@ -56,7 +63,13 @@ final class CalendarWorkingHoursRepository
         return $rows;
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     */
     public static function save(array $input): void
     {
         if (!Database::isConfigured()) {
@@ -116,6 +129,13 @@ final class CalendarWorkingHoursRepository
         ]);
     }
 
+    /**
+     * Führt aus: delete.
+     * @param int $id
+     * @return void
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function delete(int $id): void
     {
         if ($id < 1) {
@@ -129,9 +149,9 @@ final class CalendarWorkingHoursRepository
     }
 
     /**
-     * Gültige Arbeitszeiten für ein Datum (jüngster Eintrag mit start_date <= Datum).
-     *
-     * @return array{start_time: string, end_time: string, weekdays: string}
+     * Liefert for date.
+     * @param string $dateYmd
+     * @return array<string, mixed>
      */
     public static function getForDate(string $dateYmd): array
     {
@@ -168,6 +188,12 @@ final class CalendarWorkingHoursRepository
         ];
     }
 
+    /**
+     * Prüft: is working weekday.
+     * @param DateTimeInterface $date
+     * @param string $weekdaysCsv
+     * @return bool
+     */
     public static function isWorkingWeekday(DateTimeInterface $date, string $weekdaysCsv): bool
     {
         $weekday = (int) $date->format('N');
@@ -176,23 +202,38 @@ final class CalendarWorkingHoursRepository
         return in_array($weekday, $days, true);
     }
 
+    /**
+     * Methode slot step minutes.
+     * @return int
+     */
     public static function slotStepMinutes(): int
     {
         return self::SLOT_STEP_MINUTES;
     }
 
-    /** @return list<string> */
+    /**
+     * Liefert Uhrzeit-Optionen für Select-Felder.
+     * @return list<string>
+     */
     public static function timeOptions(): array
     {
         return CalendarStaffRepository::timeOptions();
     }
 
-    /** @return array<int, string> */
+    /**
+     * Liefert Wochentags-Bezeichnungen.
+     * @return array<int, string>
+     */
     public static function weekdayLabels(): array
     {
         return CalendarStaffRepository::weekdayLabels();
     }
 
+    /**
+     * Methode format weekdays.
+     * @param string $weekdaysCsv
+     * @return string
+     */
     public static function formatWeekdays(string $weekdaysCsv): string
     {
         $labels = self::weekdayLabels();
@@ -208,6 +249,11 @@ final class CalendarWorkingHoursRepository
         return $names !== [] ? implode(', ', $names) : '—';
     }
 
+    /**
+     * Methode format time hm.
+     * @param string $time
+     * @return string
+     */
     public static function formatTimeHm(string $time): string
     {
         if (preg_match('/^(\d{2}):(\d{2})/', $time, $matches)) {
@@ -217,6 +263,11 @@ final class CalendarWorkingHoursRepository
         return $time;
     }
 
+    /**
+     * Methode format date.
+     * @param string $dateYmd
+     * @return string
+     */
     public static function formatDate(string $dateYmd): string
     {
         try {
@@ -226,7 +277,11 @@ final class CalendarWorkingHoursRepository
         }
     }
 
-    /** @param mixed $weekdays */
+    /**
+     * Führt aus: sanitize weekdays.
+     * @param mixed $weekdays
+     * @return string
+     */
     private static function sanitizeWeekdays(mixed $weekdays): string
     {
         if (!is_array($weekdays)) {
@@ -250,6 +305,11 @@ final class CalendarWorkingHoursRepository
         return implode(',', array_values($normalized));
     }
 
+    /**
+     * Führt aus: normalize time.
+     * @param string $value
+     * @return string
+     */
     private static function normalizeTime(string $value): string
     {
         $value = trim($value);

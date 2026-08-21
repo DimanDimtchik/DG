@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS dg_kdv_customers (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(191) NOT NULL,
+    domain VARCHAR(191) NOT NULL,
+    db_name VARCHAR(100) DEFAULT NULL,
+    contact_name VARCHAR(191) DEFAULT NULL,
+    contact_email VARCHAR(191) DEFAULT NULL,
+    contact_phone VARCHAR(60) DEFAULT NULL,
+    kas_login VARCHAR(60) DEFAULT NULL,
+    crm_version VARCHAR(20) DEFAULT NULL,
+    status ENUM('neu','dns_pending','installiert','aktiv','gesperrt','gekuendigt') NOT NULL DEFAULT 'neu',
+    contract_start DATE DEFAULT NULL,
+    contract_end DATE DEFAULT NULL,
+    tariff VARCHAR(60) DEFAULT 'basic',
+    monthly_price DECIMAL(8,2) DEFAULT 0.00,
+    billing_cycle ENUM('monatlich','jaehrlich') DEFAULT 'monatlich',
+    notes TEXT DEFAULT NULL,
+    last_heartbeat DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_domain (domain)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

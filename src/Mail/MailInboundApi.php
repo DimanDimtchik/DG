@@ -4,6 +4,10 @@ declare(strict_types=1);
 /** Webhook-Empfang von IMAP→Webhook-Diensten (Variante B). */
 final class MailInboundApi
 {
+    /**
+     * HTTP-API-Einstieg.
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -132,7 +136,11 @@ final class MailInboundApi
         ];
     }
 
-    /** @return array{0: string, 1: string} */
+    /**
+     * Führt aus: parse address.
+     * @param string $raw
+     * @return array<string, mixed>
+     */
     private static function parseAddress(string $raw): array
     {
         $raw = trim($raw);
@@ -149,7 +157,11 @@ final class MailInboundApi
         return [$raw, ''];
     }
 
-    /** @return list<string> */
+    /**
+     * Führt aus: parse address list.
+     * @param mixed $value
+     * @return array<string, mixed>
+     */
     private static function parseAddressList(mixed $value): array
     {
         if (is_string($value)) {
@@ -176,7 +188,10 @@ final class MailInboundApi
     }
 
     /**
-     * @param array{from_email: string, from_name: string, to: list<string>, subject: string, text: string, html: string} $parsed
+     * Führt aus: build simple mime.
+     * @param array $parsed
+     * @param string $messageId
+     * @return string
      */
     private static function buildSimpleMime(array $parsed, string $messageId): string
     {

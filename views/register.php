@@ -13,7 +13,7 @@ $values = $form ?? ['username' => '', 'email' => '', 'display_name' => ''];
   <div class="dg-login">
     <div class="dg-login__card">
       <div class="dg-login__brand">
-        <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" width="44" height="44">
+        <img class="dg-login__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>" src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>">
         <div>
           <h1>Kundenkonto</h1>
           <span>Registrierung für <?= View::escape((string) App::config('crm_name')) ?></span>
@@ -36,14 +36,16 @@ $values = $form ?? ['username' => '', 'email' => '', 'display_name' => ''];
         <label>
           <span>E-Mail</span>
           <input type="email" name="email" value="<?= View::escape($values['email']) ?>" autocomplete="email" required>
+          <small class="dg-login__hint">Die Domain muss per DNS erreichbar sein (MX/A).</small>
         </label>
         <label>
           <span>Passwort</span>
-          <input type="password" name="password" autocomplete="new-password" required minlength="8">
+          <input type="password" name="password" autocomplete="new-password" required minlength="<?= (int) PasswordPolicy::MIN_LENGTH ?>">
+          <small class="dg-login__hint"><?= View::escape(PasswordPolicy::hint()) ?></small>
         </label>
         <label>
           <span>Passwort wiederholen</span>
-          <input type="password" name="password_confirm" autocomplete="new-password" required minlength="8">
+          <input type="password" name="password_confirm" autocomplete="new-password" required minlength="<?= (int) PasswordPolicy::MIN_LENGTH ?>">
         </label>
         <button type="submit" class="dg-button dg-button--primary">Registrieren</button>
       </form>

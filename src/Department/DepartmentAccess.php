@@ -23,8 +23,12 @@ final class DepartmentAccess
     /** @var array<string, array{is_hr: bool, allow_contact_delete: bool, is_purchasing: bool, allow_article_catalog: bool, modules: array<string, string>}>|null */
     private static ?array $departmentIndex = null;
 
-    /** @return array<string, string> */
-    public static function defaultModules(): array
+    /**
+     * Liefert Standard-Modulrechte.
+     *
+     * @return array<string, string>
+     */
+        public static function defaultModules(): array
     {
         return [
             'dashboard' => 'full',
@@ -35,11 +39,21 @@ final class DepartmentAccess
         ];
     }
 
+    /**
+     * Prüft, ob ein Zugriffslevel gültig ist
+     * @param string $level
+     * @return bool
+     */
     public static function isValidLevel(string $level): bool
     {
         return isset(self::LEVEL_RANK[$level]);
     }
 
+    /**
+     * Normalisiert ein Zugriffslevel
+     * @param string $level
+     * @return string
+     */
     public static function normalizeLevel(string $level): string
     {
         $level = strtolower(trim($level));
@@ -47,7 +61,11 @@ final class DepartmentAccess
         return self::isValidLevel($level) ? $level : 'partial';
     }
 
-    /** @return list<string> */
+        /**
+     * Liefert Abteilungs-IDs eines Benutzers
+     * @param User $user Angemeldeter Benutzer
+     * @return list<string>
+     */
     public static function departmentIdsForUser(User $user): array
     {
         $ids = [];
@@ -61,6 +79,11 @@ final class DepartmentAccess
         return $ids;
     }
 
+    /**
+     * Prüft HR-Zugehörigkeit
+     * @param User $user Angemeldeter Benutzer
+     * @return bool
+     */
     public static function userInHrDepartment(User $user): bool
     {
         if (RoleResolver::isAdmin($user)) {
@@ -77,6 +100,11 @@ final class DepartmentAccess
         return false;
     }
 
+    /**
+     * Prüft Kontakt-Löschrecht
+     * @param User $user Angemeldeter Benutzer
+     * @return bool
+     */
     public static function userCanDeleteContacts(User $user): bool
     {
         if (RoleResolver::isAdmin($user)) {
@@ -93,6 +121,11 @@ final class DepartmentAccess
         return false;
     }
 
+    /**
+     * Prüft Artikelkatalog-Recht
+     * @param User $user Angemeldeter Benutzer
+     * @return bool
+     */
     public static function userCanManageArticleCatalog(User $user): bool
     {
         if (RoleResolver::isAdmin($user)) {
@@ -109,6 +142,12 @@ final class DepartmentAccess
         return false;
     }
 
+    /**
+     * Ermittelt das effektive Modul-Level
+     * @param User $user Angemeldeter Benutzer
+     * @param string $module Modul-Schlüssel
+     * @return string
+     */
     public static function moduleLevel(User $user, string $module): string
     {
         if (RoleResolver::isAdmin($user)) {
@@ -141,6 +180,12 @@ final class DepartmentAccess
         return 'none';
     }
 
+    /**
+     * Prüft Modulzugriff
+     * @param User $user Angemeldeter Benutzer
+     * @param string $module Modul-Schlüssel
+     * @return bool
+     */
     public static function canAccessModule(User $user, string $module): bool
     {
         return self::moduleLevel($user, $module) !== 'none';
@@ -162,8 +207,12 @@ final class DepartmentAccess
         return $out;
     }
 
-    /** @return array<string, array{is_hr: bool, allow_contact_delete: bool, is_purchasing: bool, allow_article_catalog: bool, modules: array<string, string>}> */
-    private static function departmentIndex(): array
+    /**
+     * departmentIndex.
+     *
+     * @return array<string, array{is_hr: bool, allow_contact_delete: bool, is_purchasing: bool, allow_article_catalog: bool, modules: array<string, string>}>
+     */
+        private static function departmentIndex(): array
     {
         if (self::$departmentIndex !== null) {
             return self::$departmentIndex;
@@ -188,6 +237,10 @@ final class DepartmentAccess
         return self::$departmentIndex;
     }
 
+    /**
+     * Leert den internen Cache
+     * @return void
+     */
     public static function resetCache(): void
     {
         self::$departmentIndex = null;

@@ -9,11 +9,20 @@ final class BookingSlotService
     /** @var list<string> */
     private const CANCELLED_STATUSES = ['storniert', 'cancelled', 'canceled', 'cancel'];
 
+    /**
+     * Methode slot step minutes.
+     * @return int
+     */
     public static function slotStepMinutes(): int
     {
         return CalendarWorkingHoursRepository::slotStepMinutes();
     }
 
+    /**
+     * Führt aus: resolve duration minutes.
+     * @param int $articleId
+     * @return int
+     */
     public static function resolveDurationMinutes(int $articleId): int
     {
         if ($articleId > 0) {
@@ -27,6 +36,12 @@ final class BookingSlotService
     }
 
     /**
+     * Methode assert bookable.
+     * @param string $slotDatetime
+     * @param int $articleId
+     * @param int $employeeId
+     * @param int|null $excludeBookingId
+     * @return void
      * @throws InvalidArgumentException
      */
     public static function assertBookable(
@@ -41,7 +56,12 @@ final class BookingSlotService
     }
 
     /**
-     * @return list<string> Y-m-d H:i:s
+     * Methode slots for date.
+     * @param string $dateYmd
+     * @param int $articleId
+     * @param int $employeeId
+     * @param int|null $excludeBookingId
+     * @return array<string, mixed>
      */
     public static function slotsForDate(
         string $dateYmd,
@@ -83,7 +103,12 @@ final class BookingSlotService
     }
 
     /**
-     * @return array<string, list<string>>
+     * Berechnet verfügbare Zeitslots.
+     * @param int $articleId
+     * @param int $employeeId
+     * @param int $daysAhead
+     * @param int|null $excludeBookingId
+     * @return array<string, mixed>
      */
     public static function availableSlots(
         int $articleId = 0,
@@ -107,6 +132,14 @@ final class BookingSlotService
         return $grouped;
     }
 
+    /**
+     * Prüft: is period available.
+     * @param string $slotDatetime
+     * @param int $articleId
+     * @param int $employeeId
+     * @param int|null $excludeBookingId
+     * @return bool
+     */
     public static function isPeriodAvailable(
         string $slotDatetime,
         int $articleId = 0,
@@ -148,6 +181,11 @@ final class BookingSlotService
         return !self::hasBookingConflict($normalized, $durationMinutes, $articleId, $employeeId, $excludeBookingId);
     }
 
+    /**
+     * Führt aus: normalize slot datetime.
+     * @param string $value
+     * @return string
+     */
     public static function normalizeSlotDatetime(string $value): string
     {
         $value = trim($value);
@@ -177,6 +215,12 @@ final class BookingSlotService
         return $ts ? date('Y-m-d H:i:s', $ts) : '';
     }
 
+    /**
+     * Methode slot fits global hours.
+     * @param DateTimeImmutable $slotStart
+     * @param DateTimeImmutable $slotEnd
+     * @return bool
+     */
     private static function slotFitsGlobalHours(DateTimeImmutable $slotStart, DateTimeImmutable $slotEnd): bool
     {
         $hours = CalendarWorkingHoursRepository::getForDate($slotStart->format('Y-m-d'));
@@ -194,6 +238,13 @@ final class BookingSlotService
         return $slotStart >= $dayStart && $slotEnd <= $dayEnd;
     }
 
+    /**
+     * Slot Fits Article Employee Windows.
+     * @param DateTimeImmutable $slotStart
+     * @param DateTimeImmutable $slotEnd
+     * @param int $articleId
+     * @return bool
+     */
     private static function slotFitsArticleEmployeeWindows(
         DateTimeImmutable $slotStart,
         DateTimeImmutable $slotEnd,
@@ -210,7 +261,10 @@ final class BookingSlotService
     }
 
     /**
-     * @return array{0: DateTimeImmutable, 1: DateTimeImmutable}|null
+     * Methode global day bounds.
+     * @param DateTimeImmutable $day
+     * @param array $workingHours
+     * @return array|null
      */
     private static function globalDayBounds(DateTimeImmutable $day, array $workingHours): ?array
     {
@@ -228,7 +282,11 @@ final class BookingSlotService
     }
 
     /**
-     * @return list<array{0: DateTimeImmutable, 1: DateTimeImmutable}>
+     * Methode day windows.
+     * @param DateTimeImmutable $day
+     * @param int $articleId
+     * @param int $employeeId
+     * @return array<string, mixed>
      */
     private static function dayWindows(DateTimeImmutable $day, int $articleId, int $employeeId): array
     {
@@ -267,6 +325,15 @@ final class BookingSlotService
         return $bounds !== null ? [$bounds] : [];
     }
 
+    /**
+     * Prüft: has booking conflict.
+     * @param string $slotNormalized
+     * @param int $durationMinutes
+     * @param int $articleId
+     * @param int $employeeId
+     * @param int|null $excludeBookingId
+     * @return bool
+     */
     private static function hasBookingConflict(
         string $slotNormalized,
         int $durationMinutes,
@@ -290,6 +357,14 @@ final class BookingSlotService
         return self::hasBookingConflictForEmployee($slotNormalized, $durationMinutes, $employeeId, $excludeBookingId);
     }
 
+    /**
+     * Prüft: has booking conflict for employee.
+     * @param string $slotNormalized
+     * @param int $durationMinutes
+     * @param int $employeeId
+     * @param int|null $excludeBookingId
+     * @return bool
+     */
     private static function hasBookingConflictForEmployee(
         string $slotNormalized,
         int $durationMinutes,
@@ -342,6 +417,11 @@ final class BookingSlotService
         return (bool) $stmt->fetchColumn();
     }
 
+    /**
+     * Führt aus: parse slot datetime.
+     * @param string $value
+     * @return DateTimeImmutable|null
+     */
     private static function parseSlotDatetime(string $value): ?DateTimeImmutable
     {
         if (!preg_match('/^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2}):(\d{2})$/', $value, $matches)) {
@@ -365,7 +445,11 @@ final class BookingSlotService
         return $dt ?: null;
     }
 
-    /** @return array{hour: int, minute: int} */
+    /**
+     * Führt aus: parse clock time.
+     * @param string $timeValue
+     * @return array<string, mixed>
+     */
     private static function parseClockTime(string $timeValue): array
     {
         if (preg_match('/^(\d{1,2}):(\d{2})/', trim($timeValue), $matches)) {
@@ -378,11 +462,21 @@ final class BookingSlotService
         return ['hour' => 9, 'minute' => 0];
     }
 
+    /**
+     * Methode day start.
+     * @param string $dateYmd
+     * @return DateTimeImmutable
+     */
     private static function dayStart(string $dateYmd): DateTimeImmutable
     {
         return new DateTimeImmutable($dateYmd . ' 00:00:00', self::timezone());
     }
 
+    /**
+     * Methode date label.
+     * @param DateTimeImmutable $day
+     * @return string
+     */
     private static function dateLabel(DateTimeImmutable $day): string
     {
         $labels = CalendarStaffRepository::weekdayLabels();
@@ -391,6 +485,10 @@ final class BookingSlotService
         return ($labels[$weekday] ?? $day->format('l')) . ', ' . $day->format('d.m.Y');
     }
 
+    /**
+     * Methode timezone.
+     * @return DateTimeZone
+     */
     private static function timezone(): DateTimeZone
     {
         return new DateTimeZone((string) App::config('timezone', 'Europe/Berlin'));

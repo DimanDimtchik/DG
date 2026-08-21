@@ -1,0 +1,12 @@
+RewriteEngine On
+RewriteBase /
+
+# Block local secrets
+RewriteRule ^config/database\.local\.php$ - [F,L]
+
+# Existing files/dirs as-is
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.php [L]

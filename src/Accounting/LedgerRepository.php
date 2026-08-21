@@ -8,7 +8,10 @@ declare(strict_types=1);
  */
 final class LedgerRepository
 {
-    /** Journal für alle Belege neu aufbauen. Gibt Anzahl verarbeiteter Belege zurück. */
+        /**
+     * Journal für alle Belege neu aufbauen. Gibt Anzahl verarbeiteter Belege zurück.
+     * @return int
+     */
     public static function backfillAll(): int
     {
         if (!Database::isConfigured()) {
@@ -26,8 +29,12 @@ final class LedgerRepository
         return $count;
     }
 
-    /** @return list<int> Jahre mit Buchungen, absteigend, inkl. aktuellem Jahr. */
-    public static function availableYears(): array
+    /**
+     * availableYears.
+     *
+     * @return list<int> Jahre mit Buchungen, absteigend, inkl. aktuellem Jahr.
+     */
+        public static function availableYears(): array
     {
         $years = [];
         if (Database::isConfigured()) {
@@ -46,10 +53,10 @@ final class LedgerRepository
         return $years;
     }
 
-    /**
+        /**
      * Kontenübersicht: pro Konto Umsatz Soll/Haben, Saldenvortrag und Saldo.
-     *
-     * @param array{search?: string, show_empty?: bool} $opts
+     * @param int $year Geschäftsjahr
+     * @param array $opts Filteroptionen
      * @return array{accounts: list<array<string, mixed>>, totals: array<string, float>}
      */
     public static function accountOverview(int $year, array $opts = []): array
@@ -131,9 +138,10 @@ final class LedgerRepository
         return $result;
     }
 
-    /**
+        /**
      * Kontoauszug eines Kontos: Saldenvortrag + chronologische Einzelbuchungen mit laufendem Saldo.
-     *
+     * @param string $accountNumber Kontonummer
+     * @param int $year Geschäftsjahr
      * @return array{account: array<string, mixed>, opening: float, rows: list<array<string, mixed>>, closing: float, debit: float, credit: float}
      */
     public static function accountStatement(string $accountNumber, int $year): array
@@ -193,11 +201,9 @@ final class LedgerRepository
         return $out;
     }
 
-    /**
+        /**
      * Saldenvortrag je Konto für ein Jahr (vorzeichenbehaftet: Soll − Haben).
-     * Fällt auf kumulierten Vorjahressaldo der Bestandskonten zurück, falls kein
-     * expliziter Abschluss existiert.
-     *
+     * @param int $year Geschäftsjahr
      * @return array<string, float>
      */
     public static function openingBalances(int $year): array
@@ -248,8 +254,12 @@ final class LedgerRepository
         return $result;
     }
 
-    /** @return array<string, array{name: string, section: string}> */
-    public static function accountMeta(): array
+    /**
+     * accountMeta.
+     *
+     * @return array<string, array{name: string, section: string}>
+     */
+        public static function accountMeta(): array
     {
         static $cache = null;
         if ($cache !== null) {

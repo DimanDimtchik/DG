@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** CSV/Excel/XML/JSON/PDF-Import für Kalender-Leistungen — herstellerneutral. */
 final class CalendarArticleImporter
 {
-    /** @return list<string> */
+    /**
+     * Methode template headers.
+     * @return array<string, mixed>
+     */
     public static function templateHeaders(): array
     {
         return [
@@ -20,6 +23,10 @@ final class CalendarArticleImporter
         ];
     }
 
+    /**
+     * Methode template csv.
+     * @return string
+     */
     public static function templateCsv(): string
     {
         $content = chr(0xEF) . chr(0xBB) . chr(0xBF);
@@ -28,6 +35,10 @@ final class CalendarArticleImporter
         return $content;
     }
 
+    /**
+     * Methode template json.
+     * @return string
+     */
     public static function templateJson(): string
     {
         $example = [];
@@ -46,8 +57,12 @@ final class CalendarArticleImporter
     }
 
     /**
-     * @param array<string, mixed> $file $_FILES entry
+     * Methode import uploaded file.
+     * @param array $file
+     * @param int $defaultAreaId
      * @return array{imported: int, updated: int, errors: list<string>, message: string}
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     public static function importUploadedFile(array $file, int $defaultAreaId = 0): array
     {
@@ -137,7 +152,11 @@ final class CalendarArticleImporter
         ];
     }
 
-    /** @param list<string> $fields */
+    /**
+     * Methode csv line.
+     * @param array $fields
+     * @return string
+     */
     private static function csvLine(array $fields): string
     {
         $parts = [];
@@ -148,6 +167,11 @@ final class CalendarArticleImporter
         return implode(';', $parts) . "\r\n";
     }
 
+    /**
+     * Führt aus: normalize header.
+     * @param string $value
+     * @return string
+     */
     private static function normalizeHeader(string $value): string
     {
         $value = CalendarArticleImportReader::cleanCell($value);
@@ -157,7 +181,11 @@ final class CalendarArticleImporter
         return $value;
     }
 
-    /** @param list<string> $header */
+    /**
+     * Methode header uses net price.
+     * @param array $header
+     * @return bool
+     */
     private static function headerUsesNetPrice(array $header): bool
     {
         foreach ($header as $col) {
@@ -170,8 +198,9 @@ final class CalendarArticleImporter
     }
 
     /**
-     * @param list<string> $header
-     * @return array<string, int|null>
+     * Methode map import columns.
+     * @param array $header
+     * @return array<string, mixed>
      */
     private static function mapImportColumns(array $header): array
     {
@@ -196,7 +225,7 @@ final class CalendarArticleImporter
             'catalog_kind' => ['art', 'typ', 'type', 'katalog', 'catalog_kind', 'artikelart', 'kategorie'],
         ];
 
-        /** @var array<string, int|null> $map */
+    /** @var array<string, int|null> $map */
         $map = array_fill_keys(array_keys($aliases), null);
 
         foreach ($header as $index => $col) {
@@ -232,7 +261,11 @@ final class CalendarArticleImporter
         return $map;
     }
 
-    /** @param list<string> $line */
+    /**
+     * Prüft: is empty row.
+     * @param array $line
+     * @return bool
+     */
     private static function isEmptyRow(array $line): bool
     {
         foreach ($line as $cell) {
@@ -245,8 +278,12 @@ final class CalendarArticleImporter
     }
 
     /**
-     * @param array<string, mixed> $raw
+     * Führt aus: sanitize import row.
+     * @param array $raw
+     * @param bool $priceIsNet
+     * @param int $defaultAreaId
      * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function sanitizeImportRow(array $raw, bool $priceIsNet, int $defaultAreaId): array
     {
@@ -305,6 +342,12 @@ final class CalendarArticleImporter
         ];
     }
 
+    /**
+     * Default Work Minutes For Unit.
+     * @param string $unit
+     * @param string $workRaw
+     * @return int
+     */
     private static function defaultWorkMinutesForUnit(string $unit, string $workRaw): int
     {
         if ($workRaw !== '') {
@@ -327,8 +370,10 @@ final class CalendarArticleImporter
     }
 
     /**
-     * @param array<string, mixed> $rawRow
-     * @param array<string, mixed> $data
+     * Führt aus: resolve existing import id.
+     * @param array $rawRow
+     * @param array $data
+     * @return int|null
      */
     private static function resolveExistingImportId(array $rawRow, array $data): ?int
     {

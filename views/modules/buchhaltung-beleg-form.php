@@ -132,11 +132,46 @@ $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferReposito
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
-  <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
+  <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form" enctype="multipart/form-data"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="voucher_save" value="1">
     <input type="hidden" name="contact_id" id="dg-voucher-contact-id" value="<?= View::escape($form['contact_id'] ?? '') ?>">
+    <input type="hidden" name="draft_voucher_id" id="dg-voucher-draft-id" value="<?= (int) ($voucherId ?? 0) ?>">
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $voucherId ?>"><?php endif; ?>
+
+    <?php if (!$readOnly) : ?>
+    <section class="dg-form-section dg-voucher-files">
+      <h2 class="dg-subsection-title">Belegdatei (PDF / Bild / E-Rechnung)</h2>
+      <div class="dg-voucher-files__dropzone" id="dg-voucher-file-dropzone">
+        <input type="file" name="voucher_files[]" id="dg-voucher-file-input"
+               accept="<?= View::escape(VoucherFileStorage::acceptAttribute()) ?>" multiple>
+        <p class="dg-field-hint">
+          PDF, JPG, PNG, WEBP oder E-Rechnung (ZUGFeRD/XRechnung). Die Datei wird beim Hochladen sofort am Beleg gespeichert.
+          Bei E-Rechnungen und digitalen PDFs werden die Felder automatisch vorgeschlagen.
+        </p>
+      </div>
+      <div class="dg-voucher-attachments" id="dg-voucher-attachments-live" hidden></div>
+      <div class="dg-voucher-extract" id="dg-voucher-extract" hidden>
+        <div class="dg-voucher-extract__status" id="dg-voucher-extract-status"></div>
+        <div class="dg-voucher-extract__layout">
+          <div class="dg-voucher-extract__preview-wrap">
+            <div class="dg-voucher-extract__preview" id="dg-voucher-extract-preview" hidden></div>
+          </div>
+          <div class="dg-voucher-extract__data">
+            <div class="dg-voucher-extract__fields" id="dg-voucher-extract-fields"></div>
+            <div class="dg-voucher-extract__actions" id="dg-voucher-extract-actions" hidden>
+              <label class="dg-voucher-extract__contact-sync" id="dg-voucher-extract-contact-sync-wrap" hidden>
+                <input type="checkbox" id="dg-voucher-extract-contact-sync" checked>
+                Erkannte Stammdaten auch beim Kontakt speichern (nur leere Felder)
+              </label>
+              <button type="button" class="dg-button dg-button--primary" id="dg-voucher-extract-apply">Vorschläge übernehmen</button>
+              <button type="button" class="dg-button dg-button--ghost" id="dg-voucher-extract-dismiss">Verwerfen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <?php endif; ?>
 
     <section class="dg-form-section">
       <h2 class="dg-subsection-title">Beleg</h2>
@@ -199,7 +234,7 @@ $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferReposito
       <div class="dg-form-section__head">
         <h2 class="dg-subsection-title">Lieferant / Kontakt</h2>
         <?php if (!$readOnly && MenuRegistry::canAccess($user ?? null, 'kontakte')) : ?>
-          <a class="dg-button dg-button--small" href="<?= View::escape($newContactUrl) ?>">Neuen Kunden / Lieferanten anlegen</a>
+          <a class="dg-button dg-button--small" id="dg-voucher-new-contact-link" href="<?= View::escape($newContactUrl) ?>">Neuen Kunden / Lieferanten anlegen</a>
         <?php endif; ?>
       </div>
       <div class="dg-form-grid">
@@ -676,6 +711,52 @@ $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferReposito
       </div>
     <?php endif; ?>
   </form>
+
+  <?php
+  /** @var list<array<string, mixed>> $voucherFiles */
+  $voucherFiles = is_array($form['files'] ?? null) ? $form['files'] : [];
+  ?>
+  <?php if ($isEdit && empty($isDraftVoucher) && $voucherFiles !== []) : ?>
+    <section class="dg-panel dg-voucher-attachments">
+      <h2 class="dg-subsection-title">Angehängte Dateien</h2>
+      <ul class="dg-voucher-attachments__list">
+        <?php foreach ($voucherFiles as $file) : ?>
+          <li class="dg-voucher-attachments__item">
+            <?php if (!empty($file['is_image'])) : ?>
+              <a href="<?= View::escape((string) $file['view_url']) ?>" target="_blank" rel="noopener" class="dg-voucher-attachments__thumb">
+                <img src="<?= View::escape((string) $file['view_url']) ?>" alt="<?= View::escape((string) $file['original_name']) ?>" loading="lazy">
+              </a>
+            <?php else : ?>
+              <a href="<?= View::escape((string) $file['view_url']) ?>" target="_blank" rel="noopener" class="dg-voucher-attachments__thumb dg-voucher-attachments__thumb--file">
+                <?php View::render('partials/icon', ['name' => 'document']); ?>
+              </a>
+            <?php endif; ?>
+            <div class="dg-voucher-attachments__meta">
+              <a href="<?= View::escape((string) $file['view_url']) ?>" target="_blank" rel="noopener" class="dg-voucher-attachments__name"><?= View::escape((string) $file['original_name']) ?></a>
+              <span class="dg-muted"><?= View::escape((string) ($file['size_label'] ?? '')) ?></span>
+              <span class="dg-voucher-attachments__links">
+                <a href="<?= View::escape((string) $file['download_url']) ?>">Herunterladen</a>
+                <?php if (!$readOnly) : ?>
+                  &middot;
+                  <button type="submit" form="dg-voucher-file-delete-<?= (int) $file['id'] ?>" class="dg-linklike dg-linklike--danger" onclick="return confirm('Diese Datei wirklich löschen?');">Löschen</button>
+                <?php endif; ?>
+              </span>
+            </div>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
+    <?php if (!$readOnly) : ?>
+      <?php foreach ($voucherFiles as $file) : ?>
+        <form method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-file-delete-<?= (int) $file['id'] ?>" class="dg-hidden-form">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="voucher_file_delete" value="1">
+          <input type="hidden" name="file_id" value="<?= (int) $file['id'] ?>">
+          <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+        </form>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  <?php endif; ?>
 
   <template id="dg-voucher-invoice-item-row-template">
     <tr class="dg-voucher-items__row">

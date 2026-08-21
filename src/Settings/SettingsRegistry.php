@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Settings Registry.
+ */
 final class SettingsRegistry
 {
     /**
-     * Einheitliche CRM-Einstellungen — keine Plugin-Gliederung.
-     *
-     * @return array<string, array{label: string, tabs: array<string, array{label: string, lead: string, template: string}>}>
+     * Methode navigation.
+     * @return array<string, mixed>
      */
     public static function navigation(): array
     {
@@ -129,7 +131,10 @@ final class SettingsRegistry
         ];
     }
 
-    /** @return array<string, array{label: string, lead: string, template: string, section: string, sectionLabel: string}> */
+    /**
+     * Methode all tabs.
+     * @return array<string, mixed>
+     */
     public static function allTabs(): array
     {
         $flat = [];
@@ -148,13 +153,20 @@ final class SettingsRegistry
         return $flat;
     }
 
+    /**
+     * Prüft: can access.
+     * @param User $user
+     * @return bool
+     */
     public static function canAccess(User $user): bool
     {
         return RoleResolver::isAdmin($user);
     }
 
     /**
-     * @return array{tab: string, tabLabel: string, section: string, sectionLabel: string, lead: string, template: string}
+     * Führt aus: resolve.
+     * @param string|null $tabId
+     * @return array<string, mixed>
      */
     public static function resolve(?string $tabId): array
     {
@@ -178,12 +190,20 @@ final class SettingsRegistry
         return self::resolve($firstTab);
     }
 
+    /**
+     * Methode tab url.
+     * @param string $tabId
+     * @return string
+     */
     public static function tabUrl(string $tabId): string
     {
         return '/app?page=einstellungen&tab=' . rawurlencode($tabId);
     }
 
-    /** Aktiver Tab: bei POST zuerst aus Formularfeldern, sonst aus der URL. */
+    /**
+     * Führt aus: resolve active tab.
+     * @return string|null
+     */
     public static function resolveActiveTab(): ?string
     {
         if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -239,6 +259,11 @@ final class SettingsRegistry
         return $tab !== '' ? $tab : null;
     }
 
+    /**
+     * Methode page lead.
+     * @param string $tabId
+     * @return string
+     */
     public static function pageLead(string $tabId): string
     {
         $tabs = self::allTabs();
@@ -246,7 +271,12 @@ final class SettingsRegistry
         return $tabs[$tabId]['lead'] ?? '';
     }
 
-    /** Alte URLs ?group=…&tab=… auf einheitliche CRM-Tabs umleiten. */
+    /**
+     * Führt aus: resolve legacy tab.
+     * @param string|null $group
+     * @param string|null $tab
+     * @return string|null
+     */
     public static function resolveLegacyTab(?string $group, ?string $tab): ?string
     {
         if ($group === null || $tab === null || $group === '' || $tab === '') {

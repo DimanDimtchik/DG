@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Anmelden</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f3f0;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; color: #1e293b;
+    }
+    .card {
+      background: #fff; border-radius: 12px; padding: 36px 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); width: 100%; max-width: 380px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .brand h1 { font-size: 1.2rem; font-weight: 700; }
+    .brand span { display: block; font-size: 0.85rem; color: #64748b; }
+    .error {
+      background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+      padding: 10px 14px; border-radius: 8px; font-size: 0.9rem;
+      margin-bottom: 16px; display: none;
+    }
+    label { display: block; margin-bottom: 14px; }
+    label span { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; }
+    input {
+      width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
+      border-radius: 8px; font-size: 0.95rem; outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #6e6258; }
+    button {
+      width: 100%; padding: 11px; background: #6e6258; color: #fff;
+      border: none; border-radius: 8px; font-size: 0.95rem;
+      font-weight: 600; cursor: pointer; margin-top: 4px;
+      transition: background 0.15s;
+    }
+    button:hover { background: #5a4f47; }
+    .footer { text-align: center; margin-top: 16px; font-size: 0.85rem; color: #94a3b8; }
+    .footer a { color: #6e6258; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div>
+        <h1>Anmeldung</h1>
+        <span>Bitte melden Sie sich an</span>
+      </div>
+    </div>
+    <div class="error" id="err">Benutzername oder Passwort falsch.</div>
+    <form id="f" method="post" action="#">
+      <label>
+        <span>Benutzername oder E-Mail</span>
+        <input type="text" name="username" autocomplete="username" required autofocus>
+      </label>
+      <label>
+        <span>Passwort</span>
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Anmelden</button>
+    </form>
+    <p class="footer"><a href="#">Passwort vergessen?</a></p>
+  </div>
+  <script>
+    document.getElementById('f').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('err').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

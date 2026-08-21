@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** KAS-API-Zugang (config/kas.local.php) — optional für Postfach-Anlage bei Kasserver. */
 final class KasSettings
 {
-    /** @return array{configured: bool, kas_login: string, kas_auth_type: string, kas_auth_data: string}> */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         $path = DG_ROOT . '/config/kas.local.php';
@@ -32,12 +35,19 @@ final class KasSettings
         ];
     }
 
+    /**
+     * Prüft, ob die Konfiguration vollständig ist.
+     * @return bool
+     */
     public static function isConfigured(): bool
     {
         return self::config()['configured'];
     }
 
-    /** @return array{configured: bool, kas_login: string, kas_auth_type: string, kas_auth_data: string}> */
+    /**
+     * Methode empty.
+     * @return array<string, mixed>
+     */
     private static function empty(): array
     {
         return [

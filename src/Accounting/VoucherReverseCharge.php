@@ -14,8 +14,12 @@ final class VoucherReverseCharge
     public const LINE_INPUT_VAT = 'input_vat_13b';
     public const LINE_OUTPUT_VAT = 'output_vat_13b';
 
-    /** @return array<string, string> */
-    public static function typeOptions(): array
+    /**
+     * typeOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function typeOptions(): array
     {
         return [
             self::TYPE_EU => 'Fremdleistungen §13b (EU)',
@@ -24,6 +28,11 @@ final class VoucherReverseCharge
         ];
     }
 
+    /**
+     * typeHint
+     * @param string $type
+     * @return string
+     */
     public static function typeHint(string $type): string
     {
         return match (self::sanitizeType($type)) {
@@ -34,6 +43,11 @@ final class VoucherReverseCharge
         };
     }
 
+    /**
+     * sanitizeType
+     * @param string $type
+     * @return string
+     */
     public static function sanitizeType(string $type): string
     {
         $type = strtolower(trim($type));
@@ -41,12 +55,21 @@ final class VoucherReverseCharge
         return isset(self::typeOptions()[$type]) ? $type : '';
     }
 
+    /**
+     * isActive
+     * @param string $type
+     * @return bool
+     */
     public static function isActive(string $type): bool
     {
         return self::sanitizeType($type) !== '';
     }
 
-    /** @return list<int> */
+        /**
+     * Liefert erlaubte Steuersätze
+     * @param string $type
+     * @return list<int>
+     */
     public static function allowedTaxRates(string $type): array
     {
         return match (self::sanitizeType($type)) {
@@ -56,6 +79,11 @@ final class VoucherReverseCharge
         };
     }
 
+    /**
+     * defaultTaxRate
+     * @param string $type
+     * @return int
+     */
     public static function defaultTaxRate(string $type): int
     {
         $rates = self::allowedTaxRates($type);
@@ -63,6 +91,12 @@ final class VoucherReverseCharge
         return $rates[0] ?? 19;
     }
 
+    /**
+     * sanitizeLineTaxRate
+     * @param string $type
+     * @param int $rate Steuersatz in Prozent
+     * @return int
+     */
     public static function sanitizeLineTaxRate(string $type, int $rate): int
     {
         $allowed = self::allowedTaxRates($type);
@@ -73,7 +107,9 @@ final class VoucherReverseCharge
         return in_array($rate, $allowed, true) ? $rate : self::defaultTaxRate($type);
     }
 
-    /**
+        /**
+     * taxAccounts
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return array{input_vat: string, output_vat: string}
      */
     public static function taxAccounts(string $skrType): array
@@ -86,9 +122,10 @@ final class VoucherReverseCharge
         };
     }
 
-    /**
+        /**
      * UStVA-Kennziffern je Typ und Steuersatz (Anlage zur Umsatzsteuer-Voranmeldung).
-     *
+     * @param string $type
+     * @param int $taxRate Steuersatz in Prozent
      * @return array{base: string, output_vat: string, input_vat: string}
      */
     public static function ustvaKennziffern(string $type, int $taxRate): array
@@ -114,12 +151,12 @@ final class VoucherReverseCharge
         };
     }
 
-    /**
-     * @param list<array{account_number: string, description?: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int}> $bookingLines
+        /**
+     * lines: list<array{line_kind: string, account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int, ustva_kz: string, posting_side: string}>,
+     * @param array $bookingLines
+     * @param string $type
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return array{
-     *   lines: list<array{line_kind: string, account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int, ustva_kz: string, posting_side: string}>,
-     *   ustva_positions: list<array{kz: string, net: float, tax: float}>,
-     * }
      */
     public static function buildPostings(array $bookingLines, string $type, string $skrType): array
     {
@@ -198,7 +235,11 @@ final class VoucherReverseCharge
         return ['lines' => $allLines, 'ustva_positions' => $ustvaPositions];
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * clientConfig
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return array<string, mixed>
+     */
     public static function clientConfig(string $skrType): array
     {
         $types = [];
@@ -227,7 +268,14 @@ final class VoucherReverseCharge
         ];
     }
 
-    /** @param array<string, array{kz: string, net: float, tax: float}> $agg */
+        /**
+     * addUstvaAgg
+     * @param mixed $agg
+     * @param string $kz
+     * @param float $net
+     * @param float $tax
+     * @return void
+     */
     private static function addUstvaAgg(array &$agg, string $kz, float $net, float $tax): void
     {
         if ($kz === '' || ($net <= 0 && $tax <= 0)) {

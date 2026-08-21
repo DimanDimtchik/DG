@@ -22,6 +22,7 @@
     <section class="dg-panel">
       <h2>Termin</h2>
       <dl class="dg-dl">
+        <dt>Buchungsnummer</dt><dd><code><?= View::escape($booking->publicCode()) ?></code></dd>
         <dt>Datum/Uhrzeit</dt><dd><?= View::escape($booking->slotFormatted()) ?></dd>
         <dt>Leistung</dt><dd><?= $booking->articleId > 0 ? View::escape(CalendarArticleRepository::title($booking->articleId)) : '—' ?><?php if ($booking->articleId > 0) : ?> · <?= View::escape(CalendarArticleValidator::formatPrice(CalendarArticleRepository::priceGross($booking->articleId))) ?><?php endif; ?></dd>
         <dt>Mitarbeiter</dt><dd><?= $booking->employeeId > 0 ? View::escape(CalendarStaffRepository::employeeName($booking->employeeId)) : '—' ?></dd>

@@ -1,9 +1,12 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Scans views/src/settings for media id references and syncs dg_media_usage.
+ */
 final class MediaScanner
 {
-    /** @var array<string, string> */
+    /** @var array<string, string> context_key => German label */
     private const CONTEXT_LABELS = [
         'views/login.php' => 'Login-Seite',
         'views/register.php' => 'Registrierung',
@@ -15,9 +18,14 @@ final class MediaScanner
         'settings:mail' => 'Einstellungen → E-Mail',
     ];
 
-  /**
-   * @return array{contexts: int, references: int, closed: int}
-   */
+    /** @var array<string, string> website:page:{id} => page title */
+    private static array $websitePageTitles = [];
+
+    /**
+     * Full usage scan; opens/closes usage rows as needed.
+     *
+     * @return array{contexts: int, references: int, closed: int}
+     */
     public static function scanAll(): array
     {
         MediaRepository::ensureTables();
@@ -28,6 +36,7 @@ final class MediaScanner
         self::scanDirectory(DG_ROOT . '/views', 'views', $found);
         self::scanDirectory(DG_ROOT . '/src', 'src', $found);
         self::scanSettings($found);
+        self::scanWebsitePages($found);
 
         $references = 0;
         $contexts = 0;
@@ -53,7 +62,9 @@ final class MediaScanner
         ];
     }
 
-    /** @param array<string, array<string, true>> $found */
+    /**
+     * @param array<string, array<string, true>> $found
+     */
     private static function scanDirectory(string $dir, string $prefix, array &$found): void
     {
         if (!is_dir($dir)) {
@@ -118,6 +129,35 @@ final class MediaScanner
         }
     }
 
+    /**
+     * Collect media ids from published/draft website page layouts.
+     *
+     * @param array<string, array<string, true>> $found
+     */
+    private static function scanWebsitePages(array &$found): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+
+        try {
+            $stmt = Database::pdo()->query('SELECT id, title, layout_json FROM dg_website_pages');
+        } catch (Throwable) {
+            return;
+        }
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $title = trim((string) ($row['title'] ?? ''));
+            $key = 'website:page:' . $id;
+            self::$websitePageTitles[$key] = $title !== '' ? $title : ('Seite #' . $id);
+            self::extractFromContent((string) ($row['layout_json'] ?? ''), $key, $found);
+        }
+    }
+
     /** @param array<string, array<string, true>> $found */
     private static function extractFromContent(string $content, string $contextKey, array &$found): void
     {
@@ -144,6 +184,9 @@ final class MediaScanner
         }
     }
 
+    /**
+     * Menschlich lesbare Bezeichnung für einen Nutzungs-Kontextschlüssel.
+     */
     private static function contextLabel(string $contextKey): string
     {
         if (isset(self::CONTEXT_LABELS[$contextKey])) {
@@ -152,6 +195,11 @@ final class MediaScanner
 
         if (str_starts_with($contextKey, 'settings:')) {
             return 'Einstellungen → ' . substr($contextKey, 9);
+        }
+
+        if (str_starts_with($contextKey, 'website:page:')) {
+            $title = self::$websitePageTitles[$contextKey] ?? ('Seite #' . substr($contextKey, 13));
+            return 'Website → ' . $title;
         }
 
         if (str_starts_with($contextKey, 'views/')) {

@@ -1,11 +1,23 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Niedrigstufiger SMTP-Client für den E-Mail-Versand.
+ */
 final class SmtpClient
 {
     /** @var resource|null */
     private $socket = null;
 
+    /**
+     * Konstruktor.
+     * @param string $host
+     * @param int $port
+     * @param string $encryption
+     * @param string $username
+     * @param string $password
+     * @param int $timeout
+     */
     public function __construct(
         private readonly string $host,
         private readonly int $port,
@@ -17,9 +29,8 @@ final class SmtpClient
     }
 
     /**
-     * Schrittweise Verbindung testen — liefert Protokoll für die Einstellungen.
-     *
-     * @return array{ok: bool, summary: string, host: string, port: int, encryption: string, username: string, steps: list<array{label: string, ok: bool, detail: string}>}
+     * Prüft SMTP-Verbindung und Anmeldung schrittweise.
+     * @return array<string, mixed>
      */
     public function diagnose(): array
     {
@@ -132,6 +143,11 @@ final class SmtpClient
         }
     }
 
+    /**
+     * Stellt die SMTP-Verbindung her und meldet sich an.
+     * @return void
+     * @throws RuntimeException
+     */
     public function connectAndAuthenticate(): void
     {
         $this->connect();
@@ -155,7 +171,13 @@ final class SmtpClient
         }
     }
 
-    /** @param list<string> $recipients */
+    /**
+     * Sendet eine MIME-Nachricht an die Empfänger.
+     * @param string $from
+     * @param list<string> $recipients
+     * @param string $mimeData
+     * @return void
+     */
     public function sendMail(string $from, array $recipients, string $mimeData): void
     {
         $this->connectAndAuthenticate();
@@ -178,6 +200,12 @@ final class SmtpClient
         }
     }
 
+    /**
+     * Methode connect.
+     * @return void
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     private function connect(): void
     {
         if ($this->socket !== null) {
@@ -206,6 +234,10 @@ final class SmtpClient
         $this->socket = $socket;
     }
 
+    /**
+     * Methode authenticate.
+     * @return void
+     */
     private function authenticate(): void
     {
         $this->command('AUTH LOGIN');
@@ -216,11 +248,19 @@ final class SmtpClient
         $this->expect(235);
     }
 
+    /**
+     * Methode ehlo.
+     * @return void
+     */
     private function ehlo(): void
     {
         $this->ehloWithResponse();
     }
 
+    /**
+     * Methode ehlo with response.
+     * @return string
+     */
     private function ehloWithResponse(): string
     {
         $host = gethostname() ?: 'localhost';
@@ -230,7 +270,9 @@ final class SmtpClient
     }
 
     /**
-     * @param list<array{label: string, ok: bool, detail: string}> $steps
+     * Methode report.
+     * @param array $steps
+     * @param bool $ok
      * @return array{ok: bool, summary: string, host: string, port: int, encryption: string, username: string, steps: list<array{label: string, ok: bool, detail: string}>}
      */
     private function report(array $steps, bool $ok): array
@@ -248,11 +290,22 @@ final class SmtpClient
         ];
     }
 
+    /**
+     * Methode command.
+     * @param string $command
+     * @return void
+     */
     private function command(string $command): void
     {
         $this->write($command . "\r\n");
     }
 
+    /**
+     * Methode write.
+     * @param string $data
+     * @return void
+     * @throws RuntimeException
+     */
     private function write(string $data): void
     {
         if ($this->socket === null) {
@@ -264,7 +317,12 @@ final class SmtpClient
         }
     }
 
-    /** @param int|list<int> $expected */
+    /**
+     * Methode expect.
+     * @param int|list<int> $expected
+     * @return string
+     * @throws RuntimeException
+     */
     private function expect(int|array $expected): string
     {
         if ($this->socket === null) {
@@ -289,6 +347,12 @@ final class SmtpClient
         return $line;
     }
 
+    /**
+     * Führt aus: sanitize address.
+     * @param string $email E-Mail-Adresse
+     * @return string
+     * @throws InvalidArgumentException
+     */
     private function sanitizeAddress(string $email): string
     {
         $email = trim($email);
@@ -299,6 +363,10 @@ final class SmtpClient
         return $email;
     }
 
+    /**
+     * Methode close.
+     * @return void
+     */
     private function close(): void
     {
         if (is_resource($this->socket)) {

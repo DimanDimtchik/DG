@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Voucher Api.
+ */
 final class VoucherApi
 {
+    /**
+     * HTTP-API-Einstieg
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -74,6 +81,10 @@ final class VoucherApi
         }
     }
 
+    /**
+     * handleContactSearch
+     * @return void
+     */
     private static function handleContactSearch(): void
     {
         $user = AuthService::user();
@@ -137,6 +148,11 @@ final class VoucherApi
         ], JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * voucherTypeFromRequest
+     * @param string $raw Rohdaten
+     * @return string
+     */
     private static function voucherTypeFromRequest(string $raw): string
     {
         $raw = trim($raw);
@@ -147,6 +163,10 @@ final class VoucherApi
         return VoucherRepository::normalizeVoucherType($raw);
     }
 
+    /**
+     * handleAccountLookup
+     * @return void
+     */
     private static function handleAccountLookup(): void
     {
         $number = preg_replace('/\D/', '', (string) ($_GET['number'] ?? '')) ?? '';
@@ -188,6 +208,10 @@ final class VoucherApi
         ], JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * handleAccountSearch
+     * @return void
+     */
     private static function handleAccountSearch(): void
     {
         $query = trim((string) ($_GET['q'] ?? ''));
@@ -221,6 +245,10 @@ final class VoucherApi
         ], JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * handleInvoiceNumberPreview
+     * @return void
+     */
     private static function handleInvoiceNumberPreview(): void
     {
         $voucherType = VoucherRepository::normalizeVoucherType((string) ($_GET['voucher_type'] ?? ''));
@@ -244,6 +272,10 @@ final class VoucherApi
         ], JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * handleArticleSearch
+     * @return void
+     */
     private static function handleArticleSearch(): void
     {
         $query = trim((string) ($_GET['q'] ?? ''));
@@ -254,6 +286,10 @@ final class VoucherApi
         ], JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * handleReverseChargePreview
+     * @return void
+     */
     private static function handleReverseChargePreview(): void
     {
         $raw = file_get_contents('php://input');

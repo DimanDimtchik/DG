@@ -1536,6 +1536,7 @@
       btn.addEventListener('click', function () {
         if (contactIdInput) {
           contactIdInput.value = btn.getAttribute('data-id') || '';
+          contactIdInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
         if (contactSearch) {
           contactSearch.value = btn.getAttribute('data-label') || '';
@@ -1921,4 +1922,15 @@
     reindexBookingRows();
     reindexInvoiceItems();
   });
+
+  window.dgVoucherFormApi = {
+    addBookingRow: addBookingRow,
+    addInvoiceItemRow: addInvoiceItemRow,
+    reindexBookingRows: reindexBookingRows,
+    reindexInvoiceItems: reindexInvoiceItems,
+    syncContactValidation: syncContactValidation,
+    onBookingInput: onBookingInput,
+    syncIncomeMode: syncIncomeMode,
+    syncInvoiceNumberField: syncInvoiceNumberField,
+  };
 })();

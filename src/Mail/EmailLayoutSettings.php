@@ -6,7 +6,10 @@ final class EmailLayoutSettings
 {
     public const STORE_KEY = 'email_layout';
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return [
@@ -39,7 +42,10 @@ final class EmailLayoutSettings
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode social network labels.
+     * @return array<string, mixed>
+     */
     public static function socialNetworkLabels(): array
     {
         return [
@@ -53,7 +59,10 @@ final class EmailLayoutSettings
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         if (!Database::isConfigured()) {
@@ -84,13 +93,19 @@ final class EmailLayoutSettings
         return $out;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         return self::config();
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode email theme.
+     * @return array<string, mixed>
+     */
     public static function emailTheme(): array
     {
         $theme = CrmThemeSettings::colors();
@@ -110,7 +125,12 @@ final class EmailLayoutSettings
         ];
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Führt aus: resolved header.
+     * @param array $context
+     * @param array|null $cfg
+     * @return array<string, mixed>
+     */
     public static function resolvedHeader(array $context = [], ?array $cfg = null): array
     {
         $cfg = $cfg ?? self::config();
@@ -130,7 +150,12 @@ final class EmailLayoutSettings
         ];
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Führt aus: resolved footer.
+     * @param array $context
+     * @param array|null $cfg
+     * @return array<string, mixed>
+     */
     public static function resolvedFooter(array $context = [], ?array $cfg = null): array
     {
         $cfg = $cfg ?? self::config();
@@ -175,7 +200,11 @@ final class EmailLayoutSettings
         ];
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode preview config from input.
+     * @param array $input
+     * @return array<string, mixed>
+     */
     public static function previewConfigFromInput(array $input): array
     {
         $defaults = self::defaults();
@@ -208,7 +237,11 @@ final class EmailLayoutSettings
         return $data;
     }
 
-    /** @param array<string, mixed> $cfg */
+    /**
+     * Führt aus: resolved legal links.
+     * @param array $cfg
+     * @return array<string, mixed>
+     */
     private static function resolvedLegalLinks(array $cfg): array
     {
         $links = [];
@@ -227,7 +260,11 @@ final class EmailLayoutSettings
         return $links;
     }
 
-    /** @param array<string, mixed> $cfg */
+    /**
+     * Führt aus: resolved social links.
+     * @param array $cfg
+     * @return array<string, mixed>
+     */
     private static function resolvedSocialLinks(array $cfg): array
     {
         $links = [];
@@ -241,6 +278,11 @@ final class EmailLayoutSettings
         return $links;
     }
 
+    /**
+     * Speichert Formulardaten.
+     * @param array $input
+     * @return void
+     */
     public static function saveFromPost(array $input): void
     {
         $data = self::previewConfigFromInput($input);
@@ -252,6 +294,11 @@ final class EmailLayoutSettings
         SettingsStore::set(self::STORE_KEY, $data);
     }
 
+    /**
+     * Methode absolute url.
+     * @param string $path
+     * @return string
+     */
     public static function absoluteUrl(string $path): string
     {
         if ($path === '') {
@@ -276,11 +323,23 @@ final class EmailLayoutSettings
         return $path;
     }
 
+    /**
+     * Methode field or company.
+     * @param string $value
+     * @param string $companyValue
+     * @return string
+     */
     private static function fieldOrCompany(string $value, string $companyValue): string
     {
         return $value !== '' ? $value : trim($companyValue);
     }
 
+    /**
+     * Methode field or default.
+     * @param string $value
+     * @param string $default
+     * @return string
+     */
     private static function fieldOrDefault(string $value, string $default): string
     {
         $value = trim($value);
@@ -288,7 +347,12 @@ final class EmailLayoutSettings
         return $value !== '' ? $value : trim($default);
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Methode replace tokens.
+     * @param string $text
+     * @param array $context
+     * @return string
+     */
     private static function replaceTokens(string $text, array $context): string
     {
         if ($text === '') {
@@ -308,6 +372,11 @@ final class EmailLayoutSettings
         return CalendarEmailTokens::replace($text, $merged);
     }
 
+    /**
+     * Führt aus: normalize url.
+     * @param string $url
+     * @return string
+     */
     private static function normalizeUrl(string $url): string
     {
         $url = trim($url);

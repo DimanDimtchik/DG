@@ -1,9 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Crm Frontend Theme.
+ */
 final class CrmFrontendTheme
 {
-    /** @return array<string, string> */
+    /**
+     * Liefert CSS-Custom-Properties.
+     * @return array<string, string>
+     */
     public static function cssVariables(): array
     {
         $colors = CrmThemeSettings::colors();
@@ -30,6 +36,10 @@ final class CrmFrontendTheme
         ];
     }
 
+    /**
+     * Methode root declarations.
+     * @return string
+     */
     public static function rootDeclarations(): string
     {
         $parts = [];
@@ -40,11 +50,19 @@ final class CrmFrontendTheme
         return implode(';', $parts);
     }
 
+    /**
+     * Methode wrapper style attribute.
+     * @return string
+     */
     public static function wrapperStyleAttribute(): string
     {
         return ' style="' . htmlspecialchars(self::rootDeclarations(), ENT_QUOTES, 'UTF-8') . '"';
     }
 
+    /**
+     * Methode inline css.
+     * @return string
+     */
     public static function inlineCss(): string
     {
         return ':root{' . self::rootDeclarations() . '}';

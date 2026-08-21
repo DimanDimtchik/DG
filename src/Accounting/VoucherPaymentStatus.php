@@ -11,8 +11,12 @@ final class VoucherPaymentStatus
     public const PRIVATE = 'private';
     public const DIRECT_DEBIT = 'direct_debit';
 
-    /** @return array<string, string> */
-    public static function options(): array
+    /**
+     * Liefert Auswahloptionen.
+     *
+     * @return array<string, string>
+     */
+        public static function options(): array
     {
         return [
             self::OPEN => 'Offen',
@@ -22,6 +26,11 @@ final class VoucherPaymentStatus
         ];
     }
 
+    /**
+     * Bereinigt und validiert den Eingabewert
+     * @param string $status Statuswert
+     * @return string
+     */
     public static function sanitize(string $status): string
     {
         $status = strtolower(trim($status));
@@ -32,11 +41,21 @@ final class VoucherPaymentStatus
         return isset(self::options()[$status]) ? $status : self::OPEN;
     }
 
+    /**
+     * Liefert die Anzeigebezeichnung
+     * @param string $status Statuswert
+     * @return string
+     */
     public static function label(string $status): string
     {
         return self::options()[self::sanitize($status)] ?? $status;
     }
 
+    /**
+     * Liefert einen Hilfetext
+     * @param string $status Statuswert
+     * @return string
+     */
     public static function hint(string $status): string
     {
         return match (self::sanitize($status)) {
@@ -48,35 +67,51 @@ final class VoucherPaymentStatus
         };
     }
 
-    /** Noch keine Zahlung erfolgt (offener Posten). */
+        /**
+     * Noch keine Zahlung erfolgt (offener Posten).
+     * @param string $status Statuswert
+     * @return bool
+     */
     public static function isOpen(string $status): bool
     {
         return self::sanitize($status) === self::OPEN;
     }
 
-    /** Zahlung abgeschlossen (Kasse oder privat). */
+        /**
+     * Zahlung abgeschlossen (Kasse oder privat).
+     * @param string $status Statuswert
+     * @return bool
+     */
     public static function isSettled(string $status): bool
     {
         return in_array(self::sanitize($status), [self::CASH, self::PRIVATE], true);
     }
 
-    /** Lastschrift / Bankeinzug erwartet — noch nicht mit Kontoumsatz verknüpft. */
+        /**
+     * Lastschrift / Bankeinzug erwartet — noch nicht mit Kontoumsatz verknüpft.
+     * @param string $status Statuswert
+     * @return bool
+     */
     public static function expectsBankDebit(string $status): bool
     {
         return self::sanitize($status) === self::DIRECT_DEBIT;
     }
 
-    /** Für Auswertungen „offene Verbindlichkeiten“ (noch zu zahlen). */
+        /**
+     * Für Auswertungen „offene Verbindlichkeiten“ (noch zu zahlen).
+     * @param string $status Statuswert
+     * @return bool
+     */
     public static function countsAsOpenPayable(string $status): bool
     {
         return in_array(self::sanitize($status), [self::OPEN, self::DIRECT_DEBIT], true);
     }
 
-  /**
-   * Buchhalterische Zahlungsart für spätere Automatik (Kasse, EÜR-Verrechnung, Banking).
-   *
-   * @return 'none'|'cash'|'private'|'bank_debit'
-   */
+      /**
+     * Buchhalterische Zahlungsart für spätere Automatik (Kasse, EÜR-Verrechnung, Banking).
+     * @param string $status Statuswert
+     * @return 'none'|'cash'|'private'|'bank_debit'
+     */
     public static function settlementKind(string $status): string
     {
         return match (self::sanitize($status)) {
@@ -97,6 +132,11 @@ final class VoucherPaymentStatus
         return ['skr03' => '1371', 'skr04' => '1486'];
     }
 
+    /**
+     * Liefert CSS-Badge-Klasse für den Status
+     * @param string $status Statuswert
+     * @return string
+     */
     public static function badgeClass(string $status): string
     {
         return match (self::sanitize($status)) {

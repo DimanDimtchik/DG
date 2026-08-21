@@ -1,8 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * CRUD und Zugriffsrechte für CRM-Postfächer.
+ */
 final class MailboxRepository
 {
+    /**
+     * Prüft, ob die E-Mail-Adresse bereits als Postfach existiert.
+     * @param string $email
+     * @return bool
+     */
     public static function emailExists(string $email): bool
     {
         if (!Database::isConfigured()) {
@@ -15,7 +23,11 @@ final class MailboxRepository
         return (bool) $stmt->fetchColumn();
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Findet einen Datensatz anhand der ID.
+     * @param int $id
+     * @return array|null
+     */
     public static function findById(int $id): ?array
     {
         if (!Database::isConfigured() || $id <= 0) {
@@ -29,7 +41,11 @@ final class MailboxRepository
         return is_array($row) ? $row : null;
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Findet ein Postfach anhand des Inbound-Webhook-Tokens.
+     * @param string $token
+     * @return array|null
+     */
     public static function findByWebhookToken(string $token): ?array
     {
         $token = trim($token);
@@ -46,7 +62,11 @@ final class MailboxRepository
         return is_array($row) ? $row : null;
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Findet das private Postfach eines Benutzers.
+     * @param int $userId
+     * @return array|null
+     */
     public static function findPrivateForUser(int $userId): ?array
     {
         if ($userId <= 0 || !Database::isConfigured()) {
@@ -62,7 +82,10 @@ final class MailboxRepository
         return is_array($row) ? $row : null;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Listet alle Postfächer für Administratoren.
+     * @return array<string, mixed>
+     */
     public static function allForAdmin(): array
     {
         if (!Database::isConfigured()) {
@@ -77,7 +100,11 @@ final class MailboxRepository
         return is_array($rows) ? $rows : [];
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Listet für den Benutzer zugängliche Postfächer.
+     * @param User $user
+     * @return array<string, mixed>
+     */
     public static function accessibleForUser(User $user): array
     {
         if (!Database::isConfigured()) {
@@ -104,7 +131,11 @@ final class MailboxRepository
         return is_array($rows) ? $rows : [];
     }
 
-    /** @return list<int> */
+    /**
+     * Liefert Benutzer-IDs der Postfach-Mitglieder.
+     * @param int $mailboxId
+     * @return array<string, mixed>
+     */
     public static function memberUserIds(int $mailboxId): array
     {
         if ($mailboxId <= 0 || !Database::isConfigured()) {
@@ -116,6 +147,13 @@ final class MailboxRepository
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }
 
+    /**
+     * Prüft, ob der Benutzer auf das Postfach zugreifen darf.
+     * @param User $user
+     * @param int $mailboxId
+     * @param string $permission
+     * @return bool
+     */
     public static function userCanAccess(User $user, int $mailboxId, string $permission = 'read'): bool
     {
         if ($mailboxId <= 0) {
@@ -143,7 +181,11 @@ final class MailboxRepository
         return (bool) $stmt->fetchColumn();
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Listet Postfächer, über die der Benutzer senden darf.
+     * @param User $user Benutzer
+     * @return list<array<string, mixed>>
+     */
     public static function sendableForUser(User $user): array
     {
         $boxes = self::accessibleForUser($user);
@@ -166,6 +208,11 @@ final class MailboxRepository
         return $out;
     }
 
+    /**
+     * Prüft, ob SMTP für das Postfach konfiguriert ist.
+     * @param array $mailbox
+     * @return bool
+     */
     public static function smtpIsConfigured(array $mailbox): bool
     {
         return trim((string) ($mailbox['smtp_host'] ?? '')) !== ''
@@ -173,7 +220,11 @@ final class MailboxRepository
             && trim((string) ($mailbox['smtp_password'] ?? '')) !== '';
     }
 
-    /** @return array{host: string, port: int, encryption: string, username: string, password: string}|null */
+    /**
+     * Liefert die SMTP-Zugangsdaten des Postfachs.
+     * @param array $mailbox
+     * @return array{host: string, port: int, encryption: string, username: string, password: string}|null
+     */
     public static function smtpConfig(array $mailbox): ?array
     {
         if (!self::smtpIsConfigured($mailbox)) {
@@ -189,6 +240,11 @@ final class MailboxRepository
         ];
     }
 
+    /**
+     * Liefert den Anzeige-Absendernamen.
+     * @param array $mailbox
+     * @return string
+     */
     public static function displayFromName(array $mailbox): string
     {
         $name = trim((string) ($mailbox['from_name'] ?? ''));
@@ -200,8 +256,12 @@ final class MailboxRepository
     }
 
     /**
-     * @param array<string, mixed> $data
+     * Methode save.
+     * @param array $data
+     * @param int|null $id Datensatz-ID
      * @param list<int> $memberUserIds
+     * @return int
+     * @throws InvalidArgumentException
      */
     public static function save(array $data, ?int $id = null, array $memberUserIds = []): int
     {
@@ -306,7 +366,12 @@ final class MailboxRepository
         return $mailboxId;
     }
 
-    /** @param list<int> $userIds */
+    /**
+     * Synchronisiert die Mitglieder eines Shared-Postfachs.
+     * @param int $mailboxId Postfach-ID
+     * @param list<int> $userIds
+     * @return void
+     */
     public static function syncMembers(int $mailboxId, array $userIds): void
     {
         $pdo = Database::pdo();
@@ -332,6 +397,11 @@ final class MailboxRepository
         }
     }
 
+    /**
+     * Erzeugt die öffentliche Inbound-Webhook-URL.
+     * @param array $mailbox
+     * @return string
+     */
     public static function inboundWebhookUrl(array $mailbox): string
     {
         $token = (string) ($mailbox['inbound_webhook_token'] ?? '');
@@ -339,7 +409,12 @@ final class MailboxRepository
         return App::publicBaseUrl() . '/api/mail-inbound?token=' . rawurlencode($token);
     }
 
-    /** @return array{0: string, 1: string} */
+    /**
+     * Zerlegt eine E-Mail-Adresse in Local- und Domain-Teil.
+     * @param string $email E-Mail-Adresse
+     * @return array{0: string, 1: string}
+     * @throws InvalidArgumentException
+     */
     private static function splitEmail(string $email): array
     {
         $parts = explode('@', $email, 2);

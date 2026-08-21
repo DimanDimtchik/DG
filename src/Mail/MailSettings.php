@@ -1,12 +1,18 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Globale SMTP-/Absender-Einstellungen für den E-Mail-Versand.
+ */
 final class MailSettings
 {
   public const STORE_KEY = 'mail';
 
-  /** @return array<string, mixed> */
-  public static function defaults(): array
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
+    public static function defaults(): array
   {
     return [
       'enabled' => false,
@@ -18,8 +24,11 @@ final class MailSettings
     ];
   }
 
-  /** @return array<string, mixed> */
-  public static function config(): array
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
+    public static function config(): array
   {
     $cfg = SettingsStore::get(self::STORE_KEY, self::defaults());
     $cfg['smtp_port'] = max(1, min(65535, (int) ($cfg['smtp_port'] ?? 587)));
@@ -31,8 +40,11 @@ final class MailSettings
     return $cfg;
   }
 
-  /** @return array{name: string, email: string, reply_to: string} */
-  public static function sender(): array
+    /**
+     * Methode sender.
+     * @return array<string, mixed>
+     */
+    public static function sender(): array
   {
     $name = CompanySettings::displayName();
     $email = CompanySettings::mailEmail();
@@ -45,8 +57,11 @@ final class MailSettings
     ];
   }
 
-  /** @return array<string, mixed> */
-  public static function forForm(): array
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
+    public static function forForm(): array
   {
     $cfg = self::config();
     $sender = self::sender();
@@ -65,6 +80,10 @@ final class MailSettings
     ];
   }
 
+    /**
+     * Prüft, ob die Konfiguration vollständig ist.
+     * @return bool
+     */
   public static function isConfigured(): bool
   {
     $cfg = self::config();
@@ -75,8 +94,13 @@ final class MailSettings
       && CompanySettings::isConfiguredForMail();
   }
 
-  /** @param array<string, mixed> $input */
-  public static function save(array $input): void
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    public static function save(array $input): void
   {
     if (!CompanySettings::isConfiguredForMail()) {
       throw new InvalidArgumentException(
@@ -96,13 +120,12 @@ final class MailSettings
     SettingsStore::set(self::STORE_KEY, $data);
   }
 
-  /**
-   * Formularwerte; leere Änderungsfelder = gespeicherte DB-Werte behalten.
-   *
-   * @param array<string, mixed> $input
-   * @return array<string, mixed>
-   */
-  public static function normalizeInput(array $input): array
+    /**
+     * Führt aus: normalize input.
+     * @param array $input
+     * @return array<string, mixed>
+     */
+    public static function normalizeInput(array $input): array
   {
     $current = self::config();
 
@@ -131,8 +154,12 @@ final class MailSettings
     ];
   }
 
-  /** @return array{host: string, username: string, port: int, password_saved: bool} */
-  public static function saveSummary(array $input): array
+    /**
+     * Speichert summary.
+     * @param array $input
+     * @return array<string, mixed>
+     */
+    public static function saveSummary(array $input): array
   {
     $data = self::normalizeInput($input);
     $passwordEntered = trim((string) ($input['smtp_password'] ?? '')) !== '';
@@ -145,11 +172,12 @@ final class MailSettings
     ];
   }
 
-  /**
-   * @param array<string, mixed> $input
-   * @return array{ok: bool, summary: string, host: string, port: int, encryption: string, username: string, steps: list<array{label: string, ok: bool, detail: string}>}
-   */
-  public static function testConnectionReport(array $input): array
+    /**
+     * Methode test connection report.
+     * @param array $input Eingabedaten
+     * @return array{ok: bool, summary: string, host: string, port: int, encryption: string, username: string, steps: list<array{label: string, ok: bool, detail: string}>}
+     */
+    public static function testConnectionReport(array $input): array
   {
     $data = self::normalizeInput($input);
 
@@ -169,8 +197,13 @@ final class MailSettings
     return $report;
   }
 
-  /** @param array<string, mixed> $input */
-  public static function testConnection(array $input): string
+    /**
+     * Methode test connection.
+     * @param array $input
+     * @return string
+     * @throws RuntimeException
+     */
+    public static function testConnection(array $input): string
   {
     $report = self::testConnectionReport($input);
     if (!$report['ok']) {

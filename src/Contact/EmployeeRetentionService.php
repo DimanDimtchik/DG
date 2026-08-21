@@ -9,7 +9,10 @@ final class EmployeeRetentionService
 {
     public const RETENTION_YEARS = 10;
 
-    /** Erste zwei Kalenderwochen im Januar (1.–14.). */
+        /**
+     * Erste zwei Kalenderwochen im Januar (1.–14.).
+     * @return bool
+     */
     public static function isPurgeWindow(): bool
     {
         $now = new DateTimeImmutable('now');
@@ -19,11 +22,20 @@ final class EmployeeRetentionService
         return $month === 1 && $day >= 1 && $day <= 14;
     }
 
+    /**
+     * purgeWindowLabel
+     * @return string
+     */
     public static function purgeWindowLabel(): string
     {
         return '1.–14. Januar';
     }
 
+    /**
+     * applyIfExpired
+     * @param int $contactId Kontakt-ID
+     * @return bool
+     */
     public static function applyIfExpired(int $contactId): bool
     {
         if ($contactId <= 0 || !self::isPurgeWindow()) {
@@ -55,7 +67,10 @@ final class EmployeeRetentionService
         return true;
     }
 
-    /** Batch-Lauf (Cron, Wartung oder CRM-Aufruf). */
+        /**
+     * Batch-Lauf (Cron, Wartung oder CRM-Aufruf).
+     * @return int
+     */
     public static function purgeAllExpired(): int
     {
         $pdo = Database::pdo();
@@ -78,7 +93,10 @@ final class EmployeeRetentionService
         return $count;
     }
 
-    /** Beim CRM-Aufruf durch Admin/Mitarbeiter — max. einmal pro Sitzung, nur 1.–14. Januar. */
+        /**
+     * Beim CRM-Aufruf durch Admin/Mitarbeiter — max. einmal pro Sitzung, nur 1.–14. Januar.
+     * @return int
+     */
     public static function runOnCrmAccess(): int
     {
         if (!self::isPurgeWindow()) {
@@ -104,6 +122,12 @@ final class EmployeeRetentionService
         }
     }
 
+    /**
+     * logPurge
+     * @param int $count
+     * @param string $source
+     * @return void
+     */
     private static function logPurge(int $count, string $source): void
     {
         $line = date('c') . " employee-retention ({$source}) bereinigt: {$count}\n";
@@ -114,7 +138,12 @@ final class EmployeeRetentionService
         file_put_contents($logDir . '/cron-purge.log', $line, FILE_APPEND | LOCK_EX);
     }
 
-    /** @param mixed $employeeFilesRaw */
+        /**
+     * purge
+     * @param int $contactId Kontakt-ID
+     * @param mixed $employeeFilesRaw
+     * @return void
+     */
     private static function purge(int $contactId, mixed $employeeFilesRaw): void
     {
         $decoded = is_string($employeeFilesRaw) ? json_decode($employeeFilesRaw, true) : $employeeFilesRaw;
@@ -132,7 +161,11 @@ final class EmployeeRetentionService
         ]);
     }
 
-    /** @return array<string, string> */
+        /**
+     * decodeEmployeeData
+     * @param mixed $raw Rohdaten
+     * @return array<string, string>
+     */
     private static function decodeEmployeeData(mixed $raw): array
     {
         if ($raw === null || $raw === '') {

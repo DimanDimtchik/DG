@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** CRM- und Kontakt-Rollen (kompatibel mit dg-user-plugin). */
 final class CrmRole
 {
-    /** @return array<string, string> slug => Label */
+    /**
+     * Liefert Auswahloptionen.
+     * @return array<string, string>
+     */
     public static function options(): array
     {
         return [
@@ -14,6 +17,11 @@ final class CrmRole
         ];
     }
 
+    /**
+     * Liefert die Anzeigebezeichnung.
+     * @param string|null $slug
+     * @return string
+     */
     public static function label(?string $slug): string
     {
         $slug = self::normalize($slug);
@@ -24,6 +32,11 @@ final class CrmRole
         return self::options()[$slug] ?? ucfirst($slug);
     }
 
+    /**
+     * Normalisiert den Eingabewert.
+     * @param string|null $slug
+     * @return string
+     */
     public static function normalize(?string $slug): string
     {
         $slug = trim((string) $slug);
@@ -39,12 +52,21 @@ final class CrmRole
         };
     }
 
+    /**
+     * Prüft, ob der Wert gültig ist.
+     * @param string $slug
+     * @return bool
+     */
     public static function isValid(string $slug): bool
     {
         return isset(self::options()[self::normalize($slug)]);
     }
 
-    /** Mitarbeiterdaten für diese Kontakt-Rollen (nicht für Kunde). */
+    /**
+     * Prüft, ob die Rolle Mitarbeiterdaten erfordert.
+     * @param string $slug
+     * @return bool
+     */
     public static function hasEmployeeProfile(string $slug): bool
     {
         $slug = self::normalize($slug);

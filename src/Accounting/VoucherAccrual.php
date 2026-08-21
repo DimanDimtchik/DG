@@ -6,9 +6,11 @@ final class VoucherAccrual
 {
     public const LINE_ACCRUAL = 'accrual_deferred';
 
-    /**
-     * @param array<string, mixed> $data
+        /**
+     * parseFromData
+     * @param array $data
      * @return array{enabled: bool, current_year_percent: int, next_year_percent: int}
+     * @throws InvalidArgumentException
      */
     public static function parseFromData(array $data): array
     {
@@ -35,11 +37,23 @@ final class VoucherAccrual
         ];
     }
 
+    /**
+     * isIncomeType
+     * @param string $voucherType Belegtyp
+     * @return bool
+     */
     public static function isIncomeType(string $voucherType): bool
     {
         return in_array(VoucherRepository::normalizeVoucherType($voucherType), ['income', 'income_reduction'], true);
     }
 
+    /**
+     * showAccrualUi
+     * @param string $voucherType Belegtyp
+     * @param bool $enabled
+     * @param bool $readOnly
+     * @return bool
+     */
     public static function showAccrualUi(string $voucherType, bool $enabled, bool $readOnly): bool
     {
         if ($readOnly && $enabled) {
@@ -49,6 +63,11 @@ final class VoucherAccrual
         return !self::isIncomeType($voucherType);
     }
 
+    /**
+     * labelForType
+     * @param string $voucherType Belegtyp
+     * @return string
+     */
     public static function labelForType(string $voucherType): string
     {
         return self::isIncomeType($voucherType)
@@ -56,6 +75,11 @@ final class VoucherAccrual
             : 'Aktive Rechnungsabgrenzung (ARAP)';
     }
 
+    /**
+     * hintForType
+     * @param string $voucherType Belegtyp
+     * @return string
+     */
     public static function hintForType(string $voucherType): string
     {
         return self::isIncomeType($voucherType)
@@ -63,7 +87,9 @@ final class VoucherAccrual
             : 'Aufwandsanteil fürs Folgejahr wird als aktive Rechnungsabgrenzung (ARAP) gebucht — z. B. vorausbezahlte Leistungen.';
     }
 
-    /**
+        /**
+     * Liefert Rechnungsabgrenzungskonten
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return array{active: string, passive: string}
      */
     public static function accrualAccounts(string $skrType): array
@@ -74,6 +100,12 @@ final class VoucherAccrual
         };
     }
 
+    /**
+     * accrualAccount
+     * @param string $voucherType Belegtyp
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return string
+     */
     public static function accrualAccount(string $voucherType, string $skrType): string
     {
         $accounts = self::accrualAccounts($skrType);
@@ -81,8 +113,14 @@ final class VoucherAccrual
         return self::isIncomeType($voucherType) ? $accounts['passive'] : $accounts['active'];
     }
 
-    /**
-     * @param list<array<string, mixed>> $bookingLines
+        /**
+     * buildPostings
+     * @param array $bookingLines
+     * @param string $voucherType Belegtyp
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param int $currentPercent
+     * @param int $nextPercent
+     * @param int $nextFiscalYear
      * @return list<array<string, mixed>>
      */
     public static function buildPostings(
@@ -151,8 +189,15 @@ final class VoucherAccrual
         return $allLines;
     }
 
-    /**
-     * @param list<array<string, mixed>> $bookingLines
+        /**
+     * previewRows
+     * @param array $bookingLines
+     * @param string $voucherType Belegtyp
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param int $currentPercent
+     * @param int $nextPercent
+     * @param int $currentFiscalYear
+     * @param int $nextFiscalYear
      * @return list<array{account_number: string, account_name: string, description: string, gross_amount: string, tax_rate: int, share_label: string}>
      */
     public static function previewRows(
@@ -220,7 +265,11 @@ final class VoucherAccrual
         return $rows;
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * clientConfig
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return array<string, mixed>
+     */
     public static function clientConfig(string $skrType): array
     {
         $accounts = self::accrualAccounts($skrType);
@@ -231,6 +280,11 @@ final class VoucherAccrual
         ];
     }
 
+    /**
+     * sanitizePercent
+     * @param mixed $value Eingabewert
+     * @return int
+     */
     private static function sanitizePercent(mixed $value): int
     {
         $percent = (int) round((float) str_replace(',', '.', (string) $value));

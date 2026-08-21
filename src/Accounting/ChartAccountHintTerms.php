@@ -29,7 +29,11 @@ final class ChartAccountHintTerms
     return array_values($normalized);
   }
 
-  /** @param array<string, mixed> $row */
+    /**
+   * fromRow
+   * @param array $row Datenbankzeile
+   * @return array
+   */
   public static function fromRow(array $row): array
   {
     $hints = [];
@@ -46,8 +50,11 @@ final class ChartAccountHintTerms
     return self::normalizeList($hints['search_terms'] ?? []);
   }
 
-  /**
-   * @param list<string> $terms
+    /**
+   * scoreQuery
+   * @param string $query
+   * @param array $terms
+   * @return ?int
    */
   public static function scoreQuery(string $query, array $terms): ?int
   {

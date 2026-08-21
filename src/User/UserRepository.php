@@ -1,8 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Lädt und speichert CRM-Benutzer aus Datenbank oder Konfigurationsdatei.
+ */
 final class UserRepository
 {
+    /**
+     * Liefert by username.
+     * @param string $username
+     * @return User|null
+     */
     public static function findByUsername(string $username): ?User
     {
         if (self::useDatabase()) {
@@ -25,6 +33,11 @@ final class UserRepository
         return null;
     }
 
+    /**
+     * Liefert by email.
+     * @param string $email
+     * @return User|null
+     */
     public static function findByEmail(string $email): ?User
     {
         $email = trim($email);
@@ -52,6 +65,11 @@ final class UserRepository
         return null;
     }
 
+    /**
+     * Liefert by email or username.
+     * @param string $identifier
+     * @return User|null
+     */
     public static function findByEmailOrUsername(string $identifier): ?User
     {
         $identifier = trim($identifier);
@@ -66,14 +84,20 @@ final class UserRepository
         return self::findByUsername($identifier) ?? self::findByEmail($identifier);
     }
 
+    /**
+     * Führt aus: update password.
+     * @param int $userId
+     * @param string $password
+     * @return void
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function updatePassword(int $userId, string $password): void
     {
         if ($userId < 1 || $password === '') {
             throw new InvalidArgumentException('Ungültige Passwortänderung.');
         }
-        if (strlen($password) < 8) {
-            throw new InvalidArgumentException('Passwort mindestens 8 Zeichen.');
-        }
+        PasswordPolicy::assertValid($password);
 
         if (!self::useDatabase()) {
             throw new RuntimeException('Passwortänderung nur mit Datenbankverbindung möglich.');
@@ -93,6 +117,11 @@ final class UserRepository
         }
     }
 
+    /**
+     * Findet einen Datensatz anhand der ID.
+     * @param int $id
+     * @return User|null
+     */
     public static function findById(int $id): ?User
     {
         if (self::useDatabase()) {
@@ -111,6 +140,12 @@ final class UserRepository
         return $record ? self::mapFile($record) : null;
     }
 
+    /**
+     * Methode verify password.
+     * @param User $user
+     * @param string $password
+     * @return bool
+     */
     public static function verifyPassword(User $user, string $password): bool
     {
         if (self::useDatabase()) {
@@ -131,7 +166,11 @@ final class UserRepository
         return password_verify($password, (string) $record['password_hash']);
     }
 
-    /** @return list<array{id: string, name: string, member_role: string}> */
+    /**
+     * Methode departments for user.
+     * @param int $userId
+     * @return array<string, mixed>
+     */
     public static function departmentsForUser(int $userId): array
     {
         if (self::useDatabase()) {
@@ -173,7 +212,10 @@ final class UserRepository
         return $result;
     }
 
-    /** @return list<User> */
+    /**
+     * Methode all.
+     * @return array<string, mixed>
+     */
     public static function all(): array
     {
         if (!self::useDatabase()) {
@@ -197,11 +239,26 @@ final class UserRepository
         return $users;
     }
 
+    /**
+     * Methode username exists.
+     * @param string $username
+     * @return bool
+     */
     public static function usernameExists(string $username): bool
     {
         return self::findByUsername($username) !== null;
     }
 
+    /**
+     * Methode register.
+     * @param string $username
+     * @param string $email
+     * @param string $displayName
+     * @param string $password
+     * @return User
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function register(string $username, string $email, string $displayName, string $password): User
     {
         $username = trim($username);
@@ -211,9 +268,8 @@ final class UserRepository
         if ($username === '' || $email === '' || $displayName === '' || $password === '') {
             throw new InvalidArgumentException('Alle Felder sind Pflichtfelder.');
         }
-        if (strlen($password) < 8) {
-            throw new InvalidArgumentException('Passwort mindestens 8 Zeichen.');
-        }
+        PasswordPolicy::assertValid($password);
+        EmailExistenceChecker::assertDeliverable($email);
         if (self::usernameExists($username)) {
             throw new InvalidArgumentException('Benutzername ist bereits vergeben.');
         }
@@ -245,7 +301,11 @@ final class UserRepository
         throw new RuntimeException('Registrierung nur mit Datenbankverbindung möglich.');
     }
 
-  /** @param array<string, mixed> $record */
+    /**
+     * Methode map file.
+     * @param array $record
+     * @return User
+     */
     private static function mapFile(array $record): User
     {
         return new User(
@@ -258,7 +318,11 @@ final class UserRepository
         );
     }
 
-  /** @param array<string, mixed> $record */
+    /**
+     * Methode map db.
+     * @param array $record
+     * @return User
+     */
     private static function mapDb(array $record): User
     {
         return new User(
@@ -271,6 +335,10 @@ final class UserRepository
         );
     }
 
+    /**
+     * Prüft, ob die Datenbanktabelle verfügbar ist.
+     * @return bool
+     */
     private static function useDatabase(): bool
     {
         if (!Database::isConfigured()) {
@@ -289,7 +357,10 @@ final class UserRepository
   /** @var array{users: array<int, array<string, mixed>>, departments: list<array<string, mixed>>}|null */
     private static ?array $fileData = null;
 
-  /** @return array{users: array<int, array<string, mixed>>, departments: list<array<string, mixed>>} */
+    /**
+     * Führt aus: load file.
+     * @return array<string, mixed>
+     */
     private static function loadFile(): array
     {
         if (self::$fileData === null) {

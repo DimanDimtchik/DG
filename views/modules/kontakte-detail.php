@@ -49,6 +49,10 @@
         <dd><?= View::escape($contact->customerNumber !== '' ? $contact->customerNumber : '—') ?></dd>
         <dt>Lieferantennummer</dt>
         <dd><?= View::escape($contact->supplierNumber !== '' ? $contact->supplierNumber : '—') ?></dd>
+        <?php if ($contact->isCompany() || $contact->supplierCustomerNumber !== '') : ?>
+        <dt>Kundennummer beim Lieferanten</dt>
+        <dd><?= View::escape($contact->supplierCustomerNumber !== '' ? $contact->supplierCustomerNumber : '—') ?></dd>
+        <?php endif; ?>
       </dl>
     </section>
 

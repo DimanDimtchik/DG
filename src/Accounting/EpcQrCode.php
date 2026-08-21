@@ -11,8 +11,10 @@ declare(strict_types=1);
  */
 final class EpcQrCode
 {
-    /**
-     * @param array{recipient_name?: string, recipient_iban?: string, recipient_bic?: string, amount?: float|int|string, currency?: string, purpose?: string} $transfer
+        /**
+     * Erzeugt den EPC-QR-Code-Text (GiroCode)
+     * @param array $transfer Überweisungsdaten
+     * @return string
      */
     public static function payload(array $transfer): string
     {
@@ -45,10 +47,10 @@ final class EpcQrCode
         return rtrim(implode("\n", $lines), "\n");
     }
 
-    /**
+        /**
      * Prüft, ob genügend Daten für einen gültigen GiroCode vorhanden sind.
-     *
-     * @param array{recipient_name?: string, recipient_iban?: string, amount?: float|int|string} $transfer
+     * @param array $transfer Überweisungsdaten
+     * @return bool
      */
     public static function isPayable(array $transfer): bool
     {
@@ -58,6 +60,11 @@ final class EpcQrCode
         return $name !== '' && self::isValidIban($iban);
     }
 
+    /**
+     * Prüft eine IBAN per Modulo-97
+     * @param string $iban IBAN
+     * @return bool
+     */
     public static function isValidIban(string $iban): bool
     {
         $iban = strtoupper(preg_replace('/\s+/', '', $iban) ?? '');
@@ -80,6 +87,11 @@ final class EpcQrCode
         return $remainder === 1;
     }
 
+    /**
+     * clean
+     * @param string $value Eingabewert
+     * @return string
+     */
     private static function clean(string $value): string
     {
         $value = preg_replace('/[\r\n\t]+/', ' ', $value) ?? '';
@@ -87,6 +99,12 @@ final class EpcQrCode
         return trim((string) preg_replace('/\s{2,}/', ' ', $value));
     }
 
+    /**
+     * truncate
+     * @param string $value Eingabewert
+     * @param int $max Maximale Länge
+     * @return string
+     */
     private static function truncate(string $value, int $max): string
     {
         if (function_exists('mb_substr')) {

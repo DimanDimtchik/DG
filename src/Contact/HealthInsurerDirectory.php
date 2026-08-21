@@ -7,8 +7,12 @@ final class HealthInsurerDirectory
     /** @var list<array{name: string, type: string, code?: string}>|null */
     private static ?array $insurers = null;
 
-    /** @return list<array{name: string, type: string, code?: string}> */
-    public static function insurers(): array
+    /**
+     * insurers.
+     *
+     * @return list<array{name: string, type: string, code?: string}>
+     */
+        public static function insurers(): array
     {
         if (self::$insurers !== null) {
             return self::$insurers;
@@ -27,7 +31,11 @@ final class HealthInsurerDirectory
         return self::$insurers;
     }
 
-    /** @return list<array{name: string, type: string, code?: string}> */
+        /**
+     * searchByName
+     * @param string $input Formulardaten
+     * @return list<array{name: string, type: string, code?: string}>
+     */
     public static function searchByName(string $input): array
     {
         $query = mb_strtolower(trim($input));
@@ -54,7 +62,11 @@ final class HealthInsurerDirectory
         return $matches;
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * suggestResponse
+     * @param string $value Eingabewert
+     * @return array<string, mixed>
+     */
     public static function suggestResponse(string $value): array
     {
         return ['matches' => self::searchByName($value)];

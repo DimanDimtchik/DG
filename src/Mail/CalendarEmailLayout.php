@@ -5,15 +5,9 @@ declare(strict_types=1);
 final class CalendarEmailLayout
 {
     /**
-     * @param array<string, string> $details Label => value
-     * @param array{
-     *   title?: string,
-     *   intro?: string,
-     *   details?: array<string, string>,
-     *   footer_note?: string,
-     *   extra_html?: string,
-     *   context?: array<string, string>
-     * } $args
+     * Führt aus: render booking email.
+     * @param array $args
+     * @return string
      */
     public static function renderBookingEmail(array $args): string
     {
@@ -53,7 +47,10 @@ final class CalendarEmailLayout
         return self::wrapDocument($title, $content, $context);
     }
 
-    /** @param array<string, string> $details */
+    /**
+     * Methode preview details.
+     * @return array<string, mixed>
+     */
     public static function previewDetails(): array
     {
         $ctx = CalendarEmailTokens::demoContext();
@@ -69,8 +66,10 @@ final class CalendarEmailLayout
     }
 
     /**
-     * @param array<string, mixed>|null $cfg
-     * @param array<string, string>|null $context
+     * Methode settings header preview.
+     * @param array|null $cfg
+     * @param array|null $context
+     * @return string
      */
     public static function settingsHeaderPreview(?array $cfg = null, ?array $context = null): string
     {
@@ -86,8 +85,10 @@ final class CalendarEmailLayout
     }
 
     /**
-     * @param array<string, mixed>|null $cfg
-     * @param array<string, string>|null $context
+     * Methode settings footer preview.
+     * @param array|null $cfg
+     * @param array|null $context
+     * @return string
      */
     public static function settingsFooterPreview(?array $cfg = null, ?array $context = null): string
     {
@@ -105,18 +106,31 @@ final class CalendarEmailLayout
             . '</div>';
     }
 
+    /**
+     * Führt aus: render closing signature.
+     * @param array $context
+     * @return string
+     */
     private static function renderClosingSignature(array $context): string
     {
         return self::renderClosingSignatureResolved(EmailLayoutSettings::resolvedFooter($context));
     }
 
-    /** @param array<string, mixed> $footer */
+    /**
+     * Führt aus: render closing signature block.
+     * @param array $footer
+     * @return string
+     */
     public static function renderClosingSignatureBlock(array $footer): string
     {
         return self::renderClosingSignatureResolved($footer);
     }
 
-    /** @param array<string, mixed> $footer */
+    /**
+     * Methode closing plain text.
+     * @param array $footer
+     * @return string
+     */
     public static function closingPlainText(array $footer): string
     {
         $lines = array_filter([
@@ -129,10 +143,11 @@ final class CalendarEmailLayout
     }
 
     /**
-     * Vollständiges HTML für Post-Versand (Kopfzeile, Inhalt, Grußblock, Site-Fuß).
-     *
-     * @param array<string, mixed> $footer Bereits aufgelöste Fußzeile inkl. personalisierter Signatur
-     * @param array<string, string> $context
+     * Führt aus: render post message.
+     * @param string $innerHtml
+     * @param array $footer
+     * @param array $context
+     * @return string
      */
     public static function renderPostMessage(string $innerHtml, array $footer, array $context = []): string
     {
@@ -158,7 +173,11 @@ final class CalendarEmailLayout
         return self::wrapDocument('', $content, $context);
     }
 
-    /** @param array<string, mixed> $footer */
+    /**
+     * Führt aus: render closing signature resolved.
+     * @param array $footer
+     * @return string
+     */
     private static function renderClosingSignatureResolved(array $footer): string
     {
         $parts = array_filter([
@@ -180,13 +199,21 @@ final class CalendarEmailLayout
         return '<p style="margin:24px 0 0;font-size:15px;line-height:1.75;color:' . $textColor . ';">' . rtrim($html, '<br>') . '</p>';
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Führt aus: render site footer.
+     * @param array $context
+     * @return string
+     */
     private static function renderSiteFooter(array $context): string
     {
         return self::renderSiteFooterResolved(EmailLayoutSettings::resolvedFooter($context));
     }
 
-    /** @param array<string, mixed> $footer */
+    /**
+     * Führt aus: render site footer resolved.
+     * @param array $footer
+     * @return string
+     */
     private static function renderSiteFooterResolved(array $footer): string
     {
         $hasLegal = $footer['show_legal_links'] && $footer['legal_links'] !== [];
@@ -247,8 +274,11 @@ final class CalendarEmailLayout
     }
 
     /**
-     * @param list<array{label: string, url: string}> $links
-     * @param array<string, mixed> $footer
+     * Führt aus: render footer link row.
+     * @param array $links
+     * @param array $footer
+     * @param string $ariaLabel
+     * @return string
      */
     private static function renderFooterLinkRow(array $links, array $footer, string $ariaLabel): string
     {
@@ -271,8 +301,10 @@ final class CalendarEmailLayout
     }
 
     /**
-     * @param array<string, string> $details
-     * @param array<string, string> $emailTheme
+     * Führt aus: render details table.
+     * @param array $details
+     * @param array $emailTheme
+     * @return string
      */
     private static function renderDetailsTable(array $details, array $emailTheme): string
     {
@@ -307,13 +339,21 @@ final class CalendarEmailLayout
             . '</tbody></table>';
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Führt aus: render brand header.
+     * @param array $context
+     * @return string
+     */
     private static function renderBrandHeader(array $context): string
     {
         return self::renderBrandHeaderResolved(EmailLayoutSettings::resolvedHeader($context));
     }
 
-    /** @param array<string, mixed> $header */
+    /**
+     * Führt aus: render brand header resolved.
+     * @param array $header
+     * @return string
+     */
     private static function renderBrandHeaderResolved(array $header): string
     {
         $textColor = self::esc((string) $header['text_color']);
@@ -347,7 +387,12 @@ final class CalendarEmailLayout
         return implode('', $parts);
     }
 
-    /** @param array<string, mixed> $header */
+    /**
+     * Führt aus: render header bar block.
+     * @param array $header
+     * @param string $inner
+     * @return string
+     */
     private static function renderHeaderBarBlock(array $header, string $inner): string
     {
         $bg = self::esc((string) $header['background_color']);
@@ -355,7 +400,11 @@ final class CalendarEmailLayout
         return '<div class="dg-email-header" style="padding:20px 24px;background-color:' . $bg . ';font-family:Arial,Helvetica,sans-serif;">' . $inner . '</div>';
     }
 
-    /** @param array<string, mixed> $header */
+    /**
+     * Methode email head block.
+     * @param array $header
+     * @return string
+     */
     private static function emailHeadBlock(array $header): string
     {
         $bg = self::esc((string) $header['background_color']);
@@ -385,7 +434,13 @@ final class CalendarEmailLayout
             . '</style>';
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Methode wrap document.
+     * @param string $title
+     * @param string $content
+     * @param array $context
+     * @return string
+     */
     private static function wrapDocument(string $title, string $content, array $context): string
     {
         $titleEsc = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
@@ -405,12 +460,21 @@ final class CalendarEmailLayout
             . '</table></td></tr></table></body></html>';
     }
 
+    /**
+     * Methode html bgcolor.
+     * @param string $hexColor
+     * @return string
+     */
     private static function htmlBgcolor(string $hexColor): string
     {
         return ltrim(trim($hexColor), '#');
     }
 
-    /** @param array<string, mixed> $footer */
+    /**
+     * Methode site footer bar style.
+     * @param array $footer
+     * @return string
+     */
     private static function siteFooterBarStyle(array $footer): string
     {
         return 'padding:16px 24px;border-top:1px solid ' . self::esc((string) $footer['bar_border_color'])
@@ -419,6 +483,11 @@ final class CalendarEmailLayout
             . self::esc((string) $footer['bar_text_color']) . ';';
     }
 
+    /**
+     * Methode esc.
+     * @param string $value
+     * @return string
+     */
     private static function esc(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');

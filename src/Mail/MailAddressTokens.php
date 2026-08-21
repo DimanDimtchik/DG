@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** Platzhalter für Mitarbeiter-E-Mail-Adressen (lokaler Teil + Domain). */
 final class MailAddressTokens
 {
-    /** @return array<string, array{title: string, items: list<array{label: string, hint?: string, codes: list<string>}>}> */
+    /**
+     * Methode reference groups.
+     * @return array<string, mixed>
+     */
     public static function referenceGroups(): array
     {
         return [
@@ -27,7 +30,10 @@ final class MailAddressTokens
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Liefert vordefinierte Presets.
+     * @return array<string, array<string, string>>
+     */
     public static function presets(): array
     {
         return [
@@ -41,7 +47,10 @@ final class MailAddressTokens
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode preset labels.
+     * @return array<string, mixed>
+     */
     public static function presetLabels(): array
     {
         return [
@@ -56,7 +65,11 @@ final class MailAddressTokens
     }
 
     /**
-     * @param array<string, mixed> $context
+     * Führt aus: resolve local part.
+     * @param string $template
+     * @param array $context
+     * @param int $collisionNr
+     * @return string
      */
     public static function resolveLocalPart(string $template, array $context, int $collisionNr = 0): string
     {
@@ -92,6 +105,11 @@ final class MailAddressTokens
         return $local;
     }
 
+    /**
+     * Methode first letter.
+     * @param string $value
+     * @return string
+     */
     public static function firstLetter(string $value): string
     {
         $value = trim($value);
@@ -102,6 +120,11 @@ final class MailAddressTokens
         return mb_substr(self::slugAscii($value), 0, 1);
     }
 
+    /**
+     * Methode slug ascii.
+     * @param string $value
+     * @return string
+     */
     public static function slugAscii(string $value): string
     {
         $value = trim($value);

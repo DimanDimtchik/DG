@@ -1,11 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Calendar Email Template Renderer.
+ */
 final class CalendarEmailTemplateRenderer
 {
     /**
-     * @param array{subject?: string, title?: string, intro?: string} $template
-     * @param array<string, string>|null $context
+     * Führt aus: render.
+     * @param string $templateKey
+     * @param array $template
+     * @param array|null $context
      * @return array{subject: string, html: string}
      */
     public static function render(string $templateKey, array $template, ?array $context = null): array
@@ -36,13 +41,23 @@ final class CalendarEmailTemplateRenderer
         ];
     }
 
-    /** @param array<string, string>|null $context */
+    /**
+     * Methode preview.
+     * @param string $templateKey
+     * @param array $template
+     * @param array|null $context
+     * @return array<string, mixed>
+     */
     public static function preview(string $templateKey, array $template, ?array $context = null): array
     {
         return self::render($templateKey, $template, $context);
     }
 
-    /** @param array<string, string> $context */
+    /**
+     * Methode details for context.
+     * @param array $context
+     * @return array<string, mixed>
+     */
     private static function detailsForContext(array $context): array
     {
         return [

@@ -7,7 +7,12 @@ final class CalendarArticleRepository
     /** @var list<int> */
     public const WORK_MINUTE_PRESETS = [15, 30, 45, 60];
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Methode all.
+     * @param bool $activeOnly
+     * @param string|null $catalogKind
+     * @return array<string, mixed>
+     */
     public static function all(bool $activeOnly = false, ?string $catalogKind = null): array
     {
         if (!Database::isConfigured()) {
@@ -36,7 +41,11 @@ final class CalendarArticleRepository
         return $rows;
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Findet einen Datensatz anhand der ID.
+     * @param int $id
+     * @return array|null
+     */
     public static function findById(int $id): ?array
     {
         if ($id < 1 || !Database::isConfigured()) {
@@ -54,6 +63,11 @@ final class CalendarArticleRepository
         return $row;
     }
 
+    /**
+     * Liefert work minutes.
+     * @param int $articleId
+     * @return int
+     */
     public static function getWorkMinutes(int $articleId): int
     {
         $article = self::findById($articleId);
@@ -61,6 +75,11 @@ final class CalendarArticleRepository
         return $article ? max(0, (int) ($article['work_minutes'] ?? 0)) : 0;
     }
 
+    /**
+     * Liefert area id.
+     * @param int $articleId
+     * @return int
+     */
     public static function getAreaId(int $articleId): int
     {
         $article = self::findById($articleId);
@@ -68,6 +87,11 @@ final class CalendarArticleRepository
         return $article ? max(0, (int) ($article['area_id'] ?? 0)) : 0;
     }
 
+    /**
+     * Methode title.
+     * @param int $articleId
+     * @return string
+     */
     public static function title(int $articleId): string
     {
         $article = self::findById($articleId);
@@ -75,6 +99,11 @@ final class CalendarArticleRepository
         return $article ? (string) ($article['title'] ?? '') : '';
     }
 
+    /**
+     * Methode price gross.
+     * @param int $articleId
+     * @return float
+     */
     public static function priceGross(int $articleId): float
     {
         $article = self::findById($articleId);
@@ -82,7 +111,13 @@ final class CalendarArticleRepository
         return $article ? (float) ($article['price_gross'] ?? 0) : 0.0;
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     */
     public static function save(array $input): void
     {
         if (!Database::isConfigured()) {
@@ -166,6 +201,11 @@ final class CalendarArticleRepository
         $stmt->execute($fields);
     }
 
+    /**
+     * Liefert id by article number.
+     * @param string $articleNumber
+     * @return int|null
+     */
     public static function findIdByArticleNumber(string $articleNumber): ?int
     {
         $articleNumber = trim($articleNumber);
@@ -181,6 +221,11 @@ final class CalendarArticleRepository
         return $id !== false ? (int) $id : null;
     }
 
+    /**
+     * Liefert id by title.
+     * @param string $title
+     * @return int|null
+     */
     public static function findIdByTitle(string $title): ?int
     {
         $title = trim($title);
@@ -196,7 +241,11 @@ final class CalendarArticleRepository
         return $id !== false ? (int) $id : null;
     }
 
-    /** Zuordnung beim Re-Import (normalisierte Bezeichnung, ältester Treffer). */
+    /**
+     * Liefert id by title for import.
+     * @param string $title
+     * @return int|null
+     */
     public static function findIdByTitleForImport(string $title): ?int
     {
         if (!Database::isConfigured()) {
@@ -232,6 +281,10 @@ final class CalendarArticleRepository
         return $id !== false ? (int) $id : null;
     }
 
+    /**
+     * Methode max import article sequence.
+     * @return int
+     */
     public static function maxImportArticleSequence(): int
     {
         if (!Database::isConfigured()) {
@@ -251,6 +304,11 @@ final class CalendarArticleRepository
         return $max;
     }
 
+    /**
+     * Methode article number by id.
+     * @param int $id
+     * @return string|null
+     */
     public static function articleNumberById(int $id): ?string
     {
         if ($id < 1 || !Database::isConfigured()) {
@@ -265,6 +323,13 @@ final class CalendarArticleRepository
         return $number !== false ? (string) $number : null;
     }
 
+    /**
+     * Führt aus: delete.
+     * @param int $id
+     * @return void
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function delete(int $id): void
     {
         if ($id < 1) {
@@ -277,6 +342,11 @@ final class CalendarArticleRepository
         Database::pdo()->prepare('DELETE FROM dg_calendar_articles WHERE id = :id')->execute(['id' => $id]);
     }
 
+    /**
+     * Methode format duration.
+     * @param int $minutes
+     * @return string
+     */
     public static function formatDuration(int $minutes): string
     {
         if ($minutes < 1) {
@@ -297,11 +367,22 @@ final class CalendarArticleRepository
         return $minutes . ' Min.';
     }
 
+    /**
+     * Methode suggest article number.
+     * @param string $catalogKind
+     * @return string
+     */
     public static function suggestArticleNumber(string $catalogKind = CalendarArticleCatalog::KIND_SERVICE): string
     {
         return self::allocateArticleNumber($catalogKind, false);
     }
 
+    /**
+     * Methode allocate article number.
+     * @param string $catalogKind
+     * @param bool $persist
+     * @return string
+     */
     public static function allocateArticleNumber(string $catalogKind, bool $persist = true): string
     {
         $catalogKind = CalendarArticleCatalog::normalizeKind($catalogKind);
@@ -318,7 +399,10 @@ final class CalendarArticleRepository
         }
     }
 
-    /** @return list<array{id: int, title: string, work_minutes: int, area_id: int, uses_employees: bool, price_gross: float, price_label: string}> */
+    /**
+     * Methode booking options.
+     * @return array<string, mixed>
+     */
     public static function bookingOptions(): array
     {
         $options = [];
@@ -341,7 +425,11 @@ final class CalendarArticleRepository
         return $options;
     }
 
-    /** @param array<string, mixed> $row */
+    /**
+     * Methode enrich row.
+     * @param mixed $row
+     * @return void
+     */
     private static function enrichRow(array &$row): void
     {
         $row['duration_label'] = self::formatDuration((int) ($row['work_minutes'] ?? 0));
@@ -350,6 +438,13 @@ final class CalendarArticleRepository
         $row['kind_label'] = CalendarArticleCatalog::kindLabel((string) ($row['catalog_kind'] ?? CalendarArticleCatalog::KIND_SERVICE));
     }
 
+    /**
+     * Methode assert unique article number.
+     * @param string $articleNumber
+     * @param int $excludeId
+     * @return void
+     * @throws InvalidArgumentException
+     */
     private static function assertUniqueArticleNumber(string $articleNumber, int $excludeId): void
     {
         $sql = 'SELECT id FROM dg_calendar_articles WHERE article_number = :article_number';
@@ -367,7 +462,11 @@ final class CalendarArticleRepository
         }
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Resolve Work Minutes From Input.
+     * @param array $input
+     * @return int
+     */
     private static function resolveWorkMinutesFromInput(array $input): int
     {
         $preset = (string) ($input['work_minutes'] ?? '');
@@ -380,6 +479,11 @@ final class CalendarArticleRepository
         return $minutes > 0 ? $minutes : 30;
     }
 
+    /**
+     * Führt aus: sanitize work minutes.
+     * @param mixed $value
+     * @return int
+     */
     private static function sanitizeWorkMinutes(mixed $value): int
     {
         if (is_string($value) && $value === '__custom__') {

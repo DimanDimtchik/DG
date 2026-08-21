@@ -1,11 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Invoice Number Builder.
+ */
 final class InvoiceNumberBuilder
 {
-    /**
-     * @param array<string, mixed> $document
-     * @param array<string, mixed> $context
+        /**
+     * Erzeugt DG-Hinweise für ein SKR-Konto
+     * @param array $document
+     * @param array $context
+     * @return string
      */
     public static function build(array $document, array $context = []): string
     {
@@ -51,8 +56,10 @@ final class InvoiceNumberBuilder
         ];
     }
 
-    /**
-     * @param array<string, mixed> $document
+        /**
+     * allocationContext
+     * @param array $document
+     * @param array $overrides
      * @return array<string, mixed>
      */
     public static function allocationContext(array $document, array $overrides = []): array
@@ -63,7 +70,11 @@ final class InvoiceNumberBuilder
         ]);
     }
 
-    /** @param array<string, mixed> $document */
+        /**
+     * sequenceCounter
+     * @param array $document
+     * @return int
+     */
     public static function sequenceCounter(array $document): int
     {
         $raw = $document['counter'] ?? $document['number'] ?? '1';
@@ -74,6 +85,11 @@ final class InvoiceNumberBuilder
         return max(0, (int) preg_replace('/\D/', '', (string) $raw));
     }
 
+    /**
+     * sanitizeSequenceCounter
+     * @param mixed $input Formulardaten
+     * @return string
+     */
     public static function sanitizeSequenceCounter(mixed $input): string
     {
         if ($input === '' || $input === null) {
@@ -83,6 +99,13 @@ final class InvoiceNumberBuilder
         return (string) max(0, (int) $input);
     }
 
+    /**
+     * formatSequenceValue
+     * @param int $value Eingabewert
+     * @param string $base
+     * @param int $pad
+     * @return string
+     */
     public static function formatSequenceValue(int $value, string $base = 'decimal', int $pad = 0): string
     {
         $int = max(0, $value);
@@ -95,13 +118,20 @@ final class InvoiceNumberBuilder
         };
     }
 
+    /**
+     * incrementSequence
+     * @param int $current
+     * @return int
+     */
     public static function incrementSequence(int $current): int
     {
         return max(0, $current) + 1;
     }
 
-    /**
-     * @param array<string, mixed> $document
+        /**
+     * peekNext
+     * @param array $document
+     * @param bool $preview
      * @return array{number: string, sequence: int, sequence_display: string, next_sequence: int}
      */
     public static function peekNext(array $document, bool $preview = true): array

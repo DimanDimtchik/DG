@@ -1,7 +1,7 @@
 <?php
 /** @var string|null $error */
 /** @var array{type: string, message: string}|null $flash */
-$pageTitle = 'Anmelden â€“ ' . App::config('crm_name');
+$pageTitle = 'Anmelden &ndash; ' . App::config('crm_name');
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -12,7 +12,7 @@ $pageTitle = 'Anmelden â€“ ' . App::config('crm_name');
   <div class="dg-login">
     <div class="dg-login__card">
       <div class="dg-login__brand">
-        <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" width="44" height="44">
+        <img class="dg-login__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>" src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>">
         <div>
           <h1><?= View::escape((string) App::config('crm_name')) ?></h1>
           <span>CRM-Anmeldung</span>
@@ -40,11 +40,10 @@ $pageTitle = 'Anmelden â€“ ' . App::config('crm_name');
       </form>
       <p class="dg-login__footer">
         <a href="/passwort-vergessen">Passwort vergessen?</a>
-        Â·
+        &middot;
         <a href="/register">Als Kunde registrieren</a>
       </p>
     </div>
   </div>
 </body>
 </html>
-

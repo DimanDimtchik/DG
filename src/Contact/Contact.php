@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Contact.
+ */
 final class Contact
 {
     /** @param list<array<string, string>> $bankAccounts */
@@ -45,16 +48,28 @@ final class Contact
     ) {
     }
 
+    /**
+     * isCompany
+     * @return bool
+     */
     public function isCompany(): bool
     {
         return $this->salutation === 'Firma';
     }
 
+    /**
+     * roleLabel
+     * @return string
+     */
     public function roleLabel(): string
     {
         return CrmRole::label($this->contactRole);
     }
 
+    /**
+     * listLabel
+     * @return string
+     */
     public function listLabel(): string
     {
         if ($this->displayName !== '') {
@@ -70,6 +85,10 @@ final class Contact
         return $name !== '' ? $name : $this->login;
     }
 
+    /**
+     * addressLine1
+     * @return string
+     */
     public function addressLine1(): string
     {
         return self::formatAddress(
@@ -81,6 +100,10 @@ final class Contact
         );
     }
 
+    /**
+     * addressLine2
+     * @return string
+     */
     public function addressLine2(): string
     {
         return self::formatAddress(
@@ -92,8 +115,12 @@ final class Contact
         );
     }
 
-    /** @return list<array{label: string, url: string}> */
-    public function socialLinks(): array
+    /**
+     * socialLinks.
+     *
+     * @return list<array{label: string, url: string}>
+     */
+        public function socialLinks(): array
     {
         $labels = [
             'linkedin' => 'LinkedIn',
@@ -116,6 +143,15 @@ final class Contact
         return $links;
     }
 
+    /**
+     * formatAddress
+     * @param string $extra
+     * @param string $street
+     * @param string $postal
+     * @param string $city
+     * @param string $country
+     * @return string
+     */
     private static function formatAddress(
         string $extra,
         string $street,

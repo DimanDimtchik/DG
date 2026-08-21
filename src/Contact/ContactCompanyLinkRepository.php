@@ -4,6 +4,10 @@ declare(strict_types=1);
 /** Verknüpfungen zwischen Firmen-Kontakten und Personen-Kontakten. */
 final class ContactCompanyLinkRepository
 {
+    /**
+     * ensureTables
+     * @return void
+     */
     public static function ensureTables(): void
     {
         if (!Database::isConfigured()) {
@@ -13,6 +17,12 @@ final class ContactCompanyLinkRepository
         MigrationRunner::runPending();
     }
 
+    /**
+     * isWorkEmailInUse
+     * @param string $email
+     * @param int|null $excludePersonContactId
+     * @return bool
+     */
     public static function isWorkEmailInUse(string $email, ?int $excludePersonContactId = null): bool
     {
         $email = strtolower(trim($email));
@@ -35,7 +45,11 @@ final class ContactCompanyLinkRepository
         return (bool) $stmt->fetchColumn();
     }
 
-    /** @return list<array<string, mixed>> */
+        /**
+     * employeesForCompany
+     * @param int $companyContactId
+     * @return list<array<string, mixed>>
+     */
     public static function employeesForCompany(int $companyContactId): array
     {
         self::ensureTables();
@@ -60,7 +74,11 @@ final class ContactCompanyLinkRepository
         return $rows;
     }
 
-    /** @return array<string, mixed>|null */
+        /**
+     * employerForPerson
+     * @param int $personContactId
+     * @return array<string, mixed>|null
+     */
     public static function employerForPerson(int $personContactId): ?array
     {
         self::ensureTables();
@@ -82,7 +100,11 @@ final class ContactCompanyLinkRepository
         return $row ? self::mapEmployerRow($row) : null;
     }
 
-    /** @return list<array{id: int, label: string}> */
+        /**
+     * companyOptions
+     * @param int $excludeContactId
+     * @return list<array{id: int, label: string}>
+     */
     public static function companyOptions(int $excludeContactId = 0): array
     {
         if (!Database::isConfigured()) {
@@ -113,7 +135,11 @@ final class ContactCompanyLinkRepository
         return $options;
     }
 
-    /** @return list<array{id: int, label: string}> */
+        /**
+     * personOptions
+     * @param int $excludeContactId
+     * @return list<array{id: int, label: string}>
+     */
     public static function personOptions(int $excludeContactId = 0): array
     {
         if (!Database::isConfigured()) {
@@ -144,8 +170,12 @@ final class ContactCompanyLinkRepository
         return $options;
     }
 
-    /** @return array<string, mixed> */
-    public static function emptyEmployeeRow(): array
+    /**
+     * emptyEmployeeRow.
+     *
+     * @return array<string, mixed>
+     */
+        public static function emptyEmployeeRow(): array
     {
         return [
             'person_contact_id' => 0,
@@ -156,7 +186,11 @@ final class ContactCompanyLinkRepository
         ];
     }
 
-    /** @return list<array<string, mixed>> */
+        /**
+     * employeeRowsForCompany
+     * @param int $companyContactId
+     * @return list<array<string, mixed>>
+     */
     public static function employeeRowsForCompany(int $companyContactId): array
     {
         $rows = [];
@@ -173,7 +207,11 @@ final class ContactCompanyLinkRepository
         return $rows;
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * employerFormForPerson
+     * @param int $personContactId
+     * @return array<string, mixed>
+     */
     public static function employerFormForPerson(int $personContactId): array
     {
         $form = self::emptyEmployerForm();
@@ -191,8 +229,12 @@ final class ContactCompanyLinkRepository
         return $form;
     }
 
-    /** @return array<string, mixed> */
-    public static function emptyEmployerForm(): array
+    /**
+     * emptyEmployerForm.
+     *
+     * @return array<string, mixed>
+     */
+        public static function emptyEmployerForm(): array
     {
         return [
             'employer_company_id' => 0,
@@ -203,13 +245,11 @@ final class ContactCompanyLinkRepository
         ];
     }
 
-    /**
+        /**
+     * companyEmployees: list<array<string, mixed>>,
+     * @param Contact|null $contact
+     * @param array $post
      * @return array{
-     *   companyEmployees: list<array<string, mixed>>,
-     *   employerForm: array<string, mixed>,
-     *   companyContactOptions: list<array{id: int, label: string}>,
-     *   personContactOptions: list<array{id: int, label: string}>
-     * }
      */
     public static function formContext(?Contact $contact = null, array $post = []): array
     {
@@ -244,7 +284,11 @@ final class ContactCompanyLinkRepository
         ];
     }
 
-    /** @param array<string, mixed> $post */
+        /**
+     * employeesFromPost
+     * @param array $post
+     * @return array
+     */
     public static function employeesFromPost(array $post): array
     {
         $raw = $post['company_employees'] ?? [];
@@ -273,7 +317,11 @@ final class ContactCompanyLinkRepository
         return $rows;
     }
 
-    /** @param array<string, mixed> $post */
+        /**
+     * employerFromPost
+     * @param array $post
+     * @return array
+     */
     public static function employerFromPost(array $post): array
     {
         return [
@@ -285,7 +333,13 @@ final class ContactCompanyLinkRepository
         ];
     }
 
-    /** @param array<string, mixed> $post */
+        /**
+     * syncEmployeesForCompany
+     * @param int $companyContactId
+     * @param array $post
+     * @return void
+     * @throws InvalidArgumentException
+     */
     public static function syncEmployeesForCompany(int $companyContactId, array $post): void
     {
         self::ensureTables();
@@ -364,7 +418,13 @@ final class ContactCompanyLinkRepository
         $pdo->prepare($sql)->execute($params);
     }
 
-    /** @param array<string, mixed> $post */
+        /**
+     * syncEmployerForPerson
+     * @param int $personContactId
+     * @param array $post
+     * @return void
+     * @throws InvalidArgumentException
+     */
     public static function syncEmployerForPerson(int $personContactId, array $post): void
     {
         self::ensureTables();
@@ -427,6 +487,11 @@ final class ContactCompanyLinkRepository
         }
     }
 
+    /**
+     * deleteForContact
+     * @param int $contactId Kontakt-ID
+     * @return void
+     */
     public static function deleteForContact(int $contactId): void
     {
         if (!Database::isConfigured() || $contactId <= 0) {
@@ -439,7 +504,11 @@ final class ContactCompanyLinkRepository
         )->execute(['company_id' => $contactId, 'person_id' => $contactId]);
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapEmployeeRow
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapEmployeeRow(array $row): array
     {
         return [
@@ -456,7 +525,11 @@ final class ContactCompanyLinkRepository
         ];
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapEmployerRow
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapEmployerRow(array $row): array
     {
         return [
@@ -472,7 +545,11 @@ final class ContactCompanyLinkRepository
         ];
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * personLabel
+     * @param array $row Datenbankzeile
+     * @return string
+     */
     private static function personLabel(array $row): string
     {
         $display = trim((string) ($row['display_name'] ?? ''));
@@ -485,7 +562,11 @@ final class ContactCompanyLinkRepository
         return $name !== '' ? $name : (string) ($row['login'] ?? 'Kontakt');
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * companyLabel
+     * @param array $row Datenbankzeile
+     * @return string
+     */
     private static function companyLabel(array $row): string
     {
         $company = trim((string) ($row['company_name'] ?? ''));
@@ -498,6 +579,12 @@ final class ContactCompanyLinkRepository
         return $display !== '' ? $display : (string) ($row['login'] ?? 'Firma');
     }
 
+    /**
+     * assertCompanyContact
+     * @param int $contactId Kontakt-ID
+     * @return void
+     * @throws InvalidArgumentException
+     */
     private static function assertCompanyContact(int $contactId): void
     {
         $contact = ContactRepository::findById($contactId);
@@ -506,6 +593,12 @@ final class ContactCompanyLinkRepository
         }
     }
 
+    /**
+     * assertPersonContact
+     * @param int $contactId Kontakt-ID
+     * @return void
+     * @throws InvalidArgumentException
+     */
     private static function assertPersonContact(int $contactId): void
     {
         $contact = ContactRepository::findById($contactId);
@@ -514,7 +607,12 @@ final class ContactCompanyLinkRepository
         }
     }
 
-    /** @param list<array<string, mixed>> $existing */
+        /**
+     * findExistingLink
+     * @param array $existing Bestehende Hinweisdaten
+     * @param int $personId
+     * @return ?array
+     */
     private static function findExistingLink(array $existing, int $personId): ?array
     {
         foreach ($existing as $row) {
@@ -526,6 +624,12 @@ final class ContactCompanyLinkRepository
         return null;
     }
 
+    /**
+     * removePersonEmployerElsewhere
+     * @param int $personId
+     * @param int $companyContactId
+     * @return void
+     */
     private static function removePersonEmployerElsewhere(int $personId, int $companyContactId): void
     {
         Database::pdo()->prepare(

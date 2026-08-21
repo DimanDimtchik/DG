@@ -1,12 +1,19 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Contact Repository.
+ */
 final class ContactRepository
 {
     private const PER_PAGE = 20;
 
     private static bool $retentionPurgedOnLastFind = false;
 
+    /**
+     * consumeRetentionPurged
+     * @return bool
+     */
     public static function consumeRetentionPurged(): bool
     {
         $purged = self::$retentionPurgedOnLastFind;
@@ -15,14 +22,12 @@ final class ContactRepository
         return $purged;
     }
 
-    /**
+        /**
+     * items: list<Contact>,
+     * @param string $search
+     * @param int $page
+     * @param User|null $viewer
      * @return array{
-     *   items: list<Contact>,
-     *   total: int,
-     *   page: int,
-     *   per_page: int,
-     *   total_pages: int
-     * }
      */
     public static function paginate(string $search = '', int $page = 1, ?User $viewer = null): array
     {
@@ -68,7 +73,13 @@ final class ContactRepository
         ];
     }
 
-    /** @return list<Contact> */
+        /**
+     * searchPicker
+     * @param string $search
+     * @param int $limit
+     * @param User|null $viewer
+     * @return list<Contact>
+     */
     public static function searchPicker(string $search, int $limit = 15, ?User $viewer = null): array
     {
         $limit = max(1, min(50, $limit));
@@ -96,6 +107,11 @@ final class ContactRepository
         return $items;
     }
 
+    /**
+     * Findet einen Datensatz anhand der ID
+     * @param int $id Datensatz-ID
+     * @return ?Contact
+     */
     public static function findById(int $id): ?Contact
     {
         self::$retentionPurgedOnLastFind = EmployeeRetentionService::applyIfExpired($id);
@@ -107,6 +123,12 @@ final class ContactRepository
         return $row ? self::map($row) : null;
     }
 
+    /**
+     * loginExists
+     * @param string $login
+     * @param int|null $excludeId
+     * @return bool
+     */
     public static function loginExists(string $login, ?int $excludeId = null): bool
     {
         $sql = 'SELECT id FROM dg_contacts WHERE login = :login';
@@ -121,7 +143,10 @@ final class ContactRepository
         return (bool) $stmt->fetchColumn();
     }
 
-    /**
+        /**
+     * buildSearchWhere
+     * @param string $search
+     * @param User|null $viewer
      * @return array{0: string, 1: array<string, string>}
      */
     private static function buildSearchWhere(string $search, ?User $viewer = null): array
@@ -161,7 +186,14 @@ final class ContactRepository
     }
 
     /** @param array<string, mixed> $data */
-    /** @param array<string, mixed> $uploads */
+        /**
+     * save
+     * @param array $data
+     * @param int|null $id Datensatz-ID
+     * @param array $uploads
+     * @return int
+     * @throws InvalidArgumentException
+     */
     public static function save(array $data, ?int $id = null, array $uploads = []): int
     {
         $login = trim((string) ($data['login'] ?? ''));
@@ -239,6 +271,16 @@ final class ContactRepository
 
         self::ensureContactNumbers($fields);
 
+        // E-Mail-Existenz für Kunden (und allgemein, wenn E-Mail gesetzt) prüfen und speichern
+        $emailCheck = self::resolveEmailExistenceFields(
+            (string) $fields['email'],
+            $existingContact,
+            (string) $fields['contact_role']
+        );
+        $fields['email_existence_status'] = $emailCheck['status'];
+        $fields['email_existence_detail'] = $emailCheck['detail'];
+        $fields['email_existence_checked_at'] = $emailCheck['checked_at'];
+
         if ($hasEmployee) {
             $employeeData = EmployeeData::fromPost($data);
             if ($existingContact !== null) {
@@ -259,6 +301,8 @@ final class ContactRepository
         if ($id) {
             $sql = 'UPDATE dg_contacts SET login=:login, salutation=:salutation, first_name=:first_name, last_name=:last_name,
                 display_name=:display_name, company_name=:company_name, email=:email, email_2=:email_2,
+                email_existence_status=:email_existence_status, email_existence_detail=:email_existence_detail,
+                email_existence_checked_at=:email_existence_checked_at,
                 phone_1=:phone_1, phone_2=:phone_2, customer_number=:customer_number, supplier_number=:supplier_number,
                 tax_number=:tax_number, vat_id=:vat_id, contact_note=:contact_note,
                 address1_extra=:address1_extra, address1_street=:address1_street, address1_postal=:address1_postal,
@@ -276,13 +320,15 @@ final class ContactRepository
             $contactId = $id;
         } else {
             $sql = 'INSERT INTO dg_contacts (login, salutation, first_name, last_name, display_name, company_name,
-            email, email_2, phone_1, phone_2, customer_number, supplier_number, tax_number, vat_id, contact_note,
+            email, email_2, email_existence_status, email_existence_detail, email_existence_checked_at,
+            phone_1, phone_2, customer_number, supplier_number, tax_number, vat_id, contact_note,
             address1_extra, address1_street, address1_postal, address1_city, address1_country,
             address2_extra, address2_street, address2_postal, address2_city, address2_country,
             website, contact_role, social_linkedin, social_xing, social_facebook, social_instagram,
             social_x, social_youtube, social_tiktok, social_github, bank_accounts, employee_data, employee_files) VALUES (
             :login, :salutation, :first_name, :last_name, :display_name, :company_name,
-            :email, :email_2, :phone_1, :phone_2, :customer_number, :supplier_number, :tax_number, :vat_id, :contact_note,
+            :email, :email_2, :email_existence_status, :email_existence_detail, :email_existence_checked_at,
+            :phone_1, :phone_2, :customer_number, :supplier_number, :tax_number, :vat_id, :contact_note,
             :address1_extra, :address1_street, :address1_postal, :address1_city, :address1_country,
             :address2_extra, :address2_street, :address2_postal, :address2_city, :address2_country,
             :website, :contact_role, :social_linkedin, :social_xing, :social_facebook, :social_instagram,
@@ -316,7 +362,12 @@ final class ContactRepository
         return $contactId;
     }
 
-    /** @param array<string, string> $employeeData */
+        /**
+     * updateEmployeeData
+     * @param int $id Datensatz-ID
+     * @param array $employeeData
+     * @return void
+     */
     public static function updateEmployeeData(int $id, array $employeeData): void
     {
         $pdo = Database::pdo();
@@ -327,6 +378,12 @@ final class ContactRepository
         ]);
     }
 
+    /**
+     * isEmailInUse
+     * @param string $email
+     * @param int|null $excludeContactId
+     * @return bool
+     */
     public static function isEmailInUse(string $email, ?int $excludeContactId = null): bool
     {
         $email = strtolower(trim($email));
@@ -349,6 +406,12 @@ final class ContactRepository
         return (bool) $stmt->fetchColumn();
     }
 
+    /**
+     * setPrimaryEmailIfEmpty
+     * @param int $id Datensatz-ID
+     * @param string $email
+     * @return void
+     */
     public static function setPrimaryEmailIfEmpty(int $id, string $email): void
     {
         $email = trim($email);
@@ -362,7 +425,11 @@ final class ContactRepository
         $stmt->execute(['email' => $email, 'id' => $id]);
     }
 
-    /** @return array<string, string> */
+        /**
+     * stammForSocialDraft
+     * @param Contact $contact
+     * @return array<string, string>
+     */
     public static function stammForSocialDraft(Contact $contact): array
     {
         return [
@@ -379,10 +446,14 @@ final class ContactRepository
         ];
     }
 
-    /**
-     * @param array<string, mixed> $post
-     * @param array<string, mixed> $uploads
+        /**
+     * prepareSocialSecurityRegistrationDraft
+     * @param array $post
+     * @param int $contactId Kontakt-ID
+     * @param array $uploads
      * @return array{ok: bool, missing: list<string>, warnings: list<string>, contact_id: int}
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public static function prepareSocialSecurityRegistrationDraft(array $post, int $contactId, array $uploads = []): array
     {
@@ -411,19 +482,31 @@ final class ContactRepository
         ];
     }
 
-    /** @return list<array<string, string>> */
-    public static function defaultBankAccounts(): array
+    /**
+     * defaultBankAccounts.
+     *
+     * @return list<array<string, string>>
+     */
+        public static function defaultBankAccounts(): array
     {
         return [BankAccountTypes::emptyAccount('giro')];
     }
 
-    /** @return array<string, string> */
-    public static function bankTypes(): array
+    /**
+     * bankTypes.
+     *
+     * @return array<string, string>
+     */
+        public static function bankTypes(): array
     {
         return BankAccountTypes::labels();
     }
 
-    /** @param array<string, mixed> $data */
+        /**
+     * parseBankAccountsFromPost
+     * @param array $data
+     * @return array
+     */
     public static function parseBankAccountsFromPost(array $data): array
     {
         $raw = $data['bank_accounts'] ?? [];
@@ -446,7 +529,11 @@ final class ContactRepository
         return $accounts;
     }
 
-    /** @param array<string, mixed> $uploads */
+        /**
+     * hasEmployeeUploads
+     * @param array $uploads
+     * @return bool
+     */
     private static function hasEmployeeUploads(array $uploads): bool
     {
         foreach (array_keys(EmployeeData::documentTypes() + EmployeeData::disabilityDocumentTypes()) as $type) {
@@ -470,8 +557,12 @@ final class ContactRepository
         return false;
     }
 
-    /** @return array<string, string> */
-    public static function socialFormKeys(): array
+    /**
+     * socialFormKeys.
+     *
+     * @return array<string, string>
+     */
+        public static function socialFormKeys(): array
     {
         return [
             'social_linkedin' => 'LinkedIn',
@@ -485,12 +576,21 @@ final class ContactRepository
         ];
     }
 
+    /**
+     * normalizeContactRole
+     * @param string $role
+     * @return string
+     */
     private static function normalizeContactRole(string $role): string
     {
         return CrmRole::normalize($role);
     }
 
-    /** @param array<string, mixed> $fields */
+        /**
+     * ensureContactNumbers
+     * @param mixed $fields
+     * @return void
+     */
     private static function ensureContactNumbers(array &$fields): void
     {
         if (!Database::isConfigured()) {
@@ -518,6 +618,11 @@ final class ContactRepository
         }
     }
 
+    /**
+     * isStaffContactRole
+     * @param string $role
+     * @return bool
+     */
     public static function isStaffContactRole(string $role): bool
     {
         $role = self::normalizeContactRole($role);
@@ -525,9 +630,9 @@ final class ContactRepository
         return in_array($role, ['dg_eigenmitarbeiter', 'administrator', 'mitarbeiter'], true);
     }
 
-    /**
+        /**
      * Mitarbeiter-Kontakte für Kalender-Zuordnung (noch nicht anderem Kalender-Mitarbeiter zugeordnet).
-     *
+     * @param int $forEmployeeId
      * @return list<array{id: int, label: string}>
      */
     public static function calendarLinkableContacts(int $forEmployeeId = 0): array
@@ -563,7 +668,11 @@ final class ContactRepository
         return $options;
     }
 
-    /** Mitarbeiter-Kontakt zu CRM-Benutzer (E-Mail, sonst Login). */
+        /**
+     * Mitarbeiter-Kontakt zu CRM-Benutzer (E-Mail, sonst Login).
+     * @param User $user Angemeldeter Benutzer
+     * @return ?int
+     */
     public static function findStaffContactIdForUser(User $user): ?int
     {
         if (!Database::isConfigured()) {
@@ -604,7 +713,82 @@ final class ContactRepository
         return null;
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array{status: string, detail: string, checked_at: ?string}
+     */
+    private static function resolveEmailExistenceFields(string $email, ?Contact $existing, string $contactRole): array
+    {
+        $email = strtolower(trim($email));
+        if ($email === '') {
+            return [
+                'status' => EmailExistenceChecker::STATUS_UNKNOWN,
+                'detail' => '',
+                'checked_at' => null,
+            ];
+        }
+
+        $reuseDays = 90;
+        if ($existing !== null) {
+            $prevEmail = strtolower(trim($existing->email));
+            $prevStatus = '';
+            $prevDetail = '';
+            $prevChecked = null;
+            // Optional columns may not yet be on entity — read via SQL when needed
+            try {
+                $stmt = Database::pdo()->prepare(
+                    'SELECT email_existence_status, email_existence_detail, email_existence_checked_at
+                     FROM dg_contacts WHERE id = :id LIMIT 1'
+                );
+                $stmt->execute(['id' => $existing->id]);
+                $row = $stmt->fetch();
+                if (is_array($row)) {
+                    $prevStatus = (string) ($row['email_existence_status'] ?? '');
+                    $prevDetail = (string) ($row['email_existence_detail'] ?? '');
+                    $prevChecked = $row['email_existence_checked_at'] ?? null;
+                }
+            } catch (Throwable) {
+                // column may be missing until migration
+            }
+
+            if (
+                $prevEmail === $email
+                && $prevStatus === EmailExistenceChecker::STATUS_OK
+                && is_string($prevChecked)
+                && $prevChecked !== ''
+                && strtotime($prevChecked) !== false
+                && (time() - (int) strtotime($prevChecked)) < ($reuseDays * 86400)
+            ) {
+                return [
+                    'status' => $prevStatus,
+                    'detail' => $prevDetail,
+                    'checked_at' => $prevChecked,
+                ];
+            }
+        }
+
+        $result = EmailExistenceChecker::check($email);
+        $isCustomer = $contactRole === 'kunde'
+            || $contactRole === (string) App::config('roles.customer', 'dg_kunde')
+            || str_contains(strtolower($contactRole), 'kunde');
+
+        if ($isCustomer && !$result['ok']) {
+            throw new InvalidArgumentException(
+                'Kunden-E-Mail scheint nicht erreichbar: ' . $result['detail']
+            );
+        }
+
+        return [
+            'status' => $result['status'],
+            'detail' => $result['detail'],
+            'checked_at' => $result['checked_at'],
+        ];
+    }
+
+    /**
+     * emptyForm.
+     *
+     * @return array<string, string>
+     */
     public static function emptyForm(): array
     {
         return [
@@ -619,7 +803,11 @@ final class ContactRepository
         ];
     }
 
-    /** @return array<string, string> */
+        /**
+     * toForm
+     * @param Contact $c
+     * @return array<string, string>
+     */
     public static function toForm(Contact $c): array
     {
         $form = [
@@ -637,11 +825,32 @@ final class ContactRepository
         foreach ($c->social as $key => $value) {
             $form['social_' . $key] = $value;
         }
+        $form['email_existence_status'] = '';
+        $form['email_existence_detail'] = '';
+        $form['email_existence_checked_at'] = '';
+        try {
+            $stmt = Database::pdo()->prepare(
+                'SELECT email_existence_status, email_existence_detail, email_existence_checked_at
+                 FROM dg_contacts WHERE id = :id LIMIT 1'
+            );
+            $stmt->execute(['id' => $c->id]);
+            $row = $stmt->fetch();
+            if (is_array($row)) {
+                $form['email_existence_status'] = (string) ($row['email_existence_status'] ?? '');
+                $form['email_existence_detail'] = (string) ($row['email_existence_detail'] ?? '');
+                $form['email_existence_checked_at'] = (string) ($row['email_existence_checked_at'] ?? '');
+            }
+        } catch (Throwable) {
+        }
 
         return $form;
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapBankAccounts
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapBankAccounts(array $row): array
     {
         if (empty($row['bank_accounts'])) {
@@ -652,7 +861,11 @@ final class ContactRepository
         return is_array($decoded) ? $decoded : [];
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapEmployeeData
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapEmployeeData(array $row): array
     {
         if (empty($row['employee_data'])) {
@@ -663,7 +876,11 @@ final class ContactRepository
         return is_array($decoded) ? EmployeeData::sanitize($decoded) : EmployeeData::empty();
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapEmployeeFiles
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapEmployeeFiles(array $row): array
     {
         if (empty($row['employee_files'])) {
@@ -674,7 +891,11 @@ final class ContactRepository
         return ContactFileStorage::normalizeFiles($decoded);
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapSocial
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapSocial(array $row): array
     {
         return [
@@ -689,7 +910,11 @@ final class ContactRepository
         ];
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * map
+     * @param array $row Datenbankzeile
+     * @return Contact
+     */
     private static function map(array $row): Contact
     {
         $persons = [];
@@ -737,6 +962,12 @@ final class ContactRepository
         );
     }
 
+    /**
+     * Löscht einen Datensatz
+     * @param int $id Datensatz-ID
+     * @return void
+     * @throws InvalidArgumentException
+     */
     public static function delete(int $id): void
     {
         $contact = self::findById($id);

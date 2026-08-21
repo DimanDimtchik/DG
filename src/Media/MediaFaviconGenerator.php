@@ -1,11 +1,20 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Builds favicon assets from a media library item (PNG sizes or SVG copy).
+ */
 final class MediaFaviconGenerator
 {
     /** @var list<int> */
     private const SIZES = [16, 32, 48];
 
+    /**
+     * Generate favicon files next to the media item (favicon-16/32/48.png or favicon.svg).
+     *
+     * @throws InvalidArgumentException When the media id/item is invalid
+     * @throws RuntimeException When GD is missing or write fails
+     */
     public static function generateForMedia(string $mediaId): void
     {
         if (!MediaId::isValid($mediaId)) {
@@ -66,6 +75,9 @@ final class MediaFaviconGenerator
         imagedestroy($image);
     }
 
+    /**
+     * Public URL for the active site favicon (empty string if none configured).
+     */
     public static function publicUrl(int $size = 32): string
     {
         $id = AppearanceSettings::faviconMediaId();
@@ -76,6 +88,9 @@ final class MediaFaviconGenerator
         return '/app/favicon?size=' . max(16, min(48, $size));
     }
 
+    /**
+     * Copy an SVG source to favicon.svg for the media item.
+     */
     private static function storeSvgFavicon(string $mediaId, string $sourcePath): void
     {
         if (!is_file($sourcePath)) {
@@ -88,6 +103,9 @@ final class MediaFaviconGenerator
         }
     }
 
+    /**
+     * Lädt ein Rasterbild per GD anhand des MIME-Typs.
+     */
     private static function loadRaster(string $path, string $mime): ?\GdImage
     {
         return match ($mime) {

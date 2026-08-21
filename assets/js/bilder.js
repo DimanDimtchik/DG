@@ -520,4 +520,198 @@
         });
     });
   }
+
+  // --- SVG color / stroke-width editor ---
+  (function initSvgEditor() {
+    var form = document.getElementById('dg-media-svg-form');
+    var dataEl = document.getElementById('dg-media-svg-data');
+    var preview = document.getElementById('dg-media-preview');
+    var resetBtn = document.getElementById('dg-media-svg-reset');
+    if (!form || !dataEl || !preview) return;
+
+    var state;
+    try {
+      state = JSON.parse(dataEl.textContent || '{}');
+    } catch (e) {
+      return;
+    }
+    if (!state.markup) return;
+
+    var originalMarkup = state.markup;
+    var previewObjectUrl = null;
+
+    function escapeRegExp(value) {
+      return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function collectMaps() {
+      var colors = {};
+      var widths = {};
+      form.querySelectorAll('.dg-media-svg-color-text').forEach(function (input) {
+        var from = input.getAttribute('data-svg-color-from') || '';
+        var to = (input.value || '').trim();
+        if (from && to && to.toLowerCase() !== from.toLowerCase()) {
+          colors[from] = to;
+        }
+      });
+      form.querySelectorAll('.dg-media-svg-width').forEach(function (input) {
+        var from = input.getAttribute('data-svg-width-from') || '';
+        var rawTo = (input.value || '').trim();
+        if (!from || !rawTo) return;
+        var unitMatch = String(from).match(/(px|em|rem|pt|%)$/i);
+        var to = rawTo;
+        if (unitMatch && !/(px|em|rem|pt|%)$/i.test(rawTo)) {
+          to = rawTo + unitMatch[1];
+        }
+        if (to !== from) {
+          widths[from] = to;
+        }
+      });
+      return { colors: colors, widths: widths };
+    }
+
+    function replaceColor(markup, from, to) {
+      var q = escapeRegExp(from);
+      var attrs = 'fill|stroke|stop-color|flood-color|lighting-color|color';
+      markup = markup.replace(
+        new RegExp('(\\b(?:' + attrs + ')\\s*=\\s*)(["\\\'])(' + q + ')\\2', 'gi'),
+        function (_m, prefix, quote) {
+          return prefix + quote + to + quote;
+        }
+      );
+      markup = markup.replace(
+        new RegExp('((?:^|[;{"\\s])(?:' + attrs + ')\\s*:\\s*)(' + q + ')(?=\\s*[;}"\\\']|$)', 'gi'),
+        function (_m, prefix) {
+          return prefix + to;
+        }
+      );
+      return markup;
+    }
+
+    function replaceWidth(markup, from, to) {
+      var q = escapeRegExp(from);
+      markup = markup.replace(
+        new RegExp('(\\bstroke-width\\s*=\\s*)(["\\\'])(' + q + ')\\2', 'gi'),
+        function (_m, prefix, quote) {
+          return prefix + quote + to + quote;
+        }
+      );
+      markup = markup.replace(
+        new RegExp('((?:^|[;{"\\s])stroke-width\\s*:\\s*)(' + q + ')(?=\\s*[;}"\\\']|$)', 'gi'),
+        function (_m, prefix) {
+          return prefix + to;
+        }
+      );
+      return markup;
+    }
+
+    function buildMarkup() {
+      var maps = collectMaps();
+      var markup = originalMarkup;
+      Object.keys(maps.colors)
+        .sort(function (a, b) {
+          return b.length - a.length;
+        })
+        .forEach(function (from) {
+          markup = replaceColor(markup, from, maps.colors[from]);
+        });
+      Object.keys(maps.widths)
+        .sort(function (a, b) {
+          return b.length - a.length;
+        })
+        .forEach(function (from) {
+          markup = replaceWidth(markup, from, maps.widths[from]);
+        });
+      return markup;
+    }
+
+    function updatePreview() {
+      var markup = buildMarkup();
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+      }
+      previewObjectUrl = URL.createObjectURL(new Blob([markup], { type: 'image/svg+xml' }));
+      preview.src = previewObjectUrl;
+      form.querySelectorAll('.dg-media-svg-row__swatch').forEach(function (swatch) {
+        var text = swatch.parentElement && swatch.parentElement.querySelector('.dg-media-svg-color-text');
+        if (text && text.value) {
+          swatch.style.background = text.value;
+        }
+      });
+    }
+
+    function syncColorInputs(source) {
+      var from = source.getAttribute('data-svg-color-from');
+      if (!from) return;
+      var value = source.value;
+      form.querySelectorAll('[data-svg-color-from="' + from.replace(/"/g, '\\"') + '"]').forEach(function (el) {
+        if (el === source) return;
+        if (el.type === 'color') {
+          var hex = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+          if (hex) {
+            var h = hex[1];
+            if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+            el.value = '#' + h.toLowerCase();
+          }
+        } else {
+          el.value = value;
+        }
+      });
+      updatePreview();
+    }
+
+    form.querySelectorAll('.dg-media-svg-color, .dg-media-svg-color-text').forEach(function (input) {
+      input.addEventListener('input', function () {
+        syncColorInputs(input);
+      });
+    });
+    form.querySelectorAll('.dg-media-svg-width').forEach(function (input) {
+      input.addEventListener('input', updatePreview);
+    });
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        (state.colors || []).forEach(function (color) {
+          form.querySelectorAll('[data-svg-color-from="' + String(color.value).replace(/"/g, '\\"') + '"]').forEach(function (el) {
+            if (el.type === 'color' && color.hex) {
+              el.value = color.hex;
+            } else if (el.type !== 'color') {
+              el.value = color.value;
+            }
+          });
+        });
+        (state.stroke_widths || []).forEach(function (width) {
+          form.querySelectorAll('[data-svg-width-from="' + String(width.value).replace(/"/g, '\\"') + '"]').forEach(function (el) {
+            el.value = String(width.value).replace(/[^0-9.]/g, '') || width.value;
+          });
+        });
+        updatePreview();
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var maps = collectMaps();
+      if (Object.keys(maps.colors).length === 0 && Object.keys(maps.widths).length === 0) {
+        alert('Keine Änderungen zum Speichern.');
+        return;
+      }
+      var mediaId = form.getAttribute('data-media-id') || '';
+      var saveBtn = document.getElementById('dg-media-svg-save');
+      if (saveBtn) saveBtn.disabled = true;
+      post('svg_save', {
+        media_id: mediaId,
+        colors: JSON.stringify(maps.colors),
+        stroke_widths: JSON.stringify(maps.widths),
+      })
+        .then(function (res) {
+          if (saveBtn) saveBtn.disabled = false;
+          handleResponse(res);
+        })
+        .catch(function () {
+          if (saveBtn) saveBtn.disabled = false;
+          alert('Netzwerkfehler.');
+        });
+    });
+  })();
 })();

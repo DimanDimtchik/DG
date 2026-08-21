@@ -1,8 +1,18 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Employee Documents.
+ */
 final class EmployeeDocuments
 {
+    /**
+     * viewUrl
+     * @param int $contactId Kontakt-ID
+     * @param string $docType
+     * @param int|null $fileIndex
+     * @return string
+     */
     public static function viewUrl(int $contactId, string $docType, ?int $fileIndex = null): string
     {
         $url = '/app?page=kontakte&action=view&id=' . $contactId . '&doc=' . rawurlencode($docType);
@@ -13,6 +23,13 @@ final class EmployeeDocuments
         return $url;
     }
 
+    /**
+     * downloadUrl
+     * @param int $contactId Kontakt-ID
+     * @param string $docType
+     * @param int|null $fileIndex
+     * @return string
+     */
     public static function downloadUrl(int $contactId, string $docType, ?int $fileIndex = null): string
     {
         $url = '/app?page=kontakte&action=download&id=' . $contactId . '&doc=' . rawurlencode($docType);
@@ -64,6 +81,11 @@ final class EmployeeDocuments
         return $items;
     }
 
+    /**
+     * hasUploaded
+     * @param array $employeeFiles
+     * @return bool
+     */
     public static function hasUploaded(array $employeeFiles): bool
     {
         return self::listUploaded($employeeFiles) !== [];

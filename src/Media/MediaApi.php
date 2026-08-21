@@ -1,8 +1,14 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * HTTP API and streaming endpoints for the media library (`/api/media`, `/app/media`, favicon).
+ */
 final class MediaApi
 {
+    /**
+     * JSON API router (POST actions + GET download). Requires admin session.
+     */
     public static function handle(): void
     {
         if (!Database::isConfigured()) {
@@ -12,20 +18,28 @@ final class MediaApi
         MigrationRunner::runPending();
         MediaRepository::ensureTables();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'GET' && (string) ($_GET['action'] ?? '') === 'download') {
-            $user = AuthService::user();
-            if (!$user || !RoleResolver::isAdmin($user)) {
+        $user = AuthService::user();
+        if (!$user) {
+            self::error('Keine Berechtigung.', 403);
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && (string) ($_GET['action'] ?? '') === 'list') {
+            if (!RoleResolver::canEdit($user) || !MenuRegistry::canAccessWebsite($user)) {
                 self::error('Keine Berechtigung.', 403);
             }
+            header('Content-Type: application/json; charset=utf-8');
+            self::listForPicker();
+        }
+
+        if (!RoleResolver::isAdmin($user)) {
+            self::error('Keine Berechtigung.', 403);
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && (string) ($_GET['action'] ?? '') === 'download') {
             self::download((string) ($_GET['id'] ?? ''));
         }
 
         header('Content-Type: application/json; charset=utf-8');
-
-        $user = AuthService::user();
-        if (!$user || !RoleResolver::isAdmin($user)) {
-            self::error('Keine Berechtigung.', 403);
-        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             self::error('Nur POST erlaubt.', 405);
@@ -47,6 +61,7 @@ final class MediaApi
                 'delete' => self::delete(),
                 'set_logo' => self::setLogo(),
                 'set_favicon' => self::setFavicon(),
+                'svg_save' => self::svgSave(),
                 default => self::error('Unbekannte Aktion.'),
             };
         } catch (Throwable $e) {
@@ -54,6 +69,9 @@ final class MediaApi
         }
     }
 
+    /**
+     * Stream a media file for public website delivery (and CRM editors).
+     */
     public static function serve(string $mediaId): void
     {
         if (!MediaId::isValid($mediaId)) {
@@ -77,19 +95,41 @@ final class MediaApi
             exit;
         }
 
-        $user = AuthService::user();
-        $canPreview = $user !== null && RoleResolver::canEdit($user);
-        $isPublicLogo = AppearanceSettings::logoMediaId() === $mediaId;
-
-        if (!$isPublicLogo && !$canPreview) {
-            http_response_code(403);
-            echo 'Keine Berechtigung.';
-            exit;
-        }
-
-        self::streamFile($item, $isPublicLogo);
+        // Active library images are public (website CMS, logos, embeds). IDs are unguessable.
+        $publicCache = true;
+        self::streamFile($item, $publicCache);
     }
 
+    /**
+     * JSON list for the website builder / media picker (admin only).
+     *
+     * @return never
+     */
+    private static function listForPicker(): never
+    {
+        $items = [];
+        foreach (MediaRepository::listWithUsage() as $row) {
+            $mediaId = (string) $row['media_id'];
+            $items[] = [
+                'media_id' => $mediaId,
+                'title' => (string) ($row['title'] ?? ''),
+                'original_name' => (string) ($row['original_name'] ?? ''),
+                'alt_text' => (string) ($row['alt_text'] ?? ''),
+                'mime_type' => (string) ($row['mime_type'] ?? ''),
+                'extension' => (string) ($row['extension'] ?? ''),
+                'width' => isset($row['width']) ? (int) $row['width'] : null,
+                'height' => isset($row['height']) ? (int) $row['height'] : null,
+                'url' => MediaStorage::publicUrl($mediaId),
+                'preview_url' => MediaStorage::publicUrl($mediaId),
+            ];
+        }
+
+        self::ok(['items' => $items]);
+    }
+
+    /**
+     * Stream a media file for the Bilder editor preview (admin only).
+     */
     public static function streamForEditor(User $user, string $mediaId): void
     {
         if (!MediaId::isValid($mediaId)) {
@@ -122,7 +162,9 @@ final class MediaApi
         self::streamFile($item, false);
     }
 
-    /** @param array<string, mixed> $item */
+    /**
+     * @param array<string, mixed> $item Media DB row
+     */
     private static function streamFile(array $item, bool $publicCache): void
     {
         $mediaId = (string) $item['media_id'];
@@ -133,13 +175,35 @@ final class MediaApi
             exit;
         }
 
-        header('Content-Type: ' . (string) $item['mime_type']);
-        header('Content-Length: ' . (string) filesize($path));
-        header('Cache-Control: ' . ($publicCache ? 'public, max-age=86400' : 'private, max-age=3600'));
+        $mime = (string) $item['mime_type'];
+        self::sendMediaHeaders($mime, $publicCache, (int) filesize($path));
         readfile($path);
         exit;
     }
 
+    /**
+     * Media responses must not inherit the app CSP: browsers apply it to SVG-as-<img>
+     * and then block internal paint servers like fill="url(#id)".
+     */
+    private static function sendMediaHeaders(string $mime, bool $publicCache, int $length): void
+    {
+        header_remove('Content-Security-Policy');
+        // PHP session_start() may have set no-cache; favicons/media need stable caching.
+        if ($publicCache) {
+            header_remove('Pragma');
+            header_remove('Expires');
+        }
+        header('Content-Type: ' . $mime);
+        if ($length > 0) {
+            header('Content-Length: ' . (string) $length);
+        }
+        header('Cache-Control: ' . ($publicCache ? 'public, max-age=86400' : 'private, max-age=3600'));
+        header('X-Content-Type-Options: nosniff');
+    }
+
+    /**
+     * Serve the configured site favicon (SVG or PNG by size).
+     */
     public static function serveFavicon(int $size = 32): void
     {
         if (!Database::isConfigured()) {
@@ -161,13 +225,16 @@ final class MediaApi
             exit;
         }
 
-        header('Content-Type: ' . $file['mime']);
-        header('Content-Length: ' . (string) filesize($file['path']));
-        header('Cache-Control: public, max-age=86400');
+        self::sendMediaHeaders($file['mime'], true, (int) filesize($file['path']));
         readfile($file['path']);
         exit;
     }
 
+    /**
+     * Speichert einen Datei-Upload als neues Medium.
+     *
+     * @return never
+     */
     private static function upload(User $user): never
     {
         if (empty($_FILES['file']['tmp_name'])) {
@@ -198,6 +265,11 @@ final class MediaApi
         ]);
     }
 
+    /**
+     * Aktualisiert Metadaten (Titel, Alt-Text, Quellhinweis) eines Mediums.
+     *
+     * @return never
+     */
     private static function saveMeta(): never
     {
         $mediaId = trim((string) ($_POST['media_id'] ?? ''));
@@ -220,6 +292,11 @@ final class MediaApi
         self::ok(['reload' => true]);
     }
 
+    /**
+     * Skaliert/konvertiert ein Bild und legt ein neues abgeleitetes Medium an.
+     *
+     * @return never
+     */
     private static function transform(): never
     {
         $user = AuthService::user();
@@ -277,6 +354,11 @@ final class MediaApi
         ]);
     }
 
+    /**
+     * Speichert einen Zuschnitt/Freisteller als neues Medium (Original bleibt).
+     *
+     * @return never
+     */
     private static function crop(): never
     {
         $user = AuthService::user();
@@ -320,12 +402,22 @@ final class MediaApi
         ]);
     }
 
+    /**
+     * Scannt die Installation nach Medien-Referenzen und aktualisiert die Nutzung.
+     *
+     * @return never
+     */
     private static function scan(): never
     {
         $result = MediaScanner::scanAll();
         self::ok($result);
     }
 
+    /**
+     * Setzt oder entfernt das CRM-Logo (AppearanceSettings).
+     *
+     * @return never
+     */
     private static function setLogo(): never
     {
         $mediaId = trim((string) ($_POST['media_id'] ?? ''));
@@ -355,6 +447,11 @@ final class MediaApi
         self::ok(['reload' => true, 'message' => 'CRM-Logo deaktiviert.']);
     }
 
+    /**
+     * Setzt oder entfernt das Browser-Favicon und generiert Varianten.
+     *
+     * @return never
+     */
     private static function setFavicon(): never
     {
         $mediaId = trim((string) ($_POST['media_id'] ?? ''));
@@ -385,6 +482,110 @@ final class MediaApi
         self::ok(['reload' => true, 'message' => 'Favicon deaktiviert.']);
     }
 
+    /**
+     * Persist SVG color / stroke-width edits in place.
+     */
+    private static function svgSave(): never
+    {
+        $mediaId = trim((string) ($_POST['media_id'] ?? ''));
+        if (!MediaId::isValid($mediaId)) {
+            self::error('Ungültige Medien-ID.');
+        }
+
+        $item = MediaRepository::find($mediaId);
+        if (!$item) {
+            self::error('Bild nicht gefunden.');
+        }
+        if ((string) $item['mime_type'] !== 'image/svg+xml') {
+            self::error('Nur SVG-Dateien können so bearbeitet werden.');
+        }
+
+        $path = MediaStorage::absolutePath($mediaId, (string) $item['stored_name']);
+        if (!is_file($path)) {
+            self::error('Datei fehlt.');
+        }
+
+        $colorMap = self::decodeJsonMap($_POST['colors'] ?? '{}');
+        $strokeWidthMap = self::decodeJsonMap($_POST['stroke_widths'] ?? '{}');
+        if ($colorMap === [] && $strokeWidthMap === []) {
+            self::error('Keine Änderungen übermittelt.');
+        }
+
+        $original = MediaSvgEditor::readFile($path);
+        try {
+            $updated = MediaSvgEditor::apply($original, $colorMap, $strokeWidthMap);
+        } catch (InvalidArgumentException $e) {
+            self::error($e->getMessage());
+        }
+
+        if ($updated === $original) {
+            self::error('Keine wirksame Änderung erkannt.');
+        }
+
+        if (file_put_contents($path, $updated) === false) {
+            self::error('SVG konnte nicht gespeichert werden.');
+        }
+        MediaStorage::sanitizeSvg($path);
+        MediaStorage::applyReadablePermissions($path);
+
+        $sanitized = MediaSvgEditor::readFile($path);
+        [$width, $height] = MediaImageProcessor::readDimensions($path, 'image/svg+xml');
+        MediaRepository::updateFileMeta($mediaId, [
+            'stored_name' => (string) $item['stored_name'],
+            'mime_type' => 'image/svg+xml',
+            'extension' => 'svg',
+            'width' => $width,
+            'height' => $height,
+            'size_bytes' => (int) filesize($path),
+        ]);
+
+        if (AppearanceSettings::faviconMediaId() === $mediaId) {
+            MediaFaviconGenerator::generateForMedia($mediaId);
+        }
+
+        $analysis = MediaSvgEditor::analyze($sanitized);
+        self::ok([
+            'message' => 'SVG gespeichert.',
+            'reload' => true,
+            'analysis' => $analysis,
+            'preview_url' => MediaStorage::adminPreviewUrl($mediaId, time()),
+        ]);
+    }
+
+    /**
+     * Decode a JSON object or array map of string => string.
+     *
+     * @return array<string, string>
+     */
+    private static function decodeJsonMap(mixed $raw): array
+    {
+        if (is_array($raw)) {
+            $decoded = $raw;
+        } else {
+            $decoded = json_decode((string) $raw, true);
+            if (!is_array($decoded)) {
+                return [];
+            }
+        }
+
+        $map = [];
+        foreach ($decoded as $from => $to) {
+            $from = trim((string) $from);
+            $to = trim((string) $to);
+            if ($from === '' || $to === '') {
+                continue;
+            }
+            $map[$from] = $to;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Löscht ein Medium, sofern es nicht als Logo/Favicon oder Referenzen genutzt wird.
+     *
+     * @return never
+     */
     private static function delete(): never
     {
         $mediaId = trim((string) ($_POST['media_id'] ?? ''));
@@ -417,6 +618,11 @@ final class MediaApi
         self::ok(['redirect' => '/app?page=bilder']);
     }
 
+    /**
+     * Sendet die Mediendatei als Download-Attachment.
+     *
+     * @return never
+     */
     private static function download(string $mediaId): never
     {
         if (!MediaId::isValid($mediaId)) {
@@ -441,6 +647,9 @@ final class MediaApi
         exit;
     }
 
+    /**
+     * Parst einen positiven Integer aus Request-Werten; sonst null.
+     */
     private static function optionalInt(mixed $value): ?int
     {
         if ($value === null || $value === '') {
@@ -513,6 +722,9 @@ final class MediaApi
         return $stored;
     }
 
+    /**
+     * Regeneriert Favicon-Varianten, wenn dieses Medium aktuell als Favicon gesetzt ist.
+     */
     private static function maybeRegenerateFavicon(string $mediaId): void
     {
         if (AppearanceSettings::faviconMediaId() !== $mediaId) {
@@ -526,13 +738,21 @@ final class MediaApi
         }
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * JSON success response and exit.
+     *
+     * @param array<string, mixed> $data
+     * @return never
+     */
     private static function ok(array $data = []): never
     {
         echo json_encode(['success' => true, 'data' => $data], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
+    /**
+     * JSON error response and exit.
+     */
     private static function error(string $message, int $code = 400): never
     {
         http_response_code($code);

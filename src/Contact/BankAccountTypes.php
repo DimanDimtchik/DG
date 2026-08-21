@@ -1,10 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Bank Account Types.
+ */
 final class BankAccountTypes
 {
-    /** @return array<string, string> */
-    public static function labels(): array
+    /**
+     * Liefert Bezeichnungen.
+     *
+     * @return array<string, string>
+     */
+        public static function labels(): array
     {
         return [
             'giro' => 'Girokonto',
@@ -22,12 +29,21 @@ final class BankAccountTypes
         ];
     }
 
+    /**
+     * Liefert die Anzeigebezeichnung
+     * @param string $type
+     * @return string
+     */
     public static function label(string $type): string
     {
         return self::labels()[$type] ?? $type;
     }
 
-    /** @return array<string, string> */
+        /**
+     * emptyAccount
+     * @param string $type
+     * @return array<string, string>
+     */
     public static function emptyAccount(string $type = 'giro'): array
     {
         return [
@@ -50,7 +66,11 @@ final class BankAccountTypes
         ];
     }
 
-    /** @param array<string, mixed> $account */
+        /**
+     * sanitizeRow
+     * @param array $account Kontonummer
+     * @return array
+     */
     public static function sanitizeRow(array $account): array
     {
         $type = trim((string) ($account['type'] ?? 'giro'));
@@ -76,7 +96,11 @@ final class BankAccountTypes
         ];
     }
 
-    /** @param array<string, string> $row */
+        /**
+     * isEmpty
+     * @param array $row Datenbankzeile
+     * @return bool
+     */
     public static function isEmpty(array $row): bool
     {
         $check = $row;

@@ -1,15 +1,24 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Calendar Frontend Theme.
+ */
 final class CalendarFrontendTheme
 {
-    /** @return array<string, string> */
+    /**
+     * Methode colors.
+     * @return array<string, mixed>
+     */
     public static function colors(): array
     {
         return CalendarAppearanceSettings::forForm();
     }
 
-    /** @return array<string, string> */
+    /**
+     * Liefert CSS-Custom-Properties.
+     * @return array<string, string>
+     */
     public static function cssVariables(): array
     {
         $colors = self::colors();
@@ -39,11 +48,19 @@ final class CalendarFrontendTheme
         ];
     }
 
+    /**
+     * Methode wrapper selectors.
+     * @return string
+     */
     public static function wrapperSelectors(): string
     {
         return '.tk-cal, .tk-abs, .tk-book, .dg-cal-appearance-preview';
     }
 
+    /**
+     * Methode inline css.
+     * @return string
+     */
     public static function inlineCss(): string
     {
         $decl = [];
@@ -54,6 +71,10 @@ final class CalendarFrontendTheme
         return self::wrapperSelectors() . '{' . implode(';', $decl) . '}';
     }
 
+    /**
+     * Methode wrapper style attribute.
+     * @return string
+     */
     public static function wrapperStyleAttribute(): string
     {
         $parts = [];
@@ -64,6 +85,12 @@ final class CalendarFrontendTheme
         return ' style="' . htmlspecialchars(implode(';', $parts), ENT_QUOTES, 'UTF-8') . '"';
     }
 
+    /**
+     * Normalisiert und validiert einen Hex-Farbwert.
+     * @param string $color
+     * @param string|null $fallback
+     * @return string
+     */
     public static function sanitizeHex(string $color, ?string $fallback = null): string
     {
         $color = trim($color);
@@ -78,6 +105,11 @@ final class CalendarFrontendTheme
         return strtolower($color);
     }
 
+    /**
+     * Methode contrast text color.
+     * @param string $hex
+     * @return string
+     */
     public static function contrastTextColor(string $hex): string
     {
         $hex = ltrim(self::sanitizeHex($hex), '#');
@@ -93,6 +125,13 @@ final class CalendarFrontendTheme
         return $luminance > 0.58 ? '#1e293b' : '#ffffff';
     }
 
+    /**
+     * Methode mix hex.
+     * @param string $hex1
+     * @param string $hex2
+     * @param float $weight
+     * @return string
+     */
     public static function mixHex(string $hex1, string $hex2, float $weight): string
     {
         $weight = max(0.0, min(1.0, $weight));
@@ -106,7 +145,11 @@ final class CalendarFrontendTheme
         return sprintf('#%02x%02x%02x', $r, $g, $b);
     }
 
-    /** @return array{r: int, g: int, b: int} */
+    /**
+     * Methode hex to rgb.
+     * @param string $hex
+     * @return array<string, mixed>
+     */
     private static function hexToRgb(string $hex): array
     {
         $hex = ltrim($hex, '#');

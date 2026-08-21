@@ -1,8 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Hilfsfunktionen zum Parsen und Validieren von Theme-Farben.
+ */
 final class ThemeColor
 {
+    /**
+     * Normalisiert und validiert einen Hex-Farbwert.
+     * @param string $color
+     * @param string $fallback
+     * @return string
+     */
     public static function sanitizeHex(string $color, string $fallback): string
     {
         $color = trim($color);
@@ -17,6 +26,12 @@ final class ThemeColor
         return strtolower($color);
     }
 
+    /**
+     * Dunkelt einen Hex-Farbwert ab.
+     * @param string $hex
+     * @param float $amount
+     * @return string
+     */
     public static function darken(string $hex, float $amount): string
     {
         $amount = max(0.0, min(1.0, $amount));
@@ -24,6 +39,13 @@ final class ThemeColor
         return self::mixHex($hex, '#000000', 1.0 - $amount);
     }
 
+    /**
+     * Methode mix hex.
+     * @param string $hex1
+     * @param string $hex2
+     * @param float $weight
+     * @return string
+     */
     public static function mixHex(string $hex1, string $hex2, float $weight): string
     {
         $weight = max(0.0, min(1.0, $weight));
@@ -37,7 +59,11 @@ final class ThemeColor
         return sprintf('#%02x%02x%02x', $r, $g, $b);
     }
 
-    /** @return array{r: int, g: int, b: int} */
+    /**
+     * Methode hex to rgb.
+     * @param string $hex
+     * @return array<string, mixed>
+     */
     public static function hexToRgb(string $hex): array
     {
         $hex = ltrim(self::sanitizeHex($hex, '#000000'), '#');
@@ -49,6 +75,12 @@ final class ThemeColor
         ];
     }
 
+    /**
+     * Methode with alpha.
+     * @param string $hex
+     * @param float $alpha
+     * @return string
+     */
     public static function withAlpha(string $hex, float $alpha): string
     {
         $alpha = max(0.0, min(1.0, $alpha));
@@ -57,6 +89,11 @@ final class ThemeColor
         return sprintf('rgba(%d, %d, %d, %s)', $rgb['r'], $rgb['g'], $rgb['b'], rtrim(rtrim(number_format($alpha, 2, '.', ''), '0'), '.'));
     }
 
+    /**
+     * Methode focus ring.
+     * @param string $primaryHex
+     * @return string
+     */
     public static function focusRing(string $primaryHex): string
     {
         return self::withAlpha($primaryHex, 0.25);

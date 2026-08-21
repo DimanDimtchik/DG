@@ -1,9 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Number Range Formula.
+ */
 final class NumberRangeFormula
 {
-    /** @param array<string, mixed> $document */
+        /**
+     * fingerprint
+     * @param array $document
+     * @return string
+     */
     public static function fingerprint(array $document): string
     {
         $parts = [
@@ -18,7 +25,11 @@ final class NumberRangeFormula
         return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
-    /** @param array<string, mixed> $document */
+        /**
+     * pattern
+     * @param array $document
+     * @return string
+     */
     public static function pattern(array $document): string
     {
         $prefix = trim((string) ($document['prefix'] ?? ''));
@@ -27,7 +38,11 @@ final class NumberRangeFormula
         return $prefix . ($middle !== '' ? $middle : '{NR}') . trim((string) ($document['suffix'] ?? ''));
     }
 
-    /** @param array<string, mixed> $document */
+        /**
+     * Liefert die Anzeigebezeichnung
+     * @param array $document
+     * @return string
+     */
     public static function label(array $document): string
     {
         return self::pattern($document);

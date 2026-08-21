@@ -1,9 +1,14 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Formular und Persistenz für database.local.php (Einstellungen → Datenbank).
+ */
 final class DatabaseSettings
 {
-    /** @return array<string, mixed> */
+    /**
+     * @return array{host: string, port: int, database: string, username: string, password: string, charset: string}
+     */
     public static function forForm(): array
     {
         $cfg = App::config('database');
@@ -21,7 +26,13 @@ final class DatabaseSettings
         ];
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert die Datenbankkonfiguration in config/database.local.php.
+     *
+     * @param array<string, mixed> $input Formularwerte (leeres Passwort = bestehendes behalten).
+     * @throws InvalidArgumentException Bei fehlenden Pflichtfeldern.
+     * @throws RuntimeException Wenn die Datei nicht geschrieben werden kann.
+     */
     public static function save(array $input): void
     {
         $current = self::forForm();
@@ -55,7 +66,12 @@ final class DatabaseSettings
         Database::reset();
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Testet Verbindung mit Formularwerten (ohne Speichern).
+     *
+     * @param array<string, mixed> $input
+     * @throws InvalidArgumentException|PDOException
+     */
     public static function test(array $input): string
     {
         $current = self::forForm();
@@ -74,6 +90,9 @@ final class DatabaseSettings
         ]);
     }
 
+    /**
+     * Führt ausstehende SQL-Migrationen aus.
+     */
     public static function runMigrations(): int
     {
         return MigrationRunner::runPending();

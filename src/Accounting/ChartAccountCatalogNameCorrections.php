@@ -118,7 +118,11 @@ final class ChartAccountCatalogNameCorrections
         '5965' => 'Leistungen nach § 13b UStG ohne Vorsteuer und 19 % Umsatzsteuer',
     ];
 
-    /** @return array<string, string> */
+        /**
+     * forSkr
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return array<string, string>
+     */
     public static function forSkr(string $skrType): array
     {
         return match (ChartOfAccountsSettings::sanitizeSkrType($skrType)) {
@@ -127,6 +131,13 @@ final class ChartAccountCatalogNameCorrections
         };
     }
 
+    /**
+     * correctedName
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param string $accountNumber Kontonummer
+     * @param string $currentName
+     * @return string
+     */
     public static function correctedName(string $skrType, string $accountNumber, string $currentName): string
     {
         $number = str_pad(preg_replace('/\D/', '', $accountNumber) ?? '', 4, '0', STR_PAD_LEFT);

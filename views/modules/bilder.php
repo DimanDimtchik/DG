@@ -39,11 +39,20 @@
             <?php
               $usages = is_array($item['usages'] ?? null) ? $item['usages'] : [];
               $sourcePlain = trim(strip_tags((string) ($item['source_note'] ?? '')));
+              $isSvg = ((string) ($item['mime_type'] ?? '') === 'image/svg+xml')
+                  || strtolower((string) ($item['extension'] ?? '')) === 'svg';
             ?>
             <tr>
               <td class="dg-media-table__thumb">
                 <a href="/app?page=bilder&amp;action=edit&amp;id=<?= View::escape((string) $item['media_id']) ?>">
-                  <img src="<?= View::escape(MediaStorage::adminPreviewUrl((string) $item['media_id'])) ?>" alt="" loading="lazy" width="56" height="56">
+                  <img
+                    class="<?= $isSvg ? 'dg-media-thumb--svg' : '' ?>"
+                    src="<?= View::escape(MediaStorage::adminPreviewUrl((string) $item['media_id'])) ?>"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
                 </a>
               </td>
               <td>

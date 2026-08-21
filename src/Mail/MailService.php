@@ -1,8 +1,20 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Versendet E-Mails über SMTP und protokolliert den Versand.
+ */
 final class MailService
 {
+    /**
+     * Versendet eine E-Mail und gibt die Log-ID zurück.
+     * @param MailMessage $message
+     * @param User|null $actor
+     * @param int|null $mailboxId
+     * @return int
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     */
     public static function send(MailMessage $message, ?User $actor = null, ?int $mailboxId = null): int
     {
         if (!Database::isConfigured()) {
@@ -68,6 +80,7 @@ final class MailService
                 contactId: $message->contactId,
                 inReplyTo: $message->inReplyTo,
                 references: $message->references,
+                attachments: $message->attachments,
             );
             $mime = $outbound->toMime($fromEmail, $fromName, $replyTo, $messageId);
             $archive = MailArchiveStorage::save($logId, $mime);
@@ -91,7 +104,9 @@ final class MailService
     }
 
     /**
-     * @param array<string, mixed>|null $mailbox
+     * Führt aus: resolve from.
+     * @param MailMessage $message E-Mail-Nachricht
+     * @param array|null $mailbox
      * @return array{email: string, name: string, reply_to: string}
      */
     private static function resolveFrom(MailMessage $message, ?array $mailbox): array
@@ -114,8 +129,10 @@ final class MailService
     }
 
     /**
-     * @param array<string, mixed>|null $mailbox
+     * Führt aus: resolve smtp.
+     * @param array|null $mailbox
      * @return array{host: string, port: int, encryption: string, username: string, password: string}
+     * @throws RuntimeException
      */
     private static function resolveSmtp(?array $mailbox): array
     {
@@ -145,6 +162,13 @@ final class MailService
         ];
     }
 
+    /**
+     * Führt aus: prepare html body.
+     * @param string $html
+     * @param array|null $mailbox
+     * @param User|null $actor
+     * @return string
+     */
     private static function prepareHtmlBody(string $html, ?array $mailbox = null, ?User $actor = null): string
     {
         if (stripos($html, '<html') !== false) {
@@ -161,6 +185,13 @@ final class MailService
         return CalendarEmailLayout::renderPostMessage($html, EmailLayoutSettings::resolvedFooter());
     }
 
+    /**
+     * Führt aus: apply plain text layout.
+     * @param MailMessage $message
+     * @param array|null $mailbox
+     * @param User|null $actor
+     * @return string
+     */
     private static function applyPlainTextLayout(MailMessage $message, ?array $mailbox, ?User $actor): string
     {
         $textBody = $message->textBody;
@@ -186,6 +217,14 @@ final class MailService
         return $baseText;
     }
 
+    /**
+     * Methode send test.
+     * @param string $to
+     * @param User|null $sender
+     * @return int
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     public static function sendTest(string $to, ?User $sender = null): int
     {
         $to = trim($to);

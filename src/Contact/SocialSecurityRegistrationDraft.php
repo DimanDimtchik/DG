@@ -10,8 +10,12 @@ final class SocialSecurityRegistrationDraft
     public const STATUS_DRAFT = 'draft';
     public const STATUS_READY = 'ready';
 
-    /** @return array<string, string> */
-    public static function draftStatusOptions(): array
+    /**
+     * draftStatusOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function draftStatusOptions(): array
     {
         return [
             self::STATUS_NONE => 'Noch nicht vorbereitet',
@@ -146,11 +150,21 @@ final class SocialSecurityRegistrationDraft
         return $employeeData;
     }
 
+    /**
+     * draftStatusLabel
+     * @param string $status Statuswert
+     * @return string
+     */
     public static function draftStatusLabel(string $status): string
     {
         return self::draftStatusOptions()[$status] ?? $status;
     }
 
+    /**
+     * mapGender
+     * @param string $code
+     * @return string
+     */
     private static function mapGender(string $code): string
     {
         return match ($code) {

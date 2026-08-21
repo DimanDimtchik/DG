@@ -1,0 +1,315 @@
+{
+    "generated_at": "2026-08-21T08:43:57+02:00",
+    "generated_at_de": "21.08.2026 08:43 Uhr",
+    "account": "w0217246 (All-Inkl / Kasserver)",
+    "ssh": "ssh-w0217246@w0217246.kasserver.com",
+    "document_root": "/www/htdocs/w0217246",
+    "entries": [
+        {
+            "domain": "admin",
+            "folder": "admin",
+            "path": "/www/htdocs/w0217246/admin",
+            "url": "–",
+            "stack": "Ordner / Infrastruktur",
+            "crm": false,
+            "version": "",
+            "purpose": "Interne Admin-/Plugin-Ablage",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "infra"
+        },
+        {
+            "domain": "cloud.ganz-om.de",
+            "folder": "cloud.ganz-om.de",
+            "path": "/www/htdocs/w0217246/cloud.ganz-om.de",
+            "url": "https://cloud.ganz-om.de",
+            "stack": "Nextcloud",
+            "crm": false,
+            "version": "",
+            "purpose": "Nextcloud (Datei-/Cloud-Speicher)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "cursor-transfer",
+            "folder": "cursor-transfer",
+            "path": "/www/htdocs/w0217246/cursor-transfer",
+            "url": "–",
+            "stack": "Web (sonstig)",
+            "crm": false,
+            "version": "",
+            "purpose": "Deploy-Zwischenablage (kein öffentlicher Dienst)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "infra"
+        },
+        {
+            "domain": "dg-user.ganz-soft.de",
+            "folder": "dg-user.ganz-soft.de",
+            "path": "/www/htdocs/w0217246/dg-user.ganz-soft.de",
+            "url": "https://dg-user.ganz-soft.de",
+            "stack": "License-Server / API",
+            "crm": false,
+            "version": "",
+            "purpose": "License-Server / API (JSON), kein CRM-Frontend",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "dg.ganz-om.de",
+            "folder": "dg.ganz-om.de",
+            "path": "/www/htdocs/w0217246/dg.ganz-om.de",
+            "url": "https://dg.ganz-om.de",
+            "stack": "CRM",
+            "crm": true,
+            "version": "1.0.12",
+            "purpose": "CRM-Master, Update-Server, KDV-Zentrale",
+            "users": {
+                "mode": "count_only",
+                "count": 6,
+                "source": "users.php",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "dietrichganz.de",
+            "folder": "dietrichganz.de",
+            "path": "/www/htdocs/w0217246/dietrichganz.de",
+            "url": "https://dietrichganz.de",
+            "stack": "Web (sonstig)",
+            "crm": false,
+            "version": "",
+            "purpose": "Persönliche Domain Dietrich Ganz (Platzhalterseite)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "ganz-om.de",
+            "folder": "ganz-om.de",
+            "path": "/www/htdocs/w0217246/ganz-om.de",
+            "url": "https://ganz-om.de",
+            "stack": "WordPress",
+            "crm": false,
+            "version": "",
+            "purpose": "WordPress-Marke ganz om",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "ganz-soft-shared",
+            "folder": "ganz-soft-shared",
+            "path": "/www/htdocs/w0217246/ganz-soft-shared",
+            "url": "–",
+            "stack": "Ordner / Infrastruktur",
+            "crm": false,
+            "version": "",
+            "purpose": "Gemeinsame Dateien (kein öffentlicher Dienst)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "infra"
+        },
+        {
+            "domain": "ganz-soft.de",
+            "folder": "__ROOT__",
+            "path": "/www/htdocs/w0217246",
+            "url": "https://ganz-soft.de",
+            "stack": "CRM",
+            "crm": true,
+            "version": "1.0.12",
+            "purpose": "Live-Website & CRM von ganz-soft.de (Document-Root des Accounts)",
+            "users": {
+                "mode": "list",
+                "count": 2,
+                "source": "users.php",
+                "users": [
+                    {
+                        "username": "admin",
+                        "role": "administrator",
+                        "label": "Administrator"
+                    },
+                    {
+                        "username": "info@ganz-om.de",
+                        "role": "administrator",
+                        "label": "Dietrich Ganz"
+                    }
+                ]
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "ganz-soft.de",
+            "folder": "ganz-soft.de",
+            "path": "/www/htdocs/w0217246/ganz-soft.de",
+            "url": "https://ganz-soft.de",
+            "stack": "CRM",
+            "crm": true,
+            "version": "1.0.12",
+            "purpose": "CRM-Spiegelordner (Live-Traffic läuft über den Account-Root, nicht diesen Ordner)",
+            "users": {
+                "mode": "count_only",
+                "count": 6,
+                "source": "users.php",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "hr.ganz-soft.de",
+            "folder": "hr.ganz-soft.de",
+            "path": "/www/htdocs/w0217246/hr.ganz-soft.de",
+            "url": "https://hr.ganz-soft.de",
+            "stack": "WordPress",
+            "crm": false,
+            "version": "",
+            "purpose": "WordPress HR/Personal (Alt oder Vorbereitung)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "kasse.ganz-soft.de",
+            "folder": "kasse.ganz-soft.de",
+            "path": "/www/htdocs/w0217246/kasse.ganz-soft.de",
+            "url": "https://kasse.ganz-soft.de",
+            "stack": "WordPress",
+            "crm": false,
+            "version": "",
+            "purpose": "WordPress Kasse/POS (Alt oder Vorbereitung)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "kontur-cosmetics.de",
+            "folder": "kontur-cosmetics.de",
+            "path": "/www/htdocs/w0217246/kontur-cosmetics.de",
+            "url": "https://kontur-cosmetics.de",
+            "stack": "CRM",
+            "crm": true,
+            "version": "1.0.12",
+            "purpose": "Kunden-CRM Kontur Cosmetics",
+            "users": {
+                "mode": "list",
+                "count": 1,
+                "source": "users.php",
+                "users": [
+                    {
+                        "username": "admin",
+                        "role": "administrator",
+                        "label": "Administrator"
+                    }
+                ]
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "shop.ganz-soft.de",
+            "folder": "shop.ganz-soft.de",
+            "path": "/www/htdocs/w0217246/shop.ganz-soft.de",
+            "url": "https://shop.ganz-soft.de",
+            "stack": "Shop (PHP)",
+            "crm": false,
+            "version": "Shop Phase 1",
+            "purpose": "SaaS-Shop zum Verkauf der CRM-Tarife (PHP, Stripe folgt)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "terminkalender.ganz-soft.de",
+            "folder": "terminkalender.ganz-soft.de",
+            "path": "/www/htdocs/w0217246/terminkalender.ganz-soft.de",
+            "url": "https://terminkalender.ganz-soft.de",
+            "stack": "WordPress",
+            "crm": false,
+            "version": "",
+            "purpose": "WordPress Terminkalender (Alt/Demo)",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "wg.ganz-soft.de",
+            "folder": "wg.ganz-soft.de",
+            "path": "/www/htdocs/w0217246/wg.ganz-soft.de",
+            "url": "https://wg.ganz-soft.de",
+            "stack": "Web-App / Platzhalter",
+            "crm": false,
+            "version": "",
+            "purpose": "Wohngemeinschaft-App / Experimente",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "domain"
+        },
+        {
+            "domain": "wp-backup-archive",
+            "folder": "wp-backup-archive",
+            "path": "/www/htdocs/w0217246/wp-backup-archive",
+            "url": "–",
+            "stack": "WordPress",
+            "crm": false,
+            "version": "",
+            "purpose": "WordPress-Backup-Archiv",
+            "users": {
+                "mode": "none",
+                "count": 0,
+                "source": "",
+                "users": []
+            },
+            "kind": "infra"
+        }
+    ]
+}

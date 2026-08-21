@@ -1,8 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * HTTP-API für verfügbare Buchungs-Slots.
+ */
 final class BookingSlotsApi
 {
+    /**
+     * HTTP-API-Einstieg.
+     * @return void
+     * @throws InvalidArgumentException
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');

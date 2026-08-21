@@ -5,6 +5,8 @@ declare(strict_types=1);
 final class UvCarriers {
 
     /**
+     * Liefert alle UV-Träger.
+     *
      * @return array<string, array{name: string, short: string, street: string, zip: string, city: string, type: string}>
      */
     public static function all() {
@@ -235,8 +237,10 @@ final class UvCarriers {
     }
 
     /**
-     * @param string $key
-     * @return array|null
+     * Liefert einen UV-Träger anhand des Schlüssels.
+     *
+     * @param string $key Träger-Schlüssel
+     * @return array<string, mixed>|null
      */
     public static function get($key) {
         $all = self::all();
@@ -244,6 +248,8 @@ final class UvCarriers {
     }
 
     /**
+     * Liefert UV-Träger gruppiert für Select-Felder.
+     *
      * @return array{BG: array<string, string>, UK: array<string, string>}
      */
     public static function select_options() {

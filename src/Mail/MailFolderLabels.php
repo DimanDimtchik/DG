@@ -31,6 +31,11 @@ final class MailFolderLabels
         'OUTBOX' => 'Postausgang',
     ];
 
+    /**
+     * Methode label for path.
+     * @param string $imapPath
+     * @return string
+     */
     public static function labelForPath(string $imapPath): string
     {
         $imapPath = self::decodePath($imapPath);
@@ -40,6 +45,11 @@ final class MailFolderLabels
         return self::LABELS[$upper] ?? $name;
     }
 
+    /**
+     * Prüft: is inbox.
+     * @param string $imapPath
+     * @return bool
+     */
     public static function isInbox(string $imapPath): bool
     {
         $upper = strtoupper(self::baseName(self::decodePath($imapPath)));
@@ -47,6 +57,11 @@ final class MailFolderLabels
         return $upper === 'INBOX' || $upper === 'POSTEINGANG';
     }
 
+    /**
+     * Prüft: is sent.
+     * @param string $imapPath
+     * @return bool
+     */
     public static function isSent(string $imapPath): bool
     {
         $upper = strtoupper(self::baseName(self::decodePath($imapPath)));
@@ -54,6 +69,11 @@ final class MailFolderLabels
         return in_array($upper, ['SENT', 'GESENDET', 'SENT ITEMS', 'SENT MESSAGES', 'GESENDETE OBJEKTE'], true);
     }
 
+    /**
+     * Methode decode path.
+     * @param string $path
+     * @return string
+     */
     public static function decodePath(string $path): string
     {
         $path = trim($path);
@@ -70,6 +90,11 @@ final class MailFolderLabels
         return $path;
     }
 
+    /**
+     * Methode base name.
+     * @param string $path
+     * @return string
+     */
     public static function baseName(string $path): string
     {
         $path = trim($path);

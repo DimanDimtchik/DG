@@ -11,7 +11,11 @@ declare(strict_types=1);
  */
 final class LedgerPostingService
 {
-    /** Journal für genau einen Beleg neu aufbauen (idempotent). */
+        /**
+     * Journal für genau einen Beleg neu aufbauen (idempotent).
+     * @param int $voucherId Beleg-ID
+     * @return void
+     */
     public static function rebuildForVoucher(int $voucherId): void
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -42,6 +46,11 @@ final class LedgerPostingService
         }
     }
 
+    /**
+     * Entfernt Journalbuchungen eines Belegs
+     * @param int $voucherId Beleg-ID
+     * @return void
+     */
     public static function deleteForVoucher(int $voucherId): void
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -142,12 +151,11 @@ final class LedgerPostingService
         return $postings;
     }
 
-    /**
+        /**
      * Journalrelevante Zeilen des Belegs (Aufwand/Ertrag + Rechnungsabgrenzung).
-     * Bei Reverse Charge nur die Buchungszeilen (System-Steuerzeilen bleiben außen vor).
-     * Fällt auf das Kopf-Konto zurück, wenn keine Zeilen existieren.
-     *
-     * @param array<string, mixed> $voucher
+     * @param int $voucherId Beleg-ID
+     * @param array $voucher Belegdaten
+     * @param bool $reverseCharge Reverse-Charge-Modus
      * @return list<array<string, mixed>>
      */
     private static function journalLines(int $voucherId, array $voucher, bool $reverseCharge): array
@@ -196,7 +204,11 @@ final class LedgerPostingService
         ]];
     }
 
-    /** Deutsche/englische Zahl robust in float (2 Nachkommastellen). */
+        /**
+     * Deutsche/englische Zahl robust in float (2 Nachkommastellen).
+     * @param mixed $value Eingabewert
+     * @return float
+     */
     private static function money(mixed $value): float
     {
         if (is_int($value) || is_float($value)) {
@@ -214,7 +226,11 @@ final class LedgerPostingService
         return round((float) $str, 2);
     }
 
-    /** @param array<string, mixed> $voucher */
+        /**
+     * describe
+     * @param array $voucher Belegdaten
+     * @return string
+     */
     private static function describe(array $voucher): string
     {
         $parts = [];
@@ -233,7 +249,19 @@ final class LedgerPostingService
         return mb_substr(implode(' · ', $parts), 0, 500);
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * row
+     * @param int $year Geschäftsjahr
+     * @param string $date
+     * @param int $voucherId Beleg-ID
+     * @param string $account Kontonummer
+     * @param string $contra
+     * @param string $side Buchungsseite
+     * @param float $amount Betrag
+     * @param int $rate Steuersatz in Prozent
+     * @param string $description
+     * @return array<string, mixed>
+     */
     private static function row(int $year, string $date, int $voucherId, string $account, string $contra, string $side, float $amount, int $rate, string $description): array
     {
         return [
@@ -250,6 +278,12 @@ final class LedgerPostingService
         ];
     }
 
+    /**
+     * accountExists
+     * @param string $accountNumber Kontonummer
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return bool
+     */
     private static function accountExists(string $accountNumber, string $skrType): bool
     {
         if ($accountNumber === '') {
@@ -262,7 +296,11 @@ final class LedgerPostingService
         }
     }
 
-    /** @return array<string, mixed>|null */
+        /**
+     * loadVoucher
+     * @param int $voucherId Beleg-ID
+     * @return array<string, mixed>|null
+     */
     private static function loadVoucher(int $voucherId): ?array
     {
         $stmt = Database::pdo()->prepare('SELECT * FROM dg_vouchers WHERE id = :id');

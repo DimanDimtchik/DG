@@ -1,9 +1,20 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Authentifizierter CRM-Benutzer (Entity).
+ */
 final class User
 {
-    /** @param list<string> $roles */
+    /**
+     * Konstruktor.
+     * @param int $id Datensatz-ID
+     * @param string $username
+     * @param string $displayName
+     * @param string $email E-Mail-Adresse
+     * @param list<string> $roles
+     * @param bool $employeeActive
+     */
     public function __construct(
         public readonly int $id,
         public readonly string $username,
@@ -14,6 +25,11 @@ final class User
     ) {
     }
 
+    /**
+     * Prüft, ob der Benutzer die Rolle besitzt.
+     * @param string $role
+     * @return bool
+     */
     public function hasRole(string $role): bool
     {
         return in_array($role, $this->roles, true);

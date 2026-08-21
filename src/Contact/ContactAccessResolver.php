@@ -1,18 +1,37 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Contact Access Resolver.
+ */
 final class ContactAccessResolver
 {
+    /**
+     * canViewAllContactTypes
+     * @param User $user Angemeldeter Benutzer
+     * @return bool
+     */
     public static function canViewAllContactTypes(User $user): bool
     {
         return RoleResolver::isAdmin($user) || DepartmentAccess::userInHrDepartment($user);
     }
 
+    /**
+     * isCustomerContact
+     * @param Contact $contact
+     * @return bool
+     */
     public static function isCustomerContact(Contact $contact): bool
     {
         return CrmRole::normalize($contact->contactRole) === 'dg_kunde';
     }
 
+    /**
+     * canViewContact
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact $contact
+     * @return bool
+     */
     public static function canViewContact(User $user, Contact $contact): bool
     {
         if (!DepartmentAccess::canAccessModule($user, 'kontakte')) {
@@ -26,6 +45,12 @@ final class ContactAccessResolver
         return self::isCustomerContact($contact);
     }
 
+    /**
+     * canEditContact
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact|null $contact
+     * @return bool
+     */
     public static function canEditContact(User $user, ?Contact $contact = null): bool
     {
         if (!RoleResolver::canEdit($user)) {
@@ -43,6 +68,12 @@ final class ContactAccessResolver
         return self::canViewContact($user, $contact);
     }
 
+    /**
+     * canDeleteContact
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact $contact
+     * @return bool
+     */
     public static function canDeleteContact(User $user, Contact $contact): bool
     {
         if (!self::canEditContact($user, $contact)) {
@@ -56,6 +87,12 @@ final class ContactAccessResolver
         return DepartmentAccess::userCanDeleteContacts($user);
     }
 
+    /**
+     * canViewEmployeeHrData
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact $contact
+     * @return bool
+     */
     public static function canViewEmployeeHrData(User $user, Contact $contact): bool
     {
         if (!CrmRole::hasEmployeeProfile($contact->contactRole)) {
@@ -65,7 +102,11 @@ final class ContactAccessResolver
         return self::canViewAllContactTypes($user);
     }
 
-    /** @return array<string, string> */
+        /**
+     * allowedContactRoleOptions
+     * @param User $user Angemeldeter Benutzer
+     * @return array<string, string>
+     */
     public static function allowedContactRoleOptions(User $user): array
     {
         $all = CrmRole::options();
@@ -76,6 +117,13 @@ final class ContactAccessResolver
         return ['dg_kunde' => $all['dg_kunde']];
     }
 
+    /**
+     * assertCanView
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact $contact
+     * @return void
+     * @throws RuntimeException
+     */
     public static function assertCanView(User $user, Contact $contact): void
     {
         if (!self::canViewContact($user, $contact)) {
@@ -83,6 +131,13 @@ final class ContactAccessResolver
         }
     }
 
+    /**
+     * assertCanEdit
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact $contact
+     * @return void
+     * @throws RuntimeException
+     */
     public static function assertCanEdit(User $user, Contact $contact): void
     {
         if (!self::canEditContact($user, $contact)) {
@@ -90,6 +145,13 @@ final class ContactAccessResolver
         }
     }
 
+    /**
+     * assertCanDelete
+     * @param User $user Angemeldeter Benutzer
+     * @param Contact $contact
+     * @return void
+     * @throws RuntimeException
+     */
     public static function assertCanDelete(User $user, Contact $contact): void
     {
         if (!self::canDeleteContact($user, $contact)) {
@@ -97,8 +159,11 @@ final class ContactAccessResolver
         }
     }
 
-    /**
-     * @param array<string, mixed> $data
+        /**
+     * enforceContactRoleOnSave
+     * @param User $user Angemeldeter Benutzer
+     * @param array $data
+     * @param Contact|null $existing Bestehende Hinweisdaten
      * @return array<string, mixed>
      */
     public static function enforceContactRoleOnSave(User $user, array $data, ?Contact $existing = null): array

@@ -4,8 +4,12 @@ declare(strict_types=1);
 /** ISO-3166-1 alpha-2 für Nummernkreise (Finanzamt / ELSTER / EU). */
 final class CountryCodes
 {
-    /** @return array<string, string> */
-    public static function all(): array
+    /**
+     * Liefert alle Einträge.
+     *
+     * @return array<string, string>
+     */
+        public static function all(): array
     {
         $codes = [
             'DE' => 'Deutschland',

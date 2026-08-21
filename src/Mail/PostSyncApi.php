@@ -4,6 +4,10 @@ declare(strict_types=1);
 /** JSON-API: Postfach-Ordner per IMAP synchronisieren (asynchron vom Browser). */
 final class PostSyncApi
 {
+    /**
+     * HTTP-API-Einstieg.
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');

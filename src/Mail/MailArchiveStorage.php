@@ -1,18 +1,34 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Mail Archive Storage.
+ */
 final class MailArchiveStorage
 {
+    /**
+     * Methode base dir.
+     * @return string
+     */
     public static function baseDir(): string
     {
         return DG_ROOT . '/storage/mail/sent';
     }
 
+    /**
+     * Methode inbox base dir.
+     * @return string
+     */
     public static function inboxBaseDir(): string
     {
         return DG_ROOT . '/storage/mail/inbox';
     }
 
+    /**
+     * Methode relative path.
+     * @param int $logId
+     * @return string
+     */
     public static function relativePath(int $logId): string
     {
         $now = new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin'));
@@ -20,6 +36,11 @@ final class MailArchiveStorage
         return 'storage/mail/sent/' . $now->format('Y/m/d') . '/' . $logId . '.eml';
     }
 
+    /**
+     * Methode relative inbound path.
+     * @param int $logId
+     * @return string
+     */
     public static function relativeInboundPath(int $logId): string
     {
         $now = new DateTimeImmutable('now', new DateTimeZone('Europe/Berlin'));
@@ -27,6 +48,12 @@ final class MailArchiveStorage
         return 'storage/mail/inbox/' . $now->format('Y/m/d') . '/' . $logId . '.eml';
     }
 
+    /**
+     * Methode absolute path.
+     * @param string $relativePath
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function absolutePath(string $relativePath): string
     {
         $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
@@ -37,6 +64,13 @@ final class MailArchiveStorage
         return DG_ROOT . '/' . $relativePath;
     }
 
+    /**
+     * Methode save.
+     * @param int $logId
+     * @param string $mimeData
+     * @return array{path: string, size: int}
+     * @throws RuntimeException
+     */
     public static function save(int $logId, string $mimeData): array
     {
         $relative = self::relativePath($logId);
@@ -57,6 +91,13 @@ final class MailArchiveStorage
         ];
     }
 
+    /**
+     * Speichert inbound.
+     * @param int $logId
+     * @param string $mimeData
+     * @return array{path: string, size: int}
+     * @throws RuntimeException
+     */
     public static function saveInbound(int $logId, string $mimeData): array
     {
         $relative = self::relativeInboundPath($logId);

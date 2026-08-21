@@ -1,10 +1,18 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * PDO-Singleton für die MySQL-Datenbankverbindung.
+ */
 final class Database
 {
     private static ?PDO $pdo = null;
 
+    /**
+     * Liefert die wiederverwendete PDO-Instanz.
+     *
+     * @throws RuntimeException Wenn DB nicht konfiguriert oder Passwort fehlt.
+     */
     public static function pdo(): PDO
     {
         if (self::$pdo instanceof PDO) {
@@ -40,18 +48,30 @@ final class Database
         return self::$pdo;
     }
 
+    /**
+     * Prüft, ob database.local.php mit Passwort vorhanden ist.
+     */
     public static function isConfigured(): bool
     {
         $cfg = App::config('database');
         return is_array($cfg) && ($cfg['password'] ?? '') !== '';
     }
 
+    /**
+     * Setzt die gecachte Verbindung zurück (nach Config-Änderung).
+     */
     public static function reset(): void
     {
         self::$pdo = null;
     }
 
-    /** @param array<string, mixed> $cfg */
+    /**
+     * Testet eine DB-Konfiguration ohne die Singleton-Instanz zu ändern.
+     *
+     * @param array{host?: string, port?: int, database?: string, username?: string, password?: string, charset?: string} $cfg
+     * @throws InvalidArgumentException Bei unvollständigen Zugangsdaten.
+     * @throws PDOException Bei Verbindungsfehler.
+     */
     public static function testWithConfig(array $cfg): string
     {
         $password = (string) ($cfg['password'] ?? '');

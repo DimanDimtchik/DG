@@ -4,14 +4,10 @@ declare(strict_types=1);
 /** Seed-Daten für Standard-Konten (SKR03). */
 final class ChartAccountSeedData
 {
-    /**
+        /**
+     * account_number: string,
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return list<array{
-     *   account_number: string,
-     *   name: string,
-     *   account_class: string,
-     *   section: string,
-     *   hints: array<string, mixed>
-     * }>
      */
     public static function accountsForSkr(string $skrType): array
     {
@@ -23,13 +19,22 @@ final class ChartAccountSeedData
         };
     }
 
+    /**
+     * seedCount
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return int
+     */
     public static function seedCount(string $skrType): int
     {
         return count(self::accountsForSkr($skrType));
     }
 
-    /** @return list<array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}> */
-    private static function skr03Accounts(): array
+    /**
+     * skr03Accounts.
+     *
+     * @return list<array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}>
+     */
+        private static function skr03Accounts(): array
     {
         return [
             self::account('1000', 'Kasse', '0', 'aktiva', [
@@ -387,8 +392,12 @@ final class ChartAccountSeedData
         ];
     }
 
-    /** @return list<array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}> */
-    private static function skr04Accounts(): array
+    /**
+     * skr04Accounts.
+     *
+     * @return list<array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}>
+     */
+        private static function skr04Accounts(): array
     {
         $accounts = self::skr03Accounts();
         foreach ($accounts as &$account) {
@@ -399,8 +408,13 @@ final class ChartAccountSeedData
         return $accounts;
     }
 
-  /**
-     * @param array<string, mixed> $hints
+      /**
+     * account
+     * @param string $number
+     * @param string $name Name
+     * @param string $class
+     * @param string $section Kontenabschnitt
+     * @param array $hints Kontenhinweise
      * @return array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}
      */
     private static function account(
@@ -419,6 +433,11 @@ final class ChartAccountSeedData
         ];
     }
 
+    /**
+     * mapToSkr04
+     * @param string $skr03Number
+     * @return string
+     */
     private static function mapToSkr04(string $skr03Number): string
     {
         $first = (int) substr($skr03Number, 0, 1);

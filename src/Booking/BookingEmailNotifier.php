@@ -7,6 +7,13 @@ final class BookingEmailNotifier
     /** @var list<string> */
     private const CANCELLED_STATUSES = ['storniert', 'cancelled', 'canceled', 'cancel'];
 
+    /**
+     * Methode after save.
+     * @param Booking|null $before
+     * @param Booking $after
+     * @param User|null $actor
+     * @return void
+     */
     public static function afterSave(?Booking $before, Booking $after, ?User $actor = null): void
     {
         if (!Database::isConfigured() || !MailSettings::isConfigured()) {
@@ -31,6 +38,12 @@ final class BookingEmailNotifier
         }
     }
 
+    /**
+     * Methode send confirmation.
+     * @param Booking $booking
+     * @param User|null $actor
+     * @return void
+     */
     private static function sendConfirmation(Booking $booking, ?User $actor): void
     {
         if (!CalendarNotificationSettings::config()['send_customer_email']) {
@@ -50,6 +63,12 @@ final class BookingEmailNotifier
         );
     }
 
+    /**
+     * Methode send cancellation.
+     * @param Booking $booking
+     * @param User|null $actor
+     * @return void
+     */
     private static function sendCancellation(Booking $booking, ?User $actor): void
     {
         if (!CalendarNotificationSettings::config()['send_customer_email']) {
@@ -69,6 +88,12 @@ final class BookingEmailNotifier
         );
     }
 
+    /**
+     * Methode send admin notification.
+     * @param Booking $booking
+     * @param User|null $actor
+     * @return void
+     */
     private static function sendAdminNotification(Booking $booking, ?User $actor): void
     {
         $settings = CalendarNotificationSettings::config();
@@ -89,7 +114,14 @@ final class BookingEmailNotifier
         );
     }
 
-    /** @param list<string> $recipients */
+    /**
+     * Methode send templated.
+     * @param Booking $booking
+     * @param string $templateSlug
+     * @param array $recipients
+     * @param User|null $actor
+     * @return void
+     */
     private static function sendTemplated(
         Booking $booking,
         string $templateSlug,
@@ -125,6 +157,11 @@ final class BookingEmailNotifier
         }
     }
 
+    /**
+     * Methode department id for.
+     * @param Booking $booking
+     * @return string
+     */
     private static function departmentIdFor(Booking $booking): string
     {
         $areaId = CalendarArticleRepository::getAreaId($booking->articleId);
@@ -135,6 +172,11 @@ final class BookingEmailNotifier
         return CalendarStaffRepository::areaDepartmentMap()[(string) $areaId] ?? '';
     }
 
+    /**
+     * Prüft: is cancelled.
+     * @param string $status
+     * @return bool
+     */
     private static function isCancelled(string $status): bool
     {
         return in_array(strtolower(trim($status)), self::CANCELLED_STATUSES, true);

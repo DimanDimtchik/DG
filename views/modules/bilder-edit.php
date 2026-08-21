@@ -63,13 +63,13 @@ $formatUsageDate = static function (?string $value): string {
           <small class="dg-field-hint">JPG, PNG, WebP, GIF oder SVG — keine PDFs oder Office-Dateien.</small>
         </label>
         <div class="dg-media-edit-preview__frame">
-          <img id="dg-media-preview" class="dg-media-preview--empty" src="" alt="" hidden>
+          <img id="dg-media-preview" class="dg-media-preview--empty<?= $isSvg ? ' dg-media-thumb--svg' : '' ?>" src="" alt="" hidden>
           <p class="dg-media-edit-preview__placeholder" id="dg-media-preview-placeholder">Noch kein Bild gewählt</p>
         </div>
       <?php else : ?>
         <h2 class="dg-media-edit-preview__title">Vorschau</h2>
         <div class="dg-media-edit-preview__frame">
-          <img id="dg-media-preview" src="<?= View::escape($previewUrl) ?>" alt="<?= View::escape($previewAlt) ?>">
+          <img id="dg-media-preview" class="<?= $isSvg ? 'dg-media-thumb--svg' : '' ?>" src="<?= View::escape($previewUrl) ?>" alt="<?= View::escape($previewAlt) ?>">
         </div>
         <p class="dg-media-edit-preview__open">
           <a href="<?= View::escape($previewUrl) ?>" target="_blank" rel="noopener noreferrer">Vollbild in neuem Tab öffnen</a>
@@ -176,9 +176,106 @@ $formatUsageDate = static function (?string $value): string {
             <button type="button" class="dg-button" id="dg-media-bg-remove">Hintergrund entfernen</button>
           </section>
         <?php else : ?>
-          <div class="dg-panel dg-panel--notice">
-            <p>SVG: Metadaten bearbeiten; Raster-Umwandlung nicht verfügbar.</p>
-          </div>
+          <?php
+            $svgMarkup = '';
+            $svgAnalysis = ['colors' => [], 'stroke_widths' => []];
+            try {
+                $svgPath = MediaStorage::absolutePath($mediaId, (string) ($mediaItem['stored_name'] ?? ''));
+                if (is_file($svgPath)) {
+                    $svgMarkup = MediaSvgEditor::readFile($svgPath);
+                    $svgAnalysis = MediaSvgEditor::analyze($svgMarkup);
+                }
+            } catch (Throwable $e) {
+                $svgMarkup = '';
+            }
+          ?>
+          <form class="dg-form dg-panel" id="dg-media-svg-form" data-media-id="<?= View::escape($mediaId) ?>">
+            <h2>SVG bearbeiten</h2>
+            <p class="dg-field-hint">Farben und Linienbreiten aus der Datei. Änderungen erscheinen sofort in der Vorschau; mit Speichern werden sie in die SVG-Datei geschrieben.</p>
+
+            <?php if ($svgMarkup === '') : ?>
+              <p class="dg-lead">SVG-Inhalt konnte nicht geladen werden.</p>
+            <?php else : ?>
+              <script type="application/json" id="dg-media-svg-data"><?= json_encode([
+                  'markup' => $svgMarkup,
+                  'colors' => $svgAnalysis['colors'],
+                  'stroke_widths' => $svgAnalysis['stroke_widths'],
+              ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) ?></script>
+
+              <div id="dg-media-svg-colors">
+                <?php if ($svgAnalysis['colors'] === []) : ?>
+                  <p class="dg-field-hint">Keine editierbaren Farben gefunden.</p>
+                <?php else : ?>
+                  <h3 class="dg-media-svg-subtitle">Farben</h3>
+                  <div class="dg-media-svg-list">
+                    <?php foreach ($svgAnalysis['colors'] as $color) : ?>
+                      <?php
+                        $colorId = (string) $color['id'];
+                        $colorValue = (string) $color['value'];
+                        $colorHex = $color['hex'] ?? null;
+                        $pickerValue = is_string($colorHex) ? $colorHex : '#000000';
+                      ?>
+                      <label class="dg-media-svg-row">
+                        <span class="dg-media-svg-row__swatch" style="background: <?= View::escape($colorHex ?? $colorValue) ?>"></span>
+                        <span class="dg-media-svg-row__meta">
+                          <strong><?= View::escape($colorValue) ?></strong>
+                          <small><?= (int) $color['count'] ?>×</small>
+                        </span>
+                        <input
+                          type="color"
+                          class="dg-media-svg-color"
+                          data-svg-color-from="<?= View::escape($colorValue) ?>"
+                          data-svg-color-id="<?= View::escape($colorId) ?>"
+                          value="<?= View::escape($pickerValue) ?>"
+                         <?= $colorHex === null ? ' disabled title="Nur Hex/RGB über Textfeld"' : '' ?>
+                        >
+                        <input
+                          type="text"
+                          class="dg-media-svg-color-text"
+                          data-svg-color-from="<?= View::escape($colorValue) ?>"
+                          data-svg-color-id="<?= View::escape($colorId) ?>"
+                          value="<?= View::escape($colorValue) ?>"
+                          spellcheck="false"
+                        >
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+                <?php endif; ?>
+              </div>
+
+              <div id="dg-media-svg-widths" style="margin-top:16px;">
+                <?php if ($svgAnalysis['stroke_widths'] === []) : ?>
+                  <p class="dg-field-hint">Keine Linienbreiten gefunden.</p>
+                <?php else : ?>
+                  <h3 class="dg-media-svg-subtitle">Linienbreiten</h3>
+                  <div class="dg-media-svg-list">
+                    <?php foreach ($svgAnalysis['stroke_widths'] as $width) : ?>
+                      <label class="dg-media-svg-row dg-media-svg-row--width">
+                        <span class="dg-media-svg-row__meta">
+                          <strong>stroke-width</strong>
+                          <small><?= (int) $width['count'] ?>× · bisher <?= View::escape((string) $width['value']) ?></small>
+                        </span>
+                        <input
+                          type="number"
+                          class="dg-media-svg-width"
+                          data-svg-width-from="<?= View::escape((string) $width['value']) ?>"
+                          data-svg-width-id="<?= View::escape((string) $width['id']) ?>"
+                          value="<?= View::escape(preg_replace('/[^0-9.]/', '', (string) $width['value']) ?: (string) $width['value']) ?>"
+                          min="0"
+                          step="any"
+                        >
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+                <?php endif; ?>
+              </div>
+
+              <div class="dg-form-actions" style="margin-top:16px;">
+                <button type="submit" class="dg-button dg-button--primary" id="dg-media-svg-save">SVG speichern</button>
+                <button type="button" class="dg-button" id="dg-media-svg-reset">Zurücksetzen</button>
+              </div>
+            <?php endif; ?>
+          </form>
         <?php endif; ?>
 
         <section class="dg-panel dg-panel--danger">

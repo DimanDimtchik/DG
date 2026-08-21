@@ -31,7 +31,7 @@ $baseUrl = '/app?page=kontakte';
       id="kontakte-search"
       name="s"
       value="<?= View::escape($search) ?>"
-      placeholder="Name, Firma, E-Mail, Kundennummer …"
+      placeholder="Name, Firma, E-Mail, Kunden-/Lieferantennummer …"
     >
     <button class="dg-button dg-button--primary" type="submit">Suchen</button>
     <?php if ($search !== '') : ?>

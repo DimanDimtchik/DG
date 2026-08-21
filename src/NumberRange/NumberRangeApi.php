@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Number Range Api.
+ */
 final class NumberRangeApi
 {
+    /**
+     * handlePreview
+     * @return void
+     */
     public static function handlePreview(): void
     {
         header('Content-Type: application/json; charset=utf-8');

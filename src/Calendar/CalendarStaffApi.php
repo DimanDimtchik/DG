@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Calendar Staff Api.
+ */
 final class CalendarStaffApi
 {
+    /**
+     * HTTP-API-Einstieg.
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -51,7 +58,12 @@ final class CalendarStaffApi
         }
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Methode ok.
+     * @param array $data
+     * @param bool $reload
+     * @return never
+     */
     private static function ok(array $data = [], bool $reload = true): never
     {
         $payload = $data;
@@ -62,6 +74,12 @@ final class CalendarStaffApi
         exit;
     }
 
+    /**
+     * Methode error.
+     * @param string $message
+     * @param int $code
+     * @return never
+     */
     private static function error(string $message, int $code = 400): never
     {
         http_response_code($code);

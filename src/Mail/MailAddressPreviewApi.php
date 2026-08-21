@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Mail Address Preview Api.
+ */
 final class MailAddressPreviewApi
 {
+    /**
+     * HTTP-API-Einstieg.
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');

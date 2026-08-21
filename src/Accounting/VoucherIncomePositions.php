@@ -4,17 +4,31 @@ declare(strict_types=1);
 /** Rechnungspositionen für Erlös-Belege (Artikel/Leistungen → Buchungszeilen). */
 final class VoucherIncomePositions
 {
-    /** @return list<string> */
-    public static function voucherTypesWithItems(): array
+    /**
+     * voucherTypesWithItems.
+     *
+     * @return list<string>
+     */
+        public static function voucherTypesWithItems(): array
     {
         return ['income', 'income_reduction', 'credit'];
     }
 
+    /**
+     * usesInvoiceItems
+     * @param string $voucherType Belegtyp
+     * @return bool
+     */
     public static function usesInvoiceItems(string $voucherType): bool
     {
         return in_array(VoucherRepository::normalizeVoucherType($voucherType), self::voucherTypesWithItems(), true);
     }
 
+    /**
+     * taxRateFromTaxType
+     * @param string $taxType
+     * @return int
+     */
     public static function taxRateFromTaxType(string $taxType): int
     {
         $taxType = trim($taxType);
@@ -26,6 +40,11 @@ final class VoucherIncomePositions
         };
     }
 
+    /**
+     * taxTypeFromRate
+     * @param int $taxRate Steuersatz in Prozent
+     * @return string
+     */
     public static function taxTypeFromRate(int $taxRate): string
     {
         return match (VoucherTaxKeys::sanitizeTaxRate($taxRate)) {
@@ -35,7 +54,11 @@ final class VoucherIncomePositions
         };
     }
 
-    /** @return array<int, string> */
+        /**
+     * defaultRevenueAccounts
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return array<int, string>
+     */
     public static function defaultRevenueAccounts(string $skrType): array
     {
         unset($skrType);
@@ -47,6 +70,12 @@ final class VoucherIncomePositions
         ];
     }
 
+    /**
+     * defaultRevenueAccount
+     * @param int $taxRate Steuersatz in Prozent
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return string
+     */
     public static function defaultRevenueAccount(int $taxRate, string $skrType): string
     {
         $rate = VoucherTaxKeys::sanitizeTaxRate($taxRate);
@@ -55,7 +84,10 @@ final class VoucherIncomePositions
         return $accounts[$rate] ?? $accounts[19];
     }
 
-    /**
+        /**
+     * searchArticles
+     * @param string $query
+     * @param int $limit
      * @return list<array<string, mixed>>
      */
     public static function searchArticles(string $query, int $limit = 15): array
@@ -204,8 +236,10 @@ final class VoucherIncomePositions
         return $rows;
     }
 
-    /**
-     * @param list<array<string, mixed>> $items
+        /**
+     * bookingLinesFromItems
+     * @param array $items
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return list<array{account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int, line_kind: string, ustva_kz: string, posting_side: string}>
      */
     public static function bookingLinesFromItems(array $items, string $skrType): array
@@ -263,6 +297,11 @@ final class VoucherIncomePositions
         return $rows;
     }
 
+    /**
+     * parseQuantity
+     * @param mixed $value Eingabewert
+     * @return float
+     */
     private static function parseQuantity(mixed $value): float
     {
         if (is_string($value)) {

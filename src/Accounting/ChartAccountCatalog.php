@@ -60,7 +60,9 @@ final class ChartAccountCatalog
     /** @var array<string, list<array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}>> */
     private static array $cache = [];
 
-    /**
+        /**
+     * accountsForSkr
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return list<array{account_number: string, name: string, account_class: string, section: string, hints: array<string, mixed>}>
      */
     public static function accountsForSkr(string $skrType): array
@@ -137,11 +139,21 @@ final class ChartAccountCatalog
         return $accounts;
     }
 
+    /**
+     * catalogCount
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return int
+     */
     public static function catalogCount(string $skrType): int
     {
         return count(self::accountsForSkr($skrType));
     }
 
+    /**
+     * catalogVersion
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return string
+     */
     public static function catalogVersion(string $skrType): string
     {
         $skrType = ChartOfAccountsSettings::sanitizeSkrType($skrType);
@@ -239,6 +251,11 @@ final class ChartAccountCatalog
         return $accounts;
     }
 
+    /**
+     * normalizeCode
+     * @param string $code
+     * @return string
+     */
     private static function normalizeCode(string $code): string
     {
         $digits = preg_replace('/\D/', '', $code) ?? '';
@@ -249,6 +266,12 @@ final class ChartAccountCatalog
         return str_pad($digits, 4, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * sectionFromGermanType
+     * @param string $typ
+     * @param string $code
+     * @return string
+     */
     private static function sectionFromGermanType(string $typ, string $code): string
     {
         return match (mb_strtolower($typ)) {
@@ -260,6 +283,12 @@ final class ChartAccountCatalog
         };
     }
 
+    /**
+     * sectionFromGnuCashType
+     * @param string $type
+     * @param string $code
+     * @return string
+     */
     private static function sectionFromGnuCashType(string $type, string $code): string
     {
         $typeLower = mb_strtolower($type);
@@ -279,6 +308,11 @@ final class ChartAccountCatalog
         return self::sectionFromFirstDigit($code);
     }
 
+    /**
+     * sectionFromFirstDigit
+     * @param string $code
+     * @return string
+     */
     private static function sectionFromFirstDigit(string $code): string
     {
         return match ((int) substr($code, 0, 1)) {
@@ -290,7 +324,11 @@ final class ChartAccountCatalog
         };
     }
 
-    /** @return array{balance_sheet: bool, guv: bool, eur: bool} */
+        /**
+     * classificationForSection
+     * @param string $section Kontenabschnitt
+     * @return array{balance_sheet: bool, guv: bool, eur: bool}
+     */
     private static function classificationForSection(string $section): array
     {
         return match ($section) {

@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Finanzamt Lookup Api.
+ */
 final class FinanzamtLookupApi
 {
+    /**
+     * HTTP-API-Einstieg
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');

@@ -5,7 +5,11 @@ declare(strict_types=1);
 final class MailboxProvisioner
 {
     /**
-     * @return array{mailbox_id: int, email: string, kas_provisioned: bool, message: string, skipped?: bool}
+     * Führt aus: create private for contact.
+     * @param Contact $contact
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public static function createPrivateForContact(Contact $contact): array
     {
@@ -106,9 +110,11 @@ final class MailboxProvisioner
     }
 
     /**
-     * Legt ein im CRM erfasstes Postfach nachträglich bei All-Inkl per KAS-API an.
-     *
-     * @return array{email: string, message: string}
+     * Methode provision kas for mailbox.
+     * @param int $mailboxId
+     * @return array<string, mixed>
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     public static function provisionKasForMailbox(int $mailboxId): array
     {
@@ -202,9 +208,11 @@ final class MailboxProvisioner
     }
 
     /**
-     * Setzt das Postfach-Passwort bei All-Inkl per KAS zurück und speichert es im CRM.
-     *
-     * @return array{email: string, message: string}
+     * Methode repair kas imap password.
+     * @param int $mailboxId
+     * @return array<string, mixed>
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     public static function repairKasImapPassword(int $mailboxId): array
     {
@@ -266,8 +274,11 @@ final class MailboxProvisioner
     }
 
     /**
-     * @param array<string, mixed> $input
-     * @param list<int> $memberUserIds
+     * Führt aus: create shared from form.
+     * @param array $input
+     * @param array $memberUserIds
+     * @return int
+     * @throws InvalidArgumentException
      */
     public static function createSharedFromForm(array $input, array $memberUserIds): int
     {
@@ -319,7 +330,12 @@ final class MailboxProvisioner
         return MailboxRepository::save($input, null, $memberUserIds);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Führt aus: normalize post input.
+     * @param array $post
+     * @param array|null $existing
+     * @return array<string, mixed>
+     */
     public static function normalizePostInput(array $post, ?array $existing = null): array
     {
         return [
@@ -347,7 +363,11 @@ final class MailboxProvisioner
     }
 
     /**
-     * @param array<string, mixed> $mailbox
+     * Methode discover imap username.
+     * @param array $mailbox
+     * @param string $password
+     * @param string $kasLogin
+     * @return string
      */
     private static function discoverImapUsername(array $mailbox, string $password, string $kasLogin): string
     {

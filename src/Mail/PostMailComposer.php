@@ -5,7 +5,12 @@ declare(strict_types=1);
 final class PostMailComposer
 {
     /**
-     * @param array<string, mixed> $input
+     * Methode send from post.
+     * @param User $actor
+     * @param array $input
+     * @return int
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public static function sendFromPost(User $actor, array $input): int
     {
@@ -72,7 +77,11 @@ final class PostMailComposer
         );
     }
 
-    /** @return list<string> */
+    /**
+     * Führt aus: parse recipients.
+     * @param string $raw
+     * @return array<string, mixed>
+     */
     private static function parseRecipients(string $raw): array
     {
         $parts = preg_split('/[,;]/', $raw) ?: [];
@@ -87,6 +96,11 @@ final class PostMailComposer
         return array_values(array_unique($out));
     }
 
+    /**
+     * Methode reply subject.
+     * @param string $subject
+     * @return string
+     */
     public static function replySubject(string $subject): string
     {
         $subject = trim($subject);

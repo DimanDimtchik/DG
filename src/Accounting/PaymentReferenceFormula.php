@@ -14,11 +14,19 @@ final class PaymentReferenceFormula
 {
     public const STORE_KEY = 'payment_reference';
 
+    /**
+     * defaultFormula
+     * @return string
+     */
     public static function defaultFormula(): string
     {
         return 'RE {RENR} vom {REDATUM}[ / KdNr {KUNDENNR}] / {FIRMA}';
     }
 
+    /**
+     * formula
+     * @return string
+     */
     public static function formula(): string
     {
         $cfg = SettingsStore::get(self::STORE_KEY, ['formula' => self::defaultFormula()]);
@@ -27,6 +35,11 @@ final class PaymentReferenceFormula
         return $formula !== '' ? $formula : self::defaultFormula();
     }
 
+    /**
+     * save
+     * @param string $formula
+     * @return void
+     */
     public static function save(string $formula): void
     {
         $formula = trim($formula);
@@ -54,10 +67,11 @@ final class PaymentReferenceFormula
         ];
     }
 
-    /**
+        /**
      * Löst die Formel mit den übergebenen Werten auf.
-     *
-     * @param array{invoice_number?: string, invoice_date?: string, customer_number?: string, company_name?: string, supplier_name?: string, amount?: float|int|string} $context
+     * @param string $formula
+     * @param array $context
+     * @return string
      */
     public static function resolve(string $formula, array $context): string
     {
@@ -107,9 +121,10 @@ final class PaymentReferenceFormula
         ];
     }
 
-    /**
+        /**
      * Reduziert den Text auf für SEPA-Überweisungen zulässige Zeichen.
-     * Umlaute werden transliteriert, unzulässige Zeichen entfernt.
+     * @param string $value Eingabewert
+     * @return string
      */
     public static function sanitizeSepa(string $value): string
     {

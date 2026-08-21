@@ -6,7 +6,10 @@ final class CompanyExtendedSettings
 {
     public const STORE_KEY = 'company_extended';
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return [
@@ -62,7 +65,11 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode institution defaults.
+     * @param bool $withMemberNo
+     * @return array<string, mixed>
+     */
     private static function institutionDefaults(bool $withMemberNo = true): array
     {
         if ($withMemberNo) {
@@ -72,7 +79,10 @@ final class CompanyExtendedSettings
         return ['name' => '', 'contact' => '', 'phone' => '', 'email' => ''];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         $stored = SettingsStore::get(self::STORE_KEY, self::defaults());
@@ -80,7 +90,10 @@ final class CompanyExtendedSettings
         return self::normalize(is_array($stored) ? $stored : []);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         $cfg = self::config();
@@ -134,7 +147,10 @@ final class CompanyExtendedSettings
         return $cfg;
     }
 
-    /** @return list<array{id: int, label: string}> */
+    /**
+     * Methode owner user options.
+     * @return array<string, mixed>
+     */
     public static function ownerUserOptions(): array
     {
         $options = [];
@@ -152,6 +168,10 @@ final class CompanyExtendedSettings
         return $options;
     }
 
+    /**
+     * Methode active employee count.
+     * @return int
+     */
     public static function activeEmployeeCount(): int
     {
         $count = 0;
@@ -164,6 +184,11 @@ final class CompanyExtendedSettings
         return $count;
     }
 
+    /**
+     * Methode display employee count.
+     * @param array $cfg
+     * @return int
+     */
     public static function displayEmployeeCount(array $cfg): int
     {
         if (($cfg['employee_count_mode'] ?? 'auto') === 'manual') {
@@ -174,8 +199,9 @@ final class CompanyExtendedSettings
     }
 
     /**
-     * @param array<string, string> $basic
-     * @return list<array<string, string>>
+     * Methode seed addresses from basic.
+     * @param array $basic
+     * @return array<string, mixed>
      */
     private static function seedAddressesFromBasic(array $basic): array
     {
@@ -193,7 +219,11 @@ final class CompanyExtendedSettings
         ]];
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert Formulardaten.
+     * @param array $input
+     * @return void
+     */
     public static function saveFromPost(array $input): void
     {
         $clean = self::sanitize($input);
@@ -207,8 +237,10 @@ final class CompanyExtendedSettings
     }
 
     /**
-     * @param array<string, string> $basic
-     * @param list<array<string, string>> $addresses
+     * Führt aus: sync primary address to basic.
+     * @param mixed $basic
+     * @param array $addresses
+     * @return void
      */
     private static function syncPrimaryAddressToBasic(array &$basic, array $addresses): void
     {
@@ -228,7 +260,11 @@ final class CompanyExtendedSettings
         }
     }
 
-    /** @param array<string, mixed> $raw */
+    /**
+     * Normalisiert den Eingabewert.
+     * @param array $raw
+     * @return array<string, mixed>
+     */
     private static function normalize(array $raw): array
     {
         $defaults = self::defaults();
@@ -263,7 +299,11 @@ final class CompanyExtendedSettings
         return $cfg;
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Führt aus: sanitize.
+     * @param array $input
+     * @return array<string, mixed>
+     */
     private static function sanitize(array $input): array
     {
         $cfg = self::normalize([]);
@@ -319,7 +359,11 @@ final class CompanyExtendedSettings
         return $cfg;
     }
 
-    /** @param array<string, mixed> $raw */
+    /**
+     * Führt aus: sanitize bg data.
+     * @param array $raw
+     * @return array<string, mixed>
+     */
     private static function sanitizeBgData(array $raw): array
     {
         $carrierKeys = array_keys(UvCarriers::all());
@@ -362,7 +406,11 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param array<string, mixed> $raw */
+    /**
+     * Führt aus: sanitize institutions.
+     * @param array $raw
+     * @return array<string, mixed>
+     */
     private static function sanitizeInstitutions(array $raw): array
     {
         $defaults = self::defaults()['institutions'];
@@ -380,7 +428,11 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param array<string, mixed> $raw */
+    /**
+     * Führt aus: sanitize employment agency.
+     * @param array $raw
+     * @return array<string, mixed>
+     */
     private static function sanitizeEmploymentAgency(array $raw): array
     {
         return [
@@ -392,7 +444,11 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: normalize finanzaemter.
+     * @param array $rows
+     * @return array<string, mixed>
+     */
     private static function normalizeFinanzaemter(array $rows): array
     {
         $clean = [];
@@ -421,7 +477,11 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: normalize org rows.
+     * @param array $rows
+     * @return array<string, mixed>
+     */
     private static function normalizeOrgRows(array $rows): array
     {
         $clean = [];
@@ -445,7 +505,11 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: normalize memberships.
+     * @param array $rows
+     * @return array<string, mixed>
+     */
     private static function normalizeMemberships(array $rows): array
     {
         $clean = [];
@@ -475,7 +539,12 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param array<string, mixed> $resolved */
+    /**
+     * Führt aus: resolved from lookup.
+     * @param array $resolved
+     * @param string $taxNumber
+     * @return array<string, mixed>
+     */
     private static function resolvedFromLookup(array $resolved, string $taxNumber): array
     {
         $office = is_array($resolved['office'] ?? null) ? $resolved['office'] : [];
@@ -492,7 +561,12 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @param list<array<string, string>> $rows */
+    /**
+     * Methode finanzamt list has bufo.
+     * @param array $rows
+     * @param string $bufoNr
+     * @return bool
+     */
     private static function finanzamtListHasBufo(array $rows, string $bufoNr): bool
     {
         if ($bufoNr === '') {
@@ -508,9 +582,10 @@ final class CompanyExtendedSettings
     }
 
     /**
-     * @param list<array<string, string>> $rows
-     * @param array<string, mixed> $resolved
-     * @return list<array<string, string>>
+     * Methode prepend finanzamt from lookup.
+     * @param array $rows
+     * @param array $resolved
+     * @return array<string, mixed>
      */
     private static function prependFinanzamtFromLookup(array $rows, array $resolved): array
     {
@@ -535,7 +610,10 @@ final class CompanyExtendedSettings
         return array_merge([$row], $rows);
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode empty finanzamt row.
+     * @return array<string, mixed>
+     */
     public static function emptyFinanzamtRow(): array
     {
         return [
@@ -552,7 +630,11 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode empty org row.
+     * @param bool $withMemberNo
+     * @return array<string, mixed>
+     */
     public static function emptyOrgRow(bool $withMemberNo = true): array
     {
         $row = ['name' => '', 'contact' => '', 'phone' => '', 'email' => ''];
@@ -563,7 +645,10 @@ final class CompanyExtendedSettings
         return $row;
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode empty membership row.
+     * @return array<string, mixed>
+     */
     public static function emptyMembershipRow(): array
     {
         return [
@@ -577,7 +662,10 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode empty address row.
+     * @return array<string, mixed>
+     */
     public static function emptyAddressRow(): array
     {
         return [
@@ -590,7 +678,10 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @return array{name: string, share_percent: string, user_id: string} */
+    /**
+     * Methode empty owner row.
+     * @return array<string, mixed>
+     */
     public static function emptyOwnerRow(): array
     {
         return [
@@ -600,7 +691,11 @@ final class CompanyExtendedSettings
         ];
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: normalize addresses.
+     * @param array $rows
+     * @return array<string, mixed>
+     */
     private static function normalizeAddresses(array $rows): array
     {
         $types = array_keys(CompanyAddressTypes::labels());
@@ -627,7 +722,11 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: normalize owners.
+     * @param array $rows
+     * @return array<string, mixed>
+     */
     private static function normalizeOwners(array $rows): array
     {
         $clean = [];
@@ -653,7 +752,11 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: normalize bank accounts.
+     * @param array $rows
+     * @return array<string, mixed>
+     */
     private static function normalizeBankAccounts(array $rows): array
     {
         $clean = [];
@@ -671,7 +774,12 @@ final class CompanyExtendedSettings
         return $clean;
     }
 
-    /** @param array<string, string> $row @param list<string> $ignore */
+    /**
+     * Methode row is empty.
+     * @param array $row
+     * @param array $ignore
+     * @return bool
+     */
     private static function rowIsEmpty(array $row, array $ignore = []): bool
     {
         foreach ($row as $key => $value) {
@@ -686,11 +794,21 @@ final class CompanyExtendedSettings
         return true;
     }
 
+    /**
+     * Methode str.
+     * @param mixed $value
+     * @return string
+     */
     private static function str(mixed $value): string
     {
         return trim((string) $value);
     }
 
+    /**
+     * Methode email.
+     * @param mixed $value
+     * @return string
+     */
     private static function email(mixed $value): string
     {
         $email = trim((string) $value);

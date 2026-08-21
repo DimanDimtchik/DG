@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Startanleitung – Kontur Cosmetics</title>
+<style>
+  @page { size: A4; margin: 14mm 13mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    color: #1a1816;
+    line-height: 1.45;
+    margin: 0;
+  }
+  h1 { font-size: 19pt; margin: 0 0 6px; color: #2c2824; }
+  h2 {
+    font-size: 13.5pt;
+    margin: 16px 0 8px;
+    padding: 6px 10px;
+    background: #f3efe8;
+    border-left: 5px solid #6e6258;
+  }
+  .lead { font-size: 12pt; color: #333; margin: 0 0 12px; }
+  .meta { font-size: 9.5pt; color: #666; margin-bottom: 12px; }
+  .step {
+    border: 1px solid #d5cfc6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 0 0 10px;
+    background: #fffcf8;
+  }
+  .step-num {
+    display: inline-block;
+    width: 1.55em;
+    height: 1.55em;
+    line-height: 1.55em;
+    text-align: center;
+    border-radius: 50%;
+    background: #6e6258;
+    color: #fff;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  ol.easy { margin: 6px 0 0; padding-left: 1.4em; }
+  ol.easy li { margin: 5px 0; }
+  .box {
+    background: #eef6ea;
+    border: 1px solid #b7d0ae;
+    padding: 10px 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+  .warn {
+    background: #fff6e8;
+    border: 1px solid #e0c48a;
+    padding: 10px 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+  .page-break { page-break-before: always; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  th, td { border: 1px solid #bbb; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: #f3efe8; width: 34%; }
+  .big { font-size: 12.5pt; }
+  ul.plain { margin: 6px 0; padding-left: 1.2em; }
+  .muted { color: #555; font-size: 10pt; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 10.5pt; }
+  @media print {
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <h1>Startanleitung – Kontur Cosmetics</h1>
+  <p class="lead"><strong>Ihre Domain und Ihr Postfach sind bereits eingerichtet.</strong><br>
+  Sie brauchen keinen Installations-Assistenten und keinen Installations-Link.
+  Diese Anleitung ist nur für Sie – Schritt für Schritt, zum Ausdrucken.</p>
+  <div class="meta">
+    Domain: <strong>kontur-cosmetics.de</strong> · Stand: 21.08.2026<br>
+    Passwörter stehen auf dem separaten Blatt <em>„Zugangsdaten – Kontur Cosmetics“</em>
+    (nicht in dieser Anleitung).
+  </div>
+
+  <div class="box">
+    <strong>Was Sie von Ganz Soft bekommen (Paket):</strong>
+    <ul class="plain">
+      <li>dieses Blatt (Startanleitung)</li>
+      <li>Zugangsdaten-Blatt (CRM, SaaS-Konto, E-Mail)</li>
+      <li>E-Mail-Einrichtung (Gmail / Outlook) – optional</li>
+    </ul>
+  </div>
+
+  <h2>Wichtig: Was Sie nicht brauchen</h2>
+  <div class="warn">
+    <ul class="plain">
+      <li>Keine E-Mail mit Knopf „Installation starten“</li>
+      <li>Kein Assistent zum Anlegen von Firma / Domain</li>
+      <li>Kein neues Postfach anlegen – <strong>info@kontur-cosmetics.de</strong> existiert schon</li>
+      <li>Keine neue Domain / DNS einrichten</li>
+    </ul>
+  </div>
+
+  <h2>Ihre drei Zugänge (Überblick)</h2>
+  <table>
+    <tr>
+      <th>1. CRM (Software)</th>
+      <td>
+        <code>https://kontur-cosmetics.de/login</code><br>
+        Benutzer: <strong>admin</strong><br>
+        E-Mail: <strong>info@kontur-cosmetics.de</strong><br>
+        <span class="muted">Passwort: siehe Zugangsdaten-Blatt · nach dem ersten Login ändern</span>
+      </td>
+    </tr>
+    <tr>
+      <th>2. Kundenkonto Ganz Soft</th>
+      <td>
+        <code>https://shop.ganz-soft.de/konto/login</code><br>
+        Login: <strong>info@kontur-cosmetics.de</strong><br>
+        <span class="muted">Vertrag / Tarif Business · Passwort: Zugangsdaten-Blatt oder „Passwort vergessen?“</span>
+      </td>
+    </tr>
+    <tr>
+      <th>3. E-Mail-Postfach</th>
+      <td>
+        <strong>info@kontur-cosmetics.de</strong><br>
+        Webmail: <code>https://webmail.kasserver.com</code><br>
+        <span class="muted">Passwort handschriftlich auf dem Zugangsdaten-Blatt · Details: Blatt „E-Mail einrichten“</span>
+      </td>
+    </tr>
+  </table>
+
+  <h2>Schritt 1: Im CRM anmelden</h2>
+  <div class="step">
+    <p><span class="step-num">1</span> Öffnen Sie im Browser:</p>
+    <p class="big"><code>https://kontur-cosmetics.de/login</code></p>
+    <ol class="easy">
+      <li>Benutzername: <strong>admin</strong> (oder die E-Mail info@kontur-cosmetics.de)</li>
+      <li>Passwort aus dem Zugangsdaten-Blatt eingeben</li>
+      <li>Auf <strong>Anmelden</strong> klicken</li>
+    </ol>
+    <div class="box">
+      <strong>Tipp:</strong> Gleich danach unter Einstellungen / Profil das Passwort ändern
+      und das neue Passwort sicher notieren.
+    </div>
+  </div>
+
+  <h2>Schritt 2: Firmendaten prüfen</h2>
+  <div class="step">
+    <p><span class="step-num">2</span> Im CRM öffnen Sie die Firmendaten (Einstellungen → Kontakte → Firmendaten
+    bzw. vergleichbarer Menüpunkt).</p>
+    <p>Tragen Sie ein bzw. prüfen Sie:</p>
+    <ul class="plain">
+      <li>Firmenname (Kontur Cosmetics)</li>
+      <li>Anschrift, Telefon</li>
+      <li>Geschäfts-E-Mail: <strong>info@kontur-cosmetics.de</strong></li>
+    </ul>
+    <p class="muted">Diese Angaben erscheinen später auf Dokumenten und als Absender-Hinweis.</p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h2>Schritt 3: E-Mail testen</h2>
+  <div class="step">
+    <p><span class="step-num">3</span> Öffnen Sie das Webmail:</p>
+    <p class="big"><code>https://webmail.kasserver.com</code></p>
+    <ol class="easy">
+      <li>Benutzername: <strong>info@kontur-cosmetics.de</strong> (vollständige Adresse)</li>
+      <li>Passwort vom Zugangsdaten-Blatt</li>
+      <li>Prüfen Sie, ob Posteingang und Versand funktionieren</li>
+    </ol>
+    <p>Für Outlook oder Gmail: Blatt <em>„E-Mail einrichten – Kontur Cosmetics“</em> nutzen.<br>
+    Server: <code>w0217246.kasserver.com</code> · IMAP 993 SSL · SMTP 465 SSL</p>
+  </div>
+
+  <h2>Schritt 4: Kundenkonto bei Ganz Soft (optional)</h2>
+  <div class="step">
+    <p><span class="step-num">4</span> Unter <code>https://shop.ganz-soft.de/konto/login</code>
+    sehen Sie Ihren Vertragsstatus (Domain kontur-cosmetics.de, Tarif Business).</p>
+    <p>Hier können Sie bei Bedarf das Konto-Passwort zurücksetzen oder eine Entsperrung anfragen.</p>
+  </div>
+
+  <h2>Später im CRM (wenn Sie soweit sind)</h2>
+  <ul class="plain">
+    <li>Kontakte / Kunden anlegen</li>
+    <li>Termine / Buchungen nutzen</li>
+    <li>Buchhaltung / Belege – je nach Tarif</li>
+    <li>Website-Seiten im CRM – nur wenn Sie die öffentliche Website über das CRM pflegen möchten
+      (aktuell ist die Domain bereits mit dem CRM verbunden; öffentliche Inhaltsseiten können Sie später anlegen)</li>
+  </ul>
+
+  <h2>Hinweise nur für Kontur</h2>
+  <table>
+    <tr>
+      <th>Lizenz</th>
+      <td>Bereits aktiv (Business). Kein weiterer Aktivierungscode nötig.</td>
+    </tr>
+    <tr>
+      <th>CRM-Benutzer</th>
+      <td>Benutzername <strong>admin</strong>, E-Mail <strong>info@kontur-cosmetics.de</strong>
+      (gleiches Postfach wie Geschäftsmail – kein separates Admin-Postfach).</td>
+    </tr>
+    <tr>
+      <th>Passwort-Modell</th>
+      <td>Bei Ihnen: Startpasswort auf dem Zugangsdaten-Blatt (Sonderfall, weil alles schon stand).<br>
+      Neue Mitarbeiter später: Einladung → Link per E-Mail → selbst Passwort setzen.</td>
+    </tr>
+  </table>
+
+  <h2>Wenn etwas hakt</h2>
+  <div class="warn">
+    <ul class="plain">
+      <li><strong>Login geht nicht:</strong> Passwort genau vom Blatt tippen; Groß-/Kleinschreibung beachten.</li>
+      <li><strong>Webmail geht nicht:</strong> volle E-Mail-Adresse als Benutzername; Spam-Ordner prüfen.</li>
+      <li><strong>Immer noch unsicher:</strong> <strong>info@ganz-soft.de</strong> – schreiben Sie, bei welchem Schritt Sie stehen.</li>
+    </ul>
+  </div>
+
+  <h2>Checkliste</h2>
+  <div class="box">
+    <ol class="easy">
+      <li>☐ CRM-Login unter kontur-cosmetics.de/login</li>
+      <li>☐ CRM-Passwort geändert und notiert</li>
+      <li>☐ Firmendaten geprüft</li>
+      <li>☐ Webmail info@ getestet</li>
+      <li>☐ (optional) Outlook/Gmail eingerichtet</li>
+      <li>☐ (optional) SaaS-Konto unter shop.ganz-soft.de geprüft</li>
+    </ol>
+  </div>
+
+  <p class="muted">Ganz Soft · info@ganz-soft.de · Speziell für Kontur Cosmetics – nicht die allgemeine Installationsanleitung für Neukunden.</p>
+</body>
+</html>

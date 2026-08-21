@@ -4,7 +4,10 @@ declare(strict_types=1);
 /** Validierung für Kalender-Leistungen (Artikelnummer, GTIN, Preis). */
 final class CalendarArticleValidator
 {
-    /** @return array<string, string> */
+    /**
+     * Methode tax types.
+     * @return array<string, mixed>
+     */
     public static function taxTypes(): array
     {
         return [
@@ -17,12 +20,21 @@ final class CalendarArticleValidator
         ];
     }
 
-    /** @return list<string> */
+    /**
+     * Methode units.
+     * @return array<string, mixed>
+     */
     public static function units(): array
     {
         return ['Einheit', 'Stück', 'Stunde'];
     }
 
+    /**
+     * Führt aus: validate article number.
+     * @param string $value
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function validateArticleNumber(string $value): string
     {
         $value = trim($value);
@@ -36,6 +48,12 @@ final class CalendarArticleValidator
         return $value;
     }
 
+    /**
+     * Führt aus: validate gtin.
+     * @param string $value
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function validateGtin(string $value): string
     {
         $value = trim($value);
@@ -60,6 +78,12 @@ final class CalendarArticleValidator
         return $digits;
     }
 
+    /**
+     * Führt aus: validate tax type.
+     * @param string $value
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function validateTaxType(string $value): string
     {
         $value = trim($value);
@@ -70,6 +94,12 @@ final class CalendarArticleValidator
         return $value;
     }
 
+    /**
+     * Führt aus: validate unit.
+     * @param string $value
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function validateUnit(string $value): string
     {
         $value = trim($value);
@@ -83,6 +113,13 @@ final class CalendarArticleValidator
         return $value;
     }
 
+    /**
+     * Führt aus: validate price gross.
+     * @param mixed $value
+     * @param bool $allowNegative
+     * @return float
+     * @throws InvalidArgumentException
+     */
     public static function validatePriceGross(mixed $value, bool $allowNegative = false): float
     {
         if (is_string($value)) {
@@ -100,21 +137,41 @@ final class CalendarArticleValidator
         return $price;
     }
 
+    /**
+     * Führt aus: validate import price.
+     * @param mixed $value
+     * @return float
+     */
     public static function validateImportPrice(mixed $value): float
     {
         return self::validatePriceGross($value, true);
     }
 
+    /**
+     * Methode format price.
+     * @param float $price
+     * @return string
+     */
     public static function formatPrice(float $price): string
     {
         return number_format($price, 2, ',', '.') . ' €';
     }
 
+    /**
+     * Methode tax label.
+     * @param string $taxType
+     * @return string
+     */
     public static function taxLabel(string $taxType): string
     {
         return self::taxTypes()[$taxType] ?? $taxType;
     }
 
+    /**
+     * Führt aus: normalize import title.
+     * @param string $value
+     * @return string
+     */
     public static function normalizeImportTitle(string $value): string
     {
         $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
@@ -131,6 +188,11 @@ final class CalendarArticleValidator
         return $value;
     }
 
+    /**
+     * Führt aus: normalize unit for import.
+     * @param string $value
+     * @return string
+     */
     public static function normalizeUnitForImport(string $value): string
     {
         $value = trim($value);
@@ -160,6 +222,12 @@ final class CalendarArticleValidator
         return $value;
     }
 
+    /**
+     * Normalize Tax Type For Import.
+     * @param string $value
+     * @return string
+     * @throws \InvalidArgumentException
+     */
     public static function normalizeTaxTypeForImport(string $value): string
     {
         $value = strtolower(trim($value));
@@ -202,6 +270,12 @@ final class CalendarArticleValidator
         throw new InvalidArgumentException('Unbekannte Steuerart: ' . $value);
     }
 
+    /**
+     * Methode gross from net.
+     * @param float $net
+     * @param string $taxType
+     * @return float
+     */
     public static function grossFromNet(float $net, string $taxType): float
     {
         $multiplier = match ($taxType) {
@@ -213,6 +287,11 @@ final class CalendarArticleValidator
         return round($net * $multiplier, 2);
     }
 
+    /**
+     * Prüft: is valid gs1 check digit.
+     * @param string $digits
+     * @return bool
+     */
     private static function isValidGs1CheckDigit(string $digits): bool
     {
         $check = (int) substr($digits, -1);

@@ -4,6 +4,10 @@ declare(strict_types=1);
 /** Öffentliche Terminbuchung (ohne CRM-Login). */
 final class PublicBookingApi
 {
+    /**
+     * HTTP-API-Einstieg.
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -52,6 +56,7 @@ final class PublicBookingApi
                 'success' => true,
                 'message' => CalendarEmbedSettings::successMessage(),
                 'booking_id' => $bookingId,
+                'booking_code' => $booking !== null ? $booking->publicCode() : '',
             ], JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(400);
@@ -59,7 +64,12 @@ final class PublicBookingApi
         }
     }
 
-    /** @param array<string, mixed> $post */
+    /**
+     * Führt aus: create booking.
+     * @param array $post
+     * @return int
+     * @throws InvalidArgumentException
+     */
     private static function createBooking(array $post): int
     {
         $name = trim((string) ($post['customer_name'] ?? ''));

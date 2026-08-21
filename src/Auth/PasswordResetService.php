@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Passwort-zurücksetzen per E-Mail-Token (Anfordern, Validieren, Neues Passwort setzen).
+ */
 final class PasswordResetService
 {
     private const TOKEN_BYTES = 32;
@@ -12,6 +15,11 @@ final class PasswordResetService
     public const REQUEST_SUCCESS_MESSAGE =
         'Falls ein passendes Konto mit hinterlegter E-Mail existiert, erhalten Sie in Kürze eine Nachricht mit weiteren Schritten.';
 
+    /**
+     * Startet den Reset-Prozess (E-Mail nur wenn Konto existiert und SMTP konfiguriert).
+     *
+     * @throws RuntimeException Bei fehlender DB oder E-Mail-Konfiguration.
+     */
     public static function requestReset(string $identifier): void
     {
         if (!Database::isConfigured()) {
@@ -43,6 +51,9 @@ final class PasswordResetService
         self::sendResetEmail($user, $email, $token);
     }
 
+    /**
+     * Prüft ein Reset-Token und liefert den zugehörigen Benutzer.
+     */
     public static function validateToken(string $token): ?User
     {
         if (!Database::isConfigured()) {
@@ -74,17 +85,18 @@ final class PasswordResetService
         return $user;
     }
 
+    /**
+     * Setzt das Passwort anhand eines gültigen Tokens.
+     *
+     * @throws InvalidArgumentException Bei ungültigem Token oder Passwortregeln.
+     * @throws RuntimeException Bei fehlender Datenbank.
+     */
     public static function resetPassword(string $token, string $password, string $confirm): void
     {
         if ($password === '' || $confirm === '') {
             throw new InvalidArgumentException('Bitte neues Passwort eingeben und bestätigen.');
         }
-        if ($password !== $confirm) {
-            throw new InvalidArgumentException('Passwörter stimmen nicht überein.');
-        }
-        if (strlen($password) < 8) {
-            throw new InvalidArgumentException('Passwort mindestens 8 Zeichen.');
-        }
+        PasswordPolicy::assertValid($password, $confirm);
 
         if (!Database::isConfigured()) {
             throw new RuntimeException('Passwort-Zurücksetzen ist nur mit Datenbankverbindung verfügbar.');
@@ -140,6 +152,9 @@ final class PasswordResetService
         }
     }
 
+    /**
+     * Invalidiert alte Tokens und speichert einen neuen Hash.
+     */
     private static function storeToken(int $userId, string $token): void
     {
         $pdo = Database::pdo();
@@ -159,6 +174,9 @@ final class PasswordResetService
         ]);
     }
 
+    /**
+     * @throws RuntimeException Wenn keine öffentliche Basis-URL ermittelt werden kann.
+     */
     private static function sendResetEmail(User $user, string $email, string $token): void
     {
         $baseUrl = App::publicBaseUrl();
@@ -208,11 +226,19 @@ final class PasswordResetService
         MailService::send($message);
     }
 
+    /**
+     * Hasht ein Klartext-Token für den sicheren DB-Vergleich.
+     */
     private static function hashToken(string $token): string
     {
         return hash('sha256', $token);
     }
 
+    /**
+     * Session-basiertes Rate-Limit für Reset-Anfragen.
+     *
+     * @throws RuntimeException Bei zu vielen Anfragen im Zeitfenster.
+     */
     private static function enforceRateLimit(string $identifier): void
     {
         $now = time();

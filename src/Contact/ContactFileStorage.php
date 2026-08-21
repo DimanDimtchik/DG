@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Contact File Storage.
+ */
 final class ContactFileStorage
 {
     private const MAX_BYTES = 10_485_760;
@@ -14,13 +17,21 @@ final class ContactFileStorage
         'webp' => 'image/webp',
     ];
 
+    /**
+     * Liefert das Basisverzeichnis für Belegdateien
+     * @return string
+     */
     public static function baseDir(): string
     {
         return DG_ROOT . '/storage/contacts';
     }
 
-    /** @return array<string, array<string, string>|list<array<string, string>>> */
-    public static function emptyFiles(): array
+    /**
+     * emptyFiles.
+     *
+     * @return array<string, array<string, string>|list<array<string, string>>>
+     */
+        public static function emptyFiles(): array
     {
         $files = [];
         foreach (array_keys(EmployeeData::allDocumentTypes()) as $type) {
@@ -30,12 +41,21 @@ final class ContactFileStorage
         return $files;
     }
 
+    /**
+     * isMultiType
+     * @param string $type
+     * @return bool
+     */
     public static function isMultiType(string $type): bool
     {
         return isset(EmployeeData::multiDocumentTypes()[$type]);
     }
 
-    /** @param mixed $raw */
+        /**
+     * normalizeFiles
+     * @param mixed $raw Rohdaten
+     * @return array
+     */
     public static function normalizeFiles(mixed $raw): array
     {
         if (!is_array($raw)) {
@@ -69,7 +89,11 @@ final class ContactFileStorage
         return $out;
     }
 
-    /** @param array<string, mixed> $entry */
+        /**
+     * normalizeSingleEntry
+     * @param array $entry
+     * @return array
+     */
     private static function normalizeSingleEntry(array $entry): array
     {
         return [
@@ -80,10 +104,13 @@ final class ContactFileStorage
         ];
     }
 
-    /**
-     * @param array<string, array<string, string>|list<array<string, string>>> $existing
-     * @param array<string, mixed> $uploads from $_FILES['employee_files']
+        /**
+     * Verarbeitet hochgeladene Belegdateien
+     * @param int $contactId Kontakt-ID
+     * @param array $uploads
+     * @param array $existing Bestehende Hinweisdaten
      * @return array<string, array<string, string>|list<array<string, string>>>
+     * @throws RuntimeException
      */
     public static function processUploads(int $contactId, array $uploads, array $existing): array
     {
@@ -111,10 +138,15 @@ final class ContactFileStorage
         return $files;
     }
 
-    /**
-     * @param array<string, mixed> $file
-     * @param array<string, string>|list<array<string, string>> $existingEntry
+        /**
+     * processSingleUpload
+     * @param int $contactId Kontakt-ID
+     * @param string $type
+     * @param array $file
+     * @param string $label
+     * @param array $existingEntry
      * @return array<string, string>
+     * @throws InvalidArgumentException
      */
     private static function processSingleUpload(int $contactId, string $type, array $file, string $label, array $existingEntry): array
     {
@@ -133,10 +165,15 @@ final class ContactFileStorage
         return $stored;
     }
 
-    /**
-     * @param array<string, mixed> $fileGroup
-     * @param list<array<string, string>> $existingList
+        /**
+     * processMultiUpload
+     * @param int $contactId Kontakt-ID
+     * @param string $type
+     * @param array $fileGroup Upload-Dateigruppe
+     * @param string $label
+     * @param array $existingList
      * @return list<array<string, string>>
+     * @throws InvalidArgumentException
      */
     private static function processMultiUpload(int $contactId, string $type, array $fileGroup, string $label, array $existingList): array
     {
@@ -169,7 +206,16 @@ final class ContactFileStorage
         return $existingList;
     }
 
-    /** @param array<string, mixed> $file */
+        /**
+     * storeUploadedFile
+     * @param int $contactId Kontakt-ID
+     * @param string $type
+     * @param array $file
+     * @param string $label
+     * @return array
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
     private static function storeUploadedFile(int $contactId, string $type, array $file, string $label): array
     {
         $size = (int) ($file['size'] ?? 0);
@@ -199,6 +245,11 @@ final class ContactFileStorage
         ];
     }
 
+    /**
+     * Löst einen relativen Pfad in einen absoluten Dateipfad auf
+     * @param string $relativePath
+     * @return ?string
+     */
     public static function resolveAbsolute(string $relativePath): ?string
     {
         $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
@@ -213,7 +264,11 @@ final class ContactFileStorage
         return $absolute;
     }
 
-    /** @param array<string, array<string, string>|list<array<string, string>>> $files */
+        /**
+     * encodeFiles
+     * @param array $files
+     * @return string
+     */
     public static function encodeFiles(array $files): string
     {
         $out = [];
@@ -232,7 +287,11 @@ final class ContactFileStorage
         return json_encode($out, JSON_UNESCAPED_UNICODE);
     }
 
-    /** @param array<string, array<string, string>|list<array<string, string>>> $files */
+        /**
+     * deleteAll
+     * @param array $files
+     * @return void
+     */
     public static function deleteAll(array $files): void
     {
         foreach ($files as $type => $entry) {
@@ -253,11 +312,21 @@ final class ContactFileStorage
         }
     }
 
+    /**
+     * contactDir
+     * @param int $contactId Kontakt-ID
+     * @return string
+     */
     private static function contactDir(int $contactId): string
     {
         return self::baseDir() . '/' . $contactId;
     }
 
+    /**
+     * deletePath
+     * @param string $relativePath
+     * @return void
+     */
     private static function deletePath(string $relativePath): void
     {
         $absolute = self::resolveAbsolute($relativePath);

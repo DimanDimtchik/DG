@@ -4,7 +4,9 @@ declare(strict_types=1);
 /** Standard-Bedeutungen der Kontenziffern nach SKR. */
 final class SkrDigitLegend
 {
-    /**
+        /**
+     * forSkr
+     * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return array<int, string>
      */
     public static function forSkr(string $skrType): array
@@ -15,8 +17,12 @@ final class SkrDigitLegend
         };
     }
 
-    /** @return array<int, string> */
-    public static function skr03(): array
+    /**
+     * skr03.
+     *
+     * @return array<int, string>
+     */
+        public static function skr03(): array
     {
         return [
             1 => 'Anlagevermögen / Finanz- und Privatkonten',
@@ -31,8 +37,12 @@ final class SkrDigitLegend
         ];
     }
 
-    /** @return array<int, string> */
-    public static function skr04(): array
+    /**
+     * skr04.
+     *
+     * @return array<int, string>
+     */
+        public static function skr04(): array
     {
         return [
             1 => 'Aktiva (Anlage- und Umlaufvermögen)',
@@ -47,8 +57,10 @@ final class SkrDigitLegend
         ];
     }
 
-    /**
-     * @param array<int, string> $overrides
+        /**
+     * mergeWithOverrides
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param array $overrides
      * @return array<int, string>
      */
     public static function mergeWithOverrides(string $skrType, array $overrides): array

@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Calendar Email Template Api.
+ */
 final class CalendarEmailTemplateApi
 {
+    /**
+     * Liefert eine HTML-Vorschau des E-Mail-Layouts.
+     * @return void
+     */
     public static function handlePreview(): void
     {
         header('Content-Type: application/json; charset=utf-8');

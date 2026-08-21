@@ -5,20 +5,8 @@ declare(strict_types=1);
 final class MailboxProviderPresets
 {
     /**
-     * @return array<string, array{
-     *   label: string,
-     *   group: string,
-     *   imap_host: string,
-     *   imap_port: int,
-     *   imap_encryption: string,
-     *   smtp_host: string,
-     *   smtp_port: int,
-     *   smtp_encryption: string,
-     *   imap_username_hint: string,
-     *   smtp_username_hint: string,
-     *   auto_email_username: bool,
-     *   note: string
-     * }>
+     * Methode definitions.
+     * @return array<string, mixed>
      */
     private static function definitions(): array
     {
@@ -141,7 +129,10 @@ final class MailboxProviderPresets
         ];
     }
 
-    /** @return array<string, string> slug => Label */
+    /**
+     * Methode labels.
+     * @return array<string, mixed>
+     */
     public static function labels(): array
     {
         $out = [];
@@ -152,7 +143,10 @@ final class MailboxProviderPresets
         return $out;
     }
 
-    /** @return array<string, string> group id => group label */
+    /**
+     * Methode group labels.
+     * @return array<string, mixed>
+     */
     public static function groupLabels(): array
     {
         return [
@@ -164,7 +158,10 @@ final class MailboxProviderPresets
         ];
     }
 
-    /** @return array<string, array<string, string>> group id => [preset id => label] */
+    /**
+     * Methode grouped labels.
+     * @return array<string, mixed>
+     */
     public static function groupedLabels(): array
     {
         $groups = [];
@@ -175,11 +172,21 @@ final class MailboxProviderPresets
         return $groups;
     }
 
+    /**
+     * Prüft, ob der Wert gültig ist.
+     * @param string $preset
+     * @return bool
+     */
     public static function isValid(string $preset): bool
     {
         return isset(self::definitions()[$preset]);
     }
 
+    /**
+     * Methode preset note.
+     * @param string $preset
+     * @return string
+     */
     public static function presetNote(string $preset): string
     {
         if (!self::isValid($preset)) {
@@ -190,17 +197,10 @@ final class MailboxProviderPresets
     }
 
     /**
-     * @return array{
-     *   imap_host: string,
-     *   imap_port: int,
-     *   imap_encryption: string,
-     *   smtp_host: string,
-     *   smtp_port: int,
-     *   smtp_encryption: string,
-     *   imap_username_hint: string,
-     *   smtp_username_hint: string,
-     *   note: string
-     * }
+     * Methode connection defaults.
+     * @param string $preset
+     * @param string $emailAddress
+     * @return array<string, mixed>
      */
     public static function connectionDefaults(string $preset, string $emailAddress = ''): array
     {
@@ -228,7 +228,9 @@ final class MailboxProviderPresets
     }
 
     /**
-     * @param array<string, mixed> $input
+     * Methode merge form input.
+     * @param array $input
+     * @param array|null $existing
      * @return array<string, mixed>
      */
     public static function mergeFormInput(array $input, ?array $existing = null): array
@@ -300,6 +302,12 @@ final class MailboxProviderPresets
         ]);
     }
 
+    /**
+     * Führt aus: resolve host.
+     * @param string $pattern
+     * @param string $domain
+     * @return string
+     */
     private static function resolveHost(string $pattern, string $domain): string
     {
         if ($pattern === '') {
@@ -313,20 +321,20 @@ final class MailboxProviderPresets
     }
 
     /**
-     * @return array{
-     *   label: string,
-     *   group: string,
-     *   imap_host: string,
-     *   imap_port: int,
-     *   imap_encryption: string,
-     *   smtp_host: string,
-     *   smtp_port: int,
-     *   smtp_encryption: string,
-     *   imap_username_hint: string,
-     *   smtp_username_hint: string,
-     *   auto_email_username: bool,
-     *   note: string
-     * }
+     * Methode def.
+     * @param string $label
+     * @param string $group
+     * @param string $imapHost
+     * @param string $smtpHost
+     * @param int $imapPort
+     * @param string $imapEncryption
+     * @param int $smtpPort
+     * @param string $smtpEncryption
+     * @param string $imapUserHint
+     * @param string $smtpUserHint
+     * @param bool $autoEmailUsername
+     * @param string $note
+     * @return array<string, mixed>
      */
     private static function def(
         string $label,

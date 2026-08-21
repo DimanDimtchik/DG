@@ -1,12 +1,19 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Voucher Repository.
+ */
 final class VoucherRepository
 {
     private const PER_PAGE = 25;
 
-    /** @return array<string, string> */
-    public static function voucherTypeOptions(): array
+    /**
+     * voucherTypeOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function voucherTypeOptions(): array
     {
         return [
             'income' => 'Einnahmen',
@@ -17,7 +24,11 @@ final class VoucherRepository
         ];
     }
 
-    /** Kurz erklärung je Belegart (Lexoffice / EÜR-Logik). */
+        /**
+     * Kurz erklärung je Belegart (Lexoffice / EÜR-Logik).
+     * @param string $type
+     * @return string
+     */
     public static function voucherTypeHint(string $type): string
     {
         return match (self::sanitizeVoucherType($type)) {
@@ -30,8 +41,12 @@ final class VoucherRepository
         };
     }
 
-    /** @return array<string, string> */
-    public static function paymentStatusOptions(): array
+    /**
+     * paymentStatusOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function paymentStatusOptions(): array
     {
         return VoucherPaymentStatus::options();
     }
@@ -124,8 +139,12 @@ final class VoucherRepository
         ];
     }
 
-    /** @return list<int> */
-    public static function availableYears(): array
+    /**
+     * availableYears.
+     *
+     * @return list<int>
+     */
+        public static function availableYears(): array
     {
         if (!Database::isConfigured()) {
             return [(int) date('Y')];
@@ -148,6 +167,11 @@ final class VoucherRepository
         return $years;
     }
 
+    /**
+     * Findet einen Datensatz anhand der ID
+     * @param int $id Datensatz-ID
+     * @return ?array
+     */
     public static function findById(int $id): ?array
     {
         if (!Database::isConfigured()) {
@@ -177,7 +201,13 @@ final class VoucherRepository
         return $enriched;
     }
 
-    /** @return list<array<string, mixed>> */
+        /**
+     * linesForVoucher
+     * @param int $voucherId Beleg-ID
+     * @param bool $bookingOnly
+     * @param bool $systemOnly
+     * @return list<array<string, mixed>>
+     */
     public static function linesForVoucher(int $voucherId, bool $bookingOnly = false, bool $systemOnly = false): array
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -225,7 +255,11 @@ final class VoucherRepository
         return $lines;
     }
 
-    /** @return list<array<string, mixed>> */
+        /**
+     * itemsForVoucher
+     * @param int $voucherId Beleg-ID
+     * @return list<array<string, mixed>>
+     */
     public static function itemsForVoucher(int $voucherId): array
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -259,8 +293,11 @@ final class VoucherRepository
         return $items;
     }
 
-    /**
-     * @param list<array<string, mixed>> $itemRows
+        /**
+     * replaceItems
+     * @param int $voucherId Beleg-ID
+     * @param array $itemRows
+     * @return void
      */
     private static function replaceItems(int $voucherId, array $itemRows): void
     {
@@ -303,6 +340,11 @@ final class VoucherRepository
         }
     }
 
+    /**
+     * formatQuantity
+     * @param float $quantity
+     * @return string
+     */
     public static function formatQuantity(float $quantity): string
     {
         $formatted = number_format($quantity, 3, ',', '.');
@@ -311,8 +353,10 @@ final class VoucherRepository
         return $formatted === '' ? '0' : $formatted;
     }
 
-    /**
-     * @param list<array<string, mixed>> $rawLines
+        /**
+     * previewReverseChargePostings
+     * @param array $rawLines
+     * @param string $reverseChargeType
      * @return array{lines: list<array<string, mixed>>, ustva_positions: list<array{kz: string, net: float, tax: float}>}
      */
     public static function previewReverseChargePostings(array $rawLines, string $reverseChargeType): array
@@ -327,8 +371,13 @@ final class VoucherRepository
         return VoucherReverseCharge::buildPostings($bookingLines, $type, ChartOfAccountsSettings::activeSkrType());
     }
 
-    /**
-     * @param list<array<string, mixed>> $rawLines
+        /**
+     * previewAccrualPostings
+     * @param array $rawLines
+     * @param string $voucherType Belegtyp
+     * @param int $currentPercent
+     * @param int $nextPercent
+     * @param string $voucherDate
      * @return list<array<string, mixed>>
      */
     public static function previewAccrualPostings(
@@ -352,7 +401,15 @@ final class VoucherRepository
         );
     }
 
-    /** @param array<string, mixed> $data */
+        /**
+     * save
+     * @param array $data
+     * @param int|null $id Datensatz-ID
+     * @param int|null $userId Benutzer-ID
+     * @return int
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     */
     public static function save(array $data, ?int $id = null, ?int $userId = null): int
     {
         if (!Database::isConfigured()) {
@@ -559,9 +616,13 @@ final class VoucherRepository
         return $newId;
     }
 
-    /**
-     * @param array<string, mixed> $data
+        /**
+     * parseLineRows
+     * @param array $data
+     * @param bool $reverseCharge Reverse-Charge-Modus
+     * @param string $reverseChargeType
      * @return list<array{account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int}>
+     * @throws InvalidArgumentException
      */
     private static function parseLineRows(array $data, bool $reverseCharge, string $reverseChargeType = ''): array
     {
@@ -604,8 +665,10 @@ final class VoucherRepository
         return $rows;
     }
 
-    /**
-     * @param list<array<string, mixed>> $bookingLines
+        /**
+     * amountsFromBookingLines
+     * @param array $bookingLines
+     * @param bool $reverseCharge Reverse-Charge-Modus
      * @return array{gross_amount: float, net_amount: float, tax_amount: float}
      */
     private static function amountsFromBookingLines(array $bookingLines, bool $reverseCharge): array
@@ -649,8 +712,11 @@ final class VoucherRepository
         ];
     }
 
-    /**
-     * @param list<array{account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int}> $lineRows
+        /**
+     * replaceLines
+     * @param int $voucherId Beleg-ID
+     * @param array $lineRows
+     * @return void
      */
     private static function replaceLines(int $voucherId, array $lineRows): void
     {
@@ -689,6 +755,12 @@ final class VoucherRepository
         }
     }
 
+    /**
+     * Löscht einen Datensatz
+     * @param int $id Datensatz-ID
+     * @return void
+     * @throws RuntimeException
+     */
     public static function delete(int $id): void
     {
         if (!Database::isConfigured()) {
@@ -700,7 +772,11 @@ final class VoucherRepository
         $stmt->execute(['id' => $id]);
     }
 
-    /** Journalbuchungen des Belegs neu aufbauen (fehlerresistent). */
+        /**
+     * Journalbuchungen des Belegs neu aufbauen (fehlerresistent).
+     * @param int $voucherId Beleg-ID
+     * @return void
+     */
     private static function syncLedger(int $voucherId): void
     {
         try {
@@ -710,8 +786,12 @@ final class VoucherRepository
         }
     }
 
-    /** @return array<string, string> */
-    public static function emptyForm(): array
+    /**
+     * emptyForm.
+     *
+     * @return array<string, string>
+     */
+        public static function emptyForm(): array
     {
         return [
             'voucher_type' => 'expense',
@@ -763,7 +843,11 @@ final class VoucherRepository
         ];
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * toForm
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     public static function toForm(array $row): array
     {
         $lines = is_array($row['lines'] ?? null) ? $row['lines'] : self::linesForVoucher((int) ($row['id'] ?? 0), true);
@@ -834,22 +918,41 @@ final class VoucherRepository
         ];
     }
 
+    /**
+     * typeLabel
+     * @param string $type
+     * @return string
+     */
     public static function typeLabel(string $type): string
     {
         return self::voucherTypeOptions()[self::sanitizeVoucherType($type)] ?? $type;
     }
 
+    /**
+     * normalizeVoucherType
+     * @param string $type
+     * @return string
+     */
     public static function normalizeVoucherType(string $type): string
     {
         return self::sanitizeVoucherType($type);
     }
 
-    /** Ausgaben-Belegarten (Aufwand) – hier ist die Rechnungsnummer Pflicht. */
+        /**
+     * Ausgaben-Belegarten (Aufwand) – hier ist die Rechnungsnummer Pflicht.
+     * @param string $voucherType Belegtyp
+     * @return bool
+     */
     public static function isExpenseType(string $voucherType): bool
     {
         return in_array(self::sanitizeVoucherType($voucherType), ['expense', 'expense_reduction'], true);
     }
 
+    /**
+     * numberRangeTypeForVoucher
+     * @param string $voucherType Belegtyp
+     * @return ?string
+     */
     public static function numberRangeTypeForVoucher(string $voucherType): ?string
     {
         return match (self::sanitizeVoucherType($voucherType)) {
@@ -859,8 +962,12 @@ final class VoucherRepository
         };
     }
 
-    /** @return array<string, string> Belegart => Nummernkreis-Bezeichnung */
-    public static function autoInvoiceNumberLabels(): array
+    /**
+     * autoInvoiceNumberLabels.
+     *
+     * @return array<string, string> Belegart => Nummernkreis-Bezeichnung
+     */
+        public static function autoInvoiceNumberLabels(): array
     {
         $labels = [];
         foreach (self::voucherTypeOptions() as $voucherType => $_label) {
@@ -873,11 +980,22 @@ final class VoucherRepository
         return $labels;
     }
 
+    /**
+     * usesAutoInvoiceNumber
+     * @param string $voucherType Belegtyp
+     * @return bool
+     */
     public static function usesAutoInvoiceNumber(string $voucherType): bool
     {
         return self::numberRangeTypeForVoucher($voucherType) !== null;
     }
 
+    /**
+     * peekInvoiceNumber
+     * @param string $voucherType Belegtyp
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function peekInvoiceNumber(string $voucherType): string
     {
         $rangeType = self::numberRangeTypeForVoucher($voucherType);
@@ -888,6 +1006,11 @@ final class VoucherRepository
         return NumberRangeSettings::allocateNext($rangeType, false)['number'];
     }
 
+    /**
+     * parseOptionalDate
+     * @param string $value Eingabewert
+     * @return ?string
+     */
     private static function parseOptionalDate(string $value): ?string
     {
         $value = trim($value);
@@ -898,7 +1021,13 @@ final class VoucherRepository
         return date('Y-m-d', strtotime($value));
     }
 
-    /** @param array<string, mixed> $data */
+        /**
+     * resolveInvoiceNumber
+     * @param string $voucherType Belegtyp
+     * @param array $data
+     * @param int|null $id Datensatz-ID
+     * @return string
+     */
     private static function resolveInvoiceNumber(string $voucherType, array $data, ?int $id): string
     {
         $rangeType = self::numberRangeTypeForVoucher($voucherType);
@@ -917,16 +1046,31 @@ final class VoucherRepository
         return NumberRangeSettings::allocateNext($rangeType, true)['number'];
     }
 
+    /**
+     * paymentLabel
+     * @param string $status Statuswert
+     * @return string
+     */
     public static function paymentLabel(string $status): string
     {
         return VoucherPaymentStatus::label($status);
     }
 
+    /**
+     * formatMoney
+     * @param float $amount Betrag
+     * @return string
+     */
     public static function formatMoney(float $amount): string
     {
         return number_format($amount, 2, ',', '.');
     }
 
+    /**
+     * sanitizeVoucherType
+     * @param string $type
+     * @return string
+     */
     private static function sanitizeVoucherType(string $type): string
     {
         $type = strtolower(trim($type));
@@ -937,7 +1081,11 @@ final class VoucherRepository
         return isset(self::voucherTypeOptions()[$type]) ? $type : 'expense';
     }
 
-    /** Leerer Filter = alle Belegarten (nicht auf „Ausgaben“ einschränken). */
+        /**
+     * Leerer Filter = alle Belegarten (nicht auf „Ausgaben“ einschränken).
+     * @param string $type
+     * @return string
+     */
     private static function sanitizeVoucherTypeFilter(string $type): string
     {
         $type = strtolower(trim($type));
@@ -948,12 +1096,21 @@ final class VoucherRepository
         return isset(self::voucherTypeOptions()[$type]) ? $type : '';
     }
 
+    /**
+     * sanitizePaymentStatus
+     * @param string $status Statuswert
+     * @return string
+     */
     private static function sanitizePaymentStatus(string $status): string
     {
         return VoucherPaymentStatus::sanitize($status);
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * enrichRow
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function enrichRow(array $row): array
     {
         $contactLabel = trim((string) ($row['contact_company_name'] ?? ''));

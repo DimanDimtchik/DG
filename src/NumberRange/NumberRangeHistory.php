@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Number Range History.
+ */
 final class NumberRangeHistory
 {
+    /**
+     * ensureTable
+     * @return void
+     */
     public static function ensureTable(): void
     {
         if (!Database::isConfigured()) {
@@ -39,7 +46,9 @@ final class NumberRangeHistory
         return $rows;
     }
 
-    /**
+        /**
+     * listForType
+     * @param string $type
      * @return list<array<string, mixed>>
      */
     public static function listForType(string $type): array
@@ -66,9 +75,12 @@ final class NumberRangeHistory
         return $rows;
     }
 
-    /**
-     * @param array<string, mixed> $previous
-     * @param array<string, mixed> $next
+        /**
+     * syncOnSave
+     * @param string $type
+     * @param array $previous
+     * @param array $next
+     * @return void
      */
     public static function syncOnSave(string $type, array $previous, array $next): void
     {
@@ -86,7 +98,12 @@ final class NumberRangeHistory
         self::insertRecord($type, $next);
     }
 
-    /** @param array<string, mixed> $document */
+        /**
+     * insertRecord
+     * @param string $type
+     * @param array $document
+     * @return void
+     */
     private static function insertRecord(string $type, array $document): void
     {
         $counter = InvoiceNumberBuilder::sequenceCounter($document);
@@ -112,6 +129,12 @@ final class NumberRangeHistory
         ]);
     }
 
+    /**
+     * closeActive
+     * @param string $type
+     * @param int $counterTo
+     * @return void
+     */
     private static function closeActive(string $type, int $counterTo): void
     {
         $stmt = Database::pdo()->prepare(
@@ -125,7 +148,11 @@ final class NumberRangeHistory
         ]);
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * mapRow
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function mapRow(array $row): array
     {
         $usedFrom = (string) ($row['used_from'] ?? '');
@@ -160,11 +187,21 @@ final class NumberRangeHistory
         ];
     }
 
+    /**
+     * typeLabel
+     * @param string $type
+     * @return string
+     */
     public static function typeLabel(string $type): string
     {
         return NumberRangeSettings::documentTypes()[$type] ?? $type;
     }
 
+    /**
+     * numberDisplayLabel
+     * @param string $display
+     * @return string
+     */
     public static function numberDisplayLabel(string $display): string
     {
         $display = strtolower(trim($display));
@@ -173,12 +210,22 @@ final class NumberRangeHistory
         return $bases[$display] ?? $bases['decimal'];
     }
 
+    /**
+     * formatPadLabel
+     * @param int $pad
+     * @return string
+     */
     public static function formatPadLabel(int $pad): string
     {
         return $pad > 0 ? (string) $pad : '—';
     }
 
-    /** @deprecated Nur noch intern; Spalte in der UI entfernt. */
+        /**
+     * durationLabel
+     * @param string $usedFrom
+     * @param string|null $usedUntil
+     * @return string
+     */
     public static function durationLabel(string $usedFrom, ?string $usedUntil): string
     {
         if ($usedFrom === '') {
@@ -220,6 +267,11 @@ final class NumberRangeHistory
         return $usedUntil === null ? $label . ' (läuft)' : $label;
     }
 
+    /**
+     * formatDateTime
+     * @param string|null $value Eingabewert
+     * @return string
+     */
     public static function formatDateTime(?string $value): string
     {
         if ($value === null || trim($value) === '') {

@@ -11,7 +11,9 @@ final class MailPartyLabel
     private static array $byEmail = [];
 
     /**
-     * @param array<string, mixed> $row
+     * Methode for message row.
+     * @param array $row
+     * @return string
      */
     public static function forMessageRow(array $row): string
     {
@@ -24,7 +26,9 @@ final class MailPartyLabel
     }
 
     /**
-     * @param array<string, mixed> $row
+     * Führt aus: resolve contact.
+     * @param array $row
+     * @return Contact|null
      */
     public static function resolveContact(array $row): ?Contact
     {
@@ -41,6 +45,11 @@ final class MailPartyLabel
         return self::contactByEmail($email);
     }
 
+    /**
+     * Methode contact by id.
+     * @param int $contactId
+     * @return Contact|null
+     */
     private static function contactById(int $contactId): ?Contact
     {
         if (!array_key_exists($contactId, self::$byId)) {
@@ -50,6 +59,11 @@ final class MailPartyLabel
         return self::$byId[$contactId];
     }
 
+    /**
+     * Methode contact by email.
+     * @param string $email
+     * @return Contact|null
+     */
     private static function contactByEmail(string $email): ?Contact
     {
         if (!array_key_exists($email, self::$byEmail)) {

@@ -7,8 +7,12 @@ final class BankDirectory
     /** @var list<array{bankCode: string, bankName: string, bic: string}>|null */
     private static ?array $banks = null;
 
-    /** @return list<array{bankCode: string, bankName: string, bic: string}> */
-    public static function banks(): array
+    /**
+     * banks.
+     *
+     * @return list<array{bankCode: string, bankName: string, bic: string}>
+     */
+        public static function banks(): array
     {
         if (self::$banks !== null) {
             return self::$banks;
@@ -27,7 +31,11 @@ final class BankDirectory
         return self::$banks;
     }
 
-    /** @return array{bankCode: string, bankName: string, bic: string}|null */
+        /**
+     * suggestFromIban
+     * @param string $iban IBAN
+     * @return array{bankCode: string, bankName: string, bic: string}|null
+     */
     public static function suggestFromIban(string $iban): ?array
     {
         $iban = self::normalizeIban($iban);
@@ -45,7 +53,11 @@ final class BankDirectory
         return null;
     }
 
-    /** @return list<array{bankCode: string, bankName: string, bic: string}> */
+        /**
+     * searchByName
+     * @param string $input Formulardaten
+     * @return list<array{bankCode: string, bankName: string, bic: string}>
+     */
     public static function searchByName(string $input): array
     {
         $query = mb_strtolower(trim($input));
@@ -67,7 +79,11 @@ final class BankDirectory
         return $matches;
     }
 
-    /** @return list<array{bankCode: string, bankName: string, bic: string}> */
+        /**
+     * searchByBic
+     * @param string $input Formulardaten
+     * @return list<array{bankCode: string, bankName: string, bic: string}>
+     */
     public static function searchByBic(string $input): array
     {
         $query = strtoupper(trim($input));
@@ -89,11 +105,21 @@ final class BankDirectory
         return $matches;
     }
 
+    /**
+     * normalizeIban
+     * @param string $iban IBAN
+     * @return string
+     */
     public static function normalizeIban(string $iban): string
     {
         return strtoupper(preg_replace('/\s+/', '', $iban) ?? '');
     }
 
+    /**
+     * validateIban
+     * @param string $iban IBAN
+     * @return bool
+     */
     public static function validateIban(string $iban): bool
     {
         $iban = self::normalizeIban($iban);
@@ -122,7 +148,13 @@ final class BankDirectory
         return $remainder === 1;
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * suggestResponse
+     * @param string $field
+     * @param string $value Eingabewert
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     */
     public static function suggestResponse(string $field, string $value): array
     {
         return match ($field) {

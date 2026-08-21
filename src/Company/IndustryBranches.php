@@ -4,8 +4,12 @@ declare(strict_types=1);
 /** Branchen nach WZ 2008 (Finanzamt) und Berufsgenossenschaften. */
 final class IndustryBranches
 {
-    /** @return array<string, array<string, array{label: string, wz: string, bg: string}>> */
-    public static function groups(): array
+    /**
+     * Liefert Branchengruppen.
+     *
+     * @return array<string, array<string, array{label: string, wz: string, bg: string}>>
+     */
+        public static function groups(): array
     {
         return [
             'Land- und Forstwirtschaft, Fischerei' => [
@@ -47,8 +51,12 @@ final class IndustryBranches
         ];
     }
 
-    /** @return array<string, string> */
-    public static function industryUvMap(): array
+    /**
+     * Liefert Branchen-zu-UV-Träger-Zuordnung.
+     *
+     * @return array<string, string>
+     */
+        public static function industryUvMap(): array
     {
         $map = [];
         foreach (self::groups() as $items) {

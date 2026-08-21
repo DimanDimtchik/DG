@@ -1,8 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Chart Account Api.
+ */
 final class ChartAccountApi
 {
+    /**
+     * HTTP-API-Einstieg
+     * @return void
+     */
     public static function handle(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -78,6 +85,10 @@ final class ChartAccountApi
         }
     }
 
+    /**
+     * Verarbeitet POST-Anfragen
+     * @return void
+     */
     private static function handlePost(): void
     {
         $payload = self::readJsonPayload();
@@ -127,8 +138,12 @@ final class ChartAccountApi
         }
     }
 
-    /** @return array<string, mixed> */
-    private static function readJsonPayload(): array
+    /**
+     * readJsonPayload.
+     *
+     * @return array<string, mixed>
+     */
+        private static function readJsonPayload(): array
     {
         $raw = file_get_contents('php://input');
         if (!is_string($raw) || trim($raw) === '') {
@@ -140,7 +155,11 @@ final class ChartAccountApi
         return is_array($decoded) ? $decoded : $_POST;
     }
 
-    /** @param array<string, mixed> $account */
+        /**
+     * Reduziert Kontodaten für die API-Antwort
+     * @param array $account Kontonummer
+     * @return array
+     */
     private static function publicAccount(array $account): array
     {
         $hints = is_array($account['hints'] ?? null) ? $account['hints'] : [];

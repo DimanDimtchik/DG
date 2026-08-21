@@ -7,7 +7,10 @@ final class CalendarArticleCatalog
     public const KIND_SERVICE = 'service';
     public const KIND_PRODUCT = 'product';
 
-    /** @return array<string, string> */
+    /**
+     * Methode kinds.
+     * @return array<string, mixed>
+     */
     public static function kinds(): array
     {
         return [
@@ -16,6 +19,11 @@ final class CalendarArticleCatalog
         ];
     }
 
+    /**
+     * Führt aus: normalize kind.
+     * @param string $value
+     * @return string
+     */
     public static function normalizeKind(string $value): string
     {
         $value = strtolower(trim($value));
@@ -26,11 +34,21 @@ final class CalendarArticleCatalog
         return self::KIND_SERVICE;
     }
 
+    /**
+     * Methode number range type.
+     * @param string $kind
+     * @return string
+     */
     public static function numberRangeType(string $kind): string
     {
         return self::normalizeKind($kind) === self::KIND_PRODUCT ? 'article' : 'service';
     }
 
+    /**
+     * Methode kind label.
+     * @param string $kind
+     * @return string
+     */
     public static function kindLabel(string $kind): string
     {
         return self::kinds()[self::normalizeKind($kind)] ?? 'Leistung';

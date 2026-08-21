@@ -8,6 +8,11 @@ final class ChartAccountNameRepair
 {
     public const VERSION = '2026-07-06-artifacts';
 
+    /**
+     * repair
+     * @param string $name Name
+     * @return string
+     */
     public static function repair(string $name): string
     {
         $name = str_replace("\u{00AD}", '', $name);

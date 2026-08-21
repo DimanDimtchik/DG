@@ -4,6 +4,11 @@ declare(strict_types=1);
 /** Normalisiert Paragraphen- und Reverse-Charge-Suchbegriffe (Lexoffice: „§13“, „13b“, „Reverse Charge“). */
 final class ChartAccountSearchNormalizer
 {
+  /**
+   * normalizeLegal
+   * @param string $text
+   * @return string
+   */
   public static function normalizeLegal(string $text): string
   {
     $lower = mb_strtolower(trim($text));
@@ -18,6 +23,11 @@ final class ChartAccountSearchNormalizer
     return $lower;
   }
 
+  /**
+   * isReverseChargeQuery
+   * @param string $query
+   * @return bool
+   */
   public static function isReverseChargeQuery(string $query): bool
   {
     $raw = mb_strtolower(trim($query));
@@ -45,6 +55,12 @@ final class ChartAccountSearchNormalizer
     return str_contains($raw, '§') && preg_match('/\b13\b/u', $raw) === 1;
   }
 
+  /**
+   * nameMatchesQuery
+   * @param string $query
+   * @param string $name Name
+   * @return bool
+   */
   public static function nameMatchesQuery(string $query, string $name): bool
   {
     $needle = self::normalizeLegal($query);
@@ -57,7 +73,11 @@ final class ChartAccountSearchNormalizer
     return str_contains($haystack, $needle);
   }
 
-  /** @return list<string> */
+    /**
+   * sqlNamePatterns
+   * @param string $query
+   * @return list<string>
+   */
   public static function sqlNamePatterns(string $query): array
   {
     $patterns = [];

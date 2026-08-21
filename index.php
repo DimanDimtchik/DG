@@ -6,6 +6,28 @@ require __DIR__ . '/bootstrap.php';
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $path = rtrim($path, '/') ?: '/';
 
+if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
+    $previewUser = AuthService::user();
+    if ($previewUser === null || !MenuRegistry::canAccess($previewUser, 'website-seiten')) {
+        header('Location: /login', true, 302);
+        exit;
+    }
+    $previewPage = WebsitePageRepository::findBySlugAnyStatus($previewMatch[1]);
+    if ($previewPage === null) {
+        http_response_code(404);
+        View::render('offline');
+        exit;
+    }
+    View::render('website-public', [
+        'page' => $previewPage,
+        'chrome' => WebsiteSettings::chrome(),
+        'menu' => WebsiteSettings::publicMenu(true),
+        'design' => WebsiteSettings::design(),
+        'previewMode' => true,
+    ]);
+    exit;
+}
+
 switch ($path) {
     case '/':
         if (AuthService::check()) {
@@ -13,8 +35,24 @@ switch ($path) {
             header('Location: ' . ($u ? RoleResolver::homePath($u) : '/app'), true, 302);
             exit;
         }
-        View::render('offline');
-        break;
+        // Show published homepage if available, otherwise redirect to login
+        if (Database::isConfigured()) {
+            if (WebsiteMaintenanceSettings::isActive()) {
+                WebsiteMaintenanceSettings::renderAndExit();
+            }
+            $homepage = WebsitePageRepository::findHomepage();
+            if ($homepage !== null) {
+                View::render('website-public', [
+                    'page' => $homepage,
+                    'chrome' => WebsiteSettings::chrome(),
+                    'menu' => WebsiteSettings::publicMenu(),
+                    'design' => WebsiteSettings::design(),
+                ]);
+                break;
+            }
+        }
+        header('Location: /login', true, 302);
+        exit;
 
     case '/register':
         if (AuthService::check()) {
@@ -36,7 +74,7 @@ switch ($path) {
 
             try {
                 if ($password !== $confirm) {
-                    throw new InvalidArgumentException('PasswÃ¶rter stimmen nicht Ã¼berein.');
+                    throw new InvalidArgumentException('Passwörter stimmen nicht überein.');
                 }
                 $newUser = UserRepository::register($form['username'], $form['email'], $form['display_name'], $password);
                 AuthService::loginUser($newUser);
@@ -65,16 +103,21 @@ switch ($path) {
 
             if ($username === '' || $password === '') {
                 $error = 'Bitte Benutzername und Passwort eingeben.';
-            } elseif (AuthService::attempt($username, $password)) {
-                $loggedIn = UserRepository::findByEmailOrUsername($username);
-                header('Location: ' . ($loggedIn ? RoleResolver::homePath($loggedIn) : '/app'), true, 302);
-                exit;
             } else {
-                $user = UserRepository::findByEmailOrUsername($username);
-                if ($user && !RoleResolver::canAccessCrm($user)) {
-                    $error = 'FÃ¼r dieses Konto ist kein CRM-Zugang freigeschaltet.';
+                $result = AuthService::attempt($username, $password);
+                if ($result === true) {
+                    $loggedIn = UserRepository::findByEmailOrUsername($username);
+                    header('Location: ' . ($loggedIn ? RoleResolver::homePath($loggedIn) : '/app'), true, 302);
+                    exit;
+                } elseif (is_string($result)) {
+                    $error = $result;
                 } else {
-                    $error = 'Anmeldung fehlgeschlagen. Benutzername oder Passwort ist falsch.';
+                    $user = UserRepository::findByEmailOrUsername($username);
+                    if ($user && !RoleResolver::canAccessCrm($user)) {
+                        $error = 'Für dieses Konto ist kein CRM-Zugang freigeschaltet.';
+                    } else {
+                        $error = 'Anmeldung fehlgeschlagen. Benutzername oder Passwort ist falsch.';
+                    }
                 }
             }
         }
@@ -144,9 +187,135 @@ switch ($path) {
         View::render('reset-password', compact('error', 'token', 'tokenValid'));
         break;
 
+    case '/konto-aktivieren':
+        if (AuthService::check()) {
+            $u = AuthService::user();
+            header('Location: ' . ($u ? RoleResolver::homePath($u) : '/app'), true, 302);
+            exit;
+        }
+
+        $error = null;
+        $activateSuccess = false;
+        $token = trim((string) ($_POST['token'] ?? $_GET['token'] ?? ''));
+        $tokenValid = $token !== '' && PasswordResetService::validateToken($token) !== null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                $error = 'Sitzung abgelaufen. Bitte erneut versuchen.';
+            } else {
+                $password = (string) ($_POST['password'] ?? '');
+                $confirm = (string) ($_POST['password_confirm'] ?? '');
+                try {
+                    PasswordResetService::resetPassword($token, $password, $confirm);
+                    Flash::set('success', 'Ihr Konto ist jetzt aktiv. Sie können sich anmelden.');
+                    header('Location: /login', true, 302);
+                    exit;
+                } catch (Throwable $e) {
+                    $error = $e->getMessage();
+                    $tokenValid = PasswordResetService::validateToken($token) !== null;
+                }
+            }
+        }
+
+        $activateMode = true;
+        View::render('activate-account', compact('error', 'token', 'tokenValid', 'activateMode'));
+        break;
+
+    case '/support-zugang':
+        $token = trim((string) ($_GET['token'] ?? $_POST['token'] ?? ''));
+        $error = null;
+        if ($token === '') {
+            $error = 'Kein gültiger Support-Token.';
+            View::render('support-zugang', compact('error'));
+            break;
+        }
+        $grant = SupportAccessService::findActiveByToken($token);
+        if ($grant === null) {
+            $error = 'Support-Freigabe ungültig oder abgelaufen.';
+            View::render('support-zugang', compact('error'));
+            break;
+        }
+        SupportSession::login($grant, $token);
+        header('Location: /app?page=support-zuschauen', true, 302);
+        exit;
+
     case '/logout':
         AuthService::logout();
         header('Location: /', true, 302);
+        exit;
+
+    case '/robots.txt':
+        header('Content-Type: text/plain; charset=utf-8');
+        echo SitemapGenerator::robotsTxt();
+        exit;
+
+    case '/sitemap.xml':
+        header('Content-Type: application/xml; charset=utf-8');
+        echo SitemapGenerator::sitemapXml();
+        exit;
+
+    case '/kontakt-formular':
+        // Legacy endpoint: map to default published form if possible, else old fixed fields.
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !Csrf::verify($_POST['_csrf'] ?? null)) {
+            header('Location: /', true, 302);
+            exit;
+        }
+        if (!empty($_POST['form_id'])) {
+            WebsiteFormSubmitHandler::handle();
+        }
+        // Fall through to legacy handler below if no form_id — keep old contact block working
+        $cfTo = filter_var(trim($_POST['to'] ?? ''), FILTER_VALIDATE_EMAIL);
+        $cfName = trim($_POST['name'] ?? '');
+        $cfEmail = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+        $cfMsg = trim($_POST['message'] ?? '');
+        $cfSubject = trim($_POST['subject'] ?? 'Kontaktanfrage');
+
+        if ($cfTo && $cfEmail && $cfName !== '' && $cfMsg !== '') {
+            $html = '<p><strong>Name:</strong> ' . htmlspecialchars($cfName) . '</p>'
+                . '<p><strong>E-Mail:</strong> ' . htmlspecialchars($cfEmail) . '</p>'
+                . '<p><strong>Nachricht:</strong></p><p>' . nl2br(htmlspecialchars($cfMsg)) . '</p>';
+            try {
+                if (class_exists('MailService') && MailSettings::isConfigured()) {
+                    MailService::send(new MailMessage(to: [$cfTo], subject: $cfSubject . ' von ' . $cfName, htmlBody: $html, replyTo: $cfEmail));
+                } else {
+                    $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nReply-To: $cfEmail\r\nFrom: noreply@" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "\r\n";
+                    @mail($cfTo, $cfSubject . ' von ' . $cfName, $html, $headers);
+                }
+            } catch (Throwable $e) {
+                // Silently fail
+            }
+        }
+        $ref = $_SERVER['HTTP_REFERER'] ?? '/';
+        header('Location: ' . $ref, true, 302);
+        exit;
+
+    case '/formular-senden':
+        WebsiteFormSubmitHandler::handle();
+        exit;
+
+    case '/api/website-form/appointments':
+        WebsiteFormPublicApi::appointments();
+        exit;
+
+    case '/api/support/signal':
+        SupportAccessApi::handleSignal();
+        exit;
+
+    case '/api/kdv/provision':
+        KdvProvisionApi::handle();
+        exit;
+
+    case '/api/kdv/support-grant':
+        SupportAccessApi::handleHubGrant();
+        exit;
+
+    case '/api/kdv/account/login':
+    case '/api/kdv/account/me':
+    case '/api/kdv/account/logout':
+    case '/api/kdv/account/unlock-request':
+    case '/api/kdv/account/password-reset/request':
+    case '/api/kdv/account/password-reset/confirm':
+        KdvAccountApi::handle($path);
         exit;
 
     case '/api/finanzamt-lookup':
@@ -338,6 +507,8 @@ switch ($path) {
         $menuItems = MenuRegistry::modules($user);
         $settingsItem = MenuRegistry::settingsItem($user);
         $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
+        $websiteSection = MenuRegistry::websiteSection($user);
+        $kdvSection = MenuRegistry::kdvSection($user);
         $flash = Flash::pull();
         $canEdit = RoleResolver::canEdit($user);
         $sidebarItems = MenuRegistry::sidebarItems($user);
@@ -1143,7 +1314,18 @@ switch ($path) {
                 $returnTo = trim((string) ($_POST['return_to'] ?? ''));
                 if ($returnTo !== '' && str_starts_with($returnTo, '/app?') && !str_contains($returnTo, '//')) {
                     $separator = str_contains($returnTo, '?') ? '&' : '?';
-                    header('Location: ' . $returnTo . $separator . 'contact_id=' . $newId, true, 302);
+                    $redirectUrl = $returnTo . $separator . 'contact_id=' . $newId;
+                    $savedContact = ContactRepository::findById($newId);
+                    if ($savedContact !== null) {
+                        $contactLabel = trim($savedContact->companyName);
+                        if ($contactLabel === '') {
+                            $contactLabel = trim($savedContact->displayName);
+                        }
+                        if ($contactLabel !== '') {
+                            $redirectUrl .= '&contact_label=' . rawurlencode($contactLabel);
+                        }
+                    }
+                    header('Location: ' . $redirectUrl, true, 302);
                     exit;
                 }
                 header('Location: /app?page=kontakte', true, 302);
@@ -1155,6 +1337,10 @@ switch ($path) {
                 $contactId = $editId ?: null;
                 $form = array_merge(ContactRepository::emptyForm(), $_POST);
                 $formError = $e->getMessage();
+                $kontakteReturnTo = trim((string) ($_POST['return_to'] ?? ''));
+                if ($kontakteReturnTo !== '' && (!str_starts_with($kontakteReturnTo, '/app?') || str_contains($kontakteReturnTo, '//'))) {
+                    $kontakteReturnTo = '';
+                }
                 $bankAccounts = ContactRepository::parseBankAccountsFromPost($_POST);
                 if ($bankAccounts === []) {
                     $bankAccounts = ContactRepository::defaultBankAccounts();
@@ -1184,10 +1370,94 @@ switch ($path) {
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
                     'menuItems', 'settingsItem', 'currentPage', 'settingsNav', 'settingsSelection',
-                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'contactId', 'form', 'formError', 'bankAccounts', 'employeeData', 'employeeFiles', 'showEmployeeFields', 'allowedContactRoles', 'canDeleteContact', 'companyEmployees', 'employerForm', 'companyContactOptions', 'personContactOptions'
+                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'contactId', 'form', 'formError', 'bankAccounts', 'employeeData', 'employeeFiles', 'showEmployeeFields', 'allowedContactRoles', 'canDeleteContact', 'companyEmployees', 'employerForm', 'companyContactOptions', 'personContactOptions', 'kontakteReturnTo'
                 ));
                 break;
             }
+        }
+
+        // GET: Beleg-Datei anzeigen / herunterladen
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && ($_GET['action'] ?? '') === 'beleg-file'
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $fileMeta = VoucherFileStorage::resolveForDownload((int) ($_GET['file'] ?? 0));
+            if ($fileMeta === null) {
+                http_response_code(404);
+                exit('Datei nicht gefunden.');
+            }
+            $inline = ($_GET['disp'] ?? '') !== 'download';
+            $safeName = str_replace(['"', "\r", "\n"], '', $fileMeta['name']);
+            header('Content-Type: ' . $fileMeta['mime']);
+            header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . $safeName . '"');
+            header('Content-Length: ' . (string) filesize($fileMeta['path']));
+            header('X-Content-Type-Options: nosniff');
+            readfile($fileMeta['path']);
+            exit;
+        }
+
+        // POST: Kontakt-Stammdaten aus Beleg-Import ergänzen (nur leere Felder)
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && ($_GET['action'] ?? '') === 'contact-patch'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            header('Content-Type: application/json; charset=utf-8');
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Keine Berechtigung bzw. ungültiges Formular.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            $contactId = (int) ($_POST['contact_id'] ?? 0);
+            if ($contactId < 1) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Kein Kontakt ausgewählt.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            try {
+                $updated = ContactRepository::patchMasterDataIfEmpty($contactId, [
+                    'tax_number' => (string) ($_POST['tax_number'] ?? ''),
+                    'vat_id' => (string) ($_POST['vat_id'] ?? ''),
+                    'commercial_register' => (string) ($_POST['commercial_register'] ?? ''),
+                    'weee_registration' => (string) ($_POST['weee_registration'] ?? ''),
+                    'supplier_customer_number' => (string) ($_POST['supplier_customer_number'] ?? ''),
+                    'website' => (string) ($_POST['website'] ?? ''),
+                    'phone_1' => (string) ($_POST['phone_1'] ?? ''),
+                    'address1_street' => (string) ($_POST['address1_street'] ?? ''),
+                    'address1_postal' => (string) ($_POST['address1_postal'] ?? ''),
+                    'address1_city' => (string) ($_POST['address1_city'] ?? ''),
+                ]);
+                echo json_encode(['success' => true, 'updated' => $updated], JSON_UNESCAPED_UNICODE);
+            } catch (Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            }
+            exit;
+        }
+
+        // POST: Beleg-Datei löschen
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_file_delete'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $fileId = (int) ($_POST['file_id'] ?? 0);
+            $backVoucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                $fileMeta = VoucherFileStorage::resolveForDownload($fileId);
+                if ($fileMeta !== null) {
+                    $backVoucherId = $fileMeta['voucher_id'];
+                    VoucherFileStorage::deleteFile($fileId);
+                    Flash::set('success', 'Datei gelöscht.');
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $backVoucherId, true, 302);
+            exit;
         }
 
         // POST: Beleg speichern
@@ -1208,9 +1478,21 @@ switch ($path) {
                 exit;
             }
             $editId = (int) ($_POST['id'] ?? 0);
+            $draftVoucherId = (int) ($_POST['draft_voucher_id'] ?? 0);
+            if ($editId < 1 && $draftVoucherId > 0) {
+                $editId = $draftVoucherId;
+            }
             try {
                 $newId = VoucherRepository::save($_POST, $editId > 0 ? $editId : null, $user->id);
-                Flash::set('success', 'Beleg gespeichert.');
+                $uploadWarning = '';
+                if (isset($_FILES['voucher_files']) && is_array($_FILES['voucher_files'])) {
+                    try {
+                        VoucherFileStorage::processUploads($newId, $_FILES['voucher_files'], $user->id);
+                    } catch (Throwable $fileError) {
+                        $uploadWarning = ' Hinweis zum Datei-Upload: ' . $fileError->getMessage();
+                    }
+                }
+                Flash::set($uploadWarning === '' ? 'success' : 'warning', 'Beleg gespeichert.' . $uploadWarning);
                 header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $newId, true, 302);
                 exit;
             } catch (Throwable $e) {
@@ -1219,6 +1501,9 @@ switch ($path) {
                 $currentPage = 'buchhaltung-belege';
                 $voucherId = $editId > 0 ? $editId : null;
                 $form = array_merge(VoucherRepository::emptyForm(), $_POST);
+                if ($editId > 0) {
+                    $form['files'] = VoucherFileStorage::listForVoucher($editId);
+                }
                 $formError = $e->getMessage();
                 $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
                 $dbConfig = DatabaseSettings::forForm();
@@ -1238,6 +1523,198 @@ switch ($path) {
                 ));
                 break;
             }
+        }
+
+        $guardWebsitePost = static function () use ($user, $page): void {
+            if (!MenuRegistry::canAccess($user, $page)) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=' . $page, true, 302);
+                exit;
+            }
+            if (!RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung zum Bearbeiten.');
+                header('Location: /app?page=' . $page, true, 302);
+                exit;
+            }
+        };
+
+        // Image upload for website builder → Mediathek (öffentlich über /app/media)
+        if ($page === 'website-seite-form' && $action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_image_upload'])) {
+            $guardWebsitePost();
+            header('Content-Type: application/json; charset=utf-8');
+            try {
+                if (empty($_FILES['file']) || (int) ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                    throw new RuntimeException('Upload fehlgeschlagen.');
+                }
+                MediaRepository::ensureTables();
+                $mediaId = MediaId::generate();
+                $stored = MediaStorage::storeUpload($mediaId, $_FILES['file']);
+                $stored['source_note'] = 'Website-Builder';
+                $stored['title'] = pathinfo((string) ($stored['original_name'] ?? ''), PATHINFO_FILENAME);
+                $stored['alt_text'] = '';
+                MediaRepository::insert($mediaId, $stored, $user->id);
+                echo json_encode([
+                    'url' => MediaStorage::publicUrl($mediaId),
+                    'media_id' => $mediaId,
+                    'alt' => (string) ($stored['alt_text'] ?? ''),
+                ], JSON_UNESCAPED_UNICODE);
+            } catch (Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            }
+            exit;
+        }
+
+        if ($page === 'website-seite-form' && $_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['website_page_save']) || isset($_POST['website_page_delete']))) {
+            $guardWebsitePost();
+            $editId = (int) ($_POST['id'] ?? 0);
+            try {
+                if (isset($_POST['website_page_delete']) && $editId > 0) {
+                    WebsitePageRepository::delete($editId);
+                    Flash::set('success', 'Seite gelöscht.');
+                    header('Location: /app?page=website-seiten', true, 302);
+                    exit;
+                }
+                $newId = WebsitePageRepository::save($_POST, $editId > 0 ? $editId : null, $user->id);
+                Flash::set('success', 'Seite gespeichert.');
+                header('Location: /app?page=website-seite-form&action=edit&id=' . $newId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $contentTemplate = 'modules/website-seite-form';
+                $title = $editId > 0 ? 'Seite bearbeiten' : 'Neue Seite';
+                $currentPage = 'website-seite-form';
+                $websitePageId = $editId > 0 ? $editId : null;
+                $form = [
+                    'title' => (string) ($_POST['title'] ?? ''),
+                    'slug' => (string) ($_POST['slug'] ?? ''),
+                    'status' => (string) ($_POST['status'] ?? 'draft'),
+                    'layout' => json_decode((string) ($_POST['layout'] ?? ''), true) ?: WebsitePageRepository::emptyLayout(),
+                ];
+                $formError = $e->getMessage();
+                $websiteFormOptions = WebsiteFormRepository::listPublishedOptions();
+            }
+        }
+
+        if ($page === 'website-seiten' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_maintenance_save'])) {
+            $guardWebsitePost();
+            try {
+                $upload = null;
+                if (!empty($_FILES['maintenance_image']) && is_array($_FILES['maintenance_image'])) {
+                    $upload = $_FILES['maintenance_image'];
+                }
+                WebsiteMaintenanceSettings::save($_POST, $upload, $user->id);
+                Flash::set('success', 'Wartungsmodus gespeichert.');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=website-seiten', true, 302);
+            exit;
+        }
+
+        if ($page === 'support-freigabe' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::isAdmin($user) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=support-freigabe', true, 302);
+                exit;
+            }
+            try {
+                if (isset($_POST['support_access_stop'])) {
+                    SupportAccessService::stop($user->id, 'manual');
+                    Flash::set('success', 'Support-Freigabe beendet.');
+                } elseif (isset($_POST['support_access_start'])) {
+                    $hours = (int) ($_POST['duration_hours'] ?? SupportAccessService::DEFAULT_HOURS);
+                    $screen = !empty($_POST['screen_share']);
+                    $started = SupportAccessService::start($hours, $user->id, $screen);
+                    Flash::set('success', 'Support-Freigabe gestartet (' . $hours . ' Std.).');
+                    $supportTokenOnce = $started['token'];
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            if (!isset($supportTokenOnce)) {
+                header('Location: /app?page=support-freigabe', true, 302);
+                exit;
+            }
+        }
+
+        if ($page === 'website-menu' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_menu_save'])) {
+            $guardWebsitePost();
+            try {
+                WebsiteSettings::saveMenu($_POST);
+                Flash::set('success', 'Menü gespeichert.');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=website-menu', true, 302);
+            exit;
+        }
+
+        if ($page === 'website-chrome' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_chrome_save'])) {
+            $guardWebsitePost();
+            try {
+                WebsiteSettings::saveChrome($_POST);
+                Flash::set('success', 'Kopf und Fuß gespeichert.');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=website-chrome', true, 302);
+            exit;
+        }
+
+        if ($page === 'website-formular-form' && $_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['website_form_save']) || isset($_POST['website_form_delete']))) {
+            $guardWebsitePost();
+            $editFormId = (int) ($_POST['id'] ?? 0);
+            try {
+                if (isset($_POST['website_form_delete']) && $editFormId > 0) {
+                    WebsiteFormRepository::delete($editFormId);
+                    Flash::set('success', 'Formular gelöscht.');
+                    header('Location: /app?page=website-formulare', true, 302);
+                    exit;
+                }
+                $newFormId = WebsiteFormRepository::save($_POST, $editFormId > 0 ? $editFormId : null, $user->id);
+                Flash::set('success', 'Formular gespeichert.');
+                header('Location: /app?page=website-formular-form&action=edit&id=' . $newFormId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $contentTemplate = 'modules/website-formular-form';
+                $title = $editFormId > 0 ? 'Formular bearbeiten' : 'Neues Formular';
+                $currentPage = 'website-formular-form';
+                $websiteFormId = $editFormId > 0 ? $editFormId : null;
+                $form = [
+                    'title' => (string) ($_POST['title'] ?? ''),
+                    'status' => (string) ($_POST['status'] ?? 'draft'),
+                    'definition' => json_decode((string) ($_POST['definition'] ?? ''), true) ?: WebsiteFormRepository::emptyDefinition(),
+                ];
+                $formError = $e->getMessage();
+            }
+        }
+
+        if ($page === 'website-formular-inbox' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_form_submission_delete'])) {
+            $guardWebsitePost();
+            $inboxFormId = (int) ($_GET['id'] ?? $_POST['form_id'] ?? 0);
+            $subId = (int) ($_POST['submission_id'] ?? 0);
+            if ($subId > 0) {
+                WebsiteFormSubmissionRepository::delete($subId);
+                Flash::set('success', 'Einsendung gelöscht.');
+            }
+            header('Location: /app?page=website-formular-inbox&id=' . $inboxFormId, true, 302);
+            exit;
+        }
+
+        if ($page === 'website-design' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_design_save'])) {
+            $guardWebsitePost();
+            try {
+                WebsiteSettings::saveDesign($_POST);
+                Flash::set('success', 'Website-Design gespeichert.');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=website-design', true, 302);
+            exit;
         }
 
         // POST: Überweisung aus Beleg vorbereiten
@@ -1534,6 +2011,9 @@ switch ($path) {
                 'page' => $voucherPage,
             ]);
             $voucherYears = VoucherRepository::availableYears();
+            $voucherFileCounts = VoucherFileStorage::countsForVouchers(
+                array_map(static fn (array $v): int => (int) ($v['id'] ?? 0), $voucherList['items'] ?? [])
+            );
             $contentTemplate = 'modules/buchhaltung-belege';
             $title = 'Belege';
             $currentPage = 'buchhaltung-belege';
@@ -1541,6 +2021,28 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-beleg-form' && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')) {
+            $applyBelegContactPrefill = static function (array &$form): void {
+                $prefillContactId = (int) ($_GET['contact_id'] ?? 0);
+                if ($prefillContactId < 1) {
+                    return;
+                }
+                $prefillContact = ContactRepository::findById($prefillContactId);
+                if ($prefillContact === null) {
+                    return;
+                }
+                $label = trim((string) ($_GET['contact_label'] ?? ''));
+                if ($label === '') {
+                    $label = trim($prefillContact->companyName);
+                    if ($label === '') {
+                        $label = trim($prefillContact->displayName);
+                    }
+                }
+                $form['contact_id'] = (string) $prefillContactId;
+                $form['contact_label'] = $label;
+                if (trim((string) ($form['supplier_name'] ?? '')) === '') {
+                    $form['supplier_name'] = $label;
+                }
+            };
             $voucherId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             if ($action === 'new') {
                 if (!$canEdit) {
@@ -1550,22 +2052,9 @@ switch ($path) {
                 $contentTemplate = 'modules/buchhaltung-beleg-form';
                 $title = 'Neuer Beleg';
                 $currentPage = 'buchhaltung-belege';
+                $isDraftVoucher = false;
                 $form = VoucherRepository::emptyForm();
-                $prefillContactId = (int) ($_GET['contact_id'] ?? 0);
-                if ($prefillContactId > 0) {
-                    $prefillContact = ContactRepository::findById($prefillContactId);
-                    if ($prefillContact !== null) {
-                        $label = trim($prefillContact->companyName);
-                        if ($label === '') {
-                            $label = trim($prefillContact->displayName);
-                        }
-                        $form['contact_id'] = (string) $prefillContactId;
-                        $form['contact_label'] = $label;
-                        if (trim($form['supplier_name']) === '') {
-                            $form['supplier_name'] = $label;
-                        }
-                    }
-                }
+                $applyBelegContactPrefill($form);
                 $formError = null;
             } elseif ($action === 'edit' && $voucherId > 0) {
                 $voucher = VoucherRepository::findById($voucherId);
@@ -1574,10 +2063,13 @@ switch ($path) {
                     header('Location: /app?page=buchhaltung-belege', true, 302);
                     exit;
                 }
+                $isDraftVoucher = !empty($voucher['is_draft']);
                 $contentTemplate = 'modules/buchhaltung-beleg-form';
-                $title = $canEdit ? 'Beleg bearbeiten' : 'Beleg anzeigen';
+                $title = $isDraftVoucher ? 'Neuer Beleg' : ($canEdit ? 'Beleg bearbeiten' : 'Beleg anzeigen');
                 $currentPage = 'buchhaltung-belege';
                 $form = VoucherRepository::toForm($voucher);
+                $form['files'] = VoucherFileStorage::listForVoucher($voucherId);
+                $applyBelegContactPrefill($form);
                 $formError = null;
             } else {
                 header('Location: /app?page=buchhaltung-belege', true, 302);
@@ -1638,6 +2130,15 @@ switch ($path) {
             $contentTemplate = 'modules/einstellungen';
             $title = 'Einstellungen';
             $currentPage = 'einstellungen';
+        } elseif ($page === 'sicherheitsprotokoll') {
+            if (!RoleResolver::isAdmin($user)) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            $auditEntries = AuditLog::recent(200);
+            $contentTemplate = 'modules/sicherheitsprotokoll';
+            $title = 'Sicherheitsprotokoll';
+            $currentPage = 'einstellungen';
         } elseif ($page === 'kontakte' && MenuRegistry::canAccess($user, 'kontakte')) {
             $contactId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $contactSearch = trim((string) ($_GET['s'] ?? ''));
@@ -1658,6 +2159,14 @@ switch ($path) {
                 $kontakteReturnTo = trim((string) ($_GET['return_to'] ?? ''));
                 if ($kontakteReturnTo !== '' && (!str_starts_with($kontakteReturnTo, '/app?') || str_contains($kontakteReturnTo, '//'))) {
                     $kontakteReturnTo = '';
+                }
+                $kontakteSupplierNumberPreview = '';
+                if ($kontakteReturnTo !== '' && str_contains($kontakteReturnTo, 'buchhaltung-beleg-form')) {
+                    try {
+                        $kontakteSupplierNumberPreview = NumberRangeSettings::preview('supplier');
+                    } catch (Throwable) {
+                        $kontakteSupplierNumberPreview = '';
+                    }
                 }
                 $formError = null;
                 $bankAccounts = ContactRepository::defaultBankAccounts();
@@ -1733,6 +2242,364 @@ switch ($path) {
                 $title = 'Kontakte';
                 $currentPage = 'kontakte';
             }
+        } elseif (
+            (
+                $page === 'website-seiten'
+                || $page === 'website-seite-form'
+                || $page === 'website-formulare'
+                || $page === 'website-formular-form'
+                || $page === 'website-formular-inbox'
+                || $page === 'website-statistik'
+                || $page === 'website-menu'
+                || $page === 'website-chrome'
+                || $page === 'website-design'
+            )
+            && MenuRegistry::canAccess($user, $page)
+        ) {
+            if ($page === 'website-seiten') {
+                if (Database::isConfigured()) {
+                    WebsiteFormRepository::ensureTables();
+                    $migratedPages = WebsiteFormRepository::migrateLegacyContactBlocksInPages($user->id);
+                    if ($migratedPages > 0) {
+                        Flash::set('success', $migratedPages . ' Seite(n): klassische Kontaktblöcke → Formulare umgestellt.');
+                        header('Location: /app?page=website-seiten', true, 302);
+                        exit;
+                    }
+                }
+                $websitePageList = WebsitePageRepository::list();
+                $websiteMaintenance = WebsiteMaintenanceSettings::config();
+                $contentTemplate = 'modules/website-seiten';
+                $title = 'Seiten';
+                $currentPage = 'website-seiten';
+            } elseif ($page === 'website-seite-form') {
+                if (empty($formError)) {
+                    $websitePageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+                    if ($action === 'edit' && $websitePageId > 0) {
+                        $pageRow = WebsitePageRepository::findById($websitePageId);
+                        if ($pageRow === null) {
+                            Flash::set('error', 'Seite nicht gefunden.');
+                            header('Location: /app?page=website-seiten', true, 302);
+                            exit;
+                        }
+                        $form = $pageRow;
+                        $websiteFormOptions = WebsiteFormRepository::listPublishedOptions();
+                        $contentTemplate = 'modules/website-seite-form';
+                        $title = 'Seite bearbeiten';
+                        $currentPage = 'website-seite-form';
+                    } elseif ($action === 'new') {
+                        $websitePageId = null;
+                        $form = WebsitePageRepository::emptyForm();
+                        $websiteFormOptions = WebsiteFormRepository::listPublishedOptions();
+                        $contentTemplate = 'modules/website-seite-form';
+                        $title = 'Neue Seite';
+                        $currentPage = 'website-seite-form';
+                    } else {
+                        header('Location: /app?page=website-seiten', true, 302);
+                        exit;
+                    }
+                }
+            } elseif ($page === 'website-formulare') {
+                if (Database::isConfigured()) {
+                    WebsiteFormRepository::ensureTables();
+                    $migratedPages = WebsiteFormRepository::migrateLegacyContactBlocksInPages($user->id);
+                    if ($migratedPages > 0) {
+                        Flash::set('success', $migratedPages . ' Seite(n): klassische Kontaktblöcke → Formulare umgestellt.');
+                        header('Location: /app?page=website-formulare', true, 302);
+                        exit;
+                    }
+                }
+                $websiteFormList = WebsiteFormRepository::list();
+                $contentTemplate = 'modules/website-formulare';
+                $title = 'Formulare';
+                $currentPage = 'website-formulare';
+            } elseif ($page === 'website-formular-form') {
+                if (empty($formError)) {
+                    $websiteFormId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+                    if ($action === 'edit' && $websiteFormId > 0) {
+                        $formRow = WebsiteFormRepository::findById($websiteFormId);
+                        if ($formRow === null) {
+                            Flash::set('error', 'Formular nicht gefunden.');
+                            header('Location: /app?page=website-formulare', true, 302);
+                            exit;
+                        }
+                        $form = $formRow;
+                        $contentTemplate = 'modules/website-formular-form';
+                        $title = 'Formular bearbeiten';
+                        $currentPage = 'website-formular-form';
+                    } elseif ($action === 'new') {
+                        $websiteFormId = null;
+                        $form = WebsiteFormRepository::emptyForm();
+                        $contentTemplate = 'modules/website-formular-form';
+                        $title = 'Neues Formular';
+                        $currentPage = 'website-formular-form';
+                    } else {
+                        header('Location: /app?page=website-formulare', true, 302);
+                        exit;
+                    }
+                }
+            } elseif ($page === 'website-formular-inbox') {
+                $websiteFormId = (int) ($_GET['id'] ?? 0);
+                $websiteForm = WebsiteFormRepository::findById($websiteFormId);
+                if ($websiteForm === null) {
+                    Flash::set('error', 'Formular nicht gefunden.');
+                    header('Location: /app?page=website-formulare', true, 302);
+                    exit;
+                }
+                if ($action === 'download') {
+                    $subId = (int) ($_GET['submission'] ?? 0);
+                    $fileName = basename((string) ($_GET['file'] ?? ''));
+                    $sub = WebsiteFormSubmissionRepository::find($subId);
+                    if ($sub === null || (int) $sub['form_id'] !== $websiteFormId || $fileName === '') {
+                        http_response_code(404);
+                        echo 'Datei nicht gefunden.';
+                        exit;
+                    }
+                    $rel = $websiteFormId . '/' . $subId . '/' . $fileName;
+                    $abs = WebsiteFormFileStorage::absolutePath($rel);
+                    $meta = null;
+                    foreach ((array) ($sub['files'] ?? []) as $f) {
+                        if (is_array($f) && (string) ($f['stored_name'] ?? '') === $fileName) {
+                            $meta = $f;
+                            break;
+                        }
+                    }
+                    if ($abs === null || $meta === null) {
+                        http_response_code(404);
+                        echo 'Datei nicht gefunden.';
+                        exit;
+                    }
+                    header('Content-Type: ' . (string) ($meta['mime'] ?? 'application/octet-stream'));
+                    header('Content-Disposition: attachment; filename="' . str_replace('"', '', (string) ($meta['original_name'] ?? $fileName)) . '"');
+                    header('Content-Length: ' . (string) filesize($abs));
+                    readfile($abs);
+                    exit;
+                }
+                $submissionId = (int) ($_GET['submission'] ?? 0);
+                $websiteFormSubmission = null;
+                if ($submissionId > 0) {
+                    $websiteFormSubmission = WebsiteFormSubmissionRepository::find($submissionId);
+                    if ($websiteFormSubmission !== null && (int) $websiteFormSubmission['form_id'] === $websiteFormId) {
+                        WebsiteFormSubmissionRepository::markRead($submissionId, true);
+                    } else {
+                        $websiteFormSubmission = null;
+                    }
+                }
+                $websiteFormSubmissions = WebsiteFormSubmissionRepository::listForForm($websiteFormId);
+                $contentTemplate = 'modules/website-formular-inbox';
+                $title = 'Formulareingänge';
+                $currentPage = 'website-formular-inbox';
+            } elseif ($page === 'website-statistik') {
+                $websiteStatsDays = (int) ($_GET['days'] ?? 30);
+                if (!in_array($websiteStatsDays, [7, 30, 90], true)) {
+                    $websiteStatsDays = 30;
+                }
+                $websiteStatsSummary = ['total' => 0, 'today' => 0, 'days7' => 0, 'days30' => 0];
+                $websiteStatsByDay = [];
+                $websiteStatsTopPaths = [];
+                $websiteStatsTopReferrers = [];
+                $websiteAnalyticsLinks = WebsitePageviewTracker::externalDashboardLinks();
+                if (Database::isConfigured()) {
+                    WebsitePageviewRepository::ensureTables();
+                    $websiteStatsSummary = WebsitePageviewRepository::summary();
+                    $websiteStatsByDay = WebsitePageviewRepository::viewsByDay($websiteStatsDays);
+                    $websiteStatsTopPaths = WebsitePageviewRepository::topPaths($websiteStatsDays);
+                    $websiteStatsTopReferrers = WebsitePageviewRepository::topReferrers($websiteStatsDays);
+                }
+                $contentTemplate = 'modules/website-statistik';
+                $title = 'Statistik';
+                $currentPage = 'website-statistik';
+            } elseif ($page === 'website-menu') {
+                $websiteMenuForm = WebsiteSettings::menu();
+                $websiteMenuSuggestions = WebsitePageRepository::unusedInMenu($websiteMenuForm);
+                $contentTemplate = 'modules/website-menu';
+                $title = 'Menü';
+                $currentPage = 'website-menu';
+            } elseif ($page === 'website-chrome') {
+                $websiteChromeForm = WebsiteSettings::chrome();
+                $contentTemplate = 'modules/website-chrome';
+                $title = 'Kopf & Fuß';
+                $currentPage = 'website-chrome';
+            } else {
+                $websiteDesignForm = WebsiteSettings::design();
+                $contentTemplate = 'modules/website-design';
+                $title = 'Design';
+                $currentPage = 'website-design';
+            }
+        } elseif ($page === 'website-seiten' || $page === 'website-seite-form' || $page === 'website-formulare' || $page === 'website-formular-form' || $page === 'website-formular-inbox' || $page === 'website-statistik' || $page === 'website-menu' || $page === 'website-chrome' || $page === 'website-design') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'support-freigabe' && MenuRegistry::canAccess($user, 'support-freigabe')) {
+            $supportGrant = SupportAccessService::activeGrant();
+            $contentTemplate = 'modules/support-freigabe';
+            $title = 'Support-Freigabe';
+            $currentPage = 'support-freigabe';
+        } elseif ($page === 'support-zuschauen' && MenuRegistry::canAccess($user, 'support-zuschauen')) {
+            $supportGrant = SupportSession::grant();
+            $contentTemplate = 'modules/support-zuschauen';
+            $title = 'Bildschirm zuschauen';
+            $currentPage = 'support-zuschauen';
+        } elseif ($page === 'kdv-dashboard' && MenuRegistry::canAccessKdv($user)) {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && Csrf::verify($_POST['_csrf'] ?? null)) {
+                if (isset($_POST['kdv_generate_api_key'])) {
+                    KdvProvisionApi::generateApiKey();
+                    Flash::set('success', 'Neuer API-Schlüssel wurde generiert.');
+                    header('Location: /app?page=kdv-dashboard', true, 302);
+                    exit;
+                }
+                if (isset($_POST['kdv_save_kas'])) {
+                    $kasL = trim($_POST['kdv_kas_login'] ?? '');
+                    $kasP = trim($_POST['kdv_kas_pass'] ?? '');
+                    if ($kasL !== '') {
+                        KdvConfig::set('kas_login', $kasL);
+                    }
+                    if ($kasP !== '') {
+                        KdvConfig::set('kas_pass', $kasP);
+                    }
+                    Flash::set('success', 'KAS-Zugangsdaten gespeichert.');
+                    header('Location: /app?page=kdv-dashboard', true, 302);
+                    exit;
+                }
+                if (isset($_POST['kdv_save_license_server'])) {
+                    $licUrl = trim((string) ($_POST['kdv_license_server_url'] ?? ''));
+                    $licToken = trim((string) ($_POST['kdv_license_admin_token'] ?? ''));
+                    $supportEmail = trim((string) ($_POST['kdv_support_email'] ?? ''));
+                    $shopPublicUrl = trim((string) ($_POST['kdv_shop_public_url'] ?? ''));
+                    if ($licUrl !== '') {
+                        KdvConfig::set('license_server_url', rtrim($licUrl, '/'));
+                    }
+                    if ($licToken !== '') {
+                        KdvConfig::set('license_admin_token', $licToken);
+                    }
+                    if ($supportEmail !== '') {
+                        KdvConfig::set('support_email', $supportEmail);
+                    }
+                    if ($shopPublicUrl !== '') {
+                        KdvConfig::set('shop_public_url', rtrim($shopPublicUrl, '/'));
+                    }
+                    Flash::set('success', 'Lizenzserver-Einstellungen gespeichert.');
+                    header('Location: /app?page=kdv-dashboard', true, 302);
+                    exit;
+                }
+            }
+            $customers = KdvCustomerRepository::list();
+            $stats = KdvCustomerRepository::stats();
+            $contentTemplate = 'modules/kdv-dashboard';
+            $title = 'KDV – SaaS-Kunden';
+            $currentPage = 'kdv-dashboard';
+        } elseif ($page === 'kdv-support' && MenuRegistry::canAccessKdv($user)) {
+            $kdvSupportSessions = KdvSupportSessionRepository::listActive();
+            $contentTemplate = 'modules/kdv-support';
+            $title = 'Support-Freigaben';
+            $currentPage = 'kdv-support';
+        } elseif ($page === 'kdv-kunden' && MenuRegistry::canAccessKdv($user)) {
+            $formError = null;
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && Csrf::verify($_POST['_csrf'] ?? null)) {
+                $editId = ($action === 'edit' && !empty($_GET['id'])) ? (int) $_GET['id'] : null;
+                $licenseAction = trim((string) ($_POST['kdv_license_action'] ?? ''));
+
+                if ($editId && $licenseAction !== '') {
+                    try {
+                        if ($licenseAction === 'issue') {
+                            $res = KdvLicenseService::issueNew($editId, trim((string) ($_POST['valid_to'] ?? '')) ?: null);
+                            if (!$res['ok']) {
+                                throw new RuntimeException($res['error'] ?? 'Lizenzanlage fehlgeschlagen.');
+                            }
+                            Flash::set('success', 'Neuer Lizenzschlüssel: ' . ($res['license_key'] ?? ''));
+                        } elseif ($licenseAction === 'assign') {
+                            $res = KdvLicenseService::assignExisting($editId, (string) ($_POST['license_key'] ?? ''));
+                            if (!$res['ok']) {
+                                throw new RuntimeException($res['error'] ?? 'Zuweisung fehlgeschlagen.');
+                            }
+                            Flash::set('success', 'Lizenzschlüssel zugewiesen.');
+                        } elseif ($licenseAction === 'suspend') {
+                            $res = KdvLicenseService::suspend(
+                                $editId,
+                                (string) ($_POST['block_reason'] ?? 'manual'),
+                                trim((string) ($_POST['block_note'] ?? '')) ?: null,
+                                !isset($_POST['skip_license_suspend'])
+                            );
+                            if (!$res['ok']) {
+                                throw new RuntimeException($res['error'] ?? 'Sperre fehlgeschlagen.');
+                            }
+                            Flash::set('success', 'SaaS-Kunde und Lizenz gesperrt.');
+                        } elseif ($licenseAction === 'unsuspend') {
+                            $res = KdvLicenseService::unsuspend($editId, !isset($_POST['skip_license_activate']));
+                            if (!$res['ok']) {
+                                throw new RuntimeException($res['error'] ?? 'Entsperrung fehlgeschlagen.');
+                            }
+                            Flash::set('success', 'SaaS-Kunde und Lizenz entsperrt.');
+                        } else {
+                            throw new InvalidArgumentException('Unbekannte Lizenz-Aktion.');
+                        }
+                        header('Location: /app?page=kdv-kunden&action=edit&id=' . $editId, true, 302);
+                        exit;
+                    } catch (Throwable $e) {
+                        $formError = $e->getMessage();
+                    }
+                } else {
+                    try {
+                        KdvCustomerRepository::save($_POST, $editId);
+                        Flash::set('success', $editId ? 'SaaS-Kunde aktualisiert.' : 'SaaS-Kunde angelegt.');
+                        header('Location: /app?page=kdv-kunden', true, 302);
+                        exit;
+                    } catch (Throwable $e) {
+                        $formError = $e->getMessage();
+                    }
+                }
+            }
+
+            if ($action === 'delete' && !empty($_GET['id']) && Csrf::verify($_GET['_csrf'] ?? null)) {
+                KdvCustomerRepository::delete((int) $_GET['id']);
+                Flash::set('success', 'SaaS-Kunde gelöscht.');
+                header('Location: /app?page=kdv-kunden', true, 302);
+                exit;
+            }
+
+            if ($action === 'new' || $action === 'edit') {
+                $customer = ($action === 'edit' && !empty($_GET['id']))
+                    ? KdvCustomerRepository::findById((int) $_GET['id'])
+                    : null;
+                if ($action === 'edit' && $customer === null && empty($formError)) {
+                    Flash::set('error', 'SaaS-Kunde nicht gefunden.');
+                    header('Location: /app?page=kdv-kunden', true, 302);
+                    exit;
+                }
+                $contentTemplate = 'modules/kdv-kunde-form';
+                $title = $action === 'edit' ? 'SaaS-Kunde bearbeiten' : 'Neuer SaaS-Kunde';
+                $currentPage = 'kdv-kunden';
+            } else {
+                $customers = KdvCustomerRepository::list();
+                $contentTemplate = 'modules/kdv-kunden';
+                $title = 'SaaS-Kunden';
+                $currentPage = 'kdv-kunden';
+            }
+        } elseif ($page === 'kdv-provision' && MenuRegistry::canAccessKdv($user)) {
+            $provisionId = (int) ($_GET['id'] ?? 0);
+            $customer = KdvCustomerRepository::findById($provisionId);
+            $result = null;
+
+            if ($customer === null) {
+                Flash::set('error', 'SaaS-Kunde nicht gefunden.');
+                header('Location: /app?page=kdv-kunden', true, 302);
+                exit;
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && Csrf::verify($_POST['_csrf'] ?? null)) {
+                $result = KdvDeployService::provision([
+                    'customer_id'   => (int) ($customer['id'] ?? 0),
+                    'kas_login'     => trim($_POST['kas_login'] ?? ''),
+                    'kas_pass'      => trim($_POST['kas_pass'] ?? ''),
+                    'domain'        => $customer['domain'],
+                    'company_name'  => $customer['company_name'],
+                    'contact_email' => $customer['contact_email'] ?? '',
+                    'contact_name'  => $customer['contact_name'] ?? '',
+                ]);
+            }
+
+            $contentTemplate = 'modules/kdv-provision';
+            $title = 'CRM bereitstellen';
+            $currentPage = 'kdv-kunden';
         } elseif ($page === 'bilder' && RoleResolver::isAdmin($user)) {
             MediaRepository::ensureTables();
             $mediaId = trim((string) ($_GET['id'] ?? ''));
@@ -2073,6 +2940,14 @@ switch ($path) {
         $postImapLive = $postImapLive ?? false;
         $postImapAsync = $postImapAsync ?? false;
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
+        $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
+        $kdvSection = $kdvSection ?? MenuRegistry::kdvSection($user);
+        $websitePageList = $websitePageList ?? [];
+        $websitePageId = $websitePageId ?? null;
+        $websiteMenuForm = $websiteMenuForm ?? ['items' => [['label' => '', 'url' => '']]];
+        $websiteMenuSuggestions = $websiteMenuSuggestions ?? [];
+        $websiteChromeForm = $websiteChromeForm ?? [];
+        $websiteDesignForm = $websiteDesignForm ?? [];
         $chartOfAccountsConfig = $chartOfAccountsConfig ?? ChartOfAccountsSettings::forForm();
         $chartAccountCount = $chartAccountCount ?? 0;
         $chartCatalogCount = $chartCatalogCount ?? ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
@@ -2082,6 +2957,7 @@ switch ($path) {
         $voucherYear = $voucherYear ?? (int) date('Y');
         $voucherTypeFilter = $voucherTypeFilter ?? '';
         $voucherYears = $voucherYears ?? [(int) date('Y')];
+        $voucherFileCounts = $voucherFileCounts ?? [];
         $voucherList = $voucherList ?? [
             'items' => [],
             'total' => 0,
@@ -2106,6 +2982,15 @@ switch ($path) {
         $fiscalYears = $fiscalYears ?? [];
         $jaYearStatus = $jaYearStatus ?? 'open';
         $isAdmin = $isAdmin ?? RoleResolver::isAdmin($user);
+        $kontakteReturnTo = $kontakteReturnTo ?? '';
+        $kontakteSupplierNumberPreview = $kontakteSupplierNumberPreview ?? '';
+        $isDraftVoucher = $isDraftVoucher ?? false;
+        $websiteStatsSummary = $websiteStatsSummary ?? ['total' => 0, 'today' => 0, 'days7' => 0, 'days30' => 0];
+        $websiteStatsByDay = $websiteStatsByDay ?? [];
+        $websiteStatsTopPaths = $websiteStatsTopPaths ?? [];
+        $websiteStatsTopReferrers = $websiteStatsTopReferrers ?? [];
+        $websiteAnalyticsLinks = $websiteAnalyticsLinks ?? [];
+        $websiteStatsDays = $websiteStatsDays ?? 30;
 
         View::render('layout/app', compact(
             'title',
@@ -2118,6 +3003,7 @@ switch ($path) {
             'menuItems',
             'settingsItem',
             'buchhaltungSection',
+            'websiteSection',
             'currentPage',
             'settingsNav',
             'settingsSelection',
@@ -2176,6 +3062,7 @@ switch ($path) {
             'voucherYear',
             'voucherTypeFilter',
             'voucherYears',
+            'voucherFileCounts',
             'voucherId',
             'transfersPrepared',
             'transfersExecuted',
@@ -2225,6 +3112,31 @@ switch ($path) {
             'employerLink',
             'companyContactOptions',
             'personContactOptions',
+            'kontakteReturnTo',
+            'kontakteSupplierNumberPreview',
+            'isDraftVoucher',
+            'websitePageList',
+            'websiteMaintenance',
+            'supportGrant',
+            'supportTokenOnce',
+            'kdvSupportSessions',
+            'websitePageId',
+            'websiteFormList',
+            'websiteFormId',
+            'websiteForm',
+            'websiteFormSubmissions',
+            'websiteFormSubmission',
+            'websiteFormOptions',
+            'websiteMenuForm',
+            'websiteMenuSuggestions',
+            'websiteChromeForm',
+            'websiteDesignForm',
+            'websiteStatsSummary',
+            'websiteStatsByDay',
+            'websiteStatsTopPaths',
+            'websiteStatsTopReferrers',
+            'websiteAnalyticsLinks',
+            'websiteStatsDays',
             'bookingId',
             'booking',
             'bookingArticleOptions',
@@ -2236,11 +3148,46 @@ switch ($path) {
         break;
 
     default:
-        http_response_code(404);
-        if (AuthService::check()) {
-            header('Location: /app', true, 302);
+        // Public website pages: try to match slug
+        $slug = ltrim($path, '/');
+
+        if (
+            Database::isConfigured()
+            && WebsiteMaintenanceSettings::isActive()
+            && !AuthService::check()
+            && $slug !== ''
+            && !str_starts_with($slug, 'api/')
+            && !str_starts_with($slug, 'assets/')
+            && !str_starts_with($slug, 'app/media')
+            && $slug !== 'support-zugang'
+        ) {
+            WebsiteMaintenanceSettings::renderAndExit();
+        }
+
+        $publicPage = ($slug !== '' && Database::isConfigured()) ? WebsitePageRepository::findBySlug($slug) : null;
+
+        // Homepage: '/' for non-authenticated users → show startseite if published
+        if ($publicPage === null && $path === '/' && !AuthService::check() && Database::isConfigured()) {
+            $publicPage = WebsitePageRepository::findHomepage();
+        }
+
+        if ($publicPage !== null) {
+            $chrome = WebsiteSettings::chrome();
+            $menu = WebsiteSettings::publicMenu();
+            $design = WebsiteSettings::design();
+            View::render('website-public', [
+                'page' => $publicPage,
+                'chrome' => $chrome,
+                'menu' => $menu,
+                'design' => $design,
+            ]);
         } else {
-            View::render('offline');
+            http_response_code(404);
+            if (AuthService::check()) {
+                header('Location: /app', true, 302);
+            } else {
+                View::render('offline');
+            }
         }
         break;
 }

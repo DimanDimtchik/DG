@@ -86,12 +86,13 @@ $baseUrl = '/app?page=buchhaltung-belege';
           <th class="dg-table__num">MwSt.</th>
           <th>Konto</th>
           <th>Zahlung</th>
+          <th class="dg-buchhaltung-belege__file-col" title="Belegdatei"><span class="dg-visually-hidden">Datei</span></th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <?php if ($list['items'] === []) : ?>
-          <tr><td colspan="10" class="dg-table__empty">Keine Belege gefunden.</td></tr>
+          <tr><td colspan="11" class="dg-table__empty">Keine Belege gefunden.</td></tr>
         <?php else : ?>
           <?php foreach ($list['items'] as $voucher) : ?>
             <tr>
@@ -123,6 +124,17 @@ $baseUrl = '/app?page=buchhaltung-belege';
                 <span class="dg-badge <?= View::escape((string) ($voucher['payment_badge_class'] ?? 'dg-badge--muted')) ?>">
                   <?= View::escape((string) ($voucher['payment_label'] ?? '')) ?>
                 </span>
+              </td>
+              <td class="dg-buchhaltung-belege__file-col">
+                <?php $fileCount = (int) (($voucherFileCounts ?? [])[(int) ($voucher['id'] ?? 0)] ?? 0); ?>
+                <?php if ($fileCount > 0) : ?>
+                  <a class="dg-file-badge" href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $voucher['id'] ?>" title="<?= $fileCount ?> Datei(en) angehängt">
+                    <?php View::render('partials/icon', ['name' => 'paperclip']); ?>
+                    <?php if ($fileCount > 1) : ?><span class="dg-file-badge__count"><?= $fileCount ?></span><?php endif; ?>
+                  </a>
+                <?php else : ?>
+                  <span class="dg-muted">—</span>
+                <?php endif; ?>
               </td>
               <td class="dg-table__actions">
                 <?php if ($canEdit) : ?>

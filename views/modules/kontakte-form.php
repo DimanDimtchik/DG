@@ -26,8 +26,14 @@ if ($isCompanyForm && $companyEmployees === []) {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <?php
-        $kontakteBackHref = $isEdit ? '/app?page=kontakte&action=view&id=' . (int) $contactId : '/app?page=kontakte';
-        $kontakteBackLabel = $isEdit ? 'Zurück zum Kontakt' : 'Zurück zur Liste';
+        $kontakteReturnTo = trim((string) ($kontakteReturnTo ?? ''));
+        if ($kontakteReturnTo !== '' && str_contains($kontakteReturnTo, 'buchhaltung-beleg-form')) {
+            $kontakteBackHref = $kontakteReturnTo;
+            $kontakteBackLabel = 'Zurück zur Belegerfassung';
+        } else {
+            $kontakteBackHref = $isEdit ? '/app?page=kontakte&action=view&id=' . (int) $contactId : '/app?page=kontakte';
+            $kontakteBackLabel = $isEdit ? 'Zurück zum Kontakt' : 'Zurück zur Liste';
+        }
         View::partial('partials/back-nav', [
             'href' => $kontakteBackHref,
             'label' => $kontakteBackLabel,
@@ -128,15 +134,35 @@ if ($isCompanyForm && $companyEmployees === []) {
 
     <h2>Kunde / Lieferant</h2>
     <div class="dg-form-grid" data-customer-section>
-      <label class="dg-field"><span>Kundennummer</span><input name="customer_number" value="<?= View::escape($form['customer_number']) ?>"></label>
-      <label class="dg-field"><span>Lieferantennummer</span><input name="supplier_number" value="<?= View::escape($form['supplier_number']) ?>"></label>
+      <label class="dg-field"><span>Kundennummer</span><input name="customer_number" value="<?= View::escape($form['customer_number']) ?>" placeholder="intern, Nummernkreis"></label>
+      <label class="dg-field"><span>Lieferantennummer</span><input name="supplier_number" value="<?= View::escape($form['supplier_number']) ?>" placeholder="intern, Nummernkreis"></label>
+      <label class="dg-field dg-field--wide" data-supplier-customer-number>
+        <span>Kundennummer beim Lieferanten</span>
+        <input name="supplier_customer_number" value="<?= View::escape($form['supplier_customer_number'] ?? '') ?>" placeholder="Ihre Kontonummer beim Lieferanten (z. B. von Rechnungen)">
+      </label>
       <label class="dg-field"><span>Steuernummer</span><input name="tax_number" value="<?= View::escape($form['tax_number']) ?>"></label>
       <label class="dg-field"><span>USt-IdNr.</span><input name="vat_id" value="<?= View::escape($form['vat_id']) ?>"></label>
+      <label class="dg-field"><span>Handelsregister</span><input name="commercial_register" value="<?= View::escape($form['commercial_register'] ?? '') ?>" placeholder="z. B. Amtsgericht Stuttgart HRA 590261"></label>
+      <label class="dg-field"><span>WEEE-Registrierungsnr.</span><input name="weee_registration" value="<?= View::escape($form['weee_registration'] ?? '') ?>" placeholder="z. B. DE 69804700"></label>
     </div>
 
     <h2>Kommunikation</h2>
     <div class="dg-form-grid">
-      <label class="dg-field"><span>E-Mail</span><input type="email" name="email" value="<?= View::escape($form['email']) ?>"></label>
+      <label class="dg-field"><span>E-Mail</span><input type="email" name="email" value="<?= View::escape($form['email']) ?>">
+        <?php if (trim((string) ($form['email_existence_status'] ?? '')) !== '' && ($form['email_existence_status'] ?? '') !== 'unknown') : ?>
+          <small class="dg-field-hint">
+            DNS-Prüfung: <?= View::escape((string) $form['email_existence_status']) ?>
+            <?php if (trim((string) ($form['email_existence_detail'] ?? '')) !== '') : ?>
+              – <?= View::escape((string) $form['email_existence_detail']) ?>
+            <?php endif; ?>
+            <?php if (trim((string) ($form['email_existence_checked_at'] ?? '')) !== '') : ?>
+              (<?= View::escape((string) $form['email_existence_checked_at']) ?>)
+            <?php endif; ?>
+          </small>
+        <?php else : ?>
+          <small class="dg-field-hint">Bei Kunden wird die Domain per DNS (MX/A) geprüft und das Ergebnis gespeichert (erneut nach 90 Tagen oder bei E-Mail-Änderung).</small>
+        <?php endif; ?>
+      </label>
       <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" value="<?= View::escape($form['email_2']) ?>"></label>
       <label class="dg-field"><span>Telefon 1</span><input name="phone_1" value="<?= View::escape($form['phone_1']) ?>"></label>
       <label class="dg-field"><span>Telefon 2</span><input name="phone_2" value="<?= View::escape($form['phone_2']) ?>"></label>

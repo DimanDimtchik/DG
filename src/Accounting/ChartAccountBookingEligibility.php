@@ -57,6 +57,12 @@ final class ChartAccountBookingEligibility
     'statistisches konto',
   ];
 
+  /**
+   * isPotentiallySearchableNumber
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @return bool
+   */
   public static function isPotentiallySearchableNumber(string $skrType, string $accountNumber): bool
   {
     $number = str_pad(preg_replace('/\D/', '', $accountNumber) ?? '', 4, '0', STR_PAD_LEFT);
@@ -77,6 +83,14 @@ final class ChartAccountBookingEligibility
     return true;
   }
 
+  /**
+   * isSearchable
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @param string $name Name
+   * @param string $section Kontenabschnitt
+   * @return bool
+   */
   public static function isSearchable(
     string $skrType,
     string $accountNumber,
@@ -121,7 +135,11 @@ final class ChartAccountBookingEligibility
     };
   }
 
-  /** @return list<string> */
+    /**
+   * allowedSectionsForVoucherType
+   * @param string $voucherType Belegtyp
+   * @return list<string>
+   */
   public static function allowedSectionsForVoucherType(string $voucherType): array
   {
     $type = strtolower(trim($voucherType));
@@ -136,6 +154,15 @@ final class ChartAccountBookingEligibility
     };
   }
 
+  /**
+   * isSearchableForVoucherType
+   * @param string $voucherType Belegtyp
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @param string $name Name
+   * @param string $section Kontenabschnitt
+   * @return bool
+   */
   public static function isSearchableForVoucherType(
     string $voucherType,
     string $skrType,
@@ -150,7 +177,12 @@ final class ChartAccountBookingEligibility
     return in_array($section, self::allowedSectionsForVoucherType($voucherType), true);
   }
 
-  /** @param array<string, mixed> $row */
+    /**
+   * isSearchableRowForVoucherType
+   * @param array $row Datenbankzeile
+   * @param string $voucherType Belegtyp
+   * @return bool
+   */
   public static function isSearchableRowForVoucherType(array $row, string $voucherType): bool
   {
     if (trim($voucherType) === '') {
@@ -179,6 +211,11 @@ final class ChartAccountBookingEligibility
     return true;
   }
 
+  /**
+   * sanitizeVoucherTypeForFilter
+   * @param string $voucherType Belegtyp
+   * @return string
+   */
   private static function sanitizeVoucherTypeForFilter(string $voucherType): string
   {
     $type = strtolower(trim($voucherType));
@@ -191,6 +228,12 @@ final class ChartAccountBookingEligibility
       : 'expense';
   }
 
+  /**
+   * matchesVoucherTaxRate
+   * @param string $accountName
+   * @param int $taxRate Steuersatz in Prozent
+   * @return bool
+   */
   public static function matchesVoucherTaxRate(string $accountName, int $taxRate): bool
   {
     $markers = self::taxMarkersFromAccountName($accountName);
@@ -203,6 +246,11 @@ final class ChartAccountBookingEligibility
     };
   }
 
+  /**
+   * inferTaxRateFromAccountName
+   * @param string $accountName
+   * @return ?int
+   */
   public static function inferTaxRateFromAccountName(string $accountName): ?int
   {
     $markers = self::taxMarkersFromAccountName($accountName);
@@ -219,7 +267,11 @@ final class ChartAccountBookingEligibility
     return null;
   }
 
-  /** @return array{has19: bool, has7: bool, has0: bool, isTaxFree: bool} */
+    /**
+   * taxMarkersFromAccountName
+   * @param string $accountName
+   * @return array{has19: bool, has7: bool, has0: bool, isTaxFree: bool}
+   */
   private static function taxMarkersFromAccountName(string $accountName): array
   {
     $name = mb_strtolower(trim($accountName));
@@ -232,7 +284,11 @@ final class ChartAccountBookingEligibility
     ];
   }
 
-  /** @param array<string, mixed> $row */
+    /**
+   * isSearchableRow
+   * @param array $row Datenbankzeile
+   * @return bool
+   */
   public static function isSearchableRow(array $row): bool
   {
     return self::isSearchable(

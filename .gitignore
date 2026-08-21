@@ -9,6 +9,7 @@ bin/pw-cookies.txt
 bin/pw-*.html
 bin/_forgot.html
 bin/search-results.txt
+bin/*.zip
 node_modules/
 dist/
 build/
@@ -22,3 +23,10 @@ config/cron.local.php
 config/mail.local.php
 config/company.local.php
 config/kas.local.php
+config/license.php
+config/app.local.php
+license-server/config.php
+backup-*/
+tmp-*
+docs/Kontur-Cosmetics-Zugangsdaten.html
+docs/Kontur-Cosmetics-Zugangsdaten.pdf

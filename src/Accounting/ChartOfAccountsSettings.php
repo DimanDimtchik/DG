@@ -6,8 +6,12 @@ final class ChartOfAccountsSettings
 {
     public const STORE_KEY = 'chart_of_accounts';
 
-    /** @return array{skr_type: string, account_digits: int} */
-    public static function defaults(): array
+    /**
+     * defaults.
+     *
+     * @return array{skr_type: string, account_digits: int}
+     */
+        public static function defaults(): array
     {
         return [
             'skr_type' => 'skr03',
@@ -15,8 +19,12 @@ final class ChartOfAccountsSettings
         ];
     }
 
-    /** @return array{skr_type: string, account_digits: int} */
-    public static function forForm(): array
+    /**
+     * forForm.
+     *
+     * @return array{skr_type: string, account_digits: int}
+     */
+        public static function forForm(): array
     {
         $stored = SettingsStore::get(self::STORE_KEY, self::defaults());
 
@@ -26,17 +34,29 @@ final class ChartOfAccountsSettings
         ];
     }
 
+    /**
+     * activeSkrType
+     * @return string
+     */
     public static function activeSkrType(): string
     {
         return self::forForm()['skr_type'];
     }
 
+    /**
+     * accountDigits
+     * @return int
+     */
     public static function accountDigits(): int
     {
         return self::forForm()['account_digits'];
     }
 
-    /** @param array<string, mixed> $input */
+        /**
+     * Speichert Formulardaten
+     * @param array $input Formulardaten
+     * @return void
+     */
     public static function saveFromPost(array $input): void
     {
         $skrType = self::sanitizeSkrType((string) ($input['skr_type'] ?? 'skr03'));
@@ -50,6 +70,11 @@ final class ChartOfAccountsSettings
         ChartAccountRepository::ensureSeeded($skrType);
     }
 
+    /**
+     * sanitizeSkrType
+     * @param string $value Eingabewert
+     * @return string
+     */
     public static function sanitizeSkrType(string $value): string
     {
         $value = strtolower(trim($value));
@@ -57,13 +82,22 @@ final class ChartOfAccountsSettings
         return in_array($value, ['skr03', 'skr04'], true) ? $value : 'skr03';
     }
 
+    /**
+     * sanitizeDigits
+     * @param int $value Eingabewert
+     * @return int
+     */
     public static function sanitizeDigits(int $value): int
     {
         return $value >= 4 && $value <= 8 ? $value : 4;
     }
 
-    /** @return array<string, string> */
-    public static function skrTypeOptions(): array
+    /**
+     * skrTypeOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function skrTypeOptions(): array
     {
         return [
             'skr03' => 'SKR03 (Prozessgliederung)',

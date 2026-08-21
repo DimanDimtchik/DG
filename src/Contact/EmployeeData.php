@@ -1,10 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Employee Data.
+ */
 final class EmployeeData
 {
-    /** @return array<string, string> */
-    public static function empty(): array
+    /**
+     * empty.
+     *
+     * @return array<string, string>
+     */
+        public static function empty(): array
     {
         $data = [];
         foreach (self::fieldKeys() as $key) {
@@ -20,8 +27,12 @@ final class EmployeeData
         return $data;
     }
 
-    /** @return list<string> */
-    public static function systemManagedMetaKeys(): array
+    /**
+     * systemManagedMetaKeys.
+     *
+     * @return list<string>
+     */
+        public static function systemManagedMetaKeys(): array
     {
         return [
             'social_registration_status',
@@ -30,8 +41,12 @@ final class EmployeeData
         ];
     }
 
-    /** @return list<string> */
-    public static function fieldKeys(): array
+    /**
+     * fieldKeys.
+     *
+     * @return list<string>
+     */
+        public static function fieldKeys(): array
     {
         return array_keys(self::fields());
     }
@@ -76,8 +91,12 @@ final class EmployeeData
         ];
     }
 
-    /** @return array<string, string> */
-    public static function sectionLabels(): array
+    /**
+     * sectionLabels.
+     *
+     * @return array<string, string>
+     */
+        public static function sectionLabels(): array
     {
         return [
             'personal' => 'Persönliche Angaben',
@@ -95,8 +114,12 @@ final class EmployeeData
         ];
     }
 
-    /** @return array<string, string> */
-    public static function socialSecurityStatusOptions(): array
+    /**
+     * socialSecurityStatusOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function socialSecurityStatusOptions(): array
     {
         return [
             'pending' => 'Noch nicht vorhanden',
@@ -121,6 +144,11 @@ final class EmployeeData
         ];
     }
 
+    /**
+     * filingOfficeHint
+     * @param string $office
+     * @return string
+     */
     public static function filingOfficeHint(string $office): string
     {
         return match ($office) {
@@ -165,7 +193,12 @@ final class EmployeeData
         ];
     }
 
-    /** @return list<string> */
+        /**
+     * socialSecurityApplicationSteps
+     * @param string $office
+     * @param string $status Statuswert
+     * @return list<string>
+     */
     public static function socialSecurityApplicationSteps(string $office, string $status): array
     {
         if ($status === 'received') {
@@ -188,7 +221,11 @@ final class EmployeeData
         return $steps;
     }
 
-    /** @return array<string, string> */
+        /**
+     * selectOptions
+     * @param string $fieldKey
+     * @return array<string, string>
+     */
     public static function selectOptions(string $fieldKey): array
     {
         return match ($fieldKey) {
@@ -199,8 +236,12 @@ final class EmployeeData
         };
     }
 
-    /** @return array<string, string> */
-    public static function genderOptions(): array
+    /**
+     * genderOptions.
+     *
+     * @return array<string, string>
+     */
+        public static function genderOptions(): array
     {
         return [
             '' => '—',
@@ -211,8 +252,12 @@ final class EmployeeData
         ];
     }
 
-    /** @return array<string, string> */
-    public static function documentTypes(): array
+    /**
+     * documentTypes.
+     *
+     * @return array<string, string>
+     */
+        public static function documentTypes(): array
     {
         return [
             'driver_license' => 'Führerschein',
@@ -223,24 +268,36 @@ final class EmployeeData
         ];
     }
 
-    /** @return array<string, string> */
-    public static function disabilityDocumentTypes(): array
+    /**
+     * disabilityDocumentTypes.
+     *
+     * @return array<string, string>
+     */
+        public static function disabilityDocumentTypes(): array
     {
         return [
             'disability_id_card' => 'Behindertenausweis',
         ];
     }
 
-    /** @return array<string, string> */
-    public static function multiDocumentTypes(): array
+    /**
+     * multiDocumentTypes.
+     *
+     * @return array<string, string>
+     */
+        public static function multiDocumentTypes(): array
     {
         return [
             'medical_certificates' => 'Ärztliche Atteste',
         ];
     }
 
-    /** @return array<string, string> */
-    public static function allDocumentTypes(): array
+    /**
+     * allDocumentTypes.
+     *
+     * @return array<string, string>
+     */
+        public static function allDocumentTypes(): array
     {
         return self::documentTypes() + self::disabilityDocumentTypes() + self::multiDocumentTypes();
     }
@@ -264,6 +321,11 @@ final class EmployeeData
         ];
     }
 
+    /**
+     * formatSupplementaryCodes
+     * @param string $raw Rohdaten
+     * @return string
+     */
     public static function formatSupplementaryCodes(string $raw): string
     {
         $codes = self::parseSupplementaryCodes($raw);
@@ -281,7 +343,11 @@ final class EmployeeData
         return implode(', ', $parts);
     }
 
-    /** @return list<string> */
+        /**
+     * parseSupplementaryCodes
+     * @param string $raw Rohdaten
+     * @return list<string>
+     */
     public static function parseSupplementaryCodes(string $raw): array
     {
         $raw = trim($raw);
@@ -308,7 +374,11 @@ final class EmployeeData
         return array_values(array_unique($out));
     }
 
-    /** @param array<string, mixed> $data */
+        /**
+     * fromPost
+     * @param array $data
+     * @return array
+     */
     public static function fromPost(array $data): array
     {
         $raw = $data['employee'] ?? [];
@@ -319,7 +389,11 @@ final class EmployeeData
         return self::sanitize($raw);
     }
 
-    /** @param array<string, mixed> $raw */
+        /**
+     * Bereinigt und validiert den Eingabewert
+     * @param array $raw Rohdaten
+     * @return array
+     */
     public static function sanitize(array $raw): array
     {
         $out = self::empty();
@@ -388,6 +462,11 @@ final class EmployeeData
         return $current;
     }
 
+    /**
+     * computeRetentionUntil
+     * @param string $exitDate
+     * @return string
+     */
     public static function computeRetentionUntil(string $exitDate): string
     {
         $exitDate = trim($exitDate);
@@ -401,7 +480,11 @@ final class EmployeeData
         }
     }
 
-    /** @param array<string, string> $data */
+        /**
+     * retentionUntil
+     * @param array $data
+     * @return ?string
+     */
     public static function retentionUntil(array $data): ?string
     {
         $stored = trim($data['retention_until'] ?? '');
@@ -514,8 +597,12 @@ final class EmployeeData
         return $fields;
     }
 
-    /** @return list<string> */
-    public static function storedMetaKeys(): array
+    /**
+     * storedMetaKeys.
+     *
+     * @return list<string>
+     */
+        public static function storedMetaKeys(): array
     {
         return array_merge(['retention_until'], self::systemManagedMetaKeys());
     }

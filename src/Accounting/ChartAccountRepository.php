@@ -1,11 +1,19 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Chart Account Repository.
+ */
 final class ChartAccountRepository
 {
     /** @var array<string, bool> */
     private static array $seedChecked = [];
 
+    /**
+     * Stellt Standarddaten in der Datenbank sicher
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
+     * @return void
+     */
     public static function ensureSeeded(?string $skrType = null): void
     {
         if (!Database::isConfigured()) {
@@ -26,6 +34,12 @@ final class ChartAccountRepository
         self::$seedChecked[$skrType] = true;
     }
 
+    /**
+     * syncCatalogAccounts
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return void
+     * @throws RuntimeException
+     */
     private static function syncCatalogAccounts(string $skrType): void
     {
         $syncKey = 'chart_catalog_' . $skrType;
@@ -70,6 +84,12 @@ final class ChartAccountRepository
         SettingsStore::set('chart_catalog_sync', $stored);
     }
 
+    /**
+     * syncHintAccounts
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return void
+     * @throws RuntimeException
+     */
     private static function syncHintAccounts(string $skrType): void
     {
         $pdo = Database::pdo();
@@ -99,6 +119,11 @@ final class ChartAccountRepository
         }
     }
 
+    /**
+     * syncGeneratedHints
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @return void
+     */
     private static function syncGeneratedHints(string $skrType): void
     {
         $version = ChartAccountHintBuilder::generatorVersion();
@@ -170,6 +195,11 @@ final class ChartAccountRepository
         SettingsStore::set('chart_catalog_sync', $stored);
     }
 
+    /**
+     * countWithDetailedHints
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
+     * @return int
+     */
     public static function countWithDetailedHints(?string $skrType = null): int
     {
         if (!Database::isConfigured()) {
@@ -191,6 +221,11 @@ final class ChartAccountRepository
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * countForSkr
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
+     * @return int
+     */
     public static function countForSkr(?string $skrType = null): int
     {
         if (!Database::isConfigured()) {
@@ -206,6 +241,12 @@ final class ChartAccountRepository
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * findByNumber
+     * @param string $number
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
+     * @return ?array
+     */
     public static function findByNumber(string $number, ?string $skrType = null): ?array
     {
         self::ensureSeeded($skrType);
@@ -232,9 +273,14 @@ final class ChartAccountRepository
         return $row ? self::hydrateRow($row) : null;
     }
 
-    /**
-     * @param list<string> $terms
+        /**
+     * updateSearchTerms
+     * @param string $accountNumber Kontonummer
+     * @param array $terms
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
      * @return array<string, mixed>
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     public static function updateSearchTerms(string $accountNumber, array $terms, ?string $skrType = null): array
     {
@@ -296,7 +342,13 @@ final class ChartAccountRepository
         return self::hydrateRow($row);
     }
 
-    /**
+        /**
+     * search
+     * @param string $query
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
+     * @param int $limit
+     * @param string $voucherType Belegtyp
+     * @param int|null $taxRate Steuersatz in Prozent
      * @return list<array<string, mixed>>
      */
     public static function search(string $query, ?string $skrType = null, int $limit = 20, string $voucherType = '', ?int $taxRate = null): array
@@ -349,8 +401,11 @@ final class ChartAccountRepository
         return array_map(self::hydrateRow(...), $rows);
     }
 
-    /**
-     * @param list<array<string, mixed>> $rows
+        /**
+     * filterRowsForVoucherBooking
+     * @param array $rows
+     * @param string $voucherType Belegtyp
+     * @param int|null $taxRate Steuersatz in Prozent
      * @return list<array<string, mixed>>
      */
     private static function filterRowsForVoucherBooking(array $rows, string $voucherType, ?int $taxRate = null): array
@@ -370,7 +425,13 @@ final class ChartAccountRepository
         return $filtered;
     }
 
-    /**
+        /**
+     * searchByText
+     * @param string $query
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param int $limit
+     * @param string $voucherType Belegtyp
+     * @param int|null $taxRate Steuersatz in Prozent
      * @return list<array<string, mixed>>
      */
     private static function searchByText(string $query, string $skrType, int $limit, string $voucherType = '', ?int $taxRate = null): array
@@ -519,7 +580,14 @@ final class ChartAccountRepository
         return $merged;
     }
 
-    /** @param array<string, int> $bookingScores */
+        /**
+     * searchScore
+     * @param string $query
+     * @param array $row Datenbankzeile
+     * @param string|null $skrType Kontenrahmen (skr03/skr04)
+     * @param array $bookingScores
+     * @return ?int
+     */
     private static function searchScore(string $query, array $row, ?string $skrType = null, array $bookingScores = []): ?int
     {
         $needle = mb_strtolower(trim($query));
@@ -563,7 +631,12 @@ final class ChartAccountRepository
         return null;
     }
 
-    /**
+        /**
+     * searchByStoredTerms
+     * @param string $query
+     * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param string $voucherType Belegtyp
+     * @param int|null $taxRate Steuersatz in Prozent
      * @return list<array{score: int, row: array<string, mixed>}>
      */
     private static function searchByStoredTerms(string $query, string $skrType, string $voucherType = '', ?int $taxRate = null): array
@@ -614,12 +687,21 @@ final class ChartAccountRepository
         return $hits;
     }
 
-    /** @return list<string> */
-    public static function sections(): array
+    /**
+     * Liefert Kontenabschnitte.
+     *
+     * @return list<string>
+     */
+        public static function sections(): array
     {
         return ['aktiva', 'passiva', 'aufwand', 'ertrag'];
     }
 
+    /**
+     * sectionLabel
+     * @param string $section Kontenabschnitt
+     * @return string
+     */
     public static function sectionLabel(string $section): string
     {
         return match ($section) {
@@ -631,7 +713,11 @@ final class ChartAccountRepository
         };
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * hydrateRow
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function hydrateRow(array $row): array
     {
         $hints = [];
@@ -662,9 +748,11 @@ final class ChartAccountRepository
         ];
     }
 
-    /**
-     * @param array<int, string> $legend
-     * @param array<string, mixed> $hints
+        /**
+     * digitBreakdown
+     * @param string $accountNumber Kontonummer
+     * @param array $legend
+     * @param array $hints Kontenhinweise
      * @return list<array{digit: int, value: string, meaning: string, detail: string}>
      */
     private static function digitBreakdown(string $accountNumber, array $legend, array $hints): array
@@ -691,6 +779,11 @@ final class ChartAccountRepository
         return $breakdown;
     }
 
+    /**
+     * normalizeAccountNumber
+     * @param string $number
+     * @return string
+     */
     private static function normalizeAccountNumber(string $number): string
     {
         $digits = ChartOfAccountsSettings::accountDigits();

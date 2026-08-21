@@ -6,7 +6,12 @@ final class MailImapCache
 {
     private const HEADER_TTL = 45;
 
-    /** @return list<array<string, mixed>>|null */
+    /**
+     * Methode headers.
+     * @param int $mailboxId
+     * @param string $folderPath
+     * @return array|null
+     */
     public static function headers(int $mailboxId, string $folderPath): ?array
     {
         if ($mailboxId <= 0 || !self::sessionActive()) {
@@ -26,7 +31,13 @@ final class MailImapCache
         return is_array($rows) ? $rows : null;
     }
 
-    /** @param list<array<string, mixed>> $rows */
+    /**
+     * Führt aus: store headers.
+     * @param int $mailboxId
+     * @param string $folderPath
+     * @param array $rows
+     * @return void
+     */
     public static function storeHeaders(int $mailboxId, string $folderPath, array $rows): void
     {
         if ($mailboxId <= 0 || !self::sessionActive()) {
@@ -42,16 +53,30 @@ final class MailImapCache
         ];
     }
 
+    /**
+     * Methode should bypass.
+     * @return bool
+     */
     public static function shouldBypass(): bool
     {
         return !empty($_GET['refresh']);
     }
 
+    /**
+     * Methode header key.
+     * @param int $mailboxId
+     * @param string $folderPath
+     * @return string
+     */
     private static function headerKey(int $mailboxId, string $folderPath): string
     {
         return $mailboxId . '|' . strtolower(trim($folderPath));
     }
 
+    /**
+     * Methode session active.
+     * @return bool
+     */
     private static function sessionActive(): bool
     {
         return isset($_SESSION) && session_status() === PHP_SESSION_ACTIVE;

@@ -14,8 +14,12 @@ final class VoucherTaxKeys
     public const KEY_UST_7 = '2';
     public const KEY_REVERSE_CHARGE = '94';
 
-    /** @return array<string, string> */
-    public static function options(): array
+    /**
+     * Liefert Auswahloptionen.
+     *
+     * @return array<string, string>
+     */
+        public static function options(): array
     {
         return [
             self::KEY_NONE => '— Kein Steuerschlüssel —',
@@ -28,22 +32,43 @@ final class VoucherTaxKeys
         ];
     }
 
+    /**
+     * Liefert die Anzeigebezeichnung
+     * @param string $key Steuerschlüssel
+     * @return string
+     */
     public static function label(string $key): string
     {
         return self::options()[$key] ?? ($key !== '' ? 'Schlüssel ' . $key : '—');
     }
 
-    /** @return list<int> */
-    public static function allowedTaxRates(): array
+    /**
+     * Liefert erlaubte Steuersätze.
+     *
+     * @return list<int>
+     */
+        public static function allowedTaxRates(): array
     {
         return [0, 7, 19];
     }
 
+    /**
+     * Bereinigt und validiert einen Steuersatz.
+     *
+     * @param int $rate Steuersatz in Prozent
+     * @return int
+     */
     public static function sanitizeTaxRate(int $rate): int
     {
         return in_array($rate, self::allowedTaxRates(), true) ? $rate : 19;
     }
 
+    /**
+     * Bereinigt und validiert einen Steuerschlüssel.
+     *
+     * @param string $key Steuerschlüssel
+     * @return string
+     */
     public static function sanitizeTaxKey(string $key): string
     {
         $key = trim($key);
@@ -57,7 +82,13 @@ final class VoucherTaxKeys
         return $key;
     }
 
-    /** Steuerbetrag aus Brutto und Satz berechnen (inklusive MwSt.). */
+    /**
+     * Steuerbetrag aus Brutto und Satz berechnen (inklusive MwSt.).
+     *
+     * @param float $gross Bruttobetrag
+     * @param int $taxRate Steuersatz in Prozent
+     * @return array{gross_amount: float, net_amount: float, tax_amount: float}
+     */
     public static function calcTaxFromGross(float $gross, int $taxRate): array
     {
         $gross = round(max(0, $gross), 2);
@@ -79,14 +110,21 @@ final class VoucherTaxKeys
         ];
     }
 
+    /**
+     * Prüft, ob der Steuerschlüssel Reverse Charge markiert
+     * @param string $taxKey Steuerschlüssel
+     * @return bool
+     */
     public static function isReverseChargeKey(string $taxKey): bool
     {
         return self::sanitizeTaxKey($taxKey) === self::KEY_REVERSE_CHARGE;
     }
 
-    /**
+        /**
      * Zeilenbetrag aus Buchungszeile: normal inkl. USt., bei §13b netto (Rechnungsbetrag ohne USt.).
-     *
+     * @param float $amount Betrag
+     * @param int $taxRate Steuersatz in Prozent
+     * @param bool $reverseCharge Reverse-Charge-Modus
      * @return array{gross_amount: float, net_amount: float, tax_amount: float}
      */
     public static function calcLineAmounts(float $amount, int $taxRate, bool $reverseCharge): array
@@ -105,10 +143,10 @@ final class VoucherTaxKeys
         return self::calcTaxFromGross($amount, $taxRate);
     }
 
-    /**
+        /**
      * MwSt.-Summen je Steuersatz aus Buchungszeilen (Formular-Anzeige).
-     *
-     * @param list<array<string, mixed>> $lines
+     * @param array $lines Buchungszeilen
+     * @param bool $reverseCharge Reverse-Charge-Modus
      * @return array<int, float>
      */
     public static function taxBreakdownFromLines(array $lines, bool $reverseCharge): array
@@ -151,8 +189,10 @@ final class VoucherTaxKeys
         return $lines;
     }
 
-    /**
-     * @param array<int, float> $breakdown
+        /**
+     * Formatiert Steueraufschlüsselung als Text
+     * @param array $breakdown Steueraufschlüsselung
+     * @return string
      */
     public static function formatTaxBreakdownDisplay(array $breakdown): string
     {

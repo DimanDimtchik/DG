@@ -1,23 +1,35 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Calendar Appearance Settings.
+ */
 final class CalendarAppearanceSettings
 {
     public const STORE_KEY = 'calendar_colors';
 
-    /** @return array<string, string> */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return CalendarColorPresets::defaultColors();
     }
 
-    /** @return array<string, string> */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         return SettingsStore::get(self::STORE_KEY, self::defaults());
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         $colors = self::config();
@@ -32,7 +44,11 @@ final class CalendarAppearanceSettings
         return $normalized;
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     */
     public static function save(array $input): void
     {
         $defaults = self::defaults();
@@ -47,7 +63,10 @@ final class CalendarAppearanceSettings
         SettingsStore::set(self::STORE_KEY, $colors);
     }
 
-    /** @return array<string, array{label: string, hint: string}> */
+    /**
+     * Methode field definitions.
+     * @return array<string, mixed>
+     */
     public static function fieldDefinitions(): array
     {
         return [

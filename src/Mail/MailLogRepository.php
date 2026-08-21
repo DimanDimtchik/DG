@@ -1,12 +1,24 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Mail Log Repository.
+ */
 final class MailLogRepository
 {
     /**
-     * @param list<string> $to
-     * @param list<string> $cc
-     * @param list<string> $bcc
+     * Führt aus: create queued.
+     * @param string $fromEmail
+     * @param string $fromName
+     * @param array $to
+     * @param array $cc
+     * @param array $bcc
+     * @param string $subject
+     * @param string $bodyPreview
+     * @param int|null $contactId
+     * @param int|null $userId
+     * @param int|null $mailboxId
+     * @return int
      */
     public static function createQueued(
         string $fromEmail,
@@ -46,8 +58,17 @@ final class MailLogRepository
     }
 
     /**
-     * @param list<string> $toAddresses
-     * @param list<string> $ccAddresses
+     * Führt aus: create inbound.
+     * @param int $mailboxId
+     * @param string $fromEmail
+     * @param string $fromName
+     * @param array $toAddresses
+     * @param array $ccAddresses
+     * @param string $subject
+     * @param string $bodyPreview
+     * @param string|null $messageId
+     * @param int|null $contactId
+     * @return int
      */
     public static function createInbound(
         int $mailboxId,
@@ -85,6 +106,11 @@ final class MailLogRepository
         return (int) $pdo->lastInsertId();
     }
 
+    /**
+     * Methode mark received.
+     * @param int $id
+     * @return void
+     */
     public static function markReceived(int $id): void
     {
         $pdo = Database::pdo();
@@ -94,6 +120,12 @@ final class MailLogRepository
         $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Methode mark read.
+     * @param int $id
+     * @param bool $read
+     * @return void
+     */
     public static function markRead(int $id, bool $read = true): void
     {
         $pdo = Database::pdo();
@@ -101,6 +133,12 @@ final class MailLogRepository
         $stmt->execute(['is_read' => $read ? 1 : 0, 'id' => $id]);
     }
 
+    /**
+     * Methode inbound exists.
+     * @param string $messageId
+     * @param int $mailboxId
+     * @return bool
+     */
     public static function inboundExists(string $messageId, int $mailboxId): bool
     {
         if ($messageId === '') {
@@ -115,7 +153,11 @@ final class MailLogRepository
     }
 
     /**
-     * @param array<string, mixed> $header
+     * Methode upsert from imap header.
+     * @param int $mailboxId
+     * @param string $imapFolder
+     * @param array $header
+     * @return int
      */
     public static function upsertFromImapHeader(int $mailboxId, string $imapFolder, array $header): int
     {
@@ -184,6 +226,11 @@ final class MailLogRepository
         return (int) $pdo->lastInsertId();
     }
 
+    /**
+     * Führt aus: parse mail date.
+     * @param string $value
+     * @return string|null
+     */
     private static function parseMailDate(string $value): ?string
     {
         $value = trim($value);
@@ -195,11 +242,23 @@ final class MailLogRepository
         return $ts !== false ? date('Y-m-d H:i:s', $ts) : null;
     }
 
+    /**
+     * Methode imap message id.
+     * @param int $mailboxId
+     * @param string $imapFolder
+     * @param int $uid
+     * @return string
+     */
     public static function imapMessageId(int $mailboxId, string $imapFolder, int $uid): string
     {
         return sprintf('imap:%d:%s:%d', $mailboxId, $imapFolder, $uid);
     }
 
+    /**
+     * Methode guess contact id.
+     * @param string $fromEmail
+     * @return int|null
+     */
     public static function guessContactId(string $fromEmail): ?int
     {
         $fromEmail = strtolower(trim($fromEmail));
@@ -225,8 +284,9 @@ final class MailLogRepository
     }
 
     /**
-     * @param list<array<string, mixed>> $rows
-     * @return list<array<string, mixed>>
+     * Methode enrich party labels.
+     * @param array $rows
+     * @return array<string, mixed>
      */
     public static function enrichPartyLabels(array $rows): array
     {
@@ -238,8 +298,11 @@ final class MailLogRepository
     }
 
     /**
-     * @param list<int> $mailboxIds
-     * @return list<array<string, mixed>>
+     * Methode inbox for mailboxes.
+     * @param array $mailboxIds
+     * @param int $limit
+     * @param int|null $mailboxFilter
+     * @return array<string, mixed>
      */
     public static function inboxForMailboxes(array $mailboxIds, int $limit = 50, ?int $mailboxFilter = null): array
     {
@@ -247,8 +310,11 @@ final class MailLogRepository
     }
 
     /**
-     * @param list<int> $mailboxIds
-     * @return list<array<string, mixed>>
+     * Methode sent for mailboxes.
+     * @param array $mailboxIds
+     * @param int $limit
+     * @param int|null $mailboxFilter
+     * @return array<string, mixed>
      */
     public static function sentForMailboxes(array $mailboxIds, int $limit = 50, ?int $mailboxFilter = null): array
     {
@@ -292,7 +358,11 @@ final class MailLogRepository
     }
 
     /**
+     * Methode folder messages for mailboxes.
      * @param list<int> $mailboxIds
+     * @param string $folderPath
+     * @param int $limit
+     * @param int|null $mailboxFilter
      * @return list<array<string, mixed>>
      */
     public static function folderMessagesForMailboxes(
@@ -345,6 +415,11 @@ final class MailLogRepository
         }, $rows));
     }
 
+    /**
+     * Methode count unread for mailboxes.
+     * @param array $mailboxIds
+     * @return int
+     */
     public static function countUnreadForMailboxes(array $mailboxIds): int
     {
         if ($mailboxIds === [] || !Database::isConfigured()) {
@@ -364,6 +439,14 @@ final class MailLogRepository
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * Methode mark archived.
+     * @param int $id Datensatz-ID
+     * @param string $storagePath
+     * @param int $sizeBytes
+     * @param string $messageId
+     * @return void
+     */
     public static function markArchived(int $id, string $storagePath, int $sizeBytes, string $messageId): void
     {
         $pdo = Database::pdo();
@@ -378,6 +461,11 @@ final class MailLogRepository
         ]);
     }
 
+    /**
+     * Methode mark sent.
+     * @param int $id Datensatz-ID
+     * @return void
+     */
     public static function markSent(int $id): void
     {
         $pdo = Database::pdo();
@@ -387,6 +475,12 @@ final class MailLogRepository
         $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Methode mark failed.
+     * @param int $id Datensatz-ID
+     * @param string $error
+     * @return void
+     */
     public static function markFailed(int $id, string $error): void
     {
         $pdo = Database::pdo();
@@ -399,7 +493,11 @@ final class MailLogRepository
         ]);
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Findet einen Datensatz anhand der ID.
+     * @param int $id Datensatz-ID
+     * @return array<string, mixed>|null
+     */
     public static function findById(int $id): ?array
     {
         if (!Database::isConfigured()) {
@@ -417,7 +515,11 @@ final class MailLogRepository
         }
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Methode recent.
+     * @param int $limit
+     * @return list<array<string, mixed>>
+     */
     public static function recent(int $limit = 15): array
     {
         if (!Database::isConfigured()) {

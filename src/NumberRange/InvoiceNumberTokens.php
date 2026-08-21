@@ -1,10 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Invoice Number Tokens.
+ */
 final class InvoiceNumberTokens
 {
-    /** @return array<string, array{title: string, items: list<array{label: string, codes: list<string>}>}> */
-    public static function referenceGroups(): array
+    /**
+     * referenceGroups.
+     *
+     * @return array<string, array{title: string, items: list<array{label: string, codes: list<string>}>}>
+     */
+        public static function referenceGroups(): array
     {
         return [
             'zeit' => [
@@ -38,8 +45,12 @@ final class InvoiceNumberTokens
         ];
     }
 
-    /** @return array<string, string> */
-    public static function numberBases(): array
+    /**
+     * numberBases.
+     *
+     * @return array<string, string>
+     */
+        public static function numberBases(): array
     {
         return [
             'decimal' => 'Dezimal (10)',
@@ -48,8 +59,12 @@ final class InvoiceNumberTokens
         ];
     }
 
-    /**
-     * @param array<string, mixed> $context
+        /**
+     * resolveString
+     * @param string $template
+     * @param array $context
+     * @param int $sequence
+     * @return string
      */
     public static function resolveString(string $template, array $context, int $sequence = 0): string
     {
@@ -72,8 +87,10 @@ final class InvoiceNumberTokens
         );
     }
 
-    /**
-     * @param array<string, mixed> $document
+        /**
+     * usesCountryPlaceholder
+     * @param array $document
+     * @return bool
      */
     public static function usesCountryPlaceholder(array $document): bool
     {
@@ -154,6 +171,11 @@ final class InvoiceNumberTokens
         return $document;
     }
 
+    /**
+     * normalizePlaceholderKey
+     * @param string $raw Rohdaten
+     * @return string
+     */
     private static function normalizePlaceholderKey(string $raw): string
     {
         $key = strtoupper(trim($raw));
@@ -165,8 +187,12 @@ final class InvoiceNumberTokens
         return $key;
     }
 
-    /**
-     * @param array<string, mixed> $context
+        /**
+     * resolveKey
+     * @param string $key Steuerschlüssel
+     * @param array $context
+     * @param string $formattedNr
+     * @return string
      */
     private static function resolveKey(string $key, array $context, string $formattedNr): string
     {
@@ -210,8 +236,11 @@ final class InvoiceNumberTokens
         };
     }
 
-    /**
-     * @param array<string, mixed> $context
+        /**
+     * resolveCompanyId
+     * @param array $context
+     * @return string
+     * @throws InvalidArgumentException
      */
     private static function resolveCompanyId(array $context): string
     {

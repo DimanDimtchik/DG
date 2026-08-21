@@ -1,10 +1,14 @@
 DirectoryIndex index.php index.html
 
+<IfModule mod_mime.c>
+  AddType text/javascript .mjs
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
   # Geschützte Verzeichnisse nicht direkt aufrufbar
-  RewriteRule ^(config|src|views|admin|bin|database)/ - [F,L]
+  RewriteRule ^(config|src|views|admin|bin|database|storage)/ - [F,L]
 
   # Statische Dateien direkt ausliefern
   RewriteCond %{REQUEST_FILENAME} -f [OR]

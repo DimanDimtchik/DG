@@ -6,7 +6,10 @@ final class TaxAdvisorSettings
 {
     public const STORE_KEY = 'tax_advisor';
 
-    /** @return array{contact_id: int} */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return [
@@ -15,11 +18,8 @@ final class TaxAdvisorSettings
     }
 
     /**
-     * @return array{
-     *   contact_id: int,
-     *   contact: Contact|null,
-     *   employees: list<array<string, mixed>>
-     * }
+     * Methode for form.
+     * @return array<string, mixed>
      */
     public static function forForm(): array
     {
@@ -44,12 +44,21 @@ final class TaxAdvisorSettings
         ];
     }
 
+    /**
+     * Methode selected contact id.
+     * @return int
+     */
     public static function selectedContactId(): int
     {
         return self::forForm()['contact_id'];
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert Formulardaten.
+     * @param array $input
+     * @return void
+     * @throws InvalidArgumentException
+     */
     public static function saveFromPost(array $input): void
     {
         $contactId = max(0, (int) ($input['tax_advisor_contact_id'] ?? 0));
@@ -60,6 +69,11 @@ final class TaxAdvisorSettings
         SettingsStore::set(self::STORE_KEY, ['contact_id' => $contactId]);
     }
 
+    /**
+     * Führt aus: resolve company contact.
+     * @param int $contactId
+     * @return Contact|null
+     */
     private static function resolveCompanyContact(int $contactId): ?Contact
     {
         if ($contactId <= 0) {

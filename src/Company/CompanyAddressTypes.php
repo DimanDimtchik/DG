@@ -1,10 +1,17 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Company Address Types.
+ */
 final class CompanyAddressTypes
 {
-    /** @return array<string, string> */
-    public static function labels(): array
+    /**
+     * Liefert Bezeichnungen.
+     *
+     * @return array<string, string>
+     */
+        public static function labels(): array
     {
         return [
             'hauptsitz' => 'Zentrale / Hauptsitz',

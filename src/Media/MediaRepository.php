@@ -1,8 +1,14 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Database access for media items and usage tracking (dg_media / dg_media_usage).
+ */
 final class MediaRepository
 {
+    /**
+     * Ensure media tables exist (idempotent CREATE TABLE IF NOT EXISTS).
+     */
     public static function ensureTables(): void
     {
         if (!Database::isConfigured()) {
@@ -50,7 +56,11 @@ final class MediaRepository
         );
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Active media rows with nested usage lists and public URLs.
+     *
+     * @return list<array<string, mixed>>
+     */
     public static function listWithUsage(): array
     {
         self::ensureTables();
@@ -77,7 +87,11 @@ final class MediaRepository
         return $out;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Usage rows for one media id (active and historical).
+     *
+     * @return list<array<string, mixed>>
+     */
     public static function usageForMedia(string $mediaId): array
     {
         $stmt = Database::pdo()->prepare(
@@ -91,7 +105,9 @@ final class MediaRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * @return array<string, mixed>|null Media row or null
+     */
     public static function find(string $mediaId): ?array
     {
         if (!MediaId::isValid($mediaId)) {
@@ -113,7 +129,11 @@ final class MediaRepository
         return $row;
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Insert a new active media row.
+     *
+     * @param array<string, mixed> $data File + meta fields from MediaStorage::storeUpload / storeBinary
+     */
     public static function insert(string $mediaId, array $data, ?int $uploadedBy): void
     {
         $stmt = Database::pdo()->prepare(
@@ -142,7 +162,11 @@ final class MediaRepository
         ]);
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Update stored file metadata after rewrite / transform.
+     *
+     * @param array<string, mixed> $data stored_name, mime_type, extension, width, height, size_bytes
+     */
     public static function updateFileMeta(string $mediaId, array $data): void
     {
         $stmt = Database::pdo()->prepare(
@@ -168,6 +192,9 @@ final class MediaRepository
         ]);
     }
 
+    /**
+     * Update editorial metadata (title, alt, source note).
+     */
     public static function updateMetadata(string $mediaId, string $sourceNote, string $title, string $altText): void
     {
         $stmt = Database::pdo()->prepare(
@@ -182,6 +209,9 @@ final class MediaRepository
         ]);
     }
 
+    /**
+     * Count active (used_until IS NULL) usage rows.
+     */
     public static function activeUsageCount(string $mediaId): int
     {
         $stmt = Database::pdo()->prepare(
@@ -192,6 +222,9 @@ final class MediaRepository
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * Whether any usage row exists (active or closed).
+     */
     public static function hasAnyUsage(string $mediaId): bool
     {
         $stmt = Database::pdo()->prepare('SELECT COUNT(*) FROM dg_media_usage WHERE media_id = :id');
@@ -200,6 +233,9 @@ final class MediaRepository
         return (int) $stmt->fetchColumn() > 0;
     }
 
+    /**
+     * Delete usage + media row and remove files from disk.
+     */
     public static function delete(string $mediaId): void
     {
         $pdo = Database::pdo();
@@ -208,6 +244,9 @@ final class MediaRepository
         MediaStorage::deleteMediaFiles($mediaId);
     }
 
+    /**
+     * Upsert an active usage reference for a context key.
+     */
     public static function syncUsage(string $mediaId, string $contextKey, string $contextLabel): void
     {
         $now = date('Y-m-d H:i:s');
@@ -228,6 +267,9 @@ final class MediaRepository
         ]);
     }
 
+    /**
+     * Mark a previously active usage as ended (used_until = now).
+     */
     public static function closeStaleUsage(string $mediaId, string $contextKey): void
     {
         $stmt = Database::pdo()->prepare(

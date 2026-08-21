@@ -8,8 +8,12 @@ declare(strict_types=1);
  */
 final class FiscalYearService
 {
-    /** @return array<int, array{year: int, status: string, closed_at: ?string, note: string}> */
-    public static function list(): array
+    /**
+     * list.
+     *
+     * @return array<int, array{year: int, status: string, closed_at: ?string, note: string}>
+     */
+        public static function list(): array
     {
         if (!Database::isConfigured()) {
             return [];
@@ -29,6 +33,11 @@ final class FiscalYearService
         return $out;
     }
 
+    /**
+     * Liefert den Status eines Geschäftsjahres
+     * @param int $year Geschäftsjahr
+     * @return string
+     */
     public static function status(int $year): string
     {
         if (!Database::isConfigured()) {
@@ -42,15 +51,22 @@ final class FiscalYearService
         return $status === 'closed' ? 'closed' : 'open';
     }
 
+    /**
+     * Prüft, ob ein Geschäftsjahr abgeschlossen ist
+     * @param int $year Geschäftsjahr
+     * @return bool
+     */
     public static function isClosed(int $year): bool
     {
         return self::status($year) === 'closed';
     }
 
-    /**
+        /**
      * Jahr abschließen: Saldenvortrag der Bestandskonten ins Folgejahr buchen.
-     *
+     * @param int $year Geschäftsjahr
+     * @param int|null $userId Benutzer-ID
      * @return array{carried: int, equity: float, next_year: int}
+     * @throws RuntimeException
      */
     public static function closeYear(int $year, ?int $userId): array
     {
@@ -137,7 +153,12 @@ final class FiscalYearService
         return ['carried' => $carried, 'equity' => $equity, 'next_year' => $nextYear];
     }
 
-    /** Abschluss zurücknehmen: Vorträge des Folgejahres entfernen, Jahr wieder öffnen. */
+        /**
+     * Abschluss zurücknehmen: Vorträge des Folgejahres entfernen, Jahr wieder öffnen.
+     * @param int $year Geschäftsjahr
+     * @return void
+     * @throws RuntimeException
+     */
     public static function reopenYear(int $year): void
     {
         if (!Database::isConfigured()) {
@@ -163,9 +184,9 @@ final class FiscalYearService
         }
     }
 
-    /**
+        /**
      * GuV-Ergebnis (Ertrag − Aufwand) eines Jahres als Vorschau.
-     *
+     * @param int $year Geschäftsjahr
      * @return array{income: float, expense: float, result: float}
      */
     public static function profitLossPreview(int $year): array
@@ -186,7 +207,11 @@ final class FiscalYearService
         return ['income' => $income, 'expense' => $expense, 'result' => round($income - $expense, 2)];
     }
 
-    /** @return array<string, float> Bewegungssaldo (Soll − Haben) je Konto, ohne Saldenvortrag. */
+        /**
+     * Liefert Bewegungssaldo je Konto
+     * @param int $year Geschäftsjahr
+     * @return array<string, float> Bewegungssaldo (Soll − Haben) je Konto, ohne Saldenvortrag.
+     */
     private static function movementSigned(int $year): array
     {
         $out = [];
@@ -205,6 +230,14 @@ final class FiscalYearService
         return $out;
     }
 
+    /**
+     * Legt ein Geschäftsjahr an oder aktualisiert es
+     * @param PDO $pdo PDO-Verbindung
+     * @param int $year Geschäftsjahr
+     * @param string $status Statuswert
+     * @param int|null $userId Benutzer-ID
+     * @return void
+     */
     private static function upsertYear(PDO $pdo, int $year, string $status, ?int $userId): void
     {
         $closedAt = $status === 'closed' ? date('Y-m-d H:i:s') : null;

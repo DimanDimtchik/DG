@@ -203,7 +203,11 @@ final class ChartAccountSearchLexicon
     'bauleistung' => ['5910', '5920', '5930', '5940', '5960', '5965'],
   ];
 
-  /** @return array<string, list<string>> */
+    /**
+   * topicDirectMap
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @return array<string, list<string>>
+   */
   private static function topicDirectMap(string $skrType): array
   {
     return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04'
@@ -238,9 +242,10 @@ final class ChartAccountSearchLexicon
     '6650' => self::SKR03_BOOKING['4900'],
   ];
 
-  /**
+    /**
    * Suchbegriff → Zielkonten mit Relevanz (niedriger = besser).
-   *
+   * @param string $query
+   * @param string $skrType Kontenrahmen (skr03/skr04)
    * @return list<array{account_number: string, score: int}>
    */
   public static function resolveBookingTargets(string $query, string $skrType): array
@@ -313,8 +318,11 @@ final class ChartAccountSearchLexicon
     return $hits;
   }
 
-  /**
-   * @param list<string> $accountNumbers
+    /**
+   * topicAccountHits
+   * @param array $accountNumbers
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param int $score
    * @return list<array{account_number: string, score: int}>
    */
   private static function topicAccountHits(array $accountNumbers, string $skrType, int $score): array
@@ -381,6 +389,12 @@ final class ChartAccountSearchLexicon
     return $hits;
   }
 
+  /**
+   * isSearchableAccountNumber
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @return bool
+   */
   public static function isSearchableAccountNumber(string $skrType, string $accountNumber): bool
   {
     $number = str_pad(preg_replace('/\D/', '', $accountNumber) ?? '', 4, '0', STR_PAD_LEFT);
@@ -407,9 +421,11 @@ final class ChartAccountSearchLexicon
     return ChartAccountBookingEligibility::isSearchableRow($row);
   }
 
-  /**
+    /**
    * Buchungsbegriffe für ein Konto (für hints.search_terms).
-   *
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @param string $name Name
    * @return list<string>
    */
   public static function synonymsForAccount(string $skrType, string $accountNumber, string $name): array
@@ -434,6 +450,14 @@ final class ChartAccountSearchLexicon
     return array_values(array_unique($terms));
   }
 
+  /**
+   * synonymScore
+   * @param string $query
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @param string $name Name
+   * @return ?int
+   */
   public static function synonymScore(string $query, string $skrType, string $accountNumber, string $name): ?int
   {
     $number = str_pad(preg_replace('/\D/', '', $accountNumber) ?? '', 4, '0', STR_PAD_LEFT);
@@ -446,12 +470,21 @@ final class ChartAccountSearchLexicon
     return null;
   }
 
+  /**
+   * isInvoiceBookingAccount
+   * @param string $accountNumber Kontonummer
+   * @return bool
+   */
   public static function isInvoiceBookingAccount(string $accountNumber): bool
   {
     return ChartAccountBookingEligibility::isSearchable('skr03', $accountNumber, '', 'aufwand');
   }
 
-  /** @deprecated Nur noch für Abwärtskompatibilität — liefert Buchungsbegriffe des ersten Treffers. */
+    /**
+   * expandQuery
+   * @param string $query
+   * @return array
+   */
   public static function expandQuery(string $query): array
   {
     $needle = mb_strtolower(trim($query));
@@ -462,7 +495,11 @@ final class ChartAccountSearchLexicon
     return [$needle];
   }
 
-  /** @return list<string> */
+    /**
+   * reverseChargeDirectAccounts
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @return list<string>
+   */
   public static function reverseChargeDirectAccounts(string $skrType): array
   {
     return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04'
@@ -470,7 +507,11 @@ final class ChartAccountSearchLexicon
       : self::SKR03_REVERSE_CHARGE_DIRECT;
   }
 
-  /** @return array<string, list<string>> */
+    /**
+   * bookingMap
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @return array<string, list<string>>
+   */
   private static function bookingMap(string $skrType): array
   {
     return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04'

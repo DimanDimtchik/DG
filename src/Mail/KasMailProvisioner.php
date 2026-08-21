@@ -6,6 +6,15 @@ final class KasMailProvisioner
 {
     private const WSDL = 'https://kasapi.kasserver.com/soap/wsdl/KasApi.wsdl';
 
+    /**
+     * Führt aus: create mailbox.
+     * @param string $localPart
+     * @param string $domainPart
+     * @param string $password
+     * @return array<string, mixed>
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
+     */
     public static function createMailbox(string $localPart, string $domainPart, string $password): array
     {
         if (!KasSettings::isConfigured()) {
@@ -52,11 +61,21 @@ final class KasMailProvisioner
         ];
     }
 
+    /**
+     * Methode generate password.
+     * @return string
+     */
     public static function generatePassword(): string
     {
         return bin2hex(random_bytes(12));
     }
 
+    /**
+     * Methode reset mailbox password.
+     * @param string $kasMailLogin
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function resetMailboxPassword(string $kasMailLogin): string
     {
         $kasMailLogin = trim($kasMailLogin);
@@ -73,6 +92,10 @@ final class KasMailProvisioner
         return $password;
     }
 
+    /**
+     * Methode kas server host.
+     * @return string
+     */
     public static function kasServerHost(): string
     {
         $cfg = KasSettings::config();
@@ -84,7 +107,13 @@ final class KasMailProvisioner
         return 'w0217246.kasserver.com';
     }
 
-    /** @param array<string, mixed> $params */
+    /**
+     * Methode call.
+     * @param string $action
+     * @param array $params
+     * @return mixed
+     * @throws RuntimeException
+     */
     private static function call(string $action, array $params): mixed
     {
         $cfg = KasSettings::config();
@@ -114,7 +143,10 @@ final class KasMailProvisioner
         return $decoded;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Methode list mail accounts.
+     * @return array<string, mixed>
+     */
     public static function listMailAccounts(): array
     {
         $decoded = self::call('get_mailaccounts', []);
@@ -130,7 +162,11 @@ final class KasMailProvisioner
         return array_values(array_filter($rows, static fn(mixed $row): bool => is_array($row)));
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Liefert mail account by email.
+     * @param string $email
+     * @return array|null
+     */
     public static function findMailAccountByEmail(string $email): ?array
     {
         $email = strtolower(trim($email));
@@ -144,6 +180,11 @@ final class KasMailProvisioner
         return null;
     }
 
+    /**
+     * Methode decode response.
+     * @param mixed $raw
+     * @return mixed
+     */
     private static function decodeResponse(mixed $raw): mixed
     {
         if (is_array($raw)) {
@@ -158,6 +199,11 @@ final class KasMailProvisioner
         return is_array($decoded) ? $decoded : $raw;
     }
 
+    /**
+     * Methode extract mail login.
+     * @param mixed $response
+     * @return string
+     */
     private static function extractMailLogin(mixed $response): string
     {
         if (!is_array($response)) {

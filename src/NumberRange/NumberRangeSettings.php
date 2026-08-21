@@ -1,12 +1,19 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Number Range Settings.
+ */
 final class NumberRangeSettings
 {
     public const STORE_KEY = 'number_ranges';
 
-    /** @return array<string, string> */
-    public static function documentTypes(): array
+    /**
+     * documentTypes.
+     *
+     * @return array<string, string>
+     */
+        public static function documentTypes(): array
     {
         return [
             'offer' => 'Angebot',
@@ -20,8 +27,12 @@ final class NumberRangeSettings
         ];
     }
 
-    /** @return array<string, list<string>> */
-    public static function typeGroups(): array
+    /**
+     * typeGroups.
+     *
+     * @return array<string, list<string>>
+     */
+        public static function typeGroups(): array
     {
         return [
             'Belege' => ['offer', 'invoice', 'final_invoice', 'credit_note'],
@@ -29,18 +40,32 @@ final class NumberRangeSettings
         ];
     }
 
+    /**
+     * isMasterDataType
+     * @param string $type
+     * @return bool
+     */
     public static function isMasterDataType(string $type): bool
     {
         return in_array($type, ['article', 'service', 'customer', 'supplier'], true);
     }
 
+    /**
+     * isValidType
+     * @param string $type
+     * @return bool
+     */
     public static function isValidType(string $type): bool
     {
         return isset(self::documentTypes()[$type]);
     }
 
-    /** @return array<string, mixed> */
-    public static function documentDefaults(): array
+    /**
+     * documentDefaults.
+     *
+     * @return array<string, mixed>
+     */
+        public static function documentDefaults(): array
     {
         return [
             'prefix' => '',
@@ -54,8 +79,12 @@ final class NumberRangeSettings
         ];
     }
 
-    /** @return array<string, array<string, mixed>> */
-    public static function allDefaults(): array
+    /**
+     * allDefaults.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+        public static function allDefaults(): array
     {
         $defaults = self::documentDefaults();
         $out = [];
@@ -66,8 +95,12 @@ final class NumberRangeSettings
         return $out;
     }
 
-    /** @return array<string, array<string, mixed>> */
-    public static function all(): array
+    /**
+     * Liefert alle Einträge.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+        public static function all(): array
     {
         if (!Database::isConfigured()) {
             return self::allDefaults();
@@ -83,7 +116,12 @@ final class NumberRangeSettings
         return $out;
     }
 
-    /** @return array<string, mixed> */
+        /**
+     * document
+     * @param string $type
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     */
     public static function document(string $type): array
     {
         if (!self::isValidType($type)) {
@@ -98,6 +136,11 @@ final class NumberRangeSettings
         return $document;
     }
 
+    /**
+     * preview
+     * @param string $type
+     * @return string
+     */
     public static function preview(string $type): string
     {
         $document = self::document($type);
@@ -106,8 +149,10 @@ final class NumberRangeSettings
         return InvoiceNumberBuilder::build($document, $context);
     }
 
-    /**
-     * @param array<string, mixed> $input
+        /**
+     * allocateNext
+     * @param string $type
+     * @param bool $persist
      * @return array{number: string, sequence: int, sequence_display: string, next_sequence: int}
      */
     public static function allocateNext(string $type, bool $persist = true): array
@@ -122,7 +167,13 @@ final class NumberRangeSettings
         return $peek;
     }
 
-    /** @param array<string, mixed> $input */
+        /**
+     * saveDocument
+     * @param string $type
+     * @param array $input Formulardaten
+     * @return void
+     * @throws InvalidArgumentException
+     */
     public static function saveDocument(string $type, array $input): void
     {
         if (!self::isValidType($type)) {
@@ -136,8 +187,10 @@ final class NumberRangeSettings
         NumberRangeHistory::syncOnSave($type, $previous, $all[$type]);
     }
 
-    /**
-     * @param array<string, mixed> $raw
+        /**
+     * sanitizeDocument
+     * @param array $raw Rohdaten
+     * @param string|null $type
      * @return array<string, mixed>
      */
     public static function sanitizeDocument(array $raw, ?string $type = null): array
@@ -172,7 +225,11 @@ final class NumberRangeSettings
         return $clean;
     }
 
-    /** @return array<string, string> */
+        /**
+     * datevDefaults
+     * @param string $type
+     * @return array<string, string>
+     */
     private static function datevDefaults(string $type): array
     {
         return match ($type) {
@@ -182,7 +239,12 @@ final class NumberRangeSettings
         };
     }
 
-    /** @param array<string, mixed> $document */
+        /**
+     * shouldApplyDatevDefaults
+     * @param string $type
+     * @param array $document
+     * @return bool
+     */
     private static function shouldApplyDatevDefaults(string $type, array $document): bool
     {
         if (!in_array($type, ['customer', 'supplier'], true)) {
@@ -197,8 +259,12 @@ final class NumberRangeSettings
             && (string) ($document['counter'] ?? '1') === '1';
     }
 
-    /**
-     * @param array<string, mixed> $post
+        /**
+     * Speichert Formulardaten
+     * @param string $type
+     * @param array $post
+     * @return void
+     * @throws InvalidArgumentException
      */
     public static function saveFromPost(string $type, array $post): void
     {
@@ -210,7 +276,12 @@ final class NumberRangeSettings
         self::saveDocument($type, $raw);
     }
 
-    /** @param array<string, mixed> $document */
+        /**
+     * persistDocument
+     * @param string $type
+     * @param array $document
+     * @return void
+     */
     private static function persistDocument(string $type, array $document): void
     {
         $all = self::all();

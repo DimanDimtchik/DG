@@ -5,11 +5,10 @@
   <?php if (AppearanceSettings::hasFavicon()) : ?>
     <?php if (AppearanceSettings::faviconIsSvg()) : ?>
       <link rel="icon" href="/app/favicon" type="image/svg+xml">
-    <?php else : ?>
-      <link rel="icon" href="/app/favicon?size=32" type="image/png" sizes="32x32">
-      <link rel="icon" href="/app/favicon?size=16" type="image/png" sizes="16x16">
-      <link rel="apple-touch-icon" href="/app/favicon?size=48">
     <?php endif; ?>
+    <link rel="icon" href="/app/favicon?size=32" type="image/png" sizes="32x32">
+    <link rel="icon" href="/app/favicon?size=16" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/app/favicon?size=48">
   <?php endif; ?>
   <?php
     $googleFontsHref = AppearanceSettings::googleFontsHref();

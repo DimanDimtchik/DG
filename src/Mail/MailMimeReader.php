@@ -4,7 +4,11 @@ declare(strict_types=1);
 /** Liest Text/HTML aus archivierten .eml-Dateien. */
 final class MailMimeReader
 {
-    /** @return array{html: string, text: string} */
+    /**
+     * Methode bodies from file.
+     * @param string $absolutePath
+     * @return array<string, mixed>
+     */
     public static function bodiesFromFile(string $absolutePath): array
     {
         if (!is_readable($absolutePath)) {
@@ -19,7 +23,11 @@ final class MailMimeReader
         return self::bodiesFromMime($mime);
     }
 
-    /** @return array{html: string, text: string} */
+    /**
+     * Methode bodies from mime.
+     * @param string $mime
+     * @return array<string, mixed>
+     */
     public static function bodiesFromMime(string $mime): array
     {
         $html = '';
@@ -61,7 +69,9 @@ final class MailMimeReader
     }
 
     /**
-     * @return array{content_type: string, body: string}|null
+     * Methode decode mime part.
+     * @param string $section
+     * @return array|null
      */
     private static function decodeMimePart(string $section): ?array
     {
@@ -97,6 +107,11 @@ final class MailMimeReader
         ];
     }
 
+    /**
+     * Methode body after headers.
+     * @param string $mime
+     * @return string
+     */
     private static function bodyAfterHeaders(string $mime): string
     {
         $parts = preg_split("/\n\n/", $mime, 2);

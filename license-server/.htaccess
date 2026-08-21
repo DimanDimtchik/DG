@@ -1,0 +1,16 @@
+RewriteEngine On
+RewriteBase /
+
+# Block crawlers
+Header set X-Robots-Tag "noindex, nofollow"
+
+# Force HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# Block config.php direct access
+RewriteRule ^config\.php$ - [F,L]
+
+# Route everything through index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [QSA,L]

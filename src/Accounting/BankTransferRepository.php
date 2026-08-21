@@ -6,10 +6,12 @@ declare(strict_types=1);
  */
 final class BankTransferRepository
 {
-    /**
+        /**
      * Erstellt aus einem (offenen Lieferanten-)Beleg eine vorbereitete Überweisung.
-     *
-     * @throws RuntimeException wenn der Beleg ungeeignet ist oder Bankdaten fehlen
+     * @param int $voucherId Beleg-ID
+     * @param int|null $userId Benutzer-ID
+     * @return int
+     * @throws RuntimeException
      */
     public static function prepareFromVoucher(int $voucherId, ?int $userId): int
     {
@@ -78,7 +80,11 @@ final class BankTransferRepository
         return (int) $pdo->lastInsertId();
     }
 
-    /** @param array<string, mixed> $voucher */
+        /**
+     * Prüft, ob ein Beleg als Überweisung vorbereitet werden kann
+     * @param array $voucher Belegdaten
+     * @return bool
+     */
     public static function voucherIsTransferable(array $voucher): bool
     {
         $type = (string) ($voucher['voucher_type'] ?? '');
@@ -87,7 +93,11 @@ final class BankTransferRepository
         return in_array($type, ['expense', 'expense_reduction'], true) && $status === 'open';
     }
 
-    /** Liefert eine bereits vorbereitete Überweisung zu einem Beleg (falls vorhanden). */
+        /**
+     * Liefert eine bereits vorbereitete Überweisung zu einem Beleg (falls vorhanden).
+     * @param int $voucherId Beleg-ID
+     * @return ?array
+     */
     public static function findByVoucher(int $voucherId): ?array
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -105,6 +115,11 @@ final class BankTransferRepository
         return $row ? self::enrich($row) : null;
     }
 
+    /**
+     * Findet einen Datensatz anhand der ID
+     * @param int $id Datensatz-ID
+     * @return ?array
+     */
     public static function findById(int $id): ?array
     {
         if (!Database::isConfigured() || $id < 1) {
@@ -147,6 +162,11 @@ final class BankTransferRepository
         return array_map([self::class, 'enrich'], is_array($rows) ? $rows : []);
     }
 
+    /**
+     * Markiert eine Überweisung als ausgeführt
+     * @param int $id Datensatz-ID
+     * @return void
+     */
     public static function markExecuted(int $id): void
     {
         if (!Database::isConfigured() || $id < 1) {
@@ -161,6 +181,11 @@ final class BankTransferRepository
         $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Markiert eine Überweisung als vorbereitet
+     * @param int $id Datensatz-ID
+     * @return void
+     */
     public static function markPrepared(int $id): void
     {
         if (!Database::isConfigured() || $id < 1) {
@@ -175,6 +200,11 @@ final class BankTransferRepository
         $stmt->execute(['id' => $id]);
     }
 
+    /**
+     * Löscht einen Datensatz
+     * @param int $id Datensatz-ID
+     * @return void
+     */
     public static function delete(int $id): void
     {
         if (!Database::isConfigured() || $id < 1) {
@@ -187,7 +217,11 @@ final class BankTransferRepository
         $stmt->execute(['id' => $id]);
     }
 
-    /** @param array<string, mixed> $row */
+        /**
+     * enrich
+     * @param array $row Datenbankzeile
+     * @return array
+     */
     private static function enrich(array $row): array
     {
         $amount = (float) ($row['amount'] ?? 0);
@@ -215,9 +249,11 @@ final class BankTransferRepository
         return $row;
     }
 
-    /**
+        /**
      * Liefert die BIC – entweder die übergebene oder, falls leer, aus der
-     * deutschen IBAN (Bankleitzahl) abgeleitet.
+     * @param string $bic BIC
+     * @param string $iban IBAN
+     * @return string
      */
     private static function resolveBic(string $bic, string $iban): string
     {
@@ -234,6 +270,11 @@ final class BankTransferRepository
         return '';
     }
 
+    /**
+     * bankAccountForContact
+     * @param int $contactId Kontakt-ID
+     * @return ?array
+     */
     private static function bankAccountForContact(int $contactId): ?array
     {
         if ($contactId < 1) {
@@ -262,6 +303,11 @@ final class BankTransferRepository
         return $fallback;
     }
 
+    /**
+     * customerNumberForContact
+     * @param int $contactId Kontakt-ID
+     * @return string
+     */
     private static function customerNumberForContact(int $contactId): string
     {
         if ($contactId < 1) {
@@ -273,6 +319,11 @@ final class BankTransferRepository
         return $contact !== null ? trim($contact->customerNumber) : '';
     }
 
+    /**
+     * formatIban
+     * @param string $iban IBAN
+     * @return string
+     */
     private static function formatIban(string $iban): string
     {
         $iban = strtoupper(str_replace(' ', '', $iban));

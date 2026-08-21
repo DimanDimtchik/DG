@@ -6,12 +6,20 @@ final class ChartAccountHintBuilder
 {
   private const GENERATOR_VERSION = '2026-07-06-v7';
 
+  /**
+   * Liefert die Version des Hinweis-Generators
+   * @return string
+   */
   public static function generatorVersion(): string
   {
     return self::GENERATOR_VERSION;
   }
 
-  /** @param array<string, mixed> $hints */
+    /**
+   * Prüft, ob Kontenhinweise nachgeneriert werden sollen
+   * @param array $hints Kontenhinweise
+   * @return bool
+   */
   public static function needsEnhancement(array $hints): bool
   {
     if (($hints['dg_hint_level'] ?? '') === 'manual') {
@@ -30,8 +38,13 @@ final class ChartAccountHintBuilder
     return true;
   }
 
-  /**
-   * @param array<string, mixed> $existing
+    /**
+   * Erzeugt DG-Hinweise für ein SKR-Konto
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @param string $name Name
+   * @param string $section Kontenabschnitt
+   * @param array $existing Bestehende Hinweisdaten
    * @return array<string, mixed>
    */
   public static function build(
@@ -84,7 +97,12 @@ final class ChartAccountHintBuilder
     return self::applyBookingGuidance($number, $hints);
   }
 
-  /** @param array<string, mixed> $hints @return array<string, mixed> */
+    /**
+   * applyBookingGuidance
+   * @param string $accountNumber Kontonummer
+   * @param array $hints Kontenhinweise
+   * @return array<string, mixed>
+   */
   private static function applyBookingGuidance(string $accountNumber, array $hints): array
   {
     if (in_array($accountNumber, ['4832', '4842', '4852', '6222'], true)) {
@@ -109,6 +127,13 @@ final class ChartAccountHintBuilder
     return $hints;
   }
 
+  /**
+   * buildSummary
+   * @param string $name Name
+   * @param string $section Kontenabschnitt
+   * @param string $category Kontenkategorie
+   * @return string
+   */
   private static function buildSummary(string $name, string $section, string $category): string
   {
     $sectionLabel = ChartAccountRepository::sectionLabel($section);
@@ -121,7 +146,14 @@ final class ChartAccountHintBuilder
     return $name . ' (' . $sectionLabel . ').';
   }
 
-  /** @return array<int, string> */
+    /**
+   * digitExplanations
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $number
+   * @param string $name Name
+   * @param string $category Kontenkategorie
+   * @return array<int, string>
+   */
   private static function digitExplanations(string $skrType, string $number, string $name, string $category): array
   {
     $legend = SkrDigitLegend::forSkr($skrType);
@@ -140,7 +172,12 @@ final class ChartAccountHintBuilder
     ];
   }
 
-  /** @return list<string> */
+    /**
+   * detectFeatures
+   * @param string $name Name
+   * @param string $category Kontenkategorie
+   * @return list<string>
+   */
   private static function detectFeatures(string $name, string $category): array
   {
     $lower = mb_strtolower($name);
@@ -193,6 +230,14 @@ final class ChartAccountHintBuilder
     return array_values(array_unique($features));
   }
 
+  /**
+   * detectCategory
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $number
+   * @param string $name Name
+   * @param string $section Kontenabschnitt
+   * @return string
+   */
   private static function detectCategory(string $skrType, string $number, string $name, string $section): string
   {
     $lower = mb_strtolower($name);
@@ -273,7 +318,15 @@ final class ChartAccountHintBuilder
     };
   }
 
-  /** @param list<string> $features @return list<string> */
+    /**
+   * searchTerms
+   * @param string $name Name
+   * @param string $category Kontenkategorie
+   * @param array $features Erkannte Merkmale
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $accountNumber Kontonummer
+   * @return list<string>
+   */
   private static function searchTerms(string $name, string $category, array $features, string $skrType, string $accountNumber): array
   {
     $terms = [];
@@ -300,7 +353,13 @@ final class ChartAccountHintBuilder
     return array_values(array_unique(array_slice($terms, 0, 24)));
   }
 
-  /** @param list<string> $features @return list<string> */
+    /**
+   * examplesFor
+   * @param string $category Kontenkategorie
+   * @param string $name Name
+   * @param array $features Erkannte Merkmale
+   * @return list<string>
+   */
   private static function examplesFor(string $category, string $name, array $features): array
   {
     $examples = match ($category) {
@@ -329,7 +388,12 @@ final class ChartAccountHintBuilder
     return array_slice($examples, 0, 4);
   }
 
-  /** @param list<string> $features @return list<string> */
+    /**
+   * edgeCasesFor
+   * @param string $category Kontenkategorie
+   * @param array $features Erkannte Merkmale
+   * @return list<string>
+   */
   private static function edgeCasesFor(string $category, array $features): array
   {
     $cases = match ($category) {
@@ -353,7 +417,12 @@ final class ChartAccountHintBuilder
     return array_slice(array_values(array_unique($cases)), 0, 4);
   }
 
-  /** @return list<string> */
+    /**
+   * dependenciesFor
+   * @param string $category Kontenkategorie
+   * @param string $section Kontenabschnitt
+   * @return list<string>
+   */
   private static function dependenciesFor(string $category, string $section): array
   {
     return match ($category) {
@@ -373,7 +442,13 @@ final class ChartAccountHintBuilder
     };
   }
 
-  /** @param list<string> $features @return array<string, string> */
+    /**
+   * taxEffectsFor
+   * @param string $section Kontenabschnitt
+   * @param string $category Kontenkategorie
+   * @param array $features Erkannte Merkmale
+   * @return array<string, string>
+   */
   private static function taxEffectsFor(string $section, string $category, array $features): array
   {
     if (in_array('vorsteuer', $features, true) || $category === 'vorsteuer') {
@@ -396,7 +471,11 @@ final class ChartAccountHintBuilder
     return ['ust' => 'neutral', 'gewst' => 'neutral', 'kst' => 'neutral', 'est' => 'neutral'];
   }
 
-  /** @return array{balance_sheet: bool, guv: bool, eur: bool} */
+    /**
+   * classificationForSection
+   * @param string $section Kontenabschnitt
+   * @return array{balance_sheet: bool, guv: bool, eur: bool}
+   */
   private static function classificationForSection(string $section): array
   {
     return match ($section) {
@@ -405,6 +484,12 @@ final class ChartAccountHintBuilder
     };
   }
 
+  /**
+   * sectionFromNumber
+   * @param string $skrType Kontenrahmen (skr03/skr04)
+   * @param string $number
+   * @return string
+   */
   private static function sectionFromNumber(string $skrType, string $number): string
   {
     $first = (int) substr($number, 0, 1);
@@ -427,6 +512,11 @@ final class ChartAccountHintBuilder
     };
   }
 
+  /**
+   * categoryLabel
+   * @param string $category Kontenkategorie
+   * @return string
+   */
   private static function categoryLabel(string $category): string
   {
     return match ($category) {
@@ -449,8 +539,12 @@ final class ChartAccountHintBuilder
     };
   }
 
-  /** @return array<string, string> */
-  private static function skr03Groups(): array
+  /**
+   * skr03Groups.
+   *
+   * @return array<string, string>
+   */
+    private static function skr03Groups(): array
   {
     return [
       '00' => 'Immaterielle Vermögensgegenstände / Konzessionen',
@@ -496,8 +590,12 @@ final class ChartAccountHintBuilder
     ];
   }
 
-  /** @return array<string, string> */
-  private static function skr04Groups(): array
+  /**
+   * skr04Groups.
+   *
+   * @return array<string, string>
+   */
+    private static function skr04Groups(): array
   {
     return [
       '00' => 'Immaterielle Vermögensgegenstände',

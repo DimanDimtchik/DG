@@ -6,6 +6,11 @@ declare(strict_types=1);
  */
 final class SettingsStore
 {
+    /**
+     * Methode ensure ready.
+     * @return void
+     * @throws RuntimeException
+     */
     private static function ensureReady(): void
     {
         if (!Database::isConfigured()) {
@@ -15,6 +20,10 @@ final class SettingsStore
         self::ensureTable();
     }
 
+    /**
+     * Methode ensure table.
+     * @return void
+     */
     private static function ensureTable(): void
     {
         $pdo = Database::pdo();
@@ -28,7 +37,13 @@ final class SettingsStore
         );
     }
 
-    /** @param array<string, mixed> $defaults */
+    /**
+     * Methode get.
+     * @param string $key
+     * @param array $defaults
+     * @return array<string, mixed>
+     * @throws RuntimeException
+     */
     public static function get(string $key, array $defaults = []): array
     {
         if (!Database::isConfigured()) {
@@ -56,7 +71,13 @@ final class SettingsStore
         }
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Methode set.
+     * @param string $key
+     * @param array $data
+     * @return void
+     * @throws RuntimeException
+     */
     public static function set(string $key, array $data): void
     {
         self::ensureReady();
@@ -79,6 +100,12 @@ final class SettingsStore
         self::verifyStored($key);
     }
 
+    /**
+     * Methode verify stored.
+     * @param string $key
+     * @return void
+     * @throws RuntimeException
+     */
     private static function verifyStored(string $key): void
     {
         $pdo = Database::pdo();
@@ -96,8 +123,9 @@ final class SettingsStore
     }
 
     /**
-     * @param array<string, mixed> $defaults
-     * @param array<string, mixed> $stored
+     * Normalisiert den Eingabewert.
+     * @param array $defaults
+     * @param array $stored
      * @return array<string, mixed>
      */
     private static function normalize(array $defaults, array $stored): array

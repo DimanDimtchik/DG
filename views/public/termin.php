@@ -19,7 +19,7 @@ $intro = CalendarEmbedSettings::introText();
   <div class="tk-book" id="tk-public-booking"<?= CalendarFrontendTheme::wrapperStyleAttribute() ?>>
     <header class="tk-book__header">
       <?php if (AppearanceSettings::logoUrl() !== '') : ?>
-        <img class="tk-book__logo" src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" width="48" height="48">
+        <img class="tk-book__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>" src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>">
       <?php endif; ?>
       <div>
         <h1 class="tk-book__title"><?= View::escape(CalendarEmbedSettings::pageTitle()) ?></h1>

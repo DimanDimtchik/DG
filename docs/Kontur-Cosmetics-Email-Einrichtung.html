@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>E-Mail einrichten – Kontur Cosmetics (Gmail &amp; Outlook)</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 10.5pt;
+    color: #1a1816;
+    line-height: 1.4;
+    margin: 0;
+  }
+  h1 { font-size: 16pt; margin: 0 0 4px; }
+  h2 {
+    font-size: 12pt;
+    margin: 16px 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #c9c2b8;
+  }
+  h3 { font-size: 11pt; margin: 12px 0 4px; }
+  .meta { color: #555; font-size: 9pt; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
+  th, td {
+    border: 1px solid #bbb;
+    padding: 5px 7px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th { width: 34%; background: #f3efe8; font-weight: 600; font-size: 9.5pt; }
+  td { font-size: 10pt; }
+  ol { margin: 4px 0 8px; padding-left: 1.3em; }
+  ol li { margin: 3px 0; }
+  .box {
+    background: #faf8f5;
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    margin: 8px 0 10px;
+    font-size: 9.5pt;
+  }
+  .blank {
+    display: inline-block;
+    min-width: 12em;
+    border-bottom: 1px dotted #333;
+    height: 1em;
+    vertical-align: bottom;
+  }
+  .page-break { page-break-before: always; }
+  .muted { color: #555; font-size: 9pt; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; }
+  @media print {
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <h1>E-Mail einrichten – Kontur Cosmetics</h1>
+  <div class="meta">
+    Postfach: <strong>info@kontur-cosmetics.de</strong> (All-Inkl / KAS)<br>
+    Für Gmail (Android/Web) und Outlook (Windows / Microsoft 365)<br>
+    Stand: 21.08.2026
+  </div>
+
+  <h2>Ihre Zugangsdaten (Überblick)</h2>
+  <table>
+    <tr><th>E-Mail-Adresse</th><td>info@kontur-cosmetics.de</td></tr>
+    <tr><th>Passwort</th><td><span class="blank"></span> <span class="muted">(wie im Zugangsdaten-Blatt)</span></td></tr>
+    <tr><th>Webmail (Browser)</th><td>https://webmail.kasserver.com</td></tr>
+    <tr><th>Posteingang (IMAP)</th><td>w0217246.kasserver.com · Port <strong>993</strong> · Verschlüsselung <strong>SSL/TLS</strong></td></tr>
+    <tr><th>Postausgang (SMTP)</th><td>w0217246.kasserver.com · Port <strong>465</strong> · Verschlüsselung <strong>SSL/TLS</strong></td></tr>
+    <tr><th>Benutzername</th><td>immer die vollständige Adresse: <code>info@kontur-cosmetics.de</code></td></tr>
+  </table>
+  <div class="box">
+    <strong>Tipp:</strong> Wenn Port 465 nicht funktioniert, alternativ SMTP Port <strong>587</strong> mit Verschlüsselung <strong>STARTTLS</strong> versuchen.
+    Authentifizierung am SMTP-Server muss eingeschaltet sein („Anmeldung erforderlich“).
+  </div>
+
+  <h2>1. Outlook (Windows – Microsoft Outlook)</h2>
+  <h3>Neues Konto hinzufügen</h3>
+  <ol>
+    <li>Outlook öffnen → <strong>Datei</strong> → <strong>Konto hinzufügen</strong> (oder: Datei → Kontoeinstellungen → E-Mail-Konten → Neu).</li>
+    <li>E-Mail-Adresse eingeben: <code>info@kontur-cosmetics.de</code> → Weiter.</li>
+    <li>Wenn Outlook das Konto nicht automatisch findet: <strong>Manuelle Einrichtung</strong> / <strong>Erweiterte Optionen</strong> wählen → <strong>Ich möchte mein Konto manuell einrichten</strong>.</li>
+    <li>Kontotyp: <strong>IMAP</strong> wählen.</li>
+    <li>Serverdaten wie in der Tabelle oben eintragen (IMAP 993 SSL, SMTP 465 SSL).</li>
+    <li>Benutzername: <code>info@kontur-cosmetics.de</code>, Passwort eingeben.</li>
+    <li>Unter SMTP: Option <strong>Authentifizierung erforderlich</strong> / dieselben Anmeldedaten wie für den Posteingang aktivieren.</li>
+    <li>Verbindung testen und mit <strong>Fertig stellen</strong> bestätigen.</li>
+  </ol>
+  <h3>Falls schon ein Konto existiert und angepasst werden soll</h3>
+  <ol>
+    <li>Datei → Kontoeinstellungen → Kontoeinstellungen…</li>
+    <li>Konto markieren → <strong>Ändern</strong> → <strong>Weitere Einstellungen</strong>.</li>
+    <li>Reiter <strong>Server</strong>: SMTP-Anmeldung aktivieren.</li>
+    <li>Reiter <strong>Erweitert</strong>: Ports 993 (IMAP/SSL) und 465 (SMTP/SSL) prüfen.</li>
+  </ol>
+
+  <h2>2. Outlook im Web / neue Outlook-App</h2>
+  <ol>
+    <li>Bei Microsoft anmelden und „Anderes Konto hinzufügen“ bzw. IMAP wählen.</li>
+    <li>E-Mail und Passwort eingeben.</li>
+    <li>Bei Nachfrage die Serverdaten manuell setzen:
+      <ul>
+        <li>IMAP: <code>w0217246.kasserver.com</code>, 993, SSL</li>
+        <li>SMTP: <code>w0217246.kasserver.com</code>, 465, SSL</li>
+      </ul>
+    </li>
+  </ol>
+
+  <div class="page-break"></div>
+
+  <h2>3. Gmail in der App (Android / iPhone)</h2>
+  <ol>
+    <li>Gmail-App öffnen → Profilbild oben rechts → <strong>Weiteres Konto hinzufügen</strong>.</li>
+    <li><strong>Sonstige</strong> (nicht „Google“) wählen.</li>
+    <li>Adresse: <code>info@kontur-cosmetics.de</code> → Manuell einrichten.</li>
+    <li>Kontotyp: <strong>Persönlich (IMAP)</strong>.</li>
+    <li>Passwort eingeben.</li>
+    <li><strong>Server für den Posteingang</strong>:
+      <ul>
+        <li>Server: <code>w0217246.kasserver.com</code></li>
+        <li>Port: 993 · Sicherheit: SSL/TLS</li>
+        <li>Benutzername: <code>info@kontur-cosmetics.de</code></li>
+      </ul>
+    </li>
+    <li><strong>Server für den Postausgang (SMTP)</strong>:
+      <ul>
+        <li>Server: <code>w0217246.kasserver.com</code></li>
+        <li>Port: 465 · Sicherheit: SSL/TLS (sonst 587 / STARTTLS)</li>
+        <li>Anmeldung erforderlich: ja · dieselben Zugangsdaten</li>
+      </ul>
+    </li>
+    <li>Konto benennen (z. B. „Kontur Info“) und fertigstellen.</li>
+  </ol>
+
+  <h2>4. Gmail im Browser (Mails über Gmail abrufen)</h2>
+  <p class="muted">Damit erscheinen die Mails von info@ in Ihrem Gmail-Posteingang. Senden über info@ ist optional.</p>
+  <h3>Posteingang abrufen (IMAP)</h3>
+  <ol>
+    <li>In Gmail (Browser): Zahnrad → <strong>Alle Einstellungen anzeigen</strong>.</li>
+    <li>Reiter <strong>Konten und Import</strong> → unter „E-Mails aus anderen Konten abrufen“: <strong>E-Mail-Konto hinzufügen</strong>.</li>
+    <li>Adresse <code>info@kontur-cosmetics.de</code> eingeben → Weiter → <strong>E-Mails über mein anderes Konto abrufen (POP3)</strong> erscheint manchmal zuerst; wenn möglich <strong>IMAP</strong> nutzen. Falls nur POP3 angeboten wird:
+      <ul>
+        <li>POP-Server: <code>w0217246.kasserver.com</code>, Port <strong>995</strong>, SSL aktiv</li>
+        <li>Benutzername: volle E-Mail-Adresse</li>
+      </ul>
+      <span class="muted">Hinweis: POP lädt Mails oft nur in den Posteingang und lässt sie am Server optional stehen – IMAP (App/Outlook) ist für den Alltag besser.</span>
+    </li>
+  </ol>
+  <h3>Mit info@ über Gmail senden (SMTP)</h3>
+  <ol>
+    <li>Einstellungen → Konten und Import → „Nachricht senden als“ → <strong>Weitere E-Mail-Adresse hinzufügen</strong>.</li>
+    <li>Name und Adresse <code>info@kontur-cosmetics.de</code> eintragen.</li>
+    <li>SMTP-Server: <code>w0217246.kasserver.com</code>, Port <strong>465</strong>, Benutzername volle Adresse, Passwort, SSL.</li>
+    <li>Bestätigungscode aus dem Postfach eingeben (kommt an info@).</li>
+  </ol>
+
+  <h2>5. Schnellprüfung bei Problemen</h2>
+  <table>
+    <tr><th>Symptom</th><td><strong>Was prüfen</strong></td></tr>
+    <tr><th>Anmeldung fehlgeschlagen</th><td>Vollständige Adresse als Benutzername? Passwort korrekt? Groß/Klein beachten.</td></tr>
+    <tr><th>Empfangen geht, Senden nicht</th><td>SMTP-Port 465 SSL oder 587 STARTTLS; „SMTP-Anmeldung“ aktiv.</td></tr>
+    <tr><th>Timeout / keine Verbindung</th><td>Internet/Firewall; Servername exakt <code>w0217246.kasserver.com</code>.</td></tr>
+    <tr><th>Unsicher</th><td>Zuerst im Browser testen: <a href="https://webmail.kasserver.com">webmail.kasserver.com</a> – wenn Webmail geht, stimmen Adresse und Passwort.</td></tr>
+  </table>
+
+  <div class="box">
+    <strong>Support:</strong> Bei anhaltenden Problemen an Ganz Soft wenden: info@ganz-soft.de<br>
+    Zugehöriges Blatt: „Zugangsdaten – Kontur Cosmetics“.
+  </div>
+</body>
+</html>

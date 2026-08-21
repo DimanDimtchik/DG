@@ -43,6 +43,10 @@ $bookingArticleOptions = $bookingArticleOptions ?? [];
     <input type="hidden" name="slot_datetime" id="dg-booking-slot-datetime" value="<?= View::escape($form['slot_datetime'] ?? '') ?>">
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $bookingId ?>"><?php endif; ?>
 
+    <?php if ($isEdit && trim((string) ($form['booking_code'] ?? '')) !== '') : ?>
+      <p class="dg-lead">Buchungsnummer: <strong><?= View::escape((string) $form['booking_code']) ?></strong></p>
+    <?php endif; ?>
+
     <div class="dg-form-grid">
       <label class="dg-field">
         <span>Leistung</span>

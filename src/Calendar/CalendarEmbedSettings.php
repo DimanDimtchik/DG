@@ -6,7 +6,10 @@ final class CalendarEmbedSettings
 {
     public const STORE_KEY = 'calendar_embed';
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die Standardwerte.
+     * @return array<string, mixed>
+     */
     public static function defaults(): array
     {
         return [
@@ -17,7 +20,10 @@ final class CalendarEmbedSettings
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Liefert die aktuelle Konfiguration.
+     * @return array<string, mixed>
+     */
     public static function config(): array
     {
         $stored = SettingsStore::get(self::STORE_KEY, self::defaults());
@@ -35,7 +41,10 @@ final class CalendarEmbedSettings
         return $out;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         $cfg = self::config();
@@ -45,11 +54,19 @@ final class CalendarEmbedSettings
         ]);
     }
 
+    /**
+     * Prüft: is online booking enabled.
+     * @return bool
+     */
     public static function isOnlineBookingEnabled(): bool
     {
         return (bool) self::config()['online_booking_enabled'];
     }
 
+    /**
+     * Methode page title.
+     * @return string
+     */
     public static function pageTitle(): string
     {
         $title = trim((string) self::config()['page_title']);
@@ -57,11 +74,19 @@ final class CalendarEmbedSettings
         return $title !== '' ? $title : (string) self::defaults()['page_title'];
     }
 
+    /**
+     * Methode intro text.
+     * @return string
+     */
     public static function introText(): string
     {
         return trim((string) self::config()['intro_text']);
     }
 
+    /**
+     * Methode success message.
+     * @return string
+     */
     public static function successMessage(): string
     {
         $message = trim((string) self::config()['success_message']);
@@ -69,6 +94,10 @@ final class CalendarEmbedSettings
         return $message !== '' ? $message : (string) self::defaults()['success_message'];
     }
 
+    /**
+     * Methode public booking url.
+     * @return string
+     */
     public static function publicBookingUrl(): string
     {
         $base = App::publicBaseUrl();
@@ -76,7 +105,11 @@ final class CalendarEmbedSettings
         return $base !== '' ? $base . '/termin' : '/termin';
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Methode save.
+     * @param array $input
+     * @return void
+     */
     public static function save(array $input): void
     {
         SettingsStore::set(self::STORE_KEY, [

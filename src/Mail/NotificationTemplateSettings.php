@@ -24,6 +24,11 @@ final class NotificationTemplateSettings
     /** UI-Schlüssel für Terminkalender (gespeichert als leere department_id). */
     public const CALENDAR_OWNER_ID = 'terminkalender';
 
+    /**
+     * Mappt Owner-ID auf Abteilungs-ID.
+     * @param string $ownerId
+     * @return string
+     */
     public static function ownerIdToDepartmentId(string $ownerId): string
     {
         $ownerId = trim($ownerId);
@@ -31,12 +36,20 @@ final class NotificationTemplateSettings
         return $ownerId === self::CALENDAR_OWNER_ID || $ownerId === '' ? '' : $ownerId;
     }
 
+    /**
+     * Mappt Abteilungs-ID auf Owner-ID.
+     * @param string $departmentId
+     * @return string
+     */
     public static function departmentIdToOwnerId(string $departmentId): string
     {
         return trim($departmentId) === '' ? self::CALENDAR_OWNER_ID : trim($departmentId);
     }
 
-    /** @return list<array{id: string, name: string, is_calendar: bool}> */
+    /**
+     * Liefert Vorlagen-Eigentümer für die UI.
+     * @return list<array{id: string, name: string, is_calendar: bool}>
+     */
     public static function templateOwners(): array
     {
         $owners = [
@@ -62,8 +75,11 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param list<array<string, mixed>> $templates
-     * @return list<array<string, mixed>>
+     * Methode templates for owner.
+     * @param string $ownerId
+     * @param array $templates
+     * @param bool $displayableOnly
+     * @return array<string, mixed>
      */
     public static function templatesForOwner(string $ownerId, array $templates, bool $displayableOnly = true): array
     {
@@ -95,7 +111,11 @@ final class NotificationTemplateSettings
         return $out;
     }
 
-    /** Systemvorlagen und ausgefüllte eigene Vorlagen — leere Entwürfe ausblenden. */
+    /**
+     * Prüft: is displayable template.
+     * @param array $template
+     * @return bool
+     */
     public static function isDisplayableTemplate(array $template): bool
     {
         if (!empty($template['builtin'])) {
@@ -114,7 +134,10 @@ final class NotificationTemplateSettings
         return $subject !== '' || $title !== '' || $intro !== '';
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode categories.
+     * @return array<string, mixed>
+     */
     public static function categories(): array
     {
         return [
@@ -123,7 +146,10 @@ final class NotificationTemplateSettings
         ];
     }
 
-    /** @return array<string, string> */
+    /**
+     * Methode mode labels.
+     * @return array<string, mixed>
+     */
     public static function modeLabels(): array
     {
         return [
@@ -133,7 +159,10 @@ final class NotificationTemplateSettings
         ];
     }
 
-    /** @return list<array{id: string, name: string, category: string, department_id: string, event_slug: string, builtin: bool, subject: string, title: string, intro: string, sort_order: int}> */
+    /**
+     * Methode default builtin templates.
+     * @return array<string, mixed>
+     */
     public static function defaultBuiltinTemplates(): array
     {
         $calendar = [
@@ -141,7 +170,7 @@ final class NotificationTemplateSettings
                 'name' => 'Buchungsbestätigung (Kunde)',
                 'subject' => 'Terminbestätigung: {termin_datum}',
                 'title' => 'Terminbestätigung',
-                'intro' => 'Ihr Termin am {termin_datum} wurde erfolgreich gebucht. Vielen Dank!',
+                'intro' => 'Ihr Termin am {termin_datum} um {termin_zeit} wurde gebucht. Ihre Buchungsnummer: {buchungsnummer}. Bitte bewahren Sie diese Nummer auf – z. B. für Rückfragen im Kontaktformular.',
             ],
             self::SLUG_CANCELLATION => [
                 'name' => 'Storno (Kunde)',
@@ -177,7 +206,10 @@ final class NotificationTemplateSettings
         return $out;
     }
 
-    /** @return array{templates: list<array<string, mixed>>, department_modes: array<string, array{mode: string, inherit_from: string}>} */
+    /**
+     * Methode all.
+     * @return array<string, mixed>
+     */
     public static function all(): array
     {
         $defaults = [
@@ -200,7 +232,10 @@ final class NotificationTemplateSettings
         return self::sanitizeStore(is_array($stored) ? $stored : []);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Methode for form.
+     * @return array<string, mixed>
+     */
     public static function forForm(): array
     {
         $all = self::all();
@@ -237,8 +272,11 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param list<array<string, mixed>> $templates
-     * @return list<array<string, mixed>>
+     * Methode templates for scope.
+     * @param string $category
+     * @param string $departmentId
+     * @param array $templates
+     * @return array<string, mixed>
      */
     public static function templatesForScope(string $category, string $departmentId, array $templates): array
     {
@@ -258,7 +296,13 @@ final class NotificationTemplateSettings
         return $out;
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Führt aus: resolved template.
+     * @param string $departmentId
+     * @param string $category
+     * @param string $templateId
+     * @return array|null
+     */
     public static function resolvedTemplate(string $departmentId, string $category, string $templateId): ?array
     {
         $category = self::normalizeCategory($category);
@@ -305,14 +349,22 @@ final class NotificationTemplateSettings
             ?? self::findBuiltin($all['templates'], $templateId, $category);
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert Formulardaten.
+     * @param array $input
+     * @return void
+     */
     public static function saveFromPost(array $input): void
     {
         self::saveAllTemplatesFromPost($input);
     }
 
     /** Alle Vorlagen aus Benachrichtigungen — Zuordnungsmodi bleiben erhalten. */
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert all templates from post.
+     * @param array $input
+     * @return void
+     */
     public static function saveAllTemplatesFromPost(array $input): void
     {
         $all = self::all();
@@ -349,14 +401,22 @@ final class NotificationTemplateSettings
         ]);
     }
 
-    /** @deprecated */
+    /**
+     * Speichert global templates from post.
+     * @param array $input
+     * @return void
+     */
     public static function saveGlobalTemplatesFromPost(array $input): void
     {
         self::saveAllTemplatesFromPost($input);
     }
 
     /** Abteilungs-Zuordnung und abteilungsspezifische Vorlagen (Einstellungen → Abteilungen). */
-    /** @param array<string, mixed> $input */
+    /**
+     * Speichert department notification from post.
+     * @param array $input
+     * @return void
+     */
     public static function saveDepartmentNotificationFromPost(array $input): void
     {
         $all = self::all();
@@ -368,9 +428,10 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param list<array<string, mixed>> $templates
-     * @param callable(array<string, mixed>): bool $predicate
-     * @return list<array<string, mixed>>
+     * Methode filter templates.
+     * @param array $templates
+     * @param callable $predicate
+     * @return array<string, mixed>
      */
     private static function filterTemplates(array $templates, callable $predicate): array
     {
@@ -385,9 +446,11 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param array<string, mixed> $input
-     * @param callable(array<string, mixed>): bool $predicate
-     * @return list<array<string, mixed>>
+     * Führt aus: parse templates from post.
+     * @param array $input
+     * @param callable $predicate
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
      */
     private static function parseTemplatesFromPost(array $input, callable $predicate): array
     {
@@ -423,8 +486,9 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param array<string, mixed> $input
-     * @param array<string, array{mode: string, inherit_from: string}> $fallback
+     * Führt aus: parse department modes from post.
+     * @param array $input Eingabedaten
+     * @param array $fallback
      * @return array<string, array{mode: string, inherit_from: string}>
      */
     private static function parseDepartmentModesFromPost(array $input, array $fallback): array
@@ -461,8 +525,9 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param array<string, array{mode: string, inherit_from: string}> $departmentModes
-     * @param list<array{id: string, name: string}> $options
+     * Methode departments with own templates.
+     * @param array $departmentModes
+     * @param array $options
      * @return list<array{id: string, name: string}>
      */
     public static function departmentsWithOwnTemplates(array $departmentModes, array $options): array
@@ -479,7 +544,11 @@ final class NotificationTemplateSettings
         return $out;
     }
 
-    /** @param array<string, mixed> $legacy */
+    /**
+     * Methode migrate legacy.
+     * @param array $legacy
+     * @return array<string, mixed>
+     */
     private static function migrateLegacy(array $legacy): array
     {
         $templates = self::defaultBuiltinTemplates();
@@ -555,7 +624,11 @@ final class NotificationTemplateSettings
         return ['templates' => $templates, 'department_modes' => $departmentModes];
     }
 
-    /** @param array<string, mixed> $stored */
+    /**
+     * Führt aus: sanitize store.
+     * @param array $stored
+     * @return array<string, mixed>
+     */
     private static function sanitizeStore(array $stored): array
     {
         $templates = [];
@@ -601,8 +674,9 @@ final class NotificationTemplateSettings
     }
 
     /**
-     * @param list<array<string, mixed>> $templates
-     * @return list<array<string, mixed>>
+     * Methode ensure builtin templates.
+     * @param array $templates
+     * @return array<string, mixed>
      */
     private static function ensureBuiltinTemplates(array $templates): array
     {
@@ -642,7 +716,11 @@ final class NotificationTemplateSettings
         return $result;
     }
 
-    /** @param array<string, mixed> $row */
+    /**
+     * Führt aus: sanitize template row.
+     * @param array $row
+     * @return array|null
+     */
     private static function sanitizeTemplateRow(array $row): ?array
     {
         $id = trim((string) ($row['id'] ?? ''));
@@ -686,7 +764,11 @@ final class NotificationTemplateSettings
         return self::mergeWithBuiltinDefaults($template);
     }
 
-    /** @return array<string, mixed>|null */
+    /**
+     * Methode default builtin by slug.
+     * @param string $slug
+     * @return array|null
+     */
     private static function defaultBuiltinBySlug(string $slug): ?array
     {
         foreach (self::defaultBuiltinTemplates() as $builtin) {
@@ -698,12 +780,21 @@ final class NotificationTemplateSettings
         return null;
     }
 
+    /**
+     * Prüft: is global builtin slug.
+     * @param string $slug
+     * @return bool
+     */
     private static function isGlobalBuiltinSlug(string $slug): bool
     {
         return $slug !== '' && self::defaultBuiltinBySlug($slug) !== null;
     }
 
-    /** @param array<string, mixed> $template */
+    /**
+     * Methode merge with builtin defaults.
+     * @param array $template
+     * @return array<string, mixed>
+     */
     private static function mergeWithBuiltinDefaults(array $template): array
     {
         if (trim((string) ($template['department_id'] ?? '')) !== '') {
@@ -734,7 +825,14 @@ final class NotificationTemplateSettings
         ];
     }
 
-    /** @param list<array<string, mixed>> $templates */
+    /**
+     * Liefert template.
+     * @param array $templates
+     * @param string $id
+     * @param string $category
+     * @param string $departmentId
+     * @return array|null
+     */
     private static function findTemplate(array $templates, string $id, string $category, string $departmentId): ?array
     {
         foreach ($templates as $template) {
@@ -746,7 +844,13 @@ final class NotificationTemplateSettings
         return null;
     }
 
-    /** @param list<array<string, mixed>> $templates */
+    /**
+     * Liefert builtin.
+     * @param array $templates
+     * @param string $slug
+     * @param string $category
+     * @return array|null
+     */
     private static function findBuiltin(array $templates, string $slug, string $category): ?array
     {
         foreach ($templates as $template) {
@@ -761,6 +865,11 @@ final class NotificationTemplateSettings
         return null;
     }
 
+    /**
+     * Führt aus: normalize category.
+     * @param string $category
+     * @return string
+     */
     private static function normalizeCategory(string $category): string
     {
         if ($category === self::CATEGORY_COMMUNICATION || $category === self::CATEGORY_ACCOUNTING) {
@@ -770,6 +879,11 @@ final class NotificationTemplateSettings
         return isset(self::categories()[$category]) ? $category : self::CATEGORY_DEPARTMENT;
     }
 
+    /**
+     * Führt aus: normalize mode.
+     * @param string $mode
+     * @return string
+     */
     private static function normalizeMode(string $mode): string
     {
         return in_array($mode, [self::MODE_STANDARD, self::MODE_OWN, self::MODE_INHERIT], true)
