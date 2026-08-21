@@ -104,11 +104,12 @@ final class InstallImportRunner
     {
         $type = (string) ($job['type'] ?? '');
         $offset = (int) ($job['offset'] ?? -1);
+        $source = (string) ($job['source'] ?? 'other');
 
         return match ($type) {
-            InstallImportQueue::TYPE_CONTACTS => InstallContactImporter::importBatch($path, $offset),
-            InstallImportQueue::TYPE_EMPLOYEES => InstallEmployeeImporter::importBatch($path, $offset),
-            InstallImportQueue::TYPE_BOOKINGS => InstallBookingImporter::importBatch($path, $offset),
+            InstallImportQueue::TYPE_CONTACTS => InstallContactImporter::importBatch($path, $offset, $source),
+            InstallImportQueue::TYPE_EMPLOYEES => InstallEmployeeImporter::importBatch($path, $offset, $source),
+            InstallImportQueue::TYPE_BOOKINGS => InstallBookingImporter::importBatch($path, $offset, $source),
             InstallImportQueue::TYPE_ARTICLES => self::importArticles($path),
             InstallImportQueue::TYPE_VOUCHERS => InstallVoucherImporter::importBatch($path),
             default => throw new InvalidArgumentException('Unbekannter Importtyp: ' . $type),

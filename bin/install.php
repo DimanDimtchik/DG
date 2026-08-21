@@ -301,7 +301,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!empty($wizard['import']['enabled'])) {
             try {
-                $jobs = InstallImportQueue::buildJobsFromUploads($wizard['import']['enabled'], $_FILES);
+                $sources = [];
+                foreach (array_keys($wizard['import']['enabled']) as $importType) {
+                    $sources[$importType] = InstallImportSourcePresets::normalize(
+                        (string) ($_POST['import_source'][$importType] ?? 'other')
+                    );
+                }
+                $wizard['import']['sources'] = $sources;
+                $jobs = InstallImportQueue::buildJobsFromUploads($wizard['import']['enabled'], $_FILES, $sources);
                 InstallImportQueue::saveManifest($jobs);
                 InstallImportQueue::saveState([
                     'jobs' => $jobs,
@@ -715,7 +722,8 @@ $userRoles = [
 $done = !empty($wizard['done']);
 $importRunning = !empty($wizard['import_running']);
 $version = is_readable(DG_ROOT . '/config/version.php') ? (string) require DG_ROOT . '/config/version.php' : '?';
-$importJobs = InstallImportQueue::loadState()['jobs'] ?? [];
+$importState = InstallImportQueue::loadState();
+$importJobs = is_array($importState) ? ($importState['jobs'] ?? []) : [];
 
 ?><!doctype html>
 <html lang="de">
@@ -761,7 +769,9 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
 .import-block{border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin-bottom:1rem;background:#f8fafc}
 .import-block.is-disabled{opacity:.55}
 .import-block__head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}
-.import-block__file{margin-top:.75rem}
+.import-block__source{margin-top:.75rem}
+.import-source-hint{font-size:.8rem;color:#475569;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:.65rem .75rem;margin:.5rem 0 0}
+.import-source-hint strong{color:#334155}
 .owner-row,.user-row{display:grid;grid-template-columns:1fr 1fr auto;gap:.5rem;align-items:start;margin-bottom:.5rem}
 .user-row{grid-template-columns:1fr 1fr 1fr auto}
 .remove-btn{background:none;border:none;color:#dc2626;cursor:pointer;font-size:1.2rem;padding:.5rem;line-height:1}
@@ -1227,10 +1237,17 @@ function addOwner(){
 <form method="post" enctype="multipart/form-data" class="card">
 <input type="hidden" name="step" value="5">
 <h2>Bestehende Daten importieren (optional)</h2>
-<p class="hint">Wählen Sie die Datentypen, die Sie aus Ihrem bisherigen System übernehmen möchten. Der Import startet nach der Installation und kann einige Minuten dauern.</p>
+<p class="hint">Laden Sie einfach die Dateien hoch, die Ihr bisheriges Programm erzeugt — meist eine <strong>Excel-Datei (.xlsx)</strong> oder ein Export. Sie müssen nichts umwandeln: Wir erkennen die Spalten automatisch.</p>
 
+<?php
+$importSources = InstallImportSourcePresets::all();
+$tabularAccept = InstallImportSourcePresets::tabularAcceptAttribute();
+?>
 <?php foreach (InstallImportQueue::TYPES as $type => $meta): ?>
-<?php $checked = !empty($wizard['import']['enabled'][$type]); ?>
+<?php
+$checked = !empty($wizard['import']['enabled'][$type]);
+$selectedSource = InstallImportSourcePresets::normalize($wizard['import']['sources'][$type] ?? 'excel');
+?>
 <div class="import-block" data-import-block="<?= htmlspecialchars($type) ?>">
     <div class="import-block__head">
         <label style="margin:0">
@@ -1240,17 +1257,35 @@ function addOwner(){
             <span style="font-weight:400;color:#64748b;font-size:.8rem"><?= htmlspecialchars($meta['description']) ?></span>
         </label>
         <?php if ($type !== InstallImportQueue::TYPE_VOUCHERS && InstallImportQueue::templateDownload($type) !== null): ?>
-        <a class="btn-link" href="?action=import-template&amp;type=<?= urlencode($type) ?>">CSV-Vorlage</a>
+        <a class="btn-link" href="?action=import-template&amp;type=<?= urlencode($type) ?>">Beispiel-Vorlage</a>
         <?php endif; ?>
     </div>
     <div class="import-block__file" data-import-file="<?= htmlspecialchars($type) ?>" <?= $checked ? '' : 'hidden' ?>>
+        <?php if ($type !== InstallImportQueue::TYPE_VOUCHERS): ?>
+        <div class="import-block__source">
+            <label>Aus welchem Programm stammen die Daten?</label>
+            <select name="import_source[<?= htmlspecialchars($type) ?>]" data-import-source="<?= htmlspecialchars($type) ?>">
+                <?php foreach ($importSources as $sourceKey => $sourceMeta): ?>
+                <option value="<?= htmlspecialchars($sourceKey) ?>" <?= $selectedSource === $sourceKey ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($sourceMeta['label']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <div class="import-source-hint" data-import-hint="<?= htmlspecialchars($type) ?>">
+                <strong>So geht's:</strong>
+                <span data-import-hint-text><?= htmlspecialchars($importSources[$selectedSource]['hint']) ?></span>
+                <br><span style="color:#64748b">Unterstützt: <?= htmlspecialchars($importSources[$selectedSource]['formats']) ?></span>
+            </div>
+        </div>
+        <?php endif; ?>
         <?php if ($type === InstallImportQueue::TYPE_VOUCHERS): ?>
         <label>Belegdateien (PDF, JPG, PNG — mehrere möglich)</label>
         <input type="file" name="file_vouchers[]" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff" multiple>
         <p class="hint">Die Verarbeitung von Belegen/Rechnungen folgt in einer späteren Version. Dateien werden zwischengespeichert.</p>
         <?php else: ?>
-        <label>Importdatei</label>
-        <input type="file" name="file_<?= htmlspecialchars($type) ?>" <?= $type === InstallImportQueue::TYPE_ARTICLES ? 'accept=".csv,.txt,.xlsx,.xls,.xml,.json,.pdf"' : 'accept=".csv,.txt"' ?>>
+        <label>Datei hochladen</label>
+        <input type="file" name="file_<?= htmlspecialchars($type) ?>" accept="<?= htmlspecialchars($type === InstallImportQueue::TYPE_ARTICLES ? $tabularAccept . ',.pdf' : $tabularAccept) ?>">
+        <p class="hint">Excel (.xlsx) bevorzugt — alternativ CSV, XML oder JSON. Alte Excel-Dateien (.xls): bitte einmal als .xlsx speichern.</p>
         <?php endif; ?>
     </div>
 </div>
@@ -1263,6 +1298,11 @@ function addOwner(){
 </form>
 
 <script>
+var importSourceHints = <?= json_encode(array_map(static fn (array $m): array => [
+    'hint' => $m['hint'],
+    'formats' => $m['formats'],
+], $importSources), JSON_UNESCAPED_UNICODE) ?>;
+
 document.querySelectorAll('[data-import-toggle]').forEach(function (el) {
     el.addEventListener('change', function () {
         var type = el.getAttribute('data-import-toggle');
@@ -1270,6 +1310,19 @@ document.querySelectorAll('[data-import-toggle]').forEach(function (el) {
         var wrap = document.querySelector('[data-import-block="' + type + '"]');
         if (block) { block.hidden = !el.checked; }
         if (wrap) { wrap.classList.toggle('is-disabled', !el.checked); }
+    });
+});
+
+document.querySelectorAll('[data-import-source]').forEach(function (select) {
+    select.addEventListener('change', function () {
+        var type = select.getAttribute('data-import-source');
+        var meta = importSourceHints[select.value] || importSourceHints.other;
+        var hintBox = document.querySelector('[data-import-hint="' + type + '"]');
+        if (!hintBox || !meta) { return; }
+        var textEl = hintBox.querySelector('[data-import-hint-text]');
+        if (textEl) { textEl.textContent = meta.hint; }
+        var formatLine = hintBox.querySelector('span[style]');
+        if (formatLine) { formatLine.textContent = 'Unterstützt: ' + meta.formats; }
     });
 });
 </script>

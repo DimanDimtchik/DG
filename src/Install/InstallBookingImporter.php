@@ -9,7 +9,7 @@ final class InstallBookingImporter
     /**
      * @return array{done: bool, progress: int, imported: int, skipped: int, errors: list<string>, message: string, next_offset?: int}
      */
-    public static function importBatch(string $path, int $offset): array
+    public static function importBatch(string $path, int $offset, string $source = 'other'): array
     {
         $rows = InstallCsvHelper::readRows($path);
         if (count($rows) < 2) {
@@ -23,7 +23,7 @@ final class InstallBookingImporter
             ];
         }
 
-        $map = InstallCsvHelper::mapColumns($rows[0], [
+        $map = InstallCsvHelper::mapColumns($rows[0], InstallCsvHelper::mergeAliases([
             'slot_datetime' => ['datum', 'datum_zeit', 'termin', 'slot', 'slot_datetime', 'start'],
             'customer_name' => ['kunde', 'kundenname', 'name', 'customer_name'],
             'customer_email' => ['email', 'e_mail', 'customer_email'],
@@ -32,7 +32,7 @@ final class InstallBookingImporter
             'admin_notes' => ['notiz', 'notizen', 'admin_notes', 'bemerkung'],
             'employee_name' => ['mitarbeiter', 'employee', 'employee_name'],
             'article_title' => ['leistung', 'artikel', 'article', 'article_title'],
-        ]);
+        ], InstallImportSourcePresets::bookingAliases($source)));
 
         $dataRows = count($rows) - 1;
         $imported = 0;

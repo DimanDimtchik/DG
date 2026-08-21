@@ -14,19 +14,19 @@ final class InstallImportQueue
     public const TYPES = [
         self::TYPE_CONTACTS => [
             'label' => 'Kontakte',
-            'description' => 'Kunden, Lieferanten und Geschäftspartner (CSV)',
+            'description' => 'Kunden, Lieferanten — Excel oder Export aus Ihrem Programm',
         ],
         self::TYPE_EMPLOYEES => [
             'label' => 'Mitarbeiter',
-            'description' => 'Kalender-Mitarbeiter mit Bereichen (CSV)',
+            'description' => 'Personal — z. B. aus ShiftBase, Excel oder DATEV',
         ],
         self::TYPE_BOOKINGS => [
             'label' => 'Termine',
-            'description' => 'Bestehende Terminbuchungen (CSV)',
+            'description' => 'Termine/Schichten — Excel oder Export aus Kalender/ShiftBase',
         ],
         self::TYPE_ARTICLES => [
             'label' => 'Artikel & Leistungen',
-            'description' => 'CSV, Excel, XML, JSON oder PDF',
+            'description' => 'Excel, CSV, XML, JSON oder PDF',
         ],
         self::TYPE_VOUCHERS => [
             'label' => 'Belege & Rechnungen',
@@ -60,9 +60,10 @@ final class InstallImportQueue
     /**
      * @param array<string, mixed> $selection
      * @param array<string, array{name?: string, tmp_name?: string, error?: int}> $uploads
+     * @param array<string, string> $sources
      * @return list<array<string, mixed>>
      */
-    public static function buildJobsFromUploads(array $selection, array $uploads): array
+    public static function buildJobsFromUploads(array $selection, array $uploads, array $sources = []): array
     {
         self::ensureStorageDir();
         $jobs = [];
@@ -104,6 +105,7 @@ final class InstallImportQueue
                 'label' => $meta['label'],
                 'file' => $safeName,
                 'original_name' => $originalName,
+                'source' => InstallImportSourcePresets::normalize($sources[$type] ?? 'other'),
                 'status' => 'pending',
                 'progress' => 0,
                 'imported' => 0,
@@ -254,6 +256,7 @@ final class InstallImportQueue
             'label' => self::TYPES[self::TYPE_VOUCHERS]['label'],
             'file' => 'vouchers',
             'original_name' => $saved . ' Datei(en)',
+            'source' => 'other',
             'status' => 'pending',
             'progress' => 0,
             'imported' => 0,

@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
-/** CSV-Hilfen für den Installations-Datenimport. */
+/** Tabellarische Import-Hilfen (CSV, Excel, XML, JSON). */
 final class InstallCsvHelper
 {
     /**
+     * Liest tabellarische Daten — akzeptiert dieselben Formate wie der Artikel-Import.
+     *
      * @return list<list<string>>
      */
     public static function readRows(string $path): array
@@ -14,11 +16,28 @@ final class InstallCsvHelper
         }
 
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        if ($ext === 'csv' || $ext === 'txt') {
-            return CalendarArticleImportReader::readFile($path, 'csv');
+        if (!in_array($ext, InstallImportSourcePresets::tabularExtensions(), true)) {
+            throw new InvalidArgumentException(
+                'Dateiformat wird nicht unterstützt. Bitte laden Sie eine Excel- (.xlsx), CSV-, XML- oder JSON-Datei hoch.'
+            );
         }
 
-        throw new InvalidArgumentException('Für diesen Importtyp wird eine CSV-Datei benötigt.');
+        return CalendarArticleImportReader::readFile($path, $ext === 'txt' ? 'csv' : $ext);
+    }
+
+    /**
+     * @param array<string, list<string>> $baseAliases
+     * @param array<string, list<string>> $extraAliases
+     * @return array<string, list<string>>
+     */
+    public static function mergeAliases(array $baseAliases, array $extraAliases): array
+    {
+        $merged = $baseAliases;
+        foreach ($extraAliases as $field => $names) {
+            $merged[$field] = array_values(array_unique(array_merge($merged[$field] ?? [], $names)));
+        }
+
+        return $merged;
     }
 
     /**

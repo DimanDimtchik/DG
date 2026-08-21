@@ -9,7 +9,7 @@ final class InstallContactImporter
     /**
      * @return array{done: bool, progress: int, imported: int, skipped: int, errors: list<string>, message: string}
      */
-    public static function importBatch(string $path, int $offset): array
+    public static function importBatch(string $path, int $offset, string $source = 'other'): array
     {
         $rows = InstallCsvHelper::readRows($path);
         if (count($rows) < 2) {
@@ -23,7 +23,7 @@ final class InstallContactImporter
             ];
         }
 
-        $map = InstallCsvHelper::mapColumns($rows[0], [
+        $map = InstallCsvHelper::mapColumns($rows[0], InstallCsvHelper::mergeAliases([
             'salutation' => ['anrede', 'salutation'],
             'first_name' => ['vorname', 'first_name'],
             'last_name' => ['nachname', 'last_name'],
@@ -41,7 +41,7 @@ final class InstallContactImporter
             'country' => ['land', 'country'],
             'contact_role' => ['rolle', 'contact_role', 'typ'],
             'login' => ['login', 'benutzername', 'username'],
-        ]);
+        ], InstallImportSourcePresets::contactAliases($source)));
 
         $dataRows = count($rows) - 1;
         $imported = 0;

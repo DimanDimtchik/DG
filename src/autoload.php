@@ -186,6 +186,7 @@ spl_autoload_register(static function (string $class): void {
         'InstallVoucherImporter' => '/src/Install/InstallVoucherImporter.php',
         'InstallImportQueue' => '/src/Install/InstallImportQueue.php',
         'InstallImportRunner' => '/src/Install/InstallImportRunner.php',
+        'InstallImportSourcePresets' => '/src/Install/InstallImportSourcePresets.php',
         'KdvCustomerRepository' => '/src/Kdv/KdvCustomerRepository.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',

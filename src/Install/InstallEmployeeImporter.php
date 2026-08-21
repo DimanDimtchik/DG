@@ -9,7 +9,7 @@ final class InstallEmployeeImporter
     /**
      * @return array{done: bool, progress: int, imported: int, skipped: int, errors: list<string>, message: string, next_offset?: int}
      */
-    public static function importBatch(string $path, int $offset): array
+    public static function importBatch(string $path, int $offset, string $source = 'other'): array
     {
         $rows = InstallCsvHelper::readRows($path);
         if (count($rows) < 2) {
@@ -23,12 +23,12 @@ final class InstallEmployeeImporter
             ];
         }
 
-        $map = InstallCsvHelper::mapColumns($rows[0], [
+        $map = InstallCsvHelper::mapColumns($rows[0], InstallCsvHelper::mergeAliases([
             'name' => ['name', 'mitarbeiter', 'display_name', 'anzeigename'],
             'area' => ['bereich', 'area', 'abteilung'],
             'email' => ['email', 'e_mail', 'mail'],
             'active' => ['aktiv', 'active', 'is_active'],
-        ]);
+        ], InstallImportSourcePresets::employeeAliases($source)));
 
         $defaultAreaId = self::ensureDefaultAreaId();
         $dataRows = count($rows) - 1;
