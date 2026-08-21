@@ -29,7 +29,7 @@ $saldo = static function (float $signed) use ($fmt): string {
     }
     return $fmt(abs($signed)) . ' ' . ($signed > 0 ? 'S' : 'H');
 };
-$accountLink = static fn (string $acc): string => $baseUrl . '&year=' . $year . '&account=' . rawurlencode($acc);
+$accountLink = static fn (string $acc): string => $period->appendToUrl($baseUrl . '&account=' . rawurlencode($acc));
 ?>
 <div class="dg-wrap dg-buchhaltung-konten-uebersicht">
   <?php View::render('partials/flash', compact('flash')); ?>

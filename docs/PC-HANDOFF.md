@@ -1,6 +1,7 @@
 # PC-Handoff — Stand 2026-08-21
 
-> **Aktuell:** Arbeit liegt auf **`master`** (Import, Deploy, Shop-Recht, Wartung).  
+> **Aktuell:** Buchhaltung Phasen A–C auf Branch **`cursor/buchhaltung-phase-abc-6a0c`** — Deploy/Migration vom PC.  
+> **→ Deploy-Anleitung:** [`docs/BUCHHALTUNG-PC-HANDOFF.md`](BUCHHALTUNG-PC-HANDOFF.md)  
 > Handy/Cloud: [`docs/HANDY-HANDOFF.md`](HANDY-HANDOFF.md) · SSH/Secrets: [`docs/CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
 > Historisch: Zwei Feature-Branches waren unterwegs; Website-Bootstrap und Datenimport sind inzwischen auf `master`.

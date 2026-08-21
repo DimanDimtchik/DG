@@ -170,6 +170,56 @@ Frische Installation oder Test-VM (`storage/.installed` entfernen):
 
 ---
 
+## J. Buchhaltung Phasen A–C (Branch `cursor/buchhaltung-phase-abc-6a0c`)
+
+> Deploy: `.\deploy.bat` · Migration automatisch beim CRM-Login · Details: `docs/BUCHHALTUNG-PC-HANDOFF.md`
+
+### J1 Zeitraum-Filter
+
+- [ ] **Belege:** Monat wählen → nur Belege dieses Monats
+- [ ] **Belege:** Von/Bis-Datum → korrekter Zeitraum
+- [ ] **Kontenübersicht:** Monatsfilter → Salden nur für Zeitraum
+- [ ] **Kassenbuch:** Zeitraumfilter → Ein/Aus/Saldo passt
+
+### J2 Skonto + USt
+
+- [ ] Beleg mit Skonto (discount_amount oder paid < gross) speichern
+- [ ] Journal im Belegformular: Skonto-Zeilen **mit** USt-Aufspaltung (3 Buchungen)
+- [ ] UStVA: Skonto reduziert KZ 62/63 bzw. 83/35
+
+### J3 Druck / PDF
+
+- [ ] Bilanz & GuV → „Drucken / PDF“ → HTML öffnet, Druckdialog OK
+- [ ] UStVA → Druck
+- [ ] Kassenbuch → Druck
+- [ ] Kontoauszug (Konto anklicken) → Druck
+
+### J4 UStVA Sonderfälle
+
+- [ ] Leerer Monat → Hinweis **Nullmeldung möglich**
+- [ ] Checkbox **Berichtigung** → gelber Hinweis
+- [ ] ELSTER-CSV Download funktioniert
+
+### J5 Kassenbuch Tagesabschluss
+
+- [ ] Datum wählen, gezählter Bestand eingeben → Abschluss speichern
+- [ ] Eintrag erscheint in Historie-Tabelle
+- [ ] Zweiter Abschluss am selben Tag → Fehlermeldung
+
+### J6 BWA & SuSa
+
+- [ ] Menü **BWA** sichtbar, Report mit Monatsfilter
+- [ ] Menü **SuSa** sichtbar, Konten mit Anfang/Soll/Haben/Saldo
+
+### J7 Bank & Export
+
+- [ ] CAMT.053 Import (wie bisher)
+- [ ] MT940 Import (`.sta` / `.940`)
+- [ ] Auto-Match: Beleg mit passender IBAN am Kontakt wird zugeordnet
+- [ ] Steuerberater-Export → **Komplett-Paket (ZIP)** enthält EXTF, UStVA, EÜR, SuSa, Beleg-ZIP
+
+---
+
 ## Schnellpfad (ca. 15 Minuten)
 
 1. Shop: Start + Preise Monat/Jahr + ein Checkout mit Testdaten  
