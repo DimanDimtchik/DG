@@ -550,8 +550,13 @@ final class VoucherRepository
         $reverseCharge = VoucherReverseCharge::isActive($reverseChargeType);
         $taxKey = $reverseCharge ? VoucherTaxKeys::KEY_REVERSE_CHARGE : '';
         $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
+        $documentKind = VoucherDocumentKind::sanitize((string) ($data['document_kind'] ?? ''));
+        if ($voucherType === 'income' && $documentKind === '') {
+            $documentKind = VoucherDocumentKind::INVOICE;
+        }
+        $parentVoucherId = max(0, (int) ($data['parent_voucher_id'] ?? 0));
         $arap = VoucherAccrual::parseFromData($data);
-        if (!VoucherAccrual::supportsAccrual($voucherType)) {
+        if (!VoucherAccrual::supportsAccrual($voucherType, $documentKind)) {
             $arap = [
                 'enabled' => false,
                 'current_year_percent' => 100,
@@ -662,6 +667,8 @@ final class VoucherRepository
 
         $fields = [
             'voucher_type' => $voucherType,
+            'document_kind' => $documentKind,
+            'parent_voucher_id' => $parentVoucherId > 0 ? $parentVoucherId : null,
             'voucher_date' => $voucherDate,
             'delivery_date' => $deliveryDate,
             'arap_enabled' => $arap['enabled'] ? 1 : 0,
@@ -669,7 +676,7 @@ final class VoucherRepository
             'arap_next_year_percent' => $arap['next_year_percent'],
             'contact_id' => $contactId,
             'supplier_name' => $supplierName,
-            'invoice_number' => self::resolveInvoiceNumber($voucherType, $data, $id),
+            'invoice_number' => self::resolveInvoiceNumber($voucherType, $data, $id, $documentKind),
             'description' => trim((string) ($data['description'] ?? '')),
             'gross_amount' => $amounts['gross_amount'],
             'discount_percent' => $discountPercent,
@@ -698,6 +705,8 @@ final class VoucherRepository
             $stmt = $pdo->prepare(
                 'UPDATE dg_vouchers SET
                     voucher_type = :voucher_type,
+                    document_kind = :document_kind,
+                    parent_voucher_id = :parent_voucher_id,
                     is_draft = 0,
                     voucher_date = :voucher_date,
                     delivery_date = :delivery_date,
@@ -736,13 +745,13 @@ final class VoucherRepository
         $fields['created_by'] = $userId;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_vouchers (
-                voucher_type, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
+                voucher_type, document_kind, parent_voucher_id, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
                 contact_id, supplier_name, invoice_number, description,
                 gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
                 net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
                 account_number, payment_status, notes, created_by
             ) VALUES (
-                :voucher_type, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
+                :voucher_type, :document_kind, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
                 :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
                 :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
@@ -942,6 +951,8 @@ final class VoucherRepository
     {
         return [
             'voucher_type' => 'expense',
+            'document_kind' => '',
+            'parent_voucher_id' => '',
             'voucher_date' => date('Y-m-d'),
             'delivery_date' => date('Y-m-d'),
             'arap_enabled' => '0',
@@ -1041,6 +1052,8 @@ final class VoucherRepository
 
         return [
             'voucher_type' => self::sanitizeVoucherType((string) ($row['voucher_type'] ?? 'expense')),
+            'document_kind' => (string) ($row['document_kind'] ?? ''),
+            'parent_voucher_id' => $row['parent_voucher_id'] !== null ? (string) $row['parent_voucher_id'] : '',
             'voucher_date' => (string) ($row['voucher_date'] ?? ''),
             'delivery_date' => (string) ($row['delivery_date'] ?? ''),
             'arap_enabled' => !empty($row['arap_enabled']) ? '1' : '0',
@@ -1116,6 +1129,34 @@ final class VoucherRepository
     }
 
     /**
+     * Nummernkreis je Ausgangsbeleg-Typ oder Belegart.
+     */
+    public static function numberRangeTypeForDocument(string $documentKind, string $voucherType): ?string
+    {
+        $fromKind = VoucherDocumentKind::numberRangeType(VoucherDocumentKind::sanitize($documentKind));
+        if ($fromKind !== null) {
+            return $fromKind;
+        }
+
+        return self::numberRangeTypeForVoucher($voucherType);
+    }
+
+    public static function peekDocumentNumber(string $voucherType, string $documentKind = ''): string
+    {
+        $rangeType = self::numberRangeTypeForDocument($documentKind, $voucherType);
+        if ($rangeType === null) {
+            throw new InvalidArgumentException('Für diese Dokumentart gibt es keinen Nummernkreis.');
+        }
+
+        return NumberRangeSettings::allocateNext($rangeType, false)['number'];
+    }
+
+    public static function usesAutoDocumentNumber(string $voucherType, string $documentKind = ''): bool
+    {
+        return self::numberRangeTypeForDocument($documentKind, $voucherType) !== null;
+    }
+
+    /**
      * numberRangeTypeForVoucher
      * @param string $voucherType Belegtyp
      * @return ?string
@@ -1148,6 +1189,22 @@ final class VoucherRepository
     }
 
     /**
+     * @return array<string, string> Dokumentart => Nummernkreis-Bezeichnung (Einnahmen-Kette)
+     */
+    public static function autoDocumentKindNumberLabels(): array
+    {
+        $labels = [];
+        foreach (VoucherDocumentKind::options() as $kind => $_label) {
+            $rangeType = VoucherDocumentKind::numberRangeType($kind);
+            if ($rangeType !== null) {
+                $labels[$kind] = NumberRangeSettings::documentTypes()[$rangeType] ?? $rangeType;
+            }
+        }
+
+        return $labels;
+    }
+
+    /**
      * usesAutoInvoiceNumber
      * @param string $voucherType Belegtyp
      * @return bool
@@ -1163,14 +1220,9 @@ final class VoucherRepository
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function peekInvoiceNumber(string $voucherType): string
+    public static function peekInvoiceNumber(string $voucherType, string $documentKind = ''): string
     {
-        $rangeType = self::numberRangeTypeForVoucher($voucherType);
-        if ($rangeType === null) {
-            throw new InvalidArgumentException('Für diese Belegart gibt es keinen Nummernkreis.');
-        }
-
-        return NumberRangeSettings::allocateNext($rangeType, false)['number'];
+        return self::peekDocumentNumber($voucherType, $documentKind);
     }
 
     /**
@@ -1208,9 +1260,9 @@ final class VoucherRepository
      * @param int|null $id Datensatz-ID
      * @return string
      */
-    private static function resolveInvoiceNumber(string $voucherType, array $data, ?int $id): string
+    private static function resolveInvoiceNumber(string $voucherType, array $data, ?int $id, string $documentKind = ''): string
     {
-        $rangeType = self::numberRangeTypeForVoucher($voucherType);
+        $rangeType = self::numberRangeTypeForDocument($documentKind, $voucherType);
         if ($rangeType === null) {
             return trim((string) ($data['invoice_number'] ?? ''));
         }
@@ -1316,6 +1368,11 @@ final class VoucherRepository
         $row['account_name'] = $accountName;
         $row['is_draft'] = !empty($row['is_draft']);
         $row['type_label'] = self::typeLabel((string) ($row['voucher_type'] ?? ''));
+        $documentKind = (string) ($row['document_kind'] ?? '');
+        $row['document_kind_label'] = VoucherDocumentKind::label($documentKind);
+        if ($documentKind !== '' && VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? '')) === 'income') {
+            $row['type_label'] = $row['document_kind_label'];
+        }
         $row['payment_label'] = self::paymentLabel((string) ($row['payment_status'] ?? ''));
         $row['payment_badge_class'] = VoucherPaymentStatus::badgeClass((string) ($row['payment_status'] ?? ''));
         $row['payment_settlement_kind'] = VoucherPaymentStatus::settlementKind((string) ($row['payment_status'] ?? ''));

@@ -22,6 +22,13 @@ final class LedgerPostingService
             return;
         }
 
+        if (!VoucherDocumentKind::isBookable(
+            (string) ($voucher['document_kind'] ?? ''),
+            (string) ($voucher['voucher_type'] ?? 'expense')
+        )) {
+            return;
+        }
+
         $fiscalYear = (int) substr((string) ($voucher['voucher_date'] ?? ''), 0, 4);
         if ($fiscalYear >= 2000 && FiscalYearService::isClosed($fiscalYear)) {
             return;
@@ -75,6 +82,13 @@ final class LedgerPostingService
      */
     private static function buildPostings(array $voucher): array
     {
+        if (!VoucherDocumentKind::isBookable(
+            (string) ($voucher['document_kind'] ?? ''),
+            (string) ($voucher['voucher_type'] ?? 'expense')
+        )) {
+            return [];
+        }
+
         $voucherId = (int) ($voucher['id'] ?? 0);
         $voucherType = (string) ($voucher['voucher_type'] ?? 'expense');
         $voucherDate = (string) ($voucher['voucher_date'] ?? date('Y-m-d'));

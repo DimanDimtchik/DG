@@ -22,6 +22,11 @@ $systemLines = is_array($form['system_lines'] ?? null) ? $form['system_lines'] :
 $skrLabel = ChartOfAccountsSettings::skrTypeOptions()[$chartOfAccountsConfig['skr_type'] ?? 'skr03'] ?? 'SKR03';
 $selectedType = VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? 'expense'));
 $typeHint = VoucherRepository::voucherTypeHint($selectedType);
+$selectedDocumentKind = VoucherDocumentKind::sanitize((string) ($form['document_kind'] ?? ''));
+if ($selectedType === 'income' && $selectedDocumentKind === '') {
+    $selectedDocumentKind = VoucherDocumentKind::defaultForIncome();
+}
+$documentKindOptions = VoucherDocumentKind::options();
 /** @var list<array<string, mixed>> $lineRows */
 $lineRows = is_array($form['lines'] ?? null) ? $form['lines'] : [];
 /** @var list<array<string, mixed>> $itemRows */
@@ -67,7 +72,7 @@ $hasBookingAmounts = array_sum($taxBreakdown) > 0
     || array_reduce($lineRows, static fn (bool $carry, array $line): bool => $carry || (float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')) > 0, false);
 $paymentStatus = VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? VoucherPaymentStatus::OPEN));
 $paymentStatusHint = VoucherPaymentStatus::hint($paymentStatus);
-$invoiceNumberRangeType = VoucherRepository::numberRangeTypeForVoucher($selectedType);
+$invoiceNumberRangeType = VoucherRepository::numberRangeTypeForDocument($selectedDocumentKind, $selectedType);
 $autoInvoiceNumber = $invoiceNumberRangeType !== null;
 $invoiceNumberRangeLabel = $autoInvoiceNumber
     ? (NumberRangeSettings::documentTypes()[$invoiceNumberRangeType] ?? 'Rechnung')
@@ -75,7 +80,7 @@ $invoiceNumberRangeLabel = $autoInvoiceNumber
 $invoiceNumberValue = (string) ($form['invoice_number'] ?? '');
 if ($autoInvoiceNumber && !$isEdit) {
     try {
-        $invoiceNumberValue = VoucherRepository::peekInvoiceNumber($selectedType);
+        $invoiceNumberValue = VoucherRepository::peekDocumentNumber($selectedType, $selectedDocumentKind);
     } catch (Throwable) {
         $invoiceNumberValue = '';
     }
@@ -92,13 +97,21 @@ $fiscalYear = (int) date('Y', strtotime((string) ($form['voucher_date'] ?? date(
 $nextFiscalYear = $fiscalYear + 1;
 $arapTypeLabel = VoucherAccrual::labelForType($selectedType);
 $arapTypeHint = VoucherAccrual::hintForType($selectedType);
-$showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $readOnly);
+$showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $readOnly, $selectedDocumentKind);
 $transferSupported = $isEdit
     && $paymentStatus === VoucherPaymentStatus::OPEN
     && in_array($selectedType, ['expense', 'expense_reduction'], true);
 $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferRepository::findByVoucher((int) $voucherId) : null;
 /** @var list<array<string, mixed>> $ledgerPostings */
 $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
+/** @var array{documents: list<array<string, mixed>>, current_id: int} $voucherChain */
+$voucherChain = is_array($voucherChain ?? null) ? $voucherChain : ['documents' => [], 'current_id' => 0];
+/** @var list<string> $followUpKinds */
+$followUpKinds = is_array($followUpKinds ?? null) ? $followUpKinds : [];
+/** @var array<string, mixed>|null $chainSummary */
+$chainSummary = is_array($chainSummary ?? null) ? $chainSummary : null;
+$showDocumentKindField = $selectedType === 'income';
+$documentKindReadOnly = $readOnly || $isEdit;
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -134,11 +147,22 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
+  <?php
+    View::partial('partials/voucher-document-chain', [
+        'voucherChain' => $voucherChain,
+        'followUpKinds' => $followUpKinds,
+        'chainSummary' => $chainSummary,
+        'voucherId' => (int) ($voucherId ?? 0),
+        'canEdit' => !($readOnly ?? false),
+    ]);
+  ?>
+
   <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form" enctype="multipart/form-data"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="voucher_save" value="1">
     <input type="hidden" name="contact_id" id="dg-voucher-contact-id" value="<?= View::escape($form['contact_id'] ?? '') ?>">
     <input type="hidden" name="draft_voucher_id" id="dg-voucher-draft-id" value="<?= (int) ($voucherId ?? 0) ?>">
+    <input type="hidden" name="parent_voucher_id" id="dg-voucher-parent-id" value="<?= View::escape((string) ($form['parent_voucher_id'] ?? '')) ?>">
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $voucherId ?>"><?php endif; ?>
 
     <?php if (!$readOnly) : ?>
@@ -186,6 +210,21 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
             <?php endforeach; ?>
           </select>
           <small class="dg-field-hint" id="dg-voucher-type-hint"><?= View::escape($typeHint) ?></small>
+        </label>
+        <label class="dg-field" id="dg-voucher-document-kind-field"<?= $showDocumentKindField ? '' : ' hidden' ?>>
+          <span>Dokumentart</span>
+          <?php if ($documentKindReadOnly) : ?>
+            <input type="hidden" name="document_kind" id="dg-voucher-document-kind" value="<?= View::escape($selectedDocumentKind) ?>">
+            <input type="text" value="<?= View::escape(VoucherDocumentKind::label($selectedDocumentKind)) ?>" readonly class="dg-input--computed">
+            <small class="dg-field-hint">Angebot, Lieferschein, Abschlags- und Schlussrechnung — nach dem Speichern nicht mehr änderbar.</small>
+          <?php else : ?>
+            <select name="document_kind" id="dg-voucher-document-kind"<?= $readOnly ? ' disabled' : '' ?>>
+              <?php foreach ($documentKindOptions as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"<?= $selectedDocumentKind === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <small class="dg-field-hint">Steuert Nummernkreis und ob der Beleg gebucht wird (Angebot/AB/Lieferschein = ohne Buchung).</small>
+          <?php endif; ?>
         </label>
         <label class="dg-field">
           <span>Belegdatum *</span>

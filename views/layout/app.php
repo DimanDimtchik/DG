@@ -334,6 +334,22 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
             VoucherRepository::autoInvoiceNumberLabels(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
+        documentKindOptions: <?= json_encode(
+            VoucherDocumentKind::options(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        documentKindNumberLabels: <?= json_encode(
+            VoucherRepository::autoDocumentKindNumberLabels(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        nonBookableDocumentKinds: <?= json_encode(
+            [
+                VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::ORDER_CONFIRMATION,
+                VoucherDocumentKind::DELIVERY_NOTE,
+            ],
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
         incomeVoucherTypes: <?= json_encode(
             VoucherIncomePositions::voucherTypesWithItems(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE

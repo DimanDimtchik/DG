@@ -51,6 +51,8 @@
   var contactHint = document.getElementById('dg-voucher-contact-hint');
   var typeSelect = document.getElementById('dg-voucher-type');
   var typeHint = document.getElementById('dg-voucher-type-hint');
+  var documentKindSelect = document.getElementById('dg-voucher-document-kind');
+  var documentKindField = document.getElementById('dg-voucher-document-kind-field');
   var bookingBody = document.getElementById('dg-voucher-booking-body');
   var bookingRowTemplate = document.getElementById('dg-voucher-booking-row-template');
   var bookingSumEl = document.getElementById('dg-voucher-booking-sum');
@@ -70,6 +72,23 @@
     return typeSelect ? typeSelect.value : 'expense';
   }
 
+  function getDocumentKind() {
+    return documentKindSelect ? documentKindSelect.value : '';
+  }
+
+  function isBookableDocumentKind() {
+    var voucherType = getVoucherType();
+    if (voucherType !== 'income') {
+      return true;
+    }
+    var kind = getDocumentKind();
+    if (!kind) {
+      return true;
+    }
+    var nonBookable = config.nonBookableDocumentKinds || [];
+    return nonBookable.indexOf(kind) === -1;
+  }
+
   function usesIncomeItems() {
     return incomeVoucherTypes.indexOf(getVoucherType()) !== -1;
   }
@@ -80,8 +99,18 @@
   }
 
   function supportsAccrualUi() {
+    if (!isBookableDocumentKind()) {
+      return false;
+    }
     var t = getVoucherType();
     return t === 'income' || t === 'expense' || t === 'expense_reduction';
+  }
+
+  function syncDocumentKindField() {
+    if (!documentKindField) {
+      return;
+    }
+    documentKindField.hidden = getVoucherType() !== 'income';
   }
 
   function taxTypeFromRate(rate) {
@@ -1800,11 +1829,19 @@
       if (typeHint) {
         typeHint.textContent = typeDescriptions[typeSelect.value] || '';
       }
+      syncDocumentKindField();
       syncInvoiceNumberField();
       syncIncomeMode();
       syncPaymentStatusOptions();
       syncArapUi();
       revalidateBookingAccounts();
+    });
+  }
+
+  if (documentKindSelect && documentKindSelect.tagName === 'SELECT') {
+    documentKindSelect.addEventListener('change', function () {
+      syncInvoiceNumberField();
+      syncArapUi();
     });
   }
 
@@ -1827,14 +1864,23 @@
     var invoiceInput = document.getElementById('dg-voucher-invoice-number');
     var invoiceHint = document.getElementById('dg-voucher-invoice-hint');
     var autoTypes = config.autoInvoiceTypes || {};
+    var kindLabels = config.documentKindNumberLabels || {};
     if (!invoiceInput || !typeSelect || readOnly) {
       return;
     }
 
-    var rangeLabel = autoTypes[typeSelect.value] || '';
+    var voucherType = typeSelect.value;
+    var documentKind = getDocumentKind();
+    var rangeLabel = voucherType === 'income' && documentKind
+      ? (kindLabels[documentKind] || '')
+      : (autoTypes[voucherType] || '');
     var isAuto = rangeLabel !== '';
     var isSaved = invoiceInput.getAttribute('data-saved-invoice') === '1';
-    var isExpense = typeSelect.value === 'expense' || typeSelect.value === 'expense_reduction';
+    var isExpense = voucherType === 'expense' || voucherType === 'expense_reduction';
+    var previewUrl = apiUrl + '?action=invoice_number_preview&voucher_type=' + encodeURIComponent(voucherType);
+    if (voucherType === 'income' && documentKind) {
+      previewUrl += '&document_kind=' + encodeURIComponent(documentKind);
+    }
 
     if (isAuto) {
       // Automatische Nummer aus dem Nummernkreis – nie Pflichtfeld.
@@ -1851,7 +1897,7 @@
         }
       }
       if (!isSaved) {
-        fetchJson(apiUrl + '?action=invoice_number_preview&voucher_type=' + encodeURIComponent(typeSelect.value))
+        fetchJson(previewUrl)
           .then(function (result) {
             if (result.ok && result.data && result.data.success && result.data.data && result.data.data.number) {
               invoiceInput.value = result.data.data.number;
@@ -1879,9 +1925,10 @@
   }
 
   if (typeSelect) {
+    syncDocumentKindField();
     syncInvoiceNumberField();
     var invoiceInputInit = document.getElementById('dg-voucher-invoice-number');
-    if (invoiceInputInit && (config.autoInvoiceTypes || {})[typeSelect.value]) {
+    if (invoiceInputInit && ((config.autoInvoiceTypes || {})[typeSelect.value] || (getVoucherType() === 'income' && (config.documentKindNumberLabels || {})[getDocumentKind()]))) {
       invoiceInputInit.setAttribute('data-was-auto', '1');
     }
   }

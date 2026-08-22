@@ -1538,11 +1538,14 @@ switch ($path) {
                 } catch (Throwable) {
                     $dbConnected = false;
                 }
+                $voucherChain = ['documents' => [], 'current_id' => 0];
+                $followUpKinds = [];
+                $chainSummary = null;
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
                     'menuItems', 'settingsItem', 'buchhaltungSection', 'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
-                    'chartOfAccountsConfig'
+                    'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary'
                 ));
                 break;
             }
@@ -2232,6 +2235,9 @@ switch ($path) {
                 }
             };
             $voucherId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+            $voucherChain = ['documents' => [], 'current_id' => 0];
+            $followUpKinds = [];
+            $chainSummary = null;
             if ($action === 'new') {
                 if (!$canEdit) {
                     header('Location: ' . RoleResolver::homePath($user), true, 302);
@@ -2245,11 +2251,35 @@ switch ($path) {
                 $applyBelegContactPrefill($form);
                 $formError = null;
                 $ledgerPostings = [];
+                $followFromId = (int) ($_GET['follow_from'] ?? 0);
+                $followDocumentKind = VoucherDocumentKind::sanitize((string) ($_GET['document_kind'] ?? ''));
+                if ($followFromId > 0 && $followDocumentKind !== '') {
+                    try {
+                        $form = VoucherDocumentChain::prefillFollowUp($followFromId, $followDocumentKind);
+                        $chainSummary = is_array($form['chain_summary'] ?? null) ? $form['chain_summary'] : null;
+                        unset($form['chain_summary']);
+                        $voucherChain = VoucherDocumentChain::chainView($followFromId);
+                        $title = 'Folgebeleg: ' . VoucherDocumentKind::label($followDocumentKind);
+                    } catch (Throwable $e) {
+                        $formError = $e->getMessage();
+                    }
+                }
             } elseif ($action === 'edit' && $voucherId > 0) {
                 $voucher = VoucherRepository::findById($voucherId);
                 if ($voucher === null) {
                     Flash::set('error', 'Beleg nicht gefunden.');
                     header('Location: /app?page=buchhaltung-belege', true, 302);
+                    exit;
+                }
+                if (trim((string) ($_GET['download'] ?? '')) === 'print') {
+                    $html = VoucherDocumentPrintService::render($voucher);
+                    $kindLabel = VoucherDocumentKind::label((string) ($voucher['document_kind'] ?? ''));
+                    if ($kindLabel === '') {
+                        $kindLabel = 'Beleg';
+                    }
+                    $number = trim((string) ($voucher['invoice_number'] ?? ''));
+                    $filename = $kindLabel . ($number !== '' ? '_' . preg_replace('/[^A-Za-z0-9._-]+/', '_', $number) : '') . '.html';
+                    AccountingPrintService::send($filename, $html);
                     exit;
                 }
                 $isDraftVoucher = !empty($voucher['is_draft']);
@@ -2261,6 +2291,17 @@ switch ($path) {
                 $ledgerPostings = $isDraftVoucher ? [] : LedgerRepository::postingsForVoucher($voucherId);
                 $applyBelegContactPrefill($form);
                 $formError = null;
+                $voucherChain = VoucherDocumentChain::chainView($voucherId);
+                $documentKind = (string) ($form['document_kind'] ?? '');
+                if ($canEdit && !$isDraftVoucher && VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income') {
+                    $followUpKinds = VoucherDocumentKind::followUpKinds($documentKind);
+                }
+                if ($documentKind === VoucherDocumentKind::FINAL_INVOICE) {
+                    $parentId = (int) ($form['parent_voucher_id'] ?? 0);
+                    if ($parentId > 0) {
+                        $chainSummary = VoucherDocumentChain::finalInvoiceSummary($parentId, $voucherId);
+                    }
+                }
             } else {
                 header('Location: /app?page=buchhaltung-belege', true, 302);
                 exit;
@@ -3413,6 +3454,9 @@ switch ($path) {
         $fiscalYears = $fiscalYears ?? [];
         $jaYearStatus = $jaYearStatus ?? 'open';
         $ledgerPostings = $ledgerPostings ?? [];
+        $voucherChain = $voucherChain ?? ['documents' => [], 'current_id' => 0];
+        $followUpKinds = $followUpKinds ?? [];
+        $chainSummary = $chainSummary ?? null;
         $oposDirection = $oposDirection ?? '';
         $oposSearch = $oposSearch ?? '';
         $oposData = $oposData ?? ['items' => [], 'totals' => ['receivable' => 0.0, 'payable' => 0.0]];
@@ -3530,6 +3574,9 @@ switch ($path) {
             'ledgerOverview',
             'ledgerStatement',
             'ledgerPostings',
+            'voucherChain',
+            'followUpKinds',
+            'chainSummary',
             'oposDirection',
             'oposSearch',
             'oposData',

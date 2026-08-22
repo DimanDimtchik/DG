@@ -34,6 +34,9 @@ final class OpenItemsRepository
                 continue;
             }
             $type = VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? 'expense'));
+            if (!VoucherDocumentKind::isBookable((string) ($row['document_kind'] ?? ''), $type)) {
+                continue;
+            }
             $isReceivable = LedgerAccounts::isIncomeDirection($type);
             $itemDirection = $isReceivable ? 'receivable' : 'payable';
 
