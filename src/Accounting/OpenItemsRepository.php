@@ -25,7 +25,7 @@ final class OpenItemsRepository
                 FROM dg_vouchers v
                 LEFT JOIN dg_contacts c ON c.id = v.contact_id
                 WHERE v.is_draft = 0
-                  AND v.payment_status IN ('open', 'direct_debit')
+                  AND v.payment_status IN ('open', 'partial', 'direct_debit')
                 ORDER BY v.voucher_date ASC, v.id ASC";
         $rows = Database::pdo()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
@@ -50,10 +50,12 @@ final class OpenItemsRepository
                 continue;
             }
 
-            $openAmount = self::openAmount($row);
+            $openAmount = VoucherPaymentRepository::openAmount($row);
             if ($openAmount <= 0.0) {
                 continue;
             }
+
+            $totalPaid = VoucherPaymentRepository::totalPaid((int) ($row['id'] ?? 0));
 
             $contactLabel = trim((string) ($row['supplier_name'] ?? ''));
             if ($contactLabel === '') {
@@ -95,6 +97,7 @@ final class OpenItemsRepository
                 'contact_label' => $contactLabel,
                 'person_account' => $personAccount,
                 'gross_amount' => round((float) ($row['gross_amount'] ?? 0), 2),
+                'paid_amount' => $totalPaid,
                 'open_amount' => $openAmount,
                 'payment_status' => (string) ($row['payment_status'] ?? 'open'),
                 'description' => (string) ($row['description'] ?? ''),
@@ -104,13 +107,5 @@ final class OpenItemsRepository
         }
 
         return $result;
-    }
-
-    /**
-     * @param array<string, mixed> $voucher
-     */
-    private static function openAmount(array $voucher): float
-    {
-        return DunningService::openAmount($voucher);
     }
 }

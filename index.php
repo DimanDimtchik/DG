@@ -1826,6 +1826,61 @@ switch ($path) {
             exit;
         }
 
+        // POST: Teilzahlung erfassen
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_payment_add'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    $amount = round((float) str_replace(',', '.', (string) ($_POST['payment_new_amount'] ?? '0')), 2);
+                    VoucherPaymentRepository::addPayment(
+                        $voucherId,
+                        $amount,
+                        (string) ($_POST['payment_new_date'] ?? ''),
+                        (string) ($_POST['payment_new_method'] ?? VoucherPaymentRepository::METHOD_BANK),
+                        (string) ($_POST['payment_new_reference'] ?? ''),
+                        null,
+                        null,
+                        $user->id,
+                    );
+                    Flash::set('success', 'Zahlung erfasst.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
+        // POST: Teilzahlung löschen
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_payment_delete'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            $paymentId = (int) ($_POST['payment_id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    VoucherPaymentRepository::deletePayment($paymentId, $voucherId);
+                    Flash::set('success', 'Zahlung entfernt.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
         // POST: Mahnung senden
         if (
             $page === 'buchhaltung-beleg-form'
@@ -2424,10 +2479,8 @@ switch ($path) {
                 $currentDunningLevel = (int) ($form['dunning_level'] ?? 0);
                 $dueDate = (string) ($form['payment_due_date'] ?? '');
                 $isOpenReceivable = VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income'
-                    && in_array(
-                        VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? '')),
-                        [VoucherPaymentStatus::OPEN, VoucherPaymentStatus::DIRECT_DEBIT],
-                        true
+                    && VoucherPaymentStatus::countsAsOpenPayable(
+                        VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? ''))
                     );
                 if (
                     $canEdit

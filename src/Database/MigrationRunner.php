@@ -186,6 +186,7 @@ final class MigrationRunner
             '058_voucher_document_legal_clauses.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_legal_clauses'),
             '059_voucher_payment_terms_dunning.sql' => self::columnExists($pdo, 'dg_vouchers', 'payment_due_date')
                 && self::tableExists($pdo, 'dg_voucher_dunnings'),
+            '060_voucher_payments.sql' => self::tableExists($pdo, 'dg_voucher_payments'),
             default => false,
         };
     }
@@ -276,6 +277,7 @@ final class MigrationRunner
             '057_voucher_document_texts.sql' => true,
             '058_voucher_document_legal_clauses.sql' => true,
             '059_voucher_payment_terms_dunning.sql' => true,
+            '060_voucher_payments.sql' => true,
         ];
     }
 

@@ -59,7 +59,7 @@ final class DunningService
                 LEFT JOIN dg_contacts c ON c.id = v.contact_id
                 WHERE v.is_draft = 0
                   AND v.voucher_type = 'income'
-                  AND v.payment_status IN ('open', 'direct_debit')
+                  AND v.payment_status IN ('open', 'partial', 'direct_debit')
                   AND v.payment_due_date IS NOT NULL";
         $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         $today = date('Y-m-d');
@@ -127,7 +127,7 @@ final class DunningService
         }
         if (!in_array(
             VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? '')),
-            [VoucherPaymentStatus::OPEN, VoucherPaymentStatus::DIRECT_DEBIT],
+            [VoucherPaymentStatus::OPEN, VoucherPaymentStatus::PARTIAL, VoucherPaymentStatus::DIRECT_DEBIT],
             true
         )) {
             throw new InvalidArgumentException('Beleg ist bereits ausgeglichen.');
@@ -232,13 +232,7 @@ final class DunningService
      */
     public static function openAmount(array $voucher): float
     {
-        $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
-        $paid = round((float) ($voucher['paid_amount'] ?? 0), 2);
-        if ($paid > 0.0 && $paid < $gross) {
-            return round($gross - $paid, 2);
-        }
-
-        return $gross;
+        return VoucherPaymentRepository::openAmount($voucher);
     }
 
     /**

@@ -70,6 +70,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
               <th>Rechnung</th>
               <th>Kontakt</th>
               <th>Personenkonto</th>
+              <th class="dg-table__num">Bezahlt</th>
               <th class="dg-table__num">Offen</th>
               <th>Mahnung</th>
               <th></th>
@@ -93,6 +94,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
                 <td><?= View::escape((string) ($item['invoice_number'] ?? '—')) ?></td>
                 <td><?= View::escape((string) ($item['contact_label'] ?? '')) ?></td>
                 <td><?= View::escape((string) ($item['person_account'] ?? '')) ?: '—' ?></td>
+                <td class="dg-table__num"><?= $fmt((float) ($item['paid_amount'] ?? 0)) ?> €</td>
                 <td class="dg-table__num"><strong><?= $fmt((float) ($item['open_amount'] ?? 0)) ?> €</strong></td>
                 <td><?= (int) ($item['dunning_level'] ?? 0) > 0 ? (int) $item['dunning_level'] : '—' ?></td>
                 <td>

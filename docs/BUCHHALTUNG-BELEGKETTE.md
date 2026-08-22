@@ -72,18 +72,21 @@
 8. Rechnung: Freitext + gesetzliche Vorlagen (§ 19, Reverse Charge) auf Druck/PDF/E-Mail prüfen
 9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — Zahlung buchen, Skonto automatisch
 10. Mahnung: Fälligkeit überschritten → manuell/automatisch (Cron), Mahngebühren auf Beleg
+11. Teilzahlungen: zwei Zahlungen auf eine Rechnung → OPOS „Bezahlt/Offen“, Status `partial`, Mahnung nur auf Rest
 
-### Teilzahlungen (Stand & geplant)
+### Teilzahlungen (Migration 060)
 
 | Aspekt | Status |
 |--------|--------|
-| Feld `paid_amount` am Beleg | ✅ ein Zahlungsbetrag |
-| OPOS offen = Brutto − gezahlt (bei Teilszahlung) | ✅ grob |
-| Mehrere Zahlungen pro Rechnung (Historie) | ❌ geplant |
-| Bankabgleich Teilsummen | ✅ teilweise (Match auf Restbetrag) |
-| OPOS: „teilbezahlt“, Zahlungshistorie, Mahnung auf Rest | ❌ geplant |
+| Tabelle `dg_voucher_payments` (Datum, Betrag, Art, Bankumsatz) | ✅ |
+| Mehrere Zahlungen pro Rechnung (Historie im Belegformular) | ✅ |
+| Zahlungsstatus `partial` (teilweise bezahlt) | ✅ |
+| OPOS: Spalten „Bezahlt“ und „Offen“ (Brutto − Summe Zahlungen) | ✅ |
+| Bankabgleich: Match auf Restbetrag, Teilzahlung buchen | ✅ |
+| Mahnung: nur auf Restbetrag (`openAmount`) | ✅ |
+| Legacy `paid_amount` → erste Zahlung in Historie (Migration beim Laden) | ✅ |
 
-Geplant: Tabelle `dg_voucher_payments` (Datum, Betrag, Art, Verknüpfung Bankumsatz), OPOS-Spalte „Bezahlt / Offen“, Mahnung nur auf Restbetrag.
+Manuell im Beleg: „Neue Zahlung erfassen“ (Betrag, Datum, Art). Bei voller Bezahlung über Zahlungsstatus ohne Historie legt `finalizePayments()` eine Zahlung an.
 
 ---
 

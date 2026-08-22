@@ -7,6 +7,7 @@ declare(strict_types=1);
 final class VoucherPaymentStatus
 {
     public const OPEN = 'open';
+    public const PARTIAL = 'partial';
     public const CASH = 'cash';
     public const PRIVATE = 'private';
     public const DIRECT_DEBIT = 'direct_debit';
@@ -22,6 +23,7 @@ final class VoucherPaymentStatus
     {
         return [
             self::OPEN => 'Offen',
+            self::PARTIAL => 'Teilweise bezahlt',
             self::CASH => 'Per Kasse bezahlt',
             self::TIP => 'Trinkgeld (Durchlaufende Posten)',
             self::PRIVATE => 'Privat bezahlt',
@@ -64,6 +66,7 @@ final class VoucherPaymentStatus
     {
         return match (self::sanitize($status)) {
             self::OPEN => 'Zahlung steht noch aus — Beleg erscheint bei offenen Posten.',
+            self::PARTIAL => 'Teilzahlung erfasst — Restbetrag bleibt offen (OPOS).',
             self::CASH => 'Barzahlung über die Kasse — Beleg gilt als bezahlt, Kassenbuch-Buchung vorgesehen.',
             self::TIP => 'Trinkgeld an Mitarbeiter/Dritte aus der Kasse — Buchung auf Durchlaufende Posten (z. B. 1590), Kassenbuch-Ausgang.',
             self::PRIVATE => 'Privat bezahlt — Verrechnungskonto EÜR (z. B. 1371) statt Geschäftskonto.',
@@ -110,7 +113,7 @@ final class VoucherPaymentStatus
      */
     public static function countsAsOpenPayable(string $status): bool
     {
-        return in_array(self::sanitize($status), [self::OPEN, self::DIRECT_DEBIT], true);
+        return in_array(self::sanitize($status), [self::OPEN, self::PARTIAL, self::DIRECT_DEBIT], true);
     }
 
       /**
@@ -148,6 +151,7 @@ final class VoucherPaymentStatus
     {
         return match (self::sanitize($status)) {
             self::CASH, self::PRIVATE, self::BANK, self::TIP => 'dg-badge--ok',
+            self::PARTIAL => 'dg-badge--pending',
             self::DIRECT_DEBIT => 'dg-badge--pending',
             default => 'dg-badge--muted',
         };

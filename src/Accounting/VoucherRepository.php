@@ -289,6 +289,9 @@ final class VoucherRepository
         $enriched['lines'] = self::linesForVoucher($id, true);
         $enriched['system_lines'] = self::linesForVoucher($id, false, true);
         $enriched['items'] = self::itemsForVoucher($id);
+        $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
+        $enriched['total_paid'] = VoucherPaymentRepository::totalPaid($id);
+        $enriched['open_amount'] = VoucherPaymentRepository::openAmount($enriched, $enriched['total_paid']);
 
         return $enriched;
     }
@@ -687,11 +690,23 @@ final class VoucherRepository
         if ($discountPercent > 0 && $discountAmount <= 0.0 && $gross > 0) {
             $discountAmount = round($gross * $discountPercent / 100, 2);
         }
-        $paidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+        $paidAmount = $id > 0 ? VoucherPaymentRepository::totalPaid($id) : 0.0;
         $paidAt = trim((string) ($data['paid_at'] ?? ''));
-        if (VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK) {
-            if ($paidAmount <= 0.0) {
-                $paidAmount = round(max(0, $gross - $discountAmount), 2);
+        $recordSettlement = VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK;
+        $settlementAmount = 0.0;
+        $settlementMethod = match (VoucherPaymentStatus::sanitize($paymentStatus)) {
+            VoucherPaymentStatus::CASH, VoucherPaymentStatus::TIP => VoucherPaymentRepository::METHOD_CASH,
+            VoucherPaymentStatus::PRIVATE => VoucherPaymentRepository::METHOD_PRIVATE,
+            VoucherPaymentStatus::DIRECT_DEBIT => VoucherPaymentRepository::METHOD_DIRECT_DEBIT,
+            default => VoucherPaymentRepository::METHOD_BANK,
+        };
+        if ($recordSettlement) {
+            $settlementAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+            if ($settlementAmount <= 0.0) {
+                $settlementAmount = round(max(0, $gross - $discountAmount - $paidAmount), 2);
+            }
+            if ($settlementAmount <= 0.0) {
+                $settlementAmount = round(max(0, $gross - $discountAmount), 2);
             }
             if ($paidAt === '') {
                 $paidAt = date('Y-m-d');
@@ -700,11 +715,10 @@ final class VoucherRepository
                 $settlement = PaymentTermsService::settlementAmounts($gross, $voucherDate, $paidAt, $paymentTermTiers);
                 $discountPercent = $settlement['discount_percent'];
                 $discountAmount = $settlement['discount_amount'];
-                $paidAmount = $settlement['paid_amount'];
+                $settlementAmount = $settlement['paid_amount'];
             }
         } else {
-            $paidAmount = 0.0;
-            $paidAt = '';
+            $paidAt = $paidAmount > 0.0 ? $paidAt : '';
         }
 
         foreach ($lineRows as $lineRow) {
@@ -799,6 +813,7 @@ final class VoucherRepository
             self::replaceLines($id, $lineRows);
             self::replaceItems($id, $itemRows);
             self::syncLedger($id);
+            self::finalizePayments($id, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
             return $id;
         }
@@ -826,8 +841,41 @@ final class VoucherRepository
         self::replaceLines($newId, $lineRows);
         self::replaceItems($newId, $itemRows);
         self::syncLedger($newId);
+        self::finalizePayments($newId, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
         return $newId;
+    }
+
+    private static function finalizePayments(
+        int $voucherId,
+        bool $recordSettlement,
+        float $settlementAmount,
+        string $settlementDate,
+        string $settlementMethod,
+        ?int $userId,
+    ): void {
+        if ($voucherId < 1) {
+            return;
+        }
+        VoucherPaymentRepository::migrateLegacyPaidAmount($voucherId);
+        if ($recordSettlement && VoucherPaymentRepository::totalPaid($voucherId) <= 0.0 && $settlementAmount > 0.0) {
+            try {
+                VoucherPaymentRepository::addPayment(
+                    $voucherId,
+                    $settlementAmount,
+                    $settlementDate !== '' ? $settlementDate : date('Y-m-d'),
+                    $settlementMethod,
+                    'Beim Speichern erfasst',
+                    null,
+                    null,
+                    $userId,
+                );
+            } catch (Throwable) {
+                VoucherPaymentRepository::syncVoucherSettlement($voucherId);
+            }
+        } else {
+            VoucherPaymentRepository::syncVoucherSettlement($voucherId);
+        }
     }
 
         /**
@@ -1054,7 +1102,9 @@ final class VoucherRepository
             'payment_term_tiers' => AccountingPaymentSettings::defaultTiers(),
             'dunning_level' => '0',
             'dunning_fee_total' => '0',
-            'last_dunning_sent_at' => '',
+            'payments' => [],
+            'total_paid' => '0',
+            'open_amount' => '0',
             'lines' => [
                 [
                     'account_number' => '',
@@ -1127,6 +1177,17 @@ final class VoucherRepository
             }
         }
 
+        $voucherIdForForm = (int) ($row['id'] ?? 0);
+        $payments = is_array($row['payments'] ?? null)
+            ? $row['payments']
+            : ($voucherIdForForm > 0 ? VoucherPaymentRepository::listForVoucher($voucherIdForForm) : []);
+        $totalPaidValue = isset($row['total_paid'])
+            ? (float) $row['total_paid']
+            : ($voucherIdForForm > 0 ? VoucherPaymentRepository::totalPaid($voucherIdForForm) : (float) ($row['paid_amount'] ?? 0));
+        $openAmountValue = isset($row['open_amount'])
+            ? (float) $row['open_amount']
+            : VoucherPaymentRepository::openAmount($row, $totalPaidValue);
+
         return [
             'voucher_type' => self::sanitizeVoucherType((string) ($row['voucher_type'] ?? 'expense')),
             'document_kind' => (string) ($row['document_kind'] ?? ''),
@@ -1165,6 +1226,9 @@ final class VoucherRepository
             'dunning_level' => (string) ($row['dunning_level'] ?? '0'),
             'dunning_fee_total' => self::formatMoney((float) ($row['dunning_fee_total'] ?? 0)),
             'last_dunning_sent_at' => (string) ($row['last_dunning_sent_at'] ?? ''),
+            'payments' => $payments,
+            'total_paid' => self::formatMoney($totalPaidValue),
+            'open_amount' => self::formatMoney($openAmountValue),
             'lines' => $lines,
             'items' => $items,
             'system_lines' => is_array($row['system_lines'] ?? null) ? $row['system_lines'] : [],

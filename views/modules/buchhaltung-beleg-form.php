@@ -72,6 +72,10 @@ $hasBookingAmounts = array_sum($taxBreakdown) > 0
     || array_reduce($lineRows, static fn (bool $carry, array $line): bool => $carry || (float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')) > 0, false);
 $paymentStatus = VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? VoucherPaymentStatus::OPEN));
 $paymentStatusHint = VoucherPaymentStatus::hint($paymentStatus);
+$voucherPayments = is_array($form['payments'] ?? null) ? $form['payments'] : [];
+$voucherTotalPaid = (string) ($form['total_paid'] ?? ($form['paid_amount'] ?? '0,00'));
+$voucherOpenAmount = (string) ($form['open_amount'] ?? ($form['gross_amount'] ?? '0,00'));
+$showPartialPaymentsUi = $isEdit && empty($isDraftVoucher);
 $invoiceNumberRangeType = VoucherRepository::numberRangeTypeForDocument($selectedDocumentKind, $selectedType);
 $autoInvoiceNumber = $invoiceNumberRangeType !== null;
 $invoiceNumberRangeLabel = $autoInvoiceNumber
@@ -415,9 +419,12 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                  value="<?= View::escape((string) ($form['discount_amount'] ?? '')) ?>" placeholder="0,00"<?= $readOnly ? ' readonly' : '' ?>>
         </label>
         <label class="dg-field">
-          <span>Gezahlt (Brutto − Skonto)</span>
-          <input type="text" name="paid_amount" inputmode="decimal"
-                 value="<?= View::escape((string) ($form['paid_amount'] ?? '')) ?>" placeholder="0,00"<?= $readOnly ? ' readonly' : '' ?>>
+          <span><?= $voucherPayments !== [] ? 'Gezahlt gesamt' : 'Gezahlt (Brutto − Skonto)' ?></span>
+          <input type="text" name="paid_amount" id="dg-voucher-paid-amount" inputmode="decimal"
+                 value="<?= View::escape($voucherPayments !== [] ? $voucherTotalPaid : (string) ($form['paid_amount'] ?? '')) ?>" placeholder="0,00"<?= ($readOnly || $voucherPayments !== []) ? ' readonly' : '' ?><?= $voucherPayments !== [] ? ' class="dg-input--readonly"' : '' ?>>
+          <?php if ($voucherPayments !== []) : ?>
+            <small class="dg-field-hint">Summe aus Zahlungshistorie — neue Zahlungen unten erfassen.</small>
+          <?php endif; ?>
         </label>
         <label class="dg-field">
           <span>Zahlungsdatum</span>
@@ -425,6 +432,89 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </label>
       </div>
       <input type="hidden" name="discount_manual" id="dg-voucher-discount-manual" value="0">
+
+      <?php if ($showPartialPaymentsUi) : ?>
+        <div class="dg-voucher-payments" id="dg-voucher-payments-section" style="margin-top: 14px;">
+          <h3 class="dg-subsection-title">Zahlungen / Teilzahlungen</h3>
+          <p class="dg-field-hint">
+            Brutto: <strong><?= View::escape((string) ($form['gross_amount'] ?? '0,00')) ?> €</strong>
+            · Gezahlt: <strong id="dg-voucher-total-paid"><?= View::escape($voucherTotalPaid) ?> €</strong>
+            · Offen: <strong id="dg-voucher-open-amount"><?= View::escape($voucherOpenAmount) ?> €</strong>
+          </p>
+          <?php if ($voucherPayments !== []) : ?>
+            <div class="dg-table-wrap">
+              <table class="dg-table">
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Art</th>
+                    <th class="dg-table__num">Betrag</th>
+                    <th>Verwendungszweck</th>
+                    <?php if (!$readOnly) : ?><th></th><?php endif; ?>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($voucherPayments as $payment) : ?>
+                    <tr>
+                      <td><?= View::escape((string) ($payment['payment_date'] ?? '')) ?></td>
+                      <td><?= View::escape((string) ($payment['payment_method_label'] ?? '')) ?></td>
+                      <td class="dg-table__num"><?= View::escape((string) ($payment['amount_display'] ?? '')) ?> €</td>
+                      <td><?= View::escape((string) ($payment['reference_text'] ?? '')) ?></td>
+                      <?php if (!$readOnly) : ?>
+                        <td>
+                          <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form" onsubmit="return confirm('Zahlung wirklich entfernen?');">
+                            <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                            <input type="hidden" name="voucher_payment_delete" value="1">
+                            <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+                            <input type="hidden" name="payment_id" value="<?= (int) ($payment['id'] ?? 0) ?>">
+                            <button type="submit" class="dg-button dg-button--ghost dg-button--small" aria-label="Zahlung löschen">×</button>
+                          </form>
+                        </td>
+                      <?php endif; ?>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php else : ?>
+            <p class="dg-muted">Noch keine Zahlungen erfasst.</p>
+          <?php endif; ?>
+
+          <?php if (!$readOnly) : ?>
+            <form method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-payment-add-form" class="dg-voucher-payments__add" style="margin-top: 12px;">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="voucher_payment_add" value="1">
+              <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+              <fieldset>
+                <legend>Neue Zahlung erfassen</legend>
+                <div class="dg-form-grid">
+                  <label class="dg-field">
+                    <span>Betrag</span>
+                    <input type="text" name="payment_new_amount" inputmode="decimal" placeholder="0,00" required>
+                  </label>
+                  <label class="dg-field">
+                    <span>Datum</span>
+                    <input type="date" name="payment_new_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+                  </label>
+                  <label class="dg-field">
+                    <span>Zahlungsart</span>
+                    <select name="payment_new_method">
+                      <?php foreach (VoucherPaymentRepository::methodOptions() as $methodKey => $methodLabel) : ?>
+                        <option value="<?= View::escape($methodKey) ?>"><?= View::escape($methodLabel) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </label>
+                  <label class="dg-field dg-field--wide">
+                    <span>Verwendungszweck / Notiz</span>
+                    <input type="text" name="payment_new_reference" maxlength="255" placeholder="optional">
+                  </label>
+                </div>
+                <button type="submit" class="dg-button dg-button--primary dg-button--small">Zahlung buchen</button>
+              </fieldset>
+            </form>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
 
       <div id="dg-voucher-payment-terms-section" class="dg-voucher-payment-terms"<?= $showPaymentTerms ? '' : ' hidden' ?> style="margin-top: 14px;">
         <h3 class="dg-subsection-title">Zahlungsbedingungen (Skonto-Stufen)</h3>
