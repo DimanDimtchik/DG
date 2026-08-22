@@ -17,6 +17,8 @@ final class NumberRangeSettings
     {
         return [
             'offer' => 'Angebot',
+            'order_confirmation' => 'Auftragsbestätigung',
+            'partial_invoice' => 'Abschlagsrechnung',
             'invoice' => 'Rechnung',
             'final_invoice' => 'Schlussrechnung',
             'credit_note' => 'Kundengutschrift',
@@ -35,7 +37,7 @@ final class NumberRangeSettings
         public static function typeGroups(): array
     {
         return [
-            'Belege' => ['offer', 'invoice', 'final_invoice', 'credit_note'],
+            'Belege' => ['offer', 'order_confirmation', 'partial_invoice', 'invoice', 'final_invoice', 'credit_note'],
             'Stammdaten' => ['article', 'service', 'customer', 'supplier'],
         ];
     }
