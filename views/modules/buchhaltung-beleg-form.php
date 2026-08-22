@@ -122,6 +122,11 @@ $documentStatusOptionsForKind = $selectedDocumentKind !== ''
 $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
     ? VoucherDocumentStatus::nextStatuses($selectedDocumentStatus, $selectedDocumentKind)
     : [];
+$showDocumentPositionTexts = VoucherDocumentKind::usesPositionTexts($selectedDocumentKind, $selectedType);
+if (!$isEdit && $showDocumentPositionTexts && trim((string) ($form['document_intro_text'] ?? '')) === '') {
+    $form['document_intro_text'] = VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind);
+}
+$documentFooterHint = 'z. B. Kleinunternehmerregelung § 19 UStG, Zahlungsziel, Skonto — erscheint unter den Positionen auf Rechnung/PDF.';
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -411,6 +416,20 @@ $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
       <div class="dg-form-section__head">
         <h2 class="dg-subsection-title">Rechnungspositionen</h2>
       </div>
+      <div id="dg-voucher-document-texts-intro"<?= $showDocumentPositionTexts ? '' : ' hidden' ?>>
+        <label class="dg-field dg-field--wide">
+          <span>Text vor den Positionen</span>
+          <textarea
+            name="document_intro_text"
+            id="dg-voucher-document-intro"
+            rows="3"
+            maxlength="4000"
+            placeholder="<?= View::escape(VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind)) ?>"
+            <?= $readOnly ? ' readonly' : '' ?>
+          ><?= View::escape((string) ($form['document_intro_text'] ?? '')) ?></textarea>
+          <small class="dg-field-hint">Erscheint auf Rechnung, PDF und in der E-Mail vor der Positionstabelle.</small>
+        </label>
+      </div>
       <p class="dg-field-hint" id="dg-voucher-invoice-items-hint">
         Artikel und Leistungen aus dem Katalog — Buchungszeilen werden daraus automatisch erzeugt.
         <span class="dg-muted">Leistungen mit <strong>IMP-*</strong> haben oft keinen Festpreis (0,00 €) — Betrag bitte manuell eintragen.</span>
@@ -536,6 +555,20 @@ $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
         </table>
       </div>
       <p class="dg-field-hint">Summe Positionen: <strong id="dg-voucher-invoice-items-sum">0,00</strong> €</p>
+      <div id="dg-voucher-document-texts-footer"<?= $showDocumentPositionTexts ? '' : ' hidden' ?> style="margin-top: 12px;">
+        <label class="dg-field dg-field--wide">
+          <span>Text nach den Positionen</span>
+          <textarea
+            name="document_footer_text"
+            id="dg-voucher-document-footer"
+            rows="4"
+            maxlength="4000"
+            placeholder="Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung)."
+            <?= $readOnly ? ' readonly' : '' ?>
+          ><?= View::escape((string) ($form['document_footer_text'] ?? '')) ?></textarea>
+          <small class="dg-field-hint"><?= View::escape($documentFooterHint) ?></small>
+        </label>
+      </div>
     </section>
 
     <section class="dg-form-section" id="dg-voucher-booking-section">

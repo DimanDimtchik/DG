@@ -577,6 +577,12 @@ final class VoucherRepository
         } else {
             $documentStatus = '';
         }
+        $documentIntroText = '';
+        $documentFooterText = '';
+        if (VoucherDocumentKind::usesPositionTexts($documentKind, $voucherType)) {
+            $documentIntroText = self::sanitizeDocumentText((string) ($data['document_intro_text'] ?? ''));
+            $documentFooterText = self::sanitizeDocumentText((string) ($data['document_footer_text'] ?? ''));
+        }
         $parentVoucherId = max(0, (int) ($data['parent_voucher_id'] ?? 0));
         $arap = VoucherAccrual::parseFromData($data);
         if (!VoucherAccrual::supportsAccrual($voucherType, $documentKind)) {
@@ -716,6 +722,8 @@ final class VoucherRepository
             'account_number' => $accountNumber,
             'payment_status' => $paymentStatus,
             'notes' => trim((string) ($data['notes'] ?? '')),
+            'document_intro_text' => $documentIntroText !== '' ? $documentIntroText : null,
+            'document_footer_text' => $documentFooterText !== '' ? $documentFooterText : null,
         ];
 
         if ($contactId !== null) {
@@ -755,7 +763,9 @@ final class VoucherRepository
                     ustva_snapshot = :ustva_snapshot,
                     account_number = :account_number,
                     payment_status = :payment_status,
-                    notes = :notes
+                    notes = :notes,
+                    document_intro_text = :document_intro_text,
+                    document_footer_text = :document_footer_text
                  WHERE id = :id'
             );
             $fields['id'] = $id;
@@ -774,13 +784,13 @@ final class VoucherRepository
                 contact_id, supplier_name, invoice_number, description,
                 gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
                 net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
-                account_number, payment_status, notes, created_by
+                account_number, payment_status, notes, document_intro_text, document_footer_text, created_by
             ) VALUES (
                 :voucher_type, :document_kind, :document_status, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
                 :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
                 :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
-                :account_number, :payment_status, :notes, :created_by
+                :account_number, :payment_status, :notes, :document_intro_text, :document_footer_text, :created_by
             )'
         );
         $stmt->execute($fields);
@@ -1004,6 +1014,8 @@ final class VoucherRepository
             'account_name' => '',
             'payment_status' => 'open',
             'notes' => '',
+            'document_intro_text' => '',
+            'document_footer_text' => '',
             'lines' => [
                 [
                     'account_number' => '',
@@ -1106,6 +1118,8 @@ final class VoucherRepository
             'account_name' => (string) ($row['account_name'] ?? ''),
             'payment_status' => (string) ($row['payment_status'] ?? 'open'),
             'notes' => (string) ($row['notes'] ?? ''),
+            'document_intro_text' => (string) ($row['document_intro_text'] ?? ''),
+            'document_footer_text' => (string) ($row['document_footer_text'] ?? ''),
             'lines' => $lines,
             'items' => $items,
             'system_lines' => is_array($row['system_lines'] ?? null) ? $row['system_lines'] : [],
@@ -1397,6 +1411,16 @@ final class VoucherRepository
     private static function sanitizePaymentStatus(string $status): string
     {
         return VoucherPaymentStatus::sanitize($status);
+    }
+
+    private static function sanitizeDocumentText(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+
+        return mb_substr($text, 0, 4000);
     }
 
         /**

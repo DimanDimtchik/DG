@@ -20,6 +20,8 @@ $date = (string) ($voucher['voucher_date'] ?? '');
 $delivery = (string) ($voucher['delivery_date'] ?? '');
 $description = trim((string) ($voucher['description'] ?? ''));
 $notes = trim((string) ($voucher['notes'] ?? ''));
+$introText = trim((string) ($voucher['document_intro_text'] ?? ''));
+$footerText = trim((string) ($voucher['document_footer_text'] ?? ''));
 $company = $companyBlock ?? ['name' => '', 'lines' => []];
 $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
 ?>
@@ -110,6 +112,12 @@ $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
   </table>
 <?php endif; ?>
 
+<?php if ($introText !== '') : ?>
+  <div class="vd-intro"<?= !empty($forEmail) ? ' style="margin:12px 0;font-size:14px;"' : '' ?>>
+    <?= nl2br(View::escape($introText)) ?>
+  </div>
+<?php endif; ?>
+
 <h2>Positionen</h2>
 <?php if ($items === []) : ?>
   <p>Keine Positionen erfasst.</p>
@@ -161,6 +169,12 @@ $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
     <?php if (($primaryBank['bic'] ?? '') !== '') : ?>
       · BIC <?= View::escape((string) $primaryBank['bic']) ?>
     <?php endif; ?>
+  </div>
+<?php endif; ?>
+
+<?php if ($footerText !== '') : ?>
+  <div class="vd-document-footer"<?= !empty($forEmail) ? ' style="margin-top:16px;font-size:12px;"' : ' style="margin-top:6mm;"' ?>>
+    <?= nl2br(View::escape($footerText)) ?>
   </div>
 <?php endif; ?>
 

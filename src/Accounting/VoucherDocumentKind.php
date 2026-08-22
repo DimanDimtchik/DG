@@ -124,4 +124,30 @@ final class VoucherDocumentKind
     {
         return self::INVOICE;
     }
+
+    /**
+     * Rechnung, Abschlags- und Schlussrechnung — Freitext vor/nach Positionen.
+     */
+    public static function usesPositionTexts(string $documentKind, string $voucherType = 'income'): bool
+    {
+        if (VoucherRepository::normalizeVoucherType($voucherType) !== 'income') {
+            return false;
+        }
+
+        $kind = self::sanitize($documentKind);
+        if ($kind === '') {
+            return true;
+        }
+
+        return in_array($kind, [self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE], true);
+    }
+
+    public static function defaultPositionIntroText(string $documentKind): string
+    {
+        return match (self::sanitize($documentKind)) {
+            self::PARTIAL_INVOICE => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen (Abschlagsrechnung):',
+            self::FINAL_INVOICE => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen (Schlussrechnung):',
+            default => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen:',
+        };
+    }
 }

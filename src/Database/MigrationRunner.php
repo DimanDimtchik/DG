@@ -182,6 +182,7 @@ final class MigrationRunner
             '054_cash_day_closing.sql' => self::tableExists($pdo, 'dg_cash_day_closings'),
             '055_voucher_document_chain.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_kind'),
             '056_voucher_document_status.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_status'),
+            '057_voucher_document_texts.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_intro_text'),
             default => false,
         };
     }
@@ -269,6 +270,7 @@ final class MigrationRunner
             '054_cash_day_closing.sql' => true,
             '055_voucher_document_chain.sql' => true,
             '056_voucher_document_status.sql' => true,
+            '057_voucher_document_texts.sql' => true,
         ];
     }
 
