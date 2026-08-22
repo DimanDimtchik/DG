@@ -70,6 +70,30 @@
 6. Status-Workflow: versendet → angenommen → abgerechnet
 7. Belegliste filtern nach Dokumentart und Status
 8. Rechnung: Freitext + gesetzliche Vorlagen (§ 19, Reverse Charge) auf Druck/PDF/E-Mail prüfen
+9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — Zahlung buchen, Skonto automatisch
+10. Mahnung: Fälligkeit überschritten → manuell/automatisch (Cron), Mahngebühren auf Beleg
+
+---
+
+## Zahlungsbedingungen & Mahnwesen
+
+### Skonto-Stufen (Einstellungen → Buchhaltung → Zahlungsbedingungen & Mahnung)
+
+Standard-Stufen (anpassbar):
+
+| Tage ab Rechnungsdatum | Änderung | Bedeutung |
+|------------------------|----------|-----------|
+| 7 | −3 % | Skonto |
+| 30 | 0 % | Netto ohne Abzug |
+| 90 | +1,5 % | Verzugszinsen bei späterer Zahlung |
+
+Pro Rechnung editierbar im Belegformular. Text erscheint auf Druck/PDF/E-Mail. Bei Zahlungsdatum wird Skonto/Zuschlag vorgeschlagen.
+
+### Automatischer Mahnversand
+
+Cron: `cron.php?job=dunning-auto&token=…` (gleicher Token wie `employee-retention` in `config/cron.local.php`).
+
+Mahnstufen mit Tagen nach Fälligkeit, E-Mail-Text und Mahngebühr (wird dem Beleg hinzugefügt). Manueller Versand im Belegformular bei überfälligen offenen Forderungen.
 
 ---
 

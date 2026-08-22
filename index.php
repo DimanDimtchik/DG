@@ -669,6 +669,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Zahlungsbedingungen & Mahnung
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['accounting_payment_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('payment-terms');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    AccountingPaymentSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Zahlungsbedingungen und Mahnwesen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Schriften
         if (
             $page === 'einstellungen'
@@ -1804,6 +1826,29 @@ switch ($path) {
             exit;
         }
 
+        // POST: Mahnung senden
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_dunning_send'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            $level = max(1, (int) ($_POST['dunning_level'] ?? 0));
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    DunningService::sendLevel($voucherId, $level, $user);
+                    Flash::set('success', 'Mahnung versendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
         // POST: Dokumentstatus schnell ändern (Workflow)
         if (
             $page === 'buchhaltung-beleg-form'
@@ -2149,6 +2194,7 @@ switch ($path) {
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
+        $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
             try {
@@ -2302,6 +2348,10 @@ switch ($path) {
             $voucherMailTo = '';
             $voucherMailSubject = '';
             $voucherMailIntro = '';
+            $voucherDunningCanSend = false;
+            $voucherDunningNextLevel = 0;
+            $voucherDunningNextLabel = '';
+            $voucherDunningFee = 0.0;
             if ($action === 'new') {
                 if (!$canEdit) {
                     header('Location: ' . RoleResolver::homePath($user), true, 302);
@@ -2368,6 +2418,31 @@ switch ($path) {
                 if ($voucherMailCanSend) {
                     $voucherMailSubject = VoucherDocumentPrintService::defaultEmailSubject($voucher);
                     $voucherMailIntro = VoucherDocumentPrintService::defaultEmailIntro($voucher);
+                }
+                $dunningConfig = AccountingPaymentSettings::dunningConfig();
+                $dunningLevels = is_array($dunningConfig['levels'] ?? null) ? $dunningConfig['levels'] : [];
+                $currentDunningLevel = (int) ($form['dunning_level'] ?? 0);
+                $dueDate = (string) ($form['payment_due_date'] ?? '');
+                $isOpenReceivable = VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income'
+                    && in_array(
+                        VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? '')),
+                        [VoucherPaymentStatus::OPEN, VoucherPaymentStatus::DIRECT_DEBIT],
+                        true
+                    );
+                if (
+                    $canEdit
+                    && !$isDraftVoucher
+                    && $isOpenReceivable
+                    && $dueDate !== ''
+                    && PaymentTermsService::daysOverdue($dueDate) > 0
+                    && $currentDunningLevel < count($dunningLevels)
+                    && MailSettings::isConfigured()
+                ) {
+                    $voucherDunningCanSend = true;
+                    $voucherDunningNextLevel = $currentDunningLevel + 1;
+                    $nextLevelConfig = $dunningLevels[$currentDunningLevel];
+                    $voucherDunningNextLabel = (string) ($nextLevelConfig['label'] ?? 'Mahnung');
+                    $voucherDunningFee = (float) ($nextLevelConfig['fee_amount'] ?? 0);
                 }
             } else {
                 header('Location: /app?page=buchhaltung-belege', true, 302);
@@ -3531,11 +3606,16 @@ switch ($path) {
         $voucherMailTo = $voucherMailTo ?? '';
         $voucherMailSubject = $voucherMailSubject ?? '';
         $voucherMailIntro = $voucherMailIntro ?? '';
+        $voucherDunningCanSend = $voucherDunningCanSend ?? false;
+        $voucherDunningNextLevel = $voucherDunningNextLevel ?? 0;
+        $voucherDunningNextLabel = $voucherDunningNextLabel ?? '';
+        $voucherDunningFee = $voucherDunningFee ?? 0.0;
         $oposDirection = $oposDirection ?? '';
         $oposSearch = $oposSearch ?? '';
         $oposData = $oposData ?? ['items' => [], 'totals' => ['receivable' => 0.0, 'payable' => 0.0]];
         $datevExportYear = $datevExportYear ?? (int) date('Y');
         $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
+        $accountingPaymentSettings = $accountingPaymentSettings ?? AccountingPaymentSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];
@@ -3624,6 +3704,7 @@ switch ($path) {
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
             'elsterConfig',
+            'accountingPaymentSettings',
             'chartOfAccountsConfig',
             'chartAccountCount',
             'chartCatalogCount',
@@ -3658,6 +3739,10 @@ switch ($path) {
             'voucherMailTo',
             'voucherMailSubject',
             'voucherMailIntro',
+            'voucherDunningCanSend',
+            'voucherDunningNextLevel',
+            'voucherDunningNextLabel',
+            'voucherDunningFee',
             'oposDirection',
             'oposSearch',
             'oposData',

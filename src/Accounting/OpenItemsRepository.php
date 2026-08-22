@@ -84,6 +84,12 @@ final class OpenItemsRepository
                 'voucher_type' => $type,
                 'direction' => $itemDirection,
                 'voucher_date' => (string) ($row['voucher_date'] ?? ''),
+                'payment_due_date' => (string) ($row['payment_due_date'] ?? ''),
+                'days_overdue' => PaymentTermsService::daysOverdue(
+                    (string) ($row['payment_due_date'] ?? ''),
+                    date('Y-m-d')
+                ),
+                'dunning_level' => (int) ($row['dunning_level'] ?? 0),
                 'invoice_number' => (string) ($row['invoice_number'] ?? ''),
                 'contact_id' => (int) ($row['contact_id'] ?? 0),
                 'contact_label' => $contactLabel,
@@ -105,12 +111,6 @@ final class OpenItemsRepository
      */
     private static function openAmount(array $voucher): float
     {
-        $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
-        $paid = round((float) ($voucher['paid_amount'] ?? 0), 2);
-        if ($paid > 0.0 && $paid < $gross) {
-            return round($gross - $paid, 2);
-        }
-
-        return $gross;
+        return DunningService::openAmount($voucher);
     }
 }

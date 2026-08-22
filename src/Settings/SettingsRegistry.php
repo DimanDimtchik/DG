@@ -121,6 +121,11 @@ final class SettingsRegistry
                         'lead' => 'Vorbereitung direkter ELSTER-Übermittlung — bis Server-Umzug: CSV-Modus.',
                         'template' => 'elster',
                     ],
+                    'payment-terms' => [
+                        'label' => 'Zahlungsbedingungen & Mahnung',
+                        'lead' => 'Skonto-Stufen mit Zeitvorgaben und automatischer Mahnversand mit Mahngebühren.',
+                        'template' => 'payment-terms',
+                    ],
                 ],
             ],
             'recht' => [

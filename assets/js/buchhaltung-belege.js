@@ -127,6 +127,7 @@
     documentKindField.hidden = getVoucherType() !== 'income';
     syncDocumentStatusField();
     syncDocumentPositionTextsField();
+    syncPaymentTermsSection();
   }
 
   function usesDocumentPositionTexts() {
@@ -226,6 +227,184 @@
     if (show) {
       updateLegalClausesPreview();
     }
+  }
+
+  var paymentTermsSection = document.getElementById('dg-voucher-payment-terms-section');
+  var paymentTermsPreviewEl = document.getElementById('dg-voucher-payment-terms-preview');
+  var paymentDueDateInput = document.getElementById('dg-voucher-payment-due-date');
+  var voucherDateInput = document.getElementById('dg-voucher-date');
+  var paidAtInput = document.getElementById('dg-voucher-paid-at');
+  var discountManualInput = document.getElementById('dg-voucher-discount-manual');
+  var discountPercentInput = form ? form.querySelector('[name="discount_percent"]') : null;
+  var discountAmountInput = form ? form.querySelector('[name="discount_amount"]') : null;
+  var paidAmountInput = form ? form.querySelector('[name="paid_amount"]') : null;
+
+  function readPaymentTiersFromForm() {
+    var tiers = [];
+    document.querySelectorAll('#dg-voucher-payment-tiers-body tr').forEach(function (row) {
+      var daysEl = row.querySelector('.dg-voucher-payment-tier-days, [name*="[days]"]');
+      var percentEl = row.querySelector('.dg-voucher-payment-tier-percent, [name*="[adjustment_percent]"]');
+      var labelEl = row.querySelector('[name*="[label]"]');
+      if (!daysEl || !percentEl) {
+        return;
+      }
+      tiers.push({
+        days: parseInt(daysEl.value, 10) || 1,
+        adjustment_percent: parseFloat(String(percentEl.value).replace(',', '.')) || 0,
+        label: labelEl ? labelEl.value : '',
+      });
+    });
+    tiers.sort(function (a, b) { return a.days - b.days; });
+    return tiers;
+  }
+
+  function composePaymentTermsPreviewText(tiers, voucherDate, dueDate) {
+    if (!tiers.length) {
+      return '';
+    }
+    var lines = ['Zahlungsbedingungen:'];
+    tiers.forEach(function (tier) {
+      var pct = tier.adjustment_percent;
+      if (pct < 0) {
+        lines.push('Bei Zahlung innerhalb von ' + tier.days + ' Tagen gewähren wir ' + Math.abs(pct).toFixed(2).replace('.', ',') + ' % Skonto.');
+      } else if (pct > 0) {
+        lines.push('Bei Zahlung innerhalb von ' + tier.days + ' Tagen Verzugszinsen von ' + pct.toFixed(2).replace('.', ',') + ' %.');
+      } else {
+        lines.push('Bei Zahlung innerhalb von ' + tier.days + ' Tagen ohne Abzug.');
+      }
+    });
+    if (dueDate) {
+      lines.push('Fälligkeitsdatum: ' + dueDate.split('-').reverse().join('.'));
+    }
+    return lines.join('\n');
+  }
+
+  function maxTierDays(tiers) {
+    var max = 0;
+    tiers.forEach(function (tier) {
+      if (tier.days > max) {
+        max = tier.days;
+      }
+    });
+    return max;
+  }
+
+  function addDaysIso(dateStr, days) {
+    var parts = dateStr.split('-');
+    if (parts.length !== 3) {
+      return dateStr;
+    }
+    var date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function daysBetweenDates(fromDate, toDate) {
+    var from = new Date(fromDate);
+    var to = new Date(toDate);
+    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+      return 0;
+    }
+    return Math.max(0, Math.floor((to - from) / 86400000));
+  }
+
+  function tierForPaymentDate(voucherDate, paymentDate, tiers) {
+    var days = daysBetweenDates(voucherDate, paymentDate);
+    var applicable = null;
+    tiers.forEach(function (tier) {
+      if (days <= tier.days) {
+        applicable = tier;
+      }
+    });
+    return applicable || tiers[tiers.length - 1] || null;
+  }
+
+  function updatePaymentTermsPreview() {
+    if (!paymentTermsPreviewEl) {
+      return;
+    }
+    var voucherDate = voucherDateInput ? voucherDateInput.value : '';
+    var tiers = readPaymentTiersFromForm();
+    if (paymentDueDateInput && voucherDate && tiers.length && !paymentDueDateInput.dataset.manualDue) {
+      paymentDueDateInput.value = addDaysIso(voucherDate, maxTierDays(tiers));
+    }
+    var dueDate = paymentDueDateInput ? paymentDueDateInput.value : '';
+    paymentTermsPreviewEl.textContent = composePaymentTermsPreviewText(tiers, voucherDate, dueDate);
+  }
+
+  function syncPaymentTermsSection() {
+    if (!paymentTermsSection) {
+      return;
+    }
+    paymentTermsSection.hidden = !(getVoucherType() === 'income' && isBookableDocumentKind());
+    if (!paymentTermsSection.hidden) {
+      updatePaymentTermsPreview();
+    }
+  }
+
+  function suggestSettlementFromPaymentDate() {
+    if (readOnly || !paidAtInput || discountManualInput && discountManualInput.value === '1') {
+      return;
+    }
+    var voucherDate = voucherDateInput ? voucherDateInput.value : '';
+    var paidAt = paidAtInput.value;
+    var tiers = readPaymentTiersFromForm();
+    if (!voucherDate || !paidAt || !tiers.length) {
+      return;
+    }
+    var gross = parseFloat(String(grossInput ? grossInput.value : '').replace(',', '.')) || 0;
+    if (gross <= 0 && invoiceItemsSumEl) {
+      gross = parseFloat(String(invoiceItemsSumEl.textContent).replace(/\./g, '').replace(',', '.')) || 0;
+    }
+    if (gross <= 0) {
+      return;
+    }
+    var tier = tierForPaymentDate(voucherDate, paidAt, tiers);
+    if (!tier) {
+      return;
+    }
+    var percent = tier.adjustment_percent;
+    if (percent < 0 && discountPercentInput && discountAmountInput && paidAmountInput) {
+      var discountAmount = Math.round(gross * Math.abs(percent)) / 100;
+      discountPercentInput.value = String(Math.abs(percent));
+      discountAmountInput.value = discountAmount.toFixed(2).replace('.', ',');
+      paidAmountInput.value = (gross - discountAmount).toFixed(2).replace('.', ',');
+    } else if (percent > 0 && paidAmountInput) {
+      if (discountPercentInput) discountPercentInput.value = '0';
+      if (discountAmountInput) discountAmountInput.value = '0,00';
+      paidAmountInput.value = (gross * (1 + percent / 100)).toFixed(2).replace('.', ',');
+    } else if (paidAmountInput) {
+      if (discountPercentInput) discountPercentInput.value = '0';
+      if (discountAmountInput) discountAmountInput.value = '0,00';
+      paidAmountInput.value = gross.toFixed(2).replace('.', ',');
+    }
+  }
+
+  function bindPaymentTermsUi() {
+    document.querySelectorAll('#dg-voucher-payment-tiers-body input').forEach(function (field) {
+      field.addEventListener('input', updatePaymentTermsPreview);
+      field.addEventListener('change', updatePaymentTermsPreview);
+    });
+    if (voucherDateInput) {
+      voucherDateInput.addEventListener('change', updatePaymentTermsPreview);
+    }
+    if (paymentDueDateInput) {
+      paymentDueDateInput.addEventListener('change', function () {
+        paymentDueDateInput.dataset.manualDue = '1';
+        updatePaymentTermsPreview();
+      });
+    }
+    if (paidAtInput) {
+      paidAtInput.addEventListener('change', suggestSettlementFromPaymentDate);
+    }
+    [discountPercentInput, discountAmountInput].forEach(function (field) {
+      if (!field) return;
+      field.addEventListener('input', function () {
+        if (discountManualInput) {
+          discountManualInput.value = '1';
+        }
+      });
+    });
   }
 
   function syncDocumentStatusField() {
@@ -2089,8 +2268,10 @@
 
   syncIncomeMode();
   bindLegalClausesUi();
+  bindPaymentTermsUi();
   syncLegalClauseSuggestions();
   updateLegalClausesPreview();
+  syncPaymentTermsSection();
 
   if (bookingBody) {
     bookingBody.querySelectorAll('.dg-voucher-split__row').forEach(bindBookingRow);

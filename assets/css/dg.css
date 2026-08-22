@@ -4469,8 +4469,8 @@ body.dg-login-page {
   border-top: 1px solid var(--dg-border, #d8dee8);
 }
 
-.dg-voucher-legal-clauses__preview-text {
-  margin: 8px 0 0;
+.dg-voucher-payment-terms-preview {
+  margin: 10px 0 0;
   padding: 10px 12px;
   white-space: pre-wrap;
   font-family: inherit;
@@ -4479,6 +4479,13 @@ body.dg-login-page {
   background: var(--dg-surface, #fff);
   border: 1px solid var(--dg-border, #d8dee8);
   border-radius: 6px;
+}
+
+.dg-voucher-dunning {
+  border: 1px solid #f0d9a8;
+  background: #fffaf0;
+  border-radius: 8px;
+  padding: 12px 14px;
 }
 
 .dg-voucher-items__row:has(.dg-voucher-items-search-results:not([hidden])) {

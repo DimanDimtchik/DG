@@ -580,10 +580,22 @@ final class VoucherRepository
         $documentIntroText = '';
         $documentFooterText = '';
         $documentLegalClauses = [];
+        $paymentTermTiers = [];
+        $paymentDueDate = '';
         if (VoucherDocumentKind::usesPositionTexts($documentKind, $voucherType)) {
             $documentIntroText = self::sanitizeDocumentText((string) ($data['document_intro_text'] ?? ''));
             $documentFooterText = self::sanitizeDocumentText((string) ($data['document_footer_text'] ?? ''));
             $documentLegalClauses = VoucherDocumentLegalClause::parseFromRequest($data);
+        }
+        if ($voucherType === 'income' && VoucherDocumentKind::isBookable($documentKind, $voucherType)) {
+            $paymentTermTiers = PaymentTermsService::sanitizeTiers($data['payment_term_tiers'] ?? AccountingPaymentSettings::defaultTiers());
+            $paymentDueDate = trim((string) ($data['payment_due_date'] ?? ''));
+            if ($paymentDueDate === '' && $paymentTermTiers !== []) {
+                $paymentDueDate = PaymentTermsService::dueDateFromTiers($voucherDate, $paymentTermTiers);
+            }
+            if ($paymentDueDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $paymentDueDate)) {
+                throw new InvalidArgumentException('Ungültiges Fälligkeitsdatum.');
+            }
         }
         $parentVoucherId = max(0, (int) ($data['parent_voucher_id'] ?? 0));
         $arap = VoucherAccrual::parseFromData($data);
@@ -684,6 +696,12 @@ final class VoucherRepository
             if ($paidAt === '') {
                 $paidAt = date('Y-m-d');
             }
+            if ($paymentTermTiers !== [] && $paidAt !== '' && empty($data['discount_manual'])) {
+                $settlement = PaymentTermsService::settlementAmounts($gross, $voucherDate, $paidAt, $paymentTermTiers);
+                $discountPercent = $settlement['discount_percent'];
+                $discountAmount = $settlement['discount_amount'];
+                $paidAmount = $settlement['paid_amount'];
+            }
         } else {
             $paidAmount = 0.0;
             $paidAt = '';
@@ -727,6 +745,8 @@ final class VoucherRepository
             'document_intro_text' => $documentIntroText !== '' ? $documentIntroText : null,
             'document_footer_text' => $documentFooterText !== '' ? $documentFooterText : null,
             'document_legal_clauses' => VoucherDocumentLegalClause::encodeSelection($documentLegalClauses),
+            'payment_due_date' => $paymentDueDate !== '' ? $paymentDueDate : null,
+            'payment_term_tiers' => PaymentTermsService::encodeTiers($paymentTermTiers),
         ];
 
         if ($contactId !== null) {
@@ -769,7 +789,9 @@ final class VoucherRepository
                     notes = :notes,
                     document_intro_text = :document_intro_text,
                     document_footer_text = :document_footer_text,
-                    document_legal_clauses = :document_legal_clauses
+                    document_legal_clauses = :document_legal_clauses,
+                    payment_due_date = :payment_due_date,
+                    payment_term_tiers = :payment_term_tiers
                  WHERE id = :id'
             );
             $fields['id'] = $id;
@@ -788,13 +810,15 @@ final class VoucherRepository
                 contact_id, supplier_name, invoice_number, description,
                 gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
                 net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
-                account_number, payment_status, notes, document_intro_text, document_footer_text, document_legal_clauses, created_by
+                account_number, payment_status, notes, document_intro_text, document_footer_text, document_legal_clauses,
+                payment_due_date, payment_term_tiers, created_by
             ) VALUES (
                 :voucher_type, :document_kind, :document_status, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
                 :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
                 :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
-                :account_number, :payment_status, :notes, :document_intro_text, :document_footer_text, :document_legal_clauses, :created_by
+                :account_number, :payment_status, :notes, :document_intro_text, :document_footer_text, :document_legal_clauses,
+                :payment_due_date, :payment_term_tiers, :created_by
             )'
         );
         $stmt->execute($fields);
@@ -981,6 +1005,11 @@ final class VoucherRepository
         }
     }
 
+    public static function refreshLedger(int $voucherId): void
+    {
+        self::syncLedger($voucherId);
+    }
+
     /**
      * emptyForm.
      *
@@ -1021,6 +1050,11 @@ final class VoucherRepository
             'document_intro_text' => '',
             'document_footer_text' => '',
             'document_legal_clauses' => [],
+            'payment_due_date' => '',
+            'payment_term_tiers' => AccountingPaymentSettings::defaultTiers(),
+            'dunning_level' => '0',
+            'dunning_fee_total' => '0',
+            'last_dunning_sent_at' => '',
             'lines' => [
                 [
                     'account_number' => '',
@@ -1126,6 +1160,11 @@ final class VoucherRepository
             'document_intro_text' => (string) ($row['document_intro_text'] ?? ''),
             'document_footer_text' => (string) ($row['document_footer_text'] ?? ''),
             'document_legal_clauses' => VoucherDocumentLegalClause::sanitizeSelection($row['document_legal_clauses'] ?? ''),
+            'payment_due_date' => (string) ($row['payment_due_date'] ?? ''),
+            'payment_term_tiers' => PaymentTermsService::sanitizeTiers($row['payment_term_tiers'] ?? ''),
+            'dunning_level' => (string) ($row['dunning_level'] ?? '0'),
+            'dunning_fee_total' => self::formatMoney((float) ($row['dunning_fee_total'] ?? 0)),
+            'last_dunning_sent_at' => (string) ($row['last_dunning_sent_at'] ?? ''),
             'lines' => $lines,
             'items' => $items,
             'system_lines' => is_array($row['system_lines'] ?? null) ? $row['system_lines'] : [],

@@ -180,6 +180,15 @@ $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
   </div>
 <?php endif; ?>
 
+<?php
+$paymentTermsText = trim((string) ($paymentTermsText ?? ''));
+?>
+<?php if ($paymentTermsText !== '') : ?>
+  <div class="vd-payment-terms"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:12px;"' : ' style="margin-top:4mm;font-size:12px;"' ?>>
+    <?= nl2br(View::escape($paymentTermsText)) ?>
+  </div>
+<?php endif; ?>
+
 <?php if ($legalClauseBlocks !== []) : ?>
   <div class="vd-legal-clauses"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:12px;"' : ' style="margin-top:4mm;"' ?>>
     <?php foreach ($legalClauseBlocks as $clause) : ?>

@@ -65,11 +65,13 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
           <thead>
             <tr>
               <th>Datum</th>
+              <th>Fällig</th>
               <th>Art</th>
               <th>Rechnung</th>
               <th>Kontakt</th>
               <th>Personenkonto</th>
               <th class="dg-table__num">Offen</th>
+              <th>Mahnung</th>
               <th></th>
             </tr>
           </thead>
@@ -77,11 +79,22 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
             <?php foreach ($items as $item) : ?>
               <tr>
                 <td><?= View::escape((string) ($item['voucher_date'] ?? '')) ?></td>
+                <td>
+                  <?php
+                    $due = (string) ($item['payment_due_date'] ?? '');
+                    $overdue = (int) ($item['days_overdue'] ?? 0);
+                  ?>
+                  <?= $due !== '' ? View::escape($due) : '—' ?>
+                  <?php if ($overdue > 0) : ?>
+                    <span class="dg-badge dg-badge--pending"><?= $overdue ?> T. überf.</span>
+                  <?php endif; ?>
+                </td>
                 <td><?= ($item['direction'] ?? '') === 'receivable' ? 'Forderung' : 'Verbindlichkeit' ?></td>
                 <td><?= View::escape((string) ($item['invoice_number'] ?? '—')) ?></td>
                 <td><?= View::escape((string) ($item['contact_label'] ?? '')) ?></td>
                 <td><?= View::escape((string) ($item['person_account'] ?? '')) ?: '—' ?></td>
                 <td class="dg-table__num"><strong><?= $fmt((float) ($item['open_amount'] ?? 0)) ?> €</strong></td>
+                <td><?= (int) ($item['dunning_level'] ?? 0) > 0 ? (int) $item['dunning_level'] : '—' ?></td>
                 <td>
                   <a href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) ($item['voucher_id'] ?? 0) ?>">Beleg</a>
                 </td>

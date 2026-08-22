@@ -141,6 +141,16 @@ foreach ($legalClauseCatalog as $key => $meta) {
     $group = (string) ($meta['group'] ?? 'Sonstiges');
     $legalClauseGroups[$group][$key] = $meta;
 }
+$paymentTermTiers = PaymentTermsService::sanitizeTiers($form['payment_term_tiers'] ?? AccountingPaymentSettings::defaultTiers());
+$showPaymentTerms = $selectedType === 'income' && VoucherDocumentKind::isBookable($selectedDocumentKind, $selectedType);
+if ($showPaymentTerms && trim((string) ($form['payment_due_date'] ?? '')) === '' && $paymentTermTiers !== []) {
+    $form['payment_due_date'] = PaymentTermsService::dueDateFromTiers((string) ($form['voucher_date'] ?? date('Y-m-d')), $paymentTermTiers);
+}
+$paymentTermsPreview = PaymentTermsService::composeText(
+    $paymentTermTiers,
+    (string) ($form['voucher_date'] ?? ''),
+    (string) ($form['payment_due_date'] ?? '')
+);
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -229,6 +239,25 @@ foreach ($legalClauseCatalog as $key => $meta) {
       <a href="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>">Einstellungen → E-Mail</a>
       konfigurieren, um Angebote und Rechnungen direkt zu versenden.
     </div>
+  <?php endif; ?>
+
+  <?php if ($isEdit && !$readOnly && ($voucherDunningCanSend ?? false)) : ?>
+    <section class="dg-form-section dg-voucher-dunning" style="margin-bottom: 20px;">
+      <h2 class="dg-subsection-title">Mahnung</h2>
+      <p class="dg-field-hint">
+        Nächste Stufe: <strong><?= View::escape((string) ($voucherDunningNextLabel ?? '')) ?></strong>
+        <?php if ((float) ($voucherDunningFee ?? 0) > 0) : ?>
+          — Mahngebühr <?= View::escape(VoucherRepository::formatMoney((float) $voucherDunningFee)) ?> € wird dem Beleg hinzugefügt.
+        <?php endif; ?>
+      </p>
+      <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="voucher_dunning_send" value="1">
+        <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+        <input type="hidden" name="dunning_level" value="<?= (int) ($voucherDunningNextLevel ?? 0) ?>">
+        <button type="submit" class="dg-button dg-button--warning"><?= View::escape((string) ($voucherDunningNextLabel ?? 'Mahnung')) ?> senden</button>
+      </form>
+    </section>
   <?php endif; ?>
 
   <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form" enctype="multipart/form-data"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
@@ -392,8 +421,57 @@ foreach ($legalClauseCatalog as $key => $meta) {
         </label>
         <label class="dg-field">
           <span>Zahlungsdatum</span>
-          <input type="date" name="paid_at" value="<?= View::escape((string) ($form['paid_at'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+          <input type="date" name="paid_at" id="dg-voucher-paid-at" value="<?= View::escape((string) ($form['paid_at'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
         </label>
+      </div>
+      <input type="hidden" name="discount_manual" id="dg-voucher-discount-manual" value="0">
+
+      <div id="dg-voucher-payment-terms-section" class="dg-voucher-payment-terms"<?= $showPaymentTerms ? '' : ' hidden' ?> style="margin-top: 14px;">
+        <h3 class="dg-subsection-title">Zahlungsbedingungen (Skonto-Stufen)</h3>
+        <p class="dg-field-hint">Voreinstellungen aus <a href="<?= View::escape(SettingsRegistry::tabUrl('payment-terms')) ?>">Einstellungen → Zahlungsbedingungen</a>. Negative % = Skonto, positive % = Verzugszinsen.</p>
+        <div class="dg-table-wrap">
+          <table class="dg-table" id="dg-voucher-payment-tiers-table">
+            <thead>
+              <tr>
+                <th>Tage</th>
+                <th>Änderung %</th>
+                <th>Bezeichnung</th>
+              </tr>
+            </thead>
+            <tbody id="dg-voucher-payment-tiers-body">
+              <?php foreach ($paymentTermTiers as $index => $tier) : ?>
+                <tr>
+                  <td>
+                    <input type="number" name="payment_term_tiers[<?= (int) $index ?>][days]" min="1" max="365"
+                           value="<?= (int) ($tier['days'] ?? 1) ?>" class="dg-voucher-payment-tier-days"<?= $readOnly ? ' readonly' : '' ?>>
+                  </td>
+                  <td>
+                    <input type="text" name="payment_term_tiers[<?= (int) $index ?>][adjustment_percent]" inputmode="decimal"
+                           value="<?= View::escape(number_format((float) ($tier['adjustment_percent'] ?? 0), 2, '.', '')) ?>" class="dg-voucher-payment-tier-percent"<?= $readOnly ? ' readonly' : '' ?>>
+                  </td>
+                  <td>
+                    <input type="text" name="payment_term_tiers[<?= (int) $index ?>][label]" maxlength="80"
+                           value="<?= View::escape((string) ($tier['label'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <div class="dg-form-grid" style="margin-top: 12px;">
+          <label class="dg-field">
+            <span>Fälligkeitsdatum</span>
+            <input type="date" name="payment_due_date" id="dg-voucher-payment-due-date" value="<?= View::escape((string) ($form['payment_due_date'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+          </label>
+          <?php if ($isEdit && (int) ($form['dunning_level'] ?? 0) > 0) : ?>
+            <label class="dg-field">
+              <span>Mahnstufe</span>
+              <input type="text" value="<?= (int) ($form['dunning_level'] ?? 0) ?>" readonly class="dg-input--readonly">
+              <small class="dg-field-hint">Mahngebühren gesamt: <?= View::escape(VoucherRepository::formatMoney((float) ($form['dunning_fee_total'] ?? 0))) ?> €</small>
+            </label>
+          <?php endif; ?>
+        </div>
+        <pre class="dg-voucher-payment-terms-preview" id="dg-voucher-payment-terms-preview"><?= View::escape($paymentTermsPreview) ?></pre>
       </div>
     </section>
 

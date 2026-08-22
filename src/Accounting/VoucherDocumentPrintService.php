@@ -144,7 +144,26 @@ final class VoucherDocumentPrintService
             'legalClauseBlocks' => VoucherDocumentLegalClause::blocksForKeys(
                 VoucherDocumentLegalClause::sanitizeSelection($voucher['document_legal_clauses'] ?? [])
             ),
+            'paymentTermsText' => self::paymentTermsText($voucher),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $voucher
+     */
+    public static function paymentTermsText(array $voucher): string
+    {
+        $tiers = PaymentTermsService::sanitizeTiers($voucher['payment_term_tiers'] ?? []);
+        if ($tiers === []) {
+            return '';
+        }
+        $voucherDate = (string) ($voucher['voucher_date'] ?? '');
+        $dueDate = (string) ($voucher['payment_due_date'] ?? '');
+        if ($dueDate === '' && $voucherDate !== '') {
+            $dueDate = PaymentTermsService::dueDateFromTiers($voucherDate, $tiers);
+        }
+
+        return PaymentTermsService::composeText($tiers, $voucherDate, $dueDate);
     }
 
     /**
