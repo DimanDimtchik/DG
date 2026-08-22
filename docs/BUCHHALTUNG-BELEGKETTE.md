@@ -32,50 +32,51 @@
 
 ## Was noch fehlt (Implementierung)
 
-### Datenmodell (Migration `055_voucher_document_chain.sql` — vorbereitet)
+### Datenmodell
 
-- `document_kind` — z. B. `offer`, `order_confirmation`, `partial_invoice`, `invoice`, `final_invoice`
-- `parent_voucher_id` — Verknüpfung zur Vorgänger-Stufe
-
-**Noch nicht angebunden:** UI, API, PDF, Workflow-Buttons.
+- Migration `055_voucher_document_chain.sql` — `document_kind`, `parent_voucher_id` ✅
+- Migration `056_voucher_document_status.sql` — `document_status` ✅
 
 ### UI / Workflow
 
-- [ ] Dokumentart-Auswahl im Belegformular (getrennt von EÜR-Belegtyp `income`)
-- [ ] „Aus Angebot erstellen“ / „Folgebeleg“ (AB, Abschlag, Schlussrechnung)
-- [ ] Positionsübernahme vom Vorgängerbeleg
-- [ ] Schlussrechnung: Summe bisheriger Abschläge anzeigen und abziehen
-- [ ] Status je Stufe (entwurf, versendet, angenommen, abgerechnet, storniert)
-- [ ] PDF-Vorlagen je Dokumentart (Angebot ohne Buchung, Rechnung mit Pflichtangaben)
+- [x] Dokumentart-Auswahl im Belegformular (getrennt von EÜR-Belegtyp `income`)
+- [x] „Folgebeleg“ (AB, Abschlag, Schlussrechnung) mit Positionsübernahme
+- [x] Belegkette-Panel mit Links auf allen verknüpften Belegen
+- [x] Schlussrechnung: Summe bisheriger Abschläge anzeigen und abziehen
+- [x] Dokumentstatus (Entwurf, Versendet, Angenommen, Abgerechnet, Storniert) + Schnellaktionen
+- [x] Belegliste: Filter und Spalten Dokument + Dokumentstatus
+- [x] Druck/PDF inkl. Kette (HTML-Druck)
+- [ ] PDF-Vorlagen je Dokumentart (Layout/Pflichtangaben Feinschliff)
+- [ ] E-Mail-Versand aus dem Beleg
 
 ### Buchhaltung
 
-- [ ] Abschlagsrechnung: Umsatz buchen, OPOS Teilbetrag
-- [ ] Schlussrechnung: Restumsatz, Verknüpfung Abschlagszahlungen
-- [ ] Angebot/AB: **kein** Journal bis Rechnungsstellung
-- [ ] Nummernkreis-Zuordnung: `partial_invoice`, `final_invoice` an `numberRangeTypeForVoucher()`
+- [x] Abschlagsrechnung: Umsatz buchen, OPOS Teilbetrag (über bestehende Einnahmen-Logik)
+- [x] Schlussrechnung: Restumsatz, Verknüpfung Abschlagszahlungen (Anzeige + Positions-Skalierung)
+- [x] Angebot/AB/Lieferschein: kein Journal bis Rechnungsstellung
+- [x] Nummernkreis-Zuordnung je `document_kind`
 
-### Tests (nach UI)
+### Tests (nach Deploy)
 
 1. Angebot anlegen → keine Buchung, keine UStVA
 2. AB aus Angebot → noch keine Buchung
 3. Abschlagsrechnung 30 % → Journal + OPOS
 4. Schlussrechnung → Rest 70 %, Summe = Auftrag
 5. Gutschrift auf Rechnung → Minderung korrekt
+6. Status-Workflow: versendet → angenommen → abgerechnet
+7. Belegliste filtern nach Dokumentart und Status
 
 ---
 
-## Empfohlene Reihenfolge
+## Empfohlene Reihenfolge (Rest)
 
-1. **Dokumentart-Feld** + Anzeige in Belegliste (Filter)
-2. **Folgebeleg-Button** mit Positionskopie
-3. **Schlussrechnung-Logik** (Abzug Abschläge)
-4. **PDF** je Dokumentart
-5. **Status & Versand** (E-Mail aus CRM)
+1. **PDF-Layout** je Dokumentart
+2. **E-Mail-Versand** (Angebot/Rechnung an Kunden)
+3. **Manuelle Tests** nach Migration 055 + 056
 
 ---
 
-## Randfälle (parallel erledigt in diesem Branch)
+## Randfälle (Branch cursor/buchhaltung-randfaelle-1c3a)
 
 - PRAP für Einnahmen (Vorausrechnung)
 - Negative Rabattpositionen auf Rechnungen

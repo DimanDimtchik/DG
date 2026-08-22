@@ -25,6 +25,7 @@ $followUps = $followUpKinds ?? [];
         <thead>
           <tr>
             <th>Dokument</th>
+            <th>Status</th>
             <th>Nummer</th>
             <th>Datum</th>
             <th class="dg-table__num">Betrag</th>
@@ -41,6 +42,15 @@ $followUps = $followUpKinds ?? [];
                 <?php endif; ?>
                 <?php if (empty($doc['books'])) : ?>
                   <span class="dg-badge dg-badge--muted">ohne Buchung</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if ((string) ($doc['document_status_label'] ?? '') !== '') : ?>
+                  <span class="dg-badge <?= View::escape((string) ($doc['document_status_badge_class'] ?? 'dg-badge--muted')) ?>">
+                    <?= View::escape((string) $doc['document_status_label']) ?>
+                  </span>
+                <?php else : ?>
+                  —
                 <?php endif; ?>
               </td>
               <td><?= View::escape((string) ($doc['invoice_number'] ?? '—')) ?></td>

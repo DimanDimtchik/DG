@@ -112,6 +112,16 @@ $followUpKinds = is_array($followUpKinds ?? null) ? $followUpKinds : [];
 $chainSummary = is_array($chainSummary ?? null) ? $chainSummary : null;
 $showDocumentKindField = $selectedType === 'income';
 $documentKindReadOnly = $readOnly || $isEdit;
+$selectedDocumentStatus = VoucherDocumentStatus::sanitize((string) ($form['document_status'] ?? ''));
+if ($showDocumentKindField && $selectedDocumentKind !== '' && $selectedDocumentStatus === '') {
+    $selectedDocumentStatus = VoucherDocumentStatus::defaultForKind($selectedDocumentKind);
+}
+$documentStatusOptionsForKind = $selectedDocumentKind !== ''
+    ? VoucherDocumentStatus::allowedForKind($selectedDocumentKind)
+    : [];
+$statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
+    ? VoucherDocumentStatus::nextStatuses($selectedDocumentStatus, $selectedDocumentKind)
+    : [];
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -226,6 +236,21 @@ $documentKindReadOnly = $readOnly || $isEdit;
             <small class="dg-field-hint">Steuert Nummernkreis und ob der Beleg gebucht wird (Angebot/AB/Lieferschein = ohne Buchung).</small>
           <?php endif; ?>
         </label>
+        <label class="dg-field" id="dg-voucher-document-status-field"<?= $showDocumentKindField && $documentStatusOptionsForKind !== [] ? '' : ' hidden' ?>>
+          <span>Dokumentstatus</span>
+          <?php if ($readOnly) : ?>
+            <input type="text" value="<?= View::escape(VoucherDocumentStatus::label($selectedDocumentStatus)) ?>" readonly class="dg-input--computed">
+          <?php else : ?>
+            <select name="document_status" id="dg-voucher-document-status">
+              <?php foreach ($documentStatusOptionsForKind as $statusValue) : ?>
+                <option value="<?= View::escape($statusValue) ?>"<?= $selectedDocumentStatus === $statusValue ? ' selected' : '' ?>>
+                  <?= View::escape(VoucherDocumentStatus::label($statusValue)) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <small class="dg-field-hint">Workflow: z. B. Angebot versendet → angenommen → abgerechnet.</small>
+          <?php endif; ?>
+        </label>
         <label class="dg-field">
           <span>Belegdatum *</span>
           <input type="date" name="voucher_date" id="dg-voucher-date" value="<?= View::escape($form['voucher_date'] ?? '') ?>" required<?= $readOnly ? ' readonly' : '' ?>>
@@ -272,6 +297,19 @@ $documentKindReadOnly = $readOnly || $isEdit;
           <small class="dg-field-hint" id="dg-voucher-payment-status-hint"><?= View::escape($paymentStatusHint) ?></small>
         </label>
       </div>
+      <?php if ($isEdit && !$readOnly && $statusNextActions !== []) : ?>
+        <div class="dg-form-actions dg-voucher-status-actions" style="margin-top: 12px;">
+          <?php foreach ($statusNextActions as $nextStatus) : ?>
+            <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="voucher_status_change" value="1">
+              <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+              <input type="hidden" name="document_status" value="<?= View::escape($nextStatus) ?>">
+              <button type="submit" class="dg-button dg-button--small"><?= View::escape(VoucherDocumentStatus::actionLabel($nextStatus)) ?></button>
+            </form>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
       <div class="dg-form-grid" id="dg-voucher-settlement-fields">
         <label class="dg-field">
           <span>Skonto %</span>

@@ -350,6 +350,20 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
             ],
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
+        documentStatusLabels: <?= json_encode(
+            VoucherDocumentStatus::options(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        documentStatusByKind: <?= json_encode(
+            array_combine(
+                array_keys(VoucherDocumentKind::options()),
+                array_map(
+                    static fn (string $kind): array => VoucherDocumentStatus::allowedForKind($kind),
+                    array_keys(VoucherDocumentKind::options())
+                )
+            ),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
         incomeVoucherTypes: <?= json_encode(
             VoucherIncomePositions::voucherTypesWithItems(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE

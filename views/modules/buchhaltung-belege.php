@@ -4,6 +4,8 @@
  * @var string $voucherSearch
  * @var int $voucherYear
  * @var string $voucherTypeFilter
+ * @var string $voucherDocumentKindFilter
+ * @var string $voucherDocumentStatusFilter
  * @var string $voucherDraftFilter
  * @var int $voucherDraftCount
  * @var array<string, mixed> $voucherImportPending
@@ -17,12 +19,17 @@ $search = $voucherSearch ?? '';
 $year = (int) ($voucherYear ?? (int) date('Y'));
 $period = $voucherPeriod ?? AccountingPeriodFilter::fromRequest(['year' => $year]);
 $typeFilter = $voucherTypeFilter ?? '';
+$documentKindFilter = $voucherDocumentKindFilter ?? '';
+$documentStatusFilter = $voucherDocumentStatusFilter ?? '';
 $draftFilter = $voucherDraftFilter ?? '';
 $draftCount = (int) ($voucherDraftCount ?? 0);
 $importPending = is_array($voucherImportPending ?? null) ? $voucherImportPending : [];
 $years = $voucherYears ?? [(int) date('Y')];
 $typeOptions = VoucherRepository::voucherTypeOptions();
+$documentKindOptions = VoucherDocumentKind::options();
+$documentStatusOptions = VoucherDocumentStatus::options();
 $baseUrl = '/app?page=buchhaltung-belege';
+$hasActiveFilters = $search !== '' || $typeFilter !== '' || $documentKindFilter !== '' || $documentStatusFilter !== '' || $draftFilter !== '';
 ?>
 <div class="dg-wrap dg-buchhaltung-belege">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -61,7 +68,7 @@ $baseUrl = '/app?page=buchhaltung-belege';
           'years' => $years,
       ]); ?>
       <label class="dg-field">
-        <span>Belegart</span>
+        <span>Belegart (EÜR)</span>
         <select name="type" id="dg-voucher-type-filter">
           <option value="">Alle Arten</option>
           <?php foreach ($typeOptions as $value => $label) : ?>
@@ -70,10 +77,28 @@ $baseUrl = '/app?page=buchhaltung-belege';
         </select>
       </label>
       <label class="dg-field">
-        <span>Status</span>
+        <span>Dokument</span>
+        <select name="doc_kind" id="dg-voucher-doc-kind-filter">
+          <option value="">Alle Dokumente</option>
+          <?php foreach ($documentKindOptions as $value => $label) : ?>
+            <option value="<?= View::escape($value) ?>"<?= $documentKindFilter === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field">
+        <span>Dokumentstatus</span>
+        <select name="doc_status" id="dg-voucher-doc-status-filter">
+          <option value="">Alle Status</option>
+          <?php foreach ($documentStatusOptions as $value => $label) : ?>
+            <option value="<?= View::escape($value) ?>"<?= $documentStatusFilter === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field">
+        <span>Vollständigkeit</span>
         <select name="draft" id="dg-voucher-draft-filter">
           <option value=""<?= $draftFilter === '' ? ' selected' : '' ?>>Alle</option>
-          <option value="1"<?= $draftFilter === '1' ? ' selected' : '' ?>>Nur Entwürfe</option>
+          <option value="1"<?= $draftFilter === '1' ? ' selected' : '' ?>>Nur unvollständige Entwürfe</option>
           <option value="0"<?= $draftFilter === '0' ? ' selected' : '' ?>>Ohne Entwürfe</option>
         </select>
       </label>
@@ -83,7 +108,7 @@ $baseUrl = '/app?page=buchhaltung-belege';
       </label>
       <div class="dg-field dg-field--actions">
         <button type="submit" class="dg-button dg-button--primary">Filtern</button>
-        <?php if ($search !== '' || $typeFilter !== '' || $draftFilter !== '') : ?>
+        <?php if ($hasActiveFilters) : ?>
           <a class="dg-button" href="<?= View::escape($baseUrl . '&year=' . $year) ?>">Zurücksetzen</a>
         <?php endif; ?>
       </div>
@@ -101,9 +126,10 @@ $baseUrl = '/app?page=buchhaltung-belege';
       <thead>
         <tr>
           <th>Datum</th>
-          <th>Art</th>
+          <th>Dokument</th>
+          <th>Status</th>
           <th>Lieferant / Kontakt</th>
-          <th>Rechnungsnr.</th>
+          <th>Nummer</th>
           <th>Buchungstext</th>
           <th class="dg-table__num">Brutto</th>
           <th class="dg-table__num">MwSt.</th>
@@ -115,7 +141,7 @@ $baseUrl = '/app?page=buchhaltung-belege';
       </thead>
       <tbody>
         <?php if ($list['items'] === []) : ?>
-          <tr><td colspan="11" class="dg-table__empty">Keine Belege gefunden.</td></tr>
+          <tr><td colspan="12" class="dg-table__empty">Keine Belege gefunden.</td></tr>
         <?php else : ?>
           <?php foreach ($list['items'] as $voucher) : ?>
             <tr<?= !empty($voucher['is_draft']) ? ' class="dg-buchhaltung-belege__row--draft"' : '' ?>>
@@ -123,7 +149,16 @@ $baseUrl = '/app?page=buchhaltung-belege';
               <td>
                 <?= View::escape((string) ($voucher['type_label'] ?? '')) ?>
                 <?php if (!empty($voucher['is_draft'])) : ?>
-                  <span class="dg-badge dg-badge--muted">Entwurf</span>
+                  <span class="dg-badge dg-badge--muted">unvollständig</span>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if ((string) ($voucher['document_status_label'] ?? '') !== '') : ?>
+                  <span class="dg-badge <?= View::escape((string) ($voucher['document_status_badge_class'] ?? 'dg-badge--muted')) ?>">
+                    <?= View::escape((string) $voucher['document_status_label']) ?>
+                  </span>
+                <?php else : ?>
+                  <span class="dg-muted">—</span>
                 <?php endif; ?>
               </td>
               <td><?= View::escape((string) ($voucher['supplier_display'] ?? '—')) ?></td>
@@ -183,6 +218,8 @@ $baseUrl = '/app?page=buchhaltung-belege';
       <?php
         $pageQuery = $baseUrl . '&year=' . $year
             . ($typeFilter !== '' ? '&type=' . rawurlencode($typeFilter) : '')
+            . ($documentKindFilter !== '' ? '&doc_kind=' . rawurlencode($documentKindFilter) : '')
+            . ($documentStatusFilter !== '' ? '&doc_status=' . rawurlencode($documentStatusFilter) : '')
             . ($draftFilter !== '' ? '&draft=' . rawurlencode($draftFilter) : '')
             . ($search !== '' ? '&s=' . rawurlencode($search) : '');
       ?>

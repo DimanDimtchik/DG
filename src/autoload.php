@@ -147,6 +147,7 @@ spl_autoload_register(static function (string $class): void {
         'VoucherIncomePositions' => '/src/Accounting/VoucherIncomePositions.php',
         'VoucherAccrual' => '/src/Accounting/VoucherAccrual.php',
         'VoucherDocumentKind' => '/src/Accounting/VoucherDocumentKind.php',
+        'VoucherDocumentStatus' => '/src/Accounting/VoucherDocumentStatus.php',
         'VoucherDocumentChain' => '/src/Accounting/VoucherDocumentChain.php',
         'VoucherDocumentPrintService' => '/src/Accounting/VoucherDocumentPrintService.php',
         'EpcQrCode' => '/src/Accounting/EpcQrCode.php',

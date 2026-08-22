@@ -7,6 +7,8 @@
 
   var listYear = document.getElementById('dg-voucher-year');
   var listType = document.getElementById('dg-voucher-type-filter');
+  var listDocKind = document.getElementById('dg-voucher-doc-kind-filter');
+  var listDocStatus = document.getElementById('dg-voucher-doc-status-filter');
 
   if (listYear && listType) {
     listYear.addEventListener('change', function () {
@@ -14,6 +16,16 @@
     });
     listType.addEventListener('change', function () {
       listType.form.submit();
+    });
+  }
+  if (listDocKind) {
+    listDocKind.addEventListener('change', function () {
+      listDocKind.form.submit();
+    });
+  }
+  if (listDocStatus) {
+    listDocStatus.addEventListener('change', function () {
+      listDocStatus.form.submit();
     });
   }
 
@@ -53,6 +65,8 @@
   var typeHint = document.getElementById('dg-voucher-type-hint');
   var documentKindSelect = document.getElementById('dg-voucher-document-kind');
   var documentKindField = document.getElementById('dg-voucher-document-kind-field');
+  var documentStatusField = document.getElementById('dg-voucher-document-status-field');
+  var documentStatusSelect = document.getElementById('dg-voucher-document-status');
   var bookingBody = document.getElementById('dg-voucher-booking-body');
   var bookingRowTemplate = document.getElementById('dg-voucher-booking-row-template');
   var bookingSumEl = document.getElementById('dg-voucher-booking-sum');
@@ -111,6 +125,36 @@
       return;
     }
     documentKindField.hidden = getVoucherType() !== 'income';
+    syncDocumentStatusField();
+  }
+
+  function syncDocumentStatusField() {
+    if (!documentStatusField || !documentStatusSelect) {
+      return;
+    }
+    var isIncome = getVoucherType() === 'income';
+    var kind = getDocumentKind();
+    var byKind = config.documentStatusByKind || {};
+    var labels = config.documentStatusLabels || {};
+    var allowed = kind && byKind[kind] ? byKind[kind] : [];
+    documentStatusField.hidden = !isIncome || allowed.length === 0;
+    if (!isIncome || allowed.length === 0 || documentStatusSelect.tagName !== 'SELECT') {
+      return;
+    }
+    var current = documentStatusSelect.value;
+    documentStatusSelect.innerHTML = '';
+    allowed.forEach(function (status) {
+      var option = document.createElement('option');
+      option.value = status;
+      option.textContent = labels[status] || status;
+      if (status === current) {
+        option.selected = true;
+      }
+      documentStatusSelect.appendChild(option);
+    });
+    if (!documentStatusSelect.value && allowed.length > 0) {
+      documentStatusSelect.value = allowed[0];
+    }
   }
 
   function taxTypeFromRate(rate) {
@@ -1840,6 +1884,7 @@
 
   if (documentKindSelect && documentKindSelect.tagName === 'SELECT') {
     documentKindSelect.addEventListener('change', function () {
+      syncDocumentStatusField();
       syncInvoiceNumberField();
       syncArapUi();
     });

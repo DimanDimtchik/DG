@@ -1774,6 +1774,31 @@ switch ($path) {
             exit;
         }
 
+        // POST: Dokumentstatus schnell ändern (Workflow)
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_status_change'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    VoucherRepository::updateDocumentStatus(
+                        $voucherId,
+                        (string) ($_POST['document_status'] ?? '')
+                    );
+                    Flash::set('success', 'Dokumentstatus aktualisiert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
         // POST: Überweisung aus Beleg vorbereiten
         if (
             $page === 'buchhaltung-beleg-form'
@@ -2187,6 +2212,8 @@ switch ($path) {
             if (!array_key_exists($voucherTypeFilter, VoucherRepository::voucherTypeOptions())) {
                 $voucherTypeFilter = '';
             }
+            $voucherDocumentKindFilter = VoucherDocumentKind::sanitize((string) ($_GET['doc_kind'] ?? ''));
+            $voucherDocumentStatusFilter = VoucherDocumentStatus::sanitize((string) ($_GET['doc_status'] ?? ''));
             $voucherDraftFilter = (string) ($_GET['draft'] ?? '');
             if ($voucherDraftFilter !== '1' && $voucherDraftFilter !== '0') {
                 $voucherDraftFilter = '';
@@ -2195,6 +2222,8 @@ switch ($path) {
                 'date_from' => $voucherPeriod->dateFrom,
                 'date_to' => $voucherPeriod->dateTo,
                 'type' => $voucherTypeFilter,
+                'document_kind' => $voucherDocumentKindFilter,
+                'document_status' => $voucherDocumentStatusFilter,
                 'search' => $voucherSearch,
                 'page' => $voucherPage,
                 'draft' => $voucherDraftFilter,
@@ -3428,6 +3457,8 @@ switch ($path) {
         $voucherPage = $voucherPage ?? 1;
         $voucherYear = $voucherYear ?? (int) date('Y');
         $voucherTypeFilter = $voucherTypeFilter ?? '';
+        $voucherDocumentKindFilter = $voucherDocumentKindFilter ?? '';
+        $voucherDocumentStatusFilter = $voucherDocumentStatusFilter ?? '';
         $voucherYears = $voucherYears ?? [(int) date('Y')];
         $voucherFileCounts = $voucherFileCounts ?? [];
         $voucherList = $voucherList ?? [
@@ -3559,6 +3590,8 @@ switch ($path) {
             'voucherPage',
             'voucherYear',
             'voucherTypeFilter',
+            'voucherDocumentKindFilter',
+            'voucherDocumentStatusFilter',
             'voucherYears',
             'voucherFileCounts',
             'voucherId',

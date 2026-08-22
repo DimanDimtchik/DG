@@ -52,7 +52,7 @@ final class VoucherRepository
     }
 
     /**
-     * @param array{year?: int|null, type?: string, search?: string, page?: int, draft?: string} $filters
+     * @param array{year?: int|null, type?: string, document_kind?: string, document_status?: string, search?: string, page?: int, draft?: string, date_from?: string, date_to?: string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int}
      */
     public static function list(array $filters = []): array
@@ -72,6 +72,8 @@ final class VoucherRepository
         $page = max(1, (int) ($filters['page'] ?? 1));
         $year = isset($filters['year']) && (int) $filters['year'] > 0 ? (int) $filters['year'] : null;
         $type = self::sanitizeVoucherTypeFilter((string) ($filters['type'] ?? ''));
+        $documentKind = VoucherDocumentKind::sanitize((string) ($filters['document_kind'] ?? ''));
+        $documentStatus = VoucherDocumentStatus::sanitize((string) ($filters['document_status'] ?? ''));
         $search = trim((string) ($filters['search'] ?? ''));
         $draft = (string) ($filters['draft'] ?? '');
 
@@ -94,6 +96,16 @@ final class VoucherRepository
         if ($type !== '') {
             $where[] = 'v.voucher_type = :voucher_type';
             $params['voucher_type'] = $type;
+        }
+
+        if ($documentKind !== '') {
+            $where[] = 'v.document_kind = :document_kind';
+            $params['document_kind'] = $documentKind;
+        }
+
+        if ($documentStatus !== '') {
+            $where[] = 'v.document_status = :document_status';
+            $params['document_status'] = $documentStatus;
         }
 
         if ($draft === '1') {
@@ -554,6 +566,17 @@ final class VoucherRepository
         if ($voucherType === 'income' && $documentKind === '') {
             $documentKind = VoucherDocumentKind::INVOICE;
         }
+        $documentStatus = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
+        if ($voucherType === 'income' && $documentKind !== '') {
+            if ($documentStatus === '') {
+                $documentStatus = VoucherDocumentStatus::defaultForKind($documentKind);
+            }
+            if (!VoucherDocumentStatus::isValidForKind($documentStatus, $documentKind)) {
+                throw new InvalidArgumentException('Ungültiger Dokumentstatus für diese Dokumentart.');
+            }
+        } else {
+            $documentStatus = '';
+        }
         $parentVoucherId = max(0, (int) ($data['parent_voucher_id'] ?? 0));
         $arap = VoucherAccrual::parseFromData($data);
         if (!VoucherAccrual::supportsAccrual($voucherType, $documentKind)) {
@@ -668,6 +691,7 @@ final class VoucherRepository
         $fields = [
             'voucher_type' => $voucherType,
             'document_kind' => $documentKind,
+            'document_status' => $documentStatus,
             'parent_voucher_id' => $parentVoucherId > 0 ? $parentVoucherId : null,
             'voucher_date' => $voucherDate,
             'delivery_date' => $deliveryDate,
@@ -706,6 +730,7 @@ final class VoucherRepository
                 'UPDATE dg_vouchers SET
                     voucher_type = :voucher_type,
                     document_kind = :document_kind,
+                    document_status = :document_status,
                     parent_voucher_id = :parent_voucher_id,
                     is_draft = 0,
                     voucher_date = :voucher_date,
@@ -745,13 +770,13 @@ final class VoucherRepository
         $fields['created_by'] = $userId;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_vouchers (
-                voucher_type, document_kind, parent_voucher_id, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
+                voucher_type, document_kind, document_status, parent_voucher_id, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
                 contact_id, supplier_name, invoice_number, description,
                 gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
                 net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
                 account_number, payment_status, notes, created_by
             ) VALUES (
-                :voucher_type, :document_kind, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
+                :voucher_type, :document_kind, :document_status, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
                 :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
                 :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
@@ -952,6 +977,7 @@ final class VoucherRepository
         return [
             'voucher_type' => 'expense',
             'document_kind' => '',
+            'document_status' => '',
             'parent_voucher_id' => '',
             'voucher_date' => date('Y-m-d'),
             'delivery_date' => date('Y-m-d'),
@@ -1053,6 +1079,7 @@ final class VoucherRepository
         return [
             'voucher_type' => self::sanitizeVoucherType((string) ($row['voucher_type'] ?? 'expense')),
             'document_kind' => (string) ($row['document_kind'] ?? ''),
+            'document_status' => (string) ($row['document_status'] ?? ''),
             'parent_voucher_id' => $row['parent_voucher_id'] !== null ? (string) $row['parent_voucher_id'] : '',
             'voucher_date' => (string) ($row['voucher_date'] ?? ''),
             'delivery_date' => (string) ($row['delivery_date'] ?? ''),
@@ -1226,6 +1253,40 @@ final class VoucherRepository
     }
 
     /**
+     * Dokumentstatus setzen (Workflow, ohne vollständiges Formular).
+     */
+    public static function updateDocumentStatus(int $voucherId, string $status): void
+    {
+        if (!Database::isConfigured() || $voucherId < 1) {
+            throw new InvalidArgumentException('Beleg nicht gefunden.');
+        }
+
+        MigrationRunner::runPending();
+        $voucher = self::findById($voucherId);
+        if ($voucher === null) {
+            throw new InvalidArgumentException('Beleg nicht gefunden.');
+        }
+
+        $documentKind = (string) ($voucher['document_kind'] ?? '');
+        if ($documentKind === '' || self::normalizeVoucherType((string) ($voucher['voucher_type'] ?? '')) !== 'income') {
+            throw new InvalidArgumentException('Dokumentstatus ist nur für Ausgangsbelege verfügbar.');
+        }
+
+        $status = VoucherDocumentStatus::sanitize($status);
+        if ($status === '' || !VoucherDocumentStatus::isValidForKind($status, $documentKind)) {
+            throw new InvalidArgumentException('Ungültiger Dokumentstatus.');
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_vouchers SET document_status = :document_status WHERE id = :id'
+        );
+        $stmt->execute([
+            'document_status' => $status,
+            'id' => $voucherId,
+        ]);
+    }
+
+    /**
      * @throws InvalidArgumentException
      */
     private static function assertEditableFiscalYear(string $voucherDate): void
@@ -1373,6 +1434,9 @@ final class VoucherRepository
         if ($documentKind !== '' && VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? '')) === 'income') {
             $row['type_label'] = $row['document_kind_label'];
         }
+        $documentStatus = (string) ($row['document_status'] ?? '');
+        $row['document_status_label'] = VoucherDocumentStatus::label($documentStatus);
+        $row['document_status_badge_class'] = VoucherDocumentStatus::badgeClass($documentStatus);
         $row['payment_label'] = self::paymentLabel((string) ($row['payment_status'] ?? ''));
         $row['payment_badge_class'] = VoucherPaymentStatus::badgeClass((string) ($row['payment_status'] ?? ''));
         $row['payment_settlement_kind'] = VoucherPaymentStatus::settlementKind((string) ($row['payment_status'] ?? ''));

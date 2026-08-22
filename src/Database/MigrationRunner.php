@@ -181,6 +181,7 @@ final class MigrationRunner
             '053_elster_submissions.sql' => self::tableExists($pdo, 'dg_elster_submissions'),
             '054_cash_day_closing.sql' => self::tableExists($pdo, 'dg_cash_day_closings'),
             '055_voucher_document_chain.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_kind'),
+            '056_voucher_document_status.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_status'),
             default => false,
         };
     }
@@ -267,6 +268,7 @@ final class MigrationRunner
             '053_elster_submissions.sql' => true,
             '054_cash_day_closing.sql' => true,
             '055_voucher_document_chain.sql' => true,
+            '056_voucher_document_status.sql' => true,
         ];
     }
 

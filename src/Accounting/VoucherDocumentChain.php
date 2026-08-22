@@ -139,6 +139,7 @@ final class VoucherDocumentChain
         $form = VoucherRepository::toForm($parent);
         $form['voucher_type'] = 'income';
         $form['document_kind'] = $documentKind;
+        $form['document_status'] = VoucherDocumentStatus::defaultForKind($documentKind);
         $form['parent_voucher_id'] = (string) $parentId;
         $form['voucher_date'] = date('Y-m-d');
         $form['delivery_date'] = date('Y-m-d');
@@ -329,11 +330,15 @@ final class VoucherDocumentChain
         if ($label === '') {
             $label = VoucherRepository::typeLabel((string) ($row['voucher_type'] ?? ''));
         }
+        $docStatus = (string) ($row['document_status'] ?? '');
 
         return [
             'id' => $id,
             'document_kind' => $kind,
             'document_label' => $label,
+            'document_status' => $docStatus,
+            'document_status_label' => VoucherDocumentStatus::label($docStatus),
+            'document_status_badge_class' => VoucherDocumentStatus::badgeClass($docStatus),
             'invoice_number' => (string) ($row['invoice_number'] ?? ''),
             'voucher_date' => (string) ($row['voucher_date'] ?? ''),
             'gross_amount' => round((float) ($row['gross_amount'] ?? 0), 2),
