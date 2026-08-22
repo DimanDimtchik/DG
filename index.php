@@ -1774,6 +1774,36 @@ switch ($path) {
             exit;
         }
 
+        // POST: Ausgangsbeleg per E-Mail senden
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_email_send'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    VoucherDocumentMailService::send(
+                        $voucherId,
+                        (string) ($_POST['email_to'] ?? ''),
+                        (string) ($_POST['email_subject'] ?? ''),
+                        (string) ($_POST['email_intro'] ?? ''),
+                        $user,
+                        !empty($_POST['email_mark_sent']),
+                        !empty($_POST['email_attach_document']),
+                    );
+                    Flash::set('success', 'Dokument per E-Mail versendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
         // POST: Dokumentstatus schnell ändern (Workflow)
         if (
             $page === 'buchhaltung-beleg-form'
@@ -2267,6 +2297,11 @@ switch ($path) {
             $voucherChain = ['documents' => [], 'current_id' => 0];
             $followUpKinds = [];
             $chainSummary = null;
+            $voucherMailConfigured = MailSettings::isConfigured();
+            $voucherMailCanSend = false;
+            $voucherMailTo = '';
+            $voucherMailSubject = '';
+            $voucherMailIntro = '';
             if ($action === 'new') {
                 if (!$canEdit) {
                     header('Location: ' . RoleResolver::homePath($user), true, 302);
@@ -2302,13 +2337,10 @@ switch ($path) {
                 }
                 if (trim((string) ($_GET['download'] ?? '')) === 'print') {
                     $html = VoucherDocumentPrintService::render($voucher);
-                    $kindLabel = VoucherDocumentKind::label((string) ($voucher['document_kind'] ?? ''));
-                    if ($kindLabel === '') {
-                        $kindLabel = 'Beleg';
-                    }
-                    $number = trim((string) ($voucher['invoice_number'] ?? ''));
-                    $filename = $kindLabel . ($number !== '' ? '_' . preg_replace('/[^A-Za-z0-9._-]+/', '_', $number) : '') . '.html';
-                    AccountingPrintService::send($filename, $html);
+                    AccountingPrintService::send(
+                        VoucherDocumentPrintService::attachmentFilename($voucher),
+                        $html
+                    );
                     exit;
                 }
                 $isDraftVoucher = !empty($voucher['is_draft']);
@@ -2330,6 +2362,12 @@ switch ($path) {
                     if ($parentId > 0) {
                         $chainSummary = VoucherDocumentChain::finalInvoiceSummary($parentId, $voucherId);
                     }
+                }
+                $voucherMailCanSend = VoucherDocumentMailService::canSend($voucher);
+                $voucherMailTo = VoucherDocumentMailService::defaultRecipient((int) ($form['contact_id'] ?? 0));
+                if ($voucherMailCanSend) {
+                    $voucherMailSubject = VoucherDocumentPrintService::defaultEmailSubject($voucher);
+                    $voucherMailIntro = VoucherDocumentPrintService::defaultEmailIntro($voucher);
                 }
             } else {
                 header('Location: /app?page=buchhaltung-belege', true, 302);
@@ -3488,6 +3526,11 @@ switch ($path) {
         $voucherChain = $voucherChain ?? ['documents' => [], 'current_id' => 0];
         $followUpKinds = $followUpKinds ?? [];
         $chainSummary = $chainSummary ?? null;
+        $voucherMailConfigured = $voucherMailConfigured ?? MailSettings::isConfigured();
+        $voucherMailCanSend = $voucherMailCanSend ?? false;
+        $voucherMailTo = $voucherMailTo ?? '';
+        $voucherMailSubject = $voucherMailSubject ?? '';
+        $voucherMailIntro = $voucherMailIntro ?? '';
         $oposDirection = $oposDirection ?? '';
         $oposSearch = $oposSearch ?? '';
         $oposData = $oposData ?? ['items' => [], 'totals' => ['receivable' => 0.0, 'payable' => 0.0]];
@@ -3610,6 +3653,11 @@ switch ($path) {
             'voucherChain',
             'followUpKinds',
             'chainSummary',
+            'voucherMailConfigured',
+            'voucherMailCanSend',
+            'voucherMailTo',
+            'voucherMailSubject',
+            'voucherMailIntro',
             'oposDirection',
             'oposSearch',
             'oposData',

@@ -45,9 +45,9 @@
 - [x] Schlussrechnung: Summe bisheriger Abschläge anzeigen und abziehen
 - [x] Dokumentstatus (Entwurf, Versendet, Angenommen, Abgerechnet, Storniert) + Schnellaktionen
 - [x] Belegliste: Filter und Spalten Dokument + Dokumentstatus
-- [x] Druck/PDF inkl. Kette (HTML-Druck)
-- [ ] PDF-Vorlagen je Dokumentart (Layout/Pflichtangaben Feinschliff)
-- [ ] E-Mail-Versand aus dem Beleg
+- [x] Druck/PDF inkl. Kette (HTML-Druck, Layout je Dokumentart)
+- [x] E-Mail-Versand aus dem Beleg (HTML-Anhang + Vorschau im Body)
+- [ ] Feinschliff Pflichtangaben / Logo im PDF-Layout
 
 ### Buchhaltung
 
@@ -70,9 +70,8 @@
 
 ## Empfohlene Reihenfolge (Rest)
 
-1. **PDF-Layout** je Dokumentart
-2. **E-Mail-Versand** (Angebot/Rechnung an Kunden)
-3. **Manuelle Tests** nach Migration 055 + 056
+1. **Logo / Pflichtangaben** im Drucklayout (optional)
+2. **Manuelle Tests** nach Migration 055 + 056
 
 ---
 

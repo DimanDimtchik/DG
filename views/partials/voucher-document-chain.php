@@ -5,9 +5,11 @@
  * @var array<string, mixed>|null $chainSummary
  * @var int $voucherId
  * @var bool $canEdit
+ * @var bool $voucherMailCanSend
  */
 $documents = $voucherChain['documents'] ?? [];
 $followUps = $followUpKinds ?? [];
+$mailCanSend = (bool) ($voucherMailCanSend ?? false);
 ?>
 <?php if ($documents !== []) : ?>
   <section class="dg-panel dg-voucher-chain" style="margin-bottom: 20px;">
@@ -18,6 +20,9 @@ $followUps = $followUpKinds ?? [];
       </div>
       <?php if ($voucherId > 0) : ?>
         <a class="dg-button dg-button--small" href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $voucherId ?>&amp;download=print" target="_blank" rel="noopener">Drucken / PDF</a>
+        <?php if ($mailCanSend) : ?>
+          <a class="dg-button dg-button--small" href="#dg-voucher-email-section">Per E-Mail</a>
+        <?php endif; ?>
       <?php endif; ?>
     </header>
     <div class="dg-table-wrap">

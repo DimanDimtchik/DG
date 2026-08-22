@@ -164,8 +164,53 @@ $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
         'chainSummary' => $chainSummary,
         'voucherId' => (int) ($voucherId ?? 0),
         'canEdit' => !($readOnly ?? false),
+        'voucherMailCanSend' => (bool) ($voucherMailCanSend ?? false),
     ]);
   ?>
+
+  <?php if ($isEdit && !$readOnly && ($voucherMailCanSend ?? false)) : ?>
+    <section class="dg-panel dg-voucher-email" id="dg-voucher-email-section" style="margin-bottom: 20px;">
+      <h2 class="dg-subsection-title">Per E-Mail senden</h2>
+      <p class="dg-field-hint">Versendet das Dokument an den Kunden — mit HTML-Anhang zum Drucken/PDF-Speichern.</p>
+      <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="voucher_email_send" value="1">
+        <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field dg-field--wide">
+            <span>Empfänger *</span>
+            <input type="email" name="email_to" required value="<?= View::escape((string) ($voucherMailTo ?? '')) ?>" placeholder="kunde@example.com">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Betreff</span>
+            <input type="text" name="email_subject" maxlength="191" value="<?= View::escape((string) ($voucherMailSubject ?? '')) ?>">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Anschreiben</span>
+            <textarea name="email_intro" rows="5"><?= View::escape((string) ($voucherMailIntro ?? '')) ?></textarea>
+          </label>
+        </div>
+        <p class="dg-form-actions">
+          <label class="dg-checkbox">
+            <input type="checkbox" name="email_attach_document" value="1" checked>
+            Dokument als HTML-Datei anhängen (Druck → PDF im Browser)
+          </label>
+          <label class="dg-checkbox">
+            <input type="checkbox" name="email_mark_sent" value="1" checked>
+            Nach Versand als „Versendet“ markieren
+          </label>
+          <button type="submit" class="dg-button dg-button--primary">E-Mail senden</button>
+          <a class="dg-button" href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $voucherId ?>&amp;download=print" target="_blank" rel="noopener">Vorschau Druck/PDF</a>
+        </p>
+      </form>
+    </section>
+  <?php elseif ($isEdit && !$readOnly && !($voucherMailConfigured ?? false) && $showDocumentKindField) : ?>
+    <div class="dg-flash dg-flash--info" style="margin-bottom: 20px;">
+      E-Mail-Versand: SMTP unter
+      <a href="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>">Einstellungen → E-Mail</a>
+      konfigurieren, um Angebote und Rechnungen direkt zu versenden.
+    </div>
+  <?php endif; ?>
 
   <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form" enctype="multipart/form-data"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
