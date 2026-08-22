@@ -74,6 +74,16 @@
     return incomeVoucherTypes.indexOf(getVoucherType()) !== -1;
   }
 
+  function allowsSignedItemAmounts() {
+    var t = getVoucherType();
+    return t === 'income' || t === 'credit' || t === 'income_reduction' || t === 'expense_reduction';
+  }
+
+  function supportsAccrualUi() {
+    var t = getVoucherType();
+    return t === 'income' || t === 'expense' || t === 'expense_reduction';
+  }
+
   function taxTypeFromRate(rate) {
     var value = parseInt(String(rate), 10);
     if (value === 7) {
@@ -179,7 +189,7 @@
     }
     var title = (row.querySelector('.dg-voucher-items-title') || {}).value || '';
     var gross = parseAmount((row.querySelector('.dg-voucher-items-gross') || {}).value || '0');
-    return title.trim() === '' && gross <= 0;
+    return title.trim() === '' && gross === 0;
   }
 
   function hasEmptyInvoiceItem() {
@@ -220,7 +230,7 @@
     var grossField = row.querySelector('.dg-voucher-items-gross');
     var articleId = (row.querySelector('.dg-voucher-items-article-id') || {}).value || '';
     if (grossField) {
-      if (gross > 0) {
+      if (gross !== 0) {
         grossField.value = formatAmount(gross);
       } else if (articleId) {
         grossField.value = '0,00';
@@ -254,10 +264,10 @@
       var gross = updateInvoiceItemLineTotal(row);
       var taxField = row.querySelector('.dg-voucher-items-tax');
       var taxRate = taxField ? parseInt(taxField.value, 10) : 19;
-      if (title === '' && gross <= 0) {
+      if (title === '' && gross === 0) {
         return;
       }
-      if (gross <= 0) {
+      if (!allowsSignedItemAmounts() && gross <= 0) {
         return;
       }
       items.push({
@@ -632,10 +642,11 @@
       invoiceItemsSection.hidden = !income;
     }
     var arapSection = document.getElementById('dg-voucher-arap-section');
+    var showArap = supportsAccrualUi();
     if (arapSection) {
-      arapSection.hidden = income;
+      arapSection.hidden = !showArap;
     }
-    if (income && arapEnabledInput) {
+    if (!showArap && arapEnabledInput) {
       arapEnabledInput.checked = false;
       syncArapUi();
     }
@@ -666,6 +677,62 @@
       ensureTrailingInvoiceItemRow();
       syncInvoiceItemsSum();
       syncBookingFromItems();
+    }
+  }
+
+  function applyTipDefaultAccount() {
+    if (!bookingBody || readOnly || getVoucherType() !== 'expense') {
+      return;
+    }
+    var tipAccount = String(config.tipPassThroughAccount || '1590');
+    var row = bookingBody.querySelector('.dg-voucher-split__row');
+    if (!row) {
+      addBookingRow();
+      row = bookingBody.querySelector('.dg-voucher-split__row');
+    }
+    if (!row) {
+      return;
+    }
+    var accountField = row.querySelector('.dg-voucher-split-account');
+    var queryField = row.querySelector('.dg-voucher-split-account-query');
+    if (accountField) {
+      accountField.value = tipAccount;
+    }
+    if (queryField) {
+      fetchJson(apiUrl + '?action=account&number=' + encodeURIComponent(tipAccount) + accountLookupSuffix())
+        .then(function (result) {
+          if (result.ok && result.data && result.data.success && result.data.data) {
+            var acc = result.data.data;
+            queryField.value = formatAccountLabel(acc.account_number, acc.name);
+          } else {
+            queryField.value = tipAccount;
+          }
+        })
+        .catch(function () {
+          queryField.value = tipAccount;
+        });
+    }
+    debouncedPreview();
+  }
+
+  function syncPaymentStatusOptions() {
+    var paymentSelect = document.getElementById('dg-voucher-payment-status');
+    var paymentHint = document.getElementById('dg-voucher-payment-status-hint');
+    if (!paymentSelect) {
+      return;
+    }
+    var isExpense = getVoucherType() === 'expense' || getVoucherType() === 'expense_reduction';
+    paymentSelect.querySelectorAll('option').forEach(function (opt) {
+      if (opt.value === 'tip') {
+        opt.hidden = !isExpense;
+        opt.disabled = !isExpense;
+      }
+    });
+    if (!isExpense && paymentSelect.value === 'tip') {
+      paymentSelect.value = 'open';
+      if (paymentHint) {
+        paymentHint.textContent = (config.paymentStatusHints || {}).open || '';
+      }
     }
   }
 
@@ -1735,6 +1802,7 @@
       }
       syncInvoiceNumberField();
       syncIncomeMode();
+      syncPaymentStatusOptions();
       syncArapUi();
       revalidateBookingAccounts();
     });
@@ -1860,8 +1928,12 @@
   if (paymentStatusSelect && paymentStatusHint) {
     paymentStatusSelect.addEventListener('change', function () {
       paymentStatusHint.textContent = paymentStatusHints[paymentStatusSelect.value] || '';
+      if (paymentStatusSelect.value === 'tip') {
+        applyTipDefaultAccount();
+      }
     });
   }
+  syncPaymentStatusOptions();
 
   if (contactSearch && !readOnly) {
     contactSearch.addEventListener('input', debounce(function () {

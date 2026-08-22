@@ -224,6 +224,9 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
           <span>Zahlungsstatus</span>
           <select name="payment_status" id="dg-voucher-payment-status"<?= $readOnly ? ' disabled' : '' ?>>
             <?php foreach ($paymentOptions as $value => $label) : ?>
+              <?php if ($value === VoucherPaymentStatus::TIP && !VoucherRepository::isExpenseType($selectedType)) {
+                  continue;
+              } ?>
               <option value="<?= View::escape($value) ?>"<?= $paymentStatus === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
             <?php endforeach; ?>
           </select>

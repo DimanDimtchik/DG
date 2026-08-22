@@ -164,6 +164,7 @@ final class ChartAccountSearchLexicon
     'anwalt' => ['4950'],
     'bank' => ['1200', '4970'],
     'kasse' => ['1000'],
+    'trinkgeld' => ['1590'],
     'bewirtung' => ['4800'],
     'reise' => ['4900'],
     'lohn' => ['4100', '4110'],

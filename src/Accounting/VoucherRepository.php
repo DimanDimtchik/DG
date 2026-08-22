@@ -537,7 +537,8 @@ final class VoucherRepository
             throw new InvalidArgumentException('Name des Kontakts / Lieferanten ist erforderlich.');
         }
 
-        if (self::isExpenseType($voucherType) && trim((string) ($data['invoice_number'] ?? '')) === '') {
+        if (self::isExpenseType($voucherType) && trim((string) ($data['invoice_number'] ?? '')) === ''
+            && $paymentStatus !== VoucherPaymentStatus::TIP) {
             throw new InvalidArgumentException('Bei Ausgaben ist die Rechnungsnummer erforderlich.');
         }
 
@@ -548,8 +549,9 @@ final class VoucherRepository
         }
         $reverseCharge = VoucherReverseCharge::isActive($reverseChargeType);
         $taxKey = $reverseCharge ? VoucherTaxKeys::KEY_REVERSE_CHARGE : '';
+        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
         $arap = VoucherAccrual::parseFromData($data);
-        if (VoucherAccrual::isIncomeType($voucherType)) {
+        if (!VoucherAccrual::supportsAccrual($voucherType)) {
             $arap = [
                 'enabled' => false,
                 'current_year_percent' => 100,
@@ -563,16 +565,30 @@ final class VoucherRepository
         ChartAccountRepository::ensureSeeded($skrType);
         $usesInvoiceItems = VoucherIncomePositions::usesInvoiceItems($voucherType);
         /** @var list<array<string, mixed>> $itemRows */
-        $itemRows = $usesInvoiceItems ? VoucherIncomePositions::parseItemRows($data) : [];
+        $itemRows = $usesInvoiceItems
+            ? VoucherIncomePositions::parseItemRows($data, $voucherType)
+            : [];
         $gross = round((float) str_replace(',', '.', (string) ($data['gross_amount'] ?? '0')), 2);
         /** @var list<array<string, mixed>> $lineRows */
         if ($usesInvoiceItems && $itemRows !== []) {
-            $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType);
+            $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType, $voucherType);
             if ($bookingLines === []) {
                 throw new InvalidArgumentException('Mindestens eine Rechnungsposition mit Betrag ist erforderlich.');
             }
         } else {
             $bookingLines = self::parseLineRows($data, $reverseCharge, $reverseChargeType);
+        }
+        if ($paymentStatus === VoucherPaymentStatus::TIP && !self::isExpenseType($voucherType)) {
+            throw new InvalidArgumentException('Trinkgeld ist nur bei Ausgaben-Belegen möglich.');
+        }
+        if ($paymentStatus === VoucherPaymentStatus::TIP && self::isExpenseType($voucherType)) {
+            $tipAccount = LedgerAccounts::tipPassThroughAccount($skrType);
+            foreach ($bookingLines as &$tipLine) {
+                if (trim((string) ($tipLine['account_number'] ?? '')) === '') {
+                    $tipLine['account_number'] = $tipAccount;
+                }
+            }
+            unset($tipLine);
         }
         $ustvaSnapshot = null;
         if ($reverseCharge) {
@@ -605,6 +621,9 @@ final class VoucherRepository
             $gross = $amounts['gross_amount'];
             $taxRate = (int) ($bookingLines[0]['tax_rate'] ?? 19);
         } elseif ($gross <= 0) {
+            if (self::allowsSignedItemAmounts($voucherType) && $gross < 0) {
+                throw new InvalidArgumentException('Negativer Gesamtbetrag — bitte Belegart „Kundengutschrift“ oder „Einnahmenminderung“ verwenden.');
+            }
             throw new InvalidArgumentException('Bruttobetrag muss größer als 0 sein.');
         }
 
@@ -622,7 +641,6 @@ final class VoucherRepository
         }
         $paidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
         $paidAt = trim((string) ($data['paid_at'] ?? ''));
-        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
         if (VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK) {
             if ($paidAmount <= 0.0) {
                 $paidAmount = round(max(0, $gross - $discountAmount), 2);
@@ -1083,6 +1101,18 @@ final class VoucherRepository
     public static function isExpenseType(string $voucherType): bool
     {
         return in_array(self::sanitizeVoucherType($voucherType), ['expense', 'expense_reduction'], true);
+    }
+
+    /**
+     * Belegarten, bei denen Rechnungspositionen negative Beträge tragen können (Rabatt-/Gutschriftzeilen).
+     */
+    public static function allowsSignedItemAmounts(string $voucherType): bool
+    {
+        return in_array(
+            self::sanitizeVoucherType($voucherType),
+            ['income', 'credit', 'income_reduction', 'expense_reduction'],
+            true
+        );
     }
 
     /**

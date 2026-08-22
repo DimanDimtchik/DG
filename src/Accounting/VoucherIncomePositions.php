@@ -170,8 +170,11 @@ final class VoucherIncomePositions
      * @param array<string, mixed> $data
      * @return list<array<string, mixed>>
      */
-    public static function parseItemRows(array $data): array
+    public static function parseItemRows(array $data, string $voucherType = 'income'): array
     {
+        $voucherType = VoucherRepository::normalizeVoucherType($voucherType);
+        $allowSigned = VoucherRepository::allowsSignedItemAmounts($voucherType);
+
         $raw = $data['items'] ?? [];
         if (!is_array($raw)) {
             return [];
@@ -196,10 +199,13 @@ final class VoucherIncomePositions
 
             $unitPrice = round((float) str_replace(',', '.', (string) ($line['unit_price_gross'] ?? '0')), 2);
             $gross = round($quantity * $unitPrice, 2);
-            if ($gross <= 0) {
+            if ($gross === 0.0) {
                 $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
             }
-            if ($gross <= 0) {
+            if ($gross === 0.0) {
+                continue;
+            }
+            if (!$allowSigned && $gross < 0) {
                 continue;
             }
 
@@ -240,13 +246,17 @@ final class VoucherIncomePositions
      * bookingLinesFromItems
      * @param array $items
      * @param string $skrType Kontenrahmen (skr03/skr04)
+     * @param string $voucherType Belegtyp
      * @return list<array{account_number: string, description: string, gross_amount: float, net_amount: float, tax_amount: float, tax_rate: int, line_kind: string, ustva_kz: string, posting_side: string}>
      */
-    public static function bookingLinesFromItems(array $items, string $skrType): array
+    public static function bookingLinesFromItems(array $items, string $skrType, string $voucherType = 'income'): array
     {
         if ($items === []) {
             return [];
         }
+
+        $voucherType = VoucherRepository::normalizeVoucherType($voucherType);
+        $postingSide = LedgerAccounts::primarySide($voucherType);
 
         ChartAccountRepository::ensureSeeded($skrType);
 
@@ -274,10 +284,16 @@ final class VoucherIncomePositions
         $rows = [];
         foreach ($groups as $group) {
             $gross = round($group['gross_amount'], 2);
-            if ($gross <= 0) {
+            if ($gross === 0.0) {
                 continue;
             }
-            $amounts = VoucherTaxKeys::calcLineAmounts($gross, $group['tax_rate'], false);
+            $amountGross = abs($gross);
+            $amounts = VoucherTaxKeys::calcLineAmounts($amountGross, $group['tax_rate'], false);
+            if ($gross < 0) {
+                $amounts['gross_amount'] = -$amounts['gross_amount'];
+                $amounts['net_amount'] = -$amounts['net_amount'];
+                $amounts['tax_amount'] = -$amounts['tax_amount'];
+            }
             $description = $group['titles'] !== []
                 ? mb_substr(implode(', ', array_unique($group['titles'])), 0, 500)
                 : '';
@@ -290,7 +306,7 @@ final class VoucherIncomePositions
                 'tax_amount' => $amounts['tax_amount'],
                 'tax_rate' => $group['tax_rate'],
                 'ustva_kz' => '',
-                'posting_side' => 'debit',
+                'posting_side' => $postingSide,
             ];
         }
 

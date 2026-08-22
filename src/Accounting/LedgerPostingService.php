@@ -120,10 +120,12 @@ final class LedgerPostingService
 
             $primaryAmount = $net;
             $taxAccount = LedgerAccounts::taxAccount($skrType, $voucherType, $rate);
-            $bookTaxSeparately = !$reverseCharge && $tax > 0.0 && self::accountExists($taxAccount, $skrType);
+            $bookTaxSeparately = !$reverseCharge && $tax != 0.0 && self::accountExists($taxAccount, $skrType);
             if (!$bookTaxSeparately) {
                 $primaryAmount = $gross;
             }
+
+            [$primaryAmount, $linePrimarySide] = self::normalizeSignedAmount($primaryAmount, $primarySide);
 
             if ($primaryAmount != 0.0) {
                 $postings[] = self::row(
@@ -133,7 +135,7 @@ final class LedgerPostingService
                     $account,
                     $contraAccount,
                     $personAccount,
-                    $primarySide,
+                    $linePrimarySide,
                     $primaryAmount,
                     $rate,
                     $taxKey,
@@ -142,6 +144,7 @@ final class LedgerPostingService
                 );
             }
             if ($bookTaxSeparately) {
+                [$taxAmount, $taxSide] = self::normalizeSignedAmount($tax, $primarySide);
                 $postings[] = self::row(
                     $fiscalYear,
                     $voucherDate,
@@ -149,8 +152,8 @@ final class LedgerPostingService
                     $taxAccount,
                     $contraAccount,
                     $personAccount,
-                    $primarySide,
-                    $tax,
+                    $taxSide,
+                    $taxAmount,
                     $rate,
                     $taxKey,
                     $description,
@@ -159,6 +162,7 @@ final class LedgerPostingService
             }
 
             if ($gross != 0.0) {
+                [$grossAmount, $grossSide] = self::normalizeSignedAmount($gross, $contraSide);
                 $postings[] = self::row(
                     $fiscalYear,
                     $voucherDate,
@@ -166,8 +170,8 @@ final class LedgerPostingService
                     $contraAccount,
                     $account,
                     $personAccount,
-                    $contraSide,
-                    $gross,
+                    $grossSide,
+                    $grossAmount,
                     0,
                     '',
                     $description,
@@ -412,6 +416,20 @@ final class LedgerPostingService
         }
 
         return mb_substr(implode(' · ', $parts), 0, 500);
+    }
+
+    /**
+     * Negative Beträge (Rabattzeilen) → Betrag positiv, Buchungsseite invertiert.
+     *
+     * @return array{0: float, 1: string}
+     */
+    private static function normalizeSignedAmount(float $amount, string $side): array
+    {
+        if ($amount < 0) {
+            return [abs($amount), LedgerAccounts::oppositeSide($side)];
+        }
+
+        return [$amount, $side];
     }
 
     /**

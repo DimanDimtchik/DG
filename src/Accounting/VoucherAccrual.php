@@ -48,6 +48,18 @@ final class VoucherAccrual
     }
 
     /**
+     * PRAP nur für Einnahmen (Vorausrechnung über Jahreswechsel), nicht für Minderungen/Gutschriften.
+     */
+    public static function supportsAccrual(string $voucherType): bool
+    {
+        return in_array(
+            VoucherRepository::normalizeVoucherType($voucherType),
+            ['income', 'expense', 'expense_reduction'],
+            true
+        );
+    }
+
+    /**
      * showAccrualUi
      * @param string $voucherType Belegtyp
      * @param bool $enabled
@@ -60,7 +72,7 @@ final class VoucherAccrual
             return true;
         }
 
-        return !self::isIncomeType($voucherType);
+        return self::supportsAccrual($voucherType);
     }
 
     /**
