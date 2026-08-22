@@ -4469,8 +4469,9 @@ body.dg-login-page {
   border-top: 1px solid var(--dg-border, #d8dee8);
 }
 
+.dg-voucher-legal-clauses__preview-text,
 .dg-voucher-payment-terms-preview {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   padding: 10px 12px;
   white-space: pre-wrap;
   font-family: inherit;

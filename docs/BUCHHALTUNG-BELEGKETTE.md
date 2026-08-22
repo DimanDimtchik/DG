@@ -73,6 +73,18 @@
 9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — Zahlung buchen, Skonto automatisch
 10. Mahnung: Fälligkeit überschritten → manuell/automatisch (Cron), Mahngebühren auf Beleg
 
+### Teilzahlungen (Stand & geplant)
+
+| Aspekt | Status |
+|--------|--------|
+| Feld `paid_amount` am Beleg | ✅ ein Zahlungsbetrag |
+| OPOS offen = Brutto − gezahlt (bei Teilszahlung) | ✅ grob |
+| Mehrere Zahlungen pro Rechnung (Historie) | ❌ geplant |
+| Bankabgleich Teilsummen | ✅ teilweise (Match auf Restbetrag) |
+| OPOS: „teilbezahlt“, Zahlungshistorie, Mahnung auf Rest | ❌ geplant |
+
+Geplant: Tabelle `dg_voucher_payments` (Datum, Betrag, Art, Verknüpfung Bankumsatz), OPOS-Spalte „Bezahlt / Offen“, Mahnung nur auf Restbetrag.
+
 ---
 
 ## Zahlungsbedingungen & Mahnwesen
