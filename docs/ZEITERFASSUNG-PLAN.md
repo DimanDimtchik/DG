@@ -118,6 +118,8 @@ Protokoll Exporte an Lohnsoftware.
 - [x] **Einstempeln / Ausstempeln** mit Live-Anzeige „seit …“
 - [x] **Manuelle Pause** starten/beenden
 - [x] **Automatische Pause** nach Regel (Einstellungen → Termine → Zeiterfassung)
+- [x] **Zwangspause** — Ausstempeln blockiert bis Mindestpause manuell genommen
+- [x] **Autostart** — offene Tage (vergessen auszustempeln) schließen via `runIfDue()`
 - [x] Tagesliste eigener Stempel
 - [x] HR: Team heute (wer ist eingestempelt) — `/app?page=zeiterfassung-team`
 - [x] Flag `overtime_allowed` + `employment_type` (Minijob) in `EmployeeData`
@@ -190,7 +192,7 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 - **Zeitzone:** Europe/Berlin, UTC in DB speichern oder lokale Zeit konsistent
 - **API:** `TimeClockApi` analog `VoucherApi` für AJAX Stempel
-- **Cron:** Täglich offene Tage schließen, Auto-Pause, Erinnerung „vergessen auszustempeln“
+- **Cron:** ~~Täglich offene Tage schließen~~ → `TimeClockService::runIfDue()` in `App::boot` · Auto-Pause · Erinnerung „vergessen auszustempeln“ (UI-Warnung + Autoclose)
 - **DSGVO:** Stempeldaten = personenbezogen, Aufbewahrung an `EmployeeRetentionService` anknüpfen
 
 ---

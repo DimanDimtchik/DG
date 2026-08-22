@@ -19,6 +19,7 @@ Auf KAS können Cronjobs nur manuell eingetragen werden. Das CRM nutzt deshalb *
 | Datei-Integrität | `FileIntegrity::runIfDue()` | Max. alle 24 h |
 | Mitarbeiter-Purge (10 J.) | `EmployeeRetentionService::runOnCrmAccess()` | CRM `/app`, nur **1.–14. Januar**, 1× pro Sitzung |
 | **Mahnversand auto** | `DunningService::runIfDue()` | Erster Request pro Tag, wenn in Einstellungen aktiv |
+| **Zeiterfassung offener Tag** | `TimeClockService::runIfDue()` | Erster Request pro Tag — schließt Vortag ohne Ausstempeln |
 
 ## Optional: HTTP-Cron (`cron.php`)
 
@@ -37,6 +38,7 @@ CLI-Alternativen: `bin/db-purge-expired-employees.php`, `bin/run-migrations.php`
 |-----|-----|
 | Mitarbeiter-Purge | `storage/logs/cron-purge.log` |
 | Mahn auto | `storage/logs/dunning-auto.log` |
+| Zeiterfassung Autoclose | `storage/logs/time-clock-autoclose.log` |
 
 ## Hinweis Mahnwesen
 

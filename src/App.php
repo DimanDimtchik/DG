@@ -50,6 +50,11 @@ final class App
         } catch (Throwable) {
             // Mahn-Autostart darf Seitenaufruf nicht blockieren
         }
+        try {
+            TimeClockService::runIfDue();
+        } catch (Throwable) {
+            // Zeiterfassung-Autostart darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

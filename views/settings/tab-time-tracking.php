@@ -28,6 +28,20 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
       </span>
     </label>
 
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="force_break_before_clock_out" value="1"<?= !empty($settings['force_break_before_clock_out']) ? ' checked' : '' ?>>
+        Zwangspause: Ausstempeln nur nach ausreichender manueller Pause
+      </span>
+    </label>
+
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="auto_close_open_days" value="1"<?= !empty($settings['auto_close_open_days']) ? ' checked' : '' ?>>
+        Offene Tage automatisch schließen (vergessen auszustempeln — Autostart beim ersten Request)
+      </span>
+    </label>
+
     <div class="dg-form-grid">
       <label class="dg-field">
         <span>Schwelle 6&nbsp;h (Minuten Arbeitszeit)</span>

@@ -11,6 +11,7 @@ final class TimeClockRepository
 
     public const SOURCE_WEB = 'web';
     public const SOURCE_AUTO_BREAK = 'auto_break';
+    public const SOURCE_AUTO_CLOSE = 'auto_close';
 
     /**
      * @return list<array<string, mixed>>

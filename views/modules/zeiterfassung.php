@@ -13,6 +13,9 @@ $contactId = (int) ($timeClockContactId ?? 0);
 $employeeLabel = (string) ($timeClockEmployeeLabel ?? '');
 $events = is_array($summary['events'] ?? null) ? $summary['events'] : [];
 $warnings = is_array($summary['warnings'] ?? null) ? $summary['warnings'] : [];
+$compliance = is_array($summary['break_compliance'] ?? null) ? $summary['break_compliance'] : [];
+$autoBreakMinutes = (int) ($summary['auto_break_minutes'] ?? 0);
+$blocksClockOut = !empty($compliance['blocks_clock_out']);
 $state = (string) ($status['state'] ?? 'off');
 ?>
 <div class="dg-wrap dg-zeiterfassung">
@@ -59,7 +62,7 @@ $state = (string) ($status['state'] ?? 'off');
           <form method="post" action="/app?page=zeiterfassung" class="dg-inline-form">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="time_clock_action" value="clock_out">
-            <button type="submit" class="dg-button dg-button--warning">Ausstempeln</button>
+            <button type="submit" class="dg-button dg-button--warning"<?= $blocksClockOut ? ' disabled' : '' ?>>Ausstempeln</button>
           </form>
           <form method="post" action="/app?page=zeiterfassung" class="dg-inline-form">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -77,9 +80,19 @@ $state = (string) ($status['state'] ?? 'off');
 
       <div class="dg-time-clock-summary">
         <p><strong>Heute:</strong> <?= View::escape((string) ($summary['worked_display'] ?? '0:00')) ?> h
-          (Pause: <?= View::escape((string) ($summary['break_display'] ?? '0:00')) ?> h)</p>
+          (Pause gesamt: <?= View::escape((string) ($summary['break_display'] ?? '0:00')) ?> h
+          <?php if ($autoBreakMinutes > 0) : ?>
+            — davon <?= View::escape((string) ($summary['auto_break_display'] ?? '0:00')) ?> h automatisch
+          <?php endif; ?>
+          )</p>
         <p><strong>Soll heute:</strong> <?= View::escape((string) ($summary['scheduled_display'] ?? '8:00')) ?> h</p>
       </div>
+
+      <?php if ($blocksClockOut) : ?>
+        <div class="dg-flash dg-flash--warning">
+          Ausstempeln gesperrt: Bitte zuerst Pause starten und die gesetzliche Mindestpause einhalten.
+        </div>
+      <?php endif; ?>
 
       <?php foreach ($warnings as $warning) : ?>
         <div class="dg-flash dg-flash--warning"><?= View::escape((string) $warning) ?></div>
@@ -105,7 +118,7 @@ $state = (string) ($status['state'] ?? 'off');
                 <tr>
                   <td><?= View::escape((string) ($event['occurred_display'] ?? '')) ?></td>
                   <td><?= View::escape((string) ($event['event_label'] ?? '')) ?></td>
-                  <td><?= View::escape((string) ($event['source'] ?? '')) ?></td>
+                  <td><?= View::escape((string) ($event['source_label'] ?? ($event['source'] ?? ''))) ?></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>

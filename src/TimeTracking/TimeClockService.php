@@ -15,6 +15,11 @@ final class TimeClockService
 
         $eventType = self::sanitizeEventType($eventType);
         $status = self::currentStatus($contactId);
+
+        if ($eventType === TimeClockRepository::EVENT_CLOCK_OUT) {
+            self::assertBreakComplianceBeforeClockOut($contactId);
+        }
+
         self::assertTransitionAllowed($status, $eventType);
 
         $now = date('Y-m-d H:i:s');
@@ -26,6 +31,48 @@ final class TimeClockService
             null,
             $actor?->id,
         );
+    }
+
+    /**
+     * Schließt offene Stempelungen vom Vortag (Autostart, kein KAS-Cron).
+     */
+    public static function runIfDue(): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+
+        $cfg = TimeTrackingSettings::config();
+        if (empty($cfg['auto_close_open_days'])) {
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $state = self::loadAutoCloseState();
+        if (($state['last_run'] ?? '') === $today) {
+            return;
+        }
+
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        try {
+            $closed = self::closeOpenSessionsForDate($yesterday);
+            self::saveAutoCloseState([
+                'last_run' => $today,
+                'closed_sessions' => $closed,
+                'closed_for_date' => $yesterday,
+            ]);
+            if ($closed > 0) {
+                self::logAutoClose($closed, $yesterday);
+            }
+        } catch (Throwable $e) {
+            self::saveAutoCloseState([
+                'last_run' => $today,
+                'closed_sessions' => 0,
+                'closed_for_date' => $yesterday,
+                'last_error' => $e->getMessage(),
+            ]);
+            self::logAutoClose(0, $yesterday, $e->getMessage());
+        }
     }
 
     /**
@@ -112,7 +159,17 @@ final class TimeClockService
         $totalBreak = $manualBreak + $autoBreak;
         $netWorked = max(0, $grossWorked - $autoBreak);
 
+        $status = self::currentStatus($contactId);
+        $compliance = self::breakComplianceFromSegments($grossWorked, $manualBreak, (string) ($status['state'] ?? 'off'));
+
         $warnings = [];
+        if ($compliance['must_take_break']) {
+            $warnings[] = sprintf(
+                'Zwangspause: Bitte mindestens %d min Pause nehmen (noch %d min offen).',
+                (int) $compliance['required_break_minutes'],
+                (int) $compliance['deficit_minutes'],
+            );
+        }
         if (EmployeeData::isMinijob($employeeData) && $netWorked > $scheduled) {
             $warnings[] = 'Minijob: Überstunden sind nicht vorgesehen.';
         }
@@ -124,19 +181,26 @@ final class TimeClockService
         foreach ($displayEvents as &$event) {
             $event['event_label'] = self::eventLabel((string) ($event['event_type'] ?? ''));
             $event['occurred_display'] = self::formatDateTimeGerman((string) ($event['occurred_at'] ?? ''));
+            $event['source_label'] = self::sourceLabel((string) ($event['source'] ?? ''));
         }
         unset($event);
 
         return [
             'events' => $displayEvents,
             'worked_minutes' => $netWorked,
+            'gross_worked_minutes' => $grossWorked,
+            'manual_break_minutes' => $manualBreak,
+            'auto_break_minutes' => $autoBreak,
             'break_minutes' => $totalBreak,
             'scheduled_minutes' => $scheduled,
             'worked_display' => self::formatMinutes($netWorked),
             'break_display' => self::formatMinutes($totalBreak),
+            'manual_break_display' => self::formatMinutes($manualBreak),
+            'auto_break_display' => self::formatMinutes($autoBreak),
             'scheduled_display' => self::formatMinutes($scheduled),
             'warnings' => $warnings,
-            'status' => self::currentStatus($contactId),
+            'break_compliance' => $compliance,
+            'status' => $status,
         ];
     }
 
@@ -306,20 +370,190 @@ final class TimeClockService
 
     private static function autoBreakMinutes(int $grossWorkedMinutes, int $manualBreakMinutes): int
     {
+        $required = self::requiredBreakMinutes($grossWorkedMinutes);
+
+        return max(0, $required - $manualBreakMinutes);
+    }
+
+    private static function requiredBreakMinutes(int $grossWorkedMinutes): int
+    {
         $cfg = TimeTrackingSettings::config();
         $threshold6 = (int) ($cfg['break_threshold_6h_minutes'] ?? 360);
         $threshold9 = (int) ($cfg['break_threshold_9h_minutes'] ?? 540);
         $break6 = (int) ($cfg['break_after_6h_minutes'] ?? 30);
         $break9 = (int) ($cfg['break_after_9h_minutes'] ?? 45);
 
-        $required = 0;
         if ($grossWorkedMinutes >= $threshold9) {
-            $required = $break9;
-        } elseif ($grossWorkedMinutes >= $threshold6) {
-            $required = $break6;
+            return $break9;
+        }
+        if ($grossWorkedMinutes >= $threshold6) {
+            return $break6;
         }
 
-        return max(0, $required - $manualBreakMinutes);
+        return 0;
+    }
+
+    /**
+     * @return array{
+     *   required_break_minutes: int,
+     *   manual_break_minutes: int,
+     *   auto_break_minutes: int,
+     *   deficit_minutes: int,
+     *   must_take_break: bool,
+     *   blocks_clock_out: bool
+     * }
+     */
+    private static function breakComplianceFromSegments(int $grossWorkedMinutes, int $manualBreakMinutes, string $state): array
+    {
+        $required = self::requiredBreakMinutes($grossWorkedMinutes);
+        $deficit = max(0, $required - $manualBreakMinutes);
+        $autoBreak = 0;
+        if (TimeTrackingSettings::config()['auto_break_enabled'] ?? true) {
+            $autoBreak = max(0, $required - $manualBreakMinutes);
+        }
+        $force = !empty(TimeTrackingSettings::config()['force_break_before_clock_out']);
+        $mustTake = $deficit > 0 && ($state === 'working' || $state === 'break');
+
+        return [
+            'required_break_minutes' => $required,
+            'manual_break_minutes' => $manualBreakMinutes,
+            'auto_break_minutes' => $autoBreak,
+            'deficit_minutes' => $deficit,
+            'must_take_break' => $mustTake,
+            'blocks_clock_out' => $force && $deficit > 0,
+        ];
+    }
+
+    private static function assertBreakComplianceBeforeClockOut(int $contactId): void
+    {
+        $cfg = TimeTrackingSettings::config();
+        if (empty($cfg['force_break_before_clock_out'])) {
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $events = TimeClockRepository::eventsForContact($contactId, $today);
+        $segments = self::computeSegments($events);
+        $status = self::currentStatus($contactId);
+        $compliance = self::breakComplianceFromSegments(
+            $segments['worked_minutes'],
+            $segments['break_minutes'],
+            (string) ($status['state'] ?? 'off'),
+        );
+
+        if ($compliance['blocks_clock_out']) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Zwangspause: Bitte zuerst mindestens %d min Pause nehmen (noch %d min).',
+                    (int) $compliance['required_break_minutes'],
+                    (int) $compliance['deficit_minutes'],
+                ),
+            );
+        }
+    }
+
+    private static function closeOpenSessionsForDate(string $date): int
+    {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return 0;
+        }
+
+        $closed = 0;
+        foreach (self::staffContacts() as $contact) {
+            $contactId = (int) ($contact['id'] ?? 0);
+            if ($contactId < 1) {
+                continue;
+            }
+
+            $events = TimeClockRepository::eventsForContact($contactId, $date);
+            if ($events === []) {
+                continue;
+            }
+
+            $last = $events[count($events) - 1];
+            $lastType = (string) ($last['event_type'] ?? '');
+            if ($lastType === TimeClockRepository::EVENT_CLOCK_OUT) {
+                continue;
+            }
+
+            $closeAt = $date . ' 23:59:59';
+            $breakEndAt = $date . ' 23:58:00';
+
+            if ($lastType === TimeClockRepository::EVENT_BREAK_START) {
+                TimeClockRepository::insert(
+                    $contactId,
+                    TimeClockRepository::EVENT_BREAK_END,
+                    $breakEndAt,
+                    TimeClockRepository::SOURCE_AUTO_CLOSE,
+                    'Automatische Pausenbeendigung (offener Tag)',
+                );
+            }
+
+            TimeClockRepository::insert(
+                $contactId,
+                TimeClockRepository::EVENT_CLOCK_OUT,
+                $closeAt,
+                TimeClockRepository::SOURCE_AUTO_CLOSE,
+                'Automatisches Ausstempeln (offener Tag)',
+            );
+            $closed++;
+        }
+
+        return $closed;
+    }
+
+    /** @return array<string, mixed> */
+    private static function loadAutoCloseState(): array
+    {
+        $path = DG_ROOT . '/storage/time-clock-autoclose-state.json';
+        if (!is_file($path)) {
+            return [];
+        }
+        $raw = file_get_contents($path);
+        if ($raw === false || trim($raw) === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /** @param array<string, mixed> $state */
+    private static function saveAutoCloseState(array $state): void
+    {
+        $dir = DG_ROOT . '/storage';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0750, true);
+        }
+        file_put_contents(
+            $dir . '/time-clock-autoclose-state.json',
+            json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            LOCK_EX,
+        );
+    }
+
+    private static function logAutoClose(int $closed, string $forDate, ?string $error = null): void
+    {
+        $line = date('c') . " time-clock-autoclose: datum={$forDate}, geschlossen={$closed}";
+        if ($error !== null && $error !== '') {
+            $line .= ' FEHLER: ' . $error;
+        }
+        $line .= "\n";
+        $logDir = DG_ROOT . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0750, true);
+        }
+        file_put_contents($logDir . '/time-clock-autoclose.log', $line, FILE_APPEND | LOCK_EX);
+    }
+
+    private static function sourceLabel(string $source): string
+    {
+        return match ($source) {
+            TimeClockRepository::SOURCE_WEB => 'Web',
+            TimeClockRepository::SOURCE_AUTO_BREAK => 'Automatische Pause',
+            TimeClockRepository::SOURCE_AUTO_CLOSE => 'Automatisches Ausstempeln',
+            default => $source !== '' ? $source : 'Web',
+        };
     }
 
     /**
