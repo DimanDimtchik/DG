@@ -183,6 +183,7 @@ final class MigrationRunner
             '055_voucher_document_chain.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_kind'),
             '056_voucher_document_status.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_status'),
             '057_voucher_document_texts.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_intro_text'),
+            '058_voucher_document_legal_clauses.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_legal_clauses'),
             default => false,
         };
     }
@@ -271,6 +272,7 @@ final class MigrationRunner
             '055_voucher_document_chain.sql' => true,
             '056_voucher_document_status.sql' => true,
             '057_voucher_document_texts.sql' => true,
+            '058_voucher_document_legal_clauses.sql' => true,
         ];
     }
 

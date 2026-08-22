@@ -141,6 +141,9 @@ final class VoucherDocumentPrintService
             'footerNotice' => self::footerNotice($kind, $books),
             'primaryBank' => self::primaryBankAccount(),
             'documentStatusLabel' => VoucherDocumentStatus::label((string) ($voucher['document_status'] ?? '')),
+            'legalClauseBlocks' => VoucherDocumentLegalClause::blocksForKeys(
+                VoucherDocumentLegalClause::sanitizeSelection($voucher['document_legal_clauses'] ?? [])
+            ),
         ];
     }
 

@@ -126,7 +126,21 @@ $showDocumentPositionTexts = VoucherDocumentKind::usesPositionTexts($selectedDoc
 if (!$isEdit && $showDocumentPositionTexts && trim((string) ($form['document_intro_text'] ?? '')) === '') {
     $form['document_intro_text'] = VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind);
 }
-$documentFooterHint = 'z. B. Kleinunternehmerregelung § 19 UStG, Zahlungsziel, Skonto — erscheint unter den Positionen auf Rechnung/PDF.';
+$documentFooterHint = 'Zusätzlicher Freitext (Zahlungsziel, Skonto, persönliche Hinweise). Gesetzliche Standardtexte wählen Sie unten aus.';
+$selectedLegalClauses = is_array($form['document_legal_clauses'] ?? null)
+    ? VoucherDocumentLegalClause::sanitizeSelection($form['document_legal_clauses'])
+    : [];
+$suggestedLegalClauses = VoucherDocumentLegalClause::suggestedKeys([
+    'id' => (int) ($voucherId ?? 0),
+    'reverse_charge_type' => (string) ($form['reverse_charge_type'] ?? ''),
+    'items' => is_array($form['items'] ?? null) ? $form['items'] : [],
+]);
+$legalClauseCatalog = VoucherDocumentLegalClause::catalog();
+$legalClauseGroups = [];
+foreach ($legalClauseCatalog as $key => $meta) {
+    $group = (string) ($meta['group'] ?? 'Sonstiges');
+    $legalClauseGroups[$group][$key] = $meta;
+}
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -557,17 +571,61 @@ $documentFooterHint = 'z. B. Kleinunternehmerregelung § 19 UStG, Zahlungsziel, 
       <p class="dg-field-hint">Summe Positionen: <strong id="dg-voucher-invoice-items-sum">0,00</strong> €</p>
       <div id="dg-voucher-document-texts-footer"<?= $showDocumentPositionTexts ? '' : ' hidden' ?> style="margin-top: 12px;">
         <label class="dg-field dg-field--wide">
-          <span>Text nach den Positionen</span>
+          <span>Zusätzlicher Freitext (nach den Positionen)</span>
           <textarea
             name="document_footer_text"
             id="dg-voucher-document-footer"
-            rows="4"
+            rows="3"
             maxlength="4000"
-            placeholder="Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung)."
+            placeholder="z. B. Zahlungsziel 14 Tage, 2 % Skonto bei Zahlung innerhalb von 7 Tagen …"
             <?= $readOnly ? ' readonly' : '' ?>
           ><?= View::escape((string) ($form['document_footer_text'] ?? '')) ?></textarea>
           <small class="dg-field-hint"><?= View::escape($documentFooterHint) ?></small>
         </label>
+
+        <fieldset class="dg-field dg-field--wide dg-voucher-legal-clauses">
+          <legend>Gesetzliche Hinweise (Vorlagen)</legend>
+          <p class="dg-field-hint">Standardformulierungen nach UStG — werden auf Rechnung, PDF und E-Mail unter dem Freitext ausgegeben. Bei Unsicherheit Steuerberater fragen.</p>
+          <?php foreach ($legalClauseGroups as $groupLabel => $clauses) : ?>
+            <div class="dg-voucher-legal-clauses__group">
+              <h3 class="dg-voucher-legal-clauses__group-title"><?= View::escape($groupLabel) ?></h3>
+              <ul class="dg-voucher-legal-clauses__list">
+                <?php foreach ($clauses as $clauseKey => $clauseMeta) : ?>
+                  <?php
+                    $isChecked = in_array($clauseKey, $selectedLegalClauses, true);
+                    $isSuggested = in_array($clauseKey, $suggestedLegalClauses, true) && !$isChecked;
+                  ?>
+                  <li class="dg-voucher-legal-clauses__item">
+                    <label class="dg-checkbox dg-voucher-legal-clause">
+                      <input
+                        type="checkbox"
+                        name="document_legal_clauses[]"
+                        value="<?= View::escape($clauseKey) ?>"
+                        class="dg-voucher-legal-clause-input"
+                        data-clause-text="<?= View::escape((string) ($clauseMeta['text'] ?? '')) ?>"
+                        <?= $isChecked ? ' checked' : '' ?>
+                        <?= $readOnly ? ' disabled' : '' ?>
+                      >
+                      <span class="dg-voucher-legal-clause__label"><?= View::escape((string) ($clauseMeta['label'] ?? '')) ?></span>
+                      <?php if ($isSuggested) : ?>
+                        <span class="dg-badge dg-badge--pending">Vorschlag</span>
+                      <?php endif; ?>
+                    </label>
+                    <small class="dg-field-hint"><?= View::escape((string) ($clauseMeta['hint'] ?? '')) ?></small>
+                    <details class="dg-voucher-legal-clause__preview">
+                      <summary>Textvorschau</summary>
+                      <p><?= View::escape((string) ($clauseMeta['text'] ?? '')) ?></p>
+                    </details>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          <?php endforeach; ?>
+          <div class="dg-voucher-legal-clauses__combined" id="dg-voucher-legal-clauses-preview-wrap" hidden>
+            <strong>Vorschau Fußtext gesamt</strong>
+            <pre class="dg-voucher-legal-clauses__preview-text" id="dg-voucher-legal-clauses-preview"></pre>
+          </div>
+        </fieldset>
       </div>
     </section>
 

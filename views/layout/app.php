@@ -380,6 +380,10 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
             LedgerAccounts::tipPassThroughAccount($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
+        documentLegalClauses: <?= json_encode(
+            VoucherDocumentLegalClause::clientConfig(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
         voucherId: <?= ($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form' ? (int) ($voucherId ?? 0) : 0 ?>,
         csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
         initialFiles: <?= json_encode(

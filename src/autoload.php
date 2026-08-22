@@ -150,6 +150,7 @@ spl_autoload_register(static function (string $class): void {
         'VoucherDocumentStatus' => '/src/Accounting/VoucherDocumentStatus.php',
         'VoucherDocumentChain' => '/src/Accounting/VoucherDocumentChain.php',
         'VoucherDocumentPrintService' => '/src/Accounting/VoucherDocumentPrintService.php',
+        'VoucherDocumentLegalClause' => '/src/Accounting/VoucherDocumentLegalClause.php',
         'VoucherDocumentMailService' => '/src/Accounting/VoucherDocumentMailService.php',
         'EpcQrCode' => '/src/Accounting/EpcQrCode.php',
         'PaymentReferenceFormula' => '/src/Accounting/PaymentReferenceFormula.php',

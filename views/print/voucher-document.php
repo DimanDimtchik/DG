@@ -20,8 +20,10 @@ $date = (string) ($voucher['voucher_date'] ?? '');
 $delivery = (string) ($voucher['delivery_date'] ?? '');
 $description = trim((string) ($voucher['description'] ?? ''));
 $notes = trim((string) ($voucher['notes'] ?? ''));
+/** @var list<array{key: string, label: string, text: string}> $legalClauseBlocks */
 $introText = trim((string) ($voucher['document_intro_text'] ?? ''));
 $footerText = trim((string) ($voucher['document_footer_text'] ?? ''));
+$legalClauseBlocks = is_array($legalClauseBlocks ?? null) ? $legalClauseBlocks : [];
 $company = $companyBlock ?? ['name' => '', 'lines' => []];
 $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
 ?>
@@ -175,6 +177,17 @@ $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
 <?php if ($footerText !== '') : ?>
   <div class="vd-document-footer"<?= !empty($forEmail) ? ' style="margin-top:16px;font-size:12px;"' : ' style="margin-top:6mm;"' ?>>
     <?= nl2br(View::escape($footerText)) ?>
+  </div>
+<?php endif; ?>
+
+<?php if ($legalClauseBlocks !== []) : ?>
+  <div class="vd-legal-clauses"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:12px;"' : ' style="margin-top:4mm;"' ?>>
+    <?php foreach ($legalClauseBlocks as $clause) : ?>
+      <p class="vd-legal-clause" style="margin:0 0 3mm;padding:2mm 3mm;background:#f8f9fb;border-left:3px solid #b8942f;">
+        <strong><?= View::escape((string) ($clause['label'] ?? '')) ?>:</strong>
+        <?= View::escape((string) ($clause['text'] ?? '')) ?>
+      </p>
+    <?php endforeach; ?>
   </div>
 <?php endif; ?>
 

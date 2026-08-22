@@ -126,6 +126,106 @@
     }
     documentKindField.hidden = getVoucherType() !== 'income';
     syncDocumentStatusField();
+    syncDocumentPositionTextsField();
+  }
+
+  function usesDocumentPositionTexts() {
+    if (getVoucherType() !== 'income') {
+      return false;
+    }
+    var kind = getDocumentKind();
+    if (!kind) {
+      return true;
+    }
+    return kind === 'partial_invoice' || kind === 'invoice' || kind === 'final_invoice';
+  }
+
+  var documentFooterInput = document.getElementById('dg-voucher-document-footer');
+  var legalClausesPreviewWrap = document.getElementById('dg-voucher-legal-clauses-preview-wrap');
+  var legalClausesPreviewEl = document.getElementById('dg-voucher-legal-clauses-preview');
+  var legalClauseConfig = config.documentLegalClauses || {};
+  var legalClauseSuggestionMap = legalClauseConfig.reverseChargeSuggestions || {};
+
+  function getSelectedLegalClauseTexts() {
+    var texts = [];
+    document.querySelectorAll('.dg-voucher-legal-clause-input:checked').forEach(function (input) {
+      var text = input.getAttribute('data-clause-text') || '';
+      if (text.trim() !== '') {
+        texts.push(text.trim());
+      }
+    });
+    return texts;
+  }
+
+  function updateLegalClausesPreview() {
+    if (!legalClausesPreviewEl) {
+      return;
+    }
+    var parts = [];
+    var freeText = documentFooterInput ? documentFooterInput.value.trim() : '';
+    if (freeText !== '') {
+      parts.push(freeText);
+    }
+    getSelectedLegalClauseTexts().forEach(function (text) {
+      parts.push(text);
+    });
+    var combined = parts.join('\n\n');
+    if (legalClausesPreviewWrap) {
+      legalClausesPreviewWrap.hidden = combined === '';
+    }
+    legalClausesPreviewEl.textContent = combined;
+  }
+
+  function syncLegalClauseSuggestions() {
+    var rcType = reverseChargeTypeSelect ? reverseChargeTypeSelect.value : '';
+    var suggested = legalClauseSuggestionMap[rcType] || [];
+    document.querySelectorAll('.dg-voucher-legal-clause-input').forEach(function (input) {
+      var item = input.closest('.dg-voucher-legal-clauses__item');
+      if (!item) {
+        return;
+      }
+      var existingBadge = item.querySelector('.dg-badge--suggestion');
+      var isSuggested = suggested.indexOf(input.value) !== -1 && !input.checked;
+      if (isSuggested && !existingBadge) {
+        var badge = document.createElement('span');
+        badge.className = 'dg-badge dg-badge--pending dg-badge--suggestion';
+        badge.textContent = 'Vorschlag';
+        var label = item.querySelector('.dg-voucher-legal-clause');
+        if (label) {
+          label.appendChild(badge);
+        }
+      } else if (!isSuggested && existingBadge) {
+        existingBadge.remove();
+      }
+    });
+  }
+
+  function bindLegalClausesUi() {
+    document.querySelectorAll('.dg-voucher-legal-clause-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        syncLegalClauseSuggestions();
+        updateLegalClausesPreview();
+      });
+    });
+    if (documentFooterInput) {
+      documentFooterInput.addEventListener('input', updateLegalClausesPreview);
+      documentFooterInput.addEventListener('change', updateLegalClausesPreview);
+    }
+  }
+
+  function syncDocumentPositionTextsField() {
+    var introWrap = document.getElementById('dg-voucher-document-texts-intro');
+    var footerWrap = document.getElementById('dg-voucher-document-texts-footer');
+    var show = usesIncomeItems() && usesDocumentPositionTexts();
+    if (introWrap) {
+      introWrap.hidden = !show;
+    }
+    if (footerWrap) {
+      footerWrap.hidden = !show;
+    }
+    if (show) {
+      updateLegalClausesPreview();
+    }
   }
 
   function syncDocumentStatusField() {
@@ -714,6 +814,7 @@
     if (invoiceItemsSection) {
       invoiceItemsSection.hidden = !income;
     }
+    syncDocumentPositionTextsField();
     var arapSection = document.getElementById('dg-voucher-arap-section');
     var showArap = supportsAccrualUi();
     if (arapSection) {
@@ -1479,6 +1580,7 @@
     syncArapUi();
     syncTotalsFromLines();
     refreshReverseChargePreview();
+    syncLegalClauseSuggestions();
   }
 
   function voucherTypeQuery() {
@@ -1971,6 +2073,7 @@
 
   if (typeSelect) {
     syncDocumentKindField();
+    syncDocumentPositionTextsField();
     syncInvoiceNumberField();
     var invoiceInputInit = document.getElementById('dg-voucher-invoice-number');
     if (invoiceInputInit && ((config.autoInvoiceTypes || {})[typeSelect.value] || (getVoucherType() === 'income' && (config.documentKindNumberLabels || {})[getDocumentKind()]))) {
@@ -1985,6 +2088,9 @@
   }
 
   syncIncomeMode();
+  bindLegalClausesUi();
+  syncLegalClauseSuggestions();
+  updateLegalClausesPreview();
 
   if (bookingBody) {
     bookingBody.querySelectorAll('.dg-voucher-split__row').forEach(bindBookingRow);

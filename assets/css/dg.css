@@ -4418,6 +4418,69 @@ body.dg-login-page {
   overflow: visible;
 }
 
+.dg-voucher-legal-clauses {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 8px;
+  background: var(--dg-surface-muted, #f8f9fb);
+}
+
+.dg-voucher-legal-clauses__group + .dg-voucher-legal-clauses__group {
+  margin-top: 14px;
+}
+
+.dg-voucher-legal-clauses__group-title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dg-voucher-legal-clauses__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dg-voucher-legal-clauses__item + .dg-voucher-legal-clauses__item {
+  margin-top: 10px;
+}
+
+.dg-voucher-legal-clause {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dg-voucher-legal-clause__preview {
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.dg-voucher-legal-clause__preview p {
+  margin: 6px 0 0;
+  color: var(--dg-text-muted, #5c6678);
+}
+
+.dg-voucher-legal-clauses__combined {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dg-border, #d8dee8);
+}
+
+.dg-voucher-legal-clauses__preview-text {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  background: var(--dg-surface, #fff);
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 6px;
+}
+
 .dg-voucher-items__row:has(.dg-voucher-items-search-results:not([hidden])) {
   position: relative;
   z-index: 3;
