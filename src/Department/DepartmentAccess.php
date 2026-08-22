@@ -10,6 +10,7 @@ final class DepartmentAccess
         'kontakte' => 'Kontakte',
         'terminkalender' => 'Terminkalender',
         'post' => 'Post',
+        'zeiterfassung' => 'Zeiterfassung',
         'buchhaltung' => 'Buchhaltung',
     ];
 
@@ -35,6 +36,7 @@ final class DepartmentAccess
             'kontakte' => 'partial',
             'terminkalender' => 'full',
             'post' => 'full',
+            'zeiterfassung' => 'full',
             'buchhaltung' => 'none',
         ];
     }

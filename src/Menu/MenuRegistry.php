@@ -26,6 +26,9 @@ final class MenuRegistry
         if (DepartmentAccess::canAccessModule($user, 'terminkalender') && $canEdit) {
             $items[] = ['slug' => 'terminkalender', 'label' => 'Terminkalender', 'icon' => 'calendar'];
         }
+        if (DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user)) {
+            $items[] = ['slug' => 'zeiterfassung', 'label' => 'Zeiterfassung', 'icon' => 'clock'];
+        }
         if (DepartmentAccess::canAccessModule($user, 'post') && $canEdit) {
             $items[] = ['slug' => 'post', 'label' => 'Post', 'icon' => 'mail'];
         }
@@ -294,6 +297,7 @@ final class MenuRegistry
             'profile' => 'Persönliche Daten und Zugang verwalten.',
             'kontakte' => 'Benutzer, Kunden, Lieferanten und Mitarbeiter verwalten.',
             'terminkalender' => 'Buchungen, Artikel und Kalender im Blick behalten.',
+            'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'bilder' => 'Medien, Logos und Bilder verwalten.',
@@ -466,6 +470,10 @@ final class MenuRegistry
 
         if ($slug === 'post') {
             return DepartmentAccess::canAccessModule($user, 'post') && RoleResolver::canEdit($user);
+        }
+
+        if ($slug === 'zeiterfassung-team') {
+            return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && TimeClockService::canViewTeam($user);
         }
 
         foreach (self::modules($user) as $item) {

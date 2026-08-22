@@ -691,6 +691,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Zeiterfassung
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['time_tracking_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('zeiterfassung');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    TimeTrackingSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Zeiterfassung-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Schriften
         if (
             $page === 'einstellungen'
@@ -2161,6 +2183,31 @@ switch ($path) {
             exit;
         }
 
+        // POST: Zeiterfassung Stempel
+        if (
+            $page === 'zeiterfassung'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['time_clock_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    $contactId = ContactRepository::findStaffContactIdForUser($user);
+                    if ($contactId === null) {
+                        throw new InvalidArgumentException('Kein Mitarbeiter-Kontakt verknüpft.');
+                    }
+                    TimeClockService::recordEvent($contactId, (string) ($_POST['time_clock_action'] ?? ''), $user);
+                    Flash::set('success', 'Stempelung erfasst.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=zeiterfassung', true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -2253,6 +2300,7 @@ switch ($path) {
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
+        $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
             try {
@@ -3299,6 +3347,33 @@ switch ($path) {
                 $title = 'Bilder';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-team' && MenuRegistry::canAccess($user, 'zeiterfassung-team')) {
+            $contentTemplate = 'modules/zeiterfassung-team';
+            $title = 'Team heute';
+            $currentPage = 'zeiterfassung';
+            $timeClockTeam = TimeClockService::teamToday();
+        } elseif ($page === 'zeiterfassung' && MenuRegistry::canAccess($user, 'zeiterfassung')) {
+            $timeClockContactId = ContactRepository::findStaffContactIdForUser($user);
+            $timeClockEmployeeLabel = '';
+            if ($timeClockContactId !== null) {
+                $staffContact = ContactRepository::findById($timeClockContactId);
+                if ($staffContact !== null) {
+                    $timeClockEmployeeLabel = trim($staffContact->displayName);
+                    if ($timeClockEmployeeLabel === '') {
+                        $timeClockEmployeeLabel = trim($staffContact->companyName);
+                    }
+                }
+            }
+            $timeClockSummary = $timeClockContactId !== null
+                ? TimeClockService::daySummary($timeClockContactId)
+                : ['events' => [], 'worked_display' => '0:00', 'break_display' => '0:00', 'scheduled_display' => '8:00', 'warnings' => [], 'status' => ['state' => 'off', 'label' => 'Nicht eingestempelt', 'since_display' => null]];
+            $timeClockStatus = is_array($timeClockSummary['status'] ?? null)
+                ? $timeClockSummary['status']
+                : TimeClockService::currentStatus((int) $timeClockContactId);
+            $timeClockCanTeam = TimeClockService::canViewTeam($user);
+            $contentTemplate = 'modules/zeiterfassung';
+            $title = 'Zeiterfassung';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'terminkalender' && MenuRegistry::canAccess($user, 'terminkalender')) {
             $bookingId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $bookingSearch = trim((string) ($_GET['s'] ?? ''));
@@ -3672,6 +3747,7 @@ switch ($path) {
         $datevExportYear = $datevExportYear ?? (int) date('Y');
         $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
         $accountingPaymentSettings = $accountingPaymentSettings ?? AccountingPaymentSettings::forForm();
+        $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];
@@ -3698,6 +3774,12 @@ switch ($path) {
         $websiteStatsTopReferrers = $websiteStatsTopReferrers ?? [];
         $websiteAnalyticsLinks = $websiteAnalyticsLinks ?? [];
         $websiteStatsDays = $websiteStatsDays ?? 30;
+        $timeClockSummary = $timeClockSummary ?? null;
+        $timeClockStatus = $timeClockStatus ?? null;
+        $timeClockContactId = $timeClockContactId ?? null;
+        $timeClockEmployeeLabel = $timeClockEmployeeLabel ?? '';
+        $timeClockCanTeam = $timeClockCanTeam ?? false;
+        $timeClockTeam = $timeClockTeam ?? [];
 
         View::render('layout/app', compact(
             'title',
@@ -3761,6 +3843,7 @@ switch ($path) {
             'taxAdvisorCompanyOptions',
             'elsterConfig',
             'accountingPaymentSettings',
+            'timeTrackingSettings',
             'chartOfAccountsConfig',
             'chartAccountCount',
             'chartCatalogCount',
@@ -3888,7 +3971,13 @@ switch ($path) {
             'bookingEmployeeOptions',
             'mediaList',
             'mediaItem',
-            'mediaIsNew'
+            'mediaIsNew',
+            'timeClockSummary',
+            'timeClockStatus',
+            'timeClockContactId',
+            'timeClockEmployeeLabel',
+            'timeClockCanTeam',
+            'timeClockTeam',
         ));
         break;
 

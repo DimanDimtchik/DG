@@ -86,6 +86,11 @@ final class SettingsRegistry
                         'lead' => 'Online-Terminbuchung für Kunden aktivieren und öffentliche Buchungsseite verwalten.',
                         'template' => 'calendar-embed',
                     ],
+                    'zeiterfassung' => [
+                        'label' => 'Zeiterfassung',
+                        'lead' => 'Automatische Pausenregeln nach Arbeitszeitgesetz für die Stempeluhr.',
+                        'template' => 'time-tracking',
+                    ],
                 ],
             ],
             'kommunikation' => [

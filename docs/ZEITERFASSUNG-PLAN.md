@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 22.08.2026  
-> Status: **Konzept / noch nicht implementiert** (nur Merkliste in `docs/KDV-TODO.md`)  
+> Status: **Phase 1 implementiert** (Stempeluhr MVP) · Phase 2+ siehe unten  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -112,15 +112,17 @@ Protokoll Exporte an Lohnsoftware.
 
 ## Funktionen nach Phase
 
-### Phase 1 — MVP Stempeluhr (4–6 Bausteine)
+### Phase 1 — MVP Stempeluhr ✅
 
-- [ ] Menüpunkt **Zeiterfassung** für Rolle Mitarbeiter
-- [ ] **Einstempeln / Ausstempeln** mit Live-Anzeige „seit …“
-- [ ] **Manuelle Pause** starten/beenden
-- [ ] **Automatische Pause** nach Regel (Einstellung: ab X Stunden Y Minuten abziehen, wenn keine manuelle Pause)
-- [ ] Tagesliste eigener Stempel
-- [ ] HR: Team heute (wer ist eingestempelt)
-- [ ] Flag `overtime_allowed` + `employment_type` (Minijob) in `EmployeeData` erweitern
+- [x] Menüpunkt **Zeiterfassung** für Rolle Mitarbeiter
+- [x] **Einstempeln / Ausstempeln** mit Live-Anzeige „seit …“
+- [x] **Manuelle Pause** starten/beenden
+- [x] **Automatische Pause** nach Regel (Einstellungen → Termine → Zeiterfassung)
+- [x] Tagesliste eigener Stempel
+- [x] HR: Team heute (wer ist eingestempelt) — `/app?page=zeiterfassung-team`
+- [x] Flag `overtime_allowed` + `employment_type` (Minijob) in `EmployeeData`
+
+Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSettings`
 
 ### Phase 2 — Soll/Ist & Zeitkonto
 

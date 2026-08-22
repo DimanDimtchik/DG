@@ -79,7 +79,10 @@ final class EmployeeData
             'exit_date' => ['label' => 'Austritt', 'type' => 'date', 'section' => 'employment'],
             'contract_start' => ['label' => 'Vertragsbeginn', 'type' => 'date', 'section' => 'contract'],
             'contract_end' => ['label' => 'Vertragsende (befristet)', 'type' => 'date', 'section' => 'contract'],
-            'working_hours' => ['label' => 'Arbeitszeit', 'type' => 'text', 'section' => 'contract'],
+            'working_hours' => ['label' => 'Arbeitszeit (Freitext)', 'type' => 'text', 'section' => 'contract'],
+            'daily_work_minutes' => ['label' => 'Soll-Arbeitszeit pro Tag (Minuten)', 'type' => 'number', 'section' => 'contract'],
+            'employment_type' => ['label' => 'Beschäftigungsart (Zeiterfassung)', 'type' => 'select', 'section' => 'contract'],
+            'overtime_allowed' => ['label' => 'Überstunden erlaubt', 'type' => 'checkbox', 'section' => 'contract'],
             'salary' => ['label' => 'Lohn / Gehalt', 'type' => 'text', 'section' => 'contract'],
             'subsidy_amount' => ['label' => 'Beihilfebetrag', 'type' => 'text', 'section' => 'subsidy'],
             'subsidy_carrier' => ['label' => 'Beihilfeträger', 'type' => 'text', 'section' => 'subsidy'],
@@ -232,8 +235,49 @@ final class EmployeeData
             'gender' => self::genderOptions(),
             'social_security_status' => self::socialSecurityStatusOptions(),
             'social_filing_office' => self::socialFilingOfficeOptions(),
+            'employment_type' => self::employmentTypeOptions(),
             default => [],
         };
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function employmentTypeOptions(): array
+    {
+        return [
+            '' => '—',
+            'regular' => 'Vollzeit / Teilzeit (sv-pflichtig)',
+            'minijob' => 'Minijob (geringfügig)',
+            'intern' => 'Praktikant / Intern',
+        ];
+    }
+
+    public static function isMinijob(array $data): bool
+    {
+        $type = trim((string) ($data['employment_type'] ?? ''));
+
+        return $type === 'minijob' || trim((string) ($data['social_filing_office'] ?? '')) === 'kbs_minijob';
+    }
+
+    public static function overtimeAllowed(array $data): bool
+    {
+        return ($data['overtime_allowed'] ?? '') === '1';
+    }
+
+    public static function dailyTargetMinutes(array $data): int
+    {
+        $minutes = (int) preg_replace('/\D/', '', (string) ($data['daily_work_minutes'] ?? '')) ?? 0;
+        if ($minutes > 0) {
+            return min(960, $minutes);
+        }
+
+        $workingHours = trim((string) ($data['working_hours'] ?? ''));
+        if ($workingHours !== '' && preg_match('/(\d+)/', $workingHours, $m)) {
+            return min(960, (int) $m[1] * 60);
+        }
+
+        return 480;
     }
 
     /**
@@ -398,6 +442,10 @@ final class EmployeeData
     {
         $out = self::empty();
         foreach (self::fields() as $key => $meta) {
+            if (($meta['type'] ?? '') === 'checkbox') {
+                $out[$key] = !empty($raw[$key]) && (string) $raw[$key] !== '0' ? '1' : '';
+                continue;
+            }
             $value = trim((string) ($raw[$key] ?? ''));
             $out[$key] = $value;
         }
@@ -413,6 +461,9 @@ final class EmployeeData
         }
         if ($out['social_filing_office'] !== '' && !isset(self::socialFilingOfficeOptions()[$out['social_filing_office']])) {
             $out['social_filing_office'] = '';
+        }
+        if ($out['employment_type'] !== '' && !isset(self::employmentTypeOptions()[$out['employment_type']])) {
+            $out['employment_type'] = '';
         }
         if ($out['social_security_status'] === 'received' && $out['social_security_number'] === '') {
             $out['social_security_status'] = 'requested';

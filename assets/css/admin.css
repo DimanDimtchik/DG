@@ -274,6 +274,7 @@ body.dg-app {
 
 .dg-adminmenu__icon--contacts::before { content: "👤"; }
 .dg-adminmenu__icon--calendar::before { content: "📅"; }
+.dg-adminmenu__icon--clock::before { content: "🕐"; }
 .dg-adminmenu__icon--settings::before { content: "⚙"; }
 
 /* Inhalt */
