@@ -133,7 +133,8 @@ Bei gesetztem Reverse-Charge-Typ werden passende Vorlagen als **Vorschlag** mark
 ## Empfohlene Reihenfolge (Rest)
 
 1. **Logo / Pflichtangaben** im Drucklayout (optional)
-2. **Manuelle Tests** nach Migration 055 + 056
+2. **Zeiterfassung Phase 1** laut `docs/ZEITERFASSUNG-PLAN.md` (Stempeluhr, Pausen, Minijob/Überstunden-Flags)
+3. **Manuelle Tests** nach Migration 055 + 056
 
 ---
 

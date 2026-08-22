@@ -1666,6 +1666,9 @@ switch ($path) {
                 if (is_array($result['contact_page'])) {
                     $summary[] = 'Kontakt: ' . $result['contact_page']['action'];
                 }
+                if (is_array($result['terminkalender_page'])) {
+                    $summary[] = 'Terminkalender: ' . $result['terminkalender_page']['action'];
+                }
                 $msg = 'Pflichtseiten eingerichtet. ' . implode(' · ', $summary);
                 if (!empty($result['maintenance'])) {
                     $msg .= ' · Wartungsmodus eingeschaltet';
