@@ -24,11 +24,21 @@ $notes = trim((string) ($voucher['notes'] ?? ''));
 $introText = trim((string) ($voucher['document_intro_text'] ?? ''));
 $footerText = trim((string) ($voucher['document_footer_text'] ?? ''));
 $legalClauseBlocks = is_array($legalClauseBlocks ?? null) ? $legalClauseBlocks : [];
-$company = $companyBlock ?? ['name' => '', 'lines' => []];
+$company = $companyBlock ?? ['name' => '', 'lines' => [], 'owner' => ''];
 $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
+$logoUrl = (string) ($logoUrl ?? '');
+$logoAlt = (string) ($logoAlt ?? '');
+$logoShapeClass = (string) ($logoShapeClass ?? 'wide');
+/** @var list<string> $mandatoryLines */
+$mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
 ?>
 <div class="vd-letterhead"<?= !empty($forEmail) ? ' style="display:table;width:100%;margin-bottom:16px;"' : '' ?>>
   <div class="vd-letterhead__col"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;width:50%;"' : '' ?>>
+    <?php if ($logoUrl !== '') : ?>
+      <div class="vd-logo vd-logo--<?= View::escape($logoShapeClass) ?>">
+        <img src="<?= View::escape($logoUrl) ?>" alt="<?= View::escape($logoAlt) ?>" class="vd-logo__img">
+      </div>
+    <?php endif; ?>
     <strong><?= View::escape((string) ($company['name'] ?? '')) ?></strong><br>
     <?php foreach (($company['lines'] ?? []) as $line) : ?>
       <?= View::escape((string) $line) ?><br>
@@ -207,5 +217,13 @@ $paymentTermsText = trim((string) ($paymentTermsText ?? ''));
 <?php if (($footerNotice ?? '') !== '') : ?>
   <div class="vd-footer"<?= !empty($forEmail) ? ' style="margin-top:16px;font-size:11px;color:#5c6678;"' : '' ?>>
     <?= View::escape((string) $footerNotice) ?>
+  </div>
+<?php endif; ?>
+
+<?php if ($mandatoryLines !== []) : ?>
+  <div class="vd-mandatory"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:10px;color:#5c6678;"' : '' ?>>
+    <?php foreach ($mandatoryLines as $line) : ?>
+      <div><?= View::escape((string) $line) ?></div>
+    <?php endforeach; ?>
   </div>
 <?php endif; ?>

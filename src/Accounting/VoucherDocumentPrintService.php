@@ -145,6 +145,10 @@ final class VoucherDocumentPrintService
                 VoucherDocumentLegalClause::sanitizeSelection($voucher['document_legal_clauses'] ?? [])
             ),
             'paymentTermsText' => self::paymentTermsText($voucher),
+            'logoUrl' => AppearanceSettings::logoUrl(),
+            'logoAlt' => AppearanceSettings::logoAlt(),
+            'logoShapeClass' => AppearanceSettings::logoShapeClass(),
+            'mandatoryLines' => self::mandatoryLines(),
         ];
     }
 
@@ -201,13 +205,76 @@ final class VoucherDocumentPrintService
         if ($vat !== '') {
             $lines[] = 'USt-IdNr. ' . $vat;
         }
+        $est = trim((string) ($extended['tax_numbers']['est'] ?? $basic['tax_number'] ?? ''));
+        if ($est !== '') {
+            $lines[] = 'Steuernummer ' . $est;
+        }
+        $wId = trim((string) ($extended['tax_numbers']['wirtschafts_id'] ?? ''));
+        if ($wId !== '') {
+            $lines[] = 'Wirtschafts-ID ' . $wId;
+        }
         $tradeCourt = trim((string) ($extended['trade_register']['court'] ?? ''));
         $tradeNumber = trim((string) ($extended['trade_register']['number'] ?? ''));
         if ($tradeCourt !== '' || $tradeNumber !== '') {
             $lines[] = trim($tradeCourt . ' ' . $tradeNumber);
         }
+        $owner = self::primaryOwnerName($extended);
 
-        return ['name' => $name, 'lines' => $lines];
+        return ['name' => $name, 'lines' => $lines, 'owner' => $owner];
+    }
+
+    /**
+     * Pflichtangaben für Rechnungsfuß (§ 14 UStG ergänzend).
+     *
+     * @return list<string>
+     */
+    public static function mandatoryLines(): array
+    {
+        $extended = CompanyExtendedSettings::config();
+        $basic = CompanySettings::config();
+        $lines = [];
+
+        $owner = self::primaryOwnerName($extended);
+        if ($owner !== '') {
+            $lines[] = 'Geschäftsführung / Inhaber: ' . $owner;
+        }
+
+        $est = trim((string) ($extended['tax_numbers']['est'] ?? $basic['tax_number'] ?? ''));
+        if ($est !== '') {
+            $lines[] = 'Steuernummer: ' . $est;
+        }
+
+        $ust = trim((string) ($extended['tax_numbers']['ust'] ?? $basic['vat_id'] ?? ''));
+        if ($ust !== '') {
+            $lines[] = 'USt-IdNr.: ' . $ust;
+        }
+
+        $court = trim((string) ($extended['trade_register']['court'] ?? ''));
+        $number = trim((string) ($extended['trade_register']['number'] ?? ''));
+        if ($court !== '' || $number !== '') {
+            $lines[] = 'Handelsregister: ' . trim($court . ' ' . $number);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $extended
+     */
+    private static function primaryOwnerName(array $extended): string
+    {
+        $owners = is_array($extended['owners'] ?? null) ? $extended['owners'] : [];
+        foreach ($owners as $owner) {
+            if (!is_array($owner)) {
+                continue;
+            }
+            $name = trim((string) ($owner['name'] ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return '';
     }
 
     /**

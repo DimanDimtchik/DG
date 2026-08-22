@@ -51,7 +51,7 @@
 - [x] E-Mail-Versand aus dem Beleg (HTML-Anhang + Vorschau im Body)
 - [x] Freitext vor/nach Rechnungspositionen (Migration 057)
 - [x] Gesetzliche Hinweis-Vorlagen (§ 19, § 13b, Photovoltaik, …) neben Freitext (Migration 058)
-- [ ] Feinschliff Pflichtangaben / Logo im PDF-Layout
+- [x] Logo und Pflichtangaben im Druck/PDF-Layout (Firmenlogo, Steuernummer, USt-IdNr., Handelsregister, GF/Inhaber)
 
 ### Buchhaltung
 
@@ -132,9 +132,7 @@ Bei gesetztem Reverse-Charge-Typ werden passende Vorlagen als **Vorschlag** mark
 
 ## Empfohlene Reihenfolge (Rest)
 
-1. **Logo / Pflichtangaben** im Drucklayout (optional)
-2. **Zeiterfassung Phase 1** laut `docs/ZEITERFASSUNG-PLAN.md` (Stempeluhr, Pausen, Minijob/Überstunden-Flags)
-3. **Manuelle Tests** nach Migration 055 + 056
+1. **Manuelle Tests** nach Migration 055 + 056
 
 ---
 

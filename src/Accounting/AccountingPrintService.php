@@ -65,7 +65,11 @@ final class AccountingPrintService
   .vd-notice { background: #f4f6f9; border-left: 3px solid #b8942f; padding: 3mm 4mm; margin: 4mm 0 6mm; font-size: 9pt; }
   .vd-notice--warn { background: #fff8e6; border-left-color: #c9a227; color: #8a6410; }
   .vd-footer { margin-top: 8mm; font-size: 8.5pt; color: #5c6678; border-top: 1px solid #dfe3ea; padding-top: 3mm; }
-  .vd-bank { margin-top: 5mm; font-size: 9pt; }';
+  .vd-bank { margin-top: 5mm; font-size: 9pt; }
+  .vd-logo { margin-bottom: 4mm; max-width: 55mm; }
+  .vd-logo__img { max-width: 100%; height: auto; max-height: 22mm; }
+  .vd-logo--wide .vd-logo__img { max-height: 16mm; }
+  .vd-mandatory { margin-top: 6mm; font-size: 8pt; color: #5c6678; border-top: 1px solid #dfe3ea; padding-top: 2mm; }';
         }
 
         $printButton = $showPrintButton
