@@ -38,6 +38,116 @@ final class DunningService
     }
 
     /**
+     * Automatischer Mahnversand ohne KAS-Cron: einmal täglich beim ersten Request (App::boot).
+     * Optional zusätzlich: cron.php?job=dunning-auto&token=…
+     */
+    public static function runIfDue(): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+
+        $config = AccountingPaymentSettings::dunningConfig();
+        if (empty($config['auto_send'])) {
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $state = self::loadAutoState();
+        if (($state['last_run'] ?? '') === $today) {
+            return;
+        }
+
+        try {
+            $result = self::runAutomatic();
+            $state = [
+                'last_run' => $today,
+                'sent' => (int) ($result['sent'] ?? 0),
+                'skipped' => (int) ($result['skipped'] ?? 0),
+                'last_error' => ($result['errors'] ?? []) !== []
+                    ? implode('; ', $result['errors'])
+                    : null,
+            ];
+            self::saveAutoState($state);
+            if ($result['sent'] > 0 || $result['errors'] !== []) {
+                self::logAutoRun($result, 'autostart');
+            }
+        } catch (Throwable $e) {
+            self::saveAutoState([
+                'last_run' => $today,
+                'sent' => 0,
+                'skipped' => 0,
+                'last_error' => $e->getMessage(),
+            ]);
+            self::logAutoRun(['sent' => 0, 'skipped' => 0, 'errors' => [$e->getMessage()]], 'autostart-error');
+        }
+    }
+
+    /**
+     * @return array{last_run: string|null, sent: int, skipped: int, last_error: string|null}
+     */
+    public static function autoRunInfo(): array
+    {
+        $state = self::loadAutoState();
+
+        return [
+            'last_run' => isset($state['last_run']) ? (string) $state['last_run'] : null,
+            'sent' => (int) ($state['sent'] ?? 0),
+            'skipped' => (int) ($state['skipped'] ?? 0),
+            'last_error' => isset($state['last_error']) && $state['last_error'] !== null
+                ? (string) $state['last_error']
+                : null,
+        ];
+    }
+
+    /**
+     * @param array{sent: int, skipped: int, errors: list<string>} $result
+     */
+    private static function logAutoRun(array $result, string $source): void
+    {
+        $line = date('c') . " dunning-auto ({$source}): gesendet={$result['sent']}, übersprungen={$result['skipped']}";
+        if (($result['errors'] ?? []) !== []) {
+            $line .= ' FEHLER: ' . implode('; ', $result['errors']);
+        }
+        $line .= "\n";
+        $logDir = DG_ROOT . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0750, true);
+        }
+        file_put_contents($logDir . '/dunning-auto.log', $line, FILE_APPEND | LOCK_EX);
+    }
+
+    /** @return array<string, mixed> */
+    private static function loadAutoState(): array
+    {
+        $path = DG_ROOT . '/storage/dunning-auto-state.json';
+        if (!is_readable($path)) {
+            return [];
+        }
+        $raw = file_get_contents($path);
+        if ($raw === false || trim($raw) === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /** @param array<string, mixed> $state */
+    private static function saveAutoState(array $state): void
+    {
+        $dir = DG_ROOT . '/storage';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0750, true);
+        }
+        file_put_contents(
+            $dir . '/dunning-auto-state.json',
+            json_encode($state, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            LOCK_EX
+        );
+    }
+
+    /**
      * @return list<array{voucher_id: int, next_level: int, days_overdue: int}>
      */
     public static function candidates(): array

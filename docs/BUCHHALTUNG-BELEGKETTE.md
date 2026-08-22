@@ -106,9 +106,9 @@ Pro Rechnung editierbar im Belegformular. Text erscheint auf Druck/PDF/E-Mail. B
 
 ### Automatischer Mahnversand
 
-Cron: `cron.php?job=dunning-auto&token=…` (gleicher Token wie `employee-retention` in `config/cron.local.php`).
+**Standard (ohne KAS-Cron):** Wenn „Automatischer Mahnversand“ aktiv ist, läuft `DunningService::runIfDue()` beim ersten Request des Tages (`App::boot` — wie Tages-Backup). Status: `storage/dunning-auto-state.json`, Log: `storage/logs/dunning-auto.log`.
 
-Mahnstufen mit Tagen nach Fälligkeit, E-Mail-Text und Mahngebühr (wird dem Beleg hinzugefügt). Manueller Versand im Belegformular bei überfälligen offenen Forderungen.
+**Optional KAS:** `cron.php?job=dunning-auto&token=…` (Token in `config/cron.local.php`) — für feste Uhrzeit oder erzwungenen Lauf.
 
 ---
 

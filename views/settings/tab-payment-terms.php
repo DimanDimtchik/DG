@@ -68,8 +68,11 @@ $fmt = static fn (float $v): string => number_format($v, 2, '.', '');
   <section class="dg-form-section">
     <h3 class="dg-subsection-title">Automatischer Mahnversand</h3>
     <p class="dg-field-hint">
-      Mahnungen werden per Cron-Job versendet (<code>cron.php?job=dunning-auto&amp;token=…</code>), wenn SMTP konfiguriert ist.
-      Platzhalter in Betreff/Text: <code>{RECHNUNGSNR}</code>, <code>{BELEGDATUM}</code>, <code>{FAELLIG}</code>, <code>{OFFEN}</code>, <code>{MAHNGEBUEHR}</code>, <code>{FIRMA}</code>.
+      Wenn aktiviert: Mahnungen werden <strong>automatisch einmal täglich</strong> beim ersten Seitenaufruf versendet
+      (CRM oder öffentliche Website — gleiches Prinzip wie Tages-Backup, kein KAS-Cron nötig).
+      Optional zusätzlich per KAS-Cron: <code>cron.php?job=dunning-auto&amp;token=…</code>.
+      Log: <code>storage/logs/dunning-auto.log</code>.
+      Platzhalter: <code>{RECHNUNGSNR}</code>, <code>{BELEGDATUM}</code>, <code>{FAELLIG}</code>, <code>{OFFEN}</code>, <code>{MAHNGEBUEHR}</code>, <code>{FIRMA}</code>.
     </p>
 
     <label class="dg-checkbox">

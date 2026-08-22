@@ -45,6 +45,11 @@ final class App
         UpdateChecker::runIfDue();
         BackupService::runIfDue();
         FileIntegrity::runIfDue();
+        try {
+            DunningService::runIfDue();
+        } catch (Throwable) {
+            // Mahn-Autostart darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**
