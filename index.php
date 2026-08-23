@@ -3796,6 +3796,18 @@ switch ($path) {
         $websiteFormSubmissions = $websiteFormSubmissions ?? [];
         $websiteFormSubmission = $websiteFormSubmission ?? null;
         $websiteFormOptions = $websiteFormOptions ?? [];
+        $crmUsers = $crmUsers ?? [];
+        $allowedContactRoles = $allowedContactRoles ?? ContactAccessResolver::allowedContactRoleOptions($user);
+        $canDeleteContact = $canDeleteContact ?? false;
+        $companyEmployees = $companyEmployees ?? [];
+        $employerForm = $employerForm ?? ContactCompanyLinkRepository::emptyEmployerForm();
+        $employerLink = $employerLink ?? null;
+        $companyContactOptions = $companyContactOptions ?? [];
+        $personContactOptions = $personContactOptions ?? [];
+        $websiteMaintenance = $websiteMaintenance ?? WebsiteMaintenanceSettings::config();
+        $supportGrant = $supportGrant ?? null;
+        $supportTokenOnce = $supportTokenOnce ?? null;
+        $kdvSupportSessions = $kdvSupportSessions ?? [];
 
         View::render('layout/app', compact(
             'title',
