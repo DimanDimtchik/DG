@@ -64,11 +64,13 @@ final class AccountingPrintService
   .vd-doc-meta { margin: 0 0 6mm; color: #5c6678; font-size: 9pt; }
   .vd-notice { background: #f4f6f9; border-left: 3px solid #b8942f; padding: 3mm 4mm; margin: 4mm 0 6mm; font-size: 9pt; }
   .vd-notice--warn { background: #fff8e6; border-left-color: #c9a227; color: #8a6410; }
-  .vd-intro { margin: 4mm 0 5mm; font-size: 10pt; line-height: 1.45; white-space: pre-wrap; }
-  .vd-document-footer { margin-top: 5mm; font-size: 9.5pt; line-height: 1.45; white-space: pre-wrap; }
-  .vd-payment-terms { margin-top: 4mm; font-size: 9pt; line-height: 1.4; white-space: pre-wrap; }
+  .vd-intro { margin: 4mm 0 5mm; font-size: 10pt; line-height: 1.45; white-space: pre-wrap; color: #1c2330; }
+  .vd-document-footer { margin-top: 5mm; font-size: 9.5pt; line-height: 1.45; white-space: pre-wrap; color: #1c2330; }
+  .vd-payment-terms { margin-top: 4mm; padding: 2.5mm 3mm; background: #fafbfc; border: 1px solid #e5e8ee; font-size: 9pt; line-height: 1.4; white-space: pre-wrap; color: #1c2330; }
+  .vd-payment-terms strong { display: block; margin-bottom: 1mm; font-size: 9pt; }
   .vd-legal-clauses { margin-top: 4mm; }
-  .vd-legal-clause { margin: 0 0 3mm; padding: 2mm 3mm; background: #f8f9fb; border-left: 3px solid #b8942f; font-size: 9pt; line-height: 1.4; }
+  .vd-legal-clause { margin: 0 0 3mm; padding: 2mm 3mm; background: #f8f9fb; border-left: 3px solid #b8942f; font-size: 9pt; line-height: 1.4; color: #1c2330; }
+  .vd-legal-clause:last-child { margin-bottom: 0; }
   .vd-footer { margin-top: 8mm; font-size: 8.5pt; color: #5c6678; border-top: 1px solid #dfe3ea; padding-top: 3mm; }
   .vd-bank { margin-top: 5mm; font-size: 9pt; }
   .vd-logo { margin-bottom: 4mm; max-width: 55mm; }

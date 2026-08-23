@@ -674,7 +674,16 @@ code {
 .dg-flash--success { background: #edfaef; border-color: #68de7c; color: #1e4620; }
 .dg-flash--error { background: var(--dg-danger-bg); border-color: #fecaca; color: var(--dg-danger); }
 .dg-flash--warning { background: #fffbeb; border-color: #fbbf24; color: #78350f; }
-.dg-flash--info { background: #eff6ff; border-color: #93c5fd; color: #1e3a5f; }
+.dg-flash--info {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e3a5f;
+}
+
+.dg-flash--info a {
+  color: inherit;
+  font-weight: 600;
+}
 
 .dg-form h2 {
   margin: 20px 0 12px;
@@ -1500,6 +1509,7 @@ code {
   border-color: transparent;
   color: var(--dg-text-secondary, #5c6678);
   box-shadow: none;
+  font-weight: 500;
 }
 
 .dg-button--ghost:hover:not(:disabled) {
@@ -1512,6 +1522,7 @@ code {
   background: #fff1cc;
   border-color: #c9a227;
   color: #6b4e0a;
+  box-shadow: 0 1px 2px color-mix(in srgb, #c9a227 22%, transparent);
 }
 
 .dg-button--warning:hover:not(:disabled) {
@@ -4320,9 +4331,18 @@ body.dg-login-page {
 }
 
 .dg-input--readonly,
-.dg-input--computed {
+.dg-input--computed,
+input.dg-input--readonly,
+input.dg-input--computed {
   background: var(--dg-surface-muted, #f6f8fb);
   color: var(--dg-text-muted, #5c6678);
+  cursor: default;
+}
+
+.dg-field input.dg-input--readonly:focus,
+.dg-field input.dg-input--computed:focus {
+  border-color: var(--dg-border-strong, #c5ccd8);
+  box-shadow: none;
 }
 
 .dg-field-hint--error {
@@ -4526,16 +4546,23 @@ body.dg-login-page {
   margin-bottom: 2px;
 }
 
+/* Belegkette */
 .dg-voucher-chain {
   overflow: hidden;
 }
 
+.dg-voucher-chain__table td {
+  vertical-align: middle;
+}
+
 .dg-voucher-chain__current {
-  background: color-mix(in srgb, var(--dg-primary) 8%, var(--dg-surface, #fff));
+  background: color-mix(in srgb, var(--dg-primary) 10%, var(--dg-surface, #fff));
+  box-shadow: inset 3px 0 0 var(--dg-primary);
 }
 
 .dg-voucher-chain__current td {
   font-weight: 600;
+  color: var(--dg-text);
 }
 
 .dg-voucher-chain-actions .dg-form-actions {
@@ -4544,25 +4571,40 @@ body.dg-login-page {
   border-top: 0;
 }
 
-.dg-voucher-email {
-  border: 1px solid var(--dg-border, #d8dee8);
-  border-radius: 8px;
-  padding: 14px 16px;
-  background: var(--dg-surface, #fff);
+/* E-Mail-Versand (liegt auf .dg-panel) */
+.dg-panel.dg-voucher-email {
+  background: color-mix(in srgb, var(--dg-primary) 5%, var(--dg-surface, #fff));
 }
 
+.dg-voucher-email .dg-form-actions {
+  align-items: center;
+}
+
+.dg-voucher-email .dg-checkbox {
+  margin-right: 4px;
+}
+
+/* Teilzahlungen */
 .dg-voucher-payments {
   padding: 12px 14px;
   border: 1px solid var(--dg-border, #d8dee8);
-  border-radius: 8px;
+  border-radius: var(--dg-radius-sm, 6px);
   background: var(--dg-surface-muted, #f8f9fb);
+}
+
+.dg-voucher-payments .dg-subsection-title {
+  margin-top: 0;
+}
+
+.dg-voucher-payments__add {
+  margin-top: 12px;
 }
 
 .dg-voucher-payments__add fieldset {
   margin: 0;
   padding: 12px 14px;
   border: 1px solid var(--dg-border, #d8dee8);
-  border-radius: 6px;
+  border-radius: var(--dg-radius-sm, 6px);
   background: var(--dg-surface, #fff);
 }
 
@@ -4570,6 +4612,11 @@ body.dg-login-page {
   padding: 0 4px;
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--dg-heading, var(--dg-text));
+}
+
+.dg-voucher-payments__add .dg-button {
+  margin-top: 10px;
 }
 
 .dg-voucher-payment-terms .dg-table input {
@@ -4583,7 +4630,8 @@ body.dg-login-page {
   align-items: center;
 }
 
-.dg-table__total td {
+.dg-table__total td,
+.dg-table tr.dg-table__total td {
   border-top: 2px solid var(--dg-border-accent-strong, #b8942f);
   font-weight: 700;
   background: var(--dg-surface-muted, #f8f9fb);
@@ -4625,10 +4673,12 @@ body.dg-login-page {
   gap: 6px 10px;
   margin: 0 0 16px;
   font-size: 1rem;
+  color: var(--dg-text);
 }
 
 .dg-time-clock-status__value {
   font-size: 1.15rem;
+  letter-spacing: 0.01em;
 }
 
 .dg-time-clock-status--working {
@@ -4641,6 +4691,7 @@ body.dg-login-page {
 
 .dg-time-clock-status--off {
   color: var(--dg-text-secondary, #5c6678);
+  font-weight: 600;
 }
 
 .dg-time-clock-actions {
@@ -4658,19 +4709,25 @@ body.dg-login-page {
 
 .dg-time-clock-summary {
   margin: 0 0 12px;
-  padding: 10px 12px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border-radius: var(--dg-radius-sm, 6px);
   background: var(--dg-surface-muted, #f8f9fb);
   border: 1px solid var(--dg-border, #d8dee8);
   line-height: 1.5;
+  font-variant-numeric: tabular-nums;
 }
 
 .dg-time-clock-summary p {
   margin: 0 0 4px;
+  color: var(--dg-text);
 }
 
 .dg-time-clock-summary p:last-child {
   margin-bottom: 0;
+}
+
+.dg-time-clock-card .dg-flash {
+  margin-top: 10px;
 }
 
 #dg-payment-term-tiers-table input,
