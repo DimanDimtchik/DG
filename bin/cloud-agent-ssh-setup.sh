@@ -10,6 +10,13 @@ KEY_RAW="${DG_ALLINKL_SSH_PRIVATE_KEY:-}"
 USER_NAME="${DG_ALLINKL_SSH_USER:-ssh-w0217246}"
 HOST_NAME="${DG_ALLINKL_SSH_HOST:-w0217246.kasserver.com}"
 
+if [[ ! "$USER_NAME" =~ ^ssh- ]]; then
+  echo "cloud-agent-ssh-setup: DG_ALLINKL_SSH_USER must start with 'ssh-' (SSH login from KAS → Tools → SSH-Zugänge)." >&2
+  echo "Got length ${#USER_NAME} — often the KAS web login was used by mistake." >&2
+  echo "See docs/CLOUD-AGENT-ACCESS.md section 4." >&2
+  exit 1
+fi
+
 if [[ -z "$KEY_RAW" ]]; then
   echo "cloud-agent-ssh-setup: DG_ALLINKL_SSH_PRIVATE_KEY is not set." >&2
   echo "Add it under https://cursor.com/dashboard/cloud-agents (Secrets)." >&2

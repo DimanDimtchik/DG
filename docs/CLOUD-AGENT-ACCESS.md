@@ -1,6 +1,6 @@
 # Cloud-Agent / Cursor Browser — Zugänge (DG CRM)
 
-Stand: 2026-08-21
+Stand: 2026-08-23
 
 > **Kein Passwort-SSH.** All-Inkl akzeptiert den Key `id_ed25519_ganzom`. Ein „veraltetes Passwort“ ist normal — der Browser-Agent braucht den **Private Key** als Cursor-Secret.
 
@@ -14,15 +14,25 @@ Stand: 2026-08-21
 | Name | Wert |
 |------|------|
 | `DG_ALLINKL_SSH_PRIVATE_KEY` | Inhalt von `~/.ssh/id_ed25519_ganzom` (kompletter Key inkl. `BEGIN`/`END`) |
-| `DG_ALLINKL_SSH_USER` | `ssh-w0217246` |
-| `DG_ALLINKL_SSH_HOST` | `w0217246.kasserver.com` |
-| `DG_CRM_SSH_HOST` | `dg.ganz-om.de` |
+| `DG_ALLINKL_SSH_USER` | **SSH-Benutzer** aus KAS → Tools → SSH-Zugänge: `ssh-XXXXXXX` (**nicht** der KAS-Weblogin!) |
+| `DG_ALLINKL_SSH_HOST` | `[login].kasserver.com` |
+| `DG_CRM_SSH_HOST` | `dg.ganz-om.de` (optional) |
+
+### Wichtig: SSH-User ≠ KAS-Login
+
+| Feld | Beispielformat | Secret |
+|------|----------------|--------|
+| **KAS-Login** (Web/API) | kurzer Name, ~8 Zeichen | `DG_KAS_LOGIN` — **nicht** für SSH |
+| **SSH-Benutzer** | beginnt immer mit `ssh-` | `DG_ALLINKL_SSH_USER` |
+
+Häufiger Fehler: KAS-Login in `DG_ALLINKL_SSH_USER` → am PC funktioniert SSH, im Cloud Agent `Permission denied (publickey)`, obwohl der Private Key korrekt ist.
+
 
 Optional (nur wenn Agent lokal DB/KAS braucht; sonst reichen SSH + Server-Configs):
 
 | Name | Bedeutung |
 |------|-----------|
-| `DG_KAS_LOGIN` | `w0217246` |
+| `DG_KAS_LOGIN` | KAS-Weblogin (nicht der SSH-User!) |
 | `DG_KAS_AUTH_DATA` | KAS-API-Passwort (liegt nur in GitHub Secrets / Server `kas.local.php`) |
 | `DG_MASTER_DB_PASSWORD` | DB-Passwort Master-CRM |
 | `DG_LIVE_DB_PASSWORD` | DB-Passwort Live-Root |
@@ -34,10 +44,19 @@ Optional (nur wenn Agent lokal DB/KAS braucht; sonst reichen SSH + Server-Config
 **Key vom PC holen** (einmalig, wenn du am Rechner bist):
 
 ```powershell
-Get-Content $env:USERPROFILE\.ssh\id_ed25519_ganzom
+Get-Content $env:USERPROFILE\.ssh\id_ed25519_ganzom -Raw
 ```
 
-Öffentlicher Fingerprint (Kontrolle): `ssh-ed25519 … ganz-om.de (w0217246)` — Datei `id_ed25519_ganzom.pub`.
+**SSH-User vom PC prüfen** (Wert für `DG_ALLINKL_SSH_USER`):
+
+```powershell
+ssh -G allinkl-ganzom | findstr /i "^user "
+```
+
+Fingerprint Private Key (Kontrolle): `SHA256:RoWIYpvE7HH1cQbVS7YUmSouM4pGvYv33i3AEiFriPw` — Kommentar in `id_ed25519_ganzom.pub`: `ganz-om.de (s000e3d3)`.
+
+**Nicht verwenden:** Secrets mit Prefix `IQ_ALLINKL_*` — anderer All-Inkl-Account (`w01f1176`), nicht DG (`s000e3d3`).
+
 
 ---
 
@@ -72,13 +91,49 @@ Hinweis: GitHub-Secrets sind **nicht** automatisch in Cursor Cloud Agents. Curso
 Deploy vom Agent nach SSH-Setup:
 
 ```bash
-bash bin/sync-crm-from-master.sh
+bash bin/cloud-agent-ssh-setup.sh   # muss SSH_OK ausgeben
+bash bin/sync-crm-from-master.sh    # nach Upload auf Master
 # Shop: lokal deploy-shop / rsync analog
 ```
 
+Erst Master per `scp`/`deploy.bat` vom PC hochladen, dann Instanzen syncen.
+
 ---
 
-## 4. Was der Agent nicht braucht / nicht anfassen soll
+## 4. Fehlerbehebung SSH im Cloud Agent
+
+### Symptom: `Permission denied (publickey)` — PC geht, Agent nicht
+
+**Diagnose (August 2026):** Der Private Key im Secret war **korrekt** (gleicher Fingerprint wie am PC). Ursache war **`DG_ALLINKL_SSH_USER`**: KAS-Login (~8 Zeichen) statt SSH-User (`ssh-…`).
+
+| Prüfung | Erwartung |
+|---------|-----------|
+| `DG_ALLINKL_SSH_PRIVATE_KEY` | Fingerprint `SHA256:RoWIYpvE7HH1cQbVS7YUmSouM4pGvYv33i3AEiFriPw` |
+| `DG_ALLINKL_SSH_USER` | beginnt mit `ssh-`, Länge typisch 11–12 Zeichen |
+| `DG_ALLINKL_SSH_HOST` | `[login].kasserver.com` |
+| Verbindung mit `IQ_ALLINKL_*` | Falsches Konto — ignorieren |
+
+**Fix:**
+
+1. KAS (Hauptaccount) → **Tools → SSH-Zugänge** → Spalte **SSH-Login** kopieren (`ssh-…`)
+2. In Cursor Secrets `DG_ALLINKL_SSH_USER` setzen (nicht den KAS-Weblogin!)
+3. Neuen Cloud-Agent starten
+4. `bash bin/cloud-agent-ssh-setup.sh` → Ausgabe `SSH_OK`
+
+**Agent-seitig prüfen** (ohne Key-Inhalt anzuzeigen):
+
+```bash
+ssh-keygen -l -f ~/.ssh/id_ed25519_ganzom
+python3 -c "import os; u=os.environ.get('DG_ALLINKL_SSH_USER',''); print('user ok:', u.startswith('ssh-'), 'len', len(u))"
+```
+
+### Symptom: Verbindung klappt, falscher Account (`w01f1176`)
+
+Falscher Key — `id_ed25519_allinkl` / `IQ_ALLINKL_*` statt `id_ed25519_ganzom` / `DG_ALLINKL_*`.
+
+---
+
+## 5. Was der Agent nicht braucht / nicht anfassen soll
 
 - Stripe Live-Keys: bewusst noch nicht aktiv (`shop/config/stripe.local.php`)
 - Passwort-Login SSH: deaktiviert bzw. veraltet — nur Key
