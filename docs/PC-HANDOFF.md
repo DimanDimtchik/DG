@@ -1,6 +1,8 @@
 # PC-Handoff — Stand 2026-08-21
 
-> **Aktuell:** Buchhaltung Phasen A–C auf Branch **`cursor/buchhaltung-phase-abc-6a0c`** — Deploy/Migration vom PC.  
+> **→ Aktueller Gesamtstand (2026-08-23):** [`docs/HANDOFF.md`](HANDOFF.md) · Agent-Rolle: [`AGENTS.md`](../AGENTS.md)
+
+> **Aktuell:** Buchhaltung Phasen A–C auf **`master`** (gemergt). Nächster Branch: **`cursor/buchhaltung-randfaelle-1c3a`**.  
 > **→ Deploy-Anleitung:** [`docs/BUCHHALTUNG-PC-HANDOFF.md`](BUCHHALTUNG-PC-HANDOFF.md)  
 > Handy/Cloud: [`docs/HANDY-HANDOFF.md`](HANDY-HANDOFF.md) · SSH/Secrets: [`docs/CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 

@@ -1,6 +1,8 @@
 # Cloud-Agent / Cursor Browser — Zugänge (DG CRM)
 
-Stand: 2026-08-21
+Stand: 2026-08-23
+
+> **Konsolidierter Stand:** [`docs/HANDOFF.md`](HANDOFF.md) · Agent-Rolle: [`AGENTS.md`](../AGENTS.md)
 
 > **Kein Passwort-SSH.** All-Inkl akzeptiert den Key `id_ed25519_ganzom`. Ein „veraltetes Passwort“ ist normal — der Browser-Agent braucht den **Private Key** als Cursor-Secret.
 
@@ -30,6 +32,13 @@ Optional (nur wenn Agent lokal DB/KAS braucht; sonst reichen SSH + Server-Config
 
 3. Neuen Cloud-Agent starten (alte Runs haben keine neuen Secrets).
 4. Agent soll zuerst ausführen: `bash bin/cloud-agent-ssh-setup.sh`
+
+**Häufige Fehler (2026-08-23 behoben):**
+
+| Symptom | Ursache | Lösung |
+|---------|---------|--------|
+| `error in libcrypto` | Key im Secret als **eine Zeile** | `cloud-agent-ssh-setup.sh` auf `master` reformatiert automatisch |
+| `Permission denied` trotz Key | `DG_ALLINKL_SSH_USER` = KAS-Login statt `ssh-…` | Secret auf SSH-User setzen (nicht `w0217246`) |
 
 **Key vom PC holen** (einmalig, wenn du am Rechner bist):
 
