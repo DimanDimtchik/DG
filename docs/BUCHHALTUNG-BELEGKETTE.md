@@ -62,6 +62,8 @@
 
 ### Tests (nach Deploy)
 
+**Druckbare Checkliste:** [`TESTLISTE-RANDFAELLE-2026-08-23.html`](TESTLISTE-RANDFAELLE-2026-08-23.html)
+
 1. Angebot anlegen → keine Buchung, keine UStVA
 2. AB aus Angebot → noch keine Buchung
 3. Abschlagsrechnung 30 % → Journal + OPOS

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testliste — Buchhaltung Randfälle · DG CRM</title>
+<style>
+  @page { size: A4; margin: 12mm 12mm 12mm 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1c2330;
+    font-size: 10pt;
+    line-height: 1.35;
+    padding: 8mm 10mm;
+    max-width: 210mm;
+    margin: 0 auto;
+  }
+  h1 { font-size: 16pt; margin: 0 0 1.5mm; color: #6b4f10; }
+  .sub { color: #5c6678; font-size: 9pt; margin: 0 0 3mm; }
+  .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm 8mm;
+    font-size: 8.5pt;
+    border: 1px solid #e0d6bd;
+    background: #faf6ec;
+    border-radius: 5px;
+    padding: 3mm 4mm;
+    margin-bottom: 4mm;
+  }
+  .meta dt { font-weight: 700; color: #6b4f10; margin: 0; }
+  .meta dd { margin: 0 0 1.5mm; color: #3a4252; }
+  .hint {
+    font-size: 8.5pt;
+    color: #5c6678;
+    margin: 0 0 4mm;
+    padding: 2mm 3mm;
+    border-left: 3px solid #b8942f;
+    background: #fafbfc;
+  }
+  section { margin-bottom: 3.5mm; break-inside: avoid; }
+  h2 {
+    font-size: 11pt;
+    margin: 0 0 1.2mm;
+    padding-bottom: 1mm;
+    border-bottom: 2px solid #b8942f;
+    color: #6b4f10;
+  }
+  h2 .tag {
+    float: right;
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #7a828f;
+    padding-top: 2px;
+  }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 1.1mm 0;
+    border-bottom: 1px dotted #dfe3ea;
+    break-inside: avoid;
+  }
+  li:last-child { border-bottom: none; }
+  .box {
+    flex: 0 0 auto;
+    width: 4.2mm;
+    height: 4.2mm;
+    border: 1.6px solid #556;
+    border-radius: 2px;
+    margin-top: 0.4mm;
+  }
+  .txt { flex: 1; }
+  .txt .t { font-weight: 600; }
+  .txt .d { color: #5c6678; font-size: 8.5pt; display: block; margin-top: 0.2mm; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6mm; }
+  .cols section { margin-bottom: 3mm; }
+  .foot {
+    margin-top: 4mm;
+    font-size: 7.5pt;
+    color: #8a919c;
+    border-top: 1px solid #e3e7ee;
+    padding-top: 2mm;
+  }
+  .sign {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4mm;
+    margin-top: 4mm;
+    font-size: 8.5pt;
+  }
+  .sign label { display: block; color: #5c6678; margin-bottom: 1mm; }
+  .sign .line {
+    border-bottom: 1px solid #9aa3b2;
+    height: 7mm;
+  }
+  @media print {
+    body { padding: 0; }
+    .no-print { display: none !important; }
+    a { color: inherit; text-decoration: none; }
+  }
+  @media screen {
+    .toolbar {
+      position: sticky; top: 0; z-index: 2;
+      display: flex; gap: 8px; align-items: center;
+      background: #fff; border-bottom: 1px solid #e3e7ee;
+      padding: 8px 0 10px; margin-bottom: 8px;
+    }
+    .toolbar button {
+      font: inherit; font-weight: 600; cursor: pointer;
+      padding: 8px 14px; border-radius: 4px;
+      border: 1px solid #b8942f; background: #fff8e6; color: #6b4e0a;
+    }
+    .toolbar button.primary {
+      background: #6e6258; border-color: #6e6258; color: #fff;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <button type="button" class="primary" onclick="window.print()">Drucken / PDF speichern</button>
+    <span style="color:#5c6678;font-size:9pt;">Branch <code>cursor/buchhaltung-randfaelle-1c3a</code> · nach Deploy testen</span>
+  </div>
+
+  <h1>Testliste — Buchhaltung Randfälle</h1>
+  <p class="sub">DG CRM · Manuelle Abnahme · Stand 23.08.2026 · Migrationen 055–061</p>
+
+  <dl class="meta">
+    <div>
+      <dt>Branch</dt>
+      <dd><code>cursor/buchhaltung-randfaelle-1c3a</code></dd>
+      <dt>Test-Instanz (empfohlen)</dt>
+      <dd>ganz-soft.de (Wartung an) oder dg.ganz-om.de</dd>
+    </div>
+    <div>
+      <dt>Vor dem Test</dt>
+      <dd>Deploy · CRM öffnen (Migrationen) · <strong>Shift+Strg+R</strong></dd>
+      <dt>Tester / Datum</dt>
+      <dd>________________ / __.__.2026</dd>
+    </div>
+  </dl>
+
+  <p class="hint">
+    Bei Fehlern notieren: URL, Aktion, Screenshot/Fehlertext.
+    Basis A–C (Filter, BWA, SuSa, …) nur spotten, wenn Zeit — Detail: <code>TESTLISTE-2026-08-21.md</code> Abschnitt&nbsp;J.
+  </p>
+
+  <section>
+    <h2>0 · Vorab <span class="tag">Deploy</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Branch deployed</span><span class="d">deploy.bat / sync-crm-from-master · Hard-Reload</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Login OK</span><span class="d">CRM öffnet ohne 500; Wartungsmodus: öffentlich 503, Login erlaubt</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Migrationen 055–061 angewendet</span><span class="d">Beim Login automatisch · optional in DB: <code>dg_migrations</code> prüfen</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Menü Zeiterfassung sichtbar</span><span class="d">Sidebar-Icon Uhr · Modulrechte OK</span></span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Einstellungen → Zahlungsbedingungen &amp; Mahnung / Zeiterfassung öffnen</span></span></li>
+    </ul>
+  </section>
+
+  <div class="cols">
+    <section>
+      <h2>1 · Belegkette <span class="tag">055</span></h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Angebot anlegen</span><span class="d">Keine Journal-Buchung, keine UStVA</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">AB aus Angebot (Folgebeleg)</span><span class="d">Positionen übernommen · weiterhin ohne Buchung</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Lieferschein (optional)</span><span class="d">Ohne Buchung</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Abschlagsrechnung</span><span class="d">Journal + OPOS Teilbetrag</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Schlussrechnung</span><span class="d">Restbetrag · Abschläge sichtbar abgezogen</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Belegkette-Panel</span><span class="d">Links zu allen Dokumenten · aktuelle Zeile markiert</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Gutschrift auf Rechnung</span><span class="d">Minderung / OPOS plausibel</span></span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2 · Dokumentstatus <span class="tag">056</span></h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Status Entwurf → Versendet</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Versendet → Angenommen</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Angenommen → Abgerechnet</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Schnellaktionen im Formular</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Belegliste: Filter Dokumentart</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Belegliste: Filter Dokumentstatus</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Badges lesbar (Liste + Formular)</span></span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="cols">
+    <section>
+      <h2>3 · Freitext &amp; Klauseln <span class="tag">057–058</span></h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Freitext vor Positionen speichern</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Freitext nach Positionen speichern</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Klausel §&nbsp;19 UStG anhaken</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Klausel §&nbsp;13b / PV (mind. eine)</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Druck/PDF zeigt Texte + Klauseln</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">E-Mail-Versand inkl. Anhang/Vorschau</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Logo + Pflichtangaben im Druck</span></span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4 · Skonto &amp; Mahnung <span class="tag">059</span></h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Einstellungen: Skonto-Stufen speichern</span><span class="d">z.&nbsp;B. 7&nbsp;T −3&nbsp;% · 30&nbsp;T netto · 90&nbsp;T Verzug</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Rechnung: Stufen + Vorschautext</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Fälligkeit / Zahlung → Skonto-Vorschlag</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Manuelle Mahnung senden</span><span class="d">Mahnstufe + Gebühr auf Beleg</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Auto-Mahnung aktiv</span><span class="d">ohne KAS-Cron · Log optional: <code>storage/logs/dunning-auto.log</code></span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">OPOS zeigt Fälligkeit / Überfälligkeit</span></span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="cols">
+    <section>
+      <h2>5 · Teilzahlungen <span class="tag">060</span></h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Zwei Zahlungen auf eine Rechnung</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Status <code>partial</code> / Badge „teilweise“</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">OPOS: Bezahlt + Offen korrekt</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Zahlung löschen (falls erlaubt)</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Vollzahlung → erledigt / offen 0</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Mahnung nur auf Restbetrag</span></span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6 · Zeiterfassung <span class="tag">061</span></h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Mitarbeiter-Kontakt mit Login verknüpft</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Einstempeln</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Pause starten / beenden</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Zwangspause: Ausstempeln gesperrt</span><span class="d">Einstellungen ArbZG · Warnung sichtbar</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Ausstempeln nach Pause</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Tagesliste Stempel heute</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Team heute (Leitung)</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Autoclose / Autostart offener Tage</span><span class="d">laut Einstellung · Plausibilität</span></span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="cols">
+    <section>
+      <h2>7 · Randfälle</h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">PRAP für Einnahmen</span><span class="d">Vorausrechnung / Abgrenzung UI + Speichern</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Negative Rabattzeile auf Rechnung</span><span class="d">Beträge / USt plausibel</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Zahlungsart Trinkgeld</span><span class="d">Durchlaufende Posten + Kassenbuch</span></span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8 · Website / Install</h2>
+      <ul>
+        <li><span class="box"></span><span class="txt"><span class="t">Terminkalender-Landing</span><span class="d">Frisch install oder Bootstrap · Seite /terminkalender</span></span></li>
+        <li><span class="box"></span><span class="txt"><span class="t">Nummernkreise Dokumentarten</span><span class="d">Angebot, AB, Abschlag, Schlussrechnung</span></span></li>
+      </ul>
+    </section>
+  </div>
+
+  <section>
+    <h2>9 · Spot-Check Buchhaltung A–C <span class="tag">optional</span></h2>
+    <ul>
+      <li><span class="box"></span><span class="txt"><span class="t">Belege: Monatsfilter</span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">BWA / SuSa öffnen</span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Ein Druck/PDF (z.&nbsp;B. UStVA oder Kasse)</span></li>
+      <li><span class="box"></span><span class="txt"><span class="t">Keine offensichtlichen CSS-/Layout-Brüche</span><span class="d">Sidebar-Icon, Warning-Buttons, Belegkette-Zeile</span></span></li>
+    </ul>
+  </section>
+
+  <div class="sign">
+    <div>
+      <label>Ergebnis</label>
+      <div class="line"></div>
+    </div>
+    <div>
+      <label>Merge nach master?</label>
+      <div class="line"></div>
+    </div>
+    <div>
+      <label>Unterschrift</label>
+      <div class="line"></div>
+    </div>
+  </div>
+
+  <p class="foot">
+    Quelle: Belegkette-Doku, Zeiterfassung-Plan, Handoff Randfälle · Datei
+    <code>docs/TESTLISTE-RANDFAELLE-2026-08-23.html</code>
+    · Alt: <code>docs/TESTLISTE-2026-08-21.md</code> (J)
+  </p>
+</body>
+</html>
