@@ -7,7 +7,25 @@ Agent-Rolle: siehe **`AGENTS.md`** (Rechtsanwalt Steuer-/Buchführungsrecht · S
 
 ## 1. Chats aufräumen (1 Cloud + 1 Lokal)
 
-Cursor-Chats können vom Agent **nicht** gelöscht werden — bitte manuell archivieren.
+**Wichtig:** Der Agent kann Chats **nicht** aus der Sidebar entfernen — nur du in Cursor (Rechtsklick → **Archive**). Alles Wichtige steht in `AGENTS.md` und dieser Datei; alte Chats sind danach überflüssig.
+
+### So räumst du in ~1 Minute auf
+
+**Ordner `dg` (Cloud, ☁️):**
+
+1. Chat **„Aktueller stand“** einmal öffnen (der bleibt).
+2. Auf jeden **anderen** Chat rechtsklicken → **Archive** (6 Stück):
+   - Ssh deploy functionality
+   - 3× Ssh bereitstellung
+   - Umgang mit unklarer Anweisung
+   - Github repo Aktualität
+
+**Ordner `DG` (lokal, ohne ☁️):**
+
+1. **Behalten:** „Handy chat work request“ (Allgemeinarbeit)
+2. **Archivieren:** „Wartungsmodus SVG Fix“ (erledigt)
+
+Tipp: Sidebar-Filter → **Status → Archived** zeigt archivierte Chats; dort **Restore**, falls du einen zurückholen willst.
 
 ### Cloud — BEHALTEN (1)
 
@@ -24,6 +42,7 @@ Cursor-Chats können vom Agent **nicht** gelöscht werden — bitte manuell arch
 | Ssh bereitstellung (`bc-1b6845c9`) | Redundant |
 | Ssh bereitstellung (`bc-20e8eb99`) | Redundant |
 | Umgang mit unklarer Anweisung (`bc-3d52fe8b`) | Nur Chat-Wiederherstellung |
+| Github repo Aktualität | Repo-Check, erledigt |
 
 Archivieren: Cursor Dashboard → Agent-Run → Menü → Archive.
 
