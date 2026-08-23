@@ -3790,6 +3790,12 @@ switch ($path) {
         $timeClockEmployeeLabel = $timeClockEmployeeLabel ?? '';
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
+        $websiteFormList = $websiteFormList ?? [];
+        $websiteFormId = $websiteFormId ?? null;
+        $websiteForm = $websiteForm ?? null;
+        $websiteFormSubmissions = $websiteFormSubmissions ?? [];
+        $websiteFormSubmission = $websiteFormSubmission ?? null;
+        $websiteFormOptions = $websiteFormOptions ?? [];
 
         View::render('layout/app', compact(
             'title',
