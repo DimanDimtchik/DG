@@ -1509,15 +1509,15 @@ code {
 }
 
 .dg-button--warning {
-  background: #fff8e6;
-  border-color: #e0b84a;
-  color: #8a6410;
-}
-
-.dg-button--warning:hover:not(:disabled) {
   background: #fff1cc;
   border-color: #c9a227;
   color: #6b4e0a;
+}
+
+.dg-button--warning:hover:not(:disabled) {
+  background: #ffe8a3;
+  border-color: #a8841a;
+  color: #543c08;
 }
 
 .dg-button--back {
