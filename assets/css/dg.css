@@ -674,6 +674,7 @@ code {
 .dg-flash--success { background: #edfaef; border-color: #68de7c; color: #1e4620; }
 .dg-flash--error { background: var(--dg-danger-bg); border-color: #fecaca; color: var(--dg-danger); }
 .dg-flash--warning { background: #fffbeb; border-color: #fbbf24; color: #78350f; }
+.dg-flash--info { background: #eff6ff; border-color: #93c5fd; color: #1e3a5f; }
 
 .dg-form h2 {
   margin: 20px 0 12px;
@@ -1492,6 +1493,31 @@ code {
   background: var(--dg-primary-hover);
   border-color: var(--dg-primary-hover);
   color: #fff;
+}
+
+.dg-button--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--dg-text-secondary, #5c6678);
+  box-shadow: none;
+}
+
+.dg-button--ghost:hover:not(:disabled) {
+  background: var(--dg-surface-muted, #f4f6f9);
+  border-color: var(--dg-border, #d8dee8);
+  color: var(--dg-text);
+}
+
+.dg-button--warning {
+  background: #fff8e6;
+  border-color: #e0b84a;
+  color: #8a6410;
+}
+
+.dg-button--warning:hover:not(:disabled) {
+  background: #fff1cc;
+  border-color: #c9a227;
+  color: #6b4e0a;
 }
 
 .dg-button--back {
@@ -4293,6 +4319,7 @@ body.dg-login-page {
   border-top: 1px solid var(--dg-border, #d8dee8);
 }
 
+.dg-input--readonly,
 .dg-input--computed {
   background: var(--dg-surface-muted, #f6f8fb);
   color: var(--dg-text-muted, #5c6678);
@@ -4487,6 +4514,178 @@ body.dg-login-page {
   background: #fffaf0;
   border-radius: 8px;
   padding: 12px 14px;
+}
+
+.dg-voucher-legal-clause__preview summary {
+  cursor: pointer;
+  color: var(--dg-text-secondary, #5c6678);
+  font-size: 0.85rem;
+}
+
+.dg-voucher-legal-clause__preview[open] summary {
+  margin-bottom: 2px;
+}
+
+.dg-voucher-chain {
+  overflow: hidden;
+}
+
+.dg-voucher-chain__current {
+  background: color-mix(in srgb, var(--dg-primary) 8%, var(--dg-surface, #fff));
+}
+
+.dg-voucher-chain__current td {
+  font-weight: 600;
+}
+
+.dg-voucher-chain-actions .dg-form-actions {
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dg-voucher-email {
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: var(--dg-surface, #fff);
+}
+
+.dg-voucher-payments {
+  padding: 12px 14px;
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 8px;
+  background: var(--dg-surface-muted, #f8f9fb);
+}
+
+.dg-voucher-payments__add fieldset {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--dg-border, #d8dee8);
+  border-radius: 6px;
+  background: var(--dg-surface, #fff);
+}
+
+.dg-voucher-payments__add legend {
+  padding: 0 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dg-voucher-payment-terms .dg-table input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dg-voucher-status-actions {
+  gap: 8px;
+  align-items: center;
+}
+
+.dg-table__total td {
+  border-top: 2px solid var(--dg-border-accent-strong, #b8942f);
+  font-weight: 700;
+  background: var(--dg-surface-muted, #f8f9fb);
+}
+
+.dg-form-divider {
+  margin: 24px 0;
+  border: 0;
+  border-top: 1px solid var(--dg-border, #d8dee8);
+}
+
+.dg-opos-summary {
+  margin-bottom: 16px;
+}
+
+.dg-opos-summary p {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+.dg-buchhaltung-belege__row--draft {
+  background: color-mix(in srgb, var(--dg-warning, #dba617) 8%, transparent);
+}
+
+.dg-buchhaltung-belege__row--draft td {
+  color: var(--dg-text-secondary, #5c6678);
+}
+
+/* Zeiterfassung — Stempeluhr */
+.dg-time-clock-card {
+  max-width: 42rem;
+}
+
+.dg-time-clock-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 0 0 16px;
+  font-size: 1rem;
+}
+
+.dg-time-clock-status__value {
+  font-size: 1.15rem;
+}
+
+.dg-time-clock-status--working {
+  color: #1e4620;
+}
+
+.dg-time-clock-status--break {
+  color: #8a6410;
+}
+
+.dg-time-clock-status--off {
+  color: var(--dg-text-secondary, #5c6678);
+}
+
+.dg-time-clock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dg-time-clock-actions .dg-inline-form,
+.dg-time-clock-actions > form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.dg-time-clock-summary {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--dg-surface-muted, #f8f9fb);
+  border: 1px solid var(--dg-border, #d8dee8);
+  line-height: 1.5;
+}
+
+.dg-time-clock-summary p {
+  margin: 0 0 4px;
+}
+
+.dg-time-clock-summary p:last-child {
+  margin-bottom: 0;
+}
+
+#dg-payment-term-tiers-table input,
+#dg-dunning-levels-table input,
+#dg-dunning-levels-table textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dg-dunning-level-intro-row td {
+  padding-top: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--dg-border, #d8dee8);
+  background: var(--dg-surface-muted, #f8f9fb);
 }
 
 .dg-voucher-items__row:has(.dg-voucher-items-search-results:not([hidden])) {
