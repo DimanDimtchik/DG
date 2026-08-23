@@ -34,6 +34,11 @@ final class BackupService
             return;
         }
 
+        // Emergency pause flag (set on server during hotfix)
+        if (($state['last_status'] ?? '') === 'paused_hotfix') {
+            return;
+        }
+
         // After a failed attempt, wait until next calendar day (or 6h) before retrying.
         $lastAttempt = (string) ($state['last_attempt_at'] ?? '');
         if ($lastAttempt !== '') {

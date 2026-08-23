@@ -6,6 +6,11 @@ require __DIR__ . '/bootstrap.php';
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $path = rtrim($path, '/') ?: '/';
 
+// CRM-Login: /Login und /LOGIN → /login (Autocomplete/Lesezeichen)
+if (strcasecmp($path, '/login') === 0) {
+    $path = '/login';
+}
+
 if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     $previewUser = AuthService::user();
     if ($previewUser === null || !MenuRegistry::canAccess($previewUser, 'website-seiten')) {
@@ -119,6 +124,11 @@ switch ($path) {
                         $error = 'Anmeldung fehlgeschlagen. Benutzername oder Passwort ist falsch.';
                     }
                 }
+            }
+        } else {
+            // GET: Session-Lock freigeben — sonst blockiert ein hängender POST alle weiteren Tabs.
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
             }
         }
 
@@ -3990,6 +4000,7 @@ switch ($path) {
             && WebsiteMaintenanceSettings::isActive()
             && !AuthService::check()
             && $slug !== ''
+            && strcasecmp($slug, 'login') !== 0
             && !str_starts_with($slug, 'api/')
             && !str_starts_with($slug, 'assets/')
             && !str_starts_with($slug, 'app/media')
