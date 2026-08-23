@@ -19,6 +19,7 @@ final class BackupService
 
     /**
      * Run daily backup if due (called from App::boot).
+     * On failure: cooldown (no retry every request) so a broken dump cannot hang login/CRM.
      */
     public static function runIfDue(): void
     {
@@ -33,14 +34,28 @@ final class BackupService
             return;
         }
 
+        // After a failed attempt, wait until next calendar day (or 6h) before retrying.
+        $lastAttempt = (string) ($state['last_attempt_at'] ?? '');
+        if ($lastAttempt !== '') {
+            $attemptTs = strtotime($lastAttempt);
+            if ($attemptTs !== false && (time() - $attemptTs) < 21600) {
+                return;
+            }
+        }
+
+        $state['last_attempt_at'] = date('c');
+        self::saveState($state);
+
         try {
             self::createBackup();
             $state['last_backup'] = $today;
             $state['last_status'] = 'ok';
             $state['last_error'] = null;
+            $state['last_attempt_at'] = date('c');
         } catch (Throwable $e) {
             $state['last_status'] = 'error';
             $state['last_error'] = $e->getMessage();
+            $state['last_attempt_at'] = date('c');
         }
 
         self::saveState($state);
@@ -58,7 +73,10 @@ final class BackupService
         $timestamp = date('Y-m-d_His');
         $backupPath = $dir . '/' . $timestamp;
 
-        if (!mkdir($backupPath, 0750, true)) {
+        if (is_dir($backupPath)) {
+            $backupPath = $dir . '/' . date('Y-m-d_His') . '_' . bin2hex(random_bytes(2));
+        }
+        if (!@mkdir($backupPath, 0750, true) && !is_dir($backupPath)) {
             throw new RuntimeException("Backup-Verzeichnis konnte nicht erstellt werden: $backupPath");
         }
 
@@ -104,14 +122,17 @@ final class BackupService
     /** mysqldump oder PDO-Fallback für database.sql. */
     private static function backupDatabase(string $backupPath): void
     {
-        $dbConfig = require DG_ROOT . '/config/database.local.php';
-        $host = $dbConfig['host'] ?? 'localhost';
-        $name = $dbConfig['name'] ?? '';
-        $user = $dbConfig['user'] ?? '';
-        $pass = $dbConfig['pass'] ?? '';
+        $dbConfig = require DG_ROOT . '/config/database.php';
+        if (!is_array($dbConfig)) {
+            $dbConfig = require DG_ROOT . '/config/database.local.php';
+        }
+        $host = (string) ($dbConfig['host'] ?? 'localhost');
+        $name = (string) ($dbConfig['database'] ?? $dbConfig['name'] ?? '');
+        $user = (string) ($dbConfig['username'] ?? $dbConfig['user'] ?? '');
+        $pass = (string) ($dbConfig['password'] ?? $dbConfig['pass'] ?? '');
         $file = $backupPath . '/database.sql';
 
-        if (self::hasMysqldump()) {
+        if ($name !== '' && self::hasMysqldump()) {
             $cmd = sprintf(
                 'mysqldump --host=%s --user=%s --password=%s --single-transaction --routines --triggers %s > %s 2>&1',
                 escapeshellarg($host),
@@ -161,7 +182,19 @@ final class BackupService
 
             $rows = $pdo->query("SELECT * FROM `$table`");
             while ($row = $rows->fetch(PDO::FETCH_ASSOC)) {
-                $values = array_map(fn($v) => $v === null ? 'NULL' : $pdo->quote($v), $row);
+                $values = array_map(static function (mixed $v) use ($pdo): string {
+                    if ($v === null) {
+                        return 'NULL';
+                    }
+                    if (is_bool($v)) {
+                        return $v ? '1' : '0';
+                    }
+                    if (is_int($v) || is_float($v)) {
+                        return (string) $v;
+                    }
+                    // PDO::quote() requires string (PHP 8.1+)
+                    return $pdo->quote((string) $v);
+                }, $row);
                 fwrite($fp, "INSERT INTO `$table` VALUES (" . implode(',', $values) . ");\n");
             }
             fwrite($fp, "\n");

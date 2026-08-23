@@ -43,7 +43,11 @@ final class App
         LicenseGuard::verify();
 
         UpdateChecker::runIfDue();
-        BackupService::runIfDue();
+        try {
+            BackupService::runIfDue();
+        } catch (Throwable) {
+            // Backup darf Login/CRM nicht blockieren
+        }
         FileIntegrity::runIfDue();
         try {
             DunningService::runIfDue();
