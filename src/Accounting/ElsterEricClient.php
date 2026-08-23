@@ -17,8 +17,14 @@ final class ElsterEricClient
      */
     public static function readiness(): array
     {
-        $settings = ElsterSettings::forForm();
+        $stored = Database::isConfigured()
+            ? SettingsStore::get(ElsterSettings::STORE_KEY, ElsterSettings::defaults())
+            : ElsterSettings::defaults();
         $local = ElsterSettings::localConfig();
+        $mode = ElsterSettings::sanitizeMode((string) ($stored['mode'] ?? ElsterSettings::MODE_CSV));
+        if ($mode === ElsterSettings::MODE_ERIC && !ElsterSettings::serverSupportsEric()) {
+            $mode = ElsterSettings::MODE_CSV;
+        }
         $items = [];
 
         $items[] = [
@@ -39,7 +45,7 @@ final class ElsterEricClient
                 : 'Datei aus config/elster.local.php.example anlegen (nur auf Server).',
         ];
 
-        $workerUrl = trim((string) ($settings['eric_worker_url'] ?? ''));
+        $workerUrl = trim((string) ($stored['eric_worker_url'] ?? ''));
         if ($workerUrl === '' && trim((string) ($local['worker_url'] ?? '')) !== '') {
             $workerUrl = trim((string) $local['worker_url']);
         }
@@ -53,7 +59,7 @@ final class ElsterEricClient
                 : ($workerOk ? 'Worker antwortet unter ' . $workerUrl : 'Worker nicht erreichbar: ' . $workerUrl),
         ];
 
-        $mfg = trim((string) ($settings['manufacturer_id'] ?? ''));
+        $mfg = trim((string) ($stored['manufacturer_id'] ?? ''));
         if ($mfg === '' && trim((string) ($local['manufacturer_id'] ?? '')) !== '') {
             $mfg = trim((string) $local['manufacturer_id']);
         }
@@ -69,8 +75,8 @@ final class ElsterEricClient
         $items[] = [
             'id' => 'certificate',
             'label' => 'ELSTER-Zertifikat',
-            'ok' => !empty($settings['certificate_uploaded']),
-            'detail' => !empty($settings['certificate_uploaded'])
+            'ok' => !empty($stored['certificate_uploaded']),
+            'detail' => !empty($stored['certificate_uploaded'])
                 ? 'Zertifikat markiert als hochgeladen (Upload-UI folgt mit ERiC).'
                 : 'Test-Zertifikat für Entwicklung, echtes Zertifikat nur für Produktion.',
         ];
@@ -84,7 +90,7 @@ final class ElsterEricClient
 
         return [
             'ready' => $ready,
-            'mode' => (string) ($settings['mode'] ?? ElsterSettings::MODE_CSV),
+            'mode' => $mode,
             'items' => $items,
         ];
     }
