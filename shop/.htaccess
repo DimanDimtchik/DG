@@ -1,12 +1,13 @@
 RewriteEngine On
 RewriteBase /
 
-# Wartungsmodus (Apache-Ebene): solange config/.maintenance existiert → 503
+# Wartungsmodus (Apache-Ebene): solange config/.maintenance existiert → 503 + Wartungsseite
 # Live-Schaltung: config/.maintenance löschen + maintenance.local.php (enabled=false)
+ErrorDocument 503 /maintenance.html
 RewriteCond %{REQUEST_URI} !^/maintenance\.html$ [NC]
 RewriteCond %{REQUEST_URI} !^/assets/ [NC]
 RewriteCond %{DOCUMENT_ROOT}/config/.maintenance -f
-RewriteRule ^ maintenance.html [R=503,L]
+RewriteRule ^ - [R=503,L]
 
 # Block local secrets
 RewriteRule ^config/database\.local\.php$ - [F,L]
