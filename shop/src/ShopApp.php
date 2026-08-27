@@ -17,6 +17,7 @@ final class ShopApp
         self::$booted = true;
         self::$config = require SHOP_ROOT . '/config/app.php';
         date_default_timezone_set('Europe/Berlin');
+        ShopMaintenance::guard();
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }

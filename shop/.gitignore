@@ -1,4 +1,5 @@
 # Local secrets – never commit
 config/database.local.php
 config/stripe.local.php
+config/maintenance.local.php
 storage/
