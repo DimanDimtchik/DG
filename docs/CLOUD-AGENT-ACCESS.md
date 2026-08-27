@@ -80,7 +80,7 @@ Hinweis: GitHub-Secrets sind **nicht** automatisch in Cursor Cloud Agents. Curso
 |-------|-------------|-----|
 | SSH | `ssh-w0217246@w0217246.kasserver.com` (Alias `allinkl-ganzom`) | — |
 | Master-CRM | `/www/htdocs/w0217246/dg.ganz-om.de` | https://dg.ganz-om.de |
-| Live ganz-soft | `/www/htdocs/w0217246` | https://ganz-soft.de |
+| Live ganz-soft | `/www/htdocs/w0217246/ganz-soft.de` | https://ganz-soft.de |
 | Kontur | `/www/htdocs/w0217246/kontur-cosmetics.de` | (Kundeninstanz) |
 | Shop | `/www/htdocs/w0217246/shop.ganz-soft.de` | https://shop.ganz-soft.de |
 | Git | `https://github.com/DimanDimtchik/DG.git` | Branch `master` |
@@ -92,11 +92,11 @@ Deploy vom Agent nach SSH-Setup:
 
 ```bash
 bash bin/cloud-agent-ssh-setup.sh   # muss SSH_OK ausgeben
-bash bin/sync-crm-from-master.sh    # nach Upload auf Master
-# Shop: lokal deploy-shop / rsync analog
+bash bin/sync-crm-from-master.sh    # Master → ganz-soft.de/ + kontur-cosmetics.de
+# Shop: Dateien nach shop.ganz-soft.de/ (eigenes Projekt, nicht im CRM-Sync)
 ```
 
-Erst Master per `scp`/`deploy.bat` vom PC hochladen, dann Instanzen syncen.
+Erst Master per `scp`/`deploy.bat` auf **dg.ganz-om.de** hochladen, dann `sync-crm-from-master.sh`.
 
 ---
 

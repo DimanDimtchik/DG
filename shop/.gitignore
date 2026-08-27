@@ -2,4 +2,5 @@
 config/database.local.php
 config/stripe.local.php
 config/maintenance.local.php
+config/admin.local.php
 storage/
