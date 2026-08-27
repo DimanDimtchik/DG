@@ -123,6 +123,55 @@ Empfohlene Struktur:
 Der Anhang braucht Unterschriftenfelder fuer Arbeitgeber/in bzw. Unterweisende,
 Arbeitnehmer/in und optional Eltern/gesetzliche Vertreter.
 
+## Schulungsquellen und Pfade
+
+Die folgenden Dateien wurden in der Session als Grundlage fuer die
+Kurzschulung herangezogen. Sie sollen nicht automatisch committed werden,
+sondern als Quellen-/Ablagehinweis fuer spaetere Vorlagen und Schulungsanlagen
+dienen.
+
+Lokale Ausgangsordner laut Anwender:
+
+- `C:\Users\dietr\OneDrive\Desktop\Arbeit\MaxGrill\GbR\Lebensmittel-Ueberwachung\Gesundheitsamt\`
+- `C:\Users\dietr\OneDrive\Desktop\Arbeit\MaxGrill\GbR\Lebensmittel-Ueberwachung\Gesundheitsamt2\`
+- `C:\Users\dietr\Downloads\`
+
+In der Cloud-Session hochgeladene Dateien:
+
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Anmeldebest_tigung-Quittung_02fe.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/cert__1__0abf.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/cert_5841.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/rkn2.de_merkblatt_45e6.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Anleitung-Haendewaschen_a6d4.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Betriebshygiene_7ed7.docx`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Fliessdiagramm-GastroImbiss-Gefahren_c737.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Lagerung-Leitfaden_258c.docx`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Leitfaden-Vo-EG-852-2004-1_fb68.pdf`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Personalhygiene_3710.docx`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Produktionshygiene_2ee3.docx`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Schulungen_d639.docx`
+- `/home/ubuntu/.cursor/projects/workspace/uploads/Schulungsprotokoll_b3c1.pdf`
+
+Vom Anwender auf den Webserver hochgeladenes Video:
+
+- lokaler Dateiname: `belerung.mp4`
+- Serverpfad: `www/htdocs/w0217246/kontur-cosmetics.de/schulung/belerung.mp4`
+- oeffentliche URL: `https://kontur-cosmetics.de/schulung/belerung.mp4`
+
+Hinweise zur Einordnung:
+
+- `rkn2.de_merkblatt_45e6.pdf`, `cert*.pdf` und
+  `Anmeldebest_tigung-Quittung_02fe.pdf` betreffen `IfSG §§ 42, 43` und sind
+  nur bei tatsaechlichem Lebensmittelkontakt relevant.
+- `Personalhygiene_3710.docx`, `Betriebshygiene_7ed7.docx`,
+  `Anleitung-Haendewaschen_a6d4.pdf` und `Schulungen_d639.docx` enthalten
+  allgemein nutzbare Hygiene-/Schulungspunkte, die fuer Kosmetik angepasst
+  wurden.
+- `Lagerung-Leitfaden_258c.docx`, `Produktionshygiene_2ee3.docx`,
+  `Fliessdiagramm-GastroImbiss-Gefahren_c737.pdf` und
+  `Leitfaden-Vo-EG-852-2004-1_fb68.pdf` sind stark lebensmittel-/gastrobezogen
+  und sollten in Kosmetik-Vorlagen nur optional verwendet werden.
+
 ## Video-Unterweisung
 
 Fuer Kontur Cosmetics wurde ein oeffentlich erreichbarer Schulungsvideo-Pfad
