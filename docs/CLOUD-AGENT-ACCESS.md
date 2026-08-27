@@ -1,6 +1,6 @@
 # Cloud-Agent / Cursor Browser — Zugänge (DG CRM)
 
-Stand: 2026-08-23
+Stand: 2026-08-27
 
 > **Kein Passwort-SSH.** All-Inkl akzeptiert den Key `id_ed25519_ganzom`. Ein „veraltetes Passwort“ ist normal — der Browser-Agent braucht den **Private Key** als Cursor-Secret.
 
@@ -98,6 +98,8 @@ bash bin/sync-crm-from-master.sh    # Master → ganz-soft.de/ + kontur-cosmetic
 ```
 
 Erst Master per `scp`/`deploy.bat` auf **dg.ganz-om.de** hochladen, dann `sync-crm-from-master.sh`.
+
+**PHP 8.5:** Erst alle Domains im KAS auf 8.5 stellen, dann testen — [`docs/PHP85-TEST-HANDOFF.md`](PHP85-TEST-HANDOFF.md).
 
 ---
 

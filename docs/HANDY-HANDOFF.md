@@ -28,10 +28,11 @@ GitHub Secrets sind als Backup gesetzt (gleiche Namen), greifen aber **nicht** a
 
 ## Offene Themen
 
-1. Stripe Keys + Webhook (bewusst später)
-2. AGB/Widerruf juristisch
-3. DATEV EXTF / ShiftBase API
-4. Kontur-Adresse nach Restore prüfen
+1. **PHP 8.5:** Alle Domains im KAS auf 8.5 → **dann** testen. Details: [`docs/PHP85-TEST-HANDOFF.md`](PHP85-TEST-HANDOFF.md)
+2. Stripe Keys + Webhook (bewusst später)
+3. AGB/Widerruf juristisch
+4. DATEV EXTF / ShiftBase API
+5. Kontur-Adresse nach Restore prüfen
 
 ## Deploy (nach SSH-Setup)
 
