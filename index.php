@@ -2451,11 +2451,10 @@ switch ($path) {
                 }
                 $form['contact_id'] = (string) $prefillContactId;
                 $form['contact_label'] = $label;
-                if (trim((string) ($form['supplier_name'] ?? '')) === '' || trim((string) ($form['supplier_name'] ?? '')) !== $label) {
-                    $getLabel = trim((string) ($_GET['contact_label'] ?? ''));
-                    if ($getLabel === '' || strcasecmp(trim((string) ($form['supplier_name'] ?? '')), $getLabel) === 0) {
-                        $form['supplier_name'] = $label;
-                    }
+                $supplierName = trim((string) ($form['supplier_name'] ?? ''));
+                $getLabel = trim((string) ($_GET['contact_label'] ?? ''));
+                if ($supplierName === '' || ($getLabel !== '' && strcasecmp($supplierName, $getLabel) === 0)) {
+                    $form['supplier_name'] = $label;
                 }
             };
             $voucherId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
