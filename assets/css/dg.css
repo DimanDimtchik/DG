@@ -4009,21 +4009,33 @@ body.dg-login-page {
 }
 
 .dg-buchhaltung-belege__filters .dg-form-grid--compact {
-  grid-template-columns: repeat(6, minmax(120px, 1fr));
-  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px 16px;
 }
 
 .dg-buchhaltung-belege__filters .dg-period-filter {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 160px));
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px 16px;
-  align-items: end;
+}
+
+.dg-buchhaltung-belege__filters .dg-period-filter > .dg-field {
+  flex: 0 1 140px;
+  min-width: 120px;
+}
+
+.dg-buchhaltung-belege__filters .dg-form-grid--compact > .dg-field {
+  flex: 0 1 160px;
+  min-width: 140px;
 }
 
 .dg-buchhaltung-belege__filters .dg-field--wide {
-  grid-column: span 2;
+  flex: 1 1 280px;
+  min-width: 200px;
 }
 
 .dg-buchhaltung-belege__filters .dg-field--actions {
@@ -4035,13 +4047,15 @@ body.dg-login-page {
 }
 
 @media (max-width: 900px) {
-  .dg-buchhaltung-belege__filters .dg-form-grid--compact {
-    grid-template-columns: 1fr 1fr;
+  .dg-buchhaltung-belege__filters .dg-form-grid--compact > .dg-field,
+  .dg-buchhaltung-belege__filters .dg-period-filter > .dg-field {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   .dg-buchhaltung-belege__filters .dg-field--wide,
   .dg-buchhaltung-belege__filters .dg-field--actions {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
   }
 }
 
