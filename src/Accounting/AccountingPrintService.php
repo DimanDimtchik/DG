@@ -12,7 +12,7 @@ final class AccountingPrintService
     {
         $body = self::renderBody($template, $data);
 
-        $company = trim((string) (SettingsStore::get('company_name', '') ?? ''));
+        $company = CompanySettings::displayName();
         if ($company === '') {
             $company = 'DG CRM';
         }

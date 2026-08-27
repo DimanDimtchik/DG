@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Zahlungsstatus für Belege — Lexoffice-Parität (Weiterverarbeitung / OPOS / Banking).
+ * Zahlungsstatus für Belege — Weiterverarbeitung, OPOS und Banking.
  */
 final class VoucherPaymentStatus
 {

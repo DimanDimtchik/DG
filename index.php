@@ -2442,17 +2442,20 @@ switch ($path) {
                 if ($prefillContact === null) {
                     return;
                 }
-                $label = trim((string) ($_GET['contact_label'] ?? ''));
+                $label = trim($prefillContact->companyName);
                 if ($label === '') {
-                    $label = trim($prefillContact->companyName);
-                    if ($label === '') {
-                        $label = trim($prefillContact->displayName);
-                    }
+                    $label = trim($prefillContact->displayName);
+                }
+                if ($label === '') {
+                    $label = trim((string) ($_GET['contact_label'] ?? ''));
                 }
                 $form['contact_id'] = (string) $prefillContactId;
                 $form['contact_label'] = $label;
-                if (trim((string) ($form['supplier_name'] ?? '')) === '') {
-                    $form['supplier_name'] = $label;
+                if (trim((string) ($form['supplier_name'] ?? '')) === '' || trim((string) ($form['supplier_name'] ?? '')) !== $label) {
+                    $getLabel = trim((string) ($_GET['contact_label'] ?? ''));
+                    if ($getLabel === '' || strcasecmp(trim((string) ($form['supplier_name'] ?? '')), $getLabel) === 0) {
+                        $form['supplier_name'] = $label;
+                    }
                 }
             };
             $voucherId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -2502,11 +2505,16 @@ switch ($path) {
                     exit;
                 }
                 if (trim((string) ($_GET['download'] ?? '')) === 'print') {
-                    $html = VoucherDocumentPrintService::render($voucher);
-                    AccountingPrintService::send(
-                        VoucherDocumentPrintService::attachmentFilename($voucher),
-                        $html
-                    );
+                    try {
+                        $html = VoucherDocumentPrintService::render($voucher);
+                        AccountingPrintService::send(
+                            VoucherDocumentPrintService::attachmentFilename($voucher),
+                            $html
+                        );
+                    } catch (Throwable $printError) {
+                        Flash::set('error', 'Druckansicht konnte nicht erzeugt werden: ' . $printError->getMessage());
+                        header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+                    }
                     exit;
                 }
                 $isDraftVoucher = !empty($voucher['is_draft']);

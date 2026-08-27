@@ -297,6 +297,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/contact-company-links.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/kontakte-form.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/voucher-contact-bridge.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-konten') : ?>

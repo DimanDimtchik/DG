@@ -169,12 +169,14 @@ if ($isCompanyForm && $companyEmployees === []) {
       <label class="dg-field dg-field--wide"><span>Website</span><input name="website" value="<?= View::escape($form['website']) ?>"></label>
       <?php if (!$isEdit) : ?>
         <?php
-          $autoMailDefault = MailAddressSettings::config()['auto_on_contact_create'] ?? true;
+          $mailAddressConfig = MailAddressSettings::config();
+          $autoMailEnabled = !empty($mailAddressConfig['auto_on_contact_create']);
+          $autoMailDefault = $autoMailEnabled && CrmRole::hasEmployeeProfile($selectedRole);
           $kasConfiguredForForm = KasSettings::isConfigured();
         ?>
         <label class="dg-field dg-field--wide" data-auto-mailbox-row>
           <span>
-            <input type="checkbox" name="auto_create_mailbox" value="1"<?= $autoMailDefault ? ' checked' : '' ?>>
+            <input type="checkbox" name="auto_create_mailbox" value="1" id="contact_auto_create_mailbox" data-auto-enabled="<?= $autoMailEnabled ? '1' : '0' ?>"<?= $autoMailDefault ? ' checked' : '' ?>>
             E-Mail-Adresse / privates Postfach automatisch anlegen
           </span>
           <small class="dg-field-hint">Nur für Rolle Mitarbeiter oder Administrator. Formel unter Einstellungen → E-Mail. Geprüft werden E-Mail, E-Mail 2 und E-Mail (dienstlich) beim Arbeitgeber. Weicht eine Adresse ab oder ist bereits vergeben, wird keine neue Adresse angelegt.<?php if (!$kasConfiguredForForm) : ?> <strong>Hinweis:</strong> KAS-API (<code>config/kas.local.php</code>) ist nicht konfiguriert — ohne KAS wird kein Postfach bei All-Inkl erzeugt.<?php endif; ?></small>

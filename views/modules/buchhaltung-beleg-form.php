@@ -392,6 +392,19 @@ $paymentTermsPreview = PaymentTermsService::composeText(
             <?php endforeach; ?>
           </select>
           <small class="dg-field-hint" id="dg-voucher-payment-status-hint"><?= View::escape($paymentStatusHint) ?></small>
+          <?php
+            $partialPaidAmount = (float) str_replace(',', '.', $voucherTotalPaid);
+            $partialOpenAmount = (float) str_replace(',', '.', $voucherOpenAmount);
+          ?>
+          <?php if ($paymentStatus === VoucherPaymentStatus::PARTIAL && ($partialPaidAmount > 0 || $partialOpenAmount > 0)) : ?>
+            <p class="dg-field-hint dg-voucher-partial-summary">
+              Teilzahlung: <strong><?= View::escape($voucherTotalPaid) ?> €</strong>
+              · Offen: <strong><?= View::escape($voucherOpenAmount) ?> €</strong>
+              <?php if ($showPartialPaymentsUi && $voucherPayments === []) : ?>
+                · <a href="#dg-voucher-payments-section">Zahlungshistorie unten</a>
+              <?php endif; ?>
+            </p>
+          <?php endif; ?>
         </label>
       </div>
       <?php if ($isEdit && !$readOnly && $statusNextActions !== []) : ?>
@@ -1047,7 +1060,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       <div id="dg-voucher-rc-panels" class="dg-voucher-rc-panels"<?= $reverseCharge ? '' : ' hidden' ?>>
         <div class="dg-voucher-rc-panel">
           <h3 class="dg-voucher-rc-panel__title">Automatische Nebenbuchungen (§13b)</h3>
-          <p class="dg-field-hint">Wie in Lexoffice: Vorsteuer und Umsatzsteuer werden zusätzlich auf die Steuerkonten gebucht.</p>
+          <p class="dg-field-hint">Bei §13b werden Vorsteuer und Umsatzsteuer zusätzlich auf die Steuerkonten gebucht (Soll/Haben).</p>
           <div class="dg-table-wrap">
             <table class="dg-table dg-voucher-rc-postings__table">
               <thead>

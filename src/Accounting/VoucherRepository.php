@@ -290,6 +290,8 @@ final class VoucherRepository
         $enriched['system_lines'] = self::linesForVoucher($id, false, true);
         $enriched['items'] = self::itemsForVoucher($id);
         $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
+        VoucherPaymentRepository::migrateLegacyPaidAmount($id);
+        $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
         $enriched['total_paid'] = VoucherPaymentRepository::totalPaid($id);
         $enriched['open_amount'] = VoucherPaymentRepository::openAmount($enriched, $enriched['total_paid']);
 
@@ -690,9 +692,13 @@ final class VoucherRepository
         if ($discountPercent > 0 && $discountAmount <= 0.0 && $gross > 0) {
             $discountAmount = round($gross * $discountPercent / 100, 2);
         }
+        $formPaidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
         $paidAmount = $id > 0 ? VoucherPaymentRepository::totalPaid($id) : 0.0;
         $paidAt = trim((string) ($data['paid_at'] ?? ''));
         $recordSettlement = VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK;
+        if (!$recordSettlement && $paymentStatus === VoucherPaymentStatus::PARTIAL && $formPaidAmount > 0.0) {
+            $recordSettlement = true;
+        }
         $settlementAmount = 0.0;
         $settlementMethod = match (VoucherPaymentStatus::sanitize($paymentStatus)) {
             VoucherPaymentStatus::CASH, VoucherPaymentStatus::TIP => VoucherPaymentRepository::METHOD_CASH,
@@ -701,7 +707,10 @@ final class VoucherRepository
             default => VoucherPaymentRepository::METHOD_BANK,
         };
         if ($recordSettlement) {
-            $settlementAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+            $settlementAmount = $formPaidAmount;
+            if ($settlementAmount <= 0.0) {
+                $settlementAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+            }
             if ($settlementAmount <= 0.0) {
                 $settlementAmount = round(max(0, $gross - $discountAmount - $paidAmount), 2);
             }
