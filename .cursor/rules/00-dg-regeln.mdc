@@ -1,0 +1,19 @@
+---
+description: DG CRM — verbindliche Projektregeln (immer aktiv)
+alwaysApply: true
+---
+
+# DG CRM — immer gültig
+
+**Regeln:** `AGENTS.md` (Repo-Root)  
+**ToDos / Stand:** `docs/TODOS.md` — bei Session-Start lesen, nicht mit Regeln verwechseln
+
+## Kurzfassung (verbindlich)
+
+1. **Entwickeln** nur auf Master `dg.ganz-om.de` · **Updates** per `bin/sync-crm-from-master.sh` auf alle CRM-Instanzen
+2. **Gleicher Code** überall · **eigene DB** pro Instanz · **kein Sondercode** pro Domain · **nie** fremde Instanz-DB
+3. **Wartungsmodus:** ein `WebsiteMaintenanceRenderer` · Kontakt aus CRM (Wartung → Firma) · sonst „Öffentliche Kontaktdaten noch nicht gesetzt.“
+4. **Rolle:** Steuerrecht + Steuerberater-Praxis + Prüfbarkeit mitdenken
+5. **Nicht:** Account-Root mit `--delete` syncen · Stripe live · ELSTER auf Kasserver
+
+Details und Deploy-Ablauf: `AGENTS.md`

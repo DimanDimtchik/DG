@@ -2,7 +2,7 @@
 
 Weiterarbeit vom Handy / Cursor Browser.
 
-## Git
+**Regeln:** [`AGENTS.md`](../AGENTS.md) · **ToDos:** [`docs/TODOS.md`](TODOS.md)
 
 - Repo: https://github.com/DimanDimtchik/DG
 - Branch: **`master`** (aktuell, gepusht)
