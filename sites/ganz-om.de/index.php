@@ -71,7 +71,6 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
     <div class="wm-card">
       <h1>Die Seite befindet sich im Aufbau</h1>
       <p>Wir bereiten die Website vor. Bitte schauen Sie bald wieder vorbei.</p>
-      <p><a href="https://ganz-soft.de">ganz-soft.de</a></p>
     </div>
   </main>
 </body>
