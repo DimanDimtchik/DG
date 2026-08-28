@@ -11,7 +11,7 @@ Stand: **2026-08-28** · Server-Check per SSH
 | **Git (DG-Repo)** | **Nein** — nur CRM/Shop-Code, keine Nextcloud-Dateien |
 | **Server jetzt** | **Fast alles weg** — nur 14 Dateien (~7 MB) übrig |
 | **CRM-Datenbanken** | **Nein** — keine `oc_*`-Tabellen in d0477ae6, d046f637, d046f8ab, d047f810 |
-| **All-Inkl KAS-Backup** | **Beste Chance** — FTP (~2/4 Wochen) + MySQL (Vortag, 5–8, 9–12 Tage) |
+| **All-Inkl KAS-Backup** | **✅ Verfügbar** — Webspace **16.08.** (16 GB) + DB **d046bc58** (`nextcloud_om`) |
 
 **Wahrscheinliches Löschdatum:** Ordner `cloud.ganz-om.de` zuletzt geändert **2026-08-21 17:02** (passt zu „vor ein paar Tagen“).
 
@@ -39,42 +39,40 @@ cloud.ganz-om.de/
 
 ---
 
-## Schritt 1 — All-Inkl-Backup prüfen (Priorität 1)
+## Schritt 1 — KAS-Backup wiederherstellen (bestätigt 28.08.2026)
 
-Im **KAS** → **Tools** → **Datensicherung** / **Backup** (Bezeichnung je nach KAS-Version):
+### A) Webspace-Backup (Tools → Backups → Webspace-Backup)
 
-### A) FTP-/Webspace-Backup
+| Datum | Größe | Empfehlung |
+|-------|-------|------------|
+| **16.08.2026** | **16,061 GB** | **✅ DIESES** — letztes volles Backup vor Löschung (~21.08.) |
+| 09.08.2026 | 16,061 GB | Alternative |
+| 02.08.2026 | 16,180 GB | Fallback |
+| 22.–28.08.2026 | ~0,27 GB | **❌ Nicht** — bereits ohne Cloud-Daten |
 
-All-Inkl legt ca. **alle 14 Tage** Sicherungen an (typisch **2 Stück**: ~2 Wochen + ~4 Wochen alt).
+**Vorgehen:**
 
-**Wiederherstellen:**
+1. Wiederherstellungs-Icon bei **16.08.2026** klicken.
+2. Wenn möglich: **nur `cloud.ganz-om.de`** — sonst in **Unterordner** legen (CRM nicht überschreiben!).
+3. Prüfen: `status.php`, `config/config.php`, große `data/`.
+4. Gezielt nach `/www/htdocs/w0217246/cloud.ganz-om.de/` kopieren.
 
-1. Backup **vor dem 21.08.2026** wählen (je älter, desto vollständiger — aber vor dem Löschtag).
-2. Nur Ordner **`cloud.ganz-om.de`** (oder gesamten Account, vorsichtig) wiederherstellen.
-3. Wiederhergestellte Dateien oft unter separatem Pfad (z. B. `_ProviderRestore` o. ä. — KAS-Hinweis beachten).
-4. **Nicht** blind überschreiben — erst in Unterordner entpacken, prüfen, dann gezielt zurückkopieren.
+### B) Datenbank-Backup (Tools → Backups → Datenbank-Backup)
 
-**Erwartung bei Erfolg:** Ordner mit `status.php`, `config/config.php`, `data/` (groß), ggf. `apps/`.
+| KAS-Eintrag | DB-ID | Aktion |
+|-------------|-------|--------|
+| **cloud.ganz-om.de: nextcloud_om** | **d046bc58** | **✅ Wiederherstellen** (Backup vor 21.08.) |
+| ganz-om.de: wordpress_om | d046bc57 | Nur für WP — später durch CRM ersetzt |
 
-### B) MySQL-Backup
+1. Zeile **nextcloud_om** → Wiederherstellen.
+2. Passendes Backup-Datum wählen (10 Versionen verfügbar).
+3. Tabellen `oc_*` in **d046bc58** prüfen.
 
-Separate Snapshots: **Vortag**, **5–8 Tage**, **9–12 Tage**.
+**Ohne DB + `data/` zusammen** funktioniert Nextcloud nicht; **Passwörter-App** braucht den **Master-Passwort-Schlüssel** der App.
 
-1. KAS → **MySQL** → alle Datenbanken anzeigen.
-2. Nach DB suchen, die **nicht** CRM ist (nicht d0477ae6, d046f637, d046f8ab, d047f810).
-3. Typisch: eigener Name `d04xxxxxx` mit Tabellen **`oc_*`** (Nextcloud-Prefix).
-4. Falls DB **noch existiert**, aber leer: Backup aus KAS importieren.
-5. Falls DB **gelöscht**: MySQL-Backup aus KAS wiederherstellen oder All-Inkl-Support anfragen.
+### C) All-Inkl-Support (nur bei Problemen)
 
-**Ohne DB + `data/` zusammen** funktioniert Nextcloud nicht; **Passwörter-App** braucht zusätzlich den **Master-Passwort-Schlüssel** der App.
-
-### C) All-Inkl-Support
-
-Falls im KAS nichts Passendes sichtbar:
-
-- support@all-inkl.com · +49 35872 353-41  
-- Account: **w0217246**  
-- Bitte: Wiederherstellung **`cloud.ganz-om.de`** vom **FTP-Backup vor 2026-08-21** + zugehörige **MySQL-DB** mit `oc_*`-Tabellen.
+- support@all-inkl.com · +49 35872 353-41 · Account **w0217246**
 
 ---
 
@@ -120,11 +118,13 @@ Frische Installation **ohne** Backup hilft **nicht** bei Passwörter-Wiederherst
 
 ## Checkliste für nächste Session
 
-- [ ] KAS Datensicherung: FTP-Backup `cloud.ganz-om.de` vor 21.08. finden
-- [ ] KAS MySQL: alle DBs listen, `oc_*`-DB identifizieren / wiederherstellen
-- [ ] PC/Handy auf lokale Nextcloud-Sync prüfen
-- [ ] Bei Erfolg: Nextcloud testen, dann ganz-om.de → CRM planen
-- [ ] Bei Misserfolg: Support All-Inkl + externe Backups
+- [ ] **Webspace-Backup 16.08.2026** (16 GB) wiederherstellen — **nicht** die ~0,27 GB vom 22.08.+
+- [ ] **DB d046bc58** (`nextcloud_om`) aus KAS-Datenbank-Backup wiederherstellen
+- [ ] Restore in Testordner, dann `cloud.ganz-om.de` prüfen (`status.php`, große `data/`)
+- [ ] Passwörter-App mit Master-Passwort testen
+- [ ] PC/Handy auf lokale Nextcloud-Sync prüfen (zusätzlich)
+- [ ] Bei Erfolg: PHP 8.5 + Nextcloud-Version prüfen
+- [ ] ganz-om.de → CRM planen (WP-DB **d046bc57** separat, nicht mit Cloud verwechseln)
 
 ---
 
