@@ -20,7 +20,7 @@ Auf KAS können Cronjobs nur manuell eingetragen werden. Das CRM nutzt deshalb *
 | Mitarbeiter-Purge (10 J.) | `EmployeeRetentionService::runOnCrmAccess()` | CRM `/app`, nur **1.–14. Januar**, 1× pro Sitzung |
 | **Mahnversand auto** | `DunningService::runIfDue()` | Erster Request pro Tag, wenn in Einstellungen aktiv |
 | **Zeiterfassung offener Tag** | `TimeClockService::runIfDue()` | Erster Request pro Tag — schließt Vortag ohne Ausstempeln + Tagesaggregation |
-| **Überstunden-Erinnerung** | `OvertimeReminderService::runIfDue()` | Erster Request pro Tag — 5-Monats-Hinweis vor 6-Monats-Frist |
+| **Überstunden-Erinnerung** | `OvertimeReminderService::runIfDue()` | Am **1. des Monats** — ArbZG Ø > 48 h/Woche in 6 Kalendermonaten |
 
 ## Optional: HTTP-Cron (`cron.php`)
 

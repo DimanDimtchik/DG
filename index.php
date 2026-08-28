@@ -40,6 +40,9 @@ switch ($path) {
             header('Location: ' . ($u ? RoleResolver::homePath($u) : '/app'), true, 302);
             exit;
         }
+        if (!Database::isConfigured()) {
+            WebsiteMaintenanceSettings::renderPlaceholderMaintenance();
+        }
         // Show published homepage if available, otherwise redirect to login
         if (Database::isConfigured()) {
             if (WebsiteMaintenanceSettings::isActive()) {
@@ -4022,6 +4025,15 @@ switch ($path) {
     default:
         // Public website pages: try to match slug
         $slug = ltrim($path, '/');
+
+        if (
+            !Database::isConfigured()
+            && !AuthService::check()
+            && strcasecmp($slug, 'login') !== 0
+            && !str_starts_with($slug, 'assets/')
+        ) {
+            WebsiteMaintenanceSettings::renderPlaceholderMaintenance();
+        }
 
         if (
             Database::isConfigured()

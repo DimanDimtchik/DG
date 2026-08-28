@@ -66,6 +66,8 @@ echo "version: $VER"
 # Live ganz-soft.de: Domain zeigt auf /ganz-soft.de/ (KAS Webspace, nicht Account-Root).
 sync_to "$ROOT/ganz-soft.de" "ganz-soft.de (Live)" yes
 sync_to "$ROOT/kontur-cosmetics.de" "kontur-cosmetics.de" yes
+# ganz-om.de: gleicher CRM-Code wie Live-Instanzen, ohne DB bis CRM-Install.
+sync_to "$ROOT/ganz-om.de" "ganz-om.de (Platzhalter)" yes
 
 # Cleanup accidental top-level copies from bad scp
 rm -rf "$ROOT/Install" "$ROOT/Website" 2>/dev/null || true

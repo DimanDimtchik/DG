@@ -39,6 +39,12 @@ final class App
         $_SESSION['dg_last_activity'] = time();
 
         SecurityHeaders::send();
+
+        // Instanz ohne DB (Platzhalter): nur öffentliche Wartungsseite — kein CRM/Lizenz-Stack.
+        if (!Database::isConfigured()) {
+            return;
+        }
+
         Firewall::inspect();
         LicenseGuard::verify();
 

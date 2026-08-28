@@ -96,6 +96,11 @@ $imgSrc = View::escape(Asset::url($imageUrl));
       margin-bottom: 0.35rem;
       font-size: 0.95rem;
     }
+    .wm-card .wm-label--unset {
+      color: var(--wm-muted);
+      font-style: italic;
+      font-weight: 400;
+    }
     .wm-card a {
       color: var(--wm-accent);
       font-weight: 600;
@@ -143,6 +148,8 @@ $imgSrc = View::escape(Asset::url($imageUrl));
       <?php if ($email !== '') : ?>
         <p class="wm-label">Fragen? Schreiben Sie uns:</p>
         <p><a href="mailto:<?= View::escape($email) ?>"><?= View::escape($email) ?></a></p>
+      <?php else : ?>
+        <p class="wm-label wm-label--unset"><?= View::escape(WebsiteMaintenanceSettings::NO_PUBLIC_CONTACT_MESSAGE) ?></p>
       <?php endif; ?>
     </div>
   </main>
