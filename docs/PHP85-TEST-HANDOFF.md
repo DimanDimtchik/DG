@@ -12,6 +12,9 @@ Stand: **2026-08-27** · Für die nächste Session (nach Feierabend-Umstellung i
 | **ganz-soft.de** (Live) | `/www/htdocs/w0217246/ganz-soft.de` | 8.4 → Nutzer stellt auf **8.5** um | 8.5 |
 | **dg.ganz-om.de** (Master) | `/www/htdocs/w0217246/dg.ganz-om.de` | 8.4 → Nutzer stellt auf **8.5** um | 8.5 |
 | **shop.ganz-soft.de** | `/www/htdocs/w0217246/shop.ganz-soft.de` | 8.4 → Nutzer stellt auf **8.5** um | 8.5 |
+| **ganz-om.de** | `/www/htdocs/w0217246/ganz-om.de` | 8.5 | 8.5 (Platzhalter, kein WordPress-Core) |
+
+**Hinweis ganz-om.de (28.08.):** Ordner hatte nur `wp-content/`, kein `index.php` → Apache 403. Platzhalter `sites/ganz-om.de/index.php` auf Server deployen. WordPress-Core fehlt — Marketing-Site später separat wiederherstellen.
 
 **Wichtig:** KAS-Umstellung erfolgt **pro Domain** (Domain bearbeiten → PHP-Version).
 
