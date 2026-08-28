@@ -686,6 +686,7 @@ code {
 }
 
 .dg-field { display: flex; flex-direction: column; gap: 6px; }
+.dg-field[hidden] { display: none !important; }
 .dg-field--wide { grid-column: 1 / -1; }
 .dg-field span { font-size: 12px; font-weight: 600; color: var(--dg-text); }
 .dg-field input,
