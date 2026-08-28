@@ -3798,7 +3798,7 @@ switch ($path) {
         $timeClockEmployeeLabel = $timeClockEmployeeLabel ?? '';
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
-        $overtimeReminders = $overtimeReminders ?? ['due' => [], 'overdue' => []];
+        $overtimeReminders = $overtimeReminders ?? ['violations' => []];
         $websiteFormList = $websiteFormList ?? [];
         $websiteFormId = $websiteFormId ?? null;
         $websiteForm = $websiteForm ?? null;

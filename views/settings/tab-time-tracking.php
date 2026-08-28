@@ -63,18 +63,17 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
   </section>
 
   <section class="dg-form-section">
-    <h3 class="dg-subsection-title">Überstunden (betriebliche Regelung)</h3>
+    <h3 class="dg-subsection-title">ArbZG-Ausgleich (§3 / WD 6/097/19)</h3>
     <p class="dg-field-hint">
-      Ausgleichsfrist für den Abbau (Standard: 6 Monate). Nicht abgebaute Stunden <strong>bleiben im Zeitkonto</strong>
-      und werden nicht gelöscht — auch nach Fristüberschreitung.
-      Erinnerung an Personal + Abteilungsleiter (Fallback: Geschäftsführung, dann Admin).
-      Mitarbeiter erhalten eine separate E-Mail nur mit den eigenen Daten.
+      Nach <strong>6 Kalendermonaten</strong> wird geprüft, ob der wöchtentliche Durchschnitt über
+      <strong>48 Stunden</strong> liegt. Am <strong>1. des Folgemonats</strong> geht eine Erinnerung per E-Mail an
+      Personal + Abteilungsleiter (Fallback: Geschäftsführung, dann Admin) sowie an den betroffenen Mitarbeiter.
     </p>
 
     <label class="dg-field dg-field--checkbox">
       <span>
         <input type="checkbox" name="overtime_reminder_enabled" value="1"<?= !empty($settings['overtime_reminder_enabled']) ? ' checked' : '' ?>>
-        Erinnerung an ausstehenden Überstunden-Abbau aktivieren
+        ArbZG-Erinnerung aktivieren
       </span>
     </label>
 
@@ -87,12 +86,12 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
 
     <div class="dg-form-grid">
       <label class="dg-field">
-        <span>Abbau-Frist (Monate ab Entstehung)</span>
-        <input type="number" name="overtime_compensation_months" min="2" max="24" value="<?= (int) ($settings['overtime_compensation_months'] ?? 6) ?>">
+        <span>Ausgleichszeitraum (Kalendermonate)</span>
+        <input type="number" name="overtime_compensation_months" min="1" max="24" value="<?= (int) ($settings['overtime_compensation_months'] ?? 6) ?>">
       </label>
       <label class="dg-field">
-        <span>Erinnerung nach (Monate ab Entstehung)</span>
-        <input type="number" name="overtime_reminder_after_months" min="1" max="23" value="<?= (int) ($settings['overtime_reminder_after_months'] ?? 5) ?>">
+        <span>Max. Wochendurchschnitt (Stunden, Standard 48)</span>
+        <input type="number" name="arbzg_max_weekly_hours" min="1" max="168" value="<?= (int) ($settings['arbzg_max_weekly_hours'] ?? 48) ?>">
       </label>
     </div>
   </section>

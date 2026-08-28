@@ -1,16 +1,11 @@
 <?php
 /**
  * @var list<array<string, mixed>> $timeClockTeam
- * @var array{due: list<array<string, mixed>>, overdue: list<array<string, mixed>>}|list<array<string, mixed>> $overtimeReminders
+ * @var array{violations: list<array<string, mixed>>} $overtimeReminders
  * @var array{type: string, message: string}|null $flash
  */
 $team = $timeClockTeam ?? [];
-$reminderData = $overtimeReminders ?? ['due' => [], 'overdue' => []];
-if (array_is_list($reminderData)) {
-    $reminderData = ['due' => $reminderData, 'overdue' => []];
-}
-$dueReminders = $reminderData['due'] ?? [];
-$overdueReminders = $reminderData['overdue'] ?? [];
+$violations = $overtimeReminders['violations'] ?? [];
 ?>
 <div class="dg-wrap dg-zeiterfassung-team">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -25,24 +20,18 @@ $overdueReminders = $reminderData['overdue'] ?? [];
     </div>
   </header>
 
-  <?php if ($dueReminders !== []) : ?>
+  <?php if ($violations !== []) : ?>
     <section class="dg-panel dg-panel--warning">
-      <h2 class="dg-subsection-title">Überstunden-Abbau fällig</h2>
+      <h2 class="dg-subsection-title">ArbZG: Wochendurchschnitt über 48 h (6 Monate)</h2>
+      <p class="dg-field-hint">Prüfung nach §3 ArbZG / Bundestag-WD 6/097/19 — Erinnerung per E-Mail am 1. des Monats nach abgeschlossenem 6-Monats-Zeitraum.</p>
       <ul class="dg-list">
-        <?php foreach ($dueReminders as $reminder) : ?>
-          <li><?= View::escape((string) ($reminder['message'] ?? '')) ?></li>
-        <?php endforeach; ?>
-      </ul>
-    </section>
-  <?php endif; ?>
-
-  <?php if ($overdueReminders !== []) : ?>
-    <section class="dg-panel">
-      <h2 class="dg-subsection-title">Überstunden über Frist (bleiben im Konto)</h2>
-      <p class="dg-field-hint">Nicht abgebaute Stunden werden nicht gelöscht — sie müssen weiter eingeplant werden.</p>
-      <ul class="dg-list">
-        <?php foreach ($overdueReminders as $reminder) : ?>
-          <li><?= View::escape((string) ($reminder['message'] ?? '')) ?></li>
+        <?php foreach ($violations as $violation) : ?>
+          <li>
+            <?= View::escape((string) ($violation['message'] ?? '')) ?>
+            <?php if (!empty($violation['avg_weekly_display'])) : ?>
+              <span class="dg-muted">(Ø <?= View::escape((string) $violation['avg_weekly_display']) ?> h/Woche)</span>
+            <?php endif; ?>
+          </li>
         <?php endforeach; ?>
       </ul>
     </section>

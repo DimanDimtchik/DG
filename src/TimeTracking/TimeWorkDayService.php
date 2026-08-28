@@ -59,26 +59,6 @@ final class TimeWorkDayService
             'status' => 'closed',
         ]);
 
-        if ($overtimeMinutes > 0) {
-            $cfg = TimeTrackingSettings::config();
-            $compensationMonths = max(1, (int) ($cfg['overtime_compensation_months'] ?? 6));
-            $reminderAfterMonths = max(1, (int) ($cfg['overtime_reminder_after_months'] ?? 5));
-            if ($reminderAfterMonths >= $compensationMonths) {
-                $reminderAfterMonths = max(1, $compensationMonths - 1);
-            }
-
-            $expiresAt = OvertimeDateRules::addMonths($workDate, $compensationMonths);
-            $reminderDueAt = OvertimeDateRules::addMonths($workDate, $reminderAfterMonths);
-
-            OvertimeLotRepository::upsertLot(
-                $contactId,
-                $workDate,
-                $overtimeMinutes,
-                $expiresAt,
-                $reminderDueAt,
-            );
-        }
-
         return true;
     }
 

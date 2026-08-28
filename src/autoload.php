@@ -183,6 +183,8 @@ spl_autoload_register(static function (string $class): void {
         'TimeWorkDayService' => '/src/TimeTracking/TimeWorkDayService.php',
         'OvertimeLotRepository' => '/src/TimeTracking/OvertimeLotRepository.php',
         'OvertimeDateRules' => '/src/TimeTracking/OvertimeDateRules.php',
+        'ArbzgComplianceService' => '/src/TimeTracking/ArbzgComplianceService.php',
+        'ArbzgReminderRepository' => '/src/TimeTracking/ArbzgReminderRepository.php',
         'OvertimeReminderService' => '/src/TimeTracking/OvertimeReminderService.php',
         'OvertimeNotificationRecipients' => '/src/TimeTracking/OvertimeNotificationRecipients.php',
         'BwaReportService' => '/src/Accounting/BwaReportService.php',

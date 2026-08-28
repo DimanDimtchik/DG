@@ -62,4 +62,29 @@ final class TimeWorkDayRepository
 
         return is_array($row) ? $row : null;
     }
+
+    public static function sumWorkedMinutes(int $contactId, string $periodFrom, string $periodTo): int
+    {
+        if (!Database::isConfigured() || $contactId < 1) {
+            return 0;
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $periodFrom)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $periodTo)) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(worked_minutes), 0) FROM dg_time_work_days
+             WHERE contact_id = :contact_id
+               AND work_date >= :period_from AND work_date <= :period_to'
+        );
+        $stmt->execute([
+            'contact_id' => $contactId,
+            'period_from' => $periodFrom,
+            'period_to' => $periodTo,
+        ]);
+
+        return max(0, (int) $stmt->fetchColumn());
+    }
 }
