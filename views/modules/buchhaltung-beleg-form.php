@@ -26,6 +26,10 @@ $selectedDocumentKind = VoucherDocumentKind::sanitize((string) ($form['document_
 if ($selectedType === 'income' && $selectedDocumentKind === '') {
     $selectedDocumentKind = VoucherDocumentKind::defaultForIncome();
 }
+// Vorauswahl für Select (auch bei Ausgaben), damit JS beim Wechsel auf Einnahmen sofort Status-Optionen hat.
+$documentKindSelectValue = $selectedDocumentKind !== ''
+    ? $selectedDocumentKind
+    : VoucherDocumentKind::defaultForIncome();
 $documentKindOptions = VoucherDocumentKind::options();
 /** @var list<array<string, mixed>> $lineRows */
 $lineRows = is_array($form['lines'] ?? null) ? $form['lines'] : [];
@@ -117,12 +121,13 @@ $chainSummary = is_array($chainSummary ?? null) ? $chainSummary : null;
 $showDocumentKindField = $selectedType === 'income';
 $documentKindReadOnly = $readOnly || $isEdit;
 $selectedDocumentStatus = VoucherDocumentStatus::sanitize((string) ($form['document_status'] ?? ''));
-if ($showDocumentKindField && $selectedDocumentKind !== '' && $selectedDocumentStatus === '') {
-    $selectedDocumentStatus = VoucherDocumentStatus::defaultForKind($selectedDocumentKind);
+$documentStatusKind = $showDocumentKindField && $selectedDocumentKind !== ''
+    ? $selectedDocumentKind
+    : $documentKindSelectValue;
+if ($showDocumentKindField && $selectedDocumentStatus === '') {
+    $selectedDocumentStatus = VoucherDocumentStatus::defaultForKind($documentStatusKind);
 }
-$documentStatusOptionsForKind = $selectedDocumentKind !== ''
-    ? VoucherDocumentStatus::allowedForKind($selectedDocumentKind)
-    : [];
+$documentStatusOptionsForKind = VoucherDocumentStatus::allowedForKind($documentStatusKind);
 $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
     ? VoucherDocumentStatus::nextStatuses($selectedDocumentStatus, $selectedDocumentKind)
     : [];
@@ -327,7 +332,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <?php else : ?>
             <select name="document_kind" id="dg-voucher-document-kind"<?= $readOnly ? ' disabled' : '' ?>>
               <?php foreach ($documentKindOptions as $value => $label) : ?>
-                <option value="<?= View::escape($value) ?>"<?= $selectedDocumentKind === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+                <option value="<?= View::escape($value) ?>"<?= $documentKindSelectValue === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
               <?php endforeach; ?>
             </select>
             <small class="dg-field-hint">Steuert Nummernkreis und ob der Beleg gebucht wird (Angebot/AB/Lieferschein = ohne Buchung).</small>

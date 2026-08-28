@@ -120,11 +120,26 @@
     return t === 'income' || t === 'expense' || t === 'expense_reduction';
   }
 
+  function ensureDocumentKindForIncome() {
+    if (!documentKindSelect || documentKindSelect.tagName !== 'SELECT') {
+      return;
+    }
+    if (getVoucherType() !== 'income') {
+      return;
+    }
+    var kind = getDocumentKind();
+    var byKind = config.documentStatusByKind || {};
+    if (!kind || !byKind[kind] || byKind[kind].length === 0) {
+      documentKindSelect.value = 'invoice';
+    }
+  }
+
   function syncDocumentKindField() {
     if (!documentKindField) {
       return;
     }
     documentKindField.hidden = getVoucherType() !== 'income';
+    ensureDocumentKindForIncome();
     syncDocumentStatusField();
     syncDocumentPositionTextsField();
     syncPaymentTermsSection();
@@ -412,12 +427,20 @@
       return;
     }
     var isIncome = getVoucherType() === 'income';
+    if (!isIncome) {
+      documentStatusField.hidden = true;
+      return;
+    }
+    ensureDocumentKindForIncome();
     var kind = getDocumentKind();
     var byKind = config.documentStatusByKind || {};
     var labels = config.documentStatusLabels || {};
     var allowed = kind && byKind[kind] ? byKind[kind] : [];
-    documentStatusField.hidden = !isIncome || allowed.length === 0;
-    if (!isIncome || allowed.length === 0 || documentStatusSelect.tagName !== 'SELECT') {
+    if (allowed.length === 0 && byKind.invoice) {
+      allowed = byKind.invoice;
+    }
+    documentStatusField.hidden = allowed.length === 0;
+    if (allowed.length === 0 || documentStatusSelect.tagName !== 'SELECT') {
       return;
     }
     var current = documentStatusSelect.value;
