@@ -16,7 +16,20 @@ Stand: **2026-08-28** · **Restore abgeschlossen** ✅
 | Daten | **~11 GB** · 2008 Dateien · `files:scan` ohne Fehler |
 | PHP 8.5 | ✅ `php85 occ status` OK |
 
-**Noch manuell durch Nutzer:** Login testen + Passwörter-App mit **Master-Passwort** öffnen.
+**Noch manuell durch Nutzer:** Mit **`info@ganz-om.de`** anmelden (nicht GMX!) + Passwörter-App mit **Master-Passwort** entsperren.
+
+### Passwörter-DB (28.08. geprüft)
+
+| Tabelle | Inhalt |
+|---------|--------|
+| `oc_passwords_password` | **18** Einträge, User **`info@ganz-om.de`** |
+| `oc_passwords_password_rv` | **21** Revisionen (SSEv1r2 verschlüsselt) |
+| `oc_passwords_folder` | **23** Ordner |
+| `dietrichganz@gmx.de` | **0** Passwörter |
+
+**Ursache leere Anzeige:** Anmeldung als `dietrichganz@gmx.de` — Passwörter hängen am Konto **`info@ganz-om.de`**.
+
+**Zusätzlich behoben:** Defekte App `worktime` (fehlendes vendor/) blockierte Passwords-API → nach `apps/worktime.disabled` verschoben.
 
 ---
 
