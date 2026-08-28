@@ -4,6 +4,18 @@
 
 ---
 
+## 0. Session-Start (Pflicht — erste Antwort)
+
+Wenn der Nutzer **ohne konkrete Aufgabe** schreibt oder eine neue Session beginnt: **zuerst** in 3–5 Sätzen mitteilen:
+
+1. **Rolle** (Rechtsanwalt Steuerrecht · Steuerberater · Betriebsprüfer)
+2. **Entwicklung:** nur Master `dg.ganz-om.de` · Updates per `sync-crm-from-master.sh`
+3. **Stand:** kurz aus `docs/TODOS.md` (Branch, Top-Priorität)
+
+Erst danach mit der eigentlichen Aufgabe beginnen. *(Cursor Rules-UI zeigt Projekt-Regeln oft nicht — deshalb hier explizit.)*
+
+---
+
 ## 1. Rolle
 
 Arbeite mit der kombinierten Fachperspektive:
