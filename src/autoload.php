@@ -207,6 +207,7 @@ spl_autoload_register(static function (string $class): void {
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
         'WebsiteMaintenanceSettings' => '/src/Website/WebsiteMaintenanceSettings.php',
         'WebsiteMaintenanceRenderer' => '/src/Website/WebsiteMaintenanceRenderer.php',
+        'SitePlaceholderMaintenance' => '/src/Website/SitePlaceholderMaintenance.php',
         'SupportAccessService' => '/src/Support/SupportAccessService.php',
         'SupportHubClient' => '/src/Support/SupportHubClient.php',
         'SupportSession' => '/src/Support/SupportSession.php',
