@@ -74,5 +74,5 @@ rm -rf "$ROOT/Install" "$ROOT/Website" 2>/dev/null || true
 
 echo
 echo "=== Post-sync MD5 check (index.php) ==="
-md5sum "$MASTER/index.php" "$ROOT/ganz-soft.de/index.php" "$ROOT/kontur-cosmetics.de/index.php"
+md5sum "$MASTER/index.php" "$ROOT/ganz-soft.de/index.php" "$ROOT/kontur-cosmetics.de/index.php" "$ROOT/ganz-om.de/index.php"
 echo DONE

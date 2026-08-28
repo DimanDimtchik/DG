@@ -92,7 +92,7 @@ Deploy vom Agent nach SSH-Setup:
 
 ```bash
 bash bin/cloud-agent-ssh-setup.sh   # muss SSH_OK ausgeben
-bash bin/sync-crm-from-master.sh    # Master → ganz-soft.de/ + kontur-cosmetics.de
+bash bin/sync-crm-from-master.sh    # Master → ganz-soft.de + kontur-cosmetics.de + ganz-om.de
 # Shop: Dateien nach shop.ganz-soft.de/ (eigenes Projekt, nicht im CRM-Sync)
 # Wartungsmodus: https://shop.ganz-soft.de/admin/login (Passwort in config/admin.local.php auf Server)
 ```
