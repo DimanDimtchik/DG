@@ -184,6 +184,7 @@ spl_autoload_register(static function (string $class): void {
         'OvertimeLotRepository' => '/src/TimeTracking/OvertimeLotRepository.php',
         'OvertimeDateRules' => '/src/TimeTracking/OvertimeDateRules.php',
         'OvertimeReminderService' => '/src/TimeTracking/OvertimeReminderService.php',
+        'OvertimeNotificationRecipients' => '/src/TimeTracking/OvertimeNotificationRecipients.php',
         'BwaReportService' => '/src/Accounting/BwaReportService.php',
         'SusaReportService' => '/src/Accounting/SusaReportService.php',
         'Mt940Importer' => '/src/Accounting/Mt940Importer.php',

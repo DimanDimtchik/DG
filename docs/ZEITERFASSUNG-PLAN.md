@@ -22,7 +22,7 @@ Mitarbeiter können sich anmelden und unter **Zeiterfassung** ein-/ausstempeln. 
 | **ArbZG §7 — Nacht-/Sonntags-/Feiertagsarbeit** | Besondere Regeln, ggf. Zuschläge, Freizeitausgleich | Zuschläge später (Phase 6) |
 | **Pausen (§4 ArbZG)** | Mind. **30 min** ab 6 h, **45 min** ab 9 h (Block ≥15 min) | ✅ Auto-Pause + Zwangspause |
 | **Geringfügig beschäftigt (Minijob)** | Flag am Mitarbeiter → **kein Überstunden-Zeitkonto**, Warnung bei Stempel über Soll | ✅ |
-| **Überstunden (betrieblich)** | Nur wenn `overtime_allowed = 1`; **Abbau innerhalb 6 Monate**; **Erinnerung nach 5 Monaten** | ✅ Lots + Team-Hinweis + E-Mail |
+| **Überstunden (betrieblich + ArbZG)** | Vertragliches Soll/Ist; gesetzlich: Ausgleich >8 h/Tag innerhalb 6 Mon./24 Wo., Ø 48 h/Woche | ✅ Erinnerung · ArbZG-Prüfung Phase 2 |
 | **TzBfG** | Teilzeit ohne Benachteiligung; keine verdeckten Vollzeit-Anforderungen | Stammdaten / Soll-Zeiten |
 | **BUrlG — Urlaub** | Anspruch, Rest, Genehmigung, Rückstellungen | Phase 4 |
 | **EFZG — Entgeltfortzahlung** | Krankheit, AU-Fristen | Phase 4 (Attest-Verknüpfung vorbereitet) |
@@ -33,12 +33,24 @@ Mitarbeiter können sich anmelden und unter **Zeiterfassung** ein-/ausstempeln. 
 ### Betriebliche Überstunden-Regelung (implementiert)
 
 - Überstunden werden **nur** für Mitarbeiter mit `overtime_allowed` und **nicht** Minijob als **Tages-Lots** gebucht (nach Tages-Aggregation).
-- **Abbau-Frist:** standardmäßig **6 Monate** ab Entstehungsdatum (einstellbar).
-- **Erinnerung:** ab **5 Monate** nach Entstehung — Anzeige in **Team heute** und optional **E-Mail** an Admin (Einstellungen → Termine → Benachrichtigungen).
+- **Ausgleichsfrist:** standardmäßig **6 Monate** ab Entstehungsdatum (einstellbar) — **kein automatisches Löschen** bei Fristablauf.
+- **Erinnerung:** ab **5 Monate** — Teamübersicht + E-Mail an **Personal + Abteilungsleiter** (Fallback: Geschäftsführung → Admin) sowie **separate Mitarbeiter-Mail**.
 - Beispiel-Text: *„Max Mustermann hat noch 2:30 Überstunden, die bis Juli 2026 (spätestens 15.07.2026) abgebaut werden sollen.“*
-- Autostart: Tagesaggregation nach Autoclose (`TimeWorkDayService`) · Erinnerungsjob (`OvertimeReminderService::runIfDue()`).
 
-> **Hinweis:** Die 6-Monats-Frist ist eine **betriebliche Vereinbarung** (Arbeitsvertrag / Betriebsvereinbarung), nicht unmittelbar ArbZG. Gesetzlich relevant bleiben trotzdem Höchstarbeitszeit, Ruhezeiten und die **Aufzeichnungspflicht** nach §3 ArbZG.
+### Gesetzliche Einordnung: 6 Monate / 48 Stunden (ArbZG §3)
+
+**Ja — es gibt eine gesetzliche 6-Monats-Regel**, aber sie betrifft **nicht** vertragliche „Überstunden“ über das vereinbarte Soll hinaus, sondern die **Arbeitszeitverlängerung über 8 Stunden werktäglich** (bis max. 10 h):
+
+| Begriff | Bedeutung |
+|---------|-----------|
+| **8 h/Tag** | Reguläre werktägliche Höchstarbeitszeit (§3 Satz 1 ArbZG) |
+| **10 h/Tag** | Zulässige Verlängerung, wenn im **Ausgleichszeitraum** (6 Kalendermonate oder 24 Wochen) im Durchschnitt wieder **8 h werktäglich** erreicht werden |
+| **48 h/Woche** | **Kein separater Schwellenwert**, sondern abgeleitetes Mittel aus 8 h × 6 Werktage — durchschnittliche Wochenobergrenze im Ausgleichszeitraum |
+| **Ausgleich** | Mehrarbeit über 8 h/Tag muss durch **kürzere Tage** im Ausgleichszeitraum ausgeglichen werden — **nicht zwingend Konto = 0**, maßgeblich ist der **Durchschnitt** |
+
+**Aktueller CRM-Stand:** Die Erinnerung bezieht sich auf **vertragliches Soll/Ist** (Tagesüberstunden laut Arbeitszeitmodell). Eine separate **ArbZG-Ausgleichsprüfung** (>8 h/Tag, 48 h-Wochendurchschnitt) ist für **Phase 2** vorgesehen.
+
+> Tarifvertrag, Betriebsvereinbarung oder Arbeitsvertrag können **zusätzliche** Abbaufristen für vertragliche Überstunden festlegen — unabhängig vom ArbZG-Ausgleich.
 
 ---
 

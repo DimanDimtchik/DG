@@ -1,11 +1,16 @@
 <?php
 /**
  * @var list<array<string, mixed>> $timeClockTeam
- * @var list<array<string, mixed>> $overtimeReminders
+ * @var array{due: list<array<string, mixed>>, overdue: list<array<string, mixed>>}|list<array<string, mixed>> $overtimeReminders
  * @var array{type: string, message: string}|null $flash
  */
 $team = $timeClockTeam ?? [];
-$reminders = $overtimeReminders ?? [];
+$reminderData = $overtimeReminders ?? ['due' => [], 'overdue' => []];
+if (array_is_list($reminderData)) {
+    $reminderData = ['due' => $reminderData, 'overdue' => []];
+}
+$dueReminders = $reminderData['due'] ?? [];
+$overdueReminders = $reminderData['overdue'] ?? [];
 ?>
 <div class="dg-wrap dg-zeiterfassung-team">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -20,11 +25,23 @@ $reminders = $overtimeReminders ?? [];
     </div>
   </header>
 
-  <?php if ($reminders !== []) : ?>
+  <?php if ($dueReminders !== []) : ?>
     <section class="dg-panel dg-panel--warning">
       <h2 class="dg-subsection-title">Überstunden-Abbau fällig</h2>
       <ul class="dg-list">
-        <?php foreach ($reminders as $reminder) : ?>
+        <?php foreach ($dueReminders as $reminder) : ?>
+          <li><?= View::escape((string) ($reminder['message'] ?? '')) ?></li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
+  <?php endif; ?>
+
+  <?php if ($overdueReminders !== []) : ?>
+    <section class="dg-panel">
+      <h2 class="dg-subsection-title">Überstunden über Frist (bleiben im Konto)</h2>
+      <p class="dg-field-hint">Nicht abgebaute Stunden werden nicht gelöscht — sie müssen weiter eingeplant werden.</p>
+      <ul class="dg-list">
+        <?php foreach ($overdueReminders as $reminder) : ?>
           <li><?= View::escape((string) ($reminder['message'] ?? '')) ?></li>
         <?php endforeach; ?>
       </ul>

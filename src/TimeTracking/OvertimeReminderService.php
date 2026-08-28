@@ -22,40 +22,58 @@ final class OvertimeReminderService
 
         $result = ['sent' => 0, 'skipped' => 0, 'errors' => []];
         $emailEnabled = !empty($cfg['overtime_reminder_email']) && MailSettings::isConfigured();
-        $recipient = CalendarNotificationSettings::notifyAdminEmail();
 
+        $mappedLots = [];
         foreach ($lots as $lot) {
-            $lotId = (int) ($lot['id'] ?? 0);
-            if ($lotId < 1) {
-                $result['skipped']++;
-                continue;
+            $mapped = OvertimeLotRepository::mapRowPublic($lot, $today);
+            if ($mapped !== null) {
+                $mappedLots[] = $mapped;
+            }
+        }
+        if ($mappedLots === []) {
+            return $result;
+        }
+
+        if ($emailEnabled) {
+            try {
+                self::sendManagerDigest($mappedLots);
+                $result['sent']++;
+            } catch (Throwable $e) {
+                $result['errors'][] = 'Verantwortliche: ' . $e->getMessage();
             }
 
-            $label = trim((string) ($lot['display_name'] ?? ''));
-            if ($label === '') {
-                $label = trim((string) ($lot['company_name'] ?? ''));
-            }
-            if ($label === '') {
-                $label = 'Mitarbeiter #' . (int) ($lot['contact_id'] ?? 0);
-            }
-
-            $remaining = (int) ($lot['minutes_remaining'] ?? 0);
-            $expiresAt = (string) ($lot['expires_at'] ?? '');
-            $message = OvertimeLotRepository::buildReminderMessage($label, $remaining, $expiresAt);
-
-            if ($emailEnabled && $recipient !== '' && filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
-                try {
-                    self::sendReminderEmail($recipient, $label, $message, $expiresAt);
-                    $result['sent']++;
-                } catch (Throwable $e) {
-                    $result['errors'][] = $label . ': ' . $e->getMessage();
+            $byContact = [];
+            foreach ($mappedLots as $lot) {
+                $contactId = (int) ($lot['contact_id'] ?? 0);
+                if ($contactId < 1) {
                     continue;
                 }
-            } else {
-                $result['sent']++;
+                $byContact[$contactId][] = $lot;
             }
 
-            OvertimeLotRepository::markReminderSent($lotId);
+            foreach ($byContact as $contactId => $contactLots) {
+                $employeeEmail = OvertimeNotificationRecipients::employeeEmailForContact($contactId);
+                if ($employeeEmail === null) {
+                    $result['skipped']++;
+                    continue;
+                }
+                try {
+                    self::sendEmployeeReminder($employeeEmail, $contactLots);
+                    $result['sent']++;
+                } catch (Throwable $e) {
+                    $label = (string) ($contactLots[0]['label'] ?? 'Mitarbeiter #' . $contactId);
+                    $result['errors'][] = $label . ': ' . $e->getMessage();
+                }
+            }
+        } else {
+            $result['sent'] = count($mappedLots);
+        }
+
+        foreach ($mappedLots as $lot) {
+            $lotId = (int) ($lot['id'] ?? 0);
+            if ($lotId > 0) {
+                OvertimeLotRepository::markReminderSent($lotId);
+            }
         }
 
         return $result;
@@ -106,34 +124,71 @@ final class OvertimeReminderService
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array{due: list<array<string, mixed>>, overdue: list<array<string, mixed>>}
      */
     public static function pendingForUi(): array
     {
         if (!Database::isConfigured()) {
-            return [];
+            return ['due' => [], 'overdue' => []];
         }
 
         $cfg = TimeTrackingSettings::config();
         if (empty($cfg['overtime_reminder_enabled'])) {
-            return [];
+            return ['due' => [], 'overdue' => []];
         }
 
-        return OvertimeLotRepository::pendingReminders(date('Y-m-d'));
+        return OvertimeLotRepository::pendingRemindersGrouped(date('Y-m-d'));
     }
 
-    private static function sendReminderEmail(string $recipient, string $employeeLabel, string $message, string $expiresAt): void
+    /**
+     * @param list<array<string, mixed>> $lots
+     */
+    private static function sendManagerDigest(array $lots): void
     {
-        $deadline = date('d.m.Y', strtotime($expiresAt) ?: time());
-        $subject = 'Überstunden-Abbau: ' . $employeeLabel . ' (Frist ' . $deadline . ')';
-        $html = '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>'
+        $recipients = OvertimeNotificationRecipients::managerEmailsForDigest();
+        if ($recipients === []) {
+            throw new RuntimeException('Keine E-Mail-Adresse für Verantwortliche gefunden.');
+        }
+
+        $subject = 'Überstunden-Abbau: ' . count($lots) . ' offene Position(en)';
+        $items = [];
+        foreach ($lots as $lot) {
+            $items[] = '<li>' . htmlspecialchars((string) ($lot['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</li>';
+        }
+        $html = '<p>Folgende Überstunden sind zum Abbau vorgesehen (Stunden verbleiben im Konto, auch nach Frist):</p>'
+            . '<ul>' . implode('', $items) . '</ul>'
             . '<p><a href="' . htmlspecialchars(App::publicBaseUrl() . '/app?page=zeiterfassung-team', ENT_QUOTES, 'UTF-8') . '">'
             . 'Teamübersicht Zeiterfassung öffnen</a></p>';
 
         MailService::send(new MailMessage(
             subject: $subject,
             htmlBody: $html,
-            to: [$recipient],
+            to: $recipients,
+        ));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $lots
+     */
+    private static function sendEmployeeReminder(string $employeeEmail, array $lots): void
+    {
+        $label = (string) ($lots[0]['label'] ?? 'Mitarbeiter');
+        $subject = 'Ihre Überstunden: Abbau bis ' . (string) ($lots[0]['expires_display'] ?? '');
+        $items = [];
+        foreach ($lots as $lot) {
+            $items[] = '<li>' . htmlspecialchars((string) ($lot['employee_message'] ?? $lot['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</li>';
+        }
+        $html = '<p>Guten Tag ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ',</p>'
+            . '<p>folgende Überstunden stehen bei Ihnen noch zum Abbau an. Nicht abgebaute Stunden '
+            . 'bleiben im Zeitkonto erhalten und müssen weiterhin eingeplant werden:</p>'
+            . '<ul>' . implode('', $items) . '</ul>'
+            . '<p><a href="' . htmlspecialchars(App::publicBaseUrl() . '/app?page=zeiterfassung', ENT_QUOTES, 'UTF-8') . '">'
+            . 'Zeiterfassung öffnen</a></p>';
+
+        MailService::send(new MailMessage(
+            subject: $subject,
+            htmlBody: $html,
+            to: [$employeeEmail],
         ));
     }
 

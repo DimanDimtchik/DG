@@ -65,9 +65,10 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
   <section class="dg-form-section">
     <h3 class="dg-subsection-title">Überstunden (betriebliche Regelung)</h3>
     <p class="dg-field-hint">
-      Überstunden sollen innerhalb der eingestellten Frist abgebaut werden.
-      Die Erinnerung erscheint in der Teamübersicht und optional per E-Mail an die Admin-Adresse
-      (Einstellungen → Termine → Benachrichtigungen).
+      Ausgleichsfrist für den Abbau (Standard: 6 Monate). Nicht abgebaute Stunden <strong>bleiben im Zeitkonto</strong>
+      und werden nicht gelöscht — auch nach Fristüberschreitung.
+      Erinnerung an Personal + Abteilungsleiter (Fallback: Geschäftsführung, dann Admin).
+      Mitarbeiter erhalten eine separate E-Mail nur mit den eigenen Daten.
     </p>
 
     <label class="dg-field dg-field--checkbox">
@@ -80,7 +81,7 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
     <label class="dg-field dg-field--checkbox">
       <span>
         <input type="checkbox" name="overtime_reminder_email" value="1"<?= !empty($settings['overtime_reminder_email']) ? ' checked' : '' ?>>
-        Zusätzlich E-Mail an Admin-Adresse senden (einmal pro Überstunden-Block)
+        E-Mail an Verantwortliche (Sammelliste) und an betroffene Mitarbeiter senden
       </span>
     </label>
 
