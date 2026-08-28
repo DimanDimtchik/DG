@@ -39,12 +39,37 @@ final class App
         $_SESSION['dg_last_activity'] = time();
 
         SecurityHeaders::send();
+
+        // Instanz ohne DB (Platzhalter): nur öffentliche Wartungsseite — kein CRM/Lizenz-Stack.
+        if (!Database::isConfigured()) {
+            return;
+        }
+
         Firewall::inspect();
         LicenseGuard::verify();
 
         UpdateChecker::runIfDue();
-        BackupService::runIfDue();
+        try {
+            BackupService::runIfDue();
+        } catch (Throwable) {
+            // Backup darf Login/CRM nicht blockieren
+        }
         FileIntegrity::runIfDue();
+        try {
+            DunningService::runIfDue();
+        } catch (Throwable) {
+            // Mahn-Autostart darf Seitenaufruf nicht blockieren
+        }
+        try {
+            TimeClockService::runIfDue();
+        } catch (Throwable) {
+            // Zeiterfassung-Autostart darf Seitenaufruf nicht blockieren
+        }
+        try {
+            OvertimeReminderService::runIfDue();
+        } catch (Throwable) {
+            // Überstunden-Erinnerung darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

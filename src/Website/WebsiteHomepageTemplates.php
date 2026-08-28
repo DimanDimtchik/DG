@@ -113,6 +113,85 @@ final class WebsiteHomepageTemplates
         ];
     }
 
+    /**
+     * Marketing-Landingpage für den Terminkalender (öffentlich unter /terminkalender).
+     *
+     * @return array{rows: list<array<string, mixed>>}
+     */
+    public static function terminkalenderPageLayout(): array
+    {
+        return [
+            'rows' => [
+                [
+                    'id' => self::id('row'),
+                    'columns' => [[
+                        'id' => self::id('col'),
+                        'width' => 12,
+                        'blocks' => [
+                            ['id' => self::id('blk'), 'type' => 'heading', 'text' => 'Terminkalender', 'level' => 'h1'],
+                            ['id' => self::id('blk'), 'type' => 'text', 'text' => 'Ihre Kunden buchen online. Ihre Mitarbeiter sehen alles auf einen Blick. Automatische Erinnerungen erledigen den Rest.'],
+                        ],
+                    ]],
+                ],
+                [
+                    'id' => self::id('row'),
+                    'columns' => [
+                        [
+                            'id' => self::id('col'),
+                            'width' => 6,
+                            'blocks' => [
+                                ['id' => self::id('blk'), 'type' => 'heading', 'text' => 'Online-Terminbuchung', 'level' => 'h3'],
+                                ['id' => self::id('blk'), 'type' => 'text', 'text' => 'Kunden wählen Dienstleistung, Mitarbeiter und Zeitfenster – direkt auf Ihrer Website. Rund um die Uhr, auch außerhalb der Öffnungszeiten.' . "\n\n" . '• Buchungsseite in Ihren Farben' . "\n" . '• Dienstleistungen mit Dauer und Preis' . "\n" . '• Verfügbare Zeitfenster automatisch berechnet' . "\n" . '• Bestätigungsmail an Kunden'],
+                            ],
+                        ],
+                        [
+                            'id' => self::id('col'),
+                            'width' => 6,
+                            'blocks' => [
+                                ['id' => self::id('blk'), 'type' => 'heading', 'text' => 'Mitarbeiter-Kalender', 'level' => 'h3'],
+                                ['id' => self::id('blk'), 'type' => 'text', 'text' => 'Jeder Mitarbeiter hat seinen eigenen Kalender. Sie sehen auf einen Blick, wer wann frei ist oder gebucht wurde.' . "\n\n" . '• Tages-, Wochen- und Monatsansicht' . "\n" . '• Arbeitszeiten pro Mitarbeiter' . "\n" . '• Urlaub und Abwesenheiten' . "\n" . '• Termine im CRM verschieben'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => self::id('row'),
+                    'columns' => [
+                        [
+                            'id' => self::id('col'),
+                            'width' => 6,
+                            'blocks' => [
+                                ['id' => self::id('blk'), 'type' => 'heading', 'text' => 'Automatische Erinnerungen', 'level' => 'h3'],
+                                ['id' => self::id('blk'), 'type' => 'text', 'text' => 'Weniger No-Shows: Kunden werden automatisch per E-Mail an ihren Termin erinnert.' . "\n\n" . '• 24 Stunden oder individuell vorher' . "\n" . '• E-Mail-Vorlage anpassbar' . "\n" . '• Stornierungslink in der Erinnerung'],
+                            ],
+                        ],
+                        [
+                            'id' => self::id('col'),
+                            'width' => 6,
+                            'blocks' => [
+                                ['id' => self::id('blk'), 'type' => 'heading', 'text' => 'Artikelverknüpfung', 'level' => 'h3'],
+                                ['id' => self::id('blk'), 'type' => 'text', 'text' => 'Verknüpfen Sie Termine direkt mit Ihrem Artikelkatalog. So sehen Sie Umsatz pro Dienstleistung und Mitarbeiter.' . "\n\n" . '• Artikel und Leistungen zuordnen' . "\n" . '• Preise automatisch berechnet' . "\n" . '• Umsatzauswertung pro Monat'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id' => self::id('row'),
+                    'columns' => [[
+                        'id' => self::id('col'),
+                        'width' => 12,
+                        'blocks' => [
+                            ['id' => self::id('blk'), 'type' => 'heading', 'text' => 'Bereit für weniger Terminausfälle?', 'level' => 'h2'],
+                            ['id' => self::id('blk'), 'type' => 'text', 'text' => 'Lassen Sie Ihre Kunden selbst buchen und automatisieren Sie Erinnerungen.'],
+                            ['id' => self::id('blk'), 'type' => 'button', 'text' => 'Termin online buchen', 'url' => '/termin', 'style' => 'primary'],
+                            ['id' => self::id('blk'), 'type' => 'button', 'text' => 'Kontakt aufnehmen', 'url' => '/kontakt', 'style' => 'outline'],
+                        ],
+                    ]],
+                ],
+            ],
+        ];
+    }
+
     /** @param list<string> $kinds */
     public static function primaryKind(array $kinds): string
     {

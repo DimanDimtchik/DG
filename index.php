@@ -6,6 +6,11 @@ require __DIR__ . '/bootstrap.php';
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $path = rtrim($path, '/') ?: '/';
 
+// CRM-Login: /Login und /LOGIN → /login (Autocomplete/Lesezeichen)
+if (strcasecmp($path, '/login') === 0) {
+    $path = '/login';
+}
+
 if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     $previewUser = AuthService::user();
     if ($previewUser === null || !MenuRegistry::canAccess($previewUser, 'website-seiten')) {
@@ -34,6 +39,9 @@ switch ($path) {
             $u = AuthService::user();
             header('Location: ' . ($u ? RoleResolver::homePath($u) : '/app'), true, 302);
             exit;
+        }
+        if (!Database::isConfigured()) {
+            WebsiteMaintenanceSettings::renderPlaceholderMaintenance();
         }
         // Show published homepage if available, otherwise redirect to login
         if (Database::isConfigured()) {
@@ -119,6 +127,11 @@ switch ($path) {
                         $error = 'Anmeldung fehlgeschlagen. Benutzername oder Passwort ist falsch.';
                     }
                 }
+            }
+        } else {
+            // GET: Session-Lock freigeben — sonst blockiert ein hängender POST alle weiteren Tabs.
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
             }
         }
 
@@ -661,6 +674,50 @@ switch ($path) {
                     ChartOfAccountsSettings::saveFromPost($_POST);
                     DatevExportSettings::saveFromPost($_POST);
                     Flash::set('success', 'Kontenrahmen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Zahlungsbedingungen & Mahnung
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['accounting_payment_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('payment-terms');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    AccountingPaymentSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Zahlungsbedingungen und Mahnwesen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Zeiterfassung
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['time_tracking_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('zeiterfassung');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    TimeTrackingSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Zeiterfassung-Einstellungen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -1538,11 +1595,14 @@ switch ($path) {
                 } catch (Throwable) {
                     $dbConnected = false;
                 }
+                $voucherChain = ['documents' => [], 'current_id' => 0];
+                $followUpKinds = [];
+                $chainSummary = null;
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
                     'menuItems', 'settingsItem', 'buchhaltungSection', 'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
-                    'chartOfAccountsConfig'
+                    'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary'
                 ));
                 break;
             }
@@ -1640,6 +1700,9 @@ switch ($path) {
                 }
                 if (is_array($result['contact_page'])) {
                     $summary[] = 'Kontakt: ' . $result['contact_page']['action'];
+                }
+                if (is_array($result['terminkalender_page'])) {
+                    $summary[] = 'Terminkalender: ' . $result['terminkalender_page']['action'];
                 }
                 $msg = 'Pflichtseiten eingerichtet. ' . implode(' · ', $summary);
                 if (!empty($result['maintenance'])) {
@@ -1768,6 +1831,139 @@ switch ($path) {
                 Flash::set('error', $e->getMessage());
             }
             header('Location: /app?page=website-design', true, 302);
+            exit;
+        }
+
+        // POST: Ausgangsbeleg per E-Mail senden
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_email_send'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    VoucherDocumentMailService::send(
+                        $voucherId,
+                        (string) ($_POST['email_to'] ?? ''),
+                        (string) ($_POST['email_subject'] ?? ''),
+                        (string) ($_POST['email_intro'] ?? ''),
+                        $user,
+                        !empty($_POST['email_mark_sent']),
+                        !empty($_POST['email_attach_document']),
+                    );
+                    Flash::set('success', 'Dokument per E-Mail versendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
+        // POST: Teilzahlung erfassen
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_payment_add'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    $amount = round((float) str_replace(',', '.', (string) ($_POST['payment_new_amount'] ?? '0')), 2);
+                    VoucherPaymentRepository::addPayment(
+                        $voucherId,
+                        $amount,
+                        (string) ($_POST['payment_new_date'] ?? ''),
+                        (string) ($_POST['payment_new_method'] ?? VoucherPaymentRepository::METHOD_BANK),
+                        (string) ($_POST['payment_new_reference'] ?? ''),
+                        null,
+                        null,
+                        $user->id,
+                    );
+                    Flash::set('success', 'Zahlung erfasst.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
+        // POST: Teilzahlung löschen
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_payment_delete'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            $paymentId = (int) ($_POST['payment_id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    VoucherPaymentRepository::deletePayment($paymentId, $voucherId);
+                    Flash::set('success', 'Zahlung entfernt.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
+        // POST: Mahnung senden
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_dunning_send'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            $level = max(1, (int) ($_POST['dunning_level'] ?? 0));
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    DunningService::sendLevel($voucherId, $level, $user);
+                    Flash::set('success', 'Mahnung versendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+            exit;
+        }
+
+        // POST: Dokumentstatus schnell ändern (Workflow)
+        if (
+            $page === 'buchhaltung-beleg-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['voucher_status_change'])
+            && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')
+        ) {
+            $voucherId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    VoucherRepository::updateDocumentStatus(
+                        $voucherId,
+                        (string) ($_POST['document_status'] ?? '')
+                    );
+                    Flash::set('success', 'Dokumentstatus aktualisiert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
             exit;
         }
 
@@ -2000,6 +2196,31 @@ switch ($path) {
             exit;
         }
 
+        // POST: Zeiterfassung Stempel
+        if (
+            $page === 'zeiterfassung'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['time_clock_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    $contactId = ContactRepository::findStaffContactIdForUser($user);
+                    if ($contactId === null) {
+                        throw new InvalidArgumentException('Kein Mitarbeiter-Kontakt verknüpft.');
+                    }
+                    TimeClockService::recordEvent($contactId, (string) ($_POST['time_clock_action'] ?? ''), $user);
+                    Flash::set('success', 'Stempelung erfasst.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=zeiterfassung', true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -2091,6 +2312,8 @@ switch ($path) {
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
+        $accountingPaymentSettings = AccountingPaymentSettings::forForm();
+        $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
             try {
@@ -2184,6 +2407,8 @@ switch ($path) {
             if (!array_key_exists($voucherTypeFilter, VoucherRepository::voucherTypeOptions())) {
                 $voucherTypeFilter = '';
             }
+            $voucherDocumentKindFilter = VoucherDocumentKind::sanitize((string) ($_GET['doc_kind'] ?? ''));
+            $voucherDocumentStatusFilter = VoucherDocumentStatus::sanitize((string) ($_GET['doc_status'] ?? ''));
             $voucherDraftFilter = (string) ($_GET['draft'] ?? '');
             if ($voucherDraftFilter !== '1' && $voucherDraftFilter !== '0') {
                 $voucherDraftFilter = '';
@@ -2192,6 +2417,8 @@ switch ($path) {
                 'date_from' => $voucherPeriod->dateFrom,
                 'date_to' => $voucherPeriod->dateTo,
                 'type' => $voucherTypeFilter,
+                'document_kind' => $voucherDocumentKindFilter,
+                'document_status' => $voucherDocumentStatusFilter,
                 'search' => $voucherSearch,
                 'page' => $voucherPage,
                 'draft' => $voucherDraftFilter,
@@ -2218,20 +2445,34 @@ switch ($path) {
                 if ($prefillContact === null) {
                     return;
                 }
-                $label = trim((string) ($_GET['contact_label'] ?? ''));
+                $label = trim($prefillContact->companyName);
                 if ($label === '') {
-                    $label = trim($prefillContact->companyName);
-                    if ($label === '') {
-                        $label = trim($prefillContact->displayName);
-                    }
+                    $label = trim($prefillContact->displayName);
+                }
+                if ($label === '') {
+                    $label = trim((string) ($_GET['contact_label'] ?? ''));
                 }
                 $form['contact_id'] = (string) $prefillContactId;
                 $form['contact_label'] = $label;
-                if (trim((string) ($form['supplier_name'] ?? '')) === '') {
+                $supplierName = trim((string) ($form['supplier_name'] ?? ''));
+                $getLabel = trim((string) ($_GET['contact_label'] ?? ''));
+                if ($supplierName === '' || ($getLabel !== '' && strcasecmp($supplierName, $getLabel) === 0)) {
                     $form['supplier_name'] = $label;
                 }
             };
             $voucherId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+            $voucherChain = ['documents' => [], 'current_id' => 0];
+            $followUpKinds = [];
+            $chainSummary = null;
+            $voucherMailConfigured = MailSettings::isConfigured();
+            $voucherMailCanSend = false;
+            $voucherMailTo = '';
+            $voucherMailSubject = '';
+            $voucherMailIntro = '';
+            $voucherDunningCanSend = false;
+            $voucherDunningNextLevel = 0;
+            $voucherDunningNextLabel = '';
+            $voucherDunningFee = 0.0;
             if ($action === 'new') {
                 if (!$canEdit) {
                     header('Location: ' . RoleResolver::homePath($user), true, 302);
@@ -2245,11 +2486,37 @@ switch ($path) {
                 $applyBelegContactPrefill($form);
                 $formError = null;
                 $ledgerPostings = [];
+                $followFromId = (int) ($_GET['follow_from'] ?? 0);
+                $followDocumentKind = VoucherDocumentKind::sanitize((string) ($_GET['document_kind'] ?? ''));
+                if ($followFromId > 0 && $followDocumentKind !== '') {
+                    try {
+                        $form = VoucherDocumentChain::prefillFollowUp($followFromId, $followDocumentKind);
+                        $chainSummary = is_array($form['chain_summary'] ?? null) ? $form['chain_summary'] : null;
+                        unset($form['chain_summary']);
+                        $voucherChain = VoucherDocumentChain::chainView($followFromId);
+                        $title = 'Folgebeleg: ' . VoucherDocumentKind::label($followDocumentKind);
+                    } catch (Throwable $e) {
+                        $formError = $e->getMessage();
+                    }
+                }
             } elseif ($action === 'edit' && $voucherId > 0) {
                 $voucher = VoucherRepository::findById($voucherId);
                 if ($voucher === null) {
                     Flash::set('error', 'Beleg nicht gefunden.');
                     header('Location: /app?page=buchhaltung-belege', true, 302);
+                    exit;
+                }
+                if (trim((string) ($_GET['download'] ?? '')) === 'print') {
+                    try {
+                        $html = VoucherDocumentPrintService::render($voucher);
+                        AccountingPrintService::send(
+                            VoucherDocumentPrintService::attachmentFilename($voucher),
+                            $html
+                        );
+                    } catch (Throwable $printError) {
+                        Flash::set('error', 'Druckansicht konnte nicht erzeugt werden: ' . $printError->getMessage());
+                        header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+                    }
                     exit;
                 }
                 $isDraftVoucher = !empty($voucher['is_draft']);
@@ -2261,6 +2528,46 @@ switch ($path) {
                 $ledgerPostings = $isDraftVoucher ? [] : LedgerRepository::postingsForVoucher($voucherId);
                 $applyBelegContactPrefill($form);
                 $formError = null;
+                $voucherChain = VoucherDocumentChain::chainView($voucherId);
+                $documentKind = (string) ($form['document_kind'] ?? '');
+                if ($canEdit && !$isDraftVoucher && VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income') {
+                    $followUpKinds = VoucherDocumentKind::followUpKinds($documentKind);
+                }
+                if ($documentKind === VoucherDocumentKind::FINAL_INVOICE) {
+                    $parentId = (int) ($form['parent_voucher_id'] ?? 0);
+                    if ($parentId > 0) {
+                        $chainSummary = VoucherDocumentChain::finalInvoiceSummary($parentId, $voucherId);
+                    }
+                }
+                $voucherMailCanSend = VoucherDocumentMailService::canSend($voucher);
+                $voucherMailTo = VoucherDocumentMailService::defaultRecipient((int) ($form['contact_id'] ?? 0));
+                if ($voucherMailCanSend) {
+                    $voucherMailSubject = VoucherDocumentPrintService::defaultEmailSubject($voucher);
+                    $voucherMailIntro = VoucherDocumentPrintService::defaultEmailIntro($voucher);
+                }
+                $dunningConfig = AccountingPaymentSettings::dunningConfig();
+                $dunningLevels = is_array($dunningConfig['levels'] ?? null) ? $dunningConfig['levels'] : [];
+                $currentDunningLevel = (int) ($form['dunning_level'] ?? 0);
+                $dueDate = (string) ($form['payment_due_date'] ?? '');
+                $isOpenReceivable = VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income'
+                    && VoucherPaymentStatus::countsAsOpenPayable(
+                        VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? ''))
+                    );
+                if (
+                    $canEdit
+                    && !$isDraftVoucher
+                    && $isOpenReceivable
+                    && $dueDate !== ''
+                    && PaymentTermsService::daysOverdue($dueDate) > 0
+                    && $currentDunningLevel < count($dunningLevels)
+                    && MailSettings::isConfigured()
+                ) {
+                    $voucherDunningCanSend = true;
+                    $voucherDunningNextLevel = $currentDunningLevel + 1;
+                    $nextLevelConfig = $dunningLevels[$currentDunningLevel];
+                    $voucherDunningNextLabel = (string) ($nextLevelConfig['label'] ?? 'Mahnung');
+                    $voucherDunningFee = (float) ($nextLevelConfig['fee_amount'] ?? 0);
+                }
             } else {
                 header('Location: /app?page=buchhaltung-belege', true, 302);
                 exit;
@@ -3060,6 +3367,34 @@ switch ($path) {
                 $title = 'Bilder';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-team' && MenuRegistry::canAccess($user, 'zeiterfassung-team')) {
+            $contentTemplate = 'modules/zeiterfassung-team';
+            $title = 'Team heute';
+            $currentPage = 'zeiterfassung';
+            $timeClockTeam = TimeClockService::teamToday();
+            $overtimeReminders = OvertimeReminderService::pendingForUi();
+        } elseif ($page === 'zeiterfassung' && MenuRegistry::canAccess($user, 'zeiterfassung')) {
+            $timeClockContactId = ContactRepository::findStaffContactIdForUser($user);
+            $timeClockEmployeeLabel = '';
+            if ($timeClockContactId !== null) {
+                $staffContact = ContactRepository::findById($timeClockContactId);
+                if ($staffContact !== null) {
+                    $timeClockEmployeeLabel = trim($staffContact->displayName);
+                    if ($timeClockEmployeeLabel === '') {
+                        $timeClockEmployeeLabel = trim($staffContact->companyName);
+                    }
+                }
+            }
+            $timeClockSummary = $timeClockContactId !== null
+                ? TimeClockService::daySummary($timeClockContactId)
+                : ['events' => [], 'worked_display' => '0:00', 'break_display' => '0:00', 'scheduled_display' => '8:00', 'warnings' => [], 'status' => ['state' => 'off', 'label' => 'Nicht eingestempelt', 'since_display' => null]];
+            $timeClockStatus = is_array($timeClockSummary['status'] ?? null)
+                ? $timeClockSummary['status']
+                : TimeClockService::currentStatus((int) $timeClockContactId);
+            $timeClockCanTeam = TimeClockService::canViewTeam($user);
+            $contentTemplate = 'modules/zeiterfassung';
+            $title = 'Zeiterfassung';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'terminkalender' && MenuRegistry::canAccess($user, 'terminkalender')) {
             $bookingId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $bookingSearch = trim((string) ($_GET['s'] ?? ''));
@@ -3387,6 +3722,8 @@ switch ($path) {
         $voucherPage = $voucherPage ?? 1;
         $voucherYear = $voucherYear ?? (int) date('Y');
         $voucherTypeFilter = $voucherTypeFilter ?? '';
+        $voucherDocumentKindFilter = $voucherDocumentKindFilter ?? '';
+        $voucherDocumentStatusFilter = $voucherDocumentStatusFilter ?? '';
         $voucherYears = $voucherYears ?? [(int) date('Y')];
         $voucherFileCounts = $voucherFileCounts ?? [];
         $voucherList = $voucherList ?? [
@@ -3413,11 +3750,25 @@ switch ($path) {
         $fiscalYears = $fiscalYears ?? [];
         $jaYearStatus = $jaYearStatus ?? 'open';
         $ledgerPostings = $ledgerPostings ?? [];
+        $voucherChain = $voucherChain ?? ['documents' => [], 'current_id' => 0];
+        $followUpKinds = $followUpKinds ?? [];
+        $chainSummary = $chainSummary ?? null;
+        $voucherMailConfigured = $voucherMailConfigured ?? MailSettings::isConfigured();
+        $voucherMailCanSend = $voucherMailCanSend ?? false;
+        $voucherMailTo = $voucherMailTo ?? '';
+        $voucherMailSubject = $voucherMailSubject ?? '';
+        $voucherMailIntro = $voucherMailIntro ?? '';
+        $voucherDunningCanSend = $voucherDunningCanSend ?? false;
+        $voucherDunningNextLevel = $voucherDunningNextLevel ?? 0;
+        $voucherDunningNextLabel = $voucherDunningNextLabel ?? '';
+        $voucherDunningFee = $voucherDunningFee ?? 0.0;
         $oposDirection = $oposDirection ?? '';
         $oposSearch = $oposSearch ?? '';
         $oposData = $oposData ?? ['items' => [], 'totals' => ['receivable' => 0.0, 'payable' => 0.0]];
         $datevExportYear = $datevExportYear ?? (int) date('Y');
         $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
+        $accountingPaymentSettings = $accountingPaymentSettings ?? AccountingPaymentSettings::forForm();
+        $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];
@@ -3444,6 +3795,31 @@ switch ($path) {
         $websiteStatsTopReferrers = $websiteStatsTopReferrers ?? [];
         $websiteAnalyticsLinks = $websiteAnalyticsLinks ?? [];
         $websiteStatsDays = $websiteStatsDays ?? 30;
+        $timeClockSummary = $timeClockSummary ?? null;
+        $timeClockStatus = $timeClockStatus ?? null;
+        $timeClockContactId = $timeClockContactId ?? null;
+        $timeClockEmployeeLabel = $timeClockEmployeeLabel ?? '';
+        $timeClockCanTeam = $timeClockCanTeam ?? false;
+        $timeClockTeam = $timeClockTeam ?? [];
+        $overtimeReminders = $overtimeReminders ?? ['violations' => []];
+        $websiteFormList = $websiteFormList ?? [];
+        $websiteFormId = $websiteFormId ?? null;
+        $websiteForm = $websiteForm ?? null;
+        $websiteFormSubmissions = $websiteFormSubmissions ?? [];
+        $websiteFormSubmission = $websiteFormSubmission ?? null;
+        $websiteFormOptions = $websiteFormOptions ?? [];
+        $crmUsers = $crmUsers ?? [];
+        $allowedContactRoles = $allowedContactRoles ?? ContactAccessResolver::allowedContactRoleOptions($user);
+        $canDeleteContact = $canDeleteContact ?? false;
+        $companyEmployees = $companyEmployees ?? [];
+        $employerForm = $employerForm ?? ContactCompanyLinkRepository::emptyEmployerForm();
+        $employerLink = $employerLink ?? null;
+        $companyContactOptions = $companyContactOptions ?? [];
+        $personContactOptions = $personContactOptions ?? [];
+        $websiteMaintenance = $websiteMaintenance ?? WebsiteMaintenanceSettings::config();
+        $supportGrant = $supportGrant ?? null;
+        $supportTokenOnce = $supportTokenOnce ?? null;
+        $kdvSupportSessions = $kdvSupportSessions ?? [];
 
         View::render('layout/app', compact(
             'title',
@@ -3506,6 +3882,8 @@ switch ($path) {
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
             'elsterConfig',
+            'accountingPaymentSettings',
+            'timeTrackingSettings',
             'chartOfAccountsConfig',
             'chartAccountCount',
             'chartCatalogCount',
@@ -3515,6 +3893,8 @@ switch ($path) {
             'voucherPage',
             'voucherYear',
             'voucherTypeFilter',
+            'voucherDocumentKindFilter',
+            'voucherDocumentStatusFilter',
             'voucherYears',
             'voucherFileCounts',
             'voucherId',
@@ -3530,6 +3910,18 @@ switch ($path) {
             'ledgerOverview',
             'ledgerStatement',
             'ledgerPostings',
+            'voucherChain',
+            'followUpKinds',
+            'chainSummary',
+            'voucherMailConfigured',
+            'voucherMailCanSend',
+            'voucherMailTo',
+            'voucherMailSubject',
+            'voucherMailIntro',
+            'voucherDunningCanSend',
+            'voucherDunningNextLevel',
+            'voucherDunningNextLabel',
+            'voucherDunningFee',
             'oposDirection',
             'oposSearch',
             'oposData',
@@ -3619,7 +4011,14 @@ switch ($path) {
             'bookingEmployeeOptions',
             'mediaList',
             'mediaItem',
-            'mediaIsNew'
+            'mediaIsNew',
+            'timeClockSummary',
+            'timeClockStatus',
+            'timeClockContactId',
+            'timeClockEmployeeLabel',
+            'timeClockCanTeam',
+            'timeClockTeam',
+            'overtimeReminders',
         ));
         break;
 
@@ -3628,10 +4027,20 @@ switch ($path) {
         $slug = ltrim($path, '/');
 
         if (
+            !Database::isConfigured()
+            && !AuthService::check()
+            && strcasecmp($slug, 'login') !== 0
+            && !str_starts_with($slug, 'assets/')
+        ) {
+            WebsiteMaintenanceSettings::renderPlaceholderMaintenance();
+        }
+
+        if (
             Database::isConfigured()
             && WebsiteMaintenanceSettings::isActive()
             && !AuthService::check()
             && $slug !== ''
+            && strcasecmp($slug, 'login') !== 0
             && !str_starts_with($slug, 'api/')
             && !str_starts_with($slug, 'assets/')
             && !str_starts_with($slug, 'app/media')

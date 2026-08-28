@@ -86,6 +86,11 @@ final class SettingsRegistry
                         'lead' => 'Online-Terminbuchung für Kunden aktivieren und öffentliche Buchungsseite verwalten.',
                         'template' => 'calendar-embed',
                     ],
+                    'zeiterfassung' => [
+                        'label' => 'Zeiterfassung',
+                        'lead' => 'Automatische Pausenregeln nach Arbeitszeitgesetz für die Stempeluhr.',
+                        'template' => 'time-tracking',
+                    ],
                 ],
             ],
             'kommunikation' => [
@@ -120,6 +125,11 @@ final class SettingsRegistry
                         'label' => 'ELSTER / ERiC',
                         'lead' => 'Vorbereitung direkter ELSTER-Übermittlung — bis Server-Umzug: CSV-Modus.',
                         'template' => 'elster',
+                    ],
+                    'payment-terms' => [
+                        'label' => 'Zahlungsbedingungen & Mahnung',
+                        'lead' => 'Skonto-Stufen mit Zeitvorgaben und automatischer Mahnversand mit Mahngebühren.',
+                        'template' => 'payment-terms',
                     ],
                 ],
             ],

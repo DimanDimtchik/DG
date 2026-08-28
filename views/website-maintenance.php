@@ -1,6 +1,6 @@
 <?php
 /**
- * Öffentliche Wartungsseite.
+ * Öffentliche Wartungsseite (CRM — einheitlich auf allen Instanzen).
  *
  * @var array{
  *   enabled: bool,
@@ -8,18 +8,16 @@
  *   message: string,
  *   email: string,
  *   image_url: string,
- *   image_media_id: string
+ *   image_media_id: string,
+ *   use_inline_art?: bool
  * } $maintenance
  */
-$m = $maintenance ?? WebsiteMaintenanceSettings::config();
+$m = WebsiteMaintenanceRenderer::normalize($maintenance ?? []);
 $headline = (string) ($m['headline'] ?? 'Die Seite befindet sich im Aufbau');
 $message = (string) ($m['message'] ?? '');
 $email = (string) ($m['email'] ?? '');
-$imageUrl = (string) ($m['image_url'] ?? WebsiteMaintenanceSettings::DEFAULT_IMAGE);
-if ($imageUrl === '') {
-    $imageUrl = WebsiteMaintenanceSettings::DEFAULT_IMAGE;
-}
-$isDefaultSvg = str_contains($imageUrl, 'maintenance-aufbau.svg');
+$useInlineArt = !empty($m['use_inline_art']);
+$imageUrl = (string) ($m['image_url'] ?? '/assets/img/maintenance-aufbau.svg');
 $pageTitle = View::escape($headline);
 $imgSrc = View::escape(Asset::url($imageUrl));
 ?>
@@ -98,6 +96,11 @@ $imgSrc = View::escape(Asset::url($imageUrl));
       margin-bottom: 0.35rem;
       font-size: 0.95rem;
     }
+    .wm-card .wm-label--unset {
+      color: var(--wm-muted);
+      font-style: italic;
+      font-weight: 400;
+    }
     .wm-card a {
       color: var(--wm-accent);
       font-weight: 600;
@@ -109,7 +112,7 @@ $imgSrc = View::escape(Asset::url($imageUrl));
 </head>
 <body>
   <main class="wm-wrap">
-    <?php if ($isDefaultSvg) : ?>
+    <?php if ($useInlineArt) : ?>
       <div class="wm-art" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Website im Aufbau">
           <rect width="640" height="420" fill="#f4efe8"/>
@@ -145,6 +148,8 @@ $imgSrc = View::escape(Asset::url($imageUrl));
       <?php if ($email !== '') : ?>
         <p class="wm-label">Fragen? Schreiben Sie uns:</p>
         <p><a href="mailto:<?= View::escape($email) ?>"><?= View::escape($email) ?></a></p>
+      <?php else : ?>
+        <p class="wm-label wm-label--unset"><?= View::escape(WebsiteMaintenanceSettings::NO_PUBLIC_CONTACT_MESSAGE) ?></p>
       <?php endif; ?>
     </div>
   </main>

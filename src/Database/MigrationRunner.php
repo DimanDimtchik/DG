@@ -7,6 +7,10 @@ declare(strict_types=1);
 final class MigrationRunner
 {
     private static bool $ranThisRequest = false;
+    /** Verhindert Rekursion, wenn runPending() aus Repositories/Settings während eines Laufs erneut aufgerufen wird. */
+    private static bool $running = false;
+    /** Nach erfolgreichem Durchlauf in diesem Request keine erneuten Vollscans. */
+    private static bool $completedThisRequest = false;
 
     /**
      * Führt Migrationen einmal pro HTTP-Request beim CRM-Zugriff aus (Fehler werden geschluckt).
@@ -35,39 +39,52 @@ final class MigrationRunner
         if (!Database::isConfigured()) {
             return 0;
         }
+        if (self::$completedThisRequest) {
+            return 0;
+        }
+        if (self::$running) {
+            return 0;
+        }
 
-        $pdo = Database::pdo();
-        self::ensureMigrationsTable($pdo);
-        self::bootstrapLegacyInstallations($pdo);
-        self::repairStaleMigrations($pdo);
+        self::$running = true;
+        try {
+            $pdo = Database::pdo();
+            self::ensureMigrationsTable($pdo);
+            self::bootstrapLegacyInstallations($pdo);
+            self::repairStaleMigrations($pdo);
 
-        $dir = DG_ROOT . '/database/migrations';
-        $files = glob($dir . '/*.sql') ?: [];
-        sort($files);
+            $dir = DG_ROOT . '/database/migrations';
+            $files = glob($dir . '/*.sql') ?: [];
+            sort($files);
 
-        $applied = self::appliedIds($pdo);
-        $count = 0;
+            $applied = self::appliedIds($pdo);
+            $count = 0;
 
-        foreach ($files as $file) {
-            $id = basename($file);
-            if (isset($applied[$id])) {
-                continue;
-            }
+            foreach ($files as $file) {
+                $id = basename($file);
+                if (isset($applied[$id])) {
+                    continue;
+                }
 
-            if (self::isMigrationSatisfied($pdo, $id)) {
+                if (self::isMigrationSatisfied($pdo, $id)) {
+                    $stmt = $pdo->prepare('INSERT INTO dg_migrations (id) VALUES (:id)');
+                    $stmt->execute(['id' => $id]);
+                    $count++;
+                    continue;
+                }
+
+                self::executeFile($pdo, $file);
                 $stmt = $pdo->prepare('INSERT INTO dg_migrations (id) VALUES (:id)');
                 $stmt->execute(['id' => $id]);
                 $count++;
-                continue;
             }
 
-            self::executeFile($pdo, $file);
-            $stmt = $pdo->prepare('INSERT INTO dg_migrations (id) VALUES (:id)');
-            $stmt->execute(['id' => $id]);
-            $count++;
-        }
+            self::$completedThisRequest = true;
 
-        return $count;
+            return $count;
+        } finally {
+            self::$running = false;
+        }
     }
 
     /** Legt dg_migrations an, falls nicht vorhanden. */
@@ -180,6 +197,14 @@ final class MigrationRunner
                 && self::tableExists($pdo, 'dg_manual_journal_batches'),
             '053_elster_submissions.sql' => self::tableExists($pdo, 'dg_elster_submissions'),
             '054_cash_day_closing.sql' => self::tableExists($pdo, 'dg_cash_day_closings'),
+            '055_voucher_document_chain.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_kind'),
+            '056_voucher_document_status.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_status'),
+            '057_voucher_document_texts.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_intro_text'),
+            '058_voucher_document_legal_clauses.sql' => self::columnExists($pdo, 'dg_vouchers', 'document_legal_clauses'),
+            '059_voucher_payment_terms_dunning.sql' => self::columnExists($pdo, 'dg_vouchers', 'payment_due_date')
+                && self::tableExists($pdo, 'dg_voucher_dunnings'),
+            '060_voucher_payments.sql' => self::tableExists($pdo, 'dg_voucher_payments'),
+            '061_time_clock.sql' => self::tableExists($pdo, 'dg_time_clock_events'),
             default => false,
         };
     }
@@ -265,6 +290,13 @@ final class MigrationRunner
             '052_banking_manual.sql' => true,
             '053_elster_submissions.sql' => true,
             '054_cash_day_closing.sql' => true,
+            '055_voucher_document_chain.sql' => true,
+            '056_voucher_document_status.sql' => true,
+            '057_voucher_document_texts.sql' => true,
+            '058_voucher_document_legal_clauses.sql' => true,
+            '059_voucher_payment_terms_dunning.sql' => true,
+            '060_voucher_payments.sql' => true,
+            '061_time_clock.sql' => true,
         ];
     }
 

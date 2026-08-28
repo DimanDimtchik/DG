@@ -16,7 +16,7 @@ for %%I in (assets src views) do (
     if errorlevel 1 goto fail
 )
 
-scp -o BatchMode=yes -i "%KEY%" shop\config\app.php shop\config\plans.php shop\config\legal.php shop\config\database.php shop\config\stripe.example.php %HOST%:%DEST%/config/
+scp -o BatchMode=yes -i "%KEY%" shop\config\app.php shop\config\plans.php shop\config\legal.php shop\config\database.php shop\config\maintenance.php shop\config\stripe.example.php shop\config\admin.local.php.example %HOST%:%DEST%/config/
 if errorlevel 1 goto fail
 
 ssh -o BatchMode=yes -i "%KEY%" %HOST% "mkdir -p %DEST%/storage && chmod 750 %DEST%/storage && echo Deny from all > %DEST%/storage/.htaccess"

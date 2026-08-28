@@ -10,6 +10,9 @@ final class WebsiteMaintenanceSettings
 
     public const DEFAULT_IMAGE = '/assets/img/maintenance-aufbau.svg';
 
+    /** Hinweis, wenn weder Wartungs- noch Firmen-E-Mail gesetzt ist. */
+    public const NO_PUBLIC_CONTACT_MESSAGE = 'Öffentliche Kontaktdaten noch nicht gesetzt.';
+
     /**
      * @return array{
      *   enabled: bool,
@@ -73,11 +76,34 @@ final class WebsiteMaintenanceSettings
         if ($cfg['image_url'] === '') {
             $cfg['image_url'] = self::DEFAULT_IMAGE;
         }
-        if ($cfg['email'] === '' && $defaults['email'] !== '') {
-            $cfg['email'] = $defaults['email'];
-        }
+        $cfg['email'] = self::resolvePublicContactEmail($cfg);
 
         return $cfg;
+    }
+
+    /**
+     * Wartungs-E-Mail aus DB, sonst Firmen-E-Mail aus CRM (Einstellungen → Firma).
+     */
+    public static function resolvePublicContactEmail(array $cfg): string
+    {
+        $email = trim((string) ($cfg['email'] ?? ''));
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $email;
+        }
+        if (class_exists('CompanySettings')) {
+            return CompanySettings::mailEmail();
+        }
+
+        return '';
+    }
+
+    /** Öffentliche Wartungsseite wenn keine DB (Platzhalter-Instanz, gleicher Code). */
+    public static function renderPlaceholderMaintenance(): never
+    {
+        WebsiteMaintenanceRenderer::send(
+            array_merge(self::defaults(), ['enabled' => true]),
+            503
+        );
     }
 
     /** Wartungsseite für anonyme Besucher der öffentlichen Website? */
@@ -145,12 +171,6 @@ final class WebsiteMaintenanceSettings
     /** Rendert die öffentliche Wartungsseite und beendet den Request. */
     public static function renderAndExit(): never
     {
-        http_response_code(503);
-        header('Retry-After: 3600');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        View::render('website-maintenance', [
-            'maintenance' => self::config(),
-        ]);
-        exit;
+        WebsiteMaintenanceRenderer::send(self::config(), 503);
     }
 }

@@ -136,7 +136,9 @@ bash bin/run-website-bootstrap-on-instances.sh --overwrite
 ### SSH-Problem (gelöst am PC)
 
 SSH funktioniert lokal mit Host **`allinkl-ganzom`** / Key `~/.ssh/id_ed25519_ganzom`  
-(`ssh-w0217246@w0217246.kasserver.com`). Cloud-Agent hatte den falschen Key.
+(`ssh-[REDACTED]@[REDACTED].kasserver.com`).
+
+**Cloud Agent:** gleicher Key, aber `DG_ALLINKL_SSH_USER` muss der **SSH-Login** (`ssh-…`) sein — nicht der KAS-Weblogin. Details: [`docs/CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) Abschnitt 4.
 
 ```powershell
 ssh allinkl-ganzom

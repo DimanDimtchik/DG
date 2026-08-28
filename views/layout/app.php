@@ -297,6 +297,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/contact-company-links.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/kontakte-form.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/voucher-contact-bridge.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-konten') : ?>
@@ -334,6 +335,36 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
             VoucherRepository::autoInvoiceNumberLabels(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
+        documentKindOptions: <?= json_encode(
+            VoucherDocumentKind::options(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        documentKindNumberLabels: <?= json_encode(
+            VoucherRepository::autoDocumentKindNumberLabels(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        nonBookableDocumentKinds: <?= json_encode(
+            [
+                VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::ORDER_CONFIRMATION,
+                VoucherDocumentKind::DELIVERY_NOTE,
+            ],
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        documentStatusLabels: <?= json_encode(
+            VoucherDocumentStatus::options(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        documentStatusByKind: <?= json_encode(
+            array_combine(
+                array_keys(VoucherDocumentKind::options()),
+                array_map(
+                    static fn (string $kind): array => VoucherDocumentStatus::allowedForKind($kind),
+                    array_keys(VoucherDocumentKind::options())
+                )
+            ),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
         incomeVoucherTypes: <?= json_encode(
             VoucherIncomePositions::voucherTypesWithItems(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
@@ -344,6 +375,14 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
         ) ?>,
         accrual: <?= json_encode(
             VoucherAccrual::clientConfig($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        tipPassThroughAccount: <?= json_encode(
+            LedgerAccounts::tipPassThroughAccount($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
+        documentLegalClauses: <?= json_encode(
+            VoucherDocumentLegalClause::clientConfig(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
         voucherId: <?= ($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form' ? (int) ($voucherId ?? 0) : 0 ?>,

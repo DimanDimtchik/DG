@@ -25,7 +25,7 @@ final class OpenItemsRepository
                 FROM dg_vouchers v
                 LEFT JOIN dg_contacts c ON c.id = v.contact_id
                 WHERE v.is_draft = 0
-                  AND v.payment_status IN ('open', 'direct_debit')
+                  AND v.payment_status IN ('open', 'partial', 'direct_debit')
                 ORDER BY v.voucher_date ASC, v.id ASC";
         $rows = Database::pdo()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
@@ -34,6 +34,9 @@ final class OpenItemsRepository
                 continue;
             }
             $type = VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? 'expense'));
+            if (!VoucherDocumentKind::isBookable((string) ($row['document_kind'] ?? ''), $type)) {
+                continue;
+            }
             $isReceivable = LedgerAccounts::isIncomeDirection($type);
             $itemDirection = $isReceivable ? 'receivable' : 'payable';
 
@@ -47,10 +50,12 @@ final class OpenItemsRepository
                 continue;
             }
 
-            $openAmount = self::openAmount($row);
+            $openAmount = VoucherPaymentRepository::openAmount($row);
             if ($openAmount <= 0.0) {
                 continue;
             }
+
+            $totalPaid = VoucherPaymentRepository::totalPaid((int) ($row['id'] ?? 0));
 
             $contactLabel = trim((string) ($row['supplier_name'] ?? ''));
             if ($contactLabel === '') {
@@ -81,11 +86,18 @@ final class OpenItemsRepository
                 'voucher_type' => $type,
                 'direction' => $itemDirection,
                 'voucher_date' => (string) ($row['voucher_date'] ?? ''),
+                'payment_due_date' => (string) ($row['payment_due_date'] ?? ''),
+                'days_overdue' => PaymentTermsService::daysOverdue(
+                    (string) ($row['payment_due_date'] ?? ''),
+                    date('Y-m-d')
+                ),
+                'dunning_level' => (int) ($row['dunning_level'] ?? 0),
                 'invoice_number' => (string) ($row['invoice_number'] ?? ''),
                 'contact_id' => (int) ($row['contact_id'] ?? 0),
                 'contact_label' => $contactLabel,
                 'person_account' => $personAccount,
                 'gross_amount' => round((float) ($row['gross_amount'] ?? 0), 2),
+                'paid_amount' => $totalPaid,
                 'open_amount' => $openAmount,
                 'payment_status' => (string) ($row['payment_status'] ?? 'open'),
                 'description' => (string) ($row['description'] ?? ''),
@@ -95,19 +107,5 @@ final class OpenItemsRepository
         }
 
         return $result;
-    }
-
-    /**
-     * @param array<string, mixed> $voucher
-     */
-    private static function openAmount(array $voucher): float
-    {
-        $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
-        $paid = round((float) ($voucher['paid_amount'] ?? 0), 2);
-        if ($paid > 0.0 && $paid < $gross) {
-            return round($gross - $paid, 2);
-        }
-
-        return $gross;
     }
 }

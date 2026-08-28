@@ -90,7 +90,8 @@ final class CashJournalRepository
             return;
         }
 
-        if (VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? '')) !== VoucherPaymentStatus::CASH) {
+        if (VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? '')) !== VoucherPaymentStatus::CASH
+            && VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? '')) !== VoucherPaymentStatus::TIP) {
             return;
         }
 

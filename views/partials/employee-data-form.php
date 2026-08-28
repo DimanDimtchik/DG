@@ -185,6 +185,27 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               data-disability-options="<?= View::escape(json_encode($disabilitySupplementaryOptions, JSON_UNESCAPED_UNICODE)) ?>"
             ></div>
           </label>
+        <?php elseif ($meta['type'] === 'checkbox') : ?>
+          <label class="dg-field dg-field--checkbox">
+            <span>
+              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?>>
+              <?= View::escape($meta['label']) ?>
+            </span>
+          </label>
+        <?php elseif ($meta['type'] === 'number') : ?>
+          <label class="dg-field">
+            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
+            <input
+              type="number"
+              name="<?= View::escape($name) ?>"
+              value="<?= View::escape($value) ?>"
+              min="0"
+              max="960"
+              step="1"
+              placeholder="z. B. 480 (= 8 h)"
+              <?= $required ? ' required data-employee-required' : '' ?>
+            >
+          </label>
         <?php else : ?>
           <label class="dg-field">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>

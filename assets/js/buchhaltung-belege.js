@@ -7,6 +7,8 @@
 
   var listYear = document.getElementById('dg-voucher-year');
   var listType = document.getElementById('dg-voucher-type-filter');
+  var listDocKind = document.getElementById('dg-voucher-doc-kind-filter');
+  var listDocStatus = document.getElementById('dg-voucher-doc-status-filter');
 
   if (listYear && listType) {
     listYear.addEventListener('change', function () {
@@ -14,6 +16,16 @@
     });
     listType.addEventListener('change', function () {
       listType.form.submit();
+    });
+  }
+  if (listDocKind) {
+    listDocKind.addEventListener('change', function () {
+      listDocKind.form.submit();
+    });
+  }
+  if (listDocStatus) {
+    listDocStatus.addEventListener('change', function () {
+      listDocStatus.form.submit();
     });
   }
 
@@ -51,6 +63,10 @@
   var contactHint = document.getElementById('dg-voucher-contact-hint');
   var typeSelect = document.getElementById('dg-voucher-type');
   var typeHint = document.getElementById('dg-voucher-type-hint');
+  var documentKindSelect = document.getElementById('dg-voucher-document-kind');
+  var documentKindField = document.getElementById('dg-voucher-document-kind-field');
+  var documentStatusField = document.getElementById('dg-voucher-document-status-field');
+  var documentStatusSelect = document.getElementById('dg-voucher-document-status');
   var bookingBody = document.getElementById('dg-voucher-booking-body');
   var bookingRowTemplate = document.getElementById('dg-voucher-booking-row-template');
   var bookingSumEl = document.getElementById('dg-voucher-booking-sum');
@@ -70,8 +86,354 @@
     return typeSelect ? typeSelect.value : 'expense';
   }
 
+  function getDocumentKind() {
+    return documentKindSelect ? documentKindSelect.value : '';
+  }
+
+  function isBookableDocumentKind() {
+    var voucherType = getVoucherType();
+    if (voucherType !== 'income') {
+      return true;
+    }
+    var kind = getDocumentKind();
+    if (!kind) {
+      return true;
+    }
+    var nonBookable = config.nonBookableDocumentKinds || [];
+    return nonBookable.indexOf(kind) === -1;
+  }
+
   function usesIncomeItems() {
     return incomeVoucherTypes.indexOf(getVoucherType()) !== -1;
+  }
+
+  function allowsSignedItemAmounts() {
+    var t = getVoucherType();
+    return t === 'income' || t === 'credit' || t === 'income_reduction' || t === 'expense_reduction';
+  }
+
+  function supportsAccrualUi() {
+    if (!isBookableDocumentKind()) {
+      return false;
+    }
+    var t = getVoucherType();
+    return t === 'income' || t === 'expense' || t === 'expense_reduction';
+  }
+
+  function syncDocumentKindField() {
+    if (!documentKindField) {
+      return;
+    }
+    documentKindField.hidden = getVoucherType() !== 'income';
+    syncDocumentStatusField();
+    syncDocumentPositionTextsField();
+    syncPaymentTermsSection();
+  }
+
+  function usesDocumentPositionTexts() {
+    if (getVoucherType() !== 'income') {
+      return false;
+    }
+    var kind = getDocumentKind();
+    if (!kind) {
+      return true;
+    }
+    return kind === 'partial_invoice' || kind === 'invoice' || kind === 'final_invoice';
+  }
+
+  var documentFooterInput = document.getElementById('dg-voucher-document-footer');
+  var legalClausesPreviewWrap = document.getElementById('dg-voucher-legal-clauses-preview-wrap');
+  var legalClausesPreviewEl = document.getElementById('dg-voucher-legal-clauses-preview');
+  var legalClauseConfig = config.documentLegalClauses || {};
+  var legalClauseSuggestionMap = legalClauseConfig.reverseChargeSuggestions || {};
+
+  function getSelectedLegalClauseTexts() {
+    var texts = [];
+    document.querySelectorAll('.dg-voucher-legal-clause-input:checked').forEach(function (input) {
+      var text = input.getAttribute('data-clause-text') || '';
+      if (text.trim() !== '') {
+        texts.push(text.trim());
+      }
+    });
+    return texts;
+  }
+
+  function updateLegalClausesPreview() {
+    if (!legalClausesPreviewEl) {
+      return;
+    }
+    var parts = [];
+    var freeText = documentFooterInput ? documentFooterInput.value.trim() : '';
+    if (freeText !== '') {
+      parts.push(freeText);
+    }
+    getSelectedLegalClauseTexts().forEach(function (text) {
+      parts.push(text);
+    });
+    var combined = parts.join('\n\n');
+    if (legalClausesPreviewWrap) {
+      legalClausesPreviewWrap.hidden = combined === '';
+    }
+    legalClausesPreviewEl.textContent = combined;
+  }
+
+  function syncLegalClauseSuggestions() {
+    var rcType = reverseChargeTypeSelect ? reverseChargeTypeSelect.value : '';
+    var suggested = legalClauseSuggestionMap[rcType] || [];
+    document.querySelectorAll('.dg-voucher-legal-clause-input').forEach(function (input) {
+      var item = input.closest('.dg-voucher-legal-clauses__item');
+      if (!item) {
+        return;
+      }
+      var existingBadge = item.querySelector('.dg-badge--suggestion');
+      var isSuggested = suggested.indexOf(input.value) !== -1 && !input.checked;
+      if (isSuggested && !existingBadge) {
+        var badge = document.createElement('span');
+        badge.className = 'dg-badge dg-badge--pending dg-badge--suggestion';
+        badge.textContent = 'Vorschlag';
+        var label = item.querySelector('.dg-voucher-legal-clause');
+        if (label) {
+          label.appendChild(badge);
+        }
+      } else if (!isSuggested && existingBadge) {
+        existingBadge.remove();
+      }
+    });
+  }
+
+  function bindLegalClausesUi() {
+    document.querySelectorAll('.dg-voucher-legal-clause-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        syncLegalClauseSuggestions();
+        updateLegalClausesPreview();
+      });
+    });
+    if (documentFooterInput) {
+      documentFooterInput.addEventListener('input', updateLegalClausesPreview);
+      documentFooterInput.addEventListener('change', updateLegalClausesPreview);
+    }
+  }
+
+  function syncDocumentPositionTextsField() {
+    var introWrap = document.getElementById('dg-voucher-document-texts-intro');
+    var footerWrap = document.getElementById('dg-voucher-document-texts-footer');
+    var show = usesIncomeItems() && usesDocumentPositionTexts();
+    if (introWrap) {
+      introWrap.hidden = !show;
+    }
+    if (footerWrap) {
+      footerWrap.hidden = !show;
+    }
+    if (show) {
+      updateLegalClausesPreview();
+    }
+  }
+
+  var paymentTermsSection = document.getElementById('dg-voucher-payment-terms-section');
+  var paymentTermsPreviewEl = document.getElementById('dg-voucher-payment-terms-preview');
+  var paymentDueDateInput = document.getElementById('dg-voucher-payment-due-date');
+  var voucherDateInput = document.getElementById('dg-voucher-date');
+  var paidAtInput = document.getElementById('dg-voucher-paid-at');
+  var discountManualInput = document.getElementById('dg-voucher-discount-manual');
+  var discountPercentInput = form ? form.querySelector('[name="discount_percent"]') : null;
+  var discountAmountInput = form ? form.querySelector('[name="discount_amount"]') : null;
+  var paidAmountInput = form ? form.querySelector('[name="paid_amount"]') : null;
+
+  function readPaymentTiersFromForm() {
+    var tiers = [];
+    document.querySelectorAll('#dg-voucher-payment-tiers-body tr').forEach(function (row) {
+      var daysEl = row.querySelector('.dg-voucher-payment-tier-days, [name*="[days]"]');
+      var percentEl = row.querySelector('.dg-voucher-payment-tier-percent, [name*="[adjustment_percent]"]');
+      var labelEl = row.querySelector('[name*="[label]"]');
+      if (!daysEl || !percentEl) {
+        return;
+      }
+      tiers.push({
+        days: parseInt(daysEl.value, 10) || 1,
+        adjustment_percent: parseFloat(String(percentEl.value).replace(',', '.')) || 0,
+        label: labelEl ? labelEl.value : '',
+      });
+    });
+    tiers.sort(function (a, b) { return a.days - b.days; });
+    return tiers;
+  }
+
+  function composePaymentTermsPreviewText(tiers, voucherDate, dueDate) {
+    if (!tiers.length) {
+      return '';
+    }
+    var lines = ['Zahlungsbedingungen:'];
+    tiers.forEach(function (tier) {
+      var pct = tier.adjustment_percent;
+      if (pct < 0) {
+        lines.push('Bei Zahlung innerhalb von ' + tier.days + ' Tagen gewähren wir ' + Math.abs(pct).toFixed(2).replace('.', ',') + ' % Skonto.');
+      } else if (pct > 0) {
+        lines.push('Bei Zahlung innerhalb von ' + tier.days + ' Tagen Verzugszinsen von ' + pct.toFixed(2).replace('.', ',') + ' %.');
+      } else {
+        lines.push('Bei Zahlung innerhalb von ' + tier.days + ' Tagen ohne Abzug.');
+      }
+    });
+    if (dueDate) {
+      lines.push('Fälligkeitsdatum: ' + dueDate.split('-').reverse().join('.'));
+    }
+    return lines.join('\n');
+  }
+
+  function maxTierDays(tiers) {
+    var max = 0;
+    tiers.forEach(function (tier) {
+      if (tier.days > max) {
+        max = tier.days;
+      }
+    });
+    return max;
+  }
+
+  function addDaysIso(dateStr, days) {
+    var parts = dateStr.split('-');
+    if (parts.length !== 3) {
+      return dateStr;
+    }
+    var date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function daysBetweenDates(fromDate, toDate) {
+    var from = new Date(fromDate);
+    var to = new Date(toDate);
+    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+      return 0;
+    }
+    return Math.max(0, Math.floor((to - from) / 86400000));
+  }
+
+  function tierForPaymentDate(voucherDate, paymentDate, tiers) {
+    var days = daysBetweenDates(voucherDate, paymentDate);
+    var applicable = null;
+    tiers.forEach(function (tier) {
+      if (days <= tier.days) {
+        applicable = tier;
+      }
+    });
+    return applicable || tiers[tiers.length - 1] || null;
+  }
+
+  function updatePaymentTermsPreview() {
+    if (!paymentTermsPreviewEl) {
+      return;
+    }
+    var voucherDate = voucherDateInput ? voucherDateInput.value : '';
+    var tiers = readPaymentTiersFromForm();
+    if (paymentDueDateInput && voucherDate && tiers.length && !paymentDueDateInput.dataset.manualDue) {
+      paymentDueDateInput.value = addDaysIso(voucherDate, maxTierDays(tiers));
+    }
+    var dueDate = paymentDueDateInput ? paymentDueDateInput.value : '';
+    paymentTermsPreviewEl.textContent = composePaymentTermsPreviewText(tiers, voucherDate, dueDate);
+  }
+
+  function syncPaymentTermsSection() {
+    if (!paymentTermsSection) {
+      return;
+    }
+    paymentTermsSection.hidden = !(getVoucherType() === 'income' && isBookableDocumentKind());
+    if (!paymentTermsSection.hidden) {
+      updatePaymentTermsPreview();
+    }
+  }
+
+  function suggestSettlementFromPaymentDate() {
+    if (readOnly || !paidAtInput || discountManualInput && discountManualInput.value === '1') {
+      return;
+    }
+    var voucherDate = voucherDateInput ? voucherDateInput.value : '';
+    var paidAt = paidAtInput.value;
+    var tiers = readPaymentTiersFromForm();
+    if (!voucherDate || !paidAt || !tiers.length) {
+      return;
+    }
+    var gross = parseFloat(String(grossInput ? grossInput.value : '').replace(',', '.')) || 0;
+    if (gross <= 0 && invoiceItemsSumEl) {
+      gross = parseFloat(String(invoiceItemsSumEl.textContent).replace(/\./g, '').replace(',', '.')) || 0;
+    }
+    if (gross <= 0) {
+      return;
+    }
+    var tier = tierForPaymentDate(voucherDate, paidAt, tiers);
+    if (!tier) {
+      return;
+    }
+    var percent = tier.adjustment_percent;
+    if (percent < 0 && discountPercentInput && discountAmountInput && paidAmountInput) {
+      var discountAmount = Math.round(gross * Math.abs(percent)) / 100;
+      discountPercentInput.value = String(Math.abs(percent));
+      discountAmountInput.value = discountAmount.toFixed(2).replace('.', ',');
+      paidAmountInput.value = (gross - discountAmount).toFixed(2).replace('.', ',');
+    } else if (percent > 0 && paidAmountInput) {
+      if (discountPercentInput) discountPercentInput.value = '0';
+      if (discountAmountInput) discountAmountInput.value = '0,00';
+      paidAmountInput.value = (gross * (1 + percent / 100)).toFixed(2).replace('.', ',');
+    } else if (paidAmountInput) {
+      if (discountPercentInput) discountPercentInput.value = '0';
+      if (discountAmountInput) discountAmountInput.value = '0,00';
+      paidAmountInput.value = gross.toFixed(2).replace('.', ',');
+    }
+  }
+
+  function bindPaymentTermsUi() {
+    document.querySelectorAll('#dg-voucher-payment-tiers-body input').forEach(function (field) {
+      field.addEventListener('input', updatePaymentTermsPreview);
+      field.addEventListener('change', updatePaymentTermsPreview);
+    });
+    if (voucherDateInput) {
+      voucherDateInput.addEventListener('change', updatePaymentTermsPreview);
+    }
+    if (paymentDueDateInput) {
+      paymentDueDateInput.addEventListener('change', function () {
+        paymentDueDateInput.dataset.manualDue = '1';
+        updatePaymentTermsPreview();
+      });
+    }
+    if (paidAtInput) {
+      paidAtInput.addEventListener('change', suggestSettlementFromPaymentDate);
+    }
+    [discountPercentInput, discountAmountInput].forEach(function (field) {
+      if (!field) return;
+      field.addEventListener('input', function () {
+        if (discountManualInput) {
+          discountManualInput.value = '1';
+        }
+      });
+    });
+  }
+
+  function syncDocumentStatusField() {
+    if (!documentStatusField || !documentStatusSelect) {
+      return;
+    }
+    var isIncome = getVoucherType() === 'income';
+    var kind = getDocumentKind();
+    var byKind = config.documentStatusByKind || {};
+    var labels = config.documentStatusLabels || {};
+    var allowed = kind && byKind[kind] ? byKind[kind] : [];
+    documentStatusField.hidden = !isIncome || allowed.length === 0;
+    if (!isIncome || allowed.length === 0 || documentStatusSelect.tagName !== 'SELECT') {
+      return;
+    }
+    var current = documentStatusSelect.value;
+    documentStatusSelect.innerHTML = '';
+    allowed.forEach(function (status) {
+      var option = document.createElement('option');
+      option.value = status;
+      option.textContent = labels[status] || status;
+      if (status === current) {
+        option.selected = true;
+      }
+      documentStatusSelect.appendChild(option);
+    });
+    if (!documentStatusSelect.value && allowed.length > 0) {
+      documentStatusSelect.value = allowed[0];
+    }
   }
 
   function taxTypeFromRate(rate) {
@@ -179,7 +541,7 @@
     }
     var title = (row.querySelector('.dg-voucher-items-title') || {}).value || '';
     var gross = parseAmount((row.querySelector('.dg-voucher-items-gross') || {}).value || '0');
-    return title.trim() === '' && gross <= 0;
+    return title.trim() === '' && gross === 0;
   }
 
   function hasEmptyInvoiceItem() {
@@ -220,7 +582,7 @@
     var grossField = row.querySelector('.dg-voucher-items-gross');
     var articleId = (row.querySelector('.dg-voucher-items-article-id') || {}).value || '';
     if (grossField) {
-      if (gross > 0) {
+      if (gross !== 0) {
         grossField.value = formatAmount(gross);
       } else if (articleId) {
         grossField.value = '0,00';
@@ -254,10 +616,10 @@
       var gross = updateInvoiceItemLineTotal(row);
       var taxField = row.querySelector('.dg-voucher-items-tax');
       var taxRate = taxField ? parseInt(taxField.value, 10) : 19;
-      if (title === '' && gross <= 0) {
+      if (title === '' && gross === 0) {
         return;
       }
-      if (gross <= 0) {
+      if (!allowsSignedItemAmounts() && gross <= 0) {
         return;
       }
       items.push({
@@ -631,11 +993,13 @@
     if (invoiceItemsSection) {
       invoiceItemsSection.hidden = !income;
     }
+    syncDocumentPositionTextsField();
     var arapSection = document.getElementById('dg-voucher-arap-section');
+    var showArap = supportsAccrualUi();
     if (arapSection) {
-      arapSection.hidden = income;
+      arapSection.hidden = !showArap;
     }
-    if (income && arapEnabledInput) {
+    if (!showArap && arapEnabledInput) {
       arapEnabledInput.checked = false;
       syncArapUi();
     }
@@ -666,6 +1030,62 @@
       ensureTrailingInvoiceItemRow();
       syncInvoiceItemsSum();
       syncBookingFromItems();
+    }
+  }
+
+  function applyTipDefaultAccount() {
+    if (!bookingBody || readOnly || getVoucherType() !== 'expense') {
+      return;
+    }
+    var tipAccount = String(config.tipPassThroughAccount || '1590');
+    var row = bookingBody.querySelector('.dg-voucher-split__row');
+    if (!row) {
+      addBookingRow();
+      row = bookingBody.querySelector('.dg-voucher-split__row');
+    }
+    if (!row) {
+      return;
+    }
+    var accountField = row.querySelector('.dg-voucher-split-account');
+    var queryField = row.querySelector('.dg-voucher-split-account-query');
+    if (accountField) {
+      accountField.value = tipAccount;
+    }
+    if (queryField) {
+      fetchJson(apiUrl + '?action=account&number=' + encodeURIComponent(tipAccount) + accountLookupSuffix())
+        .then(function (result) {
+          if (result.ok && result.data && result.data.success && result.data.data) {
+            var acc = result.data.data;
+            queryField.value = formatAccountLabel(acc.account_number, acc.name);
+          } else {
+            queryField.value = tipAccount;
+          }
+        })
+        .catch(function () {
+          queryField.value = tipAccount;
+        });
+    }
+    debouncedPreview();
+  }
+
+  function syncPaymentStatusOptions() {
+    var paymentSelect = document.getElementById('dg-voucher-payment-status');
+    var paymentHint = document.getElementById('dg-voucher-payment-status-hint');
+    if (!paymentSelect) {
+      return;
+    }
+    var isExpense = getVoucherType() === 'expense' || getVoucherType() === 'expense_reduction';
+    paymentSelect.querySelectorAll('option').forEach(function (opt) {
+      if (opt.value === 'tip') {
+        opt.hidden = !isExpense;
+        opt.disabled = !isExpense;
+      }
+    });
+    if (!isExpense && paymentSelect.value === 'tip') {
+      paymentSelect.value = 'open';
+      if (paymentHint) {
+        paymentHint.textContent = (config.paymentStatusHints || {}).open || '';
+      }
     }
   }
 
@@ -1339,6 +1759,7 @@
     syncArapUi();
     syncTotalsFromLines();
     refreshReverseChargePreview();
+    syncLegalClauseSuggestions();
   }
 
   function voucherTypeQuery() {
@@ -1733,10 +2154,20 @@
       if (typeHint) {
         typeHint.textContent = typeDescriptions[typeSelect.value] || '';
       }
+      syncDocumentKindField();
       syncInvoiceNumberField();
       syncIncomeMode();
+      syncPaymentStatusOptions();
       syncArapUi();
       revalidateBookingAccounts();
+    });
+  }
+
+  if (documentKindSelect && documentKindSelect.tagName === 'SELECT') {
+    documentKindSelect.addEventListener('change', function () {
+      syncDocumentStatusField();
+      syncInvoiceNumberField();
+      syncArapUi();
     });
   }
 
@@ -1759,14 +2190,23 @@
     var invoiceInput = document.getElementById('dg-voucher-invoice-number');
     var invoiceHint = document.getElementById('dg-voucher-invoice-hint');
     var autoTypes = config.autoInvoiceTypes || {};
+    var kindLabels = config.documentKindNumberLabels || {};
     if (!invoiceInput || !typeSelect || readOnly) {
       return;
     }
 
-    var rangeLabel = autoTypes[typeSelect.value] || '';
+    var voucherType = typeSelect.value;
+    var documentKind = getDocumentKind();
+    var rangeLabel = voucherType === 'income' && documentKind
+      ? (kindLabels[documentKind] || '')
+      : (autoTypes[voucherType] || '');
     var isAuto = rangeLabel !== '';
     var isSaved = invoiceInput.getAttribute('data-saved-invoice') === '1';
-    var isExpense = typeSelect.value === 'expense' || typeSelect.value === 'expense_reduction';
+    var isExpense = voucherType === 'expense' || voucherType === 'expense_reduction';
+    var previewUrl = apiUrl + '?action=invoice_number_preview&voucher_type=' + encodeURIComponent(voucherType);
+    if (voucherType === 'income' && documentKind) {
+      previewUrl += '&document_kind=' + encodeURIComponent(documentKind);
+    }
 
     if (isAuto) {
       // Automatische Nummer aus dem Nummernkreis – nie Pflichtfeld.
@@ -1783,7 +2223,7 @@
         }
       }
       if (!isSaved) {
-        fetchJson(apiUrl + '?action=invoice_number_preview&voucher_type=' + encodeURIComponent(typeSelect.value))
+        fetchJson(previewUrl)
           .then(function (result) {
             if (result.ok && result.data && result.data.success && result.data.data && result.data.data.number) {
               invoiceInput.value = result.data.data.number;
@@ -1811,9 +2251,11 @@
   }
 
   if (typeSelect) {
+    syncDocumentKindField();
+    syncDocumentPositionTextsField();
     syncInvoiceNumberField();
     var invoiceInputInit = document.getElementById('dg-voucher-invoice-number');
-    if (invoiceInputInit && (config.autoInvoiceTypes || {})[typeSelect.value]) {
+    if (invoiceInputInit && ((config.autoInvoiceTypes || {})[typeSelect.value] || (getVoucherType() === 'income' && (config.documentKindNumberLabels || {})[getDocumentKind()]))) {
       invoiceInputInit.setAttribute('data-was-auto', '1');
     }
   }
@@ -1825,6 +2267,11 @@
   }
 
   syncIncomeMode();
+  bindLegalClausesUi();
+  bindPaymentTermsUi();
+  syncLegalClauseSuggestions();
+  updateLegalClausesPreview();
+  syncPaymentTermsSection();
 
   if (bookingBody) {
     bookingBody.querySelectorAll('.dg-voucher-split__row').forEach(bindBookingRow);
@@ -1860,8 +2307,12 @@
   if (paymentStatusSelect && paymentStatusHint) {
     paymentStatusSelect.addEventListener('change', function () {
       paymentStatusHint.textContent = paymentStatusHints[paymentStatusSelect.value] || '';
+      if (paymentStatusSelect.value === 'tip') {
+        applyTipDefaultAccount();
+      }
     });
   }
+  syncPaymentStatusOptions();
 
   if (contactSearch && !readOnly) {
     contactSearch.addEventListener('input', debounce(function () {

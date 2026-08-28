@@ -86,7 +86,7 @@ $skrLabel = ChartOfAccountsSettings::skrTypeOptions()[$chartOfAccountsConfig['sk
       <section class="dg-account-hint__block" id="dg-account-hint-search-wrap">
         <div class="dg-account-hint__block-head">
           <h3 class="dg-account-hint__block-title">Suchbegriffe &amp; Synonyme</h3>
-          <p class="dg-field-hint">Steuern die Kontensuche (z.&nbsp;B. „Briefmarke“ → Porto). Bearbeitbar wie in Lexoffice.</p>
+          <p class="dg-field-hint">Steuern die Kontensuche (z.&nbsp;B. „Briefmarke“ → Porto). Synonyme und Zuordnungen sind hier bearbeitbar.</p>
         </div>
         <div id="dg-account-hint-search-editor" class="dg-account-search-terms">
           <div id="dg-account-hint-search-tags" class="dg-account-hint__tags" aria-live="polite"></div>

@@ -27,7 +27,15 @@ final class VoucherSettlementService
         }
 
         $amount = round((float) ($transfer['amount'] ?? 0), 2);
-        self::markPaid($voucherId, VoucherPaymentStatus::BANK, $amount, date('Y-m-d'));
+        self::recordPayment(
+            $voucherId,
+            VoucherPaymentStatus::BANK,
+            $amount,
+            date('Y-m-d'),
+            null,
+            null,
+            (int) $transferId,
+        );
         BankTransferRepository::markExecuted($transferId);
     }
 
@@ -36,25 +44,58 @@ final class VoucherSettlementService
      */
     public static function markPaid(int $voucherId, string $paymentStatus, float $amount, string $paidAt): void
     {
+        self::recordPayment($voucherId, $paymentStatus, $amount, $paidAt);
+    }
+
+    /**
+     * @param numeric-string|float $amount
+     */
+    public static function recordPayment(
+        int $voucherId,
+        string $paymentStatus,
+        float $amount,
+        string $paidAt,
+        ?int $bankTransactionId = null,
+        ?string $reference = null,
+        ?int $bankTransferId = null,
+        ?int $createdBy = null,
+    ): void {
         if (!Database::isConfigured() || $voucherId < 1) {
             return;
         }
         MigrationRunner::runPending();
 
-        $pdo = Database::pdo();
-        $stmt = $pdo->prepare(
-            'UPDATE dg_vouchers
-             SET payment_status = :status, paid_amount = :paid_amount, paid_at = :paid_at
-             WHERE id = :id'
-        );
-        $stmt->execute([
-            'status' => VoucherPaymentStatus::sanitize($paymentStatus),
-            'paid_amount' => round(max(0, $amount), 2),
-            'paid_at' => $paidAt !== '' ? $paidAt : date('Y-m-d'),
-            'id' => $voucherId,
-        ]);
+        $voucher = VoucherRepository::findById($voucherId);
+        if ($voucher === null) {
+            return;
+        }
 
-        LedgerPostingService::rebuildForVoucher($voucherId);
-        CashJournalRepository::syncForVoucher($voucherId);
+        $amount = round(max(0, $amount), 2);
+        if ($amount <= 0.0) {
+            $open = VoucherPaymentRepository::openAmount($voucher);
+            $amount = $open > 0.0 ? $open : VoucherPaymentRepository::amountDue($voucher);
+        }
+
+        $method = match (VoucherPaymentStatus::sanitize($paymentStatus)) {
+            VoucherPaymentStatus::CASH, VoucherPaymentStatus::TIP => VoucherPaymentRepository::METHOD_CASH,
+            VoucherPaymentStatus::PRIVATE => VoucherPaymentRepository::METHOD_PRIVATE,
+            VoucherPaymentStatus::DIRECT_DEBIT => VoucherPaymentRepository::METHOD_DIRECT_DEBIT,
+            default => VoucherPaymentRepository::METHOD_BANK,
+        };
+
+        if ($paidAt === '') {
+            $paidAt = date('Y-m-d');
+        }
+
+        VoucherPaymentRepository::addPayment(
+            $voucherId,
+            $amount,
+            $paidAt,
+            $method,
+            $reference,
+            $bankTransactionId,
+            $bankTransferId,
+            $createdBy,
+        );
     }
 }

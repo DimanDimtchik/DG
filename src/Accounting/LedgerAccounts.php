@@ -58,6 +58,14 @@ final class LedgerAccounts
         };
     }
 
+    /**
+     * Durchlaufende Posten für Trinkgeld (Barabfluss, keine Betriebsausgabe).
+     */
+    public static function tipPassThroughAccount(string $skrType): string
+    {
+        return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '1370' : '1590';
+    }
+
         /**
      * Steuerkonto (Vorsteuer bei Ausgabe, Umsatzsteuer bei Einnahme) je Satz.
      * @param string $skrType Kontenrahmen (skr03/skr04)

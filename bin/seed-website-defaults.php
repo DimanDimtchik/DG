@@ -62,6 +62,10 @@ try {
         $c = $result['contact_page'];
         echo "Kontaktseite: {$c['action']} (ID {$c['id']})\n";
     }
+    if (is_array($result['terminkalender_page'])) {
+        $t = $result['terminkalender_page'];
+        echo "Terminkalender-Landing: {$t['action']} (ID {$t['id']})\n";
+    }
     if (!empty($result['contact_form_id'])) {
         echo "Kontaktformular-ID: {$result['contact_form_id']}\n";
     }

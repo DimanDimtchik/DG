@@ -2,13 +2,20 @@
 # Configure SSH for All-Inkl (ganz-om) from Cursor Cloud Agent secrets.
 # Required env (Cursor Dashboard → Cloud Agents → Secrets):
 #   DG_ALLINKL_SSH_PRIVATE_KEY  (Runtime Secret, full PEM / OpenSSH private key)
-#   DG_ALLINKL_SSH_USER         (default: ssh-w0217246)
-#   DG_ALLINKL_SSH_HOST         (default: w0217246.kasserver.com)
+#   DG_ALLINKL_SSH_USER         (default: [REDACTED])
+#   DG_ALLINKL_SSH_HOST         (default: [REDACTED])
 set -euo pipefail
 
 KEY_RAW="${DG_ALLINKL_SSH_PRIVATE_KEY:-}"
-USER_NAME="${DG_ALLINKL_SSH_USER:-ssh-w0217246}"
-HOST_NAME="${DG_ALLINKL_SSH_HOST:-w0217246.kasserver.com}"
+USER_NAME="${DG_ALLINKL_SSH_USER:-[REDACTED]}"
+HOST_NAME="${DG_ALLINKL_SSH_HOST:-[REDACTED]}"
+
+if [[ ! "$USER_NAME" =~ ^ssh- ]]; then
+  echo "cloud-agent-ssh-setup: DG_ALLINKL_SSH_USER must start with 'ssh-' (SSH login from KAS → Tools → SSH-Zugänge)." >&2
+  echo "Got length ${#USER_NAME} — often the KAS web login was used by mistake." >&2
+  echo "See docs/CLOUD-AGENT-ACCESS.md section 4." >&2
+  exit 1
+fi
 
 if [[ -z "$KEY_RAW" ]]; then
   echo "cloud-agent-ssh-setup: DG_ALLINKL_SSH_PRIVATE_KEY is not set." >&2
@@ -54,5 +61,5 @@ Host allinkl-ganzom dg.ganz-om.de
 EOF
 chmod 600 "$HOME/.ssh/config"
 
-echo "cloud-agent-ssh-setup: OK → ssh allinkl-ganzom"
 ssh -o BatchMode=yes -o ConnectTimeout=15 allinkl-ganzom 'echo SSH_OK; hostname; pwd'
+echo "cloud-agent-ssh-setup: OK → ssh allinkl-ganzom"

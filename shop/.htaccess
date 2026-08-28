@@ -1,8 +1,25 @@
 RewriteEngine On
 RewriteBase /
 
+# Admin immer an index.php (Wartungsmodus-Verwaltung); Env bleibt über internes Rewrite (REDIRECT_*)
+RewriteRule ^admin(/.*)?$ index.php [L,QSA,E=SHOP_ADMIN:1]
+
+# Wartungsmodus (Apache-Ebene): solange config/.maintenance existiert → 503
+# Admin-Bypass: REQUEST_URI /admin oder Env nach Rewrite (REDIRECT_SHOP_ADMIN)
+ErrorDocument 503 /maintenance.html
+RewriteCond %{ENV:SHOP_ADMIN} !^1$
+RewriteCond %{ENV:REDIRECT_SHOP_ADMIN} !^1$
+RewriteCond %{REQUEST_URI} !^/admin [NC]
+RewriteCond %{REQUEST_URI} !^/maintenance\.html$ [NC]
+RewriteCond %{REQUEST_URI} !^/assets/ [NC]
+RewriteCond %{DOCUMENT_ROOT}/config/.maintenance -f
+RewriteRule ^ - [R=503,L]
+
 # Block local secrets
 RewriteRule ^config/database\.local\.php$ - [F,L]
+RewriteRule ^config/maintenance\.local\.php$ - [F,L]
+RewriteRule ^config/admin\.local\.php$ - [F,L]
+RewriteRule ^config/\.maintenance$ - [F,L]
 
 # Existing files/dirs as-is
 RewriteCond %{REQUEST_FILENAME} -f [OR]

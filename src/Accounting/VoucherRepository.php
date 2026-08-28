@@ -52,7 +52,7 @@ final class VoucherRepository
     }
 
     /**
-     * @param array{year?: int|null, type?: string, search?: string, page?: int, draft?: string} $filters
+     * @param array{year?: int|null, type?: string, document_kind?: string, document_status?: string, search?: string, page?: int, draft?: string, date_from?: string, date_to?: string} $filters
      * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int}
      */
     public static function list(array $filters = []): array
@@ -72,6 +72,8 @@ final class VoucherRepository
         $page = max(1, (int) ($filters['page'] ?? 1));
         $year = isset($filters['year']) && (int) $filters['year'] > 0 ? (int) $filters['year'] : null;
         $type = self::sanitizeVoucherTypeFilter((string) ($filters['type'] ?? ''));
+        $documentKind = VoucherDocumentKind::sanitize((string) ($filters['document_kind'] ?? ''));
+        $documentStatus = VoucherDocumentStatus::sanitize((string) ($filters['document_status'] ?? ''));
         $search = trim((string) ($filters['search'] ?? ''));
         $draft = (string) ($filters['draft'] ?? '');
 
@@ -94,6 +96,16 @@ final class VoucherRepository
         if ($type !== '') {
             $where[] = 'v.voucher_type = :voucher_type';
             $params['voucher_type'] = $type;
+        }
+
+        if ($documentKind !== '') {
+            $where[] = 'v.document_kind = :document_kind';
+            $params['document_kind'] = $documentKind;
+        }
+
+        if ($documentStatus !== '') {
+            $where[] = 'v.document_status = :document_status';
+            $params['document_status'] = $documentStatus;
         }
 
         if ($draft === '1') {
@@ -277,6 +289,11 @@ final class VoucherRepository
         $enriched['lines'] = self::linesForVoucher($id, true);
         $enriched['system_lines'] = self::linesForVoucher($id, false, true);
         $enriched['items'] = self::itemsForVoucher($id);
+        $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
+        VoucherPaymentRepository::migrateLegacyPaidAmount($id);
+        $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
+        $enriched['total_paid'] = VoucherPaymentRepository::totalPaid($id);
+        $enriched['open_amount'] = VoucherPaymentRepository::openAmount($enriched, $enriched['total_paid']);
 
         return $enriched;
     }
@@ -537,7 +554,8 @@ final class VoucherRepository
             throw new InvalidArgumentException('Name des Kontakts / Lieferanten ist erforderlich.');
         }
 
-        if (self::isExpenseType($voucherType) && trim((string) ($data['invoice_number'] ?? '')) === '') {
+        if (self::isExpenseType($voucherType) && trim((string) ($data['invoice_number'] ?? '')) === ''
+            && $paymentStatus !== VoucherPaymentStatus::TIP) {
             throw new InvalidArgumentException('Bei Ausgaben ist die Rechnungsnummer erforderlich.');
         }
 
@@ -548,8 +566,45 @@ final class VoucherRepository
         }
         $reverseCharge = VoucherReverseCharge::isActive($reverseChargeType);
         $taxKey = $reverseCharge ? VoucherTaxKeys::KEY_REVERSE_CHARGE : '';
+        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
+        $documentKind = VoucherDocumentKind::sanitize((string) ($data['document_kind'] ?? ''));
+        if ($voucherType === 'income' && $documentKind === '') {
+            $documentKind = VoucherDocumentKind::INVOICE;
+        }
+        $documentStatus = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
+        if ($voucherType === 'income' && $documentKind !== '') {
+            if ($documentStatus === '') {
+                $documentStatus = VoucherDocumentStatus::defaultForKind($documentKind);
+            }
+            if (!VoucherDocumentStatus::isValidForKind($documentStatus, $documentKind)) {
+                throw new InvalidArgumentException('Ungültiger Dokumentstatus für diese Dokumentart.');
+            }
+        } else {
+            $documentStatus = '';
+        }
+        $documentIntroText = '';
+        $documentFooterText = '';
+        $documentLegalClauses = [];
+        $paymentTermTiers = [];
+        $paymentDueDate = '';
+        if (VoucherDocumentKind::usesPositionTexts($documentKind, $voucherType)) {
+            $documentIntroText = self::sanitizeDocumentText((string) ($data['document_intro_text'] ?? ''));
+            $documentFooterText = self::sanitizeDocumentText((string) ($data['document_footer_text'] ?? ''));
+            $documentLegalClauses = VoucherDocumentLegalClause::parseFromRequest($data);
+        }
+        if ($voucherType === 'income' && VoucherDocumentKind::isBookable($documentKind, $voucherType)) {
+            $paymentTermTiers = PaymentTermsService::sanitizeTiers($data['payment_term_tiers'] ?? AccountingPaymentSettings::defaultTiers());
+            $paymentDueDate = trim((string) ($data['payment_due_date'] ?? ''));
+            if ($paymentDueDate === '' && $paymentTermTiers !== []) {
+                $paymentDueDate = PaymentTermsService::dueDateFromTiers($voucherDate, $paymentTermTiers);
+            }
+            if ($paymentDueDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $paymentDueDate)) {
+                throw new InvalidArgumentException('Ungültiges Fälligkeitsdatum.');
+            }
+        }
+        $parentVoucherId = max(0, (int) ($data['parent_voucher_id'] ?? 0));
         $arap = VoucherAccrual::parseFromData($data);
-        if (VoucherAccrual::isIncomeType($voucherType)) {
+        if (!VoucherAccrual::supportsAccrual($voucherType, $documentKind)) {
             $arap = [
                 'enabled' => false,
                 'current_year_percent' => 100,
@@ -563,16 +618,30 @@ final class VoucherRepository
         ChartAccountRepository::ensureSeeded($skrType);
         $usesInvoiceItems = VoucherIncomePositions::usesInvoiceItems($voucherType);
         /** @var list<array<string, mixed>> $itemRows */
-        $itemRows = $usesInvoiceItems ? VoucherIncomePositions::parseItemRows($data) : [];
+        $itemRows = $usesInvoiceItems
+            ? VoucherIncomePositions::parseItemRows($data, $voucherType)
+            : [];
         $gross = round((float) str_replace(',', '.', (string) ($data['gross_amount'] ?? '0')), 2);
         /** @var list<array<string, mixed>> $lineRows */
         if ($usesInvoiceItems && $itemRows !== []) {
-            $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType);
+            $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType, $voucherType);
             if ($bookingLines === []) {
                 throw new InvalidArgumentException('Mindestens eine Rechnungsposition mit Betrag ist erforderlich.');
             }
         } else {
             $bookingLines = self::parseLineRows($data, $reverseCharge, $reverseChargeType);
+        }
+        if ($paymentStatus === VoucherPaymentStatus::TIP && !self::isExpenseType($voucherType)) {
+            throw new InvalidArgumentException('Trinkgeld ist nur bei Ausgaben-Belegen möglich.');
+        }
+        if ($paymentStatus === VoucherPaymentStatus::TIP && self::isExpenseType($voucherType)) {
+            $tipAccount = LedgerAccounts::tipPassThroughAccount($skrType);
+            foreach ($bookingLines as &$tipLine) {
+                if (trim((string) ($tipLine['account_number'] ?? '')) === '') {
+                    $tipLine['account_number'] = $tipAccount;
+                }
+            }
+            unset($tipLine);
         }
         $ustvaSnapshot = null;
         if ($reverseCharge) {
@@ -605,6 +674,9 @@ final class VoucherRepository
             $gross = $amounts['gross_amount'];
             $taxRate = (int) ($bookingLines[0]['tax_rate'] ?? 19);
         } elseif ($gross <= 0) {
+            if (self::allowsSignedItemAmounts($voucherType) && $gross < 0) {
+                throw new InvalidArgumentException('Negativer Gesamtbetrag — bitte Belegart „Kundengutschrift“ oder „Einnahmenminderung“ verwenden.');
+            }
             throw new InvalidArgumentException('Bruttobetrag muss größer als 0 sein.');
         }
 
@@ -620,19 +692,42 @@ final class VoucherRepository
         if ($discountPercent > 0 && $discountAmount <= 0.0 && $gross > 0) {
             $discountAmount = round($gross * $discountPercent / 100, 2);
         }
-        $paidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+        $formPaidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+        $paidAmount = $id > 0 ? VoucherPaymentRepository::totalPaid($id) : 0.0;
         $paidAt = trim((string) ($data['paid_at'] ?? ''));
-        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
-        if (VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK) {
-            if ($paidAmount <= 0.0) {
-                $paidAmount = round(max(0, $gross - $discountAmount), 2);
+        $recordSettlement = VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK;
+        if (!$recordSettlement && $paymentStatus === VoucherPaymentStatus::PARTIAL && $formPaidAmount > 0.0) {
+            $recordSettlement = true;
+        }
+        $settlementAmount = 0.0;
+        $settlementMethod = match (VoucherPaymentStatus::sanitize($paymentStatus)) {
+            VoucherPaymentStatus::CASH, VoucherPaymentStatus::TIP => VoucherPaymentRepository::METHOD_CASH,
+            VoucherPaymentStatus::PRIVATE => VoucherPaymentRepository::METHOD_PRIVATE,
+            VoucherPaymentStatus::DIRECT_DEBIT => VoucherPaymentRepository::METHOD_DIRECT_DEBIT,
+            default => VoucherPaymentRepository::METHOD_BANK,
+        };
+        if ($recordSettlement) {
+            $settlementAmount = $formPaidAmount;
+            if ($settlementAmount <= 0.0) {
+                $settlementAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+            }
+            if ($settlementAmount <= 0.0) {
+                $settlementAmount = round(max(0, $gross - $discountAmount - $paidAmount), 2);
+            }
+            if ($settlementAmount <= 0.0) {
+                $settlementAmount = round(max(0, $gross - $discountAmount), 2);
             }
             if ($paidAt === '') {
                 $paidAt = date('Y-m-d');
             }
+            if ($paymentTermTiers !== [] && $paidAt !== '' && empty($data['discount_manual'])) {
+                $settlement = PaymentTermsService::settlementAmounts($gross, $voucherDate, $paidAt, $paymentTermTiers);
+                $discountPercent = $settlement['discount_percent'];
+                $discountAmount = $settlement['discount_amount'];
+                $settlementAmount = $settlement['paid_amount'];
+            }
         } else {
-            $paidAmount = 0.0;
-            $paidAt = '';
+            $paidAt = $paidAmount > 0.0 ? $paidAt : '';
         }
 
         foreach ($lineRows as $lineRow) {
@@ -644,6 +739,9 @@ final class VoucherRepository
 
         $fields = [
             'voucher_type' => $voucherType,
+            'document_kind' => $documentKind,
+            'document_status' => $documentStatus,
+            'parent_voucher_id' => $parentVoucherId > 0 ? $parentVoucherId : null,
             'voucher_date' => $voucherDate,
             'delivery_date' => $deliveryDate,
             'arap_enabled' => $arap['enabled'] ? 1 : 0,
@@ -651,7 +749,7 @@ final class VoucherRepository
             'arap_next_year_percent' => $arap['next_year_percent'],
             'contact_id' => $contactId,
             'supplier_name' => $supplierName,
-            'invoice_number' => self::resolveInvoiceNumber($voucherType, $data, $id),
+            'invoice_number' => self::resolveInvoiceNumber($voucherType, $data, $id, $documentKind),
             'description' => trim((string) ($data['description'] ?? '')),
             'gross_amount' => $amounts['gross_amount'],
             'discount_percent' => $discountPercent,
@@ -667,6 +765,11 @@ final class VoucherRepository
             'account_number' => $accountNumber,
             'payment_status' => $paymentStatus,
             'notes' => trim((string) ($data['notes'] ?? '')),
+            'document_intro_text' => $documentIntroText !== '' ? $documentIntroText : null,
+            'document_footer_text' => $documentFooterText !== '' ? $documentFooterText : null,
+            'document_legal_clauses' => VoucherDocumentLegalClause::encodeSelection($documentLegalClauses),
+            'payment_due_date' => $paymentDueDate !== '' ? $paymentDueDate : null,
+            'payment_term_tiers' => PaymentTermsService::encodeTiers($paymentTermTiers),
         ];
 
         if ($contactId !== null) {
@@ -680,6 +783,9 @@ final class VoucherRepository
             $stmt = $pdo->prepare(
                 'UPDATE dg_vouchers SET
                     voucher_type = :voucher_type,
+                    document_kind = :document_kind,
+                    document_status = :document_status,
+                    parent_voucher_id = :parent_voucher_id,
                     is_draft = 0,
                     voucher_date = :voucher_date,
                     delivery_date = :delivery_date,
@@ -703,7 +809,12 @@ final class VoucherRepository
                     ustva_snapshot = :ustva_snapshot,
                     account_number = :account_number,
                     payment_status = :payment_status,
-                    notes = :notes
+                    notes = :notes,
+                    document_intro_text = :document_intro_text,
+                    document_footer_text = :document_footer_text,
+                    document_legal_clauses = :document_legal_clauses,
+                    payment_due_date = :payment_due_date,
+                    payment_term_tiers = :payment_term_tiers
                  WHERE id = :id'
             );
             $fields['id'] = $id;
@@ -711,6 +822,7 @@ final class VoucherRepository
             self::replaceLines($id, $lineRows);
             self::replaceItems($id, $itemRows);
             self::syncLedger($id);
+            self::finalizePayments($id, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
             return $id;
         }
@@ -718,17 +830,19 @@ final class VoucherRepository
         $fields['created_by'] = $userId;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_vouchers (
-                voucher_type, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
+                voucher_type, document_kind, document_status, parent_voucher_id, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
                 contact_id, supplier_name, invoice_number, description,
                 gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
                 net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
-                account_number, payment_status, notes, created_by
+                account_number, payment_status, notes, document_intro_text, document_footer_text, document_legal_clauses,
+                payment_due_date, payment_term_tiers, created_by
             ) VALUES (
-                :voucher_type, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
+                :voucher_type, :document_kind, :document_status, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
                 :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
                 :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
-                :account_number, :payment_status, :notes, :created_by
+                :account_number, :payment_status, :notes, :document_intro_text, :document_footer_text, :document_legal_clauses,
+                :payment_due_date, :payment_term_tiers, :created_by
             )'
         );
         $stmt->execute($fields);
@@ -736,8 +850,41 @@ final class VoucherRepository
         self::replaceLines($newId, $lineRows);
         self::replaceItems($newId, $itemRows);
         self::syncLedger($newId);
+        self::finalizePayments($newId, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
         return $newId;
+    }
+
+    private static function finalizePayments(
+        int $voucherId,
+        bool $recordSettlement,
+        float $settlementAmount,
+        string $settlementDate,
+        string $settlementMethod,
+        ?int $userId,
+    ): void {
+        if ($voucherId < 1) {
+            return;
+        }
+        VoucherPaymentRepository::migrateLegacyPaidAmount($voucherId);
+        if ($recordSettlement && VoucherPaymentRepository::totalPaid($voucherId) <= 0.0 && $settlementAmount > 0.0) {
+            try {
+                VoucherPaymentRepository::addPayment(
+                    $voucherId,
+                    $settlementAmount,
+                    $settlementDate !== '' ? $settlementDate : date('Y-m-d'),
+                    $settlementMethod,
+                    'Beim Speichern erfasst',
+                    null,
+                    null,
+                    $userId,
+                );
+            } catch (Throwable) {
+                VoucherPaymentRepository::syncVoucherSettlement($voucherId);
+            }
+        } else {
+            VoucherPaymentRepository::syncVoucherSettlement($voucherId);
+        }
     }
 
         /**
@@ -915,6 +1062,11 @@ final class VoucherRepository
         }
     }
 
+    public static function refreshLedger(int $voucherId): void
+    {
+        self::syncLedger($voucherId);
+    }
+
     /**
      * emptyForm.
      *
@@ -924,6 +1076,9 @@ final class VoucherRepository
     {
         return [
             'voucher_type' => 'expense',
+            'document_kind' => '',
+            'document_status' => '',
+            'parent_voucher_id' => '',
             'voucher_date' => date('Y-m-d'),
             'delivery_date' => date('Y-m-d'),
             'arap_enabled' => '0',
@@ -949,6 +1104,16 @@ final class VoucherRepository
             'account_name' => '',
             'payment_status' => 'open',
             'notes' => '',
+            'document_intro_text' => '',
+            'document_footer_text' => '',
+            'document_legal_clauses' => [],
+            'payment_due_date' => '',
+            'payment_term_tiers' => AccountingPaymentSettings::defaultTiers(),
+            'dunning_level' => '0',
+            'dunning_fee_total' => '0',
+            'payments' => [],
+            'total_paid' => '0',
+            'open_amount' => '0',
             'lines' => [
                 [
                     'account_number' => '',
@@ -1021,8 +1186,22 @@ final class VoucherRepository
             }
         }
 
+        $voucherIdForForm = (int) ($row['id'] ?? 0);
+        $payments = is_array($row['payments'] ?? null)
+            ? $row['payments']
+            : ($voucherIdForForm > 0 ? VoucherPaymentRepository::listForVoucher($voucherIdForForm) : []);
+        $totalPaidValue = isset($row['total_paid'])
+            ? (float) $row['total_paid']
+            : ($voucherIdForForm > 0 ? VoucherPaymentRepository::totalPaid($voucherIdForForm) : (float) ($row['paid_amount'] ?? 0));
+        $openAmountValue = isset($row['open_amount'])
+            ? (float) $row['open_amount']
+            : VoucherPaymentRepository::openAmount($row, $totalPaidValue);
+
         return [
             'voucher_type' => self::sanitizeVoucherType((string) ($row['voucher_type'] ?? 'expense')),
+            'document_kind' => (string) ($row['document_kind'] ?? ''),
+            'document_status' => (string) ($row['document_status'] ?? ''),
+            'parent_voucher_id' => $row['parent_voucher_id'] !== null ? (string) $row['parent_voucher_id'] : '',
             'voucher_date' => (string) ($row['voucher_date'] ?? ''),
             'delivery_date' => (string) ($row['delivery_date'] ?? ''),
             'arap_enabled' => !empty($row['arap_enabled']) ? '1' : '0',
@@ -1048,6 +1227,17 @@ final class VoucherRepository
             'account_name' => (string) ($row['account_name'] ?? ''),
             'payment_status' => (string) ($row['payment_status'] ?? 'open'),
             'notes' => (string) ($row['notes'] ?? ''),
+            'document_intro_text' => (string) ($row['document_intro_text'] ?? ''),
+            'document_footer_text' => (string) ($row['document_footer_text'] ?? ''),
+            'document_legal_clauses' => VoucherDocumentLegalClause::sanitizeSelection($row['document_legal_clauses'] ?? ''),
+            'payment_due_date' => (string) ($row['payment_due_date'] ?? ''),
+            'payment_term_tiers' => PaymentTermsService::sanitizeTiers($row['payment_term_tiers'] ?? ''),
+            'dunning_level' => (string) ($row['dunning_level'] ?? '0'),
+            'dunning_fee_total' => self::formatMoney((float) ($row['dunning_fee_total'] ?? 0)),
+            'last_dunning_sent_at' => (string) ($row['last_dunning_sent_at'] ?? ''),
+            'payments' => $payments,
+            'total_paid' => self::formatMoney($totalPaidValue),
+            'open_amount' => self::formatMoney($openAmountValue),
             'lines' => $lines,
             'items' => $items,
             'system_lines' => is_array($row['system_lines'] ?? null) ? $row['system_lines'] : [],
@@ -1086,6 +1276,46 @@ final class VoucherRepository
     }
 
     /**
+     * Belegarten, bei denen Rechnungspositionen negative Beträge tragen können (Rabatt-/Gutschriftzeilen).
+     */
+    public static function allowsSignedItemAmounts(string $voucherType): bool
+    {
+        return in_array(
+            self::sanitizeVoucherType($voucherType),
+            ['income', 'credit', 'income_reduction', 'expense_reduction'],
+            true
+        );
+    }
+
+    /**
+     * Nummernkreis je Ausgangsbeleg-Typ oder Belegart.
+     */
+    public static function numberRangeTypeForDocument(string $documentKind, string $voucherType): ?string
+    {
+        $fromKind = VoucherDocumentKind::numberRangeType(VoucherDocumentKind::sanitize($documentKind));
+        if ($fromKind !== null) {
+            return $fromKind;
+        }
+
+        return self::numberRangeTypeForVoucher($voucherType);
+    }
+
+    public static function peekDocumentNumber(string $voucherType, string $documentKind = ''): string
+    {
+        $rangeType = self::numberRangeTypeForDocument($documentKind, $voucherType);
+        if ($rangeType === null) {
+            throw new InvalidArgumentException('Für diese Dokumentart gibt es keinen Nummernkreis.');
+        }
+
+        return NumberRangeSettings::allocateNext($rangeType, false)['number'];
+    }
+
+    public static function usesAutoDocumentNumber(string $voucherType, string $documentKind = ''): bool
+    {
+        return self::numberRangeTypeForDocument($documentKind, $voucherType) !== null;
+    }
+
+    /**
      * numberRangeTypeForVoucher
      * @param string $voucherType Belegtyp
      * @return ?string
@@ -1118,6 +1348,22 @@ final class VoucherRepository
     }
 
     /**
+     * @return array<string, string> Dokumentart => Nummernkreis-Bezeichnung (Einnahmen-Kette)
+     */
+    public static function autoDocumentKindNumberLabels(): array
+    {
+        $labels = [];
+        foreach (VoucherDocumentKind::options() as $kind => $_label) {
+            $rangeType = VoucherDocumentKind::numberRangeType($kind);
+            if ($rangeType !== null) {
+                $labels[$kind] = NumberRangeSettings::documentTypes()[$rangeType] ?? $rangeType;
+            }
+        }
+
+        return $labels;
+    }
+
+    /**
      * usesAutoInvoiceNumber
      * @param string $voucherType Belegtyp
      * @return bool
@@ -1133,14 +1379,43 @@ final class VoucherRepository
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function peekInvoiceNumber(string $voucherType): string
+    public static function peekInvoiceNumber(string $voucherType, string $documentKind = ''): string
     {
-        $rangeType = self::numberRangeTypeForVoucher($voucherType);
-        if ($rangeType === null) {
-            throw new InvalidArgumentException('Für diese Belegart gibt es keinen Nummernkreis.');
+        return self::peekDocumentNumber($voucherType, $documentKind);
+    }
+
+    /**
+     * Dokumentstatus setzen (Workflow, ohne vollständiges Formular).
+     */
+    public static function updateDocumentStatus(int $voucherId, string $status): void
+    {
+        if (!Database::isConfigured() || $voucherId < 1) {
+            throw new InvalidArgumentException('Beleg nicht gefunden.');
         }
 
-        return NumberRangeSettings::allocateNext($rangeType, false)['number'];
+        MigrationRunner::runPending();
+        $voucher = self::findById($voucherId);
+        if ($voucher === null) {
+            throw new InvalidArgumentException('Beleg nicht gefunden.');
+        }
+
+        $documentKind = (string) ($voucher['document_kind'] ?? '');
+        if ($documentKind === '' || self::normalizeVoucherType((string) ($voucher['voucher_type'] ?? '')) !== 'income') {
+            throw new InvalidArgumentException('Dokumentstatus ist nur für Ausgangsbelege verfügbar.');
+        }
+
+        $status = VoucherDocumentStatus::sanitize($status);
+        if ($status === '' || !VoucherDocumentStatus::isValidForKind($status, $documentKind)) {
+            throw new InvalidArgumentException('Ungültiger Dokumentstatus.');
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_vouchers SET document_status = :document_status WHERE id = :id'
+        );
+        $stmt->execute([
+            'document_status' => $status,
+            'id' => $voucherId,
+        ]);
     }
 
     /**
@@ -1178,9 +1453,9 @@ final class VoucherRepository
      * @param int|null $id Datensatz-ID
      * @return string
      */
-    private static function resolveInvoiceNumber(string $voucherType, array $data, ?int $id): string
+    private static function resolveInvoiceNumber(string $voucherType, array $data, ?int $id, string $documentKind = ''): string
     {
-        $rangeType = self::numberRangeTypeForVoucher($voucherType);
+        $rangeType = self::numberRangeTypeForDocument($documentKind, $voucherType);
         if ($rangeType === null) {
             return trim((string) ($data['invoice_number'] ?? ''));
         }
@@ -1256,6 +1531,16 @@ final class VoucherRepository
         return VoucherPaymentStatus::sanitize($status);
     }
 
+    private static function sanitizeDocumentText(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+
+        return mb_substr($text, 0, 4000);
+    }
+
         /**
      * enrichRow
      * @param array $row Datenbankzeile
@@ -1286,6 +1571,14 @@ final class VoucherRepository
         $row['account_name'] = $accountName;
         $row['is_draft'] = !empty($row['is_draft']);
         $row['type_label'] = self::typeLabel((string) ($row['voucher_type'] ?? ''));
+        $documentKind = (string) ($row['document_kind'] ?? '');
+        $row['document_kind_label'] = VoucherDocumentKind::label($documentKind);
+        if ($documentKind !== '' && VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? '')) === 'income') {
+            $row['type_label'] = $row['document_kind_label'];
+        }
+        $documentStatus = (string) ($row['document_status'] ?? '');
+        $row['document_status_label'] = VoucherDocumentStatus::label($documentStatus);
+        $row['document_status_badge_class'] = VoucherDocumentStatus::badgeClass($documentStatus);
         $row['payment_label'] = self::paymentLabel((string) ($row['payment_status'] ?? ''));
         $row['payment_badge_class'] = VoucherPaymentStatus::badgeClass((string) ($row['payment_status'] ?? ''));
         $row['payment_settlement_kind'] = VoucherPaymentStatus::settlementKind((string) ($row['payment_status'] ?? ''));

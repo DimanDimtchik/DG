@@ -2,15 +2,17 @@
 declare(strict_types=1);
 
 /**
- * Zahlungsstatus für Belege — Lexoffice-Parität (Weiterverarbeitung / OPOS / Banking).
+ * Zahlungsstatus für Belege — Weiterverarbeitung, OPOS und Banking.
  */
 final class VoucherPaymentStatus
 {
     public const OPEN = 'open';
+    public const PARTIAL = 'partial';
     public const CASH = 'cash';
     public const PRIVATE = 'private';
     public const DIRECT_DEBIT = 'direct_debit';
     public const BANK = 'bank';
+    public const TIP = 'tip';
 
     /**
      * Liefert Auswahloptionen.
@@ -21,7 +23,9 @@ final class VoucherPaymentStatus
     {
         return [
             self::OPEN => 'Offen',
+            self::PARTIAL => 'Teilweise bezahlt',
             self::CASH => 'Per Kasse bezahlt',
+            self::TIP => 'Trinkgeld (Durchlaufende Posten)',
             self::PRIVATE => 'Privat bezahlt',
             self::DIRECT_DEBIT => 'Wird abgebucht',
             self::BANK => 'Per Überweisung bezahlt',
@@ -62,7 +66,9 @@ final class VoucherPaymentStatus
     {
         return match (self::sanitize($status)) {
             self::OPEN => 'Zahlung steht noch aus — Beleg erscheint bei offenen Posten.',
+            self::PARTIAL => 'Teilzahlung erfasst — Restbetrag bleibt offen (OPOS).',
             self::CASH => 'Barzahlung über die Kasse — Beleg gilt als bezahlt, Kassenbuch-Buchung vorgesehen.',
+            self::TIP => 'Trinkgeld an Mitarbeiter/Dritte aus der Kasse — Buchung auf Durchlaufende Posten (z. B. 1590), Kassenbuch-Ausgang.',
             self::PRIVATE => 'Privat bezahlt — Verrechnungskonto EÜR (z. B. 1371) statt Geschäftskonto.',
             self::DIRECT_DEBIT => 'Lastschrift erwartet — wird beim Bankumsatz automatisch zugeordnet und als bezahlt markiert.',
             self::BANK => 'Überweisung ausgeführt — Beleg ist bezahlt, Gegenkonto Bank.',
@@ -87,7 +93,7 @@ final class VoucherPaymentStatus
      */
     public static function isSettled(string $status): bool
     {
-        return in_array(self::sanitize($status), [self::CASH, self::PRIVATE, self::BANK], true);
+        return in_array(self::sanitize($status), [self::CASH, self::PRIVATE, self::BANK, self::TIP], true);
     }
 
         /**
@@ -107,7 +113,7 @@ final class VoucherPaymentStatus
      */
     public static function countsAsOpenPayable(string $status): bool
     {
-        return in_array(self::sanitize($status), [self::OPEN, self::DIRECT_DEBIT], true);
+        return in_array(self::sanitize($status), [self::OPEN, self::PARTIAL, self::DIRECT_DEBIT], true);
     }
 
       /**
@@ -118,7 +124,7 @@ final class VoucherPaymentStatus
     public static function settlementKind(string $status): string
     {
         return match (self::sanitize($status)) {
-            self::CASH => 'cash',
+            self::CASH, self::TIP => 'cash',
             self::PRIVATE => 'private',
             self::DIRECT_DEBIT => 'bank_debit',
             self::BANK => 'bank_debit',
@@ -144,7 +150,8 @@ final class VoucherPaymentStatus
     public static function badgeClass(string $status): string
     {
         return match (self::sanitize($status)) {
-            self::CASH, self::PRIVATE, self::BANK => 'dg-badge--ok',
+            self::CASH, self::PRIVATE, self::BANK, self::TIP => 'dg-badge--ok',
+            self::PARTIAL => 'dg-badge--pending',
             self::DIRECT_DEBIT => 'dg-badge--pending',
             default => 'dg-badge--muted',
         };

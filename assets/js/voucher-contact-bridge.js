@@ -293,10 +293,14 @@
       var contactSearch = document.getElementById('dg-voucher-contact-search');
       if (contactSearch) {
         var contactLabel = params.get('contact_label') || '';
+        var linkedContactId = params.get('contact_id') || '';
         var label = contactLabel || contactSearch.value || draft.contactSearch || '';
         if (label) {
           contactSearch.value = label;
           contactSearch.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (linkedContactId && contactLabel) {
+          setFieldValue(form, 'supplier_name', contactLabel);
         }
       }
 

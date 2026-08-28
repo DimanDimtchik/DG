@@ -5,6 +5,8 @@ declare(strict_types=1);
 define('SHOP_ROOT', __DIR__);
 
 require_once SHOP_ROOT . '/src/ShopApp.php';
+require_once SHOP_ROOT . '/src/ShopMaintenance.php';
+require_once SHOP_ROOT . '/src/ShopAdminAuth.php';
 require_once SHOP_ROOT . '/src/ShopPlans.php';
 require_once SHOP_ROOT . '/src/ShopView.php';
 require_once SHOP_ROOT . '/src/ShopCheckout.php';

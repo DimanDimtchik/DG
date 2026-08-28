@@ -13,6 +13,69 @@ $marketingUrl = (string) ShopApp::config('marketing_url');
 $contactEmail = (string) ShopApp::config('contact_email');
 $legal = require SHOP_ROOT . '/config/legal.php';
 
+if (str_starts_with($path, '/admin')) {
+    if ($path === '/admin/logout') {
+        ShopAdminAuth::logout();
+        header('Location: /admin/login', true, 302);
+        exit;
+    }
+
+    if ($path === '/admin/login') {
+        $error = null;
+        $returnTo = trim((string) ($_GET['return'] ?? $_POST['return'] ?? '/admin/wartung'));
+        if ($returnTo === '' || !str_starts_with($returnTo, '/admin')) {
+            $returnTo = '/admin/wartung';
+        }
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $password = (string) ($_POST['password'] ?? '');
+            if (ShopAdminAuth::attempt($password)) {
+                header('Location: ' . $returnTo, true, 302);
+                exit;
+            }
+            $error = 'Anmeldung fehlgeschlagen.';
+        }
+        ShopView::render('admin-login', [
+            'title' => 'Shop-Verwaltung — Anmelden',
+            'error' => $error,
+            'returnTo' => $returnTo,
+            'adminConfigured' => ShopAdminAuth::isConfigured(),
+        ], true);
+        exit;
+    }
+
+    if ($path === '/admin/wartung') {
+        ShopAdminAuth::requireLogin();
+        $flashOk = $_SESSION['shop_admin_flash_ok'] ?? null;
+        $flashErr = $_SESSION['shop_admin_flash_err'] ?? null;
+        unset($_SESSION['shop_admin_flash_ok'], $_SESSION['shop_admin_flash_err']);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                ShopMaintenance::save($_POST);
+                $_SESSION['shop_admin_flash_ok'] = 'Wartungsmodus gespeichert.';
+            } catch (Throwable $e) {
+                $_SESSION['shop_admin_flash_err'] = $e->getMessage();
+            }
+            header('Location: /admin/wartung', true, 302);
+            exit;
+        }
+
+        ShopView::render('admin-maintenance', [
+            'title' => 'Shop — Wartungsmodus',
+            'maintEnabled' => ShopMaintenance::isActive(),
+            'maintenance' => ShopMaintenance::config(),
+            'flashOk' => $flashOk,
+            'flashErr' => $flashErr,
+            'adminConfigured' => ShopAdminAuth::isConfigured(),
+        ], true);
+        exit;
+    }
+
+    http_response_code(404);
+    echo 'Seite nicht gefunden.';
+    exit;
+}
+
 switch ($path) {
     case '/':
         ShopView::render('home', [

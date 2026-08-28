@@ -22,6 +22,11 @@ $systemLines = is_array($form['system_lines'] ?? null) ? $form['system_lines'] :
 $skrLabel = ChartOfAccountsSettings::skrTypeOptions()[$chartOfAccountsConfig['skr_type'] ?? 'skr03'] ?? 'SKR03';
 $selectedType = VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? 'expense'));
 $typeHint = VoucherRepository::voucherTypeHint($selectedType);
+$selectedDocumentKind = VoucherDocumentKind::sanitize((string) ($form['document_kind'] ?? ''));
+if ($selectedType === 'income' && $selectedDocumentKind === '') {
+    $selectedDocumentKind = VoucherDocumentKind::defaultForIncome();
+}
+$documentKindOptions = VoucherDocumentKind::options();
 /** @var list<array<string, mixed>> $lineRows */
 $lineRows = is_array($form['lines'] ?? null) ? $form['lines'] : [];
 /** @var list<array<string, mixed>> $itemRows */
@@ -67,7 +72,11 @@ $hasBookingAmounts = array_sum($taxBreakdown) > 0
     || array_reduce($lineRows, static fn (bool $carry, array $line): bool => $carry || (float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')) > 0, false);
 $paymentStatus = VoucherPaymentStatus::sanitize((string) ($form['payment_status'] ?? VoucherPaymentStatus::OPEN));
 $paymentStatusHint = VoucherPaymentStatus::hint($paymentStatus);
-$invoiceNumberRangeType = VoucherRepository::numberRangeTypeForVoucher($selectedType);
+$voucherPayments = is_array($form['payments'] ?? null) ? $form['payments'] : [];
+$voucherTotalPaid = (string) ($form['total_paid'] ?? ($form['paid_amount'] ?? '0,00'));
+$voucherOpenAmount = (string) ($form['open_amount'] ?? ($form['gross_amount'] ?? '0,00'));
+$showPartialPaymentsUi = $isEdit && empty($isDraftVoucher);
+$invoiceNumberRangeType = VoucherRepository::numberRangeTypeForDocument($selectedDocumentKind, $selectedType);
 $autoInvoiceNumber = $invoiceNumberRangeType !== null;
 $invoiceNumberRangeLabel = $autoInvoiceNumber
     ? (NumberRangeSettings::documentTypes()[$invoiceNumberRangeType] ?? 'Rechnung')
@@ -75,7 +84,7 @@ $invoiceNumberRangeLabel = $autoInvoiceNumber
 $invoiceNumberValue = (string) ($form['invoice_number'] ?? '');
 if ($autoInvoiceNumber && !$isEdit) {
     try {
-        $invoiceNumberValue = VoucherRepository::peekInvoiceNumber($selectedType);
+        $invoiceNumberValue = VoucherRepository::peekDocumentNumber($selectedType, $selectedDocumentKind);
     } catch (Throwable) {
         $invoiceNumberValue = '';
     }
@@ -92,13 +101,60 @@ $fiscalYear = (int) date('Y', strtotime((string) ($form['voucher_date'] ?? date(
 $nextFiscalYear = $fiscalYear + 1;
 $arapTypeLabel = VoucherAccrual::labelForType($selectedType);
 $arapTypeHint = VoucherAccrual::hintForType($selectedType);
-$showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $readOnly);
+$showArapSection = VoucherAccrual::showAccrualUi($selectedType, $arapEnabled, $readOnly, $selectedDocumentKind);
 $transferSupported = $isEdit
     && $paymentStatus === VoucherPaymentStatus::OPEN
     && in_array($selectedType, ['expense', 'expense_reduction'], true);
 $existingTransfer = ($isEdit && Database::isConfigured()) ? BankTransferRepository::findByVoucher((int) $voucherId) : null;
 /** @var list<array<string, mixed>> $ledgerPostings */
 $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
+/** @var array{documents: list<array<string, mixed>>, current_id: int} $voucherChain */
+$voucherChain = is_array($voucherChain ?? null) ? $voucherChain : ['documents' => [], 'current_id' => 0];
+/** @var list<string> $followUpKinds */
+$followUpKinds = is_array($followUpKinds ?? null) ? $followUpKinds : [];
+/** @var array<string, mixed>|null $chainSummary */
+$chainSummary = is_array($chainSummary ?? null) ? $chainSummary : null;
+$showDocumentKindField = $selectedType === 'income';
+$documentKindReadOnly = $readOnly || $isEdit;
+$selectedDocumentStatus = VoucherDocumentStatus::sanitize((string) ($form['document_status'] ?? ''));
+if ($showDocumentKindField && $selectedDocumentKind !== '' && $selectedDocumentStatus === '') {
+    $selectedDocumentStatus = VoucherDocumentStatus::defaultForKind($selectedDocumentKind);
+}
+$documentStatusOptionsForKind = $selectedDocumentKind !== ''
+    ? VoucherDocumentStatus::allowedForKind($selectedDocumentKind)
+    : [];
+$statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
+    ? VoucherDocumentStatus::nextStatuses($selectedDocumentStatus, $selectedDocumentKind)
+    : [];
+$showDocumentPositionTexts = VoucherDocumentKind::usesPositionTexts($selectedDocumentKind, $selectedType);
+if (!$isEdit && $showDocumentPositionTexts && trim((string) ($form['document_intro_text'] ?? '')) === '') {
+    $form['document_intro_text'] = VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind);
+}
+$documentFooterHint = 'Zusätzlicher Freitext (Zahlungsziel, Skonto, persönliche Hinweise). Gesetzliche Standardtexte wählen Sie unten aus.';
+$selectedLegalClauses = is_array($form['document_legal_clauses'] ?? null)
+    ? VoucherDocumentLegalClause::sanitizeSelection($form['document_legal_clauses'])
+    : [];
+$suggestedLegalClauses = VoucherDocumentLegalClause::suggestedKeys([
+    'id' => (int) ($voucherId ?? 0),
+    'reverse_charge_type' => (string) ($form['reverse_charge_type'] ?? ''),
+    'items' => is_array($form['items'] ?? null) ? $form['items'] : [],
+]);
+$legalClauseCatalog = VoucherDocumentLegalClause::catalog();
+$legalClauseGroups = [];
+foreach ($legalClauseCatalog as $key => $meta) {
+    $group = (string) ($meta['group'] ?? 'Sonstiges');
+    $legalClauseGroups[$group][$key] = $meta;
+}
+$paymentTermTiers = PaymentTermsService::sanitizeTiers($form['payment_term_tiers'] ?? AccountingPaymentSettings::defaultTiers());
+$showPaymentTerms = $selectedType === 'income' && VoucherDocumentKind::isBookable($selectedDocumentKind, $selectedType);
+if ($showPaymentTerms && trim((string) ($form['payment_due_date'] ?? '')) === '' && $paymentTermTiers !== []) {
+    $form['payment_due_date'] = PaymentTermsService::dueDateFromTiers((string) ($form['voucher_date'] ?? date('Y-m-d')), $paymentTermTiers);
+}
+$paymentTermsPreview = PaymentTermsService::composeText(
+    $paymentTermTiers,
+    (string) ($form['voucher_date'] ?? ''),
+    (string) ($form['payment_due_date'] ?? '')
+);
 ?>
 <div class="dg-wrap dg-buchhaltung-beleg-form">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -134,11 +190,86 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
+  <?php
+    View::partial('partials/voucher-document-chain', [
+        'voucherChain' => $voucherChain,
+        'followUpKinds' => $followUpKinds,
+        'chainSummary' => $chainSummary,
+        'voucherId' => (int) ($voucherId ?? 0),
+        'canEdit' => !($readOnly ?? false),
+        'voucherMailCanSend' => (bool) ($voucherMailCanSend ?? false),
+    ]);
+  ?>
+
+  <?php if ($isEdit && !$readOnly && ($voucherMailCanSend ?? false)) : ?>
+    <section class="dg-panel dg-voucher-email" id="dg-voucher-email-section" style="margin-bottom: 20px;">
+      <h2 class="dg-subsection-title">Per E-Mail senden</h2>
+      <p class="dg-field-hint">Versendet das Dokument an den Kunden — mit HTML-Anhang zum Drucken/PDF-Speichern.</p>
+      <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="voucher_email_send" value="1">
+        <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field dg-field--wide">
+            <span>Empfänger *</span>
+            <input type="email" name="email_to" required value="<?= View::escape((string) ($voucherMailTo ?? '')) ?>" placeholder="kunde@example.com">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Betreff</span>
+            <input type="text" name="email_subject" maxlength="191" value="<?= View::escape((string) ($voucherMailSubject ?? '')) ?>">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Anschreiben</span>
+            <textarea name="email_intro" rows="5"><?= View::escape((string) ($voucherMailIntro ?? '')) ?></textarea>
+          </label>
+        </div>
+        <p class="dg-form-actions">
+          <label class="dg-checkbox">
+            <input type="checkbox" name="email_attach_document" value="1" checked>
+            Dokument als HTML-Datei anhängen (Druck → PDF im Browser)
+          </label>
+          <label class="dg-checkbox">
+            <input type="checkbox" name="email_mark_sent" value="1" checked>
+            Nach Versand als „Versendet“ markieren
+          </label>
+          <button type="submit" class="dg-button dg-button--primary">E-Mail senden</button>
+          <a class="dg-button" href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $voucherId ?>&amp;download=print" target="_blank" rel="noopener">Vorschau Druck/PDF</a>
+        </p>
+      </form>
+    </section>
+  <?php elseif ($isEdit && !$readOnly && !($voucherMailConfigured ?? false) && $showDocumentKindField) : ?>
+    <div class="dg-flash dg-flash--info" style="margin-bottom: 20px;">
+      E-Mail-Versand: SMTP unter
+      <a href="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>">Einstellungen → E-Mail</a>
+      konfigurieren, um Angebote und Rechnungen direkt zu versenden.
+    </div>
+  <?php endif; ?>
+
+  <?php if ($isEdit && !$readOnly && ($voucherDunningCanSend ?? false)) : ?>
+    <section class="dg-form-section dg-voucher-dunning" style="margin-bottom: 20px;">
+      <h2 class="dg-subsection-title">Mahnung</h2>
+      <p class="dg-field-hint">
+        Nächste Stufe: <strong><?= View::escape((string) ($voucherDunningNextLabel ?? '')) ?></strong>
+        <?php if ((float) ($voucherDunningFee ?? 0) > 0) : ?>
+          — Mahngebühr <?= View::escape(VoucherRepository::formatMoney((float) $voucherDunningFee)) ?> € wird dem Beleg hinzugefügt.
+        <?php endif; ?>
+      </p>
+      <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="voucher_dunning_send" value="1">
+        <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+        <input type="hidden" name="dunning_level" value="<?= (int) ($voucherDunningNextLevel ?? 0) ?>">
+        <button type="submit" class="dg-button dg-button--warning"><?= View::escape((string) ($voucherDunningNextLabel ?? 'Mahnung')) ?> senden</button>
+      </form>
+    </section>
+  <?php endif; ?>
+
   <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form" enctype="multipart/form-data"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="voucher_save" value="1">
     <input type="hidden" name="contact_id" id="dg-voucher-contact-id" value="<?= View::escape($form['contact_id'] ?? '') ?>">
     <input type="hidden" name="draft_voucher_id" id="dg-voucher-draft-id" value="<?= (int) ($voucherId ?? 0) ?>">
+    <input type="hidden" name="parent_voucher_id" id="dg-voucher-parent-id" value="<?= View::escape((string) ($form['parent_voucher_id'] ?? '')) ?>">
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $voucherId ?>"><?php endif; ?>
 
     <?php if (!$readOnly) : ?>
@@ -187,6 +318,36 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
           </select>
           <small class="dg-field-hint" id="dg-voucher-type-hint"><?= View::escape($typeHint) ?></small>
         </label>
+        <label class="dg-field" id="dg-voucher-document-kind-field"<?= $showDocumentKindField ? '' : ' hidden' ?>>
+          <span>Dokumentart</span>
+          <?php if ($documentKindReadOnly) : ?>
+            <input type="hidden" name="document_kind" id="dg-voucher-document-kind" value="<?= View::escape($selectedDocumentKind) ?>">
+            <input type="text" value="<?= View::escape(VoucherDocumentKind::label($selectedDocumentKind)) ?>" readonly class="dg-input--computed">
+            <small class="dg-field-hint">Angebot, Lieferschein, Abschlags- und Schlussrechnung — nach dem Speichern nicht mehr änderbar.</small>
+          <?php else : ?>
+            <select name="document_kind" id="dg-voucher-document-kind"<?= $readOnly ? ' disabled' : '' ?>>
+              <?php foreach ($documentKindOptions as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"<?= $selectedDocumentKind === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <small class="dg-field-hint">Steuert Nummernkreis und ob der Beleg gebucht wird (Angebot/AB/Lieferschein = ohne Buchung).</small>
+          <?php endif; ?>
+        </label>
+        <label class="dg-field" id="dg-voucher-document-status-field"<?= $showDocumentKindField && $documentStatusOptionsForKind !== [] ? '' : ' hidden' ?>>
+          <span>Dokumentstatus</span>
+          <?php if ($readOnly) : ?>
+            <input type="text" value="<?= View::escape(VoucherDocumentStatus::label($selectedDocumentStatus)) ?>" readonly class="dg-input--computed">
+          <?php else : ?>
+            <select name="document_status" id="dg-voucher-document-status">
+              <?php foreach ($documentStatusOptionsForKind as $statusValue) : ?>
+                <option value="<?= View::escape($statusValue) ?>"<?= $selectedDocumentStatus === $statusValue ? ' selected' : '' ?>>
+                  <?= View::escape(VoucherDocumentStatus::label($statusValue)) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <small class="dg-field-hint">Workflow: z. B. Angebot versendet → angenommen → abgerechnet.</small>
+          <?php endif; ?>
+        </label>
         <label class="dg-field">
           <span>Belegdatum *</span>
           <input type="date" name="voucher_date" id="dg-voucher-date" value="<?= View::escape($form['voucher_date'] ?? '') ?>" required<?= $readOnly ? ' readonly' : '' ?>>
@@ -224,12 +385,41 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
           <span>Zahlungsstatus</span>
           <select name="payment_status" id="dg-voucher-payment-status"<?= $readOnly ? ' disabled' : '' ?>>
             <?php foreach ($paymentOptions as $value => $label) : ?>
+              <?php if ($value === VoucherPaymentStatus::TIP && !VoucherRepository::isExpenseType($selectedType)) {
+                  continue;
+              } ?>
               <option value="<?= View::escape($value) ?>"<?= $paymentStatus === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
             <?php endforeach; ?>
           </select>
           <small class="dg-field-hint" id="dg-voucher-payment-status-hint"><?= View::escape($paymentStatusHint) ?></small>
+          <?php
+            $partialPaidAmount = (float) str_replace(',', '.', $voucherTotalPaid);
+            $partialOpenAmount = (float) str_replace(',', '.', $voucherOpenAmount);
+          ?>
+          <?php if ($paymentStatus === VoucherPaymentStatus::PARTIAL && ($partialPaidAmount > 0 || $partialOpenAmount > 0)) : ?>
+            <p class="dg-field-hint dg-voucher-partial-summary">
+              Teilzahlung: <strong><?= View::escape($voucherTotalPaid) ?> €</strong>
+              · Offen: <strong><?= View::escape($voucherOpenAmount) ?> €</strong>
+              <?php if ($showPartialPaymentsUi && $voucherPayments === []) : ?>
+                · <a href="#dg-voucher-payments-section">Zahlungshistorie unten</a>
+              <?php endif; ?>
+            </p>
+          <?php endif; ?>
         </label>
       </div>
+      <?php if ($isEdit && !$readOnly && $statusNextActions !== []) : ?>
+        <div class="dg-form-actions dg-voucher-status-actions" style="margin-top: 12px;">
+          <?php foreach ($statusNextActions as $nextStatus) : ?>
+            <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="voucher_status_change" value="1">
+              <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+              <input type="hidden" name="document_status" value="<?= View::escape($nextStatus) ?>">
+              <button type="submit" class="dg-button dg-button--small"><?= View::escape(VoucherDocumentStatus::actionLabel($nextStatus)) ?></button>
+            </form>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
       <div class="dg-form-grid" id="dg-voucher-settlement-fields">
         <label class="dg-field">
           <span>Skonto %</span>
@@ -242,14 +432,149 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
                  value="<?= View::escape((string) ($form['discount_amount'] ?? '')) ?>" placeholder="0,00"<?= $readOnly ? ' readonly' : '' ?>>
         </label>
         <label class="dg-field">
-          <span>Gezahlt (Brutto − Skonto)</span>
-          <input type="text" name="paid_amount" inputmode="decimal"
-                 value="<?= View::escape((string) ($form['paid_amount'] ?? '')) ?>" placeholder="0,00"<?= $readOnly ? ' readonly' : '' ?>>
+          <span><?= $voucherPayments !== [] ? 'Gezahlt gesamt' : 'Gezahlt (Brutto − Skonto)' ?></span>
+          <input type="text" name="paid_amount" id="dg-voucher-paid-amount" inputmode="decimal"
+                 value="<?= View::escape($voucherPayments !== [] ? $voucherTotalPaid : (string) ($form['paid_amount'] ?? '')) ?>" placeholder="0,00"<?= ($readOnly || $voucherPayments !== []) ? ' readonly' : '' ?><?= $voucherPayments !== [] ? ' class="dg-input--readonly"' : '' ?>>
+          <?php if ($voucherPayments !== []) : ?>
+            <small class="dg-field-hint">Summe aus Zahlungshistorie — neue Zahlungen unten erfassen.</small>
+          <?php endif; ?>
         </label>
         <label class="dg-field">
           <span>Zahlungsdatum</span>
-          <input type="date" name="paid_at" value="<?= View::escape((string) ($form['paid_at'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+          <input type="date" name="paid_at" id="dg-voucher-paid-at" value="<?= View::escape((string) ($form['paid_at'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
         </label>
+      </div>
+      <input type="hidden" name="discount_manual" id="dg-voucher-discount-manual" value="0">
+
+      <?php if ($showPartialPaymentsUi) : ?>
+        <div class="dg-voucher-payments" id="dg-voucher-payments-section" style="margin-top: 14px;">
+          <h3 class="dg-subsection-title">Zahlungen / Teilzahlungen</h3>
+          <p class="dg-field-hint">
+            Brutto: <strong><?= View::escape((string) ($form['gross_amount'] ?? '0,00')) ?> €</strong>
+            · Gezahlt: <strong id="dg-voucher-total-paid"><?= View::escape($voucherTotalPaid) ?> €</strong>
+            · Offen: <strong id="dg-voucher-open-amount"><?= View::escape($voucherOpenAmount) ?> €</strong>
+          </p>
+          <?php if ($voucherPayments !== []) : ?>
+            <div class="dg-table-wrap">
+              <table class="dg-table">
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Art</th>
+                    <th class="dg-table__num">Betrag</th>
+                    <th>Verwendungszweck</th>
+                    <?php if (!$readOnly) : ?><th></th><?php endif; ?>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($voucherPayments as $payment) : ?>
+                    <tr>
+                      <td><?= View::escape((string) ($payment['payment_date'] ?? '')) ?></td>
+                      <td><?= View::escape((string) ($payment['payment_method_label'] ?? '')) ?></td>
+                      <td class="dg-table__num"><?= View::escape((string) ($payment['amount_display'] ?? '')) ?> €</td>
+                      <td><?= View::escape((string) ($payment['reference_text'] ?? '')) ?></td>
+                      <?php if (!$readOnly) : ?>
+                        <td>
+                          <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-inline-form" onsubmit="return confirm('Zahlung wirklich entfernen?');">
+                            <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                            <input type="hidden" name="voucher_payment_delete" value="1">
+                            <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+                            <input type="hidden" name="payment_id" value="<?= (int) ($payment['id'] ?? 0) ?>">
+                            <button type="submit" class="dg-button dg-button--ghost dg-button--small" aria-label="Zahlung löschen">×</button>
+                          </form>
+                        </td>
+                      <?php endif; ?>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php else : ?>
+            <p class="dg-muted">Noch keine Zahlungen erfasst.</p>
+          <?php endif; ?>
+
+          <?php if (!$readOnly) : ?>
+            <form method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-payment-add-form" class="dg-voucher-payments__add" style="margin-top: 12px;">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="voucher_payment_add" value="1">
+              <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
+              <fieldset>
+                <legend>Neue Zahlung erfassen</legend>
+                <div class="dg-form-grid">
+                  <label class="dg-field">
+                    <span>Betrag</span>
+                    <input type="text" name="payment_new_amount" inputmode="decimal" placeholder="0,00" required>
+                  </label>
+                  <label class="dg-field">
+                    <span>Datum</span>
+                    <input type="date" name="payment_new_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+                  </label>
+                  <label class="dg-field">
+                    <span>Zahlungsart</span>
+                    <select name="payment_new_method">
+                      <?php foreach (VoucherPaymentRepository::methodOptions() as $methodKey => $methodLabel) : ?>
+                        <option value="<?= View::escape($methodKey) ?>"><?= View::escape($methodLabel) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </label>
+                  <label class="dg-field dg-field--wide">
+                    <span>Verwendungszweck / Notiz</span>
+                    <input type="text" name="payment_new_reference" maxlength="255" placeholder="optional">
+                  </label>
+                </div>
+                <button type="submit" class="dg-button dg-button--primary dg-button--small">Zahlung buchen</button>
+              </fieldset>
+            </form>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
+
+      <div id="dg-voucher-payment-terms-section" class="dg-voucher-payment-terms"<?= $showPaymentTerms ? '' : ' hidden' ?> style="margin-top: 14px;">
+        <h3 class="dg-subsection-title">Zahlungsbedingungen (Skonto-Stufen)</h3>
+        <p class="dg-field-hint">Voreinstellungen aus <a href="<?= View::escape(SettingsRegistry::tabUrl('payment-terms')) ?>">Einstellungen → Zahlungsbedingungen</a>. Negative % = Skonto, positive % = Verzugszinsen.</p>
+        <div class="dg-table-wrap">
+          <table class="dg-table" id="dg-voucher-payment-tiers-table">
+            <thead>
+              <tr>
+                <th>Tage</th>
+                <th>Änderung %</th>
+                <th>Bezeichnung</th>
+              </tr>
+            </thead>
+            <tbody id="dg-voucher-payment-tiers-body">
+              <?php foreach ($paymentTermTiers as $index => $tier) : ?>
+                <tr>
+                  <td>
+                    <input type="number" name="payment_term_tiers[<?= (int) $index ?>][days]" min="1" max="365"
+                           value="<?= (int) ($tier['days'] ?? 1) ?>" class="dg-voucher-payment-tier-days"<?= $readOnly ? ' readonly' : '' ?>>
+                  </td>
+                  <td>
+                    <input type="text" name="payment_term_tiers[<?= (int) $index ?>][adjustment_percent]" inputmode="decimal"
+                           value="<?= View::escape(number_format((float) ($tier['adjustment_percent'] ?? 0), 2, '.', '')) ?>" class="dg-voucher-payment-tier-percent"<?= $readOnly ? ' readonly' : '' ?>>
+                  </td>
+                  <td>
+                    <input type="text" name="payment_term_tiers[<?= (int) $index ?>][label]" maxlength="80"
+                           value="<?= View::escape((string) ($tier['label'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <div class="dg-form-grid" style="margin-top: 12px;">
+          <label class="dg-field">
+            <span>Fälligkeitsdatum</span>
+            <input type="date" name="payment_due_date" id="dg-voucher-payment-due-date" value="<?= View::escape((string) ($form['payment_due_date'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
+          </label>
+          <?php if ($isEdit && (int) ($form['dunning_level'] ?? 0) > 0) : ?>
+            <label class="dg-field">
+              <span>Mahnstufe</span>
+              <input type="text" value="<?= (int) ($form['dunning_level'] ?? 0) ?>" readonly class="dg-input--readonly">
+              <small class="dg-field-hint">Mahngebühren gesamt: <?= View::escape(VoucherRepository::formatMoney((float) ($form['dunning_fee_total'] ?? 0))) ?> €</small>
+            </label>
+          <?php endif; ?>
+        </div>
+        <pre class="dg-voucher-payment-terms-preview" id="dg-voucher-payment-terms-preview"><?= View::escape($paymentTermsPreview) ?></pre>
       </div>
     </section>
 
@@ -285,6 +610,20 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
     <section class="dg-form-section" id="dg-voucher-invoice-items-section"<?= $showInvoiceItems ? '' : ' hidden' ?>>
       <div class="dg-form-section__head">
         <h2 class="dg-subsection-title">Rechnungspositionen</h2>
+      </div>
+      <div id="dg-voucher-document-texts-intro"<?= $showDocumentPositionTexts ? '' : ' hidden' ?>>
+        <label class="dg-field dg-field--wide">
+          <span>Text vor den Positionen</span>
+          <textarea
+            name="document_intro_text"
+            id="dg-voucher-document-intro"
+            rows="3"
+            maxlength="4000"
+            placeholder="<?= View::escape(VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind)) ?>"
+            <?= $readOnly ? ' readonly' : '' ?>
+          ><?= View::escape((string) ($form['document_intro_text'] ?? '')) ?></textarea>
+          <small class="dg-field-hint">Erscheint auf Rechnung, PDF und in der E-Mail vor der Positionstabelle.</small>
+        </label>
       </div>
       <p class="dg-field-hint" id="dg-voucher-invoice-items-hint">
         Artikel und Leistungen aus dem Katalog — Buchungszeilen werden daraus automatisch erzeugt.
@@ -411,6 +750,64 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
         </table>
       </div>
       <p class="dg-field-hint">Summe Positionen: <strong id="dg-voucher-invoice-items-sum">0,00</strong> €</p>
+      <div id="dg-voucher-document-texts-footer"<?= $showDocumentPositionTexts ? '' : ' hidden' ?> style="margin-top: 12px;">
+        <label class="dg-field dg-field--wide">
+          <span>Zusätzlicher Freitext (nach den Positionen)</span>
+          <textarea
+            name="document_footer_text"
+            id="dg-voucher-document-footer"
+            rows="3"
+            maxlength="4000"
+            placeholder="z. B. Zahlungsziel 14 Tage, 2 % Skonto bei Zahlung innerhalb von 7 Tagen …"
+            <?= $readOnly ? ' readonly' : '' ?>
+          ><?= View::escape((string) ($form['document_footer_text'] ?? '')) ?></textarea>
+          <small class="dg-field-hint"><?= View::escape($documentFooterHint) ?></small>
+        </label>
+
+        <fieldset class="dg-field dg-field--wide dg-voucher-legal-clauses">
+          <legend>Gesetzliche Hinweise (Vorlagen)</legend>
+          <p class="dg-field-hint">Standardformulierungen nach UStG — werden auf Rechnung, PDF und E-Mail unter dem Freitext ausgegeben. Bei Unsicherheit Steuerberater fragen.</p>
+          <?php foreach ($legalClauseGroups as $groupLabel => $clauses) : ?>
+            <div class="dg-voucher-legal-clauses__group">
+              <h3 class="dg-voucher-legal-clauses__group-title"><?= View::escape($groupLabel) ?></h3>
+              <ul class="dg-voucher-legal-clauses__list">
+                <?php foreach ($clauses as $clauseKey => $clauseMeta) : ?>
+                  <?php
+                    $isChecked = in_array($clauseKey, $selectedLegalClauses, true);
+                    $isSuggested = in_array($clauseKey, $suggestedLegalClauses, true) && !$isChecked;
+                  ?>
+                  <li class="dg-voucher-legal-clauses__item">
+                    <label class="dg-checkbox dg-voucher-legal-clause">
+                      <input
+                        type="checkbox"
+                        name="document_legal_clauses[]"
+                        value="<?= View::escape($clauseKey) ?>"
+                        class="dg-voucher-legal-clause-input"
+                        data-clause-text="<?= View::escape((string) ($clauseMeta['text'] ?? '')) ?>"
+                        <?= $isChecked ? ' checked' : '' ?>
+                        <?= $readOnly ? ' disabled' : '' ?>
+                      >
+                      <span class="dg-voucher-legal-clause__label"><?= View::escape((string) ($clauseMeta['label'] ?? '')) ?></span>
+                      <?php if ($isSuggested) : ?>
+                        <span class="dg-badge dg-badge--pending">Vorschlag</span>
+                      <?php endif; ?>
+                    </label>
+                    <small class="dg-field-hint"><?= View::escape((string) ($clauseMeta['hint'] ?? '')) ?></small>
+                    <details class="dg-voucher-legal-clause__preview">
+                      <summary>Textvorschau</summary>
+                      <p><?= View::escape((string) ($clauseMeta['text'] ?? '')) ?></p>
+                    </details>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          <?php endforeach; ?>
+          <div class="dg-voucher-legal-clauses__combined" id="dg-voucher-legal-clauses-preview-wrap" hidden>
+            <strong>Vorschau Fußtext gesamt</strong>
+            <pre class="dg-voucher-legal-clauses__preview-text" id="dg-voucher-legal-clauses-preview"></pre>
+          </div>
+        </fieldset>
+      </div>
     </section>
 
     <section class="dg-form-section" id="dg-voucher-booking-section">
@@ -663,7 +1060,7 @@ $ledgerPostings = is_array($ledgerPostings ?? null) ? $ledgerPostings : [];
       <div id="dg-voucher-rc-panels" class="dg-voucher-rc-panels"<?= $reverseCharge ? '' : ' hidden' ?>>
         <div class="dg-voucher-rc-panel">
           <h3 class="dg-voucher-rc-panel__title">Automatische Nebenbuchungen (§13b)</h3>
-          <p class="dg-field-hint">Wie in Lexoffice: Vorsteuer und Umsatzsteuer werden zusätzlich auf die Steuerkonten gebucht.</p>
+          <p class="dg-field-hint">Bei §13b werden Vorsteuer und Umsatzsteuer zusätzlich auf die Steuerkonten gebucht (Soll/Haben).</p>
           <div class="dg-table-wrap">
             <table class="dg-table dg-voucher-rc-postings__table">
               <thead>

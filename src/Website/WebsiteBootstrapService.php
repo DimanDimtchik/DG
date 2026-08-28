@@ -11,6 +11,7 @@ final class WebsiteBootstrapService
      *   legal?: bool,
      *   homepage?: bool,
      *   contact?: bool,
+     *   terminkalender_page?: bool,
      *   menu?: bool,
      *   maintenance?: bool,
      *   overwrite?: bool,
@@ -30,6 +31,7 @@ final class WebsiteBootstrapService
         $legal = $options['legal'] ?? true;
         $homepage = $options['homepage'] ?? true;
         $contact = $options['contact'] ?? true;
+        $terminkalenderPage = $options['terminkalender_page'] ?? true;
         $menu = $options['menu'] ?? true;
         $maintenance = $options['maintenance'] ?? true;
         $overwrite = $options['overwrite'] ?? false;
@@ -39,6 +41,7 @@ final class WebsiteBootstrapService
             'legal' => [],
             'homepage' => null,
             'contact_page' => null,
+            'terminkalender_page' => null,
             'contact_form_id' => null,
             'menu' => false,
             'maintenance' => false,
@@ -77,6 +80,29 @@ final class WebsiteBootstrapService
             }
         }
 
+        if ($terminkalenderPage) {
+            $existingTk = WebsitePageRepository::findBySlugAnyStatus('terminkalender');
+            if ($existingTk === null || $overwrite) {
+                $tkId = WebsitePageRepository::save([
+                    'title' => 'Terminkalender',
+                    'slug' => 'terminkalender',
+                    'status' => WebsitePageRepository::STATUS_PUBLISHED,
+                    'layout' => WebsiteHomepageTemplates::terminkalenderPageLayout(),
+                ], $existingTk !== null ? (int) $existingTk['id'] : null, $userId);
+                $result['terminkalender_page'] = [
+                    'id' => $tkId,
+                    'slug' => 'terminkalender',
+                    'action' => $existingTk !== null ? 'updated' : 'created',
+                ];
+            } else {
+                $result['terminkalender_page'] = [
+                    'id' => (int) $existingTk['id'],
+                    'slug' => 'terminkalender',
+                    'action' => 'skipped',
+                ];
+            }
+        }
+
         if ($homepage) {
             $existingHome = WebsitePageRepository::findBySlugAnyStatus('startseite');
             if ($existingHome === null || $overwrite) {
@@ -105,6 +131,11 @@ final class WebsiteBootstrapService
         if ($menu && ($overwrite || $isFirstRun)) {
             self::configureMenuAndChrome();
             $result['menu'] = true;
+        } elseif (
+            is_array($result['terminkalender_page'])
+            && ($result['terminkalender_page']['action'] ?? '') === 'created'
+        ) {
+            self::ensureTerminkalenderMenuItem();
         }
 
         if ($maintenance) {
@@ -154,6 +185,7 @@ final class WebsiteBootstrapService
         SettingsStore::set('website.menu', [
             'items' => [
                 ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'children' => []],
+                ['label' => 'Terminkalender', 'url' => '/terminkalender', 'auth_only' => false, 'children' => []],
                 ['label' => 'Kontakt', 'url' => '/kontakt', 'auth_only' => false, 'children' => []],
                 [
                     'label' => 'Rechtliches',
@@ -180,6 +212,42 @@ final class WebsiteBootstrapService
             }
             SettingsStore::set(EmailLayoutSettings::STORE_KEY, $layout);
         }
+    }
+
+    private static function ensureTerminkalenderMenuItem(): void
+    {
+        $menu = SettingsStore::get('website.menu', []);
+        if (!is_array($menu)) {
+            $menu = [];
+        }
+        $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $url = rtrim((string) ($item['url'] ?? ''), '/');
+            if ($url === '/terminkalender') {
+                return;
+            }
+        }
+
+        $entry = [
+            'label' => 'Terminkalender',
+            'url' => '/terminkalender',
+            'auth_only' => false,
+            'children' => [],
+        ];
+        if ($items === []) {
+            $items[] = ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'children' => []];
+        }
+        $insertAt = 1;
+        if ($insertAt > count($items)) {
+            $items[] = $entry;
+        } else {
+            array_splice($items, $insertAt, 0, [$entry]);
+        }
+        $menu['items'] = $items;
+        SettingsStore::set('website.menu', $menu);
     }
 
     private static function configureMaintenance(bool $enabled): void

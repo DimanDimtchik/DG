@@ -220,6 +220,22 @@ Frische Installation oder Test-VM (`storage/.installed` entfernen):
 
 ---
 
+## K. Buchhaltung Randfälle (Branch `cursor/buchhaltung-randfaelle-1c3a`)
+
+> **Druckbare Checkliste:** [`TESTLISTE-RANDFAELLE-2026-08-23.html`](TESTLISTE-RANDFAELLE-2026-08-23.html) (Browser → Drucken / PDF)  
+> Deploy + Migrationen **055–061** · Hard-Reload · Details: `BUCHHALTUNG-BELEGKETTE.md`, `ZEITERFASSUNG-PLAN.md`
+
+- [ ] Belegkette: Angebot → AB → (Lieferschein) → Abschlag → Schlussrechnung + Panel-Links
+- [ ] Dokumentstatus-Workflow + Belegliste-Filter
+- [ ] Freitext + gesetzliche Klauseln auf Druck/PDF/E-Mail
+- [ ] Skonto-Stufen + manuelle/automatische Mahnung
+- [ ] Teilzahlungen (`partial`, OPOS Bezahlt/Offen)
+- [ ] Zeiterfassung: Stempel, Zwangspause, Team, Autoclose
+- [ ] Randfälle: PRAP Einnahmen, negative Rabattzeile, Trinkgeld
+- [ ] Terminkalender-Landing (frisch / Bootstrap)
+
+---
+
 ## Schnellpfad (ca. 15 Minuten)
 
 1. Shop: Start + Preise Monat/Jahr + ein Checkout mit Testdaten  

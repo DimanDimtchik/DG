@@ -261,7 +261,8 @@ final class VoucherApi
     private static function handleInvoiceNumberPreview(): void
     {
         $voucherType = VoucherRepository::normalizeVoucherType((string) ($_GET['voucher_type'] ?? ''));
-        if (!VoucherRepository::usesAutoInvoiceNumber($voucherType)) {
+        $documentKind = VoucherDocumentKind::sanitize((string) ($_GET['document_kind'] ?? ''));
+        if (!VoucherRepository::usesAutoDocumentNumber($voucherType, $documentKind)) {
             echo json_encode([
                 'success' => true,
                 'data' => ['number' => '', 'auto' => false],
@@ -269,11 +270,11 @@ final class VoucherApi
             return;
         }
 
-        $rangeType = VoucherRepository::numberRangeTypeForVoucher($voucherType);
+        $rangeType = VoucherRepository::numberRangeTypeForDocument($documentKind, $voucherType);
         echo json_encode([
             'success' => true,
             'data' => [
-                'number' => VoucherRepository::peekInvoiceNumber($voucherType),
+                'number' => VoucherRepository::peekDocumentNumber($voucherType, $documentKind),
                 'auto' => true,
                 'range_type' => $rangeType,
                 'range_label' => NumberRangeSettings::documentTypes()[$rangeType ?? ''] ?? '',
