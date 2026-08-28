@@ -56,6 +56,17 @@ if (!str_contains($msg, 'Max Mustermann') || !str_contains($msg, '2:30')) {
 }
 
 line('');
+line('== Erinnerungstext überfällig ==');
+$overdue = OvertimeLotRepository::buildReminderMessage('Max Mustermann', 150, '2026-07-15', true);
+line($overdue);
+if (!str_contains($overdue, 'bleiben offen')) {
+    $failed++;
+    line('FEHLER: Überfällig-Text fehlt');
+} else {
+    line('OK  Überfällig-Text');
+}
+
+line('');
 if ($failed > 0) {
     line("FEHLGESCHLAGEN: {$failed} Prüfung(en)");
     exit(1);
