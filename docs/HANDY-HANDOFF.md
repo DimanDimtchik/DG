@@ -29,10 +29,12 @@ GitHub Secrets sind als Backup gesetzt (gleiche Namen), greifen aber **nicht** a
 ## Offene Themen
 
 1. **PHP 8.5:** Alle Domains im KAS auf 8.5 → **dann** testen. Details: [`docs/PHP85-TEST-HANDOFF.md`](PHP85-TEST-HANDOFF.md)
-2. Stripe Keys + Webhook (bewusst später)
-3. AGB/Widerruf juristisch
-4. DATEV EXTF / ShiftBase API
-5. Kontur-Adresse nach Restore prüfen
+2. **Nextcloud cloud.ganz-om.de:** Wiederherstellung — [`docs/CLOUD-NEXTCLOUD-RESTORE.md`](CLOUD-NEXTCLOUD-RESTORE.md)
+3. Stripe Keys + Webhook (bewusst später)
+4. AGB/Widerruf juristisch
+5. DATEV EXTF / ShiftBase API
+6. Kontur-Adresse nach Restore prüfen
+7. ganz-om.de → CRM (WP entfernen)
 
 ## Deploy (nach SSH-Setup)
 
