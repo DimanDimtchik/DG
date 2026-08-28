@@ -1,6 +1,22 @@
 # Nextcloud cloud.ganz-om.de — Wiederherstellung & ganz-om.de → CRM
 
-Stand: **2026-08-28** · Server-Check per SSH
+Stand: **2026-08-28** · **Restore abgeschlossen** ✅
+
+---
+
+## Restore-Status (28.08.2026)
+
+| Schritt | Status |
+|---------|--------|
+| DB **d046bc58** (`nextcloud_om`) Backup **16.08.** | ✅ eingespielt (Option 2) |
+| Webspace **`cloud.ganz-om.de`** Backup **16.08.** | ✅ Option 5 (nur Verzeichnis) |
+| Nextcloud erreichbar | ✅ https://cloud.ganz-om.de/ |
+| Version | **33.0.1** · maintenance: false |
+| Passwörter-App | ✅ installiert (`passwords` 2026.3.21) |
+| Daten | **~11 GB** · 2008 Dateien · `files:scan` ohne Fehler |
+| PHP 8.5 | ✅ `php85 occ status` OK |
+
+**Noch manuell durch Nutzer:** Login testen + Passwörter-App mit **Master-Passwort** öffnen.
 
 ---
 
@@ -118,13 +134,11 @@ Frische Installation **ohne** Backup hilft **nicht** bei Passwörter-Wiederherst
 
 ## Checkliste für nächste Session
 
-- [ ] **Webspace-Backup 16.08.2026** (16 GB) wiederherstellen — **nicht** die ~0,27 GB vom 22.08.+
-- [ ] **DB d046bc58** (`nextcloud_om`) aus KAS-Datenbank-Backup wiederherstellen
-- [ ] Restore in Testordner, dann `cloud.ganz-om.de` prüfen (`status.php`, große `data/`)
-- [ ] Passwörter-App mit Master-Passwort testen
-- [ ] PC/Handy auf lokale Nextcloud-Sync prüfen (zusätzlich)
-- [ ] Bei Erfolg: PHP 8.5 + Nextcloud-Version prüfen
-- [ ] ganz-om.de → CRM planen (WP-DB **d046bc57** separat, nicht mit Cloud verwechseln)
+- [x] **Webspace-Backup 16.08.2026** — Option 5 nur `cloud.ganz-om.de`
+- [x] **DB d046bc58** (`nextcloud_om`) Backup 16.08.
+- [x] `files:scan --all` ohne Fehler
+- [ ] **Nutzer:** Login https://cloud.ganz-om.de/ + Passwörter-App Master-Passwort prüfen
+- [ ] ganz-om.de → CRM planen (WP-DB **d046bc57** separat)
 
 ---
 
