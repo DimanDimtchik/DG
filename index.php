@@ -2409,6 +2409,10 @@ switch ($path) {
             }
             $voucherDocumentKindFilter = VoucherDocumentKind::sanitize((string) ($_GET['doc_kind'] ?? ''));
             $voucherDocumentStatusFilter = VoucherDocumentStatus::sanitize((string) ($_GET['doc_status'] ?? ''));
+            if ($voucherTypeFilter !== '' && !VoucherDocumentKind::voucherTypeSupportsDocumentKind($voucherTypeFilter)) {
+                $voucherDocumentKindFilter = '';
+                $voucherDocumentStatusFilter = '';
+            }
             $voucherDraftFilter = (string) ($_GET['draft'] ?? '');
             if ($voucherDraftFilter !== '1' && $voucherDraftFilter !== '0') {
                 $voucherDraftFilter = '';
