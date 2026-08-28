@@ -1,6 +1,6 @@
 <?php
 /**
- * Öffentliche Wartungsseite.
+ * Öffentliche Wartungsseite (CRM — einheitlich auf allen Instanzen).
  *
  * @var array{
  *   enabled: bool,
@@ -8,18 +8,16 @@
  *   message: string,
  *   email: string,
  *   image_url: string,
- *   image_media_id: string
+ *   image_media_id: string,
+ *   use_inline_art?: bool
  * } $maintenance
  */
-$m = $maintenance ?? WebsiteMaintenanceSettings::config();
+$m = WebsiteMaintenanceRenderer::normalize($maintenance ?? []);
 $headline = (string) ($m['headline'] ?? 'Die Seite befindet sich im Aufbau');
 $message = (string) ($m['message'] ?? '');
 $email = (string) ($m['email'] ?? '');
-$imageUrl = (string) ($m['image_url'] ?? WebsiteMaintenanceSettings::DEFAULT_IMAGE);
-if ($imageUrl === '') {
-    $imageUrl = WebsiteMaintenanceSettings::DEFAULT_IMAGE;
-}
-$isDefaultSvg = str_contains($imageUrl, 'maintenance-aufbau.svg');
+$useInlineArt = !empty($m['use_inline_art']);
+$imageUrl = (string) ($m['image_url'] ?? '/assets/img/maintenance-aufbau.svg');
 $pageTitle = View::escape($headline);
 $imgSrc = View::escape(Asset::url($imageUrl));
 ?>
@@ -109,7 +107,7 @@ $imgSrc = View::escape(Asset::url($imageUrl));
 </head>
 <body>
   <main class="wm-wrap">
-    <?php if ($isDefaultSvg) : ?>
+    <?php if ($useInlineArt) : ?>
       <div class="wm-art" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Website im Aufbau">
           <rect width="640" height="420" fill="#f4efe8"/>

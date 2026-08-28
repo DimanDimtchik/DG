@@ -145,12 +145,6 @@ final class WebsiteMaintenanceSettings
     /** Rendert die öffentliche Wartungsseite und beendet den Request. */
     public static function renderAndExit(): never
     {
-        http_response_code(503);
-        header('Retry-After: 3600');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        View::render('website-maintenance', [
-            'maintenance' => self::config(),
-        ]);
-        exit;
+        WebsiteMaintenanceRenderer::send(self::config(), 503);
     }
 }
