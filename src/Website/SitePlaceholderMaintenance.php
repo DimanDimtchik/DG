@@ -47,4 +47,35 @@ final class SitePlaceholderMaintenance
     {
         WebsiteMaintenanceRenderer::send(self::config($siteRoot), 503);
     }
+
+    /**
+     * Wartungstexte aus CRM-Datenbank (Master-Code) — eine Quelle für Platzhalter-Domains.
+     */
+    public static function renderFromCrmRoot(string $crmRoot): never
+    {
+        WebsiteMaintenanceRenderer::send(self::configFromCrmRoot($crmRoot), 503);
+    }
+
+    /**
+     * @return array{
+     *   enabled: bool,
+     *   headline: string,
+     *   message: string,
+     *   email: string,
+     *   image_url: string,
+     *   image_media_id: string
+     * }
+     */
+    public static function configFromCrmRoot(string $crmRoot): array
+    {
+        if (!class_exists('WebsiteMaintenanceSettings')) {
+            require_once rtrim($crmRoot, '/') . '/src/autoload.php';
+        }
+
+        if (!class_exists('Database') || !Database::isConfigured()) {
+            return self::config($crmRoot);
+        }
+
+        return WebsiteMaintenanceSettings::config();
+    }
 }
