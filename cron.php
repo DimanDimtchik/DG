@@ -48,5 +48,26 @@ if (($_GET['job'] ?? '') === 'dunning-auto') {
     exit;
 }
 
+if (($_GET['job'] ?? '') === 'overtime-reminder') {
+    if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
+        http_response_code(403);
+        echo "Forbidden.\n";
+        exit;
+    }
+
+    if (!Database::isConfigured()) {
+        http_response_code(500);
+        echo "Datenbank nicht konfiguriert.\n";
+        exit;
+    }
+
+    $result = OvertimeReminderService::runAutomatic();
+    echo date('c') . " overtime-reminder: gesendet={$result['sent']}, übersprungen={$result['skipped']}\n";
+    foreach ($result['errors'] as $error) {
+        echo "FEHLER: {$error}\n";
+    }
+    exit;
+}
+
 http_response_code(404);
 echo "Unbekannter Job.\n";

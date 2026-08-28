@@ -3369,6 +3369,7 @@ switch ($path) {
             $title = 'Team heute';
             $currentPage = 'zeiterfassung';
             $timeClockTeam = TimeClockService::teamToday();
+            $overtimeReminders = OvertimeReminderService::pendingForUi();
         } elseif ($page === 'zeiterfassung' && MenuRegistry::canAccess($user, 'zeiterfassung')) {
             $timeClockContactId = ContactRepository::findStaffContactIdForUser($user);
             $timeClockEmployeeLabel = '';
@@ -3797,6 +3798,7 @@ switch ($path) {
         $timeClockEmployeeLabel = $timeClockEmployeeLabel ?? '';
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
+        $overtimeReminders = $overtimeReminders ?? [];
         $websiteFormList = $websiteFormList ?? [];
         $websiteFormId = $websiteFormId ?? null;
         $websiteForm = $websiteForm ?? null;
@@ -4013,6 +4015,7 @@ switch ($path) {
             'timeClockEmployeeLabel',
             'timeClockCanTeam',
             'timeClockTeam',
+            'overtimeReminders',
         ));
         break;
 

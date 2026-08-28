@@ -62,6 +62,40 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
     </div>
   </section>
 
+  <section class="dg-form-section">
+    <h3 class="dg-subsection-title">Überstunden (betriebliche Regelung)</h3>
+    <p class="dg-field-hint">
+      Überstunden sollen innerhalb der eingestellten Frist abgebaut werden.
+      Die Erinnerung erscheint in der Teamübersicht und optional per E-Mail an die Admin-Adresse
+      (Einstellungen → Termine → Benachrichtigungen).
+    </p>
+
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="overtime_reminder_enabled" value="1"<?= !empty($settings['overtime_reminder_enabled']) ? ' checked' : '' ?>>
+        Erinnerung an ausstehenden Überstunden-Abbau aktivieren
+      </span>
+    </label>
+
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="overtime_reminder_email" value="1"<?= !empty($settings['overtime_reminder_email']) ? ' checked' : '' ?>>
+        Zusätzlich E-Mail an Admin-Adresse senden (einmal pro Überstunden-Block)
+      </span>
+    </label>
+
+    <div class="dg-form-grid">
+      <label class="dg-field">
+        <span>Abbau-Frist (Monate ab Entstehung)</span>
+        <input type="number" name="overtime_compensation_months" min="2" max="24" value="<?= (int) ($settings['overtime_compensation_months'] ?? 6) ?>">
+      </label>
+      <label class="dg-field">
+        <span>Erinnerung nach (Monate ab Entstehung)</span>
+        <input type="number" name="overtime_reminder_after_months" min="1" max="23" value="<?= (int) ($settings['overtime_reminder_after_months'] ?? 5) ?>">
+      </label>
+    </div>
+  </section>
+
   <div class="dg-form-actions">
     <button type="submit" name="time_tracking_save" value="1" class="dg-button dg-button--primary"<?= $dbConnected ? '' : ' disabled' ?>>Speichern</button>
   </div>

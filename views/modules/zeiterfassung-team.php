@@ -1,9 +1,11 @@
 <?php
 /**
  * @var list<array<string, mixed>> $timeClockTeam
+ * @var list<array<string, mixed>> $overtimeReminders
  * @var array{type: string, message: string}|null $flash
  */
 $team = $timeClockTeam ?? [];
+$reminders = $overtimeReminders ?? [];
 ?>
 <div class="dg-wrap dg-zeiterfassung-team">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -17,6 +19,17 @@ $team = $timeClockTeam ?? [];
       <a class="dg-button" href="/app?page=zeiterfassung">Meine Zeiterfassung</a>
     </div>
   </header>
+
+  <?php if ($reminders !== []) : ?>
+    <section class="dg-panel dg-panel--warning">
+      <h2 class="dg-subsection-title">Überstunden-Abbau fällig</h2>
+      <ul class="dg-list">
+        <?php foreach ($reminders as $reminder) : ?>
+          <li><?= View::escape((string) ($reminder['message'] ?? '')) ?></li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
+  <?php endif; ?>
 
   <section class="dg-panel">
     <?php if ($team === []) : ?>

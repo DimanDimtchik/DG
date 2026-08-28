@@ -14,14 +14,31 @@ Mitarbeiter können sich anmelden und unter **Zeiterfassung** ein-/ausstempeln. 
 
 ## Rechtliche / fachliche Leitplanken (Deutschland)
 
-| Thema | Anforderung im System |
-|--------|----------------------|
-| **Arbeitszeitgesetz** | Pausenregeln (mind. 30 min ab 6 h, 45 min ab 9 h), max. Arbeitszeit, Ruhezeiten |
-| **Geringfügig beschäftigt (Minijob)** | Flag am Mitarbeiter → **kein Überstunden-Zeitkonto**, Warnung bei Stempel über Soll |
-| **Überstunden** | Nur wenn `overtime_allowed = 1`; sonst nur Anzeige/Warnung, keine Gutschrift auf Zeitkonto |
-| **Urlaub** | Anspruch, Rest, Genehmigung, Rückstellungen (Buchhaltung Phase 2) |
-| **Krankheit** | AU-Erfassung, Verknüpfung zu Attest-Dokumenten (bestehend: `medical_certificates`) |
-| **Nachweis** | Unveränderliche Stempel-Historie (Audit), Korrekturen nur mit Begründung + Berechtigung |
+| Thema | Anforderung im System | Status |
+|--------|----------------------|--------|
+| **ArbZG §3 — Aufzeichnungspflicht** | Beginn, Ende, Dauer der täglichen Arbeitszeit; Pausen; Überstunden — **lückenlos, nachvollziehbar, mindestens 2 Jahre** | Stempel-Log ✅ · Auswertung/Export Phase 2 |
+| **ArbZG §4 — Höchstarbeitszeit** | Regelmäßig max. **8 h/Tag**; verlängerbar auf **10 h**, wenn **8 h-Wochendurchschnitt** in 6 Monaten / 24 Wochen eingehalten wird | Warnung/Hinweis geplant Phase 2 |
+| **ArbZG §5 — Ruhezeit** | Mindestens **11 h** ununterbrochene Ruhezeit nach Arbeitsende | Prüfung geplant Phase 2 |
+| **ArbZG §7 — Nacht-/Sonntags-/Feiertagsarbeit** | Besondere Regeln, ggf. Zuschläge, Freizeitausgleich | Zuschläge später (Phase 6) |
+| **Pausen (§4 ArbZG)** | Mind. **30 min** ab 6 h, **45 min** ab 9 h (Block ≥15 min) | ✅ Auto-Pause + Zwangspause |
+| **Geringfügig beschäftigt (Minijob)** | Flag am Mitarbeiter → **kein Überstunden-Zeitkonto**, Warnung bei Stempel über Soll | ✅ |
+| **Überstunden (betrieblich)** | Nur wenn `overtime_allowed = 1`; **Abbau innerhalb 6 Monate**; **Erinnerung nach 5 Monaten** | ✅ Lots + Team-Hinweis + E-Mail |
+| **TzBfG** | Teilzeit ohne Benachteiligung; keine verdeckten Vollzeit-Anforderungen | Stammdaten / Soll-Zeiten |
+| **BUrlG — Urlaub** | Anspruch, Rest, Genehmigung, Rückstellungen | Phase 4 |
+| **EFZG — Entgeltfortzahlung** | Krankheit, AU-Fristen | Phase 4 (Attest-Verknüpfung vorbereitet) |
+| **JArbSchG** | Bei Praktikanten/Minijobbern unter 18: kürzere Arbeitszeiten, keine Nachtarbeit | Flag `employment_type = intern` |
+| **Nachweis / GoBD-Personal** | Unveränderliche Stempel-Historie; Korrekturen nur mit Begründung + Berechtigung | Audit-Log ✅ · Korrektur-UI Phase 2 |
+| **DSGVO** | Zweckbindung, Löschfristen an `EmployeeRetentionService` | Anbindung vorhanden |
+
+### Betriebliche Überstunden-Regelung (implementiert)
+
+- Überstunden werden **nur** für Mitarbeiter mit `overtime_allowed` und **nicht** Minijob als **Tages-Lots** gebucht (nach Tages-Aggregation).
+- **Abbau-Frist:** standardmäßig **6 Monate** ab Entstehungsdatum (einstellbar).
+- **Erinnerung:** ab **5 Monate** nach Entstehung — Anzeige in **Team heute** und optional **E-Mail** an Admin (Einstellungen → Termine → Benachrichtigungen).
+- Beispiel-Text: *„Max Mustermann hat noch 2:30 Überstunden, die bis Juli 2026 (spätestens 15.07.2026) abgebaut werden sollen.“*
+- Autostart: Tagesaggregation nach Autoclose (`TimeWorkDayService`) · Erinnerungsjob (`OvertimeReminderService::runIfDue()`).
+
+> **Hinweis:** Die 6-Monats-Frist ist eine **betriebliche Vereinbarung** (Arbeitsvertrag / Betriebsvereinbarung), nicht unmittelbar ArbZG. Gesetzlich relevant bleiben trotzdem Höchstarbeitszeit, Ruhezeiten und die **Aufzeichnungspflicht** nach §3 ArbZG.
 
 ---
 
@@ -130,9 +147,12 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 - [ ] Reguläre Arbeitszeiten pro Mitarbeiter oder Abteilung (Wochentage, Stunden)
 - [ ] Monatsansicht: Soll, Ist, Differenz, Überstunden
-- [ ] **Zeitkonto Überstunden** nur bei `overtime_allowed`
-- [ ] Warnung bei Minijob: „Keine Überstunden erlaubt“
+- [x] **Zeitkonto Überstunden** — Tages-Lots mit Verfallsdatum (Migration `062_time_overtime.sql`)
+- [x] **5-Monats-Erinnerung** vor 6-Monats-Abbau (Team-UI + E-Mail)
+- [ ] Überstunden-Abbau buchen (Minusstunden, Freizeit)
+- [ ] Warnung bei Minijob: „Keine Überstunden erlaubt“ (Tageswarnung ✅)
 - [ ] Korrekturen mit Berechtigung + Audit
+- [ ] ArbZG: Ruhezeit 11 h, max. 10 h/Tag, Wochendurchschnitt 8 h
 
 ### Phase 3 — Schichten
 

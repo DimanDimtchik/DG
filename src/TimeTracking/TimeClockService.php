@@ -56,12 +56,21 @@ final class TimeClockService
         $yesterday = date('Y-m-d', strtotime('-1 day'));
         try {
             $closed = self::closeOpenSessionsForDate($yesterday);
+            $aggregated = 0;
+            if (!empty($cfg['auto_close_open_days'])) {
+                try {
+                    $aggregated = TimeWorkDayService::aggregateDate($yesterday);
+                } catch (Throwable $aggregateError) {
+                    self::logAutoClose($closed, $yesterday, 'Aggregation: ' . $aggregateError->getMessage());
+                }
+            }
             self::saveAutoCloseState([
                 'last_run' => $today,
                 'closed_sessions' => $closed,
                 'closed_for_date' => $yesterday,
+                'aggregated_days' => $aggregated,
             ]);
-            if ($closed > 0) {
+            if ($closed > 0 || $aggregated > 0) {
                 self::logAutoClose($closed, $yesterday);
             }
         } catch (Throwable $e) {

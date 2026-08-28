@@ -59,6 +59,11 @@ final class App
         } catch (Throwable) {
             // Zeiterfassung-Autostart darf Seitenaufruf nicht blockieren
         }
+        try {
+            OvertimeReminderService::runIfDue();
+        } catch (Throwable) {
+            // Überstunden-Erinnerung darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

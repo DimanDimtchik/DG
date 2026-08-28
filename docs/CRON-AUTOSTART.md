@@ -19,7 +19,8 @@ Auf KAS können Cronjobs nur manuell eingetragen werden. Das CRM nutzt deshalb *
 | Datei-Integrität | `FileIntegrity::runIfDue()` | Max. alle 24 h |
 | Mitarbeiter-Purge (10 J.) | `EmployeeRetentionService::runOnCrmAccess()` | CRM `/app`, nur **1.–14. Januar**, 1× pro Sitzung |
 | **Mahnversand auto** | `DunningService::runIfDue()` | Erster Request pro Tag, wenn in Einstellungen aktiv |
-| **Zeiterfassung offener Tag** | `TimeClockService::runIfDue()` | Erster Request pro Tag — schließt Vortag ohne Ausstempeln |
+| **Zeiterfassung offener Tag** | `TimeClockService::runIfDue()` | Erster Request pro Tag — schließt Vortag ohne Ausstempeln + Tagesaggregation |
+| **Überstunden-Erinnerung** | `OvertimeReminderService::runIfDue()` | Erster Request pro Tag — 5-Monats-Hinweis vor 6-Monats-Frist |
 
 ## Optional: HTTP-Cron (`cron.php`)
 
@@ -27,6 +28,7 @@ Für feste Uhrzeiten oder Jobs ohne Website-Traffic:
 
 - `cron.php?job=employee-retention&token=…`
 - `cron.php?job=dunning-auto&token=…`
+- `cron.php?job=overtime-reminder&token=…`
 
 Token: `config/cron.local.php` (Vorlage: `config/cron.local.php.example`).
 
@@ -39,6 +41,7 @@ CLI-Alternativen: `bin/db-purge-expired-employees.php`, `bin/run-migrations.php`
 | Mitarbeiter-Purge | `storage/logs/cron-purge.log` |
 | Mahn auto | `storage/logs/dunning-auto.log` |
 | Zeiterfassung Autoclose | `storage/logs/time-clock-autoclose.log` |
+| Überstunden-Erinnerung | `storage/logs/overtime-reminder.log` |
 
 ## Hinweis Mahnwesen
 
