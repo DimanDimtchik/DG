@@ -9,12 +9,41 @@
   var listType = document.getElementById('dg-voucher-type-filter');
   var listDocKind = document.getElementById('dg-voucher-doc-kind-filter');
   var listDocStatus = document.getElementById('dg-voucher-doc-status-filter');
+  var listDocKindField = document.getElementById('dg-voucher-doc-kind-filter-field');
+  var listDocStatusField = document.getElementById('dg-voucher-doc-status-filter-field');
+
+  function voucherTypeSupportsDocumentKind(type) {
+    return type === 'income';
+  }
+
+  function syncListDocumentFilters() {
+    if (!listType) {
+      return;
+    }
+    var type = listType.value;
+    var show = type === '' || voucherTypeSupportsDocumentKind(type);
+    if (listDocKindField) {
+      listDocKindField.hidden = !show;
+    }
+    if (listDocStatusField) {
+      listDocStatusField.hidden = !show;
+    }
+    if (!show) {
+      if (listDocKind) {
+        listDocKind.value = '';
+      }
+      if (listDocStatus) {
+        listDocStatus.value = '';
+      }
+    }
+  }
 
   if (listYear && listType) {
     listYear.addEventListener('change', function () {
       listYear.form.submit();
     });
     listType.addEventListener('change', function () {
+      syncListDocumentFilters();
       listType.form.submit();
     });
   }
@@ -28,6 +57,7 @@
       listDocStatus.form.submit();
     });
   }
+  syncListDocumentFilters();
 
   var form = document.getElementById('dg-voucher-form');
   if (!form) {
@@ -124,7 +154,7 @@
     if (!documentKindSelect || documentKindSelect.tagName !== 'SELECT') {
       return;
     }
-    if (getVoucherType() !== 'income') {
+    if (!voucherTypeSupportsDocumentKind(getVoucherType())) {
       return;
     }
     var kind = getDocumentKind();
@@ -134,11 +164,42 @@
     }
   }
 
+  function syncDocumentKindOptions() {
+    if (!documentKindSelect || documentKindSelect.tagName !== 'SELECT') {
+      return;
+    }
+    var isIncome = voucherTypeSupportsDocumentKind(getVoucherType());
+    var options = config.documentKindOptions || {};
+    var current = documentKindSelect.value;
+    if (!isIncome) {
+      documentKindSelect.innerHTML = '<option value=""></option>';
+      documentKindSelect.value = '';
+      documentKindSelect.disabled = true;
+      return;
+    }
+    documentKindSelect.disabled = !!readOnly;
+    documentKindSelect.innerHTML = '';
+    Object.keys(options).forEach(function (key) {
+      var option = document.createElement('option');
+      option.value = key;
+      option.textContent = options[key];
+      if (key === current) {
+        option.selected = true;
+      }
+      documentKindSelect.appendChild(option);
+    });
+    if (!documentKindSelect.value) {
+      documentKindSelect.value = 'invoice';
+    }
+  }
+
   function syncDocumentKindField() {
     if (!documentKindField) {
       return;
     }
-    documentKindField.hidden = getVoucherType() !== 'income';
+    var isIncome = voucherTypeSupportsDocumentKind(getVoucherType());
+    documentKindField.hidden = !isIncome;
+    syncDocumentKindOptions();
     ensureDocumentKindForIncome();
     syncDocumentStatusField();
     syncDocumentPositionTextsField();
@@ -426,9 +487,14 @@
     if (!documentStatusField || !documentStatusSelect) {
       return;
     }
-    var isIncome = getVoucherType() === 'income';
+    var isIncome = voucherTypeSupportsDocumentKind(getVoucherType());
     if (!isIncome) {
       documentStatusField.hidden = true;
+      if (documentStatusSelect.tagName === 'SELECT') {
+        documentStatusSelect.disabled = true;
+        documentStatusSelect.innerHTML = '';
+        documentStatusSelect.value = '';
+      }
       return;
     }
     ensureDocumentKindForIncome();
@@ -443,6 +509,7 @@
     if (allowed.length === 0 || documentStatusSelect.tagName !== 'SELECT') {
       return;
     }
+    documentStatusSelect.disabled = !!readOnly;
     var current = documentStatusSelect.value;
     documentStatusSelect.innerHTML = '';
     allowed.forEach(function (status) {

@@ -23,14 +23,15 @@ $skrLabel = ChartOfAccountsSettings::skrTypeOptions()[$chartOfAccountsConfig['sk
 $selectedType = VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? 'expense'));
 $typeHint = VoucherRepository::voucherTypeHint($selectedType);
 $selectedDocumentKind = VoucherDocumentKind::sanitize((string) ($form['document_kind'] ?? ''));
-if ($selectedType === 'income' && $selectedDocumentKind === '') {
+$showDocumentKindField = VoucherDocumentKind::voucherTypeSupportsDocumentKind($selectedType);
+if ($showDocumentKindField && $selectedDocumentKind === '') {
     $selectedDocumentKind = VoucherDocumentKind::defaultForIncome();
 }
-// Vorauswahl für Select (auch bei Ausgaben), damit JS beim Wechsel auf Einnahmen sofort Status-Optionen hat.
-$documentKindSelectValue = $selectedDocumentKind !== ''
-    ? $selectedDocumentKind
-    : VoucherDocumentKind::defaultForIncome();
-$documentKindOptions = VoucherDocumentKind::options();
+if (!$showDocumentKindField) {
+    $selectedDocumentKind = '';
+}
+$documentKindSelectValue = $showDocumentKindField ? $selectedDocumentKind : '';
+$documentKindOptions = VoucherDocumentKind::optionsForVoucherType($selectedType);
 /** @var list<array<string, mixed>> $lineRows */
 $lineRows = is_array($form['lines'] ?? null) ? $form['lines'] : [];
 /** @var list<array<string, mixed>> $itemRows */
@@ -118,7 +119,6 @@ $voucherChain = is_array($voucherChain ?? null) ? $voucherChain : ['documents' =
 $followUpKinds = is_array($followUpKinds ?? null) ? $followUpKinds : [];
 /** @var array<string, mixed>|null $chainSummary */
 $chainSummary = is_array($chainSummary ?? null) ? $chainSummary : null;
-$showDocumentKindField = $selectedType === 'income';
 $documentKindReadOnly = $readOnly || $isEdit;
 $selectedDocumentStatus = VoucherDocumentStatus::sanitize((string) ($form['document_status'] ?? ''));
 $documentStatusKind = $showDocumentKindField && $selectedDocumentKind !== ''
@@ -127,7 +127,9 @@ $documentStatusKind = $showDocumentKindField && $selectedDocumentKind !== ''
 if ($showDocumentKindField && $selectedDocumentStatus === '') {
     $selectedDocumentStatus = VoucherDocumentStatus::defaultForKind($documentStatusKind);
 }
-$documentStatusOptionsForKind = VoucherDocumentStatus::allowedForKind($documentStatusKind);
+$documentStatusOptionsForKind = $showDocumentKindField
+    ? VoucherDocumentStatus::allowedForKind($documentStatusKind)
+    : [];
 $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
     ? VoucherDocumentStatus::nextStatuses($selectedDocumentStatus, $selectedDocumentKind)
     : [];
@@ -330,12 +332,16 @@ $paymentTermsPreview = PaymentTermsService::composeText(
             <input type="text" value="<?= View::escape(VoucherDocumentKind::label($selectedDocumentKind)) ?>" readonly class="dg-input--computed">
             <small class="dg-field-hint">Angebot, Lieferschein, Abschlags- und Schlussrechnung — nach dem Speichern nicht mehr änderbar.</small>
           <?php else : ?>
-            <select name="document_kind" id="dg-voucher-document-kind"<?= $readOnly ? ' disabled' : '' ?>>
-              <?php foreach ($documentKindOptions as $value => $label) : ?>
-                <option value="<?= View::escape($value) ?>"<?= $documentKindSelectValue === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
-              <?php endforeach; ?>
+            <select name="document_kind" id="dg-voucher-document-kind"<?= ($readOnly || !$showDocumentKindField) ? ' disabled' : '' ?>>
+              <?php if ($documentKindOptions === []) : ?>
+                <option value=""></option>
+              <?php else : ?>
+                <?php foreach ($documentKindOptions as $value => $label) : ?>
+                  <option value="<?= View::escape($value) ?>"<?= $documentKindSelectValue === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </select>
-            <small class="dg-field-hint">Steuert Nummernkreis und ob der Beleg gebucht wird (Angebot/AB/Lieferschein = ohne Buchung).</small>
+            <small class="dg-field-hint">Nur bei Belegart <strong>Einnahmen</strong> — steuert Nummernkreis und Buchung (Angebot/AB/Lieferschein ohne Buchung).</small>
           <?php endif; ?>
         </label>
         <label class="dg-field" id="dg-voucher-document-status-field"<?= $showDocumentKindField && $documentStatusOptionsForKind !== [] ? '' : ' hidden' ?>>
@@ -343,7 +349,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <?php if ($readOnly) : ?>
             <input type="text" value="<?= View::escape(VoucherDocumentStatus::label($selectedDocumentStatus)) ?>" readonly class="dg-input--computed">
           <?php else : ?>
-            <select name="document_status" id="dg-voucher-document-status">
+            <select name="document_status" id="dg-voucher-document-status"<?= !$showDocumentKindField ? ' disabled' : '' ?>>
               <?php foreach ($documentStatusOptionsForKind as $statusValue) : ?>
                 <option value="<?= View::escape($statusValue) ?>"<?= $selectedDocumentStatus === $statusValue ? ' selected' : '' ?>>
                   <?= View::escape(VoucherDocumentStatus::label($statusValue)) ?>

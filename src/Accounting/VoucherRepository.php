@@ -568,10 +568,13 @@ final class VoucherRepository
         $taxKey = $reverseCharge ? VoucherTaxKeys::KEY_REVERSE_CHARGE : '';
         $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
         $documentKind = VoucherDocumentKind::sanitize((string) ($data['document_kind'] ?? ''));
-        if ($voucherType === 'income' && $documentKind === '') {
+        $documentStatus = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
+        if ($voucherType !== 'income') {
+            $documentKind = '';
+            $documentStatus = '';
+        } elseif ($documentKind === '') {
             $documentKind = VoucherDocumentKind::INVOICE;
         }
-        $documentStatus = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
         if ($voucherType === 'income' && $documentKind !== '') {
             if ($documentStatus === '') {
                 $documentStatus = VoucherDocumentStatus::defaultForKind($documentKind);
@@ -603,6 +606,9 @@ final class VoucherRepository
             }
         }
         $parentVoucherId = max(0, (int) ($data['parent_voucher_id'] ?? 0));
+        if ($voucherType !== 'income') {
+            $parentVoucherId = 0;
+        }
         $arap = VoucherAccrual::parseFromData($data);
         if (!VoucherAccrual::supportsAccrual($voucherType, $documentKind)) {
             $arap = [

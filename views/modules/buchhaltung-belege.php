@@ -28,6 +28,7 @@ $years = $voucherYears ?? [(int) date('Y')];
 $typeOptions = VoucherRepository::voucherTypeOptions();
 $documentKindOptions = VoucherDocumentKind::options();
 $documentStatusOptions = VoucherDocumentStatus::options();
+$showDocumentListFilters = $typeFilter === '' || VoucherDocumentKind::voucherTypeSupportsDocumentKind($typeFilter);
 $baseUrl = '/app?page=buchhaltung-belege';
 $hasActiveFilters = $search !== '' || $typeFilter !== '' || $documentKindFilter !== '' || $documentStatusFilter !== '' || $draftFilter !== '';
 ?>
@@ -76,7 +77,7 @@ $hasActiveFilters = $search !== '' || $typeFilter !== '' || $documentKindFilter 
           <?php endforeach; ?>
         </select>
       </label>
-      <label class="dg-field">
+      <label class="dg-field" id="dg-voucher-doc-kind-filter-field"<?= $showDocumentListFilters ? '' : ' hidden' ?>>
         <span>Dokument</span>
         <select name="doc_kind" id="dg-voucher-doc-kind-filter">
           <option value="">Alle Dokumente</option>
@@ -84,8 +85,9 @@ $hasActiveFilters = $search !== '' || $typeFilter !== '' || $documentKindFilter 
             <option value="<?= View::escape($value) ?>"<?= $documentKindFilter === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
           <?php endforeach; ?>
         </select>
+        <small class="dg-field-hint">Angebot, Rechnung usw. — nur bei Belegart Einnahmen.</small>
       </label>
-      <label class="dg-field">
+      <label class="dg-field" id="dg-voucher-doc-status-filter-field"<?= $showDocumentListFilters ? '' : ' hidden' ?>>
         <span>Dokumentstatus</span>
         <select name="doc_status" id="dg-voucher-doc-status-filter">
           <option value="">Alle Status</option>

@@ -48,6 +48,20 @@ final class VoucherDocumentKind
         return self::sanitize($kind) !== '';
     }
 
+    /** Ausgangsbeleg-Kette (Angebot, Rechnung, …) — nur bei Belegart Einnahmen. */
+    public static function voucherTypeSupportsDocumentKind(string $voucherType): bool
+    {
+        return VoucherRepository::normalizeVoucherType($voucherType) === 'income';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function optionsForVoucherType(string $voucherType): array
+    {
+        return self::voucherTypeSupportsDocumentKind($voucherType) ? self::options() : [];
+    }
+
     /**
      * Angebot, AB, Lieferschein → keine Journalbuchung / kein OPOS.
      */
