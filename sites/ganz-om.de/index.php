@@ -5,6 +5,13 @@ declare(strict_types=1);
  * Platzhalter / Wartungsmodus für ganz-om.de
  * Nutzt dieselbe Wartungsseite wie das CRM (Inline-SVG), sobald bootstrap.php vorhanden ist.
  */
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$path = rtrim($path, '/') ?: '/';
+if (strcasecmp($path, '/login') === 0) {
+    header('Location: https://ganz-soft.de/login', true, 302);
+    exit;
+}
+
 $crmBootstrap = __DIR__ . '/bootstrap.php';
 if (is_file($crmBootstrap)) {
     require $crmBootstrap;
