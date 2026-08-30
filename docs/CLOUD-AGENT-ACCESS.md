@@ -19,31 +19,44 @@ Stand: 2026-08-30
 | `DG_ALLINKL_SSH_USER` | **SSH-Benutzer** aus KAS → Tools → SSH-Zugänge: `ssh-XXXXXXX` (**nicht** der KAS-Weblogin!) |
 | `DG_ALLINKL_SSH_HOST` | `[login].kasserver.com` |
 | `DG_CRM_SSH_HOST` | `dg.ganz-om.de` (optional) |
-| `DG_KAS_LOGIN` | KAS-Weblogin, z. B. `w0217246` — **FTP-Benutzer** (Fallback Deploy) |
-| `DG_KAS_AUTH_DATA` | KAS-Hauptaccount-Passwort — **gleich FTP-Passwort** (Fallback wenn SSH Port 22 timeout) |
-
-### Wichtig: SSH-User ≠ KAS-Login ≠ FTP-User
+### Wichtig: SSH-User ≠ KAS-Login
 
 | Feld | Beispielformat | Secret |
 |------|----------------|--------|
-| **KAS-Login / FTP-User** | `w0217246` | `DG_KAS_LOGIN` |
-| **KAS-/FTP-Passwort** | (Weblogin-Passwort) | `DG_KAS_AUTH_DATA` |
 | **SSH-Benutzer** | beginnt immer mit `ssh-` | `DG_ALLINKL_SSH_USER` |
+| **KAS-Login** | `w0217246` | `DG_KAS_LOGIN` (optional, nur KAS-API / FTP-Fallback) |
+| **KAS-Passwort** | Weblogin-Passwort | `DG_KAS_AUTH_DATA` (optional, nur FTP-Fallback) |
 
 Häufiger Fehler: KAS-Login in `DG_ALLINKL_SSH_USER` → am PC funktioniert SSH, im Cloud Agent `Permission denied (publickey)`, obwohl der Private Key korrekt ist.
 
-### SSH blockiert (Port 22 timeout) — FTP-Fallback (wie KlarWin-Chat)
+### Deploy vom Cloud-Agent (wie KlarWin — **kein KAS-Passwort**)
 
-Wenn `ssh allinkl-ganzom` → **Connection timed out**, aber **FTP Port 21 offen**:
+All-Inkl/WinSCP: **SFTP + Public Key**, Passwort leer — dieselben Secrets wie SSH (`DG_ALLINKL_SSH_*`). Nutzer sprechen oft von „FTP“, meinen damit **SFTP** (Port 22).
 
 ```bash
-bash bin/cloud-agent-ftp-setup.sh    # muss OK melden
-bash bin/deploy-via-ftp.sh           # Master dg.ganz-om.de
-bash bin/deploy-via-ftp.sh --all     # + ganz-soft.de, kontur, ganz-om
+bash bin/cloud-agent-ssh-setup.sh      # muss SSH_OK ausgeben
+bash bin/cloud-agent-sftp-setup.sh     # optional: SFTP-Verzeichnis testen
+bash bin/deploy-via-sftp.sh            # Master dg.ganz-om.de
+bash bin/deploy-via-sftp.sh --all        # + ganz-soft.de, kontur, ganz-om
 ```
 
-Gleiche Secrets wie KlarWin: `DG_KAS_LOGIN` + `DG_KAS_AUTH_DATA`. **Neuen Cloud-Agent starten** nach Secret-Änderung.
+**Kein manueller KAS-Datei-Upload nötig** — KlarWin nach `ganz-soft.de/klarwin/` wurde genauso übertragen (Daten liegen auf dem Server).
 
+Wenn Port 22 **Connection timed out** (All-Inkl-Ticket): weder SSH noch SFTP vom Cloud-Agent — dann PC `deploy.bat` sobald SSH wieder geht, oder optional FTP-Fallback (extra Secrets, siehe unten).
+
+### Optional: FTP-Fallback (Port 21, **nur mit KAS-Passwort**)
+
+Nur wenn du **zusätzlich** Secrets setzen willst — **nicht** für KlarWin nötig gewesen:
+
+| Name | Wert |
+|------|------|
+| `DG_KAS_LOGIN` | KAS-Weblogin (`w0217246`) |
+| `DG_KAS_AUTH_DATA` | KAS-Hauptaccount-Passwort (= FTP-Passwort) |
+
+```bash
+bash bin/cloud-agent-ftp-setup.sh
+bash bin/deploy-via-ftp.sh --all
+```
 
 Optional (nur wenn Agent lokal DB/KAS braucht; sonst reichen SSH + Server-Configs):
 
@@ -116,7 +129,8 @@ Deploy vom Agent nach SSH-Setup:
 
 ```bash
 bash bin/cloud-agent-ssh-setup.sh   # muss SSH_OK ausgeben
-bash bin/sync-crm-from-master.sh    # Master → ganz-soft.de + kontur-cosmetics.de + ganz-om.de
+bash bin/deploy-via-sftp.sh           # Master hochladen (oder deploy.bat am PC)
+bash bin/sync-crm-from-master.sh      # Master → ganz-soft.de + kontur-cosmetics.de + ganz-om.de
 # Shop: Dateien nach shop.ganz-soft.de/ (eigenes Projekt, nicht im CRM-Sync)
 # Wartungsmodus: https://shop.ganz-soft.de/admin/login (Passwort in config/admin.local.php auf Server)
 ```

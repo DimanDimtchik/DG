@@ -21,7 +21,7 @@ fi
 if [[ -z "$FTP_PASS" ]]; then
   echo "cloud-agent-ftp-setup: DG_KAS_AUTH_DATA or DG_FTP_PASSWORD is not set." >&2
   echo "All-Inkl: FTP-Passwort = KAS-Hauptaccount-Passwort (nicht SSH-Key)." >&2
-  echo "Gleiche Secrets wie im KlarWin-Chat: DG_KAS_LOGIN + DG_KAS_AUTH_DATA" >&2
+  echo "Optional — KlarWin nutzte SFTP+SSH-Key (cloud-agent-sftp-setup.sh), kein KAS-Passwort." >&2
   exit 1
 fi
 

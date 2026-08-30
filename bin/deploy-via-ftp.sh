@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Deploy DG CRM per FTP wenn SSH (Port 22) blockiert ist — wie KlarWin-Upload nach /klarwin/.
+# Deploy DG CRM per FTP (Port 21) — optionaler Fallback, braucht DG_KAS_LOGIN + DG_KAS_AUTH_DATA.
+# KlarWin nutzte SFTP + SSH-Key (deploy-via-sftp.sh), nicht dieses Skript.
 # Spiegelt deploy.bat: Master dg.ganz-om.de, optional weitere Instanzen.
 #
 # Voraussetzung: bash bin/cloud-agent-ftp-setup.sh → OK
@@ -31,7 +32,7 @@ fi
 
 if [[ -z "$FTP_PASS" ]]; then
   echo "deploy-via-ftp: DG_KAS_AUTH_DATA or DG_FTP_PASSWORD missing." >&2
-  echo "Cursor Secrets setzen (wie KlarWin-Chat), neuen Agent starten." >&2
+  echo "Optional: DG_KAS_LOGIN + DG_KAS_AUTH_DATA setzen — oder deploy-via-sftp.sh (SSH-Key)." >&2
   exit 1
 fi
 

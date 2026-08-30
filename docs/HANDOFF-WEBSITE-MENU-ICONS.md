@@ -51,16 +51,16 @@ Hauptmenü-Icons: nur Icon-Auswahl (auto/manuell), keine `icon_style`.
 ## Deploy
 
 ```bash
-# SSH (wenn Port 22 geht)
-./deploy.bat
+# Cloud-Agent oder PC: SFTP/SCP + SSH-Key (Passwort leer) — wie KlarWin nach /klarwin/
+bash bin/cloud-agent-ssh-setup.sh
+bash bin/deploy-via-sftp.sh --all
 ssh allinkl-ganzom "bash www/htdocs/w0217246/dg.ganz-om.de/bin/sync-crm-from-master.sh"
 
-# FTP-Fallback (wie KlarWin-Chat, wenn SSH timeout)
-bash bin/cloud-agent-ftp-setup.sh
-bash bin/deploy-via-ftp.sh --all
+# PC-Alternative
+./deploy.bat
 ```
 
-Secrets: `DG_KAS_LOGIN` + `DG_KAS_AUTH_DATA` in Cursor Cloud Agents (siehe `docs/CLOUD-AGENT-ACCESS.md`).
+Secrets: nur `DG_ALLINKL_SSH_*` (siehe `docs/CLOUD-AGENT-ACCESS.md`). **Kein** KAS-Passwort, kein manueller KAS-Upload.
 
 ## Test
 
