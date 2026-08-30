@@ -51,12 +51,16 @@ Hauptmenü-Icons: nur Icon-Auswahl (auto/manuell), keine `icon_style`.
 ## Deploy
 
 ```bash
-# SSH (wenn verfügbar)
+# SSH (wenn Port 22 geht)
 ./deploy.bat
 ssh allinkl-ganzom "bash www/htdocs/w0217246/dg.ganz-om.de/bin/sync-crm-from-master.sh"
 
-# FTP-Alternative: index.php, src/, views/, assets/css/dg.css
+# FTP-Fallback (wie KlarWin-Chat, wenn SSH timeout)
+bash bin/cloud-agent-ftp-setup.sh
+bash bin/deploy-via-ftp.sh --all
 ```
+
+Secrets: `DG_KAS_LOGIN` + `DG_KAS_AUTH_DATA` in Cursor Cloud Agents (siehe `docs/CLOUD-AGENT-ACCESS.md`).
 
 ## Test
 

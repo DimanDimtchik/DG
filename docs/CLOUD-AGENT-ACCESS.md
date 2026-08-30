@@ -1,12 +1,8 @@
 # Cloud-Agent / Cursor Browser — Zugänge (DG CRM)
 
-<<<<<<< HEAD
-Stand: 2026-08-23
+Stand: 2026-08-30
 
 > **Konsolidierter Stand:** [`docs/HANDOFF.md`](HANDOFF.md) · Agent-Rolle: [`AGENTS.md`](../AGENTS.md)
-=======
-Stand: 2026-08-27
->>>>>>> cursor/buchhaltung-randfaelle-1c3a
 
 > **Kein Passwort-SSH.** All-Inkl akzeptiert den Key `id_ed25519_ganzom`. Ein „veraltetes Passwort“ ist normal — der Browser-Agent braucht den **Private Key** als Cursor-Secret.
 
@@ -23,15 +19,30 @@ Stand: 2026-08-27
 | `DG_ALLINKL_SSH_USER` | **SSH-Benutzer** aus KAS → Tools → SSH-Zugänge: `ssh-XXXXXXX` (**nicht** der KAS-Weblogin!) |
 | `DG_ALLINKL_SSH_HOST` | `[login].kasserver.com` |
 | `DG_CRM_SSH_HOST` | `dg.ganz-om.de` (optional) |
+| `DG_KAS_LOGIN` | KAS-Weblogin, z. B. `w0217246` — **FTP-Benutzer** (Fallback Deploy) |
+| `DG_KAS_AUTH_DATA` | KAS-Hauptaccount-Passwort — **gleich FTP-Passwort** (Fallback wenn SSH Port 22 timeout) |
 
-### Wichtig: SSH-User ≠ KAS-Login
+### Wichtig: SSH-User ≠ KAS-Login ≠ FTP-User
 
 | Feld | Beispielformat | Secret |
 |------|----------------|--------|
-| **KAS-Login** (Web/API) | kurzer Name, ~8 Zeichen | `DG_KAS_LOGIN` — **nicht** für SSH |
+| **KAS-Login / FTP-User** | `w0217246` | `DG_KAS_LOGIN` |
+| **KAS-/FTP-Passwort** | (Weblogin-Passwort) | `DG_KAS_AUTH_DATA` |
 | **SSH-Benutzer** | beginnt immer mit `ssh-` | `DG_ALLINKL_SSH_USER` |
 
 Häufiger Fehler: KAS-Login in `DG_ALLINKL_SSH_USER` → am PC funktioniert SSH, im Cloud Agent `Permission denied (publickey)`, obwohl der Private Key korrekt ist.
+
+### SSH blockiert (Port 22 timeout) — FTP-Fallback (wie KlarWin-Chat)
+
+Wenn `ssh allinkl-ganzom` → **Connection timed out**, aber **FTP Port 21 offen**:
+
+```bash
+bash bin/cloud-agent-ftp-setup.sh    # muss OK melden
+bash bin/deploy-via-ftp.sh           # Master dg.ganz-om.de
+bash bin/deploy-via-ftp.sh --all     # + ganz-soft.de, kontur, ganz-om
+```
+
+Gleiche Secrets wie KlarWin: `DG_KAS_LOGIN` + `DG_KAS_AUTH_DATA`. **Neuen Cloud-Agent starten** nach Secret-Änderung.
 
 
 Optional (nur wenn Agent lokal DB/KAS braucht; sonst reichen SSH + Server-Configs):
