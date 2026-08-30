@@ -109,9 +109,15 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-nav__item:hover > .ws-nav__sub, .ws-nav__item.is-open > .ws-nav__sub { display: block; }
     .ws-nav__sub a { display: flex; align-items: center; gap: var(--ws-nav-icon-gap, 0.4em); color: var(--ws-text); padding: 8px 14px; border-radius: 0; }
     .ws-nav__sub a.ws-nav__link--icon-right { flex-direction: row-reverse; text-align: right; }
-    .ws-nav__sub a .ws-nav__icon { color: var(--ws-nav-icon-color, var(--ws-primary)); }
+    .ws-nav__sub a .ws-nav__icon { color: var(--ws-nav-icon-color, var(--ws-primary)); stroke-width: var(--ws-nav-icon-stroke, 1.75); }
+    .ws-nav__sub a:hover .ws-nav__icon, .ws-nav__sub a.active .ws-nav__icon {
+      color: var(--ws-nav-icon-hover-color, var(--ws-nav-icon-color, var(--ws-primary)));
+    }
     .ws-nav__sub a:hover, .ws-nav__sub a.active { background: #f3f4f6; color: var(--ws-primary); }
-    .ws-nav__badge { font-size: 0.7rem; opacity: 0.75; margin-left: 4px; }
+    .ws-nav__badge { font-size: 0.7rem; opacity: 0.85; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: rgba(110,98,88,0.12); }
+    .ws-nav__sub a.ws-nav__link--icon-hide-mobile .ws-nav__icon { display: inline-flex; }
+    .ws-header.is-compact .ws-nav__sub a.ws-nav__link--icon-hide-mobile .ws-nav__icon { display: none; }
+    .ws-nav__sub a.ws-nav__link--no-icon .ws-nav__icon { display: none !important; }
 
     /* Mobile / compact nav panel */
     .ws-header.is-compact .ws-nav-toggle { display: inline-flex; }
@@ -282,20 +288,16 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
                 $childHref = $rewriteHref($childUrl === '' ? '/' : $childUrl);
                 $childActive = $isActivePath($childUrl);
                 $childIconStyle = WebsiteMenuIcons::normalizeSubmenuIconStyle(is_array($child['icon_style'] ?? null) ? $child['icon_style'] : []);
-                $childIcon = WebsiteMenuIcons::resolve($child + ['children' => []]);
+                $childIcon = WebsiteMenuIcons::submenuIconVisible($child) ? WebsiteMenuIcons::resolve($child + ['children' => []]) : '';
                 $childIconHtml = $childIcon !== '' ? WebsiteMenuIcons::svg($childIcon, 'ws-nav__icon', $childIconStyle) : '';
+                $badgeLabel = WebsiteMenuIcons::submenuBadgeLabel($child);
                 $childText = '<span>' . View::escape((string) ($child['label'] ?? '')) . '</span>'
+                    . ($badgeLabel !== '' ? ' <span class="ws-nav__badge">' . View::escape($badgeLabel) . '</span>' : '')
                     . (!empty($child['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '');
                 $childIconRight = WebsiteMenuIcons::submenuLinkIconRight($child);
                 $childLabel = $childIconRight ? ($childText . $childIconHtml) : ($childIconHtml . $childText);
                 $childStyleAttr = WebsiteMenuIcons::submenuLinkStyleAttr($child);
-                $childClasses = [];
-                if ($childActive) {
-                    $childClasses[] = 'active';
-                }
-                if ($childIconRight) {
-                    $childClasses[] = 'ws-nav__link--icon-right';
-                }
+                $childClasses = WebsiteMenuIcons::submenuLinkClasses($child, $childActive);
               ?>
                 <a href="<?= View::escape($childHref) ?>"<?= $childClasses !== [] ? ' class="' . View::escape(implode(' ', $childClasses)) . '"' : '' ?><?= $childStyleAttr !== '' ? ' style="' . View::escape($childStyleAttr) . '"' : '' ?>><?= $childLabel ?></a>
               <?php endforeach; ?>

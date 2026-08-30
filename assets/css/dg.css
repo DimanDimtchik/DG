@@ -5523,13 +5523,27 @@ body.dg-login-page {
   border-radius: var(--dg-radius-sm);
   background: #fff;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  min-width: min(100%, 320px);
+}
+
+.dg-menu-icon-field__search-wrap {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.dg-menu-icon-field__search {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--dg-border-strong);
+  border-radius: var(--dg-radius-sm);
+  font: inherit;
 }
 
 .dg-menu-icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
   gap: 6px;
-  max-height: 240px;
+  max-height: 280px;
   overflow: auto;
 }
 

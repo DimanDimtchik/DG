@@ -2,44 +2,119 @@
 declare(strict_types=1);
 
 /**
- * Stroke icons for the public website menu (no external icon CDN).
+ * Stroke icons for the public website menu (Lucide bundled locally, no CDN).
  */
 final class WebsiteMenuIcons
 {
+    /** @var array<string, mixed>|null */
+    private static ?array $manifest = null;
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function manifest(): array
+    {
+        if (self::$manifest !== null) {
+            return self::$manifest;
+        }
+        $file = __DIR__ . '/data/lucide-menu-icons.php';
+        if (!is_file($file)) {
+            self::$manifest = ['icons' => [], 'legacy_aliases' => []];
+
+            return self::$manifest;
+        }
+        $loaded = require $file;
+
+        return self::$manifest = is_array($loaded) ? $loaded : ['icons' => [], 'legacy_aliases' => []];
+    }
+
+    /**
+     * Resolve stored id through legacy aliases to a Lucide icon id.
+     */
+    public static function canonicalId(string $name): string
+    {
+        $name = strtolower(trim($name));
+        if ($name === '' || $name === 'auto') {
+            return $name;
+        }
+        $aliases = self::manifest()['legacy_aliases'] ?? [];
+        if (is_array($aliases) && isset($aliases[$name])) {
+            return (string) $aliases[$name];
+        }
+
+        return $name;
+    }
+
     /**
      * @return array<string, string> id => label
      */
     public static function options(): array
     {
-        return [
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $options = [
             'auto' => 'Automatisch (Vorschlag)',
             '' => 'Kein Icon',
-            'chevron-down' => 'Pfeil (Untermenü)',
-            'home' => 'Start / Haus',
-            'calendar' => 'Kalender',
-            'contacts' => 'Personen',
-            'mail' => 'E-Mail',
-            'website' => 'Website / Globus',
-            'document' => 'Dokument',
-            'nav' => 'Liste',
-            'folder' => 'Ordner',
-            'tag' => 'Preis / Etikett',
-            'scale' => 'Rechtliches',
-            'info' => 'Info',
-            'images' => 'Bilder',
-            'catalog' => 'Katalog',
-            'accounting' => 'Buchhaltung',
-            'receipt' => 'Beleg',
-            'settings' => 'Einstellungen',
-            'palette' => 'Design',
-            'layout' => 'Layout',
-            'external' => 'Externer Link',
         ];
+        $icons = self::manifest()['icons'] ?? [];
+        if (is_array($icons)) {
+            foreach ($icons as $id => $meta) {
+                if (!is_array($meta)) {
+                    continue;
+                }
+                $options[(string) $id] = (string) ($meta['label'] ?? $id);
+            }
+        }
+        asort($options, SORT_FLAG_CASE | SORT_NATURAL);
+        $cache = ['auto' => $options['auto'], '' => $options['']] + $options;
+
+        return $cache;
+    }
+
+    /**
+     * Filter icons for the picker search box.
+     *
+     * @return list<array{id: string, label: string}>
+     */
+    public static function searchOptions(string $query, int $limit = 120): array
+    {
+        $query = mb_strtolower(trim($query));
+        $results = [];
+        $icons = self::manifest()['icons'] ?? [];
+        if (!is_array($icons)) {
+            return [];
+        }
+        foreach ($icons as $id => $meta) {
+            if (!is_array($meta)) {
+                continue;
+            }
+            $label = (string) ($meta['label'] ?? $id);
+            $tags = is_array($meta['tags'] ?? null) ? $meta['tags'] : [];
+            $hay = mb_strtolower($id . ' ' . $label . ' ' . implode(' ', $tags));
+            if ($query !== '' && !str_contains($hay, $query)) {
+                continue;
+            }
+            $results[] = ['id' => (string) $id, 'label' => $label];
+            if (count($results) >= $limit) {
+                break;
+            }
+        }
+        usort($results, static fn (array $a, array $b): int => strnatcasecmp($a['label'], $b['label']));
+
+        return $results;
     }
 
     public static function isValid(string $name): bool
     {
-        return isset(self::options()[$name]);
+        if ($name === 'auto' || $name === '') {
+            return true;
+        }
+        $canonical = self::canonicalId($name);
+        $icons = self::manifest()['icons'] ?? [];
+
+        return is_array($icons) && isset($icons[$canonical]);
     }
 
     /**
@@ -63,7 +138,7 @@ final class WebsiteMenuIcons
                 $hasChildren
             );
         }
-        if (!isset(self::options()[$icon])) {
+        if (!self::isValid($icon)) {
             return self::suggest(
                 (string) ($item['label'] ?? ''),
                 (string) ($item['url'] ?? ''),
@@ -71,7 +146,7 @@ final class WebsiteMenuIcons
             );
         }
 
-        return $icon;
+        return self::canonicalId($icon);
     }
 
     /**
@@ -81,21 +156,25 @@ final class WebsiteMenuIcons
     {
         $hay = mb_strtolower(trim($label . ' ' . $url));
         $rules = [
-            'home' => ['start', 'home', 'startseite', '/$'],
+            'house' => ['start', 'home', 'startseite', '/$'],
             'calendar' => ['termin', 'kalender', 'buchung'],
-            'contacts' => ['kontakt', 'kunde', 'person'],
+            'users' => ['kontakt', 'kunde', 'person', 'team'],
             'mail' => ['mail', 'e-mail', 'email', 'nachricht'],
             'tag' => ['preis', 'tarif', 'abo', 'paket'],
-            'website' => ['website', 'internet', 'builder', 'web'],
-            'accounting' => ['buchhaltung', 'rechnung', 'finanz'],
-            'catalog' => ['artikel', 'leistung', 'katalog', 'produkt'],
-            'images' => ['bild', 'galerie', 'foto', 'media'],
+            'globe' => ['website', 'internet', 'builder', 'web'],
+            'calculator' => ['buchhaltung', 'rechnung', 'finanz'],
+            'package' => ['artikel', 'leistung', 'katalog', 'produkt'],
+            'image' => ['bild', 'galerie', 'foto', 'media'],
             'scale' => ['impressum', 'datenschutz', 'agb', 'recht', 'legal'],
-            'document' => ['dokument', 'pdf', 'handbuch', 'seite'],
+            'file-text' => ['dokument', 'pdf', 'handbuch', 'seite'],
             'info' => ['info', 'über', 'uber', 'about'],
             'settings' => ['einstellung', 'konto', 'profil'],
             'folder' => ['ordner', 'archiv', 'download'],
-            'external' => ['http://', 'https://', 'shop.', 'extern'],
+            'external-link' => ['http://', 'https://', 'shop.', 'extern'],
+            'phone' => ['telefon', 'anruf', 'hotline'],
+            'map-pin' => ['standort', 'adresse', 'anfahrt'],
+            'shopping-cart' => ['shop', 'warenkorb', 'bestell'],
+            'shield' => ['datenschutz', 'sicherheit', 'ssl'],
         ];
         foreach ($rules as $icon => $needles) {
             foreach ($needles as $needle) {
@@ -131,7 +210,19 @@ final class WebsiteMenuIcons
     /**
      * Defaults for icons in dropdown submenus (white panel).
      *
-     * @return array{size: string, color: string, color_custom: string, position: string, gap: string, stroke: string}
+     * @return array{
+     *   size: string,
+     *   color: string,
+     *   color_custom: string,
+     *   position: string,
+     *   gap: string,
+     *   stroke: string,
+     *   visibility: string,
+     *   badge: string,
+     *   hover: string,
+     *   hover_color_custom: string,
+     *   hide_mobile: bool
+     * }
      */
     public static function submenuIconStyleDefaults(): array
     {
@@ -142,6 +233,11 @@ final class WebsiteMenuIcons
             'position' => 'left',
             'gap' => 'normal',
             'stroke' => 'normal',
+            'visibility' => 'show',
+            'badge' => '',
+            'hover' => 'inherit',
+            'hover_color_custom' => '',
+            'hide_mobile' => false,
         ];
     }
 
@@ -161,6 +257,30 @@ final class WebsiteMenuIcons
             'text' => 'Textfarbe (Design)',
             'inherit' => 'Wie Untermenü-Text',
             'custom' => 'Eigene Farbe',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function submenuIconHoverOptions(): array
+    {
+        return [
+            'inherit' => 'Wie Icon-Farbe',
+            'primary' => 'Primärfarbe (Design)',
+            'text' => 'Textfarbe (Design)',
+            'custom' => 'Eigene Farbe',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function submenuIconVisibilityOptions(): array
+    {
+        return [
+            'show' => 'Icon anzeigen',
+            'hidden' => 'Icon ausblenden',
         ];
     }
 
@@ -201,6 +321,30 @@ final class WebsiteMenuIcons
     }
 
     /**
+     * @return array<string, string>
+     */
+    public static function iconGapOptions(): array
+    {
+        return [
+            'tight' => 'Eng',
+            'normal' => 'Normal',
+            'wide' => 'Weit',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function iconStrokeOptions(): array
+    {
+        return [
+            'light' => 'Dünn',
+            'normal' => 'Normal',
+            'bold' => 'Kräftig',
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $raw
      * @return array{size: string, color: string, color_custom: string, position: string, gap: string, stroke: string}
      */
@@ -221,11 +365,11 @@ final class WebsiteMenuIcons
             $position = $defaults['position'];
         }
         $gap = (string) ($raw['gap'] ?? $defaults['gap']);
-        if (!in_array($gap, ['tight', 'normal', 'wide'], true)) {
+        if (!isset(self::iconGapOptions()[$gap])) {
             $gap = $defaults['gap'];
         }
         $stroke = (string) ($raw['stroke'] ?? $defaults['stroke']);
-        if (!in_array($stroke, ['light', 'normal', 'bold'], true)) {
+        if (!isset(self::iconStrokeOptions()[$stroke])) {
             $stroke = $defaults['stroke'];
         }
         $colorCustom = trim((string) ($raw['color_custom'] ?? ''));
@@ -245,11 +389,70 @@ final class WebsiteMenuIcons
 
     /**
      * @param array<string, mixed> $raw
-     * @return array{size: string, color: string, color_custom: string, position: string, gap: string, stroke: string}
+     * @return array{
+     *   size: string,
+     *   color: string,
+     *   color_custom: string,
+     *   position: string,
+     *   gap: string,
+     *   stroke: string,
+     *   visibility: string,
+     *   badge: string,
+     *   hover: string,
+     *   hover_color_custom: string,
+     *   hide_mobile: bool
+     * }
      */
     public static function normalizeSubmenuIconStyle(array $raw): array
     {
-        return self::normalizeIconStyle($raw, true);
+        $base = self::normalizeIconStyle($raw, true);
+        $defaults = self::submenuIconStyleDefaults();
+        $visibility = (string) ($raw['visibility'] ?? $defaults['visibility']);
+        if (!isset(self::submenuIconVisibilityOptions()[$visibility])) {
+            $visibility = $defaults['visibility'];
+        }
+        $hover = (string) ($raw['hover'] ?? $defaults['hover']);
+        if (!isset(self::submenuIconHoverOptions()[$hover])) {
+            $hover = $defaults['hover'];
+        }
+        $hoverCustom = trim((string) ($raw['hover_color_custom'] ?? ''));
+        if ($hoverCustom !== '' && preg_match('/^#[0-9A-Fa-f]{6}$/', $hoverCustom) !== 1) {
+            $hoverCustom = '';
+        }
+        $badge = mb_substr(trim((string) ($raw['badge'] ?? '')), 0, 24);
+        $hideMobile = !empty($raw['hide_mobile']) && (string) ($raw['hide_mobile'] ?? '') !== '0';
+
+        return $base + [
+            'visibility' => $visibility,
+            'badge' => $badge,
+            'hover' => $hover,
+            'hover_color_custom' => strtolower($hoverCustom),
+            'hide_mobile' => $hideMobile,
+        ];
+    }
+
+    /**
+     * Whether the submenu item should render its icon.
+     *
+     * @param array<string, mixed> $item
+     */
+    public static function submenuIconVisible(array $item): bool
+    {
+        $style = self::normalizeSubmenuIconStyle(is_array($item['icon_style'] ?? null) ? $item['icon_style'] : []);
+
+        return $style['visibility'] !== 'hidden';
+    }
+
+    /**
+     * Optional badge label for a submenu item (empty = none).
+     *
+     * @param array<string, mixed> $item
+     */
+    public static function submenuBadgeLabel(array $item): string
+    {
+        $style = self::normalizeSubmenuIconStyle(is_array($item['icon_style'] ?? null) ? $item['icon_style'] : []);
+
+        return $style['badge'];
     }
 
     /**
@@ -268,6 +471,32 @@ final class WebsiteMenuIcons
         return $parts !== [] ? implode(';', $parts) : '';
     }
 
+    /**
+     * CSS classes for submenu link (position, mobile icon hide).
+     *
+     * @param array<string, mixed> $item
+     * @return list<string>
+     */
+    public static function submenuLinkClasses(array $item, bool $active = false): array
+    {
+        $classes = [];
+        if ($active) {
+            $classes[] = 'active';
+        }
+        if (self::submenuLinkIconRight($item)) {
+            $classes[] = 'ws-nav__link--icon-right';
+        }
+        $style = self::normalizeSubmenuIconStyle(is_array($item['icon_style'] ?? null) ? $item['icon_style'] : []);
+        if ($style['hide_mobile']) {
+            $classes[] = 'ws-nav__link--icon-hide-mobile';
+        }
+        if ($style['visibility'] === 'hidden') {
+            $classes[] = 'ws-nav__link--no-icon';
+        }
+
+        return $classes;
+    }
+
     public static function submenuLinkIconRight(array $item): bool
     {
         $style = self::normalizeSubmenuIconStyle(is_array($item['icon_style'] ?? null) ? $item['icon_style'] : []);
@@ -278,7 +507,7 @@ final class WebsiteMenuIcons
     /**
      * CSS custom properties for the public menu header.
      *
-     * @param array<string, string> $iconStyle
+     * @param array<string, mixed> $iconStyle
      * @return array<string, string>
      */
     public static function iconStyleCssVars(array $iconStyle, bool $submenu = false): array
@@ -299,27 +528,41 @@ final class WebsiteMenuIcons
             'bold' => '2.1',
             default => '1.75',
         };
-        $color = match ($style['color']) {
-            'primary' => 'var(--ws-primary)',
-            'text' => 'var(--ws-text)',
-            'custom' => $style['color_custom'] !== '' ? $style['color_custom'] : 'currentColor',
-            default => 'currentColor',
-        };
-
-        return [
+        $color = self::resolveColor((string) $style['color'], (string) ($style['color_custom'] ?? ''), $submenu);
+        $vars = [
             '--ws-nav-icon-size' => $sizePx,
             '--ws-nav-icon-gap' => $gapPx,
             '--ws-nav-icon-stroke' => $strokeW,
             '--ws-nav-icon-color' => $color,
         ];
+        if ($submenu) {
+            $hover = (string) ($style['hover'] ?? 'inherit');
+            $hoverCustom = (string) ($style['hover_color_custom'] ?? '');
+            if ($hover !== 'inherit') {
+                $vars['--ws-nav-icon-hover-color'] = self::resolveColor($hover, $hoverCustom, true);
+            }
+        }
+
+        return $vars;
+    }
+
+    private static function resolveColor(string $mode, string $custom, bool $submenu): string
+    {
+        return match ($mode) {
+            'primary' => 'var(--ws-primary)',
+            'text' => 'var(--ws-text)',
+            'custom' => $custom !== '' ? $custom : 'currentColor',
+            default => $submenu ? 'currentColor' : 'currentColor',
+        };
     }
 
     public static function svg(string $name, string $class = 'ws-nav__icon', ?array $iconStyle = null): string
     {
-        if ($name === '' || !self::isValid($name)) {
+        $canonical = self::canonicalId($name);
+        if ($canonical === '' || !self::isValid($canonical)) {
             return '';
         }
-        $paths = self::paths($name);
+        $paths = self::paths($canonical);
         if ($paths === '') {
             return '';
         }
@@ -342,28 +585,55 @@ final class WebsiteMenuIcons
 
     private static function paths(string $name): string
     {
-        return match ($name) {
-            'chevron-down' => '<path d="m6 9 6 6 6-6"/>',
-            'home' => '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/>',
-            'calendar' => '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/>',
-            'contacts' => '<circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/>',
-            'mail' => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
-            'website' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 4.5 6.2 4.5 9S15 17.8 12 21c-3-3.2-4.5-6.2-4.5-9S9 6.2 12 3Z"/>',
-            'document' => '<path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/>',
-            'nav' => '<path d="M4 7h16M4 12h16M4 17h10"/>',
-            'folder' => '<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
-            'tag' => '<path d="M20.6 13.4 12 22l-8.5-8.5a2 2 0 0 1 0-2.8L10.7 3.5a2 2 0 0 1 1.4-.6H20v7.9a2 2 0 0 1-.6 1.4Z"/><circle cx="16" cy="8" r="1.25"/>',
-            'scale' => '<path d="M12 3v18"/><path d="M5 7h14"/><path d="M7 7 4 14h6L7 7Zm10 0-3 7h6l-3-7Z"/>',
-            'info' => '<circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.5h.01"/>',
-            'images' => '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5.5-5.5a1.5 1.5 0 0 0-2.12 0L3 19"/>',
-            'catalog' => '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
-            'accounting' => '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
-            'receipt' => '<path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
-            'settings' => '<circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
-            'palette' => '<path d="M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12"/><circle cx="7.5" cy="10" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="16.5" cy="11" r="1"/>',
-            'layout' => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 15h18"/>',
-            'external' => '<path d="M14 4h6v6"/><path d="M10 14 20 4"/><path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5"/>',
-            default => '',
-        };
+        $canonical = self::canonicalId($name);
+        $icons = self::manifest()['icons'] ?? [];
+        if (!is_array($icons) || !isset($icons[$canonical]) || !is_array($icons[$canonical])) {
+            return '';
+        }
+
+        return (string) ($icons[$canonical]['paths'] ?? '');
+    }
+
+    /**
+     * Compact catalog for the CRM icon picker (local Lucide, no CDN).
+     *
+     * @return list<array{id: string, label: string, tags: list<string>, paths: string}>
+     */
+    public static function pickerCatalog(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $out = [];
+        $icons = self::manifest()['icons'] ?? [];
+        if (!is_array($icons)) {
+            return $cache = [];
+        }
+        foreach ($icons as $id => $meta) {
+            if (!is_array($meta)) {
+                continue;
+            }
+            $out[] = [
+                'id' => (string) $id,
+                'label' => (string) ($meta['label'] ?? $id),
+                'tags' => is_array($meta['tags'] ?? null) ? array_values($meta['tags']) : [],
+                'paths' => (string) ($meta['paths'] ?? ''),
+            ];
+        }
+        usort($out, static fn (array $a, array $b): int => strnatcasecmp($a['label'], $b['label']));
+
+        return $cache = $out;
+    }
+
+    /** @return list<string> */
+    public static function pickerFeaturedIds(): array
+    {
+        return [
+            'house', 'calendar', 'users', 'mail', 'globe', 'file-text', 'menu', 'folder', 'tag',
+            'scale', 'info', 'image', 'package', 'calculator', 'receipt', 'settings', 'palette',
+            'layout-grid', 'external-link', 'phone', 'map-pin', 'shopping-cart', 'shield', 'search',
+            'chevron-down', 'heart', 'star', 'bell', 'clock', 'building', 'book-open', 'download',
+        ];
     }
 }
