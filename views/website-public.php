@@ -8,6 +8,9 @@ $title = View::escape($page['title'] ?? '');
 $chrome = $chrome ?? WebsiteSettings::chromeDefaults();
 $menu = $menu ?? WebsiteSettings::menuDefaults();
 $design = $design ?? WebsiteSettings::designDefaults();
+$headerIconStyle = WebsiteMenuIcons::headerIconStyleDefaults();
+$headerIconVars = WebsiteMenuIcons::iconStyleCssVars($headerIconStyle);
+$menuIconRight = $headerIconStyle['position'] === 'right';
 $layout = $page['layout'] ?? ['rows' => []];
 $siteName = View::escape($chrome['header_title'] ?: (string) App::config('crm_name'));
 $seoPage = [
@@ -54,6 +57,9 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
       --ws-primary: <?= View::escape($design['primary']) ?>;
       --ws-bg: <?= View::escape($design['background']) ?>;
       --ws-text: <?= View::escape($design['text']) ?>;
+<?php foreach ($headerIconVars as $var => $val) : ?>
+      <?= View::escape($var) ?>: <?= View::escape($val) ?>;
+<?php endforeach; ?>
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--ws-text); background: var(--ws-bg); line-height: 1.6; }
@@ -62,19 +68,68 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     /* Header */
     .ws-header { background: var(--ws-primary); color: #fff; padding: 20px 0; }
     .ws-header__inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .ws-header__brand { flex: 1 1 auto; min-width: 0; }
     .ws-header__title { font-size: 1.4rem; font-weight: 700; }
     .ws-header__tagline { font-size: 0.9rem; opacity: 0.85; }
+    .ws-nav-toggle {
+      display: none; align-items: center; justify-content: center;
+      width: 42px; height: 42px; padding: 0; border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 6px; background: transparent; color: #fff; cursor: pointer;
+    }
+    .ws-nav-toggle:hover { background: rgba(255,255,255,0.15); }
+    .ws-nav-toggle__bars {
+      display: block; width: 18px; height: 2px; background: currentColor; position: relative;
+    }
+    .ws-nav-toggle__bars::before, .ws-nav-toggle__bars::after {
+      content: ''; position: absolute; left: 0; width: 18px; height: 2px; background: currentColor;
+    }
+    .ws-nav-toggle__bars::before { top: -6px; }
+    .ws-nav-toggle__bars::after { top: 6px; }
     .ws-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-    .ws-nav a { color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.95rem; transition: background 0.15s; }
+    .ws-nav a, .ws-nav__toggle {
+      color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.95rem;
+      transition: background 0.15s; display: inline-flex; align-items: center; gap: var(--ws-nav-icon-gap, 0.4em);
+      background: transparent; border: 0; font: inherit; text-align: left; cursor: pointer;
+    }
+    .ws-nav.ws-nav--icon-right a,
+    .ws-nav.ws-nav--icon-right .ws-nav__toggle { flex-direction: row-reverse; text-align: right; }
     .ws-nav a:hover, .ws-nav a.active { background: rgba(255,255,255,0.18); }
     .ws-nav__item { position: relative; }
-    .ws-nav__toggle { color: #fff; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.95rem; display: inline-block; cursor: pointer; }
     .ws-nav__toggle:hover, .ws-nav__item:hover > .ws-nav__toggle, .ws-nav__item.is-open > .ws-nav__toggle { background: rgba(255,255,255,0.18); }
+    .ws-nav__icon, .ws-nav__caret {
+      width: var(--ws-nav-icon-size, 1.05em); height: var(--ws-nav-icon-size, 1.05em);
+      flex-shrink: 0; display: block; color: var(--ws-nav-icon-color, currentColor);
+    }
+    .ws-nav__caret {
+      width: 0.85em; height: 0.85em; flex-shrink: 0; margin-left: 0.15em;
+      transition: transform 0.15s ease;
+    }
+    .ws-nav__item.is-open > .ws-nav__toggle .ws-nav__caret { transform: rotate(180deg); }
     .ws-nav__sub { display: none; position: absolute; top: 100%; left: 0; min-width: 180px; background: #fff; color: var(--ws-text); border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); padding: 6px 0; z-index: 40; }
     .ws-nav__item:hover > .ws-nav__sub, .ws-nav__item.is-open > .ws-nav__sub { display: block; }
-    .ws-nav__sub a { display: block; color: var(--ws-text); padding: 8px 14px; border-radius: 0; }
+    .ws-nav__sub a { display: flex; align-items: center; gap: var(--ws-nav-icon-gap, 0.4em); color: var(--ws-text); padding: 8px 14px; border-radius: 0; }
+    .ws-nav__sub a.ws-nav__link--icon-right { flex-direction: row-reverse; text-align: right; }
+    .ws-nav__sub a .ws-nav__icon { color: var(--ws-nav-icon-color, var(--ws-primary)); }
     .ws-nav__sub a:hover, .ws-nav__sub a.active { background: #f3f4f6; color: var(--ws-primary); }
     .ws-nav__badge { font-size: 0.7rem; opacity: 0.75; margin-left: 4px; }
+
+    /* Mobile / compact nav panel */
+    .ws-header.is-compact .ws-nav-toggle { display: inline-flex; }
+    .ws-header.is-compact .ws-nav {
+      display: none; flex-direction: column; align-items: stretch; flex: 1 1 100%;
+      width: 100%; gap: 2px; padding-top: 8px;
+    }
+    .ws-header.is-compact.is-nav-open .ws-nav { display: flex; }
+    .ws-header.is-compact .ws-nav__item { width: 100%; }
+    .ws-header.is-compact .ws-nav__sub {
+      position: static; box-shadow: none; border-radius: 0; margin: 0 0 4px 12px;
+      background: rgba(255,255,255,0.12); padding: 4px 0;
+    }
+    .ws-header.is-compact .ws-nav__sub a { color: #fff; }
+    .ws-header.is-compact .ws-nav__sub a:hover,
+    .ws-header.is-compact .ws-nav__sub a.active { background: rgba(255,255,255,0.18); color: #fff; }
+    .ws-header.is-compact .ws-nav__item:hover > .ws-nav__sub { display: none; }
+    .ws-header.is-compact .ws-nav__item.is-open > .ws-nav__sub { display: block; }
 
     /* Main */
     .ws-main { max-width: 1140px; margin: 0 auto; padding: 40px 20px; }
@@ -156,15 +211,20 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 </div>
 <?php endif; ?>
 
-<header class="ws-header">
+<header class="ws-header" id="ws-header"
+        data-nav-mode="<?= View::escape((string) ($menu['layout'] ?? 'auto')) ?>"
+        data-nav-breakpoint="<?= (int) ($menu['breakpoint'] ?? 768) ?>">
   <div class="ws-header__inner">
-    <div>
+    <div class="ws-header__brand">
       <div class="ws-header__title"><?= $siteName ?></div>
       <?php if (!empty($chrome['header_tagline'])): ?>
         <div class="ws-header__tagline"><?= View::escape($chrome['header_tagline']) ?></div>
       <?php endif; ?>
     </div>
-    <nav class="ws-nav">
+    <button type="button" class="ws-nav-toggle" id="ws-nav-toggle" aria-controls="ws-nav" aria-expanded="false" aria-label="Menü öffnen">
+      <span class="ws-nav-toggle__bars" aria-hidden="true"></span>
+    </button>
+    <nav class="ws-nav<?= $menuIconRight ? ' ws-nav--icon-right' : '' ?>" id="ws-nav">
       <?php
         $currentPublicPath = WebsitePageRepository::publicPath((string) ($page['slug'] ?? ''));
         $rewriteHref = static function (string $itemUrl) use ($previewMode): string {
@@ -199,31 +259,108 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
                   break;
               }
           }
+          $iconId = WebsiteMenuIcons::resolve($item);
+          $iconHtml = $iconId !== '' ? WebsiteMenuIcons::svg($iconId, 'ws-nav__icon', $headerIconStyle) : '';
+          $showCaret = $children !== [] && $iconId !== 'chevron-down';
+          $caretHtml = $showCaret ? WebsiteMenuIcons::svg('chevron-down', 'ws-nav__caret', $headerIconStyle) : '';
+          $textHtml = '<span>' . View::escape((string) $item['label']) . '</span>'
+              . (!empty($item['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '');
+          $labelHtml = $menuIconRight
+              ? ($textHtml . $iconHtml . $caretHtml)
+              : ($iconHtml . $textHtml . $caretHtml);
       ?>
         <?php if ($children !== []) : ?>
           <div class="ws-nav__item<?= $isActive ? ' is-open' : '' ?>">
             <?php if ($itemUrl !== '' && $itemUrl !== '#') : ?>
-              <a class="ws-nav__toggle<?= $isActive ? ' active' : '' ?>" href="<?= View::escape($href) ?>"><?= View::escape((string) $item['label']) ?><?= !empty($item['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '' ?></a>
+              <a class="ws-nav__toggle<?= $isActive ? ' active' : '' ?>" href="<?= View::escape($href) ?>"><?= $labelHtml ?></a>
             <?php else : ?>
-              <span class="ws-nav__toggle"><?= View::escape((string) $item['label']) ?><?= !empty($item['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '' ?></span>
+              <button type="button" class="ws-nav__toggle" aria-expanded="<?= $isActive ? 'true' : 'false' ?>"><?= $labelHtml ?></button>
             <?php endif; ?>
             <div class="ws-nav__sub">
               <?php foreach ($children as $child):
                 $childUrl = trim((string) ($child['url'] ?? '/'));
                 $childHref = $rewriteHref($childUrl === '' ? '/' : $childUrl);
                 $childActive = $isActivePath($childUrl);
+                $childIconStyle = WebsiteMenuIcons::normalizeSubmenuIconStyle(is_array($child['icon_style'] ?? null) ? $child['icon_style'] : []);
+                $childIcon = WebsiteMenuIcons::resolve($child + ['children' => []]);
+                $childIconHtml = $childIcon !== '' ? WebsiteMenuIcons::svg($childIcon, 'ws-nav__icon', $childIconStyle) : '';
+                $childText = '<span>' . View::escape((string) ($child['label'] ?? '')) . '</span>'
+                    . (!empty($child['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '');
+                $childIconRight = WebsiteMenuIcons::submenuLinkIconRight($child);
+                $childLabel = $childIconRight ? ($childText . $childIconHtml) : ($childIconHtml . $childText);
+                $childStyleAttr = WebsiteMenuIcons::submenuLinkStyleAttr($child);
+                $childClasses = [];
+                if ($childActive) {
+                    $childClasses[] = 'active';
+                }
+                if ($childIconRight) {
+                    $childClasses[] = 'ws-nav__link--icon-right';
+                }
               ?>
-                <a href="<?= View::escape($childHref) ?>"<?= $childActive ? ' class="active"' : '' ?>><?= View::escape((string) ($child['label'] ?? '')) ?><?= !empty($child['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '' ?></a>
+                <a href="<?= View::escape($childHref) ?>"<?= $childClasses !== [] ? ' class="' . View::escape(implode(' ', $childClasses)) . '"' : '' ?><?= $childStyleAttr !== '' ? ' style="' . View::escape($childStyleAttr) . '"' : '' ?>><?= $childLabel ?></a>
               <?php endforeach; ?>
             </div>
           </div>
         <?php else : ?>
-          <a href="<?= View::escape($href) ?>"<?= $isActive ? ' class="active"' : '' ?>><?= View::escape((string) $item['label']) ?><?= !empty($item['auth_only']) ? ' <span class="ws-nav__badge">(intern)</span>' : '' ?></a>
+          <a href="<?= View::escape($href) ?>"<?= $isActive ? ' class="active"' : '' ?>><?= $labelHtml ?></a>
         <?php endif; ?>
       <?php endforeach; ?>
     </nav>
   </div>
 </header>
+<script>
+(function () {
+  var header = document.getElementById('ws-header');
+  var toggle = document.getElementById('ws-nav-toggle');
+  if (!header || !toggle) return;
+
+  var mode = header.getAttribute('data-nav-mode') || 'auto';
+  var breakpoint = parseInt(header.getAttribute('data-nav-breakpoint') || '768', 10);
+  if (!breakpoint || breakpoint < 320) breakpoint = 768;
+
+  function setOpen(open) {
+    header.classList.toggle('is-nav-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open ? 'Menü schließen' : 'Menü öffnen');
+  }
+
+  function applyMode() {
+    var compact = mode === 'mobile' || (mode === 'auto' && window.innerWidth <= breakpoint);
+    header.classList.toggle('is-compact', compact);
+    if (!compact) setOpen(false);
+  }
+
+  toggle.addEventListener('click', function () {
+    setOpen(!header.classList.contains('is-nav-open'));
+  });
+
+  header.querySelectorAll('.ws-nav__item').forEach(function (item) {
+    var trigger = item.querySelector('.ws-nav__toggle');
+    if (!trigger) return;
+    trigger.addEventListener('click', function (event) {
+      if (!header.classList.contains('is-compact')) return;
+      if (trigger.tagName === 'A' && !event.metaKey && !event.ctrlKey) {
+        // Allow navigation, but also open submenu if closed
+        if (!item.classList.contains('is-open')) {
+          event.preventDefault();
+          item.classList.add('is-open');
+          if (trigger.getAttribute('aria-expanded') !== null) trigger.setAttribute('aria-expanded', 'true');
+          return;
+        }
+      }
+      if (trigger.tagName === 'BUTTON') {
+        event.preventDefault();
+        var open = !item.classList.contains('is-open');
+        item.classList.toggle('is-open', open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+    });
+  });
+
+  window.addEventListener('resize', applyMode);
+  applyMode();
+})();
+</script>
 
 <main class="ws-main">
 <?php foreach ($layout['rows'] as $row): ?>
@@ -244,11 +381,11 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
         <?php switch ($type):
           case 'heading':
             $level = in_array($block['level'] ?? '', ['h1','h2','h3'], true) ? $block['level'] : 'h2';
-            echo "<{$level}>" . View::escape($block['text'] ?? '') . "</{$level}>";
+            echo "<{$level}>" . WebsiteContent::renderHeadingText((string) ($block['text'] ?? '')) . "</{$level}>";
             break;
 
           case 'text':
-            echo '<p>' . nl2br(View::escape($block['text'] ?? '')) . '</p>';
+            echo '<p>' . WebsiteContent::renderTextHtml((string) ($block['text'] ?? '')) . '</p>';
             break;
 
           case 'image':

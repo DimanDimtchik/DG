@@ -2,6 +2,7 @@
 # Sync CRM code FROM master (dg.ganz-om.de) TO live instances.
 # Preserves each instance's local config and storage.
 # NEVER use --delete against the account root (would wipe sibling domains).
+# Tenant folders at domain root (e.g. klarwin/) are user content — never delete.
 set -euo pipefail
 ROOT=/www/htdocs/w0217246
 MASTER="$ROOT/dg.ganz-om.de"
@@ -25,6 +26,7 @@ EXCLUDES=(
   --exclude '*.bak'
   --exclude 'www/'
   --exclude 'wp-backup-archive/'
+  --exclude 'klarwin/'
 )
 
 sync_to() {

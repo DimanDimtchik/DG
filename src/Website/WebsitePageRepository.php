@@ -308,6 +308,7 @@ final class WebsitePageRepository
         }
         $layoutChanged = false;
         $layout = WebsiteFormRepository::convertContactBlocksInLayout($layout, $userId, $layoutChanged);
+        $layout = WebsiteContent::normalizeLayout($layout);
 
         $layoutJson = json_encode($layout, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $pdo = Database::pdo();
@@ -454,7 +455,7 @@ final class WebsitePageRepository
         if ($raw !== '') {
             $decoded = json_decode($raw, true);
             if (is_array($decoded) && isset($decoded['rows']) && is_array($decoded['rows'])) {
-                $layout = $decoded;
+                $layout = WebsiteContent::normalizeLayout($decoded);
             }
         }
 

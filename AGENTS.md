@@ -62,6 +62,8 @@ bash bin/sync-crm-from-master.sh
 
 **Verboten:** `sync-crm-from-master.sh` mit `--delete` gegen den Account-Root (`/www/htdocs/w0217246/`).
 
+**Nutzerinhalt:** Website-Seiten in der DB und Ordner wie `klarwin/` gehören zur Instanz — Sync darf sie nicht löschen (`--exclude 'klarwin/'`). Kein KlarWin-Sondercode im CRM.
+
 ---
 
 ## 3. Wartungsmodus (Website)

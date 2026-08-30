@@ -13,7 +13,11 @@ final class WebsiteSettings
     /**
      * Default top navigation when nothing is stored yet.
      *
-     * @return array{items: list<array{label: string, url: string, auth_only: bool, children: list<array<string, mixed>>}>}
+     * @return array{
+     *   items: list<array{label: string, url: string, auth_only: bool, children: list<array<string, mixed>>}>,
+     *   layout: string,
+     *   breakpoint: int
+     * }
      */
     public static function menuDefaults(): array
     {
@@ -23,9 +27,24 @@ final class WebsiteSettings
                     'label' => 'Start',
                     'url' => '/',
                     'auth_only' => false,
+                    'icon' => 'auto',
                     'children' => [],
                 ],
             ],
+            'layout' => 'auto',
+            'breakpoint' => 768,
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function menuLayoutOptions(): array
+    {
+        return [
+            'standard' => 'Standard (immer horizontales Menü)',
+            'mobile' => 'Mobil (immer Hamburger-Menü)',
+            'auto' => 'Automatisch (Umschalten ab Breite)',
         ];
     }
 
@@ -72,11 +91,14 @@ final class WebsiteSettings
     /**
      * Full menu as stored (editor). Includes private entries.
      *
-     * @return array{items: list<array<string, mixed>>}
+     * @return array{items: list<array<string, mixed>>, layout: string, breakpoint: int}
      */
     public static function menu(): array
     {
         $stored = SettingsStore::get(self::MENU_KEY, self::menuDefaults());
+        if (!is_array($stored)) {
+            $stored = [];
+        }
         $items = [];
         $rawItems = is_array($stored['items'] ?? null) ? $stored['items'] : [];
         foreach ($rawItems as $item) {
@@ -92,19 +114,24 @@ final class WebsiteSettings
             $items = self::menuDefaults()['items'];
         }
 
-        return ['items' => $items];
+        return [
+            'items' => $items,
+            'layout' => self::normalizeLayout((string) ($stored['layout'] ?? 'auto')),
+            'breakpoint' => self::normalizeBreakpoint($stored['breakpoint'] ?? 768),
+        ];
     }
 
     /**
      * Menu for the public website (filters auth_only when guest).
      *
-     * @return array{items: list<array<string, mixed>>}
+     * @return array{items: list<array<string, mixed>>, layout: string, breakpoint: int}
      */
     public static function publicMenu(?bool $loggedIn = null): array
     {
+        $full = self::menu();
         $loggedIn ??= class_exists('AuthService') && AuthService::check();
         $items = [];
-        foreach (self::menu()['items'] as $item) {
+        foreach ($full['items'] as $item) {
             if (!empty($item['auth_only']) && !$loggedIn) {
                 continue;
             }
@@ -131,7 +158,11 @@ final class WebsiteSettings
             $items = self::menuDefaults()['items'];
         }
 
-        return ['items' => $items];
+        return [
+            'items' => $items,
+            'layout' => $full['layout'],
+            'breakpoint' => $full['breakpoint'],
+        ];
     }
 
     /**
@@ -183,7 +214,21 @@ final class WebsiteSettings
         if ($items === []) {
             $items = self::menuDefaults()['items'];
         }
-        SettingsStore::set(self::MENU_KEY, ['items' => $items]);
+        $existing = SettingsStore::get(self::MENU_KEY, self::menuDefaults());
+        if (!is_array($existing)) {
+            $existing = [];
+        }
+        $layout = array_key_exists('layout', $post)
+            ? self::normalizeLayout((string) $post['layout'])
+            : self::normalizeLayout((string) ($existing['layout'] ?? 'auto'));
+        $breakpoint = array_key_exists('breakpoint', $post)
+            ? self::normalizeBreakpoint($post['breakpoint'])
+            : self::normalizeBreakpoint($existing['breakpoint'] ?? 768);
+        SettingsStore::set(self::MENU_KEY, [
+            'items' => $items,
+            'layout' => $layout,
+            'breakpoint' => $breakpoint,
+        ]);
     }
 
     /**
@@ -223,13 +268,17 @@ final class WebsiteSettings
      *
      * @param array<string, mixed> $item
      * @param bool $allowChildren When false, nested children are ignored (one nesting level)
-     * @return array{label: string, url: string, auth_only: bool, children: list<array<string, mixed>>}|null
+     * @return array{label: string, url: string, auth_only: bool, icon: string, children: list<array<string, mixed>>, icon_style?: array<string, string>}|null
      */
     private static function normalizeMenuItem(array $item, bool $allowChildren): ?array
     {
         $label = trim((string) ($item['label'] ?? ''));
         $url = trim((string) ($item['url'] ?? ''));
         $authOnly = !empty($item['auth_only']) && (string) ($item['auth_only'] ?? '') !== '0';
+        $icon = strtolower(trim((string) ($item['icon'] ?? 'auto')));
+        if ($icon !== 'auto' && $icon !== '' && !WebsiteMenuIcons::isValid($icon)) {
+            $icon = 'auto';
+        }
 
         $children = [];
         if ($allowChildren) {
@@ -261,8 +310,13 @@ final class WebsiteSettings
             'label' => mb_substr($label, 0, 80),
             'url' => mb_substr($url !== '' ? $url : ($children !== [] ? '#' : '/'), 0, 255),
             'auth_only' => $authOnly,
+            'icon' => $icon,
             'children' => $children,
-        ];
+        ] + ($allowChildren ? [] : [
+            'icon_style' => WebsiteMenuIcons::normalizeSubmenuIconStyle(
+                is_array($item['icon_style'] ?? null) ? $item['icon_style'] : []
+            ),
+        ]);
     }
 
     /**
@@ -273,5 +327,25 @@ final class WebsiteSettings
         $value = trim($value);
 
         return preg_match('/^#[0-9A-Fa-f]{6}$/', $value) === 1 ? strtolower($value) : $fallback;
+    }
+
+    private static function normalizeLayout(string $value): string
+    {
+        $value = strtolower(trim($value));
+
+        return isset(self::menuLayoutOptions()[$value]) ? $value : 'auto';
+    }
+
+    private static function normalizeBreakpoint(mixed $value): int
+    {
+        $n = (int) $value;
+        if ($n < 320) {
+            return 320;
+        }
+        if ($n > 2000) {
+            return 2000;
+        }
+
+        return $n > 0 ? $n : 768;
     }
 }

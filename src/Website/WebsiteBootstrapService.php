@@ -182,22 +182,26 @@ final class WebsiteBootstrapService
             'gtm_container_id' => '',
         ]);
 
-        SettingsStore::set('website.menu', [
-            'items' => [
-                ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'children' => []],
-                ['label' => 'Terminkalender', 'url' => '/terminkalender', 'auth_only' => false, 'children' => []],
-                ['label' => 'Kontakt', 'url' => '/kontakt', 'auth_only' => false, 'children' => []],
-                [
-                    'label' => 'Rechtliches',
-                    'url' => '#',
-                    'auth_only' => false,
-                    'children' => [
-                        ['label' => 'Impressum', 'url' => '/impressum', 'auth_only' => false, 'children' => []],
-                        ['label' => 'Datenschutz', 'url' => '/datenschutz', 'auth_only' => false, 'children' => []],
-                        ['label' => 'AGB', 'url' => '/agb', 'auth_only' => false, 'children' => []],
-                    ],
+        $defaults = [
+            ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+            ['label' => 'Terminkalender', 'url' => '/terminkalender', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+            ['label' => 'Kontakt', 'url' => '/kontakt', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+            [
+                'label' => 'Rechtliches',
+                'url' => '#',
+                'auth_only' => false,
+                'icon' => 'auto',
+                'children' => [
+                    ['label' => 'Impressum', 'url' => '/impressum', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+                    ['label' => 'Datenschutz', 'url' => '/datenschutz', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+                    ['label' => 'AGB', 'url' => '/agb', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                 ],
             ],
+        ];
+        SettingsStore::set('website.menu', [
+            'items' => self::mergePreservedMenuItems($defaults),
+            'layout' => self::preservedMenuLayout(),
+            'breakpoint' => self::preservedMenuBreakpoint(),
         ]);
 
         $base = App::publicBaseUrl();
@@ -212,6 +216,35 @@ final class WebsiteBootstrapService
             }
             SettingsStore::set(EmailLayoutSettings::STORE_KEY, $layout);
         }
+    }
+
+    /**
+     * Behält vom Nutzer angelegte Menüpunkte (z. B. KlarWin), die nicht zu den Pflicht-URLs gehören.
+     *
+     * @param list<array<string, mixed>> $defaults
+     * @return list<array<string, mixed>>
+     */
+    private static function mergePreservedMenuItems(array $defaults): array
+    {
+        $reserved = ['/', '/terminkalender', '/kontakt', '#', '/impressum', '/datenschutz', '/agb'];
+        $menu = SettingsStore::get('website.menu', []);
+        if (!is_array($menu)) {
+            return $defaults;
+        }
+        $existing = is_array($menu['items'] ?? null) ? $menu['items'] : [];
+        $extra = [];
+        foreach ($existing as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $url = rtrim((string) ($item['url'] ?? ''), '/') ?: '/';
+            if (in_array($url, $reserved, true) || $url === '') {
+                continue;
+            }
+            $extra[] = $item;
+        }
+
+        return array_merge($defaults, $extra);
     }
 
     private static function ensureTerminkalenderMenuItem(): void
@@ -235,10 +268,11 @@ final class WebsiteBootstrapService
             'label' => 'Terminkalender',
             'url' => '/terminkalender',
             'auth_only' => false,
+            'icon' => 'auto',
             'children' => [],
         ];
         if ($items === []) {
-            $items[] = ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'children' => []];
+            $items[] = ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []];
         }
         $insertAt = 1;
         if ($insertAt > count($items)) {
@@ -247,7 +281,47 @@ final class WebsiteBootstrapService
             array_splice($items, $insertAt, 0, [$entry]);
         }
         $menu['items'] = $items;
+        $menu['layout'] = self::preservedMenuLayoutFrom($menu);
+        $menu['breakpoint'] = self::preservedMenuBreakpointFrom($menu);
         SettingsStore::set('website.menu', $menu);
+    }
+
+    private static function preservedMenuLayout(): string
+    {
+        return self::preservedMenuLayoutFrom(SettingsStore::get('website.menu', []));
+    }
+
+    private static function preservedMenuBreakpoint(): int
+    {
+        return self::preservedMenuBreakpointFrom(SettingsStore::get('website.menu', []));
+    }
+
+    /** @param mixed $menu */
+    private static function preservedMenuLayoutFrom($menu): string
+    {
+        if (!is_array($menu)) {
+            return 'auto';
+        }
+        $layout = strtolower(trim((string) ($menu['layout'] ?? 'auto')));
+
+        return isset(WebsiteSettings::menuLayoutOptions()[$layout]) ? $layout : 'auto';
+    }
+
+    /** @param mixed $menu */
+    private static function preservedMenuBreakpointFrom($menu): int
+    {
+        if (!is_array($menu)) {
+            return 768;
+        }
+        $n = (int) ($menu['breakpoint'] ?? 768);
+        if ($n < 320) {
+            return 320;
+        }
+        if ($n > 2000) {
+            return 2000;
+        }
+
+        return $n > 0 ? $n : 768;
     }
 
     private static function configureMaintenance(bool $enabled): void

@@ -205,6 +205,8 @@ spl_autoload_register(static function (string $class): void {
         'BankReconciliationService' => '/src/Accounting/BankReconciliationService.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
+        'WebsiteContent' => '/src/Website/WebsiteContent.php',
+        'WebsiteMenuIcons' => '/src/Website/WebsiteMenuIcons.php',
         'WebsiteMaintenanceSettings' => '/src/Website/WebsiteMaintenanceSettings.php',
         'WebsiteMaintenanceRenderer' => '/src/Website/WebsiteMaintenanceRenderer.php',
         'SupportAccessService' => '/src/Support/SupportAccessService.php',
