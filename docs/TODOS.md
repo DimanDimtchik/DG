@@ -48,11 +48,13 @@ Doku: `BUCHHALTUNG-BELEGKETTE.md`, `CRON-AUTOSTART.md`, `ZEITERFASSUNG-PLAN.md`
 
 | Instanz | Wartung | Bemerkung |
 |---------|---------|-----------|
-| dg.ganz-om.de | AN | Master, Login ok |
-| ganz-soft.de | AN | Haupt-Testinstanz |
-| kontur-cosmetics.de | AN | Adresse ggf. prüfen |
-| ganz-om.de | Platzhalter | Sync vom Master, keine DB |
+| dg.ganz-om.de | AN | Master — **Lizenzfehler 30.08.** (SSH reparieren) |
+| ganz-soft.de | AN | Öffentlich 503 Aufbau, **/login OK** |
+| kontur-cosmetics.de | AN | **Lizenzfehler 30.08.** |
+| ganz-om.de | Platzhalter | Öffentlich 503 Aufbau, **/login OK** |
 | shop.ganz-soft.de | — | Stripe nicht live |
+
+**Incident 2026-08-30:** Domains existieren — ganz-soft/ganz-om zeigen absichtlich Wartungsseite. kontur + Master blockiert durch fehlende/ungültige Lizenz; Lizenzserver `dg-user.ganz-soft.de/check` liefert HTTP 500. Diagnose/Reparatur: `bash bin/repair-crm-instances.sh` (auf Server per SSH). Cloud-Restore betraf nur `cloud.ganz-om.de`, nicht automatisch alle CRM-Configs.
 
 ---
 
