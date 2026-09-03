@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-08-28** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
+Stand: **2026-09-03** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
 
 ---
 
@@ -10,23 +10,25 @@ Stand: **2026-08-28** — bei jeder Session zuerst aktualisieren, wenn sich Bran
 
 | Branch | Status |
 |--------|--------|
-| `master` | **Aktuell** — Buchhaltung Randfälle, Zeiterfassung Ph.1, Wartungsmodus, AGENTS/TODOS |
+| `master` | **Einzige Produktionslinie** @ `1.0.29` — Buchhaltung Randfälle, Zeiterfassung Ph.1, Website-Menü-Icons, Deploy-Skripte |
 
-Nach Tests: Master deployen → `sync-crm-from-master.sh`
+**Hygiene:** Feature-Branches (`cursor/…`) nach Merge in `master` lokal + remote löschen. Kein paralleler „Randfälle“-Branch mehr offen.
+
+Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash bin/sync-crm-from-master.sh` (auf Server).
 
 ---
 
 ## Prioritäten (jetzt)
 
-- [ ] Master auf Server deployen + testen (ganz-soft.de)
+- [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
+- [x] Lizenzserver `dg-user.ganz-soft.de` repariert; kontur/Master `/login` OK
 - [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
-- [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma) — dann erscheint Wartungs-Kontakt automatisch
-- [ ] Manuelle Tests Randfälle-Branch (siehe unten)
-- [ ] Merge → `master` wenn Testliste grün
+- [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma) — Wartungs-Kontakt
+- [ ] Manuelle Testliste Randfälle auf **ganz-soft.de** (siehe unten)
 
 ---
 
-## Offene Arbeit (Branch-Inhalt)
+## Inhalt auf `master` (Deploy-Quelle)
 
 | Block | Migration / Ort |
 |-------|-----------------|
@@ -39,8 +41,9 @@ Nach Tests: Master deployen → `sync-crm-from-master.sh`
 | Zeiterfassung Ph.1 (Stempeluhr) | 061 |
 | Überstunden / ArbZG-Erinnerung | 062–063 |
 | Wartungsmodus einheitlicher Code | `WebsiteMaintenanceRenderer`, Sync inkl. ganz-om.de |
+| Website-Menü Icons (Lucide, Untermenü-Styles) | `src/Website/` |
 
-Doku: `BUCHHALTUNG-BELEGKETTE.md`, `CRON-AUTOSTART.md`, `ZEITERFASSUNG-PLAN.md`
+Doku: `BUCHHALTUNG-BELEGKETTE.md`, `CRON-AUTOSTART.md`, `ZEITERFASSUNG-PLAN.md`, `HANDOFF-WEBSITE-MENU-ICONS.md`
 
 ---
 
@@ -48,17 +51,17 @@ Doku: `BUCHHALTUNG-BELEGKETTE.md`, `CRON-AUTOSTART.md`, `ZEITERFASSUNG-PLAN.md`
 
 | Instanz | Wartung | Bemerkung |
 |---------|---------|-----------|
-| dg.ganz-om.de | AN | Master — **Lizenzfehler 30.08.** (SSH reparieren) |
-| ganz-soft.de | AN | Öffentlich 503 Aufbau, **/login OK** |
-| kontur-cosmetics.de | AN | **Lizenzfehler 30.08.** |
-| ganz-om.de | Platzhalter | Öffentlich 503 Aufbau, **/login OK** |
+| dg.ganz-om.de | AN | Master, `/login` OK |
+| ganz-soft.de | AN | Haupt-Testinstanz, `/login` OK |
+| kontur-cosmetics.de | AN | `/login` OK (Lizenz 03.09. repariert) |
+| ganz-om.de | Platzhalter | Sync vom Master, keine DB |
 | shop.ganz-soft.de | — | Stripe nicht live |
 
-**Incident 2026-08-30:** Domains existieren — ganz-soft/ganz-om zeigen absichtlich Wartungsseite. kontur + Master blockiert durch fehlende/ungültige Lizenz; Lizenzserver `dg-user.ganz-soft.de/check` liefert HTTP 500. Diagnose/Reparatur: `bash bin/repair-crm-instances.sh` (auf Server per SSH). Cloud-Restore betraf nur `cloud.ganz-om.de`, nicht automatisch alle CRM-Configs.
+**Erledigt 2026-09-03:** CRM v1.0.29 deployt; Lizenzserver wiederhergestellt (`license-server/` + `config.php`); Grace-State zurückgesetzt.
 
 ---
 
-## Test-Checkliste (Randfälle-Branch)
+## Test-Checkliste (Randfälle — `master` auf ganz-soft.de)
 
 Instanz: **ganz-soft.de** (Wartung bleibt an bis Freigabe)
 
@@ -70,7 +73,7 @@ Instanz: **ganz-soft.de** (Wartung bleibt an bis Freigabe)
 - [ ] Zeiterfassung: Stempeln, Team, Autoclose
 - [ ] Wartungsmodus: gleiches Layout auf ganz-soft.de und ganz-om.de; Kontakt aus CRM
 
-Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md)
+Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 ---
 
@@ -79,7 +82,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md)
 | Thema | Doku |
 |-------|------|
 | Stripe Live | `SHOP-TODO.md` |
-| ELSTER/ERiC live | `ELSTER-ERIC-TODO.md` |
+| ELSTER/ERiC live | `ELSTER-ERIC-TODO.md` (Entwicklerregistrierung läuft) |
 | PHP 8.5 KAS-Umstellung | `PHP85-TEST-HANDOFF.md` |
 | Nextcloud cloud.ganz-om.de | `CLOUD-NEXTCLOUD-RESTORE.md` |
 | ganz-om.de vollständiges CRM | `CLOUD-NEXTCLOUD-RESTORE.md` |
@@ -100,4 +103,4 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `PC-HANDOFF.md` | PC-Deploy, Import |
 | `HANDY-HANDOFF.md` | Kurz Mobile |
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung A–C |
-| `CLOUD-AGENT-ACCESS.md` | Secrets, SSH |
+| `CLOUD-AGENT-ACCESS.md` | Secrets, SSH, rsync-Deploy |

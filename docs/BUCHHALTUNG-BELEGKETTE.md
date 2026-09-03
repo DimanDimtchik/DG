@@ -138,7 +138,7 @@ Bei gesetztem Reverse-Charge-Typ werden passende Vorlagen als **Vorschlag** mark
 
 ---
 
-## Randfälle (Branch cursor/buchhaltung-randfaelle-1c3a)
+## Randfälle (`master`)
 
 - PRAP für Einnahmen (Vorausrechnung)
 - Negative Rabattpositionen auf Rechnungen

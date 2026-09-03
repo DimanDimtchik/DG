@@ -1,8 +1,8 @@
 # Buchhaltung — PC-Handoff (Deploy & Weiterarbeit)
 
-> **Stand:** 21.08.2026  
-> **Branch:** `cursor/buchhaltung-phase-abc-6a0c`  
-> **Deploy & Migration:** vom PC (Kasserver) — nicht im Cloud-Agent
+> **Stand:** 03.09.2026  
+> **Branch:** `master` (Phasen A–C + Randfälle gemergt)  
+> **Deploy & Migration:** vom PC (`deploy.bat`) oder Cloud (`bin/deploy-via-rsync.sh`) → `sync-crm-from-master.sh`
 
 Allgemeiner PC-Handoff (SSH, Shop, Import): [`docs/PC-HANDOFF.md`](PC-HANDOFF.md)
 
@@ -13,8 +13,8 @@ Allgemeiner PC-Handoff (SSH, Shop, Import): [`docs/PC-HANDOFF.md`](PC-HANDOFF.md
 ```powershell
 cd C:\Users\dietr\Projects\DG   # dein Pfad
 git fetch origin
-git checkout cursor/buchhaltung-phase-abc-6a0c
-git pull origin cursor/buchhaltung-phase-abc-6a0c
+git checkout master
+git pull origin master
 ```
 
 **Enthalten in diesem Branch (kumuliert):**
@@ -24,18 +24,9 @@ git pull origin cursor/buchhaltung-phase-abc-6a0c
 | DATEV-Doppelbuchung A–D | Journal, EXTF, OPOS, Kasse |
 | DIY UStVA / EÜR-CSV | ohne Steuerberater |
 | ELSTER/ERiC-Vorbereitung | Stub, Settings, Doku (kein Live-ERiC) |
-| **Phasen A–C (neu)** | Filter, Skonto-USt, Druck, BWA, SuSa, MT940, Tagesabschluss |
+| **Phasen A–C + Randfälle** | Filter, Skonto-USt, Druck, BWA, SuSa, MT940, Belegkette, Zeiterfassung Ph.1 |
 
-**PR manuell:** https://github.com/DimanDimtchik/DG/compare/master...cursor/buchhaltung-phase-abc-6a0c
-
-**Nach Tests mergen:**
-
-```powershell
-git checkout master
-git pull origin master
-git merge cursor/buchhaltung-phase-abc-6a0c
-git push origin master
-```
+Deploy direkt von `master` (siehe Abschnitt 2).
 
 ---
 

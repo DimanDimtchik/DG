@@ -42,7 +42,7 @@ php85 -v
 - Lizenz **ganz-soft.de:** `config/license.php` + `storage/license_state.json` aus Account-Root übernommen (alter Subfolder-Key `GS-AC90…` war ungültig).
 - Shop-Wartung: `/admin/wartung` — Admin-Passwort auf Server in `config/admin.local.php`.
 
-Branch mit Fixes (noch nicht auf `master` gemergt): **`cursor/buchhaltung-randfaelle-1c3a`**
+Randfälle-Fixes sind auf **`master`** gemergt (Stand 2026-09-03).
 
 ---
 

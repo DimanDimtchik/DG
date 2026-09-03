@@ -2,7 +2,7 @@
 
 > **→ Aktueller Gesamtstand (2026-08-23):** [`docs/HANDOFF.md`](HANDOFF.md) · Agent-Rolle: [`AGENTS.md`](../AGENTS.md)
 
-> **Aktuell:** Buchhaltung Phasen A–C auf **`master`** (gemergt). Nächster Branch: **`cursor/buchhaltung-randfaelle-1c3a`**.  
+> **Aktuell:** Alles Relevante auf **`master`** (Phasen A–C + Randfälle + Website-Menü-Icons, v1.0.29). Kein offener Feature-Branch.  
 > **→ Deploy-Anleitung:** [`docs/BUCHHALTUNG-PC-HANDOFF.md`](BUCHHALTUNG-PC-HANDOFF.md)  
 > Handy/Cloud: [`docs/HANDY-HANDOFF.md`](HANDY-HANDOFF.md) · SSH/Secrets: [`docs/CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 

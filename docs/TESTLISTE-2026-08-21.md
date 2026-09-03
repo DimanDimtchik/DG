@@ -220,7 +220,7 @@ Frische Installation oder Test-VM (`storage/.installed` entfernen):
 
 ---
 
-## K. Buchhaltung Randfälle (Branch `cursor/buchhaltung-randfaelle-1c3a`)
+## K. Buchhaltung Randfälle (`master`)
 
 > **Druckbare Checkliste:** [`TESTLISTE-RANDFAELLE-2026-08-23.html`](TESTLISTE-RANDFAELLE-2026-08-23.html) (Browser → Drucken / PDF)  
 > Deploy + Migrationen **055–061** · Hard-Reload · Details: `BUCHHALTUNG-BELEGKETTE.md`, `ZEITERFASSUNG-PLAN.md`
