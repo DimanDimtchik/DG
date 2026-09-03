@@ -1,10 +1,16 @@
 <?php
 declare(strict_types=1);
 
-/** Erkennung von Geisterumsätzen: bereits verbuchte oder doppelte Bankzeilen. */
+/** Erkennung von Geisterumsätzen: bereits verbuchte oder doppelte Bankzeilen.
+ *
+ * Geisterumsätze werden nie automatisch ausgeblendet — nur manuell durch den Nutzer
+ * (Ausblenden / Verknüpfen). classifyOpenTransactions() ändert keinen Status.
+ */
 final class BankGhostDetectionService
 {
     /**
+     * Trennt offene Umsätze in echte Offene und Geister — nur zur Anzeige, ohne Statusänderung.
+     *
      * @return array{open: list<array<string, mixed>>, ghosts: list<array<string, mixed>>}
      */
     public static function classifyOpenTransactions(): array
@@ -165,6 +171,9 @@ final class BankGhostDetectionService
         BankTransactionRepository::markMatched($transactionId, $voucherId);
     }
 
+    /**
+     * Blendet einen Geisterumsatz aus — nur nach expliziter Nutzeraktion.
+     */
     public static function hideGhost(int $transactionId): void
     {
         $tx = BankTransactionRepository::findById($transactionId);
@@ -178,6 +187,8 @@ final class BankGhostDetectionService
     }
 
     /**
+     * Blendet alle erkannten Geisterumsätze aus — nur nach expliziter Nutzeraktion („Alle ausblenden“).
+     *
      * @return int Anzahl ausgeblendeter Geisterumsätze
      */
     public static function hideAllGhosts(): int

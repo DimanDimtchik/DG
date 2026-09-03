@@ -19,7 +19,7 @@ $csrf = Csrf::token();
 
   <header class="dg-page-header">
     <h1 class="dg-page-title">Bankabgleich</h1>
-    <p class="dg-lead">CAMT.053 oder MT940 importieren und offene Belege automatisch zuordnen.</p>
+    <p class="dg-lead">CAMT.053 oder MT940 importieren und offene Belege automatisch zuordnen. Geisterumsätze werden nie automatisch ausgeblendet — Ausblenden oder Verknüpfen nur manuell.</p>
   </header>
 
   <?php if ($canEdit && $dbConnected) : ?>
@@ -60,7 +60,8 @@ $csrf = Csrf::token();
     <?php endif; ?>
     <p class="dg-field-hint">
       Diese Umsätze stammen von der Bank, sind aber bereits verbucht oder doppelt importiert.
-      Sie können sie ausblenden oder mit der bestehenden Zahlung verknüpfen — ohne Doppelbuchung.
+      Geisterumsätze werden nie automatisch ausgeblendet — bitte prüfen und manuell
+      Verknüpfen (ohne Doppelbuchung) oder Ausblenden wählen.
     </p>
     <div class="dg-table-wrap">
       <table class="dg-table">

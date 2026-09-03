@@ -2124,6 +2124,7 @@ switch ($path) {
                 BankTransactionRepository::markIgnored((int) ($_POST['bank_tx_id'] ?? 0));
                 Flash::set('success', 'Umsatz ignoriert.');
             } elseif (isset($_POST['bank_ghost_hide'])) {
+                // Geisterumsätze: nur manuelle Nutzeraktion — kein Cron, keine Automatik.
                 try {
                     BankGhostDetectionService::hideGhost((int) ($_POST['bank_tx_id'] ?? 0));
                     Flash::set('success', 'Geisterumsatz ausgeblendet.');
@@ -2854,6 +2855,7 @@ switch ($path) {
             exit;
         } elseif ($page === 'buchhaltung-bankabgleich' && MenuRegistry::canAccess($user, 'buchhaltung-bankabgleich')) {
             BankTransactionRepository::backfillFingerprints();
+            // Nur Klassifikation zur Anzeige — Geisterumsätze werden nie automatisch ausgeblendet.
             $bankTxClassified = BankGhostDetectionService::classifyOpenTransactions();
             $bankTransactionsOpen = $bankTxClassified['open'];
             $bankTransactionsGhosts = $bankTxClassified['ghosts'];
