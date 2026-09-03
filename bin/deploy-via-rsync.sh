@@ -12,7 +12,7 @@ cd "$ROOT"
 KEY_FILE="$HOME/.ssh/id_ed25519_ganzom"
 USER_NAME="${DG_ALLINKL_SSH_USER:-}"
 HOST_NAME="${DG_ALLINKL_SSH_HOST:-}"
-REMOTE_BASE="www/htdocs/w0217246"
+REMOTE_BASE="/www/htdocs/w0217246"
 
 ALL=false
 if [[ "${1:-}" == "--all" ]]; then
