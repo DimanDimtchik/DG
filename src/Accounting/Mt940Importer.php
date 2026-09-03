@@ -5,7 +5,7 @@ declare(strict_types=1);
 final class Mt940Importer
 {
     /**
-     * @return array{batch: string, imported: int, skipped: int}
+     * @return array{batch: string, imported: int, skipped: int, duplicates: int}
      */
     public static function import(string $content): array
     {
@@ -22,6 +22,7 @@ final class Mt940Importer
         $batch = bin2hex(random_bytes(16));
         $imported = 0;
         $skipped = 0;
+        $duplicates = 0;
 
         $statements = preg_split('/\r?\n(?=-{5})/', $content) ?: [$content];
         foreach ($statements as $statement) {
@@ -34,7 +35,11 @@ final class Mt940Importer
                     $skipped++;
                     continue;
                 }
-                BankTransactionRepository::insert($tx + ['import_batch' => $batch]);
+                $result = BankTransactionRepository::insertOrSkip($tx + ['import_batch' => $batch]);
+                if ($result['skipped']) {
+                    $duplicates++;
+                    continue;
+                }
                 $imported++;
             }
         }
@@ -43,7 +48,7 @@ final class Mt940Importer
             BankReconciliationService::autoMatchBatch($batch);
         }
 
-        return ['batch' => $batch, 'imported' => $imported, 'skipped' => $skipped];
+        return ['batch' => $batch, 'imported' => $imported, 'skipped' => $skipped, 'duplicates' => $duplicates];
     }
 
     /**

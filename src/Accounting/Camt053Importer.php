@@ -5,7 +5,7 @@ declare(strict_types=1);
 final class Camt053Importer
 {
     /**
-     * @return array{batch: string, imported: int, skipped: int}
+     * @return array{batch: string, imported: int, skipped: int, duplicates: int}
      */
     public static function import(string $xmlContent): array
     {
@@ -30,6 +30,7 @@ final class Camt053Importer
         $batch = bin2hex(random_bytes(16));
         $imported = 0;
         $skipped = 0;
+        $duplicates = 0;
 
         foreach ($entries as $entry) {
             $amountNode = $entry->Amt ?? $entry->children()->Amt ?? null;
@@ -60,7 +61,7 @@ final class Camt053Importer
                 continue;
             }
 
-            BankTransactionRepository::insert([
+            $result = BankTransactionRepository::insertOrSkip([
                 'import_batch' => $batch,
                 'transaction_date' => $bookingDate,
                 'value_date' => $valueDate !== '' ? $valueDate : null,
@@ -70,6 +71,10 @@ final class Camt053Importer
                 'reference_text' => mb_substr($reference, 0, 500),
                 'end_to_end_id' => mb_substr($endToEnd, 0, 64),
             ]);
+            if ($result['skipped']) {
+                $duplicates++;
+                continue;
+            }
             $imported++;
         }
 
@@ -77,7 +82,7 @@ final class Camt053Importer
             BankReconciliationService::autoMatchBatch($batch);
         }
 
-        return ['batch' => $batch, 'imported' => $imported, 'skipped' => $skipped];
+        return ['batch' => $batch, 'imported' => $imported, 'skipped' => $skipped, 'duplicates' => $duplicates];
     }
 
     private static function parseDate(?SimpleXMLElement $node): string
