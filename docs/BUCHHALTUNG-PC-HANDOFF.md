@@ -158,8 +158,8 @@ views/partials/accounting-period-filter.php   # Filter-UI (wiederverwendet)
 
 ```powershell
 git fetch origin
-git checkout cursor/buchhaltung-phase-abc-6a0c
-git pull
+git checkout master
+git pull origin master
 .\deploy.bat
 # Browser: CRM öffnen → Migration läuft → Abschnitt J testen
 ```
