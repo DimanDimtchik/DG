@@ -205,6 +205,9 @@ final class MigrationRunner
                 && self::tableExists($pdo, 'dg_voucher_dunnings'),
             '060_voucher_payments.sql' => self::tableExists($pdo, 'dg_voucher_payments'),
             '061_time_clock.sql' => self::tableExists($pdo, 'dg_time_clock_events'),
+            '062_time_overtime.sql' => self::tableExists($pdo, 'dg_time_work_days'),
+            '063_arbzg_reminders.sql' => self::tableExists($pdo, 'dg_time_arbzg_reminders'),
+            '064_bank_tx_fingerprint.sql' => self::columnExists($pdo, 'dg_bank_transactions', 'transaction_fingerprint'),
             default => false,
         };
     }
@@ -297,6 +300,9 @@ final class MigrationRunner
             '059_voucher_payment_terms_dunning.sql' => true,
             '060_voucher_payments.sql' => true,
             '061_time_clock.sql' => true,
+            '062_time_overtime.sql' => true,
+            '063_arbzg_reminders.sql' => true,
+            '064_bank_tx_fingerprint.sql' => true,
         ];
     }
 

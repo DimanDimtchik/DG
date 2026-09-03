@@ -2076,11 +2076,16 @@ switch ($path) {
                     }
                     $xml = (string) file_get_contents((string) ($file['tmp_name'] ?? ''));
                     $res = Camt053Importer::import($xml);
-                    Flash::set('success', sprintf(
-                        'CAMT importiert: %d Umsätze (%d übersprungen). Automatischer Abgleich durchgeführt.',
+                    $message = sprintf(
+                        'CAMT importiert: %d Umsätze (%d übersprungen',
                         $res['imported'],
                         $res['skipped']
-                    ));
+                    );
+                    if (($res['duplicates'] ?? 0) > 0) {
+                        $message .= sprintf(', %d Duplikate ausgeblendet', (int) $res['duplicates']);
+                    }
+                    $message .= '). Automatischer Abgleich durchgeführt.';
+                    Flash::set('success', $message);
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -2092,11 +2097,16 @@ switch ($path) {
                     }
                     $content = (string) file_get_contents((string) ($file['tmp_name'] ?? ''));
                     $res = Mt940Importer::import($content);
-                    Flash::set('success', sprintf(
-                        'MT940 importiert: %d Umsätze (%d übersprungen). Automatischer Abgleich durchgeführt.',
+                    $message = sprintf(
+                        'MT940 importiert: %d Umsätze (%d übersprungen',
                         $res['imported'],
                         $res['skipped']
-                    ));
+                    );
+                    if (($res['duplicates'] ?? 0) > 0) {
+                        $message .= sprintf(', %d Duplikate ausgeblendet', (int) $res['duplicates']);
+                    }
+                    $message .= '). Automatischer Abgleich durchgeführt.';
+                    Flash::set('success', $message);
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -2113,6 +2123,25 @@ switch ($path) {
             } elseif (isset($_POST['bank_tx_ignore'])) {
                 BankTransactionRepository::markIgnored((int) ($_POST['bank_tx_id'] ?? 0));
                 Flash::set('success', 'Umsatz ignoriert.');
+            } elseif (isset($_POST['bank_ghost_hide'])) {
+                try {
+                    BankGhostDetectionService::hideGhost((int) ($_POST['bank_tx_id'] ?? 0));
+                    Flash::set('success', 'Geisterumsatz ausgeblendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            } elseif (isset($_POST['bank_ghost_hide_all'])) {
+                $hidden = BankGhostDetectionService::hideAllGhosts();
+                Flash::set('success', $hidden > 0
+                    ? sprintf('%d Geisterumsätze ausgeblendet.', $hidden)
+                    : 'Keine Geisterumsätze gefunden.');
+            } elseif (isset($_POST['bank_ghost_link'])) {
+                try {
+                    BankGhostDetectionService::linkExistingSettlement((int) ($_POST['bank_tx_id'] ?? 0));
+                    Flash::set('success', 'Geisterumsatz mit bestehender Zahlung verknüpft.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
             }
             header('Location: ' . $redirect, true, 302);
             exit;
@@ -2824,7 +2853,10 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-bankabgleich' && MenuRegistry::canAccess($user, 'buchhaltung-bankabgleich')) {
-            $bankTransactionsOpen = BankTransactionRepository::list('open');
+            BankTransactionRepository::backfillFingerprints();
+            $bankTxClassified = BankGhostDetectionService::classifyOpenTransactions();
+            $bankTransactionsOpen = $bankTxClassified['open'];
+            $bankTransactionsGhosts = $bankTxClassified['ghosts'];
             $bankTransactionsMatched = BankTransactionRepository::list('matched');
             $bankMatchVouchers = Database::isConfigured()
                 ? (Database::pdo()->query(
@@ -3787,6 +3819,7 @@ switch ($path) {
         $balanceSheet = $balanceSheet ?? ['aktiva' => [], 'passiva' => [], 'totals' => ['aktiva' => 0.0, 'passiva' => 0.0], 'result' => 0.0];
         $profitLoss = $profitLoss ?? ['income' => [], 'expense' => [], 'totals' => ['income' => 0.0, 'expense' => 0.0, 'result' => 0.0]];
         $bankTransactionsOpen = $bankTransactionsOpen ?? [];
+        $bankTransactionsGhosts = $bankTransactionsGhosts ?? [];
         $bankTransactionsMatched = $bankTransactionsMatched ?? [];
         $bankMatchVouchers = $bankMatchVouchers ?? [];
         $isAdmin = $isAdmin ?? RoleResolver::isAdmin($user);
@@ -3945,6 +3978,7 @@ switch ($path) {
             'balanceSheet',
             'profitLoss',
             'bankTransactionsOpen',
+            'bankTransactionsGhosts',
             'bankTransactionsMatched',
             'bankMatchVouchers',
             'jaYear',

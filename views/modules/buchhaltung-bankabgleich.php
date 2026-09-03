@@ -1,6 +1,7 @@
 <?php
 /**
  * @var list<array<string, mixed>> $bankTransactionsOpen
+ * @var list<array<string, mixed>> $bankTransactionsGhosts
  * @var list<array<string, mixed>> $bankTransactionsMatched
  * @var list<array<string, mixed>> $bankMatchVouchers
  * @var bool $canEdit
@@ -8,6 +9,7 @@
  * @var array{type: string, message: string}|null $flash
  */
 $open = $bankTransactionsOpen ?? [];
+$ghosts = $bankTransactionsGhosts ?? [];
 $matched = $bankTransactionsMatched ?? [];
 $vouchers = $bankMatchVouchers ?? [];
 $csrf = Csrf::token();
@@ -47,10 +49,64 @@ $csrf = Csrf::token();
   </section>
   <?php endif; ?>
 
+  <?php if ($ghosts !== []) : ?>
+  <section class="dg-panel dg-panel--notice">
+    <h2 class="dg-subsection-title">Geisterumsätze (<?= count($ghosts) ?>)</h2>
+    <?php if ($canEdit) : ?>
+      <form method="post" action="/app?page=buchhaltung-bankabgleich" class="dg-form dg-form--inline" style="margin-bottom: 1rem;">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <button type="submit" name="bank_ghost_hide_all" value="1" class="dg-button dg-button--small">Alle ausblenden</button>
+      </form>
+    <?php endif; ?>
+    <p class="dg-field-hint">
+      Diese Umsätze stammen von der Bank, sind aber bereits verbucht oder doppelt importiert.
+      Sie können sie ausblenden oder mit der bestehenden Zahlung verknüpfen — ohne Doppelbuchung.
+    </p>
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr><th>Datum</th><th>Text</th><th>Gegenseite</th><th class="dg-table__num">Betrag</th><th>Hinweis</th><th></th></tr>
+        </thead>
+        <tbody>
+          <?php foreach ($ghosts as $tx) : ?>
+            <tr>
+              <td><?= View::escape((string) ($tx['transaction_date'] ?? '')) ?></td>
+              <td><?= View::escape((string) ($tx['reference_text'] ?? '')) ?></td>
+              <td><?= View::escape((string) ($tx['counterparty_name'] ?? '')) ?></td>
+              <td class="dg-table__num"><?= View::escape((string) ($tx['amount_display'] ?? '')) ?></td>
+              <td>
+                <span class="dg-badge dg-badge--pending"><?= View::escape((string) ($tx['ghost_label'] ?? '')) ?></span>
+                <div class="dg-muted dg-ghost-detail"><?= View::escape((string) ($tx['ghost_detail'] ?? '')) ?></div>
+                <?php if (!empty($tx['ghost_voucher_id'])) : ?>
+                  <a href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) $tx['ghost_voucher_id'] ?>">
+                    Beleg #<?= (int) $tx['ghost_voucher_id'] ?> öffnen
+                  </a>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?php if ($canEdit) : ?>
+                  <form method="post" action="/app?page=buchhaltung-bankabgleich" class="dg-inline-form">
+                    <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+                    <input type="hidden" name="bank_tx_id" value="<?= (int) ($tx['id'] ?? 0) ?>">
+                    <?php if (!empty($tx['ghost_voucher_id']) || !empty($tx['ghost_payment_id'])) : ?>
+                      <button type="submit" name="bank_ghost_link" value="1" class="dg-button dg-button--small">Verknüpfen</button>
+                    <?php endif; ?>
+                    <button type="submit" name="bank_ghost_hide" value="1" class="dg-button dg-button--small">Ausblenden</button>
+                  </form>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <?php endif; ?>
+
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Offene Umsätze (<?= count($open) ?>)</h2>
     <?php if ($open === []) : ?>
-      <p class="dg-muted">Keine offenen Bankumsätze.</p>
+      <p class="dg-muted">Keine offenen Bankumsätze<?= $ghosts !== [] ? ' (ohne Geisterumsätze)' : '' ?>.</p>
     <?php else : ?>
       <div class="dg-table-wrap">
         <table class="dg-table">

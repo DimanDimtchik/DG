@@ -202,6 +202,7 @@ spl_autoload_register(static function (string $class): void {
         'DatevBelegExportService' => '/src/Accounting/DatevBelegExportService.php',
         'Camt053Importer' => '/src/Accounting/Camt053Importer.php',
         'BankTransactionRepository' => '/src/Accounting/BankTransactionRepository.php',
+        'BankGhostDetectionService' => '/src/Accounting/BankGhostDetectionService.php',
         'BankReconciliationService' => '/src/Accounting/BankReconciliationService.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
