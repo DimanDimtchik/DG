@@ -20,11 +20,8 @@ Stand: **2026-09-03** — bei jeder Session zuerst aktualisieren, wenn sich Bran
 |--------|--------|
 | `cursor/bank-geisterumsaetze-e031` | Bankabgleich Geisterumsätze |
 | `cursor/arbeitsvertrag-vorlagen-hinweis-caef` | Doku Arbeitsvertrag-Vorlagen |
-| `cursor/ssh-diagnose-deploy-2416` | SSH-Diagnose (evtl. in master überholt) |
-| `cursor/ssh-fix-and-deploy-92d7` | SSH-Deploy-Fix (evtl. überholt) |
-| `cursor/ssh-key-normalize-deploy-c7e0` | SSH-Key-Normalize (evtl. überholt) |
 
-**Aufgeräumt 2026-09-03:** u. a. `buchhaltung-randfaelle`, `buchhaltung-phase-abc`, `install-data-import`, `website-bootstrap`, `datev-doppelbuchung`, `server-elster-prep`, `fix-ssh-key-format`.
+**Aufgeräumt 2026-09-03:** u. a. `buchhaltung-randfaelle`, `buchhaltung-phase-abc`, `install-data-import`, `website-bootstrap`, `datev-doppelbuchung`, `server-elster-prep`, `fix-ssh-key-format`, drei SSH-Deploy-Branches (Fixes in `master` + `deploy-via-rsync.sh`).
 
 Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash bin/sync-crm-from-master.sh` (auf Server).
 
