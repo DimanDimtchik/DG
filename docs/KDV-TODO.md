@@ -116,6 +116,7 @@ dg.ganz-om.de/KDV/
 
 Notiert 21.08.2026 – noch nicht priorisiert:
 
+- [ ] **Multi-Firma / Org-Switcher** (Umfirmierung, Tochter) — [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md)
 - [ ] **Caching** (Performance / Zwischenspeicher)
 - [ ] **HaltStatus** (Bedeutung beim Umsetzen klären)
 - [ ] **Zeiterfassung**
