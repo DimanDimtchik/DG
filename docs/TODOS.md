@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-03** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
+Stand: **2026-09-04** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
 
 ---
 
@@ -23,10 +23,12 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
 - [x] Feature-Branches gemergt: Bank-Geisterumsätze, Arbeitsvertrag-Doku
+- [x] **Multi-Firma / Umfirmierung** — Konzept dokumentiert (`MULTI-FIRMA-KONZEPT.md`)
 - [ ] Migration **064** (Bank-Fingerabdruck) auf Live prüfen nach Login
 - [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
+- [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
 
 ---
 
@@ -72,6 +74,15 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 ---
 
+## Geplant (Konzept, noch nicht gebaut)
+
+| Thema | Doku |
+|-------|------|
+| **Multi-Firma** (Switcher, Tochter, Umfirmierung unterjährig) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) |
+| Zweitfirma −20 %, Umfirmierung = 1 Paket + Archiv-Slot | Abschnitt 7 im Konzept |
+
+---
+
 ## Bewusst zurückgestellt
 
 | Thema | Doku |
@@ -98,3 +109,4 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten.
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung Deploy |
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |
 | `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md` | Vertragsvorlagen (Rechtliches) |
+| `MULTI-FIRMA-KONZEPT.md` | Multi-Firma, Umfirmierung, Pakete/Rabatt |

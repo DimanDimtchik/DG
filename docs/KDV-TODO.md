@@ -2,7 +2,8 @@
 
 > Erreichbar unter: `dg.ganz-om.de` → Menü **SaaS-Kunden (Ganz Soft)** (Admin)
 > Zweck: Zentrale Verwaltung **Ihrer** CRM-Hosting-/Lizenzkunden (Domains)
-> Abgrenzung: **nicht** CRM-Kontakte der Endkunden; Endkunden sehen nur das **Shop-Konto** auf shop.ganz-soft.de
+> Abgrenzung: **nicht** CRM-Kontakte der Endkunden; Endkunden sehen nur das **Shop-Konto** auf shop.ganz-soft.de  
+> **Geplant:** Org mit mehreren Firmen (Tochter/Umfirmierung) — [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md)
 
 ---
 
