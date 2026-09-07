@@ -44,9 +44,10 @@
 
 ## Phase 2 — ERiC organisatorisch
 
-- [ ] Registrierung [ELSTER Entwickler](https://www.elster.de/eportal/infoseite/entwickler)
-- [ ] **Hersteller-ID** beantragen und in `elster.local.php` eintragen
-- [ ] ELSTER-Newsletter abonnieren
+- [x] Registrierung [ELSTER Entwickler](https://www.elster.de/eportal/infoseite/entwickler) — Zugang aktiv (2026-09-07)
+- [x] **Hersteller-ID** beantragt (ERiC, Warte auf Freigabe per E-Mail)
+- [ ] Hersteller-ID in `elster.local.php` / Einstellungen → ELSTER eintragen (wenn Nummer da)
+- [x] ELSTER-Newsletter abonniert (2026-09-07)
 - [ ] ERiC Linux x64 (aktuelle Mindestversion) aus Entwicklerbereich laden
 - [ ] Lizenzvereinbarung ERiC akzeptieren / dokumentieren
 - [ ] **Test-Softwarezertifikat** in Mein ELSTER anlegen (nicht Produktions-Zertifikat für Tests)

@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-04** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
+Stand: **2026-09-07** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
 
 ---
 
@@ -29,6 +29,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
 - [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
+- [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
 
 ---
 
