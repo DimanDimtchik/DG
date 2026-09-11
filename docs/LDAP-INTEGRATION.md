@@ -79,15 +79,30 @@ Einstellungen → Organisation → **Anmeldung / LDAP**:
 - JIT: an, wenn neue LDAP-Nutzer automatisch CRM-Konten bekommen sollen.
 - Standard-Rolle: `dg_eigenmitarbeiter` (oder per Gruppen-Mapping überschreiben).
 
-### 5. WordPress dg-user (Plugin — separates Repo)
+### 5. WordPress / Telefonbuch (ma.iqstrom.com)
 
-Das Plugin aus dem anderen Chat ist **nicht** in diesem CRM-Repo. Nach Import dort:
+**Live-System (Sep 2026):** `https://ma.iqstrom.com` — Mitarbeiterportal IQ-Strom GmbH (WordPress, **eigener KAS-Account**, nicht unter `w0217246` per SSH erreichbar).
+
+Plugin **`openstage-telefonbuch`** (OpenStage Telefonbuch):
+
+| Endpunkt | Zugriff |
+|----------|---------|
+| `GET /wp-json/openstage-telefonbuch/v1/health` | öffentlich — `{ ok, plugin, version, count }` |
+| `GET /wp-json/openstage-telefonbuch/v1/contacts` | Token erforderlich (`ostb_forbidden`) |
+| `GET /wp-json/openstage-telefonbuch/v1/template` | Token erforderlich (LDAP-Template) |
+
+Laut `readme.txt`: Kontakte in WordPress, Ausgabe als LDAP-Template/LDIF/REST; **Node-LDAP-Gateway** für Unify OpenStage 40 SIP.
+
+**CRM-only Felder:** `contact_note` (Bemerkung, z. B. Geräte-IP) bleibt nur in `dg_contacts` — nicht LDAP/OpenStage.
+
+### 6. WordPress dg-user (Plugin — separates Repo)
+
+Zusätzlich zum Telefonbuch-Plugin (LDAP-Gateway) ggf. dg-user für allgemeine WP-Konten:
 
 - REST-Basis-URL in `wordpress_base_url` (ldap.local.php).
 - API-Token nur lokal, nicht in Git.
-- Später: Cron/Webhook für Abgleich LDAP ↔ WP ↔ CRM (noch nicht im CRM implementiert).
 
-**Handoff:** Plugin-Quellcode in eigenes Repo `dg-user-wp-plugin` legen oder hier unter `wordpress/dg-user/` committen, wenn gewünscht.
+**Handoff:** Plugin-Quellcode aus No-Repo-Chat in Repo legen (z. B. `wordpress/openstage-telefonbuch/`).
 
 ---
 
