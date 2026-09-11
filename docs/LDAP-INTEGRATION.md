@@ -81,15 +81,19 @@ Einstellungen → Organisation → **Anmeldung / LDAP**:
 
 ### 5. WordPress / Telefonbuch (ma.iqstrom.com)
 
-**Live-System (Sep 2026):** `https://ma.iqstrom.com` — Mitarbeiterportal IQ-Strom GmbH (WordPress, **eigener KAS-Account**, nicht unter `w0217246` per SSH erreichbar).
+**Live-System (Sep 2026):** `https://ma.iqstrom.com` — Mitarbeiterportal IQ-Strom GmbH (WordPress, KAS-Account **`w01f1176`**).
+
+Cloud-Agent SSH: `bash bin/cloud-agent-iq-ssh-setup.sh` → `ssh allinkl-iqstrom`  
+Plugin-Pfad: `/www/htdocs/w01f1176/ma.iqstrom.com/wp-content/plugins/openstage-telefonbuch/`
 
 Plugin **`openstage-telefonbuch`** (OpenStage Telefonbuch):
 
 | Endpunkt | Zugriff |
 |----------|---------|
 | `GET /wp-json/openstage-telefonbuch/v1/health` | öffentlich — `{ ok, plugin, version, count }` |
-| `GET /wp-json/openstage-telefonbuch/v1/contacts` | Token erforderlich (`ostb_forbidden`) |
-| `GET /wp-json/openstage-telefonbuch/v1/template` | Token erforderlich (LDAP-Template) |
+| `GET /wp-json/openstage-telefonbuch/v1/contacts` | Header `X-OSTB-Token` oder `?token=` (WP-Option `ostb_settings`) |
+| `GET /wp-json/openstage-telefonbuch/v1/template` | wie contacts |
+| Export-URLs | `/openstage-telefonbuch/template|ldif|json/?token=…` |
 
 Laut `readme.txt`: Kontakte in WordPress, Ausgabe als LDAP-Template/LDIF/REST; **Node-LDAP-Gateway** für Unify OpenStage 40 SIP.
 

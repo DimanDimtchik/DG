@@ -52,7 +52,8 @@ return [
     // hybrid = LDAP zuerst, sonst lokales Passwort; ldap_only = nur Verzeichnis
     'mode' => 'hybrid',
 
-    // WordPress dg-user Plugin (optional): REST-Basis für spätere Sync-Jobs
-    'wordpress_base_url' => '',
+    // OpenStage Telefonbuch (ma.iqstrom.com): REST + Export
+    // Token: WP-Admin → Telefonbuch → Einstellungen → API-Token (Header X-OSTB-Token)
+    'wordpress_base_url' => 'https://ma.iqstrom.com',
     'wordpress_api_token' => '',
 ];

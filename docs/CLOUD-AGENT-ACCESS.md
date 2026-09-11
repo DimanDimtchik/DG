@@ -92,7 +92,14 @@ ssh -G allinkl-ganzom | findstr /i "^user "
 
 Fingerprint Private Key (Kontrolle): `SHA256:RoWIYpvE7HH1cQbVS7YUmSouM4pGvYv33i3AEiFriPw` — Kommentar in `id_ed25519_ganzom.pub`: `ganz-om.de (s000e3d3)`.
 
-**Nicht verwenden:** Secrets mit Prefix `IQ_ALLINKL_*` — anderer All-Inkl-Account (`w01f1176`), nicht DG (`s000e3d3`).
+**Zwei All-Inkl-Accounts** — jeweils die passenden Secrets verwenden:
+
+| Prefix | KAS-Account | Domains (Auszug) | Setup-Skript |
+|--------|-------------|------------------|--------------|
+| `DG_ALLINKL_*` | `w0217246` | dg.ganz-om.de, ganz-soft.de, kontur-cosmetics.de | `bin/cloud-agent-ssh-setup.sh` |
+| `IQ_ALLINKL_*` | `w01f1176` | ma.iqstrom.com, iqstrom.com, iq-strom.de, cloud.iqstrom.com | `bin/cloud-agent-iq-ssh-setup.sh` |
+
+Für **CRM-Deploy** nur `DG_ALLINKL_*`. Für **IQ-Strom / Telefonbuch / ma.iqstrom.com** `IQ_ALLINKL_*` — nicht verwechseln.
 
 
 ---
@@ -152,7 +159,7 @@ Erst Master per `scp`/`deploy.bat` auf **dg.ganz-om.de** hochladen, dann `sync-c
 | `DG_ALLINKL_SSH_PRIVATE_KEY` | Fingerprint `SHA256:RoWIYpvE7HH1cQbVS7YUmSouM4pGvYv33i3AEiFriPw` |
 | `DG_ALLINKL_SSH_USER` | beginnt mit `ssh-`, Länge typisch 11–12 Zeichen |
 | `DG_ALLINKL_SSH_HOST` | `[login].kasserver.com` |
-| Verbindung mit `IQ_ALLINKL_*` | Falsches Konto — ignorieren |
+| IQ-Strom / ma.iqstrom.com | `IQ_ALLINKL_*` + `bash bin/cloud-agent-iq-ssh-setup.sh` → `ssh allinkl-iqstrom` |
 
 **Fix:**
 
