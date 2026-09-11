@@ -22,15 +22,41 @@ final class AuthService
             return $throttleMsg;
         }
 
-        $user = UserRepository::findByEmailOrUsername($username);
-        if (!$user || !UserRepository::verifyPassword($user, $password)) {
+        $user = null;
+
+        if (LdapSettings::isLdapEnabled()) {
+            $ldapProfile = LdapAuthenticator::authenticate($username, $password);
+            if ($ldapProfile !== null) {
+                $user = UserRepository::syncFromLdap($ldapProfile);
+            } elseif (LdapSettings::ldapOnly()) {
+                LoginThrottle::recordFailure($ip, $username);
+                AuditLog::record('login_failed', null, 'User: ' . $username . ' (LDAP)');
+
+                return false;
+            }
+        }
+
+        if ($user === null && !LdapSettings::ldapOnly()) {
+            $localUser = UserRepository::findByEmailOrUsername($username);
+            if (!$localUser || !UserRepository::verifyPassword($localUser, $password)) {
+                LoginThrottle::recordFailure($ip, $username);
+                AuditLog::record('login_failed', null, 'User: ' . $username);
+
+                return false;
+            }
+            $user = $localUser;
+        }
+
+        if ($user === null) {
             LoginThrottle::recordFailure($ip, $username);
             AuditLog::record('login_failed', null, 'User: ' . $username);
+
             return false;
         }
 
         if (!RoleResolver::canAccessCrm($user)) {
             LoginThrottle::recordFailure($ip, $username);
+
             return false;
         }
 

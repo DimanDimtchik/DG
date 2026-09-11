@@ -1,0 +1,58 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * LDAP — lokale Server-Konfiguration (nicht ins Git committen).
+ *
+ * Kopie: cp config/ldap.local.php.example config/ldap.local.php
+ *
+ * Auf All-Inkl Shared Hosting: PHP ldap-Extension fehlt oft — nur Vorbereitung.
+ * LDAP-Server läuft extern (eigener VPS/Hetzner); CRM ist Client.
+ *
+ * @see docs/LDAP-INTEGRATION.md
+ */
+return [
+    // Erst auf Root-Server / wenn php-ldap + erreichbarer LDAP-Host verfügbar:
+    'enabled' => false,
+
+    'host' => 'ldap.example.internal',
+    'port' => 389,
+    'use_tls' => true,
+    'use_ssl' => false,
+    'timeout_seconds' => 5,
+
+    // Service-Account für Benutzersuche (optional; sonst anonymes Bind + User-Bind)
+    'bind_dn' => 'cn=readonly,ou=services,dc=ganz-om,dc=de',
+    'bind_password' => '',
+
+    'base_dn' => 'ou=users,dc=ganz-om,dc=de',
+
+    // %s = escaped login (uid oder mail)
+    'user_filter' => '(&(objectClass=inetOrgPerson)(|(uid=%s)(mail=%s)))',
+
+    // LDAP-Attribut → CRM-Feld
+    'attribute_map' => [
+        'username' => 'uid',
+        'email' => 'mail',
+        'display_name' => 'cn',
+        'external_id' => 'entryUUID',
+    ],
+
+    // LDAP-Gruppe (memberOf CN) → CRM-Rolle (dg-user-plugin-kompatibel)
+    'group_role_map' => [
+        'crm-admins' => 'administrator',
+        'crm-staff' => 'dg_eigenmitarbeiter',
+    ],
+    'default_role' => 'dg_eigenmitarbeiter',
+    'default_employee_active' => true,
+
+    // Neuen CRM-Benutzer bei erstem LDAP-Login anlegen
+    'jit_provision' => true,
+
+    // hybrid = LDAP zuerst, sonst lokales Passwort; ldap_only = nur Verzeichnis
+    'mode' => 'hybrid',
+
+    // WordPress dg-user Plugin (optional): REST-Basis für spätere Sync-Jobs
+    'wordpress_base_url' => '',
+    'wordpress_api_token' => '',
+];
