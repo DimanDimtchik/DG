@@ -28,7 +28,13 @@ final class StockMovementService
             return;
         }
 
-        $deltaSign = self::deltaSignForVoucherType($voucherType);
+        if ($voucherType === 'income' && self::shouldSkipIncomeStockSync($documentKind, $voucherId)) {
+            StockMovementRepository::deleteForVoucher($voucherId);
+
+            return;
+        }
+
+        $deltaSign = self::deltaSignForVoucherType($voucherType, $documentKind);
         if ($deltaSign === 0) {
             StockMovementRepository::deleteForVoucher($voucherId);
 
@@ -38,12 +44,7 @@ final class StockMovementService
         StockMovementRepository::deleteForVoucher($voucherId);
 
         $movementDate = (string) ($voucher['voucher_date'] ?? date('Y-m-d'));
-        $reason = $deltaSign > 0 ? 'purchase' : 'sale';
-        if ($voucherType === 'credit') {
-            $reason = 'purchase';
-        } elseif ($voucherType === 'expense_reduction') {
-            $reason = 'sale';
-        }
+        $reason = self::reasonForVoucherMovement($voucherType, $documentKind, $deltaSign);
 
         $items = VoucherRepository::itemsForVoucher($voucherId);
         foreach ($items as $item) {
@@ -201,19 +202,60 @@ final class StockMovementService
 
     private static function voucherAffectsStock(string $voucherType, string $documentKind): bool
     {
+        $documentKind = VoucherDocumentKind::sanitize($documentKind);
         if ($voucherType === 'income') {
+            if ($documentKind === VoucherDocumentKind::DELIVERY_NOTE) {
+                return true;
+            }
+
             return VoucherDocumentKind::isBookable($documentKind, 'income');
         }
 
         return in_array($voucherType, ['expense', 'expense_reduction', 'credit'], true);
     }
 
-    private static function deltaSignForVoucherType(string $voucherType): int
+    private static function shouldSkipIncomeStockSync(string $documentKind, int $voucherId): bool
     {
+        $documentKind = VoucherDocumentKind::sanitize($documentKind);
+        if ($documentKind === VoucherDocumentKind::DELIVERY_NOTE) {
+            return false;
+        }
+
+        if (!in_array($documentKind, [
+            VoucherDocumentKind::PARTIAL_INVOICE,
+            VoucherDocumentKind::INVOICE,
+            VoucherDocumentKind::FINAL_INVOICE,
+        ], true)) {
+            return false;
+        }
+
+        return VoucherDocumentChain::subtreeHasKind($voucherId, VoucherDocumentKind::DELIVERY_NOTE);
+    }
+
+    private static function deltaSignForVoucherType(string $voucherType, string $documentKind = ''): int
+    {
+        $documentKind = VoucherDocumentKind::sanitize($documentKind);
+        if ($voucherType === 'income' && $documentKind === VoucherDocumentKind::DELIVERY_NOTE) {
+            return -1;
+        }
+
         return match ($voucherType) {
             'expense', 'credit' => 1,
             'income', 'expense_reduction' => -1,
             default => 0,
         };
+    }
+
+    private static function reasonForVoucherMovement(string $voucherType, string $documentKind, int $deltaSign): string
+    {
+        $documentKind = VoucherDocumentKind::sanitize($documentKind);
+        if ($voucherType === 'income' && $documentKind === VoucherDocumentKind::DELIVERY_NOTE) {
+            return 'issue';
+        }
+        if ($deltaSign > 0) {
+            return $voucherType === 'credit' ? 'purchase' : 'receipt';
+        }
+
+        return $voucherType === 'expense_reduction' ? 'sale' : 'issue';
     }
 }

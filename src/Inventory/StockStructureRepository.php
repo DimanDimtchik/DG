@@ -450,6 +450,29 @@ final class StockStructureRepository
     }
 
     /** @return array<string, mixed>|null */
+    public static function findPlaceByBarcode(string $barcode): ?array
+    {
+        $barcode = StockBarcodeService::normalize($barcode);
+        if ($barcode === '' || !Database::isConfigured()) {
+            return null;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT p.*, l.code AS location_code, h.code AS hall_code, s.code AS shelf_code
+             FROM dg_stock_places p
+             INNER JOIN dg_stock_locations l ON l.id = p.location_id
+             INNER JOIN dg_stock_halls h ON h.id = p.hall_id
+             INNER JOIN dg_stock_shelves s ON s.id = p.shelf_id
+             WHERE p.barcode = :barcode AND p.is_active = 1
+             LIMIT 1'
+        );
+        $stmt->execute(['barcode' => $barcode]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? self::enrichPlaceRow($row) : null;
+    }
+
+    /** @return array<string, mixed>|null */
     public static function findPlace(int $id): ?array
     {
         if ($id < 1 || !Database::isConfigured()) {
@@ -650,6 +673,25 @@ final class StockStructureRepository
                 'place_kind' => $kind,
                 'sort_order' => $sortBase + $i,
             ]);
+            $newPlaceId = (int) $pdo->lastInsertId();
+            if ($newPlaceId > 0) {
+                try {
+                    StockBarcodeService::generatePlaceBarcode($newPlaceId);
+                } catch (Throwable) {
+                    // Barcode optional bei Race
+                }
+            }
+        }
+
+        $refresh = $pdo->prepare(
+            'SELECT id FROM dg_stock_places WHERE shelf_id = :shelf_id AND place_kind = :kind AND (barcode IS NULL OR barcode = \'\')'
+        );
+        $refresh->execute(['shelf_id' => $shelfId, 'kind' => $kind]);
+        foreach (array_map('intval', $refresh->fetchAll(PDO::FETCH_COLUMN) ?: []) as $placeId) {
+            try {
+                StockBarcodeService::generatePlaceBarcode($placeId);
+            } catch (Throwable) {
+            }
         }
 
         if (count($existing) <= $targetCount) {

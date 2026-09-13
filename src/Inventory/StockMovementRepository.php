@@ -74,6 +74,8 @@ final class StockMovementRepository
         ?int $inventoryId = null,
         string $note = '',
         ?int $userId = null,
+        ?int $placeId = null,
+        ?int $packageId = null,
     ): int {
         if ($articleId < 1 || !Database::isConfigured()) {
             return 0;
@@ -82,12 +84,14 @@ final class StockMovementRepository
         $pdo = Database::pdo();
         $stmt = $pdo->prepare(
             'INSERT INTO dg_stock_movements
-             (article_id, movement_date, quantity, reason, voucher_id, inventory_id, note, created_by)
+             (article_id, place_id, package_id, movement_date, quantity, reason, voucher_id, inventory_id, note, created_by)
              VALUES
-             (:article_id, :movement_date, :quantity, :reason, :voucher_id, :inventory_id, :note, :created_by)'
+             (:article_id, :place_id, :package_id, :movement_date, :quantity, :reason, :voucher_id, :inventory_id, :note, :created_by)'
         );
         $stmt->execute([
             'article_id' => $articleId,
+            'place_id' => $placeId !== null && $placeId > 0 ? $placeId : null,
+            'package_id' => $packageId !== null && $packageId > 0 ? $packageId : null,
             'movement_date' => $movementDate,
             'quantity' => round($quantity, 3),
             'reason' => self::sanitizeReason($reason),
@@ -123,7 +127,7 @@ final class StockMovementRepository
     public static function sanitizeReason(string $reason): string
     {
         $reason = strtolower(trim($reason));
-        $allowed = ['purchase', 'sale', 'adjustment', 'inventory', 'opening', 'reversal'];
+        $allowed = ['purchase', 'sale', 'adjustment', 'inventory', 'opening', 'reversal', 'receipt', 'issue'];
 
         return in_array($reason, $allowed, true) ? $reason : 'adjustment';
     }
@@ -132,7 +136,9 @@ final class StockMovementRepository
     {
         return match (self::sanitizeReason($reason)) {
             'purchase' => 'Wareneingang (Einkauf)',
+            'receipt' => 'Wareneingang',
             'sale' => 'Warenausgang (Verkauf)',
+            'issue' => 'Warenausgang',
             'adjustment' => 'Manuelle Korrektur',
             'inventory' => 'Inventur',
             'opening' => 'Anfangsbestand',
