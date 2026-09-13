@@ -40,9 +40,9 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
   <?php endif; ?>
 
   <nav class="dg-subtabs" aria-label="Lagerstruktur">
-    <a href="<?= View::escape($tabBase . '&amp;ltab=orte') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'orte' ? ' is-active' : '' ?>">Lagerorte</a>
-    <a href="<?= View::escape($tabBase . '&amp;ltab=hallen') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'hallen' ? ' is-active' : '' ?>">Hallen</a>
-    <a href="<?= View::escape($tabBase . '&amp;ltab=regale') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'regale' ? ' is-active' : '' ?>">Regale &amp; Stellplätze</a>
+    <a href="<?= View::escape($tabBase . '&amp;lager_tab=orte') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'orte' ? ' is-active' : '' ?>">Lagerorte</a>
+    <a href="<?= View::escape($tabBase . '&amp;lager_tab=hallen') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'hallen' ? ' is-active' : '' ?>">Hallen</a>
+    <a href="<?= View::escape($tabBase . '&amp;lager_tab=regale') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'regale' ? ' is-active' : '' ?>">Regale &amp; Stellplätze</a>
   </nav>
 
   <?php if ($lagerStrukturTab === 'orte') : ?>
@@ -52,8 +52,9 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
         <span class="dg-muted">Ortkode, Adresse, Funktion</span>
       </summary>
       <div class="dg-notify-section__body">
-        <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&ltab=orte') ?>">
+        <form class="dg-form" method="post" action="<?= View::escape($tabBase) ?>">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="lager_tab" value="orte">
           <input type="hidden" name="stock_location_save" value="1">
           <?php if ($editLocation) : ?>
             <input type="hidden" name="id" value="<?= (int) $editLocation['id'] ?>">
@@ -90,7 +91,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
           <div class="dg-form-actions">
             <button type="submit" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>><?= $editLocation ? 'Speichern' : 'Anlegen' ?></button>
             <?php if ($editLocation) : ?>
-              <a class="dg-button" href="<?= View::escape($tabBase . '&ltab=orte') ?>">Abbrechen</a>
+              <a class="dg-button" href="<?= View::escape($tabBase . '&amp;lager_tab=orte') ?>">Abbrechen</a>
             <?php endif; ?>
           </div>
         </form>
@@ -130,9 +131,10 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                   <td><?= (int) ($loc['floor_slot_group_count'] ?? 0) ?></td>
                   <td><?= (int) ($loc['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
-                    <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&ltab=orte&amp;edit=' . (int) $loc['id']) ?>">Bearbeiten</a>
-                    <form method="post" action="<?= View::escape($tabBase . '&ltab=orte') ?>" class="dg-inline-form" onsubmit="return confirm('Lagerort wirklich löschen?');">
+                    <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&amp;lager_tab=orte&amp;edit=' . (int) $loc['id']) ?>">Bearbeiten</a>
+                    <form method="post" action="<?= View::escape($tabBase) ?>" class="dg-inline-form" onsubmit="return confirm('Lagerort wirklich löschen?');">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="lager_tab" value="orte">
                       <input type="hidden" name="stock_location_delete" value="1">
                       <input type="hidden" name="id" value="<?= (int) $loc['id'] ?>">
                       <button type="submit" class="dg-button dg-button--small dg-button--danger"<?= !$dbConnected ? ' disabled' : '' ?>>Löschen</button>
@@ -150,7 +152,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     <form class="dg-form dg-form--inline-filter" method="get" action="/app">
       <input type="hidden" name="page" value="einstellungen">
       <input type="hidden" name="tab" value="lager-struktur">
-      <input type="hidden" name="ltab" value="hallen">
+      <input type="hidden" name="lager_tab" value="hallen">
       <label class="dg-field">
         <span>Filter Lagerort</span>
         <select name="location_id" onchange="this.form.submit()">
@@ -168,8 +170,9 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
         <span class="dg-muted">Hallenkode, Nutzung, Besonderheiten</span>
       </summary>
       <div class="dg-notify-section__body">
-        <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&ltab=hallen') ?>">
+        <form class="dg-form" method="post" action="<?= View::escape($tabBase) ?>">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="lager_tab" value="hallen">
           <input type="hidden" name="stock_hall_save" value="1">
           <?php if ($editHall) : ?>
             <input type="hidden" name="id" value="<?= (int) $editHall['id'] ?>">
@@ -207,7 +210,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
           <div class="dg-form-actions">
             <button type="submit" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>><?= $editHall ? 'Speichern' : 'Anlegen' ?></button>
             <?php if ($editHall) : ?>
-              <a class="dg-button" href="<?= View::escape($tabBase . '&ltab=hallen') ?>">Abbrechen</a>
+              <a class="dg-button" href="<?= View::escape($tabBase . '&amp;lager_tab=hallen') ?>">Abbrechen</a>
             <?php endif; ?>
           </div>
         </form>
@@ -247,9 +250,10 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                   <td><?= (int) ($hall['floor_slot_group_count'] ?? 0) ?></td>
                   <td><?= (int) ($hall['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
-                    <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&ltab=hallen&amp;edit=' . (int) $hall['id']) ?>">Bearbeiten</a>
-                    <form method="post" action="<?= View::escape($tabBase . '&ltab=hallen') ?>" class="dg-inline-form" onsubmit="return confirm('Halle wirklich löschen?');">
+                    <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&amp;lager_tab=hallen&amp;edit=' . (int) $hall['id']) ?>">Bearbeiten</a>
+                    <form method="post" action="<?= View::escape($tabBase) ?>" class="dg-inline-form" onsubmit="return confirm('Halle wirklich löschen?');">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="lager_tab" value="hallen">
                       <input type="hidden" name="stock_hall_delete" value="1">
                       <input type="hidden" name="id" value="<?= (int) $hall['id'] ?>">
                       <button type="submit" class="dg-button dg-button--small dg-button--danger"<?= !$dbConnected ? ' disabled' : '' ?>>Löschen</button>
@@ -267,7 +271,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     <form class="dg-form dg-form--inline-filter" method="get" action="/app">
       <input type="hidden" name="page" value="einstellungen">
       <input type="hidden" name="tab" value="lager-struktur">
-      <input type="hidden" name="ltab" value="regale">
+      <input type="hidden" name="lager_tab" value="regale">
       <label class="dg-field">
         <span>Lagerort</span>
         <select name="location_id" id="dg_lager_filter_location" onchange="this.form.submit()">
@@ -295,8 +299,9 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
         <span class="dg-muted">Regalkode, Kapazität, Anzahl Plätze</span>
       </summary>
       <div class="dg-notify-section__body">
-        <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&ltab=regale') ?>">
+        <form class="dg-form" method="post" action="<?= View::escape($tabBase) ?>">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="lager_tab" value="regale">
           <input type="hidden" name="stock_shelf_save" value="1">
           <?php if ($editShelf) : ?>
             <input type="hidden" name="id" value="<?= (int) $editShelf['id'] ?>">
@@ -355,15 +360,16 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
           <div class="dg-form-actions">
             <button type="submit" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>><?= $editShelf ? 'Speichern' : 'Anlegen' ?></button>
             <?php if ($editShelf) : ?>
-              <a class="dg-button" href="<?= View::escape($tabBase . '&ltab=regale') ?>">Abbrechen</a>
+              <a class="dg-button" href="<?= View::escape($tabBase . '&amp;lager_tab=regale') ?>">Abbrechen</a>
             <?php endif; ?>
           </div>
         </form>
 
         <?php if ($editShelf && $shelfPlaces !== []) : ?>
           <h4 class="dg-subsection-title">Stellplätze — fest oder flexibel</h4>
-          <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&ltab=regale&amp;edit=' . $editShelfId) ?>">
+          <form class="dg-form" method="post" action="<?= View::escape($tabBase) ?>">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+            <input type="hidden" name="lager_tab" value="regale">
             <input type="hidden" name="stock_places_save" value="1">
             <input type="hidden" name="shelf_id" value="<?= $editShelfId ?>">
             <div class="dg-table-wrap">
@@ -447,9 +453,10 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                   ?></td>
                   <td><?= (int) ($shelf['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
-                    <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&ltab=regale&amp;edit=' . (int) $shelf['id']) ?>">Bearbeiten</a>
-                    <form method="post" action="<?= View::escape($tabBase . '&ltab=regale') ?>" class="dg-inline-form" onsubmit="return confirm('Regal wirklich löschen?');">
+                    <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&amp;lager_tab=regale&amp;edit=' . (int) $shelf['id']) ?>">Bearbeiten</a>
+                    <form method="post" action="<?= View::escape($tabBase) ?>" class="dg-inline-form" onsubmit="return confirm('Regal wirklich löschen?');">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="lager_tab" value="regale">
                       <input type="hidden" name="stock_shelf_delete" value="1">
                       <input type="hidden" name="id" value="<?= (int) $shelf['id'] ?>">
                       <button type="submit" class="dg-button dg-button--small dg-button--danger"<?= !$dbConnected ? ' disabled' : '' ?>>Löschen</button>

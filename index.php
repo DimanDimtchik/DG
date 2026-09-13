@@ -786,17 +786,19 @@ switch ($path) {
                 || isset($_POST['stock_places_save'])
             )
         ) {
-            $ltab = isset($_GET['ltab']) ? preg_replace('/[^a-z]/', '', (string) $_GET['ltab']) : '';
-            if ($ltab === '') {
+            $lagerTab = isset($_POST['lager_tab'])
+                ? preg_replace('/[^a-z]/', '', (string) $_POST['lager_tab'])
+                : (isset($_GET['lager_tab']) ? preg_replace('/[^a-z]/', '', (string) $_GET['lager_tab']) : '');
+            if ($lagerTab === '') {
                 if (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
-                    $ltab = 'hallen';
+                    $lagerTab = 'hallen';
                 } elseif (isset($_POST['stock_shelf_save']) || isset($_POST['stock_shelf_delete']) || isset($_POST['stock_places_save'])) {
-                    $ltab = 'regale';
+                    $lagerTab = 'regale';
                 } else {
-                    $ltab = 'orte';
+                    $lagerTab = 'orte';
                 }
             }
-            $redirect = SettingsRegistry::tabUrl('lager-struktur') . '&ltab=' . rawurlencode($ltab);
+            $redirect = SettingsRegistry::tabUrl('lager-struktur') . '&lager_tab=' . rawurlencode($lagerTab);
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
                 Flash::set('error', 'Ungültiges Formular (CSRF).');
             } else {
@@ -2442,8 +2444,8 @@ switch ($path) {
         $crmThemeConfig = CrmThemeSettings::forForm();
         $departmentsData = DepartmentRepository::allWithMembers();
         $departmentEmployees = DepartmentRepository::assignableEmployees();
-        $lagerStrukturTab = isset($_GET['ltab']) && in_array($_GET['ltab'], ['orte', 'hallen', 'regale'], true)
-            ? (string) $_GET['ltab']
+        $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale'], true)
+            ? (string) $_GET['lager_tab']
             : 'orte';
         $stockLocations = StockStructureRepository::allLocations();
         $stockHalls = StockStructureRepository::allHalls();
