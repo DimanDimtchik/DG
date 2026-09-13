@@ -34,8 +34,9 @@ final class KichelKnowledge
         $stop = [
             'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines',
             'und', 'oder', 'wo', 'wie', 'was', 'ist', 'sind', 'im', 'in', 'für', 'von',
-            'zu', 'zum', 'zur', 'mit', 'auf', 'an', 'am', 'als', 'bei', 'mir', 'mich',
+            'zu', 'zum', 'zur', 'mit', 'auf', 'an', 'am', 'als', 'bei', 'mir', 'mich', 'ich',
             'finde', 'finden', 'zeige', 'zeigen', 'suche', 'such', 'bitte', 'kann', 'kannst',
+            'möchte', 'will', 'würde', 'gern', 'gerne', 'mal', 'noch', 'mehr',
         ];
 
         $tokens = [];
@@ -69,8 +70,15 @@ final class KichelKnowledge
             foreach ($tokens as $token) {
                 foreach ($keywords as $keyword) {
                     $kw = (string) $keyword;
-                    if ($token === $kw || str_contains($kw, $token) || str_contains($token, $kw)) {
-                        $score += $token === $kw ? 4 : 2;
+                    if ($token === $kw) {
+                        $score += 4;
+                        continue;
+                    }
+                    if (mb_strlen($token, 'UTF-8') < 4) {
+                        continue;
+                    }
+                    if (str_contains($kw, $token) || str_contains($token, $kw)) {
+                        $score += 2;
                     }
                 }
                 $title = mb_strtolower((string) ($topic['title'] ?? ''), 'UTF-8');

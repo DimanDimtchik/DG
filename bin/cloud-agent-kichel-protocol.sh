@@ -10,7 +10,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LIMIT="${1:-30}"
 OFFSET="${2:-0}"
-REMOTE="/www/htdocs/w0217246"
+# Live-CRM läuft auf ganz-soft.de (eigene DB); Account-Root ist oft nur Deploy-Spiegel.
+REMOTE="/www/htdocs/w0217246/ganz-soft.de"
 
 bash "$ROOT/bin/cloud-agent-ssh-setup.sh" >/dev/null
 
