@@ -78,12 +78,12 @@ final class KichelKnowledge
                     if (mb_strlen($token, 'UTF-8') < 4) {
                         continue;
                     }
-                    if (str_contains($kw, $token) || str_contains($token, $kw)) {
+                    if (self::keywordContainsToken($kw, $token) || self::keywordContainsToken($token, $kw)) {
                         $score += 2;
                     }
                 }
                 $title = mb_strtolower((string) ($topic['title'] ?? ''), 'UTF-8');
-                if ($title !== '' && str_contains($title, $token)) {
+                if ($title !== '' && self::keywordContainsToken($title, $token)) {
                     $score += 1;
                 }
             }
@@ -133,6 +133,15 @@ final class KichelKnowledge
         }
 
         return array_slice($hints, 0, 6);
+    }
+
+    private static function keywordContainsToken(string $keyword, string $token): bool
+    {
+        if ($token === 'konto' && str_contains($keyword, 'skonto') && $keyword !== 'konto') {
+            return false;
+        }
+
+        return str_contains($keyword, $token);
     }
 
     /**

@@ -27,6 +27,7 @@ final class KichelAssistant
         $moneyAnswer = KichelMoneyLogic::tryAnswer($query);
         $moneyFacts = $moneyAnswer['facts'] ?? [];
         $legalAnswer = KichelLegalPages::tryAnswer($query, $tokens);
+        $ledgerAnswer = KichelLedgerAccounts::tryAnswer($query);
 
         $topicMatches = KichelKnowledge::matchTopics($tokens);
         $navigation = KichelKnowledge::navigationHints($user, $tokens);
@@ -36,6 +37,11 @@ final class KichelAssistant
 
         if ($legalAnswer !== null) {
             $answerParts[] = (string) $legalAnswer['answer'];
+        } elseif ($ledgerAnswer !== null) {
+            $answerParts[] = (string) $ledgerAnswer['answer'];
+            foreach ($ledgerAnswer['action_links'] as $link) {
+                $actionLinks[] = $link;
+            }
         } elseif ($moneyAnswer !== null) {
             $baseMoneyAnswer = (string) $moneyAnswer['answer'];
             $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
@@ -94,6 +100,8 @@ final class KichelAssistant
         if ($legalAnswer !== null) {
             $response['kind'] = 'legal_pages';
             $response['page_links'] = $legalAnswer['page_links'];
+        } elseif ($ledgerAnswer !== null) {
+            $response['kind'] = 'ledger_account';
         }
 
         return $response;

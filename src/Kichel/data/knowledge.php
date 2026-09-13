@@ -61,6 +61,15 @@ return [
         'tags' => ['mail'],
     ],
     [
+        'id' => 'kontenuebersicht',
+        'keywords' => ['kontenübersicht', 'kontenuebersicht', 'kontoauszug', 'kontensaldo', 'sachkonten'],
+        'title' => 'Kontenübersicht',
+        'answer' => 'Salden und Kontoauszüge je Konto findest du unter Buchhaltung → Kontenübersicht — dort ein Konto anklicken für alle Buchungen.',
+        'href' => '/app?page=buchhaltung-kontenuebersicht',
+        'action_label' => 'Kontenübersicht öffnen',
+        'tags' => ['buchhaltung'],
+    ],
+    [
         'id' => 'kontenrahmen',
         'keywords' => ['skr03', 'skr04', 'kontenrahmen', 'sachkonto', 'kontenplan'],
         'title' => 'Kontenrahmen SKR03/SKR04',
