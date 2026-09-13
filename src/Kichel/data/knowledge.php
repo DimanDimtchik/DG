@@ -34,8 +34,21 @@ return [
         'tags' => ['buchhaltung', 'steuer'],
     ],
     [
+        'id' => 'support-freigabe',
+        'keywords' => [
+            'support', 'supportfreigabe', 'support-freigabe', 'support freigabe',
+            'fernzugriff', 'fernwartung', 'fernhilfe', 'bildschirmfreigabe', 'bildschirm teilen',
+            'zuschauen', 'ganz soft zugang',
+        ],
+        'title' => 'Support-Freigabe',
+        'answer' => 'Unter Support-Freigabe gibst du Ganz Soft zeitlich begrenzt Zugang zu deinem CRM — optional auch Bildschirm-Zuschauen. Du kannst die Freigabe jederzeit wieder beenden.',
+        'href' => '/app?page=support-freigabe',
+        'action_label' => 'Support-Freigabe öffnen',
+        'tags' => ['support', 'admin'],
+    ],
+    [
         'id' => 'belegkette',
-        'keywords' => ['belegkette', 'belege', 'beleg', 'workflow', 'belegstatus', 'freigabe', 'gobd'],
+        'keywords' => ['belegkette', 'belege', 'beleg', 'workflow', 'belegstatus', 'belegfreigabe', 'gobd'],
         'title' => 'Belegkette und Workflow',
         'answer' => 'Alle Belege — vom Angebot bis zur Rechnung — findest du unter Buchhaltung → Belege.',
         'href' => '/app?page=buchhaltung-belege',

@@ -145,6 +145,12 @@ final class KichelKnowledge
         if ($token === 'mein' && str_contains($keyword, 'allgemein')) {
             return false;
         }
+        if ($token === 'freigabe' && str_contains($keyword, 'support')) {
+            return false;
+        }
+        if ($token === 'support' && str_contains($keyword, 'support') && str_contains($keyword, 'beleg')) {
+            return false;
+        }
         if (mb_strlen($token, 'UTF-8') < 4 && $keyword !== $token) {
             return false;
         }
