@@ -432,7 +432,6 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                 <th>Ort / Halle</th>
                 <th>Code</th>
                 <th>Stellplätze</th>
-                <th>Gesamt</th>
                 <th></th>
               </tr>
             </thead>
@@ -442,7 +441,6 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                   <td><?= View::escape((string) ($shelf['location_code'] ?? '') . ' / ' . (string) ($shelf['hall_code'] ?? '')) ?></td>
                   <td><strong><?= View::escape((string) $shelf['code']) ?></strong></td>
                   <td><?= View::escape((string) ($shelf['capacity_summary'] ?? '—')) ?></td>
-                  <td><?= (int) ($shelf['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
                     <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&lager_tab=regale&edit=' . (int) $shelf['id']) ?>">Bearbeiten</a>
                     <form method="post" action="<?= View::escape($tabBase) ?>" class="dg-inline-form" onsubmit="return confirm('Regal wirklich löschen?');">
