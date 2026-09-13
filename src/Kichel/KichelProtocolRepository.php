@@ -28,8 +28,8 @@ final class KichelProtocolRepository
                 'answer' => mb_substr($answer, 0, 65000),
                 'json' => $json,
             ]);
-        } catch (Throwable) {
-            // Protokoll darf Kichel nicht blockieren
+        } catch (Throwable $e) {
+            error_log('KichelProtocolRepository: ' . $e->getMessage());
         }
     }
 
