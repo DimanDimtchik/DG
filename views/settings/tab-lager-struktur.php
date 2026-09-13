@@ -375,6 +375,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                     <th>Platz</th>
                     <th>Art</th>
                     <th>Positionscode</th>
+                    <th>Strichcode</th>
                     <th>Modus</th>
                     <th>Fester Artikel (ID)</th>
                     <th>Belegt</th>
@@ -389,6 +390,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                       </td>
                       <td><?= View::escape((string) ($place['kind_label'] ?? 'Einheit')) ?></td>
                       <td><?= View::escape((string) ($place['position_code'] ?? '')) ?></td>
+                      <td><code><?= ($place['barcode'] ?? '') !== '' ? View::escape((string) $place['barcode']) : '—' ?></code></td>
                       <td>
                         <select name="places[<?= (int) $pi ?>][place_mode]"<?= !$dbConnected ? ' disabled' : '' ?>>
                           <option value="flexible"<?= ($place['place_mode'] ?? '') === 'flexible' ? ' selected' : '' ?>>flexibel</option>

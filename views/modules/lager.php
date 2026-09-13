@@ -8,11 +8,13 @@
  * @var bool $canEdit
  * @var bool $dbConnected
  * @var string $lagerView
+ * @var list<array<string, mixed>> $stockOutboundVouchers
  * @var array{type: string, message: string}|null $flash
  */
 $stockItems = $stockItems ?? [];
 $stockMovements = $stockMovements ?? [];
 $stockInventories = $stockInventories ?? [];
+$stockOutboundVouchers = $stockOutboundVouchers ?? [];
 $activeInventory = $activeInventory ?? null;
 $activeInventoryLines = $activeInventoryLines ?? [];
 $lagerView = $lagerView ?? 'overview';
@@ -38,6 +40,8 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
 
   <nav class="dg-subtabs" aria-label="Lager-Bereiche">
     <a href="/app?page=lager&amp;view=overview" class="dg-subtabs__link<?= $lagerView === 'overview' ? ' is-active' : '' ?>">Bestandsübersicht</a>
+    <a href="/app?page=lager&amp;view=wareneingang" class="dg-subtabs__link<?= $lagerView === 'wareneingang' ? ' is-active' : '' ?>">Wareneingang</a>
+    <a href="/app?page=lager&amp;view=warenausgang" class="dg-subtabs__link<?= $lagerView === 'warenausgang' ? ' is-active' : '' ?>">Warenausgang</a>
     <a href="/app?page=lager&amp;view=bewegungen" class="dg-subtabs__link<?= $lagerView === 'bewegungen' ? ' is-active' : '' ?>">Bewegungen</a>
     <a href="/app?page=lager&amp;view=inventur" class="dg-subtabs__link<?= $lagerView === 'inventur' ? ' is-active' : '' ?>">Inventur</a>
   </nav>
@@ -115,6 +119,97 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   </section>
   <?php endif; ?>
 
+  <?php elseif ($lagerView === 'wareneingang') : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Wareneingang</h2>
+    <p class="dg-field-hint">Strichcode scannen: Palette/Platz, Karton oder Artikel (EAN/GTIN). Optional Karton mit eigenem Code anlegen.</p>
+    <?php if (!$canEdit) : ?>
+      <p class="dg-muted">Keine Berechtigung zum Buchen.</p>
+    <?php else : ?>
+      <form class="dg-form-grid dg-form-grid--compact" data-lager-scan="receipt" autocomplete="off">
+        <label class="dg-field dg-field--wide">
+          <span>Strichcode scannen</span>
+          <input type="text" data-scan-input inputmode="numeric" autofocus placeholder="Scanner oder Eingabe + Enter">
+        </label>
+        <div class="dg-field dg-field--wide">
+          <div data-scan-message class="dg-scan-result" hidden></div>
+        </div>
+      </form>
+
+      <form method="post" action="/app?page=lager&amp;view=wareneingang" class="dg-form" id="dg-receipt-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="view" value="wareneingang">
+        <input type="hidden" name="stock_receipt" value="1">
+        <div class="dg-table-wrap" id="dg-receipt-lines">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr><th>Artikel</th><th>Menge</th><th>Platz</th><th>Karton</th><th>Karton-Code</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <label class="dg-field dg-field--wide">
+          <span>Notiz</span>
+          <input type="text" name="note" maxlength="500" placeholder="Optional">
+        </label>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">Wareneingang buchen</button>
+        </div>
+      </form>
+    <?php endif; ?>
+  </section>
+
+  <?php elseif ($lagerView === 'warenausgang') : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Warenausgang</h2>
+    <p class="dg-field-hint">Verknüpfung mit Lieferschein oder Auftrag — oder manuell per Strichcode (Artikel/Karton).</p>
+    <?php if (!$canEdit) : ?>
+      <p class="dg-muted">Keine Berechtigung zum Buchen.</p>
+    <?php else : ?>
+      <form class="dg-form-grid dg-form-grid--compact" data-lager-scan="issue" autocomplete="off">
+        <label class="dg-field dg-field--wide">
+          <span>Strichcode scannen</span>
+          <input type="text" data-scan-input inputmode="numeric" placeholder="Artikel, Karton oder Palette">
+        </label>
+        <div class="dg-field dg-field--wide">
+          <div data-scan-message class="dg-scan-result" hidden></div>
+        </div>
+      </form>
+
+      <form method="post" action="/app?page=lager&amp;view=warenausgang" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="view" value="warenausgang">
+        <input type="hidden" name="stock_issue" value="1">
+        <div class="dg-form-grid dg-form-grid--compact">
+          <label class="dg-field dg-field--wide">
+            <span>Beleg (Lieferschein / Auftrag)</span>
+            <select name="voucher_id" id="dg-issue-voucher">
+              <option value="">— manuell / Scan —</option>
+              <?php foreach ($stockOutboundVouchers as $voucher) : ?>
+                <option value="<?= (int) ($voucher['id'] ?? 0) ?>"><?= View::escape((string) ($voucher['label'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Notiz</span>
+            <input type="text" name="note" maxlength="500" placeholder="Optional">
+          </label>
+        </div>
+        <div class="dg-table-wrap" id="dg-issue-lines">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr><th>Artikel</th><th>Menge</th><th>Karton-Scan</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">Warenausgang buchen</button>
+        </div>
+      </form>
+    <?php endif; ?>
+  </section>
+
   <?php elseif ($lagerView === 'bewegungen') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Letzte Bewegungen</h2>
@@ -142,7 +237,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
     <?php endif; ?>
   </section>
 
-  <?php else : ?>
+  <?php elseif ($lagerView === 'inventur') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Inventur</h2>
     <?php if ($activeInventory === null && $canEdit) : ?>
@@ -238,10 +333,19 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
     </table>
   </section>
   <?php endif; ?>
-  <?php endif; ?>
 
   <?php endif; ?>
+  <?php endif; ?>
 </div>
+<?php if (in_array($lagerView, ['wareneingang', 'warenausgang'], true) && $canEdit) : ?>
+<script>
+window.dgLagerScanConfig = {
+  scanApiUrl: '/api/stock-scan',
+  csrf: <?= json_encode($csrf, JSON_UNESCAPED_UNICODE) ?>
+};
+</script>
+<script src="<?= View::escape(Asset::url('/assets/js/lager-scan.js')) ?>" defer></script>
+<?php endif; ?>
 <script>
 (function () {
   document.querySelectorAll('.dg-stock-adjust-btn').forEach(function (btn) {

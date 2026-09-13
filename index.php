@@ -393,6 +393,10 @@ switch ($path) {
         VoucherApi::handle();
         exit;
 
+    case '/api/stock-scan':
+        StockScanApi::handle();
+        exit;
+
     case '/api/number-range-preview':
         NumberRangeApi::handlePreview();
         exit;
@@ -1062,6 +1066,14 @@ switch ($path) {
                         $applied = StockInventoryService::close($invId, $user->id);
                         Flash::set('success', 'Inventur abgeschlossen — ' . $applied . ' Differenz(en) gebucht.');
                         $redirect = '/app?page=lager&view=inventur';
+                    } elseif (isset($_POST['stock_receipt'])) {
+                        $count = StockReceiptIssueService::receiptFromPost($_POST, $user->id);
+                        Flash::set('success', $count . ' Position(en) als Wareneingang gebucht.');
+                        $redirect = '/app?page=lager&view=wareneingang';
+                    } elseif (isset($_POST['stock_issue'])) {
+                        $count = StockReceiptIssueService::issueFromPost($_POST, $user->id);
+                        Flash::set('success', $count . ' Position(en) als Warenausgang gebucht.');
+                        $redirect = '/app?page=lager&view=warenausgang';
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -2538,7 +2550,7 @@ switch ($path) {
             exit;
         } elseif ($page === 'lager' && MenuRegistry::canAccess($user, 'lager')) {
             $lagerView = trim((string) ($_GET['view'] ?? 'overview'));
-            if (!in_array($lagerView, ['overview', 'bewegungen', 'inventur'], true)) {
+            if (!in_array($lagerView, ['overview', 'bewegungen', 'wareneingang', 'warenausgang', 'inventur'], true)) {
                 $lagerView = 'overview';
             }
             $download = trim((string) ($_GET['download'] ?? ''));
@@ -2600,6 +2612,9 @@ switch ($path) {
                 ? (Database::pdo()->query(
                     "SELECT * FROM dg_stock_inventories ORDER BY inventory_date DESC, id DESC LIMIT 20"
                 )->fetchAll(PDO::FETCH_ASSOC) ?: [])
+                : [];
+            $stockOutboundVouchers = in_array($lagerView, ['warenausgang'], true)
+                ? StockReceiptIssueService::outboundVoucherOptions()
                 : [];
             $contentTemplate = 'modules/lager';
             $title = 'Lager';
@@ -4049,6 +4064,7 @@ switch ($path) {
         $stockItems = $stockItems ?? [];
         $stockMovements = $stockMovements ?? [];
         $stockInventories = $stockInventories ?? [];
+        $stockOutboundVouchers = $stockOutboundVouchers ?? [];
         $activeInventory = $activeInventory ?? null;
         $activeInventoryLines = $activeInventoryLines ?? [];
         $websiteFormList = $websiteFormList ?? [];
@@ -4136,6 +4152,7 @@ switch ($path) {
             'stockItems',
             'stockMovements',
             'stockInventories',
+            'stockOutboundVouchers',
             'activeInventory',
             'activeInventoryLines',
             'companyConfig',

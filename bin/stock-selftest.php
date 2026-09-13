@@ -118,6 +118,84 @@ if ($hasStructure) {
     StockStructureRepository::deleteLocation($locId);
 }
 
+$hasPackages = $pdo->query("SHOW TABLES LIKE 'dg_stock_packages'")->fetchColumn() !== false;
+if (!$hasPackages) {
+    $errors[] = 'Migration 069 nicht angewendet (dg_stock_packages fehlt).';
+}
+
+if ($hasPackages && $hasStructure) {
+    $testGtin = '4006381333931';
+    $pdo->prepare('UPDATE dg_calendar_articles SET gtin = :gtin, track_stock = 1 WHERE id = :id')
+        ->execute(['gtin' => $testGtin, 'id' => $articleId]);
+
+    $locId = StockStructureRepository::saveLocation([
+        'code' => 'TST-BC-' . date('His'),
+        'name' => 'Barcode Test',
+        'function_text' => 'Test',
+        'is_active' => 1,
+    ]);
+    $hallId = StockStructureRepository::saveHall([
+        'location_id' => $locId,
+        'code' => 'H1',
+        'usage_text' => 'Test',
+        'is_active' => 1,
+    ]);
+    $shelfId = StockStructureRepository::saveShelf([
+        'location_id' => $locId,
+        'hall_id' => $hallId,
+        'code' => 'R1',
+        'slots_pallets' => 1,
+        'slots_cartons' => 0,
+        'slots_units' => 0,
+        'is_active' => 1,
+    ]);
+    $places = StockStructureRepository::placesForShelf($shelfId);
+    $placeId = (int) ($places[0]['id'] ?? 0);
+    if ($placeId < 1) {
+        $errors[] = 'Kein Stellplatz für Barcode-Test.';
+    } else {
+        $placeBarcode = StockBarcodeService::generatePlaceBarcode($placeId);
+        $resolvedPlace = StockBarcodeService::resolve($placeBarcode);
+        if (($resolvedPlace['type'] ?? '') !== 'place') {
+            $errors[] = 'Platz-Strichcode nicht auflösbar.';
+        }
+
+        $resolvedArticle = StockBarcodeService::resolve($testGtin);
+        if (($resolvedArticle['type'] ?? '') !== 'article') {
+            $errors[] = 'Artikel-Strichcode (GTIN) nicht auflösbar.';
+        }
+
+        $packageId = StockPackageRepository::create($articleId, 3.0, $placeId, 'TST-KRT-SELFTEST');
+        $resolvedPackage = StockBarcodeService::resolve('TST-KRT-SELFTEST');
+        if (($resolvedPackage['type'] ?? '') !== 'package') {
+            $errors[] = 'Karton-Strichcode nicht auflösbar.';
+        }
+
+        $beforeReceipt = (float) (CalendarArticleRepository::findById($articleId)['stock_qty'] ?? 0);
+        StockReceiptIssueService::processReceipt([
+            ['article_id' => $articleId, 'quantity' => 2, 'place_id' => $placeId],
+        ], null, null, 'Selftest WE');
+        $afterReceipt = (float) (CalendarArticleRepository::findById($articleId)['stock_qty'] ?? 0);
+        if ($afterReceipt <= $beforeReceipt) {
+            $errors[] = 'Wareneingang hat Bestand nicht erhöht.';
+        }
+
+        StockReceiptIssueService::processIssue([
+            ['package_barcode' => 'TST-KRT-SELFTEST'],
+        ], null, null, 'Selftest WA Karton');
+        $pkgAfter = StockPackageRepository::findByBarcode('TST-KRT-SELFTEST');
+        if ($pkgAfter !== null && ($pkgAfter['status'] ?? '') !== 'issued') {
+            $errors[] = 'Karton nach Warenausgang nicht als issued markiert.';
+        }
+
+        $pdo->prepare('DELETE FROM dg_stock_packages WHERE id = :id')->execute(['id' => $packageId]);
+    }
+
+    StockStructureRepository::deleteShelf($shelfId);
+    StockStructureRepository::deleteHall($hallId);
+    StockStructureRepository::deleteLocation($locId);
+}
+
 if ($errors !== []) {
     foreach ($errors as $err) {
         fwrite(STDERR, 'FAIL: ' . $err . "\n");

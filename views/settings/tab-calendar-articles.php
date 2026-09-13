@@ -154,7 +154,7 @@ $stockStructureJson = json_encode([
         <input type="text" name="article_number" id="dg_article_number" value="<?= View::escape($suggestedNumber) ?>" required<?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field">
-        <span>GTIN/EAN</span>
+        <span>EAN / Strichcode (GTIN)</span>
         <input type="text" name="gtin" id="dg_article_gtin" inputmode="numeric"<?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field dg-field--wide">
