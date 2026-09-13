@@ -215,6 +215,9 @@ final class MigrationRunner
                 && self::columnExists($pdo, 'dg_calendar_articles', 'stock_location_id'),
             '068_stock_shelf_slot_kinds.sql' => self::columnExists($pdo, 'dg_stock_shelves', 'slots_pallets')
                 && self::columnExists($pdo, 'dg_stock_places', 'place_kind'),
+            '069_stock_barcodes_receipt_issue.sql' => self::tableExists($pdo, 'dg_stock_packages')
+                && self::columnExists($pdo, 'dg_stock_places', 'barcode')
+                && self::columnExists($pdo, 'dg_stock_movements', 'place_id'),
             default => false,
         };
     }
@@ -314,6 +317,7 @@ final class MigrationRunner
             '066_stock_position.sql' => true,
             '067_stock_structure.sql' => true,
             '068_stock_shelf_slot_kinds.sql' => true,
+            '069_stock_barcodes_receipt_issue.sql' => true,
         ];
     }
 
