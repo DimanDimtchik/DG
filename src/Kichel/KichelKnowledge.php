@@ -37,6 +37,7 @@ final class KichelKnowledge
             'zu', 'zum', 'zur', 'mit', 'auf', 'an', 'am', 'als', 'bei', 'mir', 'mich', 'ich',
             'finde', 'finden', 'zeige', 'zeigen', 'suche', 'such', 'bitte', 'kann', 'kannst',
             'möchte', 'will', 'würde', 'gern', 'gerne', 'mal', 'noch', 'mehr',
+            'stelle', 'einstellen', 'einstellung', 'einstellungen', 'ändern', 'änderung',
         ];
 
         $tokens = [];
