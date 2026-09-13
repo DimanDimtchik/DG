@@ -50,15 +50,17 @@ final class KichelAssistant
             $answerParts[] = $phrased ?? $baseMoneyAnswer;
         }
 
-        if ($topics !== [] && $legalAnswer === null) {
-            foreach (array_slice($topics, 0, 2) as $topic) {
-                $answerParts[] = (string) ($topic['answer'] ?? '');
+        if ($legalAnswer === null) {
+            if ($topics !== []) {
+                foreach (array_slice($topics, 0, 2) as $topic) {
+                    $answerParts[] = (string) ($topic['answer'] ?? '');
+                }
+            } elseif ($moneyAnswer === null) {
+                $answerParts[] = self::genericIntro($query);
             }
-        } else {
-            $answerParts[] = self::genericIntro($query);
         }
 
-        if ($companyFields !== []) {
+        if ($legalAnswer === null && $companyFields !== []) {
             $lines = [];
             foreach ($companyFields as $field) {
                 $lines[] = ucfirst($field['label']) . ': ' . $field['value'];
@@ -66,7 +68,7 @@ final class KichelAssistant
             $answerParts[] = 'Aus Ihren Firmendaten: ' . implode(' · ', $lines);
         }
 
-        if ($schemaHits !== []) {
+        if ($legalAnswer === null && $schemaHits !== []) {
             $tableLines = [];
             foreach (array_slice($schemaHits, 0, 3) as $hit) {
                 $cols = implode(', ', array_slice($hit['columns'], 0, 6));
@@ -77,11 +79,11 @@ final class KichelAssistant
             $answerParts[] = 'Datenbank-Schema (Migrationen): ' . implode(' | ', $tableLines);
         }
 
-        if ($codeHits !== []) {
+        if ($legalAnswer === null && $codeHits !== []) {
             $answerParts[] = 'Im Quellcode habe ich passende Stellen gefunden — siehe Trefferliste unten.';
         }
 
-        if ($navigation !== [] && $topics === []) {
+        if ($legalAnswer === null && $navigation !== [] && $topics === []) {
             $navLabels = array_map(static fn (array $n): string => $n['label'], $navigation);
             $answerParts[] = 'Vielleicht meinen Sie: ' . implode(', ', $navLabels) . '.';
         }
