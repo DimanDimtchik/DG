@@ -108,7 +108,7 @@
       if (feedbackBtn.getAttribute('data-kichel-feedback') === 'yes') {
         appendMessage('Freut mich! Bei weiteren Fragen einfach melden.', 'bot');
       } else {
-        appendMessage('Kein Problem — probier ein kürzeres Stichwort oder eine Beispielfrage oben.', 'bot');
+        appendMessage('Alles klar — formuliere die Frage gerne noch einmal.', 'bot');
       }
       return;
     }

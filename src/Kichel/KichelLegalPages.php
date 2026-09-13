@@ -45,7 +45,7 @@ final class KichelLegalPages
 
         return [
             'kind' => 'legal_pages',
-            'answer' => self::introText($query) . "\n\nHier kannst du direkt hingehen:",
+            'answer' => self::introText($query),
             'page_links' => $pageLinks,
             'overview_links' => [],
         ];
@@ -99,12 +99,12 @@ final class KichelLegalPages
         }
 
         if ($mentioned !== []) {
-            return 'Du meinst wahrscheinlich ' . self::naturalList($mentioned)
-                . ' — das sind Pflichtseiten auf deiner Website.';
+            return 'Du meinst vermutlich ' . self::naturalList($mentioned)
+                . ' — das sind Pflichtseiten auf deiner Website:';
         }
 
-        return 'Du meinst wahrscheinlich die Pflichtseiten auf deiner Website — '
-            . 'zum Beispiel Impressum, Datenschutz, AGB und Widerruf.';
+        return 'Du meinst vermutlich Impressum, Datenschutz, AGB oder Widerruf — '
+            . 'die Pflichtseiten deiner Website:';
     }
 
     /**

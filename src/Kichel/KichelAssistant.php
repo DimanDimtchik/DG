@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 final class KichelAssistant
 {
-    private const FOLLOW_UP = 'War das hilfreich? Wenn nicht, formuliere die Frage bitte etwas kürzer — zum Beispiel mit einem Stichwort von oben.';
+    private const FOLLOW_UP = 'War das hilfreich?';
 
     /**
      * @return array<string, mixed>
@@ -35,7 +35,6 @@ final class KichelAssistant
         $schemaHits = $technical ? KichelSchemaCatalog::searchSchema($tokens) : [];
         $companyFields = $technical ? KichelSchemaCatalog::matchCompanyFields($tokens) : [];
 
-        $topics = array_map(static fn (array $m): array => $m['topic'], $topicMatches);
         $answerParts = [];
         $actionLinks = [];
 
@@ -44,17 +43,23 @@ final class KichelAssistant
         } elseif ($moneyAnswer !== null) {
             $baseMoneyAnswer = (string) $moneyAnswer['answer'];
             $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
-            $answerParts[] = 'Du meinst wahrscheinlich eine Skonto-Rechnung.' . "\n\n"
-                . ($phrased ?? $baseMoneyAnswer);
+            $answerParts[] = $phrased ?? $baseMoneyAnswer;
             $actionLinks[] = [
                 'label' => 'Skonto-Einstellungen öffnen',
                 'href' => '/app?page=einstellungen&tab=payment-terms',
             ];
-        } elseif ($topics !== []) {
-            $topic = $topics[0];
-            $title = (string) ($topic['title'] ?? 'dieses Thema');
-            $answerParts[] = 'Du meinst wahrscheinlich „' . $title . '“. '
-                . self::plainLanguage((string) ($topic['answer'] ?? ''));
+        } elseif ($topicMatches !== []) {
+            $match = $topicMatches[0];
+            $topic = $match['topic'];
+            $score = (int) ($match['score'] ?? 0);
+            $text = self::plainLanguage((string) ($topic['answer'] ?? ''));
+            if ($score < 4) {
+                $title = (string) ($topic['title'] ?? '');
+                $text = $title !== ''
+                    ? 'Du meinst vielleicht „' . $title . '“: ' . $text
+                    : $text;
+            }
+            $answerParts[] = $text;
             $href = (string) ($topic['href'] ?? '');
             if ($href !== '') {
                 $label = trim((string) ($topic['action_label'] ?? ''));
@@ -65,8 +70,7 @@ final class KichelAssistant
             }
         } elseif ($navigation !== []) {
             $nav = $navigation[0];
-            $answerParts[] = 'Du meinst vielleicht „' . ($nav['label'] ?? 'einen Menüpunkt')
-                . '“ im CRM?';
+            $answerParts[] = 'Meinst du „' . ($nav['label'] ?? 'einen Menüpunkt') . '“?';
             if (($nav['href'] ?? '') !== '') {
                 $actionLinks[] = [
                     'label' => (string) $nav['label'],
@@ -74,8 +78,7 @@ final class KichelAssistant
                 ];
             }
         } else {
-            $answerParts[] = 'Dazu finde ich gerade kein passendes Thema. '
-                . 'Versuch es mit einem kurzen Stichwort — zum Beispiel „USt-ID“, „Skonto“ oder „Pflichtseiten“.';
+            $answerParts[] = 'Dazu habe ich nichts Passendes gefunden. Probiere ein Stichwort wie „USt-ID“, „Skonto“ oder „Pflichtseiten“.';
         }
 
         if ($technical && $companyFields !== []) {
