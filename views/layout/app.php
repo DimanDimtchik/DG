@@ -420,7 +420,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
   <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
   <?php if (RoleResolver::isStaff($user)) : ?>
-    <?php View::render('partials/kichel-widget'); ?>
+    <?php View::render('partials/kichel-widget', compact('user')); ?>
   <?php endif; ?>
   <?php if (!CookieConsent::hasDecided()) : ?>
     <style><?= CookieConsent::bannerCss() ?></style>

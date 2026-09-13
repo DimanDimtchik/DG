@@ -1,7 +1,8 @@
 <?php
 /** Kichel — KI-Helfer (regelbasiert, ohne externe API). */
-/** @var User $user */
-$kichelIsAdmin = RoleResolver::isAdmin($user);
+/** @var User|null $user */
+$kichelUser = $user ?? AuthService::user();
+$kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUser);
 ?>
 <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/kichel.css')) ?>">
 <button type="button" class="dg-kichel-fab" data-kichel-fab aria-expanded="false" aria-controls="dg-kichel-panel" title="Kichel — CRM-Hilfe">
