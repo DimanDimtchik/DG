@@ -85,18 +85,56 @@ final class KichelFieldCatalog
             }
         }
 
+        $label = mb_strtolower((string) ($field['label'] ?? ''), 'UTF-8');
+        $matchedTokens = 0;
+
         foreach ($tokens as $token) {
+            $tokenMatched = false;
             foreach ($keywords as $keyword) {
                 $kw = mb_strtolower((string) $keyword, 'UTF-8');
                 if ($token === $kw) {
                     $score += 5;
+                    $tokenMatched = true;
                 } elseif (mb_strlen($token, 'UTF-8') >= 3 && (str_contains($kw, $token) || str_contains($token, $kw))) {
                     $score += 2;
+                    $tokenMatched = true;
                 }
             }
-            $label = mb_strtolower((string) ($field['label'] ?? ''), 'UTF-8');
             if ($label !== '' && mb_strlen($token, 'UTF-8') >= 3 && str_contains($label, $token)) {
                 $score += 3;
+                $tokenMatched = true;
+            }
+            if ($tokenMatched) {
+                ++$matchedTokens;
+            }
+        }
+
+        if ($matchedTokens >= 2) {
+            $score += 4;
+        }
+
+        if ($label !== '' && str_contains($normalizedQuery, $label)) {
+            $score += 6;
+        }
+
+        $specificBelegTypes = [
+            'einnahmenminderung',
+            'kundengutschrift',
+            'ausgabenminderung',
+        ];
+        $mentionsSpecificType = false;
+        foreach ($specificBelegTypes as $typePhrase) {
+            if (str_contains($normalizedQuery, $typePhrase)) {
+                $mentionsSpecificType = true;
+                break;
+            }
+        }
+        if ($mentionsSpecificType) {
+            if ($label === 'belegart') {
+                $score = max(0, $score - 10);
+            } elseif (in_array($label, ['Einnahmenminderung', 'Kundengutschrift'], true)
+                && str_contains($normalizedQuery, mb_strtolower($label, 'UTF-8'))) {
+                $score += 10;
             }
         }
 

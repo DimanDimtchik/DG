@@ -76,6 +76,24 @@ return [
                 'hint' => 'Das Logo erscheint in der CRM-Kopfzeile; für E-Mails zusätzlich unter Benachrichtigungen aktivieren.',
                 'keywords' => ['logo', 'firmenlogo', 'crm-logo', 'logodatei', 'logos'],
             ],
+            [
+                'label' => 'PNG',
+                'format' => 'PNG — Rastergrafik mit Transparenz, gut für Logos',
+                'hint' => 'PNG eignet sich für Logos und Grafiken mit transparentem Hintergrund. Für Fotos oft JPG; Vektorgrafiken als SVG.',
+                'keywords' => ['png', 'png-datei', 'png-format', 'bildformat', 'dateiformat', 'transparenz'],
+            ],
+            [
+                'label' => 'JPG / JPEG',
+                'format' => 'JPEG/JPG — komprimierte Fotos, ohne Transparenz',
+                'hint' => 'Für Fotos und große Bilder ohne Alpha-Kanal. Logos mit transparentem Hintergrund besser als PNG oder SVG.',
+                'keywords' => ['jpg', 'jpeg', 'jpg-format'],
+            ],
+            [
+                'label' => 'SVG',
+                'format' => 'SVG — Vektorgrafik, skalierbar ohne Qualitätsverlust',
+                'hint' => 'Ideal für Logos und Icons. Wird im Browser scharf dargestellt — unabhängig von der Anzeigegröße.',
+                'keywords' => ['svg', 'vektor', 'vektorgrafik'],
+            ],
         ],
     ],
     [
@@ -127,6 +145,28 @@ return [
         ],
     ],
     [
+        'area_id' => 'buchhaltung-ustva',
+        'area_label' => 'UStVA',
+        'href' => '/app?page=buchhaltung-ustva',
+        'intro' => 'Umsatzsteuer-Voranmeldung aus Belegen — Export als ELSTER-CSV zur manuellen Übermittlung.',
+        'fields' => [
+            [
+                'label' => 'Umsatzsteuer-Voranmeldung',
+                'format' => 'Zeitraum wählen → Kennziffern prüfen → CSV für ELSTER exportieren',
+                'hint' => 'Die Voranmeldung fasst Umsatzsteuer aus gebuchten Belegen zusammen. Direkte ELSTER-Übermittlung kommt erst nach dem Server-Umzug.',
+                'keywords' => [
+                    'ustva',
+                    'umsatzsteuervoranmeldung',
+                    'umsatzsteuer-voranmeldung',
+                    'umsatzsteuer voranmeldung',
+                    'ust voranmeldung',
+                    'voranmeldung',
+                    'umsatzsteuer',
+                ],
+            ],
+        ],
+    ],
+    [
         'area_id' => 'buchhaltung-kontenuebersicht',
         'area_label' => 'Kontenübersicht',
         'href' => '/app?page=buchhaltung-kontenuebersicht',
@@ -137,6 +177,56 @@ return [
                 'format' => 'SKR-Kontonummer, z. B. 3200',
                 'hint' => 'Konto in der Übersicht anklicken — alle Buchungen und Saldo erscheinen im Kontoauszug.',
                 'keywords' => ['kontonummer', 'kontoauszug', 'kontenübersicht', 'kontenuebersicht', 'sachkonto'],
+            ],
+        ],
+    ],
+    [
+        'area_id' => 'buchhaltung-beleg-form',
+        'area_label' => 'Beleg erfassen',
+        'href' => '/app?page=buchhaltung-belege',
+        'intro' => 'Einnahmen, Ausgaben und Korrekturbelege — mit Steuerfeldern, Positionen und Kontenzuordnung.',
+        'fields' => [
+            [
+                'label' => 'Belegart',
+                'format' => 'Einnahmen · Einnahmenminderung · Ausgaben · Ausgabenminderung · Kundengutschrift',
+                'hint' => 'Steuert Buchungslogik und Nummernkreis. Unter dem Feld erscheint eine Kurzerklärung zur gewählten Art.',
+                'keywords' => ['belegart', 'beleg-art', 'voucher_type', 'belegtyp'],
+            ],
+            [
+                'label' => 'Einnahmenminderung',
+                'format' => 'Betrag mindert einen früheren Ertrag — Positionen können negativ sein',
+                'hint' => 'Wähle diese Belegart bei Erlösschmälerung oder gewährtem Skonto vom Kunden. '
+                    . 'Wichtige Felder: Belegdatum, Kontakt, Positionen (Netto/USt), optional Rechnungsnummer. '
+                    . 'Bei negativem Gesamtbetrag verlangt das System Einnahmenminderung oder Kundengutschrift.',
+                'keywords' => [
+                    'einnahmenminderung',
+                    'einnahmen-minderung',
+                    'income_reduction',
+                    'erloesschmaelerung',
+                    'erloesschmälerung',
+                    'ertrag mindern',
+                ],
+            ],
+            [
+                'label' => 'Kundengutschrift',
+                'format' => 'Gutschrift an Kunden — mindert früheren Umsatz (Ausgangsbeleg)',
+                'hint' => 'Für Korrekturen zu Ihrer Ausgangsrechnung an einen Kunden. '
+                    . 'Nicht für Lieferantengutschriften — dafür „Ausgabenminderung“. '
+                    . 'Felder wie bei Einnahmen: Kontakt, Positionen, Belegdatum; negative Beträge sind erlaubt.',
+                'keywords' => [
+                    'kundengutschrift',
+                    'kunden-gutschrift',
+                    'credit',
+                    'gutschrift kunde',
+                    'ausgangsgutschrift',
+                ],
+            ],
+            [
+                'label' => 'Belegpositionen',
+                'format' => 'Beschreibung, Menge, Netto, USt-Satz — Summe bildet den Beleg',
+                'hint' => 'Bei Einnahmenminderung und Kundengutschrift können einzelne Zeilen negative Beträge haben. '
+                    . 'Kontenzuordnung je Position steuert die Buchung in der Kontenübersicht.',
+                'keywords' => ['positionen', 'belegposition', 'position', 'zeilen', 'felder'],
             ],
         ],
     ],

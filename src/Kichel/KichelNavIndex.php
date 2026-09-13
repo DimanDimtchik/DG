@@ -9,6 +9,18 @@ final class KichelNavIndex
     /** @var array<string, list<array<string, mixed>>> */
     private static array $cache = [];
 
+    /** @var array<string, list<string>> Navigations-Aliase (Query-Substring → Menü-ID) */
+    private const QUERY_ALIASES = [
+        'buchhaltung-ustva' => [
+            'umsatzsteuervoranmeldung',
+            'umsatzsteuer-voranmeldung',
+            'umsatzsteuer voranmeldung',
+            'ust voranmeldung',
+            'ust-voranmeldung',
+            'ustva',
+        ],
+    ];
+
     /**
      * @return list<array{
      *   id: string,
@@ -176,6 +188,28 @@ final class KichelNavIndex
             }
             if ($id !== '' && self::textContainsToken(str_replace([':', '-', '_'], ' ', $id), $token)) {
                 $score += 2;
+            }
+        }
+
+        if ($id === 'support-freigabe' && in_array('support', $tokens, true) && in_array('freigabe', $tokens, true)) {
+            $score += 12;
+        }
+        if (str_starts_with($id, 'kdv-') && !str_contains($normalizedQuery, 'kdv') && !str_contains($normalizedQuery, 'saas')) {
+            $score = max(0, $score - 4);
+        }
+        if ($id === 'support-freigabe' && str_contains($normalizedQuery, 'support freigabe')) {
+            $score += 6;
+        }
+
+        foreach (self::QUERY_ALIASES as $aliasId => $phrases) {
+            if ($id !== $aliasId) {
+                continue;
+            }
+            foreach ($phrases as $phrase) {
+                if ($phrase !== '' && str_contains($normalizedQuery, $phrase)) {
+                    $score += 14;
+                    break;
+                }
             }
         }
 

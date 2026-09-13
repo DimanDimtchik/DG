@@ -11,7 +11,8 @@ if (!defined('DG_ROOT')) {
 require_once DG_ROOT . '/src/autoload.php';
 
 $query = $argv[1] ?? 'Wo trage ich die USt-ID ein?';
-$user = new User(1, 'admin', 'Administrator', '', ['admin'], true);
+$adminRole = (string) App::config('roles.admin', 'administrator');
+$user = new User(1, 'admin', 'Administrator', '', [$adminRole], true);
 $result = KichelAssistant::answer($user, $query);
 
 echo json_encode([
