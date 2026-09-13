@@ -133,6 +133,15 @@ return [
         'tags' => ['personal'],
     ],
     [
+        'id' => 'social-media',
+        'keywords' => ['facebook', 'instagram', 'linkedin', 'xing', 'tiktok', 'youtube', 'sozial', 'social', 'sozialmedia', 'sozialen', 'netzwerk', 'verlinken'],
+        'title' => 'Soziale Medien verlinken',
+        'answer' => 'Facebook und andere Profile kannst du als URL eintragen — es gibt keine Anbindung ans Netzwerk selbst (kein Posten o. Ä.). Für einzelne Kontakte: Kontakt bearbeiten → Soziale Medien. Für die Firmen-Leiste in E-Mails: Einstellungen → Benachrichtigungen → Social Media.',
+        'href' => '/app?page=einstellungen&tab=benachrichtigungen',
+        'action_label' => 'E-Mail Social Media öffnen',
+        'tags' => ['kommunikation', 'kontakte'],
+    ],
+    [
         'id' => 'schriften',
         'keywords' => ['schriftart', 'schriftarten', 'schriften', 'font', 'fonts', 'typografie'],
         'title' => 'Schriften',

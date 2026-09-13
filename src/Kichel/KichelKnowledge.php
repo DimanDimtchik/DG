@@ -38,6 +38,8 @@ final class KichelKnowledge
             'finde', 'finden', 'zeige', 'zeigen', 'suche', 'such', 'bitte', 'kann', 'kannst',
             'möchte', 'will', 'würde', 'gern', 'gerne', 'mal', 'noch', 'mehr',
             'stelle', 'einstellen', 'einstellung', 'einstellungen', 'ändern', 'änderung',
+            'mein', 'meine', 'dein', 'deine', 'ihr', 'ihre', 'unser', 'unsere',
+            'kann', 'können', 'kannst',
         ];
 
         $tokens = [];
@@ -140,6 +142,12 @@ final class KichelKnowledge
         if ($token === 'konto' && str_contains($keyword, 'skonto') && $keyword !== 'konto') {
             return false;
         }
+        if ($token === 'mein' && str_contains($keyword, 'allgemein')) {
+            return false;
+        }
+        if (mb_strlen($token, 'UTF-8') < 4 && $keyword !== $token) {
+            return false;
+        }
 
         return str_contains($keyword, $token);
     }
@@ -158,7 +166,7 @@ final class KichelKnowledge
         $labelLower = mb_strtolower($label, 'UTF-8');
         $match = false;
         foreach ($tokens as $token) {
-            if (str_contains($labelLower, $token)) {
+            if (self::keywordContainsToken($labelLower, $token)) {
                 $match = true;
                 break;
             }
