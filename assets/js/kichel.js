@@ -17,11 +17,14 @@
   var input = document.querySelector('[data-kichel-input]');
   var scrollBody = document.querySelector('[data-kichel-body]');
   var messages = document.querySelector('[data-kichel-messages]');
-  var chips = document.querySelectorAll('[data-kichel-chip]');
   var protokollLink = document.querySelector('[data-kichel-protokoll]');
 
   if (!fab || !panel || !form || !input || !scrollBody || !messages) {
     return;
+  }
+
+  function scrollToBottom() {
+    scrollBody.scrollTop = scrollBody.scrollHeight;
   }
 
   function saveState() {
@@ -59,7 +62,7 @@
     fab.setAttribute('aria-expanded', show ? 'true' : 'false');
     if (show) {
       input.focus();
-      scrollBody.scrollTop = scrollBody.scrollHeight;
+      scrollToBottom();
     }
     saveState();
   }
@@ -94,6 +97,26 @@
     });
   }
 
+  messages.addEventListener('click', function (ev) {
+    var feedbackBtn = ev.target.closest('[data-kichel-feedback]');
+    if (feedbackBtn) {
+      ev.preventDefault();
+      var wrap = feedbackBtn.closest('.dg-kichel-followup');
+      if (wrap) {
+        wrap.querySelector('.dg-kichel-feedback').remove();
+      }
+      if (feedbackBtn.getAttribute('data-kichel-feedback') === 'yes') {
+        appendMessage('Freut mich! Bei weiteren Fragen einfach melden.', 'bot');
+      } else {
+        appendMessage('Kein Problem — probier ein kürzeres Stichwort oder eine Beispielfrage oben.', 'bot');
+      }
+      return;
+    }
+    if (ev.target.tagName === 'A') {
+      saveState();
+    }
+  });
+
   window.addEventListener('pagehide', saveState);
 
   bindChips();
@@ -104,36 +127,32 @@
     el.className = 'dg-kichel-msg dg-kichel-msg--' + role;
     el.textContent = text;
     messages.appendChild(el);
-    scrollBody.scrollTop = scrollBody.scrollHeight;
+    scrollToBottom();
     saveState();
     return el;
   }
 
-  function appendSection(title, html) {
+  function appendHtmlSection(className, html) {
     var wrap = document.createElement('div');
-    wrap.className = 'dg-kichel-section';
-    wrap.innerHTML = '<h4>' + title + '</h4>' + html;
+    wrap.className = className;
+    wrap.innerHTML = html;
     messages.appendChild(wrap);
-    scrollBody.scrollTop = scrollBody.scrollHeight;
+    scrollToBottom();
     saveState();
   }
 
-  function renderLinks(title, items, labelKey, hrefKey) {
+  function renderActionLinks(items) {
     if (!items || !items.length) {
       return;
     }
-    var html = '<ul class="dg-kichel-links">';
+    var html = '<ul class="dg-kichel-links dg-kichel-links--action">';
     items.forEach(function (item) {
-      var label = item[labelKey];
-      var href = item[hrefKey];
-      if (!href) {
-        html += '<li>' + label + '</li>';
-      } else {
-        html += '<li><a href="' + href + '">' + label + '</a></li>';
+      if (item.href) {
+        html += '<li><a class="dg-kichel-action" href="' + item.href + '">' + item.label + '</a></li>';
       }
     });
     html += '</ul>';
-    appendSection(title, html);
+    appendHtmlSection('dg-kichel-section dg-kichel-section--action', html);
   }
 
   function renderPageLinks(items) {
@@ -153,32 +172,62 @@
       }
       html += '</ul></div>';
     });
-    appendSection('Pflichtseiten — Links', html);
+    appendHtmlSection('dg-kichel-section dg-kichel-section--pages', html);
   }
 
-  function renderCodeHits(items) {
-    if (!items || !items.length) {
+  function renderFollowUp(text) {
+    if (!text) {
       return;
     }
-    var html = '';
-    items.forEach(function (hit) {
-      html += '<div class="dg-kichel-hit">' + hit.path + ':' + hit.line + '<br>' + hit.snippet + '</div>';
-    });
-    appendSection('Code-Treffer', html);
+    var html = '<p class="dg-kichel-followup__text">' + text + '</p>';
+    html += '<div class="dg-kichel-feedback">';
+    html += '<button type="button" data-kichel-feedback="yes">Ja, passt</button>';
+    html += '<button type="button" data-kichel-feedback="no">Nein, nochmal</button>';
+    html += '</div>';
+    appendHtmlSection('dg-kichel-followup', html);
   }
 
-  function renderDbHits(items) {
-    if (!items || !items.length) {
-      return;
+  function renderTechnicalExtras(data) {
+    function renderLinks(title, items, labelKey, hrefKey) {
+      if (!items || !items.length) {
+        return;
+      }
+      var html = '<h4>' + title + '</h4><ul class="dg-kichel-links">';
+      items.forEach(function (item) {
+        var label = item[labelKey];
+        var href = item[hrefKey];
+        if (!href) {
+          html += '<li>' + label + '</li>';
+        } else {
+          html += '<li><a href="' + href + '">' + label + '</a></li>';
+        }
+      });
+      html += '</ul>';
+      appendHtmlSection('dg-kichel-section', html);
     }
-    var html = '<ul class="dg-kichel-links">';
-    items.forEach(function (hit) {
-      var cols = (hit.columns || []).slice(0, 6).join(', ');
-      var count = hit.row_count != null ? ' · ' + hit.row_count + ' Zeilen' : '';
-      html += '<li><strong>' + hit.table + '</strong>' + count + (cols ? '<br><span class="dg-kichel-hit">' + cols + '</span>' : '') + '</li>';
-    });
-    html += '</ul>';
-    appendSection('Datenbank-Schema', html);
+
+    renderLinks('Navigation', data.navigation || [], 'label', 'href');
+
+    var code = data.code || [];
+    if (code.length) {
+      var codeHtml = '';
+      code.forEach(function (hit) {
+        codeHtml += '<div class="dg-kichel-hit">' + hit.path + ':' + hit.line + '<br>' + hit.snippet + '</div>';
+      });
+      appendHtmlSection('dg-kichel-section', '<h4>Code-Treffer</h4>' + codeHtml);
+    }
+
+    var db = data.database || [];
+    if (db.length) {
+      var dbHtml = '<h4>Datenbank-Schema</h4><ul class="dg-kichel-links">';
+      db.forEach(function (hit) {
+        var cols = (hit.columns || []).slice(0, 6).join(', ');
+        var count = hit.row_count != null ? ' · ' + hit.row_count + ' Zeilen' : '';
+        dbHtml += '<li><strong>' + hit.table + '</strong>' + count + (cols ? '<br><span class="dg-kichel-hit">' + cols + '</span>' : '') + '</li>';
+      });
+      dbHtml += '</ul>';
+      appendHtmlSection('dg-kichel-section', dbHtml);
+    }
   }
 
   form.addEventListener('submit', function (ev) {
@@ -196,7 +245,7 @@
       submitBtn.disabled = true;
     }
 
-    var loading = appendMessage('Kichel denkt nach …', 'bot');
+    var loading = appendMessage('Einen Moment …', 'bot');
 
     var fd = new FormData();
     fd.append('_csrf', cfg.csrf);
@@ -211,34 +260,23 @@
         saveState();
         if (!json.success) {
           appendMessage(json.message || 'Fehler bei der Anfrage.', 'bot');
+          renderFollowUp('Soll ich es noch einmal versuchen?');
           return;
         }
         var data = json.data || {};
         appendMessage(data.answer || 'Keine Antwort.', 'bot');
-
-        var topics = (data.topics || []).map(function (t) {
-          return { label: t.title, href: t.href };
-        });
         renderPageLinks(data.page_links || []);
-        renderLinks('Übersicht', data.overview_links || [], 'label', 'href');
-        renderLinks('Fachthemen', topics, 'label', 'href');
-        renderLinks('Navigation', data.navigation || [], 'label', 'href');
-        renderCodeHits(data.code || []);
-        renderDbHits(data.database || []);
-
-        if (data.company && data.company.length) {
-          var chtml = '<ul class="dg-kichel-links">';
-          data.company.forEach(function (c) {
-            chtml += '<li>' + c.label + ': ' + c.value + '</li>';
-          });
-          chtml += '</ul>';
-          appendSection('Firmendaten', chtml);
+        renderActionLinks(data.action_links || []);
+        if (data.presentation === 'technical') {
+          renderTechnicalExtras(data);
         }
+        renderFollowUp(data.follow_up);
       })
       .catch(function () {
         loading.remove();
         saveState();
         appendMessage('Verbindungsfehler — bitte erneut versuchen.', 'bot');
+        renderFollowUp('Soll ich es noch einmal versuchen?');
       })
       .finally(function () {
         if (submitBtn) {

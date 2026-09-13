@@ -128,6 +128,57 @@
   color: var(--dg-text-muted);
 }
 
+.dg-kichel-section--pages,
+.dg-kichel-section--action {
+  margin-top: 0.5rem;
+}
+
+.dg-kichel-links--action {
+  margin-top: 0.35rem;
+}
+
+.dg-kichel-action {
+  display: inline-block;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--dg-primary) 10%, var(--dg-surface));
+  border: 1px solid var(--dg-border-accent);
+  text-decoration: none !important;
+  font-weight: 500;
+}
+
+.dg-kichel-followup {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--dg-border);
+}
+
+.dg-kichel-followup__text {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--dg-text-muted);
+}
+
+.dg-kichel-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dg-kichel-feedback button {
+  border: 1px solid var(--dg-border);
+  background: var(--dg-surface);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--dg-text-secondary);
+}
+
+.dg-kichel-feedback button:hover {
+  background: var(--dg-surface-accent);
+}
+
 .dg-kichel-links {
   list-style: none;
   margin: 0;

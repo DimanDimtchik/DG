@@ -3,25 +3,20 @@ declare(strict_types=1);
 
 /**
  * Orchestriert Fachwissen, Code- und DB-Suche für Kichel.
+ * Standard: kurze Endnutzer-Antworten mit direkten Links.
  */
 final class KichelAssistant
 {
+    private const FOLLOW_UP = 'War das hilfreich? Wenn nicht, formuliere die Frage bitte etwas kürzer — zum Beispiel mit einem Stichwort von oben.';
+
     /**
-     * @return array{
-     *   answer: string,
-     *   topics: list<array<string, mixed>>,
-     *   navigation: list<array{label: string, href: string, kind: string}>,
-     *   code: list<array{path: string, line: int, snippet: string}>,
-     *   database: list<array<string, mixed>>,
-     *   company: list<array{key: string, label: string, value: string}>,
-     *   hints: list<string>
-     * }
+     * @return array<string, mixed>
      */
     public static function answer(User $user, string $query): array
     {
         $query = trim($query);
         if ($query === '') {
-            return self::emptyResponse('Stellen Sie mir eine Frage — z. B. „Wo trage ich die USt-ID ein?“ oder „contact_note Tabelle“.');
+            return self::emptyResponse('Stell mir eine Frage — zum Beispiel „Wo trage ich die USt-ID ein?“ oder „Pflichtseiten“.');
         }
 
         $tokens = KichelKnowledge::tokenize($query);
@@ -29,46 +24,64 @@ final class KichelAssistant
             $tokens = KichelKnowledge::tokenize(preg_replace('/\s+/', ' ', $query) ?? $query);
         }
 
+        $technical = self::isTechnicalQuery($query, $tokens);
         $moneyAnswer = KichelMoneyLogic::tryAnswer($query);
         $moneyFacts = $moneyAnswer['facts'] ?? [];
         $legalAnswer = KichelLegalPages::tryAnswer($query, $tokens);
 
         $topicMatches = KichelKnowledge::matchTopics($tokens);
         $navigation = KichelKnowledge::navigationHints($user, $tokens);
-        $codeHits = KichelCodeSearch::search($tokens);
-        $schemaHits = KichelSchemaCatalog::searchSchema($tokens);
-        $companyFields = KichelSchemaCatalog::matchCompanyFields($tokens);
+        $codeHits = $technical ? KichelCodeSearch::search($tokens) : [];
+        $schemaHits = $technical ? KichelSchemaCatalog::searchSchema($tokens) : [];
+        $companyFields = $technical ? KichelSchemaCatalog::matchCompanyFields($tokens) : [];
 
         $topics = array_map(static fn (array $m): array => $m['topic'], $topicMatches);
         $answerParts = [];
+        $actionLinks = [];
 
         if ($legalAnswer !== null) {
             $answerParts[] = (string) $legalAnswer['answer'];
         } elseif ($moneyAnswer !== null) {
             $baseMoneyAnswer = (string) $moneyAnswer['answer'];
             $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
-            $answerParts[] = $phrased ?? $baseMoneyAnswer;
-        }
-
-        if ($legalAnswer === null) {
-            if ($topics !== []) {
-                foreach (array_slice($topics, 0, 2) as $topic) {
-                    $answerParts[] = (string) ($topic['answer'] ?? '');
-                }
-            } elseif ($moneyAnswer === null) {
-                $answerParts[] = self::genericIntro($query);
+            $answerParts[] = 'Du meinst wahrscheinlich eine Rechenfrage im CRM. '
+                . ($phrased ?? $baseMoneyAnswer);
+        } elseif ($topics !== []) {
+            $topic = $topics[0];
+            $title = (string) ($topic['title'] ?? 'dieses Thema');
+            $answerParts[] = 'Du meinst wahrscheinlich „' . $title . '“. '
+                . self::plainLanguage((string) ($topic['answer'] ?? ''));
+            $href = (string) ($topic['href'] ?? '');
+            if ($href !== '') {
+                $actionLinks[] = [
+                    'label' => 'Direkt dorthin',
+                    'href' => $href,
+                ];
             }
+        } elseif ($navigation !== []) {
+            $nav = $navigation[0];
+            $answerParts[] = 'Du meinst vielleicht „' . ($nav['label'] ?? 'einen Menüpunkt')
+                . '“ im CRM?';
+            if (($nav['href'] ?? '') !== '') {
+                $actionLinks[] = [
+                    'label' => (string) $nav['label'],
+                    'href' => (string) $nav['href'],
+                ];
+            }
+        } else {
+            $answerParts[] = 'Dazu finde ich gerade kein passendes Thema. '
+                . 'Versuch es mit einem kurzen Stichwort — zum Beispiel „USt-ID“, „Skonto“ oder „Pflichtseiten“.';
         }
 
-        if ($legalAnswer === null && $companyFields !== []) {
+        if ($technical && $companyFields !== []) {
             $lines = [];
             foreach ($companyFields as $field) {
                 $lines[] = ucfirst($field['label']) . ': ' . $field['value'];
             }
-            $answerParts[] = 'Aus Ihren Firmendaten: ' . implode(' · ', $lines);
+            $answerParts[] = 'Aus deinen Firmendaten: ' . implode(' · ', $lines);
         }
 
-        if ($legalAnswer === null && $schemaHits !== []) {
+        if ($technical && $schemaHits !== []) {
             $tableLines = [];
             foreach (array_slice($schemaHits, 0, 3) as $hit) {
                 $cols = implode(', ', array_slice($hit['columns'], 0, 6));
@@ -76,39 +89,30 @@ final class KichelAssistant
                 $suffix = $count !== null ? ' (' . number_format($count, 0, ',', '.') . ' Datensätze)' : '';
                 $tableLines[] = $hit['table'] . $suffix . ($cols !== '' ? ' — Spalten: ' . $cols : '');
             }
-            $answerParts[] = 'Datenbank-Schema (Migrationen): ' . implode(' | ', $tableLines);
+            $answerParts[] = 'Datenbank-Schema: ' . implode(' | ', $tableLines);
         }
 
-        if ($legalAnswer === null && $codeHits !== []) {
-            $answerParts[] = 'Im Quellcode habe ich passende Stellen gefunden — siehe Trefferliste unten.';
+        if ($technical && $codeHits !== []) {
+            $answerParts[] = 'Im Quellcode habe ich passende Stellen gefunden — siehe unten.';
         }
-
-        if ($legalAnswer === null && $navigation !== [] && $topics === []) {
-            $navLabels = array_map(static fn (array $n): string => $n['label'], $navigation);
-            $answerParts[] = 'Vielleicht meinen Sie: ' . implode(', ', $navLabels) . '.';
-        }
-
-        $hints = self::hints($tokens, $topics, $codeHits, $schemaHits);
 
         $response = [
+            'presentation' => $technical ? 'technical' : 'simple',
             'answer' => trim(implode("\n\n", array_filter($answerParts))),
-            'topics' => array_map(static function (array $topic): array {
-                return [
-                    'id' => $topic['id'] ?? '',
-                    'title' => $topic['title'] ?? '',
-                    'href' => $topic['href'] ?? null,
-                ];
-            }, $topics),
-            'navigation' => $navigation,
-            'code' => array_map(static fn (array $hit): array => [
+            'follow_up' => self::FOLLOW_UP,
+            'action_links' => $actionLinks,
+            'topics' => [],
+            'navigation' => $technical ? $navigation : [],
+            'code' => $technical ? array_map(static fn (array $hit): array => [
                 'path' => $hit['path'],
                 'line' => $hit['line'],
                 'snippet' => $hit['snippet'],
-            ], $codeHits),
-            'database' => $schemaHits,
-            'company' => $companyFields,
-            'hints' => $hints,
+            ], $codeHits) : [],
+            'database' => $technical ? $schemaHits : [],
+            'company' => $technical ? $companyFields : [],
+            'hints' => [],
         ];
+
         if ($moneyAnswer !== null) {
             $response['calculation'] = [
                 'kind' => $moneyAnswer['kind'],
@@ -126,47 +130,45 @@ final class KichelAssistant
 
     /**
      * @param list<string> $tokens
-     * @param list<array<string, mixed>> $topics
-     * @param list<array<string, mixed>> $codeHits
-     * @param list<array<string, mixed>> $schemaHits
-     * @return list<string>
      */
-    private static function hints(array $tokens, array $topics, array $codeHits, array $schemaHits): array
+    private static function isTechnicalQuery(string $query, array $tokens): bool
     {
-        $hints = [
-            'Ich durchsuche CRM-Wissen, Quellcode (src/, views/, docs/) und das DB-Schema aus Migrationen.',
-            'Beispiele: „Skonto einstellen“, „dg_contacts“, „LegalPageGenerator“.',
-        ];
-
-        if ($topics === [] && $codeHits === [] && $schemaHits === []) {
-            $hints[] = 'Keine Treffer — versuchen Sie einen kürzeren Begriff (z. B. „IMAP“, „Belegkette“, „contact_note“).';
+        if (preg_match('/\b(dg_[a-z0-9_]+|src\/|views\/|migration|schema|repository|autoload|\.php|sql)\b/ui', $query)) {
+            return true;
+        }
+        foreach ($tokens as $token) {
+            if (str_starts_with($token, 'dg_') || str_contains($token, '_note')) {
+                return true;
+            }
         }
 
-        return $hints;
+        return false;
     }
 
-    private static function genericIntro(string $query): string
+    private static function plainLanguage(string $text): string
     {
-        return 'Zu „' . $query . '“ habe ich kein festes Fachthema — ich habe trotzdem Code und Datenbankschema durchsucht.';
+        $text = preg_replace('/\s*Siehe docs\/[^\s.]+\.[^.\s]*\.?/u', '', $text) ?? $text;
+        $text = preg_replace('/\s*Details:\s*docs\/[^\s.]+\.[^.\s]*\.?/u', '', $text) ?? $text;
+
+        return trim($text);
     }
 
     /**
-     * @return array{answer: string, topics: list<mixed>, navigation: list<mixed>, code: list<mixed>, database: list<mixed>, company: list<mixed>, hints: list<string>}
+     * @return array<string, mixed>
      */
     private static function emptyResponse(string $message): array
     {
         return [
+            'presentation' => 'simple',
             'answer' => $message,
+            'follow_up' => self::FOLLOW_UP,
+            'action_links' => [],
             'topics' => [],
             'navigation' => [],
             'code' => [],
             'database' => [],
             'company' => [],
-            'hints' => [
-                'Fachfragen zu Steuer, Buchhaltung und CRM-Einstellungen',
-                'Code-Suche in src/, views/, docs/',
-                'DB-Schema und sichere Firmendaten-Hinweise',
-            ],
+            'hints' => [],
         ];
     }
 }

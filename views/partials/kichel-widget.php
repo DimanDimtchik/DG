@@ -29,7 +29,7 @@ $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUse
       <button type="button" class="dg-kichel-chip" data-kichel-chip="Belegkette Workflow">Belegkette</button>
     </div>
     <div class="dg-kichel-messages" data-kichel-messages>
-      <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe bei CRM-Navigation, Steuer-/Buchhaltungsfragen und durchsuche Code sowie DB-Schema — alles lokal im CRM, ohne Cloud-KI.</div>
+      <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe dir, im CRM schnell den richtigen Weg zu finden — stell einfach deine Frage oder wähle ein Stichwort.</div>
     </div>
   </div>
   <form class="dg-kichel-form" data-kichel-form>

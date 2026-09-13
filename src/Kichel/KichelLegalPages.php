@@ -36,38 +36,18 @@ final class KichelLegalPages
             $pageLinks[] = [
                 'title' => $title,
                 'slug' => $slug,
-                'view_label' => 'Öffentlich ansehen',
+                'view_label' => 'Ansehen',
                 'view_href' => $viewHref,
-                'edit_label' => 'Im CRM bearbeiten',
+                'edit_label' => 'Bearbeiten',
                 'edit_href' => self::editHrefForSlug($slug),
             ];
         }
 
-        $overviewLinks = [
-            ['label' => 'Website → Seiten (Pflichtseiten anlegen)', 'href' => '/app?page=website-seiten'],
-        ];
-        if (class_exists('SettingsRegistry')) {
-            $overviewLinks[] = [
-                'label' => 'Einstellungen → Rechtliches / Produkte',
-                'href' => SettingsRegistry::tabUrl('agb'),
-            ];
-        }
-
-        $lines = [
-            'Pflichtseiten: Impressum, Datenschutz, AGB und Widerruf.',
-            'Unten finden Sie pro Seite den Link zum Ansehen (Website) und zum Bearbeiten (CRM).',
-        ];
-        if (self::multiProductEnabled()) {
-            $lines[] = 'Mehrprodukt-Modus ist aktiv — je Produktgruppe eigene Tabs (z. B. /datenschutz?produkt=klarwin).';
-        } else {
-            $lines[] = 'Bearbeiten: Website → Seiten → jeweilige Seite öffnen.';
-        }
-
         return [
             'kind' => 'legal_pages',
-            'answer' => implode("\n\n", $lines),
+            'answer' => self::introText($query) . "\n\nHier kannst du direkt hingehen:",
             'page_links' => $pageLinks,
-            'overview_links' => $overviewLinks,
+            'overview_links' => [],
         ];
     }
 
@@ -100,6 +80,48 @@ final class KichelLegalPages
         }
 
         return false;
+    }
+
+    private static function introText(string $query): string
+    {
+        $normalized = mb_strtolower($query, 'UTF-8');
+        $short = [
+            'impressum' => 'Impressum',
+            'datenschutz' => 'Datenschutz',
+            'agb' => 'AGB',
+            'widerruf' => 'Widerruf',
+        ];
+        $mentioned = [];
+        foreach ($short as $slug => $label) {
+            if (str_contains($normalized, $slug)) {
+                $mentioned[] = $label;
+            }
+        }
+
+        if ($mentioned !== []) {
+            return 'Du meinst wahrscheinlich ' . self::naturalList($mentioned)
+                . ' — das sind Pflichtseiten auf deiner Website.';
+        }
+
+        return 'Du meinst wahrscheinlich die Pflichtseiten auf deiner Website — '
+            . 'zum Beispiel Impressum, Datenschutz, AGB und Widerruf.';
+    }
+
+    /**
+     * @param list<string> $items
+     */
+    private static function naturalList(array $items): string
+    {
+        $items = array_values(array_unique($items));
+        if (count($items) === 1) {
+            return $items[0];
+        }
+        if (count($items) === 2) {
+            return $items[0] . ' und ' . $items[1];
+        }
+        $last = array_pop($items);
+
+        return implode(', ', $items) . ' und ' . $last;
     }
 
     private static function multiProductEnabled(): bool
