@@ -458,7 +458,7 @@ final class LegalPageGenerator
             $userId,
             false
         );
-        if (class_exists('WebsiteLegalVariantRepository')) {
+        if (self::legalVariantRepositoryAvailable()) {
             WebsiteLegalVariantRepository::ensureDefaultsForPage($slug);
         }
 
@@ -481,16 +481,25 @@ final class LegalPageGenerator
                 $userId,
                 $overwrite
             );
-            if (class_exists('WebsiteLegalVariantRepository')) {
+            if (self::legalVariantRepositoryAvailable()) {
                 WebsiteLegalVariantRepository::ensureDefaultsForPage($slug);
             }
         }
 
-        if (class_exists('LegalProductSettings') && LegalProductSettings::multiProductEnabled()) {
+        if (
+            self::legalVariantRepositoryAvailable()
+            && is_readable(DG_ROOT . '/src/Legal/LegalProductSettings.php')
+            && LegalProductSettings::multiProductEnabled()
+        ) {
             WebsiteLegalVariantRepository::ensureVariantsForAllProducts();
         }
 
         return $saved;
+    }
+
+    private static function legalVariantRepositoryAvailable(): bool
+    {
+        return is_readable(DG_ROOT . '/src/Website/WebsiteLegalVariantRepository.php');
     }
 
     // ── Data helpers ────────────────────────────────────────────────
