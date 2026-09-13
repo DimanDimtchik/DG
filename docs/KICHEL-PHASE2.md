@@ -52,3 +52,15 @@ Nutzerfrage
 | `src/Kichel/KichelProtocolRepository.php` | Anfragen-Protokoll (Admin) |
 | Migration **067** | Tabelle `dg_kichel_log` |
 | `/app?page=kichel-protokoll` | Protokoll-Ansicht (nur Admin) |
+| `bin/kichel-protocol-list.php` | JSON auf dem Server (CLI) |
+| `bin/cloud-agent-kichel-protocol.sh` | **Cloud-Agent** holt Protokoll per SSH |
+
+## Cloud-Agent: Protokoll abrufen
+
+Wenn der Nutzer Kichel-Antworten besprechen will, **zuerst Protokoll laden**:
+
+```bash
+bash bin/cloud-agent-kichel-protocol.sh 30
+```
+
+Ausgabe: JSON mit `query`, `answer`, `username`, `created_at` — dann gezielt Antworten verbessern.
