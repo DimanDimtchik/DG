@@ -134,13 +134,14 @@ final class StockMovementService
 
         MigrationRunner::runPending();
 
-        $sql = "SELECT id, article_number, title, unit, stock_qty, min_stock, track_stock
+        $sql = "SELECT id, article_number, title, unit, stock_qty, min_stock, track_stock,
+                       stock_ort, stock_halle, stock_regal, stock_platz
                 FROM dg_calendar_articles
                 WHERE catalog_kind = 'product' AND track_stock = 1";
         if ($lowStockOnly) {
             $sql .= ' AND min_stock > 0 AND stock_qty <= min_stock';
         }
-        $sql .= ' ORDER BY title ASC';
+        $sql .= ' ORDER BY stock_ort ASC, stock_halle ASC, stock_regal ASC, stock_platz ASC, title ASC';
 
         $rows = Database::pdo()->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
         foreach ($rows as &$row) {
@@ -149,6 +150,7 @@ final class StockMovementService
             $row['is_low'] = (float) ($row['min_stock'] ?? 0) > 0
                 && (float) ($row['stock_qty'] ?? 0) <= (float) ($row['min_stock'] ?? 0);
             $row['stock_label'] = self::formatQty((float) $row['stock_qty'], (string) ($row['unit'] ?? 'Stück'));
+            $row['stock_position_code'] = StockPositionCode::fromRow($row);
         }
         unset($row);
 
@@ -172,6 +174,7 @@ final class StockMovementService
             $rows[] = [
                 'article_number' => (string) ($item['article_number'] ?? ''),
                 'title' => (string) ($item['title'] ?? ''),
+                'position_code' => (string) ($item['stock_position_code'] ?? ''),
                 'unit' => (string) ($item['unit'] ?? ''),
                 'stock_qty' => (string) ($item['stock_qty'] ?? '0'),
                 'min_stock' => (string) ($item['min_stock'] ?? '0'),

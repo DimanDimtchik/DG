@@ -57,13 +57,14 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
           <th>Preis (brutto)</th>
           <th>Dauer</th>
           <th>Bestand</th>
+          <th>Positionscode</th>
           <th>Bereich</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <?php if ($calendarArticles === []) : ?>
-          <tr><td colspan="10" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
+          <tr><td colspan="11" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
         <?php else : ?>
           <?php foreach ($calendarArticles as $article) : ?>
             <tr>
@@ -75,6 +76,7 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
               <td><?= View::escape((string) ($article['price_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['duration_label'] ?? '')) ?></td>
               <td><?php if (!empty($article['track_stock'])) : ?><?= View::escape((string) ($article['stock_label'] ?? '')) ?><?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?><?php else : ?>—<?php endif; ?></td>
+              <td><?= !empty($article['stock_position_code']) ? View::escape((string) $article['stock_position_code']) : '—' ?></td>
               <td><?= View::escape($areaNames[(int) ($article['area_id'] ?? 0)] ?? '—') ?></td>
               <td class="dg-table__actions">
                 <div class="dg-table__actions-group">
@@ -96,6 +98,12 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
                       'area_id' => (int) $article['area_id'],
                       'sort_order' => (int) $article['sort_order'],
                       'is_active' => (int) $article['is_active'],
+                      'track_stock' => (int) ($article['track_stock'] ?? 0),
+                      'min_stock' => (float) ($article['min_stock'] ?? 0),
+                      'stock_ort' => (string) ($article['stock_ort'] ?? ''),
+                      'stock_halle' => (string) ($article['stock_halle'] ?? ''),
+                      'stock_regal' => (string) ($article['stock_regal'] ?? ''),
+                      'stock_platz' => (string) ($article['stock_platz'] ?? ''),
                   ], JSON_THROW_ON_ERROR)) ?>"
                 >Bearbeiten</button>
                 <form method="post" action="<?= View::escape($catalogBaseUrl) ?>" class="dg-inline-form">
@@ -218,7 +226,26 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
             <span>Mindestbestand</span>
             <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
-          <p class="dg-field-hint">„Lager führen“ gilt nur für <strong>Artikel</strong> (nicht Leistungen). Bestandsänderungen aus Belegen siehst du unter <a href="/app?page=lager">Lager</a>.</p>
+          <label class="dg-field">
+            <span>Ort</span>
+            <input type="text" name="stock_ort" id="dg_article_stock_ort" maxlength="32" placeholder="z. B. WH1" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <label class="dg-field">
+            <span>Halle</span>
+            <input type="text" name="stock_halle" id="dg_article_stock_halle" maxlength="32" placeholder="z. B. H02" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <label class="dg-field">
+            <span>Regal</span>
+            <input type="text" name="stock_regal" id="dg_article_stock_regal" maxlength="32" placeholder="z. B. R03" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <label class="dg-field">
+            <span>Platz</span>
+            <input type="text" name="stock_platz" id="dg_article_stock_platz" maxlength="32" placeholder="z. B. P12" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <p class="dg-field dg-field--wide dg-field-hint" id="dg_article_stock_position_preview" hidden>
+            Positionscode: <strong id="dg_article_stock_position_code">—</strong>
+          </p>
+          <p class="dg-field-hint">Positionscode = Ort-Halle-Regal-Platz (alle vier Felder, wenn ein Feld gesetzt ist). Bestandsänderungen aus Belegen unter <a href="/app?page=lager">Lager</a>.</p>
         </fieldset>
       </div>
     </div>

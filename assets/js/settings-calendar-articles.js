@@ -25,6 +25,12 @@
   const initialStockWrap = document.getElementById('dg_article_initial_stock_wrap');
   const initialStockInput = document.getElementById('dg_article_initial_stock');
   const minStockInput = document.getElementById('dg_article_min_stock');
+  const stockOrtInput = document.getElementById('dg_article_stock_ort');
+  const stockHalleInput = document.getElementById('dg_article_stock_halle');
+  const stockRegalInput = document.getElementById('dg_article_stock_regal');
+  const stockPlatzInput = document.getElementById('dg_article_stock_platz');
+  const stockPositionPreview = document.getElementById('dg_article_stock_position_preview');
+  const stockPositionCodeEl = document.getElementById('dg_article_stock_position_code');
   const formTitle = document.getElementById('dg-article-form-title');
   const formPanel = document.getElementById('dg-article-form-panel');
   const submitBtn = document.getElementById('dg-article-submit');
@@ -46,6 +52,33 @@
     }
   }
 
+  function sanitizePositionPart(value) {
+    return String(value || '').trim().replace(/\s+/g, '');
+  }
+
+  function composePositionCode() {
+    const parts = [
+      sanitizePositionPart(stockOrtInput && stockOrtInput.value),
+      sanitizePositionPart(stockHalleInput && stockHalleInput.value),
+      sanitizePositionPart(stockRegalInput && stockRegalInput.value),
+      sanitizePositionPart(stockPlatzInput && stockPlatzInput.value),
+    ];
+    if (parts.every(function (part) { return part === ''; })) {
+      return '';
+    }
+    return parts.join('-');
+  }
+
+  function updatePositionPreview() {
+    const code = composePositionCode();
+    if (stockPositionPreview) {
+      stockPositionPreview.hidden = !(catalogKindInput && catalogKindInput.value === 'product');
+    }
+    if (stockPositionCodeEl) {
+      stockPositionCodeEl.textContent = code !== '' ? code : '—';
+    }
+  }
+
   function toggleStockFields() {
     const isProduct = catalogKindInput && catalogKindInput.value === 'product';
     if (stockFieldsWrap) {
@@ -54,6 +87,7 @@
     if (initialStockWrap && idInput) {
       initialStockWrap.hidden = !isProduct || idInput.value !== '';
     }
+    updatePositionPreview();
   }
 
   function formatPriceForInput(value) {
@@ -95,6 +129,11 @@
     if (minStockInput) {
       minStockInput.value = '';
     }
+    if (stockOrtInput) stockOrtInput.value = '';
+    if (stockHalleInput) stockHalleInput.value = '';
+    if (stockRegalInput) stockRegalInput.value = '';
+    if (stockPlatzInput) stockPlatzInput.value = '';
+    updatePositionPreview();
   }
 
   function setWorkMinutes(minutes) {
@@ -169,10 +208,15 @@
       if (minStockInput) {
         minStockInput.value = data.min_stock != null ? String(data.min_stock).replace('.', ',') : '';
       }
+      if (stockOrtInput) stockOrtInput.value = data.stock_ort || '';
+      if (stockHalleInput) stockHalleInput.value = data.stock_halle || '';
+      if (stockRegalInput) stockRegalInput.value = data.stock_regal || '';
+      if (stockPlatzInput) stockPlatzInput.value = data.stock_platz || '';
       if (initialStockInput) {
         initialStockInput.value = '';
       }
       toggleStockFields();
+      updatePositionPreview();
       if (formTitle) {
         formTitle.textContent = kindLabel(kind) + ' bearbeiten';
       }
@@ -195,6 +239,11 @@
   if (catalogKindInput) {
     catalogKindInput.addEventListener('change', toggleStockFields);
   }
+  [stockOrtInput, stockHalleInput, stockRegalInput, stockPlatzInput].forEach(function (input) {
+    if (input) {
+      input.addEventListener('input', updatePositionPreview);
+    }
+  });
   if (cancelBtn) {
     cancelBtn.addEventListener('click', resetForm);
   }

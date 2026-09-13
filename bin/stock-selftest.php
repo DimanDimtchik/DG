@@ -71,4 +71,10 @@ if ($errors !== []) {
     exit(1);
 }
 
-echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty})\n";
+$code = StockPositionCode::compose('WH1', 'H2', 'R3', 'P4');
+if ($code !== 'WH1-H2-R3-P4') {
+    fwrite(STDERR, "FAIL: Positionscode compose → {$code}\n");
+    exit(1);
+}
+
+echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Positionscode-Logik)\n";

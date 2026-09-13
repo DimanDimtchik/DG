@@ -207,6 +207,7 @@ spl_autoload_register(static function (string $class): void {
         'StockMovementRepository' => '/src/Inventory/StockMovementRepository.php',
         'StockMovementService' => '/src/Inventory/StockMovementService.php',
         'StockInventoryService' => '/src/Inventory/StockInventoryService.php',
+        'StockPositionCode' => '/src/Inventory/StockPositionCode.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
         'WebsiteContent' => '/src/Website/WebsiteContent.php',

@@ -2474,11 +2474,12 @@ switch ($path) {
                 $out = fopen('php://output', 'w');
                 if ($out !== false) {
                     fprintf($out, "\xEF\xBB\xBF");
-                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Einheit', 'Bestand', 'Mindestbestand', 'Unter Mindest'], ';');
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Bestand', 'Mindestbestand', 'Unter Mindest'], ';');
                     foreach ($rows as $row) {
                         fputcsv($out, [
                             $row['article_number'],
                             $row['title'],
+                            $row['position_code'],
                             $row['unit'],
                             $row['stock_qty'],
                             $row['min_stock'],

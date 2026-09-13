@@ -5,6 +5,7 @@ Stand: 2026-09-13 · Migration **065**
 ## Umgesetzt
 
 - [x] **Stufe A** — Ein Lager, Bestand pro Artikel (`track_stock`, `stock_qty`, `min_stock`)
+- [x] **Positionscode** Ort-Halle-Regal-Platz (Migration 066)
 - [x] Bewegungslog `dg_stock_movements` (GoBD-Nachvollziehbarkeit)
 - [x] Automatik aus Belegen: Einkauf (+), Verkauf (−), Kundengutschrift (+), Ausgabenminderung (−)
 - [x] Nur gebuchte Einnahmen-Dokumentarten (Rechnung, Abschlag, Schluss) — kein Angebot/Lieferschein
