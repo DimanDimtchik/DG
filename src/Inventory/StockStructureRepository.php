@@ -14,8 +14,10 @@ final class StockStructureRepository
         $rows = Database::pdo()->query(
             'SELECT l.*,
                     (SELECT COUNT(*) FROM dg_stock_halls h WHERE h.location_id = l.id) AS hall_count,
-                    (SELECT COUNT(*) FROM dg_stock_shelves s WHERE s.location_id = l.id AND s.shelf_type = \'shelf\') AS shelf_count,
-                    (SELECT COUNT(*) FROM dg_stock_shelves s WHERE s.location_id = l.id AND s.shelf_type = \'floor_slots\') AS floor_slot_group_count,
+                    (SELECT COUNT(*) FROM dg_stock_shelves s WHERE s.location_id = l.id) AS shelf_count,
+                    (SELECT COUNT(*) FROM dg_stock_places p WHERE p.location_id = l.id AND p.place_kind = \'pallet\') AS pallet_places,
+                    (SELECT COUNT(*) FROM dg_stock_places p WHERE p.location_id = l.id AND p.place_kind = \'carton\') AS carton_places,
+                    (SELECT COUNT(*) FROM dg_stock_places p WHERE p.location_id = l.id AND p.place_kind = \'unit\') AS unit_places,
                     (SELECT COUNT(*) FROM dg_stock_places p WHERE p.location_id = l.id) AS place_count
              FROM dg_stock_locations l
              ORDER BY l.sort_order ASC, l.code ASC'
@@ -111,8 +113,10 @@ final class StockStructureRepository
         }
 
         $sql = 'SELECT h.*, l.code AS location_code, l.name AS location_name,
-                       (SELECT COUNT(*) FROM dg_stock_shelves s WHERE s.hall_id = h.id AND s.shelf_type = \'shelf\') AS shelf_count,
-                       (SELECT COUNT(*) FROM dg_stock_shelves s WHERE s.hall_id = h.id AND s.shelf_type = \'floor_slots\') AS floor_slot_group_count,
+                       (SELECT COUNT(*) FROM dg_stock_shelves s WHERE s.hall_id = h.id) AS shelf_count,
+                       (SELECT COUNT(*) FROM dg_stock_places p WHERE p.hall_id = h.id AND p.place_kind = \'pallet\') AS pallet_places,
+                       (SELECT COUNT(*) FROM dg_stock_places p WHERE p.hall_id = h.id AND p.place_kind = \'carton\') AS carton_places,
+                       (SELECT COUNT(*) FROM dg_stock_places p WHERE p.hall_id = h.id AND p.place_kind = \'unit\') AS unit_places,
                        (SELECT COUNT(*) FROM dg_stock_places p WHERE p.hall_id = h.id) AS place_count
                 FROM dg_stock_halls h
                 INNER JOIN dg_stock_locations l ON l.id = h.location_id';
@@ -277,16 +281,11 @@ final class StockStructureRepository
         $locationId = (int) ($input['location_id'] ?? 0);
         $hallId = (int) ($input['hall_id'] ?? 0);
         $code = StockPositionCode::sanitizeSegment((string) ($input['code'] ?? ''));
-        $shelfType = (string) ($input['shelf_type'] ?? 'shelf');
-        if (!in_array($shelfType, ['shelf', 'floor_slots'], true)) {
-            $shelfType = 'shelf';
-        }
-        $capacityUnits = round((float) str_replace(',', '.', (string) ($input['capacity_units'] ?? 0)), 3);
-        if ($capacityUnits < 0) {
-            $capacityUnits = 0;
-        }
-        $capacityLabel = trim((string) ($input['capacity_label'] ?? ''));
-        $slotCount = max(0, (int) ($input['slot_count'] ?? 0));
+        $slotsPallets = max(0, (int) ($input['slots_pallets'] ?? 0));
+        $slotsCartons = max(0, (int) ($input['slots_cartons'] ?? 0));
+        $slotsUnits = max(0, (int) ($input['slots_units'] ?? 0));
+        $slotCount = $slotsPallets + $slotsCartons + $slotsUnits;
+        $shelfType = $slotsPallets > 0 && $slotsCartons === 0 && $slotsUnits === 0 ? 'floor_slots' : 'shelf';
         $sortOrder = (int) ($input['sort_order'] ?? 0);
         $isActive = !empty($input['is_active']) ? 1 : 0;
 
@@ -304,7 +303,7 @@ final class StockStructureRepository
             throw new InvalidArgumentException('Regalkode ist erforderlich.');
         }
         if ($slotCount < 1) {
-            throw new InvalidArgumentException('Anzahl Stellplätze muss mindestens 1 sein.');
+            throw new InvalidArgumentException('Mindestens ein Stellplatz (Palette, Karton oder Einheit) erforderlich.');
         }
 
         self::assertUniqueShelfCode($hallId, $code, $id);
@@ -315,8 +314,11 @@ final class StockStructureRepository
             'hall_id' => $hallId,
             'code' => $code,
             'shelf_type' => $shelfType,
-            'capacity_units' => $capacityUnits,
-            'capacity_label' => $capacityLabel,
+            'slots_pallets' => $slotsPallets,
+            'slots_cartons' => $slotsCartons,
+            'slots_units' => $slotsUnits,
+            'capacity_units' => 0,
+            'capacity_label' => '',
             'slot_count' => $slotCount,
             'sort_order' => $sortOrder,
             'is_active' => $isActive,
@@ -327,6 +329,7 @@ final class StockStructureRepository
             $pdo->prepare(
                 'UPDATE dg_stock_shelves
                  SET location_id = :location_id, hall_id = :hall_id, code = :code, shelf_type = :shelf_type,
+                     slots_pallets = :slots_pallets, slots_cartons = :slots_cartons, slots_units = :slots_units,
                      capacity_units = :capacity_units, capacity_label = :capacity_label, slot_count = :slot_count,
                      sort_order = :sort_order, is_active = :is_active
                  WHERE id = :id'
@@ -338,9 +341,11 @@ final class StockStructureRepository
 
         $pdo->prepare(
             'INSERT INTO dg_stock_shelves
-             (location_id, hall_id, code, shelf_type, capacity_units, capacity_label, slot_count, sort_order, is_active)
+             (location_id, hall_id, code, shelf_type, slots_pallets, slots_cartons, slots_units,
+              capacity_units, capacity_label, slot_count, sort_order, is_active)
              VALUES
-             (:location_id, :hall_id, :code, :shelf_type, :capacity_units, :capacity_label, :slot_count, :sort_order, :is_active)'
+             (:location_id, :hall_id, :code, :shelf_type, :slots_pallets, :slots_cartons, :slots_units,
+              :capacity_units, :capacity_label, :slot_count, :sort_order, :is_active)'
         )->execute($params);
         $newId = (int) $pdo->lastInsertId();
         self::syncPlacesForShelf($newId);
@@ -511,14 +516,14 @@ final class StockStructureRepository
             if (empty($row['is_active'])) {
                 continue;
             }
-            $typeLabel = ($row['shelf_type'] ?? '') === 'floor_slots' ? 'Stellplätze' : 'Regal';
             $options[] = [
                 'id' => (int) $row['id'],
                 'hall_id' => (int) $row['hall_id'],
                 'location_id' => (int) $row['location_id'],
-                'label' => (string) $row['location_code'] . ' / ' . (string) $row['hall_code'] . ' / ' . (string) $row['code'] . ' (' . $typeLabel . ')',
+                'label' => (string) $row['location_code'] . ' / ' . (string) $row['hall_code'] . ' / ' . (string) $row['code']
+                    . ' (' . (string) ($row['capacity_summary'] ?? 'Regal') . ')',
                 'code' => (string) $row['code'],
-                'shelf_type' => (string) $row['shelf_type'],
+                'shelf_type' => (string) ($row['shelf_type'] ?? 'shelf'),
             ];
         }
 
@@ -584,46 +589,85 @@ final class StockStructureRepository
             return;
         }
 
-        $slotCount = max(0, (int) ($shelf['slot_count'] ?? 0));
         $pdo = Database::pdo();
-        $existing = self::placesForShelf($shelfId);
+        $kinds = [
+            ['kind' => 'pallet', 'count' => max(0, (int) ($shelf['slots_pallets'] ?? 0)), 'prefix' => 'PAL', 'sort_base' => 100],
+            ['kind' => 'carton', 'count' => max(0, (int) ($shelf['slots_cartons'] ?? 0)), 'prefix' => 'KRT', 'sort_base' => 200],
+            ['kind' => 'unit', 'count' => max(0, (int) ($shelf['slots_units'] ?? 0)), 'prefix' => 'EIN', 'sort_base' => 300],
+        ];
+
+        foreach ($kinds as $kindConfig) {
+            self::syncPlacesForShelfKind(
+                $pdo,
+                $shelfId,
+                $shelf,
+                (string) $kindConfig['kind'],
+                (string) $kindConfig['prefix'],
+                (int) $kindConfig['count'],
+                (int) $kindConfig['sort_base'],
+            );
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $shelf
+     */
+    private static function syncPlacesForShelfKind(
+        PDO $pdo,
+        int $shelfId,
+        array $shelf,
+        string $kind,
+        string $prefix,
+        int $targetCount,
+        int $sortBase,
+    ): void {
+        $stmt = $pdo->prepare(
+            'SELECT id, code, sort_order FROM dg_stock_places
+             WHERE shelf_id = :shelf_id AND place_kind = :kind
+             ORDER BY sort_order ASC, code ASC'
+        );
+        $stmt->execute(['shelf_id' => $shelfId, 'kind' => $kind]);
+        $existing = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $existingByCode = [];
         foreach ($existing as $place) {
             $existingByCode[(string) $place['code']] = $place;
         }
 
-        for ($i = 1; $i <= $slotCount; ++$i) {
-            $code = 'P' . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+        for ($i = 1; $i <= $targetCount; ++$i) {
+            $code = $prefix . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
             if (isset($existingByCode[$code])) {
                 continue;
             }
             $pdo->prepare(
-                'INSERT INTO dg_stock_places (shelf_id, location_id, hall_id, code, place_mode, sort_order, is_active)
-                 VALUES (:shelf_id, :location_id, :hall_id, :code, \'flexible\', :sort_order, 1)'
+                'INSERT INTO dg_stock_places
+                 (shelf_id, location_id, hall_id, code, place_kind, place_mode, sort_order, is_active)
+                 VALUES (:shelf_id, :location_id, :hall_id, :code, :place_kind, \'flexible\', :sort_order, 1)'
             )->execute([
                 'shelf_id' => $shelfId,
                 'location_id' => (int) $shelf['location_id'],
                 'hall_id' => (int) $shelf['hall_id'],
                 'code' => $code,
-                'sort_order' => $i,
+                'place_kind' => $kind,
+                'sort_order' => $sortBase + $i,
             ]);
         }
 
-        if ($slotCount < count($existing)) {
-            $stmt = $pdo->prepare(
-                'SELECT id FROM dg_stock_places
-                 WHERE shelf_id = :shelf_id AND sort_order > :slot_count'
-            );
-            $stmt->execute(['shelf_id' => $shelfId, 'slot_count' => $slotCount]);
-            $removeIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
-            foreach ($removeIds as $removeId) {
-                $check = $pdo->prepare('SELECT COUNT(*) FROM dg_calendar_articles WHERE stock_place_id = :id');
-                $check->execute(['id' => $removeId]);
-                if ((int) $check->fetchColumn() > 0) {
-                    continue;
-                }
-                $pdo->prepare('DELETE FROM dg_stock_places WHERE id = :id')->execute(['id' => $removeId]);
+        if (count($existing) <= $targetCount) {
+            return;
+        }
+
+        $removeCandidates = array_slice($existing, $targetCount);
+        foreach ($removeCandidates as $place) {
+            $removeId = (int) ($place['id'] ?? 0);
+            if ($removeId < 1) {
+                continue;
             }
+            $check = $pdo->prepare('SELECT COUNT(*) FROM dg_calendar_articles WHERE stock_place_id = :id');
+            $check->execute(['id' => $removeId]);
+            if ((int) $check->fetchColumn() > 0) {
+                continue;
+            }
+            $pdo->prepare('DELETE FROM dg_stock_places WHERE id = :id')->execute(['id' => $removeId]);
         }
     }
 
@@ -648,6 +692,11 @@ final class StockStructureRepository
         $row['display_label'] = trim((string) ($row['name'] ?? '')) !== ''
             ? (string) $row['name']
             : (string) $row['code'];
+        $row['slots_summary'] = self::formatSlotCountsSummary(
+            (int) ($row['pallet_places'] ?? 0),
+            (int) ($row['carton_places'] ?? 0),
+            (int) ($row['unit_places'] ?? 0),
+        );
 
         return $row;
     }
@@ -659,9 +708,12 @@ final class StockStructureRepository
     private static function enrichHallRow(array $row): array
     {
         $row['location_label'] = (string) ($row['location_code'] ?? '');
-        $row['summary'] = (int) ($row['shelf_count'] ?? 0) . ' Regale · '
-            . (int) ($row['floor_slot_group_count'] ?? 0) . ' Stellplatz-Gruppen · '
-            . (int) ($row['place_count'] ?? 0) . ' Plätze';
+        $row['slots_summary'] = self::formatSlotCountsSummary(
+            (int) ($row['pallet_places'] ?? 0),
+            (int) ($row['carton_places'] ?? 0),
+            (int) ($row['unit_places'] ?? 0),
+        );
+        $row['summary'] = (int) ($row['shelf_count'] ?? 0) . ' Regale · ' . $row['slots_summary'];
 
         return $row;
     }
@@ -672,7 +724,22 @@ final class StockStructureRepository
      */
     private static function enrichShelfRow(array $row): array
     {
-        $row['type_label'] = ($row['shelf_type'] ?? '') === 'floor_slots' ? 'Stellplätze' : 'Regal';
+        $pallets = max(0, (int) ($row['slots_pallets'] ?? 0));
+        $cartons = max(0, (int) ($row['slots_cartons'] ?? 0));
+        $units = max(0, (int) ($row['slots_units'] ?? 0));
+        if ($pallets + $cartons + $units === 0) {
+            $legacySlots = max(0, (int) ($row['slot_count'] ?? 0));
+            if (($row['shelf_type'] ?? '') === 'floor_slots' && $legacySlots > 0) {
+                $pallets = $legacySlots;
+            } elseif ($legacySlots > 0) {
+                $units = $legacySlots;
+            }
+        }
+        $row['slots_pallets'] = $pallets;
+        $row['slots_cartons'] = $cartons;
+        $row['slots_units'] = $units;
+        $row['capacity_summary'] = self::formatSlotCountsSummary($pallets, $cartons, $units);
+        $row['type_label'] = 'Regal';
         $row['position_prefix'] = StockPositionCode::compose(
             (string) ($row['location_code'] ?? ''),
             (string) ($row['hall_code'] ?? ''),
@@ -699,9 +766,35 @@ final class StockStructureRepository
             (string) ($row['code'] ?? ''),
         );
         $row['mode_label'] = ($row['place_mode'] ?? '') === 'fixed' ? 'fest' : 'flexibel';
+        $row['kind_label'] = self::placeKindLabel((string) ($row['place_kind'] ?? 'unit'));
         $row['is_occupied'] = StockPlaceService::isPlaceOccupied((int) ($row['id'] ?? 0));
 
         return $row;
+    }
+
+    private static function formatSlotCountsSummary(int $pallets, int $cartons, int $units): string
+    {
+        $parts = [];
+        if ($pallets > 0) {
+            $parts[] = $pallets . ' Pal.';
+        }
+        if ($cartons > 0) {
+            $parts[] = $cartons . ' Kart.';
+        }
+        if ($units > 0) {
+            $parts[] = $units . ' Einh.';
+        }
+
+        return $parts !== [] ? implode(' · ', $parts) : '—';
+    }
+
+    private static function placeKindLabel(string $kind): string
+    {
+        return match ($kind) {
+            'pallet' => 'Palette',
+            'carton' => 'Karton',
+            default => 'Einheit',
+        };
     }
 
     private static function assertUniqueLocationCode(string $code, int $excludeId): void

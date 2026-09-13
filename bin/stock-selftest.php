@@ -100,13 +100,14 @@ if ($hasStructure) {
         'location_id' => $locId,
         'hall_id' => $hallId,
         'code' => 'R1',
-        'shelf_type' => 'shelf',
-        'slot_count' => 2,
+        'slots_pallets' => 1,
+        'slots_cartons' => 1,
+        'slots_units' => 2,
         'is_active' => 1,
     ]);
     $places = StockStructureRepository::placesForShelf($shelfId);
-    if (count($places) < 2) {
-        $errors[] = 'Stellplätze wurden nicht automatisch angelegt.';
+    if (count($places) < 4) {
+        $errors[] = 'Stellplätze wurden nicht automatisch angelegt (Pal+Kart+Einh).';
     }
     $free = StockPlaceService::suggestFreePlaces($hallId, null, 5);
     if ($free === []) {

@@ -128,10 +128,10 @@
       }
       return true;
     }).map(function (s) {
-      const typeLabel = s.shelf_type === 'floor_slots' ? 'Stellplätze' : 'Regal';
+      const cap = s.capacity_summary || 'Regal';
       return {
         id: s.id,
-        label: (s.location_code || '') + ' / ' + (s.hall_code || '') + ' / ' + (s.code || '') + ' (' + typeLabel + ')',
+        label: (s.location_code || '') + ' / ' + (s.hall_code || '') + ' / ' + (s.code || '') + ' (' + cap + ')',
       };
     });
     fillSelect(stockShelfSelect, shelves, shelfId);

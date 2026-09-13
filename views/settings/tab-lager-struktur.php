@@ -111,8 +111,8 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                 <th>Bezeichnung / Funktion</th>
                 <th>Hallen</th>
                 <th>Regale</th>
-                <th>Stellplatz-Gr.</th>
-                <th>Plätze</th>
+                <th>Stellplätze</th>
+                <th>Gesamt</th>
                 <th></th>
               </tr>
             </thead>
@@ -128,7 +128,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                   </td>
                   <td><?= (int) ($loc['hall_count'] ?? 0) ?></td>
                   <td><?= (int) ($loc['shelf_count'] ?? 0) ?></td>
-                  <td><?= (int) ($loc['floor_slot_group_count'] ?? 0) ?></td>
+                  <td><?= View::escape((string) ($loc['slots_summary'] ?? '—')) ?></td>
                   <td><?= (int) ($loc['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
                     <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&lager_tab=orte&edit=' . (int) $loc['id']) ?>">Bearbeiten</a>
@@ -235,8 +235,8 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                 <th>Hallenkode</th>
                 <th>Nutzung</th>
                 <th>Regale</th>
-                <th>Stellplatz-Gr.</th>
-                <th>Plätze</th>
+                <th>Stellplätze</th>
+                <th>Gesamt</th>
                 <th></th>
               </tr>
             </thead>
@@ -247,7 +247,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                   <td><strong><?= View::escape((string) $hall['code']) ?></strong></td>
                   <td><?= View::escape((string) ($hall['usage_text'] ?? '—')) ?></td>
                   <td><?= (int) ($hall['shelf_count'] ?? 0) ?></td>
-                  <td><?= (int) ($hall['floor_slot_group_count'] ?? 0) ?></td>
+                  <td><?= View::escape((string) ($hall['slots_summary'] ?? '—')) ?></td>
                   <td><?= (int) ($hall['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
                     <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&lager_tab=hallen&edit=' . (int) $hall['id']) ?>">Bearbeiten</a>
@@ -295,8 +295,8 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
 
     <details class="dg-notify-section"<?= $editShelf ? ' open' : '' ?>>
       <summary class="dg-notify-section__summary">
-        <strong><?= $editShelf ? 'Regal bearbeiten' : 'Regal / Stellplätze anlegen' ?></strong>
-        <span class="dg-muted">Regalkode, Kapazität, Anzahl Plätze</span>
+        <strong><?= $editShelf ? 'Regal bearbeiten' : 'Regal anlegen' ?></strong>
+        <span class="dg-muted">Regalkode und Stellplätze nach Paletten, Kartons, Einheiten</span>
       </summary>
       <div class="dg-notify-section__body">
         <form class="dg-form" method="post" action="<?= View::escape($tabBase) ?>">
@@ -330,25 +330,21 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <input name="code" required maxlength="32" value="<?= View::escape((string) ($editShelf['code'] ?? '')) ?>" placeholder="z. B. R03 oder PAL-A"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
             <label class="dg-field">
-              <span>Art *</span>
-              <select name="shelf_type" required<?= !$dbConnected ? ' disabled' : '' ?>>
-                <option value="shelf"<?= ($editShelf['shelf_type'] ?? 'shelf') === 'shelf' ? ' selected' : '' ?>>Regal</option>
-                <option value="floor_slots"<?= ($editShelf['shelf_type'] ?? '') === 'floor_slots' ? ' selected' : '' ?>>Stellplätze (freie Palettenplätze)</option>
-              </select>
+              <span>Stellplätze Paletten</span>
+              <input type="number" name="slots_pallets" min="0" value="<?= (int) ($editShelf['slots_pallets'] ?? 0) ?>" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <small class="dg-field-hint">Freie Palettenplätze als Regal — Codes PAL01, PAL02 …</small>
             </label>
             <label class="dg-field">
-              <span>Kapazität (Paletten/Kartons/Einheiten)</span>
-              <input name="capacity_units" inputmode="decimal" value="<?= View::escape((string) ($editShelf['capacity_units'] ?? '0')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <span>Stellplätze Kartons</span>
+              <input type="number" name="slots_cartons" min="0" value="<?= (int) ($editShelf['slots_cartons'] ?? 0) ?>" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <small class="dg-field-hint">Codes KRT01, KRT02 …</small>
             </label>
             <label class="dg-field">
-              <span>Einheit (optional)</span>
-              <input name="capacity_label" maxlength="64" value="<?= View::escape((string) ($editShelf['capacity_label'] ?? '')) ?>" placeholder="Paletten, Kartons …"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <span>Stellplätze Einheiten</span>
+              <input type="number" name="slots_units" min="0" value="<?= (int) ($editShelf['slots_units'] ?? 0) ?>" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <small class="dg-field-hint">Codes EIN01, EIN02 …</small>
             </label>
-            <label class="dg-field">
-              <span>Anzahl Stellplätze *</span>
-              <input type="number" name="slot_count" min="1" required value="<?= (int) ($editShelf['slot_count'] ?? 1) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
-              <small class="dg-field-hint">Pro Platz wird automatisch P01, P02 … angelegt.</small>
-            </label>
+            <p class="dg-field dg-field--wide dg-field-hint">Mindestens eine Art mit Anzahl &gt; 0. Ein Regal kann Paletten-, Karton- und Einheitsplätze gleichzeitig haben.</p>
             <label class="dg-field">
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editShelf['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
@@ -377,6 +373,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                 <thead>
                   <tr>
                     <th>Platz</th>
+                    <th>Art</th>
                     <th>Positionscode</th>
                     <th>Modus</th>
                     <th>Fester Artikel (ID)</th>
@@ -390,6 +387,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                         <?= View::escape((string) $place['code']) ?>
                         <input type="hidden" name="places[<?= (int) $pi ?>][id]" value="<?= (int) $place['id'] ?>">
                       </td>
+                      <td><?= View::escape((string) ($place['kind_label'] ?? 'Einheit')) ?></td>
                       <td><?= View::escape((string) ($place['position_code'] ?? '')) ?></td>
                       <td>
                         <select name="places[<?= (int) $pi ?>][place_mode]"<?= !$dbConnected ? ' disabled' : '' ?>>
@@ -415,7 +413,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     </details>
 
     <section class="dg-panel">
-      <h3 class="dg-subsection-title">Regale &amp; Stellplätze</h3>
+      <h3 class="dg-subsection-title">Regale</h3>
       <?php
         $shelfRows = $stockShelves;
         if ($filterHallId > 0) {
@@ -425,7 +423,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
         }
       ?>
       <?php if ($shelfRows === []) : ?>
-        <p class="dg-muted">Noch keine Regale oder Stellplatz-Gruppen angelegt.</p>
+        <p class="dg-muted">Noch keine Regale angelegt.</p>
       <?php else : ?>
         <div class="dg-table-wrap">
           <table class="dg-table dg-table--compact">
@@ -433,9 +431,8 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <tr>
                 <th>Ort / Halle</th>
                 <th>Code</th>
-                <th>Art</th>
-                <th>Kapazität</th>
-                <th>Plätze</th>
+                <th>Stellplätze</th>
+                <th>Gesamt</th>
                 <th></th>
               </tr>
             </thead>
@@ -444,13 +441,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
                 <tr>
                   <td><?= View::escape((string) ($shelf['location_code'] ?? '') . ' / ' . (string) ($shelf['hall_code'] ?? '')) ?></td>
                   <td><strong><?= View::escape((string) $shelf['code']) ?></strong></td>
-                  <td><?= View::escape((string) ($shelf['type_label'] ?? 'Regal')) ?></td>
-                  <td><?php
-                    $cap = (float) ($shelf['capacity_units'] ?? 0);
-                    echo $cap > 0
-                        ? View::escape(rtrim(rtrim(number_format($cap, 3, ',', '.'), '0'), ',') . ' ' . (string) ($shelf['capacity_label'] ?? ''))
-                        : '—';
-                  ?></td>
+                  <td><?= View::escape((string) ($shelf['capacity_summary'] ?? '—')) ?></td>
                   <td><?= (int) ($shelf['place_count'] ?? 0) ?></td>
                   <td class="dg-table__actions">
                     <a class="dg-button dg-button--small" href="<?= View::escape($tabBase . '&lager_tab=regale&edit=' . (int) $shelf['id']) ?>">Bearbeiten</a>
