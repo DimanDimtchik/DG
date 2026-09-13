@@ -50,7 +50,7 @@ final class KichelAssistant
                 'label' => 'Skonto-Einstellungen öffnen',
                 'href' => '/app?page=einstellungen&tab=payment-terms',
             ];
-        } elseif ($topicMatches !== []) {
+        } elseif ($topicMatches !== [] && ((int) ($topicMatches[0]['score'] ?? 0) >= 4 || $navigation === [])) {
             $match = $topicMatches[0];
             $topic = $match['topic'];
             $score = (int) ($match['score'] ?? 0);

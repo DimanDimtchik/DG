@@ -146,6 +146,15 @@ return [
         'tags' => ['personal'],
     ],
     [
+        'id' => 'logo-bilder',
+        'keywords' => ['logo', 'firmenlogo', 'crm-logo', 'bilder', 'medien', 'logodatei'],
+        'title' => 'Logo / Bilder',
+        'answer' => 'Das Firmenlogo liegt in der Medienbibliothek: Bilder → gewünschtes Bild öffnen → „Als CRM-Logo in Kopfzeile“ aktivieren. Für E-Mails dasselbe Logo unter Einstellungen → Benachrichtigungen.',
+        'href' => '/app?page=bilder',
+        'action_label' => 'Bilder öffnen',
+        'tags' => ['darstellung', 'medien'],
+    ],
+    [
         'id' => 'social-media',
         'keywords' => ['facebook', 'instagram', 'linkedin', 'xing', 'tiktok', 'youtube', 'sozial', 'social', 'sozialmedia', 'sozialen', 'netzwerk', 'verlinken'],
         'title' => 'Soziale Medien verlinken',

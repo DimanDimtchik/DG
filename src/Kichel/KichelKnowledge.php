@@ -108,21 +108,50 @@ final class KichelKnowledge
         $hints = [];
         $seen = [];
 
+        $descriptions = MenuRegistry::moduleDescriptions();
+
         foreach (MenuRegistry::sidebarItems($user) as $item) {
-            self::pushNavHint($hints, $seen, $item['label'], $item['href'], $tokens, 'module');
+            $slug = (string) ($item['slug'] ?? '');
+            self::pushNavHint(
+                $hints,
+                $seen,
+                $item['label'],
+                $item['href'],
+                $tokens,
+                'module',
+                $descriptions[$slug] ?? null
+            );
         }
 
         $buchhaltung = MenuRegistry::buchhaltungSection($user);
         if ($buchhaltung !== null) {
             foreach ($buchhaltung['items'] as $item) {
-                self::pushNavHint($hints, $seen, $item['label'], $item['href'], $tokens, 'buchhaltung');
+                $slug = (string) ($item['slug'] ?? '');
+                self::pushNavHint(
+                    $hints,
+                    $seen,
+                    $item['label'],
+                    $item['href'],
+                    $tokens,
+                    'buchhaltung',
+                    $descriptions[$slug] ?? null
+                );
             }
         }
 
         $website = MenuRegistry::websiteSection($user);
         if ($website !== null) {
             foreach ($website['items'] as $item) {
-                self::pushNavHint($hints, $seen, $item['label'], $item['href'], $tokens, 'website');
+                $slug = (string) ($item['slug'] ?? '');
+                self::pushNavHint(
+                    $hints,
+                    $seen,
+                    $item['label'],
+                    $item['href'],
+                    $tokens,
+                    'website',
+                    $descriptions[$slug] ?? null
+                );
             }
         }
 
@@ -130,7 +159,8 @@ final class KichelKnowledge
             foreach (SettingsRegistry::allTabs() as $tabId => $tab) {
                 $label = (string) ($tab['label'] ?? '');
                 $href = SettingsRegistry::tabUrl($tabId);
-                self::pushNavHint($hints, $seen, $label, $href, $tokens, 'settings');
+                $lead = (string) ($tab['lead'] ?? '');
+                self::pushNavHint($hints, $seen, $label, $href, $tokens, 'settings', $lead !== '' ? $lead : null);
             }
         }
 
@@ -163,16 +193,28 @@ final class KichelKnowledge
      * @param array<string, true> $seen
      * @param list<string> $tokens
      */
-    private static function pushNavHint(array &$hints, array &$seen, string $label, string $href, array $tokens, string $kind): void
-    {
+    private static function pushNavHint(
+        array &$hints,
+        array &$seen,
+        string $label,
+        string $href,
+        array $tokens,
+        string $kind,
+        ?string $description = null
+    ): void {
         if ($label === '' || isset($seen[$href])) {
             return;
         }
 
         $labelLower = mb_strtolower($label, 'UTF-8');
+        $descriptionLower = $description !== null ? mb_strtolower($description, 'UTF-8') : '';
         $match = false;
         foreach ($tokens as $token) {
             if (self::keywordContainsToken($labelLower, $token)) {
+                $match = true;
+                break;
+            }
+            if ($descriptionLower !== '' && self::keywordContainsToken($descriptionLower, $token)) {
                 $match = true;
                 break;
             }
