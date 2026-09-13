@@ -49,7 +49,8 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Artikel mit Lagerführung</h2>
     <?php if ($stockItems === []) : ?>
-      <p class="dg-muted">Noch keine Artikel mit Lagerführung. Unter <a href="/app?page=artikel-leistungen&amp;kind=product">Artikel &amp; Leistungen</a> bei Artikeln „Lager führen“ aktivieren.</p>
+      <p class="dg-muted">Noch keine Artikel mit Lagerführung.</p>
+      <p><a class="dg-button dg-button--primary" href="/app?page=artikel-leistungen&amp;kind=product&amp;focus=stock">Artikel anlegen — Lager führen</a></p>
     <?php else : ?>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">

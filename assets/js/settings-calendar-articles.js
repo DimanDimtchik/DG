@@ -201,4 +201,22 @@
 
   toggleCustomMinutes();
   toggleStockFields();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('focus') === 'stock') {
+    if (catalogKindInput) {
+      catalogKindInput.value = 'product';
+    }
+    toggleStockFields();
+    if (formTitle) {
+      formTitle.textContent = 'Artikel mit Lagerführung anlegen';
+    }
+    if (formPanel) {
+      formPanel.open = true;
+      formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (trackStockInput) {
+      trackStockInput.checked = true;
+    }
+  }
 })();

@@ -218,7 +218,7 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
             <span>Mindestbestand</span>
             <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
-          <p class="dg-field-hint">Bestandsänderungen aus Einkaufs- und Verkaufsbelegen erfolgen automatisch unter <a href="/app?page=lager">Lager</a>.</p>
+          <p class="dg-field-hint">„Lager führen“ gilt nur für <strong>Artikel</strong> (nicht Leistungen). Bestandsänderungen aus Belegen siehst du unter <a href="/app?page=lager">Lager</a>.</p>
         </fieldset>
       </div>
     </div>

@@ -34,7 +34,7 @@ final class MenuRegistry
         }
         if (DepartmentAccess::userCanManageArticleCatalog($user) && $canEdit) {
             $items[] = ['slug' => 'artikel-leistungen', 'label' => 'Artikel & Leistungen', 'icon' => 'catalog'];
-            $items[] = ['slug' => 'lager', 'label' => 'Lager', 'icon' => 'package'];
+            $items[] = ['slug' => 'lager', 'label' => 'Lager', 'icon' => 'warehouse'];
         }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
@@ -466,7 +466,7 @@ final class MenuRegistry
             return self::canAccessWebsite($user);
         }
 
-        if ($slug === 'artikel-leistungen') {
+        if ($slug === 'artikel-leistungen' || $slug === 'lager') {
             return DepartmentAccess::userCanManageArticleCatalog($user) && RoleResolver::canEdit($user);
         }
 

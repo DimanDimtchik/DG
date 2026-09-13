@@ -3963,6 +3963,13 @@ switch ($path) {
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
+        $catalogFilter = $catalogFilter ?? 'all';
+        $lagerView = $lagerView ?? 'overview';
+        $stockItems = $stockItems ?? [];
+        $stockMovements = $stockMovements ?? [];
+        $stockInventories = $stockInventories ?? [];
+        $activeInventory = $activeInventory ?? null;
+        $activeInventoryLines = $activeInventoryLines ?? [];
         $websiteFormList = $websiteFormList ?? [];
         $websiteFormId = $websiteFormId ?? null;
         $websiteForm = $websiteForm ?? null;
@@ -4038,6 +4045,13 @@ switch ($path) {
             'calendarAppearanceConfig',
             'calendarEmbedConfig',
             'calendarArticles',
+            'catalogFilter',
+            'lagerView',
+            'stockItems',
+            'stockMovements',
+            'stockInventories',
+            'activeInventory',
+            'activeInventoryLines',
             'companyConfig',
             'companyExtended',
             'taxAdvisorConfig',
