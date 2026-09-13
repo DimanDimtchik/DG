@@ -6,8 +6,11 @@ declare(strict_types=1);
  *
  *   php bin/kichel-protocol-list.php [limit] [offset]
  */
-define('DG_ROOT', dirname(__DIR__));
-require DG_ROOT . '/bootstrap.php';
+if (!defined('DG_ROOT')) {
+    define('DG_ROOT', dirname(__DIR__));
+}
+require_once DG_ROOT . '/src/autoload.php';
+MigrationRunner::runPending();
 
 $limit = isset($argv[1]) ? max(1, min(500, (int) $argv[1])) : 50;
 $offset = isset($argv[2]) ? max(0, (int) $argv[2]) : 0;

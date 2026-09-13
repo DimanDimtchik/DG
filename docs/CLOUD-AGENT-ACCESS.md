@@ -137,6 +137,14 @@ bash bin/sync-crm-from-master.sh      # Master → ganz-soft.de + kontur-cosmeti
 
 Erst Master per `scp`/`deploy.bat` auf **dg.ganz-om.de** hochladen, dann `sync-crm-from-master.sh`.
 
+**Kichel-Protokoll (Cloud-Agent):** Wenn der Nutzer Kichel-Antworten besprechen will:
+
+```bash
+bash bin/cloud-agent-kichel-protocol.sh 30
+```
+
+JSON mit Frage/Antwort von **ganz-soft.de** (Live Account-Root). Details: [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md).
+
 **PHP 8.5:** Erst alle Domains im KAS auf 8.5 stellen, dann testen — [`docs/PHP85-TEST-HANDOFF.md`](PHP85-TEST-HANDOFF.md).
 
 ---
