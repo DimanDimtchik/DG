@@ -1751,6 +1751,30 @@ switch ($path) {
             }
         }
 
+        if (
+            $page === 'website-seiten'
+            && $_SERVER['REQUEST_METHOD'] === 'GET'
+            && isset($_GET['legal_ensure'])
+            && Database::isConfigured()
+            && MenuRegistry::canAccess($user, 'website-seiten')
+        ) {
+            $legalSlug = preg_replace('/[^a-z0-9-]/', '', strtolower(trim((string) $_GET['legal_ensure']))) ?? '';
+            if ($legalSlug !== '' && in_array($legalSlug, LegalPageGenerator::legalSlugs(), true)) {
+                try {
+                    $legalPageId = LegalPageGenerator::ensurePage($legalSlug, $user->id);
+                    if ($legalPageId !== null && $legalPageId > 0) {
+                        Flash::set('success', 'Pflichtseite angelegt — bitte Inhalt prüfen und anpassen.');
+                        header('Location: /app?page=website-seite-form&action=edit&id=' . $legalPageId, true, 302);
+                        exit;
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=website-seiten', true, 302);
+            exit;
+        }
+
         if ($page === 'website-seiten' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_bootstrap_defaults'])) {
             $guardWebsitePost();
             try {

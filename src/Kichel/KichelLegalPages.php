@@ -38,7 +38,7 @@ final class KichelLegalPages
                 'slug' => $slug,
                 'view_label' => 'Ansehen',
                 'view_href' => $viewHref,
-                'edit_label' => 'Bearbeiten',
+                'edit_label' => self::editLabelForSlug($slug),
                 'edit_href' => self::editHrefForSlug($slug),
             ];
         }
@@ -147,6 +147,18 @@ final class KichelLegalPages
             }
         }
 
-        return '/app?page=website-seiten';
+        return '/app?page=website-seiten&legal_ensure=' . rawurlencode($slug);
+    }
+
+    public static function editLabelForSlug(string $slug): string
+    {
+        if (Database::isConfigured() && class_exists('WebsitePageRepository')) {
+            $page = WebsitePageRepository::findBySlugAnyStatus($slug);
+            if ($page !== null && (int) ($page['id'] ?? 0) > 0) {
+                return 'Bearbeiten';
+            }
+        }
+
+        return 'Anlegen';
     }
 }

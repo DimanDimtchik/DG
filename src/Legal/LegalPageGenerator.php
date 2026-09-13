@@ -417,6 +417,54 @@ final class LegalPageGenerator
         return $html;
     }
 
+    /** @return array<string, array{title: string, content: string}> */
+    public static function legalDefinitions(): array
+    {
+        return [
+            'impressum' => ['title' => 'Impressum', 'content' => self::impressum()],
+            'datenschutz' => ['title' => 'Datenschutzerklärung', 'content' => self::datenschutz()],
+            'agb' => ['title' => 'Allgemeine Geschäftsbedingungen', 'content' => self::agb()],
+            'widerruf' => ['title' => 'Widerrufsbelehrung', 'content' => self::widerruf()],
+        ];
+    }
+
+    /** @return list<string> */
+    public static function legalSlugs(): array
+    {
+        return array_keys(self::legalDefinitions());
+    }
+
+    /**
+     * Legt eine einzelne Pflichtseite an, wenn sie noch fehlt.
+     */
+    public static function ensurePage(string $slug, ?int $userId = null): ?int
+    {
+        $slug = trim(strtolower($slug));
+        $definitions = self::legalDefinitions();
+        if (!isset($definitions[$slug])) {
+            return null;
+        }
+
+        $existing = WebsitePageRepository::findBySlugAnyStatus($slug);
+        if ($existing !== null) {
+            return (int) ($existing['id'] ?? 0) ?: null;
+        }
+
+        $def = $definitions[$slug];
+        $saved = WebsitePageRepository::upsertHtmlPage(
+            $slug,
+            $def['title'],
+            $def['content'],
+            $userId,
+            false
+        );
+        if (class_exists('WebsiteLegalVariantRepository')) {
+            WebsiteLegalVariantRepository::ensureDefaultsForPage($slug);
+        }
+
+        return (int) ($saved['id'] ?? 0) ?: null;
+    }
+
     /**
      * Generates all legal pages and saves them as published website pages.
      *
@@ -424,26 +472,21 @@ final class LegalPageGenerator
      */
     public static function generateAndSave(?int $userId = null, bool $overwrite = true): array
     {
-        $definitions = [
-            ['slug' => 'impressum', 'title' => 'Impressum', 'content' => self::impressum()],
-            ['slug' => 'datenschutz', 'title' => 'Datenschutzerklärung', 'content' => self::datenschutz()],
-            ['slug' => 'agb', 'title' => 'Allgemeine Geschäftsbedingungen', 'content' => self::agb()],
-            ['slug' => 'widerruf', 'title' => 'Widerrufsbelehrung', 'content' => self::widerruf()],
-        ];
-
         $saved = [];
-        foreach ($definitions as $page) {
+        foreach (self::legalDefinitions() as $slug => $def) {
             $saved[] = WebsitePageRepository::upsertHtmlPage(
-                $page['slug'],
-                $page['title'],
-                $page['content'],
+                $slug,
+                $def['title'],
+                $def['content'],
                 $userId,
                 $overwrite
             );
-            WebsiteLegalVariantRepository::ensureDefaultsForPage($page['slug']);
+            if (class_exists('WebsiteLegalVariantRepository')) {
+                WebsiteLegalVariantRepository::ensureDefaultsForPage($slug);
+            }
         }
 
-        if (LegalProductSettings::multiProductEnabled()) {
+        if (class_exists('LegalProductSettings') && LegalProductSettings::multiProductEnabled()) {
             WebsiteLegalVariantRepository::ensureVariantsForAllProducts();
         }
 
