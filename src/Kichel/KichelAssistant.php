@@ -24,16 +24,12 @@ final class KichelAssistant
             $tokens = KichelKnowledge::tokenize(preg_replace('/\s+/', ' ', $query) ?? $query);
         }
 
-        $technical = self::isTechnicalQuery($query, $tokens);
         $moneyAnswer = KichelMoneyLogic::tryAnswer($query);
         $moneyFacts = $moneyAnswer['facts'] ?? [];
         $legalAnswer = KichelLegalPages::tryAnswer($query, $tokens);
 
         $topicMatches = KichelKnowledge::matchTopics($tokens);
         $navigation = KichelKnowledge::navigationHints($user, $tokens);
-        $codeHits = $technical ? KichelCodeSearch::search($tokens) : [];
-        $schemaHits = $technical ? KichelSchemaCatalog::searchSchema($tokens) : [];
-        $companyFields = $technical ? KichelSchemaCatalog::matchCompanyFields($tokens) : [];
 
         $answerParts = [];
         $actionLinks = [];
@@ -81,44 +77,11 @@ final class KichelAssistant
             $answerParts[] = 'Dazu habe ich nichts Passendes gefunden. Probiere ein Stichwort wie „USt-ID“, „Skonto“ oder „Pflichtseiten“.';
         }
 
-        if ($technical && $companyFields !== []) {
-            $lines = [];
-            foreach ($companyFields as $field) {
-                $lines[] = ucfirst($field['label']) . ': ' . $field['value'];
-            }
-            $answerParts[] = 'Aus deinen Firmendaten: ' . implode(' · ', $lines);
-        }
-
-        if ($technical && $schemaHits !== []) {
-            $tableLines = [];
-            foreach (array_slice($schemaHits, 0, 3) as $hit) {
-                $cols = implode(', ', array_slice($hit['columns'], 0, 6));
-                $count = $hit['row_count'] ?? null;
-                $suffix = $count !== null ? ' (' . number_format($count, 0, ',', '.') . ' Datensätze)' : '';
-                $tableLines[] = $hit['table'] . $suffix . ($cols !== '' ? ' — Spalten: ' . $cols : '');
-            }
-            $answerParts[] = 'Datenbank-Schema: ' . implode(' | ', $tableLines);
-        }
-
-        if ($technical && $codeHits !== []) {
-            $answerParts[] = 'Im Quellcode habe ich passende Stellen gefunden — siehe unten.';
-        }
-
         $response = [
-            'presentation' => $technical ? 'technical' : 'simple',
+            'presentation' => 'simple',
             'answer' => trim(implode("\n\n", array_filter($answerParts))),
             'follow_up' => self::FOLLOW_UP,
             'action_links' => $actionLinks,
-            'topics' => [],
-            'navigation' => $technical ? $navigation : [],
-            'code' => $technical ? array_map(static fn (array $hit): array => [
-                'path' => $hit['path'],
-                'line' => $hit['line'],
-                'snippet' => $hit['snippet'],
-            ], $codeHits) : [],
-            'database' => $technical ? $schemaHits : [],
-            'company' => $technical ? $companyFields : [],
-            'hints' => [],
         ];
 
         if ($moneyAnswer !== null) {
@@ -131,27 +94,9 @@ final class KichelAssistant
         if ($legalAnswer !== null) {
             $response['kind'] = 'legal_pages';
             $response['page_links'] = $legalAnswer['page_links'];
-            $response['overview_links'] = $legalAnswer['overview_links'];
         }
 
         return $response;
-    }
-
-    /**
-     * @param list<string> $tokens
-     */
-    private static function isTechnicalQuery(string $query, array $tokens): bool
-    {
-        if (preg_match('/\b(dg_[a-z0-9_]+|src\/|views\/|migration|schema|repository|autoload|\.php|sql)\b/ui', $query)) {
-            return true;
-        }
-        foreach ($tokens as $token) {
-            if (str_starts_with($token, 'dg_') || str_contains($token, '_note')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static function plainLanguage(string $text): string
@@ -172,12 +117,6 @@ final class KichelAssistant
             'answer' => $message,
             'follow_up' => self::FOLLOW_UP,
             'action_links' => [],
-            'topics' => [],
-            'navigation' => [],
-            'code' => [],
-            'database' => [],
-            'company' => [],
-            'hints' => [],
         ];
     }
 }

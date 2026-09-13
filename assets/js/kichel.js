@@ -6,7 +6,7 @@
     return;
   }
 
-  var STORAGE_MESSAGES = 'dgKichelMessagesV2';
+  var STORAGE_MESSAGES = 'dgKichelMessagesV3';
   var STORAGE_OPEN = 'dgKichelPanelOpen';
   var STORAGE_CLOSE_NEXT = 'dgKichelCloseNext';
 
@@ -187,49 +187,6 @@
     appendHtmlSection('dg-kichel-followup', html);
   }
 
-  function renderTechnicalExtras(data) {
-    function renderLinks(title, items, labelKey, hrefKey) {
-      if (!items || !items.length) {
-        return;
-      }
-      var html = '<h4>' + title + '</h4><ul class="dg-kichel-links">';
-      items.forEach(function (item) {
-        var label = item[labelKey];
-        var href = item[hrefKey];
-        if (!href) {
-          html += '<li>' + label + '</li>';
-        } else {
-          html += '<li><a href="' + href + '">' + label + '</a></li>';
-        }
-      });
-      html += '</ul>';
-      appendHtmlSection('dg-kichel-section', html);
-    }
-
-    renderLinks('Navigation', data.navigation || [], 'label', 'href');
-
-    var code = data.code || [];
-    if (code.length) {
-      var codeHtml = '';
-      code.forEach(function (hit) {
-        codeHtml += '<div class="dg-kichel-hit">' + hit.path + ':' + hit.line + '<br>' + hit.snippet + '</div>';
-      });
-      appendHtmlSection('dg-kichel-section', '<h4>Code-Treffer</h4>' + codeHtml);
-    }
-
-    var db = data.database || [];
-    if (db.length) {
-      var dbHtml = '<h4>Datenbank-Schema</h4><ul class="dg-kichel-links">';
-      db.forEach(function (hit) {
-        var cols = (hit.columns || []).slice(0, 6).join(', ');
-        var count = hit.row_count != null ? ' · ' + hit.row_count + ' Zeilen' : '';
-        dbHtml += '<li><strong>' + hit.table + '</strong>' + count + (cols ? '<br><span class="dg-kichel-hit">' + cols + '</span>' : '') + '</li>';
-      });
-      dbHtml += '</ul>';
-      appendHtmlSection('dg-kichel-section', dbHtml);
-    }
-  }
-
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
     var query = (input.value || '').trim();
@@ -267,9 +224,6 @@
         appendMessage(data.answer || 'Keine Antwort.', 'bot');
         renderPageLinks(data.page_links || []);
         renderActionLinks(data.action_links || []);
-        if (data.presentation === 'technical') {
-          renderTechnicalExtras(data);
-        }
         renderFollowUp(data.follow_up);
       })
       .catch(function () {
