@@ -117,9 +117,13 @@ final class StockInventoryService
         }
 
         $pdo = Database::pdo();
+        $fetchBook = $pdo->prepare(
+            'SELECT book_quantity FROM dg_stock_inventory_lines
+             WHERE inventory_id = :inv AND article_id = :article LIMIT 1'
+        );
         $stmt = $pdo->prepare(
             'UPDATE dg_stock_inventory_lines
-             SET counted_quantity = :counted, diff_quantity = :counted - book_quantity
+             SET counted_quantity = :counted, diff_quantity = :diff
              WHERE inventory_id = :inv AND article_id = :article'
         );
 
@@ -129,8 +133,11 @@ final class StockInventoryService
                 continue;
             }
             $countedQty = round((float) str_replace(',', '.', (string) $counted), 3);
+            $fetchBook->execute(['inv' => $inventoryId, 'article' => $articleId]);
+            $bookQty = round((float) ($fetchBook->fetchColumn() ?: 0), 3);
             $stmt->execute([
                 'counted' => $countedQty,
+                'diff' => round($countedQty - $bookQty, 3),
                 'inv' => $inventoryId,
                 'article' => $articleId,
             ]);
