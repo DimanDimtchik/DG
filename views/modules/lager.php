@@ -1,0 +1,256 @@
+<?php
+/**
+ * @var list<array<string, mixed>> $stockItems
+ * @var list<array<string, mixed>> $stockMovements
+ * @var list<array<string, mixed>> $stockInventories
+ * @var array<string, mixed>|null $activeInventory
+ * @var list<array<string, mixed>> $activeInventoryLines
+ * @var bool $canEdit
+ * @var bool $dbConnected
+ * @var string $lagerView
+ * @var array{type: string, message: string}|null $flash
+ */
+$stockItems = $stockItems ?? [];
+$stockMovements = $stockMovements ?? [];
+$stockInventories = $stockInventories ?? [];
+$activeInventory = $activeInventory ?? null;
+$activeInventoryLines = $activeInventoryLines ?? [];
+$lagerView = $lagerView ?? 'overview';
+$csrf = Csrf::token();
+$fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', '.'), '0'), ',');
+?>
+<div class="dg-wrap dg-lager">
+  <?php View::render('partials/flash', compact('flash')); ?>
+
+  <header class="dg-page-header dg-page-header--toolbar">
+    <div>
+      <h1 class="dg-page-title">Lager</h1>
+      <p class="dg-lead">Bestände, Bewegungen und Inventur — ein Lager, Artikel mit aktivierter Lagerführung.</p>
+    </div>
+    <div class="dg-page-header__actions">
+      <a class="dg-button" href="/app?page=lager&amp;download=csv">Bestand CSV</a>
+      <?php if ($activeInventory !== null) : ?>
+        <a class="dg-button" href="/app?page=lager&amp;view=inventur&amp;download=inventory&amp;id=<?= (int) ($activeInventory['id'] ?? 0) ?>">Inventur CSV</a>
+      <?php endif; ?>
+    </div>
+  </header>
+
+  <nav class="dg-subtabs" aria-label="Lager-Bereiche">
+    <a href="/app?page=lager&amp;view=overview" class="dg-subtabs__link<?= $lagerView === 'overview' ? ' is-active' : '' ?>">Bestandsübersicht</a>
+    <a href="/app?page=lager&amp;view=bewegungen" class="dg-subtabs__link<?= $lagerView === 'bewegungen' ? ' is-active' : '' ?>">Bewegungen</a>
+    <a href="/app?page=lager&amp;view=inventur" class="dg-subtabs__link<?= $lagerView === 'inventur' ? ' is-active' : '' ?>">Inventur</a>
+  </nav>
+
+  <?php if (!$dbConnected) : ?>
+    <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
+  <?php else : ?>
+
+  <?php if ($lagerView === 'overview') : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Artikel mit Lagerführung</h2>
+    <?php if ($stockItems === []) : ?>
+      <p class="dg-muted">Noch keine Artikel mit Lagerführung. Unter <a href="/app?page=artikel-leistungen&amp;kind=product">Artikel &amp; Leistungen</a> bei Artikeln „Lager führen“ aktivieren.</p>
+    <?php else : ?>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Nr.</th>
+              <th>Bezeichnung</th>
+              <th>Bestand</th>
+              <th>Mindest</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($stockItems as $item) : ?>
+              <tr<?= !empty($item['is_low']) ? ' class="dg-row--warning"' : '' ?>>
+                <td><?= View::escape((string) ($item['article_number'] ?? '')) ?></td>
+                <td><?= View::escape((string) ($item['title'] ?? '')) ?></td>
+                <td><?= View::escape((string) ($item['stock_label'] ?? '')) ?></td>
+                <td><?= (float) ($item['min_stock'] ?? 0) > 0 ? View::escape($fmtQty((float) $item['min_stock']) . ' ' . ($item['unit'] ?? '')) : '—' ?></td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit) : ?>
+                    <button type="button" class="dg-button dg-button--small dg-stock-adjust-btn"
+                      data-article-id="<?= (int) ($item['id'] ?? 0) ?>"
+                      data-article-title="<?= View::escape((string) ($item['title'] ?? '')) ?>">Korrigieren</button>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </section>
+
+  <?php if ($canEdit) : ?>
+  <section class="dg-panel" id="dg-stock-adjust-panel" hidden>
+    <h2 class="dg-subsection-title">Manuelle Korrektur</h2>
+    <form method="post" action="/app?page=lager" class="dg-form-grid">
+      <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+      <input type="hidden" name="stock_adjust" value="1">
+      <input type="hidden" name="article_id" id="dg-stock-adjust-article-id" value="">
+      <label class="dg-field dg-field--wide">
+        <span>Artikel</span>
+        <input type="text" id="dg-stock-adjust-article-label" readonly>
+      </label>
+      <label class="dg-field">
+        <span>Menge (+ Zugang / − Abgang) *</span>
+        <input type="text" name="quantity_delta" inputmode="decimal" placeholder="z. B. -2 oder 5,5" required>
+        <small class="dg-field-hint">Negative Zahl = Abgang, positive = Zugang.</small>
+      </label>
+      <label class="dg-field dg-field--wide">
+        <span>Grund *</span>
+        <input type="text" name="adjust_note" maxlength="500" placeholder="z. B. Schwund, Retoure ohne Beleg" required>
+      </label>
+      <div class="dg-field dg-field--actions">
+        <button type="submit" class="dg-button dg-button--primary">Buchen</button>
+      </div>
+    </form>
+  </section>
+  <?php endif; ?>
+
+  <?php elseif ($lagerView === 'bewegungen') : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Letzte Bewegungen</h2>
+    <?php if ($stockMovements === []) : ?>
+      <p class="dg-muted">Noch keine Lagerbewegungen.</p>
+    <?php else : ?>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr><th>Datum</th><th>Artikel</th><th>Menge</th><th>Art</th><th>Notiz</th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($stockMovements as $mov) : ?>
+              <tr>
+                <td><?= View::escape((string) ($mov['movement_date'] ?? '')) ?></td>
+                <td><?= View::escape((string) ($mov['article_number'] ?? '')) ?> — <?= View::escape((string) ($mov['title'] ?? '')) ?></td>
+                <td><?= View::escape($fmtQty((float) ($mov['quantity'] ?? 0))) ?> <?= View::escape((string) ($mov['unit'] ?? '')) ?></td>
+                <td><?= View::escape(StockMovementRepository::reasonLabel((string) ($mov['reason'] ?? ''))) ?></td>
+                <td><?= View::escape((string) ($mov['note'] ?? '')) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </section>
+
+  <?php else : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Inventur</h2>
+    <?php if ($activeInventory === null && $canEdit) : ?>
+      <form method="post" action="/app?page=lager&amp;view=inventur" class="dg-form-grid dg-form-grid--compact">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="inventory_start" value="1">
+        <label class="dg-field">
+          <span>Stichtag *</span>
+          <input type="date" name="inventory_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Notiz</span>
+          <input type="text" name="inventory_note" maxlength="500" placeholder="Optional">
+        </label>
+        <div class="dg-field dg-field--actions">
+          <button type="submit" class="dg-button dg-button--primary">Inventur starten</button>
+        </div>
+      </form>
+      <p class="dg-field-hint">Es kann jeweils nur eine offene Inventur existieren. Alle Artikel mit Lagerführung werden übernommen.</p>
+    <?php elseif ($activeInventory === null) : ?>
+      <p class="dg-muted">Keine offene Inventur.</p>
+    <?php else : ?>
+      <p class="dg-field-hint">
+        Offene Inventur #<?= (int) ($activeInventory['id'] ?? 0) ?>
+        · Stichtag <?= View::escape((string) ($activeInventory['inventory_date'] ?? '')) ?>
+        <?php if (($activeInventory['note'] ?? '') !== '') : ?>
+          · <?= View::escape((string) $activeInventory['note']) ?>
+        <?php endif; ?>
+      </p>
+      <?php if ($canEdit) : ?>
+      <form method="post" action="/app?page=lager&amp;view=inventur" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="inventory_save" value="1">
+        <input type="hidden" name="inventory_id" value="<?= (int) ($activeInventory['id'] ?? 0) ?>">
+        <div class="dg-table-wrap">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr><th>Nr.</th><th>Bezeichnung</th><th>Buchbestand</th><th>Gezählt</th><th>Differenz</th></tr>
+            </thead>
+            <tbody>
+              <?php foreach ($activeInventoryLines as $line) : ?>
+                <?php
+                  $book = (float) ($line['book_quantity'] ?? 0);
+                  $counted = (float) ($line['counted_quantity'] ?? 0);
+                  $diff = round($counted - $book, 3);
+                ?>
+                <tr>
+                  <td><?= View::escape((string) ($line['article_number'] ?? '')) ?></td>
+                  <td><?= View::escape((string) ($line['title'] ?? '')) ?></td>
+                  <td><?= View::escape($fmtQty($book)) ?> <?= View::escape((string) ($line['unit'] ?? '')) ?></td>
+                  <td>
+                    <input type="text" name="counted[<?= (int) ($line['article_id'] ?? 0) ?>]"
+                      value="<?= $counted != 0.0 ? View::escape($fmtQty($counted)) : '' ?>"
+                      inputmode="decimal" class="dg-input--compact" placeholder="0">
+                  </td>
+                  <td><?= View::escape($fmtQty($diff)) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button">Zählung speichern</button>
+        </div>
+      </form>
+      <form method="post" action="/app?page=lager&amp;view=inventur" class="dg-form" style="margin-top:1rem;"
+        onsubmit="return confirm('Inventur abschließen und Differenzen ins Lager buchen?');">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="inventory_close" value="1">
+        <input type="hidden" name="inventory_id" value="<?= (int) ($activeInventory['id'] ?? 0) ?>">
+        <button type="submit" class="dg-button dg-button--primary">Inventur abschließen</button>
+      </form>
+      <?php endif; ?>
+    <?php endif; ?>
+  </section>
+
+  <?php if ($stockInventories !== []) : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Abgeschlossene Inventuren</h2>
+    <table class="dg-table dg-table--compact">
+      <thead><tr><th>ID</th><th>Stichtag</th><th>Abgeschlossen</th><th>Notiz</th></tr></thead>
+      <tbody>
+        <?php foreach ($stockInventories as $inv) : ?>
+          <?php if (($inv['status'] ?? '') !== 'closed') { continue; } ?>
+          <tr>
+            <td><?= (int) ($inv['id'] ?? 0) ?></td>
+            <td><?= View::escape((string) ($inv['inventory_date'] ?? '')) ?></td>
+            <td><?= View::escape((string) ($inv['closed_at'] ?? '')) ?></td>
+            <td><?= View::escape((string) ($inv['note'] ?? '')) ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </section>
+  <?php endif; ?>
+  <?php endif; ?>
+
+  <?php endif; ?>
+</div>
+<script>
+(function () {
+  document.querySelectorAll('.dg-stock-adjust-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var panel = document.getElementById('dg-stock-adjust-panel');
+      var idInput = document.getElementById('dg-stock-adjust-article-id');
+      var labelInput = document.getElementById('dg-stock-adjust-article-label');
+      if (!panel || !idInput || !labelInput) return;
+      idInput.value = btn.getAttribute('data-article-id') || '';
+      labelInput.value = btn.getAttribute('data-article-title') || '';
+      panel.hidden = false;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+})();
+</script>

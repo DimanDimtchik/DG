@@ -46,6 +46,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 | Zeiterfassung Ph.1 (Stempeluhr) | 061 |
 | Überstunden / ArbZG-Erinnerung | 062–063 |
 | **Bank Geisterumsätze** | **064** · `BankGhostDetectionService` |
+| **Lager Stufe A+B** | **065** · `StockMovementService`, Menü Lager |
 | Wartungsmodus einheitlicher Code | `WebsiteMaintenanceRenderer` |
 | Website-Menü Icons (Lucide) | `src/Website/` |
 
@@ -69,6 +70,7 @@ Doku: `BUCHHALTUNG-BELEGKETTE.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `ZEITER
 
 - [ ] Belegkette, Workflow, Klauseln, Skonto, Teilzahlungen, Zeiterfassung
 - [ ] **Bankabgleich:** Geisterumsätze erkennen, manuell ausblenden (Migration 064)
+- [ ] **Lager:** Artikel mit Lagerführung, Beleg-Buchung, Inventur (Migration 065) — siehe `LAGER-WIRTSCHAFT.md`
 - [ ] Wartungsmodus: Layout + Kontakt aus CRM
 
 Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K

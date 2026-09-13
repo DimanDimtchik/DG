@@ -951,6 +951,58 @@ switch ($path) {
             exit;
         }
 
+        // POST: Lager (Korrektur, Inventur)
+        if (
+            $page === 'lager'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'lager')
+            && RoleResolver::canEdit($user)
+        ) {
+            $redirect = '/app?page=lager';
+            $view = trim((string) ($_POST['view'] ?? $_GET['view'] ?? 'overview'));
+            if ($view !== '') {
+                $redirect .= '&view=' . rawurlencode($view);
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    if (isset($_POST['stock_adjust'])) {
+                        StockMovementService::manualAdjust(
+                            (int) ($_POST['article_id'] ?? 0),
+                            (float) str_replace(',', '.', (string) ($_POST['quantity_delta'] ?? '0')),
+                            trim((string) ($_POST['adjust_note'] ?? '')),
+                            $user->id,
+                        );
+                        Flash::set('success', 'Lagerkorrektur gebucht.');
+                    } elseif (isset($_POST['inventory_start'])) {
+                        $invId = StockInventoryService::start(
+                            (string) ($_POST['inventory_date'] ?? date('Y-m-d')),
+                            (string) ($_POST['inventory_note'] ?? ''),
+                            $user->id,
+                        );
+                        Flash::set('success', 'Inventur #' . $invId . ' gestartet.');
+                        $redirect = '/app?page=lager&view=inventur';
+                    } elseif (isset($_POST['inventory_save'])) {
+                        $invId = (int) ($_POST['inventory_id'] ?? 0);
+                        $counted = is_array($_POST['counted'] ?? null) ? $_POST['counted'] : [];
+                        StockInventoryService::saveCounts($invId, $counted);
+                        Flash::set('success', 'Zählung gespeichert.');
+                        $redirect = '/app?page=lager&view=inventur';
+                    } elseif (isset($_POST['inventory_close'])) {
+                        $invId = (int) ($_POST['inventory_id'] ?? 0);
+                        $applied = StockInventoryService::close($invId, $user->id);
+                        Flash::set('success', 'Inventur abgeschlossen — ' . $applied . ' Differenz(en) gebucht.');
+                        $redirect = '/app?page=lager&view=inventur';
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // Legacy: alte Einstellungs-URL fÃ¼r Leistungen
         if (
             $page === 'einstellungen'
@@ -2407,6 +2459,76 @@ switch ($path) {
             $title = 'Artikel & Leistungen';
             $currentPage = 'artikel-leistungen';
         } elseif ($page === 'artikel-leistungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'lager' && MenuRegistry::canAccess($user, 'lager')) {
+            $lagerView = trim((string) ($_GET['view'] ?? 'overview'));
+            if (!in_array($lagerView, ['overview', 'bewegungen', 'inventur'], true)) {
+                $lagerView = 'overview';
+            }
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'csv') {
+                $rows = StockMovementService::exportOverviewCsvRows();
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="lagerbestand-' . date('Y-m-d') . '.csv"');
+                $out = fopen('php://output', 'w');
+                if ($out !== false) {
+                    fprintf($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Einheit', 'Bestand', 'Mindestbestand', 'Unter Mindest'], ';');
+                    foreach ($rows as $row) {
+                        fputcsv($out, [
+                            $row['article_number'],
+                            $row['title'],
+                            $row['unit'],
+                            $row['stock_qty'],
+                            $row['min_stock'],
+                            $row['low_stock'],
+                        ], ';');
+                    }
+                    fclose($out);
+                }
+                exit;
+            }
+            if ($download === 'inventory') {
+                $invId = (int) ($_GET['id'] ?? 0);
+                $rows = StockInventoryService::exportInventoryCsv($invId);
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="inventur-' . $invId . '.csv"');
+                $out = fopen('php://output', 'w');
+                if ($out !== false) {
+                    fprintf($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Einheit', 'Buchbestand', 'Gezählt', 'Differenz'], ';');
+                    foreach ($rows as $row) {
+                        fputcsv($out, [
+                            $row['article_number'],
+                            $row['title'],
+                            $row['unit'],
+                            $row['book_quantity'],
+                            $row['counted_quantity'],
+                            $row['diff_quantity'],
+                        ], ';');
+                    }
+                    fclose($out);
+                }
+                exit;
+            }
+            $canEdit = RoleResolver::canEdit($user);
+            $stockItems = StockMovementService::stockOverview(false);
+            $stockMovements = StockMovementRepository::recent(50);
+            $openInventories = StockInventoryService::openInventories();
+            $activeInventory = $openInventories[0] ?? null;
+            $activeInventoryLines = $activeInventory !== null
+                ? StockInventoryService::linesForInventory((int) $activeInventory['id'])
+                : [];
+            $stockInventories = Database::isConfigured()
+                ? (Database::pdo()->query(
+                    "SELECT * FROM dg_stock_inventories ORDER BY inventory_date DESC, id DESC LIMIT 20"
+                )->fetchAll(PDO::FETCH_ASSOC) ?: [])
+                : [];
+            $contentTemplate = 'modules/lager';
+            $title = 'Lager';
+            $currentPage = 'lager';
+        } elseif ($page === 'lager') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {

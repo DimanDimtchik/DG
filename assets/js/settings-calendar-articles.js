@@ -20,6 +20,11 @@
   const descriptionInput = document.getElementById('dg_article_description');
   const noteInput = document.getElementById('dg_article_note');
   const activeInput = document.getElementById('dg_article_active');
+  const stockFieldsWrap = document.getElementById('dg_article_stock_fields');
+  const trackStockInput = document.getElementById('dg_article_track_stock');
+  const initialStockWrap = document.getElementById('dg_article_initial_stock_wrap');
+  const initialStockInput = document.getElementById('dg_article_initial_stock');
+  const minStockInput = document.getElementById('dg_article_min_stock');
   const formTitle = document.getElementById('dg-article-form-title');
   const formPanel = document.getElementById('dg-article-form-panel');
   const submitBtn = document.getElementById('dg-article-submit');
@@ -38,6 +43,16 @@
     }
     if (customInput) {
       customInput.required = Boolean(show);
+    }
+  }
+
+  function toggleStockFields() {
+    const isProduct = catalogKindInput && catalogKindInput.value === 'product';
+    if (stockFieldsWrap) {
+      stockFieldsWrap.hidden = !isProduct;
+    }
+    if (initialStockWrap && idInput) {
+      initialStockWrap.hidden = !isProduct || idInput.value !== '';
     }
   }
 
@@ -70,6 +85,16 @@
       formPanel.open = false;
     }
     toggleCustomMinutes();
+    toggleStockFields();
+    if (trackStockInput) {
+      trackStockInput.checked = false;
+    }
+    if (initialStockInput) {
+      initialStockInput.value = '';
+    }
+    if (minStockInput) {
+      minStockInput.value = '';
+    }
   }
 
   function setWorkMinutes(minutes) {
@@ -138,6 +163,16 @@
       if (activeInput) {
         activeInput.checked = Number(data.is_active || 0) === 1;
       }
+      if (trackStockInput) {
+        trackStockInput.checked = Boolean(data.track_stock);
+      }
+      if (minStockInput) {
+        minStockInput.value = data.min_stock != null ? String(data.min_stock).replace('.', ',') : '';
+      }
+      if (initialStockInput) {
+        initialStockInput.value = '';
+      }
+      toggleStockFields();
       if (formTitle) {
         formTitle.textContent = kindLabel(kind) + ' bearbeiten';
       }
@@ -157,9 +192,13 @@
   if (workSelect) {
     workSelect.addEventListener('change', toggleCustomMinutes);
   }
+  if (catalogKindInput) {
+    catalogKindInput.addEventListener('change', toggleStockFields);
+  }
   if (cancelBtn) {
     cancelBtn.addEventListener('click', resetForm);
   }
 
   toggleCustomMinutes();
+  toggleStockFields();
 })();

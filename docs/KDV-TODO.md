@@ -120,4 +120,4 @@ Notiert 21.08.2026 – noch nicht priorisiert:
 - [ ] **Caching** (Performance / Zwischenspeicher)
 - [ ] **HaltStatus** (Bedeutung beim Umsetzen klären)
 - [ ] **Zeiterfassung**
-- [ ] **Lagerwirtschaft**
+- [x] **Lagerwirtschaft** (Stufe A+B — siehe `LAGER-WIRTSCHAFT.md`, Migration 065)

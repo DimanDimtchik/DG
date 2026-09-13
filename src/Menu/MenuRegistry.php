@@ -34,6 +34,7 @@ final class MenuRegistry
         }
         if (DepartmentAccess::userCanManageArticleCatalog($user) && $canEdit) {
             $items[] = ['slug' => 'artikel-leistungen', 'label' => 'Artikel & Leistungen', 'icon' => 'catalog'];
+            $items[] = ['slug' => 'lager', 'label' => 'Lager', 'icon' => 'package'];
         }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
@@ -300,6 +301,7 @@ final class MenuRegistry
             'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
+            'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
             'bilder' => 'Medien, Logos und Bilder verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Belege erfassen mit Steuerfeldern und Kontenzuordnung.',

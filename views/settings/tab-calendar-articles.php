@@ -56,13 +56,14 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
           <th>Steuer</th>
           <th>Preis (brutto)</th>
           <th>Dauer</th>
+          <th>Bestand</th>
           <th>Bereich</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <?php if ($calendarArticles === []) : ?>
-          <tr><td colspan="9" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
+          <tr><td colspan="10" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
         <?php else : ?>
           <?php foreach ($calendarArticles as $article) : ?>
             <tr>
@@ -73,6 +74,7 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
               <td><?= View::escape((string) ($article['tax_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['price_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['duration_label'] ?? '')) ?></td>
+              <td><?php if (!empty($article['track_stock'])) : ?><?= View::escape((string) ($article['stock_label'] ?? '')) ?><?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?><?php else : ?>—<?php endif; ?></td>
               <td><?= View::escape($areaNames[(int) ($article['area_id'] ?? 0)] ?? '—') ?></td>
               <td class="dg-table__actions">
                 <div class="dg-table__actions-group">
@@ -202,6 +204,23 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
       <label class="dg-field">
         <span><input type="checkbox" name="is_active" id="dg_article_active" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Eintrag ist aktiv</span>
       </label>
+      <div class="dg-field dg-field--wide" id="dg_article_stock_fields" hidden>
+        <fieldset class="dg-fieldset">
+          <legend>Lager (nur Artikel)</legend>
+          <label class="dg-field">
+            <span><input type="checkbox" name="track_stock" id="dg_article_track_stock" value="1"<?= !$dbConnected ? ' disabled' : '' ?>> Lager führen</span>
+          </label>
+          <label class="dg-field" id="dg_article_initial_stock_wrap">
+            <span>Anfangsbestand (nur neu)</span>
+            <input type="text" name="initial_stock" id="dg_article_initial_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <label class="dg-field">
+            <span>Mindestbestand</span>
+            <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <p class="dg-field-hint">Bestandsänderungen aus Einkaufs- und Verkaufsbelegen erfolgen automatisch unter <a href="/app?page=lager">Lager</a>.</p>
+        </fieldset>
+      </div>
     </div>
 
     <div class="dg-form-actions">

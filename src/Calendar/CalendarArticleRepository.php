@@ -148,6 +148,21 @@ final class CalendarArticleRepository
         $areaId = max(0, (int) ($input['area_id'] ?? 0));
         $sortOrder = max(0, (int) ($input['sort_order'] ?? 0));
         $isActive = !empty($input['is_active']) ? 1 : 0;
+        $trackStock = $catalogKind === CalendarArticleCatalog::KIND_PRODUCT && !empty($input['track_stock']) ? 1 : 0;
+        $minStock = 0.0;
+        if ($trackStock === 1) {
+            $minStock = round((float) str_replace(',', '.', (string) ($input['min_stock'] ?? 0)), 3);
+            if ($minStock < 0) {
+                throw new InvalidArgumentException('Mindestbestand darf nicht negativ sein.');
+            }
+        }
+        $initialStock = 0.0;
+        if ($trackStock === 1 && $id < 1) {
+            $initialStock = round((float) str_replace(',', '.', (string) ($input['initial_stock'] ?? 0)), 3);
+            if ($initialStock < 0) {
+                throw new InvalidArgumentException('Anfangsbestand darf nicht negativ sein.');
+            }
+        }
 
         if ($title === '') {
             throw new InvalidArgumentException('Bezeichnung der Leistung ist erforderlich.');
@@ -175,6 +190,8 @@ final class CalendarArticleRepository
             'area_id' => $areaId,
             'sort_order' => $sortOrder,
             'is_active' => $isActive,
+            'track_stock' => $trackStock,
+            'min_stock' => $minStock,
         ];
 
         $pdo = Database::pdo();
@@ -184,7 +201,8 @@ final class CalendarArticleRepository
                 'UPDATE dg_calendar_articles
                  SET article_number = :article_number, catalog_kind = :catalog_kind, gtin = :gtin, title = :title, description = :description,
                      note = :note, unit = :unit, tax_type = :tax_type, price_gross = :price_gross,
-                     work_minutes = :work_minutes, area_id = :area_id, sort_order = :sort_order, is_active = :is_active
+                     work_minutes = :work_minutes, area_id = :area_id, sort_order = :sort_order, is_active = :is_active,
+                     track_stock = :track_stock, min_stock = :min_stock
                  WHERE id = :id'
             );
             $stmt->execute($fields);
@@ -192,13 +210,18 @@ final class CalendarArticleRepository
             return;
         }
 
+        $fields['stock_qty'] = 0;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_calendar_articles
-             (article_number, catalog_kind, gtin, title, description, note, unit, tax_type, price_gross, work_minutes, area_id, sort_order, is_active)
+             (article_number, catalog_kind, gtin, title, description, note, unit, tax_type, price_gross, work_minutes, area_id, sort_order, is_active, track_stock, stock_qty, min_stock)
              VALUES
-             (:article_number, :catalog_kind, :gtin, :title, :description, :note, :unit, :tax_type, :price_gross, :work_minutes, :area_id, :sort_order, :is_active)'
+             (:article_number, :catalog_kind, :gtin, :title, :description, :note, :unit, :tax_type, :price_gross, :work_minutes, :area_id, :sort_order, :is_active, :track_stock, :stock_qty, :min_stock)'
         );
         $stmt->execute($fields);
+        $newId = (int) $pdo->lastInsertId();
+        if ($newId > 0 && $trackStock === 1 && $initialStock > 0) {
+            StockMovementService::recordOpeningBalance($newId, $initialStock, null);
+        }
     }
 
     /**
@@ -436,6 +459,17 @@ final class CalendarArticleRepository
         $row['price_label'] = CalendarArticleValidator::formatPrice((float) ($row['price_gross'] ?? 0));
         $row['tax_label'] = CalendarArticleValidator::taxLabel((string) ($row['tax_type'] ?? ''));
         $row['kind_label'] = CalendarArticleCatalog::kindLabel((string) ($row['catalog_kind'] ?? CalendarArticleCatalog::KIND_SERVICE));
+        $row['track_stock'] = !empty($row['track_stock']);
+        $row['stock_qty'] = round((float) ($row['stock_qty'] ?? 0), 3);
+        $row['min_stock'] = round((float) ($row['min_stock'] ?? 0), 3);
+        if ($row['track_stock']) {
+            $unit = (string) ($row['unit'] ?? 'Stück');
+            $row['stock_label'] = StockMovementService::formatQty((float) $row['stock_qty'], $unit);
+            $row['is_low_stock'] = $row['min_stock'] > 0 && $row['stock_qty'] <= $row['min_stock'];
+        } else {
+            $row['stock_label'] = '—';
+            $row['is_low_stock'] = false;
+        }
     }
 
     /**
