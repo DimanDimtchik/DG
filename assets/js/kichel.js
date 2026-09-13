@@ -6,7 +6,7 @@
     return;
   }
 
-  var STORAGE_MESSAGES = 'dgKichelMessages';
+  var STORAGE_MESSAGES = 'dgKichelMessagesV2';
   var STORAGE_OPEN = 'dgKichelPanelOpen';
   var STORAGE_CLOSE_NEXT = 'dgKichelCloseNext';
 

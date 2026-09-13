@@ -129,6 +129,7 @@ final class KichelAssistant
             ];
         }
         if ($legalAnswer !== null) {
+            $response['kind'] = 'legal_pages';
             $response['page_links'] = $legalAnswer['page_links'];
             $response['overview_links'] = $legalAnswer['overview_links'];
         }
