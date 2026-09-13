@@ -22,6 +22,7 @@ FILES=(
   views/modules/website-seiten.php
   index.php
   src/Kichel/KichelAssistant.php
+  src/Kichel/KichelKnowledge.php
   src/Kichel/KichelLegalPages.php
   src/Kichel/data/knowledge.php
   src/Legal/LegalPageGenerator.php
