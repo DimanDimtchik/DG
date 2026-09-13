@@ -16,7 +16,7 @@ $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUse
       <span>Fachfragen · Code · Datenbank</span>
     </div>
     <?php if ($kichelIsAdmin) : ?>
-      <span class="dg-kichel-panel__admin"><a href="/app?page=kichel-protokoll">Protokoll</a></span>
+      <span class="dg-kichel-panel__admin"><a href="/app?page=kichel-protokoll" data-kichel-protokoll>Protokoll</a></span>
     <?php endif; ?>
     <button type="button" class="dg-kichel-panel__close" data-kichel-close aria-label="Schließen">&times;</button>
   </div>
@@ -28,7 +28,9 @@ $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUse
       <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Pflichtseiten?">Pflichtseiten</button>
       <button type="button" class="dg-kichel-chip" data-kichel-chip="Belegkette Workflow">Belegkette</button>
     </div>
-    <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe bei CRM-Navigation, Steuer-/Buchhaltungsfragen und durchsuche Code sowie DB-Schema — alles lokal im CRM, ohne Cloud-KI.</div>
+    <div class="dg-kichel-messages" data-kichel-messages>
+      <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe bei CRM-Navigation, Steuer-/Buchhaltungsfragen und durchsuche Code sowie DB-Schema — alles lokal im CRM, ohne Cloud-KI.</div>
+    </div>
   </div>
   <form class="dg-kichel-form" data-kichel-form>
     <input type="text" data-kichel-input placeholder="Frage stellen …" autocomplete="off" maxlength="500" aria-label="Frage an Kichel">

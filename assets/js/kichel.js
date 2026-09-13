@@ -6,16 +6,51 @@
     return;
   }
 
+  var STORAGE_MESSAGES = 'dgKichelMessages';
+  var STORAGE_OPEN = 'dgKichelPanelOpen';
+  var STORAGE_CLOSE_NEXT = 'dgKichelCloseNext';
+
   var fab = document.querySelector('[data-kichel-fab]');
   var panel = document.querySelector('[data-kichel-panel]');
   var closeBtn = document.querySelector('[data-kichel-close]');
   var form = document.querySelector('[data-kichel-form]');
   var input = document.querySelector('[data-kichel-input]');
-  var body = document.querySelector('[data-kichel-body]');
+  var scrollBody = document.querySelector('[data-kichel-body]');
+  var messages = document.querySelector('[data-kichel-messages]');
   var chips = document.querySelectorAll('[data-kichel-chip]');
+  var protokollLink = document.querySelector('[data-kichel-protokoll]');
 
-  if (!fab || !panel || !form || !input || !body) {
+  if (!fab || !panel || !form || !input || !scrollBody || !messages) {
     return;
+  }
+
+  function saveState() {
+    try {
+      sessionStorage.setItem(STORAGE_MESSAGES, messages.innerHTML);
+      sessionStorage.setItem(STORAGE_OPEN, panel.hidden ? '0' : '1');
+    } catch (e) {
+      /* sessionStorage nicht verfügbar */
+    }
+  }
+
+  function restoreState() {
+    try {
+      var html = sessionStorage.getItem(STORAGE_MESSAGES);
+      if (html) {
+        messages.innerHTML = html;
+      }
+      var closeNext = sessionStorage.getItem(STORAGE_CLOSE_NEXT) === '1';
+      if (closeNext) {
+        sessionStorage.removeItem(STORAGE_CLOSE_NEXT);
+        toggle(false);
+        return;
+      }
+      if (sessionStorage.getItem(STORAGE_OPEN) === '1') {
+        toggle(true);
+      }
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   function toggle(open) {
@@ -24,7 +59,18 @@
     fab.setAttribute('aria-expanded', show ? 'true' : 'false');
     if (show) {
       input.focus();
+      scrollBody.scrollTop = scrollBody.scrollHeight;
     }
+    saveState();
+  }
+
+  function bindChips() {
+    document.querySelectorAll('[data-kichel-chip]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        input.value = chip.getAttribute('data-kichel-chip') || '';
+        form.requestSubmit();
+      });
+    });
   }
 
   fab.addEventListener('click', function () {
@@ -37,19 +83,29 @@
     });
   }
 
-  chips.forEach(function (chip) {
-    chip.addEventListener('click', function () {
-      input.value = chip.getAttribute('data-kichel-chip') || '';
-      form.requestSubmit();
+  if (protokollLink) {
+    protokollLink.addEventListener('click', function () {
+      try {
+        sessionStorage.setItem(STORAGE_MESSAGES, messages.innerHTML);
+        sessionStorage.setItem(STORAGE_CLOSE_NEXT, '1');
+      } catch (e) {
+        /* ignore */
+      }
     });
-  });
+  }
+
+  window.addEventListener('pagehide', saveState);
+
+  bindChips();
+  restoreState();
 
   function appendMessage(text, role) {
     var el = document.createElement('div');
     el.className = 'dg-kichel-msg dg-kichel-msg--' + role;
     el.textContent = text;
-    body.appendChild(el);
-    body.scrollTop = body.scrollHeight;
+    messages.appendChild(el);
+    scrollBody.scrollTop = scrollBody.scrollHeight;
+    saveState();
     return el;
   }
 
@@ -57,8 +113,9 @@
     var wrap = document.createElement('div');
     wrap.className = 'dg-kichel-section';
     wrap.innerHTML = '<h4>' + title + '</h4>' + html;
-    body.appendChild(wrap);
-    body.scrollTop = body.scrollHeight;
+    messages.appendChild(wrap);
+    scrollBody.scrollTop = scrollBody.scrollHeight;
+    saveState();
   }
 
   function renderLinks(title, items, labelKey, hrefKey) {
@@ -151,6 +208,7 @@
       })
       .then(function (json) {
         loading.remove();
+        saveState();
         if (!json.success) {
           appendMessage(json.message || 'Fehler bei der Anfrage.', 'bot');
           return;
@@ -179,6 +237,7 @@
       })
       .catch(function () {
         loading.remove();
+        saveState();
         appendMessage('Verbindungsfehler — bitte erneut versuchen.', 'bot');
       })
       .finally(function () {
