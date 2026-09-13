@@ -6,9 +6,11 @@
     return;
   }
 
-  var STORAGE_MESSAGES = 'dgKichelMessagesV3';
+  var CHAT_VERSION = String(cfg.chatVersion || '4');
+  var STORAGE_MESSAGES = 'dgKichelMessagesV' + CHAT_VERSION;
   var STORAGE_OPEN = 'dgKichelPanelOpen';
   var STORAGE_CLOSE_NEXT = 'dgKichelCloseNext';
+  var STORAGE_VERSION = 'dgKichelChatVersion';
 
   var fab = document.querySelector('[data-kichel-fab]');
   var panel = document.querySelector('[data-kichel-panel]');
@@ -36,8 +38,22 @@
     }
   }
 
+  function clearLegacyChatStorage() {
+    ['dgKichelMessagesV1', 'dgKichelMessagesV2', 'dgKichelMessagesV3'].forEach(function (key) {
+      sessionStorage.removeItem(key);
+    });
+  }
+
   function restoreState() {
     try {
+      if (sessionStorage.getItem(STORAGE_VERSION) !== CHAT_VERSION) {
+        clearLegacyChatStorage();
+        sessionStorage.removeItem(STORAGE_MESSAGES);
+        sessionStorage.removeItem(STORAGE_OPEN);
+        sessionStorage.removeItem(STORAGE_CLOSE_NEXT);
+        sessionStorage.setItem(STORAGE_VERSION, CHAT_VERSION);
+        return;
+      }
       var html = sessionStorage.getItem(STORAGE_MESSAGES);
       if (html) {
         messages.innerHTML = html;

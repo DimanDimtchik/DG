@@ -13,7 +13,7 @@ $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUse
     <img src="<?= View::escape(Asset::url('/assets/img/kichel.svg')) ?>" alt="">
     <div>
       <strong>Kichel</strong>
-      <span>Fachfragen · Code · Datenbank</span>
+      <span>Schnelle Hilfe im CRM</span>
     </div>
     <?php if ($kichelIsAdmin) : ?>
       <span class="dg-kichel-panel__admin"><a href="/app?page=kichel-protokoll" data-kichel-protokoll>Protokoll</a></span>
@@ -40,7 +40,8 @@ $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUse
 <script>
   window.dgKichel = {
     apiUrl: '/api/kichel',
-    csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>
+    csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
+    chatVersion: '4'
   };
 </script>
 <script src="<?= View::escape(Asset::url('/assets/js/kichel.js')) ?>" defer></script>
