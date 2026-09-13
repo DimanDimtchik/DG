@@ -137,9 +137,9 @@ final class SettingsRegistry
                 'label' => 'Rechtliches',
                 'tabs' => [
                     'agb' => [
-                        'label' => 'AGB & Widerruf',
-                        'lead' => 'AGB, Widerruf und rechtliche Textbausteine.',
-                        'template' => 'placeholder',
+                        'label' => 'Rechtliches / Produkte',
+                        'lead' => 'Impressum, Datenschutz, AGB, Widerruf — allgemein oder je Produktgruppe (Tabs).',
+                        'template' => 'legal-products',
                     ],
                 ],
             ],
@@ -266,6 +266,9 @@ final class SettingsRegistry
             }
             if (isset($_POST['db_action'])) {
                 return 'datenbank';
+            }
+            if (isset($_POST['legal_products_save'])) {
+                return 'agb';
             }
         }
 

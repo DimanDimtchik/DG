@@ -139,6 +139,13 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 
     /* Main */
     .ws-main { max-width: 1140px; margin: 0 auto; padding: 40px 20px; }
+    .ws-legal-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .ws-legal-tabs a {
+      display: inline-block; padding: 8px 14px; border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit;
+      background: rgba(255,255,255,0.6);
+    }
+    .ws-legal-tabs a.is-active { border-color: var(--ws-primary); color: var(--ws-primary); font-weight: 600; }
 
     /* Row / Col grid */
     .ws-row { display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
@@ -365,6 +372,17 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 </script>
 
 <main class="ws-main">
+<?php if (!empty($page['legal_variants']) && is_array($page['legal_variants']) && count($page['legal_variants']) > 1) : ?>
+  <nav class="ws-legal-tabs" aria-label="Produktgruppe">
+    <?php foreach ($page['legal_variants'] as $variant) : ?>
+      <?php
+        $isActive = ($variant['key'] ?? '') === ($page['legal_active_key'] ?? '');
+        $href = (string) ($variant['url'] ?? '#');
+      ?>
+      <a href="<?= View::escape($href) ?>"<?= $isActive ? ' class="is-active" aria-current="page"' : '' ?>><?= View::escape((string) ($variant['label'] ?? '')) ?></a>
+    <?php endforeach; ?>
+  </nav>
+<?php endif; ?>
 <?php foreach ($layout['rows'] as $row): ?>
   <div class="ws-row">
     <?php foreach (($row['columns'] ?? []) as $col):

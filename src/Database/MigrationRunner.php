@@ -208,6 +208,7 @@ final class MigrationRunner
             '062_time_overtime.sql' => self::tableExists($pdo, 'dg_time_work_days'),
             '063_arbzg_reminders.sql' => self::tableExists($pdo, 'dg_time_arbzg_reminders'),
             '064_bank_tx_fingerprint.sql' => self::columnExists($pdo, 'dg_bank_transactions', 'transaction_fingerprint'),
+            '066_website_legal_variants.sql' => self::tableExists($pdo, 'dg_website_legal_variants'),
             default => false,
         };
     }
@@ -303,6 +304,7 @@ final class MigrationRunner
             '062_time_overtime.sql' => true,
             '063_arbzg_reminders.sql' => true,
             '064_bank_tx_fingerprint.sql' => true,
+            '066_website_legal_variants.sql' => true,
         ];
     }
 

@@ -195,6 +195,7 @@ final class WebsiteBootstrapService
                     ['label' => 'Impressum', 'url' => '/impressum', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                     ['label' => 'Datenschutz', 'url' => '/datenschutz', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                     ['label' => 'AGB', 'url' => '/agb', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+                    ['label' => 'Widerruf', 'url' => '/widerruf', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                 ],
             ],
         ];
@@ -226,7 +227,7 @@ final class WebsiteBootstrapService
      */
     private static function mergePreservedMenuItems(array $defaults): array
     {
-        $reserved = ['/', '/terminkalender', '/kontakt', '#', '/impressum', '/datenschutz', '/agb'];
+        $reserved = ['/', '/terminkalender', '/kontakt', '#', '/impressum', '/datenschutz', '/agb', '/widerruf'];
         $menu = SettingsStore::get('website.menu', []);
         if (!is_array($menu)) {
             return $defaults;

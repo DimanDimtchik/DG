@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-07** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
+Stand: **2026-09-13** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
 
 ---
 
@@ -30,6 +30,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
 - [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
 - [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
+- [ ] **Rechtstexte Mehrprodukt:** Migration **066** · KlarWin/HP-LaserJet-Texte in Tabs · `docs/RECHTSTEXTE-MEHRPRODUKT.md`
 
 ---
 

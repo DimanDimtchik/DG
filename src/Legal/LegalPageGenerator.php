@@ -377,6 +377,47 @@ final class LegalPageGenerator
     }
 
     /**
+     * Widerrufsbelehrung als eigene Seite (zusätzlich zum AGB-Abschnitt).
+     */
+    public static function widerruf(): string
+    {
+        $c = self::companyData();
+        $kinds = self::businessKinds();
+        $html = '<h1>Widerrufsbelehrung</h1>';
+        $html .= '<p>Informationen zum Widerrufsrecht für Verbraucher.</p>';
+
+        if (!self::hasBusinessKind($kinds, ['products', 'both', 'services'])) {
+            $html .= '<p><em>Hinweis: Für reine B2B-Geschäfte oder bestimmte Branchen kann kein Widerrufsrecht bestehen — Text juristisch prüfen.</em></p>';
+        }
+
+        $html .= '<h2>Widerrufsrecht</h2>';
+        $html .= '<p>Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. '
+            . 'Die Widerrufsfrist beträgt vierzehn Tage ab ';
+        if (self::hasBusinessKind($kinds, ['products', 'both'])) {
+            $html .= 'dem Tag, an dem Sie oder ein von Ihnen benannter Dritter die Waren in Besitz genommen haben.';
+        } else {
+            $html .= 'dem Tag des Vertragsabschlusses.';
+        }
+        $html .= '</p>';
+
+        $html .= '<p>Um Ihr Widerrufsrecht auszuüben, müssen Sie uns ('
+            . self::esc($c['name']) . ', ' . self::esc($c['street']) . ', '
+            . self::esc($c['postal']) . ' ' . self::esc($c['city']) . ', '
+            . 'E-Mail: ' . self::esc($c['email'])
+            . ') mittels einer eindeutigen Erklärung (z. B. per Post oder E-Mail) '
+            . 'über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren.</p>';
+
+        $html .= '<h2>Folgen des Widerrufs</h2>';
+        $html .= '<p>Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, '
+            . 'unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über '
+            . 'Ihren Widerruf bei uns eingegangen ist.</p>';
+
+        $html .= '<p>Weitere vertragliche Regelungen finden Sie in unseren <a href="/agb">AGB</a>.</p>';
+
+        return $html;
+    }
+
+    /**
      * Generates all legal pages and saves them as published website pages.
      *
      * @return list<array{slug: string, title: string, id: int, action: string}>
@@ -387,6 +428,7 @@ final class LegalPageGenerator
             ['slug' => 'impressum', 'title' => 'Impressum', 'content' => self::impressum()],
             ['slug' => 'datenschutz', 'title' => 'Datenschutzerklärung', 'content' => self::datenschutz()],
             ['slug' => 'agb', 'title' => 'Allgemeine Geschäftsbedingungen', 'content' => self::agb()],
+            ['slug' => 'widerruf', 'title' => 'Widerrufsbelehrung', 'content' => self::widerruf()],
         ];
 
         $saved = [];
@@ -398,6 +440,11 @@ final class LegalPageGenerator
                 $userId,
                 $overwrite
             );
+            WebsiteLegalVariantRepository::ensureDefaultsForPage($page['slug']);
+        }
+
+        if (LegalProductSettings::multiProductEnabled()) {
+            WebsiteLegalVariantRepository::ensureVariantsForAllProducts();
         }
 
         return $saved;

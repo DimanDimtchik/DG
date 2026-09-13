@@ -24,7 +24,7 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
         exit;
     }
     View::render('website-public', [
-        'page' => $previewPage,
+        'page' => LegalPagePublicHelper::enrichPage($previewPage, true),
         'chrome' => WebsiteSettings::chrome(),
         'menu' => WebsiteSettings::publicMenu(true),
         'design' => WebsiteSettings::design(),
@@ -651,6 +651,71 @@ switch ($path) {
                 try {
                     ElsterSettings::saveFromPost($_POST);
                     Flash::set('success', 'ELSTER-Vorbereitung gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Rechtliches / Mehrprodukt-Tabs
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['legal_products_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('agb');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    LegalProductSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Rechtstext-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Rechtstext-Variante (Produkt-Tab)
+        if (
+            $page === 'website-recht'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['legal_variant_save'])
+            && MenuRegistry::canAccess($user, 'website-recht')
+        ) {
+            $redirect = '/app?page=website-recht&slug=' . rawurlencode((string) ($_POST['slug'] ?? ''))
+                . '&product=' . rawurlencode((string) ($_POST['product'] ?? ''));
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $slug = LegalProductSettings::sanitizeSlug((string) ($_POST['slug'] ?? ''));
+                    $productKey = LegalProductSettings::sanitizeProductKey((string) ($_POST['product'] ?? ''));
+                    if (!LegalProductSettings::isLegalSlug($slug) || $productKey === '') {
+                        throw new InvalidArgumentException('Ungültige Rechtstext-Variante.');
+                    }
+                    $label = 'Allgemein';
+                    foreach (LegalProductSettings::allProductTabs() as $tab) {
+                        if ($tab['key'] === $productKey) {
+                            $label = $tab['label'];
+                            break;
+                        }
+                    }
+                    WebsiteLegalVariantRepository::saveHtmlVariant(
+                        $slug,
+                        $productKey,
+                        $label,
+                        (string) ($_POST['status'] ?? WebsitePageRepository::STATUS_DRAFT),
+                        (string) ($_POST['html'] ?? ''),
+                        0,
+                        false
+                    );
+                    Flash::set('success', 'Rechtstext gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -2342,6 +2407,7 @@ switch ($path) {
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
+        $legalProductsConfig = LegalProductSettings::config();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
@@ -3022,6 +3088,7 @@ switch ($path) {
             (
                 $page === 'website-seiten'
                 || $page === 'website-seite-form'
+                || $page === 'website-recht'
                 || $page === 'website-formulare'
                 || $page === 'website-formular-form'
                 || $page === 'website-formular-inbox'
@@ -3047,6 +3114,39 @@ switch ($path) {
                 $contentTemplate = 'modules/website-seiten';
                 $title = 'Seiten';
                 $currentPage = 'website-seiten';
+            } elseif ($page === 'website-recht') {
+                $legalSlug = LegalProductSettings::sanitizeSlug((string) ($_GET['slug'] ?? ''));
+                $legalProductKey = LegalProductSettings::sanitizeProductKey((string) ($_GET['product'] ?? LegalProductSettings::DEFAULT_PRODUCT_KEY));
+                if (!LegalProductSettings::isLegalSlug($legalSlug)) {
+                    Flash::set('error', 'Unbekannte Rechtstext-Seite.');
+                    header('Location: ' . SettingsRegistry::tabUrl('agb'), true, 302);
+                    exit;
+                }
+                WebsiteLegalVariantRepository::ensureDefaultsForPage($legalSlug);
+                WebsiteLegalVariantRepository::ensureVariant(
+                    $legalSlug,
+                    $legalProductKey,
+                    $legalProductKey === LegalProductSettings::DEFAULT_PRODUCT_KEY
+                        ? 'Allgemein'
+                        : ucfirst(str_replace('-', ' ', $legalProductKey))
+                );
+                $variant = WebsiteLegalVariantRepository::find($legalSlug, $legalProductKey);
+                $legalPageTitle = LegalProductSettings::LEGAL_PAGES[$legalSlug] ?? $legalSlug;
+                $legalProductLabel = 'Allgemein';
+                foreach (LegalProductSettings::allProductTabs() as $tab) {
+                    if ($tab['key'] === $legalProductKey) {
+                        $legalProductLabel = $tab['label'];
+                        break;
+                    }
+                }
+                $legalHtml = $variant !== null
+                    ? WebsiteLegalVariantRepository::extractHtmlFromLayout($variant['layout'])
+                    : '';
+                $legalStatus = $variant['status'] ?? WebsitePageRepository::STATUS_DRAFT;
+                $canEdit = RoleResolver::isAdmin($user) || MenuRegistry::canAccessWebsite($user);
+                $contentTemplate = 'modules/website-recht-variant';
+                $title = $legalPageTitle;
+                $currentPage = 'website-recht';
             } elseif ($page === 'website-seite-form') {
                 if (empty($formError)) {
                     $websitePageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -3921,6 +4021,7 @@ switch ($path) {
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
             'elsterConfig',
+            'legalProductsConfig',
             'accountingPaymentSettings',
             'timeTrackingSettings',
             'chartOfAccountsConfig',
@@ -4101,7 +4202,7 @@ switch ($path) {
             $menu = WebsiteSettings::publicMenu();
             $design = WebsiteSettings::design();
             View::render('website-public', [
-                'page' => $publicPage,
+                'page' => LegalPagePublicHelper::enrichPage($publicPage, false),
                 'chrome' => $chrome,
                 'menu' => $menu,
                 'design' => $design,

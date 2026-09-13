@@ -453,6 +453,7 @@ final class MenuRegistry
         if (
             $slug === 'website-seiten'
             || $slug === 'website-seite-form'
+            || $slug === 'website-recht'
             || $slug === 'website-formulare'
             || $slug === 'website-formular-form'
             || $slug === 'website-formular-inbox'
