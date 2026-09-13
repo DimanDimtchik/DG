@@ -79,6 +79,26 @@
     appendSection(title, html);
   }
 
+  function renderPageLinks(items) {
+    if (!items || !items.length) {
+      return;
+    }
+    var html = '';
+    items.forEach(function (page) {
+      html += '<div class="dg-kichel-page">';
+      html += '<strong>' + (page.title || page.slug) + '</strong>';
+      html += '<ul class="dg-kichel-links">';
+      if (page.view_href) {
+        html += '<li><a href="' + page.view_href + '" target="_blank" rel="noopener">' + (page.view_label || 'Ansehen') + '</a></li>';
+      }
+      if (page.edit_href) {
+        html += '<li><a href="' + page.edit_href + '">' + (page.edit_label || 'Bearbeiten') + '</a></li>';
+      }
+      html += '</ul></div>';
+    });
+    appendSection('Pflichtseiten — Links', html);
+  }
+
   function renderCodeHits(items) {
     if (!items || !items.length) {
       return;
@@ -141,6 +161,8 @@
         var topics = (data.topics || []).map(function (t) {
           return { label: t.title, href: t.href };
         });
+        renderPageLinks(data.page_links || []);
+        renderLinks('Übersicht', data.overview_links || [], 'label', 'href');
         renderLinks('Fachthemen', topics, 'label', 'href');
         renderLinks('Navigation', data.navigation || [], 'label', 'href');
         renderCodeHits(data.code || []);

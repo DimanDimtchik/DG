@@ -88,9 +88,9 @@ return [
     ],
     [
         'id' => 'rechtstexte',
-        'keywords' => ['impressum', 'datenschutz', 'agb', 'widerruf', 'rechtstext', 'mehrprodukt', 'produkt tabs'],
+        'keywords' => ['mehrprodukt', 'produkt tabs', 'rechtstext varianten'],
         'title' => 'Rechtstexte / Mehrprodukt',
-        'answer' => 'Impressum, Datenschutz, AGB und Widerruf — optional je Produktgruppe mit Tabs: Einstellungen → Rechtliches / Produkte. Öffentlich z. B. /datenschutz?produkt=schluessel. Siehe docs/RECHTSTEXTE-MEHRPRODUKT.md.',
+        'answer' => 'Mehrprodukt-Tabs für Rechtstexte: Einstellungen → Rechtliches / Produkte aktivieren. Öffentlich z. B. /datenschutz?produkt=schluessel. Für Links zu allen Pflichtseiten fragen Sie: „Wo finde ich Pflichtseiten?“',
         'href' => '/app?page=einstellungen&tab=agb',
         'tags' => ['website', 'recht'],
     ],

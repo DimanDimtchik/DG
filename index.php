@@ -3308,6 +3308,11 @@ switch ($path) {
         } elseif ($page === 'website-seiten' || $page === 'website-seite-form' || $page === 'website-formulare' || $page === 'website-formular-form' || $page === 'website-formular-inbox' || $page === 'website-statistik' || $page === 'website-menu' || $page === 'website-chrome' || $page === 'website-design') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'kichel-protokoll' && RoleResolver::isAdmin($user)) {
+            $kichelLogRows = KichelProtocolRepository::recent(200);
+            $contentTemplate = 'modules/kichel-protokoll';
+            $title = 'Kichel-Protokoll';
+            $currentPage = 'kichel-protokoll';
         } elseif ($page === 'support-freigabe' && MenuRegistry::canAccess($user, 'support-freigabe')) {
             $supportGrant = SupportAccessService::activeGrant();
             $contentTemplate = 'modules/support-freigabe';

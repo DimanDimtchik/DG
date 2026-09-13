@@ -60,7 +60,7 @@ final class KichelMoneyLogic
             "Skonto ist ein Preisnachlass bei früher Zahlung (Abzug vom Rechnungsbetrag).\n\n"
             . "Rechnung netto: %s €\n"
             . "Skonto %s %%: − %s €\n"
-            . "Zahlbetrag mit Skonto: **%s €**",
+            . "Zahlbetrag mit Skonto: %s €",
             self::formatMoney($net),
             self::formatMoney($percent),
             self::formatMoney($calc['discount']),

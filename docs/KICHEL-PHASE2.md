@@ -48,3 +48,7 @@ Nutzerfrage
 | `src/Kichel/KichelMoneyLogic.php` | Beträge in PHP |
 | `src/Kichel/KichelOllamaClient.php` | Ollama nur `phrase()`, Fakten unveränderlich |
 | `src/Kichel/KichelAssistant.php` | Orchestrierung |
+| `src/Kichel/KichelLegalPages.php` | Pflichtseiten mit Ansehen-/Bearbeiten-Links |
+| `src/Kichel/KichelProtocolRepository.php` | Anfragen-Protokoll (Admin) |
+| Migration **067** | Tabelle `dg_kichel_log` |
+| `/app?page=kichel-protokoll` | Protokoll-Ansicht (nur Admin) |

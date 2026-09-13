@@ -31,6 +31,7 @@ final class KichelAssistant
 
         $moneyAnswer = KichelMoneyLogic::tryAnswer($query);
         $moneyFacts = $moneyAnswer['facts'] ?? [];
+        $legalAnswer = KichelLegalPages::tryAnswer($query, $tokens);
 
         $topicMatches = KichelKnowledge::matchTopics($tokens);
         $navigation = KichelKnowledge::navigationHints($user, $tokens);
@@ -41,13 +42,15 @@ final class KichelAssistant
         $topics = array_map(static fn (array $m): array => $m['topic'], $topicMatches);
         $answerParts = [];
 
-        if ($moneyAnswer !== null) {
+        if ($legalAnswer !== null) {
+            $answerParts[] = (string) $legalAnswer['answer'];
+        } elseif ($moneyAnswer !== null) {
             $baseMoneyAnswer = (string) $moneyAnswer['answer'];
             $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
             $answerParts[] = $phrased ?? $baseMoneyAnswer;
         }
 
-        if ($topics !== []) {
+        if ($topics !== [] && $legalAnswer === null) {
             foreach (array_slice($topics, 0, 2) as $topic) {
                 $answerParts[] = (string) ($topic['answer'] ?? '');
             }
@@ -110,6 +113,10 @@ final class KichelAssistant
                 'facts' => $moneyFacts,
                 'computed_by' => 'php',
             ];
+        }
+        if ($legalAnswer !== null) {
+            $response['page_links'] = $legalAnswer['page_links'];
+            $response['overview_links'] = $legalAnswer['overview_links'];
         }
 
         return $response;

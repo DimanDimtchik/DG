@@ -28,6 +28,13 @@ final class KichelApi
         $query = trim((string) ($_POST['query'] ?? ''));
         $result = KichelAssistant::answer($user, $query);
 
+        KichelProtocolRepository::record(
+            $user->id,
+            $query,
+            (string) ($result['answer'] ?? ''),
+            $result
+        );
+
         echo json_encode([
             'success' => true,
             'data' => $result,
