@@ -44,8 +44,12 @@ final class KichelAssistant
         } elseif ($moneyAnswer !== null) {
             $baseMoneyAnswer = (string) $moneyAnswer['answer'];
             $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
-            $answerParts[] = 'Du meinst wahrscheinlich eine Rechenfrage im CRM. '
+            $answerParts[] = 'Du meinst wahrscheinlich eine Skonto-Rechnung.' . "\n\n"
                 . ($phrased ?? $baseMoneyAnswer);
+            $actionLinks[] = [
+                'label' => 'Skonto-Einstellungen öffnen',
+                'href' => '/app?page=einstellungen&tab=payment-terms',
+            ];
         } elseif ($topics !== []) {
             $topic = $topics[0];
             $title = (string) ($topic['title'] ?? 'dieses Thema');
@@ -53,8 +57,9 @@ final class KichelAssistant
                 . self::plainLanguage((string) ($topic['answer'] ?? ''));
             $href = (string) ($topic['href'] ?? '');
             if ($href !== '') {
+                $label = trim((string) ($topic['action_label'] ?? ''));
                 $actionLinks[] = [
-                    'label' => 'Direkt dorthin',
+                    'label' => $label !== '' ? $label : 'Direkt dorthin',
                     'href' => $href,
                 ];
             }

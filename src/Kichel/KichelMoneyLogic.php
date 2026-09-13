@@ -57,17 +57,16 @@ final class KichelMoneyLogic
 
         $calc = self::skontoPayment($net, $percent);
         $answer = sprintf(
-            "Skonto ist ein Preisnachlass bei früher Zahlung (Abzug vom Rechnungsbetrag).\n\n"
-            . "Rechnung netto: %s €\n"
+            "Rechnung: %s €\n"
             . "Skonto %s %%: − %s €\n"
-            . "Zahlbetrag mit Skonto: %s €",
+            . "Du zahlst: %s €",
             self::formatMoney($net),
             self::formatMoney($percent),
             self::formatMoney($calc['discount']),
             self::formatMoney($calc['payable'])
         );
         if ($days > 0) {
-            $answer .= sprintf("\n\nZahlungsziel für Skonto: innerhalb von %d Tagen.", $days);
+            $answer .= sprintf("\n\nSkonto gilt bei Zahlung innerhalb von %d Tagen.", $days);
         }
 
         return [

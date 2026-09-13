@@ -24,9 +24,9 @@ $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUse
     <div class="dg-kichel-chips">
       <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo trage ich die USt-ID ein?">USt-ID</button>
       <button type="button" class="dg-kichel-chip" data-kichel-chip="Skonto und Mahnung">Skonto</button>
-      <button type="button" class="dg-kichel-chip" data-kichel-chip="dg_contacts contact_note">Kontakt Bemerkung</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Interne Kontakt-Bemerkung">Kontakt-Notiz</button>
       <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Pflichtseiten?">Pflichtseiten</button>
-      <button type="button" class="dg-kichel-chip" data-kichel-chip="Belegkette Workflow">Belegkette</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Belege?">Belege</button>
     </div>
     <div class="dg-kichel-messages" data-kichel-messages>
       <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe dir, im CRM schnell den richtigen Weg zu finden — stell einfach deine Frage oder wähle ein Stichwort.</div>
