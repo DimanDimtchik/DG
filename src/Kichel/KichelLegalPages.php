@@ -104,14 +104,18 @@ final class KichelLegalPages
 
     private static function multiProductEnabled(): bool
     {
-        return class_exists('LegalProductSettings') && LegalProductSettings::multiProductEnabled();
+        if (!is_readable(DG_ROOT . '/src/Legal/LegalProductSettings.php')) {
+            return false;
+        }
+
+        return LegalProductSettings::multiProductEnabled();
     }
 
     private static function editHrefForSlug(string $slug): string
     {
         if (self::multiProductEnabled()) {
             return '/app?page=website-recht&slug=' . rawurlencode($slug)
-                . '&product=' . rawurlencode(LegalProductSettings::DEFAULT_PRODUCT_KEY);
+                . '&product=' . rawurlencode('allgemein');
         }
 
         if (Database::isConfigured() && class_exists('WebsitePageRepository')) {
