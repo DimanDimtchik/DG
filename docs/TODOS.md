@@ -30,7 +30,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
 - [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
-- [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
+- [x] **ELSTER Hersteller-ID `34573`** freigegeben (2026-09-13) — in Einstellungen → ELSTER eintragen
+- [ ] **ELSTER Phase 2:** ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
 - [ ] **Rechtstexte Mehrprodukt:** Migration **066** · KlarWin/HP-LaserJet-Texte in Tabs · `docs/RECHTSTEXTE-MEHRPRODUKT.md`
 
 ---

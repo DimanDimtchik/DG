@@ -68,7 +68,7 @@ final class ElsterEricClient
             'label' => 'ELSTER-Hersteller-ID',
             'ok' => $mfg !== '',
             'detail' => $mfg !== ''
-                ? 'Hersteller-ID hinterlegt.'
+                ? 'Hersteller-ID ' . $mfg . ' hinterlegt.'
                 : 'Bei ELSTER als Softwarehersteller registrieren (docs/ELSTER-ERIC-TODO.md).',
         ];
 

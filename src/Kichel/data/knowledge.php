@@ -71,9 +71,9 @@ return [
     ],
     [
         'id' => 'elster',
-        'keywords' => ['elster', 'eric', 'ustva', 'steuererklärung', 'übermittlung'],
+        'keywords' => ['elster', 'eric', 'ustva', 'steuererklärung', 'übermittlung', 'hersteller-id', 'herstellerid', '34573'],
         'title' => 'ELSTER / ERiC',
-        'answer' => 'Die ELSTER-Vorbereitung findest du unter Einstellungen → Buchhaltung → ELSTER / ERiC. Live-Übermittlung ist hier noch nicht möglich — nutze vorerst den CSV-Modus.',
+        'answer' => 'ELSTER-Einstellungen findest du unter Einstellungen → ELSTER / ERiC. Die Hersteller-ID für dieses CRM ist 34573. Live-Übermittlung geht erst nach dem Server-Umzug — bis dahin CSV-Modus nutzen.',
         'href' => '/app?page=einstellungen&tab=elster',
         'action_label' => 'ELSTER-Einstellungen öffnen',
         'tags' => ['steuer'],
