@@ -81,6 +81,8 @@
             —
           <?php endif; ?>
         </dd>
+        <dt>Bemerkung (intern)</dt>
+        <dd><?= $contact->contactNote !== '' ? nl2br(View::escape($contact->contactNote)) : '—' ?></dd>
       </dl>
     </section>
 

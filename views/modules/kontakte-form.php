@@ -167,6 +167,11 @@ if ($isCompanyForm && $companyEmployees === []) {
       <label class="dg-field"><span>Telefon 1</span><input name="phone_1" value="<?= View::escape($form['phone_1']) ?>"></label>
       <label class="dg-field"><span>Telefon 2</span><input name="phone_2" value="<?= View::escape($form['phone_2']) ?>"></label>
       <label class="dg-field dg-field--wide"><span>Website</span><input name="website" value="<?= View::escape($form['website']) ?>"></label>
+      <label class="dg-field dg-field--wide">
+        <span>Bemerkung (intern)</span>
+        <textarea name="contact_note" rows="3" placeholder="z. B. Geräte-IP: 192.168.1.42 (OpenStage, Drucker …)"><?= View::escape($form['contact_note'] ?? '') ?></textarea>
+        <small class="dg-field-hint">Nur im CRM — wird nicht an LDAP/OpenStage übertragen. Suche findet Einträge auch anhand der Bemerkung.</small>
+      </label>
       <?php if (!$isEdit) : ?>
         <?php
           $mailAddressConfig = MailAddressSettings::config();
