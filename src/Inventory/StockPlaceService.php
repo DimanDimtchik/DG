@@ -11,8 +11,12 @@ final class StockPlaceService
         }
 
         $pdo = Database::pdo();
-        $place = StockStructureRepository::findPlace($placeId);
-        if ($place === null) {
+        $stmt = $pdo->prepare(
+            'SELECT place_mode, fixed_article_id FROM dg_stock_places WHERE id = :id AND is_active = 1 LIMIT 1'
+        );
+        $stmt->execute(['id' => $placeId]);
+        $place = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($place === false) {
             return false;
         }
 
