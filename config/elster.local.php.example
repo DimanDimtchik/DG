@@ -19,7 +19,7 @@ return [
     // Pfad zur entpackten ERiC-Linux-Bibliothek auf dem Server:
     'eric_path' => '/opt/eric',
 
-    // ELSTER-Hersteller-ID (nach Registrierung als Softwarehersteller, Ganz Soft CRM: 34573):
+    // Kennung nach Registrierung als ELSTER-Softwarehersteller (siehe docs/ELSTER-ERIC-TODO.md):
     'manufacturer_id' => '',
 
     // Interner ERiC-Worker (localhost, nicht öffentlich ohne Auth):

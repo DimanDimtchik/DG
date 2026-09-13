@@ -47,8 +47,11 @@ $mode = (string) ($cfg['mode'] ?? ElsterSettings::MODE_CSV);
     </label>
 
     <label class="dg-field">
-      <span>Hersteller-ID (Vorbereitung)</span>
-      <input type="text" name="elster_manufacturer_id" value="<?= View::escape((string) ($cfg['manufacturer_id'] ?? '')) ?>" placeholder="nach ELSTER-Registrierung">
+      <span>Hersteller-Kennung (Software)</span>
+      <input type="text" name="elster_manufacturer_id" value="<?= View::escape((string) ($cfg['manufacturer_id'] ?? '')) ?>" placeholder="nach ELSTER-Freigabe als Softwarehersteller">
+      <small class="dg-field-hint">
+        Kennung für ERiC — nur für die Software-Anbindung, nicht für Endnutzer im CRM.
+      </small>
     </label>
 
     <label class="dg-field dg-field--wide">
