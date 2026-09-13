@@ -1,0 +1,206 @@
+/* Kichel — CRM-Hilfe-Assistent */
+
+.dg-kichel-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 9000;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem;
+  cursor: pointer;
+  background: var(--dg-primary);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dg-kichel-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+}
+
+.dg-kichel-fab img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.dg-kichel-panel {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5.25rem;
+  z-index: 9001;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: min(32rem, calc(100vh - 7rem));
+  display: flex;
+  flex-direction: column;
+  background: var(--dg-surface);
+  border: 1px solid var(--dg-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+
+.dg-kichel-panel[hidden] {
+  display: none !important;
+}
+
+.dg-kichel-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--dg-surface-accent);
+  border-bottom: 1px solid var(--dg-border);
+}
+
+.dg-kichel-panel__head img {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.dg-kichel-panel__head strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--dg-text);
+}
+
+.dg-kichel-panel__head span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--dg-text-muted);
+}
+
+.dg-kichel-panel__close {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--dg-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.dg-kichel-panel__body {
+  padding: 0.85rem;
+  overflow: auto;
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.dg-kichel-msg {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.dg-kichel-msg--bot {
+  background: var(--dg-surface-muted);
+  border: 1px solid var(--dg-border);
+}
+
+.dg-kichel-msg--user {
+  background: color-mix(in srgb, var(--dg-primary) 12%, var(--dg-surface));
+  border: 1px solid var(--dg-border-accent);
+  margin-left: 1.5rem;
+}
+
+.dg-kichel-section {
+  margin-top: 0.65rem;
+}
+
+.dg-kichel-section h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dg-text-muted);
+}
+
+.dg-kichel-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dg-kichel-links li + li {
+  margin-top: 0.25rem;
+}
+
+.dg-kichel-links a {
+  color: var(--dg-primary);
+  text-decoration: none;
+}
+
+.dg-kichel-links a:hover {
+  text-decoration: underline;
+}
+
+.dg-kichel-hit {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.45rem;
+  background: var(--dg-body-bg);
+  border-radius: 6px;
+  margin-top: 0.25rem;
+  word-break: break-word;
+}
+
+.dg-kichel-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-top: 1px solid var(--dg-border);
+  background: var(--dg-surface);
+}
+
+.dg-kichel-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--dg-border);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+}
+
+.dg-kichel-form button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  background: var(--dg-primary);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dg-kichel-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.dg-kichel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.dg-kichel-chip {
+  border: 1px solid var(--dg-border);
+  background: var(--dg-surface);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--dg-text-secondary);
+}
+
+.dg-kichel-chip:hover {
+  background: var(--dg-surface-accent);
+}

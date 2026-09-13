@@ -419,6 +419,9 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script src="<?= View::escape(Asset::url('/assets/js/website-form-builder.js')) ?>" defer></script>
   <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
+  <?php if (RoleResolver::isStaff($user)) : ?>
+    <?php View::render('partials/kichel-widget'); ?>
+  <?php endif; ?>
   <?php if (!CookieConsent::hasDecided()) : ?>
     <style><?= CookieConsent::bannerCss() ?></style>
     <?= CookieConsent::bannerHtml() ?>

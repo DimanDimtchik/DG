@@ -331,6 +331,10 @@ switch ($path) {
         KdvAccountApi::handle($path);
         exit;
 
+    case '/api/kichel':
+        KichelApi::handle();
+        exit;
+
     case '/api/finanzamt-lookup':
         FinanzamtLookupApi::handle();
         exit;

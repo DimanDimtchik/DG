@@ -10,6 +10,7 @@ Stand: **2026-09-13** — bei jeder Session zuerst aktualisieren, wenn sich Bran
 
 | Branch | Status |
 |--------|--------|
+| `cursor/kichel-assistant-1dc6` | **Kichel** — Fachfragen, Code-/DB-Suche, Widget (noch nicht auf master) |
 | `master` | **Einzige Produktionslinie** — Buchhaltung, Zeiterfassung, Bank-Geisterumsätze (064), Website-Menü-Icons |
 
 **Hygiene:** Feature-Branches (`cursor/…`) nach Merge in `master` lokal + remote löschen. **Keine offenen `cursor/`-Branches mehr.**
@@ -80,6 +81,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 | Thema | Doku |
 |-------|------|
+| **Kichel Phase 2** (optional Ollama/RAG auf Hetzner) | Branch `cursor/kichel-assistant-1dc6` |
 | **Multi-Firma** (Switcher, Tochter, Umfirmierung unterjährig) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) |
 | Zweitfirma −20 %, Umfirmierung = 1 Paket + Archiv-Slot | Abschnitt 7 im Konzept |
 

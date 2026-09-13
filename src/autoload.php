@@ -261,6 +261,11 @@ spl_autoload_register(static function (string $class): void {
         'AuditLog' => '/src/Security/AuditLog.php',
         'LicenseGuard' => '/src/Security/LicenseGuard.php',
         'FileIntegrity' => '/src/Security/FileIntegrity.php',
+        'KichelKnowledge' => '/src/Kichel/KichelKnowledge.php',
+        'KichelCodeSearch' => '/src/Kichel/KichelCodeSearch.php',
+        'KichelSchemaCatalog' => '/src/Kichel/KichelSchemaCatalog.php',
+        'KichelAssistant' => '/src/Kichel/KichelAssistant.php',
+        'KichelApi' => '/src/Kichel/KichelApi.php',
     ];
 
     if (!isset($map[$class])) {
