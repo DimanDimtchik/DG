@@ -771,6 +771,72 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Lagerstruktur
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (
+                isset($_POST['stock_location_save'])
+                || isset($_POST['stock_location_delete'])
+                || isset($_POST['stock_hall_save'])
+                || isset($_POST['stock_hall_delete'])
+                || isset($_POST['stock_shelf_save'])
+                || isset($_POST['stock_shelf_delete'])
+                || isset($_POST['stock_places_save'])
+            )
+        ) {
+            $ltab = isset($_GET['ltab']) ? preg_replace('/[^a-z]/', '', (string) $_GET['ltab']) : '';
+            if ($ltab === '') {
+                if (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
+                    $ltab = 'hallen';
+                } elseif (isset($_POST['stock_shelf_save']) || isset($_POST['stock_shelf_delete']) || isset($_POST['stock_places_save'])) {
+                    $ltab = 'regale';
+                } else {
+                    $ltab = 'orte';
+                }
+            }
+            $redirect = SettingsRegistry::tabUrl('lager-struktur') . '&ltab=' . rawurlencode($ltab);
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    if (isset($_POST['stock_location_save'])) {
+                        $newId = StockStructureRepository::saveLocation($_POST);
+                        Flash::set('success', 'Lagerort gespeichert.');
+                        $redirect .= '&edit=' . $newId;
+                    } elseif (isset($_POST['stock_location_delete'])) {
+                        StockStructureRepository::deleteLocation((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Lagerort gelöscht.');
+                    } elseif (isset($_POST['stock_hall_save'])) {
+                        $newId = StockStructureRepository::saveHall($_POST);
+                        Flash::set('success', 'Halle gespeichert.');
+                        $redirect .= '&edit=' . $newId;
+                    } elseif (isset($_POST['stock_hall_delete'])) {
+                        StockStructureRepository::deleteHall((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Halle gelöscht.');
+                    } elseif (isset($_POST['stock_shelf_save'])) {
+                        $newId = StockStructureRepository::saveShelf($_POST);
+                        Flash::set('success', 'Regal gespeichert.');
+                        $redirect .= '&edit=' . $newId;
+                    } elseif (isset($_POST['stock_shelf_delete'])) {
+                        StockStructureRepository::deleteShelf((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Regal gelöscht.');
+                    } elseif (isset($_POST['stock_places_save'])) {
+                        $shelfId = (int) ($_POST['shelf_id'] ?? 0);
+                        $places = is_array($_POST['places'] ?? null) ? $_POST['places'] : [];
+                        StockStructureRepository::savePlacesFromPost($shelfId, $places);
+                        Flash::set('success', 'Stellplätze gespeichert.');
+                        $redirect .= '&edit=' . $shelfId;
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Kalender-E-Mail-Vorlagen
         if (
             $page === 'einstellungen'
@@ -2376,6 +2442,13 @@ switch ($path) {
         $crmThemeConfig = CrmThemeSettings::forForm();
         $departmentsData = DepartmentRepository::allWithMembers();
         $departmentEmployees = DepartmentRepository::assignableEmployees();
+        $lagerStrukturTab = isset($_GET['ltab']) && in_array($_GET['ltab'], ['orte', 'hallen', 'regale'], true)
+            ? (string) $_GET['ltab']
+            : 'orte';
+        $stockLocations = StockStructureRepository::allLocations();
+        $stockHalls = StockStructureRepository::allHalls();
+        $stockShelves = StockStructureRepository::allShelves();
+        $stockLocationOptions = StockStructureRepository::locationOptions();
         if (Database::isConfigured()) {
             try {
                 CalendarStaffRepository::ensureSeeded();
@@ -3832,6 +3905,11 @@ switch ($path) {
         $crmThemeConfig = $crmThemeConfig ?? CrmThemeSettings::forForm();
         $departmentsData = $departmentsData ?? DepartmentRepository::allWithMembers();
         $departmentEmployees = $departmentEmployees ?? DepartmentRepository::assignableEmployees();
+        $lagerStrukturTab = $lagerStrukturTab ?? 'orte';
+        $stockLocations = $stockLocations ?? StockStructureRepository::allLocations();
+        $stockHalls = $stockHalls ?? StockStructureRepository::allHalls();
+        $stockShelves = $stockShelves ?? StockStructureRepository::allShelves();
+        $stockLocationOptions = $stockLocationOptions ?? StockStructureRepository::locationOptions();
         $calendarTeamTab = $calendarTeamTab ?? 'bereiche';
         $calendarAreas = $calendarAreas ?? [];
         $calendarEmployees = $calendarEmployees ?? [];
@@ -4034,6 +4112,11 @@ switch ($path) {
             'crmThemeConfig',
             'departmentsData',
             'departmentEmployees',
+            'lagerStrukturTab',
+            'stockLocations',
+            'stockHalls',
+            'stockShelves',
+            'stockLocationOptions',
             'calendarTeamTab',
             'calendarAreas',
             'calendarEmployees',

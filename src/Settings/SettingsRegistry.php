@@ -108,6 +108,16 @@ final class SettingsRegistry
                     ],
                 ],
             ],
+            'lager' => [
+                'label' => 'Lager',
+                'tabs' => [
+                    'lager-struktur' => [
+                        'label' => 'Lagerstruktur',
+                        'lead' => 'Lagerorte, Hallen, Regale und Stellplätze — Stammdaten für Positionscodes.',
+                        'template' => 'lager-struktur',
+                    ],
+                ],
+            ],
             'buchhaltung' => [
                 'label' => 'Buchhaltung',
                 'tabs' => [
@@ -266,6 +276,15 @@ final class SettingsRegistry
             }
             if (isset($_POST['db_action'])) {
                 return 'datenbank';
+            }
+            if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'])) {
+                return 'lager-struktur';
+            }
+            if (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
+                return 'lager-struktur';
+            }
+            if (isset($_POST['stock_shelf_save']) || isset($_POST['stock_shelf_delete']) || isset($_POST['stock_places_save'])) {
+                return 'lager-struktur';
             }
         }
 

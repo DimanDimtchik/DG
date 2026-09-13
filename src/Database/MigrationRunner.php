@@ -211,6 +211,8 @@ final class MigrationRunner
             '065_stock_management.sql' => self::tableExists($pdo, 'dg_stock_movements')
                 && self::columnExists($pdo, 'dg_calendar_articles', 'track_stock'),
             '066_stock_position.sql' => self::columnExists($pdo, 'dg_calendar_articles', 'stock_ort'),
+            '067_stock_structure.sql' => self::tableExists($pdo, 'dg_stock_locations')
+                && self::columnExists($pdo, 'dg_calendar_articles', 'stock_location_id'),
             default => false,
         };
     }
@@ -308,6 +310,7 @@ final class MigrationRunner
             '064_bank_tx_fingerprint.sql' => true,
             '065_stock_management.sql' => true,
             '066_stock_position.sql' => true,
+            '067_stock_structure.sql' => true,
         ];
     }
 

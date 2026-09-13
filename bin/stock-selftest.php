@@ -77,4 +77,51 @@ if ($code !== 'WH1-H2-R3-P4') {
     exit(1);
 }
 
-echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Positionscode-Logik)\n";
+$hasStructure = $pdo->query("SHOW TABLES LIKE 'dg_stock_locations'")->fetchColumn() !== false;
+if (!$hasStructure) {
+    $errors[] = 'Migration 067 nicht angewendet (dg_stock_locations fehlt).';
+}
+
+if ($hasStructure) {
+    $testCode = 'TST-LOC-' . date('His');
+    $locId = StockStructureRepository::saveLocation([
+        'code' => $testCode,
+        'name' => 'Selftest Ort',
+        'function_text' => 'Testlager',
+        'is_active' => 1,
+    ]);
+    $hallId = StockStructureRepository::saveHall([
+        'location_id' => $locId,
+        'code' => 'H1',
+        'usage_text' => 'Trockenlager',
+        'is_active' => 1,
+    ]);
+    $shelfId = StockStructureRepository::saveShelf([
+        'location_id' => $locId,
+        'hall_id' => $hallId,
+        'code' => 'R1',
+        'shelf_type' => 'shelf',
+        'slot_count' => 2,
+        'is_active' => 1,
+    ]);
+    $places = StockStructureRepository::placesForShelf($shelfId);
+    if (count($places) < 2) {
+        $errors[] = 'Stellplätze wurden nicht automatisch angelegt.';
+    }
+    $free = StockPlaceService::suggestFreePlaces($hallId, null, 5);
+    if ($free === []) {
+        $errors[] = 'Keine freien flexiblen Plätze gefunden.';
+    }
+    StockStructureRepository::deleteShelf($shelfId);
+    StockStructureRepository::deleteHall($hallId);
+    StockStructureRepository::deleteLocation($locId);
+}
+
+if ($errors !== []) {
+    foreach ($errors as $err) {
+        fwrite(STDERR, 'FAIL: ' . $err . "\n");
+    }
+    exit(1);
+}
+
+echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Lagerstruktur)\n";

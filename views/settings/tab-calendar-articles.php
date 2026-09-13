@@ -20,6 +20,12 @@ foreach ($calendarAreas as $area) {
     $areaNames[(int) $area['id']] = (string) $area['name'];
 }
 $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions());
+$stockLocationOptions = StockStructureRepository::locationOptions();
+$stockStructureJson = json_encode([
+    'halls' => StockStructureRepository::allHalls(),
+    'shelves' => StockStructureRepository::allShelves(),
+    'places' => StockStructureRepository::placeOptions(),
+], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
 ?>
 <div class="dg-form">
   <?php if (!$dbConnected) : ?>
@@ -100,6 +106,11 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
                       'is_active' => (int) $article['is_active'],
                       'track_stock' => (int) ($article['track_stock'] ?? 0),
                       'min_stock' => (float) ($article['min_stock'] ?? 0),
+                      'stock_location_id' => (int) ($article['stock_location_id'] ?? 0),
+                      'stock_hall_id' => (int) ($article['stock_hall_id'] ?? 0),
+                      'stock_shelf_id' => (int) ($article['stock_shelf_id'] ?? 0),
+                      'stock_place_id' => (int) ($article['stock_place_id'] ?? 0),
+                      'stock_place_mode' => (string) ($article['stock_place_mode'] ?? 'flexible'),
                       'stock_ort' => (string) ($article['stock_ort'] ?? ''),
                       'stock_halle' => (string) ($article['stock_halle'] ?? ''),
                       'stock_regal' => (string) ($article['stock_regal'] ?? ''),
@@ -226,26 +237,46 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
             <span>Mindestbestand</span>
             <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
+          <p class="dg-field-hint dg-field--wide">Stammdaten unter <a href="<?= View::escape(SettingsRegistry::tabUrl('lager-struktur')) ?>">Einstellungen → Lagerstruktur</a>.</p>
           <label class="dg-field">
-            <span>Ort</span>
-            <input type="text" name="stock_ort" id="dg_article_stock_ort" maxlength="32" placeholder="z. B. WH1" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <span>Lagerort</span>
+            <select name="stock_location_id" id="dg_article_stock_location"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+              <?php foreach ($stockLocationOptions as $opt) : ?>
+                <option value="<?= (int) $opt['id'] ?>"><?= View::escape($opt['label']) ?></option>
+              <?php endforeach; ?>
+            </select>
           </label>
           <label class="dg-field">
             <span>Halle</span>
-            <input type="text" name="stock_halle" id="dg_article_stock_halle" maxlength="32" placeholder="z. B. H02" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <select name="stock_hall_id" id="dg_article_stock_hall"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+            </select>
           </label>
           <label class="dg-field">
-            <span>Regal</span>
-            <input type="text" name="stock_regal" id="dg_article_stock_regal" maxlength="32" placeholder="z. B. R03" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <span>Regal / Stellplätze</span>
+            <select name="stock_shelf_id" id="dg_article_stock_shelf"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+            </select>
           </label>
           <label class="dg-field">
             <span>Platz</span>
-            <input type="text" name="stock_platz" id="dg_article_stock_platz" maxlength="32" placeholder="z. B. P12" autocomplete="off"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <select name="stock_place_id" id="dg_article_stock_place"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Platz-Modus</span>
+            <select name="stock_place_mode" id="dg_article_stock_place_mode"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="flexible">flexibel (Platz bei Einnahme)</option>
+              <option value="fixed">fest (Ein-/Ausgang nur hier)</option>
+            </select>
           </label>
           <p class="dg-field dg-field--wide dg-field-hint" id="dg_article_stock_position_preview" hidden>
             Positionscode: <strong id="dg_article_stock_position_code">—</strong>
           </p>
-          <p class="dg-field-hint">Positionscode = Ort-Halle-Regal-Platz (alle vier Felder, wenn ein Feld gesetzt ist). Bestandsänderungen aus Belegen unter <a href="/app?page=lager">Lager</a>.</p>
+          <p class="dg-field-hint">Positionscode = Ort-Halle-Regal-Platz. Feste Plätze erfordern einen konkreten Stellplatz. Bestandsänderungen aus Belegen unter <a href="/app?page=lager">Lager</a>.</p>
+          <script type="application/json" id="dg-stock-structure-data"><?= View::escape($stockStructureJson) ?></script>
         </fieldset>
       </div>
     </div>

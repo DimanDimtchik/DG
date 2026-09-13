@@ -25,12 +25,22 @@
   const initialStockWrap = document.getElementById('dg_article_initial_stock_wrap');
   const initialStockInput = document.getElementById('dg_article_initial_stock');
   const minStockInput = document.getElementById('dg_article_min_stock');
-  const stockOrtInput = document.getElementById('dg_article_stock_ort');
-  const stockHalleInput = document.getElementById('dg_article_stock_halle');
-  const stockRegalInput = document.getElementById('dg_article_stock_regal');
-  const stockPlatzInput = document.getElementById('dg_article_stock_platz');
+  const stockLocationSelect = document.getElementById('dg_article_stock_location');
+  const stockHallSelect = document.getElementById('dg_article_stock_hall');
+  const stockShelfSelect = document.getElementById('dg_article_stock_shelf');
+  const stockPlaceSelect = document.getElementById('dg_article_stock_place');
+  const stockPlaceModeSelect = document.getElementById('dg_article_stock_place_mode');
   const stockPositionPreview = document.getElementById('dg_article_stock_position_preview');
   const stockPositionCodeEl = document.getElementById('dg_article_stock_position_code');
+  const stockStructureEl = document.getElementById('dg-stock-structure-data');
+  let stockStructure = { halls: [], shelves: [], places: [] };
+  if (stockStructureEl) {
+    try {
+      stockStructure = JSON.parse(stockStructureEl.textContent || '{}');
+    } catch (error) {
+      stockStructure = { halls: [], shelves: [], places: [] };
+    }
+  }
   const formTitle = document.getElementById('dg-article-form-title');
   const formPanel = document.getElementById('dg-article-form-panel');
   const submitBtn = document.getElementById('dg-article-submit');
@@ -52,31 +62,125 @@
     }
   }
 
-  function sanitizePositionPart(value) {
-    return String(value || '').trim().replace(/\s+/g, '');
+  function fillSelect(select, options, selectedValue, emptyLabel) {
+    if (!select) {
+      return;
+    }
+    select.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = emptyLabel || '— optional —';
+    select.appendChild(empty);
+    options.forEach(function (opt) {
+      const option = document.createElement('option');
+      option.value = String(opt.id);
+      option.textContent = opt.label;
+      if (String(selectedValue || '') === String(opt.id)) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
   }
 
-  function composePositionCode() {
-    const parts = [
-      sanitizePositionPart(stockOrtInput && stockOrtInput.value),
-      sanitizePositionPart(stockHalleInput && stockHalleInput.value),
-      sanitizePositionPart(stockRegalInput && stockRegalInput.value),
-      sanitizePositionPart(stockPlatzInput && stockPlatzInput.value),
-    ];
-    if (parts.every(function (part) { return part === ''; })) {
+  function selectedPlaceCode() {
+    if (!stockPlaceSelect || !stockPlaceSelect.value) {
       return '';
     }
-    return parts.join('-');
+    const place = (stockStructure.places || []).find(function (p) {
+      return String(p.id) === String(stockPlaceSelect.value);
+    });
+    return place && place.position_code ? place.position_code : '';
   }
 
   function updatePositionPreview() {
-    const code = composePositionCode();
+    const code = selectedPlaceCode();
     if (stockPositionPreview) {
       stockPositionPreview.hidden = !(catalogKindInput && catalogKindInput.value === 'product');
     }
     if (stockPositionCodeEl) {
       stockPositionCodeEl.textContent = code !== '' ? code : '—';
     }
+  }
+
+  function refreshStockCascade(preserve) {
+    const locationId = stockLocationSelect ? stockLocationSelect.value : '';
+    const hallId = preserve && stockHallSelect ? stockHallSelect.value : '';
+    const shelfId = preserve && stockShelfSelect ? stockShelfSelect.value : '';
+    const placeId = preserve && stockPlaceSelect ? stockPlaceSelect.value : '';
+
+    const halls = (stockStructure.halls || []).filter(function (h) {
+      return !locationId || String(h.location_id) === String(locationId);
+    }).map(function (h) {
+      return {
+        id: h.id,
+        label: (h.location_code || '') + ' / ' + (h.code || ''),
+      };
+    });
+    fillSelect(stockHallSelect, halls, hallId);
+
+    const activeHallId = stockHallSelect ? stockHallSelect.value : '';
+    const shelves = (stockStructure.shelves || []).filter(function (s) {
+      if (locationId && String(s.location_id) !== String(locationId)) {
+        return false;
+      }
+      if (activeHallId && String(s.hall_id) !== String(activeHallId)) {
+        return false;
+      }
+      return true;
+    }).map(function (s) {
+      const typeLabel = s.shelf_type === 'floor_slots' ? 'Stellplätze' : 'Regal';
+      return {
+        id: s.id,
+        label: (s.location_code || '') + ' / ' + (s.hall_code || '') + ' / ' + (s.code || '') + ' (' + typeLabel + ')',
+      };
+    });
+    fillSelect(stockShelfSelect, shelves, shelfId);
+
+    const activeShelfId = stockShelfSelect ? stockShelfSelect.value : '';
+    const articleId = idInput ? Number(idInput.value || 0) : 0;
+    const places = (stockStructure.places || []).filter(function (p) {
+      if (activeShelfId && String(p.shelf_id) !== String(activeShelfId)) {
+        return false;
+      }
+      if (!activeShelfId && activeHallId) {
+        const shelf = (stockStructure.shelves || []).find(function (s) {
+          return String(s.id) === String(p.shelf_id);
+        });
+        if (!shelf || String(shelf.hall_id) !== String(activeHallId)) {
+          return false;
+        }
+      }
+      if (p.place_mode === 'fixed' && p.fixed_article_id && articleId > 0 && Number(p.fixed_article_id) !== articleId) {
+        return false;
+      }
+      return true;
+    }).map(function (p) {
+      return { id: p.id, label: p.label || p.position_code || p.code };
+    });
+    fillSelect(stockPlaceSelect, places, placeId);
+    updatePositionPreview();
+  }
+
+  function setStockSelection(data) {
+    if (stockLocationSelect) {
+      stockLocationSelect.value = data.stock_location_id ? String(data.stock_location_id) : '';
+    }
+    if (stockPlaceModeSelect) {
+      stockPlaceModeSelect.value = data.stock_place_mode || 'flexible';
+    }
+    refreshStockCascade(true);
+    if (stockHallSelect && data.stock_hall_id) {
+      stockHallSelect.value = String(data.stock_hall_id);
+    }
+    refreshStockCascade(true);
+    if (stockShelfSelect && data.stock_shelf_id) {
+      stockShelfSelect.value = String(data.stock_shelf_id);
+    }
+    refreshStockCascade(true);
+    if (stockPlaceSelect && data.stock_place_id) {
+      stockPlaceSelect.value = String(data.stock_place_id);
+    }
+    updatePositionPreview();
   }
 
   function toggleStockFields() {
@@ -129,11 +233,9 @@
     if (minStockInput) {
       minStockInput.value = '';
     }
-    if (stockOrtInput) stockOrtInput.value = '';
-    if (stockHalleInput) stockHalleInput.value = '';
-    if (stockRegalInput) stockRegalInput.value = '';
-    if (stockPlatzInput) stockPlatzInput.value = '';
-    updatePositionPreview();
+    if (stockLocationSelect) stockLocationSelect.value = '';
+    if (stockPlaceModeSelect) stockPlaceModeSelect.value = 'flexible';
+    refreshStockCascade(false);
   }
 
   function setWorkMinutes(minutes) {
@@ -208,10 +310,7 @@
       if (minStockInput) {
         minStockInput.value = data.min_stock != null ? String(data.min_stock).replace('.', ',') : '';
       }
-      if (stockOrtInput) stockOrtInput.value = data.stock_ort || '';
-      if (stockHalleInput) stockHalleInput.value = data.stock_halle || '';
-      if (stockRegalInput) stockRegalInput.value = data.stock_regal || '';
-      if (stockPlatzInput) stockPlatzInput.value = data.stock_platz || '';
+      setStockSelection(data);
       if (initialStockInput) {
         initialStockInput.value = '';
       }
@@ -239,17 +338,25 @@
   if (catalogKindInput) {
     catalogKindInput.addEventListener('change', toggleStockFields);
   }
-  [stockOrtInput, stockHalleInput, stockRegalInput, stockPlatzInput].forEach(function (input) {
-    if (input) {
-      input.addEventListener('input', updatePositionPreview);
-    }
-  });
+  if (stockLocationSelect) {
+    stockLocationSelect.addEventListener('change', function () { refreshStockCascade(false); });
+  }
+  if (stockHallSelect) {
+    stockHallSelect.addEventListener('change', function () { refreshStockCascade(false); });
+  }
+  if (stockShelfSelect) {
+    stockShelfSelect.addEventListener('change', function () { refreshStockCascade(false); });
+  }
+  if (stockPlaceSelect) {
+    stockPlaceSelect.addEventListener('change', updatePositionPreview);
+  }
   if (cancelBtn) {
     cancelBtn.addEventListener('click', resetForm);
   }
 
   toggleCustomMinutes();
   toggleStockFields();
+  refreshStockCascade(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('focus') === 'stock') {

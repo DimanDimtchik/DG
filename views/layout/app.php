@@ -260,6 +260,9 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
   <?php if (($settingsSelection['template'] ?? '') === 'notifications') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/settings-notifications.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($settingsSelection['template'] ?? '') === 'lager-struktur') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/settings-lager-struktur.js')) ?>" defer></script>
+  <?php endif; ?>
   <?php if (($settingsSelection['template'] ?? '') === 'calendar-articles' || ($contentTemplate ?? '') === 'modules/artikel-leistungen') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/settings-calendar-articles.js')) ?>" defer></script>
   <?php endif; ?>

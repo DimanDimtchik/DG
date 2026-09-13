@@ -1,11 +1,13 @@
 # Lager- und Warenwirtschaft (Stufe A + B)
 
-Stand: 2026-09-13 · Migration **065**
+Stand: 2026-09-13 · Migrationen **065–067**
 
 ## Umgesetzt
 
 - [x] **Stufe A** — Ein Lager, Bestand pro Artikel (`track_stock`, `stock_qty`, `min_stock`)
 - [x] **Positionscode** Ort-Halle-Regal-Platz (Migration 066)
+- [x] **Lagerstruktur-Stammdaten** — Ort, Halle, Regal/Stellplätze, Platz fest/flexibel (Migration 067)
+- [x] Einstellungen → **Lagerstruktur** (CRUD Lagerorte, Hallen, Regale)
 - [x] Bewegungslog `dg_stock_movements` (GoBD-Nachvollziehbarkeit)
 - [x] Automatik aus Belegen: Einkauf (+), Verkauf (−), Kundengutschrift (+), Ausgabenminderung (−)
 - [x] Nur gebuchte Einnahmen-Dokumentarten (Rechnung, Abschlag, Schluss) — kein Angebot/Lieferschein
@@ -15,7 +17,8 @@ Stand: 2026-09-13 · Migration **065**
 
 ## Bewusst nicht (Stufe C / später)
 
-- [ ] Mehrere Lagerorte / Filialen
+- [ ] Automatische Platz-Zuweisung bei Beleg-Eingang (UI-Vorschlag vorbereitet)
+- [ ] Mehrere Mandanten-Lager / Filial-Sync
 - [ ] Chargen, Seriennummern, MHD
 - [ ] Automatische SKR-Bestandskonten-Buchung
 - [ ] Shop-Bestandsabzug (`shop.ganz-soft.de`)
@@ -32,8 +35,11 @@ Manuell: `docs/TESTLISTE-2026-08-21.md` — Abschnitt Lager (neu).
 
 | Komponente | Pfad |
 |------------|------|
-| Migration | `database/migrations/065_stock_management.sql` |
+| Migration | `065_stock_management.sql`, `066_stock_position.sql`, `067_stock_structure.sql` |
+| Stammdaten | `src/Inventory/StockStructureRepository.php` |
+| Platz-Logik | `src/Inventory/StockPlaceService.php` |
 | Bewegungen | `src/Inventory/StockMovementService.php` |
 | Inventur | `src/Inventory/StockInventoryService.php` |
-| UI | `views/modules/lager.php` |
+| UI Lager | `views/modules/lager.php` |
+| UI Struktur | `views/settings/tab-lager-struktur.php` |
 | Beleg-Hook | `VoucherRepository::save()` / `delete()` |

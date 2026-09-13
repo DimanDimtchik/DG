@@ -25,9 +25,10 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Lager</h1>
-      <p class="dg-lead">Bestände, Bewegungen und Inventur — ein Lager, Artikel mit aktivierter Lagerführung.</p>
+      <p class="dg-lead">Bestände, Bewegungen und Inventur — Artikel mit aktivierter Lagerführung und Positionscode aus der Lagerstruktur.</p>
     </div>
     <div class="dg-page-header__actions">
+      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('lager-struktur')) ?>">Lagerstruktur</a>
       <a class="dg-button" href="/app?page=lager&amp;download=csv">Bestand CSV</a>
       <?php if ($activeInventory !== null) : ?>
         <a class="dg-button" href="/app?page=lager&amp;view=inventur&amp;download=inventory&amp;id=<?= (int) ($activeInventory['id'] ?? 0) ?>">Inventur CSV</a>
