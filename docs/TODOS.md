@@ -81,7 +81,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 | Thema | Doku |
 |-------|------|
-| **Kichel Phase 2** (optional Ollama/RAG auf Hetzner) | Branch `cursor/kichel-assistant-1dc6` |
+| **Kichel Phase 2** (Ollama nur Formulierung; Beträge in PHP) | `docs/KICHEL-PHASE2.md` · Branch `cursor/kichel-assistant-1dc6` |
 | **Multi-Firma** (Switcher, Tochter, Umfirmierung unterjährig) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) |
 | Zweitfirma −20 %, Umfirmierung = 1 Paket + Archiv-Slot | Abschnitt 7 im Konzept |
 

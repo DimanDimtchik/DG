@@ -29,6 +29,9 @@ final class KichelAssistant
             $tokens = KichelKnowledge::tokenize(preg_replace('/\s+/', ' ', $query) ?? $query);
         }
 
+        $moneyAnswer = KichelMoneyLogic::tryAnswer($query);
+        $moneyFacts = $moneyAnswer['facts'] ?? [];
+
         $topicMatches = KichelKnowledge::matchTopics($tokens);
         $navigation = KichelKnowledge::navigationHints($user, $tokens);
         $codeHits = KichelCodeSearch::search($tokens);
@@ -37,6 +40,12 @@ final class KichelAssistant
 
         $topics = array_map(static fn (array $m): array => $m['topic'], $topicMatches);
         $answerParts = [];
+
+        if ($moneyAnswer !== null) {
+            $baseMoneyAnswer = (string) $moneyAnswer['answer'];
+            $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
+            $answerParts[] = $phrased ?? $baseMoneyAnswer;
+        }
 
         if ($topics !== []) {
             foreach (array_slice($topics, 0, 2) as $topic) {
@@ -76,7 +85,7 @@ final class KichelAssistant
 
         $hints = self::hints($tokens, $topics, $codeHits, $schemaHits);
 
-        return [
+        $response = [
             'answer' => trim(implode("\n\n", array_filter($answerParts))),
             'topics' => array_map(static function (array $topic): array {
                 return [
@@ -95,6 +104,15 @@ final class KichelAssistant
             'company' => $companyFields,
             'hints' => $hints,
         ];
+        if ($moneyAnswer !== null) {
+            $response['calculation'] = [
+                'kind' => $moneyAnswer['kind'],
+                'facts' => $moneyFacts,
+                'computed_by' => 'php',
+            ];
+        }
+
+        return $response;
     }
 
     /**
