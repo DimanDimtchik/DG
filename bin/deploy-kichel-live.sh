@@ -21,11 +21,17 @@ FILES=(
   views/partials/kichel-widget.php
   views/modules/website-seiten.php
   index.php
+  src/autoload.php
   src/Kichel/KichelAssistant.php
   src/Kichel/KichelKnowledge.php
+  src/Kichel/KichelNavIndex.php
+  src/Kichel/KichelFieldCatalog.php
+  src/Kichel/KichelIntent.php
   src/Kichel/KichelLedgerAccounts.php
   src/Kichel/KichelLegalPages.php
   src/Kichel/data/knowledge.php
+  src/Kichel/data/fields.php
+  src/Menu/MenuRegistry.php
   src/Legal/LegalPageGenerator.php
 )
 

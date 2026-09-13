@@ -271,6 +271,9 @@ spl_autoload_register(static function (string $class): void {
         'KichelProtocolRepository' => '/src/Kichel/KichelProtocolRepository.php',
         'KichelLegalPages' => '/src/Kichel/KichelLegalPages.php',
         'KichelLedgerAccounts' => '/src/Kichel/KichelLedgerAccounts.php',
+        'KichelNavIndex' => '/src/Kichel/KichelNavIndex.php',
+        'KichelFieldCatalog' => '/src/Kichel/KichelFieldCatalog.php',
+        'KichelIntent' => '/src/Kichel/KichelIntent.php',
     ];
 
     if (!isset($map[$class])) {
