@@ -498,7 +498,7 @@ $riskClass = static function (?string $level): string {
   </section>
   <?php endif; ?>
 
-  <?php if ($academyAdminCourse !== null && (int) ($academyAdminCourse['id'] ?? 0) > 0) : ?>
+  <?php if ($academyAdminTab === 'kurs' && $academyAdminCourse !== null && (int) ($academyAdminCourse['id'] ?? 0) > 0) : ?>
   <section class="dg-panel">
     <h3 class="dg-subsection-title"><?= View::escape((string) ($academyAdminCourse['title'] ?? '')) ?> — Zuweisung & Sperre</h3>
     <form method="post" class="dg-form-grid dg-form-grid--compact">

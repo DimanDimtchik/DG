@@ -2852,7 +2852,7 @@ switch ($path) {
             $academyAdminDepartmentId = trim((string) ($_GET['department_id'] ?? ''));
             $academyAdminCourseId = (int) ($_GET['course_id'] ?? 0);
             $academyAdminCourse = null;
-            if (array_key_exists('course_id', $_GET)) {
+            if (array_key_exists('course_id', $_GET) && $academyAdminTab !== 'videos') {
                 $academyAdminTab = 'kurs';
                 if ($academyAdminCourseId > 0) {
                     $academyAdminCourse = AcademyRepository::findCourseById($academyAdminCourseId);
