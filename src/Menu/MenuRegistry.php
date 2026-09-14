@@ -32,7 +32,7 @@ final class MenuRegistry
         if (DepartmentAccess::canAccessModule($user, 'post') && $canEdit) {
             $items[] = ['slug' => 'post', 'label' => 'Post', 'icon' => 'mail'];
         }
-        if (!RoleResolver::isCustomer($user) && RoleResolver::isActiveEmployee($user)) {
+        if (RoleResolver::canEdit($user)) {
             $items[] = ['slug' => 'akademie', 'label' => 'Akademie', 'icon' => 'document'];
         }
         if (DepartmentAccess::userCanManageArticleCatalog($user) && $canEdit) {
@@ -470,7 +470,7 @@ final class MenuRegistry
         }
 
         if ($slug === 'akademie') {
-            return !RoleResolver::isCustomer($user) && RoleResolver::isActiveEmployee($user);
+            return RoleResolver::canEdit($user);
         }
 
         if ($slug === 'artikel-leistungen' || $slug === 'lager') {

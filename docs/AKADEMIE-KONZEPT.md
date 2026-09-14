@@ -186,7 +186,7 @@ Migration geplant: `070_training_academy.sql`
 
 | Rolle | Bereich |
 |-------|---------|
-| Alle | **Akademie** — Meine Schulungen, Katalog, Player, Untertitel |
+| Admin, Chef, Mitarbeiter (`canEdit`) | **Akademie** — Meine Schulungen, Katalog, Player, Untertitel |
 | HR | Zuweisungen, Prüf-Queue, Zertifikate freigeben/ablehnen, Auffälligkeiten |
 | **Admin / Chef** | Kurse anlegen, **Zugriffsmodus** (compare/soft/hard), Gates, Inhalte |
 | Einstellungen | Mail-Vorlagen, Bereiche, Tarif-Mapping |
