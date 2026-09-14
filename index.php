@@ -2657,6 +2657,9 @@ switch ($path) {
             $stockOutboundVouchers = in_array($lagerView, ['warenausgang'], true)
                 ? StockReceiptIssueService::outboundVoucherOptions()
                 : [];
+            if ($lagerView === 'platz-check') {
+                $stockPlaces = StockStructureRepository::allPlaces();
+            }
             $contentTemplate = 'modules/lager';
             $title = 'Lager';
             $currentPage = 'lager';
@@ -3968,6 +3971,7 @@ switch ($path) {
         $stockHalls = $stockHalls ?? StockStructureRepository::allHalls();
         $stockShelves = $stockShelves ?? StockStructureRepository::allShelves();
         $stockLocationOptions = $stockLocationOptions ?? StockStructureRepository::locationOptions();
+        $stockPlaces = $stockPlaces ?? [];
         $calendarTeamTab = $calendarTeamTab ?? 'bereiche';
         $calendarAreas = $calendarAreas ?? [];
         $calendarEmployees = $calendarEmployees ?? [];
@@ -4176,6 +4180,7 @@ switch ($path) {
             'stockHalls',
             'stockShelves',
             'stockLocationOptions',
+            'stockPlaces',
             'calendarTeamTab',
             'calendarAreas',
             'calendarEmployees',

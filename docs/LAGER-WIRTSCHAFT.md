@@ -49,7 +49,7 @@ Lager → **Platz-Check**: Etikett scannen (Scanner, Kamera oder Eingabe). Anzei
 - **Belegung** — `dg_stock_place_occupancy`, Kartons, Artikel-Stammplatz
 - **Letzte Bewegungen** — aus `dg_stock_movements` am Platz
 
-API: `/api/stock-scan?action=audit&code=…`
+API: `/api/stock-scan?action=audit&code=…` oder manuell `/api/stock-scan?action=audit&level=place&entity_id=…` (`level`: `location`, `hall`, `shelf`, `place`)
 
 ## Bewusst nicht (später)
 

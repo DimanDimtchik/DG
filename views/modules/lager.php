@@ -9,12 +9,20 @@
  * @var bool $dbConnected
  * @var string $lagerView
  * @var list<array<string, mixed>> $stockOutboundVouchers
+ * @var list<array<string, mixed>> $stockPlaces
+ * @var list<array{id: int, label: string, code: string}> $stockLocationOptions
+ * @var list<array<string, mixed>> $stockHalls
+ * @var list<array<string, mixed>> $stockShelves
  * @var array{type: string, message: string}|null $flash
  */
 $stockItems = $stockItems ?? [];
 $stockMovements = $stockMovements ?? [];
 $stockInventories = $stockInventories ?? [];
 $stockOutboundVouchers = $stockOutboundVouchers ?? [];
+$stockPlaces = $stockPlaces ?? [];
+$stockLocationOptions = $stockLocationOptions ?? StockStructureRepository::locationOptions();
+$stockHalls = $stockHalls ?? [];
+$stockShelves = $stockShelves ?? [];
 $activeInventory = $activeInventory ?? null;
 $activeInventoryLines = $activeInventoryLines ?? [];
 $lagerView = $lagerView ?? 'overview';
@@ -214,17 +222,69 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php elseif ($lagerView === 'platz-check') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Platz-Check (Mini-Audit)</h2>
-    <p class="dg-field-hint">Etikett scannen — Anzeige von Belegung, Reservierung (fest/flexibel) und letzten Bewegungen. Nutzbar mit Handscanner, Eingabe oder <strong>Kamera</strong> (Tablet/Smartphone, HTTPS).</p>
+    <p class="dg-field-hint">Strichcode scannen <strong>oder</strong> Lagerstruktur manuell wählen — Anzeige von Belegung, Reservierung (fest/flexibel) und letzten Bewegungen. Scan per Handscanner, Tastatureingabe oder <strong>Kamera</strong> (Tablet/Smartphone, HTTPS).</p>
     <form class="dg-form-grid dg-form-grid--compact" id="dg-place-audit-form" autocomplete="off">
       <label class="dg-field dg-field--wide">
         <span>Strichcode scannen</span>
         <input type="text" data-scan-input inputmode="numeric" autofocus placeholder="Platz, Regal, Halle, Karton oder Artikel">
         <button type="button" class="dg-button dg-button--small dg-camera-scan-btn" data-camera-scan-trigger>Kamera</button>
       </label>
-      <div class="dg-field dg-field--wide">
-        <div id="dg-place-audit-message" class="dg-scan-result" hidden></div>
+    </form>
+
+    <form class="dg-form-grid dg-form-grid--compact dg-audit-manual" id="dg-place-audit-manual-form" autocomplete="off">
+      <h3 class="dg-subsection-title dg-field--wide">Manuell auswählen</h3>
+      <label class="dg-field">
+        <span>Ebene</span>
+        <select id="dg-audit-level" data-audit-level>
+          <?php foreach (StockLabelService::levelOptions() as $levelKey => $levelLabel) : ?>
+            <option value="<?= View::escape($levelKey) ?>"<?= $levelKey === StockLabelService::LEVEL_PLACE ? ' selected' : '' ?>><?= View::escape($levelLabel) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field" data-audit-field="location">
+        <span>Lagerort</span>
+        <select id="dg-audit-location" data-audit-location>
+          <option value="">— wählen —</option>
+          <?php foreach ($stockLocationOptions as $opt) : ?>
+            <option value="<?= (int) $opt['id'] ?>"><?= View::escape($opt['label']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field" data-audit-field="hall">
+        <span>Halle</span>
+        <select id="dg-audit-hall" data-audit-hall>
+          <option value="">— wählen —</option>
+          <?php foreach ($stockHalls as $hall) : ?>
+            <option value="<?= (int) $hall['id'] ?>" data-location-id="<?= (int) ($hall['location_id'] ?? 0) ?>"><?= View::escape((string) ($hall['location_code'] ?? '') . ' / ' . (string) $hall['code']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field" data-audit-field="shelf">
+        <span>Regal</span>
+        <select id="dg-audit-shelf" data-audit-shelf>
+          <option value="">— wählen —</option>
+          <?php foreach ($stockShelves as $shelf) : ?>
+            <option value="<?= (int) $shelf['id'] ?>" data-hall-id="<?= (int) ($shelf['hall_id'] ?? 0) ?>" data-location-id="<?= (int) ($shelf['location_id'] ?? 0) ?>"><?= View::escape((string) ($shelf['position_prefix'] ?? $shelf['code'])) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field" data-audit-field="place">
+        <span>Stellplatz</span>
+        <select id="dg-audit-place" data-audit-place>
+          <option value="">— wählen —</option>
+          <?php foreach ($stockPlaces as $place) : ?>
+            <option value="<?= (int) $place['id'] ?>" data-shelf-id="<?= (int) ($place['shelf_id'] ?? 0) ?>" data-hall-id="<?= (int) ($place['hall_id'] ?? 0) ?>" data-location-id="<?= (int) ($place['location_id'] ?? 0) ?>"><?= View::escape((string) ($place['position_code'] ?? '')) ?> · <?= View::escape((string) ($place['kind_label'] ?? '')) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <div class="dg-field dg-field--actions">
+        <button type="submit" class="dg-button dg-button--primary">Prüfen</button>
       </div>
     </form>
+
+    <div class="dg-field dg-field--wide">
+      <div id="dg-place-audit-message" class="dg-scan-result" hidden></div>
+    </div>
     <div id="dg-place-audit-panel" class="dg-panel" hidden></div>
   </section>
 

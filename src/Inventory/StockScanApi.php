@@ -58,16 +58,21 @@ final class StockScanApi
 
     private static function handleAudit(): void
     {
-        $code = (string) ($_GET['code'] ?? $_POST['code'] ?? '');
-        if (trim($code) === '') {
+        $code = trim((string) ($_GET['code'] ?? $_POST['code'] ?? ''));
+        $level = trim((string) ($_GET['level'] ?? $_POST['level'] ?? ''));
+        $entityId = (int) ($_GET['entity_id'] ?? $_POST['entity_id'] ?? 0);
+
+        if ($code === '' && ($level === '' || $entityId < 1)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Strichcode fehlt.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'Strichcode oder manuelle Auswahl fehlt.'], JSON_UNESCAPED_UNICODE);
 
             return;
         }
 
         try {
-            $audit = StockPlaceAuditService::audit($code);
+            $audit = $code !== ''
+                ? StockPlaceAuditService::audit($code)
+                : StockPlaceAuditService::auditById($level, $entityId);
             echo json_encode([
                 'success' => true,
                 'data' => $audit,

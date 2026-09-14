@@ -23,6 +23,24 @@ final class StockPlaceAuditService
         };
     }
 
+    /** @return array<string, mixed> */
+    public static function auditById(string $level, int $id): array
+    {
+        if ($id < 1) {
+            throw new InvalidArgumentException('Bitte einen Eintrag auswählen.');
+        }
+
+        $level = StockLabelService::sanitizeLevel($level);
+
+        return match ($level) {
+            StockLabelService::LEVEL_PLACE => self::auditPlace(['place' => StockStructureRepository::findPlace($id)]),
+            StockLabelService::LEVEL_SHELF => self::auditShelf(['shelf' => StockStructureRepository::findShelf($id)]),
+            StockLabelService::LEVEL_HALL => self::auditHall(['hall' => StockStructureRepository::findHall($id)]),
+            StockLabelService::LEVEL_LOCATION => self::auditLocation(['location' => StockStructureRepository::findLocation($id)]),
+            default => throw new InvalidArgumentException('Ebene nicht für Platz-Check unterstützt.'),
+        };
+    }
+
     /** @param array<string, mixed> $resolved */
     private static function auditPlace(array $resolved): array
     {

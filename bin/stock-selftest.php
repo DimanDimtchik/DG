@@ -207,6 +207,10 @@ if ($hasStructure) {
         if (($audit['scan_type'] ?? '') !== 'location') {
             $errors[] = 'Platz-Check Audit für Lagerort fehlgeschlagen.';
         }
+        $auditManual = StockPlaceAuditService::auditById(StockLabelService::LEVEL_LOCATION, (int) ($firstLoc['id'] ?? 0));
+        if (($auditManual['scan_type'] ?? '') !== 'location') {
+            $errors[] = 'Platz-Check Audit (manuell) für Lagerort fehlgeschlagen.';
+        }
     }
 }
 

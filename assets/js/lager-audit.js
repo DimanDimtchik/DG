@@ -3,6 +3,7 @@
   var scanApiUrl = cfg.scanApiUrl || '/api/stock-scan';
   var panel = document.getElementById('dg-place-audit-panel');
   var form = document.getElementById('dg-place-audit-form');
+  var manualForm = document.getElementById('dg-place-audit-manual-form');
   if (!panel || !form) {
     return;
   }
@@ -97,14 +98,9 @@
     panel.hidden = false;
   }
 
-  function runAudit(code) {
-    code = (code || '').trim();
-    if (code === '') {
-      showMessage('Bitte Strichcode eingeben oder scannen.', 'warning');
-      return;
-    }
+  function fetchAudit(url) {
     showMessage('Prüfe Platz …', 'info');
-    fetch(scanApiUrl + '?action=audit&code=' + encodeURIComponent(code), {
+    return fetch(url, {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
     })
@@ -124,6 +120,23 @@
       .catch(function () {
         showMessage('Netzwerkfehler beim Platz-Check.', 'error');
       });
+  }
+
+  function runAudit(code) {
+    code = (code || '').trim();
+    if (code === '') {
+      showMessage('Bitte Strichcode eingeben oder scannen.', 'warning');
+      return;
+    }
+    fetchAudit(scanApiUrl + '?action=audit&code=' + encodeURIComponent(code));
+  }
+
+  function runManualAudit(level, entityId) {
+    if (!level || !entityId) {
+      showMessage('Bitte Ebene und Eintrag auswählen.', 'warning');
+      return;
+    }
+    fetchAudit(scanApiUrl + '?action=audit&level=' + encodeURIComponent(level) + '&entity_id=' + encodeURIComponent(String(entityId)));
   }
 
   form.addEventListener('submit', function (event) {
@@ -146,4 +159,186 @@
       });
     }
   }
+
+  if (!manualForm) {
+    return;
+  }
+
+  var levelSelect = manualForm.querySelector('[data-audit-level]');
+  var locationSelect = manualForm.querySelector('[data-audit-location]');
+  var hallSelect = manualForm.querySelector('[data-audit-hall]');
+  var shelfSelect = manualForm.querySelector('[data-audit-shelf]');
+  var placeSelect = manualForm.querySelector('[data-audit-place]');
+
+  var hallOptions = hallSelect
+    ? Array.from(hallSelect.querySelectorAll('option[data-location-id]')).map(function (opt) {
+        return {
+          value: opt.value,
+          label: opt.textContent,
+          locationId: opt.getAttribute('data-location-id'),
+        };
+      })
+    : [];
+
+  var shelfOptions = shelfSelect
+    ? Array.from(shelfSelect.querySelectorAll('option[data-hall-id]')).map(function (opt) {
+        return {
+          value: opt.value,
+          label: opt.textContent,
+          hallId: opt.getAttribute('data-hall-id'),
+          locationId: opt.getAttribute('data-location-id'),
+        };
+      })
+    : [];
+
+  var placeOptions = placeSelect
+    ? Array.from(placeSelect.querySelectorAll('option[data-shelf-id]')).map(function (opt) {
+        return {
+          value: opt.value,
+          label: opt.textContent,
+          shelfId: opt.getAttribute('data-shelf-id'),
+          hallId: opt.getAttribute('data-hall-id'),
+          locationId: opt.getAttribute('data-location-id'),
+        };
+      })
+    : [];
+
+  function rebuildSelect(select, options, emptyLabel, matchFn, previousValue) {
+    if (!select) {
+      return;
+    }
+    select.innerHTML = '';
+    var empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = emptyLabel;
+    select.appendChild(empty);
+    options.forEach(function (opt) {
+      if (matchFn && !matchFn(opt)) {
+        return;
+      }
+      var option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      if (opt.locationId) {
+        option.setAttribute('data-location-id', opt.locationId);
+      }
+      if (opt.hallId) {
+        option.setAttribute('data-hall-id', opt.hallId);
+      }
+      if (opt.shelfId) {
+        option.setAttribute('data-shelf-id', opt.shelfId);
+      }
+      if (previousValue && opt.value === previousValue) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+  }
+
+  function currentLevel() {
+    return levelSelect ? levelSelect.value : 'place';
+  }
+
+  function updateManualFields() {
+    var level = currentLevel();
+    manualForm.querySelectorAll('[data-audit-field]').forEach(function (field) {
+      var name = field.getAttribute('data-audit-field') || '';
+      var visible = false;
+      if (name === 'location') {
+        visible = true;
+      } else if (name === 'hall') {
+        visible = level === 'hall' || level === 'shelf' || level === 'place';
+      } else if (name === 'shelf') {
+        visible = level === 'shelf' || level === 'place';
+      } else if (name === 'place') {
+        visible = level === 'place';
+      }
+      field.hidden = !visible;
+    });
+  }
+
+  function filterHalls() {
+    if (!hallSelect || !locationSelect) {
+      return;
+    }
+    var locationId = locationSelect.value;
+    rebuildSelect(hallSelect, hallOptions, '— wählen —', function (opt) {
+      return !locationId || opt.locationId === locationId;
+    }, hallSelect.value);
+    filterShelves();
+  }
+
+  function filterShelves() {
+    if (!shelfSelect) {
+      return;
+    }
+    var locationId = locationSelect ? locationSelect.value : '';
+    var hallId = hallSelect ? hallSelect.value : '';
+    rebuildSelect(shelfSelect, shelfOptions, '— wählen —', function (opt) {
+      if (locationId && opt.locationId !== locationId) {
+        return false;
+      }
+      if (hallId && opt.hallId !== hallId) {
+        return false;
+      }
+      return true;
+    }, shelfSelect.value);
+    filterPlaces();
+  }
+
+  function filterPlaces() {
+    if (!placeSelect) {
+      return;
+    }
+    var locationId = locationSelect ? locationSelect.value : '';
+    var hallId = hallSelect ? hallSelect.value : '';
+    var shelfId = shelfSelect ? shelfSelect.value : '';
+    rebuildSelect(placeSelect, placeOptions, '— wählen —', function (opt) {
+      if (locationId && opt.locationId !== locationId) {
+        return false;
+      }
+      if (hallId && opt.hallId !== hallId) {
+        return false;
+      }
+      if (shelfId && opt.shelfId !== shelfId) {
+        return false;
+      }
+      return true;
+    }, placeSelect.value);
+  }
+
+  function selectedEntityId() {
+    var level = currentLevel();
+    if (level === 'location') {
+      return locationSelect ? locationSelect.value : '';
+    }
+    if (level === 'hall') {
+      return hallSelect ? hallSelect.value : '';
+    }
+    if (level === 'shelf') {
+      return shelfSelect ? shelfSelect.value : '';
+    }
+    return placeSelect ? placeSelect.value : '';
+  }
+
+  if (levelSelect) {
+    levelSelect.addEventListener('change', updateManualFields);
+  }
+  if (locationSelect) {
+    locationSelect.addEventListener('change', filterHalls);
+  }
+  if (hallSelect) {
+    hallSelect.addEventListener('change', filterShelves);
+  }
+  if (shelfSelect) {
+    shelfSelect.addEventListener('change', filterPlaces);
+  }
+
+  updateManualFields();
+  filterHalls();
+
+  manualForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    runManualAudit(currentLevel(), selectedEntityId());
+  });
 })();
