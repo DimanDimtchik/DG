@@ -6063,3 +6063,12 @@ body.dg-login-page {
   gap: 8px;
 }
 
+.dg-academy-help__list {
+  margin: 0 0 12px 1.2rem;
+  padding: 0;
+}
+
+.dg-academy-help__list li + li {
+  margin-top: 6px;
+}
+

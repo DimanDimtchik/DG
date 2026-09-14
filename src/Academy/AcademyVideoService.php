@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Video-Upload für die Akademie-Bibliothek (storage/media/training/{department_id}/).
+ * Video-Upload für die Akademie-Bibliothek (storage/media/training/{ordner}/).
  */
 final class AcademyVideoService
 {
@@ -12,6 +12,8 @@ final class AcademyVideoService
     /** Max. Untertitelgröße in Bytes (2 MiB). */
     public const MAX_VTT_BYTES = 2_097_152;
 
+    public const DEFAULT_STORAGE_SEGMENT = 'allgemein';
+
     /**
      * Speichert Metadaten + optional hochgeladene Dateien als Bibliotheks-Modul.
      *
@@ -20,10 +22,8 @@ final class AcademyVideoService
      */
     public static function saveFromUpload(array $post, array $files): int
     {
-        $departmentId = trim((string) ($post['department_id'] ?? ''));
-        if ($departmentId === '' || !DepartmentRepository::exists($departmentId)) {
-            throw new InvalidArgumentException('Bitte gültige Abteilung wählen.');
-        }
+        $departmentIds = self::parseDepartmentIds($post);
+        $storageSegment = self::storageSegmentFromDepartmentIds($departmentIds);
 
         $title = trim((string) ($post['title'] ?? ''));
         if ($title === '') {
@@ -41,19 +41,22 @@ final class AcademyVideoService
 
         $videoFile = $files['video_file'] ?? null;
         if (is_array($videoFile) && (int) ($videoFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-            $videoPath = self::storeVideo($departmentId, $videoFile, $title);
+            $videoPath = self::storeVideo($storageSegment, $videoFile, $title);
         } elseif ($moduleId < 1) {
             throw new InvalidArgumentException('Bitte MP4-Video hochladen.');
         }
 
         $vttFile = $files['vtt_file'] ?? null;
         if (is_array($vttFile) && (int) ($vttFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-            $vttPath = self::storeVtt($departmentId, $vttFile, $title);
+            $vttPath = self::storeVtt($storageSegment, $vttFile, $title);
         }
+
+        $legacyDept = $departmentIds[0] ?? '';
 
         return AcademyRepository::saveModule([
             'id' => $moduleId,
-            'department_id' => $departmentId,
+            'department_id' => $legacyDept,
+            'department_ids' => $departmentIds,
             'title' => $title,
             'description' => trim((string) ($post['description'] ?? '')),
             'video_path' => $videoPath,
@@ -65,9 +68,43 @@ final class AcademyVideoService
     }
 
     /**
+     * @param array<string, mixed> $post
+     * @return list<string>
+     */
+    public static function parseDepartmentIds(array $post): array
+    {
+        $ids = [];
+        if (!empty($post['department_ids']) && is_array($post['department_ids'])) {
+            foreach ($post['department_ids'] as $deptId) {
+                $deptId = trim((string) $deptId);
+                if ($deptId !== '' && DepartmentRepository::exists($deptId)) {
+                    $ids[$deptId] = $deptId;
+                }
+            }
+        }
+
+        $single = trim((string) ($post['department_id'] ?? ''));
+        if ($single !== '' && DepartmentRepository::exists($single)) {
+            $ids[$single] = $single;
+        }
+
+        return array_values($ids);
+    }
+
+    /** @param list<string> $departmentIds */
+    public static function storageSegmentFromDepartmentIds(array $departmentIds): string
+    {
+        if ($departmentIds === []) {
+            return self::DEFAULT_STORAGE_SEGMENT;
+        }
+
+        return self::safeStorageSegment($departmentIds[0]);
+    }
+
+    /**
      * @param array<string, mixed> $file
      */
-    public static function storeVideo(string $departmentId, array $file, string $titleHint): string
+    public static function storeVideo(string $storageSegment, array $file, string $titleHint): string
     {
         self::assertUploadOk($file, self::MAX_VIDEO_BYTES, 'Video');
 
@@ -82,7 +119,7 @@ final class AcademyVideoService
             throw new InvalidArgumentException('Ungültiger Video-MIME-Typ.');
         }
 
-        $dir = self::ensureDepartmentDir($departmentId);
+        $dir = self::ensureStorageDir($storageSegment);
         $base = self::safeBaseName($titleHint !== '' ? $titleHint : pathinfo($original, PATHINFO_FILENAME));
         $stored = $base . '-' . date('YmdHis') . '.mp4';
         $target = $dir . '/' . $stored;
@@ -93,13 +130,13 @@ final class AcademyVideoService
 
         @chmod($target, 0644);
 
-        return 'media/training/' . self::safeDepartmentSegment($departmentId) . '/' . $stored;
+        return 'media/training/' . $storageSegment . '/' . $stored;
     }
 
     /**
      * @param array<string, mixed> $file
      */
-    public static function storeVtt(string $departmentId, array $file, string $titleHint): string
+    public static function storeVtt(string $storageSegment, array $file, string $titleHint): string
     {
         self::assertUploadOk($file, self::MAX_VTT_BYTES, 'Untertitel');
 
@@ -109,7 +146,7 @@ final class AcademyVideoService
             throw new InvalidArgumentException('Untertitel nur als .vtt erlaubt.');
         }
 
-        $dir = self::ensureDepartmentDir($departmentId);
+        $dir = self::ensureStorageDir($storageSegment);
         $base = self::safeBaseName($titleHint !== '' ? $titleHint : pathinfo($original, PATHINFO_FILENAME));
         $stored = $base . '-' . date('YmdHis') . '.vtt';
         $target = $dir . '/' . $stored;
@@ -120,12 +157,12 @@ final class AcademyVideoService
 
         @chmod($target, 0644);
 
-        return 'media/training/' . self::safeDepartmentSegment($departmentId) . '/' . $stored;
+        return 'media/training/' . $storageSegment . '/' . $stored;
     }
 
-    public static function ensureDepartmentDir(string $departmentId): string
+    public static function ensureStorageDir(string $storageSegment): string
     {
-        $segment = self::safeDepartmentSegment($departmentId);
+        $segment = self::safeStorageSegment($storageSegment);
         $dir = DG_ROOT . '/storage/media/training/' . $segment;
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             throw new RuntimeException('Trainingsverzeichnis konnte nicht erstellt werden.');
@@ -134,11 +171,11 @@ final class AcademyVideoService
         return $dir;
     }
 
-    private static function safeDepartmentSegment(string $departmentId): string
+    private static function safeStorageSegment(string $segment): string
     {
-        $segment = preg_replace('/[^a-zA-Z0-9_-]/', '', $departmentId) ?? '';
+        $segment = preg_replace('/[^a-zA-Z0-9_-]/', '', $segment) ?? '';
         if ($segment === '') {
-            throw new InvalidArgumentException('Ungültige Abteilungs-ID.');
+            return self::DEFAULT_STORAGE_SEGMENT;
         }
 
         return $segment;

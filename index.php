@@ -2798,10 +2798,10 @@ switch ($path) {
                 exit;
             }
             $academyView = trim((string) ($_GET['view'] ?? 'meine'));
-            if (!in_array($academyView, ['meine', 'katalog', 'kurs', 'modul', 'admin', 'hr'], true)) {
+            if (!in_array($academyView, ['meine', 'katalog', 'kurs', 'modul', 'admin', 'hr', 'video-vorschau'], true)) {
                 $academyView = 'meine';
             }
-            if ($academyView === 'admin' || $academyView === 'hr') {
+            if ($academyView === 'admin' || $academyView === 'hr' || $academyView === 'video-vorschau') {
                 if (!RoleResolver::isAdmin($user)) {
                     header('Location: /app?page=akademie&view=meine', true, 302);
                     exit;
@@ -2845,6 +2845,13 @@ switch ($path) {
             if ($academyModuleId > 0) {
                 $academyModule = AcademyRepository::findModule($academyModuleId);
             }
+            if ($academyView === 'video-vorschau') {
+                if ($academyModule === null) {
+                    Flash::set('error', 'Video nicht gefunden.');
+                    header('Location: /app?page=akademie&view=admin&admin_tab=videos', true, 302);
+                    exit;
+                }
+            }
             $academyAdminTab = trim((string) ($_GET['admin_tab'] ?? 'kurse'));
             if (!in_array($academyAdminTab, ['kurse', 'videos', 'kurs'], true)) {
                 $academyAdminTab = 'kurse';
@@ -2879,17 +2886,16 @@ switch ($path) {
             $academyUserOptions = $canManageAcademy ? AcademyRepository::userOptions() : [];
             $academyCoursesByDepartment = $canManageAcademy ? AcademyRepository::coursesGroupedByDepartment() : [];
             $academyAllCourses = $canManageAcademy ? AcademyRepository::allCourses() : [];
-            $academyCourseModuleIds = $academyAdminCourse !== null
+            $academyCourseModuleIds = $academyAdminCourse !== null && (int) ($academyAdminCourse['id'] ?? 0) > 0
                 ? AcademyRepository::moduleIdsForCourse((int) $academyAdminCourse['id'])
                 : [];
-            $academyDepartmentVideos = [];
-            if ($canManageAcademy && $academyAdminCourse !== null && (string) ($academyAdminCourse['department_id'] ?? '') !== '') {
-                $academyDepartmentVideos = AcademyRepository::videosForDepartment(
-                    (string) ($academyAdminCourse['department_id'] ?? '')
-                );
-            } elseif ($canManageAcademy && $academyAdminDepartmentId !== '') {
-                $academyDepartmentVideos = AcademyRepository::videosForDepartment($academyAdminDepartmentId);
-            }
+            $academyCourseDepartmentIds = $academyAdminCourse !== null && (int) ($academyAdminCourse['id'] ?? 0) > 0
+                ? AcademyRepository::courseDepartmentIds((int) $academyAdminCourse['id'])
+                : [];
+            $academyModuleDepartmentIds = $academyAdminVideo !== null
+                ? AcademyRepository::moduleDepartmentIds((int) ($academyAdminVideo['id'] ?? 0))
+                : [];
+            $academyLibraryVideos = $canManageAcademy ? AcademyRepository::libraryVideos(true) : [];
             $academyAllVideos = ($canManageAcademy && $academyAdminTab === 'videos')
                 ? AcademyRepository::allVideos()
                 : [];
@@ -4363,6 +4369,9 @@ switch ($path) {
         $academyAllVideos = $academyAllVideos ?? [];
         $academyCourseModuleIds = $academyCourseModuleIds ?? [];
         $academyAdminVideo = $academyAdminVideo ?? null;
+        $academyLibraryVideos = $academyLibraryVideos ?? [];
+        $academyCourseDepartmentIds = $academyCourseDepartmentIds ?? [];
+        $academyModuleDepartmentIds = $academyModuleDepartmentIds ?? [];
         $stockItems = $stockItems ?? [];
         $stockMovements = $stockMovements ?? [];
         $stockInventories = $stockInventories ?? [];
@@ -4476,6 +4485,9 @@ switch ($path) {
             'academyAllVideos',
             'academyCourseModuleIds',
             'academyAdminVideo',
+            'academyLibraryVideos',
+            'academyCourseDepartmentIds',
+            'academyModuleDepartmentIds',
             'stockItems',
             'stockMovements',
             'stockInventories',

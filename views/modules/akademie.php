@@ -20,7 +20,9 @@
  * @var list<array{id: string, name: string}> $academyDepartments
  * @var string $academyAdminTab
  * @var string $academyAdminDepartmentId
- * @var list<array<string, mixed>> $academyDepartmentVideos
+ * @var list<array<string, mixed>> $academyLibraryVideos
+ * @var list<string> $academyCourseDepartmentIds
+ * @var list<string> $academyModuleDepartmentIds
  * @var list<array<string, mixed>> $academyAllVideos
  * @var list<int> $academyCourseModuleIds
  * @var array<string, mixed>|null $academyAdminVideo
@@ -32,7 +34,9 @@ $academyDepartments = $academyDepartments ?? $academyAreas;
 $academyCoursesByDepartment = $academyCoursesByDepartment ?? [];
 $academyAdminTab = $academyAdminTab ?? 'kurse';
 $academyAdminDepartmentId = $academyAdminDepartmentId ?? '';
-$academyDepartmentVideos = $academyDepartmentVideos ?? [];
+$academyLibraryVideos = $academyLibraryVideos ?? [];
+$academyCourseDepartmentIds = $academyCourseDepartmentIds ?? [];
+$academyModuleDepartmentIds = $academyModuleDepartmentIds ?? [];
 $academyAllVideos = $academyAllVideos ?? [];
 $academyCourseModuleIds = $academyCourseModuleIds ?? [];
 $academyAdminVideo = $academyAdminVideo ?? null;
@@ -271,7 +275,40 @@ $riskClass = static function (?string $level): string {
     <?php endif; ?>
   </section>
 
+  <?php elseif ($academyView === 'video-vorschau' && $canManageAcademy && $academyModule !== null) : ?>
+  <?php
+    $videoPath = trim((string) ($academyModule['video_path'] ?? ''));
+    $hasVideo = $videoPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($videoPath, '/'));
+    $vttPath = trim((string) ($academyModule['subtitle_vtt_path'] ?? ''));
+    $hasVtt = $vttPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($vttPath, '/'));
+  ?>
+  <section class="dg-panel dg-academy-player-wrap">
+    <h2 class="dg-subsection-title">Vorschau: <?= View::escape((string) ($academyModule['title'] ?? '')) ?></h2>
+    <p class="dg-field-hint">Admin-Vorschau ohne Schulungsregeln und ohne Fortschrittsprotokoll.</p>
+    <?php if ($hasVideo) : ?>
+    <video id="dg-academy-video" class="dg-academy-player" controls playsinline>
+      <source src="/app?page=akademie&amp;download=video&amp;module_id=<?= (int) ($academyModule['id'] ?? 0) ?>" type="video/mp4">
+      <?php if ($hasVtt) : ?>
+        <track kind="subtitles" src="/app?page=akademie&amp;download=vtt&amp;module_id=<?= (int) ($academyModule['id'] ?? 0) ?>" srclang="de" label="Deutsch" default>
+      <?php endif; ?>
+    </video>
+    <?php else : ?>
+      <p class="dg-muted">Keine Videodatei hinterlegt.</p>
+    <?php endif; ?>
+    <div class="dg-form-actions">
+      <a class="dg-button" href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos">Zurück zur Bibliothek</a>
+    </div>
+  </section>
+
   <?php elseif ($academyView === 'admin' && $canManageAcademy) : ?>
+  <section class="dg-panel dg-panel--notice dg-academy-help">
+    <h2 class="dg-subsection-title">Videos ansehen</h2>
+    <ol class="dg-academy-help__list">
+      <li><strong>Schnell (Admin):</strong> Verwaltung → Videos → <em>Ansehen</em> bei einem Eintrag.</li>
+      <li><strong>Als Schulung:</strong> Verwaltung → Kurse → Kurs anlegen → Videos auswählen → <em>Veröffentlicht</em> aktivieren → Akademie → Katalog → Kurs öffnen → Regeln bestätigen → Modul öffnen.</li>
+    </ol>
+    <p class="dg-muted">Abteilungen sind optional (Mehrfachauswahl). Leer = Video/Kurs gilt für alle. Das Video wird immer vollständig abgespielt — auch wenn im CRM nicht alle Dashboard-Kacheln sichtbar sind.</p>
+  </section>
   <nav class="dg-subtabs dg-subtabs--nested" aria-label="Akademie-Verwaltung">
     <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=kurse" class="dg-subtabs__link<?= $academyAdminTab === 'kurse' || $academyAdminTab === 'kurs' ? ' is-active' : '' ?>">Kurse</a>
     <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos" class="dg-subtabs__link<?= $academyAdminTab === 'videos' ? ' is-active' : '' ?>">Videos</a>
@@ -286,16 +323,27 @@ $riskClass = static function (?string $level): string {
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="view" value="admin">
       <input type="hidden" name="module_id" value="<?= (int) ($academyAdminVideo['id'] ?? 0) ?>">
-      <label class="dg-field">
-        <span>Abteilung</span>
-        <select name="department_id" required>
-          <option value="">— wählen —</option>
-          <?php foreach ($academyDepartments as $dept) : ?>
-            <?php $deptId = (string) ($dept['id'] ?? ''); ?>
-            <option value="<?= View::escape($deptId) ?>"<?= ($academyAdminVideo['department_id'] ?? $academyAdminDepartmentId) === $deptId ? ' selected' : '' ?>><?= View::escape((string) ($dept['name'] ?? '')) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+      <fieldset class="dg-field dg-field--wide dg-academy-module-pick">
+        <legend>Abteilungen (optional, Mehrfachauswahl)</legend>
+        <p class="dg-field-hint">Nichts ausgewählt = Video gilt für alle Abteilungen.</p>
+        <?php if ($academyDepartments === []) : ?>
+          <p class="dg-muted">Noch keine Abteilungen im CRM — Video ist automatisch für alle sichtbar.</p>
+        <?php else : ?>
+          <ul class="dg-academy-module-pick__list">
+            <?php foreach ($academyDepartments as $dept) : ?>
+              <?php $deptId = (string) ($dept['id'] ?? ''); ?>
+              <li>
+                <label class="dg-field dg-field--checkbox">
+                  <span>
+                    <input type="checkbox" name="department_ids[]" value="<?= View::escape($deptId) ?>"<?= in_array($deptId, $academyModuleDepartmentIds, true) ? ' checked' : '' ?>>
+                    <?= View::escape((string) ($dept['name'] ?? '')) ?>
+                  </span>
+                </label>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </fieldset>
       <label class="dg-field dg-field--wide">
         <span>Titel</span>
         <input type="text" name="title" maxlength="200" required value="<?= View::escape((string) ($academyAdminVideo['title'] ?? '')) ?>">
@@ -361,7 +409,11 @@ $riskClass = static function (?string $level): string {
                 <td><?= View::escape($deptName) ?></td>
                 <td><?= (int) ($video['duration_sec'] ?? 0) ?> s</td>
                 <td><?= $hasFile ? 'MP4' : '—' ?><?php if (trim((string) ($video['subtitle_vtt_path'] ?? '')) !== '') : ?> · VTT<?php endif; ?></td>
-                <td><a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;video_id=<?= (int) ($video['id'] ?? 0) ?>">Bearbeiten</a></td>
+                <td>
+                  <a href="/app?page=akademie&amp;view=video-vorschau&amp;module_id=<?= (int) ($video['id'] ?? 0) ?>">Ansehen</a>
+                  ·
+                  <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;video_id=<?= (int) ($video['id'] ?? 0) ?>">Bearbeiten</a>
+                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -381,15 +433,27 @@ $riskClass = static function (?string $level): string {
         <span>Titel</span>
         <input type="text" name="title" maxlength="200" required value="<?= View::escape((string) ($academyAdminCourse['title'] ?? '')) ?>">
       </label>
-      <label class="dg-field">
-        <span>Abteilung</span>
-        <select name="department_id" required>
-          <?php foreach ($academyDepartments as $dept) : ?>
-            <?php $deptId = (string) ($dept['id'] ?? ''); ?>
-            <option value="<?= View::escape($deptId) ?>"<?= (string) ($academyAdminCourse['department_id'] ?? '') === $deptId ? ' selected' : '' ?>><?= View::escape((string) ($dept['name'] ?? '')) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+      <fieldset class="dg-field dg-field--wide dg-academy-module-pick">
+        <legend>Abteilungen (optional, Mehrfachauswahl)</legend>
+        <p class="dg-field-hint">Leer = Kurs für alle. Videos im Kurs werden immer vollständig gezeigt.</p>
+        <?php if ($academyDepartments === []) : ?>
+          <p class="dg-muted">Keine Abteilungen im CRM — Kurs gilt für alle.</p>
+        <?php else : ?>
+          <ul class="dg-academy-module-pick__list">
+            <?php foreach ($academyDepartments as $dept) : ?>
+              <?php $deptId = (string) ($dept['id'] ?? ''); ?>
+              <li>
+                <label class="dg-field dg-field--checkbox">
+                  <span>
+                    <input type="checkbox" name="department_ids[]" value="<?= View::escape($deptId) ?>"<?= in_array($deptId, $academyCourseDepartmentIds, true) ? ' checked' : '' ?>>
+                    <?= View::escape((string) ($dept['name'] ?? '')) ?>
+                  </span>
+                </label>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </fieldset>
       <label class="dg-field">
         <span>Slug (URL)</span>
         <input type="text" name="slug" maxlength="120" value="<?= View::escape((string) ($academyAdminCourse['slug'] ?? '')) ?>">
@@ -426,11 +490,11 @@ $riskClass = static function (?string $level): string {
       </label>
       <fieldset class="dg-field dg-field--wide dg-academy-module-pick">
         <legend>Videos für diesen Kurs (Mehrfachauswahl)</legend>
-        <?php if ($academyDepartmentVideos === []) : ?>
-          <p class="dg-muted">Für diese Abteilung gibt es noch keine Videos. <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;department_id=<?= rawurlencode((string) ($academyAdminCourse['department_id'] ?? '')) ?>">Video hochladen</a></p>
+        <?php if ($academyLibraryVideos === []) : ?>
+          <p class="dg-muted">Noch keine Videos in der Bibliothek. <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos">Video hochladen</a></p>
         <?php else : ?>
           <ul class="dg-academy-module-pick__list">
-            <?php foreach ($academyDepartmentVideos as $video) : ?>
+            <?php foreach ($academyLibraryVideos as $video) : ?>
               <?php $vid = (int) ($video['id'] ?? 0); ?>
               <li>
                 <label class="dg-field dg-field--checkbox">
@@ -455,11 +519,11 @@ $riskClass = static function (?string $level): string {
   <?php elseif ($academyAdminTab === 'kurse') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Kurse nach Abteilung</h2>
-    <p class="dg-field-hint">Abteilungen kommen aus den CRM-Einstellungen. Neue Abteilungen erscheinen hier automatisch.</p>
+    <p class="dg-field-hint">Abteilungen sind optional — Kurse ohne Zuordnung stehen unter „Allgemein (alle Abteilungen)“.</p>
     <p><a class="dg-button dg-button--primary" href="/app?page=akademie&amp;view=admin&amp;course_id=0&amp;admin_tab=kurs">Neuer Kurs</a></p>
 
     <?php if ($academyCoursesByDepartment === []) : ?>
-      <p class="dg-muted">Keine Abteilungen angelegt. Bitte unter Einstellungen → Abteilungen pflegen.</p>
+      <p class="dg-muted">Noch keine Kurse.</p>
     <?php else : ?>
       <?php foreach ($academyCoursesByDepartment as $group) : ?>
         <?php

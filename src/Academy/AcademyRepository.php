@@ -117,16 +117,25 @@ final class AcademyRepository
     public static function coursesGroupedByDepartment(): array
     {
         $departments = self::allDepartments();
+        $generalCourses = [];
         $coursesByDept = [];
         foreach (self::allCourses() as $course) {
-            $deptId = (string) ($course['department_id'] ?? '');
-            if ($deptId === '') {
+            $courseDeptIds = self::courseDepartmentIds((int) ($course['id'] ?? 0));
+            if ($courseDeptIds === []) {
+                $generalCourses[] = $course;
                 continue;
             }
-            $coursesByDept[$deptId][] = $course;
+            foreach ($courseDeptIds as $deptId) {
+                $coursesByDept[$deptId][] = $course;
+            }
         }
 
-        $out = [];
+        $out = [
+            [
+                'department' => ['id' => '', 'name' => 'Allgemein (alle Abteilungen)'],
+                'courses' => $generalCourses,
+            ],
+        ];
         foreach ($departments as $dept) {
             $deptId = (string) ($dept['id'] ?? '');
             $out[] = [
@@ -136,6 +145,114 @@ final class AcademyRepository
         }
 
         return $out;
+    }
+
+    /** @return list<string> */
+    public static function moduleDepartmentIds(int $moduleId): array
+    {
+        if ($moduleId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+        if (!self::tableExists('dg_academy_module_departments')) {
+            $module = self::findModule($moduleId);
+            $legacy = trim((string) ($module['department_id'] ?? ''));
+
+            return $legacy !== '' ? [$legacy] : [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT department_id FROM dg_academy_module_departments WHERE module_id = :module_id ORDER BY department_id ASC'
+        );
+        $stmt->execute(['module_id' => $moduleId]);
+
+        return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /** @return list<string> */
+    public static function courseDepartmentIds(int $courseId): array
+    {
+        if ($courseId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+        if (!self::tableExists('dg_academy_course_departments')) {
+            $course = self::findCourseById($courseId);
+            $legacy = trim((string) ($course['department_id'] ?? ''));
+
+            return $legacy !== '' ? [$legacy] : [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT department_id FROM dg_academy_course_departments WHERE course_id = :course_id ORDER BY department_id ASC'
+        );
+        $stmt->execute(['course_id' => $courseId]);
+
+        return array_map('strval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+    }
+
+    /** @param list<string> $departmentIds */
+    public static function saveModuleDepartments(int $moduleId, array $departmentIds): void
+    {
+        if ($moduleId < 1 || !Database::isConfigured() || !self::tableExists('dg_academy_module_departments')) {
+            return;
+        }
+
+        $unique = [];
+        foreach ($departmentIds as $deptId) {
+            $deptId = trim((string) $deptId);
+            if ($deptId !== '' && DepartmentRepository::exists($deptId)) {
+                $unique[$deptId] = $deptId;
+            }
+        }
+
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM dg_academy_module_departments WHERE module_id = :module_id')
+            ->execute(['module_id' => $moduleId]);
+        if ($unique === []) {
+            return;
+        }
+
+        $ins = $pdo->prepare(
+            'INSERT INTO dg_academy_module_departments (module_id, department_id) VALUES (:module_id, :department_id)'
+        );
+        foreach ($unique as $deptId) {
+            $ins->execute(['module_id' => $moduleId, 'department_id' => $deptId]);
+        }
+    }
+
+    /** @param list<string> $departmentIds */
+    public static function saveCourseDepartments(int $courseId, array $departmentIds): void
+    {
+        if ($courseId < 1 || !Database::isConfigured() || !self::tableExists('dg_academy_course_departments')) {
+            return;
+        }
+
+        $unique = [];
+        foreach ($departmentIds as $deptId) {
+            $deptId = trim((string) $deptId);
+            if ($deptId !== '' && DepartmentRepository::exists($deptId)) {
+                $unique[$deptId] = $deptId;
+            }
+        }
+
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM dg_academy_course_departments WHERE course_id = :course_id')
+            ->execute(['course_id' => $courseId]);
+        if ($unique === []) {
+            return;
+        }
+
+        $ins = $pdo->prepare(
+            'INSERT INTO dg_academy_course_departments (course_id, department_id) VALUES (:course_id, :department_id)'
+        );
+        foreach ($unique as $deptId) {
+            $ins->execute(['course_id' => $courseId, 'department_id' => $deptId]);
+        }
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function libraryVideos(bool $activeOnly = true): array
+    {
+        return self::allVideos($activeOnly);
     }
 
     /** @return list<array<string, mixed>> */
@@ -197,20 +314,20 @@ final class AcademyRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public static function allVideos(): array
+    public static function allVideos(bool $activeOnly = false): array
     {
         if (!Database::isConfigured()) {
             return [];
         }
 
-        $stmt = Database::pdo()->query(
-            'SELECT m.*, d.name AS department_name
-             FROM dg_academy_modules m
-             LEFT JOIN dg_departments d ON d.id = m.department_id
-             ORDER BY d.sort_order ASC, d.name ASC, m.sort_order ASC, m.title ASC'
-        );
+        $sql = 'SELECT m.* FROM dg_academy_modules m';
+        if ($activeOnly) {
+            $sql .= ' WHERE m.is_active = 1';
+        }
+        $sql .= ' ORDER BY m.sort_order ASC, m.title ASC, m.id ASC';
+        $rows = Database::pdo()->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return self::attachDepartmentLabelsToModules($rows);
     }
 
     /** @return array<string, mixed>|null */
@@ -265,9 +382,6 @@ final class AcademyRepository
                     if ($module === null) {
                         continue;
                     }
-                    if ($deptId !== '' && (string) ($module['department_id'] ?? '') !== $deptId) {
-                        throw new InvalidArgumentException('Video gehört nicht zur Abteilung des Kurses.');
-                    }
                     $ins->execute([
                         'course_id' => $courseId,
                         'module_id' => $moduleId,
@@ -289,8 +403,8 @@ final class AcademyRepository
     {
         $id = (int) ($data['id'] ?? 0);
         $departmentId = trim((string) ($data['department_id'] ?? ''));
-        if ($departmentId === '' || !DepartmentRepository::exists($departmentId)) {
-            throw new InvalidArgumentException('Abteilung ist Pflicht.');
+        if ($departmentId !== '' && !DepartmentRepository::exists($departmentId)) {
+            throw new InvalidArgumentException('Abteilung nicht gefunden.');
         }
 
         $title = trim((string) ($data['title'] ?? ''));
@@ -298,8 +412,15 @@ final class AcademyRepository
             throw new InvalidArgumentException('Titel ist Pflicht.');
         }
 
+        $departmentIds = [];
+        if (!empty($data['department_ids']) && is_array($data['department_ids'])) {
+            $departmentIds = array_map('strval', $data['department_ids']);
+        } elseif ($departmentId !== '') {
+            $departmentIds = [$departmentId];
+        }
+
         $params = [
-            'department_id' => $departmentId,
+            'department_id' => $departmentId !== '' ? $departmentId : null,
             'title' => $title,
             'description' => trim((string) ($data['description'] ?? '')),
             'provider' => 'file',
@@ -322,6 +443,7 @@ final class AcademyRepository
                  WHERE id = :id'
             );
             $stmt->execute($params + ['id' => $id]);
+            self::saveModuleDepartments($id, $departmentIds);
 
             return $id;
         }
@@ -335,8 +457,10 @@ final class AcademyRepository
                  :duration_sec, :min_watch_percent, :subtitle_vtt_path, :is_active)'
         );
         $stmt->execute($params);
+        $newId = (int) Database::pdo()->lastInsertId();
+        self::saveModuleDepartments($newId, $departmentIds);
 
-        return (int) Database::pdo()->lastInsertId();
+        return $newId;
     }
 
     /** @return array<string, mixed>|null */
@@ -554,10 +678,18 @@ final class AcademyRepository
             'sort_order' => (int) ($data['sort_order'] ?? 0),
         ];
 
-        if ($params['title'] === '' || $params['department_id'] === '') {
-            throw new InvalidArgumentException('Titel und Abteilung sind Pflicht.');
+        if ($params['title'] === '') {
+            throw new InvalidArgumentException('Titel ist Pflicht.');
         }
-        if (!DepartmentRepository::exists($params['department_id'])) {
+
+        $courseDepartmentIds = [];
+        if (!empty($data['department_ids']) && is_array($data['department_ids'])) {
+            $courseDepartmentIds = array_map('strval', $data['department_ids']);
+        } elseif ($params['department_id'] !== '') {
+            $courseDepartmentIds = [(string) $params['department_id']];
+        }
+
+        if ($params['department_id'] !== '' && !DepartmentRepository::exists($params['department_id'])) {
             throw new InvalidArgumentException('Abteilung nicht gefunden.');
         }
         if ($params['slug'] === '') {
@@ -565,7 +697,12 @@ final class AcademyRepository
         }
 
         if ($params['area_id'] < 1) {
-            $params['area_id'] = self::legacyAreaIdForDepartment($params['department_id']);
+            $params['area_id'] = $params['department_id'] !== ''
+                ? self::legacyAreaIdForDepartment($params['department_id'])
+                : self::defaultLegacyAreaId();
+        }
+        if ($params['department_id'] === '') {
+            $params['department_id'] = null;
         }
 
         if ($id > 0) {
@@ -579,6 +716,7 @@ final class AcademyRepository
                  WHERE id = :id'
             );
             $stmt->execute($params + ['id' => $id]);
+            self::saveCourseDepartments($id, $courseDepartmentIds);
 
             return $id;
         }
@@ -592,8 +730,10 @@ final class AcademyRepository
                  :certificate_enabled, :certificate_scope, :certificate_valid_days, :quiz_enabled, :is_published, :sort_order)'
         );
         $stmt->execute($params);
+        $newId = (int) Database::pdo()->lastInsertId();
+        self::saveCourseDepartments($newId, $courseDepartmentIds);
 
-        return (int) Database::pdo()->lastInsertId();
+        return $newId;
     }
 
     /** @param array<string, mixed> $data */
@@ -673,8 +813,68 @@ final class AcademyRepository
         if (!isset($row['area_label']) || $row['area_label'] === '' || $row['area_label'] === null) {
             $row['area_label'] = (string) ($row['department_name'] ?? '');
         }
+        if ($row['area_label'] === '') {
+            $row['area_label'] = 'Allgemein';
+        }
 
         return $row;
+    }
+
+    /** @param list<array<string, mixed>> $rows */
+    private static function attachDepartmentLabelsToModules(array $rows): array
+    {
+        $deptNames = [];
+        foreach (self::allDepartments() as $dept) {
+            $deptNames[(string) ($dept['id'] ?? '')] = (string) ($dept['name'] ?? '');
+        }
+
+        foreach ($rows as &$row) {
+            $ids = self::moduleDepartmentIds((int) ($row['id'] ?? 0));
+            if ($ids === []) {
+                $row['department_name'] = 'Alle Abteilungen';
+                $row['department_ids'] = [];
+            } else {
+                $labels = [];
+                foreach ($ids as $id) {
+                    $labels[] = $deptNames[$id] ?? $id;
+                }
+                $row['department_name'] = implode(', ', $labels);
+                $row['department_ids'] = $ids;
+            }
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    private static function tableExists(string $table): bool
+    {
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        $stmt = Database::pdo()->query('SHOW TABLES LIKE ' . Database::pdo()->quote($table));
+
+        return $stmt !== false && $stmt->fetchColumn() !== false;
+    }
+
+    private static function defaultLegacyAreaId(): int
+    {
+        if (!Database::isConfigured()) {
+            return 1;
+        }
+
+        $stmt = Database::pdo()->query(
+            "SELECT id FROM dg_academy_areas WHERE code = 'allgemein' ORDER BY id ASC LIMIT 1"
+        );
+        $id = $stmt ? $stmt->fetchColumn() : false;
+        if ($id) {
+            return (int) $id;
+        }
+
+        $stmt = Database::pdo()->query('SELECT id FROM dg_academy_areas ORDER BY sort_order ASC, id ASC LIMIT 1');
+        $fallback = $stmt ? $stmt->fetchColumn() : false;
+
+        return $fallback ? (int) $fallback : 1;
     }
 
     private static function departmentIdFromLegacyArea(int $areaId): string
