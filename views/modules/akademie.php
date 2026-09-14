@@ -133,11 +133,15 @@ $riskClass = static function (?string $level): string {
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="view" value="kurs">
       <input type="hidden" name="course_id" value="<?= (int) ($academyCourse['id'] ?? 0) ?>">
-      <label class="dg-field dg-field--wide dg-academy-rules__confirm">
-        <input type="checkbox" name="confirm_rules" value="1" required>
-        <span>Ich habe die Schulungsregeln gelesen und verstanden.</span>
+      <label class="dg-field dg-field--checkbox dg-field--wide dg-academy-rules__confirm">
+        <span>
+          <input type="checkbox" name="confirm_rules" value="1" required>
+          Ich habe die Schulungsregeln gelesen und verstanden.
+        </span>
       </label>
-      <button type="submit" name="academy_accept_rules" value="1" class="dg-button dg-button--primary">Schulung starten</button>
+      <div class="dg-form-actions dg-academy-rules__actions">
+        <button type="submit" name="academy_accept_rules" value="1" class="dg-button dg-button--primary">Schulung starten</button>
+      </div>
     </form>
     <?php else : ?>
       <?php if ($academySummary !== null) : ?>
