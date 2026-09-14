@@ -22,6 +22,15 @@ if (!$pdo->query("SHOW TABLES LIKE 'dg_academy_courses'")->fetchColumn()) {
     $errors[] = 'Migration 070 nicht angewendet (dg_academy_courses fehlt).';
 }
 
+if (!$pdo->query("SHOW TABLES LIKE 'dg_academy_course_modules'")->fetchColumn()) {
+    $errors[] = 'Migration 071 nicht angewendet (dg_academy_course_modules fehlt).';
+}
+
+$departments = AcademyRepository::allDepartments();
+if ($departments === []) {
+    $errors[] = 'Keine CRM-Abteilungen — Kursliste leer.';
+}
+
 $course = AcademyRepository::findCourseBySlug('lager-platz-check');
 if ($course === null) {
     $errors[] = 'Seed-Kurs lager-platz-check fehlt.';

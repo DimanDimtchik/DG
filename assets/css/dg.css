@@ -6035,3 +6035,31 @@ body.dg-login-page {
   border-top: 1px solid var(--dg-border);
 }
 
+.dg-subtabs--nested {
+  margin-bottom: 16px;
+}
+
+.dg-academy-dept-block {
+  margin-bottom: 20px;
+}
+
+.dg-academy-dept-block__actions {
+  margin-top: 12px;
+}
+
+.dg-academy-module-pick__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dg-academy-module-pick__list li + li {
+  margin-top: 8px;
+}
+
+.dg-academy-module-pick__list .dg-field--checkbox span {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+

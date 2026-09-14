@@ -220,6 +220,8 @@ final class MigrationRunner
                 && self::columnExists($pdo, 'dg_stock_movements', 'place_id'),
             '070_academy.sql' => self::tableExists($pdo, 'dg_academy_courses')
                 && self::tableExists($pdo, 'dg_academy_assignments'),
+            '071_academy_departments.sql' => self::tableExists($pdo, 'dg_academy_course_modules')
+                && self::columnExists($pdo, 'dg_academy_courses', 'department_id'),
             default => false,
         };
     }
@@ -321,6 +323,7 @@ final class MigrationRunner
             '068_stock_shelf_slot_kinds.sql' => true,
             '069_stock_barcodes_receipt_issue.sql' => true,
             '070_academy.sql' => true,
+            '071_academy_departments.sql' => true,
         ];
     }
 

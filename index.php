@@ -1165,8 +1165,24 @@ switch ($path) {
                         $courseId = (int) ($_POST['course_id'] ?? 0);
                         AcademyRepository::ensureAssignment((int) $user->id, $courseId, (int) $user->id);
                         Flash::set('success', 'Kurs zu „Meine Schulungen“ hinzugefügt.');
+                    } elseif (isset($_POST['academy_upload_video']) && RoleResolver::isAdmin($user)) {
+                        $moduleId = AcademyVideoService::saveFromUpload($_POST, $_FILES);
+                        Flash::set('success', 'Video in Bibliothek gespeichert.');
+                        $dept = trim((string) ($_POST['department_id'] ?? ''));
+                        $redirect = '/app?page=akademie&view=admin&admin_tab=videos';
+                        if ($dept !== '') {
+                            $redirect .= '&department_id=' . rawurlencode($dept);
+                        }
+                        if ($moduleId > 0) {
+                            $redirect .= '&video_id=' . $moduleId;
+                        }
                     } elseif (isset($_POST['academy_save_course']) && RoleResolver::isAdmin($user)) {
                         $courseId = AcademyRepository::saveCourse($_POST);
+                        $moduleIds = [];
+                        if (!empty($_POST['module_ids']) && is_array($_POST['module_ids'])) {
+                            $moduleIds = array_map('intval', $_POST['module_ids']);
+                        }
+                        AcademyRepository::saveCourseModules($courseId, $moduleIds);
                         Flash::set('success', 'Kurs gespeichert.');
                         $redirect = '/app?page=akademie&view=admin&course_id=' . $courseId;
                     } elseif (isset($_POST['academy_assign']) && RoleResolver::isAdmin($user)) {
@@ -2794,7 +2810,8 @@ switch ($path) {
             $canManageAcademy = RoleResolver::isAdmin($user);
             $canAcademyHr = RoleResolver::isAdmin($user);
             $academyTierPlan = AcademyTier::currentPlan();
-            $academyAreas = AcademyRepository::allAreas();
+            $academyAreas = AcademyRepository::allDepartments();
+            $academyDepartments = $academyAreas;
             $academyAssignments = AcademyRepository::assignmentsForUser((int) $user->id);
             $academyCatalog = array_values(array_filter(
                 AcademyRepository::publishedCourses(),
@@ -2828,20 +2845,54 @@ switch ($path) {
             if ($academyModuleId > 0) {
                 $academyModule = AcademyRepository::findModule($academyModuleId);
             }
-            $academyAdminCourseId = (int) ($_GET['course_id'] ?? 0);
-            $academyAdminCourse = $academyAdminCourseId > 0 ? AcademyRepository::findCourseById($academyAdminCourseId) : null;
-            $academyUserOptions = $canManageAcademy ? AcademyRepository::userOptions() : [];
-            $academyAllCourses = $canManageAcademy
-                ? AcademyRepository::publishedCourses() // admin sees all including unpublished - fix
-                : [];
-            if ($canManageAcademy && Database::isConfigured()) {
-                $academyAllCourses = Database::pdo()->query(
-                    'SELECT c.*, a.code AS area_code, a.label AS area_label
-                     FROM dg_academy_courses c
-                     INNER JOIN dg_academy_areas a ON a.id = c.area_id
-                     ORDER BY c.sort_order ASC, c.title ASC'
-                )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $academyAdminTab = trim((string) ($_GET['admin_tab'] ?? 'kurse'));
+            if (!in_array($academyAdminTab, ['kurse', 'videos', 'kurs'], true)) {
+                $academyAdminTab = 'kurse';
             }
+            $academyAdminDepartmentId = trim((string) ($_GET['department_id'] ?? ''));
+            $academyAdminCourseId = (int) ($_GET['course_id'] ?? 0);
+            $academyAdminCourse = null;
+            if (array_key_exists('course_id', $_GET)) {
+                $academyAdminTab = 'kurs';
+                if ($academyAdminCourseId > 0) {
+                    $academyAdminCourse = AcademyRepository::findCourseById($academyAdminCourseId);
+                } else {
+                    $defaultDept = $academyAdminDepartmentId !== ''
+                        ? $academyAdminDepartmentId
+                        : (string) (($academyDepartments[0]['id'] ?? '') ?: '');
+                    $academyAdminCourse = [
+                        'id' => 0,
+                        'department_id' => $defaultDept,
+                        'title' => '',
+                        'slug' => '',
+                        'description' => '',
+                        'version' => '1.0',
+                        'min_tier' => AcademyTier::STARTER,
+                        'access_mode_default' => AcademyAccessMode::COMPARE,
+                        'certificate_enabled' => 0,
+                        'is_published' => 0,
+                    ];
+                }
+            }
+            $academyAdminVideoId = (int) ($_GET['video_id'] ?? 0);
+            $academyAdminVideo = $academyAdminVideoId > 0 ? AcademyRepository::findModule($academyAdminVideoId) : null;
+            $academyUserOptions = $canManageAcademy ? AcademyRepository::userOptions() : [];
+            $academyCoursesByDepartment = $canManageAcademy ? AcademyRepository::coursesGroupedByDepartment() : [];
+            $academyAllCourses = $canManageAcademy ? AcademyRepository::allCourses() : [];
+            $academyCourseModuleIds = $academyAdminCourse !== null
+                ? AcademyRepository::moduleIdsForCourse((int) $academyAdminCourse['id'])
+                : [];
+            $academyDepartmentVideos = [];
+            if ($canManageAcademy && $academyAdminCourse !== null && (string) ($academyAdminCourse['department_id'] ?? '') !== '') {
+                $academyDepartmentVideos = AcademyRepository::videosForDepartment(
+                    (string) ($academyAdminCourse['department_id'] ?? '')
+                );
+            } elseif ($canManageAcademy && $academyAdminDepartmentId !== '') {
+                $academyDepartmentVideos = AcademyRepository::videosForDepartment($academyAdminDepartmentId);
+            }
+            $academyAllVideos = ($canManageAcademy && $academyAdminTab === 'videos')
+                ? AcademyRepository::allVideos()
+                : [];
             $contentTemplate = 'modules/akademie';
             $title = 'Akademie';
             $currentPage = 'akademie';
