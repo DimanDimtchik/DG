@@ -22,6 +22,11 @@ final class StockScanApi
 
             return;
         }
+        if ($action === 'audit') {
+            self::handleAudit();
+
+            return;
+        }
 
         self::handleScan();
     }
@@ -41,6 +46,31 @@ final class StockScanApi
             echo json_encode([
                 'success' => true,
                 'data' => self::publicScan($resolved),
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    private static function handleAudit(): void
+    {
+        $code = (string) ($_GET['code'] ?? $_POST['code'] ?? '');
+        if (trim($code) === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Strichcode fehlt.'], JSON_UNESCAPED_UNICODE);
+
+            return;
+        }
+
+        try {
+            $audit = StockPlaceAuditService::audit($code);
+            echo json_encode([
+                'success' => true,
+                'data' => $audit,
             ], JSON_UNESCAPED_UNICODE);
         } catch (InvalidArgumentException $e) {
             http_response_code(404);

@@ -201,6 +201,13 @@ if ($hasStructure) {
     if ($locLabels === []) {
         $errors[] = 'Etiketten: keine Lagerorte für Druck.';
     }
+    $firstLoc = StockStructureRepository::allLocations()[0] ?? null;
+    if (is_array($firstLoc)) {
+        $audit = StockPlaceAuditService::audit((string) ($firstLoc['code'] ?? ''));
+        if (($audit['scan_type'] ?? '') !== 'location') {
+            $errors[] = 'Platz-Check Audit für Lagerort fehlgeschlagen.';
+        }
+    }
 }
 
 if ($errors !== []) {

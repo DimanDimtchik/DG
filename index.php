@@ -2591,7 +2591,7 @@ switch ($path) {
             exit;
         } elseif ($page === 'lager' && MenuRegistry::canAccess($user, 'lager')) {
             $lagerView = trim((string) ($_GET['view'] ?? 'overview'));
-            if (!in_array($lagerView, ['overview', 'bewegungen', 'wareneingang', 'warenausgang', 'inventur'], true)) {
+            if (!in_array($lagerView, ['overview', 'bewegungen', 'wareneingang', 'warenausgang', 'platz-check', 'inventur'], true)) {
                 $lagerView = 'overview';
             }
             $download = trim((string) ($_GET['download'] ?? ''));

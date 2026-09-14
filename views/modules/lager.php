@@ -42,6 +42,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
     <a href="/app?page=lager&amp;view=overview" class="dg-subtabs__link<?= $lagerView === 'overview' ? ' is-active' : '' ?>">Bestandsübersicht</a>
     <a href="/app?page=lager&amp;view=wareneingang" class="dg-subtabs__link<?= $lagerView === 'wareneingang' ? ' is-active' : '' ?>">Wareneingang</a>
     <a href="/app?page=lager&amp;view=warenausgang" class="dg-subtabs__link<?= $lagerView === 'warenausgang' ? ' is-active' : '' ?>">Warenausgang</a>
+    <a href="/app?page=lager&amp;view=platz-check" class="dg-subtabs__link<?= $lagerView === 'platz-check' ? ' is-active' : '' ?>">Platz-Check</a>
     <a href="/app?page=lager&amp;view=bewegungen" class="dg-subtabs__link<?= $lagerView === 'bewegungen' ? ' is-active' : '' ?>">Bewegungen</a>
     <a href="/app?page=lager&amp;view=inventur" class="dg-subtabs__link<?= $lagerView === 'inventur' ? ' is-active' : '' ?>">Inventur</a>
   </nav>
@@ -210,6 +211,23 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
     <?php endif; ?>
   </section>
 
+  <?php elseif ($lagerView === 'platz-check') : ?>
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Platz-Check (Mini-Audit)</h2>
+    <p class="dg-field-hint">Etikett scannen — Anzeige von Belegung, Reservierung (fest/flexibel) und letzten Bewegungen. Nutzbar mit Handscanner, Eingabe oder <strong>Kamera</strong> (Tablet/Smartphone, HTTPS).</p>
+    <form class="dg-form-grid dg-form-grid--compact" id="dg-place-audit-form" autocomplete="off">
+      <label class="dg-field dg-field--wide">
+        <span>Strichcode scannen</span>
+        <input type="text" data-scan-input inputmode="numeric" autofocus placeholder="Platz, Regal, Halle, Karton oder Artikel">
+        <button type="button" class="dg-button dg-button--small dg-camera-scan-btn" data-camera-scan-trigger>Kamera</button>
+      </label>
+      <div class="dg-field dg-field--wide">
+        <div id="dg-place-audit-message" class="dg-scan-result" hidden></div>
+      </div>
+    </form>
+    <div id="dg-place-audit-panel" class="dg-panel" hidden></div>
+  </section>
+
   <?php elseif ($lagerView === 'bewegungen') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Letzte Bewegungen</h2>
@@ -337,14 +355,21 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php endif; ?>
   <?php endif; ?>
 </div>
-<?php if (in_array($lagerView, ['wareneingang', 'warenausgang'], true) && $canEdit) : ?>
+<?php if (in_array($lagerView, ['wareneingang', 'warenausgang', 'platz-check'], true)) : ?>
 <script>
 window.dgLagerScanConfig = {
   scanApiUrl: '/api/stock-scan',
   csrf: <?= json_encode($csrf, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
+<script src="<?= View::escape(Asset::url('/assets/js/vendor/html5-qrcode.min.js')) ?>" defer></script>
+<script src="<?= View::escape(Asset::url('/assets/js/lager-camera-scan.js')) ?>" defer></script>
+<?php if (in_array($lagerView, ['wareneingang', 'warenausgang'], true) && $canEdit) : ?>
 <script src="<?= View::escape(Asset::url('/assets/js/lager-scan.js')) ?>" defer></script>
+<?php endif; ?>
+<?php if ($lagerView === 'platz-check') : ?>
+<script src="<?= View::escape(Asset::url('/assets/js/lager-audit.js')) ?>" defer></script>
+<?php endif; ?>
 <?php endif; ?>
 <script>
 (function () {

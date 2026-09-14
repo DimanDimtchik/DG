@@ -216,6 +216,7 @@ spl_autoload_register(static function (string $class): void {
         'StockScanApi' => '/src/Inventory/StockScanApi.php',
         'StockLabelService' => '/src/Inventory/StockLabelService.php',
         'StockLabelPrintService' => '/src/Inventory/StockLabelPrintService.php',
+        'StockPlaceAuditService' => '/src/Inventory/StockPlaceAuditService.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
         'WebsiteContent' => '/src/Website/WebsiteContent.php',

@@ -475,7 +475,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
   <?php elseif ($lagerStrukturTab === 'etiketten') : ?>
     <?php
       $labelLevel = StockLabelService::sanitizeLevel((string) ($_GET['label_level'] ?? StockLabelService::LEVEL_PLACE));
-      $labelFormat = StockLabelService::sanitizeFormat((string) ($_GET['label_format'] ?? '100x50'));
+      $labelFormat = StockLabelService::sanitizeFormat((string) ($_GET['label_format'] ?? 'avery-l7163'));
       $labelLocationId = (int) ($_GET['location_id'] ?? 0);
       $labelHallId = (int) ($_GET['hall_id'] ?? 0);
       $labelShelfId = (int) ($_GET['shelf_id'] ?? 0);

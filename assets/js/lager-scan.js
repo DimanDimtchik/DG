@@ -109,12 +109,37 @@
     showScanMessage(messageEl, 'Scan nicht zuordenbar.', 'warning');
   }
 
+  function attachCameraButton(form) {
+    const input = form.querySelector('[data-scan-input]');
+    if (!input || !window.dgLagerCameraScan || form.querySelector('[data-camera-scan-trigger]')) {
+      return;
+    }
+    const wrap = input.closest('label') || input.parentElement;
+    if (!wrap) {
+      return;
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dg-button dg-button--small dg-camera-scan-btn';
+    btn.setAttribute('data-camera-scan-trigger', '1');
+    btn.textContent = 'Kamera';
+    btn.addEventListener('click', function () {
+      window.dgLagerCameraScan.open(function (code) {
+        input.value = code;
+        input.focus();
+        form.requestSubmit();
+      });
+    });
+    wrap.appendChild(btn);
+  }
+
   function bindScanForm(form, tbody, mode) {
     const input = form.querySelector('[data-scan-input]');
     const messageEl = form.querySelector('[data-scan-message]');
     if (!input || !tbody) {
       return;
     }
+    attachCameraButton(form);
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();

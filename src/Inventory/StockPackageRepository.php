@@ -89,4 +89,42 @@ final class StockPackageRepository
             'UPDATE dg_stock_packages SET status = \'issued\', issued_at = NOW() WHERE id = :id'
         )->execute(['id' => $packageId]);
     }
+
+    /** @return list<array<string, mixed>> */
+    public static function inStockForPlace(int $placeId): array
+    {
+        if ($placeId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT p.*, a.article_number, a.title, a.unit
+             FROM dg_stock_packages p
+             INNER JOIN dg_calendar_articles a ON a.id = p.article_id
+             WHERE p.place_id = :place_id AND p.status = \'in_stock\'
+             ORDER BY p.barcode ASC'
+        );
+        $stmt->execute(['place_id' => $placeId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function inStockForArticle(int $articleId): array
+    {
+        if ($articleId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT p.*, a.article_number, a.title, a.unit
+             FROM dg_stock_packages p
+             INNER JOIN dg_calendar_articles a ON a.id = p.article_id
+             WHERE p.article_id = :article_id AND p.status = \'in_stock\'
+             ORDER BY p.barcode ASC'
+        );
+        $stmt->execute(['article_id' => $articleId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }

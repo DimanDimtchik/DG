@@ -46,6 +46,109 @@ final class StockMovementRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    /** @return list<array<string, mixed>> */
+    public static function forPlace(int $placeId, int $limit = 20): array
+    {
+        if ($placeId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT m.*, a.article_number, a.title, a.unit
+             FROM dg_stock_movements m
+             INNER JOIN dg_calendar_articles a ON a.id = m.article_id
+             WHERE m.place_id = :place_id
+             ORDER BY m.movement_date DESC, m.id DESC
+             LIMIT ' . max(1, min(100, $limit))
+        );
+        $stmt->execute(['place_id' => $placeId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function forPackage(int $packageId, int $limit = 20): array
+    {
+        if ($packageId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT m.*, a.article_number, a.title, a.unit
+             FROM dg_stock_movements m
+             INNER JOIN dg_calendar_articles a ON a.id = m.article_id
+             WHERE m.package_id = :package_id
+             ORDER BY m.movement_date DESC, m.id DESC
+             LIMIT ' . max(1, min(100, $limit))
+        );
+        $stmt->execute(['package_id' => $packageId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function forShelf(int $shelfId, int $limit = 20): array
+    {
+        if ($shelfId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT m.*, a.article_number, a.title, a.unit
+             FROM dg_stock_movements m
+             INNER JOIN dg_calendar_articles a ON a.id = m.article_id
+             INNER JOIN dg_stock_places p ON p.id = m.place_id
+             WHERE p.shelf_id = :shelf_id
+             ORDER BY m.movement_date DESC, m.id DESC
+             LIMIT ' . max(1, min(100, $limit))
+        );
+        $stmt->execute(['shelf_id' => $shelfId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function forHall(int $hallId, int $limit = 20): array
+    {
+        if ($hallId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT m.*, a.article_number, a.title, a.unit
+             FROM dg_stock_movements m
+             INNER JOIN dg_calendar_articles a ON a.id = m.article_id
+             INNER JOIN dg_stock_places p ON p.id = m.place_id
+             WHERE p.hall_id = :hall_id
+             ORDER BY m.movement_date DESC, m.id DESC
+             LIMIT ' . max(1, min(100, $limit))
+        );
+        $stmt->execute(['hall_id' => $hallId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function forLocation(int $locationId, int $limit = 20): array
+    {
+        if ($locationId < 1 || !Database::isConfigured()) {
+            return [];
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT m.*, a.article_number, a.title, a.unit
+             FROM dg_stock_movements m
+             INNER JOIN dg_calendar_articles a ON a.id = m.article_id
+             INNER JOIN dg_stock_places p ON p.id = m.place_id
+             WHERE p.location_id = :location_id
+             ORDER BY m.movement_date DESC, m.id DESC
+             LIMIT ' . max(1, min(100, $limit))
+        );
+        $stmt->execute(['location_id' => $locationId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public static function deleteForVoucher(int $voucherId): void
     {
         if ($voucherId < 1 || !Database::isConfigured()) {

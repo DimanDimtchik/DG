@@ -16,7 +16,9 @@ Stand: 2026-09-13 · Migrationen **065–069**
 - [x] **Stufe B** — Inventur-Assistent (Stichtag, Zählung, Differenz buchen, CSV)
 - [x] **Stufe C (Teil)** — Strichcodes: Artikel (EAN/GTIN), Palette/Platz, Karton (`dg_stock_packages`)
 - [x] **Wareneingang / Warenausgang** — Scan-UI, Karton anlegen, Belegbezug Lieferschein/Auftrag
-- [x] **Etiketten-Druck** — Lagerstruktur → Etiketten, mehrere Formate (Rollen + A4-Bogen)
+- [x] **Etiketten-Druck** — Lagerstruktur → Etiketten, Avery L7163/L7160/… + Rollenformate
+- [x] **Kamera-Scan** — Smartphone/Tablet (html5-qrcode, CODE128/EAN)
+- [x] **Platz-Check** — Mini-Audit: Belegung, Reservierung, letzte Bewegungen
 
 ## Strichcode-Ebenen
 
@@ -37,7 +39,17 @@ Einstellungen → **Lagerstruktur → Etiketten** — lesbarer Code + CODE128-St
 | Regal | Ort-Halle-Regal (z. B. `WH1-H1-R1`) |
 | Stellplatz | vollständig inkl. PAL/KRT/EIN (z. B. `WH1-H1-R1-PAL01`) |
 
-Formate u. a. 62×29 mm, 100×50 mm, A4-Bogen (3×8 / 2×5). Vorschau im Browser; Feinabstimmung in der Druckersoftware.
+Formate u. a. **Avery L7163, L7160, L7159, L7161, L7162, L4776, L4778** sowie 62×29 mm, 100×50 mm. Vorschau im Browser; Feinabstimmung in der Druckersoftware.
+
+## Platz-Check (Mini-Audit)
+
+Lager → **Platz-Check**: Etikett scannen (Scanner, Kamera oder Eingabe). Anzeige:
+
+- **Reservierung** — fest (Artikel) oder flexibel
+- **Belegung** — `dg_stock_place_occupancy`, Kartons, Artikel-Stammplatz
+- **Letzte Bewegungen** — aus `dg_stock_movements` am Platz
+
+API: `/api/stock-scan?action=audit&code=…`
 
 ## Bewusst nicht (später)
 
