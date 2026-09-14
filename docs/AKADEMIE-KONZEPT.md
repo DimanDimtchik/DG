@@ -69,21 +69,23 @@ Kein Voiceover/TTS in Phase 1.
 
 ## 6. Zugriffsmodi (Sperre — nicht immer gleich)
 
-Pro **Lernpfad** einstellbar — nicht global für alle Schulungen.
+Pro **Kurs / Lernpfad / Zuweisung** einstellbar — **kein fester Standard** im System (z. B. Lager-Einarbeitung nicht vordefiniert als hart oder Vergleich).
+
+**Wer entscheidet:** **Admin bzw. Chef** (Geschäftsführung) in der Akademie-Admin-UI — pro Kurs beim Anlegen oder bei Zuweisung an Mitarbeiter/Abteilung. HR kann zuweisen und prüfen; **Zugriffsmodus** setzt Admin/Chef (CRM-Rolle `admin`, später ggf. eigene Berechtigung „Akademie-Verwaltung“).
 
 | Modus | Code | Verhalten |
 |-------|------|-----------|
 | **Vergleich** | `compare` | Software **bleibt nutzbar**; Banner in Akademie + betroffenen Modulen: „Bitte Schulung parallel absolvieren.“ Mitarbeiter kann **Lerninhalt mit der echten Oberfläche vergleichen** (Video offen, CRM offen). Kein harter Block. |
-| **Weich** | `soft` | Module sichtbar; deutlicher Hinweis + Link zur Akademie; HR kann Frist setzen. |
+| **Weich** | `soft` | Module sichtbar; deutlicher Hinweis + Link zur Akademie; Frist optional. |
 | **Hart** | `hard` | Betroffene Module **gesperrt** bis Kurs abgeschlossen **und** ggf. HR-Zertifikat. Redirect zur Akademie. |
 
-**Typische Zuordnung:**
+**Beispiele (nur zur Orientierung — Entscheidung liegt bei Admin/Chef):**
 
-- Lager-Einarbeitung mit Sicherheitsrelevanz → oft **`hard`**
-- Vertiefung / Update-Schulung → **`soft`** oder **`compare`**
-- Onboarding „CRM-Oberfläche kennenlernen“ → **`compare`** (Lernen am echten System)
+- Lager-Einarbeitung: Chef wählt je nach Vertrauen/Reife **`hard`** (Sperre bis Zertifikat) oder **`compare`** (parallel am echten Lager üben)
+- Update-Schulung nach Release: oft **`soft`**
+- Oberflächen-Tour: oft **`compare`**
 
-Technik: `TrainingGateService` prüft Modus + Abschlussstatus; `DepartmentAccess` / `MenuRegistry` nur bei `hard` blockieren.
+Technik: `TrainingGateService` liest `access_mode` aus Kurs/Zuweisung; `DepartmentAccess` / `MenuRegistry` blockieren nur bei `hard`.
 
 ---
 
@@ -185,8 +187,9 @@ Migration geplant: `070_training_academy.sql`
 | Rolle | Bereich |
 |-------|---------|
 | Alle | **Akademie** — Meine Schulungen, Katalog, Player, Untertitel |
-| HR / Admin | Kurse, Zuweisungen, Prüf-Queue, Zertifikate, Auffälligkeiten |
-| Einstellungen | Gates, Mail-Vorlagen, Bereiche |
+| HR | Zuweisungen, Prüf-Queue, Zertifikate freigeben/ablehnen, Auffälligkeiten |
+| **Admin / Chef** | Kurse anlegen, **Zugriffsmodus** (compare/soft/hard), Gates, Inhalte |
+| Einstellungen | Mail-Vorlagen, Bereiche, Tarif-Mapping |
 
 Menü: neuer Eintrag **Akademie** (`MenuRegistry`).
 
@@ -214,7 +217,7 @@ Menü: neuer Eintrag **Akademie** (`MenuRegistry`).
 | Tarif | Lizenzserver **`plan`** |
 | Zertifikat | HR-Freigabe, Gültigkeit + Geltungsbereich |
 | Vor Start | Regeln-Screen |
-| Software-Sperre | **Optional pro Pfad** — compare / soft / hard |
+| Software-Sperre | **Optional pro Pfad** — compare / soft / hard; **Admin/Chef wählt**, kein System-Default |
 | Vergleichsmodus | Lernen **parallel** am echten CRM |
 | Quiz | Pro Kurs manuell |
 | YouTube | Pro Video einstellbar |
