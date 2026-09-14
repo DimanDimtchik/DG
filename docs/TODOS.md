@@ -81,6 +81,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 | Thema | Doku |
 |-------|------|
+| **Akademie** (Lernplattform, Zertifikate, HR-Freigabe + Mail) | [`AKADEMIE-KONZEPT.md`](AKADEMIE-KONZEPT.md) |
 | **Multi-Firma** (Switcher, Tochter, Umfirmierung unterjährig) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) |
 | Zweitfirma −20 %, Umfirmierung = 1 Paket + Archiv-Slot | Abschnitt 7 im Konzept |
 
