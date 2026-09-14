@@ -449,6 +449,142 @@ final class StockStructureRepository
         }
     }
 
+    /** @return list<array<string, mixed>> */
+    public static function allPlaces(int $locationId = 0, int $hallId = 0, int $shelfId = 0): array
+    {
+        if (!Database::isConfigured()) {
+            return [];
+        }
+
+        $sql = 'SELECT p.*, l.code AS location_code, h.code AS hall_code, s.code AS shelf_code
+                FROM dg_stock_places p
+                INNER JOIN dg_stock_locations l ON l.id = p.location_id
+                INNER JOIN dg_stock_halls h ON h.id = p.hall_id
+                INNER JOIN dg_stock_shelves s ON s.id = p.shelf_id
+                WHERE 1=1';
+        $params = [];
+        if ($shelfId > 0) {
+            $sql .= ' AND p.shelf_id = :shelf_id';
+            $params['shelf_id'] = $shelfId;
+        }
+        if ($hallId > 0) {
+            $sql .= ' AND p.hall_id = :hall_id';
+            $params['hall_id'] = $hallId;
+        }
+        if ($locationId > 0) {
+            $sql .= ' AND p.location_id = :location_id';
+            $params['location_id'] = $locationId;
+        }
+        $sql .= ' ORDER BY l.code ASC, h.code ASC, s.code ASC, p.sort_order ASC, p.code ASC';
+
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_map([self::class, 'enrichPlaceRow'], $rows);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findLocationByCode(string $code): ?array
+    {
+        $code = StockPositionCode::sanitizeSegment($code);
+        if ($code === '' || !Database::isConfigured()) {
+            return null;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_stock_locations WHERE code = :code AND is_active = 1 LIMIT 1'
+        );
+        $stmt->execute(['code' => $code]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? self::enrichLocationRow($row) : null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findHallByDisplayCode(string $code): ?array
+    {
+        $code = trim($code);
+        if ($code === '' || !Database::isConfigured()) {
+            return null;
+        }
+
+        $stmt = Database::pdo()->query(
+            'SELECT h.*, l.code AS location_code, l.name AS location_name
+             FROM dg_stock_halls h
+             INNER JOIN dg_stock_locations l ON l.id = h.location_id
+             WHERE h.is_active = 1'
+        );
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $display = StockPositionCode::composeSegments([
+                (string) ($row['location_code'] ?? ''),
+                (string) ($row['code'] ?? ''),
+            ]);
+            if ($display === $code) {
+                return self::enrichHallRow($row);
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findShelfByDisplayCode(string $code): ?array
+    {
+        $code = trim($code);
+        if ($code === '' || !Database::isConfigured()) {
+            return null;
+        }
+
+        foreach (self::allShelves() as $row) {
+            if (empty($row['is_active'])) {
+                continue;
+            }
+            $display = (string) ($row['position_prefix'] ?? '');
+            if ($display === '' ) {
+                $display = StockPositionCode::composeSegments([
+                    (string) ($row['location_code'] ?? ''),
+                    (string) ($row['hall_code'] ?? ''),
+                    (string) ($row['code'] ?? ''),
+                ]);
+            }
+            if ($display === $code) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findPlaceByPositionCode(string $code): ?array
+    {
+        $code = trim($code);
+        if ($code === '' || !Database::isConfigured()) {
+            return null;
+        }
+
+        foreach (self::allPlaces() as $row) {
+            if (empty($row['is_active'])) {
+                continue;
+            }
+            $display = (string) ($row['position_code'] ?? '');
+            if ($display === '') {
+                $display = StockPositionCode::composeSegments([
+                    (string) ($row['location_code'] ?? ''),
+                    (string) ($row['hall_code'] ?? ''),
+                    (string) ($row['shelf_code'] ?? ''),
+                    (string) ($row['code'] ?? ''),
+                ]);
+            }
+            if ($display === $code) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
     /** @return array<string, mixed>|null */
     public static function findPlaceByBarcode(string $barcode): ?array
     {

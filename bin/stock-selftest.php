@@ -203,4 +203,10 @@ if ($errors !== []) {
     exit(1);
 }
 
-echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Lagerstruktur)\n";
+$labels = StockLabelService::collectLabels(['level' => StockLabelService::LEVEL_PLACE, 'shelf_id' => 0]);
+if ($hasStructure && $labels === []) {
+    fwrite(STDERR, "FAIL: Keine Etiketten-Daten aus Lagerstruktur.\n");
+    exit(1);
+}
+
+echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Lagerstruktur, Etiketten)\n";

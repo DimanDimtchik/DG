@@ -565,6 +565,47 @@ switch ($path) {
         $settingsTab = SettingsRegistry::resolveActiveTab();
         $settingsSelection = SettingsRegistry::resolve($settingsTab);
 
+        if (
+            $page === 'einstellungen'
+            && $settingsTab === 'lager-struktur'
+            && $_SERVER['REQUEST_METHOD'] === 'GET'
+            && trim((string) ($_GET['download'] ?? '')) === 'labels'
+            && RoleResolver::isAdmin($user)
+        ) {
+            try {
+                $labelIds = [];
+                if (isset($_GET['ids']) && is_array($_GET['ids'])) {
+                    $labelIds = array_values(array_filter(array_map('intval', $_GET['ids']), static fn (int $id): bool => $id > 0));
+                } elseif (isset($_GET['id'])) {
+                    $singleId = (int) $_GET['id'];
+                    if ($singleId > 0) {
+                        $labelIds = [$singleId];
+                    }
+                }
+                $labels = StockLabelService::collectLabels([
+                    'level' => (string) ($_GET['label_level'] ?? StockLabelService::LEVEL_PLACE),
+                    'location_id' => (int) ($_GET['location_id'] ?? 0),
+                    'hall_id' => (int) ($_GET['hall_id'] ?? 0),
+                    'shelf_id' => (int) ($_GET['shelf_id'] ?? 0),
+                    'ids' => $labelIds,
+                ]);
+                if ($labels === []) {
+                    Flash::set('warning', 'Keine Etiketten für die gewählte Auswahl.');
+                    header('Location: ' . SettingsRegistry::tabUrl('lager-struktur') . '&lager_tab=etiketten', true, 302);
+                    exit;
+                }
+                $html = StockLabelPrintService::render(
+                    $labels,
+                    (string) ($_GET['label_format'] ?? '100x50'),
+                );
+                StockLabelPrintService::send('lager-etiketten.html', $html);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . SettingsRegistry::tabUrl('lager-struktur') . '&lager_tab=etiketten', true, 302);
+            }
+            exit;
+        }
+
         // POST: Einstellungen Datenbank
         if (
             $page === 'einstellungen'
@@ -2456,7 +2497,7 @@ switch ($path) {
         $crmThemeConfig = CrmThemeSettings::forForm();
         $departmentsData = DepartmentRepository::allWithMembers();
         $departmentEmployees = DepartmentRepository::assignableEmployees();
-        $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale'], true)
+        $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale', 'etiketten'], true)
             ? (string) $_GET['lager_tab']
             : 'orte';
         $stockLocations = StockStructureRepository::allLocations();

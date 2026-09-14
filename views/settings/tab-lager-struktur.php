@@ -43,6 +43,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     <a href="<?= View::escape($tabBase . '&lager_tab=orte') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'orte' ? ' is-active' : '' ?>">Lagerorte</a>
     <a href="<?= View::escape($tabBase . '&lager_tab=hallen') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'hallen' ? ' is-active' : '' ?>">Hallen</a>
     <a href="<?= View::escape($tabBase . '&lager_tab=regale') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'regale' ? ' is-active' : '' ?>">Regale &amp; Stellplätze</a>
+    <a href="<?= View::escape($tabBase . '&lager_tab=etiketten') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'etiketten' ? ' is-active' : '' ?>">Etiketten</a>
   </nav>
 
   <?php if ($lagerStrukturTab === 'orte') : ?>
@@ -267,7 +268,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
       <?php endif; ?>
     </section>
 
-  <?php else : ?>
+  <?php elseif ($lagerStrukturTab === 'regale') : ?>
     <form class="dg-form dg-form--inline-filter" method="get" action="/app">
       <input type="hidden" name="page" value="einstellungen">
       <input type="hidden" name="tab" value="lager-struktur">
@@ -361,6 +362,16 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
           </div>
         </form>
 
+        <?php if ($editShelf) : ?>
+          <p class="dg-field-hint">
+            <a class="dg-button dg-button--small" target="_blank" rel="noopener"
+              href="<?= View::escape($tabBase . '&download=labels&label_level=shelf&id=' . $editShelfId . '&label_format=100x50') ?>">Regal-Etikett drucken</a>
+            <?php if ($shelfPlaces !== []) : ?>
+              <a class="dg-button dg-button--small" target="_blank" rel="noopener"
+                href="<?= View::escape($tabBase . '&download=labels&label_level=place&shelf_id=' . $editShelfId . '&label_format=62x29') ?>">Alle Stellplatz-Etiketten</a>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
         <?php if ($editShelf && $shelfPlaces !== []) : ?>
           <h4 class="dg-subsection-title">Stellplätze — fest oder flexibel</h4>
           <form class="dg-form" method="post" action="<?= View::escape($tabBase) ?>">
@@ -459,6 +470,82 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
           </table>
         </div>
       <?php endif; ?>
+    </section>
+
+  <?php elseif ($lagerStrukturTab === 'etiketten') : ?>
+    <?php
+      $labelLevel = StockLabelService::sanitizeLevel((string) ($_GET['label_level'] ?? StockLabelService::LEVEL_PLACE));
+      $labelFormat = StockLabelService::sanitizeFormat((string) ($_GET['label_format'] ?? '100x50'));
+      $labelLocationId = (int) ($_GET['location_id'] ?? 0);
+      $labelHallId = (int) ($_GET['hall_id'] ?? 0);
+      $labelShelfId = (int) ($_GET['shelf_id'] ?? 0);
+      $labelPrintBase = $tabBase . '&download=labels';
+    ?>
+    <section class="dg-panel">
+      <h3 class="dg-subsection-title">Strichcode-Etiketten drucken</h3>
+      <p class="dg-field-hint">
+        Aufkleber mit lesbarem Code und Strichcode (CODE128). Inhalt je Ebene:
+        <strong>Lagerort</strong> nur Ortkode · <strong>Halle</strong> Ort-Halle ·
+        <strong>Regal</strong> Ort-Halle-Regal · <strong>Stellplatz</strong> vollständiger Positionscode inkl. PAL/KRT/EIN.
+        Die Vorschau zeigt das Etikettenformat — Skalierung und Rand stellen Sie in der Druckersoftware ein.
+      </p>
+
+      <form class="dg-form dg-form-grid" method="get" action="/app" target="_blank">
+        <input type="hidden" name="page" value="einstellungen">
+        <input type="hidden" name="tab" value="lager-struktur">
+        <input type="hidden" name="download" value="labels">
+        <label class="dg-field">
+          <span>Ebene *</span>
+          <select name="label_level" id="dg_label_level">
+            <?php foreach (StockLabelService::levelOptions() as $levelKey => $levelLabel) : ?>
+              <option value="<?= View::escape($levelKey) ?>"<?= $labelLevel === $levelKey ? ' selected' : '' ?>><?= View::escape($levelLabel) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Etikettenformat *</span>
+          <select name="label_format">
+            <?php foreach (StockLabelService::formatPresets() as $formatKey => $format) : ?>
+              <option value="<?= View::escape($formatKey) ?>"<?= $labelFormat === $formatKey ? ' selected' : '' ?>><?= View::escape((string) ($format['label'] ?? $formatKey)) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Lagerort</span>
+          <select name="location_id" id="dg_label_location">
+            <option value="0">— alle —</option>
+            <?php foreach ($stockLocationOptions as $opt) : ?>
+              <option value="<?= (int) $opt['id'] ?>"<?= $labelLocationId === (int) $opt['id'] ? ' selected' : '' ?>><?= View::escape($opt['label']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Halle</span>
+          <select name="hall_id" id="dg_label_hall">
+            <option value="0">— alle —</option>
+            <?php foreach ($stockHalls as $hall) : ?>
+              <?php if ($labelLocationId > 0 && (int) ($hall['location_id'] ?? 0) !== $labelLocationId) { continue; } ?>
+              <option value="<?= (int) $hall['id'] ?>" data-location-id="<?= (int) ($hall['location_id'] ?? 0) ?>"<?= $labelHallId === (int) $hall['id'] ? ' selected' : '' ?>><?= View::escape((string) ($hall['location_code'] ?? '') . ' / ' . (string) $hall['code']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Regal</span>
+          <select name="shelf_id" id="dg_label_shelf">
+            <option value="0">— alle —</option>
+            <?php foreach ($stockShelves as $shelf) : ?>
+              <?php
+                if ($labelLocationId > 0 && (int) ($shelf['location_id'] ?? 0) !== $labelLocationId) { continue; }
+                if ($labelHallId > 0 && (int) ($shelf['hall_id'] ?? 0) !== $labelHallId) { continue; }
+              ?>
+              <option value="<?= (int) $shelf['id'] ?>" data-hall-id="<?= (int) ($shelf['hall_id'] ?? 0) ?>" data-location-id="<?= (int) ($shelf['location_id'] ?? 0) ?>"<?= $labelShelfId === (int) $shelf['id'] ? ' selected' : '' ?>><?= View::escape((string) ($shelf['position_prefix'] ?? $shelf['code'])) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <div class="dg-field dg-field--actions dg-field--wide">
+          <button type="submit" class="dg-button dg-button--primary">Vorschau / Drucken</button>
+        </div>
+      </form>
     </section>
   <?php endif; ?>
 </div>

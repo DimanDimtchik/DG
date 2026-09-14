@@ -16,6 +16,7 @@ Stand: 2026-09-13 · Migrationen **065–069**
 - [x] **Stufe B** — Inventur-Assistent (Stichtag, Zählung, Differenz buchen, CSV)
 - [x] **Stufe C (Teil)** — Strichcodes: Artikel (EAN/GTIN), Palette/Platz, Karton (`dg_stock_packages`)
 - [x] **Wareneingang / Warenausgang** — Scan-UI, Karton anlegen, Belegbezug Lieferschein/Auftrag
+- [x] **Etiketten-Druck** — Lagerstruktur → Etiketten, mehrere Formate (Rollen + A4-Bogen)
 
 ## Strichcode-Ebenen
 
@@ -24,6 +25,19 @@ Stand: 2026-09-13 · Migrationen **065–069**
 | Artikel | `dg_calendar_articles.gtin` (oder Artikelnummer) | Einzelstück |
 | Palette/Platz | `dg_stock_places.barcode` (auto aus Positionscode) | Lagerplatz |
 | Karton | `dg_stock_packages.barcode` | Menge + optional Platz |
+
+## Etiketten (Aufkleber)
+
+Einstellungen → **Lagerstruktur → Etiketten** — lesbarer Code + CODE128-Strichcode:
+
+| Ebene | Text auf Etikett |
+|-------|------------------|
+| Lagerort | nur Ortkode (z. B. `WH1`) |
+| Halle | Ort-Halle (z. B. `WH1-H1`) |
+| Regal | Ort-Halle-Regal (z. B. `WH1-H1-R1`) |
+| Stellplatz | vollständig inkl. PAL/KRT/EIN (z. B. `WH1-H1-R1-PAL01`) |
+
+Formate u. a. 62×29 mm, 100×50 mm, A4-Bogen (3×8 / 2×5). Vorschau im Browser; Feinabstimmung in der Druckersoftware.
 
 ## Bewusst nicht (später)
 
@@ -50,5 +64,6 @@ Manuell: Lager → Wareneingang/Warenausgang, Strichcode scannen, Lieferschein v
 | Kartons | `src/Inventory/StockPackageRepository.php` |
 | Ein-/Ausgang | `src/Inventory/StockReceiptIssueService.php` |
 | Scan-API | `src/Inventory/StockScanApi.php` → `/api/stock-scan` |
-| UI | `views/modules/lager.php`, `assets/js/lager-scan.js` |
+| Etiketten | `src/Inventory/StockLabelService.php`, `StockLabelPrintService.php` |
+| UI | `views/modules/lager.php`, `views/settings/tab-lager-struktur.php` |
 | Beleg-Hook | `VoucherRepository::save()` / `delete()` |

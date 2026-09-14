@@ -44,6 +44,42 @@ final class StockBarcodeService
             ];
         }
 
+        $place = StockStructureRepository::findPlaceByPositionCode($code);
+        if ($place !== null) {
+            return [
+                'type' => 'place',
+                'label' => 'Platz ' . (string) ($place['position_code'] ?? $code),
+                'place' => $place,
+            ];
+        }
+
+        $shelf = StockStructureRepository::findShelfByDisplayCode($code);
+        if ($shelf !== null) {
+            return [
+                'type' => 'shelf',
+                'label' => 'Regal ' . StockLabelService::displayCodeForShelf($shelf),
+                'shelf' => $shelf,
+            ];
+        }
+
+        $hall = StockStructureRepository::findHallByDisplayCode($code);
+        if ($hall !== null) {
+            return [
+                'type' => 'hall',
+                'label' => 'Halle ' . StockLabelService::displayCodeForHall($hall),
+                'hall' => $hall,
+            ];
+        }
+
+        $location = StockStructureRepository::findLocationByCode($code);
+        if ($location !== null) {
+            return [
+                'type' => 'location',
+                'label' => 'Lagerort ' . StockLabelService::displayCodeForLocation($location),
+                'location' => $location,
+            ];
+        }
+
         $article = self::findArticleByBarcode($code);
         if ($article !== null) {
             return [

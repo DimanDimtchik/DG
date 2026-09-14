@@ -32,18 +32,26 @@ final class StockPositionCode
 
     public static function compose(string $ort, string $halle, string $regal, string $platz): string
     {
-        $parts = [
+        return self::composeSegments([
             self::sanitizeSegment($ort),
             self::sanitizeSegment($halle),
             self::sanitizeSegment($regal),
             self::sanitizeSegment($platz),
-        ];
+        ]);
+    }
 
-        if ($parts === ['', '', '', '']) {
-            return '';
+    /** @param list<string> $segments */
+    public static function composeSegments(array $segments): string
+    {
+        $parts = [];
+        foreach ($segments as $segment) {
+            $segment = self::sanitizeSegment($segment);
+            if ($segment !== '') {
+                $parts[] = $segment;
+            }
         }
 
-        return implode('-', $parts);
+        return $parts !== [] ? implode('-', $parts) : '';
     }
 
     public static function sanitizeSegment(string $value): string

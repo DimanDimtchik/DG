@@ -214,6 +214,8 @@ spl_autoload_register(static function (string $class): void {
         'StockPackageRepository' => '/src/Inventory/StockPackageRepository.php',
         'StockReceiptIssueService' => '/src/Inventory/StockReceiptIssueService.php',
         'StockScanApi' => '/src/Inventory/StockScanApi.php',
+        'StockLabelService' => '/src/Inventory/StockLabelService.php',
+        'StockLabelPrintService' => '/src/Inventory/StockLabelPrintService.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
         'WebsiteContent' => '/src/Website/WebsiteContent.php',
