@@ -5975,6 +5975,25 @@ body.dg-login-page {
   padding-left: 20px;
 }
 
+.dg-academy-rules__confirm span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.dg-academy-rules__confirm input[type="checkbox"] {
+  width: auto;
+  min-width: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.dg-academy-rules__actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 .dg-academy-player {
   width: 100%;
   max-height: 70vh;
