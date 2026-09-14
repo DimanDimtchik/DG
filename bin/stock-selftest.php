@@ -196,16 +196,17 @@ if ($hasPackages && $hasStructure) {
     StockStructureRepository::deleteLocation($locId);
 }
 
+if ($hasStructure) {
+    $locLabels = StockLabelService::collectLabels(['level' => StockLabelService::LEVEL_LOCATION]);
+    if ($locLabels === []) {
+        $errors[] = 'Etiketten: keine Lagerorte für Druck.';
+    }
+}
+
 if ($errors !== []) {
     foreach ($errors as $err) {
         fwrite(STDERR, 'FAIL: ' . $err . "\n");
     }
-    exit(1);
-}
-
-$labels = StockLabelService::collectLabels(['level' => StockLabelService::LEVEL_PLACE, 'shelf_id' => 0]);
-if ($hasStructure && $labels === []) {
-    fwrite(STDERR, "FAIL: Keine Etiketten-Daten aus Lagerstruktur.\n");
     exit(1);
 }
 
