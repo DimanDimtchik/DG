@@ -4355,6 +4355,14 @@ switch ($path) {
         $academyAdminCourse = $academyAdminCourse ?? null;
         $academyAllCourses = $academyAllCourses ?? [];
         $academyUserOptions = $academyUserOptions ?? [];
+        $academyAdminTab = $academyAdminTab ?? 'kurse';
+        $academyDepartments = $academyDepartments ?? ($academyAreas ?? []);
+        $academyCoursesByDepartment = $academyCoursesByDepartment ?? [];
+        $academyAdminDepartmentId = $academyAdminDepartmentId ?? '';
+        $academyDepartmentVideos = $academyDepartmentVideos ?? [];
+        $academyAllVideos = $academyAllVideos ?? [];
+        $academyCourseModuleIds = $academyCourseModuleIds ?? [];
+        $academyAdminVideo = $academyAdminVideo ?? null;
         $stockItems = $stockItems ?? [];
         $stockMovements = $stockMovements ?? [];
         $stockInventories = $stockInventories ?? [];
@@ -4460,6 +4468,14 @@ switch ($path) {
             'academyAdminCourse',
             'academyAllCourses',
             'academyUserOptions',
+            'academyAdminTab',
+            'academyDepartments',
+            'academyCoursesByDepartment',
+            'academyAdminDepartmentId',
+            'academyDepartmentVideos',
+            'academyAllVideos',
+            'academyCourseModuleIds',
+            'academyAdminVideo',
             'stockItems',
             'stockMovements',
             'stockInventories',
