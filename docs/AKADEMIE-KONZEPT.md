@@ -1,6 +1,6 @@
 # DG CRM — Akademie (Lernplattform)
 
-Stand: **2026-09-14** · Status: **Konzept (noch nicht implementiert)**
+Stand: **2026-09-14** · Status: **Phase 1 implementiert (MVP)**
 
 > Regeln & Deploy: [`AGENTS.md`](../AGENTS.md)
 

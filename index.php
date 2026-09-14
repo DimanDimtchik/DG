@@ -397,6 +397,10 @@ switch ($path) {
         StockScanApi::handle();
         exit;
 
+    case '/api/academy':
+        AcademyApi::handle();
+        exit;
+
     case '/api/number-range-preview':
         NumberRangeApi::handlePreview();
         exit;
@@ -1115,6 +1119,81 @@ switch ($path) {
                         $count = StockReceiptIssueService::issueFromPost($_POST, $user->id);
                         Flash::set('success', $count . ' Position(en) als Warenausgang gebucht.');
                         $redirect = '/app?page=lager&view=warenausgang';
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Akademie
+        if (
+            $page === 'akademie'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'akademie')
+        ) {
+            $redirect = '/app?page=akademie';
+            $view = trim((string) ($_POST['view'] ?? 'meine'));
+            if ($view !== '') {
+                $redirect .= '&view=' . rawurlencode($view);
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    if (isset($_POST['academy_accept_rules'])) {
+                        if (empty($_POST['confirm_rules'])) {
+                            throw new InvalidArgumentException('Bitte Schulungsregeln bestätigen.');
+                        }
+                        $courseId = (int) ($_POST['course_id'] ?? 0);
+                        $course = AcademyRepository::findCourseById($courseId);
+                        if ($course === null) {
+                            throw new InvalidArgumentException('Kurs nicht gefunden.');
+                        }
+                        $assignment = AcademyRepository::ensureAssignment((int) $user->id, $courseId, (int) $user->id);
+                        AcademyRepository::recordRulesAcceptance(
+                            (int) $user->id,
+                            $courseId,
+                            (string) ($course['version'] ?? '1.0'),
+                            (string) ($_SERVER['REMOTE_ADDR'] ?? '')
+                        );
+                        Flash::set('success', 'Schulungsregeln bestätigt.');
+                        $redirect = '/app?page=akademie&view=kurs&slug=' . rawurlencode((string) $course['slug']);
+                    } elseif (isset($_POST['academy_enroll']) && RoleResolver::isAdmin($user)) {
+                        $courseId = (int) ($_POST['course_id'] ?? 0);
+                        AcademyRepository::ensureAssignment((int) $user->id, $courseId, (int) $user->id);
+                        Flash::set('success', 'Kurs zu „Meine Schulungen“ hinzugefügt.');
+                    } elseif (isset($_POST['academy_save_course']) && RoleResolver::isAdmin($user)) {
+                        $courseId = AcademyRepository::saveCourse($_POST);
+                        Flash::set('success', 'Kurs gespeichert.');
+                        $redirect = '/app?page=akademie&view=admin&course_id=' . $courseId;
+                    } elseif (isset($_POST['academy_assign']) && RoleResolver::isAdmin($user)) {
+                        AcademyRepository::assignUser(
+                            (int) ($_POST['user_id'] ?? 0),
+                            (int) ($_POST['course_id'] ?? 0),
+                            (int) $user->id,
+                            (string) ($_POST['access_mode'] ?? AcademyAccessMode::COMPARE)
+                        );
+                        Flash::set('success', 'Schulung zugewiesen.');
+                        $redirect = '/app?page=akademie&view=admin&course_id=' . (int) ($_POST['course_id'] ?? 0);
+                    } elseif (isset($_POST['academy_set_gate']) && RoleResolver::isAdmin($user)) {
+                        AcademyRepository::setGate(
+                            (string) ($_POST['module_key'] ?? ''),
+                            (int) ($_POST['course_id'] ?? 0),
+                            !empty($_POST['gate_active'])
+                        );
+                        Flash::set('success', 'Modul-Sperre aktualisiert.');
+                        $redirect = '/app?page=akademie&view=admin&course_id=' . (int) ($_POST['course_id'] ?? 0);
+                    } elseif (isset($_POST['academy_hr_approve']) && RoleResolver::isAdmin($user)) {
+                        AcademyHrService::approve((int) ($_POST['assignment_id'] ?? 0), (int) $user->id, (string) ($_POST['review_note'] ?? ''));
+                        Flash::set('success', 'Schulung freigegeben — E-Mail an Mitarbeiter gesendet (falls Mail konfiguriert).');
+                        $redirect = '/app?page=akademie&view=hr';
+                    } elseif (isset($_POST['academy_hr_reject']) && RoleResolver::isAdmin($user)) {
+                        AcademyHrService::reject((int) ($_POST['assignment_id'] ?? 0), (int) $user->id, (string) ($_POST['review_note'] ?? ''));
+                        Flash::set('success', 'Schulung abgelehnt — E-Mail an Mitarbeiter gesendet (falls Mail konfiguriert).');
+                        $redirect = '/app?page=akademie&view=hr';
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -2590,6 +2669,15 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'lager' && MenuRegistry::canAccess($user, 'lager')) {
+            $lagerGate = AcademyGateService::gateStatus($user, 'lager');
+            if ($lagerGate !== null && ($lagerGate['blocked'] ?? false)) {
+                header(
+                    'Location: /app?page=akademie&view=kurs&slug=' . rawurlencode((string) ($lagerGate['course_slug'] ?? '')),
+                    true,
+                    302
+                );
+                exit;
+            }
             $lagerView = trim((string) ($_GET['view'] ?? 'overview'));
             if (!in_array($lagerView, ['overview', 'bewegungen', 'wareneingang', 'warenausgang', 'platz-check', 'inventur'], true)) {
                 $lagerView = 'overview';
@@ -2664,6 +2752,100 @@ switch ($path) {
             $title = 'Lager';
             $currentPage = 'lager';
         } elseif ($page === 'lager') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'akademie' && MenuRegistry::canAccess($user, 'akademie')) {
+            $academyDownload = trim((string) ($_GET['download'] ?? ''));
+            if ($academyDownload === 'video' || $academyDownload === 'vtt') {
+                $moduleId = (int) ($_GET['module_id'] ?? 0);
+                $module = AcademyRepository::findModule($moduleId);
+                if ($module === null) {
+                    http_response_code(404);
+                    exit;
+                }
+                $rel = $academyDownload === 'vtt'
+                    ? (string) ($module['subtitle_vtt_path'] ?? '')
+                    : (string) ($module['video_path'] ?? '');
+                $rel = ltrim(str_replace(['..', '\\'], '', $rel), '/');
+                if ($rel === '' || !str_starts_with($rel, 'media/training/')) {
+                    http_response_code(404);
+                    exit;
+                }
+                $path = DG_ROOT . '/storage/' . $rel;
+                if (!is_file($path)) {
+                    http_response_code(404);
+                    exit;
+                }
+                header('Content-Type: ' . ($academyDownload === 'vtt' ? 'text/vtt; charset=utf-8' : 'video/mp4'));
+                header('Content-Length: ' . (string) filesize($path));
+                readfile($path);
+                exit;
+            }
+            $academyView = trim((string) ($_GET['view'] ?? 'meine'));
+            if (!in_array($academyView, ['meine', 'katalog', 'kurs', 'modul', 'admin', 'hr'], true)) {
+                $academyView = 'meine';
+            }
+            if ($academyView === 'admin' || $academyView === 'hr') {
+                if (!RoleResolver::isAdmin($user)) {
+                    header('Location: /app?page=akademie&view=meine', true, 302);
+                    exit;
+                }
+            }
+            $canManageAcademy = RoleResolver::isAdmin($user);
+            $canAcademyHr = RoleResolver::isAdmin($user);
+            $academyTierPlan = AcademyTier::currentPlan();
+            $academyAreas = AcademyRepository::allAreas();
+            $academyAssignments = AcademyRepository::assignmentsForUser((int) $user->id);
+            $academyCatalog = array_values(array_filter(
+                AcademyRepository::publishedCourses(),
+                static fn (array $c): bool => AcademyTier::allows((string) ($c['min_tier'] ?? AcademyTier::STARTER))
+            ));
+            $academyPendingHr = $canAcademyHr ? AcademyRepository::pendingHrReviews() : [];
+            $academyCourse = null;
+            $academyModule = null;
+            $academyAssignment = null;
+            $academySummary = null;
+            $academyRulesAccepted = false;
+            $academyCourseSlug = trim((string) ($_GET['slug'] ?? ''));
+            if ($academyCourseSlug !== '') {
+                $academyCourse = AcademyRepository::findCourseBySlug($academyCourseSlug);
+            }
+            if ($academyCourse !== null) {
+                $academyAssignment = AcademyRepository::findAssignment((int) $user->id, (int) $academyCourse['id']);
+                if ($academyAssignment === null && $academyView !== 'katalog') {
+                    $academyAssignment = AcademyRepository::ensureAssignment((int) $user->id, (int) $academyCourse['id'], (int) $user->id);
+                }
+                $academyRulesAccepted = AcademyRepository::hasAcceptedRules(
+                    (int) $user->id,
+                    (int) $academyCourse['id'],
+                    (string) ($academyCourse['version'] ?? '1.0')
+                );
+                if ($academyAssignment !== null) {
+                    $academySummary = AcademyProgressService::assignmentSummary((int) $academyAssignment['id']);
+                }
+            }
+            $academyModuleId = (int) ($_GET['module_id'] ?? 0);
+            if ($academyModuleId > 0) {
+                $academyModule = AcademyRepository::findModule($academyModuleId);
+            }
+            $academyAdminCourseId = (int) ($_GET['course_id'] ?? 0);
+            $academyAdminCourse = $academyAdminCourseId > 0 ? AcademyRepository::findCourseById($academyAdminCourseId) : null;
+            $academyUserOptions = $canManageAcademy ? AcademyRepository::userOptions() : [];
+            $academyAllCourses = $canManageAcademy
+                ? AcademyRepository::publishedCourses() // admin sees all including unpublished - fix
+                : [];
+            if ($canManageAcademy && Database::isConfigured()) {
+                $academyAllCourses = Database::pdo()->query(
+                    'SELECT c.*, a.code AS area_code, a.label AS area_label
+                     FROM dg_academy_courses c
+                     INNER JOIN dg_academy_areas a ON a.id = c.area_id
+                     ORDER BY c.sort_order ASC, c.title ASC'
+                )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            }
+            $contentTemplate = 'modules/akademie';
+            $title = 'Akademie';
+            $currentPage = 'akademie';
+        } elseif ($page === 'akademie') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {
@@ -4106,6 +4288,22 @@ switch ($path) {
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
         $catalogFilter = $catalogFilter ?? 'all';
         $lagerView = $lagerView ?? 'overview';
+        $academyView = $academyView ?? 'meine';
+        $academyAreas = $academyAreas ?? [];
+        $academyAssignments = $academyAssignments ?? [];
+        $academyCatalog = $academyCatalog ?? [];
+        $academyPendingHr = $academyPendingHr ?? [];
+        $academyCourse = $academyCourse ?? null;
+        $academyModule = $academyModule ?? null;
+        $academyAssignment = $academyAssignment ?? null;
+        $academySummary = $academySummary ?? null;
+        $academyRulesAccepted = $academyRulesAccepted ?? false;
+        $academyTierPlan = $academyTierPlan ?? AcademyTier::currentPlan();
+        $canManageAcademy = $canManageAcademy ?? false;
+        $canAcademyHr = $canAcademyHr ?? false;
+        $academyAdminCourse = $academyAdminCourse ?? null;
+        $academyAllCourses = $academyAllCourses ?? [];
+        $academyUserOptions = $academyUserOptions ?? [];
         $stockItems = $stockItems ?? [];
         $stockMovements = $stockMovements ?? [];
         $stockInventories = $stockInventories ?? [];
@@ -4195,6 +4393,22 @@ switch ($path) {
             'calendarArticles',
             'catalogFilter',
             'lagerView',
+            'academyView',
+            'academyAreas',
+            'academyAssignments',
+            'academyCatalog',
+            'academyPendingHr',
+            'academyCourse',
+            'academyModule',
+            'academyAssignment',
+            'academySummary',
+            'academyRulesAccepted',
+            'academyTierPlan',
+            'canManageAcademy',
+            'canAcademyHr',
+            'academyAdminCourse',
+            'academyAllCourses',
+            'academyUserOptions',
             'stockItems',
             'stockMovements',
             'stockInventories',

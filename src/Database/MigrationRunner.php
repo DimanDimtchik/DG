@@ -218,6 +218,8 @@ final class MigrationRunner
             '069_stock_barcodes_receipt_issue.sql' => self::tableExists($pdo, 'dg_stock_packages')
                 && self::columnExists($pdo, 'dg_stock_places', 'barcode')
                 && self::columnExists($pdo, 'dg_stock_movements', 'place_id'),
+            '070_academy.sql' => self::tableExists($pdo, 'dg_academy_courses')
+                && self::tableExists($pdo, 'dg_academy_assignments'),
             default => false,
         };
     }
@@ -318,6 +320,7 @@ final class MigrationRunner
             '067_stock_structure.sql' => true,
             '068_stock_shelf_slot_kinds.sql' => true,
             '069_stock_barcodes_receipt_issue.sql' => true,
+            '070_academy.sql' => true,
         ];
     }
 

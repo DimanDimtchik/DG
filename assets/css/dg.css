@@ -5950,3 +5950,69 @@ body.dg-login-page {
   margin-top: 0;
 }
 
+/* Akademie */
+.dg-academy-catalog,
+.dg-academy-modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.dg-academy-card {
+  border: 1px solid var(--dg-border);
+  border-radius: var(--dg-radius-sm);
+  padding: 14px 16px;
+  background: var(--dg-surface);
+}
+
+.dg-academy-rules {
+  margin-top: 20px;
+}
+
+.dg-academy-rules__list {
+  margin: 0 0 16px;
+  padding-left: 20px;
+}
+
+.dg-academy-player {
+  width: 100%;
+  max-height: 70vh;
+  margin: 16px 0;
+  background: #111;
+  border-radius: var(--dg-radius-sm);
+}
+
+.dg-academy-player__desc {
+  margin-bottom: 12px;
+}
+
+.dg-academy-hr-card.dg-academy-risk--red {
+  border-left: 4px solid #c0392b;
+}
+
+.dg-academy-hr-card.dg-academy-risk--yellow {
+  border-left: 4px solid #d68910;
+}
+
+.dg-academy-hr-card.dg-academy-risk--green {
+  border-left: 4px solid #27ae60;
+}
+
+.dg-academy-flags {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.dg-academy-flag--red {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.dg-academy-gate-form {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dg-border);
+}
+
