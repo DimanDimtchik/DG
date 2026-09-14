@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dashboard-Schulungsvideo: echtes Kachel-Layout, Kamera-Schwenk/Zoom je Kachel, Stimme + VTT."""
+"""Dashboard-Schulungsvideo aus echtem CRM-Screenshot + Kamera-Fokus je Kachel."""
 
 from __future__ import annotations
 
@@ -11,101 +11,19 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "storage/media/training/allgemein"
+SCREENSHOT = OUT_DIR / "dashboard-capture.png"
+TILES_JSON = OUT_DIR / "dashboard-tiles.json"
 VOICE = "de-DE-KatjaNeural"
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-FONT_REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 EDGE_TTS = Path.home() / ".local/bin/edge-tts"
 
 OUT_W, OUT_H = 1920, 1080
-COLS = 4
-MARGIN_X = 64
-HEADER_H = 132
-GAP = 14
-CARD_H = 98
 FPS = 25
 TRANSITION_SEC = 0.85
-FOCUS_ZOOM = 2.35
-
-# CRM-Farben (dg.css Standard)
-BG = (245, 243, 240)
-PRIMARY = (110, 98, 88)
-BRAND = (196, 181, 165)
-TEXT = (45, 42, 38)
-TEXT_MUTED = (95, 90, 84)
-BORDER = (220, 214, 206)
-
-
-@dataclass
-class Tile:
-    title: str
-    description: str
-    narration: str
-
-
-TILES: list[Tile] = [
-    Tile("Kontakte", "Benutzer, Kunden, Lieferanten und Mitarbeiter verwalten.",
-         "Kontakte: Hier werden alle Kontakte Ihres Unternehmens gespeichert — Kunden, Lieferanten, Mitarbeiter und Behörden. Alle für Unternehmen relevanten Kontaktfelder sind voreingestellt, inklusive eines Feldes für Bemerkungen."),
-    Tile("Terminkalender", "Buchungen, Artikel und Kalender im Blick behalten.",
-         "Terminkalender: Termine, Buchungen und Kalenderbereiche im Überblick — für Planung und Abstimmung im Team."),
-    Tile("Zeiterfassung", "Einstempeln, Pausen und Teamübersicht für HR.",
-         "Zeiterfassung: Einstempeln, Pausen und Arbeitszeiten erfassen — Grundlage für HR und Auswertungen."),
-    Tile("Post", "Postfächer, Eingang und Nachrichten versenden.",
-         "Post: Ihre Postfächer — Eingang lesen und Nachrichten direkt aus dem CRM versenden."),
-    Tile("Akademie", "Schulungen, Erklärvideos und Zertifikate.",
-         "Akademie: Schulungen, Erklärvideos und Zertifikate — hier finden Sie Anleitungen zu den Modulen."),
-    Tile("Artikel & Leistungen", "Artikel- und Leistungskatalog pflegen.",
-         "Artikel und Leistungen: Der Katalog für verkaufte und eingekaufte Artikel sowie Leistungen — Basis für Angebote, Belege und Lager."),
-    Tile("Lager", "Lagerbestände, Bewegungen aus Belegen und Inventur.",
-         "Lager: Bestände, Lagerorte und Bewegungen — von Wareneingang bis Inventur."),
-    Tile("Bilder", "Medien, Logos und Bilder verwalten.",
-         "Bilder: Medienbibliothek für Logos, Fotos und andere Bilddateien — nur für Administratoren."),
-    Tile("Konten", "Kontenrahmen durchsuchen und Kontenhinweise einsehen.",
-         "Konten: Kontenrahmen und Kontenhinweise — Ihr Nachschlagewerk für die Buchführung."),
-    Tile("Belege", "Belege erfassen mit Steuerfeldern und Kontenzuordnung.",
-         "Belege: Eingangs- und Ausgangsbelege erfassen — mit Steuerfeldern und Kontenzuordnung."),
-    Tile("Überweisungen", "Überweisungen mit QR-Code und Fotovorlage.",
-         "Überweisungen: Zahlungen vorbereiten — inklusive QR-Code und Fotovorlage für den Bankauftrag."),
-    Tile("Kontenübersicht", "Kontensalden und Kontoauszüge je Geschäftsjahr.",
-         "Kontenübersicht: Salden und Kontoauszüge je Geschäftsjahr auf einen Blick."),
-    Tile("Offene Posten", "Offene Forderungen und Verbindlichkeiten (OPOS).",
-         "Offene Posten: Offene Forderungen und Verbindlichkeiten — wer schuldet wem noch etwas."),
-    Tile("Kassenbuch", "Bar-Ein- und Ausgänge aus Kassenbelegen.",
-         "Kassenbuch: Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren."),
-    Tile("Manuelle Buchungen", "Freie Journalbuchungen ohne Beleg.",
-         "Manuelle Buchungen: Journalbuchungen ohne Beleg — wenn Soll und Haben direkt gebucht werden."),
-    Tile("Bilanz & GuV", "Bilanz und GuV je Geschäftsjahr.",
-         "Bilanz und GuV: Auswertungen zu Vermögen, Schulden und Ergebnis je Geschäftsjahr."),
-    Tile("BWA", "Betriebswirtschaftliche Auswertung.",
-         "BWA: Betriebswirtschaftliche Auswertung — der klassische Monatsüberblick fürs Management."),
-    Tile("SuSa", "Summen- und Saldenliste.",
-         "SuSa: Summen- und Saldenliste — Kontenstände kompakt für Prüfung und Steuerberater."),
-    Tile("Bankabgleich", "CAMT.053 importieren und Belege zuordnen.",
-         "Bankabgleich: Kontoauszüge importieren und Belegen zuordnen."),
-    Tile("Steuerberater-Export", "DATEV, Agenda, Addison — Buchungsstapel.",
-         "Steuerberater-Export: Daten für DATEV, Agenda oder Addison — Buchungsstapel und Belege."),
-    Tile("UStVA", "Umsatzsteuer-Voranmeldung und ELSTER-CSV.",
-         "UStVA: Umsatzsteuer-Voranmeldung vorbereiten — inklusive ELSTER-Export."),
-    Tile("Jahresabschluss", "Checkliste, GuV-Abschluss, Saldenvortrag.",
-         "Jahresabschluss: Checkliste und Assistent für GuV-Abschluss und Saldenvortrag."),
-    Tile("Seiten", "Seiten der öffentlichen Website anlegen.",
-         "Seiten: Inhaltsseiten der öffentlichen Website anlegen und pflegen."),
-    Tile("Formulare", "Formulare bauen und Eingänge empfangen.",
-         "Formulare: Kontakt- und Anfrageformulare bauen und Eingänge empfangen."),
-    Tile("Statistik", "Seitenaufrufe und Analytics-Links.",
-         "Statistik: Seitenaufrufe im CRM und Links zu Google Analytics oder Tag Manager."),
-    Tile("Menü", "Navigation der Website pflegen.",
-         "Menü: Navigation der Website — welche Seiten wo verlinkt sind."),
-    Tile("Kopf & Fuß", "Kopfzeile, Fußzeile und Skripte.",
-         "Kopf und Fuß: Kopfzeile, Fußzeile und zusätzliche Skripte der Website."),
-    Tile("Design", "Farben der öffentlichen Website.",
-         "Design: Farben und Erscheinungsbild der öffentlichen Website."),
-    Tile("Einstellungen", "Firma, E-Mail, Module und System.",
-         "Einstellungen: Firma, E-Mail, Abteilungen, Module und System — nur für berechtigte Nutzer. Das war der Kurzüberblick über alle Dashboard-Kacheln. Wählen Sie eine Kachel, wenn Sie in einem Bereich arbeiten möchten — die Details erklären wir in den Modul-Videos der Akademie. Viel Erfolg!"),
-]
+FOCUS_ZOOM = 2.2
 
 INTRO = (
     "Willkommen zur kurzen Einführung ins Dashboard. Nach dem Login sehen Sie hier alle Module als Kacheln — "
@@ -114,108 +32,107 @@ INTRO = (
     "Was Sie nach dem Öffnen sehen, behandeln wir in eigenen Videos."
 )
 
+# Erzähltext je Modul-Slug (Reihenfolge kommt aus dem echten Screenshot)
+NARRATIONS: dict[str, str] = {
+    "kontakte": "Kontakte: Hier werden alle Kontakte Ihres Unternehmens gespeichert — Kunden, Lieferanten, Mitarbeiter und Behörden. Alle für Unternehmen relevanten Kontaktfelder sind voreingestellt, inklusive eines Feldes für Bemerkungen.",
+    "terminkalender": "Terminkalender: Termine, Buchungen und Kalenderbereiche im Überblick — für Planung und Abstimmung im Team.",
+    "zeiterfassung": "Zeiterfassung: Einstempeln, Pausen und Arbeitszeiten erfassen — Grundlage für HR und Auswertungen.",
+    "post": "Post: Ihre Postfächer — Eingang lesen und Nachrichten direkt aus dem CRM versenden.",
+    "akademie": "Akademie: Schulungen, Erklärvideos und Zertifikate — hier finden Sie Anleitungen zu den Modulen.",
+    "artikel-leistungen": "Artikel und Leistungen: Der Katalog für verkaufte und eingekaufte Artikel sowie Leistungen — Basis für Angebote, Belege und Lager.",
+    "lager": "Lager: Bestände, Lagerorte und Bewegungen — von Wareneingang bis Inventur.",
+    "support-freigabe": "Support-Freigabe: Temporären Zugang für den Support freischalten — zeitlich begrenzt und kontrolliert.",
+    "bilder": "Bilder: Medienbibliothek für Logos, Fotos und andere Bilddateien — nur für Administratoren.",
+    "buchhaltung-konten": "Konten: Kontenrahmen und Kontenhinweise — Ihr Nachschlagewerk für die Buchführung.",
+    "buchhaltung-belege": "Belege: Eingangs- und Ausgangsbelege erfassen — mit Steuerfeldern und Kontenzuordnung.",
+    "buchhaltung-ueberweisungen": "Überweisungen: Zahlungen vorbereiten — inklusive QR-Code und Fotovorlage für den Bankauftrag.",
+    "buchhaltung-kontenuebersicht": "Kontenübersicht: Salden und Kontoauszüge je Geschäftsjahr auf einen Blick.",
+    "buchhaltung-opos": "Offene Posten: Offene Forderungen und Verbindlichkeiten — wer schuldet wem noch etwas.",
+    "buchhaltung-kassenbuch": "Kassenbuch: Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.",
+    "buchhaltung-manuelle-buchung": "Manuelle Buchungen: Journalbuchungen ohne Beleg — wenn Soll und Haben direkt gebucht werden.",
+    "buchhaltung-auswertungen": "Bilanz und GuV: Auswertungen zu Vermögen, Schulden und Ergebnis je Geschäftsjahr.",
+    "buchhaltung-bwa": "BWA: Betriebswirtschaftliche Auswertung — der klassische Monatsüberblick fürs Management.",
+    "buchhaltung-susa": "SuSa: Summen- und Saldenliste — Kontenstände kompakt für Prüfung und Steuerberater.",
+    "buchhaltung-bankabgleich": "Bankabgleich: Kontoauszüge importieren und Belegen zuordnen.",
+    "buchhaltung-steuerberater-export": "Steuerberater-Export: Daten für DATEV, Agenda oder Addison — Buchungsstapel und Belege.",
+    "buchhaltung-ustva": "UStVA: Umsatzsteuer-Voranmeldung vorbereiten — inklusive ELSTER-Export.",
+    "buchhaltung-jahresabschluss": "Jahresabschluss: Checkliste und Assistent für GuV-Abschluss und Saldenvortrag.",
+    "website-seiten": "Seiten: Inhaltsseiten der öffentlichen Website anlegen und pflegen.",
+    "website-formulare": "Formulare: Kontakt- und Anfrageformulare bauen und Eingänge empfangen.",
+    "website-statistik": "Statistik: Seitenaufrufe im CRM und Links zu Google Analytics oder Tag Manager.",
+    "website-menu": "Menü: Navigation der Website — welche Seiten wo verlinkt sind.",
+    "website-chrome": "Kopf und Fuß: Kopfzeile, Fußzeile und zusätzliche Skripte der Website.",
+    "website-design": "Design: Farben und Erscheinungsbild der öffentlichen Website.",
+    "einstellungen": "Einstellungen: Firma, E-Mail, Abteilungen, Module und System — nur für berechtigte Nutzer. Das war der Kurzüberblick über alle Dashboard-Kacheln. Wählen Sie eine Kachel, wenn Sie in einem Bereich arbeiten möchten — die Details erklären wir in den Modul-Videos der Akademie. Viel Erfolg!",
+}
 
-def card_width() -> int:
-    return (OUT_W - 2 * MARGIN_X - (COLS - 1) * GAP) // COLS
 
+@dataclass
+class TileRect:
+    slug: str
+    label: str
+    x: float
+    y: float
+    w: float
+    h: float
 
-def canvas_size() -> tuple[int, int]:
-    rows = (len(TILES) + COLS - 1) // COLS
-    h = HEADER_H + rows * CARD_H + (rows - 1) * GAP + 48
-    return OUT_W, h
+    @property
+    def cx(self) -> float:
+        return self.x + self.w / 2
 
-
-def tile_rect(index: int) -> tuple[int, int, int, int]:
-    cw = card_width()
-    row = index // COLS
-    col = index % COLS
-    x = MARGIN_X + col * (cw + GAP)
-    y = HEADER_H + row * (CARD_H + GAP)
-    return x, y, cw, CARD_H
-
-
-def tile_center(index: int) -> tuple[float, float]:
-    x, y, w, h = tile_rect(index)
-    return x + w / 2, y + h / 2
+    @property
+    def cy(self) -> float:
+        return self.y + self.h / 2
 
 
 def ease_in_out(t: float) -> float:
     return t * t * (3 - 2 * t)
 
 
-def load_fonts() -> tuple[ImageFont.FreeTypeFont, ImageFont.FreeTypeFont]:
-    return (
-        ImageFont.truetype(FONT_BOLD, 34),
-        ImageFont.truetype(FONT_REG, 17),
-    )
+def lerp(a: float, b: float, t: float) -> float:
+    return a + (b - a) * t
 
 
-def wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
-    words = text.split()
-    lines: list[str] = []
-    line: list[str] = []
-    for word in words:
-        test = " ".join(line + [word])
-        if draw.textlength(test, font=font) > max_w and line:
-            lines.append(" ".join(line))
-            line = [word]
-        else:
-            line.append(word)
-    if line:
-        lines.append(" ".join(line))
-    return lines[:2]
+def load_assets() -> tuple[Image.Image, list[TileRect]]:
+    if not SCREENSHOT.is_file() or not TILES_JSON.is_file():
+        print(
+            "Fehlt Screenshot oder Kachel-JSON. Bitte ausführen:\n"
+            "  php bin/academy-export-dashboard-html.php\n"
+            "  python3 bin/academy-capture-dashboard.py",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    base = Image.open(SCREENSHOT).convert("RGB")
+    data = json.loads(TILES_JSON.read_text(encoding="utf-8"))
+    tiles = [
+        TileRect(
+            slug=t["slug"],
+            label=t["label"],
+            x=float(t["x"]),
+            y=float(t["y"]),
+            w=float(t["w"]),
+            h=float(t["h"]),
+        )
+        for t in data["tiles"]
+        if t.get("slug")
+    ]
+    if not tiles:
+        print("Keine Kacheln in dashboard-tiles.json", file=sys.stderr)
+        sys.exit(1)
+    return base, tiles
 
 
-def draw_card(
-    draw: ImageDraw.ImageDraw,
-    x: int,
-    y: int,
-    w: int,
-    h: int,
-    tile: Tile,
-    fonts: tuple[ImageFont.FreeTypeFont, ImageFont.FreeTypeFont],
-) -> None:
-    title_font, desc_font = fonts
-    fill, border, accent = (250, 248, 246), BORDER, BRAND
-    draw.rectangle([x, y + 3, x + w, y + h], fill=fill, outline=border, width=1)
-    draw.rectangle([x, y, x + w, y + 3], fill=accent)
-    draw.rectangle([x + 12, y + 16, x + 44, y + 48], outline=border, width=1)
-    draw.text((x + 20, y + 22), tile.title[:1], fill=PRIMARY, font=title_font)
-    draw.text((x + 52, y + 20), tile.title, fill=TEXT, font=title_font)
-    for i, line in enumerate(wrap_text(draw, tile.description, desc_font, w - 24)):
-        draw.text((x + 12, y + 56 + i * 20), line, fill=TEXT_MUTED, font=desc_font)
-
-
-def build_dashboard_canvas() -> Image.Image:
-    cw, ch = canvas_size()
-    fonts = load_fonts()
-    title_font, lead_font = fonts
-    img = Image.new("RGB", (cw, ch), BG)
-    draw = ImageDraw.Draw(img)
-    draw.text((MARGIN_X, 36), "Willkommen", fill=TEXT, font=title_font)
-    draw.text(
-        (MARGIN_X, 82),
-        "Wählen Sie im Menü links ein Modul oder starten Sie direkt über eine Kachel.",
-        fill=TEXT_MUTED,
-        font=lead_font,
-    )
-    for i, tile in enumerate(TILES):
-        x, y, w, h = tile_rect(i)
-        draw_card(draw, x, y, w, h, tile, fonts)
-    return img
-
-
-def overview_scale(extra: float = 1.0) -> float:
-    cw, ch = canvas_size()
-    return min(OUT_W / cw, OUT_H / ch) * extra
+def overview_scale(img_w: int, img_h: int, extra: float = 1.0) -> float:
+    return min(OUT_W / img_w, OUT_H / img_h) * extra
 
 
 def render_overview(base: Image.Image, extra_zoom: float = 1.0) -> Image.Image:
-    cw, ch = base.size
-    scale = overview_scale(extra_zoom)
-    nw, nh = max(1, int(cw * scale)), max(1, int(ch * scale))
+    iw, ih = base.size
+    scale = overview_scale(iw, ih, extra_zoom)
+    nw, nh = max(1, int(iw * scale)), max(1, int(ih * scale))
     scaled = base.resize((nw, nh), Image.Resampling.LANCZOS)
-    frame = Image.new("RGB", (OUT_W, OUT_H), BG)
+    frame = Image.new("RGB", (OUT_W, OUT_H), (245, 243, 240))
     frame.paste(scaled, ((OUT_W - nw) // 2, (OUT_H - nh) // 2))
     return frame
 
@@ -225,52 +142,73 @@ def render_viewport(
     center_x: float,
     center_y: float,
     zoom: float,
-    focus_index: int | None = None,
+    focus: TileRect | None = None,
 ) -> Image.Image:
-    """Kamera: schwenkt und zoomt — keine dunkle Folie, Kacheln bleiben sichtbar."""
-    cw, ch = canvas_size()
-
+    iw, ih = base.size
     view_w = OUT_W / zoom
     view_h = OUT_H / zoom
-    left = max(0, min(center_x - view_w / 2, max(0, cw - view_w)))
-    top = max(0, min(center_y - view_h / 2, max(0, ch - view_h)))
-    right = min(cw, left + view_w)
-    bottom = min(ch, top + view_h)
+    left = max(0, min(center_x - view_w / 2, max(0, iw - view_w)))
+    top = max(0, min(center_y - view_h / 2, max(0, ih - view_h)))
+    right = min(iw, left + view_w)
+    bottom = min(ih, top + view_h)
     crop = base.crop((int(left), int(top), int(right), int(bottom)))
     frame = crop.resize((OUT_W, OUT_H), Image.Resampling.LANCZOS)
 
-    if focus_index is not None:
-        x, y, w, h = tile_rect(focus_index)
-        sx = (x - left) / max(right - left, 1) * OUT_W
-        sy = (y - top) / max(bottom - top, 1) * OUT_H
-        sw = w / max(right - left, 1) * OUT_W
-        sh = h / max(bottom - top, 1) * OUT_H
+    if focus is not None:
+        sx = (focus.x - left) / max(right - left, 1) * OUT_W
+        sy = (focus.y - top) / max(bottom - top, 1) * OUT_H
+        sw = focus.w / max(right - left, 1) * OUT_W
+        sh = focus.h / max(bottom - top, 1) * OUT_H
         overlay = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
         od = ImageDraw.Draw(overlay)
-        pad = 8
+        pad = 6
         od.rectangle(
             [sx - pad, sy - pad, sx + sw + pad, sy + sh + pad],
-            outline=PRIMARY + (255,),
-            width=5,
+            outline=(110, 98, 88, 255),
+            width=4,
         )
         frame = Image.alpha_composite(frame.convert("RGBA"), overlay).convert("RGB")
 
         mask = Image.new("L", (OUT_W, OUT_H), 0)
         md = ImageDraw.Draw(mask)
-        md.rectangle([0, 0, OUT_W, OUT_H], fill=28)
-        md.rectangle([sx - 10, sy - 10, sx + sw + 10, sy + sh + 10], fill=0)
-        dim = Image.new("RGBA", (OUT_W, OUT_H), (25, 23, 20, 255))
+        md.rectangle([0, 0, OUT_W, OUT_H], fill=22)
+        md.rectangle([sx - 8, sy - 8, sx + sw + 8, sy + sh + 8], fill=0)
+        dim = Image.new("RGBA", (OUT_W, OUT_H), (20, 18, 16, 255))
         frame = Image.composite(
             Image.alpha_composite(frame.convert("RGBA"), dim).convert("RGB"),
             frame,
             mask,
         )
-
     return frame
 
 
-def lerp(a: float, b: float, t: float) -> float:
-    return a + (b - a) * t
+def make_intro_frames(base: Image.Image, n: int) -> list[Image.Image]:
+    return [render_overview(base, lerp(1.0, 1.04, ease_in_out(f / max(n - 1, 1)))) for f in range(n)]
+
+
+def make_focus_frames(
+    base: Image.Image,
+    from_tile: TileRect | None,
+    to_tile: TileRect,
+    n: int,
+) -> list[Image.Image]:
+    iw, ih = base.size
+    ox, oy = iw / 2, ih / 2
+    if from_tile is None:
+        sx, sy, sz = ox, oy, overview_scale(iw, ih, 1.0)
+    else:
+        sx, sy, sz = from_tile.cx, from_tile.cy, FOCUS_ZOOM
+
+    frames: list[Image.Image] = []
+    for f in range(n):
+        t = ease_in_out(f / max(n - 1, 1))
+        cx = lerp(sx, to_tile.cx, t)
+        cy = lerp(sy, to_tile.cy, t)
+        zoom = lerp(sz, FOCUS_ZOOM, t)
+        focus = to_tile if t >= 0.5 else from_tile
+        frames.append(render_viewport(base, cx, cy, zoom, focus))
+    frames[-1] = render_viewport(base, to_tile.cx, to_tile.cy, FOCUS_ZOOM, to_tile)
+    return frames
 
 
 def run(cmd: list[str]) -> None:
@@ -302,7 +240,6 @@ def encode_clip(frames: list[Image.Image], audio: Path, out: Path) -> float:
     duration = probe_duration(audio)
     trans_frames = len(frames)
     hold_frames = max(1, int((duration - trans_frames / FPS) * FPS))
-    total_frames = trans_frames + hold_frames
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -322,7 +259,7 @@ def encode_clip(frames: list[Image.Image], audio: Path, out: Path) -> float:
             "-shortest",
             str(out),
         ])
-    return total_frames / FPS
+    return (trans_frames + hold_frames) / FPS
 
 
 def format_ts(seconds: float) -> str:
@@ -340,52 +277,22 @@ def write_vtt(entries: list[tuple[float, float, str]], path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def make_intro_frames(base: Image.Image, n: int) -> list[Image.Image]:
-    frames: list[Image.Image] = []
-    for f in range(n):
-        t = ease_in_out(f / max(n - 1, 1))
-        frames.append(render_overview(base, lerp(1.0, 1.05, t)))
-    return frames
-
-
-def make_focus_frames(
-    base: Image.Image,
-    from_idx: int | None,
-    to_idx: int,
-    n: int,
-) -> list[Image.Image]:
-    cw, ch = canvas_size()
-    ox, oy = cw / 2, ch / 2
-    tx, ty = tile_center(to_idx)
-    frames: list[Image.Image] = []
-
-    if from_idx is None:
-        start_x, start_y, start_z = ox, oy, overview_scale(1.0)
-    else:
-        start_x, start_y = tile_center(from_idx)
-        start_z = FOCUS_ZOOM
-
-    for f in range(n):
-        t = ease_in_out(f / max(n - 1, 1))
-        cx = lerp(start_x, tx, t)
-        cy = lerp(start_y, ty, t)
-        zoom = lerp(start_z, FOCUS_ZOOM, t)
-        focus = to_idx if t >= 0.5 else (from_idx if from_idx is not None else None)
-        frames.append(render_viewport(base, cx, cy, zoom, focus_index=focus))
-
-    frames[-1] = render_viewport(base, tx, ty, FOCUS_ZOOM, focus_index=to_idx)
-    return frames
-
-
 async def main() -> int:
     if not EDGE_TTS.is_file():
         print("edge-tts fehlt", file=sys.stderr)
         return 1
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    base = build_dashboard_canvas()
+    base, tiles = load_assets()
     trans_n = max(1, int(TRANSITION_SEC * FPS))
-    segments = [("intro", INTRO, None)] + [(f"tile_{i}", t.narration, i) for i, t in enumerate(TILES)]
+
+    segments: list[tuple[str, str, TileRect | None]] = [("intro", INTRO, None)]
+    for tile in tiles:
+        text = NARRATIONS.get(tile.slug)
+        if not text:
+            text = f"{tile.label}: {tile.label} im CRM."
+            print(f"Hinweis: keine Narration für slug={tile.slug}, Fallback genutzt")
+        segments.append((tile.slug, text, tile))
 
     with tempfile.TemporaryDirectory(prefix="dg-dash-vid-") as tmp:
         tmp_path = Path(tmp)
@@ -394,18 +301,20 @@ async def main() -> int:
         cursor = 0.0
         manifest: list[dict] = []
 
-        for idx, (key, narration, tile_idx) in enumerate(segments):
+        for idx, (key, narration, tile) in enumerate(segments):
             print(f"[{idx + 1}/{len(segments)}] {key}")
             mp3 = tmp_path / f"{key}.mp3"
             clip = tmp_path / f"{key}.mp4"
             await synthesize(narration, mp3)
 
-            if tile_idx is None:
+            if tile is None:
                 frames = make_intro_frames(base, trans_n)
-            elif tile_idx == 0:
-                frames = make_focus_frames(base, None, 0, trans_n)
+            elif idx == 1:
+                frames = make_focus_frames(base, None, tile, trans_n)
             else:
-                frames = make_focus_frames(base, tile_idx - 1, tile_idx, trans_n)
+                prev = segments[idx - 1][2]
+                assert prev is not None
+                frames = make_focus_frames(base, prev, tile, trans_n)
 
             dur = encode_clip(frames, mp3, clip)
             clips.append(clip)
@@ -421,7 +330,12 @@ async def main() -> int:
         write_vtt(vtt, vtt_out)
         (OUT_DIR / "dashboard-ueberblick.meta.json").write_text(
             json.dumps(
-                {"title": "Dashboard — Kurzüberblick", "duration_sec": round(cursor, 1), "segments": manifest},
+                {
+                    "title": "Dashboard — Kurzüberblick",
+                    "source": "dashboard-capture.png",
+                    "duration_sec": round(cursor, 1),
+                    "segments": manifest,
+                },
                 ensure_ascii=False,
                 indent=2,
             ),
