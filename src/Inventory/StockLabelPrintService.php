@@ -109,7 +109,7 @@ HTML;
   <div class="dg-label-toolbar no-print">
     <h1>{$escapedTitle}</h1>
     <p>{$escapedCompany} · Format: {$formatLabel} · {$count} Etikett(en)</p>
-    <p>Die Vorschau zeigt Maße in Millimetern. Feinabstimmung (Rand, Skalierung) erfolgt in der Druckersoftware Ihres Etikettendruckers.</p>
+    <p><strong>Hinweis:</strong> „Bogen A4“ = Papierformat 210×297&nbsp;mm mit vielen kleinen Etiketten darauf — nicht ein großes A4-Aufkleber pro Code. Die mm-Angabe gilt pro Einzeletikett. Feinabstimmung in der Druckersoftware.</p>
     <button type="button" onclick="window.print()">Drucken / PDF speichern</button>
   </div>
   <div class="dg-label-preview-wrap">

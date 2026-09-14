@@ -14,7 +14,7 @@ final class StockLabelService
     {
         return [
             'avery-l7163' => [
-                'label' => 'Avery Zweckform L7163 — 63,5 × 29,6 mm (A4, 3×8)',
+                'label' => 'Avery L7163 · Bogen A4 · 24 Etiketten je 63,5 × 29,6 mm (3×8)',
                 'avery' => 'L7163',
                 'layout' => 'a4-grid',
                 'width_mm' => 63.5,
@@ -27,7 +27,7 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             'avery-l7160' => [
-                'label' => 'Avery Zweckform L7160 — 63,5 × 38,1 mm (A4, 3×7)',
+                'label' => 'Avery L7160 · Bogen A4 · 21 Etiketten je 63,5 × 38,1 mm (3×7)',
                 'avery' => 'L7160',
                 'layout' => 'a4-grid',
                 'width_mm' => 63.5,
@@ -40,7 +40,7 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             'avery-l7159' => [
-                'label' => 'Avery Zweckform L7159 — 63,5 × 38,1 mm (A4, 3×7 Adress)',
+                'label' => 'Avery L7159 · Bogen A4 · 21 Etiketten je 63,5 × 38,1 mm (3×7 Adress)',
                 'avery' => 'L7159',
                 'layout' => 'a4-grid',
                 'width_mm' => 63.5,
@@ -53,7 +53,7 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             'avery-l7161' => [
-                'label' => 'Avery Zweckform L7161 — 63,5 × 46,6 mm (A4, 3×5)',
+                'label' => 'Avery L7161 · Bogen A4 · 15 Etiketten je 63,5 × 46,6 mm (3×5)',
                 'avery' => 'L7161',
                 'layout' => 'a4-grid',
                 'width_mm' => 63.5,
@@ -66,7 +66,7 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             'avery-l7162' => [
-                'label' => 'Avery Zweckform L7162 — 99,1 × 33,9 mm (A4, 2×8)',
+                'label' => 'Avery L7162 · Bogen A4 · 16 Etiketten je 99,1 × 33,9 mm (2×8)',
                 'avery' => 'L7162',
                 'layout' => 'a4-grid',
                 'width_mm' => 99.1,
@@ -79,7 +79,7 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             'avery-l4776' => [
-                'label' => 'Avery Zweckform L4776 — 45,7 × 21,2 mm (A4, 4×13 Mini)',
+                'label' => 'Avery L4776 · Bogen A4 · 52 Etiketten je 45,7 × 21,2 mm (4×13 Mini)',
                 'avery' => 'L4776',
                 'layout' => 'a4-grid',
                 'width_mm' => 45.7,
@@ -92,7 +92,7 @@ final class StockLabelService
                 'gap_mm' => 1.5,
             ],
             'avery-l4778' => [
-                'label' => 'Avery Zweckform L4778 — 64 × 26,7 mm (A4, 3×10)',
+                'label' => 'Avery L4778 · Bogen A4 · 30 Etiketten je 64 × 26,7 mm (3×10)',
                 'avery' => 'L4778',
                 'layout' => 'a4-grid',
                 'width_mm' => 64.0,
@@ -105,31 +105,31 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             '62x29' => [
-                'label' => '62 × 29 mm (Etikettenrolle / schmal)',
+                'label' => 'Einzeletikett 62 × 29 mm (Etikettenrolle / schmal)',
                 'layout' => 'single',
                 'width_mm' => 62.0,
                 'height_mm' => 29.0,
             ],
             '70x36' => [
-                'label' => '70 × 36 mm',
+                'label' => 'Einzeletikett 70 × 36 mm (Etikettenrolle)',
                 'layout' => 'single',
                 'width_mm' => 70.0,
                 'height_mm' => 36.0,
             ],
             '100x50' => [
-                'label' => '100 × 50 mm',
+                'label' => 'Einzeletikett 100 × 50 mm (Etikettenrolle)',
                 'layout' => 'single',
                 'width_mm' => 100.0,
                 'height_mm' => 50.0,
             ],
             '105x74' => [
-                'label' => '105 × 74 mm (Postkarte / A7)',
+                'label' => 'Einzeletikett 105 × 74 mm (Postkarte / A7, kein A4)',
                 'layout' => 'single',
                 'width_mm' => 105.0,
                 'height_mm' => 74.0,
             ],
             'a4-3x8' => [
-                'label' => 'A4 — 3 × 8 (ca. 70 × 37 mm, generisch)',
+                'label' => 'Bogen A4 · 24 Etiketten je ca. 70 × 37 mm (3×8, ohne Avery-Nr.)',
                 'layout' => 'a4-grid',
                 'width_mm' => 70.0,
                 'height_mm' => 37.0,
@@ -141,7 +141,7 @@ final class StockLabelService
                 'gap_mm' => 2.0,
             ],
             'a4-2x5' => [
-                'label' => 'A4 — 2 × 5 (ca. 99 × 57 mm, generisch)',
+                'label' => 'Bogen A4 · 10 Etiketten je ca. 99 × 57 mm (2×5, ohne Avery-Nr.)',
                 'layout' => 'a4-grid',
                 'width_mm' => 99.0,
                 'height_mm' => 57.0,
