@@ -277,15 +277,15 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
           <?php endforeach; ?>
         </select>
       </label>
-      <div class="dg-field dg-field--actions">
+      <div class="dg-field dg-field--wide dg-audit-manual__actions">
         <button type="submit" class="dg-button dg-button--primary">Prüfen</button>
       </div>
     </form>
 
-    <div class="dg-field dg-field--wide">
+    <div class="dg-place-audit-output">
       <div id="dg-place-audit-message" class="dg-scan-result" hidden></div>
+      <div id="dg-place-audit-panel" class="dg-panel dg-panel--nested" hidden></div>
     </div>
-    <div id="dg-place-audit-panel" class="dg-panel" hidden></div>
   </section>
 
   <?php elseif ($lagerView === 'bewegungen') : ?>
