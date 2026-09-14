@@ -488,6 +488,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
         <strong>Lagerort</strong> nur Ortkode · <strong>Halle</strong> Ort-Halle ·
         <strong>Regal</strong> Ort-Halle-Regal · <strong>Stellplatz</strong> vollständiger Positionscode inkl. PAL/KRT/EIN.
         Die Vorschau zeigt das Etikettenformat — Skalierung und Rand stellen Sie in der Druckersoftware ein.
+        <strong>Bogen A4</strong> = normales Papier (210×297&nbsp;mm) mit vielen kleinen Etiketten; die mm-Angabe ist die Größe <em>eines</em> Aufklebers, nicht A4 pro Code.
       </p>
 
       <form class="dg-form dg-form-grid" method="get" action="/app" target="_blank">
