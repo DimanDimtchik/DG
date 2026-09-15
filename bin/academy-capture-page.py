@@ -55,7 +55,6 @@ SECTION_JS = """() => {
 
     const form = document.querySelector('form.dg-form');
     const sections = {};
-    if (!form) return sections;
 
     const h2Titles = {
         'Stamm': 'stamm',
@@ -67,12 +66,14 @@ SECTION_JS = """() => {
         'Mitarbeiterdaten': 'mitarbeiterdaten',
     };
 
-    form.querySelectorAll(':scope > h2').forEach((h2) => {
-        const key = h2Titles[h2.textContent.trim()];
-        if (!key) return;
-        const block = expandBlock(h2);
-        if (block) sections[key] = block;
-    });
+    if (form) {
+        form.querySelectorAll(':scope > h2').forEach((h2) => {
+            const key = h2Titles[h2.textContent.trim()];
+            if (!key) return;
+            const block = expandBlock(h2);
+            if (block) sections[key] = block;
+        });
+    }
 
     const nested = [
         ['mitarbeiter_firma', '[data-company-section]'],
@@ -85,6 +86,18 @@ SECTION_JS = """() => {
             const block = rect(el);
             if (block) sections[key] = block;
         }
+    }
+
+    const formGrid = document.querySelector('#dg-booking-form .dg-form-grid, form.dg-form .dg-form-grid');
+    if (formGrid) {
+        const block = rect(formGrid);
+        if (block) sections['form'] = block;
+    }
+
+    const searchForm = document.querySelector('form.dg-search');
+    if (searchForm) {
+        const block = rect(searchForm);
+        if (block) sections['list'] = block;
     }
 
     return sections;

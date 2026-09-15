@@ -1,0 +1,101 @@
+{
+  "video_slug": "terminkalender-neuer-termin",
+  "locale": "de",
+  "title": "Terminkalender — Neuer Termin",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "overview",
+      "narration": "In diesem Video erklären wir alle Felder beim Anlegen eines Termins. Sie erreichen das Formular über Terminkalender und Neuer Termin."
+    },
+    {
+      "key": "field-article",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "article",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Leistung: Wählen Sie die gebuchte Dienstleistung. Die Dauer und der Preis kommen aus dem Katalog Artikel und Leistungen — dort legen Sie Leistungen und Waren an. Ein eigenes Schulungsvideo zeigt diesen Bereich im Detail."
+    },
+    {
+      "key": "field-employee",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "employee",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Mitarbeiter: Optional einen konkreten Mitarbeiter wählen — nur sichtbar, wenn die Leistung einem Kalender-Bereich mit Team zugeordnet ist. Ohne Auswahl sucht das System einen freien Mitarbeiter im Bereich."
+    },
+    {
+      "key": "field-slot_date",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "slot_date",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Datum: Der Tag des Termins. Nach der Auswahl werden freie Uhrzeiten anhand der Arbeitszeiten und bestehender Buchungen berechnet."
+    },
+    {
+      "key": "field-slot_time",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "slot_time",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Uhrzeit: Freie Startzeit im gewählten Raster — abhängig von Leistungsdauer und optional gewähltem Mitarbeiter. Bei stornierten Terminen wird die Verfügbarkeit nicht geprüft."
+    },
+    {
+      "key": "field-status",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "status",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Status: Gebucht, bestätigt, storniert oder abgeschlossen — für Ihre interne Übersicht und Auswertung."
+    },
+    {
+      "key": "field-customer",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "customer",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Kunde: Name des Kunden — Pflichtfeld. Beim Tippen erscheinen Vorschläge aus Ihren Kontakten. Kontakte legen und pflegen Sie im Modul Kontakte; dazu gibt es eigene Schulungsvideos."
+    },
+    {
+      "key": "field-customer_email",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "customer_email",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "E-Mail: Wird beim Kontakt-Vorschlag übernommen, kann angepasst werden — für Bestätigungen und Erinnerungen."
+    },
+    {
+      "key": "field-customer_phone",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "customer_phone",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Telefon: Optional, ebenfalls aus dem Kontakt übernehmbar — für Rückfragen am Termintag."
+    },
+    {
+      "key": "field-admin_notes",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "focus_field",
+      "field": "admin_notes",
+      "section": "form",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-new-regions.json",
+      "narration": "Notizen: Interne Hinweise zum Termin — nur für Ihr Team sichtbar, nicht für den Kunden."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-new.png",
+      "mode": "overview",
+      "narration": "Speichern legt den Termin an. Leistungen pflegen Sie unter Artikel und Leistungen, Kunden unter Kontakte — beides mit eigenen Videos. Viel Erfolg!"
+    }
+  ]
+}

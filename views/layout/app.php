@@ -270,6 +270,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script>
       window.dgBookingForm = {
         apiUrl: '/api/booking-slots',
+        contactSearchUrl: '/api/booking-slots?action=contacts',
         articleId: <?= (int) ($form['article_id'] ?? 0) ?>,
         employeeId: <?= (int) ($form['employee_id'] ?? 0) ?>,
         excludeBookingId: <?= (int) ($bookingId ?? 0) ?>,

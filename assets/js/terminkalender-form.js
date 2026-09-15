@@ -20,6 +20,12 @@
   }
 
   const apiUrl = config.apiUrl || '/api/booking-slots';
+  const contactSearchUrl = config.contactSearchUrl || '/api/booking-slots?action=contacts';
+  const customerSearch = document.getElementById('dg-booking-customer-search');
+  const customerEmail = document.getElementById('dg-booking-customer-email');
+  const customerPhone = document.getElementById('dg-booking-customer-phone');
+  const customerResults = document.getElementById('dg-booking-customer-results');
+  let customerSearchTimer = null;
   const articles = Array.isArray(config.articles) ? config.articles : [];
   const employees = Array.isArray(config.employees) ? config.employees : [];
   const excludeBookingId = Number(config.excludeBookingId || 0);
@@ -235,6 +241,95 @@
       setHint('Bitte Datum und Uhrzeit wählen.', true);
     }
   });
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderCustomerResults(items) {
+    if (!customerResults) {
+      return;
+    }
+    if (!items || items.length === 0) {
+      customerResults.hidden = false;
+      customerResults.innerHTML = '<div class="dg-voucher-contact-results__empty">Keine passenden Kontakte gefunden.</div>';
+      return;
+    }
+    customerResults.hidden = false;
+    customerResults.innerHTML = items.map(function (item) {
+      return (
+        '<button type="button" class="dg-voucher-contact-results__item" data-name="' + escapeHtml(item.customer_name || item.label) + '" data-email="' + escapeHtml(item.email || '') + '" data-phone="' + escapeHtml(item.phone || '') + '">' +
+          '<span class="dg-voucher-contact-results__label">' + escapeHtml(item.label) + '</span>' +
+          (item.meta ? '<span class="dg-voucher-contact-results__meta">' + escapeHtml(item.meta) + '</span>' : '') +
+        '</button>'
+      );
+    }).join('');
+
+    customerResults.querySelectorAll('.dg-voucher-contact-results__item').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (customerSearch) {
+          customerSearch.value = btn.getAttribute('data-name') || '';
+        }
+        if (customerEmail) {
+          customerEmail.value = btn.getAttribute('data-email') || '';
+        }
+        if (customerPhone) {
+          customerPhone.value = btn.getAttribute('data-phone') || '';
+        }
+        customerResults.hidden = true;
+        customerResults.innerHTML = '';
+      });
+    });
+  }
+
+  function searchCustomers(query) {
+    if (!customerResults) {
+      return;
+    }
+    if (query.length < 1) {
+      customerResults.hidden = true;
+      customerResults.innerHTML = '';
+      return;
+    }
+    fetch(contactSearchUrl + '&q=' + encodeURIComponent(query), { credentials: 'same-origin' })
+      .then(function (response) { return response.json(); })
+      .then(function (payload) {
+        if (!payload || !payload.success) {
+          throw new Error((payload && payload.message) || 'Kontakte konnten nicht geladen werden.');
+        }
+        renderCustomerResults((payload.data && payload.data.items) || []);
+      })
+      .catch(function () {
+        renderCustomerResults([]);
+      });
+  }
+
+  if (customerSearch) {
+    customerSearch.addEventListener('input', function () {
+      clearTimeout(customerSearchTimer);
+      customerSearchTimer = setTimeout(function () {
+        searchCustomers(customerSearch.value.trim());
+      }, 220);
+    });
+    customerSearch.addEventListener('focus', function () {
+      if (customerSearch.value.trim().length >= 1) {
+        searchCustomers(customerSearch.value.trim());
+      }
+    });
+    document.addEventListener('click', function (event) {
+      if (!customerResults || customerResults.hidden) {
+        return;
+      }
+      if (event.target === customerSearch || customerResults.contains(event.target)) {
+        return;
+      }
+      customerResults.hidden = true;
+    });
+  }
 
   renderEmployeeOptions();
   if (dateInput.value) {
