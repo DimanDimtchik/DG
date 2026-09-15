@@ -1,7 +1,9 @@
 # Szenario: Dashboard — Kurzüberblick aller Kacheln
 
+> **Produktionsregeln:** [`VIDEO-REGELN.md`](VIDEO-REGELN.md) · Build: `bin/academy-build-dashboard-video.sh`
+
 **Zielgruppe:** Neue Mitarbeiter und Anwender mit Dashboard-Zugang  
-**Dauer:** ca. 5–6 Minuten  
+**Dauer:** ca. 4–5 Minuten  
 **Stil:** Ruhig, sachlich, je Kachel nur 1–2 Sätze — **kein** Klick in Module, keine Detailmasken  
 **Hinweis am Anfang (optional im Video):** Sichtbare Kacheln hängen von Rolle und Abteilung ab.
 
