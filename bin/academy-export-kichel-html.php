@@ -89,7 +89,7 @@ if (!str_contains($html, '<base ')) {
 
 $kichelScript = <<<'HTML'
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
   var fab = document.querySelector('[data-kichel-fab]');
   var panel = document.getElementById('dg-kichel-panel');
   var messages = document.querySelector('[data-kichel-messages]');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<div class="dg-kichel-msg dg-kichel-msg--user">Wo trage ich die Umsatzsteuer-Identifikationsnummer ein?</div>' +
       '<div class="dg-kichel-msg dg-kichel-msg--bot">Die Umsatzsteuer-Identifikationsnummer trägst du beim Kontakt ein: Kontakte öffnen, Kunde bearbeiten, Abschnitt Kunde und Lieferant — Feld USt-IdNr. Für deine eigene Firma: Einstellungen, Firma.</div>';
   }
-});
+})();
 </script>
 HTML;
 

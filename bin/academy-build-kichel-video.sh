@@ -12,7 +12,7 @@ KDIR="$ROOT/storage/media/training/kichel"
 capture() {
   local html="$1" png="$2" regions="$3"
   shift 3
-  python3 bin/academy-capture-page.py "$html" "$png" "$regions" "$@"
+  python3 bin/academy-capture-page.py --viewport-only "$html" "$png" "$regions" "$@"
 }
 
 echo "==> 1/3 Kichel-HTML exportieren"

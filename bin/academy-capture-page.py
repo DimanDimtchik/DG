@@ -163,14 +163,24 @@ SECTION_JS = """() => {
 
     const kichelFab = document.querySelector('[data-kichel-fab]');
     if (kichelFab) {
-        const block = rect(kichelFab);
-        if (block) sections['kichel'] = block;
+        const style = window.getComputedStyle(kichelFab);
+        const r = kichelFab.getBoundingClientRect();
+        if (r.width >= 2 && r.height >= 2) {
+            sections['kichel'] = style.position === 'fixed'
+                ? { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }
+                : rect(kichelFab);
+        }
     }
 
     const kichelPanel = document.getElementById('dg-kichel-panel');
     if (kichelPanel && !kichelPanel.hidden) {
-        const block = rect(kichelPanel);
-        if (block) sections['kichel_open'] = block;
+        const style = window.getComputedStyle(kichelPanel);
+        const r = kichelPanel.getBoundingClientRect();
+        if (r.width >= 2 && r.height >= 2) {
+            sections['kichel_open'] = style.position === 'fixed'
+                ? { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }
+                : rect(kichelPanel);
+        }
     }
 
     const ledgerFilters = document.querySelector('.dg-ledger-filters');
@@ -190,11 +200,14 @@ FIELD_JS = """(selector) => {
     const label = el.closest('label');
     const target = label || el;
     const r = target.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return null;
     const labelText = label?.querySelector('span')?.textContent?.trim()
         || el.getAttribute('name') || selector;
+    const fixed = window.getComputedStyle(target).position === 'fixed'
+        || window.getComputedStyle(el).position === 'fixed';
     return {
-        x: Math.round(r.left + scrollX),
-        y: Math.round(r.top + scrollY),
+        x: Math.round(fixed ? r.left : r.left + scrollX),
+        y: Math.round(fixed ? r.top : r.top + scrollY),
         w: Math.round(r.width),
         h: Math.round(r.height),
         label: labelText,
@@ -230,7 +243,28 @@ def parse_field_specs(argv: list[str]) -> dict[str, str]:
     return out
 
 
-def capture(html: Path, png: Path, regions: Path | None = None, field_specs: dict[str, str] | None = None) -> None:
+def prepare_page_state(page, html: Path) -> None:
+    """Akademie-Capture: feste Overlays (z. B. Kichel) vor Screenshot öffnen."""
+    if "kichel-dashboard-open" in html.name:
+        page.evaluate(
+            """() => {
+                const panel = document.getElementById('dg-kichel-panel');
+                const fab = document.querySelector('[data-kichel-fab]');
+                if (panel) panel.hidden = false;
+                if (fab) fab.setAttribute('aria-expanded', 'true');
+            }"""
+        )
+        page.wait_for_timeout(400)
+
+
+def capture(
+    html: Path,
+    png: Path,
+    regions: Path | None = None,
+    field_specs: dict[str, str] | None = None,
+    *,
+    viewport_only: bool = False,
+) -> None:
     png.parent.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -239,12 +273,9 @@ def capture(html: Path, png: Path, regions: Path | None = None, field_specs: dic
         page.wait_for_timeout(800)
         inject_cleanup(page)
         page.wait_for_timeout(300)
-        page.screenshot(path=str(png), full_page=True)
+        prepare_page_state(page, html)
 
-        img_h = Image.open(png).size[1]
-        page.set_viewport_size({"width": VIEWPORT_W, "height": img_h})
-        page.wait_for_timeout(200)
-
+        # Regionen vor Viewport-Resize (fixed FAB/Panel sonst verschoben → Fokus ins Leere)
         field_map: dict[str, dict] = {}
         if field_specs:
             for key, selector in field_specs.items():
@@ -253,6 +284,15 @@ def capture(html: Path, png: Path, regions: Path | None = None, field_specs: dic
                     field_map[key] = data
 
         section_map: dict[str, dict] = page.evaluate(SECTION_JS)
+
+        if viewport_only:
+            page.screenshot(path=str(png), full_page=False)
+            img_h = 1080
+        else:
+            page.screenshot(path=str(png), full_page=True)
+            img_h = Image.open(png).size[1]
+            page.set_viewport_size({"width": VIEWPORT_W, "height": img_h})
+            page.wait_for_timeout(200)
 
         if regions:
             regions.write_text(
@@ -272,21 +312,23 @@ def capture(html: Path, png: Path, regions: Path | None = None, field_specs: dic
 
 
 def main() -> int:
-    if len(sys.argv) < 3:
+    args = [a for a in sys.argv[1:] if a != "--viewport-only"]
+    viewport_only = len(args) < len(sys.argv) - 1
+    if len(args) < 2:
         print(
-            "Usage: academy-capture-page.py input.html output.png [regions.json] [key=selector ...]",
+            "Usage: academy-capture-page.py [--viewport-only] input.html output.png [regions.json] [key=selector ...]",
             file=sys.stderr,
         )
         return 1
-    html = Path(sys.argv[1])
-    png = Path(sys.argv[2])
-    regions = Path(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3].endswith(".json") else None
-    spec_start = 4 if regions else 3
-    field_specs = parse_field_specs(sys.argv[spec_start:])
+    html = Path(args[0])
+    png = Path(args[1])
+    regions = Path(args[2]) if len(args) > 2 and args[2].endswith(".json") else None
+    spec_start = 3 if regions else 2
+    field_specs = parse_field_specs(args[spec_start:])
     if not html.is_file():
         print(f"Fehlt: {html}", file=sys.stderr)
         return 1
-    capture(html, png, regions, field_specs or None)
+    capture(html, png, regions, field_specs or None, viewport_only=viewport_only)
     return 0
 
 
