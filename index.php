@@ -23,6 +23,10 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
         View::render('offline');
         exit;
     }
+    if (WebsitePageRepository::isOnlineBookingPage($previewPage)) {
+        PublicBookingPageRenderer::render();
+        exit;
+    }
     View::render('website-public', [
         'page' => $previewPage,
         'chrome' => WebsiteSettings::chrome(),
@@ -434,26 +438,7 @@ switch ($path) {
         exit;
 
     case '/termin':
-        MigrationRunner::runPending();
-        if (!CalendarEmbedSettings::isOnlineBookingEnabled()) {
-            View::render('public/termin-disabled', [
-                'disabledReason' => 'Die Online-Terminbuchung ist derzeit deaktiviert. Bitte kontaktieren Sie uns direkt.',
-            ]);
-            break;
-        }
-        if (!Database::isConfigured()) {
-            View::render('public/termin-disabled', [
-                'disabledReason' => 'Die Online-Terminbuchung ist vorübergehend nicht verfügbar.',
-            ]);
-            break;
-        }
-        CalendarWorkingHoursRepository::ensureSeeded();
-        CalendarStaffRepository::ensureSeeded();
-        View::render('public/termin', [
-            'embedConfig' => CalendarEmbedSettings::config(),
-            'bookingArticles' => CalendarArticleRepository::bookingOptions(),
-            'bookingEmployees' => CalendarStaffRepository::bookingEmployeeOptions(),
-        ]);
+        PublicBookingPageRenderer::render();
         break;
 
     case '/api/calendar-articles-template.csv':
@@ -4675,6 +4660,10 @@ switch ($path) {
         }
 
         if ($publicPage !== null) {
+            if (WebsitePageRepository::isOnlineBookingPage($publicPage)) {
+                PublicBookingPageRenderer::render();
+                break;
+            }
             $chrome = WebsiteSettings::chrome();
             $menu = WebsiteSettings::publicMenu();
             $design = WebsiteSettings::design();

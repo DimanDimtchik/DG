@@ -12,6 +12,9 @@ final class WebsitePageRepository
     public const STATUS_PUBLISHED = 'published';
     public const STATUS_PRIVATE = 'private';
 
+    /** Systemseite: öffentliche Online-Terminbuchung (kein CMS-Inhalt). */
+    public const PAGE_KIND_ONLINE_BOOKING = 'online_booking';
+
     /**
      * Human-readable status labels for the editor UI.
      *
@@ -31,6 +34,36 @@ final class WebsitePageRepository
      *
      * @return array{rows: list<array<string, mixed>>}
      */
+    /** Layout für die Pflichtseite Terminkalender (Kunden buchen online). */
+    public static function onlineBookingLayout(): array
+    {
+        return [
+            'page_kind' => self::PAGE_KIND_ONLINE_BOOKING,
+            'rows' => [],
+        ];
+    }
+
+    /** @param array<string, mixed> $page */
+    public static function isOnlineBookingPage(array $page): bool
+    {
+        $layout = $page['layout'] ?? [];
+        if (!is_array($layout)) {
+            return false;
+        }
+
+        return (string) ($layout['page_kind'] ?? '') === self::PAGE_KIND_ONLINE_BOOKING;
+    }
+
+    public static function terminkalenderUsesOnlineBookingLayout(): bool
+    {
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        $page = self::findBySlugAnyStatus('terminkalender');
+
+        return $page !== null && self::isOnlineBookingPage($page);
+    }
+
     public static function emptyLayout(): array
     {
         return [
@@ -303,6 +336,17 @@ final class WebsitePageRepository
             $decoded = json_decode($layout, true);
             $layout = is_array($decoded) ? $decoded : self::emptyLayout();
         }
+        if ($id !== null && $id > 0) {
+            $existing = self::findById($id);
+            if ($existing !== null && self::isOnlineBookingPage($existing)) {
+                $layout = is_array($layout) ? $layout : self::onlineBookingLayout();
+                $layout['page_kind'] = self::PAGE_KIND_ONLINE_BOOKING;
+                if (!isset($layout['rows']) || !is_array($layout['rows'])) {
+                    $layout['rows'] = [];
+                }
+            }
+        }
+
         if (!is_array($layout) || !isset($layout['rows']) || !is_array($layout['rows'])) {
             $layout = self::emptyLayout();
         }

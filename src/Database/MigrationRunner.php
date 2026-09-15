@@ -224,6 +224,7 @@ final class MigrationRunner
                 && self::columnExists($pdo, 'dg_academy_courses', 'department_id'),
             '072_academy_module_departments.sql' => self::tableExists($pdo, 'dg_academy_module_departments')
                 && self::tableExists($pdo, 'dg_academy_course_departments'),
+            '073_website_terminkalender_booking.sql' => WebsitePageRepository::terminkalenderUsesOnlineBookingLayout(),
             default => false,
         };
     }
@@ -327,6 +328,7 @@ final class MigrationRunner
             '070_academy.sql' => true,
             '071_academy_departments.sql' => true,
             '072_academy_module_departments.sql' => true,
+            '073_website_terminkalender_booking.sql' => true,
         ];
     }
 

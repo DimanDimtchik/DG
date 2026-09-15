@@ -82,17 +82,24 @@ final class WebsiteBootstrapService
 
         if ($terminkalenderPage) {
             $existingTk = WebsitePageRepository::findBySlugAnyStatus('terminkalender');
-            if ($existingTk === null || $overwrite) {
+            $needsBookingLayout = $existingTk === null
+                || $overwrite
+                || !WebsitePageRepository::isOnlineBookingPage($existingTk);
+            if ($needsBookingLayout) {
                 $tkId = WebsitePageRepository::save([
                     'title' => 'Terminkalender',
                     'slug' => 'terminkalender',
                     'status' => WebsitePageRepository::STATUS_PUBLISHED,
                     'layout' => WebsiteHomepageTemplates::terminkalenderPageLayout(),
                 ], $existingTk !== null ? (int) $existingTk['id'] : null, $userId);
+                $action = 'created';
+                if ($existingTk !== null) {
+                    $action = WebsitePageRepository::isOnlineBookingPage($existingTk) ? 'updated' : 'repaired';
+                }
                 $result['terminkalender_page'] = [
                     'id' => $tkId,
                     'slug' => 'terminkalender',
-                    'action' => $existingTk !== null ? 'updated' : 'created',
+                    'action' => $action,
                 ];
             } else {
                 $result['terminkalender_page'] = [

@@ -115,6 +115,7 @@ spl_autoload_register(static function (string $class): void {
         'BookingSlotService' => '/src/Booking/BookingSlotService.php',
         'BookingSlotsApi' => '/src/Booking/BookingSlotsApi.php',
         'PublicBookingApi' => '/src/Booking/PublicBookingApi.php',
+        'PublicBookingPageRenderer' => '/src/Booking/PublicBookingPageRenderer.php',
         'MailMimeReader' => '/src/Mail/MailMimeReader.php',
         'CalendarStaffApi' => '/src/Calendar/CalendarStaffApi.php',
         'MediaId' => '/src/Media/MediaId.php',

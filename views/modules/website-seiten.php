@@ -39,7 +39,7 @@ if ($previewImage === '') {
   <section class="dg-panel" aria-labelledby="wb-heading">
     <h2 id="wb-heading" class="dg-website-maintenance__title">Pflichtseiten &amp; Startseite</h2>
     <p class="dg-lead dg-website-maintenance__lead">
-      Legt Impressum, Datenschutz, AGB, eine branchenspezifische Startseite, Marketing-Seite Terminkalender,
+      Legt Impressum, Datenschutz, AGB, eine branchenspezifische Startseite, die Online-Terminbuchung (Terminkalender),
       Kontaktformular mit Datenschutz-Hinweis
       und das Navigationsmenü an. Nutzt Ihre Firmendaten aus den Einstellungen.
     </p>

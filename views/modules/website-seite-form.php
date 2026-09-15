@@ -45,6 +45,15 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
+  <?php if (WebsitePageRepository::isOnlineBookingPage($form)) : ?>
+    <div class="dg-flash dg-flash--info">
+      <strong>Systemseite Online-Terminbuchung.</strong>
+      Besucher sehen hier das Buchungsformular für Kunden (Leistung, Termin, Kontaktdaten).
+      Einstellungen: Termine → Einbindung und Artikel &amp; Leistungen.
+      Vorschau öffnet die echte Buchungsseite — nicht den Seiten-Editor-Inhalt.
+    </div>
+  <?php endif; ?>
+
   <form class="dg-form dg-website-editor__form" method="post" action="/app?page=website-seite-form" id="dg-website-page-form">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="website_page_save" value="1">
