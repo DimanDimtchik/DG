@@ -1,0 +1,74 @@
+{
+  "video_slug": "kontakte-felder-kommunikation",
+  "locale": "de",
+  "title": "Kontakte — Felder: Kommunikation",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Dieses Video erklärt den Abschnitt Kommunikation — E-Mail, Telefon und Website."
+    },
+    {
+      "key": "field-email",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "email",
+      "section": "kommunikation",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "E-Mail: Hauptadresse des Kontakts. Bei Kunden prüft das System die Domain per DNS und speichert das Ergebnis — erneut nach neunzig Tagen oder bei Änderung."
+    },
+    {
+      "key": "field-email_2",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "email_2",
+      "section": "kommunikation",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "E-Mail zwei: zweite Adresse, optional — zum Beispiel privat oder Abteilungs-Postfach."
+    },
+    {
+      "key": "field-phone_1",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "phone_1",
+      "section": "kommunikation",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Telefon eins: Hauptnummer, Festnetz oder Mobil."
+    },
+    {
+      "key": "field-phone_2",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "phone_2",
+      "section": "kommunikation",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Telefon zwei: alternative Nummer, optional."
+    },
+    {
+      "key": "field-website",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "website",
+      "section": "kommunikation",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Website: Internetadresse der Firma oder Person — mit http oder https. Soziale Netzwerke tragen Sie im Abschnitt Soziale Medien ein."
+    },
+    {
+      "key": "field-auto_mailbox",
+      "screenshot": "storage/media/training/kontakte/kontakte-new.png",
+      "mode": "focus_field",
+      "field": "auto_create_mailbox",
+      "section": "kommunikation",
+      "regions_file": "storage/media/training/kontakte/kontakte-new-regions.json",
+      "narration": "Automatisches Postfach: nur beim Anlegen sichtbar — für Rolle Mitarbeiter oder Administrator. Legt nach Formel unter Einstellungen E-Mail ein Postfach an, wenn die Adresse noch frei ist und der Server konfiguriert ist."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Das war Kommunikation. Als Nächstes: Adresse."
+    }
+  ]
+}

@@ -22,9 +22,10 @@ DEFAULT_VOICE = "de-DE-KatjaNeural"
 
 OUT_W, OUT_H = 1920, 1080
 FPS = 25
-TRANSITION_SEC = 0.85
-FOCUS_ZOOM = 2.15
-FIELD_ZOOM = 2.8
+TRANSITION_SEC = 1.15
+FOCUS_ZOOM = 2.0
+MAX_ZOOM = 3.4
+MIN_ZOOM = 1.25
 
 
 @dataclass
@@ -53,6 +54,12 @@ def lerp(a: float, b: float, t: float) -> float:
 
 def overview_scale(iw: int, ih: int, extra: float = 1.0) -> float:
     return min(OUT_W / iw, OUT_H / ih) * extra
+
+
+def fit_zoom(rect: Rect, pad_x: float = 56, pad_y: float = 40) -> float:
+    zw = OUT_W / max(rect.w + pad_x * 2, 1)
+    zh = OUT_H / max(rect.h + pad_y * 2, 1)
+    return max(MIN_ZOOM, min(zw, zh, MAX_ZOOM))
 
 
 def render_overview(base: Image.Image, extra: float = 1.0) -> Image.Image:
@@ -100,46 +107,74 @@ def load_tiles() -> dict[str, Rect]:
     }
 
 
-def load_regions(path: Path) -> dict[str, Rect]:
+def load_regions(path: Path) -> tuple[dict[str, Rect], dict[str, Rect]]:
     if not path.is_file():
-        return {}
+        return {}, {}
     data = json.loads(path.read_text(encoding="utf-8"))
-    out: dict[str, Rect] = {}
+    fields: dict[str, Rect] = {}
+    sections: dict[str, Rect] = {}
     for key, r in (data.get("fields") or {}).items():
-        out[key] = Rect(float(r["x"]), float(r["y"]), float(r["w"]), float(r["h"]))
-    return out
+        fields[key] = Rect(float(r["x"]), float(r["y"]), float(r["w"]), float(r["h"]))
+    for key, r in (data.get("sections") or {}).items():
+        sections[key] = Rect(float(r["x"]), float(r["y"]), float(r["w"]), float(r["h"]))
+    return fields, sections
 
 
-def make_frames(base: Image.Image, mode: str, focus: Rect | None, n: int, from_focus: Rect | None = None, zoom: float = FOCUS_ZOOM) -> list[Image.Image]:
+def make_frames(
+    base: Image.Image,
+    mode: str,
+    focus: Rect | None,
+    n: int,
+    section: Rect | None = None,
+    zoom: float = FOCUS_ZOOM,
+) -> list[Image.Image]:
     iw, ih = base.size
     ox, oy = iw / 2, ih / 2
-    frames: list[Image.Image] = []
+    overview_z = overview_scale(iw, ih, 1.0)
 
     if mode == "overview":
         return [render_overview(base, lerp(1.0, 1.03, ease_in_out(f / max(n - 1, 1)))) for f in range(n)]
 
     if mode == "focus_tile" and focus is not None:
-        sz = overview_scale(iw, ih, 1.0)
+        frames: list[Image.Image] = []
         for f in range(n):
             t = ease_in_out(f / max(n - 1, 1))
             cx, cy = lerp(ox, focus.cx, t), lerp(oy, focus.cy, t)
-            z = lerp(sz, zoom, t)
+            z = lerp(overview_z, zoom, t)
             fr = focus if t >= 0.5 else None
             frames.append(render_viewport(base, cx, cy, z, fr))
         frames[-1] = render_viewport(base, focus.cx, focus.cy, zoom, focus)
         return frames
 
     if mode == "focus_field" and focus is not None:
-        sx, sy = (from_focus.cx, from_focus.cy) if from_focus else (ox, oy)
-        sz = FOCUS_ZOOM if from_focus else overview_scale(iw, ih, 1.0)
-        zt = FIELD_ZOOM
-        for f in range(n):
-            t = ease_in_out(f / max(n - 1, 1))
-            cx, cy = lerp(sx, focus.cx, t), lerp(sy, focus.cy, t)
-            z = lerp(sz, zt, t)
-            fr = focus if t >= 0.5 else None
+        sec = section or focus
+        section_z = fit_zoom(sec, 72, 56)
+        field_z = fit_zoom(focus, 48, 36)
+        sec_cx, sec_cy = sec.cx, sec.cy
+        fld_cx, fld_cy = focus.cx, focus.cy
+
+        n1 = max(1, n // 3)
+        n2 = max(1, n // 3)
+        n3 = max(1, n - n1 - n2)
+        frames = []
+
+        for f in range(n1):
+            t = ease_in_out(f / max(n1 - 1, 1))
+            cx, cy = lerp(ox, sec_cx, t), lerp(oy, sec_cy, t)
+            z = lerp(overview_z, section_z, t)
+            fr = sec if t >= 0.55 else None
             frames.append(render_viewport(base, cx, cy, z, fr))
-        frames[-1] = render_viewport(base, focus.cx, focus.cy, zt, focus)
+
+        for f in range(n2):
+            t = ease_in_out(f / max(n2 - 1, 1))
+            cx, cy = lerp(sec_cx, fld_cx, t), lerp(sec_cy, fld_cy, t)
+            z = lerp(section_z, field_z, t)
+            fr = focus if t >= 0.55 else sec
+            frames.append(render_viewport(base, cx, cy, z, fr))
+
+        for f in range(n3):
+            frames.append(render_viewport(base, fld_cx, fld_cy, field_z, focus))
+        frames[-1] = render_viewport(base, fld_cx, fld_cy, field_z, focus)
         return frames
 
     return [render_overview(base) for _ in range(n)]
@@ -151,7 +186,16 @@ def run(cmd: list[str]) -> None:
 
 def probe_duration(path: Path) -> float:
     out = subprocess.check_output(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(path),
+        ],
         text=True,
     ).strip()
     return float(out)
@@ -174,11 +218,28 @@ def encode_clip(frames: list[Image.Image], audio: Path, out: Path) -> float:
         last = frames[-1]
         for i in range(hold):
             last.save(tmp_path / f"frame_{trans + i:05d}.png")
-        run([
-            "ffmpeg", "-y", "-framerate", str(FPS), "-i", str(tmp_path / "frame_%05d.png"),
-            "-i", str(audio), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
-            "-shortest", str(out),
-        ])
+        run(
+            [
+                "ffmpeg",
+                "-y",
+                "-framerate",
+                str(FPS),
+                "-i",
+                str(tmp_path / "frame_%05d.png"),
+                "-i",
+                str(audio),
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                "-shortest",
+                str(out),
+            ]
+        )
     return (trans + hold) / FPS
 
 
@@ -231,17 +292,15 @@ async def main() -> int:
     trans_n = max(1, int(TRANSITION_SEC * FPS))
 
     image_cache: dict[str, Image.Image] = {}
-    region_cache: dict[str, dict[str, Rect]] = {}
-    prev_field: Rect | None = None
+    region_cache: dict[str, tuple[dict[str, Rect], dict[str, Rect]]] = {}
 
     def get_image(rel: str) -> Image.Image:
-        key = rel
-        if key not in image_cache:
+        if rel not in image_cache:
             path = resolve_path(rel)
             if not path.is_file():
                 raise FileNotFoundError(path)
-            image_cache[key] = Image.open(path).convert("RGB")
-        return image_cache[key]
+            image_cache[rel] = Image.open(path).convert("RGB")
+        return image_cache[rel]
 
     with tempfile.TemporaryDirectory(prefix="dg-scene-vid-") as tmp:
         tmp_path = Path(tmp)
@@ -259,33 +318,33 @@ async def main() -> int:
             base = get_image(screenshot)
 
             focus: Rect | None = None
-            from_focus = prev_field if mode == "focus_field" and seg.get("chain_fields") else None
+            section: Rect | None = None
 
             if mode == "focus_tile":
-                slug = seg.get("tile_slug", "")
-                focus = tiles.get(slug)
+                focus = tiles.get(seg.get("tile_slug", ""))
             elif mode == "focus_field":
                 regions_file = seg.get("regions_file", "")
                 if regions_file not in region_cache:
                     region_cache[regions_file] = load_regions(resolve_path(regions_file))
-                field = seg.get("field", "")
-                focus = region_cache[regions_file].get(field)
+                fields, sections = region_cache[regions_file]
+                field_key = seg.get("field", "")
+                focus = fields.get(field_key)
+                section_key = seg.get("section", "")
+                section = sections.get(section_key)
                 if focus is None:
-                    print(f"Warnung: Feld {field} nicht gefunden", file=sys.stderr)
+                    print(f"Warnung: Feld {field_key} nicht gefunden", file=sys.stderr)
+                if section is None and section_key:
+                    print(f"Warnung: Abschnitt {section_key} nicht gefunden", file=sys.stderr)
 
             mp3 = tmp_path / f"{key}.mp3"
             clip = tmp_path / f"{key}.mp4"
             await synthesize(narration, mp3, voice)
-            frames = make_frames(base, mode, focus, trans_n, from_focus)
+            frames = make_frames(base, mode, focus, trans_n, section=section)
             dur = encode_clip(frames, mp3, clip)
             clips.append(clip)
             vtt.append((cursor, cursor + dur - 0.05, narration))
             cursor += dur
             manifest.append({"key": key, "duration_sec": round(dur, 2)})
-            if mode == "focus_field" and focus is not None:
-                prev_field = focus
-            elif mode != "focus_field":
-                prev_field = None
 
         concat = tmp_path / "concat.txt"
         concat.write_text("\n".join(f"file '{c}'" for c in clips), encoding="utf-8")
@@ -294,7 +353,17 @@ async def main() -> int:
         run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(mp4_out)])
         write_vtt(vtt, vtt_out)
         (out_dir / f"{base_name}.meta.json").write_text(
-            json.dumps({"title": spec.get("title"), "locale": args.locale, "voice": voice, "duration_sec": round(cursor, 1), "segments": manifest}, ensure_ascii=False, indent=2),
+            json.dumps(
+                {
+                    "title": spec.get("title"),
+                    "locale": args.locale,
+                    "voice": voice,
+                    "duration_sec": round(cursor, 1),
+                    "segments": manifest,
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
             encoding="utf-8",
         )
     print(f"\nFertig: {mp4_out} ({cursor / 60:.1f} min)")

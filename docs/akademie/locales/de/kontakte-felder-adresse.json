@@ -1,0 +1,65 @@
+{
+  "video_slug": "kontakte-felder-adresse",
+  "locale": "de",
+  "title": "Kontakte — Felder: Adresse",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Dieses Video erklärt den Abschnitt Adresse — für Briefe, Belege und Lieferungen."
+    },
+    {
+      "key": "field-address1_street",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "address1_street",
+      "section": "adresse",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Straße: Straßenname und Hausnummer der Hauptadresse."
+    },
+    {
+      "key": "field-address1_extra",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "address1_extra",
+      "section": "adresse",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Zusatz: Etage, Postfach oder Gebäudeteil — optional."
+    },
+    {
+      "key": "field-address1_postal",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "address1_postal",
+      "section": "adresse",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Postleitzahl: fünfstellig in Deutschland, für Sortierung und Belege."
+    },
+    {
+      "key": "field-address1_city",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "address1_city",
+      "section": "adresse",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Ort: Stadt oder Gemeinde zur Postleitzahl."
+    },
+    {
+      "key": "field-address1_country",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "address1_country",
+      "section": "adresse",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Land: zweistelliger Ländercode — Standard ist D E für Deutschland."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Das war Adresse. Als Nächstes: Bankverbindung."
+    }
+  ]
+}

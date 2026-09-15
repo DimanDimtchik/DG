@@ -37,29 +37,52 @@ function ensureModule(PDO $pdo, string $title, string $videoRel, string $vttRel,
     ]);
 }
 
-$overviewMeta = json_decode(
-    (string) file_get_contents(DG_ROOT . '/storage/media/training/kontakte/kontakte-ueberblick.meta.json'),
-    true
-) ?: [];
-$fieldsMeta = json_decode(
-    (string) file_get_contents(DG_ROOT . '/storage/media/training/kontakte/kontakte-felder.meta.json'),
-    true
-) ?: [];
+/** @param array<string, mixed>|null $meta */
+function durationFromMeta(?array $meta, int $fallback = 120): int
+{
+    return (int) round((float) ($meta['duration_sec'] ?? $fallback));
+}
 
-$modOverview = ensureModule(
-    $pdo,
-    'Kontakte — Überblick',
-    'media/training/kontakte/kontakte-ueberblick.mp4',
-    'media/training/kontakte/kontakte-ueberblick.vtt',
-    (int) round((float) ($overviewMeta['duration_sec'] ?? 72))
+/** @return array<string, mixed>|null */
+function loadMeta(string $slug): ?array
+{
+    $path = DG_ROOT . '/storage/media/training/kontakte/' . $slug . '.meta.json';
+    if (!is_file($path)) {
+        return null;
+    }
+    $data = json_decode((string) file_get_contents($path), true);
+    return is_array($data) ? $data : null;
+}
+
+// Altes Sammel-Modul deaktivieren
+$pdo->exec(
+    "UPDATE dg_academy_modules SET is_active = 0 WHERE title = 'Kontakte — Felder im Detail'"
 );
-$modFields = ensureModule(
-    $pdo,
-    'Kontakte — Felder im Detail',
-    'media/training/kontakte/kontakte-felder.mp4',
-    'media/training/kontakte/kontakte-felder.vtt',
-    (int) round((float) ($fieldsMeta['duration_sec'] ?? 240))
-);
+
+$modules = [
+    ['Kontakte — Überblick', 'kontakte-ueberblick', 72],
+    ['Kontakte — Felder: Stamm', 'kontakte-felder-stamm', 300],
+    ['Kontakte — Felder: Kunde / Lieferant', 'kontakte-felder-kunde-lieferant', 180],
+    ['Kontakte — Felder: Kommunikation', 'kontakte-felder-kommunikation', 150],
+    ['Kontakte — Felder: Adresse', 'kontakte-felder-adresse', 120],
+    ['Kontakte — Felder: Bankverbindung', 'kontakte-felder-bank', 180],
+    ['Kontakte — Felder: Soziale Medien', 'kontakte-felder-social', 150],
+    ['Kontakte — Felder: Mitarbeiterdaten', 'kontakte-felder-mitarbeiter', 600],
+];
+
+$moduleIds = [];
+foreach ($modules as [$title, $slug, $fallback]) {
+    $meta = loadMeta($slug);
+    $sec = durationFromMeta($meta, $fallback);
+    $moduleIds[] = ensureModule(
+        $pdo,
+        $title,
+        'media/training/kontakte/' . $slug . '.mp4',
+        'media/training/kontakte/' . $slug . '.vtt',
+        $sec
+    );
+    echo "Modul: {$title} ({$sec}s) id=" . end($moduleIds) . "\n";
+}
 
 $slug = 'kontakte';
 $course = AcademyRepository::findCourseBySlug($slug);
@@ -67,17 +90,24 @@ if ($course === null) {
     $courseId = AcademyRepository::saveCourse([
         'title' => 'Kontakte',
         'slug' => $slug,
-        'description' => 'Kontakte im CRM: Überblick und Erklärung aller Formularfelder.',
-        'version' => '1.0',
+        'description' => 'Kontakte im CRM: Überblick und Felder je Formular-Abschnitt.',
+        'version' => '2.0',
         'min_tier' => AcademyTier::STARTER,
         'is_published' => 1,
     ]);
     echo "Kurs angelegt: id={$courseId}\n";
 } else {
     $courseId = (int) $course['id'];
-    echo "Kurs existiert: id={$courseId}\n";
+    $pdo->prepare(
+        'UPDATE dg_academy_courses SET description = :d, version = :v WHERE id = :id'
+    )->execute([
+        'd' => 'Kontakte im CRM: Überblick und Felder je Formular-Abschnitt.',
+        'v' => '2.0',
+        'id' => $courseId,
+    ]);
+    echo "Kurs aktualisiert: id={$courseId}\n";
 }
 
-AcademyRepository::saveCourseModules($courseId, [$modOverview, $modFields]);
-echo "Module: overview={$modOverview} fields={$modFields}\n";
+AcademyRepository::saveCourseModules($courseId, $moduleIds);
+echo 'Module-IDs: ' . implode(', ', $moduleIds) . "\n";
 echo "Katalog: /app?page=akademie&view=kurs&slug={$slug}\n";

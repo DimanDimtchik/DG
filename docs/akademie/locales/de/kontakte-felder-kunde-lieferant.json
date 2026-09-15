@@ -1,0 +1,83 @@
+{
+  "video_slug": "kontakte-felder-kunde-lieferant",
+  "locale": "de",
+  "title": "Kontakte — Felder: Kunde / Lieferant",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Dieses Video erklärt den Abschnitt Kunde und Lieferant — Nummern und steuerliche Angaben für Geschäftspartner."
+    },
+    {
+      "key": "field-customer_number",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "customer_number",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Kundennummer: interne Nummer im Nummernkreis Ihrer Firma — für Rechnungen und Zuordnung als Kunde."
+    },
+    {
+      "key": "field-supplier_number",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "supplier_number",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Lieferantennummer: interne Nummer für Einkauf und Eingangsrechnungen."
+    },
+    {
+      "key": "field-supplier_customer_number",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "supplier_customer_number",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Kundennummer beim Lieferanten: Ihre Kontonummer beim Lieferanten — steht oft auf dessen Rechnungen."
+    },
+    {
+      "key": "field-tax_number",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "tax_number",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Steuernummer: nationale Steuernummer des Partners — für Belege und steuerliche Zuordnung."
+    },
+    {
+      "key": "field-vat_id",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "vat_id",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Umsatzsteueridentifikationsnummer: wichtig bei innergemeinschaftlichen Lieferungen und auf Rechnungen in der Europäischen Union."
+    },
+    {
+      "key": "field-commercial_register",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "commercial_register",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Handelsregister: Eintragung beim Amtsgericht — zum Beispiel Amtsgericht Stuttgart, Handelsregister Abteilung A, Nummer."
+    },
+    {
+      "key": "field-weee_registration",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "weee_registration",
+      "section": "kunde_lieferant",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Registrierungsnummer für Elektro-Altgeräte: relevant bei Elektronikhandel und Entsorgungspflichten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Das war Kunde und Lieferant. Als Nächstes: Kommunikation."
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "video_slug": "kontakte-felder-stamm",
+  "locale": "de",
+  "title": "Kontakte — Felder: Stamm",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "In diesem Video erklären wir die Felder im Abschnitt Stamm — plus die Blöcke Arbeitgeber und Mitarbeiter der Firma, die je nach Anrede erscheinen."
+    },
+    {
+      "key": "field-login",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "login",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Benutzername: Pflichtfeld und eindeutig im System. Interne Kennung für Suche und Zuordnung — nicht Ihr Anmelde-Name im CRM, aber oft ähnlich aufgebaut. Nicht leer und noch nicht vergeben."
+    },
+    {
+      "key": "field-salutation",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "salutation",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Anrede: Herr, Frau, Divers, Firma oder Team — optional, hilft bei Briefen. Bei Firma erscheint der Block Mitarbeiter der Firma. Bei Personen der Block Arbeitgeber."
+    },
+    {
+      "key": "field-first_name",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "first_name",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Vorname: persönlicher Vorname, optional, zusammen mit Nachname für die Anzeige sinnvoll."
+    },
+    {
+      "key": "field-last_name",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "last_name",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Nachname: Familienname, wird in Listen und auf Belegen mit dem Vornamen verwendet."
+    },
+    {
+      "key": "field-display_name",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "display_name",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Anzeigename: So erscheint der Kontakt in Tabellen und Auswahllisten. Leer gelassen, füllt das System aus Vorname, Nachname oder Firmenname."
+    },
+    {
+      "key": "field-company_name",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "company_name",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Firmenname: bei Firmenkontakten wichtig, bei Personen optional — zum Beispiel der Arbeitgeber."
+    },
+    {
+      "key": "field-contact_role",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "contact_role",
+      "section": "stamm",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Rolle: Pflichtfeld. Legt fest, ob Kunde, Lieferant, Mitarbeiter oder Administrator. Davon hängen Nummern, Rechte und sichtbare Zusatzblöcke ab — zum Beispiel Mitarbeiterdaten."
+    },
+    {
+      "key": "block-arbeitgeber-intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Block Arbeitgeber oder Firma: erscheint bei Personen, nicht bei Anrede Firma. Optional — Verknüpfung zur Firmen-Kontaktseite."
+    },
+    {
+      "key": "field-employer_company_id",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "employer_company_id",
+      "section": "arbeitgeber",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Firma aus Kontakten: wählen Sie einen bestehenden Firmen-Kontakt als Arbeitgeber. Ohne Auswahl bleibt die Person ohne Firmen-Verknüpfung."
+    },
+    {
+      "key": "field-employer_responsibility",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "employer_responsibility",
+      "section": "arbeitgeber",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Zuständigkeitsbereich: freier Text, zum Beispiel Steuerberatung oder Lohnbuchhaltung — wer ist bei der Firma Ansprechpartner für welches Thema."
+    },
+    {
+      "key": "field-employer_work_email",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "employer_work_email",
+      "section": "arbeitgeber",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "E-Mail dienstlich beim Arbeitgeber: Erreichbarkeit über die Firma, getrennt von der privaten E-Mail im Abschnitt Kommunikation."
+    },
+    {
+      "key": "field-employer_work_phone",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "employer_work_phone",
+      "section": "arbeitgeber",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Telefon dienstlich: direkte Durchwahl oder Zentrale bei der Firma."
+    },
+    {
+      "key": "field-employer_availability",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "employer_availability",
+      "section": "arbeitgeber",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Erreichbarkeit oder Öffnungszeiten: freier Text, zum Beispiel Montag bis Freitag acht bis sechzehn Uhr."
+    },
+    {
+      "key": "block-firma-intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-firma.png",
+      "mode": "overview",
+      "narration": "Bei Anrede Firma erscheint stattdessen der Block Mitarbeiter der Firma — hier verknüpfen Sie Personen-Kontakte mit der Firma."
+    },
+    {
+      "key": "field-ce_person",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-firma.png",
+      "mode": "focus_field",
+      "field": "ce_person",
+      "section": "mitarbeiter_firma",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-firma-regions.json",
+      "narration": "Person aus Kontakten: Pflicht in dieser Karte — wählen Sie einen bestehenden Personen-Kontakt, der bei der Firma tätig ist."
+    },
+    {
+      "key": "field-ce_responsibility",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-firma.png",
+      "mode": "focus_field",
+      "field": "ce_responsibility",
+      "section": "mitarbeiter_firma",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-firma-regions.json",
+      "narration": "Zuständigkeitsbereich beim Firmen-Mitarbeiter: zum Beispiel Buchhaltung oder Geschäftsführung."
+    },
+    {
+      "key": "field-ce_work_email",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-firma.png",
+      "mode": "focus_field",
+      "field": "ce_work_email",
+      "section": "mitarbeiter_firma",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-firma-regions.json",
+      "narration": "E-Mail dienstlich in der Firmen-Karte: Erreichbarkeit der Person über die Firma."
+    },
+    {
+      "key": "field-ce_work_phone",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-firma.png",
+      "mode": "focus_field",
+      "field": "ce_work_phone",
+      "section": "mitarbeiter_firma",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-firma-regions.json",
+      "narration": "Telefon dienstlich in der Firmen-Karte."
+    },
+    {
+      "key": "field-ce_availability",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-firma.png",
+      "mode": "focus_field",
+      "field": "ce_availability",
+      "section": "mitarbeiter_firma",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-firma-regions.json",
+      "narration": "Erreichbarkeit in der Firmen-Karte — zum Beispiel Bürozeiten. Mit dem Button Mitarbeiter verknüpfen können Sie weitere Karten hinzufügen."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Das war Stamm mit Arbeitgeber und Mitarbeiter der Firma. Als Nächstes: Kunde und Lieferant."
+    }
+  ]
+}

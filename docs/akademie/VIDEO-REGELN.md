@@ -99,7 +99,24 @@ Zielgruppe: **Mitarbeiter ohne Fachkenntnisse** — weder Programmierer noch Buc
 
 **Untertitel (VTT):** **Pflicht** zu jedem Clip — identisch zur gesprochenen Spur (Barrierefreiheit, Nutzung ohne Ton). Kein Video ohne `.vtt` veröffentlichen.
 
-**Kurz halten:** **ein Thema pro Clip**; lieber mehrere kurze Videos (Richtwert **2–5 Minuten** pro Modul-Thema) als ein langer Sammelband. Keine Mindestlänge pro Kachel — nur so lang wie nötig. Ausnahme: bewusst geplanter Überblick (z. B. alle Dashboard-Kacheln).
+**Kurz halten:** **ein Thema pro Clip**; lieber mehrere kurze Videos (Richtwert **2–5 Minuten** pro Formular-Abschnitt) als ein langer Sammelband. Keine Mindestlänge pro Kachel — nur so lang wie nötig. Ausnahme: bewusst geplanter Überblick (z. B. alle Dashboard-Kacheln).
+
+**Abkürzungen und Akronyme im Sprechtext**
+
+| Regel | Beispiel |
+|-------|----------|
+| Im **gesprochenen Text** (und damit im **VTT**) Abkürzungen **ausschreiben** — nicht buchstabieren | Postleitzahl · Umsatzsteueridentifikationsnummer · Sozialversicherungsnummer |
+| **Nicht** als Einzelbuchstaben vorlesen, wenn es ein deutsches Wort/Kürzel ist | nicht „P L Z“, nicht „U S t“ für Umsatzsteuer |
+| Im **CRM-Bild** bleiben die Original-Labels (z. B. „PLZ“, „USt-IdNr.“) | Bild unverändert, Ton ausgeschrieben |
+| **Ausnahme:** etablierte **Zweibuchstaben-Codes** im Formular, die so gemeint sind | Ländercode: „D E“ für Deutschland |
+
+**Zoom bei Formular-Feldern (Pflicht)**
+
+Pro Feld **drei Schritte** — damit Orientierung und Lesbarkeit erhalten bleiben:
+
+1. **Ganzes Formular** (Überblick)
+2. **Zoom auf Abschnitt** (z. B. Stamm, Kunde / Lieferant, Adresse)
+3. **Zoom auf Feld** — **Label und Eingabe vollständig** sichtbar (breite Felder: weniger zoomen, nicht abschneiden)
 
 ---
 
@@ -161,6 +178,8 @@ Zusammenfassung der Regeln, die über Navigation, Bild und Sprache hinausgehen:
 - [ ] Aufnahme ohne Cookie-Banner / Störmeldungen
 - [ ] Keine personenbezogenen Live-Daten im Bild
 - [ ] Text für **Nicht-Buchhalter** verständlich
+- [ ] **Abkürzungen ausgeschrieben** im Sprechtext/VTT (Ausnahmen: z. B. Ländercode D E)
+- [ ] Formular-Felder: Zoom **Formular → Abschnitt → Feld** (Label sichtbar)
 - [ ] **Ein Thema** pro Clip (oder Überblick bewusst ausgewiesen)
 - [ ] Stimme **Katja** (DE) bzw. eingetragene Locale-Stimme
 - [ ] Untertitel (`.vtt`) **Pflicht** — liegt bei, Text = Audio

@@ -1,0 +1,338 @@
+{
+  "video_slug": "kontakte-felder-mitarbeiter",
+  "locale": "de",
+  "title": "Kontakte — Felder: Mitarbeiterdaten",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "overview",
+      "narration": "Dieses Video erklärt Mitarbeiterdaten — nur sichtbar bei Rolle Mitarbeiter oder Administrator. Vertrauliche Personalinformationen mit Speicherfrist nach Austritt."
+    },
+    {
+      "key": "field-birth_date",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_birth_date",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Geburtsdatum: Pflicht bei Mitarbeitern — für Personalakte und Sozialversicherung."
+    },
+    {
+      "key": "field-gender",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_gender",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Geschlecht: Auswahl für Personalunterlagen."
+    },
+    {
+      "key": "field-marital_status",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_marital_status",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Familienstand: optional, freier Text."
+    },
+    {
+      "key": "field-spouse_name",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_spouse_name",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Ehepartner oder Ehepartnerin: optional."
+    },
+    {
+      "key": "field-social_security_status",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_social_security_status",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Status Sozialversicherungsnummer: noch nicht vorhanden, beantragt oder vorhanden — steuert, ob die Nummer Pflicht ist."
+    },
+    {
+      "key": "field-social_filing_office",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_social_filing_office",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Meldestelle: wohin die Anmeldung geht — Krankenkasse, Minijob-Zentrale oder Knappschaft, nicht direkt die Rentenversicherung."
+    },
+    {
+      "key": "field-social_security_number",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_social_security_number",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Sozialversicherungsnummer: einheitliche Nummer für alle Zweige — zwölf Stellen, wenn Status vorhanden."
+    },
+    {
+      "key": "field-health_insurance",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_health_insurance",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Krankenkasse oder Krankenversicherung: Name der gesetzlichen oder privaten Kasse — mit Vorschlägen beim Tippen."
+    },
+    {
+      "key": "field-health_insurance_number",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_health_insurance_number",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Versichertennummer: zehnstellig von der Versichertenkarte."
+    },
+    {
+      "key": "field-health_status",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_health_status",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Gesundheitszustand: Freitext, vertraulich — nur wenn relevant."
+    },
+    {
+      "key": "field-treatment_needs",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_treatment_needs",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Behandlungserfordernisse: optional, für arbeitsmedizinische Hinweise."
+    },
+    {
+      "key": "field-disability_degree",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_disability_degree",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Grad der Behinderung: Prozentzahl laut Schwerbehindertenausweis, null bis einhundert."
+    },
+    {
+      "key": "field-disability_supplementary_codes",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_disability_supplementary_codes",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Zusatzbuchstaben: wie auf dem Ausweis — zum Beispiel G oder H, mehrere durch Komma."
+    },
+    {
+      "key": "field-disabilities",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_disabilities",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Chronische Krankheiten, Arbeitsunfall oder weitere Angaben — Freitext, optional mit Attest-Upload darunter."
+    },
+    {
+      "key": "field-employment_relationship",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_employment_relationship",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Beschäftigungsverhältnis: Pflicht — zum Beispiel Vollzeit, Teilzeit oder Minijob."
+    },
+    {
+      "key": "field-employer_site",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_employer_site",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Beschäftigungspflichtige Stelle: Betriebsstätte oder Niederlassung."
+    },
+    {
+      "key": "field-work_location",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_work_location",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Arbeitsort: wo die Tätigkeit ausgeübt wird."
+    },
+    {
+      "key": "field-job_type",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_job_type",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Art der Tätigkeit: kurze Beschreibung der Rolle."
+    },
+    {
+      "key": "field-entry_date",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_entry_date",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Eintritt: Beginn der Beschäftigung."
+    },
+    {
+      "key": "field-exit_date",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_exit_date",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Austritt: Ende der Beschäftigung — startet die zehnjährige Speicherfrist für Mitarbeiterdaten."
+    },
+    {
+      "key": "field-contract_start",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_contract_start",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Vertragsbeginn: Datum des Arbeitsvertrags."
+    },
+    {
+      "key": "field-contract_end",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_contract_end",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Vertragsende: bei befristeten Verträgen."
+    },
+    {
+      "key": "field-working_hours",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_working_hours",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Arbeitszeit als Freitext — zum Beispiel vierzig Stunden pro Woche."
+    },
+    {
+      "key": "field-daily_work_minutes",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_daily_work_minutes",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Soll-Arbeitszeit pro Tag in Minuten — für die Zeiterfassung, zum Beispiel vierhundertachtzig für acht Stunden."
+    },
+    {
+      "key": "field-employment_type",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_employment_type",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Beschäftigungsart für Zeiterfassung: steuert Regeln in der Stempeluhr."
+    },
+    {
+      "key": "field-overtime_allowed",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_overtime_allowed",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Überstunden erlaubt: Häkchen — ob Mehrarbeit erfasst werden darf."
+    },
+    {
+      "key": "field-salary",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_salary",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Lohn oder Gehalt: vertraulich, Freitext oder Betrag."
+    },
+    {
+      "key": "field-subsidy_amount",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_subsidy_amount",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Beihilfebetrag: für Beamte oder Beihilfeberechtigte."
+    },
+    {
+      "key": "field-subsidy_carrier",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_subsidy_carrier",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Beihilfeträger: zuständige Stelle für Beihilfe."
+    },
+    {
+      "key": "field-qualifications",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_qualifications",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Qualifikationen: Ausbildung, Erfahrung, Zertifikate."
+    },
+    {
+      "key": "field-performance_notes",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_performance_notes",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Leistungen: Aufgaben und Kommunikation — interne Beurteilung."
+    },
+    {
+      "key": "field-behavior_notes",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_behavior_notes",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Verhalten: Pünktlichkeit, Teamarbeit — interne Notizen."
+    },
+    {
+      "key": "field-driver_license_classes",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_driver_license_classes",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Führerscheinklassen: zum Beispiel B oder B E."
+    },
+    {
+      "key": "field-driver_license_valid_until",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "focus_field",
+      "field": "employee_driver_license_valid_until",
+      "section": "mitarbeiterdaten",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-mitarbeiter-regions.json",
+      "narration": "Führerschein gültig bis: Ablaufdatum."
+    },
+    {
+      "key": "block-dokumente",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "overview",
+      "narration": "Dokumente: Arbeitsvertrag, Zeugnisse, Atteste und Schwerbehindertenausweis können hochgeladen werden — PDF oder Bild, maximal zehn Megabyte pro Datei."
+    },
+    {
+      "key": "block-speicherdauer",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "overview",
+      "narration": "Speicherdauer: nach Austritt zehn Jahre Aufbewahrung, dann automatische Bereinigung der Mitarbeiterdaten — Kontaktstamm bleibt als Kunde erhalten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit-mitarbeiter.png",
+      "mode": "overview",
+      "narration": "Das waren die Mitarbeiterdaten. Damit ist die Feld-Serie Kontakte abgeschlossen."
+    }
+  ]
+}

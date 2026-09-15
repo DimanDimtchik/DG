@@ -190,6 +190,64 @@ exportHtml(
     ], $linkEdit)
 );
 
+// Firma (Anrede Firma — Block „Mitarbeiter der Firma“ sichtbar)
+$formFirma = ContactRepository::emptyForm();
+$formFirma['salutation'] = 'Firma';
+$formFirma['company_name'] = 'Demo Akademie GmbH';
+$formFirma['login'] = 'akademie.demo.firma';
+$formFirma['contact_role'] = 'dg_kunde';
+$linkFirma = ContactCompanyLinkRepository::formContext(null, []);
+exportHtml(
+    $baseUrl,
+    $outDir . '/kontakte-edit-firma.html',
+    $layout,
+    'modules/kontakte-form',
+    'Kontakt bearbeiten — Firma',
+    'kontakte',
+    array_merge([
+        'contactId' => $demoContact->id,
+        'form' => $formFirma,
+        'formError' => null,
+        'bankAccounts' => ContactRepository::defaultBankAccounts(),
+        'employeeData' => EmployeeData::empty(),
+        'employeeFiles' => ContactFileStorage::emptyFiles(),
+        'showEmployeeFields' => false,
+        'allowedContactRoles' => $allowedContactRoles,
+        'canDeleteContact' => false,
+        'kontakteReturnTo' => '',
+        'companyEmployees' => [ContactCompanyLinkRepository::emptyEmployeeRow()],
+    ], $linkFirma)
+);
+
+// Mitarbeiter (HR-Felder sichtbar)
+$formEmployee = ContactRepository::toForm($demoContact);
+$formEmployee['contact_role'] = 'dg_mitarbeiter';
+$formEmployee['salutation'] = 'Herr';
+$employeeDemo = $demoContact->employeeData !== [] ? $demoContact->employeeData : EmployeeData::empty();
+$employeeDemo['employment_relationship'] = $employeeDemo['employment_relationship'] ?: 'Vollzeit';
+$employeeDemo['social_security_status'] = $employeeDemo['social_security_status'] ?: 'pending';
+$employeeDemo['social_filing_office'] = $employeeDemo['social_filing_office'] ?: 'kk_employee';
+exportHtml(
+    $baseUrl,
+    $outDir . '/kontakte-edit-mitarbeiter.html',
+    $layout,
+    'modules/kontakte-form',
+    'Kontakt bearbeiten — Mitarbeiter',
+    'kontakte',
+    array_merge([
+        'contactId' => $demoContact->id,
+        'form' => $formEmployee,
+        'formError' => null,
+        'bankAccounts' => $demoContact->bankAccounts !== [] ? $demoContact->bankAccounts : ContactRepository::defaultBankAccounts(),
+        'employeeData' => $employeeDemo,
+        'employeeFiles' => $demoContact->employeeFiles,
+        'showEmployeeFields' => true,
+        'allowedContactRoles' => $allowedContactRoles,
+        'canDeleteContact' => false,
+        'kontakteReturnTo' => '',
+    ], $linkEdit)
+);
+
 file_put_contents($outDir . '/kontakte-export.meta.json', json_encode([
     'base_url' => $baseUrl,
     'demo_contact_id' => $demoContact->id,

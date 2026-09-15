@@ -27,7 +27,7 @@
       "key": "neu",
       "screenshot": "storage/media/training/kontakte/kontakte-new.png",
       "mode": "overview",
-      "narration": "Beim Anlegen öffnet sich ein Formular mit Abschnitten: Stamm, Kommunikation, Adresse und mehr. Tragen Sie ein, was Sie wissen — Pflicht ist nur der Benutzername und die Rolle. Details zu jedem Feld erklären wir im nächsten Video."
+      "narration": "Beim Anlegen öffnet sich ein Formular mit Abschnitten: Stamm, Kommunikation, Adresse und mehr. Tragen Sie ein, was Sie wissen — Pflicht ist nur der Benutzername und die Rolle. Details zu jedem Feld erklären wir in den Vertiefungs-Videos."
     },
     {
       "key": "bearbeiten",
@@ -39,7 +39,7 @@
       "key": "abschluss",
       "screenshot": "storage/media/training/kontakte/kontakte-list.png",
       "mode": "overview",
-      "narration": "Das war der Kurzüberblick Kontakte: Liste, anlegen, bearbeiten. Wofür jedes Feld da ist, sehen Sie im Video Kontakte — Felder im Detail. Viel Erfolg!"
+      "narration": "Das war der Kurzüberblick Kontakte: Liste, anlegen, bearbeiten. Wofür jedes Feld da ist, sehen Sie in den Videos Kontakte — Felder: Stamm, Kunde und Lieferant, Kommunikation, Adresse, Bankverbindung, Soziale Medien und optional Mitarbeiterdaten. Viel Erfolg!"
     }
   ]
 }
