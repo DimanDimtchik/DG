@@ -2814,7 +2814,7 @@ switch ($path) {
             $academyDepartments = $academyAreas;
             $academyAssignments = AcademyRepository::assignmentsForUser((int) $user->id);
             $academyCatalog = array_values(array_filter(
-                AcademyRepository::publishedCourses(),
+                AcademyRepository::publishedCoursesWithPlayableModules(),
                 static fn (array $c): bool => AcademyTier::allows((string) ($c['min_tier'] ?? AcademyTier::STARTER))
             ));
             $academyPendingHr = $canAcademyHr ? AcademyRepository::pendingHrReviews() : [];
@@ -2895,7 +2895,7 @@ switch ($path) {
             $academyModuleDepartmentIds = $academyAdminVideo !== null
                 ? AcademyRepository::moduleDepartmentIds((int) ($academyAdminVideo['id'] ?? 0))
                 : [];
-            $academyLibraryVideos = $canManageAcademy ? AcademyRepository::libraryVideos(true) : [];
+            $academyLibraryVideos = $canManageAcademy ? AcademyRepository::libraryVideos(true, true) : [];
             $academyAllVideos = ($canManageAcademy && $academyAdminTab === 'videos')
                 ? AcademyRepository::allVideos()
                 : [];

@@ -12,7 +12,7 @@ final class AcademyProgressService
         }
 
         $courseId = (int) ($assignment['course_id'] ?? 0);
-        $modules = AcademyRepository::modulesForCourse($courseId);
+        $modules = AcademyRepository::modulesForCourse($courseId, true, true);
         $progressRows = AcademyRepository::progressForAssignment($assignmentId);
         $progressByModule = [];
         foreach ($progressRows as $row) {

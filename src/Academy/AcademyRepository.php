@@ -250,13 +250,30 @@ final class AcademyRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public static function libraryVideos(bool $activeOnly = true): array
+    public static function libraryVideos(bool $activeOnly = true, bool $playableOnly = false): array
     {
-        return self::allVideos($activeOnly);
+        return self::allVideos($activeOnly, $playableOnly);
+    }
+
+    /** Absoluter Pfad zur MP4-Datei oder null wenn fehlend/leer. */
+    public static function moduleVideoAbsolutePath(array $module): ?string
+    {
+        $rel = trim((string) ($module['video_path'] ?? ''));
+        if ($rel === '') {
+            return null;
+        }
+        $abs = DG_ROOT . '/storage/' . ltrim($rel, '/');
+
+        return is_file($abs) ? $abs : null;
+    }
+
+    public static function moduleHasPlayableVideo(array $module): bool
+    {
+        return self::moduleVideoAbsolutePath($module) !== null;
     }
 
     /** @return list<array<string, mixed>> */
-    public static function modulesForCourse(int $courseId, bool $activeOnly = true): array
+    public static function modulesForCourse(int $courseId, bool $activeOnly = true, bool $playableOnly = false): array
     {
         if ($courseId < 1 || !Database::isConfigured()) {
             return [];
@@ -273,8 +290,22 @@ final class AcademyRepository
 
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute(['course_id' => $courseId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (!$playableOnly) {
+            return $rows;
+        }
+
+        return array_values(array_filter($rows, [self::class, 'moduleHasPlayableVideo']));
+    }
+
+    /** Kurse mit mindestens einem abspielbaren Modul (für Katalog). */
+    public static function publishedCoursesWithPlayableModules(?string $departmentId = null): array
+    {
+        return array_values(array_filter(
+            self::publishedCourses($departmentId),
+            static fn (array $course): bool => self::modulesForCourse((int) ($course['id'] ?? 0), true, true) !== []
+        ));
     }
 
     /** @return list<int> */
@@ -314,7 +345,7 @@ final class AcademyRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public static function allVideos(bool $activeOnly = false): array
+    public static function allVideos(bool $activeOnly = false, bool $playableOnly = false): array
     {
         if (!Database::isConfigured()) {
             return [];
@@ -327,7 +358,71 @@ final class AcademyRepository
         $sql .= ' ORDER BY m.sort_order ASC, m.title ASC, m.id ASC';
         $rows = Database::pdo()->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
+        if ($playableOnly) {
+            $rows = array_values(array_filter($rows, [self::class, 'moduleHasPlayableVideo']));
+        }
+
         return self::attachDepartmentLabelsToModules($rows);
+    }
+
+    /**
+     * Deaktiviert Module ohne MP4 auf der Platte; optional Dauer aus *.meta.json.
+     *
+     * @return array{deactivated: int, duration_updated: int}
+     */
+    public static function syncModuleMediaFromDisk(bool $updateDurationFromMeta = true): array
+    {
+        if (!Database::isConfigured()) {
+            return ['deactivated' => 0, 'duration_updated' => 0];
+        }
+
+        $deactivated = 0;
+        $durationUpdated = 0;
+        $pdo = Database::pdo();
+
+        foreach (self::allVideos(false) as $module) {
+            $moduleId = (int) ($module['id'] ?? 0);
+            if ($moduleId < 1) {
+                continue;
+            }
+
+            $hasFile = self::moduleHasPlayableVideo($module);
+            if (!$hasFile && !empty($module['is_active'])) {
+                $pdo->prepare('UPDATE dg_academy_modules SET is_active = 0 WHERE id = :id')
+                    ->execute(['id' => $moduleId]);
+                ++$deactivated;
+            }
+
+            if (!$updateDurationFromMeta || !$hasFile) {
+                continue;
+            }
+
+            $abs = self::moduleVideoAbsolutePath($module);
+            if ($abs === null) {
+                continue;
+            }
+
+            $metaPath = preg_replace('/\.mp4$/i', '.meta.json', $abs);
+            if (!is_string($metaPath) || !is_file($metaPath)) {
+                continue;
+            }
+
+            $meta = json_decode((string) file_get_contents($metaPath), true);
+            if (!is_array($meta)) {
+                continue;
+            }
+
+            $sec = (int) round((float) ($meta['duration_sec'] ?? 0));
+            if ($sec < 1 || $sec === (int) ($module['duration_sec'] ?? 0)) {
+                continue;
+            }
+
+            $pdo->prepare('UPDATE dg_academy_modules SET duration_sec = :d WHERE id = :id')
+                ->execute(['d' => $sec, 'id' => $moduleId]);
+            ++$durationUpdated;
+        }
+
+        return ['deactivated' => $deactivated, 'duration_updated' => $durationUpdated];
     }
 
     /** @return array<string, mixed>|null */

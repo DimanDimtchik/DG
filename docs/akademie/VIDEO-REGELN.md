@@ -169,6 +169,7 @@ Zusammenfassung der Regeln, die über Navigation, Bild und Sprache hinausgehen:
 | **Stimme** | DE: `de-DE-KatjaNeural`; andere Sprachen in Locale-JSON |
 | **Demos** | Kurz-Vorschau ≠ Vollvideo — bei Vorschau **Gesamtdauer** nennen |
 | **Deploy** | MP4 + VTT hochladen, `duration_sec` aktualisieren, **Vollvideo** geprüft |
+| **Modul-Liste** | Nutzer sehen nur Module mit vorhandener MP4 (Prüfung bei jedem Kurs-Aufruf); `bin/academy-sync-module-media.php` pflegt die DB |
 
 ---
 

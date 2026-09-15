@@ -110,4 +110,7 @@ if ($course === null) {
 
 AcademyRepository::saveCourseModules($courseId, $moduleIds);
 echo 'Module-IDs: ' . implode(', ', $moduleIds) . "\n";
+
+$sync = AcademyRepository::syncModuleMediaFromDisk(true);
+echo "Sync: deaktiviert={$sync['deactivated']} dauer={$sync['duration_updated']}\n";
 echo "Katalog: /app?page=akademie&view=kurs&slug={$slug}\n";

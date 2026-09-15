@@ -389,11 +389,15 @@ $riskClass = static function (?string $level): string {
     <?php else : ?>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">
-          <thead><tr><th>Titel</th><th>Abteilung</th><th>Dauer</th><th>Datei</th><th></th></tr></thead>
+          <thead><tr><th>Titel</th><th>Abteilung</th><th>Dauer</th><th>Status</th><th></th></tr></thead>
           <tbody>
             <?php foreach ($academyAllVideos as $video) : ?>
               <?php
-                $hasFile = trim((string) ($video['video_path'] ?? '')) !== '';
+                $hasFile = AcademyRepository::moduleHasPlayableVideo($video);
+                $isActive = !empty($video['is_active']);
+                $statusLabel = $hasFile
+                    ? ($isActive ? 'Bereit' : 'Inaktiv')
+                    : ($isActive ? 'Keine Datei' : 'Inaktiv · keine Datei');
                 $deptName = (string) ($video['department_name'] ?? '');
                 if ($deptName === '') {
                     foreach ($academyDepartments as $dept) {
@@ -408,7 +412,7 @@ $riskClass = static function (?string $level): string {
                 <td><?= View::escape((string) ($video['title'] ?? '')) ?></td>
                 <td><?= View::escape($deptName) ?></td>
                 <td><?= (int) ($video['duration_sec'] ?? 0) ?> s</td>
-                <td><?= $hasFile ? 'MP4' : '—' ?><?php if (trim((string) ($video['subtitle_vtt_path'] ?? '')) !== '') : ?> · VTT<?php endif; ?></td>
+                <td><?= View::escape($statusLabel) ?><?php if ($hasFile && trim((string) ($video['subtitle_vtt_path'] ?? '')) !== '') : ?> · VTT<?php endif; ?></td>
                 <td>
                   <a href="/app?page=akademie&amp;view=video-vorschau&amp;module_id=<?= (int) ($video['id'] ?? 0) ?>">Ansehen</a>
                   ·
