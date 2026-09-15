@@ -6,11 +6,13 @@ declare(strict_types=1);
  */
 final class PublicBookingPageRenderer
 {
-    public static function render(): void
+    public static function render(bool $preview = false): void
     {
         MigrationRunner::runPending();
 
-        if (!CalendarEmbedSettings::isOnlineBookingEnabled()) {
+        $onlineBookingEnabled = CalendarEmbedSettings::isOnlineBookingEnabled();
+
+        if (!$preview && !$onlineBookingEnabled) {
             View::render('public/termin-disabled', [
                 'disabledReason' => 'Die Online-Terminbuchung ist derzeit deaktiviert. Bitte kontaktieren Sie uns direkt.',
             ]);
@@ -31,6 +33,8 @@ final class PublicBookingPageRenderer
             'embedConfig' => CalendarEmbedSettings::config(),
             'bookingArticles' => CalendarArticleRepository::bookingOptions(),
             'bookingEmployees' => CalendarStaffRepository::bookingEmployeeOptions(),
+            'previewMode' => $preview,
+            'onlineBookingEnabled' => $onlineBookingEnabled,
         ]);
     }
 }

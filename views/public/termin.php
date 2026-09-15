@@ -5,6 +5,8 @@
 $embedConfig = $embedConfig ?? CalendarEmbedSettings::config();
 $bookingArticles = $bookingArticles ?? [];
 $bookingEmployees = $bookingEmployees ?? [];
+$previewMode = !empty($previewMode);
+$onlineBookingEnabled = $onlineBookingEnabled ?? CalendarEmbedSettings::isOnlineBookingEnabled();
 $pageTitle = CalendarEmbedSettings::pageTitle() . ' – ' . CompanySettings::displayName();
 $companyName = CompanySettings::displayName();
 $intro = CalendarEmbedSettings::introText();
@@ -16,6 +18,15 @@ $intro = CalendarEmbedSettings::introText();
 <style><?= CalendarFrontendTheme::inlineCss() ?></style>
 </head>
 <body class="tk-book-page">
+<?php if ($previewMode) : ?>
+<div class="tk-book__preview-banner">
+  Vorschau · Online-Terminbuchung
+  <?php if (!$onlineBookingEnabled) : ?>
+    · <strong>Öffentlich deaktiviert</strong> (nur hier sichtbar)
+  <?php endif; ?>
+  · <a href="/app?page=website-seiten">Zurück zu Website → Seiten</a>
+</div>
+<?php endif; ?>
   <div class="tk-book" id="tk-public-booking"<?= CalendarFrontendTheme::wrapperStyleAttribute() ?>>
     <header class="tk-book__header">
       <?php if (AppearanceSettings::logoUrl() !== '') : ?>

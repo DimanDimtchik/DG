@@ -3389,6 +3389,20 @@ body.dg-login-page {
   line-height: 1.5;
 }
 
+.tk-book__preview-banner {
+  background: #fef3c7;
+  color: #92400e;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.tk-book__preview-banner a {
+  color: #92400e;
+  font-weight: 600;
+}
+
 .tk-book-page--disabled {
   background: #f8fafc;
 }

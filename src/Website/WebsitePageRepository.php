@@ -46,6 +46,10 @@ final class WebsitePageRepository
     /** @param array<string, mixed> $page */
     public static function isOnlineBookingPage(array $page): bool
     {
+        if (self::sanitizeSlug((string) ($page['slug'] ?? '')) === 'terminkalender') {
+            return true;
+        }
+
         $layout = $page['layout'] ?? [];
         if (!is_array($layout)) {
             return false;
@@ -498,9 +502,27 @@ final class WebsitePageRepository
         $raw = (string) ($row['layout_json'] ?? '');
         if ($raw !== '') {
             $decoded = json_decode($raw, true);
-            if (is_array($decoded) && isset($decoded['rows']) && is_array($decoded['rows'])) {
-                $layout = WebsiteContent::normalizeLayout($decoded);
+            if (is_array($decoded)) {
+                $pageKind = (string) ($decoded['page_kind'] ?? '');
+                if ($pageKind === self::PAGE_KIND_ONLINE_BOOKING) {
+                    $layout = self::onlineBookingLayout();
+                } elseif (isset($decoded['rows']) && is_array($decoded['rows'])) {
+                    $layout = WebsiteContent::normalizeLayout($decoded);
+                    if ($pageKind !== '') {
+                        $layout['page_kind'] = $pageKind;
+                    }
+                } elseif ($pageKind !== '') {
+                    $layout['page_kind'] = $pageKind;
+                    $layout['rows'] = [];
+                }
             }
+        }
+
+        if (
+            self::sanitizeSlug((string) ($row['slug'] ?? '')) === 'terminkalender'
+            && (string) ($layout['page_kind'] ?? '') !== self::PAGE_KIND_ONLINE_BOOKING
+        ) {
+            $layout = self::onlineBookingLayout();
         }
 
         return [

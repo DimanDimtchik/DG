@@ -24,7 +24,7 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
         exit;
     }
     if (WebsitePageRepository::isOnlineBookingPage($previewPage)) {
-        PublicBookingPageRenderer::render();
+        PublicBookingPageRenderer::render(preview: true);
         exit;
     }
     View::render('website-public', [
