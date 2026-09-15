@@ -5,6 +5,24 @@
 /** @var bool $dbConnected */
 /** @var array{type: string, message: string}|null $flash */
 $pages = $websitePageList ?? [];
+$legalSlugs = ['impressum', 'datenschutz', 'agb', 'widerruf'];
+$legalLabels = [
+    'impressum' => 'Impressum',
+    'datenschutz' => 'Datenschutzerklärung',
+    'agb' => 'Allgemeine Geschäftsbedingungen',
+    'widerruf' => 'Widerrufsbelehrung',
+];
+$legalBySlug = [];
+foreach ($pages as $pageRow) {
+    $slug = (string) ($pageRow['slug'] ?? '');
+    if (in_array($slug, $legalSlugs, true)) {
+        $legalBySlug[$slug] = $pageRow;
+    }
+}
+$otherPages = array_values(array_filter(
+    $pages,
+    static fn(array $pageRow): bool => !in_array((string) ($pageRow['slug'] ?? ''), $legalSlugs, true)
+));
 $maintenance = $websiteMaintenance ?? WebsiteMaintenanceSettings::config();
 $statusLabels = WebsitePageRepository::statusOptions();
 $readOnly = !($canEdit ?? false);
@@ -59,6 +77,65 @@ if ($previewImage === '') {
         <p class="dg-muted">Alternativ per SSH: <code>php bin/seed-website-defaults.php --overwrite</code></p>
       </form>
     <?php endif; ?>
+  </section>
+
+  <section class="dg-panel" aria-labelledby="legal-pages-heading">
+    <h2 id="legal-pages-heading" class="dg-website-maintenance__title">Pflichtseiten</h2>
+    <p class="dg-lead dg-website-maintenance__lead">
+      Impressum, Datenschutz, AGB und Widerrufsbelehrung — fehlende Seiten können Sie direkt anlegen.
+    </p>
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Titel</th>
+            <th>URL</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($legalSlugs as $legalSlug) : ?>
+            <?php if (isset($legalBySlug[$legalSlug])) : ?>
+              <?php
+                $legalPage = $legalBySlug[$legalSlug];
+                $legalStatus = (string) ($legalPage['status'] ?? 'draft');
+                $legalPreviewHref = '/vorschau/' . rawurlencode($legalSlug);
+              ?>
+              <tr>
+                <td><strong><?= View::escape((string) ($legalPage['title'] ?? ($legalLabels[$legalSlug] ?? $legalSlug))) ?></strong></td>
+                <td class="dg-muted">/<?= View::escape($legalSlug) ?></td>
+                <td>
+                  <span class="dg-badge <?= $legalStatus === 'published' ? 'dg-badge--ok' : 'dg-badge--muted' ?>">
+                    <?= View::escape($statusLabels[$legalStatus] ?? $legalStatus) ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <a href="<?= View::escape($legalPreviewHref) ?>" target="_blank" rel="noopener">Vorschau</a>
+                  <span class="dg-muted">·</span>
+                  <a href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($legalPage['id'] ?? 0) ?>">
+                    <?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?>
+                  </a>
+                </td>
+              </tr>
+            <?php else : ?>
+              <tr>
+                <td><strong><?= View::escape($legalLabels[$legalSlug] ?? $legalSlug) ?></strong></td>
+                <td class="dg-muted">/<?= View::escape($legalSlug) ?></td>
+                <td><span class="dg-badge dg-badge--pending">Noch nicht angelegt</span></td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected) : ?>
+                    <a href="/app?page=website-seiten&amp;legal_ensure=<?= View::escape($legalSlug) ?>">Anlegen</a>
+                  <?php else : ?>
+                    <span class="dg-muted">—</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dg-panel dg-website-maintenance" aria-labelledby="wm-heading">
@@ -143,12 +220,12 @@ if ($previewImage === '') {
         </tr>
       </thead>
       <tbody>
-        <?php if ($pages === []) : ?>
+        <?php if ($otherPages === []) : ?>
           <tr>
-            <td colspan="5" class="dg-table__empty">Noch keine Seiten. Legen Sie die Startseite an und gestalten Sie sie im Editor.</td>
+            <td colspan="5" class="dg-table__empty">Noch keine weiteren Seiten. Legen Sie die Startseite an und gestalten Sie sie im Editor.</td>
           </tr>
         <?php else : ?>
-          <?php foreach ($pages as $pageRow) : ?>
+          <?php foreach ($otherPages as $pageRow) : ?>
             <?php
               $status = (string) ($pageRow['status'] ?? 'draft');
               $updated = (string) ($pageRow['updated_at'] ?? '');

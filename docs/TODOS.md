@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-07** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
+Stand: **2026-09-13** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
 
 ---
 
@@ -10,6 +10,7 @@ Stand: **2026-09-07** — bei jeder Session zuerst aktualisieren, wenn sich Bran
 
 | Branch | Status |
 |--------|--------|
+| `cursor/kichel-assistant-1dc6` | **Kichel** — Fachfragen, Code-/DB-Suche, Widget (noch nicht auf master) |
 | `master` | **Einzige Produktionslinie** — Buchhaltung, Zeiterfassung, Bank-Geisterumsätze (064), Website-Menü-Icons |
 
 **Hygiene:** Feature-Branches (`cursor/…`) nach Merge in `master` lokal + remote löschen. **Keine offenen `cursor/`-Branches mehr.**
@@ -29,7 +30,9 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
 - [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
-- [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
+- [x] **ELSTER Hersteller-ID `34573`** freigegeben (2026-09-13) — in Einstellungen → ELSTER eintragen
+- [ ] **ELSTER Phase 2:** ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
+- [ ] **Rechtstexte Mehrprodukt:** Migration **066** · KlarWin/HP-LaserJet-Texte in Tabs · `docs/RECHTSTEXTE-MEHRPRODUKT.md`
 
 ---
 
@@ -82,6 +85,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Thema | Doku |
 |-------|------|
 | **Akademie** Phase 2+ (Heartbeat live, Zertifikat-PDF, YouTube) | [`AKADEMIE-KONZEPT.md`](AKADEMIE-KONZEPT.md) |
+| **Kichel Phase 2** (Ollama nur Formulierung; Beträge in PHP) | [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) |
 | **Multi-Firma** (Switcher, Tochter, Umfirmierung unterjährig) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) |
 | Zweitfirma −20 %, Umfirmierung = 1 Paket + Archiv-Slot | Abschnitt 7 im Konzept |
 

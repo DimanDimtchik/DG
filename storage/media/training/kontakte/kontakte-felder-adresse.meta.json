@@ -1,0 +1,36 @@
+{
+  "title": "Kontakte — Felder: Adresse",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 35.2,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 6.0
+    },
+    {
+      "key": "field-address1_street",
+      "duration_sec": 4.64
+    },
+    {
+      "key": "field-address1_extra",
+      "duration_sec": 5.08
+    },
+    {
+      "key": "field-address1_postal",
+      "duration_sec": 5.56
+    },
+    {
+      "key": "field-address1_city",
+      "duration_sec": 3.84
+    },
+    {
+      "key": "field-address1_country",
+      "duration_sec": 5.04
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 5.08
+    }
+  ]
+}

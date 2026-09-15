@@ -1,0 +1,40 @@
+{
+  "title": "Kontakte — Felder: Bankverbindung",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 71.8,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 9.44
+    },
+    {
+      "key": "field-bank_type",
+      "duration_sec": 9.92
+    },
+    {
+      "key": "field-bank_label",
+      "duration_sec": 6.16
+    },
+    {
+      "key": "field-bank_account_holder",
+      "duration_sec": 5.88
+    },
+    {
+      "key": "field-bank_iban",
+      "duration_sec": 10.36
+    },
+    {
+      "key": "field-bank_bic",
+      "duration_sec": 7.6
+    },
+    {
+      "key": "field-bank_name",
+      "duration_sec": 8.24
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 14.16
+    }
+  ]
+}

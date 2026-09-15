@@ -9,13 +9,14 @@
           <link rel="icon" href="/app/favicon?size=32" type="image/png" sizes="32x32">
     <link rel="icon" href="/app/favicon?size=16" type="image/png" sizes="16x16">
     <link rel="apple-touch-icon" href="/app/favicon?size=48">
-        <link rel="stylesheet" href="/assets/css/dg.css?v=1789476240">
+        <link rel="stylesheet" href="/assets/css/dg.css?v=1789476215">
   <style>:root { --dg-font: system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, sans-serif; --dg-menu-bg:#59524c;--dg-menu-bg-hover:#524b46;--dg-menu-bg-active:#4b4540;--dg-menu-text:#ffffff;--dg-menu-text-muted:rgba(255, 255, 255, 0.72);--dg-menu-border:#4b4540;--dg-brand:#c4b5a5;--dg-brand-dark:#ac9f91;--dg-body-bg:#ebe6e1;--dg-surface:#ffffff;--dg-text:#1d2327;--dg-text-secondary:#50575e;--dg-text-muted:#787c82;--dg-border:#d4ccc4;--dg-border-strong:#b8aea3;--dg-primary:#6e6258;--dg-primary-hover:#5a5048;--dg-focus-ring:rgba(110, 98, 88, 0.25) }</style>
 <style>.tk-cal, .tk-abs, .tk-book, .dg-cal-appearance-preview{--tk-cal-primary:#6e6258;--tk-cal-primary-hover:#5a5048;--tk-cal-on-primary:#ffffff;--tk-cal-surface:#ffffff;--tk-cal-surface-alt:#fdfcfb;--tk-cal-border:#d4d8de;--tk-cal-text:#1e293b;--tk-cal-muted:#64748b;--tk-cal-today:#ebe4dc;--tk-cal-radius:12px;--tk-cal-shadow:0 8px 30px rgba(15, 23, 42, 0.08);--tk-slot-bg:#fdfcfb;--tk-slot-hover:#efe9e4;--tk-slot-selected-bg:#ebe4dc;--tk-slot-selected-border:#6e6258;--tk-slot-booked-bg:#f5f3f1;--tk-slot-text:#1e293b;--tk-focus-ring:#ccc8c5}</style>
 </head>
 <body class="tk-book-page">
+<div class="tk-book-wrap">
   <div class="tk-book" id="tk-public-booking" style="--tk-cal-primary:#6e6258;--tk-cal-primary-hover:#5a5048;--tk-cal-on-primary:#ffffff;--tk-cal-surface:#ffffff;--tk-cal-surface-alt:#fdfcfb;--tk-cal-border:#d4d8de;--tk-cal-text:#1e293b;--tk-cal-muted:#64748b;--tk-cal-today:#ebe4dc;--tk-cal-radius:12px;--tk-cal-shadow:0 8px 30px rgba(15, 23, 42, 0.08);--tk-slot-bg:#fdfcfb;--tk-slot-hover:#efe9e4;--tk-slot-selected-bg:#ebe4dc;--tk-slot-selected-border:#6e6258;--tk-slot-booked-bg:#f5f3f1;--tk-slot-text:#1e293b;--tk-focus-ring:#ccc8c5">
-    <header class="tk-book__header">
+        <header class="tk-book__header">
               <img class="tk-book__logo dg-logo--wide" src="/app/media?id=20260828174130_631472" alt="Logo">
             <div>
         <h1 class="tk-book__title">Termin online vereinbaren</h1>
@@ -23,7 +24,7 @@
     </header>
 
           <p class="tk-book__intro">Wählen Sie eine Leistung, einen freien Termin und hinterlassen Sie Ihre Kontaktdaten. Sie erhalten eine Bestätigung per E-Mail.</p>
-    
+        
     <ol class="tk-book__steps" aria-label="Buchungsschritte">
       <li class="tk-book__step is-active" data-step-indicator="1"><span>1</span> Leistung</li>
       <li class="tk-book__step " data-step-indicator="2"><span>2</span> Termin</li>
@@ -31,7 +32,7 @@
     </ol>
 
     <div class="tk-book__card" id="tk-book-panel">
-      <div class="tk-book__panel is-active" data-step-panel="1">
+            <div class="tk-book__panel is-active" data-step-panel="1">
         <h2 class="tk-book__panel-title">Leistung wählen</h2>
                   <div class="tk-book__services" role="list">
                           <button
@@ -77,7 +78,7 @@
         <h2 class="tk-book__panel-title">Ihre Kontaktdaten</h2>
         <p class="tk-book__selection" id="tk-book-selected-slot"></p>
         <form id="tk-book-form" class="tk-book__form" novalidate>
-          <input type="hidden" name="_csrf" value="3e01a0ffe4ec128e524c683a31154691">
+          <input type="hidden" name="_csrf" value="6b4c19b2fe1ec0273b7a95747900f67d">
           <input type="hidden" name="article_id" id="tk-book-article-id" value="">
           <input type="hidden" name="employee_id" id="tk-book-employee-id" value="0">
           <input type="hidden" name="slot_datetime" id="tk-book-slot-datetime" value="">
@@ -112,5 +113,6 @@
     </div>
   </div>
 
-  </body>
+  </div>
+</body>
 </html>

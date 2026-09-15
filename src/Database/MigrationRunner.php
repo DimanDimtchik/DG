@@ -225,6 +225,8 @@ final class MigrationRunner
             '072_academy_module_departments.sql' => self::tableExists($pdo, 'dg_academy_module_departments')
                 && self::tableExists($pdo, 'dg_academy_course_departments'),
             '073_website_terminkalender_booking.sql' => WebsitePageRepository::terminkalenderUsesOnlineBookingLayout(),
+            '076_website_legal_variants.sql' => self::tableExists($pdo, 'dg_website_legal_variants'),
+            '077_kichel_protocol.sql' => self::tableExists($pdo, 'dg_kichel_log'),
             default => false,
         };
     }
@@ -331,6 +333,8 @@ final class MigrationRunner
             '073_website_terminkalender_booking.sql' => true,
             '074_website_online_booking_editor.sql' => true,
             '075_website_terminkalender_kunde_video.sql' => true,
+            '076_website_legal_variants.sql' => true,
+            '077_kichel_protocol.sql' => true,
         ];
     }
 

@@ -222,6 +222,7 @@ final class ContactRepository
                 'customer_number',
                 'first_name',
                 'last_name',
+                'contact_note',
             ];
             $searchLikes = [];
             foreach ($searchFields as $index => $field) {

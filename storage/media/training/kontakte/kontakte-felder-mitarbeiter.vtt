@@ -1,0 +1,115 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:11.750
+Dieses Video erklärt Mitarbeiterdaten — nur sichtbar bei Rolle Mitarbeiter oder Administrator. Vertrauliche Personalinformationen mit Speicherfrist nach Austritt.
+
+00:00:11.800 --> 00:00:17.750
+Geburtsdatum: Pflicht bei Mitarbeitern — für Personalakte und Sozialversicherung.
+
+00:00:17.800 --> 00:00:21.550
+Geschlecht: Auswahl für Personalunterlagen.
+
+00:00:21.600 --> 00:00:25.670
+Familienstand: optional, freier Text.
+
+00:00:25.720 --> 00:00:29.710
+Ehepartner oder Ehepartnerin: optional.
+
+00:00:29.760 --> 00:00:37.950
+Status Sozialversicherungsnummer: noch nicht vorhanden, beantragt oder vorhanden — steuert, ob die Nummer Pflicht ist.
+
+00:00:38.000 --> 00:00:46.870
+Meldestelle: wohin die Anmeldung geht — Krankenkasse, Minijob-Zentrale oder Knappschaft, nicht direkt die Rentenversicherung.
+
+00:00:46.920 --> 00:00:54.070
+Sozialversicherungsnummer: einheitliche Nummer für alle Zweige — zwölf Stellen, wenn Status vorhanden.
+
+00:00:54.120 --> 00:01:01.670
+Krankenkasse oder Krankenversicherung: Name der gesetzlichen oder privaten Kasse — mit Vorschlägen beim Tippen.
+
+00:01:01.720 --> 00:01:06.150
+Versichertennummer: zehnstellig von der Versichertenkarte.
+
+00:01:06.200 --> 00:01:11.310
+Gesundheitszustand: Freitext, vertraulich — nur wenn relevant.
+
+00:01:11.360 --> 00:01:17.150
+Behandlungserfordernisse: optional, für arbeitsmedizinische Hinweise.
+
+00:01:17.200 --> 00:01:23.590
+Grad der Behinderung: Prozentzahl laut Schwerbehindertenausweis, null bis einhundert.
+
+00:01:23.640 --> 00:01:30.030
+Zusatzbuchstaben: wie auf dem Ausweis — zum Beispiel G oder H, mehrere durch Komma.
+
+00:01:30.080 --> 00:01:37.870
+Chronische Krankheiten, Arbeitsunfall oder weitere Angaben — Freitext, optional mit Attest-Upload darunter.
+
+00:01:37.920 --> 00:01:44.150
+Beschäftigungsverhältnis: Pflicht — zum Beispiel Vollzeit, Teilzeit oder Minijob.
+
+00:01:44.200 --> 00:01:49.270
+Beschäftigungspflichtige Stelle: Betriebsstätte oder Niederlassung.
+
+00:01:49.320 --> 00:01:53.390
+Arbeitsort: wo die Tätigkeit ausgeübt wird.
+
+00:01:53.440 --> 00:01:57.470
+Art der Tätigkeit: kurze Beschreibung der Rolle.
+
+00:01:57.520 --> 00:02:00.710
+Eintritt: Beginn der Beschäftigung.
+
+00:02:00.760 --> 00:02:07.270
+Austritt: Ende der Beschäftigung — startet die zehnjährige Speicherfrist für Mitarbeiterdaten.
+
+00:02:07.320 --> 00:02:11.270
+Vertragsbeginn: Datum des Arbeitsvertrags.
+
+00:02:11.320 --> 00:02:15.030
+Vertragsende: bei befristeten Verträgen.
+
+00:02:15.080 --> 00:02:19.910
+Arbeitszeit als Freitext — zum Beispiel vierzig Stunden pro Woche.
+
+00:02:19.960 --> 00:02:27.350
+Soll-Arbeitszeit pro Tag in Minuten — für die Zeiterfassung, zum Beispiel vierhundertachtzig für acht Stunden.
+
+00:02:27.400 --> 00:02:32.750
+Beschäftigungsart für Zeiterfassung: steuert Regeln in der Stempeluhr.
+
+00:02:32.800 --> 00:02:37.630
+Überstunden erlaubt: Häkchen — ob Mehrarbeit erfasst werden darf.
+
+00:02:37.680 --> 00:02:42.270
+Lohn oder Gehalt: vertraulich, Freitext oder Betrag.
+
+00:02:42.320 --> 00:02:47.070
+Beihilfebetrag: für Beamte oder Beihilfeberechtigte.
+
+00:02:47.120 --> 00:02:51.390
+Beihilfeträger: zuständige Stelle für Beihilfe.
+
+00:02:51.440 --> 00:02:56.590
+Qualifikationen: Ausbildung, Erfahrung, Zertifikate.
+
+00:02:56.640 --> 00:03:01.550
+Leistungen: Aufgaben und Kommunikation — interne Beurteilung.
+
+00:03:01.600 --> 00:03:06.590
+Verhalten: Pünktlichkeit, Teamarbeit — interne Notizen.
+
+00:03:06.640 --> 00:03:10.750
+Führerscheinklassen: zum Beispiel B oder B E.
+
+00:03:10.800 --> 00:03:14.350
+Führerschein gültig bis: Ablaufdatum.
+
+00:03:14.400 --> 00:03:25.550
+Dokumente: Arbeitsvertrag, Zeugnisse, Atteste und Schwerbehindertenausweis können hochgeladen werden — PDF oder Bild, maximal zehn Megabyte pro Datei.
+
+00:03:25.600 --> 00:03:35.590
+Speicherdauer: nach Austritt zehn Jahre Aufbewahrung, dann automatische Bereinigung der Mitarbeiterdaten — Kontaktstamm bleibt als Kunde erhalten.
+
+00:03:35.640 --> 00:03:42.510
+Das waren die Mitarbeiterdaten. Damit ist die Feld-Serie Kontakte abgeschlossen.

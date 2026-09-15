@@ -377,30 +377,129 @@ final class LegalPageGenerator
     }
 
     /**
+     * Widerrufsbelehrung als eigene Seite (zusätzlich zum AGB-Abschnitt).
+     */
+    public static function widerruf(): string
+    {
+        $c = self::companyData();
+        $kinds = self::businessKinds();
+        $html = '<h1>Widerrufsbelehrung</h1>';
+        $html .= '<p>Informationen zum Widerrufsrecht für Verbraucher.</p>';
+
+        if (!self::hasBusinessKind($kinds, ['products', 'both', 'services'])) {
+            $html .= '<p><em>Hinweis: Für reine B2B-Geschäfte oder bestimmte Branchen kann kein Widerrufsrecht bestehen — Text juristisch prüfen.</em></p>';
+        }
+
+        $html .= '<h2>Widerrufsrecht</h2>';
+        $html .= '<p>Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen. '
+            . 'Die Widerrufsfrist beträgt vierzehn Tage ab ';
+        if (self::hasBusinessKind($kinds, ['products', 'both'])) {
+            $html .= 'dem Tag, an dem Sie oder ein von Ihnen benannter Dritter die Waren in Besitz genommen haben.';
+        } else {
+            $html .= 'dem Tag des Vertragsabschlusses.';
+        }
+        $html .= '</p>';
+
+        $html .= '<p>Um Ihr Widerrufsrecht auszuüben, müssen Sie uns ('
+            . self::esc($c['name']) . ', ' . self::esc($c['street']) . ', '
+            . self::esc($c['postal']) . ' ' . self::esc($c['city']) . ', '
+            . 'E-Mail: ' . self::esc($c['email'])
+            . ') mittels einer eindeutigen Erklärung (z. B. per Post oder E-Mail) '
+            . 'über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren.</p>';
+
+        $html .= '<h2>Folgen des Widerrufs</h2>';
+        $html .= '<p>Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, '
+            . 'unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über '
+            . 'Ihren Widerruf bei uns eingegangen ist.</p>';
+
+        $html .= '<p>Weitere vertragliche Regelungen finden Sie in unseren <a href="/agb">AGB</a>.</p>';
+
+        return $html;
+    }
+
+    /** @return array<string, array{title: string, content: string}> */
+    public static function legalDefinitions(): array
+    {
+        return [
+            'impressum' => ['title' => 'Impressum', 'content' => self::impressum()],
+            'datenschutz' => ['title' => 'Datenschutzerklärung', 'content' => self::datenschutz()],
+            'agb' => ['title' => 'Allgemeine Geschäftsbedingungen', 'content' => self::agb()],
+            'widerruf' => ['title' => 'Widerrufsbelehrung', 'content' => self::widerruf()],
+        ];
+    }
+
+    /** @return list<string> */
+    public static function legalSlugs(): array
+    {
+        return array_keys(self::legalDefinitions());
+    }
+
+    /**
+     * Legt eine einzelne Pflichtseite an, wenn sie noch fehlt.
+     */
+    public static function ensurePage(string $slug, ?int $userId = null): ?int
+    {
+        $slug = trim(strtolower($slug));
+        $definitions = self::legalDefinitions();
+        if (!isset($definitions[$slug])) {
+            return null;
+        }
+
+        $existing = WebsitePageRepository::findBySlugAnyStatus($slug);
+        if ($existing !== null) {
+            return (int) ($existing['id'] ?? 0) ?: null;
+        }
+
+        $def = $definitions[$slug];
+        $saved = WebsitePageRepository::upsertHtmlPage(
+            $slug,
+            $def['title'],
+            $def['content'],
+            $userId,
+            false
+        );
+        if (self::legalVariantRepositoryAvailable()) {
+            WebsiteLegalVariantRepository::ensureDefaultsForPage($slug);
+        }
+
+        return (int) ($saved['id'] ?? 0) ?: null;
+    }
+
+    /**
      * Generates all legal pages and saves them as published website pages.
      *
      * @return list<array{slug: string, title: string, id: int, action: string}>
      */
     public static function generateAndSave(?int $userId = null, bool $overwrite = true): array
     {
-        $definitions = [
-            ['slug' => 'impressum', 'title' => 'Impressum', 'content' => self::impressum()],
-            ['slug' => 'datenschutz', 'title' => 'Datenschutzerklärung', 'content' => self::datenschutz()],
-            ['slug' => 'agb', 'title' => 'Allgemeine Geschäftsbedingungen', 'content' => self::agb()],
-        ];
-
         $saved = [];
-        foreach ($definitions as $page) {
+        foreach (self::legalDefinitions() as $slug => $def) {
             $saved[] = WebsitePageRepository::upsertHtmlPage(
-                $page['slug'],
-                $page['title'],
-                $page['content'],
+                $slug,
+                $def['title'],
+                $def['content'],
                 $userId,
                 $overwrite
             );
+            if (self::legalVariantRepositoryAvailable()) {
+                WebsiteLegalVariantRepository::ensureDefaultsForPage($slug);
+            }
+        }
+
+        if (
+            self::legalVariantRepositoryAvailable()
+            && is_readable(DG_ROOT . '/src/Legal/LegalProductSettings.php')
+            && LegalProductSettings::multiProductEnabled()
+        ) {
+            WebsiteLegalVariantRepository::ensureVariantsForAllProducts();
         }
 
         return $saved;
+    }
+
+    private static function legalVariantRepositoryAvailable(): bool
+    {
+        return is_readable(DG_ROOT . '/src/Website/WebsiteLegalVariantRepository.php');
     }
 
     // ── Data helpers ────────────────────────────────────────────────

@@ -1,0 +1,92 @@
+{
+  "title": "Kontakte — Felder: Stamm",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 184.5,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 9.24
+    },
+    {
+      "key": "field-login",
+      "duration_sec": 14.28
+    },
+    {
+      "key": "field-salutation",
+      "duration_sec": 13.32
+    },
+    {
+      "key": "field-first_name",
+      "duration_sec": 7.36
+    },
+    {
+      "key": "field-last_name",
+      "duration_sec": 6.52
+    },
+    {
+      "key": "field-display_name",
+      "duration_sec": 11.32
+    },
+    {
+      "key": "field-company_name",
+      "duration_sec": 7.16
+    },
+    {
+      "key": "field-contact_role",
+      "duration_sec": 14.76
+    },
+    {
+      "key": "block-arbeitgeber-intro",
+      "duration_sec": 9.64
+    },
+    {
+      "key": "field-employer_company_id",
+      "duration_sec": 10.36
+    },
+    {
+      "key": "field-employer_responsibility",
+      "duration_sec": 9.8
+    },
+    {
+      "key": "field-employer_work_email",
+      "duration_sec": 8.68
+    },
+    {
+      "key": "field-employer_work_phone",
+      "duration_sec": 5.28
+    },
+    {
+      "key": "field-employer_availability",
+      "duration_sec": 7.72
+    },
+    {
+      "key": "block-firma-intro",
+      "duration_sec": 7.8
+    },
+    {
+      "key": "field-ce_person",
+      "duration_sec": 8.32
+    },
+    {
+      "key": "field-ce_responsibility",
+      "duration_sec": 6.64
+    },
+    {
+      "key": "field-ce_work_email",
+      "duration_sec": 5.6
+    },
+    {
+      "key": "field-ce_work_phone",
+      "duration_sec": 3.24
+    },
+    {
+      "key": "field-ce_availability",
+      "duration_sec": 9.8
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 7.68
+    }
+  ]
+}

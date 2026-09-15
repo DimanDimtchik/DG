@@ -46,7 +46,8 @@
 
 - [x] Registrierung [ELSTER Entwickler](https://www.elster.de/eportal/infoseite/entwickler) — Zugang aktiv (2026-09-07)
 - [x] **Hersteller-ID** beantragt (ERiC, Warte auf Freigabe per E-Mail)
-- [ ] Hersteller-ID in `elster.local.php` / Einstellungen → ELSTER eintragen (wenn Nummer da)
+- [x] **Hersteller-ID freigegeben: `34573`** (2026-09-13) — in CRM-Einstellungen → ELSTER hinterlegen
+- [ ] Optional zusätzlich in `config/elster.local.php` (`manufacturer_id`) auf Root-Server nach Umzug
 - [x] ELSTER-Newsletter abonniert (2026-09-07)
 - [ ] ERiC Linux x64 (aktuelle Mindestversion) aus Entwicklerbereich laden
 - [ ] Lizenzvereinbarung ERiC akzeptieren / dokumentieren

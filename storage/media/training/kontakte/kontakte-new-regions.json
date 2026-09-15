@@ -1,0 +1,92 @@
+{
+  "width": 1920,
+  "height": 2845,
+  "sections": {
+    "stamm": {
+      "x": 534,
+      "y": 213,
+      "w": 1062,
+      "h": 276
+    },
+    "kunde_lieferant": {
+      "x": 534,
+      "y": 885,
+      "w": 1062,
+      "h": 230
+    },
+    "kommunikation": {
+      "x": 534,
+      "y": 1135,
+      "w": 1062,
+      "h": 288
+    },
+    "adresse": {
+      "x": 534,
+      "y": 1443,
+      "w": 1062,
+      "h": 161
+    },
+    "bank": {
+      "x": 534,
+      "y": 1624,
+      "w": 1062,
+      "h": 460
+    },
+    "social": {
+      "x": 534,
+      "y": 2104,
+      "w": 1062,
+      "h": 676
+    },
+    "arbeitgeber": {
+      "x": 534,
+      "y": 489,
+      "w": 1062,
+      "h": 376
+    }
+  },
+  "fields": {
+    "auto_create_mailbox": {
+      "x": 534,
+      "y": 1363,
+      "w": 1062,
+      "h": 60,
+      "label": "E-Mail-Adresse / privates Postfach automatisch anlegen"
+    },
+    "email": {
+      "x": 534,
+      "y": 1170,
+      "w": 254,
+      "h": 112,
+      "label": "E-Mail"
+    },
+    "email_2": {
+      "x": 804,
+      "y": 1170,
+      "w": 254,
+      "h": 112,
+      "label": "E-Mail 2"
+    },
+    "phone_1": {
+      "x": 1073,
+      "y": 1170,
+      "w": 254,
+      "h": 112,
+      "label": "Telefon 1"
+    },
+    "phone_2": {
+      "x": 1343,
+      "y": 1170,
+      "w": 254,
+      "h": 112,
+      "label": "Telefon 2"
+    },
+    "website": {
+      "x": 534,
+      "y": 1294,
+      "w": 1062,
+      "h": 57,
+      "label": "Website"
+    }
+  }
+}

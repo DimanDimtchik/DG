@@ -1,0 +1,40 @@
+{
+  "title": "Kontakte — Felder: Kommunikation",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 64.1,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 6.24
+    },
+    {
+      "key": "field-email",
+      "duration_sec": 11.32
+    },
+    {
+      "key": "field-email_2",
+      "duration_sec": 6.72
+    },
+    {
+      "key": "field-phone_1",
+      "duration_sec": 4.48
+    },
+    {
+      "key": "field-phone_2",
+      "duration_sec": 4.32
+    },
+    {
+      "key": "field-website",
+      "duration_sec": 11.08
+    },
+    {
+      "key": "field-auto_mailbox",
+      "duration_sec": 14.92
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 5.04
+    }
+  ]
+}

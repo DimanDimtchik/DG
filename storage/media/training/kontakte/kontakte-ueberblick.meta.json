@@ -1,0 +1,32 @@
+{
+  "title": "Kontakte — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 81.2,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 8.64
+    },
+    {
+      "key": "nav-kontakte",
+      "duration_sec": 8.2
+    },
+    {
+      "key": "liste",
+      "duration_sec": 13.04
+    },
+    {
+      "key": "neu",
+      "duration_sec": 17.0
+    },
+    {
+      "key": "bearbeiten",
+      "duration_sec": 13.0
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 21.28
+    }
+  ]
+}

@@ -1,0 +1,351 @@
+{
+  "width": 1920,
+  "height": 2929,
+  "sections": {
+    "stamm": {
+      "x": 534,
+      "y": 213,
+      "w": 1062,
+      "h": 276
+    },
+    "kunde_lieferant": {
+      "x": 534,
+      "y": 885,
+      "w": 1062,
+      "h": 230
+    },
+    "kommunikation": {
+      "x": 534,
+      "y": 1135,
+      "w": 1062,
+      "h": 201
+    },
+    "adresse": {
+      "x": 534,
+      "y": 1356,
+      "w": 1062,
+      "h": 161
+    },
+    "bank": {
+      "x": 534,
+      "y": 1537,
+      "w": 1062,
+      "h": 460
+    },
+    "social": {
+      "x": 534,
+      "y": 2017,
+      "w": 1062,
+      "h": 676
+    },
+    "arbeitgeber": {
+      "x": 534,
+      "y": 489,
+      "w": 1062,
+      "h": 376
+    }
+  },
+  "fields": {
+    "login": {
+      "x": 534,
+      "y": 248,
+      "w": 254,
+      "h": 58,
+      "label": "Benutzername *"
+    },
+    "salutation": {
+      "x": 804,
+      "y": 248,
+      "w": 254,
+      "h": 58,
+      "label": "Anrede"
+    },
+    "first_name": {
+      "x": 1073,
+      "y": 248,
+      "w": 254,
+      "h": 58,
+      "label": "Vorname"
+    },
+    "last_name": {
+      "x": 1343,
+      "y": 248,
+      "w": 254,
+      "h": 58,
+      "label": "Nachname"
+    },
+    "display_name": {
+      "x": 534,
+      "y": 318,
+      "w": 254,
+      "h": 57,
+      "label": "Anzeigename"
+    },
+    "company_name": {
+      "x": 804,
+      "y": 318,
+      "w": 254,
+      "h": 57,
+      "label": "Firmenname"
+    },
+    "contact_role": {
+      "x": 534,
+      "y": 387,
+      "w": 1062,
+      "h": 58,
+      "label": "Rolle"
+    },
+    "employer_company_id": {
+      "x": 554,
+      "y": 583,
+      "w": 1025,
+      "h": 58,
+      "label": "Firma aus Kontakten"
+    },
+    "employer_responsibility": {
+      "x": 554,
+      "y": 653,
+      "w": 1025,
+      "h": 57,
+      "label": "Zuständigkeitsbereich"
+    },
+    "employer_work_email": {
+      "x": 554,
+      "y": 722,
+      "w": 244,
+      "h": 57,
+      "label": "E-Mail (dienstlich)"
+    },
+    "employer_work_phone": {
+      "x": 814,
+      "y": 722,
+      "w": 244,
+      "h": 57,
+      "label": "Telefon (dienstlich)"
+    },
+    "employer_availability": {
+      "x": 554,
+      "y": 791,
+      "w": 1025,
+      "h": 57,
+      "label": "Erreichbarkeit / Öffnungszeiten"
+    },
+    "customer_number": {
+      "x": 534,
+      "y": 920,
+      "w": 254,
+      "h": 57,
+      "label": "Kundennummer"
+    },
+    "supplier_number": {
+      "x": 804,
+      "y": 920,
+      "w": 254,
+      "h": 57,
+      "label": "Lieferantennummer"
+    },
+    "supplier_customer_number": {
+      "x": 534,
+      "y": 989,
+      "w": 1062,
+      "h": 57,
+      "label": "Kundennummer beim Lieferanten"
+    },
+    "tax_number": {
+      "x": 534,
+      "y": 1058,
+      "w": 254,
+      "h": 57,
+      "label": "Steuernummer"
+    },
+    "vat_id": {
+      "x": 804,
+      "y": 1058,
+      "w": 254,
+      "h": 57,
+      "label": "USt-IdNr."
+    },
+    "commercial_register": {
+      "x": 1073,
+      "y": 1058,
+      "w": 254,
+      "h": 57,
+      "label": "Handelsregister"
+    },
+    "weee_registration": {
+      "x": 1343,
+      "y": 1058,
+      "w": 254,
+      "h": 57,
+      "label": "WEEE-Registrierungsnr."
+    },
+    "email": {
+      "x": 534,
+      "y": 1170,
+      "w": 254,
+      "h": 97,
+      "label": "E-Mail"
+    },
+    "email_2": {
+      "x": 804,
+      "y": 1170,
+      "w": 254,
+      "h": 97,
+      "label": "E-Mail 2"
+    },
+    "phone_1": {
+      "x": 1073,
+      "y": 1170,
+      "w": 254,
+      "h": 97,
+      "label": "Telefon 1"
+    },
+    "phone_2": {
+      "x": 1343,
+      "y": 1170,
+      "w": 254,
+      "h": 97,
+      "label": "Telefon 2"
+    },
+    "website": {
+      "x": 534,
+      "y": 1279,
+      "w": 1062,
+      "h": 57,
+      "label": "Website"
+    },
+    "address1_street": {
+      "x": 534,
+      "y": 1391,
+      "w": 254,
+      "h": 57,
+      "label": "Straße"
+    },
+    "address1_extra": {
+      "x": 804,
+      "y": 1391,
+      "w": 254,
+      "h": 57,
+      "label": "Zusatz"
+    },
+    "address1_city": {
+      "x": 1073,
+      "y": 1391,
+      "w": 254,
+      "h": 57,
+      "label": "Ort"
+    },
+    "address1_postal": {
+      "x": 1343,
+      "y": 1391,
+      "w": 254,
+      "h": 57,
+      "label": "PLZ"
+    },
+    "address1_country": {
+      "x": 534,
+      "y": 1460,
+      "w": 254,
+      "h": 57,
+      "label": "Land"
+    },
+    "bank_type": {
+      "x": 551,
+      "y": 1663,
+      "w": 245,
+      "h": 58,
+      "label": "Typ"
+    },
+    "bank_label": {
+      "x": 812,
+      "y": 1663,
+      "w": 245,
+      "h": 58,
+      "label": "Bezeichnung"
+    },
+    "bank_account_holder": {
+      "x": 1073,
+      "y": 1663,
+      "w": 245,
+      "h": 58,
+      "label": "Kontoinhaber"
+    },
+    "bank_iban": {
+      "x": 551,
+      "y": 1733,
+      "w": 1028,
+      "h": 57,
+      "label": "IBAN"
+    },
+    "bank_bic": {
+      "x": 551,
+      "y": 1802,
+      "w": 245,
+      "h": 57,
+      "label": "BIC"
+    },
+    "bank_name": {
+      "x": 551,
+      "y": 1871,
+      "w": 1028,
+      "h": 57,
+      "label": "Bank / Anbieter"
+    },
+    "social_linkedin": {
+      "x": 534,
+      "y": 2078,
+      "w": 1062,
+      "h": 57,
+      "label": "LinkedIn"
+    },
+    "social_xing": {
+      "x": 534,
+      "y": 2147,
+      "w": 1062,
+      "h": 57,
+      "label": "Xing"
+    },
+    "social_facebook": {
+      "x": 534,
+      "y": 2216,
+      "w": 1062,
+      "h": 57,
+      "label": "Facebook"
+    },
+    "social_instagram": {
+      "x": 534,
+      "y": 2285,
+      "w": 1062,
+      "h": 57,
+      "label": "Instagram"
+    },
+    "social_x": {
+      "x": 534,
+      "y": 2354,
+      "w": 1062,
+      "h": 57,
+      "label": "X (Twitter)"
+    },
+    "social_youtube": {
+      "x": 534,
+      "y": 2423,
+      "w": 1062,
+      "h": 57,
+      "label": "YouTube"
+    },
+    "social_tiktok": {
+      "x": 534,
+      "y": 2492,
+      "w": 1062,
+      "h": 57,
+      "label": "TikTok"
+    },
+    "social_codehost": {
+      "x": 534,
+      "y": 2561,
+      "w": 1062,
+      "h": 57,
+      "label": "GitHub"
+    }
+  }
+}

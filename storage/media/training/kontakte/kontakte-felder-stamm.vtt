@@ -1,0 +1,64 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.190
+In diesem Video erklären wir die Felder im Abschnitt Stamm — plus die Blöcke Arbeitgeber und Mitarbeiter der Firma, die je nach Anrede erscheinen.
+
+00:00:09.240 --> 00:00:23.470
+Benutzername: Pflichtfeld und eindeutig im System. Interne Kennung für Suche und Zuordnung — nicht Ihr Anmelde-Name im CRM, aber oft ähnlich aufgebaut. Nicht leer und noch nicht vergeben.
+
+00:00:23.520 --> 00:00:36.790
+Anrede: Herr, Frau, Divers, Firma oder Team — optional, hilft bei Briefen. Bei Firma erscheint der Block Mitarbeiter der Firma. Bei Personen der Block Arbeitgeber.
+
+00:00:36.840 --> 00:00:44.150
+Vorname: persönlicher Vorname, optional, zusammen mit Nachname für die Anzeige sinnvoll.
+
+00:00:44.200 --> 00:00:50.670
+Nachname: Familienname, wird in Listen und auf Belegen mit dem Vornamen verwendet.
+
+00:00:50.720 --> 00:01:01.990
+Anzeigename: So erscheint der Kontakt in Tabellen und Auswahllisten. Leer gelassen, füllt das System aus Vorname, Nachname oder Firmenname.
+
+00:01:02.040 --> 00:01:09.150
+Firmenname: bei Firmenkontakten wichtig, bei Personen optional — zum Beispiel der Arbeitgeber.
+
+00:01:09.200 --> 00:01:23.910
+Rolle: Pflichtfeld. Legt fest, ob Kunde, Lieferant, Mitarbeiter oder Administrator. Davon hängen Nummern, Rechte und sichtbare Zusatzblöcke ab — zum Beispiel Mitarbeiterdaten.
+
+00:01:23.960 --> 00:01:33.550
+Block Arbeitgeber oder Firma: erscheint bei Personen, nicht bei Anrede Firma. Optional — Verknüpfung zur Firmen-Kontaktseite.
+
+00:01:33.600 --> 00:01:43.910
+Firma aus Kontakten: wählen Sie einen bestehenden Firmen-Kontakt als Arbeitgeber. Ohne Auswahl bleibt die Person ohne Firmen-Verknüpfung.
+
+00:01:43.960 --> 00:01:53.710
+Zuständigkeitsbereich: freier Text, zum Beispiel Steuerberatung oder Lohnbuchhaltung — wer ist bei der Firma Ansprechpartner für welches Thema.
+
+00:01:53.760 --> 00:02:02.390
+E-Mail dienstlich beim Arbeitgeber: Erreichbarkeit über die Firma, getrennt von der privaten E-Mail im Abschnitt Kommunikation.
+
+00:02:02.440 --> 00:02:07.670
+Telefon dienstlich: direkte Durchwahl oder Zentrale bei der Firma.
+
+00:02:07.720 --> 00:02:15.390
+Erreichbarkeit oder Öffnungszeiten: freier Text, zum Beispiel Montag bis Freitag acht bis sechzehn Uhr.
+
+00:02:15.440 --> 00:02:23.190
+Bei Anrede Firma erscheint stattdessen der Block Mitarbeiter der Firma — hier verknüpfen Sie Personen-Kontakte mit der Firma.
+
+00:02:23.240 --> 00:02:31.510
+Person aus Kontakten: Pflicht in dieser Karte — wählen Sie einen bestehenden Personen-Kontakt, der bei der Firma tätig ist.
+
+00:02:31.560 --> 00:02:38.150
+Zuständigkeitsbereich beim Firmen-Mitarbeiter: zum Beispiel Buchhaltung oder Geschäftsführung.
+
+00:02:38.200 --> 00:02:43.750
+E-Mail dienstlich in der Firmen-Karte: Erreichbarkeit der Person über die Firma.
+
+00:02:43.800 --> 00:02:46.990
+Telefon dienstlich in der Firmen-Karte.
+
+00:02:47.040 --> 00:02:56.790
+Erreichbarkeit in der Firmen-Karte — zum Beispiel Bürozeiten. Mit dem Button Mitarbeiter verknüpfen können Sie weitere Karten hinzufügen.
+
+00:02:56.840 --> 00:03:04.470
+Das war Stamm mit Arbeitgeber und Mitarbeiter der Firma. Als Nächstes: Kunde und Lieferant.

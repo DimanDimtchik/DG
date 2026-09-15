@@ -1,0 +1,44 @@
+{
+  "title": "Kontakte — Felder: Kunde / Lieferant",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 63.0,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 7.2
+    },
+    {
+      "key": "field-customer_number",
+      "duration_sec": 6.92
+    },
+    {
+      "key": "field-supplier_number",
+      "duration_sec": 5.32
+    },
+    {
+      "key": "field-supplier_customer_number",
+      "duration_sec": 6.72
+    },
+    {
+      "key": "field-tax_number",
+      "duration_sec": 6.28
+    },
+    {
+      "key": "field-vat_id",
+      "duration_sec": 8.76
+    },
+    {
+      "key": "field-commercial_register",
+      "duration_sec": 8.48
+    },
+    {
+      "key": "field-weee_registration",
+      "duration_sec": 7.36
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 6.0
+    }
+  ]
+}

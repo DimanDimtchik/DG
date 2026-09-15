@@ -1,0 +1,85 @@
+{
+  "width": 1920,
+  "height": 2924,
+  "sections": {
+    "stamm": {
+      "x": 534,
+      "y": 213,
+      "w": 1062,
+      "h": 276
+    },
+    "kunde_lieferant": {
+      "x": 534,
+      "y": 1036,
+      "w": 1062,
+      "h": 230
+    },
+    "kommunikation": {
+      "x": 534,
+      "y": 1286,
+      "w": 1062,
+      "h": 216
+    },
+    "adresse": {
+      "x": 534,
+      "y": 1522,
+      "w": 1062,
+      "h": 161
+    },
+    "bank": {
+      "x": 534,
+      "y": 1703,
+      "w": 1062,
+      "h": 460
+    },
+    "social": {
+      "x": 534,
+      "y": 2183,
+      "w": 1062,
+      "h": 676
+    },
+    "mitarbeiter_firma": {
+      "x": 534,
+      "y": 489,
+      "w": 1062,
+      "h": 527
+    }
+  },
+  "fields": {
+    "ce_person": {
+      "x": 571,
+      "y": 648,
+      "w": 991,
+      "h": 58,
+      "label": "Person aus Kontakten *"
+    },
+    "ce_responsibility": {
+      "x": 571,
+      "y": 718,
+      "w": 991,
+      "h": 57,
+      "label": "Zuständigkeitsbereich"
+    },
+    "ce_work_email": {
+      "x": 571,
+      "y": 787,
+      "w": 236,
+      "h": 57,
+      "label": "E-Mail (dienstlich)"
+    },
+    "ce_work_phone": {
+      "x": 823,
+      "y": 787,
+      "w": 236,
+      "h": 57,
+      "label": "Telefon (dienstlich)"
+    },
+    "ce_availability": {
+      "x": 571,
+      "y": 856,
+      "w": 991,
+      "h": 57,
+      "label": "Erreichbarkeit / Öffnungszeiten"
+    }
+  }
+}
