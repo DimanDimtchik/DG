@@ -26,6 +26,7 @@ TRANSITION_SEC = 1.15
 FOCUS_ZOOM = 2.0
 MAX_ZOOM = 3.4
 MIN_ZOOM = 1.25
+FOCUS_OUTLINE = (210, 45, 45, 255)
 
 
 @dataclass
@@ -88,7 +89,7 @@ def render_viewport(base: Image.Image, cx: float, cy: float, zoom: float, focus:
     overlay = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
     od = ImageDraw.Draw(overlay)
     pad = 6
-    od.rectangle([sx - pad, sy - pad, sx + sw + pad, sy + sh + pad], outline=(110, 98, 88, 255), width=4)
+    od.rectangle([sx - pad, sy - pad, sx + sw + pad, sy + sh + pad], outline=FOCUS_OUTLINE, width=4)
     frame = Image.alpha_composite(frame.convert("RGBA"), overlay).convert("RGB")
     mask = Image.new("L", (OUT_W, OUT_H), 0)
     md = ImageDraw.Draw(mask)
@@ -120,6 +121,71 @@ def load_regions(path: Path) -> tuple[dict[str, Rect], dict[str, Rect]]:
     return fields, sections
 
 
+def make_field_chain_frames(
+    base: Image.Image,
+    focus: Rect,
+    n: int,
+    from_field: Rect,
+) -> list[Image.Image]:
+    """Weiteres Feld im gleichen Abschnitt: sanft vom vorherigen Feld zum nächsten."""
+    field_z = fit_zoom(focus, 48, 36)
+    from_z = fit_zoom(from_field, 48, 36)
+    n1 = max(1, (n * 2) // 3)
+    n2 = max(1, n - n1)
+    frames: list[Image.Image] = []
+    for f in range(n1):
+        t = ease_in_out(f / max(n1 - 1, 1))
+        cx = lerp(from_field.cx, focus.cx, t)
+        cy = lerp(from_field.cy, focus.cy, t)
+        z = lerp(from_z, field_z, t)
+        fr = focus if t >= 0.55 else from_field
+        frames.append(render_viewport(base, cx, cy, z, fr))
+    for _ in range(n2):
+        frames.append(render_viewport(base, focus.cx, focus.cy, field_z, focus))
+    frames[-1] = render_viewport(base, focus.cx, focus.cy, field_z, focus)
+    return frames
+
+
+def make_field_section_start_frames(
+    base: Image.Image,
+    focus: Rect,
+    section: Rect,
+    n: int,
+) -> list[Image.Image]:
+    """Neuer Abschnitt: Gesamtansicht → Bereich → erstes Feld."""
+    iw, ih = base.size
+    ox, oy = iw / 2, ih / 2
+    overview_z = overview_scale(iw, ih, 1.0)
+    section_z = fit_zoom(section, 72, 56)
+    field_z = fit_zoom(focus, 48, 36)
+    sec_cx, sec_cy = section.cx, section.cy
+    fld_cx, fld_cy = focus.cx, focus.cy
+
+    n1 = max(1, n // 3)
+    n2 = max(1, n // 3)
+    n3 = max(1, n - n1 - n2)
+    frames: list[Image.Image] = []
+
+    for f in range(n1):
+        t = ease_in_out(f / max(n1 - 1, 1))
+        cx, cy = lerp(ox, sec_cx, t), lerp(oy, sec_cy, t)
+        z = lerp(overview_z, section_z, t)
+        fr = section if t >= 0.55 else None
+        frames.append(render_viewport(base, cx, cy, z, fr))
+
+    for f in range(n2):
+        t = ease_in_out(f / max(n2 - 1, 1))
+        cx, cy = lerp(sec_cx, fld_cx, t), lerp(sec_cy, fld_cy, t)
+        z = lerp(section_z, field_z, t)
+        fr = focus if t >= 0.55 else section
+        frames.append(render_viewport(base, cx, cy, z, fr))
+
+    for _ in range(n3):
+        frames.append(render_viewport(base, fld_cx, fld_cy, field_z, focus))
+    frames[-1] = render_viewport(base, fld_cx, fld_cy, field_z, focus)
+    return frames
+
+
 def make_frames(
     base: Image.Image,
     mode: str,
@@ -127,6 +193,8 @@ def make_frames(
     n: int,
     section: Rect | None = None,
     zoom: float = FOCUS_ZOOM,
+    chain_field: bool = False,
+    from_field: Rect | None = None,
 ) -> list[Image.Image]:
     iw, ih = base.size
     ox, oy = iw / 2, ih / 2
@@ -147,35 +215,10 @@ def make_frames(
         return frames
 
     if mode == "focus_field" and focus is not None:
+        if chain_field and from_field is not None:
+            return make_field_chain_frames(base, focus, n, from_field)
         sec = section or focus
-        section_z = fit_zoom(sec, 72, 56)
-        field_z = fit_zoom(focus, 48, 36)
-        sec_cx, sec_cy = sec.cx, sec.cy
-        fld_cx, fld_cy = focus.cx, focus.cy
-
-        n1 = max(1, n // 3)
-        n2 = max(1, n // 3)
-        n3 = max(1, n - n1 - n2)
-        frames = []
-
-        for f in range(n1):
-            t = ease_in_out(f / max(n1 - 1, 1))
-            cx, cy = lerp(ox, sec_cx, t), lerp(oy, sec_cy, t)
-            z = lerp(overview_z, section_z, t)
-            fr = sec if t >= 0.55 else None
-            frames.append(render_viewport(base, cx, cy, z, fr))
-
-        for f in range(n2):
-            t = ease_in_out(f / max(n2 - 1, 1))
-            cx, cy = lerp(sec_cx, fld_cx, t), lerp(sec_cy, fld_cy, t)
-            z = lerp(section_z, field_z, t)
-            fr = focus if t >= 0.55 else sec
-            frames.append(render_viewport(base, cx, cy, z, fr))
-
-        for f in range(n3):
-            frames.append(render_viewport(base, fld_cx, fld_cy, field_z, focus))
-        frames[-1] = render_viewport(base, fld_cx, fld_cy, field_z, focus)
-        return frames
+        return make_field_section_start_frames(base, focus, sec, n)
 
     return [render_overview(base) for _ in range(n)]
 
@@ -309,6 +352,10 @@ async def main() -> int:
         cursor = 0.0
         manifest: list[dict] = []
 
+        prev_field: Rect | None = None
+        prev_section_key: str | None = None
+        prev_screenshot: str | None = None
+
         for idx, seg in enumerate(segments):
             key = seg["key"]
             narration = seg["narration"]
@@ -319,6 +366,13 @@ async def main() -> int:
 
             focus: Rect | None = None
             section: Rect | None = None
+            chain_field = False
+            from_field: Rect | None = None
+
+            if mode == "overview":
+                prev_field = None
+                prev_section_key = None
+                prev_screenshot = None
 
             if mode == "focus_tile":
                 focus = tiles.get(seg.get("tile_slug", ""))
@@ -335,12 +389,33 @@ async def main() -> int:
                     print(f"Warnung: Feld {field_key} nicht gefunden", file=sys.stderr)
                 if section is None and section_key:
                     print(f"Warnung: Abschnitt {section_key} nicht gefunden", file=sys.stderr)
+                if (
+                    focus is not None
+                    and prev_field is not None
+                    and section_key
+                    and section_key == prev_section_key
+                    and screenshot == prev_screenshot
+                ):
+                    chain_field = True
+                    from_field = prev_field
 
             mp3 = tmp_path / f"{key}.mp3"
             clip = tmp_path / f"{key}.mp4"
             await synthesize(narration, mp3, voice)
-            frames = make_frames(base, mode, focus, trans_n, section=section)
+            frames = make_frames(
+                base,
+                mode,
+                focus,
+                trans_n,
+                section=section,
+                chain_field=chain_field,
+                from_field=from_field,
+            )
             dur = encode_clip(frames, mp3, clip)
+            if mode == "focus_field" and focus is not None:
+                prev_field = focus
+                prev_section_key = seg.get("section") or prev_section_key
+                prev_screenshot = screenshot
             clips.append(clip)
             vtt.append((cursor, cursor + dur - 0.05, narration))
             cursor += dur

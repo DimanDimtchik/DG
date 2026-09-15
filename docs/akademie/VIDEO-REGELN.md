@@ -112,11 +112,15 @@ Zielgruppe: **Mitarbeiter ohne Fachkenntnisse** — weder Programmierer noch Buc
 
 **Zoom bei Formular-Feldern (Pflicht)**
 
-Pro Feld **drei Schritte** — damit Orientierung und Lesbarkeit erhalten bleiben:
+Pro **Abschnitt** einmal orientieren, dann Felder nacheinander — **nicht** pro Feld von vorn:
 
-1. **Ganzes Formular** (Überblick)
-2. **Zoom auf Abschnitt** (z. B. Stamm, Kunde / Lieferant, Adresse)
-3. **Zoom auf Feld** — **Label und Eingabe vollständig** sichtbar (breite Felder: weniger zoomen, nicht abschneiden)
+1. **Ganzes Formular** (Gesamtansicht)
+2. **Zoom auf Abschnitt** (Bereichsansicht)
+3. **Felder des Abschnitts** nacheinander — jeweils Fokus mit Rahmen, **ohne** erneute Gesamt-/Bereichs-Zooms zwischen den Feldern
+
+**Neuer Abschnitt** im selben Clip (z. B. Stamm → Arbeitgeber): wieder **Gesamtansicht → Bereich → Felder**.
+
+**Fokus-Rahmen:** rot (gut sichtbar), restliches Bild leicht ausgegraut — Label und Eingabe vollständig sichtbar (breite Felder: weniger zoomen, nicht abschneiden).
 
 ---
 
@@ -179,7 +183,7 @@ Zusammenfassung der Regeln, die über Navigation, Bild und Sprache hinausgehen:
 - [ ] Keine personenbezogenen Live-Daten im Bild
 - [ ] Text für **Nicht-Buchhalter** verständlich
 - [ ] **Abkürzungen ausgeschrieben** im Sprechtext/VTT (Ausnahmen: z. B. Ländercode D E)
-- [ ] Formular-Felder: Zoom **Formular → Abschnitt → Feld** (Label sichtbar)
+- [ ] Formular-Felder: **pro Abschnitt** Gesamt → Bereich → Felder nacheinander; roter Fokus-Rahmen
 - [ ] **Ein Thema** pro Clip (oder Überblick bewusst ausgewiesen)
 - [ ] Stimme **Katja** (DE) bzw. eingetragene Locale-Stimme
 - [ ] Untertitel (`.vtt`) **Pflicht** — liegt bei, Text = Audio
