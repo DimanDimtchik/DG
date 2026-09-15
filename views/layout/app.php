@@ -414,7 +414,10 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
       window.dgWebsiteBuilder = {
         mediaListUrl: '/api/media?action=list',
         csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
-        forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>
+        forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        patterns: <?= json_encode(WebsitePagePatterns::forEditor(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        pageKind: <?= json_encode((string) (($form['layout']['page_kind'] ?? '') ?: ''), JSON_THROW_ON_ERROR) ?>,
+        isOnlineBookingPage: <?= WebsitePageRepository::isOnlineBookingPage($form ?? []) ? 'true' : 'false' ?>
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/website-builder.js')) ?>" defer></script>

@@ -23,10 +23,6 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
         View::render('offline');
         exit;
     }
-    if (WebsitePageRepository::isOnlineBookingPage($previewPage)) {
-        PublicBookingPageRenderer::render(preview: true);
-        exit;
-    }
     View::render('website-public', [
         'page' => $previewPage,
         'chrome' => WebsiteSettings::chrome(),
@@ -4660,10 +4656,6 @@ switch ($path) {
         }
 
         if ($publicPage !== null) {
-            if (WebsitePageRepository::isOnlineBookingPage($publicPage)) {
-                PublicBookingPageRenderer::render();
-                break;
-            }
             $chrome = WebsiteSettings::chrome();
             $menu = WebsiteSettings::publicMenu();
             $design = WebsiteSettings::design();

@@ -30,9 +30,13 @@
     contact: 'Kontakt (wird zu Formular)',
     form: 'Formular',
     gallery: 'Galerie',
+    online_booking: 'Online-Terminbuchung',
   };
-  // Contact no longer offered in palette; keep label for old layouts until saved.
-  var blockTypes = Object.keys(typeLabels).filter(function (t) { return t !== 'contact'; });
+  // Contact / system blocks not in generic insert menu.
+  var blockTypes = Object.keys(typeLabels).filter(function (t) {
+    return t !== 'contact' && t !== 'online_booking';
+  });
+  var builderCfg = window.dgWebsiteBuilder || {};
 
   function uid(prefix) {
     return prefix + '-' + Math.random().toString(16).slice(2, 10);
@@ -53,14 +57,14 @@
           });
         });
       });
-      return data;
+      return normalizeLayoutMeta(data);
     } catch (e) {
-      return { rows: [] };
+      return normalizeLayoutMeta({ rows: [] });
     }
   }
 
   function persist(layout) {
-    layoutField.value = JSON.stringify(layout);
+    layoutField.value = JSON.stringify(normalizeLayoutMeta(layout));
   }
 
   function findColumn(layout, colId) {
@@ -130,8 +134,36 @@
       case 'contact': return { id: uid('blk'), type: 'contact', email: '', subject: 'Kontaktanfrage' };
       case 'form': return { id: uid('blk'), type: 'form', form_id: 0 };
       case 'gallery': return { id: uid('blk'), type: 'gallery', images: [] };
+      case 'online_booking': return { id: uid('blk'), type: 'online_booking' };
       default:        return { id: uid('blk'), type: 'text', text: 'Neuer Textabsatz.' };
     }
+  }
+
+  function normalizeLayoutMeta(layout) {
+    if (builderCfg.isOnlineBookingPage) {
+      layout.page_kind = 'online_booking';
+    }
+    return layout;
+  }
+
+  function regenerateRowIds(row) {
+    row.id = uid('row');
+    (row.columns || []).forEach(function (col) {
+      col.id = uid('col');
+      (col.blocks || []).forEach(function (block) {
+        block.id = uid('blk');
+      });
+    });
+    return row;
+  }
+
+  function insertPatternRows(layout, patternKey) {
+    var patterns = builderCfg.patterns || {};
+    var pattern = patterns[patternKey];
+    if (!pattern || !pattern.rows || !pattern.rows.length) return;
+    pattern.rows.forEach(function (row) {
+      layout.rows.push(regenerateRowIds(JSON.parse(JSON.stringify(row))));
+    });
   }
 
   function redistributeWidths(columns) {
@@ -230,10 +262,21 @@
         html += '<div class="dg-website-block__spacer" style="height:' + (parseInt(block.height, 10) || 24) + 'px"></div>';
         break;
       case 'video':
-        var embed = embedUrl(block.url);
-        html += embed
-          ? '<div class="dg-website-block__video"><iframe src="' + escapeHtml(embed) + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:6px;"></iframe></div>'
-          : '<div class="dg-website-block__image-placeholder">Video — YouTube/Vimeo-URL rechts eintragen</div>';
+        var vUrl = String(block.url || '').trim();
+        var isMp4 = /\.mp4(\?|$)/i.test(vUrl) || vUrl.indexOf('/media/') === 0;
+        if (isMp4 && vUrl) {
+          html += '<div class="dg-website-block__video"><video controls playsinline style="width:100%;max-width:100%;border-radius:6px;background:#111;" src="' + escapeHtml(vUrl) + '"></video></div>';
+        } else {
+          var embed = embedUrl(block.url);
+          html += embed
+            ? '<div class="dg-website-block__video"><iframe src="' + escapeHtml(embed) + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:6px;"></iframe></div>'
+            : '<div class="dg-website-block__image-placeholder">Video — YouTube/Vimeo oder MP4-URL (/media/…)</div>';
+        }
+        break;
+      case 'online_booking':
+        html += '<div class="dg-website-block__booking-preview" style="padding:16px;background:#f0f4f8;border:2px dashed #94a3b8;border-radius:8px;text-align:center;">'
+          + '<strong>Online-Terminbuchung</strong><br>'
+          + '<span style="color:#64748b;font-size:0.9em;">Leistung · Termin · Kontakt — live auf der Website</span></div>';
         break;
       case 'divider':
         var style = block.style || 'solid';
@@ -550,8 +593,12 @@
           html += fieldHtml('Höhe (px)', 'height', String(block.height || 24), 'type="number" min="8" max="160"');
           break;
         case 'video':
-          html += fieldHtml('YouTube/Vimeo-URL', 'url', block.url);
+          html += fieldHtml('Video-URL (YouTube, Vimeo oder MP4)', 'url', block.url);
           html += fieldHtml('Beschriftung', 'caption', block.caption);
+          html += '<p class="dg-field-hint">Akademie-Videos: z. B. /media/training/terminkalender/terminkalender-online-buchung.mp4</p>';
+          break;
+        case 'online_booking':
+          html += '<p class="dg-field-hint">Systemblock: zeigt das öffentliche Buchungsformular. Auf Terminkalender-Seiten bitte nicht entfernen.</p>';
           break;
         case 'divider':
           html += '<label class="dg-field"><span>Stil</span><select name="style">' +
@@ -604,9 +651,12 @@
           html += textareaHtml('Text', 'text', block.text, 6);
       }
 
-      html += '<div class="dg-form-actions dg-website-inspector-actions">' +
-        '<button type="button" class="dg-button dg-button--danger" data-remove-block>Block entfernen</button>' +
-        '</div>';
+      var protectBooking = builderCfg.isOnlineBookingPage && block.type === 'online_booking';
+      if (!protectBooking) {
+        html += '<div class="dg-form-actions dg-website-inspector-actions">' +
+          '<button type="button" class="dg-button dg-button--danger" data-remove-block>Block entfernen</button>' +
+          '</div>';
+      }
       inspector.innerHTML = html;
       return;
     }
@@ -850,6 +900,7 @@
     if (readOnly) return;
 
     var addBlock = event.target.closest('[data-add-block]');
+    var insertPatternBtn = event.target.closest('[data-insert-pattern]');
     var addRow = event.target.closest('[data-add-row]');
     var removeBlock = event.target.closest('[data-remove-block]');
     var removeRow = event.target.closest('[data-remove-row]');
@@ -857,6 +908,13 @@
     var galleryAdd = event.target.closest('[data-gallery-add]');
     var galleryRemove = event.target.closest('[data-gallery-remove]');
     var layout = parseLayout();
+
+    if (insertPatternBtn) {
+      insertPatternRows(layout, insertPatternBtn.getAttribute('data-insert-pattern') || '');
+      persist(layout);
+      render();
+      return;
+    }
 
     if (addBlock) {
       var type = addBlock.getAttribute('data-add-block');
@@ -903,6 +961,11 @@
     }
 
     if (removeBlock && selected.blockId) {
+      var doomed = findBlock(layout, selected.blockId);
+      if (doomed && doomed.type === 'online_booking' && builderCfg.isOnlineBookingPage) {
+        window.alert('Der Block Online-Terminbuchung kann auf dieser Seite nicht entfernt werden.');
+        return;
+      }
       layout.rows.forEach(function (row) {
         (row.columns || []).forEach(function (col) {
           col.blocks = (col.blocks || []).filter(function (block) {
@@ -1042,6 +1105,22 @@
   var paletteHint = builder.querySelector('.dg-website-builder__palette .dg-field-hint');
   if (paletteHint) {
     paletteHint.setAttribute('data-palette-hint', '1');
+  }
+
+  var patternList = document.getElementById('dg-website-pattern-list');
+  if (patternList && builderCfg.patterns) {
+    Object.keys(builderCfg.patterns).forEach(function (key) {
+      var pattern = builderCfg.patterns[key];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dg-website-tool';
+      btn.setAttribute('data-insert-pattern', key);
+      btn.textContent = pattern.label || key;
+      if (pattern.description) {
+        btn.title = pattern.description;
+      }
+      patternList.appendChild(btn);
+    });
   }
 
   updatePreviewLink();

@@ -47,10 +47,10 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
 
   <?php if (WebsitePageRepository::isOnlineBookingPage($form)) : ?>
     <div class="dg-flash dg-flash--info">
-      <strong>Systemseite Online-Terminbuchung.</strong>
-      Besucher sehen hier das Buchungsformular für Kunden (Leistung, Termin, Kontaktdaten).
-      Einstellungen: Termine → Einbindung und Artikel &amp; Leistungen.
-      Vorschau öffnet die echte Buchungsseite — nicht den Seiten-Editor-Inhalt.
+      <strong>Online-Terminbuchung.</strong>
+      Gestalten Sie die Seite wie jede andere: Texte, Bilder, Videos und Galerien ober- oder unterhalb des Buchungsformulars.
+      Der Block <em>Online-Terminbuchung</em> zeigt das Kundenformular — bitte nicht entfernen.
+      Einstellungen: Termine → Kalender-Einbindung und Artikel &amp; Leistungen.
     </div>
   <?php endif; ?>
 
@@ -106,6 +106,15 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
             <button type="button" class="dg-website-tool" data-add-row="6-6">2 Spalten</button>
             <button type="button" class="dg-website-tool" data-add-row="4-4-4">3 Spalten</button>
           </div>
+          <?php if (WebsitePageRepository::isOnlineBookingPage($form)) : ?>
+            <h2>Terminbuchung</h2>
+            <div class="dg-website-builder__palette-list">
+              <button type="button" class="dg-website-tool" data-add-block="online_booking">Online-Terminbuchung</button>
+            </div>
+          <?php endif; ?>
+          <h2>Vorlagen</h2>
+          <p class="dg-field-hint">Fertige Abschnitte einfügen — danach anpassen.</p>
+          <div class="dg-website-builder__palette-list" id="dg-website-pattern-list"></div>
         </aside>
       <?php endif; ?>
 

@@ -37,10 +37,60 @@ final class WebsitePageRepository
     /** Layout für die Pflichtseite Terminkalender (Kunden buchen online). */
     public static function onlineBookingLayout(): array
     {
-        return [
-            'page_kind' => self::PAGE_KIND_ONLINE_BOOKING,
-            'rows' => [],
-        ];
+        return WebsitePagePatterns::defaultTerminkalenderLayout();
+    }
+
+    /** @param array<string, mixed> $layout */
+    public static function layoutHasBlockType(array $layout, string $type): bool
+    {
+        foreach (($layout['rows'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            foreach (($row['columns'] ?? []) as $col) {
+                if (!is_array($col)) {
+                    continue;
+                }
+                foreach (($col['blocks'] ?? []) as $block) {
+                    if (is_array($block) && (string) ($block['type'] ?? '') === $type) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Stellt sicher, dass Online-Buchungsseiten einen Buchungsblock haben (Editor).
+     *
+     * @param array<string, mixed> $layout
+     * @return array<string, mixed>
+     */
+    public static function ensureOnlineBookingStructure(array $layout): array
+    {
+        $layout['page_kind'] = self::PAGE_KIND_ONLINE_BOOKING;
+        if (!isset($layout['rows']) || !is_array($layout['rows'])) {
+            $layout['rows'] = [];
+        }
+        if (!self::layoutHasBlockType($layout, 'online_booking')) {
+            $layout['rows'] = array_merge($layout['rows'], WebsitePagePatterns::onlineBookingBlockRow());
+        }
+
+        return $layout;
+    }
+
+    /** @param array<string, mixed> $page */
+    public static function prepareForEditor(array $page): array
+    {
+        if (!self::isOnlineBookingPage($page)) {
+            return $page;
+        }
+        $layout = is_array($page['layout'] ?? null) ? $page['layout'] : [];
+        $page['layout'] = self::ensureOnlineBookingStructure($layout);
+
+        return $page;
     }
 
     /** @param array<string, mixed> $page */
@@ -293,7 +343,7 @@ final class WebsitePageRepository
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $row ? self::map($row) : null;
+        return $row ? self::prepareForEditor(self::map($row)) : null;
     }
 
     /**
@@ -344,10 +394,7 @@ final class WebsitePageRepository
             $existing = self::findById($id);
             if ($existing !== null && self::isOnlineBookingPage($existing)) {
                 $layout = is_array($layout) ? $layout : self::onlineBookingLayout();
-                $layout['page_kind'] = self::PAGE_KIND_ONLINE_BOOKING;
-                if (!isset($layout['rows']) || !is_array($layout['rows'])) {
-                    $layout['rows'] = [];
-                }
+                $layout = self::ensureOnlineBookingStructure($layout);
             }
         }
 

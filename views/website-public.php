@@ -12,6 +12,8 @@ $headerIconStyle = WebsiteMenuIcons::headerIconStyleDefaults();
 $headerIconVars = WebsiteMenuIcons::iconStyleCssVars($headerIconStyle);
 $menuIconRight = $headerIconStyle['position'] === 'right';
 $layout = $page['layout'] ?? ['rows' => []];
+$bookingPreview = !empty($previewMode);
+$needsBookingAssets = PublicBookingPageRenderer::pageNeedsAssets(is_array($page) ? $page : []);
 $siteName = View::escape($chrome['header_title'] ?: (string) App::config('crm_name'));
 $seoPage = [
     'title' => (string) ($page['title'] ?? ''),
@@ -64,6 +66,21 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--ws-text); background: var(--ws-bg); line-height: 1.6; }
     a { color: var(--ws-primary); }
+
+    .ws-booking-disabled,
+    .ws-booking-preview-hint {
+      padding: 16px 18px;
+      border-radius: 8px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      margin: 12px 0;
+    }
+    .tk-book-wrap--embedded .tk-book {
+      max-width: 100%;
+      padding-left: 0;
+      padding-right: 0;
+    }
 
     /* Header */
     .ws-header { background: var(--ws-primary); color: #fff; padding: 20px 0; }
@@ -202,6 +219,9 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-footer { background: #f5f5f5; color: #666; padding: 24px 0; margin-top: 40px; border-top: 1px solid #e0e0e0; }
     .ws-footer__inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; text-align: center; font-size: 0.9rem; }
   </style>
+<?php if ($needsBookingAssets) : ?>
+  <style><?= CalendarFrontendTheme::inlineCss() ?></style>
+<?php endif; ?>
   <?= WebsiteAnalytics::headHtml() ?>
   <?php if (!empty($chrome['header_js'])): ?>
   <?= $chrome['header_js'] ?>
@@ -410,20 +430,35 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
             break;
 
           case 'video':
-            $vUrl = $block['url'] ?? '';
+            $vUrl = trim((string) ($block['url'] ?? ''));
             $embed = '';
-            if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/', $vUrl, $m)) {
-                $embed = 'https://www.youtube-nocookie.com/embed/' . $m[1];
-            } elseif (preg_match('/vimeo\.com\/(\d+)/', $vUrl, $m)) {
-                $embed = 'https://player.vimeo.com/video/' . $m[1];
-            }
-            if ($embed !== '') {
-                echo '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;">'
-                    . '<iframe src="' . View::escape($embed) . '" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allowfullscreen></iframe></div>';
+            $isLocalVideo = $vUrl !== '' && (
+                preg_match('/\.mp4(\?|$)/i', $vUrl) === 1
+                || str_starts_with($vUrl, '/media/')
+            );
+            if ($isLocalVideo) {
+                echo '<video controls playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:6px;background:#000;" src="' . View::escape($vUrl) . '"></video>';
                 if (!empty($block['caption'])) {
                     echo '<p style="font-size:0.9rem;color:#888;margin-top:6px;">' . View::escape($block['caption']) . '</p>';
                 }
+            } else {
+                if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/', $vUrl, $m)) {
+                    $embed = 'https://www.youtube-nocookie.com/embed/' . $m[1];
+                } elseif (preg_match('/vimeo\.com\/(\d+)/', $vUrl, $m)) {
+                    $embed = 'https://player.vimeo.com/video/' . $m[1];
+                }
+                if ($embed !== '') {
+                    echo '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;">'
+                        . '<iframe src="' . View::escape($embed) . '" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allowfullscreen></iframe></div>';
+                    if (!empty($block['caption'])) {
+                        echo '<p style="font-size:0.9rem;color:#888;margin-top:6px;">' . View::escape($block['caption']) . '</p>';
+                    }
+                }
             }
+            break;
+
+          case 'online_booking':
+            PublicBookingPageRenderer::renderWidget($bookingPreview);
             break;
 
           case 'divider':
