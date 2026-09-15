@@ -97,8 +97,8 @@ bash bin/sync-crm-from-master.sh
 
 ## 6. Akademie — Schulungsvideos
 
-Verbindliche Regeln für Erklärvideos: **[`docs/akademie/VIDEO-REGELN.md`](docs/akademie/VIDEO-REGELN.md)**
+Verbindliche Regeln: **[`docs/akademie/VIDEO-REGELN.md`](docs/akademie/VIDEO-REGELN.md)** · Texte/Sprachen: **[`docs/akademie/locales/README.md`](docs/akademie/locales/README.md)**
 
-Kurz: (1) **Immer vom Dashboard starten** und sichtbar zur Ziel-Stelle navigieren · (2) **Nur echte CRM-Screenshots** — keine nachgebauten Kacheln oder Textfolien · (3) **Einfache Sprache** für Anwender ohne IT-/Buchführungskenntnisse.
+Kurz: Dashboard-Start · nur echte CRM-Screenshots · einfache Sprache · **Stimme DE: `de-DE-KatjaNeural`** · Texte in `locales/{sprache}/*.json` (Slug-Keys, mehrsprachig vorbereitet).
 
-Technik Dashboard-Video: `bin/academy-build-dashboard-video.sh`
+Technik: `bin/academy-build-dashboard-video.sh`

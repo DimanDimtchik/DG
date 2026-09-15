@@ -23,6 +23,7 @@ echo "==> 2/3 Screenshot + Kachel-Positionen"
 python3 bin/academy-capture-dashboard.py
 
 echo "==> 3/3 Video (Stimme + Kamera-Fokus)"
-python3 bin/academy-generate-dashboard-video.py
+LOCALE="${LOCALE:-de}"
+python3 bin/academy-generate-dashboard-video.py --locale "$LOCALE"
 
 echo "Fertig: storage/media/training/allgemein/dashboard-ueberblick.mp4"

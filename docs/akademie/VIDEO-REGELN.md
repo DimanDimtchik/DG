@@ -1,7 +1,7 @@
 # Akademie — Regeln für Schulungsvideos
 
 > **Verbindlich für alle Video-Clips** der CRM-Akademie (Erklärvideos, Modul-Einführungen, Kurzüberblicke).  
-> **Technik (Dashboard-Beispiel):** [`bin/academy-build-dashboard-video.sh`](../bin/academy-build-dashboard-video.sh) · Szenario-Vorlage: [`szenario-dashboard-ueberblick.md`](szenario-dashboard-ueberblick.md)
+> **Texte / Sprachen:** [`locales/README.md`](locales/README.md) · **Technik:** [`bin/academy-build-dashboard-video.sh`](../bin/academy-build-dashboard-video.sh)
 
 Stand: 2026-09-15
 
@@ -9,9 +9,10 @@ Stand: 2026-09-15
 
 ## Kurzfassung (für Chats)
 
-1. **Immer vom Dashboard starten** — Nutzer soll sehen, *wo* er im CRM ist und *wie* er dorthin kommt.  
-2. **Nur echtes CRM-Bild** — keine nachgebauten Kacheln, keine erfundenen Folien, keine Mockups.  
-3. **Einfache Sprache** — für Anwender ohne IT- und ohne Buchführungs-Vorkenntnisse.
+1. **Immer vom Dashboard starten** — Nutzer soll sehen, *wo* er ist und *wie* er dorthin kommt.  
+2. **Nur echtes CRM-Bild** — keine nachgebauten Kacheln, keine erfundenen Folien.  
+3. **Einfache Sprache** — für Anwender ohne IT- und Buchführungs-Vorkenntnisse.  
+4. **Feste Stimme (Deutsch):** `de-DE-KatjaNeural` (edge-tts) — alle Clips einheitlich.
 
 ---
 
@@ -22,81 +23,96 @@ Jedes Schulungsvideo beginnt mit dem **Dashboard** (Startseite nach Login).
 | Pflicht | Begründung |
 |---------|------------|
 | Erste Bilder zeigen das **volle Dashboard** (Kacheln + Seitenmenü erkennbar) | Orientierung: „Das ist mein Einstieg ins Programm.“ |
-| Danach **sichtbar zur Ziel-Stelle navigieren** (Kachel anklicken / Menü / Modul öffnen) | Nutzer lernt den **Weg**, nicht nur das Ziel. |
-| Kein „Sprung“ mitten in eine Maske ohne vorherigen Kontext | Sonst wirkt es wie ein fremdes Programm. |
+| Danach **sichtbar zur Ziel-Stelle navigieren** (Kachel / Menü / Modul) | Nutzer lernt den **Weg**, nicht nur das Ziel. |
+| Kein Sprung mitten in eine Maske ohne Kontext | Sonst wirkt es wie ein fremdes Programm. |
 
-**Beispiel Ablauf (Modul-Video):**  
-Dashboard (Gesamtüberblick) → Kachel oder Menüpunkt → Zielmodul → konkrete Funktion erklären.
+**Beispiel (Modul-Video):** Dashboard → Kachel/Menü → Zielmodul → Funktion erklären.
 
-**Ausnahme:** Reine Dashboard-Übersichtsvideos (z. B. „Kurzüberblick aller Kacheln“) bleiben auf dem Dashboard — dort ist kein weiterer Navigationsschritt nötig.
+**Ausnahme:** Reine Dashboard-Übersicht (z. B. „Kurzüberblick aller Kacheln“) bleibt auf dem Dashboard.
 
 ---
 
 ## 2. Bildmaterial: nur echte CRM-Ausschnitte
 
-Alles, was im Video zu sehen ist, muss **1:1 aus dem laufenden CRM** stammen.
+Alles Sichtbare muss **1:1 aus dem laufenden CRM** stammen.
 
 | Erlaubt | Nicht erlaubt |
 |---------|----------------|
-| Screenshot / Screen-Recording vom **Master oder Live-Test** (`dg.ganz-om.de`, `ganz-soft.de`) | Selbst gezeichnete Kacheln, PIL-/Canvas-Nachbauten |
-| HTML-Export + Browser-Screenshot (echtes Layout, echte Icons, echtes CSS) | Dunkle Vollbild-Folien mit Text statt UI |
-| Leichte Kamera-Zooms / Fokus-Rahmen **auf dem echten Bild** | Fantasie-UI, Stock-Fotos, generische „Software“-Grafiken |
-| Unscharfe Abdunkelung **neben** dem Fokus (Nachbarkacheln bleiben erkennbar) | Vollflächige Overlays, die das CRM verdecken |
+| Screenshot vom **Master oder Live-Test** | Selbst gezeichnete Kacheln, PIL-/Canvas-Nachbauten |
+| HTML-Export + Browser-Screenshot (echtes CSS/Icons) | Dunkle Vollbild-Folien mit Text |
+| Leichte Zooms / Fokus-Rahmen **auf dem echten Bild** | Stock-Fotos, Mockups, generische Software-Grafiken |
+| Leichte Abdunkelung **neben** dem Fokus | Overlays, die das CRM verdecken |
 
-**Technischer Standard (Dashboard & statische Clips):**
+**Vor der Aufnahme:** Cookie-Banner, Support-Hinweise und Störmeldungen entfernen. **Datenschutz:** keine echten Kundennamen, Beträge oder E-Mails — Demo-Daten oder Unkenntlichmachung.
 
-```bash
-# 1. HTML vom Live-CRM exportieren
-php bin/academy-export-dashboard-html.php --base=https://ganz-soft.de/
-
-# 2. Echter Screenshot + Kachel-Koordinaten
-python3 bin/academy-capture-dashboard.py
-
-# 3. Video mit Stimme + Untertiteln
-python3 bin/academy-generate-dashboard-video.py
-# oder alles zusammen:
-bash bin/academy-build-dashboard-video.sh
-```
-
-Für **andere Module** gilt dasselbe Prinzip: zuerst echten Bildschirm erfassen (Playwright, Screen-Recording), dann schneiden/zoomen — **nie** UI neu zeichnen.
+**Technik (Dashboard):** `bin/academy-build-dashboard-video.sh`
 
 ---
 
 ## 3. Sprache und Textstil
 
-Zielgruppe: **Mitarbeiter und Anwender ohne Fachkenntnisse** — keine Programmierer, oft auch keine Buchhalter.
+Zielgruppe: **Mitarbeiter ohne Fachkenntnisse** — weder Programmierer noch Buchhalter.
 
-| So schreiben / sprechen | So nicht |
-|-------------------------|----------|
-| Kurze Sätze, **eine Idee pro Satz** | Fachjargon (GoBD, OPOS, CAMT, Journal, API …) ohne Erklärung |
-| **Alltagswörter:** „Beleg“, „Rechnung“, „Kunde“, „Termin“ | „Datensatz“, „Entität“, „Modul instanziieren“ |
-| Sage **was** der Nutzer hier macht und **warum** es ihm hilft | Technische Implementierung, Datenbank, Code |
-| „Hier sehen Sie …“ / „Hier tragen Sie … ein“ | Passiv und behördlich |
-| Bei Fachbegriff **einmal kurz erklären** oder vermeiden | Abkürzungen voraussetzen (BWA, SuSa, UStVA) — im Video aussprechen und in 3–5 Wörtern erklären |
+| So | Nicht so |
+|----|----------|
+| Kurze Sätze, **eine Idee pro Satz** | Fachjargon ohne Erklärung (GoBD, OPOS, CAMT …) |
+| Alltagswörter: „Beleg“, „Kunde“, „Termin“ | „Datensatz“, „Entität“, „Modul“ |
+| **Was** tun und **warum** — aus Nutzersicht | Technik, Datenbank, Code |
+| Fachbegriff **kurz erklären** oder vermeiden | Abkürzungen voraussetzen |
 
-**Ton:** ruhig, sachlich, freundlich — wie eine geduldige Kollegin, nicht wie ein Handbuch.
+**Ton:** ruhig, sachlich, freundlich — wie eine geduldige Kollegin.
 
-**Untertitel (VTT):** derselbe Text wie die gesprochene Spur; keine abweichende Fachsprache.
+**Untertitel (VTT):** identisch zur gesprochenen Spur.
 
-**Orientierung an bestehenden Szenarien:** [`docs/akademie/szenario-*.md`](.) — vor neuer Produktion Szenario anlegen oder erweitern.
+**Kurz halten:** ein Thema pro Clip; lieber mehrere kurze Videos als ein langer Sammelband. Keine Mindestlänge pro Kachel — nur so lang wie nötig.
+
+**Szenario zuerst:** Text in `docs/akademie/szenario-*.md` und `docs/akademie/locales/{sprache}/*.json` **vor** Aufnahme/Render festlegen.
+
+---
+
+## 4. Stimme (einheitlich)
+
+| Sprache | Stimme (edge-tts) | Status |
+|---------|-------------------|--------|
+| **Deutsch** | `de-DE-KatjaNeural` | **Verbindlich** für alle deutschen Clips |
+| Weitere Sprachen | je Sprache in `locales/…/voice` eintragen | erst bei Übersetzung festlegen |
+
+Abweichungen nur mit dokumentierter Begründung (z. B. barrierefreie Alternative).
+
+---
+
+## 5. Mehrsprachigkeit — jetzt vorbereiten, später ausbauen
+
+**Noch keine Pflicht** — aber von Anfang an so arbeiten, dass Übersetzung später leicht wird:
+
+| Heute | Später (mit CRM-i18n) |
+|-------|------------------------|
+| Texte in `docs/akademie/locales/de/{video-slug}.json` | Kopie nach `locales/en/`, … und übersetzen |
+| Segment-Keys = **CRM-Modul-Slug** (sprachneutral) | Gleiche Slugs wie CRM-Menü |
+| Deutsch: `video.mp4` + `video.vtt` | Weitere Sprachen: `video.en.mp4`, `video.en.vtt` |
+| Screenshot deutsch (CRM-Oberfläche DE) | Pro UI-Sprache **neuer Screenshot**, wenn CRM übersetzt ist |
+
+**Trennung:** Gesprochene Sprache ≠ Bildsprache möglich (z. B. englische Stimme über deutschem UI) — nur bewusst so dokumentieren. Ideal: Stimme und UI stimmen überein.
+
+Details: [`locales/README.md`](locales/README.md)
 
 ---
 
 ## Checkliste vor Veröffentlichung
 
 - [ ] Video startet am **Dashboard** (oder dokumentierte Ausnahme)
-- [ ] Navigation zum Thema ist **im Video sichtbar**
-- [ ] Alle gezeigten UI-Teile sind **echte CRM-Screenshots** (prüfbar an Sidebar, Logo, Schrift, Icons)
+- [ ] Navigation zum Thema **sichtbar**
+- [ ] **Echte CRM-Screenshots** (Sidebar, Logo, Icons erkennbar)
 - [ ] Keine Textfolien ohne UI
-- [ ] Text verständlich für **Nicht-Buchhalter** gelesen
+- [ ] Text für **Nicht-Buchhalter** verständlich
+- [ ] Stimme **Katja** (DE) bzw. eingetragene Locale-Stimme
 - [ ] Untertitel (`.vtt`) liegt bei
+- [ ] Keine personenbezogenen Live-Daten im Bild
 - [ ] Dauer in `dg_academy_modules.duration_sec` stimmt
-- [ ] Vorschau ≠ Vollvideo: bei Demos **gesamtes Video** oder Dauer angeben
+- [ ] Demo-Vorschau ≠ Vollvideo (Dauer angeben)
 
 ---
 
 ## Referenz für Agent-Chats
 
-In Cursor / Cloud-Agent am Session-Start oder vor Video-Arbeit:
-
-> **Akademie-Videos:** [`docs/akademie/VIDEO-REGELN.md`](VIDEO-REGELN.md) — Dashboard-Start, nur echte CRM-Bilder, einfache Sprache.
+> **Akademie-Videos:** [`docs/akademie/VIDEO-REGELN.md`](VIDEO-REGELN.md) — Dashboard-Start, echte CRM-Bilder, einfache Sprache, Stimme Katja. Texte: [`locales/`](locales/).

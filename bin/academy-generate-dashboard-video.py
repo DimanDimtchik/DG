@@ -14,10 +14,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
+LOCALES_DIR = ROOT / "docs/akademie/locales"
 OUT_DIR = ROOT / "storage/media/training/allgemein"
 SCREENSHOT = OUT_DIR / "dashboard-capture.png"
 TILES_JSON = OUT_DIR / "dashboard-tiles.json"
-VOICE = "de-DE-KatjaNeural"
+DEFAULT_VOICE = "de-DE-KatjaNeural"
 EDGE_TTS = Path.home() / ".local/bin/edge-tts"
 
 OUT_W, OUT_H = 1920, 1080
@@ -25,46 +26,34 @@ FPS = 25
 TRANSITION_SEC = 0.85
 FOCUS_ZOOM = 2.2
 
-INTRO = (
-    "Willkommen zur kurzen Einführung ins Dashboard. Nach dem Login sehen Sie hier alle Module als Kacheln — "
-    "Ihr Einstieg in das CRM. Links finden Sie dieselben Bereiche im Menü. "
-    "In diesem Video erklären wir nur, wofür jede Kachel gedacht ist. "
-    "Was Sie nach dem Öffnen sehen, behandeln wir in eigenen Videos."
-)
 
-# Erzähltext je Modul-Slug (Reihenfolge kommt aus dem echten Screenshot)
-NARRATIONS: dict[str, str] = {
-    "kontakte": "Kontakte: Hier werden alle Kontakte Ihres Unternehmens gespeichert — Kunden, Lieferanten, Mitarbeiter und Behörden. Alle für Unternehmen relevanten Kontaktfelder sind voreingestellt, inklusive eines Feldes für Bemerkungen.",
-    "terminkalender": "Terminkalender: Termine, Buchungen und Kalenderbereiche im Überblick — für Planung und Abstimmung im Team.",
-    "zeiterfassung": "Zeiterfassung: Einstempeln, Pausen und Arbeitszeiten erfassen — Grundlage für HR und Auswertungen.",
-    "post": "Post: Ihre Postfächer — Eingang lesen und Nachrichten direkt aus dem CRM versenden.",
-    "akademie": "Akademie: Schulungen, Erklärvideos und Zertifikate — hier finden Sie Anleitungen zu den Modulen.",
-    "artikel-leistungen": "Artikel und Leistungen: Der Katalog für verkaufte und eingekaufte Artikel sowie Leistungen — Basis für Angebote, Belege und Lager.",
-    "lager": "Lager: Bestände, Lagerorte und Bewegungen — von Wareneingang bis Inventur.",
-    "support-freigabe": "Support-Freigabe: Temporären Zugang für den Support freischalten — zeitlich begrenzt und kontrolliert.",
-    "bilder": "Bilder: Medienbibliothek für Logos, Fotos und andere Bilddateien — nur für Administratoren.",
-    "buchhaltung-konten": "Konten: Kontenrahmen und Kontenhinweise — Ihr Nachschlagewerk für die Buchführung.",
-    "buchhaltung-belege": "Belege: Eingangs- und Ausgangsbelege erfassen — mit Steuerfeldern und Kontenzuordnung.",
-    "buchhaltung-ueberweisungen": "Überweisungen: Zahlungen vorbereiten — inklusive QR-Code und Fotovorlage für den Bankauftrag.",
-    "buchhaltung-kontenuebersicht": "Kontenübersicht: Salden und Kontoauszüge je Geschäftsjahr auf einen Blick.",
-    "buchhaltung-opos": "Offene Posten: Offene Forderungen und Verbindlichkeiten — wer schuldet wem noch etwas.",
-    "buchhaltung-kassenbuch": "Kassenbuch: Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.",
-    "buchhaltung-manuelle-buchung": "Manuelle Buchungen: Journalbuchungen ohne Beleg — wenn Soll und Haben direkt gebucht werden.",
-    "buchhaltung-auswertungen": "Bilanz und GuV: Auswertungen zu Vermögen, Schulden und Ergebnis je Geschäftsjahr.",
-    "buchhaltung-bwa": "BWA: Betriebswirtschaftliche Auswertung — der klassische Monatsüberblick fürs Management.",
-    "buchhaltung-susa": "SuSa: Summen- und Saldenliste — Kontenstände kompakt für Prüfung und Steuerberater.",
-    "buchhaltung-bankabgleich": "Bankabgleich: Kontoauszüge importieren und Belegen zuordnen.",
-    "buchhaltung-steuerberater-export": "Steuerberater-Export: Daten für DATEV, Agenda oder Addison — Buchungsstapel und Belege.",
-    "buchhaltung-ustva": "UStVA: Umsatzsteuer-Voranmeldung vorbereiten — inklusive ELSTER-Export.",
-    "buchhaltung-jahresabschluss": "Jahresabschluss: Checkliste und Assistent für GuV-Abschluss und Saldenvortrag.",
-    "website-seiten": "Seiten: Inhaltsseiten der öffentlichen Website anlegen und pflegen.",
-    "website-formulare": "Formulare: Kontakt- und Anfrageformulare bauen und Eingänge empfangen.",
-    "website-statistik": "Statistik: Seitenaufrufe im CRM und Links zu Google Analytics oder Tag Manager.",
-    "website-menu": "Menü: Navigation der Website — welche Seiten wo verlinkt sind.",
-    "website-chrome": "Kopf und Fuß: Kopfzeile, Fußzeile und zusätzliche Skripte der Website.",
-    "website-design": "Design: Farben und Erscheinungsbild der öffentlichen Website.",
-    "einstellungen": "Einstellungen: Firma, E-Mail, Abteilungen, Module und System — nur für berechtigte Nutzer. Das war der Kurzüberblick über alle Dashboard-Kacheln. Wählen Sie eine Kachel, wenn Sie in einem Bereich arbeiten möchten — die Details erklären wir in den Modul-Videos der Akademie. Viel Erfolg!",
-}
+@dataclass
+class ScriptBundle:
+    video_slug: str
+    locale: str
+    title: str
+    voice: str
+    intro: str
+    segments: dict[str, str]
+
+
+def load_script(locale: str, video_slug: str) -> ScriptBundle:
+    path = LOCALES_DIR / locale / f"{video_slug}.json"
+    if not path.is_file():
+        raise FileNotFoundError(f"Skript fehlt: {path}")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return ScriptBundle(
+        video_slug=video_slug,
+        locale=locale,
+        title=str(data.get("title", video_slug)),
+        voice=str(data.get("voice", DEFAULT_VOICE)),
+        intro=str(data.get("intro", "")),
+        segments={str(k): str(v) for k, v in (data.get("segments") or {}).items()},
+    )
+
+
+def media_basename(video_slug: str, locale: str) -> str:
+    return video_slug if locale == "de" else f"{video_slug}.{locale}"
 
 
 @dataclass
@@ -228,9 +217,9 @@ def probe_duration(path: Path) -> float:
     return float(out)
 
 
-async def synthesize(text: str, mp3: Path) -> None:
+async def synthesize(text: str, mp3: Path, voice: str) -> None:
     proc = await asyncio.create_subprocess_exec(
-        str(EDGE_TTS), "--voice", VOICE, "--text", text, "--write-media", str(mp3)
+        str(EDGE_TTS), "--voice", voice, "--text", text, "--write-media", str(mp3)
     )
     if await proc.wait() != 0:
         raise RuntimeError("edge-tts failed")
@@ -278,17 +267,31 @@ def write_vtt(entries: list[tuple[float, float, str]], path: Path) -> None:
 
 
 async def main() -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Dashboard-Schulungsvideo aus CRM-Screenshot")
+    parser.add_argument("--locale", default="de", help="Sprache (ISO 639-1), z. B. de")
+    parser.add_argument("--script", default="dashboard-ueberblick", help="video_slug in locales/")
+    args = parser.parse_args()
+
     if not EDGE_TTS.is_file():
         print("edge-tts fehlt", file=sys.stderr)
+        return 1
+
+    try:
+        script = load_script(args.locale, args.script)
+    except FileNotFoundError as exc:
+        print(exc, file=sys.stderr)
         return 1
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     base, tiles = load_assets()
     trans_n = max(1, int(TRANSITION_SEC * FPS))
+    base_name = media_basename(script.video_slug, script.locale)
 
-    segments: list[tuple[str, str, TileRect | None]] = [("intro", INTRO, None)]
+    segments: list[tuple[str, str, TileRect | None]] = [("intro", script.intro, None)]
     for tile in tiles:
-        text = NARRATIONS.get(tile.slug)
+        text = script.segments.get(tile.slug)
         if not text:
             text = f"{tile.label}: {tile.label} im CRM."
             print(f"Hinweis: keine Narration für slug={tile.slug}, Fallback genutzt")
@@ -305,7 +308,7 @@ async def main() -> int:
             print(f"[{idx + 1}/{len(segments)}] {key}")
             mp3 = tmp_path / f"{key}.mp3"
             clip = tmp_path / f"{key}.mp4"
-            await synthesize(narration, mp3)
+            await synthesize(narration, mp3, script.voice)
 
             if tile is None:
                 frames = make_intro_frames(base, trans_n)
@@ -324,14 +327,16 @@ async def main() -> int:
 
         concat = tmp_path / "concat.txt"
         concat.write_text("\n".join(f"file '{c}'" for c in clips), encoding="utf-8")
-        mp4_out = OUT_DIR / "dashboard-ueberblick.mp4"
-        vtt_out = OUT_DIR / "dashboard-ueberblick.vtt"
+        mp4_out = OUT_DIR / f"{base_name}.mp4"
+        vtt_out = OUT_DIR / f"{base_name}.vtt"
         run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(mp4_out)])
         write_vtt(vtt, vtt_out)
-        (OUT_DIR / "dashboard-ueberblick.meta.json").write_text(
+        (OUT_DIR / f"{base_name}.meta.json").write_text(
             json.dumps(
                 {
-                    "title": "Dashboard — Kurzüberblick",
+                    "title": script.title,
+                    "locale": script.locale,
+                    "voice": script.voice,
                     "source": "dashboard-capture.png",
                     "duration_sec": round(cursor, 1),
                     "segments": manifest,
