@@ -154,4 +154,4 @@ done
 echo "==> 4/4 Altes Sammel-Video entfernen"
 rm -f "$KDIR/kontakte-felder.mp4" "$KDIR/kontakte-felder.vtt" "$KDIR/kontakte-felder.meta.json"
 
-echo "Fertig — $KDIR/kontakte-felder-*.mp4 (+ Überblick)"
+echo "Fertig: $KDIR/kontakte-felder-*.mp4 und kontakte-ueberblick.mp4"
