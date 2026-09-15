@@ -58,9 +58,10 @@ $panelVisible = static function (string $panel) use ($activeDemoStep, $isAcademy
   · <a href="/app?page=website-seiten">Zurück zu Website → Seiten</a>
 </div>
 <?php elseif ($previewMode && $embedded && !$onlineBookingEnabled) : ?>
-<p class="ws-booking-preview-hint">Vorschau: Buchungsformular — öffentlich derzeit deaktiviert (Einstellungen → Kalender-Einbindung).</p>
+<p class="ws-booking-preview-hint">Vorschau: Das Formular sehen Sie hier trotzdem — für Besucher ist die Online-Buchung derzeit deaktiviert (Einstellungen → Kalender-Einbindung).</p>
 <?php endif; ?>
   <div class="tk-book" id="tk-public-booking"<?= CalendarFrontendTheme::wrapperStyleAttribute() ?>>
+    <?php if (!$embedded) : ?>
     <header class="tk-book__header">
       <?php if (AppearanceSettings::logoUrl() !== '') : ?>
         <img class="tk-book__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>" src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>">
@@ -75,6 +76,7 @@ $panelVisible = static function (string $panel) use ($activeDemoStep, $isAcademy
 
     <?php if ($intro !== '') : ?>
       <p class="tk-book__intro"><?= View::escape($intro) ?></p>
+    <?php endif; ?>
     <?php endif; ?>
 
     <ol class="tk-book__steps" aria-label="Buchungsschritte">

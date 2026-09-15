@@ -220,6 +220,7 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-footer__inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; text-align: center; font-size: 0.9rem; }
   </style>
 <?php if ($needsBookingAssets) : ?>
+  <link rel="stylesheet" href="<?= View::escape(CalendarFrontendTheme::bookingStylesheetHref()) ?>">
   <style><?= CalendarFrontendTheme::inlineCss() ?></style>
 <?php endif; ?>
   <?= WebsiteAnalytics::headHtml() ?>
@@ -430,16 +431,21 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
             break;
 
           case 'video':
-            $vUrl = trim((string) ($block['url'] ?? ''));
+            $vUrl = WebsiteVideoLibrary::resolvePublicUrl(trim((string) ($block['url'] ?? '')));
+            $vLabel = trim((string) ($block['label'] ?? ''));
             $embed = '';
             $isLocalVideo = $vUrl !== '' && (
                 preg_match('/\.mp4(\?|$)/i', $vUrl) === 1
                 || str_starts_with($vUrl, '/media/')
+                || str_starts_with($vUrl, '/app/media')
             );
+            if ($vLabel !== '') {
+                echo '<p class="ws-video-label">' . View::escape($vLabel) . '</p>';
+            }
             if ($isLocalVideo) {
                 echo '<video controls playsinline preload="metadata" style="width:100%;max-width:960px;border-radius:6px;background:#000;" src="' . View::escape($vUrl) . '"></video>';
                 if (!empty($block['caption'])) {
-                    echo '<p style="font-size:0.9rem;color:#888;margin-top:6px;">' . View::escape($block['caption']) . '</p>';
+                    echo '<p class="ws-video-caption">' . View::escape($block['caption']) . '</p>';
                 }
             } else {
                 if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/', $vUrl, $m)) {
@@ -451,7 +457,7 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
                     echo '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;">'
                         . '<iframe src="' . View::escape($embed) . '" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" allowfullscreen></iframe></div>';
                     if (!empty($block['caption'])) {
-                        echo '<p style="font-size:0.9rem;color:#888;margin-top:6px;">' . View::escape($block['caption']) . '</p>';
+                        echo '<p class="ws-video-caption">' . View::escape($block['caption']) . '</p>';
                     }
                 }
             }

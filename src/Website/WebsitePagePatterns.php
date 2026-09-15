@@ -82,6 +82,7 @@ final class WebsitePagePatterns
                     [
                         'id' => 'blk-pattern-academy-video',
                         'type' => 'video',
+                        'label' => '',
                         'url' => '/media/training/terminkalender/terminkalender-online-buchung.mp4',
                         'caption' => 'Online-Terminbuchung — Anleitung für Kunden',
                     ],

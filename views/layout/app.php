@@ -413,6 +413,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script>
       window.dgWebsiteBuilder = {
         mediaListUrl: '/api/media?action=list',
+        videoListUrl: '/api/website-videos?action=list',
         csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
         forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
         patterns: <?= json_encode(WebsitePagePatterns::forEditor(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,

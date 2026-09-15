@@ -128,7 +128,7 @@
       case 'image':   return { id: uid('blk'), type: 'image', src: '', alt: '' };
       case 'button':  return { id: uid('blk'), type: 'button', label: 'Mehr erfahren', url: '#' };
       case 'spacer':  return { id: uid('blk'), type: 'spacer', height: 24 };
-      case 'video':   return { id: uid('blk'), type: 'video', url: '', caption: '' };
+      case 'video':   return { id: uid('blk'), type: 'video', label: '', url: '', caption: '' };
       case 'divider': return { id: uid('blk'), type: 'divider', style: 'solid', color: '#ddd' };
       case 'html':    return { id: uid('blk'), type: 'html', code: '' };
       case 'contact': return { id: uid('blk'), type: 'contact', email: '', subject: 'Kontaktanfrage' };
@@ -262,15 +262,21 @@
         html += '<div class="dg-website-block__spacer" style="height:' + (parseInt(block.height, 10) || 24) + 'px"></div>';
         break;
       case 'video':
+        if ((block.label || '').trim()) {
+          html += '<p class="dg-website-block__video-label" style="font-weight:600;margin:0 0 6px;">' + escapeHtml(block.label) + '</p>';
+        }
         var vUrl = String(block.url || '').trim();
-        var isMp4 = /\.mp4(\?|$)/i.test(vUrl) || vUrl.indexOf('/media/') === 0;
+        var isMp4 = /\.mp4(\?|$)/i.test(vUrl) || vUrl.indexOf('/media/') === 0 || vUrl.indexOf('/app/media') === 0;
         if (isMp4 && vUrl) {
           html += '<div class="dg-website-block__video"><video controls playsinline style="width:100%;max-width:100%;border-radius:6px;background:#111;" src="' + escapeHtml(vUrl) + '"></video></div>';
         } else {
           var embed = embedUrl(block.url);
           html += embed
             ? '<div class="dg-website-block__video"><iframe src="' + escapeHtml(embed) + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:6px;"></iframe></div>'
-            : '<div class="dg-website-block__image-placeholder">Video — YouTube/Vimeo oder MP4-URL (/media/…)</div>';
+            : '<div class="dg-website-block__image-placeholder">Video — aus Videobibliothek wählen oder URL eintragen</div>';
+        }
+        if ((block.caption || '').trim()) {
+          html += '<p class="dg-field-hint" style="margin-top:6px;">' + escapeHtml(block.caption) + '</p>';
         }
         break;
       case 'online_booking':
@@ -409,6 +415,12 @@
       '</div>';
   }
 
+  function videoPickerHtml(name) {
+    return '<div class="dg-website-image-tools">' +
+      '<button type="button" class="dg-button" data-video-pick="' + escapeHtml(name) + '">Aus Videobibliothek</button>' +
+      '</div>';
+  }
+
   function applyImageSelection(targetField, item) {
     var layout = parseLayout();
     var block = findBlock(layout, selected.blockId);
@@ -489,6 +501,8 @@
 
   var mediaPickerTarget = '';
   var mediaPickerCache = null;
+  var videoPickerTarget = '';
+  var videoPickerCache = null;
 
   function closeMediaPicker() {
     var modal = document.getElementById('dg-website-media-picker');
@@ -558,6 +572,155 @@
     body.innerHTML = html;
   }
 
+  function closeVideoPicker() {
+    var modal = document.getElementById('dg-website-video-picker');
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    videoPickerTarget = '';
+  }
+
+  function ensureVideoPicker() {
+    var modal = document.getElementById('dg-website-video-picker');
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'dg-website-video-picker';
+    modal.className = 'dg-modal';
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML =
+      '<div class="dg-modal__backdrop" data-video-picker-close></div>' +
+      '<div class="dg-modal__dialog dg-website-media-picker__dialog" role="dialog" aria-modal="true" aria-labelledby="dg-website-video-picker-title">' +
+        '<header class="dg-modal__head">' +
+          '<h2 id="dg-website-video-picker-title">Videobibliothek</h2>' +
+          '<button type="button" class="dg-modal__close" data-video-picker-close aria-label="Schließen">&times;</button>' +
+        '</header>' +
+        '<div class="dg-website-media-picker__toolbar">' +
+          '<label class="dg-field dg-website-media-picker__search"><span class="dg-visually-hidden">Suchen</span>' +
+            '<input type="search" placeholder="Suchen …" data-video-picker-search>' +
+          '</label>' +
+          '<a class="dg-button" href="/app?page=akademie&view=admin" target="_blank" rel="noopener">Zur Akademie</a>' +
+        '</div>' +
+        '<div class="dg-website-media-picker__body" data-video-picker-body>' +
+          '<p class="dg-field-hint">Lade Videobibliothek …</p>' +
+        '</div>' +
+        '<footer class="dg-modal__foot">' +
+          '<button type="button" class="dg-button" data-video-picker-close>Abbrechen</button>' +
+        '</footer>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', function (event) {
+      if (event.target.closest('[data-video-picker-close]')) {
+        closeVideoPicker();
+        return;
+      }
+      var pick = event.target.closest('[data-video-pick-id]');
+      if (!pick) return;
+      var videoId = pick.getAttribute('data-video-pick-id') || '';
+      var item = (videoPickerCache || []).find(function (row) { return row.id === videoId; });
+      if (!item || !videoPickerTarget) return;
+      applyVideoSelection(videoPickerTarget, item);
+      closeVideoPicker();
+    });
+
+    var search = modal.querySelector('[data-video-picker-search]');
+    if (search) {
+      search.addEventListener('input', function () {
+        renderVideoPickerItems(search.value);
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeVideoPicker();
+    });
+
+    return modal;
+  }
+
+  function openVideoPicker(targetField) {
+    videoPickerTarget = targetField;
+    var modal = ensureVideoPicker();
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    var search = modal.querySelector('[data-video-picker-search]');
+    if (search) search.value = '';
+    loadVideoPickerItems();
+  }
+
+  function loadVideoPickerItems() {
+    var body = document.querySelector('[data-video-picker-body]');
+    if (!body) return;
+    body.innerHTML = '<p class="dg-field-hint">Lade Videobibliothek …</p>';
+
+    var cfg = window.dgWebsiteBuilder || {};
+    var url = cfg.videoListUrl || '/api/website-videos?action=list';
+    fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Liste nicht ladbar');
+        return res.json();
+      })
+      .then(function (data) {
+        videoPickerCache = Array.isArray(data.items) ? data.items : [];
+        renderVideoPickerItems('');
+      })
+      .catch(function () {
+        body.innerHTML = '<p class="dg-field-hint">Videobibliothek konnte nicht geladen werden.</p>';
+      });
+  }
+
+  function formatVideoDuration(sec) {
+    var n = parseInt(sec, 10);
+    if (!n || n < 1) return '';
+    var m = Math.floor(n / 60);
+    var s = n % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function renderVideoPickerItems(query) {
+    var body = document.querySelector('[data-video-picker-body]');
+    if (!body) return;
+    var items = videoPickerCache || [];
+    var q = String(query || '').trim().toLowerCase();
+    if (q) {
+      items = items.filter(function (item) {
+        var hay = [item.title, item.url, item.source].join(' ').toLowerCase();
+        return hay.indexOf(q) !== -1;
+      });
+    }
+    if (!items.length) {
+      body.innerHTML = '<p class="dg-field-hint">Keine Videos gefunden. Akademie-Videos unter Akademie → Admin oder MP4 in der Mediathek.</p>';
+      return;
+    }
+    var html = '<div class="dg-website-media-picker__grid dg-website-video-picker__grid">';
+    items.forEach(function (item) {
+      var label = item.title || 'Video';
+      var meta = item.source === 'academy' ? 'Akademie' : 'Mediathek';
+      var dur = formatVideoDuration(item.duration_sec);
+      if (dur) meta += ' · ' + dur;
+      html += '<button type="button" class="dg-website-media-picker__item dg-website-video-picker__item" data-video-pick-id="' + escapeHtml(item.id) + '" title="' + escapeHtml(label) + '">' +
+        '<span class="dg-website-video-picker__icon" aria-hidden="true">▶</span>' +
+        '<span>' + escapeHtml(label) + '</span>' +
+        '<small>' + escapeHtml(meta) + '</small>' +
+        '</button>';
+    });
+    html += '</div>';
+    body.innerHTML = html;
+  }
+
+  function applyVideoSelection(targetField, item) {
+    var layout = parseLayout();
+    var block = findBlock(layout, selected.blockId);
+    if (!block) return;
+    block[targetField] = item.url || '';
+    if (!(block.label || '').trim() && item.title) {
+      block.label = item.title;
+    }
+    persist(layout);
+    render();
+  }
+
   function renderInspector() {
     if (!inspector) return;
     var layout = parseLayout();
@@ -593,9 +756,11 @@
           html += fieldHtml('Höhe (px)', 'height', String(block.height || 24), 'type="number" min="8" max="160"');
           break;
         case 'video':
+          html += fieldHtml('Label (optional)', 'label', block.label);
           html += fieldHtml('Video-URL (YouTube, Vimeo oder MP4)', 'url', block.url);
-          html += fieldHtml('Beschriftung', 'caption', block.caption);
-          html += '<p class="dg-field-hint">Akademie-Videos: z. B. /media/training/terminkalender/terminkalender-online-buchung.mp4</p>';
+          html += videoPickerHtml('url');
+          html += fieldHtml('Beschriftung unter dem Video', 'caption', block.caption);
+          html += '<p class="dg-field-hint">Akademie-Videos über „Aus Videobibliothek“ — oder URL manuell eintragen.</p>';
           break;
         case 'online_booking':
           html += '<p class="dg-field-hint">Systemblock: zeigt das öffentliche Buchungsformular. Auf Terminkalender-Seiten bitte nicht entfernen.</p>';
@@ -1083,9 +1248,15 @@
 
     inspector.addEventListener('click', function (event) {
       var pickBtn = event.target.closest('[data-media-pick]');
-      if (!pickBtn) return;
+      if (pickBtn) {
+        event.preventDefault();
+        openMediaPicker(pickBtn.getAttribute('data-media-pick') || 'src');
+        return;
+      }
+      var videoBtn = event.target.closest('[data-video-pick]');
+      if (!videoBtn) return;
       event.preventDefault();
-      openMediaPicker(pickBtn.getAttribute('data-media-pick') || 'src');
+      openVideoPicker(videoBtn.getAttribute('data-video-pick') || 'url');
     });
   }
 

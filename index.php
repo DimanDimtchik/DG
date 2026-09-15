@@ -11,6 +11,21 @@ if (strcasecmp($path, '/login') === 0) {
     $path = '/login';
 }
 
+if (preg_match('#^/media/training/([a-z0-9_-]+)/([a-z0-9_.-]+\.mp4)$#', $path, $trainingVideoMatch)) {
+    $rel = 'media/training/' . $trainingVideoMatch[1] . '/' . $trainingVideoMatch[2];
+    $file = DG_ROOT . '/storage/' . $rel;
+    if (!is_file($file) || !is_readable($file)) {
+        http_response_code(404);
+        echo 'Nicht gefunden.';
+        exit;
+    }
+    header('Content-Type: video/mp4');
+    header('Content-Length: ' . (string) filesize($file));
+    header('Cache-Control: public, max-age=86400');
+    readfile($file);
+    exit;
+}
+
 if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     $previewUser = AuthService::user();
     if ($previewUser === null || !MenuRegistry::canAccess($previewUser, 'website-seiten')) {
@@ -383,6 +398,24 @@ switch ($path) {
 
     case '/api/media':
         MediaApi::handle();
+        exit;
+
+    case '/api/website-videos':
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' || (string) ($_GET['action'] ?? '') !== 'list') {
+            http_response_code(405);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Nur GET action=list'], JSON_THROW_ON_ERROR);
+            exit;
+        }
+        $videoListUser = AuthService::user();
+        if ($videoListUser === null || !RoleResolver::canEdit($videoListUser) || !MenuRegistry::canAccessWebsite($videoListUser)) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Keine Berechtigung'], JSON_THROW_ON_ERROR);
+            exit;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['items' => WebsiteVideoLibrary::listForPicker()], JSON_UNESCAPED_UNICODE);
         exit;
 
     case '/api/chart-account':

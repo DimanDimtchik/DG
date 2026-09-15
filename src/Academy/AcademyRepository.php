@@ -272,6 +272,25 @@ final class AcademyRepository
         return self::moduleVideoAbsolutePath($module) !== null;
     }
 
+    /** Öffentliche URL für Website-Einbettung (/media/training/…). */
+    public static function publicVideoUrl(array $module): ?string
+    {
+        $rel = trim((string) ($module['video_path'] ?? ''));
+
+        return self::publicVideoUrlFromRelative($rel);
+    }
+
+    public static function publicVideoUrlFromRelative(string $relativePath): ?string
+    {
+        $rel = ltrim(trim($relativePath), '/');
+        if ($rel === '' || !preg_match('#^media/training/[a-z0-9_-]+/[a-z0-9_.-]+\.mp4$#', $rel)) {
+            return null;
+        }
+        $abs = DG_ROOT . '/storage/' . $rel;
+
+        return is_file($abs) ? '/' . $rel : null;
+    }
+
     /** @return list<array<string, mixed>> */
     public static function modulesForCourse(int $courseId, bool $activeOnly = true, bool $playableOnly = false): array
     {

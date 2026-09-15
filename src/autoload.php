@@ -228,6 +228,7 @@ spl_autoload_register(static function (string $class): void {
         'AcademyVideoService' => '/src/Academy/AcademyVideoService.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsitePagePatterns' => '/src/Website/WebsitePagePatterns.php',
+        'WebsiteVideoLibrary' => '/src/Website/WebsiteVideoLibrary.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
         'WebsiteContent' => '/src/Website/WebsiteContent.php',
         'WebsiteMenuIcons' => '/src/Website/WebsiteMenuIcons.php',
