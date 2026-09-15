@@ -1268,6 +1268,11 @@ switch ($path) {
                         AcademyRepository::saveCourseModules($courseId, $moduleIds);
                         Flash::set('success', 'Kurs gespeichert.');
                         $redirect = '/app?page=akademie&view=admin&course_id=' . $courseId;
+                    } elseif (isset($_POST['academy_delete_course']) && RoleResolver::isAdmin($user)) {
+                        $courseId = (int) ($_POST['course_id'] ?? $_POST['id'] ?? 0);
+                        AcademyRepository::deleteCourse($courseId);
+                        Flash::set('success', 'Kurs gelöscht.');
+                        $redirect = '/app?page=akademie&view=admin&admin_tab=kurse';
                     } elseif (isset($_POST['academy_assign']) && RoleResolver::isAdmin($user)) {
                         AcademyRepository::assignUser(
                             (int) ($_POST['user_id'] ?? 0),

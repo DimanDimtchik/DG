@@ -516,6 +516,9 @@ $riskClass = static function (?string $level): string {
       <div class="dg-field dg-field--actions dg-field--wide">
         <button type="submit" name="academy_save_course" value="1" class="dg-button dg-button--primary">Kurs speichern</button>
         <a class="dg-button" href="/app?page=akademie&amp;view=admin&amp;admin_tab=kurse">Zurück zur Liste</a>
+        <?php if ((int) ($academyAdminCourse['id'] ?? 0) > 0) : ?>
+          <button type="submit" name="academy_delete_course" value="1" class="dg-button dg-button--danger" formnovalidate onclick="return confirm('Kurs „<?= View::escape((string) ($academyAdminCourse['title'] ?? '')) ?>“ wirklich löschen? Zuweisungen und Fortschritt werden mit entfernt. Videos in der Bibliothek bleiben erhalten.');">Kurs löschen</button>
+        <?php endif; ?>
       </div>
     </form>
   </section>

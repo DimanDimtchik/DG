@@ -850,6 +850,19 @@ final class AcademyRepository
         return $newId;
     }
 
+    public static function deleteCourse(int $courseId): void
+    {
+        if ($courseId < 1) {
+            throw new InvalidArgumentException('Kurs ungültig.');
+        }
+        if (self::findCourseById($courseId) === null) {
+            throw new InvalidArgumentException('Kurs nicht gefunden.');
+        }
+
+        Database::pdo()->prepare('DELETE FROM dg_academy_courses WHERE id = :id')
+            ->execute(['id' => $courseId]);
+    }
+
     /** @param array<string, mixed> $data */
     public static function assignUser(int $userId, int $courseId, int $assignedBy, string $accessMode): void
     {
