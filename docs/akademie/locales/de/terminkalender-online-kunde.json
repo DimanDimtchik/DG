@@ -1,0 +1,113 @@
+{
+  "video_slug": "terminkalender-online-kunde",
+  "locale": "de",
+  "title": "Online-Terminbuchung — Anleitung für Kunden",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "overview",
+      "narration": "Willkommen! In dieser kurzen Anleitung sehen Sie, wie Sie bei uns online einen Termin buchen — ohne Anruf und ohne Registrierung."
+    },
+    {
+      "key": "entry",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "overview",
+      "narration": "Sie erreichen diese Seite über unseren Link, einen QR-Code — zum Beispiel im Schaufenster — oder über unsere Website in Google und anderen Suchergebnissen."
+    },
+    {
+      "key": "steps-overview",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "overview",
+      "narration": "Die Buchung läuft in drei Schritten: Leistung wählen, Termin wählen, Kontaktdaten eingeben. Oben sehen Sie, in welchem Schritt Sie gerade sind."
+    },
+    {
+      "key": "field-service",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "focus_field",
+      "field": "service",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step1-regions.json",
+      "narration": "Schritt eins: Tippen Sie auf die Leistung, die Sie buchen möchten — zum Beispiel eine Behandlung oder Beratung mit Dauer und Preis."
+    },
+    {
+      "key": "public-step2",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step2.png",
+      "mode": "overview",
+      "narration": "Schritt zwei: Wählen Sie ein Datum ab heute. Darunter erscheinen freie Uhrzeiten — nur Termine, die wirklich verfügbar sind."
+    },
+    {
+      "key": "field-slots",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step2.png",
+      "mode": "focus_field",
+      "field": "slots",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step2-regions.json",
+      "narration": "Tippen Sie auf eine Uhrzeit. Wenn angeboten, können Sie optional eine bestimmte Person aus dem Team wählen."
+    },
+    {
+      "key": "field-name",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "customer_name",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Schritt drei: Tragen Sie Ihren Namen ein — damit wir Ihren Termin zuordnen können."
+    },
+    {
+      "key": "field-email",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "customer_email",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Ihre E-Mail-Adresse ist Pflicht — Sie erhalten die Bestätigung und wichtige Infos zum Termin."
+    },
+    {
+      "key": "field-phone",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "customer_phone",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Telefon ist optional — hilfreich, wenn wir Sie kurz vor dem Termin erreichen müssen."
+    },
+    {
+      "key": "field-submit",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "submit",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Mit Termin verbindlich buchen senden Sie Ihre Anfrage. Bitte prüfen Sie Datum und Uhrzeit noch einmal."
+    },
+    {
+      "key": "success",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-success.png",
+      "mode": "overview",
+      "narration": "Nach erfolgreicher Buchung sehen Sie hier eine Bestätigung auf dem Bildschirm — mit allen wichtigen Angaben zu Ihrem Termin."
+    },
+    {
+      "key": "email-intro",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-email-confirmation.png",
+      "mode": "overview",
+      "narration": "Zusätzlich erhalten Sie eine Bestätigungs-E-Mail an die angegebene Adresse — speichern Sie diese für Ihre Unterlagen."
+    },
+    {
+      "key": "email-detail",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-email-confirmation.png",
+      "mode": "focus_field",
+      "field": "email_body",
+      "section": "email",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-email-confirmation-regions.json",
+      "narration": "In der E-Mail stehen Leistung, Datum, Uhrzeit, Ihre Kontaktdaten und eine Buchungsnummer für Rückfragen. Bei Änderungen oder Absagen folgen Sie den Hinweisen in der Mail."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-success.png",
+      "mode": "overview",
+      "narration": "Das war's — so einfach buchen Sie online. Wir freuen uns auf Ihren Termin!"
+    }
+  ]
+}

@@ -330,6 +330,7 @@ final class MigrationRunner
             '072_academy_module_departments.sql' => true,
             '073_website_terminkalender_booking.sql' => true,
             '074_website_online_booking_editor.sql' => true,
+            '075_website_terminkalender_kunde_video.sql' => true,
         ];
     }
 

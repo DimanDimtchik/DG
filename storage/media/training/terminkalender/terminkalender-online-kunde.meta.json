@@ -1,0 +1,64 @@
+{
+  "title": "Online-Terminbuchung — Anleitung für Kunden",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 115.6,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 9.8
+    },
+    {
+      "key": "entry",
+      "duration_sec": 9.96
+    },
+    {
+      "key": "steps-overview",
+      "duration_sec": 10.6
+    },
+    {
+      "key": "field-service",
+      "duration_sec": 8.2
+    },
+    {
+      "key": "public-step2",
+      "duration_sec": 9.32
+    },
+    {
+      "key": "field-slots",
+      "duration_sec": 8.4
+    },
+    {
+      "key": "field-name",
+      "duration_sec": 5.72
+    },
+    {
+      "key": "field-email",
+      "duration_sec": 6.36
+    },
+    {
+      "key": "field-phone",
+      "duration_sec": 5.88
+    },
+    {
+      "key": "field-submit",
+      "duration_sec": 7.96
+    },
+    {
+      "key": "success",
+      "duration_sec": 7.6
+    },
+    {
+      "key": "email-intro",
+      "duration_sec": 7.44
+    },
+    {
+      "key": "email-detail",
+      "duration_sec": 12.48
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 5.92
+    }
+  ]
+}

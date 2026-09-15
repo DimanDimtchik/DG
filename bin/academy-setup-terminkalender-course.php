@@ -99,7 +99,20 @@ if ($course === null) {
 }
 
 AcademyRepository::saveCourseModules($courseId, $moduleIds);
-echo 'Module-IDs: ' . implode(', ', $moduleIds) . "\n";
+echo 'Kurs-Module-IDs: ' . implode(', ', $moduleIds) . "\n";
+
+// Endkunden-Video: für Website / Videobibliothek — nicht im Schulungskurs (Mitarbeiter-Video bleibt Modul 3).
+$kundeSlug = 'terminkalender-online-kunde';
+$kundeMeta = loadMeta($kundeSlug);
+$kundeSec = durationFromMeta($kundeMeta, 116);
+$kundeId = ensureModule(
+    $pdo,
+    'Online-Terminbuchung — Kundenansicht',
+    'media/training/terminkalender/' . $kundeSlug . '.mp4',
+    'media/training/terminkalender/' . $kundeSlug . '.vtt',
+    $kundeSec
+);
+echo "Bibliothek (Website): Online-Terminbuchung — Kundenansicht id={$kundeId} ({$kundeSec}s)\n";
 
 $sync = AcademyRepository::syncModuleMediaFromDisk(true);
 echo "Sync: deaktiviert={$sync['deactivated']} dauer={$sync['duration_updated']}\n";
