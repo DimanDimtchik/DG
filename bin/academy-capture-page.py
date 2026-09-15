@@ -100,6 +100,24 @@ SECTION_JS = """() => {
         if (block) sections['list'] = block;
     }
 
+    const tkBook = document.querySelector('.tk-book__card');
+    if (tkBook) {
+        const block = rect(tkBook);
+        if (block) sections['booking'] = block;
+    }
+
+    const embedMain = document.querySelector('.dg-settings-main__body');
+    if (embedMain && document.querySelector('[name="online_booking_enabled"]')) {
+        const block = rect(embedMain);
+        if (block) sections['embed'] = block;
+    }
+
+    const emailFrame = document.getElementById('dg-academy-email-frame');
+    if (emailFrame) {
+        const block = rect(emailFrame);
+        if (block) sections['email'] = block;
+    }
+
     return sections;
 }"""
 

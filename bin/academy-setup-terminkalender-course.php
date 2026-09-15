@@ -57,6 +57,7 @@ function loadMeta(string $slug): ?array
 $modules = [
     ['Terminkalender — Überblick', 'terminkalender-ueberblick', 90],
     ['Terminkalender — Neuer Termin', 'terminkalender-neuer-termin', 240],
+    ['Terminkalender — Online-Buchung', 'terminkalender-online-buchung', 180],
 ];
 
 $moduleIds = [];
@@ -79,8 +80,8 @@ if ($course === null) {
     $courseId = AcademyRepository::saveCourse([
         'title' => 'Terminkalender',
         'slug' => $slug,
-        'description' => 'Terminkalender: Übersicht, Suche und alle Felder bei Neuer Termin.',
-        'version' => '1.0',
+        'description' => 'Terminkalender: Übersicht, Neuer Termin, Online-Buchung für Kunden inkl. Bestätigungsmail.',
+        'version' => '1.1',
         'min_tier' => AcademyTier::STARTER,
         'is_published' => 1,
     ]);
@@ -90,8 +91,8 @@ if ($course === null) {
     $pdo->prepare(
         'UPDATE dg_academy_courses SET description = :d, version = :v WHERE id = :id'
     )->execute([
-        'd' => 'Terminkalender: Übersicht, Suche und alle Felder bei Neuer Termin.',
-        'v' => '1.0',
+        'd' => 'Terminkalender: Übersicht, Neuer Termin, Online-Buchung für Kunden inkl. Bestätigungsmail.',
+        'v' => '1.1',
         'id' => $courseId,
     ]);
     echo "Kurs aktualisiert: id={$courseId}\n";

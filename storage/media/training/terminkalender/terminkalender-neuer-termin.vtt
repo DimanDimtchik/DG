@@ -1,0 +1,34 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.910
+In diesem Video erklären wir alle Felder beim Anlegen eines Termins. Sie erreichen das Formular über Terminkalender und Neuer Termin.
+
+00:00:09.960 --> 00:00:25.350
+Leistung: Wählen Sie die gebuchte Dienstleistung. Die Dauer und der Preis kommen aus dem Katalog Artikel und Leistungen — dort legen Sie Leistungen und Waren an. Ein eigenes Schulungsvideo zeigt diesen Bereich im Detail.
+
+00:00:25.400 --> 00:00:39.310
+Mitarbeiter: Optional einen konkreten Mitarbeiter wählen — nur sichtbar, wenn die Leistung einem Kalender-Bereich mit Team zugeordnet ist. Ohne Auswahl sucht das System einen freien Mitarbeiter im Bereich.
+
+00:00:39.360 --> 00:00:49.310
+Datum: Der Tag des Termins. Nach der Auswahl werden freie Uhrzeiten anhand der Arbeitszeiten und bestehender Buchungen berechnet.
+
+00:00:49.360 --> 00:01:01.590
+Uhrzeit: Freie Startzeit im gewählten Raster — abhängig von Leistungsdauer und optional gewähltem Mitarbeiter. Bei stornierten Terminen wird die Verfügbarkeit nicht geprüft.
+
+00:01:01.640 --> 00:01:09.310
+Status: Gebucht, bestätigt, storniert oder abgeschlossen — für Ihre interne Übersicht und Auswertung.
+
+00:01:09.360 --> 00:01:23.390
+Kunde: Name des Kunden — Pflichtfeld. Beim Tippen erscheinen Vorschläge aus Ihren Kontakten. Kontakte legen und pflegen Sie im Modul Kontakte; dazu gibt es eigene Schulungsvideos.
+
+00:01:23.440 --> 00:01:30.990
+E-Mail: Wird beim Kontakt-Vorschlag übernommen, kann angepasst werden — für Bestätigungen und Erinnerungen.
+
+00:01:31.040 --> 00:01:37.870
+Telefon: Optional, ebenfalls aus dem Kontakt übernehmbar — für Rückfragen am Termintag.
+
+00:01:37.920 --> 00:01:44.470
+Notizen: Interne Hinweise zum Termin — nur für Ihr Team sichtbar, nicht für den Kunden.
+
+00:01:44.520 --> 00:01:56.350
+Speichern legt den Termin an. Leistungen pflegen Sie unter Artikel und Leistungen, Kunden unter Kontakte — beides mit eigenen Videos. Viel Erfolg!

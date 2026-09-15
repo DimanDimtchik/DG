@@ -1,0 +1,76 @@
+{
+  "title": "Terminkalender — Online-Buchung für Kunden",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 166.2,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 8.6
+    },
+    {
+      "key": "nav-settings",
+      "duration_sec": 8.76
+    },
+    {
+      "key": "embed-overview",
+      "duration_sec": 11.96
+    },
+    {
+      "key": "embed-url",
+      "duration_sec": 9.0
+    },
+    {
+      "key": "embed-qrcode",
+      "duration_sec": 10.4
+    },
+    {
+      "key": "public-step1",
+      "duration_sec": 10.16
+    },
+    {
+      "key": "field-service",
+      "duration_sec": 10.96
+    },
+    {
+      "key": "public-step2",
+      "duration_sec": 9.4
+    },
+    {
+      "key": "field-slots",
+      "duration_sec": 9.8
+    },
+    {
+      "key": "field-name",
+      "duration_sec": 5.2
+    },
+    {
+      "key": "field-email",
+      "duration_sec": 5.08
+    },
+    {
+      "key": "field-phone",
+      "duration_sec": 5.08
+    },
+    {
+      "key": "field-submit",
+      "duration_sec": 9.0
+    },
+    {
+      "key": "success",
+      "duration_sec": 6.96
+    },
+    {
+      "key": "email-intro",
+      "duration_sec": 15.4
+    },
+    {
+      "key": "email-detail",
+      "duration_sec": 18.16
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 12.28
+    }
+  ]
+}

@@ -4707,6 +4707,24 @@ body.dg-login-page {
   text-align: center;
 }
 
+.dg-booking-qr {
+  margin-top: 16px;
+}
+
+.dg-booking-qr__canvas {
+  display: inline-flex;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--dg-border, #e2e8f0);
+  border-radius: 12px;
+}
+
+.dg-booking-qr__img {
+  display: block;
+  width: 160px;
+  height: 160px;
+}
+
 .dg-transfer-qr__img {
   width: 180px;
   height: 180px;

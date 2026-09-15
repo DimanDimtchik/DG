@@ -7,9 +7,46 @@ $bookingArticles = $bookingArticles ?? [];
 $bookingEmployees = $bookingEmployees ?? [];
 $previewMode = !empty($previewMode);
 $onlineBookingEnabled = $onlineBookingEnabled ?? CalendarEmbedSettings::isOnlineBookingEnabled();
+$academyDemoStep = $academyDemoStep ?? null;
+$isAcademyDemo = $academyDemoStep !== null && $academyDemoStep !== '';
+$demoArticle = $bookingArticles[0] ?? null;
+$demoArticleTitle = $demoArticle !== null ? (string) ($demoArticle['title'] ?? 'Massage') : 'Massage';
+$demoArticleId = $demoArticle !== null ? (int) ($demoArticle['id'] ?? 0) : 0;
+$demoDate = date('Y-m-d', strtotime('+3 days'));
+$demoTime = '10:45';
+$demoSlotLabel = $demoArticleTitle . ' — ' . date('d.m.Y', strtotime($demoDate)) . ', ' . $demoTime . ' Uhr';
+$demoCustomerName = 'Maria Beispiel';
+$demoCustomerEmail = 'maria.beispiel@example.de';
+$demoCustomerPhone = '+49 170 1234567';
+$activeDemoStep = $isAcademyDemo ? (int) ($academyDemoStep === 'done' ? 4 : $academyDemoStep) : 1;
 $pageTitle = CalendarEmbedSettings::pageTitle() . ' – ' . CompanySettings::displayName();
 $companyName = CompanySettings::displayName();
 $intro = CalendarEmbedSettings::introText();
+
+$stepIndicatorClass = static function (int $step) use ($activeDemoStep, $isAcademyDemo): string {
+    if (!$isAcademyDemo) {
+        return $step === 1 ? 'is-active' : '';
+    }
+    if ($step < $activeDemoStep) {
+        return 'is-done';
+    }
+    if ($step === $activeDemoStep) {
+        return 'is-active';
+    }
+
+    return '';
+};
+
+$panelVisible = static function (string $panel) use ($activeDemoStep, $isAcademyDemo): bool {
+    if (!$isAcademyDemo) {
+        return $panel === '1';
+    }
+    if ($panel === 'done') {
+        return $activeDemoStep >= 4;
+    }
+
+    return (int) $panel === $activeDemoStep;
+};
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -45,13 +82,13 @@ $intro = CalendarEmbedSettings::introText();
     <?php endif; ?>
 
     <ol class="tk-book__steps" aria-label="Buchungsschritte">
-      <li class="tk-book__step is-active" data-step-indicator="1"><span>1</span> Leistung</li>
-      <li class="tk-book__step" data-step-indicator="2"><span>2</span> Termin</li>
-      <li class="tk-book__step" data-step-indicator="3"><span>3</span> Kontakt</li>
+      <li class="tk-book__step <?= $stepIndicatorClass(1) ?>" data-step-indicator="1"><span>1</span> Leistung</li>
+      <li class="tk-book__step <?= $stepIndicatorClass(2) ?>" data-step-indicator="2"><span>2</span> Termin</li>
+      <li class="tk-book__step <?= $stepIndicatorClass(3) ?>" data-step-indicator="3"><span>3</span> Kontakt</li>
     </ol>
 
     <div class="tk-book__card" id="tk-book-panel">
-      <div class="tk-book__panel is-active" data-step-panel="1">
+      <div class="tk-book__panel<?= $panelVisible('1') ? ' is-active' : '' ?>" data-step-panel="1"<?= !$panelVisible('1') ? ' hidden' : '' ?>>
         <h2 class="tk-book__panel-title">Leistung wählen</h2>
         <?php if ($bookingArticles === []) : ?>
           <p class="tk-book__muted">Derzeit sind keine Leistungen für die Online-Buchung hinterlegt.</p>
@@ -60,7 +97,7 @@ $intro = CalendarEmbedSettings::introText();
             <?php foreach ($bookingArticles as $article) : ?>
               <button
                 type="button"
-                class="tk-book__service"
+                class="tk-book__service<?= $isAcademyDemo && $activeDemoStep >= 2 && (int) ($article['id'] ?? 0) === $demoArticleId ? ' is-selected' : '' ?>"
                 data-article-id="<?= (int) ($article['id'] ?? 0) ?>"
                 data-uses-employees="<?= !empty($article['uses_employees']) ? '1' : '0' ?>"
                 data-duration="<?= (int) ($article['work_minutes'] ?? 0) ?>"
@@ -78,13 +115,13 @@ $intro = CalendarEmbedSettings::introText();
         <?php endif; ?>
       </div>
 
-      <div class="tk-book__panel" data-step-panel="2" hidden>
+      <div class="tk-book__panel<?= $panelVisible('2') ? ' is-active' : '' ?>" data-step-panel="2"<?= !$panelVisible('2') ? ' hidden' : '' ?>>
         <h2 class="tk-book__panel-title">Termin wählen</h2>
-        <p class="tk-book__selection" id="tk-book-selected-service" hidden></p>
+        <p class="tk-book__selection" id="tk-book-selected-service"<?= $isAcademyDemo && $activeDemoStep >= 2 ? '' : ' hidden' ?>><?= $isAcademyDemo && $activeDemoStep >= 2 ? View::escape($demoArticleTitle) : '' ?></p>
         <div class="tk-book__datetime">
           <label class="tk-book__field">
             <span>Datum</span>
-            <input type="date" id="tk-book-date" class="tk-book__input">
+            <input type="date" id="tk-book-date" class="tk-book__input"<?= $isAcademyDemo && $activeDemoStep >= 2 ? ' value="' . View::escape($demoDate) . '"' : '' ?>>
           </label>
           <label class="tk-book__field" id="tk-book-employee-field" hidden>
             <span>Mitarbeiter (optional)</span>
@@ -98,36 +135,46 @@ $intro = CalendarEmbedSettings::introText();
         </div>
         <div class="tk-book__slots-wrap">
           <p class="tk-book__slots-label">Verfügbare Zeiten</p>
-          <div class="tk-book__slots" id="tk-book-slots" aria-live="polite"></div>
-          <p class="tk-book__hint" id="tk-book-slots-hint">Bitte zuerst ein Datum wählen.</p>
+          <?php if ($isAcademyDemo && $activeDemoStep >= 2) : ?>
+            <div class="tk-book__slots" id="tk-book-slots" aria-live="polite">
+              <button type="button" class="tk-book__slot is-selected"><?= View::escape($demoTime) ?></button>
+              <button type="button" class="tk-book__slot">11:00</button>
+              <button type="button" class="tk-book__slot">11:15</button>
+              <button type="button" class="tk-book__slot">11:30</button>
+            </div>
+            <p class="tk-book__hint" id="tk-book-slots-hint" hidden>Bitte zuerst ein Datum wählen.</p>
+          <?php else : ?>
+            <div class="tk-book__slots" id="tk-book-slots" aria-live="polite"></div>
+            <p class="tk-book__hint" id="tk-book-slots-hint">Bitte zuerst ein Datum wählen.</p>
+          <?php endif; ?>
         </div>
         <div class="tk-book__nav">
           <button type="button" class="tk-book__btn tk-book__btn--ghost" data-step-back="1">Zurück</button>
         </div>
       </div>
 
-      <div class="tk-book__panel" data-step-panel="3" hidden>
+      <div class="tk-book__panel<?= $panelVisible('3') ? ' is-active' : '' ?>" data-step-panel="3"<?= !$panelVisible('3') ? ' hidden' : '' ?>>
         <h2 class="tk-book__panel-title">Ihre Kontaktdaten</h2>
-        <p class="tk-book__selection" id="tk-book-selected-slot"></p>
+        <p class="tk-book__selection" id="tk-book-selected-slot"><?= $isAcademyDemo && $activeDemoStep >= 3 ? View::escape($demoSlotLabel) : '' ?></p>
         <form id="tk-book-form" class="tk-book__form" novalidate>
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-          <input type="hidden" name="article_id" id="tk-book-article-id" value="">
+          <input type="hidden" name="article_id" id="tk-book-article-id" value="<?= $isAcademyDemo && $activeDemoStep >= 3 ? $demoArticleId : '' ?>">
           <input type="hidden" name="employee_id" id="tk-book-employee-id" value="0">
-          <input type="hidden" name="slot_datetime" id="tk-book-slot-datetime" value="">
+          <input type="hidden" name="slot_datetime" id="tk-book-slot-datetime" value="<?= $isAcademyDemo && $activeDemoStep >= 3 ? View::escape($demoDate . 'T' . $demoTime) : '' ?>">
           <div class="tk-book__hp" aria-hidden="true">
             <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
           </div>
           <label class="tk-book__field">
             <span>Name *</span>
-            <input type="text" name="customer_name" class="tk-book__input" required autocomplete="name">
+            <input type="text" name="customer_name" class="tk-book__input" required autocomplete="name"<?= $isAcademyDemo && $activeDemoStep >= 3 ? ' value="' . View::escape($demoCustomerName) . '"' : '' ?>>
           </label>
           <label class="tk-book__field">
             <span>E-Mail *</span>
-            <input type="email" name="customer_email" class="tk-book__input" required autocomplete="email">
+            <input type="email" name="customer_email" class="tk-book__input" required autocomplete="email"<?= $isAcademyDemo && $activeDemoStep >= 3 ? ' value="' . View::escape($demoCustomerEmail) . '"' : '' ?>>
           </label>
           <label class="tk-book__field">
             <span>Telefon (optional)</span>
-            <input type="tel" name="customer_phone" class="tk-book__input" autocomplete="tel">
+            <input type="tel" name="customer_phone" class="tk-book__input" autocomplete="tel"<?= $isAcademyDemo && $activeDemoStep >= 3 ? ' value="' . View::escape($demoCustomerPhone) . '"' : '' ?>>
           </label>
           <p class="tk-book__error" id="tk-book-error" hidden role="alert"></p>
           <div class="tk-book__nav">
@@ -137,7 +184,7 @@ $intro = CalendarEmbedSettings::introText();
         </form>
       </div>
 
-      <div class="tk-book__panel tk-book__panel--success" data-step-panel="done" hidden>
+      <div class="tk-book__panel tk-book__panel--success<?= $panelVisible('done') ? ' is-active' : '' ?>" data-step-panel="done"<?= !$panelVisible('done') ? ' hidden' : '' ?>>
         <div class="tk-book__success-icon" aria-hidden="true">✓</div>
         <h2 class="tk-book__panel-title">Termin gebucht</h2>
         <p class="tk-book__lead" id="tk-book-success-message"><?= View::escape(CalendarEmbedSettings::successMessage()) ?></p>
@@ -145,6 +192,7 @@ $intro = CalendarEmbedSettings::introText();
     </div>
   </div>
 
+  <?php if (!$isAcademyDemo) : ?>
   <script>
     window.tkPublicBooking = {
       apiSlots: '/api/booking-slots',
@@ -154,5 +202,6 @@ $intro = CalendarEmbedSettings::introText();
     };
   </script>
   <script src="<?= View::escape(Asset::url('/assets/js/public-booking.js')) ?>" defer></script>
+  <?php endif; ?>
 </body>
 </html>

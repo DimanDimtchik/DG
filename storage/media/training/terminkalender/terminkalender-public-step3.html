@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="https://ganz-soft.de/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Termin online vereinbaren – </title>
+          <link rel="icon" href="/app/favicon?size=32" type="image/png" sizes="32x32">
+    <link rel="icon" href="/app/favicon?size=16" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/app/favicon?size=48">
+        <link rel="stylesheet" href="/assets/css/dg.css?v=1789476240">
+  <style>:root { --dg-font: system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, sans-serif; --dg-menu-bg:#59524c;--dg-menu-bg-hover:#524b46;--dg-menu-bg-active:#4b4540;--dg-menu-text:#ffffff;--dg-menu-text-muted:rgba(255, 255, 255, 0.72);--dg-menu-border:#4b4540;--dg-brand:#c4b5a5;--dg-brand-dark:#ac9f91;--dg-body-bg:#ebe6e1;--dg-surface:#ffffff;--dg-text:#1d2327;--dg-text-secondary:#50575e;--dg-text-muted:#787c82;--dg-border:#d4ccc4;--dg-border-strong:#b8aea3;--dg-primary:#6e6258;--dg-primary-hover:#5a5048;--dg-focus-ring:rgba(110, 98, 88, 0.25) }</style>
+<style>.tk-cal, .tk-abs, .tk-book, .dg-cal-appearance-preview{--tk-cal-primary:#6e6258;--tk-cal-primary-hover:#5a5048;--tk-cal-on-primary:#ffffff;--tk-cal-surface:#ffffff;--tk-cal-surface-alt:#fdfcfb;--tk-cal-border:#d4d8de;--tk-cal-text:#1e293b;--tk-cal-muted:#64748b;--tk-cal-today:#ebe4dc;--tk-cal-radius:12px;--tk-cal-shadow:0 8px 30px rgba(15, 23, 42, 0.08);--tk-slot-bg:#fdfcfb;--tk-slot-hover:#efe9e4;--tk-slot-selected-bg:#ebe4dc;--tk-slot-selected-border:#6e6258;--tk-slot-booked-bg:#f5f3f1;--tk-slot-text:#1e293b;--tk-focus-ring:#ccc8c5}</style>
+</head>
+<body class="tk-book-page">
+  <div class="tk-book" id="tk-public-booking" style="--tk-cal-primary:#6e6258;--tk-cal-primary-hover:#5a5048;--tk-cal-on-primary:#ffffff;--tk-cal-surface:#ffffff;--tk-cal-surface-alt:#fdfcfb;--tk-cal-border:#d4d8de;--tk-cal-text:#1e293b;--tk-cal-muted:#64748b;--tk-cal-today:#ebe4dc;--tk-cal-radius:12px;--tk-cal-shadow:0 8px 30px rgba(15, 23, 42, 0.08);--tk-slot-bg:#fdfcfb;--tk-slot-hover:#efe9e4;--tk-slot-selected-bg:#ebe4dc;--tk-slot-selected-border:#6e6258;--tk-slot-booked-bg:#f5f3f1;--tk-slot-text:#1e293b;--tk-focus-ring:#ccc8c5">
+    <header class="tk-book__header">
+              <img class="tk-book__logo dg-logo--wide" src="/app/media?id=20260828174130_631472" alt="Logo">
+            <div>
+        <h1 class="tk-book__title">Termin online vereinbaren</h1>
+              </div>
+    </header>
+
+          <p class="tk-book__intro">Wählen Sie eine Leistung, einen freien Termin und hinterlassen Sie Ihre Kontaktdaten. Sie erhalten eine Bestätigung per E-Mail.</p>
+    
+    <ol class="tk-book__steps" aria-label="Buchungsschritte">
+      <li class="tk-book__step is-done" data-step-indicator="1"><span>1</span> Leistung</li>
+      <li class="tk-book__step is-done" data-step-indicator="2"><span>2</span> Termin</li>
+      <li class="tk-book__step is-active" data-step-indicator="3"><span>3</span> Kontakt</li>
+    </ol>
+
+    <div class="tk-book__card" id="tk-book-panel">
+      <div class="tk-book__panel" data-step-panel="1" hidden>
+        <h2 class="tk-book__panel-title">Leistung wählen</h2>
+                  <div class="tk-book__services" role="list">
+                          <button
+                type="button"
+                class="tk-book__service is-selected"
+                data-article-id="97"
+                data-uses-employees="0"
+                data-duration="30"
+              >
+                <span class="tk-book__service-title">Massage</span>
+                <span class="tk-book__service-meta">
+                  30 Min.                                      · 59,99 €                                  </span>
+              </button>
+                      </div>
+              </div>
+
+      <div class="tk-book__panel" data-step-panel="2" hidden>
+        <h2 class="tk-book__panel-title">Termin wählen</h2>
+        <p class="tk-book__selection" id="tk-book-selected-service">Massage</p>
+        <div class="tk-book__datetime">
+          <label class="tk-book__field">
+            <span>Datum</span>
+            <input type="date" id="tk-book-date" class="tk-book__input" value="2026-09-18">
+          </label>
+          <label class="tk-book__field" id="tk-book-employee-field" hidden>
+            <span>Mitarbeiter (optional)</span>
+            <select id="tk-book-employee" class="tk-book__input">
+              <option value="0">— Beliebiger verfügbarer Mitarbeiter —</option>
+                          </select>
+          </label>
+        </div>
+        <div class="tk-book__slots-wrap">
+          <p class="tk-book__slots-label">Verfügbare Zeiten</p>
+                      <div class="tk-book__slots" id="tk-book-slots" aria-live="polite">
+              <button type="button" class="tk-book__slot is-selected">10:45</button>
+              <button type="button" class="tk-book__slot">11:00</button>
+              <button type="button" class="tk-book__slot">11:15</button>
+              <button type="button" class="tk-book__slot">11:30</button>
+            </div>
+            <p class="tk-book__hint" id="tk-book-slots-hint" hidden>Bitte zuerst ein Datum wählen.</p>
+                  </div>
+        <div class="tk-book__nav">
+          <button type="button" class="tk-book__btn tk-book__btn--ghost" data-step-back="1">Zurück</button>
+        </div>
+      </div>
+
+      <div class="tk-book__panel is-active" data-step-panel="3">
+        <h2 class="tk-book__panel-title">Ihre Kontaktdaten</h2>
+        <p class="tk-book__selection" id="tk-book-selected-slot">Massage — 18.09.2026, 10:45 Uhr</p>
+        <form id="tk-book-form" class="tk-book__form" novalidate>
+          <input type="hidden" name="_csrf" value="3e01a0ffe4ec128e524c683a31154691">
+          <input type="hidden" name="article_id" id="tk-book-article-id" value="97">
+          <input type="hidden" name="employee_id" id="tk-book-employee-id" value="0">
+          <input type="hidden" name="slot_datetime" id="tk-book-slot-datetime" value="2026-09-18T10:45">
+          <div class="tk-book__hp" aria-hidden="true">
+            <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          </div>
+          <label class="tk-book__field">
+            <span>Name *</span>
+            <input type="text" name="customer_name" class="tk-book__input" required autocomplete="name" value="Maria Beispiel">
+          </label>
+          <label class="tk-book__field">
+            <span>E-Mail *</span>
+            <input type="email" name="customer_email" class="tk-book__input" required autocomplete="email" value="maria.beispiel@example.de">
+          </label>
+          <label class="tk-book__field">
+            <span>Telefon (optional)</span>
+            <input type="tel" name="customer_phone" class="tk-book__input" autocomplete="tel" value="+49 170 1234567">
+          </label>
+          <p class="tk-book__error" id="tk-book-error" hidden role="alert"></p>
+          <div class="tk-book__nav">
+            <button type="button" class="tk-book__btn tk-book__btn--ghost" data-step-back="2">Zurück</button>
+            <button type="submit" class="tk-book__btn tk-book__btn--primary" id="tk-book-submit">Termin verbindlich buchen</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="tk-book__panel tk-book__panel--success" data-step-panel="done" hidden>
+        <div class="tk-book__success-icon" aria-hidden="true">✓</div>
+        <h2 class="tk-book__panel-title">Termin gebucht</h2>
+        <p class="tk-book__lead" id="tk-book-success-message">Vielen Dank — Ihr Termin ist gebucht. Sie erhalten in Kürze eine Bestätigung per E-Mail.</p>
+      </div>
+    </div>
+  </div>
+
+  </body>
+</html>

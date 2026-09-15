@@ -1,0 +1,28 @@
+{
+  "title": "Terminkalender — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 53.9,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 8.52
+    },
+    {
+      "key": "nav-terminkalender",
+      "duration_sec": 8.88
+    },
+    {
+      "key": "liste",
+      "duration_sec": 11.0
+    },
+    {
+      "key": "suche",
+      "duration_sec": 12.16
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 13.36
+    }
+  ]
+}
