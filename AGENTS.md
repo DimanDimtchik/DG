@@ -99,6 +99,6 @@ bash bin/sync-crm-from-master.sh
 
 Verbindliche Regeln: **[`docs/akademie/VIDEO-REGELN.md`](docs/akademie/VIDEO-REGELN.md)** · Texte/Sprachen: **[`docs/akademie/locales/README.md`](docs/akademie/locales/README.md)**
 
-Kurz: Dashboard-Start · nur echte CRM-Screenshots · einfache Sprache · **Stimme DE: `de-DE-KatjaNeural`** · Texte in `locales/{sprache}/*.json` (Slug-Keys, mehrsprachig vorbereitet).
+Kurz: Dashboard-Start · echte CRM-Screenshots · einfache Sprache · **Stimme DE: `de-DE-KatjaNeural`** · Szenario-first · VTT Pflicht · Demo-Daten · Störfaktoren weg · kurze Clips · UI-Änderung → neu aufnehmen · Texte in `locales/{sprache}/*.json`.
 
 Technik: `bin/academy-build-dashboard-video.sh`

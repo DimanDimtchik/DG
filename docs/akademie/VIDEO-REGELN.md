@@ -12,7 +12,23 @@ Stand: 2026-09-15
 1. **Immer vom Dashboard starten** — Nutzer soll sehen, *wo* er ist und *wie* er dorthin kommt.  
 2. **Nur echtes CRM-Bild** — keine nachgebauten Kacheln, keine erfundenen Folien.  
 3. **Einfache Sprache** — für Anwender ohne IT- und Buchführungs-Vorkenntnisse.  
-4. **Feste Stimme (Deutsch):** `de-DE-KatjaNeural` (edge-tts) — alle Clips einheitlich.
+4. **Feste Stimme (Deutsch):** `de-DE-KatjaNeural` (edge-tts) — alle Clips einheitlich.  
+5. **Produktion:** Szenario zuerst · Demo-Daten · Störfaktoren weg · kurze Clips · VTT Pflicht · bei UI-Änderung neu aufnehmen.
+
+---
+
+## 0. Workflow (Reihenfolge)
+
+| Schritt | Was |
+|---------|-----|
+| 1 | **Szenario** — `docs/akademie/szenario-{thema}.md` (Ablauf, Text grob, Dauer-Ziel) |
+| 2 | **Sprechtext** — `docs/akademie/locales/{sprache}/{video-slug}.json` |
+| 3 | **Screenshot** — echtes CRM (Export + Capture oder Screen-Recording) |
+| 4 | **Render** — Video + VTT erzeugen |
+| 5 | **Prüfen** — Checkliste unten; **Vollvideo** ansehen (nicht nur Kurz-Vorschau) |
+| 6 | **Deploy** — MP4/VTT auf Instanz, `duration_sec` in DB |
+
+Kein Render ohne fertiges Szenario und JSON — spart doppelte Arbeit.
 
 ---
 
@@ -43,9 +59,28 @@ Alles Sichtbare muss **1:1 aus dem laufenden CRM** stammen.
 | Leichte Zooms / Fokus-Rahmen **auf dem echten Bild** | Stock-Fotos, Mockups, generische Software-Grafiken |
 | Leichte Abdunkelung **neben** dem Fokus | Overlays, die das CRM verdecken |
 
-**Vor der Aufnahme:** Cookie-Banner, Support-Hinweise und Störmeldungen entfernen. **Datenschutz:** keine echten Kundennamen, Beträge oder E-Mails — Demo-Daten oder Unkenntlichmachung.
+**Vor der Aufnahme**
 
-**Technik (Dashboard):** `bin/academy-build-dashboard-video.sh`
+- Cookie-Banner, Support-Hinweise, leere Fehlermeldungen und Pop-ups **entfernen**
+- **Datenschutz:** keine echten Kundennamen, Beträge, IBAN oder E-Mails — nur Demo-Daten oder Unkenntlichmachung
+- **Aufnahme-Instanz:** Master/Live-Test (`dg.ganz-om.de`, `ganz-soft.de`) mit **Admin-User**, der alle für das Video nötigen Module zeigt
+- **Konsistenz:** dieselbe Instanz und Rolle für zusammengehörige Clips einer Serie
+
+**Sichtbare Kacheln:** Was ein Nutzer im CRM sieht, hängt von **Rolle und Abteilung** ab. Wenn das relevant ist (z. B. Dashboard-Überblick), im Intro **ein Satz** dazu — sonst wundern sich Anwender über „fehlende“ Kacheln.
+
+**Nach CRM-UI-Änderungen:** Layout, Menü, Icons oder Kacheltext geändert → Screenshot und Video **neu erzeugen**. Altes Material nicht weiterverwenden.
+
+**Technik (Dashboard):**
+
+```bash
+bash bin/academy-build-dashboard-video.sh
+# Einzelschritte:
+php bin/academy-export-dashboard-html.php --base=https://ganz-soft.de/
+python3 bin/academy-capture-dashboard.py
+python3 bin/academy-generate-dashboard-video.py --locale de
+```
+
+Für **andere Module:** gleiches Prinzip — echter Bildschirm (Playwright, Recording), dann schneiden/zoomen; **nie** UI neu zeichnen.
 
 ---
 
@@ -60,13 +95,11 @@ Zielgruppe: **Mitarbeiter ohne Fachkenntnisse** — weder Programmierer noch Buc
 | **Was** tun und **warum** — aus Nutzersicht | Technik, Datenbank, Code |
 | Fachbegriff **kurz erklären** oder vermeiden | Abkürzungen voraussetzen |
 
-**Ton:** ruhig, sachlich, freundlich — wie eine geduldige Kollegin.
+**Ton:** ruhig, sachlich, freundlich — wie eine geduldige Kollegin; **nicht hetzen**, lieber kurze Pause als gedrängelter Text.
 
-**Untertitel (VTT):** identisch zur gesprochenen Spur.
+**Untertitel (VTT):** **Pflicht** zu jedem Clip — identisch zur gesprochenen Spur (Barrierefreiheit, Nutzung ohne Ton). Kein Video ohne `.vtt` veröffentlichen.
 
-**Kurz halten:** ein Thema pro Clip; lieber mehrere kurze Videos als ein langer Sammelband. Keine Mindestlänge pro Kachel — nur so lang wie nötig.
-
-**Szenario zuerst:** Text in `docs/akademie/szenario-*.md` und `docs/akademie/locales/{sprache}/*.json` **vor** Aufnahme/Render festlegen.
+**Kurz halten:** **ein Thema pro Clip**; lieber mehrere kurze Videos (Richtwert **2–5 Minuten** pro Modul-Thema) als ein langer Sammelband. Keine Mindestlänge pro Kachel — nur so lang wie nötig. Ausnahme: bewusst geplanter Überblick (z. B. alle Dashboard-Kacheln).
 
 ---
 
@@ -98,21 +131,45 @@ Details: [`locales/README.md`](locales/README.md)
 
 ---
 
+## 6. Ergänzende Pflichten (Produktion & Pflege)
+
+Zusammenfassung der Regeln, die über Navigation, Bild und Sprache hinausgehen:
+
+| Thema | Regel |
+|-------|--------|
+| **Szenario zuerst** | Kein Aufnahme-/Render-Start ohne `szenario-*.md` + `locales/…/*.json` |
+| **Datenschutz** | Nur Demo-Daten im Bild; keine echten Personen- oder Geschäftsdaten |
+| **Störfaktoren** | Banner, Cookies, Fehlermeldungen vor Capture entfernen |
+| **Ein Thema pro Video** | Kurze Clips; Überblicke als Ausnahme dokumentieren |
+| **Aufnahme-Umgebung** | Live-Test/Master, Admin-User, alle benötigten Module sichtbar |
+| **Rollen-Hinweis** | Optional im Intro, wenn sichtbare Module von Rolle/Abteilung abhängen |
+| **UI-Änderungen** | Nach Layout-/Menü-Update Material neu erzeugen |
+| **Untertitel** | VTT Pflicht, Text = gesprochene Spur |
+| **Stimme** | DE: `de-DE-KatjaNeural`; andere Sprachen in Locale-JSON |
+| **Demos** | Kurz-Vorschau ≠ Vollvideo — bei Vorschau **Gesamtdauer** nennen |
+| **Deploy** | MP4 + VTT hochladen, `duration_sec` aktualisieren, **Vollvideo** geprüft |
+
+---
+
 ## Checkliste vor Veröffentlichung
 
+- [ ] Szenario + Locale-JSON **vor** Produktion fertig
 - [ ] Video startet am **Dashboard** (oder dokumentierte Ausnahme)
 - [ ] Navigation zum Thema **sichtbar**
 - [ ] **Echte CRM-Screenshots** (Sidebar, Logo, Icons erkennbar)
 - [ ] Keine Textfolien ohne UI
-- [ ] Text für **Nicht-Buchhalter** verständlich
-- [ ] Stimme **Katja** (DE) bzw. eingetragene Locale-Stimme
-- [ ] Untertitel (`.vtt`) liegt bei
+- [ ] Aufnahme ohne Cookie-Banner / Störmeldungen
 - [ ] Keine personenbezogenen Live-Daten im Bild
+- [ ] Text für **Nicht-Buchhalter** verständlich
+- [ ] **Ein Thema** pro Clip (oder Überblick bewusst ausgewiesen)
+- [ ] Stimme **Katja** (DE) bzw. eingetragene Locale-Stimme
+- [ ] Untertitel (`.vtt`) **Pflicht** — liegt bei, Text = Audio
+- [ ] **Vollvideo** geprüft (nicht nur Kurz-Vorschau)
 - [ ] Dauer in `dg_academy_modules.duration_sec` stimmt
-- [ ] Demo-Vorschau ≠ Vollvideo (Dauer angeben)
+- [ ] Demo-Vorschau ≠ Vollvideo (Gesamtdauer angeben)
 
 ---
 
 ## Referenz für Agent-Chats
 
-> **Akademie-Videos:** [`docs/akademie/VIDEO-REGELN.md`](VIDEO-REGELN.md) — Dashboard-Start, echte CRM-Bilder, einfache Sprache, Stimme Katja. Texte: [`locales/`](locales/).
+> **Akademie-Videos:** [`docs/akademie/VIDEO-REGELN.md`](VIDEO-REGELN.md) — Dashboard-Start, echte CRM-Bilder, einfache Sprache, Stimme Katja, Szenario-first, VTT Pflicht, Demo-Daten, bei UI-Änderung neu aufnehmen. Texte: [`locales/`](locales/).
