@@ -1,0 +1,39 @@
+{
+  "video_slug": "konten-kontenuebersicht",
+  "locale": "de",
+  "title": "Konten — Kontenübersicht",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir die Kontenübersicht. Sie starten im Dashboard."
+    },
+    {
+      "key": "nav-kontenuebersicht",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-kontenuebersicht",
+      "narration": "Klicken Sie auf Kontenübersicht — die Kachel im Buchhaltungs-Bereich oder den Menüpunkt links."
+    },
+    {
+      "key": "filter",
+      "screenshot": "storage/media/training/konten/kontenuebersicht.png",
+      "mode": "overview",
+      "narration": "Oben wählen Sie Geschäftsjahr und optional einen Zeitraum. Mit Suche filtern Sie nach Kontonummer oder Bezeichnung. Leere Konten können Sie ein- oder ausblenden."
+    },
+    {
+      "key": "salden",
+      "screenshot": "storage/media/training/konten/kontenuebersicht.png",
+      "mode": "overview",
+      "narration": "Die Tabelle zeigt je Konto den Saldo — S für Soll, H für Haben. Klicken Sie auf eine Kontonummer, um den Kontoauszug mit Einzelbuchungen zu sehen."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/konten/kontenuebersicht.png",
+      "mode": "overview",
+      "narration": "Die Kontenübersicht gibt Ihnen einen schnellen Überblick über alle Salden im gewählten Zeitraum. Viel Erfolg!"
+    }
+  ]
+}

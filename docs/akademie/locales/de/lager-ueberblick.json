@@ -1,0 +1,39 @@
+{
+  "video_slug": "lager-ueberblick",
+  "locale": "de",
+  "title": "Lager — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir das Lager im CRM. Sie starten wie immer im Dashboard — Ihrer Startseite nach dem Login."
+    },
+    {
+      "key": "nav-lager",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "lager",
+      "narration": "Klicken Sie auf die Kachel Lager — oder wählen Sie Lager im Menü links. Beides führt Sie zur Lagerübersicht."
+    },
+    {
+      "key": "subtabs",
+      "screenshot": "storage/media/training/lager/lager-overview.png",
+      "mode": "overview",
+      "narration": "Oben sehen Sie die Bereiche: Bestandsübersicht, Wareneingang, Warenausgang, Platz-Check, Bewegungen und Inventur. So finden Sie jede Lagerfunktion schnell."
+    },
+    {
+      "key": "bestand",
+      "screenshot": "storage/media/training/lager/lager-overview.png",
+      "mode": "overview",
+      "narration": "In der Bestandsübersicht sehen Sie alle Artikel mit Lagerführung: Nummer, Bezeichnung, Positionscode, Bestand und Mindestbestand. Gelb markierte Zeilen liegen unter dem Mindestbestand."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/lager/lager-overview.png",
+      "mode": "overview",
+      "narration": "Das war der Kurzüberblick Lager. Platz-Check, Ein- und Ausgang sowie Inventur erklären wir in den Vertiefungs-Videos. Viel Erfolg!"
+    }
+  ]
+}

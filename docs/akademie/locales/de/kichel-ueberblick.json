@@ -1,0 +1,53 @@
+{
+  "video_slug": "kichel-ueberblick",
+  "locale": "de",
+  "title": "Kichel — Schnelle Hilfe im CRM",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir Kichel — Ihren Hilfe-Assistenten im CRM. Kichel ist auf jeder Seite verfügbar, wir starten am Dashboard."
+    },
+    {
+      "key": "fab",
+      "screenshot": "storage/media/training/kichel/kichel-dashboard-closed.png",
+      "mode": "focus_field",
+      "field": "fab",
+      "section": "kichel",
+      "regions_file": "storage/media/training/kichel/kichel-regions.json",
+      "narration": "Unten rechts sehen Sie das Kichel-Symbol. Ein Klick öffnet das Hilfe-Panel — von überall im Programm aus."
+    },
+    {
+      "key": "panel",
+      "screenshot": "storage/media/training/kichel/kichel-dashboard-open.png",
+      "mode": "overview",
+      "narration": "Im Panel stellen Sie eine Frage oder wählen ein Stichwort — zum Beispiel Umsatzsteuer-Identifikationsnummer, Skonto oder Belege. Kichel antwortet mit dem passenden Weg im CRM."
+    },
+    {
+      "key": "chips",
+      "screenshot": "storage/media/training/kichel/kichel-dashboard-open.png",
+      "mode": "focus_field",
+      "field": "chips",
+      "section": "kichel_open",
+      "regions_file": "storage/media/training/kichel/kichel-open-regions.json",
+      "narration": "Die Stichwort-Chips sind Schnelleinstiege für häufige Fragen — ein Tipp genügt, Kichel zeigt Ihnen den Weg."
+    },
+    {
+      "key": "frage",
+      "screenshot": "storage/media/training/kichel/kichel-dashboard-open.png",
+      "mode": "focus_field",
+      "field": "input",
+      "section": "kichel_open",
+      "regions_file": "storage/media/training/kichel/kichel-open-regions.json",
+      "narration": "Oder tippen Sie Ihre Frage unten ein und klicken Sie auf Senden. Die Antwort erscheint direkt im Chat — ohne externe Internet-Suche."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kichel/kichel-dashboard-open.png",
+      "mode": "overview",
+      "narration": "Kichel hilft Ihnen, im CRM schneller zurechtzukommen — probieren Sie es bei der nächsten Frage einfach aus. Viel Erfolg!"
+    }
+  ]
+}

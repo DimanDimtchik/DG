@@ -118,6 +118,67 @@ SECTION_JS = """() => {
         if (block) sections['email'] = block;
     }
 
+    const subtabs = document.querySelector('.dg-subtabs');
+    if (subtabs) {
+        const block = rect(subtabs);
+        if (block) sections['subtabs'] = block;
+    }
+
+    const placeCheck = document.querySelector('#dg-place-audit-form, #dg-place-audit-manual-form');
+    if (placeCheck) {
+        const parent = placeCheck.closest('.dg-panel') || placeCheck;
+        const block = rect(parent);
+        if (block) sections['platz_check'] = block;
+    }
+
+    const receiptScan = document.querySelector('[data-lager-scan="receipt"]');
+    if (receiptScan) {
+        const block = rect(receiptScan.closest('.dg-panel') || receiptScan);
+        if (block) sections['wareneingang'] = block;
+    }
+
+    const issueForm = document.querySelector('#dg-issue-voucher');
+    if (issueForm) {
+        const block = rect(issueForm.closest('.dg-panel') || issueForm.closest('form') || issueForm);
+        if (block) sections['warenausgang'] = block;
+    }
+
+    const inventurForm = document.querySelector('input[name="inventory_date"]');
+    if (inventurForm) {
+        const block = rect(inventurForm.closest('.dg-panel') || inventurForm.closest('form') || inventurForm);
+        if (block) sections['inventur'] = block;
+    }
+
+    const kontenSearch = document.querySelector('.dg-buchhaltung-konten__search');
+    if (kontenSearch) {
+        const block = rect(kontenSearch);
+        if (block) sections['search'] = block;
+    }
+
+    const hintPanel = document.getElementById('dg-account-hint-panel');
+    if (hintPanel && !hintPanel.hidden) {
+        const block = rect(hintPanel);
+        if (block) sections['hint'] = block;
+    }
+
+    const kichelFab = document.querySelector('[data-kichel-fab]');
+    if (kichelFab) {
+        const block = rect(kichelFab);
+        if (block) sections['kichel'] = block;
+    }
+
+    const kichelPanel = document.getElementById('dg-kichel-panel');
+    if (kichelPanel && !kichelPanel.hidden) {
+        const block = rect(kichelPanel);
+        if (block) sections['kichel_open'] = block;
+    }
+
+    const ledgerFilters = document.querySelector('.dg-ledger-filters');
+    if (ledgerFilters) {
+        const block = rect(ledgerFilters);
+        if (block) sections['filter'] = block;
+    }
+
     return sections;
 }"""
 

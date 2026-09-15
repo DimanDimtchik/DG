@@ -1,0 +1,60 @@
+{
+  "video_slug": "konten-hinweise",
+  "locale": "de",
+  "title": "Konten — Hinweise",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir die Kontenhinweise. Sie starten im Dashboard und öffnen Konten."
+    },
+    {
+      "key": "nav-konten",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-konten",
+      "narration": "Wechseln Sie zur Kachel Konten."
+    },
+    {
+      "key": "konto-8400",
+      "screenshot": "storage/media/training/konten/konten-hint-8400.png",
+      "mode": "overview",
+      "narration": "Nach Eingabe einer Kontonummer erscheint rechts das Hinweis-Panel: Kontonummer, Name, Kurztext und Einordnung — verständlich erklärt, ohne Buchhaltungs-Fachjargon."
+    },
+    {
+      "key": "suchbegriffe",
+      "screenshot": "storage/media/training/konten/konten-hint-8400.png",
+      "mode": "focus_field",
+      "field": "search_terms",
+      "section": "hint",
+      "regions_file": "storage/media/training/konten/konten-hint-regions.json",
+      "narration": "Unter Suchbegriffe sehen Sie Synonyme — zum Beispiel Umsatz oder Erlös. Diese Begriffe steuern die Kontensuche, wenn Sie nach Worten statt nach Nummern suchen."
+    },
+    {
+      "key": "kontenziffern",
+      "screenshot": "storage/media/training/konten/konten-hint-8400.png",
+      "mode": "focus_field",
+      "field": "digits",
+      "section": "hint",
+      "regions_file": "storage/media/training/konten/konten-hint-regions.json",
+      "narration": "Bei Kontenziffern wird die Nummer Stück für Stück erklärt — hilfreich, wenn Sie den Kontenrahmen noch nicht auswendig kennen."
+    },
+    {
+      "key": "beispiele",
+      "screenshot": "storage/media/training/konten/konten-hint-8400.png",
+      "mode": "focus_field",
+      "field": "examples",
+      "section": "hint",
+      "regions_file": "storage/media/training/konten/konten-hint-regions.json",
+      "narration": "Unter Beispiele finden Sie typische Buchungsfälle — wann dieses Konto sinnvoll ist und worauf Sie achten sollten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/konten/konten-hint-8400.png",
+      "mode": "overview",
+      "narration": "Die Kontenhinweise unterstützen Sie bei der richtigen Kontenwahl — ohne Steuerberater-Wissen vorauszusetzen. Viel Erfolg!"
+    }
+  ]
+}
