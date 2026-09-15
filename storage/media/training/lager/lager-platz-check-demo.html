@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="https://ganz-soft.de/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Lager — Platz-Check – DG</title>
+          <link rel="icon" href="/app/favicon?size=32" type="image/png" sizes="32x32">
+    <link rel="icon" href="/app/favicon?size=16" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/app/favicon?size=48">
+        <link rel="stylesheet" href="/assets/css/dg.css?v=1789476215">
+  <style>:root { --dg-font: system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, sans-serif; --dg-menu-bg:#59524c;--dg-menu-bg-hover:#524b46;--dg-menu-bg-active:#4b4540;--dg-menu-text:#ffffff;--dg-menu-text-muted:rgba(255, 255, 255, 0.72);--dg-menu-border:#4b4540;--dg-brand:#c4b5a5;--dg-brand-dark:#ac9f91;--dg-body-bg:#ebe6e1;--dg-surface:#ffffff;--dg-text:#1d2327;--dg-text-secondary:#50575e;--dg-text-muted:#787c82;--dg-border:#d4ccc4;--dg-border-strong:#b8aea3;--dg-primary:#6e6258;--dg-primary-hover:#5a5048;--dg-focus-ring:rgba(110, 98, 88, 0.25) }</style>
+</head>
+<body class="dg-app">
+      <header id="dg-adminbar" class="dg-adminbar" role="banner">
+    <div class="dg-adminbar__left">
+      <a class="dg-adminbar__brand" href="/app">
+        <img src="/app/media?id=20260828174130_631472" alt="Logo" class="dg-adminbar__logo dg-logo--wide">
+        <span class="dg-adminbar__name">DG</span>
+      </a>
+    </div>
+
+    <div class="dg-adminbar__center">
+              <div class="dg-adminbar__menu" data-menu>
+          <button type="button" class="dg-adminbar__menu-toggle" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+            Admin
+            <span class="dg-adminbar__caret" aria-hidden="true"></span>
+          </button>
+          <div class="dg-adminbar__dropdown" role="menu" hidden data-menu-panel>
+            <a href="/app" role="menuitem">Übersicht</a>
+            <a href="/app?area=users" role="menuitem">Benutzer &amp; Mitarbeiter</a>
+            <a href="/app?area=departments" role="menuitem">Abteilungen</a>
+          </div>
+        </div>
+          </div>
+
+    <div class="dg-adminbar__right">
+      <div class="dg-adminbar__menu dg-adminbar__menu--user" data-menu>
+        <button type="button" class="dg-adminbar__user-toggle" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+          <span class="dg-adminbar__avatar" aria-hidden="true">A</span>
+          <span class="dg-adminbar__username">Administrator</span>
+          <span class="dg-adminbar__caret" aria-hidden="true"></span>
+        </button>
+        <div class="dg-adminbar__dropdown dg-adminbar__dropdown--right" role="menu" hidden data-menu-panel>
+          <div class="dg-adminbar__dropdown-meta">
+            <strong>Administrator</strong>
+            <span></span>
+            <span>Administrator</span>
+          </div>
+                      <a href="/app?area=profile" role="menuitem">Mein Profil</a>
+                    <a href="/logout" role="menuitem">Abmelden</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dg-shell">
+    <aside id="dg-sidebar" class="dg-sidebar" aria-label="Seitenleiste">
+      <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-nav">
+        <h2 id="dg-sidebar-nav" class="dg-sidebar__heading">Navigation</h2>
+        <ul class="dg-sidebar__list">
+                      <li>
+              <a href="/app" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                <span>Dashboard</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=kontakte" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                <span>Kontakte</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=terminkalender" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                <span>Terminkalender</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=zeiterfassung" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <circle cx="12" cy="12" r="9"/>
+  <path d="M12 3.75v1.5M20.25 12h-1.5M12 20.25v-1.5M3.75 12h1.5"/>
+  <path d="M12 7.25v5.1l3.6 2.15"/>
+  <circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+</svg>
+                <span>Zeiterfassung</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=post" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6M3 7v10l9 6 9-6V7"/></svg>
+                <span>Post</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=akademie" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                <span>Akademie</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=artikel-leistungen" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+                <span>Artikel &amp; Leistungen</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=lager" class="dg-sidebar__link is-active">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35"/><path d="M6 18h12"/><path d="M6 14h12"/><path d="M6 10h12"/><path d="M10 2 2 8v11"/><path d="M14 2l8 6v11"/></svg>
+                <span>Lager</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=support-freigabe" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <span>Support-Freigabe</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=bilder" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5.5-5.5a1.5 1.5 0 0 0-2.12 0L3 19"/></svg>
+                <span>Bilder</span>
+              </a>
+            </li>
+                  </ul>
+      </section>
+
+              <section class="dg-sidebar__section dg-sidebar__section--buchhaltung" aria-labelledby="dg-sidebar-buchhaltung">
+          <h2 id="dg-sidebar-buchhaltung" class="dg-sidebar__heading">Buchhaltung</h2>
+          <ul class="dg-sidebar__list">
+                          <li>
+                <a href="/app?page=buchhaltung-konten" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="M4 9h16"/></svg>
+                  <span>Konten</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-belege" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+                  <span>Belege</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-ueberweisungen" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Überweisungen</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-kontenuebersicht" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Kontenübersicht</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-opos" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Offene Posten</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-kassenbuch" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+                  <span>Kassenbuch</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-manuelle-buchung" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Manuelle Buchungen</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-auswertungen" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Bilanz &amp; GuV</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-bwa" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>BWA</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-susa" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>SuSa</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-bankabgleich" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Bankabgleich</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-steuerberater-export" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>Steuerberater-Export</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-ustva" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>UStVA</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-jahresabschluss" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 5h16v16H4z"/><path d="M4 9h16M8 3v4M16 3v4"/><path d="M9.5 15l2 2 3.5-4"/></svg>
+                  <span>Jahresabschluss</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+      
+              <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-website">
+          <h2 id="dg-sidebar-website" class="dg-sidebar__heading">Website</h2>
+          <ul class="dg-sidebar__list">
+                                        <li>
+                <a href="/app?page=website-seiten" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>Seiten</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-formulare" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6M3 7v10l9 6 9-6V7"/></svg>
+                  <span>Formulare</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-statistik" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Statistik</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-menu" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                  <span>Menü</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-chrome" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 15h18"/></svg>
+                  <span>Kopf &amp; Fuß</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-design" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12"/><circle cx="7.5" cy="10" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="16.5" cy="11" r="1"/></svg>
+                  <span>Design</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+                    <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kdv">
+          <h2 id="dg-sidebar-kdv" class="dg-sidebar__heading">SaaS-Kunden (Ganz Soft)</h2>
+          <ul class="dg-sidebar__list">
+                          <li>
+                <a href="/app?page=kdv-dashboard" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                  <span>Übersicht</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=kdv-kunden" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                  <span>SaaS-Kunden</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=kdv-support" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                  <span>Support-Freigaben</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+                    <section class="dg-sidebar__section dg-sidebar__section--system" aria-labelledby="dg-sidebar-system">
+          <h2 id="dg-sidebar-system" class="dg-sidebar__heading">System</h2>
+          <ul class="dg-sidebar__list">
+            <li>
+              <a href="/app?page=einstellungen" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <span>Einstellungen</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+          </aside>
+
+    <main id="dg-content" class="dg-content">
+      <div class="dg-wrap dg-lager">
+  
+  <header class="dg-page-header dg-page-header--toolbar">
+    <div>
+      <h1 class="dg-page-title">Lager</h1>
+      <p class="dg-lead">Bestände, Bewegungen und Inventur — Artikel mit aktivierter Lagerführung und Positionscode aus der Lagerstruktur.</p>
+    </div>
+    <div class="dg-page-header__actions">
+      <a class="dg-button" href="/app?page=einstellungen&amp;tab=lager-struktur">Lagerstruktur</a>
+      <a class="dg-button" href="/app?page=lager&amp;download=csv">Bestand CSV</a>
+          </div>
+  </header>
+
+  <nav class="dg-subtabs" aria-label="Lager-Bereiche">
+    <a href="/app?page=lager&amp;view=overview" class="dg-subtabs__link">Bestandsübersicht</a>
+    <a href="/app?page=lager&amp;view=wareneingang" class="dg-subtabs__link">Wareneingang</a>
+    <a href="/app?page=lager&amp;view=warenausgang" class="dg-subtabs__link">Warenausgang</a>
+    <a href="/app?page=lager&amp;view=platz-check" class="dg-subtabs__link is-active">Platz-Check</a>
+    <a href="/app?page=lager&amp;view=bewegungen" class="dg-subtabs__link">Bewegungen</a>
+    <a href="/app?page=lager&amp;view=inventur" class="dg-subtabs__link">Inventur</a>
+  </nav>
+
+  
+    <section class="dg-panel">
+    <h2 class="dg-subsection-title">Platz-Check (Mini-Audit)</h2>
+    <p class="dg-field-hint">Strichcode scannen <strong>oder</strong> Lagerstruktur manuell wählen — Anzeige von Belegung, Reservierung (fest/flexibel) und letzten Bewegungen. Scan per Handscanner, Tastatureingabe oder <strong>Kamera</strong> (Tablet/Smartphone, HTTPS).</p>
+    <form class="dg-form-grid dg-form-grid--compact" id="dg-place-audit-form" autocomplete="off">
+      <label class="dg-field dg-field--wide">
+        <span>Strichcode scannen</span>
+        <input type="text" data-scan-input inputmode="numeric" autofocus placeholder="Platz, Regal, Halle, Karton oder Artikel">
+        <button type="button" class="dg-button dg-button--small dg-camera-scan-btn" data-camera-scan-trigger>Kamera</button>
+      </label>
+    </form>
+
+    <form class="dg-form-grid dg-form-grid--compact dg-audit-manual" id="dg-place-audit-manual-form" autocomplete="off">
+      <h3 class="dg-subsection-title dg-field--wide">Manuell auswählen</h3>
+      <label class="dg-field">
+        <span>Ebene</span>
+        <select id="dg-audit-level" data-audit-level>
+                      <option value="location">Lagerort</option>
+                      <option value="hall">Halle</option>
+                      <option value="shelf">Regal</option>
+                      <option value="place" selected>Stellplatz</option>
+                  </select>
+      </label>
+      <label class="dg-field" data-audit-field="location">
+        <span>Lagerort</span>
+        <select id="dg-audit-location" data-audit-location>
+          <option value="">— wählen —</option>
+                      <option value="3">GL — Getränke Lager</option>
+                  </select>
+      </label>
+      <label class="dg-field" data-audit-field="hall">
+        <span>Halle</span>
+        <select id="dg-audit-hall" data-audit-hall>
+          <option value="">— wählen —</option>
+                      <option value="3" data-location-id="3">GL / H1</option>
+                  </select>
+      </label>
+      <label class="dg-field" data-audit-field="shelf">
+        <span>Regal</span>
+        <select id="dg-audit-shelf" data-audit-shelf>
+          <option value="">— wählen —</option>
+                      <option value="4" data-hall-id="3" data-location-id="3">GL-H1-R1</option>
+                  </select>
+      </label>
+      <label class="dg-field" data-audit-field="place">
+        <span>Stellplatz</span>
+        <select id="dg-audit-place" data-audit-place>
+          <option value="">— wählen —</option>
+                      <option value="9" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL01 · Palette</option>
+                      <option value="10" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL02 · Palette</option>
+                      <option value="11" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL03 · Palette</option>
+                      <option value="12" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL04 · Palette</option>
+                      <option value="13" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL05 · Palette</option>
+                      <option value="14" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL06 · Palette</option>
+                      <option value="15" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL07 · Palette</option>
+                      <option value="16" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL08 · Palette</option>
+                      <option value="17" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL09 · Palette</option>
+                      <option value="18" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL10 · Palette</option>
+                      <option value="19" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL11 · Palette</option>
+                      <option value="20" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL12 · Palette</option>
+                      <option value="21" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL13 · Palette</option>
+                      <option value="22" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL14 · Palette</option>
+                      <option value="23" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL15 · Palette</option>
+                      <option value="24" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL16 · Palette</option>
+                      <option value="25" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL17 · Palette</option>
+                      <option value="26" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL18 · Palette</option>
+                      <option value="27" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL19 · Palette</option>
+                      <option value="28" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL20 · Palette</option>
+                      <option value="29" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL21 · Palette</option>
+                      <option value="30" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL22 · Palette</option>
+                      <option value="31" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL23 · Palette</option>
+                      <option value="32" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL24 · Palette</option>
+                      <option value="33" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL25 · Palette</option>
+                      <option value="34" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL26 · Palette</option>
+                      <option value="35" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL27 · Palette</option>
+                      <option value="36" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL28 · Palette</option>
+                      <option value="37" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL29 · Palette</option>
+                      <option value="38" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL30 · Palette</option>
+                      <option value="39" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL31 · Palette</option>
+                      <option value="40" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL32 · Palette</option>
+                      <option value="41" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL33 · Palette</option>
+                      <option value="42" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL34 · Palette</option>
+                      <option value="43" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL35 · Palette</option>
+                      <option value="44" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL36 · Palette</option>
+                      <option value="45" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL37 · Palette</option>
+                      <option value="46" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL38 · Palette</option>
+                      <option value="47" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL39 · Palette</option>
+                      <option value="48" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL40 · Palette</option>
+                      <option value="49" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL41 · Palette</option>
+                      <option value="50" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL42 · Palette</option>
+                      <option value="51" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL43 · Palette</option>
+                      <option value="52" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL44 · Palette</option>
+                      <option value="53" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL45 · Palette</option>
+                      <option value="54" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL46 · Palette</option>
+                      <option value="55" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL47 · Palette</option>
+                      <option value="56" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL48 · Palette</option>
+                      <option value="57" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL49 · Palette</option>
+                      <option value="58" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-PAL50 · Palette</option>
+                      <option value="59" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT01 · Karton</option>
+                      <option value="60" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT02 · Karton</option>
+                      <option value="61" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT03 · Karton</option>
+                      <option value="62" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT04 · Karton</option>
+                      <option value="63" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT05 · Karton</option>
+                      <option value="64" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT06 · Karton</option>
+                      <option value="65" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT07 · Karton</option>
+                      <option value="66" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT08 · Karton</option>
+                      <option value="67" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT09 · Karton</option>
+                      <option value="68" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT10 · Karton</option>
+                      <option value="69" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT11 · Karton</option>
+                      <option value="70" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT12 · Karton</option>
+                      <option value="71" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT13 · Karton</option>
+                      <option value="72" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT14 · Karton</option>
+                      <option value="73" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT15 · Karton</option>
+                      <option value="74" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT16 · Karton</option>
+                      <option value="75" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT17 · Karton</option>
+                      <option value="76" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT18 · Karton</option>
+                      <option value="77" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT19 · Karton</option>
+                      <option value="78" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT20 · Karton</option>
+                      <option value="79" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT21 · Karton</option>
+                      <option value="80" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT22 · Karton</option>
+                      <option value="81" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT23 · Karton</option>
+                      <option value="82" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT24 · Karton</option>
+                      <option value="83" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT25 · Karton</option>
+                      <option value="84" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT26 · Karton</option>
+                      <option value="85" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT27 · Karton</option>
+                      <option value="86" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT28 · Karton</option>
+                      <option value="87" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT29 · Karton</option>
+                      <option value="88" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT30 · Karton</option>
+                      <option value="89" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT31 · Karton</option>
+                      <option value="90" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT32 · Karton</option>
+                      <option value="91" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT33 · Karton</option>
+                      <option value="92" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT34 · Karton</option>
+                      <option value="93" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT35 · Karton</option>
+                      <option value="94" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT36 · Karton</option>
+                      <option value="95" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT37 · Karton</option>
+                      <option value="96" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT38 · Karton</option>
+                      <option value="97" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT39 · Karton</option>
+                      <option value="98" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT40 · Karton</option>
+                      <option value="99" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT41 · Karton</option>
+                      <option value="100" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT42 · Karton</option>
+                      <option value="101" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT43 · Karton</option>
+                      <option value="102" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT44 · Karton</option>
+                      <option value="103" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT45 · Karton</option>
+                      <option value="104" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT46 · Karton</option>
+                      <option value="105" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT47 · Karton</option>
+                      <option value="106" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT48 · Karton</option>
+                      <option value="107" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT49 · Karton</option>
+                      <option value="108" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT50 · Karton</option>
+                      <option value="109" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT51 · Karton</option>
+                      <option value="110" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT52 · Karton</option>
+                      <option value="111" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT53 · Karton</option>
+                      <option value="112" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT54 · Karton</option>
+                      <option value="113" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT55 · Karton</option>
+                      <option value="114" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT56 · Karton</option>
+                      <option value="115" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT57 · Karton</option>
+                      <option value="116" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT58 · Karton</option>
+                      <option value="117" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT59 · Karton</option>
+                      <option value="118" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT60 · Karton</option>
+                      <option value="119" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT61 · Karton</option>
+                      <option value="120" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT62 · Karton</option>
+                      <option value="121" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT63 · Karton</option>
+                      <option value="122" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT64 · Karton</option>
+                      <option value="123" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT65 · Karton</option>
+                      <option value="124" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT66 · Karton</option>
+                      <option value="125" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT67 · Karton</option>
+                      <option value="126" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT68 · Karton</option>
+                      <option value="127" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT69 · Karton</option>
+                      <option value="128" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT70 · Karton</option>
+                      <option value="129" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT71 · Karton</option>
+                      <option value="130" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT72 · Karton</option>
+                      <option value="131" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT73 · Karton</option>
+                      <option value="132" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT74 · Karton</option>
+                      <option value="133" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT75 · Karton</option>
+                      <option value="134" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT76 · Karton</option>
+                      <option value="135" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT77 · Karton</option>
+                      <option value="136" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT78 · Karton</option>
+                      <option value="137" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT79 · Karton</option>
+                      <option value="138" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT80 · Karton</option>
+                      <option value="139" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT81 · Karton</option>
+                      <option value="140" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT82 · Karton</option>
+                      <option value="141" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT83 · Karton</option>
+                      <option value="142" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT84 · Karton</option>
+                      <option value="143" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT85 · Karton</option>
+                      <option value="144" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT86 · Karton</option>
+                      <option value="145" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT87 · Karton</option>
+                      <option value="146" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT88 · Karton</option>
+                      <option value="147" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT89 · Karton</option>
+                      <option value="148" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT90 · Karton</option>
+                      <option value="149" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT91 · Karton</option>
+                      <option value="150" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT92 · Karton</option>
+                      <option value="151" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT93 · Karton</option>
+                      <option value="152" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT94 · Karton</option>
+                      <option value="153" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT95 · Karton</option>
+                      <option value="154" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT96 · Karton</option>
+                      <option value="155" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT97 · Karton</option>
+                      <option value="156" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT98 · Karton</option>
+                      <option value="157" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT99 · Karton</option>
+                      <option value="158" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT100 · Karton</option>
+                      <option value="159" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT101 · Karton</option>
+                      <option value="160" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT102 · Karton</option>
+                      <option value="161" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT103 · Karton</option>
+                      <option value="162" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT104 · Karton</option>
+                      <option value="163" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT105 · Karton</option>
+                      <option value="164" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT106 · Karton</option>
+                      <option value="165" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT107 · Karton</option>
+                      <option value="166" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT108 · Karton</option>
+                      <option value="167" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT109 · Karton</option>
+                      <option value="168" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT110 · Karton</option>
+                      <option value="169" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT111 · Karton</option>
+                      <option value="170" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT112 · Karton</option>
+                      <option value="171" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT113 · Karton</option>
+                      <option value="172" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT114 · Karton</option>
+                      <option value="173" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT115 · Karton</option>
+                      <option value="174" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT116 · Karton</option>
+                      <option value="175" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT117 · Karton</option>
+                      <option value="176" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT118 · Karton</option>
+                      <option value="177" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT119 · Karton</option>
+                      <option value="178" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT120 · Karton</option>
+                      <option value="179" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT121 · Karton</option>
+                      <option value="180" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT122 · Karton</option>
+                      <option value="181" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT123 · Karton</option>
+                      <option value="182" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT124 · Karton</option>
+                      <option value="183" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT125 · Karton</option>
+                      <option value="184" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT126 · Karton</option>
+                      <option value="185" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT127 · Karton</option>
+                      <option value="186" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT128 · Karton</option>
+                      <option value="187" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT129 · Karton</option>
+                      <option value="188" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT130 · Karton</option>
+                      <option value="189" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT131 · Karton</option>
+                      <option value="190" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT132 · Karton</option>
+                      <option value="191" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT133 · Karton</option>
+                      <option value="192" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT134 · Karton</option>
+                      <option value="193" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT135 · Karton</option>
+                      <option value="194" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT136 · Karton</option>
+                      <option value="195" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT137 · Karton</option>
+                      <option value="196" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT138 · Karton</option>
+                      <option value="197" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT139 · Karton</option>
+                      <option value="198" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT140 · Karton</option>
+                      <option value="199" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT141 · Karton</option>
+                      <option value="200" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT142 · Karton</option>
+                      <option value="201" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT143 · Karton</option>
+                      <option value="202" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT144 · Karton</option>
+                      <option value="203" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT145 · Karton</option>
+                      <option value="204" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT146 · Karton</option>
+                      <option value="205" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT147 · Karton</option>
+                      <option value="206" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT148 · Karton</option>
+                      <option value="207" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT149 · Karton</option>
+                      <option value="208" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT150 · Karton</option>
+                      <option value="209" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT151 · Karton</option>
+                      <option value="210" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT152 · Karton</option>
+                      <option value="211" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT153 · Karton</option>
+                      <option value="212" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT154 · Karton</option>
+                      <option value="213" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT155 · Karton</option>
+                      <option value="214" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT156 · Karton</option>
+                      <option value="215" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT157 · Karton</option>
+                      <option value="216" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT158 · Karton</option>
+                      <option value="217" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT159 · Karton</option>
+                      <option value="218" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT160 · Karton</option>
+                      <option value="219" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT161 · Karton</option>
+                      <option value="220" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT162 · Karton</option>
+                      <option value="221" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT163 · Karton</option>
+                      <option value="222" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT164 · Karton</option>
+                      <option value="223" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT165 · Karton</option>
+                      <option value="224" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT166 · Karton</option>
+                      <option value="225" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT167 · Karton</option>
+                      <option value="226" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT168 · Karton</option>
+                      <option value="227" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT169 · Karton</option>
+                      <option value="228" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT170 · Karton</option>
+                      <option value="229" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT171 · Karton</option>
+                      <option value="230" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT172 · Karton</option>
+                      <option value="231" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT173 · Karton</option>
+                      <option value="232" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT174 · Karton</option>
+                      <option value="233" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT175 · Karton</option>
+                      <option value="234" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT176 · Karton</option>
+                      <option value="235" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT177 · Karton</option>
+                      <option value="236" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT178 · Karton</option>
+                      <option value="237" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT179 · Karton</option>
+                      <option value="238" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT180 · Karton</option>
+                      <option value="239" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT181 · Karton</option>
+                      <option value="240" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT182 · Karton</option>
+                      <option value="241" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT183 · Karton</option>
+                      <option value="242" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT184 · Karton</option>
+                      <option value="243" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT185 · Karton</option>
+                      <option value="244" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT186 · Karton</option>
+                      <option value="245" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT187 · Karton</option>
+                      <option value="246" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT188 · Karton</option>
+                      <option value="247" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT189 · Karton</option>
+                      <option value="248" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT190 · Karton</option>
+                      <option value="249" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT191 · Karton</option>
+                      <option value="250" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT192 · Karton</option>
+                      <option value="251" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT193 · Karton</option>
+                      <option value="252" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT194 · Karton</option>
+                      <option value="253" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT195 · Karton</option>
+                      <option value="254" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT196 · Karton</option>
+                      <option value="255" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT197 · Karton</option>
+                      <option value="256" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT198 · Karton</option>
+                      <option value="257" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT199 · Karton</option>
+                      <option value="258" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT200 · Karton</option>
+                      <option value="259" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT201 · Karton</option>
+                      <option value="260" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT202 · Karton</option>
+                      <option value="261" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT203 · Karton</option>
+                      <option value="262" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT204 · Karton</option>
+                      <option value="263" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT205 · Karton</option>
+                      <option value="264" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT206 · Karton</option>
+                      <option value="265" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT207 · Karton</option>
+                      <option value="266" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT208 · Karton</option>
+                      <option value="267" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT209 · Karton</option>
+                      <option value="268" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT210 · Karton</option>
+                      <option value="269" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT211 · Karton</option>
+                      <option value="270" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT212 · Karton</option>
+                      <option value="271" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT213 · Karton</option>
+                      <option value="272" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT214 · Karton</option>
+                      <option value="273" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT215 · Karton</option>
+                      <option value="274" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT216 · Karton</option>
+                      <option value="275" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT217 · Karton</option>
+                      <option value="276" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT218 · Karton</option>
+                      <option value="277" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT219 · Karton</option>
+                      <option value="278" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT220 · Karton</option>
+                      <option value="279" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT221 · Karton</option>
+                      <option value="280" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT222 · Karton</option>
+                      <option value="281" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT223 · Karton</option>
+                      <option value="282" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT224 · Karton</option>
+                      <option value="283" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT225 · Karton</option>
+                      <option value="284" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT226 · Karton</option>
+                      <option value="285" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT227 · Karton</option>
+                      <option value="286" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT228 · Karton</option>
+                      <option value="287" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT229 · Karton</option>
+                      <option value="288" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT230 · Karton</option>
+                      <option value="289" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT231 · Karton</option>
+                      <option value="290" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT232 · Karton</option>
+                      <option value="291" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT233 · Karton</option>
+                      <option value="292" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT234 · Karton</option>
+                      <option value="293" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT235 · Karton</option>
+                      <option value="294" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT236 · Karton</option>
+                      <option value="295" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT237 · Karton</option>
+                      <option value="296" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT238 · Karton</option>
+                      <option value="297" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT239 · Karton</option>
+                      <option value="298" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT240 · Karton</option>
+                      <option value="299" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT241 · Karton</option>
+                      <option value="300" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT242 · Karton</option>
+                      <option value="301" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT243 · Karton</option>
+                      <option value="302" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT244 · Karton</option>
+                      <option value="303" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT245 · Karton</option>
+                      <option value="304" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT246 · Karton</option>
+                      <option value="305" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT247 · Karton</option>
+                      <option value="306" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT248 · Karton</option>
+                      <option value="307" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT249 · Karton</option>
+                      <option value="308" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT250 · Karton</option>
+                      <option value="309" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT251 · Karton</option>
+                      <option value="310" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT252 · Karton</option>
+                      <option value="311" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT253 · Karton</option>
+                      <option value="312" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT254 · Karton</option>
+                      <option value="313" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT255 · Karton</option>
+                      <option value="314" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT256 · Karton</option>
+                      <option value="315" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT257 · Karton</option>
+                      <option value="316" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT258 · Karton</option>
+                      <option value="317" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT259 · Karton</option>
+                      <option value="318" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT260 · Karton</option>
+                      <option value="319" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT261 · Karton</option>
+                      <option value="320" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT262 · Karton</option>
+                      <option value="321" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT263 · Karton</option>
+                      <option value="322" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT264 · Karton</option>
+                      <option value="323" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT265 · Karton</option>
+                      <option value="324" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT266 · Karton</option>
+                      <option value="325" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT267 · Karton</option>
+                      <option value="326" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT268 · Karton</option>
+                      <option value="327" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT269 · Karton</option>
+                      <option value="328" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT270 · Karton</option>
+                      <option value="329" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT271 · Karton</option>
+                      <option value="330" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT272 · Karton</option>
+                      <option value="331" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT273 · Karton</option>
+                      <option value="332" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT274 · Karton</option>
+                      <option value="333" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT275 · Karton</option>
+                      <option value="334" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT276 · Karton</option>
+                      <option value="335" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT277 · Karton</option>
+                      <option value="336" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT278 · Karton</option>
+                      <option value="337" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT279 · Karton</option>
+                      <option value="338" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT280 · Karton</option>
+                      <option value="339" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT281 · Karton</option>
+                      <option value="340" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT282 · Karton</option>
+                      <option value="341" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT283 · Karton</option>
+                      <option value="342" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT284 · Karton</option>
+                      <option value="343" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT285 · Karton</option>
+                      <option value="344" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT286 · Karton</option>
+                      <option value="345" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT287 · Karton</option>
+                      <option value="346" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT288 · Karton</option>
+                      <option value="347" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT289 · Karton</option>
+                      <option value="348" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT290 · Karton</option>
+                      <option value="349" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT291 · Karton</option>
+                      <option value="350" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT292 · Karton</option>
+                      <option value="351" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT293 · Karton</option>
+                      <option value="352" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT294 · Karton</option>
+                      <option value="353" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT295 · Karton</option>
+                      <option value="354" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT296 · Karton</option>
+                      <option value="355" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT297 · Karton</option>
+                      <option value="356" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT298 · Karton</option>
+                      <option value="357" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT299 · Karton</option>
+                      <option value="358" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT300 · Karton</option>
+                      <option value="359" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT301 · Karton</option>
+                      <option value="360" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT302 · Karton</option>
+                      <option value="361" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT303 · Karton</option>
+                      <option value="362" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT304 · Karton</option>
+                      <option value="363" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT305 · Karton</option>
+                      <option value="364" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT306 · Karton</option>
+                      <option value="365" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT307 · Karton</option>
+                      <option value="366" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT308 · Karton</option>
+                      <option value="367" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT309 · Karton</option>
+                      <option value="368" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT310 · Karton</option>
+                      <option value="369" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT311 · Karton</option>
+                      <option value="370" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT312 · Karton</option>
+                      <option value="371" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT313 · Karton</option>
+                      <option value="372" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT314 · Karton</option>
+                      <option value="373" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT315 · Karton</option>
+                      <option value="374" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT316 · Karton</option>
+                      <option value="375" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT317 · Karton</option>
+                      <option value="376" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT318 · Karton</option>
+                      <option value="377" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT319 · Karton</option>
+                      <option value="378" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT320 · Karton</option>
+                      <option value="379" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT321 · Karton</option>
+                      <option value="380" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT322 · Karton</option>
+                      <option value="381" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT323 · Karton</option>
+                      <option value="382" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT324 · Karton</option>
+                      <option value="383" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT325 · Karton</option>
+                      <option value="384" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT326 · Karton</option>
+                      <option value="385" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT327 · Karton</option>
+                      <option value="386" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT328 · Karton</option>
+                      <option value="387" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT329 · Karton</option>
+                      <option value="388" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT330 · Karton</option>
+                      <option value="389" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT331 · Karton</option>
+                      <option value="390" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT332 · Karton</option>
+                      <option value="391" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT333 · Karton</option>
+                      <option value="392" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT334 · Karton</option>
+                      <option value="393" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT335 · Karton</option>
+                      <option value="394" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT336 · Karton</option>
+                      <option value="395" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT337 · Karton</option>
+                      <option value="396" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT338 · Karton</option>
+                      <option value="397" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT339 · Karton</option>
+                      <option value="398" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT340 · Karton</option>
+                      <option value="399" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT341 · Karton</option>
+                      <option value="400" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT342 · Karton</option>
+                      <option value="401" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT343 · Karton</option>
+                      <option value="402" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT344 · Karton</option>
+                      <option value="403" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT345 · Karton</option>
+                      <option value="404" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT346 · Karton</option>
+                      <option value="405" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT347 · Karton</option>
+                      <option value="406" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT348 · Karton</option>
+                      <option value="407" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT349 · Karton</option>
+                      <option value="408" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT350 · Karton</option>
+                      <option value="409" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT351 · Karton</option>
+                      <option value="410" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT352 · Karton</option>
+                      <option value="411" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT353 · Karton</option>
+                      <option value="412" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT354 · Karton</option>
+                      <option value="413" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT355 · Karton</option>
+                      <option value="414" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT356 · Karton</option>
+                      <option value="415" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT357 · Karton</option>
+                      <option value="416" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT358 · Karton</option>
+                      <option value="417" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT359 · Karton</option>
+                      <option value="418" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT360 · Karton</option>
+                      <option value="419" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT361 · Karton</option>
+                      <option value="420" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT362 · Karton</option>
+                      <option value="421" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT363 · Karton</option>
+                      <option value="422" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT364 · Karton</option>
+                      <option value="423" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT365 · Karton</option>
+                      <option value="424" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT366 · Karton</option>
+                      <option value="425" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT367 · Karton</option>
+                      <option value="426" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT368 · Karton</option>
+                      <option value="427" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT369 · Karton</option>
+                      <option value="428" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT370 · Karton</option>
+                      <option value="429" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT371 · Karton</option>
+                      <option value="430" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT372 · Karton</option>
+                      <option value="431" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT373 · Karton</option>
+                      <option value="432" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT374 · Karton</option>
+                      <option value="433" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT375 · Karton</option>
+                      <option value="434" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT376 · Karton</option>
+                      <option value="435" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT377 · Karton</option>
+                      <option value="436" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT378 · Karton</option>
+                      <option value="437" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT379 · Karton</option>
+                      <option value="438" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT380 · Karton</option>
+                      <option value="439" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT381 · Karton</option>
+                      <option value="440" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT382 · Karton</option>
+                      <option value="441" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT383 · Karton</option>
+                      <option value="442" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT384 · Karton</option>
+                      <option value="443" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT385 · Karton</option>
+                      <option value="444" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT386 · Karton</option>
+                      <option value="445" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT387 · Karton</option>
+                      <option value="446" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT388 · Karton</option>
+                      <option value="447" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT389 · Karton</option>
+                      <option value="448" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT390 · Karton</option>
+                      <option value="449" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT391 · Karton</option>
+                      <option value="450" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT392 · Karton</option>
+                      <option value="451" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT393 · Karton</option>
+                      <option value="452" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT394 · Karton</option>
+                      <option value="453" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT395 · Karton</option>
+                      <option value="454" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT396 · Karton</option>
+                      <option value="455" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT397 · Karton</option>
+                      <option value="456" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT398 · Karton</option>
+                      <option value="457" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT399 · Karton</option>
+                      <option value="458" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT400 · Karton</option>
+                      <option value="459" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT401 · Karton</option>
+                      <option value="460" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT402 · Karton</option>
+                      <option value="461" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT403 · Karton</option>
+                      <option value="462" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT404 · Karton</option>
+                      <option value="463" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT405 · Karton</option>
+                      <option value="464" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT406 · Karton</option>
+                      <option value="465" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT407 · Karton</option>
+                      <option value="466" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT408 · Karton</option>
+                      <option value="467" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT409 · Karton</option>
+                      <option value="468" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT410 · Karton</option>
+                      <option value="469" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT411 · Karton</option>
+                      <option value="470" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT412 · Karton</option>
+                      <option value="471" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT413 · Karton</option>
+                      <option value="472" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT414 · Karton</option>
+                      <option value="473" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT415 · Karton</option>
+                      <option value="474" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT416 · Karton</option>
+                      <option value="475" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT417 · Karton</option>
+                      <option value="476" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT418 · Karton</option>
+                      <option value="477" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT419 · Karton</option>
+                      <option value="478" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT420 · Karton</option>
+                      <option value="479" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT421 · Karton</option>
+                      <option value="480" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT422 · Karton</option>
+                      <option value="481" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT423 · Karton</option>
+                      <option value="482" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT424 · Karton</option>
+                      <option value="483" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT425 · Karton</option>
+                      <option value="484" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT426 · Karton</option>
+                      <option value="485" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT427 · Karton</option>
+                      <option value="486" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT428 · Karton</option>
+                      <option value="487" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT429 · Karton</option>
+                      <option value="488" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT430 · Karton</option>
+                      <option value="489" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT431 · Karton</option>
+                      <option value="490" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT432 · Karton</option>
+                      <option value="491" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT433 · Karton</option>
+                      <option value="492" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT434 · Karton</option>
+                      <option value="493" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT435 · Karton</option>
+                      <option value="494" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT436 · Karton</option>
+                      <option value="495" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT437 · Karton</option>
+                      <option value="496" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT438 · Karton</option>
+                      <option value="497" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT439 · Karton</option>
+                      <option value="498" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT440 · Karton</option>
+                      <option value="499" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT441 · Karton</option>
+                      <option value="500" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT442 · Karton</option>
+                      <option value="501" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT443 · Karton</option>
+                      <option value="502" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT444 · Karton</option>
+                      <option value="503" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT445 · Karton</option>
+                      <option value="504" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT446 · Karton</option>
+                      <option value="505" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT447 · Karton</option>
+                      <option value="506" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT448 · Karton</option>
+                      <option value="507" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT449 · Karton</option>
+                      <option value="508" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT450 · Karton</option>
+                      <option value="509" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT451 · Karton</option>
+                      <option value="510" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT452 · Karton</option>
+                      <option value="511" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT453 · Karton</option>
+                      <option value="512" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT454 · Karton</option>
+                      <option value="513" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT455 · Karton</option>
+                      <option value="514" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT456 · Karton</option>
+                      <option value="515" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT457 · Karton</option>
+                      <option value="516" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT458 · Karton</option>
+                      <option value="517" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT459 · Karton</option>
+                      <option value="518" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT460 · Karton</option>
+                      <option value="519" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT461 · Karton</option>
+                      <option value="520" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT462 · Karton</option>
+                      <option value="521" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT463 · Karton</option>
+                      <option value="522" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT464 · Karton</option>
+                      <option value="523" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT465 · Karton</option>
+                      <option value="524" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT466 · Karton</option>
+                      <option value="525" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT467 · Karton</option>
+                      <option value="526" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT468 · Karton</option>
+                      <option value="527" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT469 · Karton</option>
+                      <option value="528" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT470 · Karton</option>
+                      <option value="529" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT471 · Karton</option>
+                      <option value="530" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT472 · Karton</option>
+                      <option value="531" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT473 · Karton</option>
+                      <option value="532" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT474 · Karton</option>
+                      <option value="533" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT475 · Karton</option>
+                      <option value="534" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT476 · Karton</option>
+                      <option value="535" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT477 · Karton</option>
+                      <option value="536" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT478 · Karton</option>
+                      <option value="537" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT479 · Karton</option>
+                      <option value="538" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT480 · Karton</option>
+                      <option value="539" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT481 · Karton</option>
+                      <option value="540" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT482 · Karton</option>
+                      <option value="541" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT483 · Karton</option>
+                      <option value="542" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT484 · Karton</option>
+                      <option value="543" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT485 · Karton</option>
+                      <option value="544" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT486 · Karton</option>
+                      <option value="545" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT487 · Karton</option>
+                      <option value="546" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT488 · Karton</option>
+                      <option value="547" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT489 · Karton</option>
+                      <option value="548" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT490 · Karton</option>
+                      <option value="549" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT491 · Karton</option>
+                      <option value="550" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT492 · Karton</option>
+                      <option value="551" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT493 · Karton</option>
+                      <option value="552" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT494 · Karton</option>
+                      <option value="553" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT495 · Karton</option>
+                      <option value="554" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT496 · Karton</option>
+                      <option value="555" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT497 · Karton</option>
+                      <option value="556" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT498 · Karton</option>
+                      <option value="557" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT499 · Karton</option>
+                      <option value="558" data-shelf-id="4" data-hall-id="3" data-location-id="3">GL-H1-R1-KRT500 · Karton</option>
+                  </select>
+      </label>
+      <div class="dg-field dg-field--wide dg-audit-manual__actions">
+        <button type="submit" class="dg-button dg-button--primary">Prüfen</button>
+      </div>
+    </form>
+
+    <div class="dg-place-audit-output">
+      <div id="dg-place-audit-message" class="dg-scan-result" hidden></div>
+      <div id="dg-place-audit-panel" class="dg-panel dg-panel--nested" hidden></div>
+    </div>
+  </section>
+
+    </div>
+<script>
+window.dgLagerScanConfig = {
+  scanApiUrl: '/api/stock-scan',
+  csrf: "47f13d0236458881e76f777624251574"};
+</script>
+<script src="/assets/js/vendor/html5-qrcode.min.js?v=1789369067" defer></script>
+<script src="/assets/js/lager-camera-scan.js?v=1789369096" defer></script>
+<script src="/assets/js/lager-audit.js?v=1789370055" defer></script>
+<script>
+(function () {
+  document.querySelectorAll('.dg-stock-adjust-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var panel = document.getElementById('dg-stock-adjust-panel');
+      var idInput = document.getElementById('dg-stock-adjust-article-id');
+      var labelInput = document.getElementById('dg-stock-adjust-article-label');
+      if (!panel || !idInput || !labelInput) return;
+      idInput.value = btn.getAttribute('data-article-id') || '';
+      labelInput.value = btn.getAttribute('data-article-title') || '';
+      panel.hidden = false;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+})();
+</script>
+    </main>
+  </div>
+
+                                            <script src="/assets/js/admin.js?v=1789248657" defer></script>
+      <link rel="stylesheet" href="/assets/css/kichel.css?v=1789481257">
+<button type="button" class="dg-kichel-fab" data-kichel-fab aria-expanded="false" aria-controls="dg-kichel-panel" title="Kichel — CRM-Hilfe">
+  <img src="/assets/img/kichel.svg?v=1789481257" alt="">
+</button>
+<div id="dg-kichel-panel" class="dg-kichel-panel" data-kichel-panel hidden role="dialog" aria-label="Kichel Hilfe">
+  <div class="dg-kichel-panel__head">
+    <img src="/assets/img/kichel.svg?v=1789481257" alt="">
+    <div>
+      <strong>Kichel</strong>
+      <span>Schnelle Hilfe im CRM</span>
+    </div>
+          <span class="dg-kichel-panel__admin"><a href="/app?page=kichel-protokoll" data-kichel-protokoll>Protokoll</a></span>
+        <button type="button" class="dg-kichel-panel__close" data-kichel-close aria-label="Schließen">&times;</button>
+  </div>
+  <div class="dg-kichel-panel__body" data-kichel-body>
+    <div class="dg-kichel-chips">
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo trage ich die USt-ID ein?">USt-ID</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Skonto und Mahnung">Skonto</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Interne Kontakt-Bemerkung">Kontakt-Notiz</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Pflichtseiten?">Pflichtseiten</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Belege?">Belege</button>
+    </div>
+    <div class="dg-kichel-messages" data-kichel-messages>
+      <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe dir, im CRM schnell den richtigen Weg zu finden — stell einfach deine Frage oder wähle ein Stichwort.</div>
+    </div>
+  </div>
+  <form class="dg-kichel-form" data-kichel-form>
+    <input type="text" data-kichel-input placeholder="Frage stellen …" autocomplete="off" maxlength="500" aria-label="Frage an Kichel">
+    <button type="submit">Senden</button>
+  </form>
+</div>
+<script>
+  window.dgKichel = {
+    apiUrl: '/api/kichel',
+    csrf: "47f13d0236458881e76f777624251574",
+    chatVersion: '4'
+  };
+</script>
+<script src="/assets/js/kichel.js?v=1789481257" defer></script>
+        <style>.dg-cc-overlay{position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,.4);padding:1rem}
+.dg-cc-banner{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 -2px 20px rgba(0,0,0,.15);padding:1.5rem;font-family:system-ui,-apple-system,sans-serif;color:#1e293b;font-size:.9rem;line-height:1.5}
+.dg-cc-banner h3{font-size:1.1rem;margin:0 0 .5rem}
+.dg-cc-banner p{margin:0 0 1rem;color:#475569}
+.dg-cc-banner a{color:#2563eb}
+.dg-cc-details{border-top:1px solid #e2e8f0;padding-top:.75rem;margin-bottom:.75rem}
+.dg-cc-category{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;padding:.5rem 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.dg-cc-category:last-child{border-bottom:none}
+.dg-cc-cat-label{font-weight:600;font-size:.875rem;flex:0 0 auto}
+.dg-cc-cat-desc{flex:1 1 100%;font-size:.8rem;color:#64748b;margin-top:.15rem}
+.dg-cc-actions{display:flex;flex-wrap:wrap;gap:.5rem}
+.dg-cc-btn{padding:.5rem 1rem;border:none;border-radius:6px;font-size:.875rem;font-weight:600;cursor:pointer}
+.dg-cc-btn--accept{background:#2563eb;color:#fff}.dg-cc-btn--accept:hover{background:#1d4ed8}
+.dg-cc-btn--reject{background:#e2e8f0;color:#334155}.dg-cc-btn--reject:hover{background:#cbd5e1}
+.dg-cc-btn--settings{background:transparent;color:#2563eb;text-decoration:underline;padding:.5rem .25rem}
+.dg-cc-btn--save{background:#16a34a;color:#fff}.dg-cc-btn--save:hover{background:#15803d}</style>
+    <div id="dg-cookie-consent" class="dg-cc-overlay" role="dialog" aria-label="Cookie-Einstellungen">
+  <div class="dg-cc-banner">
+    <div class="dg-cc-text">
+      <h3>Cookie-Einstellungen</h3>
+      <p>Wir verwenden Cookies, um Ihnen die bestmögliche Nutzung unserer Website zu ermöglichen.
+         Technisch notwendige Cookies werden immer gesetzt. Weitere Cookies setzen wir nur mit Ihrer Einwilligung.
+         <a href="/datenschutz">Mehr erfahren</a></p>
+    </div>
+    <div class="dg-cc-details" id="dg-cc-details" style="display:none">
+      <label class="dg-cc-category"><input type="checkbox" name="necessary" value="1" checked disabled><span class="dg-cc-cat-label">Technisch notwendig</span><span class="dg-cc-cat-desc">Diese Cookies sind für den Betrieb der Website erforderlich und können nicht deaktiviert werden.</span></label><label class="dg-cc-category"><input type="checkbox" name="functional" value="1" ><span class="dg-cc-cat-label">Funktional</span><span class="dg-cc-cat-desc">Ermöglichen erweiterte Funktionen wie Sprach-Einstellungen oder personalisierte Inhalte.</span></label><label class="dg-cc-category"><input type="checkbox" name="analytics" value="1" ><span class="dg-cc-cat-label">Statistik</span><span class="dg-cc-cat-desc">Helfen uns zu verstehen, wie Besucher die Website nutzen (z.B. Seitenaufrufe, Verweildauer).</span></label><label class="dg-cc-category"><input type="checkbox" name="marketing" value="1" ><span class="dg-cc-cat-label">Marketing</span><span class="dg-cc-cat-desc">Werden genutzt, um Werbung relevanter zu gestalten und Kampagnen zu messen.</span></label>
+    </div>
+    <div class="dg-cc-actions">
+      <button type="button" class="dg-cc-btn dg-cc-btn--accept" onclick="dgCookieConsent.acceptAll()">Alle akzeptieren</button>
+      <button type="button" class="dg-cc-btn dg-cc-btn--reject" onclick="dgCookieConsent.rejectAll()">Nur notwendige</button>
+      <button type="button" class="dg-cc-btn dg-cc-btn--settings" onclick="dgCookieConsent.toggleDetails()">Einstellungen</button>
+      <button type="button" class="dg-cc-btn dg-cc-btn--save" id="dg-cc-save" style="display:none" onclick="dgCookieConsent.saveCustom()">Auswahl speichern</button>
+    </div>
+  </div>
+</div>    <script>window.dgCookieConsent={
+  setCookie:function(data){
+    var val=btoa(JSON.stringify(data));
+    var d=new Date();d.setTime(d.getTime()+31536000*1000);
+    document.cookie="dg_cookie_consent="+val+";expires="+d.toUTCString()+";path=/;SameSite=Lax;Secure";
+  },
+  hide:function(){var el=document.getElementById('dg-cookie-consent');if(el)el.remove();},
+  acceptAll:function(){
+    this.setCookie({necessary:true,functional:true,analytics:true,marketing:true});
+    this.hide();location.reload();
+  },
+  rejectAll:function(){
+    this.setCookie({necessary:true,functional:false,analytics:false,marketing:false});
+    this.hide();location.reload();
+  },
+  toggleDetails:function(){
+    var d=document.getElementById('dg-cc-details');
+    var s=document.getElementById('dg-cc-save');
+    var show=d.style.display==='none';
+    d.style.display=show?'block':'none';
+    s.style.display=show?'inline-block':'none';
+  },
+  saveCustom:function(){
+    var d=document.getElementById('dg-cc-details');
+    var inputs=d.querySelectorAll('input[type=checkbox]');
+    var data={necessary:true};
+    inputs.forEach(function(cb){if(!cb.disabled)data[cb.name]=cb.checked;});
+    this.setCookie(data);
+    this.hide();location.reload();
+  }
+};</script>
+  <div id="dg-place-audit-panel" class="dg-panel dg-panel--nested">
+  <h3 class="dg-subsection-title">Stellplatz A-01-03 · Palette</h3>
+  <p class="dg-field-hint">Belegung: 2 Kartons · Reservierung: flexibel · Letzte Bewegung: Wareneingang, Demo-Artikel</p>
+  <div class="dg-table-wrap">
+    <table class="dg-table dg-table--compact">
+      <thead><tr><th>Artikel</th><th>Menge</th><th>Karton</th></tr></thead>
+      <tbody>
+        <tr><td>DEMO-100 — Schulungsartikel</td><td>24 Stk</td><td>K-001</td></tr>
+        <tr><td>DEMO-200 — Verpackung</td><td>6 Stk</td><td>K-002</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var panel = document.getElementById('dg-place-audit-panel');
+  if (panel) panel.hidden = false;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "title": "Lager — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 53.7,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 8.76
+    },
+    {
+      "key": "nav-lager",
+      "duration_sec": 7.68
+    },
+    {
+      "key": "subtabs",
+      "duration_sec": 12.36
+    },
+    {
+      "key": "bestand",
+      "duration_sec": 13.96
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 10.92
+    }
+  ]
+}

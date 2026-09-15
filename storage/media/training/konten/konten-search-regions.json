@@ -1,0 +1,34 @@
+{
+  "width": 1920,
+  "height": 1542,
+  "sections": {
+    "search": {
+      "x": 515,
+      "y": 210,
+      "w": 340,
+      "h": 297
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1466,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "account_number": {
+      "x": 534,
+      "y": 268,
+      "w": 302,
+      "h": 82,
+      "label": "Kontonummer"
+    },
+    "account_search": {
+      "x": 534,
+      "y": 364,
+      "w": 302,
+      "h": 112,
+      "label": "Kontonamen durchsuchen"
+    }
+  }
+}

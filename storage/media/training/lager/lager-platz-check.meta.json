@@ -1,0 +1,36 @@
+{
+  "title": "Lager — Platz-Check",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 55.2,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.8
+    },
+    {
+      "key": "nav-lager",
+      "duration_sec": 3.92
+    },
+    {
+      "key": "tab-platz-check",
+      "duration_sec": 7.32
+    },
+    {
+      "key": "scan",
+      "duration_sec": 11.6
+    },
+    {
+      "key": "manuell",
+      "duration_sec": 8.04
+    },
+    {
+      "key": "ergebnis",
+      "duration_sec": 8.88
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 7.6
+    }
+  ]
+}

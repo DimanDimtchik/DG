@@ -1,0 +1,47 @@
+{
+  "width": 1920,
+  "height": 1542,
+  "sections": {
+    "search": {
+      "x": 515,
+      "y": 210,
+      "w": 340,
+      "h": 297
+    },
+    "hint": {
+      "x": 875,
+      "y": 210,
+      "w": 740,
+      "h": 706
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1466,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "search_terms": {
+      "x": 894,
+      "y": 464,
+      "w": 702,
+      "h": 0,
+      "label": "#dg-account-hint-search-tags"
+    },
+    "digits": {
+      "x": 894,
+      "y": 576,
+      "w": 702,
+      "h": 174,
+      "label": "#dg-account-hint-digits"
+    },
+    "examples": {
+      "x": 894,
+      "y": 768,
+      "w": 702,
+      "h": 131,
+      "label": "#dg-account-hint-examples-wrap"
+    }
+  }
+}

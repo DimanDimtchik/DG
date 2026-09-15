@@ -1,0 +1,36 @@
+{
+  "title": "Lager — Wareneingang und Warenausgang",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 59.9,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 8.32
+    },
+    {
+      "key": "nav-lager",
+      "duration_sec": 4.24
+    },
+    {
+      "key": "wareneingang",
+      "duration_sec": 13.08
+    },
+    {
+      "key": "wareneingang-scan",
+      "duration_sec": 7.8
+    },
+    {
+      "key": "warenausgang",
+      "duration_sec": 7.6
+    },
+    {
+      "key": "warenausgang-beleg",
+      "duration_sec": 8.8
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 10.04
+    }
+  ]
+}
