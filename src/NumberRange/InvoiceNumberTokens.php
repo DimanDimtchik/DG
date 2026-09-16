@@ -249,6 +249,12 @@ final class InvoiceNumberTokens
             return $companyId;
         }
 
+        // Fallback: wie Firmendaten — explizites Kürzel oder Ableitung aus Firmenname.
+        $fallback = CompanySettings::numberRangeCompanyId();
+        if ($fallback !== '') {
+            return $fallback;
+        }
+
         if (!empty($context['preview'])) {
             return '{FIRMA}';
         }

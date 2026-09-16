@@ -144,7 +144,7 @@ $bankSummary = $filledBanks > 0
       <label class="dg-field">
         <span>Firmen-ID (Kürzel)</span>
         <input type="text" name="company_id" value="<?= View::escape($companyConfig['company_id'] ?? '') ?>" maxlength="20" placeholder="z. B. GOM" autocapitalize="characters">
-        <small class="dg-field-hint">Für Nummernkreis-Platzhalter <code>{FIRMA}</code>. Leer = Kürzel aus dem Firmennamen, z. B. „Dietrich Ganz OM“ → <code>DGOM</code>.</small>
+        <small class="dg-field-hint">Für Nummernkreis-Platzhalter <code>{FIRMA}</code>. Leer lassen: beim Speichern wird das Kürzel aus dem Firmennamen gesetzt, z. B. „Dietrich Ganz OM“ → <code>DGOM</code>.</small>
       </label>
       <label class="dg-field dg-field--wide">
         <span>Rechtlicher Name</span>

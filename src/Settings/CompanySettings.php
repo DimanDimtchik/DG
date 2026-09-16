@@ -46,7 +46,17 @@ final class CompanySettings
      */
     public static function forForm(): array
   {
-    return self::config();
+    $cfg = self::config();
+    if ($cfg['company_id'] === '' && $cfg['name'] !== '') {
+      $derived = self::deriveCompanyIdFromName($cfg['name']);
+      if ($derived !== '') {
+        $cfg['company_id'] = $derived;
+        // Einmalig nachziehen, wenn bisher leer gespeichert wurde.
+        SettingsStore::set(self::STORE_KEY, array_merge($cfg, ['company_id' => $derived]));
+      }
+    }
+
+    return $cfg;
   }
 
     /**
@@ -144,6 +154,9 @@ final class CompanySettings
     }
     if ($data['email'] === '' || filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
       throw new InvalidArgumentException('Gültige Firmen-E-Mail ist erforderlich.');
+    }
+    if ($data['company_id'] === '') {
+      $data['company_id'] = self::deriveCompanyIdFromName($data['name']);
     }
 
     SettingsStore::set(self::STORE_KEY, $data);
