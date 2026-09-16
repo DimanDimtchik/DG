@@ -98,8 +98,22 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
                 <td><strong><?= View::escape((string) ($item['available_label'] ?? '')) ?></strong></td>
                 <td><?= (float) ($item['min_stock'] ?? 0) > 0 ? View::escape($fmtQty((float) $item['min_stock']) . ' ' . ($item['unit'] ?? '')) : '—' ?></td>
                 <td class="dg-table__actions">
-                  <?php if (($item['reorder_url'] ?? '') !== '') : ?>
-                    <a class="dg-button dg-button--small" href="<?= View::escape((string) $item['reorder_url']) ?>" target="_blank" rel="noopener" title="<?= View::escape((string) ($item['reorder_label'] ?? 'Shop')) ?>">Nachbestellen</a>
+                  <?php
+                    $reorderUrl = trim((string) ($item['reorder_url'] ?? ''));
+                    $reorderLabel = trim((string) ($item['reorder_label'] ?? ''));
+                    $hasSource = !empty($item['has_purchase_source']);
+                    $reorderPrice = $item['reorder_price'] ?? null;
+                    $reorderTitle = $reorderLabel !== '' ? $reorderLabel : 'Einkauf';
+                    if ($reorderPrice !== null && (float) $reorderPrice > 0) {
+                        $reorderTitle .= ' · EK ' . number_format((float) $reorderPrice, 2, ',', '.') . ' €';
+                    }
+                  ?>
+                  <?php if ($reorderUrl !== '') : ?>
+                    <a class="dg-button dg-button--small" href="<?= View::escape($reorderUrl) ?>" target="_blank" rel="noopener" title="<?= View::escape($reorderTitle) ?>">Nachbestellen</a>
+                  <?php elseif ($hasSource) : ?>
+                    <span class="dg-button dg-button--small" title="<?= View::escape($reorderTitle . ' — Shop-URL optional, manuell recherchieren/bestellen') ?>">Nachbestellen<?= $reorderLabel !== '' ? ': ' . View::escape($reorderLabel) : '' ?></span>
+                  <?php elseif (!empty($item['is_low'])) : ?>
+                    <span class="dg-muted" title="Keine Einkaufsquelle hinterlegt — manuell recherchieren und bestellen">Nachbestellen (manuell)</span>
                   <?php endif; ?>
                   <?php if ($canEdit) : ?>
                     <button type="button" class="dg-button dg-button--small dg-stock-adjust-btn"

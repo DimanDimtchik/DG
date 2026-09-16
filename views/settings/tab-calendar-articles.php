@@ -90,8 +90,17 @@ $stockStructureJson = json_encode([
                   · Verf. <?= View::escape((string) ($article['available_label'] ?? '')) ?></small>
                 <?php endif; ?>
                 <?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?>
-                <?php if (($article['reorder_url'] ?? '') !== '') : ?>
-                  <br><a class="dg-button dg-button--small" href="<?= View::escape((string) $article['reorder_url']) ?>" target="_blank" rel="noopener">Nachbestellen</a>
+                <?php
+                  $reorderUrl = trim((string) ($article['reorder_url'] ?? ''));
+                  $reorderLabel = trim((string) ($article['reorder_label'] ?? ''));
+                  $hasSource = !empty($article['has_purchase_source']);
+                ?>
+                <?php if ($reorderUrl !== '') : ?>
+                  <br><a class="dg-button dg-button--small" href="<?= View::escape($reorderUrl) ?>" target="_blank" rel="noopener" title="<?= View::escape($reorderLabel !== '' ? $reorderLabel : 'Shop') ?>">Nachbestellen</a>
+                <?php elseif ($hasSource) : ?>
+                  <br><small class="dg-muted" title="Shop-URL optional — Chef recherchiert und bestellt manuell">Nachbestellen<?= $reorderLabel !== '' ? ': ' . View::escape($reorderLabel) : '' ?></small>
+                <?php elseif (!empty($article['is_low_stock'])) : ?>
+                  <br><small class="dg-muted">Nachbestellen (manuell)</small>
                 <?php endif; ?>
               <?php else : ?>—<?php endif; ?></td>
               <td><?= !empty($article['stock_position_code']) ? View::escape((string) $article['stock_position_code']) : '—' ?></td>
@@ -301,7 +310,7 @@ $stockStructureJson = json_encode([
       <div class="dg-field dg-field--wide" id="dg_article_purchase_fields" hidden>
         <fieldset class="dg-fieldset">
           <legend>Einkaufsquellen (Lieferant / Shop)</legend>
-          <p class="dg-field-hint">Mehrere Quellen möglich. Die bevorzugte Quelle liefert den Link „Nachbestellen“ in Lager und Artikelliste.</p>
+          <p class="dg-field-hint">Mehrere Quellen möglich. Lieferant und EK reichen — die <strong>Shop-URL ist optional</strong> (Chef kann recherchieren und manuell bestellen). Ist eine URL hinterlegt, öffnet „Nachbestellen“ den Shop; sonst erscheint Lieferant/Hinweis zum manuellen Nachbestellen.</p>
           <div id="dg-purchase-sources-list" class="dg-purchase-sources"></div>
           <button type="button" class="dg-button dg-button--small" id="dg-purchase-source-add"<?= !$dbConnected ? ' disabled' : '' ?>>+ Einkaufsquelle</button>
           <script type="application/json" id="dg-supplier-options"><?= View::escape(json_encode($supplierContactOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)) ?></script>

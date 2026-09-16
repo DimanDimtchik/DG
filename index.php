@@ -2843,6 +2843,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
                 $articleRow['reorder_url'] = (string) ($preferred['order_url'] ?? '');
                 $articleRow['reorder_label'] = (string) ($preferred['label'] ?? '');
+                $articleRow['reorder_price'] = $preferred !== null ? (float) ($preferred['purchase_price'] ?? 0) : null;
+                $articleRow['has_purchase_source'] = $preferred !== null;
             }
             unset($articleRow);
             $supplierContactOptions = ArticlePurchaseSourceRepository::supplierContactOptions();
@@ -2957,6 +2959,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
                 $stockItem['reorder_url'] = (string) ($preferred['order_url'] ?? '');
                 $stockItem['reorder_label'] = (string) ($preferred['label'] ?? '');
+                $stockItem['reorder_price'] = $preferred !== null ? (float) ($preferred['purchase_price'] ?? 0) : null;
+                $stockItem['has_purchase_source'] = $preferred !== null;
             }
             unset($stockItem);
             $stockMovements = StockMovementRepository::recent(50);
