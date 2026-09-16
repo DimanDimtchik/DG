@@ -114,42 +114,11 @@ final class VoucherApi
             return;
         }
 
-        $items = [];
-        foreach (ContactRepository::searchPicker($query, 15, $user) as $contact) {
-            $label = trim($contact->companyName);
-            if ($label === '') {
-                $label = trim($contact->displayName);
-            }
-            if ($label === '') {
-                $label = trim($contact->firstName . ' ' . $contact->lastName);
-            }
-            if ($label === '') {
-                $label = trim($contact->email);
-            }
-
-            $meta = [];
-            if ($contact->email !== '') {
-                $meta[] = $contact->email;
-            }
-            if ($contact->companyName !== '' && $label !== $contact->companyName) {
-                $meta[] = $contact->companyName;
-            }
-            if ($contact->supplierNumber !== '') {
-                $meta[] = 'Lief.-Nr. ' . $contact->supplierNumber;
-            }
-            if ($contact->customerNumber !== '') {
-                $meta[] = 'Kd.-Nr. ' . $contact->customerNumber;
-            }
-            if ($contact->login !== '') {
-                $meta[] = 'Login ' . $contact->login;
-            }
-
-            $items[] = [
-                'id' => $contact->id,
-                'label' => $label,
-                'meta' => implode(' · ', $meta),
-            ];
+        $items = ContactRepository::pickerItems($query, 15, $user);
+        foreach ($items as &$item) {
+            unset($item['customer_name'], $item['email'], $item['phone']);
         }
+        unset($item);
 
         echo json_encode([
             'success' => true,

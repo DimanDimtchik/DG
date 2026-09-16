@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="https://ganz-soft.de/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Kontakt bearbeiten — Mitarbeiter – DG</title>
+          <link rel="icon" href="/app/favicon?size=32" type="image/png" sizes="32x32">
+    <link rel="icon" href="/app/favicon?size=16" type="image/png" sizes="16x16">
+    <link rel="apple-touch-icon" href="/app/favicon?size=48">
+        <link rel="stylesheet" href="/assets/css/dg.css?v=1789380976">
+  <style>:root { --dg-font: system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, sans-serif; --dg-menu-bg:#59524c;--dg-menu-bg-hover:#524b46;--dg-menu-bg-active:#4b4540;--dg-menu-text:#ffffff;--dg-menu-text-muted:rgba(255, 255, 255, 0.72);--dg-menu-border:#4b4540;--dg-brand:#c4b5a5;--dg-brand-dark:#ac9f91;--dg-body-bg:#ebe6e1;--dg-surface:#ffffff;--dg-text:#1d2327;--dg-text-secondary:#50575e;--dg-text-muted:#787c82;--dg-border:#d4ccc4;--dg-border-strong:#b8aea3;--dg-primary:#6e6258;--dg-primary-hover:#5a5048;--dg-focus-ring:rgba(110, 98, 88, 0.25) }</style>
+</head>
+<body class="dg-app">
+      <header id="dg-adminbar" class="dg-adminbar" role="banner">
+    <div class="dg-adminbar__left">
+      <a class="dg-adminbar__brand" href="/app">
+        <img src="/app/media?id=20260828174130_631472" alt="Logo" class="dg-adminbar__logo dg-logo--wide">
+        <span class="dg-adminbar__name">DG</span>
+      </a>
+    </div>
+
+    <div class="dg-adminbar__center">
+              <div class="dg-adminbar__menu" data-menu>
+          <button type="button" class="dg-adminbar__menu-toggle" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+            Admin
+            <span class="dg-adminbar__caret" aria-hidden="true"></span>
+          </button>
+          <div class="dg-adminbar__dropdown" role="menu" hidden data-menu-panel>
+            <a href="/app" role="menuitem">Übersicht</a>
+            <a href="/app?area=users" role="menuitem">Benutzer &amp; Mitarbeiter</a>
+            <a href="/app?area=departments" role="menuitem">Abteilungen</a>
+          </div>
+        </div>
+          </div>
+
+    <div class="dg-adminbar__right">
+      <div class="dg-adminbar__menu dg-adminbar__menu--user" data-menu>
+        <button type="button" class="dg-adminbar__user-toggle" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+          <span class="dg-adminbar__avatar" aria-hidden="true">A</span>
+          <span class="dg-adminbar__username">Administrator</span>
+          <span class="dg-adminbar__caret" aria-hidden="true"></span>
+        </button>
+        <div class="dg-adminbar__dropdown dg-adminbar__dropdown--right" role="menu" hidden data-menu-panel>
+          <div class="dg-adminbar__dropdown-meta">
+            <strong>Administrator</strong>
+            <span></span>
+            <span>Administrator</span>
+          </div>
+                      <a href="/app?area=profile" role="menuitem">Mein Profil</a>
+                    <a href="/logout" role="menuitem">Abmelden</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dg-shell">
+    <aside id="dg-sidebar" class="dg-sidebar" aria-label="Seitenleiste">
+      <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-nav">
+        <h2 id="dg-sidebar-nav" class="dg-sidebar__heading">Navigation</h2>
+        <ul class="dg-sidebar__list">
+                      <li>
+              <a href="/app" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                <span>Dashboard</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=kontakte" class="dg-sidebar__link is-active">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                <span>Kontakte</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=terminkalender" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                <span>Terminkalender</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=zeiterfassung" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <circle cx="12" cy="12" r="9"/>
+  <path d="M12 3.75v1.5M20.25 12h-1.5M12 20.25v-1.5M3.75 12h1.5"/>
+  <path d="M12 7.25v5.1l3.6 2.15"/>
+  <circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+</svg>
+                <span>Zeiterfassung</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=post" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6M3 7v10l9 6 9-6V7"/></svg>
+                <span>Post</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=akademie" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                <span>Akademie</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=artikel-leistungen" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+                <span>Artikel &amp; Leistungen</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=lager" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35"/><path d="M6 18h12"/><path d="M6 14h12"/><path d="M6 10h12"/><path d="M10 2 2 8v11"/><path d="M14 2l8 6v11"/></svg>
+                <span>Lager</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=support-freigabe" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <span>Support-Freigabe</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=bilder" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5.5-5.5a1.5 1.5 0 0 0-2.12 0L3 19"/></svg>
+                <span>Bilder</span>
+              </a>
+            </li>
+                  </ul>
+      </section>
+
+              <section class="dg-sidebar__section dg-sidebar__section--buchhaltung" aria-labelledby="dg-sidebar-buchhaltung">
+          <h2 id="dg-sidebar-buchhaltung" class="dg-sidebar__heading">Buchhaltung</h2>
+          <ul class="dg-sidebar__list">
+                          <li>
+                <a href="/app?page=buchhaltung-konten" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="M4 9h16"/></svg>
+                  <span>Konten</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-belege" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+                  <span>Belege</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-ueberweisungen" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Überweisungen</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-kontenuebersicht" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Kontenübersicht</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-opos" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Offene Posten</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-kassenbuch" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+                  <span>Kassenbuch</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-manuelle-buchung" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Manuelle Buchungen</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-auswertungen" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Bilanz &amp; GuV</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-bwa" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>BWA</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-susa" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>SuSa</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-bankabgleich" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Bankabgleich</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-steuerberater-export" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>Steuerberater-Export</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-ustva" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>UStVA</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-jahresabschluss" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 5h16v16H4z"/><path d="M4 9h16M8 3v4M16 3v4"/><path d="M9.5 15l2 2 3.5-4"/></svg>
+                  <span>Jahresabschluss</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+      
+              <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-website">
+          <h2 id="dg-sidebar-website" class="dg-sidebar__heading">Website</h2>
+          <ul class="dg-sidebar__list">
+                                        <li>
+                <a href="/app?page=website-seiten" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>Seiten</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-formulare" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6M3 7v10l9 6 9-6V7"/></svg>
+                  <span>Formulare</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-statistik" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Statistik</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-menu" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                  <span>Menü</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-chrome" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 15h18"/></svg>
+                  <span>Kopf &amp; Fuß</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-design" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12"/><circle cx="7.5" cy="10" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="16.5" cy="11" r="1"/></svg>
+                  <span>Design</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+                    <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kdv">
+          <h2 id="dg-sidebar-kdv" class="dg-sidebar__heading">SaaS-Kunden (Ganz Soft)</h2>
+          <ul class="dg-sidebar__list">
+                          <li>
+                <a href="/app?page=kdv-dashboard" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                  <span>Übersicht</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=kdv-kunden" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                  <span>SaaS-Kunden</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=kdv-support" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                  <span>Support-Freigaben</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+                    <section class="dg-sidebar__section dg-sidebar__section--system" aria-labelledby="dg-sidebar-system">
+          <h2 id="dg-sidebar-system" class="dg-sidebar__heading">System</h2>
+          <ul class="dg-sidebar__list">
+            <li>
+              <a href="/app?page=einstellungen" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <span>Einstellungen</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+          </aside>
+
+    <main id="dg-content" class="dg-content">
+      <div class="dg-wrap">
+  <header class="dg-page-header dg-page-header--toolbar">
+    <div>
+      <p class="dg-back-nav">
+  <a class="dg-button dg-button--back" href="/app?page=kontakte&amp;action=view&amp;id=9">← Zurück zum Kontakt</a>
+</p>
+      <h1 class="dg-page-title">Kontakt bearbeiten</h1>
+    </div>
+  </header>
+
+  
+  <form class="dg-form dg-panel" method="post" action="/app?page=kontakte" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="8737d6cbbd9ad7ed06e09a74c4a1e907">
+        <input type="hidden" name="id" value="9">
+    <h2>Stamm</h2>
+    <div class="dg-form-grid">
+      <label class="dg-field"><span>Benutzername *</span><input name="login" value="user1" required></label>
+      <label class="dg-field">
+        <span>Anrede</span>
+        <select name="salutation" id="contact_salutation" data-salutation-select>
+                      <option value="">—</option>
+                      <option value="Herr" selected>Herr</option>
+                      <option value="Frau">Frau</option>
+                      <option value="Divers">Divers</option>
+                      <option value="Firma">Firma</option>
+                      <option value="Team">Team</option>
+                  </select>
+      </label>
+      <label class="dg-field"><span>Vorname</span><input name="first_name" value="Kontakt"></label>
+      <label class="dg-field"><span>Nachname</span><input name="last_name" value="Test"></label>
+      <label class="dg-field"><span>Anzeigename</span><input name="display_name" value="Kontakt Test"></label>
+      <label class="dg-field"><span>Firmenname</span><input name="company_name" value="Testfirma"></label>
+      <label class="dg-field dg-field--wide">
+        <span>Rolle</span>
+        <select name="contact_role" id="contact_role" required data-role-select>
+                      <option value="administrator">Administrator</option>
+                      <option value="dg_eigenmitarbeiter">Mitarbeiter</option>
+                      <option value="dg_kunde">Kunde</option>
+                  </select>
+      </label>
+      <p class="dg-lead dg-field--wide">Mitarbeiterdaten (Krankenkasse, SV-Nummer, Dokumente …) erscheinen nur bei Rolle <strong>Mitarbeiter</strong> oder <strong>Administrator</strong>.</p>
+    </div>
+
+    <section class="dg-panel dg-panel--nested" data-company-section hidden>
+      <h2>Mitarbeiter der Firma</h2>
+      <p class="dg-lead">Verknüpfen Sie bestehende Personen-Kontakte mit dieser Firma — inkl. Zuständigkeit und Erreichbarkeit bei der Firma.</p>
+      <div id="dg-company-employee-repeater" class="dg-company-employee-repeater">
+              </div>
+      <p class="dg-form-actions dg-form-actions--inline">
+        <button type="button" class="dg-button" data-company-employee-add>+ Mitarbeiter verknüpfen</button>
+      </p>
+    </section>
+
+    <section class="dg-panel dg-panel--nested" data-person-employer-section>
+      <h2>Arbeitgeber / Firma</h2>
+      <p class="dg-lead">Optional: Person mit einer Firmen-Kontaktverknüpfen, bei der diese Person tätig ist.</p>
+      <div class="dg-form-grid">
+        <label class="dg-field dg-field--wide">
+          <span>Firma aus Kontakten</span>
+          <select name="employer_company_id" data-employer-company>
+            <option value="0">— keine Verknüpfung —</option>
+                          <option
+                value="10"
+                 selected              >Musterfirma</option>
+                      </select>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Zuständigkeitsbereich</span>
+          <input name="employer_responsibility" value="Musterabteilung" placeholder="z. B. Steuerberatung, Lohnbuchhaltung">
+        </label>
+        <label class="dg-field">
+          <span>E-Mail (dienstlich)</span>
+          <input type="email" name="employer_work_email" value="">
+        </label>
+        <label class="dg-field">
+          <span>Telefon (dienstlich)</span>
+          <input name="employer_work_phone" value="">
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Erreichbarkeit / Öffnungszeiten</span>
+          <input name="employer_availability" value="8:00 bis 16 Uhr" placeholder="z. B. Mo–Fr 8–16 Uhr">
+        </label>
+      </div>
+    </section>
+
+    <h2>Kunde / Lieferant</h2>
+    <div class="dg-form-grid" data-customer-section>
+      <label class="dg-field"><span>Kundennummer</span><input name="customer_number" value="10000" placeholder="intern, Nummernkreis"></label>
+      <label class="dg-field"><span>Lieferantennummer</span><input name="supplier_number" value="" placeholder="intern, Nummernkreis"></label>
+      <label class="dg-field dg-field--wide" data-supplier-customer-number>
+        <span>Kundennummer beim Lieferanten</span>
+        <input name="supplier_customer_number" value="" placeholder="Ihre Kontonummer beim Lieferanten (z. B. von Rechnungen)">
+      </label>
+      <label class="dg-field"><span>Steuernummer</span><input name="tax_number" value="127/127/30201"></label>
+      <label class="dg-field"><span>USt-IdNr.</span><input name="vat_id" value="DE000000000"></label>
+      <label class="dg-field"><span>Handelsregister</span><input name="commercial_register" value="" placeholder="z. B. Amtsgericht Stuttgart HRA 590261"></label>
+      <label class="dg-field"><span>WEEE-Registrierungsnr.</span><input name="weee_registration" value="" placeholder="z. B. DE 69804700"></label>
+    </div>
+
+    <h2>Kommunikation</h2>
+    <div class="dg-form-grid">
+      <label class="dg-field"><span>E-Mail</span><input type="email" name="email" value="test@mail.de">
+                  <small class="dg-field-hint">
+            DNS-Prüfung: ok                          – Domain hat MX- oder A-Eintrag.                                      (2026-09-15 10:33:37)
+                      </small>
+              </label>
+      <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" value=""></label>
+      <label class="dg-field"><span>Telefon 1</span><input name="phone_1" value=""></label>
+      <label class="dg-field"><span>Telefon 2</span><input name="phone_2" value=""></label>
+      <label class="dg-field dg-field--wide"><span>Website</span><input name="website" value="test-site.de"></label>
+          </div>
+
+    <h2>Adresse</h2>
+    <div class="dg-form-grid">
+      <label class="dg-field"><span>Straße</span><input name="address1_street" value="Muster Str. 1"></label>
+      <label class="dg-field"><span>Zusatz</span><input name="address1_extra" value=""></label>
+      <label class="dg-field"><span>Ort</span><input name="address1_city" value="Musterstadt"></label>
+      <label class="dg-field"><span>PLZ</span><input name="address1_postal" value="012345"></label>
+      <label class="dg-field"><span>Land</span><input name="address1_country" value="DE" maxlength="2"></label>
+    </div>
+
+    <div class="dg-employee-section" data-employee-section hidden data-filing-hints="{&quot;kk_employee&quot;:&quot;Regelfall für Vollzeit\/Teilzeit: Anmeldung (DEÜV) über die Krankenkasse des Mitarbeiters. Die Krankenkasse meldet an die Rentenversicherung — die SV-Nummer wird vergeben oder ist bereits bekannt.&quot;,&quot;kbs_minijob&quot;:&quot;Geringfügige Beschäftigung (Minijob): Anmeldung über die Minijob-Zentrale der Knappschaft-Bahn-See (oft mit Pauschalabgabe durch den Arbeitgeber).&quot;,&quot;kbs_sector&quot;:&quot;Nur bei Versicherten in Bergbau, Bahn oder See-Krankenversicherung der Knappschaft.&quot;,&quot;drv_regional&quot;:&quot;Sonderfälle ohne laufende Krankenkasse des Mitarbeiters — Rücksprache mit Lohnbüro\/DRV.&quot;}" data-social-steps="{&quot;kk_employee&quot;:[&quot;Stammdaten vollständig erfassen (Name, Geburtsdatum, Adresse).&quot;,&quot;Krankenkasse des Mitarbeiters unter Gesundheitsdaten eintragen.&quot;,&quot;Anmeldung zur Sozialversicherung (DEÜV-Meldung) an die Krankenkasse senden — über Lohnbüro, DATEV oder Ihr SV-Meldeverfahren.&quot;,&quot;Krankenkasse meldet an die Deutsche Rentenversicherung; die SV-Nummer wird neu vergeben oder eine bestehende zugeordnet.&quot;,&quot;SV-Nummer aus Rückmeldung der Krankenkasse oder vom Mitarbeiter übernehmen, Status auf „Vorhanden“ setzen.&quot;],&quot;kbs_minijob&quot;:[&quot;Minijob beim Arbeitgeber anmelden (geringfügige Beschäftigung).&quot;,&quot;Meldung über die Minijob-Zentrale der Knappschaft-Bahn-See (DEÜV) — oft Pauschalabgabe durch den Arbeitgeber.&quot;,&quot;SV-Nummer wird vergeben oder zugeordnet; nach Erhalt hier eintragen und Status auf „Vorhanden“ setzen.&quot;],&quot;kbs_sector&quot;:[&quot;Zuständigkeit Knappschaft-Bahn-See prüfen (Bergbau, Bahn oder See).&quot;,&quot;Anmeldung über die zuständige Meldestelle der Knappschaft durchführen.&quot;,&quot;SV-Nummer nach Rückmeldung eintragen, Status auf „Vorhanden“ setzen.&quot;],&quot;drv_regional&quot;:[&quot;Sonderfall mit Lohnbüro oder DRV-Regionalträger klären.&quot;,&quot;Anmeldung über den vereinbarten Weg (ohne laufende Krankenkasse des Mitarbeiters).&quot;,&quot;SV-Nummer nach Erteilung eintragen, Status auf „Vorhanden“ setzen.&quot;]}">
+  <h2>Mitarbeiterdaten</h2>
+  <p class="dg-lead">Vertrauliche Personalinformationen — nur für Rolle Mitarbeiter oder Administrator. Speicherdauer: 10 Jahre nach Austritt.</p>
+        
+      <h3>Persönliche Angaben</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Geburtsdatum</span>
+            <input type="date" name="employee[birth_date]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Geschlecht</span>
+            <select
+              name="employee[gender]"
+                                                      >
+                              <option value="" selected>—</option>
+                              <option value="m">Männlich</option>
+                              <option value="w">Weiblich</option>
+                              <option value="d">Divers</option>
+                              <option value="x">Keine Angabe</option>
+                          </select>
+          </label>
+                                        <label class="dg-field">
+            <span>Familienstand</span>
+            <input type="text" name="employee[marital_status]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Ehepartner/in</span>
+            <input type="text" name="employee[spouse_name]" value="">
+          </label>
+                  </div>
+          <h3>Sozialversicherung</h3>
+          <p class="dg-lead">
+        Die <strong>Sozialversicherungsnummer</strong> ist eine einheitliche Nummer für alle Zweige.
+        Fehlt sie, Status <strong>„Noch nicht vorhanden“</strong> oder <strong>„Beantragt“</strong> wählen,
+        <strong>Meldestelle</strong> festlegen — die Anmeldung läuft dort (nicht direkt bei der DRV).
+        Den Namen der Krankenkasse erfassen Sie unter <strong>Gesundheitsdaten</strong>.
+      </p>
+      <p class="dg-lead dg-filing-hint" data-filing-hint hidden></p>
+      <div class="dg-social-guide" data-social-guide hidden>
+        <p class="dg-social-guide__title"><strong>SV-Nummer beantragen — Vorgehen:</strong></p>
+        <ol class="dg-social-guide__steps" data-social-guide-steps></ol>
+      </div>
+                    <div class="dg-sv-draft-actions">
+          <button type="submit" name="prepare_sv_registration" value="1" class="dg-button">
+            Anmeldung vorbereiten (nicht absenden)
+          </button>
+          <p class="dg-lead">Speichert die aktuellen Angaben und erstellt einen DEÜV-Anmeldungs-Entwurf im CRM. Es erfolgt <strong>keine</strong> Übermittlung an Krankenkasse oder Knappschaft.</p>
+        </div>
+                      <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Status SV-Nummer</span>
+            <select
+              name="employee[social_security_status]"
+              data-social-status                                        >
+                              <option value="pending" selected>Noch nicht vorhanden</option>
+                              <option value="requested">Beantragt / Anmeldung läuft</option>
+                              <option value="received">Vorhanden</option>
+                          </select>
+          </label>
+                                        <label class="dg-field dg-field--wide">
+            <span>Meldestelle (Einzug)</span>
+            <select
+              name="employee[social_filing_office]"
+                            data-social-filing-office                          >
+                              <option value="">— bitte wählen —</option>
+                              <option value="kk_employee" selected>Krankenkasse des Mitarbeiters (sv-pflichtige Beschäftigung)</option>
+                              <option value="kbs_minijob">DRV Knappschaft-Bahn-See — Minijob-Zentrale (geringfügig entlohnt)</option>
+                              <option value="kbs_sector">DRV Knappschaft-Bahn-See (Bergbau, Bahn, See)</option>
+                              <option value="drv_regional">Deutsche Rentenversicherung — Regionalträger (Sonderfall)</option>
+                          </select>
+          </label>
+                                        <label class="dg-field">
+            <span>Sozialversicherungsnummer</span>
+            <input
+              type="text"
+              name="employee[social_security_number]"
+              value=""
+              data-social-sv-number
+              placeholder="12-stellig, z. B. 12 123456 M 123"
+                          >
+          </label>
+                  </div>
+          <h3>Gesundheitsdaten</h3>
+              <p class="dg-lead">
+        <strong>Krankenkasse / Krankenversicherung</strong> (GKV oder PKV) und die
+        <strong>Versichertennummer</strong> von der Versichertenkarte — mit Vorschlägen beim Tippen des Versicherernamens.
+      </p>
+            <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Krankenkasse / Krankenversicherung</span>
+            <input
+              type="text"
+              name="employee[health_insurance]"
+              value=""
+              data-health-insurer-name
+              autocomplete="off"
+                          >
+            <div class="dg-health-insurer-suggest dg-bank-suggest" hidden></div>
+          </label>
+                                        <label class="dg-field">
+            <span>Versichertennummer</span>
+            <input
+              type="text"
+              name="employee[health_insurance_number]"
+              value=""
+              placeholder="10-stellige Nummer von der Versichertenkarte"
+                          >
+          </label>
+                                        <label class="dg-field dg-field--wide">
+            <span>Gesundheitszustand</span>
+            <textarea name="employee[health_status]" rows="3"></textarea>
+          </label>
+                                        <label class="dg-field dg-field--wide">
+            <span>Behandlungserfordernisse</span>
+            <textarea name="employee[treatment_needs]" rows="3"></textarea>
+          </label>
+                  </div>
+          <h3>Behinderung</h3>
+                  <p class="dg-lead">
+        <strong>Grad der Behinderung</strong> und <strong>Zusatzbuchstaben</strong> wie auf dem Schwerbehindertenausweis.
+        Bei chronischen Krankheiten, Arbeitsunfällen o. Ä. können zusätzlich <strong>ärztliche Atteste</strong> hochgeladen werden.
+      </p>
+        <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Grad der Behinderung (GdB)</span>
+            <input
+              type="number"
+              name="employee[disability_degree]"
+              value=""
+              min="0"
+              max="100"
+              step="1"
+              inputmode="numeric"
+              placeholder="z. B. 50"
+                          >
+          </label>
+                                        <label class="dg-field dg-field--wide">
+            <span>Zusatzbuchstaben</span>
+            <input
+              type="text"
+              name="employee[disability_supplementary_codes]"
+              value=""
+              data-disability-supplementary
+              autocomplete="off"
+              placeholder="z. B. G, H, Bl — mehrere durch Komma trennen"
+                          >
+            <div
+              class="dg-disability-supplementary-suggest"
+              data-disability-options="{&quot;G&quot;:&quot;gehbehindert&quot;,&quot;aG&quot;:&quot;außergewöhnlich gehbehindert&quot;,&quot;H&quot;:&quot;hilflos&quot;,&quot;Bl&quot;:&quot;blind&quot;,&quot;Gl&quot;:&quot;gehörlos&quot;,&quot;TBl&quot;:&quot;taubblind&quot;,&quot;RF&quot;:&quot;Rundfunkgebührenbefreiung&quot;,&quot;B&quot;:&quot;Begleitperson erforderlich&quot;}"
+            ></div>
+          </label>
+                                        <label class="dg-field dg-field--wide">
+            <span>Chronische Krankheiten / Arbeitsunfall / weitere Angaben</span>
+            <textarea name="employee[disabilities]" rows="3"></textarea>
+          </label>
+                  </div>
+          <div class="dg-form-grid">
+                  <label class="dg-field dg-field--wide">
+            <span>Behindertenausweis (Upload)</span>
+            <input type="file" name="employee_files[disability_id_card]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+          </label>
+                <label class="dg-field dg-field--wide">
+          <span>Ärztliche Atteste (Upload)</span>
+          <p class="dg-lead">Chronische Krankheiten, Arbeitsunfall, Arbeitsunfähigkeit u. Ä. — mehrere Dateien möglich.</p>
+          <input type="file" name="employee_files[medical_certificates][]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+        </label>
+      </div>
+          <h3>Beschäftigungsdaten</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Beschäftigungsverhältnis</span>
+            <input type="text" name="employee[employment_relationship]" value="Vollzeit">
+          </label>
+                                        <label class="dg-field">
+            <span>Beschäftigungspflichtige Stelle</span>
+            <input type="text" name="employee[employer_site]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Arbeitsort</span>
+            <input type="text" name="employee[work_location]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Art der Tätigkeit</span>
+            <input type="text" name="employee[job_type]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Eintritt</span>
+            <input type="date" name="employee[entry_date]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Austritt</span>
+            <input type="date" name="employee[exit_date]" value="">
+          </label>
+                  </div>
+          <h3>Arbeitsvertragsdaten</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Vertragsbeginn</span>
+            <input type="date" name="employee[contract_start]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Vertragsende (befristet)</span>
+            <input type="date" name="employee[contract_end]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Arbeitszeit (Freitext)</span>
+            <input type="text" name="employee[working_hours]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Soll-Arbeitszeit pro Tag (Minuten)</span>
+            <input
+              type="number"
+              name="employee[daily_work_minutes]"
+              value=""
+              min="0"
+              max="960"
+              step="1"
+              placeholder="z. B. 480 (= 8 h)"
+                          >
+          </label>
+                                        <label class="dg-field">
+            <span>Beschäftigungsart (Zeiterfassung)</span>
+            <select
+              name="employee[employment_type]"
+                                                      >
+                              <option value="" selected>—</option>
+                              <option value="regular">Vollzeit / Teilzeit (sv-pflichtig)</option>
+                              <option value="minijob">Minijob (geringfügig)</option>
+                              <option value="intern">Praktikant / Intern</option>
+                          </select>
+          </label>
+                                        <label class="dg-field dg-field--checkbox">
+            <span>
+              <input type="checkbox" name="employee[overtime_allowed]" value="1">
+              Überstunden erlaubt            </span>
+          </label>
+                                        <label class="dg-field">
+            <span>Lohn / Gehalt</span>
+            <input type="text" name="employee[salary]" value="">
+          </label>
+                  </div>
+          <h3>Beihilfedaten</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Beihilfebetrag</span>
+            <input type="text" name="employee[subsidy_amount]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Beihilfeträger</span>
+            <input type="text" name="employee[subsidy_carrier]" value="">
+          </label>
+                  </div>
+          <h3>Qualifikationsdaten</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field dg-field--wide">
+            <span>Qualifikationen (Ausbildung, Erfahrung, Zertifizierungen)</span>
+            <textarea name="employee[qualifications]" rows="3"></textarea>
+          </label>
+                  </div>
+          <h3>Beurteilung</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field dg-field--wide">
+            <span>Leistungen (Aufgaben, Kommunikation)</span>
+            <textarea name="employee[performance_notes]" rows="3"></textarea>
+          </label>
+                                        <label class="dg-field dg-field--wide">
+            <span>Verhalten (Pünktlichkeit, Teamarbeit)</span>
+            <textarea name="employee[behavior_notes]" rows="3"></textarea>
+          </label>
+                  </div>
+          <h3>Führerschein</h3>
+                <div class="dg-form-grid">
+                                <label class="dg-field">
+            <span>Führerscheinklassen</span>
+            <input type="text" name="employee[driver_license_classes]" value="">
+          </label>
+                                        <label class="dg-field">
+            <span>Führerschein gültig bis</span>
+            <input type="date" name="employee[driver_license_valid_until]" value="">
+          </label>
+                  </div>
+      
+  <h3>Dokumente</h3>
+  <p class="dg-lead">PDF, JPG, PNG oder WEBP — max. 10 MB pro Datei.</p>
+  <div class="dg-form-grid">
+          <label class="dg-field dg-field--wide">
+        <span>Führerschein</span>
+        <input type="file" name="employee_files[driver_license]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+      </label>
+          <label class="dg-field dg-field--wide">
+        <span>Ausweis</span>
+        <input type="file" name="employee_files[id_card]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+      </label>
+          <label class="dg-field dg-field--wide">
+        <span>Krankenkassenkarte</span>
+        <input type="file" name="employee_files[health_insurance_card]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+      </label>
+          <label class="dg-field dg-field--wide">
+        <span>Bankkarte</span>
+        <input type="file" name="employee_files[bank_card]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+      </label>
+          <label class="dg-field dg-field--wide">
+        <span>Arbeitsvertrag</span>
+        <input type="file" name="employee_files[employment_contract]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+      </label>
+      </div>
+
+  <h3>Speicherdauer</h3>
+  <div class="dg-retention dg-retention--open">
+    <p class="dg-lead">
+      Nach dem <strong>Austritt</strong> werden Mitarbeiterdaten noch <strong>10 Jahre</strong> aufbewahrt.
+      Danach werden <strong>nur</strong> die Mitarbeiter-spezifischen Felder und Dokumente automatisch entfernt;
+      Name, Adresse, Kontakt und Kundendaten bleiben erhalten. Die Rolle wird dann auf <strong>Kunde</strong> gesetzt.
+      Die Bereinigung erfolgt automatisch in den ersten zwei Januarwochen (1.–14. Januar),
+      sobald ein Administrator oder Mitarbeiter das CRM nutzt (einmal pro Login-Sitzung).
+    </p>
+    <p><strong>Status:</strong> Austritt noch nicht erfasst — Löschfrist offen</p>
+          <p>Bitte <strong>Austritt</strong> erfassen, sobald die Beschäftigung endet.</p>
+          </div>
+</div>
+
+    <h2>Bankverbindung</h2>
+    <p class="dg-lead">Mehrere Girokonten, Kreditkarten und Zahlungsdienste möglich.</p>
+    <div id="dg-bank-repeater" class="dg-bank-repeater">
+              <div class="dg-bank-card" data-bank-card>
+  <div class="dg-bank-card__header">
+    <p class="dg-bank-card__title" data-bank-title>Konto / Zahlungsdienst 1</p>
+    <button type="button" class="dg-button dg-button--small" data-bank-remove>Entfernen</button>
+  </div>
+  <div class="dg-form-grid">
+    <label class="dg-field">
+      <span>Typ</span>
+      <select name="bank_accounts[0][type]" data-bank-type>
+                  <option value="giro" selected>Girokonto</option>
+                  <option value="sparkonto">Sparkonto / Tagesgeld</option>
+                  <option value="kreditkarte">Kreditkarte</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="klarna">Klarna</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="mollie">Mollie</option>
+                  <option value="amazon_pay">Amazon Pay</option>
+                  <option value="apple_pay">Apple Pay (über Acquirer)</option>
+                  <option value="google_pay">Google Pay (über Acquirer)</option>
+                  <option value="sepa_lastschrift">SEPA-Lastschrift (Einzug)</option>
+                  <option value="sonstiges">Sonstiger Zahlungsdienst</option>
+              </select>
+    </label>
+    <label class="dg-field"><span>Bezeichnung</span><input name="bank_accounts[0][label]" value=""></label>
+    <label class="dg-field" data-bank-field="account_holder"><span>Kontoinhaber</span><input name="bank_accounts[0][account_holder]" value=""></label>
+    <label class="dg-field dg-field--wide" data-bank-field="iban">
+      <span>IBAN</span>
+      <input class="dg-bank-iban" name="bank_accounts[0][iban]" value="" autocomplete="off">
+      <div class="dg-bank-suggest dg-bank-iban-suggest" hidden></div>
+    </label>
+    <label class="dg-field" data-bank-field="bic">
+      <span>BIC</span>
+      <input class="dg-bank-bic" name="bank_accounts[0][bic]" value="" autocomplete="off">
+      <div class="dg-bank-suggest dg-bank-bic-suggest" hidden></div>
+    </label>
+    <label class="dg-field dg-field--wide" data-bank-field="bank_name">
+      <span>Bank / Anbieter</span>
+      <input class="dg-bank-name" name="bank_accounts[0][bank_name]" value="" autocomplete="off">
+      <div class="dg-bank-suggest dg-bank-name-suggest" hidden></div>
+    </label>
+    <label class="dg-field" data-bank-field="provider"><span>Kartenanbieter</span><input name="bank_accounts[0][provider]" value="" placeholder="z. B. Visa, Mastercard"></label>
+    <label class="dg-field" data-bank-field="card_number_masked"><span>Kartennummer (maskiert)</span><input name="bank_accounts[0][card_number_masked]" value="" placeholder="**** **** **** 1234"></label>
+    <label class="dg-field" data-bank-field="expiry"><span>Gültig bis</span><input name="bank_accounts[0][expiry]" value="" placeholder="MM/JJ"></label>
+    <label class="dg-field" data-bank-field="email"><span>E-Mail (PayPal o. ä.)</span><input type="email" name="bank_accounts[0][email]" value=""></label>
+    <label class="dg-field" data-bank-field="merchant_id"><span>Merchant-ID</span><input name="bank_accounts[0][merchant_id]" value=""></label>
+    <label class="dg-field" data-bank-field="account_id"><span>Account-ID (Stripe)</span><input name="bank_accounts[0][account_id]" value=""></label>
+    <label class="dg-field" data-bank-field="profile_id"><span>Profile-ID (Mollie)</span><input name="bank_accounts[0][profile_id]" value=""></label>
+    <label class="dg-field" data-bank-field="creditor_id"><span>Gläubiger-ID (SEPA)</span><input name="bank_accounts[0][creditor_id]" value=""></label>
+  </div>
+</div>
+          </div>
+    <p class="dg-bank-repeater__actions">
+      <button type="button" class="dg-button" data-bank-add>+ Konto / Zahlungsdienst hinzufügen</button>
+    </p>
+
+    <h2>Soziale Medien</h2>
+    <p class="dg-lead">Profile in sozialen Netzwerken (Website steht unter Kommunikation).</p>
+    <div class="dg-form-grid">
+              <label class="dg-field dg-field--wide">
+          <span>LinkedIn</span>
+          <input type="url" name="social_linkedin" value="" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>Xing</span>
+          <input type="url" name="social_xing" value="" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>Facebook</span>
+          <input type="url" name="social_facebook" value="" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>Instagram</span>
+          <input type="url" name="social_instagram" value="" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>X (Twitter)</span>
+          <input type="url" name="social_x" value="" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>YouTube</span>
+          <input type="url" name="social_youtube" value="http://your.tube/SSS0123" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>TikTok</span>
+          <input type="url" name="social_tiktok" value="" placeholder="https://">
+        </label>
+              <label class="dg-field dg-field--wide">
+          <span>GitHub</span>
+          <input type="url" name="social_github" value="" placeholder="https://">
+        </label>
+          </div>
+
+    <div class="dg-form-actions">
+      <button type="submit" name="contact_save" value="1" class="dg-button dg-button--primary">Speichern</button>
+      <a class="dg-button" href="/app?page=kontakte&amp;action=view&amp;id=9">Abbrechen</a>
+    </div>
+  </form>
+
+  <template id="dg-company-employee-card-template">
+    <div class="dg-company-employee-card" data-company-employee-card>
+  <div class="dg-company-employee-card__head">
+    <p class="dg-company-employee-card__title" data-company-employee-title>Mitarbeiter 1</p>
+    <button type="button" class="dg-button dg-button--small" data-company-employee-remove>Entfernen</button>
+  </div>
+  <div class="dg-form-grid">
+    <label class="dg-field dg-field--wide">
+      <span>Person aus Kontakten *</span>
+      <select name="company_employees[__INDEX__][person_contact_id]" data-company-employee-person>
+        <option value="">— Person wählen —</option>
+              </select>
+    </label>
+    <label class="dg-field dg-field--wide">
+      <span>Zuständigkeitsbereich</span>
+      <input
+        name="company_employees[__INDEX__][responsibility]"
+        value=""
+        placeholder="z. B. Buchhaltung, Lohn, Steuererklärung"
+      >
+    </label>
+    <label class="dg-field">
+      <span>E-Mail (dienstlich)</span>
+      <input
+        type="email"
+        name="company_employees[__INDEX__][work_email]"
+        value=""
+      >
+    </label>
+    <label class="dg-field">
+      <span>Telefon (dienstlich)</span>
+      <input
+        name="company_employees[__INDEX__][work_phone]"
+        value=""
+      >
+    </label>
+    <label class="dg-field dg-field--wide">
+      <span>Erreichbarkeit / Öffnungszeiten</span>
+      <input
+        name="company_employees[__INDEX__][availability]"
+        value=""
+        placeholder="z. B. Mo–Do 9–17 Uhr, Fr nur Vormittag"
+      >
+    </label>
+  </div>
+</div>
+  </template>
+
+  </div>
+    </main>
+  </div>
+
+                <script>
+      window.dgBankConfig = {
+        url: '/api/bank-suggest',
+        csrf: "8737d6cbbd9ad7ed06e09a74c4a1e907"      };
+      window.dgHealthInsurerConfig = {
+        url: '/api/health-insurer-suggest',
+        csrf: "8737d6cbbd9ad7ed06e09a74c4a1e907"      };
+    </script>
+    <script src="/assets/js/bank-autocomplete.js?v=1789248657" defer></script>
+    <script src="/assets/js/health-insurer-autocomplete.js?v=1789248657" defer></script>
+    <script src="/assets/js/disability-supplementary.js?v=1789248657" defer></script>
+                        <script>
+      window.dgKontakteForm = {
+        supplierNumberPreview: ""      };
+    </script>
+    <script src="/assets/js/contact-company-links.js?v=1789248657" defer></script>
+    <script src="/assets/js/kontakte-form.js?v=1789248657" defer></script>
+    <script src="/assets/js/voucher-contact-bridge.js?v=1789248657" defer></script>
+                <script src="/assets/js/admin.js?v=1789248657" defer></script>
+      <style>.dg-cc-overlay{position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,.4);padding:1rem}
+.dg-cc-banner{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 -2px 20px rgba(0,0,0,.15);padding:1.5rem;font-family:system-ui,-apple-system,sans-serif;color:#1e293b;font-size:.9rem;line-height:1.5}
+.dg-cc-banner h3{font-size:1.1rem;margin:0 0 .5rem}
+.dg-cc-banner p{margin:0 0 1rem;color:#475569}
+.dg-cc-banner a{color:#2563eb}
+.dg-cc-details{border-top:1px solid #e2e8f0;padding-top:.75rem;margin-bottom:.75rem}
+.dg-cc-category{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;padding:.5rem 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.dg-cc-category:last-child{border-bottom:none}
+.dg-cc-cat-label{font-weight:600;font-size:.875rem;flex:0 0 auto}
+.dg-cc-cat-desc{flex:1 1 100%;font-size:.8rem;color:#64748b;margin-top:.15rem}
+.dg-cc-actions{display:flex;flex-wrap:wrap;gap:.5rem}
+.dg-cc-btn{padding:.5rem 1rem;border:none;border-radius:6px;font-size:.875rem;font-weight:600;cursor:pointer}
+.dg-cc-btn--accept{background:#2563eb;color:#fff}.dg-cc-btn--accept:hover{background:#1d4ed8}
+.dg-cc-btn--reject{background:#e2e8f0;color:#334155}.dg-cc-btn--reject:hover{background:#cbd5e1}
+.dg-cc-btn--settings{background:transparent;color:#2563eb;text-decoration:underline;padding:.5rem .25rem}
+.dg-cc-btn--save{background:#16a34a;color:#fff}.dg-cc-btn--save:hover{background:#15803d}</style>
+    <div id="dg-cookie-consent" class="dg-cc-overlay" role="dialog" aria-label="Cookie-Einstellungen">
+  <div class="dg-cc-banner">
+    <div class="dg-cc-text">
+      <h3>Cookie-Einstellungen</h3>
+      <p>Wir verwenden Cookies, um Ihnen die bestmögliche Nutzung unserer Website zu ermöglichen.
+         Technisch notwendige Cookies werden immer gesetzt. Weitere Cookies setzen wir nur mit Ihrer Einwilligung.
+         <a href="/datenschutz">Mehr erfahren</a></p>
+    </div>
+    <div class="dg-cc-details" id="dg-cc-details" style="display:none">
+      <label class="dg-cc-category"><input type="checkbox" name="necessary" value="1" checked disabled><span class="dg-cc-cat-label">Technisch notwendig</span><span class="dg-cc-cat-desc">Diese Cookies sind für den Betrieb der Website erforderlich und können nicht deaktiviert werden.</span></label><label class="dg-cc-category"><input type="checkbox" name="functional" value="1" ><span class="dg-cc-cat-label">Funktional</span><span class="dg-cc-cat-desc">Ermöglichen erweiterte Funktionen wie Sprach-Einstellungen oder personalisierte Inhalte.</span></label><label class="dg-cc-category"><input type="checkbox" name="analytics" value="1" ><span class="dg-cc-cat-label">Statistik</span><span class="dg-cc-cat-desc">Helfen uns zu verstehen, wie Besucher die Website nutzen (z.B. Seitenaufrufe, Verweildauer).</span></label><label class="dg-cc-category"><input type="checkbox" name="marketing" value="1" ><span class="dg-cc-cat-label">Marketing</span><span class="dg-cc-cat-desc">Werden genutzt, um Werbung relevanter zu gestalten und Kampagnen zu messen.</span></label>
+    </div>
+    <div class="dg-cc-actions">
+      <button type="button" class="dg-cc-btn dg-cc-btn--accept" onclick="dgCookieConsent.acceptAll()">Alle akzeptieren</button>
+      <button type="button" class="dg-cc-btn dg-cc-btn--reject" onclick="dgCookieConsent.rejectAll()">Nur notwendige</button>
+      <button type="button" class="dg-cc-btn dg-cc-btn--settings" onclick="dgCookieConsent.toggleDetails()">Einstellungen</button>
+      <button type="button" class="dg-cc-btn dg-cc-btn--save" id="dg-cc-save" style="display:none" onclick="dgCookieConsent.saveCustom()">Auswahl speichern</button>
+    </div>
+  </div>
+</div>    <script>window.dgCookieConsent={
+  setCookie:function(data){
+    var val=btoa(JSON.stringify(data));
+    var d=new Date();d.setTime(d.getTime()+31536000*1000);
+    document.cookie="dg_cookie_consent="+val+";expires="+d.toUTCString()+";path=/;SameSite=Lax;Secure";
+  },
+  hide:function(){var el=document.getElementById('dg-cookie-consent');if(el)el.remove();},
+  acceptAll:function(){
+    this.setCookie({necessary:true,functional:true,analytics:true,marketing:true});
+    this.hide();location.reload();
+  },
+  rejectAll:function(){
+    this.setCookie({necessary:true,functional:false,analytics:false,marketing:false});
+    this.hide();location.reload();
+  },
+  toggleDetails:function(){
+    var d=document.getElementById('dg-cc-details');
+    var s=document.getElementById('dg-cc-save');
+    var show=d.style.display==='none';
+    d.style.display=show?'block':'none';
+    s.style.display=show?'inline-block':'none';
+  },
+  saveCustom:function(){
+    var d=document.getElementById('dg-cc-details');
+    var inputs=d.querySelectorAll('input[type=checkbox]');
+    var data={necessary:true};
+    inputs.forEach(function(cb){if(!cb.disabled)data[cb.name]=cb.checked;});
+    this.setCookie(data);
+    this.hide();location.reload();
+  }
+};</script>
+  </body>
+</html>

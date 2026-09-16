@@ -1,0 +1,57 @@
+{
+  "video_slug": "lager-platz-check",
+  "locale": "de",
+  "title": "Lager — Platz-Check",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir den Platz-Check im Lager. Sie starten im Dashboard und wechseln zum Lager."
+    },
+    {
+      "key": "nav-lager",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "lager",
+      "narration": "Öffnen Sie Lager über die Kachel oder das Menü links."
+    },
+    {
+      "key": "tab-platz-check",
+      "screenshot": "storage/media/training/lager/lager-platz-check.png",
+      "mode": "overview",
+      "narration": "Wählen Sie den Reiter Platz-Check. Hier prüfen Sie einen Lagerplatz — per Strichcode oder manuell."
+    },
+    {
+      "key": "scan",
+      "screenshot": "storage/media/training/lager/lager-platz-check.png",
+      "mode": "focus_field",
+      "field": "scan_input",
+      "section": "platz_check",
+      "regions_file": "storage/media/training/lager/lager-platz-check-regions.json",
+      "narration": "Scannen Sie einen Strichcode: Platz, Regal, Halle, Karton oder Artikel. Der Scanner oder die Tastatur sendet die Eingabe — danach erscheint die Belegung."
+    },
+    {
+      "key": "manuell",
+      "screenshot": "storage/media/training/lager/lager-platz-check.png",
+      "mode": "focus_field",
+      "field": "audit_place",
+      "section": "platz_check",
+      "regions_file": "storage/media/training/lager/lager-platz-check-regions.json",
+      "narration": "Alternativ wählen Sie manuell: Ebene, Lagerort, Halle, Regal und Stellplatz — dann klicken Sie auf Prüfen."
+    },
+    {
+      "key": "ergebnis",
+      "screenshot": "storage/media/training/lager/lager-platz-check-demo.png",
+      "mode": "overview",
+      "narration": "Das Ergebnis zeigt Belegung, Reservierung und die letzten Bewegungen am gewählten Platz — ideal für eine schnelle Kontrolle im Lager."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/lager/lager-platz-check-demo.png",
+      "mode": "overview",
+      "narration": "So nutzen Sie den Platz-Check: scannen oder manuell wählen, Ergebnis lesen. Viel Erfolg!"
+    }
+  ]
+}

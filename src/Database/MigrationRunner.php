@@ -208,6 +208,25 @@ final class MigrationRunner
             '062_time_overtime.sql' => self::tableExists($pdo, 'dg_time_work_days'),
             '063_arbzg_reminders.sql' => self::tableExists($pdo, 'dg_time_arbzg_reminders'),
             '064_bank_tx_fingerprint.sql' => self::columnExists($pdo, 'dg_bank_transactions', 'transaction_fingerprint'),
+            '065_stock_management.sql' => self::tableExists($pdo, 'dg_stock_movements')
+                && self::columnExists($pdo, 'dg_calendar_articles', 'track_stock'),
+            '066_stock_position.sql' => self::columnExists($pdo, 'dg_calendar_articles', 'stock_ort'),
+            '067_stock_structure.sql' => self::tableExists($pdo, 'dg_stock_locations')
+                && self::columnExists($pdo, 'dg_calendar_articles', 'stock_location_id'),
+            '068_stock_shelf_slot_kinds.sql' => self::columnExists($pdo, 'dg_stock_shelves', 'slots_pallets')
+                && self::columnExists($pdo, 'dg_stock_places', 'place_kind'),
+            '069_stock_barcodes_receipt_issue.sql' => self::tableExists($pdo, 'dg_stock_packages')
+                && self::columnExists($pdo, 'dg_stock_places', 'barcode')
+                && self::columnExists($pdo, 'dg_stock_movements', 'place_id'),
+            '070_academy.sql' => self::tableExists($pdo, 'dg_academy_courses')
+                && self::tableExists($pdo, 'dg_academy_assignments'),
+            '071_academy_departments.sql' => self::tableExists($pdo, 'dg_academy_course_modules')
+                && self::columnExists($pdo, 'dg_academy_courses', 'department_id'),
+            '072_academy_module_departments.sql' => self::tableExists($pdo, 'dg_academy_module_departments')
+                && self::tableExists($pdo, 'dg_academy_course_departments'),
+            '073_website_terminkalender_booking.sql' => WebsitePageRepository::terminkalenderUsesOnlineBookingLayout(),
+            '076_website_legal_variants.sql' => self::tableExists($pdo, 'dg_website_legal_variants'),
+            '077_kichel_protocol.sql' => self::tableExists($pdo, 'dg_kichel_log'),
             default => false,
         };
     }
@@ -303,6 +322,19 @@ final class MigrationRunner
             '062_time_overtime.sql' => true,
             '063_arbzg_reminders.sql' => true,
             '064_bank_tx_fingerprint.sql' => true,
+            '065_stock_management.sql' => true,
+            '066_stock_position.sql' => true,
+            '067_stock_structure.sql' => true,
+            '068_stock_shelf_slot_kinds.sql' => true,
+            '069_stock_barcodes_receipt_issue.sql' => true,
+            '070_academy.sql' => true,
+            '071_academy_departments.sql' => true,
+            '072_academy_module_departments.sql' => true,
+            '073_website_terminkalender_booking.sql' => true,
+            '074_website_online_booking_editor.sql' => true,
+            '075_website_terminkalender_kunde_video.sql' => true,
+            '076_website_legal_variants.sql' => true,
+            '077_kichel_protocol.sql' => true,
         ];
     }
 

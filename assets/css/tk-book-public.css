@@ -1,0 +1,416 @@
+/* Öffentliche Online-Terminbuchung */
+.tk-book-page {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tk-cal-primary, #2563eb) 8%, #f1f5f9) 0%, #f8fafc 240px);
+  color: var(--tk-cal-text, #1e293b);
+  font-family: var(--dg-font, system-ui, -apple-system, Segoe UI, Roboto, sans-serif);
+  line-height: 1.5;
+}
+
+.tk-book__preview-banner {
+  background: #fef3c7;
+  color: #92400e;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.tk-book__preview-banner a {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.tk-book-page--disabled {
+  background: #f8fafc;
+}
+
+.tk-book {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+.tk-book__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tk-book__logo {
+  border-radius: 12px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: var(--tk-cal-shadow, 0 8px 30px rgba(15, 23, 42, 0.08));
+}
+
+.tk-book__logo.dg-logo--square {
+  width: 56px;
+  height: 56px;
+}
+
+.tk-book__logo.dg-logo--wide {
+  width: auto;
+  height: 48px;
+  max-width: 180px;
+}
+
+.tk-book__logo.dg-logo--tall {
+  width: 40px;
+  height: 56px;
+}
+
+.tk-book__title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--tk-cal-text, #1e293b);
+}
+
+.tk-book__subtitle {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  color: var(--tk-cal-muted, #64748b);
+}
+
+.tk-book__intro {
+  margin: 0 0 20px;
+  font-size: 1.02rem;
+  color: var(--tk-cal-muted, #64748b);
+}
+
+.tk-book__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.tk-book__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--tk-cal-border, #e2e8f0);
+  font-size: 0.88rem;
+  color: var(--tk-cal-muted, #64748b);
+}
+
+.tk-book__step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tk-book__step.is-active {
+  border-color: var(--tk-cal-primary, #2563eb);
+  color: var(--tk-cal-text, #1e293b);
+  font-weight: 600;
+  background: #fff;
+}
+
+.tk-book__step.is-active span {
+  background: var(--tk-cal-primary, #2563eb);
+  color: var(--tk-cal-on-primary, #fff);
+}
+
+.tk-book__step.is-done span {
+  background: #16a34a;
+  color: #fff;
+}
+
+.tk-book__card {
+  padding: 24px;
+  border: 1px solid var(--tk-cal-border, #e2e8f0);
+  border-radius: var(--tk-cal-radius, 12px);
+  background: var(--tk-cal-surface, #fff);
+  box-shadow: var(--tk-cal-shadow, 0 8px 30px rgba(15, 23, 42, 0.08));
+}
+
+.tk-book__card--center {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.tk-book__panel-title {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.tk-book__lead {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.tk-book__muted {
+  margin: 12px 0 0;
+  color: var(--tk-cal-muted, #64748b);
+}
+
+.tk-book__services {
+  display: grid;
+  gap: 10px;
+}
+
+.tk-book__service {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--tk-cal-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--tk-slot-bg, #f8fafc);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tk-book__service:hover {
+  background: var(--tk-slot-hover, #eef2ff);
+  border-color: color-mix(in srgb, var(--tk-cal-primary, #2563eb) 35%, #e2e8f0);
+}
+
+.tk-book__service.is-selected {
+  border-color: var(--tk-slot-selected-border, var(--tk-cal-primary, #2563eb));
+  background: var(--tk-slot-selected-bg, #dbeafe);
+  box-shadow: 0 0 0 3px var(--tk-focus-ring, rgba(37, 99, 235, 0.2));
+}
+
+.tk-book__service-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--tk-cal-text, #1e293b);
+}
+
+.tk-book__service-meta {
+  font-size: 0.9rem;
+  color: var(--tk-cal-muted, #64748b);
+}
+
+.tk-book__selection {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--tk-cal-primary, #2563eb);
+  background: var(--tk-cal-surface-alt, #f8fafc);
+  font-size: 0.95rem;
+}
+
+.tk-book__datetime {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tk-book__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+
+.tk-book__field span {
+  font-weight: 600;
+  color: var(--tk-cal-text, #1e293b);
+}
+
+.tk-book__input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--tk-cal-border, #e2e8f0);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--tk-cal-text, #1e293b);
+  background: #fff;
+}
+
+.tk-book__input:focus {
+  outline: none;
+  border-color: var(--tk-cal-primary, #2563eb);
+  box-shadow: 0 0 0 3px var(--tk-focus-ring, rgba(37, 99, 235, 0.2));
+}
+
+.tk-book__slots-label {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.tk-book__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.tk-book__slot {
+  min-width: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--tk-cal-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--tk-slot-bg, #f8fafc);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tk-book__slot:hover {
+  background: var(--tk-slot-hover, #eef2ff);
+}
+
+.tk-book__slot.is-selected {
+  background: var(--tk-slot-selected-bg, #dbeafe);
+  border-color: var(--tk-slot-selected-border, var(--tk-cal-primary, #2563eb));
+  color: var(--tk-cal-text, #1e293b);
+}
+
+.tk-book__hint {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: var(--tk-cal-muted, #64748b);
+}
+
+.tk-book__form {
+  display: grid;
+  gap: 14px;
+}
+
+.tk-book__hp {
+  position: absolute;
+  left: -9999px;
+  height: 0;
+  overflow: hidden;
+}
+
+.tk-book__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.tk-book__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tk-book__btn--primary {
+  background: var(--tk-cal-primary, #2563eb);
+  color: var(--tk-cal-on-primary, #fff);
+}
+
+.tk-book__btn--primary:hover:not(:disabled) {
+  background: var(--tk-cal-primary-hover, #1d4ed8);
+}
+
+.tk-book__btn--primary:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.tk-book__btn--ghost {
+  background: transparent;
+  border-color: var(--tk-cal-border, #e2e8f0);
+  color: var(--tk-cal-text, #1e293b);
+}
+
+.tk-book__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.92rem;
+}
+
+.tk-book__panel--success {
+  text-align: center;
+  padding: 12px 0 8px;
+}
+
+.tk-book__success-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 1.75rem;
+  line-height: 56px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .tk-book {
+    padding: 20px 14px 36px;
+  }
+
+  .tk-book__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .tk-book__step {
+    font-size: 0.84rem;
+  }
+
+  .tk-book__card {
+    padding: 18px 14px;
+  }
+
+  .tk-book__nav {
+    flex-direction: column-reverse;
+  }
+
+  .tk-book__btn {
+    width: 100%;
+  }
+}
+
+/* Eingebettet in Website-CMS-Seiten */
+.tk-book-wrap--embedded {
+  margin: 8px 0 16px;
+}
+.tk-book-wrap--embedded .tk-book {
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+}
+.tk-book-wrap--embedded .tk-book__header,
+.tk-book-wrap--embedded .tk-book__intro {
+  display: none;
+}
+.ws-block .ws-video-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--ws-text);
+}
+.ws-block .ws-video-caption {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 6px;
+}

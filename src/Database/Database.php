@@ -37,7 +37,12 @@ final class Database
         $username = (string) ($cfg['username'] ?? '');
         $charset = (string) ($cfg['charset'] ?? 'utf8mb4');
 
-        $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, $database, $charset);
+        $unixSocket = (string) ($cfg['unix_socket'] ?? '');
+        if ($unixSocket !== '') {
+            $dsn = sprintf('mysql:unix_socket=%s;dbname=%s;charset=%s', $unixSocket, $database, $charset);
+        } else {
+            $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, $database, $charset);
+        }
 
         self::$pdo = new PDO($dsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -84,7 +89,12 @@ final class Database
         $database = (string) $cfg['database'];
         $username = (string) $cfg['username'];
         $charset = (string) ($cfg['charset'] ?? 'utf8mb4');
-        $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, $database, $charset);
+        $unixSocket = (string) ($cfg['unix_socket'] ?? '');
+        if ($unixSocket !== '') {
+            $dsn = sprintf('mysql:unix_socket=%s;dbname=%s;charset=%s', $unixSocket, $database, $charset);
+        } else {
+            $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $host, $port, $database, $charset);
+        }
 
         $pdo = new PDO($dsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

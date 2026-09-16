@@ -1,0 +1,217 @@
+{
+    "base_url": "https:\/\/ganz-soft.de\/",
+    "user_id": 9,
+    "display_name": "Administrator",
+    "tiles": [
+        {
+            "slug": "kontakte",
+            "label": "Kontakte",
+            "icon": "contacts",
+            "href": "\/app?page=kontakte",
+            "description": "Benutzer, Kunden, Lieferanten und Mitarbeiter verwalten."
+        },
+        {
+            "slug": "terminkalender",
+            "label": "Terminkalender",
+            "icon": "calendar",
+            "href": "\/app?page=terminkalender",
+            "description": "Buchungen, Artikel und Kalender im Blick behalten."
+        },
+        {
+            "slug": "zeiterfassung",
+            "label": "Zeiterfassung",
+            "icon": "clock",
+            "href": "\/app?page=zeiterfassung",
+            "description": "Einstempeln, Pausen und Teamübersicht für HR."
+        },
+        {
+            "slug": "post",
+            "label": "Post",
+            "icon": "mail",
+            "href": "\/app?page=post",
+            "description": "Postfächer, Eingang und Nachrichten versenden."
+        },
+        {
+            "slug": "akademie",
+            "label": "Akademie",
+            "icon": "document",
+            "href": "\/app?page=akademie",
+            "description": ""
+        },
+        {
+            "slug": "artikel-leistungen",
+            "label": "Artikel & Leistungen",
+            "icon": "catalog",
+            "href": "\/app?page=artikel-leistungen",
+            "description": "Artikel- und Leistungskatalog pflegen."
+        },
+        {
+            "slug": "lager",
+            "label": "Lager",
+            "icon": "warehouse",
+            "href": "\/app?page=lager",
+            "description": "Lagerbestände, Bewegungen aus Belegen und Inventur."
+        },
+        {
+            "slug": "support-freigabe",
+            "label": "Support-Freigabe",
+            "icon": "settings",
+            "href": "\/app?page=support-freigabe",
+            "description": ""
+        },
+        {
+            "slug": "bilder",
+            "label": "Bilder",
+            "icon": "images",
+            "href": "\/app?page=bilder",
+            "description": "Medien, Logos und Bilder verwalten."
+        },
+        {
+            "slug": "buchhaltung-konten",
+            "label": "Konten",
+            "icon": "accounting",
+            "href": "\/app?page=buchhaltung-konten",
+            "description": "Kontenrahmen durchsuchen und Kontenhinweise einsehen."
+        },
+        {
+            "slug": "buchhaltung-belege",
+            "label": "Belege",
+            "icon": "receipt",
+            "href": "\/app?page=buchhaltung-belege",
+            "description": "Belege erfassen mit Steuerfeldern und Kontenzuordnung."
+        },
+        {
+            "slug": "buchhaltung-ueberweisungen",
+            "label": "Überweisungen",
+            "icon": "transfer",
+            "href": "\/app?page=buchhaltung-ueberweisungen",
+            "description": "Überweisungen vorbereiten mit QR-Code und Fotovorlage."
+        },
+        {
+            "slug": "buchhaltung-kontenuebersicht",
+            "label": "Kontenübersicht",
+            "icon": "ledger",
+            "href": "\/app?page=buchhaltung-kontenuebersicht",
+            "description": "Kontensalden und Kontoauszüge je Geschäftsjahr."
+        },
+        {
+            "slug": "buchhaltung-opos",
+            "label": "Offene Posten",
+            "icon": "transfer",
+            "href": "\/app?page=buchhaltung-opos",
+            "description": "Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten."
+        },
+        {
+            "slug": "buchhaltung-kassenbuch",
+            "label": "Kassenbuch",
+            "icon": "receipt",
+            "href": "\/app?page=buchhaltung-kassenbuch",
+            "description": "Bar-Ein- und Ausgänge aus Kassenbelegen."
+        },
+        {
+            "slug": "buchhaltung-manuelle-buchung",
+            "label": "Manuelle Buchungen",
+            "icon": "ledger",
+            "href": "\/app?page=buchhaltung-manuelle-buchung",
+            "description": "Freie Journalbuchungen ohne Beleg (Soll = Haben)."
+        },
+        {
+            "slug": "buchhaltung-auswertungen",
+            "label": "Bilanz & GuV",
+            "icon": "ledger",
+            "href": "\/app?page=buchhaltung-auswertungen",
+            "description": "Bilanz und GuV je Geschäftsjahr."
+        },
+        {
+            "slug": "buchhaltung-bwa",
+            "label": "BWA",
+            "icon": "ledger",
+            "href": "\/app?page=buchhaltung-bwa",
+            "description": ""
+        },
+        {
+            "slug": "buchhaltung-susa",
+            "label": "SuSa",
+            "icon": "ledger",
+            "href": "\/app?page=buchhaltung-susa",
+            "description": ""
+        },
+        {
+            "slug": "buchhaltung-bankabgleich",
+            "label": "Bankabgleich",
+            "icon": "transfer",
+            "href": "\/app?page=buchhaltung-bankabgleich",
+            "description": "CAMT.053 importieren und Belege zuordnen."
+        },
+        {
+            "slug": "buchhaltung-steuerberater-export",
+            "label": "Steuerberater-Export",
+            "icon": "document",
+            "href": "\/app?page=buchhaltung-steuerberater-export",
+            "description": "DATEV, Agenda, Addison — Buchungsstapel und Belege."
+        },
+        {
+            "slug": "buchhaltung-ustva",
+            "label": "UStVA",
+            "icon": "document",
+            "href": "\/app?page=buchhaltung-ustva",
+            "description": "Umsatzsteuer-Voranmeldung und ELSTER-CSV — auch ohne Steuerberater."
+        },
+        {
+            "slug": "buchhaltung-jahresabschluss",
+            "label": "Jahresabschluss",
+            "icon": "yearclose",
+            "href": "\/app?page=buchhaltung-jahresabschluss",
+            "description": "Checkliste, GuV-Abschluss, Saldenvortrag — DIY-Assistent."
+        },
+        {
+            "slug": "website-seiten",
+            "label": "Seiten",
+            "icon": "document",
+            "href": "\/app?page=website-seiten",
+            "description": "Seiten der öffentlichen Website anlegen und gestalten."
+        },
+        {
+            "slug": "website-formulare",
+            "label": "Formulare",
+            "icon": "mail",
+            "href": "\/app?page=website-formulare",
+            "description": "Formulare visuell bauen, Einträge empfangen und in Seiten einbinden."
+        },
+        {
+            "slug": "website-statistik",
+            "label": "Statistik",
+            "icon": "ledger",
+            "href": "\/app?page=website-statistik",
+            "description": "Seitenaufrufe lokal und Links zu Google Analytics \/ Tag Manager."
+        },
+        {
+            "slug": "website-menu",
+            "label": "Menü",
+            "icon": "nav",
+            "href": "\/app?page=website-menu",
+            "description": "Navigation der Website pflegen."
+        },
+        {
+            "slug": "website-chrome",
+            "label": "Kopf & Fuß",
+            "icon": "layout",
+            "href": "\/app?page=website-chrome",
+            "description": "Kopfzeile, Fußzeile und zusätzliche Skripte."
+        },
+        {
+            "slug": "website-design",
+            "label": "Design",
+            "icon": "palette",
+            "href": "\/app?page=website-design",
+            "description": "Farben der öffentlichen Website."
+        },
+        {
+            "slug": "einstellungen",
+            "label": "Einstellungen",
+            "icon": "settings",
+            "href": "\/app?page=einstellungen",
+            "description": "Firma, E-Mail, Module und System konfigurieren."
+        }
+    ]
+}

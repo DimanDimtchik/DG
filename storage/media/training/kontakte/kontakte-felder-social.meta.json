@@ -1,0 +1,44 @@
+{
+  "title": "Kontakte — Felder: Soziale Medien",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 42.0,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 8.84
+    },
+    {
+      "key": "field-social_linkedin",
+      "duration_sec": 4.68
+    },
+    {
+      "key": "field-social_xing",
+      "duration_sec": 3.52
+    },
+    {
+      "key": "field-social_facebook",
+      "duration_sec": 3.8
+    },
+    {
+      "key": "field-social_instagram",
+      "duration_sec": 3.08
+    },
+    {
+      "key": "field-social_x",
+      "duration_sec": 3.68
+    },
+    {
+      "key": "field-social_youtube",
+      "duration_sec": 3.68
+    },
+    {
+      "key": "field-social_tiktok",
+      "duration_sec": 2.84
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 7.92
+    }
+  ]
+}

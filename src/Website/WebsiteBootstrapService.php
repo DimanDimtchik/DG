@@ -82,17 +82,24 @@ final class WebsiteBootstrapService
 
         if ($terminkalenderPage) {
             $existingTk = WebsitePageRepository::findBySlugAnyStatus('terminkalender');
-            if ($existingTk === null || $overwrite) {
+            $needsBookingLayout = $existingTk === null
+                || $overwrite
+                || !WebsitePageRepository::isOnlineBookingPage($existingTk);
+            if ($needsBookingLayout) {
                 $tkId = WebsitePageRepository::save([
                     'title' => 'Terminkalender',
                     'slug' => 'terminkalender',
                     'status' => WebsitePageRepository::STATUS_PUBLISHED,
                     'layout' => WebsiteHomepageTemplates::terminkalenderPageLayout(),
                 ], $existingTk !== null ? (int) $existingTk['id'] : null, $userId);
+                $action = 'created';
+                if ($existingTk !== null) {
+                    $action = WebsitePageRepository::isOnlineBookingPage($existingTk) ? 'updated' : 'repaired';
+                }
                 $result['terminkalender_page'] = [
                     'id' => $tkId,
                     'slug' => 'terminkalender',
-                    'action' => $existingTk !== null ? 'updated' : 'created',
+                    'action' => $action,
                 ];
             } else {
                 $result['terminkalender_page'] = [
@@ -195,6 +202,7 @@ final class WebsiteBootstrapService
                     ['label' => 'Impressum', 'url' => '/impressum', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                     ['label' => 'Datenschutz', 'url' => '/datenschutz', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                     ['label' => 'AGB', 'url' => '/agb', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+                    ['label' => 'Widerruf', 'url' => '/widerruf', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
                 ],
             ],
         ];
@@ -226,7 +234,7 @@ final class WebsiteBootstrapService
      */
     private static function mergePreservedMenuItems(array $defaults): array
     {
-        $reserved = ['/', '/terminkalender', '/kontakt', '#', '/impressum', '/datenschutz', '/agb'];
+        $reserved = ['/', '/terminkalender', '/kontakt', '#', '/impressum', '/datenschutz', '/agb', '/widerruf'];
         $menu = SettingsStore::get('website.menu', []);
         if (!is_array($menu)) {
             return $defaults;

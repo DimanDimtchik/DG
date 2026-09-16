@@ -1,0 +1,131 @@
+{
+  "title": "Dashboard — Kurzüberblick",
+  "source": "dashboard-capture.png",
+  "duration_sec": 240.6,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 22.16
+    },
+    {
+      "key": "kontakte",
+      "duration_sec": 15.84
+    },
+    {
+      "key": "terminkalender",
+      "duration_sec": 7.88
+    },
+    {
+      "key": "zeiterfassung",
+      "duration_sec": 7.64
+    },
+    {
+      "key": "post",
+      "duration_sec": 6.36
+    },
+    {
+      "key": "akademie",
+      "duration_sec": 7.48
+    },
+    {
+      "key": "artikel-leistungen",
+      "duration_sec": 9.6
+    },
+    {
+      "key": "lager",
+      "duration_sec": 6.24
+    },
+    {
+      "key": "support-freigabe",
+      "duration_sec": 7.28
+    },
+    {
+      "key": "bilder",
+      "duration_sec": 7.48
+    },
+    {
+      "key": "buchhaltung-konten",
+      "duration_sec": 5.88
+    },
+    {
+      "key": "buchhaltung-belege",
+      "duration_sec": 6.64
+    },
+    {
+      "key": "buchhaltung-ueberweisungen",
+      "duration_sec": 7.32
+    },
+    {
+      "key": "buchhaltung-kontenuebersicht",
+      "duration_sec": 5.6
+    },
+    {
+      "key": "buchhaltung-opos",
+      "duration_sec": 6.16
+    },
+    {
+      "key": "buchhaltung-kassenbuch",
+      "duration_sec": 5.4
+    },
+    {
+      "key": "buchhaltung-manuelle-buchung",
+      "duration_sec": 6.52
+    },
+    {
+      "key": "buchhaltung-auswertungen",
+      "duration_sec": 6.44
+    },
+    {
+      "key": "buchhaltung-bwa",
+      "duration_sec": 6.64
+    },
+    {
+      "key": "buchhaltung-susa",
+      "duration_sec": 6.52
+    },
+    {
+      "key": "buchhaltung-bankabgleich",
+      "duration_sec": 5.4
+    },
+    {
+      "key": "buchhaltung-steuerberater-export",
+      "duration_sec": 7.08
+    },
+    {
+      "key": "buchhaltung-ustva",
+      "duration_sec": 5.88
+    },
+    {
+      "key": "buchhaltung-jahresabschluss",
+      "duration_sec": 5.92
+    },
+    {
+      "key": "website-seiten",
+      "duration_sec": 5.32
+    },
+    {
+      "key": "website-formulare",
+      "duration_sec": 6.12
+    },
+    {
+      "key": "website-statistik",
+      "duration_sec": 6.76
+    },
+    {
+      "key": "website-menu",
+      "duration_sec": 5.0
+    },
+    {
+      "key": "website-chrome",
+      "duration_sec": 6.32
+    },
+    {
+      "key": "website-design",
+      "duration_sec": 4.92
+    },
+    {
+      "key": "einstellungen",
+      "duration_sec": 20.8
+    }
+  ]
+}

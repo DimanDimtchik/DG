@@ -1,0 +1,28 @@
+{
+  "title": "Konten — Kontenübersicht",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 43.2,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.24
+    },
+    {
+      "key": "nav-kontenuebersicht",
+      "duration_sec": 6.0
+    },
+    {
+      "key": "filter",
+      "duration_sec": 12.48
+    },
+    {
+      "key": "salden",
+      "duration_sec": 10.48
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 8.04
+    }
+  ]
+}

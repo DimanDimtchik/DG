@@ -11,6 +11,21 @@ if (strcasecmp($path, '/login') === 0) {
     $path = '/login';
 }
 
+if (preg_match('#^/media/training/([a-z0-9_-]+)/([a-z0-9_.-]+\.mp4)$#', $path, $trainingVideoMatch)) {
+    $rel = 'media/training/' . $trainingVideoMatch[1] . '/' . $trainingVideoMatch[2];
+    $file = DG_ROOT . '/storage/' . $rel;
+    if (!is_file($file) || !is_readable($file)) {
+        http_response_code(404);
+        echo 'Nicht gefunden.';
+        exit;
+    }
+    header('Content-Type: video/mp4');
+    header('Content-Length: ' . (string) filesize($file));
+    header('Cache-Control: public, max-age=86400');
+    readfile($file);
+    exit;
+}
+
 if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     $previewUser = AuthService::user();
     if ($previewUser === null || !MenuRegistry::canAccess($previewUser, 'website-seiten')) {
@@ -24,7 +39,7 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
         exit;
     }
     View::render('website-public', [
-        'page' => $previewPage,
+        'page' => LegalPagePublicHelper::enrichPage($previewPage, true),
         'chrome' => WebsiteSettings::chrome(),
         'menu' => WebsiteSettings::publicMenu(true),
         'design' => WebsiteSettings::design(),
@@ -331,6 +346,10 @@ switch ($path) {
         KdvAccountApi::handle($path);
         exit;
 
+    case '/api/kichel':
+        KichelApi::handle();
+        exit;
+
     case '/api/finanzamt-lookup':
         FinanzamtLookupApi::handle();
         exit;
@@ -385,12 +404,38 @@ switch ($path) {
         MediaApi::handle();
         exit;
 
+    case '/api/website-videos':
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET' || (string) ($_GET['action'] ?? '') !== 'list') {
+            http_response_code(405);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Nur GET action=list'], JSON_THROW_ON_ERROR);
+            exit;
+        }
+        $videoListUser = AuthService::user();
+        if ($videoListUser === null || !RoleResolver::canEdit($videoListUser) || !MenuRegistry::canAccessWebsite($videoListUser)) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => 'Keine Berechtigung'], JSON_THROW_ON_ERROR);
+            exit;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['items' => WebsiteVideoLibrary::listForPicker()], JSON_UNESCAPED_UNICODE);
+        exit;
+
     case '/api/chart-account':
         ChartAccountApi::handle();
         exit;
 
     case '/api/voucher':
         VoucherApi::handle();
+        exit;
+
+    case '/api/stock-scan':
+        StockScanApi::handle();
+        exit;
+
+    case '/api/academy':
+        AcademyApi::handle();
         exit;
 
     case '/api/number-range-preview':
@@ -426,26 +471,7 @@ switch ($path) {
         exit;
 
     case '/termin':
-        MigrationRunner::runPending();
-        if (!CalendarEmbedSettings::isOnlineBookingEnabled()) {
-            View::render('public/termin-disabled', [
-                'disabledReason' => 'Die Online-Terminbuchung ist derzeit deaktiviert. Bitte kontaktieren Sie uns direkt.',
-            ]);
-            break;
-        }
-        if (!Database::isConfigured()) {
-            View::render('public/termin-disabled', [
-                'disabledReason' => 'Die Online-Terminbuchung ist vorübergehend nicht verfügbar.',
-            ]);
-            break;
-        }
-        CalendarWorkingHoursRepository::ensureSeeded();
-        CalendarStaffRepository::ensureSeeded();
-        View::render('public/termin', [
-            'embedConfig' => CalendarEmbedSettings::config(),
-            'bookingArticles' => CalendarArticleRepository::bookingOptions(),
-            'bookingEmployees' => CalendarStaffRepository::bookingEmployeeOptions(),
-        ]);
+        PublicBookingPageRenderer::render();
         break;
 
     case '/api/calendar-articles-template.csv':
@@ -561,6 +587,47 @@ switch ($path) {
         $settingsTab = SettingsRegistry::resolveActiveTab();
         $settingsSelection = SettingsRegistry::resolve($settingsTab);
 
+        if (
+            $page === 'einstellungen'
+            && $settingsTab === 'lager-struktur'
+            && $_SERVER['REQUEST_METHOD'] === 'GET'
+            && trim((string) ($_GET['download'] ?? '')) === 'labels'
+            && RoleResolver::isAdmin($user)
+        ) {
+            try {
+                $labelIds = [];
+                if (isset($_GET['ids']) && is_array($_GET['ids'])) {
+                    $labelIds = array_values(array_filter(array_map('intval', $_GET['ids']), static fn (int $id): bool => $id > 0));
+                } elseif (isset($_GET['id'])) {
+                    $singleId = (int) $_GET['id'];
+                    if ($singleId > 0) {
+                        $labelIds = [$singleId];
+                    }
+                }
+                $labels = StockLabelService::collectLabels([
+                    'level' => (string) ($_GET['label_level'] ?? StockLabelService::LEVEL_PLACE),
+                    'location_id' => (int) ($_GET['location_id'] ?? 0),
+                    'hall_id' => (int) ($_GET['hall_id'] ?? 0),
+                    'shelf_id' => (int) ($_GET['shelf_id'] ?? 0),
+                    'ids' => $labelIds,
+                ]);
+                if ($labels === []) {
+                    Flash::set('warning', 'Keine Etiketten für die gewählte Auswahl.');
+                    header('Location: ' . SettingsRegistry::tabUrl('lager-struktur') . '&lager_tab=etiketten', true, 302);
+                    exit;
+                }
+                $html = StockLabelPrintService::render(
+                    $labels,
+                    (string) ($_GET['label_format'] ?? '100x50'),
+                );
+                StockLabelPrintService::send('lager-etiketten.html', $html);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . SettingsRegistry::tabUrl('lager-struktur') . '&lager_tab=etiketten', true, 302);
+            }
+            exit;
+        }
+
         // POST: Einstellungen Datenbank
         if (
             $page === 'einstellungen'
@@ -651,6 +718,71 @@ switch ($path) {
                 try {
                     ElsterSettings::saveFromPost($_POST);
                     Flash::set('success', 'ELSTER-Vorbereitung gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Rechtliches / Mehrprodukt-Tabs
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['legal_products_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('agb');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    LegalProductSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Rechtstext-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Rechtstext-Variante (Produkt-Tab)
+        if (
+            $page === 'website-recht'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['legal_variant_save'])
+            && MenuRegistry::canAccess($user, 'website-recht')
+        ) {
+            $redirect = '/app?page=website-recht&slug=' . rawurlencode((string) ($_POST['slug'] ?? ''))
+                . '&product=' . rawurlencode((string) ($_POST['product'] ?? ''));
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $slug = LegalProductSettings::sanitizeSlug((string) ($_POST['slug'] ?? ''));
+                    $productKey = LegalProductSettings::sanitizeProductKey((string) ($_POST['product'] ?? ''));
+                    if (!LegalProductSettings::isLegalSlug($slug) || $productKey === '') {
+                        throw new InvalidArgumentException('Ungültige Rechtstext-Variante.');
+                    }
+                    $label = 'Allgemein';
+                    foreach (LegalProductSettings::allProductTabs() as $tab) {
+                        if ($tab['key'] === $productKey) {
+                            $label = $tab['label'];
+                            break;
+                        }
+                    }
+                    WebsiteLegalVariantRepository::saveHtmlVariant(
+                        $slug,
+                        $productKey,
+                        $label,
+                        (string) ($_POST['status'] ?? WebsitePageRepository::STATUS_DRAFT),
+                        (string) ($_POST['html'] ?? ''),
+                        0,
+                        false
+                    );
+                    Flash::set('success', 'Rechtstext gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -763,6 +895,74 @@ switch ($path) {
                     DepartmentRepository::saveFromPost($_POST);
                     NotificationTemplateSettings::saveDepartmentNotificationFromPost($_POST);
                     Flash::set('success', 'Abteilungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Lagerstruktur
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (
+                isset($_POST['stock_location_save'])
+                || isset($_POST['stock_location_delete'])
+                || isset($_POST['stock_hall_save'])
+                || isset($_POST['stock_hall_delete'])
+                || isset($_POST['stock_shelf_save'])
+                || isset($_POST['stock_shelf_delete'])
+                || isset($_POST['stock_places_save'])
+            )
+        ) {
+            $lagerTab = isset($_POST['lager_tab'])
+                ? preg_replace('/[^a-z]/', '', (string) $_POST['lager_tab'])
+                : (isset($_GET['lager_tab']) ? preg_replace('/[^a-z]/', '', (string) $_GET['lager_tab']) : '');
+            if ($lagerTab === '') {
+                if (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
+                    $lagerTab = 'hallen';
+                } elseif (isset($_POST['stock_shelf_save']) || isset($_POST['stock_shelf_delete']) || isset($_POST['stock_places_save'])) {
+                    $lagerTab = 'regale';
+                } else {
+                    $lagerTab = 'orte';
+                }
+            }
+            $redirect = SettingsRegistry::tabUrl('lager-struktur') . '&lager_tab=' . rawurlencode($lagerTab);
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    if (isset($_POST['stock_location_save'])) {
+                        $newId = StockStructureRepository::saveLocation($_POST);
+                        Flash::set('success', 'Lagerort gespeichert.');
+                        $redirect .= '&edit=' . $newId;
+                    } elseif (isset($_POST['stock_location_delete'])) {
+                        StockStructureRepository::deleteLocation((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Lagerort gelöscht.');
+                    } elseif (isset($_POST['stock_hall_save'])) {
+                        $newId = StockStructureRepository::saveHall($_POST);
+                        Flash::set('success', 'Halle gespeichert.');
+                        $redirect .= '&edit=' . $newId;
+                    } elseif (isset($_POST['stock_hall_delete'])) {
+                        StockStructureRepository::deleteHall((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Halle gelöscht.');
+                    } elseif (isset($_POST['stock_shelf_save'])) {
+                        $newId = StockStructureRepository::saveShelf($_POST);
+                        Flash::set('success', 'Regal gespeichert.');
+                        $redirect .= '&edit=' . $newId;
+                    } elseif (isset($_POST['stock_shelf_delete'])) {
+                        StockStructureRepository::deleteShelf((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Regal gelöscht.');
+                    } elseif (isset($_POST['stock_places_save'])) {
+                        $shelfId = (int) ($_POST['shelf_id'] ?? 0);
+                        $places = is_array($_POST['places'] ?? null) ? $_POST['places'] : [];
+                        StockStructureRepository::savePlacesFromPost($shelfId, $places);
+                        Flash::set('success', 'Stellplätze gespeichert.');
+                        $redirect .= '&edit=' . $shelfId;
+                    }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -942,6 +1142,162 @@ switch ($path) {
                     } else {
                         CalendarArticleRepository::save($_POST);
                         Flash::set('success', 'Eintrag gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Lager (Korrektur, Inventur)
+        if (
+            $page === 'lager'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'lager')
+            && RoleResolver::canEdit($user)
+        ) {
+            $redirect = '/app?page=lager';
+            $view = trim((string) ($_POST['view'] ?? $_GET['view'] ?? 'overview'));
+            if ($view !== '') {
+                $redirect .= '&view=' . rawurlencode($view);
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    if (isset($_POST['stock_adjust'])) {
+                        StockMovementService::manualAdjust(
+                            (int) ($_POST['article_id'] ?? 0),
+                            (float) str_replace(',', '.', (string) ($_POST['quantity_delta'] ?? '0')),
+                            trim((string) ($_POST['adjust_note'] ?? '')),
+                            $user->id,
+                        );
+                        Flash::set('success', 'Lagerkorrektur gebucht.');
+                    } elseif (isset($_POST['inventory_start'])) {
+                        $invId = StockInventoryService::start(
+                            (string) ($_POST['inventory_date'] ?? date('Y-m-d')),
+                            (string) ($_POST['inventory_note'] ?? ''),
+                            $user->id,
+                        );
+                        Flash::set('success', 'Inventur #' . $invId . ' gestartet.');
+                        $redirect = '/app?page=lager&view=inventur';
+                    } elseif (isset($_POST['inventory_save'])) {
+                        $invId = (int) ($_POST['inventory_id'] ?? 0);
+                        $counted = is_array($_POST['counted'] ?? null) ? $_POST['counted'] : [];
+                        StockInventoryService::saveCounts($invId, $counted);
+                        Flash::set('success', 'Zählung gespeichert.');
+                        $redirect = '/app?page=lager&view=inventur';
+                    } elseif (isset($_POST['inventory_close'])) {
+                        $invId = (int) ($_POST['inventory_id'] ?? 0);
+                        $applied = StockInventoryService::close($invId, $user->id);
+                        Flash::set('success', 'Inventur abgeschlossen — ' . $applied . ' Differenz(en) gebucht.');
+                        $redirect = '/app?page=lager&view=inventur';
+                    } elseif (isset($_POST['stock_receipt'])) {
+                        $count = StockReceiptIssueService::receiptFromPost($_POST, $user->id);
+                        Flash::set('success', $count . ' Position(en) als Wareneingang gebucht.');
+                        $redirect = '/app?page=lager&view=wareneingang';
+                    } elseif (isset($_POST['stock_issue'])) {
+                        $count = StockReceiptIssueService::issueFromPost($_POST, $user->id);
+                        Flash::set('success', $count . ' Position(en) als Warenausgang gebucht.');
+                        $redirect = '/app?page=lager&view=warenausgang';
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Akademie
+        if (
+            $page === 'akademie'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'akademie')
+        ) {
+            $redirect = '/app?page=akademie';
+            $view = trim((string) ($_POST['view'] ?? 'meine'));
+            if ($view !== '') {
+                $redirect .= '&view=' . rawurlencode($view);
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    if (isset($_POST['academy_accept_rules'])) {
+                        if (empty($_POST['confirm_rules'])) {
+                            throw new InvalidArgumentException('Bitte Schulungsregeln bestätigen.');
+                        }
+                        $courseId = (int) ($_POST['course_id'] ?? 0);
+                        $course = AcademyRepository::findCourseById($courseId);
+                        if ($course === null) {
+                            throw new InvalidArgumentException('Kurs nicht gefunden.');
+                        }
+                        $assignment = AcademyRepository::ensureAssignment((int) $user->id, $courseId, (int) $user->id);
+                        AcademyRepository::recordRulesAcceptance(
+                            (int) $user->id,
+                            $courseId,
+                            (string) ($course['version'] ?? '1.0'),
+                            (string) ($_SERVER['REMOTE_ADDR'] ?? '')
+                        );
+                        Flash::set('success', 'Schulungsregeln bestätigt.');
+                        $redirect = '/app?page=akademie&view=kurs&slug=' . rawurlencode((string) $course['slug']);
+                    } elseif (isset($_POST['academy_enroll']) && RoleResolver::isAdmin($user)) {
+                        $courseId = (int) ($_POST['course_id'] ?? 0);
+                        AcademyRepository::ensureAssignment((int) $user->id, $courseId, (int) $user->id);
+                        Flash::set('success', 'Kurs zu „Meine Schulungen“ hinzugefügt.');
+                    } elseif (isset($_POST['academy_upload_video']) && RoleResolver::isAdmin($user)) {
+                        $moduleId = AcademyVideoService::saveFromUpload($_POST, $_FILES);
+                        Flash::set('success', 'Video in Bibliothek gespeichert.');
+                        $dept = trim((string) ($_POST['department_id'] ?? ''));
+                        $redirect = '/app?page=akademie&view=admin&admin_tab=videos';
+                        if ($dept !== '') {
+                            $redirect .= '&department_id=' . rawurlencode($dept);
+                        }
+                        if ($moduleId > 0) {
+                            $redirect .= '&video_id=' . $moduleId;
+                        }
+                    } elseif (isset($_POST['academy_save_course']) && RoleResolver::isAdmin($user)) {
+                        $courseId = AcademyRepository::saveCourse($_POST);
+                        $moduleIds = [];
+                        if (!empty($_POST['module_ids']) && is_array($_POST['module_ids'])) {
+                            $moduleIds = array_map('intval', $_POST['module_ids']);
+                        }
+                        AcademyRepository::saveCourseModules($courseId, $moduleIds);
+                        Flash::set('success', 'Kurs gespeichert.');
+                        $redirect = '/app?page=akademie&view=admin&course_id=' . $courseId;
+                    } elseif (isset($_POST['academy_delete_course']) && RoleResolver::isAdmin($user)) {
+                        $courseId = (int) ($_POST['course_id'] ?? $_POST['id'] ?? 0);
+                        AcademyRepository::deleteCourse($courseId);
+                        Flash::set('success', 'Kurs gelöscht.');
+                        $redirect = '/app?page=akademie&view=admin&admin_tab=kurse';
+                    } elseif (isset($_POST['academy_assign']) && RoleResolver::isAdmin($user)) {
+                        AcademyRepository::assignUser(
+                            (int) ($_POST['user_id'] ?? 0),
+                            (int) ($_POST['course_id'] ?? 0),
+                            (int) $user->id,
+                            (string) ($_POST['access_mode'] ?? AcademyAccessMode::COMPARE)
+                        );
+                        Flash::set('success', 'Schulung zugewiesen.');
+                        $redirect = '/app?page=akademie&view=admin&course_id=' . (int) ($_POST['course_id'] ?? 0);
+                    } elseif (isset($_POST['academy_set_gate']) && RoleResolver::isAdmin($user)) {
+                        AcademyRepository::setGate(
+                            (string) ($_POST['module_key'] ?? ''),
+                            (int) ($_POST['course_id'] ?? 0),
+                            !empty($_POST['gate_active'])
+                        );
+                        Flash::set('success', 'Modul-Sperre aktualisiert.');
+                        $redirect = '/app?page=akademie&view=admin&course_id=' . (int) ($_POST['course_id'] ?? 0);
+                    } elseif (isset($_POST['academy_hr_approve']) && RoleResolver::isAdmin($user)) {
+                        AcademyHrService::approve((int) ($_POST['assignment_id'] ?? 0), (int) $user->id, (string) ($_POST['review_note'] ?? ''));
+                        Flash::set('success', 'Schulung freigegeben — E-Mail an Mitarbeiter gesendet (falls Mail konfiguriert).');
+                        $redirect = '/app?page=akademie&view=hr';
+                    } elseif (isset($_POST['academy_hr_reject']) && RoleResolver::isAdmin($user)) {
+                        AcademyHrService::reject((int) ($_POST['assignment_id'] ?? 0), (int) $user->id, (string) ($_POST['review_note'] ?? ''));
+                        Flash::set('success', 'Schulung abgelehnt — E-Mail an Mitarbeiter gesendet (falls Mail konfiguriert).');
+                        $redirect = '/app?page=akademie&view=hr';
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -1682,6 +2038,30 @@ switch ($path) {
             }
         }
 
+        if (
+            $page === 'website-seiten'
+            && $_SERVER['REQUEST_METHOD'] === 'GET'
+            && isset($_GET['legal_ensure'])
+            && Database::isConfigured()
+            && MenuRegistry::canAccess($user, 'website-seiten')
+        ) {
+            $legalSlug = preg_replace('/[^a-z0-9-]/', '', strtolower(trim((string) $_GET['legal_ensure']))) ?? '';
+            if ($legalSlug !== '' && in_array($legalSlug, LegalPageGenerator::legalSlugs(), true)) {
+                try {
+                    $legalPageId = LegalPageGenerator::ensurePage($legalSlug, $user->id);
+                    if ($legalPageId !== null && $legalPageId > 0) {
+                        Flash::set('success', 'Pflichtseite angelegt — bitte Inhalt prüfen und anpassen.');
+                        header('Location: /app?page=website-seite-form&action=edit&id=' . $legalPageId, true, 302);
+                        exit;
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=website-seiten', true, 302);
+            exit;
+        }
+
         if ($page === 'website-seiten' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['website_bootstrap_defaults'])) {
             $guardWebsitePost();
             try {
@@ -2324,6 +2704,13 @@ switch ($path) {
         $crmThemeConfig = CrmThemeSettings::forForm();
         $departmentsData = DepartmentRepository::allWithMembers();
         $departmentEmployees = DepartmentRepository::assignableEmployees();
+        $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale', 'etiketten'], true)
+            ? (string) $_GET['lager_tab']
+            : 'orte';
+        $stockLocations = StockStructureRepository::allLocations();
+        $stockHalls = StockStructureRepository::allHalls();
+        $stockShelves = StockStructureRepository::allShelves();
+        $stockLocationOptions = StockStructureRepository::locationOptions();
         if (Database::isConfigured()) {
             try {
                 CalendarStaffRepository::ensureSeeded();
@@ -2342,6 +2729,7 @@ switch ($path) {
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
+        $legalProductsConfig = LegalProductSettings::config();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
@@ -2407,6 +2795,227 @@ switch ($path) {
             $title = 'Artikel & Leistungen';
             $currentPage = 'artikel-leistungen';
         } elseif ($page === 'artikel-leistungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'lager' && MenuRegistry::canAccess($user, 'lager')) {
+            $lagerGate = AcademyGateService::gateStatus($user, 'lager');
+            if ($lagerGate !== null && ($lagerGate['blocked'] ?? false)) {
+                header(
+                    'Location: /app?page=akademie&view=kurs&slug=' . rawurlencode((string) ($lagerGate['course_slug'] ?? '')),
+                    true,
+                    302
+                );
+                exit;
+            }
+            $lagerView = trim((string) ($_GET['view'] ?? 'overview'));
+            if (!in_array($lagerView, ['overview', 'bewegungen', 'wareneingang', 'warenausgang', 'platz-check', 'inventur'], true)) {
+                $lagerView = 'overview';
+            }
+            $download = trim((string) ($_GET['download'] ?? ''));
+            if ($download === 'csv') {
+                $rows = StockMovementService::exportOverviewCsvRows();
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="lagerbestand-' . date('Y-m-d') . '.csv"');
+                $out = fopen('php://output', 'w');
+                if ($out !== false) {
+                    fprintf($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Bestand', 'Mindestbestand', 'Unter Mindest'], ';');
+                    foreach ($rows as $row) {
+                        fputcsv($out, [
+                            $row['article_number'],
+                            $row['title'],
+                            $row['position_code'],
+                            $row['unit'],
+                            $row['stock_qty'],
+                            $row['min_stock'],
+                            $row['low_stock'],
+                        ], ';');
+                    }
+                    fclose($out);
+                }
+                exit;
+            }
+            if ($download === 'inventory') {
+                $invId = (int) ($_GET['id'] ?? 0);
+                $rows = StockInventoryService::exportInventoryCsv($invId);
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="inventur-' . $invId . '.csv"');
+                $out = fopen('php://output', 'w');
+                if ($out !== false) {
+                    fprintf($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Einheit', 'Buchbestand', 'Gezählt', 'Differenz'], ';');
+                    foreach ($rows as $row) {
+                        fputcsv($out, [
+                            $row['article_number'],
+                            $row['title'],
+                            $row['unit'],
+                            $row['book_quantity'],
+                            $row['counted_quantity'],
+                            $row['diff_quantity'],
+                        ], ';');
+                    }
+                    fclose($out);
+                }
+                exit;
+            }
+            $canEdit = RoleResolver::canEdit($user);
+            $stockItems = StockMovementService::stockOverview(false);
+            $stockMovements = StockMovementRepository::recent(50);
+            $openInventories = StockInventoryService::openInventories();
+            $activeInventory = $openInventories[0] ?? null;
+            $activeInventoryLines = $activeInventory !== null
+                ? StockInventoryService::linesForInventory((int) $activeInventory['id'])
+                : [];
+            $stockInventories = Database::isConfigured()
+                ? (Database::pdo()->query(
+                    "SELECT * FROM dg_stock_inventories ORDER BY inventory_date DESC, id DESC LIMIT 20"
+                )->fetchAll(PDO::FETCH_ASSOC) ?: [])
+                : [];
+            $stockOutboundVouchers = in_array($lagerView, ['warenausgang'], true)
+                ? StockReceiptIssueService::outboundVoucherOptions()
+                : [];
+            if ($lagerView === 'platz-check') {
+                $stockPlaces = StockStructureRepository::allPlaces();
+            }
+            $contentTemplate = 'modules/lager';
+            $title = 'Lager';
+            $currentPage = 'lager';
+        } elseif ($page === 'lager') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'akademie' && MenuRegistry::canAccess($user, 'akademie')) {
+            $academyDownload = trim((string) ($_GET['download'] ?? ''));
+            if ($academyDownload === 'video' || $academyDownload === 'vtt') {
+                $moduleId = (int) ($_GET['module_id'] ?? 0);
+                $module = AcademyRepository::findModule($moduleId);
+                if ($module === null) {
+                    http_response_code(404);
+                    exit;
+                }
+                $rel = $academyDownload === 'vtt'
+                    ? (string) ($module['subtitle_vtt_path'] ?? '')
+                    : (string) ($module['video_path'] ?? '');
+                $rel = ltrim(str_replace(['..', '\\'], '', $rel), '/');
+                if ($rel === '' || !str_starts_with($rel, 'media/training/')) {
+                    http_response_code(404);
+                    exit;
+                }
+                $path = DG_ROOT . '/storage/' . $rel;
+                if (!is_file($path)) {
+                    http_response_code(404);
+                    exit;
+                }
+                header('Content-Type: ' . ($academyDownload === 'vtt' ? 'text/vtt; charset=utf-8' : 'video/mp4'));
+                header('Content-Length: ' . (string) filesize($path));
+                readfile($path);
+                exit;
+            }
+            $academyView = trim((string) ($_GET['view'] ?? 'meine'));
+            if (!in_array($academyView, ['meine', 'katalog', 'kurs', 'modul', 'admin', 'hr', 'video-vorschau'], true)) {
+                $academyView = 'meine';
+            }
+            if ($academyView === 'admin' || $academyView === 'hr' || $academyView === 'video-vorschau') {
+                if (!RoleResolver::isAdmin($user)) {
+                    header('Location: /app?page=akademie&view=meine', true, 302);
+                    exit;
+                }
+            }
+            $canManageAcademy = RoleResolver::isAdmin($user);
+            $canAcademyHr = RoleResolver::isAdmin($user);
+            $academyTierPlan = AcademyTier::currentPlan();
+            $academyAreas = AcademyRepository::allDepartments();
+            $academyDepartments = $academyAreas;
+            $academyAssignments = AcademyRepository::assignmentsForUser((int) $user->id);
+            $academyCatalog = array_values(array_filter(
+                AcademyRepository::publishedCoursesWithPlayableModules(),
+                static fn (array $c): bool => AcademyTier::allows((string) ($c['min_tier'] ?? AcademyTier::STARTER))
+            ));
+            $academyPendingHr = $canAcademyHr ? AcademyRepository::pendingHrReviews() : [];
+            $academyCourse = null;
+            $academyModule = null;
+            $academyAssignment = null;
+            $academySummary = null;
+            $academyRulesAccepted = false;
+            $academyCourseSlug = trim((string) ($_GET['slug'] ?? ''));
+            if ($academyCourseSlug !== '') {
+                $academyCourse = AcademyRepository::findCourseBySlug($academyCourseSlug);
+            }
+            if ($academyCourse !== null) {
+                $academyAssignment = AcademyRepository::findAssignment((int) $user->id, (int) $academyCourse['id']);
+                if ($academyAssignment === null && $academyView !== 'katalog') {
+                    $academyAssignment = AcademyRepository::ensureAssignment((int) $user->id, (int) $academyCourse['id'], (int) $user->id);
+                }
+                $academyRulesAccepted = AcademyRepository::hasAcceptedRules(
+                    (int) $user->id,
+                    (int) $academyCourse['id'],
+                    (string) ($academyCourse['version'] ?? '1.0')
+                );
+                if ($academyAssignment !== null) {
+                    $academySummary = AcademyProgressService::assignmentSummary((int) $academyAssignment['id']);
+                }
+            }
+            $academyModuleId = (int) ($_GET['module_id'] ?? 0);
+            if ($academyModuleId > 0) {
+                $academyModule = AcademyRepository::findModule($academyModuleId);
+            }
+            if ($academyView === 'video-vorschau') {
+                if ($academyModule === null) {
+                    Flash::set('error', 'Video nicht gefunden.');
+                    header('Location: /app?page=akademie&view=admin&admin_tab=videos', true, 302);
+                    exit;
+                }
+            }
+            $academyAdminTab = trim((string) ($_GET['admin_tab'] ?? 'kurse'));
+            if (!in_array($academyAdminTab, ['kurse', 'videos', 'kurs'], true)) {
+                $academyAdminTab = 'kurse';
+            }
+            $academyAdminDepartmentId = trim((string) ($_GET['department_id'] ?? ''));
+            $academyAdminCourseId = (int) ($_GET['course_id'] ?? 0);
+            $academyAdminCourse = null;
+            if (array_key_exists('course_id', $_GET) && $academyAdminTab !== 'videos') {
+                $academyAdminTab = 'kurs';
+                if ($academyAdminCourseId > 0) {
+                    $academyAdminCourse = AcademyRepository::findCourseById($academyAdminCourseId);
+                } else {
+                    $defaultDept = $academyAdminDepartmentId !== ''
+                        ? $academyAdminDepartmentId
+                        : (string) (($academyDepartments[0]['id'] ?? '') ?: '');
+                    $academyAdminCourse = [
+                        'id' => 0,
+                        'department_id' => $defaultDept,
+                        'title' => '',
+                        'slug' => '',
+                        'description' => '',
+                        'version' => '1.0',
+                        'min_tier' => AcademyTier::STARTER,
+                        'access_mode_default' => AcademyAccessMode::COMPARE,
+                        'certificate_enabled' => 0,
+                        'is_published' => 0,
+                    ];
+                }
+            }
+            $academyAdminVideoId = (int) ($_GET['video_id'] ?? 0);
+            $academyAdminVideo = $academyAdminVideoId > 0 ? AcademyRepository::findModule($academyAdminVideoId) : null;
+            $academyUserOptions = $canManageAcademy ? AcademyRepository::userOptions() : [];
+            $academyCoursesByDepartment = $canManageAcademy ? AcademyRepository::coursesGroupedByDepartment() : [];
+            $academyAllCourses = $canManageAcademy ? AcademyRepository::allCourses() : [];
+            $academyCourseModuleIds = $academyAdminCourse !== null && (int) ($academyAdminCourse['id'] ?? 0) > 0
+                ? AcademyRepository::moduleIdsForCourse((int) $academyAdminCourse['id'])
+                : [];
+            $academyCourseDepartmentIds = $academyAdminCourse !== null && (int) ($academyAdminCourse['id'] ?? 0) > 0
+                ? AcademyRepository::courseDepartmentIds((int) $academyAdminCourse['id'])
+                : [];
+            $academyModuleDepartmentIds = $academyAdminVideo !== null
+                ? AcademyRepository::moduleDepartmentIds((int) ($academyAdminVideo['id'] ?? 0))
+                : [];
+            $academyLibraryVideos = $canManageAcademy ? AcademyRepository::libraryVideos(true, true) : [];
+            $academyAllVideos = ($canManageAcademy && $academyAdminTab === 'videos')
+                ? AcademyRepository::allVideos()
+                : [];
+            $contentTemplate = 'modules/akademie';
+            $title = 'Akademie';
+            $currentPage = 'akademie';
+        } elseif ($page === 'akademie') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {
@@ -3022,6 +3631,7 @@ switch ($path) {
             (
                 $page === 'website-seiten'
                 || $page === 'website-seite-form'
+                || $page === 'website-recht'
                 || $page === 'website-formulare'
                 || $page === 'website-formular-form'
                 || $page === 'website-formular-inbox'
@@ -3047,6 +3657,39 @@ switch ($path) {
                 $contentTemplate = 'modules/website-seiten';
                 $title = 'Seiten';
                 $currentPage = 'website-seiten';
+            } elseif ($page === 'website-recht') {
+                $legalSlug = LegalProductSettings::sanitizeSlug((string) ($_GET['slug'] ?? ''));
+                $legalProductKey = LegalProductSettings::sanitizeProductKey((string) ($_GET['product'] ?? LegalProductSettings::DEFAULT_PRODUCT_KEY));
+                if (!LegalProductSettings::isLegalSlug($legalSlug)) {
+                    Flash::set('error', 'Unbekannte Rechtstext-Seite.');
+                    header('Location: ' . SettingsRegistry::tabUrl('agb'), true, 302);
+                    exit;
+                }
+                WebsiteLegalVariantRepository::ensureDefaultsForPage($legalSlug);
+                WebsiteLegalVariantRepository::ensureVariant(
+                    $legalSlug,
+                    $legalProductKey,
+                    $legalProductKey === LegalProductSettings::DEFAULT_PRODUCT_KEY
+                        ? 'Allgemein'
+                        : ucfirst(str_replace('-', ' ', $legalProductKey))
+                );
+                $variant = WebsiteLegalVariantRepository::find($legalSlug, $legalProductKey);
+                $legalPageTitle = LegalProductSettings::LEGAL_PAGES[$legalSlug] ?? $legalSlug;
+                $legalProductLabel = 'Allgemein';
+                foreach (LegalProductSettings::allProductTabs() as $tab) {
+                    if ($tab['key'] === $legalProductKey) {
+                        $legalProductLabel = $tab['label'];
+                        break;
+                    }
+                }
+                $legalHtml = $variant !== null
+                    ? WebsiteLegalVariantRepository::extractHtmlFromLayout($variant['layout'])
+                    : '';
+                $legalStatus = $variant['status'] ?? WebsitePageRepository::STATUS_DRAFT;
+                $canEdit = RoleResolver::isAdmin($user) || MenuRegistry::canAccessWebsite($user);
+                $contentTemplate = 'modules/website-recht-variant';
+                $title = $legalPageTitle;
+                $currentPage = 'website-recht';
             } elseif ($page === 'website-seite-form') {
                 if (empty($formError)) {
                     $websitePageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -3204,6 +3847,11 @@ switch ($path) {
         } elseif ($page === 'website-seiten' || $page === 'website-seite-form' || $page === 'website-formulare' || $page === 'website-formular-form' || $page === 'website-formular-inbox' || $page === 'website-statistik' || $page === 'website-menu' || $page === 'website-chrome' || $page === 'website-design') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'kichel-protokoll' && RoleResolver::isAdmin($user)) {
+            $kichelLogRows = KichelProtocolRepository::recent(200);
+            $contentTemplate = 'modules/kichel-protokoll';
+            $title = 'Kichel-Protokoll';
+            $currentPage = 'kichel-protokoll';
         } elseif ($page === 'support-freigabe' && MenuRegistry::canAccess($user, 'support-freigabe')) {
             $supportGrant = SupportAccessService::activeGrant();
             $contentTemplate = 'modules/support-freigabe';
@@ -3709,6 +4357,12 @@ switch ($path) {
         $crmThemeConfig = $crmThemeConfig ?? CrmThemeSettings::forForm();
         $departmentsData = $departmentsData ?? DepartmentRepository::allWithMembers();
         $departmentEmployees = $departmentEmployees ?? DepartmentRepository::assignableEmployees();
+        $lagerStrukturTab = $lagerStrukturTab ?? 'orte';
+        $stockLocations = $stockLocations ?? StockStructureRepository::allLocations();
+        $stockHalls = $stockHalls ?? StockStructureRepository::allHalls();
+        $stockShelves = $stockShelves ?? StockStructureRepository::allShelves();
+        $stockLocationOptions = $stockLocationOptions ?? StockStructureRepository::locationOptions();
+        $stockPlaces = $stockPlaces ?? [];
         $calendarTeamTab = $calendarTeamTab ?? 'bereiche';
         $calendarAreas = $calendarAreas ?? [];
         $calendarEmployees = $calendarEmployees ?? [];
@@ -3841,6 +4495,41 @@ switch ($path) {
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
+        $catalogFilter = $catalogFilter ?? 'all';
+        $lagerView = $lagerView ?? 'overview';
+        $academyView = $academyView ?? 'meine';
+        $academyAreas = $academyAreas ?? [];
+        $academyAssignments = $academyAssignments ?? [];
+        $academyCatalog = $academyCatalog ?? [];
+        $academyPendingHr = $academyPendingHr ?? [];
+        $academyCourse = $academyCourse ?? null;
+        $academyModule = $academyModule ?? null;
+        $academyAssignment = $academyAssignment ?? null;
+        $academySummary = $academySummary ?? null;
+        $academyRulesAccepted = $academyRulesAccepted ?? false;
+        $academyTierPlan = $academyTierPlan ?? AcademyTier::currentPlan();
+        $canManageAcademy = $canManageAcademy ?? false;
+        $canAcademyHr = $canAcademyHr ?? false;
+        $academyAdminCourse = $academyAdminCourse ?? null;
+        $academyAllCourses = $academyAllCourses ?? [];
+        $academyUserOptions = $academyUserOptions ?? [];
+        $academyAdminTab = $academyAdminTab ?? 'kurse';
+        $academyDepartments = $academyDepartments ?? ($academyAreas ?? []);
+        $academyCoursesByDepartment = $academyCoursesByDepartment ?? [];
+        $academyAdminDepartmentId = $academyAdminDepartmentId ?? '';
+        $academyDepartmentVideos = $academyDepartmentVideos ?? [];
+        $academyAllVideos = $academyAllVideos ?? [];
+        $academyCourseModuleIds = $academyCourseModuleIds ?? [];
+        $academyAdminVideo = $academyAdminVideo ?? null;
+        $academyLibraryVideos = $academyLibraryVideos ?? [];
+        $academyCourseDepartmentIds = $academyCourseDepartmentIds ?? [];
+        $academyModuleDepartmentIds = $academyModuleDepartmentIds ?? [];
+        $stockItems = $stockItems ?? [];
+        $stockMovements = $stockMovements ?? [];
+        $stockInventories = $stockInventories ?? [];
+        $stockOutboundVouchers = $stockOutboundVouchers ?? [];
+        $activeInventory = $activeInventory ?? null;
+        $activeInventoryLines = $activeInventoryLines ?? [];
         $websiteFormList = $websiteFormList ?? [];
         $websiteFormId = $websiteFormId ?? null;
         $websiteForm = $websiteForm ?? null;
@@ -3904,6 +4593,12 @@ switch ($path) {
             'crmThemeConfig',
             'departmentsData',
             'departmentEmployees',
+            'lagerStrukturTab',
+            'stockLocations',
+            'stockHalls',
+            'stockShelves',
+            'stockLocationOptions',
+            'stockPlaces',
             'calendarTeamTab',
             'calendarAreas',
             'calendarEmployees',
@@ -3916,11 +4611,47 @@ switch ($path) {
             'calendarAppearanceConfig',
             'calendarEmbedConfig',
             'calendarArticles',
+            'catalogFilter',
+            'lagerView',
+            'academyView',
+            'academyAreas',
+            'academyAssignments',
+            'academyCatalog',
+            'academyPendingHr',
+            'academyCourse',
+            'academyModule',
+            'academyAssignment',
+            'academySummary',
+            'academyRulesAccepted',
+            'academyTierPlan',
+            'canManageAcademy',
+            'canAcademyHr',
+            'academyAdminCourse',
+            'academyAllCourses',
+            'academyUserOptions',
+            'academyAdminTab',
+            'academyDepartments',
+            'academyCoursesByDepartment',
+            'academyAdminDepartmentId',
+            'academyDepartmentVideos',
+            'academyAllVideos',
+            'academyCourseModuleIds',
+            'academyAdminVideo',
+            'academyLibraryVideos',
+            'academyCourseDepartmentIds',
+            'academyModuleDepartmentIds',
+            'stockItems',
+            'stockMovements',
+            'stockInventories',
+            'stockOutboundVouchers',
+            'activeInventory',
+            'activeInventoryLines',
             'companyConfig',
             'companyExtended',
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
             'elsterConfig',
+            'legalProductsConfig',
             'accountingPaymentSettings',
             'timeTrackingSettings',
             'chartOfAccountsConfig',
@@ -4101,7 +4832,7 @@ switch ($path) {
             $menu = WebsiteSettings::publicMenu();
             $design = WebsiteSettings::design();
             View::render('website-public', [
-                'page' => $publicPage,
+                'page' => LegalPagePublicHelper::enrichPage($publicPage, false),
                 'chrome' => $chrome,
                 'menu' => $menu,
                 'design' => $design,

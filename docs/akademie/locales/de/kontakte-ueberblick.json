@@ -1,0 +1,45 @@
+{
+  "video_slug": "kontakte-ueberblick",
+  "locale": "de",
+  "title": "Kontakte — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir den Bereich Kontakte. Sie starten wie immer im Dashboard — Ihrer Startseite nach dem Login."
+    },
+    {
+      "key": "nav-kontakte",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "kontakte",
+      "narration": "Klicken Sie auf die Kachel Kontakte — oder wählen Sie Kontakte im Menü links. Beides führt Sie zur Kontaktliste."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/kontakte/kontakte-list.png",
+      "mode": "overview",
+      "narration": "Hier sehen Sie alle Kontakte: Kunden, Lieferanten, Mitarbeiter und Firmen in einer Tabelle. Oben können Sie suchen. Mit Neuer Kontakt legen Sie einen Eintrag an."
+    },
+    {
+      "key": "neu",
+      "screenshot": "storage/media/training/kontakte/kontakte-new.png",
+      "mode": "overview",
+      "narration": "Beim Anlegen öffnet sich ein Formular mit Abschnitten: Stamm, Kommunikation, Adresse und mehr. Tragen Sie ein, was Sie wissen — Pflicht ist nur der Benutzername und die Rolle. Details zu jedem Feld erklären wir in den Vertiefungs-Videos."
+    },
+    {
+      "key": "bearbeiten",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Bestehende Kontakte bearbeiten Sie über die Liste: Zeile öffnen oder Bearbeiten wählen. Das Formular ist dasselbe wie beim Anlegen — Ihre Änderungen speichern Sie mit dem Button Speichern unten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-list.png",
+      "mode": "overview",
+      "narration": "Das war der Kurzüberblick Kontakte: Liste, anlegen, bearbeiten. Wofür jedes Feld da ist, sehen Sie in den Videos Kontakte — Felder: Stamm, Kunde und Lieferant, Kommunikation, Adresse, Bankverbindung, Soziale Medien und optional Mitarbeiterdaten. Viel Erfolg!"
+    }
+  ]
+}

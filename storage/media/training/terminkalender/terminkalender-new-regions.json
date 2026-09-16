@@ -1,0 +1,77 @@
+{
+  "width": 1920,
+  "height": 1542,
+  "sections": {
+    "form": {
+      "x": 534,
+      "y": 225,
+      "w": 1062,
+      "h": 373
+    }
+  },
+  "fields": {
+    "article": {
+      "x": 534,
+      "y": 225,
+      "w": 254,
+      "h": 83,
+      "label": "Leistung"
+    },
+    "employee": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "label": "Mitarbeiter"
+    },
+    "slot_date": {
+      "x": 804,
+      "y": 225,
+      "w": 254,
+      "h": 83,
+      "label": "Datum *"
+    },
+    "slot_time": {
+      "x": 1073,
+      "y": 225,
+      "w": 254,
+      "h": 83,
+      "label": "Uhrzeit *"
+    },
+    "status": {
+      "x": 1343,
+      "y": 225,
+      "w": 254,
+      "h": 83,
+      "label": "Status"
+    },
+    "customer": {
+      "x": 534,
+      "y": 320,
+      "w": 1062,
+      "h": 96,
+      "label": "Kunde *"
+    },
+    "customer_email": {
+      "x": 534,
+      "y": 428,
+      "w": 254,
+      "h": 57,
+      "label": "E-Mail"
+    },
+    "customer_phone": {
+      "x": 804,
+      "y": 428,
+      "w": 254,
+      "h": 57,
+      "label": "Telefon"
+    },
+    "admin_notes": {
+      "x": 534,
+      "y": 497,
+      "w": 1062,
+      "h": 101,
+      "label": "Notizen"
+    }
+  }
+}

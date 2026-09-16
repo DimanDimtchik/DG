@@ -71,6 +71,11 @@ final class CalendarFrontendTheme
         return self::wrapperSelectors() . '{' . implode(';', $decl) . '}';
     }
 
+    public static function bookingStylesheetHref(): string
+    {
+        return Asset::url('/assets/css/tk-book-public.css');
+    }
+
     /**
      * Methode wrapper style attribute.
      * @return string

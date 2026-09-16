@@ -1,0 +1,48 @@
+{
+  "video_slug": "lager-inventur",
+  "locale": "de",
+  "title": "Lager — Inventur",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir die Inventur im Lager. Sie starten im Dashboard und öffnen das Lager."
+    },
+    {
+      "key": "nav-lager",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "lager",
+      "narration": "Wechseln Sie zur Kachel Lager."
+    },
+    {
+      "key": "tab-inventur",
+      "screenshot": "storage/media/training/lager/lager-inventur.png",
+      "mode": "overview",
+      "narration": "Wählen Sie den Reiter Inventur. Hier starten Sie eine Zählung, tragen gezählte Mengen ein und schließen die Inventur ab."
+    },
+    {
+      "key": "start",
+      "screenshot": "storage/media/training/lager/lager-inventur.png",
+      "mode": "focus_field",
+      "field": "inventory_date",
+      "section": "inventur",
+      "regions_file": "storage/media/training/lager/lager-inventur-regions.json",
+      "narration": "Mit Stichtag und optionaler Notiz starten Sie die Inventur. Es kann immer nur eine offene Inventur geben — alle Artikel mit Lagerführung werden übernommen."
+    },
+    {
+      "key": "bewegungen",
+      "screenshot": "storage/media/training/lager/lager-bewegungen.png",
+      "mode": "overview",
+      "narration": "Unter Bewegungen sehen Sie alle Lagerbuchungen chronologisch — auch Korrekturen aus der Inventur."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/lager/lager-inventur.png",
+      "mode": "overview",
+      "narration": "So läuft die Inventur: starten, zählen, Differenzen prüfen, abschließen. Viel Erfolg!"
+    }
+  ]
+}

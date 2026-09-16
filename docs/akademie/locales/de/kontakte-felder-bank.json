@@ -1,0 +1,74 @@
+{
+  "video_slug": "kontakte-felder-bank",
+  "locale": "de",
+  "title": "Kontakte — Felder: Bankverbindung",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Dieses Video erklärt den Abschnitt Bankverbindung. Sie können mehrere Konten und Zahlungsdienste anlegen — jede Karte ist ein Konto."
+    },
+    {
+      "key": "field-bank_type",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "bank_type",
+      "section": "bank",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Typ: Girokonto, Kreditkarte, PayPal oder andere Zahlungsdienste. Je nach Typ erscheinen andere Felder in der Karte."
+    },
+    {
+      "key": "field-bank_label",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "bank_label",
+      "section": "bank",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Bezeichnung: freier Name im CRM — zum Beispiel Hauptkonto oder Firmenkarte."
+    },
+    {
+      "key": "field-bank_account_holder",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "bank_account_holder",
+      "section": "bank",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Kontoinhaber: Name laut Bankvertrag — bei Girokonten Pflicht für Überweisungen."
+    },
+    {
+      "key": "field-bank_iban",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "bank_iban",
+      "section": "bank",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Internationale Bankkontonummer: das Kontonummernformat für Überweisungen in Europa. Das System schlägt passende Banken beim Tippen vor."
+    },
+    {
+      "key": "field-bank_bic",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "bank_bic",
+      "section": "bank",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Bankidentifikationscode: weltweiter Bankcode — oft zusammen mit der Internationalen Bankkontonummer nötig."
+    },
+    {
+      "key": "field-bank_name",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "bank_name",
+      "section": "bank",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Bank oder Anbieter: Name der Bank oder des Zahlungsdienstes — wird bei Auswahl der Kontonummer oft automatisch ergänzt."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Weitere Felder in der Karte — Kartenanbieter, Gültigkeit, Händler-Kennung — erscheinen je nach Typ. Mit Konto hinzufügen legen Sie weitere Karten an. Als Nächstes: Soziale Medien."
+    }
+  ]
+}

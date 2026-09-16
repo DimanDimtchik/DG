@@ -1,0 +1,32 @@
+{
+  "title": "Kichel — Schnelle Hilfe im CRM",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 55.6,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 10.0
+    },
+    {
+      "key": "fab",
+      "duration_sec": 7.64
+    },
+    {
+      "key": "panel",
+      "duration_sec": 12.76
+    },
+    {
+      "key": "chips",
+      "duration_sec": 7.08
+    },
+    {
+      "key": "frage",
+      "duration_sec": 9.16
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 8.96
+    }
+  ]
+}

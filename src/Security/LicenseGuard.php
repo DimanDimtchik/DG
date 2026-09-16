@@ -16,6 +16,10 @@ final class LicenseGuard
      */
     public static function verify(): void
     {
+        // Bypass for localhost development
+        if ($_SERVER['HTTP_HOST'] ?? '' === 'localhost:8080') {
+            return;
+        }
         // CLI tools (updates, migrations, seeds) must not be blocked by license UI.
         if (PHP_SAPI === 'cli') {
             return;

@@ -108,6 +108,61 @@ final class ContactRepository
     }
 
     /**
+     * Kontakt-Suchergebnisse für Picker (Terminkalender, Belege, …).
+     *
+     * @return list<array{id: int, label: string, meta: string, customer_name: string, email: string, phone: string}>
+     */
+    public static function pickerItems(string $search, int $limit = 15, ?User $viewer = null): array
+    {
+        $items = [];
+        foreach (self::searchPicker($search, $limit, $viewer) as $contact) {
+            $label = trim($contact->companyName);
+            if ($label === '') {
+                $label = trim($contact->displayName);
+            }
+            if ($label === '') {
+                $label = trim($contact->firstName . ' ' . $contact->lastName);
+            }
+            if ($label === '') {
+                $label = trim($contact->email);
+            }
+            if ($label === '') {
+                $label = trim($contact->login);
+            }
+
+            $meta = [];
+            if ($contact->email !== '') {
+                $meta[] = $contact->email;
+            }
+            if ($contact->companyName !== '' && $label !== $contact->companyName) {
+                $meta[] = $contact->companyName;
+            }
+            if ($contact->customerNumber !== '') {
+                $meta[] = 'Kd.-Nr. ' . $contact->customerNumber;
+            }
+            if ($contact->login !== '') {
+                $meta[] = 'Login ' . $contact->login;
+            }
+
+            $phone = trim($contact->phone1);
+            if ($phone === '') {
+                $phone = trim($contact->phone2);
+            }
+
+            $items[] = [
+                'id' => $contact->id,
+                'label' => $label,
+                'meta' => implode(' · ', $meta),
+                'customer_name' => $label,
+                'email' => trim($contact->email),
+                'phone' => $phone,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
      * Findet einen Datensatz anhand der ID
      * @param int $id Datensatz-ID
      * @return ?Contact
@@ -167,6 +222,7 @@ final class ContactRepository
                 'customer_number',
                 'first_name',
                 'last_name',
+                'contact_note',
             ];
             $searchLikes = [];
             foreach ($searchFields as $index => $field) {

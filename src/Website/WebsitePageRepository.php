@@ -12,6 +12,9 @@ final class WebsitePageRepository
     public const STATUS_PUBLISHED = 'published';
     public const STATUS_PRIVATE = 'private';
 
+    /** Systemseite: öffentliche Online-Terminbuchung (kein CMS-Inhalt). */
+    public const PAGE_KIND_ONLINE_BOOKING = 'online_booking';
+
     /**
      * Human-readable status labels for the editor UI.
      *
@@ -31,6 +34,90 @@ final class WebsitePageRepository
      *
      * @return array{rows: list<array<string, mixed>>}
      */
+    /** Layout für die Pflichtseite Terminkalender (Kunden buchen online). */
+    public static function onlineBookingLayout(): array
+    {
+        return WebsitePagePatterns::defaultTerminkalenderLayout();
+    }
+
+    /** @param array<string, mixed> $layout */
+    public static function layoutHasBlockType(array $layout, string $type): bool
+    {
+        foreach (($layout['rows'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            foreach (($row['columns'] ?? []) as $col) {
+                if (!is_array($col)) {
+                    continue;
+                }
+                foreach (($col['blocks'] ?? []) as $block) {
+                    if (is_array($block) && (string) ($block['type'] ?? '') === $type) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Stellt sicher, dass Online-Buchungsseiten einen Buchungsblock haben (Editor).
+     *
+     * @param array<string, mixed> $layout
+     * @return array<string, mixed>
+     */
+    public static function ensureOnlineBookingStructure(array $layout): array
+    {
+        $layout['page_kind'] = self::PAGE_KIND_ONLINE_BOOKING;
+        if (!isset($layout['rows']) || !is_array($layout['rows'])) {
+            $layout['rows'] = [];
+        }
+        if (!self::layoutHasBlockType($layout, 'online_booking')) {
+            $layout['rows'] = array_merge($layout['rows'], WebsitePagePatterns::onlineBookingBlockRow());
+        }
+
+        return $layout;
+    }
+
+    /** @param array<string, mixed> $page */
+    public static function prepareForEditor(array $page): array
+    {
+        if (!self::isOnlineBookingPage($page)) {
+            return $page;
+        }
+        $layout = is_array($page['layout'] ?? null) ? $page['layout'] : [];
+        $page['layout'] = self::ensureOnlineBookingStructure($layout);
+
+        return $page;
+    }
+
+    /** @param array<string, mixed> $page */
+    public static function isOnlineBookingPage(array $page): bool
+    {
+        if (self::sanitizeSlug((string) ($page['slug'] ?? '')) === 'terminkalender') {
+            return true;
+        }
+
+        $layout = $page['layout'] ?? [];
+        if (!is_array($layout)) {
+            return false;
+        }
+
+        return (string) ($layout['page_kind'] ?? '') === self::PAGE_KIND_ONLINE_BOOKING;
+    }
+
+    public static function terminkalenderUsesOnlineBookingLayout(): bool
+    {
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        $page = self::findBySlugAnyStatus('terminkalender');
+
+        return $page !== null && self::isOnlineBookingPage($page);
+    }
+
     public static function emptyLayout(): array
     {
         return [
@@ -256,7 +343,7 @@ final class WebsitePageRepository
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $row ? self::map($row) : null;
+        return $row ? self::prepareForEditor(self::map($row)) : null;
     }
 
     /**
@@ -303,6 +390,14 @@ final class WebsitePageRepository
             $decoded = json_decode($layout, true);
             $layout = is_array($decoded) ? $decoded : self::emptyLayout();
         }
+        if ($id !== null && $id > 0) {
+            $existing = self::findById($id);
+            if ($existing !== null && self::isOnlineBookingPage($existing)) {
+                $layout = is_array($layout) ? $layout : self::onlineBookingLayout();
+                $layout = self::ensureOnlineBookingStructure($layout);
+            }
+        }
+
         if (!is_array($layout) || !isset($layout['rows']) || !is_array($layout['rows'])) {
             $layout = self::emptyLayout();
         }
@@ -454,9 +549,27 @@ final class WebsitePageRepository
         $raw = (string) ($row['layout_json'] ?? '');
         if ($raw !== '') {
             $decoded = json_decode($raw, true);
-            if (is_array($decoded) && isset($decoded['rows']) && is_array($decoded['rows'])) {
-                $layout = WebsiteContent::normalizeLayout($decoded);
+            if (is_array($decoded)) {
+                $pageKind = (string) ($decoded['page_kind'] ?? '');
+                if ($pageKind === self::PAGE_KIND_ONLINE_BOOKING) {
+                    $layout = self::onlineBookingLayout();
+                } elseif (isset($decoded['rows']) && is_array($decoded['rows'])) {
+                    $layout = WebsiteContent::normalizeLayout($decoded);
+                    if ($pageKind !== '') {
+                        $layout['page_kind'] = $pageKind;
+                    }
+                } elseif ($pageKind !== '') {
+                    $layout['page_kind'] = $pageKind;
+                    $layout['rows'] = [];
+                }
             }
+        }
+
+        if (
+            self::sanitizeSlug((string) ($row['slug'] ?? '')) === 'terminkalender'
+            && (string) ($layout['page_kind'] ?? '') !== self::PAGE_KIND_ONLINE_BOOKING
+        ) {
+            $layout = self::onlineBookingLayout();
         }
 
         return [

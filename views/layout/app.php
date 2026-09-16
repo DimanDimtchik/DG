@@ -260,6 +260,9 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
   <?php if (($settingsSelection['template'] ?? '') === 'notifications') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/settings-notifications.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($settingsSelection['template'] ?? '') === 'lager-struktur') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/settings-lager-struktur.js')) ?>" defer></script>
+  <?php endif; ?>
   <?php if (($settingsSelection['template'] ?? '') === 'calendar-articles' || ($contentTemplate ?? '') === 'modules/artikel-leistungen') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/settings-calendar-articles.js')) ?>" defer></script>
   <?php endif; ?>
@@ -267,6 +270,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script>
       window.dgBookingForm = {
         apiUrl: '/api/booking-slots',
+        contactSearchUrl: '/api/booking-slots?action=contacts',
         articleId: <?= (int) ($form['article_id'] ?? 0) ?>,
         employeeId: <?= (int) ($form['employee_id'] ?? 0) ?>,
         excludeBookingId: <?= (int) ($bookingId ?? 0) ?>,
@@ -409,8 +413,12 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script>
       window.dgWebsiteBuilder = {
         mediaListUrl: '/api/media?action=list',
+        videoListUrl: '/api/website-videos?action=list',
         csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
-        forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>
+        forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        patterns: <?= json_encode(WebsitePagePatterns::forEditor(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
+        pageKind: <?= json_encode((string) (($form['layout']['page_kind'] ?? '') ?: ''), JSON_THROW_ON_ERROR) ?>,
+        isOnlineBookingPage: <?= WebsitePageRepository::isOnlineBookingPage($form ?? []) ? 'true' : 'false' ?>
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/website-builder.js')) ?>" defer></script>
@@ -419,6 +427,9 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
     <script src="<?= View::escape(Asset::url('/assets/js/website-form-builder.js')) ?>" defer></script>
   <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
+  <?php if (RoleResolver::isStaff($user)) : ?>
+    <?php View::render('partials/kichel-widget', compact('user')); ?>
+  <?php endif; ?>
   <?php if (!CookieConsent::hasDecided()) : ?>
     <style><?= CookieConsent::bannerCss() ?></style>
     <?= CookieConsent::bannerHtml() ?>

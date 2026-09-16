@@ -1,0 +1,21 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "sections": {
+    "booking": {
+      "x": 620,
+      "y": 227,
+      "w": 680,
+      "h": 453
+    }
+  },
+  "fields": {
+    "slots": {
+      "x": 645,
+      "y": 557,
+      "w": 630,
+      "h": 44,
+      "label": ".tk-book__slots"
+    }
+  }
+}

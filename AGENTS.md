@@ -92,3 +92,13 @@ bash bin/sync-crm-from-master.sh
 - **ELSTER/ERiC live:** auf Kasserver blockiert — erst nach Hetzner-Umzug
 - **SSH:** `DG_ALLINKL_SSH_USER` = SSH-User (`ssh-…`), **nicht** KAS-Login `w0217246`
 - **Chats:** möglichst 1 Cloud- + 1 Lokal-Chat; Aufräum-Liste in `docs/TODOS.md`
+
+---
+
+## 6. Akademie — Schulungsvideos
+
+Verbindliche Regeln: **[`docs/akademie/VIDEO-REGELN.md`](docs/akademie/VIDEO-REGELN.md)** · Texte/Sprachen: **[`docs/akademie/locales/README.md`](docs/akademie/locales/README.md)**
+
+Kurz: Dashboard-Start · echte CRM-Screenshots · einfache Sprache · **Stimme DE: `de-DE-KatjaNeural`** · Szenario-first · VTT Pflicht · Demo-Daten · Störfaktoren weg · kurze Clips · UI-Änderung → neu aufnehmen · Texte in `locales/{sprache}/*.json`.
+
+Technik: `bin/academy-build-dashboard-video.sh`

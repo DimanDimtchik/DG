@@ -1,0 +1,25 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.190
+Dieses Video erklärt den Abschnitt Kommunikation — E-Mail, Telefon und Website.
+
+00:00:06.240 --> 00:00:17.510
+E-Mail: Hauptadresse des Kontakts. Bei Kunden prüft das System die Domain per DNS und speichert das Ergebnis — erneut nach neunzig Tagen oder bei Änderung.
+
+00:00:17.560 --> 00:00:24.230
+E-Mail zwei: zweite Adresse, optional — zum Beispiel privat oder Abteilungs-Postfach.
+
+00:00:24.280 --> 00:00:28.710
+Telefon eins: Hauptnummer, Festnetz oder Mobil.
+
+00:00:28.760 --> 00:00:33.030
+Telefon zwei: alternative Nummer, optional.
+
+00:00:33.080 --> 00:00:44.110
+Website: Internetadresse der Firma oder Person — mit http oder https. Soziale Netzwerke tragen Sie im Abschnitt Soziale Medien ein.
+
+00:00:44.160 --> 00:00:59.030
+Automatisches Postfach: nur beim Anlegen sichtbar — für Rolle Mitarbeiter oder Administrator. Legt nach Formel unter Einstellungen E-Mail ein Postfach an, wenn die Adresse noch frei ist und der Server konfiguriert ist.
+
+00:00:59.080 --> 00:01:04.070
+Das war Kommunikation. Als Nächstes: Adresse.

@@ -1,0 +1,83 @@
+{
+  "video_slug": "kontakte-felder-social",
+  "locale": "de",
+  "title": "Kontakte — Felder: Soziale Medien",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Dieses Video erklärt den Abschnitt Soziale Medien — Profile in Netzwerken. Die Website steht unter Kommunikation."
+    },
+    {
+      "key": "field-social_linkedin",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_linkedin",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "LinkedIn: vollständige Profil-Adresse mit https."
+    },
+    {
+      "key": "field-social_xing",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_xing",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Xing: Profil-Link, optional."
+    },
+    {
+      "key": "field-social_facebook",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_facebook",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Facebook: Seiten- oder Profil-URL."
+    },
+    {
+      "key": "field-social_instagram",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_instagram",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "Instagram: Profil-Adresse."
+    },
+    {
+      "key": "field-social_x",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_x",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "X, früher Twitter: Profil-Link."
+    },
+    {
+      "key": "field-social_youtube",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_youtube",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "YouTube: Kanal- oder Video-Seite."
+    },
+    {
+      "key": "field-social_tiktok",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "focus_field",
+      "field": "social_tiktok",
+      "section": "social",
+      "regions_file": "storage/media/training/kontakte/kontakte-edit-regions.json",
+      "narration": "TikTok: Profil-Adresse."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kontakte/kontakte-edit.png",
+      "mode": "overview",
+      "narration": "Das waren Soziale Medien. Optional folgt das Video zu Mitarbeiterdaten für Personalfragen."
+    }
+  ]
+}

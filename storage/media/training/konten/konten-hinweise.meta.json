@@ -1,0 +1,36 @@
+{
+  "title": "Konten — Hinweise",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 55.8,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.36
+    },
+    {
+      "key": "nav-konten",
+      "duration_sec": 2.88
+    },
+    {
+      "key": "konto-8400",
+      "duration_sec": 11.44
+    },
+    {
+      "key": "suchbegriffe",
+      "duration_sec": 10.8
+    },
+    {
+      "key": "kontenziffern",
+      "duration_sec": 7.48
+    },
+    {
+      "key": "beispiele",
+      "duration_sec": 7.2
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 8.68
+    }
+  ]
+}

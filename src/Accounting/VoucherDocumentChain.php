@@ -283,6 +283,27 @@ final class VoucherDocumentChain
     /**
      * @return list<array<string, mixed>>
      */
+    public static function subtreeHasKind(int $voucherId, string $kind): bool
+    {
+        $rootId = self::findRootId($voucherId);
+        if ($rootId < 1) {
+            return false;
+        }
+
+        $kind = VoucherDocumentKind::sanitize($kind);
+        if ($kind === '') {
+            return false;
+        }
+
+        foreach (self::collectSubtree($rootId) as $row) {
+            if ((string) ($row['document_kind'] ?? '') === $kind) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function collectSubtree(int $rootId): array
     {
         $pdo = Database::pdo();

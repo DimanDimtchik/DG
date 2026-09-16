@@ -1,0 +1,52 @@
+{
+  "title": "Terminkalender — Neuer Termin",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 116.4,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 9.96
+    },
+    {
+      "key": "field-article",
+      "duration_sec": 15.44
+    },
+    {
+      "key": "field-employee",
+      "duration_sec": 13.96
+    },
+    {
+      "key": "field-slot_date",
+      "duration_sec": 10.0
+    },
+    {
+      "key": "field-slot_time",
+      "duration_sec": 12.28
+    },
+    {
+      "key": "field-status",
+      "duration_sec": 7.72
+    },
+    {
+      "key": "field-customer",
+      "duration_sec": 14.08
+    },
+    {
+      "key": "field-customer_email",
+      "duration_sec": 7.6
+    },
+    {
+      "key": "field-customer_phone",
+      "duration_sec": 6.88
+    },
+    {
+      "key": "field-admin_notes",
+      "duration_sec": 6.6
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 11.88
+    }
+  ]
+}

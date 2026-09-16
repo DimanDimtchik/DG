@@ -1,0 +1,138 @@
+{
+  "video_slug": "terminkalender-online-buchung",
+  "locale": "de",
+  "title": "Terminkalender — Online-Buchung für Kunden",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir, wie Ihre Kunden selbst online einen Termin buchen — ohne Anruf und ohne Login ins CRM."
+    },
+    {
+      "key": "nav-settings",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "einstellungen",
+      "narration": "Zuerst richten Sie die öffentliche Buchungsseite ein: Dashboard, dann Einstellungen, Bereich Termine, Kalender-Einbindung."
+    },
+    {
+      "key": "embed-overview",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "overview",
+      "narration": "Aktivieren Sie Terminvereinbarung online stellen. Titel und Einleitungstext sehen Kunden auf der Buchungsseite. Unten finden Sie die öffentliche Adresse."
+    },
+    {
+      "key": "embed-url",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "focus_field",
+      "field": "public_url",
+      "section": "embed",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-embed-regions.json",
+      "narration": "Diesen Link teilen Sie direkt — per E-Mail, auf Ihrer Website oder in Google-Profil und Suchergebnissen, wenn Ihre Seite dort verlinkt ist."
+    },
+    {
+      "key": "embed-qrcode",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "focus_field",
+      "field": "qrcode",
+      "section": "embed",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-embed-regions.json",
+      "narration": "Der QR-Code führt zum gleichen Link — ideal für Flyer, Schaufenster oder den Empfang. Kunden scannen und landen direkt auf der Buchungsseite."
+    },
+    {
+      "key": "public-step1",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "overview",
+      "narration": "So sieht die Seite für Ihre Kunden aus: drei Schritte — Leistung, Termin, Kontakt. Oben stehen Firmenlogo und Ihr Buchungstitel."
+    },
+    {
+      "key": "field-service",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "focus_field",
+      "field": "service",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step1-regions.json",
+      "narration": "Schritt eins: Der Kunde wählt eine Leistung. Angezeigt werden nur Artikel, die Sie für die Online-Buchung freigegeben haben — unter Artikel und Leistungen."
+    },
+    {
+      "key": "public-step2",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step2.png",
+      "mode": "overview",
+      "narration": "Schritt zwei: Datum wählen — ab heute. Darunter erscheinen freie Uhrzeiten nach Ihren Arbeitszeiten und bestehenden Terminen."
+    },
+    {
+      "key": "field-slots",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step2.png",
+      "mode": "focus_field",
+      "field": "slots",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step2-regions.json",
+      "narration": "Der Kunde tippt eine freie Zeit an. Optional kann er einen bestimmten Mitarbeiter wählen, wenn die Leistung einem Team zugeordnet ist."
+    },
+    {
+      "key": "field-name",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "customer_name",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Schritt drei: Name ist Pflicht — damit Sie den Termin zuordnen können."
+    },
+    {
+      "key": "field-email",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "customer_email",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "E-Mail ist Pflicht — für die Bestätigung und spätere Infos zum Termin."
+    },
+    {
+      "key": "field-phone",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "customer_phone",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Telefon ist optional — hilfreich für kurze Rückfragen am Termintag."
+    },
+    {
+      "key": "field-submit",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step3.png",
+      "mode": "focus_field",
+      "field": "submit",
+      "section": "booking",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-public-step3-regions.json",
+      "narration": "Mit Termin verbindlich buchen sendet der Kunde die Anfrage. Das System legt den Termin an und kann E-Mails auslösen."
+    },
+    {
+      "key": "success",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-success.png",
+      "mode": "overview",
+      "narration": "Nach erfolgreicher Buchung sieht der Kunde eine Bestätigung auf der Seite — mit Ihrem Text aus den Einstellungen."
+    },
+    {
+      "key": "email-intro",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-email-confirmation.png",
+      "mode": "overview",
+      "narration": "Parallel erhält der Kunde eine Bestätigungs-E-Mail. Vorlagen für Bestätigung, Storno und interne Benachrichtigungen passen Sie unter Einstellungen, Benachrichtigungen an — Storno und Erinnerungen erwähnen wir hier nur kurz."
+    },
+    {
+      "key": "email-detail",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-email-confirmation.png",
+      "mode": "focus_field",
+      "field": "email_body",
+      "section": "email",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-email-confirmation-regions.json",
+      "narration": "In der Bestätigung stehen Betreff und Überschrift, Ihr Einleitungstext, die gebuchte Leistung, Datum und Uhrzeit, Kundendaten, Mitarbeiter falls gewählt, und die Buchungsnummer — wichtig für Rückfragen. Unten Firmenname und Kontakt aus Ihren Firmendaten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-success.png",
+      "mode": "overview",
+      "narration": "Damit können Kunden über Link oder QR-Code selbst buchen. Link und QR-Code finden Sie jederzeit unter Einstellungen, Kalender-Einbindung. Viel Erfolg!"
+    }
+  ]
+}

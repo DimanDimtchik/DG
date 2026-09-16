@@ -32,8 +32,12 @@ final class MenuRegistry
         if (DepartmentAccess::canAccessModule($user, 'post') && $canEdit) {
             $items[] = ['slug' => 'post', 'label' => 'Post', 'icon' => 'mail'];
         }
+        if (RoleResolver::canEdit($user)) {
+            $items[] = ['slug' => 'akademie', 'label' => 'Akademie', 'icon' => 'document'];
+        }
         if (DepartmentAccess::userCanManageArticleCatalog($user) && $canEdit) {
             $items[] = ['slug' => 'artikel-leistungen', 'label' => 'Artikel & Leistungen', 'icon' => 'catalog'];
+            $items[] = ['slug' => 'lager', 'label' => 'Lager', 'icon' => 'warehouse'];
         }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
@@ -300,6 +304,7 @@ final class MenuRegistry
             'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
+            'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
             'bilder' => 'Medien, Logos und Bilder verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Belege erfassen mit Steuerfeldern und Kontenzuordnung.',
@@ -313,6 +318,13 @@ final class MenuRegistry
             'buchhaltung-steuerberater-export' => 'DATEV, Agenda, Addison — Buchungsstapel und Belege.',
             'buchhaltung-ustva' => 'Umsatzsteuer-Voranmeldung und ELSTER-CSV — auch ohne Steuerberater.',
             'buchhaltung-jahresabschluss' => 'Checkliste, GuV-Abschluss, Saldenvortrag — DIY-Assistent.',
+            'buchhaltung-bwa' => 'Betriebswirtschaftliche Auswertung je Zeitraum.',
+            'buchhaltung-susa' => 'Summen- und Saldenliste je Geschäftsjahr.',
+            'support-freigabe' => 'Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional Bildschirm-Zuschauen.',
+            'support-zuschauen' => 'Bildschirm des Kunden zuschauen während aktiver Support-Freigabe.',
+            'kdv-dashboard' => 'Übersicht SaaS-Kunden von Ganz Soft.',
+            'kdv-kunden' => 'SaaS-Kunden verwalten und Lizenzen zuordnen.',
+            'kdv-support' => 'Support-Freigaben aller SaaS-Kunden einsehen.',
             'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
             'website-seiten' => 'Seiten der öffentlichen Website anlegen und gestalten.',
             'website-formulare' => 'Formulare visuell bauen, Einträge empfangen und in Seiten einbinden.',
@@ -453,6 +465,7 @@ final class MenuRegistry
         if (
             $slug === 'website-seiten'
             || $slug === 'website-seite-form'
+            || $slug === 'website-recht'
             || $slug === 'website-formulare'
             || $slug === 'website-formular-form'
             || $slug === 'website-formular-inbox'
@@ -464,8 +477,16 @@ final class MenuRegistry
             return self::canAccessWebsite($user);
         }
 
-        if ($slug === 'artikel-leistungen') {
-            return DepartmentAccess::userCanManageArticleCatalog($user) && RoleResolver::canEdit($user);
+        if ($slug === 'akademie') {
+            return RoleResolver::canEdit($user);
+        }
+
+        if ($slug === 'artikel-leistungen' || $slug === 'lager') {
+            if (!DepartmentAccess::userCanManageArticleCatalog($user) || !RoleResolver::canEdit($user)) {
+                return false;
+            }
+
+            return AcademyGateService::isModuleAccessible($user, $slug);
         }
 
         if ($slug === 'post') {

@@ -1,0 +1,57 @@
+{
+  "video_slug": "lager-ein-ausgang",
+  "locale": "de",
+  "title": "Lager — Wareneingang und Warenausgang",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir Wareneingang und Warenausgang. Sie starten im Dashboard und öffnen das Lager."
+    },
+    {
+      "key": "nav-lager",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "lager",
+      "narration": "Wechseln Sie zur Kachel Lager oder zum Menüpunkt Lager."
+    },
+    {
+      "key": "wareneingang",
+      "screenshot": "storage/media/training/lager/lager-wareneingang.png",
+      "mode": "overview",
+      "narration": "Im Reiter Wareneingang buchen Sie Zugänge: Scannen Sie Palette, Platz, Karton oder Artikel. Die Positionen erscheinen in der Tabelle — danach klicken Sie auf Wareneingang buchen."
+    },
+    {
+      "key": "wareneingang-scan",
+      "screenshot": "storage/media/training/lager/lager-wareneingang.png",
+      "mode": "focus_field",
+      "field": "scan_input",
+      "section": "wareneingang",
+      "regions_file": "storage/media/training/lager/lager-wareneingang-regions.json",
+      "narration": "Das Scan-Feld ist der Einstieg: Strichcode eingeben oder scannen, Enter — der Artikel wird der Liste hinzugefügt."
+    },
+    {
+      "key": "warenausgang",
+      "screenshot": "storage/media/training/lager/lager-warenausgang.png",
+      "mode": "overview",
+      "narration": "Im Reiter Warenausgang buchen Sie Abgänge — entweder zu einem Lieferschein oder Auftrag, oder manuell per Scan."
+    },
+    {
+      "key": "warenausgang-beleg",
+      "screenshot": "storage/media/training/lager/lager-warenausgang.png",
+      "mode": "focus_field",
+      "field": "voucher",
+      "section": "warenausgang",
+      "regions_file": "storage/media/training/lager/lager-warenausgang-regions.json",
+      "narration": "Optional wählen Sie einen Beleg — Lieferschein oder Auftrag. Ohne Beleg arbeiten Sie rein per Scan und manueller Zeile."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/lager/lager-warenausgang.png",
+      "mode": "overview",
+      "narration": "Wareneingang erhöht den Bestand, Warenausgang verringert ihn. Beide Buchungen erscheinen unter Bewegungen. Viel Erfolg!"
+    }
+  ]
+}

@@ -92,9 +92,22 @@ $bookingArticleOptions = $bookingArticleOptions ?? [];
           <?php endforeach; ?>
         </select>
       </label>
-      <label class="dg-field"><span>Kunde *</span><input name="customer_name" value="<?= View::escape($form['customer_name']) ?>" required></label>
-      <label class="dg-field"><span>E-Mail</span><input type="email" name="customer_email" value="<?= View::escape($form['customer_email']) ?>"></label>
-      <label class="dg-field"><span>Telefon</span><input name="customer_phone" value="<?= View::escape($form['customer_phone']) ?>"></label>
+      <label class="dg-field dg-field--wide">
+        <span>Kunde *</span>
+        <input
+          type="search"
+          id="dg-booking-customer-search"
+          name="customer_name"
+          value="<?= View::escape($form['customer_name']) ?>"
+          placeholder="Name, Firma oder E-Mail …"
+          autocomplete="off"
+          required
+        >
+        <small class="dg-field-hint" id="dg-booking-customer-hint">Tippen Sie einen Buchstaben — Vorschläge aus Ihren Kontakten erscheinen darunter.</small>
+        <div id="dg-booking-customer-results" class="dg-voucher-contact-results" hidden></div>
+      </label>
+      <label class="dg-field"><span>E-Mail</span><input type="email" name="customer_email" id="dg-booking-customer-email" value="<?= View::escape($form['customer_email']) ?>"></label>
+      <label class="dg-field"><span>Telefon</span><input name="customer_phone" id="dg-booking-customer-phone" value="<?= View::escape($form['customer_phone']) ?>"></label>
       <label class="dg-field dg-field--wide"><span>Notizen</span><textarea name="admin_notes" rows="3"><?= View::escape($form['admin_notes']) ?></textarea></label>
     </div>
 

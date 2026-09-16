@@ -1,0 +1,21 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "sections": {
+    "email": {
+      "x": 500,
+      "y": 120,
+      "w": 920,
+      "h": 715
+    }
+  },
+  "fields": {
+    "email_body": {
+      "x": 500,
+      "y": 120,
+      "w": 920,
+      "h": 715,
+      "label": "#dg-academy-email-frame"
+    }
+  }
+}

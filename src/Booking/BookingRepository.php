@@ -22,8 +22,9 @@ final class BookingRepository
         $params = [];
 
         if ($search !== '') {
-            $where = 'WHERE customer_name LIKE :q OR customer_email LIKE :q OR customer_phone LIKE :q OR status LIKE :q';
-            $params['q'] = '%' . $search . '%';
+            $like = '%' . $search . '%';
+            $where = 'WHERE customer_name LIKE :q0 OR customer_email LIKE :q1 OR customer_phone LIKE :q2 OR status LIKE :q3';
+            $params = ['q0' => $like, 'q1' => $like, 'q2' => $like, 'q3' => $like];
         }
 
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM dg_bookings ' . $where);

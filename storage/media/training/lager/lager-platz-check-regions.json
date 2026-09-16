@@ -1,0 +1,40 @@
+{
+  "width": 1920,
+  "height": 1542,
+  "sections": {
+    "subtabs": {
+      "x": 515,
+      "y": 160,
+      "w": 1100,
+      "h": 36
+    },
+    "platz_check": {
+      "x": 515,
+      "y": 196,
+      "w": 1100,
+      "h": 519
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1466,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "scan_input": {
+      "x": 534,
+      "y": 294,
+      "w": 1062,
+      "h": 101,
+      "label": "Strichcode scannen"
+    },
+    "audit_place": {
+      "x": 534,
+      "y": 558,
+      "w": 254,
+      "h": 58,
+      "label": "Stellplatz"
+    }
+  }
+}

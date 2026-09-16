@@ -1,0 +1,276 @@
+{
+  "width": 1920,
+  "height": 1542,
+  "tiles": [
+    {
+      "x": 515,
+      "y": 160,
+      "w": 262,
+      "h": 144,
+      "label": "Kontakte",
+      "description": "Benutzer, Kunden, Lieferanten und Mitarbeiter verwalten.",
+      "slug": "kontakte"
+    },
+    {
+      "x": 795,
+      "y": 160,
+      "w": 262,
+      "h": 144,
+      "label": "Terminkalender",
+      "description": "Buchungen, Artikel und Kalender im Blick behalten.",
+      "slug": "terminkalender"
+    },
+    {
+      "x": 1074,
+      "y": 160,
+      "w": 262,
+      "h": 144,
+      "label": "Zeiterfassung",
+      "description": "Einstempeln, Pausen und Teamübersicht für HR.",
+      "slug": "zeiterfassung"
+    },
+    {
+      "x": 1354,
+      "y": 160,
+      "w": 262,
+      "h": 144,
+      "label": "Post",
+      "description": "Postfächer, Eingang und Nachrichten versenden.",
+      "slug": "post"
+    },
+    {
+      "x": 515,
+      "y": 322,
+      "w": 262,
+      "h": 144,
+      "label": "Akademie",
+      "description": "",
+      "slug": "akademie"
+    },
+    {
+      "x": 795,
+      "y": 322,
+      "w": 262,
+      "h": 144,
+      "label": "Artikel & Leistungen",
+      "description": "Artikel- und Leistungskatalog pflegen.",
+      "slug": "artikel-leistungen"
+    },
+    {
+      "x": 1074,
+      "y": 322,
+      "w": 262,
+      "h": 144,
+      "label": "Lager",
+      "description": "Lagerbestände, Bewegungen aus Belegen und Inventur.",
+      "slug": "lager"
+    },
+    {
+      "x": 1354,
+      "y": 322,
+      "w": 262,
+      "h": 144,
+      "label": "Support-Freigabe",
+      "description": "",
+      "slug": "support-freigabe"
+    },
+    {
+      "x": 515,
+      "y": 485,
+      "w": 262,
+      "h": 144,
+      "label": "Bilder",
+      "description": "Medien, Logos und Bilder verwalten.",
+      "slug": "bilder"
+    },
+    {
+      "x": 795,
+      "y": 485,
+      "w": 262,
+      "h": 144,
+      "label": "Konten",
+      "description": "Kontenrahmen durchsuchen und Kontenhinweise einsehen.",
+      "slug": "buchhaltung-konten"
+    },
+    {
+      "x": 1074,
+      "y": 485,
+      "w": 262,
+      "h": 144,
+      "label": "Belege",
+      "description": "Belege erfassen mit Steuerfeldern und Kontenzuordnung.",
+      "slug": "buchhaltung-belege"
+    },
+    {
+      "x": 1354,
+      "y": 485,
+      "w": 262,
+      "h": 144,
+      "label": "Überweisungen",
+      "description": "Überweisungen vorbereiten mit QR-Code und Fotovorlage.",
+      "slug": "buchhaltung-ueberweisungen"
+    },
+    {
+      "x": 515,
+      "y": 647,
+      "w": 262,
+      "h": 164,
+      "label": "Kontenübersicht",
+      "description": "Kontensalden und Kontoauszüge je Geschäftsjahr.",
+      "slug": "buchhaltung-kontenuebersicht"
+    },
+    {
+      "x": 795,
+      "y": 647,
+      "w": 262,
+      "h": 164,
+      "label": "Offene Posten",
+      "description": "Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.",
+      "slug": "buchhaltung-opos"
+    },
+    {
+      "x": 1074,
+      "y": 647,
+      "w": 262,
+      "h": 164,
+      "label": "Kassenbuch",
+      "description": "Bar-Ein- und Ausgänge aus Kassenbelegen.",
+      "slug": "buchhaltung-kassenbuch"
+    },
+    {
+      "x": 1354,
+      "y": 647,
+      "w": 262,
+      "h": 164,
+      "label": "Manuelle Buchungen",
+      "description": "Freie Journalbuchungen ohne Beleg (Soll = Haben).",
+      "slug": "buchhaltung-manuelle-buchung"
+    },
+    {
+      "x": 515,
+      "y": 829,
+      "w": 262,
+      "h": 144,
+      "label": "Bilanz & GuV",
+      "description": "Bilanz und GuV je Geschäftsjahr.",
+      "slug": "buchhaltung-auswertungen"
+    },
+    {
+      "x": 795,
+      "y": 829,
+      "w": 262,
+      "h": 144,
+      "label": "BWA",
+      "description": "",
+      "slug": "buchhaltung-bwa"
+    },
+    {
+      "x": 1074,
+      "y": 829,
+      "w": 262,
+      "h": 144,
+      "label": "SuSa",
+      "description": "",
+      "slug": "buchhaltung-susa"
+    },
+    {
+      "x": 1354,
+      "y": 829,
+      "w": 262,
+      "h": 144,
+      "label": "Bankabgleich",
+      "description": "CAMT.053 importieren und Belege zuordnen.",
+      "slug": "buchhaltung-bankabgleich"
+    },
+    {
+      "x": 515,
+      "y": 992,
+      "w": 262,
+      "h": 164,
+      "label": "Steuerberater-Export",
+      "description": "DATEV, Agenda, Addison — Buchungsstapel und Belege.",
+      "slug": "buchhaltung-steuerberater-export"
+    },
+    {
+      "x": 795,
+      "y": 992,
+      "w": 262,
+      "h": 164,
+      "label": "UStVA",
+      "description": "Umsatzsteuer-Voranmeldung und ELSTER-CSV — auch ohne Steuerberater.",
+      "slug": "buchhaltung-ustva"
+    },
+    {
+      "x": 1074,
+      "y": 992,
+      "w": 262,
+      "h": 164,
+      "label": "Jahresabschluss",
+      "description": "Checkliste, GuV-Abschluss, Saldenvortrag — DIY-Assistent.",
+      "slug": "buchhaltung-jahresabschluss"
+    },
+    {
+      "x": 1354,
+      "y": 992,
+      "w": 262,
+      "h": 164,
+      "label": "Seiten",
+      "description": "Seiten der öffentlichen Website anlegen und gestalten.",
+      "slug": "website-seiten"
+    },
+    {
+      "x": 515,
+      "y": 1174,
+      "w": 262,
+      "h": 144,
+      "label": "Formulare",
+      "description": "Formulare visuell bauen, Einträge empfangen und in Seiten einbinden.",
+      "slug": "website-formulare"
+    },
+    {
+      "x": 795,
+      "y": 1174,
+      "w": 262,
+      "h": 144,
+      "label": "Statistik",
+      "description": "Seitenaufrufe lokal und Links zu Google Analytics / Tag Manager.",
+      "slug": "website-statistik"
+    },
+    {
+      "x": 1074,
+      "y": 1174,
+      "w": 262,
+      "h": 144,
+      "label": "Menü",
+      "description": "Navigation der Website pflegen.",
+      "slug": "website-menu"
+    },
+    {
+      "x": 1354,
+      "y": 1174,
+      "w": 262,
+      "h": 144,
+      "label": "Kopf & Fuß",
+      "description": "Kopfzeile, Fußzeile und zusätzliche Skripte.",
+      "slug": "website-chrome"
+    },
+    {
+      "x": 515,
+      "y": 1336,
+      "w": 262,
+      "h": 144,
+      "label": "Design",
+      "description": "Farben der öffentlichen Website.",
+      "slug": "website-design"
+    },
+    {
+      "x": 795,
+      "y": 1336,
+      "w": 262,
+      "h": 144,
+      "label": "Einstellungen",
+      "description": "Firma, E-Mail, Module und System konfigurieren.",
+      "slug": "einstellungen"
+    }
+  ]
+}

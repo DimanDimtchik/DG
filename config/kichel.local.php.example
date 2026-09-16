@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Kichel Phase 2 — Ollama (optional). Kopie als config/kichel.local.php (nicht committen).
+ *
+ * Regel: Geldbeträge immer PHP (KichelMoneyLogic). Ollama nur Formulierung.
+ */
+return [
+    'ollama_enabled' => false,
+    'ollama_url' => 'http://127.0.0.1:11434',
+    'ollama_model' => 'llama3.1:8b',
+    'timeout_seconds' => 60,
+];

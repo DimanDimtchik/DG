@@ -31,6 +31,12 @@ final class BookingSlotsApi
         CalendarWorkingHoursRepository::ensureSeeded();
         CalendarStaffRepository::ensureSeeded();
 
+        $action = trim((string) ($_GET['action'] ?? ''));
+        if ($action === 'contacts') {
+            self::handleContactSearch();
+            return;
+        }
+
         $articleId = max(0, (int) ($_GET['article_id'] ?? 0));
         $employeeId = max(0, (int) ($_GET['employee_id'] ?? 0));
         $excludeBookingId = max(0, (int) ($_GET['exclude_booking_id'] ?? 0)) ?: null;
@@ -76,5 +82,29 @@ final class BookingSlotsApi
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
+    }
+
+    private static function handleContactSearch(): void
+    {
+        $user = AuthService::user();
+        if (
+            $user === null
+            || (!MenuRegistry::canAccess($user, 'terminkalender') && !MenuRegistry::canAccess($user, 'kontakte'))
+        ) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $query = trim((string) ($_GET['q'] ?? ''));
+        if (mb_strlen($query) < 1) {
+            echo json_encode(['success' => true, 'data' => ['items' => []]], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => ['items' => ContactRepository::pickerItems($query, 15, $user)],
+        ], JSON_UNESCAPED_UNICODE);
     }
 }

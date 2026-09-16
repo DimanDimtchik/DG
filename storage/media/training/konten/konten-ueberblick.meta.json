@@ -1,0 +1,28 @@
+{
+  "title": "Konten — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 44.1,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.96
+    },
+    {
+      "key": "nav-konten",
+      "duration_sec": 5.52
+    },
+    {
+      "key": "suche-nummer",
+      "duration_sec": 9.76
+    },
+    {
+      "key": "suche-name",
+      "duration_sec": 8.76
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 12.08
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "video_slug": "konten-ueberblick",
+  "locale": "de",
+  "title": "Konten — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir den Bereich Konten. Sie starten im Dashboard — Ihrer Startseite nach dem Login."
+    },
+    {
+      "key": "nav-konten",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-konten",
+      "narration": "Klicken Sie auf die Kachel Konten — oder wählen Sie Konten im Buchhaltungs-Menü links."
+    },
+    {
+      "key": "suche-nummer",
+      "screenshot": "storage/media/training/konten/konten-search.png",
+      "mode": "focus_field",
+      "field": "account_number",
+      "section": "search",
+      "regions_file": "storage/media/training/konten/konten-search-regions.json",
+      "narration": "Geben Sie eine Kontonummer ein — zum Beispiel 8400 für Erlöse mit neunzehn Prozent Umsatzsteuer. Die Hinweise erscheinen rechts."
+    },
+    {
+      "key": "suche-name",
+      "screenshot": "storage/media/training/konten/konten-search.png",
+      "mode": "focus_field",
+      "field": "account_search",
+      "section": "search",
+      "regions_file": "storage/media/training/konten/konten-search-regions.json",
+      "narration": "Oder suchen Sie nach einem Kontonamen — zum Beispiel Porto oder Briefmarke. Es erscheinen nur direkt bebuchbare Konten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/konten/konten-search.png",
+      "mode": "overview",
+      "narration": "Das war der Kurzüberblick Konten: Nummer eingeben oder Name suchen. Ausführliche Hinweise zu einem Konto sehen Sie im Video Konten — Hinweise. Viel Erfolg!"
+    }
+  ]
+}

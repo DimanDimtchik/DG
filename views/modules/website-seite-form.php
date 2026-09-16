@@ -45,6 +45,15 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
+  <?php if (WebsitePageRepository::isOnlineBookingPage($form)) : ?>
+    <div class="dg-flash dg-flash--info">
+      <strong>Online-Terminbuchung.</strong>
+      Gestalten Sie die Seite wie jede andere: Texte, Bilder, Videos und Galerien ober- oder unterhalb des Buchungsformulars.
+      Der Block <em>Online-Terminbuchung</em> zeigt das Kundenformular — bitte nicht entfernen.
+      Einstellungen: Termine → Kalender-Einbindung und Artikel &amp; Leistungen.
+    </div>
+  <?php endif; ?>
+
   <form class="dg-form dg-website-editor__form" method="post" action="/app?page=website-seite-form" id="dg-website-page-form">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="website_page_save" value="1">
@@ -97,6 +106,15 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
             <button type="button" class="dg-website-tool" data-add-row="6-6">2 Spalten</button>
             <button type="button" class="dg-website-tool" data-add-row="4-4-4">3 Spalten</button>
           </div>
+          <?php if (WebsitePageRepository::isOnlineBookingPage($form)) : ?>
+            <h2>Terminbuchung</h2>
+            <div class="dg-website-builder__palette-list">
+              <button type="button" class="dg-website-tool" data-add-block="online_booking">Online-Terminbuchung</button>
+            </div>
+          <?php endif; ?>
+          <h2>Vorlagen</h2>
+          <p class="dg-field-hint">Fertige Abschnitte einfügen — danach anpassen.</p>
+          <div class="dg-website-builder__palette-list" id="dg-website-pattern-list"></div>
         </aside>
       <?php endif; ?>
 

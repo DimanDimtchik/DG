@@ -1,0 +1,294 @@
+{
+  "width": 1920,
+  "height": 6298,
+  "sections": {
+    "stamm": {
+      "x": 534,
+      "y": 213,
+      "w": 1062,
+      "h": 276
+    },
+    "kunde_lieferant": {
+      "x": 534,
+      "y": 885,
+      "w": 1062,
+      "h": 230
+    },
+    "kommunikation": {
+      "x": 534,
+      "y": 1135,
+      "w": 1062,
+      "h": 201
+    },
+    "adresse": {
+      "x": 534,
+      "y": 1356,
+      "w": 1062,
+      "h": 161
+    },
+    "bank": {
+      "x": 534,
+      "y": 5077,
+      "w": 1062,
+      "h": 460
+    },
+    "social": {
+      "x": 534,
+      "y": 5557,
+      "w": 1062,
+      "h": 676
+    },
+    "arbeitgeber": {
+      "x": 534,
+      "y": 489,
+      "w": 1062,
+      "h": 376
+    },
+    "mitarbeiterdaten": {
+      "x": 534,
+      "y": 1517,
+      "w": 1062,
+      "h": 3540
+    }
+  },
+  "fields": {
+    "employee_birth_date": {
+      "x": 534,
+      "y": 1630,
+      "w": 254,
+      "h": 59,
+      "label": "Geburtsdatum"
+    },
+    "employee_gender": {
+      "x": 804,
+      "y": 1630,
+      "w": 254,
+      "h": 59,
+      "label": "Geschlecht"
+    },
+    "employee_marital_status": {
+      "x": 1073,
+      "y": 1630,
+      "w": 254,
+      "h": 59,
+      "label": "Familienstand"
+    },
+    "employee_spouse_name": {
+      "x": 1343,
+      "y": 1630,
+      "w": 254,
+      "h": 59,
+      "label": "Ehepartner/in"
+    },
+    "employee_social_security_status": {
+      "x": 534,
+      "y": 2239,
+      "w": 254,
+      "h": 58,
+      "label": "Status SV-Nummer"
+    },
+    "employee_social_filing_office": {
+      "x": 534,
+      "y": 2309,
+      "w": 1062,
+      "h": 58,
+      "label": "Meldestelle (Einzug)"
+    },
+    "employee_social_security_number": {
+      "x": 534,
+      "y": 2379,
+      "w": 254,
+      "h": 57,
+      "label": "Sozialversicherungsnummer"
+    },
+    "employee_health_insurance": {
+      "x": 534,
+      "y": 2540,
+      "w": 254,
+      "h": 57,
+      "label": "Krankenkasse / Krankenversicherung"
+    },
+    "employee_health_insurance_number": {
+      "x": 804,
+      "y": 2540,
+      "w": 254,
+      "h": 57,
+      "label": "Versichertennummer"
+    },
+    "employee_health_status": {
+      "x": 534,
+      "y": 2609,
+      "w": 1062,
+      "h": 101,
+      "label": "Gesundheitszustand"
+    },
+    "employee_treatment_needs": {
+      "x": 534,
+      "y": 2722,
+      "w": 1062,
+      "h": 101,
+      "label": "Behandlungserfordernisse"
+    },
+    "employee_disability_degree": {
+      "x": 534,
+      "y": 2927,
+      "w": 254,
+      "h": 57,
+      "label": "Grad der Behinderung (GdB)"
+    },
+    "employee_disability_supplementary_codes": {
+      "x": 534,
+      "y": 2996,
+      "w": 1062,
+      "h": 123,
+      "label": "Zusatzbuchstaben"
+    },
+    "employee_disabilities": {
+      "x": 534,
+      "y": 3131,
+      "w": 1062,
+      "h": 101,
+      "label": "Chronische Krankheiten / Arbeitsunfall / weitere Angaben"
+    },
+    "employee_employment_relationship": {
+      "x": 534,
+      "y": 3464,
+      "w": 254,
+      "h": 57,
+      "label": "Beschäftigungsverhältnis"
+    },
+    "employee_employer_site": {
+      "x": 804,
+      "y": 3464,
+      "w": 254,
+      "h": 57,
+      "label": "Beschäftigungspflichtige Stelle"
+    },
+    "employee_work_location": {
+      "x": 1073,
+      "y": 3464,
+      "w": 254,
+      "h": 57,
+      "label": "Arbeitsort"
+    },
+    "employee_job_type": {
+      "x": 1343,
+      "y": 3464,
+      "w": 254,
+      "h": 57,
+      "label": "Art der Tätigkeit"
+    },
+    "employee_entry_date": {
+      "x": 534,
+      "y": 3533,
+      "w": 254,
+      "h": 59,
+      "label": "Eintritt"
+    },
+    "employee_exit_date": {
+      "x": 804,
+      "y": 3533,
+      "w": 254,
+      "h": 59,
+      "label": "Austritt"
+    },
+    "employee_contract_start": {
+      "x": 534,
+      "y": 3638,
+      "w": 254,
+      "h": 59,
+      "label": "Vertragsbeginn"
+    },
+    "employee_contract_end": {
+      "x": 804,
+      "y": 3638,
+      "w": 254,
+      "h": 59,
+      "label": "Vertragsende (befristet)"
+    },
+    "employee_working_hours": {
+      "x": 1073,
+      "y": 3638,
+      "w": 254,
+      "h": 59,
+      "label": "Arbeitszeit (Freitext)"
+    },
+    "employee_daily_work_minutes": {
+      "x": 1343,
+      "y": 3638,
+      "w": 254,
+      "h": 59,
+      "label": "Soll-Arbeitszeit pro Tag (Minuten)"
+    },
+    "employee_employment_type": {
+      "x": 534,
+      "y": 3709,
+      "w": 254,
+      "h": 58,
+      "label": "Beschäftigungsart (Zeiterfassung)"
+    },
+    "employee_overtime_allowed": {
+      "x": 804,
+      "y": 3709,
+      "w": 254,
+      "h": 58,
+      "label": "Überstunden erlaubt"
+    },
+    "employee_salary": {
+      "x": 1073,
+      "y": 3709,
+      "w": 254,
+      "h": 58,
+      "label": "Lohn / Gehalt"
+    },
+    "employee_subsidy_amount": {
+      "x": 534,
+      "y": 3813,
+      "w": 523,
+      "h": 57,
+      "label": "Beihilfebetrag"
+    },
+    "employee_subsidy_carrier": {
+      "x": 1073,
+      "y": 3813,
+      "w": 523,
+      "h": 57,
+      "label": "Beihilfeträger"
+    },
+    "employee_qualifications": {
+      "x": 534,
+      "y": 3916,
+      "w": 1062,
+      "h": 101,
+      "label": "Qualifikationen (Ausbildung, Erfahrung, Zertifizierungen)"
+    },
+    "employee_performance_notes": {
+      "x": 534,
+      "y": 4063,
+      "w": 1062,
+      "h": 101,
+      "label": "Leistungen (Aufgaben, Kommunikation)"
+    },
+    "employee_behavior_notes": {
+      "x": 534,
+      "y": 4176,
+      "w": 1062,
+      "h": 101,
+      "label": "Verhalten (Pünktlichkeit, Teamarbeit)"
+    },
+    "employee_driver_license_classes": {
+      "x": 534,
+      "y": 4323,
+      "w": 523,
+      "h": 59,
+      "label": "Führerscheinklassen"
+    },
+    "employee_driver_license_valid_until": {
+      "x": 1073,
+      "y": 4323,
+      "w": 523,
+      "h": 59,
+      "label": "Führerschein gültig bis"
+    }
+  }
+}

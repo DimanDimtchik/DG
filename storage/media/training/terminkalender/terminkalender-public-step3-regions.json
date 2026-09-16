@@ -1,0 +1,42 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "sections": {
+    "booking": {
+      "x": 620,
+      "y": 227,
+      "w": 680,
+      "h": 469
+    }
+  },
+  "fields": {
+    "customer_name": {
+      "x": 645,
+      "y": 352,
+      "w": 630,
+      "h": 74,
+      "label": "Name *"
+    },
+    "customer_email": {
+      "x": 645,
+      "y": 441,
+      "w": 630,
+      "h": 74,
+      "label": "E-Mail *"
+    },
+    "customer_phone": {
+      "x": 645,
+      "y": 529,
+      "w": 630,
+      "h": 74,
+      "label": "Telefon (optional)"
+    },
+    "submit": {
+      "x": 1051,
+      "y": 625,
+      "w": 224,
+      "h": 46,
+      "label": "#tk-book-submit"
+    }
+  }
+}

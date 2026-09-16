@@ -1,0 +1,42 @@
+{
+  "video_slug": "terminkalender-ueberblick",
+  "locale": "de",
+  "title": "Terminkalender — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir den Terminkalender. Sie starten wie immer im Dashboard — Ihrer Startseite nach dem Login."
+    },
+    {
+      "key": "nav-terminkalender",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "terminkalender",
+      "narration": "Klicken Sie auf die Kachel Terminkalender — oder wählen Sie Terminkalender im Menü links. Beides führt Sie zur Terminliste."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-list.png",
+      "mode": "overview",
+      "narration": "Hier sehen Sie alle Buchungen: Termin, Leistung, Mitarbeiter, Kunde und Status. Oben rechts legen Sie mit Neuer Termin einen Eintrag an."
+    },
+    {
+      "key": "suche",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-list.png",
+      "mode": "focus_field",
+      "field": "search",
+      "section": "list",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-list-regions.json",
+      "narration": "Mit Suchen finden Sie Termine schnell: Geben Sie Kundenname, E-Mail, Telefon oder Status ein und klicken Sie auf Suchen. Mit Zurücksetzen sehen Sie wieder alle Einträge."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-list.png",
+      "mode": "overview",
+      "narration": "Das war der Kurzüberblick Terminkalender: Liste, Suche und Neuer Termin. Alle Felder beim Anlegen erklären wir im Video Terminkalender — Neuer Termin. Viel Erfolg!"
+    }
+  ]
+}

@@ -3389,6 +3389,20 @@ body.dg-login-page {
   line-height: 1.5;
 }
 
+.tk-book__preview-banner {
+  background: #fef3c7;
+  color: #92400e;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.tk-book__preview-banner a {
+  color: #92400e;
+  font-weight: 600;
+}
+
 .tk-book-page--disabled {
   background: #f8fafc;
 }
@@ -4693,6 +4707,24 @@ body.dg-login-page {
   text-align: center;
 }
 
+.dg-booking-qr {
+  margin-top: 16px;
+}
+
+.dg-booking-qr__canvas {
+  display: inline-flex;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--dg-border, #e2e8f0);
+  border-radius: 12px;
+}
+
+.dg-booking-qr__img {
+  display: block;
+  width: 160px;
+  height: 160px;
+}
+
 .dg-transfer-qr__img {
   width: 180px;
   height: 180px;
@@ -5924,5 +5956,151 @@ body.dg-login-page {
   width: 100%;
   max-height: 70vh;
   background: #111;
+}
+
+/* Lager — Platz-Check */
+.dg-lager .dg-audit-manual {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--dg-border);
+}
+
+.dg-lager .dg-audit-manual__actions {
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.dg-lager .dg-place-audit-output {
+  margin-top: 24px;
+}
+
+.dg-lager .dg-place-audit-output .dg-scan-result:not([hidden]) {
+  margin-bottom: 12px;
+}
+
+.dg-lager .dg-place-audit-output #dg-place-audit-panel:not([hidden]) {
+  margin-top: 0;
+}
+
+/* Akademie */
+.dg-academy-catalog,
+.dg-academy-modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.dg-academy-card {
+  border: 1px solid var(--dg-border);
+  border-radius: var(--dg-radius-sm);
+  padding: 14px 16px;
+  background: var(--dg-surface);
+}
+
+.dg-academy-rules {
+  margin-top: 20px;
+}
+
+.dg-academy-rules__list {
+  margin: 0 0 16px;
+  padding-left: 20px;
+}
+
+.dg-academy-rules__confirm span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.dg-academy-rules__confirm input[type="checkbox"] {
+  width: auto;
+  min-width: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.dg-academy-rules__actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.dg-academy-player {
+  width: 100%;
+  max-height: 70vh;
+  margin: 16px 0;
+  background: #111;
+  border-radius: var(--dg-radius-sm);
+}
+
+.dg-academy-player__desc {
+  margin-bottom: 12px;
+}
+
+.dg-academy-hr-card.dg-academy-risk--red {
+  border-left: 4px solid #c0392b;
+}
+
+.dg-academy-hr-card.dg-academy-risk--yellow {
+  border-left: 4px solid #d68910;
+}
+
+.dg-academy-hr-card.dg-academy-risk--green {
+  border-left: 4px solid #27ae60;
+}
+
+.dg-academy-flags {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.dg-academy-flag--red {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.dg-academy-gate-form {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--dg-border);
+}
+
+.dg-subtabs--nested {
+  margin-bottom: 16px;
+}
+
+.dg-academy-dept-block {
+  margin-bottom: 20px;
+}
+
+.dg-academy-dept-block__actions {
+  margin-top: 12px;
+}
+
+.dg-academy-module-pick__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dg-academy-module-pick__list li + li {
+  margin-top: 8px;
+}
+
+.dg-academy-module-pick__list .dg-field--checkbox span {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dg-academy-help__list {
+  margin: 0 0 12px 1.2rem;
+  padding: 0;
+}
+
+.dg-academy-help__list li + li {
+  margin-top: 6px;
 }
 

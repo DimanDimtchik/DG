@@ -83,6 +83,10 @@
           <?php View::render('settings/tab-payment-terms', compact('accountingPaymentSettings', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'time-tracking') : ?>
           <?php View::render('settings/tab-time-tracking', compact('timeTrackingSettings', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'lager-struktur') : ?>
+          <?php View::render('settings/tab-lager-struktur', compact('dbConnected', 'lagerStrukturTab', 'stockLocations', 'stockHalls', 'stockShelves', 'stockLocationOptions')); ?>
+        <?php elseif ($settingsSelection['template'] === 'legal-products') : ?>
+          <?php View::render('settings/tab-legal-products', compact('legalProductsConfig', 'dbConnected')); ?>
         <?php else : ?>
           <?php View::render('settings/tab-placeholder', [
               'tabLabel' => $settingsSelection['tabLabel'],

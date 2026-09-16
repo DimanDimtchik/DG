@@ -1,0 +1,34 @@
+{
+  "width": 1920,
+  "height": 1542,
+  "sections": {
+    "form": {
+      "x": 816,
+      "y": 288,
+      "w": 778,
+      "h": 340
+    },
+    "embed": {
+      "x": 796,
+      "y": 236,
+      "w": 818,
+      "h": 777
+    }
+  },
+  "fields": {
+    "public_url": {
+      "x": 835,
+      "y": 718,
+      "w": 740,
+      "h": 57,
+      "label": "Link zur Buchungsseite"
+    },
+    "qrcode": {
+      "x": 835,
+      "y": 871,
+      "w": 26,
+      "h": 26,
+      "label": "#dg-booking-qrcode"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "sections": {
+    "booking": {
+      "x": 620,
+      "y": 227,
+      "w": 680,
+      "h": 162
+    }
+  },
+  "fields": {
+    "service": {
+      "x": 645,
+      "y": 296,
+      "w": 630,
+      "h": 68,
+      "label": ".tk-book__service"
+    }
+  }
+}

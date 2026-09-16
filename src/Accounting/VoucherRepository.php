@@ -828,6 +828,7 @@ final class VoucherRepository
             self::replaceLines($id, $lineRows);
             self::replaceItems($id, $itemRows);
             self::syncLedger($id);
+            StockMovementService::syncForVoucher($id, $userId);
             self::finalizePayments($id, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
             return $id;
@@ -856,6 +857,7 @@ final class VoucherRepository
         self::replaceLines($newId, $lineRows);
         self::replaceItems($newId, $itemRows);
         self::syncLedger($newId);
+        StockMovementService::syncForVoucher($newId, $userId);
         self::finalizePayments($newId, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
         return $newId;
@@ -1049,6 +1051,7 @@ final class VoucherRepository
             self::assertEditableFiscalYear((string) ($existing['voucher_date'] ?? ''));
         }
 
+        StockMovementService::revertForVoucher($id);
         LedgerPostingService::deleteForVoucher($id);
         $stmt = Database::pdo()->prepare('DELETE FROM dg_vouchers WHERE id = :id');
         $stmt->execute(['id' => $id]);

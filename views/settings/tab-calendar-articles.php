@@ -20,6 +20,12 @@ foreach ($calendarAreas as $area) {
     $areaNames[(int) $area['id']] = (string) $area['name'];
 }
 $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions());
+$stockLocationOptions = StockStructureRepository::locationOptions();
+$stockStructureJson = json_encode([
+    'halls' => StockStructureRepository::allHalls(),
+    'shelves' => StockStructureRepository::allShelves(),
+    'places' => StockStructureRepository::placeOptions(),
+], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
 ?>
 <div class="dg-form">
   <?php if (!$dbConnected) : ?>
@@ -56,13 +62,15 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
           <th>Steuer</th>
           <th>Preis (brutto)</th>
           <th>Dauer</th>
+          <th>Bestand</th>
+          <th>Positionscode</th>
           <th>Bereich</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <?php if ($calendarArticles === []) : ?>
-          <tr><td colspan="9" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
+          <tr><td colspan="11" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
         <?php else : ?>
           <?php foreach ($calendarArticles as $article) : ?>
             <tr>
@@ -73,6 +81,8 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
               <td><?= View::escape((string) ($article['tax_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['price_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['duration_label'] ?? '')) ?></td>
+              <td><?php if (!empty($article['track_stock'])) : ?><?= View::escape((string) ($article['stock_label'] ?? '')) ?><?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?><?php else : ?>—<?php endif; ?></td>
+              <td><?= !empty($article['stock_position_code']) ? View::escape((string) $article['stock_position_code']) : '—' ?></td>
               <td><?= View::escape($areaNames[(int) ($article['area_id'] ?? 0)] ?? '—') ?></td>
               <td class="dg-table__actions">
                 <div class="dg-table__actions-group">
@@ -94,6 +104,17 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
                       'area_id' => (int) $article['area_id'],
                       'sort_order' => (int) $article['sort_order'],
                       'is_active' => (int) $article['is_active'],
+                      'track_stock' => (int) ($article['track_stock'] ?? 0),
+                      'min_stock' => (float) ($article['min_stock'] ?? 0),
+                      'stock_location_id' => (int) ($article['stock_location_id'] ?? 0),
+                      'stock_hall_id' => (int) ($article['stock_hall_id'] ?? 0),
+                      'stock_shelf_id' => (int) ($article['stock_shelf_id'] ?? 0),
+                      'stock_place_id' => (int) ($article['stock_place_id'] ?? 0),
+                      'stock_place_mode' => (string) ($article['stock_place_mode'] ?? 'flexible'),
+                      'stock_ort' => (string) ($article['stock_ort'] ?? ''),
+                      'stock_halle' => (string) ($article['stock_halle'] ?? ''),
+                      'stock_regal' => (string) ($article['stock_regal'] ?? ''),
+                      'stock_platz' => (string) ($article['stock_platz'] ?? ''),
                   ], JSON_THROW_ON_ERROR)) ?>"
                 >Bearbeiten</button>
                 <form method="post" action="<?= View::escape($catalogBaseUrl) ?>" class="dg-inline-form">
@@ -133,7 +154,7 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
         <input type="text" name="article_number" id="dg_article_number" value="<?= View::escape($suggestedNumber) ?>" required<?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field">
-        <span>GTIN/EAN</span>
+        <span>EAN / Strichcode (GTIN)</span>
         <input type="text" name="gtin" id="dg_article_gtin" inputmode="numeric"<?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field dg-field--wide">
@@ -202,6 +223,62 @@ $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions(
       <label class="dg-field">
         <span><input type="checkbox" name="is_active" id="dg_article_active" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Eintrag ist aktiv</span>
       </label>
+      <div class="dg-field dg-field--wide" id="dg_article_stock_fields" hidden>
+        <fieldset class="dg-fieldset">
+          <legend>Lager (nur Artikel)</legend>
+          <label class="dg-field">
+            <span><input type="checkbox" name="track_stock" id="dg_article_track_stock" value="1"<?= !$dbConnected ? ' disabled' : '' ?>> Lager führen</span>
+          </label>
+          <label class="dg-field" id="dg_article_initial_stock_wrap">
+            <span>Anfangsbestand (nur neu)</span>
+            <input type="text" name="initial_stock" id="dg_article_initial_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <label class="dg-field">
+            <span>Mindestbestand</span>
+            <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+          <p class="dg-field-hint dg-field--wide">Stammdaten unter <a href="<?= View::escape(SettingsRegistry::tabUrl('lager-struktur')) ?>">Einstellungen → Lagerstruktur</a>.</p>
+          <label class="dg-field">
+            <span>Lagerort</span>
+            <select name="stock_location_id" id="dg_article_stock_location"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+              <?php foreach ($stockLocationOptions as $opt) : ?>
+                <option value="<?= (int) $opt['id'] ?>"><?= View::escape($opt['label']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Halle</span>
+            <select name="stock_hall_id" id="dg_article_stock_hall"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Regal / Stellplätze</span>
+            <select name="stock_shelf_id" id="dg_article_stock_shelf"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Platz</span>
+            <select name="stock_place_id" id="dg_article_stock_place"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="">— optional —</option>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Platz-Modus</span>
+            <select name="stock_place_mode" id="dg_article_stock_place_mode"<?= !$dbConnected ? ' disabled' : '' ?>>
+              <option value="flexible">flexibel (Platz bei Einnahme)</option>
+              <option value="fixed">fest (Ein-/Ausgang nur hier)</option>
+            </select>
+          </label>
+          <p class="dg-field dg-field--wide dg-field-hint" id="dg_article_stock_position_preview" hidden>
+            Positionscode: <strong id="dg_article_stock_position_code">—</strong>
+          </p>
+          <p class="dg-field-hint">Positionscode = Ort-Halle-Regal-Platz. Feste Plätze erfordern einen konkreten Stellplatz. Bestandsänderungen aus Belegen unter <a href="/app?page=lager">Lager</a>.</p>
+          <script type="application/json" id="dg-stock-structure-data"><?= View::escape($stockStructureJson) ?></script>
+        </fieldset>
+      </div>
     </div>
 
     <div class="dg-form-actions">

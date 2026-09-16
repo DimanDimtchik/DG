@@ -1,0 +1,160 @@
+{
+  "title": "Kontakte — Felder: Mitarbeiterdaten",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 222.6,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 11.8
+    },
+    {
+      "key": "field-birth_date",
+      "duration_sec": 6.0
+    },
+    {
+      "key": "field-gender",
+      "duration_sec": 3.8
+    },
+    {
+      "key": "field-marital_status",
+      "duration_sec": 4.12
+    },
+    {
+      "key": "field-spouse_name",
+      "duration_sec": 4.04
+    },
+    {
+      "key": "field-social_security_status",
+      "duration_sec": 8.24
+    },
+    {
+      "key": "field-social_filing_office",
+      "duration_sec": 8.92
+    },
+    {
+      "key": "field-social_security_number",
+      "duration_sec": 7.2
+    },
+    {
+      "key": "field-health_insurance",
+      "duration_sec": 7.6
+    },
+    {
+      "key": "field-health_insurance_number",
+      "duration_sec": 4.48
+    },
+    {
+      "key": "field-health_status",
+      "duration_sec": 5.16
+    },
+    {
+      "key": "field-treatment_needs",
+      "duration_sec": 5.84
+    },
+    {
+      "key": "field-disability_degree",
+      "duration_sec": 6.44
+    },
+    {
+      "key": "field-disability_supplementary_codes",
+      "duration_sec": 6.44
+    },
+    {
+      "key": "field-disabilities",
+      "duration_sec": 7.84
+    },
+    {
+      "key": "field-employment_relationship",
+      "duration_sec": 6.28
+    },
+    {
+      "key": "field-employer_site",
+      "duration_sec": 5.12
+    },
+    {
+      "key": "field-work_location",
+      "duration_sec": 4.12
+    },
+    {
+      "key": "field-job_type",
+      "duration_sec": 4.08
+    },
+    {
+      "key": "field-entry_date",
+      "duration_sec": 3.24
+    },
+    {
+      "key": "field-exit_date",
+      "duration_sec": 6.56
+    },
+    {
+      "key": "field-contract_start",
+      "duration_sec": 4.0
+    },
+    {
+      "key": "field-contract_end",
+      "duration_sec": 3.76
+    },
+    {
+      "key": "field-working_hours",
+      "duration_sec": 4.88
+    },
+    {
+      "key": "field-daily_work_minutes",
+      "duration_sec": 7.44
+    },
+    {
+      "key": "field-employment_type",
+      "duration_sec": 5.4
+    },
+    {
+      "key": "field-overtime_allowed",
+      "duration_sec": 4.88
+    },
+    {
+      "key": "field-salary",
+      "duration_sec": 4.64
+    },
+    {
+      "key": "field-subsidy_amount",
+      "duration_sec": 4.8
+    },
+    {
+      "key": "field-subsidy_carrier",
+      "duration_sec": 4.32
+    },
+    {
+      "key": "field-qualifications",
+      "duration_sec": 5.2
+    },
+    {
+      "key": "field-performance_notes",
+      "duration_sec": 4.96
+    },
+    {
+      "key": "field-behavior_notes",
+      "duration_sec": 5.04
+    },
+    {
+      "key": "field-driver_license_classes",
+      "duration_sec": 4.16
+    },
+    {
+      "key": "field-driver_license_valid_until",
+      "duration_sec": 3.6
+    },
+    {
+      "key": "block-dokumente",
+      "duration_sec": 11.2
+    },
+    {
+      "key": "block-speicherdauer",
+      "duration_sec": 10.04
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 6.92
+    }
+  ]
+}

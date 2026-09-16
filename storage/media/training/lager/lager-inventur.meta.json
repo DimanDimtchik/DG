@@ -1,0 +1,32 @@
+{
+  "title": "Lager — Inventur",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 44.0,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.64
+    },
+    {
+      "key": "nav-lager",
+      "duration_sec": 2.68
+    },
+    {
+      "key": "tab-inventur",
+      "duration_sec": 8.92
+    },
+    {
+      "key": "start",
+      "duration_sec": 10.64
+    },
+    {
+      "key": "bewegungen",
+      "duration_sec": 6.4
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 7.72
+    }
+  ]
+}
