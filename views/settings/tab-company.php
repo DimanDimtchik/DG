@@ -404,7 +404,14 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field"><span>PLZ</span><input type="text" name="finanzaemter[<?= (int) $i ?>][postal_code]" value="<?= View::escape((string) ($fa['postal_code'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Ort</span><input type="text" name="finanzaemter[<?= (int) $i ?>][city]" value="<?= View::escape((string) ($fa['city'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Telefon</span><input type="text" name="finanzaemter[<?= (int) $i ?>][phone]" value="<?= View::escape((string) ($fa['phone'] ?? '')) ?>"></label>
-          <label class="dg-field"><span>E-Mail</span><input type="email" name="finanzaemter[<?= (int) $i ?>][email]" value="<?= View::escape((string) ($fa['email'] ?? '')) ?>"></label>
+          <?php
+            $faChannels = FinanzamtRegistry::normalize_contact_channels(
+                (string) ($fa['email'] ?? ''),
+                (string) ($fa['website'] ?? '')
+            );
+            ?>
+          <label class="dg-field"><span>E-Mail</span><input type="email" name="finanzaemter[<?= (int) $i ?>][email]" value="<?= View::escape($faChannels['email']) ?>" autocomplete="off"></label>
+          <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="finanzaemter[<?= (int) $i ?>][website]" value="<?= View::escape($faChannels['website']) ?>" placeholder="https://…"></label>
           <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea name="finanzaemter[<?= (int) $i ?>][opening_hours]" rows="4"><?= View::escape(FinanzamtOpeningHours::toPlainText((string) ($fa['opening_hours'] ?? ''))) ?></textarea></label>
           <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" name="finanzaemter[<?= (int) $i ?>][notes]" value="<?= View::escape((string) ($fa['notes'] ?? '')) ?>"></label>
           <label class="dg-field dg-field--check">
@@ -681,7 +688,8 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field"><span>PLZ</span><input type="text" data-name="finanzaemter[__INDEX__][postal_code]"></label>
     <label class="dg-field"><span>Ort</span><input type="text" data-name="finanzaemter[__INDEX__][city]"></label>
     <label class="dg-field"><span>Telefon</span><input type="text" data-name="finanzaemter[__INDEX__][phone]"></label>
-    <label class="dg-field"><span>E-Mail</span><input type="email" data-name="finanzaemter[__INDEX__][email]"></label>
+    <label class="dg-field"><span>E-Mail</span><input type="email" data-name="finanzaemter[__INDEX__][email]" autocomplete="off"></label>
+    <label class="dg-field dg-field--wide"><span>Website</span><input type="url" data-name="finanzaemter[__INDEX__][website]" placeholder="https://…"></label>
     <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea data-name="finanzaemter[__INDEX__][opening_hours]" rows="4"></textarea></label>
     <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" data-name="finanzaemter[__INDEX__][notes]"></label>
     <label class="dg-field dg-field--check"><input type="checkbox" data-name="finanzaemter[__INDEX__][is_primary]" value="1"><span>Haupt-Finanzamt</span></label>

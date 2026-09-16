@@ -116,7 +116,8 @@ final class CompanyExtendedSettings
                 'city' => (string) ($office['city'] ?? ''),
                 'phone' => (string) ($office['phone'] ?? ''),
                 'email' => (string) ($office['email'] ?? ''),
-                'opening_hours' => (string) ($office['opening_hours'] ?? ''),
+                'website' => (string) ($office['website'] ?? ''),
+                'opening_hours' => (string) ($office['opening_hours_text'] ?? $office['opening_hours'] ?? ''),
                 'is_primary' => '1',
                 'notes' => '',
             ]];
@@ -463,11 +464,19 @@ final class CompanyExtendedSettings
                 'postal_code' => self::str($row['postal_code'] ?? ''),
                 'city' => self::str($row['city'] ?? ''),
                 'phone' => self::str($row['phone'] ?? ''),
-                'email' => self::email($row['email'] ?? ''),
+                'email' => self::str($row['email'] ?? ''),
+                'website' => self::str($row['website'] ?? ''),
                 'opening_hours' => self::str($row['opening_hours'] ?? ''),
                 'is_primary' => !empty($row['is_primary']) ? '1' : '',
                 'notes' => self::str($row['notes'] ?? ''),
             ];
+            $channels = FinanzamtRegistry::normalize_contact_channels($item['email'], $item['website']);
+            $item['email'] = $channels['email'];
+            $item['website'] = $channels['website'];
+            if ($item['email'] !== '' && !filter_var($item['email'], FILTER_VALIDATE_EMAIL)) {
+                // Keine harte Ablehnung — URL-Reste landen oben in website.
+                $item['email'] = '';
+            }
             if (self::rowIsEmpty($item, ['is_primary'])) {
                 continue;
             }
@@ -602,6 +611,7 @@ final class CompanyExtendedSettings
             'city' => (string) ($office['city'] ?? ''),
             'phone' => (string) ($office['phone'] ?? ''),
             'email' => (string) ($office['email'] ?? ''),
+            'website' => (string) ($office['website'] ?? ''),
             'opening_hours' => (string) ($office['opening_hours_text'] ?? $office['opening_hours'] ?? ''),
             'is_primary' => '1',
             'notes' => '',
@@ -624,6 +634,7 @@ final class CompanyExtendedSettings
             'city' => '',
             'phone' => '',
             'email' => '',
+            'website' => '',
             'opening_hours' => '',
             'is_primary' => '',
             'notes' => '',

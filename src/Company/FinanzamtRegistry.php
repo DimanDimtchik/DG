@@ -141,6 +141,10 @@ final class FinanzamtRegistry {
      */
     private static function normalize_office($office) {
         $rawHours = (string) ($office['opening_hours'] ?? '');
+        $channels = self::normalize_contact_channels(
+            (string) ($office['email'] ?? ''),
+            (string) ($office['website'] ?? '')
+        );
 
         return array(
             'bufo_nr'       => (string) ($office['bufo_nr'] ?? ''),
@@ -150,8 +154,8 @@ final class FinanzamtRegistry {
             'city'          => (string) ($office['city'] ?? ''),
             'phone'         => (string) ($office['phone'] ?? ''),
             'fax'           => (string) ($office['fax'] ?? ''),
-            'email'         => (string) ($office['email'] ?? ''),
-            'website'       => (string) ($office['website'] ?? ''),
+            'email'         => $channels['email'],
+            'website'       => $channels['website'],
             'opening_hours' => $rawHours,
             'opening_hours_lines' => FinanzamtOpeningHours::toLines($rawHours),
             'opening_hours_text' => FinanzamtOpeningHours::toPlainText($rawHours),
@@ -160,6 +164,52 @@ final class FinanzamtRegistry {
             'bank_name'     => (string) ($office['bank_name'] ?? ''),
             'creditor_id'   => '',
         );
+    }
+
+    /**
+     * GemFA legt oft die Website im E-Mail-Feld ab — trennen.
+     *
+     * @return array{email: string, website: string}
+     */
+    public static function normalize_contact_channels(string $email, string $website = ''): array
+    {
+        $email = trim($email);
+        $website = trim($website);
+
+        if ($email !== '' && self::looks_like_url($email)) {
+            if ($website === '') {
+                $website = $email;
+            }
+            $email = '';
+        }
+        if ($website !== '' && !self::looks_like_url($website) && filter_var($website, FILTER_VALIDATE_EMAIL)) {
+            if ($email === '') {
+                $email = $website;
+            }
+            $website = '';
+        }
+        if ($website !== '' && !preg_match('#^https?://#i', $website) && self::looks_like_url($website)) {
+            $website = 'https://' . preg_replace('#^//#', '', $website);
+        }
+
+        return [
+            'email' => $email,
+            'website' => $website,
+        ];
+    }
+
+    private static function looks_like_url(string $value): bool
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return false;
+        }
+        if (str_contains($value, '@') && !preg_match('#^https?://#i', $value)) {
+            return false;
+        }
+
+        return (bool) preg_match('#^(https?://|www\.)#i', $value)
+            || (bool) preg_match('#^[a-z0-9.-]+\.[a-z]{2,}(/|$)#i', $value);
     }
 }
 

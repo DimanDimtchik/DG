@@ -248,6 +248,7 @@ final class TaxOffice {
                 'city'          => '',
                 'phone'         => '',
                 'email'         => '',
+                'website'       => '',
                 'opening_hours' => '',
             );
         }

@@ -194,6 +194,18 @@
       if (office.phone) {
         html += '<p>Telefon: ' + escapeHtml(office.phone) + '</p>';
       }
+      const channels = normalizeFaChannels(office.email || '', office.website || '');
+      if (channels.email) {
+        html += '<p>E-Mail: ' + escapeHtml(channels.email) + '</p>';
+      }
+      if (channels.website) {
+        html +=
+          '<p>Website: <a href="' +
+          escapeHtml(channels.website) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(channels.website) +
+          '</a></p>';
+      }
       html += formatOpeningHoursHtml(office);
     } else if (data.error) {
       html += '<p class="dg-field-hint">' + escapeHtml(data.error) + '</p>';
@@ -264,13 +276,41 @@
     setRowValue(row, 'postal_code', office.postal_code || '');
     setRowValue(row, 'city', office.city || '');
     setRowValue(row, 'phone', office.phone || '');
-    setRowValue(row, 'email', office.email || '');
+    const channels = normalizeFaChannels(office.email || '', office.website || '');
+    setRowValue(row, 'email', channels.email);
+    setRowValue(row, 'website', channels.website);
     setRowValue(row, 'opening_hours', openingHoursPlain(office));
 
     const taxSection = document.querySelector('[data-company-section="tax"]');
     if (taxSection) {
       updateCompanySummary(taxSection);
     }
+  }
+
+  function looksLikeUrl(value) {
+    const v = String(value || '').trim();
+    if (!v) {
+      return false;
+    }
+    if (v.indexOf('@') !== -1 && !/^https?:\/\//i.test(v)) {
+      return false;
+    }
+    return /^(https?:\/\/|www\.)/i.test(v) || /^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(v);
+  }
+
+  function normalizeFaChannels(email, website) {
+    let mail = String(email || '').trim();
+    let web = String(website || '').trim();
+    if (mail && looksLikeUrl(mail)) {
+      if (!web) {
+        web = mail;
+      }
+      mail = '';
+    }
+    if (web && !/^https?:\/\//i.test(web) && looksLikeUrl(web)) {
+      web = 'https://' + web.replace(/^\/\//, '');
+    }
+    return { email: mail, website: web };
   }
 
   function setRowValue(row, field, value) {
