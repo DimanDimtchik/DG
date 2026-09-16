@@ -83,16 +83,43 @@
     render();
   }
 
+  function csrfToken() {
+    if (cfg.csrf) {
+      return cfg.csrf;
+    }
+    const field = document.querySelector('.dg-company-form input[name="_csrf"]');
+    return field ? field.value : '';
+  }
+
   function finanzamtRequest(payload) {
     const body = new FormData();
-    body.append('_csrf', cfg.csrf || '');
+    body.append('_csrf', csrfToken());
     Object.keys(payload).forEach((key) => body.append(key, payload[key]));
 
     return fetch(cfg.finanzamtUrl || '/api/finanzamt-lookup', {
       method: 'POST',
       body,
       credentials: 'same-origin',
-    }).then((r) => r.json());
+      headers: { Accept: 'application/json' },
+    }).then(async (r) => {
+      let response;
+      try {
+        response = await r.json();
+      } catch (error) {
+        throw new Error('Antwort vom Server war ungültig (HTTP ' + r.status + ').');
+      }
+      if (!r.ok || !response.success) {
+        throw new Error((response && response.message) || 'Finanzamt-Suche fehlgeschlagen (HTTP ' + r.status + ').');
+      }
+      return response;
+    });
+  }
+
+  function showFinanzamtMessage(text) {
+    const panel = document.getElementById('dg-finanzamt-content');
+    if (panel) {
+      panel.innerHTML = '<p class="dg-field-hint">' + escapeHtml(text) + '</p>';
+    }
   }
 
   function escapeHtml(text) {
@@ -223,9 +250,10 @@
       }
       finanzamtRequest(payload)
         .then((response) => {
-          if (response.success) {
-            renderFinanzamtPanel(response.data);
-          }
+          renderFinanzamtPanel(response.data);
+        })
+        .catch((error) => {
+          showFinanzamtMessage(error && error.message ? error.message : 'Finanzamt-Suche fehlgeschlagen.');
         })
         .finally(() => {
           if (btn) {

@@ -17,7 +17,22 @@ final class TaxOffice {
      * @return bool
      */
     public static function is_steuer_id($input) {
-        return strlen(self::digits_only($input)) === 11;
+        $raw = trim((string) $input);
+        if ($raw === '') {
+            return false;
+        }
+
+        // Lokale ESt-Steuernummer (z. B. 127/219/40770) und ELSTER-Formate
+        // haben Trennzeichen bzw. 12/13 Ziffern — das ist keine Steuer-ID.
+        if (preg_match('#[/\s.-]#', $raw)) {
+            return false;
+        }
+
+        $digits = self::digits_only($raw);
+
+        // Steuer-ID (Identifikationsnummer): genau 11 Ziffern ohne FA-Struktur.
+        // 12/13-stellig = ELSTER-Steuernummer.
+        return strlen($digits) === 11;
     }
 
     /**

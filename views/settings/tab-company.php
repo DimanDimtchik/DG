@@ -309,14 +309,14 @@ $bankSummary = $filledBanks > 0
     </header>
     <div class="dg-dept-accordion__panel" data-dept-panel hidden>
     <div class="dg-form-grid">
-      <label class="dg-field dg-field--wide">
+      <div class="dg-field dg-field--wide">
         <span>ESt-Steuernummer (Finanzamt-Zuordnung)</span>
         <div class="dg-input-with-action">
           <input type="text" name="tax_numbers[est]" id="dg-tax-number-est" value="<?= View::escape((string) ($taxNumbers['est'] ?? $companyConfig['tax_number'])) ?>" data-tax-est>
           <button type="button" class="dg-button dg-button--secondary" id="dg-lookup-finanzamt">Finanzamt ermitteln</button>
         </div>
-        <small class="dg-field-hint">Format z. B. 127/219/40770 oder 13-stelliges ELSTER-Format.</small>
-      </label>
+        <small class="dg-field-hint">Format z. B. 127/219/40770 oder 13-stelliges ELSTER-Format — nicht die 11-stellige Steuer-ID.</small>
+      </div>
       <label class="dg-field">
         <span>USt-IdNr.</span>
         <input type="text" name="tax_numbers[ust]" value="<?= View::escape((string) ($taxNumbers['ust'] ?? $companyConfig['vat_id'])) ?>">
