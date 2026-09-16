@@ -161,6 +161,10 @@ final class ArticlePurchaseSourceRepository
     }
 
     /**
+     * Firmen-/Lieferanten-Kontakte für Einkaufsquellen.
+     * Hinweis: CRM kennt keine eigene Rolle „lieferant“ (wird auf dg_kunde normalisiert).
+     * Deshalb: Anrede Firma bzw. Kontakte mit Firmennamen.
+     *
      * @return list<array{id: int, label: string}>
      */
     public static function supplierContactOptions(): array
@@ -171,10 +175,17 @@ final class ArticlePurchaseSourceRepository
 
         try {
             $stmt = Database::pdo()->query(
-                "SELECT id, company_name, first_name, last_name, supplier_number
+                "SELECT id, company_name, display_name, first_name, last_name, supplier_number, salutation, contact_role
                  FROM dg_contacts
-                 WHERE contact_role = 'lieferant'
-                 ORDER BY company_name ASC, last_name ASC, first_name ASC, id ASC
+                 WHERE salutation = 'Firma'
+                    OR TRIM(COALESCE(company_name, '')) <> ''
+                 ORDER BY
+                   CASE WHEN salutation = 'Firma' THEN 0 ELSE 1 END,
+                   company_name ASC,
+                   display_name ASC,
+                   last_name ASC,
+                   first_name ASC,
+                   id ASC
                  LIMIT 500"
             );
         } catch (Throwable) {
@@ -188,14 +199,15 @@ final class ArticlePurchaseSourceRepository
                 continue;
             }
             $company = trim((string) ($row['company_name'] ?? ''));
+            $display = trim((string) ($row['display_name'] ?? ''));
             $person = trim(trim((string) ($row['first_name'] ?? '')) . ' ' . trim((string) ($row['last_name'] ?? '')));
-            $label = $company !== '' ? $company : $person;
+            $label = $company !== '' ? $company : ($display !== '' ? $display : $person);
             if ($label === '') {
-                $label = 'Lieferant #' . $id;
+                $label = 'Kontakt #' . $id;
             }
             $snr = trim((string) ($row['supplier_number'] ?? ''));
             if ($snr !== '') {
-                $label .= ' (' . $snr . ')';
+                $label .= ' (Lief.-Nr. ' . $snr . ')';
             }
             $options[] = ['id' => $id, 'label' => $label];
         }

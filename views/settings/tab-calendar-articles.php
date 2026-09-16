@@ -310,7 +310,7 @@ $stockStructureJson = json_encode([
       <div class="dg-field dg-field--wide" id="dg_article_purchase_fields" hidden>
         <fieldset class="dg-fieldset">
           <legend>Einkaufsquellen (Lieferant / Shop)</legend>
-          <p class="dg-field-hint">Mehrere Quellen möglich. Lieferant und EK reichen — die <strong>Shop-URL ist optional</strong> (Chef kann recherchieren und manuell bestellen). Ist eine URL hinterlegt, öffnet „Nachbestellen“ den Shop; sonst erscheint Lieferant/Hinweis zum manuellen Nachbestellen.</p>
+          <p class="dg-field-hint">Mehrere Quellen möglich. Unter <strong>Firma / Lieferant</strong> erscheinen Kontakte mit Anrede „Firma“ bzw. Firmennamen (CRM-Rolle ist meist „Kunde“). Shop-URL ist optional — Chef kann recherchieren und manuell bestellen.</p>
           <div id="dg-purchase-sources-list" class="dg-purchase-sources"></div>
           <button type="button" class="dg-button dg-button--small" id="dg-purchase-source-add"<?= !$dbConnected ? ' disabled' : '' ?>>+ Einkaufsquelle</button>
           <script type="application/json" id="dg-supplier-options"><?= View::escape(json_encode($supplierContactOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)) ?></script>

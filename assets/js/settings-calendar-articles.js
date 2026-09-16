@@ -250,9 +250,9 @@
       : '';
 
     wrap.innerHTML =
-      '<label class="dg-field dg-field--wide"><span>Lieferant (Kontakt)</span>' +
+      '<label class="dg-field dg-field--wide"><span>Firma / Lieferant (Kontakt)</span>' +
       '<select name="purchase_sources[' + index + '][supplier_contact_id]">' + supplierOptionsHtml + '</select></label>' +
-      '<label class="dg-field"><span>Lieferant (Freitext)</span>' +
+      '<label class="dg-field"><span>Lieferant (Freitext, falls nicht in Kontakten)</span>' +
       '<input type="text" name="purchase_sources[' + index + '][supplier_name]" value="' + escapeHtml(source.supplier_name || '') + '" maxlength="191"></label>' +
       '<label class="dg-field"><span>EK-Preis (netto)</span>' +
       '<input type="text" name="purchase_sources[' + index + '][purchase_price]" inputmode="decimal" value="' + escapeHtml(price) + '" placeholder="0,00"></label>' +
