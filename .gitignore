@@ -26,6 +26,7 @@ config/kas.local.php
 config/license.php
 config/app.local.php
 config/elster.local.php
+config/ldap.local.php
 license-server/config.php
 backup-*/
 tmp-*

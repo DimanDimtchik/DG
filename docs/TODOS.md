@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-16** — lokal `master` = `origin/master` (`93eac36`); bei Session zuerst prüfen.
+Stand: **2026-09-16** — Cloud-Feature-Branches in `master` gemergt; bei Session zuerst prüfen.
 
 ---
 
@@ -10,25 +10,17 @@ Stand: **2026-09-16** — lokal `master` = `origin/master` (`93eac36`); bei Sess
 
 | Branch | Status |
 |--------|--------|
-| `master` | **Produktionslinie** — Stand `93eac36` (ELSTER-Doku, Geisterumsätze 064, Menü-Icons Lucide, Deploy-rsync) |
+| `master` | **Produktionslinie** — Akademie, Lager, Kichel, Terminkalender, Rechtstexte, LDAP-Prep, Kontakt-Notiz |
 
-**Lokal (dieser PC, 2026-09-16):** `git fetch` + Fast-forward `eb5b4b9` → `93eac36` (28 Commits). Veralteter lokaler Branch `cursor/install-data-import-6a0c` gelöscht (Remote schon gone).
+**Merge 2026-09-16 (lokal → push):**
 
-**Offene Remote-Feature-Branches** (Cloud-Agents, noch nicht in `master`):
+1. `cursor/arbeitsvertrag-artifacts-ignore-2ec8`
+2. `cursor/akademie-lager-konten-kichel-1dc6` (enthielt Lager/Akademie/Kichel/Termin/Recht)
+3. `cursor/kontakt-bemerkung-ip-1dc6` (LDAP + Kontakt-Notiz + IQ-SSH)
 
-| Branch | ahead | hinter master | Thema (kurz) |
-|--------|------:|--------------:|--------------|
-| `cursor/akademie-lager-konten-kichel-1dc6` | 86 | 0 | Akademie + Lager + Konten + Kichel |
-| `cursor/terminkalender-akademie-1dc6` | 83 | 0 | Terminkalender / Akademie |
-| `cursor/akademie-1dc6` | 42 | 0 | Akademie |
-| `cursor/kichel-assistant-1dc6` | 32 | 0 | Kichel-Assistent |
-| `cursor/lager-wirtschaft-1dc6` | 23 | 0 | Lagerwirtschaft |
-| `cursor/kontakt-bemerkung-ip-1dc6` | 3 | 0 | Kontakt-Bemerkung / IP |
-| `cursor/recht-produkt-tabs-1dc6` | 2 | 0 | Recht / Produkt-Tabs |
-| `cursor/ldap-prep-1dc6` | 1 | 0 | LDAP-Vorbereitung |
-| `cursor/arbeitsvertrag-artifacts-ignore-2ec8` | 1 | 10 | Artifacts ignore (teilweise veraltet) |
+Zwischenschritte (`lager-wirtschaft`, `akademie`, `kichel-assistant`, `terminkalender-akademie`, `recht-produkt-tabs`, `ldap-prep`) nicht einzeln gemergt — Inhalt steckt in 2/3.
 
-**Hygiene:** Nach Merge Feature-Branch lokal + remote löschen. Neue DG-Chats/Agents immer von aktuellem `master` starten (`git pull`).
+**Hygiene:** gemergte Remote-Branches löschen. Neue Chats/Agents von aktuellem `master`.
 
 Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash bin/sync-crm-from-master.sh` (auf Server).
 
@@ -39,13 +31,17 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
 - [x] Feature-Branches gemergt: Bank-Geisterumsätze, Arbeitsvertrag-Doku
+- [x] Cloud-Sammelbranches in `master` (2026-09-16)
 - [x] **Multi-Firma / Umfirmierung** — Konzept dokumentiert (`MULTI-FIRMA-KONZEPT.md`)
-- [ ] Migration **064** (Bank-Fingerabdruck) auf Live prüfen nach Login
+- [ ] **Master erneut deployen + sync** (nach Merge 16.09.)
+- [ ] Migrationen **064–066** (+ LDAP **065**) auf Live prüfen
 - [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
+- [ ] Smoke: Akademie, Lager, Kichel, Terminkalender, Rechtstexte, Kontakt-Notiz, LDAP-UI
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
 - [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
-- [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat (Mein ELSTER) — siehe `ELSTER-ERIC-TODO.md`
+- [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat
+- [ ] **LDAP Phase 1:** `ldap-readiness.php` auf Kasserver · Plugin-Code aus No-Repo-Chat
 
 ---
 
@@ -62,10 +58,17 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 | Zeiterfassung Ph.1 (Stempeluhr) | 061 |
 | Überstunden / ArbZG-Erinnerung | 062–063 |
 | **Bank Geisterumsätze** | **064** · `BankGhostDetectionService` |
+| **LDAP-Vorbereitung** | **065** · `LdapAuthenticator` / Einstellungen |
+| **Rechtstexte Mehrprodukt** | **066** · `LegalProductSettings` |
+| Lagerwirtschaft | `views/modules/lager.php`, Einstellungen Lager |
+| Akademie | `views/modules/akademie.php` |
+| Kichel-Assistent | Widget + Knowledge |
+| Terminkalender Website | CMS / Buchung |
+| Kontakt-Notiz (`contact_note`) | Kontakte |
 | Wartungsmodus einheitlicher Code | `WebsiteMaintenanceRenderer` |
 | Website-Menü Icons (Lucide) | `src/Website/` |
 
-Doku: `BUCHHALTUNG-BELEGKETTE.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `ZEITERFASSUNG-PLAN.md`
+Doku: `BUCHHALTUNG-BELEGKETTE.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `LDAP-INTEGRATION.md`, `LAGER-WIRTSCHAFT.md`, `ZEITERFASSUNG-PLAN.md`
 
 ---
 
@@ -85,6 +88,7 @@ Doku: `BUCHHALTUNG-BELEGKETTE.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `ZEITER
 
 - [ ] Belegkette, Workflow, Klauseln, Skonto, Teilzahlungen, Zeiterfassung
 - [ ] **Bankabgleich:** Geisterumsätze erkennen, manuell ausblenden (Migration 064)
+- [ ] Akademie / Lager / Kichel / Terminkalender / Rechtstexte
 - [ ] Wartungsmodus: Layout + Kontakt aus CRM
 
 Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
@@ -106,6 +110,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 |-------|------|
 | Stripe Live | `SHOP-TODO.md` |
 | ELSTER/ERiC live | `ELSTER-ERIC-TODO.md` |
+| LDAP / dg-user live | `LDAP-INTEGRATION.md` |
 | PHP 8.5 KAS-Umstellung | `PHP85-TEST-HANDOFF.md` |
 | Nextcloud cloud.ganz-om.de | `CLOUD-NEXTCLOUD-RESTORE.md` |
 | Zeiterfassung Ph.2+ | `ZEITERFASSUNG-PLAN.md` |
@@ -115,8 +120,6 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 ## Chats aufräumen
 
 Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren — du: Rechtsklick → Archive.
-
-**Git in anderen Chats:** Andere offene DG-Chats haben ggf. noch alten `HEAD` — dort einmal `git fetch` + `git checkout master` + `git pull`. Cloud-Agents auf Feature-Branches oben nicht „zurückziehen“, bis gemergt oder verworfen.
 
 ---
 
@@ -130,3 +133,5 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md` | Vertragsvorlagen (Rechtliches) |
 | `MULTI-FIRMA-KONZEPT.md` | Multi-Firma, Umfirmierung, Pakete/Rabatt |
 | `HANDOFF-WEBSITE-MENU-ICONS.md` | Menü-Icons Phase 2 |
+| `LDAP-INTEGRATION.md` | LDAP-Vorbereitung |
+| `LAGER-WIRTSCHAFT.md` | Lager |

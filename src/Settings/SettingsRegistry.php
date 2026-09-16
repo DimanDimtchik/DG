@@ -56,6 +56,11 @@ final class SettingsRegistry
                         'lead' => 'Abteilungen und Zuordnung von Mitarbeitern.',
                         'template' => 'departments',
                     ],
+                    'ldap' => [
+                        'label' => 'Anmeldung / LDAP',
+                        'lead' => 'Externes Verzeichnis (LDAP) und WordPress dg-user — Vorbereitung bis Server-Umzug.',
+                        'template' => 'ldap',
+                    ],
                     'nummernkreise' => [
                         'label' => 'Nummernkreise',
                         'lead' => 'Belege (Angebot, Rechnung, Schlussrechnung) und Stammdaten (Artikel, Leistung, Kunde, Lieferant).',
@@ -277,7 +282,7 @@ final class SettingsRegistry
             if (isset($_POST['db_action'])) {
                 return 'datenbank';
             }
-            if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'])) {
+if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'])) {
                 return 'lager-struktur';
             }
             if (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
@@ -288,6 +293,9 @@ final class SettingsRegistry
             }
             if (isset($_POST['legal_products_save'])) {
                 return 'agb';
+            }
+            if (isset($_POST['ldap_save'])) {
+                return 'ldap';
             }
         }
 

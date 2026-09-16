@@ -250,6 +250,145 @@ final class UserRepository
     }
 
     /**
+     * Liefert einen Benutzer anhand externer Verzeichnis-ID (LDAP).
+     */
+    public static function findByAuthExternalId(string $source, string $externalId): ?User
+    {
+        $source = trim($source);
+        $externalId = trim($externalId);
+        if ($source === '' || $externalId === '' || !self::useDatabase()) {
+            return null;
+        }
+
+        if (!self::hasAuthSourceColumns()) {
+            return null;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT id, username, display_name, email, role, employee_active
+             FROM dg_users
+             WHERE auth_source = :auth_source AND auth_external_id = :auth_external_id
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'auth_source' => $source,
+            'auth_external_id' => $externalId,
+        ]);
+        $record = $stmt->fetch();
+
+        return $record ? self::mapDb($record) : null;
+    }
+
+    /**
+     * Legt LDAP-Benutzer an oder aktualisiert Profil/Rolle (JIT optional).
+     *
+     * @param array{
+     *   username: string,
+     *   email: string,
+     *   display_name: string,
+     *   external_id: string,
+     *   role: string,
+     *   employee_active: bool
+     * } $profile
+     */
+    public static function syncFromLdap(array $profile): ?User
+    {
+        if (!self::useDatabase() || !self::hasAuthSourceColumns()) {
+            return null;
+        }
+
+        $username = trim($profile['username'] ?? '');
+        $email = trim($profile['email'] ?? '');
+        $displayName = trim($profile['display_name'] ?? '');
+        $externalId = trim($profile['external_id'] ?? '');
+        $role = CrmRole::normalize((string) ($profile['role'] ?? ''));
+        if (!CrmRole::isValid($role)) {
+            $role = CrmRole::normalize((string) LdapSettings::mergedConfig()['default_role']);
+        }
+        $employeeActive = !empty($profile['employee_active']);
+
+        if ($username === '' && $email === '') {
+            return null;
+        }
+        if ($displayName === '') {
+            $displayName = $username !== '' ? $username : $email;
+        }
+
+        $existing = null;
+        if ($externalId !== '') {
+            $existing = self::findByAuthExternalId('ldap', $externalId);
+        }
+        if ($existing === null && $username !== '') {
+            $existing = self::findByUsername($username);
+        }
+        if ($existing === null && $email !== '') {
+            $existing = self::findByEmail($email);
+        }
+
+        $pdo = Database::pdo();
+
+        if ($existing !== null) {
+            $stmt = $pdo->prepare(
+                'UPDATE dg_users
+                 SET username = :username,
+                     email = :email,
+                     display_name = :display_name,
+                     role = :role,
+                     employee_active = :employee_active,
+                     auth_source = :auth_source,
+                     auth_external_id = :auth_external_id
+                 WHERE id = :id'
+            );
+            $stmt->execute([
+                'username' => $username !== '' ? $username : $existing->username,
+                'email' => $email !== '' ? $email : $existing->email,
+                'display_name' => $displayName,
+                'role' => $role,
+                'employee_active' => $employeeActive ? 1 : 0,
+                'auth_source' => 'ldap',
+                'auth_external_id' => $externalId !== '' ? $externalId : null,
+                'id' => $existing->id,
+            ]);
+
+            return self::findById($existing->id);
+        }
+
+        if (empty(LdapSettings::mergedConfig()['jit_provision'])) {
+            return null;
+        }
+
+        if ($username === '') {
+            $username = strstr($email, '@', true) ?: ('ldap-' . substr(hash('sha256', $externalId), 0, 12));
+        }
+        if (self::usernameExists($username)) {
+            return self::findByUsername($username);
+        }
+
+        $hash = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_users (
+                username, password_hash, email, display_name, role, employee_active,
+                auth_source, auth_external_id
+             ) VALUES (
+                :username, :password_hash, :email, :display_name, :role, :employee_active,
+                :auth_source, :auth_external_id
+             )'
+        );
+        $stmt->execute([
+            'username' => $username,
+            'password_hash' => $hash,
+            'email' => $email !== '' ? $email : ($username . '@ldap.local'),
+            'display_name' => $displayName,
+            'role' => $role,
+            'employee_active' => $employeeActive ? 1 : 0,
+            'auth_source' => 'ldap',
+            'auth_external_id' => $externalId !== '' ? $externalId : null,
+        ]);
+
+        return self::findById((int) $pdo->lastInsertId());
+    }
+
+    /**
      * Methode register.
      * @param string $username
      * @param string $email
@@ -352,6 +491,32 @@ final class UserRepository
         } catch (Throwable) {
             return false;
         }
+    }
+
+    private static ?bool $authSourceColumns = null;
+
+    private static function hasAuthSourceColumns(): bool
+    {
+        if (self::$authSourceColumns !== null) {
+            return self::$authSourceColumns;
+        }
+
+        if (!self::useDatabase()) {
+            self::$authSourceColumns = false;
+
+            return false;
+        }
+
+        try {
+            $stmt = Database::pdo()->query(
+                "SHOW COLUMNS FROM dg_users LIKE 'auth_source'"
+            );
+            self::$authSourceColumns = $stmt !== false && $stmt->fetch() !== false;
+        } catch (Throwable) {
+            self::$authSourceColumns = false;
+        }
+
+        return self::$authSourceColumns;
     }
 
   /** @var array{users: array<int, array<string, mixed>>, departments: list<array<string, mixed>>}|null */

@@ -77,6 +77,8 @@
           <?php View::render('settings/tab-steuerkanzlei', compact('taxAdvisorConfig', 'taxAdvisorCompanyOptions', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'elster') : ?>
           <?php View::render('settings/tab-elster', compact('elsterConfig', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'ldap') : ?>
+          <?php View::render('settings/tab-ldap', compact('ldapConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'chart-of-accounts') : ?>
           <?php View::render('settings/tab-chart-of-accounts', compact('chartOfAccountsConfig', 'dbConnected', 'datevExportSettings')); ?>
         <?php elseif ($settingsSelection['template'] === 'payment-terms') : ?>

@@ -20,6 +20,8 @@ spl_autoload_register(static function (string $class): void {
         'CompanyAddressTypes' => '/src/Company/CompanyAddressTypes.php',
         'TaxAdvisorSettings' => '/src/Settings/TaxAdvisorSettings.php',
         'ElsterSettings' => '/src/Settings/ElsterSettings.php',
+        'LdapSettings' => '/src/Settings/LdapSettings.php',
+        'LdapAuthenticator' => '/src/Auth/LdapAuthenticator.php',
         'UvCarriers' => '/src/Company/UvCarriers.php',
         'FinanzamtRegistry' => '/src/Company/FinanzamtRegistry.php',
         'TaxOffice' => '/src/Company/TaxOffice.php',

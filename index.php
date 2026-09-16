@@ -726,7 +726,7 @@ switch ($path) {
             exit;
         }
 
-        // POST: Einstellungen Rechtliches / Mehrprodukt-Tabs
+// POST: Einstellungen Rechtliches / Mehrprodukt-Tabs
         if (
             $page === 'einstellungen'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -783,6 +783,28 @@ switch ($path) {
                         false
                     );
                     Flash::set('success', 'Rechtstext gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen LDAP (Vorbereitung)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['ldap_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('ldap');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    LdapSettings::saveFromPost($_POST);
+                    Flash::set('success', 'LDAP-Vorbereitung gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -2729,7 +2751,8 @@ switch ($path) {
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
-        $legalProductsConfig = LegalProductSettings::config();
+$legalProductsConfig = LegalProductSettings::config();
+        $ldapConfig = LdapSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
@@ -4651,7 +4674,8 @@ switch ($path) {
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
             'elsterConfig',
-            'legalProductsConfig',
+'legalProductsConfig',
+            'ldapConfig',
             'accountingPaymentSettings',
             'timeTrackingSettings',
             'chartOfAccountsConfig',
