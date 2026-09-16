@@ -40,9 +40,19 @@
   let supplierOptions = [];
   if (supplierOptionsEl) {
     try {
-      supplierOptions = JSON.parse(supplierOptionsEl.textContent || '[]');
+      const raw = (supplierOptionsEl.textContent || '').trim();
+      const parsed = JSON.parse(raw);
+      supplierOptions = Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      supplierOptions = [];
+      // Fallback: ältere Seiten hatten View::escape() im Script-Tag (&quot; …)
+      try {
+        const decoded = document.createElement('textarea');
+        decoded.innerHTML = supplierOptionsEl.textContent || '[]';
+        const parsed = JSON.parse(decoded.value || '[]');
+        supplierOptions = Array.isArray(parsed) ? parsed : [];
+      } catch (error2) {
+        supplierOptions = [];
+      }
     }
   }
   let stockStructure = { halls: [], shelves: [], places: [] };

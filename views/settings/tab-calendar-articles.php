@@ -22,11 +22,13 @@ foreach ($calendarAreas as $area) {
 $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions());
 $supplierContactOptions = $supplierContactOptions ?? [];
 $stockLocationOptions = StockStructureRepository::locationOptions();
+$jsonEmbedFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR;
 $stockStructureJson = json_encode([
     'halls' => StockStructureRepository::allHalls(),
     'shelves' => StockStructureRepository::allShelves(),
     'places' => StockStructureRepository::placeOptions(),
-], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+], $jsonEmbedFlags);
+$supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
 ?>
 <div class="dg-form">
   <?php if (!$dbConnected) : ?>
@@ -303,7 +305,7 @@ $stockStructureJson = json_encode([
             Positionscode: <strong id="dg_article_stock_position_code">—</strong>
           </p>
           <p class="dg-field-hint">Positionscode = Ort-Halle-Regal-Platz. Feste Plätze erfordern einen konkreten Stellplatz. Bestandsänderungen aus Belegen unter <a href="/app?page=lager">Lager</a>.</p>
-          <script type="application/json" id="dg-stock-structure-data"><?= View::escape($stockStructureJson) ?></script>
+          <script type="application/json" id="dg-stock-structure-data"><?= $stockStructureJson ?></script>
         </fieldset>
       </div>
 
@@ -313,7 +315,7 @@ $stockStructureJson = json_encode([
           <p class="dg-field-hint">Mehrere Quellen möglich. Unter <strong>Firma / Lieferant</strong> erscheinen Kontakte mit Anrede „Firma“ bzw. Firmennamen (CRM-Rolle ist meist „Kunde“). Shop-URL ist optional — Chef kann recherchieren und manuell bestellen.</p>
           <div id="dg-purchase-sources-list" class="dg-purchase-sources"></div>
           <button type="button" class="dg-button dg-button--small" id="dg-purchase-source-add"<?= !$dbConnected ? ' disabled' : '' ?>>+ Einkaufsquelle</button>
-          <script type="application/json" id="dg-supplier-options"><?= View::escape(json_encode($supplierContactOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)) ?></script>
+          <script type="application/json" id="dg-supplier-options"><?= $supplierOptionsJson ?></script>
         </fieldset>
       </div>
     </div>
