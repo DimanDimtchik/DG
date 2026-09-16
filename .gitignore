@@ -29,6 +29,7 @@ config/elster.local.php
 license-server/config.php
 backup-*/
 tmp-*
+artifacts/
 docs/Kontur-Cosmetics-Zugangsdaten.html
 docs/Kontur-Cosmetics-Zugangsdaten.pdf
 
