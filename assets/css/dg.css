@@ -3030,6 +3030,42 @@ body.dg-login-page {
   background: var(--dg-surface-muted);
 }
 
+.dg-opening-hours {
+  margin-top: 10px;
+}
+
+.dg-opening-hours__title {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.dg-opening-hours__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.dg-opening-hours__list li {
+  line-height: 1.35;
+}
+
+.dg-opening-hours__list li.dg-opening-hours__day {
+  display: grid;
+  grid-template-columns: 4.75rem 1fr;
+  column-gap: 0.75rem;
+}
+
+.dg-opening-hours__list .dg-opening-hours__label {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dg-opening-hours__list .dg-opening-hours__note {
+  color: var(--dg-muted);
+}
+
 .dg-founder-lookup {
   margin: 10px 0;
   display: flex;

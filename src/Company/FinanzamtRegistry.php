@@ -140,6 +140,8 @@ final class FinanzamtRegistry {
      * @return array<string, mixed>
      */
     private static function normalize_office($office) {
+        $rawHours = (string) ($office['opening_hours'] ?? '');
+
         return array(
             'bufo_nr'       => (string) ($office['bufo_nr'] ?? ''),
             'name'          => (string) ($office['name'] ?? ''),
@@ -150,7 +152,9 @@ final class FinanzamtRegistry {
             'fax'           => (string) ($office['fax'] ?? ''),
             'email'         => (string) ($office['email'] ?? ''),
             'website'       => (string) ($office['website'] ?? ''),
-            'opening_hours' => (string) ($office['opening_hours'] ?? ''),
+            'opening_hours' => $rawHours,
+            'opening_hours_lines' => FinanzamtOpeningHours::toLines($rawHours),
+            'opening_hours_text' => FinanzamtOpeningHours::toPlainText($rawHours),
             'bank_iban'     => (string) ($office['bank_iban'] ?? ''),
             'bank_bic'      => (string) ($office['bank_bic'] ?? ''),
             'bank_name'     => (string) ($office['bank_name'] ?? ''),

@@ -602,7 +602,7 @@ final class CompanyExtendedSettings
             'city' => (string) ($office['city'] ?? ''),
             'phone' => (string) ($office['phone'] ?? ''),
             'email' => (string) ($office['email'] ?? ''),
-            'opening_hours' => (string) ($office['opening_hours'] ?? ''),
+            'opening_hours' => (string) ($office['opening_hours_text'] ?? $office['opening_hours'] ?? ''),
             'is_primary' => '1',
             'notes' => '',
         ];

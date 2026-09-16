@@ -369,7 +369,22 @@ $bankSummary = $filledBanks > 0
           <p><strong><?= View::escape((string) $office['name']) ?></strong> (BuFa <?= View::escape((string) ($finanzamtResolved['bufo_nr'] ?? '')) ?>)</p>
           <p><?= View::escape(trim(($office['street'] ?? '') . ', ' . ($office['postal_code'] ?? '') . ' ' . ($office['city'] ?? ''))) ?></p>
           <?php if (!empty($office['phone'])) : ?><p>Telefon: <?= View::escape((string) $office['phone']) ?></p><?php endif; ?>
-          <?php if (!empty($office['opening_hours'])) : ?><p>Öffnungszeiten: <?= View::escape((string) $office['opening_hours']) ?></p><?php endif; ?>
+          <?php
+            $hoursRaw = (string) ($office['opening_hours'] ?? '');
+            $hoursLines = !empty($office['opening_hours_lines']) && is_array($office['opening_hours_lines'])
+                ? $office['opening_hours_lines']
+                : FinanzamtOpeningHours::toLines($hoursRaw);
+            if ($hoursLines !== []) :
+                ?>
+            <div class="dg-opening-hours">
+              <p class="dg-opening-hours__title">Öffnungszeiten</p>
+              <ul class="dg-opening-hours__list">
+                <?php foreach ($hoursLines as $hoursLine) : ?>
+                  <?= FinanzamtOpeningHours::lineToHtmlItem((string) $hoursLine) ?>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          <?php endif; ?>
         <?php elseif (!empty($finanzamtResolved['error'])) : ?>
           <p class="dg-field-hint"><?= View::escape((string) $finanzamtResolved['error']) ?></p>
         <?php else : ?>
@@ -390,7 +405,7 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field"><span>Ort</span><input type="text" name="finanzaemter[<?= (int) $i ?>][city]" value="<?= View::escape((string) ($fa['city'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Telefon</span><input type="text" name="finanzaemter[<?= (int) $i ?>][phone]" value="<?= View::escape((string) ($fa['phone'] ?? '')) ?>"></label>
           <label class="dg-field"><span>E-Mail</span><input type="email" name="finanzaemter[<?= (int) $i ?>][email]" value="<?= View::escape((string) ($fa['email'] ?? '')) ?>"></label>
-          <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><input type="text" name="finanzaemter[<?= (int) $i ?>][opening_hours]" value="<?= View::escape((string) ($fa['opening_hours'] ?? '')) ?>"></label>
+          <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea name="finanzaemter[<?= (int) $i ?>][opening_hours]" rows="4"><?= View::escape(FinanzamtOpeningHours::toPlainText((string) ($fa['opening_hours'] ?? ''))) ?></textarea></label>
           <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" name="finanzaemter[<?= (int) $i ?>][notes]" value="<?= View::escape((string) ($fa['notes'] ?? '')) ?>"></label>
           <label class="dg-field dg-field--check">
             <input type="checkbox" name="finanzaemter[<?= (int) $i ?>][is_primary]" value="1"<?= !empty($fa['is_primary']) ? ' checked' : '' ?>>
@@ -667,7 +682,7 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field"><span>Ort</span><input type="text" data-name="finanzaemter[__INDEX__][city]"></label>
     <label class="dg-field"><span>Telefon</span><input type="text" data-name="finanzaemter[__INDEX__][phone]"></label>
     <label class="dg-field"><span>E-Mail</span><input type="email" data-name="finanzaemter[__INDEX__][email]"></label>
-    <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><input type="text" data-name="finanzaemter[__INDEX__][opening_hours]"></label>
+    <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea data-name="finanzaemter[__INDEX__][opening_hours]" rows="4"></textarea></label>
     <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" data-name="finanzaemter[__INDEX__][notes]"></label>
     <label class="dg-field dg-field--check"><input type="checkbox" data-name="finanzaemter[__INDEX__][is_primary]" value="1"><span>Haupt-Finanzamt</span></label>
     <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>

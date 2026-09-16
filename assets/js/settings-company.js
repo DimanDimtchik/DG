@@ -128,6 +128,50 @@
     return div.innerHTML;
   }
 
+  function openingHoursLines(office) {
+    if (!office) {
+      return [];
+    }
+    if (Array.isArray(office.opening_hours_lines) && office.opening_hours_lines.length) {
+      return office.opening_hours_lines.map(String);
+    }
+    const text = String(office.opening_hours_text || office.opening_hours || '').trim();
+    if (!text) {
+      return [];
+    }
+    return text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  }
+
+  function formatOpeningHoursHtml(office) {
+    const lines = openingHoursLines(office);
+    if (!lines.length) {
+      return '';
+    }
+    let html = '<div class="dg-opening-hours"><p class="dg-opening-hours__title">Öffnungszeiten</p><ul class="dg-opening-hours__list">';
+    lines.forEach((line) => {
+      const match = String(line).match(/^((?:Mo|Di|Mi|Do|Fr|Sa|So)(?:\s*[–-]\s*(?:Mo|Di|Mi|Do|Fr|Sa|So))?)\s*:\s*(.+)$/u);
+      if (match) {
+        html +=
+          '<li class="dg-opening-hours__day"><span class="dg-opening-hours__label">' +
+          escapeHtml(match[1]) +
+          '</span><span class="dg-opening-hours__value">' +
+          escapeHtml(match[2]) +
+          '</span></li>';
+      } else {
+        html += '<li class="dg-opening-hours__note">' + escapeHtml(line) + '</li>';
+      }
+    });
+    html += '</ul></div>';
+    return html;
+  }
+
+  function openingHoursPlain(office) {
+    if (office && office.opening_hours_text) {
+      return String(office.opening_hours_text);
+    }
+    return openingHoursLines(office).join('\n');
+  }
+
   function renderFinanzamtPanel(data) {
     const panel = document.getElementById('dg-finanzamt-content');
     if (!panel || !data) {
@@ -150,9 +194,7 @@
       if (office.phone) {
         html += '<p>Telefon: ' + escapeHtml(office.phone) + '</p>';
       }
-      if (office.opening_hours) {
-        html += '<p>Öffnungszeiten: ' + escapeHtml(office.opening_hours) + '</p>';
-      }
+      html += formatOpeningHoursHtml(office);
     } else if (data.error) {
       html += '<p class="dg-field-hint">' + escapeHtml(data.error) + '</p>';
     }
@@ -223,7 +265,7 @@
     setRowValue(row, 'city', office.city || '');
     setRowValue(row, 'phone', office.phone || '');
     setRowValue(row, 'email', office.email || '');
-    setRowValue(row, 'opening_hours', office.opening_hours || '');
+    setRowValue(row, 'opening_hours', openingHoursPlain(office));
 
     const taxSection = document.querySelector('[data-company-section="tax"]');
     if (taxSection) {

@@ -24,6 +24,7 @@ spl_autoload_register(static function (string $class): void {
         'LdapAuthenticator' => '/src/Auth/LdapAuthenticator.php',
         'UvCarriers' => '/src/Company/UvCarriers.php',
         'FinanzamtRegistry' => '/src/Company/FinanzamtRegistry.php',
+        'FinanzamtOpeningHours' => '/src/Company/FinanzamtOpeningHours.php',
         'TaxOffice' => '/src/Company/TaxOffice.php',
         'IndustryBranches' => '/src/Company/IndustryBranches.php',
         'FinanzamtLookupApi' => '/src/Company/FinanzamtLookupApi.php',
