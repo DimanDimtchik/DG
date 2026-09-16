@@ -12,15 +12,13 @@ Stand: **2026-09-16** — Cloud-Feature-Branches in `master` gemergt; bei Sessio
 |--------|--------|
 | `master` | **Produktionslinie** — Akademie, Lager, Kichel, Terminkalender, Rechtstexte, LDAP-Prep, Kontakt-Notiz |
 
-**Merge 2026-09-16 (lokal → push):**
+**Merge 2026-09-16:**
 
 1. `cursor/arbeitsvertrag-artifacts-ignore-2ec8`
-2. `cursor/akademie-lager-konten-kichel-1dc6` (enthielt Lager/Akademie/Kichel/Termin/Recht)
+2. `cursor/akademie-lager-konten-kichel-1dc6` (Lager / Akademie / Kichel / Termin / Recht)
 3. `cursor/kontakt-bemerkung-ip-1dc6` (LDAP + Kontakt-Notiz + IQ-SSH)
 
-Zwischenschritte (`lager-wirtschaft`, `akademie`, `kichel-assistant`, `terminkalender-akademie`, `recht-produkt-tabs`, `ldap-prep`) nicht einzeln gemergt — Inhalt steckt in 2/3.
-
-**Hygiene:** gemergte Remote-Branches löschen. Neue Chats/Agents von aktuellem `master`.
+Zwischenschritte nicht einzeln gemergt — Inhalt steckte in 2/3. Remote-`cursor/*`-Branches danach gelöscht.
 
 Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash bin/sync-crm-from-master.sh` (auf Server).
 
@@ -34,7 +32,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] Cloud-Sammelbranches in `master` (2026-09-16)
 - [x] **Multi-Firma / Umfirmierung** — Konzept dokumentiert (`MULTI-FIRMA-KONZEPT.md`)
 - [ ] **Master erneut deployen + sync** (nach Merge 16.09.)
-- [ ] Migrationen **064–066** (+ LDAP **078**) auf Live prüfen
+- [ ] Migrationen **064–077** (+ LDAP **078**) auf Live prüfen
 - [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
 - [ ] Smoke: Akademie, Lager, Kichel, Terminkalender, Rechtstexte, Kontakt-Notiz, LDAP-UI
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
@@ -58,12 +56,12 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 | Zeiterfassung Ph.1 (Stempeluhr) | 061 |
 | Überstunden / ArbZG-Erinnerung | 062–063 |
 | **Bank Geisterumsätze** | **064** · `BankGhostDetectionService` |
+| Lagerwirtschaft | **065–069** · `views/modules/lager.php` |
+| Akademie | **070–072** |
+| Terminkalender Website | **073–075** |
 | **Rechtstexte Mehrprodukt** | **076** · `LegalProductSettings` |
+| Kichel-Protokoll | **077** |
 | **LDAP-Vorbereitung** | **078** · `LdapAuthenticator` / Einstellungen |
-| Lagerwirtschaft | `views/modules/lager.php`, Einstellungen Lager |
-| Akademie | `views/modules/akademie.php` |
-| Kichel-Assistent | Widget + Knowledge |
-| Terminkalender Website | CMS / Buchung |
 | Kontakt-Notiz (`contact_note`) | Kontakte |
 | Wartungsmodus einheitlicher Code | `WebsiteMaintenanceRenderer` |
 | Website-Menü Icons (Lucide) | `src/Website/` |
