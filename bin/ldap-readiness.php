@@ -34,6 +34,6 @@ line();
 line('Gesamt: ' . ($readiness['ready'] ? 'BEREIT für LDAP-Login' : 'NOCH NICHT BEREIT (normal auf Kasserver)'));
 line();
 line('Dokumentation: docs/LDAP-INTEGRATION.md');
-line('Migration: database/migrations/065_user_auth_source.sql');
+line('Migration: database/migrations/078_user_auth_source.sql');
 
 exit($readiness['ready'] ? 0 : 1);

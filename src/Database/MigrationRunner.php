@@ -227,6 +227,7 @@ final class MigrationRunner
             '073_website_terminkalender_booking.sql' => WebsitePageRepository::terminkalenderUsesOnlineBookingLayout(),
             '076_website_legal_variants.sql' => self::tableExists($pdo, 'dg_website_legal_variants'),
             '077_kichel_protocol.sql' => self::tableExists($pdo, 'dg_kichel_log'),
+            '078_user_auth_source.sql' => self::columnExists($pdo, 'dg_users', 'auth_source'),
             default => false,
         };
     }
@@ -335,6 +336,7 @@ final class MigrationRunner
             '075_website_terminkalender_kunde_video.sql' => true,
             '076_website_legal_variants.sql' => true,
             '077_kichel_protocol.sql' => true,
+            '078_user_auth_source.sql' => true,
         ];
     }
 

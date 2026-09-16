@@ -20,7 +20,7 @@ Ein zentraler Benutzerstamm (LDAP/OpenLDAP) plus optional WordPress-Plugin **dg-
 
 | Datei / Ort | Zweck |
 |-------------|--------|
-| `database/migrations/065_user_auth_source.sql` | Spalten `auth_source`, `auth_external_id` in `dg_users` |
+| `database/migrations/078_user_auth_source.sql` | Spalten `auth_source`, `auth_external_id` in `dg_users` |
 | `config/ldap.local.php.example` | Server-Host, Bind, Filter, Gruppen→Rollen (nicht committen) |
 | `src/Auth/LdapAuthenticator.php` | Bind, Suche, Passwort-Prüfung, Profil-Mapping |
 | `src/Settings/LdapSettings.php` | Modus local / hybrid / ldap_only, JIT-Flag |

@@ -19,7 +19,7 @@ $roleOptions = CrmRole::options();
       Umzug auf Root-Server (php-ldap + erreichbarer LDAP-Host).
     </p>
     <p>
-      Anleitung: <code>docs/LDAP-INTEGRATION.md</code> · Migration <code>065_user_auth_source.sql</code>
+      Anleitung: <code>docs/LDAP-INTEGRATION.md</code> · Migration <code>078_user_auth_source.sql</code>
     </p>
   </div>
 

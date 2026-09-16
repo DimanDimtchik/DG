@@ -34,7 +34,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] Cloud-Sammelbranches in `master` (2026-09-16)
 - [x] **Multi-Firma / Umfirmierung** — Konzept dokumentiert (`MULTI-FIRMA-KONZEPT.md`)
 - [ ] **Master erneut deployen + sync** (nach Merge 16.09.)
-- [ ] Migrationen **064–066** (+ LDAP **065**) auf Live prüfen
+- [ ] Migrationen **064–066** (+ LDAP **078**) auf Live prüfen
 - [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
 - [ ] Smoke: Akademie, Lager, Kichel, Terminkalender, Rechtstexte, Kontakt-Notiz, LDAP-UI
 - [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
@@ -58,8 +58,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 | Zeiterfassung Ph.1 (Stempeluhr) | 061 |
 | Überstunden / ArbZG-Erinnerung | 062–063 |
 | **Bank Geisterumsätze** | **064** · `BankGhostDetectionService` |
-| **LDAP-Vorbereitung** | **065** · `LdapAuthenticator` / Einstellungen |
-| **Rechtstexte Mehrprodukt** | **066** · `LegalProductSettings` |
+| **Rechtstexte Mehrprodukt** | **076** · `LegalProductSettings` |
+| **LDAP-Vorbereitung** | **078** · `LdapAuthenticator` / Einstellungen |
 | Lagerwirtschaft | `views/modules/lager.php`, Einstellungen Lager |
 | Akademie | `views/modules/akademie.php` |
 | Kichel-Assistent | Widget + Knowledge |
