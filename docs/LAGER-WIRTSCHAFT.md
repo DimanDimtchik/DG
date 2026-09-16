@@ -1,6 +1,6 @@
 # Lager- und Warenwirtschaft (Stufe A + B + C Teil)
 
-Stand: **2026-09-16** · Migrationen **065–069**, **079** (Reservierung)
+Stand: **2026-09-16** · Migrationen **065–069**, **079–080**
 
 ## Umgesetzt
 
@@ -21,6 +21,7 @@ Stand: **2026-09-16** · Migrationen **065–069**, **079** (Reservierung)
 - [x] **Kamera-Scan** — Smartphone/Tablet (html5-qrcode, CODE128/EAN)
 - [x] **Platz-Check** — Mini-Audit: Belegung, Reservierung, letzte Bewegungen
 - [x] **Phase 1 Reservierung** — Angebot/AB ab Versendet/Angenommen; Anzeige Bestand/Reserviert/In Auslief./Verfügbar; Warnung bei Unterbestand (Migration **079**)
+- [x] **Phase 2 Einkaufsquellen** — Lieferant/EK/Shop-URL je Artikel (mehrfach), Link **Nachbestellen** (Migration **080**)
 
 ## Strichcode-Ebenen
 

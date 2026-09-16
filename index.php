@@ -2825,6 +2825,27 @@ $legalProductsConfig = LegalProductSettings::config();
                 $catalogFilter = 'all';
             }
             $calendarArticles = CalendarArticleRepository::all(false, $catalogFilter === 'all' ? null : $catalogFilter);
+            $articleIds = array_map(static fn (array $a): int => (int) ($a['id'] ?? 0), $calendarArticles);
+            $purchaseSourcesByArticle = ArticlePurchaseSourceRepository::forArticles($articleIds);
+            foreach ($calendarArticles as &$articleRow) {
+                $aid = (int) ($articleRow['id'] ?? 0);
+                $sources = $purchaseSourcesByArticle[$aid] ?? [];
+                $articleRow['purchase_sources'] = $sources;
+                $preferred = null;
+                foreach ($sources as $src) {
+                    if (!empty($src['is_preferred'])) {
+                        $preferred = $src;
+                        break;
+                    }
+                }
+                if ($preferred === null && $sources !== []) {
+                    $preferred = $sources[0];
+                }
+                $articleRow['reorder_url'] = (string) ($preferred['order_url'] ?? '');
+                $articleRow['reorder_label'] = (string) ($preferred['label'] ?? '');
+            }
+            unset($articleRow);
+            $supplierContactOptions = ArticlePurchaseSourceRepository::supplierContactOptions();
             $contentTemplate = 'modules/artikel-leistungen';
             $title = 'Artikel & Leistungen';
             $currentPage = 'artikel-leistungen';
@@ -2918,6 +2939,26 @@ $legalProductsConfig = LegalProductSettings::config();
             }
             $canEdit = RoleResolver::canEdit($user);
             $stockItems = StockMovementService::stockOverview(false);
+            $stockReorderMap = ArticlePurchaseSourceRepository::forArticles(
+                array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $stockItems)
+            );
+            foreach ($stockItems as &$stockItem) {
+                $sid = (int) ($stockItem['id'] ?? 0);
+                $sources = $stockReorderMap[$sid] ?? [];
+                $preferred = null;
+                foreach ($sources as $src) {
+                    if (!empty($src['is_preferred'])) {
+                        $preferred = $src;
+                        break;
+                    }
+                }
+                if ($preferred === null && $sources !== []) {
+                    $preferred = $sources[0];
+                }
+                $stockItem['reorder_url'] = (string) ($preferred['order_url'] ?? '');
+                $stockItem['reorder_label'] = (string) ($preferred['label'] ?? '');
+            }
+            unset($stockItem);
             $stockMovements = StockMovementRepository::recent(50);
             $openInventories = StockInventoryService::openInventories();
             $activeInventory = $openInventories[0] ?? null;
@@ -4670,6 +4711,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'calendarEmbedConfig',
             'calendarArticles',
             'catalogFilter',
+            'supplierContactOptions',
             'lagerView',
             'academyView',
             'academyAreas',

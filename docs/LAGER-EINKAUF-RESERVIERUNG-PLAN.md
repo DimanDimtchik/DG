@@ -216,11 +216,11 @@ Spalten erweitern analog Artikel-Bestandskarte.
 4. [x] LS / Rechnung ohne LS → Reserve consume; Warnung bei Unterbestand (nicht blockierend)  
 5. [x] Selftest erweitert  
 
-### Phase 2 — Einkaufsstamm & Nachbestellen
+### Phase 2 — Einkaufsstamm & Nachbestellen — **umgesetzt 2026-09-16**
 
-1. Migration `dg_article_purchase_sources`  
-2. UI am Artikel  
-3. Link Nachbestellen (preferred URL)  
+1. [x] Migration `dg_article_purchase_sources` (080)  
+2. [x] UI am Artikel (Mehrfach-Quellen)  
+3. [x] Link Nachbestellen (bevorzugte URL) in Lager + Artikelliste  
 
 ### Phase 3 — Einkaufsliste & Ignore
 

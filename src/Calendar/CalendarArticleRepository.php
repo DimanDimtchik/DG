@@ -118,7 +118,7 @@ final class CalendarArticleRepository
      * @throws RuntimeException
      * @throws InvalidArgumentException
      */
-    public static function save(array $input): void
+    public static function save(array $input): int
     {
         if (!Database::isConfigured()) {
             throw new RuntimeException('Datenbank nicht konfiguriert.');
@@ -232,8 +232,9 @@ final class CalendarArticleRepository
                  WHERE id = :id'
             );
             $stmt->execute($fields);
+            ArticlePurchaseSourceRepository::replaceFromInput($id, $input);
 
-            return;
+            return $id;
         }
 
         $fields['stock_qty'] = 0;
@@ -248,6 +249,11 @@ final class CalendarArticleRepository
         if ($newId > 0 && $trackStock === 1 && $initialStock > 0) {
             StockMovementService::recordOpeningBalance($newId, $initialStock, null);
         }
+        if ($newId > 0) {
+            ArticlePurchaseSourceRepository::replaceFromInput($newId, $input);
+        }
+
+        return $newId;
     }
 
     /**
@@ -388,6 +394,7 @@ final class CalendarArticleRepository
             throw new RuntimeException('Datenbank nicht konfiguriert.');
         }
 
+        ArticlePurchaseSourceRepository::deleteForArticle($id);
         Database::pdo()->prepare('DELETE FROM dg_calendar_articles WHERE id = :id')->execute(['id' => $id]);
     }
 

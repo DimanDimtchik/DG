@@ -33,6 +33,18 @@
   const stockPositionPreview = document.getElementById('dg_article_stock_position_preview');
   const stockPositionCodeEl = document.getElementById('dg_article_stock_position_code');
   const stockStructureEl = document.getElementById('dg-stock-structure-data');
+  const purchaseFieldsWrap = document.getElementById('dg_article_purchase_fields');
+  const purchaseSourcesList = document.getElementById('dg-purchase-sources-list');
+  const purchaseSourceAddBtn = document.getElementById('dg-purchase-source-add');
+  const supplierOptionsEl = document.getElementById('dg-supplier-options');
+  let supplierOptions = [];
+  if (supplierOptionsEl) {
+    try {
+      supplierOptions = JSON.parse(supplierOptionsEl.textContent || '[]');
+    } catch (error) {
+      supplierOptions = [];
+    }
+  }
   let stockStructure = { halls: [], shelves: [], places: [] };
   if (stockStructureEl) {
     try {
@@ -188,15 +200,96 @@
     if (stockFieldsWrap) {
       stockFieldsWrap.hidden = !isProduct;
     }
+    if (purchaseFieldsWrap) {
+      purchaseFieldsWrap.hidden = !isProduct;
+    }
     if (initialStockWrap && idInput) {
       initialStockWrap.hidden = !isProduct || idInput.value !== '';
     }
     updatePositionPreview();
   }
 
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function formatPriceForInput(value) {
     const number = Number(value || 0);
     return number.toFixed(2).replace('.', ',');
+  }
+
+  function renderPurchaseSources(sources) {
+    if (!purchaseSourcesList) {
+      return;
+    }
+    purchaseSourcesList.innerHTML = '';
+    const rows = Array.isArray(sources) && sources.length ? sources : [{}];
+    rows.forEach(function (source, index) {
+      purchaseSourcesList.appendChild(buildPurchaseSourceRow(source || {}, index));
+    });
+  }
+
+  function buildPurchaseSourceRow(source, index) {
+    const wrap = document.createElement('div');
+    wrap.className = 'dg-form-grid dg-purchase-source-row';
+    wrap.dataset.index = String(index);
+
+    let supplierOptionsHtml = '<option value="">— Freitext / kein Kontakt —</option>';
+    supplierOptions.forEach(function (opt) {
+      const selected = Number(source.supplier_contact_id || 0) === Number(opt.id) ? ' selected' : '';
+      supplierOptionsHtml += '<option value="' + String(opt.id) + '"' + selected + '>' + escapeHtml(opt.label) + '</option>';
+    });
+
+    const preferredChecked = source.is_preferred ? ' checked' : '';
+    const price = source.purchase_price != null && source.purchase_price !== ''
+      ? formatPriceForInput(source.purchase_price)
+      : '';
+
+    wrap.innerHTML =
+      '<label class="dg-field dg-field--wide"><span>Lieferant (Kontakt)</span>' +
+      '<select name="purchase_sources[' + index + '][supplier_contact_id]">' + supplierOptionsHtml + '</select></label>' +
+      '<label class="dg-field"><span>Lieferant (Freitext)</span>' +
+      '<input type="text" name="purchase_sources[' + index + '][supplier_name]" value="' + escapeHtml(source.supplier_name || '') + '" maxlength="191"></label>' +
+      '<label class="dg-field"><span>EK-Preis (netto)</span>' +
+      '<input type="text" name="purchase_sources[' + index + '][purchase_price]" inputmode="decimal" value="' + escapeHtml(price) + '" placeholder="0,00"></label>' +
+      '<label class="dg-field"><span>Währung</span>' +
+      '<input type="text" name="purchase_sources[' + index + '][currency]" value="' + escapeHtml(source.currency || 'EUR') + '" maxlength="3"></label>' +
+      '<label class="dg-field dg-field--wide"><span>Bestell-URL / Shop</span>' +
+      '<input type="url" name="purchase_sources[' + index + '][order_url]" value="' + escapeHtml(source.order_url || '') + '" placeholder="https://…" maxlength="500"></label>' +
+      '<label class="dg-field"><span>Lieferanten-Artikelnr.</span>' +
+      '<input type="text" name="purchase_sources[' + index + '][external_sku]" value="' + escapeHtml(source.external_sku || '') + '" maxlength="100"></label>' +
+      '<label class="dg-field"><span>Notiz</span>' +
+      '<input type="text" name="purchase_sources[' + index + '][note]" value="' + escapeHtml(source.note || '') + '" maxlength="500"></label>' +
+      '<label class="dg-field"><span><input type="checkbox" name="purchase_sources[' + index + '][is_preferred]" value="1"' + preferredChecked + '> Bevorzugt (Nachbestellen)</span></label>' +
+      '<div class="dg-field dg-field--actions"><button type="button" class="dg-button dg-button--small dg-purchase-source-remove">Entfernen</button></div>';
+
+    const removeBtn = wrap.querySelector('.dg-purchase-source-remove');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function () {
+        wrap.remove();
+        reindexPurchaseSources();
+        if (purchaseSourcesList && !purchaseSourcesList.children.length) {
+          renderPurchaseSources([{}]);
+        }
+      });
+    }
+    return wrap;
+  }
+
+  function reindexPurchaseSources() {
+    if (!purchaseSourcesList) {
+      return;
+    }
+    Array.prototype.forEach.call(purchaseSourcesList.children, function (row, index) {
+      row.dataset.index = String(index);
+      Array.prototype.forEach.call(row.querySelectorAll('[name]'), function (input) {
+        input.name = input.name.replace(/purchase_sources\[\d+]/, 'purchase_sources[' + index + ']');
+      });
+    });
   }
 
   function resetForm() {
@@ -236,6 +329,7 @@
     if (stockLocationSelect) stockLocationSelect.value = '';
     if (stockPlaceModeSelect) stockPlaceModeSelect.value = 'flexible';
     refreshStockCascade(false);
+    renderPurchaseSources([{}]);
   }
 
   function setWorkMinutes(minutes) {
@@ -316,6 +410,7 @@
       }
       toggleStockFields();
       updatePositionPreview();
+      renderPurchaseSources(data.purchase_sources || [{}]);
       if (formTitle) {
         formTitle.textContent = kindLabel(kind) + ' bearbeiten';
       }
@@ -354,9 +449,20 @@
     cancelBtn.addEventListener('click', resetForm);
   }
 
+  if (purchaseSourceAddBtn) {
+    purchaseSourceAddBtn.addEventListener('click', function () {
+      if (!purchaseSourcesList) {
+        return;
+      }
+      const index = purchaseSourcesList.children.length;
+      purchaseSourcesList.appendChild(buildPurchaseSourceRow({}, index));
+    });
+  }
+
   toggleCustomMinutes();
   toggleStockFields();
   refreshStockCascade(false);
+  renderPurchaseSources([{}]);
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('focus') === 'stock') {

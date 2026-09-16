@@ -98,6 +98,9 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
                 <td><strong><?= View::escape((string) ($item['available_label'] ?? '')) ?></strong></td>
                 <td><?= (float) ($item['min_stock'] ?? 0) > 0 ? View::escape($fmtQty((float) $item['min_stock']) . ' ' . ($item['unit'] ?? '')) : '—' ?></td>
                 <td class="dg-table__actions">
+                  <?php if (($item['reorder_url'] ?? '') !== '') : ?>
+                    <a class="dg-button dg-button--small" href="<?= View::escape((string) $item['reorder_url']) ?>" target="_blank" rel="noopener" title="<?= View::escape((string) ($item['reorder_label'] ?? 'Shop')) ?>">Nachbestellen</a>
+                  <?php endif; ?>
                   <?php if ($canEdit) : ?>
                     <button type="button" class="dg-button dg-button--small dg-stock-adjust-btn"
                       data-article-id="<?= (int) ($item['id'] ?? 0) ?>"

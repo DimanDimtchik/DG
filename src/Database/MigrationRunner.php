@@ -229,6 +229,7 @@ final class MigrationRunner
             '077_kichel_protocol.sql' => self::tableExists($pdo, 'dg_kichel_log'),
             '078_user_auth_source.sql' => self::columnExists($pdo, 'dg_users', 'auth_source'),
             '079_stock_reservations.sql' => self::tableExists($pdo, 'dg_stock_reservations'),
+            '080_article_purchase_sources.sql' => self::tableExists($pdo, 'dg_article_purchase_sources'),
             default => false,
         };
     }
@@ -339,6 +340,7 @@ final class MigrationRunner
             '077_kichel_protocol.sql' => true,
             '078_user_auth_source.sql' => true,
             '079_stock_reservations.sql' => true,
+            '080_article_purchase_sources.sql' => true,
         ];
     }
 

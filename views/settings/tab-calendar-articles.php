@@ -20,6 +20,7 @@ foreach ($calendarAreas as $area) {
     $areaNames[(int) $area['id']] = (string) $area['name'];
 }
 $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions());
+$supplierContactOptions = $supplierContactOptions ?? [];
 $stockLocationOptions = StockStructureRepository::locationOptions();
 $stockStructureJson = json_encode([
     'halls' => StockStructureRepository::allHalls(),
@@ -89,6 +90,9 @@ $stockStructureJson = json_encode([
                   · Verf. <?= View::escape((string) ($article['available_label'] ?? '')) ?></small>
                 <?php endif; ?>
                 <?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?>
+                <?php if (($article['reorder_url'] ?? '') !== '') : ?>
+                  <br><a class="dg-button dg-button--small" href="<?= View::escape((string) $article['reorder_url']) ?>" target="_blank" rel="noopener">Nachbestellen</a>
+                <?php endif; ?>
               <?php else : ?>—<?php endif; ?></td>
               <td><?= !empty($article['stock_position_code']) ? View::escape((string) $article['stock_position_code']) : '—' ?></td>
               <td><?= View::escape($areaNames[(int) ($article['area_id'] ?? 0)] ?? '—') ?></td>
@@ -123,6 +127,8 @@ $stockStructureJson = json_encode([
                       'stock_halle' => (string) ($article['stock_halle'] ?? ''),
                       'stock_regal' => (string) ($article['stock_regal'] ?? ''),
                       'stock_platz' => (string) ($article['stock_platz'] ?? ''),
+                      'purchase_sources' => $article['purchase_sources'] ?? [],
+                      'reorder_url' => (string) ($article['reorder_url'] ?? ''),
                   ], JSON_THROW_ON_ERROR)) ?>"
                 >Bearbeiten</button>
                 <form method="post" action="<?= View::escape($catalogBaseUrl) ?>" class="dg-inline-form">
@@ -289,6 +295,16 @@ $stockStructureJson = json_encode([
           </p>
           <p class="dg-field-hint">Positionscode = Ort-Halle-Regal-Platz. Feste Plätze erfordern einen konkreten Stellplatz. Bestandsänderungen aus Belegen unter <a href="/app?page=lager">Lager</a>.</p>
           <script type="application/json" id="dg-stock-structure-data"><?= View::escape($stockStructureJson) ?></script>
+        </fieldset>
+      </div>
+
+      <div class="dg-field dg-field--wide" id="dg_article_purchase_fields" hidden>
+        <fieldset class="dg-fieldset">
+          <legend>Einkaufsquellen (Lieferant / Shop)</legend>
+          <p class="dg-field-hint">Mehrere Quellen möglich. Die bevorzugte Quelle liefert den Link „Nachbestellen“ in Lager und Artikelliste.</p>
+          <div id="dg-purchase-sources-list" class="dg-purchase-sources"></div>
+          <button type="button" class="dg-button dg-button--small" id="dg-purchase-source-add"<?= !$dbConnected ? ' disabled' : '' ?>>+ Einkaufsquelle</button>
+          <script type="application/json" id="dg-supplier-options"><?= View::escape(json_encode($supplierContactOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)) ?></script>
         </fieldset>
       </div>
     </div>
