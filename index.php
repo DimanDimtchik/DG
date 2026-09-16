@@ -1950,7 +1950,13 @@ switch ($path) {
                         $uploadWarning = ' Hinweis zum Datei-Upload: ' . $fileError->getMessage();
                     }
                 }
-                Flash::set($uploadWarning === '' ? 'success' : 'warning', 'Beleg gespeichert.' . $uploadWarning);
+                $stockWarnings = StockReservationService::takeLastWarnings();
+                $stockNote = $stockWarnings !== [] ? ' ' . implode(' ', $stockWarnings) : '';
+                if ($uploadWarning !== '' || $stockNote !== '') {
+                    Flash::set('warning', 'Beleg gespeichert.' . $uploadWarning . $stockNote);
+                } else {
+                    Flash::set('success', 'Beleg gespeichert.');
+                }
                 header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $newId, true, 302);
                 exit;
             } catch (Throwable $e) {
@@ -2360,7 +2366,12 @@ switch ($path) {
                         $voucherId,
                         (string) ($_POST['document_status'] ?? '')
                     );
-                    Flash::set('success', 'Dokumentstatus aktualisiert.');
+                    $stockWarnings = StockReservationService::takeLastWarnings();
+                    if ($stockWarnings !== []) {
+                        Flash::set('warning', 'Dokumentstatus aktualisiert. ' . implode(' ', $stockWarnings));
+                    } else {
+                        Flash::set('success', 'Dokumentstatus aktualisiert.');
+                    }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -2842,7 +2853,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $out = fopen('php://output', 'w');
                 if ($out !== false) {
                     fprintf($out, "\xEF\xBB\xBF");
-                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Bestand', 'Mindestbestand', 'Unter Mindest'], ';');
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Bestand', 'Reserviert', 'In Auslieferung', 'Verfügbar', 'Mindestbestand', 'Unter Mindest'], ';');
                     foreach ($rows as $row) {
                         fputcsv($out, [
                             $row['article_number'],
@@ -2850,6 +2861,9 @@ $legalProductsConfig = LegalProductSettings::config();
                             $row['position_code'],
                             $row['unit'],
                             $row['stock_qty'],
+                            $row['reserved_qty'] ?? '0',
+                            $row['in_transit_qty'] ?? '0',
+                            $row['available_qty'] ?? $row['stock_qty'],
                             $row['min_stock'],
                             $row['low_stock'],
                         ], ';');

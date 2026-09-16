@@ -81,7 +81,15 @@ $stockStructureJson = json_encode([
               <td><?= View::escape((string) ($article['tax_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['price_label'] ?? '')) ?></td>
               <td><?= View::escape((string) ($article['duration_label'] ?? '')) ?></td>
-              <td><?php if (!empty($article['track_stock'])) : ?><?= View::escape((string) ($article['stock_label'] ?? '')) ?><?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?><?php else : ?>—<?php endif; ?></td>
+              <td><?php if (!empty($article['track_stock'])) : ?>
+                <?= View::escape((string) ($article['stock_label'] ?? '')) ?>
+                <?php if ((float) ($article['reserved_qty'] ?? 0) > 0 || (float) ($article['in_transit_qty'] ?? 0) > 0) : ?>
+                  <br><small class="dg-muted">Res. <?= View::escape((string) ($article['reserved_label'] ?? '0')) ?>
+                  · Auslief. <?= View::escape((string) ($article['in_transit_label'] ?? '0')) ?>
+                  · Verf. <?= View::escape((string) ($article['available_label'] ?? '')) ?></small>
+                <?php endif; ?>
+                <?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?>
+              <?php else : ?>—<?php endif; ?></td>
               <td><?= !empty($article['stock_position_code']) ? View::escape((string) $article['stock_position_code']) : '—' ?></td>
               <td><?= View::escape($areaNames[(int) ($article['area_id'] ?? 0)] ?? '—') ?></td>
               <td class="dg-table__actions">
@@ -237,6 +245,10 @@ $stockStructureJson = json_encode([
             <span>Mindestbestand</span>
             <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
+          <p class="dg-field-hint dg-field--wide" id="dg_article_stock_availability" hidden>
+            Bestand / Reserviert / In Auslieferung / Verfügbar erscheinen nach dem Speichern in der Liste.
+            Angebot &amp; AB reservieren ab Status <strong>Versendet</strong> oder <strong>Angenommen</strong> (ohne Bestand abzubuchen).
+          </p>
           <p class="dg-field-hint dg-field--wide">Stammdaten unter <a href="<?= View::escape(SettingsRegistry::tabUrl('lager-struktur')) ?>">Einstellungen → Lagerstruktur</a>.</p>
           <label class="dg-field">
             <span>Lagerort</span>

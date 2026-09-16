@@ -497,10 +497,23 @@ final class CalendarArticleRepository
         $row['stock_place_mode_label'] = ($row['stock_place_mode'] ?? 'flexible') === 'fixed' ? 'fest' : 'flexibel';
         if ($row['track_stock']) {
             $unit = (string) ($row['unit'] ?? 'Stück');
+            $articleId = (int) ($row['id'] ?? 0);
+            $reserved = StockReservationService::reservedQty($articleId);
+            $inTransit = StockAvailabilityService::inTransitQty($articleId);
+            $available = round((float) $row['stock_qty'] - $reserved, 3);
+            $row['reserved_qty'] = $reserved;
+            $row['in_transit_qty'] = $inTransit;
+            $row['available_qty'] = $available;
             $row['stock_label'] = StockMovementService::formatQty((float) $row['stock_qty'], $unit);
-            $row['is_low_stock'] = $row['min_stock'] > 0 && $row['stock_qty'] <= $row['min_stock'];
+            $row['reserved_label'] = StockMovementService::formatQty($reserved, $unit);
+            $row['in_transit_label'] = StockMovementService::formatQty($inTransit, $unit);
+            $row['available_label'] = StockMovementService::formatQty($available, $unit);
+            $row['is_low_stock'] = $row['min_stock'] > 0 && $available <= $row['min_stock'];
         } else {
             $row['stock_label'] = '—';
+            $row['reserved_qty'] = 0.0;
+            $row['in_transit_qty'] = 0.0;
+            $row['available_qty'] = 0.0;
             $row['is_low_stock'] = false;
         }
     }

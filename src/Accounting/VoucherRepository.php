@@ -829,6 +829,7 @@ final class VoucherRepository
             self::replaceItems($id, $itemRows);
             self::syncLedger($id);
             StockMovementService::syncForVoucher($id, $userId);
+            StockReservationService::syncForVoucher($id);
             self::finalizePayments($id, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
             return $id;
@@ -858,6 +859,7 @@ final class VoucherRepository
         self::replaceItems($newId, $itemRows);
         self::syncLedger($newId);
         StockMovementService::syncForVoucher($newId, $userId);
+        StockReservationService::syncForVoucher($newId);
         self::finalizePayments($newId, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
         return $newId;
@@ -1052,6 +1054,7 @@ final class VoucherRepository
         }
 
         StockMovementService::revertForVoucher($id);
+        StockReservationService::revertForVoucher($id);
         LedgerPostingService::deleteForVoucher($id);
         $stmt = Database::pdo()->prepare('DELETE FROM dg_vouchers WHERE id = :id');
         $stmt->execute(['id' => $id]);
@@ -1425,6 +1428,9 @@ final class VoucherRepository
             'document_status' => $status,
             'id' => $voucherId,
         ]);
+
+        StockMovementService::syncForVoucher($voucherId, null);
+        StockReservationService::syncForVoucher($voucherId);
     }
 
     /**

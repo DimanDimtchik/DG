@@ -1,6 +1,6 @@
 # Lager- und Warenwirtschaft (Stufe A + B + C Teil)
 
-Stand: 2026-09-13 · Migrationen **065–069**
+Stand: **2026-09-16** · Migrationen **065–069**, **079** (Reservierung)
 
 ## Umgesetzt
 
@@ -20,6 +20,7 @@ Stand: 2026-09-13 · Migrationen **065–069**
 - [x] **Etiketten-Druck** — Lagerstruktur → Etiketten, Avery L7163/L7160/… + Rollenformate
 - [x] **Kamera-Scan** — Smartphone/Tablet (html5-qrcode, CODE128/EAN)
 - [x] **Platz-Check** — Mini-Audit: Belegung, Reservierung, letzte Bewegungen
+- [x] **Phase 1 Reservierung** — Angebot/AB ab Versendet/Angenommen; Anzeige Bestand/Reserviert/In Auslief./Verfügbar; Warnung bei Unterbestand (Migration **079**)
 
 ## Strichcode-Ebenen
 
@@ -71,8 +72,9 @@ Manuell: Lager → Wareneingang/Warenausgang, Strichcode scannen, Lieferschein v
 
 | Komponente | Pfad |
 |------------|------|
-| Migration | `065`–`069_stock_*.sql` |
+| Migration | `065`–`069_stock_*.sql`, `079_stock_reservations.sql` |
 | Stammdaten | `src/Inventory/StockStructureRepository.php` |
+| Reservierung | `StockReservationService`, `StockAvailabilityService` |
 | Strichcode | `src/Inventory/StockBarcodeService.php` |
 | Kartons | `src/Inventory/StockPackageRepository.php` |
 | Ein-/Ausgang | `src/Inventory/StockReceiptIssueService.php` |

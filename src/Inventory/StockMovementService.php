@@ -155,7 +155,7 @@ final class StockMovementService
         }
         unset($row);
 
-        return $rows;
+        return StockAvailabilityService::enrichOverviewRows($rows);
     }
 
     public static function formatQty(float $qty, string $unit = 'Stück'): string
@@ -178,6 +178,9 @@ final class StockMovementService
                 'position_code' => (string) ($item['stock_position_code'] ?? ''),
                 'unit' => (string) ($item['unit'] ?? ''),
                 'stock_qty' => (string) ($item['stock_qty'] ?? '0'),
+                'reserved_qty' => (string) ($item['reserved_qty'] ?? '0'),
+                'in_transit_qty' => (string) ($item['in_transit_qty'] ?? '0'),
+                'available_qty' => (string) ($item['available_qty'] ?? $item['stock_qty'] ?? '0'),
                 'min_stock' => (string) ($item['min_stock'] ?? '0'),
                 'low_stock' => !empty($item['is_low']) ? 'ja' : 'nein',
             ];

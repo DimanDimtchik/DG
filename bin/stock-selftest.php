@@ -214,6 +214,38 @@ if ($hasStructure) {
     }
 }
 
+// Phase 1: Reservierungen
+$hasReservations = $pdo->query("SHOW TABLES LIKE 'dg_stock_reservations'")->fetchColumn() !== false;
+if (!$hasReservations) {
+    $errors[] = 'Migration 079 nicht angewendet (dg_stock_reservations fehlt).';
+} else {
+    $pdo->prepare('DELETE FROM dg_stock_reservations WHERE article_id = :aid')->execute(['aid' => $articleId]);
+    $pdo->prepare(
+        "INSERT INTO dg_stock_reservations (article_id, voucher_id, quantity, status)
+         VALUES (:aid, 0, 3.000, 'active')"
+    )->execute(['aid' => $articleId]);
+    $reserved = StockReservationService::reservedQty($articleId);
+    if (abs($reserved - 3.0) > 0.001) {
+        $errors[] = 'reservedQty erwartet 3, ist ' . $reserved;
+    }
+    $snap = StockAvailabilityService::snapshot($articleId);
+    if ($snap === null || abs($snap['reserved'] - 3.0) > 0.001) {
+        $errors[] = 'Availability snapshot reserved falsch.';
+    }
+    $pdo->prepare('DELETE FROM dg_stock_reservations WHERE article_id = :aid')->execute(['aid' => $articleId]);
+    $overviewRes = StockMovementService::stockOverview(false);
+    $foundAvail = false;
+    foreach ($overviewRes as $row) {
+        if ((int) ($row['id'] ?? 0) === $articleId && isset($row['available_qty'])) {
+            $foundAvail = true;
+            break;
+        }
+    }
+    if (!$foundAvail) {
+        $errors[] = 'stockOverview ohne available_qty.';
+    }
+}
+
 if ($errors !== []) {
     foreach ($errors as $err) {
         fwrite(STDERR, 'FAIL: ' . $err . "\n");
@@ -221,4 +253,4 @@ if ($errors !== []) {
     exit(1);
 }
 
-echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Lagerstruktur, Etiketten)\n";
+echo "stock-selftest: OK (Artikel #{$articleId}, Bestand {$qty}, Lagerstruktur, Etiketten, Reservierung)\n";

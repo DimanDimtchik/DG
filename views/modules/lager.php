@@ -79,6 +79,9 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
               <th>Bezeichnung</th>
               <th>Positionscode</th>
               <th>Bestand</th>
+              <th>Reserviert</th>
+              <th>In Auslief.</th>
+              <th>Verfügbar</th>
               <th>Mindest</th>
               <th></th>
             </tr>
@@ -90,6 +93,9 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
                 <td><?= View::escape((string) ($item['title'] ?? '')) ?></td>
                 <td><?= ($item['stock_position_code'] ?? '') !== '' ? View::escape((string) $item['stock_position_code']) : '—' ?></td>
                 <td><?= View::escape((string) ($item['stock_label'] ?? '')) ?></td>
+                <td><?= View::escape((string) ($item['reserved_label'] ?? '0')) ?></td>
+                <td><?= View::escape((string) ($item['in_transit_label'] ?? '0')) ?></td>
+                <td><strong><?= View::escape((string) ($item['available_label'] ?? '')) ?></strong></td>
                 <td><?= (float) ($item['min_stock'] ?? 0) > 0 ? View::escape($fmtQty((float) $item['min_stock']) . ' ' . ($item['unit'] ?? '')) : '—' ?></td>
                 <td class="dg-table__actions">
                   <?php if ($canEdit) : ?>
