@@ -317,24 +317,45 @@ final class VoucherDocumentPrintService
             return null;
         }
 
+        $withIban = [];
         foreach ($accounts as $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $iban = trim((string) ($row['iban'] ?? ''));
+            $iban = strtoupper(str_replace(' ', '', trim((string) ($row['iban'] ?? ''))));
             if ($iban === '') {
                 continue;
             }
-
-            return [
-                'holder' => trim((string) ($row['holder'] ?? '')),
-                'iban' => $iban,
-                'bank' => trim((string) ($row['bank_name'] ?? '')),
-                'bic' => trim((string) ($row['bic'] ?? '')),
-            ];
+            $withIban[] = $row;
+        }
+        if ($withIban === []) {
+            return null;
         }
 
-        return null;
+        $chosen = null;
+        foreach ($withIban as $row) {
+            if (!empty($row['is_primary'])) {
+                $chosen = $row;
+                break;
+            }
+        }
+        if ($chosen === null) {
+            // Erstes Giro mit IBAN, sonst erste IBAN (auch Kreditkarte mit IBAN).
+            foreach ($withIban as $row) {
+                if (($row['type'] ?? '') === 'giro') {
+                    $chosen = $row;
+                    break;
+                }
+            }
+            $chosen = $chosen ?? $withIban[0];
+        }
+
+        return [
+            'holder' => trim((string) ($chosen['account_holder'] ?? $chosen['holder'] ?? '')),
+            'iban' => strtoupper(str_replace(' ', '', trim((string) ($chosen['iban'] ?? '')))),
+            'bank' => trim((string) ($chosen['bank_name'] ?? '')),
+            'bic' => trim((string) ($chosen['bic'] ?? '')),
+        ];
     }
 
     public static function legalNotice(string $kind, bool $books): string

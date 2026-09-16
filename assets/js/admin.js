@@ -52,9 +52,23 @@ function closeMenu(menu) {
 }
 
 const bankFieldMap = {
-  giro: ['account_holder', 'bank_name', 'iban', 'bic'],
-  sparkonto: ['account_holder', 'bank_name', 'iban', 'bic'],
-  kreditkarte: ['provider', 'card_number_masked', 'expiry'],
+  giro: ['account_holder', 'bank_name', 'iban', 'bic', 'is_primary'],
+  sparkonto: ['account_holder', 'bank_name', 'iban', 'bic', 'is_primary'],
+  kreditkarte: [
+    'account_holder',
+    'iban',
+    'bic',
+    'bank_name',
+    'card_number_entry',
+    'provider',
+    'card_brand',
+    'card_issuer',
+    'card_bin',
+    'card_number_masked',
+    'card_last4',
+    'expiry',
+    'is_primary',
+  ],
   paypal: ['email', 'merchant_id'],
   klarna: ['merchant_id'],
   stripe: ['account_id'],
@@ -62,9 +76,131 @@ const bankFieldMap = {
   amazon_pay: ['merchant_id'],
   apple_pay: ['provider'],
   google_pay: ['provider'],
-  sepa_lastschrift: ['creditor_id', 'iban', 'account_holder'],
-  sonstiges: ['bank_name', 'merchant_id', 'account_id'],
+  sepa_lastschrift: ['creditor_id', 'iban', 'account_holder', 'is_primary'],
+  sonstiges: ['bank_name', 'merchant_id', 'account_id', 'is_primary'],
 };
+
+function digitsOnlyCard(value) {
+  return String(value || '').replace(/\D+/g, '');
+}
+
+function luhnOk(digits) {
+  if (digits.length < 12 || digits.length > 19) {
+    return false;
+  }
+  let sum = 0;
+  let alt = false;
+  for (let i = digits.length - 1; i >= 0; i -= 1) {
+    let n = parseInt(digits.charAt(i), 10);
+    if (alt) {
+      n *= 2;
+      if (n > 9) {
+        n -= 9;
+      }
+    }
+    sum += n;
+    alt = !alt;
+  }
+  return sum % 10 === 0;
+}
+
+function detectCardBrand(digits) {
+  if (!digits) {
+    return { code: '', label: '' };
+  }
+  const first = parseInt(digits.charAt(0), 10);
+  const two = parseInt(digits.slice(0, 2), 10);
+  const four = parseInt(digits.slice(0, 4), 10);
+  if (first === 4) {
+    return { code: 'visa', label: 'Visa' };
+  }
+  if ((two >= 51 && two <= 55) || (four >= 2221 && four <= 2720)) {
+    return { code: 'mastercard', label: 'Mastercard' };
+  }
+  if (two === 34 || two === 37) {
+    return { code: 'amex', label: 'American Express' };
+  }
+  if (four === 6011 || (two >= 64 && two <= 65)) {
+    return { code: 'discover', label: 'Discover' };
+  }
+  if (four >= 3528 && four <= 3589) {
+    return { code: 'jcb', label: 'JCB' };
+  }
+  if (two === 62) {
+    return { code: 'unionpay', label: 'UnionPay' };
+  }
+  return { code: 'unknown', label: 'Unbekanntes Kartennetz' };
+}
+
+function maskCardDigits(digits) {
+  if (!digits || digits.length < 4) {
+    return digits || '';
+  }
+  const last4 = digits.slice(-4);
+  const masked = '*'.repeat(Math.max(0, digits.length - 4)) + last4;
+  return masked.replace(/(.{4})/g, '$1 ').trim();
+}
+
+const cardIssuerHints = {
+  '454618': 'Deutsche Bank',
+  '454613': 'Deutsche Bank',
+  '490762': 'Commerzbank',
+  '540699': 'Commerzbank',
+  '557361': 'N26',
+  '535522': 'N26',
+  '535456': 'N26',
+  '518834': 'Consorsbank',
+  '552213': 'DKB',
+  '519773': 'DKB',
+  '545708': 'ING',
+  '375987': 'American Express',
+  '545230': 'Sparkasse',
+  '547651': 'VR-Bank / genossenschaftlich',
+};
+
+function suggestCardIssuer(digits) {
+  const p6 = digits.slice(0, 6);
+  return cardIssuerHints[p6] || '';
+}
+
+function applyCardEntry(card, raw) {
+  const digits = digitsOnlyCard(raw);
+  if (digits.length < 12) {
+    return;
+  }
+  const brand = detectCardBrand(digits);
+  const bin = digits.slice(0, Math.min(8, digits.length));
+  const last4 = digits.slice(-4);
+  const issuer = suggestCardIssuer(digits);
+  const set = (sel, value) => {
+    const el = card.querySelector(sel);
+    if (el) {
+      el.value = value;
+    }
+  };
+  set('[data-card-masked]', maskCardDigits(digits));
+  set('[data-card-last4]', last4);
+  set('[data-card-bin]', bin);
+  set('[data-card-brand]', brand.code);
+  set('[data-card-provider]', brand.label);
+  if (issuer) {
+    const issuerEl = card.querySelector('[data-card-issuer]');
+    if (issuerEl && !issuerEl.value.trim()) {
+      issuerEl.value = issuer;
+    }
+    const bankEl = card.querySelector('.dg-bank-name');
+    if (bankEl && !bankEl.value.trim()) {
+      bankEl.value = issuer;
+    }
+  }
+  const entry = card.querySelector('[data-card-entry]');
+  if (entry) {
+    entry.value = '';
+    entry.placeholder = luhnOk(digits)
+      ? 'Erkannt und maskiert  Vollnummer nicht gespeichert'
+      : 'Prfziffer ungewhnlich  bitte Nummer prfen, Maske gesetzt';
+  }
+}
 
 function syncBankCardFields(card) {
   const type = card.querySelector('[data-bank-type]')?.value || 'giro';
@@ -91,7 +227,11 @@ function reindexBankCards(repeater) {
 function clearBankCard(card) {
   card.removeAttribute('data-bank-autocomplete-bound');
   card.querySelectorAll('input').forEach((input) => {
-    input.value = '';
+    if (input.type === 'checkbox') {
+      input.checked = false;
+    } else {
+      input.value = '';
+    }
     input.classList.remove('dg-bank-invalid');
   });
   card.querySelectorAll('select').forEach((select) => {
@@ -156,6 +296,29 @@ document.addEventListener('change', (event) => {
       syncBankCardFields(card);
     }
   }
+});
+
+document.addEventListener('blur', (event) => {
+  if (!event.target.matches('[data-card-entry]')) {
+    return;
+  }
+  const card = event.target.closest('[data-bank-card]');
+  if (card) {
+    applyCardEntry(card, event.target.value);
+  }
+}, true);
+
+document.addEventListener('paste', (event) => {
+  if (!event.target.matches('[data-card-entry]')) {
+    return;
+  }
+  const card = event.target.closest('[data-bank-card]');
+  if (!card) {
+    return;
+  }
+  window.setTimeout(() => {
+    applyCardEntry(card, event.target.value);
+  }, 0);
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -263,9 +426,9 @@ function syncSocialInsuranceFields() {
       const officeSteps = stepsByOffice[filing.value] || [];
       const steps = [...officeSteps];
       if (status.value === 'requested') {
-        steps.unshift('Anmeldung lÃ¤uft bereits â€” SV-Nummer abwarten und nach Erhalt unten eintragen.');
+        steps.unshift('Anmeldung luft bereits  SV-Nummer abwarten und nach Erhalt unten eintragen.');
       } else {
-        steps.unshift('SV-Nummer fehlt noch â€” Mitarbeiter beim Arbeitgeber anmelden (siehe Schritte).');
+        steps.unshift('SV-Nummer fehlt noch  Mitarbeiter beim Arbeitgeber anmelden (siehe Schritte).');
       }
       guideSteps.innerHTML = '';
       steps.forEach((step) => {

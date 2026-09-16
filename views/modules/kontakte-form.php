@@ -201,7 +201,7 @@ if ($isCompanyForm && $companyEmployees === []) {
     <?php View::partial('partials/employee-data-form', compact('employeeData', 'employeeFiles', 'contactId', 'showEmployeeFields', 'canEdit')); ?>
 
     <h2>Bankverbindung</h2>
-    <p class="dg-lead">Mehrere Girokonten, Kreditkarten und Zahlungsdienste möglich.</p>
+    <p class="dg-lead">Mehrere Girokonten, Kreditkarten und Zahlungsdienste möglich. Kreditkartennummer nur zur Erkennung — gespeichert wird die Maske; IBAN der Karte für SEPA/Dokumente.</p>
     <div id="dg-bank-repeater" class="dg-bank-repeater">
       <?php foreach ($bankAccounts as $i => $account) : ?>
         <?php View::partial('partials/bank-account-card', compact('i', 'account', 'bankTypes')); ?>

@@ -644,7 +644,11 @@ $bankSummary = $filledBanks > 0
       </button>
     </header>
     <div class="dg-dept-accordion__panel" data-dept-panel hidden>
-    <p class="dg-field-hint">IBAN-, BIC- und Bankname-Vorschläge wie in den Kontakten.</p>
+    <p class="dg-field-hint">
+      IBAN/BIC/Bank werden vorgeschlagen. Bei <strong>Kreditkarte</strong>: Nummer nur zur Erkennung eingeben (wird maskiert, Vollnummer nicht gespeichert).
+      Viele Karten haben eine <strong>IBAN</strong> — die erscheint auf Rechnungen, wenn „Hauptkonto auf Dokumenten“ gesetzt ist.
+      Monatliche Kundenzahlungen: SEPA per IBAN oder Token über Stripe/Mollie — nicht die Roh-Kartennummer.
+    </p>
     <div id="dg-company-bank-repeater" class="dg-bank-repeater">
       <?php foreach ($bankAccounts as $i => $account) : ?>
         <?php View::render('partials/bank-account-card', compact('i', 'account', 'bankTypes')); ?>

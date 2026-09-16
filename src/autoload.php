@@ -34,6 +34,7 @@ spl_autoload_register(static function (string $class): void {
         'ContactCompanyLinkRepository' => '/src/Contact/ContactCompanyLinkRepository.php',
         'ContactAccessResolver' => '/src/Contact/ContactAccessResolver.php',
         'BankAccountTypes' => '/src/Contact/BankAccountTypes.php',
+        'CardNumberHelper' => '/src/Contact/CardNumberHelper.php',
         'BankDirectory' => '/src/Contact/BankDirectory.php',
         'HealthInsurerDirectory' => '/src/Contact/HealthInsurerDirectory.php',
         'EmployeeDocuments' => '/src/Contact/EmployeeDocuments.php',
