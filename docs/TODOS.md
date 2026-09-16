@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-07** — bei jeder Session zuerst aktualisieren, wenn sich Branch/Deploy/Tests ändern.
+Stand: **2026-09-16** — lokal `master` = `origin/master` (`93eac36`); bei Session zuerst prüfen.
 
 ---
 
@@ -10,9 +10,25 @@ Stand: **2026-09-07** — bei jeder Session zuerst aktualisieren, wenn sich Bran
 
 | Branch | Status |
 |--------|--------|
-| `master` | **Einzige Produktionslinie** — Buchhaltung, Zeiterfassung, Bank-Geisterumsätze (064), Website-Menü-Icons |
+| `master` | **Produktionslinie** — Stand `93eac36` (ELSTER-Doku, Geisterumsätze 064, Menü-Icons Lucide, Deploy-rsync) |
 
-**Hygiene:** Feature-Branches (`cursor/…`) nach Merge in `master` lokal + remote löschen. **Keine offenen `cursor/`-Branches mehr.**
+**Lokal (dieser PC, 2026-09-16):** `git fetch` + Fast-forward `eb5b4b9` → `93eac36` (28 Commits). Veralteter lokaler Branch `cursor/install-data-import-6a0c` gelöscht (Remote schon gone).
+
+**Offene Remote-Feature-Branches** (Cloud-Agents, noch nicht in `master`):
+
+| Branch | ahead | hinter master | Thema (kurz) |
+|--------|------:|--------------:|--------------|
+| `cursor/akademie-lager-konten-kichel-1dc6` | 86 | 0 | Akademie + Lager + Konten + Kichel |
+| `cursor/terminkalender-akademie-1dc6` | 83 | 0 | Terminkalender / Akademie |
+| `cursor/akademie-1dc6` | 42 | 0 | Akademie |
+| `cursor/kichel-assistant-1dc6` | 32 | 0 | Kichel-Assistent |
+| `cursor/lager-wirtschaft-1dc6` | 23 | 0 | Lagerwirtschaft |
+| `cursor/kontakt-bemerkung-ip-1dc6` | 3 | 0 | Kontakt-Bemerkung / IP |
+| `cursor/recht-produkt-tabs-1dc6` | 2 | 0 | Recht / Produkt-Tabs |
+| `cursor/ldap-prep-1dc6` | 1 | 0 | LDAP-Vorbereitung |
+| `cursor/arbeitsvertrag-artifacts-ignore-2ec8` | 1 | 10 | Artifacts ignore (teilweise veraltet) |
+
+**Hygiene:** Nach Merge Feature-Branch lokal + remote löschen. Neue DG-Chats/Agents immer von aktuellem `master` starten (`git pull`).
 
 Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash bin/sync-crm-from-master.sh` (auf Server).
 
@@ -98,7 +114,9 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 ## Chats aufräumen
 
-Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten.
+Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren — du: Rechtsklick → Archive.
+
+**Git in anderen Chats:** Andere offene DG-Chats haben ggf. noch alten `HEAD` — dort einmal `git fetch` + `git checkout master` + `git pull`. Cloud-Agents auf Feature-Branches oben nicht „zurückziehen“, bis gemergt oder verworfen.
 
 ---
 
@@ -111,3 +129,4 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten.
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |
 | `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md` | Vertragsvorlagen (Rechtliches) |
 | `MULTI-FIRMA-KONZEPT.md` | Multi-Firma, Umfirmierung, Pakete/Rabatt |
+| `HANDOFF-WEBSITE-MENU-ICONS.md` | Menü-Icons Phase 2 |
