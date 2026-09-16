@@ -14,6 +14,7 @@ Stand: 2026-09-13 · Migrationen **065–069**
 - [x] Manuelle Korrektur mit Pflicht-Grund
 - [x] Menü **Lager** (Bestand, Wareneingang, Warenausgang, Bewegungen, Inventur, CSV)
 - [x] **Stufe B** — Inventur-Assistent (Stichtag, Zählung, Differenz buchen, CSV)
+- [x] **Inventur-Zähllisten PDF** — druckbares HTML (`download=inventur-print`, leer / mit Soll, gruppiert Ort·Halle·Regal)
 - [x] **Stufe C (Teil)** — Strichcodes: Artikel (EAN/GTIN), Palette/Platz, Karton (`dg_stock_packages`)
 - [x] **Wareneingang / Warenausgang** — Scan-UI, Karton anlegen, Belegbezug Lieferschein/Auftrag
 - [x] **Etiketten-Druck** — Lagerstruktur → Etiketten, Avery L7163/L7160/… + Rollenformate

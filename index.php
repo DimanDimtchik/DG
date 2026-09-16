@@ -2866,11 +2866,12 @@ $legalProductsConfig = LegalProductSettings::config();
                 $out = fopen('php://output', 'w');
                 if ($out !== false) {
                     fprintf($out, "\xEF\xBB\xBF");
-                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Einheit', 'Buchbestand', 'Gezählt', 'Differenz'], ';');
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Buchbestand', 'Gezählt', 'Differenz'], ';');
                     foreach ($rows as $row) {
                         fputcsv($out, [
                             $row['article_number'],
                             $row['title'],
+                            $row['position_code'],
                             $row['unit'],
                             $row['book_quantity'],
                             $row['counted_quantity'],
@@ -2878,6 +2879,26 @@ $legalProductsConfig = LegalProductSettings::config();
                         ], ';');
                     }
                     fclose($out);
+                }
+                exit;
+            }
+            if ($download === 'inventur-print') {
+                $mode = trim((string) ($_GET['mode'] ?? 'blank'));
+                $invId = (int) ($_GET['id'] ?? 0);
+                $ort = trim((string) ($_GET['ort'] ?? ''));
+                $halle = trim((string) ($_GET['halle'] ?? ''));
+                $regal = trim((string) ($_GET['regal'] ?? ''));
+                try {
+                    StockInventoryPrintService::send(
+                        $invId > 0 ? $invId : null,
+                        $mode,
+                        $ort,
+                        $halle,
+                        $regal
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=lager&view=inventur', true, 302);
                 }
                 exit;
             }

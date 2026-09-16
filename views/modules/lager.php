@@ -42,6 +42,11 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
       <a class="dg-button" href="/app?page=lager&amp;download=csv">Bestand CSV</a>
       <?php if ($activeInventory !== null) : ?>
         <a class="dg-button" href="/app?page=lager&amp;view=inventur&amp;download=inventory&amp;id=<?= (int) ($activeInventory['id'] ?? 0) ?>">Inventur CSV</a>
+        <a class="dg-button" target="_blank" rel="noopener" href="/app?page=lager&amp;view=inventur&amp;download=inventur-print&amp;mode=blank&amp;id=<?= (int) ($activeInventory['id'] ?? 0) ?>">Zählliste leer</a>
+        <a class="dg-button" target="_blank" rel="noopener" href="/app?page=lager&amp;view=inventur&amp;download=inventur-print&amp;mode=expected&amp;id=<?= (int) ($activeInventory['id'] ?? 0) ?>">Zählliste mit Soll</a>
+      <?php else : ?>
+        <a class="dg-button" target="_blank" rel="noopener" href="/app?page=lager&amp;view=inventur&amp;download=inventur-print&amp;mode=blank">Zählliste leer</a>
+        <a class="dg-button" target="_blank" rel="noopener" href="/app?page=lager&amp;view=inventur&amp;download=inventur-print&amp;mode=expected">Zählliste mit Soll</a>
       <?php endif; ?>
     </div>
   </header>
@@ -318,6 +323,16 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php elseif ($lagerView === 'inventur') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Inventur</h2>
+    <div class="dg-page-header__actions" style="margin-bottom:1rem;">
+      <?php
+        $printId = $activeInventory !== null ? (int) ($activeInventory['id'] ?? 0) : 0;
+        $printBase = '/app?page=lager&view=inventur&download=inventur-print'
+          . ($printId > 0 ? '&id=' . $printId : '');
+      ?>
+      <a class="dg-button" target="_blank" rel="noopener" href="<?= View::escape($printBase . '&mode=blank') ?>">PDF: Zählliste leer (Blindzählung)</a>
+      <a class="dg-button" target="_blank" rel="noopener" href="<?= View::escape($printBase . '&mode=expected') ?>">PDF: Zählliste mit Sollbestand</a>
+    </div>
+    <p class="dg-field-hint">Zähllisten öffnen im Browser — dort „Drucken / PDF speichern“. Gruppiert nach Ort · Halle · Regal mit Unterschriftsfeld.</p>
     <?php if ($activeInventory === null && $canEdit) : ?>
       <form method="post" action="/app?page=lager&amp;view=inventur" class="dg-form-grid dg-form-grid--compact">
         <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
@@ -353,7 +368,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
         <div class="dg-table-wrap">
           <table class="dg-table dg-table--compact">
             <thead>
-              <tr><th>Nr.</th><th>Bezeichnung</th><th>Buchbestand</th><th>Gezählt</th><th>Differenz</th></tr>
+              <tr><th>Pos.</th><th>Nr.</th><th>Bezeichnung</th><th>Buchbestand</th><th>Gezählt</th><th>Differenz</th></tr>
             </thead>
             <tbody>
               <?php foreach ($activeInventoryLines as $line) : ?>
@@ -361,8 +376,10 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
                   $book = (float) ($line['book_quantity'] ?? 0);
                   $counted = (float) ($line['counted_quantity'] ?? 0);
                   $diff = round($counted - $book, 3);
+                  $posCode = StockPositionCode::fromRow($line);
                 ?>
                 <tr>
+                  <td><?= View::escape($posCode) ?></td>
                   <td><?= View::escape((string) ($line['article_number'] ?? '')) ?></td>
                   <td><?= View::escape((string) ($line['title'] ?? '')) ?></td>
                   <td><?= View::escape($fmtQty($book)) ?> <?= View::escape((string) ($line['unit'] ?? '')) ?></td>
@@ -396,15 +413,22 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Abgeschlossene Inventuren</h2>
     <table class="dg-table dg-table--compact">
-      <thead><tr><th>ID</th><th>Stichtag</th><th>Abgeschlossen</th><th>Notiz</th></tr></thead>
+      <thead><tr><th>ID</th><th>Stichtag</th><th>Abgeschlossen</th><th>Notiz</th><th></th></tr></thead>
       <tbody>
         <?php foreach ($stockInventories as $inv) : ?>
           <?php if (($inv['status'] ?? '') !== 'closed') { continue; } ?>
+          <?php $closedId = (int) ($inv['id'] ?? 0); ?>
           <tr>
-            <td><?= (int) ($inv['id'] ?? 0) ?></td>
+            <td><?= $closedId ?></td>
             <td><?= View::escape((string) ($inv['inventory_date'] ?? '')) ?></td>
             <td><?= View::escape((string) ($inv['closed_at'] ?? '')) ?></td>
             <td><?= View::escape((string) ($inv['note'] ?? '')) ?></td>
+            <td>
+              <a class="dg-button dg-button--small" target="_blank" rel="noopener"
+                 href="/app?page=lager&amp;view=inventur&amp;download=inventur-print&amp;mode=expected&amp;id=<?= $closedId ?>">PDF</a>
+              <a class="dg-button dg-button--small"
+                 href="/app?page=lager&amp;view=inventur&amp;download=inventory&amp;id=<?= $closedId ?>">CSV</a>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>

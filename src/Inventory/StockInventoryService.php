@@ -48,11 +48,12 @@ final class StockInventoryService
         }
 
         $stmt = Database::pdo()->prepare(
-            'SELECT l.*, a.article_number, a.title, a.unit
+            'SELECT l.*, a.article_number, a.title, a.unit,
+                    a.stock_ort, a.stock_halle, a.stock_regal, a.stock_platz
              FROM dg_stock_inventory_lines l
              INNER JOIN dg_calendar_articles a ON a.id = l.article_id
              WHERE l.inventory_id = :id
-             ORDER BY a.title ASC'
+             ORDER BY a.stock_ort ASC, a.stock_halle ASC, a.stock_regal ASC, a.stock_platz ASC, a.title ASC'
         );
         $stmt->execute(['id' => $inventoryId]);
 
@@ -196,6 +197,7 @@ final class StockInventoryService
             $rows[] = [
                 'article_number' => (string) ($line['article_number'] ?? ''),
                 'title' => (string) ($line['title'] ?? ''),
+                'position_code' => StockPositionCode::fromRow($line),
                 'unit' => (string) ($line['unit'] ?? ''),
                 'book_quantity' => (string) ($line['book_quantity'] ?? '0'),
                 'counted_quantity' => (string) ($line['counted_quantity'] ?? '0'),
