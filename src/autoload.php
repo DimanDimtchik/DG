@@ -158,6 +158,8 @@ spl_autoload_register(static function (string $class): void {
         'VoucherDocumentLegalClause' => '/src/Accounting/VoucherDocumentLegalClause.php',
         'AccountingPaymentSettings' => '/src/Accounting/AccountingPaymentSettings.php',
         'DocumentPresentationSettings' => '/src/Accounting/DocumentPresentationSettings.php',
+        'DepositMaterialCostService' => '/src/Accounting/DepositMaterialCostService.php',
+        'OfferAcceptanceMailService' => '/src/Accounting/OfferAcceptanceMailService.php',
         'PaymentTermsService' => '/src/Accounting/PaymentTermsService.php',
         'DunningService' => '/src/Accounting/DunningService.php',
         'VoucherPaymentRepository' => '/src/Accounting/VoucherPaymentRepository.php',

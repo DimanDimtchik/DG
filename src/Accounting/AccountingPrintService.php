@@ -154,18 +154,25 @@ final class AccountingPrintService
 (function () {
   function mmToPx(mm) {
     var probe = document.createElement('div');
-    probe.style.cssText = 'position:absolute;left:-9999px;width:100mm;height:1px;';
+    probe.style.cssText = 'position:absolute;left:-9999px;height:' + mm + 'mm;width:1px;';
     document.body.appendChild(probe);
-    var px = probe.offsetWidth / 100;
+    var px = probe.offsetHeight;
     document.body.removeChild(probe);
-    return mm * px;
+    return px || (mm * 96 / 25.4);
   }
   function markPages() {
     var sheet = document.querySelector('.vd-a4');
     if (!sheet) return;
     sheet.querySelectorAll('.vd-a4__page-mark').forEach(function (n) { n.remove(); });
+    // Inhaltshöhe ohne min-height: sonst zählt leerer A4-Rest fälschlich als 2. Seite
+    var prevMin = sheet.style.minHeight;
+    sheet.style.minHeight = '0';
+    var contentH = sheet.scrollHeight;
+    sheet.style.minHeight = prevMin;
     var pageH = mmToPx(297);
-    var pages = Math.max(1, Math.ceil(sheet.scrollHeight / pageH));
+    if (pageH < 1) return;
+    // Toleranz ~4 mm: Subpixel/Padding darf keine Extra-Seite erzeugen
+    var pages = Math.max(1, Math.ceil((contentH - mmToPx(4)) / pageH));
     for (var i = 1; i <= pages; i++) {
       var mark = document.createElement('div');
       mark.className = 'vd-a4__page-mark no-print';
@@ -174,12 +181,20 @@ final class AccountingPrintService
       sheet.appendChild(mark);
     }
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', markPages);
-  } else {
+  function run() {
     markPages();
+    // Fonts/Bilder nachziehen
+    window.setTimeout(markPages, 50);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
   }
   window.addEventListener('resize', markPages);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(markPages).catch(function () {});
+  }
 })();
 </script>
 JS;

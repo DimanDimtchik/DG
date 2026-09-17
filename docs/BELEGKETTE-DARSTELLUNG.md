@@ -16,9 +16,9 @@ Kundenfähige Dokumente (Angebot → … → Rechnung/Gutschrift): A4-ähnlich, 
 | Weg | Status | Vermerk auf Dokument |
 |-----|--------|----------------------|
 | **Manuell** („Folgebeleg“ aus Angebot) | ✅ vorhanden | Nach Speichern → Druck; Unterschriften Auftraggeber/-nehmer; Vermerk wer/wann |
-| **Automatisch** bei Annahme-Antwort auf Angebots-Mail | ❌ noch nicht gebaut | Geplant: wann, per E-Mail, wer (Absender), Link zur Annahme-Mail (ohne Nassunterschrift) |
+| **Automatisch** bei Annahme-Antwort auf Angebots-Mail | ✅ Migration 083 · `OfferAcceptanceMailService` | wann, per E-Mail, wer, mail_log_id (ohne Nassunterschrift) |
 
-Heute: Angebot per Mail versenden → Status manuell „angenommen“ / AB manuell als Folgebeleg. Keine Löschung von Belegen durch Belegdarstellungs-Update (nur Code/Settings).
+Heute: Angebot per Mail versenden (SMTP) speichert `voucher_id` + Message-ID. Antwort auf denselben Thread (Inbound-Webhook mit In-Reply-To) erzeugt automatisch eine Auftragsbestätigung inkl. Annahme-Vermerk. Ablehnungstexte (z. B. „ablehnen“) werden ignoriert.
 
 ---
 

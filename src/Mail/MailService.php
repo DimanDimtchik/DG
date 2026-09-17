@@ -15,7 +15,7 @@ final class MailService
      * @throws RuntimeException
      * @throws InvalidArgumentException
      */
-    public static function send(MailMessage $message, ?User $actor = null, ?int $mailboxId = null): int
+    public static function send(MailMessage $message, ?User $actor = null, ?int $mailboxId = null, ?int $voucherId = null): int
     {
         if (!Database::isConfigured()) {
             throw new RuntimeException('Datenbank ist nicht konfiguriert.');
@@ -61,6 +61,7 @@ final class MailService
             $message->contactId,
             $actor?->id,
             $mailboxId,
+            $voucherId,
         );
 
         $domain = substr(strrchr($fromEmail, '@') ?: '@localhost', 1) ?: 'localhost';

@@ -64,6 +64,8 @@ final class MailInboundApi
                 bodyPreview: $parsed['body_preview'],
                 messageId: $messageId !== '' ? $messageId : null,
                 contactId: MailLogRepository::guessContactId($parsed['from_email']),
+                inReplyTo: $parsed['in_reply_to'] !== '' ? $parsed['in_reply_to'] : null,
+                referencesHeader: $parsed['references'] !== '' ? $parsed['references'] : null,
             );
 
             if ($parsed['mime'] !== '') {
@@ -77,8 +79,14 @@ final class MailInboundApi
                 MailLogRepository::markReceived($logId);
             }
 
+            $acceptance = OfferAcceptanceMailService::processInboundMailLog($logId);
+
             http_response_code(200);
-            echo json_encode(['ok' => true, 'id' => $logId], JSON_THROW_ON_ERROR);
+            echo json_encode([
+                'ok' => true,
+                'id' => $logId,
+                'offer_acceptance' => $acceptance,
+            ], JSON_THROW_ON_ERROR);
         } catch (Throwable $e) {
             http_response_code(500);
             echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_THROW_ON_ERROR);
@@ -97,7 +105,9 @@ final class MailInboundApi
      *   text: string,
      *   html: string,
      *   mime: string,
-     *   message_id: string
+     *   message_id: string,
+     *   in_reply_to: string,
+     *   references: string
      * }
      */
     private static function normalizePayload(array $payload): array
@@ -118,6 +128,20 @@ final class MailInboundApi
         $html = trim((string) ($email['html'] ?? $email['htmlBody'] ?? $email['html_body'] ?? $payload['html'] ?? ''));
         $mime = trim((string) ($email['raw'] ?? $email['mime'] ?? $email['rawMime'] ?? $payload['raw'] ?? ''));
         $messageId = trim((string) ($email['messageId'] ?? $email['message_id'] ?? $payload['message_id'] ?? ''));
+        $inReplyTo = trim((string) ($email['inReplyTo'] ?? $email['in_reply_to'] ?? $payload['in_reply_to'] ?? ''));
+        $references = trim((string) ($email['references'] ?? $payload['references'] ?? ''));
+
+        if ($mime !== '') {
+            if ($inReplyTo === '' && preg_match('/^In-Reply-To:\s*(.+)$/mi', $mime, $m)) {
+                $inReplyTo = trim($m[1]);
+            }
+            if ($references === '' && preg_match('/^References:\s*(.+)$/mi', $mime, $m)) {
+                $references = trim($m[1]);
+            }
+            if ($messageId === '' && preg_match('/^Message-ID:\s*(.+)$/mi', $mime, $m)) {
+                $messageId = trim($m[1]);
+            }
+        }
 
         $preview = $text !== '' ? $text : MailMessage::bodyPreview($html);
         $preview = preg_replace('/\s+/u', ' ', $preview) ?? $preview;
@@ -133,6 +157,8 @@ final class MailInboundApi
             'html' => $html,
             'mime' => $mime,
             'message_id' => $messageId,
+            'in_reply_to' => $inReplyTo,
+            'references' => $references,
         ];
     }
 

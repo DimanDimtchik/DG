@@ -86,12 +86,19 @@ final class VoucherDocumentPrintService
             $label = 'Ihr Beleg';
         }
 
-        return 'Guten Tag,' . "\n\n"
+        $base = 'Guten Tag,' . "\n\n"
             . 'anbei erhalten Sie ' . $label
             . (trim((string) ($voucher['invoice_number'] ?? '')) !== ''
                 ? ' (Nr. ' . trim((string) $voucher['invoice_number']) . ')'
                 : '')
-            . '.' . "\n\n"
+            . '.' . "\n\n";
+
+        if (VoucherDocumentKind::sanitize($kind) === VoucherDocumentKind::OFFER) {
+            $base .= 'Wenn Sie das Angebot annehmen möchten, antworten Sie bitte einfach auf diese E-Mail '
+                . '(Antwort bewirkt die Auftragsbestätigung).' . "\n\n";
+        }
+
+        return $base
             . 'Bei Rückfragen stehen wir Ihnen gerne zur Verfügung.' . "\n\n"
             . 'Mit freundlichen Grüßen';
     }
@@ -531,7 +538,16 @@ final class VoucherDocumentPrintService
         } elseif ($mode === DocumentPresentationSettings::DEPOSIT_FIXED) {
             $amountLabel = number_format((float) ($cfg['fixed_amount'] ?? 0), 2, ',', '.') . ' €';
         } elseif ($mode === DocumentPresentationSettings::DEPOSIT_MATERIAL) {
-            $amountLabel = 'Materialkosten (Einkauf) — Berechnung aus Lagerpositionen folgt';
+            $items = is_array($voucher['items'] ?? null) ? $voucher['items'] : [];
+            $mat = DepositMaterialCostService::fromVoucherItems($items);
+            $amountLabel = number_format((float) $mat['amount'], 2, ',', '.') . ' € (Material / EK)';
+            if ((int) $mat['lines_missing'] > 0) {
+                $amountLabel .= ' — Hinweis: ' . (int) $mat['lines_missing']
+                    . ' Position(en) ohne Einkaufspreis';
+            }
+            if ((int) $mat['lines_priced'] === 0) {
+                $amountLabel = 'Materialkosten nicht berechenbar (keine EK-Preise an Artikeln)';
+            }
         }
 
         return [

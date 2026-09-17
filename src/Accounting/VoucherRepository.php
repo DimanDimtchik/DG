@@ -1436,6 +1436,46 @@ final class VoucherRepository
     }
 
     /**
+     * @param array<string, mixed> $acceptance
+     */
+    public static function updateDocumentAcceptance(int $voucherId, array $acceptance): void
+    {
+        if ($voucherId < 1 || !Database::isConfigured()) {
+            return;
+        }
+        if (!self::hasDocumentAcceptanceColumn()) {
+            return;
+        }
+        $json = json_encode($acceptance, JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            return;
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_vouchers SET document_acceptance = :document_acceptance WHERE id = :id'
+        );
+        $stmt->execute([
+            'document_acceptance' => $json,
+            'id' => $voucherId,
+        ]);
+    }
+
+    private static function hasDocumentAcceptanceColumn(): bool
+    {
+        static $ok = null;
+        if ($ok !== null) {
+            return $ok;
+        }
+        try {
+            $stmt = Database::pdo()->query("SHOW COLUMNS FROM dg_vouchers LIKE 'document_acceptance'");
+            $ok = $stmt !== false && $stmt->fetch() !== false;
+        } catch (Throwable) {
+            $ok = false;
+        }
+
+        return $ok;
+    }
+
+    /**
      * @throws InvalidArgumentException
      */
     private static function assertEditableFiscalYear(string $voucherDate): void

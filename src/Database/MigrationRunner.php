@@ -233,6 +233,9 @@ final class MigrationRunner
             '081_purchase_list_items.sql' => self::tableExists($pdo, 'dg_purchase_list_items'),
             '082_kdv_orgs_multi_firma.sql' => self::tableExists($pdo, 'dg_kdv_orgs')
                 && self::columnExists($pdo, 'dg_kdv_customers', 'org_id'),
+            '083_offer_mail_acceptance.sql' => self::columnExists($pdo, 'dg_mail_log', 'voucher_id')
+                && self::columnExists($pdo, 'dg_mail_log', 'in_reply_to')
+                && self::columnExists($pdo, 'dg_vouchers', 'document_acceptance'),
             default => false,
         };
     }
@@ -346,6 +349,7 @@ final class MigrationRunner
             '080_article_purchase_sources.sql' => true,
             '081_purchase_list_items.sql' => true,
             '082_kdv_orgs_multi_firma.sql' => true,
+            '083_offer_mail_acceptance.sql' => true,
         ];
     }
 

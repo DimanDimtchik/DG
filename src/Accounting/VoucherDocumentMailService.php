@@ -117,6 +117,8 @@ final class VoucherDocumentMailService
                 attachments: $attachments,
             ),
             $actor,
+            null,
+            $voucherId,
         );
 
         if ($markAsSent) {

@@ -31,28 +31,54 @@ final class MailLogRepository
         ?int $contactId,
         ?int $userId,
         ?int $mailboxId = null,
+        ?int $voucherId = null,
     ): int {
         $pdo = Database::pdo();
-        $stmt = $pdo->prepare(
-            'INSERT INTO dg_mail_log
-            (direction, mailbox_id, status, from_address, from_name, to_addresses, cc_addresses, bcc_addresses,
-             subject, body_preview, contact_id, user_id)
-             VALUES
-            (\'out\', :mailbox_id, \'queued\', :from_address, :from_name, :to_addresses, :cc_addresses, :bcc_addresses,
-             :subject, :body_preview, :contact_id, :user_id)'
-        );
-        $stmt->execute([
-            'mailbox_id' => $mailboxId,
-            'from_address' => $fromEmail,
-            'from_name' => $fromName,
-            'to_addresses' => json_encode(array_values($to), JSON_UNESCAPED_UNICODE),
-            'cc_addresses' => $cc !== [] ? json_encode(array_values($cc), JSON_UNESCAPED_UNICODE) : null,
-            'bcc_addresses' => $bcc !== [] ? json_encode(array_values($bcc), JSON_UNESCAPED_UNICODE) : null,
-            'subject' => mb_substr($subject, 0, 500),
-            'body_preview' => mb_substr($bodyPreview, 0, 500),
-            'contact_id' => $contactId,
-            'user_id' => $userId,
-        ]);
+        $hasVoucher = self::hasColumn('voucher_id');
+        if ($hasVoucher) {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_mail_log
+                (direction, mailbox_id, status, from_address, from_name, to_addresses, cc_addresses, bcc_addresses,
+                 subject, body_preview, contact_id, user_id, voucher_id)
+                 VALUES
+                (\'out\', :mailbox_id, \'queued\', :from_address, :from_name, :to_addresses, :cc_addresses, :bcc_addresses,
+                 :subject, :body_preview, :contact_id, :user_id, :voucher_id)'
+            );
+            $stmt->execute([
+                'mailbox_id' => $mailboxId,
+                'from_address' => $fromEmail,
+                'from_name' => $fromName,
+                'to_addresses' => json_encode(array_values($to), JSON_UNESCAPED_UNICODE),
+                'cc_addresses' => $cc !== [] ? json_encode(array_values($cc), JSON_UNESCAPED_UNICODE) : null,
+                'bcc_addresses' => $bcc !== [] ? json_encode(array_values($bcc), JSON_UNESCAPED_UNICODE) : null,
+                'subject' => mb_substr($subject, 0, 500),
+                'body_preview' => mb_substr($bodyPreview, 0, 500),
+                'contact_id' => $contactId,
+                'user_id' => $userId,
+                'voucher_id' => $voucherId !== null && $voucherId > 0 ? $voucherId : null,
+            ]);
+        } else {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_mail_log
+                (direction, mailbox_id, status, from_address, from_name, to_addresses, cc_addresses, bcc_addresses,
+                 subject, body_preview, contact_id, user_id)
+                 VALUES
+                (\'out\', :mailbox_id, \'queued\', :from_address, :from_name, :to_addresses, :cc_addresses, :bcc_addresses,
+                 :subject, :body_preview, :contact_id, :user_id)'
+            );
+            $stmt->execute([
+                'mailbox_id' => $mailboxId,
+                'from_address' => $fromEmail,
+                'from_name' => $fromName,
+                'to_addresses' => json_encode(array_values($to), JSON_UNESCAPED_UNICODE),
+                'cc_addresses' => $cc !== [] ? json_encode(array_values($cc), JSON_UNESCAPED_UNICODE) : null,
+                'bcc_addresses' => $bcc !== [] ? json_encode(array_values($bcc), JSON_UNESCAPED_UNICODE) : null,
+                'subject' => mb_substr($subject, 0, 500),
+                'body_preview' => mb_substr($bodyPreview, 0, 500),
+                'contact_id' => $contactId,
+                'user_id' => $userId,
+            ]);
+        }
 
         return (int) $pdo->lastInsertId();
     }
@@ -80,30 +106,133 @@ final class MailLogRepository
         string $bodyPreview,
         ?string $messageId,
         ?int $contactId,
+        ?string $inReplyTo = null,
+        ?string $referencesHeader = null,
     ): int {
         $pdo = Database::pdo();
-        $stmt = $pdo->prepare(
-            'INSERT INTO dg_mail_log
-            (direction, mailbox_id, imap_folder, status, is_read, from_address, from_name, to_addresses, cc_addresses,
-             subject, body_preview, contact_id, message_id)
-             VALUES
-            (\'in\', :mailbox_id, :imap_folder, \'queued\', 0, :from_address, :from_name, :to_addresses, :cc_addresses,
-             :subject, :body_preview, :contact_id, :message_id)'
-        );
-        $stmt->execute([
-            'mailbox_id' => $mailboxId,
-            'imap_folder' => 'INBOX',
-            'from_address' => $fromEmail,
-            'from_name' => $fromName,
-            'to_addresses' => json_encode(array_values($toAddresses), JSON_UNESCAPED_UNICODE),
-            'cc_addresses' => $ccAddresses !== [] ? json_encode(array_values($ccAddresses), JSON_UNESCAPED_UNICODE) : null,
-            'subject' => mb_substr($subject, 0, 500),
-            'body_preview' => mb_substr($bodyPreview, 0, 500),
-            'contact_id' => $contactId,
-            'message_id' => $messageId,
-        ]);
+        $hasThread = self::hasColumn('in_reply_to');
+        if ($hasThread) {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_mail_log
+                (direction, mailbox_id, imap_folder, status, is_read, from_address, from_name, to_addresses, cc_addresses,
+                 subject, body_preview, contact_id, message_id, in_reply_to, references_header)
+                 VALUES
+                (\'in\', :mailbox_id, :imap_folder, \'queued\', 0, :from_address, :from_name, :to_addresses, :cc_addresses,
+                 :subject, :body_preview, :contact_id, :message_id, :in_reply_to, :references_header)'
+            );
+            $stmt->execute([
+                'mailbox_id' => $mailboxId,
+                'imap_folder' => 'INBOX',
+                'from_address' => $fromEmail,
+                'from_name' => $fromName,
+                'to_addresses' => json_encode(array_values($toAddresses), JSON_UNESCAPED_UNICODE),
+                'cc_addresses' => $ccAddresses !== [] ? json_encode(array_values($ccAddresses), JSON_UNESCAPED_UNICODE) : null,
+                'subject' => mb_substr($subject, 0, 500),
+                'body_preview' => mb_substr($bodyPreview, 0, 500),
+                'contact_id' => $contactId,
+                'message_id' => $messageId,
+                'in_reply_to' => $inReplyTo !== null && $inReplyTo !== '' ? mb_substr($inReplyTo, 0, 255) : null,
+                'references_header' => $referencesHeader !== null && $referencesHeader !== ''
+                    ? mb_substr($referencesHeader, 0, 1000)
+                    : null,
+            ]);
+        } else {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_mail_log
+                (direction, mailbox_id, imap_folder, status, is_read, from_address, from_name, to_addresses, cc_addresses,
+                 subject, body_preview, contact_id, message_id)
+                 VALUES
+                (\'in\', :mailbox_id, :imap_folder, \'queued\', 0, :from_address, :from_name, :to_addresses, :cc_addresses,
+                 :subject, :body_preview, :contact_id, :message_id)'
+            );
+            $stmt->execute([
+                'mailbox_id' => $mailboxId,
+                'imap_folder' => 'INBOX',
+                'from_address' => $fromEmail,
+                'from_name' => $fromName,
+                'to_addresses' => json_encode(array_values($toAddresses), JSON_UNESCAPED_UNICODE),
+                'cc_addresses' => $ccAddresses !== [] ? json_encode(array_values($ccAddresses), JSON_UNESCAPED_UNICODE) : null,
+                'subject' => mb_substr($subject, 0, 500),
+                'body_preview' => mb_substr($bodyPreview, 0, 500),
+                'contact_id' => $contactId,
+                'message_id' => $messageId,
+            ]);
+        }
 
         return (int) $pdo->lastInsertId();
+    }
+
+    public static function setVoucherId(int $logId, int $voucherId): void
+    {
+        if ($logId < 1 || $voucherId < 1 || !self::hasColumn('voucher_id')) {
+            return;
+        }
+        $stmt = Database::pdo()->prepare('UPDATE dg_mail_log SET voucher_id = :voucher_id WHERE id = :id');
+        $stmt->execute(['voucher_id' => $voucherId, 'id' => $logId]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function findOutboundByMessageId(string $messageId): ?array
+    {
+        $messageId = self::normalizeMessageId($messageId);
+        if ($messageId === '' || !Database::isConfigured()) {
+            return null;
+        }
+        // Gespeichert oft ohne/mit <> — LIKE und Normalisierung
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM dg_mail_log
+             WHERE direction = 'out'
+               AND message_id IS NOT NULL
+               AND (
+                 LOWER(TRIM(BOTH '<>' FROM message_id)) = :mid
+                 OR LOWER(message_id) = :mid2
+                 OR LOWER(message_id) = :mid3
+               )
+             ORDER BY id DESC
+             LIMIT 1"
+        );
+        $stmt->execute([
+            'mid' => $messageId,
+            'mid2' => $messageId,
+            'mid3' => '<' . $messageId . '>',
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public static function normalizeMessageId(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+        if (preg_match('/<([^>]+)>/', $raw, $m)) {
+            return strtolower(trim($m[1]));
+        }
+
+        return strtolower($raw);
+    }
+
+    private static function hasColumn(string $column): bool
+    {
+        static $cache = [];
+        if (array_key_exists($column, $cache)) {
+            return $cache[$column];
+        }
+        if (!Database::isConfigured()) {
+            return $cache[$column] = false;
+        }
+        try {
+            $stmt = Database::pdo()->query('SHOW COLUMNS FROM dg_mail_log LIKE ' . Database::pdo()->quote($column));
+            $cache[$column] = $stmt !== false && $stmt->fetch() !== false;
+        } catch (Throwable) {
+            $cache[$column] = false;
+        }
+
+        return $cache[$column];
     }
 
     /**

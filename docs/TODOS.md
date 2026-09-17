@@ -42,7 +42,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **ELSTER Phase 2:** Hersteller-ID **34573** in CRM-Einstellungen (ganz-soft.de) hinterlegt; danach ERiC Linux laden, Test-Zertifikat (nach Server-Umzug)
 - [x] **Lager Phase 3+4:** Einkaufsliste/Ignore (081), In-Auslieferung, Beleg-Live-Hinweis
 - [x] **Belegkette Kundendarstellung** — Deploy 2026-09-17 (Druck, Summen, Belegdarstellung, AB→Druck+Unterschrift)
-- [ ] **AB aus Angebots-Mail-Antwort** — automatisch Folgebeleg + Vermerk wann/per Mail/wer + Link
+- [x] **AB aus Angebots-Mail-Antwort** — Migration 083 · Auto-AB + Annahme-Vermerk (Inbound In-Reply-To)
+- [x] **Anzahlung materialbasiert** — EK aus `dg_article_purchase_sources` (Preferred)
 - [ ] **Vor Hetzner:** `VOR-HETZNER-CHECK.md` (Shared Core, Asset-Minify, GoBD/§14/§19-Stichprobe)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 
