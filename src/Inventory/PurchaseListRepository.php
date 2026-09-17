@@ -72,8 +72,12 @@ final class PurchaseListRepository
         $reason = self::sanitizeReason($reason);
         $suggestedQty = max(0.0, round($suggestedQty, 3));
         $existing = self::findByArticleId($articleId);
-        if ($existing !== null && ($existing['status'] ?? '') === self::STATUS_IGNORED) {
-            return false;
+        if ($existing !== null) {
+            $st = (string) ($existing['status'] ?? '');
+            // Ignoriert und bereits nachbestellt (unterwegs) nicht wieder öffnen
+            if ($st === self::STATUS_IGNORED || $st === self::STATUS_ORDERED) {
+                return false;
+            }
         }
 
         $pdo = Database::pdo();
@@ -95,7 +99,7 @@ final class PurchaseListRepository
             return true;
         }
 
-        // open / ordered / done → wieder open mit aktualisiertem Vorschlag
+        // open / done → wieder open mit aktualisiertem Vorschlag
         $stmt = $pdo->prepare(
             'UPDATE dg_purchase_list_items SET
                 reason = :reason,
@@ -113,6 +117,66 @@ final class PurchaseListRepository
             'suggested_qty' => max($suggestedQty, (float) ($existing['suggested_qty'] ?? 0)),
             'source_voucher_id' => $sourceVoucherId !== null && $sourceVoucherId > 0 ? $sourceVoucherId : null,
             'status' => self::STATUS_OPEN,
+            'note' => $noteClean,
+            'note2' => $noteClean,
+            'article_id' => $articleId,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Manuell als nachbestellt erfassen (auch ohne Einkaufslisten-Eintrag).
+     * Bestehende open/done/ignored/ordered → ordered mit gesetzter Menge.
+     */
+    public static function upsertOrdered(
+        int $articleId,
+        float $qty,
+        string $note = ''
+    ): bool {
+        if ($articleId < 1 || !Database::isConfigured() || !self::tableReady()) {
+            return false;
+        }
+        $qty = max(0.0, round($qty, 3));
+        if ($qty < 0.0005) {
+            return false;
+        }
+
+        $existing = self::findByArticleId($articleId);
+        $pdo = Database::pdo();
+        $noteClean = mb_substr(trim($note), 0, 500);
+
+        if ($existing === null) {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_purchase_list_items
+                 (article_id, reason, suggested_qty, source_voucher_id, status, note)
+                 VALUES (:article_id, :reason, :suggested_qty, NULL, :status, :note)'
+            );
+            $stmt->execute([
+                'article_id' => $articleId,
+                'reason' => self::REASON_MANUAL,
+                'suggested_qty' => $qty,
+                'status' => self::STATUS_ORDERED,
+                'note' => $noteClean,
+            ]);
+
+            return true;
+        }
+
+        $stmt = $pdo->prepare(
+            'UPDATE dg_purchase_list_items SET
+                reason = :reason,
+                suggested_qty = :suggested_qty,
+                status = :status,
+                ignored_at = NULL,
+                ignored_by = NULL,
+                note = CASE WHEN :note = \'\' THEN note ELSE :note2 END
+             WHERE article_id = :article_id'
+        );
+        $stmt->execute([
+            'reason' => self::REASON_MANUAL,
+            'suggested_qty' => $qty,
+            'status' => self::STATUS_ORDERED,
             'note' => $noteClean,
             'note2' => $noteClean,
             'article_id' => $articleId,
@@ -157,6 +221,24 @@ final class PurchaseListRepository
         self::setStatus((int) $row['id'], $status, $userId);
     }
 
+    /** Korrigiert die Menge (z. B. tatsächlich bestellt). */
+    public static function updateSuggestedQty(int $id, float $qty): bool
+    {
+        if ($id < 1 || !Database::isConfigured() || !self::tableReady()) {
+            return false;
+        }
+        $qty = max(0.0, round($qty, 3));
+        if ($qty < 0.0005) {
+            return false;
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_purchase_list_items SET suggested_qty = :qty WHERE id = :id'
+        );
+        $stmt->execute(['qty' => $qty, 'id' => $id]);
+
+        return $stmt->rowCount() > 0 || self::findById($id) !== null;
+    }
+
     /**
      * @return list<array<string, mixed>>
      */
@@ -178,6 +260,46 @@ final class PurchaseListRepository
         return $rows;
     }
 
+    /** Nachbestellt, Ware noch nicht eingetroffen (status=ordered). */
+    public static function onOrderQty(int $articleId): float
+    {
+        $map = self::onOrderQtyByArticleIds([$articleId]);
+
+        return round((float) ($map[$articleId] ?? 0), 3);
+    }
+
+    /**
+     * @param list<int> $articleIds
+     * @return array<int, float>
+     */
+    public static function onOrderQtyByArticleIds(array $articleIds): array
+    {
+        $articleIds = array_values(array_unique(array_filter(array_map('intval', $articleIds))));
+        if ($articleIds === [] || !Database::isConfigured() || !self::tableReady()) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($articleIds), '?'));
+        $sql = "SELECT article_id, COALESCE(SUM(suggested_qty), 0) AS qty
+                FROM dg_purchase_list_items
+                WHERE article_id IN ({$placeholders})
+                  AND status = ?
+                GROUP BY article_id";
+        try {
+            $stmt = Database::pdo()->prepare($sql);
+            $stmt->execute([...$articleIds, self::STATUS_ORDERED]);
+        } catch (Throwable) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $map[(int) ($row['article_id'] ?? 0)] = round((float) ($row['qty'] ?? 0), 3);
+        }
+
+        return $map;
+    }
+
     public static function sanitizeReason(string $reason): string
     {
         $reason = strtolower(trim($reason));
@@ -197,7 +319,7 @@ final class PurchaseListRepository
     public static function reasonLabel(string $reason): string
     {
         return match (self::sanitizeReason($reason)) {
-            self::REASON_BELOW_MIN => 'Unter Mindestbestand',
+            self::REASON_BELOW_MIN => 'Unterbestand',
             self::REASON_MISSING_FOR_VOUCHER => 'Fehlmenge Beleg',
             default => 'Manuell',
         };

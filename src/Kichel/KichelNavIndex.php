@@ -19,6 +19,38 @@ final class KichelNavIndex
             'ust-voranmeldung',
             'ustva',
         ],
+        'buchhaltung-belege' => [
+            'angebot erstellen',
+            'angebot anlegen',
+            'neues angebot',
+            'auftragsbestätigung',
+            'auftragsbestaetigung',
+            'lieferschein',
+            'belegkette',
+            'folgebeleg',
+        ],
+        'settings:nummernkreise' => [
+            'angebotsnummer',
+            'rechnungsnummer',
+            'belegnummer',
+            'nummernkreis',
+            'nummernkreise',
+        ],
+    ];
+
+    /** Dokumentarten: dürfen nicht über Nummernkreis-Lead („… Angebot, Rechnung …“) gewinnen. */
+    private const DOCUMENT_INTENT_TOKENS = [
+        'angebot',
+        'angebote',
+        'auftragsbestätigung',
+        'auftragsbestaetigung',
+        'lieferschein',
+        'lieferscheine',
+        'abschlagsrechnung',
+        'schlussrechnung',
+        'rechnung',
+        'rechnungen',
+        'gutschrift',
     ];
 
     /**
@@ -213,7 +245,47 @@ final class KichelNavIndex
             }
         }
 
+        // Einzelnes Stichwort „Angebot“ / „Lieferschein“ → Belege, nicht Nummernkreise-Lead.
+        $wantsDocument = self::queryWantsDocument($tokens, $normalizedQuery);
+        if ($wantsDocument) {
+            if ($id === 'buchhaltung-belege') {
+                $score += 16;
+            }
+            if ($id === 'settings:nummernkreise' || $id === 'nummernkreise') {
+                $score = max(0, $score - 12);
+            }
+        }
+
         return $score;
+    }
+
+    /**
+     * @param list<string> $tokens
+     */
+    private static function queryWantsDocument(array $tokens, string $normalizedQuery): bool
+    {
+        if (
+            str_contains($normalizedQuery, 'nummernkreis')
+            || str_contains($normalizedQuery, 'belegnummer')
+            || str_contains($normalizedQuery, 'rechnungsnummer')
+            || str_contains($normalizedQuery, 'angebotsnummer')
+        ) {
+            return false;
+        }
+
+        foreach ($tokens as $token) {
+            if (in_array($token, self::DOCUMENT_INTENT_TOKENS, true)) {
+                return true;
+            }
+        }
+
+        foreach (['angebot erstellen', 'angebot anlegen', 'rechnung erstellen', 'lieferschein erstellen'] as $phrase) {
+            if (str_contains($normalizedQuery, $phrase)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function textContainsToken(string $text, string $token): bool
@@ -225,6 +297,17 @@ final class KichelNavIndex
             return false;
         }
         if ($token === 'freigabe' && str_contains($text, 'support')) {
+            return false;
+        }
+        // „Angebot“ darf nicht „Angebotsnummer“ / Nummernkreis-Lead treffen.
+        if ($token === 'angebot' && str_contains($text, 'angebotsnummer')) {
+            return false;
+        }
+        if (
+            in_array($token, self::DOCUMENT_INTENT_TOKENS, true)
+            && str_contains($text, 'stammdaten')
+            && (str_contains($text, 'angebot') || str_contains($text, 'rechnung'))
+        ) {
             return false;
         }
         if (mb_strlen($token, 'UTF-8') < 3 && $text !== $token) {

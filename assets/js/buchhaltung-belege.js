@@ -214,7 +214,12 @@
     if (!kind) {
       return true;
     }
-    return kind === 'partial_invoice' || kind === 'invoice' || kind === 'final_invoice';
+    return kind === 'offer'
+      || kind === 'order_confirmation'
+      || kind === 'delivery_note'
+      || kind === 'partial_invoice'
+      || kind === 'invoice'
+      || kind === 'final_invoice';
   }
 
   var documentFooterInput = document.getElementById('dg-voucher-document-footer');
@@ -770,6 +775,9 @@
       if (accountField) {
         accountField.value = account;
       }
+      if (queryField) {
+        queryField.value = account;
+      }
       if (grossField) {
         grossField.value = formatAmount(group.gross);
       }
@@ -803,6 +811,9 @@
           }
         });
     });
+    // Sofort Totals setzen (ohne auf Kontonamen-Fetch zu warten) — sonst blockiert Speichern.
+    reindexBookingRows();
+    syncTotalsFromLines();
   }
 
   function articleFromButton(button) {
@@ -1248,18 +1259,93 @@
     var searchVal = contactSearch ? contactSearch.value.trim() : '';
     var valid = hasSelectedContact();
     if (saveButton) {
-      saveButton.disabled = !valid;
+      // Button bleibt klickbar — Hinweis statt stillem disabled (Tablet/Touch).
+      saveButton.disabled = false;
+      saveButton.title = valid
+        ? ''
+        : 'Zuerst unter „Lieferant / Kontakt“ einen gespeicherten Kontakt aus der Liste wählen.';
+      saveButton.classList.toggle('dg-button--needs-contact', !valid);
     }
     if (contactSearch) {
       contactSearch.classList.toggle('dg-input--error', !valid && searchVal !== '');
+      contactSearch.setAttribute('aria-invalid', valid ? 'false' : 'true');
     }
     if (contactHint) {
       if (valid) {
         contactHint.textContent = 'Kontakt aus dem CRM verknüpft.';
+        contactHint.classList.remove('dg-field-hint--error');
       } else if (searchVal !== '') {
-        contactHint.textContent = 'Kein gültiger Kontakt — bitte einen Vorschlag wählen oder zuerst unter Kontakte anlegen.';
+        contactHint.textContent = 'Kein gültiger Kontakt — bitte einen Vorschlag aus der Liste wählen oder zuerst unter Kontakte anlegen.';
+        contactHint.classList.add('dg-field-hint--error');
       } else {
-        contactHint.textContent = 'Pflicht: einen gespeicherten Kontakt aus der Liste wählen.';
+        contactHint.textContent = 'Pflicht: einen gespeicherten Kontakt aus der Liste wählen (Tippen und Eintrag anklicken).';
+        contactHint.classList.add('dg-field-hint--error');
+      }
+    }
+    var saveHint = document.getElementById('dg-voucher-save-hint');
+    if (saveHint) {
+      saveHint.hidden = valid;
+    }
+  }
+
+  function ensureInvoiceItemTitlesFromQuery() {
+    if (!invoiceItemsBody) {
+      return;
+    }
+    invoiceItemsBody.querySelectorAll('.dg-voucher-items__row').forEach(function (row) {
+      var titleField = row.querySelector('.dg-voucher-items-title');
+      var queryField = row.querySelector('.dg-voucher-items-article-query');
+      if (!titleField || !queryField) {
+        return;
+      }
+      if (titleField.value.trim() === '' && queryField.value.trim() !== '') {
+        titleField.value = queryField.value.trim();
+      }
+    });
+  }
+
+  function ensureGrossBeforeSubmit() {
+    if (!grossInput) {
+      return;
+    }
+    ensureInvoiceItemTitlesFromQuery();
+    if (usesIncomeItems()) {
+      syncBookingFromItems();
+    } else {
+      syncTotalsFromLines();
+    }
+    if (!String(grossInput.value || '').trim()) {
+      var itemsSum = syncInvoiceItemsSum();
+      if (itemsSum > 0) {
+        grossInput.value = formatAmount(itemsSum);
+      }
+    }
+  }
+
+  function showSaveBlocked(message, focusEl) {
+    var banner = document.getElementById('dg-voucher-save-error');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'dg-voucher-save-error';
+      banner.className = 'dg-flash dg-flash--error';
+      banner.setAttribute('role', 'alert');
+      var actions = form.querySelector('.dg-form-actions');
+      if (actions && actions.parentNode) {
+        actions.parentNode.insertBefore(banner, actions);
+      } else {
+        form.appendChild(banner);
+      }
+    }
+    banner.hidden = false;
+    banner.textContent = message;
+    if (focusEl && typeof focusEl.scrollIntoView === 'function') {
+      focusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (focusEl && typeof focusEl.focus === 'function') {
+      try {
+        focusEl.focus({ preventScroll: true });
+      } catch (e) {
+        focusEl.focus();
       }
     }
   }
@@ -2509,12 +2595,29 @@
   });
 
   form.addEventListener('submit', function (event) {
-    if (!readOnly && !hasSelectedContact()) {
+    if (readOnly) {
+      return;
+    }
+    ensureGrossBeforeSubmit();
+    if (!hasSelectedContact()) {
       event.preventDefault();
       syncContactValidation();
-      if (contactSearch) {
-        contactSearch.focus();
-      }
+      showSaveBlocked(
+        'Beleg speichern nicht möglich: Bitte unter „Lieferant / Kontakt“ einen gespeicherten Kontakt aus der Vorschlagsliste wählen.',
+        contactSearch
+      );
+      return;
+    }
+    var saveError = document.getElementById('dg-voucher-save-error');
+    if (saveError) {
+      saveError.hidden = true;
+    }
+    if (grossInput && !String(grossInput.value || '').trim()) {
+      event.preventDefault();
+      showSaveBlocked(
+        'Bitte mindestens eine Rechnungsposition mit Artikel/Leistung und Betrag erfassen (Artikel aus der Suche auswählen).',
+        invoiceItemsSection || grossInput
+      );
       return;
     }
     syncReverseChargeUi();

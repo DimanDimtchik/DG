@@ -134,10 +134,17 @@ $statusNextActions = ($selectedDocumentKind !== '' && !$readOnly)
     ? VoucherDocumentStatus::nextStatuses($selectedDocumentStatus, $selectedDocumentKind)
     : [];
 $showDocumentPositionTexts = VoucherDocumentKind::usesPositionTexts($selectedDocumentKind, $selectedType);
-if (!$isEdit && $showDocumentPositionTexts && trim((string) ($form['document_intro_text'] ?? '')) === '') {
-    $form['document_intro_text'] = VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind);
+if (!$isEdit && $showDocumentPositionTexts) {
+    if (trim((string) ($form['document_intro_text'] ?? '')) === '') {
+        $form['document_intro_text'] = DocumentPresentationSettings::defaultIntro($selectedDocumentKind);
+    }
+    if (trim((string) ($form['document_footer_text'] ?? '')) === '') {
+        $form['document_footer_text'] = DocumentPresentationSettings::defaultFooter($selectedDocumentKind);
+    }
 }
-$documentFooterHint = 'Zusätzlicher Freitext (Zahlungsziel, Skonto, persönliche Hinweise). Gesetzliche Standardtexte wählen Sie unten aus.';
+$documentFooterHint = $selectedDocumentKind === VoucherDocumentKind::OFFER
+    ? 'Gültigkeitsdauer und Preisgarantie (editierbar). Platzhalter {valid_until} wird beim Druck durch das Datum „gültig bis“ ersetzt.'
+    : 'Zusätzlicher Freitext (Zahlungsziel, Skonto, persönliche Hinweise). Gesetzliche Standardtexte wählen Sie unten aus.';
 $selectedLegalClauses = is_array($form['document_legal_clauses'] ?? null)
     ? VoucherDocumentLegalClause::sanitizeSelection($form['document_legal_clauses'])
     : [];
@@ -207,6 +214,30 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         'voucherMailCanSend' => (bool) ($voucherMailCanSend ?? false),
     ]);
   ?>
+
+  <?php
+    $provenanceHint = '';
+    if ($isEdit) {
+        $createdAtRaw = trim((string) ($form['created_at'] ?? ''));
+        $createdById = (int) ($form['created_by'] ?? 0);
+        $createdByLabel = '';
+        if ($createdById > 0) {
+            $creator = UserRepository::findById($createdById);
+            if ($creator !== null) {
+                $createdByLabel = trim($creator->displayName) !== '' ? trim($creator->displayName) : trim($creator->username);
+            }
+        }
+        if ($createdAtRaw !== '' || $createdByLabel !== '') {
+            $provenanceHint = 'Erstellt'
+                . ($createdAtRaw !== '' ? ' am ' . date('d.m.Y H:i', strtotime($createdAtRaw) ?: time()) : '')
+                . ($createdByLabel !== '' ? ' von ' . $createdByLabel : '')
+                . '.';
+        }
+    }
+  ?>
+  <?php if ($provenanceHint !== '') : ?>
+    <p class="dg-field-hint" style="margin-top:-8px;margin-bottom:16px;"><?= View::escape($provenanceHint) ?></p>
+  <?php endif; ?>
 
   <?php if ($isEdit && !$readOnly && ($voucherMailCanSend ?? false)) : ?>
     <section class="dg-panel dg-voucher-email" id="dg-voucher-email-section" style="margin-bottom: 20px;">
@@ -364,9 +395,11 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <input type="date" name="voucher_date" id="dg-voucher-date" value="<?= View::escape($form['voucher_date'] ?? '') ?>" required<?= $readOnly ? ' readonly' : '' ?>>
         </label>
         <label class="dg-field">
-          <span>Lieferdatum</span>
+          <span><?= $selectedDocumentKind === VoucherDocumentKind::OFFER ? 'Gültig bis' : 'Lieferdatum' ?></span>
           <input type="date" name="delivery_date" id="dg-voucher-delivery-date" value="<?= View::escape($form['delivery_date'] ?? '') ?>"<?= $readOnly ? ' readonly' : '' ?>>
-          <small class="dg-field-hint">Leistungs- oder Lieferdatum — z. B. auf der Ausgangsrechnung.</small>
+          <small class="dg-field-hint"><?= $selectedDocumentKind === VoucherDocumentKind::OFFER
+            ? 'Bis zu diesem Datum sind die Angebotspreise verbindlich (auch im Footer-Text als {valid_until}).'
+            : 'Leistungs- oder Lieferdatum — z. B. auf der Ausgangsrechnung.' ?></small>
         </label>
         <label class="dg-field" id="dg-voucher-invoice-field">
           <span id="dg-voucher-invoice-label">Rechnungsnummer<?= $invoiceNumberRequired ? ' *' : '' ?></span>
@@ -630,7 +663,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
             id="dg-voucher-document-intro"
             rows="3"
             maxlength="4000"
-            placeholder="<?= View::escape(VoucherDocumentKind::defaultPositionIntroText($selectedDocumentKind)) ?>"
+            placeholder="<?= View::escape(DocumentPresentationSettings::defaultIntro($selectedDocumentKind)) ?>"
             <?= $readOnly ? ' readonly' : '' ?>
           ><?= View::escape((string) ($form['document_intro_text'] ?? '')) ?></textarea>
           <small class="dg-field-hint">Erscheint auf Rechnung, PDF und in der E-Mail vor der Positionstabelle.</small>
@@ -665,7 +698,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
               $itemAreaId = (int) ($item['area_id'] ?? 0);
               ?>
               <tr class="dg-voucher-items__row" data-item-index="<?= (int) $index ?>">
-                <td class="dg-voucher-items-article-cell">
+                <td class="dg-voucher-items-article-cell" data-label="Artikel / Leistung">
                   <?php if ($readOnly) : ?>
                     <?= View::escape($itemQuery !== '' ? $itemQuery : '—') ?>
                   <?php else : ?>
@@ -686,7 +719,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     </div>
                   <?php endif; ?>
                 </td>
-                <td>
+                <td class="dg-voucher-items-area-cell" data-label="Leistungsbereich">
                   <?php if ($readOnly) : ?>
                     <?= View::escape((string) ($item['area_name'] ?? '—')) ?>
                   <?php else : ?>
@@ -703,7 +736,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     <input type="hidden" class="dg-voucher-items-area-name" name="items[<?= (int) $index ?>][area_name]" value="<?= View::escape((string) ($item['area_name'] ?? '')) ?>">
                   <?php endif; ?>
                 </td>
-                <td>
+                <td data-label="Menge">
                   <input
                     type="text"
                     class="dg-voucher-items-quantity"
@@ -713,7 +746,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     <?= $readOnly ? ' readonly' : '' ?>
                   >
                 </td>
-                <td>
+                <td data-label="Einheit">
                   <input
                     type="text"
                     class="dg-voucher-items-unit"
@@ -723,7 +756,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     <?= $readOnly ? ' readonly' : '' ?>
                   >
                 </td>
-                <td>
+                <td data-label="Einzelpreis brutto">
                   <input
                     type="text"
                     class="dg-voucher-items-unit-price"
@@ -733,14 +766,14 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     <?= $readOnly ? ' readonly' : '' ?>
                   >
                 </td>
-                <td>
+                <td data-label="USt %">
                   <select class="dg-voucher-items-tax" name="items[<?= (int) $index ?>][tax_rate]"<?= $readOnly ? ' disabled' : '' ?>>
                     <?php foreach ($taxRates as $rate) : ?>
                       <option value="<?= (int) $rate ?>"<?= (int) ($item['tax_rate'] ?? 19) === $rate ? ' selected' : '' ?>><?= (int) $rate ?> %</option>
                     <?php endforeach; ?>
                   </select>
                 </td>
-                <td>
+                <td data-label="Summe">
                   <input
                     type="text"
                     class="dg-voucher-items-gross dg-input--computed"
@@ -751,7 +784,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                   >
                 </td>
                 <?php if (!$readOnly) : ?>
-                  <td>
+                  <td class="dg-voucher-items-remove-cell">
                     <button type="button" class="dg-button dg-button--ghost dg-voucher-items-remove" aria-label="Position entfernen">×</button>
                   </td>
                 <?php endif; ?>
@@ -1036,7 +1069,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </label>
         <label class="dg-field">
           <span>Bruttobetrag *</span>
-          <input type="text" name="gross_amount" id="dg-voucher-gross" inputmode="decimal" value="<?= View::escape($form['gross_amount'] ?? '') ?>" required placeholder="0,00" readonly tabindex="-1" class="dg-input--computed"<?= $readOnly ? ' readonly' : '' ?>>
+          <input type="text" name="gross_amount" id="dg-voucher-gross" inputmode="decimal" value="<?= View::escape($form['gross_amount'] ?? '') ?>" placeholder="0,00" readonly tabindex="-1" class="dg-input--computed"<?= $readOnly ? ' readonly' : '' ?>>
           <small class="dg-field-hint" id="dg-voucher-gross-hint">Wird aus den Buchungszeilen berechnet.</small>
         </label>
         <label class="dg-field">
@@ -1188,7 +1221,10 @@ $paymentTermsPreview = PaymentTermsService::composeText(
 
     <?php if (!$readOnly) : ?>
       <div class="dg-form-actions">
-        <button type="submit" class="dg-button dg-button--primary" id="dg-voucher-save-btn"<?= !$readOnly && (int) ($form['contact_id'] ?? 0) < 1 ? ' disabled' : '' ?>>Beleg speichern</button>
+        <p class="dg-field-hint dg-field-hint--error" id="dg-voucher-save-hint"<?= (int) ($form['contact_id'] ?? 0) > 0 ? ' hidden' : '' ?>>
+          Speichern erst möglich, wenn unter „Lieferant / Kontakt“ ein Kontakt aus der Liste gewählt wurde.
+        </p>
+        <button type="submit" class="dg-button dg-button--primary" id="dg-voucher-save-btn" name="voucher_save_btn" value="1">Beleg speichern</button>
         <a class="dg-button" href="<?= View::escape($backHref) ?>">Abbrechen</a>
       </div>
     <?php endif; ?>
@@ -1242,7 +1278,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
 
   <template id="dg-voucher-invoice-item-row-template">
     <tr class="dg-voucher-items__row">
-      <td class="dg-voucher-items-article-cell">
+      <td class="dg-voucher-items-article-cell" data-label="Artikel / Leistung">
         <div class="dg-voucher-items-article-wrap">
           <input type="search" class="dg-voucher-items-article-query" placeholder="Artikel oder Leistung suchen …" autocomplete="off">
           <input type="hidden" class="dg-voucher-items-article-id">
@@ -1253,7 +1289,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <div class="dg-article-search-results dg-voucher-items-search-results" hidden></div>
         </div>
       </td>
-      <td>
+      <td class="dg-voucher-items-area-cell" data-label="Leistungsbereich">
         <select class="dg-voucher-items-area">
           <option value="">—</option>
           <?php foreach ($calendarAreas as $area) : ?>
@@ -1262,18 +1298,18 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </select>
         <input type="hidden" class="dg-voucher-items-area-name">
       </td>
-      <td><input type="text" class="dg-voucher-items-quantity" inputmode="decimal" value="1"></td>
-      <td><input type="text" class="dg-voucher-items-unit" value="Stück" maxlength="64"></td>
-      <td><input type="text" class="dg-voucher-items-unit-price" inputmode="decimal" placeholder="0,00"></td>
-      <td>
+      <td data-label="Menge"><input type="text" class="dg-voucher-items-quantity" inputmode="decimal" value="1"></td>
+      <td data-label="Einheit"><input type="text" class="dg-voucher-items-unit" value="Stück" maxlength="64"></td>
+      <td data-label="Einzelpreis brutto"><input type="text" class="dg-voucher-items-unit-price" inputmode="decimal" placeholder="0,00"></td>
+      <td data-label="USt %">
         <select class="dg-voucher-items-tax">
           <?php foreach ($taxRates as $rate) : ?>
             <option value="<?= (int) $rate ?>"><?= (int) $rate ?> %</option>
           <?php endforeach; ?>
         </select>
       </td>
-      <td><input type="text" class="dg-voucher-items-gross dg-input--computed" readonly tabindex="-1"></td>
-      <td><button type="button" class="dg-button dg-button--ghost dg-voucher-items-remove" aria-label="Position entfernen">×</button></td>
+      <td data-label="Summe"><input type="text" class="dg-voucher-items-gross dg-input--computed" readonly tabindex="-1"></td>
+      <td class="dg-voucher-items-remove-cell"><button type="button" class="dg-button dg-button--ghost dg-voucher-items-remove" aria-label="Position entfernen">×</button></td>
     </tr>
   </template>
 

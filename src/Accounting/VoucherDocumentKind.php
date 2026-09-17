@@ -140,7 +140,7 @@ final class VoucherDocumentKind
     }
 
     /**
-     * Rechnung, Abschlags- und Schlussrechnung — Freitext vor/nach Positionen.
+     * Ausgangsbelege der Kette — Freitext vor/nach Positionen (Kundenansicht).
      */
     public static function usesPositionTexts(string $documentKind, string $voucherType = 'income'): bool
     {
@@ -153,15 +153,38 @@ final class VoucherDocumentKind
             return true;
         }
 
-        return in_array($kind, [self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE], true);
+        return in_array($kind, [
+            self::OFFER,
+            self::ORDER_CONFIRMATION,
+            self::DELIVERY_NOTE,
+            self::PARTIAL_INVOICE,
+            self::INVOICE,
+            self::FINAL_INVOICE,
+        ], true);
     }
 
     public static function defaultPositionIntroText(string $documentKind): string
     {
         return match (self::sanitize($documentKind)) {
+            self::OFFER => 'Vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:',
+            self::ORDER_CONFIRMATION => 'Wir bestätigen Ihren Auftrag wie folgt:',
+            self::DELIVERY_NOTE => 'Wir liefern Ihnen folgende Artikel bzw. Leistungen:',
             self::PARTIAL_INVOICE => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen (Abschlagsrechnung):',
             self::FINAL_INVOICE => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen (Schlussrechnung):',
             default => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen:',
+        };
+    }
+
+    /**
+     * Standard-Nachbemerkung (Platzhalter {valid_until} für Angebotsgültigkeit).
+     */
+    public static function defaultPositionFooterText(string $documentKind): string
+    {
+        return match (self::sanitize($documentKind)) {
+            self::OFFER => 'Dieses Angebot ist gültig bis zum {valid_until}. Bis dahin sind die genannten Preise verbindlich.',
+            self::ORDER_CONFIRMATION => 'Wir freuen uns auf die Zusammenarbeit und stehen für Rückfragen gerne zur Verfügung.',
+            self::DELIVERY_NOTE => 'Bitte prüfen Sie die Lieferung unverzüglich auf Vollständigkeit und Unversehrtheit.',
+            default => '',
         };
     }
 }

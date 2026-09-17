@@ -202,8 +202,20 @@ final class VoucherIncomePositions
 
             $title = trim((string) ($line['title'] ?? ''));
             $articleId = max(0, (int) ($line['article_id'] ?? 0));
-            if ($title === '' && $articleId < 1) {
-                continue;
+            $articleNumber = trim((string) ($line['article_number'] ?? ''));
+            if ($title === '' && $articleId < 1 && $articleNumber === '') {
+                // Manuell erfasste Zeile ohne Katalogtreffer — Titel aus Betragszeile ableiten.
+                $qtyProbe = self::parseQuantity($line['quantity'] ?? 0);
+                $priceProbe = round((float) str_replace(',', '.', (string) ($line['unit_price_gross'] ?? '0')), 2);
+                $grossProbe = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+                if ($qtyProbe > 0 && ($priceProbe != 0.0 || $grossProbe != 0.0)) {
+                    $title = 'Position';
+                } else {
+                    continue;
+                }
+            }
+            if ($title === '' && $articleId > 0) {
+                $title = $articleNumber !== '' ? $articleNumber : 'Artikel';
             }
 
             $quantity = self::parseQuantity($line['quantity'] ?? 1);

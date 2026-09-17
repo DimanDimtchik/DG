@@ -858,6 +858,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Belegdarstellung (Kette)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['document_presentation_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('belegdarstellung');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    DocumentPresentationSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Belegdarstellung gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Zeiterfassung
         if (
             $page === 'einstellungen'
@@ -1155,6 +1177,8 @@ switch ($path) {
                 || isset($_POST['purchase_list_restore'])
                 || isset($_POST['purchase_list_ordered'])
                 || isset($_POST['purchase_list_done'])
+                || isset($_POST['purchase_list_qty'])
+                || isset($_POST['purchase_list_manual_order'])
                 || isset($_POST['purchase_list_rebuild'])
             )
         ) {
@@ -1164,7 +1188,7 @@ switch ($path) {
                 $redirect .= '&kind=' . rawurlencode($listKind);
             }
             $listView = trim((string) ($_POST['list'] ?? $_GET['list'] ?? ''));
-            if ($listView === 'purchase' || $listView === 'ignored') {
+            if ($listView === 'purchase' || $listView === 'ignored' || $listView === 'ordered') {
                 $redirect .= '&list=' . rawurlencode($listView);
             }
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
@@ -1183,14 +1207,52 @@ switch ($path) {
                         PurchaseListService::restore((int) ($_POST['purchase_list_id'] ?? 0));
                         Flash::set('success', 'Eintrag wieder aktiv.');
                         $redirect = '/app?page=artikel-leistungen&list=ignored';
+                    } elseif (isset($_POST['purchase_list_qty'])) {
+                        $qty = PurchaseListService::parseQtyInput($_POST['suggested_qty'] ?? '');
+                        if ($qty === null) {
+                            Flash::set('error', 'Bitte eine gültige Menge eingeben (größer 0).');
+                        } elseif (PurchaseListService::updateQty((int) ($_POST['purchase_list_id'] ?? 0), $qty)) {
+                            Flash::set('success', 'Nachbestellte Menge aktualisiert.');
+                        } else {
+                            Flash::set('error', 'Menge konnte nicht gespeichert werden.');
+                        }
+                        $redirect = '/app?page=artikel-leistungen&list=ordered';
+                    } elseif (isset($_POST['purchase_list_manual_order'])) {
+                        $articleId = (int) ($_POST['manual_order_article_id'] ?? 0);
+                        $qty = PurchaseListService::parseQtyInput($_POST['manual_order_qty'] ?? '');
+                        $note = trim((string) ($_POST['manual_order_note'] ?? ''));
+                        if ($articleId < 1) {
+                            Flash::set('error', 'Bitte einen Artikel wählen.');
+                        } elseif ($qty === null) {
+                            Flash::set('error', 'Bitte eine gültige Bestellmenge eingeben (größer 0).');
+                        } elseif (PurchaseListService::registerManualOrder($articleId, $qty, $note)) {
+                            Flash::set('success', 'Nachbestellung eingetragen — erscheint unter „Nachbestellt“ und im Bestand.');
+                        } else {
+                            Flash::set('error', 'Nachbestellung konnte nicht gespeichert werden (Artikel mit Lagerführung nötig).');
+                        }
+                        $redirect = '/app?page=artikel-leistungen&list=ordered';
                     } elseif (isset($_POST['purchase_list_ordered'])) {
-                        PurchaseListService::markOrdered((int) ($_POST['purchase_list_id'] ?? 0));
-                        Flash::set('success', 'Als bestellt markiert.');
-                        $redirect = '/app?page=artikel-leistungen&list=purchase';
+                        $orderedQty = PurchaseListService::parseQtyInput($_POST['suggested_qty'] ?? '');
+                        $orderUrl = PurchaseListService::markOrdered(
+                            (int) ($_POST['purchase_list_id'] ?? 0),
+                            $orderedQty
+                        );
+                        $redirect = '/app?page=artikel-leistungen&list=ordered';
+                        if ($orderUrl !== '' && preg_match('#^https?://#i', $orderUrl)) {
+                            Flash::set('success', 'Als bestellt markiert — Shop wird geöffnet. Menge ggf. unter „Nachbestellt“ korrigieren.');
+                            $redirect .= '&open_order_url=' . rawurlencode($orderUrl);
+                        } else {
+                            Flash::set(
+                                'success',
+                                'Als bestellt markiert. Menge ggf. unter „Nachbestellt“ korrigieren.'
+                            );
+                        }
                     } elseif (isset($_POST['purchase_list_done'])) {
                         PurchaseListService::markDone((int) ($_POST['purchase_list_id'] ?? 0));
-                        Flash::set('success', 'Als erledigt markiert.');
-                        $redirect = '/app?page=artikel-leistungen&list=purchase';
+                        Flash::set('success', 'Als erledigt markiert (Wareneingang verbuchen nicht vergessen).');
+                        $fromList = trim((string) ($_POST['list'] ?? 'ordered'));
+                        $redirect = '/app?page=artikel-leistungen&list='
+                            . ($fromList === 'purchase' ? 'purchase' : 'ordered');
                     } elseif (isset($_POST['articles_delete'])) {
                         CalendarArticleRepository::delete((int) ($_POST['article_id'] ?? 0));
                         Flash::set('success', 'Eintrag gelöscht.');
@@ -1975,6 +2037,7 @@ switch ($path) {
                 exit;
             }
             $editId = (int) ($_POST['id'] ?? 0);
+            $postedVoucherId = $editId;
             $draftVoucherId = (int) ($_POST['draft_voucher_id'] ?? 0);
             if ($editId < 1 && $draftVoucherId > 0) {
                 $editId = $draftVoucherId;
@@ -1996,6 +2059,16 @@ switch ($path) {
                 } else {
                     Flash::set('success', 'Beleg gespeichert.');
                 }
+                $savedKind = VoucherDocumentKind::sanitize((string) ($_POST['document_kind'] ?? ''));
+                // Neue manuelle Auftragsbestätigung → sofort Druck/Unterschrift
+                if ($postedVoucherId < 1 && $savedKind === VoucherDocumentKind::ORDER_CONFIRMATION) {
+                    header(
+                        'Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $newId . '&download=print',
+                        true,
+                        302
+                    );
+                    exit;
+                }
                 header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $newId, true, 302);
                 exit;
             } catch (Throwable $e) {
@@ -2008,6 +2081,8 @@ switch ($path) {
                     $form['files'] = VoucherFileStorage::listForVoucher($editId);
                 }
                 $formError = $e->getMessage();
+                Flash::set('error', 'Beleg nicht gespeichert: ' . $e->getMessage());
+                $flash = Flash::get();
                 $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
                 $dbConfig = DatabaseSettings::forForm();
                 $dbConnected = Database::isConfigured();
@@ -2021,11 +2096,13 @@ switch ($path) {
                 $voucherChain = ['documents' => [], 'current_id' => 0];
                 $followUpKinds = [];
                 $chainSummary = null;
+                $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'buchhaltungSection', 'currentPage', 'settingsNav', 'settingsSelection',
+                    'menuItems', 'settingsItem', 'buchhaltungSection', 'websiteSection', 'kdvSection',
+                    'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
-                    'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary'
+                    'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas'
                 ));
                 break;
             }
@@ -2805,6 +2882,7 @@ switch ($path) {
 $legalProductsConfig = LegalProductSettings::config();
         $ldapConfig = LdapSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
+        $documentPresentationSettings = DocumentPresentationSettings::forForm();
         $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
@@ -2860,6 +2938,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $rawList = strtolower(trim((string) ($_GET['list'] ?? $_GET['catalog_view'] ?? '')));
             $catalogView = match ($rawList) {
                 'purchase', 'einkauf' => 'purchase',
+                'ordered', 'nachbestellt' => 'ordered',
                 'ignored', 'ignore' => 'ignored',
                 default => 'catalog',
             };
@@ -2896,7 +2975,25 @@ $legalProductsConfig = LegalProductSettings::config();
             unset($articleRow);
             $supplierContactOptions = ArticlePurchaseSourceRepository::supplierContactOptions();
             $purchaseListOpen = $catalogView === 'purchase' ? PurchaseListService::listOpen() : [];
+            $purchaseListOrdered = $catalogView === 'ordered' ? PurchaseListService::listOrdered() : [];
             $purchaseListIgnored = $catalogView === 'ignored' ? PurchaseListService::listIgnored() : [];
+            $purchaseOrderArticleOptions = [];
+            if ($catalogView === 'ordered') {
+                foreach (CalendarArticleRepository::all(true, CalendarArticleCatalog::KIND_PRODUCT) as $prod) {
+                    if (empty($prod['track_stock'])) {
+                        continue;
+                    }
+                    $purchaseOrderArticleOptions[] = [
+                        'id' => (int) ($prod['id'] ?? 0),
+                        'label' => trim((string) ($prod['article_number'] ?? '')) . ' — ' . trim((string) ($prod['title'] ?? '')),
+                    ];
+                }
+            }
+            $openOrderUrl = '';
+            $rawOpenOrder = trim((string) ($_GET['open_order_url'] ?? ''));
+            if ($rawOpenOrder !== '' && preg_match('#^https?://#i', $rawOpenOrder) && filter_var($rawOpenOrder, FILTER_VALIDATE_URL)) {
+                $openOrderUrl = $rawOpenOrder;
+            }
             $contentTemplate = 'modules/artikel-leistungen';
             $title = 'Artikel & Leistungen';
             $currentPage = 'artikel-leistungen';
@@ -2926,7 +3023,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $out = fopen('php://output', 'w');
                 if ($out !== false) {
                     fprintf($out, "\xEF\xBB\xBF");
-                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Bestand', 'Reserviert', 'In Auslieferung', 'Verfügbar', 'Mindestbestand', 'Unter Mindest'], ';');
+                    fputcsv($out, ['Artikelnummer', 'Bezeichnung', 'Positionscode', 'Einheit', 'Bestand', 'Reserviert', 'In Auslieferung', 'Nachbestellt', 'Verfügbar', 'Mindestbestand', 'Unter Mindest'], ';');
                     foreach ($rows as $row) {
                         fputcsv($out, [
                             $row['article_number'],
@@ -2936,6 +3033,7 @@ $legalProductsConfig = LegalProductSettings::config();
                             $row['stock_qty'],
                             $row['reserved_qty'] ?? '0',
                             $row['in_transit_qty'] ?? '0',
+                            $row['on_order_qty'] ?? '0',
                             $row['available_qty'] ?? $row['stock_qty'],
                             $row['min_stock'],
                             $row['low_stock'],
@@ -3304,7 +3402,11 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
                 if (trim((string) ($_GET['download'] ?? '')) === 'print') {
                     try {
-                        $html = VoucherDocumentPrintService::render($voucher);
+                        $showChainInternal = trim((string) ($_GET['show_chain'] ?? '')) === '1';
+                        $html = VoucherDocumentPrintService::render($voucher, [
+                            'show_chain' => $showChainInternal,
+                            'customer_facing' => !$showChainInternal,
+                        ]);
                         AccountingPrintService::send(
                             VoucherDocumentPrintService::attachmentFilename($voucher),
                             $html
@@ -4142,6 +4244,11 @@ $legalProductsConfig = LegalProductSettings::config();
                     header('Location: /app?page=kdv-kunden', true, 302);
                     exit;
                 }
+                if ($formError !== null && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $customer = array_merge(is_array($customer) ? $customer : [], $_POST);
+                }
+                $kdvOrgOptions = KdvOrgRepository::options();
+                $kdvFirmOptions = KdvCustomerRepository::list();
                 $contentTemplate = 'modules/kdv-kunde-form';
                 $title = $action === 'edit' ? 'SaaS-Kunde bearbeiten' : 'Neuer SaaS-Kunde';
                 $currentPage = 'kdv-kunden';
@@ -4614,6 +4721,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $datevExportYear = $datevExportYear ?? (int) date('Y');
         $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
         $accountingPaymentSettings = $accountingPaymentSettings ?? AccountingPaymentSettings::forForm();
+        $documentPresentationSettings = $documentPresentationSettings ?? DocumentPresentationSettings::forForm();
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
@@ -4652,7 +4760,10 @@ $legalProductsConfig = LegalProductSettings::config();
         $catalogFilter = $catalogFilter ?? 'all';
         $catalogView = $catalogView ?? 'catalog';
         $purchaseListOpen = $purchaseListOpen ?? [];
+        $purchaseListOrdered = $purchaseListOrdered ?? [];
         $purchaseListIgnored = $purchaseListIgnored ?? [];
+        $purchaseOrderArticleOptions = $purchaseOrderArticleOptions ?? [];
+        $openOrderUrl = $openOrderUrl ?? '';
         $supplierContactOptions = $supplierContactOptions ?? [];
         $lagerView = $lagerView ?? 'overview';
         $academyView = $academyView ?? 'meine';
@@ -4706,6 +4817,11 @@ $legalProductsConfig = LegalProductSettings::config();
         $supportGrant = $supportGrant ?? null;
         $supportTokenOnce = $supportTokenOnce ?? null;
         $kdvSupportSessions = $kdvSupportSessions ?? [];
+        $customer = $customer ?? null;
+        $customers = $customers ?? [];
+        $kdvOrgOptions = $kdvOrgOptions ?? [];
+        $kdvFirmOptions = $kdvFirmOptions ?? [];
+        $result = $result ?? null;
 
         View::render('layout/app', compact(
             'title',
@@ -4773,7 +4889,10 @@ $legalProductsConfig = LegalProductSettings::config();
             'catalogFilter',
             'catalogView',
             'purchaseListOpen',
+            'purchaseListOrdered',
             'purchaseListIgnored',
+            'purchaseOrderArticleOptions',
+            'openOrderUrl',
             'supplierContactOptions',
             'lagerView',
             'academyView',
@@ -4817,6 +4936,7 @@ $legalProductsConfig = LegalProductSettings::config();
 'legalProductsConfig',
             'ldapConfig',
             'accountingPaymentSettings',
+            'documentPresentationSettings',
             'timeTrackingSettings',
             'chartOfAccountsConfig',
             'chartAccountCount',
@@ -4923,6 +5043,11 @@ $legalProductsConfig = LegalProductSettings::config();
             'supportGrant',
             'supportTokenOnce',
             'kdvSupportSessions',
+            'customer',
+            'customers',
+            'kdvOrgOptions',
+            'kdvFirmOptions',
+            'result',
             'websitePageId',
             'websiteFormList',
             'websiteFormId',

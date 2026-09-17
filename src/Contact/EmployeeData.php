@@ -66,6 +66,8 @@ final class EmployeeData
             'social_security_number' => ['label' => 'Sozialversicherungsnummer', 'type' => 'text', 'section' => 'social'],
             'health_insurance' => ['label' => 'Krankenkasse / Krankenversicherung', 'type' => 'text', 'section' => 'health'],
             'health_insurance_number' => ['label' => 'Versichertennummer', 'type' => 'text', 'section' => 'health'],
+            'health_insurance_website' => ['label' => 'Krankenkasse Website', 'type' => 'url', 'section' => 'health'],
+            'health_insurance_appointment_url' => ['label' => 'Krankenkasse Terminvereinbarung (URL)', 'type' => 'url', 'section' => 'health'],
             'health_status' => ['label' => 'Gesundheitszustand', 'type' => 'textarea', 'section' => 'health'],
             'treatment_needs' => ['label' => 'Behandlungserfordernisse', 'type' => 'textarea', 'section' => 'health'],
             'disability_degree' => ['label' => 'Grad der Behinderung (GdB)', 'type' => 'text', 'section' => 'disability'],

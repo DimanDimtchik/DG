@@ -222,16 +222,29 @@ final class StockReservationService
                     StockMovementService::formatQty((float) $need, $snap['unit']),
                     $suffix
                 );
-            } elseif ($snap['min_stock'] > 0 && $snap['available'] <= $snap['min_stock'] + 0.0005) {
-                $toMin = max(0.0, round($snap['min_stock'] - $snap['available'], 3));
-                if ($toMin > 0.0005) {
-                    PurchaseListService::ensureForShortage($articleId, $toMin, $voucherId);
+            } elseif (PurchaseListService::needsRestock(
+                $snap['stock_qty'],
+                $snap['available'],
+                $snap['min_stock'],
+                (float) ($snap['on_order'] ?? 0)
+            )) {
+                $toTarget = PurchaseListService::suggestedRestockQty(
+                    $snap['stock_qty'],
+                    $snap['available'],
+                    $snap['min_stock'],
+                    (float) ($snap['on_order'] ?? 0)
+                );
+                if ($toTarget > 0.0005) {
+                    PurchaseListService::ensureForShortage($articleId, $toTarget, $voucherId);
                 }
                 $warnings[] = sprintf(
-                    'Mindestbestand erreicht/unterschritten: %s — verfügbar %s, Mindest %s.',
+                    'Nachbestellbedarf: %s — verfügbar %s, Zielbestand %s.',
                     $snap['title'] !== '' ? $snap['title'] : ('Artikel #' . $articleId),
                     StockMovementService::formatQty($snap['available'], $snap['unit']),
-                    StockMovementService::formatQty($snap['min_stock'], $snap['unit'])
+                    StockMovementService::formatQty(
+                        PurchaseListService::restockTarget($snap['min_stock']),
+                        $snap['unit']
+                    )
                 );
             }
         }

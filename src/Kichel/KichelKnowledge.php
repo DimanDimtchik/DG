@@ -74,7 +74,7 @@ final class KichelKnowledge
                 foreach ($keywords as $keyword) {
                     $kw = (string) $keyword;
                     if ($token === $kw) {
-                        $score += 4;
+                        $score += 6;
                         continue;
                     }
                     if (mb_strlen($token, 'UTF-8') < 4) {
@@ -179,6 +179,9 @@ final class KichelKnowledge
             return false;
         }
         if ($token === 'support' && str_contains($keyword, 'support') && str_contains($keyword, 'beleg')) {
+            return false;
+        }
+        if ($token === 'angebot' && str_contains($keyword, 'angebotsnummer')) {
             return false;
         }
         if (mb_strlen($token, 'UTF-8') < 4 && $keyword !== $token) {

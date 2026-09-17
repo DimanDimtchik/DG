@@ -1,6 +1,16 @@
 <?php
 /** @var list<array<string, mixed>> $customers */
 $customers = $customers ?? [];
+$multiFirma = KdvCustomerRepository::multiFirmaColumnsReady();
+$orgNameById = [];
+if ($multiFirma) {
+    foreach (KdvOrgRepository::list() as $org) {
+        $oid = (int) ($org['id'] ?? 0);
+        if ($oid > 0) {
+            $orgNameById[$oid] = (string) ($org['name'] ?? '');
+        }
+    }
+}
 ?>
 <div class="dg-wrap">
   <header class="dg-page-header dg-page-header--toolbar">
@@ -21,6 +31,7 @@ $customers = $customers ?? [];
           <tr>
             <th>Firma</th>
             <th>Domain</th>
+            <?php if ($multiFirma): ?><th>Organisation</th><?php endif; ?>
             <th>Ansprechpartner</th>
             <th>Tarif</th>
             <th>Lizenz</th>
@@ -34,6 +45,19 @@ $customers = $customers ?? [];
           <tr>
             <td><a href="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>"><?= View::escape($c['company_name']) ?></a></td>
             <td><a href="https://<?= View::escape($c['domain']) ?>" target="_blank" rel="noopener"><?= View::escape($c['domain']) ?></a></td>
+            <?php if ($multiFirma): ?>
+            <td>
+              <?php
+                $oid = (int) ($c['org_id'] ?? 0);
+                $rel = (string) ($c['firm_relation'] ?? 'standalone');
+                $relLabel = KdvCustomerRepository::FIRM_RELATIONS[$rel] ?? $rel;
+              ?>
+              <?= $oid > 0 ? View::escape($orgNameById[$oid] ?? ('#' . $oid)) : '–' ?>
+              <?php if ($rel !== 'standalone'): ?>
+                <div style="font-size:0.8em;color:#888;"><?= View::escape($relLabel) ?></div>
+              <?php endif; ?>
+            </td>
+            <?php endif; ?>
             <td><?= View::escape($c['contact_name'] ?? '–') ?></td>
             <td><?= View::escape(KdvCustomerRepository::TARIFFS[$c['tariff']] ?? $c['tariff']) ?></td>
             <td><code style="font-size:0.85em;"><?= View::escape(KdvCustomerRepository::maskLicense((string) ($c['license_key'] ?? ''))) ?: '–' ?></code></td>

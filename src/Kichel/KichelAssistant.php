@@ -8,6 +8,12 @@ final class KichelAssistant
 {
     private const FOLLOW_UP = 'War das hilfreich?';
 
+    /** Mindest-Score für einen Treffer in der Mehrfach-Liste. */
+    private const MULTI_MIN_SCORE = 3;
+
+    /** Maximal angezeigte Treffer. */
+    private const MULTI_MAX = 5;
+
     /**
      * @return array<string, mixed>
      */
@@ -41,77 +47,284 @@ final class KichelAssistant
         }
 
         $fieldAnswer = KichelFieldCatalog::tryAnswer($query, $tokens);
-        $navMatches = KichelNavIndex::search($user, $query, $tokens, 3);
-        $topNav = $navMatches[0] ?? null;
-        $navScore = (int) ($topNav['score'] ?? 0);
-        $fieldScore = $fieldAnswer !== null ? 5 : 0;
+        $navMatches = KichelNavIndex::search($user, $query, $tokens, 8);
+        $topicMatches = KichelKnowledge::matchTopics($tokens, 8);
+        $candidates = self::collectCandidates($navMatches, $topicMatches, $fieldAnswer, $intent, $query, $tokens);
 
-        if ($intent === KichelIntent::EXPLAIN && $fieldAnswer !== null) {
-            return self::wrapSimple($fieldAnswer, 'field_help');
-        }
-
-        if ($intent === KichelIntent::NAVIGATE && $topNav !== null && $navScore >= 4) {
-            return self::wrapNav($topNav['entry'], $navScore);
-        }
-
-        if ($fieldAnswer !== null && ($intent === KichelIntent::EXPLAIN || $navScore < 5)) {
-            return self::wrapSimple($fieldAnswer, 'field_help');
-        }
-
-        if ($topNav !== null && $navScore >= 5) {
-            return self::wrapNav($topNav['entry'], $navScore);
-        }
-
-        if ($moneyAnswer !== null) {
+        if ($moneyAnswer !== null && $candidates === []) {
             return self::wrapMoney($query, $moneyAnswer);
         }
 
-        $topicMatches = KichelKnowledge::matchTopics($tokens, 3);
-        if ($topicMatches !== [] && (int) ($topicMatches[0]['score'] ?? 0) >= 6) {
-            return self::wrapTopic($topicMatches[0]);
+        if ($candidates === []) {
+            return self::emptyResponse(
+                'Dazu habe ich nichts Passendes im CRM gefunden. Formuliere die Frage mit einem Menüpunkt '
+                . '(z. B. „Belege“, „Firmendaten“, „Support-Freigabe“) oder einem Stichwort wie „USt-ID“ oder „Logo“.'
+            );
         }
 
-        if ($topNav !== null && $navScore >= 3) {
-            return self::wrapNav($topNav['entry'], $navScore, true);
+        if (count($candidates) === 1) {
+            return self::wrapSingleCandidate($candidates[0]);
         }
 
-        return self::emptyResponse(
-            'Dazu habe ich nichts Passendes im CRM gefunden. Formuliere die Frage mit einem Menüpunkt '
-            . '(z. B. „Belege“, „Firmendaten“, „Support-Freigabe“) oder einem Stichwort wie „USt-ID“ oder „Logo“.'
-        );
+        return self::wrapMultiCandidates($candidates, $query);
     }
 
     /**
-     * @param array<string, mixed> $entry
+     * @param list<array{entry: array<string, mixed>, score: int}> $navMatches
+     * @param list<array{topic: array<string, mixed>, score: int}> $topicMatches
+     * @param array<string, mixed>|null $fieldAnswer
+     * @param list<string> $tokens
+     * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string}>
      */
-    private static function wrapNav(array $entry, int $score, bool $uncertain = false): array
-    {
-        $label = (string) ($entry['label'] ?? 'Bereich');
-        $description = trim((string) ($entry['description'] ?? ''));
-        $section = trim((string) ($entry['section'] ?? ''));
-        $href = (string) ($entry['href'] ?? '');
+    private static function collectCandidates(
+        array $navMatches,
+        array $topicMatches,
+        ?array $fieldAnswer,
+        string $intent,
+        string $query,
+        array $tokens
+    ): array {
+        $raw = [];
 
-        $parts = [];
-        if ($uncertain || $score < 5) {
-            $parts[] = 'Meinst du vermutlich „' . $label . '“?';
-        } else {
-            $parts[] = 'Das findest du unter „' . $label . '“' . ($section !== '' ? ' (' . $section . ')' : '') . '.';
+        foreach ($navMatches as $match) {
+            $score = (int) ($match['score'] ?? 0);
+            // Navigation nur mit klarem Treffer — sonst erscheinen zu viele Menüpunkte mit „Beleg“ im Text.
+            if ($score < 6) {
+                continue;
+            }
+            $entry = $match['entry'] ?? [];
+            if (!is_array($entry)) {
+                continue;
+            }
+            $label = trim((string) ($entry['label'] ?? ''));
+            $href = trim((string) ($entry['href'] ?? ''));
+            if ($label === '' || $href === '') {
+                continue;
+            }
+            $section = trim((string) ($entry['section'] ?? ''));
+            $description = trim((string) ($entry['description'] ?? ''));
+            $bodyParts = [];
+            if ($section !== '') {
+                $bodyParts[] = 'Bereich: ' . $section;
+            }
+            if ($description !== '') {
+                $bodyParts[] = $description;
+            }
+            $raw[] = [
+                'kind' => 'navigation',
+                'score' => $score,
+                'title' => $label,
+                'body' => implode(' — ', $bodyParts),
+                'href' => $href,
+                'action_label' => $label . ' öffnen',
+                'dedupe' => mb_strtolower($href, 'UTF-8'),
+            ];
         }
-        if ($description !== '') {
-            $parts[] = $description;
+
+        foreach ($topicMatches as $match) {
+            $score = (int) ($match['score'] ?? 0);
+            if ($score < 4) {
+                continue;
+            }
+            $topic = $match['topic'] ?? [];
+            if (!is_array($topic)) {
+                continue;
+            }
+            $title = trim((string) ($topic['title'] ?? 'Thema'));
+            $answer = trim((string) ($topic['answer'] ?? ''));
+            $href = trim((string) ($topic['href'] ?? ''));
+            $actionLabel = trim((string) ($topic['action_label'] ?? '')) ?: 'Direkt dorthin';
+            $raw[] = [
+                'kind' => 'topic',
+                'score' => $score,
+                'title' => $title,
+                'body' => $answer,
+                'href' => $href,
+                'action_label' => $actionLabel,
+                'dedupe' => $href !== ''
+                    ? mb_strtolower($href, 'UTF-8')
+                    : ('topic:' . mb_strtolower((string) ($topic['id'] ?? $title), 'UTF-8')),
+            ];
+        }
+
+        if ($fieldAnswer !== null && ($intent === KichelIntent::EXPLAIN || $raw === [])) {
+            $links = is_array($fieldAnswer['action_links'] ?? null) ? $fieldAnswer['action_links'] : [];
+            $href = '';
+            $actionLabel = 'Einstellungen öffnen';
+            if ($links !== []) {
+                $href = (string) ($links[0]['href'] ?? '');
+                $actionLabel = (string) ($links[0]['label'] ?? $actionLabel);
+            }
+            $raw[] = [
+                'kind' => 'field_help',
+                'score' => 5,
+                'title' => 'Feldhilfe',
+                'body' => trim((string) ($fieldAnswer['answer'] ?? '')),
+                'href' => $href,
+                'action_label' => $actionLabel,
+                'dedupe' => $href !== '' ? mb_strtolower($href, 'UTF-8') : 'field:' . md5((string) ($fieldAnswer['answer'] ?? '')),
+            ];
+        }
+
+        // Verwandte Treffer ergänzen (z. B. Angebot → Belege + Nummernkreise).
+        foreach (self::relatedCandidates($query, $tokens) as $related) {
+            $raw[] = $related;
+        }
+
+        if ($raw === []) {
+            return [];
+        }
+
+        usort($raw, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
+        $out = [];
+        $seen = [];
+        foreach ($raw as $row) {
+            if ((int) $row['score'] < self::MULTI_MIN_SCORE) {
+                continue;
+            }
+            $key = (string) $row['dedupe'];
+            if ($key !== '' && isset($seen[$key])) {
+                $existingIdx = $seen[$key];
+                $existing = $out[$existingIdx];
+                if (mb_strlen((string) $row['body'], 'UTF-8') > mb_strlen((string) $existing['body'], 'UTF-8')) {
+                    $row['score'] = max((int) $existing['score'], (int) $row['score']);
+                    $out[$existingIdx] = $row;
+                } elseif ((int) $row['score'] > (int) $existing['score']) {
+                    $existing['score'] = (int) $row['score'];
+                    $out[$existingIdx] = $existing;
+                }
+                continue;
+            }
+            if (count($out) >= self::MULTI_MAX) {
+                continue;
+            }
+            if ($key !== '') {
+                $seen[$key] = count($out);
+            }
+            $out[] = $row;
+        }
+
+        usort($out, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
+        return $out;
+    }
+
+    /**
+     * Zusätzliche verwandte Treffer, die allein stehend unvollständig wären.
+     *
+     * @param list<string> $tokens
+     * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string}>
+     */
+    private static function relatedCandidates(string $query, array $tokens): array
+    {
+        $q = mb_strtolower(trim($query), 'UTF-8');
+        $out = [];
+
+        $docTokens = ['angebot', 'angebote', 'rechnung', 'rechnungen', 'lieferschein', 'auftragsbestätigung', 'auftragsbestaetigung', 'schlussrechnung', 'abschlagsrechnung'];
+        $wantsDoc = false;
+        foreach ($tokens as $token) {
+            if (in_array($token, $docTokens, true)) {
+                $wantsDoc = true;
+                break;
+            }
+        }
+        if (
+            str_contains($q, 'angebot')
+            || str_contains($q, 'rechnung')
+            || str_contains($q, 'lieferschein')
+            || str_contains($q, 'belegkette')
+        ) {
+            $wantsDoc = true;
+        }
+
+        $wantsNumberOnly = str_contains($q, 'nummernkreis')
+            || str_contains($q, 'belegnummer')
+            || str_contains($q, 'rechnungsnummer')
+            || str_contains($q, 'angebotsnummer');
+
+        if ($wantsDoc) {
+            $out[] = [
+                'kind' => 'topic',
+                'score' => 12,
+                'title' => 'Belege / Belegkette',
+                'body' => 'Angebot, Auftragsbestätigung, Lieferschein und Rechnung unter Buchhaltung → Belege anlegen (Neuer Beleg → Einnahmen → Dokumentart). Folgebelege über „Folgebeleg erstellen“.',
+                'href' => '/app?page=buchhaltung-belege',
+                'action_label' => 'Belege öffnen',
+                'dedupe' => '/app?page=buchhaltung-belege',
+            ];
+            if (!$wantsNumberOnly) {
+                $out[] = [
+                    'kind' => 'navigation',
+                    'score' => 7,
+                    'title' => 'Nummernkreise',
+                    'body' => 'Angebots-, Rechnungs- und weitere Belegnummern unter Einstellungen → Organisation → Nummernkreise.',
+                    'href' => '/app?page=einstellungen&tab=nummernkreise',
+                    'action_label' => 'Nummernkreise öffnen',
+                    'dedupe' => '/app?page=einstellungen&tab=nummernkreise',
+                ];
+            }
+        }
+
+        if ($wantsNumberOnly) {
+            $out[] = [
+                'kind' => 'navigation',
+                'score' => 14,
+                'title' => 'Nummernkreise',
+                'body' => 'Präfixe und Zähler für Angebot, Rechnung, Lieferschein usw. unter Einstellungen → Organisation → Nummernkreise.',
+                'href' => '/app?page=einstellungen&tab=nummernkreise',
+                'action_label' => 'Nummernkreise öffnen',
+                'dedupe' => '/app?page=einstellungen&tab=nummernkreise',
+            ];
+            $out[] = [
+                'kind' => 'topic',
+                'score' => 8,
+                'title' => 'Belege',
+                'body' => 'Die Nummern werden beim Speichern des jeweiligen Belegs vergeben — Belege unter Buchhaltung → Belege.',
+                'href' => '/app?page=buchhaltung-belege',
+                'action_label' => 'Belege öffnen',
+                'dedupe' => '/app?page=buchhaltung-belege',
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array{kind: string, score: int, title: string, body: string, href: string, action_label: string} $candidate
+     * @return array<string, mixed>
+     */
+    private static function wrapSingleCandidate(array $candidate): array
+    {
+        $title = (string) $candidate['title'];
+        $body = trim((string) $candidate['body']);
+        $href = (string) $candidate['href'];
+        $parts = [];
+
+        if ($candidate['kind'] === 'navigation') {
+            $parts[] = 'Das findest du unter „' . $title . '“.';
+            if ($body !== '') {
+                $parts[] = $body;
+            }
+        } else {
+            if ($body !== '') {
+                $parts[] = $body;
+            } else {
+                $parts[] = $title;
+            }
         }
 
         $actionLinks = [];
         if ($href !== '') {
             $actionLinks[] = [
-                'label' => $label . ' öffnen',
+                'label' => (string) $candidate['action_label'],
                 'href' => $href,
             ];
         }
 
         return [
             'presentation' => 'simple',
-            'kind' => 'navigation',
+            'kind' => (string) $candidate['kind'],
             'answer' => trim(implode("\n\n", $parts)),
             'follow_up' => self::FOLLOW_UP,
             'action_links' => $actionLinks,
@@ -119,26 +332,37 @@ final class KichelAssistant
     }
 
     /**
-     * @param array{topic: array<string, mixed>, score: int} $match
+     * @param list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string}> $candidates
      * @return array<string, mixed>
      */
-    private static function wrapTopic(array $match): array
+    private static function wrapMultiCandidates(array $candidates, string $query): array
     {
-        $topic = $match['topic'];
-        $text = trim((string) ($topic['answer'] ?? ''));
-        $href = (string) ($topic['href'] ?? '');
+        unset($query);
+        $lines = ['Dazu passen mehrere Stellen im CRM:'];
         $actionLinks = [];
-        if ($href !== '') {
-            $actionLinks[] = [
-                'label' => trim((string) ($topic['action_label'] ?? '')) ?: 'Direkt dorthin',
-                'href' => $href,
-            ];
+        $n = 0;
+        foreach ($candidates as $candidate) {
+            $n++;
+            $title = (string) $candidate['title'];
+            $body = trim((string) $candidate['body']);
+            $href = (string) $candidate['href'];
+            $line = $n . '. ' . $title;
+            if ($body !== '') {
+                $line .= ' — ' . $body;
+            }
+            $lines[] = $line;
+            if ($href !== '') {
+                $actionLinks[] = [
+                    'label' => (string) $candidate['action_label'],
+                    'href' => $href,
+                ];
+            }
         }
 
         return [
             'presentation' => 'simple',
-            'kind' => 'topic',
-            'answer' => $text,
+            'kind' => 'multi_match',
+            'answer' => implode("\n\n", $lines),
             'follow_up' => self::FOLLOW_UP,
             'action_links' => $actionLinks,
         ];

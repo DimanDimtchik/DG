@@ -40,6 +40,8 @@ final class CompanyExtendedSettings
                 'city' => '',
                 'phone' => '',
                 'email' => '',
+                'website' => '',
+                'appointment_url' => '',
             ],
             'institutions' => [
                 'ihk' => self::institutionDefaults(),
@@ -53,6 +55,8 @@ final class CompanyExtendedSettings
                 'contact' => '',
                 'phone' => '',
                 'email' => '',
+                'website' => '',
+                'appointment_url' => '',
             ],
             'finanzaemter' => [],
             'finanzamt_resolved' => [],
@@ -73,10 +77,25 @@ final class CompanyExtendedSettings
     private static function institutionDefaults(bool $withMemberNo = true): array
     {
         if ($withMemberNo) {
-            return ['name' => '', 'member_no' => '', 'contact' => '', 'phone' => '', 'email' => ''];
+            return [
+                'name' => '',
+                'member_no' => '',
+                'contact' => '',
+                'phone' => '',
+                'email' => '',
+                'website' => '',
+                'appointment_url' => '',
+            ];
         }
 
-        return ['name' => '', 'contact' => '', 'phone' => '', 'email' => ''];
+        return [
+            'name' => '',
+            'contact' => '',
+            'phone' => '',
+            'email' => '',
+            'website' => '',
+            'appointment_url' => '',
+        ];
     }
 
     /**
@@ -117,6 +136,7 @@ final class CompanyExtendedSettings
                 'phone' => (string) ($office['phone'] ?? ''),
                 'email' => (string) ($office['email'] ?? ''),
                 'website' => (string) ($office['website'] ?? ''),
+                'appointment_url' => (string) ($office['appointment_url'] ?? ''),
                 'opening_hours' => (string) ($office['opening_hours_text'] ?? $office['opening_hours'] ?? ''),
                 'is_primary' => '1',
                 'notes' => '',
@@ -384,6 +404,8 @@ final class CompanyExtendedSettings
             'city' => self::str($raw['city'] ?? ''),
             'phone' => self::str($raw['phone'] ?? ''),
             'email' => self::email($raw['email'] ?? ''),
+            'website' => self::url($raw['website'] ?? ''),
+            'appointment_url' => self::url($raw['appointment_url'] ?? ''),
         ];
 
         if ($carrierKey !== '') {
@@ -422,7 +444,11 @@ final class CompanyExtendedSettings
             $clean[$instKey] = [];
             foreach ($fields as $field => $default) {
                 $value = $row[$field] ?? '';
-                $clean[$instKey][$field] = $field === 'email' ? self::email($value) : self::str($value);
+                $clean[$instKey][$field] = match ($field) {
+                    'email' => self::email($value),
+                    'website', 'appointment_url' => self::url($value),
+                    default => self::str($value),
+                };
             }
         }
 
@@ -442,6 +468,8 @@ final class CompanyExtendedSettings
             'contact' => self::str($raw['contact'] ?? ''),
             'phone' => self::str($raw['phone'] ?? ''),
             'email' => self::email($raw['email'] ?? ''),
+            'website' => self::url($raw['website'] ?? ''),
+            'appointment_url' => self::url($raw['appointment_url'] ?? ''),
         ];
     }
 
@@ -466,6 +494,7 @@ final class CompanyExtendedSettings
                 'phone' => self::str($row['phone'] ?? ''),
                 'email' => self::str($row['email'] ?? ''),
                 'website' => self::str($row['website'] ?? ''),
+                'appointment_url' => self::url($row['appointment_url'] ?? ''),
                 'opening_hours' => self::str($row['opening_hours'] ?? ''),
                 'is_primary' => !empty($row['is_primary']) ? '1' : '',
                 'notes' => self::str($row['notes'] ?? ''),
@@ -504,6 +533,8 @@ final class CompanyExtendedSettings
                 'contact' => self::str($row['contact'] ?? ''),
                 'phone' => self::str($row['phone'] ?? ''),
                 'email' => self::email($row['email'] ?? ''),
+                'website' => self::url($row['website'] ?? ''),
+                'appointment_url' => self::url($row['appointment_url'] ?? ''),
             ];
             if (self::rowIsEmpty($item)) {
                 continue;
@@ -537,6 +568,8 @@ final class CompanyExtendedSettings
                 'contact' => self::str($row['contact'] ?? ''),
                 'phone' => self::str($row['phone'] ?? ''),
                 'email' => self::email($row['email'] ?? ''),
+                'website' => self::url($row['website'] ?? ''),
+                'appointment_url' => self::url($row['appointment_url'] ?? ''),
                 'notes' => self::str($row['notes'] ?? ''),
             ];
             if (self::rowIsEmpty($item, ['obligation'])) {
@@ -612,6 +645,7 @@ final class CompanyExtendedSettings
             'phone' => (string) ($office['phone'] ?? ''),
             'email' => (string) ($office['email'] ?? ''),
             'website' => (string) ($office['website'] ?? ''),
+            'appointment_url' => (string) ($office['appointment_url'] ?? ''),
             'opening_hours' => (string) ($office['opening_hours_text'] ?? $office['opening_hours'] ?? ''),
             'is_primary' => '1',
             'notes' => '',
@@ -635,6 +669,7 @@ final class CompanyExtendedSettings
             'phone' => '',
             'email' => '',
             'website' => '',
+            'appointment_url' => '',
             'opening_hours' => '',
             'is_primary' => '',
             'notes' => '',
@@ -648,7 +683,14 @@ final class CompanyExtendedSettings
      */
     public static function emptyOrgRow(bool $withMemberNo = true): array
     {
-        $row = ['name' => '', 'contact' => '', 'phone' => '', 'email' => ''];
+        $row = [
+            'name' => '',
+            'contact' => '',
+            'phone' => '',
+            'email' => '',
+            'website' => '',
+            'appointment_url' => '',
+        ];
         if ($withMemberNo) {
             $row['member_no'] = '';
         }
@@ -669,6 +711,8 @@ final class CompanyExtendedSettings
             'contact' => '',
             'phone' => '',
             'email' => '',
+            'website' => '',
+            'appointment_url' => '',
             'notes' => '',
         ];
     }
@@ -825,5 +869,21 @@ final class CompanyExtendedSettings
         $email = trim((string) $value);
 
         return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : $email;
+    }
+
+    /**
+     * Normalisiert Website-/Termin-URLs (https://-Prefix wenn nötig).
+     */
+    private static function url(mixed $value): string
+    {
+        $url = trim((string) $value);
+        if ($url === '') {
+            return '';
+        }
+        if (!preg_match('#^https?://#i', $url) && preg_match('#^[a-z0-9.-]+\.[a-z]{2,}(/|$)#i', $url)) {
+            $url = 'https://' . $url;
+        }
+
+        return $url;
     }
 }

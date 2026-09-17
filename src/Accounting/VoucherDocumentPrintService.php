@@ -6,10 +6,18 @@ final class VoucherDocumentPrintService
 {
     /**
      * @param array<string, mixed> $voucher
+     * @param array{show_chain?: bool, for_email?: bool, customer_facing?: bool} $options
      */
-    public static function render(array $voucher): string
+    public static function render(array $voucher, array $options = []): string
     {
-        $context = self::buildContext($voucher, ['show_chain' => true, 'for_email' => false]);
+        $customerFacing = array_key_exists('customer_facing', $options)
+            ? !empty($options['customer_facing'])
+            : empty($options['show_chain']);
+        $context = self::buildContext($voucher, [
+            'show_chain' => !empty($options['show_chain']),
+            'for_email' => false,
+            'customer_facing' => $customerFacing,
+        ]);
 
         return AccountingPrintService::render(
             'voucher-document',
@@ -26,7 +34,11 @@ final class VoucherDocumentPrintService
      */
     public static function renderAttachmentHtml(array $voucher): string
     {
-        $context = self::buildContext($voucher, ['show_chain' => false, 'for_email' => false]);
+        $context = self::buildContext($voucher, [
+            'show_chain' => false,
+            'for_email' => false,
+            'customer_facing' => true,
+        ]);
 
         return AccountingPrintService::render(
             'voucher-document',
@@ -43,7 +55,11 @@ final class VoucherDocumentPrintService
      */
     public static function renderEmailBodyFragment(array $voucher): string
     {
-        $context = self::buildContext($voucher, ['show_chain' => false, 'for_email' => true]);
+        $context = self::buildContext($voucher, [
+            'show_chain' => false,
+            'for_email' => true,
+            'customer_facing' => true,
+        ]);
 
         return AccountingPrintService::renderBody('voucher-document', $context);
     }
@@ -82,7 +98,7 @@ final class VoucherDocumentPrintService
 
     /**
      * @param array<string, mixed> $voucher
-     * @param array{show_chain?: bool, for_email?: bool} $options
+     * @param array{show_chain?: bool, for_email?: bool, customer_facing?: bool} $options
      * @return array<string, mixed>
      */
     public static function buildContext(array $voucher, array $options = []): array
@@ -99,6 +115,9 @@ final class VoucherDocumentPrintService
 
         $showChain = !empty($options['show_chain']);
         $forEmail = !empty($options['for_email']);
+        $customerFacing = array_key_exists('customer_facing', $options)
+            ? !empty($options['customer_facing'])
+            : !$showChain;
 
         $chain = $showChain && $voucherId > 0
             ? VoucherDocumentChain::chainView($voucherId)
@@ -124,6 +143,44 @@ final class VoucherDocumentPrintService
             $contact = ContactRepository::findById($contactId);
         }
 
+        $validUntil = self::offerValidUntil($voucher, $kind);
+        $introText = trim((string) ($voucher['document_intro_text'] ?? ''));
+        $footerText = trim((string) ($voucher['document_footer_text'] ?? ''));
+        if (VoucherDocumentKind::usesPositionTexts($kind, (string) ($voucher['voucher_type'] ?? 'income'))) {
+            if ($introText === '') {
+                $introText = DocumentPresentationSettings::defaultIntro($kind);
+            }
+            if ($footerText === '') {
+                $footerText = DocumentPresentationSettings::defaultFooter($kind);
+            }
+        }
+        $footerText = self::applyDocumentPlaceholders($footerText, $validUntil);
+        $introText = self::applyDocumentPlaceholders($introText, $validUntil);
+
+        $legalNotice = self::legalNotice($kind, $books);
+        $footerNotice = self::footerNotice($kind, $books);
+        // Interne Hinweise (ohne Buchungswirkung) nie an den Kunden.
+        if ($customerFacing && !$books) {
+            $legalNotice = '';
+            $footerNotice = '';
+        }
+
+        $kleinunternehmerHint = '';
+        if ($books && $customerFacing) {
+            $kleinunternehmerHint = DocumentPresentationSettings::kleinunternehmerHintForDate(
+                (string) ($voucher['voucher_date'] ?? '')
+            );
+        }
+
+        $depositBlock = null;
+        $depositCfg = DocumentPresentationSettings::depositConfig();
+        if (
+            ($depositCfg['mode'] ?? DocumentPresentationSettings::DEPOSIT_NONE) !== DocumentPresentationSettings::DEPOSIT_NONE
+            && in_array($kind, [VoucherDocumentKind::OFFER, VoucherDocumentKind::ORDER_CONFIRMATION], true)
+        ) {
+            $depositBlock = self::formatDepositBlock($depositCfg, $voucher);
+        }
+
         return [
             'voucher' => $voucher,
             'kind' => $kind,
@@ -134,13 +191,16 @@ final class VoucherDocumentPrintService
             'books' => $books,
             'forEmail' => $forEmail,
             'showChain' => $showChain,
+            'customerFacing' => $customerFacing,
             'pageTitle' => $pageTitle,
             'companyBlock' => self::companyBlock(),
             'customerBlock' => self::customerBlock($voucher, $contact),
-            'legalNotice' => self::legalNotice($kind, $books),
-            'footerNotice' => self::footerNotice($kind, $books),
+            'legalNotice' => $legalNotice,
+            'footerNotice' => $footerNotice,
             'primaryBank' => self::primaryBankAccount(),
-            'documentStatusLabel' => VoucherDocumentStatus::label((string) ($voucher['document_status'] ?? '')),
+            'documentStatusLabel' => $customerFacing
+                ? ''
+                : VoucherDocumentStatus::label((string) ($voucher['document_status'] ?? '')),
             'legalClauseBlocks' => VoucherDocumentLegalClause::blocksForKeys(
                 VoucherDocumentLegalClause::sanitizeSelection($voucher['document_legal_clauses'] ?? [])
             ),
@@ -149,6 +209,335 @@ final class VoucherDocumentPrintService
             'logoAlt' => AppearanceSettings::logoAlt(),
             'logoShapeClass' => AppearanceSettings::logoShapeClass(),
             'mandatoryLines' => self::mandatoryLines(),
+            'totalsBreakdown' => self::totalsBreakdown($items, $voucher),
+            'introTextResolved' => $introText,
+            'footerTextResolved' => $footerText,
+            'validUntil' => $validUntil,
+            'internalNotes' => $customerFacing ? '' : trim((string) ($voucher['notes'] ?? '')),
+            'kleinunternehmerHint' => $kleinunternehmerHint,
+            'depositBlock' => $depositBlock,
+            'provenanceBlock' => self::provenanceBlock($voucher, $kind, $customerFacing),
+            'signatureBlock' => self::signatureBlock($voucher, $kind, $customerFacing),
+        ];
+    }
+
+    /**
+     * Unterschriftsblock für manuelle Auftragsbestätigung (Ort, Datum, Auftraggeber/-nehmer).
+     *
+     * @param array<string, mixed> $voucher
+     * @return array{
+     *   place: string,
+     *   date_label: string,
+     *   client_name: string,
+     *   contractor_name: string
+     * }|null
+     */
+    public static function signatureBlock(array $voucher, string $kind, bool $customerFacing): ?array
+    {
+        if (VoucherDocumentKind::sanitize($kind) !== VoucherDocumentKind::ORDER_CONFIRMATION) {
+            return null;
+        }
+        // Mail-Annahme: kein handschriftlicher Unterschriftsblock nötig.
+        if (self::parseAcceptanceMeta($voucher) !== null) {
+            return null;
+        }
+
+        $company = CompanySettings::config();
+        $place = trim((string) ($company['city'] ?? ''));
+        $dateRaw = trim((string) ($voucher['voucher_date'] ?? ''));
+        $dateLabel = $dateRaw !== ''
+            ? date('d.m.Y', strtotime($dateRaw) ?: time())
+            : date('d.m.Y');
+
+        $client = trim((string) ($voucher['supplier_name'] ?? ''));
+        if ($client === '') {
+            $contactId = (int) ($voucher['contact_id'] ?? 0);
+            if ($contactId > 0) {
+                $contact = ContactRepository::findById($contactId);
+                if ($contact !== null) {
+                    $client = trim($contact->companyName);
+                    if ($client === '') {
+                        $client = trim($contact->displayName);
+                    }
+                }
+            }
+        }
+
+        $contractor = trim((string) (CompanyExtendedSettings::config()['legal_name'] ?? ''));
+        if ($contractor === '') {
+            $contractor = CompanySettings::displayName();
+        }
+
+        return [
+            'place' => $place,
+            'date_label' => $dateLabel,
+            'client_name' => $client,
+            'contractor_name' => $contractor,
+        ];
+    }
+
+    /**
+     * Herkunft / Annahme — Kunden-PDF und intern.
+     *
+     * @param array<string, mixed> $voucher
+     * @return array{lines: list<string>, link_url: string, link_label: string}|null
+     */
+    public static function provenanceBlock(array $voucher, string $kind, bool $customerFacing): ?array
+    {
+        $kind = VoucherDocumentKind::sanitize($kind);
+        $lines = [];
+        $linkUrl = '';
+        $linkLabel = '';
+
+        $createdAt = trim((string) ($voucher['created_at'] ?? ''));
+        $createdById = (int) ($voucher['created_by'] ?? 0);
+        $createdByName = '';
+        if ($createdById > 0) {
+            $user = UserRepository::findById($createdById);
+            if ($user !== null) {
+                $createdByName = trim($user->displayName);
+                if ($createdByName === '') {
+                    $createdByName = trim($user->username);
+                }
+            }
+        }
+        $createdAtLabel = $createdAt !== ''
+            ? date('d.m.Y H:i', strtotime($createdAt) ?: time())
+            : '';
+
+        $acceptance = self::parseAcceptanceMeta($voucher);
+        if ($acceptance !== null) {
+            $when = (string) ($acceptance['at_label'] ?? '');
+            $how = (string) ($acceptance['channel_label'] ?? 'E-Mail');
+            $who = (string) ($acceptance['by_label'] ?? '');
+            $line = 'Angebot angenommen';
+            if ($when !== '') {
+                $line .= ' am ' . $when;
+            }
+            if ($how !== '') {
+                $line .= ' per ' . $how;
+            }
+            if ($who !== '') {
+                $line .= ' von ' . $who;
+            }
+            $lines[] = $line . '.';
+            $linkUrl = (string) ($acceptance['link_url'] ?? '');
+            $linkLabel = (string) ($acceptance['link_label'] ?? 'Zur E-Mail');
+        } elseif (in_array($kind, [VoucherDocumentKind::ORDER_CONFIRMATION, VoucherDocumentKind::OFFER], true)) {
+            $line = $kind === VoucherDocumentKind::ORDER_CONFIRMATION
+                ? 'Auftragsbestätigung manuell erstellt'
+                : 'Angebot erstellt';
+            if ($createdAtLabel !== '') {
+                $line .= ' am ' . $createdAtLabel;
+            }
+            if ($createdByName !== '') {
+                $line .= ' von ' . $createdByName;
+            }
+            $lines[] = $line . '.';
+        }
+
+        $parentId = (int) ($voucher['parent_voucher_id'] ?? 0);
+        if ($kind === VoucherDocumentKind::ORDER_CONFIRMATION && $parentId > 0 && $linkUrl === '') {
+            $linkUrl = '/app?page=buchhaltung-beleg-form&action=edit&id=' . $parentId;
+            $linkLabel = 'Zum Angebot';
+        }
+
+        // Kunden-PDF: Annahme-Vermerk ja; interne CRM-Links nur wenn nicht kundenorientiert
+        // bzw. Link zur Annahme-Mail wenn öffentlich/erreichbar — Mail-Log bleibt intern.
+        if ($customerFacing && $acceptance !== null && ($acceptance['channel'] ?? '') === 'mail') {
+            // Link zur Mail nur intern; Kunde sieht Text ohne CRM-URL
+            $linkUrl = '';
+            $linkLabel = '';
+        } elseif ($customerFacing && str_starts_with($linkUrl, '/app')) {
+            $linkUrl = '';
+            $linkLabel = '';
+        }
+
+        if ($lines === []) {
+            return null;
+        }
+
+        return [
+            'lines' => $lines,
+            'link_url' => $linkUrl,
+            'link_label' => $linkLabel,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $voucher
+     * @return array<string, mixed>|null
+     */
+    public static function parseAcceptanceMeta(array $voucher): ?array
+    {
+        $raw = $voucher['document_acceptance'] ?? null;
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : null;
+        }
+        if (!is_array($raw) || $raw === []) {
+            return null;
+        }
+        $channel = strtolower(trim((string) ($raw['channel'] ?? 'mail')));
+        $at = trim((string) ($raw['at'] ?? ''));
+        $by = trim((string) ($raw['by_name'] ?? $raw['by_email'] ?? ''));
+        $mailId = (int) ($raw['mail_log_id'] ?? 0);
+
+        return [
+            'channel' => $channel,
+            'channel_label' => $channel === 'mail' ? 'E-Mail' : ($channel === 'manual' ? 'manuelle Erfassung' : $channel),
+            'at_label' => $at !== '' ? date('d.m.Y H:i', strtotime($at) ?: time()) : '',
+            'by_label' => $by,
+            'link_url' => $mailId > 0 ? '/app?page=post&mail_id=' . $mailId : '',
+            'link_label' => $mailId > 0 ? 'Zur Annahme-E-Mail' : '',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $voucher
+     */
+    public static function offerValidUntil(array $voucher, string $kind = ''): string
+    {
+        if ($kind === '') {
+            $kind = (string) ($voucher['document_kind'] ?? '');
+        }
+        if (VoucherDocumentKind::sanitize($kind) !== VoucherDocumentKind::OFFER) {
+            return '';
+        }
+        $raw = trim((string) ($voucher['delivery_date'] ?? ''));
+        if ($raw === '') {
+            $base = trim((string) ($voucher['voucher_date'] ?? ''));
+            if ($base !== '') {
+                $days = DocumentPresentationSettings::offerValidDays();
+                $ts = strtotime($base . ' +' . $days . ' days');
+                if ($ts !== false) {
+                    return date('Y-m-d', $ts);
+                }
+            }
+
+            return '';
+        }
+
+        return $raw;
+    }
+
+    public static function applyDocumentPlaceholders(string $text, string $validUntilYmd): string
+    {
+        if ($text === '') {
+            return '';
+        }
+        $formatted = $validUntilYmd !== ''
+            ? date('d.m.Y', strtotime($validUntilYmd) ?: time())
+            : '—';
+
+        return str_replace('{valid_until}', $formatted, $text);
+    }
+
+    /**
+     * Transparente Summen: Netto + USt je Satz = Brutto.
+     *
+     * @param list<array<string, mixed>> $items
+     * @param array<string, mixed> $voucher
+     * @return array{
+     *   net: float,
+     *   tax: float,
+     *   gross: float,
+     *   by_rate: list<array{rate: int, net: float, tax: float, gross: float}>
+     * }
+     */
+    public static function totalsBreakdown(array $items, array $voucher): array
+    {
+        $reverseCharge = VoucherReverseCharge::sanitizeType((string) ($voucher['reverse_charge_type'] ?? '')) !== '';
+        /** @var array<int, array{rate: int, net: float, tax: float, gross: float}> $byRate */
+        $byRate = [];
+
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            if (trim((string) ($item['title'] ?? '')) === '') {
+                continue;
+            }
+            $gross = round((float) str_replace(',', '.', (string) ($item['gross_amount'] ?? '0')), 2);
+            if ($gross == 0.0) {
+                continue;
+            }
+            $rate = VoucherTaxKeys::sanitizeTaxRate((int) ($item['tax_rate'] ?? 19));
+            $amounts = VoucherTaxKeys::calcLineAmounts(abs($gross), $rate, $reverseCharge);
+            $sign = $gross < 0 ? -1.0 : 1.0;
+            if (!isset($byRate[$rate])) {
+                $byRate[$rate] = ['rate' => $rate, 'net' => 0.0, 'tax' => 0.0, 'gross' => 0.0];
+            }
+            $byRate[$rate]['net'] = round($byRate[$rate]['net'] + $sign * (float) $amounts['net_amount'], 2);
+            $byRate[$rate]['tax'] = round($byRate[$rate]['tax'] + $sign * (float) $amounts['tax_amount'], 2);
+            $byRate[$rate]['gross'] = round($byRate[$rate]['gross'] + $sign * (float) $amounts['gross_amount'], 2);
+        }
+
+        ksort($byRate);
+        $rows = array_values($byRate);
+        $net = 0.0;
+        $tax = 0.0;
+        $gross = 0.0;
+        foreach ($rows as $row) {
+            $net += $row['net'];
+            $tax += $row['tax'];
+            $gross += $row['gross'];
+        }
+
+        if ($rows === []) {
+            $headerGross = round((float) str_replace(',', '.', (string) ($voucher['gross_amount'] ?? '0')), 2);
+            $headerNet = round((float) str_replace(',', '.', (string) ($voucher['net_amount'] ?? '0')), 2);
+            $headerTax = round((float) str_replace(',', '.', (string) ($voucher['tax_amount'] ?? '0')), 2);
+            $headerRate = VoucherTaxKeys::sanitizeTaxRate((int) ($voucher['tax_rate'] ?? 19));
+            if ($headerGross != 0.0 || $headerNet != 0.0) {
+                $rows[] = [
+                    'rate' => $headerRate,
+                    'net' => $headerNet,
+                    'tax' => $headerTax,
+                    'gross' => $headerGross,
+                ];
+                $net = $headerNet;
+                $tax = $headerTax;
+                $gross = $headerGross;
+            }
+        }
+
+        return [
+            'net' => round($net, 2),
+            'tax' => round($tax, 2),
+            'gross' => round($gross, 2),
+            'by_rate' => $rows,
+        ];
+    }
+
+    /**
+     * @param array{mode: string, percent: float, fixed_amount: float, label: string, text: string} $cfg
+     * @param array<string, mixed> $voucher
+     * @return array{label: string, amount_label: string, text: string}|null
+     */
+    public static function formatDepositBlock(array $cfg, array $voucher): ?array
+    {
+        $mode = (string) ($cfg['mode'] ?? DocumentPresentationSettings::DEPOSIT_NONE);
+        if ($mode === DocumentPresentationSettings::DEPOSIT_NONE) {
+            return null;
+        }
+        $gross = round((float) str_replace(',', '.', (string) ($voucher['gross_amount'] ?? '0')), 2);
+        $amountLabel = '';
+        if ($mode === DocumentPresentationSettings::DEPOSIT_PERCENT) {
+            $pct = (float) ($cfg['percent'] ?? 0);
+            $amount = round($gross * $pct / 100, 2);
+            $amountLabel = number_format($pct, $pct == floor($pct) ? 0 : 2, ',', '.') . ' %'
+                . ($gross > 0 ? ' (= ' . number_format($amount, 2, ',', '.') . ' €)' : '');
+        } elseif ($mode === DocumentPresentationSettings::DEPOSIT_FIXED) {
+            $amountLabel = number_format((float) ($cfg['fixed_amount'] ?? 0), 2, ',', '.') . ' €';
+        } elseif ($mode === DocumentPresentationSettings::DEPOSIT_MATERIAL) {
+            $amountLabel = 'Materialkosten (Einkauf) — Berechnung aus Lagerpositionen folgt';
+        }
+
+        return [
+            'label' => (string) ($cfg['label'] ?? 'Anzahlung'),
+            'amount_label' => $amountLabel,
+            'text' => (string) ($cfg['text'] ?? ''),
         ];
     }
 

@@ -22,9 +22,12 @@ foreach ($calendarAreas as $area) {
 $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions());
 $supplierContactOptions = $supplierContactOptions ?? [];
 $stockLocationOptions = StockStructureRepository::locationOptions();
-$catalogView = $catalogView ?? 'catalog'; // catalog | purchase | ignored
+$catalogView = $catalogView ?? 'catalog'; // catalog | purchase | ordered | ignored
 $purchaseListOpen = $purchaseListOpen ?? [];
+$purchaseListOrdered = $purchaseListOrdered ?? [];
 $purchaseListIgnored = $purchaseListIgnored ?? [];
+$purchaseOrderArticleOptions = $purchaseOrderArticleOptions ?? [];
+$openOrderUrl = $openOrderUrl ?? '';
 $jsonEmbedFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR;
 $stockStructureJson = json_encode([
     'halls' => StockStructureRepository::allHalls(),
@@ -59,6 +62,11 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
       <?= $catalogView === 'purchase' ? 'aria-current="page"' : '' ?>
     >Einkaufsliste</a>
     <a
+      href="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>"
+      class="dg-subtabs__link<?= $catalogView === 'ordered' ? ' is-active' : '' ?>"
+      <?= $catalogView === 'ordered' ? 'aria-current="page"' : '' ?>
+    >Nachbestellt</a>
+    <a
       href="<?= View::escape($catalogBaseUrl . '&list=ignored') ?>"
       class="dg-subtabs__link<?= $catalogView === 'ignored' ? ' is-active' : '' ?>"
       <?= $catalogView === 'ignored' ? 'aria-current="page"' : '' ?>
@@ -66,7 +74,17 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
   </nav>
 
 <?php if ($catalogView === 'purchase') : ?>
-  <p class="dg-lead">Artikel unter Mindestbestand oder mit Fehlmenge aus Belegen. Ignorierte erscheinen hier nicht.</p>
+  <p class="dg-lead">Artikel mit Nachbestellbedarf (Ziel: Mindestmenge + 1, sonst 1 Stück im Lager). „Bestellen“ öffnet den Shop, wenn eine URL hinterlegt ist; sonst erscheint ein Hinweis mit Lieferant und Menge. Nachbestellte Mengen zählen unterwegs, bis „Erledigt“.</p>
+  <?php if ($openOrderUrl !== '') : ?>
+    <script>
+      (function () {
+        var u = <?= json_encode($openOrderUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        if (u) {
+          window.open(u, '_blank', 'noopener');
+        }
+      })();
+    </script>
+  <?php endif; ?>
   <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form" style="margin-bottom:1rem">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <button type="submit" name="purchase_list_rebuild" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Liste aus Bestand aktualisieren</button>
@@ -78,6 +96,7 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
           <th>Artikel</th>
           <th>Bestand / Verfügbar / Min</th>
           <th>Vorschlag</th>
+          <th>Menge</th>
           <th>Grund</th>
           <th>Nachbestellen</th>
           <th></th>
@@ -85,9 +104,17 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
       </thead>
       <tbody>
         <?php if ($purchaseListOpen === []) : ?>
-          <tr><td colspan="6" class="dg-muted">Keine offenen Einträge.</td></tr>
+          <tr><td colspan="7" class="dg-muted">Keine offenen Einträge.</td></tr>
         <?php else : ?>
           <?php foreach ($purchaseListOpen as $pli) : ?>
+            <?php
+              $ru = trim((string) ($pli['reorder_url'] ?? ''));
+              $hint = (string) ($pli['manual_order_hint'] ?? '');
+              $orderTitle = $ru !== ''
+                ? ('Shop öffnen und als bestellt markieren' . (($pli['reorder_label'] ?? '') !== '' ? ': ' . $pli['reorder_label'] : ''))
+                : $hint;
+              $qtyDisplay = rtrim(rtrim(number_format((float) ($pli['suggested_qty'] ?? 0), 3, ',', '.'), '0'), ',');
+            ?>
             <tr>
               <td>
                 <?= View::escape((string) ($pli['article_number'] ?? '')) ?>
@@ -99,13 +126,24 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                 / <?= View::escape((string) ($pli['min_label'] ?? '')) ?>
               </td>
               <td><?= View::escape((string) ($pli['suggested_label'] ?? '')) ?></td>
+              <td>
+                <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-inline-form"<?= $ru !== '' ? ' data-order-url="' . View::escape($ru) . '" onsubmit="var u=this.getAttribute(\'data-order-url\'); if(u){window.open(u,\'_blank\',\'noopener\');}"' : '' ?>>
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="list" value="ordered">
+                  <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                  <label class="dg-field dg-field--compact">
+                    <span class="dg-visually-hidden">Bestellmenge</span>
+                    <input type="text" name="suggested_qty" inputmode="decimal" value="<?= View::escape($qtyDisplay) ?>" style="width:5.5rem" title="<?= View::escape($orderTitle) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+                  </label>
+                  <button type="submit" name="purchase_list_ordered" value="1" class="dg-button dg-button--small" title="<?= View::escape($orderTitle) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>Bestellen</button>
+                </form>
+              </td>
               <td><?= View::escape((string) ($pli['reason_label'] ?? '')) ?></td>
               <td>
-                <?php $ru = trim((string) ($pli['reorder_url'] ?? '')); ?>
                 <?php if ($ru !== '') : ?>
                   <a class="dg-button dg-button--small" href="<?= View::escape($ru) ?>" target="_blank" rel="noopener"><?= View::escape((string) ($pli['reorder_label'] !== '' ? $pli['reorder_label'] : 'Shop')) ?></a>
                 <?php else : ?>
-                  <span class="dg-muted">—</span>
+                  <span class="dg-muted" title="<?= View::escape($hint) ?>">—</span>
                 <?php endif; ?>
               </td>
               <td class="dg-table__actions">
@@ -117,15 +155,123 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                   </form>
                   <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form">
                     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                    <input type="hidden" name="list" value="purchase">
                     <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
-                    <button type="submit" name="purchase_list_ordered" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Bestellt</button>
-                  </form>
-                  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form">
-                    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-                    <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
-                    <button type="submit" name="purchase_list_done" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Erledigt</button>
+                    <button type="submit" name="purchase_list_done" value="1" class="dg-button dg-button--small" title="Ware eingetroffen — aus Nachbestellt entfernen"<?= !$dbConnected ? ' disabled' : '' ?>>Erledigt</button>
                   </form>
                 </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+<?php elseif ($catalogView === 'ordered') : ?>
+  <p class="dg-lead">Bereits bestellt, Ware noch nicht eingetroffen — auch manuell erfassbar (z. B. Jahresvorrat / Sonderangebot), ohne dass der Artikel auf der Einkaufsliste stand. Zählt im Bestand als „Nachbestellt“, bis „Erledigt“.</p>
+  <?php if ($openOrderUrl !== '') : ?>
+    <script>
+      (function () {
+        var u = <?= json_encode($openOrderUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        if (u) {
+          window.open(u, '_blank', 'noopener');
+        }
+      })();
+    </script>
+  <?php endif; ?>
+
+  <section class="dg-panel" style="margin-bottom:1.25rem">
+    <h3 class="dg-subsection-title">Nachbestellung manuell eintragen</h3>
+    <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-form-grid dg-form-grid--compact">
+      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+      <input type="hidden" name="list" value="ordered">
+      <label class="dg-field dg-field--wide">
+        <span>Artikel (mit Lagerführung)</span>
+        <select name="manual_order_article_id" required<?= !$dbConnected || $purchaseOrderArticleOptions === [] ? ' disabled' : '' ?>>
+          <option value="">— bitte wählen —</option>
+          <?php foreach ($purchaseOrderArticleOptions as $opt) : ?>
+            <option value="<?= (int) ($opt['id'] ?? 0) ?>"><?= View::escape((string) ($opt['label'] ?? '')) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field">
+        <span>Bestellmenge</span>
+        <input type="text" name="manual_order_qty" inputmode="decimal" required placeholder="z. B. 120"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <label class="dg-field dg-field--wide">
+        <span>Notiz (optional)</span>
+        <input type="text" name="manual_order_note" maxlength="500" placeholder="z. B. Jahresvorrat Sonderangebot"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <div class="dg-field dg-field--actions">
+        <button type="submit" name="purchase_list_manual_order" value="1" class="dg-button dg-button--primary"<?= !$dbConnected || $purchaseOrderArticleOptions === [] ? ' disabled' : '' ?>>Als nachbestellt speichern</button>
+      </div>
+    </form>
+    <?php if ($purchaseOrderArticleOptions === []) : ?>
+      <p class="dg-muted">Keine Artikel mit Lagerführung — zuerst unter Katalog anlegen und „Lager führen“ aktivieren.</p>
+    <?php endif; ?>
+  </section>
+
+  <div class="dg-table-wrap">
+    <table class="dg-table dg-table--compact">
+      <thead>
+        <tr>
+          <th>Artikel</th>
+          <th>Bestand / Verfügbar / Min</th>
+          <th>Nachbestellt</th>
+          <th>Shop</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if ($purchaseListOrdered === []) : ?>
+          <tr><td colspan="5" class="dg-muted">Keine nachbestellten Einträge.</td></tr>
+        <?php else : ?>
+          <?php foreach ($purchaseListOrdered as $pli) : ?>
+            <?php
+              $ru = trim((string) ($pli['reorder_url'] ?? ''));
+              $qtyDisplay = rtrim(rtrim(number_format((float) ($pli['suggested_qty'] ?? 0), 3, ',', '.'), '0'), ',');
+              $note = trim((string) ($pli['note'] ?? ''));
+            ?>
+            <tr>
+              <td>
+                <?= View::escape((string) ($pli['article_number'] ?? '')) ?>
+                — <?= View::escape((string) ($pli['article_title'] ?? '')) ?>
+                <?php if ($note !== '') : ?>
+                  <br><small class="dg-muted"><?= View::escape($note) ?></small>
+                <?php endif; ?>
+              </td>
+              <td>
+                <?= View::escape((string) ($pli['stock_label'] ?? '')) ?>
+                / <?= View::escape((string) ($pli['available_label'] ?? '')) ?>
+                / <?= View::escape((string) ($pli['min_label'] ?? '')) ?>
+              </td>
+              <td>
+                <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-inline-form">
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="list" value="ordered">
+                  <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                  <label class="dg-field dg-field--compact">
+                    <span class="dg-visually-hidden">Nachbestellte Menge</span>
+                    <input type="text" name="suggested_qty" inputmode="decimal" value="<?= View::escape($qtyDisplay) ?>" style="width:5.5rem"<?= !$dbConnected ? ' disabled' : '' ?>>
+                    <span class="dg-muted"><?= View::escape((string) ($pli['unit'] ?? '')) ?></span>
+                  </label>
+                  <button type="submit" name="purchase_list_qty" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Speichern</button>
+                </form>
+              </td>
+              <td>
+                <?php if ($ru !== '') : ?>
+                  <a class="dg-button dg-button--small" href="<?= View::escape($ru) ?>" target="_blank" rel="noopener"><?= View::escape((string) ($pli['reorder_label'] !== '' ? $pli['reorder_label'] : 'Shop')) ?></a>
+                <?php else : ?>
+                  <span class="dg-muted">—</span>
+                <?php endif; ?>
+              </td>
+              <td class="dg-table__actions">
+                <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-inline-form">
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="list" value="ordered">
+                  <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                  <button type="submit" name="purchase_list_done" value="1" class="dg-button dg-button--small" title="Ware eingetroffen"<?= !$dbConnected ? ' disabled' : '' ?>>Erledigt</button>
+                </form>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -218,9 +364,10 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
               <td><?= View::escape((string) ($article['duration_label'] ?? '')) ?></td>
               <td><?php if (!empty($article['track_stock'])) : ?>
                 <?= View::escape((string) ($article['stock_label'] ?? '')) ?>
-                <?php if ((float) ($article['reserved_qty'] ?? 0) > 0 || (float) ($article['in_transit_qty'] ?? 0) > 0) : ?>
+                <?php if ((float) ($article['reserved_qty'] ?? 0) > 0 || (float) ($article['in_transit_qty'] ?? 0) > 0 || (float) ($article['on_order_qty'] ?? 0) > 0) : ?>
                   <br><small class="dg-muted">Res. <?= View::escape((string) ($article['reserved_label'] ?? '0')) ?>
                   · Auslief. <?= View::escape((string) ($article['in_transit_label'] ?? '0')) ?>
+                  · Nachbest. <?= View::escape((string) ($article['on_order_label'] ?? '0')) ?>
                   · Verf. <?= View::escape((string) ($article['available_label'] ?? '')) ?></small>
                 <?php endif; ?>
                 <?php if (!empty($article['is_low_stock'])) : ?> <span class="dg-badge dg-badge--warning">Min.</span><?php endif; ?>
@@ -228,12 +375,16 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                   $reorderUrl = trim((string) ($article['reorder_url'] ?? ''));
                   $reorderLabel = trim((string) ($article['reorder_label'] ?? ''));
                   $hasSource = !empty($article['has_purchase_source']);
+                  $onOrderQty = (float) ($article['on_order_qty'] ?? 0);
+                  $isLowStock = !empty($article['is_low_stock']);
                 ?>
-                <?php if ($reorderUrl !== '') : ?>
+                <?php if ($onOrderQty > 0.0005) : ?>
+                  <br><a class="dg-button dg-button--small dg-button--secondary" href="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" title="Unterwegs — Menge unter Nachbestellt anpassen">Nachbestellt</a>
+                <?php elseif ($isLowStock && $reorderUrl !== '') : ?>
                   <br><a class="dg-button dg-button--small" href="<?= View::escape($reorderUrl) ?>" target="_blank" rel="noopener" title="<?= View::escape($reorderLabel !== '' ? $reorderLabel : 'Shop') ?>">Nachbestellen</a>
-                <?php elseif ($hasSource) : ?>
+                <?php elseif ($isLowStock && $hasSource) : ?>
                   <br><small class="dg-muted" title="Shop-URL optional — Chef recherchiert und bestellt manuell">Nachbestellen<?= $reorderLabel !== '' ? ': ' . View::escape($reorderLabel) : '' ?></small>
-                <?php elseif (!empty($article['is_low_stock'])) : ?>
+                <?php elseif ($isLowStock) : ?>
                   <br><small class="dg-muted">Nachbestellen (manuell)</small>
                 <?php endif; ?>
               <?php else : ?>—<?php endif; ?></td>
@@ -395,8 +546,9 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
             <input type="text" name="min_stock" id="dg_article_min_stock" inputmode="decimal" placeholder="0"<?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
           <p class="dg-field-hint dg-field--wide" id="dg_article_stock_availability" hidden>
-            Bestand / Reserviert / In Auslieferung / Verfügbar erscheinen nach dem Speichern in der Liste.
+            Bestand / Reserviert / In Auslieferung / Nachbestellt / Verfügbar erscheinen nach dem Speichern in der Liste.
             Angebot &amp; AB reservieren ab Status <strong>Versendet</strong> oder <strong>Angenommen</strong> (ohne Bestand abzubuchen).
+            „Bestellen“ auf der Einkaufsliste markiert Nachbestellt (unterwegs), bis die Ware mit „Erledigt“ bzw. Wareneingang ankommt.
           </p>
           <p class="dg-field-hint dg-field--wide">Stammdaten unter <a href="<?= View::escape(SettingsRegistry::tabUrl('lager-struktur')) ?>">Einstellungen → Lagerstruktur</a>.</p>
           <label class="dg-field">

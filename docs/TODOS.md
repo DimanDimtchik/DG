@@ -2,7 +2,7 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-16** — Cloud-Feature-Branches in `master` gemergt; bei Session zuerst prüfen.
+Stand: **2026-09-17** — Belegdarstellung/AB-Druck deployed + synced; Vor-Hetzner-Checkliste `VOR-HETZNER-CHECK.md`.
 
 ---
 
@@ -31,17 +31,20 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] Feature-Branches gemergt: Bank-Geisterumsätze, Arbeitsvertrag-Doku
 - [x] Cloud-Sammelbranches in `master` (2026-09-16)
 - [x] **Multi-Firma / Umfirmierung** — Konzept dokumentiert (`MULTI-FIRMA-KONZEPT.md`)
-- [ ] **Master erneut deployen + sync** (nach Merge 16.09.)
-- [ ] Migrationen **064–077** (+ LDAP **078**) auf Live prüfen
-- [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
+- [x] **Master erneut deployen + sync** (nach Merge 16.09. / laufende Deploys Sep 2026)
+- [x] Migrationen **062–081** / **064–078 fertig** (Master + ganz-soft.de + kontur, 2026-09-17) — runPending + Schema OK
+- [x] **LDAP Phase 1 (Kasserver):** `ldap-readiness.php` gelaufen — php-ldap OK, Modus `local`, `ldap.local.php` fehlt (erwartet bis Hetzner)
 - [x] Smoke: Akademie, Lager, Kichel, Terminkalender, Rechtstexte, Kontakt-Notiz, LDAP-UI
 - [x] Fix: „Finanzamt ermitteln“ — lokale ESt-Nr. (z. B. 127/219/40770) nicht mehr als Steuer-ID verwerfen
 - [x] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma) — `info@ganz-om.de`
-- [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
-- [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
+- [~] Manuelle Testliste **ganz-soft.de** — Block A erledigt (Lager/Akademie/Termin/Recht/Wartung); offen: Belegkette, Bank, Kichel
+- [x] Multi-Firma Phase 0 — KDV Org↔Firma Registry (`082`, Formular/Liste) — Switcher = Phase 1
 - [x] **ELSTER Phase 2:** Hersteller-ID **34573** in CRM-Einstellungen (ganz-soft.de) hinterlegt; danach ERiC Linux laden, Test-Zertifikat (nach Server-Umzug)
 - [x] **Lager Phase 3+4:** Einkaufsliste/Ignore (081), In-Auslieferung, Beleg-Live-Hinweis
-- [ ] **LDAP Phase 1:** `ldap-readiness.php` auf Kasserver · Plugin-Code aus No-Repo-Chat
+- [x] **Belegkette Kundendarstellung** — Deploy 2026-09-17 (Druck, Summen, Belegdarstellung, AB→Druck+Unterschrift)
+- [ ] **AB aus Angebots-Mail-Antwort** — automatisch Folgebeleg + Vermerk wann/per Mail/wer + Link
+- [ ] **Vor Hetzner:** `VOR-HETZNER-CHECK.md` (Shared Core, Asset-Minify, GoBD/§14/§19-Stichprobe)
+- [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 
 ---
 
@@ -65,10 +68,11 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 | Kichel-Protokoll | **077** |
 | **LDAP-Vorbereitung** | **078** · `LdapAuthenticator` / Einstellungen |
 | Kontakt-Notiz (`contact_note`) | Kontakte |
+| **Multi-Firma Phase 0** | **082** · `dg_kdv_orgs` / Org-Felder an KDV-Kunden |
 | Wartungsmodus einheitlicher Code | `WebsiteMaintenanceRenderer` |
 | Website-Menü Icons (Lucide) | `src/Website/` |
 
-Doku: `BUCHHALTUNG-BELEGKETTE.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `LDAP-INTEGRATION.md`, `LAGER-WIRTSCHAFT.md`, `ZEITERFASSUNG-PLAN.md`
+Doku: `BUCHHALTUNG-BELEGKETTE.md`, `BELEGKETTE-DARSTELLUNG.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `LDAP-INTEGRATION.md`, `LAGER-WIRTSCHAFT.md`, `ZEITERFASSUNG-PLAN.md`
 
 ---
 
@@ -86,10 +90,20 @@ Doku: `BUCHHALTUNG-BELEGKETTE.md`, `ARBEITSVERTRAG-VORLAGEN-HINWEIS.md`, `LDAP-I
 
 ## Test-Checkliste (Randfälle — `master` auf ganz-soft.de)
 
+**Erledigt 2026-09-17 (Nutzer):**
+
+- [x] **Lager / Einkauf** komplett
+- [x] **Akademie** öffnet; Kurs/Video erreichbar
+- [x] **Terminkalender / Online-Buchung** (Vorschau)
+- [x] **Rechtstexte** (Impressum o. Ä.) ohne Fehler
+- [x] Öffentlich `/` = Wartungsseite
+- [x] Kontakt-Link aus CRM (Firma/Wartung)
+
+**Noch offen:**
+
 - [ ] Belegkette, Workflow, Klauseln, Skonto, Teilzahlungen, Zeiterfassung
 - [ ] **Bankabgleich:** Geisterumsätze erkennen, manuell ausblenden (Migration 064)
-- [ ] Akademie / Lager / Kichel / Terminkalender / Rechtstexte
-- [ ] Wartungsmodus: Layout + Kontakt aus CRM
+- [ ] **Kichel**
 
 Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 

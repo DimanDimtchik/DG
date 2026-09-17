@@ -38,6 +38,87 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
       </div>
     </div>
 
+    <?php if (KdvCustomerRepository::multiFirmaColumnsReady()) : ?>
+    <?php
+      $kdvOrgOptions = $kdvOrgOptions ?? KdvOrgRepository::options();
+      $kdvFirmOptions = $kdvFirmOptions ?? [];
+      $orgSiblings = [];
+      $orgIdCurrent = (int) ($c['org_id'] ?? 0);
+      if ($orgIdCurrent > 0) {
+          $orgSiblings = KdvCustomerRepository::listByOrgId($orgIdCurrent);
+      }
+    ?>
+    <div class="dg-panel">
+      <h2>Organisation / Multi-Firma</h2>
+      <p class="dg-field-hint">Phase 0: Verknüpfung im KDV-Register. Jede Domain bleibt eigene CRM-Instanz/DB. CRM-Switcher kommt in Phase 1.</p>
+      <div class="dg-form-grid">
+        <label class="dg-label">Organisation
+          <select class="dg-input" name="org_id">
+            <option value="0">— keine —</option>
+            <?php foreach ($kdvOrgOptions as $opt) : ?>
+              <option value="<?= (int) $opt['id'] ?>"<?= $orgIdCurrent === (int) $opt['id'] ? ' selected' : '' ?>><?= View::escape((string) $opt['label']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-label">Neue Organisation anlegen
+          <input class="dg-input" type="text" name="org_name_new" placeholder="z. B. Holding Muster GmbH" value="">
+        </label>
+        <label class="dg-label">Beziehung
+          <select class="dg-input" name="firm_relation">
+            <?php foreach (KdvCustomerRepository::FIRM_RELATIONS as $key => $label) : ?>
+              <option value="<?= View::escape($key) ?>"<?= ($c['firm_relation'] ?? 'standalone') === $key ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-label">Verknüpfte Firma
+          <select class="dg-input" name="related_customer_id">
+            <option value="0">— keine —</option>
+            <?php foreach ($kdvFirmOptions as $firm) : ?>
+              <?php
+                $fid = (int) ($firm['id'] ?? 0);
+                if ($fid < 1 || ($isEdit && $fid === (int) ($c['id'] ?? 0))) {
+                    continue;
+                }
+              ?>
+              <option value="<?= $fid ?>"<?= (int) ($c['related_customer_id'] ?? 0) === $fid ? ' selected' : '' ?>>
+                <?= View::escape((string) ($firm['company_name'] ?? '') . ' (' . (string) ($firm['domain'] ?? '') . ')') ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-label">Slot-Status
+          <select class="dg-input" name="firm_slot_status">
+            <?php foreach (KdvCustomerRepository::FIRM_SLOT_STATUSES as $key => $label) : ?>
+              <option value="<?= View::escape($key) ?>"<?= ($c['firm_slot_status'] ?? 'active') === $key ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-label">Gültig ab
+          <input class="dg-input" type="date" name="effective_from" value="<?= View::escape((string) ($c['effective_from'] ?? '')) ?>">
+        </label>
+        <label class="dg-label">Gültig bis
+          <input class="dg-input" type="date" name="effective_to" value="<?= View::escape((string) ($c['effective_to'] ?? '')) ?>">
+        </label>
+      </div>
+      <?php if ($orgSiblings !== []) : ?>
+        <p class="dg-field-hint" style="margin-top:0.75rem"><strong>Weitere Firmen dieser Organisation:</strong></p>
+        <ul class="dg-muted">
+          <?php foreach ($orgSiblings as $sib) : ?>
+            <?php if ((int) ($sib['id'] ?? 0) === (int) ($c['id'] ?? 0)) {
+                continue;
+            } ?>
+            <li>
+              <a href="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $sib['id'] ?>">
+                <?= View::escape((string) ($sib['company_name'] ?? '') . ' — ' . (string) ($sib['domain'] ?? '')) ?>
+              </a>
+              (<?= View::escape(KdvCustomerRepository::FIRM_SLOT_STATUSES[(string) ($sib['firm_slot_status'] ?? 'active')] ?? (string) ($sib['firm_slot_status'] ?? '')) ?>)
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <div class="dg-panel">
       <h2>Ansprechpartner (Shop-Login = diese E-Mail)</h2>
       <div class="dg-form-grid">

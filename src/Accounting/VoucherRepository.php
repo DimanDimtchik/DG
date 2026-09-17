@@ -1214,6 +1214,8 @@ final class VoucherRepository
             'document_kind' => (string) ($row['document_kind'] ?? ''),
             'document_status' => (string) ($row['document_status'] ?? ''),
             'parent_voucher_id' => $row['parent_voucher_id'] !== null ? (string) $row['parent_voucher_id'] : '',
+            'created_at' => (string) ($row['created_at'] ?? ''),
+            'created_by' => $row['created_by'] !== null ? (string) $row['created_by'] : '',
             'voucher_date' => (string) ($row['voucher_date'] ?? ''),
             'delivery_date' => (string) ($row['delivery_date'] ?? ''),
             'arap_enabled' => !empty($row['arap_enabled']) ? '1' : '0',

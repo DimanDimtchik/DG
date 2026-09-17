@@ -21,6 +21,20 @@ final class KdvCustomerRepository
         'enterprise' => 'Enterprise',
     ];
 
+    public const FIRM_RELATIONS = [
+        'standalone' => 'Eigenständig',
+        'tochter' => 'Tochter',
+        'schwester' => 'Schwester',
+        'nachfolger' => 'Nachfolger (Umfirmierung)',
+        'vorgaenger' => 'Vorgänger (Umfirmierung)',
+    ];
+
+    public const FIRM_SLOT_STATUSES = [
+        'active' => 'Aktiv',
+        'archive_readonly' => 'Archiv (nur lesen)',
+        'closed' => 'Geschlossen',
+    ];
+
     /** @return list<array<string, mixed>> */
     public static function list(): array
     {
@@ -121,6 +135,32 @@ final class KdvCustomerRepository
             'notes'         => trim((string) ($data['notes'] ?? '')) ?: null,
         ];
 
+        if (self::multiFirmaColumnsReady()) {
+            $orgId = (int) ($data['org_id'] ?? 0);
+            $newOrgName = trim((string) ($data['org_name_new'] ?? ''));
+            if ($orgId < 1 && $newOrgName !== '') {
+                $orgId = KdvOrgRepository::ensureByName(
+                    $newOrgName,
+                    trim((string) ($data['contact_email'] ?? '')) ?: null
+                );
+            }
+            $relation = (string) ($data['firm_relation'] ?? 'standalone');
+            if (!isset(self::FIRM_RELATIONS[$relation])) {
+                $relation = 'standalone';
+            }
+            $slot = (string) ($data['firm_slot_status'] ?? 'active');
+            if (!isset(self::FIRM_SLOT_STATUSES[$slot])) {
+                $slot = 'active';
+            }
+            $relatedId = (int) ($data['related_customer_id'] ?? 0);
+            $fields['org_id'] = $orgId > 0 ? $orgId : null;
+            $fields['firm_relation'] = $relation;
+            $fields['related_customer_id'] = $relatedId > 0 ? $relatedId : null;
+            $fields['firm_slot_status'] = $slot;
+            $fields['effective_from'] = !empty($data['effective_from']) ? $data['effective_from'] : null;
+            $fields['effective_to'] = !empty($data['effective_to']) ? $data['effective_to'] : null;
+        }
+
         if ($fields['company_name'] === '') throw new InvalidArgumentException('Firmenname ist erforderlich.');
         if ($fields['domain'] === '') throw new InvalidArgumentException('Domain ist erforderlich.');
 
@@ -142,6 +182,45 @@ final class KdvCustomerRepository
         $newId = (int) $pdo->lastInsertId();
         self::maybeSetShopPassword($newId, $data);
         return $newId;
+    }
+
+    public static function multiFirmaColumnsReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        try {
+            $ready = Database::pdo()->query(
+                "SHOW COLUMNS FROM dg_kdv_customers LIKE 'org_id'"
+            )->fetchColumn() !== false;
+        } catch (Throwable) {
+            $ready = false;
+        }
+
+        return $ready;
+    }
+
+    /**
+     * Firmen derselben Organisation.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listByOrgId(int $orgId): array
+    {
+        if ($orgId < 1 || !self::multiFirmaColumnsReady()) {
+            return [];
+        }
+        MigrationRunner::runPending();
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_kdv_customers WHERE org_id = :oid ORDER BY company_name ASC'
+        );
+        $stmt->execute(['oid' => $orgId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     /** @param array<string, mixed> $data */

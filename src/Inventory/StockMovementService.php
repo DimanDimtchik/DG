@@ -85,10 +85,20 @@ final class StockMovementService
                 if ($snap !== null && $snap['track_stock']) {
                     if ($snap['available'] < -0.0005) {
                         PurchaseListService::ensureForShortage($articleId, abs($snap['available']), $voucherId);
-                    } elseif ($snap['min_stock'] > 0 && $snap['available'] <= $snap['min_stock'] + 0.0005) {
-                        $toMin = max(0.0, round($snap['min_stock'] - $snap['available'], 3));
-                        if ($toMin > 0.0005) {
-                            PurchaseListService::ensureForShortage($articleId, $toMin, $voucherId);
+                    } elseif (PurchaseListService::needsRestock(
+                        $snap['stock_qty'],
+                        $snap['available'],
+                        $snap['min_stock'],
+                        (float) ($snap['on_order'] ?? 0)
+                    )) {
+                        $toTarget = PurchaseListService::suggestedRestockQty(
+                            $snap['stock_qty'],
+                            $snap['available'],
+                            $snap['min_stock'],
+                            (float) ($snap['on_order'] ?? 0)
+                        );
+                        if ($toTarget > 0.0005) {
+                            PurchaseListService::ensureForShortage($articleId, $toTarget, $voucherId);
                         }
                     }
                 }
@@ -155,7 +165,7 @@ final class StockMovementService
                 FROM dg_calendar_articles
                 WHERE catalog_kind = 'product' AND track_stock = 1";
         if ($lowStockOnly) {
-            $sql .= ' AND min_stock > 0 AND stock_qty <= min_stock';
+            $sql .= ' AND (stock_qty < 0 OR (min_stock > 0 AND stock_qty <= min_stock))';
         }
         $sql .= ' ORDER BY stock_ort ASC, stock_halle ASC, stock_regal ASC, stock_platz ASC, title ASC';
 
@@ -163,8 +173,12 @@ final class StockMovementService
         foreach ($rows as &$row) {
             $row['stock_qty'] = round((float) ($row['stock_qty'] ?? 0), 3);
             $row['min_stock'] = round((float) ($row['min_stock'] ?? 0), 3);
-            $row['is_low'] = (float) ($row['min_stock'] ?? 0) > 0
-                && (float) ($row['stock_qty'] ?? 0) <= (float) ($row['min_stock'] ?? 0);
+            $row['is_low'] = PurchaseListService::needsRestock(
+                (float) $row['stock_qty'],
+                (float) $row['stock_qty'],
+                (float) $row['min_stock'],
+                0.0
+            );
             $row['stock_label'] = self::formatQty((float) $row['stock_qty'], (string) ($row['unit'] ?? 'Stück'));
             $row['stock_position_code'] = StockPositionCode::fromRow($row);
         }
@@ -195,6 +209,7 @@ final class StockMovementService
                 'stock_qty' => (string) ($item['stock_qty'] ?? '0'),
                 'reserved_qty' => (string) ($item['reserved_qty'] ?? '0'),
                 'in_transit_qty' => (string) ($item['in_transit_qty'] ?? '0'),
+                'on_order_qty' => (string) ($item['on_order_qty'] ?? '0'),
                 'available_qty' => (string) ($item['available_qty'] ?? $item['stock_qty'] ?? '0'),
                 'min_stock' => (string) ($item['min_stock'] ?? '0'),
                 'low_stock' => !empty($item['is_low']) ? 'ja' : 'nein',

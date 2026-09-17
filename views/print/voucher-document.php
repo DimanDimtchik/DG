@@ -8,21 +8,28 @@
 /** @var bool $books */
 /** @var bool $forEmail */
 /** @var bool $showChain */
+/** @var bool $customerFacing */
 /** @var array{name: string, lines: list<string>} $companyBlock */
 /** @var array{name: string, lines: list<string>} $customerBlock */
 /** @var string $legalNotice */
 /** @var string $footerNotice */
 /** @var array{holder: string, iban: string, bank: string, bic: string}|null $primaryBank */
 /** @var string $documentStatusLabel */
+/** @var array{net: float, tax: float, gross: float, by_rate: list<array{rate: int, net: float, tax: float, gross: float}>}|null $totalsBreakdown */
+/** @var string $introTextResolved */
+/** @var string $footerTextResolved */
+/** @var string $validUntil */
+/** @var string $internalNotes */
 $customer = trim((string) ($voucher['supplier_name'] ?? ''));
 $number = trim((string) ($voucher['invoice_number'] ?? ''));
 $date = (string) ($voucher['voucher_date'] ?? '');
 $delivery = (string) ($voucher['delivery_date'] ?? '');
 $description = trim((string) ($voucher['description'] ?? ''));
-$notes = trim((string) ($voucher['notes'] ?? ''));
+$customerFacing = !empty($customerFacing);
+$introText = trim((string) ($introTextResolved ?? ($voucher['document_intro_text'] ?? '')));
+$footerText = trim((string) ($footerTextResolved ?? ($voucher['document_footer_text'] ?? '')));
+$notes = trim((string) ($internalNotes ?? ''));
 /** @var list<array{key: string, label: string, text: string}> $legalClauseBlocks */
-$introText = trim((string) ($voucher['document_intro_text'] ?? ''));
-$footerText = trim((string) ($voucher['document_footer_text'] ?? ''));
 $legalClauseBlocks = is_array($legalClauseBlocks ?? null) ? $legalClauseBlocks : [];
 $company = $companyBlock ?? ['name' => '', 'lines' => [], 'owner' => ''];
 $customerBox = $customerBlock ?? ['name' => $customer, 'lines' => []];
@@ -31,6 +38,14 @@ $logoAlt = (string) ($logoAlt ?? '');
 $logoShapeClass = (string) ($logoShapeClass ?? 'wide');
 /** @var list<string> $mandatoryLines */
 $mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
+$totals = is_array($totalsBreakdown ?? null) ? $totalsBreakdown : [
+    'net' => 0.0,
+    'tax' => 0.0,
+    'gross' => (float) ($voucher['gross_amount'] ?? 0),
+    'by_rate' => [],
+];
+$isOffer = ($kind ?? '') === VoucherDocumentKind::OFFER;
+$validUntilRaw = trim((string) ($validUntil ?? ''));
 ?>
 <div class="vd-letterhead"<?= !empty($forEmail) ? ' style="display:table;width:100%;margin-bottom:16px;"' : '' ?>>
   <div class="vd-letterhead__col"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;width:50%;"' : '' ?>>
@@ -58,10 +73,12 @@ $mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
 <p class="vd-doc-meta"<?= !empty($forEmail) ? ' style="color:#5c6678;font-size:12px;margin:0 0 16px;"' : '' ?>>
   <?php if ($number !== '') : ?>Nr. <?= View::escape($number) ?> · <?php endif; ?>
   <?php if ($date !== '') : ?>Datum <?= View::escape(date('d.m.Y', strtotime($date) ?: time())) ?><?php endif; ?>
-  <?php if ($delivery !== '' && $delivery !== $date) : ?>
+  <?php if ($isOffer && $validUntilRaw !== '') : ?>
+    · gültig bis <?= View::escape(date('d.m.Y', strtotime($validUntilRaw) ?: time())) ?>
+  <?php elseif ($delivery !== '' && $delivery !== $date && !$isOffer) : ?>
     · Lieferdatum <?= View::escape(date('d.m.Y', strtotime($delivery) ?: time())) ?>
   <?php endif; ?>
-  <?php if ((string) ($documentStatusLabel ?? '') !== '') : ?>
+  <?php if (!$customerFacing && (string) ($documentStatusLabel ?? '') !== '') : ?>
     · Status <?= View::escape((string) $documentStatusLabel) ?>
   <?php endif; ?>
 </p>
@@ -70,36 +87,39 @@ $mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
   <p><strong>Betreff:</strong> <?= View::escape($description) ?></p>
 <?php endif; ?>
 
-<?php if (($legalNotice ?? '') !== '') : ?>
-  <div class="vd-notice<?= !$books ? ' vd-notice--warn' : '' ?>"<?= !empty($forEmail) ? ' style="background:#f4f6f9;padding:8px 12px;margin:12px 0;font-size:12px;"' : '' ?>>
+<?php if (!$customerFacing && ($legalNotice ?? '') !== '') : ?>
+  <div class="vd-notice no-print<?= !$books ? ' vd-notice--warn' : '' ?>"<?= !empty($forEmail) ? ' style="background:#f4f6f9;padding:8px 12px;margin:12px 0;font-size:12px;"' : '' ?>>
     <?= View::escape((string) $legalNotice) ?>
+    <span class="vd-notice__hint"> (nur intern, nicht druckbar)</span>
   </div>
 <?php endif; ?>
 
 <?php if (!empty($showChain) && ($chain['documents'] ?? []) !== []) : ?>
-  <h2>Belegkette (intern)</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Dokument</th>
-        <th>Status</th>
-        <th>Nr.</th>
-        <th>Datum</th>
-        <th class="num">Betrag</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($chain['documents'] as $doc) : ?>
-        <tr<?= !empty($doc['is_current']) ? ' style="font-weight:700;"' : '' ?>>
-          <td><?= View::escape((string) ($doc['document_label'] ?? '')) ?><?= !empty($doc['is_current']) ? ' (dieses Dokument)' : '' ?></td>
-          <td><?= View::escape((string) ($doc['document_status_label'] ?? '—')) ?></td>
-          <td><?= View::escape((string) ($doc['invoice_number'] ?? '')) ?></td>
-          <td><?= View::escape((string) ($doc['voucher_date'] ?? '')) ?></td>
-          <td class="num"><?= View::escape((string) ($doc['gross_display'] ?? '')) ?> €</td>
+  <div class="vd-chain no-print">
+    <h2>Belegkette (intern)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Dokument</th>
+          <th>Status</th>
+          <th>Nr.</th>
+          <th>Datum</th>
+          <th class="num">Betrag</th>
         </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <?php foreach ($chain['documents'] as $doc) : ?>
+          <tr<?= !empty($doc['is_current']) ? ' style="font-weight:700;"' : '' ?>>
+            <td><?= View::escape((string) ($doc['document_label'] ?? '')) ?><?= !empty($doc['is_current']) ? ' (dieses Dokument)' : '' ?></td>
+            <td><?= View::escape((string) ($doc['document_status_label'] ?? '—')) ?></td>
+            <td><?= View::escape((string) ($doc['invoice_number'] ?? '')) ?></td>
+            <td><?= View::escape((string) ($doc['voucher_date'] ?? '')) ?></td>
+            <td class="num"><?= View::escape((string) ($doc['gross_display'] ?? '')) ?> €</td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
 <?php endif; ?>
 
 <?php if (is_array($finalSummary) && ($finalSummary['partials'] ?? []) !== []) : ?>
@@ -134,7 +154,7 @@ $mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
 <?php if ($items === []) : ?>
   <p>Keine Positionen erfasst.</p>
 <?php else : ?>
-  <table>
+  <table class="vd-positions">
     <thead>
       <tr>
         <th>Bezeichnung</th>
@@ -160,12 +180,58 @@ $mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
           <td class="num"><?= $fmt((float) ($item['gross_amount'] ?? 0)) ?> €</td>
         </tr>
       <?php endforeach; ?>
-      <tr class="total">
-        <td colspan="4">Gesamt (brutto)</td>
-        <td class="num"><?= $fmt((float) ($voucher['gross_amount'] ?? 0)) ?> €</td>
-      </tr>
     </tbody>
   </table>
+<?php endif; ?>
+
+<table class="vd-totals">
+  <tbody>
+    <tr>
+      <td>Zwischensumme (netto)</td>
+      <td class="num"><?= $fmt((float) ($totals['net'] ?? 0)) ?> €</td>
+    </tr>
+    <?php foreach (($totals['by_rate'] ?? []) as $taxRow) : ?>
+      <?php
+        $rate = (int) ($taxRow['rate'] ?? 0);
+        $taxAmt = (float) ($taxRow['tax'] ?? 0);
+        $label = $rate === 0
+          ? 'Umsatzsteuer 0 %'
+          : 'zzgl. ' . $rate . ' % USt.';
+      ?>
+      <tr>
+        <td><?= View::escape($label) ?></td>
+        <td class="num"><?= $taxAmt == 0.0 && $rate === 0 ? '—' : $fmt($taxAmt) . ' €' ?></td>
+      </tr>
+    <?php endforeach; ?>
+    <?php if (($totals['by_rate'] ?? []) === [] && (float) ($totals['tax'] ?? 0) > 0) : ?>
+      <tr>
+        <td>zzgl. Umsatzsteuer</td>
+        <td class="num"><?= $fmt((float) $totals['tax']) ?> €</td>
+      </tr>
+    <?php endif; ?>
+    <tr class="total">
+      <td>Gesamtbetrag</td>
+      <td class="num"><?= $fmt((float) ($totals['gross'] ?? 0)) ?> €</td>
+    </tr>
+  </tbody>
+</table>
+
+<?php if (is_array($depositBlock ?? null) && ($depositBlock['label'] ?? '') !== '') : ?>
+  <div class="vd-deposit"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:12px;padding:8px 12px;background:#fafbfc;border:1px solid #e5e8ee;"' : '' ?>>
+    <strong><?= View::escape((string) $depositBlock['label']) ?></strong>
+    <?php if (($depositBlock['amount_label'] ?? '') !== '') : ?>
+      — <?= View::escape((string) $depositBlock['amount_label']) ?>
+    <?php endif; ?>
+    <?php if (($depositBlock['text'] ?? '') !== '') : ?>
+      <div style="margin-top:2mm;"><?= nl2br(View::escape((string) $depositBlock['text'])) ?></div>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
+
+<?php if (trim((string) ($kleinunternehmerHint ?? '')) !== '') : ?>
+  <div class="vd-kleinunternehmer"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:12px;padding:8px 12px;background:#f8f9fb;border-left:3px solid #b8942f;"' : '' ?>>
+    <?= nl2br(View::escape(trim((string) $kleinunternehmerHint))) ?>
+  </div>
 <?php endif; ?>
 
 <?php if ($books && $primaryBank !== null) : ?>
@@ -210,12 +276,12 @@ $paymentTermsText = trim((string) ($paymentTermsText ?? ''));
   </div>
 <?php endif; ?>
 
-<?php if ($notes !== '') : ?>
-  <p><strong>Notizen:</strong><br><?= nl2br(View::escape($notes)) ?></p>
+<?php if (!$customerFacing && $notes !== '') : ?>
+  <p class="no-print"><strong>Interne Notizen:</strong><br><?= nl2br(View::escape($notes)) ?></p>
 <?php endif; ?>
 
-<?php if (($footerNotice ?? '') !== '') : ?>
-  <div class="vd-footer"<?= !empty($forEmail) ? ' style="margin-top:16px;font-size:11px;color:#5c6678;"' : '' ?>>
+<?php if (!$customerFacing && ($footerNotice ?? '') !== '') : ?>
+  <div class="vd-footer no-print"<?= !empty($forEmail) ? ' style="margin-top:16px;font-size:11px;color:#5c6678;"' : '' ?>>
     <?= View::escape((string) $footerNotice) ?>
   </div>
 <?php endif; ?>
@@ -225,5 +291,47 @@ $paymentTermsText = trim((string) ($paymentTermsText ?? ''));
     <?php foreach ($mandatoryLines as $line) : ?>
       <div><?= View::escape((string) $line) ?></div>
     <?php endforeach; ?>
+  </div>
+<?php endif; ?>
+
+<?php if (is_array($provenanceBlock ?? null) && ($provenanceBlock['lines'] ?? []) !== []) : ?>
+  <div class="vd-provenance"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:10px;color:#5c6678;"' : '' ?>>
+    <?php foreach ($provenanceBlock['lines'] as $pline) : ?>
+      <div><?= View::escape((string) $pline) ?></div>
+    <?php endforeach; ?>
+    <?php if (($provenanceBlock['link_url'] ?? '') !== '' && ($provenanceBlock['link_label'] ?? '') !== '') : ?>
+      <div><a href="<?= View::escape((string) $provenanceBlock['link_url']) ?>"><?= View::escape((string) $provenanceBlock['link_label']) ?></a></div>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
+
+<?php if (is_array($signatureBlock ?? null)) : ?>
+  <?php
+    $sigPlace = trim((string) ($signatureBlock['place'] ?? ''));
+    $sigDate = trim((string) ($signatureBlock['date_label'] ?? ''));
+    $sigPlaceDate = trim(($sigPlace !== '' ? $sigPlace : 'Ort') . ', den ' . ($sigDate !== '' ? $sigDate : '…………'));
+    $sigClient = trim((string) ($signatureBlock['client_name'] ?? ''));
+    $sigContractor = trim((string) ($signatureBlock['contractor_name'] ?? ''));
+  ?>
+  <div class="vd-signatures"<?= !empty($forEmail) ? ' style="margin-top:24px;font-size:12px;"' : '' ?>>
+    <p class="vd-signatures__place"><?= View::escape($sigPlaceDate) ?></p>
+    <div class="vd-signatures__cols"<?= !empty($forEmail) ? ' style="display:table;width:100%;margin-top:16px;"' : '' ?>>
+      <div class="vd-signatures__col"<?= !empty($forEmail) ? ' style="display:table-cell;width:48%;vertical-align:top;padding-right:4%;"' : '' ?>>
+        <strong>Auftraggeber</strong>
+        <?php if ($sigClient !== '') : ?>
+          <div class="vd-signatures__name"><?= View::escape($sigClient) ?></div>
+        <?php endif; ?>
+        <div class="vd-signatures__line"></div>
+        <div class="vd-signatures__caption">Unterschrift</div>
+      </div>
+      <div class="vd-signatures__col"<?= !empty($forEmail) ? ' style="display:table-cell;width:48%;vertical-align:top;"' : '' ?>>
+        <strong>Auftragnehmer</strong>
+        <?php if ($sigContractor !== '') : ?>
+          <div class="vd-signatures__name"><?= View::escape($sigContractor) ?></div>
+        <?php endif; ?>
+        <div class="vd-signatures__line"></div>
+        <div class="vd-signatures__caption">Unterschrift</div>
+      </div>
+    </div>
   </div>
 <?php endif; ?>

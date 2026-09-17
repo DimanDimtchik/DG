@@ -125,10 +125,11 @@
   }
 
   function refreshStockCascade(preserve) {
+    preserve = preserve || {};
     const locationId = stockLocationSelect ? stockLocationSelect.value : '';
-    const hallId = preserve && stockHallSelect ? stockHallSelect.value : '';
-    const shelfId = preserve && stockShelfSelect ? stockShelfSelect.value : '';
-    const placeId = preserve && stockPlaceSelect ? stockPlaceSelect.value : '';
+    const hallId = preserve.hall && stockHallSelect ? stockHallSelect.value : '';
+    const shelfId = preserve.shelf && stockShelfSelect ? stockShelfSelect.value : '';
+    const placeId = preserve.place && stockPlaceSelect ? stockPlaceSelect.value : '';
 
     const halls = (stockStructure.halls || []).filter(function (h) {
       return !locationId || String(h.location_id) === String(locationId);
@@ -148,7 +149,7 @@
       if (activeHallId && String(s.hall_id) !== String(activeHallId)) {
         return false;
       }
-      return true;
+      return !activeHallId ? false : true;
     }).map(function (s) {
       const cap = s.capacity_summary || 'Regal';
       return {
@@ -156,21 +157,14 @@
         label: (s.location_code || '') + ' / ' + (s.hall_code || '') + ' / ' + (s.code || '') + ' (' + cap + ')',
       };
     });
-    fillSelect(stockShelfSelect, shelves, shelfId);
+    // Ohne Halle: leere Regalliste (nur „— optional —“)
+    fillSelect(stockShelfSelect, activeHallId ? shelves : [], shelfId);
 
     const activeShelfId = stockShelfSelect ? stockShelfSelect.value : '';
     const articleId = idInput ? Number(idInput.value || 0) : 0;
     const places = (stockStructure.places || []).filter(function (p) {
-      if (activeShelfId && String(p.shelf_id) !== String(activeShelfId)) {
+      if (!activeShelfId || String(p.shelf_id) !== String(activeShelfId)) {
         return false;
-      }
-      if (!activeShelfId && activeHallId) {
-        const shelf = (stockStructure.shelves || []).find(function (s) {
-          return String(s.id) === String(p.shelf_id);
-        });
-        if (!shelf || String(shelf.hall_id) !== String(activeHallId)) {
-          return false;
-        }
       }
       if (p.place_mode === 'fixed' && p.fixed_article_id && articleId > 0 && Number(p.fixed_article_id) !== articleId) {
         return false;
@@ -179,7 +173,7 @@
     }).map(function (p) {
       return { id: p.id, label: p.label || p.position_code || p.code };
     });
-    fillSelect(stockPlaceSelect, places, placeId);
+    fillSelect(stockPlaceSelect, activeShelfId ? places : [], placeId);
     updatePositionPreview();
   }
 
@@ -190,18 +184,19 @@
     if (stockPlaceModeSelect) {
       stockPlaceModeSelect.value = data.stock_place_mode || 'flexible';
     }
-    refreshStockCascade(true);
+    refreshStockCascade({ hall: false, shelf: false, place: false });
     if (stockHallSelect && data.stock_hall_id) {
       stockHallSelect.value = String(data.stock_hall_id);
     }
-    refreshStockCascade(true);
+    refreshStockCascade({ hall: true, shelf: false, place: false });
     if (stockShelfSelect && data.stock_shelf_id) {
       stockShelfSelect.value = String(data.stock_shelf_id);
     }
-    refreshStockCascade(true);
+    refreshStockCascade({ hall: true, shelf: true, place: false });
     if (stockPlaceSelect && data.stock_place_id) {
       stockPlaceSelect.value = String(data.stock_place_id);
     }
+    refreshStockCascade({ hall: true, shelf: true, place: true });
     updatePositionPreview();
   }
 
@@ -338,7 +333,7 @@
     }
     if (stockLocationSelect) stockLocationSelect.value = '';
     if (stockPlaceModeSelect) stockPlaceModeSelect.value = 'flexible';
-    refreshStockCascade(false);
+    refreshStockCascade({ hall: false, shelf: false, place: false });
     renderPurchaseSources([{}]);
   }
 
@@ -444,13 +439,19 @@
     catalogKindInput.addEventListener('change', toggleStockFields);
   }
   if (stockLocationSelect) {
-    stockLocationSelect.addEventListener('change', function () { refreshStockCascade(false); });
+    stockLocationSelect.addEventListener('change', function () {
+      refreshStockCascade({ hall: false, shelf: false, place: false });
+    });
   }
   if (stockHallSelect) {
-    stockHallSelect.addEventListener('change', function () { refreshStockCascade(false); });
+    stockHallSelect.addEventListener('change', function () {
+      refreshStockCascade({ hall: true, shelf: false, place: false });
+    });
   }
   if (stockShelfSelect) {
-    stockShelfSelect.addEventListener('change', function () { refreshStockCascade(false); });
+    stockShelfSelect.addEventListener('change', function () {
+      refreshStockCascade({ hall: true, shelf: true, place: false });
+    });
   }
   if (stockPlaceSelect) {
     stockPlaceSelect.addEventListener('change', updatePositionPreview);
@@ -471,7 +472,7 @@
 
   toggleCustomMinutes();
   toggleStockFields();
-  refreshStockCascade(false);
+  refreshStockCascade({ hall: false, shelf: false, place: false });
   renderPurchaseSources([{}]);
 
   const urlParams = new URLSearchParams(window.location.search);

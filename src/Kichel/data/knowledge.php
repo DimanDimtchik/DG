@@ -48,9 +48,14 @@ return [
     ],
     [
         'id' => 'belegkette',
-        'keywords' => ['belegkette', 'belege', 'beleg', 'workflow', 'belegstatus', 'belegfreigabe', 'gobd'],
+        'keywords' => [
+            'belegkette', 'belege', 'beleg', 'workflow', 'belegstatus', 'belegfreigabe', 'gobd',
+            'angebot', 'angebote', 'angebot erstellen', 'angebot anlegen',
+            'auftragsbestätigung', 'auftragsbestaetigung', 'lieferschein',
+            'abschlagsrechnung', 'schlussrechnung', 'folgebeleg',
+        ],
         'title' => 'Belegkette und Workflow',
-        'answer' => 'Alle Belege — vom Angebot bis zur Rechnung — findest du unter Buchhaltung → Belege.',
+        'answer' => 'Angebot, Auftragsbestätigung, Lieferschein und Rechnung legst du unter Buchhaltung → Belege an: Neuer Beleg → Belegart Einnahmen → Dokumentart wählen. Folgebelege erstellst du im gespeicherten Beleg über „Folgebeleg erstellen“.',
         'href' => '/app?page=buchhaltung-belege',
         'action_label' => 'Belege öffnen',
         'tags' => ['buchhaltung'],

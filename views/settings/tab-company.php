@@ -412,6 +412,7 @@ $bankSummary = $filledBanks > 0
             ?>
           <label class="dg-field"><span>E-Mail</span><input type="email" name="finanzaemter[<?= (int) $i ?>][email]" value="<?= View::escape($faChannels['email']) ?>" autocomplete="off"></label>
           <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="finanzaemter[<?= (int) $i ?>][website]" value="<?= View::escape($faChannels['website']) ?>" placeholder="https://…"></label>
+          <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="finanzaemter[<?= (int) $i ?>][appointment_url]" value="<?= View::escape((string) ($fa['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
           <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea name="finanzaemter[<?= (int) $i ?>][opening_hours]" rows="4"><?= View::escape(FinanzamtOpeningHours::toPlainText((string) ($fa['opening_hours'] ?? ''))) ?></textarea></label>
           <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" name="finanzaemter[<?= (int) $i ?>][notes]" value="<?= View::escape((string) ($fa['notes'] ?? '')) ?>"></label>
           <label class="dg-field dg-field--check">
@@ -480,6 +481,8 @@ $bankSummary = $filledBanks > 0
       <label class="dg-field"><span>Ort</span><input type="text" name="bg_data[city]" id="dg-uv-city" value="<?= View::escape((string) ($bgData['city'] ?? '')) ?>"></label>
       <label class="dg-field"><span>Telefon</span><input type="text" name="bg_data[phone]" value="<?= View::escape((string) ($bgData['phone'] ?? '')) ?>"></label>
       <label class="dg-field"><span>E-Mail</span><input type="email" name="bg_data[email]" value="<?= View::escape((string) ($bgData['email'] ?? '')) ?>"></label>
+      <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="bg_data[website]" value="<?= View::escape((string) ($bgData['website'] ?? '')) ?>" placeholder="https://…"></label>
+      <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="bg_data[appointment_url]" value="<?= View::escape((string) ($bgData['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
     </div>
     </div>
   </section>
@@ -507,6 +510,8 @@ $bankSummary = $filledBanks > 0
       <label class="dg-field"><span>Ansprechpartner</span><input type="text" name="employment_agency[contact]" value="<?= View::escape((string) ($employmentAgency['contact'] ?? '')) ?>"></label>
       <label class="dg-field"><span>Telefon</span><input type="text" name="employment_agency[phone]" value="<?= View::escape((string) ($employmentAgency['phone'] ?? '')) ?>"></label>
       <label class="dg-field"><span>E-Mail</span><input type="email" name="employment_agency[email]" value="<?= View::escape((string) ($employmentAgency['email'] ?? '')) ?>"></label>
+      <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="employment_agency[website]" value="<?= View::escape((string) ($employmentAgency['website'] ?? '')) ?>" placeholder="https://…"></label>
+      <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="employment_agency[appointment_url]" value="<?= View::escape((string) ($employmentAgency['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
     </div>
     </div>
   </section>
@@ -536,6 +541,8 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field"><span>Ansprechpartner</span><input type="text" name="institutions[<?= View::escape($instKey) ?>][contact]" value="<?= View::escape((string) ($inst['contact'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Telefon</span><input type="text" name="institutions[<?= View::escape($instKey) ?>][phone]" value="<?= View::escape((string) ($inst['phone'] ?? '')) ?>"></label>
           <label class="dg-field"><span>E-Mail</span><input type="email" name="institutions[<?= View::escape($instKey) ?>][email]" value="<?= View::escape((string) ($inst['email'] ?? '')) ?>"></label>
+          <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="institutions[<?= View::escape($instKey) ?>][website]" value="<?= View::escape((string) ($inst['website'] ?? '')) ?>" placeholder="https://…"></label>
+          <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="institutions[<?= View::escape($instKey) ?>][appointment_url]" value="<?= View::escape((string) ($inst['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
         </div>
       <?php endforeach; ?>
     </div>
@@ -562,6 +569,8 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field"><span>Ansprechpartner</span><input type="text" name="professional_chambers[<?= (int) $i ?>][contact]" value="<?= View::escape((string) ($row['contact'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Telefon</span><input type="text" name="professional_chambers[<?= (int) $i ?>][phone]" value="<?= View::escape((string) ($row['phone'] ?? '')) ?>"></label>
           <label class="dg-field"><span>E-Mail</span><input type="email" name="professional_chambers[<?= (int) $i ?>][email]" value="<?= View::escape((string) ($row['email'] ?? '')) ?>"></label>
+          <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="professional_chambers[<?= (int) $i ?>][website]" value="<?= View::escape((string) ($row['website'] ?? '')) ?>" placeholder="https://…"></label>
+          <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="professional_chambers[<?= (int) $i ?>][appointment_url]" value="<?= View::escape((string) ($row['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
           <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
         </div>
       <?php endforeach; ?>
@@ -589,6 +598,8 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field"><span>Ansprechpartner</span><input type="text" name="trade_associations[<?= (int) $i ?>][contact]" value="<?= View::escape((string) ($row['contact'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Telefon</span><input type="text" name="trade_associations[<?= (int) $i ?>][phone]" value="<?= View::escape((string) ($row['phone'] ?? '')) ?>"></label>
           <label class="dg-field"><span>E-Mail</span><input type="email" name="trade_associations[<?= (int) $i ?>][email]" value="<?= View::escape((string) ($row['email'] ?? '')) ?>"></label>
+          <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="trade_associations[<?= (int) $i ?>][website]" value="<?= View::escape((string) ($row['website'] ?? '')) ?>" placeholder="https://…"></label>
+          <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="trade_associations[<?= (int) $i ?>][appointment_url]" value="<?= View::escape((string) ($row['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
           <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
         </div>
       <?php endforeach; ?>
@@ -624,6 +635,8 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field"><span>Ansprechpartner</span><input type="text" name="memberships[<?= (int) $i ?>][contact]" value="<?= View::escape((string) ($row['contact'] ?? '')) ?>"></label>
           <label class="dg-field"><span>Telefon</span><input type="text" name="memberships[<?= (int) $i ?>][phone]" value="<?= View::escape((string) ($row['phone'] ?? '')) ?>"></label>
           <label class="dg-field"><span>E-Mail</span><input type="email" name="memberships[<?= (int) $i ?>][email]" value="<?= View::escape((string) ($row['email'] ?? '')) ?>"></label>
+          <label class="dg-field dg-field--wide"><span>Website</span><input type="url" name="memberships[<?= (int) $i ?>][website]" value="<?= View::escape((string) ($row['website'] ?? '')) ?>" placeholder="https://…"></label>
+          <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" name="memberships[<?= (int) $i ?>][appointment_url]" value="<?= View::escape((string) ($row['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
           <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" name="memberships[<?= (int) $i ?>][notes]" value="<?= View::escape((string) ($row['notes'] ?? '')) ?>"></label>
           <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
         </div>
@@ -694,6 +707,7 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field"><span>Telefon</span><input type="text" data-name="finanzaemter[__INDEX__][phone]"></label>
     <label class="dg-field"><span>E-Mail</span><input type="email" data-name="finanzaemter[__INDEX__][email]" autocomplete="off"></label>
     <label class="dg-field dg-field--wide"><span>Website</span><input type="url" data-name="finanzaemter[__INDEX__][website]" placeholder="https://…"></label>
+    <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" data-name="finanzaemter[__INDEX__][appointment_url]" placeholder="https://…"></label>
     <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea data-name="finanzaemter[__INDEX__][opening_hours]" rows="4"></textarea></label>
     <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" data-name="finanzaemter[__INDEX__][notes]"></label>
     <label class="dg-field dg-field--check"><input type="checkbox" data-name="finanzaemter[__INDEX__][is_primary]" value="1"><span>Haupt-Finanzamt</span></label>
@@ -707,6 +721,8 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field"><span>Ansprechpartner</span><input type="text" data-name="professional_chambers[__INDEX__][contact]"></label>
     <label class="dg-field"><span>Telefon</span><input type="text" data-name="professional_chambers[__INDEX__][phone]"></label>
     <label class="dg-field"><span>E-Mail</span><input type="email" data-name="professional_chambers[__INDEX__][email]"></label>
+    <label class="dg-field dg-field--wide"><span>Website</span><input type="url" data-name="professional_chambers[__INDEX__][website]" placeholder="https://…"></label>
+    <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" data-name="professional_chambers[__INDEX__][appointment_url]" placeholder="https://…"></label>
     <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
   </div>
 </template>
@@ -717,6 +733,8 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field"><span>Ansprechpartner</span><input type="text" data-name="trade_associations[__INDEX__][contact]"></label>
     <label class="dg-field"><span>Telefon</span><input type="text" data-name="trade_associations[__INDEX__][phone]"></label>
     <label class="dg-field"><span>E-Mail</span><input type="email" data-name="trade_associations[__INDEX__][email]"></label>
+    <label class="dg-field dg-field--wide"><span>Website</span><input type="url" data-name="trade_associations[__INDEX__][website]" placeholder="https://…"></label>
+    <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" data-name="trade_associations[__INDEX__][appointment_url]" placeholder="https://…"></label>
     <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
   </div>
 </template>
@@ -728,6 +746,8 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field"><span>Ansprechpartner</span><input type="text" data-name="memberships[__INDEX__][contact]"></label>
     <label class="dg-field"><span>Telefon</span><input type="text" data-name="memberships[__INDEX__][phone]"></label>
     <label class="dg-field"><span>E-Mail</span><input type="email" data-name="memberships[__INDEX__][email]"></label>
+    <label class="dg-field dg-field--wide"><span>Website</span><input type="url" data-name="memberships[__INDEX__][website]" placeholder="https://…"></label>
+    <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="url" data-name="memberships[__INDEX__][appointment_url]" placeholder="https://…"></label>
     <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" data-name="memberships[__INDEX__][notes]"></label>
     <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
   </div>

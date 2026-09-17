@@ -307,7 +307,7 @@ final class MenuRegistry
             'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
             'bilder' => 'Medien, Logos und Bilder verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
-            'buchhaltung-belege' => 'Belege erfassen mit Steuerfeldern und Kontenzuordnung.',
+            'buchhaltung-belege' => 'Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
             'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',

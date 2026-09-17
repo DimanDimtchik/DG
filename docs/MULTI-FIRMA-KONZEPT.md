@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-04** · Status: **Konzept** (noch nicht umgesetzt)  
+Stand: **2026-09-17** · Status: **Phase 0 in Umsetzung** (KDV-Registry)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -181,13 +181,21 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 
 ## 11. Umsetzungsphasen (grob)
 
-| Phase | Inhalt |
-|-------|--------|
-| **0** | Dieses Konzept · KDV-Datenmodell Org↔Firma skizzieren |
-| **1** | Org-Login + Switcher + verknüpfte Instanzen (manuell provisioniert) |
-| **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot |
-| **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum |
-| **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts |
+| Phase | Inhalt | Stand |
+|-------|--------|-------|
+| **0** | Konzept · KDV-Datenmodell Org↔Firma | **Laufend:** Migration `082_kdv_orgs_multi_firma.sql` (`dg_kdv_orgs` + Felder an `dg_kdv_customers`), `KdvOrgRepository`, Formular/Listen-UI in KDV. Keine Buchhaltungs-Tabellen. |
+| **1** | Org-Login + Switcher + verknüpfte Instanzen (manuell provisioniert) | Offen |
+| **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | Offen |
+| **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | Offen |
+| **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | Offen |
+
+### Phase 0 — technische Artefakte
+
+- `database/migrations/082_kdv_orgs_multi_firma.sql`
+- `src/Kdv/KdvOrgRepository.php`
+- `KdvCustomerRepository`: `org_id`, Beziehung, Slot-Status, Gültigkeit; `listByOrgId()`
+- UI: `views/modules/kdv-kunde-form.php` (Panel Organisation), Liste mit Org-Spalte
+- Nur Master-DB (KDV-Register); Kundeninstanzen unverändert getrennt
 
 ---
 

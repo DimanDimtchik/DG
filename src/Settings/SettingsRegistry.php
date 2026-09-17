@@ -146,6 +146,11 @@ final class SettingsRegistry
                         'lead' => 'Skonto-Stufen mit Zeitvorgaben und automatischer Mahnversand mit Mahngebühren.',
                         'template' => 'payment-terms',
                     ],
+                    'belegdarstellung' => [
+                        'label' => 'Belegdarstellung',
+                        'lead' => 'Kunden-PDF der Belegkette: Textvorlagen, Anzahlung, Kleinunternehmer § 19 — nicht Nummernkreise.',
+                        'template' => 'belegdarstellung',
+                    ],
                 ],
             ],
             'recht' => [

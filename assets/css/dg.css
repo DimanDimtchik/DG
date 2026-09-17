@@ -4248,7 +4248,7 @@ body.dg-login-page {
 }
 
 .dg-voucher-items-article-cell {
-  min-width: 220px;
+  min-width: 180px;
 }
 
 .dg-voucher-items-article-wrap {
@@ -4262,13 +4262,215 @@ body.dg-login-page {
   background: var(--dg-surface);
 }
 
+/* Positionstabelle: horizontal scrollen statt über Panel hinaus (Tablet) */
 #dg-voucher-invoice-items-section .dg-table-wrap {
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  background: var(--dg-surface);
+  max-width: 100%;
 }
 
-#dg-voucher-invoice-items-section .dg-voucher-items__table {
-  overflow: visible;
+.dg-voucher-items__table {
+  min-width: 860px;
+  width: 100%;
+  table-layout: fixed;
 }
+
+.dg-voucher-items__table th,
+.dg-voucher-items__table td {
+  vertical-align: middle;
+}
+
+.dg-voucher-items__table th:nth-child(1),
+.dg-voucher-items__table td:nth-child(1) {
+  width: 22%;
+}
+
+.dg-voucher-items__table th:nth-child(2),
+.dg-voucher-items__table td:nth-child(2) {
+  width: 16%;
+}
+
+.dg-voucher-items__table th:nth-child(3),
+.dg-voucher-items__table td:nth-child(3) {
+  width: 8%;
+}
+
+.dg-voucher-items__table th:nth-child(4),
+.dg-voucher-items__table td:nth-child(4) {
+  width: 9%;
+}
+
+.dg-voucher-items__table th:nth-child(5),
+.dg-voucher-items__table td:nth-child(5) {
+  width: 12%;
+}
+
+.dg-voucher-items__table th:nth-child(6),
+.dg-voucher-items__table td:nth-child(6) {
+  width: 9%;
+}
+
+.dg-voucher-items__table th:nth-child(7),
+.dg-voucher-items__table td:nth-child(7) {
+  width: 12%;
+}
+
+.dg-voucher-items__table th:nth-child(8),
+.dg-voucher-items__table td:nth-child(8) {
+  width: 3.5rem;
+  text-align: center;
+}
+
+.dg-voucher-items__table .dg-voucher-items-quantity,
+.dg-voucher-items__table .dg-voucher-items-unit-price,
+.dg-voucher-items__table .dg-voucher-items-gross {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.dg-button--needs-contact {
+  opacity: 0.92;
+}
+
+.dg-wrap:has(.dg-buchhaltung-beleg-form__form) {
+  max-width: min(1280px, 100%);
+}
+
+/*
+ * Rechnungspositionen Hochformat (Tablet/Phone):
+ * Karten statt enger Tabelle — Querformat behält die Tabelle.
+ * Breakpoint bewusst hoch: viele Tablets melden im Hochformat > 820 CSS-px.
+ */
+@media (orientation: portrait) and (max-width: 1400px),
+       (max-width: 700px) {
+  .dg-wrap:has(.dg-buchhaltung-beleg-form__form) {
+    max-width: 100%;
+  }
+
+  .dg-buchhaltung-beleg-form__form.dg-panel {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .dg-voucher-items__table {
+    min-width: 0 !important;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  #dg-voucher-invoice-items-section .dg-table-wrap {
+    overflow: visible;
+    border: none;
+    background: transparent;
+    margin: 0 -2px;
+  }
+
+  .dg-voucher-items__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .dg-voucher-items__table,
+  .dg-voucher-items__table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .dg-voucher-items__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 14px;
+    margin-bottom: 16px;
+    padding: 14px 14px 16px;
+    border: 1px solid var(--dg-border-accent);
+    border-radius: var(--dg-radius-sm);
+    background: var(--dg-surface);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--dg-primary) 8%, transparent);
+  }
+
+  .dg-voucher-items__table td {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100% !important;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border-bottom: none;
+    vertical-align: top;
+  }
+
+  .dg-voucher-items__table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.3;
+    color: var(--dg-heading);
+    letter-spacing: 0.01em;
+  }
+
+  .dg-voucher-items__table td.dg-voucher-items-article-cell,
+  .dg-voucher-items__table td.dg-voucher-items-area-cell,
+  .dg-voucher-items__table td[data-label="Summe"],
+  .dg-voucher-items__table td.dg-voucher-items-remove-cell {
+    grid-column: 1 / -1;
+  }
+
+  .dg-voucher-items__table td.dg-voucher-items-remove-cell {
+    align-items: flex-end;
+    margin-top: 4px;
+  }
+
+  .dg-voucher-items__table td.dg-voucher-items-remove-cell::before {
+    content: none;
+  }
+
+  /* Touch-tauglich, 16px gegen iOS-Zoom */
+  .dg-voucher-items__table input,
+  .dg-voucher-items__table select,
+  .dg-voucher-items__table .dg-voucher-items-article-query {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    box-sizing: border-box;
+    font-size: 16px !important;
+    line-height: 1.35;
+    padding: 10px 12px;
+    text-align: left !important;
+  }
+
+  .dg-voucher-items__table .dg-voucher-items-quantity,
+  .dg-voucher-items__table .dg-voucher-items-unit-price,
+  .dg-voucher-items__table .dg-voucher-items-gross {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dg-voucher-items__table .dg-voucher-items-remove {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 22px;
+    line-height: 1;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 480px) {
+  .dg-voucher-items__row {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .dg-voucher-legal-clauses {
   margin-top: 20px;

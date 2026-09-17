@@ -231,6 +231,8 @@ final class MigrationRunner
             '079_stock_reservations.sql' => self::tableExists($pdo, 'dg_stock_reservations'),
             '080_article_purchase_sources.sql' => self::tableExists($pdo, 'dg_article_purchase_sources'),
             '081_purchase_list_items.sql' => self::tableExists($pdo, 'dg_purchase_list_items'),
+            '082_kdv_orgs_multi_firma.sql' => self::tableExists($pdo, 'dg_kdv_orgs')
+                && self::columnExists($pdo, 'dg_kdv_customers', 'org_id'),
             default => false,
         };
     }
@@ -343,6 +345,7 @@ final class MigrationRunner
             '079_stock_reservations.sql' => true,
             '080_article_purchase_sources.sql' => true,
             '081_purchase_list_items.sql' => true,
+            '082_kdv_orgs_multi_firma.sql' => true,
         ];
     }
 

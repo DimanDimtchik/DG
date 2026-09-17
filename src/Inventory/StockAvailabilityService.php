@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Verfügbarkeit: Bestand − Reserviert; In-Auslieferung als Info. */
+/** Verfügbarkeit: Bestand − Reserviert; In-Auslieferung / Nachbestellt als Info. */
 final class StockAvailabilityService
 {
     /**
@@ -12,6 +12,7 @@ final class StockAvailabilityService
      *   stock_qty: float,
      *   reserved: float,
      *   in_transit: float,
+     *   on_order: float,
      *   available: float,
      *   min_stock: float,
      *   is_low: bool,
@@ -36,6 +37,7 @@ final class StockAvailabilityService
                 'stock_qty' => 0.0,
                 'reserved' => 0.0,
                 'in_transit' => 0.0,
+                'on_order' => 0.0,
                 'available' => 0.0,
                 'min_stock' => 0.0,
                 'is_low' => false,
@@ -47,6 +49,7 @@ final class StockAvailabilityService
         $minStock = round((float) ($article['min_stock'] ?? 0), 3);
         $reserved = StockReservationService::reservedQty($articleId);
         $inTransit = self::inTransitQty($articleId);
+        $onOrder = PurchaseListRepository::onOrderQty($articleId);
         $available = round($stockQty - $reserved, 3);
         $unit = (string) ($article['unit'] ?? 'Stück');
 
@@ -57,9 +60,10 @@ final class StockAvailabilityService
             'stock_qty' => $stockQty,
             'reserved' => $reserved,
             'in_transit' => $inTransit,
+            'on_order' => $onOrder,
             'available' => $available,
             'min_stock' => $minStock,
-            'is_low' => $minStock > 0 && $available <= $minStock,
+            'is_low' => PurchaseListService::needsRestock($stockQty, $available, $minStock, $onOrder),
             'track_stock' => true,
         ];
     }
@@ -78,23 +82,27 @@ final class StockAvailabilityService
         }
         $reservedMap = StockReservationService::reservedQtyByArticleIds($ids);
         $transitMap = self::inTransitQtyByArticleIds($ids);
+        $onOrderMap = PurchaseListRepository::onOrderQtyByArticleIds($ids);
 
         foreach ($rows as &$row) {
             $id = (int) ($row['id'] ?? 0);
             $stockQty = round((float) ($row['stock_qty'] ?? 0), 3);
             $reserved = round((float) ($reservedMap[$id] ?? 0), 3);
             $inTransit = round((float) ($transitMap[$id] ?? 0), 3);
+            $onOrder = round((float) ($onOrderMap[$id] ?? 0), 3);
             $available = round($stockQty - $reserved, 3);
             $minStock = round((float) ($row['min_stock'] ?? 0), 3);
             $unit = (string) ($row['unit'] ?? 'Stück');
 
             $row['reserved_qty'] = $reserved;
             $row['in_transit_qty'] = $inTransit;
+            $row['on_order_qty'] = $onOrder;
             $row['available_qty'] = $available;
             $row['reserved_label'] = StockMovementService::formatQty($reserved, $unit);
             $row['in_transit_label'] = StockMovementService::formatQty($inTransit, $unit);
+            $row['on_order_label'] = StockMovementService::formatQty($onOrder, $unit);
             $row['available_label'] = StockMovementService::formatQty($available, $unit);
-            $row['is_low'] = $minStock > 0 && $available <= $minStock;
+            $row['is_low'] = PurchaseListService::needsRestock($stockQty, $available, $minStock, $onOrder);
         }
         unset($row);
 
@@ -148,7 +156,7 @@ final class StockAvailabilityService
 
         $map = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
-            $map[(int) $row['article_id']] = round((float) $row['qty'], 3);
+            $map[(int) ($row['article_id'] ?? 0)] = round((float) ($row['qty'] ?? 0), 3);
         }
 
         return $map;

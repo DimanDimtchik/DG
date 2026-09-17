@@ -81,6 +81,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
               <th>Bestand</th>
               <th>Reserviert</th>
               <th>In Auslief.</th>
+              <th>Nachbestellt</th>
               <th>Verfügbar</th>
               <th>Mindest</th>
               <th></th>
@@ -95,6 +96,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
                 <td><?= View::escape((string) ($item['stock_label'] ?? '')) ?></td>
                 <td><?= View::escape((string) ($item['reserved_label'] ?? '0')) ?></td>
                 <td><?= View::escape((string) ($item['in_transit_label'] ?? '0')) ?></td>
+                <td><?= View::escape((string) ($item['on_order_label'] ?? '0')) ?></td>
                 <td><strong><?= View::escape((string) ($item['available_label'] ?? '')) ?></strong></td>
                 <td><?= (float) ($item['min_stock'] ?? 0) > 0 ? View::escape($fmtQty((float) $item['min_stock']) . ' ' . ($item['unit'] ?? '')) : '—' ?></td>
                 <td class="dg-table__actions">
@@ -102,17 +104,21 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
                     $reorderUrl = trim((string) ($item['reorder_url'] ?? ''));
                     $reorderLabel = trim((string) ($item['reorder_label'] ?? ''));
                     $hasSource = !empty($item['has_purchase_source']);
+                    $onOrderQty = (float) ($item['on_order_qty'] ?? 0);
+                    $isLow = !empty($item['is_low']);
                     $reorderPrice = $item['reorder_price'] ?? null;
                     $reorderTitle = $reorderLabel !== '' ? $reorderLabel : 'Einkauf';
                     if ($reorderPrice !== null && (float) $reorderPrice > 0) {
                         $reorderTitle .= ' · EK ' . number_format((float) $reorderPrice, 2, ',', '.') . ' €';
                     }
                   ?>
-                  <?php if ($reorderUrl !== '') : ?>
+                  <?php if ($onOrderQty > 0.0005) : ?>
+                    <a class="dg-button dg-button--small dg-button--secondary" href="/app?page=artikel-leistungen&amp;list=ordered" title="Unterwegs — Menge unter Nachbestellt anpassen">Nachbestellt</a>
+                  <?php elseif ($isLow && $reorderUrl !== '') : ?>
                     <a class="dg-button dg-button--small" href="<?= View::escape($reorderUrl) ?>" target="_blank" rel="noopener" title="<?= View::escape($reorderTitle) ?>">Nachbestellen</a>
-                  <?php elseif ($hasSource) : ?>
+                  <?php elseif ($isLow && $hasSource) : ?>
                     <span class="dg-button dg-button--small" title="<?= View::escape($reorderTitle . ' — Shop-URL optional, manuell recherchieren/bestellen') ?>">Nachbestellen<?= $reorderLabel !== '' ? ': ' . View::escape($reorderLabel) : '' ?></span>
-                  <?php elseif (!empty($item['is_low'])) : ?>
+                  <?php elseif ($isLow) : ?>
                     <span class="dg-muted" title="Keine Einkaufsquelle hinterlegt — manuell recherchieren und bestellen">Nachbestellen (manuell)</span>
                   <?php endif; ?>
                   <?php if ($canEdit) : ?>
