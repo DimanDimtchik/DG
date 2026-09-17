@@ -149,7 +149,7 @@ final class VoucherIncomePositions
         $taxType = (string) ($row['tax_type'] ?? 'ust19');
         $taxRate = self::taxRateFromTaxType($taxType);
 
-        return [
+        $payload = [
             'id' => (int) ($row['id'] ?? 0),
             'catalog_kind' => (string) ($row['catalog_kind'] ?? CalendarArticleCatalog::KIND_SERVICE),
             'kind_label' => CalendarArticleCatalog::kindLabel((string) ($row['catalog_kind'] ?? CalendarArticleCatalog::KIND_SERVICE)),
@@ -163,7 +163,21 @@ final class VoucherIncomePositions
             'price_label' => CalendarArticleValidator::formatPrice((float) ($row['price_gross'] ?? 0)),
             'area_id' => (int) ($row['area_id'] ?? 0),
             'area_name' => (string) ($row['area_name'] ?? ''),
+            'track_stock' => !empty($row['track_stock']),
+            'stock_qty' => round((float) ($row['stock_qty'] ?? 0), 3),
+            'min_stock' => round((float) ($row['min_stock'] ?? 0), 3),
+            'available_qty' => null,
+            'reserved_qty' => 0.0,
         ];
+
+        if (!empty($payload['track_stock'])) {
+            $articleId = (int) $payload['id'];
+            $reserved = StockReservationService::reservedQty($articleId);
+            $payload['available_qty'] = round((float) $payload['stock_qty'] - $reserved, 3);
+            $payload['reserved_qty'] = $reserved;
+        }
+
+        return $payload;
     }
 
     /**

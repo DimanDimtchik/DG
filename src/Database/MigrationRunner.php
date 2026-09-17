@@ -230,6 +230,7 @@ final class MigrationRunner
             '078_user_auth_source.sql' => self::columnExists($pdo, 'dg_users', 'auth_source'),
             '079_stock_reservations.sql' => self::tableExists($pdo, 'dg_stock_reservations'),
             '080_article_purchase_sources.sql' => self::tableExists($pdo, 'dg_article_purchase_sources'),
+            '081_purchase_list_items.sql' => self::tableExists($pdo, 'dg_purchase_list_items'),
             default => false,
         };
     }
@@ -341,6 +342,7 @@ final class MigrationRunner
             '078_user_auth_source.sql' => true,
             '079_stock_reservations.sql' => true,
             '080_article_purchase_sources.sql' => true,
+            '081_purchase_list_items.sql' => true,
         ];
     }
 

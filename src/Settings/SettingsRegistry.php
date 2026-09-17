@@ -291,6 +291,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             if (isset($_POST['stock_shelf_save']) || isset($_POST['stock_shelf_delete']) || isset($_POST['stock_places_save'])) {
                 return 'lager-struktur';
             }
+            if (isset($_POST['stock_purchase_save'])) {
+                return 'lager-struktur';
+            }
             if (isset($_POST['legal_products_save'])) {
                 return 'agb';
             }

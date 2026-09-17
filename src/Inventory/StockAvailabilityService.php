@@ -124,8 +124,8 @@ final class StockAvailabilityService
         }
 
         $placeholders = implode(',', array_fill(0, count($articleIds), '?'));
+        // In Auslieferung = offene LS (Bestand schon gemindert), Status „Versendet“, noch nicht abgerechnet/storniert.
         $sent = VoucherDocumentStatus::SENT;
-        $draft = VoucherDocumentStatus::DRAFT;
         $kind = VoucherDocumentKind::DELIVERY_NOTE;
 
         $sql = "SELECT i.article_id, COALESCE(SUM(ABS(i.quantity)), 0) AS qty
@@ -135,10 +135,10 @@ final class StockAvailabilityService
                   AND v.voucher_type = 'income'
                   AND v.document_kind = ?
                   AND v.is_draft = 0
-                  AND v.document_status IN (?, ?)
+                  AND v.document_status = ?
                 GROUP BY i.article_id";
 
-        $params = array_merge($articleIds, [$kind, $draft, $sent]);
+        $params = array_merge($articleIds, [$kind, $sent]);
         try {
             $stmt = Database::pdo()->prepare($sql);
             $stmt->execute($params);

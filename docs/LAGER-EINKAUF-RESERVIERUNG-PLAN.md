@@ -1,6 +1,6 @@
 # Plan: Lager-Reservierung, Beleg-Automatik & Einkaufsliste
 
-Stand: **2026-09-16** · Status: **Plan — noch nicht implementiert**  
+Stand: **2026-09-17** · Status: **Phase 1–4 umgesetzt**  
 Bezug: [`LAGER-WIRTSCHAFT.md`](LAGER-WIRTSCHAFT.md) · Belegkette [`BUCHHALTUNG-BELEGKETTE.md`](BUCHHALTUNG-BELEGKETTE.md)
 
 ---
@@ -222,19 +222,19 @@ Spalten erweitern analog Artikel-Bestandskarte.
 2. [x] UI am Artikel (Mehrfach-Quellen)  
 3. [x] Link Nachbestellen (bevorzugte URL) in Lager + Artikelliste  
 
-### Phase 3 — Einkaufsliste & Ignore
+### Phase 3 — Einkaufsliste & Ignore — **umgesetzt 2026-09-17**
 
-1. Migration `dg_purchase_list_items`  
-2. Auto-Einträge: `stock_qty < min_stock` (Cron oder bei CRM-Zugriff) + Fehlmenge aus Beleg  
-3. UI Subtabs Einkaufsliste / Ignoriert  
-4. Admin: shortage_policy + shortage_action  
+1. [x] Migration `dg_purchase_list_items` (081)  
+2. [x] Auto-Einträge: `stock_qty`/`available` unter `min_stock` (bei CRM-Zugriff Artikel/Lager) + Fehlmenge aus Beleg  
+3. [x] UI Subtabs Einkaufsliste / Ignoriert unter Artikel & Leistungen  
+4. [x] Admin: shortage_policy + shortage_action (Einstellungen → Lagerstruktur → Einkauf)  
 
-### Phase 4 — Feinschliff
+### Phase 4 — Feinschliff — **umgesetzt 2026-09-17**
 
-1. In-Auslieferung-Anzeige aus LS-Status  
-2. Beleg-Editor Live-Warnung  
-3. Doku `LAGER-WIRTSCHAFT.md` + Akademie-Clip später  
-4. Optional: Lieferanten-API-Hooks  
+1. [x] In-Auslieferung-Anzeige aus LS-Status (`sent`, nicht Entwurf/Abgerechnet)  
+2. [x] Beleg-Editor Live-Hinweis Verfügbarkeit / Min bei Artikelwahl (`article_search` + data-Attribute)  
+3. [x] Doku `LAGER-WIRTSCHAFT.md` + Plan aktualisiert  
+4. [ ] Optional: Lieferanten-API-Hooks (bewusst später)  
 
 ---
 
@@ -260,5 +260,5 @@ Spalten erweitern analog Artikel-Bestandskarte.
 
 ## 10. Nächster Schritt
 
-Nach Freigabe der **Phase-0-Entscheidungen** mit **Phase 1** starten (Reserve + Anzeige Verfügbar).  
-Geschätzter Aufwand grob: Phase 1–3 je 1–2 Arbeitstage, Phase 4 0,5–1 Tag.
+Phase 1–4 sind umgesetzt. Optional später: Lieferanten-API-Hooks, harte Speichern-Sperre bei `shortage_policy=block` (Transaktion/Preflight).  
+Akademie-Clip Lager/Einkauf nachziehen, wenn UI stabil ist.

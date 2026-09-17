@@ -78,6 +78,21 @@ final class StockMovementService
                 'Beleg #' . $voucherId,
                 $userId,
             );
+
+            // Nach Abgang: Unterbestand → Einkaufsliste
+            if ($deltaSign < 0) {
+                $snap = StockAvailabilityService::snapshot($articleId);
+                if ($snap !== null && $snap['track_stock']) {
+                    if ($snap['available'] < -0.0005) {
+                        PurchaseListService::ensureForShortage($articleId, abs($snap['available']), $voucherId);
+                    } elseif ($snap['min_stock'] > 0 && $snap['available'] <= $snap['min_stock'] + 0.0005) {
+                        $toMin = max(0.0, round($snap['min_stock'] - $snap['available'], 3));
+                        if ($toMin > 0.0005) {
+                            PurchaseListService::ensureForShortage($articleId, $toMin, $voucherId);
+                        }
+                    }
+                }
+            }
         }
     }
 

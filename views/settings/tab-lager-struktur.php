@@ -44,9 +44,41 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     <a href="<?= View::escape($tabBase . '&lager_tab=hallen') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'hallen' ? ' is-active' : '' ?>">Hallen</a>
     <a href="<?= View::escape($tabBase . '&lager_tab=regale') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'regale' ? ' is-active' : '' ?>">Regale &amp; Stellplätze</a>
     <a href="<?= View::escape($tabBase . '&lager_tab=etiketten') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'etiketten' ? ' is-active' : '' ?>">Etiketten</a>
+    <a href="<?= View::escape($tabBase . '&lager_tab=einkauf') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'einkauf' ? ' is-active' : '' ?>">Einkauf</a>
   </nav>
 
-  <?php if ($lagerStrukturTab === 'orte') : ?>
+  <?php if ($lagerStrukturTab === 'einkauf') : ?>
+    <?php $stockPurchaseForm = $stockPurchaseForm ?? StockPurchaseSettings::forForm(); ?>
+    <p class="dg-lead">
+      Verhalten bei Unterbestand beim Speichern von Angebot, Lieferschein oder Rechnung.
+      Einkaufsliste unter <a href="/app?page=artikel-leistungen&amp;list=purchase">Artikel &amp; Leistungen → Einkaufsliste</a>.
+    </p>
+    <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&lager_tab=einkauf') ?>">
+      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+      <input type="hidden" name="lager_tab" value="einkauf">
+      <input type="hidden" name="stock_purchase_save" value="1">
+      <div class="dg-form-grid">
+        <label class="dg-field">
+          <span>Unterbestand</span>
+          <select name="shortage_policy"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <option value="warn"<?= ($stockPurchaseForm['shortage_policy'] ?? '') === 'warn' ? ' selected' : '' ?>>Nur warnen (Speichern erlaubt)</option>
+            <option value="block"<?= ($stockPurchaseForm['shortage_policy'] ?? '') === 'block' ? ' selected' : '' ?>>Strenger Hinweis (Policy blockieren)</option>
+          </select>
+          <small class="dg-field-hint">„Blockieren“ zeigt einen stärkeren Hinweis; Belegspeichern bleibt vorerst möglich (GoBD-Nacharbeit geplant).</small>
+        </label>
+        <label class="dg-field">
+          <span>Aktion bei Fehlmenge</span>
+          <select name="shortage_action"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <option value="purchase_list"<?= ($stockPurchaseForm['shortage_action'] ?? '') === 'purchase_list' ? ' selected' : '' ?>>Auf Einkaufsliste setzen</option>
+            <option value="purchase_list_and_open_url"<?= ($stockPurchaseForm['shortage_action'] ?? '') === 'purchase_list_and_open_url' ? ' selected' : '' ?>>Einkaufsliste + Shop-URL bevorzugt</option>
+          </select>
+        </label>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>>Speichern</button>
+      </div>
+    </form>
+  <?php elseif ($lagerStrukturTab === 'orte') : ?>
     <details class="dg-notify-section"<?= $editLocation ? ' open' : '' ?>>
       <summary class="dg-notify-section__summary">
         <strong><?= $editLocation ? 'Lagerort bearbeiten' : 'Lagerort anlegen' ?></strong>

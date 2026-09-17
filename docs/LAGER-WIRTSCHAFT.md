@@ -1,6 +1,6 @@
 # Lager- und Warenwirtschaft (Stufe A + B + C Teil)
 
-Stand: **2026-09-16** · Migrationen **065–069**, **079–080**
+Stand: **2026-09-17** · Migrationen **065–069**, **079–081**
 
 ## Umgesetzt
 
@@ -22,7 +22,8 @@ Stand: **2026-09-16** · Migrationen **065–069**, **079–080**
 - [x] **Platz-Check** — Mini-Audit: Belegung, Reservierung, letzte Bewegungen
 - [x] **Phase 1 Reservierung** — Angebot/AB ab Versendet/Angenommen; Anzeige Bestand/Reserviert/In Auslief./Verfügbar; Warnung bei Unterbestand (Migration **079**)
 - [x] **Phase 2 Einkaufsquellen** — Lieferant/EK/Shop-URL je Artikel (mehrfach), Link **Nachbestellen** (Migration **080**)
-
+- [x] **Phase 3 Einkaufsliste** — Auto-Einträge unter Min / Fehlmenge, Subtabs Einkaufsliste + Ignoriert, Ignore/Bestellt/Erledigt (Migration **081**)
+- [x] **Phase 4 Feinschliff** — In-Auslieferung aus LS-Status `sent`; Live-Hinweis Verfügbarkeit im Beleg-Editor; Einstellungen Unterbestand (Lagerstruktur → Einkauf)
 ## Strichcode-Ebenen
 
 | Ebene | Speicherort | Auflösung |
@@ -73,9 +74,10 @@ Manuell: Lager → Wareneingang/Warenausgang, Strichcode scannen, Lieferschein v
 
 | Komponente | Pfad |
 |------------|------|
-| Migration | `065`–`069_stock_*.sql`, `079_stock_reservations.sql` |
+| Migration | `065`–`069_stock_*.sql`, `079_stock_reservations.sql`, `080_article_purchase_sources.sql`, `081_purchase_list_items.sql` |
 | Stammdaten | `src/Inventory/StockStructureRepository.php` |
 | Reservierung | `StockReservationService`, `StockAvailabilityService` |
+| Einkaufsliste | `PurchaseListService`, `PurchaseListRepository`, `StockPurchaseSettings` |
 | Strichcode | `src/Inventory/StockBarcodeService.php` |
 | Kartons | `src/Inventory/StockPackageRepository.php` |
 | Ein-/Ausgang | `src/Inventory/StockReceiptIssueService.php` |

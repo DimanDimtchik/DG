@@ -36,10 +36,11 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] Migrationen 062–063 (Zeiterfassung/ArbZG) prüfen
 - [x] Smoke: Akademie, Lager, Kichel, Terminkalender, Rechtstexte, Kontakt-Notiz, LDAP-UI
 - [x] Fix: „Finanzamt ermitteln“ — lokale ESt-Nr. (z. B. 127/219/40770) nicht mehr als Steuer-ID verwerfen
-- [ ] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma)
+- [x] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma) — `info@ganz-om.de`
 - [ ] Manuelle Testliste Randfälle auf **ganz-soft.de**
 - [ ] Multi-Firma Phase 0/1 planen (Org-Switcher, KDV Org↔Firma) — siehe Konzept
-- [ ] **ELSTER Phase 2:** Hersteller-ID per E-Mail abwarten → ERiC Linux laden, Test-Zertifikat
+- [x] **ELSTER Phase 2:** Hersteller-ID **34573** in CRM-Einstellungen (ganz-soft.de) hinterlegt; danach ERiC Linux laden, Test-Zertifikat (nach Server-Umzug)
+- [x] **Lager Phase 3+4:** Einkaufsliste/Ignore (081), In-Auslieferung, Beleg-Live-Hinweis
 - [ ] **LDAP Phase 1:** `ldap-readiness.php` auf Kasserver · Plugin-Code aus No-Repo-Chat
 
 ---

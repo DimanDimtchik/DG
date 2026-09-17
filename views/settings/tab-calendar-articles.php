@@ -22,6 +22,9 @@ foreach ($calendarAreas as $area) {
 $importFormats = implode(', ', CalendarArticleImportReader::supportedExtensions());
 $supplierContactOptions = $supplierContactOptions ?? [];
 $stockLocationOptions = StockStructureRepository::locationOptions();
+$catalogView = $catalogView ?? 'catalog'; // catalog | purchase | ignored
+$purchaseListOpen = $purchaseListOpen ?? [];
+$purchaseListIgnored = $purchaseListIgnored ?? [];
 $jsonEmbedFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR;
 $stockStructureJson = json_encode([
     'halls' => StockStructureRepository::allHalls(),
@@ -43,6 +46,135 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
     Nummern kommen aus den <a href="<?= View::escape(SettingsRegistry::tabUrl('nummernkreise')) ?>">Nummernkreisen</a> (Artikel / Leistung).
     Import: <?= View::escape($importFormats) ?>.
   </p>
+
+  <nav class="dg-subtabs" aria-label="Artikel-Bereiche">
+    <a
+      href="<?= View::escape($catalogBaseUrl . ($catalogFilter !== 'all' ? '&kind=' . rawurlencode($catalogFilter) : '')) ?>"
+      class="dg-subtabs__link<?= $catalogView === 'catalog' ? ' is-active' : '' ?>"
+      <?= $catalogView === 'catalog' ? 'aria-current="page"' : '' ?>
+    >Katalog</a>
+    <a
+      href="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>"
+      class="dg-subtabs__link<?= $catalogView === 'purchase' ? ' is-active' : '' ?>"
+      <?= $catalogView === 'purchase' ? 'aria-current="page"' : '' ?>
+    >Einkaufsliste</a>
+    <a
+      href="<?= View::escape($catalogBaseUrl . '&list=ignored') ?>"
+      class="dg-subtabs__link<?= $catalogView === 'ignored' ? ' is-active' : '' ?>"
+      <?= $catalogView === 'ignored' ? 'aria-current="page"' : '' ?>
+    >Ignoriert</a>
+  </nav>
+
+<?php if ($catalogView === 'purchase') : ?>
+  <p class="dg-lead">Artikel unter Mindestbestand oder mit Fehlmenge aus Belegen. Ignorierte erscheinen hier nicht.</p>
+  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form" style="margin-bottom:1rem">
+    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+    <button type="submit" name="purchase_list_rebuild" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Liste aus Bestand aktualisieren</button>
+  </form>
+  <div class="dg-table-wrap">
+    <table class="dg-table dg-table--compact">
+      <thead>
+        <tr>
+          <th>Artikel</th>
+          <th>Bestand / Verfügbar / Min</th>
+          <th>Vorschlag</th>
+          <th>Grund</th>
+          <th>Nachbestellen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if ($purchaseListOpen === []) : ?>
+          <tr><td colspan="6" class="dg-muted">Keine offenen Einträge.</td></tr>
+        <?php else : ?>
+          <?php foreach ($purchaseListOpen as $pli) : ?>
+            <tr>
+              <td>
+                <?= View::escape((string) ($pli['article_number'] ?? '')) ?>
+                — <?= View::escape((string) ($pli['article_title'] ?? '')) ?>
+              </td>
+              <td>
+                <?= View::escape((string) ($pli['stock_label'] ?? '')) ?>
+                / <?= View::escape((string) ($pli['available_label'] ?? '')) ?>
+                / <?= View::escape((string) ($pli['min_label'] ?? '')) ?>
+              </td>
+              <td><?= View::escape((string) ($pli['suggested_label'] ?? '')) ?></td>
+              <td><?= View::escape((string) ($pli['reason_label'] ?? '')) ?></td>
+              <td>
+                <?php $ru = trim((string) ($pli['reorder_url'] ?? '')); ?>
+                <?php if ($ru !== '') : ?>
+                  <a class="dg-button dg-button--small" href="<?= View::escape($ru) ?>" target="_blank" rel="noopener"><?= View::escape((string) ($pli['reorder_label'] !== '' ? $pli['reorder_label'] : 'Shop')) ?></a>
+                <?php else : ?>
+                  <span class="dg-muted">—</span>
+                <?php endif; ?>
+              </td>
+              <td class="dg-table__actions">
+                <div class="dg-table__actions-group">
+                  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form">
+                    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                    <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                    <button type="submit" name="purchase_list_ignore" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Ignorieren</button>
+                  </form>
+                  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form">
+                    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                    <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                    <button type="submit" name="purchase_list_ordered" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Bestellt</button>
+                  </form>
+                  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form">
+                    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                    <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                    <button type="submit" name="purchase_list_done" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Erledigt</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+<?php elseif ($catalogView === 'ignored') : ?>
+  <p class="dg-lead">Ignorierte Artikel erscheinen nicht wieder auf der Einkaufsliste, bis sie reaktiviert werden.</p>
+  <div class="dg-table-wrap">
+    <table class="dg-table dg-table--compact">
+      <thead>
+        <tr>
+          <th>Artikel</th>
+          <th>Bestand / Verfügbar / Min</th>
+          <th>Grund</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if ($purchaseListIgnored === []) : ?>
+          <tr><td colspan="4" class="dg-muted">Keine ignorierten Einträge.</td></tr>
+        <?php else : ?>
+          <?php foreach ($purchaseListIgnored as $pli) : ?>
+            <tr>
+              <td>
+                <?= View::escape((string) ($pli['article_number'] ?? '')) ?>
+                — <?= View::escape((string) ($pli['article_title'] ?? '')) ?>
+              </td>
+              <td>
+                <?= View::escape((string) ($pli['stock_label'] ?? '')) ?>
+                / <?= View::escape((string) ($pli['available_label'] ?? '')) ?>
+                / <?= View::escape((string) ($pli['min_label'] ?? '')) ?>
+              </td>
+              <td><?= View::escape((string) ($pli['reason_label'] ?? '')) ?></td>
+              <td class="dg-table__actions">
+                <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ignored') ?>" class="dg-inline-form">
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
+                  <button type="submit" name="purchase_list_restore" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Wieder aktivieren</button>
+                </form>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+<?php else : ?>
 
   <nav class="dg-subtabs" aria-label="Katalogfilter">
     <?php foreach (['all' => 'Alle', 'service' => 'Leistungen', 'product' => 'Artikel'] as $kindKey => $kindLabel) : ?>
@@ -363,4 +495,5 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
   </form>
     </div>
   </details>
+<?php endif; ?>
 </div>

@@ -591,6 +591,9 @@
       price_gross: priceGross,
       area_id: parseInt(String(fromItem.area_id != null ? fromItem.area_id : fromButton.area_id || '0'), 10) || 0,
       area_name: fromItem.area_name || fromButton.area_name || '',
+      track_stock: !!(fromItem.track_stock != null ? fromItem.track_stock : fromButton.track_stock),
+      available_qty: fromItem.available_qty != null ? parseFloat(String(fromItem.available_qty)) : fromButton.available_qty,
+      min_stock: fromItem.min_stock != null ? parseFloat(String(fromItem.min_stock)) : fromButton.min_stock,
     };
   }
 
@@ -818,6 +821,9 @@
       price_gross: parseFloat(String(button.getAttribute('data-price-gross') || '0').replace(',', '.')) || 0,
       area_id: parseInt(button.getAttribute('data-area-id') || '0', 10) || 0,
       area_name: button.getAttribute('data-area-name') || '',
+      track_stock: button.getAttribute('data-track-stock') === '1',
+      available_qty: parseFloat(String(button.getAttribute('data-available-qty') || '').replace(',', '.')),
+      min_stock: parseFloat(String(button.getAttribute('data-min-stock') || '').replace(',', '.')),
     };
   }
 
@@ -875,6 +881,7 @@
     if (results) {
       results.hidden = true;
     }
+    updateStockAvailabilityHint(row, article);
     var qtyField = row.querySelector('.dg-voucher-items-quantity');
     var pickedPrice = parseArticlePrice(article.price_gross);
     if (priceField && !readOnly && (pickedPrice === null || pickedPrice <= 0)) {
@@ -888,6 +895,50 @@
     onInvoiceItemInput();
   }
 
+  function updateStockAvailabilityHint(row, article) {
+    if (!row) {
+      return;
+    }
+    var cell = row.querySelector('.dg-voucher-items-article-cell') || row;
+    var hint = cell.querySelector('.dg-voucher-stock-hint');
+    if (!hint) {
+      hint = document.createElement('small');
+      hint.className = 'dg-voucher-stock-hint dg-muted';
+      cell.appendChild(hint);
+    }
+    if (!article || !article.track_stock) {
+      hint.hidden = true;
+      hint.textContent = '';
+      hint.classList.remove('dg-badge--warning');
+      return;
+    }
+    var available = parseFloat(String(article.available_qty));
+    var minStock = parseFloat(String(article.min_stock));
+    if (isNaN(available)) {
+      hint.hidden = true;
+      return;
+    }
+    var unit = article.unit || 'Stück';
+    var text = 'Verfügbar: ' + String(available).replace('.', ',') + ' ' + unit;
+    if (!isNaN(minStock) && minStock > 0) {
+      text += ' · Min. ' + String(minStock).replace('.', ',') + ' ' + unit;
+      if (available <= minStock) {
+        hint.classList.add('dg-badge--warning');
+        text += ' — unter Mindestbestand';
+      } else {
+        hint.classList.remove('dg-badge--warning');
+      }
+    } else {
+      hint.classList.remove('dg-badge--warning');
+    }
+    if (available < 0) {
+      hint.classList.add('dg-badge--warning');
+      text += ' — Unterbestand';
+    }
+    hint.textContent = text;
+    hint.hidden = false;
+  }
+
   function renderArticleResults(container, items, row) {
     if (!container) {
       return;
@@ -898,7 +949,11 @@
       return;
     }
     container.innerHTML = items.map(function (item) {
-      var meta = [item.kind_label || '', item.tax_label || '', item.price_label || ''].filter(Boolean).join(' · ');
+      var metaParts = [item.kind_label || '', item.tax_label || '', item.price_label || ''].filter(Boolean);
+      if (item.track_stock && item.available_qty != null) {
+        metaParts.push('Verf. ' + String(item.available_qty));
+      }
+      var meta = metaParts.join(' · ');
       var area = item.area_name ? ' · ' + item.area_name : '';
       return '<button type="button" class="dg-account-search-results__item dg-article-search-results__item"' +
         ' data-article-id="' + escapeHtml(String(item.id != null ? item.id : '')) + '"' +
@@ -910,7 +965,10 @@
         ' data-tax-rate="' + escapeHtml(item.tax_rate != null ? String(item.tax_rate) : '19') + '"' +
         ' data-price-gross="' + escapeHtml(item.price_gross != null ? String(item.price_gross) : '0') + '"' +
         ' data-area-id="' + escapeHtml(item.area_id != null ? String(item.area_id) : '0') + '"' +
-        ' data-area-name="' + escapeHtml(item.area_name || '') + '">' +
+        ' data-area-name="' + escapeHtml(item.area_name || '') + '"' +
+        ' data-track-stock="' + (item.track_stock ? '1' : '0') + '"' +
+        ' data-available-qty="' + escapeHtml(item.available_qty != null ? String(item.available_qty) : '') + '"' +
+        ' data-min-stock="' + escapeHtml(item.min_stock != null ? String(item.min_stock) : '') + '">' +
         '<span class="dg-account-search-results__number">' + escapeHtml(item.article_number || '') + '</span>' +
         '<span class="dg-account-search-results__name">' + escapeHtml(item.title || '') + '</span>' +
         '<span class="dg-account-search-results__meta">' + escapeHtml(meta + area) + '</span>' +

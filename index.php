@@ -938,13 +938,16 @@ switch ($path) {
                 || isset($_POST['stock_shelf_save'])
                 || isset($_POST['stock_shelf_delete'])
                 || isset($_POST['stock_places_save'])
+                || isset($_POST['stock_purchase_save'])
             )
         ) {
             $lagerTab = isset($_POST['lager_tab'])
                 ? preg_replace('/[^a-z]/', '', (string) $_POST['lager_tab'])
                 : (isset($_GET['lager_tab']) ? preg_replace('/[^a-z]/', '', (string) $_GET['lager_tab']) : '');
             if ($lagerTab === '') {
-                if (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
+                if (isset($_POST['stock_purchase_save'])) {
+                    $lagerTab = 'einkauf';
+                } elseif (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
                     $lagerTab = 'hallen';
                 } elseif (isset($_POST['stock_shelf_save']) || isset($_POST['stock_shelf_delete']) || isset($_POST['stock_places_save'])) {
                     $lagerTab = 'regale';
@@ -957,7 +960,10 @@ switch ($path) {
                 Flash::set('error', 'Ungültiges Formular (CSRF).');
             } else {
                 try {
-                    if (isset($_POST['stock_location_save'])) {
+                    if (isset($_POST['stock_purchase_save'])) {
+                        StockPurchaseSettings::saveFromPost($_POST);
+                        Flash::set('success', 'Einkaufs-Einstellungen gespeichert.');
+                    } elseif (isset($_POST['stock_location_save'])) {
                         $newId = StockStructureRepository::saveLocation($_POST);
                         Flash::set('success', 'Lagerort gespeichert.');
                         $redirect .= '&edit=' . $newId;
@@ -1141,20 +1147,53 @@ switch ($path) {
             $page === 'artikel-leistungen'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
             && DepartmentAccess::userCanManageArticleCatalog($user)
-            && (isset($_POST['articles_save']) || isset($_POST['articles_delete']) || isset($_POST['articles_import']))
+            && (
+                isset($_POST['articles_save'])
+                || isset($_POST['articles_delete'])
+                || isset($_POST['articles_import'])
+                || isset($_POST['purchase_list_ignore'])
+                || isset($_POST['purchase_list_restore'])
+                || isset($_POST['purchase_list_ordered'])
+                || isset($_POST['purchase_list_done'])
+                || isset($_POST['purchase_list_rebuild'])
+            )
         ) {
             $redirect = '/app?page=artikel-leistungen';
             $listKind = trim((string) ($_POST['list_kind'] ?? ''));
             if ($listKind === CalendarArticleCatalog::KIND_PRODUCT || $listKind === CalendarArticleCatalog::KIND_SERVICE) {
                 $redirect .= '&kind=' . rawurlencode($listKind);
             }
+            $listView = trim((string) ($_POST['list'] ?? $_GET['list'] ?? ''));
+            if ($listView === 'purchase' || $listView === 'ignored') {
+                $redirect .= '&list=' . rawurlencode($listView);
+            }
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
-                Flash::set('error', 'UngÃ¼ltiges Formular (CSRF).');
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
             } else {
                 try {
-                    if (isset($_POST['articles_delete'])) {
+                    if (isset($_POST['purchase_list_rebuild'])) {
+                        $n = PurchaseListService::rebuildFromStock();
+                        Flash::set('success', 'Einkaufsliste aktualisiert (' . $n . ' Einträge).');
+                        $redirect = '/app?page=artikel-leistungen&list=purchase';
+                    } elseif (isset($_POST['purchase_list_ignore'])) {
+                        PurchaseListService::ignore((int) ($_POST['purchase_list_id'] ?? 0), $user->id);
+                        Flash::set('success', 'Eintrag ignoriert.');
+                        $redirect = '/app?page=artikel-leistungen&list=purchase';
+                    } elseif (isset($_POST['purchase_list_restore'])) {
+                        PurchaseListService::restore((int) ($_POST['purchase_list_id'] ?? 0));
+                        Flash::set('success', 'Eintrag wieder aktiv.');
+                        $redirect = '/app?page=artikel-leistungen&list=ignored';
+                    } elseif (isset($_POST['purchase_list_ordered'])) {
+                        PurchaseListService::markOrdered((int) ($_POST['purchase_list_id'] ?? 0));
+                        Flash::set('success', 'Als bestellt markiert.');
+                        $redirect = '/app?page=artikel-leistungen&list=purchase';
+                    } elseif (isset($_POST['purchase_list_done'])) {
+                        PurchaseListService::markDone((int) ($_POST['purchase_list_id'] ?? 0));
+                        Flash::set('success', 'Als erledigt markiert.');
+                        $redirect = '/app?page=artikel-leistungen&list=purchase';
+                    } elseif (isset($_POST['articles_delete'])) {
                         CalendarArticleRepository::delete((int) ($_POST['article_id'] ?? 0));
-                        Flash::set('success', 'Eintrag gelÃ¶scht.');
+                        Flash::set('success', 'Eintrag gelöscht.');
                     } elseif (isset($_POST['articles_import'])) {
                         $result = CalendarArticleImporter::importUploadedFile(
                             $_FILES['import_file'] ?? [],
@@ -2737,9 +2776,10 @@ switch ($path) {
         $crmThemeConfig = CrmThemeSettings::forForm();
         $departmentsData = DepartmentRepository::allWithMembers();
         $departmentEmployees = DepartmentRepository::assignableEmployees();
-        $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale', 'etiketten'], true)
+        $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale', 'etiketten', 'einkauf'], true)
             ? (string) $_GET['lager_tab']
             : 'orte';
+        $stockPurchaseForm = StockPurchaseSettings::forForm();
         $stockLocations = StockStructureRepository::allLocations();
         $stockHalls = StockStructureRepository::allHalls();
         $stockShelves = StockStructureRepository::allShelves();
@@ -2816,6 +2856,13 @@ $legalProductsConfig = LegalProductSettings::config();
             header('Location: ' . SettingsRegistry::tabUrl('abteilungen'), true, 302);
             exit;
         } elseif ($page === 'artikel-leistungen' && MenuRegistry::canAccess($user, 'artikel-leistungen')) {
+            PurchaseListService::rebuildFromStock();
+            $rawList = strtolower(trim((string) ($_GET['list'] ?? $_GET['catalog_view'] ?? '')));
+            $catalogView = match ($rawList) {
+                'purchase', 'einkauf' => 'purchase',
+                'ignored', 'ignore' => 'ignored',
+                default => 'catalog',
+            };
             $rawKind = isset($_GET['kind']) ? strtolower(trim((string) $_GET['kind'])) : 'all';
             if ($rawKind === 'product' || $rawKind === 'article') {
                 $catalogFilter = CalendarArticleCatalog::KIND_PRODUCT;
@@ -2848,6 +2895,8 @@ $legalProductsConfig = LegalProductSettings::config();
             }
             unset($articleRow);
             $supplierContactOptions = ArticlePurchaseSourceRepository::supplierContactOptions();
+            $purchaseListOpen = $catalogView === 'purchase' ? PurchaseListService::listOpen() : [];
+            $purchaseListIgnored = $catalogView === 'ignored' ? PurchaseListService::listIgnored() : [];
             $contentTemplate = 'modules/artikel-leistungen';
             $title = 'Artikel & Leistungen';
             $currentPage = 'artikel-leistungen';
@@ -2864,6 +2913,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 );
                 exit;
             }
+            PurchaseListService::rebuildFromStock();
             $lagerView = trim((string) ($_GET['view'] ?? 'overview'));
             if (!in_array($lagerView, ['overview', 'bewegungen', 'wareneingang', 'warenausgang', 'platz-check', 'inventur'], true)) {
                 $lagerView = 'overview';
@@ -4461,6 +4511,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $departmentsData = $departmentsData ?? DepartmentRepository::allWithMembers();
         $departmentEmployees = $departmentEmployees ?? DepartmentRepository::assignableEmployees();
         $lagerStrukturTab = $lagerStrukturTab ?? 'orte';
+        $stockPurchaseForm = $stockPurchaseForm ?? StockPurchaseSettings::forForm();
         $stockLocations = $stockLocations ?? StockStructureRepository::allLocations();
         $stockHalls = $stockHalls ?? StockStructureRepository::allHalls();
         $stockShelves = $stockShelves ?? StockStructureRepository::allShelves();
@@ -4599,6 +4650,10 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeClockTeam = $timeClockTeam ?? [];
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
         $catalogFilter = $catalogFilter ?? 'all';
+        $catalogView = $catalogView ?? 'catalog';
+        $purchaseListOpen = $purchaseListOpen ?? [];
+        $purchaseListIgnored = $purchaseListIgnored ?? [];
+        $supplierContactOptions = $supplierContactOptions ?? [];
         $lagerView = $lagerView ?? 'overview';
         $academyView = $academyView ?? 'meine';
         $academyAreas = $academyAreas ?? [];
@@ -4697,6 +4752,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'departmentsData',
             'departmentEmployees',
             'lagerStrukturTab',
+            'stockPurchaseForm',
             'stockLocations',
             'stockHalls',
             'stockShelves',
@@ -4715,6 +4771,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'calendarEmbedConfig',
             'calendarArticles',
             'catalogFilter',
+            'catalogView',
+            'purchaseListOpen',
+            'purchaseListIgnored',
             'supplierContactOptions',
             'lagerView',
             'academyView',

@@ -205,15 +205,28 @@ final class StockReservationService
             // Nach Sync: Reservierung dieses Belegs steckt schon in reserved — Verfügbarkeit
             // vor diesem Beleg ≈ available + Anteil dieses Belegs an reserved (vereinfacht: available < 0)
             if ($snap['available'] < -0.0005) {
+                $shortageQty = round(abs((float) $snap['available']), 3);
+                if ($shortageQty < 0.0005) {
+                    $shortageQty = round((float) $need, 3);
+                }
+                PurchaseListService::ensureForShortage($articleId, $shortageQty, $voucherId);
+                $suffix = StockPurchaseSettings::isBlocking()
+                    ? ' Bitte Nachbestellen (Policy: blockieren).'
+                    : ' Speichern trotzdem möglich.';
                 $warnings[] = sprintf(
-                    'Unterbestand: %s — Bestand %s, reserviert %s, verfügbar %s (Bedarf dieses Belegs %s). Speichern trotzdem möglich.',
+                    'Unterbestand: %s — Bestand %s, reserviert %s, verfügbar %s (Bedarf dieses Belegs %s).%s',
                     $snap['title'] !== '' ? $snap['title'] : ('Artikel #' . $articleId),
                     StockMovementService::formatQty($snap['stock_qty'], $snap['unit']),
                     StockMovementService::formatQty($snap['reserved'], $snap['unit']),
                     StockMovementService::formatQty($snap['available'], $snap['unit']),
-                    StockMovementService::formatQty((float) $need, $snap['unit'])
+                    StockMovementService::formatQty((float) $need, $snap['unit']),
+                    $suffix
                 );
             } elseif ($snap['min_stock'] > 0 && $snap['available'] <= $snap['min_stock'] + 0.0005) {
+                $toMin = max(0.0, round($snap['min_stock'] - $snap['available'], 3));
+                if ($toMin > 0.0005) {
+                    PurchaseListService::ensureForShortage($articleId, $toMin, $voucherId);
+                }
                 $warnings[] = sprintf(
                     'Mindestbestand erreicht/unterschritten: %s — verfügbar %s, Mindest %s.',
                     $snap['title'] !== '' ? $snap['title'] : ('Artikel #' . $articleId),
