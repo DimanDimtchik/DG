@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB3 ✅ · offen MB4** (siehe §15)  
+Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB4 ✅** (siehe §15)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -680,7 +680,7 @@ Nach MF0–MF7 ist der **Code** deployed; offen ist **Betrieb** (Config, Smoke, 
 1. **MB1** SSO-Secret (Checkliste → Ausrollung) ✅  
 2. **MB2** Switcher-Smoke ✅  
 3. **MB3** Contact Export/Import ✅  
-4. **MB4** Provision-Gates-Smoke  
+4. **MB4** Provision-Gates-Smoke ✅  
 
 **Nie parallel** SSO + Contact + Provision in einem Chat.
 
@@ -767,14 +767,18 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 
 **Nicht:** Live-2-Wege, Mitarbeiterakten, Bankkonten.
 
-### MB4 — Provision-Gates-Smoke
+### MB4 — Provision-Gates-Smoke ✅ 2026-09-21
 
-| Schritt | Erwartung |
-|---------|-----------|
-| Nachfolger `status=neu` | Gates G1–G9 greifen |
-| Gate-Reject | Meldung mit Code in Akte / Provision-UI; kein KAS-Call |
-| Letzter Lauf | Steps / Install-URL in KDV-Kundenakte (MF7c) |
-| Voller KAS-Lauf | **nur** wenn Nutzer explizit KAS-Daten + Befehl gibt |
+#### Smoke-Ergebnis (CLI-Probe Master `dg.ganz-om.de`, 2026-09-21)
+
+Temporärer Vorgänger (`archive_readonly`) + Nachfolger (`status=neu`, `firm_relation=nachfolger`) — nach dem Lauf gelöscht. **Kein** KAS-Call.
+
+| Schritt | Erwartung | Ergebnis |
+|---------|-----------|----------|
+| Nachfolger `status=neu` | G1–G6 bestehen | ✅ `EVAL_NACHFOLGER codes=G7` (nur fehlende KAS-Daten) |
+| Gate-Reject | Code in Meldung; `result=null` | ✅ `RUN_CODES=G7` · `REJECT_NO_KAS_OK` |
+| Letzter Lauf (MF7c) | `lastResult` mit `gate_failures` | ✅ `LAST_GATE_CODES=G7` · Install-URL-Hint gesetzt |
+| Voller KAS-Lauf | nur mit explizitem Nutzerbefehl | ✅ **nicht** ausgeführt |
 
 **Nicht:** Stripe, stilles Löschen von KAS-Artefakten.
 
@@ -786,7 +790,7 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 | **MB1b** ✅ | `firm-sso.local.php` auf Org-Instanzen | Server `dg` + `ganz-soft` — **erledigt 2026-09-21** | Code, Git-Secret |
 | **MB2** ✅ | Switcher-Smoke (Token, Support-Ban, Fallback) | firm-switcher.local + CLI-Probe — **erledigt 2026-09-21** | Contact, Provision |
 | **MB3** ✅ | Contact Export/Import Smoke | Kontakte-UI, Org-Flag — **erledigt 2026-09-21** | 2-Wege, Mitarbeiter/Bank |
-| **MB4** | Provision-Gates-Smoke (+ optional 1× KAS) | KDV-Akte, Gates | Stripe, Auto-Rollback-Löschen |
+| **MB4** ✅ | Provision-Gates-Smoke (+ optional 1× KAS) | KDV-Akte, Gates — **erledigt 2026-09-21** (ohne KAS) | Stripe, Auto-Rollback-Löschen |
 
 ### Chat-Vorlage (kopieren)
 
