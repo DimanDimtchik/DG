@@ -32,10 +32,13 @@ $pageTitle = (string) ($page['title'] ?? 'Vorschau');
     <div class="ws-preview-toolbar__devices" role="group" aria-label="Geräte-Voreinstellungen">
       <button type="button" class="ws-preview-device-btn is-active" data-preset="desktop" data-w="1440" data-h="900" title="Desktop 1440×900">Desktop</button>
       <button type="button" class="ws-preview-device-btn" data-preset="laptop" data-w="1366" data-h="768" title="Laptop 1366×768">Laptop</button>
-      <button type="button" class="ws-preview-device-btn" data-preset="tablet" data-w="768" data-h="1024" title="Tablet 768×1024">Tablet</button>
-      <button type="button" class="ws-preview-device-btn" data-preset="s10" data-w="360" data-h="760" title="Samsung Galaxy S10 360×760">S10</button>
-      <button type="button" class="ws-preview-device-btn" data-preset="s24" data-w="360" data-h="780" title="Samsung Galaxy S24 360×780">S24</button>
-      <button type="button" class="ws-preview-device-btn" data-preset="iphone" data-w="390" data-h="844" title="iPhone 14 390×844">iPhone</button>
+      <button type="button" class="ws-preview-device-btn" data-preset="tablet" data-w="768" data-h="1024" title="Tablet (iPad) 768×1024">Tablet</button>
+      <label class="ws-preview-device-select-wrap">
+        <span class="ws-visually-hidden">Weitere Geräte</span>
+        <select id="ws-preview-device-select" class="ws-preview-device-select" aria-label="Handy und weitere Tablets">
+          <option value="">Weitere Geräte …</option>
+        </select>
+      </label>
     </div>
     <div class="ws-preview-toolbar__size">
       <label class="ws-preview-field">
