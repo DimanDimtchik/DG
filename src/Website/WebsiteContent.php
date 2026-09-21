@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 /**
  * Normalizes website builder text that may still contain HTML from imports/seeds.
+ *
+ * W4 Entscheidung: Inhalt bleibt Plaintext mit wenigen Markern —
+ * `**fett**` und `[text](url)` — die hier zu sicherem HTML werden.
+ * Erlaubte Links: http(s):, mailto:, relative Pfade ab `/` (nicht `//`).
  */
 final class WebsiteContent
 {
@@ -25,19 +29,88 @@ final class WebsiteContent
     }
 
     /**
-     * Safe HTML paragraph body for the public website.
+     * Erlaubte href-Ziele für Content-Links (W4).
      */
-    public static function renderTextHtml(string $text): string
+    public static function isSafeHref(string $url): bool
     {
-        return nl2br(View::escape(self::normalizePlainText($text)), false);
+        $url = trim($url);
+        if ($url === '') {
+            return false;
+        }
+        if (preg_match('#^https?://#i', $url) === 1) {
+            return true;
+        }
+        if (preg_match('#^mailto:[^\s<>\"\']+$#i', $url) === 1) {
+            return true;
+        }
+        // Relativ ab Slash, aber kein Protocol-relative //evil.example
+        if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
-     * Safe plain text for headings (no line breaks as HTML).
+     * Safe HTML paragraph body for the public website (Marker + Zeilenumbrüche).
+     */
+    public static function renderTextHtml(string $text): string
+    {
+        return nl2br(self::renderInlineMarkup(self::normalizePlainText($text)), false);
+    }
+
+    /**
+     * Safe HTML for headings (Inline-Marker, keine <br>).
      */
     public static function renderHeadingText(string $text): string
     {
-        return View::escape(self::normalizePlainText($text));
+        return self::renderInlineMarkup(self::normalizePlainText($text));
+    }
+
+    /**
+     * Plaintext-Marker → sicheres HTML: **fett**, [label](url).
+     */
+    public static function renderInlineMarkup(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        $out = '';
+        $offset = 0;
+        $length = strlen($text);
+        // Non-greedy bold; link label without ]; URL without )
+        $pattern = '/\*\*(.+?)\*\*|\[([^\[\]]+)\]\(([^)]+)\)/su';
+
+        while ($offset < $length && preg_match($pattern, $text, $m, PREG_OFFSET_CAPTURE, $offset) === 1) {
+            $matchStart = (int) $m[0][1];
+            $matchLen = strlen($m[0][0]);
+            if ($matchStart > $offset) {
+                $out .= View::escape(substr($text, $offset, $matchStart - $offset));
+            }
+
+            if ($m[1][1] >= 0 && $m[1][0] !== '') {
+                $out .= '<strong>' . View::escape($m[1][0]) . '</strong>';
+            } elseif (isset($m[2][0], $m[3][0]) && $m[2][1] >= 0) {
+                $label = $m[2][0];
+                $href = trim($m[3][0]);
+                if (self::isSafeHref($href)) {
+                    $out .= '<a href="' . View::escape($href) . '">' . View::escape($label) . '</a>';
+                } else {
+                    $out .= View::escape($label);
+                }
+            } else {
+                $out .= View::escape($m[0][0]);
+            }
+
+            $offset = $matchStart + $matchLen;
+        }
+
+        if ($offset < $length) {
+            $out .= View::escape(substr($text, $offset));
+        }
+
+        return $out;
     }
 
     /**
@@ -75,6 +148,13 @@ final class WebsiteContent
                     $type = (string) ($block['type'] ?? '');
                     if (($type === 'text' || $type === 'heading') && isset($block['text']) && is_string($block['text'])) {
                         $block['text'] = self::normalizePlainText($block['text']);
+                    }
+                    if ($type === 'text') {
+                        if (!empty($block['quote'])) {
+                            $block['quote'] = true;
+                        } else {
+                            unset($block['quote']);
+                        }
                     }
                     if ($type === 'button') {
                         if (isset($block['label']) && is_string($block['label'])) {

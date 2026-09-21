@@ -194,6 +194,13 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-block h2 { font-size: 1.5rem; margin-bottom: 10px; }
     .ws-block h3 { font-size: 1.25rem; margin-bottom: 8px; }
     .ws-block p { margin-bottom: 8px; }
+    .ws-block blockquote.ws-quote {
+      margin: 0 0 12px;
+      padding: 10px 14px;
+      border-left: 3px solid var(--ws-primary);
+      background: color-mix(in srgb, var(--ws-primary) 8%, transparent);
+      border-radius: 0 6px 6px 0;
+    }
     .ws-block img { max-width: 100%; height: auto; border-radius: 6px; }
     .ws-block .ws-btn { display: inline-block; padding: 10px 24px; background: var(--ws-primary); color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: opacity 0.15s; border: none; cursor: pointer; font: inherit; }
     .ws-block .ws-btn:hover { opacity: 0.85; }
@@ -414,6 +421,37 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 </script>
 
 <main class="ws-main">
+<?php
+$wsInteractionCss = '';
+foreach (($layout['rows'] ?? []) as $ixRow) {
+    if (!is_array($ixRow)) {
+        continue;
+    }
+    foreach (($ixRow['columns'] ?? []) as $ixCol) {
+        if (!is_array($ixCol)) {
+            continue;
+        }
+        foreach (($ixCol['blocks'] ?? []) as $ixBlock) {
+            if (!is_array($ixBlock)) {
+                continue;
+            }
+            $ixType = (string) ($ixBlock['type'] ?? '');
+            if ($ixType !== 'button' && $ixType !== 'text' && $ixType !== 'heading') {
+                continue;
+            }
+            $ixAdv = WebsiteBlockAdvanced::normalize($ixBlock['advanced'] ?? null);
+            $ixClass = WebsiteBlockAdvanced::interactionClassName((string) ($ixBlock['id'] ?? ''), $ixAdv);
+            if ($ixClass === '') {
+                continue;
+            }
+            $wsInteractionCss .= WebsiteBlockAdvanced::toInteractionCss($ixClass, $ixAdv);
+        }
+    }
+}
+if ($wsInteractionCss !== '') :
+?>
+  <style id="ws-adv-interaction"><?= $wsInteractionCss ?></style>
+<?php endif; ?>
 <?php if (!empty($page['legal_variants']) && is_array($page['legal_variants']) && count($page['legal_variants']) > 1) : ?>
   <nav class="ws-legal-tabs" aria-label="Produktgruppe">
     <?php foreach ($page['legal_variants'] as $variant) : ?>
@@ -441,8 +479,18 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
         $adv = WebsiteBlockAdvanced::normalize($block['advanced'] ?? null);
         $advStyle = WebsiteBlockAdvanced::toInlineCss($adv);
         $advExtraClass = WebsiteBlockAdvanced::extraClassNames($adv);
-        $wsBlockClass = 'ws-block' . ($advExtraClass !== '' ? ' ' . $advExtraClass : '');
         $blockIdAttr = trim((string) ($block['id'] ?? ''));
+        $ixClass = '';
+        if ($type === 'button' || $type === 'text' || $type === 'heading') {
+            $ixClass = WebsiteBlockAdvanced::interactionClassName($blockIdAttr, $adv);
+        }
+        $wsBlockClass = 'ws-block';
+        if ($advExtraClass !== '') {
+            $wsBlockClass .= ' ' . $advExtraClass;
+        }
+        if ($ixClass !== '') {
+            $wsBlockClass .= ' ' . $ixClass;
+        }
       ?>
       <div class="<?= View::escape($wsBlockClass) ?>"<?= $blockIdAttr !== '' ? ' data-block-id="' . View::escape($blockIdAttr) . '"' : '' ?><?= $advStyle !== '' ? ' style="' . View::escape($advStyle) . '"' : '' ?><?= WebsiteBlockAdvanced::toHtmlAttributes($adv) ?>>
         <?php switch ($type):
@@ -452,7 +500,12 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
             break;
 
           case 'text':
-            echo '<p>' . WebsiteContent::renderTextHtml((string) ($block['text'] ?? '')) . '</p>';
+            $textBody = WebsiteContent::renderTextHtml((string) ($block['text'] ?? ''));
+            if (!empty($block['quote'])) {
+                echo '<blockquote class="ws-quote">' . $textBody . '</blockquote>';
+            } else {
+                echo '<p>' . $textBody . '</p>';
+            }
             break;
 
           case 'image':

@@ -73,6 +73,8 @@ Minimal, sicher:
 
 **Entscheidungspflicht in W4:** Speichern wir weiter Plaintext + Marker oder strukturiertes JSON? Default-Vorschlag: Plaintext mit wenigen Markern, die serverseitig zu sicherem HTML werden (wie bisher escape + nl2br, plus `**fett**` und `[text](url)`).
 
+**Entscheidung W4 (umgesetzt):** Plaintext + Marker. Server: `WebsiteContent::renderInlineMarkup` → `<strong>` / sicheres `<a>` (nur `http(s):`, `mailto:`, `/…`). Zitat: `block.quote = true` → `<blockquote class="ws-quote">`.
+
 ---
 
 ## 4. Chat-Phasen (Token-sparend)
@@ -84,6 +86,8 @@ Minimal, sicher:
 | **W3** | Zeichen-Picker | `website-builder.js`, `dg.css` |
 | **W4** | Fett/Link Content | `website-builder.js`, `WebsiteContent.php`, `website-public.php` |
 | **W5** | Hover/Visited Button/Link | Advanced + Public CSS/Style-Injection |
+
+**W5 umgesetzt:** Gruppen `hover` / `visited` (color, background, borderColor, textDecoration, opacity) → Klasse `ws-adv-h-{blockId}` + `<style>` in Public/Editor. Selektor zielt auf `a` / `.ws-btn` / Editor-Button.
 
 **Chat-Vorlage:**
 

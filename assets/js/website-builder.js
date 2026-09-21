@@ -188,6 +188,11 @@
   var ADV_VISIBILITY = ['visible', 'hidden'];
   var ADV_TEXT_ALIGN = ['left', 'center', 'right', 'justify'];
   var ADV_BORDER_STYLE = ['none', 'solid', 'dashed', 'dotted'];
+  var ADV_BG_SIZE = ['cover', 'contain', 'auto'];
+  var ADV_BG_REPEAT = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'];
+  var ADV_BG_POS = ['center', 'top', 'bottom', 'left', 'right'];
+  var ADV_TEXT_DECORATION = ['none', 'underline', 'line-through', 'overline'];
+  var ADV_INTERACTION_COLOR_KEYS = ['color', 'background', 'borderColor'];
 
   function advPickEnum(value, allowed) {
     value = String(value || '').trim();
@@ -227,10 +232,70 @@
     return clean.join(' ');
   }
 
-  function advSanitizeHex(value) {
+  function advSanitizeColor(value) {
     value = String(value || '').trim();
-    if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value)) return '';
-    return value.toLowerCase();
+    if (!value) return '';
+    if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) {
+      return value.toLowerCase();
+    }
+    var m = value.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0|1|0?\.\d+)\s*)?\)$/i);
+    if (!m) return '';
+    var r = parseInt(m[1], 10);
+    var g = parseInt(m[2], 10);
+    var b = parseInt(m[3], 10);
+    if (r > 255 || g > 255 || b > 255) return '';
+    if (m[4] != null && m[4] !== '') {
+      var a = Number(m[4]);
+      if (a < 0 || a > 1) return '';
+      var aFmt = String(Math.round(a * 1000) / 1000);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + aFmt + ')';
+    }
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function advSanitizeBgImageUrl(value) {
+    value = String(value || '').trim();
+    if (!value) return '';
+    var wrapped = value.match(/^url\(\s*['"]?(.*?)['"]?\s*\)$/i);
+    if (wrapped) value = String(wrapped[1] || '').trim();
+    if (!value || /[\s'"<>\\]|javascript:/i.test(value) || value.length > 500) return '';
+    if (value.indexOf('/media/') === 0 || value.indexOf('/app/media') === 0) return value;
+    if (/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:\/\S*)?$/i.test(value)) return value;
+    return '';
+  }
+
+  function advSanitizeBgSize(value) {
+    value = String(value || '').trim();
+    if (!value) return '';
+    var lower = value.toLowerCase();
+    if (ADV_BG_SIZE.indexOf(lower) !== -1) return lower;
+    var parts = value.split(/\s+/);
+    if (!parts.length || parts.length > 2) return '';
+    var clean = [];
+    for (var i = 0; i < parts.length; i++) {
+      var len = advSanitizeLength(parts[i]);
+      if (!len || /\s/.test(len)) return '';
+      clean.push(len);
+    }
+    return clean.join(' ');
+  }
+
+  function advSanitizeBgPosition(value) {
+    value = String(value || '').trim();
+    if (!value) return '';
+    var parts = value.toLowerCase().split(/\s+/);
+    if (!parts.length || parts.length > 2) return '';
+    var clean = [];
+    for (var i = 0; i < parts.length; i++) {
+      if (ADV_BG_POS.indexOf(parts[i]) !== -1) {
+        clean.push(parts[i]);
+        continue;
+      }
+      var len = advSanitizeLength(parts[i]);
+      if (!len || /\s/.test(len)) return '';
+      clean.push(len);
+    }
+    return clean.join(' ');
   }
 
   function advSanitizeId(value) {
@@ -279,9 +344,17 @@
     var colorsIn = raw.colors && typeof raw.colors === 'object' ? raw.colors : {};
     var colors = {};
     ['color', 'background'].forEach(function (key) {
-      var hex = advSanitizeHex(colorsIn[key]);
-      if (hex) colors[key] = hex;
+      var col = advSanitizeColor(colorsIn[key]);
+      if (col) colors[key] = col;
     });
+    var bgImg = advSanitizeBgImageUrl(colorsIn.backgroundImage);
+    if (bgImg) colors.backgroundImage = bgImg;
+    var bgSize = advSanitizeBgSize(colorsIn.backgroundSize);
+    if (bgSize) colors.backgroundSize = bgSize;
+    var bgPos = advSanitizeBgPosition(colorsIn.backgroundPosition);
+    if (bgPos) colors.backgroundPosition = bgPos;
+    var bgRepeat = advPickEnum(String(colorsIn.backgroundRepeat || '').toLowerCase(), ADV_BG_REPEAT);
+    if (bgRepeat) colors.backgroundRepeat = bgRepeat;
     if (Object.keys(colors).length) out.colors = colors;
 
     var borderIn = raw.border && typeof raw.border === 'object' ? raw.border : {};
@@ -289,12 +362,25 @@
     var bw = advSanitizeLength(borderIn.width);
     if (bw) border.width = bw;
     var bs = advPickEnum(borderIn.style, ADV_BORDER_STYLE);
-    var bc = advSanitizeHex(borderIn.color);
+    var bc = advSanitizeColor(borderIn.color);
     if (bs && bs !== 'none') border.style = bs;
     else if (bs === 'none' && (bw || bc)) border.style = 'none';
     if (bc) border.color = bc;
     var br = advSanitizeLength(borderIn.radius);
     if (br) border.radius = br;
+    ['radiusTL', 'radiusTR', 'radiusBR', 'radiusBL'].forEach(function (rk) {
+      var rv = advSanitizeLength(borderIn[rk]);
+      if (rv) border[rk] = rv;
+    });
+    ['top', 'right', 'bottom', 'left'].forEach(function (side) {
+      var sw = advSanitizeLength(borderIn[side + 'Width']);
+      if (sw) border[side + 'Width'] = sw;
+      var ss = advPickEnum(borderIn[side + 'Style'], ADV_BORDER_STYLE);
+      var sc = advSanitizeColor(borderIn[side + 'Color']);
+      if (ss && ss !== 'none') border[side + 'Style'] = ss;
+      else if (ss === 'none' && (sw || sc)) border[side + 'Style'] = 'none';
+      if (sc) border[side + 'Color'] = sc;
+    });
     if (Object.keys(border).length) out.border = border;
 
     var attrsIn = raw.attrs && typeof raw.attrs === 'object' ? raw.attrs : {};
@@ -309,7 +395,75 @@
     if (aria) attrs.ariaLabel = aria;
     if (Object.keys(attrs).length) out.attrs = attrs;
 
+    ['hover', 'visited'].forEach(function (state) {
+      var stateIn = raw[state] && typeof raw[state] === 'object' ? raw[state] : {};
+      var stateOut = {};
+      ADV_INTERACTION_COLOR_KEYS.forEach(function (ck) {
+        var col = advSanitizeColor(stateIn[ck]);
+        if (col) stateOut[ck] = col;
+      });
+      var td = advPickEnum(stateIn.textDecoration, ADV_TEXT_DECORATION);
+      if (td) stateOut.textDecoration = td;
+      var iop = advSanitizeOpacity(stateIn.opacity);
+      if (iop !== '') stateOut.opacity = iop;
+      if (Object.keys(stateOut).length) out[state] = stateOut;
+    });
+
     return out;
+  }
+
+  function hasInteractionStyles(advanced) {
+    var adv = normalizeAdvanced(advanced);
+    return !!(adv.hover && Object.keys(adv.hover).length) || !!(adv.visited && Object.keys(adv.visited).length);
+  }
+
+  function interactionClassName(blockId, advanced) {
+    var adv = normalizeAdvanced(advanced);
+    if (!hasInteractionStyles(adv)) return '';
+    var id = String(blockId || '').replace(/[^A-Za-z0-9_-]/g, '');
+    if (!id) {
+      id = 'x' + String(JSON.stringify({ hover: adv.hover || {}, visited: adv.visited || {} }).length);
+    }
+    if (id.length > 40) id = id.slice(0, 40);
+    return 'ws-adv-h-' + id;
+  }
+
+  function interactionDeclarations(state) {
+    state = state || {};
+    var parts = [];
+    if (state.color) parts.push('color:' + state.color);
+    if (state.background) parts.push('background-color:' + state.background);
+    if (state.borderColor) parts.push('border-color:' + state.borderColor);
+    if (state.textDecoration) parts.push('text-decoration:' + state.textDecoration);
+    if (state.opacity != null && state.opacity !== '') parts.push('opacity:' + state.opacity);
+    return parts.join(';');
+  }
+
+  function toInteractionCss(className, advanced) {
+    if (!/^ws-adv-h-[A-Za-z0-9_-]+$/.test(className)) return '';
+    var adv = normalizeAdvanced(advanced);
+    var chunks = [];
+    var hoverDecl = interactionDeclarations(adv.hover);
+    var visitedDecl = interactionDeclarations(adv.visited);
+    var hoverSel = '.' + className + ' a:hover,.' + className + ' .ws-btn:hover,.' + className + ' .dg-website-block__btn:hover';
+    var visitedSel = '.' + className + ' a:visited,.' + className + ' .ws-btn:visited,.' + className + ' .dg-website-block__btn:visited';
+    if (hoverDecl) chunks.push(hoverSel + '{' + hoverDecl + '}');
+    if (visitedDecl) chunks.push(visitedSel + '{' + visitedDecl + '}');
+    return chunks.join('');
+  }
+
+  function collectInteractionCss(layout) {
+    var css = '';
+    (layout.rows || []).forEach(function (row) {
+      (row.columns || []).forEach(function (col) {
+        (col.blocks || []).forEach(function (block) {
+          if (!block || (block.type !== 'button' && block.type !== 'text' && block.type !== 'heading')) return;
+          var cls = interactionClassName(block.id, block.advanced);
+          if (cls) css += toInteractionCss(cls, block.advanced);
+        });
+      });
+    });
+    return css;
   }
 
   function advancedIsActive(advanced) {
@@ -331,24 +485,65 @@
     var colors = adv.colors || {};
     if (colors.color) parts.push('color:' + colors.color);
     if (colors.background) parts.push('background-color:' + colors.background);
+    if (colors.backgroundImage) parts.push('background-image:url("' + colors.backgroundImage + '")');
+    if (colors.backgroundSize) parts.push('background-size:' + colors.backgroundSize);
+    if (colors.backgroundPosition) parts.push('background-position:' + colors.backgroundPosition);
+    if (colors.backgroundRepeat) parts.push('background-repeat:' + colors.backgroundRepeat);
     var border = adv.border || {};
-    if (border.style === 'none') {
-      parts.push('border:none');
-    } else if (border.width || border.style || border.color) {
+    var sides = ['top', 'right', 'bottom', 'left'];
+    var hasSide = false;
+    sides.forEach(function (side) {
+      var sw = border[side + 'Width'] || '';
+      var ss = border[side + 'Style'] || '';
+      var sc = border[side + 'Color'] || '';
+      if (!sw && !ss && !sc) return;
+      hasSide = true;
+      if (ss === 'none') {
+        parts.push('border-' + side + ':none');
+        return;
+      }
       parts.push(
-        'border:' +
-          (border.width || '1px') + ' ' +
-          (border.style || 'solid') + ' ' +
-          (border.color || '#000000')
+        'border-' + side + ':' +
+          (sw || '1px') + ' ' +
+          (ss || 'solid') + ' ' +
+          (sc || '#000000')
       );
+    });
+    if (!hasSide) {
+      if (border.style === 'none') {
+        parts.push('border:none');
+      } else if (border.width || border.style || border.color) {
+        parts.push(
+          'border:' +
+            (border.width || '1px') + ' ' +
+            (border.style || 'solid') + ' ' +
+            (border.color || '#000000')
+        );
+      }
     }
-    if (border.radius) parts.push('border-radius:' + border.radius);
+    var corners = [border.radiusTL || '', border.radiusTR || '', border.radiusBR || '', border.radiusBL || ''];
+    var hasCorner = corners.some(function (c) { return !!c; });
+    if (hasCorner) {
+      parts.push(
+        'border-radius:' +
+          (corners[0] || '0') + ' ' +
+          (corners[1] || '0') + ' ' +
+          (corners[2] || '0') + ' ' +
+          (corners[3] || '0')
+      );
+    } else if (border.radius) {
+      parts.push('border-radius:' + border.radius);
+    }
     return parts.join(';');
   }
 
-  function advancedExtraClass(advanced) {
+  function advancedExtraClass(advanced, blockId) {
     var adv = normalizeAdvanced(advanced);
-    return (adv.attrs && adv.attrs.className) || '';
+    var parts = [];
+    if (adv.attrs && adv.attrs.className) parts.push(adv.attrs.className);
+    var ix = interactionClassName(blockId || '', adv);
+    if (ix) parts.push(ix);
+    return parts.join(' ');
   }
 
   function advancedAttrHtml(advanced) {
@@ -419,6 +614,24 @@
       }
       if (event.target.closest('[data-adv-close]')) {
         closeAdvancedPopover();
+        return;
+      }
+      var mediaBtn = event.target.closest('[data-media-pick]');
+      if (mediaBtn) {
+        event.preventDefault();
+        openMediaPicker(mediaBtn.getAttribute('data-media-pick') || 'src');
+        return;
+      }
+      if (event.target.closest('[data-adv-clear-bg-image]') && selected.blockId) {
+        event.preventDefault();
+        var layout = parseLayout();
+        var block = findBlock(layout, selected.blockId);
+        if (!block) return;
+        setAdvancedValue(block, 'colors', 'backgroundImage', '');
+        persist(layout);
+        render({ keepInspector: true });
+        refreshAdvancedPopoverContent();
+        syncAdvancedLivePreview(block);
       }
     });
 
@@ -684,6 +897,15 @@
       { id: 'border', label: 'Rahmen' },
       { id: 'attrs', label: 'Attribute' },
     ];
+    var blockType = block && block.type;
+    var showHoverTab = blockType === 'button' || blockType === 'text' || blockType === 'heading';
+    if (showHoverTab) {
+      tabs.push({ id: 'hover', label: 'Hover' });
+    }
+    if (tab === 'hover' && !showHoverTab) {
+      tab = 'display';
+      advancedPopoverTab = 'display';
+    }
 
     if (!advancedPopoverEl.querySelector('[data-adv-shell]')) {
       advancedPopoverEl.innerHTML =
@@ -767,36 +989,163 @@
         label: 'Textfarbe', type: 'color',
       });
       html += advInputHtml('colors', 'color', getAdvancedValue(adv, 'colors', 'color'), {
-        label: 'Textfarbe (Hex)', placeholder: '#333333',
+        label: 'Textfarbe (Hex / RGBA)', placeholder: '#333 oder rgba(0,0,0,0.5)',
+        hint: 'Hex (#rgb, #rrggbb, #rrggbbaa) oder rgba(r,g,b,a)',
       });
       html += advInputHtml('colors', 'background', getAdvancedValue(adv, 'colors', 'background') || '#ffffff', {
         label: 'Hintergrund', type: 'color',
       });
       html += advInputHtml('colors', 'background', getAdvancedValue(adv, 'colors', 'background'), {
-        label: 'Hintergrund (Hex)', placeholder: '#ffffff',
+        label: 'Hintergrund (Hex / RGBA)', placeholder: '#fff oder rgba(255,255,255,0.8)',
+        hint: 'Hex oder rgba — benannte Farben (red) werden verworfen',
       });
-    } else if (tab === 'border') {
-      html += advInputHtml('border', 'width', getAdvancedValue(adv, 'border', 'width'), {
-        label: 'Stärke', placeholder: '1px',
+      html += '<p class="dg-field-hint" style="margin-top:8px;font-weight:600;">Hintergrundbild</p>';
+      html += advInputHtml('colors', 'backgroundImage', getAdvancedValue(adv, 'colors', 'backgroundImage'), {
+        label: 'Bild-URL', placeholder: '/media/… oder https://…',
+        hint: 'Nur /media/…, /app/media… oder http(s)-URL',
       });
-      html += advSelectHtml('border', 'style', getAdvancedValue(adv, 'border', 'style'), {
-        label: 'Stil',
+      html += '<div class="dg-website-image-tools" style="margin-bottom:10px;">' +
+        '<button type="button" class="dg-button" data-media-pick="adv.backgroundImage">Aus Mediathek</button>' +
+        '<button type="button" class="dg-button" data-adv-clear-bg-image style="margin-left:6px;">Bild entfernen</button>' +
+        '</div>';
+      html += advSelectHtml('colors', 'backgroundSize', getAdvancedValue(adv, 'colors', 'backgroundSize'), {
+        label: 'Größe',
         choices: [
           { value: '', label: '— Standard —' },
-          { value: 'none', label: 'ohne' },
-          { value: 'solid', label: 'durchgezogen' },
-          { value: 'dashed', label: 'gestrichelt' },
-          { value: 'dotted', label: 'gepunktet' },
+          { value: 'cover', label: 'cover (ausfüllen)' },
+          { value: 'contain', label: 'contain (einpassen)' },
+          { value: 'auto', label: 'auto' },
         ],
       });
-      html += advInputHtml('border', 'color', getAdvancedValue(adv, 'border', 'color') || '#cccccc', {
-        label: 'Farbe', type: 'color',
+      html += advInputHtml('colors', 'backgroundSize', getAdvancedValue(adv, 'colors', 'backgroundSize'), {
+        label: 'Größe (frei)', placeholder: 'cover oder 100% 50%',
+        hint: 'cover / contain / auto oder 1–2 Längen (px/%)',
+      });
+      html += advSelectHtml('colors', 'backgroundPosition', getAdvancedValue(adv, 'colors', 'backgroundPosition'), {
+        label: 'Position',
+        choices: [
+          { value: '', label: '— Standard —' },
+          { value: 'center', label: 'center' },
+          { value: 'top', label: 'top' },
+          { value: 'bottom', label: 'bottom' },
+          { value: 'left', label: 'left' },
+          { value: 'right', label: 'right' },
+          { value: 'center top', label: 'center top' },
+          { value: 'left top', label: 'left top' },
+          { value: 'right bottom', label: 'right bottom' },
+        ],
+      });
+      html += advSelectHtml('colors', 'backgroundRepeat', getAdvancedValue(adv, 'colors', 'backgroundRepeat'), {
+        label: 'Wiederholen',
+        choices: [
+          { value: '', label: '— Standard —' },
+          { value: 'no-repeat', label: 'no-repeat' },
+          { value: 'repeat', label: 'repeat' },
+          { value: 'repeat-x', label: 'repeat-x' },
+          { value: 'repeat-y', label: 'repeat-y' },
+        ],
+      });
+    } else if (tab === 'border') {
+      var borderStyleChoices = [
+        { value: '', label: '— Standard —' },
+        { value: 'none', label: 'ohne' },
+        { value: 'solid', label: 'durchgezogen' },
+        { value: 'dashed', label: 'gestrichelt' },
+        { value: 'dotted', label: 'gepunktet' },
+      ];
+      html += '<p class="dg-field-hint">Alle Seiten (wird ignoriert, wenn Einzel-Seiten gesetzt sind)</p>';
+      html += advInputHtml('border', 'width', getAdvancedValue(adv, 'border', 'width'), {
+        label: 'Stärke alle', placeholder: '1px',
+      });
+      html += advSelectHtml('border', 'style', getAdvancedValue(adv, 'border', 'style'), {
+        label: 'Stil alle', choices: borderStyleChoices,
       });
       html += advInputHtml('border', 'color', getAdvancedValue(adv, 'border', 'color'), {
-        label: 'Farbe (Hex)', placeholder: '#cccccc',
+        label: 'Farbe alle (Hex / RGBA)', placeholder: '#ccc oder rgba(0,0,0,0.2)',
       });
       html += advInputHtml('border', 'radius', getAdvancedValue(adv, 'border', 'radius'), {
-        label: 'Eckenradius', placeholder: '8px',
+        label: 'Radius alle / Shorthand', placeholder: '8px oder 8px 4px',
+        hint: '1–4 Längen (oben-links → oben-rechts → unten-rechts → unten-links)',
+      });
+      html += '<p class="dg-field-hint" style="margin-top:10px;">Radius je Ecke (überschreibt „Radius alle“, wenn gesetzt)</p>';
+      html += advInputHtml('border', 'radiusTL', getAdvancedValue(adv, 'border', 'radiusTL'), {
+        label: 'Radius oben links', placeholder: '8px',
+      });
+      html += advInputHtml('border', 'radiusTR', getAdvancedValue(adv, 'border', 'radiusTR'), {
+        label: 'Radius oben rechts', placeholder: '8px',
+      });
+      html += advInputHtml('border', 'radiusBR', getAdvancedValue(adv, 'border', 'radiusBR'), {
+        label: 'Radius unten rechts', placeholder: '8px',
+      });
+      html += advInputHtml('border', 'radiusBL', getAdvancedValue(adv, 'border', 'radiusBL'), {
+        label: 'Radius unten links', placeholder: '8px',
+      });
+      [
+        { side: 'top', label: 'Oben' },
+        { side: 'right', label: 'Rechts' },
+        { side: 'bottom', label: 'Unten' },
+        { side: 'left', label: 'Links' },
+      ].forEach(function (sideDef) {
+        html += '<p class="dg-field-hint" style="margin-top:10px;font-weight:600;">Seite ' + escapeHtml(sideDef.label) + '</p>';
+        html += advInputHtml('border', sideDef.side + 'Width', getAdvancedValue(adv, 'border', sideDef.side + 'Width'), {
+          label: 'Stärke ' + sideDef.label, placeholder: '1px',
+        });
+        html += advSelectHtml('border', sideDef.side + 'Style', getAdvancedValue(adv, 'border', sideDef.side + 'Style'), {
+          label: 'Stil ' + sideDef.label, choices: borderStyleChoices,
+        });
+        html += advInputHtml('border', sideDef.side + 'Color', getAdvancedValue(adv, 'border', sideDef.side + 'Color'), {
+          label: 'Farbe ' + sideDef.label, placeholder: '#ccc oder rgba(…)',
+        });
+      });
+    } else if (tab === 'hover') {
+      var decoChoices = [
+        { value: '', label: '— Standard —' },
+        { value: 'none', label: 'keine' },
+        { value: 'underline', label: 'unterstrichen' },
+        { value: 'line-through', label: 'durchgestrichen' },
+        { value: 'overline', label: 'überstrichen' },
+      ];
+      html += '<p class="dg-field-hint">Wirkt auf Buttons und Links im Block (nicht auf den ganzen Wrapper).</p>';
+      html += '<p class="dg-field-hint" style="margin-top:8px;font-weight:600;">Hover</p>';
+      html += advInputHtml('hover', 'color', getAdvancedValue(adv, 'hover', 'color') || '#0066cc', {
+        label: 'Textfarbe', type: 'color',
+      });
+      html += advInputHtml('hover', 'color', getAdvancedValue(adv, 'hover', 'color'), {
+        label: 'Textfarbe (Hex / RGBA)', placeholder: '#06c oder rgba(…)',
+      });
+      html += advInputHtml('hover', 'background', getAdvancedValue(adv, 'hover', 'background') || '#ffffff', {
+        label: 'Hintergrund', type: 'color',
+      });
+      html += advInputHtml('hover', 'background', getAdvancedValue(adv, 'hover', 'background'), {
+        label: 'Hintergrund (Hex / RGBA)', placeholder: '#fff oder rgba(…)',
+      });
+      html += advInputHtml('hover', 'borderColor', getAdvancedValue(adv, 'hover', 'borderColor'), {
+        label: 'Rahmenfarbe', placeholder: '#ccc oder rgba(…)',
+      });
+      html += advSelectHtml('hover', 'textDecoration', getAdvancedValue(adv, 'hover', 'textDecoration'), {
+        label: 'Textverzierung', choices: decoChoices,
+      });
+      html += advInputHtml('hover', 'opacity', getAdvancedValue(adv, 'hover', 'opacity'), {
+        label: 'Deckkraft (0–1)', type: 'number', min: '0', max: '1', step: '0.05', placeholder: '1',
+      });
+      html += '<p class="dg-field-hint" style="margin-top:12px;font-weight:600;">Visited (besuchter Link)</p>';
+      html += advInputHtml('visited', 'color', getAdvancedValue(adv, 'visited', 'color') || '#551a8b', {
+        label: 'Textfarbe', type: 'color',
+      });
+      html += advInputHtml('visited', 'color', getAdvancedValue(adv, 'visited', 'color'), {
+        label: 'Textfarbe (Hex / RGBA)', placeholder: '#551a8b',
+      });
+      html += advInputHtml('visited', 'background', getAdvancedValue(adv, 'visited', 'background'), {
+        label: 'Hintergrund (Hex / RGBA)', placeholder: '#fff oder rgba(…)',
+      });
+      html += advInputHtml('visited', 'borderColor', getAdvancedValue(adv, 'visited', 'borderColor'), {
+        label: 'Rahmenfarbe', placeholder: '#ccc',
+      });
+      html += advSelectHtml('visited', 'textDecoration', getAdvancedValue(adv, 'visited', 'textDecoration'), {
+        label: 'Textverzierung', choices: decoChoices,
+      });
+      html += advInputHtml('visited', 'opacity', getAdvancedValue(adv, 'visited', 'opacity'), {
+        label: 'Deckkraft (0–1)', type: 'number', min: '0', max: '1', step: '0.05', placeholder: '1',
       });
     } else {
       html += advInputHtml('attrs', 'id', getAdvancedValue(adv, 'attrs', 'id'), {
@@ -894,7 +1243,7 @@
   function renderBlock(block) {
     var isSelected = selected.blockId === block.id;
     var selectedClass = isSelected ? ' is-selected' : '';
-    var extraClass = advancedExtraClass(block.advanced);
+    var extraClass = advancedExtraClass(block.advanced, block.id);
     if (extraClass) selectedClass += ' ' + extraClass;
     var styleCss = advancedToInlineCss(block.advanced);
     var attrHtml = advancedAttrHtml(block.advanced);
@@ -915,7 +1264,8 @@
     switch (block.type) {
       case 'heading':
         var level = block.level === 'h1' || block.level === 'h3' ? block.level : 'h2';
-        html += '<p class="dg-website-block__heading dg-website-block__heading--' + level + '">' + escapeHtml(block.text) + '</p>';
+        html += '<p class="dg-website-block__heading dg-website-block__heading--' + level + '">' +
+          (renderInlineMarkupHtml(block.text) || '<span class="dg-field-hint">Überschrift</span>') + '</p>';
         break;
       case 'image':
         html += block.src
@@ -982,7 +1332,12 @@
         html += '</div>';
         break;
       default:
-        html += '<p class="dg-website-block__text">' + escapeHtml(block.text) + '</p>';
+        var textHtml = renderInlineMarkupHtml(block.text) || '<span class="dg-field-hint">Text</span>';
+        if (block.quote) {
+          html += '<blockquote class="dg-website-block__quote">' + textHtml + '</blockquote>';
+        } else {
+          html += '<p class="dg-website-block__text">' + textHtml + '</p>';
+        }
     }
     return html + '</div>';
   }
@@ -992,7 +1347,8 @@
     if (!layout.rows.length) {
       canvas.innerHTML = '<div class="dg-website-canvas-empty">Noch keine Zeile. Links unter „Zeile“ eine Spaltenanzahl wählen — oder hier starten.</div>';
     } else {
-      canvas.innerHTML = layout.rows.map(function (row, rowIndex) {
+      var ixCss = collectInteractionCss(layout);
+      canvas.innerHTML = (ixCss ? '<style data-ws-adv-ix>' + ixCss + '</style>' : '') + layout.rows.map(function (row, rowIndex) {
         var rowHtml = '';
         if (!readOnly && rowIndex === 0) {
           rowHtml += '<div class="dg-website-row-gap">' +
@@ -1066,6 +1422,224 @@
       '<textarea name="' + escapeHtml(name) + '" rows="' + (rows || 4) + '">' + escapeHtml(value) + '</textarea></label>';
   }
 
+  /** Kuratierte Zeichen für Inspector (W3) — eingefügt als Unicode, nicht als Entity-Markup. */
+  var CHAR_PICKER_GROUPS = [
+    {
+      id: 'symbols',
+      label: 'HTML-Symbole',
+      chars: [
+        '©', '®', '™', '€', '£', '¥', '§', '¶', '†', '‡', '•', '…', '–', '—',
+        '′', '″', '°', '±', '×', '÷', '≠', '≤', '≥', '∞', '≈', '√', '∑',
+        '←', '→', '↑', '↓', '↔', '★', '☆', '♥', '♠', '♣', '♦', '✓', '✗',
+      ],
+    },
+    {
+      id: 'entities',
+      label: 'Sonderzeichen',
+      chars: [
+        '«', '»', '‹', '›', '„', '“', '”', '‘', '’', '‚', '‛',
+        '¡', '¿', '¢', '¤', '¦', '¨', '´', '¸', '¯', '¬',
+        'ª', 'º', 'æ', 'Æ', 'œ', 'Œ', 'ß', 'ø', 'Ø', 'å', 'Å',
+      ],
+    },
+    {
+      id: 'emoji',
+      label: 'Emojis',
+      chars: [
+        '😀', '😊', '🙂', '😉', '👍', '👋', '🙏', '💪',
+        '✅', '❌', '⚠️', '❗', '❓', 'ℹ️', '💡', '📌',
+        '📞', '✉️', '📍', '🏠', '⭐', '❤️', '🔥', '🎉', '🚀', '🛒',
+      ],
+    },
+  ];
+
+  var charPickerState = { fieldName: 'text', start: 0, end: 0 };
+
+  function charPickerToolbarHtml(fieldName) {
+    var html = '<div class="dg-website-char-picker" data-char-picker-for="' + escapeHtml(fieldName) + '">' +
+      '<button type="button" class="dg-button dg-website-char-picker__btn" data-char-picker-toggle title="Zeichen einfügen" aria-expanded="false" aria-haspopup="true">Ω</button>' +
+      '<div class="dg-website-char-picker__menu" data-char-picker-menu hidden>';
+    CHAR_PICKER_GROUPS.forEach(function (group) {
+      html += '<div class="dg-website-char-picker__group">' +
+        '<div class="dg-website-char-picker__group-label">' + escapeHtml(group.label) + '</div>' +
+        '<div class="dg-website-char-picker__grid">';
+      group.chars.forEach(function (ch) {
+        html += '<button type="button" class="dg-website-char-picker__char" data-char-insert="' +
+          escapeHtml(ch) + '" title="' + escapeHtml(ch) + '">' + escapeHtml(ch) + '</button>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+
+  function isSafeContentHref(url) {
+    url = String(url || '').trim();
+    if (!url) return false;
+    if (/^https?:\/\//i.test(url)) return true;
+    if (/^mailto:[^\s<>"']+$/i.test(url)) return true;
+    if (url.charAt(0) === '/' && url.charAt(1) !== '/') return true;
+    return false;
+  }
+
+  /** Canvas-Vorschau: gleiche Marker wie WebsiteContent (W4). */
+  function renderInlineMarkupHtml(text) {
+    text = String(text || '');
+    if (!text) return '';
+    var out = '';
+    var re = /\*\*(.+?)\*\*|\[([^\[\]]+)\]\(([^)]+)\)/g;
+    var last = 0;
+    var m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) out += escapeHtml(text.slice(last, m.index));
+      if (m[1] != null) {
+        out += '<strong>' + escapeHtml(m[1]) + '</strong>';
+      } else if (m[2] != null) {
+        var href = String(m[3] || '').trim();
+        if (isSafeContentHref(href)) {
+          out += '<a href="' + escapeHtml(href) + '">' + escapeHtml(m[2]) + '</a>';
+        } else {
+          out += escapeHtml(m[2]);
+        }
+      } else {
+        out += escapeHtml(m[0]);
+      }
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) out += escapeHtml(text.slice(last));
+    return out;
+  }
+
+  function formatToolbarHtml(fieldName) {
+    return '<div class="dg-website-format-toolbar" data-format-for="' + escapeHtml(fieldName) + '">' +
+      '<button type="button" class="dg-button dg-website-format-toolbar__btn" data-format-bold title="Fett (**…**)" aria-label="Fett"><strong>B</strong></button>' +
+      '<button type="button" class="dg-button dg-website-format-toolbar__btn" data-format-link title="Link ([Text](URL))" aria-label="Link">Link</button>' +
+      '</div>';
+  }
+
+  function textFieldWithCharPicker(label, name, value, options) {
+    options = options || {};
+    var field = options.textarea
+      ? textareaHtml(label, name, value, options.rows || 6)
+      : fieldHtml(label, name, value, options.extra || '');
+    return '<div class="dg-website-char-field">' +
+      '<div class="dg-website-char-field__toolbar">' +
+      '<span class="dg-website-char-field__toolbar-label">Format</span>' +
+      formatToolbarHtml(name) +
+      '<span class="dg-website-char-field__toolbar-label">Zeichen</span>' +
+      charPickerToolbarHtml(name) +
+      '</div>' +
+      field +
+      '</div>';
+  }
+
+  function wrapSelectionWithMarkers(fieldName, before, after, placeholder) {
+    if (!inspector || !selected.blockId) return;
+    var field = inspector.querySelector('input[name="' + fieldName + '"], textarea[name="' + fieldName + '"]');
+    if (!field) return;
+    rememberCharPickerSelection(field);
+    var value = String(field.value || '');
+    var start = charPickerState.start;
+    var end = charPickerState.end;
+    if (start < 0) start = 0;
+    if (end < start) end = start;
+    if (start > value.length) start = value.length;
+    if (end > value.length) end = value.length;
+    var selectedText = value.slice(start, end);
+    if (!selectedText) selectedText = placeholder || '';
+    var insert = before + selectedText + after;
+    field.value = value.slice(0, start) + insert + value.slice(end);
+    var selStart = start + before.length;
+    var selEnd = selStart + selectedText.length;
+    try {
+      field.focus();
+      field.setSelectionRange(selStart, selEnd);
+    } catch (e) { /* ignore */ }
+    charPickerState.fieldName = fieldName;
+    charPickerState.start = selStart;
+    charPickerState.end = selEnd;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function applyFormatBold(fieldName) {
+    wrapSelectionWithMarkers(fieldName, '**', '**', 'fett');
+  }
+
+  function applyFormatLink(fieldName) {
+    if (!inspector || !selected.blockId) return;
+    var field = inspector.querySelector('input[name="' + fieldName + '"], textarea[name="' + fieldName + '"]');
+    if (!field) return;
+    rememberCharPickerSelection(field);
+    var url = window.prompt('Link-URL (https://, mailto: oder /pfad):', 'https://');
+    if (url == null) return;
+    url = String(url).trim();
+    if (!isSafeContentHref(url)) {
+      window.alert('Nur http(s)://, mailto: oder relative Pfade ab / sind erlaubt.');
+      return;
+    }
+    var value = String(field.value || '');
+    var start = charPickerState.start;
+    var end = charPickerState.end;
+    var label = value.slice(start, end) || 'Linktext';
+    var insert = '[' + label + '](' + url + ')';
+    field.value = value.slice(0, start) + insert + value.slice(end);
+    var caret = start + insert.length;
+    try {
+      field.focus();
+      field.setSelectionRange(caret, caret);
+    } catch (e) { /* ignore */ }
+    charPickerState.fieldName = fieldName;
+    charPickerState.start = caret;
+    charPickerState.end = caret;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function rememberCharPickerSelection(field) {
+    if (!field || !field.name) return;
+    if (!(field.tagName === 'INPUT' || field.tagName === 'TEXTAREA')) return;
+    charPickerState.fieldName = field.name;
+    try {
+      charPickerState.start = field.selectionStart != null ? field.selectionStart : field.value.length;
+      charPickerState.end = field.selectionEnd != null ? field.selectionEnd : field.value.length;
+    } catch (e) {
+      charPickerState.start = field.value.length;
+      charPickerState.end = field.value.length;
+    }
+  }
+
+  function insertCharAtCursor(ch) {
+    if (!inspector || !selected.blockId) return;
+    var name = charPickerState.fieldName || 'text';
+    var field = inspector.querySelector('input[name="' + name + '"], textarea[name="' + name + '"]');
+    if (!field) return;
+    var value = String(field.value || '');
+    var start = charPickerState.start;
+    var end = charPickerState.end;
+    if (start < 0) start = 0;
+    if (end < start) end = start;
+    if (start > value.length) start = value.length;
+    if (end > value.length) end = value.length;
+    field.value = value.slice(0, start) + ch + value.slice(end);
+    var caret = start + ch.length;
+    try {
+      field.focus();
+      field.setSelectionRange(caret, caret);
+    } catch (e) { /* ignore */ }
+    charPickerState.start = caret;
+    charPickerState.end = caret;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function closeAllCharPickerMenus() {
+    if (!inspector) return;
+    inspector.querySelectorAll('[data-char-picker-menu]').forEach(function (menu) {
+      menu.hidden = true;
+    });
+    inspector.querySelectorAll('[data-char-picker-toggle]').forEach(function (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
   function moveButtons() {
     return '<div class="dg-form-actions dg-website-inspector-actions" style="margin-bottom:8px;">' +
       '<button type="button" class="dg-button" data-move-block="up" title="Nach oben">↑</button>' +
@@ -1097,6 +1671,17 @@
     if (targetField === 'gallery_add') {
       block.images = block.images || [];
       block.images.push({ src: url, alt: alt });
+    } else if (targetField === 'adv.backgroundImage') {
+      setAdvancedValue(block, 'colors', 'backgroundImage', url);
+      if (!getAdvancedValue(block.advanced, 'colors', 'backgroundSize')) {
+        setAdvancedValue(block, 'colors', 'backgroundSize', 'cover');
+      }
+      if (!getAdvancedValue(block.advanced, 'colors', 'backgroundRepeat')) {
+        setAdvancedValue(block, 'colors', 'backgroundRepeat', 'no-repeat');
+      }
+      if (!getAdvancedValue(block.advanced, 'colors', 'backgroundPosition')) {
+        setAdvancedValue(block, 'colors', 'backgroundPosition', 'center');
+      }
     } else {
       block[targetField] = url;
       if (targetField === 'src' && alt && !(block.alt || '').trim()) {
@@ -1104,7 +1689,15 @@
       }
     }
     persist(layout);
-    render();
+    if (targetField === 'adv.backgroundImage') {
+      render({ keepInspector: true });
+      if (advancedPopoverEl && !advancedPopoverEl.hidden) {
+        refreshAdvancedPopoverContent();
+        syncAdvancedLivePreview(block);
+      }
+    } else {
+      render();
+    }
   }
 
   function ensureMediaPicker() {
@@ -1404,7 +1997,7 @@
 
       switch (block.type) {
         case 'heading':
-          html += fieldHtml('Text', 'text', block.text);
+          html += textFieldWithCharPicker('Text', 'text', block.text);
           html += '<label class="dg-field"><span>Größe</span><select name="level">' +
             '<option value="h1"' + (block.level === 'h1' ? ' selected' : '') + '>Groß</option>' +
             '<option value="h2"' + (block.level !== 'h1' && block.level !== 'h3' ? ' selected' : '') + '>Mittel</option>' +
@@ -1417,7 +2010,7 @@
           html += fieldHtml('Alternativtext', 'alt', block.alt);
           break;
         case 'button':
-          html += fieldHtml('Beschriftung', 'label', block.label || block.text);
+          html += textFieldWithCharPicker('Beschriftung', 'label', block.label || block.text);
           html += fieldHtml('Link', 'url', block.url);
           break;
         case 'spacer':
@@ -1481,7 +2074,10 @@
           }
           break;
         default:
-          html += textareaHtml('Text', 'text', block.text, 6);
+          html += textFieldWithCharPicker('Text', 'text', block.text, { textarea: true, rows: 6 });
+          html += '<label class="dg-field dg-field--inline"><span>' +
+            '<input type="checkbox" name="quote" value="1"' + (block.quote ? ' checked' : '') + '> Als Zitat darstellen' +
+            '</span></label>';
       }
 
       var protectBooking = builderCfg.isOnlineBookingPage && block.type === 'online_booking';
@@ -1866,9 +2462,47 @@
   });
 
   if (inspector) {
+    inspector.addEventListener('focusin', function (event) {
+      var field = event.target;
+      if (!field || !field.name) return;
+      if (field.tagName === 'TEXTAREA') {
+        rememberCharPickerSelection(field);
+        return;
+      }
+      if (field.tagName !== 'INPUT') return;
+      var inputType = String(field.type || 'text').toLowerCase();
+      if (inputType !== 'text' && inputType !== 'search') return;
+      rememberCharPickerSelection(field);
+    });
+
+    inspector.addEventListener('keyup', function (event) {
+      var field = event.target;
+      if (field && (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA') && field.name) {
+        rememberCharPickerSelection(field);
+      }
+    });
+
+    inspector.addEventListener('mouseup', function (event) {
+      var field = event.target;
+      if (field && (field.tagName === 'INPUT' || field.tagName === 'TEXTAREA') && field.name) {
+        rememberCharPickerSelection(field);
+      }
+    });
+
+    inspector.addEventListener('mousedown', function (event) {
+      if (event.target.closest('[data-char-picker-toggle], [data-char-insert], .dg-website-char-picker__menu, [data-format-bold], [data-format-link]')) {
+        var active = document.activeElement;
+        if (active && inspector.contains(active) && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+          rememberCharPickerSelection(active);
+        }
+        event.preventDefault();
+      }
+    });
+
     inspector.addEventListener('input', function (event) {
       var field = event.target;
       if (!field.name || !selected.blockId) return;
+      if (field.type === 'checkbox' || field.type === 'radio') return;
       var layout = parseLayout();
       var block = findBlock(layout, selected.blockId);
       if (!block) return;
@@ -1882,6 +2516,18 @@
     });
 
     inspector.addEventListener('change', function (event) {
+      var quoteBox = event.target.closest('input[name="quote"][type="checkbox"]');
+      if (quoteBox && selected.blockId) {
+        var layoutQ = parseLayout();
+        var blockQ = findBlock(layoutQ, selected.blockId);
+        if (blockQ) {
+          if (quoteBox.checked) blockQ.quote = true;
+          else delete blockQ.quote;
+          persist(layoutQ);
+          render({ keepInspector: true });
+        }
+        return;
+      }
       var select = event.target.closest('select[name="form_id"]');
       if (select && selected.blockId) {
         var layout = parseLayout();
@@ -1916,6 +2562,51 @@
     });
 
     inspector.addEventListener('click', function (event) {
+      var formatBold = event.target.closest('[data-format-bold]');
+      if (formatBold) {
+        event.preventDefault();
+        var fmtFor = formatBold.closest('[data-format-for]');
+        var fmtName = fmtFor ? fmtFor.getAttribute('data-format-for') : 'text';
+        applyFormatBold(fmtName || 'text');
+        return;
+      }
+      var formatLink = event.target.closest('[data-format-link]');
+      if (formatLink) {
+        event.preventDefault();
+        var linkFor = formatLink.closest('[data-format-for]');
+        var linkName = linkFor ? linkFor.getAttribute('data-format-for') : 'text';
+        applyFormatLink(linkName || 'text');
+        return;
+      }
+      var pickerToggle = event.target.closest('[data-char-picker-toggle]');
+      if (pickerToggle) {
+        event.preventDefault();
+        var picker = pickerToggle.closest('[data-char-picker-for]');
+        var menu = picker ? picker.querySelector('[data-char-picker-menu]') : null;
+        var forName = picker ? picker.getAttribute('data-char-picker-for') : '';
+        if (forName) charPickerState.fieldName = forName;
+        var wasOpen = menu && !menu.hidden;
+        closeAllCharPickerMenus();
+        if (menu && !wasOpen) {
+          menu.hidden = false;
+          pickerToggle.setAttribute('aria-expanded', 'true');
+        }
+        return;
+      }
+      var charBtn = event.target.closest('[data-char-insert]');
+      if (charBtn) {
+        event.preventDefault();
+        var ch = charBtn.getAttribute('data-char-insert') || '';
+        var pickerFor = charBtn.closest('[data-char-picker-for]');
+        if (pickerFor && pickerFor.getAttribute('data-char-picker-for')) {
+          charPickerState.fieldName = pickerFor.getAttribute('data-char-picker-for');
+        }
+        if (ch) insertCharAtCursor(ch);
+        return;
+      }
+      if (!event.target.closest('.dg-website-char-picker')) {
+        closeAllCharPickerMenus();
+      }
       var advBtn = event.target.closest('[data-open-advanced]');
       if (advBtn) {
         event.preventDefault();

@@ -11,6 +11,12 @@ final class WebsiteBlockAdvanced
     private const VISIBILITY_VALUES = ['visible', 'hidden'];
     private const TEXT_ALIGN_VALUES = ['left', 'center', 'right', 'justify'];
     private const BORDER_STYLES = ['none', 'solid', 'dashed', 'dotted'];
+    private const BORDER_SIDES = ['top', 'right', 'bottom', 'left'];
+    private const BG_SIZE_ENUM = ['cover', 'contain', 'auto'];
+    private const BG_REPEAT_VALUES = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'];
+    private const BG_POS_KEYWORDS = ['center', 'top', 'bottom', 'left', 'right'];
+    private const TEXT_DECORATION_VALUES = ['none', 'underline', 'line-through', 'overline'];
+    private const INTERACTION_COLOR_KEYS = ['color', 'background', 'borderColor'];
 
     /**
      * @param mixed $advanced
@@ -60,35 +66,36 @@ final class WebsiteBlockAdvanced
         $colorsIn = is_array($advanced['colors'] ?? null) ? $advanced['colors'] : [];
         $colors = [];
         foreach (['color', 'background'] as $colorKey) {
-            $hex = self::sanitizeHexColor((string) ($colorsIn[$colorKey] ?? ''));
-            if ($hex !== '') {
-                $colors[$colorKey] = $hex;
+            $col = self::sanitizeColor((string) ($colorsIn[$colorKey] ?? ''));
+            if ($col !== '') {
+                $colors[$colorKey] = $col;
             }
+        }
+        $bgImage = self::sanitizeBackgroundImageUrl((string) ($colorsIn['backgroundImage'] ?? ''));
+        if ($bgImage !== '') {
+            $colors['backgroundImage'] = $bgImage;
+        }
+        $bgSize = self::sanitizeBackgroundSize((string) ($colorsIn['backgroundSize'] ?? ''));
+        if ($bgSize !== '') {
+            $colors['backgroundSize'] = $bgSize;
+        }
+        $bgPos = self::sanitizeBackgroundPosition((string) ($colorsIn['backgroundPosition'] ?? ''));
+        if ($bgPos !== '') {
+            $colors['backgroundPosition'] = $bgPos;
+        }
+        $bgRepeat = self::pickEnum(
+            strtolower(trim((string) ($colorsIn['backgroundRepeat'] ?? ''))),
+            self::BG_REPEAT_VALUES
+        );
+        if ($bgRepeat !== '') {
+            $colors['backgroundRepeat'] = $bgRepeat;
         }
         if ($colors !== []) {
             $out['colors'] = $colors;
         }
 
         $borderIn = is_array($advanced['border'] ?? null) ? $advanced['border'] : [];
-        $border = [];
-        $bWidth = self::sanitizeCssLength((string) ($borderIn['width'] ?? ''));
-        if ($bWidth !== '') {
-            $border['width'] = $bWidth;
-        }
-        $bStyle = self::pickEnum((string) ($borderIn['style'] ?? ''), self::BORDER_STYLES);
-        if ($bStyle !== '' && $bStyle !== 'none') {
-            $border['style'] = $bStyle;
-        } elseif ($bStyle === 'none' && ($bWidth !== '' || self::sanitizeHexColor((string) ($borderIn['color'] ?? '')) !== '')) {
-            $border['style'] = 'none';
-        }
-        $bColor = self::sanitizeHexColor((string) ($borderIn['color'] ?? ''));
-        if ($bColor !== '') {
-            $border['color'] = $bColor;
-        }
-        $radius = self::sanitizeCssLength((string) ($borderIn['radius'] ?? ''));
-        if ($radius !== '') {
-            $border['radius'] = $radius;
-        }
+        $border = self::normalizeBorder($borderIn);
         if ($border !== []) {
             $out['border'] = $border;
         }
@@ -113,6 +120,14 @@ final class WebsiteBlockAdvanced
         }
         if ($attrs !== []) {
             $out['attrs'] = $attrs;
+        }
+
+        foreach (['hover', 'visited'] as $state) {
+            $stateIn = is_array($advanced[$state] ?? null) ? $advanced[$state] : [];
+            $stateOut = self::normalizeInteractionState($stateIn);
+            if ($stateOut !== []) {
+                $out[$state] = $stateOut;
+            }
         }
 
         return $out;
@@ -162,20 +177,72 @@ final class WebsiteBlockAdvanced
         if (!empty($colors['background'])) {
             $parts[] = 'background-color:' . $colors['background'];
         }
+        if (!empty($colors['backgroundImage'])) {
+            $parts[] = 'background-image:url("' . $colors['backgroundImage'] . '")';
+        }
+        if (!empty($colors['backgroundSize'])) {
+            $parts[] = 'background-size:' . $colors['backgroundSize'];
+        }
+        if (!empty($colors['backgroundPosition'])) {
+            $parts[] = 'background-position:' . $colors['backgroundPosition'];
+        }
+        if (!empty($colors['backgroundRepeat'])) {
+            $parts[] = 'background-repeat:' . $colors['backgroundRepeat'];
+        }
 
         $border = is_array($advanced['border'] ?? null) ? $advanced['border'] : [];
-        $bStyle = (string) ($border['style'] ?? '');
-        $bWidth = (string) ($border['width'] ?? '');
-        $bColor = (string) ($border['color'] ?? '');
-        if ($bStyle === 'none') {
-            $parts[] = 'border:none';
-        } elseif ($bWidth !== '' || $bStyle !== '' || $bColor !== '') {
-            $w = $bWidth !== '' ? $bWidth : '1px';
-            $s = $bStyle !== '' ? $bStyle : 'solid';
-            $c = $bColor !== '' ? $bColor : '#000000';
-            $parts[] = 'border:' . $w . ' ' . $s . ' ' . $c;
+        $hasSide = false;
+        foreach (self::BORDER_SIDES as $side) {
+            $sw = (string) ($border[$side . 'Width'] ?? '');
+            $ss = (string) ($border[$side . 'Style'] ?? '');
+            $sc = (string) ($border[$side . 'Color'] ?? '');
+            if ($sw === '' && $ss === '' && $sc === '') {
+                continue;
+            }
+            $hasSide = true;
+            if ($ss === 'none') {
+                $parts[] = 'border-' . $side . ':none';
+                continue;
+            }
+            $w = $sw !== '' ? $sw : '1px';
+            $s = $ss !== '' ? $ss : 'solid';
+            $c = $sc !== '' ? $sc : '#000000';
+            $parts[] = 'border-' . $side . ':' . $w . ' ' . $s . ' ' . $c;
         }
-        if (!empty($border['radius'])) {
+
+        if (!$hasSide) {
+            $bStyle = (string) ($border['style'] ?? '');
+            $bWidth = (string) ($border['width'] ?? '');
+            $bColor = (string) ($border['color'] ?? '');
+            if ($bStyle === 'none') {
+                $parts[] = 'border:none';
+            } elseif ($bWidth !== '' || $bStyle !== '' || $bColor !== '') {
+                $w = $bWidth !== '' ? $bWidth : '1px';
+                $s = $bStyle !== '' ? $bStyle : 'solid';
+                $c = $bColor !== '' ? $bColor : '#000000';
+                $parts[] = 'border:' . $w . ' ' . $s . ' ' . $c;
+            }
+        }
+
+        $corners = [
+            (string) ($border['radiusTL'] ?? ''),
+            (string) ($border['radiusTR'] ?? ''),
+            (string) ($border['radiusBR'] ?? ''),
+            (string) ($border['radiusBL'] ?? ''),
+        ];
+        $hasCorner = false;
+        foreach ($corners as $corner) {
+            if ($corner !== '') {
+                $hasCorner = true;
+                break;
+            }
+        }
+        if ($hasCorner) {
+            $parts[] = 'border-radius:' . ($corners[0] !== '' ? $corners[0] : '0') . ' '
+                . ($corners[1] !== '' ? $corners[1] : '0') . ' '
+                . ($corners[2] !== '' ? $corners[2] : '0') . ' '
+                . ($corners[3] !== '' ? $corners[3] : '0');
+        } elseif (!empty($border['radius'])) {
             $parts[] = 'border-radius:' . $border['radius'];
         }
 
@@ -183,8 +250,6 @@ final class WebsiteBlockAdvanced
     }
 
     /**
-     * HTML-Attribute ohne class (class separat mergen).
-     *
      * @param array<string, mixed> $advanced already normalized
      * @return array{id?: string, title?: string, aria-label?: string}
      */
@@ -206,8 +271,69 @@ final class WebsiteBlockAdvanced
     }
 
     /**
-     * Zusätzliche CSS-Klassen (bereits sanitisiert).
+     * @param array<string, mixed> $advanced already normalized
+     */
+    public static function hasInteractionStyles(array $advanced): bool
+    {
+        $hover = is_array($advanced['hover'] ?? null) ? $advanced['hover'] : [];
+        $visited = is_array($advanced['visited'] ?? null) ? $advanced['visited'] : [];
+
+        return $hover !== [] || $visited !== [];
+    }
+
+    /**
+     * Generierte Klasse für Hover/Visited (W5). Leer, wenn keine Interaction-Styles.
      *
+     * @param array<string, mixed> $advanced already normalized
+     */
+    public static function interactionClassName(string $blockId, array $advanced): string
+    {
+        if (!self::hasInteractionStyles($advanced)) {
+            return '';
+        }
+        $id = preg_replace('/[^A-Za-z0-9_-]/', '', $blockId) ?? '';
+        if ($id === '') {
+            $payload = json_encode([
+                'hover' => $advanced['hover'] ?? [],
+                'visited' => $advanced['visited'] ?? [],
+            ], JSON_UNESCAPED_SLASHES);
+            $id = substr(hash('sha256', is_string($payload) ? $payload : ''), 0, 10);
+        }
+        if (strlen($id) > 40) {
+            $id = substr($id, 0, 40);
+        }
+
+        return 'ws-adv-h-' . $id;
+    }
+
+    /**
+     * Sicheres CSS für Hover/Visited auf Links/Buttons innerhalb des Blocks.
+     *
+     * @param array<string, mixed> $advanced already normalized
+     */
+    public static function toInteractionCss(string $className, array $advanced): string
+    {
+        if (preg_match('/^ws-adv-h-[A-Za-z0-9_-]+$/', $className) !== 1) {
+            return '';
+        }
+        $chunks = [];
+        $hover = is_array($advanced['hover'] ?? null) ? $advanced['hover'] : [];
+        $visited = is_array($advanced['visited'] ?? null) ? $advanced['visited'] : [];
+        $hoverDecl = self::interactionDeclarations($hover);
+        $visitedDecl = self::interactionDeclarations($visited);
+        $hoverSel = '.' . $className . ' a:hover,.' . $className . ' .ws-btn:hover,.' . $className . ' .dg-website-block__btn:hover';
+        $visitedSel = '.' . $className . ' a:visited,.' . $className . ' .ws-btn:visited,.' . $className . ' .dg-website-block__btn:visited';
+        if ($hoverDecl !== '') {
+            $chunks[] = $hoverSel . '{' . $hoverDecl . '}';
+        }
+        if ($visitedDecl !== '') {
+            $chunks[] = $visitedSel . '{' . $visitedDecl . '}';
+        }
+
+        return implode('', $chunks);
+    }
+
+    /**
      * @param array<string, mixed> $advanced already normalized
      */
     public static function extraClassNames(array $advanced): string
@@ -218,9 +344,6 @@ final class WebsiteBlockAdvanced
     }
 
     /**
-     * Escapte Attribute-Zeichenkette inkl. class-Merge-Hinweis: ohne class.
-     * Für einfachen Echo: id/title/aria-label.
-     *
      * @param array<string, mixed> $advanced already normalized
      */
     public static function toHtmlAttributes(array $advanced): string
@@ -231,6 +354,109 @@ final class WebsiteBlockAdvanced
         }
 
         return $html;
+    }
+
+    /**
+     * @param array<string, mixed> $in
+     * @return array<string, string>
+     */
+    private static function normalizeInteractionState(array $in): array
+    {
+        $out = [];
+        foreach (self::INTERACTION_COLOR_KEYS as $colorKey) {
+            $col = self::sanitizeColor((string) ($in[$colorKey] ?? ''));
+            if ($col !== '') {
+                $out[$colorKey] = $col;
+            }
+        }
+        $td = self::pickEnum((string) ($in['textDecoration'] ?? ''), self::TEXT_DECORATION_VALUES);
+        if ($td !== '') {
+            $out['textDecoration'] = $td;
+        }
+        $opacity = self::sanitizeOpacity((string) ($in['opacity'] ?? ''));
+        if ($opacity !== '') {
+            $out['opacity'] = $opacity;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function interactionDeclarations(array $state): string
+    {
+        $parts = [];
+        if (!empty($state['color'])) {
+            $parts[] = 'color:' . $state['color'];
+        }
+        if (!empty($state['background'])) {
+            $parts[] = 'background-color:' . $state['background'];
+        }
+        if (!empty($state['borderColor'])) {
+            $parts[] = 'border-color:' . $state['borderColor'];
+        }
+        if (!empty($state['textDecoration'])) {
+            $parts[] = 'text-decoration:' . $state['textDecoration'];
+        }
+        if (isset($state['opacity']) && $state['opacity'] !== '') {
+            $parts[] = 'opacity:' . $state['opacity'];
+        }
+
+        return implode(';', $parts);
+    }
+
+    /**
+     * @param array<string, mixed> $borderIn
+     * @return array<string, string>
+     */
+    private static function normalizeBorder(array $borderIn): array
+    {
+        $border = [];
+        $bWidth = self::sanitizeCssLength((string) ($borderIn['width'] ?? ''));
+        if ($bWidth !== '') {
+            $border['width'] = $bWidth;
+        }
+        $bStyle = self::pickEnum((string) ($borderIn['style'] ?? ''), self::BORDER_STYLES);
+        $bColor = self::sanitizeColor((string) ($borderIn['color'] ?? ''));
+        if ($bStyle !== '' && $bStyle !== 'none') {
+            $border['style'] = $bStyle;
+        } elseif ($bStyle === 'none' && ($bWidth !== '' || $bColor !== '')) {
+            $border['style'] = 'none';
+        }
+        if ($bColor !== '') {
+            $border['color'] = $bColor;
+        }
+
+        $radius = self::sanitizeCssLength((string) ($borderIn['radius'] ?? ''));
+        if ($radius !== '') {
+            $border['radius'] = $radius;
+        }
+        foreach (['radiusTL', 'radiusTR', 'radiusBR', 'radiusBL'] as $rk) {
+            $rv = self::sanitizeCssLength((string) ($borderIn[$rk] ?? ''));
+            if ($rv !== '') {
+                $border[$rk] = $rv;
+            }
+        }
+
+        foreach (self::BORDER_SIDES as $side) {
+            $sw = self::sanitizeCssLength((string) ($borderIn[$side . 'Width'] ?? ''));
+            if ($sw !== '') {
+                $border[$side . 'Width'] = $sw;
+            }
+            $ss = self::pickEnum((string) ($borderIn[$side . 'Style'] ?? ''), self::BORDER_STYLES);
+            $sc = self::sanitizeColor((string) ($borderIn[$side . 'Color'] ?? ''));
+            if ($ss !== '' && $ss !== 'none') {
+                $border[$side . 'Style'] = $ss;
+            } elseif ($ss === 'none' && ($sw !== '' || $sc !== '')) {
+                $border[$side . 'Style'] = 'none';
+            }
+            if ($sc !== '') {
+                $border[$side . 'Color'] = $sc;
+            }
+        }
+
+        return $border;
     }
 
     /**
@@ -273,7 +499,6 @@ final class WebsiteBlockAdvanced
         if (strcasecmp($value, '0') === 0) {
             return '0';
         }
-        // Single length or up to 4 space-separated (margin/padding shorthand)
         $parts = preg_split('/\s+/', $value) ?: [];
         if ($parts === [] || count($parts) > 4) {
             return '';
@@ -297,17 +522,126 @@ final class WebsiteBlockAdvanced
         return implode(' ', $clean);
     }
 
-    private static function sanitizeHexColor(string $value): string
+    /**
+     * Hintergrundbild-URL: /media…, /app/media… oder http(s) ohne Quotes/JS.
+     */
+    private static function sanitizeBackgroundImageUrl(string $value): string
     {
         $value = trim($value);
         if ($value === '') {
             return '';
         }
-        if (preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $value) !== 1) {
+        if (preg_match('/^url\(\s*[\'"]?(.*?)[\'"]?\s*\)$/i', $value, $m) === 1) {
+            $value = trim($m[1]);
+        }
+        if ($value === '' || preg_match('/[\s\'"<>\\\\]|javascript:/i', $value) === 1) {
             return '';
         }
+        if (strlen($value) > 500) {
+            return '';
+        }
+        if (str_starts_with($value, '/media/') || str_starts_with($value, '/app/media')) {
+            return $value;
+        }
+        if (preg_match('#^https?://[a-z0-9.-]+(?::\d+)?(?:/[^\s]*)?$#i', $value) === 1) {
+            return $value;
+        }
 
-        return strtolower($value);
+        return '';
+    }
+
+    private static function sanitizeBackgroundSize(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        $lower = strtolower($value);
+        if (in_array($lower, self::BG_SIZE_ENUM, true)) {
+            return $lower;
+        }
+        $parts = preg_split('/\s+/', $value) ?: [];
+        if ($parts === [] || count($parts) > 2) {
+            return '';
+        }
+        $clean = [];
+        foreach ($parts as $part) {
+            $len = self::sanitizeCssLength($part);
+            if ($len === '' || str_contains($len, ' ')) {
+                return '';
+            }
+            $clean[] = $len;
+        }
+
+        return implode(' ', $clean);
+    }
+
+    private static function sanitizeBackgroundPosition(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        $parts = preg_split('/\s+/', strtolower($value)) ?: [];
+        if ($parts === [] || count($parts) > 2) {
+            return '';
+        }
+        $clean = [];
+        foreach ($parts as $part) {
+            if (in_array($part, self::BG_POS_KEYWORDS, true)) {
+                $clean[] = $part;
+                continue;
+            }
+            $len = self::sanitizeCssLength($part);
+            if ($len === '' || str_contains($len, ' ')) {
+                return '';
+            }
+            $clean[] = $len;
+        }
+
+        return implode(' ', $clean);
+    }
+
+    /**
+     * Hex (#rgb / #rrggbb / #rrggbbaa), rgb(), rgba().
+     */
+    private static function sanitizeColor(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/', $value) === 1) {
+            return strtolower($value);
+        }
+        if (preg_match(
+            '/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0|1|0?\.\d+)\s*)?\)$/i',
+            $value,
+            $m
+        ) === 1) {
+            $r = (int) $m[1];
+            $g = (int) $m[2];
+            $b = (int) $m[3];
+            if ($r > 255 || $g > 255 || $b > 255) {
+                return '';
+            }
+            if (isset($m[4]) && $m[4] !== '') {
+                $a = (float) $m[4];
+                if ($a < 0.0 || $a > 1.0) {
+                    return '';
+                }
+                $aFmt = rtrim(rtrim(sprintf('%.3f', $a), '0'), '.');
+                if ($aFmt === '') {
+                    $aFmt = '0';
+                }
+
+                return 'rgba(' . $r . ',' . $g . ',' . $b . ',' . $aFmt . ')';
+            }
+
+            return 'rgb(' . $r . ',' . $g . ',' . $b . ')';
+        }
+
+        return '';
     }
 
     private static function sanitizeHtmlId(string $value): string
