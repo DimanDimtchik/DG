@@ -5541,11 +5541,13 @@ $legalProductsConfig = LegalProductSettings::config();
             $timePayrollDatevSettings = DatevExportSettings::config();
             $timePayrollDatevConfigured = DatevExportSettings::isConfigured();
             $dl = trim((string) ($_GET['download'] ?? ''));
-            if ($dl === 'csv' || $dl === 'datev') {
+            if ($dl === 'csv' || $dl === 'datev' || $dl === 'lexoffice') {
                 try {
-                    $exported = $dl === 'datev'
-                        ? TimePayrollExportService::exportDatev($user, $timePayrollYearMonth)
-                        : TimePayrollExportService::exportCsv($user, $timePayrollYearMonth);
+                    $exported = match ($dl) {
+                        'datev' => TimePayrollExportService::exportDatev($user, $timePayrollYearMonth),
+                        'lexoffice' => TimePayrollExportService::exportLexoffice($user, $timePayrollYearMonth),
+                        default => TimePayrollExportService::exportCsv($user, $timePayrollYearMonth),
+                    };
                     header('Content-Type: text/csv; charset=utf-8');
                     header('Content-Disposition: attachment; filename="' . $exported['filename'] . '"');
                     echo $exported['csv'];

@@ -1,6 +1,6 @@
 <?php
 /**
- * Z6b/Z6c Lohn-Export CSV + DATEV-Übergabe + Protokoll.
+ * Z6b–Z6d Lohn-Export CSV + DATEV/Lexoffice + Protokoll.
  *
  * @var string $timePayrollYearMonth
  * @var array{year_month: string, rows: list<array<string, mixed>>, totals: array<string, mixed>} $timePayrollDataset
@@ -25,13 +25,14 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Lohn-Export</h1>
-      <p class="dg-lead">Z6c — CSV-Standard + DATEV Lohn-Zeitenübergabe (keine Netto-Berechnung)</p>
+      <p class="dg-lead">Z6d — CSV / DATEV / Lexoffice Zeitenübergabe (keine Netto-Berechnung)</p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
       <a class="dg-button" href="/app?page=zeiterfassung-rueckstellung">Rückstellungen</a>
       <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('kontenrahmen')) ?>">DATEV-Einstellungen</a>
+      <a class="dg-button" href="/app?page=kontakte">Kontaktakte (PDF)</a>
     </div>
   </header>
 
@@ -51,6 +52,7 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
       <?php else : ?>
         <span class="dg-button dg-button--primary" aria-disabled="true" title="Berater-/Mandantennummer setzen">DATEV Lohn-Zeiten</span>
       <?php endif; ?>
+      <a class="dg-button" href="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($ym) ?>&amp;download=lexoffice">Lexoffice Lohn-Zeiten</a>
     </form>
     <p class="dg-field-hint">
       Berater-Nr.: <?= View::escape((string) ($datevCfg['consultant_number'] ?? '')) ?: '—' ?>
@@ -58,7 +60,8 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
       <?php if (!$datevOk) : ?>
         — bitte unter <a href="<?= View::escape(SettingsRegistry::tabUrl('kontenrahmen')) ?>">Einstellungen → Kontenrahmen</a> pflegen.
       <?php endif; ?>
-      DATEV-Datei = CSV-Übergabe (kein LODAS-Binärformat); mit Steuerberater abstimmen.
+      DATEV/Lexoffice = CSV-Übergabe (kein Binärformat); mit Steuerberater abstimmen.
+      Lohnabrechnungs-PDF vom Berater unter Kontakt → Mitarbeiterdaten als <code>payroll_slip</code> ablegen (kein Generieren im CRM).
     </p>
   </section>
 

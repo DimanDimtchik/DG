@@ -240,6 +240,14 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
         <input type="file" name="employee_files[<?= View::escape($docType) ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
       </label>
     <?php endforeach; ?>
+    <label class="dg-field dg-field--wide">
+      <span>Lohnabrechnung / payroll_slip (Upload)</span>
+      <p class="dg-lead">
+        Vom Steuerberater erhaltene PDF-Abrechnung ablegen (Monat im Dateinamen empfohlen).
+        Keine Generierung im CRM — mehrere Dateien möglich.
+      </p>
+      <input type="file" name="employee_files[payroll_slip][]" multiple accept=".pdf,application/pdf">
+    </label>
   </div>
 
   <h3><?= View::escape($sections['retention']) ?></h3>

@@ -329,6 +329,7 @@ final class EmployeeData
     {
         return [
             'medical_certificates' => 'Ärztliche Atteste',
+            'payroll_slip' => 'Lohnabrechnung (PDF)',
         ];
     }
 

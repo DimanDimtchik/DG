@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Zeiterfassung Z6b/Z6c: CSV-Monats-Lohnzeiten-Export + DATEV-Übergabe + Protokoll.
+ * Zeiterfassung Z6b–Z6d: CSV / DATEV / Lexoffice Lohnzeiten-Export + Protokoll.
  * Keine eigene Lohnabrechnung.
  */
 final class TimePayrollExportService
@@ -198,6 +198,34 @@ final class TimePayrollExportService
         $id = TimePayrollExportRepository::insert(
             (string) ($dataset['year_month'] ?? $yearMonth),
             'datev_lohn',
+            $built['filename'],
+            $built['count'],
+            (int) ($user->id ?? 0)
+        );
+
+        return [
+            'filename' => $built['filename'],
+            'csv' => $built['content'],
+            'row_count' => $built['count'],
+            'export_id' => $id,
+        ];
+    }
+
+    /**
+     * Lexoffice Lohn Zeitenübergabe (Z6d).
+     *
+     * @return array{filename: string, csv: string, row_count: int, export_id: int}
+     */
+    public static function exportLexoffice(User $user, string $yearMonth): array
+    {
+        if (!self::canExport($user)) {
+            throw new RuntimeException('Keine Berechtigung für Lohn-Export (nur HR/Admin/full).');
+        }
+        $dataset = self::monthDataset($yearMonth);
+        $built = TimePayrollLexofficeExporter::build($dataset);
+        $id = TimePayrollExportRepository::insert(
+            (string) ($dataset['year_month'] ?? $yearMonth),
+            'lexoffice_lohn',
             $built['filename'],
             $built['count'],
             (int) ($user->id ?? 0)

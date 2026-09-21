@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–5 ✅** · Spec **Z3a–Z6a ✅** · **Z6b–Z6c Code ✅** · offen: Z6d  
+> Status: **Phase 1–6 ✅** · Spec **Z3a–Z6a ✅** · **Z6b–Z6d Code ✅**  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -175,9 +175,9 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 6 — Lohn-Export (ohne eigene Abrechnung)
 
-- [~] Exportformate: **DATEV Lohn**, **Lexoffice Lohn**, CSV-Standard — CSV Z6b + DATEV Z6c ✅; Lexoffice Z6d offen
+- [x] Exportformate: **DATEV Lohn**, **Lexoffice Lohn**, CSV-Standard — CSV Z6b + DATEV Z6c + Lexoffice Z6d ✅
 - [~] Monatsdaten: Arbeitsstunden, Überstunden, Urlaub, Krankheit, Zuschläge (später) — CSV-Felder Z6b ✅; Zuschläge später
-- [ ] Dokumente: Lohnabrechnung PDF ablegen (`payroll_slip` Dokumenttyp)
+- [x] Dokumente: Lohnabrechnung PDF ablegen (`payroll_slip` Dokumenttyp) ✅ Z6d
 - [ ] Später: eigene Lohnabrechnung (separates Großprojekt)
 
 ---
@@ -274,7 +274,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
 | **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5d` ✅ |
-| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6c` ✅ · weiter `z6d` |
+| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6d` ✅ |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
 
@@ -910,7 +910,7 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 1. **Z6a** Spec ✅  
 2. **Z6b** CSV-Monats-Export + Protokoll-Tabelle ✅  
 3. **Z6c** DATEV-Lohn-Anschluss (Settings + Datei) ✅  
-4. **Z6d** optional Lexoffice + `payroll_slip`-Ablage  
+4. **Z6d** optional Lexoffice + `payroll_slip`-Ablage ✅  
 
 #### Abnahme Z6a
 
@@ -932,7 +932,7 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 | UI | `/app?page=zeiterfassung-lohnexport` — Vorschau, CSV, Protokoll |
 | Rechte | `canViewTeam` |
 
-**Nicht:** DATEV-Felder (Z6c ✅), Lexoffice/PDF (Z6d).
+**Nicht:** DATEV-Felder (Z6c ✅), Lexoffice/PDF (Z6d ✅).
 
 ### Z6c — DATEV Lohn ✅ 2026-09-21
 
@@ -943,15 +943,17 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 | UI | Download „DATEV Lohn-Zeiten“ auf Lohn-Export-Seite |
 | Mapping | Login bzw. `datev_personnel_number` |
 
-**Nicht:** Lexoffice (Z6d), PDF generieren.
+**Nicht:** Lexoffice (Z6d ✅), PDF generieren (weiterhin nicht).
 
-### Z6d — Lexoffice + PDF-Ablage
+### Z6d — Lexoffice + PDF-Ablage ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Optional Mapping | nur bei Bedarf |
-| payroll_slip | Upload in Akte |
-| Nicht | PDF generieren |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Optional Mapping | `TimePayrollLexofficeExporter` — CSV-Übergabe (Stunden dezimal), Protokoll `lexoffice_lohn` |
+| payroll_slip | Multi-Upload in Mitarbeiterdaten / Kontaktakte |
+| UI | Download „Lexoffice Lohn-Zeiten“ + Hinweis PDF-Ablage |
+
+**Nicht:** PDF generieren, Lexoffice-API, Netto-Lohn.
 
 ### Chat-Vorlage Z6
 

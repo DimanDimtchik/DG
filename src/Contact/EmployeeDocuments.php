@@ -62,16 +62,21 @@ final class EmployeeDocuments
             ];
         }
 
-        $certs = $employeeFiles['medical_certificates'] ?? [];
-        if (is_array($certs) && !isset($certs['path'])) {
-            foreach ($certs as $index => $entry) {
+        foreach (EmployeeData::multiDocumentTypes() as $type => $label) {
+            $entries = $employeeFiles[$type] ?? [];
+            if (!is_array($entries) || isset($entries['path'])) {
+                continue;
+            }
+            $itemLabel = $type === 'medical_certificates' ? 'Ärztliches Attest' : $label;
+            $fallbackName = $type === 'payroll_slip' ? 'Lohnabrechnung' : 'Datei';
+            foreach ($entries as $index => $entry) {
                 if (!is_array($entry) || empty($entry['path'])) {
                     continue;
                 }
                 $items[] = [
-                    'type' => 'medical_certificates',
-                    'label' => 'Ärztliches Attest',
-                    'name' => (string) ($entry['original_name'] ?? 'Attest'),
+                    'type' => $type,
+                    'label' => $itemLabel,
+                    'name' => (string) ($entry['original_name'] ?? $fallbackName),
                     'mime' => (string) ($entry['mime'] ?? ''),
                     'fileIndex' => (int) $index,
                 ];
