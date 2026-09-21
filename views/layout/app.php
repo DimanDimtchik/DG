@@ -37,12 +37,48 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
       <a href="/app?page=support-freigabe">Verwalten</a>
     </div>
   <?php endif; ?>
+  <?php $firmSwitcher = FirmSwitcherService::forCurrentRequest(); ?>
   <header id="dg-adminbar" class="dg-adminbar" role="banner">
     <div class="dg-adminbar__left">
-      <a class="dg-adminbar__brand" href="<?= View::escape($homeHref) ?>">
-        <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" class="dg-adminbar__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>">
-        <span class="dg-adminbar__name"><?= View::escape((string) App::config('crm_name')) ?></span>
-      </a>
+      <?php if (!empty($firmSwitcher['enabled'])) : ?>
+        <div class="dg-adminbar__menu dg-adminbar__menu--firm" data-menu>
+          <button type="button" class="dg-adminbar__brand dg-adminbar__brand--switch" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+            <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" class="dg-adminbar__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>">
+            <span class="dg-adminbar__name"><?= View::escape((string) ($firmSwitcher['current_label'] ?? App::config('crm_name'))) ?></span>
+            <span class="dg-adminbar__caret" aria-hidden="true"></span>
+          </button>
+          <div class="dg-adminbar__dropdown" role="menu" hidden data-menu-panel>
+            <div class="dg-adminbar__dropdown-meta">
+              <strong>Firma wechseln</strong>
+              <span>Weiterleitung zur Instanz · erneuter Login</span>
+            </div>
+            <?php foreach ($firmSwitcher['firms'] as $firmRow) : ?>
+              <?php
+                $isCurrentFirm = !empty($firmRow['is_current']);
+                $isArchive = (($firmRow['status'] ?? '') === 'archive_readonly');
+                $firmLabel = (string) ($firmRow['label'] ?? $firmRow['domain'] ?? '');
+                if ($isArchive) {
+                    $firmLabel .= ' (Archiv)';
+                }
+              ?>
+              <?php if ($isCurrentFirm) : ?>
+                <span class="dg-adminbar__firm-current" role="menuitem" aria-current="true"><?= View::escape($firmLabel) ?></span>
+              <?php else : ?>
+                <form method="post" action="/firm-switch" class="dg-adminbar__firm-form">
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="domain" value="<?= View::escape((string) ($firmRow['domain'] ?? '')) ?>">
+                  <button type="submit" role="menuitem"><?= View::escape($firmLabel) ?></button>
+                </form>
+              <?php endif; ?>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php else : ?>
+        <a class="dg-adminbar__brand" href="<?= View::escape($homeHref) ?>">
+          <img src="<?= View::escape(AppearanceSettings::logoUrl()) ?>" alt="<?= View::escape(AppearanceSettings::logoAlt()) ?>" class="dg-adminbar__logo <?= View::escape(AppearanceSettings::logoShapeClass()) ?>">
+          <span class="dg-adminbar__name"><?= View::escape((string) ($firmSwitcher['current_label'] ?? App::config('crm_name'))) ?></span>
+        </a>
+      <?php endif; ?>
     </div>
 
     <div class="dg-adminbar__center">

@@ -291,6 +291,7 @@ spl_autoload_register(static function (string $class): void {
         'InstallImportSourcePresets' => '/src/Install/InstallImportSourcePresets.php',
         'KdvCustomerRepository' => '/src/Kdv/KdvCustomerRepository.php',
         'KdvOrgRepository' => '/src/Kdv/KdvOrgRepository.php',
+        'FirmSwitcherService' => '/src/MultiFirma/FirmSwitcherService.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',
         'KdvBlockReasons' => '/src/Kdv/KdvBlockReasons.php',

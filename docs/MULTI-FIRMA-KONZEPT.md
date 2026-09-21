@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-17** · Status: **Phase 0 in Umsetzung** (KDV-Registry)  
+Stand: **2026-09-21** · Status: **Phase 1 (MF1) Switcher umgesetzt** · Phase 0 Registry ✅  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -183,8 +183,8 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 
 | Phase | Inhalt | Stand |
 |-------|--------|-------|
-| **0** | Konzept · KDV-Datenmodell Org↔Firma | **Laufend:** Migration `082_kdv_orgs_multi_firma.sql` (`dg_kdv_orgs` + Felder an `dg_kdv_customers`), `KdvOrgRepository`, Formular/Listen-UI in KDV. Keine Buchhaltungs-Tabellen. |
-| **1** | Org-Login + Switcher + verknüpfte Instanzen (manuell provisioniert) | Offen |
+| **0** | Konzept · KDV-Datenmodell Org↔Firma | ✅ Migration `082`, `KdvOrgRepository`, Formular/Liste |
+| **1** | Switcher + verknüpfte Instanzen (manuell) | ✅ **MF1 2026-09-21:** Header-Dropdown, KDV-Org-Mapping, Redirect `https://{domain}/login`; Kundeninstanz optional `config/firm-switcher.local.php`. Kein SSO (erneuter Login). |
 | **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | Offen |
 | **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | Offen |
 | **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | Offen |
@@ -196,6 +196,14 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 - `KdvCustomerRepository`: `org_id`, Beziehung, Slot-Status, Gültigkeit; `listByOrgId()`
 - UI: `views/modules/kdv-kunde-form.php` (Panel Organisation), Liste mit Org-Spalte
 - Nur Master-DB (KDV-Register); Kundeninstanzen unverändert getrennt
+
+### Phase 1 (MF1) — technische Artefakte
+
+- `src/MultiFirma/FirmSwitcherService.php` — Sibling-Liste aus KDV (`findByDomain` + `listByOrgId`) oder `config/firm-switcher.local.php`
+- `config/firm-switcher.local.example.php` — Vorlage für Kundeninstanzen (Sync-Exclude `*.local.php`)
+- `POST /firm-switch` — CSRF + Domain-Allowlist → Redirect HTTPS Login
+- UI: `views/layout/app.php` Adminbar-Dropdown „Firma wechseln“
+- **Nicht in MF1:** SSO/Org-Single-Login, Shop −20 %, Umfirmierungs-Assistent, `company_id` an Belegen
 
 ---
 

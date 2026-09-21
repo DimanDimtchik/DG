@@ -205,6 +205,39 @@ final class KdvCustomerRepository
     }
 
     /**
+     * Firma anhand der CRM-Domain (ohne Schema/Port/www).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function findByDomain(string $domain): ?array
+    {
+        $domain = strtolower(trim($domain));
+        $domain = preg_replace('/:\d+$/', '', $domain) ?? $domain;
+        if (str_starts_with($domain, 'www.')) {
+            $domain = substr($domain, 4);
+        }
+        if ($domain === '' || !Database::isConfigured()) {
+            return null;
+        }
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_kdv_customers
+             WHERE LOWER(TRIM(domain)) = :d
+                OR LOWER(TRIM(domain)) = :dwww
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'd' => $domain,
+            'dwww' => 'www.' . $domain,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    /**
      * Firmen derselben Organisation.
      *
      * @return list<array<string, mixed>>

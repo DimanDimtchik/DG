@@ -143,6 +143,44 @@ code {
   opacity: 0.9;
 }
 
+.dg-adminbar__brand--switch {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.dg-adminbar__firm-current {
+  display: block;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dg-menu-text, #222);
+  opacity: 0.75;
+}
+
+.dg-adminbar__firm-form {
+  margin: 0;
+}
+
+.dg-adminbar__firm-form button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dg-adminbar__firm-form button:hover {
+  background: color-mix(in srgb, var(--dg-primary, #336) 10%, transparent);
+}
+
 .dg-adminbar__logo {
   display: block;
   object-fit: contain;

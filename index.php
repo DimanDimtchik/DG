@@ -112,6 +112,34 @@ switch ($path) {
         View::render('register', compact('error', 'form'));
         break;
 
+    case '/firm-switch':
+        // Multi-Firma MF1: Redirect zur verknüpften Instanz-Domain (Allowlist).
+        if (!AuthService::check()) {
+            header('Location: /login', true, 302);
+            exit;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /app', true, 302);
+            exit;
+        }
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            Flash::set('error', 'Ungültiges Formular (CSRF).');
+            header('Location: /app', true, 302);
+            exit;
+        }
+        $switchDomain = (string) ($_POST['domain'] ?? '');
+        $targetUrl = FirmSwitcherService::redirectUrlForDomain($switchDomain);
+        if ($targetUrl === null) {
+            Flash::set('error', 'Firmenwechsel nicht erlaubt oder bereits aktuelle Firma.');
+            header('Location: /app', true, 302);
+            exit;
+        }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['firm_switch_at'] = time();
+        }
+        header('Location: ' . $targetUrl, true, 302);
+        exit;
+
     case '/login':
         if (AuthService::check()) {
             $u = AuthService::user();
