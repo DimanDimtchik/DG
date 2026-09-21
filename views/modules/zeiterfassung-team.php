@@ -71,7 +71,9 @@ $violations = $overtimeReminders['violations'] ?? [];
                 <td class="dg-table__num"><?= View::escape((string) ($row['worked_display'] ?? '0:00')) ?></td>
                 <td class="dg-table__num">
                   <?= View::escape((string) ($row['scheduled_display'] ?? '0:00')) ?>
-                  <?php if (($row['schedule_source'] ?? '') === 'shift' && ($row['shift_name'] ?? '') !== '') : ?>
+                  <?php if (($row['schedule_source'] ?? '') === 'absence' && ($row['absence_label'] ?? '') !== '') : ?>
+                    <br><span class="dg-muted"><?= View::escape((string) $row['absence_label']) ?></span>
+                  <?php elseif (($row['schedule_source'] ?? '') === 'shift' && ($row['shift_name'] ?? '') !== '') : ?>
                     <br><span class="dg-muted"><?= View::escape((string) $row['shift_name']) ?></span>
                   <?php endif; ?>
                 </td>

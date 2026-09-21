@@ -78,11 +78,16 @@ final class TimeMonthReportService
             $dt = DateTimeImmutable::createFromFormat('Y-m-d', $date);
             $wd = $dt !== false ? (int) $dt->format('N') : 0;
 
-            // Z3d: Soll immer live (Schicht schlägt Aggregation).
+            // Z3d/Z4e: Soll live (Abwesenheit → 0, sonst Schicht/…).
             $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $date);
             $scheduleSource = TimeScheduleService::scheduleSource($contactId, $date);
             $shift = TimeScheduleService::shiftAssignmentFor($contactId, $date);
             $shiftName = is_array($shift) ? (string) ($shift['template_name'] ?? '') : '';
+            $absence = TimeScheduleService::approvedAbsenceFor($contactId, $date);
+            $absenceType = is_array($absence) ? (string) ($absence['type'] ?? '') : '';
+            $absenceLabel = $absenceType !== '' && class_exists('TimeAbsenceService')
+                ? TimeAbsenceService::typeLabel($absenceType)
+                : '';
 
             if (isset($aggregated[$date])) {
                 $row = $aggregated[$date];
@@ -117,7 +122,9 @@ final class TimeMonthReportService
             if ($worked > ArbzgComplianceService::MAX_DAILY_MINUTES) {
                 $dayWarnings[] = 'ArbZG: >10 h (Soft)';
             }
-            if (
+            if ($scheduleSource === 'absence') {
+                $dayWarnings[] = 'Abwesenheit: ' . ($absenceLabel !== '' ? $absenceLabel : 'genehmigt') . ' (Soll 0)';
+            } elseif (
                 $scheduleSource === 'shift'
                 && $scheduled > 0
                 && $worked > 0
@@ -142,6 +149,8 @@ final class TimeMonthReportService
                 'overtime_display' => TimeClockService::formatMinutes($overtime),
                 'schedule_source' => $scheduleSource,
                 'shift_name' => $shiftName,
+                'absence_type' => $absenceType,
+                'absence_label' => $absenceLabel,
                 'source' => $source,
                 'arbzg_flags' => $dayWarnings,
             ];

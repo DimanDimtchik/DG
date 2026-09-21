@@ -2,9 +2,10 @@
 declare(strict_types=1);
 
 /**
- * Zeiterfassung Z2b/Z3d: Soll-Minuten pro Kontakt und Tag.
+ * Zeiterfassung Z2b/Z3d/Z4e: Soll-Minuten pro Kontakt und Tag.
  *
- * Prio: Schicht-Zuordnung → MA daily_work_minutes → working_hours → Kalender → 0.
+ * Prio: genehmigte Abwesenheit (Soll 0) → Schicht → MA daily_work_minutes
+ * → working_hours → Kalender → 0.
  */
 final class TimeScheduleService
 {
@@ -14,6 +15,11 @@ final class TimeScheduleService
     public static function scheduledMinutesFor(int $contactId, string $dateYmd): int
     {
         if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
+            return 0;
+        }
+
+        // Z4e: genehmigte Abwesenheit schlägt Schicht/Stammdaten/Kalender.
+        if (self::approvedAbsenceFor($contactId, $dateYmd) !== null) {
             return 0;
         }
 
@@ -28,6 +34,23 @@ final class TimeScheduleService
         }
 
         return self::calendarTargetMinutes($dateYmd);
+    }
+
+    /**
+     * Genehmigte Abwesenheit am Tag (Z4), oder null.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function approvedAbsenceFor(int $contactId, string $dateYmd): ?array
+    {
+        if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
+            return null;
+        }
+        if (!class_exists('TimeAbsenceRepository')) {
+            return null;
+        }
+
+        return TimeAbsenceRepository::approvedOnDate($contactId, $dateYmd);
     }
 
     /**
@@ -48,7 +71,7 @@ final class TimeScheduleService
     }
 
     /**
-     * Soll aus Schicht-Vorlage (Prio 0), sonst 0.
+     * Soll aus Schicht-Vorlage (nach Abwesenheit), sonst 0.
      */
     public static function shiftTargetMinutes(int $contactId, string $dateYmd): int
     {
@@ -62,12 +85,15 @@ final class TimeScheduleService
     }
 
     /**
-     * Quelle des Soll-Werts: shift | personal | calendar | none.
+     * Quelle des Soll-Werts: absence | shift | personal | calendar | none.
      */
     public static function scheduleSource(int $contactId, string $dateYmd): string
     {
         if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
             return 'none';
+        }
+        if (self::approvedAbsenceFor($contactId, $dateYmd) !== null) {
+            return 'absence';
         }
         if (self::shiftTargetMinutes($contactId, $dateYmd) > 0) {
             return 'shift';

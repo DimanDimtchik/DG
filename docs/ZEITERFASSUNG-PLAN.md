@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–3 ✅** · Spec **Z3a–Z6a ✅** · **Z4b–Z4d Code ✅** · offen: Z4e, Z5b–d, Z6b+  
+> Status: **Phase 1–4 ✅** · Spec **Z3a–Z6a ✅** · offen: Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -272,7 +272,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
-| **Z4** | Urlaub & Krankheit | `z4a`–`z4d` ✅ · weiter `z4e` |
+| **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
@@ -616,7 +616,7 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 2. **Z4b** Migration Entitlement + Absences + Repository ✅  
 3. **Z4c** Urlaubsantrag + Freigabe-UI ✅  
 4. **Z4d** Krankheit + Attest-Link + Team-Kalender ✅  
-5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel  
+5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel ✅  
 
 #### Abnahme Z4a
 
@@ -662,13 +662,15 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 
 **Nicht:** Soll=0 (Z4e), Rückstellung (Z5).
 
-### Z4e — Soll-Anbindung Abwesenheit
+### Z4e — Soll-Anbindung Abwesenheit ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| `TimeScheduleService` | genehmigt → Soll 0 |
-| Soft-Warnung Stempel | ja |
-| Nicht | Hard-Block |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| `TimeScheduleService` | genehmigte Abwesenheit → Soll 0 (vor Schicht) |
+| Stempel/Team/Monat | Soft-Hinweis + Typ-Label |
+| Hard-Block | nein |
+
+**Nicht:** Entgeltfortzahlung, Rückstellung (Z5).
 
 ### Chat-Vorlage Z4
 

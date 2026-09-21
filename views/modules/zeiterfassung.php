@@ -95,7 +95,9 @@ $state = (string) ($status['state'] ?? 'off');
           <?php endif; ?>
           )</p>
         <p><strong>Soll heute:</strong> <?= View::escape((string) ($summary['scheduled_display'] ?? '0:00')) ?> h
-          <?php if (($summary['schedule_source'] ?? '') === 'shift' && ($summary['shift_name'] ?? '') !== '') : ?>
+          <?php if (($summary['schedule_source'] ?? '') === 'absence' && ($summary['absence_label'] ?? '') !== '') : ?>
+            <span class="dg-muted">(Abwesenheit: <?= View::escape((string) $summary['absence_label']) ?>)</span>
+          <?php elseif (($summary['schedule_source'] ?? '') === 'shift' && ($summary['shift_name'] ?? '') !== '') : ?>
             <span class="dg-muted">(Schicht: <?= View::escape((string) $summary['shift_name']) ?>)</span>
           <?php endif; ?>
         </p>

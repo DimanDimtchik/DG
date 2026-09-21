@@ -159,6 +159,11 @@ final class TimeClockService
         $scheduleSource = TimeScheduleService::scheduleSource($contactId, $date);
         $shiftAssignment = TimeScheduleService::shiftAssignmentFor($contactId, $date);
         $shiftName = is_array($shiftAssignment) ? (string) ($shiftAssignment['template_name'] ?? '') : '';
+        $absence = TimeScheduleService::approvedAbsenceFor($contactId, $date);
+        $absenceType = is_array($absence) ? (string) ($absence['type'] ?? '') : '';
+        $absenceLabel = $absenceType !== '' && class_exists('TimeAbsenceService')
+            ? TimeAbsenceService::typeLabel($absenceType)
+            : '';
 
         $segments = self::computeSegments($events);
         $manualBreak = $segments['break_minutes'];
@@ -177,7 +182,12 @@ final class TimeClockService
         $compliance = self::breakComplianceFromSegments($grossWorked, $manualBreak, (string) ($status['state'] ?? 'off'));
 
         $warnings = [];
-        if ($scheduled < 1) {
+        if ($scheduleSource === 'absence') {
+            $warnings[] = sprintf(
+                'Abwesenheit genehmigt (%s) — Soll 0 (Soft-Hinweis, Stempel nicht gesperrt).',
+                $absenceLabel !== '' ? $absenceLabel : 'Abwesenheit'
+            );
+        } elseif ($scheduled < 1) {
             $warnings[] = 'Soll nicht hinterlegt (kein Tagesziel in Schicht/Stammdaten/Kalender).';
         }
         if (
@@ -226,6 +236,8 @@ final class TimeClockService
             'scheduled_minutes' => $scheduled,
             'schedule_source' => $scheduleSource,
             'shift_name' => $shiftName,
+            'absence_type' => $absenceType,
+            'absence_label' => $absenceLabel,
             'worked_display' => self::formatMinutes($netWorked),
             'break_display' => self::formatMinutes($totalBreak),
             'manual_break_display' => self::formatMinutes($manualBreak),
@@ -271,6 +283,8 @@ final class TimeClockService
             $segments = self::computeSegments($contactEvents);
             $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $today);
             $shift = TimeScheduleService::shiftAssignmentFor($contactId, $today);
+            $absence = TimeScheduleService::approvedAbsenceFor($contactId, $today);
+            $absenceType = is_array($absence) ? (string) ($absence['type'] ?? '') : '';
             $autoBreak = 0;
             if (TimeTrackingSettings::config()['auto_break_enabled'] ?? true) {
                 $autoBreak = self::autoBreakMinutes($segments['worked_minutes'], $segments['break_minutes']);
@@ -289,6 +303,10 @@ final class TimeClockService
                 'scheduled_minutes' => $scheduled,
                 'schedule_source' => TimeScheduleService::scheduleSource($contactId, $today),
                 'shift_name' => is_array($shift) ? (string) ($shift['template_name'] ?? '') : '',
+                'absence_type' => $absenceType,
+                'absence_label' => $absenceType !== '' && class_exists('TimeAbsenceService')
+                    ? TimeAbsenceService::typeLabel($absenceType)
+                    : '',
                 'arbzg_warnings' => $arbzgWarnings,
             ];
         }
