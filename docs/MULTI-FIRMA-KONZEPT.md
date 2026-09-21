@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB4 offen** (siehe §15)  
+Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1a ✅ · offen MB1b–MB4** (siehe §15)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -670,10 +670,10 @@ Nach MF0–MF7 ist der **Code** deployed; offen ist **Betrieb** (Config, Smoke, 
 
 | # | Entscheidung | Default |
 |---|--------------|---------|
-| B1 | Erste SSO-Org | Master-KDV + `ganz-soft.de` (weitere Domains erst nach Org-Mapping) |
-| B2 | Secret-Ausrollung | Manuell je Instanz `firm-sso.local.php` (Sync-Exclude `*.local.php`); gleiches Secret ≥32 Zeichen |
-| B3 | Contact-Betrieb | Einbahn Export/Import erst nach SSO-Smoke (MB2) |
-| B4 | Provision-Smoke | Gates in KDV-Akte prüfen; **voller** KAS-Lauf nur mit explizitem Nutzerbefehl |
+| B1 | Erste SSO-Org | ✅ **MB1a:** Master-KDV + `ganz-soft.de` (weitere Domains erst nach Org-Mapping) |
+| B2 | Secret-Ausrollung | ✅ **MB1a:** Manuell je Instanz `firm-sso.local.php` (Sync-Exclude `*.local.php`); gleiches Secret ≥32 Zeichen |
+| B3 | Contact-Betrieb | ✅ **MB1a:** Einbahn Export/Import erst nach SSO-Smoke (MB2) |
+| B4 | Provision-Smoke | ✅ **MB1a:** Gates in KDV-Akte prüfen; **voller** KAS-Lauf nur mit explizitem Nutzerbefehl |
 
 ### Reihenfolge (Absicht)
 
@@ -684,30 +684,51 @@ Nach MF0–MF7 ist der **Code** deployed; offen ist **Betrieb** (Config, Smoke, 
 
 **Nie parallel** SSO + Contact + Provision in einem Chat.
 
-### MB1a — SSO-Ausroll-Checkliste (Spec) 
+### MB1a — SSO-Ausroll-Checkliste (Spec) ✅ 2026-09-21
 
-Nur Spezifikation / Checkliste — kein Secret erzeugen, kein Upload.
+Nur Spezifikation / Checkliste — kein Secret erzeugen, kein Upload. Umsetzung Secret = **MB1b**.
+
+#### Erste SSO-Org (B1) — konkrete Domains
+
+| Domain (normalisiert) | Server-Pfad (All-Inkl) | Rolle | In MB1b Secret? |
+|----------------------|------------------------|-------|-----------------|
+| `dg.ganz-om.de` | `www/htdocs/w0217246/dg.ganz-om.de` | Master · KDV | ja |
+| `ganz-soft.de` | `www/htdocs/w0217246/ganz-soft.de` | Live-Test CRM | ja |
+| `kontur-cosmetics.de` | `www/htdocs/w0217246/kontur-cosmetics.de` | Kunden-CRM | **nur** wenn in derselben KDV-Org wie die Test-Org **oder** `firm-switcher.local.php` |
+| `ganz-om.de` | `www/htdocs/w0217246/ganz-om.de` | Platzhalter ohne DB | **nein** (kein CRM-Login) |
+
+Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config/firm-switcher.local.php`.
 
 #### Pflicht vor MB1b
 
 | # | Check | OK |
 |---|--------|----|
-| 1 | Liste aller Domains der Org (normalisiert, ohne `www.`) | ☐ |
-| 2 | Pro Domain: CRM-Pfad auf Server bekannt | ☐ |
-| 3 | `config/*.local.php` ist Sync-Exclude (CRM-Sync überschreibt Secret nicht) | ☐ |
-| 4 | Vorlage: `config/firm-sso.local.example.php` | ☐ |
-| 5 | Secret-Länge ≥ 32 Zeichen; **identisch** auf allen Org-Instanzen | ☐ |
-| 6 | Optional: `allowed_domains` als Schnittmenge (leer = nur Sibling-Liste) | ☐ |
-| 7 | Kundeninstanz ohne KDV: zusätzlich `firm-switcher.local.php` falls nötig | ☐ |
-| 8 | Secret nirgends in Git / Chat / Ticket-Klartext | ☐ |
+| 1 | Liste aller Domains der Org (normalisiert, ohne `www.`) — siehe Tabelle oben | ✅ |
+| 2 | Pro Domain: CRM-Pfad auf Server bekannt — siehe Tabelle | ✅ |
+| 3 | `config/*.local.php` ist Sync-Exclude (`bin/sync-crm-from-master.sh` Zeile `--exclude 'config/*.local.php'`) | ✅ |
+| 4 | Vorlage: `config/firm-sso.local.example.php` (Repo) | ✅ |
+| 5 | Secret-Länge ≥ 32 Zeichen; **identisch** auf allen Org-Instanzen | ☐ → **MB1b** |
+| 6 | Optional: `allowed_domains` leer lassen (= nur Sibling-Liste); Verschärfung nur bei Bedarf | ✅ Default leer |
+| 7 | Kundeninstanz ohne KDV: `firm-switcher.local.php` nur falls Switcher sonst leer | ✅ Regel fest |
+| 8 | Secret nirgends in Git / Chat / Ticket-Klartext | ✅ Regel fest (MB1b beachten) |
+
+#### Ausroll-Befehl (nur Memo für MB1b — hier nicht ausführen)
+
+```text
+# Pro Instanz (Beispiel Master), Secret lokal erzeugen und NICHT loggen:
+#   php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+# Datei config/firm-sso.local.php aus Example, shared_secret setzen, per SFTP/SCP hochladen.
+# Gleicher Inhalt auf dg.ganz-om.de und ganz-soft.de (und ggf. Org-Schwestern).
+```
 
 #### Abgrenzung MB1a
 
-- **Nicht:** Secret generieren, SFTP/SSH-Upload, Code-Änderung.
+- **Nicht:** Secret generieren, SFTP/SSH-Upload, Code-Änderung.  
+- **Erledigt 2026-09-21:** Domains/Pfade, Sync-Exclude, Example, Defaults B1–B4.
 
 ### MB1b — Secret ausrollen
 
-- Datei `config/firm-sso.local.php` aus Example auf **jeder** Org-Instanz anlegen (SSH/SFTP; Agent nur mit Freigabe).  
+- Datei `config/firm-sso.local.php` aus Example auf **jeder** Org-Instanz der Tabelle (Spalte „Secret? = ja“) anlegen (SSH/SFTP; Agent nur mit Freigabe).  
 - Kurzprüfung: Switcher-Hinweis „automatische Anmeldung“ (MF5c) erscheint nur wenn SSO enabled.  
 - **Nicht:** Code ändern, Secret committen, Deploy des ganzen CRM nötig (nur local.php).
 
@@ -750,7 +771,7 @@ Nur Spezifikation / Checkliste — kein Secret erzeugen, kein Upload.
 
 | Phase | Lieferobjekt | Erlaubt zu lesen/ändern | Nicht |
 |-------|----------------|-------------------------|--------|
-| **MB1a** | Checkliste SSO-Domains / Secret-Regeln | Spec §15 | Secret erzeugen/hochladen |
+| **MB1a** ✅ | Checkliste SSO-Domains / Secret-Regeln | Spec §15 — **erledigt 2026-09-21** | Secret erzeugen/hochladen |
 | **MB1b** | `firm-sso.local.php` auf Org-Instanzen | Server-Config `*.local.php` | Code, Git-Secret |
 | **MB2** | Switcher-Smoke (Token, Support-Ban, Fallback) | Browser/UI, kurze Logs | Contact, Provision |
 | **MB3** | Contact Export/Import Smoke | Kontakte-UI, Org-Flag | 2-Wege, Mitarbeiter/Bank |
@@ -759,10 +780,10 @@ Nur Spezifikation / Checkliste — kein Secret erzeugen, kein Upload.
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma Betrieb MB1a laut docs/MULTI-FIRMA-KONZEPT.md §15
-Nur: Checkliste SSO-Secret-Ausrollung Domains/Instanzen
-Kein Secret erzeugen, kein Upload, kein Deploy außer ich sage es.
-Nicht §1–14 der Spec neu einlesen — nur §15 + genannte Dateien.
+Scope: Multi-Firma Betrieb MB1b laut docs/MULTI-FIRMA-KONZEPT.md §15
+Nur: firm-sso.local.php mit gleichem Secret auf dg.ganz-om.de und ganz-soft.de
+Kein Secret im Chat ausgeben, kein Code-Commit der local.php, kein CRM-Deploy außer ich sage es.
+Nicht §1–14 der Spec neu einlesen — nur §15 + Example-Config.
 ```
 
 Weitere: `MB1b` / `MB2` / `MB3` / `MB4` analog ersetzen.
