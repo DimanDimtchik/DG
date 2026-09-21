@@ -184,6 +184,510 @@
       .replace(/"/g, '&quot;');
   }
 
+  var ADV_DISPLAY = ['block', 'inline', 'inline-block', 'flex', 'none'];
+  var ADV_VISIBILITY = ['visible', 'hidden'];
+  var ADV_TEXT_ALIGN = ['left', 'center', 'right', 'justify'];
+  var ADV_BORDER_STYLE = ['none', 'solid', 'dashed', 'dotted'];
+
+  function advPickEnum(value, allowed) {
+    value = String(value || '').trim();
+    return allowed.indexOf(value) !== -1 ? value : '';
+  }
+
+  function advSanitizeOpacity(value) {
+    value = String(value || '').trim();
+    if (value === '' || isNaN(Number(value))) return '';
+    var n = Number(value);
+    if (n < 0 || n > 1) return '';
+    return String(Math.round(n * 1000) / 1000);
+  }
+
+  function advSanitizeLength(value) {
+    value = String(value || '').trim();
+    if (value === '') return '';
+    if (/^auto$/i.test(value)) return 'auto';
+    if (value === '0') return '0';
+    var parts = value.split(/\s+/);
+    if (!parts.length || parts.length > 4) return '';
+    var clean = [];
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i];
+      if (/^auto$/i.test(part)) {
+        clean.push('auto');
+        continue;
+      }
+      if (part === '0') {
+        clean.push('0');
+        continue;
+      }
+      var m = part.match(/^(-?\d+(?:\.\d+)?)(px|%|rem|em)$/i);
+      if (!m) return '';
+      clean.push(m[1] + m[2].toLowerCase());
+    }
+    return clean.join(' ');
+  }
+
+  function advSanitizeHex(value) {
+    value = String(value || '').trim();
+    if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value)) return '';
+    return value.toLowerCase();
+  }
+
+  function advSanitizeId(value) {
+    value = String(value || '').trim();
+    if (!/^[A-Za-z][A-Za-z0-9_:-]*$/.test(value) || value.length > 64) return '';
+    return value;
+  }
+
+  function advSanitizeClassList(value) {
+    value = String(value || '').trim();
+    if (!value) return '';
+    var tokens = value.split(/\s+/);
+    var clean = [];
+    tokens.forEach(function (token) {
+      if (!/^[A-Za-z_][A-Za-z0-9_-]*$/.test(token) || token.length > 40) return;
+      if (clean.indexOf(token) === -1) clean.push(token);
+    });
+    return clean.slice(0, 8).join(' ');
+  }
+
+  function advSanitizePlain(value, maxLen) {
+    value = String(value || '').replace(/<[^>]*>/g, '').replace(/[\x00-\x1F\x7F]/g, '').trim();
+    if (!value) return '';
+    return value.length > maxLen ? value.slice(0, maxLen) : value;
+  }
+
+  function normalizeAdvanced(raw) {
+    if (!raw || typeof raw !== 'object') return {};
+    var out = {};
+    var displayIn = raw.display && typeof raw.display === 'object' ? raw.display : {};
+    var display = {};
+    var d = advPickEnum(displayIn.display, ADV_DISPLAY);
+    if (d) display.display = d;
+    var v = advPickEnum(displayIn.visibility, ADV_VISIBILITY);
+    if (v) display.visibility = v;
+    var op = advSanitizeOpacity(displayIn.opacity);
+    if (op !== '') display.opacity = op;
+    ['width', 'maxWidth', 'margin', 'padding'].forEach(function (key) {
+      var len = advSanitizeLength(displayIn[key]);
+      if (len) display[key] = len;
+    });
+    var ta = advPickEnum(displayIn.textAlign, ADV_TEXT_ALIGN);
+    if (ta) display.textAlign = ta;
+    if (Object.keys(display).length) out.display = display;
+
+    var colorsIn = raw.colors && typeof raw.colors === 'object' ? raw.colors : {};
+    var colors = {};
+    ['color', 'background'].forEach(function (key) {
+      var hex = advSanitizeHex(colorsIn[key]);
+      if (hex) colors[key] = hex;
+    });
+    if (Object.keys(colors).length) out.colors = colors;
+
+    var borderIn = raw.border && typeof raw.border === 'object' ? raw.border : {};
+    var border = {};
+    var bw = advSanitizeLength(borderIn.width);
+    if (bw) border.width = bw;
+    var bs = advPickEnum(borderIn.style, ADV_BORDER_STYLE);
+    var bc = advSanitizeHex(borderIn.color);
+    if (bs && bs !== 'none') border.style = bs;
+    else if (bs === 'none' && (bw || bc)) border.style = 'none';
+    if (bc) border.color = bc;
+    var br = advSanitizeLength(borderIn.radius);
+    if (br) border.radius = br;
+    if (Object.keys(border).length) out.border = border;
+
+    var attrsIn = raw.attrs && typeof raw.attrs === 'object' ? raw.attrs : {};
+    var attrs = {};
+    var id = advSanitizeId(attrsIn.id);
+    if (id) attrs.id = id;
+    var cls = advSanitizeClassList(attrsIn.className);
+    if (cls) attrs.className = cls;
+    var title = advSanitizePlain(attrsIn.title, 200);
+    if (title) attrs.title = title;
+    var aria = advSanitizePlain(attrsIn.ariaLabel, 200);
+    if (aria) attrs.ariaLabel = aria;
+    if (Object.keys(attrs).length) out.attrs = attrs;
+
+    return out;
+  }
+
+  function advancedIsActive(advanced) {
+    return Object.keys(normalizeAdvanced(advanced)).length > 0;
+  }
+
+  function advancedToInlineCss(advanced) {
+    var adv = normalizeAdvanced(advanced);
+    var parts = [];
+    var display = adv.display || {};
+    if (display.display) parts.push('display:' + display.display);
+    if (display.visibility) parts.push('visibility:' + display.visibility);
+    if (display.opacity != null && display.opacity !== '') parts.push('opacity:' + display.opacity);
+    if (display.width) parts.push('width:' + display.width);
+    if (display.maxWidth) parts.push('max-width:' + display.maxWidth);
+    if (display.margin) parts.push('margin:' + display.margin);
+    if (display.padding) parts.push('padding:' + display.padding);
+    if (display.textAlign) parts.push('text-align:' + display.textAlign);
+    var colors = adv.colors || {};
+    if (colors.color) parts.push('color:' + colors.color);
+    if (colors.background) parts.push('background-color:' + colors.background);
+    var border = adv.border || {};
+    if (border.style === 'none') {
+      parts.push('border:none');
+    } else if (border.width || border.style || border.color) {
+      parts.push(
+        'border:' +
+          (border.width || '1px') + ' ' +
+          (border.style || 'solid') + ' ' +
+          (border.color || '#000000')
+      );
+    }
+    if (border.radius) parts.push('border-radius:' + border.radius);
+    return parts.join(';');
+  }
+
+  function advancedExtraClass(advanced) {
+    var adv = normalizeAdvanced(advanced);
+    return (adv.attrs && adv.attrs.className) || '';
+  }
+
+  function advancedAttrHtml(advanced) {
+    var adv = normalizeAdvanced(advanced);
+    var attrs = adv.attrs || {};
+    var html = '';
+    if (attrs.id) html += ' id="' + escapeHtml(attrs.id) + '"';
+    if (attrs.title) html += ' title="' + escapeHtml(attrs.title) + '"';
+    if (attrs.ariaLabel) html += ' aria-label="' + escapeHtml(attrs.ariaLabel) + '"';
+    return html;
+  }
+
+  function getAdvancedValue(advanced, group, key) {
+    var adv = advanced && typeof advanced === 'object' ? advanced : {};
+    var g = adv[group] && typeof adv[group] === 'object' ? adv[group] : {};
+    return g[key] != null ? String(g[key]) : '';
+  }
+
+  function setAdvancedValue(block, group, key, value) {
+    if (!block.advanced || typeof block.advanced !== 'object') {
+      block.advanced = {};
+    }
+    if (!block.advanced[group] || typeof block.advanced[group] !== 'object') {
+      block.advanced[group] = {};
+    }
+    var trimmed = String(value == null ? '' : value).trim();
+    if (trimmed === '') {
+      delete block.advanced[group][key];
+      if (!Object.keys(block.advanced[group]).length) {
+        delete block.advanced[group];
+      }
+    } else {
+      block.advanced[group][key] = trimmed;
+    }
+    block.advanced = normalizeAdvanced(block.advanced);
+    if (!Object.keys(block.advanced).length) {
+      delete block.advanced;
+    }
+  }
+
+  var advancedPopoverEl = null;
+  var advancedPopoverTab = 'display';
+
+  function closeAdvancedPopover() {
+    if (!advancedPopoverEl) return;
+    advancedPopoverEl.hidden = true;
+    advancedPopoverEl.setAttribute('aria-hidden', 'true');
+  }
+
+  function ensureAdvancedPopover() {
+    if (advancedPopoverEl) return advancedPopoverEl;
+    advancedPopoverEl = document.createElement('div');
+    advancedPopoverEl.id = 'dg-website-advanced-popover';
+    advancedPopoverEl.className = 'dg-website-advanced-popover';
+    advancedPopoverEl.hidden = true;
+    advancedPopoverEl.setAttribute('role', 'dialog');
+    advancedPopoverEl.setAttribute('aria-modal', 'false');
+    advancedPopoverEl.setAttribute('aria-label', 'Erweiterte Einstellungen');
+    advancedPopoverEl.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(advancedPopoverEl);
+
+    advancedPopoverEl.addEventListener('click', function (event) {
+      var tabBtn = event.target.closest('[data-adv-tab]');
+      if (tabBtn) {
+        advancedPopoverTab = tabBtn.getAttribute('data-adv-tab') || 'display';
+        refreshAdvancedPopoverContent();
+        return;
+      }
+      if (event.target.closest('[data-adv-close]')) {
+        closeAdvancedPopover();
+      }
+    });
+
+    advancedPopoverEl.addEventListener('input', function (event) {
+      var field = event.target.closest('[data-adv-group][data-adv-key]');
+      if (!field || !selected.blockId) return;
+      var layout = parseLayout();
+      var block = findBlock(layout, selected.blockId);
+      if (!block) return;
+      var group = field.getAttribute('data-adv-group');
+      var key = field.getAttribute('data-adv-key');
+      setAdvancedValue(block, group, key, field.value);
+      persist(layout);
+      render({ keepInspector: true });
+      updateAdvancedPreviewSwatch(block);
+      updateAdvancedButtonBadge();
+      var stored = getAdvancedValue(block.advanced, group, key);
+      advancedPopoverEl.querySelectorAll('[data-adv-group="' + group + '"][data-adv-key="' + key + '"]').forEach(function (el) {
+        if (el === field) return;
+        if (el.type === 'color') {
+          el.value = stored || (key === 'background' ? '#ffffff' : '#333333');
+        } else {
+          el.value = stored;
+        }
+      });
+    });
+
+    advancedPopoverEl.addEventListener('change', function (event) {
+      var field = event.target.closest('[data-adv-group][data-adv-key]');
+      if (!field || !selected.blockId) return;
+      var layout = parseLayout();
+      var block = findBlock(layout, selected.blockId);
+      if (!block) return;
+      var group = field.getAttribute('data-adv-group');
+      var key = field.getAttribute('data-adv-key');
+      setAdvancedValue(block, group, key, field.value);
+      persist(layout);
+      render({ keepInspector: true });
+      updateAdvancedPreviewSwatch(block);
+      updateAdvancedButtonBadge();
+      var stored = getAdvancedValue(block.advanced, group, key);
+      advancedPopoverEl.querySelectorAll('[data-adv-group="' + group + '"][data-adv-key="' + key + '"]').forEach(function (el) {
+        if (el === field) return;
+        if (el.type === 'color') {
+          el.value = stored || (key === 'background' ? '#ffffff' : '#333333');
+        } else {
+          el.value = stored;
+        }
+      });
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeAdvancedPopover();
+    });
+
+    document.addEventListener('mousedown', function (event) {
+      if (!advancedPopoverEl || advancedPopoverEl.hidden) return;
+      if (advancedPopoverEl.contains(event.target)) return;
+      if (event.target.closest('[data-open-advanced]')) return;
+      closeAdvancedPopover();
+    });
+
+    return advancedPopoverEl;
+  }
+
+  function advSelectHtml(group, key, value, options) {
+    var html = '<label class="dg-field"><span>' + escapeHtml(options.label) + '</span><select data-adv-group="' +
+      escapeHtml(group) + '" data-adv-key="' + escapeHtml(key) + '">';
+    (options.choices || []).forEach(function (choice) {
+      html += '<option value="' + escapeHtml(choice.value) + '"' +
+        (String(value) === String(choice.value) ? ' selected' : '') + '>' +
+        escapeHtml(choice.label) + '</option>';
+    });
+    html += '</select></label>';
+    return html;
+  }
+
+  function advInputHtml(group, key, value, options) {
+    options = options || {};
+    return '<label class="dg-field"><span>' + escapeHtml(options.label || key) + '</span>' +
+      '<input data-adv-group="' + escapeHtml(group) + '" data-adv-key="' + escapeHtml(key) + '"' +
+      (options.type ? ' type="' + escapeHtml(options.type) + '"' : '') +
+      (options.placeholder ? ' placeholder="' + escapeHtml(options.placeholder) + '"' : '') +
+      (options.min != null ? ' min="' + escapeHtml(String(options.min)) + '"' : '') +
+      (options.max != null ? ' max="' + escapeHtml(String(options.max)) + '"' : '') +
+      (options.step != null ? ' step="' + escapeHtml(String(options.step)) + '"' : '') +
+      ' value="' + escapeHtml(value || '') + '">' +
+      (options.hint ? '<small class="dg-field-hint">' + escapeHtml(options.hint) + '</small>' : '') +
+      '</label>';
+  }
+
+  function updateAdvancedPreviewSwatch(block) {
+    if (!advancedPopoverEl) return;
+    var swatch = advancedPopoverEl.querySelector('[data-adv-swatch]');
+    if (!swatch) return;
+    var css = advancedToInlineCss(block && block.advanced);
+    swatch.setAttribute('style', css || 'background:#fff;border:1px dashed #ccc;');
+    swatch.textContent = advancedIsActive(block && block.advanced) ? 'Vorschau' : 'Standard';
+  }
+
+  function updateAdvancedButtonBadge() {
+    if (!inspector) return;
+    var btn = inspector.querySelector('[data-open-advanced]');
+    if (!btn || !selected.blockId) return;
+    var layout = parseLayout();
+    var block = findBlock(layout, selected.blockId);
+    var badge = btn.querySelector('[data-adv-badge]');
+    if (!badge) return;
+    badge.hidden = !(block && advancedIsActive(block.advanced));
+  }
+
+  function refreshAdvancedPopoverContent() {
+    if (!advancedPopoverEl || !selected.blockId) return;
+    var layout = parseLayout();
+    var block = findBlock(layout, selected.blockId);
+    if (!block) {
+      closeAdvancedPopover();
+      return;
+    }
+    var adv = block.advanced || {};
+    var tab = advancedPopoverTab;
+    var tabs = [
+      { id: 'display', label: 'Anzeige' },
+      { id: 'colors', label: 'Farben' },
+      { id: 'border', label: 'Rahmen' },
+      { id: 'attrs', label: 'Attribute' },
+    ];
+    var html = '<div class="dg-website-advanced-popover__head">' +
+      '<strong>Erweiterte Einstellungen</strong>' +
+      '<button type="button" class="dg-website-advanced-popover__close" data-adv-close aria-label="Schließen">&times;</button>' +
+      '</div>';
+    html += '<div class="dg-website-advanced-popover__tabs" role="tablist">';
+    tabs.forEach(function (t) {
+      html += '<button type="button" role="tab" class="dg-website-advanced-popover__tab' +
+        (t.id === tab ? ' is-active' : '') + '" data-adv-tab="' + escapeHtml(t.id) + '"' +
+        ' aria-selected="' + (t.id === tab ? 'true' : 'false') + '">' + escapeHtml(t.label) + '</button>';
+    });
+    html += '</div>';
+    html += '<div class="dg-website-advanced-popover__preview"><div class="dg-website-advanced-popover__swatch" data-adv-swatch>Vorschau</div></div>';
+    html += '<div class="dg-website-advanced-popover__body">';
+
+    if (tab === 'display') {
+      html += advSelectHtml('display', 'display', getAdvancedValue(adv, 'display', 'display'), {
+        label: 'Display',
+        choices: [
+          { value: '', label: '— Standard —' },
+          { value: 'block', label: 'block' },
+          { value: 'inline', label: 'inline' },
+          { value: 'inline-block', label: 'inline-block' },
+          { value: 'flex', label: 'flex' },
+          { value: 'none', label: 'none (verstecken)' },
+        ],
+      });
+      html += advSelectHtml('display', 'visibility', getAdvancedValue(adv, 'display', 'visibility'), {
+        label: 'Sichtbarkeit',
+        choices: [
+          { value: '', label: '— Standard —' },
+          { value: 'visible', label: 'sichtbar' },
+          { value: 'hidden', label: 'versteckt' },
+        ],
+      });
+      html += advInputHtml('display', 'opacity', getAdvancedValue(adv, 'display', 'opacity'), {
+        label: 'Deckkraft (0–1)', type: 'number', min: '0', max: '1', step: '0.05', placeholder: '1',
+      });
+      html += advInputHtml('display', 'width', getAdvancedValue(adv, 'display', 'width'), {
+        label: 'Breite', placeholder: 'z. B. 100% oder 320px', hint: 'Einheiten: px, %, rem, em, auto',
+      });
+      html += advInputHtml('display', 'maxWidth', getAdvancedValue(adv, 'display', 'maxWidth'), {
+        label: 'Max. Breite', placeholder: 'z. B. 720px',
+      });
+      html += advInputHtml('display', 'margin', getAdvancedValue(adv, 'display', 'margin'), {
+        label: 'Außenabstand', placeholder: 'z. B. 16px oder 8px 0',
+      });
+      html += advInputHtml('display', 'padding', getAdvancedValue(adv, 'display', 'padding'), {
+        label: 'Innenabstand', placeholder: 'z. B. 12px',
+      });
+      html += advSelectHtml('display', 'textAlign', getAdvancedValue(adv, 'display', 'textAlign'), {
+        label: 'Textausrichtung',
+        choices: [
+          { value: '', label: '— Standard —' },
+          { value: 'left', label: 'links' },
+          { value: 'center', label: 'zentriert' },
+          { value: 'right', label: 'rechts' },
+          { value: 'justify', label: 'blocksatz' },
+        ],
+      });
+    } else if (tab === 'colors') {
+      html += advInputHtml('colors', 'color', getAdvancedValue(adv, 'colors', 'color') || '#333333', {
+        label: 'Textfarbe', type: 'color',
+      });
+      html += advInputHtml('colors', 'color', getAdvancedValue(adv, 'colors', 'color'), {
+        label: 'Textfarbe (Hex)', placeholder: '#333333',
+      });
+      html += advInputHtml('colors', 'background', getAdvancedValue(adv, 'colors', 'background') || '#ffffff', {
+        label: 'Hintergrund', type: 'color',
+      });
+      html += advInputHtml('colors', 'background', getAdvancedValue(adv, 'colors', 'background'), {
+        label: 'Hintergrund (Hex)', placeholder: '#ffffff',
+      });
+    } else if (tab === 'border') {
+      html += advInputHtml('border', 'width', getAdvancedValue(adv, 'border', 'width'), {
+        label: 'Stärke', placeholder: '1px',
+      });
+      html += advSelectHtml('border', 'style', getAdvancedValue(adv, 'border', 'style'), {
+        label: 'Stil',
+        choices: [
+          { value: '', label: '— Standard —' },
+          { value: 'none', label: 'ohne' },
+          { value: 'solid', label: 'durchgezogen' },
+          { value: 'dashed', label: 'gestrichelt' },
+          { value: 'dotted', label: 'gepunktet' },
+        ],
+      });
+      html += advInputHtml('border', 'color', getAdvancedValue(adv, 'border', 'color') || '#cccccc', {
+        label: 'Farbe', type: 'color',
+      });
+      html += advInputHtml('border', 'color', getAdvancedValue(adv, 'border', 'color'), {
+        label: 'Farbe (Hex)', placeholder: '#cccccc',
+      });
+      html += advInputHtml('border', 'radius', getAdvancedValue(adv, 'border', 'radius'), {
+        label: 'Eckenradius', placeholder: '8px',
+      });
+    } else {
+      html += advInputHtml('attrs', 'id', getAdvancedValue(adv, 'attrs', 'id'), {
+        label: 'HTML-ID', placeholder: 'mein-block', hint: 'Buchstabe am Anfang, dann Buchstaben/Zahlen/_/-/:',
+      });
+      html += advInputHtml('attrs', 'className', getAdvancedValue(adv, 'attrs', 'className'), {
+        label: 'CSS-Klassen', placeholder: 'mein-block highlight', hint: 'Nur sichere Klassen-Namen, leerzeichengetrennt',
+      });
+      html += advInputHtml('attrs', 'title', getAdvancedValue(adv, 'attrs', 'title'), {
+        label: 'title', placeholder: 'Hinweistext',
+      });
+      html += advInputHtml('attrs', 'ariaLabel', getAdvancedValue(adv, 'attrs', 'ariaLabel'), {
+        label: 'aria-label', placeholder: 'Barrierefreier Name',
+      });
+    }
+
+    html += '</div>';
+    advancedPopoverEl.innerHTML = html;
+    updateAdvancedPreviewSwatch(block);
+  }
+
+  function openAdvancedPopover(anchor) {
+    var pop = ensureAdvancedPopover();
+    advancedPopoverTab = 'display';
+    refreshAdvancedPopoverContent();
+    pop.hidden = false;
+    pop.setAttribute('aria-hidden', 'false');
+    var rect = anchor.getBoundingClientRect();
+    var width = Math.min(360, window.innerWidth - 24);
+    var left = Math.min(window.innerWidth - width - 12, Math.max(12, rect.left + rect.width - width));
+    var top = rect.bottom + 8;
+    if (top + 420 > window.innerHeight) {
+      top = Math.max(12, rect.top - 8 - Math.min(420, window.innerHeight - 24));
+    }
+    pop.style.width = width + 'px';
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
+
+  function advancedButtonHtml(block) {
+    var active = advancedIsActive(block && block.advanced);
+    return '<div class="dg-form-actions dg-website-inspector-actions" style="margin-top:4px;padding-top:8px;">' +
+      '<button type="button" class="dg-button" data-open-advanced>' +
+      'Erweiterte Einstellungen' +
+      '<span class="dg-website-advanced-badge" data-adv-badge' + (active ? '' : ' hidden') + '>aktiv</span>' +
+      '</button></div>';
+  }
+
   function embedUrl(url) {
     url = String(url || '').trim();
     var m;
@@ -233,7 +737,13 @@
   function renderBlock(block) {
     var isSelected = selected.blockId === block.id;
     var selectedClass = isSelected ? ' is-selected' : '';
-    var html = '<div class="dg-website-block' + selectedClass + '" data-block-id="' + escapeHtml(block.id) + '">';
+    var extraClass = advancedExtraClass(block.advanced);
+    if (extraClass) selectedClass += ' ' + extraClass;
+    var styleCss = advancedToInlineCss(block.advanced);
+    var attrHtml = advancedAttrHtml(block.advanced);
+    var html = '<div class="dg-website-block' + selectedClass + '" data-block-id="' + escapeHtml(block.id) + '"' +
+      (styleCss ? ' style="' + escapeHtml(styleCss) + '"' : '') +
+      attrHtml + '>';
 
     if (!readOnly && isSelected) {
       html += '<div class="dg-website-plus-wrap" data-plus-wrap>';
@@ -723,6 +1233,7 @@
 
   function renderInspector() {
     if (!inspector) return;
+    closeAdvancedPopover();
     var layout = parseLayout();
 
     if (selected.blockId) {
@@ -817,6 +1328,7 @@
       }
 
       var protectBooking = builderCfg.isOnlineBookingPage && block.type === 'online_booking';
+      html += advancedButtonHtml(block);
       if (!protectBooking) {
         html += '<div class="dg-form-actions dg-website-inspector-actions">' +
           '<button type="button" class="dg-button dg-button--danger" data-remove-block>Block entfernen</button>' +
@@ -1247,6 +1759,12 @@
     });
 
     inspector.addEventListener('click', function (event) {
+      var advBtn = event.target.closest('[data-open-advanced]');
+      if (advBtn) {
+        event.preventDefault();
+        openAdvancedPopover(advBtn);
+        return;
+      }
       var pickBtn = event.target.closest('[data-media-pick]');
       if (pickBtn) {
         event.preventDefault();

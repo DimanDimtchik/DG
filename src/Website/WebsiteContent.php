@@ -84,6 +84,12 @@ final class WebsiteContent
                             $block['text'] = self::normalizePlainText($block['text']);
                         }
                     }
+                    $advanced = WebsiteBlockAdvanced::normalize($block['advanced'] ?? null);
+                    if ($advanced === []) {
+                        unset($block['advanced']);
+                    } else {
+                        $block['advanced'] = $advanced;
+                    }
                     $blocks[$b] = $block;
                 }
                 $col['blocks'] = $blocks;

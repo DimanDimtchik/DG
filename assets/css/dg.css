@@ -5838,6 +5838,106 @@ body.dg-login-page {
   padding-top: 12px;
 }
 
+.dg-website-advanced-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+  background: color-mix(in srgb, var(--dg-primary) 18%, #fff);
+  color: var(--dg-primary);
+}
+
+.dg-website-advanced-badge[hidden] {
+  display: none !important;
+}
+
+.dg-website-advanced-popover {
+  position: fixed;
+  z-index: 1200;
+  max-height: min(420px, calc(100vh - 24px));
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--dg-border);
+  border-radius: var(--dg-radius-sm, 8px);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+}
+
+.dg-website-advanced-popover[hidden] {
+  display: none !important;
+}
+
+.dg-website-advanced-popover__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dg-website-advanced-popover__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--dg-text-secondary, #64748b);
+}
+
+.dg-website-advanced-popover__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.dg-website-advanced-popover__tab {
+  border: 1px solid var(--dg-border);
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--dg-text-secondary, #64748b);
+}
+
+.dg-website-advanced-popover__tab.is-active {
+  background: color-mix(in srgb, var(--dg-primary) 12%, #fff);
+  border-color: color-mix(in srgb, var(--dg-primary) 35%, var(--dg-border));
+  color: var(--dg-primary);
+  font-weight: 600;
+}
+
+.dg-website-advanced-popover__preview {
+  margin-bottom: 10px;
+}
+
+.dg-website-advanced-popover__swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px dashed #cbd5e1;
+  background: #fff;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dg-website-advanced-popover__body .dg-field {
+  margin-bottom: 10px;
+}
+
+.dg-website-advanced-popover__body .dg-field-hint {
+  display: block;
+  margin-top: 4px;
+}
+
 .dg-website-menu-card {
   margin-bottom: 12px;
   padding: 14px 16px;
