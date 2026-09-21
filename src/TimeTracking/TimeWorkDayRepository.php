@@ -87,4 +87,34 @@ final class TimeWorkDayRepository
 
         return max(0, (int) $stmt->fetchColumn());
     }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listForContactRange(int $contactId, string $periodFrom, string $periodTo): array
+    {
+        if (!Database::isConfigured() || $contactId < 1) {
+            return [];
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $periodFrom)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $periodTo)) {
+            return [];
+        }
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_time_work_days
+             WHERE contact_id = :contact_id
+               AND work_date >= :period_from AND work_date <= :period_to
+             ORDER BY work_date ASC'
+        );
+        $stmt->execute([
+            'contact_id' => $contactId,
+            'period_from' => $periodFrom,
+            'period_to' => $periodTo,
+        ]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_values(array_filter($rows, static fn ($r): bool => is_array($r)));
+    }
 }

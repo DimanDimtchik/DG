@@ -28,7 +28,12 @@ $state = (string) ($status['state'] ?? 'off');
     </div>
     <?php if ($timeClockCanTeam ?? false) : ?>
       <div class="dg-toolbar">
+        <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
         <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
+      </div>
+    <?php else : ?>
+      <div class="dg-toolbar">
+        <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       </div>
     <?php endif; ?>
   </header>

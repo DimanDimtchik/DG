@@ -48,7 +48,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
-- [ ] **Zeiterfassung Phase 2+** — token-sparend Z2a–Z2e (`ZEITERFASSUNG-PLAN.md` § Betrieb); **Z2a–Z2b ✅** · weiter: `z2c`
+- [ ] **Zeiterfassung Phase 2+** — token-sparend Z2a–Z2e (`ZEITERFASSUNG-PLAN.md` § Betrieb); **Z2a–Z2c ✅** · weiter: `z2d`
 
 ---
 

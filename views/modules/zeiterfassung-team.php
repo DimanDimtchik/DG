@@ -17,6 +17,7 @@ $violations = $overtimeReminders['violations'] ?? [];
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung">Meine Zeiterfassung</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
     </div>
   </header>
 
@@ -63,7 +64,7 @@ $violations = $overtimeReminders['violations'] ?? [];
                 </td>
                 <td><?= View::escape((string) ($row['since_display'] ?? '—')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($row['worked_display'] ?? '0:00')) ?></td>
-                <td class="dg-table__num"><?= View::escape((string) ($row['scheduled_display'] ?? '8:00')) ?></td>
+                <td class="dg-table__num"><?= View::escape((string) ($row['scheduled_display'] ?? '0:00')) ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>

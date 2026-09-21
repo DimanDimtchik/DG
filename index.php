@@ -5112,6 +5112,44 @@ $legalProductsConfig = LegalProductSettings::config();
                 $title = 'Media';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-monat' && MenuRegistry::canAccess($user, 'zeiterfassung-monat')) {
+            $timeMonthYearMonth = TimeMonthReportService::normalizeYearMonth(
+                isset($_GET['month']) ? (string) $_GET['month'] : null
+            );
+            $timeMonthCanTeam = TimeClockService::canViewTeam($user);
+            $timeMonthStaffOptions = $timeMonthCanTeam ? TimeMonthReportService::staffOptions() : [];
+            $requestedContact = isset($_GET['contact_id']) ? (int) $_GET['contact_id'] : 0;
+            $timeMonthContactId = TimeMonthReportService::resolveContactId(
+                $user,
+                $requestedContact > 0 ? $requestedContact : null
+            );
+            $timeMonthReport = null;
+            if ($timeMonthContactId !== null && $timeMonthContactId > 0) {
+                try {
+                    $timeMonthReport = TimeMonthReportService::monthReport($timeMonthContactId, $timeMonthYearMonth);
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    $timeMonthReport = null;
+                }
+            }
+            if (
+                trim((string) ($_GET['download'] ?? '')) === 'csv'
+                && is_array($timeMonthReport)
+            ) {
+                $csv = TimeMonthReportService::toCsv($timeMonthReport);
+                $fname = sprintf(
+                    'zeiterfassung-%s-%d.csv',
+                    $timeMonthYearMonth,
+                    (int) ($timeMonthReport['contact_id'] ?? 0)
+                );
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="' . $fname . '"');
+                echo $csv;
+                exit;
+            }
+            $contentTemplate = 'modules/zeiterfassung-monat';
+            $title = 'Monatsblatt';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-team' && MenuRegistry::canAccess($user, 'zeiterfassung-team')) {
             $contentTemplate = 'modules/zeiterfassung-team';
             $title = 'Team heute';
@@ -5132,7 +5170,7 @@ $legalProductsConfig = LegalProductSettings::config();
             }
             $timeClockSummary = $timeClockContactId !== null
                 ? TimeClockService::daySummary($timeClockContactId)
-                : ['events' => [], 'worked_display' => '0:00', 'break_display' => '0:00', 'scheduled_display' => '8:00', 'warnings' => [], 'status' => ['state' => 'off', 'label' => 'Nicht eingestempelt', 'since_display' => null]];
+                : ['events' => [], 'worked_display' => '0:00', 'break_display' => '0:00', 'scheduled_display' => '0:00', 'warnings' => [], 'status' => ['state' => 'off', 'label' => 'Nicht eingestempelt', 'since_display' => null]];
             $timeClockStatus = is_array($timeClockSummary['status'] ?? null)
                 ? $timeClockSummary['status']
                 : TimeClockService::currentStatus((int) $timeClockContactId);
@@ -5580,6 +5618,11 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
+        $timeMonthReport = $timeMonthReport ?? null;
+        $timeMonthYearMonth = $timeMonthYearMonth ?? date('Y-m');
+        $timeMonthContactId = $timeMonthContactId ?? null;
+        $timeMonthCanTeam = $timeMonthCanTeam ?? false;
+        $timeMonthStaffOptions = $timeMonthStaffOptions ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -5936,6 +5979,11 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeClockCanTeam',
             'timeClockTeam',
             'overtimeReminders',
+            'timeMonthReport',
+            'timeMonthYearMonth',
+            'timeMonthContactId',
+            'timeMonthCanTeam',
+            'timeMonthStaffOptions',
             'recipeList',
             'recipeForm',
             'recipeId',
