@@ -3,7 +3,6 @@
  * @var list<array<string, mixed>> $bankTransactionsOpen
  * @var list<array<string, mixed>> $bankTransactionsGhosts
  * @var list<array<string, mixed>> $bankTransactionsMatched
- * @var list<array<string, mixed>> $bankMatchVouchers
  * @var bool $canEdit
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
@@ -11,7 +10,6 @@
 $open = $bankTransactionsOpen ?? [];
 $ghosts = $bankTransactionsGhosts ?? [];
 $matched = $bankTransactionsMatched ?? [];
-$vouchers = $bankMatchVouchers ?? [];
 $csrf = Csrf::token();
 ?>
 <div class="dg-wrap dg-buchhaltung-bankabgleich">
@@ -123,17 +121,21 @@ $csrf = Csrf::token();
                 <td class="dg-table__num"><?= View::escape((string) ($tx['amount_display'] ?? '')) ?></td>
                 <td>
                   <?php if ($canEdit) : ?>
-                    <form method="post" action="/app?page=buchhaltung-bankabgleich" class="dg-inline-form">
+                    <form method="post" action="/app?page=buchhaltung-bankabgleich" class="dg-inline-form dg-bank-match-form">
                       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
                       <input type="hidden" name="bank_tx_id" value="<?= (int) ($tx['id'] ?? 0) ?>">
-                      <select name="bank_match_voucher_id">
-                        <option value="">— Beleg —</option>
-                        <?php foreach ($vouchers as $v) : ?>
-                          <option value="<?= (int) ($v['id'] ?? 0) ?>">
-                            #<?= (int) ($v['id'] ?? 0) ?> · <?= View::escape((string) ($v['invoice_number'] ?? '')) ?> · <?= View::escape(VoucherRepository::formatMoney((float) ($v['gross_amount'] ?? 0))) ?> €
-                          </option>
-                        <?php endforeach; ?>
-                      </select>
+                      <div class="dg-bank-match-picker" data-bank-match-picker>
+                        <input type="hidden" name="bank_match_voucher_id" value="">
+                        <input
+                          type="search"
+                          class="dg-bank-match-search"
+                          placeholder="Kunde oder Rechnungsnr. tippen…"
+                          autocomplete="off"
+                          aria-autocomplete="list"
+                          aria-label="Offenen Beleg suchen"
+                        >
+                        <div class="dg-bank-match-results" role="listbox" hidden></div>
+                      </div>
                       <button type="submit" name="bank_match_manual" value="1" class="dg-button dg-button--small">Zuordnen</button>
                       <button type="submit" name="bank_tx_ignore" value="1" class="dg-button dg-button--small">Ignorieren</button>
                     </form>
@@ -175,3 +177,11 @@ $csrf = Csrf::token();
     <?php endif; ?>
   </section>
 </div>
+<?php if ($canEdit) : ?>
+<script>
+  window.dgBankMatchConfig = {
+    apiUrl: '/api/bank-match-suggest'
+  };
+</script>
+<script src="<?= View::escape(Asset::url('/assets/js/bankabgleich-match.js')) ?>" defer></script>
+<?php endif; ?>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>DG-DEMO-Q2A-2026</MsgId><CreDtTm>2026-07-01T10:00:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>DG-DEMO-Q2A-2026</Id>
+      <ElctrncSeqNb>1</ElctrncSeqNb>
+      <LglSeqNb>1</LglSeqNb>
+      <Acct><Id><IBAN>DE12500105170648489890</IBAN></Id><Ccy>EUR</Ccy><Ownr><Nm>Demo Firma CRM Schulung</Nm></Ownr></Acct>
+      <Bal><Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">13842.55</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">15210.05</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Ntry>
+        <Amt Ccy="EUR">952.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-04-05</Dt></BookgDt>
+        <ValDt><Dt>2026-04-05</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2A-001</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2A-001</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0040 Zahlung April</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Kunde Nord GmbH</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE02120300000000202051</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0040 Zahlung April</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">450.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-04-12</Dt></BookgDt>
+        <ValDt><Dt>2026-04-12</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2A-002</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2A-002</EndToEndId></Refs>
+          <RmtInf><Ustrd>Miete April 2026</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Büromiete AG</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Miete April 2026</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">1785.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-04-22</Dt></BookgDt>
+        <ValDt><Dt>2026-04-22</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2A-003</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2A-003</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0045 Lieferung</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Klinik Partner</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE12500105170648489890</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0045 Lieferung</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">129.50</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-05-07</Dt></BookgDt>
+        <ValDt><Dt>2026-05-07</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2A-004</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2A-004</EndToEndId></Refs>
+          <RmtInf><Ustrd>Rechnung Material Mai</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Bürobedarf</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE44500105175407324931</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Rechnung Material Mai</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">595.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-05-18</Dt></BookgDt>
+        <ValDt><Dt>2026-05-18</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2A-005</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2A-005</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0051 Restzahlung</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Handel West OHG</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE12500105170648489890</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0051 Restzahlung</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">385.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-05-29</Dt></BookgDt>
+        <ValDt><Dt>2026-05-29</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2A-006</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2A-006</EndToEndId></Refs>
+          <RmtInf><Ustrd>Honorar Mai 2026</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Steuerberatung</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Honorar Mai 2026</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

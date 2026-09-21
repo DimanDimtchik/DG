@@ -1,0 +1,30 @@
+{
+    "generated_at": "2026-09-17T20:22:46+02:00",
+    "note": "Demo-Kontoauszüge für Akademie Bankabgleich. Nur fiktive Namen\/IBANs.",
+    "statements": [
+        {
+            "slug": "q1-2026",
+            "title": "Kontoauszug Q1 2026",
+            "period": "01.01.2026–31.03.2026",
+            "entries": 6,
+            "camt": "q1-2026.camt053.xml",
+            "mt940": "q1-2026.mt940.sta"
+        },
+        {
+            "slug": "q2a-2026",
+            "title": "Kontoauszug Q2\/1 2026 (Apr–Mai)",
+            "period": "01.04.2026–31.05.2026",
+            "entries": 6,
+            "camt": "q2a-2026.camt053.xml",
+            "mt940": "q2a-2026.mt940.sta"
+        },
+        {
+            "slug": "q2b-2026",
+            "title": "Kontoauszug Q2\/2 2026 (Juni)",
+            "period": "01.06.2026–30.06.2026",
+            "entries": 5,
+            "camt": "q2b-2026.camt053.xml",
+            "mt940": "q2b-2026.mt940.sta"
+        }
+    ]
+}

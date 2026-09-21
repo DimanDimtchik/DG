@@ -288,10 +288,10 @@ final class BankGhostDetectionService
         $dateClause = '';
         $dateParams = [];
         if ($txDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $txDate) === 1) {
-            $dateClause = ' AND v.voucher_date BETWEEN :date_from AND :date_to';
+            $dateClause = ' AND v.voucher_date BETWEEN ? AND ?';
             $dateParams = [
-                'date_from' => date('Y-m-d', strtotime($txDate . ' -120 days')),
-                'date_to' => date('Y-m-d', strtotime($txDate . ' +30 days')),
+                date('Y-m-d', strtotime($txDate . ' -120 days')),
+                date('Y-m-d', strtotime($txDate . ' +30 days')),
             ];
         }
 
@@ -316,7 +316,7 @@ final class BankGhostDetectionService
                    {$dateClause}
                  ORDER BY v.voucher_date DESC, v.id DESC"
             );
-            $ibanStmt->execute([...$settledStatuses, '%' . $iban . '%', ...array_values($dateParams)]);
+            $ibanStmt->execute([...$settledStatuses, '%' . $iban . '%', ...$dateParams]);
             while ($row = $ibanStmt->fetch(PDO::FETCH_ASSOC)) {
                 if (is_array($row) && self::amountMatchesSettledVoucher($row, $amount)) {
                     return $row;
@@ -332,7 +332,7 @@ final class BankGhostDetectionService
                {$dateClause}
              ORDER BY v.voucher_date DESC, v.id DESC"
         );
-        $stmt->execute([...$settledStatuses, ...array_values($dateParams)]);
+        $stmt->execute([...$settledStatuses, ...$dateParams]);
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             if (!is_array($row)) {
                 continue;
