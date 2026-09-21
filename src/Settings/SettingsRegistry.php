@@ -93,7 +93,7 @@ final class SettingsRegistry
                     ],
                     'zeiterfassung' => [
                         'label' => 'Zeiterfassung',
-                        'lead' => 'Automatische Pausenregeln nach Arbeitszeitgesetz für die Stempeluhr.',
+                        'lead' => 'Pausenregeln, ArbZG und Rückstellungs-Parameter (Konten mit Steuerberater).',
                         'template' => 'time-tracking',
                     ],
                 ],

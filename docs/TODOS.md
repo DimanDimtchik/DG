@@ -50,8 +50,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
 - [x] **Zeiterfassung Phase 2** — Z2a–Z2e ✅
 - [x] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d ✅
-- [x] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e ✅ · weiter Phase 5: `z5b`
-- [ ] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d; **Z5a ✅** · offen: `z5b`–`z5d`
+- [x] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e ✅
+- [ ] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d; **Z5a–Z5b ✅** · offen: `z5c`–`z5d`
 - [ ] **Zeiterfassung Phase 6 Lohn-Export** — Z6a–Z6d; **Z6a ✅** · weiter: `z6b` (CSV)
 
 ---
@@ -124,8 +124,8 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Multi-Firma Code + Betrieb MB1–MB4 | erledigt 2026-09-21 |
 | **Zeiterfassung Z2a–Z2e** | erledigt 2026-09-21 |
 | **Zeiterfassung Z3a–Z3d** (Schichten) | **Code ✅** |
-| **Zeiterfassung Z4a–Z4e** (Urlaub/Krankheit) | **Code ✅** · weiter Phase 5 `z5b` |
-| **Zeiterfassung Z5a–Z5d** (Rückstellungen) | Spec Z5a ✅ · Code offen `z5b` |
+| **Zeiterfassung Z4a–Z4e** (Urlaub/Krankheit) | **Code ✅** |
+| **Zeiterfassung Z5a–Z5d** (Rückstellungen) | Spec Z5a ✅ · **Z5b Code ✅** · offen `z5c` |
 | **Zeiterfassung Z6a–Z6d** (Lohn-Export) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb Phase 6 · **Z6a ✅** |
 
 ---

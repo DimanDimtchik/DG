@@ -5439,6 +5439,22 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-abwesenheit';
             $title = 'Abwesenheit';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'zeiterfassung-rueckstellung' && MenuRegistry::canAccess($user, 'zeiterfassung-rueckstellung')) {
+            MigrationRunner::runPending();
+            $timeProvisionYear = max(2000, min(2100, (int) ($_GET['year'] ?? date('Y'))));
+            $timeProvisionPreview = TimeProvisionService::preview($timeProvisionYear);
+            $timeProvisionConfig = TimeTrackingSettings::config();
+            if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+                $csv = TimeProvisionService::toCsv($timeProvisionPreview);
+                $fname = sprintf('rueckstellung-urlaub-%d.csv', $timeProvisionYear);
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="' . $fname . '"');
+                echo $csv;
+                exit;
+            }
+            $contentTemplate = 'modules/zeiterfassung-rueckstellung';
+            $title = 'Rückstellungen';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schichten' && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')) {
             MigrationRunner::runPending();
             $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
@@ -6033,6 +6049,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeAbsCanTeam = $timeAbsCanTeam ?? false;
         $timeAbsYearMonth = $timeAbsYearMonth ?? date('Y-m');
         $timeAbsCalendar = $timeAbsCalendar ?? null;
+        $timeProvisionYear = $timeProvisionYear ?? (int) date('Y');
+        $timeProvisionPreview = $timeProvisionPreview ?? [];
+        $timeProvisionConfig = $timeProvisionConfig ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6426,6 +6445,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeAbsCanTeam',
             'timeAbsYearMonth',
             'timeAbsCalendar',
+            'timeProvisionYear',
+            'timeProvisionPreview',
+            'timeProvisionConfig',
             'recipeList',
             'recipeForm',
             'recipeId',

@@ -96,6 +96,62 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
     </div>
   </section>
 
+  <section class="dg-form-section">
+    <h3 class="dg-subsection-title">Rückstellungen (Z5b) — Vorschlag mit Steuerberater prüfen</h3>
+    <p class="dg-field-hint">
+      Konten und Faktoren für die Preview unter
+      <a href="/app?page=zeiterfassung-rueckstellung">Zeiterfassung → Rückstellungen</a>.
+      Keine automatische Buchung.
+    </p>
+    <div class="dg-form-grid">
+      <label class="dg-field">
+        <span>Tageskostensatz Firma (€, Default)</span>
+        <input type="number" name="provision_daily_cost" step="0.01" min="0" max="99999"
+               value="<?= View::escape(number_format((float) ($settings['provision_daily_cost'] ?? 0), 2, '.', '')) ?>">
+      </label>
+      <label class="dg-field">
+        <span>Methode Kostensatz</span>
+        <select name="provision_cost_method">
+          <option value="workdays_260"<?= ($settings['provision_cost_method'] ?? '') === 'workdays_260' ? ' selected' : '' ?>>/ 260 Arbeitstage</option>
+          <option value="calendar_365"<?= ($settings['provision_cost_method'] ?? '') === 'calendar_365' ? ' selected' : '' ?>>/ 365 Kalendertage</option>
+        </select>
+      </label>
+      <label class="dg-field">
+        <span>Sozialfaktor (Default 1,00)</span>
+        <input type="number" name="provision_social_factor" step="0.01" min="0.5" max="3"
+               value="<?= View::escape(number_format((float) ($settings['provision_social_factor'] ?? 1), 2, '.', '')) ?>">
+      </label>
+    </div>
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="provision_ot_enabled" value="1"<?= !empty($settings['provision_ot_enabled']) ? ' checked' : '' ?>>
+        Überstunden-Rückstellung in Preview einbeziehen (optional)
+      </span>
+    </label>
+    <div class="dg-form-grid">
+      <label class="dg-field">
+        <span>Konto Aufwand Urlaub (SKR-Vorschlag)</span>
+        <input type="text" name="provision_account_vacation_expense" maxlength="20"
+               value="<?= View::escape((string) ($settings['provision_account_vacation_expense'] ?? '')) ?>">
+      </label>
+      <label class="dg-field">
+        <span>Konto Rückstellung Urlaub</span>
+        <input type="text" name="provision_account_vacation_liability" maxlength="20"
+               value="<?= View::escape((string) ($settings['provision_account_vacation_liability'] ?? '')) ?>">
+      </label>
+      <label class="dg-field">
+        <span>Konto Aufwand Überstunden</span>
+        <input type="text" name="provision_account_ot_expense" maxlength="20"
+               value="<?= View::escape((string) ($settings['provision_account_ot_expense'] ?? '')) ?>">
+      </label>
+      <label class="dg-field">
+        <span>Konto Rückstellung Überstunden</span>
+        <input type="text" name="provision_account_ot_liability" maxlength="20"
+               value="<?= View::escape((string) ($settings['provision_account_ot_liability'] ?? '')) ?>">
+      </label>
+    </div>
+  </section>
+
   <div class="dg-form-actions">
     <button type="submit" name="time_tracking_save" value="1" class="dg-button dg-button--primary"<?= $dbConnected ? '' : ' disabled' ?>>Speichern</button>
   </div>

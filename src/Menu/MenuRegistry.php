@@ -525,6 +525,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-abwesenheit') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);
         }
+        if ($slug === 'zeiterfassung-rueckstellung') {
+            return TimeProvisionService::canPreview($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {
