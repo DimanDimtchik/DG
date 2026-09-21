@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Darstellung der Belegkette (Kunden-PDF): Textvorlagen, Anzahlung, Kleinunternehmer § 19.
+ * Darstellung der Belegkette (Kunden-PDF): Textvorlagen, Anzahlung.
+ * Kleinunternehmer § 19 und andere 0-%-Sonderfälle → Firmendaten (tax_special_cases).
  * Nicht Nummernkreise — eigene Einstellungen unter Buchhaltung → Belegdarstellung.
  */
 final class DocumentPresentationSettings
@@ -53,13 +54,6 @@ final class DocumentPresentationSettings
                 'fixed_amount' => 0.0,
                 'label' => 'Anzahlung / Abschlag',
                 'text' => 'Nach Auftragsbestätigung ist eine Anzahlung fällig. Der Restbetrag wird nach Leistungserbringung berechnet.',
-            ],
-            'kleinunternehmer' => [
-                'enabled' => false,
-                'valid_from' => '',
-                'valid_to' => '',
-                'ended_early_at' => '',
-                'hint_text' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
             ],
         ];
     }
@@ -120,16 +114,6 @@ final class DocumentPresentationSettings
             $fixed = 0.0;
         }
 
-        $kuIn = is_array($input['kleinunternehmer'] ?? null) ? $input['kleinunternehmer'] : [];
-        $enabled = !empty($kuIn['enabled']);
-        $validFrom = self::sanitizeDate((string) ($kuIn['valid_from'] ?? ''));
-        $validTo = self::sanitizeDate((string) ($kuIn['valid_to'] ?? ''));
-        $endedEarly = self::sanitizeDate((string) ($kuIn['ended_early_at'] ?? ''));
-        $hint = self::sanitizeText((string) ($kuIn['hint_text'] ?? $defaults['kleinunternehmer']['hint_text']));
-        if ($hint === '') {
-            $hint = (string) $defaults['kleinunternehmer']['hint_text'];
-        }
-
         return [
             'offer_valid_days' => $offerDays,
             'texts' => $texts,
@@ -139,13 +123,6 @@ final class DocumentPresentationSettings
                 'fixed_amount' => $fixed,
                 'label' => self::sanitizeText((string) ($depositIn['label'] ?? $defaults['deposit']['label'])) ?: (string) $defaults['deposit']['label'],
                 'text' => self::sanitizeText((string) ($depositIn['text'] ?? $defaults['deposit']['text'])),
-            ],
-            'kleinunternehmer' => [
-                'enabled' => $enabled,
-                'valid_from' => $validFrom,
-                'valid_to' => $validTo,
-                'ended_early_at' => $endedEarly,
-                'hint_text' => $hint,
             ],
         ];
     }
@@ -175,19 +152,27 @@ final class DocumentPresentationSettings
                 'label' => (string) ($input['deposit_label'] ?? ''),
                 'text' => (string) ($input['deposit_text'] ?? ''),
             ],
-            'kleinunternehmer' => [
-                'enabled' => !empty($input['kleinunternehmer_enabled']),
-                'valid_from' => (string) ($input['kleinunternehmer_valid_from'] ?? ''),
-                'valid_to' => (string) ($input['kleinunternehmer_valid_to'] ?? ''),
-                'ended_early_at' => (string) ($input['kleinunternehmer_ended_early_at'] ?? ''),
-                'hint_text' => (string) ($input['kleinunternehmer_hint_text'] ?? ''),
-            ],
         ]));
     }
 
     public static function offerValidDays(): int
     {
         return (int) self::forForm()['offer_valid_days'];
+    }
+
+    /**
+     * Standard-Gültigkeitsdatum: Belegdatum + offer_valid_days.
+     */
+    public static function defaultOfferValidUntilDate(?string $fromYmd = null): string
+    {
+        $base = trim((string) $fromYmd);
+        if ($base === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $base)) {
+            $base = date('Y-m-d');
+        }
+        $days = self::offerValidDays();
+        $ts = strtotime($base . ' +' . $days . ' days');
+
+        return $ts !== false ? date('Y-m-d', $ts) : $base;
     }
 
     public static function defaultIntro(string $documentKind): string
@@ -216,50 +201,74 @@ final class DocumentPresentationSettings
         return self::forForm()['deposit'];
     }
 
-    /**
-     * @return array{enabled: bool, valid_from: string, valid_to: string, ended_early_at: string, hint_text: string}
-     */
-    public static function kleinunternehmerConfig(): array
+    /** Anzahlung in Belegdarstellung aktiv (%, fest oder material). */
+    public static function depositRequired(): bool
     {
-        return self::forForm()['kleinunternehmer'];
+        $mode = (string) (self::depositConfig()['mode'] ?? self::DEPOSIT_NONE);
+
+        return $mode !== self::DEPOSIT_NONE;
     }
 
     /**
-     * Prüft, ob am Belegdatum die Kleinunternehmerregelung aktiv ist.
+     * Berechnet den Anzahlungsbetrag (Brutto-Ziel) für einen Beleg.
+     *
+     * @param array<string, mixed> $voucher findById-/Form-Daten inkl. items
+     * @return array{amount: float, mode: string, label: string, hint: string}|null
      */
-    public static function isKleinunternehmerActiveOn(?string $voucherDateYmd): bool
+    public static function depositAmountForVoucher(array $voucher): ?array
     {
-        $cfg = self::kleinunternehmerConfig();
-        if (empty($cfg['enabled'])) {
-            return false;
-        }
-        $day = trim((string) $voucherDateYmd);
-        if ($day === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
-            $day = date('Y-m-d');
-        }
-        $from = (string) ($cfg['valid_from'] ?? '');
-        $to = (string) ($cfg['valid_to'] ?? '');
-        $ended = (string) ($cfg['ended_early_at'] ?? '');
-        if ($from !== '' && $day < $from) {
-            return false;
-        }
-        if ($ended !== '' && $day >= $ended) {
-            return false;
-        }
-        if ($to !== '' && $day > $to) {
-            return false;
+        $cfg = self::depositConfig();
+        $mode = (string) ($cfg['mode'] ?? self::DEPOSIT_NONE);
+        if ($mode === self::DEPOSIT_NONE) {
+            return null;
         }
 
-        return true;
-    }
+        $label = (string) ($cfg['label'] ?? 'Anzahlung');
+        $gross = VoucherRepository::parseMoney($voucher['gross_amount'] ?? 0);
+        $amount = 0.0;
+        $hint = '';
 
-    public static function kleinunternehmerHintForDate(?string $voucherDateYmd): string
-    {
-        if (!self::isKleinunternehmerActiveOn($voucherDateYmd)) {
-            return '';
+        if ($mode === self::DEPOSIT_PERCENT) {
+            $pct = (float) ($cfg['percent'] ?? 0);
+            $amount = round($gross * $pct / 100, 2);
+            $hint = number_format($pct, $pct == floor($pct) ? 0 : 2, ',', '.') . ' % vom Auftrag';
+        } elseif ($mode === self::DEPOSIT_FIXED) {
+            $amount = round((float) ($cfg['fixed_amount'] ?? 0), 2);
+            $hint = 'fester Betrag';
+        } elseif ($mode === self::DEPOSIT_MATERIAL) {
+            $items = is_array($voucher['items'] ?? null) ? $voucher['items'] : [];
+            $mat = DepositMaterialCostService::fromVoucherItems($items);
+            $amount = round((float) ($mat['amount'] ?? 0), 2);
+            $hint = 'Material / EK';
+            if ((int) ($mat['lines_missing'] ?? 0) > 0) {
+                $hint .= ' — ' . (int) $mat['lines_missing'] . ' Position(en) ohne Einkaufspreis';
+            }
+            if ((int) ($mat['lines_priced'] ?? 0) === 0) {
+                $amount = 0.0;
+                $hint = 'Materialkosten nicht berechenbar (keine EK-Preise)';
+            }
         }
 
-        return trim((string) self::kleinunternehmerConfig()['hint_text']);
+        if ($amount <= 0.0) {
+            return [
+                'amount' => 0.0,
+                'mode' => $mode,
+                'label' => $label,
+                'hint' => $hint !== '' ? $hint : 'Anzahlung 0 €',
+            ];
+        }
+
+        // Nie mehr als Auftragsbrutto verlangen.
+        if ($gross > 0.0 && $amount > $gross) {
+            $amount = $gross;
+        }
+
+        return [
+            'amount' => $amount,
+            'mode' => $mode,
+            'label' => $label,
+            'hint' => $hint,
+        ];
     }
 
     private static function sanitizeText(string $text): string
@@ -271,15 +280,5 @@ final class DocumentPresentationSettings
         }
 
         return $text;
-    }
-
-    private static function sanitizeDate(string $value): string
-    {
-        $value = trim($value);
-        if ($value === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
-            return '';
-        }
-
-        return $value;
     }
 }

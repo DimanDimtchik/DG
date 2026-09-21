@@ -74,6 +74,16 @@ $filledFinanzaemter = $countFilledByName($finanzaemter);
 if ($filledFinanzaemter > 0) {
     $taxSummaryParts[] = $filledFinanzaemter === 1 ? '1 Finanzamt' : $filledFinanzaemter . ' Finanzämter';
 }
+$taxSpecial = is_array($ext['tax_special_cases'] ?? null) ? $ext['tax_special_cases'] : [];
+$ku = is_array($taxSpecial['kleinunternehmer'] ?? null) ? $taxSpecial['kleinunternehmer'] : [];
+$pv = is_array($taxSpecial['photovoltaik'] ?? null) ? $taxSpecial['photovoltaik'] : [];
+$rc13b = is_array($taxSpecial['reverse_charge_13b'] ?? null) ? $taxSpecial['reverse_charge_13b'] : [];
+$taxFree4 = is_array($taxSpecial['tax_free_4'] ?? null) ? $taxSpecial['tax_free_4'] : [];
+if (!empty($ku['enabled'])) {
+    $taxSummaryParts[] = 'Kleinunternehmer § 19';
+} elseif (!empty($pv['enabled']) || !empty($rc13b['enabled']) || !empty($taxFree4['enabled'])) {
+    $taxSummaryParts[] = 'USt-Sonderfälle';
+}
 $taxSummary = $taxSummaryParts !== [] ? implode(' · ', $taxSummaryParts) : 'Noch keine Steuerdaten';
 $uvCarrier = $bgCarrierKey !== '' ? UvCarriers::get($bgCarrierKey) : null;
 $uvSummary = $uvCarrier ? ($uvCarrier['short'] . ' – ' . $uvCarrier['name']) : 'Nicht zugeordnet';
@@ -424,6 +434,72 @@ $bankSummary = $filledBanks > 0
       <?php endforeach; ?>
     </div>
     <p><button type="button" class="dg-button dg-button--secondary" data-repeater-add="finanzaemter">+ Finanzamt hinzufügen</button></p>
+
+    <h4 class="dg-settings-section__subtitle">Steuerliche Sonderfälle (0&nbsp;% MwSt)</h4>
+    <p class="dg-field-hint">
+      Firmenstatus für Regelungen ohne Umsatzsteuerausweis. Kleinunternehmer §&nbsp;19 gilt belegübergreifend im Zeitraum;
+      Photovoltaik, §&nbsp;13b und §&nbsp;4 markieren, dass die Firma diese 0&nbsp;%-Fälle anwenden darf (Klauseln/Steuerschlüssel am Beleg).
+      Darstellungstexte der Belegkette bleiben unter
+      <a href="<?= View::escape(SettingsRegistry::tabUrl('belegdarstellung')) ?>">Belegdarstellung</a>.
+    </p>
+
+    <fieldset class="dg-fieldset" style="margin-bottom:16px;">
+      <legend>Kleinunternehmer § 19 UStG</legend>
+      <label class="dg-field dg-field--checkbox">
+        <input type="checkbox" name="tax_special_cases[kleinunternehmer][enabled]" value="1"
+          <?= !empty($ku['enabled']) ? ' checked' : '' ?>>
+        <span>Kleinunternehmerregelung aktiv</span>
+      </label>
+      <div class="dg-form-grid">
+        <label class="dg-field">
+          <span>Gültig von</span>
+          <input type="date" name="tax_special_cases[kleinunternehmer][valid_from]"
+            value="<?= View::escape((string) ($ku['valid_from'] ?? '')) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Gültig bis (geplant)</span>
+          <input type="date" name="tax_special_cases[kleinunternehmer][valid_to]"
+            value="<?= View::escape((string) ($ku['valid_to'] ?? '')) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Vorzeitiger Abbruch ab</span>
+          <input type="date" name="tax_special_cases[kleinunternehmer][ended_early_at]"
+            value="<?= View::escape((string) ($ku['ended_early_at'] ?? '')) ?>">
+        </label>
+      </div>
+      <label class="dg-field dg-field--wide">
+        <span>Hinweistext auf Belegen</span>
+        <textarea name="tax_special_cases[kleinunternehmer][hint_text]" rows="2"><?= View::escape((string) ($ku['hint_text'] ?? '')) ?></textarea>
+        <small class="dg-field-hint">Wird automatisch auf buchbaren Ausgangsbelegen im Gültigkeitszeitraum gedruckt.</small>
+      </label>
+    </fieldset>
+
+    <fieldset class="dg-fieldset" style="margin-bottom:16px;">
+      <legend>Photovoltaik § 12 Abs. 3 UStG</legend>
+      <label class="dg-field dg-field--checkbox">
+        <input type="checkbox" name="tax_special_cases[photovoltaik][enabled]" value="1"
+          <?= !empty($pv['enabled']) ? ' checked' : '' ?>>
+        <span>Firma führt PV-Lieferungen/Installationen mit 0&nbsp;% MwSt aus</span>
+      </label>
+      <label class="dg-field dg-field--wide">
+        <span>Standard-Hinweistext (Klausel)</span>
+        <textarea name="tax_special_cases[photovoltaik][hint_text]" rows="2"><?= View::escape((string) ($pv['hint_text'] ?? '')) ?></textarea>
+      </label>
+    </fieldset>
+
+    <div class="dg-form-grid">
+      <label class="dg-field dg-field--checkbox">
+        <input type="checkbox" name="tax_special_cases[reverse_charge_13b][enabled]" value="1"
+          <?= !empty($rc13b['enabled']) ? ' checked' : '' ?>>
+        <span>Reverse Charge § 13b UStG (0&nbsp;% / Steuerschuldnerschaft Empfänger)</span>
+      </label>
+      <label class="dg-field dg-field--checkbox">
+        <input type="checkbox" name="tax_special_cases[tax_free_4][enabled]" value="1"
+          <?= !empty($taxFree4['enabled']) ? ' checked' : '' ?>>
+        <span>Steuerfreie Umsätze § 4 UStG</span>
+      </label>
+    </div>
+
     </div>
   </section>
 

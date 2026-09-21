@@ -66,6 +66,26 @@ final class CompanyExtendedSettings
             'addresses' => [],
             'owners' => [],
             'bank_accounts' => [],
+            // Steuerliche Sonderfälle (0 % MwSt / USt-Sonderregelungen) — Firmenstatus, nicht Belegdarstellung
+            'tax_special_cases' => [
+                'kleinunternehmer' => [
+                    'enabled' => false,
+                    'valid_from' => '',
+                    'valid_to' => '',
+                    'ended_early_at' => '',
+                    'hint_text' => 'Gemäß § 19 Abs. 1 UStG wird keine Umsatzsteuer berechnet und ausgewiesen (Kleinunternehmerregelung).',
+                ],
+                'photovoltaik' => [
+                    'enabled' => false,
+                    'hint_text' => 'Die Lieferung und Installation der Photovoltaikanlage ist umsatzsteuerbefreit nach § 12 Abs. 3 UStG i. V. m. § 3g UStG.',
+                ],
+                'reverse_charge_13b' => [
+                    'enabled' => false,
+                ],
+                'tax_free_4' => [
+                    'enabled' => false,
+                ],
+            ],
         ];
     }
 
@@ -105,8 +125,10 @@ final class CompanyExtendedSettings
     public static function config(): array
     {
         $stored = SettingsStore::get(self::STORE_KEY, self::defaults());
+        $cfg = self::normalize(is_array($stored) ? $stored : []);
+        $cfg['tax_special_cases'] = self::mergeLegacyKleinunternehmer($cfg['tax_special_cases']);
 
-        return self::normalize(is_array($stored) ? $stored : []);
+        return $cfg;
     }
 
     /**
@@ -299,6 +321,9 @@ final class CompanyExtendedSettings
         $cfg['employment_agency'] = array_replace($defaults['employment_agency'], is_array($cfg['employment_agency'] ?? null) ? $cfg['employment_agency'] : []);
         $cfg['tax_numbers'] = array_replace($defaults['tax_numbers'], is_array($cfg['tax_numbers'] ?? null) ? $cfg['tax_numbers'] : []);
         $cfg['trade_register'] = array_replace($defaults['trade_register'], is_array($cfg['trade_register'] ?? null) ? $cfg['trade_register'] : []);
+        $cfg['tax_special_cases'] = self::normalizeTaxSpecialCases(
+            is_array($cfg['tax_special_cases'] ?? null) ? $cfg['tax_special_cases'] : []
+        );
 
         $types = array_keys(CompanyTypes::labels());
         $cfg['company_type'] = in_array((string) ($cfg['company_type'] ?? ''), $types, true) ? (string) $cfg['company_type'] : '';
@@ -341,6 +366,8 @@ final class CompanyExtendedSettings
 
         $cfg['trade_register']['court'] = self::str($input['trade_register']['court'] ?? '');
         $cfg['trade_register']['number'] = self::str($input['trade_register']['number'] ?? '');
+
+        $cfg['tax_special_cases'] = self::sanitizeTaxSpecialCasesFromPost($input);
 
         $cfg['bg_data'] = self::sanitizeBgData(is_array($input['bg_data'] ?? null) ? $input['bg_data'] : []);
         $cfg['institutions'] = self::sanitizeInstitutions(is_array($input['institutions'] ?? null) ? $input['institutions'] : []);
@@ -885,5 +912,160 @@ final class CompanyExtendedSettings
         }
 
         return $url;
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return array<string, mixed>
+     */
+    private static function normalizeTaxSpecialCases(array $raw): array
+    {
+        $defaults = self::defaults()['tax_special_cases'];
+        $kuIn = is_array($raw['kleinunternehmer'] ?? null) ? $raw['kleinunternehmer'] : [];
+        $pvIn = is_array($raw['photovoltaik'] ?? null) ? $raw['photovoltaik'] : [];
+        $rcIn = is_array($raw['reverse_charge_13b'] ?? null) ? $raw['reverse_charge_13b'] : [];
+        $tfIn = is_array($raw['tax_free_4'] ?? null) ? $raw['tax_free_4'] : [];
+
+        $kuHint = self::str($kuIn['hint_text'] ?? $defaults['kleinunternehmer']['hint_text']);
+        if ($kuHint === '') {
+            $kuHint = (string) $defaults['kleinunternehmer']['hint_text'];
+        }
+        $pvHint = self::str($pvIn['hint_text'] ?? $defaults['photovoltaik']['hint_text']);
+        if ($pvHint === '') {
+            $pvHint = (string) $defaults['photovoltaik']['hint_text'];
+        }
+
+        return [
+            'kleinunternehmer' => [
+                'enabled' => !empty($kuIn['enabled']),
+                'valid_from' => self::sanitizeDateYmd((string) ($kuIn['valid_from'] ?? '')),
+                'valid_to' => self::sanitizeDateYmd((string) ($kuIn['valid_to'] ?? '')),
+                'ended_early_at' => self::sanitizeDateYmd((string) ($kuIn['ended_early_at'] ?? '')),
+                'hint_text' => $kuHint,
+            ],
+            'photovoltaik' => [
+                'enabled' => !empty($pvIn['enabled']),
+                'hint_text' => $pvHint,
+            ],
+            'reverse_charge_13b' => [
+                'enabled' => !empty($rcIn['enabled']),
+            ],
+            'tax_free_4' => [
+                'enabled' => !empty($tfIn['enabled']),
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    private static function sanitizeTaxSpecialCasesFromPost(array $input): array
+    {
+        $posted = is_array($input['tax_special_cases'] ?? null) ? $input['tax_special_cases'] : [];
+
+        return self::normalizeTaxSpecialCases($posted);
+    }
+
+    /**
+     * Übernimmt §-19-Daten aus der früheren Belegdarstellung, falls Firmendaten noch leer sind.
+     *
+     * @param array<string, mixed> $taxSpecial
+     * @return array<string, mixed>
+     */
+    private static function mergeLegacyKleinunternehmer(array $taxSpecial): array
+    {
+        $ku = is_array($taxSpecial['kleinunternehmer'] ?? null) ? $taxSpecial['kleinunternehmer'] : [];
+        $hasOwn = !empty($ku['enabled'])
+            || trim((string) ($ku['valid_from'] ?? '')) !== ''
+            || trim((string) ($ku['valid_to'] ?? '')) !== ''
+            || trim((string) ($ku['ended_early_at'] ?? '')) !== '';
+        if ($hasOwn) {
+            return $taxSpecial;
+        }
+
+        $legacyStore = SettingsStore::get('document_presentation', []);
+        if (!is_array($legacyStore)) {
+            return $taxSpecial;
+        }
+        $legacyKu = is_array($legacyStore['kleinunternehmer'] ?? null) ? $legacyStore['kleinunternehmer'] : [];
+        if ($legacyKu === []) {
+            return $taxSpecial;
+        }
+
+        $merged = self::normalizeTaxSpecialCases(array_merge($taxSpecial, [
+            'kleinunternehmer' => $legacyKu,
+        ]));
+
+        return $merged;
+    }
+
+    private static function sanitizeDateYmd(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return '';
+        }
+
+        return $value;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function taxSpecialCases(): array
+    {
+        return self::config()['tax_special_cases'];
+    }
+
+    /**
+     * @return array{enabled: bool, valid_from: string, valid_to: string, ended_early_at: string, hint_text: string}
+     */
+    public static function kleinunternehmerConfig(): array
+    {
+        $ku = self::taxSpecialCases()['kleinunternehmer'] ?? [];
+
+        return [
+            'enabled' => !empty($ku['enabled']),
+            'valid_from' => (string) ($ku['valid_from'] ?? ''),
+            'valid_to' => (string) ($ku['valid_to'] ?? ''),
+            'ended_early_at' => (string) ($ku['ended_early_at'] ?? ''),
+            'hint_text' => (string) ($ku['hint_text'] ?? ''),
+        ];
+    }
+
+    public static function isKleinunternehmerActiveOn(?string $voucherDateYmd): bool
+    {
+        $cfg = self::kleinunternehmerConfig();
+        if (empty($cfg['enabled'])) {
+            return false;
+        }
+        $day = trim((string) $voucherDateYmd);
+        if ($day === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
+            $day = date('Y-m-d');
+        }
+        $from = (string) ($cfg['valid_from'] ?? '');
+        $to = (string) ($cfg['valid_to'] ?? '');
+        $ended = (string) ($cfg['ended_early_at'] ?? '');
+        if ($from !== '' && $day < $from) {
+            return false;
+        }
+        if ($ended !== '' && $day >= $ended) {
+            return false;
+        }
+        if ($to !== '' && $day > $to) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function kleinunternehmerHintForDate(?string $voucherDateYmd): string
+    {
+        if (!self::isKleinunternehmerActiveOn($voucherDateYmd)) {
+            return '';
+        }
+
+        return trim((string) self::kleinunternehmerConfig()['hint_text']);
     }
 }

@@ -46,7 +46,7 @@ Perspektive: GoBD · UStG · Belegpflicht · Datenschutz · Handelsregister-Anga
 | Keine Buchung vor Rechnung (Angebot/AB/LS) | ✅ | — |
 | Rechnungsangaben § 14 UStG | ✅ Pflichtzeilen/Logo/Steuernr. | Stichprobe Druck je Dokumentart |
 | Netto / USt je Satz / Brutto | ✅ Summentabelle | Test gemischte Sätze 7/19/0 |
-| § 19 Kleinunternehmer-Hinweis | ✅ Zeitraum + Auto-Text | Produktiv aktivieren wenn zutreffend |
+| § 19 Kleinunternehmer-Hinweis | ✅ Firmendaten → Steuerliche Sonderfälle | Produktiv aktivieren wenn zutreffend |
 | Skonto / Mahnung / Teilzahlung | ✅ | Smoke-Test |
 | Unveränderbarkeit / Änderungsnachweis | ⚠️ Speichern überschreibt | GoBD: Änderungshistorie / Storno-Konzept prüfen |
 | Aufbewahrung Belegdateien | ✅ Storage pro Instanz | Backup-Konzept Hetzner |

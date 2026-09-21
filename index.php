@@ -396,6 +396,30 @@ switch ($path) {
         }
         exit;
 
+    case '/api/bank-match-suggest':
+        header('Content-Type: application/json; charset=utf-8');
+        $apiUser = AuthService::user();
+        if (
+            !$apiUser
+            || !RoleResolver::canEdit($apiUser)
+            || !MenuRegistry::canAccess($apiUser, 'buchhaltung-bankabgleich')
+        ) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Nur GET erlaubt.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $q = trim((string) ($_GET['q'] ?? ''));
+        echo json_encode([
+            'success' => true,
+            'data' => ['items' => BankReconciliationService::searchOpenVouchers($q, 15)],
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+
     case '/api/calendar-staff':
         CalendarStaffApi::handle();
         exit;
@@ -961,13 +985,15 @@ switch ($path) {
                 || isset($_POST['stock_shelf_delete'])
                 || isset($_POST['stock_places_save'])
                 || isset($_POST['stock_purchase_save'])
+                || isset($_POST['amazon_business_save'])
+                || isset($_POST['amazon_business_test'])
             )
         ) {
             $lagerTab = isset($_POST['lager_tab'])
                 ? preg_replace('/[^a-z]/', '', (string) $_POST['lager_tab'])
                 : (isset($_GET['lager_tab']) ? preg_replace('/[^a-z]/', '', (string) $_GET['lager_tab']) : '');
             if ($lagerTab === '') {
-                if (isset($_POST['stock_purchase_save'])) {
+                if (isset($_POST['stock_purchase_save']) || isset($_POST['amazon_business_save']) || isset($_POST['amazon_business_test'])) {
                     $lagerTab = 'einkauf';
                 } elseif (isset($_POST['stock_hall_save']) || isset($_POST['stock_hall_delete'])) {
                     $lagerTab = 'hallen';
@@ -985,6 +1011,16 @@ switch ($path) {
                     if (isset($_POST['stock_purchase_save'])) {
                         StockPurchaseSettings::saveFromPost($_POST);
                         Flash::set('success', 'Einkaufs-Einstellungen gespeichert.');
+                    } elseif (isset($_POST['amazon_business_save'])) {
+                        AmazonBusinessSettings::saveFromPost($_POST);
+                        Flash::set('success', 'Amazon-Business-Einstellungen gespeichert.');
+                    } elseif (isset($_POST['amazon_business_test'])) {
+                        AmazonBusinessSettings::saveFromPost($_POST);
+                        $test = AmazonBusinessAuth::testConnection();
+                        Flash::set(
+                            !empty($test['ok']) ? 'success' : 'error',
+                            (string) ($test['message'] ?? 'Verbindungstest fehlgeschlagen.')
+                        );
                     } elseif (isset($_POST['stock_location_save'])) {
                         $newId = StockStructureRepository::saveLocation($_POST);
                         Flash::set('success', 'Lagerort gespeichert.');
@@ -1366,7 +1402,21 @@ switch ($path) {
                             (string) ($_SERVER['REMOTE_ADDR'] ?? '')
                         );
                         Flash::set('success', 'Schulungsregeln bestätigt.');
-                        $redirect = '/app?page=akademie&view=kurs&slug=' . rawurlencode((string) $course['slug']);
+                        $openModule = (int) ($_POST['open_module'] ?? 0);
+                        if ($openModule > 0) {
+                            $allowed = AcademyRepository::moduleIdsForCourse($courseId);
+                            if (in_array($openModule, $allowed, true)) {
+                                $redirect = '/app?page=akademie&view=modul&slug='
+                                    . rawurlencode((string) $course['slug'])
+                                    . '&module_id=' . $openModule;
+                            } else {
+                                $redirect = '/app?page=akademie&view=kurs&slug='
+                                    . rawurlencode((string) $course['slug']);
+                            }
+                        } else {
+                            $redirect = '/app?page=akademie&view=kurs&slug='
+                                . rawurlencode((string) $course['slug']);
+                        }
                     } elseif (isset($_POST['academy_enroll']) && RoleResolver::isAdmin($user)) {
                         $courseId = (int) ($_POST['course_id'] ?? 0);
                         AcademyRepository::ensureAssignment((int) $user->id, $courseId, (int) $user->id);
@@ -2042,7 +2092,33 @@ switch ($path) {
             if ($editId < 1 && $draftVoucherId > 0) {
                 $editId = $draftVoucherId;
             }
+            $previousStatus = '';
+            if ($editId > 0) {
+                $beforeSave = VoucherRepository::findById($editId);
+                if ($beforeSave !== null) {
+                    $previousStatus = VoucherDocumentStatus::sanitize((string) ($beforeSave['document_status'] ?? ''));
+                }
+            }
             try {
+                $beforeSave = $editId > 0 ? VoucherRepository::findById($editId) : null;
+                if (
+                    VoucherDocumentRevisionService::isImmutable($beforeSave)
+                    && is_array($beforeSave)
+                    && !VoucherDocumentRevisionService::isStatusOnlyChange($beforeSave, $_POST)
+                ) {
+                    $revision = VoucherDocumentRevisionService::reviseInsteadOfOverwrite(
+                        $editId,
+                        $_POST,
+                        $user->id
+                    );
+                    Flash::set('success', $revision['message']);
+                    header(
+                        'Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . (int) $revision['new_id'],
+                        true,
+                        302
+                    );
+                    exit;
+                }
                 $newId = VoucherRepository::save($_POST, $editId > 0 ? $editId : null, $user->id);
                 $uploadWarning = '';
                 if (isset($_FILES['voucher_files']) && is_array($_FILES['voucher_files'])) {
@@ -2059,9 +2135,30 @@ switch ($path) {
                 } else {
                     Flash::set('success', 'Beleg gespeichert.');
                 }
-                $savedKind = VoucherDocumentKind::sanitize((string) ($_POST['document_kind'] ?? ''));
+                $savedRow = VoucherRepository::findById($newId);
+                $savedKind = VoucherDocumentKind::sanitize((string) ($savedRow['document_kind'] ?? $_POST['document_kind'] ?? ''));
+                $savedStatus = VoucherDocumentStatus::sanitize((string) ($savedRow['document_status'] ?? $_POST['document_status'] ?? ''));
+                $wantPrint = isset($_POST['voucher_save_and_print']) || isset($_POST['voucher_save_print']);
+
+                // Angebot → angenommen: direkt zur Auftragsbestätigung
+                if (
+                    !$wantPrint
+                    && $savedKind === VoucherDocumentKind::OFFER
+                    && $savedStatus === VoucherDocumentStatus::ACCEPTED
+                    && $previousStatus !== VoucherDocumentStatus::ACCEPTED
+                    && !VoucherDocumentStatus::isClosed($previousStatus)
+                ) {
+                    Flash::set('success', 'Angebot als angenommen gespeichert — bitte Auftragsbestätigung prüfen/speichern.');
+                    header(
+                        'Location: ' . VoucherDocumentChain::orderConfirmationFollowUpUrl($newId),
+                        true,
+                        302
+                    );
+                    exit;
+                }
+
                 // Neue manuelle Auftragsbestätigung → sofort Druck/Unterschrift
-                if ($postedVoucherId < 1 && $savedKind === VoucherDocumentKind::ORDER_CONFIRMATION) {
+                if ($wantPrint || ($postedVoucherId < 1 && $savedKind === VoucherDocumentKind::ORDER_CONFIRMATION)) {
                     header(
                         'Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $newId . '&download=print',
                         true,
@@ -2476,21 +2573,44 @@ switch ($path) {
             $voucherId = (int) ($_POST['id'] ?? 0);
             if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
                 Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
-            } else {
-                try {
-                    VoucherRepository::updateDocumentStatus(
-                        $voucherId,
-                        (string) ($_POST['document_status'] ?? '')
+                header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
+                exit;
+            }
+            try {
+                $before = VoucherRepository::findById($voucherId);
+                $previousStatus = $before !== null
+                    ? VoucherDocumentStatus::sanitize((string) ($before['document_status'] ?? ''))
+                    : '';
+                $kind = $before !== null
+                    ? VoucherDocumentKind::sanitize((string) ($before['document_kind'] ?? ''))
+                    : '';
+                $newStatus = VoucherDocumentStatus::sanitize((string) ($_POST['document_status'] ?? ''));
+                VoucherRepository::updateDocumentStatus($voucherId, $newStatus);
+                $stockWarnings = StockReservationService::takeLastWarnings();
+                if (
+                    $kind === VoucherDocumentKind::OFFER
+                    && $newStatus === VoucherDocumentStatus::ACCEPTED
+                    && $previousStatus !== VoucherDocumentStatus::ACCEPTED
+                ) {
+                    Flash::set(
+                        $stockWarnings !== [] ? 'warning' : 'success',
+                        'Angebot als angenommen markiert — bitte Auftragsbestätigung prüfen/speichern.'
+                            . ($stockWarnings !== [] ? ' ' . implode(' ', $stockWarnings) : '')
                     );
-                    $stockWarnings = StockReservationService::takeLastWarnings();
-                    if ($stockWarnings !== []) {
-                        Flash::set('warning', 'Dokumentstatus aktualisiert. ' . implode(' ', $stockWarnings));
-                    } else {
-                        Flash::set('success', 'Dokumentstatus aktualisiert.');
-                    }
-                } catch (Throwable $e) {
-                    Flash::set('error', $e->getMessage());
+                    header(
+                        'Location: ' . VoucherDocumentChain::orderConfirmationFollowUpUrl($voucherId),
+                        true,
+                        302
+                    );
+                    exit;
                 }
+                if ($stockWarnings !== []) {
+                    Flash::set('warning', 'Dokumentstatus aktualisiert. ' . implode(' ', $stockWarnings));
+                } else {
+                    Flash::set('success', 'Dokumentstatus aktualisiert.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
             }
             header('Location: /app?page=buchhaltung-beleg-form&action=edit&id=' . $voucherId, true, 302);
             exit;
@@ -2857,6 +2977,7 @@ switch ($path) {
             ? (string) $_GET['lager_tab']
             : 'orte';
         $stockPurchaseForm = StockPurchaseSettings::forForm();
+        $amazonBusinessForm = AmazonBusinessSettings::forForm();
         $stockLocations = StockStructureRepository::allLocations();
         $stockHalls = StockStructureRepository::allHalls();
         $stockShelves = StockStructureRepository::allShelves();
@@ -3209,6 +3330,39 @@ $legalProductsConfig = LegalProductSettings::config();
             if ($academyModuleId > 0) {
                 $academyModule = AcademyRepository::findModule($academyModuleId);
             }
+            if ($academyView === 'modul') {
+                $kursRedirect = $academyCourseSlug !== ''
+                    ? '/app?page=akademie&view=kurs&slug=' . rawurlencode($academyCourseSlug)
+                    : '/app?page=akademie&view=katalog';
+                if ($academyCourse === null || $academyModule === null) {
+                    Flash::set('error', 'Video oder Kurs nicht gefunden.');
+                    header('Location: ' . $kursRedirect, true, 302);
+                    exit;
+                }
+                $courseModuleIds = AcademyRepository::moduleIdsForCourse((int) $academyCourse['id']);
+                if (!in_array($academyModuleId, $courseModuleIds, true)) {
+                    Flash::set('error', 'Dieses Video gehört nicht zu diesem Kurs.');
+                    header('Location: ' . $kursRedirect, true, 302);
+                    exit;
+                }
+                if (!$academyRulesAccepted) {
+                    Flash::set(
+                        'info',
+                        'Bitte zuerst die Schulungsregeln bestätigen — danach öffnet sich das Video.'
+                    );
+                    header(
+                        'Location: ' . $kursRedirect . '&open_module=' . $academyModuleId,
+                        true,
+                        302
+                    );
+                    exit;
+                }
+                if ($academyAssignment === null) {
+                    Flash::set('error', 'Kurszuweisung fehlt.');
+                    header('Location: ' . $kursRedirect, true, 302);
+                    exit;
+                }
+            }
             if ($academyView === 'video-vorschau') {
                 if ($academyModule === null) {
                     Flash::set('error', 'Video nicht gefunden.');
@@ -3293,36 +3447,69 @@ $legalProductsConfig = LegalProductSettings::config();
             $voucherPage = max(1, (int) ($_GET['paged'] ?? 1));
             $voucherPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
             $voucherYear = $voucherPeriod->year;
-            $voucherTypeFilter = (string) ($_GET['type'] ?? '');
-            if (!array_key_exists($voucherTypeFilter, VoucherRepository::voucherTypeOptions())) {
-                $voucherTypeFilter = '';
+
+            // Legacy-Deep-Links: draft=1 / doc_kind / doc_status → Board-Parameter
+            $sectionParam = trim((string) ($_GET['section'] ?? ''));
+            $statusParam = trim((string) ($_GET['status'] ?? ''));
+            $legacyDraft = (string) ($_GET['draft'] ?? '');
+            $legacyDocKind = VoucherDocumentKind::sanitize((string) ($_GET['doc_kind'] ?? ''));
+            $legacyDocStatus = VoucherDocumentStatus::sanitize((string) ($_GET['doc_status'] ?? ''));
+            if ($sectionParam === '' && $legacyDraft === '1') {
+                $sectionParam = VoucherBelegeBoard::SECTION_ACTION;
+                $statusParam = 'drafts';
+            } elseif ($sectionParam === '' && $legacyDocKind !== '') {
+                $sectionParam = match ($legacyDocKind) {
+                    VoucherDocumentKind::OFFER => VoucherBelegeBoard::SECTION_OFFERS,
+                    VoucherDocumentKind::ORDER_CONFIRMATION => VoucherBelegeBoard::SECTION_ORDER_CONFIRMATIONS,
+                    VoucherDocumentKind::DELIVERY_NOTE => VoucherBelegeBoard::SECTION_DELIVERY_NOTES,
+                    VoucherDocumentKind::PARTIAL_INVOICE,
+                    VoucherDocumentKind::INVOICE,
+                    VoucherDocumentKind::FINAL_INVOICE => VoucherBelegeBoard::SECTION_INVOICES,
+                    default => VoucherBelegeBoard::SECTION_ACTION,
+                };
+                if ($legacyDocStatus !== '') {
+                    $statusParam = $legacyDocStatus;
+                }
+                if (in_array($legacyDocKind, [
+                    VoucherDocumentKind::PARTIAL_INVOICE,
+                    VoucherDocumentKind::INVOICE,
+                    VoucherDocumentKind::FINAL_INVOICE,
+                ], true)) {
+                    $_GET['invoice_kind'] = $legacyDocKind;
+                }
             }
-            $voucherDocumentKindFilter = VoucherDocumentKind::sanitize((string) ($_GET['doc_kind'] ?? ''));
-            $voucherDocumentStatusFilter = VoucherDocumentStatus::sanitize((string) ($_GET['doc_status'] ?? ''));
-            if ($voucherTypeFilter !== '' && !VoucherDocumentKind::voucherTypeSupportsDocumentKind($voucherTypeFilter)) {
-                $voucherDocumentKindFilter = '';
-                $voucherDocumentStatusFilter = '';
-            }
-            $voucherDraftFilter = (string) ($_GET['draft'] ?? '');
-            if ($voucherDraftFilter !== '1' && $voucherDraftFilter !== '0') {
-                $voucherDraftFilter = '';
-            }
-            $voucherList = VoucherRepository::list([
+
+            $voucherBoard = VoucherBelegeBoard::build([
                 'date_from' => $voucherPeriod->dateFrom,
                 'date_to' => $voucherPeriod->dateTo,
-                'type' => $voucherTypeFilter,
-                'document_kind' => $voucherDocumentKindFilter,
-                'document_status' => $voucherDocumentStatusFilter,
+                'year' => $voucherPeriod->year,
+                'month' => $voucherPeriod->month,
+                'date_from_raw' => (!$voucherPeriod->isFullYear() || $voucherPeriod->month !== null)
+                    ? $voucherPeriod->dateFrom : '',
+                'date_to_raw' => (!$voucherPeriod->isFullYear() || $voucherPeriod->month !== null)
+                    ? $voucherPeriod->dateTo : '',
                 'search' => $voucherSearch,
+                'contact_id' => (int) ($_GET['contact_id'] ?? 0),
+                'amount_min' => trim((string) ($_GET['amount_min'] ?? '')),
+                'amount_max' => trim((string) ($_GET['amount_max'] ?? '')),
+                'section' => $sectionParam,
+                'status' => $statusParam,
+                'invoice_kind' => (string) ($_GET['invoice_kind'] ?? ''),
+                'pay' => (string) ($_GET['pay'] ?? ''),
                 'page' => $voucherPage,
-                'draft' => $voucherDraftFilter,
+                'actionable_only' => (string) ($_GET['actionable'] ?? ''),
             ]);
+            $voucherList = $voucherBoard['list'];
             $voucherYears = VoucherRepository::availableYears();
             $voucherDraftCount = VoucherRepository::countDrafts();
             $voucherImportPending = SettingsStore::get('install_voucher_import_pending', []);
             $voucherFileCounts = VoucherFileStorage::countsForVouchers(
                 array_map(static fn (array $v): int => (int) ($v['id'] ?? 0), $voucherList['items'] ?? [])
             );
+            $voucherTypeFilter = '';
+            $voucherDocumentKindFilter = '';
+            $voucherDocumentStatusFilter = '';
+            $voucherDraftFilter = '';
             $contentTemplate = 'modules/buchhaltung-belege';
             $title = 'Belege';
             $currentPage = 'buchhaltung-belege';
@@ -3382,13 +3569,24 @@ $legalProductsConfig = LegalProductSettings::config();
                 $ledgerPostings = [];
                 $followFromId = (int) ($_GET['follow_from'] ?? 0);
                 $followDocumentKind = VoucherDocumentKind::sanitize((string) ($_GET['document_kind'] ?? ''));
+                $reanimate = trim((string) ($_GET['reanimate'] ?? '')) === '1';
                 if ($followFromId > 0 && $followDocumentKind !== '') {
                     try {
-                        $form = VoucherDocumentChain::prefillFollowUp($followFromId, $followDocumentKind);
+                        if ($reanimate && $followDocumentKind === VoucherDocumentKind::OFFER) {
+                            $form = VoucherDocumentChain::prefillReanimatedOffer($followFromId);
+                            $title = 'Neu anbieten (aktuelle Preise)';
+                        } else {
+                            $followPaymentId = (int) ($_GET['payment_id'] ?? 0);
+                            $form = VoucherDocumentChain::prefillFollowUp(
+                                $followFromId,
+                                $followDocumentKind,
+                                $followPaymentId > 0 ? $followPaymentId : null
+                            );
+                            $title = 'Folgebeleg: ' . VoucherDocumentKind::label($followDocumentKind);
+                        }
                         $chainSummary = is_array($form['chain_summary'] ?? null) ? $form['chain_summary'] : null;
                         unset($form['chain_summary']);
                         $voucherChain = VoucherDocumentChain::chainView($followFromId);
-                        $title = 'Folgebeleg: ' . VoucherDocumentKind::label($followDocumentKind);
                     } catch (Throwable $e) {
                         $formError = $e->getMessage();
                     }
@@ -3400,8 +3598,11 @@ $legalProductsConfig = LegalProductSettings::config();
                     header('Location: /app?page=buchhaltung-belege', true, 302);
                     exit;
                 }
+                $voucher = VoucherDocumentStatus::markOfferExpiredIfDue($voucher);
                 if (trim((string) ($_GET['download'] ?? '')) === 'print') {
                     try {
+                        VoucherDocumentRevisionService::markSentOnPrint($voucherId);
+                        $voucher = VoucherRepository::findById($voucherId) ?? $voucher;
                         $showChainInternal = trim((string) ($_GET['show_chain'] ?? '')) === '1';
                         $html = VoucherDocumentPrintService::render($voucher, [
                             'show_chain' => $showChainInternal,
@@ -3428,9 +3629,19 @@ $legalProductsConfig = LegalProductSettings::config();
                 $formError = null;
                 $voucherChain = VoucherDocumentChain::chainView($voucherId);
                 $documentKind = (string) ($form['document_kind'] ?? '');
-                if ($canEdit && !$isDraftVoucher && VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income') {
+                $documentStatus = VoucherDocumentStatus::sanitize((string) ($form['document_status'] ?? ''));
+                if (
+                    $canEdit
+                    && !$isDraftVoucher
+                    && VoucherRepository::normalizeVoucherType((string) ($form['voucher_type'] ?? '')) === 'income'
+                    && !VoucherDocumentStatus::isClosed($documentStatus)
+                ) {
                     $followUpKinds = VoucherDocumentKind::followUpKinds($documentKind);
                 }
+                $canReanimateOffer = $canEdit
+                    && !$isDraftVoucher
+                    && $documentKind === VoucherDocumentKind::OFFER
+                    && VoucherDocumentStatus::isClosed($documentStatus);
                 if ($documentKind === VoucherDocumentKind::FINAL_INVOICE) {
                     $parentId = (int) ($form['parent_voucher_id'] ?? 0);
                     if ($parentId > 0) {
@@ -3724,13 +3935,6 @@ $legalProductsConfig = LegalProductSettings::config();
             $bankTransactionsOpen = $bankTxClassified['open'];
             $bankTransactionsGhosts = $bankTxClassified['ghosts'];
             $bankTransactionsMatched = BankTransactionRepository::list('matched');
-            $bankMatchVouchers = Database::isConfigured()
-                ? (Database::pdo()->query(
-                    "SELECT id, invoice_number, gross_amount FROM dg_vouchers
-                     WHERE is_draft = 0 AND payment_status IN ('open', 'direct_debit')
-                     ORDER BY voucher_date DESC LIMIT 200"
-                )->fetchAll(PDO::FETCH_ASSOC) ?: [])
-                : [];
             $contentTemplate = 'modules/buchhaltung-bankabgleich';
             $title = 'Bankabgleich';
             $currentPage = 'buchhaltung-bankabgleich';
@@ -4310,7 +4514,7 @@ $legalProductsConfig = LegalProductSettings::config();
             } else {
                 $mediaList = MediaRepository::listWithUsage();
                 $contentTemplate = 'modules/bilder';
-                $title = 'Bilder';
+                $title = 'Media';
                 $currentPage = 'bilder';
             }
         } elseif ($page === 'zeiterfassung-team' && MenuRegistry::canAccess($user, 'zeiterfassung-team')) {
@@ -4619,6 +4823,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $departmentEmployees = $departmentEmployees ?? DepartmentRepository::assignableEmployees();
         $lagerStrukturTab = $lagerStrukturTab ?? 'orte';
         $stockPurchaseForm = $stockPurchaseForm ?? StockPurchaseSettings::forForm();
+        $amazonBusinessForm = $amazonBusinessForm ?? AmazonBusinessSettings::forForm();
         $stockLocations = $stockLocations ?? StockStructureRepository::allLocations();
         $stockHalls = $stockHalls ?? StockStructureRepository::allHalls();
         $stockShelves = $stockShelves ?? StockStructureRepository::allShelves();
@@ -4685,7 +4890,30 @@ $legalProductsConfig = LegalProductSettings::config();
             'page' => 1,
             'per_page' => 25,
             'total_pages' => 1,
+            'gross_sum' => 0.0,
         ];
+        $voucherBoard = $voucherBoard ?? [
+            'section' => VoucherBelegeBoard::SECTION_ACTION,
+            'status' => '',
+            'invoice_kind' => '',
+            'pay' => '',
+            'actionable_only' => false,
+            'contact_id' => 0,
+            'contact_label' => '',
+            'amount_min' => '',
+            'amount_max' => '',
+            'search' => '',
+            'sections' => [],
+            'chips' => [],
+            'invoice_kind_chips' => [],
+            'pay_chips' => [],
+            'list' => $voucherList,
+            'contacts' => [],
+            'action_total' => 0,
+        ];
+        $voucherPeriod = $voucherPeriod ?? AccountingPeriodFilter::fromRequest(['year' => $voucherYear]);
+        $voucherDraftCount = $voucherDraftCount ?? 0;
+        $voucherImportPending = $voucherImportPending ?? [];
         $voucherId = $voucherId ?? null;
         $transfersPrepared = $transfersPrepared ?? [];
         $transfersExecuted = $transfersExecuted ?? [];
@@ -4705,6 +4933,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $ledgerPostings = $ledgerPostings ?? [];
         $voucherChain = $voucherChain ?? ['documents' => [], 'current_id' => 0];
         $followUpKinds = $followUpKinds ?? [];
+        $canReanimateOffer = $canReanimateOffer ?? false;
         $chainSummary = $chainSummary ?? null;
         $voucherMailConfigured = $voucherMailConfigured ?? MailSettings::isConfigured();
         $voucherMailCanSend = $voucherMailCanSend ?? false;
@@ -4739,7 +4968,6 @@ $legalProductsConfig = LegalProductSettings::config();
         $bankTransactionsOpen = $bankTransactionsOpen ?? [];
         $bankTransactionsGhosts = $bankTransactionsGhosts ?? [];
         $bankTransactionsMatched = $bankTransactionsMatched ?? [];
-        $bankMatchVouchers = $bankMatchVouchers ?? [];
         $isAdmin = $isAdmin ?? RoleResolver::isAdmin($user);
         $kontakteReturnTo = $kontakteReturnTo ?? '';
         $kontakteSupplierNumberPreview = $kontakteSupplierNumberPreview ?? '';
@@ -4869,6 +5097,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'departmentEmployees',
             'lagerStrukturTab',
             'stockPurchaseForm',
+            'amazonBusinessForm',
             'stockLocations',
             'stockHalls',
             'stockShelves',
@@ -4943,12 +5172,16 @@ $legalProductsConfig = LegalProductSettings::config();
             'chartCatalogCount',
             'chartHintCount',
             'voucherList',
+            'voucherBoard',
+            'voucherPeriod',
             'voucherSearch',
             'voucherPage',
             'voucherYear',
             'voucherTypeFilter',
             'voucherDocumentKindFilter',
             'voucherDocumentStatusFilter',
+            'voucherDraftCount',
+            'voucherImportPending',
             'voucherYears',
             'voucherFileCounts',
             'voucherId',
@@ -4966,6 +5199,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'ledgerPostings',
             'voucherChain',
             'followUpKinds',
+            'canReanimateOffer',
             'chainSummary',
             'voucherMailConfigured',
             'voucherMailCanSend',
@@ -4997,7 +5231,6 @@ $legalProductsConfig = LegalProductSettings::config();
             'bankTransactionsOpen',
             'bankTransactionsGhosts',
             'bankTransactionsMatched',
-            'bankMatchVouchers',
             'jaYear',
             'jaPreview',
             'fiscalYears',

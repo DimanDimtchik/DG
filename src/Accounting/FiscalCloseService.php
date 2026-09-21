@@ -113,7 +113,13 @@ final class FiscalCloseService
         $opos = OpenItemsRepository::list();
         $yearItems = array_filter(
             $opos['items'],
-            static fn (array $row): bool => (int) substr((string) ($row['voucher_date'] ?? ''), 0, 4) === $year
+            static function (array $row) use ($year): bool {
+                if ((int) substr((string) ($row['voucher_date'] ?? ''), 0, 4) !== $year) {
+                    return false;
+                }
+                // Jahresabschluss: nur buchbare Rechnungen, keine reinen Angebots-/AB-Anzahlungen.
+                return empty($row['is_advance']);
+            }
         );
         $count = count($yearItems);
         $total = round(array_sum(array_map(

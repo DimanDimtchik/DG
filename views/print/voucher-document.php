@@ -41,29 +41,64 @@ $mandatoryLines = is_array($mandatoryLines ?? null) ? $mandatoryLines : [];
 $totals = is_array($totalsBreakdown ?? null) ? $totalsBreakdown : [
     'net' => 0.0,
     'tax' => 0.0,
-    'gross' => (float) ($voucher['gross_amount'] ?? 0),
+    'gross' => VoucherRepository::parseMoney($voucher['gross_amount'] ?? 0),
     'by_rate' => [],
 ];
 $isOffer = ($kind ?? '') === VoucherDocumentKind::OFFER;
 $validUntilRaw = trim((string) ($validUntil ?? ''));
+$companyName = trim((string) ($company['name'] ?? ''));
+$companyLines = is_array($company['lines'] ?? null) ? $company['lines'] : [];
+// Absenderzeile im Fenster: nur postalische Kurzform (Name · Straße · PLZ Ort)
+$senderParts = [];
+if ($companyName !== '') {
+    $senderParts[] = $companyName;
+}
+foreach (array_slice($companyLines, 0, 2) as $line) {
+    $line = trim((string) $line);
+    if ($line !== '') {
+        $senderParts[] = $line;
+    }
+}
+$senderLine = implode(' · ', $senderParts);
+$customerName = trim((string) ($customerBox['name'] ?? $customer));
+$customerLines = is_array($customerBox['lines'] ?? null) ? $customerBox['lines'] : [];
 ?>
-<div class="vd-letterhead"<?= !empty($forEmail) ? ' style="display:table;width:100%;margin-bottom:16px;"' : '' ?>>
-  <div class="vd-letterhead__col"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;width:50%;"' : '' ?>>
+<?php if (empty($forEmail)) : ?>
+  <div class="vd-fold-marks" aria-hidden="true"></div>
+<?php endif; ?>
+
+<div class="vd-head"<?= !empty($forEmail) ? ' style="display:table;width:100%;margin-bottom:12px;"' : '' ?>>
+  <div class="vd-head__brand"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;text-align:right;"' : '' ?>>
     <?php if ($logoUrl !== '') : ?>
       <div class="vd-logo vd-logo--<?= View::escape($logoShapeClass) ?>">
         <img src="<?= View::escape($logoUrl) ?>" alt="<?= View::escape($logoAlt) ?>" class="vd-logo__img">
       </div>
     <?php endif; ?>
-    <strong><?= View::escape((string) ($company['name'] ?? '')) ?></strong><br>
-    <?php foreach (($company['lines'] ?? []) as $line) : ?>
-      <?= View::escape((string) $line) ?><br>
-    <?php endforeach; ?>
-  </div>
-  <div class="vd-letterhead__col vd-letterhead__col--right"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;width:50%;text-align:right;"' : '' ?>>
-    <?php if ((string) ($customerBox['name'] ?? '') !== '') : ?>
-      <strong><?= View::escape((string) $customerBox['name']) ?></strong><br>
+    <?php if ($companyName !== '') : ?>
+      <div class="vd-head__company"><?= View::escape($companyName) ?></div>
     <?php endif; ?>
-    <?php foreach (($customerBox['lines'] ?? []) as $line) : ?>
+  </div>
+</div>
+
+<?php /* DIN-Fensterumschlag: Empfänger (Käufer) links im Fenster, Absenderzeile darüber */ ?>
+<div class="vd-address-row"<?= !empty($forEmail) ? ' style="display:table;width:100%;margin:12px 0 16px;"' : '' ?>>
+  <div class="vd-window"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;width:55%;"' : '' ?>>
+    <?php if ($senderLine !== '') : ?>
+      <div class="vd-absender"<?= !empty($forEmail) ? ' style="font-size:10px;color:#5c6678;margin-bottom:6px;text-decoration:underline;"' : '' ?>>
+        <?= View::escape($senderLine) ?>
+      </div>
+    <?php endif; ?>
+    <div class="vd-empfaenger">
+      <?php if ($customerName !== '') : ?>
+        <strong><?= View::escape($customerName) ?></strong><br>
+      <?php endif; ?>
+      <?php foreach ($customerLines as $line) : ?>
+        <?= View::escape((string) $line) ?><br>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <div class="vd-head__side"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;width:45%;text-align:right;font-size:12px;color:#5c6678;"' : '' ?>>
+    <?php foreach (array_slice($companyLines, 2) as $line) : ?>
       <?= View::escape((string) $line) ?><br>
     <?php endforeach; ?>
   </div>
@@ -122,28 +157,6 @@ $validUntilRaw = trim((string) ($validUntil ?? ''));
   </div>
 <?php endif; ?>
 
-<?php if (is_array($finalSummary) && ($finalSummary['partials'] ?? []) !== []) : ?>
-  <h2>Abzug Abschlagsrechnungen</h2>
-  <table>
-    <thead>
-      <tr><th>Rechnung</th><th>Datum</th><th class="num">Betrag</th></tr>
-    </thead>
-    <tbody>
-      <?php foreach ($finalSummary['partials'] as $partial) : ?>
-        <tr>
-          <td><?= View::escape((string) ($partial['invoice_number'] ?? '')) ?></td>
-          <td><?= View::escape((string) ($partial['voucher_date'] ?? '')) ?></td>
-          <td class="num">− <?= View::escape((string) ($partial['gross_display'] ?? '')) ?> €</td>
-        </tr>
-      <?php endforeach; ?>
-      <tr class="total">
-        <td colspan="2">Auftragssumme / Rest</td>
-        <td class="num"><?= View::escape((string) ($finalSummary['order_total_display'] ?? '')) ?> / <?= View::escape((string) ($finalSummary['remaining_display'] ?? '')) ?> €</td>
-      </tr>
-    </tbody>
-  </table>
-<?php endif; ?>
-
 <?php if ($introText !== '') : ?>
   <div class="vd-intro"<?= !empty($forEmail) ? ' style="margin:12px 0;font-size:14px;"' : '' ?>>
     <?= nl2br(View::escape($introText)) ?>
@@ -175,9 +188,9 @@ $validUntilRaw = trim((string) ($validUntil ?? ''));
         <tr>
           <td><?= View::escape($title) ?></td>
           <td class="num"><?= View::escape((string) ($item['quantity'] ?? '1')) ?> <?= View::escape((string) ($item['unit'] ?? '')) ?></td>
-          <td class="num"><?= $fmt((float) ($item['unit_price_gross'] ?? 0)) ?> €</td>
+          <td class="num"><?= $fmt($item['unit_price_gross'] ?? 0) ?> €</td>
           <td class="num"><?= (int) ($item['tax_rate'] ?? 19) ?> %</td>
-          <td class="num"><?= $fmt((float) ($item['gross_amount'] ?? 0)) ?> €</td>
+          <td class="num"><?= $fmt($item['gross_amount'] ?? 0) ?> €</td>
         </tr>
       <?php endforeach; ?>
     </tbody>
@@ -188,12 +201,12 @@ $validUntilRaw = trim((string) ($validUntil ?? ''));
   <tbody>
     <tr>
       <td>Zwischensumme (netto)</td>
-      <td class="num"><?= $fmt((float) ($totals['net'] ?? 0)) ?> €</td>
+      <td class="num"><?= $fmt($totals['net'] ?? 0) ?> €</td>
     </tr>
     <?php foreach (($totals['by_rate'] ?? []) as $taxRow) : ?>
       <?php
         $rate = (int) ($taxRow['rate'] ?? 0);
-        $taxAmt = (float) ($taxRow['tax'] ?? 0);
+        $taxAmt = VoucherRepository::parseMoney($taxRow['tax'] ?? 0);
         $label = $rate === 0
           ? 'Umsatzsteuer 0 %'
           : 'zzgl. ' . $rate . ' % USt.';
@@ -203,16 +216,34 @@ $validUntilRaw = trim((string) ($validUntil ?? ''));
         <td class="num"><?= $taxAmt == 0.0 && $rate === 0 ? '—' : $fmt($taxAmt) . ' €' ?></td>
       </tr>
     <?php endforeach; ?>
-    <?php if (($totals['by_rate'] ?? []) === [] && (float) ($totals['tax'] ?? 0) > 0) : ?>
+    <?php if (($totals['by_rate'] ?? []) === [] && VoucherRepository::parseMoney($totals['tax'] ?? 0) > 0) : ?>
       <tr>
         <td>zzgl. Umsatzsteuer</td>
-        <td class="num"><?= $fmt((float) $totals['tax']) ?> €</td>
+        <td class="num"><?= $fmt($totals['tax'] ?? 0) ?> €</td>
       </tr>
     <?php endif; ?>
     <tr class="total">
       <td>Gesamtbetrag</td>
-      <td class="num"><?= $fmt((float) ($totals['gross'] ?? 0)) ?> €</td>
+      <td class="num"><?= $fmt($totals['gross'] ?? 0) ?> €</td>
     </tr>
+    <?php if (is_array($finalSummary) && ($finalSummary['partials'] ?? []) !== []) : ?>
+      <?php foreach ($finalSummary['partials'] as $partial) : ?>
+        <tr>
+          <td>
+            Abzgl. Anzahlung
+            <?= View::escape((string) (($partial['invoice_number'] ?? '') !== '' ? $partial['invoice_number'] : ('#' . (int) ($partial['id'] ?? 0)))) ?>
+            <?php if (($partial['voucher_date'] ?? '') !== '') : ?>
+              (<?= View::escape((string) $partial['voucher_date']) ?>)
+            <?php endif; ?>
+          </td>
+          <td class="num">− <?= View::escape((string) ($partial['gross_display'] ?? '')) ?> €</td>
+        </tr>
+      <?php endforeach; ?>
+      <tr class="total">
+        <td><strong>Restbetrag</strong></td>
+        <td class="num"><strong><?= View::escape((string) ($finalSummary['remaining_display'] ?? '0,00')) ?> €</strong></td>
+      </tr>
+    <?php endif; ?>
   </tbody>
 </table>
 

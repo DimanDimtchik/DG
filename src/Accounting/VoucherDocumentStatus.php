@@ -9,6 +9,7 @@ final class VoucherDocumentStatus
     public const ACCEPTED = 'accepted';
     public const BILLED = 'billed';
     public const CANCELLED = 'cancelled';
+    public const EXPIRED = 'expired';
 
     /**
      * @return array<string, string>
@@ -21,6 +22,7 @@ final class VoucherDocumentStatus
             self::ACCEPTED => 'Angenommen',
             self::BILLED => 'Abgerechnet',
             self::CANCELLED => 'Storniert',
+            self::EXPIRED => 'Abgelaufen',
         ];
     }
 
@@ -43,10 +45,16 @@ final class VoucherDocumentStatus
         return match (self::sanitize($status)) {
             self::SENT => 'dg-badge--pending',
             self::ACCEPTED, self::BILLED => 'dg-badge--ok',
-            self::CANCELLED => 'dg-badge--error',
+            self::CANCELLED, self::EXPIRED => 'dg-badge--error',
             self::DRAFT => 'dg-badge--muted',
             default => 'dg-badge--muted',
         };
+    }
+
+    /** Storniert oder abgelaufen — keine normalen Folgebelege, nur Neu anbieten. */
+    public static function isClosed(string $status): bool
+    {
+        return in_array(self::sanitize($status), [self::CANCELLED, self::EXPIRED], true);
     }
 
     public static function defaultForKind(string $documentKind): string
@@ -67,7 +75,13 @@ final class VoucherDocumentStatus
         $kind = VoucherDocumentKind::sanitize($documentKind);
 
         return match ($kind) {
-            VoucherDocumentKind::OFFER,
+            VoucherDocumentKind::OFFER => [
+                self::DRAFT,
+                self::SENT,
+                self::ACCEPTED,
+                self::CANCELLED,
+                self::EXPIRED,
+            ],
             VoucherDocumentKind::ORDER_CONFIRMATION => [
                 self::DRAFT,
                 self::SENT,
@@ -107,12 +121,19 @@ final class VoucherDocumentStatus
         }
 
         $next = match ($kind) {
-            VoucherDocumentKind::OFFER,
+            VoucherDocumentKind::OFFER => match ($current) {
+                '' => [self::SENT, self::ACCEPTED],
+                self::DRAFT => [self::SENT, self::ACCEPTED, self::CANCELLED],
+                self::SENT => [self::ACCEPTED, self::CANCELLED, self::EXPIRED],
+                self::ACCEPTED => [self::CANCELLED],
+                self::EXPIRED, self::CANCELLED => [],
+                default => [],
+            },
             VoucherDocumentKind::ORDER_CONFIRMATION => match ($current) {
-                '' => [self::SENT],
-                self::DRAFT => [self::SENT],
+                '' => [self::SENT, self::ACCEPTED],
+                self::DRAFT => [self::SENT, self::ACCEPTED],
                 self::SENT => [self::ACCEPTED, self::CANCELLED],
-                self::ACCEPTED => [self::BILLED, self::CANCELLED],
+                self::ACCEPTED => [self::CANCELLED],
                 default => [],
             },
             VoucherDocumentKind::DELIVERY_NOTE => match ($current) {
@@ -149,6 +170,7 @@ final class VoucherDocumentStatus
             self::ACCEPTED => 'Als angenommen markieren',
             self::BILLED => 'Als abgerechnet markieren',
             self::CANCELLED => 'Stornieren',
+            self::EXPIRED => 'Als abgelaufen markieren',
             self::DRAFT => 'Als Entwurf markieren',
             default => self::label($status),
         };
@@ -162,5 +184,50 @@ final class VoucherDocumentStatus
         }
 
         return in_array($status, self::allowedForKind($documentKind), true);
+    }
+
+    /**
+     * Angebot mit abgelaufenem „gültig bis“ → Status Abgelaufen (persistiert).
+     *
+     * @param array<string, mixed> $voucher
+     * @return array<string, mixed>
+     */
+    public static function markOfferExpiredIfDue(array $voucher): array
+    {
+        $id = (int) ($voucher['id'] ?? 0);
+        $kind = VoucherDocumentKind::sanitize((string) ($voucher['document_kind'] ?? ''));
+        if ($id < 1 || $kind !== VoucherDocumentKind::OFFER) {
+            return $voucher;
+        }
+        if (!empty($voucher['is_draft'])) {
+            return $voucher;
+        }
+
+        $status = self::sanitize((string) ($voucher['document_status'] ?? ''));
+        if ($status === self::EXPIRED || $status === self::CANCELLED || $status === self::ACCEPTED) {
+            return $voucher;
+        }
+        if ($status !== self::DRAFT && $status !== self::SENT && $status !== '') {
+            return $voucher;
+        }
+
+        $validUntil = trim((string) ($voucher['delivery_date'] ?? ''));
+        if ($validUntil === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $validUntil)) {
+            $base = trim((string) ($voucher['voucher_date'] ?? ''));
+            if ($base !== '') {
+                $validUntil = DocumentPresentationSettings::defaultOfferValidUntilDate($base);
+            }
+        }
+        if ($validUntil === '' || $validUntil >= date('Y-m-d')) {
+            return $voucher;
+        }
+
+        try {
+            VoucherRepository::updateDocumentStatus($id, self::EXPIRED);
+            $voucher['document_status'] = self::EXPIRED;
+        } catch (Throwable) {
+        }
+
+        return $voucher;
     }
 }

@@ -19,7 +19,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Offene Posten (OPOS)</h1>
-      <p class="dg-lead">Forderungen und Verbindlichkeiten mit Personenkonten — DATEV-konform bei verknüpftem Kontakt.</p>
+      <p class="dg-lead">Forderungen und Verbindlichkeiten inkl. Anzahlungen auf Angebot/AB — DATEV-konform bei verknüpftem Kontakt.</p>
     </div>
   </header>
 
@@ -66,8 +66,9 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
             <tr>
               <th>Datum</th>
               <th>Fällig</th>
-              <th>Art</th>
-              <th>Rechnung</th>
+              <th>Belegart</th>
+              <th>Richtung</th>
+              <th>Nummer</th>
               <th>Kontakt</th>
               <th>Personenkonto</th>
               <th class="dg-table__num">Bezahlt</th>
@@ -88,6 +89,12 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
                   <?= $due !== '' ? View::escape($due) : '—' ?>
                   <?php if ($overdue > 0) : ?>
                     <span class="dg-badge dg-badge--pending"><?= $overdue ?> T. überf.</span>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= View::escape((string) ($item['document_kind_label'] ?? '—')) ?>
+                  <?php if (!empty($item['is_advance'])) : ?>
+                    <span class="dg-badge dg-badge--muted" title="Anzahlung vor Rechnung">Anzahlung</span>
                   <?php endif; ?>
                 </td>
                 <td><?= ($item['direction'] ?? '') === 'receivable' ? 'Forderung' : 'Verbindlichkeit' ?></td>

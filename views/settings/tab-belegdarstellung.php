@@ -6,7 +6,6 @@
 $settings = $documentPresentationSettings ?? DocumentPresentationSettings::forForm();
 $texts = is_array($settings['texts'] ?? null) ? $settings['texts'] : [];
 $deposit = is_array($settings['deposit'] ?? null) ? $settings['deposit'] : DocumentPresentationSettings::defaults()['deposit'];
-$ku = is_array($settings['kleinunternehmer'] ?? null) ? $settings['kleinunternehmer'] : DocumentPresentationSettings::defaults()['kleinunternehmer'];
 $kindLabels = [
     VoucherDocumentKind::OFFER => 'Angebot',
     VoucherDocumentKind::ORDER_CONFIRMATION => 'Auftragsbestätigung',
@@ -28,6 +27,8 @@ $kindLabels = [
   <p class="dg-field-hint">
     Kundendarstellung der Belegkette (Angebot → … → Rechnung). Nummern bleiben unter
     <a href="<?= View::escape(SettingsRegistry::tabUrl('nummernkreise')) ?>">Nummernkreise</a>.
+    Kleinunternehmer §&nbsp;19 und andere 0&nbsp;%-MwSt-Fälle unter
+    <a href="<?= View::escape(SettingsRegistry::tabUrl('firmendaten')) ?>">Firmendaten → Steuerliche Sonderfälle</a>.
     Pro Beleg bleiben Intro/Footer weiterhin editierbar; hier liegen die Vorlagen.
   </p>
 
@@ -93,40 +94,6 @@ $kindLabels = [
     <label class="dg-field dg-field--wide">
       <span>Erläuterungstext (Kundenansicht)</span>
       <textarea name="deposit_text" rows="3"<?= !$dbConnected ? ' disabled' : '' ?>><?= View::escape((string) ($deposit['text'] ?? '')) ?></textarea>
-    </label>
-  </section>
-
-  <section class="dg-form-section">
-    <h3 class="dg-subsection-title">Kleinunternehmer § 19 UStG</h3>
-    <p class="dg-field-hint">
-      Bei aktiver Regelung wird der Hinweis automatisch auf buchbaren Ausgangsbelegen im Zeitraum mitgedruckt.
-      Vorzeitiger Abbruch endet die Regelung ab dem gesetzten Datum (einschließlich).
-    </p>
-    <label class="dg-field dg-field--checkbox">
-      <input type="checkbox" name="kleinunternehmer_enabled" value="1"
-        <?= !empty($ku['enabled']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-      <span>Kleinunternehmerregelung aktiv</span>
-    </label>
-    <div class="dg-form-grid">
-      <label class="dg-field">
-        <span>Gültig von</span>
-        <input type="date" name="kleinunternehmer_valid_from"
-          value="<?= View::escape((string) ($ku['valid_from'] ?? '')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
-      </label>
-      <label class="dg-field">
-        <span>Gültig bis (geplant)</span>
-        <input type="date" name="kleinunternehmer_valid_to"
-          value="<?= View::escape((string) ($ku['valid_to'] ?? '')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
-      </label>
-      <label class="dg-field">
-        <span>Vorzeitiger Abbruch ab</span>
-        <input type="date" name="kleinunternehmer_ended_early_at"
-          value="<?= View::escape((string) ($ku['ended_early_at'] ?? '')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
-      </label>
-    </div>
-    <label class="dg-field dg-field--wide">
-      <span>Hinweistext auf Belegen</span>
-      <textarea name="kleinunternehmer_hint_text" rows="2"<?= !$dbConnected ? ' disabled' : '' ?>><?= View::escape((string) ($ku['hint_text'] ?? '')) ?></textarea>
     </label>
   </section>
 

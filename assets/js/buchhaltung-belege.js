@@ -11,6 +11,8 @@
   var listDocStatus = document.getElementById('dg-voucher-doc-status-filter');
   var listDocKindField = document.getElementById('dg-voucher-doc-kind-filter-field');
   var listDocStatusField = document.getElementById('dg-voucher-doc-status-filter-field');
+  var listContact = document.getElementById('dg-voucher-contact-filter');
+  var filterForm = document.getElementById('dg-belege-filter-form');
 
   function voucherTypeSupportsDocumentKind(type) {
     return type === 'income';
@@ -35,6 +37,32 @@
       if (listDocStatus) {
         listDocStatus.value = '';
       }
+    }
+  }
+
+  if (filterForm) {
+    var yearSelect = filterForm.querySelector('select[name="year"]');
+    var monthSelect = filterForm.querySelector('select[name="month"]');
+    if (yearSelect) {
+      yearSelect.addEventListener('change', function () {
+        filterForm.submit();
+      });
+    }
+    if (monthSelect) {
+      monthSelect.addEventListener('change', function () {
+        filterForm.submit();
+      });
+    }
+    if (listContact) {
+      listContact.addEventListener('change', function () {
+        filterForm.submit();
+      });
+    }
+    var actionable = filterForm.querySelector('input[name="actionable"]');
+    if (actionable) {
+      actionable.addEventListener('change', function () {
+        filterForm.submit();
+      });
     }
   }
 
@@ -1190,6 +1218,7 @@
       syncInvoiceItemsSum();
       syncBookingFromItems();
     }
+    refreshReverseChargePreview();
   }
 
   function applyTipDefaultAccount() {
@@ -1329,11 +1358,14 @@
       banner.id = 'dg-voucher-save-error';
       banner.className = 'dg-flash dg-flash--error';
       banner.setAttribute('role', 'alert');
-      var actions = form.querySelector('.dg-form-actions');
+      var actions = document.querySelector('#dg-voucher-form .dg-form-actions')
+        || (form && form.querySelector('.dg-form-actions'));
       if (actions && actions.parentNode) {
         actions.parentNode.insertBefore(banner, actions);
-      } else {
+      } else if (form) {
         form.appendChild(banner);
+      } else {
+        document.body.insertBefore(banner, document.body.firstChild);
       }
     }
     banner.hidden = false;
@@ -1534,7 +1566,22 @@
 
   function refreshReverseChargePreview() {
     var type = getReverseChargeType();
-    if (!type) {
+    var bookable = isBookableDocumentKind();
+    var rcField = document.getElementById('dg-voucher-reverse-charge-field');
+    var nonBookableHint = document.getElementById('dg-voucher-nonbookable-tax-hint');
+    if (rcField) {
+      rcField.hidden = !bookable;
+    }
+    if (nonBookableHint) {
+      nonBookableHint.hidden = bookable;
+    }
+    if (reverseChargeTypeSelect) {
+      reverseChargeTypeSelect.disabled = !!readOnly || !bookable;
+      if (!bookable) {
+        reverseChargeTypeSelect.value = '';
+      }
+    }
+    if (!bookable || !type) {
       if (rcPanels) {
         rcPanels.hidden = true;
       }
@@ -1680,9 +1727,56 @@
   var arapCurrentLabel = document.getElementById('dg-voucher-arap-current-label');
   var arapNextLabel = document.getElementById('dg-voucher-arap-next-label');
   var arapHint = document.getElementById('dg-voucher-arap-hint');
-  var voucherDateInput = document.getElementById('dg-voucher-date');
   var deliveryDateInput = document.getElementById('dg-voucher-delivery-date');
   var accrualConfig = config.accrual || {};
+  var offerValidDays = parseInt(String(config.offerValidDays || (deliveryDateInput && deliveryDateInput.getAttribute('data-offer-valid-days')) || '14'), 10);
+  if (isNaN(offerValidDays) || offerValidDays < 1) {
+    offerValidDays = 14;
+  }
+
+  function addDaysYmd(ymd, days) {
+    if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+      return '';
+    }
+    var parts = ymd.split('-');
+    var d = new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+    d.setUTCDate(d.getUTCDate() + days);
+    var mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    var dd = String(d.getUTCDate()).padStart(2, '0');
+    return d.getUTCFullYear() + '-' + mm + '-' + dd;
+  }
+
+  function syncOfferValidUntil(force) {
+    if (!deliveryDateInput || !voucherDateInput || readOnly) {
+      return;
+    }
+    if (getDocumentKind() !== 'offer') {
+      deliveryDateInput.removeAttribute('data-offer-valid-auto');
+      return;
+    }
+    var base = voucherDateInput.value || '';
+    var current = deliveryDateInput.value || '';
+    var isAuto = deliveryDateInput.getAttribute('data-offer-valid-auto') === '1';
+    // force nur leeren/gleichen Wert füllen — manuell gesetztes Datum nie überschreiben
+    if (isAuto || current === '' || current === base) {
+      var next = addDaysYmd(base, offerValidDays);
+      if (next) {
+        deliveryDateInput.value = next;
+        deliveryDateInput.setAttribute('data-offer-valid-auto', '1');
+      }
+    }
+  }
+
+  if (deliveryDateInput) {
+    deliveryDateInput.addEventListener('change', function () {
+      deliveryDateInput.removeAttribute('data-offer-valid-auto');
+    });
+  }
+  if (voucherDateInput) {
+    voucherDateInput.addEventListener('change', function () {
+      syncOfferValidUntil(false);
+    });
+  }
 
   // Beim Laden gespeicherte Verteilung merken (nur wenn ARAP bereits aktiv war).
   // Daran erkennen wir, dass eine Neuberechnung eine bestehende Verteilung
@@ -2402,6 +2496,11 @@
       syncDocumentStatusField();
       syncInvoiceNumberField();
       syncArapUi();
+      syncOfferValidUntil(getDocumentKind() === 'offer');
+      refreshReverseChargePreview();
+      if (paymentTermsSection) {
+        paymentTermsSection.hidden = !(getVoucherType() === 'income' && isBookableDocumentKind());
+      }
     });
   }
 

@@ -18,7 +18,7 @@ final class SettingsRegistry
                 'tabs' => [
                     'firmendaten' => [
                         'label' => 'Firmendaten',
-                        'lead' => 'Firma, Anschrift und Kontakt — Absender für E-Mails und Dokumente.',
+                        'lead' => 'Firma, Anschrift, Kontakt, Steuernummern und steuerliche Sonderfälle (u. a. § 19).',
                         'template' => 'company',
                     ],
                     'datenbank' => [
@@ -148,7 +148,7 @@ final class SettingsRegistry
                     ],
                     'belegdarstellung' => [
                         'label' => 'Belegdarstellung',
-                        'lead' => 'Kunden-PDF der Belegkette: Textvorlagen, Anzahlung, Kleinunternehmer § 19 — nicht Nummernkreise.',
+                        'lead' => 'Kunden-PDF der Belegkette: Textvorlagen und Anzahlung — nicht Nummernkreise; § 19 unter Firmendaten.',
                         'template' => 'belegdarstellung',
                     ],
                 ],
@@ -297,6 +297,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
                 return 'lager-struktur';
             }
             if (isset($_POST['stock_purchase_save'])) {
+                return 'lager-struktur';
+            }
+            if (isset($_POST['amazon_business_save']) || isset($_POST['amazon_business_test'])) {
                 return 'lager-struktur';
             }
             if (isset($_POST['legal_products_save'])) {

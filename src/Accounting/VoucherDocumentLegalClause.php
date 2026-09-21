@@ -78,6 +78,34 @@ final class VoucherDocumentLegalClause
     }
 
     /**
+     * Firmenstatus (Firmendaten → Steuerliche Sonderfälle) — nicht als Beleg-Checkbox.
+     *
+     * @return list<string>
+     */
+    public static function firmLevelClauseKeys(): array
+    {
+        return [
+            self::SMALL_BUSINESS_19,
+            self::PHOTOVOLTAIC_12_3,
+        ];
+    }
+
+    /**
+     * Katalog für das Belegformular (ohne Firmen-Sonderfälle § 19 / PV).
+     *
+     * @return array<string, array{label: string, hint: string, text: string, group: string}>
+     */
+    public static function catalogForForm(): array
+    {
+        $catalog = self::catalog();
+        foreach (self::firmLevelClauseKeys() as $key) {
+            unset($catalog[$key]);
+        }
+
+        return $catalog;
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function options(): array
@@ -110,9 +138,13 @@ final class VoucherDocumentLegalClause
         }
 
         $catalog = self::catalog();
+        $firmKeys = array_fill_keys(self::firmLevelClauseKeys(), true);
         foreach ($raw as $key) {
             $key = strtolower(trim((string) $key));
-            if ($key !== '' && isset($catalog[$key])) {
+            if ($key === '' || isset($firmKeys[$key])) {
+                continue;
+            }
+            if (isset($catalog[$key])) {
                 $keys[] = $key;
             }
         }
@@ -194,7 +226,7 @@ final class VoucherDocumentLegalClause
     public static function clientConfig(): array
     {
         $groups = [];
-        foreach (self::catalog() as $key => $meta) {
+        foreach (self::catalogForForm() as $key => $meta) {
             $groups[] = [
                 'key' => $key,
                 'label' => (string) ($meta['label'] ?? $key),

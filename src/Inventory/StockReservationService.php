@@ -49,7 +49,7 @@ final class StockReservationService
         $kind = VoucherDocumentKind::sanitize((string) ($voucher['document_kind'] ?? ''));
         $status = VoucherDocumentStatus::sanitize((string) ($voucher['document_status'] ?? ''));
 
-        if ($status === VoucherDocumentStatus::CANCELLED) {
+        if ($status === VoucherDocumentStatus::CANCELLED || $status === VoucherDocumentStatus::EXPIRED) {
             return [];
         }
 

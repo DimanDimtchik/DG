@@ -6,17 +6,29 @@
  * @var int $voucherId
  * @var bool $canEdit
  * @var bool $voucherMailCanSend
+ * @var bool $canReanimateOffer
  */
 $documents = $voucherChain['documents'] ?? [];
 $followUps = $followUpKinds ?? [];
 $mailCanSend = (bool) ($voucherMailCanSend ?? false);
+$canReanimate = (bool) ($canReanimateOffer ?? false);
+$depositGate = ((int) ($voucherId ?? 0) > 0)
+    ? VoucherDocumentChain::followUpDepositGate((int) $voucherId, $followUps)
+    : ['blocked' => [], 'reason' => ''];
+$blockedFollowUps = $depositGate['blocked'];
+$depositProgress = ((int) ($voucherId ?? 0) > 0)
+    ? VoucherDocumentChain::depositProgress((int) $voucherId)
+    : null;
+$unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
+    ? VoucherDocumentChain::unabsorbedAdvancePayments((int) $voucherId)
+    : [];
 ?>
 <?php if ($documents !== []) : ?>
-  <section class="dg-panel dg-voucher-chain" style="margin-bottom: 20px;">
+  <section class="dg-panel dg-voucher-chain" id="dg-voucher-chain" style="margin-bottom: 20px;">
     <header class="dg-panel__toolbar dg-panel__toolbar--lead">
       <div>
         <h2 class="dg-subsection-title">Belegkette</h2>
-        <p class="dg-field-hint">Alle verknüpften Dokumente — von Angebot bis Schlussrechnung.</p>
+        <p class="dg-field-hint">Alle verknüpften Dokumente — inkl. stornierter und abgelaufener Angebote.</p>
       </div>
       <?php if ($voucherId > 0) : ?>
         <a class="dg-button dg-button--small" href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $voucherId ?>&amp;download=print" target="_blank" rel="noopener">Drucken / PDF</a>
@@ -73,6 +85,74 @@ $mailCanSend = (bool) ($voucherMailCanSend ?? false);
         </tbody>
       </table>
     </div>
+
+    <?php if (is_array($depositProgress)) : ?>
+      <h3 class="dg-subsection-title" style="margin-top:1rem">Anzahlungen</h3>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Erwartete Anzahlung</th>
+              <th class="dg-table__num">Erhalten</th>
+              <th class="dg-table__num">Rest</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <?php if ((float) ($depositProgress['expected'] ?? 0) > 0.01) : ?>
+                  <?= View::escape((string) ($depositProgress['expected_display'] ?? '0,00')) ?> €
+                  <?php if (($depositProgress['mode'] ?? '') === DocumentPresentationSettings::DEPOSIT_MATERIAL) : ?>
+                    <span class="dg-field-hint" style="display:inline;margin-left:.35rem">(Material / EK)</span>
+                  <?php endif; ?>
+                <?php else : ?>
+                  0,00 €
+                  <span class="dg-field-hint" style="display:inline;margin-left:.35rem">
+                    (keine Anzahlung konfiguriert — Rest = Gesamtbetrag <?= View::escape((string) ($depositProgress['order_total_display'] ?? '0,00')) ?> €)
+                  </span>
+                <?php endif; ?>
+              </td>
+              <td class="dg-table__num"><?= View::escape((string) ($depositProgress['received_display'] ?? '0,00')) ?> €</td>
+              <td class="dg-table__num"><strong><?= View::escape((string) ($depositProgress['remaining_display'] ?? '0,00')) ?> €</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="dg-field-hint">
+        Pro erhaltener Zahlung eine Abschlagsrechnung erzeugen, dann per E-Mail versenden.
+      </p>
+      <?php if ($canEdit && $unabsorbedPayments !== []) : ?>
+        <div class="dg-table-wrap" style="margin-top:.75rem">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Art</th>
+                <th class="dg-table__num">Betrag</th>
+                <th>Beleg</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($unabsorbedPayments as $cp) : ?>
+                <tr>
+                  <td><?= View::escape((string) ($cp['payment_date'] ?? '')) ?></td>
+                  <td><?= View::escape((string) ($cp['payment_method_label'] ?? $cp['payment_method'] ?? '')) ?></td>
+                  <td class="dg-table__num"><?= View::escape(VoucherRepository::formatMoney(VoucherRepository::parseMoney($cp['amount'] ?? 0))) ?> €</td>
+                  <td><?= View::escape((string) ($cp['chain_document_label'] ?? '')) ?></td>
+                  <td>
+                    <a
+                      class="dg-button dg-button--small"
+                      href="/app?page=buchhaltung-beleg-form&amp;action=new&amp;follow_from=<?= (int) $voucherId ?>&amp;document_kind=<?= View::escape(VoucherDocumentKind::PARTIAL_INVOICE) ?>&amp;payment_id=<?= (int) ($cp['id'] ?? 0) ?>"
+                    >Abschlagsrechnung</a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
   </section>
 <?php endif; ?>
 
@@ -116,17 +196,49 @@ $mailCanSend = (bool) ($voucherMailCanSend ?? false);
   </section>
 <?php endif; ?>
 
-<?php if ($canEdit && $voucherId > 0 && $followUps !== []) : ?>
+<?php if ($canEdit && $voucherId > 0 && ($followUps !== [] || $canReanimate)) : ?>
   <section class="dg-panel dg-voucher-chain-actions" style="margin-bottom: 20px;">
     <h2 class="dg-subsection-title">Folgebeleg erstellen</h2>
-    <p class="dg-field-hint">Positionen und Kunde werden vom aktuellen Beleg übernommen.</p>
-    <p class="dg-form-actions">
-      <?php foreach ($followUps as $kind) : ?>
-        <a
-          class="dg-button"
-          href="/app?page=buchhaltung-beleg-form&amp;action=new&amp;follow_from=<?= (int) $voucherId ?>&amp;document_kind=<?= View::escape($kind) ?>"
-        ><?= View::escape(VoucherDocumentKind::label($kind)) ?></a>
-      <?php endforeach; ?>
-    </p>
+    <?php if ($canReanimate) : ?>
+      <p class="dg-field-hint">
+        Angebot ist abgelaufen oder storniert. „Neu anbieten“ erzeugt ein neues Angebot in derselben Kette
+        mit aktuellen Preisen aus dem Artikelstamm.
+      </p>
+      <p class="dg-form-actions">
+        <a class="dg-button dg-button--primary" href="<?= View::escape(VoucherDocumentChain::reanimateOfferUrl((int) $voucherId)) ?>">
+          Neu anbieten (aktuelle Preise)
+        </a>
+      </p>
+    <?php else : ?>
+      <p class="dg-field-hint">Positionen und Kunde werden vom aktuellen Beleg übernommen.</p>
+      <?php if (($depositGate['reason'] ?? '') !== '') : ?>
+        <p class="dg-field-hint dg-field-hint--warning"><?= View::escape((string) $depositGate['reason']) ?></p>
+      <?php endif; ?>
+      <p class="dg-form-actions">
+        <?php foreach ($followUps as $kind) : ?>
+          <?php
+            $isBlocked = in_array($kind, $blockedFollowUps, true);
+            $label = VoucherDocumentKind::label($kind);
+            // Abschlag mit offenen Zahlungen: lieber über Zahlungstabelle (eine RE pro Zahlung)
+            if ($kind === VoucherDocumentKind::PARTIAL_INVOICE && $unabsorbedPayments !== []) {
+                continue;
+            }
+          ?>
+          <?php if ($isBlocked) : ?>
+            <span
+              class="dg-button dg-button--disabled"
+              aria-disabled="true"
+              title="<?= View::escape((string) ($depositGate['reason'] ?? 'Zuerst Anzahlung buchen')) ?>"
+              style="opacity:.45;cursor:not-allowed;pointer-events:auto;"
+            ><?= View::escape($label) ?></span>
+          <?php else : ?>
+            <a
+              class="dg-button"
+              href="/app?page=buchhaltung-beleg-form&amp;action=new&amp;follow_from=<?= (int) $voucherId ?>&amp;document_kind=<?= View::escape($kind) ?>"
+            ><?= View::escape($label) ?></a>
+          <?php endif; ?>
+        <?php endforeach; ?>
+      </p>
+    <?php endif; ?>
   </section>
 <?php endif; ?>

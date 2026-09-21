@@ -27,7 +27,8 @@ Heute: Angebot per Mail versenden (SMTP) speichert `voucher_id` + Message-ID. An
 | Thema | Ort |
 |-------|-----|
 | Nummern | Einstellungen → **Nummernkreise** |
-| Darstellungstexte, Anzahlung, § 19 | Einstellungen → Buchhaltung → **Belegdarstellung** |
+| Darstellungstexte, Anzahlung | Einstellungen → Buchhaltung → **Belegdarstellung** |
+| Kleinunternehmer § 19, PV, weitere 0 % | Einstellungen → **Firmendaten** → Steuerliche Sonderfälle |
 | Pro Beleg überschreiben | Belegformular: Intro / Footer / „gültig bis“ |
 
 ---
@@ -42,7 +43,7 @@ Heute: Angebot per Mail versenden (SMTP) speichert `voucher_id` + Message-ID. An
 | Gültig bis (Angebot) | Pflichtfeld | Feld „gültig bis“ (= delivery_date) + `{valid_until}` |
 | Summen Netto+USt+Brutto | transparent | Summentabelle nach Positionen |
 | Anzahlung / Abschlag | Zahlungsbedingungen | Belegdarstellung: %, fest, materialbasiert |
-| § 19 Kleinunternehmer | Hinweistexte | Zeitraum + vorzeitiger Abbruch + Auto-Hinweis |
+| § 19 Kleinunternehmer | Firmendaten | Zeitraum + vorzeitiger Abbruch + Auto-Hinweis |
 
 ---
 
@@ -53,7 +54,7 @@ Heute: Angebot per Mail versenden (SMTP) speichert `voucher_id` + Message-ID. An
 | **A** | Kunden-Druck bereinigen; Intro/Footer Kette; Summentabelle; A4-Vorschau | **erledigt** |
 | **B** | Einstellungen „Belegdarstellung“ (Vorlagen, Gültigkeitstage) | **erledigt** |
 | **C** | Anzahlungsregeln (%, fest, Material-Anzeige) | **UI + Drucktext** · Materialberechnung aus Lager folgt |
-| **D** | Kleinunternehmer § 19 (Zeitraum, Abbruch, Auto-Hinweis) | **erledigt** (Hinweis auf buchbaren Belegen) |
+| **D** | Kleinunternehmer § 19 (Zeitraum, Abbruch, Auto-Hinweis) | **erledigt** · Ort: Firmendaten → Steuerliche Sonderfälle |
 
 ---
 

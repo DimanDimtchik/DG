@@ -205,9 +205,9 @@ final class VoucherIncomePositions
             $articleNumber = trim((string) ($line['article_number'] ?? ''));
             if ($title === '' && $articleId < 1 && $articleNumber === '') {
                 // Manuell erfasste Zeile ohne Katalogtreffer — Titel aus Betragszeile ableiten.
-                $qtyProbe = self::parseQuantity($line['quantity'] ?? 0);
-                $priceProbe = round((float) str_replace(',', '.', (string) ($line['unit_price_gross'] ?? '0')), 2);
-                $grossProbe = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+                $qtyProbe = VoucherRepository::parseQuantity($line['quantity'] ?? 0);
+                $priceProbe = VoucherRepository::parseMoney($line['unit_price_gross'] ?? 0);
+                $grossProbe = VoucherRepository::parseMoney($line['gross_amount'] ?? 0);
                 if ($qtyProbe > 0 && ($priceProbe != 0.0 || $grossProbe != 0.0)) {
                     $title = 'Position';
                 } else {
@@ -218,15 +218,15 @@ final class VoucherIncomePositions
                 $title = $articleNumber !== '' ? $articleNumber : 'Artikel';
             }
 
-            $quantity = self::parseQuantity($line['quantity'] ?? 1);
+            $quantity = VoucherRepository::parseQuantity($line['quantity'] ?? 1);
             if ($quantity <= 0) {
                 continue;
             }
 
-            $unitPrice = round((float) str_replace(',', '.', (string) ($line['unit_price_gross'] ?? '0')), 2);
+            $unitPrice = VoucherRepository::parseMoney($line['unit_price_gross'] ?? 0);
             $gross = round($quantity * $unitPrice, 2);
             if ($gross === 0.0) {
-                $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+                $gross = VoucherRepository::parseMoney($line['gross_amount'] ?? 0);
             }
             if ($gross === 0.0) {
                 continue;
@@ -346,11 +346,6 @@ final class VoucherIncomePositions
      */
     private static function parseQuantity(mixed $value): float
     {
-        if (is_string($value)) {
-            $value = str_replace(',', '.', trim($value));
-        }
-        $quantity = round((float) $value, 3);
-
-        return $quantity > 0 ? $quantity : 0.0;
+        return VoucherRepository::parseQuantity($value);
     }
 }

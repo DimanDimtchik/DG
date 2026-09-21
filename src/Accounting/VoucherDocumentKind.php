@@ -63,7 +63,7 @@ final class VoucherDocumentKind
     }
 
     /**
-     * Angebot, AB, Lieferschein → keine Journalbuchung / kein OPOS.
+     * Angebot, AB, Lieferschein → keine Journalbuchung (Erlös erst mit Rechnung).
      */
     public static function isBookable(string $kind, string $voucherType): bool
     {
@@ -78,6 +78,30 @@ final class VoucherDocumentKind
         }
 
         return in_array($kind, [self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE], true);
+    }
+
+    /**
+     * Bankabgleich / OPOS: Angebot und AB (Anzahlung vor Rechnung) ja, Lieferschein nein.
+     */
+    public static function allowsOpenItemTracking(string $kind, string $voucherType): bool
+    {
+        $voucherType = VoucherRepository::normalizeVoucherType($voucherType);
+        if ($voucherType !== 'income') {
+            return true;
+        }
+
+        $kind = self::sanitize($kind);
+        if ($kind === '') {
+            return true;
+        }
+
+        return in_array($kind, [
+            self::OFFER,
+            self::ORDER_CONFIRMATION,
+            self::PARTIAL_INVOICE,
+            self::INVOICE,
+            self::FINAL_INVOICE,
+        ], true);
     }
 
   /**

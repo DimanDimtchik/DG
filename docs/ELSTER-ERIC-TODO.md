@@ -49,7 +49,7 @@
 - [x] **Hersteller-ID freigegeben: `34573`** (2026-09-13) — in CRM-Einstellungen → ELSTER hinterlegen
 - [ ] Optional zusätzlich in `config/elster.local.php` (`manufacturer_id`) auf Root-Server nach Umzug
 - [x] ELSTER-Newsletter abonniert (2026-09-07)
-- [ ] ERiC Linux x64 (aktuelle Mindestversion) aus Entwicklerbereich laden
+- [ ] ERiC Linux x64 (**aktuell ERiC 44.3**, Sept-Update 2026) aus Entwicklerbereich laden — erst nach Hetzner-Umzug installieren; bis dahin CSV-Modus
 - [ ] Lizenzvereinbarung ERiC akzeptieren / dokumentieren
 - [ ] **Test-Softwarezertifikat** in Mein ELSTER anlegen (nicht Produktions-Zertifikat für Tests)
 - [ ] Testfinanzamt / Testmerker `700000004` für UStVA-Tests dokumentieren

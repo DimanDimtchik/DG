@@ -85,10 +85,26 @@ final class VoucherPaymentRepository
      */
     public static function amountDue(array $voucher): float
     {
-        $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
-        $discount = round((float) ($voucher['discount_amount'] ?? 0), 2);
+        $gross = VoucherRepository::parseMoney($voucher['gross_amount'] ?? 0);
+        $discount = VoucherRepository::parseMoney($voucher['discount_amount'] ?? 0);
+        $due = round(max(0.0, $gross - $discount), 2);
 
-        return round(max(0.0, $gross - $discount), 2);
+        // Schlussrechnung: Positionen = Auftragssumme, Zahlbetrag = nach Abzug der Anzahlungen.
+        $kind = VoucherDocumentKind::sanitize((string) ($voucher['document_kind'] ?? ''));
+        if ($kind === VoucherDocumentKind::FINAL_INVOICE) {
+            $parentId = (int) ($voucher['parent_voucher_id'] ?? 0);
+            $voucherId = (int) ($voucher['id'] ?? 0);
+            if ($parentId > 0) {
+                $summary = VoucherDocumentChain::finalInvoiceSummary(
+                    $parentId,
+                    $voucherId > 0 ? $voucherId : null
+                );
+                $partialTotal = (float) ($summary['partial_total'] ?? 0);
+                $due = round(max(0.0, $due - $partialTotal), 2);
+            }
+        }
+
+        return $due;
     }
 
     /**
@@ -96,17 +112,16 @@ final class VoucherPaymentRepository
      */
     public static function openAmount(array $voucher, ?float $totalPaid = null): float
     {
-        $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
+        $due = self::amountDue($voucher);
         $voucherId = (int) ($voucher['id'] ?? 0);
         if ($totalPaid === null) {
-            $totalPaid = $voucherId > 0 ? self::totalPaid($voucherId) : round((float) ($voucher['paid_amount'] ?? 0), 2);
+            $totalPaid = $voucherId > 0
+                ? self::totalPaid($voucherId)
+                : VoucherRepository::parseMoney($voucher['paid_amount'] ?? 0);
         }
         $totalPaid = round(max(0.0, $totalPaid), 2);
-        if ($totalPaid <= 0.0) {
-            return $gross;
-        }
 
-        return round(max(0.0, $gross - $totalPaid), 2);
+        return round(max(0.0, $due - $totalPaid), 2);
     }
 
     public static function isPartiallyPaid(array $voucher, ?float $totalPaid = null): bool
@@ -158,8 +173,13 @@ final class VoucherPaymentRepository
 
         $open = self::openAmount($voucher);
         if ($amount > $open + 0.02) {
+            $excess = round($amount - $open, 2);
             throw new InvalidArgumentException(
-                'Zahlungsbetrag übersteigt den offenen Betrag (' . VoucherRepository::formatMoney($open) . ' €).'
+                'Zahlungsbetrag übersteigt den offenen Betrag ('
+                . VoucherRepository::formatMoney($open)
+                . ' €) um '
+                . VoucherRepository::formatMoney($excess)
+                . ' €.'
             );
         }
 
@@ -224,7 +244,16 @@ final class VoucherPaymentRepository
             return;
         }
 
+        // paid_amount zuerst an echte Zahlungssumme anpassen — sonst legt migrateLegacyPaidAmount
+        // beim anschließenden listForVoucher Phantom-Zahlungen an (z. B. nach Umhängen auf Abschlag).
         $totalPaid = self::totalPaid($voucherId);
+        Database::pdo()->prepare(
+            'UPDATE dg_vouchers SET paid_amount = :paid_amount WHERE id = :id'
+        )->execute([
+            'paid_amount' => $totalPaid,
+            'id' => $voucherId,
+        ]);
+
         $payments = self::listForVoucher($voucherId);
         $lastPayment = $payments !== [] ? $payments[count($payments) - 1] : null;
         $due = self::amountDue($row);

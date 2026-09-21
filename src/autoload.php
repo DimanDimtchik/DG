@@ -156,6 +156,7 @@ spl_autoload_register(static function (string $class): void {
         'VoucherDocumentChain' => '/src/Accounting/VoucherDocumentChain.php',
         'VoucherDocumentPrintService' => '/src/Accounting/VoucherDocumentPrintService.php',
         'VoucherDocumentLegalClause' => '/src/Accounting/VoucherDocumentLegalClause.php',
+        'VoucherBelegeBoard' => '/src/Accounting/VoucherBelegeBoard.php',
         'AccountingPaymentSettings' => '/src/Accounting/AccountingPaymentSettings.php',
         'DocumentPresentationSettings' => '/src/Accounting/DocumentPresentationSettings.php',
         'DepositMaterialCostService' => '/src/Accounting/DepositMaterialCostService.php',
@@ -163,6 +164,7 @@ spl_autoload_register(static function (string $class): void {
         'PaymentTermsService' => '/src/Accounting/PaymentTermsService.php',
         'DunningService' => '/src/Accounting/DunningService.php',
         'VoucherPaymentRepository' => '/src/Accounting/VoucherPaymentRepository.php',
+        'VoucherDocumentRevisionService' => '/src/Accounting/VoucherDocumentRevisionService.php',
         'VoucherDocumentMailService' => '/src/Accounting/VoucherDocumentMailService.php',
         'EpcQrCode' => '/src/Accounting/EpcQrCode.php',
         'PaymentReferenceFormula' => '/src/Accounting/PaymentReferenceFormula.php',
@@ -222,6 +224,9 @@ spl_autoload_register(static function (string $class): void {
         'PurchaseListRepository' => '/src/Inventory/PurchaseListRepository.php',
         'PurchaseListService' => '/src/Inventory/PurchaseListService.php',
         'StockPurchaseSettings' => '/src/Settings/StockPurchaseSettings.php',
+        'AmazonBusinessSettings' => '/src/Settings/AmazonBusinessSettings.php',
+        'AmazonBusinessAuth' => '/src/Inventory/AmazonBusinessAuth.php',
+        'AmazonBusinessClient' => '/src/Inventory/AmazonBusinessClient.php',
         'StockPlaceService' => '/src/Inventory/StockPlaceService.php',
         'StockPositionCode' => '/src/Inventory/StockPositionCode.php',
         'StockStructureRepository' => '/src/Inventory/StockStructureRepository.php',
@@ -313,6 +318,7 @@ spl_autoload_register(static function (string $class): void {
         'KichelNavIndex' => '/src/Kichel/KichelNavIndex.php',
         'KichelFieldCatalog' => '/src/Kichel/KichelFieldCatalog.php',
         'KichelIntent' => '/src/Kichel/KichelIntent.php',
+        'KichelMediaSearch' => '/src/Kichel/KichelMediaSearch.php',
     ];
 
     if (!isset($map[$class])) {

@@ -66,17 +66,28 @@ $csrf = Csrf::token();
   <?php if ($canEdit && $dbConnected) : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Tagesabschluss</h2>
-    <form method="post" action="/app?page=buchhaltung-kassenbuch" class="dg-form-grid dg-form-grid--compact">
+    <p class="dg-field-hint">
+      Der Soll-Bestand kommt aus dem Kassenbuch (Anfangsbestand + Ein − Aus an diesem Tag) und ist nicht änderbar.
+      Den gezählten Bestand tragen Sie nach dem Nachzählen ein — die Differenz wird gespeichert.
+    </p>
+    <form method="post" action="/app?page=buchhaltung-kassenbuch" class="dg-form-grid dg-form-grid--compact" id="dg-cash-day-close-form">
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="cash_day_close" value="1">
       <input type="hidden" name="year" value="<?= (int) $year ?>">
       <label class="dg-field">
         <span>Datum</span>
-        <input type="date" name="closing_date" value="<?= View::escape($closeDate) ?>" required>
+        <input
+          type="date"
+          name="closing_date"
+          id="dg-cash-closing-date"
+          value="<?= View::escape($closeDate) ?>"
+          required
+          data-reload-base="<?= View::escape($period->appendToUrl('/app?page=buchhaltung-kassenbuch') . '&close_date=') ?>"
+        >
       </label>
       <label class="dg-field">
         <span>Soll-Bestand</span>
-        <input type="text" value="<?= View::escape($fmt((float) ($daySummary['expected'] ?? 0))) ?> €" readonly>
+        <input type="text" value="<?= View::escape($fmt((float) ($daySummary['expected'] ?? 0))) ?> €" readonly title="Berechnet aus Kassenbuch — nicht änderbar">
       </label>
       <label class="dg-field">
         <span>Gezählter Bestand</span>
@@ -90,6 +101,17 @@ $csrf = Csrf::token();
         <button type="submit" class="dg-button dg-button--primary">Tag abschließen</button>
       </div>
     </form>
+    <script>
+      (function () {
+        var dateInput = document.getElementById('dg-cash-closing-date');
+        if (!dateInput) return;
+        dateInput.addEventListener('change', function () {
+          var base = dateInput.getAttribute('data-reload-base') || '';
+          if (!base || !dateInput.value) return;
+          window.location.href = base + encodeURIComponent(dateInput.value);
+        });
+      })();
+    </script>
     <?php if ($closings !== []) : ?>
       <table class="dg-table" style="margin-top:1rem;">
         <thead><tr><th>Datum</th><th>Soll</th><th>Ist</th><th>Differenz</th><th>Notiz</th></tr></thead>

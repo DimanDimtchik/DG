@@ -64,18 +64,64 @@ final class VoucherRepository
                 'page' => 1,
                 'per_page' => self::PER_PAGE,
                 'total_pages' => 1,
+                'gross_sum' => 0.0,
             ];
         }
 
         MigrationRunner::runPending();
 
         $page = max(1, (int) ($filters['page'] ?? 1));
+        $perPage = max(1, min(100, (int) ($filters['per_page'] ?? self::PER_PAGE)));
         $year = isset($filters['year']) && (int) $filters['year'] > 0 ? (int) $filters['year'] : null;
         $type = self::sanitizeVoucherTypeFilter((string) ($filters['type'] ?? ''));
         $documentKind = VoucherDocumentKind::sanitize((string) ($filters['document_kind'] ?? ''));
         $documentStatus = VoucherDocumentStatus::sanitize((string) ($filters['document_status'] ?? ''));
         $search = trim((string) ($filters['search'] ?? ''));
         $draft = (string) ($filters['draft'] ?? '');
+        $contactId = max(0, (int) ($filters['contact_id'] ?? 0));
+        $actionBucket = trim((string) ($filters['action_bucket'] ?? ''));
+        $amountMin = isset($filters['amount_min']) && $filters['amount_min'] !== ''
+            ? (float) $filters['amount_min'] : null;
+        $amountMax = isset($filters['amount_max']) && $filters['amount_max'] !== ''
+            ? (float) $filters['amount_max'] : null;
+
+        $documentKinds = [];
+        if (isset($filters['document_kinds']) && is_array($filters['document_kinds'])) {
+            foreach ($filters['document_kinds'] as $kindRaw) {
+                $kind = VoucherDocumentKind::sanitize((string) $kindRaw);
+                if ($kind !== '') {
+                    $documentKinds[$kind] = $kind;
+                }
+            }
+            $documentKinds = array_values($documentKinds);
+        }
+
+        $voucherTypes = [];
+        if (isset($filters['voucher_types']) && is_array($filters['voucher_types'])) {
+            foreach ($filters['voucher_types'] as $typeRaw) {
+                $t = self::sanitizeVoucherTypeFilter((string) $typeRaw);
+                if ($t !== '') {
+                    $voucherTypes[$t] = $t;
+                }
+            }
+            $voucherTypes = array_values($voucherTypes);
+        }
+
+        $paymentStatuses = [];
+        if (isset($filters['payment_statuses']) && is_array($filters['payment_statuses'])) {
+            foreach ($filters['payment_statuses'] as $psRaw) {
+                $ps = VoucherPaymentStatus::sanitize((string) $psRaw);
+                if ($ps !== '') {
+                    $paymentStatuses[$ps] = $ps;
+                }
+            }
+            $paymentStatuses = array_values($paymentStatuses);
+        } elseif (trim((string) ($filters['payment_status'] ?? '')) !== '') {
+            $ps = VoucherPaymentStatus::sanitize((string) $filters['payment_status']);
+            if ($ps !== '') {
+                $paymentStatuses = [$ps];
+            }
+        }
 
         $where = [];
         $params = [];
@@ -96,11 +142,27 @@ final class VoucherRepository
         if ($type !== '') {
             $where[] = 'v.voucher_type = :voucher_type';
             $params['voucher_type'] = $type;
+        } elseif ($voucherTypes !== []) {
+            $typePlaceholders = [];
+            foreach ($voucherTypes as $i => $vt) {
+                $key = 'vt' . $i;
+                $typePlaceholders[] = ':' . $key;
+                $params[$key] = $vt;
+            }
+            $where[] = 'v.voucher_type IN (' . implode(', ', $typePlaceholders) . ')';
         }
 
         if ($documentKind !== '') {
             $where[] = 'v.document_kind = :document_kind';
             $params['document_kind'] = $documentKind;
+        } elseif ($documentKinds !== []) {
+            $kindPlaceholders = [];
+            foreach ($documentKinds as $i => $dk) {
+                $key = 'dk' . $i;
+                $kindPlaceholders[] = ':' . $key;
+                $params[$key] = $dk;
+            }
+            $where[] = 'v.document_kind IN (' . implode(', ', $kindPlaceholders) . ')';
         }
 
         if ($documentStatus !== '') {
@@ -112,6 +174,76 @@ final class VoucherRepository
             $where[] = 'v.is_draft = 1';
         } elseif ($draft === '0') {
             $where[] = 'v.is_draft = 0';
+        }
+
+        if ($contactId > 0) {
+            $where[] = 'v.contact_id = :contact_id';
+            $params['contact_id'] = $contactId;
+        }
+
+        if ($paymentStatuses !== []) {
+            $payPlaceholders = [];
+            foreach ($paymentStatuses as $i => $ps) {
+                $key = 'ps' . $i;
+                $payPlaceholders[] = ':' . $key;
+                $params[$key] = $ps;
+            }
+            $where[] = 'v.payment_status IN (' . implode(', ', $payPlaceholders) . ')';
+        }
+
+        if ($amountMin !== null) {
+            $where[] = 'v.gross_amount >= :amount_min';
+            $params['amount_min'] = $amountMin;
+        }
+        if ($amountMax !== null) {
+            $where[] = 'v.gross_amount <= :amount_max';
+            $params['amount_max'] = $amountMax;
+        }
+
+        if ($actionBucket === 'accepted_without_ab') {
+            $where[] = "v.document_kind = 'offer'";
+            $where[] = "v.document_status = 'accepted'";
+            $where[] = 'v.is_draft = 0';
+            $where[] = "NOT EXISTS (
+                SELECT 1 FROM dg_vouchers oc
+                WHERE oc.parent_voucher_id = v.id
+                  AND oc.document_kind = 'order_confirmation'
+                  AND oc.is_draft = 0
+            )";
+        } elseif ($actionBucket === 'overdue_invoices') {
+            $where[] = "v.document_kind IN ('partial_invoice', 'invoice', 'final_invoice')";
+            $where[] = "v.payment_status IN ('open', 'partial')";
+            $where[] = 'v.is_draft = 0';
+            $where[] = 'v.payment_due_date IS NOT NULL';
+            $where[] = 'v.payment_due_date < CURDATE()';
+        } elseif ($actionBucket === 'expired_offers') {
+            $where[] = "v.document_kind = 'offer'";
+            $where[] = "v.document_status = 'expired'";
+        } elseif ($actionBucket === 'drafts') {
+            $where[] = 'v.is_draft = 1';
+        } elseif ($actionBucket === 'all_action') {
+            $where[] = '(
+                v.is_draft = 1
+                OR (v.document_kind = \'offer\' AND v.document_status = \'expired\')
+                OR (
+                    v.document_kind = \'offer\'
+                    AND v.document_status = \'accepted\'
+                    AND v.is_draft = 0
+                    AND NOT EXISTS (
+                        SELECT 1 FROM dg_vouchers oc
+                        WHERE oc.parent_voucher_id = v.id
+                          AND oc.document_kind = \'order_confirmation\'
+                          AND oc.is_draft = 0
+                    )
+                )
+                OR (
+                    v.document_kind IN (\'partial_invoice\', \'invoice\', \'final_invoice\')
+                    AND v.payment_status IN (\'open\', \'partial\')
+                    AND v.is_draft = 0
+                    AND v.payment_due_date IS NOT NULL
+                    AND v.payment_due_date < CURDATE()
+                )
+            )';
         }
 
         if ($search !== '') {
@@ -137,6 +269,12 @@ final class VoucherRepository
         $stmt->execute($params);
         $total = (int) $stmt->fetchColumn();
 
+        $sumSql = 'SELECT COALESCE(SUM(v.gross_amount), 0) FROM dg_vouchers v
+            LEFT JOIN dg_contacts c ON c.id = v.contact_id ' . $whereSql;
+        $sumStmt = Database::pdo()->prepare($sumSql);
+        $sumStmt->execute($params);
+        $grossSum = round((float) $sumStmt->fetchColumn(), 2);
+
         $sql = 'SELECT v.*, c.display_name AS contact_display_name, c.company_name AS contact_company_name
             FROM dg_vouchers v
             LEFT JOIN dg_contacts c ON c.id = v.contact_id
@@ -148,8 +286,8 @@ final class VoucherRepository
         foreach ($params as $key => $value) {
             $stmt->bindValue(':' . $key, $value);
         }
-        $stmt->bindValue(':limit', self::PER_PAGE, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', ($page - 1) * self::PER_PAGE, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
         $stmt->execute();
 
         $items = [];
@@ -161,8 +299,9 @@ final class VoucherRepository
             'items' => $items,
             'total' => $total,
             'page' => $page,
-            'per_page' => self::PER_PAGE,
-            'total_pages' => max(1, (int) ceil($total / self::PER_PAGE)),
+            'per_page' => $perPage,
+            'total_pages' => max(1, (int) ceil($total / $perPage)),
+            'gross_sum' => $grossSum,
         ];
     }
 
@@ -427,9 +566,9 @@ final class VoucherRepository
                 'area_id' => max(0, (int) ($row['area_id'] ?? 0)),
                 'area_name' => (string) ($row['area_name'] ?? ''),
                 'unit' => (string) ($row['unit'] ?? 'Stück'),
-                'quantity' => (float) ($row['quantity'] ?? 1),
-                'unit_price_gross' => (float) ($row['unit_price_gross'] ?? 0),
-                'gross_amount' => (float) ($row['gross_amount'] ?? 0),
+                'quantity' => self::parseQuantity($row['quantity'] ?? 1),
+                'unit_price_gross' => self::parseMoney($row['unit_price_gross'] ?? 0),
+                'gross_amount' => self::parseMoney($row['gross_amount'] ?? 0),
                 'tax_rate' => (int) ($row['tax_rate'] ?? 19),
                 'tax_type' => (string) ($row['tax_type'] ?? 'ust19'),
             ]);
@@ -554,6 +693,7 @@ final class VoucherRepository
             throw new InvalidArgumentException('Name des Kontakts / Lieferanten ist erforderlich.');
         }
 
+        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
         if (self::isExpenseType($voucherType) && trim((string) ($data['invoice_number'] ?? '')) === ''
             && $paymentStatus !== VoucherPaymentStatus::TIP) {
             throw new InvalidArgumentException('Bei Ausgaben ist die Rechnungsnummer erforderlich.');
@@ -566,7 +706,6 @@ final class VoucherRepository
         }
         $reverseCharge = VoucherReverseCharge::isActive($reverseChargeType);
         $taxKey = $reverseCharge ? VoucherTaxKeys::KEY_REVERSE_CHARGE : '';
-        $paymentStatus = self::sanitizePaymentStatus((string) ($data['payment_status'] ?? 'open'));
         $documentKind = VoucherDocumentKind::sanitize((string) ($data['document_kind'] ?? ''));
         $documentStatus = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
         if ($voucherType !== 'income') {
@@ -609,6 +748,15 @@ final class VoucherRepository
         if ($voucherType !== 'income') {
             $parentVoucherId = 0;
         }
+        if (
+            ($id === null || $id < 1)
+            && $parentVoucherId > 0
+            && VoucherDocumentChain::isFollowUpBlockedByDeposit($documentKind, $parentVoucherId)
+        ) {
+            throw new InvalidArgumentException(
+                'Rechnung/Schlussrechnung erst nach gebuchter Anzahlung (Abschlagsrechnung) möglich.'
+            );
+        }
         $arap = VoucherAccrual::parseFromData($data);
         if (!VoucherAccrual::supportsAccrual($voucherType, $documentKind)) {
             $arap = [
@@ -627,7 +775,7 @@ final class VoucherRepository
         $itemRows = $usesInvoiceItems
             ? VoucherIncomePositions::parseItemRows($data, $voucherType)
             : [];
-        $gross = round((float) str_replace(',', '.', (string) ($data['gross_amount'] ?? '0')), 2);
+        $gross = self::parseMoney($data['gross_amount'] ?? 0);
         /** @var list<array<string, mixed>> $lineRows */
         if ($usesInvoiceItems && $itemRows !== []) {
             $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType, $voucherType);
@@ -694,11 +842,11 @@ final class VoucherRepository
         }
 
         $discountPercent = max(0, min(100, (int) ($data['discount_percent'] ?? 0)));
-        $discountAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['discount_amount'] ?? '0'))), 2);
+        $discountAmount = round(max(0, self::parseMoney($data['discount_amount'] ?? 0)), 2);
         if ($discountPercent > 0 && $discountAmount <= 0.0 && $gross > 0) {
             $discountAmount = round($gross * $discountPercent / 100, 2);
         }
-        $formPaidAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+        $formPaidAmount = round(max(0, self::parseMoney($data['paid_amount'] ?? 0)), 2);
         $paidAmount = $id > 0 ? VoucherPaymentRepository::totalPaid($id) : 0.0;
         $paidAt = trim((string) ($data['paid_at'] ?? ''));
         $recordSettlement = VoucherPaymentStatus::isSettled($paymentStatus) || $paymentStatus === VoucherPaymentStatus::BANK;
@@ -715,7 +863,7 @@ final class VoucherRepository
         if ($recordSettlement) {
             $settlementAmount = $formPaidAmount;
             if ($settlementAmount <= 0.0) {
-                $settlementAmount = round(max(0, (float) str_replace(',', '.', (string) ($data['paid_amount'] ?? '0'))), 2);
+                $settlementAmount = round(max(0, self::parseMoney($data['paid_amount'] ?? 0)), 2);
             }
             if ($settlementAmount <= 0.0) {
                 $settlementAmount = round(max(0, $gross - $discountAmount - $paidAmount), 2);
@@ -862,6 +1010,19 @@ final class VoucherRepository
         StockReservationService::syncForVoucher($newId);
         self::finalizePayments($newId, $recordSettlement, $settlementAmount, $paidAt, $settlementMethod, $userId);
 
+        $newKind = VoucherDocumentKind::sanitize((string) ($fields['document_kind'] ?? ''));
+        $parentId = (int) ($fields['parent_voucher_id'] ?? 0);
+        if ($newKind === VoucherDocumentKind::PARTIAL_INVOICE && $parentId > 0) {
+            try {
+                $absorbPaymentId = (int) ($data['absorb_payment_id'] ?? 0);
+                VoucherDocumentChain::absorbAdvancePaymentsOnto(
+                    $newId,
+                    $absorbPaymentId > 0 ? $absorbPaymentId : null
+                );
+            } catch (Throwable) {
+            }
+        }
+
         return $newId;
     }
 
@@ -918,7 +1079,7 @@ final class VoucherRepository
                 continue;
             }
             $accountNumber = preg_replace('/\D/', '', (string) ($line['account_number'] ?? '')) ?? '';
-            $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+            $gross = self::parseMoney($line['gross_amount'] ?? 0);
             if ($accountNumber === '' || $gross <= 0) {
                 continue;
             }
@@ -959,7 +1120,7 @@ final class VoucherRepository
             if (!is_array($line)) {
                 continue;
             }
-            $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+            $gross = self::parseMoney($line['gross_amount'] ?? 0);
             if ($gross <= 0) {
                 continue;
             }
@@ -1549,6 +1710,71 @@ final class VoucherRepository
     }
 
     /**
+     * Parst Beträge aus DB/Formular/formatMoney („1.100,00“ → 1100.00).
+     * Nie per (float)$string — sonst wird „1.100,00“ zu 1,10.
+     */
+    public static function parseMoney(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return round((float) $value, 2);
+        }
+
+        $str = trim((string) $value);
+        if ($str === '') {
+            return 0.0;
+        }
+
+        $str = str_replace(["\xc2\xa0", ' ', '€'], '', $str);
+        $str = trim($str);
+        $negative = false;
+        if (str_starts_with($str, '-')) {
+            $negative = true;
+            $str = ltrim($str, '-');
+        }
+        if (str_contains($str, ',')) {
+            // DE: Tausenderpunkt + Dezimalkomma
+            $str = str_replace('.', '', $str);
+            $str = str_replace(',', '.', $str);
+        } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $str) === 1) {
+            // DE ohne Nachkommastellen: „1.100“ → 1100
+            $str = str_replace('.', '', $str);
+        }
+
+        $amount = round((float) $str, 2);
+
+        return $negative ? -abs($amount) : $amount;
+    }
+
+    /**
+     * Parst Mengen („1.100“ / „1,5“ / „110,000“).
+     */
+    public static function parseQuantity(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            $quantity = round((float) $value, 3);
+
+            return $quantity > 0 ? $quantity : 0.0;
+        }
+
+        $str = trim((string) $value);
+        if ($str === '') {
+            return 0.0;
+        }
+
+        $str = str_replace(["\xc2\xa0", ' '], '', $str);
+        if (str_contains($str, ',')) {
+            $str = str_replace('.', '', $str);
+            $str = str_replace(',', '.', $str);
+        } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $str) === 1) {
+            $str = str_replace('.', '', $str);
+        }
+
+        $quantity = round((float) $str, 3);
+
+        return $quantity > 0 ? $quantity : 0.0;
+    }
+
+    /**
      * sanitizeVoucherType
      * @param string $type
      * @return string
@@ -1634,6 +1860,15 @@ final class VoucherRepository
             $row['type_label'] = $row['document_kind_label'];
         }
         $documentStatus = (string) ($row['document_status'] ?? '');
+        if (
+            VoucherDocumentKind::sanitize((string) ($row['document_kind'] ?? '')) === VoucherDocumentKind::OFFER
+            && !VoucherDocumentStatus::isClosed($documentStatus)
+            && $documentStatus !== VoucherDocumentStatus::ACCEPTED
+        ) {
+            $tmp = VoucherDocumentStatus::markOfferExpiredIfDue($row);
+            $documentStatus = (string) ($tmp['document_status'] ?? $documentStatus);
+            $row['document_status'] = $documentStatus;
+        }
         $row['document_status_label'] = VoucherDocumentStatus::label($documentStatus);
         $row['document_status_badge_class'] = VoucherDocumentStatus::badgeClass($documentStatus);
         $row['payment_label'] = self::paymentLabel((string) ($row['payment_status'] ?? ''));

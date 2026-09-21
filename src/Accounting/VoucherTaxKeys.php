@@ -156,7 +156,7 @@ final class VoucherTaxKeys
             if (!is_array($line)) {
                 continue;
             }
-            $gross = round((float) str_replace(',', '.', (string) ($line['gross_amount'] ?? '0')), 2);
+            $gross = VoucherRepository::parseMoney($line['gross_amount'] ?? 0);
             if ($gross <= 0) {
                 continue;
             }

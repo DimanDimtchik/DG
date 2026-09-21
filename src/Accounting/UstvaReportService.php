@@ -57,7 +57,7 @@ final class UstvaReportService
             $params['m'] = $month;
         }
 
-        $sql = "SELECT v.id, v.voucher_type, v.net_amount, v.tax_amount, v.tax_rate,
+        $sql = "SELECT v.id, v.voucher_type, v.document_kind, v.net_amount, v.tax_amount, v.tax_rate,
                        v.reverse_charge_type, v.ustva_snapshot,
                        vl.net_amount AS line_net, vl.tax_amount AS line_tax, vl.tax_rate AS line_rate
                 FROM dg_vouchers v
@@ -74,6 +74,11 @@ final class UstvaReportService
             }
             $voucherId = (int) ($row['id'] ?? 0);
             $type = VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? 'expense'));
+            $documentKind = (string) ($row['document_kind'] ?? '');
+            // Angebot / AB / Lieferschein: keine UStVA (wie Journal/OPOS).
+            if (!VoucherDocumentKind::isBookable($documentKind, $type)) {
+                continue;
+            }
             $rcType = trim((string) ($row['reverse_charge_type'] ?? ''));
 
             if ($rcType !== '' && !isset($processedRc[$voucherId])) {

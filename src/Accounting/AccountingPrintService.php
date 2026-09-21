@@ -28,7 +28,7 @@ final class AccountingPrintService
     public static function renderBody(string $template, array $data): string
     {
         ob_start();
-        $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
+        $fmt = static fn (mixed $v): string => number_format(VoucherRepository::parseMoney($v), 2, ',', '.');
         extract($data, EXTR_SKIP);
         include __DIR__ . '/../../views/print/' . $template . '.php';
 
@@ -84,9 +84,58 @@ final class AccountingPrintService
     color: #8a93a3;
     pointer-events: none;
   }
-  .vd-letterhead { display: table; width: 100%; margin-bottom: 8mm; }
-  .vd-letterhead__col { display: table-cell; vertical-align: top; width: 50%; }
-  .vd-letterhead__col--right { text-align: right; }
+  /* DIN-Faltmarken (Fensterumschlag / DL), bezogen auf Blattkante inkl. Padding */
+  .vd-fold-marks {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    pointer-events: none;
+  }
+  .vd-fold-marks::before,
+  .vd-fold-marks::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 6mm;
+    border-top: 0.4pt solid #8a93a3;
+  }
+  .vd-fold-marks::before { top: 87mm; }
+  .vd-fold-marks::after { top: 192mm; }
+  .vd-head { display: flex; justify-content: flex-end; margin-bottom: 2mm; min-height: 18mm; }
+  .vd-head__brand { text-align: right; max-width: 70%; }
+  .vd-head__company { font-weight: 700; font-size: 11pt; color: #1c2330; }
+  .vd-address-row { display: table; width: 100%; margin: 0 0 8mm; }
+  .vd-window {
+    display: table-cell;
+    vertical-align: top;
+    width: 90mm;
+    min-height: 40mm;
+    padding: 2mm 0 0 2mm;
+  }
+  .vd-absender {
+    font-size: 7.5pt;
+    color: #5c6678;
+    margin: 0 0 2.5mm;
+    text-decoration: underline;
+    text-underline-offset: 1.5pt;
+    line-height: 1.25;
+  }
+  .vd-empfaenger {
+    font-size: 10pt;
+    line-height: 1.35;
+    color: #1c2330;
+  }
+  .vd-head__side {
+    display: table-cell;
+    vertical-align: top;
+    text-align: right;
+    font-size: 8pt;
+    color: #5c6678;
+    line-height: 1.35;
+    padding-left: 6mm;
+  }
   .vd-doc-title { font-size: 18pt; font-weight: 700; margin: 0 0 2mm; color: #1c2330; }
   .vd-doc-meta { margin: 0 0 6mm; color: #5c6678; font-size: 9pt; }
   .vd-notice { background: #f4f6f9; border-left: 3px solid #b8942f; padding: 3mm 4mm; margin: 4mm 0 6mm; font-size: 9pt; }
@@ -141,11 +190,15 @@ final class AccountingPrintService
       background: none;
     }
     .vd-a4__page-mark { display: none; }
+    /* Bei @page-Rand 14 mm: Marken relativ zum bedruckbaren Bereich */
+    .vd-fold-marks::before { top: calc(87mm - 14mm); }
+    .vd-fold-marks::after { top: calc(192mm - 14mm); }
   }';
         }
 
         $printButton = $showPrintButton
-            ? '<div class="no-print" style="margin:8mm auto;max-width:210mm;"><button onclick="window.print()">Drucken / PDF speichern</button></div>'
+            ? '<div class="no-print" style="margin:8mm auto;max-width:210mm;"><button type="button" onclick="window.print()">Nur Browser-Druck / PDF</button>'
+              . '<p style="margin:.5rem 0 0;font-size:12px;color:#64748b;">Speichert den Beleg nicht. Änderungen zuerst mit „Speichern &amp; PDF“ im Formular sichern.</p></div>'
             : '';
 
         if ($documentStyles) {

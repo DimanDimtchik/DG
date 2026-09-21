@@ -56,6 +56,10 @@ final class OfferAcceptanceMailService
         if (VoucherDocumentKind::sanitize((string) ($offer['document_kind'] ?? '')) !== VoucherDocumentKind::OFFER) {
             return ['ok' => false, 'reason' => 'not_offer'];
         }
+        $offerStatus = VoucherDocumentStatus::sanitize((string) ($offer['document_status'] ?? ''));
+        if (VoucherDocumentStatus::isClosed($offerStatus)) {
+            return ['ok' => false, 'reason' => 'offer_closed'];
+        }
 
         if (self::looksLikeRejection((string) ($inbound['subject'] ?? ''), (string) ($inbound['body_preview'] ?? ''))) {
             return ['ok' => false, 'reason' => 'rejection'];
@@ -86,11 +90,13 @@ final class OfferAcceptanceMailService
             $abId = VoucherRepository::save($form, null, null);
             VoucherRepository::updateDocumentAcceptance($abId, $acceptance);
 
-            // Angebot als angenommen markieren, wenn Übergang erlaubt
+            // Angebot immer auf „angenommen“ (auch aus Entwurf — Mail-Antwort = Annahme)
             try {
                 $current = VoucherDocumentStatus::sanitize((string) ($offer['document_status'] ?? ''));
-                $next = VoucherDocumentStatus::nextStatuses($current, VoucherDocumentKind::OFFER);
-                if (in_array(VoucherDocumentStatus::ACCEPTED, $next, true)) {
+                if ($current !== VoucherDocumentStatus::CANCELLED
+                    && $current !== VoucherDocumentStatus::EXPIRED
+                    && $current !== VoucherDocumentStatus::ACCEPTED
+                ) {
                     VoucherRepository::updateDocumentStatus($offerId, VoucherDocumentStatus::ACCEPTED);
                 }
             } catch (Throwable) {

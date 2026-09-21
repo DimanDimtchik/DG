@@ -40,7 +40,7 @@ final class DepositMaterialCostService
             if ($title === '') {
                 continue;
             }
-            $qty = (float) str_replace(',', '.', (string) ($item['quantity'] ?? '1'));
+            $qty = VoucherRepository::parseMoney($item['quantity'] ?? '1');
             if ($qty == 0.0) {
                 continue;
             }

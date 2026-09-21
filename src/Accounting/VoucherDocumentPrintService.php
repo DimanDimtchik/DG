@@ -131,10 +131,13 @@ final class VoucherDocumentPrintService
             : ['documents' => []];
 
         $finalSummary = null;
-        if ($kind === VoucherDocumentKind::FINAL_INVOICE && $voucherId > 0) {
+        if ($kind === VoucherDocumentKind::FINAL_INVOICE) {
             $parentId = (int) ($voucher['parent_voucher_id'] ?? 0);
             if ($parentId > 0) {
-                $finalSummary = VoucherDocumentChain::finalInvoiceSummary($parentId, $voucherId);
+                $finalSummary = VoucherDocumentChain::finalInvoiceSummary(
+                    $parentId,
+                    $voucherId > 0 ? $voucherId : null
+                );
             }
         }
 
@@ -174,7 +177,7 @@ final class VoucherDocumentPrintService
 
         $kleinunternehmerHint = '';
         if ($books && $customerFacing) {
-            $kleinunternehmerHint = DocumentPresentationSettings::kleinunternehmerHintForDate(
+            $kleinunternehmerHint = CompanyExtendedSettings::kleinunternehmerHintForDate(
                 (string) ($voucher['voucher_date'] ?? '')
             );
         }
@@ -415,11 +418,7 @@ final class VoucherDocumentPrintService
         if ($raw === '') {
             $base = trim((string) ($voucher['voucher_date'] ?? ''));
             if ($base !== '') {
-                $days = DocumentPresentationSettings::offerValidDays();
-                $ts = strtotime($base . ' +' . $days . ' days');
-                if ($ts !== false) {
-                    return date('Y-m-d', $ts);
-                }
+                return DocumentPresentationSettings::defaultOfferValidUntilDate($base);
             }
 
             return '';
@@ -437,7 +436,21 @@ final class VoucherDocumentPrintService
             ? date('d.m.Y', strtotime($validUntilYmd) ?: time())
             : '—';
 
-        return str_replace('{valid_until}', $formatted, $text);
+        $text = str_replace('{valid_until}', $formatted, $text);
+        // Alte Angebote: festes Datum hinter „gültig bis …“ an aktuelles Feld anpassen
+        if ($formatted !== '—') {
+            $replaced = preg_replace(
+                '/(gültig\s+bis(?:\s+zum)?\s*)(\d{1,2}\.\d{1,2}\.\d{2,4})/iu',
+                '${1}' . $formatted,
+                $text,
+                1
+            );
+            if (is_string($replaced)) {
+                $text = $replaced;
+            }
+        }
+
+        return $text;
     }
 
     /**
@@ -465,7 +478,7 @@ final class VoucherDocumentPrintService
             if (trim((string) ($item['title'] ?? '')) === '') {
                 continue;
             }
-            $gross = round((float) str_replace(',', '.', (string) ($item['gross_amount'] ?? '0')), 2);
+            $gross = VoucherRepository::parseMoney($item['gross_amount'] ?? 0);
             if ($gross == 0.0) {
                 continue;
             }
@@ -492,9 +505,9 @@ final class VoucherDocumentPrintService
         }
 
         if ($rows === []) {
-            $headerGross = round((float) str_replace(',', '.', (string) ($voucher['gross_amount'] ?? '0')), 2);
-            $headerNet = round((float) str_replace(',', '.', (string) ($voucher['net_amount'] ?? '0')), 2);
-            $headerTax = round((float) str_replace(',', '.', (string) ($voucher['tax_amount'] ?? '0')), 2);
+            $headerGross = VoucherRepository::parseMoney($voucher['gross_amount'] ?? 0);
+            $headerNet = VoucherRepository::parseMoney($voucher['net_amount'] ?? 0);
+            $headerTax = VoucherRepository::parseMoney($voucher['tax_amount'] ?? 0);
             $headerRate = VoucherTaxKeys::sanitizeTaxRate((int) ($voucher['tax_rate'] ?? 19));
             if ($headerGross != 0.0 || $headerNet != 0.0) {
                 $rows[] = [
@@ -524,34 +537,33 @@ final class VoucherDocumentPrintService
      */
     public static function formatDepositBlock(array $cfg, array $voucher): ?array
     {
-        $mode = (string) ($cfg['mode'] ?? DocumentPresentationSettings::DEPOSIT_NONE);
-        if ($mode === DocumentPresentationSettings::DEPOSIT_NONE) {
+        $computed = DocumentPresentationSettings::depositAmountForVoucher($voucher);
+        if ($computed === null) {
             return null;
         }
-        $gross = round((float) str_replace(',', '.', (string) ($voucher['gross_amount'] ?? '0')), 2);
+
+        $mode = (string) ($computed['mode'] ?? DocumentPresentationSettings::DEPOSIT_NONE);
+        $amount = (float) ($computed['amount'] ?? 0);
+        $hint = (string) ($computed['hint'] ?? '');
         $amountLabel = '';
+
         if ($mode === DocumentPresentationSettings::DEPOSIT_PERCENT) {
-            $pct = (float) ($cfg['percent'] ?? 0);
-            $amount = round($gross * $pct / 100, 2);
+            $pct = (float) (DocumentPresentationSettings::depositConfig()['percent'] ?? 0);
             $amountLabel = number_format($pct, $pct == floor($pct) ? 0 : 2, ',', '.') . ' %'
-                . ($gross > 0 ? ' (= ' . number_format($amount, 2, ',', '.') . ' €)' : '');
+                . ($amount > 0 ? ' (= ' . number_format($amount, 2, ',', '.') . ' €)' : '');
         } elseif ($mode === DocumentPresentationSettings::DEPOSIT_FIXED) {
-            $amountLabel = number_format((float) ($cfg['fixed_amount'] ?? 0), 2, ',', '.') . ' €';
+            $amountLabel = number_format($amount, 2, ',', '.') . ' €';
         } elseif ($mode === DocumentPresentationSettings::DEPOSIT_MATERIAL) {
-            $items = is_array($voucher['items'] ?? null) ? $voucher['items'] : [];
-            $mat = DepositMaterialCostService::fromVoucherItems($items);
-            $amountLabel = number_format((float) $mat['amount'], 2, ',', '.') . ' € (Material / EK)';
-            if ((int) $mat['lines_missing'] > 0) {
-                $amountLabel .= ' — Hinweis: ' . (int) $mat['lines_missing']
-                    . ' Position(en) ohne Einkaufspreis';
-            }
-            if ((int) $mat['lines_priced'] === 0) {
-                $amountLabel = 'Materialkosten nicht berechenbar (keine EK-Preise an Artikeln)';
+            $amountLabel = $amount > 0
+                ? number_format($amount, 2, ',', '.') . ' € (Material / EK)'
+                : ($hint !== '' ? $hint : 'Materialkosten nicht berechenbar');
+            if ($amount > 0 && $hint !== '' && str_contains($hint, 'ohne Einkaufspreis')) {
+                $amountLabel .= ' — Hinweis: ' . $hint;
             }
         }
 
         return [
-            'label' => (string) ($cfg['label'] ?? 'Anzahlung'),
+            'label' => (string) ($computed['label'] ?? 'Anzahlung'),
             'amount_label' => $amountLabel,
             'text' => (string) ($cfg['text'] ?? ''),
         ];
@@ -778,7 +790,7 @@ final class VoucherDocumentPrintService
 
         return match ($kind) {
             VoucherDocumentKind::PARTIAL_INVOICE => 'Abschlagsrechnung — Teilbetrag des Auftrags.',
-            VoucherDocumentKind::FINAL_INVOICE => 'Schlussrechnung — Restbetrag nach Abzug der Abschlagsrechnungen.',
+            VoucherDocumentKind::FINAL_INVOICE => 'Schlussrechnung — Positionen wie Auftrag, abzüglich bereits geleisteter Anzahlungen.',
             VoucherDocumentKind::INVOICE => 'Rechnung — Zahlbar ohne Abzug gemäß vereinbarten Zahlungsbedingungen.',
             default => '',
         };

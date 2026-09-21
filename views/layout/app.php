@@ -390,6 +390,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
         voucherId: <?= ($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form' ? (int) ($voucherId ?? 0) : 0 ?>,
+        offerValidDays: <?= (int) DocumentPresentationSettings::offerValidDays() ?>,
         csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
         initialFiles: <?= json_encode(
             ($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form' && is_array($form['files'] ?? null)

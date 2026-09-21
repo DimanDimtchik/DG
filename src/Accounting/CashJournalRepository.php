@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Kassenbuch — Ein-/Ausgänge bei Barzahlung (payment_status = cash). */
+/** Kassenbuch — Ein-/Ausgänge aus Barzahlungen (dg_voucher_payments method=cash). */
 final class CashJournalRepository
 {
     /**
@@ -73,6 +73,9 @@ final class CashJournalRepository
         return $totals;
     }
 
+    /**
+     * Kassenbuch aus Bar-Zahlungen des Belegs aufbauen (auch bei Teilzahlung / payment_status=partial).
+     */
     public static function syncForVoucher(int $voucherId): void
     {
         if (!Database::isConfigured() || $voucherId < 1) {
@@ -90,44 +93,88 @@ final class CashJournalRepository
             return;
         }
 
-        if (VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? '')) !== VoucherPaymentStatus::CASH
-            && VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? '')) !== VoucherPaymentStatus::TIP) {
-            return;
-        }
-
-        $amount = round((float) ($voucher['paid_amount'] ?? 0), 2);
-        if ($amount <= 0.0) {
-            $amount = round((float) ($voucher['gross_amount'] ?? 0), 2);
-        }
-        if ($amount <= 0.0) {
-            return;
-        }
-
-        $skr = ChartOfAccountsSettings::activeSkrType();
-        $cashAccount = ChartOfAccountsSettings::sanitizeSkrType($skr) === 'skr04' ? '1600' : '1000';
         $isIncome = LedgerAccounts::isIncomeDirection((string) ($voucher['voucher_type'] ?? 'expense'));
         $side = $isIncome ? 'in' : 'out';
+        $skr = ChartOfAccountsSettings::activeSkrType();
+        $cashAccount = ChartOfAccountsSettings::sanitizeSkrType($skr) === 'skr04' ? '1600' : '1000';
 
-        $desc = trim((string) ($voucher['invoice_number'] ?? ''));
-        if ($desc !== '') {
-            $desc = 'RE ' . $desc;
+        $descBase = trim((string) ($voucher['invoice_number'] ?? ''));
+        if ($descBase !== '') {
+            $descBase = 'RE ' . $descBase;
         }
         $supplier = trim((string) ($voucher['supplier_name'] ?? ''));
         if ($supplier !== '') {
-            $desc = $desc !== '' ? $desc . ' · ' . $supplier : $supplier;
+            $descBase = $descBase !== '' ? $descBase . ' · ' . $supplier : $supplier;
+        }
+        $kindLabel = VoucherDocumentKind::label((string) ($voucher['document_kind'] ?? ''));
+        if ($kindLabel !== '') {
+            $descBase = $descBase !== '' ? $kindLabel . ' ' . $descBase : $kindLabel;
         }
 
-        $pdo->prepare(
+        $cashPayments = [];
+        foreach (VoucherPaymentRepository::listForVoucher($voucherId) as $pay) {
+            if ((string) ($pay['payment_method'] ?? '') !== VoucherPaymentRepository::METHOD_CASH) {
+                continue;
+            }
+            $cashPayments[] = [
+                'amount' => (float) ($pay['amount'] ?? 0),
+                'payment_date' => (string) ($pay['payment_date'] ?? ''),
+                'reference_text' => (string) ($pay['reference_text'] ?? ''),
+            ];
+        }
+
+        // Legacy: gesamter Beleg als Bar ohne Zahlungshistorie
+        if ($cashPayments === []) {
+            $status = VoucherPaymentStatus::sanitize((string) ($voucher['payment_status'] ?? ''));
+            if (!in_array($status, [VoucherPaymentStatus::CASH, VoucherPaymentStatus::TIP], true)) {
+                return;
+            }
+            $amount = round((float) ($voucher['paid_amount'] ?? 0), 2);
+            if ($amount <= 0.0) {
+                $amount = round((float) ($voucher['gross_amount'] ?? 0), 2);
+            }
+            if ($amount <= 0.0) {
+                return;
+            }
+            $cashPayments[] = [
+                'amount' => $amount,
+                'payment_date' => (string) ($voucher['paid_at'] ?? $voucher['voucher_date'] ?? date('Y-m-d')),
+                'reference_text' => '',
+            ];
+        }
+
+        $insert = $pdo->prepare(
             'INSERT INTO dg_cash_journal (entry_date, voucher_id, account_number, side, amount, description)
              VALUES (:entry_date, :voucher_id, :account_number, :side, :amount, :description)'
-        )->execute([
-            'entry_date' => (string) ($voucher['voucher_date'] ?? date('Y-m-d')),
-            'voucher_id' => $voucherId,
-            'account_number' => $cashAccount,
-            'side' => $side,
-            'amount' => $amount,
-            'description' => mb_substr($desc, 0, 500),
-        ]);
+        );
+
+        foreach ($cashPayments as $pay) {
+            $amount = round((float) ($pay['amount'] ?? 0), 2);
+            if ($amount <= 0.0) {
+                continue;
+            }
+            $entryDate = (string) ($pay['payment_date'] ?? '');
+            if ($entryDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $entryDate)) {
+                $entryDate = (string) ($voucher['voucher_date'] ?? date('Y-m-d'));
+            }
+            $ref = trim((string) ($pay['reference_text'] ?? ''));
+            $desc = $descBase;
+            if ($ref !== '') {
+                $desc = $desc !== '' ? $desc . ' · ' . $ref : $ref;
+            }
+            if ($desc === '') {
+                $desc = 'Bareinnahme';
+            }
+
+            $insert->execute([
+                'entry_date' => $entryDate,
+                'voucher_id' => $voucherId,
+                'account_number' => $cashAccount,
+                'side' => $side,
+                'amount' => $amount,
+                'description' => mb_substr($desc, 0, 500),
+            ]);
+        }
     }
 
     /**

@@ -34,7 +34,9 @@ final class OpenItemsRepository
                 continue;
             }
             $type = VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? 'expense'));
-            if (!VoucherDocumentKind::isBookable((string) ($row['document_kind'] ?? ''), $type)) {
+            $documentKind = (string) ($row['document_kind'] ?? '');
+            // Rechnungen + Angebot/AB (Anzahlung vor Rechnung); kein Lieferschein.
+            if (!VoucherDocumentKind::allowsOpenItemTracking($documentKind, $type)) {
                 continue;
             }
             $isReceivable = LedgerAccounts::isIncomeDirection($type);
@@ -56,6 +58,12 @@ final class OpenItemsRepository
             }
 
             $totalPaid = VoucherPaymentRepository::totalPaid((int) ($row['id'] ?? 0));
+            $kindLabel = VoucherDocumentKind::label($documentKind);
+            if ($kindLabel === '') {
+                $kindLabel = VoucherRepository::typeLabel($type);
+            }
+            $isAdvance = !VoucherDocumentKind::isBookable($documentKind, $type)
+                && VoucherDocumentKind::voucherTypeSupportsDocumentKind($type);
 
             $contactLabel = trim((string) ($row['supplier_name'] ?? ''));
             if ($contactLabel === '') {
@@ -75,6 +83,7 @@ final class OpenItemsRepository
                     $contactLabel,
                     $personAccount,
                     (string) ($row['description'] ?? ''),
+                    $kindLabel,
                 ]));
                 if (!str_contains($haystack, $search)) {
                     continue;
@@ -84,6 +93,9 @@ final class OpenItemsRepository
             $item = [
                 'voucher_id' => (int) $row['id'],
                 'voucher_type' => $type,
+                'document_kind' => $documentKind,
+                'document_kind_label' => $kindLabel,
+                'is_advance' => $isAdvance,
                 'direction' => $itemDirection,
                 'voucher_date' => (string) ($row['voucher_date'] ?? ''),
                 'payment_due_date' => (string) ($row['payment_due_date'] ?? ''),
