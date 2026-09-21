@@ -7,7 +7,9 @@ declare(strict_types=1);
 final class KdvProvisionGateService
 {
     private const LOCK_KEY = 'kdv_provision_lock';
+    private const RESULT_KEY = 'kdv_provision_result';
     private const LOCK_TTL = 1800; // 30 Min.
+    private const RESULT_MAX = 80;
 
     /**
      * @param array<string, mixed> $customer KDV-Zeile
@@ -200,12 +202,20 @@ final class KdvProvisionGateService
         $gate = self::evaluate($customer, $opts);
         if (!$gate['ok']) {
             $codes = array_map(static fn (array $f): string => $f['code'] . ': ' . $f['message'], $gate['failures']);
+            $message = 'Provision abgelehnt — ' . implode(' · ', $codes);
+            self::remember($customerId, [
+                'ok' => false,
+                'message' => $message,
+                'install_url' => null,
+                'steps' => [],
+                'gate_failures' => $gate['failures'],
+            ]);
 
             return [
                 'ok' => false,
                 'gate' => $gate,
                 'result' => null,
-                'message' => 'Provision abgelehnt — ' . implode(' · ', $codes),
+                'message' => $message,
             ];
         }
 
@@ -216,6 +226,15 @@ final class KdvProvisionGateService
         $kasPass = (string) ($opts['kas_pass'] ?? '');
 
         if (!self::acquireLock($customerId)) {
+            $message = 'Provision-Lock aktiv — bitte warten.';
+            self::remember($customerId, [
+                'ok' => false,
+                'message' => $message,
+                'install_url' => null,
+                'steps' => [],
+                'gate_failures' => [['code' => 'G9', 'message' => $message]],
+            ]);
+
             return [
                 'ok' => false,
                 'gate' => [
@@ -224,7 +243,7 @@ final class KdvProvisionGateService
                     'warnings' => $gate['warnings'],
                 ],
                 'result' => null,
-                'message' => 'Provision-Lock aktiv — bitte warten.',
+                'message' => $message,
             ];
         }
 
@@ -243,18 +262,108 @@ final class KdvProvisionGateService
             if (!$ok) {
                 self::markDnsPendingIfDomainStepOk($customerId, $result['steps'] ?? []);
             }
+            $message = $ok
+                ? 'Provision erfolgreich.'
+                : 'Provision mit Fehlern — siehe Schritte (kein stilles Löschen).';
+            $installUrl = isset($result['install_url']) ? (string) $result['install_url'] : null;
+            if ($installUrl === null || $installUrl === '') {
+                $installUrl = self::suggestInstallUrl($customer);
+            }
+            self::remember($customerId, [
+                'ok' => $ok,
+                'message' => $message,
+                'install_url' => $installUrl,
+                'steps' => is_array($result['steps'] ?? null) ? $result['steps'] : [],
+                'gate_failures' => [],
+            ]);
 
             return [
                 'ok' => $ok,
                 'gate' => $gate,
                 'result' => $result,
-                'message' => $ok
-                    ? 'Provision erfolgreich.'
-                    : 'Provision mit Fehlern — siehe Schritte (kein stilles Löschen).',
+                'message' => $message,
             ];
         } finally {
             self::releaseLock($customerId);
         }
+    }
+
+    /**
+     * Letzter Provision-Lauf für die Kundenakte (MF7c).
+     *
+     * @return array{
+     *   at: string,
+     *   ok: bool,
+     *   message: string,
+     *   install_url: string|null,
+     *   steps: list<array{step: string, ok: bool, detail: string}>,
+     *   gate_failures: list<array{code: string, message: string}>
+     * }|null
+     */
+    public static function lastResult(int $customerId): ?array
+    {
+        if ($customerId < 1 || !class_exists('SettingsStore') || !Database::isConfigured()) {
+            return null;
+        }
+        $store = SettingsStore::get(self::RESULT_KEY, ['by_id' => []]);
+        $row = $store['by_id'][(string) $customerId] ?? null;
+        if (!is_array($row)) {
+            return null;
+        }
+
+        return [
+            'at' => (string) ($row['at'] ?? ''),
+            'ok' => !empty($row['ok']),
+            'message' => (string) ($row['message'] ?? ''),
+            'install_url' => isset($row['install_url']) && $row['install_url'] !== ''
+                ? (string) $row['install_url']
+                : null,
+            'steps' => is_array($row['steps'] ?? null) ? $row['steps'] : [],
+            'gate_failures' => is_array($row['gate_failures'] ?? null) ? $row['gate_failures'] : [],
+        ];
+    }
+
+    /**
+     * @param array{
+     *   ok: bool,
+     *   message: string,
+     *   install_url?: string|null,
+     *   steps?: list<array{step: string, ok: bool, detail: string}>,
+     *   gate_failures?: list<array{code: string, message: string}>
+     * } $payload
+     */
+    public static function remember(int $customerId, array $payload): void
+    {
+        if ($customerId < 1 || !class_exists('SettingsStore') || !Database::isConfigured()) {
+            return;
+        }
+        $store = SettingsStore::get(self::RESULT_KEY, ['by_id' => []]);
+        $byId = is_array($store['by_id'] ?? null) ? $store['by_id'] : [];
+        $byId[(string) $customerId] = [
+            'at' => date('c'),
+            'ok' => !empty($payload['ok']),
+            'message' => (string) ($payload['message'] ?? ''),
+            'install_url' => isset($payload['install_url']) && $payload['install_url'] !== null && $payload['install_url'] !== ''
+                ? (string) $payload['install_url']
+                : null,
+            'steps' => is_array($payload['steps'] ?? null) ? array_values($payload['steps']) : [],
+            'gate_failures' => is_array($payload['gate_failures'] ?? null) ? array_values($payload['gate_failures']) : [],
+        ];
+        if (count($byId) > self::RESULT_MAX) {
+            $byId = array_slice($byId, -self::RESULT_MAX, null, true);
+        }
+        SettingsStore::set(self::RESULT_KEY, ['by_id' => $byId]);
+    }
+
+    /** @param array<string, mixed> $customer */
+    public static function suggestInstallUrl(array $customer): ?string
+    {
+        $domain = FirmSwitcherService::normalizeHost((string) ($customer['domain'] ?? ''));
+        if ($domain === '' || !self::isValidFqdn($domain)) {
+            return null;
+        }
+
+        return 'https://' . $domain . '/install.php';
     }
 
     public static function formatFailures(array $gate): string

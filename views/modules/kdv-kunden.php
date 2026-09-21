@@ -79,6 +79,8 @@ if ($multiFirma) {
               <?php endif; ?>
               <?php if (in_array($c['status'], ['neu', 'dns_pending'], true)): ?>
                 <a href="/app?page=kdv-provision&amp;id=<?= (int) $c['id'] ?>" style="font-size:0.85em; margin-left:6px;">bereitstellen →</a>
+              <?php elseif (($c['status'] ?? '') === 'installiert'): ?>
+                <a href="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" style="font-size:0.85em; margin-left:6px;">Install-URL →</a>
               <?php endif; ?>
             </td>
             <td><?= View::escape($c['crm_version'] ?? '–') ?></td>

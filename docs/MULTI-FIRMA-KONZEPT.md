@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7b erledigt · Provision-Gates + Hook ✅** · Offen: MF7c  
+Stand: **2026-09-21** · Status: **MF0–MF7 erledigt · Multi-Firma Ausbau SSO/Sync/Provision ✅** · Offen: siehe Roadmap später  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -613,15 +613,13 @@ Keine neuen KAS-Operationen in MF7 — nur Gate vor dem bestehenden Pipeline-Auf
 | **MF6c** ✅ | Import auf Zielinstanz + `origin_firm_note` setzen | `ContactImportService`, Kontakte-Upload — **erledigt 2026-09-21** | 2-Wege, Merge-UI groß |
 | **MF7a** ✅ | Spec: wann Provision erlaubt (DNS, KAS, Slot `neu`) | Spec §13 — **erledigt 2026-09-21** | Code |
 | **MF7b** ✅ | Hook Umfirmierung → optional `KdvDeployService::provision` | `KdvProvisionGateService`, Umfirmierung-UI, `kdv-provision` — **erledigt 2026-09-21** | Shop-Stripe |
-| **MF7c** | Status/Fehler in KDV-UI (Install-URL, Steps) | kdv-kunde-form / umfirmierung View | neue Infrastruktur |
+| **MF7c** ✅ | Status/Fehler in KDV-UI (Install-URL, Steps) | Kundenakte-Panel, gespeicherte Steps, Listen-Link — **erledigt 2026-09-21** | neue Infrastruktur |
 
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma MF7c laut docs/MULTI-FIRMA-KONZEPT.md §13
-Nur: KDV-UI Status/Fehler/Install-URL nach Provision (Steps anzeigen)
-Kein Shop/Stripe, kein Deploy außer ich sage es.
-Nicht §1–12/§14 der Spec neu einlesen — nur §13 + genannte Dateien.
+Scope: Multi-Firma abgeschlossen (MF0–MF7). Nächster Ausbau nur nach neuer Spec.
+Kein Deploy außer ich sage es.
 ```
 
 Weitere: `MF5a` / `MF5c` / `MF6a` … analog ersetzen.

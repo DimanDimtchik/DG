@@ -98,7 +98,8 @@ $predId = (int) ($p['id'] ?? 0);
 
     <div class="dg-panel">
       <h2>Optional: CRM jetzt provisionieren (MF7)</h2>
-      <p class="dg-field-hint">Standard aus — kein Überraschungs-Deploy. Gates G1–G9 laut Spec; bei DNS-Records Bestätigung nötig.</p>
+      <p class="dg-field-hint">Standard aus — kein Überraschungs-Deploy. Gates G1–G9 laut Spec; bei DNS-Records Bestätigung nötig.
+        Ergebnis (Steps, Install-URL, Fehler) erscheint danach in der <strong>Nachfolger-Akte</strong>.</p>
       <label class="dg-label dg-label--checkbox">
         <input type="checkbox" name="provision_now" value="1"<?= !empty($form['provision_now']) ? ' checked' : '' ?>>
         <span>Nachfolger-Instanz jetzt über KAS bereitstellen</span>

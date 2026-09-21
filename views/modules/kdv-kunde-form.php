@@ -247,6 +247,70 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
     </div>
     <?php endif; ?>
 
+    <?php if ($isEdit) :
+      $provLast = KdvProvisionGateService::lastResult((int) $c['id']);
+      $provInstall = $provLast['install_url'] ?? null;
+      if ($provInstall === null || $provInstall === '') {
+          $provInstall = KdvProvisionGateService::suggestInstallUrl($c);
+      }
+      $statusLabel = KdvCustomerRepository::STATUSES[(string) ($c['status'] ?? '')] ?? (string) ($c['status'] ?? '');
+    ?>
+    <div class="dg-panel dg-kdv-provision-status">
+      <h2>CRM-Bereitstellung (MF7)</h2>
+      <p>
+        Status:
+        <strong><?= View::escape($statusLabel) ?></strong>
+        <?php if (!empty($c['crm_version'])) : ?>
+          · CRM-Version <?= View::escape((string) $c['crm_version']) ?>
+        <?php endif; ?>
+        <?php if (!empty($c['db_name'])) : ?>
+          · DB <code><?= View::escape((string) $c['db_name']) ?></code>
+        <?php endif; ?>
+      </p>
+      <?php if ($provInstall !== null && in_array((string) ($c['status'] ?? ''), ['neu', 'dns_pending', 'installiert'], true)) : ?>
+        <p>
+          Install-URL:
+          <a href="<?= View::escape($provInstall) ?>" target="_blank" rel="noopener"><?= View::escape($provInstall) ?></a>
+        </p>
+      <?php endif; ?>
+      <?php if ($provLast !== null) : ?>
+        <p class="dg-field-hint">
+          Letzter Lauf<?= $provLast['at'] !== '' ? ' (' . View::escape($provLast['at']) . ')' : '' ?>:
+          <?= !empty($provLast['ok']) ? 'erfolgreich' : 'mit Fehlern / abgelehnt' ?>
+          — <?= View::escape($provLast['message']) ?>
+        </p>
+        <?php if ($provLast['gate_failures'] !== []) : ?>
+          <ul class="dg-muted">
+            <?php foreach ($provLast['gate_failures'] as $gf) : ?>
+              <li><code><?= View::escape((string) ($gf['code'] ?? '')) ?></code> <?= View::escape((string) ($gf['message'] ?? '')) ?></li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+        <?php if ($provLast['steps'] !== []) : ?>
+          <table class="dg-table" style="margin-top:8px;">
+            <thead><tr><th>Schritt</th><th>OK</th><th>Detail</th></tr></thead>
+            <tbody>
+              <?php foreach ($provLast['steps'] as $step) : ?>
+                <tr>
+                  <td><?= View::escape((string) ($step['step'] ?? '')) ?></td>
+                  <td><?= !empty($step['ok']) ? '✓' : '✗' ?></td>
+                  <td><?= View::escape((string) ($step['detail'] ?? '')) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        <?php endif; ?>
+      <?php else : ?>
+        <p class="dg-field-hint">Noch kein Provision-Lauf gespeichert.</p>
+      <?php endif; ?>
+      <?php if (in_array((string) ($c['status'] ?? ''), ['neu', 'dns_pending'], true)) : ?>
+        <p style="margin-top:12px;">
+          <a class="dg-button" href="/app?page=kdv-provision&amp;id=<?= (int) $c['id'] ?>">CRM bereitstellen…</a>
+        </p>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <div class="dg-form-actions">
       <button class="dg-button dg-button--primary" type="submit">Speichern</button>
       <a class="dg-button" href="/app?page=kdv-kunden">Abbrechen</a>

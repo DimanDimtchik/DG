@@ -46,7 +46,8 @@ $gateError = $provisionGateError ?? null;
     </div>
     <?php endif; ?>
     <div style="margin-top:16px;">
-      <a class="dg-button" href="/app?page=kdv-kunden">← Zurück zur Kundenliste</a>
+      <a class="dg-button" href="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>">← Zur Kundenakte (Status/Steps)</a>
+      <a class="dg-button" href="/app?page=kdv-kunden">Zur Kundenliste</a>
     </div>
   </div>
 
