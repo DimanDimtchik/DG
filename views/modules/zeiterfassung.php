@@ -90,7 +90,11 @@ $state = (string) ($status['state'] ?? 'off');
             — davon <?= View::escape((string) ($summary['auto_break_display'] ?? '0:00')) ?> h automatisch
           <?php endif; ?>
           )</p>
-        <p><strong>Soll heute:</strong> <?= View::escape((string) ($summary['scheduled_display'] ?? '0:00')) ?> h</p>
+        <p><strong>Soll heute:</strong> <?= View::escape((string) ($summary['scheduled_display'] ?? '0:00')) ?> h
+          <?php if (($summary['schedule_source'] ?? '') === 'shift' && ($summary['shift_name'] ?? '') !== '') : ?>
+            <span class="dg-muted">(Schicht: <?= View::escape((string) $summary['shift_name']) ?>)</span>
+          <?php endif; ?>
+        </p>
       </div>
 
       <?php if ($blocksClockOut) : ?>

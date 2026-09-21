@@ -104,7 +104,12 @@ if ($contactId > 0) {
               <tr<?= $empty ? ' class="dg-muted"' : '' ?>>
                 <td><?= View::escape((string) ($day['date_display'] ?? '')) ?></td>
                 <td><?= View::escape((string) ($day['weekday'] ?? '')) ?></td>
-                <td class="dg-table__num"><?= View::escape((string) ($day['scheduled_display'] ?? '0:00')) ?></td>
+                <td class="dg-table__num">
+                  <?= View::escape((string) ($day['scheduled_display'] ?? '0:00')) ?>
+                  <?php if (($day['schedule_source'] ?? '') === 'shift' && ($day['shift_name'] ?? '') !== '') : ?>
+                    <br><span class="dg-muted"><?= View::escape((string) $day['shift_name']) ?></span>
+                  <?php endif; ?>
+                </td>
                 <td class="dg-table__num"><?= View::escape((string) ($day['worked_display'] ?? '0:00')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($day['break_display'] ?? '0:00')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($day['diff_display'] ?? '0:00')) ?></td>

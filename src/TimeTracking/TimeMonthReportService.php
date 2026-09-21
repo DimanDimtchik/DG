@@ -78,29 +78,33 @@ final class TimeMonthReportService
             $dt = DateTimeImmutable::createFromFormat('Y-m-d', $date);
             $wd = $dt !== false ? (int) $dt->format('N') : 0;
 
+            // Z3d: Soll immer live (Schicht schlägt Aggregation).
+            $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $date);
+            $scheduleSource = TimeScheduleService::scheduleSource($contactId, $date);
+            $shift = TimeScheduleService::shiftAssignmentFor($contactId, $date);
+            $shiftName = is_array($shift) ? (string) ($shift['template_name'] ?? '') : '';
+
             if (isset($aggregated[$date])) {
                 $row = $aggregated[$date];
-                $scheduled = max(0, (int) ($row['scheduled_minutes'] ?? 0));
                 $worked = max(0, (int) ($row['worked_minutes'] ?? 0));
                 $break = max(0, (int) ($row['break_minutes'] ?? 0));
-                $overtime = max(0, (int) ($row['overtime_minutes'] ?? 0));
                 $source = 'aggregated';
             } else {
                 $summary = TimeClockService::daySummary($contactId, $date);
-                $scheduled = max(0, (int) ($summary['scheduled_minutes'] ?? 0));
                 $worked = max(0, (int) ($summary['worked_minutes'] ?? 0));
                 $break = max(0, (int) ($summary['break_minutes'] ?? 0));
                 $events = is_array($summary['events'] ?? null) ? $summary['events'] : [];
                 $source = $events !== [] ? 'live' : 'empty';
-                $overtime = 0;
-                if (
-                    $source !== 'empty'
-                    && EmployeeData::overtimeAllowed($employeeData)
-                    && !EmployeeData::isMinijob($employeeData)
-                    && $scheduled > 0
-                ) {
-                    $overtime = max(0, $worked - $scheduled);
-                }
+            }
+
+            $overtime = 0;
+            if (
+                $source !== 'empty'
+                && EmployeeData::overtimeAllowed($employeeData)
+                && !EmployeeData::isMinijob($employeeData)
+                && $scheduled > 0
+            ) {
+                $overtime = max(0, $worked - $scheduled);
             }
 
             $diff = $worked - $scheduled;
@@ -112,6 +116,14 @@ final class TimeMonthReportService
             $dayWarnings = [];
             if ($worked > ArbzgComplianceService::MAX_DAILY_MINUTES) {
                 $dayWarnings[] = 'ArbZG: >10 h (Soft)';
+            }
+            if (
+                $scheduleSource === 'shift'
+                && $scheduled > 0
+                && $worked > 0
+                && abs($worked - $scheduled) >= 60
+            ) {
+                $dayWarnings[] = 'Ist weicht ≥1 h vom Schicht-Soll ab';
             }
 
             $days[] = [
@@ -128,6 +140,8 @@ final class TimeMonthReportService
                 'break_display' => TimeClockService::formatMinutes($break),
                 'diff_display' => self::formatSignedMinutes($diff),
                 'overtime_display' => TimeClockService::formatMinutes($overtime),
+                'schedule_source' => $scheduleSource,
+                'shift_name' => $shiftName,
                 'source' => $source,
                 'arbzg_flags' => $dayWarnings,
             ];

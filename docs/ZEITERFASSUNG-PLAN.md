@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–2 ✅** · Spec **Z3a–Z6a ✅** · **Z3b–Z3c Code ✅** · offen: Z3d, Z4b–e, Z5b–d, Z6b+  
+> Status: **Phase 1–3 Schichten ✅** · Spec **Z3a–Z6a ✅** · offen: Z4b–e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -156,9 +156,9 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 3 — Schichten
 
-- [x] Schichtplan (Früh/Spät/Nacht oder frei definierbar) — Vorlagen Z3b + Zuordnung Z3c; Soll Z3d offen
-- [ ] Zuordnung Mitarbeiter ↔ Schicht ↔ Datum
-- [ ] Abweichung Soll (Schicht) vs. Ist (Stempel)
+- [x] Schichtplan (Früh/Spät/Nacht oder frei definierbar) — Vorlagen Z3b + Zuordnung Z3c + Soll Z3d ✅
+- [x] Zuordnung Mitarbeiter ↔ Schicht ↔ Datum
+- [x] Abweichung Soll (Schicht) vs. Ist (Stempel)
 
 ### Phase 4 — Urlaub & Krankheit
 
@@ -265,13 +265,13 @@ Abweichung nur per explizitem Chat-Befehl.
 1. **Z3a** Spec Schicht-Vorlagen + Zuordnung + Soll-Prio ✅  
 2. **Z3b** Migration + CRUD Vorlagen (Früh/Spät/Nacht / frei) ✅  
 3. **Z3c** Zuordnung MA ↔ Schicht ↔ Datum + Wochen-UI ✅  
-4. **Z3d** Soll aus Schicht in `TimeScheduleService` + Abweichung Ist  
+4. **Z3d** Soll aus Schicht in `TimeScheduleService` + Abweichung Ist ✅  
 
 **Spätere Serien (eigene Chat-Ketten, nicht mischen):**
 
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
-| **Z3** | Schichten | `z3a` ✅ · weiter `z3b` |
+| **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a` ✅ · weiter `z4b` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
@@ -503,13 +503,15 @@ Ohne Zuordnung: Verhalten unverändert Z2b.
 
 **Nicht:** Soll-Anbindung (Z3d), Lohn, Zuschläge.
 
-### Z3d — Soll-Anbindung
+### Z3d — Soll-Anbindung ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| `TimeScheduleService` | Prio 0 Schicht |
-| Stempel/Monat | Schicht-Soll sichtbar |
-| Nicht | Z4 Urlaub |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| `TimeScheduleService` | Prio 0 = Schicht-Zuordnung → Vorlagen-Dauer |
+| Stempel/Team/Monat | Schicht-Soll + Name sichtbar |
+| Soft-Hinweis | Ist weicht ≥60 min vom Schicht-Soll (kein Block) |
+
+**Nicht:** Z4 Urlaub, Zuschläge.
 
 ### Chat-Vorlage Z3
 

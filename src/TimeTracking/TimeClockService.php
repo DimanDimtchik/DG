@@ -156,6 +156,9 @@ final class TimeClockService
         $events = TimeClockRepository::eventsForContact($contactId, $date);
         $employeeData = self::employeeDataForContact($contactId);
         $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $date);
+        $scheduleSource = TimeScheduleService::scheduleSource($contactId, $date);
+        $shiftAssignment = TimeScheduleService::shiftAssignmentFor($contactId, $date);
+        $shiftName = is_array($shiftAssignment) ? (string) ($shiftAssignment['template_name'] ?? '') : '';
 
         $segments = self::computeSegments($events);
         $manualBreak = $segments['break_minutes'];
@@ -175,7 +178,18 @@ final class TimeClockService
 
         $warnings = [];
         if ($scheduled < 1) {
-            $warnings[] = 'Soll nicht hinterlegt (kein Tagesziel in Stammdaten/Kalender).';
+            $warnings[] = 'Soll nicht hinterlegt (kein Tagesziel in Schicht/Stammdaten/Kalender).';
+        }
+        if (
+            $scheduleSource === 'shift'
+            && $scheduled > 0
+            && $netWorked > 0
+            && abs($netWorked - $scheduled) >= 60
+        ) {
+            $warnings[] = sprintf(
+                'Hinweis: Ist weicht um %s h vom Schicht-Soll ab (Soft, kein Block).',
+                self::formatMinutes(abs($netWorked - $scheduled))
+            );
         }
         if ($compliance['must_take_break']) {
             $warnings[] = sprintf(
@@ -210,6 +224,8 @@ final class TimeClockService
             'auto_break_minutes' => $autoBreak,
             'break_minutes' => $totalBreak,
             'scheduled_minutes' => $scheduled,
+            'schedule_source' => $scheduleSource,
+            'shift_name' => $shiftName,
             'worked_display' => self::formatMinutes($netWorked),
             'break_display' => self::formatMinutes($totalBreak),
             'manual_break_display' => self::formatMinutes($manualBreak),
@@ -254,6 +270,7 @@ final class TimeClockService
             $status = self::statusFromEvents($contactEvents);
             $segments = self::computeSegments($contactEvents);
             $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $today);
+            $shift = TimeScheduleService::shiftAssignmentFor($contactId, $today);
             $autoBreak = 0;
             if (TimeTrackingSettings::config()['auto_break_enabled'] ?? true) {
                 $autoBreak = self::autoBreakMinutes($segments['worked_minutes'], $segments['break_minutes']);
@@ -270,6 +287,8 @@ final class TimeClockService
                 'worked_display' => self::formatMinutes($netWorked),
                 'scheduled_display' => self::formatMinutes($scheduled),
                 'scheduled_minutes' => $scheduled,
+                'schedule_source' => TimeScheduleService::scheduleSource($contactId, $today),
+                'shift_name' => is_array($shift) ? (string) ($shift['template_name'] ?? '') : '',
                 'arbzg_warnings' => $arbzgWarnings,
             ];
         }

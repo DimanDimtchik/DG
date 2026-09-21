@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Zeiterfassung Z2b: Soll-Minuten pro Kontakt und Tag (Spec Z2a).
+ * Zeiterfassung Z2b/Z3d: Soll-Minuten pro Kontakt und Tag.
  *
- * Prio: MA daily_work_minutes → working_hours → Kalender Öffnungsdauer → 0.
+ * Prio: Schicht-Zuordnung → MA daily_work_minutes → working_hours → Kalender → 0.
  */
 final class TimeScheduleService
 {
@@ -17,12 +17,69 @@ final class TimeScheduleService
             return 0;
         }
 
+        $shiftMinutes = self::shiftTargetMinutes($contactId, $dateYmd);
+        if ($shiftMinutes > 0) {
+            return $shiftMinutes;
+        }
+
         $personal = self::personalTargetMinutes(self::employeeDataForContact($contactId));
         if ($personal > 0) {
             return $personal;
         }
 
         return self::calendarTargetMinutes($dateYmd);
+    }
+
+    /**
+     * Schicht-Zuordnung für den Tag (Z3c), oder null.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function shiftAssignmentFor(int $contactId, string $dateYmd): ?array
+    {
+        if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
+            return null;
+        }
+        if (!class_exists('TimeShiftAssignmentRepository')) {
+            return null;
+        }
+
+        return TimeShiftAssignmentRepository::findForContactDate($contactId, $dateYmd);
+    }
+
+    /**
+     * Soll aus Schicht-Vorlage (Prio 0), sonst 0.
+     */
+    public static function shiftTargetMinutes(int $contactId, string $dateYmd): int
+    {
+        $assignment = self::shiftAssignmentFor($contactId, $dateYmd);
+        if ($assignment === null) {
+            return 0;
+        }
+        $minutes = (int) ($assignment['duration_minutes'] ?? 0);
+
+        return $minutes > 0 ? min(960, $minutes) : 0;
+    }
+
+    /**
+     * Quelle des Soll-Werts: shift | personal | calendar | none.
+     */
+    public static function scheduleSource(int $contactId, string $dateYmd): string
+    {
+        if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
+            return 'none';
+        }
+        if (self::shiftTargetMinutes($contactId, $dateYmd) > 0) {
+            return 'shift';
+        }
+        if (self::personalTargetMinutes(self::employeeDataForContact($contactId)) > 0) {
+            return 'personal';
+        }
+        if (self::calendarTargetMinutes($dateYmd) > 0) {
+            return 'calendar';
+        }
+
+        return 'none';
     }
 
     /**
