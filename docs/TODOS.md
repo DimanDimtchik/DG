@@ -45,6 +45,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **AB aus Angebots-Mail-Antwort** — Migration 083 · Auto-AB + Annahme-Vermerk (Inbound In-Reply-To)
 - [x] **Anzahlung materialbasiert** — EK aus `dg_article_purchase_sources` (Preferred)
 - [ ] **Vor Hetzner:** `VOR-HETZNER-CHECK.md` (Shared Core, Asset-Minify, GoBD/§14/§19-Stichprobe)
+- [ ] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); Start: `mb1a`
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
 
@@ -115,8 +116,8 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 | Thema | Doku |
 |-------|------|
-| **Multi-Firma** (Switcher, Tochter, Umfirmierung unterjährig) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) |
-| Zweitfirma −20 %, Umfirmierung = 1 Paket + Archiv-Slot | Abschnitt 7 im Konzept |
+| **Multi-Firma Betrieb** MB1–MB4 (SSO-Secret, Smoke, Contact, Provision-Gates) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) §15 |
+| Multi-Firma Code MF0–MF7 | erledigt 2026-09-21 |
 
 ---
 

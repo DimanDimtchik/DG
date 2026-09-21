@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7 erledigt · Multi-Firma Ausbau SSO/Sync/Provision ✅** · Offen: siehe Roadmap später  
+Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB4 offen** (siehe §15)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -649,3 +649,138 @@ Weitere: `MF5a` / `MF5c` / `MF6a` … analog ersetzen.
 - § 4 Abs. 1 / Abs. 3 EStG  
 - `docs/KDV-TODO.md`, `docs/SHOP-TODO.md`, `docs/TODOS.md`  
 - `shop/config/plans.php`
+
+---
+
+## 15. Betrieb Multi-Firma (nach MF0–MF7) — token-sparend
+
+> **Agent-Regel:** Pro Chat nur **einen** Unterpunkt (z. B. MB1a). Spec-Absatz §15 + genannte Dateien — **nicht** §1–14 neu einlesen. Kein Deploy außer Nutzer sagt es. Secrets **nie** committen. Ein Chat = ein Commit (wenn Doku/Checkliste geändert).
+
+Nach MF0–MF7 ist der **Code** deployed; offen ist **Betrieb** (Config, Smoke, Org-Flags).
+
+### Default-Zielinstanzen
+
+| Instanz | Rolle im Betrieb |
+|---------|------------------|
+| `dg.ganz-om.de` | Master · KDV-Org/Registry |
+| `ganz-soft.de` | Live-Test CRM |
+| Weitere (z. B. `kontur-cosmetics.de`) | nur wenn **dieselbe** KDV-Org **oder** `config/firm-switcher.local.php` |
+
+### Entscheid-Checkliste Betrieb (ohne Agent abhaken)
+
+| # | Entscheidung | Default |
+|---|--------------|---------|
+| B1 | Erste SSO-Org | Master-KDV + `ganz-soft.de` (weitere Domains erst nach Org-Mapping) |
+| B2 | Secret-Ausrollung | Manuell je Instanz `firm-sso.local.php` (Sync-Exclude `*.local.php`); gleiches Secret ≥32 Zeichen |
+| B3 | Contact-Betrieb | Einbahn Export/Import erst nach SSO-Smoke (MB2) |
+| B4 | Provision-Smoke | Gates in KDV-Akte prüfen; **voller** KAS-Lauf nur mit explizitem Nutzerbefehl |
+
+### Reihenfolge (Absicht)
+
+1. **MB1** SSO-Secret (Checkliste → Ausrollung)  
+2. **MB2** Switcher-Smoke  
+3. **MB3** Contact Export/Import  
+4. **MB4** Provision-Gates-Smoke  
+
+**Nie parallel** SSO + Contact + Provision in einem Chat.
+
+### MB1a — SSO-Ausroll-Checkliste (Spec) 
+
+Nur Spezifikation / Checkliste — kein Secret erzeugen, kein Upload.
+
+#### Pflicht vor MB1b
+
+| # | Check | OK |
+|---|--------|----|
+| 1 | Liste aller Domains der Org (normalisiert, ohne `www.`) | ☐ |
+| 2 | Pro Domain: CRM-Pfad auf Server bekannt | ☐ |
+| 3 | `config/*.local.php` ist Sync-Exclude (CRM-Sync überschreibt Secret nicht) | ☐ |
+| 4 | Vorlage: `config/firm-sso.local.example.php` | ☐ |
+| 5 | Secret-Länge ≥ 32 Zeichen; **identisch** auf allen Org-Instanzen | ☐ |
+| 6 | Optional: `allowed_domains` als Schnittmenge (leer = nur Sibling-Liste) | ☐ |
+| 7 | Kundeninstanz ohne KDV: zusätzlich `firm-switcher.local.php` falls nötig | ☐ |
+| 8 | Secret nirgends in Git / Chat / Ticket-Klartext | ☐ |
+
+#### Abgrenzung MB1a
+
+- **Nicht:** Secret generieren, SFTP/SSH-Upload, Code-Änderung.
+
+### MB1b — Secret ausrollen
+
+- Datei `config/firm-sso.local.php` aus Example auf **jeder** Org-Instanz anlegen (SSH/SFTP; Agent nur mit Freigabe).  
+- Kurzprüfung: Switcher-Hinweis „automatische Anmeldung“ (MF5c) erscheint nur wenn SSO enabled.  
+- **Nicht:** Code ändern, Secret committen, Deploy des ganzen CRM nötig (nur local.php).
+
+### MB2 — Switcher-Smoke
+
+| Schritt | Erwartung |
+|---------|-----------|
+| Eingeloggt → Firma wechseln | Redirect HTTPS Ziel `/login?firm_sso=…` |
+| Token gültig | Auto-Login + Banner „Firma gewechselt“ |
+| Token abgelaufen / Replay | Flash Fehler, Passwort-Login |
+| Support-Session | Wechsel/SSO abgelehnt |
+| Ohne Secret | Fallback MF1: `/login` ohne Token |
+
+**Nicht:** Contact-Sync, Provision.
+
+### MB3 — Contact Export/Import
+
+| Schritt | Erwartung |
+|---------|-----------|
+| Org `share_contacts = 1` (oder Admin ohne KDV) | Export-Button sichtbar |
+| Export JSON | Format `dg_contact_export` v1 |
+| Import auf Schwester | Matching E-Mail → Kd-Nr. → Lf-Nr.; Default nur leere Felder |
+| Herkunft | `origin_firm_note` gesetzt wenn leer |
+| Warnungen | Selbst-Import / Flag aus / >90 Tage → Checkbox |
+
+**Nicht:** Live-2-Wege, Mitarbeiterakten, Bankkonten.
+
+### MB4 — Provision-Gates-Smoke
+
+| Schritt | Erwartung |
+|---------|-----------|
+| Nachfolger `status=neu` | Gates G1–G9 greifen |
+| Gate-Reject | Meldung mit Code in Akte / Provision-UI; kein KAS-Call |
+| Letzter Lauf | Steps / Install-URL in KDV-Kundenakte (MF7c) |
+| Voller KAS-Lauf | **nur** wenn Nutzer explizit KAS-Daten + Befehl gibt |
+
+**Nicht:** Stripe, stilles Löschen von KAS-Artefakten.
+
+### Phasen-Tabelle
+
+| Phase | Lieferobjekt | Erlaubt zu lesen/ändern | Nicht |
+|-------|----------------|-------------------------|--------|
+| **MB1a** | Checkliste SSO-Domains / Secret-Regeln | Spec §15 | Secret erzeugen/hochladen |
+| **MB1b** | `firm-sso.local.php` auf Org-Instanzen | Server-Config `*.local.php` | Code, Git-Secret |
+| **MB2** | Switcher-Smoke (Token, Support-Ban, Fallback) | Browser/UI, kurze Logs | Contact, Provision |
+| **MB3** | Contact Export/Import Smoke | Kontakte-UI, Org-Flag | 2-Wege, Mitarbeiter/Bank |
+| **MB4** | Provision-Gates-Smoke (+ optional 1× KAS) | KDV-Akte, Gates | Stripe, Auto-Rollback-Löschen |
+
+### Chat-Vorlage (kopieren)
+
+```text
+Scope: Multi-Firma Betrieb MB1a laut docs/MULTI-FIRMA-KONZEPT.md §15
+Nur: Checkliste SSO-Secret-Ausrollung Domains/Instanzen
+Kein Secret erzeugen, kein Upload, kein Deploy außer ich sage es.
+Nicht §1–14 der Spec neu einlesen — nur §15 + genannte Dateien.
+```
+
+Weitere: `MB1b` / `MB2` / `MB3` / `MB4` analog ersetzen.
+
+### Token-Sparregeln (Betrieb)
+
+1. **Ein Unterpunkt pro Chat** — nie „SSO und Contact und Provision“  
+2. **B1–B4 vorher** in der Checkliste abhaken (ohne Agent)  
+3. **Composer/lokal** für Spec; Cloud nur bei SSH/Upload  
+4. **Kein erneutes Konzept-Einlesen** — Agent-Regel oben  
+5. **Kein Deploy** in Betriebs-Chats, bis Sie „deploy“ sagen (Secret-Upload ≠ CRM-Deploy)  
+6. Nach jedem Unterpunkt: **ein Commit** (`commit mb1a`) wenn Doku geändert  
+7. Chats archivieren — max. 1 Lokal + 1 Cloud aktiv lassen  
+
+### Bewusst nicht in MB1–4
+
+- Intercompany-Belege, Konzern-Konsolidierung  
+- Shared Session über alle Domains (Cookie)  
+- Automatische Buchungsübernahme bei Umfirmierung  
+- Stripe-Coupon-API für −20 %  
+- Vault / automatisches Secret-Management  
