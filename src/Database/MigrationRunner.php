@@ -237,6 +237,8 @@ final class MigrationRunner
                 && self::columnExists($pdo, 'dg_mail_log', 'in_reply_to')
                 && self::columnExists($pdo, 'dg_vouchers', 'document_acceptance'),
             '088_multi_firma_gewinnermittlung.sql' => self::columnExists($pdo, 'dg_kdv_customers', 'gewinnermittlung'),
+            '089_multi_firma_history_shared.sql' => self::tableExists($pdo, 'dg_company_master_history')
+                && self::columnExists($pdo, 'dg_contacts', 'origin_firm_note'),
             default => false,
         };
     }
@@ -352,6 +354,7 @@ final class MigrationRunner
             '082_kdv_orgs_multi_firma.sql' => true,
             '083_offer_mail_acceptance.sql' => true,
             '088_multi_firma_gewinnermittlung.sql' => true,
+            '089_multi_firma_history_shared.sql' => true,
         ];
     }
 

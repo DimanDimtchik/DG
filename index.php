@@ -4764,6 +4764,37 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/kdv-support';
             $title = 'Support-Freigaben';
             $currentPage = 'kdv-support';
+        } elseif ($page === 'kdv-rumpf-wj' && MenuRegistry::canAccessKdv($user)) {
+            $rumpfOrgId = (int) ($_GET['org_id'] ?? $_POST['org_id'] ?? 0);
+            if (
+                $_SERVER['REQUEST_METHOD'] === 'POST'
+                && isset($_POST['mf_share_contacts_save'])
+                && Csrf::verify($_POST['_csrf'] ?? null)
+                && RoleResolver::canEdit($user)
+                && $rumpfOrgId > 0
+                && KdvOrgRepository::shareContactsColumnReady()
+            ) {
+                $orgRow = KdvOrgRepository::findById($rumpfOrgId);
+                if ($orgRow !== null) {
+                    KdvOrgRepository::save([
+                        'name' => (string) ($orgRow['name'] ?? ''),
+                        'billing_email' => (string) ($orgRow['billing_email'] ?? ''),
+                        'notes' => (string) ($orgRow['notes'] ?? ''),
+                        'share_contacts' => !empty($_POST['share_contacts']) ? 1 : 0,
+                    ], $rumpfOrgId);
+                    Flash::set('success', 'Shared-Contacts-Kennzeichnung gespeichert.');
+                }
+                header('Location: /app?page=kdv-rumpf-wj&org_id=' . $rumpfOrgId, true, 302);
+                exit;
+            }
+            $report = RumpfWjReportService::forOrg($rumpfOrgId);
+            $rumpfOrg = $report['org'];
+            $rumpfFirms = $report['firms'];
+            $rumpfPairs = $report['pairs'];
+            $kdvOrgOptions = KdvOrgRepository::options();
+            $contentTemplate = 'modules/kdv-rumpf-wj';
+            $title = 'Rumpf-WJ / Umfirmierung';
+            $currentPage = 'kdv-kunden';
         } elseif ($page === 'kdv-umfirmierung' && MenuRegistry::canAccessKdv($user)) {
             $formError = null;
             $fromId = (int) ($_GET['from_id'] ?? $_POST['from_id'] ?? 0);
@@ -5500,6 +5531,10 @@ $legalProductsConfig = LegalProductSettings::config();
         $predecessor = $predecessor ?? null;
         $umfirmForm = $umfirmForm ?? [];
         $umfirmChecklist = $umfirmChecklist ?? [];
+        $rumpfOrg = $rumpfOrg ?? null;
+        $rumpfFirms = $rumpfFirms ?? [];
+        $rumpfPairs = $rumpfPairs ?? [];
+        $rumpfOrgId = $rumpfOrgId ?? 0;
         $result = $result ?? null;
 
         View::render('layout/app', compact(
@@ -5734,6 +5769,10 @@ $legalProductsConfig = LegalProductSettings::config();
             'predecessor',
             'umfirmForm',
             'umfirmChecklist',
+            'rumpfOrg',
+            'rumpfFirms',
+            'rumpfPairs',
+            'rumpfOrgId',
             'result',
             'websitePageId',
             'websiteFormList',

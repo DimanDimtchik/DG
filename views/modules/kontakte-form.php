@@ -172,6 +172,13 @@ if ($isCompanyForm && $companyEmployees === []) {
         <textarea name="contact_note" rows="3" placeholder="z. B. Geräte-IP: 192.168.1.42 (OpenStage, Drucker …)"><?= View::escape($form['contact_note'] ?? '') ?></textarea>
         <small class="dg-field-hint">Nur im CRM — wird nicht an LDAP/OpenStage übertragen. Suche findet Einträge auch anhand der Bemerkung.</small>
       </label>
+      <?php if (ContactRepository::originFirmNoteColumnReady()) : ?>
+        <label class="dg-field dg-field--wide">
+          <span>Herkunft Firma (Multi-Firma)</span>
+          <input name="origin_firm_note" maxlength="191" value="<?= View::escape($form['origin_firm_note'] ?? '') ?>" placeholder="z. B. übernommen aus Vorgänger GmbH">
+          <small class="dg-field-hint">Nur Hinweis — kein automatischer Sync zwischen Instanzen.</small>
+        </label>
+      <?php endif; ?>
       <?php if (!$isEdit) : ?>
         <?php
           $mailAddressConfig = MailAddressSettings::config();

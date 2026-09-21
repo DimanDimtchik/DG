@@ -241,6 +241,49 @@ $bankSummary = $filledBanks > 0
     </div>
   </section>
 
+  <?php
+    $companyHistory = CompanyMasterHistoryRepository::tableReady()
+      ? CompanyMasterHistoryRepository::listRecent(15)
+      : [];
+  ?>
+  <?php if ($companyHistory !== []) : ?>
+  <section class="dg-dept-card" data-dept-card data-company-section="master-history">
+    <header class="dg-dept-accordion__header">
+      <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">
+        <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+        <span class="dg-dept-accordion__label">
+          <strong class="dg-dept-accordion__title">Firmendaten-Historie (MF4)</strong>
+          <span class="dg-dept-accordion__meta"><?= count($companyHistory) ?> Einträge</span>
+        </span>
+      </button>
+    </header>
+    <div class="dg-dept-accordion__panel" data-dept-panel hidden>
+      <p class="dg-field-hint">Stichtagsbezogene Snapshots bei Änderung von Name, Rechtsform, Gewinnermittlung, Steuernummer — für Prüfung/Impressum.</p>
+      <ul class="dg-muted" style="font-size:0.9rem;">
+        <?php foreach ($companyHistory as $h) : ?>
+          <?php
+            $vf = (string) ($h['valid_from'] ?? '');
+            $vfLabel = $vf !== '' ? date('d.m.Y', strtotime($vf)) : '—';
+          ?>
+          <li style="margin-bottom:6px;">
+            <strong><?= View::escape($vfLabel) ?></strong>
+            · <?= View::escape((string) ($h['display_name'] ?? '')) ?>
+            <?php if (($h['company_type'] ?? '') !== '') : ?>
+              · <?= View::escape((string) $h['company_type']) ?>
+            <?php endif; ?>
+            <?php if (($h['gewinnermittlung'] ?? '') !== '') : ?>
+              · <?= View::escape(UmfirmierungService::GEWINNERMITTLUNG[(string) $h['gewinnermittlung']] ?? (string) $h['gewinnermittlung']) ?>
+            <?php endif; ?>
+            <?php if (($h['tax_number'] ?? '') !== '') : ?>
+              · StNr <?= View::escape((string) $h['tax_number']) ?>
+            <?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  </section>
+  <?php endif; ?>
+
   <section class="dg-dept-card" data-dept-card data-company-section="owners">
     <header class="dg-dept-accordion__header">
       <button type="button" class="dg-dept-accordion__trigger" data-dept-toggle aria-expanded="false">

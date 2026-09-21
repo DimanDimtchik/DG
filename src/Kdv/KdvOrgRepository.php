@@ -77,24 +77,60 @@ final class KdvOrgRepository
             'billing_email' => self::emailOrNull($data['billing_email'] ?? null),
             'notes' => trim((string) ($data['notes'] ?? '')) ?: null,
         ];
+        $hasShare = self::shareContactsColumnReady();
+        if ($hasShare) {
+            $fields['share_contacts'] = !empty($data['share_contacts']) ? 1 : 0;
+        }
 
         $pdo = Database::pdo();
         if ($id !== null && $id > 0) {
-            $stmt = $pdo->prepare(
-                'UPDATE dg_kdv_orgs SET name = :name, billing_email = :billing_email, notes = :notes WHERE id = :id'
-            );
+            if ($hasShare) {
+                $stmt = $pdo->prepare(
+                    'UPDATE dg_kdv_orgs SET name = :name, billing_email = :billing_email, notes = :notes, share_contacts = :share_contacts WHERE id = :id'
+                );
+            } else {
+                $stmt = $pdo->prepare(
+                    'UPDATE dg_kdv_orgs SET name = :name, billing_email = :billing_email, notes = :notes WHERE id = :id'
+                );
+            }
             $fields['id'] = $id;
             $stmt->execute($fields);
 
             return $id;
         }
 
-        $stmt = $pdo->prepare(
-            'INSERT INTO dg_kdv_orgs (name, billing_email, notes) VALUES (:name, :billing_email, :notes)'
-        );
+        if ($hasShare) {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_kdv_orgs (name, billing_email, notes, share_contacts) VALUES (:name, :billing_email, :notes, :share_contacts)'
+            );
+        } else {
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_kdv_orgs (name, billing_email, notes) VALUES (:name, :billing_email, :notes)'
+            );
+        }
         $stmt->execute($fields);
 
         return (int) $pdo->lastInsertId();
+    }
+
+    public static function shareContactsColumnReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+        if (!self::tableReady()) {
+            return false;
+        }
+        try {
+            $ready = Database::pdo()->query(
+                "SHOW COLUMNS FROM dg_kdv_orgs LIKE 'share_contacts'"
+            )->fetchColumn() !== false;
+        } catch (Throwable) {
+            $ready = false;
+        }
+
+        return $ready;
     }
 
     /** Legt bei Bedarf eine Org anhand des Namens an und liefert die ID. */

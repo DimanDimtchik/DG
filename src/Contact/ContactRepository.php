@@ -393,6 +393,8 @@ final class ContactRepository
             $contactId = (int) $pdo->lastInsertId();
         }
 
+        self::writeOriginFirmNote($contactId, (string) ($data['origin_firm_note'] ?? ''));
+
         if ($hasEmployee && self::hasEmployeeUploads($uploads)) {
             $merged = ContactFileStorage::processUploads($contactId, $uploads, $existingFiles);
             $stmt = $pdo->prepare('UPDATE dg_contacts SET employee_files = :employee_files WHERE id = :id');
@@ -851,6 +853,7 @@ final class ContactRepository
             'login' => '', 'salutation' => '', 'first_name' => '', 'last_name' => '', 'display_name' => '',
             'company_name' => '', 'email' => '', 'email_2' => '', 'phone_1' => '', 'phone_2' => '',
             'customer_number' => '', 'supplier_number' => '', 'tax_number' => '', 'vat_id' => '', 'contact_note' => '',
+            'origin_firm_note' => '',
             'address1_extra' => '', 'address1_street' => '', 'address1_postal' => '', 'address1_city' => '', 'address1_country' => 'DE',
             'address2_extra' => '', 'address2_street' => '', 'address2_postal' => '', 'address2_city' => '', 'address2_country' => 'DE',
             'website' => '', 'contact_role' => 'dg_kunde',
@@ -872,6 +875,7 @@ final class ContactRepository
             'email' => $c->email, 'email_2' => $c->email2, 'phone_1' => $c->phone1, 'phone_2' => $c->phone2,
             'customer_number' => $c->customerNumber, 'supplier_number' => $c->supplierNumber,
             'tax_number' => $c->taxNumber, 'vat_id' => $c->vatId, 'contact_note' => $c->contactNote,
+            'origin_firm_note' => self::readOriginFirmNote($c->id),
             'address1_extra' => $c->address1Extra, 'address1_street' => $c->address1Street,
             'address1_postal' => $c->address1Postal, 'address1_city' => $c->address1City, 'address1_country' => $c->address1Country,
             'address2_extra' => $c->address2Extra, 'address2_street' => $c->address2Street,
@@ -1016,6 +1020,51 @@ final class ContactRepository
             self::mapEmployeeFiles($row),
             $persons,
         );
+    }
+
+    public static function originFirmNoteColumnReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        try {
+            $ready = Database::pdo()->query(
+                "SHOW COLUMNS FROM dg_contacts LIKE 'origin_firm_note'"
+            )->fetchColumn() !== false;
+        } catch (Throwable) {
+            $ready = false;
+        }
+
+        return $ready;
+    }
+
+    private static function readOriginFirmNote(int $contactId): string
+    {
+        if ($contactId < 1 || !self::originFirmNoteColumnReady()) {
+            return '';
+        }
+        $stmt = Database::pdo()->prepare('SELECT origin_firm_note FROM dg_contacts WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $contactId]);
+        $v = $stmt->fetchColumn();
+
+        return is_string($v) ? $v : '';
+    }
+
+    private static function writeOriginFirmNote(int $contactId, string $note): void
+    {
+        if ($contactId < 1 || !self::originFirmNoteColumnReady()) {
+            return;
+        }
+        Database::pdo()->prepare(
+            'UPDATE dg_contacts SET origin_firm_note = :n WHERE id = :id'
+        )->execute([
+            'id' => $contactId,
+            'n' => mb_substr(trim($note), 0, 191),
+        ]);
     }
 
     /**

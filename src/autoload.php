@@ -294,6 +294,8 @@ spl_autoload_register(static function (string $class): void {
         'FirmSwitcherService' => '/src/MultiFirma/FirmSwitcherService.php',
         'MultiFirmaPricingService' => '/src/MultiFirma/MultiFirmaPricingService.php',
         'UmfirmierungService' => '/src/MultiFirma/UmfirmierungService.php',
+        'CompanyMasterHistoryRepository' => '/src/MultiFirma/CompanyMasterHistoryRepository.php',
+        'RumpfWjReportService' => '/src/MultiFirma/RumpfWjReportService.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',
         'KdvBlockReasons' => '/src/Kdv/KdvBlockReasons.php',

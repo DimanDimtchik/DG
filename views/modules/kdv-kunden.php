@@ -19,6 +19,9 @@ if ($multiFirma) {
       <p class="dg-lead"><?= count($customers) ?> CRM-Instanzen (Ihre Hosting-Kunden – nicht CRM-Kontakte)</p>
     </div>
     <div class="dg-toolbar">
+      <?php if ($multiFirma) : ?>
+        <a class="dg-button" href="/app?page=kdv-rumpf-wj">Rumpf-WJ / Umfirmierung</a>
+      <?php endif; ?>
       <a class="dg-button dg-button--primary" href="/app?page=kdv-kunden&amp;action=new">Neuer SaaS-Kunde</a>
     </div>
   </header>

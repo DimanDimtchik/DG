@@ -160,6 +160,15 @@ final class CompanySettings
     }
 
     SettingsStore::set(self::STORE_KEY, $data);
+
+    $userId = class_exists('AuthService') ? (AuthService::user()?->id) : null;
+    if (class_exists('CompanyMasterHistoryRepository')) {
+      CompanyMasterHistoryRepository::recordFromCurrentSettings(
+        $userId,
+        null,
+        'Änderung Firmenstammdaten'
+      );
+    }
   }
 
     /**

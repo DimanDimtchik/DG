@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **Phase 3 (MF3) Umfirmierung/Gewinnermittlung** · MF0–MF2 ✅  
+Stand: **2026-09-21** · Status: **Phase 4 (MF4) Historie/Rumpf-WJ/Shared-Contacts** · MF0–MF3 ✅ · Roadmap MF komplett  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -173,8 +173,8 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 
 - [ ] Archiv-Dauer und Archiv-Preis (gratis vs. 9–15 €) final → **MF2: gratis, 12 Monate Standard**
 - [ ] Staffel ab 3. Firma → **MF2: vorerst weiter −20 %**
+- [ ] Shared Contacts: ja/nein im MVP → **MF4: Kennzeichnung ja, Sync nein**
 - [ ] Ob Website/Domain fest an eine Firma gebunden ist oder Org-weit umschaltbar
-- [ ] Shared Contacts: ja/nein im MVP
 - [ ] Technische Provision: neue Subdomain vs. Pfad vs. bestehendes KDV-Domain-Modell
 
 ---
@@ -187,7 +187,7 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 | **1** | Switcher + verknüpfte Instanzen (manuell) | ✅ **MF1 2026-09-21:** Header-Dropdown, KDV-Org-Mapping, Redirect `https://{domain}/login`; Kundeninstanz optional `config/firm-switcher.local.php`. Kein SSO (erneuter Login). |
 | **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | ✅ **MF2 2026-09-21:** `MultiFirmaPricingService`; KDV Preis-übernehmen + Archiv-Checkbox; Shop-Checkout Zusatzfirma −20 %; Provision-API Org/Preis. Archiv = 0 € / 12 Monate. 3.+ Firma weiter −20 %. |
 | **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | ✅ **MF3 2026-09-21:** Migration `088`, `UmfirmierungService`, KDV-Assistent, Gewinnermittlung in Firma-Einstellungen + KDV-Slot |
-| **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | Offen |
+| **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | ✅ **MF4 2026-09-21:** `dg_company_master_history`, Rumpf-WJ-Bericht, Org-Flag Shared Contacts, Kontakt-Herkunftshinweis (kein Cross-DB-Sync) |
 
 ### Phase 0 — technische Artefakte
 
@@ -221,6 +221,15 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 - UI: `/app?page=kdv-umfirmierung&from_id=` · Link am KDV-Kunden
 - Stammdatum Instanz: `CompanyExtendedSettings.gewinnermittlung` (EÜR/Bilanz) in Einstellungen → Firma
 - **Nicht in MF3:** Auto-Provision der neuen Instanz, Buchungsübernahme, Firmendaten-Historie (MF4)
+
+### Phase 4 (MF4) — technische Artefakte
+
+- Migration `089_multi_firma_history_shared.sql` — `dg_company_master_history`, `dg_kdv_orgs.share_contacts`, `dg_contacts.origin_firm_note`
+- `CompanyMasterHistoryRepository` — Snapshot bei Firmenstammdaten-Änderung (Fingerprint)
+- UI Historie: Einstellungen → Firma (Akkordeon)
+- `RumpfWjReportService` + `/app?page=kdv-rumpf-wj` — Stichtage/Slots je Org
+- Shared Contacts: Org-Kennzeichnung + Herkunftsfeld am Kontakt — **kein** Sync zwischen Instanz-DBs (Variante A)
+- **Festlegung MF4:** Shared Contacts = Kennzeichnung/Hinweis, kein Cross-DB-Import
 
 ---
 

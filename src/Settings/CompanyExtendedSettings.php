@@ -278,6 +278,13 @@ final class CompanyExtendedSettings
         $basic['vat_id'] = (string) ($clean['tax_numbers']['ust'] ?? $basic['vat_id']);
         self::syncPrimaryAddressToBasic($basic, $clean['addresses'] ?? []);
         SettingsStore::set(CompanySettings::STORE_KEY, $basic);
+
+        $userId = AuthService::user()?->id;
+        CompanyMasterHistoryRepository::recordFromCurrentSettings(
+            $userId,
+            null,
+            'Änderung Firmeneinstellungen'
+        );
     }
 
     /**
