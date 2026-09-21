@@ -29,7 +29,7 @@ final class UmfirmierungService
             ['key' => 'ust', 'label' => 'USt / Steuernummer / ELSTER-Zertifikat Nachfolger'],
             ['key' => 'impressum', 'label' => 'Impressum / Website / Briefköpfe'],
             ['key' => 'datev', 'label' => 'DATEV-Mandant / Beraternummer Nachfolger'],
-            ['key' => 'provision', 'label' => 'CRM-Instanz Nachfolger manuell provisionieren (Domain/DB)'],
+            ['key' => 'provision', 'label' => 'CRM-Instanz Nachfolger provisionieren (optional direkt nach Umfirmierung oder manuell)'],
         ];
     }
 

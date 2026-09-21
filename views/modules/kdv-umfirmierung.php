@@ -23,12 +23,13 @@ $predId = (int) ($p['id'] ?? 0);
     <p class="dg-lead">
       Vorgänger: <strong><?= View::escape((string) ($p['company_name'] ?? '')) ?></strong>
       (<?= View::escape((string) ($p['domain'] ?? '')) ?>) —
-      legt Nachfolger-Slot an und setzt den Vorgänger auf Archiv (0 €). Keine Buchungsübernahme, keine Auto-Provision.
+      legt Nachfolger-Slot an und setzt den Vorgänger auf Archiv (0 €). Keine Buchungsübernahme.
+      Provision nur wenn unten ausdrücklich aktiviert (MF7).
     </p>
   </header>
 
   <?php if (!empty($formError)) : ?>
-    <div class="dg-alert dg-alert--danger"><?= View::escape($formError) ?></div>
+    <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
   <form method="post" action="/app?page=kdv-umfirmierung&amp;from_id=<?= $predId ?>" class="dg-form">
@@ -93,6 +94,27 @@ $predId = (int) ($p['id'] ?? 0);
         <?php endforeach; ?>
       </ul>
       <p class="dg-field-hint">Nur Hinweise für die Übergabe — keine automatischen Buchungen.</p>
+    </div>
+
+    <div class="dg-panel">
+      <h2>Optional: CRM jetzt provisionieren (MF7)</h2>
+      <p class="dg-field-hint">Standard aus — kein Überraschungs-Deploy. Gates G1–G9 laut Spec; bei DNS-Records Bestätigung nötig.</p>
+      <label class="dg-label dg-label--checkbox">
+        <input type="checkbox" name="provision_now" value="1"<?= !empty($form['provision_now']) ? ' checked' : '' ?>>
+        <span>Nachfolger-Instanz jetzt über KAS bereitstellen</span>
+      </label>
+      <div class="dg-form-grid" style="margin-top:12px;">
+        <label class="dg-label">KAS-Login
+          <input class="dg-input" type="text" name="kas_login" value="<?= View::escape((string) ($form['kas_login'] ?? $p['kas_login'] ?? '')) ?>" autocomplete="off">
+        </label>
+        <label class="dg-label">KAS-Passwort
+          <input class="dg-input" type="password" name="kas_pass" value="" autocomplete="new-password">
+        </label>
+        <label class="dg-label dg-label--checkbox" style="grid-column:1/-1;">
+          <input type="checkbox" name="confirm_dns" value="1"<?= !empty($form['confirm_dns']) ? ' checked' : '' ?>>
+          <span>DNS-Warnung bestätigen (Domain hat ggf. bereits Records)</span>
+        </label>
+      </div>
     </div>
 
     <div class="dg-form-actions">

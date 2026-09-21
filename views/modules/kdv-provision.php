@@ -1,14 +1,20 @@
 <?php
 /** @var array<string, mixed> $customer */
 /** @var array{success: bool, steps: list<array{step: string, ok: bool, detail: string}>, install_url?: string}|null $result */
+/** @var string|null $provisionGateError */
 $c = $customer ?? [];
 $result = $result ?? null;
+$gateError = $provisionGateError ?? null;
 ?>
 <div class="dg-wrap">
   <header class="dg-page-header">
     <h1 class="dg-page-title">CRM bereitstellen</h1>
     <p class="dg-lead"><?= View::escape($c['company_name'] ?? '') ?> – <?= View::escape($c['domain'] ?? '') ?></p>
   </header>
+
+  <?php if ($gateError !== null && $gateError !== '') : ?>
+  <div class="dg-flash dg-flash--error" role="alert"><?= View::escape($gateError) ?></div>
+  <?php endif; ?>
 
   <?php if ($result !== null): ?>
   <div class="dg-panel">
@@ -47,7 +53,7 @@ $result = $result ?? null;
   <?php else: ?>
   <div class="dg-panel">
     <h2>Automatische Bereitstellung</h2>
-    <p>Folgende Schritte werden automatisch durchgeführt:</p>
+    <p>Folgende Schritte werden automatisch durchgeführt (nach MF7-Gates):</p>
     <ol style="margin:12px 0 12px 20px; line-height:1.8;">
       <li>Domain <strong><?= View::escape($c['domain'] ?? '') ?></strong> bei All-Inkl anlegen</li>
       <li>Datenbank erstellen</li>
@@ -66,6 +72,10 @@ $result = $result ?? null;
         </label>
         <label class="dg-label">KAS-Passwort *
           <input class="dg-input" type="password" name="kas_pass" required>
+        </label>
+        <label class="dg-label dg-label--checkbox" style="grid-column:1/-1;">
+          <input type="checkbox" name="confirm_dns" value="1">
+          <span>DNS-Warnung bestätigen (falls Domain bereits Records hat)</span>
         </label>
       </div>
 

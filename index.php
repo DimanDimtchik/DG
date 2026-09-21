@@ -4914,6 +4914,9 @@ $legalProductsConfig = LegalProductSettings::config();
                 'contact_name' => (string) ($_POST['contact_name'] ?? ($predecessor['contact_name'] ?? '')),
                 'contact_email' => (string) ($_POST['contact_email'] ?? ($predecessor['contact_email'] ?? '')),
                 'contact_phone' => (string) ($_POST['contact_phone'] ?? ($predecessor['contact_phone'] ?? '')),
+                'provision_now' => !empty($_POST['provision_now']),
+                'kas_login' => (string) ($_POST['kas_login'] ?? ($predecessor['kas_login'] ?? '')),
+                'confirm_dns' => !empty($_POST['confirm_dns']),
             ];
             if (
                 $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -4923,11 +4926,31 @@ $legalProductsConfig = LegalProductSettings::config();
             ) {
                 try {
                     $result = UmfirmierungService::start($fromId, $_POST);
-                    Flash::set(
-                        'success',
-                        'Umfirmierung angelegt: Nachfolger #' . $result['successor_id']
-                        . ' · Vorgänger #' . $result['predecessor_id'] . ' ist Archiv-Slot. Bitte Instanz manuell provisionieren.'
-                    );
+                    $flashMsg = 'Umfirmierung angelegt: Nachfolger #' . $result['successor_id']
+                        . ' · Vorgänger #' . $result['predecessor_id'] . ' ist Archiv-Slot.';
+                    if (!empty($_POST['provision_now'])) {
+                        $prov = KdvProvisionGateService::run((int) $result['successor_id'], [
+                            'mode' => 'auto',
+                            'kas_login' => trim((string) ($_POST['kas_login'] ?? '')),
+                            'kas_pass' => (string) ($_POST['kas_pass'] ?? ''),
+                            'confirm_dns' => !empty($_POST['confirm_dns']),
+                        ]);
+                        if ($prov['ok']) {
+                            $flashMsg .= ' Provision OK.';
+                            if (!empty($prov['result']['install_url'])) {
+                                $flashMsg .= ' Install: ' . $prov['result']['install_url'];
+                            }
+                            Flash::set('success', $flashMsg);
+                        } else {
+                            Flash::set(
+                                'warning',
+                                $flashMsg . ' Provision nicht ausgeführt: ' . $prov['message']
+                                . ' — bitte unter CRM bereitstellen nachziehen.'
+                            );
+                        }
+                    } else {
+                        Flash::set('success', $flashMsg . ' Bitte Instanz bei Bedarf manuell provisionieren.');
+                    }
                     header('Location: /app?page=kdv-kunden&action=edit&id=' . (int) $result['successor_id'], true, 302);
                     exit;
                 } catch (Throwable $e) {
@@ -5030,6 +5053,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $provisionId = (int) ($_GET['id'] ?? 0);
             $customer = KdvCustomerRepository::findById($provisionId);
             $result = null;
+            $provisionGateError = null;
 
             if ($customer === null) {
                 Flash::set('error', 'SaaS-Kunde nicht gefunden.');
@@ -5038,15 +5062,22 @@ $legalProductsConfig = LegalProductSettings::config();
             }
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && Csrf::verify($_POST['_csrf'] ?? null)) {
-                $result = KdvDeployService::provision([
-                    'customer_id'   => (int) ($customer['id'] ?? 0),
-                    'kas_login'     => trim($_POST['kas_login'] ?? ''),
-                    'kas_pass'      => trim($_POST['kas_pass'] ?? ''),
-                    'domain'        => $customer['domain'],
-                    'company_name'  => $customer['company_name'],
-                    'contact_email' => $customer['contact_email'] ?? '',
-                    'contact_name'  => $customer['contact_name'] ?? '',
+                if (!RoleResolver::canEdit($user)) {
+                    Flash::set('error', 'Keine Berechtigung.');
+                    header('Location: /app?page=kdv-provision&id=' . $provisionId, true, 302);
+                    exit;
+                }
+                $prov = KdvProvisionGateService::run($provisionId, [
+                    'mode' => ((string) ($customer['firm_relation'] ?? '') === 'nachfolger') ? 'auto' : 'manual',
+                    'kas_login' => trim((string) ($_POST['kas_login'] ?? '')),
+                    'kas_pass' => (string) ($_POST['kas_pass'] ?? ''),
+                    'confirm_dns' => !empty($_POST['confirm_dns']),
                 ]);
+                if ($prov['result'] !== null) {
+                    $result = $prov['result'];
+                } elseif (!$prov['ok']) {
+                    $provisionGateError = $prov['message'];
+                }
             }
 
             $contentTemplate = 'modules/kdv-provision';
@@ -5634,6 +5665,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $rumpfPairs = $rumpfPairs ?? [];
         $rumpfOrgId = $rumpfOrgId ?? 0;
         $result = $result ?? null;
+        $provisionGateError = $provisionGateError ?? null;
 
         View::render('layout/app', compact(
             'title',
@@ -5872,6 +5904,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'rumpfPairs',
             'rumpfOrgId',
             'result',
+            'provisionGateError',
             'websitePageId',
             'websiteFormList',
             'websiteFormId',

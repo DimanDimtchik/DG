@@ -300,6 +300,7 @@ spl_autoload_register(static function (string $class): void {
         'ContactExportService' => '/src/MultiFirma/ContactExportService.php',
         'ContactImportService' => '/src/MultiFirma/ContactImportService.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
+        'KdvProvisionGateService' => '/src/Kdv/KdvProvisionGateService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',
         'KdvBlockReasons' => '/src/Kdv/KdvBlockReasons.php',
         'KdvLicenseClient' => '/src/Kdv/KdvLicenseClient.php',
