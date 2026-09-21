@@ -109,6 +109,11 @@ final class TimeMonthReportService
             $sumBreak += $break;
             $sumOt += $overtime;
 
+            $dayWarnings = [];
+            if ($worked > ArbzgComplianceService::MAX_DAILY_MINUTES) {
+                $dayWarnings[] = 'ArbZG: >10 h (Soft)';
+            }
+
             $days[] = [
                 'date' => $date,
                 'date_display' => $dt !== false ? $dt->format('d.m.Y') : $date,
@@ -124,6 +129,7 @@ final class TimeMonthReportService
                 'diff_display' => self::formatSignedMinutes($diff),
                 'overtime_display' => TimeClockService::formatMinutes($overtime),
                 'source' => $source,
+                'arbzg_flags' => $dayWarnings,
             ];
         }
 

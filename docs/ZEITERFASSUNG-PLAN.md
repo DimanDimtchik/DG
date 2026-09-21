@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2a–Z2c ✅** · offen Z2d–Z2e · Phase 3+ später  
+> Status: **Phase 1 ✅** · **Z2a–Z2d ✅** · offen Z2e · Phase 3+ später  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -263,7 +263,7 @@ Abweichung nur per explizitem Chat-Befehl.
 1. **Z2a** Spec/Checkliste Soll-Quelle + Korrektur-Rechte ✅  
 2. **Z2b** Soll-Arbeitszeiten anbinden (lesen aus Kalender/MA) ✅  
 3. **Z2c** Monatsansicht Soll/Ist/Diff + CSV-Export ✅  
-4. **Z2d** ArbZG-Warnungen: Ruhezeit 11 h, max. 10 h/Tag, Hinweis Wochendurchschnitt  
+4. **Z2d** ArbZG-Warnungen: Ruhezeit 11 h, max. 10 h/Tag, Hinweis Wochendurchschnitt ✅  
 5. **Z2e** Korrektur-UI + Audit; Überstundenkonto Abbau buchen  
 
 **Spätere Serien (eigene Chat-Ketten, nicht mischen):**
@@ -356,13 +356,17 @@ Funktion Ziel: `scheduledMinutesFor(contactId, date): int` (Name in Z2b festlege
 
 **Nicht:** DATEV-Lohn, Zuschläge, Korrektur (Z2e).
 
-### Z2d — ArbZG-Warnungen
+### Z2d — ArbZG-Warnungen ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Prüfungen | <11 h Ruhe; >10 h Tag; Soft-Hinweis Ø-Woche |
-| UI | Warnung Stempel/Team; **kein** hard block ohne Spec-Flag |
-| Nicht | Zuschläge, Erinnerungs-E-Mail neu (48h-Ø schon ✅) |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| >10 h/Tag | Soft-Warnung in `daySummary` + Team + Monats-Flag |
+| Ruhezeit <11 h | Soft-Warnung (letzter `clock_out` → erster `clock_in`) |
+| Ø-Woche >8 h | Soft-Hinweis Kalenderwoche (Tage mit Ist > 0) |
+| Hard-Block | **nein** (kein Spec-Flag) |
+| 48h/6 Monate | unverändert (bestehende Erinnerung) |
+
+**Nicht:** Zuschläge, neue Erinnerungs-E-Mail.
 
 ### Z2e — Korrektur + Zeitkonto
 

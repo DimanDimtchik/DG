@@ -122,4 +122,34 @@ final class TimeClockRepository
             'created_by' => (int) ($row['created_by'] ?? 0),
         ];
     }
+
+    /**
+     * Letztes Event eines Typs vor einem Zeitpunkt (z. B. letzter clock_out vor heutigem clock_in).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function lastEventBefore(int $contactId, string $eventType, string $beforeOccurredAt): ?array
+    {
+        if (!Database::isConfigured() || $contactId < 1 || $eventType === '' || $beforeOccurredAt === '') {
+            return null;
+        }
+        MigrationRunner::runPending();
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_time_clock_events
+             WHERE contact_id = :contact_id
+               AND event_type = :event_type
+               AND occurred_at < :before
+             ORDER BY occurred_at DESC, id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'contact_id' => $contactId,
+            'event_type' => $eventType,
+            'before' => $beforeOccurredAt,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? self::mapRow($row) : null;
+    }
 }

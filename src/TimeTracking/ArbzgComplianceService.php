@@ -6,6 +6,15 @@ final class ArbzgComplianceService
 {
     public const DEFAULT_MAX_WEEKLY_MINUTES = 2880;
 
+    /** ArbZG §4: Verlängerung auf höchstens 10 Stunden / Tag. */
+    public const MAX_DAILY_MINUTES = 600;
+
+    /** ArbZG §5: mindestens 11 Stunden ununterbrochene Ruhezeit. */
+    public const MIN_REST_MINUTES = 660;
+
+    /** Soft-Hinweis: Wochendurchschnitt > 8 h/Tag (Kalenderwoche Mo–So). */
+    public const SOFT_AVG_DAILY_MINUTES = 480;
+
     /**
      * Abgeschlossener 6-Monats-Zeitraum (endet am letzten Tag des Vormonats).
      *
@@ -320,5 +329,164 @@ final class ArbzgComplianceService
         }
 
         return $out;
+    }
+
+    /**
+     * Z2d: Soft-Warnungen (kein Hard-Block) — Ruhezeit 11 h, max. 10 h/Tag, Ø-Woche 8 h.
+     *
+     * @param list<array<string, mixed>> $dayEvents Events des Tages (optional, sonst DB)
+     * @return list<string>
+     */
+    public static function daySoftWarnings(int $contactId, string $date, int $netWorkedMinutes, array $dayEvents = []): array
+    {
+        if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return [];
+        }
+
+        $warnings = [];
+
+        if ($netWorkedMinutes > self::MAX_DAILY_MINUTES) {
+            $warnings[] = sprintf(
+                'ArbZG: Tagesarbeitszeit über 10 h (%s h) — bitte prüfen (Soft-Hinweis, kein Block).',
+                TimeClockService::formatMinutes($netWorkedMinutes)
+            );
+        }
+
+        $rest = self::restPeriodMinutes($contactId, $date, $dayEvents);
+        if ($rest !== null && $rest < self::MIN_REST_MINUTES) {
+            $warnings[] = sprintf(
+                'ArbZG: Ruhezeit unter 11 h (%s h seit letztem Ausstempeln) — Soft-Hinweis, kein Block.',
+                TimeClockService::formatMinutes($rest)
+            );
+        }
+
+        $weekAvg = self::calendarWeekAverageDailyMinutes($contactId, $date);
+        if ($weekAvg !== null && $weekAvg > self::SOFT_AVG_DAILY_MINUTES) {
+            $warnings[] = sprintf(
+                'ArbZG: Wochendurchschnitt bisher über 8 h/Tag (Ø %s h, Kalenderwoche) — Ausgleich im Blick behalten.',
+                TimeClockService::formatMinutes((int) round($weekAvg))
+            );
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Minuten zwischen letztem clock_out und erstem clock_in des Tages; null wenn nicht prüfbar.
+     *
+     * @param list<array<string, mixed>> $dayEvents
+     */
+    public static function restPeriodMinutes(int $contactId, string $date, array $dayEvents = []): ?int
+    {
+        if ($dayEvents === []) {
+            $dayEvents = TimeClockRepository::eventsForContact($contactId, $date);
+        }
+        $firstIn = null;
+        foreach ($dayEvents as $event) {
+            if ((string) ($event['event_type'] ?? '') === TimeClockRepository::EVENT_CLOCK_IN) {
+                $firstIn = (string) ($event['occurred_at'] ?? '');
+                break;
+            }
+        }
+        if ($firstIn === null || $firstIn === '') {
+            return null;
+        }
+
+        $prevOut = TimeClockRepository::lastEventBefore(
+            $contactId,
+            TimeClockRepository::EVENT_CLOCK_OUT,
+            $firstIn
+        );
+        if ($prevOut === null) {
+            return null;
+        }
+        $outAt = (string) ($prevOut['occurred_at'] ?? '');
+        if ($outAt === '') {
+            return null;
+        }
+
+        try {
+            $a = new DateTimeImmutable($outAt);
+            $b = new DateTimeImmutable($firstIn);
+        } catch (Throwable) {
+            return null;
+        }
+        $diff = $b->getTimestamp() - $a->getTimestamp();
+        if ($diff < 0) {
+            return null;
+        }
+
+        return (int) floor($diff / 60);
+    }
+
+    /**
+     * Ø Tagesminuten in der Kalenderwoche (Mo–So) bis einschließlich $date.
+     * Basis: aggregierte Tage + Live-Summe für Tage ohne Aggregation.
+     */
+    public static function calendarWeekAverageDailyMinutes(int $contactId, string $date): ?float
+    {
+        if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !Database::isConfigured()) {
+            return null;
+        }
+
+        try {
+            $ref = new DateTimeImmutable($date);
+            $n = (int) $ref->format('N');
+            $monday = $ref->modify('-' . ($n - 1) . ' days');
+        } catch (Throwable) {
+            return null;
+        }
+
+        $from = $monday->format('Y-m-d');
+        $to = $date;
+        $aggregated = [];
+        foreach (TimeWorkDayRepository::listForContactRange($contactId, $from, $to) as $row) {
+            $d = (string) ($row['work_date'] ?? '');
+            if ($d !== '') {
+                $aggregated[$d] = max(0, (int) ($row['worked_minutes'] ?? 0));
+            }
+        }
+
+        $total = 0;
+        $daysCounted = 0;
+        $cursor = $monday;
+        while ($cursor->format('Y-m-d') <= $to) {
+            $d = $cursor->format('Y-m-d');
+            if (isset($aggregated[$d])) {
+                $mins = $aggregated[$d];
+            } else {
+                $mins = self::netWorkedMinutesFromEvents(TimeClockRepository::eventsForContact($contactId, $d));
+            }
+            if ($mins > 0) {
+                $total += $mins;
+                $daysCounted++;
+            }
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        if ($daysCounted < 1) {
+            return null;
+        }
+
+        return $total / $daysCounted;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $events
+     */
+    private static function netWorkedMinutesFromEvents(array $events): int
+    {
+        if ($events === []) {
+            return 0;
+        }
+        $segments = TimeClockService::computeSegments($events);
+        $gross = (int) ($segments['worked_minutes'] ?? 0);
+        $manualBreak = (int) ($segments['break_minutes'] ?? 0);
+        $autoBreak = 0;
+        if (TimeTrackingSettings::config()['auto_break_enabled'] ?? true) {
+            $autoBreak = TimeClockService::autoBreakMinutes($gross, $manualBreak);
+        }
+
+        return max(0, $gross - $autoBreak);
     }
 }

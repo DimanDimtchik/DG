@@ -109,6 +109,11 @@ if ($contactId > 0) {
                 <td class="dg-table__num"><?= View::escape((string) ($day['diff_display'] ?? '0:00')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($day['overtime_display'] ?? '0:00')) ?></td>
               </tr>
+              <?php if (!empty($day['arbzg_flags']) && is_array($day['arbzg_flags'])) : ?>
+                <tr>
+                  <td colspan="7" class="dg-muted"><?= View::escape(implode(' · ', $day['arbzg_flags'])) ?></td>
+                </tr>
+              <?php endif; ?>
             <?php endforeach; ?>
           </tbody>
           <tfoot>

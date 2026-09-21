@@ -66,6 +66,15 @@ $violations = $overtimeReminders['violations'] ?? [];
                 <td class="dg-table__num"><?= View::escape((string) ($row['worked_display'] ?? '0:00')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($row['scheduled_display'] ?? '0:00')) ?></td>
               </tr>
+              <?php if (!empty($row['arbzg_warnings']) && is_array($row['arbzg_warnings'])) : ?>
+                <tr>
+                  <td colspan="5" class="dg-muted">
+                    <?php foreach ($row['arbzg_warnings'] as $w) : ?>
+                      <div class="dg-flash dg-flash--warning" style="margin:0.25rem 0"><?= View::escape((string) $w) ?></div>
+                    <?php endforeach; ?>
+                  </td>
+                </tr>
+              <?php endif; ?>
             <?php endforeach; ?>
           </tbody>
         </table>

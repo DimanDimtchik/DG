@@ -188,6 +188,9 @@ final class TimeClockService
         if ($scheduled > 0 && !EmployeeData::overtimeAllowed($employeeData) && $netWorked > $scheduled) {
             $warnings[] = 'Überstunden sind für diesen Mitarbeiter nicht freigegeben.';
         }
+        foreach (ArbzgComplianceService::daySoftWarnings($contactId, $date, $netWorked, $events) as $w) {
+            $warnings[] = $w;
+        }
 
         $displayEvents = $events;
         foreach ($displayEvents as &$event) {
@@ -252,6 +255,7 @@ final class TimeClockService
                 $autoBreak = self::autoBreakMinutes($segments['worked_minutes'], $segments['break_minutes']);
             }
             $netWorked = max(0, $segments['worked_minutes'] - $autoBreak);
+            $arbzgWarnings = ArbzgComplianceService::daySoftWarnings($contactId, $today, $netWorked, $contactEvents);
 
             $out[] = [
                 'contact_id' => $contactId,
@@ -262,6 +266,7 @@ final class TimeClockService
                 'worked_display' => self::formatMinutes($netWorked),
                 'scheduled_display' => self::formatMinutes($scheduled),
                 'scheduled_minutes' => $scheduled,
+                'arbzg_warnings' => $arbzgWarnings,
             ];
         }
 
@@ -330,7 +335,7 @@ final class TimeClockService
      * @param list<array<string, mixed>> $events
      * @return array{worked_minutes: int, break_minutes: int}
      */
-    private static function computeSegments(array $events): array
+    public static function computeSegments(array $events): array
     {
         $worked = 0;
         $break = 0;
@@ -378,7 +383,7 @@ final class TimeClockService
         return ['worked_minutes' => $worked, 'break_minutes' => $break];
     }
 
-    private static function autoBreakMinutes(int $grossWorkedMinutes, int $manualBreakMinutes): int
+    public static function autoBreakMinutes(int $grossWorkedMinutes, int $manualBreakMinutes): int
     {
         $required = self::requiredBreakMinutes($grossWorkedMinutes);
 
