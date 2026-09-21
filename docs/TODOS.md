@@ -48,7 +48,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
-- [ ] **Zeiterfassung Phase 2+** — token-sparend Z2a–Z2e (`ZEITERFASSUNG-PLAN.md` § Betrieb); **Z2a–Z2d ✅** · weiter: `z2e`
+- [x] **Zeiterfassung Phase 2+** — token-sparend Z2a–Z2e (`ZEITERFASSUNG-PLAN.md` § Betrieb); **Z2a–Z2e ✅** · weiter: `z3a` (Schichten)
 
 ---
 
@@ -118,7 +118,8 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Thema | Doku |
 |-------|------|
 | Multi-Firma Code + Betrieb MB1–MB4 | erledigt 2026-09-21 |
-| **Zeiterfassung Z2a–Z2e** (Soll/Ist, ArbZG-Warnung, Korrektur) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb |
+| **Zeiterfassung Z2a–Z2e** (Soll/Ist, ArbZG-Warnung, Korrektur) | erledigt 2026-09-21 |
+| Zeiterfassung Z3+ (Schichten …) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb |
 
 ---
 

@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2a–Z2d ✅** · offen Z2e · Phase 3+ später  
+> Status: **Phase 1 ✅** · **Z2a–Z2e ✅** · Phase 3+ später (`z3a`)  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -264,7 +264,7 @@ Abweichung nur per explizitem Chat-Befehl.
 2. **Z2b** Soll-Arbeitszeiten anbinden (lesen aus Kalender/MA) ✅  
 3. **Z2c** Monatsansicht Soll/Ist/Diff + CSV-Export ✅  
 4. **Z2d** ArbZG-Warnungen: Ruhezeit 11 h, max. 10 h/Tag, Hinweis Wochendurchschnitt ✅  
-5. **Z2e** Korrektur-UI + Audit; Überstundenkonto Abbau buchen  
+5. **Z2e** Korrektur-UI + Audit; Überstundenkonto Abbau buchen ✅  
 
 **Spätere Serien (eigene Chat-Ketten, nicht mischen):**
 
@@ -368,13 +368,17 @@ Funktion Ziel: `scheduledMinutesFor(contactId, date): int` (Name in Z2b festlege
 
 **Nicht:** Zuschläge, neue Erinnerungs-E-Mail.
 
-### Z2e — Korrektur + Zeitkonto
+### Z2e — Korrektur + Zeitkonto ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Korrektur | Begründung + Berechtigung; Stempel-Historie unverändert + Korrektur-Satz |
-| Konto | Überstunden abbuchen (Minuten), Minijob gesperrt |
-| Nicht | Urlaubsantrag, Lohn-Export |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| UI | `/app?page=zeiterfassung-konto` (nur `canViewTeam`) |
+| Korrektur | `dg_time_corrections` + Audit-Event `correction_audit`; Originale unverändert |
+| Ist-Anrechnung | `daySummary` addiert Delta |
+| Abbau | FIFO `minutes_remaining`; Audit `dg_time_overtime_reductions`; Minijob gesperrt |
+| Migration | `090_time_corrections.sql` |
+
+**Nicht:** Urlaubsantrag, Lohn-Export, Mitarbeiter-Selbstkorrektur.
 
 ### Chat-Vorlage
 

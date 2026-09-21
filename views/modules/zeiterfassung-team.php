@@ -18,6 +18,7 @@ $violations = $overtimeReminders['violations'] ?? [];
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung">Meine Zeiterfassung</a>
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-konto">Korrektur / Konto</a>
     </div>
   </header>
 

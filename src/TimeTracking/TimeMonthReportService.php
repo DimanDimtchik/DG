@@ -278,7 +278,7 @@ final class TimeMonthReportService
             return [];
         }
         $stmt = Database::pdo()->query(
-            "SELECT id, display_name, company_name, supplier_name
+            "SELECT id, display_name, company_name
              FROM dg_contacts
              WHERE contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')
              ORDER BY display_name ASC, id ASC"
@@ -296,9 +296,6 @@ final class TimeMonthReportService
             $label = trim((string) ($row['display_name'] ?? ''));
             if ($label === '') {
                 $label = trim((string) ($row['company_name'] ?? ''));
-            }
-            if ($label === '') {
-                $label = trim((string) ($row['supplier_name'] ?? ''));
             }
             if ($label === '') {
                 $label = 'Kontakt #' . $id;

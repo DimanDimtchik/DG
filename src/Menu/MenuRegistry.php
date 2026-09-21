@@ -510,6 +510,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-monat') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);
         }
+        if ($slug === 'zeiterfassung-konto') {
+            return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && TimeClockService::canViewTeam($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {

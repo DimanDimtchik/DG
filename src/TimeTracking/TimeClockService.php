@@ -167,6 +167,8 @@ final class TimeClockService
         }
         $totalBreak = $manualBreak + $autoBreak;
         $netWorked = max(0, $grossWorked - $autoBreak);
+        $correctionDelta = TimeCorrectionRepository::sumDeltaForDay($contactId, $date);
+        $netWorked = max(0, $netWorked + $correctionDelta);
 
         $status = self::currentStatus($contactId);
         $compliance = self::breakComplianceFromSegments($grossWorked, $manualBreak, (string) ($status['state'] ?? 'off'));
@@ -213,6 +215,8 @@ final class TimeClockService
             'manual_break_display' => self::formatMinutes($manualBreak),
             'auto_break_display' => self::formatMinutes($autoBreak),
             'scheduled_display' => self::formatMinutes($scheduled),
+            'correction_minutes' => $correctionDelta,
+            'correction_display' => self::formatSignedCorrection($correctionDelta),
             'warnings' => $warnings,
             'break_compliance' => $compliance,
             'status' => $status,
@@ -619,7 +623,7 @@ final class TimeClockService
     {
         $pdo = Database::pdo();
         $stmt = $pdo->query(
-            "SELECT id, display_name, company_name, supplier_name, employee_data
+            "SELECT id, display_name, company_name, employee_data
              FROM dg_contacts
              WHERE contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')
              ORDER BY display_name ASC, company_name ASC, id ASC"
@@ -633,9 +637,6 @@ final class TimeClockService
             $label = trim((string) ($row['display_name'] ?? ''));
             if ($label === '') {
                 $label = trim((string) ($row['company_name'] ?? ''));
-            }
-            if ($label === '') {
-                $label = trim((string) ($row['supplier_name'] ?? ''));
             }
             $rawEmployee = $row['employee_data'] ?? '';
             $employeeData = [];
@@ -679,16 +680,27 @@ final class TimeClockService
             TimeClockRepository::EVENT_CLOCK_OUT => 'Ausstempeln',
             TimeClockRepository::EVENT_BREAK_START => 'Pause beginnen',
             TimeClockRepository::EVENT_BREAK_END => 'Pause beenden',
+            TimeCorrectionService::EVENT_CORRECTION_AUDIT => 'Korrektur (Audit)',
             default => $type,
         };
     }
 
     public static function formatMinutes(int $minutes): string
     {
-        $hours = intdiv($minutes, 60);
-        $mins = $minutes % 60;
+        $hours = intdiv(abs($minutes), 60);
+        $mins = abs($minutes) % 60;
 
         return sprintf('%d:%02d', $hours, $mins);
+    }
+
+    public static function formatSignedCorrection(int $minutes): string
+    {
+        if ($minutes === 0) {
+            return '0:00';
+        }
+        $sign = $minutes < 0 ? '-' : '+';
+
+        return $sign . self::formatMinutes(abs($minutes));
     }
 
     private static function formatDateTimeGerman(string $value): string

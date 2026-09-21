@@ -118,6 +118,194 @@ final class OvertimeLotRepository
         $stmt->execute(['id' => $lotId]);
     }
 
+    public static function sumRemainingMinutes(int $contactId): int
+    {
+        if (!Database::isConfigured() || $contactId < 1) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(minutes_remaining), 0) FROM dg_time_overtime_lots
+             WHERE contact_id = :cid AND minutes_remaining > 0'
+        );
+        $stmt->execute(['cid' => $contactId]);
+
+        return max(0, (int) $stmt->fetchColumn());
+    }
+
+    /**
+     * Fehlende Lots aus aggregierten overtime_minutes nachziehen (ohne Restsaldo zu überschreiben).
+     */
+    public static function syncAccrualsFromWorkDays(int $contactId): void
+    {
+        if (!Database::isConfigured() || $contactId < 1) {
+            return;
+        }
+        MigrationRunner::runPending();
+        $months = max(1, (int) (TimeTrackingSettings::config()['overtime_compensation_months'] ?? 6));
+        $stmt = Database::pdo()->prepare(
+            'SELECT work_date, overtime_minutes FROM dg_time_work_days
+             WHERE contact_id = :cid AND overtime_minutes > 0
+             ORDER BY work_date ASC'
+        );
+        $stmt->execute(['cid' => $contactId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $date = (string) ($row['work_date'] ?? '');
+            $mins = (int) ($row['overtime_minutes'] ?? 0);
+            if ($date === '' || $mins < 1) {
+                continue;
+            }
+            $exists = Database::pdo()->prepare(
+                'SELECT id FROM dg_time_overtime_lots WHERE contact_id = :cid AND accrued_date = :d LIMIT 1'
+            );
+            $exists->execute(['cid' => $contactId, 'd' => $date]);
+            if ($exists->fetchColumn() !== false) {
+                continue;
+            }
+            $expires = OvertimeDateRules::addMonths($date, $months);
+            $reminder = OvertimeDateRules::addMonths($date, max(1, $months - 1));
+            self::upsertLot($contactId, $date, $mins, $expires, $reminder);
+        }
+    }
+
+    /**
+     * FIFO-Abbau nach expires_at ASC.
+     */
+    public static function reduceMinutesFifo(int $contactId, int $minutes): int
+    {
+        if (!Database::isConfigured() || $contactId < 1 || $minutes < 1) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare(
+            'SELECT id, minutes_remaining FROM dg_time_overtime_lots
+             WHERE contact_id = :cid AND minutes_remaining > 0
+             ORDER BY expires_at ASC, accrued_date ASC, id ASC'
+        );
+        $left = $minutes;
+        $reduced = 0;
+        $pdo->beginTransaction();
+        try {
+            $stmt->execute(['cid' => $contactId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $upd = $pdo->prepare(
+                'UPDATE dg_time_overtime_lots SET minutes_remaining = :rem WHERE id = :id'
+            );
+            foreach ($rows as $row) {
+                if (!is_array($row) || $left < 1) {
+                    break;
+                }
+                $id = (int) ($row['id'] ?? 0);
+                $rem = max(0, (int) ($row['minutes_remaining'] ?? 0));
+                if ($id < 1 || $rem < 1) {
+                    continue;
+                }
+                $take = min($rem, $left);
+                $upd->execute(['rem' => $rem - $take, 'id' => $id]);
+                $left -= $take;
+                $reduced += $take;
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+
+        return $reduced;
+    }
+
+    public static function insertReductionAudit(int $contactId, int $minutes, string $reason, ?int $createdBy): void
+    {
+        if (!Database::isConfigured() || $contactId < 1 || $minutes < 1) {
+            return;
+        }
+        MigrationRunner::runPending();
+        try {
+            $chk = Database::pdo()->query("SHOW TABLES LIKE 'dg_time_overtime_reductions'");
+            if ($chk === false || $chk->fetchColumn() === false) {
+                return;
+            }
+        } catch (Throwable) {
+            return;
+        }
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_time_overtime_reductions (contact_id, minutes, reason, created_by)
+             VALUES (:cid, :minutes, :reason, :created_by)'
+        );
+        $stmt->execute([
+            'cid' => $contactId,
+            'minutes' => $minutes,
+            'reason' => $reason,
+            'created_by' => $createdBy,
+        ]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listOpenLots(int $contactId, int $limit = 40): array
+    {
+        if (!Database::isConfigured() || $contactId < 1) {
+            return [];
+        }
+        MigrationRunner::runPending();
+        $limit = max(1, min(100, $limit));
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_time_overtime_lots
+             WHERE contact_id = :cid AND minutes_remaining > 0
+             ORDER BY expires_at ASC, accrued_date ASC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['cid' => $contactId]);
+        $today = date('Y-m-d');
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $mapped = self::mapRow($row, $today);
+            if ($mapped !== null) {
+                $out[] = $mapped;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listReductions(int $contactId, int $limit = 30): array
+    {
+        if (!Database::isConfigured() || $contactId < 1) {
+            return [];
+        }
+        try {
+            $chk = Database::pdo()->query("SHOW TABLES LIKE 'dg_time_overtime_reductions'");
+            if ($chk === false || $chk->fetchColumn() === false) {
+                return [];
+            }
+        } catch (Throwable) {
+            return [];
+        }
+        $limit = max(1, min(100, $limit));
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_time_overtime_reductions
+             WHERE contact_id = :cid
+             ORDER BY created_at DESC, id DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['cid' => $contactId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_values(array_filter($rows, static fn ($r): bool => is_array($r)));
+    }
+
     /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>|null

@@ -3260,6 +3260,52 @@ switch ($path) {
             exit;
         }
 
+        // POST: Zeiterfassung Korrektur / Überstunden-Abbau (Z2e)
+        if (
+            $page === 'zeiterfassung-konto'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['time_konto_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-konto')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-konto', true, 302);
+                exit;
+            }
+            $kontoContactId = (int) ($_POST['contact_id'] ?? 0);
+            $actionKonto = (string) ($_POST['time_konto_action'] ?? '');
+            try {
+                if ($actionKonto === 'correction') {
+                    $res = TimeCorrectionService::addWorkedMinutesCorrection(
+                        $user,
+                        $kontoContactId,
+                        (string) ($_POST['work_date'] ?? ''),
+                        (int) ($_POST['delta_minutes'] ?? 0),
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set('success', $res['message']);
+                } elseif ($actionKonto === 'reduce') {
+                    $res = TimeCorrectionService::reduceOvertime(
+                        $user,
+                        $kontoContactId,
+                        (int) ($_POST['minutes'] ?? 0),
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set('success', $res['message']);
+                } else {
+                    Flash::set('error', 'Unbekannte Aktion.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header(
+                'Location: /app?page=zeiterfassung-konto&contact_id=' . max(0, $kontoContactId),
+                true,
+                302
+            );
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -5112,6 +5158,37 @@ $legalProductsConfig = LegalProductSettings::config();
                 $title = 'Media';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-konto' && MenuRegistry::canAccess($user, 'zeiterfassung-konto')) {
+            $timeKontoStaffOptions = TimeMonthReportService::staffOptions();
+            $requested = isset($_GET['contact_id']) ? (int) $_GET['contact_id'] : 0;
+            $timeKontoContactId = TimeMonthReportService::resolveContactId(
+                $user,
+                $requested > 0 ? $requested : null
+            );
+            if ($timeKontoContactId === null && $timeKontoStaffOptions !== []) {
+                $timeKontoContactId = (int) ($timeKontoStaffOptions[0]['id'] ?? 0);
+            }
+            $timeKontoContactLabel = '';
+            $timeKontoBalanceMinutes = 0;
+            $timeKontoLots = [];
+            $timeKontoCorrections = [];
+            $timeKontoReductions = [];
+            if ($timeKontoContactId !== null && $timeKontoContactId > 0) {
+                foreach ($timeKontoStaffOptions as $opt) {
+                    if ((int) ($opt['id'] ?? 0) === $timeKontoContactId) {
+                        $timeKontoContactLabel = (string) ($opt['label'] ?? '');
+                        break;
+                    }
+                }
+                OvertimeLotRepository::syncAccrualsFromWorkDays($timeKontoContactId);
+                $timeKontoBalanceMinutes = OvertimeLotRepository::sumRemainingMinutes($timeKontoContactId);
+                $timeKontoLots = OvertimeLotRepository::listOpenLots($timeKontoContactId);
+                $timeKontoCorrections = TimeCorrectionRepository::listForContact($timeKontoContactId);
+                $timeKontoReductions = OvertimeLotRepository::listReductions($timeKontoContactId);
+            }
+            $contentTemplate = 'modules/zeiterfassung-konto';
+            $title = 'Korrektur & Überstundenkonto';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-monat' && MenuRegistry::canAccess($user, 'zeiterfassung-monat')) {
             $timeMonthYearMonth = TimeMonthReportService::normalizeYearMonth(
                 isset($_GET['month']) ? (string) $_GET['month'] : null
@@ -5623,6 +5700,13 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeMonthContactId = $timeMonthContactId ?? null;
         $timeMonthCanTeam = $timeMonthCanTeam ?? false;
         $timeMonthStaffOptions = $timeMonthStaffOptions ?? [];
+        $timeKontoContactId = $timeKontoContactId ?? null;
+        $timeKontoContactLabel = $timeKontoContactLabel ?? '';
+        $timeKontoBalanceMinutes = $timeKontoBalanceMinutes ?? 0;
+        $timeKontoLots = $timeKontoLots ?? [];
+        $timeKontoCorrections = $timeKontoCorrections ?? [];
+        $timeKontoReductions = $timeKontoReductions ?? [];
+        $timeKontoStaffOptions = $timeKontoStaffOptions ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -5984,6 +6068,13 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeMonthContactId',
             'timeMonthCanTeam',
             'timeMonthStaffOptions',
+            'timeKontoContactId',
+            'timeKontoContactLabel',
+            'timeKontoBalanceMinutes',
+            'timeKontoLots',
+            'timeKontoCorrections',
+            'timeKontoReductions',
+            'timeKontoStaffOptions',
             'recipeList',
             'recipeForm',
             'recipeId',
