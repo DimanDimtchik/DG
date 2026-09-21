@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–3 Schichten ✅** · Spec **Z3a–Z6a ✅** · offen: Z4b–e, Z5b–d, Z6b+  
+> Status: **Phase 1–3 ✅** · Spec **Z3a–Z6a ✅** · **Z4b Code ✅** · offen: Z4c–e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -272,7 +272,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
-| **Z4** | Urlaub & Krankheit | `z4a` ✅ · weiter `z4b` |
+| **Z4** | Urlaub & Krankheit | `z4a`–`z4b` ✅ · weiter `z4c` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
@@ -613,7 +613,7 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 #### Serie Z4
 
 1. **Z4a** Spec ✅  
-2. **Z4b** Migration Entitlement + Absences + Repository  
+2. **Z4b** Migration Entitlement + Absences + Repository ✅  
 3. **Z4c** Urlaubsantrag + Freigabe-UI  
 4. **Z4d** Krankheit + Attest-Link + Team-Kalender  
 5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel  
@@ -629,13 +629,16 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 
 **Nicht:** Migration, UI, Rückstellung, Feiertagskalender DE.
 
-### Z4b — Migration + Repository
+### Z4b — Migration + Repository ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Tabellen | entitlements + absences |
-| Service | CRUD/Anspruch Rest berechnen |
-| Nicht | UI-Workflow, Soll-Anbindung |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Migration | `093_time_absences.sql` — entitlements + absences |
+| Repos | `TimeVacationEntitlementRepository`, `TimeAbsenceRepository` |
+| Werktage | Mo–Fr, ohne Feiertage; Halbtage 0,5 |
+| Rest | `entitled + carried − approved vacation days_count` (Jahr vollständig) |
+
+**Nicht:** UI-Workflow (Z4c), Krankheit-Team-UI (Z4d), Soll=0 (Z4e).
 
 ### Z4c — Urlaub Antrag/Freigabe
 
