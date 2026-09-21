@@ -454,7 +454,7 @@ final class MenuRegistry
             return self::canAccessBuchhaltung($user);
         }
 
-        if ($slug === 'kdv-dashboard' || $slug === 'kdv-kunden' || $slug === 'kdv-kunde-form' || $slug === 'kdv-provision' || $slug === 'kdv-support') {
+        if ($slug === 'kdv-dashboard' || $slug === 'kdv-kunden' || $slug === 'kdv-kunde-form' || $slug === 'kdv-umfirmierung' || $slug === 'kdv-provision' || $slug === 'kdv-support') {
             return self::canAccessKdv($user);
         }
 

@@ -236,6 +236,7 @@ final class MigrationRunner
             '083_offer_mail_acceptance.sql' => self::columnExists($pdo, 'dg_mail_log', 'voucher_id')
                 && self::columnExists($pdo, 'dg_mail_log', 'in_reply_to')
                 && self::columnExists($pdo, 'dg_vouchers', 'document_acceptance'),
+            '088_multi_firma_gewinnermittlung.sql' => self::columnExists($pdo, 'dg_kdv_customers', 'gewinnermittlung'),
             default => false,
         };
     }
@@ -350,6 +351,7 @@ final class MigrationRunner
             '081_purchase_list_items.sql' => true,
             '082_kdv_orgs_multi_firma.sql' => true,
             '083_offer_mail_acceptance.sql' => true,
+            '088_multi_firma_gewinnermittlung.sql' => true,
         ];
     }
 

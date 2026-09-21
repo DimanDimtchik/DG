@@ -196,6 +196,13 @@ final class KdvCustomerRepository
             }
         }
 
+        if (self::gewinnermittlungColumnsReady()) {
+            $gewinn = UmfirmierungService::normalizeGewinn((string) ($data['gewinnermittlung'] ?? ''));
+            $fields['gewinnermittlung'] = $gewinn;
+            $fields['company_type'] = mb_substr(trim((string) ($data['company_type'] ?? '')), 0, 80);
+            $fields['tax_number_note'] = mb_substr(trim((string) ($data['tax_number_note'] ?? '')), 0, 191);
+        }
+
         if ($fields['company_name'] === '') throw new InvalidArgumentException('Firmenname ist erforderlich.');
         if ($fields['domain'] === '') throw new InvalidArgumentException('Domain ist erforderlich.');
 
@@ -231,6 +238,26 @@ final class KdvCustomerRepository
         try {
             $ready = Database::pdo()->query(
                 "SHOW COLUMNS FROM dg_kdv_customers LIKE 'org_id'"
+            )->fetchColumn() !== false;
+        } catch (Throwable) {
+            $ready = false;
+        }
+
+        return $ready;
+    }
+
+    public static function gewinnermittlungColumnsReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        try {
+            $ready = Database::pdo()->query(
+                "SHOW COLUMNS FROM dg_kdv_customers LIKE 'gewinnermittlung'"
             )->fetchColumn() !== false;
         } catch (Throwable) {
             $ready = false;

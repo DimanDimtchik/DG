@@ -99,8 +99,26 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
         <label class="dg-label">Gültig bis
           <input class="dg-input" type="date" name="effective_to" value="<?= View::escape((string) ($c['effective_to'] ?? '')) ?>">
         </label>
+        <?php if (KdvCustomerRepository::gewinnermittlungColumnsReady()) : ?>
+          <label class="dg-label">Gewinnermittlung
+            <select class="dg-input" name="gewinnermittlung">
+              <?php foreach (UmfirmierungService::GEWINNERMITTLUNG as $key => $label) : ?>
+                <option value="<?= View::escape($key) ?>"<?= (($c['gewinnermittlung'] ?? '') === $key) ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-label">Rechtsform
+            <input class="dg-input" type="text" name="company_type" value="<?= View::escape((string) ($c['company_type'] ?? '')) ?>" placeholder="GmbH, Einzelunternehmen, …">
+          </label>
+          <label class="dg-label">Steuernummer-Hinweis
+            <input class="dg-input" type="text" name="tax_number_note" value="<?= View::escape((string) ($c['tax_number_note'] ?? '')) ?>">
+          </label>
+        <?php endif; ?>
       </div>
       <?php if ($isEdit && (($c['firm_slot_status'] ?? 'active') === 'active')) : ?>
+        <p style="margin-top:12px;">
+          <a class="dg-button" href="/app?page=kdv-umfirmierung&amp;from_id=<?= (int) ($c['id'] ?? 0) ?>">Umfirmierung starten…</a>
+        </p>
         <label class="dg-field" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
           <input type="checkbox" name="mf_make_archive_slot" value="1">
           <span>Als <strong>Archiv-Slot</strong> setzen (Umfirmierung Vorgänger): Slot „Archiv“, Preis 0 €, Gültig bis +<?= (int) MultiFirmaPricingService::ARCHIVE_DEFAULT_MONTHS ?> Monate falls leer. Beziehung → Vorgänger.</span>

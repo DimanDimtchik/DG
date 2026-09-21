@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **Phase 2 (MF2) Preis/Archiv umgesetzt** · MF0–MF1 ✅  
+Stand: **2026-09-21** · Status: **Phase 3 (MF3) Umfirmierung/Gewinnermittlung** · MF0–MF2 ✅  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -186,7 +186,7 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 | **0** | Konzept · KDV-Datenmodell Org↔Firma | ✅ Migration `082`, `KdvOrgRepository`, Formular/Liste |
 | **1** | Switcher + verknüpfte Instanzen (manuell) | ✅ **MF1 2026-09-21:** Header-Dropdown, KDV-Org-Mapping, Redirect `https://{domain}/login`; Kundeninstanz optional `config/firm-switcher.local.php`. Kein SSO (erneuter Login). |
 | **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | ✅ **MF2 2026-09-21:** `MultiFirmaPricingService`; KDV Preis-übernehmen + Archiv-Checkbox; Shop-Checkout Zusatzfirma −20 %; Provision-API Org/Preis. Archiv = 0 € / 12 Monate. 3.+ Firma weiter −20 %. |
-| **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | Offen |
+| **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | ✅ **MF3 2026-09-21:** Migration `088`, `UmfirmierungService`, KDV-Assistent, Gewinnermittlung in Firma-Einstellungen + KDV-Slot |
 | **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | Offen |
 
 ### Phase 0 — technische Artefakte
@@ -213,6 +213,14 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 - Shop: Checkout-Checkbox Zusatzfirma; `ShopPlans::priceWithAdditionalFirmDiscount`
 - **Festlegung MF2:** Archiv gratis; 3.+ Firma weiter −20 % (Staffel später)
 - **Nicht in MF2:** Umfirmierungs-Assistent (MF3), SSO, Stripe-Coupon-Automatik
+
+### Phase 3 (MF3) — technische Artefakte
+
+- Migration `088_multi_firma_gewinnermittlung.sql` — `gewinnermittlung`, `company_type`, `tax_number_note` an `dg_kdv_customers`
+- `UmfirmierungService` — Nachfolger anlegen, Vorgänger Archiv, Checkliste in Notizen
+- UI: `/app?page=kdv-umfirmierung&from_id=` · Link am KDV-Kunden
+- Stammdatum Instanz: `CompanyExtendedSettings.gewinnermittlung` (EÜR/Bilanz) in Einstellungen → Firma
+- **Nicht in MF3:** Auto-Provision der neuen Instanz, Buchungsübernahme, Firmendaten-Historie (MF4)
 
 ---
 

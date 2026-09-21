@@ -15,6 +15,7 @@ final class CompanyExtendedSettings
         return [
             'legal_name' => '',
             'company_type' => '',
+            'gewinnermittlung' => '',
             'employee_count_mode' => 'auto',
             'employee_count_manual' => 0,
             'industry' => '',
@@ -327,6 +328,8 @@ final class CompanyExtendedSettings
 
         $types = array_keys(CompanyTypes::labels());
         $cfg['company_type'] = in_array((string) ($cfg['company_type'] ?? ''), $types, true) ? (string) $cfg['company_type'] : '';
+        $gewinn = strtolower((string) ($cfg['gewinnermittlung'] ?? ''));
+        $cfg['gewinnermittlung'] = in_array($gewinn, ['euer', 'bilanz'], true) ? $gewinn : '';
         $cfg['employee_count_mode'] = ($cfg['employee_count_mode'] ?? '') === 'manual' ? 'manual' : 'auto';
         $cfg['employee_count_manual'] = max(0, (int) ($cfg['employee_count_manual'] ?? 0));
 
@@ -356,6 +359,8 @@ final class CompanyExtendedSettings
 
         $cfg['legal_name'] = self::str($input['legal_name'] ?? '');
         $cfg['company_type'] = self::str($input['company_type'] ?? '');
+        $gewinn = strtolower(self::str($input['gewinnermittlung'] ?? ''));
+        $cfg['gewinnermittlung'] = in_array($gewinn, ['euer', 'bilanz'], true) ? $gewinn : '';
         $cfg['employee_count_mode'] = ($input['employee_count_mode'] ?? '') === 'manual' ? 'manual' : 'auto';
         $cfg['employee_count_manual'] = max(0, (int) ($input['employee_count_manual'] ?? 0));
         $cfg['industry'] = self::str($input['industry'] ?? '');

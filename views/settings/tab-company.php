@@ -169,6 +169,15 @@ $bankSummary = $filledBanks > 0
           <?php endforeach; ?>
         </select>
       </label>
+      <label class="dg-field dg-field--wide">
+        <span>Gewinnermittlung</span>
+        <select name="gewinnermittlung">
+          <?php foreach (UmfirmierungService::GEWINNERMITTLUNG as $gKey => $gLabel) : ?>
+            <option value="<?= View::escape($gKey) ?>"<?= ($ext['gewinnermittlung'] ?? '') === $gKey ? ' selected' : '' ?>><?= View::escape($gLabel) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="dg-field-hint">Steuert Hinweise (EÜR vs. Bilanz). Keine automatische Buchungsumstellung.</small>
+      </label>
       <label class="dg-field">
         <span>E-Mail *</span>
         <input type="email" name="email" value="<?= View::escape($companyConfig['email']) ?>" required>

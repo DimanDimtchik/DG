@@ -4764,6 +4764,51 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/kdv-support';
             $title = 'Support-Freigaben';
             $currentPage = 'kdv-support';
+        } elseif ($page === 'kdv-umfirmierung' && MenuRegistry::canAccessKdv($user)) {
+            $formError = null;
+            $fromId = (int) ($_GET['from_id'] ?? $_POST['from_id'] ?? 0);
+            $predecessor = $fromId > 0 ? KdvCustomerRepository::findById($fromId) : null;
+            if ($predecessor === null) {
+                Flash::set('error', 'Vorgänger-Firma für Umfirmierung nicht gefunden.');
+                header('Location: /app?page=kdv-kunden', true, 302);
+                exit;
+            }
+            $umfirmForm = [
+                'stichtag' => (string) ($_POST['stichtag'] ?? ''),
+                'company_name' => (string) ($_POST['company_name'] ?? ''),
+                'domain' => (string) ($_POST['domain'] ?? ''),
+                'company_type' => (string) ($_POST['company_type'] ?? 'GmbH'),
+                'gewinnermittlung' => (string) ($_POST['gewinnermittlung'] ?? 'bilanz'),
+                'tax_number_note' => (string) ($_POST['tax_number_note'] ?? ''),
+                'tariff' => (string) ($_POST['tariff'] ?? ($predecessor['tariff'] ?? 'basic')),
+                'db_name' => (string) ($_POST['db_name'] ?? ''),
+                'contact_name' => (string) ($_POST['contact_name'] ?? ($predecessor['contact_name'] ?? '')),
+                'contact_email' => (string) ($_POST['contact_email'] ?? ($predecessor['contact_email'] ?? '')),
+                'contact_phone' => (string) ($_POST['contact_phone'] ?? ($predecessor['contact_phone'] ?? '')),
+            ];
+            if (
+                $_SERVER['REQUEST_METHOD'] === 'POST'
+                && isset($_POST['mf_umfirmierung_start'])
+                && Csrf::verify($_POST['_csrf'] ?? null)
+                && RoleResolver::canEdit($user)
+            ) {
+                try {
+                    $result = UmfirmierungService::start($fromId, $_POST);
+                    Flash::set(
+                        'success',
+                        'Umfirmierung angelegt: Nachfolger #' . $result['successor_id']
+                        . ' · Vorgänger #' . $result['predecessor_id'] . ' ist Archiv-Slot. Bitte Instanz manuell provisionieren.'
+                    );
+                    header('Location: /app?page=kdv-kunden&action=edit&id=' . (int) $result['successor_id'], true, 302);
+                    exit;
+                } catch (Throwable $e) {
+                    $formError = $e->getMessage();
+                }
+            }
+            $umfirmChecklist = UmfirmierungService::checklist();
+            $contentTemplate = 'modules/kdv-umfirmierung';
+            $title = 'Umfirmierung';
+            $currentPage = 'kdv-kunden';
         } elseif ($page === 'kdv-kunden' && MenuRegistry::canAccessKdv($user)) {
             $formError = null;
 
@@ -5452,6 +5497,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $customers = $customers ?? [];
         $kdvOrgOptions = $kdvOrgOptions ?? [];
         $kdvFirmOptions = $kdvFirmOptions ?? [];
+        $predecessor = $predecessor ?? null;
+        $umfirmForm = $umfirmForm ?? [];
+        $umfirmChecklist = $umfirmChecklist ?? [];
         $result = $result ?? null;
 
         View::render('layout/app', compact(
@@ -5683,6 +5731,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'customers',
             'kdvOrgOptions',
             'kdvFirmOptions',
+            'predecessor',
+            'umfirmForm',
+            'umfirmChecklist',
             'result',
             'websitePageId',
             'websiteFormList',
