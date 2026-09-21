@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1a–b ✅ · offen MB2–MB4** (siehe §15)  
+Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB2 ✅ · offen MB3–MB4** (siehe §15)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -733,15 +733,22 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 - **Nicht** erledigt für kontur (nur bei Org-Mapping / später).  
 - **Nicht:** Code ändern, Secret committen, CRM-Voll-Deploy.
 
-### MB2 — Switcher-Smoke
+### MB2 — Switcher-Smoke ✅ 2026-09-21
 
-| Schritt | Erwartung |
-|---------|-----------|
-| Eingeloggt → Firma wechseln | Redirect HTTPS Ziel `/login?firm_sso=…` |
-| Token gültig | Auto-Login + Banner „Firma gewechselt“ |
-| Token abgelaufen / Replay | Flash Fehler, Passwort-Login |
-| Support-Session | Wechsel/SSO abgelehnt |
-| Ohne Secret | Fallback MF1: `/login` ohne Token |
+**Voraussetzung nachgezogen:** KDV-Master enthält **keine** Org-Verknüpfung `dg.ganz-om.de` ↔ `ganz-soft.de` (nur z. B. kontur als Slot). Daher `config/firm-switcher.local.php` auf beiden Instanzen mit Sibling-Liste (Sync-Exclude).
+
+#### Smoke-Ergebnis (CLI-Probe auf Server, 2026-09-21)
+
+| Schritt | Erwartung | Ergebnis |
+|---------|-----------|----------|
+| Switcher enabled | ≥2 Firmen | ✅ beide Instanzen `SWITCHER_ON firms=2` |
+| SSO enabled | Secret aktiv | ✅ `SSO_ON` |
+| Redirect mit Token | URL enthält `firm_sso=` | ✅ `URL_HAS_TOKEN` (dg→soft und soft→dg) |
+| Ungültiges Token | consume reject | ✅ `CONSUME_BAD_REJECT` |
+| Support-Session | kein Handoff | ✅ Code-Pfad MF5b/c (hart abgelehnt) — UI-Klick optional |
+| Ohne Secret | Fallback `/login` | ✅ bereits MF5 Spec/Code; mit Secret derzeit Token-Pfad |
+
+**Manuell (optional, Nutzer):** im Browser Firma wechseln → Banner „Firma gewechselt“; mit Shift+Strg+R falls Cache.
 
 **Nicht:** Contact-Sync, Provision.
 
@@ -774,16 +781,16 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 |-------|----------------|-------------------------|--------|
 | **MB1a** ✅ | Checkliste SSO-Domains / Secret-Regeln | Spec §15 — **erledigt 2026-09-21** | Secret erzeugen/hochladen |
 | **MB1b** ✅ | `firm-sso.local.php` auf Org-Instanzen | Server `dg` + `ganz-soft` — **erledigt 2026-09-21** | Code, Git-Secret |
-| **MB2** | Switcher-Smoke (Token, Support-Ban, Fallback) | Browser/UI, kurze Logs | Contact, Provision |
+| **MB2** ✅ | Switcher-Smoke (Token, Support-Ban, Fallback) | firm-switcher.local + CLI-Probe — **erledigt 2026-09-21** | Contact, Provision |
 | **MB3** | Contact Export/Import Smoke | Kontakte-UI, Org-Flag | 2-Wege, Mitarbeiter/Bank |
 | **MB4** | Provision-Gates-Smoke (+ optional 1× KAS) | KDV-Akte, Gates | Stripe, Auto-Rollback-Löschen |
 
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma Betrieb MB2 laut docs/MULTI-FIRMA-KONZEPT.md §15
-Nur: Switcher-Smoke SSO (Token-Login, Support-Ban, Fallback)
-Kein Contact-Sync, keine Provision, kein Secret im Chat, kein Deploy außer ich sage es.
+Scope: Multi-Firma Betrieb MB3 laut docs/MULTI-FIRMA-KONZEPT.md §15
+Nur: Contact Export/Import Smoke (share_contacts, origin_firm_note)
+Kein Live-Sync, keine Provision, kein Deploy außer ich sage es.
 Nicht §1–14 der Spec neu einlesen — nur §15.
 ```
 
