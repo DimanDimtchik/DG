@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2 ✅** · **Z3a Spec ✅** (offen Z3b–d) · **Z4a Spec ✅** · offen Z4b–e · Phase 5+ später  
+> Status: **Phase 1 ✅** · **Z2 ✅** · **Z3a/Z4a Spec ✅** (Code Z3b–d / Z4b–e offen) · **Z5a Spec ✅** · offen Z5b–d · Phase 6 später  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -273,7 +273,7 @@ Abweichung nur per explizitem Chat-Befehl.
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a` ✅ · weiter `z3b` |
 | **Z4** | Urlaub & Krankheit | `z4a` ✅ · weiter `z4b` |
-| **Z5** | Rückstellungen Buchhaltung | `z5a` (+ Steuerberater) |
+| **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
@@ -662,3 +662,135 @@ Nicht Z3-Code / Z5–Z6 neu einlesen.
 ```
 
 Weitere: `Z4b` / `Z4c` / `Z4d` / `Z4e` analog.
+
+---
+
+## Betrieb Phase 5 — Rückstellungen (token-sparend)
+
+> **Agent-Regel:** Pro Chat **ein** Unterpunkt (`z5a` …). Spec nur dieser Abschnitt.  
+> **Kein** stilles Auto-Buchen ohne Nutzerbestätigung. **Kein** Deploy außer „deploy“.  
+> Fachlich: **Steuerberater stimmt Konten/Methode ab**, bevor Live-Buchung (E5-ähnliche Vorsicht).  
+> Abhängigkeiten: Resturlaub idealerweise aus **Z4**; bis dahin manuelle Tage-Eingabe erlaubt.
+
+### Entscheid-Checkliste Z5
+
+| # | Entscheidung | Default |
+|---|--------------|---------|
+| R1 | Urlaubsrückstellung | ✅ Pflicht-Gegenstand Z5 (HGB § 249 analog / handelsüblich) |
+| R2 | Überstunden-Rückstellung | ✅ **optional** (Schalter); oft vertraglich anders gelöst |
+| R3 | Buchung | ✅ Entwurf → Nutzer bestätigt → `ManualLedgerService` (keine stillen Posts) |
+| R4 | Konten | ✅ **konfigurierbar** (SKR-Vorschlag, kein Hardcode als Wahrheit) |
+| R5 | Stichtag | ✅ 31.12. des Geschäftsjahres (bzw. abweichendes WJ später) |
+| R6 | Jahresabschluss | ✅ Checklisten-Punkt in `FiscalCloseService` (warn bis gebucht/als n.a. markiert) |
+
+### Z5a — Spec Rückstellungen ✅ 2026-09-21
+
+Nur Spezifikation — Code = **Z5b+**. Keine Buchungssätze erzeugen in Z5a.
+
+#### Recht / Prüfbarkeit (Kurz)
+
+| Thema | Anforderung im CRM |
+|--------|-------------------|
+| Urlaub | Offener Urlaubsanspruch zum Stichtag → Rückstellung; Berechnung nachvollziehbar (Tage × Tageskostensatz) |
+| Überstunden | Optional; nur wenn betrieblich Rückstellung gebildet wird (nicht = ArbZG-Ausgleichskonto) |
+| GoBD | Beleg/Protokoll: wer, wann, Parameter, Ergebnisbetrag; Storno nur mit Begründung |
+| Steuerberater | Kontenrahmen (SKR 03/04), GuV vs. Bilanz, Sozialkosten-Zuschlag — **nicht** vom Agenten „final“ festnageln |
+
+#### Berechnungsmodell (verbindlich für Z5b)
+
+**Urlaubsrückstellung (pro MA, Jahr Y):**
+
+1. `rest_days` = Anspruch+Übertrag − genehmigte Urlaubstage (Z4) **oder** manuell gepflegt  
+2. `daily_cost` = konfigurierbar je MA oder Firmen-Default (Brutto-Äquivalent / 365 oder / Arbeitstage — **Methode wählbar**, Default: `/ 260` Arbeitstage-Näherung)  
+3. optional `social_factor` (z. B. 1,20) — Default **1,00** bis Steuerberater setzt  
+4. `amount = rest_days × daily_cost × social_factor`  
+5. Summe über aktive Mitarbeiter = Buchungsbetrag
+
+**Überstunden (optional):**
+
+1. `ot_hours` = Saldo Überstundenkonto (Z2e Lots) / 60  
+2. `hourly_cost` = daily_cost / 8 (oder eigener Satz)  
+3. `amount = ot_hours × hourly_cost × social_factor`
+
+#### Buchungsvorschlag (nur Vorlage — Konten editierbar)
+
+| Seite | SKR-03-Vorschlag (Beispiel) | SKR-04-Vorschlag (Beispiel) |
+|-------|----------------------------|----------------------------|
+| Aufwand Urlaub | 6140 o. Ä. | 6300-Bereich Personal |
+| Rückstellung Urlaub | 0970 / Verbindlichkeiten | entspr. Passiva |
+| Aufwand ÜStd (opt.) | analog Personalaufwand | analog |
+| Rückstellung ÜStd | analog | analog |
+
+Exact numbers: **Settings**, Label „Vorschlag — mit Steuerberater prüfen“.
+
+Buchungstext: `Urlaubsrückstellung {Y} / Stichtag {date} / Berechnung CRM`.
+
+#### Daten / UI (Ziel)
+
+| Baustein | Zweck |
+|----------|--------|
+| Settings Zeiterfassung/Personal | Konten, social_factor, Methode Tageskostensatz, ÜStd an/aus |
+| `TimeProvisionService` (Name Z5b) | Preview-Tabelle MA × Betrag; Export CSV Prüfnachweis |
+| Manual-Ledger-Batch | nach Bestätigung; source-Tag z. B. `time_provision` |
+| `FiscalCloseService::checklist` | Item „Urlaubsrückstellung {Y}“ → ok/warn/offen |
+
+#### Rechte
+
+| Aktion | Wer |
+|--------|-----|
+| Preview / CSV | Buchhaltung-Zugang **oder** `canViewTeam` + Buchhaltungsrecht (Z5b: an `MenuRegistry::canAccessBuchhaltung` koppeln) |
+| Buchung bestätigen | wie manuelle Buchungen heute |
+| Konten ändern | Settings (Admin) |
+
+#### Serie Z5
+
+1. **Z5a** Spec ✅  
+2. **Z5b** Settings + Berechnungs-Preview (+ CSV)  
+3. **Z5c** Buchungsentwurf → ManualLedger nach Bestätigung  
+4. **Z5d** Jahresabschluss-Checklisten-Punkt  
+
+#### Abnahme Z5a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Formel Urlaub + optional ÜStd | ✅ |
+| Kein Auto-Buch ohne Confirm | ✅ |
+| Konten nur Vorschlag/konfigurierbar | ✅ |
+| Checkliste JA angebunden (Spec) | ✅ |
+| Kein Code in diesem Chat | ✅ |
+
+**Nicht:** Migration, echte Buchung, Lohn-Export (Z6), Z4-UI nachbauen.
+
+### Z5b — Settings + Preview
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Config | Konten, Faktor, Methode, ÜStd-Flag |
+| Preview | MA-Liste Beträge + CSV |
+| Nicht | Ledger-Schreiben |
+
+### Z5c — Buchung
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Confirm-UI | Betrag/Konten anzeigen |
+| Ledger | ManualLedger-Batch |
+| Nicht | stilles Cron-Buchen |
+
+### Z5d — Jahresabschluss-Checkliste
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Checklist-Item | ok wenn Batch für Jahr existiert oder „n.a.“ gesetzt |
+| Nicht | Jahr zwingend blockieren ohne Spec-Flag (Default: **warn**, nicht error) |
+
+### Chat-Vorlage Z5
+
+```text
+Scope: Zeiterfassung Z5a laut docs/ZEITERFASSUNG-PLAN.md § Betrieb Phase 5
+Nur: Spec Rückstellungen (Formel, Konten-Vorschlag, ManualLedger, Checkliste)
+Kein Code, keine Buchung, kein Deploy.
+Nicht Z6 / Z3–Z4-Code neu einlesen.
+```
+
+Weitere: `Z5b` / `Z5c` / `Z5d` analog.
