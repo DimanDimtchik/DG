@@ -3373,6 +3373,75 @@ switch ($path) {
             exit;
         }
 
+        // POST: Urlaub Antrag/Freigabe (Z4c)
+        if (
+            $page === 'zeiterfassung-urlaub'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['vacation_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-urlaub')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-urlaub', true, 302);
+                exit;
+            }
+            $vacAction = (string) ($_POST['vacation_action'] ?? '');
+            $redirectYear = max(2000, min(2100, (int) ($_POST['year'] ?? date('Y'))));
+            $redirectEnt = max(0, (int) ($_POST['contact_id'] ?? $_POST['ent_contact_id'] ?? 0));
+            try {
+                if ($vacAction === 'request') {
+                    $ownCid = ContactRepository::findStaffContactIdForUser($user);
+                    if ($ownCid === null) {
+                        throw new InvalidArgumentException('Kein Mitarbeiter-Kontakt verknüpft.');
+                    }
+                    $res = TimeVacationService::request(
+                        $user,
+                        $ownCid,
+                        (string) ($_POST['date_from'] ?? ''),
+                        (string) ($_POST['date_to'] ?? ''),
+                        (string) ($_POST['reason'] ?? ''),
+                        !empty($_POST['half_day'])
+                    );
+                    Flash::set('success', $res['message']);
+                } elseif ($vacAction === 'cancel') {
+                    TimeVacationService::cancelOwn($user, (int) ($_POST['absence_id'] ?? 0));
+                    Flash::set('success', 'Antrag zurückgezogen.');
+                } elseif ($vacAction === 'approve') {
+                    $res = TimeVacationService::approve($user, (int) ($_POST['absence_id'] ?? 0));
+                    Flash::set('success', $res['message']);
+                } elseif ($vacAction === 'reject') {
+                    TimeVacationService::reject(
+                        $user,
+                        (int) ($_POST['absence_id'] ?? 0),
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set('success', 'Antrag abgelehnt.');
+                } elseif ($vacAction === 'save_entitlement') {
+                    TimeVacationService::saveEntitlement(
+                        $user,
+                        (int) ($_POST['contact_id'] ?? 0),
+                        $redirectYear,
+                        [
+                            'days_entitled' => $_POST['days_entitled'] ?? 0,
+                            'days_carried' => $_POST['days_carried'] ?? 0,
+                            'note' => $_POST['note'] ?? null,
+                        ]
+                    );
+                    Flash::set('success', 'Urlaubsanspruch gespeichert.');
+                } else {
+                    Flash::set('error', 'Unbekannte Aktion.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            $loc = '/app?page=zeiterfassung-urlaub&year=' . $redirectYear;
+            if ($redirectEnt > 0) {
+                $loc .= '&ent_contact_id=' . $redirectEnt;
+            }
+            header('Location: ' . $loc, true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -5225,6 +5294,46 @@ $legalProductsConfig = LegalProductSettings::config();
                 $title = 'Media';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-urlaub' && MenuRegistry::canAccess($user, 'zeiterfassung-urlaub')) {
+            MigrationRunner::runPending();
+            $timeVacYear = max(2000, min(2100, (int) ($_GET['year'] ?? date('Y'))));
+            $timeVacCanTeam = TimeClockService::canViewTeam($user);
+            $timeVacContactId = ContactRepository::findStaffContactIdForUser($user);
+            $timeVacContactLabel = '';
+            $timeVacBalance = [
+                'days_entitled' => 0.0,
+                'days_carried' => 0.0,
+                'days_used' => 0.0,
+                'days_rest' => 0.0,
+            ];
+            $timeVacOwnList = [];
+            if ($timeVacContactId !== null && $timeVacContactId > 0) {
+                $sc = ContactRepository::findById($timeVacContactId);
+                $timeVacContactLabel = $sc !== null
+                    ? (trim($sc->displayName) !== ''
+                        ? trim($sc->displayName)
+                        : trim($sc->firstName . ' ' . $sc->lastName))
+                    : '';
+                $timeVacBalance = TimeVacationEntitlementRepository::balance($timeVacContactId, $timeVacYear);
+                $timeVacOwnList = TimeAbsenceRepository::listForContact($timeVacContactId, $timeVacYear);
+            }
+            $timeVacStaffOptions = $timeVacCanTeam ? TimeMonthReportService::staffOptions() : [];
+            $timeVacPending = [];
+            if ($timeVacCanTeam) {
+                foreach (TimeAbsenceRepository::listByStatus('requested', 200) as $pend) {
+                    if ((string) ($pend['type'] ?? '') === 'vacation') {
+                        $timeVacPending[] = $pend;
+                    }
+                }
+            }
+            $timeVacEntContactId = isset($_GET['ent_contact_id']) ? (int) $_GET['ent_contact_id'] : 0;
+            $timeVacEntBalance = null;
+            if ($timeVacCanTeam && $timeVacEntContactId > 0) {
+                $timeVacEntBalance = TimeVacationEntitlementRepository::balance($timeVacEntContactId, $timeVacYear);
+            }
+            $contentTemplate = 'modules/zeiterfassung-urlaub';
+            $title = 'Urlaub';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schichten' && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')) {
             MigrationRunner::runPending();
             $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
@@ -5801,6 +5910,16 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeShiftStaff = $timeShiftStaff ?? [];
         $timeShiftActiveTemplates = $timeShiftActiveTemplates ?? [];
         $timeShiftAssignmentMap = $timeShiftAssignmentMap ?? [];
+        $timeVacContactId = $timeVacContactId ?? null;
+        $timeVacContactLabel = $timeVacContactLabel ?? '';
+        $timeVacYear = $timeVacYear ?? (int) date('Y');
+        $timeVacBalance = $timeVacBalance ?? [];
+        $timeVacOwnList = $timeVacOwnList ?? [];
+        $timeVacPending = $timeVacPending ?? [];
+        $timeVacStaffOptions = $timeVacStaffOptions ?? [];
+        $timeVacEntContactId = $timeVacEntContactId ?? null;
+        $timeVacEntBalance = $timeVacEntBalance ?? null;
+        $timeVacCanTeam = $timeVacCanTeam ?? false;
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6176,6 +6295,16 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeShiftStaff',
             'timeShiftActiveTemplates',
             'timeShiftAssignmentMap',
+            'timeVacContactId',
+            'timeVacContactLabel',
+            'timeVacYear',
+            'timeVacBalance',
+            'timeVacOwnList',
+            'timeVacPending',
+            'timeVacStaffOptions',
+            'timeVacEntContactId',
+            'timeVacEntBalance',
+            'timeVacCanTeam',
             'recipeList',
             'recipeForm',
             'recipeId',

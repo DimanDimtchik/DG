@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–3 ✅** · Spec **Z3a–Z6a ✅** · **Z4b Code ✅** · offen: Z4c–e, Z5b–d, Z6b+  
+> Status: **Phase 1–3 ✅** · Spec **Z3a–Z6a ✅** · **Z4b–Z4c Code ✅** · offen: Z4d–e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -162,8 +162,8 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 4 — Urlaub & Krankheit
 
-- [ ] Urlaubsantrag → Genehmigung Workflow
-- [ ] Urlaubskonto (Tage/Minuten, Jahresanspruch)
+- [x] Urlaubsantrag → Genehmigung Workflow — Z4c ✅
+- [x] Urlaubskonto (Tage/Minuten, Jahresanspruch) — Entitlement Z4b + UI Z4c ✅
 - [ ] Krankmeldung, Verknüpfung Attest-Upload
 - [ ] Kalenderansicht Abwesenheiten (Team)
 
@@ -272,7 +272,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
-| **Z4** | Urlaub & Krankheit | `z4a`–`z4b` ✅ · weiter `z4c` |
+| **Z4** | Urlaub & Krankheit | `z4a`–`z4c` ✅ · weiter `z4d` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
@@ -614,7 +614,7 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 
 1. **Z4a** Spec ✅  
 2. **Z4b** Migration Entitlement + Absences + Repository ✅  
-3. **Z4c** Urlaubsantrag + Freigabe-UI  
+3. **Z4c** Urlaubsantrag + Freigabe-UI ✅  
 4. **Z4d** Krankheit + Attest-Link + Team-Kalender  
 5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel  
 
@@ -640,12 +640,16 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 
 **Nicht:** UI-Workflow (Z4c), Krankheit-Team-UI (Z4d), Soll=0 (Z4e).
 
-### Z4c — Urlaub Antrag/Freigabe
+### Z4c — Urlaub Antrag/Freigabe ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| UI | Antrag MA, Freigabe HR |
-| Nicht | Krankheit, Rückstellung |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| UI | `/app?page=zeiterfassung-urlaub` |
+| Service | `TimeVacationService` (Antrag, Cancel, Approve/Reject, Anspruch) |
+| MA | Restanspruch + Antrag + eigene Liste |
+| HR | Offene Freigaben + Jahresanspruch pflegen |
+
+**Nicht:** Krankheit (Z4d), Soll=0 (Z4e), Rückstellung.
 
 ### Z4d — Krankheit + Team-Kalender
 
