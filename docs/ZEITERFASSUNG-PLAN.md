@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–5 ✅** · Spec **Z3a–Z6a ✅** · offen: Z6b+  
+> Status: **Phase 1–5 ✅** · Spec **Z3a–Z6a ✅** · **Z6b Code ✅** · offen: Z6c–d  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -175,8 +175,8 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 6 — Lohn-Export (ohne eigene Abrechnung)
 
-- [ ] Exportformate: **DATEV Lohn**, **Lexoffice Lohn**, CSV-Standard
-- [ ] Monatsdaten: Arbeitsstunden, Überstunden, Urlaub, Krankheit, Zuschläge (später)
+- [~] Exportformate: **DATEV Lohn**, **Lexoffice Lohn**, CSV-Standard — CSV Z6b ✅; DATEV Z6c offen
+- [~] Monatsdaten: Arbeitsstunden, Überstunden, Urlaub, Krankheit, Zuschläge (später) — CSV-Felder Z6b ✅; Zuschläge später
 - [ ] Dokumente: Lohnabrechnung PDF ablegen (`payroll_slip` Dokumenttyp)
 - [ ] Später: eigene Lohnabrechnung (separates Großprojekt)
 
@@ -274,7 +274,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
 | **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5d` ✅ |
-| **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
+| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6b` ✅ · weiter `z6c` |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
 
@@ -908,7 +908,7 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 #### Serie Z6
 
 1. **Z6a** Spec ✅  
-2. **Z6b** CSV-Monats-Export + Protokoll-Tabelle  
+2. **Z6b** CSV-Monats-Export + Protokoll-Tabelle ✅  
 3. **Z6c** DATEV-Lohn-Anschluss (Settings + Datei)  
 4. **Z6d** optional Lexoffice + `payroll_slip`-Ablage  
 
@@ -923,13 +923,16 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 
 **Nicht:** Migration, Export-Code, Zuschläge, ELSTER/Lohnsteuer.
 
-### Z6b — CSV + Protokoll
+### Z6b — CSV + Protokoll ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Migration | `dg_time_payroll_exports` |
-| Export | CSV laut Schema |
-| Nicht | DATEV-Felder raten |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Migration | `094_time_payroll_exports.sql` |
+| Service | `TimePayrollExportService` + Repository |
+| UI | `/app?page=zeiterfassung-lohnexport` — Vorschau, CSV, Protokoll |
+| Rechte | `canViewTeam` |
+
+**Nicht:** DATEV-Felder (Z6c), Lexoffice/PDF (Z6d).
 
 ### Z6c — DATEV Lohn
 

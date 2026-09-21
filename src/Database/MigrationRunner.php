@@ -245,6 +245,7 @@ final class MigrationRunner
             '092_time_shift_assignments.sql' => self::tableExists($pdo, 'dg_time_shift_assignments'),
             '093_time_absences.sql' => self::tableExists($pdo, 'dg_time_vacation_entitlements')
                 && self::tableExists($pdo, 'dg_time_absences'),
+            '094_time_payroll_exports.sql' => self::tableExists($pdo, 'dg_time_payroll_exports'),
             default => false,
         };
     }
@@ -365,6 +366,7 @@ final class MigrationRunner
             '091_time_shift_templates.sql' => true,
             '092_time_shift_assignments.sql' => true,
             '093_time_absences.sql' => true,
+            '094_time_payroll_exports.sql' => true,
         ];
     }
 

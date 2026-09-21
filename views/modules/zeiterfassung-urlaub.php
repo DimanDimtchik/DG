@@ -48,6 +48,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       <a class="dg-button" href="/app?page=zeiterfassung-abwesenheit">Abwesenheit</a>
       <a class="dg-button" href="/app?page=zeiterfassung-rueckstellung">Rückstellungen</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-lohnexport">Lohn-Export</a>
       <?php if ($canTeam) : ?>
         <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
       <?php endif; ?>

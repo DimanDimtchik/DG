@@ -528,6 +528,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-rueckstellung') {
             return TimeProvisionService::canPreview($user);
         }
+        if ($slug === 'zeiterfassung-lohnexport') {
+            return TimePayrollExportService::canExport($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {

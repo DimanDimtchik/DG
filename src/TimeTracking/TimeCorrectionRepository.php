@@ -58,6 +58,26 @@ final class TimeCorrectionRepository
         return (int) $stmt->fetchColumn();
     }
 
+    public static function sumDeltaForRange(int $contactId, string $fromYmd, string $toYmd): int
+    {
+        if (
+            !self::tableReady()
+            || $contactId < 1
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromYmd)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $toYmd)
+        ) {
+            return 0;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(delta_worked_minutes), 0)
+             FROM dg_time_corrections
+             WHERE contact_id = :cid AND work_date >= :from AND work_date <= :to'
+        );
+        $stmt->execute(['cid' => $contactId, 'from' => $fromYmd, 'to' => $toYmd]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

@@ -5531,6 +5531,33 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-rueckstellung';
             $title = 'Rückstellungen';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
+            MigrationRunner::runPending();
+            $timePayrollYearMonth = TimeMonthReportService::normalizeYearMonth(
+                isset($_GET['month']) ? (string) $_GET['month'] : null
+            );
+            $timePayrollDataset = TimePayrollExportService::monthDataset($timePayrollYearMonth);
+            $timePayrollExports = TimePayrollExportRepository::listRecent(40);
+            if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+                try {
+                    $exported = TimePayrollExportService::exportCsv($user, $timePayrollYearMonth);
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $exported['filename'] . '"');
+                    echo $exported['csv'];
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header(
+                        'Location: /app?page=zeiterfassung-lohnexport&month=' . rawurlencode($timePayrollYearMonth),
+                        true,
+                        302
+                    );
+                    exit;
+                }
+            }
+            $contentTemplate = 'modules/zeiterfassung-lohnexport';
+            $title = 'Lohn-Export';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schichten' && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')) {
             MigrationRunner::runPending();
             $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
@@ -6131,6 +6158,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeProvisionDraft = $timeProvisionDraft ?? null;
         $timeProvisionExistingBatchId = $timeProvisionExistingBatchId ?? null;
         $timeProvisionCanBook = $timeProvisionCanBook ?? false;
+        $timePayrollYearMonth = $timePayrollYearMonth ?? date('Y-m');
+        $timePayrollDataset = $timePayrollDataset ?? ['rows' => [], 'totals' => []];
+        $timePayrollExports = $timePayrollExports ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6530,6 +6560,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeProvisionDraft',
             'timeProvisionExistingBatchId',
             'timeProvisionCanBook',
+            'timePayrollYearMonth',
+            'timePayrollDataset',
+            'timePayrollExports',
             'recipeList',
             'recipeForm',
             'recipeId',
