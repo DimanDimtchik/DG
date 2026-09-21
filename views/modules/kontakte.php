@@ -16,6 +16,16 @@ $baseUrl = '/app?page=kontakte';
       <p class="dg-lead">Benutzer, Kunden, Lieferanten und Firmen – <?= (int) $list['total'] ?> Einträge</p>
     </div>
     <div class="dg-toolbar">
+      <?php if (ContactExportService::isExportAllowed($user)) : ?>
+        <form method="post" action="/app?page=kontakte" class="dg-toolbar__inline-form">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="contact_org_export" value="1">
+          <input type="hidden" name="s" value="<?= View::escape($search) ?>">
+          <button type="submit" class="dg-button" title="JSON-Download für Import auf einer Org-Schwesterinstanz">
+            Für Org-Schwester exportieren
+          </button>
+        </form>
+      <?php endif; ?>
       <?php if (ContactAccessResolver::canEditContact($user)) : ?>
         <a class="dg-button dg-button--primary" href="/app?page=kontakte&amp;action=new">Neuer Kontakt</a>
       <?php endif; ?>

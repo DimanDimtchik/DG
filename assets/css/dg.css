@@ -572,6 +572,11 @@ code {
   gap: 8px;
 }
 
+.dg-toolbar__inline-form {
+  margin: 0;
+  display: inline-flex;
+}
+
 .dg-search {
   display: flex;
   flex-wrap: wrap;

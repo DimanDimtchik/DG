@@ -2148,7 +2148,33 @@ switch ($path) {
             }
         }
 
-        // POST: Kontakt lÃ¶schen
+        // POST: Multi-Firma MF6b — Kontakte JSON-Export für Org-Schwester
+        if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_org_export'])) {
+            if (!MenuRegistry::canAccess($user, 'kontakte')) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            if (!ContactExportService::isExportAllowed($user)) {
+                Flash::set('error', 'Kontakt-Export für Org-Schwester ist hier nicht freigeschaltet.');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            try {
+                $exportSearch = trim((string) ($_POST['s'] ?? ''));
+                ContactExportService::sendDownload($exportSearch, $user);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+        }
+
+        // POST: Kontakt löschen
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_delete'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte') || !RoleResolver::canEdit($user)) {
                 header('Location: /app', true, 302);

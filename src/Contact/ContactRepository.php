@@ -73,6 +73,32 @@ final class ContactRepository
         ];
     }
 
+    /**
+     * Kontakte für Org-Schwester-Export (MF6b), gleiche Sichtbarkeit wie Listenansicht.
+     *
+     * @return list<Contact>
+     */
+    public static function listForExport(string $search = '', ?User $viewer = null, int $max = 5000): array
+    {
+        $max = max(1, min(10000, $max));
+        [$where, $params] = self::buildSearchWhere($search, $viewer);
+        $pdo = Database::pdo();
+        $sql = 'SELECT * FROM dg_contacts ' . $where . ' ORDER BY display_name ASC, company_name ASC LIMIT :limit';
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
+        }
+        $stmt->bindValue(':limit', $max, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $items = [];
+        while ($row = $stmt->fetch()) {
+            $items[] = self::map($row);
+        }
+
+        return $items;
+    }
+
         /**
      * searchPicker
      * @param string $search
