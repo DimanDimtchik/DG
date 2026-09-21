@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB2 ✅ · offen MB3–MB4** (siehe §15)  
+Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1–MB3 ✅ · offen MB4** (siehe §15)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -677,9 +677,9 @@ Nach MF0–MF7 ist der **Code** deployed; offen ist **Betrieb** (Config, Smoke, 
 
 ### Reihenfolge (Absicht)
 
-1. **MB1** SSO-Secret (Checkliste → Ausrollung)  
-2. **MB2** Switcher-Smoke  
-3. **MB3** Contact Export/Import  
+1. **MB1** SSO-Secret (Checkliste → Ausrollung) ✅  
+2. **MB2** Switcher-Smoke ✅  
+3. **MB3** Contact Export/Import ✅  
 4. **MB4** Provision-Gates-Smoke  
 
 **Nie parallel** SSO + Contact + Provision in einem Chat.
@@ -752,15 +752,18 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 
 **Nicht:** Contact-Sync, Provision.
 
-### MB3 — Contact Export/Import
+### MB3 — Contact Export/Import ✅ 2026-09-21
 
-| Schritt | Erwartung |
-|---------|-----------|
-| Org `share_contacts = 1` (oder Admin ohne KDV) | Export-Button sichtbar |
-| Export JSON | Format `dg_contact_export` v1 |
-| Import auf Schwester | Matching E-Mail → Kd-Nr. → Lf-Nr.; Default nur leere Felder |
-| Herkunft | `origin_firm_note` gesetzt wenn leer |
-| Warnungen | Selbst-Import / Flag aus / >90 Tage → Checkbox |
+#### Smoke-Ergebnis (CLI-Probe, dg → ganz-soft, 2026-09-21)
+
+| Schritt | Erwartung | Ergebnis |
+|---------|-----------|----------|
+| Export-Recht | Admin ohne KDV-Org **oder** `share_contacts=1` | ✅ `EXPORT_ALLOWED share=0 org=null` (Admin-Pfad) |
+| Export JSON | `dg_contact_export` v1 | ✅ `EXPORT_OK count=1` (Kd-Nr. `MB3-171317`, ohne E-Mail wegen DNS-Check) |
+| Import-Recht | Import erlaubt | ✅ `IMPORT_ALLOWED` |
+| Import | Matching Kd-Nr.; neu anlegen | ✅ `created=1` |
+| Herkunft | `origin_firm_note` gesetzt | ✅ `Übernommen aus Dietrich Ganz (dg.ganz-om.de)` |
+| Warnung Flag aus | Hinweis ohne Blocking | ✅ `Quell-Paket ohne share_contacts-Flag` |
 
 **Nicht:** Live-2-Wege, Mitarbeiterakten, Bankkonten.
 
@@ -782,7 +785,7 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 | **MB1a** ✅ | Checkliste SSO-Domains / Secret-Regeln | Spec §15 — **erledigt 2026-09-21** | Secret erzeugen/hochladen |
 | **MB1b** ✅ | `firm-sso.local.php` auf Org-Instanzen | Server `dg` + `ganz-soft` — **erledigt 2026-09-21** | Code, Git-Secret |
 | **MB2** ✅ | Switcher-Smoke (Token, Support-Ban, Fallback) | firm-switcher.local + CLI-Probe — **erledigt 2026-09-21** | Contact, Provision |
-| **MB3** | Contact Export/Import Smoke | Kontakte-UI, Org-Flag | 2-Wege, Mitarbeiter/Bank |
+| **MB3** ✅ | Contact Export/Import Smoke | Kontakte-UI, Org-Flag — **erledigt 2026-09-21** | 2-Wege, Mitarbeiter/Bank |
 | **MB4** | Provision-Gates-Smoke (+ optional 1× KAS) | KDV-Akte, Gates | Stripe, Auto-Rollback-Löschen |
 
 ### Chat-Vorlage (kopieren)
