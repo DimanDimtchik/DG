@@ -196,6 +196,7 @@ spl_autoload_register(static function (string $class): void {
         'TimeCorrectionRepository' => '/src/TimeTracking/TimeCorrectionRepository.php',
         'TimeCorrectionService' => '/src/TimeTracking/TimeCorrectionService.php',
         'TimeShiftTemplateRepository' => '/src/TimeTracking/TimeShiftTemplateRepository.php',
+        'TimeShiftAssignmentRepository' => '/src/TimeTracking/TimeShiftAssignmentRepository.php',
         'OvertimeLotRepository' => '/src/TimeTracking/OvertimeLotRepository.php',
         'OvertimeDateRules' => '/src/TimeTracking/OvertimeDateRules.php',
         'ArbzgComplianceService' => '/src/TimeTracking/ArbzgComplianceService.php',

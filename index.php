@@ -3343,6 +3343,36 @@ switch ($path) {
             exit;
         }
 
+        // POST: Schichtplan Woche (Z3c)
+        if (
+            $page === 'zeiterfassung-schichten'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['shift_plan_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-schichten', true, 302);
+                exit;
+            }
+            $weekMonday = TimeShiftAssignmentRepository::mondayOfWeek(
+                (string) ($_POST['week_monday'] ?? date('Y-m-d'))
+            );
+            try {
+                if ((string) ($_POST['shift_plan_action'] ?? '') === 'save_week') {
+                    $grid = is_array($_POST['assignments'] ?? null) ? $_POST['assignments'] : [];
+                    $n = TimeShiftAssignmentRepository::saveWeekGrid($grid);
+                    Flash::set('success', 'Schichtplan gespeichert (' . $n . ' Zellen).');
+                } else {
+                    Flash::set('error', 'Unbekannte Aktion.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=zeiterfassung-schichten&week=' . rawurlencode($weekMonday), true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -5195,6 +5225,18 @@ $legalProductsConfig = LegalProductSettings::config();
                 $title = 'Media';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-schichten' && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')) {
+            MigrationRunner::runPending();
+            $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
+            $timeShiftWeekMonday = TimeShiftAssignmentRepository::mondayOfWeek($weekRaw);
+            $timeShiftWeekDates = TimeShiftAssignmentRepository::weekDates($timeShiftWeekMonday);
+            $timeShiftStaff = TimeMonthReportService::staffOptions();
+            $timeShiftActiveTemplates = TimeShiftTemplateRepository::all(true);
+            $sunday = $timeShiftWeekDates[6] ?? $timeShiftWeekMonday;
+            $timeShiftAssignmentMap = TimeShiftAssignmentRepository::mapForRange($timeShiftWeekMonday, $sunday);
+            $contentTemplate = 'modules/zeiterfassung-schichten';
+            $title = 'Schichtplan';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schicht-vorlagen' && MenuRegistry::canAccess($user, 'zeiterfassung-schicht-vorlagen')) {
             MigrationRunner::runPending();
             $editId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -5754,6 +5796,11 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeKontoStaffOptions = $timeKontoStaffOptions ?? [];
         $timeShiftTemplates = $timeShiftTemplates ?? [];
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
+        $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
+        $timeShiftWeekDates = $timeShiftWeekDates ?? [];
+        $timeShiftStaff = $timeShiftStaff ?? [];
+        $timeShiftActiveTemplates = $timeShiftActiveTemplates ?? [];
+        $timeShiftAssignmentMap = $timeShiftAssignmentMap ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6124,6 +6171,11 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeKontoStaffOptions',
             'timeShiftTemplates',
             'timeShiftTemplateEdit',
+            'timeShiftWeekMonday',
+            'timeShiftWeekDates',
+            'timeShiftStaff',
+            'timeShiftActiveTemplates',
+            'timeShiftAssignmentMap',
             'recipeList',
             'recipeForm',
             'recipeId',

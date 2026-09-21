@@ -29,10 +29,7 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
       <a class="dg-button" href="/app?page=zeiterfassung">Stempeluhr</a>
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
-    </div>
-  </header>
-
-  <section class="dg-panel">
+      <a class="dg-button" href="/app?page=zeiterfassung-schichten">Schichtplan</a>
     <form method="get" action="/app" class="dg-form dg-form--inline">
       <input type="hidden" name="page" value="zeiterfassung-konto">
       <label class="dg-field">

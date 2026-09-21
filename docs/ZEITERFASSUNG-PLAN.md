@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–2 ✅** · Spec **Z3a–Z6a ✅** · **Z3b Code ✅** · offen: Z3c–d, Z4b–e, Z5b–d, Z6b+  
+> Status: **Phase 1–2 ✅** · Spec **Z3a–Z6a ✅** · **Z3b–Z3c Code ✅** · offen: Z3d, Z4b–e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -156,7 +156,7 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 3 — Schichten
 
-- [ ] Schichtplan (Früh/Spät/Nacht oder frei definierbar)
+- [x] Schichtplan (Früh/Spät/Nacht oder frei definierbar) — Vorlagen Z3b + Zuordnung Z3c; Soll Z3d offen
 - [ ] Zuordnung Mitarbeiter ↔ Schicht ↔ Datum
 - [ ] Abweichung Soll (Schicht) vs. Ist (Stempel)
 
@@ -264,7 +264,7 @@ Abweichung nur per explizitem Chat-Befehl.
 
 1. **Z3a** Spec Schicht-Vorlagen + Zuordnung + Soll-Prio ✅  
 2. **Z3b** Migration + CRUD Vorlagen (Früh/Spät/Nacht / frei) ✅  
-3. **Z3c** Zuordnung MA ↔ Schicht ↔ Datum + Wochen-UI  
+3. **Z3c** Zuordnung MA ↔ Schicht ↔ Datum + Wochen-UI ✅  
 4. **Z3d** Soll aus Schicht in `TimeScheduleService` + Abweichung Ist  
 
 **Spätere Serien (eigene Chat-Ketten, nicht mischen):**
@@ -492,13 +492,16 @@ Ohne Zuordnung: Verhalten unverändert Z2b.
 
 **Nicht:** Zuordnung (Z3c), Soll-Anbindung (Z3d).
 
-### Z3c — Zuordnung Wochen-UI
+### Z3c — Zuordnung Wochen-UI ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Migration | `dg_time_shift_assignments` |
-| UI | Woche wählen, MA × Tag → Vorlage |
-| Nicht | Lohn, Zuschläge |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Migration | `092_time_shift_assignments.sql` (UNIQUE contact+date) |
+| Repo | `TimeShiftAssignmentRepository` |
+| UI | `/app?page=zeiterfassung-schichten` — Woche MA × Tag → Vorlage |
+| Rechte | `canViewTeam` |
+
+**Nicht:** Soll-Anbindung (Z3d), Lohn, Zuschläge.
 
 ### Z3d — Soll-Anbindung
 

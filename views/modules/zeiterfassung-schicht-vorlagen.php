@@ -17,6 +17,7 @@ $editId = (int) ($edit['id'] ?? 0);
       <p class="dg-lead">Z3b — Früh/Spät/Nacht oder frei; Zuordnung folgt in Z3c</p>
     </div>
     <div class="dg-toolbar">
+      <a class="dg-button" href="/app?page=zeiterfassung-schichten">Schichtplan</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
       <a class="dg-button" href="/app?page=zeiterfassung-konto">Korrektur / Konto</a>
     </div>

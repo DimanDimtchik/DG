@@ -49,7 +49,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
 - [x] **Zeiterfassung Phase 2** — Z2a–Z2e ✅
-- [ ] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d; **Z3a–Z3b ✅** · weiter: `z3c`
+- [ ] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d; **Z3a–Z3c ✅** · weiter: `z3d`
 - [ ] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e; **Z4a ✅** · offen: `z4b`–`z4e`
 - [ ] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d; **Z5a ✅** · offen: `z5b`–`z5d`
 - [ ] **Zeiterfassung Phase 6 Lohn-Export** — Z6a–Z6d; **Z6a ✅** · weiter: `z6b` (CSV)
@@ -123,7 +123,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 |-------|------|
 | Multi-Firma Code + Betrieb MB1–MB4 | erledigt 2026-09-21 |
 | **Zeiterfassung Z2a–Z2e** | erledigt 2026-09-21 |
-| **Zeiterfassung Z3a–Z3d** (Schichten) | Spec Z3a ✅ · **Z3b Code ✅** · offen `z3c`–`z3d` |
+| **Zeiterfassung Z3a–Z3d** (Schichten) | Spec Z3a ✅ · **Z3b–Z3c Code ✅** · offen `z3d` |
 | **Zeiterfassung Z4a–Z4e** (Urlaub/Krankheit) | Spec Z4a ✅ · Code offen `z4b` |
 | **Zeiterfassung Z5a–Z5d** (Rückstellungen) | Spec Z5a ✅ · Code offen `z5b` |
 | **Zeiterfassung Z6a–Z6d** (Lohn-Export) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb Phase 6 · **Z6a ✅** |
