@@ -113,7 +113,7 @@ switch ($path) {
         break;
 
     case '/firm-switch':
-        // Multi-Firma MF1: Redirect zur verknüpften Instanz-Domain (Allowlist).
+        // Multi-Firma MF1/MF5: Redirect zur verknüpften Instanz (Allowlist, optional SSO-Token).
         if (!AuthService::check()) {
             header('Location: /login', true, 302);
             exit;
@@ -127,8 +127,14 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         }
+        if (class_exists('SupportSession') && SupportSession::isActive()) {
+            Flash::set('error', 'Firmenwechsel in der Support-Session nicht erlaubt.');
+            header('Location: /app', true, 302);
+            exit;
+        }
         $switchDomain = (string) ($_POST['domain'] ?? '');
-        $targetUrl = FirmSwitcherService::redirectUrlForDomain($switchDomain);
+        $switchUser = AuthService::user();
+        $targetUrl = FirmSwitcherService::redirectUrlForDomainWithSso($switchDomain, $switchUser);
         if ($targetUrl === null) {
             Flash::set('error', 'Firmenwechsel nicht erlaubt oder bereits aktuelle Firma.');
             header('Location: /app', true, 302);
@@ -141,6 +147,25 @@ switch ($path) {
         exit;
 
     case '/login':
+        // MF5b: Handoff-Token vor normalem Login prüfen
+        $firmSsoToken = trim((string) ($_GET['firm_sso'] ?? ''));
+        if ($firmSsoToken !== '' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+            if (AuthService::check()) {
+                $u = AuthService::user();
+                header('Location: ' . ($u ? RoleResolver::homePath($u) : '/app'), true, 302);
+                exit;
+            }
+            $sso = FirmSsoService::consume($firmSsoToken);
+            if (!empty($sso['ok']) && isset($sso['user']) && $sso['user'] instanceof User) {
+                AuthService::loginUser($sso['user']);
+                header('Location: ' . RoleResolver::homePath($sso['user']), true, 302);
+                exit;
+            }
+            Flash::set('error', (string) ($sso['message'] ?? 'Firmenwechsel abgelaufen oder ungültig.'));
+            header('Location: /login', true, 302);
+            exit;
+        }
+
         if (AuthService::check()) {
             $u = AuthService::user();
             header('Location: ' . ($u ? RoleResolver::homePath($u) : '/app'), true, 302);

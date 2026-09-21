@@ -112,6 +112,46 @@ final class FirmSwitcherService
     }
 
     /**
+     * Normalisierte Domains der Sibling-Liste inkl. aktueller Host (für SSO-Allowlist).
+     *
+     * @return list<string>
+     */
+    public static function siblingDomains(): array
+    {
+        $state = self::forCurrentRequest();
+        $out = [];
+        foreach ($state['firms'] as $firm) {
+            $d = self::normalizeHost((string) ($firm['domain'] ?? ''));
+            if ($d !== '' && !in_array($d, $out, true)) {
+                $out[] = $d;
+            }
+        }
+        $current = self::normalizeHost((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        if ($current !== '' && !in_array($current, $out, true)) {
+            $out[] = $current;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Redirect-URL inkl. optionalem SSO-Token (MF5).
+     */
+    public static function redirectUrlForDomainWithSso(string $domain, ?User $user): ?string
+    {
+        $base = self::redirectUrlForDomain($domain);
+        if ($base === null) {
+            return null;
+        }
+        if ($user === null || !FirmSsoService::isEnabled()) {
+            return $base;
+        }
+        $withSso = FirmSsoService::issueRedirectUrl($user, $domain);
+
+        return $withSso ?? $base;
+    }
+
+    /**
      * @return list<array{domain: string, label: string, status: string, relation: string}>
      */
     private static function resolveFirms(string $currentHost): array

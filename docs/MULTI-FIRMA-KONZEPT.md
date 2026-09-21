@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **Phase 4 (MF4) Historie/Rumpf-WJ/Shared-Contacts** · MF0–MF3 ✅ · Roadmap MF komplett  
+Stand: **2026-09-21** · Status: **MF0–MF5b erledigt · MF5a Spec + MF5b FirmSsoService ✅** · Offen: MF5c, MF6, MF7  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -233,7 +233,166 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 
 ---
 
-## 12. Referenzen
+## 13. Ausbau nach MF4 (SSO · Sync · Auto-Provision) — token-sparend
+
+> **Agent-Regel:** Pro Chat nur **einen** Unterpunkt (z. B. MF5a). Spec-Absatz §13 + genannte Dateien — **nicht** §1–12 / §14 neu einlesen. Kein Deploy außer Nutzer sagt es. Ein Chat = ein Commit.
+
+### Reihenfolge (Absicht)
+
+1. **MF5 SSO** — ohne SSO bleibt Switcher unkomfortabel; Sync/Provision brauchen Auth-Kontext  
+2. **MF6 Contact-Sync** — erst nach SSO (Zielinstanz muss Nutzer/Org kennen)  
+3. **MF7 Auto-Provision** — teuer/riskant; zuletzt, baut auf KDV + vorhandenem `KdvDeployService`
+
+**Nie parallel** SSO+Sync+Provision in einem Chat.
+
+### Entscheid-Checkliste (5 Min. ohne Agent, vor MF5a)
+
+| # | Entscheidung | Vorschlag (Default) |
+|---|--------------|---------------------|
+| E1 | SSO-Mechanismus | ✅ **MF5a:** Signiertes **Handoff-Token** (HMAC-SHA256, TTL 60 s, einmalig) → Ziel-`/login?firm_sso=…` — kein Shared-Session-Cookie |
+| E2 | Shared Secret | ✅ **MF5a:** `config/firm-sso.local.php` (Sync-Exclude `*.local.php`); gleicher `shared_secret` auf allen Org-Instanzen (manuell) |
+| E3 | Contact-Sync | **Einbahn** Export-Paket (JSON) + manueller/halbauto Import; **kein** Live-2-Wege (GoBD/Konflikt) |
+| E4 | Was wird synchronisiert | Stammfelder Kontakt + Adresse; **keine** Mitarbeiterakten, **keine** Belege |
+| E5 | Auto-Provision | Ruft bestehenden `KdvDeployService` nur für **Nachfolger** nach Umfirmierung; Domain muss DNS-ready sein |
+| E6 | Rollback | Provision-Fehler → KDV-Slot bleibt `neu`, kein stilles Löschen des Vorgänger-Archivs |
+
+### MF5a — SSO Spec (Token · TTL · Allowlist) ✅ 2026-09-21
+
+Nur Spezifikation — Umsetzung Code = **MF5b/MF5c**.
+
+#### Ziel-URL
+
+```
+https://{target_domain}/login?firm_sso={token}
+```
+
+- Nur **HTTPS**. HTTP ablehnen.
+- Token ausschließlich als Query-Parameter `firm_sso` (kein Cookie, kein POST-Body in MF5).
+- Nach erfolgreicher Verifikation: Session auf Zielinstanz anlegen, Token **verbrauchmarkieren**, Redirect auf Home (`RoleResolver::homePath`).
+- Bei Fehler: Login-Formular mit Flash „Firmenwechsel abgelaufen oder ungültig“ — kein Account-Leak in der Meldung.
+
+#### Token-Inhalt (Payload, vor Signatur)
+
+| Feld | Typ | Bedeutung |
+|------|-----|-----------|
+| `v` | int | Formatversion, fest `1` |
+| `iss` | string | Quell-Domain normalisiert (ohne Schema/Port/`www.`) |
+| `aud` | string | Ziel-Domain normalisiert (Allowlist-Pflicht) |
+| `sub` | string | Login-Identität: bevorzugt **E-Mail** des Users (lowercase); Fallback Username |
+| `iat` | int | Unix-Zeit Ausstellung |
+| `exp` | int | Unix-Zeit Ablauf = `iat + 60` |
+| `jti` | string | 16+ Bytes hex Zufall (Einmaligkeit) |
+| `uid` | int\|null | optionale Quell-User-ID (nur Info, Login auf Ziel über `sub`) |
+
+Matching auf Ziel: `UserRepository::findByEmailOrUsername(sub)` — **kein** automatisches Anlegen fehlender User (MF5). Fehlt User → Fehler, Passwort-Login.
+
+#### Kodierung
+
+1. Payload JSON (UTF-8, Schlüssel sortiert oder feste Feldreihenfolge laut Implementierung MF5b — dokumentieren im Code).
+2. `payload_b64` = Base64URL (ohne Padding) des JSON.
+3. `sig` = Base64URL( HMAC-SHA256( `payload_b64`, `shared_secret` ) ).
+4. Token-String: `{payload_b64}.{sig}` (ein Punkt).
+
+#### TTL & Replay
+
+| Regel | Wert |
+|-------|------|
+| TTL | **60 Sekunden** (`exp - iat = 60`) |
+| Uhr | Serverzeit; Toleranz Clock-Skew **±10 s** bei Prüfung (`now` in `[iat-10, exp+10]` unzulässig erweitern — nur `now ≤ exp+10` und `now ≥ iat-10`) |
+| Einmaligkeit | `jti` nach Erfolg in Zielinstanz speichern (SettingsStore-Key oder kleine Tabelle `dg_firm_sso_jti`, TTL-Cleanup > 24 h) — Wiederverwendung → reject |
+| CSRF am Quell-`/firm-switch` | bleibt POST+CSRF wie MF1; Token wird **server-seitig** nach CSRF erzeugt, nicht vom Browser gebaut |
+
+#### Allowlist Domains
+
+Ziel (`aud`) und Quelle (`iss`) müssen **beide** in der für die aktuelle Instanz bekannten Sibling-Liste liegen:
+
+1. Primär: KDV Org-Geschwister (`FirmSwitcherService` / `listByOrgId`) wenn KDV-DB vorhanden  
+2. Sonst: `config/firm-switcher.local.php` (MF1)  
+3. Zusätzlich optional in `firm-sso.local.php`: `allowed_domains => string[]` als **Schnittmenge**-Verschärfung (wenn gesetzt: Domain muss in Sibling-Liste **und** in `allowed_domains` sein)
+
+Normalisierung wie MF1: lowercase, ohne Port, ohne führendes `www.`, ohne Schema.
+
+Reject wenn:
+
+- `aud` ≠ HTTP_HOST der prüfenden Instanz (normalisiert)  
+- `iss` === `aud` (Selbst-Switch)  
+- `aud` / `iss` nicht allowlisted  
+- Signatur falsch, `v !== 1`, `exp` abgelaufen, `jti` schon gesehen, `sub` leer  
+
+#### Secret-Datei (`config/firm-sso.local.example.php` in MF5b anlegen)
+
+```php
+<?php
+return [
+    'shared_secret' => '', // min. 32 Bytes Zufall, identisch auf allen Org-Instanzen
+    'ttl_seconds' => 60,
+    'allowed_domains' => [
+        // optional leer = nur Sibling-Liste aus KDV / firm-switcher.local.php
+        // 'firma-a.example',
+        // 'firma-b.example',
+    ],
+];
+```
+
+Ohne `shared_secret` oder Secret &lt; 32 Zeichen: SSO **aus** — Switcher fällt auf MF1-Verhalten zurück (Redirect `/login` ohne Token).
+
+#### Security-Randbedingungen (MF5)
+
+- Kein Token in Referrer loggen (Login-Seite: `Referrer-Policy` beachten falls nötig).  
+- Rate-Limit: fehlgeschlagene `firm_sso`-Versuche zählen wie LoginThrottle (MF5b anbinden, wenn trivial).  
+- Support-Session / Impersonation: **kein** SSO-Handoff aus Support-Session (MF5b: hart ablehnen).  
+- Archiv-Slots: Switch erlaubt (nur lesen auf Ziel ist Instanz-Sache); SSO ändert daran nichts.
+
+#### Abgrenzung MF5a
+
+- **Nicht** in MF5a: PHP-Code, Migration JTI-Tabelle, Beispiel-Config-Datei (→ MF5b).  
+- **Nicht** Cookie-SSO, OAuth, SAML, Lizenzserver als IdP.
+
+### Phasen
+
+| Phase | Lieferobjekt | Erlaubt zu lesen/ändern | Nicht |
+|-------|----------------|-------------------------|--------|
+| **MF5a** ✅ | Spec-Nachtrag SSO (Token-Format, TTL, CSRF, Allowlist Domains) | nur `MULTI-FIRMA-KONZEPT.md` §13 — **erledigt 2026-09-21** | Code |
+| **MF5b** ✅ | `FirmSsoService` ausstellen + verifizieren | `src/MultiFirma/*`, `config/firm-sso.local.example.php`, `index.php` `/firm-switch` + `/login` — **erledigt 2026-09-21** | Sync, Provision, Shop |
+| **MF5c** | Switcher-UX/Polish (Flash, Referrer-Policy, Feinschliff) | `FirmSwitcherService`, Login-View | neues UI-Framework |
+| **MF6a** | Spec Contact-Export-Schema + Herkunft | Spec §13 | Code |
+| **MF6b** | Export API/Button „Kontakte für Org-Schwester“ (JSON-Datei) | Contact-Repo read-only Export, 1 View | Import, Live-Sync |
+| **MF6c** | Import auf Zielinstanz + `origin_firm_note` setzen | Contact save, MF4-Feld | 2-Wege, Merge-UI groß |
+| **MF7a** | Spec: wann Provision erlaubt (DNS, KAS, Slot `neu`) | Spec | Code |
+| **MF7b** | Hook Umfirmierung → optional `KdvDeployService::provision` | `UmfirmierungService`, DeployService | Shop-Stripe |
+| **MF7c** | Status/Fehler in KDV-UI (Install-URL, Steps) | kdv-kunde-form / umfirmierung View | neue Infrastruktur |
+
+### Chat-Vorlage (kopieren)
+
+```text
+Scope: Multi-Firma MF5b laut docs/MULTI-FIRMA-KONZEPT.md §13
+Nur: FirmSsoService Token ausstellen/prüfen + Anbindung /firm-switch und /login
+Kein Contact-Sync, keine Auto-Provision, kein Shop, kein Deploy außer ich sage es.
+Nicht §1–12/§14 der Spec neu einlesen — nur §13 + genannte Dateien.
+```
+
+Weitere: `MF5a` / `MF5c` / `MF6a` … analog ersetzen.
+
+### Token-Sparregeln (Cursor)
+
+1. **Ein Unterpunkt pro Chat** — nie „baue SSO und Sync“  
+2. **Entscheidungen E1–E6 vorher** in dieser Tabelle abhaken (ohne Agent)  
+3. **Composer/lokal** für Code; Cloud nur bei Deploy/SSH  
+4. **Kein erneutes Konzept-Einlesen** — Agent-Regel oben  
+5. **Kein Deploy** in Ausbau-Chats, bis Sie „deploy“ sagen  
+6. Nach jedem Unterpunkt: **ein Commit** (`commit mf5b`) — Diff bleibt klein  
+7. Chats archivieren — max. 1 Lokal + 1 Cloud aktiv lassen  
+
+### Bewusst später / nicht in MF5–7
+
+- Intercompany-Belege, Konzern-Konsolidierung  
+- Shared Session über alle Domains (Cookie)  
+- Automatische Buchungsübernahme bei Umfirmierung  
+- Stripe-Coupon-API für −20 %  
+
+---
+
+## 14. Referenzen
 
 - § 140, § 141 AO  
 - § 4 Abs. 1 / Abs. 3 EStG  
