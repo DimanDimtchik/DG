@@ -347,6 +347,10 @@ switch ($path) {
         KdvAccountApi::handle($path);
         exit;
 
+    case '/api/recipe-cost':
+        RecipeCostApi::handle();
+        exit;
+
     case '/api/kichel':
         KichelApi::handle();
         exit;
@@ -1056,6 +1060,235 @@ switch ($path) {
             }
             header('Location: ' . $redirect, true, 302);
             exit;
+        }
+
+        // POST: Rezeptur speichern/löschen (R1/R3)
+        if (
+            $page === 'rezeptur-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['recipe_save']) || isset($_POST['recipe_delete']))
+            && MenuRegistry::canAccess($user, 'rezeptur-form')
+        ) {
+            $editRecipeId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur', true, 302);
+                exit;
+            }
+            try {
+                RecipeRepository::ensureReady();
+                if (isset($_POST['recipe_delete']) && $editRecipeId > 0) {
+                    RecipeRepository::delete($editRecipeId);
+                    Flash::set('success', 'Rezept gelöscht.');
+                    header('Location: /app?page=rezeptur', true, 302);
+                    exit;
+                }
+                $newRecipeId = RecipeRepository::save($_POST, $editRecipeId > 0 ? $editRecipeId : null, $user->id);
+                Flash::set('success', 'Rezept gespeichert (Kalkulations-Snapshot angelegt).');
+                header('Location: /app?page=rezeptur-form&action=edit&id=' . $newRecipeId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $formError = $e->getMessage();
+                $recipeId = $editRecipeId > 0 ? $editRecipeId : null;
+                $bomPost = is_array($_POST['bom'] ?? null) ? $_POST['bom'] : [];
+                $bomLines = [];
+                foreach ($bomPost as $line) {
+                    if (!is_array($line)) {
+                        continue;
+                    }
+                    $bomLines[] = [
+                        'id' => 0,
+                        'material_label' => (string) ($line['material_label'] ?? ''),
+                        'article_id' => (int) ($line['article_id'] ?? 0),
+                        'qty' => (string) ($line['qty'] ?? '1'),
+                        'scrap_pct' => (string) ($line['scrap_pct'] ?? '0'),
+                        'unit' => (string) ($line['unit'] ?? 'Stk'),
+                        'unit_cost' => (string) ($line['unit_cost'] ?? ''),
+                    ];
+                }
+                if ($bomLines === []) {
+                    $bomLines = [RecipeRepository::emptyBomLine()];
+                }
+                $routingPost = is_array($_POST['routing'] ?? null) ? $_POST['routing'] : [];
+                $routingLines = [];
+                foreach ($routingPost as $step) {
+                    if (!is_array($step)) {
+                        continue;
+                    }
+                    $routingLines[] = [
+                        'id' => 0,
+                        'work_center_id' => (int) ($step['work_center_id'] ?? 0),
+                        'setup_min' => (string) ($step['setup_min'] ?? '0'),
+                        'run_min' => (string) ($step['run_min'] ?? '0'),
+                        'label' => (string) ($step['label'] ?? ''),
+                    ];
+                }
+                if ($routingLines === []) {
+                    $routingLines = [RecipeRepository::emptyRoutingLine()];
+                }
+                $recipeForm = [
+                    'title' => (string) ($_POST['title'] ?? ''),
+                    'target_qty' => (string) ($_POST['target_qty'] ?? '1'),
+                    'labor_minutes' => (string) ($_POST['labor_minutes'] ?? '0'),
+                    'margin_pct' => (string) ($_POST['margin_pct'] ?? '0'),
+                    'status' => (string) ($_POST['status'] ?? RecipeRepository::STATUS_DRAFT),
+                    'version' => max(1, (int) ($_POST['version'] ?? 1)),
+                    'notes' => (string) ($_POST['notes'] ?? ''),
+                    'bom' => $bomLines,
+                    'routing' => $routingLines,
+                ];
+            }
+        }
+
+        // POST: Rezeptur Produktionslauf-Snapshot + Soll/Ist (R3/R6)
+        if (
+            $page === 'rezeptur-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['recipe_run_snapshot'])
+            && MenuRegistry::canAccess($user, 'rezeptur-form')
+        ) {
+            $runId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user) || $runId <= 0) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur', true, 302);
+                exit;
+            }
+            try {
+                $formSnap = RecipeRepository::formForId($runId);
+                if (RecipeRepository::find($runId) === null) {
+                    throw new InvalidArgumentException('Rezept nicht gefunden.');
+                }
+                $calc = RecipeCostService::calculate($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? []);
+                $payload = RecipeCostService::snapshotPayload($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], $calc);
+                $snapshotId = RecipeSnapshotRepository::create(
+                    $runId,
+                    RecipeSnapshotRepository::KIND_RUN,
+                    $payload['inputs'],
+                    $payload['result'],
+                    $user->id
+                );
+                $planned = RecipeActualRepository::plannedFromRecipe(
+                    $formSnap,
+                    $formSnap['routing'] ?? [],
+                    $calc
+                );
+                RecipeActualRepository::createForSnapshot($snapshotId, [
+                    'planned_qty' => $planned['planned_qty'],
+                    'planned_setup_min' => $planned['planned_setup_min'],
+                    'planned_run_min' => $planned['planned_run_min'],
+                    'planned_self_cost' => $planned['planned_self_cost'],
+                    'actual_qty' => $_POST['actual_qty'] ?? $planned['planned_qty'],
+                    'actual_setup_min' => $_POST['actual_setup_min'] ?? $planned['planned_setup_min'],
+                    'actual_run_min' => $_POST['actual_run_min'] ?? $planned['planned_run_min'],
+                    'actual_self_cost' => $_POST['actual_self_cost'] ?? null,
+                    'note' => (string) ($_POST['actual_note'] ?? ''),
+                ], $user->id);
+                Flash::set('success', 'Produktionsdurchlauf protokolliert (Soll/Ist, ohne Buchung).');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=rezeptur-form&action=edit&id=' . $runId, true, 302);
+            exit;
+        }
+
+        // POST: Rezeptur Soll/Ist nachträglich anpassen (R6)
+        if (
+            $page === 'rezeptur-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['recipe_actual_update'])
+            && MenuRegistry::canAccess($user, 'rezeptur-form')
+        ) {
+            $runId = (int) ($_POST['id'] ?? 0);
+            $actualId = (int) ($_POST['actual_id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user) || $runId <= 0 || $actualId <= 0) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur', true, 302);
+                exit;
+            }
+            try {
+                if (RecipeRepository::find($runId) === null) {
+                    throw new InvalidArgumentException('Rezept nicht gefunden.');
+                }
+                $map = RecipeActualRepository::mapForRecipe($runId);
+                $owned = false;
+                foreach ($map as $row) {
+                    if ((int) ($row['id'] ?? 0) === $actualId) {
+                        $owned = true;
+                        break;
+                    }
+                }
+                if (!$owned) {
+                    throw new InvalidArgumentException('Soll/Ist gehört nicht zu diesem Rezept.');
+                }
+                RecipeActualRepository::updateFromPost($actualId, $_POST);
+                Flash::set('success', 'Soll/Ist aktualisiert (ohne Buchung).');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=rezeptur-form&action=edit&id=' . $runId, true, 302);
+            exit;
+        }
+
+        // POST: Rezeptur Kostensätze (R2)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['recipe_cost_rates_save'])
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    RecipeCostSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Kostensätze gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen', true, 302);
+            exit;
+        }
+
+        // POST: Work Center speichern/löschen (R2)
+        if (
+            $page === 'rezeptur-maschine-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['work_center_save']) || isset($_POST['work_center_delete']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschine-form')
+        ) {
+            $editWcId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur-maschinen', true, 302);
+                exit;
+            }
+            try {
+                WorkCenterRepository::ensureReady();
+                if (isset($_POST['work_center_delete']) && $editWcId > 0) {
+                    WorkCenterRepository::delete($editWcId);
+                    Flash::set('success', 'Maschine / Arbeitsplatz gelöscht.');
+                    header('Location: /app?page=rezeptur-maschinen', true, 302);
+                    exit;
+                }
+                $newWcId = WorkCenterRepository::save($_POST, $editWcId > 0 ? $editWcId : null);
+                Flash::set('success', 'Maschine / Arbeitsplatz gespeichert.');
+                header('Location: /app?page=rezeptur-maschine-form&action=edit&id=' . $newWcId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $formError = $e->getMessage();
+                $workCenterId = $editWcId > 0 ? $editWcId : null;
+                $workCenterForm = [
+                    'name' => (string) ($_POST['name'] ?? ''),
+                    'purchase_price' => (string) ($_POST['purchase_price'] ?? '0'),
+                    'life_hours' => (string) ($_POST['life_hours'] ?? '1'),
+                    'kw' => (string) ($_POST['kw'] ?? '0'),
+                    'space_m2' => (string) ($_POST['space_m2'] ?? '0'),
+                    'operators' => (string) ($_POST['operators'] ?? '1'),
+                    'is_active' => !empty($_POST['is_active']),
+                    'notes' => (string) ($_POST['notes'] ?? ''),
+                ];
+            }
         }
 
         // POST: Einstellungen Kalender-E-Mail-Vorlagen
@@ -3256,6 +3489,134 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'lager') {
             header('Location: /app', true, 302);
             exit;
+        } elseif (
+            (
+                $page === 'rezeptur'
+                || $page === 'rezeptur-form'
+                || $page === 'rezeptur-maschinen'
+                || $page === 'rezeptur-maschine-form'
+            )
+            && MenuRegistry::canAccess($user, $page)
+        ) {
+            RecipeRepository::ensureReady();
+            WorkCenterRepository::ensureReady();
+            if ($page === 'rezeptur-form') {
+                if (empty($formError)) {
+                    $recipeId = (int) ($_GET['id'] ?? 0);
+                    $action = (string) ($_GET['action'] ?? ($recipeId > 0 ? 'edit' : 'new'));
+                    if ($action === 'edit' && $recipeId > 0) {
+                        if (RecipeRepository::find($recipeId) === null) {
+                            Flash::set('error', 'Rezept nicht gefunden.');
+                            header('Location: /app?page=rezeptur', true, 302);
+                            exit;
+                        }
+                        $recipeForm = RecipeRepository::formForId($recipeId);
+                    } else {
+                        $recipeId = null;
+                        $recipeForm = RecipeRepository::emptyForm();
+                    }
+                }
+                $recipeArticleOptions = [];
+                $recipeWorkCenterOptions = [];
+                if ($dbConnected) {
+                    foreach (CalendarArticleRepository::all(true) as $artRow) {
+                        if (!is_array($artRow)) {
+                            continue;
+                        }
+                        $aid = (int) ($artRow['id'] ?? 0);
+                        if ($aid <= 0) {
+                            continue;
+                        }
+                        $recipeArticleOptions[] = [
+                            'id' => $aid,
+                            'title' => (string) ($artRow['title'] ?? ('#' . $aid)),
+                        ];
+                    }
+                    foreach (WorkCenterRepository::listAll(true) as $wcRow) {
+                        if (!is_array($wcRow)) {
+                            continue;
+                        }
+                        $wid = (int) ($wcRow['id'] ?? 0);
+                        if ($wid <= 0) {
+                            continue;
+                        }
+                        $recipeWorkCenterOptions[] = [
+                            'id' => $wid,
+                            'name' => (string) ($wcRow['name'] ?? ('#' . $wid)),
+                        ];
+                    }
+                }
+                if (!isset($recipeForm) || !is_array($recipeForm)) {
+                    $recipeForm = RecipeRepository::emptyForm();
+                }
+                $recipeCalc = null;
+                $recipeSnapshots = [];
+                $recipeActuals = [];
+                if (($recipeId ?? 0) > 0) {
+                    try {
+                        $recipeCalc = RecipeCostService::calculate(
+                            $recipeForm,
+                            $recipeForm['bom'] ?? [],
+                            $recipeForm['routing'] ?? []
+                        );
+                    } catch (Throwable) {
+                        $recipeCalc = null;
+                    }
+                    try {
+                        $recipeSnapshots = RecipeSnapshotRepository::listForRecipe((int) $recipeId, 15);
+                        $recipeActuals = RecipeActualRepository::mapForRecipe((int) $recipeId);
+                    } catch (Throwable) {
+                        $recipeSnapshots = [];
+                        $recipeActuals = [];
+                    }
+                }
+                $contentTemplate = 'modules/rezeptur-form';
+                $title = (($recipeId ?? 0) > 0) ? 'Rezept bearbeiten' : 'Neues Rezept';
+                $currentPage = 'rezeptur';
+            } elseif ($page === 'rezeptur-maschinen') {
+                $workCenterList = WorkCenterRepository::listAll(false);
+                $recipeCostRates = RecipeCostSettings::get();
+                $recipeCostRatesForm = RecipeCostSettings::forForm();
+                $contentTemplate = 'modules/rezeptur-maschinen';
+                $title = 'Maschinen & Arbeitsplätze';
+                $currentPage = 'rezeptur';
+            } elseif ($page === 'rezeptur-maschine-form') {
+                if (empty($formError)) {
+                    $workCenterId = (int) ($_GET['id'] ?? 0);
+                    $action = (string) ($_GET['action'] ?? ($workCenterId > 0 ? 'edit' : 'new'));
+                    if ($action === 'edit' && $workCenterId > 0) {
+                        if (WorkCenterRepository::find($workCenterId) === null) {
+                            Flash::set('error', 'Maschine / Arbeitsplatz nicht gefunden.');
+                            header('Location: /app?page=rezeptur-maschinen', true, 302);
+                            exit;
+                        }
+                        $workCenterForm = WorkCenterRepository::formForId($workCenterId);
+                    } else {
+                        $workCenterId = null;
+                        $workCenterForm = WorkCenterRepository::emptyForm();
+                    }
+                }
+                if (!isset($workCenterForm) || !is_array($workCenterForm)) {
+                    $workCenterForm = WorkCenterRepository::emptyForm();
+                }
+                $recipeCostRates = RecipeCostSettings::get();
+                $contentTemplate = 'modules/rezeptur-maschine-form';
+                $title = (($workCenterId ?? 0) > 0) ? 'Maschine bearbeiten' : 'Maschine hinzufügen';
+                $currentPage = 'rezeptur';
+            } else {
+                $recipeList = RecipeRepository::listAll();
+                $contentTemplate = 'modules/rezeptur';
+                $title = 'Rezeptur';
+                $currentPage = 'rezeptur';
+            }
+        } elseif (
+            $page === 'rezeptur'
+            || $page === 'rezeptur-form'
+            || $page === 'rezeptur-maschinen'
+            || $page === 'rezeptur-maschine-form'
+        ) {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'akademie' && MenuRegistry::canAccess($user, 'akademie')) {
             $academyDownload = trim((string) ($_GET['download'] ?? ''));
             if ($academyDownload === 'video' || $academyDownload === 'vtt') {
@@ -4986,6 +5347,19 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
+        $recipeList = $recipeList ?? [];
+        $recipeForm = $recipeForm ?? null;
+        $recipeId = $recipeId ?? null;
+        $recipeArticleOptions = $recipeArticleOptions ?? [];
+        $recipeWorkCenterOptions = $recipeWorkCenterOptions ?? [];
+        $recipeCalc = $recipeCalc ?? null;
+        $recipeSnapshots = $recipeSnapshots ?? [];
+        $recipeActuals = $recipeActuals ?? [];
+        $workCenterList = $workCenterList ?? [];
+        $workCenterForm = $workCenterForm ?? null;
+        $workCenterId = $workCenterId ?? null;
+        $recipeCostRates = $recipeCostRates ?? null;
+        $recipeCostRatesForm = $recipeCostRatesForm ?? null;
         $catalogFilter = $catalogFilter ?? 'all';
         $catalogView = $catalogView ?? 'catalog';
         $purchaseListOpen = $purchaseListOpen ?? [];
@@ -5313,6 +5687,20 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeClockCanTeam',
             'timeClockTeam',
             'overtimeReminders',
+            'recipeList',
+            'recipeForm',
+            'recipeId',
+            'recipeArticleOptions',
+            'recipeWorkCenterOptions',
+            'recipeCalc',
+            'recipeSnapshots',
+            'recipeActuals',
+            'workCenterList',
+            'workCenterForm',
+            'workCenterId',
+            'recipeCostRates',
+            'recipeCostRatesForm',
+            'formError',
         ));
         break;
 

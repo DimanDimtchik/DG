@@ -38,6 +38,9 @@ final class MenuRegistry
         if (DepartmentAccess::userCanManageArticleCatalog($user) && $canEdit) {
             $items[] = ['slug' => 'artikel-leistungen', 'label' => 'Artikel & Leistungen', 'icon' => 'catalog'];
             $items[] = ['slug' => 'lager', 'label' => 'Lager', 'icon' => 'warehouse'];
+            if (self::isRezepturEnabled()) {
+                $items[] = ['slug' => 'rezeptur', 'label' => 'Rezeptur', 'icon' => 'document'];
+            }
         }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
@@ -305,6 +308,7 @@ final class MenuRegistry
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
+            'rezeptur' => 'Stücklisten und Fertigungszeit — Vorkalkulation folgt schrittweise.',
             'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
@@ -489,6 +493,13 @@ final class MenuRegistry
             return AcademyGateService::isModuleAccessible($user, $slug);
         }
 
+        if ($slug === 'rezeptur' || $slug === 'rezeptur-form'
+            || $slug === 'rezeptur-maschinen' || $slug === 'rezeptur-maschine-form') {
+            return self::isRezepturEnabled()
+                && DepartmentAccess::userCanManageArticleCatalog($user)
+                && RoleResolver::canEdit($user);
+        }
+
         if ($slug === 'post') {
             return DepartmentAccess::canAccessModule($user, 'post') && RoleResolver::canEdit($user);
         }
@@ -504,5 +515,14 @@ final class MenuRegistry
         }
 
         return false;
+    }
+
+    /**
+     * Feature-Flag Rezeptur (R0). Abschalten: App-Config `features.rezeptur` => false.
+     * Seite/Schema kommen erst ab R1 — Menüpunkt ist Platzhalter.
+     */
+    public static function isRezepturEnabled(): bool
+    {
+        return (bool) App::config('features.rezeptur', true);
     }
 }

@@ -427,6 +427,10 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
   <?php if (($contentTemplate ?? '') === 'modules/website-formular-form') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/website-form-builder.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/rezeptur-form') : ?>
+    <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/recipe-flow.css')) ?>">
+    <script src="<?= View::escape(Asset::url('/assets/js/recipe-flow.js')) ?>" defer></script>
+  <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
   <?php if (RoleResolver::isStaff($user)) : ?>
     <?php View::render('partials/kichel-widget', compact('user')); ?>

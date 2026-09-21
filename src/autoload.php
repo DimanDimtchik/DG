@@ -320,6 +320,13 @@ spl_autoload_register(static function (string $class): void {
         'KichelFieldCatalog' => '/src/Kichel/KichelFieldCatalog.php',
         'KichelIntent' => '/src/Kichel/KichelIntent.php',
         'KichelMediaSearch' => '/src/Kichel/KichelMediaSearch.php',
+        'RecipeRepository' => '/src/Recipe/RecipeRepository.php',
+        'WorkCenterRepository' => '/src/Recipe/WorkCenterRepository.php',
+        'RecipeCostSettings' => '/src/Recipe/RecipeCostSettings.php',
+        'RecipeCostService' => '/src/Recipe/RecipeCostService.php',
+        'RecipeSnapshotRepository' => '/src/Recipe/RecipeSnapshotRepository.php',
+        'RecipeCostApi' => '/src/Recipe/RecipeCostApi.php',
+        'RecipeActualRepository' => '/src/Recipe/RecipeActualRepository.php',
     ];
 
     if (!isset($map[$class])) {

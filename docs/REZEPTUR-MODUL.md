@@ -1,6 +1,6 @@
 # Rezeptur & Produktionsplanung — Spec (Source of Truth)
 
-Stand: **2026-09-21** · Status: Entwurf · Zielsystem: DG CRM (Buchhaltung + Lager)  
+Stand: **2026-09-21** · Status: **R7 erledigt (Modul komplett)** · Zielsystem: DG CRM (Buchhaltung + Lager)  
 Quellen: `Systemspezifikation_Rezeptur_Modul.pdf` · Markt-/UX-Notiz (SAP / Odoo / Lexware) · Session 2026-09-21
 
 > Agent-Regel: Bei Arbeit an diesem Modul **nur diese Spec** und die in der jeweiligen Phase genannten Dateien lesen. Kein erneutes Einlesen der PDF. Kein Scope außerhalb der Phase.
@@ -56,7 +56,7 @@ Einheiten und Rundung: im UI Euro mit 2–4 Nachkommastellen je nach Kontext; Sn
 | `dg_work_centers` | Maschine / Arbeitsplatz | name, purchase_price, life_hours, kw, space_m2, operators |
 | `dg_recipe_routing` | Arbeitsplan | recipe_id, work_center_id, step_order, setup_min, run_min |
 | `dg_recipe_run_snapshots` | Historie je Lauf | recipe_id, inputs_json, result_json, created_at |
-| `dg_recipe_run_actuals` | Soll/Ist (später) | snapshot_id, planned_*, actual_*, note |
+| `dg_recipe_run_actuals` | Soll/Ist je Lauf | snapshot_id, planned_*, actual_*, note |
 
 Exakte Migration-Nummern und Spaltentypen: in der jeweiligen Phase festlegen (anschließend an letzte DG-Migration).
 
@@ -68,7 +68,7 @@ Exakte Migration-Nummern und Spaltentypen: in der jeweiligen Phase festlegen (an
 2. **Was-wäre-wenn-Slider** (Strom, Charge, Rüstzeit) — ändert Anzeige, nicht Stammdaten, bis „Übernehmen“.
 3. **Soll/Ist-Button** „Produktionsdurchlauf protokollieren“.
 4. **Single-Pane-Cockpit** (BOM + Routing + Kalkulation auf einer Maske) — **ohne** Graph zuerst.
-5. **Ablaufgraph (React Flow)** — erst nach stabilem Cockpit (Phase R7).
+5. **Ablaufgraph** — SVG/Vanilla-JS unter dem Cockpit (R7); kein React-Build im CRM-Sync.
 
 ---
 
@@ -76,14 +76,14 @@ Exakte Migration-Nummern und Spaltentypen: in der jeweiligen Phase festlegen (an
 
 | Phase | Lieferobjekt | Erlaubt zu lesen/ändern |
 |-------|----------------|-------------------------|
-| **R0** | Diese Spec + ggf. Menü-Platzhalter/Feature-Flag | docs, MenuRegistry (1 Eintrag), kein Schema |
-| **R1** | `recipes` + `recipe_bom` + Liste/Form (Material + Zeit, keine Maschine) | Migration, Repository, 1–2 Views, index-Routing minimal |
-| **R2** | `work_centers` + Stundensatz-Anzeige | Migration, Service `RecipeCostService`, Settings/UI |
-| **R3** | `recipe_routing` + Vorkalkulation + Snapshot beim Speichern/Lauf | Routing-UI, CostService, Snapshot-Tabelle |
-| **R4** | Wizard Maschine anlegen | nur Work-Center-UI |
-| **R5** | Was-wäre-wenn-Slider | Frontend + CostService (keine neuen Tabellen) |
-| **R6** | Soll/Ist-Protokoll | Actuals-Tabelle + Button |
-| **R7** | Graph-Visualisierung | neues Frontend-Paket, Optional |
+| **R0** ✅ | Spec + Menü-Platzhalter `rezeptur` + Flag `features.rezeptur` | docs, `MenuRegistry` — **erledigt 2026-09-21** |
+| **R1** ✅ | `dg_recipes` + `dg_recipe_bom` + Liste/Form | Migration `084`, `RecipeRepository`, Views, index-Hook — **erledigt 2026-09-21** |
+| **R2** ✅ | `dg_work_centers` + Stundensatz K<sub>masch</sub> | Migration `085`, `WorkCenterRepository`, `RecipeCostService`/`RecipeCostSettings`, UI — **erledigt 2026-09-21** |
+| **R3** ✅ | Routing + Vorkalkulation + Snapshots | Migration `086`, `RecipeSnapshotRepository`, CostService erweitern, Form-UI — **erledigt 2026-09-21** |
+| **R4** ✅ | Wizard Maschine anlegen | nur `rezeptur-maschine-form` (+ Listentext) — **erledigt 2026-09-21** |
+| **R5** ✅ | Was-wäre-wenn-Slider | Frontend + CostService (keine neuen Tabellen) — **erledigt 2026-09-21** |
+| **R6** ✅ | Soll/Ist-Protokoll | Migration `087`, `RecipeActualRepository`, Button + Ist-Anpassung — **erledigt 2026-09-21** |
+| **R7** ✅ | Graph-Visualisierung | `assets/css/recipe-flow.css` + `assets/js/recipe-flow.js` (SVG, kein npm) — **erledigt 2026-09-21** |
 
 **Chat-Vorlage (Token-sparend):**
 
@@ -105,6 +105,14 @@ Kein Routing, kein Graph, kein Deploy außer ich sage es.
 
 ## 8. Offene Entscheidungen (vor R1 klären)
 
-- [ ] Material-Referenz: `dg_articles.id` vs. freier Text + optionaler Artikel-Link
-- [ ] Menü-Ort: unter Lager, Buchhaltung oder eigener Punkt „Produktion“
-- [ ] Mehrere Firmen (Multi-Firma Phase 0): recipe pro Firma/Tenant wie üblich über Instanz-DB
+- [x] Material-Referenz: **freier Text** (`material_label`) **+ optional** `article_id` → `dg_calendar_articles`
+- [x] Menü-Ort: **neben Lager** (Slug `rezeptur`), gleiche Rechte wie Artikelkatalog; Feature-Flag `features.rezeptur` (Default an, abschaltbar)
+- [x] Mehrere Firmen (Multi-Firma Phase 0): recipe pro Firma/Tenant wie üblich über Instanz-DB
+
+**R1:** Fertigungszeit als Feld `labor_minutes` am Rezept (ohne Maschine).  
+**R2:** Maschinen unter Rezeptur → „Maschinen & Stundensatz“; globale Kostensätze in `SettingsStore` (`recipe_cost_rates`).  
+**R3:** `dg_recipe_routing` + Vorkalkulation (K_mat/K_fert/SK/VK); Snapshot bei Speichern (`kind=save`) und Button „Produktionsdurchlauf“ (`kind=run`). EK aus Preferred-Einkauf oder manuellem `unit_cost`.  
+**R4:** Maschinen-Anlage als 5-Schritt-Wizard (Name → Preis/Jahre→Stunden → Watt → Fläche/Personal → Zusammenfassung + Live-Stundensatz).
+**R5:** Was-wäre-wenn-Slider (Strom/Charge/Rüst) über `/api/recipe-cost`; Übernehmen schreibt Formular + Stromsatz.
+**R6:** `dg_recipe_run_actuals` — Button „Produktionsdurchlauf“ speichert Lauf-Snapshot (Soll) + Ist-Werte; nachträglich editierbar; keine Buchung.
+**R7:** Ablaufgraph als SVG-Frontend-Paket (`recipe-flow.css`/`recipe-flow.js`), live aus BOM+Routing; bewusst ohne React/npm (gleicher Code-Sync).

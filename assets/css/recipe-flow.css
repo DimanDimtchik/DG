@@ -1,0 +1,75 @@
+/* Rezeptur R7 — Ablaufgraph (SVG, ohne React-Build) */
+.dg-recipe-flow {
+  --rf-border: var(--dg-border, #d8dde6);
+  --rf-bg: color-mix(in srgb, var(--dg-primary, #336) 4%, #fff);
+  --rf-node-mat: #f4f7fb;
+  --rf-node-step: #eef6f0;
+  --rf-node-end: #f7f1e8;
+  --rf-line: #8a93a3;
+  --rf-text: var(--dg-text, #1c2430);
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--rf-border);
+  border-radius: 8px;
+  background: var(--rf-bg);
+}
+
+.dg-recipe-flow__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.dg-recipe-flow__hint {
+  margin: 0 0 12px;
+}
+
+.dg-recipe-flow__canvas {
+  overflow: auto;
+  max-width: 100%;
+  min-height: 160px;
+}
+
+.dg-recipe-flow__canvas svg {
+  display: block;
+  max-width: none;
+}
+
+.dg-recipe-flow__empty {
+  margin: 0;
+  color: #667;
+  font-size: 0.92rem;
+}
+
+.dg-rf-node rect {
+  stroke: var(--rf-border);
+  stroke-width: 1.25;
+  rx: 8;
+  ry: 8;
+}
+
+.dg-rf-node--mat rect { fill: var(--rf-node-mat); }
+.dg-rf-node--step rect { fill: var(--rf-node-step); }
+.dg-rf-node--end rect { fill: var(--rf-node-end); }
+.dg-rf-node--start rect { fill: #fff; }
+
+.dg-rf-node text {
+  fill: var(--rf-text);
+  font-family: inherit;
+}
+
+.dg-rf-node__title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dg-rf-node__meta {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.dg-rf-edge {
+  fill: none;
+  stroke: var(--rf-line);
+  stroke-width: 1.5;
+  marker-end: url(#dg-rf-arrow);
+}
