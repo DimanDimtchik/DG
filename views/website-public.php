@@ -442,8 +442,9 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
         $advStyle = WebsiteBlockAdvanced::toInlineCss($adv);
         $advExtraClass = WebsiteBlockAdvanced::extraClassNames($adv);
         $wsBlockClass = 'ws-block' . ($advExtraClass !== '' ? ' ' . $advExtraClass : '');
+        $blockIdAttr = trim((string) ($block['id'] ?? ''));
       ?>
-      <div class="<?= View::escape($wsBlockClass) ?>"<?= $advStyle !== '' ? ' style="' . View::escape($advStyle) . '"' : '' ?><?= WebsiteBlockAdvanced::toHtmlAttributes($adv) ?>>
+      <div class="<?= View::escape($wsBlockClass) ?>"<?= $blockIdAttr !== '' ? ' data-block-id="' . View::escape($blockIdAttr) . '"' : '' ?><?= $advStyle !== '' ? ' style="' . View::escape($advStyle) . '"' : '' ?><?= WebsiteBlockAdvanced::toHtmlAttributes($adv) ?>>
         <?php switch ($type):
           case 'heading':
             $level = in_array($block['level'] ?? '', ['h1','h2','h3'], true) ? $block['level'] : 'h2';
@@ -584,5 +585,8 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 <?php endif; ?>
 
 <?= SeoMeta::organizationJsonLd() ?>
+<?php if ($previewFrame) : ?>
+<script src="<?= View::escape(Asset::url('/assets/js/website-preview-frame-bridge.js')) ?>"></script>
+<?php endif; ?>
 </body>
 </html>
