@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF5 erledigt · MF5a–c SSO ✅** · Offen: MF6, MF7  
+Stand: **2026-09-21** · Status: **MF0–MF5 erledigt · MF6a Contact-Export-Spec ✅** · Offen: MF6b–c, MF7  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -251,8 +251,8 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 |---|--------------|---------------------|
 | E1 | SSO-Mechanismus | ✅ **MF5a:** Signiertes **Handoff-Token** (HMAC-SHA256, TTL 60 s, einmalig) → Ziel-`/login?firm_sso=…` — kein Shared-Session-Cookie |
 | E2 | Shared Secret | ✅ **MF5a:** `config/firm-sso.local.php` (Sync-Exclude `*.local.php`); gleicher `shared_secret` auf allen Org-Instanzen (manuell) |
-| E3 | Contact-Sync | **Einbahn** Export-Paket (JSON) + manueller/halbauto Import; **kein** Live-2-Wege (GoBD/Konflikt) |
-| E4 | Was wird synchronisiert | Stammfelder Kontakt + Adresse; **keine** Mitarbeiterakten, **keine** Belege |
+| E3 | Contact-Sync | ✅ **MF6a:** **Einbahn** Export-Paket (JSON) + manueller/halbauto Import; **kein** Live-2-Wege (GoBD/Konflikt) |
+| E4 | Was wird synchronisiert | ✅ **MF6a:** Stammfelder Kontakt + Adresse; **keine** Mitarbeiterakten, **keine** Belege, **keine** Bankkonten |
 | E5 | Auto-Provision | Ruft bestehenden `KdvDeployService` nur für **Nachfolger** nach Umfirmierung; Domain muss DNS-ready sein |
 | E6 | Rollback | Provision-Fehler → KDV-Slot bleibt `neu`, kein stilles Löschen des Vorgänger-Archivs |
 
@@ -348,6 +348,169 @@ Ohne `shared_secret` oder Secret &lt; 32 Zeichen: SSO **aus** — Switcher fäll
 - **Nicht** in MF5a: PHP-Code, Migration JTI-Tabelle, Beispiel-Config-Datei (→ MF5b).  
 - **Nicht** Cookie-SSO, OAuth, SAML, Lizenzserver als IdP.
 
+### MF6a — Contact-Export Spec (Schema · Herkunft) ✅ 2026-09-21
+
+Nur Spezifikation — Umsetzung Code = **MF6b** (Export) / **MF6c** (Import). Baut auf MF4 (`origin_firm_note`, Org-Flag `share_contacts`) und Variante A (eigene DB pro Firma).
+
+#### Zielbild
+
+1. Quellinstanz erzeugt eine **JSON-Datei** (Download) mit ausgewählten Kontakten.  
+2. Zielinstanz importiert die Datei (MF6c) und legt/aktualisiert Kontakte **lokal**.  
+3. Am importierten Kontakt wird `origin_firm_note` gesetzt (Herkunft sichtbar, prüfbar).  
+4. **Kein** Live-API-Push, **kein** 2-Wege-Merge, **kein** Schreiben in fremde Instanz-DBs.
+
+#### Voraussetzungen (fachlich)
+
+| Regel | Wert |
+|-------|------|
+| Org-Flag | Export-UI (MF6b) nur sinnvoll wenn `dg_kdv_orgs.share_contacts = 1` **oder** explizite Admin-Freigabe auf Quellinstanz (Kundeninstanz ohne KDV: immer Admin-Export erlaubt) |
+| Richtung | Einbahn Quell → Ziel; erneuter Export überschreibt nicht automatisch ohne Import-Entscheidung |
+| GoBD | Belege bleiben je Rechtsträger; Kontakt-Stamm ist Stammdatum, Herkunftshinweis dokumentiert Übernahme |
+| Rechte | Export: Kontakt lesen; Import: Kontakt anlegen/ändern (Rollen wie bestehende Kontakt-UI) |
+
+#### Datei-Metadaten (Wurzelobjekt)
+
+```json
+{
+  "format": "dg_contact_export",
+  "v": 1,
+  "exported_at": "2026-09-21T14:00:00+02:00",
+  "source": {
+    "domain": "firma-a.example",
+    "firm_label": "Muster GmbH",
+    "org_id": 12,
+    "share_contacts": true
+  },
+  "contacts": [ ]
+}
+```
+
+| Feld | Typ | Pflicht | Bedeutung |
+|------|-----|---------|-----------|
+| `format` | string | ja | fest `dg_contact_export` |
+| `v` | int | ja | Schemaversion, fest `1` |
+| `exported_at` | string | ja | ISO-8601 mit Offset |
+| `source.domain` | string | ja | normalisierte Quell-Domain (wie MF1/MF5) |
+| `source.firm_label` | string | ja | Anzeigename Quelle (CRM-Firmenname / Slot-Label) |
+| `source.org_id` | int\|null | nein | KDV-Org-ID wenn bekannt |
+| `source.share_contacts` | bool | ja | Zustand Flag zum Exportzeitpunkt |
+| `contacts` | array | ja | 0…n Kontakt-Objekte |
+
+Dateiname-Vorschlag (MF6b): `kontakte-{domain}-{Ymd-His}.json` · Content-Type `application/json; charset=utf-8`.
+
+#### Kontakt-Objekt (Export)
+
+```json
+{
+  "source_id": 42,
+  "match": {
+    "email": "kunde@example.de",
+    "customer_number": "K-1001",
+    "supplier_number": ""
+  },
+  "fields": {
+    "salutation": "Frau",
+    "first_name": "Erika",
+    "last_name": "Mustermann",
+    "display_name": "Muster GmbH",
+    "company_name": "Muster GmbH",
+    "email": "kunde@example.de",
+    "email_2": "",
+    "phone_1": "+49…",
+    "phone_2": "",
+    "customer_number": "K-1001",
+    "supplier_number": "",
+    "tax_number": "",
+    "vat_id": "DE…",
+    "contact_note": "",
+    "website": "",
+    "contact_role": "dg_kunde",
+    "address1_extra": "",
+    "address1_street": "Beispielweg 1",
+    "address1_postal": "12345",
+    "address1_city": "Berlin",
+    "address1_country": "DE",
+    "address2_extra": "",
+    "address2_street": "",
+    "address2_postal": "",
+    "address2_city": "",
+    "address2_country": "DE"
+  },
+  "origin_hint": "Übernommen aus Muster GmbH (firma-a.example)"
+}
+```
+
+| Feld | Bedeutung |
+|------|-----------|
+| `source_id` | ID auf Quelle — **nur Info**, nie als PK auf Ziel übernehmen |
+| `match.*` | Dedup-Hinweise für Import (lowercase E-Mail; Nummern getrimmt) |
+| `fields.*` | Stammfelder + Adressen (Whitelist unten) |
+| `origin_hint` | Vorschlagstext für `dg_contacts.origin_firm_note` (max. 191 Zeichen, Import darf kürzen) |
+
+#### Whitelist `fields` (v1)
+
+Erlaubt: `salutation`, `first_name`, `last_name`, `display_name`, `company_name`, `email`, `email_2`, `phone_1`, `phone_2`, `customer_number`, `supplier_number`, `tax_number`, `vat_id`, `contact_note`, `website`, `contact_role`, `address1_*`, `address2_*`.
+
+#### Explizit ausgeschlossen (v1)
+
+| Ausschluss | Grund |
+|------------|--------|
+| `employee_data` / `employee_files` | Mitarbeiterakten / DSGVO / Dateien |
+| `bank_accounts` | Zahlungsdaten, separates Risiko |
+| `login` / Passwort-Hashes | Auth-Identität Instanz-lokal |
+| Social-Profile (`social_*`) | nicht Stamm/Adresse; später optional |
+| E-Mail-Existence-Meta | technische Prüfdaten Quelle |
+| Belege, Termine, Mail-Log | Rechtsträger-Datenkreis |
+
+Unbekannte Keys in `fields` beim Import: **ignorieren** (Forward-compat).
+
+#### Matching-Regeln Import (verbindlich für MF6c)
+
+Reihenfolge, erster Treffer gewinnt:
+
+1. `match.email` bzw. `fields.email` (lowercase, nicht leer) → `User`/`Contact` per E-Mail  
+2. sonst `match.customer_number` / `fields.customer_number` wenn nicht leer  
+3. sonst `match.supplier_number` / `fields.supplier_number` wenn nicht leer  
+4. kein Treffer → **Neuanlage**
+
+Bei Treffer (MF6c Default): bestehende Stammdaten **nicht still überschreiben** — Import-UI zeigt Diff / Option „nur leere Felder füllen“ vs. „überschreiben“. MVP-Default: **nur leere Zielfelder füllen** + `origin_firm_note` setzen/ergänzen wenn leer.
+
+`contact_role`: nur übernehmen wenn Zielrolle gültig (`ContactRepository::normalizeContactRole`); sonst Fallback `dg_kunde`.
+
+#### Herkunft (`origin_firm_note`)
+
+- MF4-Feld `VARCHAR(191)`, bereits vorhanden.  
+- Nach erfolgreichem Import: Wert = `origin_hint` aus Paket, sonst generiert: `Übernommen aus {firm_label} ({domain})`.  
+- Wenn Feld bereits gefüllt: **nicht überschreiben** (Hinweis bleibt erste Herkunft).  
+- Kein Cross-DB-Link, keine Sync-ID-Tabelle in MF6.
+
+#### Validierung Export-Datei (Import-Gate)
+
+Ablehnen wenn:
+
+- `format !== "dg_contact_export"` oder `v !== 1`  
+- `source.domain` leer / nicht normalisierbar  
+- `contacts` kein Array  
+- Einzelkontakt ohne `fields` Objekt  
+
+Warnen (Import trotzdem möglich nach Bestätigung):
+
+- `source.share_contacts === false`  
+- `source.domain` === aktuelle Host-Domain (Selbst-Import)  
+- Paket älter als 90 Tage (`exported_at`)
+
+#### Security / Prüfbarkeit
+
+- Export nur eingeloggt + CSRF am Trigger (MF6b).  
+- JSON enthält personenbezogene Daten → Download-Audit optional später; in MF6 mindestens Flash „Export erstellt (n Kontakte)“.  
+- Support-Session: Export/Import **erlaubt** (anders als SSO-Handoff), Protokollierung über bestehende Support-Kanäle reicht.  
+- Keine Signatur/HMAC am JSON in v1 (Datei wird manuell übertragen; Vertrauensgrenze = Admin der Zielinstanz). Signiertes Paket = später optional.
+
+#### Abgrenzung MF6a
+
+- **Nicht** in MF6a: PHP-Export/Import, neue Migration, UI-Button.  
+- **Nicht** Live-Sync, Merge-Wizard groß, Intercompany-Belege.
+
 ### Phasen
 
 | Phase | Lieferobjekt | Erlaubt zu lesen/ändern | Nicht |
@@ -355,7 +518,7 @@ Ohne `shared_secret` oder Secret &lt; 32 Zeichen: SSO **aus** — Switcher fäll
 | **MF5a** ✅ | Spec-Nachtrag SSO (Token-Format, TTL, CSRF, Allowlist Domains) | nur `MULTI-FIRMA-KONZEPT.md` §13 — **erledigt 2026-09-21** | Code |
 | **MF5b** ✅ | `FirmSsoService` ausstellen + verifizieren | `src/MultiFirma/*`, `config/firm-sso.local.example.php`, `index.php` `/firm-switch` + `/login` — **erledigt 2026-09-21** | Sync, Provision, Shop |
 | **MF5c** ✅ | Switcher-UX/Polish (Flash, Referrer-Policy, Feinschliff) | Login-View, `app.php`, `SecurityHeaders` — **erledigt 2026-09-21** | neues UI-Framework |
-| **MF6a** | Spec Contact-Export-Schema + Herkunft | Spec §13 | Code |
+| **MF6a** ✅ | Spec Contact-Export-Schema + Herkunft | Spec §13 — **erledigt 2026-09-21** | Code |
 | **MF6b** | Export API/Button „Kontakte für Org-Schwester“ (JSON-Datei) | Contact-Repo read-only Export, 1 View | Import, Live-Sync |
 | **MF6c** | Import auf Zielinstanz + `origin_firm_note` setzen | Contact save, MF4-Feld | 2-Wege, Merge-UI groß |
 | **MF7a** | Spec: wann Provision erlaubt (DNS, KAS, Slot `neu`) | Spec | Code |
@@ -365,9 +528,9 @@ Ohne `shared_secret` oder Secret &lt; 32 Zeichen: SSO **aus** — Switcher fäll
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma MF5b laut docs/MULTI-FIRMA-KONZEPT.md §13
-Nur: FirmSsoService Token ausstellen/prüfen + Anbindung /firm-switch und /login
-Kein Contact-Sync, keine Auto-Provision, kein Shop, kein Deploy außer ich sage es.
+Scope: Multi-Firma MF6b laut docs/MULTI-FIRMA-KONZEPT.md §13
+Nur: Contact-Export JSON laut MF6a-Schema + Button/Download
+Kein Import, kein Live-Sync, keine Auto-Provision, kein Shop, kein Deploy außer ich sage es.
 Nicht §1–12/§14 der Spec neu einlesen — nur §13 + genannte Dateien.
 ```
 
