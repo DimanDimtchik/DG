@@ -2,14 +2,31 @@
 declare(strict_types=1);
 
 /**
- * Zeiterfassung Z5b: Urlaubs-/Überstunden-Rückstellung Preview + CSV.
- * Keine Ledger-Buchung (Z5c).
+ * Zeiterfassung Z5b/Z5c: Urlaubs-/Überstunden-Rückstellung Preview + CSV + Buchung.
  */
 final class TimeProvisionService
 {
+    public const SOURCE = 'time_provision';
+
     public static function canPreview(User $user): bool
     {
         return MenuRegistry::canAccessBuchhaltung($user);
+    }
+
+    public static function canBook(User $user): bool
+    {
+        return MenuRegistry::canAccess($user, 'buchhaltung-manuelle-buchung')
+            && RoleResolver::canEdit($user);
+    }
+
+    public static function markerForYear(int $year): string
+    {
+        return 'time_provision:' . max(2000, min(2100, $year));
+    }
+
+    public static function existingBatchId(int $year): ?int
+    {
+        return ManualLedgerService::findBatchIdBySourceMarker(self::SOURCE, self::markerForYear($year));
     }
 
     /**
@@ -172,9 +189,140 @@ final class TimeProvisionService
             'Konten_Urlaub',
             (string) ($cfg['account_vacation_expense'] ?? '') . ' / ' . (string) ($cfg['account_vacation_liability'] ?? ''),
         ]);
-        $lines[] = self::csvLine(['#', 'Hinweis', 'Vorschlag — mit Steuerberater prüfen. Keine Buchung in Z5b.']);
+        $lines[] = self::csvLine(['#', 'Hinweis', 'Vorschlag — mit Steuerberater prüfen. Buchung nur nach Bestätigung (Z5c).']);
 
         return "\xEF\xBB\xBF" . implode("\r\n", $lines) . "\r\n";
+    }
+
+    /**
+     * Buchungsentwurf aus Preview (Soll Aufwand / Haben Rückstellung).
+     *
+     * @param array<string, mixed> $preview
+     * @return array{
+     *   lines: list<array<string, mixed>>,
+     *   description: string,
+     *   batch_date: string,
+     *   vacation_amount: float,
+     *   overtime_amount: float,
+     *   total: float,
+     *   marker: string
+     * }
+     */
+    public static function bookingDraft(array $preview): array
+    {
+        $year = (int) ($preview['year'] ?? 0);
+        $stichtag = (string) ($preview['stichtag'] ?? sprintf('%04d-12-31', $year));
+        $cfg = is_array($preview['config'] ?? null) ? $preview['config'] : [];
+        $totals = is_array($preview['totals'] ?? null) ? $preview['totals'] : [];
+        $vac = round((float) ($totals['vacation'] ?? 0), 2);
+        $ot = round((float) ($totals['overtime'] ?? 0), 2);
+        $desc = (string) ($cfg['booking_text'] ?? sprintf(
+            'Urlaubsrückstellung %d / Stichtag %s / Berechnung CRM',
+            $year,
+            $stichtag
+        ));
+        $marker = self::markerForYear($year);
+        $lines = [];
+
+        if ($vac > 0) {
+            $exp = preg_replace('/\D/', '', (string) ($cfg['account_vacation_expense'] ?? '')) ?? '';
+            $liab = preg_replace('/\D/', '', (string) ($cfg['account_vacation_liability'] ?? '')) ?? '';
+            if ($exp === '' || $liab === '') {
+                throw new InvalidArgumentException('Konten für Urlaubsrückstellung in den Einstellungen setzen.');
+            }
+            $lines[] = [
+                'account_number' => $exp,
+                'side' => 'debit',
+                'amount' => $vac,
+                'contra_account' => $liab,
+                'description' => $desc,
+                'document_field1' => $marker,
+            ];
+            $lines[] = [
+                'account_number' => $liab,
+                'side' => 'credit',
+                'amount' => $vac,
+                'contra_account' => $exp,
+                'description' => $desc,
+                'document_field1' => $marker,
+            ];
+        }
+
+        if ($ot > 0) {
+            $exp = preg_replace('/\D/', '', (string) ($cfg['account_ot_expense'] ?? '')) ?? '';
+            $liab = preg_replace('/\D/', '', (string) ($cfg['account_ot_liability'] ?? '')) ?? '';
+            if ($exp === '' || $liab === '') {
+                throw new InvalidArgumentException('Konten für Überstunden-Rückstellung in den Einstellungen setzen.');
+            }
+            $otDesc = sprintf('Überstundenrückstellung %d / Stichtag %s / Berechnung CRM', $year, $stichtag);
+            $lines[] = [
+                'account_number' => $exp,
+                'side' => 'debit',
+                'amount' => $ot,
+                'contra_account' => $liab,
+                'description' => $otDesc,
+                'document_field1' => $marker,
+            ];
+            $lines[] = [
+                'account_number' => $liab,
+                'side' => 'credit',
+                'amount' => $ot,
+                'contra_account' => $exp,
+                'description' => $otDesc,
+                'document_field1' => $marker,
+            ];
+        }
+
+        if ($lines === []) {
+            throw new InvalidArgumentException('Kein Buchungsbetrag — Preview-Summe ist 0.');
+        }
+
+        return [
+            'lines' => $lines,
+            'description' => $desc,
+            'batch_date' => $stichtag,
+            'vacation_amount' => $vac,
+            'overtime_amount' => $ot,
+            'total' => round($vac + $ot, 2),
+            'marker' => $marker,
+        ];
+    }
+
+    /**
+     * @return array{batch_id: int, message: string}
+     */
+    public static function confirmBooking(User $user, int $year): array
+    {
+        if (!self::canBook($user)) {
+            throw new RuntimeException('Keine Berechtigung für die Buchung (wie manuelle Journalbuchung).');
+        }
+        $year = max(2000, min(2100, $year));
+        $existing = self::existingBatchId($year);
+        if ($existing !== null) {
+            throw new RuntimeException(
+                'Für ' . $year . ' existiert bereits eine Rückstellungsbuchung (Batch #' . $existing . ').'
+            );
+        }
+
+        $preview = self::preview($year);
+        $draft = self::bookingDraft($preview);
+        $batchId = ManualLedgerService::createBatch(
+            $draft['batch_date'],
+            $draft['description'],
+            $draft['lines'],
+            (int) ($user->id ?? 0),
+            self::SOURCE
+        );
+
+        return [
+            'batch_id' => $batchId,
+            'message' => sprintf(
+                'Rückstellung %d gebucht (Batch #%d, %.2f €).',
+                $year,
+                $batchId,
+                $draft['total']
+            ),
+        ];
     }
 
     /**

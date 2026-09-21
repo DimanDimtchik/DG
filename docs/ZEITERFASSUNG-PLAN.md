@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–4 ✅** · Spec **Z3a–Z6a ✅** · **Z5b Code ✅** · offen: Z5c–d, Z6b+  
+> Status: **Phase 1–4 ✅** · Spec **Z3a–Z6a ✅** · **Z5b–Z5c Code ✅** · offen: Z5d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -169,8 +169,8 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 5 — Rückstellungen & Buchhaltung
 
-- [~] **Urlaubsrückstellung** (Buchungssätze, SKR-Konten — mit Steuerberater abstimmen) — Preview Z5b ✅; Buchung Z5c offen
-- [~] **Überstunden-Rückstellung** (optional) — Flag + Preview Z5b ✅; Buchung Z5c offen
+- [~] **Urlaubsrückstellung** (Buchungssätze, SKR-Konten — mit Steuerberater abstimmen) — Preview Z5b + Buchung Z5c ✅; Checkliste Z5d offen
+- [~] **Überstunden-Rückstellung** (optional) — Flag + Preview Z5b + Buchung Z5c ✅
 - [ ] Anbindung an Jahresabschluss-Checkliste
 
 ### Phase 6 — Lohn-Export (ohne eigene Abrechnung)
@@ -273,7 +273,7 @@ Abweichung nur per explizitem Chat-Befehl.
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
-| **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5b` ✅ · weiter `z5c` |
+| **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5c` ✅ · weiter `z5d` |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
@@ -766,7 +766,7 @@ Buchungstext: `Urlaubsrückstellung {Y} / Stichtag {date} / Berechnung CRM`.
 
 1. **Z5a** Spec ✅  
 2. **Z5b** Settings + Berechnungs-Preview (+ CSV) ✅  
-3. **Z5c** Buchungsentwurf → ManualLedger nach Bestätigung  
+3. **Z5c** Buchungsentwurf → ManualLedger nach Bestätigung ✅  
 4. **Z5d** Jahresabschluss-Checklisten-Punkt  
 
 #### Abnahme Z5a
@@ -789,15 +789,17 @@ Buchungstext: `Urlaubsrückstellung {Y} / Stichtag {date} / Berechnung CRM`.
 | Service | `TimeProvisionService` Preview + CSV |
 | UI | `/app?page=zeiterfassung-rueckstellung` (Buchhaltung) |
 
-**Nicht:** Ledger-Schreiben (Z5c), Checkliste JA (Z5d).
+**Nicht:** Ledger-Schreiben (Z5c ✅), Checkliste JA (Z5d).
 
-### Z5c — Buchung
+### Z5c — Buchung ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Confirm-UI | Betrag/Konten anzeigen |
-| Ledger | ManualLedger-Batch |
-| Nicht | stilles Cron-Buchen |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Confirm-UI | Entwurf Soll/Haben auf Rückstellungs-Seite |
+| Ledger | `ManualLedgerService::createBatch` source=`time_provision` |
+| Schutz | Checkbox-Bestätigung · kein Doppel-Batch/Jahr · kein Cron |
+
+**Nicht:** stilles Cron-Buchen, Checkliste JA (Z5d).
 
 ### Z5d — Jahresabschluss-Checkliste
 

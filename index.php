@@ -3512,6 +3512,36 @@ switch ($path) {
             exit;
         }
 
+        // POST: Rückstellung buchen (Z5c)
+        if (
+            $page === 'zeiterfassung-rueckstellung'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['provision_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-rueckstellung')
+        ) {
+            $provYear = max(2000, min(2100, (int) ($_POST['year'] ?? date('Y'))));
+            $loc = '/app?page=zeiterfassung-rueckstellung&year=' . $provYear;
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: ' . $loc, true, 302);
+                exit;
+            }
+            try {
+                if ((string) ($_POST['provision_action'] ?? '') !== 'book') {
+                    throw new InvalidArgumentException('Unbekannte Aktion.');
+                }
+                if (empty($_POST['confirm_book'])) {
+                    throw new InvalidArgumentException('Bitte die Buchung ausdrücklich bestätigen.');
+                }
+                $res = TimeProvisionService::confirmBooking($user, $provYear);
+                Flash::set('success', $res['message']);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: ' . $loc, true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -5444,6 +5474,16 @@ $legalProductsConfig = LegalProductSettings::config();
             $timeProvisionYear = max(2000, min(2100, (int) ($_GET['year'] ?? date('Y'))));
             $timeProvisionPreview = TimeProvisionService::preview($timeProvisionYear);
             $timeProvisionConfig = TimeTrackingSettings::config();
+            $timeProvisionCanBook = TimeProvisionService::canBook($user);
+            $timeProvisionExistingBatchId = TimeProvisionService::existingBatchId($timeProvisionYear);
+            $timeProvisionDraft = null;
+            try {
+                if ($timeProvisionExistingBatchId === null) {
+                    $timeProvisionDraft = TimeProvisionService::bookingDraft($timeProvisionPreview);
+                }
+            } catch (Throwable) {
+                $timeProvisionDraft = null;
+            }
             if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
                 $csv = TimeProvisionService::toCsv($timeProvisionPreview);
                 $fname = sprintf('rueckstellung-urlaub-%d.csv', $timeProvisionYear);
@@ -6052,6 +6092,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeProvisionYear = $timeProvisionYear ?? (int) date('Y');
         $timeProvisionPreview = $timeProvisionPreview ?? [];
         $timeProvisionConfig = $timeProvisionConfig ?? [];
+        $timeProvisionDraft = $timeProvisionDraft ?? null;
+        $timeProvisionExistingBatchId = $timeProvisionExistingBatchId ?? null;
+        $timeProvisionCanBook = $timeProvisionCanBook ?? false;
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6448,6 +6491,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeProvisionYear',
             'timeProvisionPreview',
             'timeProvisionConfig',
+            'timeProvisionDraft',
+            'timeProvisionExistingBatchId',
+            'timeProvisionCanBook',
             'recipeList',
             'recipeForm',
             'recipeId',

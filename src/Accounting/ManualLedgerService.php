@@ -5,15 +5,21 @@ declare(strict_types=1);
 final class ManualLedgerService
 {
     /**
-     * @param list<array{account_number: string, side: string, amount: float, tax_key?: string, description?: string, contra_account?: string}> $lines
+     * @param list<array{account_number: string, side: string, amount: float, tax_key?: string, description?: string, contra_account?: string, document_field1?: string}> $lines
      */
-    public static function createBatch(string $batchDate, string $description, array $lines, ?int $userId): int
-    {
+    public static function createBatch(
+        string $batchDate,
+        string $description,
+        array $lines,
+        ?int $userId,
+        string $source = 'manual',
+    ): int {
         if (!Database::isConfigured()) {
             throw new RuntimeException('Datenbank nicht verbunden.');
         }
         MigrationRunner::runPending();
 
+        $source = self::sanitizeSource($source);
         $batchDate = self::sanitizeDate($batchDate);
         $year = (int) substr($batchDate, 0, 4);
         if (FiscalYearService::isClosed($year)) {
@@ -60,7 +66,7 @@ final class ManualLedgerService
                     'description' => $line['description'],
                     'document_field1' => $line['document_field1'],
                     'document_field2' => '',
-                    'source' => 'manual',
+                    'source' => $source,
                 ]);
             }
 
@@ -116,9 +122,45 @@ final class ManualLedgerService
             throw new RuntimeException('Abgeschlossenes Geschäftsjahr — manuelle Buchung kann nicht gelöscht werden.');
         }
 
-        $pdo->prepare('DELETE FROM dg_ledger_postings WHERE manual_batch_id = :id AND source = :source')
-            ->execute(['id' => $batchId, 'source' => 'manual']);
+        $pdo->prepare('DELETE FROM dg_ledger_postings WHERE manual_batch_id = :id')
+            ->execute(['id' => $batchId]);
         $pdo->prepare('DELETE FROM dg_manual_journal_batches WHERE id = :id')->execute(['id' => $batchId]);
+    }
+
+    /**
+     * Batch-ID für Quelle + Kennzeichen in document_field1 (z. B. time_provision:2026).
+     */
+    public static function findBatchIdBySourceMarker(string $source, string $documentField1): ?int
+    {
+        if (!Database::isConfigured()) {
+            return null;
+        }
+        MigrationRunner::runPending();
+        $source = self::sanitizeSource($source);
+        $marker = mb_substr(trim($documentField1), 0, 36);
+        if ($marker === '') {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT manual_batch_id FROM dg_ledger_postings
+             WHERE source = :src AND document_field1 = :df1 AND manual_batch_id IS NOT NULL
+             ORDER BY manual_batch_id DESC
+             LIMIT 1'
+        );
+        $stmt->execute(['src' => $source, 'df1' => $marker]);
+        $id = (int) $stmt->fetchColumn();
+
+        return $id > 0 ? $id : null;
+    }
+
+    private static function sanitizeSource(string $source): string
+    {
+        $source = trim($source);
+        if ($source === '' || !preg_match('/^[a-z0-9_]{1,32}$/', $source)) {
+            return 'manual';
+        }
+
+        return $source;
     }
 
     /**
