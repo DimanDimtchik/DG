@@ -155,7 +155,7 @@ final class TimeClockService
         $date = $date ?? date('Y-m-d');
         $events = TimeClockRepository::eventsForContact($contactId, $date);
         $employeeData = self::employeeDataForContact($contactId);
-        $scheduled = EmployeeData::dailyTargetMinutes($employeeData);
+        $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $date);
 
         $segments = self::computeSegments($events);
         $manualBreak = $segments['break_minutes'];
@@ -172,6 +172,9 @@ final class TimeClockService
         $compliance = self::breakComplianceFromSegments($grossWorked, $manualBreak, (string) ($status['state'] ?? 'off'));
 
         $warnings = [];
+        if ($scheduled < 1) {
+            $warnings[] = 'Soll nicht hinterlegt (kein Tagesziel in Stammdaten/Kalender).';
+        }
         if ($compliance['must_take_break']) {
             $warnings[] = sprintf(
                 'Zwangspause: Bitte mindestens %d min Pause nehmen (noch %d min offen).',
@@ -179,10 +182,10 @@ final class TimeClockService
                 (int) $compliance['deficit_minutes'],
             );
         }
-        if (EmployeeData::isMinijob($employeeData) && $netWorked > $scheduled) {
+        if ($scheduled > 0 && EmployeeData::isMinijob($employeeData) && $netWorked > $scheduled) {
             $warnings[] = 'Minijob: Überstunden sind nicht vorgesehen.';
         }
-        if (!EmployeeData::overtimeAllowed($employeeData) && $netWorked > $scheduled) {
+        if ($scheduled > 0 && !EmployeeData::overtimeAllowed($employeeData) && $netWorked > $scheduled) {
             $warnings[] = 'Überstunden sind für diesen Mitarbeiter nicht freigegeben.';
         }
 
@@ -243,10 +246,7 @@ final class TimeClockService
             $contactEvents = $byContact[$contactId] ?? [];
             $status = self::statusFromEvents($contactEvents);
             $segments = self::computeSegments($contactEvents);
-            $employeeData = is_array($contact['employee_data'] ?? null)
-                ? $contact['employee_data']
-                : [];
-            $scheduled = EmployeeData::dailyTargetMinutes($employeeData);
+            $scheduled = TimeScheduleService::scheduledMinutesFor($contactId, $today);
             $autoBreak = 0;
             if (TimeTrackingSettings::config()['auto_break_enabled'] ?? true) {
                 $autoBreak = self::autoBreakMinutes($segments['worked_minutes'], $segments['break_minutes']);
@@ -261,6 +261,7 @@ final class TimeClockService
                 'since_display' => $status['since_display'],
                 'worked_display' => self::formatMinutes($netWorked),
                 'scheduled_display' => self::formatMinutes($scheduled),
+                'scheduled_minutes' => $scheduled,
             ];
         }
 

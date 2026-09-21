@@ -267,19 +267,13 @@ final class EmployeeData
         return ($data['overtime_allowed'] ?? '') === '1';
     }
 
+    /**
+     * Persönliches Tagessoll (ohne Kalender). Z2b: kein stilles 8-h-Fallback —
+     * vollständige Prio inkl. Kalender → TimeScheduleService::scheduledMinutesFor.
+     */
     public static function dailyTargetMinutes(array $data): int
     {
-        $minutes = (int) preg_replace('/\D/', '', (string) ($data['daily_work_minutes'] ?? '')) ?? 0;
-        if ($minutes > 0) {
-            return min(960, $minutes);
-        }
-
-        $workingHours = trim((string) ($data['working_hours'] ?? ''));
-        if ($workingHours !== '' && preg_match('/(\d+)/', $workingHours, $m)) {
-            return min(960, (int) $m[1] * 60);
-        }
-
-        return 480;
+        return TimeScheduleService::personalTargetMinutes($data);
     }
 
     /**

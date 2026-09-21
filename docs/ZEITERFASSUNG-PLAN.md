@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2a Spec ✅** · offen Z2b–Z2e · Phase 3+ später  
+> Status: **Phase 1 ✅** · **Z2a–Z2b ✅** · offen Z2c–Z2e · Phase 3+ später  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -261,7 +261,7 @@ Abweichung nur per explizitem Chat-Befehl.
 **Serie Z2 (jetzt):**
 
 1. **Z2a** Spec/Checkliste Soll-Quelle + Korrektur-Rechte ✅  
-2. **Z2b** Soll-Arbeitszeiten anbinden (lesen aus Kalender/MA)  
+2. **Z2b** Soll-Arbeitszeiten anbinden (lesen aus Kalender/MA) ✅  
 3. **Z2c** Monatsansicht Soll/Ist/Diff + CSV-Export  
 4. **Z2d** ArbZG-Warnungen: Ruhezeit 11 h, max. 10 h/Tag, Hinweis Wochendurchschnitt  
 5. **Z2e** Korrektur-UI + Audit; Überstundenkonto Abbau buchen  
@@ -334,13 +334,16 @@ Funktion Ziel: `scheduledMinutesFor(contactId, date): int` (Name in Z2b festlege
 
 **Nicht:** Code, Migration, UI.
 
-### Z2b — Soll anbinden
+### Z2b — Soll anbinden ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Service | `scheduledMinutesFor(contactId, date)` aus bestehender Quelle |
-| Fallback | fehlendes Soll → 0 + Hinweis, kein Fake-8h |
-| Nicht | Schichtplan, Urlaub |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| `TimeScheduleService::scheduledMinutesFor` | Prio MA → Kalender → 0 |
+| Fake-8h | entfernt (`EmployeeData::dailyTargetMinutes` → personal only / 0) |
+| Anbindung | `TimeClockService::daySummary` + Team-Heute |
+| UI-Hinweis | Warnung „Soll nicht hinterlegt“ wenn Soll = 0 |
+
+**Nicht:** Schichtplan, Urlaub, Monatsblatt (Z2c).
 
 ### Z2c — Monatsansicht + CSV
 

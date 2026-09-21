@@ -85,7 +85,7 @@ $state = (string) ($status['state'] ?? 'off');
             — davon <?= View::escape((string) ($summary['auto_break_display'] ?? '0:00')) ?> h automatisch
           <?php endif; ?>
           )</p>
-        <p><strong>Soll heute:</strong> <?= View::escape((string) ($summary['scheduled_display'] ?? '8:00')) ?> h</p>
+        <p><strong>Soll heute:</strong> <?= View::escape((string) ($summary['scheduled_display'] ?? '0:00')) ?> h</p>
       </div>
 
       <?php if ($blocksClockOut) : ?>

@@ -187,6 +187,7 @@ spl_autoload_register(static function (string $class): void {
         'AccountingPeriodFilter' => '/src/Accounting/AccountingPeriodFilter.php',
         'AccountingPrintService' => '/src/Accounting/AccountingPrintService.php',
         'TimeTrackingSettings' => '/src/TimeTracking/TimeTrackingSettings.php',
+        'TimeScheduleService' => '/src/TimeTracking/TimeScheduleService.php',
         'TimeClockRepository' => '/src/TimeTracking/TimeClockRepository.php',
         'TimeClockService' => '/src/TimeTracking/TimeClockService.php',
         'TimeWorkDayRepository' => '/src/TimeTracking/TimeWorkDayRepository.php',
