@@ -37,7 +37,18 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
       <a href="/app?page=support-freigabe">Verwalten</a>
     </div>
   <?php endif; ?>
-  <?php $firmSwitcher = FirmSwitcherService::forCurrentRequest(); ?>
+  <?php
+    $firmSwitcher = FirmSwitcherService::forCurrentRequest();
+    $firmSsoOn = class_exists('FirmSsoService') && FirmSsoService::isEnabled();
+    $firmSwitchSupportBlocked = class_exists('SupportSession') && SupportSession::isActive();
+    $firmSwitchedNotice = !empty($_SESSION['firm_switched_notice']);
+    if ($firmSwitchedNotice) {
+        unset($_SESSION['firm_switched_notice']);
+    }
+  ?>
+  <?php if ($firmSwitchedNotice) : ?>
+    <div class="dg-firm-switch-notice" role="status">Firma gewechselt — Sie sind angemeldet.</div>
+  <?php endif; ?>
   <header id="dg-adminbar" class="dg-adminbar" role="banner">
     <div class="dg-adminbar__left">
       <?php if (!empty($firmSwitcher['enabled'])) : ?>
@@ -50,7 +61,13 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
           <div class="dg-adminbar__dropdown" role="menu" hidden data-menu-panel>
             <div class="dg-adminbar__dropdown-meta">
               <strong>Firma wechseln</strong>
-              <span>Weiterleitung zur Instanz · erneuter Login</span>
+              <?php if ($firmSwitchSupportBlocked) : ?>
+                <span>In der Support-Session nicht verfügbar</span>
+              <?php elseif ($firmSsoOn) : ?>
+                <span>Weiterleitung mit automatischer Anmeldung</span>
+              <?php else : ?>
+                <span>Weiterleitung zur Instanz · erneuter Login</span>
+              <?php endif; ?>
             </div>
             <?php foreach ($firmSwitcher['firms'] as $firmRow) : ?>
               <?php
@@ -63,6 +80,8 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
               ?>
               <?php if ($isCurrentFirm) : ?>
                 <span class="dg-adminbar__firm-current" role="menuitem" aria-current="true"><?= View::escape($firmLabel) ?></span>
+              <?php elseif ($firmSwitchSupportBlocked) : ?>
+                <span class="dg-adminbar__firm-disabled" role="menuitem" aria-disabled="true"><?= View::escape($firmLabel) ?></span>
               <?php else : ?>
                 <form method="post" action="/firm-switch" class="dg-adminbar__firm-form">
                   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">

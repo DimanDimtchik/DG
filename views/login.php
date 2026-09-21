@@ -7,6 +7,7 @@ $pageTitle = 'Anmelden &ndash; ' . App::config('crm_name');
 <html lang="de">
 <head>
 <?php View::render('partials/head', compact('pageTitle')); ?>
+  <meta name="referrer" content="no-referrer">
 </head>
 <body class="dg-login-page">
   <div class="dg-login">
@@ -24,7 +25,12 @@ $pageTitle = 'Anmelden &ndash; ' . App::config('crm_name');
       <?php endif; ?>
 
       <?php if (!empty($flash['message'])) : ?>
-        <div class="dg-login__success" role="status"><?= View::escape($flash['message']) ?></div>
+        <?php
+          $flashType = (string) ($flash['type'] ?? 'info');
+          $flashClass = $flashType === 'error' ? 'dg-login__error' : 'dg-login__success';
+          $flashRole = $flashType === 'error' ? 'alert' : 'status';
+        ?>
+        <div class="<?= View::escape($flashClass) ?>" role="<?= View::escape($flashRole) ?>"><?= View::escape($flash['message']) ?></div>
       <?php endif; ?>
 
       <form method="post" action="/login" class="dg-login__form">

@@ -41,4 +41,15 @@ final class SecurityHeaders
         ]);
         header('Content-Security-Policy: ' . $csp);
     }
+
+    /**
+     * Login / SSO-Handoff: Token darf nicht in Referrer-URLs landen (MF5c).
+     */
+    public static function sendNoReferrer(): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+        header('Referrer-Policy: no-referrer', true);
+    }
 }

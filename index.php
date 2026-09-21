@@ -147,6 +147,9 @@ switch ($path) {
         exit;
 
     case '/login':
+        // MF5c: Token nicht in Referrer weiterreichen
+        SecurityHeaders::sendNoReferrer();
+
         // MF5b: Handoff-Token vor normalem Login prüfen
         $firmSsoToken = trim((string) ($_GET['firm_sso'] ?? ''));
         if ($firmSsoToken !== '' && $_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -157,7 +160,12 @@ switch ($path) {
             }
             $sso = FirmSsoService::consume($firmSsoToken);
             if (!empty($sso['ok']) && isset($sso['user']) && $sso['user'] instanceof User) {
-                AuthService::loginUser($sso['user']);
+                if (!AuthService::loginUser($sso['user'])) {
+                    Flash::set('error', 'Firmenwechsel abgelaufen oder ungültig.');
+                    header('Location: /login', true, 302);
+                    exit;
+                }
+                $_SESSION['firm_switched_notice'] = 1;
                 header('Location: ' . RoleResolver::homePath($sso['user']), true, 302);
                 exit;
             }
@@ -174,6 +182,10 @@ switch ($path) {
 
         $error = null;
         $flash = Flash::pull();
+        if (is_array($flash) && ($flash['type'] ?? '') === 'error' && $error === null) {
+            $error = (string) ($flash['message'] ?? '');
+            $flash = null;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = trim((string) ($_POST['username'] ?? ''));
             $password = (string) ($_POST['password'] ?? '');

@@ -181,6 +181,24 @@ code {
   background: color-mix(in srgb, var(--dg-primary, #336) 10%, transparent);
 }
 
+.dg-adminbar__firm-disabled {
+  display: block;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: inherit;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dg-firm-switch-notice {
+  background: #e8f6ee;
+  border-bottom: 1px solid #9bc9ae;
+  color: #1e4d33;
+  padding: 8px 16px;
+  font-size: 13px;
+  text-align: center;
+}
+
 .dg-adminbar__logo {
   display: block;
   object-fit: contain;

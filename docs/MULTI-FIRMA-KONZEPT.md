@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF5b erledigt · MF5a Spec + MF5b FirmSsoService ✅** · Offen: MF5c, MF6, MF7  
+Stand: **2026-09-21** · Status: **MF0–MF5 erledigt · MF5a–c SSO ✅** · Offen: MF6, MF7  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -184,7 +184,7 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 | Phase | Inhalt | Stand |
 |-------|--------|-------|
 | **0** | Konzept · KDV-Datenmodell Org↔Firma | ✅ Migration `082`, `KdvOrgRepository`, Formular/Liste |
-| **1** | Switcher + verknüpfte Instanzen (manuell) | ✅ **MF1 2026-09-21:** Header-Dropdown, KDV-Org-Mapping, Redirect `https://{domain}/login`; Kundeninstanz optional `config/firm-switcher.local.php`. Kein SSO (erneuter Login). |
+| **1** | Switcher + verknüpfte Instanzen (manuell) | ✅ **MF1 2026-09-21:** Header-Dropdown, KDV-Org-Mapping, Redirect `https://{domain}/login`; Kundeninstanz optional `config/firm-switcher.local.php`. ✅ **MF5 SSO 2026-09-21:** Handoff-Token wenn `firm-sso.local.php` gesetzt. |
 | **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | ✅ **MF2 2026-09-21:** `MultiFirmaPricingService`; KDV Preis-übernehmen + Archiv-Checkbox; Shop-Checkout Zusatzfirma −20 %; Provision-API Org/Preis. Archiv = 0 € / 12 Monate. 3.+ Firma weiter −20 %. |
 | **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | ✅ **MF3 2026-09-21:** Migration `088`, `UmfirmierungService`, KDV-Assistent, Gewinnermittlung in Firma-Einstellungen + KDV-Slot |
 | **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | ✅ **MF4 2026-09-21:** `dg_company_master_history`, Rumpf-WJ-Bericht, Org-Flag Shared Contacts, Kontakt-Herkunftshinweis (kein Cross-DB-Sync) |
@@ -354,7 +354,7 @@ Ohne `shared_secret` oder Secret &lt; 32 Zeichen: SSO **aus** — Switcher fäll
 |-------|----------------|-------------------------|--------|
 | **MF5a** ✅ | Spec-Nachtrag SSO (Token-Format, TTL, CSRF, Allowlist Domains) | nur `MULTI-FIRMA-KONZEPT.md` §13 — **erledigt 2026-09-21** | Code |
 | **MF5b** ✅ | `FirmSsoService` ausstellen + verifizieren | `src/MultiFirma/*`, `config/firm-sso.local.example.php`, `index.php` `/firm-switch` + `/login` — **erledigt 2026-09-21** | Sync, Provision, Shop |
-| **MF5c** | Switcher-UX/Polish (Flash, Referrer-Policy, Feinschliff) | `FirmSwitcherService`, Login-View | neues UI-Framework |
+| **MF5c** ✅ | Switcher-UX/Polish (Flash, Referrer-Policy, Feinschliff) | Login-View, `app.php`, `SecurityHeaders` — **erledigt 2026-09-21** | neues UI-Framework |
 | **MF6a** | Spec Contact-Export-Schema + Herkunft | Spec §13 | Code |
 | **MF6b** | Export API/Button „Kontakte für Org-Schwester“ (JSON-Datei) | Contact-Repo read-only Export, 1 View | Import, Live-Sync |
 | **MF6c** | Import auf Zielinstanz + `origin_firm_note` setzen | Contact save, MF4-Feld | 2-Wege, Merge-UI groß |
