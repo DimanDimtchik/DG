@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1a ✅ · offen MB1b–MB4** (siehe §15)  
+Stand: **2026-09-21** · Status: **MF0–MF7 Code ✅ · Betrieb MB1a–b ✅ · offen MB2–MB4** (siehe §15)  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -707,7 +707,7 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 | 2 | Pro Domain: CRM-Pfad auf Server bekannt — siehe Tabelle | ✅ |
 | 3 | `config/*.local.php` ist Sync-Exclude (`bin/sync-crm-from-master.sh` Zeile `--exclude 'config/*.local.php'`) | ✅ |
 | 4 | Vorlage: `config/firm-sso.local.example.php` (Repo) | ✅ |
-| 5 | Secret-Länge ≥ 32 Zeichen; **identisch** auf allen Org-Instanzen | ☐ → **MB1b** |
+| 5 | Secret-Länge ≥ 32 Zeichen; **identisch** auf allen Org-Instanzen | ✅ **MB1b** (`dg.ganz-om.de` + `ganz-soft.de`, gleicher Datei-Hash) |
 | 6 | Optional: `allowed_domains` leer lassen (= nur Sibling-Liste); Verschärfung nur bei Bedarf | ✅ Default leer |
 | 7 | Kundeninstanz ohne KDV: `firm-switcher.local.php` nur falls Switcher sonst leer | ✅ Regel fest |
 | 8 | Secret nirgends in Git / Chat / Ticket-Klartext | ✅ Regel fest (MB1b beachten) |
@@ -726,11 +726,12 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 - **Nicht:** Secret generieren, SFTP/SSH-Upload, Code-Änderung.  
 - **Erledigt 2026-09-21:** Domains/Pfade, Sync-Exclude, Example, Defaults B1–B4.
 
-### MB1b — Secret ausrollen
+### MB1b — Secret ausrollen ✅ 2026-09-21
 
-- Datei `config/firm-sso.local.php` aus Example auf **jeder** Org-Instanz der Tabelle (Spalte „Secret? = ja“) anlegen (SSH/SFTP; Agent nur mit Freigabe).  
-- Kurzprüfung: Switcher-Hinweis „automatische Anmeldung“ (MF5c) erscheint nur wenn SSO enabled.  
-- **Nicht:** Code ändern, Secret committen, Deploy des ganzen CRM nötig (nur local.php).
+- Datei `config/firm-sso.local.php` aus Example auf **dg.ganz-om.de** und **ganz-soft.de** angelegt (identischer Inhalt, Sync-Exclude, Rechte 640).  
+- Secret **nicht** im Repo/Chat. Kurzprüfung Switcher-Hinweis „automatische Anmeldung“ = **MB2**.  
+- **Nicht** erledigt für kontur (nur bei Org-Mapping / später).  
+- **Nicht:** Code ändern, Secret committen, CRM-Voll-Deploy.
 
 ### MB2 — Switcher-Smoke
 
@@ -772,7 +773,7 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 | Phase | Lieferobjekt | Erlaubt zu lesen/ändern | Nicht |
 |-------|----------------|-------------------------|--------|
 | **MB1a** ✅ | Checkliste SSO-Domains / Secret-Regeln | Spec §15 — **erledigt 2026-09-21** | Secret erzeugen/hochladen |
-| **MB1b** | `firm-sso.local.php` auf Org-Instanzen | Server-Config `*.local.php` | Code, Git-Secret |
+| **MB1b** ✅ | `firm-sso.local.php` auf Org-Instanzen | Server `dg` + `ganz-soft` — **erledigt 2026-09-21** | Code, Git-Secret |
 | **MB2** | Switcher-Smoke (Token, Support-Ban, Fallback) | Browser/UI, kurze Logs | Contact, Provision |
 | **MB3** | Contact Export/Import Smoke | Kontakte-UI, Org-Flag | 2-Wege, Mitarbeiter/Bank |
 | **MB4** | Provision-Gates-Smoke (+ optional 1× KAS) | KDV-Akte, Gates | Stripe, Auto-Rollback-Löschen |
@@ -780,10 +781,10 @@ Sibling-Liste kommt primär aus KDV (`FirmSwitcherService` / Org); sonst `config
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma Betrieb MB1b laut docs/MULTI-FIRMA-KONZEPT.md §15
-Nur: firm-sso.local.php mit gleichem Secret auf dg.ganz-om.de und ganz-soft.de
-Kein Secret im Chat ausgeben, kein Code-Commit der local.php, kein CRM-Deploy außer ich sage es.
-Nicht §1–14 der Spec neu einlesen — nur §15 + Example-Config.
+Scope: Multi-Firma Betrieb MB2 laut docs/MULTI-FIRMA-KONZEPT.md §15
+Nur: Switcher-Smoke SSO (Token-Login, Support-Ban, Fallback)
+Kein Contact-Sync, keine Provision, kein Secret im Chat, kein Deploy außer ich sage es.
+Nicht §1–14 der Spec neu einlesen — nur §15.
 ```
 
 Weitere: `MB1b` / `MB2` / `MB3` / `MB4` analog ersetzen.

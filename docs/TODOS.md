@@ -45,7 +45,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **AB aus Angebots-Mail-Antwort** — Migration 083 · Auto-AB + Annahme-Vermerk (Inbound In-Reply-To)
 - [x] **Anzahlung materialbasiert** — EK aus `dg_article_purchase_sources` (Preferred)
 - [ ] **Vor Hetzner:** `VOR-HETZNER-CHECK.md` (Shared Core, Asset-Minify, GoBD/§14/§19-Stichprobe)
-- [ ] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1a ✅** · weiter: `mb1b`
+- [ ] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1a–b ✅** · weiter: `mb2`
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
 
