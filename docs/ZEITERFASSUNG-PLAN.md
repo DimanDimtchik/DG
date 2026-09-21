@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2a–Z2e ✅** · Phase 3+ später (`z3a`)  
+> Status: **Phase 1 ✅** · **Z2a–Z2e ✅** · **Z3a Spec ✅** · offen Z3b–Z3d · Phase 4+ später  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -258,19 +258,20 @@ Abweichung nur per explizitem Chat-Befehl.
 
 ### Reihenfolge
 
-**Serie Z2 (jetzt):**
+**Serie Z2:** ✅ abgeschlossen  
 
-1. **Z2a** Spec/Checkliste Soll-Quelle + Korrektur-Rechte ✅  
-2. **Z2b** Soll-Arbeitszeiten anbinden (lesen aus Kalender/MA) ✅  
-3. **Z2c** Monatsansicht Soll/Ist/Diff + CSV-Export ✅  
-4. **Z2d** ArbZG-Warnungen: Ruhezeit 11 h, max. 10 h/Tag, Hinweis Wochendurchschnitt ✅  
-5. **Z2e** Korrektur-UI + Audit; Überstundenkonto Abbau buchen ✅  
+**Serie Z3 (Schichten — jetzt):**
+
+1. **Z3a** Spec Schicht-Vorlagen + Zuordnung + Soll-Prio ✅  
+2. **Z3b** Migration + CRUD Vorlagen (Früh/Spät/Nacht / frei)  
+3. **Z3c** Zuordnung MA ↔ Schicht ↔ Datum + Wochen-UI  
+4. **Z3d** Soll aus Schicht in `TimeScheduleService` + Abweichung Ist  
 
 **Spätere Serien (eigene Chat-Ketten, nicht mischen):**
 
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
-| **Z3** | Schichten | `z3a` nach Z2e ✅ |
+| **Z3** | Schichten | `z3a` ✅ · weiter `z3b` |
 | **Z4** | Urlaub & Krankheit | `z4a` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` |
@@ -407,3 +408,110 @@ Weitere: `Z2b` / `Z2c` / `Z2d` / `Z2e` / `Z3a` analog.
 - Rückstellungen, DATEV-Lohn  
 - Nacht-/Sonntagszuschläge  
 - Eigene Lohnabrechnung
+
+---
+
+## Betrieb Phase 3 — Schichten (token-sparend)
+
+> **Agent-Regel:** Pro Chat **ein** Unterpunkt (`z3a` …). Spec nur dieser Abschnitt + genannte Dateien.  
+> **Kein** paralleles Einlesen Z4–Z6. **Kein** Deploy außer „deploy“.
+
+### Entscheid-Checkliste Z3
+
+| # | Entscheidung | Default |
+|---|--------------|---------|
+| S1 | Vorlagen | ✅ frei benennbar + Seed Früh/Spät/Nacht |
+| S2 | Mitternacht | ✅ `end < start` = über Mitternacht (Dauer = Rest + Ende) |
+| S3 | Soll-Prio | ✅ **Schicht-Zuordnung schlägt** MA-Stammdaten und Kalender |
+| S4 | Mehrfach/Tag | ✅ höchstens **eine** Zuordnung pro Kontakt+Datum |
+| S5 | Zuschläge Nacht | ✅ **nicht** in Z3 (erst Z6+) |
+
+### Z3a — Spec Schicht-Modell ✅ 2026-09-21
+
+Nur Spezifikation — Code/Migration = **Z3b+**.
+
+#### Datenmodell (Ziel)
+
+| Tabelle | Zweck |
+|---------|--------|
+| `dg_time_shift_templates` | Vorlagen: `name`, `start_time`, `end_time`, `sort_order`, `active` |
+| `dg_time_shift_assignments` | `contact_id`, `work_date`, `template_id` (UNIQUE contact+date) |
+
+**Dauer-Minuten:** wenn `end > start` → Differenz; wenn `end ≤ start` → `(24:00−start) + end` (Nacht). Cap 960 wie Z2. Pause **nicht** von Soll abziehen (wie Kalender-Soll).
+
+**Seed (Z3b):** drei Vorlagen z. B. Früh 06:00–14:00, Spät 14:00–22:00, Nacht 22:00–06:00 — editierbar/löschbar wenn unbenutzt.
+
+#### Soll-Prio (ersetzt Z2a-Liste ab Z3d)
+
+| Prio | Quelle |
+|------|--------|
+| **0** | Schicht-Zuordnung an diesem Datum → Vorlagen-Dauer |
+| 1 | MA `daily_work_minutes` |
+| 2 | MA `working_hours` |
+| 3 | Kalender-Öffnungsdauer |
+| 4 | 0 + Hinweis |
+
+Ohne Zuordnung: Verhalten unverändert Z2b.
+
+#### Rechte
+
+| Aktion | Wer |
+|--------|-----|
+| Vorlagen CRUD | `canViewTeam` |
+| Zuordnung planen (Woche) | `canViewTeam` |
+| Eigene Schicht sehen (Stempel/Monat) | Stempel-Nutzer (read-only) |
+| Mitarbeiter ändert eigene Schicht | **nein** in Z3 |
+
+**Seite (Z3c):** z. B. `/app?page=zeiterfassung-schichten` — Wochenraster Kontakt × Tag; Link von Team/Konto.
+
+#### Abweichung Ist vs. Schicht-Soll (Z3d)
+
+- Monatsblatt/Stempel: Soll = Schicht wenn gesetzt  
+- Soft-Hinweis wenn Ist stark abweicht optional; **kein** Hard-Block  
+- ArbZG Soft-Warnungen (Z2d) bleiben
+
+#### Abnahme Z3a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Tabellen + Mitternacht-Regel | ✅ |
+| Soll-Prio 0 = Schicht | ✅ |
+| Rechte canViewTeam | ✅ |
+| Kein Code in diesem Chat | ✅ |
+
+**Nicht:** Migration, UI, Zuschläge, Urlaub.
+
+### Z3b — Vorlagen CRUD
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Migration | `dg_time_shift_templates` + Seed |
+| UI/Service | anlegen/ändern/deaktivieren |
+| Nicht | Zuordnung, Soll-Anbindung |
+
+### Z3c — Zuordnung Wochen-UI
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Migration | `dg_time_shift_assignments` |
+| UI | Woche wählen, MA × Tag → Vorlage |
+| Nicht | Lohn, Zuschläge |
+
+### Z3d — Soll-Anbindung
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| `TimeScheduleService` | Prio 0 Schicht |
+| Stempel/Monat | Schicht-Soll sichtbar |
+| Nicht | Z4 Urlaub |
+
+### Chat-Vorlage Z3
+
+```text
+Scope: Zeiterfassung Z3a laut docs/ZEITERFASSUNG-PLAN.md § Betrieb Phase 3
+Nur: Spec Schicht-Vorlagen + Zuordnung + Soll-Prio
+Kein Code, keine Migration, kein Deploy.
+Nicht Z4–Z6 neu einlesen.
+```
+
+Weitere: `Z3b` / `Z3c` / `Z3d` analog.
