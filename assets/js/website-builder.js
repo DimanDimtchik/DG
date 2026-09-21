@@ -490,9 +490,9 @@
       }
       if (data.type === 'advanced-preview-result' && status) {
         if (data.found) {
-          status.textContent = 'Echte Website — Block markiert, Styles live übernommen.';
+          status.textContent = 'Nur gewählter Block (echte Website-Styles).';
         } else {
-          status.textContent = 'Block in der gespeicherten Vorschau nicht gefunden — Seite speichern und Popover neu öffnen.';
+          status.textContent = 'Block in gespeicherter Vorschau nicht gefunden — Seite speichern.';
         }
       }
     });
@@ -646,7 +646,7 @@
     frame.hidden = false;
     if (status) {
       status.hidden = false;
-      status.textContent = 'Echte Website — Live-Styles für den markierten Block (Texte/neue Blöcke erst nach Speichern).';
+      status.textContent = 'Nur gewählter Block — Live-Styles (Texte/neue Blöcke erst nach Speichern).';
     }
 
     var currentSrc = frame.getAttribute('src') || '';
@@ -825,11 +825,11 @@
     pop.hidden = false;
     pop.setAttribute('aria-hidden', 'false');
     var rect = anchor.getBoundingClientRect();
-    var width = Math.min(420, window.innerWidth - 24);
+    var width = Math.min(380, window.innerWidth - 24);
     var left = Math.min(window.innerWidth - width - 12, Math.max(12, rect.left + rect.width - width));
     var top = rect.bottom + 8;
-    if (top + 520 > window.innerHeight) {
-      top = Math.max(12, rect.top - 8 - Math.min(520, window.innerHeight - 24));
+    if (top + 460 > window.innerHeight) {
+      top = Math.max(12, rect.top - 8 - Math.min(460, window.innerHeight - 24));
     }
     pop.style.width = width + 'px';
     pop.style.left = left + 'px';

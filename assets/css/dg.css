@@ -5917,31 +5917,21 @@ body.dg-login-page {
 }
 
 .dg-website-advanced-popover__swatch {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px dashed #cbd5e1;
-  background: #fff;
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 8px;
+  display: none;
 }
 
 .dg-website-advanced-popover__live {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .dg-website-advanced-popover__frame {
   width: 100%;
-  height: 220px;
+  height: 112px;
   border: 1px solid var(--dg-border);
   border-radius: 6px;
-  background: #fff;
+  background: #f8fafc;
 }
 
 .dg-website-advanced-popover__open {
@@ -5956,6 +5946,12 @@ body.dg-login-page {
 .dg-website-advanced-popover__body .dg-field-hint {
   display: block;
   margin-top: 4px;
+}
+
+.dg-website-advanced-popover [data-adv-live-status] {
+  font-size: 11px;
+  margin: 0;
+  line-height: 1.35;
 }
 
 .dg-website-menu-card {

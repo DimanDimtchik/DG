@@ -1,39 +1,79 @@
 /**
  * Empfängt Live-Styles aus dem Website-Editor (Erweiterte Einstellungen)
- * und wendet sie auf echte ws-block-Elemente in /vorschau/?frame=1 an.
+ * und zeigt in /vorschau/?frame=1 nur den gewählten Block (Rest ausgeblendet).
  */
 (function () {
   var HIGHLIGHT = 'ws-block--adv-focus';
+  var HIDDEN = 'ws-adv-crop-hidden';
+  var TARGET = 'ws-adv-crop-target';
+  var BODY_MODE = 'ws-adv-crop-mode';
   var styleTag = null;
 
-  function ensureHighlightCss() {
+  function ensureCropCss() {
     if (styleTag) return;
     styleTag = document.createElement('style');
-    styleTag.textContent =
-      '.' + HIGHLIGHT + '{' +
-      'outline:2px solid #2563eb!important;' +
-      'outline-offset:3px;' +
-      'scroll-margin:80px;' +
-      '}';
+    styleTag.textContent = [
+      'body.' + BODY_MODE + '{margin:0;padding:0;background:#f1f5f9;min-height:100%;overflow:hidden;}',
+      'body.' + BODY_MODE + ' .ws-header,',
+      'body.' + BODY_MODE + ' .ws-footer,',
+      'body.' + BODY_MODE + ' .ws-preview-banner,',
+      'body.' + BODY_MODE + ' .ws-legal-tabs,',
+      'body.' + BODY_MODE + ' #cc-banner,',
+      'body.' + BODY_MODE + ' .cc-banner,',
+      'body.' + BODY_MODE + ' [class*="cookie"]{display:none!important;}',
+      'body.' + BODY_MODE + ' .ws-main{padding:8px!important;margin:0!important;max-width:none!important;}',
+      'body.' + BODY_MODE + ' .ws-row{display:block!important;margin:0!important;}',
+      'body.' + BODY_MODE + ' .ws-col{width:100%!important;max-width:100%!important;flex:none!important;padding:0!important;}',
+      'body.' + BODY_MODE + ' .' + HIDDEN + '{display:none!important;}',
+      'body.' + BODY_MODE + ' .' + TARGET + '{',
+      '  margin:0!important;',
+      '  max-width:100%;',
+      '  outline:2px solid #2563eb;',
+      '  outline-offset:2px;',
+      '}',
+      '.' + HIGHLIGHT + '{scroll-margin:0;}',
+    ].join('');
     document.head.appendChild(styleTag);
   }
 
-  function clearHighlight() {
-    document.querySelectorAll('.' + HIGHLIGHT).forEach(function (el) {
-      el.classList.remove(HIGHLIGHT);
+  function clearCropMode() {
+    document.body.classList.remove(BODY_MODE);
+    document.querySelectorAll('.' + HIDDEN + ',.' + TARGET + ',.' + HIGHLIGHT).forEach(function (el) {
+      el.classList.remove(HIDDEN, TARGET, HIGHLIGHT);
+    });
+  }
+
+  function enterCropMode(target) {
+    ensureCropCss();
+    clearCropMode();
+    document.body.classList.add(BODY_MODE);
+
+    document.querySelectorAll('.ws-block').forEach(function (block) {
+      if (block === target) {
+        block.classList.add(TARGET, HIGHLIGHT);
+      } else {
+        block.classList.add(HIDDEN);
+      }
+    });
+
+    // Leere Zeilen/Spalten ohne sichtbaren Block ausblenden
+    document.querySelectorAll('.ws-row').forEach(function (row) {
+      if (!row.querySelector('.' + TARGET)) {
+        row.classList.add(HIDDEN);
+      }
     });
   }
 
   function applyAdvanced(msg) {
-    ensureHighlightCss();
-    clearHighlight();
     var blockId = String(msg.blockId || '');
     if (!blockId) {
+      clearCropMode();
       window.parent.postMessage({ source: 'dg-website-preview-frame', type: 'advanced-preview-result', found: false }, window.location.origin);
       return;
     }
     var el = document.querySelector('[data-block-id="' + blockId.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
     if (!el) {
+      clearCropMode();
       window.parent.postMessage({ source: 'dg-website-preview-frame', type: 'advanced-preview-result', found: false, blockId: blockId }, window.location.origin);
       return;
     }
@@ -48,7 +88,6 @@
     var baseClass = el.getAttribute('data-adv-base-class') || 'ws-block';
     var extra = String(msg.className || '').trim();
     el.className = extra ? (baseClass + ' ' + extra) : baseClass;
-    el.classList.add(HIGHLIGHT);
 
     var css = String(msg.css || '');
     if (css) {
@@ -66,7 +105,6 @@
       if (val) el.setAttribute(name, val);
       else el.removeAttribute(name);
     });
-    // id nur setzen wenn gültig und nicht kollidierend mit fremdem Element
     if (attrs.id) {
       var existing = document.getElementById(attrs.id);
       if (!existing || existing === el) {
@@ -74,10 +112,13 @@
       }
     }
 
+    enterCropMode(el);
+
     try {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.scrollTo(0, 0);
+      el.scrollIntoView({ behavior: 'instant', block: 'start' });
     } catch (e) {
-      el.scrollIntoView(true);
+      try { el.scrollIntoView(true); } catch (e2) { /* ignore */ }
     }
 
     window.parent.postMessage({
@@ -95,6 +136,5 @@
     applyAdvanced(data);
   });
 
-  // Parent signalisieren: Frame bereit
   window.parent.postMessage({ source: 'dg-website-preview-frame', type: 'advanced-preview-ready' }, window.location.origin);
 })();
