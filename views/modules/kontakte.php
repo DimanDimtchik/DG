@@ -49,6 +49,30 @@ $baseUrl = '/app?page=kontakte';
     <?php endif; ?>
   </form>
 
+  <?php if (ContactImportService::isImportAllowed($user)) : ?>
+    <details class="dg-contact-import">
+      <summary>Kontakte von Org-Schwester importieren (JSON)</summary>
+      <form method="post" action="/app?page=kontakte" enctype="multipart/form-data" class="dg-contact-import__form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="contact_org_import" value="1">
+        <label class="dg-contact-import__file">
+          <span>Export-Datei</span>
+          <input type="file" name="contact_export_file" accept="application/json,.json" required>
+        </label>
+        <label class="dg-contact-import__check">
+          <input type="checkbox" name="overwrite_fields" value="1">
+          <span>Bestehende Felder überschreiben (sonst nur leere Felder füllen)</span>
+        </label>
+        <label class="dg-contact-import__check">
+          <input type="checkbox" name="confirm_warnings" value="1">
+          <span>Warnungen bestätigen (Selbst-Import, Flag aus, Paket &gt; 90 Tage)</span>
+        </label>
+        <button type="submit" class="dg-button dg-button--primary">Import starten</button>
+        <p class="dg-muted">Herkunft wird in <code>origin_firm_note</code> gesetzt, wenn dort noch nichts steht. Kein Live-Sync.</p>
+      </form>
+    </details>
+  <?php endif; ?>
+
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>

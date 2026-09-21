@@ -2174,6 +2174,41 @@ switch ($path) {
             }
         }
 
+        // POST: Multi-Firma MF6c — Kontakte JSON-Import von Org-Schwester
+        if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_org_import'])) {
+            if (!MenuRegistry::canAccess($user, 'kontakte')) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            if (!ContactImportService::isImportAllowed($user)) {
+                Flash::set('error', 'Kein Recht zum Kontakt-Import.');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            try {
+                $result = ContactImportService::importUpload(
+                    is_array($_FILES['contact_export_file'] ?? null) ? $_FILES['contact_export_file'] : [],
+                    $user,
+                    !empty($_POST['overwrite_fields']),
+                    !empty($_POST['confirm_warnings'])
+                );
+                $msg = $result['message'];
+                if ($result['errors'] !== []) {
+                    $msg .= ' ' . implode(' ', array_slice($result['errors'], 0, 5));
+                }
+                Flash::set($result['errors'] !== [] ? 'warning' : 'success', $msg);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=kontakte', true, 302);
+            exit;
+        }
+
         // POST: Kontakt löschen
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_delete'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte') || !RoleResolver::canEdit($user)) {

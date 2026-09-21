@@ -577,6 +577,46 @@ code {
   display: inline-flex;
 }
 
+.dg-contact-import {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--dg-primary, #336) 18%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--dg-primary, #336) 4%, transparent);
+}
+
+.dg-contact-import summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dg-contact-import__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  max-width: 40rem;
+}
+
+.dg-contact-import__file,
+.dg-contact-import__check {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.dg-contact-import__check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dg-contact-import__check input {
+  margin-top: 2px;
+}
+
 .dg-search {
   display: flex;
   flex-wrap: wrap;

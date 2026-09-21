@@ -205,6 +205,56 @@ final class ContactRepository
     }
 
     /**
+     * Matching für Org-Schwester-Import (MF6c): E-Mail (auch email_2).
+     */
+    public static function findByEmailMatch(string $email): ?Contact
+    {
+        $email = strtolower(trim($email));
+        if ($email === '' || !Database::isConfigured()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_contacts
+             WHERE LOWER(TRIM(email)) = :email OR LOWER(TRIM(email_2)) = :email2
+             ORDER BY id ASC LIMIT 1'
+        );
+        $stmt->execute(['email' => $email, 'email2' => $email]);
+        $row = $stmt->fetch();
+
+        return $row ? self::map($row) : null;
+    }
+
+    public static function findByCustomerNumber(string $number): ?Contact
+    {
+        $number = trim($number);
+        if ($number === '' || !Database::isConfigured()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_contacts WHERE TRIM(customer_number) = :n ORDER BY id ASC LIMIT 1'
+        );
+        $stmt->execute(['n' => $number]);
+        $row = $stmt->fetch();
+
+        return $row ? self::map($row) : null;
+    }
+
+    public static function findBySupplierNumber(string $number): ?Contact
+    {
+        $number = trim($number);
+        if ($number === '' || !Database::isConfigured()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_contacts WHERE TRIM(supplier_number) = :n ORDER BY id ASC LIMIT 1'
+        );
+        $stmt->execute(['n' => $number]);
+        $row = $stmt->fetch();
+
+        return $row ? self::map($row) : null;
+    }
+
+    /**
      * loginExists
      * @param string $login
      * @param int|null $excludeId

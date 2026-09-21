@@ -298,6 +298,7 @@ spl_autoload_register(static function (string $class): void {
         'RumpfWjReportService' => '/src/MultiFirma/RumpfWjReportService.php',
         'FirmSsoService' => '/src/MultiFirma/FirmSsoService.php',
         'ContactExportService' => '/src/MultiFirma/ContactExportService.php',
+        'ContactImportService' => '/src/MultiFirma/ContactImportService.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',
         'KdvBlockReasons' => '/src/Kdv/KdvBlockReasons.php',

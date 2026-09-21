@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF6b erledigt · Contact-Export JSON ✅** · Offen: MF6c, MF7  
+Stand: **2026-09-21** · Status: **MF0–MF6 erledigt · Contact Export/Import ✅** · Offen: MF7  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -520,7 +520,7 @@ Warnen (Import trotzdem möglich nach Bestätigung):
 | **MF5c** ✅ | Switcher-UX/Polish (Flash, Referrer-Policy, Feinschliff) | Login-View, `app.php`, `SecurityHeaders` — **erledigt 2026-09-21** | neues UI-Framework |
 | **MF6a** ✅ | Spec Contact-Export-Schema + Herkunft | Spec §13 — **erledigt 2026-09-21** | Code |
 | **MF6b** ✅ | Export API/Button „Kontakte für Org-Schwester“ (JSON-Datei) | `ContactExportService`, Kontakte-Liste, `index.php` POST — **erledigt 2026-09-21** | Import, Live-Sync |
-| **MF6c** | Import auf Zielinstanz + `origin_firm_note` setzen | Contact save, MF4-Feld | 2-Wege, Merge-UI groß |
+| **MF6c** ✅ | Import auf Zielinstanz + `origin_firm_note` setzen | `ContactImportService`, Kontakte-Upload — **erledigt 2026-09-21** | 2-Wege, Merge-UI groß |
 | **MF7a** | Spec: wann Provision erlaubt (DNS, KAS, Slot `neu`) | Spec | Code |
 | **MF7b** | Hook Umfirmierung → optional `KdvDeployService::provision` | `UmfirmierungService`, DeployService | Shop-Stripe |
 | **MF7c** | Status/Fehler in KDV-UI (Install-URL, Steps) | kdv-kunde-form / umfirmierung View | neue Infrastruktur |
@@ -528,9 +528,9 @@ Warnen (Import trotzdem möglich nach Bestätigung):
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma MF6c laut docs/MULTI-FIRMA-KONZEPT.md §13
-Nur: Contact-Import JSON laut MF6a-Schema + origin_firm_note
-Kein Live-Sync, keine Auto-Provision, kein Shop, kein Deploy außer ich sage es.
+Scope: Multi-Firma MF7a laut docs/MULTI-FIRMA-KONZEPT.md §13
+Nur: Spec wann Auto-Provision erlaubt (DNS, KAS, Slot neu)
+Kein Code, kein Deploy außer ich sage es.
 Nicht §1–12/§14 der Spec neu einlesen — nur §13 + genannte Dateien.
 ```
 
