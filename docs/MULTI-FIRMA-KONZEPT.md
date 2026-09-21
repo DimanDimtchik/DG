@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **MF0–MF6 erledigt · Contact Export/Import ✅** · Offen: MF7  
+Stand: **2026-09-21** · Status: **MF0–MF6 erledigt · MF7a Provision-Gate-Spec ✅** · Offen: MF7b–c  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -253,8 +253,8 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 | E2 | Shared Secret | ✅ **MF5a:** `config/firm-sso.local.php` (Sync-Exclude `*.local.php`); gleicher `shared_secret` auf allen Org-Instanzen (manuell) |
 | E3 | Contact-Sync | ✅ **MF6a:** **Einbahn** Export-Paket (JSON) + manueller/halbauto Import; **kein** Live-2-Wege (GoBD/Konflikt) |
 | E4 | Was wird synchronisiert | ✅ **MF6a:** Stammfelder Kontakt + Adresse; **keine** Mitarbeiterakten, **keine** Belege, **keine** Bankkonten |
-| E5 | Auto-Provision | Ruft bestehenden `KdvDeployService` nur für **Nachfolger** nach Umfirmierung; Domain muss DNS-ready sein |
-| E6 | Rollback | Provision-Fehler → KDV-Slot bleibt `neu`, kein stilles Löschen des Vorgänger-Archivs |
+| E5 | Auto-Provision | ✅ **MF7a:** Ruft bestehenden `KdvDeployService` nur für **Nachfolger** nach Umfirmierung; Domain/KAS/Slot-Gates (unten) |
+| E6 | Rollback | ✅ **MF7a:** Provision-Fehler → KDV-`status` bleibt/`neu` (oder `dns_pending`); **kein** stilles Löschen des Vorgänger-Archivs; keine automatische KAS-Rollback-Löschung in MF7 |
 
 ### MF5a — SSO Spec (Token · TTL · Allowlist) ✅ 2026-09-21
 
@@ -511,6 +511,96 @@ Warnen (Import trotzdem möglich nach Bestätigung):
 - **Nicht** in MF6a: PHP-Export/Import, neue Migration, UI-Button.  
 - **Nicht** Live-Sync, Merge-Wizard groß, Intercompany-Belege.
 
+### MF7a — Auto-Provision Gate Spec (DNS · KAS · Slot) ✅ 2026-09-21
+
+Nur Spezifikation — Umsetzung Code = **MF7b** (Hook) / **MF7c** (KDV-UI Status). Nutzt bestehenden `KdvDeployService::provision` — **kein** neuer Deploy-Stack.
+
+#### Zielbild
+
+Nach Umfirmierung (MF3 `UmfirmierungService::start`) existiert ein **Nachfolger-Slot** mit `status = neu`. Optional darf KDV diesen Slot **automatisch oder halbautomatisch** provisionieren (Domain + DB + CRM-Dateien + Install-URL), statt nur den Checklisten-Punkt „manuell provisionieren“.
+
+Manuelle Provision über `/app?page=kdv-provision` bleibt erhalten und unterliegt denselben Hard-Gates (MF7b kann Gate-Helper teilen).
+
+#### Begriffe (KDV-Felder)
+
+| Feld | Relevanz für MF7 |
+|------|------------------|
+| `status` | Lebenszyklus Instanz: `neu` → (`dns_pending`) → `installiert` → `aktiv` … |
+| `firm_slot_status` | Rechtsträger-Slot: Nachfolger typisch `active`; Vorgänger `archive_readonly` — **nicht** mit `status=neu` verwechseln |
+| `firm_relation` | Auto-Provision-Trigger nur bei `nachfolger` (E5) |
+| `related_customer_id` | Vorgänger-ID; muss existieren und Archiv-Slot sein |
+| `domain` | Ziel-FQDN für KAS `add_domain` + Deploy-Pfad |
+
+„Slot `neu`“ in der Phasen-Tabelle = KDV-Kunde mit **`status = neu`** (nicht `firm_slot_status`).
+
+#### Wann Auto-Provision **erlaubt** ist (Hard-Gates — alle müssen greifen)
+
+| # | Gate | Regel |
+|---|------|--------|
+| G1 | Kontext | Aufruf nur für KDV-Kunde mit `firm_relation = nachfolger` **und** `related_customer_id > 0` (Umfirmierungs-Nachfolger). Kein Auto-Trigger für reine Shop-Neukunden / `standalone` in MF7. |
+| G2 | Status | `status ∈ {neu, dns_pending}` — nie erneut auto-starten wenn `installiert` / `aktiv` / `gesperrt` / `gekuendigt`. |
+| G3 | Slot | `firm_slot_status = active` (kein Archiv/Closed). |
+| G4 | Domain | `domain` nicht leer; normalisiert (lowercase, ohne Schema/Port/`www.`); syntaktisch FQDN mit ≥1 Punkt; **≠** Domain des Vorgängers. |
+| G5 | Domain-Konflikt | Kein **anderer** KDV-Kunde mit derselben normalisierten Domain (außer dieser Datensatz). |
+| G6 | Vorgänger | `related_customer_id` existiert; Vorgänger `firm_relation = vorgaenger` (oder historisch konsistent); Vorgänger-`firm_slot_status` ∈ {`archive_readonly`, `closed`} — sonst ablehnen (Umfirmierung unvollständig). |
+| G7 | KAS | `kas_login` + `kas_pass` zum Laufzeitpunkt vorhanden (POST wie heutige `kdv-provision`-UI **oder** serverseitige KDV-Config — Implementierung MF7b wählt eine Quelle; Secrets nie in Git). Ohne Credentials: Gate fail, UI zeigt „KAS-Zugangsdaten erforderlich“. |
+| G8 | Rechte | Nur Nutzer mit `MenuRegistry::canAccessKdv`; CSRF am Trigger. Support-Session: **erlaubt** (wie MF6), aber Schritt-Protokoll in `steps[]` speichern. |
+| G9 | Idempotenz | Kein paralleler Zweitlauf: wenn Provision bereits läuft (Session-/Settings-Flag oder `status` kurz auf Zwischenwert), zweiten Start ablehnen. MF7b: einfaches Lock (SettingsStore oder Spalte), TTL z. B. 30 Min. |
+
+Fehlt ein Gate → **kein** Aufruf von `KdvDeployService::provision`; Flash/UI mit konkretem Gate-Code (G1…G9).
+
+#### DNS-ready (Definition MF7)
+
+KAS legt die Domain oft erst in der Pipeline an — „DNS-ready“ heißt daher **nicht** zwingend „A-Record zeigt schon auf All-Inkl“.
+
+| Stufe | Bedeutung | Wirkung |
+|-------|-----------|---------|
+| **D0 Pflicht** | Domain besteht G4/G5 | Hard-Gate |
+| **D1 Soft** | Soft-Check analog Shop (`dns_get_record` A/AAAA/NS): wenn Domain **bereits** auf fremde NS/A zeigt | **Warnung** — Provision nur mit expliziter Bestätigung (Checkbox), sonst abort |
+| **D2 Optional** | Keine DNS-Records | OK — typisch vor `add_domain`; nach Erfolg darf UI `status → dns_pending` setzen bis Install abgeschlossen |
+| **D3** | Nach erfolgreichem KAS-`add_domain` | DNS folgt KAS; Install-URL `https://{domain}/install.php` erst nutzen wenn HTTPS erreichbar (MF7c kann ping/Hinweis zeigen, kein Hard-Block in MF7a) |
+
+#### KAS-ready (Definition MF7)
+
+| Prüfung | Regel |
+|---------|--------|
+| Auth | `KdvDeployService` KAS-Auth muss knackbar sein (Gate G7 liefert Credentials) |
+| Bestand | Domain „already exists“ in KAS = **weiter** (wie heutiger Service), kein Abbruch |
+| DB/Mail | Fehler in Teilschritten → gesamter Lauf `success=false` (bestehendes Step-Array) |
+| SSH/SCP | Schlüssel/Host wie bestehender Service; Ausfall = fail, kein Silent-Success |
+
+Keine neuen KAS-Operationen in MF7 — nur Gate vor dem bestehenden Pipeline-Aufruf.
+
+#### Erlaubte Trigger (Reihenfolge Absicht)
+
+1. **MF7b:** Optionaler Hook nach `UmfirmierungService::start` — nur wenn Hard-Gates ok **und** Operator/Flag „Jetzt provisionieren“ gesetzt (Default: **aus** — halbautomatisch, kein Überraschungs-Deploy).  
+2. **MF7b/c:** Button auf Nachfolger-KDV-Formular / Provision-Seite „CRM bereitstellen“ mit Gate-Vorprüfung.  
+3. Rein manuell: bestehende `kdv-provision`-Seite, Gates ebenfalls anwenden.
+
+#### Nach Erfolg / Misserfolg (Status-Maschine, verbindlich für MF7b/c)
+
+| Ergebnis | `status`-Aktion | Sonstiges |
+|----------|-----------------|-----------|
+| Pipeline `success=true` | → `installiert` (oder `dns_pending` wenn Install-URL noch nicht erreichbar — MF7c wählt; Default **`installiert`** + Install-URL in UI) | `install_url` aus Service anzeigen; Vorgänger unverändert archiviert |
+| Pipeline `success=false` | bleibt `neu` oder → `dns_pending` wenn Domain-Schritt ok aber späterer Schritt failte | **Kein** Löschen KAS-Artefakte in MF7 (E6); **kein** Zurücksetzen von Vorgänger-Archiv; Fehler-`steps[]` in UI (MF7c) |
+| Gate-Reject vor Aufruf | unverändert `neu` | kein KAS-Call |
+
+#### Explizit **nicht** erlaubt (MF7)
+
+| Verbot | Grund |
+|--------|--------|
+| Auto-Provision für Vorgänger / Archiv-Slots | GoBD / falsche Instanz |
+| Überschreiben einer bereits `aktiv`en Domain-Instanz | Datenverlust |
+| Fremde Instanz-DB anfassen / Sync von Buchungen | Variante A |
+| Stilles Löschen bei Fehler (Domain/DB/Mail) | E6; manuelle KAS-Bereiningung durch Operator |
+| Stripe/Shop-Änderung | außerhalb Scope |
+| Provision ohne CSRF / ohne KDV-Recht | Security |
+
+#### Abgrenzung MF7a
+
+- **Nicht** in MF7a: PHP-Hook, UI-Steps, Migration Lock-Spalte.  
+- **Nicht** neuer Deploy-Service — nur Spec der Gates um `KdvDeployService`.
+
 ### Phasen
 
 | Phase | Lieferobjekt | Erlaubt zu lesen/ändern | Nicht |
@@ -521,16 +611,16 @@ Warnen (Import trotzdem möglich nach Bestätigung):
 | **MF6a** ✅ | Spec Contact-Export-Schema + Herkunft | Spec §13 — **erledigt 2026-09-21** | Code |
 | **MF6b** ✅ | Export API/Button „Kontakte für Org-Schwester“ (JSON-Datei) | `ContactExportService`, Kontakte-Liste, `index.php` POST — **erledigt 2026-09-21** | Import, Live-Sync |
 | **MF6c** ✅ | Import auf Zielinstanz + `origin_firm_note` setzen | `ContactImportService`, Kontakte-Upload — **erledigt 2026-09-21** | 2-Wege, Merge-UI groß |
-| **MF7a** | Spec: wann Provision erlaubt (DNS, KAS, Slot `neu`) | Spec | Code |
-| **MF7b** | Hook Umfirmierung → optional `KdvDeployService::provision` | `UmfirmierungService`, DeployService | Shop-Stripe |
+| **MF7a** ✅ | Spec: wann Provision erlaubt (DNS, KAS, Slot `neu`) | Spec §13 — **erledigt 2026-09-21** | Code |
+| **MF7b** | Hook Umfirmierung → optional `KdvDeployService::provision` | `UmfirmierungService`, DeployService, Gate-Helper | Shop-Stripe |
 | **MF7c** | Status/Fehler in KDV-UI (Install-URL, Steps) | kdv-kunde-form / umfirmierung View | neue Infrastruktur |
 
 ### Chat-Vorlage (kopieren)
 
 ```text
-Scope: Multi-Firma MF7a laut docs/MULTI-FIRMA-KONZEPT.md §13
-Nur: Spec wann Auto-Provision erlaubt (DNS, KAS, Slot neu)
-Kein Code, kein Deploy außer ich sage es.
+Scope: Multi-Firma MF7b laut docs/MULTI-FIRMA-KONZEPT.md §13
+Nur: Gate-Helper + optional Hook Umfirmierung → KdvDeployService::provision
+Kein Shop/Stripe, kein Deploy außer ich sage es.
 Nicht §1–12/§14 der Spec neu einlesen — nur §13 + genannte Dateien.
 ```
 
