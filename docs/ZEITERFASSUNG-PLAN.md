@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
-> **Stand:** 22.08.2026  
-> Status: **Phase 1 implementiert** (Stempeluhr MVP) · Phase 2+ siehe unten  
+> **Stand:** 2026-09-21  
+> Status: **Phase 1 ✅** · **Z2a Spec ✅** · offen Z2b–Z2e · Phase 3+ später  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -228,8 +228,168 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ## Offene Fragen an Product Owner
 
-1. Kiosk-Tablet in der Werkstatt (PIN statt Login)?
-2. GPS/Standort beim Stempeln nötig?
-3. Welche Lohnsoftware zuerst (DATEV Lohn & Gehalt, Lexware, …)?
-4. Soll-Arbeitszeit aus Terminkalender-Arbeitszeiten oder separat pflegen?
-5. Zuschläge (Nacht/Sonntag/Feiertag) in Phase 1 oder später?
+| # | Frage | Default für Z2+ (token-sparend) |
+|---|--------|----------------------------------|
+| 1 | Kiosk-Tablet (PIN)? | **Später** — nicht in Z2–Z4 |
+| 2 | GPS beim Stempeln? | **Nein** in Z2 |
+| 3 | Lohnsoftware zuerst? | **DATEV Lohn** in Z6a; Lexoffice optional Z6b |
+| 4 | Soll-Quelle? | **Zuerst** `CalendarWorkingHoursRepository` / bestehende Arbeitszeiten; nur bei Lücke eigene MA-Soll-Felder |
+| 5 | Zuschläge Nacht/So/Feiertag? | **Z6+**, nicht Z2 |
+
+Abweichung nur per explizitem Chat-Befehl.
+
+---
+
+## Betrieb Phase 2+ (token-sparend)
+
+> **Agent-Regel:** Pro Chat **ein** Unterpunkt (`z2a` …). Spec nur dieser Abschnitt + genannte Dateien.  
+> **Kein** paralleles Einlesen Phase 3–6. **Kein** Deploy außer „deploy“.  
+> Rhythmus wie Multi-Firma MB: Spec/Checkliste → Code → Smoke → `commit z2a`.
+
+### Entscheid-Checkliste (ohne Agent abhaken)
+
+| # | Entscheidung | Default |
+|---|--------------|---------|
+| T1 | Erste Umsetzung | ✅ Phase **2** vor Schichten/Urlaub |
+| T2 | Soll-Quelle | ✅ Kalender-Arbeitszeiten wiederverwenden |
+| T3 | Korrektur-Recht | ✅ HR/Admin; Mitarbeiter nur eigene Anträge (wenn gebaut) |
+| T4 | Export in Z2 | ✅ CSV Monatsblatt (ArbZG-Nachweis); DATEV = Z6 |
+| T5 | Buchungs-Rückstellung | ✅ erst Z5 (Steuerberater) |
+
+### Reihenfolge
+
+**Serie Z2 (jetzt):**
+
+1. **Z2a** Spec/Checkliste Soll-Quelle + Korrektur-Rechte ✅  
+2. **Z2b** Soll-Arbeitszeiten anbinden (lesen aus Kalender/MA)  
+3. **Z2c** Monatsansicht Soll/Ist/Diff + CSV-Export  
+4. **Z2d** ArbZG-Warnungen: Ruhezeit 11 h, max. 10 h/Tag, Hinweis Wochendurchschnitt  
+5. **Z2e** Korrektur-UI + Audit; Überstundenkonto Abbau buchen  
+
+**Spätere Serien (eigene Chat-Ketten, nicht mischen):**
+
+| Serie | Inhalt | Einstieg |
+|-------|--------|----------|
+| **Z3** | Schichten | `z3a` nach Z2e ✅ |
+| **Z4** | Urlaub & Krankheit | `z4a` |
+| **Z5** | Rückstellungen Buchhaltung | `z5a` (+ Steuerberater) |
+| **Z6** | Lohn-Export DATEV/CSV | `z6a` |
+
+### Z2a — Spec/Checkliste ✅ 2026-09-21
+
+Nur Spezifikation — Umsetzung Code = **Z2b+**. Keine Migration, keine UI in Z2a.
+
+#### Ist-Stand (Ph.1, relevant für Soll)
+
+| Baustein | Verhalten heute |
+|----------|-----------------|
+| `TimeClockService::daySummary` | Soll = `EmployeeData::dailyTargetMinutes` |
+| `dailyTargetMinutes` | 1) `daily_work_minutes` · 2) erste Zahl in `working_hours` × 60 · 3) **sonst 480** (8 h) |
+| `CalendarWorkingHoursRepository` | Firma-Öffnungszeiten (`start_time`/`end_time`/`weekdays`/`start_date`) — **noch nicht** an Stempel-Soll gekoppelt |
+| Aggregation | `dg_time_work_days.scheduled_minutes` aus daySummary |
+| Team-Recht | `TimeClockService::canViewTeam` = Admin **oder** HR-Abteilung **oder** Modul `zeiterfassung` Level `full` |
+
+#### Soll-Mapping (verbindlich für Z2b)
+
+Funktion Ziel: `scheduledMinutesFor(contactId, date): int` (Name in Z2b festlegen).
+
+| Prio | Quelle | Regel |
+|------|--------|--------|
+| 1 | MA-Stammdaten `daily_work_minutes` | Wenn > 0 → Minuten (cap 960 wie heute) |
+| 2 | MA-Stammdaten `working_hours` | Erste Ganzzahl × 60 (wie heute), nur wenn Prio 1 leer |
+| 3 | Kalender `dg_calendar_working_hours` | Zeile mit größtem `start_date ≤ date`; Wochentag in `weekdays`; Soll = Differenz `end_time − start_time` (Pause **nicht** abziehen — Pause ist Ist-Thema) |
+| 4 | Kein Treffer | **0** + UI-Hinweis „Soll nicht hinterlegt“ |
+
+**Breaking vs. Ph.1:** Stiller Fallback **480 entfällt** in Z2b (TzBfG/Minijob: kein Fake-Vollzeit-Soll). Prüfbarkeit: Differenz/Überstunden nur bei hinterlegtem Soll.
+
+**Wochentag ohne Kalender-Match:** Wenn Prio 1/2 gesetzt, gilt Soll auch am Wochenende (Vertragstage später Z3); Kalender (Prio 3) liefert 0 außerhalb `weekdays`.
+
+**Minijob / `overtime_allowed=0`:** Soll-Mapping unverändert; Überstunden-Gutschrift bleibt 0 (Ph.1). Warnung bei Ist > Soll bleibt.
+
+**Nicht in Z2b:** pro-Abteilung-Soll-Tabelle, Schicht-Soll (Z3), Feiertags-Nullung (kann Soft-Hinweis Z2d).
+
+#### Rollen & Rechte (verbindlich für Z2c–Z2e)
+
+| Aktion | Wer |
+|--------|-----|
+| Eigenes Stempeln / eigene Tagesliste | Modul `zeiterfassung` + `canEdit` (wie Ph.1) |
+| Eigenes Monatsblatt (Z2c) | derselbe Kreis; nur **eigene** `contact_id` |
+| Team-Monatsblatt / CSV-Export fremder MA | `canViewTeam` (Admin \| HR \| zeiterfassung `full`) |
+| Stempel-Korrektur buchen (Z2e) | **nur** `canViewTeam` — mit Pflicht-Begründung |
+| Überstunden-Abbau buchen (Z2e) | **nur** `canViewTeam` |
+| Mitarbeiter-Selbstkorrektur / Antrag | **nicht** in Z2 — frühestens Z4-Workflow-Stil |
+
+**Audit (Z2e):** Originale `dg_time_clock_events` unverändert; Korrektur als zusätzlicher Event-Typ oder Korrektur-Tabelle + Verweis; wer/wann/warum speichern (GoBD-Personal).
+
+**Seite:** Monatsblatt unter neuem Slug z. B. `zeiterfassung-monat` (oder Auswertung wie Plan-Skizze) — Menü nur bei `zeiterfassung`; Team-Filter nur bei `canViewTeam`.
+
+#### Abnahme Z2a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Soll-Priorität 1→4 dokumentiert | ✅ |
+| Fake-8h-Fallback abgeschafft (Spec) | ✅ |
+| Rollen Stempel / Monat / Korrektur klar | ✅ |
+| Kein Code in diesem Chat | ✅ |
+
+**Nicht:** Code, Migration, UI.
+
+### Z2b — Soll anbinden
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Service | `scheduledMinutesFor(contactId, date)` aus bestehender Quelle |
+| Fallback | fehlendes Soll → 0 + Hinweis, kein Fake-8h |
+| Nicht | Schichtplan, Urlaub |
+
+### Z2c — Monatsansicht + CSV
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| UI | Monat: Soll, Ist, Diff, Überstunden (exist. `overtime_minutes`) |
+| CSV | eine Datei/Monat, GoBD-tauglich nachvollziehbar |
+| Nicht | DATEV-Lohn, Zuschläge |
+
+### Z2d — ArbZG-Warnungen
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Prüfungen | <11 h Ruhe; >10 h Tag; Soft-Hinweis Ø-Woche |
+| UI | Warnung Stempel/Team; **kein** hard block ohne Spec-Flag |
+| Nicht | Zuschläge, Erinnerungs-E-Mail neu (48h-Ø schon ✅) |
+
+### Z2e — Korrektur + Zeitkonto
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Korrektur | Begründung + Berechtigung; Stempel-Historie unverändert + Korrektur-Satz |
+| Konto | Überstunden abbuchen (Minuten), Minijob gesperrt |
+| Nicht | Urlaubsantrag, Lohn-Export |
+
+### Chat-Vorlage
+
+```text
+Scope: Zeiterfassung Z2a laut docs/ZEITERFASSUNG-PLAN.md § Betrieb Phase 2+
+Nur: Spec/Checkliste Soll-Quelle + Korrektur-Rechte
+Kein Code, keine Migration, kein Deploy.
+Nicht Phase 3–6 neu einlesen.
+```
+
+Weitere: `Z2b` / `Z2c` / `Z2d` / `Z2e` / `Z3a` analog.
+
+### Token-Sparregeln
+
+1. **Ein Unterpunkt pro Chat**  
+2. T1–T5 vorher in der Checkliste lassen (Defaults oben)  
+3. Composer/lokal für Spec; Cloud nur bei SSH/Deploy  
+4. Kein erneutes Gesamtkonzept-Einlesen  
+5. Nach jedem Unterpunkt: **ein Commit** wenn Doku/Code geändert  
+6. Max. 1 Lokal- + 1 Cloud-Chat
+
+### Bewusst nicht in Z2
+
+- Kiosk/PIN, GPS  
+- Schichten, Urlaub, Krankheit  
+- Rückstellungen, DATEV-Lohn  
+- Nacht-/Sonntagszuschläge  
+- Eigene Lohnabrechnung

@@ -48,6 +48,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
+- [ ] **Zeiterfassung Phase 2+** — token-sparend Z2a–Z2e (`ZEITERFASSUNG-PLAN.md` § Betrieb); **Z2a ✅** · weiter: `z2b`
 
 ---
 
@@ -116,8 +117,8 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 
 | Thema | Doku |
 |-------|------|
-| **Multi-Firma Betrieb** MB1–MB4 (SSO-Secret, Smoke, Contact, Provision-Gates) | [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) §15 |
-| Multi-Firma Code MF0–MF7 | erledigt 2026-09-21 |
+| Multi-Firma Code + Betrieb MB1–MB4 | erledigt 2026-09-21 |
+| **Zeiterfassung Z2a–Z2e** (Soll/Ist, ArbZG-Warnung, Korrektur) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb |
 
 ---
 
@@ -130,7 +131,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | LDAP / dg-user live | `LDAP-INTEGRATION.md` |
 | PHP 8.5 KAS-Umstellung | `PHP85-TEST-HANDOFF.md` |
 | Nextcloud cloud.ganz-om.de | `CLOUD-NEXTCLOUD-RESTORE.md` |
-| Zeiterfassung Ph.2+ | `ZEITERFASSUNG-PLAN.md` |
+| Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` |
 
 ---
 
