@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2a–Z2e ✅** · **Z3a Spec ✅** · offen Z3b–Z3d · Phase 4+ später  
+> Status: **Phase 1 ✅** · **Z2 ✅** · **Z3a Spec ✅** (offen Z3b–d) · **Z4a Spec ✅** · offen Z4b–e · Phase 5+ später  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -272,7 +272,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a` ✅ · weiter `z3b` |
-| **Z4** | Urlaub & Krankheit | `z4a` |
+| **Z4** | Urlaub & Krankheit | `z4a` ✅ · weiter `z4b` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` |
 
@@ -515,3 +515,150 @@ Nicht Z4–Z6 neu einlesen.
 ```
 
 Weitere: `Z3b` / `Z3c` / `Z3d` analog.
+
+---
+
+## Betrieb Phase 4 — Urlaub & Krankheit (token-sparend)
+
+> **Agent-Regel:** Pro Chat **ein** Unterpunkt (`z4a` …). Spec nur dieser Abschnitt.  
+> **Kein** paralleles Einlesen Z5–Z6 / Z3-Code. **Kein** Deploy außer „deploy“.  
+> Hinweis: Z3b–d (Schicht-Code) bleibt parallel offen — Serien nicht in einem Chat mischen.
+
+### Entscheid-Checkliste Z4
+
+| # | Entscheidung | Default |
+|---|--------------|---------|
+| U1 | Datenhaltung | ✅ eigene `dg_time_absences` (+ Urlaubskonto) — **nicht** 1:1 die Kalender-Absences ersetzen |
+| U2 | Kalender-Absences | ✅ `dg_calendar_employee_absences` bleibt Terminkalender-Team; optional später Spiegel (nicht Z4) |
+| U3 | Urlaubseinheit | ✅ **Tage** (halbe Tage erlaubt als 0,5); Minuten nur intern optional |
+| U4 | Genehmigung | ✅ Antrag MA → Freigabe `canViewTeam` |
+| U5 | Stempel an Abwesenheit | ✅ Soft-Warnung; **kein** Hard-Block in Z4 |
+| U6 | Rückstellung | ✅ erst **Z5** (Steuerberater) |
+
+### Z4a — Spec Urlaub/Krankheit ✅ 2026-09-21
+
+Nur Spezifikation — Code/Migration = **Z4b+**.
+
+#### Ist-Stand (Wiederverwendung)
+
+| Baustein | Relevanz |
+|----------|----------|
+| `dg_calendar_employee_absences` | Terminkalender-Team (vacation/sick/other) — **Planung**, kein Genehmigungs-Workflow |
+| `EmployeeDocuments` / Kontaktakte | Attest-Upload-Anbindung vorbereitet |
+| `canViewTeam` | HR/Admin/full — Freigabe & Krank-Erfassung für andere |
+| Plan-Skizze `dg_time_absences` | Status `requested`/`approved`/`rejected`, `document_id` |
+
+#### Datenmodell (Ziel)
+
+**`dg_time_vacation_entitlements`** (Jahresanspruch)
+
+| Feld | Regel |
+|------|--------|
+| contact_id, year | UNIQUE |
+| days_entitled | Jahresanspruch (Dezimal ok, z. B. 30 / 27,5) |
+| days_carried | Übertrag Vorjahr (Default 0) |
+| note | optional |
+
+**Rest:** `entitled + carried − genehmigte Urlaubstage (approved, type=vacation) im Jahr`.
+
+**`dg_time_absences`**
+
+| Feld | Regel |
+|------|--------|
+| contact_id | Mitarbeiter |
+| type | `vacation` \| `sick` \| `other` |
+| date_from, date_to | inklusiv; `from ≤ to` |
+| days_count | berechnete Werktage oder Kalendertage — **Z4b entscheidet Default: Werktage Mo–Fr ohne Feiertagslogik zuerst** (Feiertage Soft später) |
+| status | `requested` → `approved` \| `rejected` \| `cancelled` |
+| reason | Pflicht bei Antrag/Ablehnung |
+| document_ref | optional Attest (Pfad/ID Kontaktakte — keine neue Dokument-Engine) |
+| decided_by, decided_at | bei Freigabe/Ablehnung |
+| created_by, created_at | Audit |
+
+Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `requested` bis HR bestätigt (oder direkt `approved` wenn Spec-Flag — **Default: HR bestätigt**).
+
+#### Rechte
+
+| Aktion | Wer |
+|--------|-----|
+| Eigenen Urlaub beantragen | Stempel-Nutzer (`zeiterfassung` + canEdit) |
+| Eigenen Antrag zurückziehen (`cancelled`) solange `requested` | Antragsteller |
+| Freigeben / Ablehnen | `canViewTeam` |
+| Krankmeldung für anderen + Attest zuordnen | `canViewTeam` |
+| Anspruchstage pflegen | `canViewTeam` |
+| Team-Abwesenheitskalender lesen | `canViewTeam`; eigene Einträge: Stempel-Nutzer |
+
+#### Wirkung auf Soll/Ist (Z4e)
+
+- Genehmigte Abwesenheit an Tag T: **Soll = 0** (schlägt Schicht/Stammdaten/Kalender für diesen Tag)
+- Ist bleibt Stempel; Soft-Warnung „Abwesenheit genehmigt“ beim Stempeln
+- Monatsblatt: Spalte/Hinweis Abwesenheitstyp
+- **Nicht** in Z4: Entgeltfortzahlungs-Buchung, BUrlG-Rückstellung (Z5)
+
+#### UI-Skizze (Seiten)
+
+| Slug | Inhalt |
+|------|--------|
+| `zeiterfassung-urlaub` | Antrag + eigene Anträge + Restanspruch |
+| `zeiterfassung-abwesenheit` (Team) | Freigabe-Liste + Krank erfassen + Monatskalender |
+
+#### Serie Z4
+
+1. **Z4a** Spec ✅  
+2. **Z4b** Migration Entitlement + Absences + Repository  
+3. **Z4c** Urlaubsantrag + Freigabe-UI  
+4. **Z4d** Krankheit + Attest-Link + Team-Kalender  
+5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel  
+
+#### Abnahme Z4a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Eigenes Modell vs. Kalender-Absences | ✅ |
+| Workflow + Rechte | ✅ |
+| Anspruch in Tagen / Restformel | ✅ |
+| Kein Code in diesem Chat | ✅ |
+
+**Nicht:** Migration, UI, Rückstellung, Feiertagskalender DE.
+
+### Z4b — Migration + Repository
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Tabellen | entitlements + absences |
+| Service | CRUD/Anspruch Rest berechnen |
+| Nicht | UI-Workflow, Soll-Anbindung |
+
+### Z4c — Urlaub Antrag/Freigabe
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| UI | Antrag MA, Freigabe HR |
+| Nicht | Krankheit, Rückstellung |
+
+### Z4d — Krankheit + Team-Kalender
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Krank + Attest-Ref | HR |
+| Kalenderansicht | Monat Team |
+| Nicht | Z5 |
+
+### Z4e — Soll-Anbindung Abwesenheit
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| `TimeScheduleService` | genehmigt → Soll 0 |
+| Soft-Warnung Stempel | ja |
+| Nicht | Hard-Block |
+
+### Chat-Vorlage Z4
+
+```text
+Scope: Zeiterfassung Z4a laut docs/ZEITERFASSUNG-PLAN.md § Betrieb Phase 4
+Nur: Spec Urlaub/Krankheit (Modell, Rechte, Soll-Wirkung)
+Kein Code, keine Migration, kein Deploy.
+Nicht Z3-Code / Z5–Z6 neu einlesen.
+```
+
+Weitere: `Z4b` / `Z4c` / `Z4d` / `Z4e` analog.

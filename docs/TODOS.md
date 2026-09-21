@@ -49,7 +49,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
 - [x] **Zeiterfassung Phase 2** — Z2a–Z2e ✅
-- [ ] **Zeiterfassung Phase 3 Schichten** — token-sparend Z3a–Z3d (`ZEITERFASSUNG-PLAN.md`); **Z3a ✅** · weiter: `z3b`
+- [ ] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d; **Z3a ✅** · offen: `z3b`–`z3d`
+- [ ] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e; **Z4a ✅** · weiter: `z4b`
 
 ---
 
@@ -120,7 +121,8 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 |-------|------|
 | Multi-Firma Code + Betrieb MB1–MB4 | erledigt 2026-09-21 |
 | **Zeiterfassung Z2a–Z2e** | erledigt 2026-09-21 |
-| **Zeiterfassung Z3a–Z3d** (Schichten) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb Phase 3 · **Z3a ✅** |
+| **Zeiterfassung Z3a–Z3d** (Schichten) | Spec Z3a ✅ · Code offen `z3b` |
+| **Zeiterfassung Z4a–Z4e** (Urlaub/Krankheit) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb Phase 4 · **Z4a ✅** |
 
 ---
 
