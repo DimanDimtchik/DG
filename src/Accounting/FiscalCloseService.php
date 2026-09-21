@@ -6,8 +6,10 @@ declare(strict_types=1);
  */
 final class FiscalCloseService
 {
+    public const NA_STORE_KEY = 'fiscal_close_na';
+
     /**
-     * @return list<array{id: string, label: string, status: string, detail: string, href: string}>
+     * @return list<array{id: string, label: string, status: string, detail: string, href: string, allow_na?: bool, na_marked?: bool}>
      */
     public static function checklist(int $year): array
     {
@@ -23,6 +25,7 @@ final class FiscalCloseService
         $items[] = self::itemBalanceSheet($year);
         $items[] = self::itemUnbalancedVouchers($year);
         $items[] = self::itemBankOpen($year);
+        $items[] = self::itemVacationProvision($year);
 
         return $items;
     }
@@ -246,5 +249,137 @@ final class FiscalCloseService
                 : sprintf('%d Bankumsätze aus %d noch nicht zugeordnet.', $count, $year),
             'href' => '/app?page=buchhaltung-bankabgleich',
         ];
+    }
+
+    /**
+     * Z5d: Urlaubsrückstellung — ok bei Batch oder n. a.; sonst warn (blockiert Abschluss nicht).
+     *
+     * @return array{id: string, label: string, status: string, detail: string, href: string, allow_na?: bool, na_marked?: bool}
+     */
+    private static function itemVacationProvision(int $year): array
+    {
+        $href = '/app?page=zeiterfassung-rueckstellung&year=' . $year;
+        $label = 'Urlaubsrückstellung ' . $year;
+
+        $batchId = null;
+        if (class_exists('TimeProvisionService')) {
+            $batchId = TimeProvisionService::existingBatchId($year);
+        }
+
+        if ($batchId !== null && $batchId > 0) {
+            return [
+                'id' => 'time_provision',
+                'label' => $label,
+                'status' => 'ok',
+                'detail' => sprintf('Rückstellung gebucht (Journal-Batch #%d).', $batchId),
+                'href' => $href,
+            ];
+        }
+
+        if (self::isNaMarked('time_provision', $year)) {
+            $mark = self::naMark('time_provision', $year);
+            $note = trim((string) ($mark['note'] ?? ''));
+
+            return [
+                'id' => 'time_provision',
+                'label' => $label,
+                'status' => 'ok',
+                'detail' => $note !== ''
+                    ? 'Als n. a. markiert: ' . $note
+                    : 'Als n. a. markiert (keine CRM-Rückstellungsbuchung erforderlich).',
+                'href' => $href,
+                'na_marked' => true,
+            ];
+        }
+
+        return [
+            'id' => 'time_provision',
+            'label' => $label,
+            'status' => 'warn',
+            'detail' => 'Noch keine Rückstellungsbuchung für '
+                . $year
+                . ' — unter Zeiterfassung buchen oder hier als n. a. markieren (blockiert den Abschluss nicht).',
+            'href' => $href,
+            'allow_na' => true,
+        ];
+    }
+
+    public static function isNaMarked(string $itemId, int $year): bool
+    {
+        return self::naMark($itemId, $year) !== null;
+    }
+
+    /**
+     * @return array{note: string, at: string, by: int|null}|null
+     */
+    public static function naMark(string $itemId, int $year): ?array
+    {
+        $all = self::naStore();
+        $key = self::naKey($itemId, $year);
+        $row = $all[$key] ?? null;
+        if (!is_array($row)) {
+            return null;
+        }
+
+        return [
+            'note' => (string) ($row['note'] ?? ''),
+            'at' => (string) ($row['at'] ?? ''),
+            'by' => isset($row['by']) && $row['by'] !== null && $row['by'] !== ''
+                ? (int) $row['by']
+                : null,
+        ];
+    }
+
+    public static function markNa(string $itemId, int $year, string $note, ?int $userId): void
+    {
+        $itemId = preg_replace('/[^a-z0-9_]/', '', $itemId) ?? '';
+        if ($itemId === '' || $year < 2000 || $year > 2100) {
+            throw new InvalidArgumentException('Checklisten-Punkt oder Jahr ungültig.');
+        }
+        if ($itemId !== 'time_provision') {
+            throw new InvalidArgumentException('Nur Urlaubsrückstellung kann als n. a. markiert werden.');
+        }
+        $note = trim($note);
+        if (function_exists('mb_substr')) {
+            $note = mb_substr($note, 0, 255);
+        } else {
+            $note = substr($note, 0, 255);
+        }
+        $all = self::naStore();
+        $all[self::naKey($itemId, $year)] = [
+            'note' => $note,
+            'at' => date('c'),
+            'by' => $userId !== null && $userId > 0 ? $userId : null,
+        ];
+        SettingsStore::set(self::NA_STORE_KEY, $all);
+    }
+
+    public static function clearNa(string $itemId, int $year): void
+    {
+        $all = self::naStore();
+        $key = self::naKey($itemId, $year);
+        if (!isset($all[$key])) {
+            return;
+        }
+        unset($all[$key]);
+        SettingsStore::set(self::NA_STORE_KEY, $all);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function naStore(): array
+    {
+        if (!class_exists('SettingsStore')) {
+            return [];
+        }
+        $raw = SettingsStore::get(self::NA_STORE_KEY, []);
+
+        return is_array($raw) ? $raw : [];
+    }
+
+    private static function naKey(string $itemId, int $year): string
+    {
+        return $itemId . ':' . $year;
     }
 }

@@ -3191,9 +3191,12 @@ switch ($path) {
         ) {
             $closeYear = max(2000, (int) ($_POST['year'] ?? 0));
             $redirect = '/app?page=buchhaltung-jahresabschluss&year=' . $closeYear;
-            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::isAdmin($user)) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
                 Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
             } elseif (isset($_POST['fiscal_year_close'])) {
+                if (!RoleResolver::isAdmin($user)) {
+                    Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                } else {
                 try {
                     $res = FiscalYearService::closeYear($closeYear, (int) $user->id);
                     Flash::set('success', sprintf(
@@ -3205,12 +3208,45 @@ switch ($path) {
                 } catch (Throwable $e) {
                     Flash::set('error', 'Abschluss fehlgeschlagen: ' . $e->getMessage());
                 }
+                }
             } elseif (isset($_POST['fiscal_year_reopen'])) {
+                if (!RoleResolver::isAdmin($user)) {
+                    Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                } else {
                 try {
                     FiscalYearService::reopenYear($closeYear);
                     Flash::set('success', 'Abschluss ' . $closeYear . ' zurückgenommen.');
                 } catch (Throwable $e) {
                     Flash::set('error', 'Rücknahme fehlgeschlagen: ' . $e->getMessage());
+                }
+                }
+            } elseif (isset($_POST['fiscal_close_mark_na'])) {
+                try {
+                    if (!RoleResolver::canEdit($user)) {
+                        throw new RuntimeException('Keine Berechtigung.');
+                    }
+                    FiscalCloseService::markNa(
+                        (string) ($_POST['checklist_item'] ?? ''),
+                        $closeYear,
+                        (string) ($_POST['na_note'] ?? ''),
+                        (int) ($user->id ?? 0)
+                    );
+                    Flash::set('success', 'Checklisten-Punkt als n. a. markiert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            } elseif (isset($_POST['fiscal_close_clear_na'])) {
+                try {
+                    if (!RoleResolver::canEdit($user)) {
+                        throw new RuntimeException('Keine Berechtigung.');
+                    }
+                    FiscalCloseService::clearNa(
+                        (string) ($_POST['checklist_item'] ?? ''),
+                        $closeYear
+                    );
+                    Flash::set('success', 'n. a.-Markierung entfernt.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
                 }
             }
             header('Location: ' . $redirect, true, 302);

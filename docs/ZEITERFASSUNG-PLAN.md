@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–4 ✅** · Spec **Z3a–Z6a ✅** · **Z5b–Z5c Code ✅** · offen: Z5d, Z6b+  
+> Status: **Phase 1–5 ✅** · Spec **Z3a–Z6a ✅** · offen: Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -169,9 +169,9 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 ### Phase 5 — Rückstellungen & Buchhaltung
 
-- [~] **Urlaubsrückstellung** (Buchungssätze, SKR-Konten — mit Steuerberater abstimmen) — Preview Z5b + Buchung Z5c ✅; Checkliste Z5d offen
-- [~] **Überstunden-Rückstellung** (optional) — Flag + Preview Z5b + Buchung Z5c ✅
-- [ ] Anbindung an Jahresabschluss-Checkliste
+- [x] **Urlaubsrückstellung** — Preview Z5b + Buchung Z5c + Checkliste Z5d ✅
+- [x] **Überstunden-Rückstellung** (optional) — Flag + Preview Z5b + Buchung Z5c ✅
+- [x] Anbindung an Jahresabschluss-Checkliste — Z5d ✅
 
 ### Phase 6 — Lohn-Export (ohne eigene Abrechnung)
 
@@ -273,7 +273,7 @@ Abweichung nur per explizitem Chat-Befehl.
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
-| **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5c` ✅ · weiter `z5d` |
+| **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5d` ✅ |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
@@ -767,7 +767,7 @@ Buchungstext: `Urlaubsrückstellung {Y} / Stichtag {date} / Berechnung CRM`.
 1. **Z5a** Spec ✅  
 2. **Z5b** Settings + Berechnungs-Preview (+ CSV) ✅  
 3. **Z5c** Buchungsentwurf → ManualLedger nach Bestätigung ✅  
-4. **Z5d** Jahresabschluss-Checklisten-Punkt  
+4. **Z5d** Jahresabschluss-Checklisten-Punkt ✅  
 
 #### Abnahme Z5a
 
@@ -799,14 +799,18 @@ Buchungstext: `Urlaubsrückstellung {Y} / Stichtag {date} / Berechnung CRM`.
 | Ledger | `ManualLedgerService::createBatch` source=`time_provision` |
 | Schutz | Checkbox-Bestätigung · kein Doppel-Batch/Jahr · kein Cron |
 
-**Nicht:** stilles Cron-Buchen, Checkliste JA (Z5d).
+**Nicht:** Checkliste JA (Z5d ✅).
 
-### Z5d — Jahresabschluss-Checkliste
+### Z5d — Jahresabschluss-Checkliste ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Checklist-Item | ok wenn Batch für Jahr existiert oder „n.a.“ gesetzt |
-| Nicht | Jahr zwingend blockieren ohne Spec-Flag (Default: **warn**, nicht error) |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Checklist-Item | `Urlaubsrückstellung {Y}` in `FiscalCloseService` |
+| ok | Batch `time_provision` **oder** n. a. markiert |
+| Default | **warn** (blockiert Abschluss nicht) |
+| UI | n. a. setzen/aufheben auf Jahresabschluss-Seite |
+
+**Nicht:** Hard-Block ohne Spec-Flag.
 
 ### Chat-Vorlage Z5
 
