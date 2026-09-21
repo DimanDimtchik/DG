@@ -3442,6 +3442,76 @@ switch ($path) {
             exit;
         }
 
+        // POST: Abwesenheit Krankheit/Team (Z4d)
+        if (
+            $page === 'zeiterfassung-abwesenheit'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['absence_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-abwesenheit')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-abwesenheit', true, 302);
+                exit;
+            }
+            $absAction = (string) ($_POST['absence_action'] ?? '');
+            $redirectMonth = TimeMonthReportService::normalizeYearMonth(
+                isset($_POST['month'])
+                    ? (string) $_POST['month']
+                    : (isset($_GET['month']) ? (string) $_GET['month'] : null)
+            );
+            try {
+                if ($absAction === 'request_sick') {
+                    $res = TimeAbsenceService::requestOwnSick(
+                        $user,
+                        (string) ($_POST['date_from'] ?? ''),
+                        (string) ($_POST['date_to'] ?? ''),
+                        (string) ($_POST['reason'] ?? ''),
+                        trim((string) ($_POST['document_ref'] ?? '')) !== ''
+                            ? (string) $_POST['document_ref']
+                            : null
+                    );
+                    Flash::set('success', $res['message']);
+                } elseif ($absAction === 'cancel') {
+                    TimeAbsenceService::cancelOwn($user, (int) ($_POST['absence_id'] ?? 0));
+                    Flash::set('success', 'Meldung zurückgezogen.');
+                } elseif ($absAction === 'record') {
+                    $res = TimeAbsenceService::recordApproved(
+                        $user,
+                        (int) ($_POST['contact_id'] ?? 0),
+                        (string) ($_POST['type'] ?? 'sick'),
+                        (string) ($_POST['date_from'] ?? ''),
+                        (string) ($_POST['date_to'] ?? ''),
+                        (string) ($_POST['reason'] ?? ''),
+                        trim((string) ($_POST['document_ref'] ?? '')) !== ''
+                            ? (string) $_POST['document_ref']
+                            : null
+                    );
+                    Flash::set('success', $res['message']);
+                } elseif ($absAction === 'approve') {
+                    $res = TimeAbsenceService::approve($user, (int) ($_POST['absence_id'] ?? 0));
+                    Flash::set('success', $res['message']);
+                } elseif ($absAction === 'reject') {
+                    TimeAbsenceService::reject(
+                        $user,
+                        (int) ($_POST['absence_id'] ?? 0),
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set('success', 'Meldung abgelehnt.');
+                } else {
+                    Flash::set('error', 'Unbekannte Aktion.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header(
+                'Location: /app?page=zeiterfassung-abwesenheit&month=' . rawurlencode($redirectMonth),
+                true,
+                302
+            );
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -5334,6 +5404,41 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-urlaub';
             $title = 'Urlaub';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'zeiterfassung-abwesenheit' && MenuRegistry::canAccess($user, 'zeiterfassung-abwesenheit')) {
+            MigrationRunner::runPending();
+            $timeAbsCanTeam = TimeClockService::canViewTeam($user);
+            $timeAbsYearMonth = TimeMonthReportService::normalizeYearMonth(
+                isset($_GET['month']) ? (string) $_GET['month'] : null
+            );
+            $timeAbsContactId = ContactRepository::findStaffContactIdForUser($user);
+            $timeAbsContactLabel = '';
+            $timeAbsOwnList = [];
+            if ($timeAbsContactId !== null && $timeAbsContactId > 0) {
+                $sc = ContactRepository::findById($timeAbsContactId);
+                $timeAbsContactLabel = $sc !== null
+                    ? (trim($sc->displayName) !== ''
+                        ? trim($sc->displayName)
+                        : trim($sc->firstName . ' ' . $sc->lastName))
+                    : '';
+                $timeAbsOwnList = TimeAbsenceRepository::listForContact(
+                    $timeAbsContactId,
+                    (int) substr($timeAbsYearMonth, 0, 4)
+                );
+            }
+            $timeAbsStaffOptions = $timeAbsCanTeam ? TimeMonthReportService::staffOptions() : [];
+            $timeAbsPending = [];
+            $timeAbsCalendar = null;
+            if ($timeAbsCanTeam) {
+                foreach (TimeAbsenceRepository::listByStatus('requested', 200) as $pend) {
+                    if ((string) ($pend['type'] ?? '') !== 'vacation') {
+                        $timeAbsPending[] = $pend;
+                    }
+                }
+                $timeAbsCalendar = TimeAbsenceService::monthCalendar($timeAbsYearMonth, $timeAbsStaffOptions);
+            }
+            $contentTemplate = 'modules/zeiterfassung-abwesenheit';
+            $title = 'Abwesenheit';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schichten' && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')) {
             MigrationRunner::runPending();
             $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
@@ -5920,6 +6025,14 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeVacEntContactId = $timeVacEntContactId ?? null;
         $timeVacEntBalance = $timeVacEntBalance ?? null;
         $timeVacCanTeam = $timeVacCanTeam ?? false;
+        $timeAbsContactId = $timeAbsContactId ?? null;
+        $timeAbsContactLabel = $timeAbsContactLabel ?? '';
+        $timeAbsOwnList = $timeAbsOwnList ?? [];
+        $timeAbsPending = $timeAbsPending ?? [];
+        $timeAbsStaffOptions = $timeAbsStaffOptions ?? [];
+        $timeAbsCanTeam = $timeAbsCanTeam ?? false;
+        $timeAbsYearMonth = $timeAbsYearMonth ?? date('Y-m');
+        $timeAbsCalendar = $timeAbsCalendar ?? null;
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6305,6 +6418,14 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeVacEntContactId',
             'timeVacEntBalance',
             'timeVacCanTeam',
+            'timeAbsContactId',
+            'timeAbsContactLabel',
+            'timeAbsOwnList',
+            'timeAbsPending',
+            'timeAbsStaffOptions',
+            'timeAbsCanTeam',
+            'timeAbsYearMonth',
+            'timeAbsCalendar',
             'recipeList',
             'recipeForm',
             'recipeId',

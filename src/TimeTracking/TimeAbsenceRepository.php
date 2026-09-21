@@ -123,6 +123,41 @@ final class TimeAbsenceRepository
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listOverlappingRange(string $from, string $to, ?string $status = null, int $limit = 500): array
+    {
+        if (!self::tableReady()
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
+            return [];
+        }
+        MigrationRunner::runPending();
+        $limit = max(1, min(1000, $limit));
+        $sql = 'SELECT * FROM dg_time_absences
+                WHERE date_from <= :to AND date_to >= :from';
+        $params = ['from' => $from, 'to' => $to];
+        if ($status !== null) {
+            if (!in_array($status, self::STATUSES, true)) {
+                return [];
+            }
+            $sql .= ' AND status = :st';
+            $params['st'] = $status;
+        }
+        $sql .= ' ORDER BY date_from ASC, contact_id ASC, id ASC LIMIT ' . $limit;
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            if (is_array($row)) {
+                $out[] = self::mapRow($row);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Genehmigte Abwesenheit an einem Kalendertag (Z4e-Vorbereitung).
      *
      * @return array<string, mixed>|null

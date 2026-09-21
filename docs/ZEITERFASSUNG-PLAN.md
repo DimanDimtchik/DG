@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–3 ✅** · Spec **Z3a–Z6a ✅** · **Z4b–Z4c Code ✅** · offen: Z4d–e, Z5b–d, Z6b+  
+> Status: **Phase 1–3 ✅** · Spec **Z3a–Z6a ✅** · **Z4b–Z4d Code ✅** · offen: Z4e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -164,8 +164,8 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 - [x] Urlaubsantrag → Genehmigung Workflow — Z4c ✅
 - [x] Urlaubskonto (Tage/Minuten, Jahresanspruch) — Entitlement Z4b + UI Z4c ✅
-- [ ] Krankmeldung, Verknüpfung Attest-Upload
-- [ ] Kalenderansicht Abwesenheiten (Team)
+- [x] Krankmeldung, Verknüpfung Attest-Upload — Z4d (Ref auf Kontaktakte) ✅
+- [x] Kalenderansicht Abwesenheiten (Team) — Z4d ✅
 
 ### Phase 5 — Rückstellungen & Buchhaltung
 
@@ -272,7 +272,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
-| **Z4** | Urlaub & Krankheit | `z4a`–`z4c` ✅ · weiter `z4d` |
+| **Z4** | Urlaub & Krankheit | `z4a`–`z4d` ✅ · weiter `z4e` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
@@ -615,7 +615,7 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 1. **Z4a** Spec ✅  
 2. **Z4b** Migration Entitlement + Absences + Repository ✅  
 3. **Z4c** Urlaubsantrag + Freigabe-UI ✅  
-4. **Z4d** Krankheit + Attest-Link + Team-Kalender  
+4. **Z4d** Krankheit + Attest-Link + Team-Kalender ✅  
 5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel  
 
 #### Abnahme Z4a
@@ -651,13 +651,16 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 
 **Nicht:** Krankheit (Z4d), Soll=0 (Z4e), Rückstellung.
 
-### Z4d — Krankheit + Team-Kalender
+### Z4d — Krankheit + Team-Kalender ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Krank + Attest-Ref | HR |
-| Kalenderansicht | Monat Team |
-| Nicht | Z5 |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| UI | `/app?page=zeiterfassung-abwesenheit` |
+| Service | `TimeAbsenceService` |
+| MA | Krankmeldung `requested` + Attest-Ref |
+| HR | Erfassung `approved`, Bestätigung, Monatskalender U/K/S |
+
+**Nicht:** Soll=0 (Z4e), Rückstellung (Z5).
 
 ### Z4e — Soll-Anbindung Abwesenheit
 

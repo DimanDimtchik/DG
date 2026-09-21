@@ -522,6 +522,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-urlaub') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);
         }
+        if ($slug === 'zeiterfassung-abwesenheit') {
+            return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {
