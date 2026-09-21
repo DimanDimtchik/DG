@@ -1,0 +1,30 @@
+---
+description: Website Block Advanced/Content v2 — Spec-Phasen W1–W5, token-sparend
+globs:
+  - docs/WEBSITE-BLOCK-ADVANCED-V2.md
+  - src/Website/WebsiteBlockAdvanced.php
+  - src/Website/WebsiteContent.php
+  - assets/js/website-builder.js
+  - assets/js/website-preview-frame-bridge.js
+  - views/website-public.php
+alwaysApply: false
+---
+
+# Website Block Advanced v2 (Agent)
+
+**Source of Truth:** [`docs/WEBSITE-BLOCK-ADVANCED-V2.md`](docs/WEBSITE-BLOCK-ADVANCED-V2.md)
+
+## Pflicht
+
+1. Nur Phase `W1`–`W5`, wenn der Nutzer sie nennt.
+2. Darstellung (Advanced) und Inhalt (Inspector) nicht vermischen.
+3. Kein freies Custom-CSS; Allowlist + Selftest.
+4. Kein Rezeptur-Scope in demselben Chat.
+5. Kein Deploy/Commit, außer der Nutzer verlangt es.
+
+## Chat-Vorlage
+
+```text
+Scope: Website W1 laut docs/WEBSITE-BLOCK-ADVANCED-V2.md
+Nur genannte Dateien. Selftest grün. Kein Deploy.
+```

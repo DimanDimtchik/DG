@@ -1,0 +1,32 @@
+---
+description: Rezeptur-Modul — Spec ist Source of Truth; token-sparend, phasenweise
+globs:
+  - docs/REZEPTUR-MODUL.md
+  - **/Recipe*
+  - **/Rezeptur*
+  - **/recipe*
+alwaysApply: false
+---
+
+# Rezeptur-Modul (Agent)
+
+**Source of Truth:** [`docs/REZEPTUR-MODUL.md`](docs/REZEPTUR-MODUL.md)
+
+## Pflicht
+
+1. Phase nur ausführen, wenn der Nutzer explizit `Rezeptur R0` … `R7` (oder gleichwertig) nennt.
+2. Nur Dateien anfassen, die in der Spec für **diese Phase** erlaubt sind.
+3. Keine PDF erneut einlesen; keine SAP/Odoo-Recherche; kein React Flow vor R7.
+4. Kein Deploy/Commit, außer der Nutzer verlangt es.
+5. GoBD: keine rückwirkende Änderung gebuchter Snapshots.
+
+## Chat-Erwartung
+
+Nutzer schreibt idealerweise:
+
+```text
+Scope: Rezeptur R1 laut docs/REZEPTUR-MODUL.md
+Nur: Migration + Repository + eine View. Kein Graph. Kein Deploy.
+```
+
+Website-Advanced-Arbeit gehört **nicht** hierher → [`docs/WEBSITE-BLOCK-ADVANCED-V2.md`](docs/WEBSITE-BLOCK-ADVANCED-V2.md).
