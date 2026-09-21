@@ -1,0 +1,49 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.590
+In diesem Video bearbeiten wir ein Bild in Media. Start ist wieder das Dashboard.
+
+00:00:06.640 --> 00:00:08.670
+Öffnen Sie Media.
+
+00:00:08.720 --> 00:00:14.830
+In der Liste wählen Sie Bearbeiten bei dem gewünschten Bild — oder Hochladen für eine neue Datei.
+
+00:00:14.880 --> 00:00:24.830
+Links sehen Sie die Vorschau und technische Angaben wie Abmessungen, Größe und Format. Darunter die Optionen für Logo und Favicon.
+
+00:00:24.880 --> 00:00:33.550
+Mit Als CRM-Logo in Kopfzeile erscheint dieses Bild in der CRM-Kopfzeile und auf der Login-Seite — nur wenn Sie den Haken setzen.
+
+00:00:33.600 --> 00:00:41.030
+Als Favicon für Browser erzeugen Sie die kleinen Icons für Browser-Tabs — ebenfalls nur bei aktivierter Option.
+
+00:00:41.080 --> 00:00:54.030
+Rechts beginnen die Metadaten: Titel für die Liste, Alt-Text für Barrierefreiheit und Quelle oder Rechte — Freitext, URL oder HTML. Speichern Sie mit Metadaten speichern.
+
+00:00:54.080 --> 00:00:58.630
+Der Titel erscheint in der Media-Liste und hilft beim Wiederfinden.
+
+00:00:58.680 --> 00:01:04.350
+Der Alt-Text beschreibt das Bild für Screenreader und Suchmaschinen — kurz und sachlich.
+
+00:01:04.400 --> 00:01:13.310
+Unter Quelle und Rechte dokumentieren Sie Herkunft oder Lizenz. In der Liste sehen Sie später nur eine Klartext-Vorschau.
+
+00:01:13.360 --> 00:01:26.910
+Darunter Größe und Format: Breite, Höhe und Zielformat — zum Beispiel WebP. Mit Als neues Bild anlegen bleibt das Original erhalten; es entsteht ein zusätzlicher Eintrag in der Liste.
+
+00:01:26.960 --> 00:01:34.590
+Zuschneiden öffnet einen Dialog. Auch hier entsteht ein neues Bild — das Original bleibt unverändert.
+
+00:01:34.640 --> 00:01:47.230
+Hintergrund entfernen oder Freistellen läuft kostenlos im Browser. Beim ersten Mal kann das Laden etwas dauern. Ergebnis ist wieder ein neues, freigestelltes Bild.
+
+00:01:47.280 --> 00:01:57.910
+Ganz unten können Sie das Bild löschen. Prüfen Sie vorher die Verwendung — sonst entfernen Sie eine Datei, die noch als Logo oder auf der Website hängt.
+
+00:01:57.960 --> 00:02:07.270
+Unter Verwendung sehen Sie, wo die Datei im CRM referenziert ist. Mit Verwendung scannen aktualisieren Sie diese Liste.
+
+00:02:07.320 --> 00:02:20.990
+Kurz gesagt: links Vorschau und Logo-Optionen, rechts Metadaten, Größe, Zuschnitt, Freistellen und Löschen. Zurück zur Liste über den Link oben. Viel Erfolg!

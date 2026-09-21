@@ -1,0 +1,44 @@
+{
+  "title": "Bankabgleich — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 100.9,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.2
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 5.56
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 11.2
+    },
+    {
+      "key": "camt",
+      "duration_sec": 10.32
+    },
+    {
+      "key": "mt940",
+      "duration_sec": 14.36
+    },
+    {
+      "key": "offen",
+      "duration_sec": 12.76
+    },
+    {
+      "key": "geister",
+      "duration_sec": 12.16
+    },
+    {
+      "key": "zugeordnet",
+      "duration_sec": 9.76
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 18.6
+    }
+  ]
+}

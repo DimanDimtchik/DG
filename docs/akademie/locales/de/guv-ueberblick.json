@@ -1,0 +1,43 @@
+{
+  "video_slug": "guv-ueberblick",
+  "locale": "de",
+  "title": "Bilanz und GuV — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir Bilanz und Gewinn- und Verlustrechnung. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-auswertungen",
+      "narration": "Öffnen Sie die Kachel Bilanz und GuV — oder denselben Punkt unter Buchhaltung im Menü."
+    },
+    {
+      "key": "zweck",
+      "screenshot": "storage/media/training/guv/guv-page.png",
+      "mode": "overview",
+      "narration": "Diese Auswertung entsteht aus Ihren Buchungen im Journal. Die Gewinn- und Verlustrechnung zeigt Erträge und Aufwendungen. Die Bilanz zeigt Vermögen und Kapital."
+    },
+    {
+      "key": "filter",
+      "screenshot": "storage/media/training/guv/guv-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/guv/guv-page-regions.json",
+      "field": "filter",
+      "narration": "Wählen Sie Zeitraum und Report: GuV für das Ergebnis, Bilanz für Aktiva und Passiva. Dann Anzeigen."
+    },
+    {
+      "key": "guv",
+      "screenshot": "storage/media/training/guv/guv-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/guv/guv-page-regions.json",
+      "field": "report",
+      "narration": "Bei der GuV sehen Sie Erträge, Aufwendungen und das Ergebnis darunter. Über Drucken speichern Sie die Auswertung als PDF. Viel Erfolg!"
+    }
+  ]
+}

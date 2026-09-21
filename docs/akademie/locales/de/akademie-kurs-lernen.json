@@ -1,0 +1,61 @@
+{
+  "video_slug": "akademie-kurs-lernen",
+  "locale": "de",
+  "title": "Akademie — Kurs lernen",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir, wie Sie einen Kurs in der Akademie absolvieren. Start ist wieder das Dashboard."
+    },
+    {
+      "key": "nav-akademie",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "akademie",
+      "narration": "Öffnen Sie die Akademie über die Kachel oder das Menü."
+    },
+    {
+      "key": "katalog-open",
+      "screenshot": "storage/media/training/akademie/akademie-katalog.png",
+      "mode": "overview",
+      "narration": "Wählen Sie im Katalog einen Kurs — oder öffnen Sie ihn unter Meine Schulungen, wenn er Ihnen schon zugewiesen ist."
+    },
+    {
+      "key": "regeln",
+      "screenshot": "storage/media/training/akademie/akademie-kurs-regeln.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/akademie/akademie-kurs-regeln-regions.json",
+      "field": "rules",
+      "narration": "Beim ersten Öffnen erscheinen die Schulungsregeln. Lesen Sie sie, setzen Sie den Haken und klicken Sie auf Schulung starten. Ohne Bestätigung kommen Sie nicht zu den Videos."
+    },
+    {
+      "key": "module",
+      "screenshot": "storage/media/training/akademie/akademie-kurs-module.png",
+      "mode": "overview",
+      "narration": "Danach sehen Sie die Module des Kurses — also die einzelnen Videos. Oben steht Ihr Fortschritt. Mit Modul öffnen starten Sie ein Video."
+    },
+    {
+      "key": "player",
+      "screenshot": "storage/media/training/akademie/akademie-modul-player.png",
+      "mode": "overview",
+      "narration": "Im Player sehen Sie das Video mit Untertiteln. Die Wiedergabe zählt nur, solange das Fenster im Blick ist. Schneller als zweifache Geschwindigkeit gilt nicht für den Fortschritt."
+    },
+    {
+      "key": "abschliessen",
+      "screenshot": "storage/media/training/akademie/akademie-modul-player.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/akademie/akademie-modul-player-regions.json",
+      "field": "complete",
+      "narration": "Wenn Sie genug gesehen haben, klicken Sie auf Modul abschließen. Danach geht es zurück zum Kurs — und weiter zum nächsten Video. Am Ende prüft die Personalabteilung bei Bedarf das Zertifikat."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/akademie/akademie-kurs-module.png",
+      "mode": "overview",
+      "narration": "Kurz gesagt: Kurs öffnen, Regeln bestätigen, Module der Reihe nach ansehen und abschließen. So nutzen Sie die Akademie richtig. Viel Erfolg beim Lernen!"
+    }
+  ]
+}

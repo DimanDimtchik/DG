@@ -122,49 +122,65 @@
 
   if (completeBtn) {
     completeBtn.addEventListener('click', function () {
-      if (!sessionUuid) {
-        showMessage('Bitte warten — Sitzung wird gestartet …', 'info');
-        return;
-      }
-      if (!cfg.hasVideo && cfg.durationSec) {
-        var chunk = 30;
-        for (var t = 0; t < cfg.durationSec; t += chunk) {
-          sendHeartbeat(Math.min(chunk, cfg.durationSec - t));
+      function postComplete() {
+        if (!sessionUuid) {
+          showMessage('Bitte warten — Sitzung wird gestartet …', 'info');
+          return startSession().then(function () {
+            return postComplete();
+          });
         }
-      } else {
-        sendHeartbeat(5);
+        if (!cfg.hasVideo && cfg.durationSec) {
+          var chunk = 30;
+          for (var t = 0; t < cfg.durationSec; t += chunk) {
+            sendHeartbeat(Math.min(chunk, cfg.durationSec - t));
+          }
+        } else {
+          sendHeartbeat(5);
+        }
+        var body = new FormData();
+        body.append('_csrf', csrf);
+        body.append('session_uuid', sessionUuid);
+        return fetch(apiUrl + '?action=complete', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: body,
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (result) {
+            if (!result.success) {
+              var msg = (result && result.message) || 'Abschluss fehlgeschlagen.';
+              // Nach SQL-/Netzfehler: neue Sitzung und einmal erneut versuchen
+              if (/sitzung nicht gefunden/i.test(msg) && !completeBtn.dataset.retrying) {
+                completeBtn.dataset.retrying = '1';
+                sessionUuid = '';
+                return startSession().then(function () {
+                  return postComplete();
+                }).finally(function () {
+                  delete completeBtn.dataset.retrying;
+                });
+              }
+              showMessage(msg, 'error');
+              return;
+            }
+            var data = result.data || {};
+            if (data.completed) {
+              showMessage('Modul abgeschlossen.', 'success');
+              setTimeout(function () {
+                window.location.href = completeBtn.closest('.dg-academy-player-wrap')
+                  ? '/app?page=akademie&view=kurs&slug=' + encodeURIComponent(new URLSearchParams(window.location.search).get('slug') || '')
+                  : '/app?page=akademie&view=meine';
+              }, 800);
+            } else {
+              showMessage('Noch nicht ausreichend angesehen. Bitte Modul vollständig durcharbeiten.', 'warning');
+            }
+          })
+          .catch(function () {
+            showMessage('Netzwerkfehler.', 'error');
+          });
       }
-      var body = new FormData();
-      body.append('_csrf', csrf);
-      body.append('session_uuid', sessionUuid);
-      fetch(apiUrl + '?action=complete', {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: body,
-      })
-        .then(function (res) {
-          return res.json();
-        })
-        .then(function (result) {
-          if (!result.success) {
-            showMessage((result && result.message) || 'Abschluss fehlgeschlagen.', 'error');
-            return;
-          }
-          var data = result.data || {};
-          if (data.completed) {
-            showMessage('Modul abgeschlossen.', 'success');
-            setTimeout(function () {
-              window.location.href = completeBtn.closest('.dg-academy-player-wrap')
-                ? '/app?page=akademie&view=kurs&slug=' + encodeURIComponent(new URLSearchParams(window.location.search).get('slug') || '')
-                : '/app?page=akademie&view=meine';
-            }, 800);
-          } else {
-            showMessage('Noch nicht ausreichend angesehen. Bitte Modul vollständig durcharbeiten.', 'warning');
-          }
-        })
-        .catch(function () {
-          showMessage('Netzwerkfehler.', 'error');
-        });
+      postComplete();
     });
   }
 })();

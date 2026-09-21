@@ -1,0 +1,32 @@
+{
+  "title": "Manuelle Buchungen — Erfassen",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 55.8,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.44
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 2.64
+    },
+    {
+      "key": "formular",
+      "duration_sec": 7.96
+    },
+    {
+      "key": "kopf",
+      "duration_sec": 7.76
+    },
+    {
+      "key": "zeilen",
+      "duration_sec": 13.92
+    },
+    {
+      "key": "speichern",
+      "duration_sec": 17.12
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "title": "Akademie — Kurs lernen",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 81.8,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 8.44
+    },
+    {
+      "key": "nav-akademie",
+      "duration_sec": 3.92
+    },
+    {
+      "key": "katalog-open",
+      "duration_sec": 7.2
+    },
+    {
+      "key": "regeln",
+      "duration_sec": 12.48
+    },
+    {
+      "key": "module",
+      "duration_sec": 10.44
+    },
+    {
+      "key": "player",
+      "duration_sec": 12.92
+    },
+    {
+      "key": "abschliessen",
+      "duration_sec": 14.0
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 12.4
+    }
+  ]
+}

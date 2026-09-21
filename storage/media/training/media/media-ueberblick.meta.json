@@ -1,0 +1,28 @@
+{
+  "title": "Media — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 51.4,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 10.64
+    },
+    {
+      "key": "nav-media",
+      "duration_sec": 4.8
+    },
+    {
+      "key": "liste",
+      "duration_sec": 10.64
+    },
+    {
+      "key": "aktionen",
+      "duration_sec": 13.48
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 11.88
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "width": 1920,
-  "height": 1542,
+  "height": 1569,
   "tiles": [
     {
       "x": 515,
@@ -42,7 +42,7 @@
       "x": 515,
       "y": 322,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Akademie",
       "description": "",
       "slug": "akademie"
@@ -51,7 +51,7 @@
       "x": 795,
       "y": 322,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Artikel & Leistungen",
       "description": "Artikel- und Leistungskatalog pflegen.",
       "slug": "artikel-leistungen"
@@ -60,7 +60,7 @@
       "x": 1074,
       "y": 322,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Lager",
       "description": "Lagerbestände, Bewegungen aus Belegen und Inventur.",
       "slug": "lager"
@@ -69,50 +69,50 @@
       "x": 1354,
       "y": 322,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Support-Freigabe",
-      "description": "",
+      "description": "Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional Bildschirm-Zuschauen.",
       "slug": "support-freigabe"
     },
     {
       "x": 515,
-      "y": 485,
+      "y": 505,
       "w": 262,
-      "h": 144,
-      "label": "Bilder",
-      "description": "Medien, Logos und Bilder verwalten.",
+      "h": 164,
+      "label": "Media",
+      "description": "Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.",
       "slug": "bilder"
     },
     {
       "x": 795,
-      "y": 485,
+      "y": 505,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Konten",
       "description": "Kontenrahmen durchsuchen und Kontenhinweise einsehen.",
       "slug": "buchhaltung-konten"
     },
     {
       "x": 1074,
-      "y": 485,
+      "y": 505,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Belege",
-      "description": "Belege erfassen mit Steuerfeldern und Kontenzuordnung.",
+      "description": "Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.",
       "slug": "buchhaltung-belege"
     },
     {
       "x": 1354,
-      "y": 485,
+      "y": 505,
       "w": 262,
-      "h": 144,
+      "h": 164,
       "label": "Überweisungen",
       "description": "Überweisungen vorbereiten mit QR-Code und Fotovorlage.",
       "slug": "buchhaltung-ueberweisungen"
     },
     {
       "x": 515,
-      "y": 647,
+      "y": 687,
       "w": 262,
       "h": 164,
       "label": "Kontenübersicht",
@@ -121,7 +121,7 @@
     },
     {
       "x": 795,
-      "y": 647,
+      "y": 687,
       "w": 262,
       "h": 164,
       "label": "Offene Posten",
@@ -130,7 +130,7 @@
     },
     {
       "x": 1074,
-      "y": 647,
+      "y": 687,
       "w": 262,
       "h": 164,
       "label": "Kassenbuch",
@@ -139,7 +139,7 @@
     },
     {
       "x": 1354,
-      "y": 647,
+      "y": 687,
       "w": 262,
       "h": 164,
       "label": "Manuelle Buchungen",
@@ -148,7 +148,7 @@
     },
     {
       "x": 515,
-      "y": 829,
+      "y": 870,
       "w": 262,
       "h": 144,
       "label": "Bilanz & GuV",
@@ -157,25 +157,25 @@
     },
     {
       "x": 795,
-      "y": 829,
+      "y": 870,
       "w": 262,
       "h": 144,
       "label": "BWA",
-      "description": "",
+      "description": "Betriebswirtschaftliche Auswertung je Zeitraum.",
       "slug": "buchhaltung-bwa"
     },
     {
       "x": 1074,
-      "y": 829,
+      "y": 870,
       "w": 262,
       "h": 144,
       "label": "SuSa",
-      "description": "",
+      "description": "Summen- und Saldenliste je Geschäftsjahr.",
       "slug": "buchhaltung-susa"
     },
     {
       "x": 1354,
-      "y": 829,
+      "y": 870,
       "w": 262,
       "h": 144,
       "label": "Bankabgleich",
@@ -184,7 +184,7 @@
     },
     {
       "x": 515,
-      "y": 992,
+      "y": 1032,
       "w": 262,
       "h": 164,
       "label": "Steuerberater-Export",
@@ -193,7 +193,7 @@
     },
     {
       "x": 795,
-      "y": 992,
+      "y": 1032,
       "w": 262,
       "h": 164,
       "label": "UStVA",
@@ -202,7 +202,7 @@
     },
     {
       "x": 1074,
-      "y": 992,
+      "y": 1032,
       "w": 262,
       "h": 164,
       "label": "Jahresabschluss",
@@ -211,7 +211,7 @@
     },
     {
       "x": 1354,
-      "y": 992,
+      "y": 1032,
       "w": 262,
       "h": 164,
       "label": "Seiten",
@@ -220,7 +220,7 @@
     },
     {
       "x": 515,
-      "y": 1174,
+      "y": 1214,
       "w": 262,
       "h": 144,
       "label": "Formulare",
@@ -229,7 +229,7 @@
     },
     {
       "x": 795,
-      "y": 1174,
+      "y": 1214,
       "w": 262,
       "h": 144,
       "label": "Statistik",
@@ -238,7 +238,7 @@
     },
     {
       "x": 1074,
-      "y": 1174,
+      "y": 1214,
       "w": 262,
       "h": 144,
       "label": "Menü",
@@ -247,7 +247,7 @@
     },
     {
       "x": 1354,
-      "y": 1174,
+      "y": 1214,
       "w": 262,
       "h": 144,
       "label": "Kopf & Fuß",
@@ -256,7 +256,7 @@
     },
     {
       "x": 515,
-      "y": 1336,
+      "y": 1377,
       "w": 262,
       "h": 144,
       "label": "Design",
@@ -265,7 +265,7 @@
     },
     {
       "x": 795,
-      "y": 1336,
+      "y": 1377,
       "w": 262,
       "h": 144,
       "label": "Einstellungen",

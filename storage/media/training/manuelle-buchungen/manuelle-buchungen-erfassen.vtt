@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.390
+In diesem Video erfassen wir eine manuelle Buchung. Start wieder im Dashboard.
+
+00:00:06.440 --> 00:00:09.030
+Öffnen Sie Manuelle Buchungen.
+
+00:00:09.080 --> 00:00:16.990
+Unter Neue Buchung legen Sie den Buchungssatz an. Sie brauchen Schreibrecht — sonst erscheint dieses Formular nicht.
+
+00:00:17.040 --> 00:00:24.750
+Tragen Sie Datum und eine kurze Beschreibung ein — zum Beispiel Umbuchung Privatanteil oder Korrektur Kontierung.
+
+00:00:24.800 --> 00:00:38.670
+In den Zeilen: Konto und Gegenkonto aus dem Kontenrahmen, Soll oder Haben, Betrag, optional BU-Schlüssel und Text. Mehrere Zeilen sind möglich — die Summe Soll muss der Summe Haben entsprechen.
+
+00:00:38.720 --> 00:00:55.790
+Speichern Sie die Buchung. Ist sie nicht ausgeglichen oder das Jahr abgeschlossen, erscheint eine Fehlermeldung. Nach dem Speichern steht der Satz in der Liste darunter — und im Journal für Auswertungen und den Steuerberater-Export. Viel Erfolg!

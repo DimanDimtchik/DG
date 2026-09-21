@@ -1,0 +1,28 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.150
+In diesem Video zeigen wir den Bankabgleich. Start ist das Dashboard.
+
+00:00:06.200 --> 00:00:11.710
+Öffnen Sie die Kachel Bankabgleich — oder denselben Punkt unter Buchhaltung im Menü.
+
+00:00:11.760 --> 00:00:22.910
+Hier lesen Sie Ihren elektronischen Kontoauszug ein. Das CRM legt die Umsätze an und versucht, passende offene Belege automatisch zuzuordnen.
+
+00:00:22.960 --> 00:00:33.230
+Oben importieren Sie den CAMT-XML-Kontoauszug Ihrer Bank — das gängige SEPA-Format. Nach dem Import startet der automatische Abgleich.
+
+00:00:33.280 --> 00:00:47.590
+Alternativ geht SWIFT MT940 — oft als Datei mit Endung STA. Inhaltlich dasselbe: Umsätze kommen in die Liste. Schon bekannte Umsätze erkennt das System als Duplikat.
+
+00:00:47.640 --> 00:01:00.350
+Unter Offene Umsätze stehen Zahlungen, die noch keinem Beleg zugeordnet sind. Sie wählen einen Beleg und klicken Zuordnen — oder Ignorieren, wenn der Umsatz nicht gebucht werden soll.
+
+00:01:00.400 --> 00:01:12.510
+Geisterumsätze sind Bankzeilen, die schon verbucht oder doppelt importiert wirken. Das CRM blendet sie nie von allein aus — Sie prüfen und wählen Verknüpfen oder Ausblenden.
+
+00:01:12.560 --> 00:01:22.270
+Unter Zugeordnet sehen Sie erfolgreiche Zuordnungen mit Link zum Beleg. So bleibt der Abgleich nachvollziehbar für Sie und die Prüfung.
+
+00:01:22.320 --> 00:01:40.870
+Kurz: Kontoauszug importieren, Automatik prüfen, offene Umsätze zuordnen, Geister bewusst behandeln. In der Demo liegen drei Auszüge für Anfang und Mitte 2026 bereit — CAMT und MT940. Viel Erfolg!

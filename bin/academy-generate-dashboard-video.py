@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -19,7 +20,26 @@ OUT_DIR = ROOT / "storage/media/training/allgemein"
 SCREENSHOT = OUT_DIR / "dashboard-capture.png"
 TILES_JSON = OUT_DIR / "dashboard-tiles.json"
 DEFAULT_VOICE = "de-DE-KatjaNeural"
-EDGE_TTS = Path.home() / ".local/bin/edge-tts"
+
+
+def resolve_edge_tts() -> Path:
+    """edge-tts: Linux ~/.local/bin, Windows Scripts/, oder PATH."""
+    candidates = [
+        Path.home() / ".local/bin/edge-tts",
+        Path(sys.executable).resolve().parent / "Scripts" / "edge-tts.exe",
+        Path(sys.executable).resolve().parent / "Scripts" / "edge-tts",
+        Path(sys.executable).resolve().parent / "edge-tts",
+    ]
+    for cand in candidates:
+        if cand.is_file():
+            return cand
+    which = shutil.which("edge-tts")
+    if which:
+        return Path(which)
+    raise FileNotFoundError("edge-tts nicht gefunden — pip install edge-tts")
+
+
+EDGE_TTS = resolve_edge_tts()
 
 OUT_W, OUT_H = 1920, 1080
 FPS = 25
@@ -218,11 +238,32 @@ def probe_duration(path: Path) -> float:
 
 
 async def synthesize(text: str, mp3: Path, voice: str) -> None:
-    proc = await asyncio.create_subprocess_exec(
-        str(EDGE_TTS), "--voice", voice, "--text", text, "--write-media", str(mp3)
-    )
-    if await proc.wait() != 0:
-        raise RuntimeError("edge-tts failed")
+    last_err: Exception | None = None
+    for attempt in range(1, 4):
+        try:
+            if mp3.exists():
+                mp3.unlink()
+            proc = await asyncio.create_subprocess_exec(
+                str(EDGE_TTS),
+                "--voice",
+                voice,
+                "--text",
+                text,
+                "--write-media",
+                str(mp3),
+            )
+            code = await asyncio.wait_for(proc.wait(), timeout=90)
+            if code == 0 and mp3.is_file() and mp3.stat().st_size > 0:
+                return
+            last_err = RuntimeError(f"edge-tts failed (attempt {attempt}, exit={code})")
+        except asyncio.TimeoutError:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            last_err = RuntimeError(f"edge-tts timeout (attempt {attempt})")
+        await asyncio.sleep(1.5 * attempt)
+    raise last_err or RuntimeError("edge-tts failed")
 
 
 def encode_clip(frames: list[Image.Image], audio: Path, out: Path) -> float:

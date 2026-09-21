@@ -1,0 +1,32 @@
+{
+  "title": "Steuerberater-Export — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 52.7,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.68
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 6.04
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 8.84
+    },
+    {
+      "key": "jahr",
+      "duration_sec": 9.64
+    },
+    {
+      "key": "stapel",
+      "duration_sec": 9.4
+    },
+    {
+      "key": "paket",
+      "duration_sec": 12.12
+    }
+  ]
+}

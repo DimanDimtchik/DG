@@ -140,6 +140,7 @@ $riskClass = static function (?string $level): string {
     <p><?= nl2br(View::escape((string) ($academyCourse['description'] ?? ''))) ?></p>
 
     <?php if (!$academyRulesAccepted) : ?>
+    <?php $openModulePrefill = (int) ($_GET['open_module'] ?? 0); ?>
     <form method="post" action="/app?page=akademie&amp;view=kurs&amp;slug=<?= rawurlencode((string) ($academyCourse['slug'] ?? '')) ?>" class="dg-panel dg-academy-rules">
       <h3 class="dg-subsection-title">Schulungsregeln (Pflicht)</h3>
       <ul class="dg-academy-rules__list">
@@ -153,6 +154,9 @@ $riskClass = static function (?string $level): string {
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="view" value="kurs">
       <input type="hidden" name="course_id" value="<?= (int) ($academyCourse['id'] ?? 0) ?>">
+      <?php if ($openModulePrefill > 0) : ?>
+        <input type="hidden" name="open_module" value="<?= $openModulePrefill ?>">
+      <?php endif; ?>
       <label class="dg-field dg-field--checkbox dg-field--wide dg-academy-rules__confirm">
         <span>
           <input type="checkbox" name="confirm_rules" value="1" required>

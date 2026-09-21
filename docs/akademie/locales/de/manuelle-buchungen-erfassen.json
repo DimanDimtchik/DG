@@ -1,0 +1,53 @@
+{
+  "video_slug": "manuelle-buchungen-erfassen",
+  "locale": "de",
+  "title": "Manuelle Buchungen — Erfassen",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video erfassen wir eine manuelle Buchung. Start wieder im Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-manuelle-buchung",
+      "narration": "Öffnen Sie Manuelle Buchungen."
+    },
+    {
+      "key": "formular",
+      "screenshot": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page-regions.json",
+      "field": "form",
+      "narration": "Unter Neue Buchung legen Sie den Buchungssatz an. Sie brauchen Schreibrecht — sonst erscheint dieses Formular nicht."
+    },
+    {
+      "key": "kopf",
+      "screenshot": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page-regions.json",
+      "field": "kopf",
+      "narration": "Tragen Sie Datum und eine kurze Beschreibung ein — zum Beispiel Umbuchung Privatanteil oder Korrektur Kontierung."
+    },
+    {
+      "key": "zeilen",
+      "screenshot": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page-regions.json",
+      "field": "zeilen",
+      "narration": "In den Zeilen: Konto und Gegenkonto aus dem Kontenrahmen, Soll oder Haben, Betrag, optional BU-Schlüssel und Text. Mehrere Zeilen sind möglich — die Summe Soll muss der Summe Haben entsprechen."
+    },
+    {
+      "key": "speichern",
+      "screenshot": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/manuelle-buchungen/manuelle-buchungen-page-regions.json",
+      "field": "speichern",
+      "narration": "Speichern Sie die Buchung. Ist sie nicht ausgeglichen oder das Jahr abgeschlossen, erscheint eine Fehlermeldung. Nach dem Speichern steht der Satz in der Liste darunter — und im Journal für Auswertungen und den Steuerberater-Export. Viel Erfolg!"
+    }
+  ]
+}

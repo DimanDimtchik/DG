@@ -1,0 +1,28 @@
+{
+  "title": "Bilanz und GuV — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 45.9,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.52
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 5.88
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 12.48
+    },
+    {
+      "key": "filter",
+      "duration_sec": 8.92
+    },
+    {
+      "key": "guv",
+      "duration_sec": 11.12
+    }
+  ]
+}

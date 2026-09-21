@@ -1,0 +1,48 @@
+{
+  "title": "Media — Zuschneiden & Freistellen",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 79.6,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.32
+    },
+    {
+      "key": "nav-media",
+      "duration_sec": 2.08
+    },
+    {
+      "key": "liste",
+      "duration_sec": 7.24
+    },
+    {
+      "key": "original",
+      "duration_sec": 11.16
+    },
+    {
+      "key": "zuschneiden-btn",
+      "duration_sec": 2.56
+    },
+    {
+      "key": "crop-modal",
+      "duration_sec": 9.76
+    },
+    {
+      "key": "crop-result",
+      "duration_sec": 7.92
+    },
+    {
+      "key": "freistellen-btn",
+      "duration_sec": 10.48
+    },
+    {
+      "key": "frei-result",
+      "duration_sec": 11.08
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 9.96
+    }
+  ]
+}

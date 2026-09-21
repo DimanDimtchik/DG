@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>DG-DEMO-Q1-2026</MsgId><CreDtTm>2026-07-01T10:00:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>DG-DEMO-Q1-2026</Id>
+      <ElctrncSeqNb>1</ElctrncSeqNb>
+      <LglSeqNb>1</LglSeqNb>
+      <Acct><Id><IBAN>DE12500105170648489890</IBAN></Id><Ccy>EUR</Ccy><Ownr><Nm>Demo Firma CRM Schulung</Nm></Ownr></Acct>
+      <Bal><Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">12500.00</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">13842.55</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Ntry>
+        <Amt Ccy="EUR">1190.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-01-08</Dt></BookgDt>
+        <ValDt><Dt>2026-01-08</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q1-001</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q1-001</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0001 Zahlung Januar</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Kunde Nord GmbH</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE02120300000000202051</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0001 Zahlung Januar</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">450.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-01-15</Dt></BookgDt>
+        <ValDt><Dt>2026-01-15</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q1-002</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q1-002</EndToEndId></Refs>
+          <RmtInf><Ustrd>Miete Januar 2026</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Büromiete AG</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Miete Januar 2026</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">714.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-02-03</Dt></BookgDt>
+        <ValDt><Dt>2026-02-03</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q1-003</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q1-003</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0012 Skonto</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Handel West OHG</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE12500105170648489890</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0012 Skonto</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">89.90</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-02-20</Dt></BookgDt>
+        <ValDt><Dt>2026-02-20</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q1-004</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q1-004</EndToEndId></Refs>
+          <RmtInf><Ustrd>Abo CRM Hosting Feb</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Software SaaS</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE44500105175407324931</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Abo CRM Hosting Feb</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">2380.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-03-10</Dt></BookgDt>
+        <ValDt><Dt>2026-03-10</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q1-005</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q1-005</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0028 Zahlung März</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Kunde Süd AG</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE02120300000000202051</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0028 Zahlung März</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">401.55</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-03-28</Dt></BookgDt>
+        <ValDt><Dt>2026-03-28</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q1-006</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q1-006</EndToEndId></Refs>
+          <RmtInf><Ustrd>Haftpflicht Q1 2026</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Versicherungen</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Haftpflicht Q1 2026</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

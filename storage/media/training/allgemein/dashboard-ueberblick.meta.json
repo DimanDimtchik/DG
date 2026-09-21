@@ -1,7 +1,9 @@
 {
   "title": "Dashboard — Kurzüberblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
   "source": "dashboard-capture.png",
-  "duration_sec": 240.6,
+  "duration_sec": 240.2,
   "segments": [
     {
       "key": "intro",
@@ -41,7 +43,7 @@
     },
     {
       "key": "bilder",
-      "duration_sec": 7.48
+      "duration_sec": 7.08
     },
     {
       "key": "buchhaltung-konten",

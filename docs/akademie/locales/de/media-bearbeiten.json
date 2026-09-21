@@ -1,0 +1,132 @@
+{
+  "video_slug": "media-bearbeiten",
+  "locale": "de",
+  "title": "Media — Bearbeiten",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video bearbeiten wir ein Bild in Media. Start ist wieder das Dashboard."
+    },
+    {
+      "key": "nav-media",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "bilder",
+      "narration": "Öffnen Sie Media."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/media/media-list.png",
+      "mode": "overview",
+      "narration": "In der Liste wählen Sie Bearbeiten bei dem gewünschten Bild — oder Hochladen für eine neue Datei."
+    },
+    {
+      "key": "vorschau",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "vorschau",
+      "narration": "Links sehen Sie die Vorschau und technische Angaben wie Abmessungen, Größe und Format. Darunter die Optionen für Logo und Favicon."
+    },
+    {
+      "key": "logo",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "logo",
+      "narration": "Mit Als CRM-Logo in Kopfzeile erscheint dieses Bild in der CRM-Kopfzeile und auf der Login-Seite — nur wenn Sie den Haken setzen."
+    },
+    {
+      "key": "favicon",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "favicon",
+      "narration": "Als Favicon für Browser erzeugen Sie die kleinen Icons für Browser-Tabs — ebenfalls nur bei aktivierter Option."
+    },
+    {
+      "key": "metadaten",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "metadaten",
+      "narration": "Rechts beginnen die Metadaten: Titel für die Liste, Alt-Text für Barrierefreiheit und Quelle oder Rechte — Freitext, URL oder HTML. Speichern Sie mit Metadaten speichern."
+    },
+    {
+      "key": "titel",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "title",
+      "section": "metadaten",
+      "narration": "Der Titel erscheint in der Media-Liste und hilft beim Wiederfinden."
+    },
+    {
+      "key": "alt",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "alt_text",
+      "section": "metadaten",
+      "narration": "Der Alt-Text beschreibt das Bild für Screenreader und Suchmaschinen — kurz und sachlich."
+    },
+    {
+      "key": "quelle",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "source_note",
+      "section": "metadaten",
+      "narration": "Unter Quelle und Rechte dokumentieren Sie Herkunft oder Lizenz. In der Liste sehen Sie später nur eine Klartext-Vorschau."
+    },
+    {
+      "key": "groesse",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "groesse",
+      "narration": "Darunter Größe und Format: Breite, Höhe und Zielformat — zum Beispiel WebP. Mit Als neues Bild anlegen bleibt das Original erhalten; es entsteht ein zusätzlicher Eintrag in der Liste."
+    },
+    {
+      "key": "zuschneiden",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "zuschneiden",
+      "narration": "Zuschneiden öffnet einen Dialog. Auch hier entsteht ein neues Bild — das Original bleibt unverändert."
+    },
+    {
+      "key": "freistellen",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "freistellen",
+      "narration": "Hintergrund entfernen oder Freistellen läuft kostenlos im Browser. Beim ersten Mal kann das Laden etwas dauern. Ergebnis ist wieder ein neues, freigestelltes Bild."
+    },
+    {
+      "key": "loeschen",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "loeschen",
+      "narration": "Ganz unten können Sie das Bild löschen. Prüfen Sie vorher die Verwendung — sonst entfernen Sie eine Datei, die noch als Logo oder auf der Website hängt."
+    },
+    {
+      "key": "verwendung",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-regions.json",
+      "field": "verwendung",
+      "narration": "Unter Verwendung sehen Sie, wo die Datei im CRM referenziert ist. Mit Verwendung scannen aktualisieren Sie diese Liste."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/media/media-edit.png",
+      "mode": "overview",
+      "narration": "Kurz gesagt: links Vorschau und Logo-Optionen, rechts Metadaten, Größe, Zuschnitt, Freistellen und Löschen. Zurück zur Liste über den Link oben. Viel Erfolg!"
+    }
+  ]
+}

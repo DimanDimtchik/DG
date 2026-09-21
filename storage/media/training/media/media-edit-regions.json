@@ -1,0 +1,97 @@
+{
+  "width": 1920,
+  "height": 1743,
+  "sections": {
+    "form": {
+      "x": 914,
+      "y": 726,
+      "w": 682,
+      "h": 127
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1004,
+      "w": 56,
+      "h": 56
+    },
+    "vorschau": {
+      "x": 515,
+      "y": 256,
+      "w": 360,
+      "h": 535
+    },
+    "verwendung": {
+      "x": 515,
+      "y": 1514,
+      "w": 1100,
+      "h": 181
+    },
+    "metadaten": {
+      "x": 895,
+      "y": 256,
+      "w": 720,
+      "h": 400
+    },
+    "groesse": {
+      "x": 895,
+      "y": 672,
+      "w": 720,
+      "h": 360
+    },
+    "zuschneiden": {
+      "x": 895,
+      "y": 1048,
+      "w": 720,
+      "h": 138
+    },
+    "freistellen": {
+      "x": 895,
+      "y": 1202,
+      "w": 720,
+      "h": 163
+    },
+    "loeschen": {
+      "x": 895,
+      "y": 1381,
+      "w": 720,
+      "h": 113
+    }
+  },
+  "fields": {
+    "logo": {
+      "x": 534,
+      "y": 642,
+      "w": 322,
+      "h": 60,
+      "label": "Als CRM-Logo in Kopfzeile"
+    },
+    "favicon": {
+      "x": 534,
+      "y": 714,
+      "w": 322,
+      "h": 60,
+      "label": "Als Favicon für Browser benutzen"
+    },
+    "title": {
+      "x": 914,
+      "y": 310,
+      "w": 682,
+      "h": 57,
+      "label": "Titel"
+    },
+    "alt_text": {
+      "x": 914,
+      "y": 367,
+      "w": 682,
+      "h": 57,
+      "label": "Alt-Text"
+    },
+    "source_note": {
+      "x": 914,
+      "y": 424,
+      "w": 682,
+      "h": 140,
+      "label": "Quelle / Rechte"
+    }
+  }
+}

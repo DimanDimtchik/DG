@@ -41,8 +41,8 @@
 ### Lager
 > **Lager:** Bestände, Lagerorte und Bewegungen — von Wareneingang bis Inventur.
 
-### Bilder *(nur Admin)*
-> **Bilder:** Medienbibliothek für Logos, Fotos und andere Bilddateien im System.
+### Media *(nur Admin)*
+> **Media:** Bibliothek für Logos, Fotos und andere Bilddateien im System.
 
 ---
 

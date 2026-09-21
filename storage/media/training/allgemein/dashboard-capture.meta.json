@@ -57,14 +57,14 @@
             "label": "Support-Freigabe",
             "icon": "settings",
             "href": "\/app?page=support-freigabe",
-            "description": ""
+            "description": "Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional Bildschirm-Zuschauen."
         },
         {
             "slug": "bilder",
-            "label": "Bilder",
+            "label": "Media",
             "icon": "images",
             "href": "\/app?page=bilder",
-            "description": "Medien, Logos und Bilder verwalten."
+            "description": "Media-Bibliothek: Logos, Fotos und Bilddateien verwalten."
         },
         {
             "slug": "buchhaltung-konten",
@@ -78,7 +78,7 @@
             "label": "Belege",
             "icon": "receipt",
             "href": "\/app?page=buchhaltung-belege",
-            "description": "Belege erfassen mit Steuerfeldern und Kontenzuordnung."
+            "description": "Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder."
         },
         {
             "slug": "buchhaltung-ueberweisungen",
@@ -127,14 +127,14 @@
             "label": "BWA",
             "icon": "ledger",
             "href": "\/app?page=buchhaltung-bwa",
-            "description": ""
+            "description": "Betriebswirtschaftliche Auswertung je Zeitraum."
         },
         {
             "slug": "buchhaltung-susa",
             "label": "SuSa",
             "icon": "ledger",
             "href": "\/app?page=buchhaltung-susa",
-            "description": ""
+            "description": "Summen- und Saldenliste je Geschäftsjahr."
         },
         {
             "slug": "buchhaltung-bankabgleich",

@@ -1,0 +1,36 @@
+{
+  "title": "Kassenbuch — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 54.6,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.0
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 5.4
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 9.92
+    },
+    {
+      "key": "zeitraum",
+      "duration_sec": 6.36
+    },
+    {
+      "key": "summen",
+      "duration_sec": 5.6
+    },
+    {
+      "key": "liste",
+      "duration_sec": 10.24
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 11.12
+    }
+  ]
+}

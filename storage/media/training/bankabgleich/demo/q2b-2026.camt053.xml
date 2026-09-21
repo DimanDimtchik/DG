@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>DG-DEMO-Q2B-2026</MsgId><CreDtTm>2026-07-01T10:00:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>DG-DEMO-Q2B-2026</Id>
+      <ElctrncSeqNb>1</ElctrncSeqNb>
+      <LglSeqNb>1</LglSeqNb>
+      <Acct><Id><IBAN>DE12500105170648489890</IBAN></Id><Ccy>EUR</Ccy><Ownr><Nm>Demo Firma CRM Schulung</Nm></Ownr></Acct>
+      <Bal><Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">15210.05</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">16103.55</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Ntry>
+        <Amt Ccy="EUR">1428.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-06-04</Dt></BookgDt>
+        <ValDt><Dt>2026-06-04</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2B-001</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2B-001</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0060 Zahlung Juni</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Kunde Süd AG</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE02120300000000202051</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0060 Zahlung Juni</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">450.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-06-11</Dt></BookgDt>
+        <ValDt><Dt>2026-06-11</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2B-002</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2B-002</EndToEndId></Refs>
+          <RmtInf><Ustrd>Miete Juni 2026</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Büromiete AG</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Miete Juni 2026</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">833.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-06-18</Dt></BookgDt>
+        <ValDt><Dt>2026-06-18</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2B-003</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2B-003</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0066 Teilzahlung</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Praxis Mitte</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE44500105175407324931</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0066 Teilzahlung</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">89.90</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-06-25</Dt></BookgDt>
+        <ValDt><Dt>2026-06-25</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2B-004</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2B-004</EndToEndId></Refs>
+          <RmtInf><Ustrd>Abo CRM Hosting Jun</Ustrd></RmtInf>
+          <RltdPties>
+            <Cdtr><Nm>Demo Software SaaS</Nm></Cdtr>
+            <CdtrAcct><Id><IBAN>DE44500105175407324931</IBAN></Id></CdtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>Abo CRM Hosting Jun</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">172.40</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Status>BOOK</Status>
+        <BookgDt><Dt>2026-06-28</Dt></BookgDt>
+        <ValDt><Dt>2026-06-28</Dt></ValDt>
+        <AcctSvcrRef>DG-E2E-Q2B-005</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>DG-E2E-Q2B-005</EndToEndId></Refs>
+          <RmtInf><Ustrd>RE-2026-0070 Nachzahlung</Ustrd></RmtInf>
+          <RltdPties>
+            <Dbtr><Nm>Demo Kunde Nord GmbH</Nm></Dbtr>
+            <DbtrAcct><Id><IBAN>DE02120300000000202051</IBAN></Id></DbtrAcct>
+          </RltdPties>
+        </TxDtls></NtryDtls>
+        <AddtlNtryInf>RE-2026-0070 Nachzahlung</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

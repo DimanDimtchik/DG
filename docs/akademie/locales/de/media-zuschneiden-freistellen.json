@@ -1,0 +1,79 @@
+{
+  "video_slug": "media-zuschneiden-freistellen",
+  "locale": "de",
+  "title": "Media — Zuschneiden & Freistellen",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir Zuschneiden und Freistellen in Media. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-media",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "bilder",
+      "narration": "Öffnen Sie Media."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/media/media-list-demo.png",
+      "mode": "overview",
+      "narration": "Wir nutzen ein Demo-Produktfoto — einen Becher auf grünem Hintergrund. Öffnen Sie Bearbeiten."
+    },
+    {
+      "key": "original",
+      "screenshot": "storage/media/training/media/media-edit-demo.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-demo-regions.json",
+      "field": "vorschau",
+      "narration": "Links sehen Sie die Vorschau. Rechts unten finden Sie Zuschneiden und Freistellen. Beides legt ein neues Bild an — das Original bleibt erhalten."
+    },
+    {
+      "key": "zuschneiden-btn",
+      "screenshot": "storage/media/training/media/media-edit-demo.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-demo-regions.json",
+      "field": "zuschneiden",
+      "narration": "Klicken Sie auf Zuschneiden."
+    },
+    {
+      "key": "crop-modal",
+      "screenshot": "storage/media/training/media/media-crop-modal.png",
+      "mode": "overview",
+      "narration": "Im Dialog ziehen Sie den Rahmen auf den wichtigen Bildteil — hier den Becher. Mit Zuschnitt übernehmen speichern Sie das Ergebnis als neues Bild."
+    },
+    {
+      "key": "crop-result",
+      "screenshot": "storage/media/training/media/media-edit-crop.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-crop-regions.json",
+      "field": "vorschau",
+      "narration": "Das zugeschnittene Bild erscheint als eigener Eintrag. Das Original finden Sie weiterhin in der Liste."
+    },
+    {
+      "key": "freistellen-btn",
+      "screenshot": "storage/media/training/media/media-edit-crop.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-crop-regions.json",
+      "field": "freistellen",
+      "narration": "Als Nächstes Freistellen: Hintergrund entfernen. Das läuft kostenlos im Browser. Beim ersten Mal kann das Laden etwas dauern."
+    },
+    {
+      "key": "frei-result",
+      "screenshot": "storage/media/training/media/media-edit-frei.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/media/media-edit-frei-regions.json",
+      "field": "vorschau",
+      "narration": "Danach haben Sie ein freigestelltes Bild ohne Hintergrund — ideal für Logos, Produkte oder die Website. Auch hier bleibt die Ausgangsdatei unverändert."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/media/media-edit-frei.png",
+      "mode": "overview",
+      "narration": "Kurz: Zuschneiden und Freistellen erzeugen immer neue Dateien. So können Sie gefahrlos ausprobieren. Viel Erfolg!"
+    }
+  ]
+}

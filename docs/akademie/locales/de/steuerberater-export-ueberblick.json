@@ -1,0 +1,51 @@
+{
+  "video_slug": "steuerberater-export-ueberblick",
+  "locale": "de",
+  "title": "Steuerberater-Export — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir den Steuerberater-Export. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-steuerberater-export",
+      "narration": "Öffnen Sie die Kachel Steuerberater-Export — oder denselben Punkt unter Buchhaltung im Menü."
+    },
+    {
+      "key": "zweck",
+      "screenshot": "storage/media/training/steuerberater-export/steuerberater-export-page.png",
+      "mode": "overview",
+      "narration": "Hier geben Sie Buchungen, Konten und Belegbilder an Ihre Steuerkanzlei weiter — zum Beispiel für DATEV, Agenda oder Addison."
+    },
+    {
+      "key": "jahr",
+      "screenshot": "storage/media/training/steuerberater-export/steuerberater-export-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/steuerberater-export/steuerberater-export-page-regions.json",
+      "field": "filter",
+      "narration": "Zuerst wählen Sie das Geschäftsjahr. Berater- und Mandantennummer pflegen Sie in den Einstellungen — ohne sie sind manche Downloads gesperrt."
+    },
+    {
+      "key": "stapel",
+      "screenshot": "storage/media/training/steuerberater-export/steuerberater-export-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/steuerberater-export/steuerberater-export-page-regions.json",
+      "field": "stapel",
+      "narration": "Unter Buchungsstapel laden Sie den DATEV-Export, Agenda als CSV oder Addison herunter — je nachdem, was Ihre Kanzlei nutzt."
+    },
+    {
+      "key": "paket",
+      "screenshot": "storage/media/training/steuerberater-export/steuerberater-export-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/steuerberater-export/steuerberater-export-page-regions.json",
+      "field": "stammdaten",
+      "narration": "Darunter liegen Kontenbeschriftungen, Personenkonten und Belegbilder. Das Komplett-Paket packt alles in eine ZIP-Datei für die Kanzlei. Viel Erfolg!"
+    }
+  ]
+}

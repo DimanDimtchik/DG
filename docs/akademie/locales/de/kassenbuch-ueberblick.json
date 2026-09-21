@@ -1,0 +1,59 @@
+{
+  "video_slug": "kassenbuch-ueberblick",
+  "locale": "de",
+  "title": "Kassenbuch — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir das Kassenbuch. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-kassenbuch",
+      "narration": "Öffnen Sie die Kachel Kassenbuch — oder denselben Punkt unter Buchhaltung im Menü."
+    },
+    {
+      "key": "zweck",
+      "screenshot": "storage/media/training/kassenbuch/kassenbuch-page.png",
+      "mode": "overview",
+      "narration": "Hier sehen Sie alle Bar-Ein- und Ausgänge. Wenn Sie einen Beleg als bar bezahlt markieren, erscheint der Betrag automatisch im Kassenbuch."
+    },
+    {
+      "key": "zeitraum",
+      "screenshot": "storage/media/training/kassenbuch/kassenbuch-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/kassenbuch/kassenbuch-page-regions.json",
+      "field": "filter",
+      "narration": "Oben wählen Sie den Zeitraum — Jahr, Monat oder einen eigenen Bereich — und klicken Anzeigen."
+    },
+    {
+      "key": "summen",
+      "screenshot": "storage/media/training/kassenbuch/kassenbuch-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/kassenbuch/kassenbuch-page-regions.json",
+      "field": "summary",
+      "narration": "Die Summen zeigen Einnahmen, Ausgaben und den Saldo im gewählten Zeitraum."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/kassenbuch/kassenbuch-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/kassenbuch/kassenbuch-page-regions.json",
+      "field": "liste",
+      "narration": "In der Liste stehen die einzelnen Kasseneinträge mit Datum, Text und Betrag. Über Drucken können Sie das Kassenbuch als PDF speichern."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/kassenbuch/kassenbuch-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/kassenbuch/kassenbuch-page-regions.json",
+      "field": "tagesabschluss",
+      "narration": "Beim Tagesabschluss prüfen Sie den Soll-Bestand und bestätigen den Ist-Bestand in der Kasse. So bleibt der Bargeldverlauf nachvollziehbar. Viel Erfolg!"
+    }
+  ]
+}

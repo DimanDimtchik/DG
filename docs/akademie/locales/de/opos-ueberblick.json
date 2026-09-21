@@ -1,0 +1,51 @@
+{
+  "video_slug": "opos-ueberblick",
+  "locale": "de",
+  "title": "Offene Posten — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir die offenen Posten. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-opos",
+      "narration": "Öffnen Sie die Kachel Offene Posten — oder denselben Punkt unter Buchhaltung im Menü."
+    },
+    {
+      "key": "zweck",
+      "screenshot": "storage/media/training/opos/opos-page.png",
+      "mode": "overview",
+      "narration": "Offene Posten sind Beträge, die noch nicht vollständig bezahlt sind. Forderungen: Kunden schulden Ihnen noch Geld. Verbindlichkeiten: Sie schulden Lieferanten noch Geld."
+    },
+    {
+      "key": "summen",
+      "screenshot": "storage/media/training/opos/opos-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/opos/opos-page-regions.json",
+      "field": "summary",
+      "narration": "Oben sehen Sie die Summe aller offenen Forderungen und Verbindlichkeiten auf einen Blick."
+    },
+    {
+      "key": "filter",
+      "screenshot": "storage/media/training/opos/opos-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/opos/opos-page-regions.json",
+      "field": "filter",
+      "narration": "Mit dem Filter wählen Sie nur Forderungen oder nur Verbindlichkeiten. Die Suche findet Rechnungsnummern, Kontakte und Personenkonten."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/opos/opos-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/opos/opos-page-regions.json",
+      "field": "liste",
+      "narration": "In der Liste stehen Datum, Fälligkeit, Beleg und der noch offene Betrag. Über Öffnen gelangen Sie zum Beleg — zum Beispiel zum Zuordnen einer Zahlung. Viel Erfolg!"
+    }
+  ]
+}

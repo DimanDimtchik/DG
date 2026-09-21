@@ -1,0 +1,36 @@
+{
+  "title": "Akademie — Die Reiter",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 65.2,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.2
+    },
+    {
+      "key": "nav-akademie",
+      "duration_sec": 3.92
+    },
+    {
+      "key": "tab-meine",
+      "duration_sec": 8.88
+    },
+    {
+      "key": "tab-katalog",
+      "duration_sec": 7.76
+    },
+    {
+      "key": "tab-hr",
+      "duration_sec": 12.4
+    },
+    {
+      "key": "tab-verwaltung",
+      "duration_sec": 8.96
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 16.04
+    }
+  ]
+}

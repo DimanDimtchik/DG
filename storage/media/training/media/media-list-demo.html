@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <base href="https://dg.ganz-om.de/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Media – DG</title>
+        <link rel="stylesheet" href="/assets/css/dg.css?v=1789654438">
+  <style>:root { --dg-font: system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, sans-serif; --dg-menu-bg:#4a4028;--dg-menu-bg-hover:#443b25;--dg-menu-bg-active:#3e3622;--dg-menu-text:#ffffff;--dg-menu-text-muted:rgba(255, 255, 255, 0.72);--dg-menu-border:#3e3622;--dg-brand:#b8860b;--dg-brand-dark:#a2760a;--dg-body-bg:#f7f4eb;--dg-surface:#ffffff;--dg-text:#2a2418;--dg-text-secondary:#5c5340;--dg-text-muted:#8a8068;--dg-border:#d8cfba;--dg-border-strong:#c4b89a;--dg-primary:#9a7209;--dg-primary-hover:#7d5d07;--dg-focus-ring:rgba(154, 114, 9, 0.25) }</style>
+</head>
+<body class="dg-app">
+      <header id="dg-adminbar" class="dg-adminbar" role="banner">
+    <div class="dg-adminbar__left">
+      <a class="dg-adminbar__brand" href="/app">
+        <img src="/assets/img/logo.svg?v=1789654441" alt="DG" class="dg-adminbar__logo dg-logo--square">
+        <span class="dg-adminbar__name">DG</span>
+      </a>
+    </div>
+
+    <div class="dg-adminbar__center">
+              <div class="dg-adminbar__menu" data-menu>
+          <button type="button" class="dg-adminbar__menu-toggle" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+            Admin
+            <span class="dg-adminbar__caret" aria-hidden="true"></span>
+          </button>
+          <div class="dg-adminbar__dropdown" role="menu" hidden data-menu-panel>
+            <a href="/app" role="menuitem">Übersicht</a>
+            <a href="/app?area=users" role="menuitem">Benutzer &amp; Mitarbeiter</a>
+            <a href="/app?area=departments" role="menuitem">Abteilungen</a>
+          </div>
+        </div>
+          </div>
+
+    <div class="dg-adminbar__right">
+      <div class="dg-adminbar__menu dg-adminbar__menu--user" data-menu>
+        <button type="button" class="dg-adminbar__user-toggle" aria-expanded="false" aria-haspopup="true" data-menu-toggle>
+          <span class="dg-adminbar__avatar" aria-hidden="true">D</span>
+          <span class="dg-adminbar__username">Dietrich Ganz</span>
+          <span class="dg-adminbar__caret" aria-hidden="true"></span>
+        </button>
+        <div class="dg-adminbar__dropdown dg-adminbar__dropdown--right" role="menu" hidden data-menu-panel>
+          <div class="dg-adminbar__dropdown-meta">
+            <strong>Dietrich Ganz</strong>
+            <span>dietrichganz@gmx.de</span>
+            <span>Administrator</span>
+          </div>
+                      <a href="/app?area=profile" role="menuitem">Mein Profil</a>
+                    <a href="/logout" role="menuitem">Abmelden</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dg-shell">
+    <aside id="dg-sidebar" class="dg-sidebar" aria-label="Seitenleiste">
+      <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-nav">
+        <h2 id="dg-sidebar-nav" class="dg-sidebar__heading">Navigation</h2>
+        <ul class="dg-sidebar__list">
+                      <li>
+              <a href="/app" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                <span>Dashboard</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=kontakte" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                <span>Kontakte</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=terminkalender" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                <span>Terminkalender</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=zeiterfassung" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <circle cx="12" cy="12" r="9"/>
+  <path d="M12 3.75v1.5M20.25 12h-1.5M12 20.25v-1.5M3.75 12h1.5"/>
+  <path d="M12 7.25v5.1l3.6 2.15"/>
+  <circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+</svg>
+                <span>Zeiterfassung</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=post" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6M3 7v10l9 6 9-6V7"/></svg>
+                <span>Post</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=akademie" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                <span>Akademie</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=artikel-leistungen" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+                <span>Artikel &amp; Leistungen</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=lager" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35"/><path d="M6 18h12"/><path d="M6 14h12"/><path d="M6 10h12"/><path d="M10 2 2 8v11"/><path d="M14 2l8 6v11"/></svg>
+                <span>Lager</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=support-freigabe" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <span>Support-Freigabe</span>
+              </a>
+            </li>
+                      <li>
+              <a href="/app?page=bilder" class="dg-sidebar__link is-active">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5.5-5.5a1.5 1.5 0 0 0-2.12 0L3 19"/></svg>
+                <span>Media</span>
+              </a>
+            </li>
+                  </ul>
+      </section>
+
+              <section class="dg-sidebar__section dg-sidebar__section--buchhaltung" aria-labelledby="dg-sidebar-buchhaltung">
+          <h2 id="dg-sidebar-buchhaltung" class="dg-sidebar__heading">Buchhaltung</h2>
+          <ul class="dg-sidebar__list">
+                          <li>
+                <a href="/app?page=buchhaltung-konten" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/><path d="M4 9h16"/></svg>
+                  <span>Konten</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-belege" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+                  <span>Belege</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-ueberweisungen" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Überweisungen</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-kontenuebersicht" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Kontenübersicht</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-opos" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Offene Posten</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-kassenbuch" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+                  <span>Kassenbuch</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-manuelle-buchung" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Manuelle Buchungen</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-auswertungen" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Bilanz &amp; GuV</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-bwa" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>BWA</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-susa" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>SuSa</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-bankabgleich" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 9h13M4 9l4-4M4 9l4 4"/><path d="M20 15H7M20 15l-4-4M20 15l-4 4"/></svg>
+                  <span>Bankabgleich</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-steuerberater-export" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>Steuerberater-Export</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-ustva" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>UStVA</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=buchhaltung-jahresabschluss" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 5h16v16H4z"/><path d="M4 9h16M8 3v4M16 3v4"/><path d="M9.5 15l2 2 3.5-4"/></svg>
+                  <span>Jahresabschluss</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+      
+              <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-website">
+          <h2 id="dg-sidebar-website" class="dg-sidebar__heading">Website</h2>
+          <ul class="dg-sidebar__list">
+                                        <li>
+                <a href="/app?page=website-seiten" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M9 13h6M9 17h6"/></svg>
+                  <span>Seiten</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-formulare" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6M3 7v10l9 6 9-6V7"/></svg>
+                  <span>Formulare</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-statistik" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M9 3v18"/><path d="M12 8h4M12 12h4M12 16h3"/></svg>
+                  <span>Statistik</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-menu" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                  <span>Menü</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-chrome" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 15h18"/></svg>
+                  <span>Kopf &amp; Fuß</span>
+                </a>
+              </li>
+                                        <li>
+                <a href="/app?page=website-design" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12"/><circle cx="7.5" cy="10" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="16.5" cy="11" r="1"/></svg>
+                  <span>Design</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+                    <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kdv">
+          <h2 id="dg-sidebar-kdv" class="dg-sidebar__heading">SaaS-Kunden (Ganz Soft)</h2>
+          <ul class="dg-sidebar__list">
+                          <li>
+                <a href="/app?page=kdv-dashboard" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+                  <span>Übersicht</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=kdv-kunden" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                  <span>SaaS-Kunden</span>
+                </a>
+              </li>
+                          <li>
+                <a href="/app?page=kdv-support" class="dg-sidebar__link">
+                  <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                  <span>Support-Freigaben</span>
+                </a>
+              </li>
+                      </ul>
+        </section>
+                    <section class="dg-sidebar__section dg-sidebar__section--system" aria-labelledby="dg-sidebar-system">
+          <h2 id="dg-sidebar-system" class="dg-sidebar__heading">System</h2>
+          <ul class="dg-sidebar__list">
+            <li>
+              <a href="/app?page=einstellungen" class="dg-sidebar__link">
+                <svg class="dg-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <span>Einstellungen</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+          </aside>
+
+    <main id="dg-content" class="dg-content">
+      <div class="dg-wrap dg-media-library">
+  
+  <header class="dg-page-header dg-media-library__header">
+    <div>
+      <h1 class="dg-page-title">Media</h1>
+      <p class="dg-lead">Zentrale Media-Bibliothek — nur Bilddateien. HR-Dokumente unter Kontakte sind ausgeschlossen.</p>
+    </div>
+    <div class="dg-media-library__actions">
+      <a class="dg-button dg-button--primary" href="/app?page=bilder&amp;action=new">Hochladen</a>
+      <button type="button" class="dg-button" id="dg-media-scan">Verwendung scannen</button>
+    </div>
+  </header>
+
+      <div class="dg-table-wrap">
+      <table class="dg-table dg-table--compact dg-media-table">
+        <thead>
+          <tr>
+            <th>Vorschau</th>
+            <th>ID / Name</th>
+            <th>Größe</th>
+            <th>Format</th>
+            <th>Quelle</th>
+            <th>Benutzung</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260917190000_789abc">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260917190000_789abc"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260917190000_789abc</code>
+                <div>Demo Becher (Freigestellt)</div>
+              </td>
+              <td>
+                                  534×534 px<br>
+                                357,4 KB              </td>
+              <td>PNG</td>
+              <td>Akademie-Demo: Abgeleitet beim Freistellen.</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260917190000_789abc">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260917190000_789abc">Download</a>
+              </td>
+            </tr>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260917190000_a1b2c3">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260917190000_a1b2c3"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260917190000_a1b2c3</code>
+                <div>Demo Becher (Original)</div>
+              </td>
+              <td>
+                                  1152×864 px<br>
+                                181,7 KB              </td>
+              <td>PNG</td>
+              <td>Akademie-Demo: Original vor Zuschnitt/Freistellen.</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260917190000_a1b2c3">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260917190000_a1b2c3">Download</a>
+              </td>
+            </tr>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260917190000_d4e5f6">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260917190000_d4e5f6"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260917190000_d4e5f6</code>
+                <div>Demo Becher (Zuschnitt)</div>
+              </td>
+              <td>
+                                  534×534 px<br>
+                                356,8 KB              </td>
+              <td>PNG</td>
+              <td>Akademie-Demo: Abgeleitet beim Zuschneiden.</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260917190000_d4e5f6">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260917190000_d4e5f6">Download</a>
+              </td>
+            </tr>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260630155408_9c8756">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260630155408_9c8756"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260630155408_9c8756</code>
+                <div>Test Bild (Zuschnitt) (Freigestellt)</div>
+              </td>
+              <td>
+                                  43×54 px<br>
+                                1,4 KB              </td>
+              <td>PNG</td>
+              <td>Zum testen aus dem Internet hochgeladen
+Abgeleitet von 20260630114459_ea0959.
+Abgeleitet bei Hintergrund entfernen / Freistellen von 20260630153852_a76e53.</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260630155408_9c8756">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260630155408_9c8756">Download</a>
+              </td>
+            </tr>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260630153852_a76e53">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260630153852_a76e53"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260630153852_a76e53</code>
+                <div>Test Bild (Zuschnitt)</div>
+              </td>
+              <td>
+                                  43×54 px<br>
+                                3,3 KB              </td>
+              <td>PNG</td>
+              <td>Zum testen aus dem Internet hochgeladen
+Abgeleitet von 20260630114459_ea0959.</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260630153852_a76e53">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260630153852_a76e53">Download</a>
+              </td>
+            </tr>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260630114459_ea0959">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260630114459_ea0959"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260630114459_ea0959</code>
+                <div>Test Bild</div>
+              </td>
+              <td>
+                                  87×89 px<br>
+                                7,3 KB              </td>
+              <td>PNG</td>
+              <td>Zum testen aus dem Internet hochgeladen</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260630114459_ea0959">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260630114459_ea0959">Download</a>
+              </td>
+            </tr>
+                                  <tr>
+              <td class="dg-media-table__thumb">
+                <a href="/app?page=bilder&amp;action=edit&amp;id=20260630112704_b63f14">
+                  <img
+                    class=""
+                    src="/app?page=bilder&amp;action=preview&amp;id=20260630112704_b63f14"
+                    alt=""
+                    loading="lazy"
+                    width="56"
+                    height="56"
+                  >
+                </a>
+              </td>
+              <td>
+                <code class="dg-media-id">20260630112704_b63f14</code>
+                <div>Test bild 2</div>
+              </td>
+              <td>
+                                  87×89 px<br>
+                                7,3 KB              </td>
+              <td>PNG</td>
+              <td>Internet</td>
+              <td class="dg-media-table__usage">
+                                  <span class="dg-badge">Nicht referenziert</span>
+                              </td>
+              <td class="dg-media-table__ops">
+                <a class="dg-button dg-button--small" href="/app?page=bilder&amp;action=edit&amp;id=20260630112704_b63f14">Bearbeiten</a>
+                <a class="dg-button dg-button--small" href="/api/media?action=download&amp;id=20260630112704_b63f14">Download</a>
+              </td>
+            </tr>
+                  </tbody>
+      </table>
+    </div>
+  </div>
+    </main>
+  </div>
+
+                                <link rel="stylesheet" href="/assets/vendor/cropper.min.css?v=1789654444">
+    <script>
+      window.dgMedia = {
+        apiUrl: '/api/media',
+        csrf: "3e471f05e4a944ebbf8eadfb24a5bb42"      };
+    </script>
+    <script src="/assets/vendor/cropper.min.js?v=1789654444" defer></script>
+    <script src="/assets/js/bilder.js?v=1789654441" defer></script>
+                  <script src="/assets/js/admin.js?v=1789654441" defer></script>
+      <link rel="stylesheet" href="/assets/css/kichel.css?v=1789654438">
+<button type="button" class="dg-kichel-fab" data-kichel-fab aria-expanded="false" aria-controls="dg-kichel-panel" title="Kichel — CRM-Hilfe">
+  <img src="/assets/img/kichel.svg?v=1789654441" alt="">
+</button>
+<div id="dg-kichel-panel" class="dg-kichel-panel" data-kichel-panel hidden role="dialog" aria-label="Kichel Hilfe">
+  <div class="dg-kichel-panel__head">
+    <img src="/assets/img/kichel.svg?v=1789654441" alt="">
+    <div>
+      <strong>Kichel</strong>
+      <span>Schnelle Hilfe im CRM</span>
+    </div>
+          <span class="dg-kichel-panel__admin"><a href="/app?page=kichel-protokoll" data-kichel-protokoll>Protokoll</a></span>
+        <button type="button" class="dg-kichel-panel__close" data-kichel-close aria-label="Schließen">&times;</button>
+  </div>
+  <div class="dg-kichel-panel__body" data-kichel-body>
+    <div class="dg-kichel-chips">
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo trage ich die USt-ID ein?">USt-ID</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Skonto und Mahnung">Skonto</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Interne Kontakt-Bemerkung">Kontakt-Notiz</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Pflichtseiten?">Pflichtseiten</button>
+      <button type="button" class="dg-kichel-chip" data-kichel-chip="Wo finde ich Belege?">Belege</button>
+    </div>
+    <div class="dg-kichel-messages" data-kichel-messages>
+      <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Ich helfe dir, im CRM schnell den richtigen Weg zu finden — stell einfach deine Frage oder wähle ein Stichwort.</div>
+    </div>
+  </div>
+  <form class="dg-kichel-form" data-kichel-form>
+    <input type="text" data-kichel-input placeholder="Frage stellen …" autocomplete="off" maxlength="500" aria-label="Frage an Kichel">
+    <button type="submit">Senden</button>
+  </form>
+</div>
+<script>
+  window.dgKichel = {
+    apiUrl: '/api/kichel',
+    csrf: "3e471f05e4a944ebbf8eadfb24a5bb42",
+    chatVersion: '4'
+  };
+</script>
+<script src="/assets/js/kichel.js?v=1789654442" defer></script>
+        
+    
+  </body>
+</html>

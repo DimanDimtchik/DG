@@ -1,0 +1,73 @@
+{
+  "video_slug": "bankabgleich-ueberblick",
+  "locale": "de",
+  "title": "Bankabgleich — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir den Bankabgleich. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "buchhaltung-bankabgleich",
+      "narration": "Öffnen Sie die Kachel Bankabgleich — oder denselben Punkt unter Buchhaltung im Menü."
+    },
+    {
+      "key": "zweck",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "overview",
+      "narration": "Hier lesen Sie Ihren elektronischen Kontoauszug ein. Das CRM legt die Umsätze an und versucht, passende offene Belege automatisch zuzuordnen."
+    },
+    {
+      "key": "camt",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/bankabgleich/bankabgleich-page-regions.json",
+      "field": "camt",
+      "narration": "Oben importieren Sie den CAMT-XML-Kontoauszug Ihrer Bank — das gängige SEPA-Format. Nach dem Import startet der automatische Abgleich."
+    },
+    {
+      "key": "mt940",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/bankabgleich/bankabgleich-page-regions.json",
+      "field": "mt940",
+      "narration": "Alternativ geht SWIFT MT940 — oft als Datei mit Endung STA. Inhaltlich dasselbe: Umsätze kommen in die Liste. Schon bekannte Umsätze erkennt das System als Duplikat."
+    },
+    {
+      "key": "offen",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/bankabgleich/bankabgleich-page-regions.json",
+      "field": "offen",
+      "narration": "Unter Offene Umsätze stehen Zahlungen, die noch keinem Beleg zugeordnet sind. Sie wählen einen Beleg und klicken Zuordnen — oder Ignorieren, wenn der Umsatz nicht gebucht werden soll."
+    },
+    {
+      "key": "geister",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/bankabgleich/bankabgleich-page-regions.json",
+      "field": "geister",
+      "narration": "Geisterumsätze sind Bankzeilen, die schon verbucht oder doppelt importiert wirken. Das CRM blendet sie nie von allein aus — Sie prüfen und wählen Verknüpfen oder Ausblenden."
+    },
+    {
+      "key": "zugeordnet",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/bankabgleich/bankabgleich-page-regions.json",
+      "field": "zugeordnet",
+      "narration": "Unter Zugeordnet sehen Sie erfolgreiche Zuordnungen mit Link zum Beleg. So bleibt der Abgleich nachvollziehbar für Sie und die Prüfung."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/bankabgleich/bankabgleich-page.png",
+      "mode": "overview",
+      "narration": "Kurz: Kontoauszug importieren, Automatik prüfen, offene Umsätze zuordnen, Geister bewusst behandeln. In der Demo liegen drei Auszüge für Anfang und Mitte 2026 bereit — CAMT und MT940. Viel Erfolg!"
+    }
+  ]
+}

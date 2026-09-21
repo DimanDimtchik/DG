@@ -1,0 +1,72 @@
+{
+  "title": "Media — Bearbeiten",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 141.0,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.64
+    },
+    {
+      "key": "nav-media",
+      "duration_sec": 2.08
+    },
+    {
+      "key": "liste",
+      "duration_sec": 6.16
+    },
+    {
+      "key": "vorschau",
+      "duration_sec": 10.0
+    },
+    {
+      "key": "logo",
+      "duration_sec": 8.72
+    },
+    {
+      "key": "favicon",
+      "duration_sec": 7.48
+    },
+    {
+      "key": "metadaten",
+      "duration_sec": 13.0
+    },
+    {
+      "key": "titel",
+      "duration_sec": 4.6
+    },
+    {
+      "key": "alt",
+      "duration_sec": 5.72
+    },
+    {
+      "key": "quelle",
+      "duration_sec": 8.96
+    },
+    {
+      "key": "groesse",
+      "duration_sec": 13.6
+    },
+    {
+      "key": "zuschneiden",
+      "duration_sec": 7.68
+    },
+    {
+      "key": "freistellen",
+      "duration_sec": 12.64
+    },
+    {
+      "key": "loeschen",
+      "duration_sec": 10.68
+    },
+    {
+      "key": "verwendung",
+      "duration_sec": 9.36
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 13.72
+    }
+  ]
+}

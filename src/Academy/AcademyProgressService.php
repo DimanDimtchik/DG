@@ -110,18 +110,21 @@ final class AcademyProgressService
             $stmt = Database::pdo()->prepare(
                 'UPDATE dg_academy_watch_sessions SET
                     watched_seconds = watched_seconds + :delta,
-                    wall_clock_sec = wall_clock_sec + :delta,
+                    wall_clock_sec = wall_clock_sec + :delta_wall,
                     heartbeat_count = heartbeat_count + 1,
-                    max_playback_rate = GREATEST(max_playback_rate, :rate),
+                    max_playback_rate = GREATEST(max_playback_rate, :rate_max),
                     avg_playback_rate = CASE
-                        WHEN heartbeat_count = 0 THEN :rate
-                        ELSE ((avg_playback_rate * heartbeat_count) + :rate) / (heartbeat_count + 1)
+                        WHEN heartbeat_count = 0 THEN :rate_avg_init
+                        ELSE ((avg_playback_rate * heartbeat_count) + :rate_avg_add) / (heartbeat_count + 1)
                     END
                  WHERE id = :id'
             );
             $stmt->execute([
                 'delta' => $delta,
-                'rate' => $rate,
+                'delta_wall' => $delta,
+                'rate_max' => $rate,
+                'rate_avg_init' => $rate,
+                'rate_avg_add' => $rate,
                 'id' => (int) $session['id'],
             ]);
         } elseif (!$tabVisible && $delta > 0) {
@@ -147,7 +150,8 @@ final class AcademyProgressService
 
     public static function completeModule(string $sessionUuid, int $userId): array
     {
-        $session = self::findSession($sessionUuid, $userId);
+        // Auch beendete Sitzungen erlauben (Retry nach Fehler, wenn ended_at schon gesetzt wurde).
+        $session = self::findSession($sessionUuid, $userId, true);
         if ($session === null) {
             throw new InvalidArgumentException('Sitzung nicht gefunden.');
         }
@@ -165,11 +169,30 @@ final class AcademyProgressService
         $requiredWatch = (int) ceil($duration * ($minPercent / 100));
         $minWall = (int) ceil($requiredWatch / $maxRate);
 
-        $watched = (int) ($session['watched_seconds'] ?? 0);
-        $wall = (int) ($session['wall_clock_sec'] ?? 0);
+        // Watch-Zeit über alle Sitzungen dieses Moduls summieren (nicht nur die aktuelle).
+        $aggStmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(watched_seconds), 0) AS watched,
+                    COALESCE(SUM(wall_clock_sec), 0) AS wall,
+                    COALESCE(MAX(max_playback_rate), 1) AS max_rate
+             FROM dg_academy_watch_sessions
+             WHERE assignment_id = :assignment_id AND module_id = :module_id AND user_id = :user_id'
+        );
+        $aggStmt->execute([
+            'assignment_id' => $assignmentId,
+            'module_id' => $moduleId,
+            'user_id' => $userId,
+        ]);
+        $agg = $aggStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $watched = max((int) ($session['watched_seconds'] ?? 0), (int) ($agg['watched'] ?? 0));
+        $wall = max((int) ($session['wall_clock_sec'] ?? 0), (int) ($agg['wall'] ?? 0));
+        $sessionMaxRate = max(
+            (float) ($session['max_playback_rate'] ?? 1),
+            (float) ($agg['max_rate'] ?? 1)
+        );
         $flags = self::decodeFlags($session['anomaly_flags'] ?? null);
 
-        if ((float) ($session['max_playback_rate'] ?? 1) > $maxRate + 0.01) {
+        if ($sessionMaxRate > $maxRate + 0.01) {
             $flags[] = 'playback_rate_exceeded';
         }
         if ($watched < $requiredWatch) {
@@ -181,15 +204,9 @@ final class AcademyProgressService
 
         $completed = $watched >= $requiredWatch && !in_array('playback_rate_exceeded', $flags, true);
 
-        $stmt = Database::pdo()->prepare(
-            'UPDATE dg_academy_watch_sessions SET ended_at = NOW(), anomaly_flags = :flags WHERE id = :id'
-        );
-        $stmt->execute([
-            'flags' => self::encodeFlags($flags),
-            'id' => (int) $session['id'],
-        ]);
-
+        // Zuerst Fortschritt schreiben, dann Sitzung schließen — sonst bleibt bei Fehlern eine „tote“ Sitzung.
         self::ensureProgressRow($assignmentId, $moduleId);
+        $status = $completed ? 'completed' : 'in_progress';
         $stmt = Database::pdo()->prepare(
             'UPDATE dg_academy_module_progress SET
                 status = :status,
@@ -197,17 +214,28 @@ final class AcademyProgressService
                 wall_clock_sec = GREATEST(wall_clock_sec, :wall),
                 max_playback_rate = GREATEST(max_playback_rate, :max_rate),
                 anomaly_flags = :flags,
-                completed_at = CASE WHEN :status = \'completed\' THEN NOW() ELSE completed_at END
+                completed_at = CASE WHEN :mark_completed = 1 THEN NOW() ELSE completed_at END
              WHERE assignment_id = :assignment_id AND module_id = :module_id'
         );
         $stmt->execute([
-            'status' => $completed ? 'completed' : 'in_progress',
+            'status' => $status,
             'watched' => $watched,
             'wall' => $wall,
-            'max_rate' => (float) ($session['max_playback_rate'] ?? 1),
+            'max_rate' => $sessionMaxRate,
             'flags' => self::encodeFlags($flags),
+            'mark_completed' => $completed ? 1 : 0,
             'assignment_id' => $assignmentId,
             'module_id' => $moduleId,
+        ]);
+
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_academy_watch_sessions
+             SET ended_at = COALESCE(ended_at, NOW()), anomaly_flags = :flags
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            'flags' => self::encodeFlags($flags),
+            'id' => (int) $session['id'],
         ]);
 
         self::maybeCompleteAssignment($assignmentId);
@@ -328,12 +356,15 @@ final class AcademyProgressService
     }
 
     /** @return array<string, mixed>|null */
-    private static function findSession(string $uuid, int $userId): ?array
+    private static function findSession(string $uuid, int $userId, bool $allowEnded = false): ?array
     {
-        $stmt = Database::pdo()->prepare(
-            'SELECT * FROM dg_academy_watch_sessions
-             WHERE session_uuid = :uuid AND user_id = :user_id AND ended_at IS NULL LIMIT 1'
-        );
+        $sql = 'SELECT * FROM dg_academy_watch_sessions
+             WHERE session_uuid = :uuid AND user_id = :user_id';
+        if (!$allowEnded) {
+            $sql .= ' AND ended_at IS NULL';
+        }
+        $sql .= ' ORDER BY id DESC LIMIT 1';
+        $stmt = Database::pdo()->prepare($sql);
         $stmt->execute(['uuid' => $uuid, 'user_id' => $userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

@@ -1,0 +1,32 @@
+{
+  "title": "Manuelle Buchungen — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 58.8,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 7.8
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 6.52
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 11.84
+    },
+    {
+      "key": "jahr",
+      "duration_sec": 8.12
+    },
+    {
+      "key": "liste",
+      "duration_sec": 11.12
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 13.44
+    }
+  ]
+}

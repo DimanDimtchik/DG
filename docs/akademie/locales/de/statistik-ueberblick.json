@@ -1,0 +1,51 @@
+{
+  "video_slug": "statistik-ueberblick",
+  "locale": "de",
+  "title": "Statistik — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir die Website-Statistik. Start ist das Dashboard."
+    },
+    {
+      "key": "nav-tile",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "website-statistik",
+      "narration": "Öffnen Sie die Kachel Statistik — oder denselben Punkt unter Website im Menü."
+    },
+    {
+      "key": "zweck",
+      "screenshot": "storage/media/training/statistik/statistik-page.png",
+      "mode": "overview",
+      "narration": "Hier sehen Sie, wie oft Ihre Website aufgerufen wurde. Gezählt wird nur, wenn Besucher der Statistik im Cookie-Banner zugestimmt haben."
+    },
+    {
+      "key": "zeitraum",
+      "screenshot": "storage/media/training/statistik/statistik-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/statistik/statistik-page-regions.json",
+      "field": "zeitraum",
+      "narration": "Oben wählen Sie sieben, dreißig oder neunzig Tage. Die Kennzahlen und Listen passen sich dem Zeitraum an."
+    },
+    {
+      "key": "kennzahlen",
+      "screenshot": "storage/media/training/statistik/statistik-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/statistik/statistik-page-regions.json",
+      "field": "kennzahlen",
+      "narration": "Die Kacheln zeigen Aufrufe heute, in sieben Tagen, in dreißig Tagen und die gespeicherte Gesamtsumme."
+    },
+    {
+      "key": "listen",
+      "screenshot": "storage/media/training/statistik/statistik-page.png",
+      "mode": "focus_field",
+      "regions_file": "storage/media/training/statistik/statistik-page-regions.json",
+      "field": "listen",
+      "narration": "Darunter sehen Sie den Verlauf, die beliebtesten Seiten und woher Besucher kamen. Für Geräte und Kampagnen nutzen Sie die Links zu Google Analytics, wenn eine Mess-ID hinterlegt ist. Viel Erfolg!"
+    }
+  ]
+}

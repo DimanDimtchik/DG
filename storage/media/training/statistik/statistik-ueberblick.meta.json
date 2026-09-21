@@ -1,0 +1,32 @@
+{
+  "title": "Statistik — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 52.0,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.48
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 5.28
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 10.08
+    },
+    {
+      "key": "zeitraum",
+      "duration_sec": 8.24
+    },
+    {
+      "key": "kennzahlen",
+      "duration_sec": 7.36
+    },
+    {
+      "key": "listen",
+      "duration_sec": 14.56
+    }
+  ]
+}

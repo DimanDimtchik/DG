@@ -1,0 +1,32 @@
+{
+  "title": "Offene Posten — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 53.7,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 6.36
+    },
+    {
+      "key": "nav-tile",
+      "duration_sec": 5.64
+    },
+    {
+      "key": "zweck",
+      "duration_sec": 13.24
+    },
+    {
+      "key": "summen",
+      "duration_sec": 5.88
+    },
+    {
+      "key": "filter",
+      "duration_sec": 9.96
+    },
+    {
+      "key": "liste",
+      "duration_sec": 12.64
+    }
+  ]
+}

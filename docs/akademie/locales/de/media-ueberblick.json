@@ -1,0 +1,39 @@
+{
+  "video_slug": "media-ueberblick",
+  "locale": "de",
+  "title": "Media — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir Media — die Bildbibliothek im CRM. Sie starten im Dashboard. Den Bereich sehen nur Administratoren."
+    },
+    {
+      "key": "nav-media",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "bilder",
+      "narration": "Klicken Sie auf die Kachel Media — oder wählen Sie Media im Menü links."
+    },
+    {
+      "key": "liste",
+      "screenshot": "storage/media/training/media/media-list.png",
+      "mode": "overview",
+      "narration": "Hier sehen Sie alle Bilddateien: Vorschau, Name, Größe, Format und ob das Bild irgendwo benutzt wird — zum Beispiel als Logo oder auf der Website."
+    },
+    {
+      "key": "aktionen",
+      "screenshot": "storage/media/training/media/media-list.png",
+      "mode": "overview",
+      "narration": "Oben rechts laden Sie neue Bilder hoch. Mit Verwendung scannen aktualisieren Sie, wo Dateien im System referenziert sind. Personalunterlagen unter Kontakte gehören nicht hierher."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/media/media-list.png",
+      "mode": "overview",
+      "narration": "Das war der Überblick Media. Wie Sie ein Bild bearbeiten und als Firmenlogo oder Favicon setzen, zeigt das Video Media — Bearbeiten. Viel Erfolg!"
+    }
+  ]
+}

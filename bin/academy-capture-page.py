@@ -189,6 +189,171 @@ SECTION_JS = """() => {
         if (block) sections['filter'] = block;
     }
 
+    const manualRoot = document.querySelector('.dg-buchhaltung-manuelle-buchung');
+    if (manualRoot) {
+        const formPanel = manualRoot.querySelector('#dg-manual-lines')?.closest('.dg-panel');
+        if (formPanel) {
+            const block = rect(formPanel);
+            if (block) sections['form'] = block;
+        }
+        const kopf = manualRoot.querySelector('form.dg-form .dg-form-grid');
+        if (kopf) {
+            const block = rect(kopf);
+            if (block) sections['kopf'] = block;
+        }
+        const zeilen = document.getElementById('dg-manual-lines');
+        if (zeilen) {
+            const wrap = zeilen.closest('.dg-table-wrap') || zeilen;
+            const block = rect(wrap);
+            if (block) sections['zeilen'] = block;
+        }
+        const speichern = manualRoot.querySelector('form.dg-form .dg-form-actions, form.dg-form button[type="submit"]');
+        if (speichern) {
+            const block = rect(speichern);
+            if (block) sections['speichern'] = block;
+        }
+        manualRoot.querySelectorAll('section.dg-panel').forEach((panel) => {
+            const h2 = panel.querySelector('h2');
+            if (h2 && /Buchungen/i.test(h2.textContent || '')) {
+                const block = rect(panel);
+                if (block) sections['liste'] = block;
+            }
+        });
+    }
+
+    const mediaEdit = document.querySelector('.dg-media-edit');
+    if (mediaEdit) {
+        const preview = mediaEdit.querySelector('.dg-media-edit-preview');
+        if (preview) {
+            const block = rect(preview);
+            if (block) sections['vorschau'] = block;
+        }
+        const usage = mediaEdit.querySelector('.dg-media-edit-usage');
+        if (usage) {
+            const block = rect(usage);
+            if (block) sections['verwendung'] = block;
+        }
+        const panelTitles = {
+            'Metadaten': 'metadaten',
+            'Bild & Metadaten': 'metadaten',
+            'Größe & Format': 'groesse',
+            'Zuschneiden': 'zuschneiden',
+            'Hintergrund entfernen / Freistellen': 'freistellen',
+            'SVG bearbeiten': 'svg',
+            'Löschen': 'loeschen',
+        };
+        mediaEdit.querySelectorAll('.dg-media-edit-forms .dg-panel, .dg-media-edit-forms form.dg-panel').forEach((panel) => {
+            const h2 = panel.querySelector('h2');
+            if (!h2) return;
+            const key = panelTitles[h2.textContent.trim()];
+            if (!key) return;
+            const block = rect(panel);
+            if (block) sections[key] = block;
+        });
+    }
+
+    const bankRoot = document.querySelector('.dg-buchhaltung-bankabgleich');
+    if (bankRoot) {
+        bankRoot.querySelectorAll('section.dg-panel').forEach((panel) => {
+            const h2 = panel.querySelector('h2');
+            if (!h2) return;
+            const t = (h2.textContent || '').trim();
+            let key = '';
+            if (/CAMT/i.test(t)) key = 'camt';
+            else if (/MT940/i.test(t)) key = 'mt940';
+            else if (/Geister/i.test(t)) key = 'geister';
+            else if (/Offene Umsätze/i.test(t)) key = 'offen';
+            else if (/Zugeordnet/i.test(t)) key = 'zugeordnet';
+            if (!key) return;
+            const block = rect(panel);
+            if (block) sections[key] = block;
+        });
+    }
+
+    const filterPanel = document.querySelector('.dg-ledger-filters');
+    if (filterPanel) {
+        const block = rect(filterPanel);
+        if (block) sections['filter'] = block;
+    }
+    const summaryPanel = document.querySelector('.dg-opos-summary');
+    if (summaryPanel) {
+        const block = rect(summaryPanel);
+        if (block) sections['summary'] = block;
+    }
+    const cashRoot = document.querySelector('.dg-buchhaltung-kassenbuch');
+    if (cashRoot) {
+        cashRoot.querySelectorAll('section.dg-panel').forEach((panel) => {
+            const h2 = panel.querySelector('h2');
+            const t = (h2?.textContent || '').trim();
+            let key = '';
+            if (/Tagesabschluss/i.test(t)) key = 'tagesabschluss';
+            if (!key && panel.querySelector('.dg-table')) key = 'liste';
+            if (!key) return;
+            const block = rect(panel);
+            if (block) sections[key] = block;
+        });
+    }
+    const oposRoot = document.querySelector('.dg-buchhaltung-opos');
+    if (oposRoot) {
+        oposRoot.querySelectorAll('section.dg-panel').forEach((panel) => {
+            if (!panel.querySelector('.dg-table')) return;
+            const block = rect(panel);
+            if (block) sections['liste'] = block;
+        });
+    }
+    const guvRoot = document.querySelector('.dg-buchhaltung-auswertungen');
+    if (guvRoot) {
+        guvRoot.querySelectorAll('section.dg-panel').forEach((panel) => {
+            const h2 = panel.querySelector('h2');
+            const t = (h2?.textContent || '').trim();
+            if (/Gewinn|Bilanz/i.test(t) || panel.querySelector('.dg-table')) {
+                const block = rect(panel);
+                if (block) sections['report'] = block;
+            }
+        });
+    }
+    const datevRoot = document.querySelector('.dg-buchhaltung-steuerberater-export');
+    if (datevRoot) {
+        datevRoot.querySelectorAll('section.dg-panel').forEach((panel) => {
+            const h2 = panel.querySelector('h2');
+            const t = (h2?.textContent || '').trim();
+            let key = '';
+            if (/Buchungsstapel/i.test(t)) key = 'stapel';
+            else if (/Stammdaten/i.test(t)) key = 'stammdaten';
+            if (!key) return;
+            const block = rect(panel);
+            if (block) sections[key] = block;
+        });
+    }
+    const statsWrap = document.querySelector('.dg-wrap');
+    if (statsWrap && document.querySelector('.dg-page-title')?.textContent?.includes('Statistik')) {
+        const toolbar = document.querySelector('.dg-page-header__actions, .dg-toolbar');
+        if (toolbar) {
+            const block = rect(toolbar);
+            if (block) sections['zeitraum'] = block;
+        }
+        const grids = document.querySelectorAll('.dg-form-grid');
+        grids.forEach((grid) => {
+            if (grid.querySelectorAll('.dg-panel').length >= 3) {
+                const block = rect(grid);
+                if (block) sections['kennzahlen'] = block;
+            }
+        });
+        const panels = Array.from(document.querySelectorAll('section.dg-panel'));
+        if (panels.length) {
+            let unionRect = null;
+            panels.slice(1).forEach((panel) => {
+                unionRect = union(unionRect, rect(panel));
+            });
+            if (unionRect) sections['listen'] = unionRect;
+        }
+        const ga = panels.find((p) => /Google Analytics/i.test(p.querySelector('h2')?.textContent || ''));
+        if (ga) {
+            const block = rect(ga);
+            if (block) sections['google'] = block;
+        }
+    }
+
     return sections;
 }"""
 
@@ -220,11 +385,13 @@ def inject_cleanup(page) -> None:
         """() => {
             const el = document.getElementById('dg-cookie-consent');
             if (el) el.remove();
+            document.querySelectorAll('.dg-cc-overlay, .dg-cc-banner').forEach((n) => n.remove());
             const style = document.createElement('style');
             style.textContent = `
                 body.dg-app { height: auto !important; min-height: auto !important; overflow: visible !important; }
                 .dg-shell { overflow: visible !important; min-height: auto !important; }
                 .dg-content { overflow: visible !important; height: auto !important; min-height: auto !important; }
+                #dg-cookie-consent, .dg-cc-overlay { display: none !important; visibility: hidden !important; }
             `;
             document.head.appendChild(style);
             window.scrollTo(0, 0);
@@ -255,6 +422,74 @@ def prepare_page_state(page, html: Path) -> None:
             }"""
         )
         page.wait_for_timeout(400)
+    if "akademie-modul-player" in html.name:
+        page.evaluate(
+            """() => {
+                const msg = document.getElementById('dg-academy-player-message');
+                if (msg) { msg.hidden = true; msg.textContent = ''; }
+                document.querySelectorAll('.dg-scan-result').forEach((el) => {
+                    if ((el.textContent || '').toLowerCase().includes('failed')) {
+                        el.hidden = true;
+                        el.textContent = '';
+                    }
+                });
+                const video = document.getElementById('dg-academy-video');
+                if (video) {
+                    video.removeAttribute('src');
+                    video.querySelectorAll('source').forEach((s) => s.remove());
+                    video.poster = '';
+                    video.style.background = '#1a1a1a';
+                    video.style.minHeight = '320px';
+                }
+            }"""
+        )
+        page.wait_for_timeout(200)
+
+    # Media-Demo: lokale PNGs in Vorschau (ohne Login-Preview)
+    media_preview_map = {
+        "media-edit-demo": "media-demo-becher.png",
+        "media-crop-modal": "media-demo-becher.png",
+        "media-edit-crop": "media-demo-becher-crop.png",
+        "media-edit-frei": "media-demo-becher-frei.png",
+        "media-list-demo": "media-demo-becher.png",
+    }
+    for key, filename in media_preview_map.items():
+        if key not in html.name:
+            continue
+        demo = (ROOT / "storage/media/training/media/demo" / filename).resolve()
+        if not demo.is_file():
+            break
+        uri = demo.as_uri()
+        page.evaluate(
+            """(uri) => {
+                const img = document.getElementById('dg-media-preview');
+                if (img) {
+                    img.src = uri;
+                    img.hidden = false;
+                    img.classList.remove('dg-media-preview--empty');
+                }
+                document.querySelectorAll('.dg-media-thumb img, .dg-table img').forEach((el) => {
+                    if (el && el.tagName === 'IMG') el.src = uri;
+                });
+            }""",
+            uri,
+        )
+        page.wait_for_timeout(400)
+        if "media-crop-modal" in html.name:
+            page.evaluate(
+                """(uri) => {
+                    const modal = document.getElementById('dg-media-crop-modal');
+                    const cropImg = document.getElementById('dg-media-crop-image');
+                    if (modal) {
+                        modal.hidden = false;
+                        modal.setAttribute('aria-hidden', 'false');
+                    }
+                    if (cropImg) cropImg.src = uri;
+                }""",
+                uri,
+            )
+            page.wait_for_timeout(500)
+        break
 
 
 def capture(
@@ -308,7 +543,7 @@ def capture(
     print(f"Screenshot: {png} ({Image.open(png).size[1]}px)")
     if regions and regions.is_file():
         payload = json.loads(regions.read_text(encoding="utf-8"))
-        print(f"Abschnitte: {len(payload.get('sections', {}))}, Felder: {len(payload.get('fields', {}))} → {regions}")
+        print(f"Abschnitte: {len(payload.get('sections', {}))}, Felder: {len(payload.get('fields', {}))} -> {regions}")
 
 
 def main() -> int:

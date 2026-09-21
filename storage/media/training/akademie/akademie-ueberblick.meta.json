@@ -1,0 +1,32 @@
+{
+  "title": "Akademie — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 68.1,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 9.2
+    },
+    {
+      "key": "nav-akademie",
+      "duration_sec": 8.08
+    },
+    {
+      "key": "meine",
+      "duration_sec": 9.08
+    },
+    {
+      "key": "katalog",
+      "duration_sec": 11.68
+    },
+    {
+      "key": "aufbau",
+      "duration_sec": 13.36
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 16.72
+    }
+  ]
+}
