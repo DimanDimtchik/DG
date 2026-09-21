@@ -513,6 +513,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-konto') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && TimeClockService::canViewTeam($user);
         }
+        if ($slug === 'zeiterfassung-schicht-vorlagen') {
+            return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && TimeClockService::canViewTeam($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {

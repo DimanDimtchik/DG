@@ -241,6 +241,7 @@ final class MigrationRunner
                 && self::columnExists($pdo, 'dg_contacts', 'origin_firm_note'),
             '090_time_corrections.sql' => self::tableExists($pdo, 'dg_time_corrections')
                 && self::tableExists($pdo, 'dg_time_overtime_reductions'),
+            '091_time_shift_templates.sql' => self::tableExists($pdo, 'dg_time_shift_templates'),
             default => false,
         };
     }
@@ -358,6 +359,7 @@ final class MigrationRunner
             '088_multi_firma_gewinnermittlung.sql' => true,
             '089_multi_firma_history_shared.sql' => true,
             '090_time_corrections.sql' => true,
+            '091_time_shift_templates.sql' => true,
         ];
     }
 

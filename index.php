@@ -3306,6 +3306,43 @@ switch ($path) {
             exit;
         }
 
+        // POST: Schicht-Vorlagen (Z3b)
+        if (
+            $page === 'zeiterfassung-schicht-vorlagen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['shift_template_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-schicht-vorlagen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-schicht-vorlagen', true, 302);
+                exit;
+            }
+            $tplAction = (string) ($_POST['shift_template_action'] ?? '');
+            $tplId = (int) ($_POST['id'] ?? 0);
+            try {
+                if ($tplAction === 'save') {
+                    $savedId = TimeShiftTemplateRepository::save($_POST, $tplId > 0 ? $tplId : null);
+                    Flash::set('success', $tplId > 0 ? 'Vorlage gespeichert.' : 'Vorlage angelegt.');
+                    header('Location: /app?page=zeiterfassung-schicht-vorlagen&id=' . $savedId, true, 302);
+                    exit;
+                }
+                if ($tplAction === 'toggle') {
+                    TimeShiftTemplateRepository::setActive($tplId, !empty($_POST['active']));
+                    Flash::set('success', 'Status aktualisiert.');
+                } elseif ($tplAction === 'delete') {
+                    TimeShiftTemplateRepository::delete($tplId);
+                    Flash::set('success', 'Vorlage gelöscht.');
+                } else {
+                    Flash::set('error', 'Unbekannte Aktion.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=zeiterfassung-schicht-vorlagen', true, 302);
+            exit;
+        }
+
         // POST: Termin speichern
         if ($page === 'terminkalender' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_save'])) {
             if (!MenuRegistry::canAccess($user, 'terminkalender')) {
@@ -5158,6 +5195,14 @@ $legalProductsConfig = LegalProductSettings::config();
                 $title = 'Media';
                 $currentPage = 'bilder';
             }
+        } elseif ($page === 'zeiterfassung-schicht-vorlagen' && MenuRegistry::canAccess($user, 'zeiterfassung-schicht-vorlagen')) {
+            MigrationRunner::runPending();
+            $editId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+            $timeShiftTemplateEdit = $editId > 0 ? TimeShiftTemplateRepository::findById($editId) : null;
+            $timeShiftTemplates = TimeShiftTemplateRepository::all(false);
+            $contentTemplate = 'modules/zeiterfassung-schicht-vorlagen';
+            $title = 'Schicht-Vorlagen';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-konto' && MenuRegistry::canAccess($user, 'zeiterfassung-konto')) {
             $timeKontoStaffOptions = TimeMonthReportService::staffOptions();
             $requested = isset($_GET['contact_id']) ? (int) $_GET['contact_id'] : 0;
@@ -5707,6 +5752,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeKontoCorrections = $timeKontoCorrections ?? [];
         $timeKontoReductions = $timeKontoReductions ?? [];
         $timeKontoStaffOptions = $timeKontoStaffOptions ?? [];
+        $timeShiftTemplates = $timeShiftTemplates ?? [];
+        $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6075,6 +6122,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeKontoCorrections',
             'timeKontoReductions',
             'timeKontoStaffOptions',
+            'timeShiftTemplates',
+            'timeShiftTemplateEdit',
             'recipeList',
             'recipeForm',
             'recipeId',

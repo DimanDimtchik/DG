@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–2 ✅** · Spec **Z3a–Z6a ✅** · Code offen: Z3b–d, Z4b–e, Z5b–d, Z6b+  
+> Status: **Phase 1–2 ✅** · Spec **Z3a–Z6a ✅** · **Z3b Code ✅** · offen: Z3c–d, Z4b–e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -263,7 +263,7 @@ Abweichung nur per explizitem Chat-Befehl.
 **Serie Z3 (Schichten — jetzt):**
 
 1. **Z3a** Spec Schicht-Vorlagen + Zuordnung + Soll-Prio ✅  
-2. **Z3b** Migration + CRUD Vorlagen (Früh/Spät/Nacht / frei)  
+2. **Z3b** Migration + CRUD Vorlagen (Früh/Spät/Nacht / frei) ✅  
 3. **Z3c** Zuordnung MA ↔ Schicht ↔ Datum + Wochen-UI  
 4. **Z3d** Soll aus Schicht in `TimeScheduleService` + Abweichung Ist  
 
@@ -481,13 +481,16 @@ Ohne Zuordnung: Verhalten unverändert Z2b.
 
 **Nicht:** Migration, UI, Zuschläge, Urlaub.
 
-### Z3b — Vorlagen CRUD
+### Z3b — Vorlagen CRUD ✅ 2026-09-21
 
-| Lieferobjekt | Erwartung |
-|--------------|-----------|
-| Migration | `dg_time_shift_templates` + Seed |
-| UI/Service | anlegen/ändern/deaktivieren |
-| Nicht | Zuordnung, Soll-Anbindung |
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Migration | `091_time_shift_templates.sql` + Seed Früh/Spät/Nacht |
+| Service | `TimeShiftTemplateRepository` (Dauer inkl. Mitternacht) |
+| UI | `/app?page=zeiterfassung-schicht-vorlagen` (`canViewTeam`) |
+| Löschen | nur ohne Zuordnung; sonst deaktivieren |
+
+**Nicht:** Zuordnung (Z3c), Soll-Anbindung (Z3d).
 
 ### Z3c — Zuordnung Wochen-UI
 
