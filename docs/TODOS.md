@@ -51,7 +51,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Zeiterfassung Phase 2** — Z2a–Z2e ✅
 - [ ] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d; **Z3a ✅** · offen: `z3b`–`z3d`
 - [ ] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e; **Z4a ✅** · offen: `z4b`–`z4e`
-- [ ] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d; **Z5a ✅** · weiter: `z5b` (Steuerberater-Konten)
+- [ ] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d; **Z5a ✅** · offen: `z5b`–`z5d`
+- [ ] **Zeiterfassung Phase 6 Lohn-Export** — Z6a–Z6d; **Z6a ✅** · weiter: `z6b` (CSV)
 
 ---
 
@@ -124,7 +125,8 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | **Zeiterfassung Z2a–Z2e** | erledigt 2026-09-21 |
 | **Zeiterfassung Z3a–Z3d** (Schichten) | Spec Z3a ✅ · Code offen `z3b` |
 | **Zeiterfassung Z4a–Z4e** (Urlaub/Krankheit) | Spec Z4a ✅ · Code offen `z4b` |
-| **Zeiterfassung Z5a–Z5d** (Rückstellungen) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb Phase 5 · **Z5a ✅** |
+| **Zeiterfassung Z5a–Z5d** (Rückstellungen) | Spec Z5a ✅ · Code offen `z5b` |
+| **Zeiterfassung Z6a–Z6d** (Lohn-Export) | [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) § Betrieb Phase 6 · **Z6a ✅** |
 
 ---
 

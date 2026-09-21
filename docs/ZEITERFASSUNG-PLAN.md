@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1 ✅** · **Z2 ✅** · **Z3a/Z4a Spec ✅** (Code Z3b–d / Z4b–e offen) · **Z5a Spec ✅** · offen Z5b–d · Phase 6 später  
+> Status: **Phase 1–2 ✅** · Spec **Z3a–Z6a ✅** · Code offen: Z3b–d, Z4b–e, Z5b–d, Z6b+  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -274,7 +274,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | **Z3** | Schichten | `z3a` ✅ · weiter `z3b` |
 | **Z4** | Urlaub & Krankheit | `z4a` ✅ · weiter `z4b` |
 | **Z5** | Rückstellungen Buchhaltung | `z5a` ✅ · weiter `z5b` (+ Steuerberater) |
-| **Z6** | Lohn-Export DATEV/CSV | `z6a` |
+| **Z6** | Lohn-Export DATEV/CSV | `z6a` ✅ · weiter `z6b` |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
 
@@ -794,3 +794,138 @@ Nicht Z6 / Z3–Z4-Code neu einlesen.
 ```
 
 Weitere: `Z5b` / `Z5c` / `Z5d` analog.
+
+---
+
+## Betrieb Phase 6 — Lohn-Export (token-sparend)
+
+> **Agent-Regel:** Pro Chat **ein** Unterpunkt (`z6a` …). Spec nur dieser Abschnitt.  
+> **Keine eigene Lohnabrechnung** in Z6 — nur Export an externe Software.  
+> **Kein** Deploy außer „deploy“. Datenquellen soft-degraden (fehlen Z4-Abwesenheiten → Spalten leer/0).
+
+### Entscheid-Checkliste Z6
+
+| # | Entscheidung | Default |
+|---|--------------|---------|
+| L1 | Erstes Format | ✅ **CSV-Standard** (Z6b) — robust, prüfbar |
+| L2 | DATEV | ✅ **DATEV Lohn & Gehalt** Anschluss (Z6c) — EXTF/bekannte Felder, mit Berater prüfen |
+| L3 | Lexoffice | ✅ optional **Z6d** nach DATEV |
+| L4 | Zuschläge | ✅ **nicht** in Z6 (Nacht/So/Feiertag später) |
+| L5 | PDF Lohnzettel | ✅ Ablegen `payroll_slip` in Kontaktakte (Z6d/e) — **kein** Generieren der Abrechnung |
+| L6 | Protokoll | ✅ `dg_time_payroll_exports` (wer/wann/Monat/Format/Dateiname) |
+
+### Z6a — Spec Lohn-Export ✅ 2026-09-21
+
+Nur Spezifikation — Code = **Z6b+**.
+
+#### Abgrenzung
+
+| Ja in Z6 | Nein in Z6 |
+|----------|------------|
+| Monats-Export Ist/Soll/ÜStd/Urlaub/Krank (soweit Daten) | Eigene Netto-Lohnberechnung |
+| CSV + DATEV-Lohn-Anschluss + optional Lexoffice | ELStAM, SV-Meldungen, Auszahlung |
+| Mandant/Berater-Nr. in Settings | Stripe/Shop |
+| Upload/Ablage fremder Lohn-PDF | PDF selbst erzeugen |
+
+#### Datenquellen (pro MA, Monat YYYY-MM)
+
+| Feld | Quelle (Priorität) |
+|------|-------------------|
+| Personalnummer / Login | Kontakt / EmployeeData |
+| Name | Kontakt |
+| Soll_Minuten | Summe `scheduled` (TimeMonth / WorkDays) |
+| Ist_Minuten | Summe `worked` |
+| Pause_Minuten | Summe `break` |
+| Ueberstunden_Minuten | Summe `overtime` bzw. Lots-Bewegung |
+| Urlaub_Tage | Z4 approved vacation overlapping month (0 bis Z4 live) |
+| Krank_Tage | Z4 approved sick (0 bis Z4 live) |
+| Korrektur_Minuten | Summe Z2e Deltas im Monat |
+
+#### CSV-Standard (Z6b — verbindliches Minimal-Schema)
+
+- UTF-8 BOM, Trenner `;`
+- Kopfzeile fest (deutsche Bezeichner + `_Minuten` / `_Tage`)
+- Eine Zeile pro Mitarbeiter; Summenzeile optional
+- Dateiname: `lohn-zeiten-{YYYY-MM}-{domain}.csv`
+- Inhalt prüfbar gegen Monatsblatt (Z2c)
+
+#### DATEV Lohn (Z6c)
+
+- Settings: Beraternummer, Mandantennummer, ggf. Personalnummer-Mapping
+- Export erzeugt Datei im mit Steuerberater abgestimmten DATEV-Lohn-Importformat (Dokumentation/Feldliste in Code-Kommentar + Spec-Anhang bei Implementierung)
+- **Kein** Raten undokumentierter Binärformate; im Zweifel CSV-Übergabe + DATEV-Import-Assistent laut Berater
+- Wiederverwendung Muster: bestehende DATEV-Exporter (Buchhaltung) nur als Vorbild für Encoding/BOM/Protokoll — **nicht** Kontenblatt als Lohn missbrauchen
+
+#### Lexoffice (Z6d, optional)
+
+- Nur wenn Nutzer/Berater Format vorgibt; sonst zurückstellen
+- Gleicher Monatsdatensatz wie CSV, anderes Mapping
+
+#### Dokument `payroll_slip` (Z6d/e)
+
+- Typ in EmployeeDocuments / Kontaktakte
+- Nutzer lädt vom Steuerberater erhaltene PDF hoch (Monat + MA)
+- Kein Auto-Download von DATEV-Cloud in Z6
+
+#### Rechte & UI
+
+| Aktion | Wer |
+|--------|-----|
+| Export starten | `canViewTeam` **und** Buchhaltungs- oder HR-Kontext (Z6b: `canViewTeam`; optional zusätzlich Buchhaltung) |
+| Settings Mandant/Berater | Admin / Settings |
+| PDF ablegen | wie Kontaktakte heute |
+
+Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau, Download, Protokoll.
+
+#### Serie Z6
+
+1. **Z6a** Spec ✅  
+2. **Z6b** CSV-Monats-Export + Protokoll-Tabelle  
+3. **Z6c** DATEV-Lohn-Anschluss (Settings + Datei)  
+4. **Z6d** optional Lexoffice + `payroll_slip`-Ablage  
+
+#### Abnahme Z6a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| CSV zuerst, DATEV danach, Lexoffice optional | ✅ |
+| Keine eigene Abrechnung | ✅ |
+| Soft-Degrade ohne Z4 | ✅ |
+| Kein Code in diesem Chat | ✅ |
+
+**Nicht:** Migration, Export-Code, Zuschläge, ELSTER/Lohnsteuer.
+
+### Z6b — CSV + Protokoll
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Migration | `dg_time_payroll_exports` |
+| Export | CSV laut Schema |
+| Nicht | DATEV-Felder raten |
+
+### Z6c — DATEV Lohn
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Settings | Berater/Mandant |
+| Datei | abgestimmtes Format |
+| Nicht | Lexoffice |
+
+### Z6d — Lexoffice + PDF-Ablage
+
+| Lieferobjekt | Erwartung |
+|--------------|-----------|
+| Optional Mapping | nur bei Bedarf |
+| payroll_slip | Upload in Akte |
+| Nicht | PDF generieren |
+
+### Chat-Vorlage Z6
+
+```text
+Scope: Zeiterfassung Z6a laut docs/ZEITERFASSUNG-PLAN.md § Betrieb Phase 6
+Nur: Spec Lohn-Export (CSV/DATEV/Lexoffice, Rechte, Abgrenzung)
+Kein Code, keine Migration, kein Deploy.
+Keine eigene Lohnabrechnung.
+```
+
+Weitere: `Z6b` / `Z6c` / `Z6d` analog.
