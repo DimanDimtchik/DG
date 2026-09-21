@@ -5538,9 +5538,14 @@ $legalProductsConfig = LegalProductSettings::config();
             );
             $timePayrollDataset = TimePayrollExportService::monthDataset($timePayrollYearMonth);
             $timePayrollExports = TimePayrollExportRepository::listRecent(40);
-            if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+            $timePayrollDatevSettings = DatevExportSettings::config();
+            $timePayrollDatevConfigured = DatevExportSettings::isConfigured();
+            $dl = trim((string) ($_GET['download'] ?? ''));
+            if ($dl === 'csv' || $dl === 'datev') {
                 try {
-                    $exported = TimePayrollExportService::exportCsv($user, $timePayrollYearMonth);
+                    $exported = $dl === 'datev'
+                        ? TimePayrollExportService::exportDatev($user, $timePayrollYearMonth)
+                        : TimePayrollExportService::exportCsv($user, $timePayrollYearMonth);
                     header('Content-Type: text/csv; charset=utf-8');
                     header('Content-Disposition: attachment; filename="' . $exported['filename'] . '"');
                     echo $exported['csv'];
@@ -6161,6 +6166,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $timePayrollYearMonth = $timePayrollYearMonth ?? date('Y-m');
         $timePayrollDataset = $timePayrollDataset ?? ['rows' => [], 'totals' => []];
         $timePayrollExports = $timePayrollExports ?? [];
+        $timePayrollDatevSettings = $timePayrollDatevSettings ?? DatevExportSettings::defaults();
+        $timePayrollDatevConfigured = $timePayrollDatevConfigured ?? false;
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6563,6 +6570,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'timePayrollYearMonth',
             'timePayrollDataset',
             'timePayrollExports',
+            'timePayrollDatevSettings',
+            'timePayrollDatevConfigured',
             'recipeList',
             'recipeForm',
             'recipeId',

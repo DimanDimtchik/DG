@@ -1,10 +1,12 @@
 <?php
 /**
- * Z6b Lohn-Export CSV + Protokoll.
+ * Z6b/Z6c Lohn-Export CSV + DATEV-Übergabe + Protokoll.
  *
  * @var string $timePayrollYearMonth
  * @var array{year_month: string, rows: list<array<string, mixed>>, totals: array<string, mixed>} $timePayrollDataset
  * @var list<array<string, mixed>> $timePayrollExports
+ * @var array{consultant_number: string, client_number: string} $timePayrollDatevSettings
+ * @var bool $timePayrollDatevConfigured
  * @var array{type: string, message: string}|null $flash
  */
 $ym = (string) ($timePayrollYearMonth ?? date('Y-m'));
@@ -12,6 +14,8 @@ $dataset = is_array($timePayrollDataset ?? null) ? $timePayrollDataset : ['rows'
 $rows = is_array($dataset['rows'] ?? null) ? $dataset['rows'] : [];
 $totals = is_array($dataset['totals'] ?? null) ? $dataset['totals'] : [];
 $exports = is_array($timePayrollExports ?? null) ? $timePayrollExports : [];
+$datevCfg = is_array($timePayrollDatevSettings ?? null) ? $timePayrollDatevSettings : [];
+$datevOk = !empty($timePayrollDatevConfigured);
 $prev = (new DateTimeImmutable($ym . '-01'))->modify('-1 month')->format('Y-m');
 $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
 ?>
@@ -21,12 +25,13 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Lohn-Export</h1>
-      <p class="dg-lead">Z6b — CSV-Monatszeiten für externe Lohnbuchhaltung (keine Netto-Berechnung)</p>
+      <p class="dg-lead">Z6c — CSV-Standard + DATEV Lohn-Zeitenübergabe (keine Netto-Berechnung)</p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
       <a class="dg-button" href="/app?page=zeiterfassung-rueckstellung">Rückstellungen</a>
+      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('kontenrahmen')) ?>">DATEV-Einstellungen</a>
     </div>
   </header>
 
@@ -40,11 +45,20 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
       <button type="submit" class="dg-button">Anzeigen</button>
       <a class="dg-button" href="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($prev) ?>">←</a>
       <a class="dg-button" href="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($next) ?>">→</a>
-      <a class="dg-button dg-button--primary" href="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($ym) ?>&amp;download=csv">CSV herunterladen</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($ym) ?>&amp;download=csv">CSV herunterladen</a>
+      <?php if ($datevOk) : ?>
+        <a class="dg-button dg-button--primary" href="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($ym) ?>&amp;download=datev">DATEV Lohn-Zeiten</a>
+      <?php else : ?>
+        <span class="dg-button dg-button--primary" aria-disabled="true" title="Berater-/Mandantennummer setzen">DATEV Lohn-Zeiten</span>
+      <?php endif; ?>
     </form>
     <p class="dg-field-hint">
-      UTF-8 BOM, Trenner „;“. Dateiname: <code>lohn-zeiten-{Monat}-{Domain}.csv</code>.
-      Urlaub/Krank aus genehmigten Abwesenheiten (0 wenn keine Daten). DATEV folgt in Z6c.
+      Berater-Nr.: <?= View::escape((string) ($datevCfg['consultant_number'] ?? '')) ?: '—' ?>
+      · Mandanten-Nr.: <?= View::escape((string) ($datevCfg['client_number'] ?? '')) ?: '—' ?>
+      <?php if (!$datevOk) : ?>
+        — bitte unter <a href="<?= View::escape(SettingsRegistry::tabUrl('kontenrahmen')) ?>">Einstellungen → Kontenrahmen</a> pflegen.
+      <?php endif; ?>
+      DATEV-Datei = CSV-Übergabe (kein LODAS-Binärformat); mit Steuerberater abstimmen.
     </p>
   </section>
 

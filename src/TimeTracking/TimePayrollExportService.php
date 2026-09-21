@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Zeiterfassung Z6b: CSV-Monats-Lohnzeiten-Export + Protokoll.
- * Keine eigene Lohnabrechnung, kein DATEV in Z6b.
+ * Zeiterfassung Z6b/Z6c: CSV-Monats-Lohnzeiten-Export + DATEV-Übergabe + Protokoll.
+ * Keine eigene Lohnabrechnung.
  */
 final class TimePayrollExportService
 {
@@ -183,11 +183,46 @@ final class TimePayrollExportService
         ];
     }
 
+    /**
+     * DATEV Lohn Zeitenübergabe (Z6c) — benötigt Berater-/Mandantennummer.
+     *
+     * @return array{filename: string, csv: string, row_count: int, export_id: int}
+     */
+    public static function exportDatev(User $user, string $yearMonth): array
+    {
+        if (!self::canExport($user)) {
+            throw new RuntimeException('Keine Berechtigung für Lohn-Export (nur HR/Admin/full).');
+        }
+        $dataset = self::monthDataset($yearMonth);
+        $built = TimePayrollDatevExporter::build($dataset);
+        $id = TimePayrollExportRepository::insert(
+            (string) ($dataset['year_month'] ?? $yearMonth),
+            'datev_lohn',
+            $built['filename'],
+            $built['count'],
+            (int) ($user->id ?? 0)
+        );
+
+        return [
+            'filename' => $built['filename'],
+            'csv' => $built['content'],
+            'row_count' => $built['count'],
+            'export_id' => $id,
+        ];
+    }
+
     private static function personalNumber(int $contactId): string
     {
         $c = ContactRepository::findById($contactId);
         if ($c === null) {
             return (string) $contactId;
+        }
+        $raw = $c->employeeData ?? [];
+        if (is_array($raw)) {
+            $mapped = trim((string) ($raw['datev_personnel_number'] ?? ''));
+            if ($mapped !== '') {
+                return $mapped;
+            }
         }
         $login = trim((string) ($c->login ?? ''));
         if ($login !== '') {

@@ -59,7 +59,12 @@ $accountDigits = (int) ($chartOfAccountsConfig['account_digits'] ?? 4);
   <hr class="dg-form-divider">
 
   <h3 class="dg-subsection-title">DATEV-Export</h3>
-  <p class="dg-field-hint">Berater- und Mandantennummer für den EXTF-Buchungsstapel-Export an die Steuerkanzlei.</p>
+  <p class="dg-field-hint">
+    Berater- und Mandantennummer für EXTF-Buchungsstapel und für den
+    <a href="/app?page=zeiterfassung-lohnexport">Lohn-Zeitenexport (DATEV)</a>.
+    Personalnummer: Kontakt-Login, optional Override in Mitarbeiterdaten
+    <code>datev_personnel_number</code>.
+  </p>
   <?php
   $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
   ?>
