@@ -78,6 +78,75 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
         <button type="submit" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>>Speichern</button>
       </div>
     </form>
+
+    <?php $amazonBusinessForm = $amazonBusinessForm ?? AmazonBusinessSettings::forForm(); ?>
+    <h3 class="dg-subsection-title" style="margin-top:2rem">Amazon Business (Stufe 2)</h3>
+    <p class="dg-lead">
+      Halbautomatische Bestellung aus der Einkaufsliste. Zuerst Developer-Zugang beantragen
+      (siehe <code>docs/AMAZON-BUSINESS-STUFE2.md</code>), dann Credentials hier hinterlegen.
+      Der Bestell-Button an der Einkaufsliste folgt in einem nächsten Schritt.
+    </p>
+    <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&lager_tab=einkauf') ?>">
+      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+      <input type="hidden" name="lager_tab" value="einkauf">
+      <div class="dg-form-grid">
+        <label class="dg-field">
+          <span>Status</span>
+          <input type="text" value="<?= View::escape((string) ($amazonBusinessForm['status_label'] ?? '')) ?>" readonly>
+        </label>
+        <label class="dg-field">
+          <span>Integration</span>
+          <select name="amazon_enabled"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <option value="0"<?= empty($amazonBusinessForm['enabled']) ? ' selected' : '' ?>>Deaktiviert</option>
+            <option value="1"<?= !empty($amazonBusinessForm['enabled']) ? ' selected' : '' ?>>Aktiv</option>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Region</span>
+          <select name="amazon_region"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <option value="EU"<?= ($amazonBusinessForm['region'] ?? '') === 'EU' ? ' selected' : '' ?>>EU (u. a. DE)</option>
+            <option value="NA"<?= ($amazonBusinessForm['region'] ?? '') === 'NA' ? ' selected' : '' ?>>Nordamerika</option>
+            <option value="FE"<?= ($amazonBusinessForm['region'] ?? '') === 'FE' ? ' selected' : '' ?>>Fernost</option>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Max. Bestellwert pro Klick (€)</span>
+          <input type="text" name="amazon_max_order_amount" inputmode="decimal"
+            value="<?= View::escape(number_format((float) ($amazonBusinessForm['max_order_amount'] ?? 500), 2, ',', '')) ?>"
+            <?= !$dbConnected ? ' disabled' : '' ?>>
+          <small class="dg-field-hint">CRM-Schutzlimit — Amazon-Safeguards zusätzlich empfohlen.</small>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Client-ID (LWA)</span>
+          <input type="text" name="amazon_client_id" autocomplete="off"
+            value="<?= View::escape((string) ($amazonBusinessForm['client_id'] ?? '')) ?>"
+            placeholder="amzn1.application-oa2-client.…"<?= !$dbConnected ? ' disabled' : '' ?>>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Client-Secret</span>
+          <input type="password" name="amazon_client_secret" autocomplete="new-password" value=""
+            placeholder="<?= !empty($amazonBusinessForm['client_secret_set']) ? '•••••••• (gespeichert — leer lassen zum Behalten)' : '' ?>"
+            <?= !$dbConnected ? ' disabled' : '' ?>>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Refresh-Token</span>
+          <input type="password" name="amazon_refresh_token" autocomplete="new-password" value=""
+            placeholder="<?= !empty($amazonBusinessForm['refresh_token_set']) ? '•••••••• (gespeichert — leer lassen zum Behalten)' : '' ?>"
+            <?= !$dbConnected ? ' disabled' : '' ?>>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Amazon-Nutzer-E-Mail (x-amz-user-email)</span>
+          <input type="email" name="amazon_user_email"
+            value="<?= View::escape((string) ($amazonBusinessForm['user_email'] ?? '')) ?>"
+            placeholder="einkauf@firma.de"<?= !$dbConnected ? ' disabled' : '' ?>>
+          <small class="dg-field-hint">E-Mail des Amazon-Business-Nutzers, der bestellen darf (Gruppe mit Ordering API).</small>
+        </label>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" name="amazon_business_save" value="1" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>>Amazon speichern</button>
+        <button type="submit" name="amazon_business_test" value="1" class="dg-button"<?= !$dbConnected ? ' disabled' : '' ?>>Verbindung testen</button>
+      </div>
+    </form>
   <?php elseif ($lagerStrukturTab === 'orte') : ?>
     <details class="dg-notify-section"<?= $editLocation ? ' open' : '' ?>>
       <summary class="dg-notify-section__summary">
