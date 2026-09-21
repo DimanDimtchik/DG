@@ -460,7 +460,7 @@
           '<label class="dg-field dg-website-media-picker__search"><span class="dg-visually-hidden">Suchen</span>' +
             '<input type="search" placeholder="Suchen …" data-media-picker-search>' +
           '</label>' +
-          '<a class="dg-button" href="/app?page=bilder" target="_blank" rel="noopener">Zur Mediathek</a>' +
+          '<a class="dg-button" href="/app?page=bilder" target="_blank" rel="noopener">Zur Media-Bibliothek</a>' +
         '</div>' +
         '<div class="dg-website-media-picker__body" data-media-picker-body>' +
           '<p class="dg-field-hint">Lade Mediathek …</p>' +
@@ -556,7 +556,7 @@
       });
     }
     if (!items.length) {
-      body.innerHTML = '<p class="dg-field-hint">Keine Bilder gefunden. Laden Sie welche unter Bilder hoch.</p>';
+      body.innerHTML = '<p class="dg-field-hint">Keine Bilder gefunden. Laden Sie welche unter Media hoch.</p>';
       return;
     }
     var html = '<div class="dg-website-media-picker__grid">';

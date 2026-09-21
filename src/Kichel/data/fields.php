@@ -66,13 +66,13 @@ return [
     ],
     [
         'area_id' => 'bilder',
-        'area_label' => 'Bilder / Medien',
+        'area_label' => 'Media',
         'href' => '/app?page=bilder',
-        'intro' => 'Medienbibliothek für Logos, Fotos und Grafiken.',
+        'intro' => 'Media-Bibliothek für Logos, Fotos und Grafiken.',
         'fields' => [
             [
                 'label' => 'CRM-Logo',
-                'format' => 'PNG/SVG/JPG, Bild unter Bilder öffnen → „Als CRM-Logo in Kopfzeile“',
+                'format' => 'PNG/SVG/JPG, Bild unter Media öffnen → „Als CRM-Logo in Kopfzeile“',
                 'hint' => 'Das Logo erscheint in der CRM-Kopfzeile; für E-Mails zusätzlich unter Benachrichtigungen aktivieren.',
                 'keywords' => ['logo', 'firmenlogo', 'crm-logo', 'logodatei', 'logos'],
             ],
@@ -110,7 +110,7 @@ return [
             ],
             [
                 'label' => 'Logo in E-Mail-Kopfzeile',
-                'format' => 'Checkbox — Logo kommt aus der Medienbibliothek (Bilder)',
+                'format' => 'Checkbox — Logo kommt aus der Media-Bibliothek',
                 'hint' => 'Helles Logo auf transparentem Hintergrund für Dark Mode in Mail-Apps.',
                 'keywords' => ['email-logo', 'mail-logo', 'kopfzeile'],
             ],
@@ -141,6 +141,38 @@ return [
                 'format' => 'Auswahl aus Webfonts / Systemschriften',
                 'hint' => 'Gilt für die eingeloggte CRM-Oberfläche.',
                 'keywords' => ['schriftart', 'schriftarten', 'schriften', 'font', 'fonts', 'typografie'],
+            ],
+        ],
+    ],
+    [
+        'area_id' => 'settings:crm-darstellung',
+        'area_label' => 'Software Design',
+        'href' => '/app?page=einstellungen&tab=crm-darstellung',
+        'intro' => 'Farben der CRM-Oberfläche: Menü, Text, Hintergrund und Buttons.',
+        'fields' => [
+            [
+                'label' => 'Fließtext / Textfarbe',
+                'format' => 'Hex-Farbe',
+                'hint' => 'Haupttextfarbe im Inhaltsbereich unter Einstellungen → Software Design.',
+                'keywords' => ['textfarbe', 'fließtext', 'fliesstext', 'text color', 'schriftfarbe'],
+            ],
+            [
+                'label' => 'Markenfarbe',
+                'format' => 'Hex-Farbe',
+                'hint' => 'Logo-Akzent und Hervorhebungen in der Navigation.',
+                'keywords' => ['markenfarbe', 'brand', 'akzentfarbe', 'branding'],
+            ],
+            [
+                'label' => 'Primärfarbe (Buttons)',
+                'format' => 'Hex-Farbe',
+                'hint' => 'Farbe für primäre Buttons und Aktionen.',
+                'keywords' => ['primärfarbe', 'primaerfarbe', 'buttonfarbe', 'button farbe', 'primary'],
+            ],
+            [
+                'label' => 'CRM-Farben',
+                'format' => 'Farbpalette / Hex-Werte',
+                'hint' => 'Gesamte CRM-Farbwelt: Menü, Hintergrund, Rahmen, Buttons.',
+                'keywords' => ['farbe', 'farben', 'color', 'colors', 'theme', 'design', 'hintergrundfarbe'],
             ],
         ],
     ],

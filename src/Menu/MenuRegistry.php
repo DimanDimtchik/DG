@@ -79,7 +79,7 @@ final class MenuRegistry
         if (RoleResolver::isAdmin($user)) {
             $items[] = [
                 'slug' => 'bilder',
-                'label' => 'Bilder',
+                'label' => 'Media',
                 'icon' => 'images',
                 'href' => '/app?page=bilder',
             ];
@@ -305,7 +305,7 @@ final class MenuRegistry
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
-            'bilder' => 'Medien, Logos und Bilder verwalten.',
+            'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
             'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',

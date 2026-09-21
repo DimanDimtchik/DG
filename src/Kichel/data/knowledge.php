@@ -152,12 +152,21 @@ return [
     ],
     [
         'id' => 'logo-bilder',
-        'keywords' => ['logo', 'firmenlogo', 'crm-logo', 'bilder', 'medien', 'logodatei'],
-        'title' => 'Logo / Bilder',
-        'answer' => 'Das Firmenlogo liegt in der Medienbibliothek: Bilder → gewünschtes Bild öffnen → „Als CRM-Logo in Kopfzeile“ aktivieren. Für E-Mails dasselbe Logo unter Einstellungen → Benachrichtigungen.',
+        'keywords' => ['logo', 'firmenlogo', 'crm-logo', 'bilder', 'medien', 'media', 'logodatei', 'bildbibliothek', 'favicon'],
+        'title' => 'Logo / Media',
+        'answer' => 'Das Firmenlogo liegt in der Media-Bibliothek: Media → gewünschtes Bild öffnen → „Als CRM-Logo in Kopfzeile“ aktivieren. Für E-Mails dasselbe Logo unter Einstellungen → Benachrichtigungen.',
         'href' => '/app?page=bilder',
-        'action_label' => 'Bilder öffnen',
+        'action_label' => 'Media öffnen',
         'tags' => ['darstellung', 'medien'],
+    ],
+    [
+        'id' => 'akademie-videos',
+        'keywords' => ['video', 'videos', 'schulungsvideo', 'schulung', 'clip', 'clips', 'lernvideo', 'erklärvideo', 'erklaervideo'],
+        'title' => 'Schulungsvideos (Akademie)',
+        'answer' => 'Erklärvideos findest du in der Akademie: Katalog oder Meine Schulungen. Kichel findet Kurse und einzelne Clips auch, wenn du z. B. „Video Lager“ oder „Video Media“ eingibst.',
+        'href' => '/app?page=akademie',
+        'action_label' => 'Akademie öffnen',
+        'tags' => ['akademie', 'medien'],
     ],
     [
         'id' => 'social-media',
@@ -175,6 +184,21 @@ return [
         'answer' => 'Schriftarten für die CRM-Oberfläche und HTML-E-Mails stellst du unter Einstellungen → Schriften ein.',
         'href' => '/app?page=einstellungen&tab=schriften',
         'action_label' => 'Schriften öffnen',
+        'tags' => ['darstellung'],
+    ],
+    [
+        'id' => 'crm-farben',
+        'keywords' => [
+            'farbe', 'farben', 'textfarbe', 'markenfarbe', 'primärfarbe', 'primaerfarbe',
+            'color', 'colors', 'theme', 'design', 'hintergrundfarbe', 'buttonfarbe',
+            'menüfarbe', 'menuefarbe', 'software design', 'crm farbe', 'crm farben',
+        ],
+        'title' => 'CRM-Farben ändern',
+        'answer' => 'Die Farben der CRM-Oberfläche (Menü, Text, Hintergrund, Buttons) stellst du unter Einstellungen → Software Design ein. '
+            . 'Für den öffentlichen Buchungskalender: Einstellungen → Kalender Design. '
+            . 'Für die Website: Website → Design.',
+        'href' => '/app?page=einstellungen&tab=crm-darstellung',
+        'action_label' => 'Software Design öffnen',
         'tags' => ['darstellung'],
     ],
     [

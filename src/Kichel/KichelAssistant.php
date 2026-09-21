@@ -49,7 +49,8 @@ final class KichelAssistant
         $fieldAnswer = KichelFieldCatalog::tryAnswer($query, $tokens);
         $navMatches = KichelNavIndex::search($user, $query, $tokens, 8);
         $topicMatches = KichelKnowledge::matchTopics($tokens, 8);
-        $candidates = self::collectCandidates($navMatches, $topicMatches, $fieldAnswer, $intent, $query, $tokens);
+        $mediaMatches = KichelMediaSearch::search($user, $query, $tokens, 8);
+        $candidates = self::collectCandidates($navMatches, $topicMatches, $fieldAnswer, $mediaMatches, $intent, $query, $tokens);
 
         if ($moneyAnswer !== null && $candidates === []) {
             return self::wrapMoney($query, $moneyAnswer);
@@ -73,6 +74,7 @@ final class KichelAssistant
      * @param list<array{entry: array<string, mixed>, score: int}> $navMatches
      * @param list<array{topic: array<string, mixed>, score: int}> $topicMatches
      * @param array<string, mixed>|null $fieldAnswer
+     * @param list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string}> $mediaMatches
      * @param list<string> $tokens
      * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string}>
      */
@@ -80,11 +82,28 @@ final class KichelAssistant
         array $navMatches,
         array $topicMatches,
         ?array $fieldAnswer,
+        array $mediaMatches,
         string $intent,
         string $query,
         array $tokens
     ): array {
         $raw = [];
+
+        foreach ($mediaMatches as $match) {
+            $score = (int) ($match['score'] ?? 0);
+            if ($score < 4) {
+                continue;
+            }
+            $raw[] = [
+                'kind' => (string) ($match['kind'] ?? 'media'),
+                'score' => $score,
+                'title' => (string) ($match['title'] ?? 'Medien'),
+                'body' => (string) ($match['body'] ?? ''),
+                'href' => (string) ($match['href'] ?? ''),
+                'action_label' => (string) ($match['action_label'] ?? 'Öffnen'),
+                'dedupe' => (string) ($match['dedupe'] ?? ''),
+            ];
+        }
 
         foreach ($navMatches as $match) {
             $score = (int) ($match['score'] ?? 0);
@@ -316,8 +335,12 @@ final class KichelAssistant
 
         $actionLinks = [];
         if ($href !== '') {
+            $label = trim((string) ($candidate['action_label'] ?? ''));
+            if ($label === '' || preg_match('/^(Video|Kurs|Bild|Media) öffnen$/u', $label) === 1) {
+                $label = self::buttonLabelFromTitle($title);
+            }
             $actionLinks[] = [
-                'label' => (string) $candidate['action_label'],
+                'label' => $label,
                 'href' => $href,
             ];
         }
@@ -340,6 +363,7 @@ final class KichelAssistant
         unset($query);
         $lines = ['Dazu passen mehrere Stellen im CRM:'];
         $actionLinks = [];
+        $seenHref = [];
         $n = 0;
         foreach ($candidates as $candidate) {
             $n++;
@@ -351,12 +375,22 @@ final class KichelAssistant
                 $line .= ' — ' . $body;
             }
             $lines[] = $line;
-            if ($href !== '') {
-                $actionLinks[] = [
-                    'label' => (string) $candidate['action_label'],
-                    'href' => $href,
-                ];
+            if ($href === '') {
+                continue;
             }
+            $hrefKey = mb_strtolower($href, 'UTF-8');
+            if (isset($seenHref[$hrefKey])) {
+                continue;
+            }
+            $seenHref[$hrefKey] = true;
+            $label = trim((string) ($candidate['action_label'] ?? ''));
+            if ($label === '' || preg_match('/^(Video|Kurs|Bild|Media) öffnen$/u', $label) === 1) {
+                $label = self::buttonLabelFromTitle($title);
+            }
+            $actionLinks[] = [
+                'label' => $label,
+                'href' => $href,
+            ];
         }
 
         return [
@@ -366,6 +400,19 @@ final class KichelAssistant
             'follow_up' => self::FOLLOW_UP,
             'action_links' => $actionLinks,
         ];
+    }
+
+    private static function buttonLabelFromTitle(string $title): string
+    {
+        $label = trim($title);
+        foreach (['Video: ', 'Schulungsvideo: ', 'Media: '] as $prefix) {
+            if (str_starts_with($label, $prefix)) {
+                $label = trim(substr($label, strlen($prefix)));
+                break;
+            }
+        }
+
+        return $label !== '' ? $label : 'Öffnen';
     }
 
     /**

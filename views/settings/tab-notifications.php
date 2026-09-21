@@ -51,7 +51,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
               <input type="checkbox" name="header_show_logo" value="1"<?= !empty($layout['header_show_logo']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
               Logo in der Kopfzeile anzeigen
             </span>
-            <small class="dg-field-hint">Das Logo wird unter <a href="/app?page=bilder">Bilder</a> als Firmenlogo hinterlegt. Für Dark Mode in Mail-Apps: helles Logo auf transparentem Hintergrund verwenden — der farbige Balken bleibt sichtbar.</small>
+            <small class="dg-field-hint">Das Logo wird unter <a href="/app?page=bilder">Media</a> als Firmenlogo hinterlegt. Für Dark Mode in Mail-Apps: helles Logo auf transparentem Hintergrund verwenden — der farbige Balken bleibt sichtbar.</small>
           </label>
           <label class="dg-field dg-field--wide">
             <span>Titel in der Kopfzeile</span>

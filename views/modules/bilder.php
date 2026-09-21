@@ -7,8 +7,8 @@
 
   <header class="dg-page-header dg-media-library__header">
     <div>
-      <h1 class="dg-page-title">Bilder</h1>
-      <p class="dg-lead">Zentrale Medienbibliothek — nur Bilder. HR-Dokumente unter Kontakte sind ausgeschlossen.</p>
+      <h1 class="dg-page-title">Media</h1>
+      <p class="dg-lead">Zentrale Media-Bibliothek — nur Bilddateien. HR-Dokumente unter Kontakte sind ausgeschlossen.</p>
     </div>
     <div class="dg-media-library__actions">
       <a class="dg-button dg-button--primary" href="/app?page=bilder&amp;action=new">Hochladen</a>
@@ -18,7 +18,7 @@
 
   <?php if ($mediaList === []) : ?>
     <div class="dg-panel dg-panel--notice">
-      <p>Noch keine Bilder. Klicken Sie auf <strong>Hochladen</strong>, um das erste Bild anzulegen.</p>
+      <p>Noch keine Dateien. Klicken Sie auf <strong>Hochladen</strong>, um das erste Bild anzulegen.</p>
     </div>
   <?php else : ?>
     <div class="dg-table-wrap">

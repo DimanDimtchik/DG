@@ -11,6 +11,23 @@ final class KichelNavIndex
 
     /** @var array<string, list<string>> Navigations-Aliase (Query-Substring → Menü-ID) */
     private const QUERY_ALIASES = [
+        'bilder' => [
+            'media',
+            'medien',
+            'bildbibliothek',
+            'medialbibliothek',
+            'bilder',
+            'logo hochladen',
+            'favicon',
+        ],
+        'akademie' => [
+            'schulungsvideo',
+            'schulungsvideos',
+            'erklärvideo',
+            'erklaervideo',
+            'lernvideo',
+            'video kurs',
+        ],
         'buchhaltung-ustva' => [
             'umsatzsteuervoranmeldung',
             'umsatzsteuer-voranmeldung',
@@ -35,6 +52,35 @@ final class KichelNavIndex
             'belegnummer',
             'nummernkreis',
             'nummernkreise',
+        ],
+        'settings:crm-darstellung' => [
+            'farbe',
+            'farben',
+            'textfarbe',
+            'markenfarbe',
+            'primärfarbe',
+            'primaerfarbe',
+            'color',
+            'colors',
+            'crm farbe',
+            'crm farben',
+            'software design',
+            'oberflächenfarbe',
+            'oberflaechenfarbe',
+            'theme',
+        ],
+        'settings:kalender-darstellung' => [
+            'kalenderfarbe',
+            'kalender farbe',
+            'kalenderfarben',
+            'kalender design',
+        ],
+        'website-design' => [
+            'website farbe',
+            'website farben',
+            'webseitenfarbe',
+            'webseitenfarben',
+            'website design',
         ],
     ];
 
