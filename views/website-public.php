@@ -25,9 +25,14 @@ if (($page['slug'] ?? '') === 'startseite') {
     $seoPage['url'] = App::publicBaseUrl() . '/';
 }
 $previewMode = !empty($previewMode);
+$previewFrame = !empty($previewFrame);
 $isDraft = ($page['status'] ?? '') !== WebsitePageRepository::STATUS_PUBLISHED;
 if ($previewMode) {
     $seoPage['noindex'] = true;
+}
+if ($previewMode && !$previewFrame) {
+    require DG_ROOT . '/views/website-preview-shell.php';
+    return;
 }
 WebsitePageviewTracker::trackPublicPage(is_array($page ?? null) ? $page : null, $previewMode);
 $formFlashById = [];
@@ -66,6 +71,15 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--ws-text); background: var(--ws-bg); line-height: 1.6; }
     a { color: var(--ws-primary); }
+    .ws-preview-banner {
+      background: #fef3c7;
+      color: #92400e;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #fcd34d;
+    }
+    .ws-preview-banner a { color: #92400e; font-weight: 600; }
 
     .ws-booking-disabled,
     .ws-booking-preview-hint {
@@ -239,9 +253,10 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 <?= WebsiteAnalytics::bodyOpenHtml() ?>
 
 <?php if ($previewMode) : ?>
-<div style="background:#fef3c7;color:#92400e;text-align:center;padding:10px 16px;font-size:0.9rem;border-bottom:1px solid #fcd34d;">
+<div class="ws-preview-banner">
   Vorschau<?= $isDraft ? ' (Entwurf – noch nicht öffentlich)' : '' ?>
-  · <a href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($page['id'] ?? 0) ?>" style="color:#92400e;font-weight:600;">Zurück zum Editor</a>
+  · <a href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($page['id'] ?? 0) ?>">Zurück zum Editor</a>
+  · Gerätesimulation in der äußeren Vorschau-Leiste
 </div>
 <?php endif; ?>
 
@@ -261,7 +276,7 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     <nav class="ws-nav<?= $menuIconRight ? ' ws-nav--icon-right' : '' ?>" id="ws-nav">
       <?php
         $currentPublicPath = WebsitePageRepository::publicPath((string) ($page['slug'] ?? ''));
-        $rewriteHref = static function (string $itemUrl) use ($previewMode): string {
+        $rewriteHref = static function (string $itemUrl) use ($previewMode, $previewFrame): string {
             $itemUrl = trim($itemUrl);
             if ($itemUrl === '') {
                 $itemUrl = '/';
@@ -271,9 +286,15 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
             }
             $slugPart = ltrim($itemUrl, '/');
             if ($slugPart === '' || $slugPart === 'startseite') {
-                return '/vorschau/startseite';
+                $path = '/vorschau/startseite';
+            } else {
+                $path = '/vorschau/' . $slugPart;
             }
-            return '/vorschau/' . $slugPart;
+            if ($previewFrame) {
+                $path .= (str_contains($path, '?') ? '&' : '?') . 'frame=1';
+            }
+
+            return $path;
         };
         $isActivePath = static function (string $itemUrl) use ($currentPublicPath): bool {
             $itemUrl = trim($itemUrl);
@@ -417,8 +438,12 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     <div class="ws-col <?= $colClass ?>">
       <?php foreach (($col['blocks'] ?? []) as $block):
         $type = $block['type'] ?? '';
+        $adv = WebsiteBlockAdvanced::normalize($block['advanced'] ?? null);
+        $advStyle = WebsiteBlockAdvanced::toInlineCss($adv);
+        $advExtraClass = WebsiteBlockAdvanced::extraClassNames($adv);
+        $wsBlockClass = 'ws-block' . ($advExtraClass !== '' ? ' ' . $advExtraClass : '');
       ?>
-      <div class="ws-block">
+      <div class="<?= View::escape($wsBlockClass) ?>"<?= $advStyle !== '' ? ' style="' . View::escape($advStyle) . '"' : '' ?><?= WebsiteBlockAdvanced::toHtmlAttributes($adv) ?>>
         <?php switch ($type):
           case 'heading':
             $level = in_array($block['level'] ?? '', ['h1','h2','h3'], true) ? $block['level'] : 'h2';

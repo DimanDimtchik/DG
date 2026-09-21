@@ -44,6 +44,7 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
         'menu' => WebsiteSettings::publicMenu(true),
         'design' => WebsiteSettings::design(),
         'previewMode' => true,
+        'previewFrame' => isset($_GET['frame']) && (string) $_GET['frame'] === '1',
     ]);
     exit;
 }
