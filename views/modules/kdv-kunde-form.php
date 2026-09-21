@@ -50,7 +50,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
     ?>
     <div class="dg-panel">
       <h2>Organisation / Multi-Firma</h2>
-      <p class="dg-field-hint">Phase 0: Verknüpfung im KDV-Register. Jede Domain bleibt eigene CRM-Instanz/DB. CRM-Switcher kommt in Phase 1.</p>
+      <p class="dg-field-hint">Verknüpfung im KDV-Register. Jede Domain = eigene CRM-Instanz/DB. Switcher: MF1 · Preise/Archiv: MF2.</p>
       <div class="dg-form-grid">
         <label class="dg-label">Organisation
           <select class="dg-input" name="org_id">
@@ -100,6 +100,12 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           <input class="dg-input" type="date" name="effective_to" value="<?= View::escape((string) ($c['effective_to'] ?? '')) ?>">
         </label>
       </div>
+      <?php if ($isEdit && (($c['firm_slot_status'] ?? 'active') === 'active')) : ?>
+        <label class="dg-field" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
+          <input type="checkbox" name="mf_make_archive_slot" value="1">
+          <span>Als <strong>Archiv-Slot</strong> setzen (Umfirmierung Vorgänger): Slot „Archiv“, Preis 0 €, Gültig bis +<?= (int) MultiFirmaPricingService::ARCHIVE_DEFAULT_MONTHS ?> Monate falls leer. Beziehung → Vorgänger.</span>
+        </label>
+      <?php endif; ?>
       <?php if ($orgSiblings !== []) : ?>
         <p class="dg-field-hint" style="margin-top:0.75rem"><strong>Weitere Firmen dieser Organisation:</strong></p>
         <ul class="dg-muted">
@@ -136,6 +142,20 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
 
     <div class="dg-panel">
       <h2>Vertrag</h2>
+      <?php
+        $mfQuote = MultiFirmaPricingService::quote([
+            'tariff' => (string) ($c['tariff'] ?? 'basic'),
+            'org_id' => (int) ($c['org_id'] ?? 0),
+            'customer_id' => (int) ($c['id'] ?? 0),
+            'firm_slot_status' => (string) ($c['firm_slot_status'] ?? 'active'),
+            'firm_relation' => (string) ($c['firm_relation'] ?? 'standalone'),
+        ]);
+      ?>
+      <p class="dg-field-hint" id="dg-mf-price-hint">
+        MF2-Vorschlag: <strong><?= View::escape(number_format((float) $mfQuote['monthly_net'], 2, ',', '.')) ?> €</strong>/Monat netto
+        · Listenpreis <?= View::escape(number_format((float) $mfQuote['list_monthly_net'], 2, ',', '.')) ?> €
+        · <?= View::escape((string) $mfQuote['label']) ?>
+      </p>
       <div class="dg-form-grid">
         <label class="dg-label">Status
           <select class="dg-input" name="status">
@@ -145,14 +165,14 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           </select>
         </label>
         <label class="dg-label">Tarif
-          <select class="dg-input" name="tariff">
+          <select class="dg-input" name="tariff" id="dg-kdv-tariff">
             <?php foreach (KdvCustomerRepository::TARIFFS as $key => $label): ?>
               <option value="<?= $key ?>" <?= ($c['tariff'] ?? 'basic') === $key ? 'selected' : '' ?>><?= View::escape($label) ?></option>
             <?php endforeach; ?>
           </select>
         </label>
         <label class="dg-label">Monatspreis (€)
-          <input class="dg-input" type="number" step="0.01" min="0" name="monthly_price" value="<?= number_format((float) ($c['monthly_price'] ?? 0), 2, '.', '') ?>">
+          <input class="dg-input" type="number" step="0.01" min="0" name="monthly_price" id="dg-kdv-monthly-price" value="<?= number_format((float) ($c['monthly_price'] ?? 0), 2, '.', '') ?>">
         </label>
         <label class="dg-label">Abrechnungszyklus
           <select class="dg-input" name="billing_cycle">
@@ -167,6 +187,10 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           <input class="dg-input" type="date" name="contract_end" value="<?= View::escape($c['contract_end'] ?? '') ?>">
         </label>
       </div>
+      <label class="dg-field" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
+        <input type="checkbox" name="mf_apply_price" value="1"<?= !$isEdit || (float) ($c['monthly_price'] ?? 0) <= 0 ? ' checked' : '' ?>>
+        <span>Beim Speichern <strong>MF2-Preis übernehmen</strong> (Listenpreis bzw. −20 % Zusatzfirma / 0 € Archiv).</span>
+      </label>
     </div>
 
     <div class="dg-panel">

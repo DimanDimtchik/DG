@@ -157,6 +157,7 @@ switch ($path) {
             'business_profile' => '',
             'privacy' => '',
             'agb' => '',
+            'additional_firm' => '',
         ];
         $preview = null;
         $domainCheck = null;
@@ -174,12 +175,27 @@ switch ($path) {
             if ($result['ok'] && $errors === []) {
                 $chosen = ShopPlans::get($form['plan']);
                 $isYearly = $form['billing_cycle'] === ShopCheckout::BILLING_YEARLY;
+                $isAdditional = ($form['additional_firm'] ?? '') === '1';
+                $priced = $isAdditional
+                    ? ShopPlans::priceWithAdditionalFirmDiscount($chosen)
+                    : [
+                        'monthly_net' => (float) $chosen['monthly_net'],
+                        'yearly_net' => (float) $chosen['yearly_net'],
+                        'monthly_gross' => (float) $chosen['monthly_gross'],
+                        'yearly_gross' => (float) $chosen['yearly_gross'],
+                        'discount_pct' => 0.0,
+                    ];
+                $net = $isYearly ? (float) $priced['yearly_net'] : (float) $priced['monthly_net'];
+                $gross = $isYearly ? (float) $priced['yearly_gross'] : (float) $priced['monthly_gross'];
                 $preview = [
                     'plan' => $chosen,
                     'billing_cycle' => $form['billing_cycle'],
-                    'net' => $isYearly ? (float) $chosen['yearly_net'] : (float) $chosen['monthly_net'],
-                    'gross' => $isYearly ? (float) $chosen['yearly_gross'] : (float) $chosen['monthly_gross'],
-                    'note' => 'Zahlung mit Stripe folgt in Phase 2. Ihre Angaben wurden geprüft und sind bereit für die Einrichtung.',
+                    'net' => $net,
+                    'gross' => $gross,
+                    'additional_firm' => $isAdditional,
+                    'note' => $isAdditional
+                        ? 'Zusatzfirma: −20 % auf den Listenpreis. Zahlung mit Stripe folgt später; Angaben sind geprüft.'
+                        : 'Zahlung mit Stripe folgt in Phase 2. Ihre Angaben wurden geprüft und sind bereit für die Einrichtung.',
                     'kdv_payload' => [
                         'company_name' => $form['company_name'],
                         'domain' => $form['domain'],
@@ -188,7 +204,9 @@ switch ($path) {
                         'contact_phone' => $form['contact_phone'],
                         'tariff' => (string) $chosen['kdv_tariff'],
                         'billing_cycle' => $form['billing_cycle'],
-                        'monthly_price' => (float) $chosen['monthly_net'],
+                        'monthly_price' => (float) $priced['monthly_net'],
+                        'additional_firm' => $isAdditional,
+                        'apply_mf_price' => true,
                         'business_profile' => $form['business_profile'],
                         'business_kind' => $form['business_profile'] !== ''
                             ? ShopCheckout::businessKindsForProfile($form['business_profile'])

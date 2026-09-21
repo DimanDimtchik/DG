@@ -79,4 +79,29 @@ final class ShopPlans
     {
         return number_format($amount, 2, ',', '.') . ' €';
     }
+
+    /** Multi-Firma MF2: Rabatt auf Listenpreis für Zusatzfirma. */
+    public static function additionalFirmDiscount(): float
+    {
+        return 0.20;
+    }
+
+    /**
+     * @return array{monthly_net: float, yearly_net: float, monthly_gross: float, yearly_gross: float, discount_pct: float}
+     */
+    public static function priceWithAdditionalFirmDiscount(array $plan): array
+    {
+        $vat = self::vatRate();
+        $disc = self::additionalFirmDiscount();
+        $monthly = round((float) ($plan['monthly_net'] ?? 0) * (1.0 - $disc), 2);
+        $yearly = round($monthly * 11, 2);
+
+        return [
+            'monthly_net' => $monthly,
+            'yearly_net' => $yearly,
+            'monthly_gross' => round($monthly * (1 + $vat), 2),
+            'yearly_gross' => round($yearly * (1 + $vat), 2),
+            'discount_pct' => $disc,
+        ];
+    }
 }

@@ -67,6 +67,10 @@ final class KdvProvisionApi
         $tariff       = (string) ($body['tariff'] ?? 'basic');
         $billingCycle = (string) ($body['billing_cycle'] ?? 'monatlich');
         $monthlyPrice = (float) ($body['monthly_price'] ?? 0);
+        $orgId        = (int) ($body['org_id'] ?? 0);
+        $additionalFirm = !empty($body['additional_firm']);
+        $firmSlotStatus = (string) ($body['firm_slot_status'] ?? 'active');
+        $firmRelation = (string) ($body['firm_relation'] ?? 'standalone');
         $businessProfile = trim((string) ($body['business_profile'] ?? ''));
         $businessKind = $body['business_kind'] ?? [];
         if (!is_array($businessKind)) {
@@ -81,6 +85,33 @@ final class KdvProvisionApi
         if ($domain === '')     self::error(422, 'domain ist erforderlich.');
         if ($contactEmail === '' || !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
             self::error(422, 'Gültige contact_email ist erforderlich.');
+        }
+
+        // MF2: Org aus bestehendem Kontakt ableiten, Preisregeln anwenden
+        if ($orgId < 1 && KdvCustomerRepository::multiFirmaColumnsReady()) {
+            $existing = KdvCustomerRepository::findByContactEmail($contactEmail);
+            if ($existing !== null) {
+                $orgId = (int) ($existing['org_id'] ?? 0);
+            }
+        }
+        if ($additionalFirm && $orgId < 1) {
+            // Noch keine Org — Preis trotzdem −20 % (Shop-Angabe); Org manuell in KDV nachziehen
+            $firmRelation = $firmRelation === 'standalone' ? 'schwester' : $firmRelation;
+        }
+        $priceQuote = MultiFirmaPricingService::quote([
+            'tariff' => isset(KdvCustomerRepository::TARIFFS[$tariff]) ? $tariff : 'basic',
+            'org_id' => $orgId,
+            'customer_id' => 0,
+            'firm_slot_status' => $firmSlotStatus,
+            'firm_relation' => $firmRelation,
+        ]);
+        if ($additionalFirm && $priceQuote['code'] === 'primary') {
+            $list = MultiFirmaPricingService::listPriceForTariff(
+                isset(KdvCustomerRepository::TARIFFS[$tariff]) ? $tariff : 'basic'
+            );
+            $monthlyPrice = round($list * (1.0 - MultiFirmaPricingService::ADDITIONAL_FIRM_DISCOUNT), 2);
+        } elseif ($monthlyPrice <= 0 || !empty($body['apply_mf_price'])) {
+            $monthlyPrice = $priceQuote['monthly_net'];
         }
 
         $provisionNotes = null;
@@ -106,6 +137,9 @@ final class KdvProvisionApi
                 'status'        => 'neu',
                 'contract_start'=> date('Y-m-d'),
                 'notes'         => $provisionNotes,
+                'org_id'        => $orgId > 0 ? $orgId : 0,
+                'firm_relation' => $firmRelation,
+                'firm_slot_status' => $firmSlotStatus,
             ]);
         } catch (Throwable $e) {
             self::error(500, 'Kunde konnte nicht angelegt werden: ' . $e->getMessage());

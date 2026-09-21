@@ -102,7 +102,14 @@ final class KdvCustomerRepository
         $pdo = Database::pdo();
         $total = (int) $pdo->query('SELECT COUNT(*) FROM dg_kdv_customers')->fetchColumn();
         $active = (int) $pdo->query("SELECT COUNT(*) FROM dg_kdv_customers WHERE status = 'aktiv'")->fetchColumn();
-        $revenue = (float) $pdo->query("SELECT COALESCE(SUM(monthly_price), 0) FROM dg_kdv_customers WHERE status = 'aktiv'")->fetchColumn();
+        if (self::multiFirmaColumnsReady()) {
+            $revenue = (float) $pdo->query(
+                "SELECT COALESCE(SUM(monthly_price), 0) FROM dg_kdv_customers
+                 WHERE status = 'aktiv' AND firm_slot_status = 'active'"
+            )->fetchColumn();
+        } else {
+            $revenue = (float) $pdo->query("SELECT COALESCE(SUM(monthly_price), 0) FROM dg_kdv_customers WHERE status = 'aktiv'")->fetchColumn();
+        }
 
         return ['total' => $total, 'active' => $active, 'revenue' => $revenue];
     }
@@ -152,6 +159,22 @@ final class KdvCustomerRepository
             if (!isset(self::FIRM_SLOT_STATUSES[$slot])) {
                 $slot = 'active';
             }
+
+            // MF2: Archiv-Slot-Aktion (Vorgänger)
+            if (!empty($data['mf_make_archive_slot'])) {
+                $arch = MultiFirmaPricingService::archiveSlotDefaults(
+                    !empty($data['effective_from']) ? (string) $data['effective_from'] : null
+                );
+                $slot = $arch['firm_slot_status'];
+                $fields['monthly_price'] = $arch['monthly_price'];
+                if (empty($data['effective_to'])) {
+                    $data['effective_to'] = $arch['effective_to'];
+                }
+                if ($relation === 'standalone') {
+                    $relation = 'vorgaenger';
+                }
+            }
+
             $relatedId = (int) ($data['related_customer_id'] ?? 0);
             $fields['org_id'] = $orgId > 0 ? $orgId : null;
             $fields['firm_relation'] = $relation;
@@ -159,6 +182,18 @@ final class KdvCustomerRepository
             $fields['firm_slot_status'] = $slot;
             $fields['effective_from'] = !empty($data['effective_from']) ? $data['effective_from'] : null;
             $fields['effective_to'] = !empty($data['effective_to']) ? $data['effective_to'] : null;
+
+            // MF2: Listen-/Org-Preis übernehmen (nicht wenn gerade Archiv gesetzt)
+            if (!empty($data['mf_apply_price']) && empty($data['mf_make_archive_slot'])) {
+                $quote = MultiFirmaPricingService::quote([
+                    'tariff' => $fields['tariff'],
+                    'org_id' => $orgId,
+                    'customer_id' => $id ?? 0,
+                    'firm_slot_status' => $slot,
+                    'firm_relation' => $relation,
+                ]);
+                $fields['monthly_price'] = $quote['monthly_net'];
+            }
         }
 
         if ($fields['company_name'] === '') throw new InvalidArgumentException('Firmenname ist erforderlich.');

@@ -82,6 +82,17 @@ $profileOptions = ShopCheckout::businessProfileOptions();
       </label>
     </fieldset>
 
+    <?php
+      $addFirm = ($form['additional_firm'] ?? '') === '1';
+      $addPriced = ShopPlans::priceWithAdditionalFirmDiscount($plan);
+    ?>
+    <label class="shop-check">
+      <input type="checkbox" name="additional_firm" value="1"<?= $addFirm ? ' checked' : '' ?>>
+      <span>Zusatzfirma (−<?= (int) (ShopPlans::additionalFirmDiscount() * 100) ?> %): weitere Firma derselben Organisation
+        — dann <?= ShopView::escape(ShopPlans::formatMoneyExact((float) $addPriced['monthly_net'])) ?>/Monat netto
+        statt <?= ShopView::escape(ShopPlans::formatMoneyExact((float) $plan['monthly_net'])) ?>.</span>
+    </label>
+
     <label>
       <span>Firmenname <span class="shop-req">*</span></span>
       <input type="text" name="company_name" required value="<?= ShopView::escape($form['company_name']) ?>" autocomplete="organization">

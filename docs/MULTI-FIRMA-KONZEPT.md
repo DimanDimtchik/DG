@@ -1,6 +1,6 @@
 # Multi-Firma / Umfirmierung — Produktkonzept
 
-Stand: **2026-09-21** · Status: **Phase 1 (MF1) Switcher umgesetzt** · Phase 0 Registry ✅  
+Stand: **2026-09-21** · Status: **Phase 2 (MF2) Preis/Archiv umgesetzt** · MF0–MF1 ✅  
 Bezug: KDV (`docs/KDV-TODO.md`), Shop-Pakete (`shop/config/plans.php`), Buchhaltung, Lizenzserver
 
 ---
@@ -171,8 +171,8 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 
 ## 10. Offene Entscheidungen
 
-- [ ] Archiv-Dauer und Archiv-Preis (gratis vs. 9–15 €) final
-- [ ] Staffel ab 3. Firma
+- [ ] Archiv-Dauer und Archiv-Preis (gratis vs. 9–15 €) final → **MF2: gratis, 12 Monate Standard**
+- [ ] Staffel ab 3. Firma → **MF2: vorerst weiter −20 %**
 - [ ] Ob Website/Domain fest an eine Firma gebunden ist oder Org-weit umschaltbar
 - [ ] Shared Contacts: ja/nein im MVP
 - [ ] Technische Provision: neue Subdomain vs. Pfad vs. bestehendes KDV-Domain-Modell
@@ -185,7 +185,7 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 |-------|--------|-------|
 | **0** | Konzept · KDV-Datenmodell Org↔Firma | ✅ Migration `082`, `KdvOrgRepository`, Formular/Liste |
 | **1** | Switcher + verknüpfte Instanzen (manuell) | ✅ **MF1 2026-09-21:** Header-Dropdown, KDV-Org-Mapping, Redirect `https://{domain}/login`; Kundeninstanz optional `config/firm-switcher.local.php`. Kein SSO (erneuter Login). |
-| **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | Offen |
+| **2** | Shop/KDV: Zweitfirma −20 %, Umfirmierungs-Archiv-Slot | ✅ **MF2 2026-09-21:** `MultiFirmaPricingService`; KDV Preis-übernehmen + Archiv-Checkbox; Shop-Checkout Zusatzfirma −20 %; Provision-API Org/Preis. Archiv = 0 € / 12 Monate. 3.+ Firma weiter −20 %. |
 | **3** | Umfirmierungs-Assistent + Gewinnermittlungsart-Stammdatum | Offen |
 | **4** | Historie Firmendaten, Berichte Rumpf-WJ, optionale Shared Contacts | Offen |
 
@@ -204,6 +204,15 @@ Jede Firma = eigener Datenkreis; AV-Vertrag / Auftragsverarbeitung klar der Org 
 - `POST /firm-switch` — CSRF + Domain-Allowlist → Redirect HTTPS Login
 - UI: `views/layout/app.php` Adminbar-Dropdown „Firma wechseln“
 - **Nicht in MF1:** SSO/Org-Single-Login, Shop −20 %, Umfirmierungs-Assistent, `company_id` an Belegen
+
+### Phase 2 (MF2) — technische Artefakte
+
+- `src/MultiFirma/MultiFirmaPricingService.php` — Listenpreise, −20 % Zusatzfirma, Archiv 0 € / 12 Monate
+- KDV-Kunde-Form: MF2-Vorschlag, Checkbox „Preis übernehmen“, „Als Archiv-Slot setzen“
+- `KdvProvisionApi`: Org aus Kontakt-E-Mail, `additional_firm` / `apply_mf_price`
+- Shop: Checkout-Checkbox Zusatzfirma; `ShopPlans::priceWithAdditionalFirmDiscount`
+- **Festlegung MF2:** Archiv gratis; 3.+ Firma weiter −20 % (Staffel später)
+- **Nicht in MF2:** Umfirmierungs-Assistent (MF3), SSO, Stripe-Coupon-Automatik
 
 ---
 

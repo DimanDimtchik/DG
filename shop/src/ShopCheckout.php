@@ -28,6 +28,7 @@ final class ShopCheckout
             'business_profile' => trim((string) ($input['business_profile'] ?? '')),
             'privacy' => !empty($input['privacy']) ? '1' : '',
             'agb' => !empty($input['agb']) ? '1' : '',
+            'additional_firm' => !empty($input['additional_firm']) ? '1' : '',
         ];
 
         if (ShopPlans::get($data['plan']) === null) {

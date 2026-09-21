@@ -292,6 +292,7 @@ spl_autoload_register(static function (string $class): void {
         'KdvCustomerRepository' => '/src/Kdv/KdvCustomerRepository.php',
         'KdvOrgRepository' => '/src/Kdv/KdvOrgRepository.php',
         'FirmSwitcherService' => '/src/MultiFirma/FirmSwitcherService.php',
+        'MultiFirmaPricingService' => '/src/MultiFirma/MultiFirmaPricingService.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',
         'KdvBlockReasons' => '/src/Kdv/KdvBlockReasons.php',
