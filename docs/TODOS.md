@@ -56,6 +56,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e ✅
 - [x] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d ✅
 - [x] **Zeiterfassung Phase 6 Lohn-Export** — Z6a–Z6d ✅
+- [x] **Arbeitsstunden-Import** — Excel/CSV Shiftbase/Crewmeister → Stempelzeiten (`zeiterfassung-stundenimport`)
 
 ---
 

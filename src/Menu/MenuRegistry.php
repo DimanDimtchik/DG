@@ -531,6 +531,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-lohnexport') {
             return TimePayrollExportService::canExport($user);
         }
+        if ($slug === 'zeiterfassung-stundenimport') {
+            return TimeHoursImportService::canImport($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {

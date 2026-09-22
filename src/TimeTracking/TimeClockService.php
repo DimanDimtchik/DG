@@ -608,6 +608,7 @@ final class TimeClockService
             TimeClockRepository::SOURCE_WEB => 'Web',
             TimeClockRepository::SOURCE_AUTO_BREAK => 'Automatische Pause',
             TimeClockRepository::SOURCE_AUTO_CLOSE => 'Automatisches Ausstempeln',
+            TimeClockRepository::SOURCE_IMPORT => 'Import',
             default => $source !== '' ? $source : 'Web',
         };
     }

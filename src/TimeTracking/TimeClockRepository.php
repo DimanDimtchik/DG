@@ -12,6 +12,7 @@ final class TimeClockRepository
     public const SOURCE_WEB = 'web';
     public const SOURCE_AUTO_BREAK = 'auto_break';
     public const SOURCE_AUTO_CLOSE = 'auto_close';
+    public const SOURCE_IMPORT = 'import';
 
     /**
      * @return list<array<string, mixed>>
@@ -151,5 +152,25 @@ final class TimeClockRepository
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return is_array($row) ? self::mapRow($row) : null;
+    }
+
+    /** Löscht alle Stempel-Events eines Kontakts an einem Kalendertag (Import/Überschreiben). */
+    public static function deleteForContactDay(int $contactId, string $date): int
+    {
+        if (!Database::isConfigured() || $contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+
+        $from = $date . ' 00:00:00';
+        $to = date('Y-m-d', strtotime($date . ' +1 day')) . ' 00:00:00';
+        $stmt = Database::pdo()->prepare(
+            'DELETE FROM dg_time_clock_events
+             WHERE contact_id = :contact_id
+               AND occurred_at >= :from AND occurred_at < :to'
+        );
+        $stmt->execute(['contact_id' => $contactId, 'from' => $from, 'to' => $to]);
+
+        return $stmt->rowCount();
     }
 }

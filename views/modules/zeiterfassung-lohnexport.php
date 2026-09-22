@@ -30,6 +30,7 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-stundenimport">Stunden-Import</a>
       <a class="dg-button" href="/app?page=zeiterfassung-rueckstellung">Rückstellungen</a>
       <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('kontenrahmen')) ?>">DATEV-Einstellungen</a>
       <a class="dg-button" href="/app?page=kontakte">Kontaktakte (PDF)</a>

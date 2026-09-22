@@ -35,6 +35,7 @@ if ($contactId > 0) {
       <?php if ($canTeam) : ?>
         <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
         <a class="dg-button" href="/app?page=zeiterfassung-konto<?= $contactId > 0 ? '&amp;contact_id=' . $contactId : '' ?>">Korrektur / Konto</a>
+        <a class="dg-button" href="/app?page=zeiterfassung-stundenimport">Stunden-Import</a>
       <?php endif; ?>
       <?php if ($contactId > 0) : ?>
         <a class="dg-button dg-button--primary" href="/app?<?= View::escape($baseQs) ?>&amp;download=csv">CSV exportieren</a>

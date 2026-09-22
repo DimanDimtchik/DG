@@ -955,6 +955,18 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 
 **Nicht:** PDF generieren, Lexoffice-API, Netto-Lohn.
 
+### Arbeitsstunden-Import (Excel/CSV) ✅ 2026-09-22
+
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Service | `TimeHoursImportService` + `TimeHoursImportPresets` (Excel, Shiftbase, Crewmeister) |
+| Persistenz | Stempel-Events `source=import` → `TimeWorkDayService::aggregateContactDay` |
+| UI | `/app?page=zeiterfassung-stundenimport` — Upload, Konflikt skip/replace, Vorlage |
+| Rechte | `canViewTeam` |
+| Zuordnung | E-Mail, Login/Personalnummer, Anzeigename (nur Mitarbeiter-Kontakte) |
+
+**Nicht:** Live-API Shiftbase/Crewmeister, Schichtplan-Import, Abwesenheits-Import.
+
 ### Chat-Vorlage Z6
 
 ```text

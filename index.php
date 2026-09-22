@@ -3339,6 +3339,44 @@ switch ($path) {
             exit;
         }
 
+        // POST: Arbeitsstunden Excel/CSV-Import (Shiftbase/Crewmeister/…)
+        if (
+            $page === 'zeiterfassung-stundenimport'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['time_hours_import'])
+        ) {
+            if (!MenuRegistry::canAccess($user, 'zeiterfassung-stundenimport') || !TimeHoursImportService::canImport($user)) {
+                Flash::set('error', 'Kein Recht zum Stunden-Import.');
+                header('Location: /app?page=zeiterfassung', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+                header('Location: /app?page=zeiterfassung-stundenimport', true, 302);
+                exit;
+            }
+            try {
+                $result = TimeHoursImportService::importUpload(
+                    is_array($_FILES['time_hours_file'] ?? null) ? $_FILES['time_hours_file'] : [],
+                    $user,
+                    $_POST
+                );
+                $msg = $result['message'];
+                if ($result['errors'] !== []) {
+                    $_SESSION['dg_time_hours_import_errors'] = array_slice($result['errors'], 0, 40);
+                    $msg .= ' Details siehe Hinweise unten.';
+                    Flash::set('warning', $msg);
+                } else {
+                    unset($_SESSION['dg_time_hours_import_errors']);
+                    Flash::set('success', $msg);
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=zeiterfassung-stundenimport', true, 302);
+            exit;
+        }
+
         // POST: Zeiterfassung Korrektur / Überstunden-Abbau (Z2e)
         if (
             $page === 'zeiterfassung-konto'
@@ -5608,6 +5646,19 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-lohnexport';
             $title = 'Lohn-Export';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'zeiterfassung-stundenimport' && MenuRegistry::canAccess($user, 'zeiterfassung-stundenimport')) {
+            MigrationRunner::runPending();
+            if (trim((string) ($_GET['action'] ?? '')) === 'template') {
+                TimeHoursImportService::sendTemplateDownload();
+            }
+            $timeHoursImportErrors = [];
+            if (isset($_SESSION['dg_time_hours_import_errors']) && is_array($_SESSION['dg_time_hours_import_errors'])) {
+                $timeHoursImportErrors = $_SESSION['dg_time_hours_import_errors'];
+                unset($_SESSION['dg_time_hours_import_errors']);
+            }
+            $contentTemplate = 'modules/zeiterfassung-stundenimport';
+            $title = 'Stunden-Import';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schichten' && MenuRegistry::canAccess($user, 'zeiterfassung-schichten')) {
             MigrationRunner::runPending();
             $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
@@ -6213,6 +6264,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $timePayrollExports = $timePayrollExports ?? [];
         $timePayrollDatevSettings = $timePayrollDatevSettings ?? DatevExportSettings::defaults();
         $timePayrollDatevConfigured = $timePayrollDatevConfigured ?? false;
+        $timeHoursImportErrors = $timeHoursImportErrors ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6617,6 +6669,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'timePayrollExports',
             'timePayrollDatevSettings',
             'timePayrollDatevConfigured',
+            'timeHoursImportErrors',
             'recipeList',
             'recipeForm',
             'recipeId',
