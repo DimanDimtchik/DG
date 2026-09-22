@@ -142,4 +142,34 @@ $state = (string) ($status['state'] ?? 'off');
       <?php endif; ?>
     </section>
   <?php endif; ?>
+
+  <?php if ($contactId > 0) : ?>
+    <section class="dg-panel">
+      <h2 class="dg-subsection-title">Stempeluhr-PIN (Kiosk / Tablet)</h2>
+      <p class="dg-muted">
+        Öffentliche Stempeluhr ohne CRM-Login: <a href="/stempeluhr" target="_blank" rel="noopener">/stempeluhr</a>
+        <?php if (!empty($timeClockHasKioskPin)) : ?>
+          — PIN ist gesetzt.
+        <?php else : ?>
+          — noch keine PIN gesetzt.
+        <?php endif; ?>
+      </p>
+      <form method="post" action="/app?page=zeiterfassung" class="dg-form dg-form--inline">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="kiosk_own_pin" value="1">
+        <label>
+          <span>Neue PIN (4–8 Ziffern)</span>
+          <input type="password" name="pin" inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="8" required autocomplete="new-password">
+        </label>
+        <label>
+          <span>Wiederholen</span>
+          <input type="password" name="pin_confirm" inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="8" required autocomplete="new-password">
+        </label>
+        <button type="submit" class="dg-button">PIN speichern</button>
+      </form>
+      <?php if ($timeClockCanTeam ?? false) : ?>
+        <p class="dg-muted" style="margin-top:.75rem"><a href="/app?page=zeiterfassung-kiosk">PIN-Anfragen &amp; PIN für Team (HR)</a></p>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
 </div>

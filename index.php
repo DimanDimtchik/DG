@@ -49,6 +49,149 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     exit;
 }
 
+// Öffentliche Stempeluhr (Kiosk) — ohne CRM-Login, auch im Wartungsmodus
+if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
+    if (!Database::isConfigured()) {
+        http_response_code(503);
+        echo 'Stempeluhr nicht verfügbar (keine Datenbank).';
+        exit;
+    }
+    MigrationRunner::runPending();
+    TimeKioskService::ensureDraftWebsitePage();
+
+    if ($path === '/stempeluhr/pin-anfrage') {
+        $token = trim((string) ($_POST['token'] ?? $_GET['token'] ?? ''));
+        $kioskFlash = null;
+        $kioskFlashType = 'info';
+        $kioskDone = false;
+        $kioskReset = [];
+        $kioskContact = null;
+        $kioskToken = $token;
+        try {
+            if ($token === '') {
+                throw new InvalidArgumentException('Token fehlt.');
+            }
+            $loaded = TimeKioskService::loadHrRequest($token);
+            $kioskReset = $loaded['reset'];
+            $kioskContact = $loaded['contact'];
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $decision = (string) ($_POST['decision'] ?? '');
+                TimeKioskService::decideHrRequest($token, $decision, AuthService::user());
+                $kioskDone = true;
+                $kioskFlashType = 'success';
+                $kioskFlash = $decision === 'allow'
+                    ? 'Erlaubt. Der Mitarbeiter erhält eine E-Mail mit Link zur neuen PIN.'
+                    : 'Anfrage blockiert.';
+                $kioskReset = TimeKioskService::loadHrRequest($token)['reset'];
+            }
+        } catch (Throwable $e) {
+            $kioskFlash = $e->getMessage();
+            $kioskFlashType = 'error';
+            $kioskDone = true;
+        }
+        View::render('website-kiosk-hr', compact('kioskReset', 'kioskContact', 'kioskFlash', 'kioskFlashType', 'kioskDone', 'kioskToken'));
+        exit;
+    }
+
+    if ($path === '/stempeluhr/pin-setzen') {
+        $token = trim((string) ($_POST['token'] ?? $_GET['token'] ?? ''));
+        $kioskFlash = null;
+        $kioskFlashType = 'info';
+        $kioskDone = false;
+        $kioskToken = $token;
+        try {
+            if ($token === '') {
+                throw new InvalidArgumentException('Link ungültig.');
+            }
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $pin = (string) ($_POST['pin'] ?? '');
+                $pin2 = (string) ($_POST['pin_confirm'] ?? '');
+                if ($pin !== $pin2) {
+                    throw new InvalidArgumentException('PINs stimmen nicht überein.');
+                }
+                TimeKioskService::completePinSet($token, $pin);
+                $kioskDone = true;
+                $kioskFlashType = 'success';
+                $kioskFlash = 'PIN gespeichert. Sie können sich an der Stempeluhr anmelden.';
+            }
+        } catch (Throwable $e) {
+            $kioskFlash = $e->getMessage();
+            $kioskFlashType = 'error';
+        }
+        View::render('website-kiosk-pin-set', compact('kioskToken', 'kioskFlash', 'kioskFlashType', 'kioskDone'));
+        exit;
+    }
+
+    if ($path !== '/stempeluhr') {
+        http_response_code(404);
+        echo 'Nicht gefunden.';
+        exit;
+    }
+
+    $kioskFlash = null;
+    $kioskFlashType = 'info';
+    $kioskView = trim((string) ($_GET['view'] ?? ''));
+    if ($kioskView !== 'forgot') {
+        $kioskView = '';
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $action = (string) ($_POST['kiosk_action'] ?? '');
+        try {
+            if ($action === 'login') {
+                TimeKioskService::login((string) ($_POST['identifier'] ?? ''), (string) ($_POST['pin'] ?? ''));
+                $kioskFlash = 'Angemeldet.';
+                $kioskFlashType = 'success';
+                $kioskView = '';
+            } elseif ($action === 'logout') {
+                TimeKioskService::logout();
+                $kioskFlash = 'Abgemeldet.';
+                $kioskFlashType = 'success';
+            } elseif ($action === 'clock') {
+                TimeKioskService::recordClockSafe((string) ($_POST['event_type'] ?? ''));
+                $kioskFlash = 'Stempelung erfasst.';
+                $kioskFlashType = 'success';
+            } elseif ($action === 'forgot') {
+                TimeKioskService::requestPinReset((string) ($_POST['identifier'] ?? ''));
+                $kioskFlash = 'Wenn der Mitarbeiter bekannt ist, wurde die Personalabteilung benachrichtigt.';
+                $kioskFlashType = 'success';
+                $kioskView = '';
+            }
+        } catch (Throwable $e) {
+            $kioskFlash = $e->getMessage();
+            $kioskFlashType = 'error';
+            if ($action === 'forgot') {
+                $kioskView = 'forgot';
+            }
+        }
+    }
+
+    $kioskSession = TimeKioskService::currentSession();
+    $kioskStatus = null;
+    $kioskSummary = null;
+    if ($kioskSession !== null) {
+        $kioskStatus = TimeClockService::currentStatus($kioskSession['contact_id']);
+        $kioskSummary = TimeClockService::daySummary($kioskSession['contact_id']);
+        if ($kioskView === 'forgot') {
+            $kioskView = 'clock';
+        } elseif ($kioskView === '') {
+            $kioskView = 'clock';
+        }
+    } elseif ($kioskView !== 'forgot') {
+        $kioskView = 'login';
+    }
+
+    View::render('website-kiosk', compact(
+        'kioskSession',
+        'kioskSummary',
+        'kioskStatus',
+        'kioskFlash',
+        'kioskFlashType',
+        'kioskView'
+    ));
+    exit;
+}
+
 switch ($path) {
     case '/':
         if (AuthService::check()) {
@@ -3339,6 +3482,71 @@ switch ($path) {
             exit;
         }
 
+        // POST: Eigene Kiosk-PIN ändern
+        if (
+            $page === 'zeiterfassung'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['kiosk_own_pin'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    $contactId = ContactRepository::findStaffContactIdForUser($user);
+                    if ($contactId === null) {
+                        throw new InvalidArgumentException('Kein Mitarbeiter-Kontakt verknüpft.');
+                    }
+                    $pin = (string) ($_POST['pin'] ?? '');
+                    $pin2 = (string) ($_POST['pin_confirm'] ?? '');
+                    if ($pin !== $pin2) {
+                        throw new InvalidArgumentException('PINs stimmen nicht überein.');
+                    }
+                    TimeKioskService::setPin($contactId, $pin, $user);
+                    Flash::set('success', 'Stempeluhr-PIN gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=zeiterfassung', true, 302);
+            exit;
+        }
+
+        // POST: HR Kiosk-PIN / Freigaben
+        if (
+            $page === 'zeiterfassung-kiosk'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'zeiterfassung-kiosk')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !TimeKioskService::canManagePins($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-kiosk', true, 302);
+                exit;
+            }
+            try {
+                if (isset($_POST['kiosk_hr_decide'])) {
+                    TimeKioskService::decideHrRequestById(
+                        (int) ($_POST['reset_id'] ?? 0),
+                        (string) ($_POST['decision'] ?? ''),
+                        $user
+                    );
+                    Flash::set('success', 'Anfrage bearbeitet.');
+                } elseif (isset($_POST['kiosk_set_pin'])) {
+                    $pin = (string) ($_POST['pin'] ?? '');
+                    $pin2 = (string) ($_POST['pin_confirm'] ?? '');
+                    if ($pin !== $pin2) {
+                        throw new InvalidArgumentException('PINs stimmen nicht überein.');
+                    }
+                    TimeKioskService::setPin((int) ($_POST['contact_id'] ?? 0), $pin, $user);
+                    Flash::set('success', 'PIN für Mitarbeiter gespeichert.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=zeiterfassung-kiosk', true, 302);
+            exit;
+        }
+
         // POST: Arbeitsstunden Excel/CSV-Import (Shiftbase/Crewmeister/…)
         if (
             $page === 'zeiterfassung-stundenimport'
@@ -5773,8 +5981,17 @@ $legalProductsConfig = LegalProductSettings::config();
                 ? $timeClockSummary['status']
                 : TimeClockService::currentStatus((int) $timeClockContactId);
             $timeClockCanTeam = TimeClockService::canViewTeam($user);
+            $timeClockHasKioskPin = $timeClockContactId !== null && TimeKioskPinRepository::hasPin($timeClockContactId);
             $contentTemplate = 'modules/zeiterfassung';
             $title = 'Zeiterfassung';
+            $currentPage = 'zeiterfassung';
+        } elseif ($page === 'zeiterfassung-kiosk' && MenuRegistry::canAccess($user, 'zeiterfassung-kiosk')) {
+            MigrationRunner::runPending();
+            TimeKioskService::ensureDraftWebsitePage((int) ($user->id ?? 0));
+            $kioskPendingResets = TimeKioskPinRepository::listPending(50);
+            $kioskStaffOptions = TimeMonthReportService::staffOptions();
+            $contentTemplate = 'modules/zeiterfassung-kiosk';
+            $title = 'Stempeluhr-PIN';
             $currentPage = 'zeiterfassung';
         } elseif ($page === 'terminkalender' && MenuRegistry::canAccess($user, 'terminkalender')) {
             $bookingId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -6215,6 +6432,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeClockEmployeeLabel = $timeClockEmployeeLabel ?? '';
         $timeClockCanTeam = $timeClockCanTeam ?? false;
         $timeClockTeam = $timeClockTeam ?? [];
+        $timeClockHasKioskPin = $timeClockHasKioskPin ?? false;
+        $kioskPendingResets = $kioskPendingResets ?? [];
+        $kioskStaffOptions = $kioskStaffOptions ?? [];
         $overtimeReminders = $overtimeReminders ?? ['violations' => []];
         $timeMonthReport = $timeMonthReport ?? null;
         $timeMonthYearMonth = $timeMonthYearMonth ?? date('Y-m');
@@ -6620,6 +6840,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeClockEmployeeLabel',
             'timeClockCanTeam',
             'timeClockTeam',
+            'timeClockHasKioskPin',
+            'kioskPendingResets',
+            'kioskStaffOptions',
             'overtimeReminders',
             'timeMonthReport',
             'timeMonthYearMonth',

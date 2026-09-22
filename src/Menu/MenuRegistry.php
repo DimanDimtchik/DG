@@ -534,6 +534,9 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-stundenimport') {
             return TimeHoursImportService::canImport($user);
         }
+        if ($slug === 'zeiterfassung-kiosk') {
+            return TimeKioskService::canManagePins($user);
+        }
 
         foreach (self::modules($user) as $item) {
             if ($item['slug'] === $slug) {

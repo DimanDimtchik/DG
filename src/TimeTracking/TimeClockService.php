@@ -7,8 +7,12 @@ final class TimeClockService
     /**
      * @throws InvalidArgumentException
      */
-    public static function recordEvent(int $contactId, string $eventType, ?User $actor = null): void
-    {
+    public static function recordEvent(
+        int $contactId,
+        string $eventType,
+        ?User $actor = null,
+        string $source = TimeClockRepository::SOURCE_WEB,
+    ): void {
         if ($contactId < 1) {
             throw new InvalidArgumentException('Kein Mitarbeiter-Kontakt verknüpft. Bitte E-Mail/Login im Kontakt hinterlegen.');
         }
@@ -22,12 +26,21 @@ final class TimeClockService
 
         self::assertTransitionAllowed($status, $eventType);
 
+        $allowedSources = [
+            TimeClockRepository::SOURCE_WEB,
+            TimeClockRepository::SOURCE_KIOSK,
+            TimeClockRepository::SOURCE_IMPORT,
+        ];
+        if (!in_array($source, $allowedSources, true)) {
+            $source = TimeClockRepository::SOURCE_WEB;
+        }
+
         $now = date('Y-m-d H:i:s');
         TimeClockRepository::insert(
             $contactId,
             $eventType,
             $now,
-            TimeClockRepository::SOURCE_WEB,
+            $source,
             null,
             $actor?->id,
         );
@@ -609,6 +622,7 @@ final class TimeClockService
             TimeClockRepository::SOURCE_AUTO_BREAK => 'Automatische Pause',
             TimeClockRepository::SOURCE_AUTO_CLOSE => 'Automatisches Ausstempeln',
             TimeClockRepository::SOURCE_IMPORT => 'Import',
+            TimeClockRepository::SOURCE_KIOSK => 'Kiosk',
             default => $source !== '' ? $source : 'Web',
         };
     }

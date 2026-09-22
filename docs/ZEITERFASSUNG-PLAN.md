@@ -230,13 +230,49 @@ Migration: `061_time_clock.sql` · Module: `TimeClockService`, `TimeTrackingSett
 
 | # | Frage | Default für Z2+ (token-sparend) |
 |---|--------|----------------------------------|
-| 1 | Kiosk-Tablet (PIN)? | **Später** — nicht in Z2–Z4 |
+| 1 | Kiosk-Tablet (PIN)? | **Jetzt Z7** — Spec + Code unten |
 | 2 | GPS beim Stempeln? | **Nein** in Z2 |
 | 3 | Lohnsoftware zuerst? | **DATEV Lohn** in Z6a; Lexoffice optional Z6b |
 | 4 | Soll-Quelle? | **Zuerst** `CalendarWorkingHoursRepository` / bestehende Arbeitszeiten; nur bei Lücke eigene MA-Soll-Felder |
 | 5 | Zuschläge Nacht/So/Feiertag? | **Z6+**, nicht Z2 |
 
 Abweichung nur per explizitem Chat-Befehl.
+
+---
+
+## Betrieb Phase 7 — Kiosk / Tablet mit PIN
+
+> Öffentliche Stempeluhr **ohne CRM-Login**. Website-Seite bei Installation als **Entwurf**. PIN selbst (MA) oder HR. PIN vergessen → Mail an HR → Erlauben/Blockieren → Link an MA zur neuen PIN.
+
+### Anforderungen (PO)
+
+| # | Anforderung |
+|---|-------------|
+| K1 | Tablet/Kiosk unter `/stempeluhr` ohne CRM-Session |
+| K2 | Ein-/Ausstempeln + Pause starten/beenden |
+| K3 | Authentifizierung per Mitarbeiter-Kennung + PIN (4–8 Ziffern, gehasht) |
+| K4 | Install: Website-Seite „Stempeluhr“ als **Entwurf** (slug `stempeluhr`) |
+| K5 | PIN ändern: Mitarbeiter selbst im CRM **oder** HR |
+| K6 | Kiosk „PIN vergessen“ → E-Mail an HR → Buttons Erlauben / Blockieren |
+| K7 | Nach Erlauben → E-Mail an MA mit Link zur PIN-Eingabe |
+
+### Technik
+
+| Baustein | Ort |
+|----------|-----|
+| Migration | `096_time_kiosk_pin.sql` — PIN-Hash, Reset-Anfragen, Kiosk-Session |
+| Service | `TimeKioskService` / `TimeKioskPinRepository` |
+| Public | `/stempeluhr`, `/stempeluhr/pin-anfrage`, `/stempeluhr/pin-setzen` |
+| CRM | PIN auf Zeiterfassung (selbst) + HR-Freigaben-Liste |
+| Bootstrap | `WebsiteBootstrapService` → Entwurf-Seite |
+| Stempel-Source | `kiosk` |
+
+### Serie Z7
+
+1. **Z7a** Spec ✅ (dieser Abschnitt)
+2. **Z7b** Migration + PIN/Reset-Persistenz + Public-Kiosk + Mails + CRM-PIN/HR ✅
+
+**Nicht:** GPS, Gesichtserkennung, native App.
 
 ---
 

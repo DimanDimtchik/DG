@@ -102,12 +102,23 @@ final class WebsiteBootstrapService
                     'action' => $action,
                 ];
             } else {
-                $result['terminkalender_page'] = [
-                    'id' => (int) $existingTk['id'],
-                    'slug' => 'terminkalender',
-                    'action' => 'skipped',
-                ];
+            $result['terminkalender_page'] = [
+                'id' => (int) $existingTk['id'],
+                'slug' => 'terminkalender',
+                'action' => 'skipped',
+            ];
             }
+        }
+
+        // Stempeluhr-Kiosk: Entwurf-Website-Seite (öffentliche Route /stempeluhr)
+        try {
+            TimeKioskService::ensureDraftWebsitePage($userId);
+            $kioskPage = WebsitePageRepository::findBySlugAnyStatus(TimeKioskService::PAGE_SLUG);
+            $result['stempeluhr_page'] = $kioskPage !== null
+                ? ['id' => (int) $kioskPage['id'], 'slug' => TimeKioskService::PAGE_SLUG, 'action' => 'ensured']
+                : null;
+        } catch (Throwable) {
+            $result['stempeluhr_page'] = null;
         }
 
         if ($homepage) {
