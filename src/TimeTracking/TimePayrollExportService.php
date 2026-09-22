@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Zeiterfassung Z6b–Z6d: CSV / DATEV / Lexoffice Lohnzeiten-Export + Protokoll.
+ * Zeiterfassung Z6b–Z6f: CSV / DATEV / Lexoffice Lohnzeiten-Export + Auszahlungsvorschlag.
  * Keine eigene Lohnabrechnung.
  */
 final class TimePayrollExportService
@@ -33,6 +33,7 @@ final class TimePayrollExportService
         $totPayout = 0;
         $totKonto = 0;
         $payoutMap = TimePayrollOtPayoutRepository::mapForMonth($yearMonth);
+        $reserve = TimeTrackingSettings::otPayoutReserveMinutes();
 
         foreach (TimeMonthReportService::staffOptions() as $opt) {
             $cid = (int) ($opt['id'] ?? 0);
@@ -56,7 +57,8 @@ final class TimePayrollExportService
             $corr = self::correctionMinutesInMonth($cid, $yearMonth);
             $konto = OvertimeLotRepository::sumRemainingMinutes($cid);
             $payoutRow = $payoutMap[$cid] ?? null;
-            $payoutMins = is_array($payoutRow) ? (int) ($payoutRow['minutes'] ?? 0) : 0;
+            $suggest = max(0, $konto - $reserve);
+            $payoutMins = is_array($payoutRow) ? (int) ($payoutRow['minutes'] ?? 0) : $suggest;
             $payoutApplied = is_array($payoutRow) && ($payoutRow['applied_at'] ?? null) !== null;
             $payoutAppliedMins = is_array($payoutRow) && $payoutRow['applied_minutes'] !== null
                 ? (int) $payoutRow['applied_minutes']
@@ -85,6 +87,8 @@ final class TimePayrollExportService
                 'korrektur_minutes' => $corr,
                 'konto_saldo_minutes' => $konto,
                 'auszahlung_minutes' => $payoutMins,
+                'auszahlung_vorschlag_minutes' => $suggest,
+                'auszahlung_reserve_minutes' => $reserve,
                 'auszahlung_applied' => $payoutApplied,
                 'auszahlung_applied_minutes' => $payoutAppliedMins,
             ];
@@ -93,6 +97,7 @@ final class TimePayrollExportService
         return [
             'year_month' => $yearMonth,
             'rows' => $rows,
+            'ot_payout_reserve_minutes' => $reserve,
             'totals' => [
                 'soll_minutes' => $totSched,
                 'ist_minutes' => $totWork,

@@ -55,7 +55,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d ✅
 - [x] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e ✅
 - [x] **Zeiterfassung Phase 5 Rückstellungen** — Z5a–Z5d ✅
-- [x] **Zeiterfassung Phase 6 Lohn-Export** — Z6a–Z6e ✅ (Auszahlung vom Überstundenkonto)
+- [x] **Zeiterfassung Phase 6 Lohn-Export** — Z6a–Z6f ✅ (Auszahlung + Zeitkontoregelung/Vorschlag)
 - [x] **Arbeitsstunden-Import** — Excel/CSV Shiftbase/Crewmeister → Stempelzeiten (`zeiterfassung-stundenimport`)
 - [x] **Kiosk/Tablet PIN (Z7)** — `/stempeluhr` ohne CRM-Login · Entwurf-Seite · PIN-Reset über HR
 - [x] **Stempeluhr-Seite Nachzug Alt-Instanzen** — Migration 097 + `ensureDraftWebsitePage` (Master/ganz-soft/kontur: Entwurf „Stempeluhr“ angelegt)

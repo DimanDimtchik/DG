@@ -20,6 +20,7 @@ final class TimeTrackingSettings
             'break_threshold_6h_minutes' => 360,
             'break_threshold_9h_minutes' => 540,
             'overtime_compensation_months' => 6,
+            'ot_payout_reserve_minutes' => 0,
             'arbzg_max_weekly_hours' => 48,
             'overtime_reminder_enabled' => true,
             'overtime_reminder_email' => true,
@@ -56,6 +57,7 @@ final class TimeTrackingSettings
             'break_threshold_6h_minutes' => max(60, (int) ($stored['break_threshold_6h_minutes'] ?? $defaults['break_threshold_6h_minutes'])),
             'break_threshold_9h_minutes' => max(60, (int) ($stored['break_threshold_9h_minutes'] ?? $defaults['break_threshold_9h_minutes'])),
             'overtime_compensation_months' => max(1, (int) ($stored['overtime_compensation_months'] ?? $defaults['overtime_compensation_months'])),
+            'ot_payout_reserve_minutes' => max(0, (int) ($stored['ot_payout_reserve_minutes'] ?? $defaults['ot_payout_reserve_minutes'])),
             'arbzg_max_weekly_hours' => max(1, min(168, (int) ($stored['arbzg_max_weekly_hours'] ?? $defaults['arbzg_max_weekly_hours']))),
             'overtime_reminder_enabled' => !empty($stored['overtime_reminder_enabled'] ?? $defaults['overtime_reminder_enabled']),
             'overtime_reminder_email' => !empty($stored['overtime_reminder_email'] ?? $defaults['overtime_reminder_email']),
@@ -86,6 +88,12 @@ final class TimeTrackingSettings
         return self::forForm();
     }
 
+    /** Nicht auszahlbare Überstunden (Zeitkontoregelung), Minuten. Default 0 = alles vorschlagen. */
+    public static function otPayoutReserveMinutes(): int
+    {
+        return max(0, (int) (self::config()['ot_payout_reserve_minutes'] ?? 0));
+    }
+
     /**
      * @param array<string, mixed> $input
      */
@@ -94,6 +102,16 @@ final class TimeTrackingSettings
         $method = (string) ($input['provision_cost_method'] ?? 'workdays_260');
         if (!in_array($method, ['workdays_260', 'calendar_365'], true)) {
             $method = 'workdays_260';
+        }
+
+        $reserveHoursRaw = $input['ot_payout_reserve_hours'] ?? null;
+        if ($reserveHoursRaw === null || $reserveHoursRaw === '') {
+            $reserveMinutes = max(0, (int) ($input['ot_payout_reserve_minutes'] ?? 0));
+        } else {
+            if (is_string($reserveHoursRaw)) {
+                $reserveHoursRaw = str_replace(',', '.', trim($reserveHoursRaw));
+            }
+            $reserveMinutes = max(0, (int) round((float) $reserveHoursRaw * 60));
         }
 
         SettingsStore::set(self::STORE_KEY, [
@@ -105,6 +123,7 @@ final class TimeTrackingSettings
             'break_threshold_6h_minutes' => max(60, (int) ($input['break_threshold_6h_minutes'] ?? 360)),
             'break_threshold_9h_minutes' => max(60, (int) ($input['break_threshold_9h_minutes'] ?? 540)),
             'overtime_compensation_months' => max(1, (int) ($input['overtime_compensation_months'] ?? 6)),
+            'ot_payout_reserve_minutes' => $reserveMinutes,
             'arbzg_max_weekly_hours' => max(1, min(168, (int) ($input['arbzg_max_weekly_hours'] ?? 48))),
             'overtime_reminder_enabled' => !empty($input['overtime_reminder_enabled']),
             'overtime_reminder_email' => !empty($input['overtime_reminder_email']),

@@ -1,9 +1,9 @@
 <?php
 /**
- * Z6b–Z6e Lohn-Export CSV + DATEV/Lexoffice + Überstunden-Auszahlung + Protokoll.
+ * Z6b–Z6f Lohn-Export CSV + DATEV/Lexoffice + Überstunden-Auszahlung + Protokoll.
  *
  * @var string $timePayrollYearMonth
- * @var array{year_month: string, rows: list<array<string, mixed>>, totals: array<string, mixed>} $timePayrollDataset
+ * @var array{year_month: string, rows: list<array<string, mixed>>, totals: array<string, mixed>, ot_payout_reserve_minutes?: int} $timePayrollDataset
  * @var list<array<string, mixed>> $timePayrollExports
  * @var array{consultant_number: string, client_number: string} $timePayrollDatevSettings
  * @var bool $timePayrollDatevConfigured
@@ -18,6 +18,8 @@ $datevCfg = is_array($timePayrollDatevSettings ?? null) ? $timePayrollDatevSetti
 $datevOk = !empty($timePayrollDatevConfigured);
 $prev = (new DateTimeImmutable($ym . '-01'))->modify('-1 month')->format('Y-m');
 $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
+$reserveMins = (int) ($dataset['ot_payout_reserve_minutes'] ?? TimeTrackingSettings::otPayoutReserveMinutes());
+$reserveHoursLabel = TimeClockService::formatMinutes($reserveMins);
 $hasAppliedPayout = false;
 $hasEditablePayout = false;
 foreach ($rows as $r) {
@@ -34,7 +36,7 @@ foreach ($rows as $r) {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Lohn-Export</h1>
-      <p class="dg-lead">Z6e — CSV / DATEV / Lexoffice Zeitenübergabe · Überstunden-Auszahlung vom Konto</p>
+      <p class="dg-lead">Z6f — CSV / DATEV / Lexoffice · Auszahlungsvorschlag aus Zeitkontoregelung</p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
@@ -42,6 +44,7 @@ foreach ($rows as $r) {
       <a class="dg-button" href="/app?page=zeiterfassung-stundenimport">Stunden-Import</a>
       <a class="dg-button" href="/app?page=zeiterfassung-konto">Zeitkonto</a>
       <a class="dg-button" href="/app?page=zeiterfassung-rueckstellung">Rückstellungen</a>
+      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('zeiterfassung')) ?>">Zeitkontoregelung</a>
       <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('kontenrahmen')) ?>">DATEV-Einstellungen</a>
       <a class="dg-button" href="/app?page=kontakte">Kontaktakte (PDF)</a>
     </div>
@@ -75,8 +78,11 @@ foreach ($rows as $r) {
       Lohnabrechnungs-PDF vom Berater unter Kontakt → Mitarbeiterdaten als <code>payroll_slip</code> ablegen (kein Generieren im CRM).
     </p>
     <p class="dg-field-hint">
-      <strong>Überstunden-Auszahlung:</strong> unten Minuten eintragen und speichern (auch teilweise).
-      Beim ersten Export des Monats mit Auszahlung werden diese Minuten FIFO vom Überstundenkonto abgebucht und erscheinen in der Export-Datei.
+      <strong>Zeitkontoregelung:</strong> nicht auszahlbar =
+      <?= View::escape($reserveHoursLabel) ?> h
+      (<a href="<?= View::escape(SettingsRegistry::tabUrl('zeiterfassung')) ?>">Einstellungen → Zeiterfassung</a>).
+      Vorschlag = max(0, Konto − Reserve); ohne gespeicherten Draft wird der Vorschlag vorausgefüllt.
+      Speichern, dann Export — Abbuchung FIFO erst beim Download.
       Spalte „ÜStd“ = Monatsdifferenz Ist−Soll; „Konto“ = aktueller Überstunden-Saldo.
     </p>
   </section>
@@ -137,6 +143,7 @@ foreach ($rows as $r) {
                       <input type="hidden" name="auszahlung[<?= $cid ?>]" value="0">
                       <span class="dg-muted">0</span>
                     <?php else : ?>
+                      <?php $suggest = (int) ($row['auszahlung_vorschlag_minutes'] ?? $payout); ?>
                       <input
                         type="number"
                         name="auszahlung[<?= $cid ?>]"
@@ -146,7 +153,7 @@ foreach ($rows as $r) {
                         step="1"
                         class="dg-input dg-input--narrow"
                         placeholder="0"
-                        title="Max. <?= View::escape(TimeClockService::formatMinutes($konto)) ?> (Konto)"
+                        title="Vorschlag <?= View::escape(TimeClockService::formatMinutes($suggest)) ?> · Max. <?= View::escape(TimeClockService::formatMinutes($konto)) ?> (Konto)"
                       >
                     <?php endif; ?>
                   </td>

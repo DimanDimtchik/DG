@@ -83,6 +83,46 @@ Zuordnung über Login oder E-Mail. Ca. 80 Werktage × 12 MA.
 
 ---
 
+## OT-Demo (5 Mitarbeiter, variable Überstunden) ✅ 2026-09-22
+
+Zusätzlich zum 12er-Roster — für Lohn-Export / Überstundenkonto (Z6e).
+
+| Login | Name | Profil |
+|-------|------|--------|
+| `demo-ot-01` | Mira Keine | **0** OT alle Monate (Kontrolle) |
+| `demo-ot-02` | Noah Wenig | steigend: Jun 15 → Jul 30 → Aug 45 → Sep 60 Min/Tag |
+| `demo-ot-03` | Olga Mittel | wechselnd: 60 / 15 / 90 / 30 Min/Tag |
+| `demo-ot-04` | Paul Hoch | meist hoch: 90 / 90 / 30 / 120 Min/Tag |
+| `demo-ot-05` | Rita Escal | starke Schwankung: 120 / 60 / 120 / 15 Min/Tag |
+
+| Datei | Zweck |
+|-------|--------|
+| `kontakte/kontakte-ot-variabel.csv` | Kontakte-Import (Quellsystem **Excel**) |
+| `stunden/stunden-ot-variabel.csv` | Stunden-Import (Quellsystem **Excel**), 01.06.–19.09.2026 Werktage |
+
+**Pflicht nach Kontakt-Import:** Für alle fünf unter Kontakt → Mitarbeiterdaten **„Überstunden erlaubt“** aktivieren (sonst entstehen keine Konto-Lots). Soll bleibt Default **480** Min/Tag.
+
+Erwartete Monats-Überstunden (Minuten), wenn `overtime_allowed=1`:
+
+| Login | Jun | Jul | Aug | Sep | Summe |
+|-------|-----|-----|-----|-----|-------|
+| demo-ot-01 | 0 | 0 | 0 | 0 | 0 |
+| demo-ot-02 | 330 (5:30) | 690 (11:30) | 945 (15:45) | 840 (14:00) | 2805 (46:45) |
+| demo-ot-03 | 1320 (22:00) | 345 (5:45) | 1890 (31:30) | 420 (7:00) | 3975 (66:15) |
+| demo-ot-04 | 1980 (33:00) | 2070 (34:30) | 630 (10:30) | 1680 (28:00) | 6360 (106:00) |
+| demo-ot-05 | 2640 (44:00) | 1380 (23:00) | 2520 (42:00) | 210 (3:30) | 6750 (112:30) |
+
+Neu erzeugen: `py -3 bin/generate-ot-demo-fixtures.py`
+
+### D — OT-Demo Abnahme (kurz)
+
+1. Kontakte: `kontakte-ot-variabel.csv` importieren (Excel, Rolle Mitarbeiter).
+2. Pro MA: **Überstunden erlaubt** setzen.
+3. Stunden: `stunden-ot-variabel.csv` importieren (Excel).
+4. Stichprobe Zeitkonto / Lohn-Export: Mira = 0; Noah/Olga/Paul/Rita unterschiedlich je Monat.
+
+---
+
 ## Abnahmeschritte (dg.ganz-om.de)
 
 Voraussetzung: eingeloggt als Admin/HR mit Kontakt-Import und Stunden-Import (`canViewTeam`).

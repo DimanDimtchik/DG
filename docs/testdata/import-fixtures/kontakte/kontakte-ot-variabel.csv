@@ -1,0 +1,6 @@
+﻿Anrede;Vorname;Nachname;Firma;E-Mail;Telefon;Login;Kundennummer;Rolle
+Frau;Mira;Keine;;mira.keine@demo-import.ganz-om.invalid;030 1100 2100;demo-ot-01;;mitarbeiter
+Herr;Noah;Wenig;;noah.wenig@demo-import.ganz-om.invalid;030 1101 2101;demo-ot-02;;mitarbeiter
+Frau;Olga;Mittel;;olga.mittel@demo-import.ganz-om.invalid;030 1102 2102;demo-ot-03;;mitarbeiter
+Herr;Paul;Hoch;;paul.hoch@demo-import.ganz-om.invalid;030 1103 2103;demo-ot-04;;mitarbeiter
+Frau;Rita;Escal;;rita.escal@demo-import.ganz-om.invalid;030 1104 2104;demo-ot-05;;mitarbeiter

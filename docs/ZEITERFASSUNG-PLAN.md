@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–6 ✅** · Spec **Z3a–Z6a ✅** · **Z6b–Z6e Code ✅**  
+> Status: **Phase 1–6 ✅** · Spec **Z3a–Z6a ✅** · **Z6b–Z6f Code ✅**  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -310,7 +310,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
 | **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5d` ✅ |
-| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6e` ✅ |
+| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6f` ✅ |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
 
@@ -1002,6 +1002,17 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 | Wirkung | Beim Export: `reduceMinutesFifo` + Audit; Teilbeträge möglich; max. = Konto-Saldo |
 
 **Nicht:** Netto-Lohn, automatische Voll-Auszahlung ohne Eingabe.
+
+### Z6f — Auszahlungsvorschlag aus Zeitkontoregelung ✅ 2026-09-22
+
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Setting | `ot_payout_reserve_minutes` in `TimeTrackingSettings` (UI: Stunden) — Default **0** |
+| Formel | Vorschlag = max(0, Konto − Reserve); ohne Draft vorausgefüllt |
+| UI | Einstellungen → Zeiterfassung; Lohn-Export zeigt Reserve + Prefill |
+| Beispiel | Reserve 80 h, Konto 110 h → Vorschlag 30 h |
+
+**Nicht:** Reserve pro MA, Auto-Save ohne Speichern-Klick.
 
 ### Arbeitsstunden-Import (Excel/CSV) ✅ 2026-09-22
 

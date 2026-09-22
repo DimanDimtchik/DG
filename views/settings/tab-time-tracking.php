@@ -93,6 +93,18 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         <span>Max. Wochendurchschnitt (Stunden, Standard 48)</span>
         <input type="number" name="arbzg_max_weekly_hours" min="1" max="168" value="<?= (int) ($settings['arbzg_max_weekly_hours'] ?? 48) ?>">
       </label>
+      <label class="dg-field">
+        <span>Nicht auszahlbare Überstunden (Stunden)</span>
+        <?php
+          $reserveMins = max(0, (int) ($settings['ot_payout_reserve_minutes'] ?? 0));
+          $reserveHoursDisplay = $reserveMins % 60 === 0
+              ? (string) intdiv($reserveMins, 60)
+              : number_format($reserveMins / 60.0, 2, '.', '');
+        ?>
+        <input type="number" name="ot_payout_reserve_hours" min="0" max="9999" step="0.5"
+               value="<?= View::escape($reserveHoursDisplay) ?>">
+        <span class="dg-field-hint">Zeitkontoregelung: alles oberhalb fließt als Auszahlungsvorschlag in den Lohn-Export. 0 = alles vorschlagen (z. B. Handwerk 80).</span>
+      </label>
     </div>
   </section>
 
