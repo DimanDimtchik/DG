@@ -68,6 +68,7 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
 
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Vorschau <?= View::escape($ym) ?></h2>
+    <p class="dg-muted">Soll/Ist/Pause/ÜStd/Korrektur in der Tabelle als Stunden:Minuten (intern und in DATEV-CSV: Minuten). Lexoffice-CSV: Dezimalstunden.</p>
     <?php if ($rows === []) : ?>
       <p class="dg-muted">Keine Mitarbeiter-Kontakte.</p>
     <?php else : ?>
@@ -77,13 +78,13 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
             <tr>
               <th>Personalnr.</th>
               <th>Name</th>
-              <th class="dg-table__num">Soll</th>
-              <th class="dg-table__num">Ist</th>
-              <th class="dg-table__num">Pause</th>
-              <th class="dg-table__num">ÜStd</th>
+              <th class="dg-table__num" title="Geplante Arbeitszeit laut Schicht/Vertrag">Soll</th>
+              <th class="dg-table__num" title="Tatsächliche Netto-Arbeitszeit">Ist</th>
+              <th class="dg-table__num" title="Pausen (gestempelt + Zwangspause)">Pause</th>
+              <th class="dg-table__num" title="Überstunden (Ist − Soll, wenn positiv)">ÜStd</th>
               <th class="dg-table__num">Urlaub</th>
               <th class="dg-table__num">Krank</th>
-              <th class="dg-table__num">Korrektur</th>
+              <th class="dg-table__num" title="Korrekturbuchungen">Korrektur</th>
             </tr>
           </thead>
           <tbody>
@@ -91,26 +92,26 @@ $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
               <tr>
                 <td><?= View::escape((string) ($row['personal_number'] ?? '')) ?></td>
                 <td><?= View::escape((string) ($row['name'] ?? '')) ?></td>
-                <td class="dg-table__num"><?= (int) ($row['soll_minutes'] ?? 0) ?></td>
-                <td class="dg-table__num"><?= (int) ($row['ist_minutes'] ?? 0) ?></td>
-                <td class="dg-table__num"><?= (int) ($row['pause_minutes'] ?? 0) ?></td>
-                <td class="dg-table__num"><?= (int) ($row['ueberstunden_minutes'] ?? 0) ?></td>
+                <td class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($row['soll_minutes'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($row['ist_minutes'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($row['pause_minutes'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($row['ueberstunden_minutes'] ?? 0))) ?></td>
                 <td class="dg-table__num"><?= View::escape(number_format((float) ($row['urlaub_tage'] ?? 0), 1, ',', '')) ?></td>
                 <td class="dg-table__num"><?= View::escape(number_format((float) ($row['krank_tage'] ?? 0), 1, ',', '')) ?></td>
-                <td class="dg-table__num"><?= (int) ($row['korrektur_minutes'] ?? 0) ?></td>
+                <td class="dg-table__num"><?= View::escape(TimeClockService::formatSignedCorrection((int) ($row['korrektur_minutes'] ?? 0))) ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>
           <tfoot>
             <tr>
               <th colspan="2">Summe</th>
-              <th class="dg-table__num"><?= (int) ($totals['soll_minutes'] ?? 0) ?></th>
-              <th class="dg-table__num"><?= (int) ($totals['ist_minutes'] ?? 0) ?></th>
-              <th class="dg-table__num"><?= (int) ($totals['pause_minutes'] ?? 0) ?></th>
-              <th class="dg-table__num"><?= (int) ($totals['ueberstunden_minutes'] ?? 0) ?></th>
+              <th class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($totals['soll_minutes'] ?? 0))) ?></th>
+              <th class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($totals['ist_minutes'] ?? 0))) ?></th>
+              <th class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($totals['pause_minutes'] ?? 0))) ?></th>
+              <th class="dg-table__num"><?= View::escape(TimeClockService::formatMinutes((int) ($totals['ueberstunden_minutes'] ?? 0))) ?></th>
               <th class="dg-table__num"><?= View::escape(number_format((float) ($totals['urlaub_tage'] ?? 0), 1, ',', '')) ?></th>
               <th class="dg-table__num"><?= View::escape(number_format((float) ($totals['krank_tage'] ?? 0), 1, ',', '')) ?></th>
-              <th class="dg-table__num"><?= (int) ($totals['korrektur_minutes'] ?? 0) ?></th>
+              <th class="dg-table__num"><?= View::escape(TimeClockService::formatSignedCorrection((int) ($totals['korrektur_minutes'] ?? 0))) ?></th>
             </tr>
           </tfoot>
         </table>
