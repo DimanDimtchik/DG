@@ -89,7 +89,7 @@ foreach ($rows as $r) {
 
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Vorschau <?= View::escape($ym) ?></h2>
-    <p class="dg-muted">Soll/Ist/Pause/ÜStd/Korrektur/Konto als Stunden:Minuten (intern und DATEV-CSV: Minuten). Lexoffice-CSV: Dezimalstunden. Auszahlung: Minuten.</p>
+    <p class="dg-muted">Soll/Ist/Pause/ÜStd/Korrektur/Konto/Auszahlung als Stunden:Minuten (intern und DATEV-CSV: Minuten). Lexoffice-CSV: Dezimalstunden.</p>
     <?php if ($rows === []) : ?>
       <p class="dg-muted">Keine Mitarbeiter-Kontakte.</p>
     <?php else : ?>
@@ -111,7 +111,7 @@ foreach ($rows as $r) {
                 <th class="dg-table__num">Krank</th>
                 <th class="dg-table__num" title="Korrekturbuchungen">Korrektur</th>
                 <th class="dg-table__num" title="Aktueller Überstunden-Saldo (Zeitkonto)">Konto</th>
-                <th class="dg-table__num" title="Zur Auszahlung vorgesehene Minuten (Teilbetrag möglich)">Auszahlung (Min.)</th>
+                <th class="dg-table__num" title="Zur Auszahlung vorgesehene Zeit (Teilbetrag möglich; Format H:MM)">Auszahlung</th>
               </tr>
             </thead>
             <tbody>
@@ -140,20 +140,19 @@ foreach ($rows as $r) {
                       <?= View::escape(TimeClockService::formatMinutes($appliedMins ?? $payout)) ?>
                       <span class="dg-muted" title="Bereits beim Export vom Konto abgebucht">✓</span>
                     <?php elseif ($konto < 1) : ?>
-                      <input type="hidden" name="auszahlung[<?= $cid ?>]" value="0">
-                      <span class="dg-muted">0</span>
+                      <input type="hidden" name="auszahlung[<?= $cid ?>]" value="0:00">
+                      <span class="dg-muted">0:00</span>
                     <?php else : ?>
                       <?php $suggest = (int) ($row['auszahlung_vorschlag_minutes'] ?? $payout); ?>
                       <input
-                        type="number"
+                        type="text"
                         name="auszahlung[<?= $cid ?>]"
-                        value="<?= $payout > 0 ? $payout : '' ?>"
-                        min="0"
-                        max="<?= $konto ?>"
-                        step="1"
+                        value="<?= $payout > 0 ? View::escape(TimeClockService::formatMinutes($payout)) : '' ?>"
+                        inputmode="numeric"
+                        pattern="^\d+:[0-5]\d$"
+                        placeholder="0:00"
                         class="dg-input dg-input--narrow"
-                        placeholder="0"
-                        title="Vorschlag <?= View::escape(TimeClockService::formatMinutes($suggest)) ?> · Max. <?= View::escape(TimeClockService::formatMinutes($konto)) ?> (Konto)"
+                        title="Vorschlag <?= View::escape(TimeClockService::formatMinutes($suggest)) ?> · Max. <?= View::escape(TimeClockService::formatMinutes($konto)) ?> (Konto) · Format H:MM"
                       >
                     <?php endif; ?>
                   </td>

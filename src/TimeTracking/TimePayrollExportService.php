@@ -130,7 +130,7 @@ final class TimePayrollExportService
             if ($cid < 1) {
                 continue;
             }
-            $mins = max(0, (int) $raw);
+            $mins = self::parseDurationToMinutes($raw);
             if ($mins < 1) {
                 $mapped[$cid] = 0;
                 continue;
@@ -140,6 +140,30 @@ final class TimePayrollExportService
         }
 
         return TimePayrollOtPayoutRepository::saveDrafts($yearMonth, $mapped, (int) ($user->id ?? 0));
+    }
+
+    /**
+     * H:MM oder reine Minuten (Rückwärtskompatibilität) → Minuten.
+     */
+    public static function parseDurationToMinutes(mixed $raw): int
+    {
+        if (is_int($raw) || is_float($raw)) {
+            return max(0, (int) round((float) $raw));
+        }
+        $s = trim((string) $raw);
+        if ($s === '') {
+            return 0;
+        }
+        $s = str_replace(',', '.', $s);
+        if (preg_match('/^(\d+):([0-5]?\d)$/', $s, $m)) {
+            return max(0, ((int) $m[1] * 60) + (int) $m[2]);
+        }
+        if (preg_match('/^\d+(\.\d+)?$/', $s)) {
+            // reine Zahl: Minuten (alt) oder Dezimalstunden mit Punkt nur wenn < 24 und Komma? → Minuten beibehalten
+            return max(0, (int) round((float) $s));
+        }
+
+        return 0;
     }
 
     /**
