@@ -3874,7 +3874,8 @@ switch ($path) {
                         (string) ($_POST['reason'] ?? ''),
                         trim((string) ($_POST['document_ref'] ?? '')) !== ''
                             ? (string) $_POST['document_ref']
-                            : null
+                            : null,
+                        !empty($_POST['half_day'])
                     );
                     Flash::set('success', $res['message']);
                 } elseif ($absAction === 'approve') {

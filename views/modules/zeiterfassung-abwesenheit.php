@@ -39,7 +39,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Abwesenheit</h1>
-      <p class="dg-lead">Z4d — Krankheit / Sonstiges<?= $canTeam ? ' · Team-Kalender' : '' ?></p>
+      <p class="dg-lead">Z4d — Urlaub / Krankheit / Sonstiges<?= $canTeam ? ' · Team-Kalender' : '' ?></p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung-urlaub">Urlaub</a>
@@ -134,12 +134,12 @@ $staffLabel = static function (int $cid) use ($staff): string {
       <?php endif; ?>
     </section>
   <?php else : ?>
-    <div class="dg-flash dg-flash--warning">Kein Mitarbeiter-Kontakt verknüpft — eigene Krankmeldung nicht möglich.</div>
+    <div class="dg-flash dg-flash--warning">Kein Mitarbeiter-Kontakt verknüpft — eigene Krankmeldung nicht möglich. Als HR können Sie unten Abwesenheit für Mitarbeiter erfassen.</div>
   <?php endif; ?>
 
   <?php if ($canTeam) : ?>
     <section class="dg-panel">
-      <h2 class="dg-subsection-title">HR: Krankheit / Sonstiges erfassen</h2>
+      <h2 class="dg-subsection-title">HR: Abwesenheit für Mitarbeiter erfassen</h2>
       <form method="post" action="/app?page=zeiterfassung-abwesenheit" class="dg-form">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
         <input type="hidden" name="absence_action" value="record">
@@ -154,7 +154,8 @@ $staffLabel = static function (int $cid) use ($staff): string {
         </label>
         <label class="dg-field">
           <span class="dg-field-label">Typ</span>
-          <select name="type" required>
+          <select name="type" id="abs-hr-type" required>
+            <option value="vacation">Urlaub</option>
             <option value="sick">Krankheit</option>
             <option value="other">Sonstiges</option>
           </select>
@@ -169,17 +170,41 @@ $staffLabel = static function (int $cid) use ($staff): string {
             <input type="date" name="date_to" required>
           </label>
         </div>
+        <label class="dg-field" id="abs-hr-halfday-wrap">
+          <span class="dg-field-label">
+            <input type="checkbox" name="half_day" value="1"> Halber Tag (nur Urlaub, gleiches Von/Bis)
+          </span>
+        </label>
         <label class="dg-field">
           <span class="dg-field-label">Grund</span>
           <textarea name="reason" rows="2" required maxlength="500"></textarea>
         </label>
-        <label class="dg-field">
-          <span class="dg-field-label">Attest-Ref (optional)</span>
+        <label class="dg-field" id="abs-hr-doc-wrap">
+          <span class="dg-field-label">Attest-Ref (optional, Krankheit/Sonstiges)</span>
           <input type="text" name="document_ref" maxlength="255" placeholder="Kontaktakte medical_certificates:Index oder Notiz">
         </label>
-        <p class="dg-field-hint">Wird sofort als genehmigt gespeichert (HR-Erfassung).</p>
+        <p class="dg-field-hint">Wird sofort als genehmigt gespeichert (HR-Erfassung). Urlaub zählt gegen den Jahresanspruch.</p>
         <button type="submit" class="dg-button dg-button--primary">Erfassen</button>
       </form>
+      <script>
+        (function () {
+          var typeEl = document.getElementById('abs-hr-type');
+          var halfWrap = document.getElementById('abs-hr-halfday-wrap');
+          var docWrap = document.getElementById('abs-hr-doc-wrap');
+          if (!typeEl || !halfWrap || !docWrap) return;
+          function sync() {
+            var isVac = typeEl.value === 'vacation';
+            halfWrap.style.display = isVac ? '' : 'none';
+            docWrap.style.display = isVac ? 'none' : '';
+            if (!isVac) {
+              var cb = halfWrap.querySelector('input[type=checkbox]');
+              if (cb) cb.checked = false;
+            }
+          }
+          typeEl.addEventListener('change', sync);
+          sync();
+        })();
+      </script>
     </section>
 
     <section class="dg-panel">

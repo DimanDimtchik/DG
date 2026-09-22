@@ -27,7 +27,7 @@ final class TimeAbsenceService
     }
 
     /**
-     * HR: Krank/Sonstiges direkt genehmigt (+ optional Attest-Ref).
+     * HR: Urlaub / Krankheit / Sonstiges direkt genehmigt (+ optional Attest-Ref).
      *
      * @return array{id: int, message: string}
      */
@@ -39,12 +39,28 @@ final class TimeAbsenceService
         string $dateTo,
         string $reason,
         ?string $documentRef = null,
+        bool $halfDay = false,
     ): array {
         if (!TimeClockService::canViewTeam($user)) {
             throw new RuntimeException('Keine Berechtigung (nur HR/Admin/full).');
         }
-        if (!in_array($type, ['sick', 'other'], true)) {
-            throw new InvalidArgumentException('Typ muss Krankheit oder Sonstiges sein.');
+        if (!in_array($type, ['vacation', 'sick', 'other'], true)) {
+            throw new InvalidArgumentException('Typ muss Urlaub, Krankheit oder Sonstiges sein.');
+        }
+
+        $days = null;
+        if ($halfDay) {
+            if ($type !== 'vacation') {
+                throw new InvalidArgumentException('Halber Tag nur bei Urlaub.');
+            }
+            if ($dateFrom !== $dateTo) {
+                throw new InvalidArgumentException('Halber Tag nur bei gleichem Von-/Bis-Datum.');
+            }
+            $wd = TimeAbsenceRepository::countWorkingDays($dateFrom, $dateTo);
+            if ($wd < 1) {
+                throw new InvalidArgumentException('Halber Tag nur an einem Werktag (Mo–Fr).');
+            }
+            $days = 0.5;
         }
 
         $id = TimeAbsenceRepository::create([
@@ -52,17 +68,28 @@ final class TimeAbsenceService
             'type' => $type,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
+            'days_count' => $days,
             'status' => 'approved',
             'reason' => $reason,
-            'document_ref' => $documentRef,
+            'document_ref' => $type === 'vacation' ? null : $documentRef,
             'created_by' => (int) ($user->id ?? 0) > 0 ? (int) $user->id : null,
         ]);
         TimeAbsenceRepository::setStatus($id, 'approved', (int) ($user->id ?? 0));
 
-        return [
-            'id' => $id,
-            'message' => self::typeLabel($type) . ' erfasst (genehmigt).',
-        ];
+        $row = TimeAbsenceRepository::findById($id);
+        $daysCount = $row !== null ? (float) ($row['days_count'] ?? 0) : 0.0;
+        $msg = self::typeLabel($type) . ' erfasst (genehmigt)';
+        if ($type === 'vacation') {
+            $msg .= sprintf(' — %.1f Tage', $daysCount);
+            $year = (int) substr($dateFrom, 0, 4);
+            $rest = TimeVacationEntitlementRepository::restDays($contactId, $year);
+            if ($daysCount > $rest) {
+                $msg .= sprintf(' (Hinweis: Restanspruch aktuell %.1f Tage)', $rest);
+            }
+        }
+        $msg .= '.';
+
+        return ['id' => $id, 'message' => $msg];
     }
 
     /**
