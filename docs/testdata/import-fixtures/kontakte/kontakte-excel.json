@@ -1,0 +1,112 @@
+{
+  "rows": [
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Anna",
+      "Nachname": "Duplikat",
+      "E-Mail": "anna.duplikat@demo-import.ganz-om.invalid",
+      "Telefon": "030 1000 2000",
+      "Login": "demo-dup-01",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Bernd",
+      "Nachname": "Doppel",
+      "E-Mail": "bernd.doppel@demo-import.ganz-om.invalid",
+      "Telefon": "030 1001 2001",
+      "Login": "demo-dup-02",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Clara",
+      "Nachname": "Fischer",
+      "E-Mail": "clara.fischer@demo-import.ganz-om.invalid",
+      "Telefon": "030 1002 2002",
+      "Login": "demo-ma-03",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "David",
+      "Nachname": "Hoffmann",
+      "E-Mail": "david.hoffmann@demo-import.ganz-om.invalid",
+      "Telefon": "030 1003 2003",
+      "Login": "demo-ma-04",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Elena",
+      "Nachname": "Jung",
+      "E-Mail": "elena.jung@demo-import.ganz-om.invalid",
+      "Telefon": "030 1004 2004",
+      "Login": "demo-ma-05",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Felix",
+      "Nachname": "Keller",
+      "E-Mail": "felix.keller@demo-import.ganz-om.invalid",
+      "Telefon": "030 1005 2005",
+      "Login": "demo-ma-06",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Greta",
+      "Nachname": "Lange",
+      "E-Mail": "greta.lange@demo-import.ganz-om.invalid",
+      "Telefon": "030 1006 2006",
+      "Login": "demo-ma-07",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Hans",
+      "Nachname": "Meier",
+      "E-Mail": "hans.meier@demo-import.ganz-om.invalid",
+      "Telefon": "030 1007 2007",
+      "Login": "demo-ma-08",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Ina",
+      "Nachname": "Neumann",
+      "E-Mail": "ina.neumann@demo-import.ganz-om.invalid",
+      "Telefon": "030 1008 2008",
+      "Login": "demo-ma-09",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Jonas",
+      "Nachname": "Otto",
+      "E-Mail": "jonas.otto@demo-import.ganz-om.invalid",
+      "Telefon": "030 1009 2009",
+      "Login": "demo-ma-10",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Karla",
+      "Nachname": "Peters",
+      "E-Mail": "karla.peters@demo-import.ganz-om.invalid",
+      "Telefon": "030 1010 2010",
+      "Login": "demo-ma-11",
+      "Rolle": "mitarbeiter"
+    },
+    {
+      "Anrede": "Frau/Herr",
+      "Vorname": "Leon",
+      "Nachname": "Richter",
+      "E-Mail": "leon.richter@demo-import.ganz-om.invalid",
+      "Telefon": "030 1011 2011",
+      "Login": "demo-ma-12",
+      "Rolle": "mitarbeiter"
+    }
+  ]
+}

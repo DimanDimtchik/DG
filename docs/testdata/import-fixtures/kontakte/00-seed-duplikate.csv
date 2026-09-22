@@ -1,0 +1,3 @@
+﻿Anrede;Vorname;Nachname;E-Mail;Telefon;Login;Rolle
+Frau/Herr;Anna;Duplikat;anna.duplikat@demo-import.ganz-om.invalid;030 1000 2000;demo-dup-01;mitarbeiter
+Frau/Herr;Bernd;Doppel;bernd.doppel@demo-import.ganz-om.invalid;030 1001 2001;demo-dup-02;mitarbeiter
