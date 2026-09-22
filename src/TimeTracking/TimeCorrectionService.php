@@ -17,7 +17,8 @@ final class TimeCorrectionService
     }
 
     /**
-     * @return array{id: int, message: string}
+     * @param array<string, mixed>|null $evidenceFiles $_FILES['evidence'] optional
+     * @return array{id: int, message: string, attachments: int}
      */
     public static function addWorkedMinutesCorrection(
         User $user,
@@ -25,6 +26,7 @@ final class TimeCorrectionService
         string $workDate,
         int $deltaMinutes,
         string $reason,
+        ?array $evidenceFiles = null,
     ): array {
         self::assertCanManage($user);
         if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $workDate)) {
@@ -53,6 +55,16 @@ final class TimeCorrectionService
         }
 
         $id = TimeCorrectionRepository::insert($contactId, $workDate, $deltaMinutes, $reason, $user->id);
+        $attached = 0;
+        if (is_array($evidenceFiles)) {
+            $attached = TimeCorrectionEvidenceStorage::storeUploads(
+                $id,
+                $contactId,
+                $evidenceFiles,
+                $user->id
+            );
+        }
+
         $sign = $deltaMinutes > 0 ? '+' : '';
         $note = sprintf(
             'Korrektur %s%d min (%s) — %s',
@@ -61,6 +73,9 @@ final class TimeCorrectionService
             $workDate,
             $reason
         );
+        if ($attached > 0) {
+            $note .= sprintf(' [%d Nachweisdatei(en)]', $attached);
+        }
         TimeClockRepository::insert(
             $contactId,
             self::EVENT_CORRECTION_AUDIT,
@@ -76,14 +91,20 @@ final class TimeCorrectionService
             // best effort
         }
 
+        $msg = sprintf(
+            'Korrektur gebucht: %s%d min am %s (Stempel-Historie unverändert).',
+            $sign,
+            $deltaMinutes,
+            $workDate
+        );
+        if ($attached > 0) {
+            $msg .= sprintf(' %d Nachweisdatei(en) gespeichert.', $attached);
+        }
+
         return [
             'id' => $id,
-            'message' => sprintf(
-                'Korrektur gebucht: %s%d min am %s (Stempel-Historie unverändert).',
-                $sign,
-                $deltaMinutes,
-                $workDate
-            ),
+            'message' => $msg,
+            'attachments' => $attached,
         ];
     }
 

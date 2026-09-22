@@ -263,6 +263,7 @@ final class MigrationRunner
             '096_time_kiosk_pin.sql' => self::tableExists($pdo, 'dg_time_kiosk_pins'),
             '097_time_kiosk_website_page.sql' => true,
             '098_time_payroll_ot_payouts.sql' => self::tableExists($pdo, 'dg_time_payroll_ot_payouts'),
+            '099_time_correction_attachments.sql' => self::tableExists($pdo, 'dg_time_correction_attachments'),
             default => false,
         };
     }
@@ -388,6 +389,7 @@ final class MigrationRunner
             '096_time_kiosk_pin.sql' => true,
             '097_time_kiosk_website_page.sql' => true,
             '098_time_payroll_ot_payouts.sql' => true,
+            '099_time_correction_attachments.sql' => true,
         ];
     }
 

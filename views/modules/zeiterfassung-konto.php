@@ -66,8 +66,11 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
     <div class="dg-zeiterfassung-konto__actions">
       <section class="dg-panel">
         <h2 class="dg-subsection-title">Stempel-Korrektur</h2>
-        <p class="dg-field-hint">Passt nur die Ist-Minuten an (±). Originale Stempel bleiben; Audit-Eintrag + Begründung Pflicht.</p>
-        <form method="post" action="/app?page=zeiterfassung-konto" class="dg-form">
+        <p class="dg-field-hint">
+          Passt nur die Ist-Minuten an (±). Originale Stempel bleiben; Audit-Eintrag + Begründung Pflicht.
+          Nachweis empfohlen: WhatsApp-Screenshot (Bild) und/oder E-Mail als PDF.
+        </p>
+        <form method="post" action="/app?page=zeiterfassung-konto" class="dg-form" enctype="multipart/form-data">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="time_konto_action" value="correction">
           <input type="hidden" name="contact_id" value="<?= $contactId ?>">
@@ -83,6 +86,11 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
             <label class="dg-field dg-field--wide">
               <span class="dg-field-label">Begründung</span>
               <input type="text" name="reason" required maxlength="500" minlength="5" placeholder="z. B. vergessen auszustempeln, Nachweis …">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span class="dg-field-label">Nachweis (Bilder / PDF, max. 5 × 10 MB)</span>
+              <input type="file" name="evidence[]" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" multiple>
+              <span class="dg-field-hint">JPG/PNG/WebP oder PDF — z. B. WhatsApp-Screenshot oder gespeicherte E-Mail.</span>
             </label>
           </div>
           <p class="dg-toolbar" style="margin-top:0.75rem">
@@ -146,11 +154,32 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
         <h2 class="dg-subsection-title">Letzte Korrekturen</h2>
         <ul class="dg-list">
           <?php foreach ($corrections as $c) : ?>
+            <?php
+              $atts = is_array($c['attachments'] ?? null) ? $c['attachments'] : [];
+              $corrId = (int) ($c['id'] ?? 0);
+            ?>
             <li>
               <?= View::escape((string) ($c['work_date'] ?? '')) ?>:
               <?= View::escape(TimeClockService::formatSignedCorrection((int) ($c['delta_worked_minutes'] ?? 0))) ?> min
               — <?= View::escape((string) ($c['reason'] ?? '')) ?>
               <span class="dg-muted">(<?= View::escape((string) ($c['created_at'] ?? '')) ?>)</span>
+              <?php if ($atts !== []) : ?>
+                <ul class="dg-list dg-zeiterfassung-konto__atts">
+                  <?php foreach ($atts as $att) : ?>
+                    <li>
+                      <a href="/app?page=zeiterfassung-konto&amp;contact_id=<?= $contactId ?>&amp;download_attachment=<?= (int) ($att['id'] ?? 0) ?>">
+                        <?= View::escape((string) ($att['original_name'] ?? 'Nachweis')) ?>
+                      </a>
+                      <span class="dg-muted">
+                        (<?= View::escape((string) ($att['mime'] ?? '')) ?>
+                        · <?= (int) round(((int) ($att['size_bytes'] ?? 0)) / 1024) ?> KB)
+                      </span>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              <?php elseif ($corrId > 0) : ?>
+                <span class="dg-muted"> — kein Nachweis hinterlegt</span>
+              <?php endif; ?>
             </li>
           <?php endforeach; ?>
         </ul>

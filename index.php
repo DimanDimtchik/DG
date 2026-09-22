@@ -3669,7 +3669,8 @@ switch ($path) {
                         $kontoContactId,
                         (string) ($_POST['work_date'] ?? ''),
                         (int) ($_POST['delta_minutes'] ?? 0),
-                        (string) ($_POST['reason'] ?? '')
+                        (string) ($_POST['reason'] ?? ''),
+                        isset($_FILES['evidence']) && is_array($_FILES['evidence']) ? $_FILES['evidence'] : null
                     );
                     Flash::set('success', $res['message']);
                 } elseif ($actionKonto === 'reduce') {
@@ -6024,6 +6025,23 @@ $legalProductsConfig = LegalProductSettings::config();
             $title = 'Schicht-Vorlagen';
             $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-konto' && MenuRegistry::canAccess($user, 'zeiterfassung-konto')) {
+            MigrationRunner::runPending();
+            $attDl = (int) ($_GET['download_attachment'] ?? 0);
+            if ($attDl > 0) {
+                try {
+                    TimeCorrectionEvidenceStorage::sendDownload($user, $attDl);
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    $backCid = (int) ($_GET['contact_id'] ?? 0);
+                    header(
+                        'Location: /app?page=zeiterfassung-konto'
+                        . ($backCid > 0 ? '&contact_id=' . $backCid : ''),
+                        true,
+                        302
+                    );
+                    exit;
+                }
+            }
             $timeKontoStaffOptions = TimeMonthReportService::staffOptions();
             $requested = isset($_GET['contact_id']) ? (int) $_GET['contact_id'] : 0;
             $timeKontoContactId = TimeMonthReportService::resolveContactId(
@@ -6049,6 +6067,15 @@ $legalProductsConfig = LegalProductSettings::config();
                 $timeKontoBalanceMinutes = OvertimeLotRepository::sumRemainingMinutes($timeKontoContactId);
                 $timeKontoLots = OvertimeLotRepository::listOpenLots($timeKontoContactId);
                 $timeKontoCorrections = TimeCorrectionRepository::listForContact($timeKontoContactId);
+                $corrIds = [];
+                foreach ($timeKontoCorrections as $corrRow) {
+                    $corrIds[] = (int) ($corrRow['id'] ?? 0);
+                }
+                $attMap = TimeCorrectionEvidenceStorage::mapForCorrections($corrIds);
+                foreach ($timeKontoCorrections as $i => $corrRow) {
+                    $cid = (int) ($corrRow['id'] ?? 0);
+                    $timeKontoCorrections[$i]['attachments'] = $attMap[$cid] ?? [];
+                }
                 $timeKontoReductions = OvertimeLotRepository::listReductions($timeKontoContactId);
             }
             $contentTemplate = 'modules/zeiterfassung-konto';

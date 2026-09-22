@@ -194,6 +194,7 @@ spl_autoload_register(static function (string $class): void {
         'TimeWorkDayService' => '/src/TimeTracking/TimeWorkDayService.php',
         'TimeMonthReportService' => '/src/TimeTracking/TimeMonthReportService.php',
         'TimeCorrectionRepository' => '/src/TimeTracking/TimeCorrectionRepository.php',
+        'TimeCorrectionEvidenceStorage' => '/src/TimeTracking/TimeCorrectionEvidenceStorage.php',
         'TimeCorrectionService' => '/src/TimeTracking/TimeCorrectionService.php',
         'TimeShiftTemplateRepository' => '/src/TimeTracking/TimeShiftTemplateRepository.php',
         'TimeShiftAssignmentRepository' => '/src/TimeTracking/TimeShiftAssignmentRepository.php',
