@@ -44,7 +44,7 @@ final class TimePayrollExportRepository
 
         $stmt = Database::pdo()->prepare(
             'INSERT INTO dg_time_payroll_exports
-                (year_month, format, filename, row_count, created_by)
+                (`year_month`, `format`, filename, row_count, created_by)
              VALUES
                 (:ym, :fmt, :fn, :rc, :by)'
         );
