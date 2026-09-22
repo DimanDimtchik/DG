@@ -3630,6 +3630,7 @@ switch ($path) {
                     $raw = [];
                 }
                 $changed = TimePayrollExportService::saveOtPayoutDrafts($user, $ymPost, $raw);
+                $_SESSION['dg_payroll_month'] = $ymPost;
                 Flash::set(
                     'success',
                     $changed > 0
@@ -3639,7 +3640,11 @@ switch ($path) {
             } catch (Throwable $e) {
                 Flash::set('error', $e->getMessage());
             }
-            header('Location: /app?page=zeiterfassung-lohnexport&month=' . rawurlencode($ymPost), true, 302);
+            header(
+                'Location: /app?page=zeiterfassung-lohnexport&month=' . rawurlencode($ymPost) . '&saved=1',
+                true,
+                302
+            );
             exit;
         }
 
@@ -5889,14 +5894,54 @@ $legalProductsConfig = LegalProductSettings::config();
             $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
-            $timePayrollYearMonth = TimeMonthReportService::normalizeYearMonth(
-                isset($_GET['month']) ? (string) $_GET['month'] : null
-            );
-            $timePayrollDataset = TimePayrollExportService::monthDataset($timePayrollYearMonth);
-            $timePayrollExports = TimePayrollExportRepository::listRecent(40);
-            $timePayrollDatevSettings = DatevExportSettings::config();
-            $timePayrollDatevConfigured = DatevExportSettings::isConfigured();
+            $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
+            if ($rawMonth === '' && isset($_SESSION['dg_payroll_month'])) {
+                $rawMonth = (string) $_SESSION['dg_payroll_month'];
+            }
+            $timePayrollYearMonth = TimeMonthReportService::normalizeYearMonth($rawMonth !== '' ? $rawMonth : null);
+            $_SESSION['dg_payroll_month'] = $timePayrollYearMonth;
+
+            $isFetchDl = trim((string) ($_GET['fetch_download'] ?? '')) === '1';
+            $isExportDl = in_array(trim((string) ($_GET['download'] ?? '')), ['csv', 'datev', 'lexoffice'], true);
+            $getMonthRaw = isset($_GET['month']) ? trim((string) $_GET['month']) : null;
+            if (!$isFetchDl && !$isExportDl && ($getMonthRaw === null || $getMonthRaw === '')) {
+                $qs = 'page=zeiterfassung-lohnexport&month=' . rawurlencode($timePayrollYearMonth);
+                if (trim((string) ($_GET['autodl'] ?? '')) === '1') {
+                    $qs .= '&autodl=1';
+                }
+                if (trim((string) ($_GET['saved'] ?? '')) === '1') {
+                    $qs .= '&saved=1';
+                }
+                header('Location: /app?' . $qs, true, 302);
+                exit;
+            }
+
+            // Fertige Export-Datei aus Session ausliefern (nach Redirect, damit Protokoll sichtbar ist)
+            if ($isFetchDl) {
+                $pending = $_SESSION['dg_payroll_pending_download'] ?? null;
+                unset($_SESSION['dg_payroll_pending_download']);
+                if (is_array($pending)
+                    && isset($pending['csv'], $pending['filename'])
+                    && is_string($pending['csv'])
+                    && is_string($pending['filename'])
+                    && $pending['filename'] !== ''
+                ) {
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $pending['filename'] . '"');
+                    header('Cache-Control: no-store');
+                    echo $pending['csv'];
+                    exit;
+                }
+                header(
+                    'Location: /app?page=zeiterfassung-lohnexport&month=' . rawurlencode($timePayrollYearMonth),
+                    true,
+                    302
+                );
+                exit;
+            }
+
             $dl = trim((string) ($_GET['download'] ?? ''));
+            $timePayrollAutoDownload = false;
             if ($dl === 'csv' || $dl === 'datev' || $dl === 'lexoffice') {
                 try {
                     $exported = match ($dl) {
@@ -5904,9 +5949,25 @@ $legalProductsConfig = LegalProductSettings::config();
                         'lexoffice' => TimePayrollExportService::exportLexoffice($user, $timePayrollYearMonth),
                         default => TimePayrollExportService::exportCsv($user, $timePayrollYearMonth),
                     };
-                    header('Content-Type: text/csv; charset=utf-8');
-                    header('Content-Disposition: attachment; filename="' . $exported['filename'] . '"');
-                    echo $exported['csv'];
+                    $_SESSION['dg_payroll_pending_download'] = [
+                        'filename' => (string) $exported['filename'],
+                        'csv' => (string) $exported['csv'],
+                    ];
+                    Flash::set(
+                        'success',
+                        sprintf(
+                            'Export „%s“ erstellt (%d Zeilen). Überstunden-Auszahlung abgebucht (soweit vorgesehen).',
+                            (string) $exported['filename'],
+                            (int) ($exported['row_count'] ?? 0)
+                        )
+                    );
+                    header(
+                        'Location: /app?page=zeiterfassung-lohnexport&month='
+                        . rawurlencode($timePayrollYearMonth)
+                        . '&autodl=1',
+                        true,
+                        302
+                    );
                     exit;
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -5918,6 +5979,14 @@ $legalProductsConfig = LegalProductSettings::config();
                     exit;
                 }
             }
+
+            header('Cache-Control: no-store, no-cache, must-revalidate');
+            $timePayrollDataset = TimePayrollExportService::monthDataset($timePayrollYearMonth);
+            $timePayrollExports = TimePayrollExportRepository::listRecent(40);
+            $timePayrollDatevSettings = DatevExportSettings::config();
+            $timePayrollDatevConfigured = DatevExportSettings::isConfigured();
+            $timePayrollAutoDownload = trim((string) ($_GET['autodl'] ?? '')) === '1'
+                && isset($_SESSION['dg_payroll_pending_download']);
             $contentTemplate = 'modules/zeiterfassung-lohnexport';
             $title = 'Lohn-Export';
             $currentPage = 'zeiterfassung';
@@ -6551,6 +6620,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $timePayrollExports = $timePayrollExports ?? [];
         $timePayrollDatevSettings = $timePayrollDatevSettings ?? DatevExportSettings::defaults();
         $timePayrollDatevConfigured = $timePayrollDatevConfigured ?? false;
+        $timePayrollAutoDownload = $timePayrollAutoDownload ?? false;
         $timeHoursImportErrors = $timeHoursImportErrors ?? [];
         $contactImportErrors = $contactImportErrors ?? [];
         $recipeList = $recipeList ?? [];
@@ -6960,6 +7030,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'timePayrollExports',
             'timePayrollDatevSettings',
             'timePayrollDatevConfigured',
+            'timePayrollAutoDownload',
             'timeHoursImportErrors',
             'contactImportErrors',
             'recipeList',

@@ -51,11 +51,6 @@ final class SettingsRegistry
                         'lead' => 'Allgemeine CRM-Optionen und Standardverhalten.',
                         'template' => 'placeholder',
                     ],
-                    'abteilungen' => [
-                        'label' => 'Abteilungen',
-                        'lead' => 'Abteilungen und Zuordnung von Mitarbeitern.',
-                        'template' => 'departments',
-                    ],
                     'ldap' => [
                         'label' => 'Anmeldung / LDAP',
                         'lead' => 'Externes Verzeichnis (LDAP) und WordPress dg-user — Vorbereitung bis Server-Umzug.',
@@ -91,9 +86,19 @@ final class SettingsRegistry
                         'lead' => 'Online-Terminbuchung für Kunden aktivieren und öffentliche Buchungsseite verwalten.',
                         'template' => 'calendar-embed',
                     ],
+                ],
+            ],
+            'hr' => [
+                'label' => 'HR',
+                'tabs' => [
+                    'abteilungen' => [
+                        'label' => 'Abteilungen',
+                        'lead' => 'Abteilungen und Zuordnung von Mitarbeitern.',
+                        'template' => 'departments',
+                    ],
                     'zeiterfassung' => [
                         'label' => 'Zeiterfassung',
-                        'lead' => 'Pausenregeln, ArbZG und Rückstellungs-Parameter (Konten mit Steuerberater).',
+                        'lead' => 'Pausenregeln, ArbZG, Zeitkontoregelung und Rückstellungs-Parameter (Konten mit Steuerberater).',
                         'template' => 'time-tracking',
                     ],
                 ],
@@ -108,7 +113,7 @@ final class SettingsRegistry
                     ],
                     'benachrichtigungen' => [
                         'label' => 'Benachrichtigungen',
-                        'lead' => 'Kopf- und Fußzeile, E-Mail-Vorlagen für Terminkalender und freie Abteilungsvorlagen. Zuordnung pro Abteilung unter Einstellungen → Abteilungen.',
+                        'lead' => 'Kopf- und Fußzeile, E-Mail-Vorlagen für Terminkalender und freie Abteilungsvorlagen. Zuordnung pro Abteilung unter Einstellungen → HR → Abteilungen.',
                         'template' => 'notifications',
                     ],
                 ],

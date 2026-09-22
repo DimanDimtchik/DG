@@ -19,7 +19,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
   <p class="dg-lead">
     E-Mail-Vorlagen für <strong>Terminkalender</strong> und alle <strong>Abteilungen</strong>.
     Leere Entwürfe werden nicht angezeigt. Welche Vorlagen eine Abteilung nutzt, stellen Sie unter
-    <a href="<?= View::escape(SettingsRegistry::tabUrl('abteilungen')) ?>">Einstellungen → Abteilungen</a> ein.
+    <a href="<?= View::escape(SettingsRegistry::tabUrl('abteilungen')) ?>">Einstellungen → HR → Abteilungen</a> ein.
   </p>
 
   <?php if (!$dbConnected) : ?>

@@ -7,6 +7,7 @@
  * @var list<array<string, mixed>> $timePayrollExports
  * @var array{consultant_number: string, client_number: string} $timePayrollDatevSettings
  * @var bool $timePayrollDatevConfigured
+ * @var bool $timePayrollAutoDownload
  * @var array{type: string, message: string}|null $flash
  */
 $ym = (string) ($timePayrollYearMonth ?? date('Y-m'));
@@ -16,6 +17,7 @@ $totals = is_array($dataset['totals'] ?? null) ? $dataset['totals'] : [];
 $exports = is_array($timePayrollExports ?? null) ? $timePayrollExports : [];
 $datevCfg = is_array($timePayrollDatevSettings ?? null) ? $timePayrollDatevSettings : [];
 $datevOk = !empty($timePayrollDatevConfigured);
+$autoDl = !empty($timePayrollAutoDownload);
 $prev = (new DateTimeImmutable($ym . '-01'))->modify('-1 month')->format('Y-m');
 $next = (new DateTimeImmutable($ym . '-01'))->modify('+1 month')->format('Y-m');
 $reserveMins = (int) ($dataset['ot_payout_reserve_minutes'] ?? TimeTrackingSettings::otPayoutReserveMinutes());
@@ -32,6 +34,13 @@ foreach ($rows as $r) {
 ?>
 <div class="dg-wrap dg-zeiterfassung-lohnexport">
   <?php View::render('partials/flash', compact('flash')); ?>
+  <?php if ($autoDl) : ?>
+    <iframe
+      title="Lohn-Export Download"
+      style="position:absolute;width:0;height:0;border:0;overflow:hidden"
+      src="/app?page=zeiterfassung-lohnexport&amp;month=<?= View::escape($ym) ?>&amp;fetch_download=1"
+    ></iframe>
+  <?php endif; ?>
 
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
@@ -80,7 +89,7 @@ foreach ($rows as $r) {
     <p class="dg-field-hint">
       <strong>Zeitkontoregelung:</strong> nicht auszahlbar =
       <?= View::escape($reserveHoursLabel) ?> h
-      (<a href="<?= View::escape(SettingsRegistry::tabUrl('zeiterfassung')) ?>">Einstellungen → Zeiterfassung</a>).
+      (<a href="<?= View::escape(SettingsRegistry::tabUrl('zeiterfassung')) ?>">Einstellungen → HR → Zeiterfassung</a>).
       Vorschlag = max(0, Konto − Reserve); ohne gespeicherten Draft wird der Vorschlag vorausgefüllt.
       Speichern, dann Export — Abbuchung FIFO erst beim Download.
       Spalte „ÜStd“ = Monatsdifferenz Ist−Soll; „Konto“ = aktueller Überstunden-Saldo.

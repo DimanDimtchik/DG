@@ -1009,7 +1009,7 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 |--------------|----------|
 | Setting | `ot_payout_reserve_minutes` in `TimeTrackingSettings` (UI: Stunden) — Default **0** |
 | Formel | Vorschlag = max(0, Konto − Reserve); ohne Draft vorausgefüllt |
-| UI | Einstellungen → Zeiterfassung; Lohn-Export zeigt Reserve + Prefill |
+| UI | Einstellungen → HR → Zeiterfassung; Lohn-Export zeigt Reserve + Prefill |
 | Beispiel | Reserve 80 h, Konto 110 h → Vorschlag 30 h |
 
 **Nicht:** Reserve pro MA, Auto-Save ohne Speichern-Klick.
