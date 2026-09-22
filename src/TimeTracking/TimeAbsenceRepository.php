@@ -174,11 +174,11 @@ final class TimeAbsenceRepository
             'SELECT * FROM dg_time_absences
              WHERE contact_id = :cid
                AND status = \'approved\'
-               AND date_from <= :d AND date_to >= :d
+               AND date_from <= :d_from AND date_to >= :d_to
              ORDER BY id ASC
              LIMIT 1'
         );
-        $stmt->execute(['cid' => $contactId, 'd' => $dateYmd]);
+        $stmt->execute(['cid' => $contactId, 'd_from' => $dateYmd, 'd_to' => $dateYmd]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return is_array($row) ? self::mapRow($row) : null;

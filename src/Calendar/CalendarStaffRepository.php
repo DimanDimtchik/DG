@@ -961,9 +961,9 @@ final class CalendarStaffRepository
 
         $stmt = Database::pdo()->prepare(
             'SELECT COUNT(*) FROM dg_calendar_employee_absences
-             WHERE employee_id = :employee_id AND start_date <= :date AND end_date >= :date'
+             WHERE employee_id = :employee_id AND start_date <= :d_from AND end_date >= :d_to'
         );
-        $stmt->execute(['employee_id' => $employeeId, 'date' => $dateYmd]);
+        $stmt->execute(['employee_id' => $employeeId, 'd_from' => $dateYmd, 'd_to' => $dateYmd]);
 
         return (int) $stmt->fetchColumn() > 0;
     }
