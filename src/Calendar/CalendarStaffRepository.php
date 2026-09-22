@@ -206,13 +206,20 @@ final class CalendarStaffRepository
     }
 
     /**
-     * Liefert all absences.
-     * @return array<string, mixed>
+     * Liefert Abwesenheiten für die Kalender-UI — Spiegel genehmigter Z4-Einträge
+     * (Kontakt der Kalender-Mitarbeiter). Fallback: alte dg_calendar_employee_absences.
+     *
+     * @return list<array<string, mixed>>
      */
     public static function getAllAbsences(): array
     {
         if (!self::useDatabase()) {
             return [];
+        }
+
+        $mirrored = self::mirroredAbsencesFromTimeTracking();
+        if ($mirrored !== null) {
+            return $mirrored;
         }
 
         $stmt = Database::pdo()->query(
@@ -223,6 +230,138 @@ final class CalendarStaffRepository
         );
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * @return list<array<string, mixed>>|null null = Z4 nicht nutzbar, Legacy verwenden
+     */
+    private static function mirroredAbsencesFromTimeTracking(): ?array
+    {
+        if (!class_exists('TimeAbsenceRepository') || !TimeAbsenceRepository::tableReady()) {
+            return null;
+        }
+
+        $byContact = [];
+        foreach (self::getEmployees(false) as $employee) {
+            $cid = (int) ($employee['contact_id'] ?? 0);
+            $eid = (int) ($employee['id'] ?? 0);
+            if ($cid < 1 || $eid < 1) {
+                continue;
+            }
+            $byContact[$cid] = [
+                'employee_id' => $eid,
+                'employee_name' => (string) ($employee['name'] ?? ''),
+            ];
+        }
+        if ($byContact === []) {
+            return [];
+        }
+
+        $from = (new DateTimeImmutable('first day of january last year'))->format('Y-m-d');
+        $to = (new DateTimeImmutable('+2 years'))->format('Y-m-d');
+        $out = [];
+        foreach (TimeAbsenceRepository::listOverlappingRange($from, $to, 'approved', 1000) as $row) {
+            $cid = (int) ($row['contact_id'] ?? 0);
+            if (!isset($byContact[$cid])) {
+                continue;
+            }
+            $type = (string) ($row['type'] ?? 'other');
+            if (!in_array($type, ['vacation', 'sick', 'other'], true)) {
+                $type = 'other';
+            }
+            $out[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'employee_id' => $byContact[$cid]['employee_id'],
+                'employee_name' => $byContact[$cid]['employee_name'],
+                'absence_type' => $type,
+                'start_date' => (string) ($row['date_from'] ?? ''),
+                'end_date' => (string) ($row['date_to'] ?? ''),
+                'note' => trim((string) ($row['reason'] ?? '')),
+                'source' => 'z4',
+            ];
+        }
+
+        usort(
+            $out,
+            static function (array $a, array $b): int {
+                return strcmp((string) ($b['start_date'] ?? ''), (string) ($a['start_date'] ?? ''))
+                    ?: strcmp((string) ($a['employee_name'] ?? ''), (string) ($b['employee_name'] ?? ''));
+            }
+        );
+
+        return $out;
+    }
+
+    /**
+     * Speichert absence — ab Z4-Spiegel nicht mehr; bitte Zeiterfassung.
+     *
+     * @param array $input
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    public static function saveAbsence(array $input): array
+    {
+        if (class_exists('TimeAbsenceRepository') && TimeAbsenceRepository::tableReady()) {
+            throw new RuntimeException(
+                'Abwesenheiten bitte unter Zeiterfassung (Urlaub / Krankheit) erfassen — der Kalender spiegelt nur genehmigte Einträge.'
+            );
+        }
+
+        $employeeId = (int) ($input['employee_id'] ?? 0);
+        $type = (string) ($input['absence_type'] ?? 'vacation');
+        $startDate = trim((string) ($input['start_date'] ?? ''));
+        $endDate = trim((string) ($input['end_date'] ?? ''));
+        $note = trim((string) ($input['note'] ?? ''));
+
+        if ($employeeId < 1 || self::getEmployee($employeeId) === null) {
+            throw new InvalidArgumentException('Mitarbeiter nicht gefunden.');
+        }
+        if (!in_array($type, ['vacation', 'sick', 'other'], true)) {
+            $type = 'vacation';
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+            throw new InvalidArgumentException('Gültiges Von- und Bis-Datum erforderlich.');
+        }
+        if ($endDate < $startDate) {
+            throw new InvalidArgumentException('Das Enddatum darf nicht vor dem Startdatum liegen.');
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_calendar_employee_absences (employee_id, absence_type, start_date, end_date, note)
+             VALUES (:employee_id, :absence_type, :start_date, :end_date, :note)'
+        );
+        $stmt->execute([
+            'employee_id' => $employeeId,
+            'absence_type' => $type,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'note' => $note,
+        ]);
+
+        return ['message' => 'Abwesenheit gespeichert.'];
+    }
+
+    /**
+     * Führt aus: delete absence.
+     * @param int $id
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    public static function deleteAbsence(int $id): array
+    {
+        if (class_exists('TimeAbsenceRepository') && TimeAbsenceRepository::tableReady()) {
+            throw new RuntimeException(
+                'Abwesenheiten bitte unter Zeiterfassung stornieren/ablehnen — der Kalender spiegelt nur.'
+            );
+        }
+        if ($id < 1) {
+            throw new InvalidArgumentException('ID erforderlich.');
+        }
+        Database::pdo()->prepare('DELETE FROM dg_calendar_employee_absences WHERE id = :id')->execute(['id' => $id]);
+
+        return ['message' => 'Abwesenheit gelöscht.'];
     }
 
     /**
@@ -601,64 +740,6 @@ final class CalendarStaffRepository
     }
 
     /**
-     * Speichert absence.
-     * @param array $input
-     * @return array<string, mixed>
-     * @throws InvalidArgumentException
-     */
-    public static function saveAbsence(array $input): array
-    {
-        $employeeId = (int) ($input['employee_id'] ?? 0);
-        $type = (string) ($input['absence_type'] ?? 'vacation');
-        $startDate = trim((string) ($input['start_date'] ?? ''));
-        $endDate = trim((string) ($input['end_date'] ?? ''));
-        $note = trim((string) ($input['note'] ?? ''));
-
-        if ($employeeId < 1 || self::getEmployee($employeeId) === null) {
-            throw new InvalidArgumentException('Mitarbeiter nicht gefunden.');
-        }
-        if (!in_array($type, ['vacation', 'sick', 'other'], true)) {
-            $type = 'vacation';
-        }
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
-            throw new InvalidArgumentException('Gültiges Von- und Bis-Datum erforderlich.');
-        }
-        if ($endDate < $startDate) {
-            throw new InvalidArgumentException('Das Enddatum darf nicht vor dem Startdatum liegen.');
-        }
-
-        $stmt = Database::pdo()->prepare(
-            'INSERT INTO dg_calendar_employee_absences (employee_id, absence_type, start_date, end_date, note)
-             VALUES (:employee_id, :absence_type, :start_date, :end_date, :note)'
-        );
-        $stmt->execute([
-            'employee_id' => $employeeId,
-            'absence_type' => $type,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'note' => $note,
-        ]);
-
-        return ['message' => 'Abwesenheit gespeichert.'];
-    }
-
-    /**
-     * Führt aus: delete absence.
-     * @param int $id
-     * @return array<string, mixed>
-     * @throws InvalidArgumentException
-     */
-    public static function deleteAbsence(int $id): array
-    {
-        if ($id < 1) {
-            throw new InvalidArgumentException('ID erforderlich.');
-        }
-        Database::pdo()->prepare('DELETE FROM dg_calendar_employee_absences WHERE id = :id')->execute(['id' => $id]);
-
-        return ['message' => 'Abwesenheit gelöscht.'];
-    }
-
-    /**
      * Speichert Arbeitszeiten eines Mitarbeiters.
      * @param int $employeeId Mitarbeiter-/Benutzer-ID
      * @param array $windows Zeitfenster
@@ -867,6 +948,15 @@ final class CalendarStaffRepository
     {
         if ($employeeId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd) || !self::useDatabase()) {
             return false;
+        }
+
+        $employee = self::getEmployee($employeeId);
+        $contactId = is_array($employee) ? (int) ($employee['contact_id'] ?? 0) : 0;
+        if ($contactId > 0
+            && class_exists('TimeAbsenceRepository')
+            && TimeAbsenceRepository::tableReady()
+        ) {
+            return TimeAbsenceRepository::approvedOnDate($contactId, $dateYmd) !== null;
         }
 
         $stmt = Database::pdo()->prepare(

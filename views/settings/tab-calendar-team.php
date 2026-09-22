@@ -356,9 +356,23 @@ $csrf = Csrf::token();
       </form>
 
       <?php if ($calendarEmployees !== []) : ?>
+        <?php
+          $calendarAbsencesFromZ4 = class_exists('TimeAbsenceRepository') && TimeAbsenceRepository::tableReady();
+        ?>
         <hr class="dg-cal-divider">
         <h3 class="dg-subsection-title">Abwesenheiten</h3>
-        <p class="dg-lead">Urlaub, Krankheit und andere Abwesenheiten blockieren ganze Kalendertage für den gewählten Mitarbeiter.</p>
+        <?php if ($calendarAbsencesFromZ4) : ?>
+          <p class="dg-lead">
+            Spiegel genehmigter Einträge aus der <strong>Zeiterfassung</strong> (Urlaub / Krankheit).
+            Buchbare Termine werden an diesen Tagen blockiert.
+            Pflegen unter
+            <a href="/app?page=zeiterfassung-urlaub">Urlaub</a>
+            bzw.
+            <a href="/app?page=zeiterfassung-abwesenheit">Abwesenheit</a>.
+          </p>
+        <?php else : ?>
+          <p class="dg-lead">Urlaub, Krankheit und andere Abwesenheiten blockieren ganze Kalendertage für den gewählten Mitarbeiter.</p>
+        <?php endif; ?>
 
         <?php if ($calendarAbsences !== []) : ?>
           <div class="dg-table-wrap">
@@ -370,7 +384,9 @@ $csrf = Csrf::token();
                   <th>Von</th>
                   <th>Bis</th>
                   <th>Notiz</th>
-                  <th></th>
+                  <?php if (!$calendarAbsencesFromZ4) : ?>
+                    <th></th>
+                  <?php endif; ?>
                 </tr>
               </thead>
               <tbody>
@@ -381,18 +397,21 @@ $csrf = Csrf::token();
                     <td><?= View::escape((string) $absence['start_date']) ?></td>
                     <td><?= View::escape((string) $absence['end_date']) ?></td>
                     <td><?= View::escape((string) ($absence['note'] ?? '')) ?: '—' ?></td>
-                    <td>
-                      <button type="button" class="dg-button dg-button--small dg-button--danger dg-cal-delete-absence" data-id="<?= (int) $absence['id'] ?>">Löschen</button>
-                    </td>
+                    <?php if (!$calendarAbsencesFromZ4) : ?>
+                      <td>
+                        <button type="button" class="dg-button dg-button--small dg-button--danger dg-cal-delete-absence" data-id="<?= (int) $absence['id'] ?>">Löschen</button>
+                      </td>
+                    <?php endif; ?>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
             </table>
           </div>
         <?php else : ?>
-          <p class="dg-lead">Keine Abwesenheiten eingetragen.</p>
+          <p class="dg-lead"><?= $calendarAbsencesFromZ4 ? 'Keine genehmigten Abwesenheiten im Spiegelzeitraum.' : 'Keine Abwesenheiten eingetragen.' ?></p>
         <?php endif; ?>
 
+        <?php if (!$calendarAbsencesFromZ4) : ?>
         <h4 class="dg-subsection-title">Abwesenheit hinzufügen</h4>
         <form id="dg-calendar-absence-form" class="dg-form">
           <div class="dg-form-grid">
@@ -430,6 +449,7 @@ $csrf = Csrf::token();
             <button type="submit" class="dg-button dg-button--primary">Abwesenheit hinzufügen</button>
           </div>
         </form>
+        <?php endif; ?>
       <?php endif; ?>
     <?php endif; ?>
   </section>

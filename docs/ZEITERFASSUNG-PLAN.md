@@ -51,7 +51,7 @@ Mitarbeiter können sich anmelden und unter **Zeiterfassung** ein-/ausstempeln. 
 | `EmployeeData::documentTypes()` | Arbeitsvertrag, Ausweise — erweiterbar um Lohnabrechnungen |
 | `ContactFileStorage` | Dokumentenablage pro Mitarbeiter |
 | `CalendarWorkingHoursRepository` | Öffnungszeiten / Buchungszeiten — Basis für **Soll-Arbeitszeit** (pro Standort/Abteilung) |
-| `CalendarStaffRepository` | Kalender-Ressource, **Pflicht** `contact_id` → Mitarbeiter-Kontakt (095) |
+| `CalendarStaffRepository` | Kalender-Ressource, **Pflicht** `contact_id` → Mitarbeiter-Kontakt (095); Abwesenheiten = **Spiegel Z4** |
 | `DepartmentRepository` | Abteilungen, Schichtzuordnung später |
 | Login / Rollen (`RoleResolver`) | Mitarbeiter sieht nur eigene Zeiten; HR/Admin alles |
 
