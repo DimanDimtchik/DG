@@ -239,6 +239,21 @@ final class ContactRepository
         return $row ? self::map($row) : null;
     }
 
+    public static function findByLogin(string $login): ?Contact
+    {
+        $login = trim($login);
+        if ($login === '' || !Database::isConfigured()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_contacts WHERE login = :login ORDER BY id ASC LIMIT 1'
+        );
+        $stmt->execute(['login' => $login]);
+        $row = $stmt->fetch();
+
+        return $row ? self::map($row) : null;
+    }
+
     public static function findBySupplierNumber(string $number): ?Contact
     {
         $number = trim($number);

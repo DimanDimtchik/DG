@@ -62,6 +62,7 @@
 - [ ] Lexoffice
 - [ ] payroll_slip Upload in Kontaktakte
 - [ ] Rechte ohne Team
+- [ ] Kontakte: Excel/CSV-Import (ShiftBase/Mitarbeiter), optional Kalender-Link
 
 ## 6 · Offen von früher
 

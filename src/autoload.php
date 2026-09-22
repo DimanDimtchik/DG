@@ -314,6 +314,7 @@ spl_autoload_register(static function (string $class): void {
         'FirmSsoService' => '/src/MultiFirma/FirmSsoService.php',
         'ContactExportService' => '/src/MultiFirma/ContactExportService.php',
         'ContactImportService' => '/src/MultiFirma/ContactImportService.php',
+        'ContactFileImportService' => '/src/Contact/ContactFileImportService.php',
         'KdvDeployService' => '/src/Kdv/KdvDeployService.php',
         'KdvProvisionGateService' => '/src/Kdv/KdvProvisionGateService.php',
         'KdvProvisionApi' => '/src/Kdv/KdvProvisionApi.php',

@@ -40,6 +40,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [~] Manuelle Testliste **ganz-soft.de** — Block A erledigt; **neu:** [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) + Canvas `testliste-sep-2026` (Z2–Z6 + Beleg/Bank/Kichel)
 - [x] **Kalender-Mitarbeiter:** `contact_id` Pflicht (Migration **095**) — Orphans deaktiviert / Auto-Link nach Name
 - [x] **Kalender-Abwesenheiten:** Spiegel genehmigter Z4-Einträge (Buchungsblockade + Read-only-Liste)
+- [x] **Kontakte-Massenimport** im laufenden CRM (Install-Engine, Excel/CSV, optional Kalender-Link)
 - [x] Multi-Firma Phase 0 — KDV Org↔Firma Registry (`082`, Formular/Liste) — Switcher = Phase 1
 - [x] **ELSTER Phase 2:** Hersteller-ID **34573** in CRM-Einstellungen (ganz-soft.de) hinterlegt; danach ERiC Linux laden, Test-Zertifikat (nach Server-Umzug)
 - [x] **Lager Phase 3+4:** Einkaufsliste/Ignore (081), In-Auslieferung, Beleg-Live-Hinweis
