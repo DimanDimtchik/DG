@@ -44,6 +44,8 @@ final class TimePayrollLexofficeExporter
             'Urlaub_Tage',
             'Krank_Tage',
             'Korrektur_Stunden',
+            'Konto_Saldo_Stunden',
+            'Ueberstunden_Auszahlung_Stunden',
         ];
 
         $lines = [self::csvLine($meta), self::csvLine($columns)];
@@ -63,6 +65,8 @@ final class TimePayrollLexofficeExporter
                 self::numDays((float) ($row['urlaub_tage'] ?? 0)),
                 self::numDays((float) ($row['krank_tage'] ?? 0)),
                 self::minutesToHours((int) ($row['korrektur_minutes'] ?? 0)),
+                self::minutesToHours((int) ($row['konto_saldo_minutes'] ?? 0)),
+                self::minutesToHours((int) ($row['auszahlung_minutes'] ?? 0)),
             ]);
             $count++;
         }
@@ -70,7 +74,7 @@ final class TimePayrollLexofficeExporter
         $lines[] = self::csvLine([
             '#',
             'Hinweis',
-            'Lexoffice Lohn Zeitenuebergabe Z6d — Import laut Kanzlei; PDF-Abrechnung separat als payroll_slip in Kontaktakte ablegen.',
+            'Lexoffice Lohn Zeitenuebergabe Z6d/Z6e — Auszahlung vom Ueberstundenkonto; PDF-Abrechnung separat als payroll_slip.',
         ]);
 
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'crm');

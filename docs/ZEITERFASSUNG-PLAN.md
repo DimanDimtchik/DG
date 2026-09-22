@@ -1,7 +1,7 @@
 # Zeiterfassung & Personal — Umsetzungsplan
 
 > **Stand:** 2026-09-21  
-> Status: **Phase 1–6 ✅** · Spec **Z3a–Z6a ✅** · **Z6b–Z6d Code ✅**  
+> Status: **Phase 1–6 ✅** · Spec **Z3a–Z6a ✅** · **Z6b–Z6e Code ✅**  
 > Verwandt: `EmployeeData`, `ContactFileStorage`, `CalendarWorkingHoursRepository`, Buchhaltung (Lohn-Export später)
 
 ---
@@ -310,7 +310,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
 | **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
 | **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5d` ✅ |
-| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6d` ✅ |
+| **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6e` ✅ |
 
 ### Z2a — Spec/Checkliste ✅ 2026-09-21
 
@@ -990,6 +990,18 @@ Seite: z. B. `/app?page=zeiterfassung-lohnexport` — Monat wählen, Vorschau,
 | UI | Download „Lexoffice Lohn-Zeiten“ + Hinweis PDF-Ablage |
 
 **Nicht:** PDF generieren, Lexoffice-API, Netto-Lohn.
+
+### Z6e — Überstunden-Auszahlung vor Lohn-Export ✅ 2026-09-22
+
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Migration | `098_time_payroll_ot_payouts.sql` — geplante Minuten je Monat/MA |
+| Repository | `TimePayrollOtPayoutRepository` — Draft speichern, FIFO-Abbuchung bei Export |
+| Dataset | `konto_saldo_minutes` + `auszahlung_minutes` in Vorschau und CSV/DATEV/Lexoffice |
+| UI | Lohn-Export: Spalte Auszahlung (Min.), Speichern vor Download; nach Abbuchung gesperrt |
+| Wirkung | Beim Export: `reduceMinutesFifo` + Audit; Teilbeträge möglich; max. = Konto-Saldo |
+
+**Nicht:** Netto-Lohn, automatische Voll-Auszahlung ohne Eingabe.
 
 ### Arbeitsstunden-Import (Excel/CSV) ✅ 2026-09-22
 

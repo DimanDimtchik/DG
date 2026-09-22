@@ -260,6 +260,9 @@ final class MigrationRunner
                 && self::tableExists($pdo, 'dg_time_absences'),
             '094_time_payroll_exports.sql' => self::tableExists($pdo, 'dg_time_payroll_exports'),
             '095_calendar_employee_contact_required.sql' => self::noActiveCalendarEmployeesWithoutContact($pdo),
+            '096_time_kiosk_pin.sql' => self::tableExists($pdo, 'dg_time_kiosk_pins'),
+            '097_time_kiosk_website_page.sql' => true,
+            '098_time_payroll_ot_payouts.sql' => self::tableExists($pdo, 'dg_time_payroll_ot_payouts'),
             default => false,
         };
     }
@@ -382,6 +385,9 @@ final class MigrationRunner
             '093_time_absences.sql' => true,
             '094_time_payroll_exports.sql' => true,
             '095_calendar_employee_contact_required.sql' => true,
+            '096_time_kiosk_pin.sql' => true,
+            '097_time_kiosk_website_page.sql' => true,
+            '098_time_payroll_ot_payouts.sql' => true,
         ];
     }
 

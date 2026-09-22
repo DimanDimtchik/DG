@@ -30,6 +30,9 @@ final class TimePayrollExportService
         $totVac = 0.0;
         $totSick = 0.0;
         $totCorr = 0;
+        $totPayout = 0;
+        $totKonto = 0;
+        $payoutMap = TimePayrollOtPayoutRepository::mapForMonth($yearMonth);
 
         foreach (TimeMonthReportService::staffOptions() as $opt) {
             $cid = (int) ($opt['id'] ?? 0);
@@ -51,6 +54,13 @@ final class TimePayrollExportService
             $vac = self::absenceDaysInMonth($cid, $yearMonth, 'vacation');
             $sick = self::absenceDaysInMonth($cid, $yearMonth, 'sick');
             $corr = self::correctionMinutesInMonth($cid, $yearMonth);
+            $konto = OvertimeLotRepository::sumRemainingMinutes($cid);
+            $payoutRow = $payoutMap[$cid] ?? null;
+            $payoutMins = is_array($payoutRow) ? (int) ($payoutRow['minutes'] ?? 0) : 0;
+            $payoutApplied = is_array($payoutRow) && ($payoutRow['applied_at'] ?? null) !== null;
+            $payoutAppliedMins = is_array($payoutRow) && $payoutRow['applied_minutes'] !== null
+                ? (int) $payoutRow['applied_minutes']
+                : null;
 
             $totSched += $sched;
             $totWork += $work;
@@ -59,6 +69,8 @@ final class TimePayrollExportService
             $totVac += $vac;
             $totSick += $sick;
             $totCorr += $corr;
+            $totPayout += $payoutMins;
+            $totKonto += $konto;
 
             $rows[] = [
                 'contact_id' => $cid,
@@ -71,6 +83,10 @@ final class TimePayrollExportService
                 'urlaub_tage' => $vac,
                 'krank_tage' => $sick,
                 'korrektur_minutes' => $corr,
+                'konto_saldo_minutes' => $konto,
+                'auszahlung_minutes' => $payoutMins,
+                'auszahlung_applied' => $payoutApplied,
+                'auszahlung_applied_minutes' => $payoutAppliedMins,
             ];
         }
 
@@ -85,8 +101,40 @@ final class TimePayrollExportService
                 'urlaub_tage' => round($totVac, 1),
                 'krank_tage' => round($totSick, 1),
                 'korrektur_minutes' => $totCorr,
+                'konto_saldo_minutes' => $totKonto,
+                'auszahlung_minutes' => $totPayout,
             ],
         ];
+    }
+
+    /**
+     * Speichert geplante Überstunden-Auszahlungen (Minuten) vor dem Export.
+     *
+     * @param array<int|string, mixed> $rawByContact contact_id => Minuten (Formular)
+     * @return int Anzahl geänderter Zeilen
+     */
+    public static function saveOtPayoutDrafts(User $user, string $yearMonth, array $rawByContact): int
+    {
+        if (!self::canExport($user)) {
+            throw new RuntimeException('Keine Berechtigung für Überstunden-Auszahlung (nur HR/Admin/full).');
+        }
+        $yearMonth = TimeMonthReportService::normalizeYearMonth($yearMonth);
+        $mapped = [];
+        foreach ($rawByContact as $contactId => $raw) {
+            $cid = (int) $contactId;
+            if ($cid < 1) {
+                continue;
+            }
+            $mins = max(0, (int) $raw);
+            if ($mins < 1) {
+                $mapped[$cid] = 0;
+                continue;
+            }
+            $available = OvertimeLotRepository::sumRemainingMinutes($cid);
+            $mapped[$cid] = min($mins, max(0, $available));
+        }
+
+        return TimePayrollOtPayoutRepository::saveDrafts($yearMonth, $mapped, (int) ($user->id ?? 0));
     }
 
     /**
@@ -105,6 +153,8 @@ final class TimePayrollExportService
             'Urlaub_Tage',
             'Krank_Tage',
             'Korrektur_Minuten',
+            'Konto_Saldo_Minuten',
+            'Ueberstunden_Auszahlung_Minuten',
         ]);
         foreach ($dataset['rows'] ?? [] as $row) {
             if (!is_array($row)) {
@@ -120,6 +170,8 @@ final class TimePayrollExportService
                 self::numDays((float) ($row['urlaub_tage'] ?? 0)),
                 self::numDays((float) ($row['krank_tage'] ?? 0)),
                 (string) (int) ($row['korrektur_minutes'] ?? 0),
+                (string) (int) ($row['konto_saldo_minutes'] ?? 0),
+                (string) (int) ($row['auszahlung_minutes'] ?? 0),
             ]);
         }
         $t = is_array($dataset['totals'] ?? null) ? $dataset['totals'] : [];
@@ -133,9 +185,15 @@ final class TimePayrollExportService
             self::numDays((float) ($t['urlaub_tage'] ?? 0)),
             self::numDays((float) ($t['krank_tage'] ?? 0)),
             (string) (int) ($t['korrektur_minutes'] ?? 0),
+            (string) (int) ($t['konto_saldo_minutes'] ?? 0),
+            (string) (int) ($t['auszahlung_minutes'] ?? 0),
         ]);
         $lines[] = self::csvLine(['#', 'Monat', (string) ($dataset['year_month'] ?? '')]);
-        $lines[] = self::csvLine(['#', 'Hinweis', 'CSV-Standard Z6b — pruefbar gegen Monatsblatt; keine Netto-Lohnberechnung.']);
+        $lines[] = self::csvLine([
+            '#',
+            'Hinweis',
+            'CSV-Standard Z6b/Z6e — Auszahlung vom Ueberstundenkonto (FIFO); keine Netto-Lohnberechnung.',
+        ]);
 
         return "\xEF\xBB\xBF" . implode("\r\n", $lines) . "\r\n";
     }
@@ -174,6 +232,11 @@ final class TimePayrollExportService
             $rowCount,
             (int) ($user->id ?? 0)
         );
+        TimePayrollOtPayoutRepository::applyPending(
+            (string) ($dataset['year_month'] ?? $yearMonth),
+            $id,
+            (int) ($user->id ?? 0)
+        );
 
         return [
             'filename' => $fname,
@@ -202,6 +265,11 @@ final class TimePayrollExportService
             $built['count'],
             (int) ($user->id ?? 0)
         );
+        TimePayrollOtPayoutRepository::applyPending(
+            (string) ($dataset['year_month'] ?? $yearMonth),
+            $id,
+            (int) ($user->id ?? 0)
+        );
 
         return [
             'filename' => $built['filename'],
@@ -228,6 +296,11 @@ final class TimePayrollExportService
             'lexoffice_lohn',
             $built['filename'],
             $built['count'],
+            (int) ($user->id ?? 0)
+        );
+        TimePayrollOtPayoutRepository::applyPending(
+            (string) ($dataset['year_month'] ?? $yearMonth),
+            $id,
             (int) ($user->id ?? 0)
         );
 

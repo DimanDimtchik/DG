@@ -203,6 +203,7 @@ spl_autoload_register(static function (string $class): void {
         'TimeAbsenceService' => '/src/TimeTracking/TimeAbsenceService.php',
         'TimeProvisionService' => '/src/TimeTracking/TimeProvisionService.php',
         'TimePayrollExportRepository' => '/src/TimeTracking/TimePayrollExportRepository.php',
+        'TimePayrollOtPayoutRepository' => '/src/TimeTracking/TimePayrollOtPayoutRepository.php',
         'TimePayrollExportService' => '/src/TimeTracking/TimePayrollExportService.php',
         'TimePayrollDatevExporter' => '/src/TimeTracking/TimePayrollDatevExporter.php',
         'TimePayrollLexofficeExporter' => '/src/TimeTracking/TimePayrollLexofficeExporter.php',

@@ -3609,6 +3609,40 @@ switch ($path) {
             exit;
         }
 
+        // POST: Lohn-Export Überstunden-Auszahlung (Z6e)
+        if (
+            $page === 'zeiterfassung-lohnexport'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['payroll_ot_payout_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')
+        ) {
+            $ymPost = TimeMonthReportService::normalizeYearMonth(
+                isset($_POST['month']) ? (string) $_POST['month'] : (isset($_GET['month']) ? (string) $_GET['month'] : null)
+            );
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-lohnexport&month=' . rawurlencode($ymPost), true, 302);
+                exit;
+            }
+            try {
+                $raw = $_POST['auszahlung'] ?? [];
+                if (!is_array($raw)) {
+                    $raw = [];
+                }
+                $changed = TimePayrollExportService::saveOtPayoutDrafts($user, $ymPost, $raw);
+                Flash::set(
+                    'success',
+                    $changed > 0
+                        ? sprintf('Auszahlung gespeichert (%d Einträge). Beim Export wird vom Überstundenkonto abgebucht.', $changed)
+                        : 'Keine Änderungen an der Auszahlung.'
+                );
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=zeiterfassung-lohnexport&month=' . rawurlencode($ymPost), true, 302);
+            exit;
+        }
+
         // POST: Zeiterfassung Korrektur / Überstunden-Abbau (Z2e)
         if (
             $page === 'zeiterfassung-konto'

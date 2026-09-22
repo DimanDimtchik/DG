@@ -57,6 +57,8 @@ final class TimePayrollDatevExporter
             'Urlaub_Tage',
             'Krank_Tage',
             'Korrektur_Minuten',
+            'Konto_Saldo_Minuten',
+            'Ueberstunden_Auszahlung_Minuten',
         ];
 
         $lines = [self::csvLine($meta), self::csvLine($columns)];
@@ -78,6 +80,8 @@ final class TimePayrollDatevExporter
                 self::numDays((float) ($row['urlaub_tage'] ?? 0)),
                 self::numDays((float) ($row['krank_tage'] ?? 0)),
                 (string) (int) ($row['korrektur_minutes'] ?? 0),
+                (string) (int) ($row['konto_saldo_minutes'] ?? 0),
+                (string) (int) ($row['auszahlung_minutes'] ?? 0),
             ]);
             $count++;
         }
@@ -85,7 +89,7 @@ final class TimePayrollDatevExporter
         $lines[] = self::csvLine([
             '#',
             'Hinweis',
-            'DATEV Lohn Zeitenuebergabe Z6c — Import laut Kanzlei/DATEV-Assistent; keine Netto-Lohnberechnung im CRM.',
+            'DATEV Lohn Zeitenuebergabe Z6c/Z6e — Auszahlung vom Ueberstundenkonto; Import laut Kanzlei/DATEV-Assistent.',
         ]);
 
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'crm');
