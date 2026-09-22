@@ -18,6 +18,9 @@ $baseUrl = '/app?page=kontakte';
       <p class="dg-lead">Benutzer, Kunden, Lieferanten und Firmen – <?= (int) $list['total'] ?> Einträge</p>
     </div>
     <div class="dg-toolbar">
+      <a class="dg-button" href="/app?page=kontakte&amp;action=export-csv<?= $search !== '' ? '&amp;s=' . rawurlencode($search) : '' ?>" title="CSV-Download (Import-kompatibel, aktuelle Suche)">
+        Kontakte exportieren
+      </a>
       <?php if (ContactExportService::isExportAllowed($user)) : ?>
         <form method="post" action="/app?page=kontakte" class="dg-toolbar__inline-form">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">

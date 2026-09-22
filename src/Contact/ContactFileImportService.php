@@ -156,4 +156,73 @@ final class ContactFileImportService
         echo $csv;
         exit;
     }
+
+    /**
+     * CSV-Export (Import-kompatibel) für die aktuelle Suche / alle sichtbaren Kontakte.
+     */
+    public static function sendCsvExport(?User $viewer, string $search = ''): never
+    {
+        if ($viewer === null || !MenuRegistry::canAccess($viewer, 'kontakte')) {
+            throw new RuntimeException('Kein Recht zum Kontakt-Export.');
+        }
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht verbunden.');
+        }
+
+        $headers = [
+            'Anrede', 'Vorname', 'Nachname', 'Firma', 'E-Mail', 'Telefon',
+            'Login', 'Kundennummer', 'Lieferantennummer', 'Straße', 'PLZ', 'Ort', 'Rolle',
+        ];
+        $contacts = ContactRepository::listForExport($search, $viewer, 5000);
+        $lines = [];
+        $lines[] = self::csvLine($headers);
+        foreach ($contacts as $contact) {
+            $form = ContactRepository::toForm($contact);
+            $lines[] = self::csvLine([
+                (string) ($form['salutation'] ?? ''),
+                (string) ($form['first_name'] ?? ''),
+                (string) ($form['last_name'] ?? ''),
+                (string) ($form['company_name'] ?? ''),
+                (string) ($form['email'] ?? ''),
+                (string) ($form['phone_1'] ?? ''),
+                (string) ($form['login'] ?? ''),
+                (string) ($form['customer_number'] ?? ''),
+                (string) ($form['supplier_number'] ?? ''),
+                (string) ($form['address1_street'] ?? ''),
+                (string) ($form['address1_postal'] ?? ''),
+                (string) ($form['address1_city'] ?? ''),
+                self::exportRoleLabel((string) ($form['contact_role'] ?? '')),
+            ]);
+        }
+
+        $bom = chr(0xEF) . chr(0xBB) . chr(0xBF);
+        $filename = 'kontakte-export-' . date('Ymd-His') . '.csv';
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        echo $bom . implode("\r\n", $lines) . "\r\n";
+        exit;
+    }
+
+    /** @param list<string> $cells */
+    private static function csvLine(array $cells): string
+    {
+        $parts = [];
+        foreach ($cells as $cell) {
+            $parts[] = '"' . str_replace('"', '""', $cell) . '"';
+        }
+
+        return implode(';', $parts);
+    }
+
+    private static function exportRoleLabel(string $role): string
+    {
+        $slug = CrmRole::normalize($role);
+
+        return match ($slug) {
+            'dg_eigenmitarbeiter' => 'mitarbeiter',
+            'administrator' => 'administrator',
+            'lieferant' => 'lieferant',
+            default => 'kunde',
+        };
+    }
 }

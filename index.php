@@ -2326,6 +2326,21 @@ switch ($path) {
             ContactFileImportService::sendTemplateDownload();
         }
 
+        // GET: Kontakte als CSV exportieren (Import-kompatibel)
+        if ($page === 'kontakte' && ($_GET['action'] ?? '') === 'export-csv') {
+            if (!MenuRegistry::canAccess($user, 'kontakte')) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            try {
+                ContactFileImportService::sendCsvExport($user, trim((string) ($_GET['s'] ?? '')));
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+        }
+
         // POST: Multi-Firma MF6c — Kontakte JSON-Import von Org-Schwester
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_org_import'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte')) {
