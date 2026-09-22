@@ -341,7 +341,7 @@ final class CalendarArticleImportReader
             $cells = [];
             $maxCol = 0;
             foreach ($rowNode->children($ns)->c as $cell) {
-                $ref = (string) ($cell['r'] ?? '');
+                $ref = self::xlsxAttr($cell, 'r');
                 $col = $ref !== '' ? self::columnIndexFromCellRef($ref) : $maxCol;
                 $cells[$col] = self::xlsxCellValue($cell, $sharedStrings, $ns);
                 $maxCol = max($maxCol, $col + 1);
@@ -370,7 +370,7 @@ final class CalendarArticleImportReader
      */
     private static function xlsxCellValue(SimpleXMLElement $cell, array $sharedStrings, string $ns): string
     {
-        $type = (string) ($cell['t'] ?? '');
+        $type = self::xlsxAttr($cell, 't');
         $children = $cell->children($ns);
 
         if ($type === 's') {
@@ -384,6 +384,20 @@ final class CalendarArticleImportReader
         }
 
         return (string) ($children->v ?? '');
+    }
+
+    /** Zell-Attribut (r, t, …) — bei Default-Namespace greift $cell['t'] oft nicht. */
+    private static function xlsxAttr(SimpleXMLElement $cell, string $name): string
+    {
+        $attrs = $cell->attributes();
+        if ($attrs !== null && isset($attrs[$name])) {
+            return (string) $attrs[$name];
+        }
+        if (isset($cell[$name])) {
+            return (string) $cell[$name];
+        }
+
+        return '';
     }
 
     /**
