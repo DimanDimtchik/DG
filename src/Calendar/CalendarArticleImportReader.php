@@ -422,6 +422,16 @@ final class CalendarArticleImportReader
     }
 
     /**
+     * @return int Trefferanzahl für XPath (0 bei Fehler / leer)
+     */
+    private static function xmlXpathCount(SimpleXMLElement $xml, string $xpath): int
+    {
+        $nodes = $xml->xpath($xpath);
+
+        return is_array($nodes) ? count($nodes) : 0;
+    }
+
+    /**
      * Methode read xml file.
      * @param string $path
      * @return array<string, mixed>
@@ -445,7 +455,12 @@ final class CalendarArticleImportReader
         }
 
         $rootName = strtolower($xml->getName());
-        if ($rootName === 'workbook' || $xml->Worksheet !== null) {
+        // Nicht $xml->Worksheet !== null — SimpleXML liefert dafür auch ohne Kind ein leeres
+        // Element (≠ null) und leitet so normales <records>/<row>-XML fälschlich in SpreadsheetML.
+        $hasSsWorksheet = self::xmlXpathCount($xml, '//*[local-name()="Worksheet"]') > 0
+            || self::xmlXpathCount($xml, '//*[local-name()="worksheet"]') > 0;
+        $hasSsRow = self::xmlXpathCount($xml, '//*[local-name()="Row"]') > 0;
+        if ($rootName === 'workbook' || ($hasSsWorksheet && $hasSsRow)) {
             return self::readSpreadsheetMl($xml);
         }
 

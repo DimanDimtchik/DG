@@ -3,8 +3,10 @@
 /** @var array{items: list<Contact>, total: int, page: int, per_page: int, total_pages: int} $contactList */
 /** @var string $contactSearch */
 /** @var array{type: string, message: string}|null $flash */
+/** @var list<string> $contactImportErrors */
 $search = $contactSearch ?? '';
 $list = $contactList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'total_pages' => 1];
+$importErrors = is_array($contactImportErrors ?? null) ? $contactImportErrors : [];
 $baseUrl = '/app?page=kontakte';
 ?>
 <div class="dg-wrap">
@@ -89,8 +91,8 @@ $baseUrl = '/app?page=kontakte';
         <label class="dg-contact-import__file">
           <span>Bei bestehendem Kontakt (E-Mail / Login / KdNr / LiefNr)</span>
           <select name="on_duplicate">
-            <option value="skip" selected>Überspringen (keine Doppelgänger)</option>
-            <option value="update_empty">Aktualisieren — nur leere Felder füllen</option>
+            <option value="skip">Überspringen (keine Doppelgänger)</option>
+            <option value="update_empty" selected>Aktualisieren — nur leere Felder füllen</option>
             <option value="update_all">Aktualisieren — Felder überschreiben</option>
           </select>
         </label>
@@ -140,6 +142,17 @@ $baseUrl = '/app?page=kontakte';
         <p class="dg-muted">Herkunft wird in <code>origin_firm_note</code> gesetzt, wenn dort noch nichts steht. Kein Live-Sync.</p>
       </form>
     </details>
+  <?php endif; ?>
+
+  <?php if ($importErrors !== []) : ?>
+    <section class="dg-panel dg-panel--warning" style="margin-bottom:1rem">
+      <h2 class="dg-subsection-title">Hinweise aus dem letzten Import</h2>
+      <ul class="dg-list">
+        <?php foreach ($importErrors as $err) : ?>
+          <li><?= View::escape((string) $err) ?></li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
   <?php endif; ?>
 
   <div class="dg-table-wrap">

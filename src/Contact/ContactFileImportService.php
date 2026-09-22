@@ -65,9 +65,9 @@ final class ContactFileImportService
         $forceRole = !empty($post['force_role']) ? $defaultRole : null;
         $createCalendar = !empty($post['create_calendar']);
         $areaId = max(0, (int) ($post['calendar_area_id'] ?? 0));
-        $onDuplicate = (string) ($post['on_duplicate'] ?? 'skip');
+        $onDuplicate = (string) ($post['on_duplicate'] ?? 'update_empty');
         if (!in_array($onDuplicate, ['skip', 'update_empty', 'update_all'], true)) {
-            $onDuplicate = 'skip';
+            $onDuplicate = 'update_empty';
         }
 
         $dir = DG_ROOT . '/storage/contact-import';

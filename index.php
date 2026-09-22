@@ -2368,27 +2368,33 @@ switch ($path) {
                 exit;
             }
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                unset($_SESSION['dg_contact_import_errors']);
                 Flash::set('error', 'Ungültiges Formular (CSRF).');
                 header('Location: /app?page=kontakte', true, 302);
                 exit;
             }
             if (!ContactFileImportService::isAllowed($user)) {
+                unset($_SESSION['dg_contact_import_errors']);
                 Flash::set('error', 'Kein Recht zum Kontakt-Import.');
                 header('Location: /app?page=kontakte', true, 302);
                 exit;
             }
+            // Vor jedem Lauf leeren — sonst bleiben Duplikat-Hinweise vom vorherigen Import stehen
+            unset($_SESSION['dg_contact_import_errors']);
             try {
                 $result = ContactFileImportService::importUpload(
                     is_array($_FILES['contact_import_file'] ?? null) ? $_FILES['contact_import_file'] : [],
                     $user,
                     $_POST
                 );
-                $msg = $result['message'];
                 if ($result['errors'] !== []) {
-                    $msg .= ' ' . implode(' ', array_slice($result['errors'], 0, 5));
+                    $_SESSION['dg_contact_import_errors'] = array_slice($result['errors'], 0, 40);
+                    Flash::set('warning', $result['message'] . ' Details siehe Hinweise unten.');
+                } else {
+                    Flash::set('success', $result['message']);
                 }
-                Flash::set($result['errors'] !== [] ? 'warning' : 'success', $msg);
             } catch (Throwable $e) {
+                unset($_SESSION['dg_contact_import_errors']);
                 Flash::set('error', $e->getMessage());
             }
             header('Location: /app?page=kontakte', true, 302);
@@ -3559,10 +3565,13 @@ switch ($path) {
                 exit;
             }
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                unset($_SESSION['dg_time_hours_import_errors']);
                 Flash::set('error', 'Ungültiges Formular (CSRF).');
                 header('Location: /app?page=zeiterfassung-stundenimport', true, 302);
                 exit;
             }
+            // Vor jedem Lauf leeren — sonst bleiben Duplikat-/Skip-Hinweise vom vorherigen Import stehen
+            unset($_SESSION['dg_time_hours_import_errors']);
             try {
                 $result = TimeHoursImportService::importUpload(
                     is_array($_FILES['time_hours_file'] ?? null) ? $_FILES['time_hours_file'] : [],
@@ -3575,10 +3584,10 @@ switch ($path) {
                     $msg .= ' Details siehe Hinweise unten.';
                     Flash::set('warning', $msg);
                 } else {
-                    unset($_SESSION['dg_time_hours_import_errors']);
                     Flash::set('success', $msg);
                 }
             } catch (Throwable $e) {
+                unset($_SESSION['dg_time_hours_import_errors']);
                 Flash::set('error', $e->getMessage());
             }
             header('Location: /app?page=zeiterfassung-stundenimport', true, 302);
@@ -5177,6 +5186,11 @@ $legalProductsConfig = LegalProductSettings::config();
                     : null;
             } else {
                 $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user);
+                $contactImportErrors = [];
+                if (isset($_SESSION['dg_contact_import_errors']) && is_array($_SESSION['dg_contact_import_errors'])) {
+                    $contactImportErrors = $_SESSION['dg_contact_import_errors'];
+                    unset($_SESSION['dg_contact_import_errors']);
+                }
                 $contentTemplate = 'modules/kontakte';
                 $title = 'Kontakte';
                 $currentPage = 'kontakte';
@@ -6489,6 +6503,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $timePayrollDatevSettings = $timePayrollDatevSettings ?? DatevExportSettings::defaults();
         $timePayrollDatevConfigured = $timePayrollDatevConfigured ?? false;
         $timeHoursImportErrors = $timeHoursImportErrors ?? [];
+        $contactImportErrors = $contactImportErrors ?? [];
         $recipeList = $recipeList ?? [];
         $recipeForm = $recipeForm ?? null;
         $recipeId = $recipeId ?? null;
@@ -6897,6 +6912,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'timePayrollDatevSettings',
             'timePayrollDatevConfigured',
             'timeHoursImportErrors',
+            'contactImportErrors',
             'recipeList',
             'recipeForm',
             'recipeId',
