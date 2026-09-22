@@ -252,9 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Bitte wählen Sie mindestens einen Bereich aus.');
         return;
       }
+      const contactId = document.getElementById('dg_employee_contact').value;
+      if (!contactId || contactId === '0') {
+        alert('Bitte einen Mitarbeiter-Kontakt wählen.');
+        return;
+      }
       postStaff('save_employee', {
         employee_id: document.getElementById('dg_employee_id').value,
-        contact_id: document.getElementById('dg_employee_contact').value,
+        contact_id: contactId,
         name: document.getElementById('dg_employee_name').value,
         sort_order: document.getElementById('dg_employee_sort').value,
         is_active: document.getElementById('dg_employee_active').checked ? 1 : '',
@@ -267,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dg-employee-cancel')?.addEventListener('click', () => {
       employeeForm.reset();
       document.getElementById('dg_employee_id').value = '';
-      document.getElementById('dg_employee_contact').value = '0';
+      document.getElementById('dg_employee_contact').value = '';
       document.getElementById('dg_employee_active').checked = true;
       document.getElementById('dg_employee_user').value = '0';
       document.getElementById('dg_employee_supervisor').value = '0';
@@ -285,9 +290,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = JSON.parse(button.getAttribute('data-employee') || '{}');
         document.getElementById('dg_employee_id').value = data.id || '';
         ensureContactOption(data.contact_id || 0, data.contact_label || '');
-        if (!data.contact_id) {
-          document.getElementById('dg_employee_contact').value = '0';
-        }
+        document.getElementById('dg_employee_contact').value = data.contact_id
+          ? String(data.contact_id)
+          : '';
         document.getElementById('dg_employee_name').value = data.name || '';
         document.getElementById('dg_employee_sort').value = data.sort_order || 0;
         document.getElementById('dg_employee_active').checked = !!parseInt(data.is_active, 10);

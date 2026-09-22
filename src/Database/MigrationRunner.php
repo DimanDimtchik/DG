@@ -73,6 +73,10 @@ final class MigrationRunner
                     continue;
                 }
 
+                if ($id === '095_calendar_employee_contact_required.sql') {
+                    CalendarStaffRepository::autoLinkOrphanEmployeesToContacts();
+                }
+
                 self::executeFile($pdo, $file);
                 $stmt = $pdo->prepare('INSERT INTO dg_migrations (id) VALUES (:id)');
                 $stmt->execute(['id' => $id]);
@@ -246,6 +250,7 @@ final class MigrationRunner
             '093_time_absences.sql' => self::tableExists($pdo, 'dg_time_vacation_entitlements')
                 && self::tableExists($pdo, 'dg_time_absences'),
             '094_time_payroll_exports.sql' => self::tableExists($pdo, 'dg_time_payroll_exports'),
+            '095_calendar_employee_contact_required.sql' => self::noActiveCalendarEmployeesWithoutContact($pdo),
             default => false,
         };
     }
@@ -367,6 +372,7 @@ final class MigrationRunner
             '092_time_shift_assignments.sql' => true,
             '093_time_absences.sql' => true,
             '094_time_payroll_exports.sql' => true,
+            '095_calendar_employee_contact_required.sql' => true,
         ];
     }
 
@@ -376,6 +382,23 @@ final class MigrationRunner
         $stmt = $pdo->query("SHOW TABLES LIKE " . $pdo->quote($table));
 
         return $stmt !== false && $stmt->fetchColumn() !== false;
+    }
+
+    /** 095: keine aktiven Kalender-Mitarbeiter ohne Kontakt. */
+    private static function noActiveCalendarEmployeesWithoutContact(PDO $pdo): bool
+    {
+        if (!self::tableExists($pdo, 'dg_calendar_employees')) {
+            return true;
+        }
+        if (!self::columnExists($pdo, 'dg_calendar_employees', 'contact_id')) {
+            return false;
+        }
+        $stmt = $pdo->query(
+            'SELECT COUNT(*) FROM dg_calendar_employees
+             WHERE is_active = 1 AND (contact_id IS NULL OR contact_id = 0)'
+        );
+
+        return $stmt !== false && (int) $stmt->fetchColumn() === 0;
     }
 
     /** @return bool */

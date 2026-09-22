@@ -1,7 +1,10 @@
 <?php
 declare(strict_types=1);
 
-/** CSV-Import für Kalender-Mitarbeiter während der Installation. */
+/**
+ * CSV-Import für Kalender-Mitarbeiter während der Installation.
+ * Legt zusätzlich einen Mitarbeiter-Kontakt an (contact_id Pflicht ab 095).
+ */
 final class InstallEmployeeImporter
 {
     private const BATCH_SIZE = 25;
@@ -28,6 +31,9 @@ final class InstallEmployeeImporter
             'area' => ['bereich', 'area', 'abteilung'],
             'email' => ['email', 'e_mail', 'mail'],
             'active' => ['aktiv', 'active', 'is_active'],
+            'first_name' => ['vorname', 'first_name'],
+            'last_name' => ['nachname', 'last_name'],
+            'login' => ['login', 'benutzername', 'username', 'personalnummer'],
         ], InstallImportSourcePresets::employeeAliases($source)));
 
         $defaultAreaId = self::ensureDefaultAreaId();
@@ -47,17 +53,49 @@ final class InstallEmployeeImporter
             $raw = InstallCsvHelper::rowFromMap($map, $line);
             try {
                 $name = trim($raw['name'] ?? '');
+                $firstName = trim($raw['first_name'] ?? '');
+                $lastName = trim($raw['last_name'] ?? '');
+                if ($name === '' && ($firstName !== '' || $lastName !== '')) {
+                    $name = trim($firstName . ' ' . $lastName);
+                }
                 if ($name === '') {
                     throw new InvalidArgumentException('Name fehlt.');
+                }
+                if ($firstName === '' && $lastName === '') {
+                    $parts = preg_split('/\s+/', $name, 2) ?: [];
+                    $firstName = trim((string) ($parts[0] ?? $name));
+                    $lastName = trim((string) ($parts[1] ?? ''));
                 }
 
                 $areaName = trim($raw['area'] ?? '');
                 $areaId = $areaName !== '' ? self::resolveAreaId($areaName) : $defaultAreaId;
                 $isActive = self::parseBool($raw['active'] ?? 'ja', true);
+                $email = trim($raw['email'] ?? '');
+
+                $loginBase = trim($raw['login'] ?? '');
+                if ($loginBase === '') {
+                    $loginBase = $email !== '' ? $email : $name;
+                }
+                $login = InstallCsvHelper::uniqueLogin(
+                    $loginBase,
+                    static fn (string $candidate): bool => ContactRepository::loginExists($candidate)
+                );
+
+                $contactId = ContactRepository::save([
+                    'salutation' => '',
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'display_name' => $name,
+                    'company_name' => '',
+                    'email' => $email,
+                    'contact_role' => 'mitarbeiter',
+                    'login' => $login,
+                    'address1_country' => 'DE',
+                ]);
 
                 CalendarStaffRepository::saveEmployee([
                     'name' => $name,
-                    'contact_id' => 0,
+                    'contact_id' => $contactId,
                     'user_id' => 0,
                     'supervisor_id' => 0,
                     'sort_order' => 0,
@@ -84,7 +122,7 @@ final class InstallEmployeeImporter
             'skipped' => $skipped,
             'errors' => $errors,
             'message' => $done
-                ? sprintf('%d Mitarbeiter importiert.', $imported)
+                ? sprintf('%d Mitarbeiter (Kontakt + Kalender) importiert.', $imported)
                 : sprintf('Mitarbeiter werden importiert … (%d%%)', $progress),
             'next_offset' => $offset,
         ];
@@ -121,26 +159,19 @@ final class InstallEmployeeImporter
         return self::ensureDefaultAreaId();
     }
 
-    private static function parseBool(string $value, bool $default): bool
+    private static function parseBool(string $raw, bool $default): bool
     {
-        $value = strtolower(trim($value));
-        if ($value === '') {
+        $v = mb_strtolower(trim($raw));
+        if ($v === '') {
             return $default;
         }
+        if (in_array($v, ['1', 'ja', 'yes', 'true', 'aktiv', 'active'], true)) {
+            return true;
+        }
+        if (in_array($v, ['0', 'nein', 'no', 'false', 'inaktiv', 'inactive'], true)) {
+            return false;
+        }
 
-        return in_array($value, ['1', 'ja', 'yes', 'true', 'aktiv', 'x'], true);
-    }
-
-    public static function templateCsv(): string
-    {
-        return InstallCsvHelper::templateCsv(
-            ['Name', 'Bereich', 'E-Mail', 'Aktiv'],
-            [
-                'Name' => 'Max Mustermann',
-                'Bereich' => 'Standard',
-                'E-Mail' => 'max@beispiel.de',
-                'Aktiv' => 'ja',
-            ]
-        );
+        return $default;
     }
 }

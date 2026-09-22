@@ -104,8 +104,22 @@ $csrf = Csrf::token();
   </section>
 
 <?php else : ?>
+  <?php
+    $calendarOrphans = $dbConnected ? CalendarStaffRepository::orphanEmployeesWithoutContact() : [];
+  ?>
   <section class="dg-panel" style="margin-top:16px">
-    <p class="dg-lead">Kalender-Mitarbeiter Bereichen zuordnen, optional mit einem Mitarbeiter-Kontakt verknüpfen, Arbeitszeiten und Abwesenheiten pflegen.</p>
+    <p class="dg-lead">
+      Kalender-Mitarbeiter sind Ressourcen für Termine/Online-Buchung und brauchen zwingend einen
+      <strong>Mitarbeiter-Kontakt</strong> (Personal / Zeiterfassung). Stammdaten pflegen Sie unter Kontakte.
+    </p>
+
+    <?php if ($calendarOrphans !== []) : ?>
+      <div class="dg-flash dg-flash--warning">
+        <?= count($calendarOrphans) ?> Eintrag/Einträge ohne Kontakt (inaktiv).
+        Bitte Kontakt zuweisen und speichern oder löschen:
+        <?= View::escape(implode(', ', array_map(static fn (array $o): string => (string) ($o['name'] ?? ''), $calendarOrphans))) ?>
+      </div>
+    <?php endif; ?>
 
     <?php if ($calendarAreas === []) : ?>
       <div class="dg-flash dg-flash--warning">
@@ -235,7 +249,7 @@ $csrf = Csrf::token();
                     <?php if ($linkedContactId > 0) : ?>
                       <a href="/app?page=kontakte&amp;id=<?= $linkedContactId ?>"><?= View::escape($linkedContactLabel !== '' ? $linkedContactLabel : 'Kontakt #' . $linkedContactId) ?></a>
                     <?php else : ?>
-                      —
+                      <span class="dg-cal-warning">Kontakt fehlt</span>
                     <?php endif; ?>
                   </td>
                   <td><?= View::escape($areaNames !== [] ? implode(', ', $areaNames) : '—') ?></td>
@@ -280,18 +294,18 @@ $csrf = Csrf::token();
         <input type="hidden" name="employee_id" id="dg_employee_id" value="">
         <div class="dg-form-grid">
           <label class="dg-field">
-            <span>Kontakt (Mitarbeiter)</span>
-            <select name="contact_id" id="dg_employee_contact">
-              <option value="0">— Kein Kontakt —</option>
+            <span>Kontakt (Mitarbeiter) *</span>
+            <select name="contact_id" id="dg_employee_contact" required>
+              <option value="">— Kontakt wählen —</option>
               <?php foreach ($calendarLinkContacts as $contact) : ?>
                 <option value="<?= (int) $contact['id'] ?>" data-label="<?= View::escape((string) $contact['label']) ?>"><?= View::escape((string) $contact['label']) ?></option>
               <?php endforeach; ?>
             </select>
-            <small class="dg-field-hint">Eigenmitarbeiter aus Kontakte. Name wird beim Speichern übernommen, wenn leer.</small>
+            <small class="dg-field-hint">Pflicht. Eigenmitarbeiter aus Kontakte — Name wird übernommen, wenn leer.</small>
           </label>
           <label class="dg-field dg-field--wide">
-            <span>Name *</span>
-            <input type="text" name="name" id="dg_employee_name" required>
+            <span>Anzeigename (Kalender)</span>
+            <input type="text" name="name" id="dg_employee_name" placeholder="leer = Kontaktname">
           </label>
           <label class="dg-field dg-field--wide">
             <span>Bereiche *</span>

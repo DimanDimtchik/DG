@@ -9,6 +9,126 @@ final class CalendarStaffRepository
     private const SLOT_STEP_MINUTES = 15;
 
     /**
+     * Migration 095: Orphans (ohne contact_id) per Namensgleichheit an freien Mitarbeiter-Kontakt hängen.
+     *
+     * @return array{linked: int, remaining: int}
+     */
+    public static function autoLinkOrphanEmployeesToContacts(): array
+    {
+        if (!self::useDatabase()) {
+            return ['linked' => 0, 'remaining' => 0];
+        }
+
+        $pdo = Database::pdo();
+        $orphans = $pdo->query(
+            'SELECT id, name FROM dg_calendar_employees
+             WHERE contact_id IS NULL OR contact_id = 0
+             ORDER BY id ASC'
+        )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $usedContactIds = [];
+        foreach ($pdo->query(
+            'SELECT contact_id FROM dg_calendar_employees WHERE contact_id IS NOT NULL AND contact_id > 0'
+        )->fetchAll(PDO::FETCH_COLUMN) ?: [] as $cid) {
+            $usedContactIds[(int) $cid] = true;
+        }
+
+        $linked = 0;
+        $update = $pdo->prepare(
+            'UPDATE dg_calendar_employees SET contact_id = :contact_id, name = :name WHERE id = :id'
+        );
+
+        foreach ($orphans as $orphan) {
+            $empId = (int) ($orphan['id'] ?? 0);
+            $name = trim((string) ($orphan['name'] ?? ''));
+            if ($empId < 1 || $name === '') {
+                continue;
+            }
+
+            $contactId = self::findUniqueStaffContactIdByName($name, $usedContactIds);
+            if ($contactId < 1) {
+                continue;
+            }
+
+            $contact = ContactRepository::findById($contactId);
+            $label = $contact !== null ? $contact->listLabel() : $name;
+            $update->execute([
+                'contact_id' => $contactId,
+                'name' => $label !== '' ? $label : $name,
+                'id' => $empId,
+            ]);
+            $usedContactIds[$contactId] = true;
+            $linked++;
+        }
+
+        $remainingStmt = $pdo->query(
+            'SELECT COUNT(*) FROM dg_calendar_employees WHERE contact_id IS NULL OR contact_id = 0'
+        );
+        $remaining = $remainingStmt !== false ? (int) $remainingStmt->fetchColumn() : 0;
+
+        return ['linked' => $linked, 'remaining' => $remaining];
+    }
+
+    /**
+     * Aktive Kalender-Mitarbeiter ohne Kontakt (nach 095 sollten 0 sein).
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public static function orphanEmployeesWithoutContact(): array
+    {
+        if (!self::useDatabase()) {
+            return [];
+        }
+        $rows = Database::pdo()->query(
+            'SELECT id, name FROM dg_calendar_employees
+             WHERE contact_id IS NULL OR contact_id = 0
+             ORDER BY is_active DESC, name ASC'
+        )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'name' => (string) ($row['name'] ?? ''),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<int, true> $usedContactIds
+     */
+    private static function findUniqueStaffContactIdByName(string $name, array $usedContactIds): int
+    {
+        $needle = mb_strtolower(trim($name));
+        if ($needle === '') {
+            return 0;
+        }
+
+        $matches = [];
+        $stmt = Database::pdo()->query(
+            "SELECT id, display_name, first_name, last_name
+             FROM dg_contacts
+             WHERE contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')"
+        );
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $cid = (int) ($row['id'] ?? 0);
+            if ($cid < 1 || isset($usedContactIds[$cid])) {
+                continue;
+            }
+            $display = mb_strtolower(trim((string) ($row['display_name'] ?? '')));
+            $composed = mb_strtolower(trim(
+                trim((string) ($row['first_name'] ?? '')) . ' ' . trim((string) ($row['last_name'] ?? ''))
+            ));
+            if ($display === $needle || $composed === $needle) {
+                $matches[] = $cid;
+            }
+        }
+
+        return count($matches) === 1 ? $matches[0] : 0;
+    }
+
+    /**
      * Stellt Standarddaten in der Datenbank sicher.
      * @return void
      */
@@ -350,14 +470,17 @@ final class CalendarStaffRepository
         $supervisorId = max(0, (int) ($input['supervisor_id'] ?? 0));
         $areaIds = array_values(array_filter(array_map('intval', (array) ($input['area_ids'] ?? []))));
 
-        if ($contactId > 0) {
-            $contact = ContactRepository::findById($contactId);
-            if ($contact === null || !ContactRepository::isStaffContactRole($contact->contactRole)) {
-                throw new InvalidArgumentException('Der gewählte Kontakt ist kein Mitarbeiter-Kontakt.');
-            }
-            if ($name === '') {
-                $name = $contact->listLabel();
-            }
+        if ($contactId < 1) {
+            throw new InvalidArgumentException(
+                'Kalender-Mitarbeiter brauchen einen Mitarbeiter-Kontakt (Personal). Bitte Kontakt wählen.'
+            );
+        }
+        $contact = ContactRepository::findById($contactId);
+        if ($contact === null || !ContactRepository::isStaffContactRole($contact->contactRole)) {
+            throw new InvalidArgumentException('Der gewählte Kontakt ist kein Mitarbeiter-Kontakt.');
+        }
+        if ($name === '') {
+            $name = $contact->listLabel();
         }
 
         if ($name === '') {
@@ -379,18 +502,16 @@ final class CalendarStaffRepository
         }
 
         $pdo = Database::pdo();
-        if ($contactId > 0) {
-            $conflictSql = 'SELECT id FROM dg_calendar_employees WHERE contact_id = :contact_id';
-            $conflictParams = ['contact_id' => $contactId];
-            if ($id > 0) {
-                $conflictSql .= ' AND id != :id';
-                $conflictParams['id'] = $id;
-            }
-            $stmt = $pdo->prepare($conflictSql);
-            $stmt->execute($conflictParams);
-            if ($stmt->fetchColumn()) {
-                throw new InvalidArgumentException('Dieser Kontakt ist bereits einem anderen Kalender-Mitarbeiter zugeordnet.');
-            }
+        $conflictSql = 'SELECT id FROM dg_calendar_employees WHERE contact_id = :contact_id';
+        $conflictParams = ['contact_id' => $contactId];
+        if ($id > 0) {
+            $conflictSql .= ' AND id != :id';
+            $conflictParams['id'] = $id;
+        }
+        $stmt = $pdo->prepare($conflictSql);
+        $stmt->execute($conflictParams);
+        if ($stmt->fetchColumn()) {
+            throw new InvalidArgumentException('Dieser Kontakt ist bereits einem anderen Kalender-Mitarbeiter zugeordnet.');
         }
         if ($userId > 0) {
             $conflictSql = 'SELECT id FROM dg_calendar_employees WHERE user_id = :user_id';
@@ -945,7 +1066,10 @@ final class CalendarStaffRepository
             return false;
         }
 
-        $count = (int) Database::pdo()->query('SELECT COUNT(*) FROM dg_calendar_employees WHERE is_active = 1')->fetchColumn();
+        $count = (int) Database::pdo()->query(
+            'SELECT COUNT(*) FROM dg_calendar_employees
+             WHERE is_active = 1 AND contact_id IS NOT NULL AND contact_id > 0'
+        )->fetchColumn();
 
         return $count > 0;
     }
@@ -977,6 +1101,18 @@ final class CalendarStaffRepository
         $employeeIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
 
         $departmentId = trim((string) ($area['department_id'] ?? ''));
+        $employeeIds = array_values(array_filter(
+            $employeeIds,
+            static function (int $employeeId): bool {
+                $employee = self::getEmployeeById($employeeId);
+                if ($employee === null) {
+                    return false;
+                }
+
+                return (int) ($employee['contact_id'] ?? 0) > 0;
+            }
+        ));
+
         if ($departmentId === '') {
             return $employeeIds;
         }
@@ -996,7 +1132,9 @@ final class CalendarStaffRepository
                     return in_array($userId, $deptUserIds, true);
                 }
 
-                return (int) ($employee['contact_id'] ?? 0) > 0;
+                // Kontakt verknüpft, aber kein CRM-Benutzer: bei Abteilungsfilter trotzdem erlauben
+                // (Kontakt ist Pflicht; Abteilungszuordnung läuft sonst über Benutzer).
+                return true;
             }
         ));
     }
@@ -1046,6 +1184,9 @@ final class CalendarStaffRepository
     {
         $options = [];
         foreach (self::getEmployees(true) as $employee) {
+            if ((int) ($employee['contact_id'] ?? 0) < 1) {
+                continue;
+            }
             $id = (int) ($employee['id'] ?? 0);
             if ($id < 1) {
                 continue;

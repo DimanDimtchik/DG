@@ -52,7 +52,7 @@ final class InstallImportSourcePresets
             ],
             self::SOURCE_SHIFTBASE => [
                 'label' => 'ShiftBase (Personal / Dienstplan)',
-                'hint' => 'Mitarbeiter oder Schichten in ShiftBase exportieren (Berichte → Export als Excel/CSV) und die Datei hier hochladen.',
+                'hint' => 'Mitarbeiter in ShiftBase exportieren (Berichte → Employee als Excel/CSV). Im CRM entstehen Kontakt (Rolle Mitarbeiter) + Kalender-Ressource.',
                 'formats' => 'Excel (.xlsx), CSV',
             ],
             self::SOURCE_OTHER => [

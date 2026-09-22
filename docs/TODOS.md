@@ -37,7 +37,8 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] Smoke: Akademie, Lager, Kichel, Terminkalender, Rechtstexte, Kontakt-Notiz, LDAP-UI
 - [x] Fix: „Finanzamt ermitteln“ — lokale ESt-Nr. (z. B. 127/219/40770) nicht mehr als Steuer-ID verwerfen
 - [x] Firmen-E-Mail in ganz-soft.de CRM eintragen (Einstellungen → Firma) — `info@ganz-om.de`
-- [~] Manuelle Testliste **ganz-soft.de** — Block A erledigt (Lager/Akademie/Termin/Recht/Wartung); offen: Belegkette, Bank, Kichel
+- [~] Manuelle Testliste **ganz-soft.de** — Block A erledigt; **neu:** [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) + Canvas `testliste-sep-2026` (Z2–Z6 + Beleg/Bank/Kichel)
+- [x] **Kalender-Mitarbeiter:** `contact_id` Pflicht (Migration **095**) — Orphans deaktiviert / Auto-Link nach Name
 - [x] Multi-Firma Phase 0 — KDV Org↔Firma Registry (`082`, Formular/Liste) — Switcher = Phase 1
 - [x] **ELSTER Phase 2:** Hersteller-ID **34573** in CRM-Einstellungen (ganz-soft.de) hinterlegt; danach ERiC Linux laden, Test-Zertifikat (nach Server-Umzug)
 - [x] **Lager Phase 3+4:** Einkaufsliste/Ignore (081), In-Auslieferung, Beleg-Live-Hinweis
