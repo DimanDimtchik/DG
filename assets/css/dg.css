@@ -570,6 +570,7 @@ code {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .dg-toolbar__inline-form {
@@ -6840,4 +6841,22 @@ body.dg-login-page {
 .dg-academy-help__list li + li {
   margin-top: 6px;
 }
+
+/* Zeiterfassung — Korrektur & Überstundenkonto */
+.dg-zeiterfassung-konto__balance {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.dg-zeiterfassung-konto__actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.dg-zeiterfassung-konto__actions > .dg-panel {
+  margin: 0;
+}
+
 

@@ -30,11 +30,17 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
       <a class="dg-button" href="/app?page=zeiterfassung-monat">Monatsblatt</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
       <a class="dg-button" href="/app?page=zeiterfassung-schichten">Schichtplan</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-lohnexport">Lohn-Export</a>
+    </div>
+  </header>
+
+  <section class="dg-panel">
     <form method="get" action="/app" class="dg-form dg-form--inline">
       <input type="hidden" name="page" value="zeiterfassung-konto">
       <label class="dg-field">
         <span class="dg-field-label">Mitarbeiter</span>
         <select name="contact_id" required>
+          <option value="">— bitte wählen —</option>
           <?php foreach ($staffOptions as $opt) : ?>
             <option value="<?= (int) $opt['id'] ?>"<?= (int) $opt['id'] === $contactId ? ' selected' : '' ?>>
               <?= View::escape((string) $opt['label']) ?>
@@ -51,50 +57,63 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
   <?php else : ?>
     <section class="dg-panel">
       <h2 class="dg-subsection-title"><?= View::escape($label) ?></h2>
-      <p><strong>Überstunden-Saldo:</strong> <?= View::escape(TimeClockService::formatMinutes($balance)) ?> h</p>
+      <p class="dg-zeiterfassung-konto__balance">
+        <strong>Überstunden-Saldo:</strong>
+        <?= View::escape(TimeClockService::formatMinutes($balance)) ?> h
+      </p>
     </section>
 
-    <section class="dg-panel">
-      <h2 class="dg-subsection-title">Stempel-Korrektur</h2>
-      <p class="dg-field-hint">Passt nur die Ist-Minuten an (±). Originale Stempel bleiben; Audit-Eintrag + Begründung Pflicht.</p>
-      <form method="post" action="/app?page=zeiterfassung-konto" class="dg-form">
-        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-        <input type="hidden" name="time_konto_action" value="correction">
-        <input type="hidden" name="contact_id" value="<?= $contactId ?>">
-        <label class="dg-field">
-          <span class="dg-field-label">Datum</span>
-          <input type="date" name="work_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
-        </label>
-        <label class="dg-field">
-          <span class="dg-field-label">Delta Minuten (+/−)</span>
-          <input type="number" name="delta_minutes" required step="1" min="-960" max="960" placeholder="z. B. 15 oder -30">
-        </label>
-        <label class="dg-field">
-          <span class="dg-field-label">Begründung</span>
-          <input type="text" name="reason" required maxlength="500" minlength="5" placeholder="z. B. vergessen auszustempeln, Nachweis …">
-        </label>
-        <button type="submit" class="dg-button dg-button--primary">Korrektur buchen</button>
-      </form>
-    </section>
+    <div class="dg-zeiterfassung-konto__actions">
+      <section class="dg-panel">
+        <h2 class="dg-subsection-title">Stempel-Korrektur</h2>
+        <p class="dg-field-hint">Passt nur die Ist-Minuten an (±). Originale Stempel bleiben; Audit-Eintrag + Begründung Pflicht.</p>
+        <form method="post" action="/app?page=zeiterfassung-konto" class="dg-form">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="time_konto_action" value="correction">
+          <input type="hidden" name="contact_id" value="<?= $contactId ?>">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span class="dg-field-label">Datum</span>
+              <input type="date" name="work_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+            </label>
+            <label class="dg-field">
+              <span class="dg-field-label">Delta Minuten (+/−)</span>
+              <input type="number" name="delta_minutes" required step="1" min="-960" max="960" placeholder="z. B. 15 oder -30">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span class="dg-field-label">Begründung</span>
+              <input type="text" name="reason" required maxlength="500" minlength="5" placeholder="z. B. vergessen auszustempeln, Nachweis …">
+            </label>
+          </div>
+          <p class="dg-toolbar" style="margin-top:0.75rem">
+            <button type="submit" class="dg-button dg-button--primary">Korrektur buchen</button>
+          </p>
+        </form>
+      </section>
 
-    <section class="dg-panel">
-      <h2 class="dg-subsection-title">Überstunden abbauen</h2>
-      <p class="dg-field-hint">FIFO nach Ausgleichsfrist. Minijob / ohne overtime_allowed: gesperrt.</p>
-      <form method="post" action="/app?page=zeiterfassung-konto" class="dg-form">
-        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-        <input type="hidden" name="time_konto_action" value="reduce">
-        <input type="hidden" name="contact_id" value="<?= $contactId ?>">
-        <label class="dg-field">
-          <span class="dg-field-label">Minuten abbauen</span>
-          <input type="number" name="minutes" required min="1" max="6000" step="1">
-        </label>
-        <label class="dg-field">
-          <span class="dg-field-label">Begründung</span>
-          <input type="text" name="reason" required maxlength="500" minlength="5">
-        </label>
-        <button type="submit" class="dg-button dg-button--primary">Abbau buchen</button>
-      </form>
-    </section>
+      <section class="dg-panel">
+        <h2 class="dg-subsection-title">Überstunden abbauen</h2>
+        <p class="dg-field-hint">FIFO nach Ausgleichsfrist. Minijob / ohne overtime_allowed: gesperrt.</p>
+        <form method="post" action="/app?page=zeiterfassung-konto" class="dg-form">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="time_konto_action" value="reduce">
+          <input type="hidden" name="contact_id" value="<?= $contactId ?>">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span class="dg-field-label">Minuten abbauen</span>
+              <input type="number" name="minutes" required min="1" max="6000" step="1">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span class="dg-field-label">Begründung</span>
+              <input type="text" name="reason" required maxlength="500" minlength="5">
+            </label>
+          </div>
+          <p class="dg-toolbar" style="margin-top:0.75rem">
+            <button type="submit" class="dg-button dg-button--primary">Abbau buchen</button>
+          </p>
+        </form>
+      </section>
+    </div>
 
     <?php if ($lots !== []) : ?>
       <section class="dg-panel">
