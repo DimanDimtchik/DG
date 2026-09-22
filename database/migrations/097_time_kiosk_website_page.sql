@@ -1,0 +1,3 @@
+-- Stempeluhr-Kiosk: Entwurf-Website-Seite (slug stempeluhr) per PHP-Nachzug.
+-- Kein Schema — Marker, damit MigrationRunner::runPending auf Alt-Instanzen
+-- TimeKioskService::ensureDraftWebsitePage() ausführt (siehe MigrationRunner).

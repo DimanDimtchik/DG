@@ -27,7 +27,8 @@ final class TimeKioskService
         if (!Database::isConfigured()) {
             return;
         }
-        MigrationRunner::runPending();
+        // Kein nested MigrationRunner::runPending() — Aufrufer (CRM/Bootstrap/MigrationRunner)
+        // hat Schema bereits nachgezogen; nested runPending kollidiert mit offenen PDO-Cursors.
         $existing = WebsitePageRepository::findBySlugAnyStatus(self::PAGE_SLUG);
         if ($existing !== null) {
             return;

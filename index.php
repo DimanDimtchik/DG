@@ -5199,6 +5199,10 @@ $legalProductsConfig = LegalProductSettings::config();
             if ($page === 'website-seiten') {
                 if (Database::isConfigured()) {
                     WebsiteFormRepository::ensureTables();
+                    try {
+                        TimeKioskService::ensureDraftWebsitePage((int) ($user->id ?? 0));
+                    } catch (Throwable) {
+                    }
                     $migratedPages = WebsiteFormRepository::migrateLegacyContactBlocksInPages($user->id);
                     if ($migratedPages > 0) {
                         Flash::set('success', $migratedPages . ' Seite(n): klassische Kontaktblöcke → Formulare umgestellt.');

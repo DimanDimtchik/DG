@@ -85,6 +85,15 @@ final class MigrationRunner
 
             self::$completedThisRequest = true;
 
+            // Z7: Stempeluhr-Website-Seite als Entwurf (auch Alt-Installationen)
+            try {
+                if (class_exists('TimeKioskService')) {
+                    TimeKioskService::ensureDraftWebsitePage();
+                }
+            } catch (Throwable) {
+                // Soft: Seite kann später per /stempeluhr nachgezogen werden
+            }
+
             return $count;
         } finally {
             self::$running = false;
