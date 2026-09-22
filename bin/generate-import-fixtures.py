@@ -163,32 +163,45 @@ def write_xlsx(path: Path, headers: list[str], rows: list[list[str]]) -> None:
 
 def contact_rows(source: str, people: list[dict]) -> tuple[list[str], list[list[str]]]:
     if source in ("excel", "other"):
-        h = ["Anrede", "Vorname", "Nachname", "E-Mail", "Telefon", "Login", "Rolle"]
-        r = [["Frau/Herr", p["first"], p["last"], p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Anrede", "Vorname", "Nachname", "Firma", "E-Mail", "Telefon", "Login", "Kundennummer", "Rolle"]
+        r = [
+            [
+                "Frau" if i % 2 == 0 else "Herr",
+                p["first"],
+                p["last"],
+                "",
+                p["email"],
+                p["phone"],
+                p["login"],
+                "",  # leer → CRM vergibt Nummernkreis Kundennummer (= Mitarbeiternummer)
+                "mitarbeiter",
+            ]
+            for i, p in enumerate(people)
+        ]
         return h, r
     if source == "outlook":
-        h = ["Given Name", "Family Name", "E-mail Address", "Business Phone", "Login", "Rolle"]
-        r = [[p["first"], p["last"], p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Given Name", "Family Name", "Company", "E-mail Address", "Business Phone", "Login", "Kundennummer", "Rolle"]
+        r = [[p["first"], p["last"], "", p["email"], p["phone"], p["login"], "", "mitarbeiter"] for p in people]
         return h, r
     if source == "google":
-        h = ["Given Name", "Family Name", "E-Mail", "Phone 1 - Value", "Login", "Rolle"]
-        r = [[p["first"], p["last"], p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Given Name", "Family Name", "Organization Name", "E-Mail", "Phone 1 - Value", "Login", "Kundennummer", "Rolle"]
+        r = [[p["first"], p["last"], "", p["email"], p["phone"], p["login"], "", "mitarbeiter"] for p in people]
         return h, r
     if source == "datev":
-        h = ["Vorname", "Nachname", "E-Mail", "Telefon", "Personalnummer", "Rolle"]
-        r = [[p["first"], p["last"], p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Vorname", "Nachname", "Firma", "E-Mail", "Telefon", "Login", "Mitarbeiternummer", "Rolle"]
+        r = [[p["first"], p["last"], "", p["email"], p["phone"], p["login"], "", "mitarbeiter"] for p in people]
         return h, r
     if source == "lexware":
-        h = ["Vorname", "Nachname", "E-Mail", "Telefon", "Benutzername", "Rolle"]
-        r = [[p["first"], p["last"], p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Vorname", "Nachname", "Firma", "E-Mail", "Telefon", "Benutzername", "Kundennummer", "Rolle"]
+        r = [[p["first"], p["last"], "", p["email"], p["phone"], p["login"], "", "mitarbeiter"] for p in people]
         return h, r
     if source == "sevdesk":
-        h = ["Vorname", "Nachname", "email", "Telefon", "Login", "Rolle"]
-        r = [[p["first"], p["last"], p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Vorname", "Nachname", "company", "email", "Telefon", "Login", "Kundennummer", "Rolle"]
+        r = [[p["first"], p["last"], "", p["email"], p["phone"], p["login"], "", "mitarbeiter"] for p in people]
         return h, r
     if source == "shiftbase":
-        h = ["Employee", "E-Mail", "Phone", "Personalnummer", "Rolle"]
-        r = [[f"{p['first']} {p['last']}", p["email"], p["phone"], p["login"], "mitarbeiter"] for p in people]
+        h = ["Employee", "Company", "E-Mail", "Phone", "Personalnummer", "Kundennummer", "Rolle"]
+        r = [[f"{p['first']} {p['last']}", "", p["email"], p["phone"], p["login"], "", "mitarbeiter"] for p in people]
         return h, r
     raise ValueError(source)
 

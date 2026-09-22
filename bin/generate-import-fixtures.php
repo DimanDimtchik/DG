@@ -210,47 +210,60 @@ function writeXlsx(string $path, array $headers, array $dataRows): void
  */
 function contactRowsForSource(string $source, array $roster): array
 {
+    $excelRows = [];
+    foreach ($roster as $i => $p) {
+        $excelRows[] = [
+            ($i % 2 === 0) ? 'Frau' : 'Herr',
+            $p['first'],
+            $p['last'],
+            '',
+            $p['email'],
+            $p['phone'],
+            $p['login'],
+            '',
+            'mitarbeiter',
+        ];
+    }
+
     return match ($source) {
         'excel', 'other' => [
-            ['Anrede', 'Vorname', 'Nachname', 'E-Mail', 'Telefon', 'Login', 'Rolle'],
-            array_map(static fn (array $p): array => [
-                'Frau/Herr', $p['first'], $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
-            ], $roster),
+            ['Anrede', 'Vorname', 'Nachname', 'Firma', 'E-Mail', 'Telefon', 'Login', 'Kundennummer', 'Rolle'],
+            $excelRows,
         ],
         'outlook' => [
-            ['Given Name', 'Family Name', 'E-mail Address', 'Business Phone', 'Login', 'Rolle'],
+            ['Given Name', 'Family Name', 'Company', 'E-mail Address', 'Business Phone', 'Login', 'Kundennummer', 'Rolle'],
             array_map(static fn (array $p): array => [
-                $p['first'], $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
+                $p['first'], $p['last'], '', $p['email'], $p['phone'], $p['login'], '', 'mitarbeiter',
             ], $roster),
         ],
         'google' => [
-            ['Given Name', 'Family Name', 'E-Mail', 'Phone 1 - Value', 'Login', 'Rolle'],
+            ['Given Name', 'Family Name', 'Organization Name', 'E-Mail', 'Phone 1 - Value', 'Login', 'Kundennummer', 'Rolle'],
             array_map(static fn (array $p): array => [
-                $p['first'], $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
+                $p['first'], $p['last'], '', $p['email'], $p['phone'], $p['login'], '', 'mitarbeiter',
             ], $roster),
         ],
         'datev' => [
-            ['Vorname', 'Nachname', 'E-Mail', 'Telefon', 'Personalnummer', 'Rolle'],
+            ['Vorname', 'Nachname', 'Firma', 'E-Mail', 'Telefon', 'Login', 'Mitarbeiternummer', 'Rolle'],
             array_map(static fn (array $p): array => [
-                $p['first'], $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
+                $p['first'], $p['last'], '', $p['email'], $p['phone'], $p['login'], '', 'mitarbeiter',
             ], $roster),
         ],
         'lexware' => [
-            ['Vorname', 'Nachname', 'E-Mail', 'Telefon', 'Benutzername', 'Rolle'],
+            ['Vorname', 'Nachname', 'Firma', 'E-Mail', 'Telefon', 'Benutzername', 'Kundennummer', 'Rolle'],
             array_map(static fn (array $p): array => [
-                $p['first'], $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
+                $p['first'], $p['last'], '', $p['email'], $p['phone'], $p['login'], '', 'mitarbeiter',
             ], $roster),
         ],
         'sevdesk' => [
-            ['Vorname', 'Nachname', 'email', 'Telefon', 'Login', 'Rolle'],
+            ['Vorname', 'Nachname', 'company', 'email', 'Telefon', 'Login', 'Kundennummer', 'Rolle'],
             array_map(static fn (array $p): array => [
-                $p['first'], $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
+                $p['first'], $p['last'], '', $p['email'], $p['phone'], $p['login'], '', 'mitarbeiter',
             ], $roster),
         ],
         'shiftbase' => [
-            ['Employee', 'E-Mail', 'Phone', 'Personalnummer', 'Rolle'],
+            ['Employee', 'Company', 'E-Mail', 'Phone', 'Personalnummer', 'Kundennummer', 'Rolle'],
             array_map(static fn (array $p): array => [
-                $p['first'] . ' ' . $p['last'], $p['email'], $p['phone'], $p['login'], 'mitarbeiter',
+                $p['first'] . ' ' . $p['last'], '', $p['email'], $p['phone'], $p['login'], '', 'mitarbeiter',
             ], $roster),
         ],
         default => throw new InvalidArgumentException('Unbekannte Quelle: ' . $source),

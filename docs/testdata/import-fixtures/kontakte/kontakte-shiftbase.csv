@@ -1,13 +1,13 @@
-﻿Employee;E-Mail;Phone;Personalnummer;Rolle
-Anna Duplikat;anna.duplikat@demo-import.ganz-om.invalid;030 1000 2000;demo-dup-01;mitarbeiter
-Bernd Doppel;bernd.doppel@demo-import.ganz-om.invalid;030 1001 2001;demo-dup-02;mitarbeiter
-Clara Fischer;clara.fischer@demo-import.ganz-om.invalid;030 1002 2002;demo-ma-03;mitarbeiter
-David Hoffmann;david.hoffmann@demo-import.ganz-om.invalid;030 1003 2003;demo-ma-04;mitarbeiter
-Elena Jung;elena.jung@demo-import.ganz-om.invalid;030 1004 2004;demo-ma-05;mitarbeiter
-Felix Keller;felix.keller@demo-import.ganz-om.invalid;030 1005 2005;demo-ma-06;mitarbeiter
-Greta Lange;greta.lange@demo-import.ganz-om.invalid;030 1006 2006;demo-ma-07;mitarbeiter
-Hans Meier;hans.meier@demo-import.ganz-om.invalid;030 1007 2007;demo-ma-08;mitarbeiter
-Ina Neumann;ina.neumann@demo-import.ganz-om.invalid;030 1008 2008;demo-ma-09;mitarbeiter
-Jonas Otto;jonas.otto@demo-import.ganz-om.invalid;030 1009 2009;demo-ma-10;mitarbeiter
-Karla Peters;karla.peters@demo-import.ganz-om.invalid;030 1010 2010;demo-ma-11;mitarbeiter
-Leon Richter;leon.richter@demo-import.ganz-om.invalid;030 1011 2011;demo-ma-12;mitarbeiter
+﻿Employee;Company;E-Mail;Phone;Personalnummer;Kundennummer;Rolle
+Anna Duplikat;;anna.duplikat@demo-import.ganz-om.invalid;030 1000 2000;demo-dup-01;;mitarbeiter
+Bernd Doppel;;bernd.doppel@demo-import.ganz-om.invalid;030 1001 2001;demo-dup-02;;mitarbeiter
+Clara Fischer;;clara.fischer@demo-import.ganz-om.invalid;030 1002 2002;demo-ma-03;;mitarbeiter
+David Hoffmann;;david.hoffmann@demo-import.ganz-om.invalid;030 1003 2003;demo-ma-04;;mitarbeiter
+Elena Jung;;elena.jung@demo-import.ganz-om.invalid;030 1004 2004;demo-ma-05;;mitarbeiter
+Felix Keller;;felix.keller@demo-import.ganz-om.invalid;030 1005 2005;demo-ma-06;;mitarbeiter
+Greta Lange;;greta.lange@demo-import.ganz-om.invalid;030 1006 2006;demo-ma-07;;mitarbeiter
+Hans Meier;;hans.meier@demo-import.ganz-om.invalid;030 1007 2007;demo-ma-08;;mitarbeiter
+Ina Neumann;;ina.neumann@demo-import.ganz-om.invalid;030 1008 2008;demo-ma-09;;mitarbeiter
+Jonas Otto;;jonas.otto@demo-import.ganz-om.invalid;030 1009 2009;demo-ma-10;;mitarbeiter
+Karla Peters;;karla.peters@demo-import.ganz-om.invalid;030 1010 2010;demo-ma-11;;mitarbeiter
+Leon Richter;;leon.richter@demo-import.ganz-om.invalid;030 1011 2011;demo-ma-12;;mitarbeiter

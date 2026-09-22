@@ -749,8 +749,10 @@ final class ContactRepository
         $role = CrmRole::normalize((string) ($fields['contact_role'] ?? ''));
         $isCustomer = in_array($role, ['dg_kunde', 'kunde'], true);
         $isSupplier = $role === 'lieferant';
+        $isStaff = in_array($role, ['dg_eigenmitarbeiter', 'administrator', 'mitarbeiter'], true);
 
-        if ($isCustomer && trim((string) ($fields['customer_number'] ?? '')) === '') {
+        // Kundennummer-Feld: Kunden + Mitarbeiter (dort = Mitarbeiternummer)
+        if (($isCustomer || $isStaff) && trim((string) ($fields['customer_number'] ?? '')) === '') {
             try {
                 $fields['customer_number'] = NumberRangeSettings::allocateNext('customer', true)['number'];
             } catch (Throwable) {

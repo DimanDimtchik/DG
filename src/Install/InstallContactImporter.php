@@ -84,7 +84,10 @@ final class InstallContactImporter
             'display_name' => ['anzeigename', 'display_name', 'name', 'mitarbeiter', 'employee', 'full_name'],
             'email' => ['email', 'e_mail', 'mail'],
             'phone_1' => ['telefon', 'phone', 'phone_1', 'tel'],
-            'customer_number' => ['kundennummer', 'customer_number', 'kdnr'],
+            'customer_number' => [
+                'kundennummer', 'customer_number', 'kdnr',
+                'mitarbeiternummer', 'mitarbeiter_nr', 'employee_number', 'personal_nr',
+            ],
             'supplier_number' => ['lieferantennummer', 'supplier_number', 'liefnr'],
             'tax_number' => ['steuernummer', 'tax_number'],
             'vat_id' => ['ust_idnr', 'ust_id', 'vat_id', 'ustid'],
@@ -159,6 +162,11 @@ final class InstallContactImporter
                     $roleRaw = $defaultRole;
                 }
                 $role = self::normalizeRoleInput($roleRaw);
+
+                // Eigenmitarbeiter / Mitarbeiter: leere Firma → eigener Firmenname aus Einstellungen
+                if ($companyName === '' && ContactRepository::isStaffContactRole($role)) {
+                    $companyName = CompanySettings::displayName();
+                }
 
                 $payload = [
                     'salutation' => $salutation,

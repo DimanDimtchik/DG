@@ -34,6 +34,10 @@ Beide Skripte erzeugen denselben Inhalt unter `docs/testdata/import-fixtures/`.
 
 Rolle in den Dateien: `mitarbeiter`. Domain jeweils `@demo-import.ganz-om.invalid`.
 
+**Firma:** Spalte bewusst leer. Beim Import von Mitarbeiter-Rollen setzt das CRM den Firmennamen aus **Einstellungen → Firma** (`CompanySettings`), sofern dort gesetzt.
+
+**Kundennummer / Mitarbeiternummer:** Spalte bewusst leer. Beim Speichern vergibt das CRM automatisch die nächste Nummer aus dem Nummernkreis **Kundennummer** (gleiches Feld wie für Kunden).
+
 ## Erwartete Zähler (Kontakte)
 
 | Schritt | Datei | Quellsystem | on_duplicate | Erwartung |
@@ -88,6 +92,7 @@ Voraussetzung: eingeloggt als Admin/HR mit Kontakt-Import und Stunden-Import (`c
 1. **Kontakte** → „Kontakte aus Datei importieren“.
 2. Quellsystem **Excel**, Datei `00-seed-duplikate.csv`, Rolle **Mitarbeiter**, **Rolle erzwingen**, bei Duplikat **Überspringen** → Import → erwarten **2** neu.
 3. Dieselbe UI: `kontakte-excel.csv`, wieder **Überspringen** → erwarten **10** imported, **2** duplicates (Anna/Bernd).
+   Bereits importierte MA mit leerer Firma: erneut mit **„nur leere Felder füllen“** importieren (dann Firmenname aus Einstellungen).
 4. Optional Format-Test (je eine Datei, Quellsystem Excel): `.txt`, `.xlsx`, `.xml`, `.json` — nach Löschen der 10 `demo-ma-*` oder auf frischer DB; bei bereits vorhandenen 12er: nur Duplikate.
 5. Optional Quellen-CSVs: jeweils passendes Quellsystem wählen (`outlook`, `google`, …).
 
