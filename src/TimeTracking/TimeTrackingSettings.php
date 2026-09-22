@@ -24,6 +24,10 @@ final class TimeTrackingSettings
             'arbzg_max_weekly_hours' => 48,
             'overtime_reminder_enabled' => true,
             'overtime_reminder_email' => true,
+            // Kiosk-Abwesenheit: Urlaub/Krankheit immer; Rest optional
+            'absence_enable_ot_comp' => true,
+            'absence_enable_unpaid_leave' => true,
+            'absence_enable_special_leave' => true,
             // Z5b Rückstellungen (Konten = Vorschlag — mit Steuerberater prüfen)
             'provision_daily_cost' => 0.0,
             'provision_cost_method' => 'workdays_260',
@@ -61,6 +65,9 @@ final class TimeTrackingSettings
             'arbzg_max_weekly_hours' => max(1, min(168, (int) ($stored['arbzg_max_weekly_hours'] ?? $defaults['arbzg_max_weekly_hours']))),
             'overtime_reminder_enabled' => !empty($stored['overtime_reminder_enabled'] ?? $defaults['overtime_reminder_enabled']),
             'overtime_reminder_email' => !empty($stored['overtime_reminder_email'] ?? $defaults['overtime_reminder_email']),
+            'absence_enable_ot_comp' => !empty($stored['absence_enable_ot_comp'] ?? $defaults['absence_enable_ot_comp']),
+            'absence_enable_unpaid_leave' => !empty($stored['absence_enable_unpaid_leave'] ?? $defaults['absence_enable_unpaid_leave']),
+            'absence_enable_special_leave' => !empty($stored['absence_enable_special_leave'] ?? $defaults['absence_enable_special_leave']),
             'provision_daily_cost' => self::normalizeMoney($stored['provision_daily_cost'] ?? $defaults['provision_daily_cost']),
             'provision_cost_method' => $method,
             'provision_social_factor' => self::normalizeFactor($stored['provision_social_factor'] ?? $defaults['provision_social_factor']),
@@ -92,6 +99,28 @@ final class TimeTrackingSettings
     public static function otPayoutReserveMinutes(): int
     {
         return max(0, (int) (self::config()['ot_payout_reserve_minutes'] ?? 0));
+    }
+
+    /**
+     * Typen für Stempeluhr-Abwesenheit (Urlaub/Krankheit immer).
+     *
+     * @return list<string>
+     */
+    public static function enabledAbsenceTypesForKiosk(): array
+    {
+        $cfg = self::config();
+        $types = ['vacation', 'sick'];
+        if (!empty($cfg['absence_enable_ot_comp'])) {
+            $types[] = 'ot_comp';
+        }
+        if (!empty($cfg['absence_enable_unpaid_leave'])) {
+            $types[] = 'unpaid_leave';
+        }
+        if (!empty($cfg['absence_enable_special_leave'])) {
+            $types[] = 'special_leave';
+        }
+
+        return $types;
     }
 
     /**
@@ -127,6 +156,9 @@ final class TimeTrackingSettings
             'arbzg_max_weekly_hours' => max(1, min(168, (int) ($input['arbzg_max_weekly_hours'] ?? 48))),
             'overtime_reminder_enabled' => !empty($input['overtime_reminder_enabled']),
             'overtime_reminder_email' => !empty($input['overtime_reminder_email']),
+            'absence_enable_ot_comp' => !empty($input['absence_enable_ot_comp']),
+            'absence_enable_unpaid_leave' => !empty($input['absence_enable_unpaid_leave']),
+            'absence_enable_special_leave' => !empty($input['absence_enable_special_leave']),
             'provision_daily_cost' => self::normalizeMoney($input['provision_daily_cost'] ?? 0),
             'provision_cost_method' => $method,
             'provision_social_factor' => self::normalizeFactor($input['provision_social_factor'] ?? 1),

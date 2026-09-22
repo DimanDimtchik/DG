@@ -200,6 +200,7 @@ spl_autoload_register(static function (string $class): void {
         'TimeShiftAssignmentRepository' => '/src/TimeTracking/TimeShiftAssignmentRepository.php',
         'TimeVacationEntitlementRepository' => '/src/TimeTracking/TimeVacationEntitlementRepository.php',
         'TimeAbsenceRepository' => '/src/TimeTracking/TimeAbsenceRepository.php',
+        'TimeAbsenceEvidenceStorage' => '/src/TimeTracking/TimeAbsenceEvidenceStorage.php',
         'TimeVacationService' => '/src/TimeTracking/TimeVacationService.php',
         'TimeAbsenceService' => '/src/TimeTracking/TimeAbsenceService.php',
         'TimeProvisionService' => '/src/TimeTracking/TimeProvisionService.php',

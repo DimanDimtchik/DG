@@ -123,7 +123,11 @@ final class TimeMonthReportService
                 $dayWarnings[] = 'ArbZG: >10 h (Soft)';
             }
             if ($scheduleSource === 'absence') {
-                $dayWarnings[] = 'Abwesenheit: ' . ($absenceLabel !== '' ? $absenceLabel : 'genehmigt') . ' (Soll 0)';
+                if ($absenceType === 'ot_comp') {
+                    $dayWarnings[] = 'Überstundenabbau (Ist aus Zeitkonto)';
+                } else {
+                    $dayWarnings[] = 'Abwesenheit: ' . ($absenceLabel !== '' ? $absenceLabel : 'genehmigt') . ' (Soll 0)';
+                }
             } elseif (
                 $scheduleSource === 'shift'
                 && $scheduled > 0

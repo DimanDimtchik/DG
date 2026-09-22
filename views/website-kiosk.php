@@ -7,7 +7,9 @@
  * @var array{state: string, label: string, since_display?: string|null}|null $kioskStatus
  * @var string|null $kioskFlash
  * @var string $kioskFlashType
- * @var string $kioskView  login|clock|forgot
+ * @var string $kioskView  login|clock|forgot|absence|absence_form
+ * @var list<string> $kioskAbsenceTypes
+ * @var string $kioskAbsenceType
  */
 $session = $kioskSession ?? null;
 $summary = is_array($kioskSummary ?? null) ? $kioskSummary : [];
@@ -17,6 +19,8 @@ $flashType = (string) ($kioskFlashType ?? 'info');
 $view = (string) ($kioskView ?? ($session ? 'clock' : 'login'));
 $state = (string) ($status['state'] ?? 'off');
 $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
+$absenceTypes = is_array($kioskAbsenceTypes ?? null) ? $kioskAbsenceTypes : TimeTrackingSettings::enabledAbsenceTypesForKiosk();
+$absenceType = (string) ($kioskAbsenceType ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -33,7 +37,8 @@ $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
     h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
     .lead { color: var(--k-muted); margin: 0 0 1.25rem; font-size: .95rem; }
     label { display: block; margin: .75rem 0 .35rem; font-size: .9rem; color: var(--k-muted); }
-    input { width: 100%; padding: .85rem 1rem; border-radius: .5rem; border: 1px solid #334155; background: #0f172a; color: var(--k-text); font-size: 1.15rem; }
+    input, textarea { width: 100%; padding: .85rem 1rem; border-radius: .5rem; border: 1px solid #334155; background: #0f172a; color: var(--k-text); font-size: 1.15rem; }
+    textarea { min-height: 4.5rem; resize: vertical; font-size: 1rem; }
     .actions { display: flex; flex-direction: column; gap: .75rem; margin-top: 1.25rem; }
     button, .btn { appearance: none; border: 0; border-radius: .6rem; padding: 1rem 1.1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; display: block; color: #0f172a; background: var(--k-accent); }
     button.secondary, .btn.secondary { background: #475569; color: #fff; }
@@ -48,6 +53,8 @@ $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
     .muted { color: var(--k-muted); font-size: .85rem; margin-top: 1rem; }
     .links { margin-top: 1rem; text-align: center; }
     .links a { color: var(--k-accent); }
+    .form-row { display: flex; gap: .75rem; }
+    .form-row > label { flex: 1; margin-top: .75rem; }
   </style>
 </head>
 <body>
@@ -73,6 +80,56 @@ $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
         </div>
       </form>
       <p class="muted">HR erhält eine E-Mail und kann die Anfrage erlauben oder blockieren. Danach bekommen Sie einen Link zur neuen PIN.</p>
+
+    <?php elseif ($session && $view === 'absence') : ?>
+      <p class="status"><?= View::escape((string) ($session['label'] ?? '')) ?> — Abwesenheit</p>
+      <p class="muted">Bitte Art wählen:</p>
+      <div class="actions">
+        <?php foreach ($absenceTypes as $t) : ?>
+          <a class="btn" href="/stempeluhr?view=absence_form&amp;type=<?= rawurlencode((string) $t) ?>">
+            <?= View::escape(TimeAbsenceService::typeLabel((string) $t)) ?>
+          </a>
+        <?php endforeach; ?>
+        <a class="btn secondary" href="/stempeluhr">Zurück</a>
+      </div>
+
+    <?php elseif ($session && $view === 'absence_form') : ?>
+      <p class="status">
+        <?= View::escape((string) ($session['label'] ?? '')) ?> —
+        <?= View::escape(TimeAbsenceService::typeLabel($absenceType)) ?>
+      </p>
+      <form method="post" action="/stempeluhr" enctype="multipart/form-data">
+        <input type="hidden" name="kiosk_action" value="absence_request">
+        <input type="hidden" name="type" value="<?= View::escape($absenceType) ?>">
+        <div class="form-row">
+          <label>
+            Von
+            <input type="date" name="date_from" required>
+          </label>
+          <label>
+            Bis
+            <input type="date" name="date_to" required>
+          </label>
+        </div>
+        <label for="reason">Grund</label>
+        <textarea id="reason" name="reason" required maxlength="500" placeholder="Kurz begründen"></textarea>
+        <?php if ($absenceType === 'vacation') : ?>
+          <label style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
+            <input type="checkbox" name="half_day" value="1" style="width:auto">
+            Halber Tag (gleiches Von/Bis)
+          </label>
+        <?php endif; ?>
+        <?php if (TimeAbsenceEvidenceStorage::allowsEvidence($absenceType)) : ?>
+          <label for="evidence">Nachweis (optional) — Foto/Scan/PDF</label>
+          <input id="evidence" type="file" name="evidence[]" accept=".jpg,.jpeg,.png,.webp,.pdf,image/*,application/pdf" multiple>
+          <p class="muted" style="margin-top:.35rem">z. B. Attest fotografieren. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.</p>
+        <?php endif; ?>
+        <div class="actions">
+          <button type="submit" class="ok">Beantragen</button>
+          <a class="btn secondary" href="/stempeluhr?view=absence">Zurück</a>
+        </div>
+      </form>
+      <p class="muted">Antrag geht an HR zur Bestätigung<?= $absenceType === 'ot_comp' ? '. Bei Freigabe: Abbuchung vom Zeitkonto → Ist-Stunden.' : '.' ?></p>
 
     <?php elseif ($session) : ?>
       <p class="status">
@@ -111,6 +168,7 @@ $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
             <button type="submit" class="ok">Pause beenden</button>
           </form>
         <?php endif; ?>
+        <a class="btn secondary" href="/stempeluhr?view=absence">Abwesenheit</a>
         <form method="post" action="/stempeluhr">
           <input type="hidden" name="kiosk_action" value="logout">
           <button type="submit" class="secondary">Abmelden</button>

@@ -109,6 +109,33 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
   </section>
 
   <section class="dg-form-section">
+    <h3 class="dg-subsection-title">Abwesenheit an der Stempeluhr</h3>
+    <p class="dg-field-hint">
+      Unter <code>/stempeluhr</code> können Mitarbeiter Abwesenheit beantragen.
+      <strong>Urlaub</strong> und <strong>Krankheit</strong> sind immer verfügbar.
+      Die übrigen Typen können Sie abschalten.
+    </p>
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="absence_enable_ot_comp" value="1"<?= !empty($settings['absence_enable_ot_comp']) ? ' checked' : '' ?>>
+        Überstundenabbau anbieten
+      </span>
+    </label>
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="absence_enable_unpaid_leave" value="1"<?= !empty($settings['absence_enable_unpaid_leave']) ? ' checked' : '' ?>>
+        Unbezahlten Urlaub anbieten
+      </span>
+    </label>
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="absence_enable_special_leave" value="1"<?= !empty($settings['absence_enable_special_leave']) ? ' checked' : '' ?>>
+        Sonderurlaub anbieten
+      </span>
+    </label>
+  </section>
+
+  <section class="dg-form-section">
     <h3 class="dg-subsection-title">Rückstellungen (Z5b) — Vorschlag mit Steuerberater prüfen</h3>
     <p class="dg-field-hint">
       Konten und Faktoren für die Preview unter

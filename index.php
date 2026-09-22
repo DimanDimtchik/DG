@@ -131,9 +131,12 @@ if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
     $kioskFlash = null;
     $kioskFlashType = 'info';
     $kioskView = trim((string) ($_GET['view'] ?? ''));
-    if ($kioskView !== 'forgot') {
+    $allowedViews = ['forgot', 'absence', 'absence_form'];
+    if (!in_array($kioskView, $allowedViews, true)) {
         $kioskView = '';
     }
+    $kioskAbsenceType = trim((string) ($_GET['type'] ?? $_POST['type'] ?? ''));
+    $kioskAbsenceTypes = TimeTrackingSettings::enabledAbsenceTypesForKiosk();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string) ($_POST['kiosk_action'] ?? '');
@@ -156,12 +159,32 @@ if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
                 $kioskFlash = 'Wenn der Mitarbeiter bekannt ist, wurde die Personalabteilung benachrichtigt.';
                 $kioskFlashType = 'success';
                 $kioskView = '';
+            } elseif ($action === 'absence_request') {
+                $sess = TimeKioskService::currentSession();
+                if ($sess === null) {
+                    throw new RuntimeException('Bitte zuerst anmelden.');
+                }
+                $res = TimeAbsenceService::requestFromKiosk(
+                    (int) ($sess['contact_id'] ?? 0),
+                    (string) ($_POST['type'] ?? ''),
+                    (string) ($_POST['date_from'] ?? ''),
+                    (string) ($_POST['date_to'] ?? ''),
+                    (string) ($_POST['reason'] ?? ''),
+                    !empty($_POST['half_day']),
+                    is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : []
+                );
+                $kioskFlash = $res['message'];
+                $kioskFlashType = 'success';
+                $kioskView = '';
             }
         } catch (Throwable $e) {
             $kioskFlash = $e->getMessage();
             $kioskFlashType = 'error';
             if ($action === 'forgot') {
                 $kioskView = 'forgot';
+            } elseif ($action === 'absence_request') {
+                $kioskView = 'absence_form';
+                $kioskAbsenceType = (string) ($_POST['type'] ?? $kioskAbsenceType);
             }
         }
     }
@@ -174,6 +197,11 @@ if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
         $kioskSummary = TimeClockService::daySummary($kioskSession['contact_id']);
         if ($kioskView === 'forgot') {
             $kioskView = 'clock';
+        } elseif ($kioskView === 'absence_form') {
+            if (!in_array($kioskAbsenceType, $kioskAbsenceTypes, true)) {
+                $kioskView = 'absence';
+                $kioskAbsenceType = '';
+            }
         } elseif ($kioskView === '') {
             $kioskView = 'clock';
         }
@@ -187,7 +215,9 @@ if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
         'kioskStatus',
         'kioskFlash',
         'kioskFlashType',
-        'kioskView'
+        'kioskView',
+        'kioskAbsenceTypes',
+        'kioskAbsenceType'
     ));
     exit;
 }
@@ -3858,7 +3888,8 @@ switch ($path) {
                         (string) ($_POST['reason'] ?? ''),
                         trim((string) ($_POST['document_ref'] ?? '')) !== ''
                             ? (string) $_POST['document_ref']
-                            : null
+                            : null,
+                        is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : []
                     );
                     Flash::set('success', $res['message']);
                 } elseif ($absAction === 'cancel') {
@@ -3875,7 +3906,8 @@ switch ($path) {
                         trim((string) ($_POST['document_ref'] ?? '')) !== ''
                             ? (string) $_POST['document_ref']
                             : null,
-                        !empty($_POST['half_day'])
+                        !empty($_POST['half_day']),
+                        is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : []
                     );
                     Flash::set('success', $res['message']);
                 } elseif ($absAction === 'approve') {
@@ -5835,6 +5867,16 @@ $legalProductsConfig = LegalProductSettings::config();
             $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-abwesenheit' && MenuRegistry::canAccess($user, 'zeiterfassung-abwesenheit')) {
             MigrationRunner::runPending();
+            $attDl = (int) ($_GET['download_attachment'] ?? 0);
+            if ($attDl > 0) {
+                try {
+                    TimeAbsenceEvidenceStorage::sendDownload($user, $attDl);
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=zeiterfassung-abwesenheit', true, 302);
+                    exit;
+                }
+            }
             $timeAbsCanTeam = TimeClockService::canViewTeam($user);
             $timeAbsYearMonth = TimeMonthReportService::normalizeYearMonth(
                 isset($_GET['month']) ? (string) $_GET['month'] : null
@@ -5865,6 +5907,18 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
                 $timeAbsCalendar = TimeAbsenceService::monthCalendar($timeAbsYearMonth, $timeAbsStaffOptions);
             }
+            $absIdsForAtt = [];
+            foreach ($timeAbsOwnList as $row) {
+                if (is_array($row)) {
+                    $absIdsForAtt[] = (int) ($row['id'] ?? 0);
+                }
+            }
+            foreach ($timeAbsPending as $row) {
+                if (is_array($row)) {
+                    $absIdsForAtt[] = (int) ($row['id'] ?? 0);
+                }
+            }
+            $timeAbsAttachments = TimeAbsenceEvidenceStorage::mapForAbsences($absIdsForAtt);
             $contentTemplate = 'modules/zeiterfassung-abwesenheit';
             $title = 'Abwesenheit';
             $currentPage = 'zeiterfassung';
@@ -6637,6 +6691,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeAbsCanTeam = $timeAbsCanTeam ?? false;
         $timeAbsYearMonth = $timeAbsYearMonth ?? date('Y-m');
         $timeAbsCalendar = $timeAbsCalendar ?? null;
+        $timeAbsAttachments = $timeAbsAttachments ?? [];
         $timeProvisionYear = $timeProvisionYear ?? (int) date('Y');
         $timeProvisionPreview = $timeProvisionPreview ?? [];
         $timeProvisionConfig = $timeProvisionConfig ?? [];
@@ -7047,6 +7102,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeAbsCanTeam',
             'timeAbsYearMonth',
             'timeAbsCalendar',
+            'timeAbsAttachments',
             'timeProvisionYear',
             'timeProvisionPreview',
             'timeProvisionConfig',

@@ -196,10 +196,14 @@ final class TimeClockService
 
         $warnings = [];
         if ($scheduleSource === 'absence') {
-            $warnings[] = sprintf(
-                'Abwesenheit genehmigt (%s) — Soll 0 (Soft-Hinweis, Stempel nicht gesperrt).',
-                $absenceLabel !== '' ? $absenceLabel : 'Abwesenheit'
-            );
+            if ($absenceType === 'ot_comp') {
+                $warnings[] = 'Überstundenabbau — Ist aus Zeitkonto (Soll bleibt).';
+            } else {
+                $warnings[] = sprintf(
+                    'Abwesenheit genehmigt (%s) — Soll 0 (Soft-Hinweis, Stempel nicht gesperrt).',
+                    $absenceLabel !== '' ? $absenceLabel : 'Abwesenheit'
+                );
+            }
         } elseif ($scheduled < 1) {
             $warnings[] = 'Soll nicht hinterlegt (kein Tagesziel in Schicht/Stammdaten/Kalender).';
         }

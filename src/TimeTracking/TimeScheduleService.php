@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Zeiterfassung Z2b/Z3d/Z4e: Soll-Minuten pro Kontakt und Tag.
  *
- * Prio: genehmigte Abwesenheit (Soll 0) → Schicht → MA daily_work_minutes
+ * Prio: genehmigte Abwesenheit (Soll 0, außer ot_comp) → Schicht → MA daily_work_minutes
  * → working_hours → Kalender → 0.
  */
 final class TimeScheduleService
@@ -18,8 +18,21 @@ final class TimeScheduleService
             return 0;
         }
 
-        // Z4e: genehmigte Abwesenheit schlägt Schicht/Stammdaten/Kalender.
-        if (self::approvedAbsenceFor($contactId, $dateYmd) !== null) {
+        // Z4e: genehmigte Abwesenheit schlägt Schicht/Stammdaten/Kalender — außer Überstundenabbau (Ist aus Konto).
+        $absence = self::approvedAbsenceFor($contactId, $dateYmd);
+        if ($absence !== null && (string) ($absence['type'] ?? '') !== 'ot_comp') {
+            return 0;
+        }
+
+        return self::targetMinutesIgnoringAbsence($contactId, $dateYmd);
+    }
+
+    /**
+     * Soll ohne Abwesenheits-Nullung (Schicht → Stammdaten → Kalender).
+     */
+    public static function targetMinutesIgnoringAbsence(int $contactId, string $dateYmd): int
+    {
+        if ($contactId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
             return 0;
         }
 

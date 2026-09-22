@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 final class TimeAbsenceRepository
 {
-    public const TYPES = ['vacation', 'sick', 'other'];
+    public const TYPES = ['vacation', 'sick', 'other', 'ot_comp', 'unpaid_leave', 'special_leave'];
     public const STATUSES = ['requested', 'approved', 'rejected', 'cancelled'];
 
     public static function tableReady(): bool
