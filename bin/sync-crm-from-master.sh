@@ -27,6 +27,7 @@ EXCLUDES=(
   --exclude 'www/'
   --exclude 'wp-backup-archive/'
   --exclude 'klarwin/'
+  --exclude 'apps/'
 )
 
 sync_to() {

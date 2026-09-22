@@ -49,6 +49,12 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     exit;
 }
 
+// Mobile Apps JSON-API (ohne CRM-Session)
+if ($path === '/api/mobile' || str_starts_with($path, '/api/mobile/')) {
+    MobileApi::handle($path);
+    exit;
+}
+
 // Öffentliche Stempeluhr (Kiosk) — ohne CRM-Login, auch im Wartungsmodus
 if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
     if (!Database::isConfigured()) {

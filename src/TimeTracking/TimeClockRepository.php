@@ -14,6 +14,7 @@ final class TimeClockRepository
     public const SOURCE_AUTO_CLOSE = 'auto_close';
     public const SOURCE_IMPORT = 'import';
     public const SOURCE_KIOSK = 'kiosk';
+    public const SOURCE_MOBILE = 'mobile';
 
     /**
      * @return list<array<string, mixed>>

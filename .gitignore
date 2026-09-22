@@ -37,3 +37,10 @@ docs/Kontur-Cosmetics-Zugangsdaten.pdf
 # Local credential paste files (never commit)
 secrets/
 
+# Flutter
+apps/**/.dart_tool/
+apps/**/build/
+apps/**/.flutter-plugins
+apps/**/.flutter-plugins-dependencies
+apps/**/.packages
+

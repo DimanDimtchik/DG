@@ -266,6 +266,8 @@ final class MigrationRunner
             '099_time_correction_attachments.sql' => self::tableExists($pdo, 'dg_time_correction_attachments'),
             '100_time_absence_types.sql' => self::columnTypeAllows($pdo, 'dg_time_absences', 'type', 'ot_comp'),
             '101_time_absence_attachments.sql' => self::tableExists($pdo, 'dg_time_absence_attachments'),
+            '102_mobile_app_auth.sql' => self::tableExists($pdo, 'dg_mobile_customer_accounts')
+                && self::tableExists($pdo, 'dg_mobile_tokens'),
             default => false,
         };
     }
@@ -394,6 +396,7 @@ final class MigrationRunner
             '099_time_correction_attachments.sql' => true,
             '100_time_absence_types.sql' => true,
             '101_time_absence_attachments.sql' => true,
+            '102_mobile_app_auth.sql' => true,
         ];
     }
 
