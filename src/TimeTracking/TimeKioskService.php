@@ -372,7 +372,15 @@ final class TimeKioskService
         if ($byEmail !== null && self::isStaffRole($byEmail->contactRole)) {
             return $byEmail;
         }
-        // Personalnummer in employee_data
+        // Mitarbeiternummer = Feld customer_number bei Mitarbeiter-Kontakten
+        $byNumber = ContactRepository::findByCustomerNumber($identifier);
+        if ($byNumber !== null && self::isStaffRole($byNumber->contactRole)) {
+            return $byNumber;
+        }
+
+        $needle = self::normalizeIdent($identifier);
+        $lastNameHits = [];
+
         foreach (TimeMonthReportService::staffOptions() as $opt) {
             $id = (int) ($opt['id'] ?? 0);
             if ($id < 1) {
@@ -382,6 +390,10 @@ final class TimeKioskService
             if ($c === null) {
                 continue;
             }
+            $custNo = trim($c->customerNumber);
+            if ($custNo !== '' && strcasecmp($custNo, $identifier) === 0) {
+                return $c;
+            }
             $pnr = trim((string) ($c->employeeData['datev_personnel_number'] ?? ''));
             if ($pnr !== '' && strcasecmp($pnr, $identifier) === 0) {
                 return $c;
@@ -389,9 +401,41 @@ final class TimeKioskService
             if (strcasecmp(trim($c->listLabel()), $identifier) === 0) {
                 return $c;
             }
+            $full = self::normalizeIdent($c->firstName . ' ' . $c->lastName);
+            $rev = self::normalizeIdent($c->lastName . ' ' . $c->firstName);
+            $comma = self::normalizeIdent($c->lastName . ', ' . $c->firstName);
+            if ($needle !== '' && ($needle === $full || $needle === $rev || $needle === $comma)) {
+                return $c;
+            }
+            $last = self::normalizeIdent($c->lastName);
+            if ($last !== '' && $last === $needle) {
+                $lastNameHits[] = $c;
+            }
+        }
+
+        if (count($lastNameHits) === 1) {
+            return $lastNameHits[0];
+        }
+        if (count($lastNameHits) > 1) {
+            throw new InvalidArgumentException(
+                'Nachname nicht eindeutig — bitte Login, E-Mail oder Vor- und Nachname eingeben.'
+            );
         }
 
         return null;
+    }
+
+    private static function normalizeIdent(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (function_exists('mb_strtolower')) {
+            return mb_strtolower($value, 'UTF-8');
+        }
+
+        return strtolower($value);
     }
 
     private static function startSession(int $contactId): void

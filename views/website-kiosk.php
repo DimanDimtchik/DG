@@ -64,8 +64,9 @@ $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
     <?php if ($view === 'forgot') : ?>
       <form method="post" action="/stempeluhr">
         <input type="hidden" name="kiosk_action" value="forgot">
-        <label for="ident">Login, E-Mail oder Name</label>
+        <label for="ident">Login, E-Mail, Nachname oder Mitarbeiternummer</label>
         <input id="ident" name="identifier" required autocomplete="username" inputmode="email">
+        <p class="hint" style="font-size:.9rem;opacity:.85;margin:.25rem 0 .75rem">Auch nur Nachname möglich, wenn eindeutig.</p>
         <div class="actions">
           <button type="submit">PIN-Hilfe anfordern</button>
           <a class="btn secondary" href="/stempeluhr">Zurück</a>
@@ -119,7 +120,7 @@ $siteName = (string) (App::config('crm_name') ?: 'DG CRM');
     <?php else : ?>
       <form method="post" action="/stempeluhr">
         <input type="hidden" name="kiosk_action" value="login">
-        <label for="ident">Login, E-Mail oder Name</label>
+        <label for="ident">Login, E-Mail, Nachname oder Mitarbeiternummer</label>
         <input id="ident" name="identifier" required autocomplete="username">
         <label for="pin">PIN</label>
         <input id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="8" required autocomplete="current-password">
