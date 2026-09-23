@@ -121,6 +121,19 @@ final class WebsiteBootstrapService
             $result['stempeluhr_page'] = null;
         }
 
+        // Mobile Apps: Download-Seite /apps
+        try {
+            MobileAppDownloadService::ensureDraftWebsitePage($userId);
+            MobileAppDownloadService::ensureDownloadsDir();
+            $appsPage = WebsitePageRepository::findBySlugAnyStatus(MobileAppDownloadService::PAGE_SLUG);
+            $result['apps_page'] = $appsPage !== null
+                ? ['id' => (int) $appsPage['id'], 'slug' => MobileAppDownloadService::PAGE_SLUG, 'action' => 'ensured']
+                : null;
+            self::ensureAppsMenuItem();
+        } catch (Throwable) {
+            $result['apps_page'] = null;
+        }
+
         if ($homepage) {
             $existingHome = WebsitePageRepository::findBySlugAnyStatus('startseite');
             if ($existingHome === null || $overwrite) {
@@ -203,6 +216,7 @@ final class WebsiteBootstrapService
         $defaults = [
             ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             ['label' => 'Terminkalender', 'url' => '/terminkalender', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+            ['label' => 'Apps', 'url' => '/apps', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             ['label' => 'Kontakt', 'url' => '/kontakt', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             [
                 'label' => 'Rechtliches',
@@ -245,7 +259,7 @@ final class WebsiteBootstrapService
      */
     private static function mergePreservedMenuItems(array $defaults): array
     {
-        $reserved = ['/', '/terminkalender', '/kontakt', '#', '/impressum', '/datenschutz', '/agb', '/widerruf'];
+        $reserved = ['/', '/terminkalender', '/apps', '/kontakt', '#', '/impressum', '/datenschutz', '/agb', '/widerruf'];
         $menu = SettingsStore::get('website.menu', []);
         if (!is_array($menu)) {
             return $defaults;
@@ -294,6 +308,56 @@ final class WebsiteBootstrapService
             $items[] = ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []];
         }
         $insertAt = 1;
+        if ($insertAt > count($items)) {
+            $items[] = $entry;
+        } else {
+            array_splice($items, $insertAt, 0, [$entry]);
+        }
+        $menu['items'] = $items;
+        $menu['layout'] = self::preservedMenuLayoutFrom($menu);
+        $menu['breakpoint'] = self::preservedMenuBreakpointFrom($menu);
+        SettingsStore::set('website.menu', $menu);
+    }
+
+    /** Menüpunkt „Apps“ für bestehende Instanzen nachziehen (ohne doppelten Eintrag). */
+    private static function ensureAppsMenuItem(): void
+    {
+        $menu = SettingsStore::get('website.menu', []);
+        if (!is_array($menu)) {
+            $menu = [];
+        }
+        $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $url = rtrim((string) ($item['url'] ?? ''), '/');
+            if ($url === '/apps') {
+                return;
+            }
+        }
+
+        $entry = [
+            'label' => 'Apps',
+            'url' => '/apps',
+            'auth_only' => false,
+            'icon' => 'auto',
+            'children' => [],
+        ];
+        if ($items === []) {
+            $items[] = ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []];
+        }
+        // Nach Terminkalender, sonst nach Start
+        $insertAt = 1;
+        foreach ($items as $i => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            if (rtrim((string) ($item['url'] ?? ''), '/') === '/terminkalender') {
+                $insertAt = $i + 1;
+                break;
+            }
+        }
         if ($insertAt > count($items)) {
             $items[] = $entry;
         } else {

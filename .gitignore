@@ -44,3 +44,6 @@ apps/**/.flutter-plugins
 apps/**/.flutter-plugins-dependencies
 apps/**/.packages
 
+# App-APKs (groß) — auf Server unter downloads/ ablegen, nicht committen
+downloads/*.apk
+

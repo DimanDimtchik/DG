@@ -209,6 +209,7 @@ spl_autoload_register(static function (string $class): void {
         'MobileTokenRepository' => '/src/Mobile/MobileTokenRepository.php',
         'MobileAuthThrottle' => '/src/Mobile/MobileAuthThrottle.php',
         'MobileAuthService' => '/src/Mobile/MobileAuthService.php',
+        'MobileAppDownloadService' => '/src/Mobile/MobileAppDownloadService.php',
         'MobileApi' => '/src/Mobile/MobileApi.php',
         'MobileAuthApi' => '/src/Mobile/MobileAuthApi.php',
         'MobileCustomerApi' => '/src/Mobile/MobileCustomerApi.php',

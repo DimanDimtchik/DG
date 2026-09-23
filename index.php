@@ -26,6 +26,27 @@ if (preg_match('#^/media/training/([a-z0-9_-]+)/([a-z0-9_.-]+\.mp4)$#', $path, $
     exit;
 }
 
+// App-APKs unter /downloads/ — Datei fehlt: klare Meldung (existierende Dateien liefert Apache direkt)
+if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter)\.apk$#', $path, $apkMatch)) {
+    $apkFile = DG_ROOT . '/downloads/' . $apkMatch[1] . '.apk';
+    if (is_file($apkFile) && is_readable($apkFile)) {
+        header('Content-Type: application/vnd.android.package-archive');
+        header('Content-Length: ' . (string) filesize($apkFile));
+        header('Content-Disposition: attachment; filename="' . $apkMatch[1] . '.apk"');
+        header('Cache-Control: private, max-age=0');
+        readfile($apkFile);
+        exit;
+    }
+    http_response_code(404);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><title>App noch nicht hinterlegt</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem;">'
+        . '<h1>App noch nicht hinterlegt</h1>'
+        . '<p>Die Installationsdatei liegt noch nicht auf dem Server. Bitte wenden Sie sich an Ihre Firma oder versuchen Sie es später erneut.</p>'
+        . '<p><a href="/apps">Zurück zur App-Download-Seite</a></p>'
+        . '</body></html>';
+    exit;
+}
+
 if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     $previewUser = AuthService::user();
     if ($previewUser === null || !MenuRegistry::canAccess($previewUser, 'website-seiten')) {

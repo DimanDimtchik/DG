@@ -1,0 +1,3 @@
+-- Mobile-Apps: Website-Seite „Apps“ (Download Kalender + Mitarbeiter) per PHP-Nachzug.
+-- Kein Schema — Marker, damit MigrationRunner::runPending auf Alt-Instanzen
+-- MobileAppDownloadService::ensureDraftWebsitePage() ausführt (siehe MigrationRunner).

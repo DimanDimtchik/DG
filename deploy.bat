@@ -11,12 +11,12 @@ echo Deploying DG CRM to dg.ganz-om.de ...
 scp -o BatchMode=yes -i "%KEY%" index.php bootstrap.php .htaccess cron.php %HOST%:%DEST%/
 if errorlevel 1 goto fail
 
-for %%I in (assets config src views database bin) do (
+for %%I in (assets config src views database bin downloads) do (
     scp -o BatchMode=yes -i "%KEY%" -r %%I %HOST%:%DEST%/
     if errorlevel 1 goto fail
 )
 
-ssh -o BatchMode=yes -i "%KEY%" %HOST% "chmod -R a+rX %DEST%/assets"
+ssh -o BatchMode=yes -i "%KEY%" %HOST% "chmod -R a+rX %DEST%/assets %DEST%/downloads"
 if errorlevel 1 goto fail
 
 ssh -o BatchMode=yes -i "%KEY%" %HOST% "mkdir -p %DEST%/storage/contacts %DEST%/storage/logs %DEST%/storage/mail/sent %DEST%/storage/media && chmod +x %DEST%/bin/run-cron-purge-expired-employees.sh && sed -i 's/\\r$//' %DEST%/bin/run-cron-purge-expired-employees.sh"

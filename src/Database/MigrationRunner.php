@@ -94,6 +94,16 @@ final class MigrationRunner
                 // Soft: Seite kann später per /stempeluhr nachgezogen werden
             }
 
+            // Mobile Apps: Download-Seite /apps (auch Alt-Installationen)
+            try {
+                if (class_exists('MobileAppDownloadService')) {
+                    MobileAppDownloadService::ensureDraftWebsitePage();
+                    MobileAppDownloadService::ensureDownloadsDir();
+                }
+            } catch (Throwable) {
+                // Soft: Seite kann später per Website-Bootstrap nachgezogen werden
+            }
+
             return $count;
         } finally {
             self::$running = false;
