@@ -5232,6 +5232,113 @@ body.dg-login-page {
   height: 160px;
 }
 
+.dg-booking-qr-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+@media (max-width: 960px) {
+  .dg-booking-qr-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dg-booking-qr-fields .dg-radio {
+  display: block;
+  margin: 4px 0;
+}
+
+.dg-booking-qr-sub {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--dg-surface-2, #f8fafc);
+  border-radius: 8px;
+}
+
+.dg-booking-qr-center-preview img {
+  vertical-align: middle;
+  margin-left: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--dg-border, #e2e8f0);
+}
+
+.dg-booking-qr-emoji-input {
+  width: 4rem;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.dg-booking-qr-emoji-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dg-booking-qr-emoji-btn {
+  border: 1px solid var(--dg-border, #e2e8f0);
+  background: #fff;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.dg-booking-qr-preview-panel {
+  position: sticky;
+  top: 16px;
+  padding: 16px;
+  border: 1px solid var(--dg-border, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+}
+
+.dg-booking-qr-print-area {
+  display: inline-block;
+  margin: 8px auto 12px;
+}
+
+.dg-booking-qr-frame {
+  display: inline-block;
+  background: #fff;
+}
+
+.dg-booking-qr-caption {
+  margin: 12px 0 0;
+  font-weight: 600;
+}
+
+#dg-qr-status.is-error {
+  color: var(--dg-danger, #b91c1c);
+}
+
+#dg-qr-media-picker .dg-website-media-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+#dg-qr-media-picker .dg-website-media-picker__item {
+  border: 1px solid var(--dg-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+#dg-qr-media-picker .dg-website-media-picker__item img {
+  display: block;
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
 .dg-transfer-qr__img {
   width: 180px;
   height: 180px;
