@@ -18,15 +18,68 @@ final class MobileAppDownloadService
             return;
         }
         $existing = WebsitePageRepository::findBySlugAnyStatus(self::PAGE_SLUG);
-        if ($existing !== null) {
+        if ($existing === null) {
+            WebsitePageRepository::save([
+                'title' => 'Apps herunterladen',
+                'slug' => self::PAGE_SLUG,
+                'status' => WebsitePageRepository::STATUS_PUBLISHED,
+                'layout' => self::pageLayout(),
+            ], null, $userId);
+        }
+        self::ensureMenuItem();
+    }
+
+    /** Menüpunkt „Apps“ nachziehen (ohne Duplikat). */
+    public static function ensureMenuItem(): void
+    {
+        if (!Database::isConfigured()) {
             return;
         }
-        WebsitePageRepository::save([
-            'title' => 'Apps herunterladen',
-            'slug' => self::PAGE_SLUG,
-            'status' => WebsitePageRepository::STATUS_PUBLISHED,
-            'layout' => self::pageLayout(),
-        ], null, $userId);
+        $menu = SettingsStore::get('website.menu', []);
+        if (!is_array($menu)) {
+            $menu = [];
+        }
+        $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $url = rtrim((string) ($item['url'] ?? ''), '/');
+            if ($url === '/apps') {
+                return;
+            }
+        }
+
+        $entry = [
+            'label' => 'Apps',
+            'url' => '/apps',
+            'auth_only' => false,
+            'icon' => 'auto',
+            'children' => [],
+        ];
+        if ($items === []) {
+            $items[] = ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []];
+        }
+        $insertAt = 1;
+        foreach ($items as $i => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            if (rtrim((string) ($item['url'] ?? ''), '/') === '/terminkalender') {
+                $insertAt = $i + 1;
+                break;
+            }
+        }
+        if ($insertAt > count($items)) {
+            $items[] = $entry;
+        } else {
+            array_splice($items, $insertAt, 0, [$entry]);
+        }
+        $menu['items'] = $items;
+        if (!isset($menu['layout'])) {
+            $menu['layout'] = 'auto';
+        }
+        SettingsStore::set('website.menu', $menu);
     }
 
     /**
