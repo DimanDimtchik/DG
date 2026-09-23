@@ -59,44 +59,13 @@ $isEnabled = !empty($calendarEmbedConfig['online_booking_enabled']);
     <?php if ($publicUrl !== '') : ?>
       <div class="dg-booking-qr">
         <p class="dg-field-hint">QR-Code zur Buchungsseite — z.&nbsp;B. für Flyer, Schaufenster oder Empfang.</p>
-        <div id="dg-booking-qrcode" class="dg-booking-qr__canvas" data-qr-url="<?= View::escape($publicUrl) ?>"></div>
+        <div
+          id="dg-booking-qrcode"
+          class="dg-booking-qr__canvas"
+          data-qr-url="<?= View::escape($publicUrl) ?>"
+          aria-label="QR-Code zur Online-Terminbuchung"
+        >QR-Code wird erzeugt…</div>
       </div>
-      <script>
-      (function () {
-        function renderBookingQr() {
-          var node = document.getElementById('dg-booking-qrcode');
-          if (!node || node.dataset.qrRendered === '1' || typeof qrcode === 'undefined') {
-            return;
-          }
-          var url = node.getAttribute('data-qr-url') || '';
-          if (url === '') {
-            return;
-          }
-          if (qrcode.stringToBytesFuncs && qrcode.stringToBytesFuncs['UTF-8']) {
-            qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
-          }
-          try {
-            var qr = qrcode(0, 'M');
-            qr.addData(url, 'Byte');
-            qr.make();
-            var img = document.createElement('img');
-            img.src = qr.createDataURL(6, 12);
-            img.alt = 'QR-Code zur Online-Terminbuchung';
-            img.className = 'dg-booking-qr__img';
-            node.innerHTML = '';
-            node.appendChild(img);
-            node.dataset.qrRendered = '1';
-          } catch (e) {
-            node.textContent = 'QR-Code konnte nicht erzeugt werden.';
-          }
-        }
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', renderBookingQr);
-        } else {
-          renderBookingQr();
-        }
-      })();
-      </script>
     <?php endif; ?>
   </div>
 

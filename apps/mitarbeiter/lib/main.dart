@@ -8,6 +8,22 @@ void main() {
   runApp(const DgMitarbeiterApp());
 }
 
+String normalizeBaseUrl(String raw) {
+  var u = raw.trim();
+  if (u.isEmpty) {
+    throw ArgumentError('CRM-Adresse fehlt.');
+  }
+  if (!u.contains('://')) {
+    u = 'https://$u';
+  }
+  u = u.replaceAll(RegExp(r'/+$'), '');
+  final parsed = Uri.tryParse(u);
+  if (parsed == null || !parsed.hasScheme || parsed.host.isEmpty) {
+    throw ArgumentError('Ungültige CRM-Adresse. Beispiel: https://dg.ganz-om.de');
+  }
+  return u;
+}
+
 class DgMitarbeiterApp extends StatelessWidget {
   const DgMitarbeiterApp({super.key});
 
@@ -25,13 +41,16 @@ class DgMitarbeiterApp extends StatelessWidget {
 }
 
 class ApiClient {
-  ApiClient(this.baseUrl, {this.token});
-  String baseUrl;
+  ApiClient(String baseUrl, {this.token}) : baseUrl = normalizeBaseUrl(baseUrl);
+  final String baseUrl;
   String? token;
 
-  Uri _u(String path, [Map<String, String>? q]) =>
-      Uri.parse('${baseUrl.replaceAll(RegExp(r'/+$'), '')}$path')
-          .replace(queryParameters: q);
+  Uri _u(String path, [Map<String, String>? q]) {
+    final base = Uri.parse(baseUrl);
+    final uri = base.replace(path: '${base.path.replaceAll(RegExp(r'/+$'), '')}$path');
+    if (q == null || q.isEmpty) return uri;
+    return uri.replace(queryParameters: q);
+  }
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
@@ -69,14 +88,24 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    _url.text = p.getString('base_url') ?? '';
+    var saved = p.getString('base_url') ?? '';
     final token = p.getString('token');
+    if (saved.isNotEmpty) {
+      try {
+        saved = normalizeBaseUrl(saved);
+        await p.setString('base_url', saved);
+      } catch (_) {
+        saved = '';
+        await p.remove('base_url');
+      }
+    }
+    _url.text = saved;
     setState(() => _loading = false);
-    if (_url.text.isNotEmpty && token != null && token.isNotEmpty) {
+    if (saved.isNotEmpty && token != null && token.isNotEmpty) {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => ShellPage(client: ApiClient(_url.text, token: token)),
+          builder: (_) => ShellPage(client: ApiClient(saved, token: token)),
         ),
       );
     }
@@ -105,12 +134,24 @@ class _BootstrapPageState extends State<BootstrapPage> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () async {
-                final p = await SharedPreferences.getInstance();
-                await p.setString('base_url', _url.text.trim());
-                if (!context.mounted) return;
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => LoginPage(baseUrl: _url.text.trim())),
-                );
+                try {
+                  final normalized = normalizeBaseUrl(_url.text);
+                  final p = await SharedPreferences.getInstance();
+                  await p.setString('base_url', normalized);
+                  if (!context.mounted) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => LoginPage(baseUrl: normalized)),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        e.toString().replaceFirst('Invalid argument(s): ', ''),
+                      ),
+                    ),
+                  );
+                }
               },
               child: const Text('Weiter'),
             ),
@@ -151,17 +192,17 @@ class _LoginPageState extends State<LoginPage> {
       }
       final token = (res['data'] as Map)['token'] as String;
       final p = await SharedPreferences.getInstance();
-      await p.setString('base_url', widget.baseUrl);
+      await p.setString('base_url', client.baseUrl);
       await p.setString('token', token);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => ShellPage(client: ApiClient(widget.baseUrl, token: token)),
+          builder: (_) => ShellPage(client: ApiClient(client.baseUrl, token: token)),
         ),
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = e.toString().replaceFirst('Invalid argument(s): ', ''));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
