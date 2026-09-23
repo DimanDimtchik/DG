@@ -279,7 +279,6 @@ class _HomePageState extends State<HomePage> {
   String? _bookingsError;
   String? _catalogError;
   bool _loading = true;
-  bool _bookingBusy = false;
 
   @override
   void initState() {
@@ -336,53 +335,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _bookArticle(Map<String, dynamic> a) async {
-    if (_bookingBusy) return;
-    setState(() => _bookingBusy = true);
-    try {
-      final date = DateTime.now().add(const Duration(days: 1));
-      final dateStr =
-          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final slotsRes = await widget.client.get(
-        '/api/mobile/customer/slots',
-        {'article_id': '${a['id']}', 'date': dateStr},
-      );
-      if (!mounted) return;
-      if (slotsRes['ok'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text((slotsRes['error'] ?? 'Slots nicht ladbar').toString())),
-        );
-        return;
-      }
-      final slots = (_dataMap(slotsRes)?['slots'] as List?) ?? [];
-      if (slots.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Keine freien Zeiten morgen — anderes Datum folgt später.')),
-        );
-        return;
-      }
-      final slot = slots.first.toString();
-      final book = await widget.client.post('/api/mobile/customer/bookings', {
-        'article_id': a['id'],
-        'slot_datetime': slot,
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            book['ok'] == true ? 'Termin gebucht ($slot)' : (book['error'] ?? 'Fehler').toString(),
-          ),
-        ),
-      );
-      if (book['ok'] == true) {
-        await _reload();
-        setState(() => _tab = 0);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    } finally {
-      if (mounted) setState(() => _bookingBusy = false);
+  Future<void> _openBooking(Map<String, dynamic> a) async {
+    final booked = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BookSlotPage(client: widget.client, article: a),
+      ),
+    );
+    if (!mounted) return;
+    if (booked == true) {
+      await _reload();
+      setState(() => _tab = 0);
     }
   }
 
@@ -438,10 +400,8 @@ class _HomePageState extends State<HomePage> {
         return ListTile(
           title: Text('${a['title']}'),
           subtitle: Text('${a['duration_minutes']} min · ${a['price_label'] ?? ''}'),
-          trailing: _bookingBusy
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.chevron_right),
-          onTap: _bookingBusy ? null : () => _bookArticle(a),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _openBooking(a),
         );
       },
     );
@@ -466,6 +426,225 @@ class _HomePageState extends State<HomePage> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.event), label: 'Termine'),
           NavigationDestination(icon: Icon(Icons.add_circle), label: 'Buchen'),
+        ],
+      ),
+    );
+  }
+}
+
+/// Terminwahl: Datum + Slot wählen, erst nach Bestätigung buchen.
+class BookSlotPage extends StatefulWidget {
+  const BookSlotPage({super.key, required this.client, required this.article});
+
+  final ApiClient client;
+  final Map<String, dynamic> article;
+
+  @override
+  State<BookSlotPage> createState() => _BookSlotPageState();
+}
+
+class _BookSlotPageState extends State<BookSlotPage> {
+  late DateTime _selectedDay;
+  List<String> _slots = [];
+  String? _error;
+  bool _loadingSlots = true;
+  bool _bookingBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = DateTime.now().add(const Duration(days: 1));
+    _loadSlots();
+  }
+
+  String _ymd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  String _dayLabel(DateTime d) {
+    const wd = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    return '${wd[d.weekday - 1]} ${d.day}.${d.month}.';
+  }
+
+  String _slotLabel(String slot) {
+    final m = RegExp(r'(\d{2}):(\d{2})').firstMatch(slot);
+    if (m != null) return '${m.group(1)}:${m.group(2)}';
+    return slot;
+  }
+
+  String _slotFullLabel(String slot) {
+    final m = RegExp(r'(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})').firstMatch(slot);
+    if (m != null) {
+      return '${m.group(3)}.${m.group(2)}.${m.group(1)} um ${m.group(4)}:${m.group(5)} Uhr';
+    }
+    return slot;
+  }
+
+  Map<String, dynamic>? _dataMap(Map<String, dynamic> res) {
+    final d = res['data'];
+    return d is Map<String, dynamic> ? d : null;
+  }
+
+  Future<void> _loadSlots() async {
+    setState(() {
+      _loadingSlots = true;
+      _error = null;
+      _slots = [];
+    });
+    try {
+      final res = await widget.client.get('/api/mobile/customer/slots', {
+        'article_id': '${widget.article['id']}',
+        'date': _ymd(_selectedDay),
+      });
+      if (!mounted) return;
+      if (res['ok'] != true) {
+        setState(() {
+          _error = (res['error'] ?? 'Zeiten nicht ladbar').toString();
+          _loadingSlots = false;
+        });
+        return;
+      }
+      final raw = (_dataMap(res)?['slots'] as List?) ?? [];
+      setState(() {
+        _slots = raw.map((e) => e.toString()).toList();
+        _loadingSlots = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loadingSlots = false;
+      });
+    }
+  }
+
+  Future<void> _confirmAndBook(String slot) async {
+    if (_bookingBusy) return;
+    final title = '${widget.article['title']}';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Termin verbindlich buchen?'),
+        content: Text(
+          '$title\n${_slotFullLabel(slot)}\n\n'
+          'Erst nach „Jetzt buchen“ wird der Termin angelegt.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Abbrechen')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Jetzt buchen')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _bookingBusy = true);
+    try {
+      final book = await widget.client.post('/api/mobile/customer/bookings', {
+        'article_id': widget.article['id'],
+        'slot_datetime': slot,
+      });
+      if (!mounted) return;
+      if (book['ok'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Termin gebucht: ${_slotFullLabel(slot)}')),
+        );
+        Navigator.of(context).pop(true);
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text((book['error'] ?? 'Buchung fehlgeschlagen').toString())),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _bookingBusy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final days = List.generate(14, (i) => DateTime.now().add(Duration(days: i)));
+    final articleTitle = '${widget.article['title']}';
+    final subtitle =
+        '${widget.article['duration_minutes']} min · ${widget.article['price_label'] ?? ''}';
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Zeit wählen')),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(articleTitle, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 8),
+                Text(
+                  'Bitte Datum und Uhrzeit wählen. Es wird nichts automatisch gebucht.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 48,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: days.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final d = days[i];
+                final selected = _ymd(d) == _ymd(_selectedDay);
+                return ChoiceChip(
+                  label: Text(_dayLabel(d)),
+                  selected: selected,
+                  onSelected: _bookingBusy
+                      ? null
+                      : (_) {
+                          setState(() => _selectedDay = d);
+                          _loadSlots();
+                        },
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: _loadingSlots
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!)))
+                    : _slots.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text('Keine freien Zeiten an diesem Tag.'),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _slots.length,
+                            itemBuilder: (_, i) {
+                              final slot = _slots[i];
+                              return ListTile(
+                                leading: const Icon(Icons.schedule),
+                                title: Text(_slotLabel(slot)),
+                                subtitle: Text(_slotFullLabel(slot)),
+                                trailing: _bookingBusy
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.chevron_right),
+                                onTap: _bookingBusy ? null : () => _confirmAndBook(slot),
+                              );
+                            },
+                          ),
+          ),
         ],
       ),
     );

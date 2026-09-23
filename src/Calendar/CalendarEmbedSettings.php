@@ -34,8 +34,11 @@ final class CalendarEmbedSettings
             'show_logo' => 1,
             'accent_color' => '',
             'bg_color' => '#ffffff',
+            'bg_media_id' => '',
             'text_color' => '#1a1a1a',
-            'quiet_mm' => 15,
+            'headline_size' => 18,
+            'cta_size' => 13,
+            'quiet_mm' => 8,
         ];
     }
 
@@ -130,6 +133,19 @@ final class CalendarEmbedSettings
             }
         }
 
+        $bgMediaId = (string) ($flyer['bg_media_id'] ?? '');
+        $bgMediaUrl = '';
+        if ($bgMediaId !== '' && MediaId::isValid($bgMediaId) && Database::isConfigured()) {
+            try {
+                MediaRepository::ensureTables();
+                if (MediaRepository::find($bgMediaId) !== null) {
+                    $bgMediaUrl = MediaStorage::publicUrl($bgMediaId);
+                }
+            } catch (Throwable) {
+                $bgMediaUrl = '';
+            }
+        }
+
         $theme = [];
         try {
             $theme = CrmThemeSettings::colors();
@@ -153,6 +169,7 @@ final class CalendarEmbedSettings
             'flyer_brand_primary' => $brandPrimary,
             'flyer_accent_effective' => $flyerAccent,
             'flyer_font_family' => AppearanceSettings::uiFontFamily(),
+            'flyer_bg_media_url' => $bgMediaUrl,
         ]);
     }
 
@@ -345,8 +362,15 @@ final class CalendarEmbedSettings
             'show_logo' => !empty($input['show_logo']) ? 1 : 0,
             'accent_color' => $hexOrEmpty((string) ($input['accent_color'] ?? '')),
             'bg_color' => $hex((string) ($input['bg_color'] ?? ''), (string) $d['bg_color']),
+            'bg_media_id' => (static function () use ($input): string {
+                $id = trim((string) ($input['bg_media_id'] ?? ''));
+
+                return ($id !== '' && MediaId::isValid($id)) ? $id : '';
+            })(),
             'text_color' => $hex((string) ($input['text_color'] ?? ''), (string) $d['text_color']),
-            'quiet_mm' => max(10, min(25, (int) ($input['quiet_mm'] ?? $d['quiet_mm']))),
+            'headline_size' => max(12, min(32, (int) ($input['headline_size'] ?? $d['headline_size']))),
+            'cta_size' => max(10, min(22, (int) ($input['cta_size'] ?? $d['cta_size']))),
+            'quiet_mm' => max(5, min(20, (int) ($input['quiet_mm'] ?? $d['quiet_mm']))),
         ];
     }
 }

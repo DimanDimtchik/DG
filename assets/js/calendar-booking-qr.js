@@ -321,10 +321,20 @@
   }
 
   var flyerQrInstance = null;
+  var flyerBgUrl = root.getAttribute('data-flyer-bg-url') || '';
 
   function flyerAccent() {
     var picked = val('dg-flyer-accent', '');
     return picked || root.getAttribute('data-flyer-brand') || '#0f766e';
+  }
+
+  /** mm → Preview-Pixel (A6-Vorschau ~280px ≈ 105mm). */
+  function quietPreviewPx() {
+    var mm = parseInt(val('dg-flyer-quiet', '8'), 10) || 8;
+    var sheet = document.getElementById('dg-flyer-sheet');
+    var widthPx = sheet ? sheet.clientWidth || 280 : 280;
+    var pxPerMm = widthPx / 105;
+    return Math.max(6, Math.round(mm * pxPerMm));
   }
 
   function updateFlyerSheet() {
@@ -338,8 +348,15 @@
     sheet.style.setProperty('--flyer-bg', val('dg-flyer-bg', '#ffffff'));
     sheet.style.setProperty('--flyer-text', val('dg-flyer-text', '#1a1a1a'));
     sheet.style.setProperty('--flyer-accent', flyerAccent());
-    sheet.style.setProperty('--flyer-quiet', (parseInt(val('dg-flyer-quiet', '15'), 10) || 15) + 'mm');
+    sheet.style.setProperty('--flyer-quiet-px', quietPreviewPx() + 'px');
     sheet.style.setProperty('--flyer-font', root.getAttribute('data-flyer-font') || 'system-ui,sans-serif');
+    sheet.style.setProperty('--flyer-headline-size', (parseInt(val('dg-flyer-headline-size', '18'), 10) || 18) + 'px');
+    sheet.style.setProperty('--flyer-cta-size', (parseInt(val('dg-flyer-cta-size', '13'), 10) || 13) + 'px');
+    if (flyerBgUrl) {
+      sheet.style.setProperty('--flyer-bg-image', 'url("' + flyerBgUrl.replace(/"/g, '\\"') + '")');
+    } else {
+      sheet.style.setProperty('--flyer-bg-image', 'none');
+    }
 
     var showLogo = document.getElementById('dg-flyer-show-logo');
     var logoEl = document.getElementById('dg-flyer-logo');
@@ -390,10 +407,9 @@
       return;
     }
     var format = val('dg-flyer-format', 'a6');
-    var pixel = format === 'a5' ? 220 : format === 'square' ? 200 : 180;
+    var pixel = format === 'a5' ? 160 : format === 'square' ? 150 : 140;
     var opts = readOptions(pixel);
-    // Flyer: QR ohne dekorativen Rahmen — Weißraum kommt vom Wrapper
-    opts.styling.margin = Math.max(8, parseInt(val('dg-qr-margin', '12'), 10) || 12);
+    opts.styling.margin = Math.max(4, Math.min(12, parseInt(val('dg-qr-margin', '8'), 10) || 8));
     host.innerHTML = '';
     try {
       flyerQrInstance = new window.QRCodeStyling(opts.styling);
@@ -438,7 +454,10 @@
         }
         var format = val('dg-flyer-format', 'a6');
         var pageSize = format === 'a5' ? 'A5' : format === 'square' ? '100mm 100mm' : 'A6';
-        var quiet = (parseInt(val('dg-flyer-quiet', '15'), 10) || 15) + 'mm';
+        var quietMm = Math.max(5, Math.min(20, parseInt(val('dg-flyer-quiet', '8'), 10) || 8));
+        var headlinePt = Math.max(12, Math.min(32, parseInt(val('dg-flyer-headline-size', '18'), 10) || 18));
+        var ctaPt = Math.max(10, Math.min(22, parseInt(val('dg-flyer-cta-size', '13'), 10) || 13));
+        var qrMm = format === 'a5' ? 58 : format === 'square' ? 48 : 52;
         var showLogo = document.getElementById('dg-flyer-show-logo');
         var logoUrl = root.getAttribute('data-logo-url') || '';
         var company = root.getAttribute('data-company-name') || '';
@@ -450,6 +469,15 @@
         var cta = escapeHtml(val('dg-flyer-cta', 'Code scannen & Termin buchen'));
         var ctaAbove = pos === 'above' ? '<p class="cta">' + cta + '</p>' : '';
         var ctaBelow = pos === 'below' ? '<p class="cta">' + cta + '</p>' : '';
+        var bgCss =
+          'background-color:' +
+          escapeHtml(val('dg-flyer-bg', '#ffffff')) +
+          ';' +
+          (flyerBgUrl
+            ? 'background-image:url("' +
+              escapeHtml(flyerBgUrl) +
+              '");background-size:cover;background-position:center;'
+            : '');
         win.document.write(
           '<!doctype html><html><head><title>Flyer Druck</title><style>' +
             '@page{size:' +
@@ -459,38 +487,52 @@
             'body{font-family:' +
             (root.getAttribute('data-flyer-font') || 'system-ui,sans-serif') +
             ';}' +
-            '.sheet{box-sizing:border-box;width:100vw;min-height:100vh;padding:12mm 10mm 14mm;' +
-            'background:' +
-            escapeHtml(val('dg-flyer-bg', '#ffffff')) +
-            ';color:' +
+            '.sheet{box-sizing:border-box;width:100vw;min-height:100vh;padding:10mm 9mm 11mm;' +
+            bgCss +
+            'color:' +
             escapeHtml(val('dg-flyer-text', '#1a1a1a')) +
             ';display:flex;flex-direction:column;align-items:center;text-align:center;}' +
-            '.logo{max-height:18mm;max-width:55%;object-fit:contain;margin-bottom:2mm;}' +
-            '.company{margin:0 0 4mm;font-size:9pt;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:' +
+            '.brand{flex:0 0 auto;}' +
+            '.logo{max-height:16mm;max-width:55%;object-fit:contain;margin-bottom:2mm;}' +
+            '.company{margin:0 0 3mm;font-size:9pt;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:' +
             escapeHtml(flyerAccent()) +
             ';}' +
-            '.headline{margin:0 0 6mm;font-size:16pt;line-height:1.25;font-weight:700;}' +
-            '.cta{margin:3mm 0;font-size:11pt;font-weight:600;color:' +
+            '.headline{margin:0;font-size:' +
+            headlinePt +
+            'pt;line-height:1.25;font-weight:700;flex:0 0 auto;' +
+            (flyerBgUrl ? 'text-shadow:0 0 4mm rgba(255,255,255,.75);' : '') +
+            '}' +
+            '.cta{margin:2mm 0 0;font-size:' +
+            ctaPt +
+            'pt;font-weight:600;color:' +
             escapeHtml(flyerAccent()) +
-            ';}' +
-            '.qr-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;}' +
+            ';' +
+            (flyerBgUrl ? 'text-shadow:0 0 3mm rgba(255,255,255,.7);' : '') +
+            '}' +
+            '.qr-block{margin-top:auto;margin-bottom:2mm;display:flex;flex-direction:column;align-items:center;gap:2mm;flex:0 0 auto;}' +
             '.qr{background:#fff;padding:' +
-            quiet +
-            ';display:inline-block;}' +
-            '.qr img{display:block;width:55mm;height:55mm;}' +
+            quietMm +
+            'mm;display:inline-block;border-radius:2mm;box-shadow:0 1mm 3mm rgba(0,0,0,.12);}' +
+            '.qr img{display:block;width:' +
+            qrMm +
+            'mm;height:' +
+            qrMm +
+            'mm;}' +
             '@media print{.sheet{width:auto;min-height:auto;height:100%;}}' +
-            '</style></head><body><div class="sheet">' +
+            '</style></head><body><div class="sheet"><div class="brand">' +
             logoHtml +
             (company ? '<p class="company">' + escapeHtml(company) + '</p>' : '') +
+            '</div>' +
             '<h1 class="headline">' +
             escapeHtml(val('dg-flyer-headline', '')) +
             '</h1>' +
+            '<div class="qr-block">' +
             ctaAbove +
-            '<div class="qr-wrap"><div class="qr"><img src="' +
+            '<div class="qr"><img src="' +
             qrUrl +
-            '" alt="QR-Code"></div></div>' +
+            '" alt="QR-Code"></div>' +
             ctaBelow +
-            '</div></body></html>'
+            '</div></div></body></html>'
         );
         win.document.close();
         win.focus();
@@ -523,9 +565,12 @@
         var text = val('dg-flyer-text', '#1a1a1a');
         var accent = flyerAccent();
         var padX = Math.round(w * 0.09);
-        var y = Math.round(h * 0.06);
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, w, h);
+        var y = Math.round(h * 0.055);
+        var headlinePx = Math.round(((parseInt(val('dg-flyer-headline-size', '18'), 10) || 18) / 105) * w * 0.85);
+        var ctaPx = Math.round(((parseInt(val('dg-flyer-cta-size', '13'), 10) || 13) / 105) * w * 0.85);
+        var quietMm = Math.max(5, Math.min(20, parseInt(val('dg-flyer-quiet', '8'), 10) || 8));
+        var quiet = (quietMm / 105) * w;
+        var qrSize = Math.min(w * 0.42, h * 0.34);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
 
@@ -547,58 +592,70 @@
           });
         }
 
+        function drawCover(img) {
+          if (!img) {
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, w, h);
+            return;
+          }
+          var scale = Math.max(w / img.width, h / img.height);
+          var dw = img.width * scale;
+          var dh = img.height * scale;
+          ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        }
+
         var showLogo = document.getElementById('dg-flyer-show-logo');
         var logoUrl = showLogo && showLogo.checked ? root.getAttribute('data-logo-url') || '' : '';
         var company = root.getAttribute('data-company-name') || '';
 
-        return Promise.all([loadImage(logoUrl), loadImage(qrUrl)]).then(function (pair) {
-          var logoImg = pair[0];
-          var qrImg = pair[1];
+        return Promise.all([loadImage(flyerBgUrl), loadImage(logoUrl), loadImage(qrUrl)]).then(function (imgs) {
+          drawCover(imgs[0]);
+          var logoImg = imgs[1];
+          var qrImg = imgs[2];
           if (logoImg) {
             var maxLogoW = w * 0.45;
-            var maxLogoH = h * 0.08;
+            var maxLogoH = h * 0.07;
             var scale = Math.min(maxLogoW / logoImg.width, maxLogoH / logoImg.height);
             var lw = logoImg.width * scale;
             var lh = logoImg.height * scale;
             ctx.drawImage(logoImg, (w - lw) / 2, y, lw, lh);
-            y += lh + h * 0.015;
+            y += lh + h * 0.012;
           }
           if (company) {
             ctx.fillStyle = accent;
-            ctx.font = '600 ' + Math.round(h * 0.022) + 'px system-ui,sans-serif';
+            ctx.font = '600 ' + Math.round(h * 0.02) + 'px system-ui,sans-serif';
             ctx.fillText(company.toUpperCase(), w / 2, y);
-            y += h * 0.04;
+            y += h * 0.035;
           }
           ctx.fillStyle = text;
-          ctx.font = '700 ' + Math.round(h * 0.045) + 'px system-ui,sans-serif';
+          ctx.font = '700 ' + headlinePx + 'px system-ui,sans-serif';
           var headline = val('dg-flyer-headline', '');
-          wrapText(ctx, headline, w / 2, y, w - padX * 2, Math.round(h * 0.055));
-          y += measureWrap(ctx, headline, w - padX * 2, Math.round(h * 0.055)) + h * 0.03;
+          var lineH = Math.round(headlinePx * 1.25);
+          wrapText(ctx, headline, w / 2, y, w - padX * 2, lineH);
+          y += measureWrap(ctx, headline, w - padX * 2, lineH) + h * 0.02;
 
           var cta = val('dg-flyer-cta', '');
           var pos = val('dg-flyer-cta-pos', 'below');
-          ctx.fillStyle = accent;
-          ctx.font = '600 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
-          if (pos === 'above') {
-            ctx.fillText(cta, w / 2, y);
-            y += h * 0.05;
-          }
-
-          var quiet = ((parseInt(val('dg-flyer-quiet', '15'), 10) || 15) / 105) * w;
-          var qrSize = Math.min(w * 0.52, h * 0.42);
           var qrBox = qrSize + quiet * 2;
           var qrX = (w - qrBox) / 2;
-          var qrY = Math.min(y, h - qrBox - h * 0.14);
+          var bottomReserve = pos === 'below' ? h * 0.08 + ctaPx : h * 0.04;
+          var qrY = Math.max(y + h * 0.02, h - qrBox - bottomReserve);
+
+          if (pos === 'above') {
+            ctx.fillStyle = accent;
+            ctx.font = '600 ' + ctaPx + 'px system-ui,sans-serif';
+            ctx.fillText(cta, w / 2, qrY - ctaPx - h * 0.015);
+          }
+
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(qrX, qrY, qrBox, qrBox);
           if (qrImg) {
             ctx.drawImage(qrImg, qrX + quiet, qrY + quiet, qrSize, qrSize);
           }
-          y = qrY + qrBox + h * 0.025;
           if (pos === 'below') {
             ctx.fillStyle = accent;
-            ctx.font = '600 ' + Math.round(h * 0.032) + 'px system-ui,sans-serif';
-            ctx.fillText(cta, w / 2, y);
+            ctx.font = '600 ' + ctaPx + 'px system-ui,sans-serif';
+            ctx.fillText(cta, w / 2, qrY + qrBox + h * 0.018);
           }
 
           var a = document.createElement('a');
@@ -812,7 +869,8 @@
       });
   }
 
-  function openMediaPicker() {
+  function openMediaPicker(mode) {
+    mode = mode || 'qr-center';
     var listUrl = root.getAttribute('data-media-list-url') || '/api/media?action=list';
     var existing = document.getElementById('dg-qr-media-picker');
     if (existing) {
@@ -821,10 +879,13 @@
     var modal = document.createElement('div');
     modal.id = 'dg-qr-media-picker';
     modal.className = 'dg-modal';
+    var title = mode === 'flyer-bg' ? 'Hintergrundbild für Flyer' : 'Bild für QR-Mitte';
     modal.innerHTML =
       '<div class="dg-modal__backdrop" data-close></div>' +
       '<div class="dg-modal__dialog" role="dialog" aria-modal="true">' +
-      '<header class="dg-modal__header"><h2>Bild für QR-Mitte</h2>' +
+      '<header class="dg-modal__header"><h2>' +
+      title +
+      '</h2>' +
       '<button type="button" class="dg-modal__close" data-close aria-label="Schließen">&times;</button></header>' +
       '<div class="dg-modal__body" data-body><p class="dg-field-hint">Laden …</p></div>' +
       '<footer class="dg-modal__footer"><button type="button" class="dg-button" data-close>Abbrechen</button></footer>' +
@@ -876,6 +937,21 @@
           }
           var id = btn.getAttribute('data-id') || '';
           var url = btn.getAttribute('data-url') || '';
+          if (mode === 'flyer-bg') {
+            var bgInput = document.getElementById('dg-flyer-bg-media-id');
+            if (bgInput) {
+              bgInput.value = id;
+            }
+            flyerBgUrl = url;
+            root.setAttribute('data-flyer-bg-url', url);
+            var bgPrev = document.getElementById('dg-flyer-bg-preview');
+            if (bgPrev) {
+              bgPrev.innerHTML = url ? '<img src="' + url + '" alt="" width="64" height="40">' : '';
+            }
+            modal.remove();
+            updateFlyerSheet();
+            return;
+          }
           var mediaInput = document.getElementById('dg-qr-center-media-id');
           if (mediaInput) {
             mediaInput.value = id;
@@ -942,7 +1018,7 @@
       return;
     }
     if (ev.target.closest('#dg-qr-pick-media')) {
-      openMediaPicker();
+      openMediaPicker('qr-center');
       return;
     }
     if (ev.target.closest('#dg-qr-clear-media')) {
@@ -957,6 +1033,24 @@
         preview.innerHTML = '';
       }
       scheduleUpdate();
+      return;
+    }
+    if (ev.target.closest('#dg-flyer-pick-bg')) {
+      openMediaPicker('flyer-bg');
+      return;
+    }
+    if (ev.target.closest('#dg-flyer-clear-bg')) {
+      var bgInput = document.getElementById('dg-flyer-bg-media-id');
+      if (bgInput) {
+        bgInput.value = '';
+      }
+      flyerBgUrl = '';
+      root.setAttribute('data-flyer-bg-url', '');
+      var bgPrev = document.getElementById('dg-flyer-bg-preview');
+      if (bgPrev) {
+        bgPrev.innerHTML = '';
+      }
+      updateFlyerSheet();
       return;
     }
     if (ev.target.closest('#dg-qr-download-png')) {

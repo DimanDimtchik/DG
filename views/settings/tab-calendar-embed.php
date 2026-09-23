@@ -10,6 +10,7 @@ $qrLogoUrl = (string) ($calendarEmbedConfig['qr_logo_url'] ?? '');
 $qrFaviconUrl = (string) ($calendarEmbedConfig['qr_favicon_url'] ?? '');
 $qrCenterCustomUrl = (string) ($calendarEmbedConfig['qr_center_custom_url'] ?? '');
 $flyerAccent = (string) ($calendarEmbedConfig['flyer_accent_effective'] ?? ($flyer['accent_color'] ?: '#0f766e'));
+$flyerBgMediaUrl = (string) ($calendarEmbedConfig['flyer_bg_media_url'] ?? '');
 $centerSource = (string) ($qr['center_image_source'] ?? 'none');
 $headlinePresets = [
     'Wunschtermin in 60 Sekunden sichern!',
@@ -84,6 +85,7 @@ $ctaPresets = [
        data-company-name="<?= View::escape((string) ($calendarEmbedConfig['qr_company_name'] ?? '')) ?>"
        data-flyer-font="<?= View::escape((string) ($calendarEmbedConfig['flyer_font_family'] ?? 'system-ui,sans-serif')) ?>"
        data-flyer-brand="<?= View::escape((string) ($calendarEmbedConfig['flyer_brand_primary'] ?? '#0f766e')) ?>"
+       data-flyer-bg-url="<?= View::escape($flyerBgMediaUrl) ?>"
        data-media-list-url="/api/media?action=list"
        data-csrf="<?= View::escape(Csrf::token()) ?>">
     <h4 class="dg-subsection-title">QR-Code Design &amp; Flyer</h4>
@@ -263,21 +265,43 @@ $ctaPresets = [
             </label>
             <label class="dg-field">
               <span>Weißraum um QR (mm)</span>
-              <input type="number" name="flyer[quiet_mm]" id="dg-flyer-quiet" value="<?= (int) ($flyer['quiet_mm'] ?? 15) ?>" min="10" max="25" data-dg-qr-field data-dg-flyer-field>
+              <input type="number" name="flyer[quiet_mm]" id="dg-flyer-quiet" value="<?= (int) ($flyer['quiet_mm'] ?? 8) ?>" min="5" max="20" data-dg-qr-field data-dg-flyer-field>
+              <small class="dg-field-hint">Empfohlen 5–12 mm (Scanbarkeit)</small>
             </label>
             <label class="dg-field">
-              <span>Akzentfarbe</span>
-              <input type="color" name="flyer[accent_color]" id="dg-flyer-accent" value="<?= View::escape($flyerAccent) ?>" data-dg-qr-field data-dg-flyer-field title="Leer speichern = CRM-Primärfarbe: Feld auf Markenfarbe lassen oder zurücksetzen">
-              <small class="dg-field-hint">Standard: CRM-Markenfarbe</small>
+              <span>Akzentfarbe (CTA)</span>
+              <input type="color" name="flyer[accent_color]" id="dg-flyer-accent" value="<?= View::escape($flyerAccent) ?>" data-dg-qr-field data-dg-flyer-field>
             </label>
             <label class="dg-field">
-              <span>Flyer-Hintergrund</span>
-              <input type="color" name="flyer[bg_color]" id="dg-flyer-bg" value="<?= View::escape((string) $flyer['bg_color']) ?>" data-dg-qr-field data-dg-flyer-field>
-            </label>
-            <label class="dg-field">
-              <span>Textfarbe</span>
+              <span>Headline-Farbe</span>
               <input type="color" name="flyer[text_color]" id="dg-flyer-text" value="<?= View::escape((string) $flyer['text_color']) ?>" data-dg-qr-field data-dg-flyer-field>
             </label>
+            <label class="dg-field">
+              <span>Headline-Größe (pt)</span>
+              <input type="number" name="flyer[headline_size]" id="dg-flyer-headline-size" value="<?= (int) ($flyer['headline_size'] ?? 18) ?>" min="12" max="32" data-dg-qr-field data-dg-flyer-field>
+            </label>
+            <label class="dg-field">
+              <span>CTA-Größe (pt)</span>
+              <input type="number" name="flyer[cta_size]" id="dg-flyer-cta-size" value="<?= (int) ($flyer['cta_size'] ?? 13) ?>" min="10" max="22" data-dg-qr-field data-dg-flyer-field>
+            </label>
+            <label class="dg-field">
+              <span>Hintergrundfarbe</span>
+              <input type="color" name="flyer[bg_color]" id="dg-flyer-bg" value="<?= View::escape((string) $flyer['bg_color']) ?>" data-dg-qr-field data-dg-flyer-field>
+            </label>
+          </div>
+          <div class="dg-field dg-field--wide">
+            <span>Hintergrundbild (optional)</span>
+            <input type="hidden" name="flyer[bg_media_id]" id="dg-flyer-bg-media-id" value="<?= View::escape((string) ($flyer['bg_media_id'] ?? '')) ?>">
+            <div class="dg-booking-flyer-bg-actions">
+              <button type="button" class="dg-button" id="dg-flyer-pick-bg">Bild wählen</button>
+              <button type="button" class="dg-button" id="dg-flyer-clear-bg">Bild entfernen</button>
+              <span id="dg-flyer-bg-preview" class="dg-booking-flyer-bg-preview">
+                <?php if ($flyerBgMediaUrl !== '') : ?>
+                  <img src="<?= View::escape($flyerBgMediaUrl) ?>" alt="" width="64" height="40">
+                <?php endif; ?>
+              </span>
+            </div>
+            <small class="dg-field-hint">Bild deckt den Flyer ab (cover). QR bleibt auf weißem Feld lesbar.</small>
           </div>
           <label class="dg-field dg-field--wide">
             <span>
@@ -318,11 +342,11 @@ $ctaPresets = [
               <p class="dg-booking-flyer-company" id="dg-flyer-company"></p>
             </div>
             <h2 class="dg-booking-flyer-headline" id="dg-flyer-headline-preview"></h2>
-            <p class="dg-booking-flyer-cta dg-booking-flyer-cta--above" id="dg-flyer-cta-above" hidden></p>
-            <div class="dg-booking-flyer-qr-wrap" id="dg-flyer-qr-wrap">
+            <div class="dg-booking-flyer-qr-block" id="dg-flyer-qr-block">
+              <p class="dg-booking-flyer-cta dg-booking-flyer-cta--above" id="dg-flyer-cta-above" hidden></p>
               <div id="dg-flyer-qr-host" class="dg-booking-flyer-qr-host"></div>
+              <p class="dg-booking-flyer-cta dg-booking-flyer-cta--below" id="dg-flyer-cta-below"></p>
             </div>
-            <p class="dg-booking-flyer-cta dg-booking-flyer-cta--below" id="dg-flyer-cta-below"></p>
           </div>
           <div class="dg-form-actions">
             <button type="button" class="dg-button dg-button--primary" id="dg-flyer-print">Flyer drucken</button>
