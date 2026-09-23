@@ -399,6 +399,28 @@ $bankSummary = $filledBanks > 0
         <span>Wirtschafts-ID</span>
         <input type="text" name="tax_numbers[wirtschafts_id]" value="<?= View::escape((string) ($taxNumbers['wirtschafts_id'] ?? '')) ?>">
       </label>
+      <label class="dg-field">
+        <span>GewSt-Hebesatz (%)</span>
+        <input type="number" name="tax_rates[gewst_hebesatz]" min="0" max="900" step="1"
+               value="<?= View::escape((string) ($ext['tax_rates']['gewst_hebesatz'] ?? 400)) ?>">
+        <small class="dg-field-hint">Gemeinde-Hebesatz, z. B. 400. Für Anschaffungsrechner.</small>
+      </label>
+      <label class="dg-field">
+        <span>KSt-Satz (%)</span>
+        <input type="number" name="tax_rates[kst_satz]" min="0" max="30" step="0.1"
+               value="<?= View::escape((string) ($ext['tax_rates']['kst_satz'] ?? 15)) ?>">
+      </label>
+      <label class="dg-field">
+        <span>SolZ auf KSt (%)</span>
+        <input type="number" name="tax_rates[solz_satz]" min="0" max="10" step="0.1"
+               value="<?= View::escape((string) ($ext['tax_rates']['solz_satz'] ?? 5.5)) ?>">
+      </label>
+      <label class="dg-field">
+        <span>ESt-Grenzsteuersatz (%)</span>
+        <input type="number" name="tax_rates[est_marginal]" min="0" max="55" step="0.1"
+               value="<?= View::escape((string) ($ext['tax_rates']['est_marginal'] ?? 42)) ?>">
+        <small class="dg-field-hint">Für Einzelunternehmen / Personengesellschaften im Anschaffungsrechner.</small>
+      </label>
       <label class="dg-field dg-field--wide">
         <span>Registergericht</span>
         <input type="text" name="trade_register[court]" value="<?= View::escape((string) ($tradeRegister['court'] ?? '')) ?>">

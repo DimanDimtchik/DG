@@ -4943,6 +4943,43 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'buchhaltung-jahresabschluss') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'buchhaltung-anschaffungsrechner' && MenuRegistry::canAccess($user, 'buchhaltung-anschaffungsrechner')) {
+            $acqAreas = AfaCatalog::areas();
+            $acqPresets = AfaCatalog::presets();
+            $acqCompanyCfg = CompanyExtendedSettings::config();
+            $acqCompany = [
+                'company_type' => (string) ($acqCompanyCfg['company_type'] ?? ''),
+                'company_type_label' => CompanyTypes::labels()[(string) ($acqCompanyCfg['company_type'] ?? '')] ?? '',
+                'tax_rates' => CompanyExtendedSettings::taxRates(),
+            ];
+            $presetId = trim((string) ($_GET['preset'] ?? 'pc'));
+            $preset = AfaCatalog::presetById($presetId) ?? AfaCatalog::presetById('pc');
+            $acqInput = [
+                'area' => trim((string) ($_GET['area'] ?? ($preset['area'] ?? 'it'))),
+                'preset' => (string) ($preset['id'] ?? 'pc'),
+                'net' => isset($_GET['net']) ? (float) $_GET['net'] : (float) ($preset['default_net'] ?? 1200),
+                'vat_rate' => isset($_GET['vat_rate']) ? (float) $_GET['vat_rate'] : 19.0,
+                'useful_life_years' => isset($_GET['useful_life_years'])
+                    ? (int) $_GET['useful_life_years']
+                    : (int) ($preset['useful_life_years'] ?? 3),
+                'non_deductible_share' => isset($_GET['non_deductible_share']) ? (float) $_GET['non_deductible_share'] : 0.0,
+                'down_payment' => isset($_GET['down_payment']) ? (float) $_GET['down_payment'] : 0.0,
+                'term_months' => isset($_GET['term_months']) ? (int) $_GET['term_months'] : 36,
+                'interest_pa' => isset($_GET['interest_pa']) ? (float) $_GET['interest_pa'] : 6.0,
+                'lease_rate' => isset($_GET['lease_rate']) ? (float) $_GET['lease_rate'] : 0.0,
+                'rent_rate' => isset($_GET['rent_rate']) ? (float) $_GET['rent_rate'] : 0.0,
+                'residual' => isset($_GET['residual']) ? (float) $_GET['residual'] : 0.0,
+            ];
+            $acqResult = null;
+            if (!empty($_GET['calc'])) {
+                $acqResult = AcquisitionCompareService::compare($acqInput, $acqCompanyCfg);
+            }
+            $contentTemplate = 'modules/buchhaltung-anschaffungsrechner';
+            $title = 'Anschaffungsrechner';
+            $currentPage = 'buchhaltung-anschaffungsrechner';
+        } elseif ($page === 'buchhaltung-anschaffungsrechner') {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'buchhaltung-ustva' && MenuRegistry::canAccess($user, 'buchhaltung-ustva')) {
             $ustvaPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
             $ustvaYear = $ustvaPeriod->year;

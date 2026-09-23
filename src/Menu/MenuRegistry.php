@@ -280,6 +280,12 @@ final class MenuRegistry
                     'icon' => 'yearclose',
                     'href' => '/app?page=buchhaltung-jahresabschluss',
                 ],
+                [
+                    'slug' => 'buchhaltung-anschaffungsrechner',
+                    'label' => 'Anschaffungsrechner',
+                    'icon' => 'document',
+                    'href' => '/app?page=buchhaltung-anschaffungsrechner',
+                ],
             ],
         ];
     }
@@ -322,6 +328,7 @@ final class MenuRegistry
             'buchhaltung-steuerberater-export' => 'DATEV, Agenda, Addison — Buchungsstapel und Belege.',
             'buchhaltung-ustva' => 'Umsatzsteuer-Voranmeldung und ELSTER-CSV — auch ohne Steuerberater.',
             'buchhaltung-jahresabschluss' => 'Checkliste, GuV-Abschluss, Saldenvortrag — DIY-Assistent.',
+            'buchhaltung-anschaffungsrechner' => 'Barkauf, Leasing, Ratenkauf und Miete mit AfA- und Steuerorientierung vergleichen.',
             'buchhaltung-bwa' => 'Betriebswirtschaftliche Auswertung je Zeitraum.',
             'buchhaltung-susa' => 'Summen- und Saldenliste je Geschäftsjahr.',
             'support-freigabe' => 'Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional Bildschirm-Zuschauen.',
@@ -450,6 +457,7 @@ final class MenuRegistry
             || $slug === 'buchhaltung-datev-export'
             || $slug === 'buchhaltung-ustva'
             || $slug === 'buchhaltung-jahresabschluss'
+            || $slug === 'buchhaltung-anschaffungsrechner'
         ) {
             return self::canAccessBuchhaltung($user);
         }

@@ -27,6 +27,13 @@ final class CompanyExtendedSettings
                 'steuer_id' => '',
                 'wirtschafts_id' => '',
             ],
+            /** Steuersätze für Orientierungsrechner (keine ELSTER-Werte). */
+            'tax_rates' => [
+                'gewst_hebesatz' => 400.0,
+                'kst_satz' => 15.0,
+                'solz_satz' => 5.5,
+                'est_marginal' => 42.0,
+            ],
             'trade_register' => [
                 'court' => '',
                 'number' => '',
@@ -328,6 +335,7 @@ final class CompanyExtendedSettings
         $cfg['bg_data'] = array_replace($defaults['bg_data'], is_array($cfg['bg_data'] ?? null) ? $cfg['bg_data'] : []);
         $cfg['employment_agency'] = array_replace($defaults['employment_agency'], is_array($cfg['employment_agency'] ?? null) ? $cfg['employment_agency'] : []);
         $cfg['tax_numbers'] = array_replace($defaults['tax_numbers'], is_array($cfg['tax_numbers'] ?? null) ? $cfg['tax_numbers'] : []);
+        $cfg['tax_rates'] = self::normalizeTaxRates(is_array($cfg['tax_rates'] ?? null) ? $cfg['tax_rates'] : []);
         $cfg['trade_register'] = array_replace($defaults['trade_register'], is_array($cfg['trade_register'] ?? null) ? $cfg['trade_register'] : []);
         $cfg['tax_special_cases'] = self::normalizeTaxSpecialCases(
             is_array($cfg['tax_special_cases'] ?? null) ? $cfg['tax_special_cases'] : []
@@ -375,6 +383,8 @@ final class CompanyExtendedSettings
         foreach (array_keys($cfg['tax_numbers']) as $key) {
             $cfg['tax_numbers'][$key] = self::str($input['tax_numbers'][$key] ?? '');
         }
+
+        $cfg['tax_rates'] = self::normalizeTaxRates(is_array($input['tax_rates'] ?? null) ? $input['tax_rates'] : []);
 
         $cfg['trade_register']['court'] = self::str($input['trade_register']['court'] ?? '');
         $cfg['trade_register']['number'] = self::str($input['trade_register']['number'] ?? '');
@@ -924,6 +934,34 @@ final class CompanyExtendedSettings
         }
 
         return $url;
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return array{gewst_hebesatz: float, kst_satz: float, solz_satz: float, est_marginal: float}
+     */
+    private static function normalizeTaxRates(array $raw): array
+    {
+        $d = self::defaults()['tax_rates'];
+
+        return [
+            'gewst_hebesatz' => max(0.0, min(900.0, (float) ($raw['gewst_hebesatz'] ?? $d['gewst_hebesatz']))),
+            'kst_satz' => max(0.0, min(30.0, (float) ($raw['kst_satz'] ?? $d['kst_satz']))),
+            'solz_satz' => max(0.0, min(10.0, (float) ($raw['solz_satz'] ?? $d['solz_satz']))),
+            'est_marginal' => max(0.0, min(55.0, (float) ($raw['est_marginal'] ?? $d['est_marginal']))),
+        ];
+    }
+
+    /**
+     * Steuersätze für Orientierungsrechner (Anschaffungsvergleich).
+     *
+     * @return array{gewst_hebesatz: float, kst_satz: float, solz_satz: float, est_marginal: float}
+     */
+    public static function taxRates(): array
+    {
+        $cfg = self::config();
+
+        return self::normalizeTaxRates(is_array($cfg['tax_rates'] ?? null) ? $cfg['tax_rates'] : []);
     }
 
     /**

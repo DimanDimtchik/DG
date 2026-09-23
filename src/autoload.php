@@ -139,6 +139,8 @@ spl_autoload_register(static function (string $class): void {
         'ChartAccountSearchNormalizer' => '/src/Accounting/ChartAccountSearchNormalizer.php',
         'ChartAccountBookingEligibility' => '/src/Accounting/ChartAccountBookingEligibility.php',
         'ChartAccountCatalog' => '/src/Accounting/ChartAccountCatalog.php',
+        'AfaCatalog' => '/src/Accounting/Acquisition/AfaCatalog.php',
+        'AcquisitionCompareService' => '/src/Accounting/Acquisition/AcquisitionCompareService.php',
         'ChartAccountCatalogNameCorrections' => '/src/Accounting/ChartAccountCatalogNameCorrections.php',
         'ChartAccountNameRepair' => '/src/Accounting/ChartAccountNameRepair.php',
         'ChartAccountApi' => '/src/Accounting/ChartAccountApi.php',
