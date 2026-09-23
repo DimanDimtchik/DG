@@ -17,9 +17,69 @@
   var qrInstance = null;
   var updateTimer = null;
   var customUrl = root.getAttribute('data-center-custom-url') || '';
+  var emojiActiveGroup = 'smileys';
+  var emojiSearchQuery = '';
 
   function $(sel) {
     return root.querySelector(sel) || document.querySelector(sel);
+  }
+
+  function catalog() {
+    return window.DgEmojiCatalog || null;
+  }
+
+  function renderEmojiPicker() {
+    var cat = catalog();
+    var tabs = document.getElementById('dg-qr-emoji-tabs');
+    var picks = document.getElementById('dg-qr-emoji-picks');
+    var countEl = document.getElementById('dg-qr-emoji-count');
+    if (!tabs || !picks) {
+      return;
+    }
+    if (!cat) {
+      picks.innerHTML = '<p class="dg-field-hint">Emoji-Katalog nicht geladen.</p>';
+      return;
+    }
+    if (countEl) {
+      countEl.textContent = String(cat.count);
+    }
+    var groups = emojiSearchQuery ? cat.search(emojiSearchQuery) : cat.groups;
+    if (!groups.length) {
+      tabs.innerHTML = '';
+      picks.innerHTML = '<p class="dg-field-hint">Keine Treffer.</p>';
+      return;
+    }
+    if (!groups.some(function (g) { return g.id === emojiActiveGroup; })) {
+      emojiActiveGroup = groups[0].id;
+    }
+    tabs.innerHTML = groups.map(function (g) {
+      return (
+        '<button type="button" class="dg-booking-qr-emoji-tab' +
+        (g.id === emojiActiveGroup ? ' is-active' : '') +
+        '" data-emoji-group="' +
+        g.id +
+        '" role="tab">' +
+        g.label +
+        '</button>'
+      );
+    }).join('');
+    var active = groups.find(function (g) { return g.id === emojiActiveGroup; }) || groups[0];
+    var selected = val('dg-qr-emoji', '');
+    picks.innerHTML = (active.chars || [])
+      .map(function (em) {
+        return (
+          '<button type="button" class="dg-booking-qr-emoji-btn' +
+          (em === selected ? ' is-selected' : '') +
+          '" data-emoji="' +
+          em +
+          '" title="' +
+          em +
+          '">' +
+          em +
+          '</button>'
+        );
+      })
+      .join('');
   }
 
   function val(id, fallback) {
@@ -112,6 +172,9 @@
     }
     if (emojiWrap) {
       emojiWrap.hidden = source !== 'emoji';
+      if (source === 'emoji') {
+        renderEmojiPicker();
+      }
     }
     if (note) {
       note.hidden = !usesCenter() && source === 'none';
@@ -283,9 +346,20 @@
     }
   }
 
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        resolve(String(reader.result || ''));
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
   function printQr() {
-    var area = document.getElementById('dg-qr-print-area');
-    if (!area) {
+    if (typeof window.QRCodeStyling === 'undefined') {
+      setStatus('QR-Bibliothek nicht geladen.', true);
       return;
     }
     var win = window.open('', '_blank', 'width=800,height=900');
@@ -294,19 +368,100 @@
       return;
     }
     win.document.write(
-      '<!doctype html><html><head><title>QR-Code Druck</title><style>' +
-        'body{font-family:system-ui,sans-serif;text-align:center;padding:24px;}' +
-        '.dg-booking-qr-caption{margin-top:16px;font-size:18px;font-weight:600;}' +
-        '@media print{body{padding:0;}}' +
-        '</style></head><body>' +
-        area.innerHTML +
+      '<!doctype html><html><head><title>QR-Code Druck</title></head><body>' +
+        '<p style="font-family:system-ui;text-align:center;margin-top:40px">QR wird vorbereitet …</p>' +
         '</body></html>'
     );
     win.document.close();
-    win.focus();
-    setTimeout(function () {
-      win.print();
-    }, 400);
+
+    var exportSize = parseInt(val('dg-qr-export-size', '1200'), 10) || 1200;
+    var opts = readOptions(exportSize);
+    var instance = new window.QRCodeStyling(
+      Object.assign({}, opts.styling, {
+        type: 'canvas',
+        width: exportSize,
+        height: exportSize,
+      })
+    );
+
+    Promise.resolve()
+      .then(function () {
+        return instance.getRawData('png').then(function (blob) {
+          if (blob) {
+            return blobToDataUrl(blob);
+          }
+          return null;
+        }).catch(function () {
+          return null;
+        });
+      })
+      .then(function (dataUrl) {
+        if (dataUrl) {
+          return dataUrl;
+        }
+        // Fallback: sichtbare Vorschau als PNG (Canvas speichert Pixel — innerHTML nicht)
+        var previewCanvas = document.querySelector('#dg-qr-canvas-host canvas');
+        if (previewCanvas && typeof previewCanvas.toDataURL === 'function') {
+          return previewCanvas.toDataURL('image/png');
+        }
+        throw new Error('empty');
+      })
+      .then(function (dataUrl) {
+        if (!dataUrl) {
+          throw new Error('empty');
+        }
+        var frameCss = opts.frame.enabled
+          ? 'border:' +
+            opts.frame.width +
+            'px solid ' +
+            opts.frame.color +
+            ';padding:' +
+            opts.frame.padding +
+            'px;border-radius:' +
+            opts.frame.radius +
+            'px;display:inline-block;background:#fff;'
+          : 'display:inline-block;background:#fff;';
+        var captionHtml = opts.caption
+          ? '<p class="caption">' +
+            opts.caption
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;') +
+            '</p>'
+          : '';
+        win.document.open();
+        win.document.write(
+          '<!doctype html><html><head><title>QR-Code Druck</title><style>' +
+            'body{font-family:system-ui,sans-serif;text-align:center;padding:24px;color:#111;}' +
+            '.frame{margin:0 auto;}' +
+            '.frame img{display:block;max-width:min(90vw,520px);height:auto;}' +
+            '.caption{margin-top:16px;font-size:18px;font-weight:600;}' +
+            '@media print{body{padding:0;} .frame img{max-width:140mm;}}' +
+            '</style></head><body>' +
+            '<div class="frame" style="' +
+            frameCss +
+            '"><img src="' +
+            dataUrl +
+            '" alt="QR-Code"></div>' +
+            captionHtml +
+            '</body></html>'
+        );
+        win.document.close();
+        win.focus();
+        // Bild kurz laden lassen, dann drucken
+        setTimeout(function () {
+          try {
+            win.print();
+          } catch (ignore) {}
+        }, 350);
+        setStatus('Druckvorschau geöffnet.');
+      })
+      .catch(function () {
+        try {
+          win.close();
+        } catch (ignore) {}
+        setStatus('Druckvorschau fehlgeschlagen — bitte PNG laden und daraus drucken.', true);
+      });
   }
 
   function openMediaPicker() {
@@ -408,11 +563,22 @@
     }
   });
   root.addEventListener('input', function (ev) {
+    if (ev.target && ev.target.id === 'dg-qr-emoji-search') {
+      emojiSearchQuery = ev.target.value || '';
+      renderEmojiPicker();
+      return;
+    }
     if (ev.target && ev.target.matches('[data-dg-qr-field]')) {
       scheduleUpdate();
     }
   });
   root.addEventListener('click', function (ev) {
+    var groupBtn = ev.target.closest('[data-emoji-group]');
+    if (groupBtn) {
+      emojiActiveGroup = groupBtn.getAttribute('data-emoji-group') || 'smileys';
+      renderEmojiPicker();
+      return;
+    }
     var emojiBtn = ev.target.closest('[data-emoji]');
     if (emojiBtn) {
       var input = document.getElementById('dg-qr-emoji');
@@ -423,6 +589,7 @@
       if (emojiRadio) {
         emojiRadio.checked = true;
       }
+      renderEmojiPicker();
       scheduleUpdate();
       return;
     }
@@ -462,6 +629,8 @@
   if (presetChecked && !val('dg-qr-frame-width', '')) {
     applyPreset(presetChecked.value);
   }
+
+  renderEmojiPicker();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderPreview);

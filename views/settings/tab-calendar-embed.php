@@ -9,7 +9,6 @@ $qrLogoUrl = (string) ($calendarEmbedConfig['qr_logo_url'] ?? '');
 $qrFaviconUrl = (string) ($calendarEmbedConfig['qr_favicon_url'] ?? '');
 $qrCenterCustomUrl = (string) ($calendarEmbedConfig['qr_center_custom_url'] ?? '');
 $centerSource = (string) ($qr['center_image_source'] ?? 'none');
-$emojis = ['📅', '🗓️', '✨', '💚', '🌿', '💇', '💅', '🧘', '☕', '🌸'];
 ?>
 <form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('kalender-einbindung')) ?>" id="dg-calendar-embed-form">
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -121,12 +120,13 @@ $emojis = ['📅', '🗓️', '✨', '💚', '🌿', '💇', '💅', '🧘', '�
           </div>
 
           <div id="dg-qr-center-emoji-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'emoji' ? '' : ' hidden' ?>>
-            <input type="text" name="qr[center_emoji]" id="dg-qr-emoji" value="<?= View::escape((string) $qr['center_emoji']) ?>" maxlength="8" data-dg-qr-field class="dg-booking-qr-emoji-input">
-            <div class="dg-booking-qr-emoji-picks" role="list">
-              <?php foreach ($emojis as $em) : ?>
-                <button type="button" class="dg-booking-qr-emoji-btn" data-emoji="<?= View::escape($em) ?>"><?= View::escape($em) ?></button>
-              <?php endforeach; ?>
+            <div class="dg-booking-qr-emoji-toolbar">
+              <input type="text" name="qr[center_emoji]" id="dg-qr-emoji" value="<?= View::escape((string) $qr['center_emoji']) ?>" maxlength="32" data-dg-qr-field class="dg-booking-qr-emoji-input" aria-label="Gewähltes Emoji">
+              <input type="search" id="dg-qr-emoji-search" class="dg-booking-qr-emoji-search" placeholder="Suchen …" autocomplete="off">
             </div>
+            <div id="dg-qr-emoji-tabs" class="dg-booking-qr-emoji-tabs" role="tablist"></div>
+            <div id="dg-qr-emoji-picks" class="dg-booking-qr-emoji-picks" role="listbox" aria-label="Emoji-Auswahl"></div>
+            <p class="dg-field-hint">Über <span id="dg-qr-emoji-count">…</span> Emojis — Kategorien oder Suche. Beliebiges Emoji auch per Zwischenablage einfügen.</p>
           </div>
           <p class="dg-field-hint" id="dg-qr-ec-note"<?= in_array($centerSource, ['logo', 'favicon', 'custom', 'emoji'], true) ? '' : ' hidden' ?>>
             Bei Logo/Emoji wird die Fehlerkorrektur automatisch auf H (max.) gesetzt — bitte einmal mit dem Handy scannen.

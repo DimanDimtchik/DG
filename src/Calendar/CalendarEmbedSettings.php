@@ -194,7 +194,7 @@ final class CalendarEmbedSettings
             $mediaId = '';
         }
         $emoji = trim((string) ($input['center_emoji'] ?? $d['center_emoji']));
-        if ($emoji === '' || mb_strlen($emoji) > 8) {
+        if ($emoji === '' || mb_strlen($emoji) > 32) {
             $emoji = (string) $d['center_emoji'];
         }
 

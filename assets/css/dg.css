@@ -5266,26 +5266,73 @@ body.dg-login-page {
 }
 
 .dg-booking-qr-emoji-input {
-  width: 4rem;
+  width: 3.25rem;
   font-size: 1.6rem;
   text-align: center;
+  flex: 0 0 auto;
+}
+
+.dg-booking-qr-emoji-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dg-booking-qr-emoji-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dg-booking-qr-emoji-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.dg-booking-qr-emoji-tab {
+  border: 1px solid var(--dg-border, #e2e8f0);
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.dg-booking-qr-emoji-tab.is-active {
+  background: var(--dg-primary, #0f766e);
+  border-color: var(--dg-primary, #0f766e);
+  color: #fff;
 }
 
 .dg-booking-qr-emoji-picks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 4px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--dg-border, #e2e8f0);
+  border-radius: 8px;
+  background: #fff;
 }
 
 .dg-booking-qr-emoji-btn {
-  border: 1px solid var(--dg-border, #e2e8f0);
-  background: #fff;
+  border: 1px solid transparent;
+  background: transparent;
   border-radius: 8px;
   font-size: 1.25rem;
   line-height: 1;
-  padding: 6px 8px;
+  padding: 6px 4px;
   cursor: pointer;
+}
+
+.dg-booking-qr-emoji-btn:hover,
+.dg-booking-qr-emoji-btn.is-selected {
+  border-color: var(--dg-primary, #0f766e);
+  background: rgba(15, 118, 110, 0.08);
 }
 
 .dg-booking-qr-preview-panel {

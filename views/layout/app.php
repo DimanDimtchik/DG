@@ -467,6 +467,7 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
   <?php endif; ?>
   <?php if (($settingsSelection['template'] ?? '') === 'calendar-embed') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/vendor/qr-code-styling.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/emoji-catalog.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/calendar-booking-qr.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/website-seite-form') : ?>
