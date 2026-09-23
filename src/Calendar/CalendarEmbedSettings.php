@@ -17,6 +17,25 @@ final class CalendarEmbedSettings
             'intro_text' => 'Wählen Sie eine Leistung, einen freien Termin und hinterlassen Sie Ihre Kontaktdaten. Sie erhalten eine Bestätigung per E-Mail.',
             'success_message' => 'Vielen Dank — Ihr Termin ist gebucht. Sie erhalten in Kürze eine Bestätigung per E-Mail.',
             'qr' => self::qrDefaults(),
+            'flyer' => self::flyerDefaults(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function flyerDefaults(): array
+    {
+        return [
+            'headline' => 'Wunschtermin in 60 Sekunden sichern!',
+            'cta' => 'Code scannen & Termin buchen',
+            'cta_position' => 'below',
+            'format' => 'a6',
+            'show_logo' => 1,
+            'accent_color' => '',
+            'bg_color' => '#ffffff',
+            'text_color' => '#1a1a1a',
+            'quiet_mm' => 15,
         ];
     }
 
@@ -60,7 +79,7 @@ final class CalendarEmbedSettings
         $defaults = self::defaults();
         $out = [];
         foreach ($defaults as $key => $defaultValue) {
-            if ($key === 'qr') {
+            if ($key === 'qr' || $key === 'flyer') {
                 continue;
             }
             $out[$key] = $stored[$key] ?? $defaultValue;
@@ -70,6 +89,7 @@ final class CalendarEmbedSettings
             $out[$textKey] = trim((string) $out[$textKey]);
         }
         $out['qr'] = self::normalizeQr(is_array($stored['qr'] ?? null) ? $stored['qr'] : []);
+        $out['flyer'] = self::normalizeFlyer(is_array($stored['flyer'] ?? null) ? $stored['flyer'] : []);
 
         return $out;
     }
@@ -81,6 +101,7 @@ final class CalendarEmbedSettings
     {
         $cfg = self::config();
         $qr = $cfg['qr'];
+        $flyer = $cfg['flyer'];
         $company = '';
         try {
             $company = trim((string) (CompanySettings::config()['name'] ?? ''));
@@ -109,13 +130,29 @@ final class CalendarEmbedSettings
             }
         }
 
+        $theme = [];
+        try {
+            $theme = CrmThemeSettings::colors();
+        } catch (Throwable) {
+            $theme = [];
+        }
+        $brandPrimary = ThemeColor::sanitizeHex((string) ($theme['primary'] ?? ''), '#0f766e');
+        $flyerAccent = trim((string) $flyer['accent_color']);
+        if ($flyerAccent === '') {
+            $flyerAccent = $brandPrimary;
+        }
+
         return array_merge($cfg, [
             'public_url' => self::publicBookingUrl(),
             'qr' => $qr,
+            'flyer' => $flyer,
             'qr_logo_url' => $logoUrl,
             'qr_favicon_url' => $faviconUrl,
             'qr_center_custom_url' => $centerCustomUrl,
             'qr_company_name' => $company,
+            'flyer_brand_primary' => $brandPrimary,
+            'flyer_accent_effective' => $flyerAccent,
+            'flyer_font_family' => AppearanceSettings::uiFontFamily(),
         ]);
     }
 
@@ -156,12 +193,14 @@ final class CalendarEmbedSettings
     public static function save(array $input): void
     {
         $qrInput = is_array($input['qr'] ?? null) ? $input['qr'] : $input;
+        $flyerInput = is_array($input['flyer'] ?? null) ? $input['flyer'] : [];
         SettingsStore::set(self::STORE_KEY, [
             'online_booking_enabled' => !empty($input['online_booking_enabled']) ? 1 : 0,
             'page_title' => trim((string) ($input['page_title'] ?? '')),
             'intro_text' => trim((string) ($input['intro_text'] ?? '')),
             'success_message' => trim((string) ($input['success_message'] ?? '')),
             'qr' => self::normalizeQr($qrInput),
+            'flyer' => self::normalizeFlyer($flyerInput),
         ]);
     }
 
@@ -248,6 +287,66 @@ final class CalendarEmbedSettings
                 (string) $d['center_image_size']
             ),
             'center_emoji' => $emoji,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    public static function normalizeFlyer(array $input): array
+    {
+        $d = self::flyerDefaults();
+        $hexOrEmpty = static function (string $value): string {
+            $value = trim($value);
+            if ($value === '') {
+                return '';
+            }
+            if (preg_match('/^#[0-9A-Fa-f]{6}$/', $value) === 1) {
+                return strtolower($value);
+            }
+
+            return '';
+        };
+        $hex = static function (string $value, string $fallback): string {
+            $value = trim($value);
+            if (preg_match('/^#[0-9A-Fa-f]{6}$/', $value) === 1) {
+                return strtolower($value);
+            }
+
+            return $fallback;
+        };
+        $pick = static function (string $value, array $allowed, string $fallback): string {
+            return in_array($value, $allowed, true) ? $value : $fallback;
+        };
+
+        $headline = trim(mb_substr((string) ($input['headline'] ?? $d['headline']), 0, 120));
+        if ($headline === '') {
+            $headline = (string) $d['headline'];
+        }
+        $cta = trim(mb_substr((string) ($input['cta'] ?? $d['cta']), 0, 80));
+        if ($cta === '') {
+            $cta = (string) $d['cta'];
+        }
+
+        return [
+            'headline' => $headline,
+            'cta' => $cta,
+            'cta_position' => $pick(
+                (string) ($input['cta_position'] ?? ''),
+                ['above', 'below'],
+                (string) $d['cta_position']
+            ),
+            'format' => $pick(
+                (string) ($input['format'] ?? ''),
+                ['a6', 'a5', 'square'],
+                (string) $d['format']
+            ),
+            'show_logo' => !empty($input['show_logo']) ? 1 : 0,
+            'accent_color' => $hexOrEmpty((string) ($input['accent_color'] ?? '')),
+            'bg_color' => $hex((string) ($input['bg_color'] ?? ''), (string) $d['bg_color']),
+            'text_color' => $hex((string) ($input['text_color'] ?? ''), (string) $d['text_color']),
+            'quiet_mm' => max(10, min(25, (int) ($input['quiet_mm'] ?? $d['quiet_mm']))),
         ];
     }
 }

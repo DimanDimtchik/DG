@@ -5,10 +5,22 @@ $calendarEmbedConfig = $calendarEmbedConfig ?? CalendarEmbedSettings::forForm();
 $publicUrl = (string) ($calendarEmbedConfig['public_url'] ?? CalendarEmbedSettings::publicBookingUrl());
 $isEnabled = !empty($calendarEmbedConfig['online_booking_enabled']);
 $qr = is_array($calendarEmbedConfig['qr'] ?? null) ? $calendarEmbedConfig['qr'] : CalendarEmbedSettings::qrDefaults();
+$flyer = is_array($calendarEmbedConfig['flyer'] ?? null) ? $calendarEmbedConfig['flyer'] : CalendarEmbedSettings::flyerDefaults();
 $qrLogoUrl = (string) ($calendarEmbedConfig['qr_logo_url'] ?? '');
 $qrFaviconUrl = (string) ($calendarEmbedConfig['qr_favicon_url'] ?? '');
 $qrCenterCustomUrl = (string) ($calendarEmbedConfig['qr_center_custom_url'] ?? '');
+$flyerAccent = (string) ($calendarEmbedConfig['flyer_accent_effective'] ?? ($flyer['accent_color'] ?: '#0f766e'));
 $centerSource = (string) ($qr['center_image_source'] ?? 'none');
+$headlinePresets = [
+    'Wunschtermin in 60 Sekunden sichern!',
+    'Jetzt online Termin buchen',
+    'Scannen – Termin wählen – fertig',
+];
+$ctaPresets = [
+    'Code scannen & Termin buchen',
+    'Einfach scannen und Wunschtermin wählen',
+    'Jetzt scannen – online buchen',
+];
 ?>
 <form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('kalender-einbindung')) ?>" id="dg-calendar-embed-form">
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -69,10 +81,13 @@ $centerSource = (string) ($qr['center_image_source'] ?? 'none');
        data-logo-url="<?= View::escape($qrLogoUrl) ?>"
        data-favicon-url="<?= View::escape($qrFaviconUrl) ?>"
        data-center-custom-url="<?= View::escape($qrCenterCustomUrl) ?>"
+       data-company-name="<?= View::escape((string) ($calendarEmbedConfig['qr_company_name'] ?? '')) ?>"
+       data-flyer-font="<?= View::escape((string) ($calendarEmbedConfig['flyer_font_family'] ?? 'system-ui,sans-serif')) ?>"
+       data-flyer-brand="<?= View::escape((string) ($calendarEmbedConfig['flyer_brand_primary'] ?? '#0f766e')) ?>"
        data-media-list-url="/api/media?action=list"
        data-csrf="<?= View::escape(Csrf::token()) ?>">
-    <h4 class="dg-subsection-title">QR-Code Design &amp; Druck</h4>
-    <p class="dg-field-hint">Für Flyer, Schaufenster oder Empfang — Logo/Emoji in der Mitte, Rahmenvorlagen, PNG/SVG-Download und Druck.</p>
+    <h4 class="dg-subsection-title">QR-Code Design &amp; Flyer</h4>
+    <p class="dg-field-hint">QR gestalten und als Flyer drucken: Logo oben, Headline, Code mit Weißraum, klare Handlungsaufforderung.</p>
 
     <div class="dg-booking-qr-layout">
       <div class="dg-booking-qr-fields">
@@ -209,21 +224,112 @@ $centerSource = (string) ($qr['center_image_source'] ?? 'none');
             </select>
           </label>
         </div>
+        <fieldset class="dg-field dg-field--wide" style="margin-top:16px">
+          <legend>Flyer-Text &amp; Layout</legend>
+          <label class="dg-field dg-field--wide">
+            <span>Überschrift (Headline)</span>
+            <input type="text" name="flyer[headline]" id="dg-flyer-headline" value="<?= View::escape((string) $flyer['headline']) ?>" maxlength="120" data-dg-qr-field data-dg-flyer-field>
+            <small class="dg-field-hint">Kurz und nutzenorientiert — z.&nbsp;B. „Wunschtermin in 60 Sekunden sichern!“</small>
+            <div class="dg-booking-flyer-presets">
+              <?php foreach ($headlinePresets as $hp) : ?>
+                <button type="button" class="dg-button dg-button--small" data-flyer-set="headline" data-value="<?= View::escape($hp) ?>"><?= View::escape($hp) ?></button>
+              <?php endforeach; ?>
+            </div>
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Handlungsaufforderung (CTA)</span>
+            <input type="text" name="flyer[cta]" id="dg-flyer-cta" value="<?= View::escape((string) $flyer['cta']) ?>" maxlength="80" data-dg-qr-field data-dg-flyer-field>
+            <div class="dg-booking-flyer-presets">
+              <?php foreach ($ctaPresets as $cp) : ?>
+                <button type="button" class="dg-button dg-button--small" data-flyer-set="cta" data-value="<?= View::escape($cp) ?>"><?= View::escape($cp) ?></button>
+              <?php endforeach; ?>
+            </div>
+          </label>
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span>CTA-Position</span>
+              <select name="flyer[cta_position]" id="dg-flyer-cta-pos" data-dg-qr-field data-dg-flyer-field>
+                <option value="below"<?= ($flyer['cta_position'] ?? '') === 'below' ? ' selected' : '' ?>>Unter dem QR-Code</option>
+                <option value="above"<?= ($flyer['cta_position'] ?? '') === 'above' ? ' selected' : '' ?>>Über dem QR-Code</option>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Format</span>
+              <select name="flyer[format]" id="dg-flyer-format" data-dg-qr-field data-dg-flyer-field>
+                <option value="a6"<?= ($flyer['format'] ?? '') === 'a6' ? ' selected' : '' ?>>A6 Hochformat</option>
+                <option value="a5"<?= ($flyer['format'] ?? '') === 'a5' ? ' selected' : '' ?>>A5 Hochformat</option>
+                <option value="square"<?= ($flyer['format'] ?? '') === 'square' ? ' selected' : '' ?>>Quadrat (Social/Aufkleber)</option>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Weißraum um QR (mm)</span>
+              <input type="number" name="flyer[quiet_mm]" id="dg-flyer-quiet" value="<?= (int) ($flyer['quiet_mm'] ?? 15) ?>" min="10" max="25" data-dg-qr-field data-dg-flyer-field>
+            </label>
+            <label class="dg-field">
+              <span>Akzentfarbe</span>
+              <input type="color" name="flyer[accent_color]" id="dg-flyer-accent" value="<?= View::escape($flyerAccent) ?>" data-dg-qr-field data-dg-flyer-field title="Leer speichern = CRM-Primärfarbe: Feld auf Markenfarbe lassen oder zurücksetzen">
+              <small class="dg-field-hint">Standard: CRM-Markenfarbe</small>
+            </label>
+            <label class="dg-field">
+              <span>Flyer-Hintergrund</span>
+              <input type="color" name="flyer[bg_color]" id="dg-flyer-bg" value="<?= View::escape((string) $flyer['bg_color']) ?>" data-dg-qr-field data-dg-flyer-field>
+            </label>
+            <label class="dg-field">
+              <span>Textfarbe</span>
+              <input type="color" name="flyer[text_color]" id="dg-flyer-text" value="<?= View::escape((string) $flyer['text_color']) ?>" data-dg-qr-field data-dg-flyer-field>
+            </label>
+          </div>
+          <label class="dg-field dg-field--wide">
+            <span>
+              <input type="hidden" name="flyer[show_logo]" value="0">
+              <input type="checkbox" name="flyer[show_logo]" id="dg-flyer-show-logo" value="1"<?= !empty($flyer['show_logo']) ? ' checked' : '' ?> data-dg-qr-field data-dg-flyer-field>
+              Logo oben anzeigen (CRM-Logo)
+            </span>
+          </label>
+        </fieldset>
       </div>
 
       <div class="dg-booking-qr-preview-panel">
-        <h5 class="dg-subsection-title">Vorschau</h5>
-        <div id="dg-qr-print-area" class="dg-booking-qr-print-area">
-          <div id="dg-qr-frame" class="dg-booking-qr-frame">
-            <div id="dg-qr-canvas-host"></div>
+        <div class="dg-booking-preview-tabs" role="tablist">
+          <button type="button" class="dg-booking-preview-tab is-active" data-preview-mode="qr" role="tab">QR-Code</button>
+          <button type="button" class="dg-booking-preview-tab" data-preview-mode="flyer" role="tab">Flyer</button>
+        </div>
+
+        <div id="dg-qr-mode-qr" class="dg-booking-preview-mode">
+          <h5 class="dg-subsection-title">QR-Vorschau</h5>
+          <div id="dg-qr-print-area" class="dg-booking-qr-print-area">
+            <div id="dg-qr-frame" class="dg-booking-qr-frame">
+              <div id="dg-qr-canvas-host"></div>
+            </div>
+            <p id="dg-qr-caption-preview" class="dg-booking-qr-caption"></p>
           </div>
-          <p id="dg-qr-caption-preview" class="dg-booking-qr-caption"></p>
+          <div class="dg-form-actions">
+            <button type="button" class="dg-button dg-button--primary" id="dg-qr-download-png">PNG laden</button>
+            <button type="button" class="dg-button" id="dg-qr-download-svg">SVG laden</button>
+            <button type="button" class="dg-button" id="dg-qr-print">QR drucken</button>
+          </div>
         </div>
-        <div class="dg-form-actions">
-          <button type="button" class="dg-button dg-button--primary" id="dg-qr-download-png">PNG laden</button>
-          <button type="button" class="dg-button" id="dg-qr-download-svg">SVG laden</button>
-          <button type="button" class="dg-button" id="dg-qr-print">Drucken</button>
+
+        <div id="dg-qr-mode-flyer" class="dg-booking-preview-mode" hidden>
+          <h5 class="dg-subsection-title">Flyer-Vorschau</h5>
+          <div id="dg-flyer-sheet" class="dg-booking-flyer-sheet dg-booking-flyer-sheet--a6" aria-label="Flyer-Vorschau">
+            <div class="dg-booking-flyer-brand" id="dg-flyer-brand">
+              <img id="dg-flyer-logo" class="dg-booking-flyer-logo" alt="" hidden>
+              <p class="dg-booking-flyer-company" id="dg-flyer-company"></p>
+            </div>
+            <h2 class="dg-booking-flyer-headline" id="dg-flyer-headline-preview"></h2>
+            <p class="dg-booking-flyer-cta dg-booking-flyer-cta--above" id="dg-flyer-cta-above" hidden></p>
+            <div class="dg-booking-flyer-qr-wrap" id="dg-flyer-qr-wrap">
+              <div id="dg-flyer-qr-host" class="dg-booking-flyer-qr-host"></div>
+            </div>
+            <p class="dg-booking-flyer-cta dg-booking-flyer-cta--below" id="dg-flyer-cta-below"></p>
+          </div>
+          <div class="dg-form-actions">
+            <button type="button" class="dg-button dg-button--primary" id="dg-flyer-print">Flyer drucken</button>
+            <button type="button" class="dg-button" id="dg-flyer-download-png">Flyer als PNG</button>
+          </div>
         </div>
+
         <p id="dg-qr-status" class="dg-field-hint" aria-live="polite"></p>
       </div>
     </div>
