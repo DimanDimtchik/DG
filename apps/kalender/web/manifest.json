@@ -1,11 +1,11 @@
 {
-    "name": "dg_kalender",
-    "short_name": "dg_kalender",
+    "name": "DG Kalender",
+    "short_name": "Kalender",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F766E",
+    "theme_color": "#0F766E",
+    "description": "DG CRM Termin-App — Leistungen ansehen und Termine buchen.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
