@@ -127,6 +127,10 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
   </form>
 
   <?php if ($result !== null) : ?>
+    <section class="dg-panel" id="dg-acq-results">
+      <h2 class="dg-subsection-title">Vergleichsergebnis</h2>
+      <p class="dg-field-hint">Netto <?= $fmt((float) ($meta['net'] ?? 0)) ?> · Brutto <?= $fmt((float) ($meta['gross'] ?? 0)) ?> · Horizont <?= (int) ($meta['horizon_years'] ?? 0) ?> Jahre</p>
+    </section>
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Firmendaten &amp; Steuersätze</h2>
       <p>
@@ -255,20 +259,24 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
     areaHint.textContent = o ? (o.getAttribute('data-hint') || '') : '';
   }
 
-  function filterPresets() {
+  function filterPresets(fromUserChange) {
     var a = area.value;
     var opts = preset.querySelectorAll('option');
     var firstVisible = null;
     opts.forEach(function (o) {
       var show = o.getAttribute('data-area') === a;
       o.hidden = !show;
-      o.disabled = !show;
+      // nicht disabled: sonst fehlt preset im GET-Submit
       if (show && !firstVisible) firstVisible = o;
     });
     updateAreaHint();
     if (preset.selectedOptions[0] && preset.selectedOptions[0].hidden && firstVisible) {
       firstVisible.selected = true;
-      applyPreset();
+      if (fromUserChange) {
+        applyPreset();
+      } else {
+        applyPresetHintsOnly();
+      }
     } else {
       applyPresetHintsOnly();
     }
@@ -289,8 +297,12 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
     applyPresetHintsOnly();
   }
 
-  area.addEventListener('change', filterPresets);
+  area.addEventListener('change', function () { filterPresets(true); });
   preset.addEventListener('change', applyPreset);
-  filterPresets();
+  filterPresets(false);
+  var results = document.getElementById('dg-acq-results');
+  if (results) {
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 })();
 </script>

@@ -4993,7 +4993,11 @@ $legalProductsConfig = LegalProductSettings::config();
             ];
             $acqResult = null;
             if (!empty($_GET['calc'])) {
-                $acqResult = AcquisitionCompareService::compare($acqInput, $acqCompanyCfg);
+                try {
+                    $acqResult = AcquisitionCompareService::compare($acqInput, $acqCompanyCfg);
+                } catch (Throwable $e) {
+                    Flash::set('error', 'Berechnung fehlgeschlagen: ' . $e->getMessage());
+                }
             }
             $contentTemplate = 'modules/buchhaltung-anschaffungsrechner';
             $title = 'Anschaffungsrechner';
@@ -6856,6 +6860,11 @@ $legalProductsConfig = LegalProductSettings::config();
         $rumpfOrgId = $rumpfOrgId ?? 0;
         $result = $result ?? null;
         $provisionGateError = $provisionGateError ?? null;
+        $acqInput = $acqInput ?? null;
+        $acqResult = $acqResult ?? null;
+        $acqCompany = $acqCompany ?? null;
+        $acqAreas = $acqAreas ?? null;
+        $acqPresets = $acqPresets ?? null;
 
         View::render('layout/app', compact(
             'title',
@@ -7041,6 +7050,11 @@ $legalProductsConfig = LegalProductSettings::config();
             'jaPreview',
             'fiscalYears',
             'jaYearStatus',
+            'acqInput',
+            'acqResult',
+            'acqCompany',
+            'acqAreas',
+            'acqPresets',
             'isAdmin',
             'numberRangeType',
             'numberRangeDoc',
