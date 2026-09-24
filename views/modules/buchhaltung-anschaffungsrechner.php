@@ -149,12 +149,64 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
     </section>
 
     <section class="dg-acq-cards">
-      <?php foreach (['barkauf', 'ratenkauf', 'leasing', 'miete'] as $key) :
+      <?php
+        $isKapG = !empty($meta['is_kapg']);
+        $gewstPct = $fmtPct((float) ($meta['effective']['gewst'] ?? 0));
+        $incomePct = $fmtPct((float) ($meta['effective']['income_tax'] ?? 0));
+        $incomeLabel = $isKapG ? 'Körperschaftsteuer inkl. Solidaritätszuschlag' : 'Einkommensteuer (Grenzsatz)';
+        $acqHelp = [
+            'barkauf' => [
+                'title' => 'Was bedeuten die Zahlen beim Barkauf?',
+                'paras' => [
+                    'Cash (Summe): einmaliger Abfluss des Brutto-Kaufpreises (Netto + Umsatzsteuer) im Anschaffungsjahr.',
+                    'Vorsteuer / VSt-Effekt: die gezahlte Umsatzsteuer, die Sie als Vorsteuer zurückholen bzw. verrechnen können (wenn Sie kein Kleinunternehmer sind). Das mindert die Belastung.',
+                    'Betriebsaufwand: die Abschreibung (AfA) über die Nutzungsdauer — bei GWG der volle Nettobetrag im ersten Jahr. Optional gekürzt um den „nicht abziehbaren Anteil“ (z. B. Privatnutzung).',
+                    'Steuerentlastung GewSt: geschätzte Ersparnis bei der Gewerbesteuer selbst (= Betriebsaufwand × GewSt-Satz ' . $gewstPct . '). Die Bemessungsgrundlage sinkt um den Aufwand; die Steuer sinkt um diesen Betrag.',
+                    'Steuerentlastung KSt/ESt: geschätzte Ersparnis bei der ' . $incomeLabel . ' (= Betriebsaufwand × ' . $incomePct . ').',
+                    'Steuerentlastung gesamt: Summe aus GewSt- und Ertragsteuer-Entlastung (vereinfacht addiert).',
+                    'Nettobelastung nach Steuer: Cash + Vorsteuer-Effekt + Steuerentlastung gesamt. Negativ = Netto-Belastung über den Horizont.',
+                ],
+            ],
+            'ratenkauf' => [
+                'title' => 'Was bedeuten die Zahlen beim Ratenkauf?',
+                'paras' => [
+                    'Cash (Summe): Anzahlung plus alle Monatsraten über die Laufzeit. Enthält Zinsen — deshalb oft höher als beim Barkauf.',
+                    'Vorsteuer / VSt-Effekt: Vorsteuer auf den Kaufpreis (typisch im Anschaffungsjahr), sofern vorsteuerabzugsberechtigt.',
+                    'Betriebsaufwand: AfA auf den Netto-Kaufpreis plus vereinfachter Zinsanteil der Finanzierung.',
+                    'Steuerentlastung GewSt / KSt/ESt: wie beim Barkauf — Aufwand × Steuersätze aus den Firmendaten. Höherer Aufwand (Zinsen) → höhere geschätzte Entlastung.',
+                    'Monatsrate: Annuität aus finanziertem Betrag, Zinssatz und Laufzeit (vereinfachte Formel).',
+                    'Nettobelastung: Cash + Vorsteuer-Effekt + Steuerentlastung. Orientierung, keine Bankkalkulation.',
+                ],
+            ],
+            'leasing' => [
+                'title' => 'Was bedeuten die Zahlen beim Leasing?',
+                'paras' => [
+                    'Cash (Summe): Summe aller Leasingraten (und ggf. Restwert am Ende). Kein Kaufpreis — Sie zahlen für die Nutzung.',
+                    'Wenn die Monatsrate im Formular 0 war, schätzt das System eine Rate aus Netto und Laufzeit. Für den Vergleich echte Vertragswerte eintragen.',
+                    'Vorsteuer / VSt-Effekt: Vorsteueranteil aus den Raten (wenn Raten brutto eingegeben und Vorsteuerabzug möglich).',
+                    'Betriebsaufwand: abziehbarer Teil der Raten (vereinfacht Vollrate ohne Zins-/Tilgungssplit).',
+                    'Steuerentlastung: geschätzte Steuerersparnis = Aufwand × GewSt- bzw. KSt/ESt-Satz. Bedeutet: die zu zahlende Steuer fällt um diesen Betrag niedriger aus als ohne diesen Aufwand.',
+                    'Am Ende besitzen Sie das Fahrzeug in der Regel nicht (außer Kaufoption/Restwert) — deshalb kann Cash unter dem Barkauf liegen.',
+                ],
+            ],
+            'miete' => [
+                'title' => 'Was bedeuten die Zahlen bei der Miete?',
+                'paras' => [
+                    'Cash (Summe): Summe aller Mietraten über die Laufzeit. Wie Leasing: laufende Zahlung, kein Eigentumserwerb.',
+                    'Bei Rate 0 im Formular verwendet das System einen Schätzwert (etwas höher als die Leasing-Schätzung). Besser: echte Mietrate eintragen.',
+                    'Vorsteuer / VSt-Effekt und Betriebsaufwand: analog Leasing — Raten als Betriebsausgabe, Vorsteuer aus Brutto-Raten.',
+                    'Steuerentlastung GewSt und KSt/ESt: Aufwand × Firmensätze. Das ist die geschätzte Ersparnis bei der Steuerzahlung, nicht die Minderung der Bemessungsgrundlage (die sinkt um den Aufwand).',
+                    'Nettobelastung nach Steuer: Cash + Vorsteuer-Effekt + Steuerentlastung — zum groben Vergleich mit Kauf und Leasing.',
+                ],
+            ],
+        ];
+        foreach (['barkauf', 'ratenkauf', 'leasing', 'miete'] as $key) :
           $m = is_array($models[$key] ?? null) ? $models[$key] : null;
           if ($m === null) {
               continue;
           }
           $t = is_array($m['totals'] ?? null) ? $m['totals'] : [];
+          $help = $acqHelp[$key] ?? null;
           ?>
         <article class="dg-panel dg-acq-card">
           <h3 class="dg-subsection-title"><?= View::escape((string) ($m['label'] ?? $key)) ?></h3>
@@ -172,6 +224,17 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
           </dl>
           <?php if (isset($m['monthly_rate'])) : ?>
             <p class="dg-field-hint">Monatsrate ca. <?= $fmt((float) $m['monthly_rate']) ?></p>
+          <?php endif; ?>
+          <?php if (is_array($help)) : ?>
+            <details class="dg-acq-help">
+              <summary><?= View::escape((string) $help['title']) ?></summary>
+              <div class="dg-acq-help__body">
+                <?php foreach ($help['paras'] as $para) : ?>
+                  <p><?= View::escape((string) $para) ?></p>
+                <?php endforeach; ?>
+                <p class="dg-acq-help__note">Nur Orientierung — keine Steuerberatung. Sätze und Wechselwirkungen sind vereinfacht.</p>
+              </div>
+            </details>
           <?php endif; ?>
         </article>
       <?php endforeach; ?>
@@ -242,6 +305,34 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
 .dg-acq-dl dd { margin: 0; font-weight: 600; color: #134e4a; text-align: right; }
 .dg-acq-dl__total { border-top: 1px solid #d1e4e0; padding-top: 8px; margin-top: 4px; }
 .dg-acq-dl__total dd { font-size: 16px; }
+.dg-acq-help {
+  margin-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+}
+.dg-acq-help summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f766e;
+  list-style-position: outside;
+}
+.dg-acq-help summary:hover {
+  text-decoration: underline;
+}
+.dg-acq-help__body {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #334155;
+}
+.dg-acq-help__body p {
+  margin: 0 0 8px;
+}
+.dg-acq-help__note {
+  color: #64748b;
+  font-style: italic;
+}
 </style>
 <script>
 (function () {
