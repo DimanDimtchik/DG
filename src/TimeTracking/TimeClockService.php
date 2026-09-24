@@ -109,20 +109,37 @@ final class TimeClockService
     {
         $today = date('Y-m-d');
         $events = TimeClockRepository::eventsForContact($contactId, $today);
+        $sessionStart = null;
+        foreach ($events as $ev) {
+            if (!is_array($ev)) {
+                continue;
+            }
+            if ((string) ($ev['event_type'] ?? '') === TimeClockRepository::EVENT_CLOCK_IN) {
+                $sessionStart = (string) ($ev['occurred_at'] ?? '');
+                break;
+            }
+        }
+        $sessionMeta = [
+            'session_start' => $sessionStart,
+            'session_start_display' => $sessionStart !== null && $sessionStart !== ''
+                ? self::formatDateTimeGerman($sessionStart)
+                : null,
+        ];
+
         if ($events === []) {
-            return [
+            return array_merge([
                 'state' => 'off',
                 'since' => null,
                 'since_display' => null,
                 'label' => 'Nicht eingestempelt',
-            ];
+            ], $sessionMeta);
         }
 
         $last = $events[count($events) - 1];
         $type = (string) ($last['event_type'] ?? '');
         $since = (string) ($last['occurred_at'] ?? '');
 
-        return match ($type) {
+        $base = match ($type) {
             TimeClockRepository::EVENT_CLOCK_IN => [
                 'state' => 'working',
                 'since' => $since,
@@ -148,6 +165,8 @@ final class TimeClockService
                 'label' => 'Ausgestempelt',
             ],
         };
+
+        return array_merge($base, $sessionMeta);
     }
 
     /**
@@ -172,6 +191,8 @@ final class TimeClockService
         $scheduleSource = TimeScheduleService::scheduleSource($contactId, $date);
         $shiftAssignment = TimeScheduleService::shiftAssignmentFor($contactId, $date);
         $shiftName = is_array($shiftAssignment) ? (string) ($shiftAssignment['template_name'] ?? '') : '';
+        $shiftStart = is_array($shiftAssignment) ? (string) ($shiftAssignment['start_time'] ?? '') : '';
+        $shiftEnd = is_array($shiftAssignment) ? (string) ($shiftAssignment['end_time'] ?? '') : '';
         $absence = TimeScheduleService::approvedAbsenceFor($contactId, $date);
         $absenceType = is_array($absence) ? (string) ($absence['type'] ?? '') : '';
         $absenceLabel = $absenceType !== '' && class_exists('TimeAbsenceService')
@@ -253,6 +274,8 @@ final class TimeClockService
             'scheduled_minutes' => $scheduled,
             'schedule_source' => $scheduleSource,
             'shift_name' => $shiftName,
+            'shift_start' => $shiftStart !== '' ? substr($shiftStart, 0, 5) : '',
+            'shift_end' => $shiftEnd !== '' ? substr($shiftEnd, 0, 5) : '',
             'absence_type' => $absenceType,
             'absence_label' => $absenceLabel,
             'worked_display' => self::formatMinutes($netWorked),

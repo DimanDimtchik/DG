@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -301,20 +303,36 @@ class ClockTab extends StatefulWidget {
 class _ClockTabState extends State<ClockTab> {
   Map<String, dynamic>? _data;
   String? _error;
+  Timer? _tick;
+  Timer? _refresh;
+  DateTime _now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _load();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+    _refresh = Timer.periodic(const Duration(seconds: 30), (_) => _load(silent: true));
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _tick?.cancel();
+    _refresh?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load({bool silent = false}) async {
     final res = await widget.client.get('/api/mobile/staff/clock');
+    if (!mounted) return;
     setState(() {
       if (res['ok'] == true) {
         _data = res['data'] as Map<String, dynamic>;
         _error = null;
-      } else {
+      } else if (!silent) {
         _error = res['error']?.toString();
       }
     });
@@ -322,39 +340,374 @@ class _ClockTabState extends State<ClockTab> {
 
   Future<void> _event(String type) async {
     final res = await widget.client.post('/api/mobile/staff/clock', {'event_type': type});
+    if (!mounted) return;
     if (res['ok'] == true) {
       setState(() => _data = res['data'] as Map<String, dynamic>);
-    } else if (mounted) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${res['error']}')));
+    }
+  }
+
+  DateTime? _parseServerTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final normalized = raw.trim().replaceFirst(' ', 'T');
+    return DateTime.tryParse(normalized);
+  }
+
+  String _fmtHm(int totalMinutes) {
+    final m = totalMinutes.abs();
+    final h = m ~/ 60;
+    final min = m % 60;
+    final body = '$h:${min.toString().padLeft(2, '0')}';
+    return totalMinutes < 0 ? '-$body' : body;
+  }
+
+  String _fmtDuration(Duration d) {
+    final total = d.inSeconds < 0 ? Duration.zero : d;
+    final h = total.inHours;
+    final m = total.inMinutes.remainder(60);
+    final s = total.inSeconds.remainder(60);
+    if (h > 0) {
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  String _fmtClock(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:${t.second.toString().padLeft(2, '0')}';
+
+  Color _stateColor(String state) {
+    switch (state) {
+      case 'working':
+        return const Color(0xFF15803D);
+      case 'break':
+        return const Color(0xFFC2410C);
+      default:
+        return const Color(0xFF64748B);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_error != null) return Center(child: Text(_error!));
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Erneut laden')),
+            ],
+          ),
+        ),
+      );
+    }
     if (_data == null) return const Center(child: CircularProgressIndicator());
-    final status = _data!['status'] as Map? ?? {};
-    final summary = _data!['summary'] as Map? ?? {};
+
+    final status = Map<String, dynamic>.from(_data!['status'] as Map? ?? {});
+    final summary = Map<String, dynamic>.from(_data!['summary'] as Map? ?? {});
     final state = status['state']?.toString() ?? 'off';
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    final events = (summary['events'] as List?) ?? const [];
+    final warnings = (summary['warnings'] as List?) ?? const [];
+
+    final sinceAt = _parseServerTime(status['since']?.toString());
+    var sessionStartAt = _parseServerTime(status['session_start']?.toString());
+    var sessionStartDisplay = status['session_start_display']?.toString();
+    if (sessionStartAt == null || sessionStartDisplay == null) {
+      for (final raw in events) {
+        final e = Map<String, dynamic>.from(raw as Map);
+        if (e['event_type']?.toString() == 'clock_in') {
+          sessionStartAt ??= _parseServerTime(e['occurred_at']?.toString());
+          sessionStartDisplay ??= e['occurred_display']?.toString();
+          break;
+        }
+      }
+    }
+    final segmentElapsed = sinceAt == null ? null : _now.difference(sinceAt);
+    final sessionElapsed = sessionStartAt == null || state == 'off'
+        ? null
+        : _now.difference(sessionStartAt);
+
+    final workedMin = (summary['worked_minutes'] as num?)?.toInt() ?? 0;
+    final breakMin = (summary['break_minutes'] as num?)?.toInt() ?? 0;
+    final scheduledMin = (summary['scheduled_minutes'] as num?)?.toInt() ?? 0;
+    final remaining = math.max(0, scheduledMin - workedMin);
+    final progress = scheduledMin > 0 ? (workedMin / scheduledMin).clamp(0.0, 1.2) : 0.0;
+
+    final shiftName = (summary['shift_name'] ?? '').toString().trim();
+    final shiftStart = (summary['shift_start'] ?? '').toString().trim();
+    final shiftEnd = (summary['shift_end'] ?? '').toString().trim();
+    final shiftLine = [
+      if (shiftName.isNotEmpty) shiftName,
+      if (shiftStart.isNotEmpty && shiftEnd.isNotEmpty) '$shiftStart–$shiftEnd Uhr',
+    ].join(' · ');
+
+    final theme = Theme.of(context);
+    final stateColor = _stateColor(state);
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
-          Text('Status: ${status['label'] ?? state}', style: Theme.of(context).textTheme.titleLarge),
-          Text('Heute: ${summary['worked_display'] ?? '0:00'} h'),
-          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _fmtClock(_now),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Aktualisieren',
+                onPressed: _load,
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Card(
+            color: stateColor.withValues(alpha: 0.08),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: stateColor.withValues(alpha: 0.35)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (status['label'] ?? state).toString(),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: stateColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (segmentElapsed != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      state == 'break'
+                          ? 'Pause seit ${_fmtDuration(segmentElapsed)}'
+                          : 'Aktueller Abschnitt seit ${_fmtDuration(segmentElapsed)}',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                  if (sessionStartDisplay != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Arbeitsbeginn: $sessionStartDisplay'
+                      '${sessionElapsed != null ? '  ·  ${_fmtDuration(sessionElapsed)} insgesamt' : ''}',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ] else if (status['since_display'] != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Seit ${status['since_display']}',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                  if (shiftLine.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_view_day, size: 18, color: theme.colorScheme.primary),
+                        const SizedBox(width: 6),
+                        Expanded(child: Text(shiftLine, style: theme.textTheme.bodyMedium)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.55,
+            children: [
+              _MetricTile(
+                label: 'Gearbeitet',
+                value: '${_fmtHm(workedMin)} h',
+                icon: Icons.timer_outlined,
+              ),
+              _MetricTile(
+                label: 'Pause',
+                value: '${_fmtHm(breakMin)} h',
+                icon: Icons.coffee_outlined,
+              ),
+              _MetricTile(
+                label: 'Soll heute',
+                value: '${summary['scheduled_display'] ?? _fmtHm(scheduledMin)} h',
+                icon: Icons.flag_outlined,
+              ),
+              _MetricTile(
+                label: scheduledMin > 0 && workedMin >= scheduledMin ? 'Über Soll' : 'Noch bis Soll',
+                value: scheduledMin < 1
+                    ? '—'
+                    : '${_fmtHm(workedMin >= scheduledMin ? workedMin - scheduledMin : remaining)} h',
+                icon: Icons.hourglass_bottom,
+              ),
+            ],
+          ),
+          if (scheduledMin > 0) ...[
+            const SizedBox(height: 12),
+            Text('Tagesfortschritt', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress > 1 ? 1 : progress,
+                minHeight: 10,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: progress > 1 ? const Color(0xFFB45309) : theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_fmtHm(workedMin)} / ${_fmtHm(scheduledMin)} h'
+              '${progress > 1 ? '  (+${_fmtHm(workedMin - scheduledMin)} über Soll)' : ''}',
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+          if (warnings.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            ...warnings.map((w) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Material(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(10),
+                    child: ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.info_outline, color: Color(0xFFC2410C)),
+                      title: Text('$w', style: const TextStyle(fontSize: 13)),
+                    ),
+                  ),
+                )),
+          ],
+          const SizedBox(height: 18),
           if (state == 'off')
-            FilledButton(onPressed: () => _event('clock_in'), child: const Text('Einstempeln')),
+            FilledButton.icon(
+              onPressed: () => _event('clock_in'),
+              icon: const Icon(Icons.login),
+              label: const Text('Einstempeln'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            ),
           if (state == 'working') ...[
-            FilledButton(onPressed: () => _event('break_start'), child: const Text('Pause starten')),
+            FilledButton.icon(
+              onPressed: () => _event('break_start'),
+              icon: const Icon(Icons.coffee),
+              label: const Text('Pause starten'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            ),
             const SizedBox(height: 8),
-            FilledButton.tonal(onPressed: () => _event('clock_out'), child: const Text('Ausstempeln')),
+            FilledButton.tonalIcon(
+              onPressed: () => _event('clock_out'),
+              icon: const Icon(Icons.logout),
+              label: const Text('Ausstempeln'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            ),
           ],
           if (state == 'break')
-            FilledButton(onPressed: () => _event('break_end'), child: const Text('Pause beenden')),
-          TextButton(onPressed: _load, child: const Text('Aktualisieren')),
+            FilledButton.icon(
+              onPressed: () => _event('break_end'),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Pause beenden'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            ),
+          const SizedBox(height: 22),
+          Text('Heutige Stempel', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          if (events.isEmpty)
+            Text(
+              'Noch keine Stempel heute.',
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            )
+          else
+            ...events.map((raw) {
+              final e = Map<String, dynamic>.from(raw as Map);
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: Icon(_eventIcon(e['event_type']?.toString())),
+                  title: Text('${e['event_label'] ?? e['event_type']}'),
+                  subtitle: Text('${e['occurred_display'] ?? e['occurred_at']}'
+                      '${e['source_label'] != null ? ' · ${e['source_label']}' : ''}'),
+                ),
+              );
+            }),
         ],
+      ),
+    );
+  }
+
+  IconData _eventIcon(String? type) {
+    switch (type) {
+      case 'clock_in':
+        return Icons.login;
+      case 'clock_out':
+        return Icons.logout;
+      case 'break_start':
+        return Icons.coffee;
+      case 'break_end':
+        return Icons.play_arrow;
+      default:
+        return Icons.schedule;
+    }
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.label, required this.value, required this.icon});
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
