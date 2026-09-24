@@ -29,7 +29,7 @@ final class AcquisitionCompareService
 
         $net = max(0.0, (float) ($input['net'] ?? 0));
         $vatRate = max(0.0, min(19.0, (float) ($input['vat_rate'] ?? 19)));
-        $usefulLife = max(1, min(30, (int) ($input['useful_life_years'] ?? 3)));
+        $usefulLife = max(1, min(50, (int) ($input['useful_life_years'] ?? 3)));
         $nonDeductible = max(0.0, min(1.0, (float) ($input['non_deductible_share'] ?? 0)));
         $downPayment = max(0.0, (float) ($input['down_payment'] ?? 0));
         $termMonths = max(1, min(120, (int) ($input['term_months'] ?? 36)));

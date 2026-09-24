@@ -30,7 +30,8 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
   </header>
 
   <p class="dg-alert dg-alert--info">
-    Orientierungshilfe, keine Steuerberatung. AfA linear; GWG bis <?= View::escape(number_format(AfaCatalog::GWG_NETTO_LIMIT, 0, ',', '.')) ?> € Netto Sofortabschreibung.
+    Orientierungshilfe, keine Steuerberatung. Anlagetypen und AfA-Jahre angelehnt an Lexoffice/Lexware Office.
+    IT-Hardware: 1 Jahr / Sofortabschreibung (seit 2021) möglich. GWG bis <?= View::escape(number_format(AfaCatalog::GWG_NETTO_LIMIT, 0, ',', '.')) ?> € Netto Sofortabschreibung.
     Steuersätze unter Einstellungen → Firma (Hebesatz, KSt, SolZ, ESt-Grenzsatz).
   </p>
 
@@ -40,12 +41,20 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
 
     <div class="dg-form-grid">
       <label class="dg-field">
-        <span>Gegenstandsbereich</span>
+        <span>Gegenstandsbereich (Anlagetyp)</span>
         <select name="area" id="dg-acq-area">
-          <?php foreach ($areas as $areaId => $areaLabel) : ?>
-            <option value="<?= View::escape($areaId) ?>"<?= ($input['area'] ?? 'it') === $areaId ? ' selected' : '' ?>><?= View::escape($areaLabel) ?></option>
+          <?php
+            $areaHints = AfaCatalog::areaHints();
+            foreach ($areas as $areaId => $areaLabel) :
+                ?>
+            <option
+              value="<?= View::escape($areaId) ?>"
+              data-hint="<?= View::escape((string) ($areaHints[$areaId] ?? '')) ?>"
+              <?= ($input['area'] ?? 'it') === $areaId ? ' selected' : '' ?>
+            ><?= View::escape($areaLabel) ?></option>
           <?php endforeach; ?>
         </select>
+        <small class="dg-field-hint" id="dg-acq-area-hint"><?= View::escape((string) ($areaHints[$input['area'] ?? 'it'] ?? $areaHints['it'] ?? '')) ?></small>
       </label>
       <label class="dg-field">
         <span>Gerät / Preset</span>
@@ -56,10 +65,12 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
               data-area="<?= View::escape((string) $p['area']) ?>"
               data-net="<?= View::escape((string) $p['default_net']) ?>"
               data-life="<?= View::escape((string) $p['useful_life_years']) ?>"
+              data-hint="<?= View::escape((string) ($p['hint'] ?? '')) ?>"
               <?= ($input['preset'] ?? 'pc') === $p['id'] ? ' selected' : '' ?>
             ><?= View::escape((string) $p['label']) ?> (<?= (int) $p['useful_life_years'] ?> J.)</option>
           <?php endforeach; ?>
         </select>
+        <small class="dg-field-hint" id="dg-acq-preset-hint"></small>
       </label>
       <label class="dg-field">
         <span>Netto (€)</span>
@@ -75,7 +86,8 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
       </label>
       <label class="dg-field">
         <span>Nutzungsdauer (Jahre)</span>
-        <input type="number" name="useful_life_years" id="dg-acq-life" min="1" max="30" value="<?= View::escape((string) ($input['useful_life_years'] ?? '3')) ?>">
+        <input type="number" name="useful_life_years" id="dg-acq-life" min="1" max="50" value="<?= View::escape((string) ($input['useful_life_years'] ?? '1')) ?>">
+        <small class="dg-field-hint">Gebäude bis 50 Jahre; IT typisch 1 Jahr.</small>
       </label>
       <label class="dg-field">
         <span>Nicht abziehbarer Anteil (0–1)</span>
@@ -233,7 +245,15 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
   var preset = document.getElementById('dg-acq-preset');
   var net = document.getElementById('dg-acq-net');
   var life = document.getElementById('dg-acq-life');
+  var areaHint = document.getElementById('dg-acq-area-hint');
+  var presetHint = document.getElementById('dg-acq-preset-hint');
   if (!area || !preset) return;
+
+  function updateAreaHint() {
+    if (!areaHint) return;
+    var o = area.selectedOptions[0];
+    areaHint.textContent = o ? (o.getAttribute('data-hint') || '') : '';
+  }
 
   function filterPresets() {
     var a = area.value;
@@ -245,9 +265,19 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
       o.disabled = !show;
       if (show && !firstVisible) firstVisible = o;
     });
+    updateAreaHint();
     if (preset.selectedOptions[0] && preset.selectedOptions[0].hidden && firstVisible) {
       firstVisible.selected = true;
       applyPreset();
+    } else {
+      applyPresetHintsOnly();
+    }
+  }
+
+  function applyPresetHintsOnly() {
+    var o = preset.selectedOptions[0];
+    if (presetHint) {
+      presetHint.textContent = o ? (o.getAttribute('data-hint') || '') : '';
     }
   }
 
@@ -256,6 +286,7 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
     if (!o) return;
     if (net) net.value = o.getAttribute('data-net') || net.value;
     if (life) life.value = o.getAttribute('data-life') || life.value;
+    applyPresetHintsOnly();
   }
 
   area.addEventListener('change', filterPresets);

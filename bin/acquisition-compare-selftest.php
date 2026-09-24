@@ -31,7 +31,7 @@ $baseCompany = [
     '_vat_deductible' => true,
 ];
 
-// 1) Barkauf PC 1500 € / 3 J. AfA — Aufwand Jahr 1 = 500
+// 1) Lineare AfA 1500 € / 3 J. — Aufwand Jahr 1 = 500
 $r1 = AcquisitionCompareService::compare([
     'net' => 1500,
     'vat_rate' => 19,
@@ -39,10 +39,26 @@ $r1 = AcquisitionCompareService::compare([
     'term_months' => 36,
 ], $baseCompany);
 $barkauf = $r1['models']['barkauf'];
-assertTrue(!$r1['meta']['is_gwg'], 'PC 1500 € ist kein GWG');
+assertTrue(!$r1['meta']['is_gwg'], '1500 € bei 3 J. AfA ist kein GWG');
 assertTrue(abs((float) $barkauf['years'][0]['expense'] - 500.0) < 0.02, 'Barkauf AfA Jahr 1 = 500');
 assertTrue(abs((float) $barkauf['years'][0]['cash'] + 1785.0) < 0.02, 'Barkauf Cash Jahr 1 = −1785 Brutto');
 assertTrue((float) $barkauf['years'][0]['vat_cash'] > 0, 'Vorsteuer Jahr 1 > 0');
+
+// 1b) IT Sofortabschreibung 1 Jahr — voller Aufwand Jahr 1
+$rIt = AcquisitionCompareService::compare([
+    'net' => 1500,
+    'vat_rate' => 19,
+    'useful_life_years' => 1,
+    'term_months' => 12,
+], $baseCompany);
+assertTrue(abs((float) $rIt['models']['barkauf']['years'][0]['expense'] - 1500.0) < 0.02, 'IT 1 J. = Sofortaufwand 1500');
+
+// Katalog: Lexoffice-Bereiche vorhanden
+$areas = AfaCatalog::areas();
+assertTrue(isset($areas['it'], $areas['software'], $areas['pkw'], $areas['lkw'], $areas['buero']), 'Lexoffice-Hauptbereiche vorhanden');
+assertTrue(isset($areas['werkzeug'], $areas['maschinen'], $areas['betriebsvorrichtung'], $areas['gebaeude'], $areas['gwg']), 'Weitere Lexoffice-Bereiche vorhanden');
+$pc = AfaCatalog::presetById('pc');
+assertTrue($pc !== null && (int) $pc['useful_life_years'] === 1, 'PC-Preset AfA 1 Jahr (IT seit 2021)');
 
 // 2) GWG 500 € Sofortabschreibung
 $r2 = AcquisitionCompareService::compare([
