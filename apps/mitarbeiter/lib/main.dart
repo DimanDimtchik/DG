@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -69,6 +73,66 @@ class ApiClient {
       if (token != null) 'Authorization': 'Bearer $token',
     });
     return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+  }
+
+  Future<({List<int> bytes, String? filename, String? mime})> getBinary(
+    String path, [
+    Map<String, String>? q,
+  ]) async {
+    final res = await http.get(_u(path, q), headers: {
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw Exception('Download fehlgeschlagen (${res.statusCode}).');
+    }
+    String? filename;
+    final disp = res.headers['content-disposition'];
+    if (disp != null) {
+      final m = RegExp(r'filename="?([^";]+)"?', caseSensitive: false).firstMatch(disp);
+      filename = m?.group(1);
+    }
+    return (bytes: res.bodyBytes, filename: filename, mime: res.headers['content-type']);
+  }
+
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    required String fileField,
+    required String filePath,
+    String? filename,
+  }) async {
+    final req = http.MultipartRequest('POST', _u(path));
+    if (token != null) {
+      req.headers['Authorization'] = 'Bearer $token';
+    }
+    req.fields.addAll(fields);
+    final name = filename ?? p.basename(filePath);
+    final ext = p.extension(name).toLowerCase().replaceFirst('.', '');
+    MediaType? mime;
+    switch (ext) {
+      case 'pdf':
+        mime = MediaType('application', 'pdf');
+        break;
+      case 'png':
+        mime = MediaType('image', 'png');
+        break;
+      case 'jpg':
+      case 'jpeg':
+        mime = MediaType('image', 'jpeg');
+        break;
+      case 'webp':
+        mime = MediaType('image', 'webp');
+        break;
+    }
+    req.files.add(await http.MultipartFile.fromPath(
+      fileField,
+      filePath,
+      filename: name,
+      contentType: mime,
+    ));
+    final streamed = await req.send();
+    final body = await streamed.stream.toBytes();
+    return jsonDecode(utf8.decode(body)) as Map<String, dynamic>;
   }
 }
 
@@ -839,32 +903,225 @@ class DocsTab extends StatefulWidget {
 }
 
 class _DocsTabState extends State<DocsTab> {
-  List<dynamic> _docs = [];
+  List<dynamic> _slots = [];
+  bool _loading = true;
+  String? _error;
+  String? _busyType;
 
   @override
   void initState() {
     super.initState();
-    widget.client.get('/api/mobile/staff/documents').then((res) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final res = await widget.client.get('/api/mobile/staff/documents');
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
       if (res['ok'] == true) {
-        setState(() => _docs = (res['data']?['documents'] as List?) ?? []);
+        final data = res['data'] as Map? ?? {};
+        _slots = (data['slots'] as List?) ?? const [];
+        if (_slots.isEmpty) {
+          // Fallback ältere API: nur documents-Liste
+          final docs = (data['documents'] as List?) ?? const [];
+          _slots = docs
+              .map((d) {
+                final m = Map<String, dynamic>.from(d as Map);
+                return {
+                  'type': m['type'],
+                  'label': m['label'],
+                  'multi': false,
+                  'files': [m],
+                };
+              })
+              .toList();
+        }
+      } else {
+        _error = res['error']?.toString() ?? 'Akte nicht ladbar';
       }
     });
   }
 
+  Future<void> _upload(String type, String label) async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+      withData: false,
+    );
+    if (picked == null || picked.files.isEmpty) return;
+    final file = picked.files.first;
+    final path = file.path;
+    if (path == null || path.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Datei konnte nicht gelesen werden.')),
+      );
+      return;
+    }
+    setState(() => _busyType = type);
+    final res = await widget.client.postMultipart(
+      '/api/mobile/staff/documents',
+      fields: {'type': type},
+      fileField: 'file',
+      filePath: path,
+      filename: file.name,
+    );
+    if (!mounted) return;
+    setState(() => _busyType = null);
+    if (res['ok'] == true) {
+      final data = res['data'] as Map? ?? {};
+      setState(() => _slots = (data['slots'] as List?) ?? _slots);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$label hochgeladen.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${res['error'] ?? 'Upload fehlgeschlagen'}')),
+      );
+    }
+  }
+
+  Future<void> _download(Map doc) async {
+    final type = doc['type']?.toString() ?? '';
+    if (type.isEmpty) return;
+    final q = <String, String>{'type': type};
+    if (doc['fileIndex'] != null) {
+      q['file'] = '${doc['fileIndex']}';
+    }
+    try {
+      final bin = await widget.client.getBinary('/api/mobile/staff/documents/download', q);
+      final name = (bin.filename?.trim().isNotEmpty == true)
+          ? bin.filename!
+          : (doc['name']?.toString() ?? 'dokument.bin');
+      final out = File(p.join(Directory.systemTemp.path, name));
+      await out.writeAsBytes(bin.bytes, flush: true);
+      if (Platform.isWindows) {
+        await Process.start('cmd', ['/c', 'start', '', out.path], runInShell: false);
+      } else if (Platform.isMacOS) {
+        await Process.start('open', [out.path]);
+      } else {
+        await Process.start('xdg-open', [out.path]);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Geöffnet: $name')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_docs.isEmpty) {
-      return const Center(child: Text('Keine Dokumente in der Akte.'));
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Erneut laden')),
+            ],
+          ),
+        ),
+      );
     }
-    return ListView.builder(
-      itemCount: _docs.length,
-      itemBuilder: (_, i) {
-        final d = _docs[i] as Map;
-        return ListTile(
-          title: Text('${d['label']}'),
-          subtitle: Text('${d['name']}'),
-        );
-      },
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
+        itemCount: _slots.length + 1,
+        itemBuilder: (context, i) {
+          if (i == 0) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+              child: Text(
+                'Personalakte — alle Dokumenttypen. Fehlende Dateien können Sie hier anhängen (PDF/JPG/PNG).',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            );
+          }
+          final slot = Map<String, dynamic>.from(_slots[i - 1] as Map);
+          final type = slot['type']?.toString() ?? '';
+          final label = slot['label']?.toString() ?? type;
+          final multi = slot['multi'] == true;
+          final files = (slot['files'] as List?) ?? const [];
+          final busy = _busyType == type;
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+                      ),
+                      if (busy)
+                        const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else
+                        TextButton.icon(
+                          onPressed: () => _upload(type, label),
+                          icon: Icon(multi ? Icons.note_add_outlined : Icons.upload_file),
+                          label: Text(files.isEmpty ? 'Anhängen' : (multi ? 'Weitere' : 'Ersetzen')),
+                        ),
+                    ],
+                  ),
+                  if (files.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4, top: 2),
+                      child: Text(
+                        'Noch kein Dokument hinterlegt.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    )
+                  else
+                    ...files.map((raw) {
+                      final doc = Map<String, dynamic>.from(raw as Map);
+                      final uploaded = (doc['uploaded_at'] ?? '').toString().trim();
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          (doc['mime']?.toString().startsWith('image/') ?? false)
+                              ? Icons.image_outlined
+                              : Icons.picture_as_pdf_outlined,
+                        ),
+                        title: Text('${doc['name'] ?? 'Datei'}'),
+                        subtitle: uploaded.isEmpty ? null : Text('Hochgeladen: $uploaded'),
+                        trailing: IconButton(
+                          tooltip: 'Öffnen',
+                          onPressed: () => _download(doc),
+                          icon: const Icon(Icons.open_in_new),
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -878,28 +1135,186 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   Map<String, dynamic>? _data;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    widget.client.get('/api/mobile/staff/profile').then((res) {
-      if (res['ok'] == true) setState(() => _data = res['data'] as Map<String, dynamic>);
+    _load();
+  }
+
+  Future<void> _load() async {
+    final res = await widget.client.get('/api/mobile/staff/profile');
+    if (!mounted) return;
+    setState(() {
+      if (res['ok'] == true) {
+        _data = res['data'] as Map<String, dynamic>;
+        _error = null;
+      } else {
+        _error = res['error']?.toString() ?? 'Profil nicht ladbar';
+      }
     });
+  }
+
+  Widget _kv(String label, String? value) {
+    final v = (value ?? '').trim();
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+      subtitle: Text(
+        v.isEmpty ? '—' : v,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: v.isEmpty ? const Color(0xFF94A3B8) : null,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Erneut laden')),
+            ],
+          ),
+        ),
+      );
+    }
     if (_data == null) return const Center(child: CircularProgressIndicator());
-    final c = _data!['contact'] as Map? ?? {};
-    final e = _data!['employee'] as Map? ?? {};
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        ListTile(title: Text('${c['label']}'), subtitle: Text('${c['email']}')),
-        ListTile(title: const Text('Tätigkeit'), subtitle: Text('${e['job_type'] ?? '—'}')),
-        ListTile(title: const Text('Arbeitszeit'), subtitle: Text('${e['working_hours'] ?? '—'}')),
-        ListTile(title: const Text('Eintritt'), subtitle: Text('${e['entry_date'] ?? e['contract_start'] ?? '—'}')),
-      ],
+
+    final c = Map<String, dynamic>.from(_data!['contact'] as Map? ?? {});
+    final sections = (_data!['sections'] as List?) ?? const [];
+    final banks = (_data!['bank_accounts'] as List?) ?? const [];
+    final theme = Theme.of(context);
+    final addressLines = (c['address_lines'] as List?)?.map((e) => '$e').where((e) => e.trim().isNotEmpty).toList() ??
+        [
+          if ('${c['address_street'] ?? ''}'.trim().isNotEmpty) '${c['address_street']}',
+          [
+            '${c['address_postal'] ?? ''}'.trim(),
+            '${c['address_city'] ?? ''}'.trim(),
+          ].where((e) => e.isNotEmpty).join(' '),
+          if ('${c['address_country'] ?? ''}'.trim().isNotEmpty) '${c['address_country']}',
+        ].where((e) => e.trim().isNotEmpty).toList();
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+        children: [
+          Text('${c['label'] ?? 'Mitarbeiter'}', style: theme.textTheme.headlineSmall),
+          if ('${c['login'] ?? ''}'.trim().isNotEmpty)
+            Text('Login: ${c['login']}', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Kontaktdaten', style: theme.textTheme.titleMedium),
+                  _kv('Anrede', c['salutation']?.toString()),
+                  _kv('Vorname', c['first_name']?.toString()),
+                  _kv('Nachname', c['last_name']?.toString()),
+                  _kv('Anzeigename', c['display_name']?.toString()),
+                  _kv('E-Mail', c['email']?.toString()),
+                  _kv('E-Mail 2', c['email2']?.toString()),
+                  _kv('Telefon', c['phone']?.toString()),
+                  _kv('Telefon 2', c['phone2']?.toString()),
+                  _kv('Kunden-/Personalnr.', c['customer_number']?.toString()),
+                  _kv('Adresse', addressLines.isEmpty ? null : addressLines.join('\n')),
+                ],
+              ),
+            ),
+          ),
+          if (sections.isEmpty) ...[
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Mitarbeiterdaten', style: theme.textTheme.titleMedium),
+                    ...(() {
+                      final e = Map<String, dynamic>.from(_data!['employee'] as Map? ?? {});
+                      return [
+                        _kv('Tätigkeit', e['job_type']?.toString()),
+                        _kv('Arbeitszeit', e['working_hours']?.toString()),
+                        _kv('Eintritt', e['entry_date']?.toString()),
+                        _kv('Vertragsbeginn', e['contract_start']?.toString()),
+                        _kv('Beschäftigungsverhältnis', e['employment_relationship']?.toString()),
+                        _kv('Arbeitsort', e['work_location']?.toString()),
+                      ];
+                    })(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          ...sections.map((raw) {
+            final sec = Map<String, dynamic>.from(raw as Map);
+            final fields = (sec['fields'] as List?) ?? const [];
+            return Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${sec['label']}', style: theme.textTheme.titleMedium),
+                      ...fields.map((fRaw) {
+                        final f = Map<String, dynamic>.from(fRaw as Map);
+                        return _kv('${f['label']}', f['value']?.toString());
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          if (banks.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...banks.map((raw) {
+              final bank = Map<String, dynamic>.from(raw as Map);
+              final fields = (bank['fields'] as List?) ?? const [];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${bank['type_label'] ?? 'Bankkonto'}', style: theme.textTheme.titleMedium),
+                        ...fields.map((fRaw) {
+                          final f = Map<String, dynamic>.from(fRaw as Map);
+                          return _kv('${f['label']}', f['value']?.toString());
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            'Änderungen bitte über Personal/HR im CRM melden. Hier sehen Sie Ihre hinterlegten Stammdaten.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 }

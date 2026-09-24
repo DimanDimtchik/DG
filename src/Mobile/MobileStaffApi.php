@@ -155,12 +155,12 @@ final class MobileStaffApi
             self::downloadDocument($contactId);
         }
 
+        if ($head === 'documents' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            self::uploadDocument($contactId);
+        }
+
         if ($head === 'documents' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
-            $c = ContactRepository::findById($contactId);
-            $files = is_array($c?->employeeFiles ?? null) ? $c->employeeFiles : [];
-            MobileApi::ok([
-                'documents' => EmployeeDocuments::listUploaded($files),
-            ]);
+            MobileApi::ok(self::documentsPayload($contactId));
         }
 
         MobileApi::fail(404, 'Unbekannter Mitarbeiter-Endpunkt.', 'not_found');
@@ -177,21 +177,166 @@ final class MobileStaffApi
         }
         $raw = is_array($c->employeeData ?? null) ? $c->employeeData : [];
         $data = EmployeeData::sanitize($raw);
-        // Keine sensiblen Rohfelder unnötig erweitern — ausgewählte Felder
-        $safe = [
-            'job_type' => (string) ($data['job_type'] ?? ''),
-            'working_hours' => (string) ($data['working_hours'] ?? ''),
-            'daily_work_minutes' => (string) ($data['daily_work_minutes'] ?? ''),
-            'entry_date' => (string) ($data['entry_date'] ?? ''),
-            'contract_start' => (string) ($data['contract_start'] ?? ''),
-            'employment_relationship' => (string) ($data['employment_relationship'] ?? ''),
-            'work_location' => (string) ($data['work_location'] ?? ''),
-        ];
+
+        $sections = [];
+        foreach (EmployeeData::sectionLabels() as $sectionId => $sectionLabel) {
+            if ($sectionId === 'documents') {
+                continue;
+            }
+            $fields = [];
+            foreach (EmployeeData::fields() as $key => $meta) {
+                if (($meta['section'] ?? '') !== $sectionId) {
+                    continue;
+                }
+                $value = trim((string) ($data[$key] ?? ''));
+                $display = $value;
+                if ($value !== '' && ($meta['type'] ?? '') === 'select') {
+                    $options = EmployeeData::selectOptions($key);
+                    if ($options !== []) {
+                        $display = (string) ($options[$value] ?? $value);
+                    }
+                }
+                if ($key === 'disability_degree' && $display !== '') {
+                    $display .= ' %';
+                }
+                if ($key === 'disability_supplementary_codes' && $display !== '') {
+                    $display = EmployeeData::formatSupplementaryCodes($display);
+                }
+                if ($key === 'overtime_allowed') {
+                    $display = $value === '1' || $value === 'true' || $value === 'yes' ? 'Ja' : ($value === '' ? '' : 'Nein');
+                }
+                $fields[] = [
+                    'key' => $key,
+                    'label' => (string) ($meta['label'] ?? $key),
+                    'value' => $display === '' ? null : $display,
+                ];
+            }
+            if ($sectionId === 'retention') {
+                $retention = EmployeeData::retentionUntil($data);
+                if ($retention !== null) {
+                    $fields[] = [
+                        'key' => 'retention_until',
+                        'label' => 'Löschfrist (10 Jahre nach Austritt)',
+                        'value' => $retention,
+                    ];
+                }
+            }
+            if ($fields === []) {
+                continue;
+            }
+            $sections[] = [
+                'id' => $sectionId,
+                'label' => $sectionLabel,
+                'fields' => $fields,
+            ];
+        }
+
+        $banks = [];
+        foreach ((array) ($c->bankAccounts ?? []) as $account) {
+            if (!is_array($account) || BankAccountTypes::isEmpty($account)) {
+                continue;
+            }
+            $banks[] = [
+                'type_label' => BankAccountTypes::label((string) ($account['type'] ?? 'giro')),
+                'fields' => BankAccountTypes::detailFields($account),
+            ];
+        }
+
+        $addressParts = array_values(array_filter([
+            trim((string) ($c->address1Extra ?? '')),
+            trim((string) ($c->address1Street ?? '')),
+            trim(trim((string) ($c->address1Postal ?? '')) . ' ' . trim((string) ($c->address1City ?? ''))),
+            trim((string) ($c->address1Country ?? '')),
+        ], static fn (string $p): bool => $p !== ''));
 
         return [
-            'contact' => MobileAuthService::contactPublic($contactId),
-            'employee' => $safe,
+            'contact' => array_merge(MobileAuthService::contactPublic($contactId), [
+                'login' => (string) ($c->login ?? ''),
+                'salutation' => (string) ($c->salutation ?? ''),
+                'first_name' => (string) ($c->firstName ?? ''),
+                'last_name' => (string) ($c->lastName ?? ''),
+                'email2' => (string) ($c->email2 ?? ''),
+                'phone2' => (string) ($c->phone2 ?? ''),
+                'customer_number' => (string) ($c->customerNumber ?? ''),
+                'address_lines' => $addressParts,
+                'address_street' => (string) ($c->address1Street ?? ''),
+                'address_postal' => (string) ($c->address1Postal ?? ''),
+                'address_city' => (string) ($c->address1City ?? ''),
+                'address_country' => (string) ($c->address1Country ?? ''),
+            ]),
+            'sections' => $sections,
+            'bank_accounts' => $banks,
+            // Abwärtskompatibel für ältere App-Builds
+            'employee' => [
+                'job_type' => (string) ($data['job_type'] ?? ''),
+                'working_hours' => (string) ($data['working_hours'] ?? ''),
+                'daily_work_minutes' => (string) ($data['daily_work_minutes'] ?? ''),
+                'entry_date' => (string) ($data['entry_date'] ?? ''),
+                'contract_start' => (string) ($data['contract_start'] ?? ''),
+                'employment_relationship' => (string) ($data['employment_relationship'] ?? ''),
+                'work_location' => (string) ($data['work_location'] ?? ''),
+            ],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function documentsPayload(int $contactId): array
+    {
+        $c = ContactRepository::findById($contactId);
+        $files = is_array($c?->employeeFiles ?? null) ? $c->employeeFiles : [];
+        $uploaded = EmployeeDocuments::listUploaded($files);
+        $slots = [];
+        foreach (EmployeeData::allDocumentTypes() as $type => $label) {
+            $typeFiles = [];
+            foreach ($uploaded as $doc) {
+                if (!is_array($doc) || (string) ($doc['type'] ?? '') !== $type) {
+                    continue;
+                }
+                $typeFiles[] = $doc;
+            }
+            $slots[] = [
+                'type' => $type,
+                'label' => $label,
+                'multi' => ContactFileStorage::isMultiType($type),
+                'files' => $typeFiles,
+            ];
+        }
+
+        return [
+            'documents' => $uploaded,
+            'slots' => $slots,
+        ];
+    }
+
+    /** @return never */
+    private static function uploadDocument(int $contactId): void
+    {
+        $type = preg_replace('/[^a-z0-9_]/', '', strtolower((string) ($_POST['type'] ?? ''))) ?? '';
+        if ($type === '' || !isset(EmployeeData::allDocumentTypes()[$type])) {
+            MobileApi::fail(400, 'Unbekannter Dokumenttyp.', 'bad_request');
+        }
+        if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
+            MobileApi::fail(400, 'Bitte eine Datei wählen (PDF/JPG/PNG).', 'bad_request');
+        }
+        $c = ContactRepository::findById($contactId);
+        if ($c === null) {
+            MobileApi::fail(404, 'Kontakt nicht gefunden.', 'not_found');
+        }
+        $existing = is_array($c->employeeFiles ?? null) ? $c->employeeFiles : ContactFileStorage::emptyFiles();
+        try {
+            $merged = ContactFileStorage::processUploads($contactId, [$type => $_FILES['file']], $existing);
+        } catch (Throwable $e) {
+            MobileApi::fail(400, $e->getMessage(), 'bad_request');
+        }
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare('UPDATE dg_contacts SET employee_files = :employee_files WHERE id = :id');
+        $stmt->execute([
+            'employee_files' => ContactFileStorage::encodeFiles($merged),
+            'id' => $contactId,
+        ]);
+        MobileApi::ok(self::documentsPayload($contactId));
     }
 
     /** @return never */

@@ -58,6 +58,7 @@ final class EmployeeDocuments
                 'label' => $label,
                 'name' => (string) ($entry['original_name'] ?? 'Datei'),
                 'mime' => (string) ($entry['mime'] ?? ''),
+                'uploaded_at' => (string) ($entry['uploaded_at'] ?? ''),
                 'fileIndex' => null,
             ];
         }
@@ -78,6 +79,7 @@ final class EmployeeDocuments
                     'label' => $itemLabel,
                     'name' => (string) ($entry['original_name'] ?? $fallbackName),
                     'mime' => (string) ($entry['mime'] ?? ''),
+                    'uploaded_at' => (string) ($entry['uploaded_at'] ?? ''),
                     'fileIndex' => (int) $index,
                 ];
             }
