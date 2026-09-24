@@ -38,7 +38,7 @@ class DgMitarbeiterApp extends StatelessWidget {
     return MaterialApp(
       title: 'DG Mitarbeiter',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A5F)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F766E)),
         useMaterial3: true,
       ),
       home: const BootstrapPage(),
@@ -189,6 +189,32 @@ class _BootstrapPageState extends State<BootstrapPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/branding/app_icon.png',
+                  width: 112,
+                  height: 112,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Mitarbeiter-App',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Stempel · Schichten · Abwesenheiten · Akte',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 24),
             TextField(
               controller: _url,
               decoration: const InputDecoration(
