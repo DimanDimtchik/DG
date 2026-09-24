@@ -173,7 +173,7 @@ final class AcquisitionCompareService
         }
 
         return self::summarize('Barkauf', $years, [
-            'note' => $isGwg ? 'GWG: Sofortabschreibung im Anschaffungsjahr (Netto ≤ 800 €).' : 'Lineare AfA über ' . $usefulLife . ' Jahre.',
+            'note' => $isGwg ? 'GWG: Sofortabschreibung (Netto ≤ 800 €).' : 'Lineare AfA, ' . $usefulLife . ' Jahre.',
         ]);
     }
 
@@ -235,7 +235,7 @@ final class AcquisitionCompareService
         return self::summarize('Ratenkauf', $years, [
             'monthly_rate' => round($monthly, 2),
             'total_interest' => round($totalInterest, 2),
-            'note' => 'Annuität vereinfacht; AfA auf Netto + Zinsen als Aufwand.',
+            'note' => 'Annuität vereinfacht; AfA + Zinsen.',
         ]);
     }
 
@@ -281,7 +281,7 @@ final class AcquisitionCompareService
 
         return self::summarize($label, $years, [
             'monthly_rate' => round($monthlyRate, 2),
-            'note' => $label . '-Raten als Betriebsausgabe (Vollrate, vereinfacht).',
+            'note' => $label . '-Raten als Betriebsausgabe.',
         ]);
     }
 

@@ -156,7 +156,6 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
         $incomeLabel = $isKapG ? 'Körperschaftsteuer inkl. Solidaritätszuschlag' : 'Einkommensteuer (Grenzsatz)';
         $acqHelp = [
             'barkauf' => [
-                'title' => 'Was bedeuten die Zahlen beim Barkauf?',
                 'paras' => [
                     'Cash (Summe): einmaliger Abfluss des Brutto-Kaufpreises (Netto + Umsatzsteuer) im Anschaffungsjahr.',
                     'Vorsteuer / VSt-Effekt: die gezahlte Umsatzsteuer, die Sie als Vorsteuer zurückholen bzw. verrechnen können (wenn Sie kein Kleinunternehmer sind). Das mindert die Belastung.',
@@ -168,7 +167,6 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
                 ],
             ],
             'ratenkauf' => [
-                'title' => 'Was bedeuten die Zahlen beim Ratenkauf?',
                 'paras' => [
                     'Cash (Summe): Anzahlung plus alle Monatsraten über die Laufzeit. Enthält Zinsen — deshalb oft höher als beim Barkauf.',
                     'Vorsteuer / VSt-Effekt: Vorsteuer auf den Kaufpreis (typisch im Anschaffungsjahr), sofern vorsteuerabzugsberechtigt.',
@@ -179,7 +177,6 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
                 ],
             ],
             'leasing' => [
-                'title' => 'Was bedeuten die Zahlen beim Leasing?',
                 'paras' => [
                     'Cash (Summe): Summe aller Leasingraten (und ggf. Restwert am Ende). Kein Kaufpreis — Sie zahlen für die Nutzung.',
                     'Wenn die Monatsrate im Formular 0 war, schätzt das System eine Rate aus Netto und Laufzeit. Für den Vergleich echte Vertragswerte eintragen.',
@@ -190,7 +187,6 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
                 ],
             ],
             'miete' => [
-                'title' => 'Was bedeuten die Zahlen bei der Miete?',
                 'paras' => [
                     'Cash (Summe): Summe aller Mietraten über die Laufzeit. Wie Leasing: laufende Zahlung, kein Eigentumserwerb.',
                     'Bei Rate 0 im Formular verwendet das System einen Schätzwert (etwas höher als die Leasing-Schätzung). Besser: echte Mietrate eintragen.',
@@ -200,6 +196,15 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
                 ],
             ],
         ];
+        $metricDefs = [
+            ['key' => 'cash', 'label' => 'Cash (Summe)', 'total' => false],
+            ['key' => 'vat_cash', 'label' => 'Vorsteuer / VSt-Effekt', 'total' => false],
+            ['key' => 'expense', 'label' => 'Betriebsaufwand', 'total' => false],
+            ['key' => 'tax_gewst', 'label' => 'Steuerentlastung GewSt', 'total' => false],
+            ['key' => 'tax_income', 'label' => 'Steuerentlastung KSt/ESt', 'total' => false],
+            ['key' => 'tax_relief', 'label' => 'Steuerentlastung gesamt', 'total' => false],
+            ['key' => 'net_burden', 'label' => 'Nettobelastung nach Steuer', 'total' => true],
+        ];
         foreach (['barkauf', 'ratenkauf', 'leasing', 'miete'] as $key) :
           $m = is_array($models[$key] ?? null) ? $models[$key] : null;
           if ($m === null) {
@@ -207,27 +212,28 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
           }
           $t = is_array($m['totals'] ?? null) ? $m['totals'] : [];
           $help = $acqHelp[$key] ?? null;
+          $note = trim((string) ($m['note'] ?? ''));
+          $hasRate = isset($m['monthly_rate']);
           ?>
         <article class="dg-panel dg-acq-card">
-          <h3 class="dg-subsection-title"><?= View::escape((string) ($m['label'] ?? $key)) ?></h3>
-          <?php if (!empty($m['note'])) : ?>
-            <p class="dg-field-hint"><?= View::escape((string) $m['note']) ?></p>
-          <?php endif; ?>
-          <dl class="dg-acq-dl">
-            <div><dt>Cash (Summe)</dt><dd><?= $fmt((float) ($t['cash'] ?? 0)) ?></dd></div>
-            <div><dt>Vorsteuer / VSt-Effekt</dt><dd><?= $fmt((float) ($t['vat_cash'] ?? 0)) ?></dd></div>
-            <div><dt>Betriebsaufwand</dt><dd><?= $fmt((float) ($t['expense'] ?? 0)) ?></dd></div>
-            <div><dt>Steuerentlastung GewSt</dt><dd><?= $fmt((float) ($t['tax_gewst'] ?? 0)) ?></dd></div>
-            <div><dt>Steuerentlastung KSt/ESt</dt><dd><?= $fmt((float) ($t['tax_income'] ?? 0)) ?></dd></div>
-            <div><dt>Steuerentlastung gesamt</dt><dd><?= $fmt((float) ($t['tax_relief'] ?? 0)) ?></dd></div>
-            <div class="dg-acq-dl__total"><dt>Nettobelastung nach Steuer</dt><dd><?= $fmt((float) ($t['net_burden'] ?? 0)) ?></dd></div>
-          </dl>
-          <?php if (isset($m['monthly_rate'])) : ?>
-            <p class="dg-field-hint">Monatsrate ca. <?= $fmt((float) $m['monthly_rate']) ?></p>
-          <?php endif; ?>
+          <h3 class="dg-subsection-title dg-acq-card__title"><?= View::escape((string) ($m['label'] ?? $key)) ?></h3>
+          <p class="dg-acq-card__note<?= $note === '' ? ' dg-acq-card__note--empty' : '' ?>"><?= $note !== '' ? View::escape($note) : '&nbsp;' ?></p>
+          <?php foreach ($metricDefs as $metric) : ?>
+            <div class="dg-acq-metric<?= !empty($metric['total']) ? ' dg-acq-metric--total' : '' ?>">
+              <span class="dg-acq-metric__label"><?= View::escape((string) $metric['label']) ?></span>
+              <span class="dg-acq-metric__value"><?= $fmt((float) ($t[$metric['key']] ?? 0)) ?></span>
+            </div>
+          <?php endforeach; ?>
+          <p class="dg-acq-card__rate<?= $hasRate ? '' : ' dg-acq-card__rate--empty' ?>">
+            <?php if ($hasRate) : ?>
+              Monatsrate ca. <?= $fmt((float) $m['monthly_rate']) ?>
+            <?php else : ?>
+              &nbsp;
+            <?php endif; ?>
+          </p>
           <?php if (is_array($help)) : ?>
             <details class="dg-acq-help">
-              <summary><?= View::escape((string) $help['title']) ?></summary>
+              <summary>Was bedeuten die Zahlen?</summary>
               <div class="dg-acq-help__body">
                 <?php foreach ($help['paras'] as $para) : ?>
                   <p><?= View::escape((string) $para) ?></p>
@@ -235,6 +241,8 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
                 <p class="dg-acq-help__note">Nur Orientierung — keine Steuerberatung. Sätze und Wechselwirkungen sind vereinfacht.</p>
               </div>
             </details>
+          <?php else : ?>
+            <div class="dg-acq-help dg-acq-help--empty" aria-hidden="true"></div>
           <?php endif; ?>
         </article>
       <?php endforeach; ?>
@@ -286,28 +294,77 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
 <style>
 .dg-acq-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin: 16px 0;
+  align-items: stretch;
 }
-.dg-acq-dl {
-  margin: 0;
-  display: grid;
-  gap: 8px;
-}
-.dg-acq-dl > div {
+.dg-acq-card {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 14px;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  height: 100%;
 }
-.dg-acq-dl dt { color: #64748b; margin: 0; }
-.dg-acq-dl dd { margin: 0; font-weight: 600; color: #134e4a; text-align: right; }
-.dg-acq-dl__total { border-top: 1px solid #d1e4e0; padding-top: 8px; margin-top: 4px; }
-.dg-acq-dl__total dd { font-size: 16px; }
+.dg-acq-card__title {
+  margin: 0 0 8px;
+  min-height: 1.4em;
+  line-height: 1.3;
+}
+.dg-acq-card__note,
+.dg-acq-card__rate {
+  margin: 0 0 10px;
+  min-height: calc(1.35em * 2);
+  line-height: 1.35;
+  font-size: 13px;
+  color: #64748b;
+}
+.dg-acq-card__rate {
+  margin: 10px 0 0;
+  min-height: 1.35em;
+}
+.dg-acq-card__note--empty,
+.dg-acq-card__rate--empty {
+  visibility: hidden;
+}
+.dg-acq-metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 14px;
+  line-height: 1.35;
+  min-height: 1.7em;
+  padding: 3px 0;
+}
+.dg-acq-metric__label {
+  color: #64748b;
+  min-width: 0;
+}
+.dg-acq-metric__value {
+  font-weight: 600;
+  color: #134e4a;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dg-acq-metric--total {
+  border-top: 1px solid #d1e4e0;
+  margin-top: 4px;
+  padding-top: 8px;
+}
+.dg-acq-metric--total .dg-acq-metric__value {
+  font-size: 16px;
+}
 .dg-acq-help {
-  margin-top: 14px;
+  margin-top: auto;
+  padding-top: 10px;
   border-top: 1px solid #e2e8f0;
+}
+.dg-acq-help--empty {
+  min-height: 1.4em;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
   padding-top: 10px;
 }
 .dg-acq-help summary {
@@ -315,6 +372,7 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
   font-size: 13px;
   font-weight: 600;
   color: #0f766e;
+  line-height: 1.35;
   list-style-position: outside;
 }
 .dg-acq-help summary:hover {
@@ -332,6 +390,68 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
 .dg-acq-help__note {
   color: #64748b;
   font-style: italic;
+}
+
+/* Zeilen über alle Kästen hinweg bündig (gleiche Höhe je Slot) */
+@supports (grid-template-rows: subgrid) {
+  .dg-acq-cards {
+    grid-auto-rows: auto;
+  }
+  .dg-acq-card {
+    display: grid;
+    grid-row: span 11;
+    grid-template-rows: subgrid;
+    gap: 0 16px;
+    height: auto;
+  }
+  .dg-acq-card__title,
+  .dg-acq-card__note,
+  .dg-acq-card__rate,
+  .dg-acq-metric,
+  .dg-acq-help,
+  .dg-acq-help--empty {
+    margin: 0;
+  }
+  .dg-acq-card__note {
+    align-self: start;
+  }
+  .dg-acq-metric--total {
+    margin-top: 0;
+  }
+  .dg-acq-help,
+  .dg-acq-help--empty {
+    margin-top: 0;
+    align-self: end;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dg-acq-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .dg-acq-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @supports (grid-template-rows: subgrid) {
+    .dg-acq-card {
+      display: flex;
+      flex-direction: column;
+      grid-row: auto;
+      height: 100%;
+    }
+    .dg-acq-card__note {
+      margin-bottom: 10px;
+    }
+    .dg-acq-card__rate {
+      margin-top: 10px;
+    }
+    .dg-acq-help,
+    .dg-acq-help--empty {
+      margin-top: auto;
+    }
+  }
 }
 </style>
 <script>
