@@ -357,14 +357,14 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
   font-size: 16px;
 }
 .dg-acq-help {
-  margin-top: auto;
+  margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #e2e8f0;
 }
 .dg-acq-help--empty {
   min-height: 1.4em;
   border-top: 1px solid #e2e8f0;
-  margin-top: auto;
+  margin-top: 10px;
   padding-top: 10px;
 }
 .dg-acq-help summary {
@@ -421,7 +421,7 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
   .dg-acq-help,
   .dg-acq-help--empty {
     margin-top: 0;
-    align-self: end;
+    align-self: start;
   }
 }
 
@@ -449,7 +449,7 @@ $models = is_array($result['models'] ?? null) ? $result['models'] : [];
     }
     .dg-acq-help,
     .dg-acq-help--empty {
-      margin-top: auto;
+      margin-top: 10px;
     }
   }
 }
