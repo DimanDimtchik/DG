@@ -64,16 +64,23 @@ final class MobileStaffApi
         }
 
         if ($head === 'absences' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
-            $year = max(2000, min(2100, (int) ($_GET['year'] ?? date('Y'))));
+            $month = trim((string) ($_GET['month'] ?? ''));
+            if ($month === '' || !preg_match('/^\d{4}-\d{2}$/', $month)) {
+                $month = date('Y-m');
+            }
+            $year = (int) substr($month, 0, 4);
             $rows = [];
             foreach (TimeAbsenceRepository::listForContact($contactId, $year) as $row) {
                 if (!is_array($row)) {
                     continue;
                 }
+                $type = (string) ($row['type'] ?? '');
                 $rows[] = [
                     'id' => (int) ($row['id'] ?? 0),
-                    'type' => (string) ($row['type'] ?? ''),
-                    'type_label' => TimeAbsenceService::typeLabel((string) ($row['type'] ?? '')),
+                    'type' => $type,
+                    'type_label' => TimeAbsenceService::typeLabel($type),
+                    'type_short' => TimeAbsenceService::typeShort($type),
+                    'color' => TimeAbsenceService::typeColor($type),
                     'date_from' => (string) ($row['date_from'] ?? ''),
                     'date_to' => (string) ($row['date_to'] ?? ''),
                     'days_count' => (float) ($row['days_count'] ?? 0),
@@ -82,9 +89,13 @@ final class MobileStaffApi
                     'reason' => (string) ($row['reason'] ?? ''),
                 ];
             }
+            $cal = TimeAbsenceService::personalMonthCalendar($contactId, $month);
             MobileApi::ok([
                 'year' => $year,
+                'month' => $month,
+                'calendar' => $cal,
                 'enabled_types' => TimeTrackingSettings::enabledAbsenceTypesForKiosk(),
+                'type_options' => TimeAbsenceService::typeOptionsForKiosk(),
                 'absences' => $rows,
             ]);
         }

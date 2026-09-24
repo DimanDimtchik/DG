@@ -850,34 +850,527 @@ class AbsencesTab extends StatefulWidget {
 }
 
 class _AbsencesTabState extends State<AbsencesTab> {
-  List<dynamic> _rows = [];
+  late DateTime _month;
+  Map<String, dynamic>? _data;
+  String? _error;
+  bool _loading = true;
+  double _dragDx = 0;
+
+  String? _formType;
+  final _fromCtrl = TextEditingController();
+  final _toCtrl = TextEditingController();
+  final _reasonCtrl = TextEditingController();
+  bool _halfDay = false;
+  String? _evidencePath;
+  String? _evidenceName;
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month, 1);
     _load();
   }
 
+  @override
+  void dispose() {
+    _fromCtrl.dispose();
+    _toCtrl.dispose();
+    _reasonCtrl.dispose();
+    super.dispose();
+  }
+
+  String get _monthKey =>
+      '${_month.year.toString().padLeft(4, '0')}-${_month.month.toString().padLeft(2, '0')}';
+
   Future<void> _load() async {
-    final res = await widget.client.get('/api/mobile/staff/absences');
-    if (res['ok'] == true) {
-      setState(() => _rows = (res['data']?['absences'] as List?) ?? []);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final res = await widget.client.get('/api/mobile/staff/absences', {'month': _monthKey});
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      if (res['ok'] == true) {
+        _data = Map<String, dynamic>.from(res['data'] as Map? ?? {});
+      } else {
+        _error = res['error']?.toString() ?? 'Abwesenheiten nicht ladbar';
+      }
+    });
+  }
+
+  void _shiftMonth(int delta) {
+    setState(() {
+      _month = DateTime(_month.year, _month.month + delta, 1);
+    });
+    _load();
+  }
+
+  Color _parseColor(String? hex, {double opacity = 1}) {
+    if (hex == null || hex.isEmpty) return Colors.transparent;
+    var h = hex.replaceFirst('#', '');
+    if (h.length == 6) h = 'FF$h';
+    try {
+      return Color(int.parse(h, radix: 16)).withValues(alpha: opacity);
+    } catch (_) {
+      return Colors.transparent;
+    }
+  }
+
+  Map<String, dynamic>? _selectedTypeMeta() {
+    final opts = (_data?['type_options'] as List?) ?? const [];
+    for (final raw in opts) {
+      final m = Map<String, dynamic>.from(raw as Map);
+      if (m['type']?.toString() == _formType) return m;
+    }
+    return null;
+  }
+
+  Future<void> _pickDate(TextEditingController ctrl) async {
+    final now = DateTime.now();
+    final initial = DateTime.tryParse(ctrl.text) ?? now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 2),
+    );
+    if (picked == null) return;
+    ctrl.text =
+        '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    setState(() {});
+  }
+
+  Future<void> _pickEvidence() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+    );
+    if (picked == null || picked.files.isEmpty) return;
+    final f = picked.files.first;
+    if (f.path == null) return;
+    setState(() {
+      _evidencePath = f.path;
+      _evidenceName = f.name;
+    });
+  }
+
+  Future<void> _submit() async {
+    final type = _formType;
+    if (type == null || type.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte Abwesenheitsart wählen.')),
+      );
+      return;
+    }
+    if (_fromCtrl.text.isEmpty || _toCtrl.text.isEmpty || _reasonCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Von, Bis und Grund sind Pflicht.')),
+      );
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      Map<String, dynamic> res;
+      if (_evidencePath != null) {
+        res = await widget.client.postMultipart(
+          '/api/mobile/staff/absences',
+          fields: {
+            'type': type,
+            'date_from': _fromCtrl.text,
+            'date_to': _toCtrl.text,
+            'reason': _reasonCtrl.text.trim(),
+            if (_halfDay) 'half_day': '1',
+          },
+          fileField: 'evidence[]',
+          filePath: _evidencePath!,
+          filename: _evidenceName,
+        );
+      } else {
+        res = await widget.client.post('/api/mobile/staff/absences', {
+          'type': type,
+          'date_from': _fromCtrl.text,
+          'date_to': _toCtrl.text,
+          'reason': _reasonCtrl.text.trim(),
+          if (_halfDay) 'half_day': true,
+        });
+      }
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      if (res['ok'] == true) {
+        final msg = (res['data'] is Map)
+            ? ((res['data'] as Map)['message']?.toString() ?? 'Antrag gestellt.')
+            : 'Antrag gestellt.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        setState(() {
+          _formType = null;
+          _fromCtrl.clear();
+          _toCtrl.clear();
+          _reasonCtrl.clear();
+          _halfDay = false;
+          _evidencePath = null;
+          _evidenceName = null;
+        });
+        await _load();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${res['error'] ?? 'Antrag fehlgeschlagen'}')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading && _data == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null && _data == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Erneut laden')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final cal = Map<String, dynamic>.from(_data?['calendar'] as Map? ?? {});
+    final days = (cal['days'] as List?) ?? const [];
+    final legend = (cal['legend'] as List?) ?? (_data?['type_options'] as List?) ?? const [];
+    final absences = (_data?['absences'] as List?) ?? const [];
+    final typeOpts = (_data?['type_options'] as List?) ?? const [];
+    final typeMeta = _selectedTypeMeta();
+    final theme = Theme.of(context);
+
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView.builder(
-        itemCount: _rows.length,
-        itemBuilder: (_, i) {
-          final r = _rows[i] as Map;
-          return ListTile(
-            title: Text('${r['type_label']} · ${r['status_label']}'),
-            subtitle: Text('${r['date_from']} – ${r['date_to']} (${r['days_count']} T.)'),
-          );
-        },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
+        children: [
+          GestureDetector(
+            onHorizontalDragUpdate: (d) => _dragDx += d.delta.dx,
+            onHorizontalDragEnd: (_) {
+              if (_dragDx > 60) {
+                _shiftMonth(-1);
+              } else if (_dragDx < -60) {
+                _shiftMonth(1);
+              }
+              _dragDx = 0;
+            },
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Vorheriger Monat',
+                          onPressed: () => _shiftMonth(-1),
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                        Expanded(
+                          child: Text(
+                            cal['month_label']?.toString() ?? _monthKey,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Nächster Monat',
+                          onPressed: () => _shiftMonth(1),
+                          icon: const Icon(Icons.chevron_right),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+                          .map(
+                            (w) => Expanded(
+                              child: Text(
+                                w,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 6),
+                    if (_loading)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: days.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisSpacing: 4,
+                          crossAxisSpacing: 4,
+                          childAspectRatio: 0.72,
+                        ),
+                        itemBuilder: (context, i) {
+                          final day = Map<String, dynamic>.from(days[i] as Map);
+                          final inMonth = day['in_month'] == true;
+                          final absence = day['absence'] is Map
+                              ? Map<String, dynamic>.from(day['absence'] as Map)
+                              : null;
+                          final pending = absence != null && absence['status']?.toString() != 'approved';
+                          final color = absence != null
+                              ? _parseColor(
+                                  absence['color']?.toString(),
+                                  opacity: pending ? 0.35 : 0.85,
+                                )
+                              : Colors.transparent;
+                          final planned = (day['planned_display'] ?? '').toString();
+                          return Opacity(
+                            opacity: inMonth ? 1 : 0.35,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: color == Colors.transparent
+                                    ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+                                    : color,
+                                borderRadius: BorderRadius.circular(8),
+                                border: day['is_today'] == true
+                                    ? Border.all(color: theme.colorScheme.primary, width: 2)
+                                    : null,
+                              ),
+                              padding: const EdgeInsets.all(3),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${day['day']}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: color == Colors.transparent
+                                          ? null
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                  if (absence != null)
+                                    Text(
+                                      '${absence['type_short'] ?? ''}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: color == Colors.transparent
+                                            ? theme.colorScheme.primary
+                                            : Colors.white,
+                                      ),
+                                    ),
+                                  if (planned.isNotEmpty)
+                                    Text(
+                                      planned,
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: color == Colors.transparent
+                                            ? theme.colorScheme.onSurfaceVariant
+                                            : Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Wischen oder Pfeile · Sollzeit unter dem Tag',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text('Legende', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...legend.map((raw) {
+                final m = Map<String, dynamic>.from(raw as Map);
+                return Chip(
+                  avatar: CircleAvatar(
+                    backgroundColor: _parseColor(m['color']?.toString()),
+                    radius: 8,
+                    child: Text(
+                      '${m['short'] ?? ''}',
+                      style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  label: Text('${m['label'] ?? m['type']}'),
+                  visualDensity: VisualDensity.compact,
+                );
+              }),
+              Chip(
+                avatar: CircleAvatar(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  radius: 8,
+                ),
+                label: const Text('Sollzeit (h)'),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text('Abwesenheitsantrag', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Wie auf der Stempeluhr: Art wählen, Zeitraum, Grund — HR bestätigt.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: typeOpts.map((raw) {
+              final m = Map<String, dynamic>.from(raw as Map);
+              final t = m['type']?.toString() ?? '';
+              final selected = _formType == t;
+              return ChoiceChip(
+                selected: selected,
+                label: Text('${m['label']}'),
+                selectedColor: _parseColor(m['color']?.toString(), opacity: 0.35),
+                onSelected: (_) => setState(() {
+                  _formType = t;
+                  if (m['allows_half_day'] != true) _halfDay = false;
+                  if (m['needs_evidence'] != true) {
+                    _evidencePath = null;
+                    _evidenceName = null;
+                  }
+                }),
+              );
+            }).toList(),
+          ),
+          if (_formType != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _fromCtrl,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Von',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.event),
+                    ),
+                    onTap: () => _pickDate(_fromCtrl),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _toCtrl,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Bis',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.event),
+                    ),
+                    onTap: () => _pickDate(_toCtrl),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _reasonCtrl,
+              maxLines: 3,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                labelText: 'Grund',
+                hintText: 'Kurz begründen',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (typeMeta?['allows_half_day'] == true)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _halfDay,
+                onChanged: (v) => setState(() => _halfDay = v ?? false),
+                title: const Text('Halber Tag (gleiches Von/Bis)'),
+              ),
+            if (typeMeta?['needs_evidence'] == true) ...[
+              const SizedBox(height: 4),
+              OutlinedButton.icon(
+                onPressed: _pickEvidence,
+                icon: const Icon(Icons.attach_file),
+                label: Text(_evidenceName ?? 'Nachweis anhängen (optional)'),
+              ),
+              Text(
+                'z. B. Attest — JPG/PNG/PDF',
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Beantragen'),
+            ),
+          ],
+          const SizedBox(height: 20),
+          Text('Meine Anträge (${_month.year})', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 6),
+          if (absences.isEmpty)
+            Text(
+              'Noch keine Einträge.',
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            )
+          else
+            ...absences.map((raw) {
+              final r = Map<String, dynamic>.from(raw as Map);
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: _parseColor(r['color']?.toString()),
+                    child: Text(
+                      '${r['type_short'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                  title: Text('${r['type_label']} · ${r['status_label']}'),
+                  subtitle: Text('${r['date_from']} – ${r['date_to']} (${r['days_count']} T.)'),
+                ),
+              );
+            }),
+        ],
       ),
     );
   }

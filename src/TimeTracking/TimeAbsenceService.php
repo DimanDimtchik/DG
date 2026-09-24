@@ -32,6 +32,194 @@ final class TimeAbsenceService
         };
     }
 
+    /** Hex-Farbe für Kalender / Legende (App + UI). */
+    public static function typeColor(string $type): string
+    {
+        return match ($type) {
+            'sick' => '#DC2626',
+            'vacation' => '#EAB308',
+            'ot_comp' => '#0284C7',
+            'unpaid_leave' => '#64748B',
+            'special_leave' => '#7C3AED',
+            'other' => '#EA580C',
+            default => '#94A3B8',
+        };
+    }
+
+    /**
+     * @return list<array{type: string, label: string, short: string, color: string, allows_half_day: bool, needs_evidence: bool}>
+     */
+    public static function typeOptionsForKiosk(): array
+    {
+        $out = [];
+        foreach (TimeTrackingSettings::enabledAbsenceTypesForKiosk() as $type) {
+            $type = (string) $type;
+            $out[] = [
+                'type' => $type,
+                'label' => self::typeLabel($type),
+                'short' => self::typeShort($type),
+                'color' => self::typeColor($type),
+                'allows_half_day' => $type === 'vacation',
+                'needs_evidence' => TimeAbsenceEvidenceStorage::allowsEvidence($type),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Persönlicher Monatskalender: Soll-Arbeitszeit + eigene Abwesenheiten.
+     *
+     * @return array{
+     *   year_month: string,
+     *   month_label: string,
+     *   days: list<array<string, mixed>>,
+     *   legend: list<array<string, mixed>>
+     * }
+     */
+    public static function personalMonthCalendar(int $contactId, string $yearMonth): array
+    {
+        if ($contactId < 1) {
+            throw new InvalidArgumentException('Kontakt fehlt.');
+        }
+        if (!preg_match('/^(\d{4})-(\d{2})$/', $yearMonth, $m)) {
+            $yearMonth = date('Y-m');
+            preg_match('/^(\d{4})-(\d{2})$/', $yearMonth, $m);
+        }
+        $y = (int) $m[1];
+        $mo = (int) $m[2];
+        $from = sprintf('%04d-%02d-01', $y, $mo);
+        $first = new DateTimeImmutable($from);
+        $daysInMonth = (int) $first->format('t');
+        $to = sprintf('%04d-%02d-%02d', $y, $mo, $daysInMonth);
+
+        $monthNames = [
+            1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April',
+            5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember',
+        ];
+
+        /** @var array<string, list<array<string, mixed>>> $byDate */
+        $byDate = [];
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $byDate[sprintf('%04d-%02d-%02d', $y, $mo, $d)] = [];
+        }
+
+        foreach (TimeAbsenceRepository::listOverlappingRange($from, $to, null) as $row) {
+            if ((int) ($row['contact_id'] ?? 0) !== $contactId) {
+                continue;
+            }
+            $status = (string) ($row['status'] ?? '');
+            if ($status === 'cancelled' || $status === 'rejected') {
+                continue;
+            }
+            $start = (string) ($row['date_from'] ?? '');
+            $end = (string) ($row['date_to'] ?? '');
+            if ($start === '' || $end === '') {
+                continue;
+            }
+            $type = (string) ($row['type'] ?? '');
+            $cursor = new DateTimeImmutable(max($start, $from));
+            $last = new DateTimeImmutable(min($end, $to));
+            for ($day = $cursor; $day <= $last; $day = $day->modify('+1 day')) {
+                $key = $day->format('Y-m-d');
+                if (!isset($byDate[$key])) {
+                    continue;
+                }
+                $byDate[$key][] = [
+                    'id' => (int) ($row['id'] ?? 0),
+                    'type' => $type,
+                    'type_label' => self::typeLabel($type),
+                    'type_short' => self::typeShort($type),
+                    'color' => self::typeColor($type),
+                    'status' => $status,
+                    'status_label' => class_exists('TimeVacationService')
+                        ? TimeVacationService::statusLabel($status)
+                        : $status,
+                ];
+            }
+        }
+
+        $weekdayLabels = [1 => 'Mo', 2 => 'Di', 3 => 'Mi', 4 => 'Do', 5 => 'Fr', 6 => 'Sa', 7 => 'So'];
+        $today = date('Y-m-d');
+        $days = [];
+
+        $startPad = ((int) $first->format('N')) - 1;
+        for ($i = $startPad; $i > 0; $i--) {
+            $dt = $first->modify('-' . $i . ' days');
+            $days[] = self::personalDayPayload($contactId, $dt, false, $today, $weekdayLabels, []);
+        }
+
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $date = sprintf('%04d-%02d-%02d', $y, $mo, $d);
+            $dt = new DateTimeImmutable($date);
+            $days[] = self::personalDayPayload(
+                $contactId,
+                $dt,
+                true,
+                $today,
+                $weekdayLabels,
+                $byDate[$date] ?? []
+            );
+        }
+
+        $endPad = (7 - (count($days) % 7)) % 7;
+        $lastInMonth = new DateTimeImmutable($to);
+        for ($i = 1; $i <= $endPad; $i++) {
+            $dt = $lastInMonth->modify('+' . $i . ' days');
+            $days[] = self::personalDayPayload($contactId, $dt, false, $today, $weekdayLabels, []);
+        }
+
+        return [
+            'year_month' => $yearMonth,
+            'month_label' => ($monthNames[$mo] ?? $yearMonth) . ' ' . $y,
+            'days' => $days,
+            'legend' => self::typeOptionsForKiosk(),
+        ];
+    }
+
+    /**
+     * @param array<int, string> $weekdayLabels
+     * @param list<array<string, mixed>> $absences
+     * @return array<string, mixed>
+     */
+    private static function personalDayPayload(
+        int $contactId,
+        DateTimeImmutable $dt,
+        bool $inMonth,
+        string $today,
+        array $weekdayLabels,
+        array $absences,
+    ): array {
+        $date = $dt->format('Y-m-d');
+        $weekday = (int) $dt->format('N');
+        $planned = $inMonth ? TimeScheduleService::targetMinutesIgnoringAbsence($contactId, $date) : 0;
+        $primary = null;
+        foreach ($absences as $a) {
+            if (($a['status'] ?? '') === 'approved') {
+                $primary = $a;
+                break;
+            }
+        }
+        if ($primary === null && $absences !== []) {
+            $primary = $absences[0];
+        }
+
+        return [
+            'date' => $date,
+            'day' => (int) $dt->format('j'),
+            'weekday' => $weekday,
+            'weekday_label' => $weekdayLabels[$weekday] ?? '',
+            'in_month' => $inMonth,
+            'is_today' => $date === $today,
+            'is_weekend' => $weekday >= 6,
+            'planned_minutes' => $planned,
+            'planned_display' => $planned > 0 ? TimeClockService::formatMinutes($planned) : '',
+            'absence' => $primary,
+            'absences' => $absences,
+        ];
+    }
+
     /**
      * Kiosk: Abwesenheitsantrag für Session-Kontakt (ohne CRM-User).
      *
