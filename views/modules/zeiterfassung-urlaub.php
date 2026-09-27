@@ -13,6 +13,8 @@
  * @var array<string, mixed>|null $timeVacEntBalance
  * @var bool $timeVacCanTeam
  * @var bool $timeVacCanApprove
+ * @var list<array<string, mixed>> $timeVacPlanningStats
+ * @var float $timeVacPlanningThreshold
  * @var array{type: string, message: string}|null $flash
  */
 $contactId = (int) ($timeVacContactId ?? 0);
@@ -26,6 +28,14 @@ $canTeam = !empty($timeVacCanTeam);
 $canApprove = !empty($timeVacCanApprove);
 $entCid = (int) ($timeVacEntContactId ?? 0);
 $entBal = is_array($timeVacEntBalance ?? null) ? $timeVacEntBalance : null;
+$planningStats = is_array($timeVacPlanningStats ?? null) ? $timeVacPlanningStats : [];
+$planningThreshold = (float) ($timeVacPlanningThreshold ?? 60);
+$belowCount = 0;
+foreach ($planningStats as $ps) {
+    if (!empty($ps['below_threshold'])) {
+        $belowCount++;
+    }
+}
 
 $staffLabel = static function (int $cid) use ($staff): string {
     foreach ($staff as $opt) {
@@ -202,6 +212,97 @@ $staffLabel = static function (int $cid) use ($staff): string {
   <?php endif; ?>
 
   <?php if ($canTeam) : ?>
+    <section class="dg-panel">
+      <h2 class="dg-subsection-title">Urlaubsplanung <?= (int) $year ?></h2>
+      <p class="dg-field-hint">
+        Geplant = beantragt + genehmigt. Schwelle:
+        <?= View::escape(number_format($planningThreshold, 0, ',', '')) ?>&nbsp;%
+        des Anspruchs inkl. Übertrag.
+        <?php if ($belowCount > 0) : ?>
+          · <strong><?= (int) $belowCount ?></strong> unter der Schwelle.
+        <?php endif; ?>
+      </p>
+      <?php if ($planningStats === []) : ?>
+        <p class="dg-muted">Keine Mitarbeiter-Kontakte.</p>
+      <?php else : ?>
+        <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form dg-form--inline" style="margin-bottom:1rem">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="vacation_action" value="send_planning_reminder">
+          <input type="hidden" name="year" value="<?= (int) $year ?>">
+          <button type="submit" class="dg-button dg-button--primary"<?= $belowCount < 1 ? ' disabled' : '' ?>
+                  onclick="return confirm('Erinnerung an alle unter der Schwelle senden?');">
+            Erinnerung an alle unter <?= View::escape(number_format($planningThreshold, 0, ',', '')) ?>&nbsp;% senden
+          </button>
+        </form>
+        <div class="dg-table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th>Mitarbeiter</th>
+                <th class="dg-table__num">Anspruch</th>
+                <th class="dg-table__num">Geplant</th>
+                <th class="dg-table__num">Davon genehmigt</th>
+                <th class="dg-table__num">%</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($planningStats as $row) : ?>
+                <?php
+                  $cid = (int) ($row['contact_id'] ?? 0);
+                  $pct = $row['percent'];
+                  $below = !empty($row['below_threshold']);
+                  $budget = (float) ($row['days_budget'] ?? 0);
+                ?>
+                <tr<?= $below ? ' class="dg-row--warn"' : '' ?>>
+                  <td>
+                    <?= View::escape((string) ($row['label'] ?? '')) ?>
+                    <?php if ($cid > 0) : ?>
+                      <a class="dg-muted" href="/app?page=kontakte&amp;id=<?= $cid ?>">Akte</a>
+                    <?php endif; ?>
+                  </td>
+                  <td class="dg-table__num"><?= View::escape(number_format($budget, 1, ',', '')) ?></td>
+                  <td class="dg-table__num"><?= View::escape(number_format((float) ($row['days_planned'] ?? 0), 1, ',', '')) ?></td>
+                  <td class="dg-table__num"><?= View::escape(number_format((float) ($row['days_approved'] ?? 0), 1, ',', '')) ?></td>
+                  <td class="dg-table__num">
+                    <?= $pct === null
+                        ? '—'
+                        : View::escape(number_format((float) $pct, 1, ',', '')) . '&nbsp;%' ?>
+                  </td>
+                  <td>
+                    <?php if ($budget <= 0) : ?>
+                      <span class="dg-muted">Kein Anspruch</span>
+                    <?php elseif ($below) : ?>
+                      <span class="dg-badge dg-badge--pending">unter Schwelle</span>
+                    <?php else : ?>
+                      <span class="dg-badge">ok</span>
+                    <?php endif; ?>
+                    <?php if (!empty($row['last_reminder_sent_at'])) : ?>
+                      <div class="dg-muted" style="font-size:.8rem">
+                        Erinnerung: <?= View::escape((string) $row['last_reminder_sent_at']) ?>
+                      </div>
+                    <?php endif; ?>
+                  </td>
+                  <td>
+                    <?php if ($below && $budget > 0) : ?>
+                      <form method="post" action="/app?page=zeiterfassung-urlaub" style="display:inline">
+                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                        <input type="hidden" name="vacation_action" value="send_planning_reminder">
+                        <input type="hidden" name="year" value="<?= (int) $year ?>">
+                        <input type="hidden" name="reminder_contact_id" value="<?= $cid ?>">
+                        <button type="submit" class="dg-button dg-button--small">Erinnern</button>
+                      </form>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </section>
+
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Jahresanspruch pflegen</h2>
       <form method="get" action="/app" class="dg-form dg-form--inline">

@@ -109,6 +109,26 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
   </section>
 
   <section class="dg-form-section">
+    <h3 class="dg-subsection-title">Urlaubsplanung (Erinnerung)</h3>
+    <p class="dg-field-hint">
+      Ende März / Anfang April (25.03.–07.04.) erhalten Mitarbeiter mit weniger als der Schwelle ihres
+      Jahresanspruchs (beantragt + genehmigt) eine Erinnerungs-E-Mail. HR sieht die Statistik unter
+      Zeiterfassung → Urlaub und kann manuell versenden.
+    </p>
+    <label class="dg-field dg-field--checkbox">
+      <span>
+        <input type="checkbox" name="vacation_planning_reminder_enabled" value="1"<?= !empty($settings['vacation_planning_reminder_enabled']) ? ' checked' : '' ?>>
+        Automatische Urlaubsplanungs-Erinnerung aktivieren
+      </span>
+    </label>
+    <label class="dg-field">
+      <span>Schwelle (Prozent des Jahresanspruchs + Übertrag)</span>
+      <input type="number" name="vacation_planning_reminder_threshold" min="1" max="100" step="1"
+             value="<?= View::escape((string) (int) round((float) ($settings['vacation_planning_reminder_threshold'] ?? 60))) ?>">
+    </label>
+  </section>
+
+  <section class="dg-form-section">
     <h3 class="dg-subsection-title">Abwesenheit an der Stempeluhr</h3>
     <p class="dg-field-hint">
       Unter <code>/stempeluhr</code> können Mitarbeiter Abwesenheit beantragen.

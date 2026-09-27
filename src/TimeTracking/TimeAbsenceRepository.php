@@ -210,6 +210,31 @@ final class TimeAbsenceRepository
     }
 
     /**
+     * Geplante Urlaubstage im Jahr (beantragt + genehmigt), vollständig im Jahr.
+     */
+    public static function plannedVacationDaysInYear(int $contactId, int $year): float
+    {
+        if (!self::tableReady() || $contactId < 1 || $year < 2000 || $year > 2100) {
+            return 0.0;
+        }
+        MigrationRunner::runPending();
+        $from = sprintf('%04d-01-01', $year);
+        $to = sprintf('%04d-12-31', $year);
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(SUM(days_count), 0)
+             FROM dg_time_absences
+             WHERE contact_id = :cid
+               AND type = \'vacation\'
+               AND status IN (\'requested\', \'approved\')
+               AND date_from >= :from
+               AND date_to <= :to'
+        );
+        $stmt->execute(['cid' => $contactId, 'from' => $from, 'to' => $to]);
+
+        return round((float) $stmt->fetchColumn(), 1);
+    }
+
+    /**
      * Neue Abwesenheit anlegen.
      *
      * @param array{

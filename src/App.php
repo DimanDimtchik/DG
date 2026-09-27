@@ -70,6 +70,11 @@ final class App
         } catch (Throwable) {
             // Überstunden-Erinnerung darf Seitenaufruf nicht blockieren
         }
+        try {
+            VacationPlanningReminderService::runIfDue();
+        } catch (Throwable) {
+            // Urlaubsplanungs-Erinnerung darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

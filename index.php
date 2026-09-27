@@ -3981,6 +3981,22 @@ switch ($path) {
                         ]
                     );
                     Flash::set('success', 'Urlaubsanspruch gespeichert.');
+                } elseif ($vacAction === 'send_planning_reminder') {
+                    $onlyCid = isset($_POST['reminder_contact_id']) ? (int) $_POST['reminder_contact_id'] : 0;
+                    $res = VacationPlanningReminderService::sendManual(
+                        $user,
+                        $redirectYear,
+                        $onlyCid > 0 ? $onlyCid : null
+                    );
+                    $msg = sprintf(
+                        'Erinnerungen: %d gesendet, %d übersprungen.',
+                        (int) ($res['sent'] ?? 0),
+                        (int) ($res['skipped'] ?? 0)
+                    );
+                    if (($res['errors'] ?? []) !== []) {
+                        $msg .= ' ' . implode(' ', array_slice($res['errors'], 0, 3));
+                    }
+                    Flash::set(($res['sent'] ?? 0) > 0 ? 'success' : 'error', $msg);
                 } else {
                     Flash::set('error', 'Unbekannte Aktion.');
                 }
@@ -6046,6 +6062,10 @@ $legalProductsConfig = LegalProductSettings::config();
             if ($timeVacCanTeam && $timeVacEntContactId > 0) {
                 $timeVacEntBalance = TimeVacationEntitlementRepository::balance($timeVacEntContactId, $timeVacYear);
             }
+            $timeVacPlanningStats = $timeVacCanTeam
+                ? VacationPlanningReminderService::statsForYear($timeVacYear)
+                : [];
+            $timeVacPlanningThreshold = VacationPlanningReminderService::thresholdPercent();
             $contentTemplate = 'modules/zeiterfassung-urlaub';
             $title = 'Urlaub';
             $currentPage = 'zeiterfassung';

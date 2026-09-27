@@ -24,6 +24,8 @@ final class TimeTrackingSettings
             'arbzg_max_weekly_hours' => 48,
             'overtime_reminder_enabled' => true,
             'overtime_reminder_email' => true,
+            'vacation_planning_reminder_enabled' => true,
+            'vacation_planning_reminder_threshold' => 60.0,
             // Kiosk-Abwesenheit: Urlaub/Krankheit immer; Rest optional
             'absence_enable_ot_comp' => true,
             'absence_enable_unpaid_leave' => true,
@@ -69,6 +71,12 @@ final class TimeTrackingSettings
             'arbzg_max_weekly_hours' => max(1, min(168, (int) ($stored['arbzg_max_weekly_hours'] ?? $defaults['arbzg_max_weekly_hours']))),
             'overtime_reminder_enabled' => !empty($stored['overtime_reminder_enabled'] ?? $defaults['overtime_reminder_enabled']),
             'overtime_reminder_email' => !empty($stored['overtime_reminder_email'] ?? $defaults['overtime_reminder_email']),
+            'vacation_planning_reminder_enabled' => !empty(
+                $stored['vacation_planning_reminder_enabled'] ?? $defaults['vacation_planning_reminder_enabled']
+            ),
+            'vacation_planning_reminder_threshold' => self::normalizePercent(
+                $stored['vacation_planning_reminder_threshold'] ?? $defaults['vacation_planning_reminder_threshold']
+            ),
             'absence_enable_ot_comp' => !empty($stored['absence_enable_ot_comp'] ?? $defaults['absence_enable_ot_comp']),
             'absence_enable_unpaid_leave' => !empty($stored['absence_enable_unpaid_leave'] ?? $defaults['absence_enable_unpaid_leave']),
             'absence_enable_special_leave' => !empty($stored['absence_enable_special_leave'] ?? $defaults['absence_enable_special_leave']),
@@ -164,6 +172,10 @@ final class TimeTrackingSettings
             'arbzg_max_weekly_hours' => max(1, min(168, (int) ($input['arbzg_max_weekly_hours'] ?? 48))),
             'overtime_reminder_enabled' => !empty($input['overtime_reminder_enabled']),
             'overtime_reminder_email' => !empty($input['overtime_reminder_email']),
+            'vacation_planning_reminder_enabled' => !empty($input['vacation_planning_reminder_enabled']),
+            'vacation_planning_reminder_threshold' => self::normalizePercent(
+                $input['vacation_planning_reminder_threshold'] ?? 60
+            ),
             'absence_enable_ot_comp' => !empty($input['absence_enable_ot_comp']),
             'absence_enable_unpaid_leave' => !empty($input['absence_enable_unpaid_leave']),
             'absence_enable_special_leave' => !empty($input['absence_enable_special_leave']),
@@ -188,6 +200,16 @@ final class TimeTrackingSettings
                 (string) ($input['provision_account_ot_liability'] ?? '0970')
             ),
         ]);
+    }
+
+    private static function normalizePercent(mixed $raw): float
+    {
+        if (is_string($raw)) {
+            $raw = str_replace(',', '.', trim($raw));
+        }
+        $v = round((float) $raw, 1);
+
+        return max(1.0, min(100.0, $v > 0 ? $v : 60.0));
     }
 
     private static function normalizeMoney(mixed $raw): float

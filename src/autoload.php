@@ -233,6 +233,8 @@ spl_autoload_register(static function (string $class): void {
         'ArbzgComplianceService' => '/src/TimeTracking/ArbzgComplianceService.php',
         'ArbzgReminderRepository' => '/src/TimeTracking/ArbzgReminderRepository.php',
         'OvertimeReminderService' => '/src/TimeTracking/OvertimeReminderService.php',
+        'VacationPlanningReminderRepository' => '/src/TimeTracking/VacationPlanningReminderRepository.php',
+        'VacationPlanningReminderService' => '/src/TimeTracking/VacationPlanningReminderService.php',
         'OvertimeNotificationRecipients' => '/src/TimeTracking/OvertimeNotificationRecipients.php',
         'BwaReportService' => '/src/Accounting/BwaReportService.php',
         'SusaReportService' => '/src/Accounting/SusaReportService.php',
