@@ -446,79 +446,6 @@ function performInstallation(array $wizard, bool $deferLock = false): array
             'vat_id'     => $legal['vat_id'],
         ]);
 
-        // Save extended settings
-        $owners = [];
-        foreach ($legal['owners'] as $o) {
-            $owners[] = ['name' => $o['name'], 'share_percent' => '', 'user_id' => '0'];
-        }
-
-        $extendedData = [
-            'legal_name'    => $company['legal_name'],
-            'company_type'  => $company['company_type'],
-            'industry'      => $company['industry'],
-            'tax_numbers'   => [
-                'est'            => $legal['tax_number'],
-                'ust'            => $legal['vat_id'],
-                'steuer_id'      => $legal['tax_id'],
-                'gst' => '', 'kst' => '', 'wirtschafts_id' => '',
-            ],
-            'trade_register' => [
-                'court'  => $legal['register_court'],
-                'number' => $legal['register_number'],
-            ],
-            'owners' => $owners,
-        ];
-
-        if (!empty($legal['authority_name'])) {
-            $extendedData['professional_chambers'] = [[
-                'name'      => $legal['authority_name'],
-                'member_no' => '',
-                'contact'   => '',
-                'phone'     => '',
-                'email'     => '',
-            ]];
-        }
-
-        SettingsStore::set(CompanyExtendedSettings::STORE_KEY, $extendedData);
-
-        // Save business kind for AGB/Impressum generator
-        SettingsStore::set('install_business_kind', $company['business_kind']);
-
-        // Pflichtseiten, Startseite, Kontaktformular, Menü, Wartungsmodus
-        try {
-            WebsiteBootstrapService::bootstrap(1, [
-                'overwrite' => false,
-                'enable_maintenance' => true,
-            ]);
-        } catch (Throwable $bootstrapError) {
-            $existingHints = SettingsStore::get('install_hints', []);
-            if (!is_array($existingHints)) {
-                $existingHints = [];
-            }
-            $existingHints[] = [
-                'field' => 'Website',
-                'text' => 'Pflichtseiten konnten nicht automatisch angelegt werden: '
-                    . htmlspecialchars($bootstrapError->getMessage(), ENT_QUOTES, 'UTF-8'),
-            ];
-            SettingsStore::set('install_hints', $existingHints);
-        }
-
-        // Configure SMTP from KAS-Login
-        $smtp = $wizard['smtp'] ?? [];
-        $kasLogin = $wizard['db']['kas_login'] ?? '';
-        if (!empty($smtp['email']) && $kasLogin !== '') {
-            MailSettings::save([
-                'smtp_host'       => $kasLogin . '.kasserver.com',
-                'smtp_port'       => 465,
-                'smtp_encryption' => 'ssl',
-                'smtp_username'   => $smtp['email'],
-                'smtp_password'   => $smtp['password'],
-                'sender_name'     => $company['name'],
-                'sender_email'    => $smtp['email'],
-                'reply_to'        => $company['email'],
-            ]);
-        }
-
         // Create users with email verification tokens
         $invited = [];
         $userId = 1;
@@ -577,15 +504,122 @@ function performInstallation(array $wizard, bool $deferLock = false): array
         }
         $usersPhp .= "    ],\n];\n";
         file_put_contents($configDir . '/users.php', $usersPhp);
+        App::reloadConfig();
+
+        // Kontakte für Benutzer + Inhaber (ohne CRM-Login, sofern nur Inhaber)
+        $seedUsers = [];
+        foreach ($usersConfig as $id => $u) {
+            $seedUsers[] = [
+                'id' => (int) $id,
+                'email' => (string) $u['email'],
+                'display_name' => (string) $u['display_name'],
+                'role' => (string) (($u['roles'][0] ?? 'administrator')),
+            ];
+        }
+        $seedResult = InstallPersonContactSeeder::seed(
+            is_array($legal['owners'] ?? null) ? $legal['owners'] : [],
+            $seedUsers,
+            $company
+        );
+
+        // Save extended settings (Inhaber inkl. optionaler CRM-Benutzer-Verknüpfung)
+        $extendedData = [
+            'legal_name'    => $company['legal_name'],
+            'company_type'  => $company['company_type'],
+            'industry'      => $company['industry'],
+            'tax_numbers'   => [
+                'est'            => $legal['tax_number'],
+                'ust'            => $legal['vat_id'],
+                'steuer_id'      => $legal['tax_id'],
+                'gst' => '', 'kst' => '', 'wirtschafts_id' => '',
+            ],
+            'trade_register' => [
+                'court'  => $legal['register_court'],
+                'number' => $legal['register_number'],
+            ],
+            'owners' => $seedResult['owners'],
+        ];
+
+        if (!empty($legal['authority_name'])) {
+            $extendedData['professional_chambers'] = [[
+                'name'      => $legal['authority_name'],
+                'member_no' => '',
+                'contact'   => '',
+                'phone'     => '',
+                'email'     => '',
+            ]];
+        }
+
+        SettingsStore::set(CompanyExtendedSettings::STORE_KEY, $extendedData);
+
+        // Save business kind for AGB/Impressum generator
+        SettingsStore::set('install_business_kind', $company['business_kind']);
+
+        // Pflichtseiten, Startseite, Kontaktformular, Menü, Wartungsmodus
+        try {
+            WebsiteBootstrapService::bootstrap(1, [
+                'overwrite' => false,
+                'enable_maintenance' => true,
+            ]);
+        } catch (Throwable $bootstrapError) {
+            $existingHints = SettingsStore::get('install_hints', []);
+            if (!is_array($existingHints)) {
+                $existingHints = [];
+            }
+            $existingHints[] = [
+                'field' => 'Website',
+                'text' => 'Pflichtseiten konnten nicht automatisch angelegt werden: '
+                    . htmlspecialchars($bootstrapError->getMessage(), ENT_QUOTES, 'UTF-8'),
+            ];
+            SettingsStore::set('install_hints', $existingHints);
+        }
+
+        // Configure SMTP from KAS-Login
+        $smtp = $wizard['smtp'] ?? [];
+        $kasLogin = $wizard['db']['kas_login'] ?? '';
+        if (!empty($smtp['email']) && $kasLogin !== '') {
+            MailSettings::save([
+                'smtp_host'       => $kasLogin . '.kasserver.com',
+                'smtp_port'       => 465,
+                'smtp_encryption' => 'ssl',
+                'smtp_username'   => $smtp['email'],
+                'smtp_password'   => $smtp['password'],
+                'sender_name'     => $company['name'],
+                'sender_email'    => $smtp['email'],
+                'reply_to'        => $company['email'],
+            ]);
+        }
 
         // Send invitation emails
         foreach ($invited as $inv) {
             sendInvitationEmail($inv['email'], $inv['name'], $inv['token'], $company['name'], $baseUrl);
         }
 
-        // Save hints
-        if (!empty($wizard['hints'])) {
-            SettingsStore::set('install_hints', $wizard['hints']);
+        // Save hints (Website-Hinweise nicht überschreiben)
+        $hints = is_array($wizard['hints'] ?? null) ? $wizard['hints'] : [];
+        if (($seedResult['created'] ?? 0) > 0 || ($seedResult['linked'] ?? 0) > 0) {
+            $hints[] = [
+                'field' => 'Kontakte',
+                'text' => sprintf(
+                    'Aus der Installation: %d Kontakt(e) angelegt, %d mit CRM-Benutzer verknüpft. '
+                    . 'CRM-Backend-Login nur für eingeladene Benutzer — weitere Zugänge (App/PIN) später im Kontakt.',
+                    (int) ($seedResult['created'] ?? 0),
+                    (int) ($seedResult['linked'] ?? 0)
+                ),
+            ];
+        }
+        foreach ($seedResult['errors'] ?? [] as $seedErr) {
+            $hints[] = [
+                'field' => 'Kontakte',
+                'text' => htmlspecialchars((string) $seedErr, ENT_QUOTES, 'UTF-8'),
+            ];
+        }
+        $existingHints = SettingsStore::get('install_hints', []);
+        if (is_array($existingHints) && $existingHints !== []) {
+            $hints = array_merge($existingHints, $hints);
+        }
+        if ($hints !== []) {
+            SettingsStore::set('install_hints', $hints);
         }
 
         // Lock installer (nach Datenimport, falls vorhanden)
@@ -1146,7 +1180,7 @@ if (!empty($mig['provider']) && $mig['provider'] !== 'unbekannt') {
 <input type="hidden" name="step" value="4">
 
 <h2>Inhaber / Geschäftsführer</h2>
-<p class="hint">Mindestens eine Person ist erforderlich (Impressumspflicht)</p>
+<p class="hint">Mindestens eine Person ist erforderlich (Impressumspflicht). Diese Personen werden automatisch als Kontakte angelegt. CRM-Login nur, wenn dieselbe Person auch unter „Benutzer“ eingeladen wird.</p>
 
 <div id="owners">
 <?php
@@ -1343,7 +1377,7 @@ document.querySelectorAll('[data-import-source]').forEach(function (select) {
 <input type="hidden" name="step" value="6">
 
 <h2>Hauptbenutzer anlegen (Pflicht)</h2>
-<p class="hint">Dieser Benutzer erhält vollen Administratorzugang. Eine Einladungs-E-Mail mit Bestätigungslink wird gesendet.</p>
+<p class="hint">Dieser Benutzer erhält vollen Administratorzugang. Eine Einladungs-E-Mail mit Bestätigungslink wird gesendet. Gleichzeitig wird ein Mitarbeiter-Kontakt angelegt (gleicher Name = gleiche Person wie beim Inhaber).</p>
 
 <?php
 $primaryUser = $wizard['users'][0] ?? ['email' => '', 'display_name' => '', 'role' => 'administrator'];

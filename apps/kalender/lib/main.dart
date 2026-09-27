@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const Color _brandTeal = Color(0xFF0F766E);
 const Color _brandTealDark = Color(0xFF115E59);
 const Color _surfaceMist = Color(0xFFF3F7F6);
+const Locale _localeDe = Locale('de', 'DE');
 
 void main() {
   runApp(const DgKalenderApp());
@@ -45,7 +47,9 @@ String formatSlotFull(String slot) {
 
 String formatDayChip(DateTime d) {
   const wd = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-  return '${wd[d.weekday - 1]}\n${d.day}.${d.month}.';
+  final day = d.day.toString().padLeft(2, '0');
+  final month = d.month.toString().padLeft(2, '0');
+  return '${wd[d.weekday - 1]}\n$day.$month.';
 }
 
 String ymd(DateTime d) =>
@@ -139,6 +143,13 @@ class DgKalenderApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DG Kalender',
+      locale: _localeDe,
+      supportedLocales: const [_localeDe],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: buildKalenderTheme(),
       home: const BootstrapPage(),
     );

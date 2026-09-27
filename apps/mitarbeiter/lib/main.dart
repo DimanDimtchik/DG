@@ -6,8 +6,10 @@ import 'dart:math' as math;
 import 'package:app_links/app_links.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +17,59 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const DgMitarbeiterApp());
 }
+
+const _localeDe = Locale('de', 'DE');
+final _deDate = DateFormat('dd.MM.yyyy', 'de_DE');
+final _deDateTime = DateFormat('dd.MM.yyyy HH:mm', 'de_DE');
+
+/// Anzeige: TT.MM.JJJJ (ISO oder schon deutsch).
+String formatDeDate(Object? raw) {
+  if (raw is DateTime) return _deDate.format(raw);
+  final s = raw?.toString().trim() ?? '';
+  if (s.isEmpty) return '';
+  final dt = DateTime.tryParse(s.replaceFirst(' ', 'T'));
+  if (dt != null) return _deDate.format(dt);
+  final m = RegExp(r'^(\d{1,2})\.(\d{1,2})\.(\d{4})$').firstMatch(s);
+  if (m != null) {
+    final d = int.parse(m.group(1)!);
+    final mo = int.parse(m.group(2)!);
+    final y = int.parse(m.group(3)!);
+    return _deDate.format(DateTime(y, mo, d));
+  }
+  return s;
+}
+
+String formatDeDateTime(Object? raw) {
+  if (raw is DateTime) return _deDateTime.format(raw);
+  final s = raw?.toString().trim() ?? '';
+  if (s.isEmpty) return '';
+  final dt = DateTime.tryParse(s.replaceFirst(' ', 'T'));
+  if (dt != null) return _deDateTime.format(dt);
+  return formatDeDate(s);
+}
+
+/// ISO-Datum (yyyy-MM-dd…) → deutsch, sonst unverändert.
+String formatDeIfDate(Object? raw) {
+  final s = raw?.toString().trim() ?? '';
+  if (s.isEmpty) return '';
+  if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(s)) return formatDeDate(s);
+  return s;
+}
+
+DateTime? parseFlexibleDate(String raw) {
+  final s = raw.trim();
+  if (s.isEmpty) return null;
+  final iso = DateTime.tryParse(s);
+  if (iso != null) return iso;
+  final m = RegExp(r'^(\d{1,2})\.(\d{1,2})\.(\d{4})$').firstMatch(s);
+  if (m != null) {
+    return DateTime(int.parse(m.group(3)!), int.parse(m.group(2)!), int.parse(m.group(1)!));
+  }
+  return null;
+}
+
+String toApiDate(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 String normalizeBaseUrl(String raw) {
   var u = raw.trim();
@@ -39,6 +94,13 @@ class DgMitarbeiterApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'DG Mitarbeiter',
+      locale: _localeDe,
+      supportedLocales: const [_localeDe],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F766E)),
         useMaterial3: true,
@@ -358,7 +420,7 @@ class _LoginPageState extends State<LoginPage> {
           TextField(
             controller: _id,
             decoration: const InputDecoration(
-              labelText: 'Login / E-Mail / Nachname / Nr.',
+              labelText: 'Kennung / E-Mail / Nachname / Nr.',
             ),
           ),
           TextField(
@@ -369,7 +431,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _busy ? null : _login, child: Text(_busy ? '…' : 'Login')),
+          FilledButton(onPressed: _busy ? null : _login, child: Text(_busy ? '…' : 'Anmelden')),
         ],
       ),
     );
@@ -882,7 +944,9 @@ class _KontoTabState extends State<KontoTab> {
           final m = l as Map;
           return ListTile(
             title: Text('${m['remaining_display']} h'),
-            subtitle: Text('Ang. ${m['accrued_date']} · bis ${m['expires_at']}'),
+            subtitle: Text(
+              'Ang. ${formatDeDate(m['accrued_date'])} · bis ${formatDeDate(m['expires_at'])}',
+            ),
           );
         }),
       ],
@@ -1016,16 +1080,16 @@ class _AbsencesTabState extends State<AbsencesTab> {
 
   Future<void> _pickDate(TextEditingController ctrl) async {
     final now = DateTime.now();
-    final initial = DateTime.tryParse(ctrl.text) ?? now;
+    final initial = parseFlexibleDate(ctrl.text) ?? now;
     final picked = await showDatePicker(
       context: context,
+      locale: _localeDe,
       initialDate: initial,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 2),
     );
     if (picked == null) return;
-    ctrl.text =
-        '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    ctrl.text = formatDeDate(picked);
     setState(() {});
   }
 
@@ -1057,6 +1121,16 @@ class _AbsencesTabState extends State<AbsencesTab> {
       );
       return;
     }
+    final fromDt = parseFlexibleDate(_fromCtrl.text);
+    final toDt = parseFlexibleDate(_toCtrl.text);
+    if (fromDt == null || toDt == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte Datum als TT.MM.JJJJ wählen.')),
+      );
+      return;
+    }
+    final dateFrom = toApiDate(fromDt);
+    final dateTo = toApiDate(toDt);
     setState(() => _submitting = true);
     try {
       Map<String, dynamic> res;
@@ -1065,8 +1139,8 @@ class _AbsencesTabState extends State<AbsencesTab> {
           '/api/mobile/staff/absences',
           fields: {
             'type': type,
-            'date_from': _fromCtrl.text,
-            'date_to': _toCtrl.text,
+            'date_from': dateFrom,
+            'date_to': dateTo,
             'reason': _reasonCtrl.text.trim(),
             if (_halfDay) 'half_day': '1',
           },
@@ -1077,8 +1151,8 @@ class _AbsencesTabState extends State<AbsencesTab> {
       } else {
         res = await widget.client.post('/api/mobile/staff/absences', {
           'type': type,
-          'date_from': _fromCtrl.text,
-          'date_to': _toCtrl.text,
+          'date_from': dateFrom,
+          'date_to': dateTo,
           'reason': _reasonCtrl.text.trim(),
           if (_halfDay) 'half_day': true,
         });
@@ -1386,6 +1460,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
                     readOnly: true,
                     decoration: const InputDecoration(
                       labelText: 'Von',
+                      hintText: 'TT.MM.JJJJ',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.event),
                     ),
@@ -1399,6 +1474,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
                     readOnly: true,
                     decoration: const InputDecoration(
                       labelText: 'Bis',
+                      hintText: 'TT.MM.JJJJ',
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.event),
                     ),
@@ -1470,7 +1546,9 @@ class _AbsencesTabState extends State<AbsencesTab> {
                     status: r['status']?.toString(),
                   ),
                   title: Text('${r['type_label']} · ${r['status_label']}'),
-                  subtitle: Text('${r['date_from']} – ${r['date_to']} (${r['days_count']} T.)'),
+                  subtitle: Text(
+                    '${formatDeDate(r['date_from'])} – ${formatDeDate(r['date_to'])} (${r['days_count']} T.)',
+                  ),
                 ),
               );
             }),
@@ -1510,8 +1588,8 @@ class _ShiftsTabState extends State<ShiftsTab> {
       itemBuilder: (_, i) {
         final s = _shifts[i] as Map;
         return ListTile(
-          title: Text('${s['date']} · ${s['template_name']}'),
-          subtitle: Text('${s['start_time']} – ${s['end_time']}'),
+          title: Text('${formatDeDate(s['date'])} · ${s['template_name']}'),
+          subtitle: Text('${s['start_time']} – ${s['end_time']} Uhr'),
         );
       },
     );
@@ -1731,7 +1809,9 @@ class _DocsTabState extends State<DocsTab> {
                               : Icons.picture_as_pdf_outlined,
                         ),
                         title: Text('${doc['name'] ?? 'Datei'}'),
-                        subtitle: uploaded.isEmpty ? null : Text('Hochgeladen: $uploaded'),
+                        subtitle: uploaded.isEmpty
+                            ? null
+                            : Text('Hochgeladen: ${formatDeDateTime(uploaded)}'),
                         trailing: IconButton(
                           tooltip: 'Öffnen',
                           onPressed: () => _download(doc),
@@ -1836,7 +1916,7 @@ class _ProfileTabState extends State<ProfileTab> {
         children: [
           Text('${c['label'] ?? 'Mitarbeiter'}', style: theme.textTheme.headlineSmall),
           if ('${c['login'] ?? ''}'.trim().isNotEmpty)
-            Text('Login: ${c['login']}', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text('Kennung: ${c['login']}', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -1873,8 +1953,8 @@ class _ProfileTabState extends State<ProfileTab> {
                       return [
                         _kv('Tätigkeit', e['job_type']?.toString()),
                         _kv('Arbeitszeit', e['working_hours']?.toString()),
-                        _kv('Eintritt', e['entry_date']?.toString()),
-                        _kv('Vertragsbeginn', e['contract_start']?.toString()),
+                        _kv('Eintritt', formatDeIfDate(e['entry_date'])),
+                        _kv('Vertragsbeginn', formatDeIfDate(e['contract_start'])),
                         _kv('Beschäftigungsverhältnis', e['employment_relationship']?.toString()),
                         _kv('Arbeitsort', e['work_location']?.toString()),
                       ];
@@ -1898,7 +1978,7 @@ class _ProfileTabState extends State<ProfileTab> {
                       Text('${sec['label']}', style: theme.textTheme.titleMedium),
                       ...fields.map((fRaw) {
                         final f = Map<String, dynamic>.from(fRaw as Map);
-                        return _kv('${f['label']}', f['value']?.toString());
+                        return _kv('${f['label']}', formatDeIfDate(f['value']));
                       }),
                     ],
                   ),
@@ -1922,7 +2002,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         Text('${bank['type_label'] ?? 'Bankkonto'}', style: theme.textTheme.titleMedium),
                         ...fields.map((fRaw) {
                           final f = Map<String, dynamic>.from(fRaw as Map);
-                          return _kv('${f['label']}', f['value']?.toString());
+                          return _kv('${f['label']}', formatDeIfDate(f['value']));
                         }),
                       ],
                     ),

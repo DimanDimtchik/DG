@@ -125,13 +125,17 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                 <th>Zeitraum</th>
                 <th class="dg-table__num">Tage</th>
                 <th>Status</th>
+                <th>Begründung</th>
                 <th>Nachweis</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($ownNonVac as $row) : ?>
-                <?php $rowId = (int) ($row['id'] ?? 0); ?>
+                <?php
+                  $rowId = (int) ($row['id'] ?? 0);
+                  $reasonText = trim((string) ($row['reason'] ?? ''));
+                ?>
                 <tr>
                   <td><?= View::escape(TimeAbsenceService::typeLabel((string) ($row['type'] ?? ''))) ?></td>
                   <td>
@@ -140,6 +144,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                   </td>
                   <td class="dg-table__num"><?= View::escape(number_format((float) ($row['days_count'] ?? 0), 1, ',', '')) ?></td>
                   <td><?= View::escape(TimeVacationService::statusLabel((string) ($row['status'] ?? ''))) ?></td>
+                  <td><?= $reasonText !== '' ? View::escape($reasonText) : '—' ?></td>
                   <td>
                     <?php $renderAtts($rowId); ?>
                     <?php if (trim((string) ($row['document_ref'] ?? '')) !== '') : ?>
@@ -274,6 +279,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                 <th>Mitarbeiter</th>
                 <th>Typ</th>
                 <th>Zeitraum</th>
+                <th>Begründung</th>
                 <th>Nachweis</th>
                 <th></th>
               </tr>
@@ -283,6 +289,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                 <?php
                   $cid = (int) ($row['contact_id'] ?? 0);
                   $rowId = (int) ($row['id'] ?? 0);
+                  $reasonText = trim((string) ($row['reason'] ?? ''));
                 ?>
                 <tr>
                   <td>
@@ -296,6 +303,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                     <?= View::escape((string) ($row['date_from'] ?? '')) ?>
                     – <?= View::escape((string) ($row['date_to'] ?? '')) ?>
                   </td>
+                  <td><?= $reasonText !== '' ? View::escape($reasonText) : '—' ?></td>
                   <td>
                     <?php $renderAtts($rowId); ?>
                     <?php if (trim((string) ($row['document_ref'] ?? '')) !== '') : ?>

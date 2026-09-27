@@ -326,6 +326,7 @@ spl_autoload_register(static function (string $class): void {
         'InstallImportQueue' => '/src/Install/InstallImportQueue.php',
         'InstallImportRunner' => '/src/Install/InstallImportRunner.php',
         'InstallImportSourcePresets' => '/src/Install/InstallImportSourcePresets.php',
+        'InstallPersonContactSeeder' => '/src/Install/InstallPersonContactSeeder.php',
         'KdvCustomerRepository' => '/src/Kdv/KdvCustomerRepository.php',
         'KdvOrgRepository' => '/src/Kdv/KdvOrgRepository.php',
         'FirmSwitcherService' => '/src/MultiFirma/FirmSwitcherService.php',
