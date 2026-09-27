@@ -7138,6 +7138,31 @@ body.dg-login-page {
   margin-bottom: 12px;
 }
 
+.dg-academy-reading {
+  margin: 20px 0 8px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--dg-accent, #2c5f4f);
+  background: var(--dg-surface-muted, rgba(0, 0, 0, 0.03));
+  border-radius: 0 var(--dg-radius-sm, 6px) var(--dg-radius-sm, 6px) 0;
+}
+
+.dg-academy-reading__title {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.dg-academy-reading__body {
+  margin: 0;
+  line-height: 1.55;
+  white-space: normal;
+}
+
+.dg-academy-player-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .dg-academy-hr-card.dg-academy-risk--red {
   border-left: 4px solid #c0392b;
 }

@@ -16,6 +16,8 @@ final class AcademyVideoService
 
     /**
      * Speichert Metadaten + optional hochgeladene Dateien als Bibliotheks-Modul.
+     * Beschreibung und CRM-Stelle werden aus dem Formular übernommen; fehlen sie,
+     * aus Locale-Skript bzw. Video-Dateiname ergänzt.
      *
      * @param array<string, mixed> $post
      * @param array<string, mixed> $files $_FILES
@@ -38,9 +40,11 @@ final class AcademyVideoService
 
         $videoPath = trim((string) ($existing['video_path'] ?? ''));
         $vttPath = trim((string) ($existing['subtitle_vtt_path'] ?? ''));
+        $uploadOriginalName = '';
 
         $videoFile = $files['video_file'] ?? null;
         if (is_array($videoFile) && (int) ($videoFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            $uploadOriginalName = (string) ($videoFile['name'] ?? '');
             $videoPath = self::storeVideo($storageSegment, $videoFile, $title);
         } elseif ($moduleId < 1) {
             throw new InvalidArgumentException('Bitte MP4-Video hochladen.');
@@ -51,6 +55,22 @@ final class AcademyVideoService
             $vttPath = self::storeVtt($storageSegment, $vttFile, $title);
         }
 
+        $description = trim((string) ($post['description'] ?? ''));
+        $targetPage = trim((string) ($post['target_page'] ?? ''));
+
+        $draft = [
+            'title' => $title,
+            'description' => $description,
+            'target_page' => $targetPage,
+            'video_path' => $videoPath !== '' ? $videoPath : self::hintPathFromUploadName($uploadOriginalName),
+        ];
+        if ($description === '') {
+            $description = AcademyModulePresentation::suggestedDescription($draft);
+        }
+        if ($targetPage === '') {
+            $targetPage = AcademyModulePresentation::resolvedTargetPage($draft);
+        }
+
         $legacyDept = $departmentIds[0] ?? '';
 
         return AcademyRepository::saveModule([
@@ -58,13 +78,25 @@ final class AcademyVideoService
             'department_id' => $legacyDept,
             'department_ids' => $departmentIds,
             'title' => $title,
-            'description' => trim((string) ($post['description'] ?? '')),
+            'description' => $description,
+            'target_page' => $targetPage,
             'video_path' => $videoPath,
             'subtitle_vtt_path' => $vttPath,
             'duration_sec' => max(1, (int) ($post['duration_sec'] ?? 180)),
             'min_watch_percent' => max(1, min(100, (int) ($post['min_watch_percent'] ?? 90))),
             'is_active' => !empty($post['is_active']) || $moduleId < 1,
         ]);
+    }
+
+    /** Hilfspfad nur für Slug-Erkennung, wenn noch keine gespeicherte Datei existiert. */
+    private static function hintPathFromUploadName(string $originalName): string
+    {
+        $slug = self::slugFromUploadName($originalName);
+        if ($slug === '') {
+            return '';
+        }
+
+        return 'media/training/' . self::DEFAULT_STORAGE_SEGMENT . '/' . $slug . '.mp4';
     }
 
     /**
@@ -120,7 +152,9 @@ final class AcademyVideoService
         }
 
         $dir = self::ensureStorageDir($storageSegment);
-        $base = self::safeBaseName($titleHint !== '' ? $titleHint : pathinfo($original, PATHINFO_FILENAME));
+        $fromUpload = self::slugFromUploadName($original);
+        $fromTitle = self::safeBaseName($titleHint !== '' ? $titleHint : pathinfo($original, PATHINFO_FILENAME));
+        $base = $fromUpload !== '' ? $fromUpload : $fromTitle;
         $stored = $base . '-' . date('YmdHis') . '.mp4';
         $target = $dir . '/' . $stored;
 
@@ -147,7 +181,9 @@ final class AcademyVideoService
         }
 
         $dir = self::ensureStorageDir($storageSegment);
-        $base = self::safeBaseName($titleHint !== '' ? $titleHint : pathinfo($original, PATHINFO_FILENAME));
+        $fromUpload = self::slugFromUploadName($original);
+        $fromTitle = self::safeBaseName($titleHint !== '' ? $titleHint : pathinfo($original, PATHINFO_FILENAME));
+        $base = $fromUpload !== '' ? $fromUpload : $fromTitle;
         $stored = $base . '-' . date('YmdHis') . '.vtt';
         $target = $dir . '/' . $stored;
 
@@ -188,6 +224,26 @@ final class AcademyVideoService
         $slug = trim($slug, '-');
 
         return $slug !== '' ? $slug : 'video';
+    }
+
+    /**
+     * Bevorzugt den Original-Dateinamen (Akademie-Slug), damit Locale und Zielseite passen.
+     */
+    private static function slugFromUploadName(string $originalName): string
+    {
+        $base = pathinfo($originalName, PATHINFO_FILENAME);
+        if ($base === '') {
+            return '';
+        }
+        $base = (string) preg_replace('/\.(de|en|fr|it|es|pl|nl|pt)$/i', '', $base);
+        $base = (string) preg_replace('/-\d{14}$/', '', $base);
+        $slug = self::safeBaseName($base);
+        if ($slug === 'video' || !preg_match('/^[a-z][a-z0-9]*(-[a-z0-9]+)+$/', $slug)) {
+            // Kein erkennbarer Themen-Slug (z. B. „video.mp4“) → Titel nutzen
+            return '';
+        }
+
+        return $slug;
     }
 
     /**

@@ -195,11 +195,12 @@ $riskClass = static function (?string $level): string {
     $hasVideo = $videoPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($videoPath, '/'));
     $vttPath = trim((string) ($academyModule['subtitle_vtt_path'] ?? ''));
     $hasVtt = $vttPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($vttPath, '/'));
+    $academyReadingText = AcademyModulePresentation::readingText($academyModule);
+    $academyCrmTarget = AcademyModulePresentation::crmTarget($academyModule);
   ?>
   <section class="dg-panel dg-academy-player-wrap">
     <h2 class="dg-subsection-title"><?= View::escape((string) ($academyModule['title'] ?? '')) ?></h2>
     <p class="dg-field-hint"><?= View::escape((string) ($academyCourse['title'] ?? '')) ?></p>
-    <div class="dg-academy-player__desc"><?= nl2br(View::escape((string) ($academyModule['description'] ?? ''))) ?></div>
 
     <?php if ($hasVideo) : ?>
     <video id="dg-academy-video" class="dg-academy-player" controls playsinline
@@ -214,15 +215,25 @@ $riskClass = static function (?string $level): string {
     </video>
     <?php else : ?>
     <div class="dg-panel dg-panel--muted">
-      <p><strong>Video folgt.</strong> Lesen Sie die Beschreibung oben. Für dieses Modul ist noch keine Videodatei hinterlegt (<code>storage/media/training/</code>).</p>
+      <p><strong>Video folgt.</strong> Lesen Sie die Textfassung unten. Für dieses Modul ist noch keine Videodatei hinterlegt (<code>storage/media/training/</code>).</p>
       <p class="dg-muted">Dauer für Fortschritt: <?= (int) ($academyModule['duration_sec'] ?? 0) ?> Sekunden (Admin pflegt <code>duration_sec</code>).</p>
     </div>
     <?php endif; ?>
 
+    <?php if ($academyReadingText !== '') : ?>
+    <div class="dg-academy-reading">
+      <h3 class="dg-academy-reading__title">Zum Nachlesen</h3>
+      <div class="dg-academy-reading__body"><?= nl2br(View::escape($academyReadingText)) ?></div>
+    </div>
+    <?php endif; ?>
+
     <div id="dg-academy-player-message" class="dg-scan-result" hidden></div>
-    <div class="dg-form-actions">
+    <div class="dg-form-actions dg-academy-player-actions">
+      <?php if ($academyCrmTarget !== null) : ?>
+        <a class="dg-button dg-button--primary" href="<?= View::escape($academyCrmTarget['href']) ?>"><?= View::escape($academyCrmTarget['label']) ?></a>
+      <?php endif; ?>
       <a class="dg-button" href="/app?page=akademie&amp;view=kurs&amp;slug=<?= rawurlencode((string) ($academyCourse['slug'] ?? '')) ?>">Zurück zum Kurs</a>
-      <button type="button" class="dg-button dg-button--primary" id="dg-academy-complete-btn"
+      <button type="button" class="dg-button<?= $academyCrmTarget === null ? ' dg-button--primary' : '' ?>" id="dg-academy-complete-btn"
         data-assignment-id="<?= (int) ($academyAssignment['id'] ?? 0) ?>"
         data-module-id="<?= (int) ($academyModule['id'] ?? 0) ?>"
         data-has-video="<?= $hasVideo ? '1' : '0' ?>"
@@ -285,6 +296,8 @@ $riskClass = static function (?string $level): string {
     $hasVideo = $videoPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($videoPath, '/'));
     $vttPath = trim((string) ($academyModule['subtitle_vtt_path'] ?? ''));
     $hasVtt = $vttPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($vttPath, '/'));
+    $academyReadingText = AcademyModulePresentation::readingText($academyModule);
+    $academyCrmTarget = AcademyModulePresentation::crmTarget($academyModule);
   ?>
   <section class="dg-panel dg-academy-player-wrap">
     <h2 class="dg-subsection-title">Vorschau: <?= View::escape((string) ($academyModule['title'] ?? '')) ?></h2>
@@ -299,7 +312,20 @@ $riskClass = static function (?string $level): string {
     <?php else : ?>
       <p class="dg-muted">Keine Videodatei hinterlegt.</p>
     <?php endif; ?>
-    <div class="dg-form-actions">
+
+    <?php if ($academyReadingText !== '') : ?>
+    <div class="dg-academy-reading">
+      <h3 class="dg-academy-reading__title">Zum Nachlesen</h3>
+      <div class="dg-academy-reading__body"><?= nl2br(View::escape($academyReadingText)) ?></div>
+    </div>
+    <?php else : ?>
+    <p class="dg-muted">Noch kein Lesetext — Beschreibung im Video oder Locale-Skript hinterlegen.</p>
+    <?php endif; ?>
+
+    <div class="dg-form-actions dg-academy-player-actions">
+      <?php if ($academyCrmTarget !== null) : ?>
+        <a class="dg-button dg-button--primary" href="<?= View::escape($academyCrmTarget['href']) ?>"><?= View::escape($academyCrmTarget['label']) ?></a>
+      <?php endif; ?>
       <a class="dg-button" href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos">Zurück zur Bibliothek</a>
     </div>
   </section>
@@ -353,8 +379,21 @@ $riskClass = static function (?string $level): string {
         <input type="text" name="title" maxlength="200" required value="<?= View::escape((string) ($academyAdminVideo['title'] ?? '')) ?>">
       </label>
       <label class="dg-field dg-field--wide">
-        <span>Beschreibung</span>
-        <textarea name="description" rows="3"><?= View::escape((string) ($academyAdminVideo['description'] ?? '')) ?></textarea>
+        <span>Lesetext (unter dem Video)</span>
+        <textarea name="description" rows="6" placeholder="Kurzfassung zum Nachlesen …"><?= View::escape((string) ($academyAdminVideo['description'] ?? '')) ?></textarea>
+        <span class="dg-field-hint">Wird unter dem Video angezeigt. Leer lassen: Intro aus dem Locale-Skript zum Dateinamen (z. B. <code>kontakte-ueberblick.mp4</code>).</span>
+      </label>
+      <label class="dg-field dg-field--wide">
+        <span>CRM-Stelle (Button unter dem Video)</span>
+        <select name="target_page">
+          <?php
+            $selectedTarget = (string) ($academyAdminVideo['target_page'] ?? '');
+            foreach (AcademyModulePresentation::targetPageOptions() as $pageSlug => $pageLabel) :
+          ?>
+            <option value="<?= View::escape($pageSlug) ?>"<?= $selectedTarget === $pageSlug ? ' selected' : '' ?>><?= View::escape($pageLabel) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <span class="dg-field-hint">Wohin der Button „Zum Thema“ springt. Leer = aus dem Video-Dateinamen (z. B. kontakte-… → Kontakte).</span>
       </label>
       <label class="dg-field">
         <span>Dauer (Sekunden)</span>

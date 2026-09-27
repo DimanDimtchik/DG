@@ -284,6 +284,7 @@ spl_autoload_register(static function (string $class): void {
         'AcademyHrService' => '/src/Academy/AcademyHrService.php',
         'AcademyApi' => '/src/Academy/AcademyApi.php',
         'AcademyVideoService' => '/src/Academy/AcademyVideoService.php',
+        'AcademyModulePresentation' => '/src/Academy/AcademyModulePresentation.php',
         'WebsitePageRepository' => '/src/Website/WebsitePageRepository.php',
         'WebsitePagePatterns' => '/src/Website/WebsitePagePatterns.php',
         'WebsiteVideoLibrary' => '/src/Website/WebsiteVideoLibrary.php',

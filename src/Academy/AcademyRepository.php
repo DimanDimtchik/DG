@@ -533,6 +533,7 @@ final class AcademyRepository
             $departmentIds = [$departmentId];
         }
 
+        $hasTargetCol = self::modulesHaveTargetPageColumn();
         $params = [
             'department_id' => $departmentId !== '' ? $departmentId : null,
             'title' => $title,
@@ -546,35 +547,86 @@ final class AcademyRepository
             'is_active' => !empty($data['is_active']) ? 1 : 0,
             'sort_order' => (int) ($data['sort_order'] ?? 0),
         ];
+        if ($hasTargetCol) {
+            $params['target_page'] = self::normalizeTargetPage((string) ($data['target_page'] ?? ''));
+        }
 
         if ($id > 0) {
-            $stmt = Database::pdo()->prepare(
-                'UPDATE dg_academy_modules SET
+            $sql = $hasTargetCol
+                ? 'UPDATE dg_academy_modules SET
                     department_id = :department_id, title = :title, description = :description,
+                    target_page = :target_page,
                     provider = :provider, video_path = :video_path, external_ref = :external_ref,
                     duration_sec = :duration_sec, min_watch_percent = :min_watch_percent,
                     subtitle_vtt_path = :subtitle_vtt_path, is_active = :is_active, sort_order = :sort_order
                  WHERE id = :id'
-            );
+                : 'UPDATE dg_academy_modules SET
+                    department_id = :department_id, title = :title, description = :description,
+                    provider = :provider, video_path = :video_path, external_ref = :external_ref,
+                    duration_sec = :duration_sec, min_watch_percent = :min_watch_percent,
+                    subtitle_vtt_path = :subtitle_vtt_path, is_active = :is_active, sort_order = :sort_order
+                 WHERE id = :id';
+            $stmt = Database::pdo()->prepare($sql);
             $stmt->execute($params + ['id' => $id]);
             self::saveModuleDepartments($id, $departmentIds);
 
             return $id;
         }
 
-        $stmt = Database::pdo()->prepare(
-            'INSERT INTO dg_academy_modules
+        $sql = $hasTargetCol
+            ? 'INSERT INTO dg_academy_modules
+                (department_id, sort_order, title, description, target_page, provider, video_path, external_ref,
+                 duration_sec, min_watch_percent, subtitle_vtt_path, is_active)
+               VALUES
+                (:department_id, :sort_order, :title, :description, :target_page, :provider, :video_path, :external_ref,
+                 :duration_sec, :min_watch_percent, :subtitle_vtt_path, :is_active)'
+            : 'INSERT INTO dg_academy_modules
                 (department_id, sort_order, title, description, provider, video_path, external_ref,
                  duration_sec, min_watch_percent, subtitle_vtt_path, is_active)
-             VALUES
+               VALUES
                 (:department_id, :sort_order, :title, :description, :provider, :video_path, :external_ref,
-                 :duration_sec, :min_watch_percent, :subtitle_vtt_path, :is_active)'
-        );
+                 :duration_sec, :min_watch_percent, :subtitle_vtt_path, :is_active)';
+        $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
         $newId = (int) Database::pdo()->lastInsertId();
         self::saveModuleDepartments($newId, $departmentIds);
 
         return $newId;
+    }
+
+    private static function normalizeTargetPage(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+        if ($raw === 'dashboard') {
+            return 'dashboard';
+        }
+        if (!preg_match('/^[a-z0-9_-]+$/i', $raw)) {
+            return '';
+        }
+
+        return strtolower($raw);
+    }
+
+    private static function modulesHaveTargetPageColumn(): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        if (!Database::isConfigured()) {
+            return $cached = false;
+        }
+        try {
+            $stmt = Database::pdo()->query("SHOW COLUMNS FROM dg_academy_modules LIKE 'target_page'");
+            $cached = $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Throwable) {
+            $cached = false;
+        }
+
+        return $cached;
     }
 
     /** @return array<string, mixed>|null */
