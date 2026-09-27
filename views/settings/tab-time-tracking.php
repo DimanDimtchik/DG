@@ -135,6 +135,68 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
     </label>
   </section>
 
+  <?php
+    $approverStaff = TimeMonthReportService::staffOptions();
+    $approverDepts = [];
+    if (Database::isConfigured()) {
+        foreach (DepartmentRepository::allWithMembers() as $dept) {
+            $did = trim((string) ($dept['id'] ?? ''));
+            $dname = trim((string) ($dept['name'] ?? ''));
+            if ($did === '') {
+                continue;
+            }
+            $approverDepts[] = ['id' => $did, 'name' => $dname !== '' ? $dname : $did];
+        }
+    }
+    $globalApprover = (int) ($settings['absence_approver_contact_id'] ?? 0);
+    $byDept = is_array($settings['absence_approver_by_department'] ?? null)
+        ? $settings['absence_approver_by_department']
+        : [];
+  ?>
+  <section class="dg-form-section">
+    <h3 class="dg-subsection-title">Freigabe von Abwesenheitsanträgen</h3>
+    <p class="dg-field-hint">
+      Jeder Antrag (Urlaub, Krankheit, Überstundenabbau usw.) braucht eine Freigabe.
+      <strong>Standard:</strong> Abteilungsleiter → sonst Personal/HR → sonst Geschäftsführung.
+      Optional können Sie einen festen Freigeber für alle oder je Abteilung setzen.
+    </p>
+    <label class="dg-field">
+      <span>Fester Freigeber für alle (leer = Automatik)</span>
+      <select name="absence_approver_contact_id">
+        <option value="0">— Automatik (Leiter → HR → Chef) —</option>
+        <?php foreach ($approverStaff as $opt) : ?>
+          <option value="<?= (int) ($opt['id'] ?? 0) ?>"<?= (int) ($opt['id'] ?? 0) === $globalApprover ? ' selected' : '' ?>>
+            <?= View::escape((string) ($opt['label'] ?? '')) ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <?php if ($approverDepts !== []) : ?>
+      <p class="dg-field-hint" style="margin-top:1rem">
+        Optional je Abteilung (überschreibt die Automatik und ggf. den globalen Freigeber nur für diese Abteilung):
+      </p>
+      <div class="dg-form-grid">
+        <?php foreach ($approverDepts as $dept) : ?>
+          <?php
+            $did = (string) $dept['id'];
+            $sel = (int) ($byDept[$did] ?? 0);
+          ?>
+          <label class="dg-field">
+            <span><?= View::escape((string) $dept['name']) ?></span>
+            <select name="absence_approver_by_department[<?= View::escape($did) ?>]">
+              <option value="0">— Automatik / global —</option>
+              <?php foreach ($approverStaff as $opt) : ?>
+                <option value="<?= (int) ($opt['id'] ?? 0) ?>"<?= (int) ($opt['id'] ?? 0) === $sel ? ' selected' : '' ?>>
+                  <?= View::escape((string) ($opt['label'] ?? '')) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </section>
+
   <section class="dg-form-section">
     <h3 class="dg-subsection-title">Rückstellungen (Z5b) — Vorschlag mit Steuerberater prüfen</h3>
     <p class="dg-field-hint">

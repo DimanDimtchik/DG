@@ -205,6 +205,13 @@ final class TimeAbsenceService
             $primary = $absences[0];
         }
 
+        $displayStyle = null;
+        $displayColor = null;
+        if (is_array($primary)) {
+            $displayColor = (string) ($primary['color'] ?? '');
+            $displayStyle = (($primary['status'] ?? '') === 'approved') ? 'fill' : 'outline';
+        }
+
         return [
             'date' => $date,
             'day' => (int) $dt->format('j'),
@@ -217,6 +224,8 @@ final class TimeAbsenceService
             'planned_display' => $planned > 0 ? TimeClockService::formatMinutes($planned) : '',
             'absence' => $primary,
             'absences' => $absences,
+            'display_style' => $displayStyle,
+            'display_color' => $displayColor,
         ];
     }
 
@@ -442,10 +451,10 @@ final class TimeAbsenceService
      */
     public static function approve(User $user, int $absenceId): array
     {
-        if (!TimeClockService::canViewTeam($user)) {
+        $row = self::requirePendingNonVacation($absenceId);
+        if (!AbsenceApprovalService::canDecide($user, (int) ($row['contact_id'] ?? 0))) {
             throw new RuntimeException('Keine Berechtigung für Freigabe.');
         }
-        $row = self::requirePendingNonVacation($absenceId);
         $type = (string) ($row['type'] ?? '');
         $contactId = (int) ($row['contact_id'] ?? 0);
         $dateFrom = (string) ($row['date_from'] ?? '');
@@ -476,10 +485,10 @@ final class TimeAbsenceService
 
     public static function reject(User $user, int $absenceId, string $reason): void
     {
-        if (!TimeClockService::canViewTeam($user)) {
+        $row = self::requirePendingNonVacation($absenceId);
+        if (!AbsenceApprovalService::canDecide($user, (int) ($row['contact_id'] ?? 0))) {
             throw new RuntimeException('Keine Berechtigung.');
         }
-        self::requirePendingNonVacation($absenceId);
         $reason = trim($reason);
         if ($reason === '') {
             throw new InvalidArgumentException('Ablehnungsgrund erforderlich.');

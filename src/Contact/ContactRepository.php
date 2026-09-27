@@ -819,9 +819,10 @@ final class ContactRepository
         return $options;
     }
 
-        /**
+    /**
      * Mitarbeiter-Kontakt zu CRM-Benutzer (E-Mail, sonst Login).
-     * @param User $user Angemeldeter Benutzer
+     * Match: Kontakt-E-Mail/E-Mail-2 = User-E-Mail, oder Kontakt-Login = User-Benutzername/E-Mail.
+     *
      * @return ?int
      */
     public static function findStaffContactIdForUser(User $user): ?int
@@ -832,29 +833,46 @@ final class ContactRepository
 
         $roles = "'dg_eigenmitarbeiter', 'administrator', 'mitarbeiter'";
         $email = strtolower(trim($user->email));
+        $login = strtolower(trim($user->username));
+
         if ($email !== '') {
             $stmt = Database::pdo()->prepare(
                 "SELECT id FROM dg_contacts
                  WHERE contact_role IN ({$roles})
-                 AND (LOWER(TRIM(email)) = :email OR LOWER(TRIM(email_2)) = :email2)
+                 AND (
+                     LOWER(TRIM(email)) = :email
+                     OR LOWER(TRIM(email_2)) = :email2
+                     OR LOWER(TRIM(login)) = :login_via_email
+                 )
                  ORDER BY id ASC LIMIT 1"
             );
-            $stmt->execute(['email' => $email, 'email2' => $email]);
+            $stmt->execute([
+                'email' => $email,
+                'email2' => $email,
+                'login_via_email' => $email,
+            ]);
             $id = $stmt->fetchColumn();
             if ($id !== false) {
                 return (int) $id;
             }
         }
 
-        $login = trim($user->username);
         if ($login !== '') {
             $stmt = Database::pdo()->prepare(
                 "SELECT id FROM dg_contacts
                  WHERE contact_role IN ({$roles})
-                 AND login = :login
+                 AND (
+                     LOWER(TRIM(login)) = :login
+                     OR LOWER(TRIM(email)) = :login_as_email
+                     OR LOWER(TRIM(email_2)) = :login_as_email2
+                 )
                  ORDER BY id ASC LIMIT 1"
             );
-            $stmt->execute(['login' => $login]);
+            $stmt->execute([
+                'login' => $login,
+                'login_as_email' => $login,
+                'login_as_email2' => $login,
+            ]);
             $id = $stmt->fetchColumn();
             if ($id !== false) {
                 return (int) $id;

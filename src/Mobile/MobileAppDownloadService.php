@@ -176,9 +176,9 @@ final class MobileAppDownloadService
                             [
                                 'id' => 'blk-apps-hint',
                                 'type' => 'text',
-                                'text' => 'Hinweis: iOS- und Store-Links folgen. Android-APKs legt die Administration '
-                                    . 'unter downloads/ auf dem Server ab. Fehlt die Datei, erscheint beim Klick eine Fehlermeldung — '
-                                    . 'bitte die Firma kontaktieren.',
+                                'text' => 'Hinweis: Mitarbeiter können per Kontaktakte zur App und zu Passwort/PIN eingeladen werden. '
+                                    . 'Android-APKs liegen unter downloads/ auf dem Server. iOS-Links folgen (TestFlight). '
+                                    . 'Fehlt die APK-Datei, erscheint beim Klick eine Fehlermeldung.',
                             ],
                         ],
                     ]],

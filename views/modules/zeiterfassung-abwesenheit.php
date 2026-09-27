@@ -8,6 +8,7 @@
  * @var list<array<string, mixed>> $timeAbsPending
  * @var list<array{id: int, label: string}> $timeAbsStaffOptions
  * @var bool $timeAbsCanTeam
+ * @var bool $timeAbsCanApprove
  * @var string $timeAbsYearMonth
  * @var array{year_month: string, days: list<array<string, mixed>>}|null $timeAbsCalendar
  * @var array<int, list<array{id: int, original_name: string, mime: string, size_bytes: int}>> $timeAbsAttachments
@@ -19,6 +20,7 @@ $ownList = is_array($timeAbsOwnList ?? null) ? $timeAbsOwnList : [];
 $pending = is_array($timeAbsPending ?? null) ? $timeAbsPending : [];
 $staff = is_array($timeAbsStaffOptions ?? null) ? $timeAbsStaffOptions : [];
 $canTeam = !empty($timeAbsCanTeam);
+$canApprove = !empty($timeAbsCanApprove);
 $ym = (string) ($timeAbsYearMonth ?? date('Y-m'));
 $cal = is_array($timeAbsCalendar ?? null) ? $timeAbsCalendar : null;
 $attMap = is_array($timeAbsAttachments ?? null) ? $timeAbsAttachments : [];
@@ -162,7 +164,14 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
       <?php endif; ?>
     </section>
   <?php else : ?>
-    <div class="dg-flash dg-flash--warning">Kein Mitarbeiter-Kontakt verknüpft — eigene Krankmeldung nicht möglich. Als HR können Sie unten Abwesenheit für Mitarbeiter erfassen.</div>
+    <div class="dg-flash dg-flash--warning">
+      <strong>Kein eigener Mitarbeiter-Kontakt verknüpft</strong> — deshalb ist hier keine eigene Krankmeldung möglich.
+      Das betrifft nicht die erfassten Kollegen, sondern <em>Ihr</em> Benutzerkonto:
+      Im Kontakt (Rolle Mitarbeiter) müssen dieselbe E-Mail oder derselbe Login wie bei Ihrem CRM-Benutzer hinterlegt sein.
+      <?php if ($canTeam) : ?>
+        Als HR können Sie unten weiterhin Abwesenheit für andere Mitarbeiter erfassen.
+      <?php endif; ?>
+    </div>
   <?php endif; ?>
 
   <?php if ($canTeam) : ?>
@@ -250,7 +259,9 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
         })();
       </script>
     </section>
+  <?php endif; ?>
 
+  <?php if ($canApprove) : ?>
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Offene Abwesenheits-Bestätigungen</h2>
       <?php if ($pending === []) : ?>
@@ -277,7 +288,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                   <td>
                     <?= View::escape($staffLabel($cid)) ?>
                     <?php if ($cid > 0) : ?>
-                      <a class="dg-muted" href="/app?page=kontakte&amp;action=view&amp;id=<?= $cid ?>">Akte</a>
+                      <a class="dg-muted" href="/app?page=kontakte&amp;id=<?= $cid ?>">Akte</a>
                     <?php endif; ?>
                   </td>
                   <td><?= View::escape(TimeAbsenceService::typeLabel((string) ($row['type'] ?? ''))) ?></td>
@@ -313,7 +324,9 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
         </div>
       <?php endif; ?>
     </section>
+  <?php endif; ?>
 
+  <?php if ($canTeam) : ?>
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Team-Kalender (genehmigt)</h2>
       <form method="get" action="/app" class="dg-form dg-form--inline">

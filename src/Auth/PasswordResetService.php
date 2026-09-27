@@ -152,26 +152,9 @@ final class PasswordResetService
         }
     }
 
-    /**
-     * Invalidiert alte Tokens und speichert einen neuen Hash.
-     */
     private static function storeToken(int $userId, string $token): void
     {
-        $pdo = Database::pdo();
-        $pdo->prepare(
-            'UPDATE dg_password_reset_tokens SET used_at = NOW() WHERE user_id = :user_id AND used_at IS NULL'
-        )->execute(['user_id' => $userId]);
-
-        $expiresAt = (new DateTimeImmutable('now'))->modify('+' . self::EXPIRY_SECONDS . ' seconds');
-        $stmt = $pdo->prepare(
-            'INSERT INTO dg_password_reset_tokens (user_id, token_hash, expires_at)
-             VALUES (:user_id, :token_hash, :expires_at)'
-        );
-        $stmt->execute([
-            'user_id' => $userId,
-            'token_hash' => self::hashToken($token),
-            'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
-        ]);
+        self::storeTokenWithTtl($userId, $token, self::EXPIRY_SECONDS);
     }
 
     /**
@@ -216,14 +199,103 @@ final class PasswordResetService
             $text .= "\n" . $plainClosing;
         }
 
-        $message = new MailMessage(
+        MailService::send(new MailMessage(
             subject: $subject,
             htmlBody: $html,
             to: [$email],
             textBody: $text,
-        );
+        ));
+    }
 
-        MailService::send($message);
+    /**
+     * HR-Einladung: Token mit längerer Gültigkeit (Standard 7 Tage), Link /konto-aktivieren.
+     */
+    public static function issueInviteToken(int $userId, int $ttlSeconds = 604800): string
+    {
+        if ($userId < 1) {
+            throw new InvalidArgumentException('Benutzer fehlt.');
+        }
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbankverbindung erforderlich.');
+        }
+        MigrationRunner::runPending();
+        $token = bin2hex(random_bytes(self::TOKEN_BYTES));
+        self::storeTokenWithTtl($userId, $token, max(3600, $ttlSeconds));
+
+        return $token;
+    }
+
+    public static function sendActivationInvite(User $user, string $email, string $token, int $ttlHours = 168): void
+    {
+        $email = trim($email);
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw new InvalidArgumentException('Gültige E-Mail für die Einladung erforderlich.');
+        }
+        if (!MailSettings::isConfigured()) {
+            throw new RuntimeException(
+                'E-Mail-Versand ist nicht konfiguriert (Einstellungen → E-Mail / SMTP).'
+            );
+        }
+        $baseUrl = App::publicBaseUrl();
+        if ($baseUrl === '') {
+            throw new RuntimeException('Öffentliche Basis-URL konnte nicht ermittelt werden.');
+        }
+
+        $activateUrl = rtrim($baseUrl, '/') . '/konto-aktivieren?token=' . rawurlencode($token);
+        $crmName = (string) App::config('crm_name', 'DG');
+        $subject = 'CRM-Zugang einrichten – ' . $crmName;
+        $displayName = $user->displayName !== '' ? $user->displayName : $user->username;
+        $crmNameEsc = htmlspecialchars($crmName, ENT_QUOTES, 'UTF-8');
+        $urlEsc = htmlspecialchars($activateUrl, ENT_QUOTES, 'UTF-8');
+        $theme = EmailLayoutSettings::emailTheme();
+        $buttonBg = htmlspecialchars((string) ($theme['primary'] ?? '#2271b1'), ENT_QUOTES, 'UTF-8');
+        $mutedColor = htmlspecialchars((string) ($theme['text_muted'] ?? '#666666'), ENT_QUOTES, 'UTF-8');
+        $hours = max(1, $ttlHours);
+
+        $inner = '<p>Sie wurden eingeladen, Ihren CRM-Zugang für ' . $crmNameEsc . ' einzurichten.</p>'
+            . '<p>Bitte vergeben Sie selbst ein Passwort über den folgenden Link (kein Passwort in dieser Mail):</p>'
+            . '<p style="margin:24px 0;">'
+            . '<a href="' . $urlEsc . '" style="display:inline-block;padding:12px 24px;background-color:' . $buttonBg
+            . ';color:#ffffff;text-decoration:none;border-radius:4px;font-weight:600;">Passwort festlegen</a>'
+            . '</p>'
+            . '<p>Der Link ist ' . $hours . ' Stunden gültig.</p>'
+            . '<p style="font-size:12px;line-height:1.5;color:' . $mutedColor . ';">Falls der Link nicht funktioniert:<br>'
+            . $urlEsc . '</p>';
+
+        $footer = EmailLayoutSettings::resolvedFooter();
+        $footer['opening_greeting'] = 'Hallo ' . $displayName . ',';
+        $html = CalendarEmailLayout::renderPostMessage($inner, $footer);
+
+        $text = "Hallo {$displayName},\n\n"
+            . "Sie wurden eingeladen, Ihren CRM-Zugang für {$crmName} einzurichten.\n\n"
+            . "Passwort festlegen:\n{$activateUrl}\n\n"
+            . "Der Link ist {$hours} Stunden gültig.\n";
+
+        MailService::send(new MailMessage(
+            subject: $subject,
+            htmlBody: $html,
+            to: [$email],
+            textBody: $text,
+        ));
+    }
+
+    private static function storeTokenWithTtl(int $userId, string $token, int $ttlSeconds): void
+    {
+        $pdo = Database::pdo();
+        $pdo->prepare(
+            'UPDATE dg_password_reset_tokens SET used_at = NOW() WHERE user_id = :user_id AND used_at IS NULL'
+        )->execute(['user_id' => $userId]);
+
+        $expiresAt = (new DateTimeImmutable('now'))->modify('+' . $ttlSeconds . ' seconds');
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_password_reset_tokens (user_id, token_hash, expires_at)
+             VALUES (:user_id, :token_hash, :expires_at)'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'token_hash' => self::hashToken($token),
+            'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+        ]);
     }
 
     /**

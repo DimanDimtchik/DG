@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:app_links/app_links.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +12,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const DgMitarbeiterApp());
 }
 
@@ -145,11 +147,52 @@ class BootstrapPage extends StatefulWidget {
 class _BootstrapPageState extends State<BootstrapPage> {
   final _url = TextEditingController();
   bool _loading = true;
+  StreamSubscription<Uri>? _linkSub;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _listenDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    _url.dispose();
+    super.dispose();
+  }
+
+  Future<void> _listenDeepLinks() async {
+    final appLinks = AppLinks();
+    try {
+      final initial = await appLinks.getInitialLink();
+      if (initial != null) {
+        await _applyDeepLink(initial);
+      }
+    } catch (_) {}
+    _linkSub = appLinks.uriLinkStream.listen((uri) {
+      _applyDeepLink(uri);
+    });
+  }
+
+  Future<void> _applyDeepLink(Uri uri) async {
+    if (uri.scheme != 'dg-mitarbeiter') return;
+    final baseRaw = uri.queryParameters['base'] ?? '';
+    if (baseRaw.isEmpty) return;
+    try {
+      final normalized = normalizeBaseUrl(baseRaw);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('base_url', normalized);
+      if (!mounted) return;
+      setState(() => _url.text = normalized);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CRM verbunden: $normalized')),
+      );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => LoginPage(baseUrl: normalized)),
+      );
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -173,6 +216,11 @@ class _BootstrapPageState extends State<BootstrapPage> {
         MaterialPageRoute(
           builder: (_) => ShellPage(client: ApiClient(saved, token: token)),
         ),
+      );
+    } else if (saved.isNotEmpty) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => LoginPage(baseUrl: saved)),
       );
     }
   }
@@ -919,6 +967,44 @@ class _AbsencesTabState extends State<AbsencesTab> {
     }
   }
 
+  /// Kurzbuchstabe: Rahmen bis Freigabe, volle Fläche danach (wie Kalender).
+  Widget _typeBadge({required String? short, required String? colorHex, required String? status}) {
+    final accent = _parseColor(colorHex);
+    final label = (short ?? '').trim();
+    final approved = status == 'approved';
+    if (approved) {
+      return CircleAvatar(
+        backgroundColor: accent == Colors.transparent
+            ? Colors.grey
+            : accent.withValues(alpha: 0.85),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+      );
+    }
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: accent == Colors.transparent ? Colors.grey : accent,
+          width: 2.5,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: accent == Colors.transparent ? Colors.grey : accent,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
   Map<String, dynamic>? _selectedTypeMeta() {
     final opts = (_data?['type_options'] as List?) ?? const [];
     for (final raw in opts) {
@@ -1136,25 +1222,41 @@ class _AbsencesTabState extends State<AbsencesTab> {
                           final absence = day['absence'] is Map
                               ? Map<String, dynamic>.from(day['absence'] as Map)
                               : null;
-                          final pending = absence != null && absence['status']?.toString() != 'approved';
-                          final color = absence != null
-                              ? _parseColor(
-                                  absence['color']?.toString(),
-                                  opacity: pending ? 0.35 : 0.85,
-                                )
+                          final style = (day['display_style'] ?? '').toString();
+                          final isFill = style == 'fill' ||
+                              (style.isEmpty &&
+                                  absence != null &&
+                                  absence['status']?.toString() == 'approved');
+                          final isOutline = style == 'outline' ||
+                              (style.isEmpty &&
+                                  absence != null &&
+                                  absence['status']?.toString() != 'approved');
+                          final colorHex = (day['display_color'] ?? absence?['color'])?.toString();
+                          final accent = absence != null
+                              ? _parseColor(colorHex, opacity: 1)
                               : Colors.transparent;
+                          final fillColor = isFill && accent != Colors.transparent
+                              ? accent.withValues(alpha: 0.85)
+                              : (accent == Colors.transparent
+                                  ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+                                  : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.25));
                           final planned = (day['planned_display'] ?? '').toString();
+                          final textOnFill = isFill && accent != Colors.transparent;
                           return Opacity(
                             opacity: inMonth ? 1 : 0.35,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: color == Colors.transparent
-                                    ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
-                                    : color,
+                                color: fillColor,
                                 borderRadius: BorderRadius.circular(8),
-                                border: day['is_today'] == true
-                                    ? Border.all(color: theme.colorScheme.primary, width: 2)
-                                    : null,
+                                border: () {
+                                  if (isOutline && accent != Colors.transparent) {
+                                    return Border.all(color: accent, width: 2.5);
+                                  }
+                                  if (day['is_today'] == true) {
+                                    return Border.all(color: theme.colorScheme.primary, width: 2);
+                                  }
+                                  return null;
+                                }(),
                               ),
                               padding: const EdgeInsets.all(3),
                               child: Column(
@@ -1164,9 +1266,11 @@ class _AbsencesTabState extends State<AbsencesTab> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                      color: color == Colors.transparent
-                                          ? null
-                                          : Colors.white,
+                                      color: textOnFill
+                                          ? Colors.white
+                                          : (isOutline && accent != Colors.transparent
+                                              ? accent
+                                              : null),
                                     ),
                                   ),
                                   if (absence != null)
@@ -1175,9 +1279,11 @@ class _AbsencesTabState extends State<AbsencesTab> {
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: color == Colors.transparent
-                                            ? theme.colorScheme.primary
-                                            : Colors.white,
+                                        color: textOnFill
+                                            ? Colors.white
+                                            : (accent != Colors.transparent
+                                                ? accent
+                                                : theme.colorScheme.primary),
                                       ),
                                     ),
                                   if (planned.isNotEmpty)
@@ -1185,9 +1291,9 @@ class _AbsencesTabState extends State<AbsencesTab> {
                                       planned,
                                       style: TextStyle(
                                         fontSize: 9,
-                                        color: color == Colors.transparent
-                                            ? theme.colorScheme.onSurfaceVariant
-                                            : Colors.white.withValues(alpha: 0.9),
+                                        color: textOnFill
+                                            ? Colors.white.withValues(alpha: 0.9)
+                                            : theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                 ],
@@ -1198,7 +1304,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
                       ),
                     const SizedBox(height: 8),
                     Text(
-                      'Wischen oder Pfeile · Sollzeit unter dem Tag',
+                      'Rahmen = beantragt · volle Farbe = freigegeben · Wischen oder Pfeile',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1358,12 +1464,10 @@ class _AbsencesTabState extends State<AbsencesTab> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: _parseColor(r['color']?.toString()),
-                    child: Text(
-                      '${r['type_short'] ?? ''}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
+                  leading: _typeBadge(
+                    short: r['type_short']?.toString(),
+                    colorHex: r['color']?.toString(),
+                    status: r['status']?.toString(),
                   ),
                   title: Text('${r['type_label']} · ${r['status_label']}'),
                   subtitle: Text('${r['date_from']} – ${r['date_to']} (${r['days_count']} T.)'),

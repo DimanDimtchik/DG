@@ -12,6 +12,7 @@
  * @var int|null $timeVacEntContactId
  * @var array<string, mixed>|null $timeVacEntBalance
  * @var bool $timeVacCanTeam
+ * @var bool $timeVacCanApprove
  * @var array{type: string, message: string}|null $flash
  */
 $contactId = (int) ($timeVacContactId ?? 0);
@@ -22,6 +23,7 @@ $ownList = is_array($timeVacOwnList ?? null) ? $timeVacOwnList : [];
 $pending = is_array($timeVacPending ?? null) ? $timeVacPending : [];
 $staff = is_array($timeVacStaffOptions ?? null) ? $timeVacStaffOptions : [];
 $canTeam = !empty($timeVacCanTeam);
+$canApprove = !empty($timeVacCanApprove);
 $entCid = (int) ($timeVacEntContactId ?? 0);
 $entBal = is_array($timeVacEntBalance ?? null) ? $timeVacEntBalance : null;
 
@@ -147,7 +149,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
     </section>
   <?php endif; ?>
 
-  <?php if ($canTeam) : ?>
+  <?php if ($canApprove) : ?>
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Offene Freigaben</h2>
       <?php if ($pending === []) : ?>
@@ -197,7 +199,9 @@ $staffLabel = static function (int $cid) use ($staff): string {
         </div>
       <?php endif; ?>
     </section>
+  <?php endif; ?>
 
+  <?php if ($canTeam) : ?>
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Jahresanspruch pflegen</h2>
       <form method="get" action="/app" class="dg-form dg-form--inline">

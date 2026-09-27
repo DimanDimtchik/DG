@@ -31,7 +31,7 @@ if ($isCompanyForm && $companyEmployees === []) {
             $kontakteBackHref = $kontakteReturnTo;
             $kontakteBackLabel = 'Zurück zur Belegerfassung';
         } else {
-            $kontakteBackHref = $isEdit ? '/app?page=kontakte&action=view&id=' . (int) $contactId : '/app?page=kontakte';
+            $kontakteBackHref = $isEdit ? '/app?page=kontakte&id=' . (int) $contactId : '/app?page=kontakte';
             $kontakteBackLabel = $isEdit ? 'Zurück zum Kontakt' : 'Zurück zur Liste';
         }
         View::partial('partials/back-nav', [
@@ -207,6 +207,20 @@ if ($isCompanyForm && $companyEmployees === []) {
 
     <?php View::partial('partials/employee-data-form', compact('employeeData', 'employeeFiles', 'contactId', 'showEmployeeFields', 'canEdit')); ?>
 
+    <?php if (!$isEdit && !empty($showEmployeeFields)) : ?>
+      <?php
+        $staffAccessStatus = [];
+        $staffAccessHasMailbox = false;
+        View::partial('partials/staff-access-invite', [
+            'contactId' => null,
+            'showEmployeeFields' => true,
+            'isEdit' => false,
+            'staffAccessStatus' => $staffAccessStatus,
+            'staffAccessHasMailbox' => $staffAccessHasMailbox,
+        ]);
+      ?>
+    <?php endif; ?>
+
     <h2>Bankverbindung</h2>
     <p class="dg-lead">Mehrere Girokonten, Kreditkarten und Zahlungsdienste möglich. Kreditkartennummer nur zur Erkennung — gespeichert wird die Maske; IBAN der Karte für SEPA/Dokumente.</p>
     <div id="dg-bank-repeater" class="dg-bank-repeater">
@@ -234,6 +248,22 @@ if ($isCompanyForm && $companyEmployees === []) {
       <a class="dg-button" href="<?= View::escape($kontakteBackHref) ?>">Abbrechen</a>
     </div>
   </form>
+
+  <?php if ($isEdit && !empty($showEmployeeFields)) : ?>
+    <div class="dg-panel" style="margin-top:16px">
+      <?php
+        $staffAccessStatus = $staffAccessStatus ?? StaffAccessInviteService::status((int) $contactId);
+        $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;
+        View::partial('partials/staff-access-invite', [
+            'contactId' => (int) $contactId,
+            'showEmployeeFields' => true,
+            'isEdit' => true,
+            'staffAccessStatus' => $staffAccessStatus,
+            'staffAccessHasMailbox' => $staffAccessHasMailbox,
+        ]);
+      ?>
+    </div>
+  <?php endif; ?>
 
   <template id="dg-company-employee-card-template">
     <?php View::partial('partials/contact-company-employee-card', [

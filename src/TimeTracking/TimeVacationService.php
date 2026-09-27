@@ -88,8 +88,10 @@ final class TimeVacationService
      */
     public static function approve(User $user, int $absenceId): array
     {
-        self::assertCanDecide($user);
         $row = self::requirePendingVacation($absenceId);
+        if (!AbsenceApprovalService::canDecide($user, (int) ($row['contact_id'] ?? 0))) {
+            throw new RuntimeException('Keine Berechtigung für Freigabe.');
+        }
         TimeAbsenceRepository::setStatus($absenceId, 'approved', (int) ($user->id ?? 0));
         $year = (int) substr((string) $row['date_from'], 0, 4);
         $rest = TimeVacationEntitlementRepository::restDays((int) $row['contact_id'], $year);
@@ -103,8 +105,10 @@ final class TimeVacationService
 
     public static function reject(User $user, int $absenceId, string $reason): void
     {
-        self::assertCanDecide($user);
-        self::requirePendingVacation($absenceId);
+        $row = self::requirePendingVacation($absenceId);
+        if (!AbsenceApprovalService::canDecide($user, (int) ($row['contact_id'] ?? 0))) {
+            throw new RuntimeException('Keine Berechtigung für Freigabe.');
+        }
         $reason = trim($reason);
         if ($reason === '') {
             throw new InvalidArgumentException('Ablehnungsgrund ist erforderlich.');
@@ -117,7 +121,7 @@ final class TimeVacationService
      */
     public static function saveEntitlement(User $user, int $contactId, int $year, array $input): int
     {
-        self::assertCanDecide($user);
+        self::assertCanManageEntitlement($user);
         if ($contactId < 1) {
             throw new InvalidArgumentException('Mitarbeiter wählen.');
         }
@@ -125,7 +129,7 @@ final class TimeVacationService
         return TimeVacationEntitlementRepository::save($contactId, $year, $input);
     }
 
-    private static function assertCanDecide(User $user): void
+    private static function assertCanManageEntitlement(User $user): void
     {
         if (!TimeClockService::canViewTeam($user)) {
             throw new RuntimeException('Keine Berechtigung für Freigabe/Anspruch (nur HR/Admin/full).');

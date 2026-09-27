@@ -82,6 +82,38 @@ final class MailboxRepository
         return is_array($row) ? $row : null;
     }
 
+    /** @return array<string, mixed>|null */
+    public static function findPrivateForContact(int $contactId): ?array
+    {
+        if ($contactId <= 0 || !Database::isConfigured()) {
+            return null;
+        }
+        MigrationRunner::runPending();
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM dg_mailboxes WHERE type = 'private' AND contact_id = :cid AND is_active = 1 LIMIT 1"
+        );
+        $stmt->execute(['cid' => $contactId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public static function updateStoredPasswords(int $mailboxId, string $imapPassword, string $smtpPassword): void
+    {
+        if ($mailboxId < 1) {
+            throw new InvalidArgumentException('Postfach-ID fehlt.');
+        }
+        MigrationRunner::runPending();
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_mailboxes SET imap_password = :imap, smtp_password = :smtp WHERE id = :id'
+        );
+        $stmt->execute([
+            'imap' => $imapPassword,
+            'smtp' => $smtpPassword,
+            'id' => $mailboxId,
+        ]);
+    }
+
     /**
      * Listet alle Postfächer für Administratoren.
      * @return array<string, mixed>

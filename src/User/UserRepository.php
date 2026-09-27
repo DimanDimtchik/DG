@@ -441,6 +441,74 @@ final class UserRepository
     }
 
     /**
+     * Legt CRM-Benutzer für Mitarbeiter-Einladung an (Zufallspasswort bis Aktivierung).
+     */
+    public static function createStaffInviteUser(Contact $contact, string $email): User
+    {
+        if (!self::useDatabase()) {
+            throw new RuntimeException('Benutzeranlage nur mit Datenbank möglich.');
+        }
+        $email = strtolower(trim($email));
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw new InvalidArgumentException('Gültige E-Mail für CRM-Benutzer erforderlich.');
+        }
+        if (self::findByEmail($email) !== null) {
+            $existing = self::findByEmail($email);
+            if ($existing !== null) {
+                return $existing;
+            }
+        }
+
+        $username = trim($contact->login);
+        if ($username === '') {
+            $username = strstr($email, '@', true) ?: ('ma' . $contact->id);
+        }
+        $username = preg_replace('/[^a-zA-Z0-9._-]/', '', $username) ?? $username;
+        if ($username === '') {
+            $username = 'ma' . max(1, $contact->id);
+        }
+        $base = $username;
+        $n = 0;
+        while (self::usernameExists($username)) {
+            ++$n;
+            $username = $base . $n;
+            if ($n > 50) {
+                $username = 'ma' . $contact->id . '-' . bin2hex(random_bytes(2));
+                break;
+            }
+        }
+
+        $displayName = trim($contact->displayName);
+        if ($displayName === '') {
+            $displayName = trim($contact->firstName . ' ' . $contact->lastName);
+        }
+        if ($displayName === '') {
+            $displayName = $username;
+        }
+
+        $role = (string) App::config('roles.employee', 'dg_eigenmitarbeiter');
+        $hash = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_users (username, password_hash, email, display_name, role, employee_active)
+             VALUES (:username, :password_hash, :email, :display_name, :role, 1)'
+        );
+        $stmt->execute([
+            'username' => $username,
+            'password_hash' => $hash,
+            'email' => $email,
+            'display_name' => $displayName,
+            'role' => $role,
+        ]);
+        $user = self::findById((int) $pdo->lastInsertId());
+        if ($user === null) {
+            throw new RuntimeException('CRM-Benutzer konnte nicht angelegt werden.');
+        }
+
+        return $user;
+    }
+
+    /**
      * Methode map file.
      * @param array $record
      * @return User

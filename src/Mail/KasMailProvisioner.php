@@ -84,12 +84,26 @@ final class KasMailProvisioner
         }
 
         $password = self::generatePassword();
+        self::setMailboxPassword($kasMailLogin, $password);
+
+        return $password;
+    }
+
+    /** Setzt ein gewähltes Postfach-Passwort bei All-Inkl (KAS). */
+    public static function setMailboxPassword(string $kasMailLogin, string $password): void
+    {
+        $kasMailLogin = trim($kasMailLogin);
+        $password = (string) $password;
+        if ($kasMailLogin === '') {
+            throw new InvalidArgumentException('KAS mail_login fehlt.');
+        }
+        if (strlen($password) < 8) {
+            throw new InvalidArgumentException('Postfach-Passwort mindestens 8 Zeichen.');
+        }
         self::call('update_mailaccount', [
             'mail_login' => $kasMailLogin,
             'mail_new_password' => $password,
         ]);
-
-        return $password;
     }
 
     /**

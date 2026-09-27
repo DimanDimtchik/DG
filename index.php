@@ -76,6 +76,58 @@ if ($path === '/api/mobile' || str_starts_with($path, '/api/mobile/')) {
     exit;
 }
 
+// Postfach-Passwort selbst setzen (Einladungslink)
+if ($path === '/postfach-passwort') {
+    if (!Database::isConfigured()) {
+        http_response_code(503);
+        echo 'Nicht verfügbar (keine Datenbank).';
+        exit;
+    }
+    MigrationRunner::runPending();
+    $error = null;
+    $token = trim((string) ($_POST['token'] ?? $_GET['token'] ?? ''));
+    $tokenValid = $token !== '' && MailboxPasswordTokenRepository::isValid($token);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            $error = 'Sitzung abgelaufen. Bitte erneut versuchen.';
+        } else {
+            try {
+                StaffAccessInviteService::completeMailboxPasswordSet(
+                    $token,
+                    (string) ($_POST['password'] ?? ''),
+                    (string) ($_POST['password_confirm'] ?? '')
+                );
+                Flash::set('success', 'Postfach-Passwort gespeichert. Sie können diese Seite schließen.');
+                header('Location: /login', true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $error = $e->getMessage();
+                $tokenValid = MailboxPasswordTokenRepository::isValid($token);
+            }
+        }
+    }
+    View::render('mailbox-password-set', compact('error', 'token', 'tokenValid'));
+    exit;
+}
+
+// App mit CRM-Instanz verbinden (Download + Deep-Link)
+if ($path === '/app-connect') {
+    $base = trim((string) ($_GET['base'] ?? ''));
+    if ($base === '') {
+        $base = App::publicBaseUrl();
+    }
+    $base = rtrim($base, '/');
+    if ($base !== '' && !preg_match('#^https?://#i', $base)) {
+        $base = 'https://' . $base;
+    }
+    $baseUrl = $base !== '' ? $base : rtrim(App::publicBaseUrl(), '/');
+    $connectScheme = 'dg-mitarbeiter://setup?base=' . rawurlencode($baseUrl);
+    $apkMitarbeiter = $baseUrl . '/' . MobileAppDownloadService::MITARBEITER_APK;
+    $apkKalender = $baseUrl . '/' . MobileAppDownloadService::KALENDER_APK;
+    View::render('app-connect', compact('baseUrl', 'connectScheme', 'apkMitarbeiter', 'apkKalender'));
+    exit;
+}
+
 // Öffentliche Stempeluhr (Kiosk) — ohne CRM-Login, auch im Wartungsmodus
 if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
     if (!Database::isConfigured()) {
@@ -2224,10 +2276,11 @@ switch ($path) {
             }
         }
 
-        // Mitarbeiter-Dokument: Browseransicht (inline) oder Download
+        // Mitarbeiter-Dokument: Browseransicht (inline) oder Download (nur mit ?doc=)
         if (
             $page === 'kontakte'
             && in_array($action, ['view', 'download'], true)
+            && isset($_GET['doc'])
             && MenuRegistry::canAccess($user, 'kontakte')
         ) {
             $docId = (int) ($_GET['id'] ?? 0);
@@ -2500,6 +2553,55 @@ switch ($path) {
             exit;
         }
 
+        // POST: Mitarbeiter-Zugangseinladungen (Link/Manuell)
+        if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['staff_access_action'])) {
+            if (!MenuRegistry::canAccess($user, 'kontakte')) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            $accessContactId = (int) ($_POST['id'] ?? 0);
+            $accessAction = (string) ($_POST['staff_access_action'] ?? '');
+            try {
+                $msg = match ($accessAction) {
+                    'crm_invite' => StaffAccessInviteService::sendCrmInvite($user, $accessContactId),
+                    'crm_manual' => StaffAccessInviteService::setCrmPasswordManual(
+                        $user,
+                        $accessContactId,
+                        (string) ($_POST['password'] ?? ''),
+                        (string) ($_POST['password_confirm'] ?? ''),
+                        !empty($_POST['dsgvo_confirm'])
+                    ),
+                    'pin_invite' => StaffAccessInviteService::sendPinInvite($user, $accessContactId),
+                    'pin_manual' => StaffAccessInviteService::setPinManual(
+                        $user,
+                        $accessContactId,
+                        (string) ($_POST['pin'] ?? ''),
+                        !empty($_POST['dsgvo_confirm'])
+                    ),
+                    'mailbox_invite' => StaffAccessInviteService::sendMailboxInvite($user, $accessContactId),
+                    'mailbox_manual' => StaffAccessInviteService::setMailboxPasswordManual(
+                        $user,
+                        $accessContactId,
+                        (string) ($_POST['mailbox_password'] ?? ''),
+                        (string) ($_POST['mailbox_password_confirm'] ?? ''),
+                        !empty($_POST['dsgvo_confirm'])
+                    ),
+                    'app_invite' => StaffAccessInviteService::sendAppInvite($user, $accessContactId),
+                    default => throw new InvalidArgumentException('Unbekannte Aktion.'),
+                };
+                Flash::set('success', $msg);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=kontakte&action=edit&id=' . $accessContactId . '#staff-access-invite', true, 302);
+            exit;
+        }
+
         // POST: Kontakt speichern
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_save'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte')) {
@@ -2541,6 +2643,11 @@ switch ($path) {
                         } catch (Throwable $mailboxError) {
                             $flashMessage .= ' Postfach: ' . $mailboxError->getMessage();
                         }
+                    }
+                }
+                if ($isNewContact) {
+                    foreach (StaffAccessInviteService::processCreateInvites($user, $newId, $_POST) as $inviteMsg) {
+                        $flashMessage .= ' ' . $inviteMsg;
                     }
                 }
                 Flash::set('success', $flashMessage);
@@ -5276,7 +5383,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $bankAccounts = ContactRepository::defaultBankAccounts();
                 $employeeData = EmployeeData::empty();
                 $employeeFiles = ContactFileStorage::emptyFiles();
-                $showEmployeeFields = false;
+                $showEmployeeFields = ContactAccessResolver::canEditContact($user);
                 $linkFormContext = ContactCompanyLinkRepository::formContext(null, []);
                 extract($linkFormContext);
             } elseif ($action === 'edit' && $contactId > 0) {
@@ -5312,6 +5419,10 @@ $legalProductsConfig = LegalProductSettings::config();
                 $canDeleteContact = ContactAccessResolver::canDeleteContact($user, $contact);
                 $linkFormContext = ContactCompanyLinkRepository::formContext($contact, []);
                 extract($linkFormContext);
+                $staffAccessStatus = StaffAccessInviteService::status($contactId);
+                $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
+                $staffAccessHasMailbox = ($uidForMb !== null && MailboxRepository::findPrivateForUser($uidForMb) !== null)
+                    || MailboxRepository::findPrivateForContact($contactId) !== null;
             } elseif ($contactId > 0) {
                 $contact = ContactRepository::findById($contactId);
                 if (ContactRepository::consumeRetentionPurged()) {
@@ -5916,15 +6027,20 @@ $legalProductsConfig = LegalProductSettings::config();
                 $timeVacBalance = TimeVacationEntitlementRepository::balance($timeVacContactId, $timeVacYear);
                 $timeVacOwnList = TimeAbsenceRepository::listForContact($timeVacContactId, $timeVacYear);
             }
-            $timeVacStaffOptions = $timeVacCanTeam ? TimeMonthReportService::staffOptions() : [];
             $timeVacPending = [];
-            if ($timeVacCanTeam) {
-                foreach (TimeAbsenceRepository::listByStatus('requested', 200) as $pend) {
-                    if ((string) ($pend['type'] ?? '') === 'vacation') {
-                        $timeVacPending[] = $pend;
-                    }
+            foreach (TimeAbsenceRepository::listByStatus('requested', 200) as $pend) {
+                if ((string) ($pend['type'] ?? '') !== 'vacation') {
+                    continue;
+                }
+                $pendCid = (int) ($pend['contact_id'] ?? 0);
+                if ($pendCid > 0 && AbsenceApprovalService::canDecide($user, $pendCid)) {
+                    $timeVacPending[] = $pend;
                 }
             }
+            $timeVacCanApprove = $timeVacPending !== [];
+            $timeVacStaffOptions = ($timeVacCanTeam || $timeVacCanApprove)
+                ? TimeMonthReportService::staffOptions()
+                : [];
             $timeVacEntContactId = isset($_GET['ent_contact_id']) ? (int) $_GET['ent_contact_id'] : 0;
             $timeVacEntBalance = null;
             if ($timeVacCanTeam && $timeVacEntContactId > 0) {
@@ -5964,15 +6080,22 @@ $legalProductsConfig = LegalProductSettings::config();
                     (int) substr($timeAbsYearMonth, 0, 4)
                 );
             }
-            $timeAbsStaffOptions = $timeAbsCanTeam ? TimeMonthReportService::staffOptions() : [];
             $timeAbsPending = [];
+            foreach (TimeAbsenceRepository::listByStatus('requested', 200) as $pend) {
+                if ((string) ($pend['type'] ?? '') === 'vacation') {
+                    continue;
+                }
+                $pendCid = (int) ($pend['contact_id'] ?? 0);
+                if ($pendCid > 0 && AbsenceApprovalService::canDecide($user, $pendCid)) {
+                    $timeAbsPending[] = $pend;
+                }
+            }
+            $timeAbsCanApprove = $timeAbsPending !== [];
+            $timeAbsStaffOptions = ($timeAbsCanTeam || $timeAbsCanApprove)
+                ? TimeMonthReportService::staffOptions()
+                : [];
             $timeAbsCalendar = null;
             if ($timeAbsCanTeam) {
-                foreach (TimeAbsenceRepository::listByStatus('requested', 200) as $pend) {
-                    if ((string) ($pend['type'] ?? '') !== 'vacation') {
-                        $timeAbsPending[] = $pend;
-                    }
-                }
                 $timeAbsCalendar = TimeAbsenceService::monthCalendar($timeAbsYearMonth, $timeAbsStaffOptions);
             }
             $absIdsForAtt = [];
@@ -6548,6 +6671,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $employeeData = $employeeData ?? EmployeeData::empty();
         $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
         $showEmployeeFields = $showEmployeeFields ?? false;
+        $staffAccessStatus = $staffAccessStatus ?? [];
+        $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;
         $bookingId = $bookingId ?? null;
         $booking = $booking ?? null;
         $smtpTestReport = $smtpTestReport ?? null;
@@ -6751,12 +6876,14 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeVacEntContactId = $timeVacEntContactId ?? null;
         $timeVacEntBalance = $timeVacEntBalance ?? null;
         $timeVacCanTeam = $timeVacCanTeam ?? false;
+        $timeVacCanApprove = $timeVacCanApprove ?? false;
         $timeAbsContactId = $timeAbsContactId ?? null;
         $timeAbsContactLabel = $timeAbsContactLabel ?? '';
         $timeAbsOwnList = $timeAbsOwnList ?? [];
         $timeAbsPending = $timeAbsPending ?? [];
         $timeAbsStaffOptions = $timeAbsStaffOptions ?? [];
         $timeAbsCanTeam = $timeAbsCanTeam ?? false;
+        $timeAbsCanApprove = $timeAbsCanApprove ?? false;
         $timeAbsYearMonth = $timeAbsYearMonth ?? date('Y-m');
         $timeAbsCalendar = $timeAbsCalendar ?? null;
         $timeAbsAttachments = $timeAbsAttachments ?? [];
@@ -7081,6 +7208,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'employeeData',
             'employeeFiles',
             'showEmployeeFields',
+            'staffAccessStatus',
+            'staffAccessHasMailbox',
             'allowedContactRoles',
             'canDeleteContact',
             'companyEmployees',
@@ -7172,12 +7301,14 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeVacEntContactId',
             'timeVacEntBalance',
             'timeVacCanTeam',
+            'timeVacCanApprove',
             'timeAbsContactId',
             'timeAbsContactLabel',
             'timeAbsOwnList',
             'timeAbsPending',
             'timeAbsStaffOptions',
             'timeAbsCanTeam',
+            'timeAbsCanApprove',
             'timeAbsYearMonth',
             'timeAbsCalendar',
             'timeAbsAttachments',

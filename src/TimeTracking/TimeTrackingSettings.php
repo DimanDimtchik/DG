@@ -28,6 +28,10 @@ final class TimeTrackingSettings
             'absence_enable_ot_comp' => true,
             'absence_enable_unpaid_leave' => true,
             'absence_enable_special_leave' => true,
+            // Freigabe: 0 = Auto (Leiter → HR → Chef); sonst fester Kontakt für alle
+            'absence_approver_contact_id' => 0,
+            // Kontakt-ID je Abteilungs-ID (überschreibt Auto und ggf. global für diese Abteilung)
+            'absence_approver_by_department' => [],
             // Z5b Rückstellungen (Konten = Vorschlag — mit Steuerberater prüfen)
             'provision_daily_cost' => 0.0,
             'provision_cost_method' => 'workdays_260',
@@ -68,6 +72,10 @@ final class TimeTrackingSettings
             'absence_enable_ot_comp' => !empty($stored['absence_enable_ot_comp'] ?? $defaults['absence_enable_ot_comp']),
             'absence_enable_unpaid_leave' => !empty($stored['absence_enable_unpaid_leave'] ?? $defaults['absence_enable_unpaid_leave']),
             'absence_enable_special_leave' => !empty($stored['absence_enable_special_leave'] ?? $defaults['absence_enable_special_leave']),
+            'absence_approver_contact_id' => max(0, (int) ($stored['absence_approver_contact_id'] ?? 0)),
+            'absence_approver_by_department' => self::normalizeApproverByDepartment(
+                $stored['absence_approver_by_department'] ?? []
+            ),
             'provision_daily_cost' => self::normalizeMoney($stored['provision_daily_cost'] ?? $defaults['provision_daily_cost']),
             'provision_cost_method' => $method,
             'provision_social_factor' => self::normalizeFactor($stored['provision_social_factor'] ?? $defaults['provision_social_factor']),
@@ -159,6 +167,10 @@ final class TimeTrackingSettings
             'absence_enable_ot_comp' => !empty($input['absence_enable_ot_comp']),
             'absence_enable_unpaid_leave' => !empty($input['absence_enable_unpaid_leave']),
             'absence_enable_special_leave' => !empty($input['absence_enable_special_leave']),
+            'absence_approver_contact_id' => max(0, (int) ($input['absence_approver_contact_id'] ?? 0)),
+            'absence_approver_by_department' => self::normalizeApproverByDepartment(
+                $input['absence_approver_by_department'] ?? []
+            ),
             'provision_daily_cost' => self::normalizeMoney($input['provision_daily_cost'] ?? 0),
             'provision_cost_method' => $method,
             'provision_social_factor' => self::normalizeFactor($input['provision_social_factor'] ?? 1),
@@ -209,5 +221,27 @@ final class TimeTrackingSettings
         }
 
         return substr($raw, 0, 20);
+    }
+
+    /**
+     * @param mixed $raw
+     * @return array<string, int> departmentId => contactId
+     */
+    private static function normalizeApproverByDepartment(mixed $raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $deptId => $contactId) {
+            $dept = trim((string) $deptId);
+            $cid = (int) $contactId;
+            if ($dept === '' || $cid < 1) {
+                continue;
+            }
+            $out[$dept] = $cid;
+        }
+
+        return $out;
     }
 }

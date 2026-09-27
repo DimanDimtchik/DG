@@ -76,6 +76,43 @@ final class TimeKioskPinRepository
         return (int) Database::pdo()->lastInsertId();
     }
 
+    /**
+     * HR-Einladung: direkt freigegebener Set-Token (ohne PIN-vergessen-Workflow).
+     *
+     * @return array{id: int, plain_set_token: string}
+     */
+    public static function createDirectPinInvite(int $contactId, string $setTokenHash, string $expiresAt, ?int $decidedBy): array
+    {
+        MigrationRunner::runPending();
+        // Alte offene Set-Links desselben MA entwerten
+        $expire = Database::pdo()->prepare(
+            "UPDATE dg_time_kiosk_pin_resets
+             SET status = 'expired', set_token_hash = NULL
+             WHERE contact_id = :cid AND status IN ('approved', 'pending_hr')"
+        );
+        $expire->execute(['cid' => $contactId]);
+
+        $hrHash = hash('sha256', 'invite-' . $contactId . '-' . bin2hex(random_bytes(16)));
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_time_kiosk_pin_resets
+             (contact_id, status, hr_token_hash, set_token_hash, set_token_expires_at, decided_at, decided_by)
+             VALUES (:cid, :status, :hr, :set, :exp, NOW(), :by)'
+        );
+        $stmt->execute([
+            'cid' => $contactId,
+            'status' => self::STATUS_APPROVED,
+            'hr' => $hrHash,
+            'set' => $setTokenHash,
+            'exp' => $expiresAt,
+            'by' => $decidedBy,
+        ]);
+
+        return [
+            'id' => (int) Database::pdo()->lastInsertId(),
+            'plain_set_token' => '', // caller holds plain
+        ];
+    }
+
     /** @return array<string, mixed>|null */
     public static function findResetByHrTokenHash(string $hash): ?array
     {

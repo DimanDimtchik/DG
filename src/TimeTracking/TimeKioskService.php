@@ -358,6 +358,42 @@ final class TimeKioskService
         TimeKioskPinRepository::markCompleted((int) ($row['id'] ?? 0));
     }
 
+    /** HR: PIN-Set-Link direkt an Mitarbeiter (ohne „PIN vergessen“). */
+    public static function invitePinSet(int $contactId, User $actor, string $employeeEmail): void
+    {
+        self::assertStaffContact($contactId);
+        $employeeEmail = trim($employeeEmail);
+        if ($employeeEmail === '' || filter_var($employeeEmail, FILTER_VALIDATE_EMAIL) === false) {
+            throw new InvalidArgumentException('Gültige E-Mail für PIN-Einladung erforderlich.');
+        }
+        if (!MailSettings::isConfigured()) {
+            throw new RuntimeException('E-Mail-Versand ist nicht konfiguriert.');
+        }
+
+        $plainSet = bin2hex(random_bytes(32));
+        $expires = (new DateTimeImmutable('+' . self::SET_TOKEN_HOURS . ' hours'))->format('Y-m-d H:i:s');
+        TimeKioskPinRepository::createDirectPinInvite(
+            $contactId,
+            self::hashToken($plainSet),
+            $expires,
+            (int) ($actor->id ?? 0)
+        );
+
+        $setUrl = rtrim(App::publicBaseUrl(), '/') . '/stempeluhr/pin-setzen?token=' . rawurlencode($plainSet);
+        $html = '<p>Bitte legen Sie Ihre Stempeluhr-PIN selbst fest (kein PIN in dieser Mail).</p>'
+            . '<p><a href="' . htmlspecialchars($setUrl, ENT_QUOTES, 'UTF-8') . '">PIN festlegen</a></p>'
+            . '<p>Der Link ist ' . self::SET_TOKEN_HOURS . ' Stunden gültig. Die PIN gilt auch für die Mitarbeiter-App.</p>';
+        $text = "PIN festlegen:\n{$setUrl}\n\nGültig " . self::SET_TOKEN_HOURS . " Stunden.\n";
+
+        MailService::send(new MailMessage(
+            subject: 'Stempeluhr: PIN festlegen',
+            htmlBody: $html,
+            to: [$employeeEmail],
+            textBody: $text,
+            contactId: $contactId,
+        ));
+    }
+
     public static function resolveStaffByIdentifier(string $identifier): ?Contact
     {
         $identifier = trim($identifier);

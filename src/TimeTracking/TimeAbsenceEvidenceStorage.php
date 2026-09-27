@@ -204,8 +204,10 @@ final class TimeAbsenceEvidenceStorage
             throw new RuntimeException('Anhang nicht gefunden.');
         }
         $ownId = ContactRepository::findStaffContactIdForUser($user);
+        $attContactId = (int) ($att['contact_id'] ?? 0);
         $canTeam = TimeClockService::canViewTeam($user);
-        if (!$canTeam && ($ownId === null || $ownId !== (int) $att['contact_id'])) {
+        $canDecide = $attContactId > 0 && AbsenceApprovalService::canDecide($user, $attContactId);
+        if (!$canTeam && !$canDecide && ($ownId === null || $ownId !== $attContactId)) {
             throw new RuntimeException('Keine Berechtigung für diesen Nachweis.');
         }
         $path = self::absolutePath($att);
