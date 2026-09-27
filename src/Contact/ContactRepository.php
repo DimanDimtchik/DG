@@ -29,12 +29,12 @@ final class ContactRepository
      * @param User|null $viewer
      * @return array{
      */
-    public static function paginate(string $search = '', int $page = 1, ?User $viewer = null): array
+    public static function paginate(string $search = '', int $page = 1, ?User $viewer = null, string $roleFilter = ''): array
     {
         $page = max(1, $page);
         $perPage = self::PER_PAGE;
         $offset = ($page - 1) * $perPage;
-        [$where, $params] = self::buildSearchWhere($search, $viewer);
+        [$where, $params] = self::buildSearchWhere($search, $viewer, $roleFilter);
         $pdo = Database::pdo();
 
         $countSql = 'SELECT COUNT(*) FROM dg_contacts ' . $where;
@@ -293,15 +293,25 @@ final class ContactRepository
      * buildSearchWhere
      * @param string $search
      * @param User|null $viewer
+     * @param string $roleFilter mitarbeiter|kunde|lieferant|'' 
      * @return array{0: string, 1: array<string, string>}
      */
-    private static function buildSearchWhere(string $search, ?User $viewer = null): array
+    private static function buildSearchWhere(string $search, ?User $viewer = null, string $roleFilter = ''): array
     {
         $whereParts = [];
         $params = [];
 
         if ($viewer !== null && !ContactAccessResolver::canViewAllContactTypes($viewer)) {
             $whereParts[] = "contact_role IN ('dg_kunde', 'kunde', 'lieferant')";
+        }
+
+        $roleFilter = strtolower(trim($roleFilter));
+        if ($roleFilter === 'mitarbeiter') {
+            $whereParts[] = "contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')";
+        } elseif ($roleFilter === 'kunde') {
+            $whereParts[] = "contact_role IN ('dg_kunde', 'kunde')";
+        } elseif ($roleFilter === 'lieferant') {
+            $whereParts[] = "contact_role = 'lieferant'";
         }
 
         if ($search !== '') {

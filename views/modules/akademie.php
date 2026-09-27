@@ -196,7 +196,7 @@ $riskClass = static function (?string $level): string {
     $vttPath = trim((string) ($academyModule['subtitle_vtt_path'] ?? ''));
     $hasVtt = $vttPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($vttPath, '/'));
     $academyReadingText = AcademyModulePresentation::readingText($academyModule);
-    $academyCrmTarget = AcademyModulePresentation::crmTarget($academyModule);
+    $academyCrmTargets = AcademyModulePresentation::crmTargets($academyModule);
   ?>
   <section class="dg-panel dg-academy-player-wrap">
     <h2 class="dg-subsection-title"><?= View::escape((string) ($academyModule['title'] ?? '')) ?></h2>
@@ -229,11 +229,11 @@ $riskClass = static function (?string $level): string {
 
     <div id="dg-academy-player-message" class="dg-scan-result" hidden></div>
     <div class="dg-form-actions dg-academy-player-actions">
-      <?php if ($academyCrmTarget !== null) : ?>
-        <a class="dg-button dg-button--primary" href="<?= View::escape($academyCrmTarget['href']) ?>"><?= View::escape($academyCrmTarget['label']) ?></a>
-      <?php endif; ?>
+      <?php foreach ($academyCrmTargets as $i => $cta) : ?>
+        <a class="dg-button<?= $i === 0 ? ' dg-button--primary' : '' ?>" href="<?= View::escape($cta['href']) ?>"><?= View::escape($cta['label']) ?></a>
+      <?php endforeach; ?>
       <a class="dg-button" href="/app?page=akademie&amp;view=kurs&amp;slug=<?= rawurlencode((string) ($academyCourse['slug'] ?? '')) ?>">Zurück zum Kurs</a>
-      <button type="button" class="dg-button<?= $academyCrmTarget === null ? ' dg-button--primary' : '' ?>" id="dg-academy-complete-btn"
+      <button type="button" class="dg-button<?= $academyCrmTargets === [] ? ' dg-button--primary' : '' ?>" id="dg-academy-complete-btn"
         data-assignment-id="<?= (int) ($academyAssignment['id'] ?? 0) ?>"
         data-module-id="<?= (int) ($academyModule['id'] ?? 0) ?>"
         data-has-video="<?= $hasVideo ? '1' : '0' ?>"
@@ -297,7 +297,7 @@ $riskClass = static function (?string $level): string {
     $vttPath = trim((string) ($academyModule['subtitle_vtt_path'] ?? ''));
     $hasVtt = $vttPath !== '' && is_file(DG_ROOT . '/storage/' . ltrim($vttPath, '/'));
     $academyReadingText = AcademyModulePresentation::readingText($academyModule);
-    $academyCrmTarget = AcademyModulePresentation::crmTarget($academyModule);
+    $academyCrmTargets = AcademyModulePresentation::crmTargets($academyModule);
   ?>
   <section class="dg-panel dg-academy-player-wrap">
     <h2 class="dg-subsection-title">Vorschau: <?= View::escape((string) ($academyModule['title'] ?? '')) ?></h2>
@@ -323,9 +323,9 @@ $riskClass = static function (?string $level): string {
     <?php endif; ?>
 
     <div class="dg-form-actions dg-academy-player-actions">
-      <?php if ($academyCrmTarget !== null) : ?>
-        <a class="dg-button dg-button--primary" href="<?= View::escape($academyCrmTarget['href']) ?>"><?= View::escape($academyCrmTarget['label']) ?></a>
-      <?php endif; ?>
+      <?php foreach ($academyCrmTargets as $i => $cta) : ?>
+        <a class="dg-button<?= $i === 0 ? ' dg-button--primary' : '' ?>" href="<?= View::escape($cta['href']) ?>"><?= View::escape($cta['label']) ?></a>
+      <?php endforeach; ?>
       <a class="dg-button" href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos">Zurück zur Bibliothek</a>
     </div>
   </section>

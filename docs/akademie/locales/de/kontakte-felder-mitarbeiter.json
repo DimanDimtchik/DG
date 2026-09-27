@@ -3,6 +3,10 @@
   "locale": "de",
   "title": "Kontakte — Felder: Mitarbeiterdaten",
   "voice": "de-DE-KatjaNeural",
+  "practice": {
+    "dest": "kontakte-mitarbeiter-liste",
+    "label": "Zur Mitarbeiterliste — Bearbeiten wählen"
+  },
   "segments": [
     {
       "key": "intro",

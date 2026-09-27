@@ -2,12 +2,19 @@
 /** @var User $user */
 /** @var array{items: list<Contact>, total: int, page: int, per_page: int, total_pages: int} $contactList */
 /** @var string $contactSearch */
+/** @var string $contactRoleFilter */
 /** @var array{type: string, message: string}|null $flash */
 /** @var list<string> $contactImportErrors */
 $search = $contactSearch ?? '';
+$roleFilter = $contactRoleFilter ?? '';
 $list = $contactList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'total_pages' => 1];
 $importErrors = is_array($contactImportErrors ?? null) ? $contactImportErrors : [];
 $baseUrl = '/app?page=kontakte';
+$roleLabels = [
+    'mitarbeiter' => 'Mitarbeiter',
+    'kunde' => 'Kunden',
+    'lieferant' => 'Lieferanten',
+];
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -18,7 +25,7 @@ $baseUrl = '/app?page=kontakte';
       <p class="dg-lead">Benutzer, Kunden, Lieferanten und Firmen – <?= (int) $list['total'] ?> Einträge</p>
     </div>
     <div class="dg-toolbar">
-      <a class="dg-button" href="/app?page=kontakte&amp;action=export-csv<?= $search !== '' ? '&amp;s=' . rawurlencode($search) : '' ?>" title="CSV-Download (Import-kompatibel, aktuelle Suche)">
+      <a class="dg-button" href="/app?page=kontakte&amp;action=export-csv<?= $search !== '' ? '&amp;s=' . rawurlencode($search) : '' ?><?= $roleFilter !== '' ? '&amp;role=' . rawurlencode($roleFilter) : '' ?>" title="CSV-Download (Import-kompatibel, aktuelle Suche)">
         Kontakte exportieren
       </a>
       <?php if (ContactExportService::isExportAllowed($user)) : ?>
@@ -37,8 +44,19 @@ $baseUrl = '/app?page=kontakte';
     </div>
   </header>
 
+  <?php if ($roleFilter !== '' && isset($roleLabels[$roleFilter])) : ?>
+  <p class="dg-panel dg-panel--notice">
+    Gefiltert: <strong><?= View::escape($roleLabels[$roleFilter]) ?></strong>
+    — öffnen Sie einen Eintrag über <em>Bearbeiten</em>.
+    <a href="<?= View::escape($baseUrl) ?>">Filter aufheben</a>
+  </p>
+  <?php endif; ?>
+
   <form class="dg-search" method="get" action="/app">
     <input type="hidden" name="page" value="kontakte">
+    <?php if ($roleFilter !== '') : ?>
+      <input type="hidden" name="role" value="<?= View::escape($roleFilter) ?>">
+    <?php endif; ?>
     <label class="dg-search__label" for="kontakte-search">Suchen</label>
     <input
       class="dg-search__input"
@@ -49,7 +67,7 @@ $baseUrl = '/app?page=kontakte';
       placeholder="Name, Firma, E-Mail, Kunden-/Lieferantennummer, Bemerkung/IP …"
     >
     <button class="dg-button dg-button--primary" type="submit">Suchen</button>
-    <?php if ($search !== '') : ?>
+    <?php if ($search !== '' || $roleFilter !== '') : ?>
       <a class="dg-button" href="<?= View::escape($baseUrl) ?>">Zurücksetzen</a>
     <?php endif; ?>
   </form>
@@ -206,13 +224,22 @@ $baseUrl = '/app?page=kontakte';
   </div>
 
   <?php if ($list['total_pages'] > 1) : ?>
+    <?php
+      $pageQuery = $baseUrl;
+      if ($search !== '') {
+          $pageQuery .= '&s=' . rawurlencode($search);
+      }
+      if ($roleFilter !== '') {
+          $pageQuery .= '&role=' . rawurlencode($roleFilter);
+      }
+    ?>
     <nav class="dg-pagination" aria-label="Seiten">
       <?php if ($list['page'] > 1) : ?>
-        <a href="<?= View::escape($baseUrl . ($search !== '' ? '&s=' . rawurlencode($search) : '') . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
+        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
       <?php endif; ?>
       <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
       <?php if ($list['page'] < $list['total_pages']) : ?>
-        <a href="<?= View::escape($baseUrl . ($search !== '' ? '&s=' . rawurlencode($search) : '') . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
+        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
       <?php endif; ?>
     </nav>
   <?php endif; ?>

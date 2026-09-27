@@ -54,8 +54,33 @@ final class AcademyModulePresentation
     }
 
     /**
+     * Alle CTA-Buttons unter dem Video: Praxis-Stelle + Modul-Thema.
+     *
      * @param array<string, mixed> $module
-     * @return array{href: string, label: string}|null
+     * @return list<array{href: string, label: string, kind: string}>
+     */
+    public static function crmTargets(array $module): array
+    {
+        $out = [];
+        $seen = [];
+
+        $practice = self::practiceTarget($module);
+        if ($practice !== null) {
+            $out[] = $practice;
+            $seen[$practice['href']] = true;
+        }
+
+        $topic = self::crmTarget($module);
+        if ($topic !== null && !isset($seen[$topic['href']])) {
+            $out[] = $topic;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $module
+     * @return array{href: string, label: string, kind: string}|null
      */
     public static function crmTarget(array $module): ?array
     {
@@ -72,6 +97,40 @@ final class AcademyModulePresentation
         return [
             'href' => $href,
             'label' => $label !== '' ? ('Zum Thema: ' . $label) : 'Zum Thema im CRM',
+            'kind' => 'topic',
+        ];
+    }
+
+    /**
+     * Praxis-Button: genaue Stelle aus dem Video (z. B. Mitarbeiterliste zum Bearbeiten).
+     *
+     * @param array<string, mixed> $module
+     * @return array{href: string, label: string, kind: string}|null
+     */
+    public static function practiceTarget(array $module): ?array
+    {
+        $fromLocale = self::localePracticeCta($module);
+        if ($fromLocale !== null) {
+            return $fromLocale;
+        }
+
+        $slug = self::videoSlug($module);
+        if ($slug === '') {
+            return null;
+        }
+        $destKey = self::practiceDestKeyForSlug($slug);
+        if ($destKey === '') {
+            return null;
+        }
+        $dest = self::practiceDestinations()[$destKey] ?? null;
+        if ($dest === null) {
+            return null;
+        }
+
+        return [
+            'href' => $dest['href'],
+            'label' => $dest['label'],
+            'kind' => 'practice',
         ];
     }
 
@@ -238,6 +297,120 @@ final class AcademyModulePresentation
         }
 
         return '';
+    }
+
+    /**
+     * @param array<string, mixed> $module
+     * @return array{href: string, label: string, kind: string}|null
+     */
+    private static function localePracticeCta(array $module): ?array
+    {
+        $data = self::localeData($module);
+        if ($data === null) {
+            return null;
+        }
+        $practice = $data['practice'] ?? null;
+        if (!is_array($practice)) {
+            return null;
+        }
+        $destKey = trim((string) ($practice['dest'] ?? ''));
+        if ($destKey !== '' && isset(self::practiceDestinations()[$destKey])) {
+            $dest = self::practiceDestinations()[$destKey];
+            $label = trim((string) ($practice['label'] ?? ''));
+
+            return [
+                'href' => $dest['href'],
+                'label' => $label !== '' ? $label : $dest['label'],
+                'kind' => 'practice',
+            ];
+        }
+        $href = trim((string) ($practice['href'] ?? ''));
+        $label = trim((string) ($practice['label'] ?? ''));
+        if ($href === '' || $label === '' || !str_starts_with($href, '/app')) {
+            return null;
+        }
+        if (str_contains($href, '//') || preg_match('/[\s<>"\']/', $href)) {
+            return null;
+        }
+
+        return [
+            'href' => $href,
+            'label' => $label,
+            'kind' => 'practice',
+        ];
+    }
+
+    private static function practiceDestKeyForSlug(string $slug): string
+    {
+        $map = [
+            'kontakte-felder-mitarbeiter' => 'kontakte-mitarbeiter-liste',
+            'kontakte-felder-stamm' => 'kontakte-liste-bearbeiten',
+            'kontakte-felder-adresse' => 'kontakte-liste-bearbeiten',
+            'kontakte-felder-kommunikation' => 'kontakte-liste-bearbeiten',
+            'kontakte-felder-bank' => 'kontakte-liste-bearbeiten',
+            'kontakte-felder-social' => 'kontakte-liste-bearbeiten',
+            'kontakte-felder-kunde-lieferant' => 'kontakte-liste-bearbeiten',
+            'kontakte-ueberblick' => 'kontakte-liste',
+            'terminkalender-neuer-termin' => 'terminkalender-neu',
+            'terminkalender-online-buchung' => 'terminkalender',
+            'terminkalender-online-kunde' => 'terminkalender',
+            'terminkalender-ueberblick' => 'terminkalender',
+            'lager-platz-check' => 'lager',
+            'lager-ein-ausgang' => 'lager',
+            'lager-inventur' => 'lager',
+            'media-bearbeiten' => 'bilder',
+            'media-zuschneiden-freistellen' => 'bilder',
+            'manuelle-buchungen-erfassen' => 'buchhaltung-manuelle-buchung',
+            'akademie-kurs-lernen' => 'akademie',
+            'akademie-tabs' => 'akademie',
+        ];
+
+        return $map[$slug] ?? '';
+    }
+
+    /**
+     * @return array<string, array{href: string, label: string}>
+     */
+    private static function practiceDestinations(): array
+    {
+        return [
+            'kontakte-liste' => [
+                'href' => '/app?page=kontakte',
+                'label' => 'Zur Kontaktliste',
+            ],
+            'kontakte-liste-bearbeiten' => [
+                'href' => '/app?page=kontakte',
+                'label' => 'Zur Kontaktliste — Bearbeiten wählen',
+            ],
+            'kontakte-mitarbeiter-liste' => [
+                'href' => '/app?page=kontakte&role=mitarbeiter',
+                'label' => 'Zur Mitarbeiterliste — Bearbeiten wählen',
+            ],
+            'terminkalender' => [
+                'href' => '/app?page=terminkalender',
+                'label' => 'Zum Terminkalender',
+            ],
+            'terminkalender-neu' => [
+                'href' => '/app?page=terminkalender&action=new',
+                'label' => 'Neuen Termin anlegen',
+            ],
+            'lager' => [
+                'href' => '/app?page=lager',
+                'label' => 'Zum Lager',
+            ],
+            'bilder' => [
+                'href' => '/app?page=bilder',
+                'label' => 'Zur Media-Bibliothek',
+            ],
+            'buchhaltung-manuelle-buchung' => [
+                'href' => '/app?page=buchhaltung-manuelle-buchung',
+                'label' => 'Zur manuellen Buchung',
+            ],
+            'akademie' => [
+                'href' => '/app?page=akademie',
+                'label' => 'Zur Akademie',
+            ],
+        ];
     }
 
     private static function hrefForPage(string $page): ?string

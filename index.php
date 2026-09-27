@@ -5370,6 +5370,10 @@ $legalProductsConfig = LegalProductSettings::config();
             $contactId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $contactSearch = trim((string) ($_GET['s'] ?? ''));
             $contactPage = max(1, (int) ($_GET['paged'] ?? 1));
+            $contactRoleFilter = strtolower(trim((string) ($_GET['role'] ?? '')));
+            if (!in_array($contactRoleFilter, ['mitarbeiter', 'kunde', 'lieferant'], true)) {
+                $contactRoleFilter = '';
+            }
             $allowedContactRoles = ContactAccessResolver::allowedContactRoleOptions($user);
             $canDeleteContact = false;
             $contact = null;
@@ -5468,7 +5472,7 @@ $legalProductsConfig = LegalProductSettings::config();
                     ? ContactCompanyLinkRepository::employerForPerson($contact->id)
                     : null;
             } else {
-                $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user);
+                $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
                 $contactImportErrors = [];
                 if (isset($_SESSION['dg_contact_import_errors']) && is_array($_SESSION['dg_contact_import_errors'])) {
                     $contactImportErrors = $_SESSION['dg_contact_import_errors'];
