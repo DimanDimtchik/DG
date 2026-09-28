@@ -47,6 +47,8 @@ final class HrDepartmentBoard
             $inTeamLookup = array_fill_keys($inTeamContactIds, true);
 
             $membersOut = [];
+            $leadersOut = [];
+            $regularOut = [];
             $withoutTeam = [];
             foreach ($dept['members'] as $member) {
                 $userId = (int) ($member['user_id'] ?? 0);
@@ -66,6 +68,11 @@ final class HrDepartmentBoard
                     $inTeamLookup
                 );
                 $membersOut[] = $row;
+                if ($row['role'] === 'leader') {
+                    $leadersOut[] = $row;
+                } else {
+                    $regularOut[] = $row;
+                }
                 // Chef / Inhaber / Admins der GF zählen nicht als „MA ohne Team“.
                 if (!$isChefLeader && !$isOwnerMember && !$isAdminMember && !$row['in_team']) {
                     $withoutTeam[] = $row;
@@ -91,6 +98,8 @@ final class HrDepartmentBoard
                 'sort_order' => (int) ($dept['sort_order'] ?? 0),
                 'module_labels' => $moduleLabels,
                 'members' => $membersOut,
+                'leaders' => $leadersOut,
+                'regular_members' => $regularOut,
                 'members_without_team' => $withoutTeam,
                 'teams' => $teamDetails,
             ];
@@ -206,21 +215,31 @@ final class HrDepartmentBoard
         if (!Database::isConfigured()) {
             return [];
         }
+
+        $out = [];
         try {
             $check = Database::pdo()->query("SHOW TABLES LIKE 'dg_calendar_employees'");
-            if ($check === false || $check->fetchColumn() === false) {
-                return [];
+            if ($check !== false && $check->fetchColumn() !== false) {
+                $stmt = Database::pdo()->query(
+                    'SELECT user_id, contact_id FROM dg_calendar_employees
+                     WHERE user_id > 0 AND contact_id > 0'
+                );
+                while ($row = $stmt->fetch()) {
+                    $out[(int) $row['user_id']] = (int) $row['contact_id'];
+                }
             }
         } catch (Throwable) {
-            return [];
+            // Fallback über Kontaktdaten unten
         }
-        $stmt = Database::pdo()->query(
-            'SELECT user_id, contact_id FROM dg_calendar_employees
-             WHERE user_id > 0 AND contact_id > 0'
-        );
-        $out = [];
-        while ($row = $stmt->fetch()) {
-            $out[(int) $row['user_id']] = (int) $row['contact_id'];
+
+        foreach (UserRepository::all() as $user) {
+            if (!$user instanceof User || $user->id < 1 || isset($out[$user->id])) {
+                continue;
+            }
+            $contactId = ContactRepository::findStaffContactIdForUser($user);
+            if ($contactId !== null && $contactId > 0) {
+                $out[$user->id] = $contactId;
+            }
         }
 
         return $out;
