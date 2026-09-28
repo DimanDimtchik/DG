@@ -308,7 +308,7 @@ Abweichung nur per explizitem Chat-Befehl.
 | Serie | Inhalt | Einstieg |
 |-------|--------|----------|
 | **Z3** | Schichten | `z3a`–`z3d` ✅ |
-| **Z4** | Urlaub & Krankheit | `z4a`–`z4e` ✅ |
+| **Z4** | Urlaub & Krankheit | `z4a`–`z4f` ✅ |
 | **Z5** | Rückstellungen Buchhaltung | `z5a`–`z5d` ✅ |
 | **Z6** | Lohn-Export DATEV/CSV | `z6a`–`z6f` ✅ |
 
@@ -653,6 +653,7 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 3. **Z4c** Urlaubsantrag + Freigabe-UI ✅  
 4. **Z4d** Krankheit + Attest-Link + Team-Kalender ✅  
 5. **Z4e** Soll=0 an genehmigten Tagen + Soft-Warnung Stempel ✅  
+6. **Z4f** HR-Edit + Krankheit/Sonderurlaub schneidet Urlaub ✅  
 
 #### Abnahme Z4a
 
@@ -708,6 +709,21 @@ Krankheit: Default-Status bei HR-Erfassung `approved`; MA-Selbstmeldung `request
 
 **Nicht:** Entgeltfortzahlung, Rückstellung (Z5).
 
+### Z4f — HR-Bearbeitung + Urlaubszuschnitt ✅ 2026-09-28
+
+| Lieferobjekt | Ergebnis |
+|--------------|----------|
+| Migration | `107_time_absence_adjustments.sql` — Audit carve/restore |
+| Service | `TimeAbsenceOverlapService` — nach Freigabe Krankheit/Sonderurlaub |
+| Wirkung | Genehmigter `sick`/`special_leave` schneidet überlappenden `approved`-Urlaub; `days_count` sinkt → Resturlaub steigt |
+| Rückgängig | Ablehnung/Storno des Interruptors → Urlaub aus Audit wiederherstellen |
+| HR-UI | `/app?page=zeiterfassung-abwesenheit` — Sektion „Abwesenheiten bearbeiten“ (Filter, Edit Von/Bis/Typ/Status) |
+| Soll-Prio | `approvedOnDate`: sick/special_leave > vacation > rest (ohne ot_comp-Sonderlogik zu brechen) |
+
+**Fachlich (BUrlG § 9-nah):** Attest-Empfehlung bleibt in der UI; Automatik nur bei genehmigtem Interruptor. Unbezahlt/`other`/`ot_comp` schneiden nicht automatisch — nur manuell über HR-Edit.
+
+**Nicht:** Feiertagskalender DE, Entgeltfortzahlung, App-HR-Edit.
+
 ### Chat-Vorlage Z4
 
 ```text
@@ -717,7 +733,7 @@ Kein Code, keine Migration, kein Deploy.
 Nicht Z3-Code / Z5–Z6 neu einlesen.
 ```
 
-Weitere: `Z4b` / `Z4c` / `Z4d` / `Z4e` analog.
+Weitere: `Z4b` / `Z4c` / `Z4d` / `Z4e` / `Z4f` analog.
 
 ---
 

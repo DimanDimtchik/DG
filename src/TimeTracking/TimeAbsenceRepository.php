@@ -158,7 +158,8 @@ final class TimeAbsenceRepository
     }
 
     /**
-     * Genehmigte Abwesenheit an einem Kalendertag (Z4e-Vorbereitung).
+     * Genehmigte Abwesenheit an einem Kalendertag (Z4e).
+     * Prio: sick / special_leave vor vacation vor übrigen (ot_comp zuletzt unter „rest“).
      *
      * @return array<string, mixed>|null
      */
@@ -175,13 +176,260 @@ final class TimeAbsenceRepository
              WHERE contact_id = :cid
                AND status = \'approved\'
                AND date_from <= :d_from AND date_to >= :d_to
-             ORDER BY id ASC
-             LIMIT 1'
+             ORDER BY id ASC'
         );
         $stmt->execute(['cid' => $contactId, 'd_from' => $dateYmd, 'd_to' => $dateYmd]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if ($rows === []) {
+            return null;
+        }
+        $prio = [
+            'sick' => 1,
+            'special_leave' => 2,
+            'vacation' => 3,
+            'unpaid_leave' => 4,
+            'other' => 5,
+            'ot_comp' => 6,
+        ];
+        $best = null;
+        $bestRank = 999;
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $type = (string) ($row['type'] ?? '');
+            $rank = $prio[$type] ?? 50;
+            if ($rank < $bestRank) {
+                $bestRank = $rank;
+                $best = $row;
+            }
+        }
 
-        return is_array($row) ? self::mapRow($row) : null;
+        return is_array($best) ? self::mapRow($best) : null;
+    }
+
+    /**
+     * Genehmigte Urlaubseinträge, die mit [from,to] überlappen.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function approvedVacationsOverlapping(int $contactId, string $from, string $to): array
+    {
+        if (!self::tableReady()
+            || $contactId < 1
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $from)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
+            return [];
+        }
+        MigrationRunner::runPending();
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_time_absences
+             WHERE contact_id = :cid
+               AND type = \'vacation\'
+               AND status = \'approved\'
+               AND date_from <= :to AND date_to >= :from
+             ORDER BY date_from ASC, id ASC'
+        );
+        $stmt->execute(['cid' => $contactId, 'from' => $from, 'to' => $to]);
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            if (is_array($row)) {
+                $out[] = self::mapRow($row);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * HR-Liste mit Filtern.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listForHrFilter(
+        string $yearMonth,
+        int $contactId = 0,
+        string $type = '',
+        string $status = '',
+        int $limit = 300,
+    ): array {
+        if (!self::tableReady() || !preg_match('/^(\d{4})-(\d{2})$/', $yearMonth, $m)) {
+            return [];
+        }
+        MigrationRunner::runPending();
+        $y = (int) $m[1];
+        $mo = (int) $m[2];
+        $from = sprintf('%04d-%02d-01', $y, $mo);
+        $daysInMonth = (int) (new DateTimeImmutable($from))->format('t');
+        $to = sprintf('%04d-%02d-%02d', $y, $mo, $daysInMonth);
+        $limit = max(1, min(1000, $limit));
+
+        $sql = 'SELECT * FROM dg_time_absences
+                WHERE date_from <= :to AND date_to >= :from';
+        $params = ['from' => $from, 'to' => $to];
+        if ($contactId > 0) {
+            $sql .= ' AND contact_id = :cid';
+            $params['cid'] = $contactId;
+        }
+        if ($type !== '' && in_array($type, self::TYPES, true)) {
+            $sql .= ' AND type = :type';
+            $params['type'] = $type;
+        }
+        if ($status !== '' && in_array($status, self::STATUSES, true)) {
+            $sql .= ' AND status = :st';
+            $params['st'] = $status;
+        }
+        $sql .= ' ORDER BY date_from DESC, contact_id ASC, id DESC LIMIT ' . $limit;
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            if (is_array($row)) {
+                $out[] = self::mapRow($row);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Datum/Typ/Status/Grund aktualisieren; days_count neu aus Werktagen (oder Override).
+     *
+     * @param array{
+     *   date_from?: string,
+     *   date_to?: string,
+     *   type?: string,
+     *   status?: string,
+     *   reason?: string,
+     *   days_count?: float|int|string|null,
+     *   decided_by?: int|null
+     * } $input
+     */
+    public static function updateDatesAndMeta(int $id, array $input): void
+    {
+        if ($id < 1) {
+            throw new InvalidArgumentException('Abwesenheit nicht gefunden.');
+        }
+        MigrationRunner::runPending();
+        $row = self::findById($id);
+        if ($row === null) {
+            throw new InvalidArgumentException('Abwesenheit nicht gefunden.');
+        }
+
+        $from = isset($input['date_from']) ? (string) $input['date_from'] : (string) $row['date_from'];
+        $to = isset($input['date_to']) ? (string) $input['date_to'] : (string) $row['date_to'];
+        $type = isset($input['type']) ? (string) $input['type'] : (string) $row['type'];
+        $status = isset($input['status']) ? (string) $input['status'] : (string) $row['status'];
+        $reason = array_key_exists('reason', $input)
+            ? trim((string) $input['reason'])
+            : (string) $row['reason'];
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
+            throw new InvalidArgumentException('Ungültiges Datum.');
+        }
+        if ($to < $from) {
+            throw new InvalidArgumentException('Bis-Datum vor Von-Datum.');
+        }
+        if (!in_array($type, self::TYPES, true)) {
+            throw new InvalidArgumentException('Ungültiger Typ.');
+        }
+        if (!in_array($status, self::STATUSES, true)) {
+            throw new InvalidArgumentException('Ungültiger Status.');
+        }
+        if ($reason === '') {
+            throw new InvalidArgumentException('Begründung erforderlich.');
+        }
+        if (function_exists('mb_substr')) {
+            $reason = mb_substr($reason, 0, 500);
+        } else {
+            $reason = substr($reason, 0, 500);
+        }
+
+        if (array_key_exists('days_count', $input) && $input['days_count'] !== null && $input['days_count'] !== '') {
+            $days = self::normalizeDays($input['days_count']);
+        } else {
+            $days = self::countWorkingDays($from, $to);
+            if ($days < 0.5) {
+                throw new InvalidArgumentException('Im Zeitraum liegt kein Werktag (Mo–Fr).');
+            }
+        }
+
+        $decidedBy = array_key_exists('decided_by', $input)
+            ? (($input['decided_by'] !== null && (int) $input['decided_by'] > 0) ? (int) $input['decided_by'] : null)
+            : null;
+
+        $sql = 'UPDATE dg_time_absences SET
+                    type = :type, date_from = :from, date_to = :to, days_count = :days,
+                    status = :status, reason = :reason, updated_at = CURRENT_TIMESTAMP';
+        $params = [
+            'id' => $id,
+            'type' => $type,
+            'from' => $from,
+            'to' => $to,
+            'days' => $days,
+            'status' => $status,
+            'reason' => $reason,
+        ];
+        if ($decidedBy !== null || in_array($status, ['approved', 'rejected', 'cancelled'], true)) {
+            $sql .= ', decided_by = :decided_by, decided_at = CURRENT_TIMESTAMP';
+            $params['decided_by'] = $decidedBy;
+        }
+        $sql .= ' WHERE id = :id';
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+    }
+
+    /**
+     * Direkte Feld-Aktualisierung (Overlap-Carve; days_count darf 0 sein → dann cancel nutzen).
+     */
+    public static function applyCarveFields(
+        int $id,
+        string $dateFrom,
+        string $dateTo,
+        float $daysCount,
+        string $status,
+        string $reason,
+        ?int $decidedBy,
+    ): void {
+        if ($id < 1) {
+            throw new InvalidArgumentException('Abwesenheit nicht gefunden.');
+        }
+        MigrationRunner::runPending();
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+            throw new InvalidArgumentException('Ungültiges Datum.');
+        }
+        if (!in_array($status, self::STATUSES, true)) {
+            throw new InvalidArgumentException('Ungültiger Status.');
+        }
+        $daysCount = round($daysCount, 1);
+        if ($status === 'approved' && $daysCount < 0.5) {
+            throw new InvalidArgumentException('Genehmigter Urlaub braucht mind. 0,5 Tage.');
+        }
+        if ($reason === '') {
+            $reason = '—';
+        }
+        if (function_exists('mb_substr')) {
+            $reason = mb_substr($reason, 0, 500);
+        } else {
+            $reason = substr($reason, 0, 500);
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_time_absences SET
+                date_from = :from, date_to = :to, days_count = :days,
+                status = :status, reason = :reason,
+                decided_by = :decided_by, decided_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            'id' => $id,
+            'from' => $dateFrom,
+            'to' => $dateTo,
+            'days' => max(0.5, $daysCount),
+            'status' => $status,
+            'reason' => $reason,
+            'decided_by' => ($decidedBy !== null && $decidedBy > 0) ? $decidedBy : null,
+        ]);
     }
 
     /**

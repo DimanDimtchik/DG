@@ -4070,6 +4070,24 @@ switch ($path) {
                         (string) ($_POST['reason'] ?? '')
                     );
                     Flash::set('success', 'Meldung abgelehnt.');
+                } elseif ($absAction === 'hr_update') {
+                    $res = TimeAbsenceService::updateByHr(
+                        $user,
+                        (int) ($_POST['absence_id'] ?? 0),
+                        (string) ($_POST['date_from'] ?? ''),
+                        (string) ($_POST['date_to'] ?? ''),
+                        (string) ($_POST['type'] ?? ''),
+                        (string) ($_POST['status'] ?? ''),
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set('success', $res['message']);
+                    $hrLoc = '/app?page=zeiterfassung-abwesenheit&month=' . rawurlencode($redirectMonth)
+                        . '&hr_contact=' . (int) ($_POST['hr_contact'] ?? 0)
+                        . '&hr_type=' . rawurlencode((string) ($_POST['hr_type'] ?? ''))
+                        . '&hr_status=' . rawurlencode((string) ($_POST['hr_status'] ?? ''))
+                        . '#hr-abwesenheiten';
+                    header('Location: ' . $hrLoc, true, 302);
+                    exit;
                 } else {
                     Flash::set('error', 'Unbekannte Aktion.');
                 }
@@ -6118,6 +6136,41 @@ $legalProductsConfig = LegalProductSettings::config();
             $timeAbsStaffOptions = ($timeAbsCanTeam || $timeAbsCanApprove)
                 ? TimeMonthReportService::staffOptions()
                 : [];
+            $timeAbsHrCanEdit = $timeAbsCanTeam;
+            if (!$timeAbsHrCanEdit) {
+                foreach ($timeAbsStaffOptions as $opt) {
+                    if (AbsenceApprovalService::canDecide($user, (int) ($opt['id'] ?? 0))) {
+                        $timeAbsHrCanEdit = true;
+                        break;
+                    }
+                }
+            }
+            if ($timeAbsHrCanEdit && $timeAbsStaffOptions === []) {
+                $timeAbsStaffOptions = TimeMonthReportService::staffOptions();
+            }
+            $timeAbsHrFilterContact = (int) ($_GET['hr_contact'] ?? 0);
+            $timeAbsHrFilterType = trim((string) ($_GET['hr_type'] ?? ''));
+            $timeAbsHrFilterStatus = trim((string) ($_GET['hr_status'] ?? ''));
+            $timeAbsHrEditId = (int) ($_GET['edit_id'] ?? 0);
+            $timeAbsHrList = [];
+            $timeAbsHrEdit = null;
+            if ($timeAbsHrCanEdit) {
+                $timeAbsHrList = TimeAbsenceRepository::listForHrFilter(
+                    $timeAbsYearMonth,
+                    $timeAbsHrFilterContact,
+                    $timeAbsHrFilterType,
+                    $timeAbsHrFilterStatus
+                );
+                if ($timeAbsHrEditId > 0) {
+                    $timeAbsHrEdit = TimeAbsenceRepository::findById($timeAbsHrEditId);
+                    if ($timeAbsHrEdit !== null) {
+                        $editCid = (int) ($timeAbsHrEdit['contact_id'] ?? 0);
+                        if (!AbsenceApprovalService::canDecide($user, $editCid) && !TimeClockService::canViewTeam($user)) {
+                            $timeAbsHrEdit = null;
+                        }
+                    }
+                }
+            }
             $timeAbsCalendar = null;
             if ($timeAbsCanTeam) {
                 $timeAbsCalendar = TimeAbsenceService::monthCalendar($timeAbsYearMonth, $timeAbsStaffOptions);
@@ -6129,6 +6182,11 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
             }
             foreach ($timeAbsPending as $row) {
+                if (is_array($row)) {
+                    $absIdsForAtt[] = (int) ($row['id'] ?? 0);
+                }
+            }
+            foreach ($timeAbsHrList as $row) {
                 if (is_array($row)) {
                     $absIdsForAtt[] = (int) ($row['id'] ?? 0);
                 }

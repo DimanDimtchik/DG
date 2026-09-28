@@ -391,9 +391,85 @@ final class TimeAbsenceService
         if ($otMsg !== '') {
             $msg .= ' — ' . $otMsg;
         }
+        if (TimeAbsenceOverlapService::isInterruptType($type)) {
+            $carve = TimeAbsenceOverlapService::applyInterrupt(
+                $id,
+                (int) ($user->id ?? 0) > 0 ? (int) $user->id : null
+            );
+            if (($carve['message'] ?? '') !== '') {
+                $msg .= ' · ' . $carve['message'];
+            }
+        }
         $msg .= '.';
 
         return ['id' => $id, 'message' => $msg];
+    }
+
+    /**
+     * HR: bestehende Abwesenheit bearbeiten (alle Typen/Status).
+     *
+     * @return array{message: string}
+     */
+    public static function updateByHr(
+        User $user,
+        int $absenceId,
+        string $dateFrom,
+        string $dateTo,
+        string $type,
+        string $status,
+        string $reason,
+    ): array {
+        $row = TimeAbsenceRepository::findById($absenceId);
+        if ($row === null) {
+            throw new InvalidArgumentException('Abwesenheit nicht gefunden.');
+        }
+        $contactId = (int) ($row['contact_id'] ?? 0);
+        if (!AbsenceApprovalService::canDecide($user, $contactId) && !TimeClockService::canViewTeam($user)) {
+            throw new RuntimeException('Keine Berechtigung.');
+        }
+        if (!in_array($type, TimeAbsenceRepository::TYPES, true)) {
+            throw new InvalidArgumentException('Ungültiger Typ.');
+        }
+        if (!in_array($status, TimeAbsenceRepository::STATUSES, true)) {
+            throw new InvalidArgumentException('Ungültiger Status.');
+        }
+
+        $prevType = (string) ($row['type'] ?? '');
+        $prevStatus = (string) ($row['status'] ?? '');
+        $by = (int) ($user->id ?? 0) > 0 ? (int) $user->id : null;
+
+        // Vorher Interruptor: Urlaub wiederherstellen, dann neu speichern/schneiden
+        if (TimeAbsenceOverlapService::isInterruptType($prevType) && $prevStatus === 'approved') {
+            TimeAbsenceOverlapService::restoreAfterInterruptRemoved($absenceId, $by);
+        }
+
+        TimeAbsenceRepository::updateDatesAndMeta($absenceId, [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'type' => $type,
+            'status' => $status,
+            'reason' => $reason,
+            'decided_by' => $by,
+        ]);
+
+        $msg = 'Abwesenheit gespeichert';
+        if (TimeAbsenceOverlapService::isInterruptType($type) && $status === 'approved') {
+            $carve = TimeAbsenceOverlapService::applyInterrupt($absenceId, $by);
+            if (($carve['message'] ?? '') !== '') {
+                $msg .= ' · ' . $carve['message'];
+            }
+        } elseif (
+            TimeAbsenceOverlapService::isInterruptType($type)
+            && in_array($status, ['rejected', 'cancelled'], true)
+        ) {
+            $restored = TimeAbsenceOverlapService::restoreAfterInterruptRemoved($absenceId, $by);
+            if ($restored > 0) {
+                $msg .= sprintf(' · %.1f Urlaubstag(e) wiederhergestellt', $restored);
+            }
+        }
+        $msg .= '.';
+
+        return ['message' => $msg];
     }
 
     /**
@@ -478,6 +554,15 @@ final class TimeAbsenceService
                 $msg .= ' — ' . $otMsg;
             }
         }
+        if (TimeAbsenceOverlapService::isInterruptType($type)) {
+            $carve = TimeAbsenceOverlapService::applyInterrupt(
+                $absenceId,
+                (int) ($user->id ?? 0) > 0 ? (int) $user->id : null
+            );
+            if (($carve['message'] ?? '') !== '') {
+                $msg .= ' · ' . $carve['message'];
+            }
+        }
         $msg .= '.';
 
         return ['message' => $msg];
@@ -494,6 +579,12 @@ final class TimeAbsenceService
             throw new InvalidArgumentException('Ablehnungsgrund erforderlich.');
         }
         TimeAbsenceRepository::setStatus($absenceId, 'rejected', (int) ($user->id ?? 0), $reason);
+        if (TimeAbsenceOverlapService::isInterruptType((string) ($row['type'] ?? ''))) {
+            TimeAbsenceOverlapService::restoreAfterInterruptRemoved(
+                $absenceId,
+                (int) ($user->id ?? 0) > 0 ? (int) $user->id : null
+            );
+        }
     }
 
     public static function cancelOwn(User $user, int $absenceId): void
@@ -506,7 +597,15 @@ final class TimeAbsenceService
         if ($ownId === null || $ownId !== (int) ($row['contact_id'] ?? 0)) {
             throw new RuntimeException('Nur eigene Anträge können zurückgezogen werden.');
         }
+        $wasApprovedInterrupt = TimeAbsenceOverlapService::isInterruptType((string) ($row['type'] ?? ''))
+            && (string) ($row['status'] ?? '') === 'approved';
         TimeAbsenceRepository::cancel($absenceId, (int) ($user->id ?? 0));
+        if ($wasApprovedInterrupt) {
+            TimeAbsenceOverlapService::restoreAfterInterruptRemoved(
+                $absenceId,
+                (int) ($user->id ?? 0) > 0 ? (int) $user->id : null
+            );
+        }
     }
 
     /**

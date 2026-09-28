@@ -106,7 +106,7 @@ final class MobileStaffApi
             $to = (string) ($_POST['date_to'] ?? MobileApi::jsonBody()['date_to'] ?? '');
             $reason = (string) ($_POST['reason'] ?? MobileApi::jsonBody()['reason'] ?? '');
             $half = !empty($_POST['half_day']) || !empty(MobileApi::jsonBody()['half_day']);
-            $files = is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : [];
+            $files = self::evidenceFilesFromRequest();
             $res = TimeAbsenceService::requestFromKiosk(
                 $contactId,
                 $type,
@@ -386,5 +386,37 @@ final class MobileStaffApi
         header('Cache-Control: private, no-store');
         readfile($abs);
         exit;
+    }
+
+    /**
+     * Multipart-Nachweis aus App/Web: Feld „evidence“ oder „evidence[]“.
+     *
+     * @return array<string, mixed>
+     */
+    private static function evidenceFilesFromRequest(): array
+    {
+        foreach (['evidence', 'evidence[]'] as $key) {
+            if (!isset($_FILES[$key]) || !is_array($_FILES[$key])) {
+                continue;
+            }
+            $field = $_FILES[$key];
+            if (!isset($field['tmp_name'])) {
+                continue;
+            }
+            // Einzeldatei unter Key „evidence[]“ → in Multi-Struktur bringen
+            if (!is_array($field['tmp_name'])) {
+                return [
+                    'name' => [$field['name'] ?? 'upload'],
+                    'type' => [$field['type'] ?? ''],
+                    'tmp_name' => [$field['tmp_name']],
+                    'error' => [$field['error'] ?? UPLOAD_ERR_NO_FILE],
+                    'size' => [$field['size'] ?? 0],
+                ];
+            }
+
+            return $field;
+        }
+
+        return [];
     }
 }

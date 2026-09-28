@@ -1144,7 +1144,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
             'reason': _reasonCtrl.text.trim(),
             if (_halfDay) 'half_day': '1',
           },
-          fileField: 'evidence[]',
+          fileField: 'evidence',
           filePath: _evidencePath!,
           filename: _evidenceName,
         );

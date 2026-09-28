@@ -12,6 +12,12 @@
  * @var string $timeAbsYearMonth
  * @var array{year_month: string, days: list<array<string, mixed>>}|null $timeAbsCalendar
  * @var array<int, list<array{id: int, original_name: string, mime: string, size_bytes: int}>> $timeAbsAttachments
+ * @var bool $timeAbsHrCanEdit
+ * @var list<array<string, mixed>> $timeAbsHrList
+ * @var array<string, mixed>|null $timeAbsHrEdit
+ * @var int $timeAbsHrFilterContact
+ * @var string $timeAbsHrFilterType
+ * @var string $timeAbsHrFilterStatus
  * @var array{type: string, message: string}|null $flash
  */
 $ownCid = (int) ($timeAbsContactId ?? 0);
@@ -21,6 +27,12 @@ $pending = is_array($timeAbsPending ?? null) ? $timeAbsPending : [];
 $staff = is_array($timeAbsStaffOptions ?? null) ? $timeAbsStaffOptions : [];
 $canTeam = !empty($timeAbsCanTeam);
 $canApprove = !empty($timeAbsCanApprove);
+$hrCanEdit = !empty($timeAbsHrCanEdit);
+$hrList = is_array($timeAbsHrList ?? null) ? $timeAbsHrList : [];
+$hrEdit = is_array($timeAbsHrEdit ?? null) ? $timeAbsHrEdit : null;
+$hrFilterContact = (int) ($timeAbsHrFilterContact ?? 0);
+$hrFilterType = (string) ($timeAbsHrFilterType ?? '');
+$hrFilterStatus = (string) ($timeAbsHrFilterStatus ?? '');
 $ym = (string) ($timeAbsYearMonth ?? date('Y-m'));
 $cal = is_array($timeAbsCalendar ?? null) ? $timeAbsCalendar : null;
 $attMap = is_array($timeAbsAttachments ?? null) ? $timeAbsAttachments : [];
@@ -324,6 +336,152 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                       <input type="text" name="reason" required maxlength="500" placeholder="Ablehnungsgrund">
                       <button type="submit" class="dg-button dg-button--small">Ablehnen</button>
                     </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
+
+  <?php if ($hrCanEdit) : ?>
+    <section class="dg-panel" id="hr-abwesenheiten">
+      <h2 class="dg-subsection-title">Abwesenheiten bearbeiten (HR)</h2>
+      <p class="dg-field-hint">
+        Alle Typen und Status. Genehmigte Krankheit oder Sonderurlaub kürzen automatisch überlappenden Urlaub
+        (Resturlaub steigt). Bei Storno/Ablehnung wird der Urlaub wiederhergestellt.
+      </p>
+      <form method="get" action="/app" class="dg-form dg-form--inline" style="margin-bottom:1rem">
+        <input type="hidden" name="page" value="zeiterfassung-abwesenheit">
+        <label class="dg-field">
+          <span class="dg-field-label">Monat</span>
+          <input type="month" name="month" value="<?= View::escape($ym) ?>">
+        </label>
+        <label class="dg-field">
+          <span class="dg-field-label">Mitarbeiter</span>
+          <select name="hr_contact">
+            <option value="0">— alle —</option>
+            <?php foreach ($staff as $opt) : ?>
+              <option value="<?= (int) ($opt['id'] ?? 0) ?>"<?= $hrFilterContact === (int) ($opt['id'] ?? 0) ? ' selected' : '' ?>>
+                <?= View::escape((string) ($opt['label'] ?? '')) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span class="dg-field-label">Typ</span>
+          <select name="hr_type">
+            <option value="">— alle —</option>
+            <?php foreach (TimeAbsenceRepository::TYPES as $t) : ?>
+              <option value="<?= View::escape($t) ?>"<?= $hrFilterType === $t ? ' selected' : '' ?>>
+                <?= View::escape(TimeAbsenceService::typeLabel($t)) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span class="dg-field-label">Status</span>
+          <select name="hr_status">
+            <option value="">— alle —</option>
+            <?php foreach (TimeAbsenceRepository::STATUSES as $st) : ?>
+              <option value="<?= View::escape($st) ?>"<?= $hrFilterStatus === $st ? ' selected' : '' ?>>
+                <?= View::escape(TimeVacationService::statusLabel($st)) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <button type="submit" class="dg-button">Filtern</button>
+      </form>
+
+      <?php if ($hrEdit !== null) : ?>
+        <form method="post" action="/app?page=zeiterfassung-abwesenheit" class="dg-form" style="margin-bottom:1.25rem">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="absence_action" value="hr_update">
+          <input type="hidden" name="absence_id" value="<?= (int) ($hrEdit['id'] ?? 0) ?>">
+          <input type="hidden" name="month" value="<?= View::escape($ym) ?>">
+          <input type="hidden" name="hr_contact" value="<?= $hrFilterContact ?>">
+          <input type="hidden" name="hr_type" value="<?= View::escape($hrFilterType) ?>">
+          <input type="hidden" name="hr_status" value="<?= View::escape($hrFilterStatus) ?>">
+          <h3 class="dg-subsection-title">Eintrag #<?= (int) ($hrEdit['id'] ?? 0) ?> — <?= View::escape($staffLabel((int) ($hrEdit['contact_id'] ?? 0))) ?></h3>
+          <div class="dg-form-row">
+            <label class="dg-field">
+              <span class="dg-field-label">Von</span>
+              <input type="date" name="date_from" required value="<?= View::escape((string) ($hrEdit['date_from'] ?? '')) ?>">
+            </label>
+            <label class="dg-field">
+              <span class="dg-field-label">Bis</span>
+              <input type="date" name="date_to" required value="<?= View::escape((string) ($hrEdit['date_to'] ?? '')) ?>">
+            </label>
+            <label class="dg-field">
+              <span class="dg-field-label">Typ</span>
+              <select name="type" required>
+                <?php foreach (TimeAbsenceRepository::TYPES as $t) : ?>
+                  <option value="<?= View::escape($t) ?>"<?= (string) ($hrEdit['type'] ?? '') === $t ? ' selected' : '' ?>>
+                    <?= View::escape(TimeAbsenceService::typeLabel($t)) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span class="dg-field-label">Status</span>
+              <select name="status" required>
+                <?php foreach (TimeAbsenceRepository::STATUSES as $st) : ?>
+                  <option value="<?= View::escape($st) ?>"<?= (string) ($hrEdit['status'] ?? '') === $st ? ' selected' : '' ?>>
+                    <?= View::escape(TimeVacationService::statusLabel($st)) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+          </div>
+          <label class="dg-field">
+            <span class="dg-field-label">Begründung</span>
+            <textarea name="reason" rows="2" required maxlength="500"><?= View::escape((string) ($hrEdit['reason'] ?? '')) ?></textarea>
+          </label>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary">Speichern</button>
+            <a class="dg-button" href="/app?page=zeiterfassung-abwesenheit&amp;month=<?= View::escape(rawurlencode($ym)) ?>&amp;hr_contact=<?= $hrFilterContact ?>&amp;hr_type=<?= View::escape(rawurlencode($hrFilterType)) ?>&amp;hr_status=<?= View::escape(rawurlencode($hrFilterStatus)) ?>#hr-abwesenheiten">Abbrechen</a>
+          </div>
+        </form>
+      <?php endif; ?>
+
+      <?php if ($hrList === []) : ?>
+        <p class="dg-muted">Keine Einträge für diesen Filter.</p>
+      <?php else : ?>
+        <div class="dg-table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th>Mitarbeiter</th>
+                <th>Typ</th>
+                <th>Zeitraum</th>
+                <th>Tage</th>
+                <th>Status</th>
+                <th>Begründung</th>
+                <th>Nachweis</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($hrList as $row) : ?>
+                <?php
+                  $cid = (int) ($row['contact_id'] ?? 0);
+                  $rowId = (int) ($row['id'] ?? 0);
+                ?>
+                <tr>
+                  <td><?= View::escape($staffLabel($cid)) ?></td>
+                  <td><?= View::escape(TimeAbsenceService::typeLabel((string) ($row['type'] ?? ''))) ?></td>
+                  <td>
+                    <?= View::escape((string) ($row['date_from'] ?? '')) ?>
+                    – <?= View::escape((string) ($row['date_to'] ?? '')) ?>
+                  </td>
+                  <td><?= View::escape(number_format((float) ($row['days_count'] ?? 0), 1, ',', '')) ?></td>
+                  <td><?= View::escape(TimeVacationService::statusLabel((string) ($row['status'] ?? ''))) ?></td>
+                  <td><?= trim((string) ($row['reason'] ?? '')) !== '' ? View::escape((string) $row['reason']) : '—' ?></td>
+                  <td><?php $renderAtts($rowId); ?></td>
+                  <td>
+                    <a href="/app?page=zeiterfassung-abwesenheit&amp;month=<?= View::escape(rawurlencode($ym)) ?>&amp;hr_contact=<?= $hrFilterContact ?>&amp;hr_type=<?= View::escape(rawurlencode($hrFilterType)) ?>&amp;hr_status=<?= View::escape(rawurlencode($hrFilterStatus)) ?>&amp;edit_id=<?= $rowId ?>#hr-abwesenheiten">Bearbeiten</a>
                   </td>
                 </tr>
               <?php endforeach; ?>
