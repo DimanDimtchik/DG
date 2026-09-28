@@ -14,6 +14,28 @@ final class VoucherBelegeBoard
     public const SECTION_CREDITS = 'credits';
     public const SECTION_INCOMING = 'incoming';
 
+    /** Einstieg aus Menü Dienstleistungen: nur Angebot (+ später Auftrag). */
+    public const FOCUS_DIENSTLEISTUNGEN = 'dienstleistungen';
+
+    /**
+     * @return list<string>
+     */
+    public static function sectionsForFocus(string $focus): array
+    {
+        if ($focus === self::FOCUS_DIENSTLEISTUNGEN) {
+            return [self::SECTION_ACTION, self::SECTION_OFFERS];
+        }
+
+        return array_keys(self::sectionDefinitions());
+    }
+
+    public static function sanitizeFocus(string $focus): string
+    {
+        $focus = strtolower(trim($focus));
+
+        return $focus === self::FOCUS_DIENSTLEISTUNGEN ? self::FOCUS_DIENSTLEISTUNGEN : '';
+    }
+
     /**
      * @return array<string, array{label: string, meta: string}>
      */
@@ -97,7 +119,20 @@ final class VoucherBelegeBoard
     public static function build(array $input): array
     {
         $baseFilters = self::baseFiltersFromInput($input);
-        $section = self::sanitizeSection((string) ($input['section'] ?? self::SECTION_ACTION));
+        $focus = self::sanitizeFocus((string) ($input['focus'] ?? ''));
+        $baseFilters['_focus'] = $focus;
+        $allowedSections = self::sectionsForFocus($focus);
+
+        $sectionRaw = trim((string) ($input['section'] ?? ''));
+        $section = self::sanitizeSection($sectionRaw !== '' ? $sectionRaw : (
+            $focus === self::FOCUS_DIENSTLEISTUNGEN ? self::SECTION_OFFERS : self::SECTION_ACTION
+        ));
+        if (!in_array($section, $allowedSections, true)) {
+            $section = $focus === self::FOCUS_DIENSTLEISTUNGEN
+                ? self::SECTION_OFFERS
+                : self::SECTION_ACTION;
+        }
+
         $actionableOnly = self::truthy($input['actionable_only'] ?? false);
         if ($actionableOnly) {
             $section = self::SECTION_ACTION;
@@ -141,8 +176,20 @@ final class VoucherBelegeBoard
         $actionTotal = (int) ($actionAll['total'] ?? 0);
         $actionGross = (float) ($actionAll['gross_sum'] ?? 0);
 
+        if ($focus === self::FOCUS_DIENSTLEISTUNGEN) {
+            $overdue = (int) ($actionCounts['overdue_invoices'] ?? 0);
+            $actionTotal = max(0, $actionTotal - $overdue);
+            // Brutto der überfälligen Rechnungen nicht exakt abziehbar — Anzeige ohne Invoice-Anteil reicht.
+            if ($status === 'overdue_invoices') {
+                $status = '';
+            }
+        }
+
         $sections = [];
         foreach (self::sectionDefinitions() as $id => $def) {
+            if (!in_array($id, $allowedSections, true)) {
+                continue;
+            }
             $count = match ($id) {
                 self::SECTION_ACTION => $actionTotal,
                 self::SECTION_OFFERS => (int) ($counts['by_kind'][VoucherDocumentKind::OFFER]['total'] ?? 0),
@@ -192,7 +239,8 @@ final class VoucherBelegeBoard
             $status,
             $invoiceKind,
             $pay,
-            $actionableOnly
+            $actionableOnly,
+            $focus
         );
         $status = self::normalizeStatusForSection($section, $status, $chips);
 
@@ -223,6 +271,7 @@ final class VoucherBelegeBoard
             'invoice_kind' => $invoiceKind,
             'pay' => $pay,
             'actionable_only' => $actionableOnly,
+            'focus' => $focus,
             'contact_id' => $contactId,
             'contact_label' => $contactLabel,
             'amount_min' => $amountMin,
@@ -266,6 +315,9 @@ final class VoucherBelegeBoard
         }
         if (isset($baseFilters['amount_max']) && $baseFilters['amount_max'] !== '' && $baseFilters['amount_max'] !== null) {
             $params['amount_max'] = (string) $baseFilters['amount_max'];
+        }
+        if (($baseFilters['_focus'] ?? '') === self::FOCUS_DIENSTLEISTUNGEN) {
+            $params['focus'] = self::FOCUS_DIENSTLEISTUNGEN;
         }
 
         foreach ($overrides as $key => $value) {
@@ -485,7 +537,8 @@ final class VoucherBelegeBoard
         string $activeStatus,
         string $invoiceKind,
         string $pay,
-        bool $actionableOnly
+        bool $actionableOnly,
+        string $focus = ''
     ): array {
         $chips = [];
         $allUrl = self::url($baseFilters, [
@@ -506,8 +559,13 @@ final class VoucherBelegeBoard
                 'drafts' => ['label' => 'Entwürfe', 'count' => (int) ($actionCounts['drafts'] ?? 0)],
                 'expired_offers' => ['label' => 'Abgelaufene Angebote', 'count' => (int) ($actionCounts['expired_offers'] ?? 0)],
                 'accepted_without_ab' => ['label' => 'Angenommen ohne AB', 'count' => (int) ($actionCounts['accepted_without_ab'] ?? 0)],
-                'overdue_invoices' => ['label' => 'Überfällige Rechnungen', 'count' => (int) ($actionCounts['overdue_invoices'] ?? 0)],
             ];
+            if ($focus !== self::FOCUS_DIENSTLEISTUNGEN) {
+                $defs['overdue_invoices'] = [
+                    'label' => 'Überfällige Rechnungen',
+                    'count' => (int) ($actionCounts['overdue_invoices'] ?? 0),
+                ];
+            }
         } elseif ($section === self::SECTION_OFFERS) {
             $byStatus = $counts['by_kind'][VoucherDocumentKind::OFFER]['by_status'] ?? [];
             $defs = self::statusChipDefs(VoucherDocumentStatus::allowedForKind(VoucherDocumentKind::OFFER), $byStatus);

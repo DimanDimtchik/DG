@@ -32,7 +32,9 @@ $amountMin = (string) ($board['amount_min'] ?? '');
 $amountMax = (string) ($board['amount_max'] ?? '');
 $actionableOnly = !empty($board['actionable_only']);
 $actionTotal = (int) ($board['action_total'] ?? 0);
-$baseUrl = '/app?page=buchhaltung-belege';
+$belegeFocus = VoucherBelegeBoard::sanitizeFocus((string) ($board['focus'] ?? ($belegeFocus ?? '')));
+$isDienstleistungenFocus = $belegeFocus === VoucherBelegeBoard::FOCUS_DIENSTLEISTUNGEN;
+$baseUrl = '/app?page=buchhaltung-belege' . ($isDienstleistungenFocus ? '&focus=dienstleistungen' : '');
 $hasActiveFilters = $search !== '' || $contactId > 0 || $amountMin !== '' || $amountMax !== '' || $actionableOnly
     || !$period->isFullYear() || $period->month !== null;
 $canEdit = (bool) ($canEdit ?? false);
@@ -54,6 +56,7 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
         '_month' => $period->month,
         '_date_from_raw' => (!$period->isFullYear() || $period->month !== null) ? $period->dateFrom : '',
         '_date_to_raw' => (!$period->isFullYear() || $period->month !== null) ? $period->dateTo : '',
+        '_focus' => (string) ($board['focus'] ?? ''),
     ];
 
     return VoucherBelegeBoard::url($base, array_merge([
@@ -70,9 +73,11 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
 
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
-      <h1 class="dg-page-title">Belege</h1>
+      <h1 class="dg-page-title"><?= $isDienstleistungenFocus ? 'Auftrag/Angebot' : 'Belege' ?></h1>
       <p class="dg-lead">
-        Belegkette nach Dokumentart —
+        <?= $isDienstleistungenFocus
+            ? 'Angebote und Aufträge — Planung'
+            : 'Belegkette nach Dokumentart' ?> —
         <?= (int) ($list['total'] ?? 0) ?> in dieser Ansicht · <?= View::escape($period->label) ?>
         <?php if ($actionTotal > 0) : ?>
           · <a href="<?= View::escape($boardUrl(['section' => VoucherBelegeBoard::SECTION_ACTION, 'status' => '', 'page' => 1])) ?>"><?= (int) $actionTotal ?> handlungsbedürftig</a>
@@ -80,9 +85,23 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
       </p>
     </div>
     <?php if ($canEdit && $dbConnected) : ?>
-      <a class="dg-button dg-button--primary" href="/app?page=buchhaltung-beleg-form&amp;action=new">Neuer Beleg</a>
+      <?php if ($isDienstleistungenFocus) : ?>
+        <a class="dg-button dg-button--primary" href="/app?page=buchhaltung-beleg-form&amp;action=new&amp;voucher_type=income&amp;document_kind=offer">Neues Angebot</a>
+        <a class="dg-button" href="/app?page=buchhaltung-belege">Alle Belege</a>
+      <?php else : ?>
+        <a class="dg-button dg-button--primary" href="/app?page=buchhaltung-beleg-form&amp;action=new">Neuer Beleg</a>
+      <?php endif; ?>
     <?php endif; ?>
   </header>
+
+  <?php if ($isDienstleistungenFocus) : ?>
+    <div class="dg-flash dg-flash--info">
+      Dienstleistungen — Fokus Angebot/Auftrag.
+      Die Belegart <strong>Auftrag</strong> folgt als Nächstes.
+      Vollständige Belege (Rechnung &amp; Co.):
+      <a href="/app?page=buchhaltung-belege">Buchhaltung → Belege</a>.
+    </div>
+  <?php endif; ?>
 
   <?php if (!$dbConnected) : ?>
     <div class="dg-flash dg-flash--warning">
@@ -105,6 +124,9 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
   <form class="dg-buchhaltung-belege__filters dg-panel" method="get" action="/app" id="dg-belege-filter-form">
     <input type="hidden" name="page" value="buchhaltung-belege">
     <input type="hidden" name="section" value="<?= View::escape($section) ?>">
+    <?php if ($isDienstleistungenFocus) : ?>
+      <input type="hidden" name="focus" value="dienstleistungen">
+    <?php endif; ?>
     <?php if ((string) ($board['status'] ?? '') !== '') : ?>
       <input type="hidden" name="status" value="<?= View::escape((string) $board['status']) ?>">
     <?php endif; ?>

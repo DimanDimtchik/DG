@@ -893,10 +893,12 @@ switch ($path) {
         $menuItems = MenuRegistry::modules($user);
         $settingsItem = MenuRegistry::settingsItem($user);
         $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
+        $dienstleistungenSection = MenuRegistry::dienstleistungenSection($user);
         $hrSection = MenuRegistry::hrSection($user);
         $warenwirtschaftSection = MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = MenuRegistry::websiteSection($user);
         $kdvSection = MenuRegistry::kdvSection($user);
+        $belegeFocus = '';
         $flash = Flash::pull();
         $canEdit = RoleResolver::canEdit($user);
         $sidebarItems = MenuRegistry::sidebarItems($user);
@@ -2930,7 +2932,7 @@ switch ($path) {
                 $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kdvSection',
+                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
                     'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas'
@@ -4816,6 +4818,7 @@ $legalProductsConfig = LegalProductSettings::config();
             // Legacy-Deep-Links: draft=1 / doc_kind / doc_status → Board-Parameter
             $sectionParam = trim((string) ($_GET['section'] ?? ''));
             $statusParam = trim((string) ($_GET['status'] ?? ''));
+            $belegeFocus = VoucherBelegeBoard::sanitizeFocus((string) ($_GET['focus'] ?? ''));
             $legacyDraft = (string) ($_GET['draft'] ?? '');
             $legacyDocKind = VoucherDocumentKind::sanitize((string) ($_GET['doc_kind'] ?? ''));
             $legacyDocStatus = VoucherDocumentStatus::sanitize((string) ($_GET['doc_status'] ?? ''));
@@ -4863,6 +4866,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 'pay' => (string) ($_GET['pay'] ?? ''),
                 'page' => $voucherPage,
                 'actionable_only' => (string) ($_GET['actionable'] ?? ''),
+                'focus' => $belegeFocus,
             ]);
             $voucherList = $voucherBoard['list'];
             $voucherYears = VoucherRepository::availableYears();
@@ -4876,7 +4880,9 @@ $legalProductsConfig = LegalProductSettings::config();
             $voucherDocumentStatusFilter = '';
             $voucherDraftFilter = '';
             $contentTemplate = 'modules/buchhaltung-belege';
-            $title = 'Belege';
+            $title = $belegeFocus === VoucherBelegeBoard::FOCUS_DIENSTLEISTUNGEN
+                ? 'Auftrag/Angebot'
+                : 'Belege';
             $currentPage = 'buchhaltung-belege';
         } elseif ($page === 'buchhaltung-belege') {
             header('Location: /app', true, 302);
@@ -4930,6 +4936,15 @@ $legalProductsConfig = LegalProductSettings::config();
                 $isDraftVoucher = false;
                 $form = VoucherRepository::emptyForm();
                 $applyBelegContactPrefill($form);
+                $prefillKind = VoucherDocumentKind::sanitize((string) ($_GET['document_kind'] ?? ''));
+                $prefillVoucherType = VoucherRepository::normalizeVoucherType((string) ($_GET['voucher_type'] ?? 'income'));
+                if ($prefillKind !== '' && VoucherDocumentKind::voucherTypeSupportsDocumentKind($prefillVoucherType)) {
+                    $form['voucher_type'] = $prefillVoucherType;
+                    $form['document_kind'] = $prefillKind;
+                    if ($prefillKind === VoucherDocumentKind::OFFER) {
+                        $title = 'Neues Angebot';
+                    }
+                }
                 $formError = null;
                 $ledgerPostings = [];
                 $followFromId = (int) ($_GET['follow_from'] ?? 0);
@@ -6810,10 +6825,12 @@ $legalProductsConfig = LegalProductSettings::config();
         $postImapLive = $postImapLive ?? false;
         $postImapAsync = $postImapAsync ?? false;
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
+        $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $warenwirtschaftSection = $warenwirtschaftSection ?? MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
         $kdvSection = $kdvSection ?? MenuRegistry::kdvSection($user);
+        $belegeFocus = $belegeFocus ?? '';
         $websitePageList = $websitePageList ?? [];
         $websitePageId = $websitePageId ?? null;
         $websiteMenuForm = $websiteMenuForm ?? ['items' => [['label' => '', 'url' => '']]];
@@ -7092,10 +7109,12 @@ $legalProductsConfig = LegalProductSettings::config();
             'dept',
             'menuItems',
             'settingsItem',
+            'dienstleistungenSection',
             'hrSection',
             'warenwirtschaftSection',
             'buchhaltungSection',
             'websiteSection',
+            'belegeFocus',
             'currentPage',
             'settingsNav',
             'settingsSelection',

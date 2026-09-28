@@ -76,6 +76,42 @@ final class MenuRegistry
     }
 
     /**
+     * Dienstleistungen: Auftrag/Angebot + Leistungen (zwischen Navigation und HR).
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function dienstleistungenSection(User $user): ?array
+    {
+        if (RoleResolver::isCustomer($user)) {
+            return null;
+        }
+
+        $items = [];
+        if (self::canAccessBuchhaltung($user)) {
+            $items[] = [
+                'slug' => 'dienstleistungen-auftraege',
+                'label' => 'Auftrag/Angebot',
+                'icon' => 'receipt',
+                'href' => '/app?page=buchhaltung-belege&focus=dienstleistungen',
+            ];
+        }
+        if (DepartmentAccess::userCanManageArticleCatalog($user) && RoleResolver::canEdit($user)) {
+            $items[] = [
+                'slug' => 'artikel-leistungen',
+                'label' => 'Leistungen',
+                'icon' => 'catalog',
+                'href' => '/app?page=artikel-leistungen',
+            ];
+        }
+
+        if ($items === []) {
+            return null;
+        }
+
+        return ['label' => 'Dienstleistungen', 'items' => $items];
+    }
+
+    /**
      * Warenwirtschaft: Katalog, Lager, Rezeptur.
      *
      * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
@@ -92,7 +128,7 @@ final class MenuRegistry
         $items = [
             [
                 'slug' => 'artikel-leistungen',
-                'label' => 'Artikel & Leistungen',
+                'label' => 'Artikel',
                 'icon' => 'catalog',
                 'href' => '/app?page=artikel-leistungen',
             ],
@@ -376,6 +412,7 @@ final class MenuRegistry
             'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
             'post' => 'Postfächer, Eingang und Nachrichten versenden.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
+            'dienstleistungen-auftraege' => 'Angebote und Aufträge — Planung.',
             'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
             'rezeptur' => 'Stücklisten und Fertigungszeit — Vorkalkulation folgt schrittweise.',
             'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
@@ -430,6 +467,19 @@ final class MenuRegistry
                 'href' => $item['href'],
                 'description' => $descriptions[$item['slug']] ?? '',
             ];
+        }
+
+        $dienstleistungen = self::dienstleistungenSection($user);
+        if ($dienstleistungen !== null) {
+            foreach ($dienstleistungen['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => $descriptions[$item['slug']] ?? '',
+                ];
+            }
         }
 
         $hr = self::hrSection($user);
