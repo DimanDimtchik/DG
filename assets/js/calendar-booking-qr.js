@@ -215,21 +215,65 @@
     }
   }
 
+  function previewPixelSize() {
+    var requested = parseInt(val('dg-qr-size', '280'), 10) || 280;
+    var panel = document.querySelector('.dg-booking-qr-preview-panel');
+    var avail = panel ? panel.clientWidth - 40 : 0;
+    if (avail < 140) {
+      avail = requested;
+    }
+    var framePad = 0;
+    if (val('dg-qr-frame-enabled', '0') === '1') {
+      framePad =
+        2 *
+        ((parseInt(val('dg-qr-frame-padding', '0'), 10) || 0) +
+          (parseInt(val('dg-qr-frame-width', '0'), 10) || 0));
+    }
+    return Math.max(140, Math.min(requested, avail - framePad));
+  }
+
+  /** Kreis-Form: eckige Module erzeugen gezackte Ränder — weicher machen. */
+  function harmonizeCircleStyles() {
+    if (val('dg-qr-shape', 'square') !== 'circle') {
+      return;
+    }
+    var dots = document.getElementById('dg-qr-dots');
+    var corners = document.getElementById('dg-qr-corners-sq');
+    var cornerDot = document.getElementById('dg-qr-corners-dot');
+    if (dots && dots.value === 'square') {
+      dots.value = 'rounded';
+    }
+    if (corners && corners.value === 'square') {
+      corners.value = 'extra-rounded';
+    }
+    if (cornerDot && cornerDot.value === 'square') {
+      cornerDot.value = 'dot';
+    }
+  }
+
   function readOptions(pixelSize) {
     var frameEnabled = val('dg-qr-frame-enabled', '0') === '1';
     var fg = val('dg-qr-fg', '#1a1a1a');
+    var shape = val('dg-qr-shape', 'square');
+    var margin = parseInt(val('dg-qr-margin', '12'), 10) || 0;
+    if (shape === 'circle' && margin < 8) {
+      margin = 8;
+    }
     var styling = {
       width: pixelSize,
       height: pixelSize,
       type: 'canvas',
       data: root.getAttribute('data-public-url') || '',
-      margin: parseInt(val('dg-qr-margin', '12'), 10) || 0,
-      shape: val('dg-qr-shape', 'square'),
+      margin: margin,
+      shape: shape,
       qrOptions: { errorCorrectionLevel: errorCorrection() },
       dotsOptions: { type: val('dg-qr-dots', 'rounded'), color: fg },
       cornersSquareOptions: { type: val('dg-qr-corners-sq', 'extra-rounded'), color: fg },
       cornersDotOptions: { type: val('dg-qr-corners-dot', 'dot'), color: fg },
-      backgroundOptions: { color: val('dg-qr-bg', '#ffffff') },
+      backgroundOptions: {
+        color: val('dg-qr-bg', '#ffffff'),
+        round: shape === 'circle' ? 1 : 0,
+      },
     };
     var imageUrl = centerImageUrl();
     if (imageUrl) {
@@ -280,6 +324,7 @@
       return;
     }
     toggleCenterUi();
+    harmonizeCircleStyles();
     var url = root.getAttribute('data-public-url') || '';
     if (!url) {
       setStatus('Keine Buchungs-URL.', true);
@@ -299,7 +344,7 @@
       return;
     }
 
-    var opts = readOptions(parseInt(val('dg-qr-size', '280'), 10) || 280);
+    var opts = readOptions(previewPixelSize());
     applyFrameStyles(opts.frame);
     var cap = document.getElementById('dg-qr-caption-preview');
     if (cap) {
@@ -313,7 +358,11 @@
     try {
       qrInstance = new window.QRCodeStyling(opts.styling);
       qrInstance.append(host);
-      setStatus(usesCenter() ? 'Tipp: Mit dem Handy scannen und Lesbarkeit prüfen.' : '');
+      var tip = usesCenter() ? 'Tipp: Mit dem Handy scannen und Lesbarkeit prüfen.' : '';
+      if (val('dg-qr-shape', 'square') === 'circle') {
+        tip = (tip ? tip + ' ' : '') + 'Kreis-Form: Module und Ecken wurden weicher gesetzt.';
+      }
+      setStatus(tip);
       updateFlyerSheet();
     } catch (e) {
       setStatus('QR-Code konnte nicht erzeugt werden.', true);
@@ -735,6 +784,7 @@
       return;
     }
     try {
+      harmonizeCircleStyles();
       var exportSize = parseInt(val('dg-qr-export-size', '1200'), 10) || 1200;
       var opts = readOptions(exportSize);
       var instance = new window.QRCodeStyling(
@@ -767,6 +817,7 @@
       setStatus('QR-Bibliothek nicht geladen.', true);
       return;
     }
+    harmonizeCircleStyles();
     var win = window.open('', '_blank', 'width=800,height=900');
     if (!win) {
       setStatus('Popup blockiert — Druckfenster erlauben.', true);
@@ -1106,6 +1157,12 @@
 
   renderEmojiPicker();
   updateFlyerSheet();
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderPreview, 180);
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderPreview);

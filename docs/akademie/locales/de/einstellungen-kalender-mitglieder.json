@@ -1,0 +1,136 @@
+{
+  "video_slug": "einstellungen-kalender-mitglieder",
+  "locale": "de",
+  "title": "Einstellungen — Kalender-Mitglieder",
+  "voice": "de-DE-KatjaNeural",
+  "practice": {
+    "dest": "einstellungen-kalender-mitglieder",
+    "label": "Zur Stelle: Mitarbeiter"
+  },
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video richten wir Kalender-Mitarbeiter ein — die Personen, die für Termine und Online-Buchung buchbar sind."
+    },
+    {
+      "key": "nav-settings",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "einstellungen",
+      "narration": "Öffnen Sie die Einstellungen."
+    },
+    {
+      "key": "page-overview",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "overview",
+      "narration": "Unter Termine, Bereiche und Mitglieder öffnen Sie den Tab Mitarbeiter. Jeder Eintrag braucht einen Mitarbeiter-Kontakt aus den Kontakten."
+    },
+    {
+      "key": "list",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "list",
+      "section": "list",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Die Liste zeigt vorhandene Kalender-Mitarbeiter mit Bereichen, Kontakt und Status."
+    },
+    {
+      "key": "form",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "form",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Unten legen Sie einen neuen Mitarbeiter an."
+    },
+    {
+      "key": "field-contact",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "contact_id",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Kontakt ist Pflicht — wählen Sie einen Mitarbeiter-Kontakt. Stammdaten pflegen Sie unter Kontakte."
+    },
+    {
+      "key": "field-name",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "name",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Anzeigename im Kalender — leer lassen, dann gilt der Kontaktname."
+    },
+    {
+      "key": "field-areas",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "area_ids",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Bereiche sind Pflicht — mindestens einen ankreuzen, in dem der Mitarbeiter buchbar sein soll."
+    },
+    {
+      "key": "field-sort",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "sort_order",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Reihenfolge steuert die Sortierung in Auswahlfeldern."
+    },
+    {
+      "key": "field-user",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "user_id",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "CRM-Benutzer ist optional — verknüpft den Kalender-Eintrag mit einem Login."
+    },
+    {
+      "key": "field-supervisor",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "supervisor_id",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Vorgesetzter ist optional — ein anderer Kalender-Mitarbeiter als Leitung."
+    },
+    {
+      "key": "field-active",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "is_active",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Aktiv bedeutet: der Mitarbeiter ist buchbar. Abschalten ohne Löschen."
+    },
+    {
+      "key": "field-save",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "submit",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Mit Mitarbeiter speichern erscheint der Eintrag in der Liste."
+    },
+    {
+      "key": "absences",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "focus_field",
+      "field": "absences",
+      "section": "absences",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder-regions.json",
+      "narration": "Weiter unten: Abwesenheiten blockieren Buchungstage. Genehmigte Einträge kommen oft aus der Zeiterfassung."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "overview",
+      "narration": "Ohne Kontakt und Bereich ist niemand online buchbar. Viel Erfolg!"
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "width": 1920,
+  "height": 1432,
+  "sections": {
+    "form": {
+      "x": 816,
+      "y": 672,
+      "w": 459,
+      "h": 410
+    },
+    "presets": {
+      "x": 816,
+      "y": 320,
+      "w": 778,
+      "h": 288
+    },
+    "colors": {
+      "x": 816,
+      "y": 632,
+      "w": 459,
+      "h": 525
+    },
+    "preview": {
+      "x": 1299,
+      "y": 632,
+      "w": 295,
+      "h": 209
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1004,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "presets": {
+      "x": 816,
+      "y": 320,
+      "w": 778,
+      "h": 288,
+      "label": ".dg-cal-color-presets"
+    },
+    "colors": {
+      "x": 816,
+      "y": 672,
+      "w": 459,
+      "h": 410,
+      "label": ".dg-cal-appearance-fields"
+    },
+    "primary_color": {
+      "x": 816,
+      "y": 672,
+      "w": 221,
+      "h": 101,
+      "label": "Primärfarbe (Buttons)"
+    },
+    "button_hover": {
+      "x": 1053,
+      "y": 672,
+      "w": 221,
+      "h": 101,
+      "label": "Button Hover-Farbe"
+    },
+    "slot_bg": {
+      "x": 816,
+      "y": 785,
+      "w": 221,
+      "h": 86,
+      "label": "Termin-Slot Hintergrund"
+    },
+    "slot_hover": {
+      "x": 1053,
+      "y": 785,
+      "w": 221,
+      "h": 86,
+      "label": "Termin-Slot Hover"
+    },
+    "slot_selected_bg": {
+      "x": 816,
+      "y": 883,
+      "w": 221,
+      "h": 86,
+      "label": "Ausgewählter Termin Hintergrund"
+    },
+    "slot_selected_border": {
+      "x": 1053,
+      "y": 883,
+      "w": 221,
+      "h": 86,
+      "label": "Ausgewählter Termin Rahmen"
+    },
+    "booked_bg": {
+      "x": 816,
+      "y": 981,
+      "w": 221,
+      "h": 101,
+      "label": "Gebuchter Termin Hintergrund"
+    },
+    "preview": {
+      "x": 1299,
+      "y": 672,
+      "w": 295,
+      "h": 169,
+      "label": "#dg-cal-appearance-preview"
+    },
+    "submit": {
+      "x": 816,
+      "y": 1119,
+      "w": 183,
+      "h": 38,
+      "label": "calendar_appearance_save"
+    }
+  }
+}

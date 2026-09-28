@@ -165,6 +165,7 @@ $ctaPresets = [
               <option value="square"<?= ($qr['shape'] ?? '') === 'square' ? ' selected' : '' ?>>Quadratisch</option>
               <option value="circle"<?= ($qr['shape'] ?? '') === 'circle' ? ' selected' : '' ?>>Kreis</option>
             </select>
+            <small class="dg-field-hint">Bei Kreis werden eckige Module automatisch weicher dargestellt.</small>
           </label>
           <label class="dg-field">
             <span>Eck-Rahmen</span>

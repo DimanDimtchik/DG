@@ -1,0 +1,97 @@
+{
+  "video_slug": "einstellungen-arbeitszeiten",
+  "locale": "de",
+  "title": "Einstellungen — Arbeitszeiten für Termine",
+  "voice": "de-DE-KatjaNeural",
+  "practice": {
+    "dest": "einstellungen-arbeitszeiten",
+    "label": "Zur Stelle: Arbeitszeiten"
+  },
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video richten wir die Arbeitszeiten für Termine ein. Damit steuern Sie, an welchen Tagen und Uhrzeiten freie Termine angeboten werden — im Kalender und bei der Online-Buchung."
+    },
+    {
+      "key": "nav-settings",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "einstellungen",
+      "narration": "Starten Sie am Dashboard und öffnen Sie die Einstellungen."
+    },
+    {
+      "key": "page-overview",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten.png",
+      "mode": "overview",
+      "narration": "Unter Termine finden Sie den Punkt Arbeitszeiten. Hier legen Sie die globalen Öffnungszeiten fest — also das Zeitfenster, in dem Termine buchbar sind."
+    },
+    {
+      "key": "list-overview",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten.png",
+      "mode": "focus_field",
+      "field": "list",
+      "section": "list",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-regions.json",
+      "narration": "Oben sehen Sie die vorhandenen Regeln: ab welchem Datum sie gelten, an welchen Wochentagen, und von wann bis wann."
+    },
+    {
+      "key": "form-open",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu.png",
+      "mode": "overview",
+      "narration": "Um eine neue Regel anzulegen, öffnen Sie Neue Arbeitszeit hinzufügen."
+    },
+    {
+      "key": "field-start-date",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu.png",
+      "mode": "focus_field",
+      "field": "start_date",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu-regions.json",
+      "narration": "Ab Datum legt fest, ab wann diese Zeiten gelten. Oft nutzen Sie den ersten Januar für das ganze Jahr — oder ein späteres Datum, wenn sich die Zeiten ändern."
+    },
+    {
+      "key": "field-start-time",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu.png",
+      "mode": "focus_field",
+      "field": "start_time",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu-regions.json",
+      "narration": "Die Startzeit ist der früheste Termin am Tag — zum Beispiel neun Uhr."
+    },
+    {
+      "key": "field-end-time",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu.png",
+      "mode": "focus_field",
+      "field": "end_time",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu-regions.json",
+      "narration": "Die Endzeit ist das Ende des Buchungsfensters — zum Beispiel siebzehn Uhr."
+    },
+    {
+      "key": "field-weekdays",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu.png",
+      "mode": "focus_field",
+      "field": "weekdays",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu-regions.json",
+      "narration": "Bei den Wochentagen haken Sie an, an welchen Tagen Termine angeboten werden. Standard ist Montag bis Freitag. Wochenende lassen Sie frei, wenn Sie geschlossen haben."
+    },
+    {
+      "key": "field-submit",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu.png",
+      "mode": "focus_field",
+      "field": "submit",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-arbeitszeiten-neu-regions.json",
+      "narration": "Mit Arbeitszeit hinzufügen speichern Sie die Regel. Sie erscheint danach in der Liste."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten.png",
+      "mode": "overview",
+      "narration": "Sie können mehrere Regeln hinterlegen — zum Beispiel andere Zeiten ab einem Stichtag. Ohne passende Arbeitszeiten bleiben freie Online-Termine leer. Viel Erfolg!"
+    }
+  ]
+}

@@ -112,6 +112,72 @@ SECTION_JS = """() => {
         if (block) sections['embed'] = block;
     }
 
+    const workingHoursBody = document.querySelector('.dg-settings-main__body');
+    if (workingHoursBody && document.querySelector('button[name="working_hours_save"], button[name="working_hours_delete"]')) {
+        const listWrap = workingHoursBody.querySelector('.dg-table-wrap');
+        if (listWrap) {
+            const block = rect(listWrap);
+            if (block) sections['list'] = block;
+        }
+        const formBlock = workingHoursBody.querySelector('details.dg-collapsible-form')
+            || workingHoursBody.querySelector('form.dg-form');
+        if (formBlock) {
+            const block = rect(formBlock);
+            if (block) sections['form'] = block;
+        }
+    }
+
+    const calPresets = document.querySelector('.dg-cal-color-presets');
+    if (calPresets) {
+        const block = rect(calPresets);
+        if (block) sections['presets'] = block;
+    }
+    const calColors = document.querySelector('.dg-cal-appearance-fields, .dg-cal-appearance-form');
+    if (calColors) {
+        const block = rect(calColors);
+        if (block) sections['colors'] = block;
+    }
+    const calPreview = document.querySelector('.dg-cal-appearance-preview-wrap, #dg-cal-appearance-preview');
+    if (calPreview) {
+        const block = rect(calPreview);
+        if (block) sections['preview'] = block;
+    }
+
+    const areaForm = document.getElementById('dg-calendar-area-form');
+    if (areaForm) {
+        const block = rect(areaForm);
+        if (block) sections['form'] = block;
+        const list = document.querySelector('.dg-cal-staff-table');
+        if (list) {
+            const lb = rect(list.closest('.dg-table-wrap') || list);
+            if (lb) sections['list'] = lb;
+        }
+    }
+    const empForm = document.getElementById('dg-calendar-employee-form');
+    if (empForm) {
+        const block = rect(empForm);
+        if (block) sections['form'] = block;
+        const list = document.querySelector('.dg-cal-staff-table');
+        if (list) {
+            const lb = rect(list.closest('.dg-table-wrap') || list);
+            if (lb) sections['list'] = lb;
+        }
+        const absH = Array.from(document.querySelectorAll('h3.dg-subsection-title')).find(
+            (h) => /Abwesenheiten/i.test(h.textContent || '')
+        );
+        if (absH) {
+            let r = rect(absH);
+            let el = absH.nextElementSibling;
+            let n = 0;
+            while (el && n < 6) {
+                r = union(r, rect(el));
+                el = el.nextElementSibling;
+                n++;
+            }
+            if (r) sections['absences'] = r;
+        }
+    }
+
     const emailFrame = document.getElementById('dg-academy-email-frame');
     if (emailFrame) {
         const block = rect(emailFrame);

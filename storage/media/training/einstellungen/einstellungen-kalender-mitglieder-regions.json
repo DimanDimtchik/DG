@@ -1,0 +1,108 @@
+{
+  "width": 1920,
+  "height": 2757,
+  "sections": {
+    "form": {
+      "x": 835,
+      "y": 1960,
+      "w": 740,
+      "h": 446
+    },
+    "list": {
+      "x": 835,
+      "y": 377,
+      "w": 740,
+      "h": 1543
+    },
+    "absences": {
+      "x": 835,
+      "y": 2471,
+      "w": 740,
+      "h": 200
+    },
+    "subtabs": {
+      "x": 816,
+      "y": 248,
+      "w": 778,
+      "h": 36
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1004,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "list": {
+      "x": 836,
+      "y": 378,
+      "w": 738,
+      "h": 1541,
+      "label": ".dg-cal-staff-table"
+    },
+    "form": {
+      "x": 835,
+      "y": 1960,
+      "w": 740,
+      "h": 446,
+      "label": "#dg-calendar-employee-form"
+    },
+    "contact_id": {
+      "x": 835,
+      "y": 1960,
+      "w": 236,
+      "h": 98,
+      "label": "Kontakt (Mitarbeiter) *"
+    },
+    "name": {
+      "x": 835,
+      "y": 2070,
+      "w": 740,
+      "h": 57,
+      "label": "Anzeigename (Kalender)"
+    },
+    "area_ids": {
+      "x": 835,
+      "y": 2139,
+      "w": 740,
+      "h": 90,
+      "label": "Bereiche *"
+    },
+    "sort_order": {
+      "x": 835,
+      "y": 2241,
+      "w": 236,
+      "h": 58,
+      "label": "Reihenfolge"
+    },
+    "user_id": {
+      "x": 1087,
+      "y": 2241,
+      "w": 236,
+      "h": 58,
+      "label": "CRM-Benutzer"
+    },
+    "supervisor_id": {
+      "x": 1339,
+      "y": 2241,
+      "w": 236,
+      "h": 58,
+      "label": "Vorgesetzter"
+    },
+    "is_active": {
+      "x": 835,
+      "y": 2311,
+      "w": 236,
+      "h": 20,
+      "label": "Mitarbeiter ist aktiv"
+    },
+    "submit": {
+      "x": 835,
+      "y": 2368,
+      "w": 155,
+      "h": 38,
+      "label": "#dg-employee-submit"
+    }
+  }
+}

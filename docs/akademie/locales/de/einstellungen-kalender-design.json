@@ -1,0 +1,136 @@
+{
+  "video_slug": "einstellungen-kalender-design",
+  "locale": "de",
+  "title": "Einstellungen — Kalender Design",
+  "voice": "de-DE-KatjaNeural",
+  "practice": {
+    "dest": "einstellungen-kalender-design",
+    "label": "Zur Stelle: Kalender Design"
+  },
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video gestalten wir das Kalender Design — also die Farben Ihrer öffentlichen Terminbuchung, die Kunden auf der Website sehen."
+    },
+    {
+      "key": "nav-settings",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "einstellungen",
+      "narration": "Öffnen Sie die Einstellungen vom Dashboard aus."
+    },
+    {
+      "key": "page-overview",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "overview",
+      "narration": "Unter Termine wählen Sie Kalender Design. Hier passen Sie Vorlagen und jede einzelne Farbe an — die Vorschau zeigt Buttons und Terminzeiten wie auf der Buchungsseite."
+    },
+    {
+      "key": "presets",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "presets",
+      "section": "presets",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Oben finden Sie Farbvorlagen — zum Beispiel Kaffee Braun, Klassisch Blau oder Rosé und Beauty. Ein Klick füllt alle Felder aus. Speichern nicht vergessen."
+    },
+    {
+      "key": "colors-section",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "colors",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Darunter stellen Sie die sieben Einzelfarben selbst ein, wenn Sie von der Vorlage abweichen möchten."
+    },
+    {
+      "key": "field-primary",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "primary_color",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Primärfarbe: Farbe für Buttons und aktive Elemente — zum Beispiel Termin buchen."
+    },
+    {
+      "key": "field-button-hover",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "button_hover",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Button Hover-Farbe: etwas dunkler oder heller, wenn die Maus über dem Button liegt."
+    },
+    {
+      "key": "field-slot-bg",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "slot_bg",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Termin-Slot Hintergrund: Hintergrundfarbe für freie, buchbare Zeiten."
+    },
+    {
+      "key": "field-slot-hover",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "slot_hover",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Termin-Slot Hover: Farbe, wenn der Kunde mit der Maus über eine freie Zeit fährt."
+    },
+    {
+      "key": "field-slot-selected-bg",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "slot_selected_bg",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Ausgewählter Termin Hintergrund: so wirkt die Zeit, die der Kunde gerade gewählt hat."
+    },
+    {
+      "key": "field-slot-selected-border",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "slot_selected_border",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Ausgewählter Termin Rahmen: die Rahmenfarbe um die gewählte Zeit — gut sichtbar neben der Primärfarbe."
+    },
+    {
+      "key": "field-booked-bg",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "booked_bg",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Gebuchter Termin Hintergrund: Farbe für Zeiten, die schon vergeben sind und nicht mehr wählbar."
+    },
+    {
+      "key": "preview",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "preview",
+      "section": "preview",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Rechts sehen Sie die Live-Vorschau. Änderungen erscheinen hier sofort — noch bevor Sie speichern."
+    },
+    {
+      "key": "field-save",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "focus_field",
+      "field": "submit",
+      "section": "colors",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-design-regions.json",
+      "narration": "Mit Kalender Design speichern übernehmen Sie alle Farben dauerhaft für Shortcode und Online-Buchung."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "overview",
+      "narration": "So wirkt Ihr Buchungskalender einheitlich und markengerecht. Feinjustierung jederzeit wieder unter Einstellungen, Kalender Design. Viel Erfolg!"
+    }
+  ]
+}

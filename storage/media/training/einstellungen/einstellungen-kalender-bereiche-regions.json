@@ -1,0 +1,81 @@
+{
+  "width": 1920,
+  "height": 1432,
+  "sections": {
+    "form": {
+      "x": 835,
+      "y": 562,
+      "w": 740,
+      "h": 205
+    },
+    "list": {
+      "x": 835,
+      "y": 377,
+      "w": 740,
+      "h": 145
+    },
+    "subtabs": {
+      "x": 816,
+      "y": 248,
+      "w": 778,
+      "h": 36
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1004,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "list": {
+      "x": 836,
+      "y": 378,
+      "w": 738,
+      "h": 143,
+      "label": ".dg-cal-staff-table"
+    },
+    "form": {
+      "x": 835,
+      "y": 562,
+      "w": 740,
+      "h": 205,
+      "label": "#dg-calendar-area-form"
+    },
+    "name": {
+      "x": 835,
+      "y": 562,
+      "w": 236,
+      "h": 98,
+      "label": "Bezeichnung *"
+    },
+    "department_id": {
+      "x": 1087,
+      "y": 562,
+      "w": 236,
+      "h": 98,
+      "label": "Abteilung (CRM)"
+    },
+    "sort_order": {
+      "x": 1339,
+      "y": 562,
+      "w": 236,
+      "h": 98,
+      "label": "Reihenfolge"
+    },
+    "is_active": {
+      "x": 835,
+      "y": 672,
+      "w": 236,
+      "h": 20,
+      "label": "Bereich ist aktiv"
+    },
+    "submit": {
+      "x": 835,
+      "y": 729,
+      "w": 133,
+      "h": 38,
+      "label": "#dg-area-submit"
+    }
+  }
+}

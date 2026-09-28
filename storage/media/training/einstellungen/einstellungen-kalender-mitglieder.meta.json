@@ -1,0 +1,68 @@
+{
+  "title": "Einstellungen — Kalender-Mitglieder",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 89.7,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 7.72
+    },
+    {
+      "key": "nav-settings",
+      "duration_sec": 2.52
+    },
+    {
+      "key": "page-overview",
+      "duration_sec": 10.32
+    },
+    {
+      "key": "list",
+      "duration_sec": 6.16
+    },
+    {
+      "key": "form",
+      "duration_sec": 3.48
+    },
+    {
+      "key": "field-contact",
+      "duration_sec": 7.56
+    },
+    {
+      "key": "field-name",
+      "duration_sec": 5.08
+    },
+    {
+      "key": "field-areas",
+      "duration_sec": 6.36
+    },
+    {
+      "key": "field-sort",
+      "duration_sec": 4.16
+    },
+    {
+      "key": "field-user",
+      "duration_sec": 5.76
+    },
+    {
+      "key": "field-supervisor",
+      "duration_sec": 5.44
+    },
+    {
+      "key": "field-active",
+      "duration_sec": 6.32
+    },
+    {
+      "key": "field-save",
+      "duration_sec": 4.32
+    },
+    {
+      "key": "absences",
+      "duration_sec": 8.68
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 5.8
+    }
+  ]
+}

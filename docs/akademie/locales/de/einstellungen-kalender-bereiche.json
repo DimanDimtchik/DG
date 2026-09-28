@@ -1,0 +1,100 @@
+{
+  "video_slug": "einstellungen-kalender-bereiche",
+  "locale": "de",
+  "title": "Einstellungen — Kalender-Bereiche",
+  "voice": "de-DE-KatjaNeural",
+  "practice": {
+    "dest": "einstellungen-kalender-bereiche",
+    "label": "Zur Stelle: Bereiche"
+  },
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video legen wir Kalender-Bereiche an — Tätigkeitsfelder für Termine und Online-Buchung."
+    },
+    {
+      "key": "nav-settings",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "einstellungen",
+      "narration": "Öffnen Sie die Einstellungen."
+    },
+    {
+      "key": "page-overview",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "overview",
+      "narration": "Unter Termine, Bereiche und Mitglieder öffnen Sie den Tab Bereiche."
+    },
+    {
+      "key": "list",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "list",
+      "section": "list",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Die Liste zeigt Name, optionale Abteilung, Reihenfolge und ob der Bereich aktiv ist."
+    },
+    {
+      "key": "form",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "form",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Unten legen Sie einen neuen Bereich an."
+    },
+    {
+      "key": "field-name",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "name",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Bezeichnung ist Pflicht — zum Beispiel Beratung oder Behandlung."
+    },
+    {
+      "key": "field-department",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "department_id",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Abteilung ist optional. Wenn gesetzt, gelten nur Mitarbeiter dieser Abteilung für den Bereich."
+    },
+    {
+      "key": "field-sort",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "sort_order",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Reihenfolge steuert die Sortierung in Listen und Auswahlfeldern."
+    },
+    {
+      "key": "field-active",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "is_active",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Aktiv bedeutet: der Bereich ist buchbar und sichtbar. Abschalten, ohne ihn zu löschen."
+    },
+    {
+      "key": "field-save",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "focus_field",
+      "field": "submit",
+      "section": "form",
+      "regions_file": "storage/media/training/einstellungen/einstellungen-kalender-bereiche-regions.json",
+      "narration": "Mit Bereich speichern erscheint er in der Liste. Danach können Sie Mitarbeiter zuordnen."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "overview",
+      "narration": "Bereiche zuerst anlegen — Mitarbeiter brauchen mindestens einen Bereich. Viel Erfolg!"
+    }
+  ]
+}

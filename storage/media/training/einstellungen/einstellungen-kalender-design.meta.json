@@ -1,0 +1,68 @@
+{
+  "title": "Einstellungen — Kalender Design",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 111.2,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 8.64
+    },
+    {
+      "key": "nav-settings",
+      "duration_sec": 3.6
+    },
+    {
+      "key": "page-overview",
+      "duration_sec": 11.36
+    },
+    {
+      "key": "presets",
+      "duration_sec": 11.72
+    },
+    {
+      "key": "colors-section",
+      "duration_sec": 6.72
+    },
+    {
+      "key": "field-primary",
+      "duration_sec": 6.2
+    },
+    {
+      "key": "field-button-hover",
+      "duration_sec": 6.0
+    },
+    {
+      "key": "field-slot-bg",
+      "duration_sec": 5.76
+    },
+    {
+      "key": "field-slot-hover",
+      "duration_sec": 6.0
+    },
+    {
+      "key": "field-slot-selected-bg",
+      "duration_sec": 6.24
+    },
+    {
+      "key": "field-slot-selected-border",
+      "duration_sec": 7.04
+    },
+    {
+      "key": "field-booked-bg",
+      "duration_sec": 6.84
+    },
+    {
+      "key": "preview",
+      "duration_sec": 6.84
+    },
+    {
+      "key": "field-save",
+      "duration_sec": 6.76
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 11.44
+    }
+  ]
+}

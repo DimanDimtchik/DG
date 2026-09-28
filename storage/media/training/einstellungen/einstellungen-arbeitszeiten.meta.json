@@ -1,0 +1,52 @@
+{
+  "title": "Einstellungen — Arbeitszeiten für Termine",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 94.8,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 12.76
+    },
+    {
+      "key": "nav-settings",
+      "duration_sec": 4.2
+    },
+    {
+      "key": "page-overview",
+      "duration_sec": 11.08
+    },
+    {
+      "key": "list-overview",
+      "duration_sec": 8.0
+    },
+    {
+      "key": "form-open",
+      "duration_sec": 5.72
+    },
+    {
+      "key": "field-start-date",
+      "duration_sec": 11.4
+    },
+    {
+      "key": "field-start-time",
+      "duration_sec": 5.04
+    },
+    {
+      "key": "field-end-time",
+      "duration_sec": 5.16
+    },
+    {
+      "key": "field-weekdays",
+      "duration_sec": 12.64
+    },
+    {
+      "key": "field-submit",
+      "duration_sec": 6.76
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 12.08
+    }
+  ]
+}

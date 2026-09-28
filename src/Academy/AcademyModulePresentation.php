@@ -294,6 +294,10 @@ final class AcademyModulePresentation
             'terminkalender-neuer-termin' => 'terminkalender',
             'terminkalender-online-buchung' => 'terminkalender',
             'terminkalender-online-kunde' => 'terminkalender',
+            'einstellungen-arbeitszeiten' => 'einstellungen',
+            'einstellungen-kalender-design' => 'einstellungen',
+            'einstellungen-kalender-bereiche' => 'einstellungen',
+            'einstellungen-kalender-mitglieder' => 'einstellungen',
             'lager-ueberblick' => 'lager',
             'lager-platz-check' => 'lager',
             'lager-ein-ausgang' => 'lager',
@@ -325,6 +329,9 @@ final class AcademyModulePresentation
         }
         if (str_starts_with($slug, 'terminkalender')) {
             return 'terminkalender';
+        }
+        if (str_starts_with($slug, 'einstellungen')) {
+            return 'einstellungen';
         }
         if (str_starts_with($slug, 'lager')) {
             return 'lager';
@@ -401,6 +408,10 @@ final class AcademyModulePresentation
             'terminkalender-online-buchung' => 'terminkalender',
             'terminkalender-online-kunde' => 'terminkalender',
             'terminkalender-ueberblick' => 'terminkalender',
+            'einstellungen-arbeitszeiten' => 'einstellungen-arbeitszeiten',
+            'einstellungen-kalender-design' => 'einstellungen-kalender-design',
+            'einstellungen-kalender-bereiche' => 'einstellungen-kalender-bereiche',
+            'einstellungen-kalender-mitglieder' => 'einstellungen-kalender-mitglieder',
             'lager-ueberblick' => 'lager',
             'lager-platz-check' => 'lager',
             'lager-ein-ausgang' => 'lager',
@@ -452,6 +463,22 @@ final class AcademyModulePresentation
             'terminkalender-neu' => [
                 'href' => '/app?page=terminkalender&action=new',
                 'label' => 'Neuen Termin anlegen',
+            ],
+            'einstellungen-arbeitszeiten' => [
+                'href' => '/app?page=einstellungen&tab=arbeitszeiten',
+                'label' => 'Zur Stelle: Arbeitszeiten',
+            ],
+            'einstellungen-kalender-design' => [
+                'href' => '/app?page=einstellungen&tab=kalender-darstellung',
+                'label' => 'Zur Stelle: Kalender Design',
+            ],
+            'einstellungen-kalender-bereiche' => [
+                'href' => '/app?page=einstellungen&tab=kalender-team&ctab=bereiche',
+                'label' => 'Zur Stelle: Bereiche',
+            ],
+            'einstellungen-kalender-mitglieder' => [
+                'href' => '/app?page=einstellungen&tab=kalender-team&ctab=mitarbeiter',
+                'label' => 'Zur Stelle: Mitarbeiter',
             ],
             'lager' => [
                 'href' => '/app?page=lager',

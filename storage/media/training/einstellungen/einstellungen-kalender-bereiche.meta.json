@@ -1,0 +1,52 @@
+{
+  "title": "Einstellungen — Kalender-Bereiche",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 62.2,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 6.76
+    },
+    {
+      "key": "nav-settings",
+      "duration_sec": 2.52
+    },
+    {
+      "key": "page-overview",
+      "duration_sec": 5.12
+    },
+    {
+      "key": "list",
+      "duration_sec": 6.8
+    },
+    {
+      "key": "form",
+      "duration_sec": 3.16
+    },
+    {
+      "key": "field-name",
+      "duration_sec": 4.4
+    },
+    {
+      "key": "field-department",
+      "duration_sec": 7.44
+    },
+    {
+      "key": "field-sort",
+      "duration_sec": 4.92
+    },
+    {
+      "key": "field-active",
+      "duration_sec": 7.36
+    },
+    {
+      "key": "field-save",
+      "duration_sec": 6.84
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 6.92
+    }
+  ]
+}

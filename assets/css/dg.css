@@ -5234,7 +5234,7 @@ body.dg-login-page {
 
 .dg-booking-qr-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.85fr);
   gap: 24px;
   align-items: start;
   margin-top: 12px;
@@ -5343,21 +5343,52 @@ body.dg-login-page {
   border-radius: 12px;
   background: #fff;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dg-booking-qr-print-area {
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
   margin: 8px auto 12px;
+  box-sizing: border-box;
 }
 
 .dg-booking-qr-frame {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
   background: #fff;
+  box-sizing: border-box;
+}
+
+#dg-qr-canvas-host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  line-height: 0;
+}
+
+#dg-qr-canvas-host canvas,
+#dg-qr-canvas-host svg {
+  display: block;
+  max-width: 100% !important;
+  height: auto !important;
 }
 
 .dg-booking-qr-caption {
   margin: 12px 0 0;
   font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #dg-qr-status.is-error {

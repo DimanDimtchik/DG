@@ -1,0 +1,40 @@
+{
+  "width": 1920,
+  "height": 1432,
+  "sections": {
+    "form": {
+      "x": 816,
+      "y": 373,
+      "w": 778,
+      "h": 42
+    },
+    "list": {
+      "x": 816,
+      "y": 288,
+      "w": 778,
+      "h": 69
+    },
+    "kichel": {
+      "x": 1844,
+      "y": 1004,
+      "w": 56,
+      "h": 56
+    }
+  },
+  "fields": {
+    "list": {
+      "x": 816,
+      "y": 288,
+      "w": 778,
+      "h": 69,
+      "label": ".dg-settings-main__body .dg-table-wrap"
+    },
+    "nav_tab": {
+      "x": 516,
+      "y": 543,
+      "w": 258,
+      "h": 36,
+      "label": ".dg-settings-nav__link.is-active"
+    }
+  }
+}
