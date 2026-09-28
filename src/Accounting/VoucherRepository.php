@@ -1569,8 +1569,13 @@ final class VoucherRepository
         }
 
         MigrationRunner::runPending();
-        $voucher = self::findById($voucherId);
-        if ($voucher === null) {
+        // Ohne enrichRow/findById — sonst Rekursion mit markOfferExpiredIfDue.
+        $stmt = Database::pdo()->prepare(
+            'SELECT voucher_type, document_kind FROM dg_vouchers WHERE id = :id LIMIT 1'
+        );
+        $stmt->execute(['id' => $voucherId]);
+        $voucher = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($voucher)) {
             throw new InvalidArgumentException('Beleg nicht gefunden.');
         }
 

@@ -223,7 +223,21 @@ final class VoucherDocumentStatus
         }
 
         try {
-            VoucherRepository::updateDocumentStatus($id, self::EXPIRED);
+            // Direkter UPDATE — nicht updateDocumentStatus()/findById(), sonst Rekursion über enrichRow.
+            if (Database::isConfigured()) {
+                $stmt = Database::pdo()->prepare(
+                    'UPDATE dg_vouchers
+                     SET document_status = :document_status
+                     WHERE id = :id
+                       AND document_kind = \'offer\'
+                       AND is_draft = 0
+                       AND document_status NOT IN (\'expired\', \'cancelled\', \'accepted\')'
+                );
+                $stmt->execute([
+                    'document_status' => self::EXPIRED,
+                    'id' => $id,
+                ]);
+            }
             $voucher['document_status'] = self::EXPIRED;
         } catch (Throwable) {
         }
