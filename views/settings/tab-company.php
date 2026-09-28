@@ -295,7 +295,7 @@ $bankSummary = $filledBanks > 0
       </button>
     </header>
     <div class="dg-dept-accordion__panel" data-dept-panel hidden>
-    <p class="dg-field-hint">Ein oder mehrere Inhaber mit prozentualem Anteil am Unternehmen.</p>
+    <p class="dg-field-hint">Ein oder mehrere Inhaber mit prozentualem Anteil am Unternehmen. Der Inhaber mit den meisten Anteilen (CRM-Benutzer verknüpft) wird automatisch Abteilungsleiter der Geschäftsführung; bei gleichen Anteilen der zuerst eingetragene.</p>
     <div class="dg-company-repeater" id="dg-owners-repeater" data-repeater="owners">
       <?php foreach ($owners as $i => $owner) : ?>
         <div class="dg-company-repeater__row dg-company-repeater__row--owners" data-repeater-row>

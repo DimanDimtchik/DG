@@ -23,6 +23,7 @@ final class DepartmentRepository
 
         MigrationRunner::runPending();
         self::ensureSeeded();
+        self::ensureExecutiveChefLeaders();
 
         $pdo = Database::pdo();
         $stmt = $pdo->query(
@@ -275,6 +276,7 @@ final class DepartmentRepository
             }
 
             $pdo->commit();
+            self::ensureExecutiveChefLeaders(true);
             DepartmentAccess::resetCache();
         } catch (Throwable $e) {
             $pdo->rollBack();
@@ -404,6 +406,158 @@ final class DepartmentRepository
         $used[$id] = true;
 
         return $id;
+    }
+
+    /**
+     * Chef = Inhaber mit den meisten Anteilen (CRM-Benutzer verknüpft).
+     * Bei Gleichstand: erster Inhaber in der Liste. Ohne Inhaber-User: erster Admin.
+     * Nur der Chef ist Abteilungsleiter; andere Admins und Inhaber sind Mitglieder.
+     */
+    public static function ensureExecutiveChefLeaders(bool $force = false): void
+    {
+        static $done = false;
+        if ($done && !$force) {
+            return;
+        }
+        if (!self::useDatabase()) {
+            return;
+        }
+
+        $pdo = Database::pdo();
+        $deptId = self::resolveExecutiveDepartmentId($pdo);
+        if ($deptId === null) {
+            $done = true;
+
+            return;
+        }
+
+        $adminRole = (string) App::config('roles.admin', 'administrator');
+        $adminIds = [];
+        foreach (UserRepository::all() as $user) {
+            if ($user instanceof User && $user->hasRole($adminRole) && $user->id > 0) {
+                $adminIds[$user->id] = true;
+            }
+        }
+
+        $ownership = CompanyExtendedSettings::resolveExecutiveOwnership();
+        $ownerIds = $ownership['owner_user_ids'];
+        $chefId = (int) $ownership['leader_user_id'];
+
+        if ($chefId < 1) {
+            foreach (array_keys($adminIds) as $adminId) {
+                $chefId = (int) $adminId;
+                break;
+            }
+        }
+
+        if ($chefId < 1) {
+            $done = true;
+
+            return;
+        }
+
+        $existing = [];
+        $stmt = $pdo->prepare(
+            'SELECT user_id, member_role FROM dg_department_members WHERE department_id = :department_id'
+        );
+        $stmt->execute(['department_id' => $deptId]);
+        while ($row = $stmt->fetch()) {
+            $existing[(int) $row['user_id']] = (string) $row['member_role'];
+        }
+
+        $upsert = $pdo->prepare(
+            'INSERT INTO dg_department_members (department_id, user_id, member_role)
+             VALUES (:department_id, :user_id, :member_role)
+             ON DUPLICATE KEY UPDATE member_role = VALUES(member_role)'
+        );
+
+        // Ziel: genau ein Leiter (Chef); alle anderen Admins + Inhaber = Mitglied
+        $desired = [];
+        foreach ($ownerIds as $uid) {
+            $desired[$uid] = 'member';
+        }
+        foreach (array_keys($adminIds) as $uid) {
+            $desired[(int) $uid] = 'member';
+        }
+        $desired[$chefId] = 'leader';
+
+        $changed = false;
+        foreach ($desired as $uid => $role) {
+            if (($existing[$uid] ?? '') === $role) {
+                continue;
+            }
+            $upsert->execute([
+                'department_id' => $deptId,
+                'user_id' => $uid,
+                'member_role' => $role,
+            ]);
+            $changed = true;
+            $existing[$uid] = $role;
+        }
+
+        // Fremde Leiter (nicht Chef) auf Mitglied setzen — nicht löschen
+        foreach ($existing as $uid => $role) {
+            if ($uid === $chefId || $role !== 'leader') {
+                continue;
+            }
+            $upsert->execute([
+                'department_id' => $deptId,
+                'user_id' => $uid,
+                'member_role' => 'member',
+            ]);
+            $changed = true;
+        }
+
+        if ($changed) {
+            DepartmentAccess::resetCache();
+        }
+        $done = true;
+    }
+
+    /**
+     * @return string|null department_id
+     */
+    public static function resolveExecutiveDepartmentId(?PDO $pdo = null): ?string
+    {
+        if ($pdo === null) {
+            if (!self::useDatabase()) {
+                return null;
+            }
+            $pdo = Database::pdo();
+        }
+
+        $preferred = null;
+        $byName = null;
+        foreach ($pdo->query('SELECT id, name FROM dg_departments') as $row) {
+            $id = (string) ($row['id'] ?? '');
+            $name = mb_strtolower((string) ($row['name'] ?? ''));
+            if ($id === 'dept-geschaeftsfuehrung') {
+                $preferred = $id;
+                break;
+            }
+            if ($byName === null
+                && (str_contains($name, 'geschäftsführ') || str_contains($name, 'geschaeftsfuehr'))
+            ) {
+                $byName = $id;
+            }
+        }
+
+        return $preferred ?? $byName;
+    }
+
+    /**
+     * Prüft, ob die Abteilung die Geschäftsführung ist (Chef-Leiter).
+     */
+    public static function isExecutiveDepartment(string $departmentId, string $name = ''): bool
+    {
+        $departmentId = trim($departmentId);
+        if ($departmentId === 'dept-geschaeftsfuehrung') {
+            return true;
+        }
+        $nameLower = mb_strtolower($name);
+
+        return str_contains($nameLower, 'geschäftsführ')
+            || str_contains($nameLower, 'geschaeftsfuehr');
     }
 
     /**

@@ -14,7 +14,7 @@ $canManageTeams = !empty($canManageTeams);
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Abteilungen</h1>
-      <p class="dg-lead">Ansicht der in den Einstellungen gepflegten Abteilungen — nur Lesen. Teams und Mitarbeiter ohne Team je Abteilung.</p>
+      <p class="dg-lead">Ansicht der Abteilungen aus den Einstellungen (nur Lesen). Pro Abteilung: Teams, Mitarbeiter ohne Team und alle Abteilungsmitglieder. In der Geschäftsführung ist nur der Chef Abteilungsleiter (Inhaber mit den meisten Anteilen); andere Administratoren sind Mitglieder.</p>
     </div>
     <div class="dg-page-header__actions">
       <?php if ($canManageTeams) : ?>
@@ -30,82 +30,115 @@ $canManageTeams = !empty($canManageTeams);
   <?php elseif ($hrDepartments === []) : ?>
     <div class="dg-flash dg-flash--info">Noch keine Abteilungen. Bitte unter Einstellungen → HR → Abteilungen anlegen.</div>
   <?php else : ?>
-    <?php foreach ($hrDepartments as $dept) : ?>
-      <section class="dg-panel" style="margin-bottom: 1.25rem;">
-        <h2 class="dg-subsection-title" style="margin-top:0;">
-          <?= View::escape((string) ($dept['name'] ?? '')) ?>
-          <?php if (!empty($dept['is_hr'])) : ?>
-            <span class="dg-muted">· HR</span>
-          <?php endif; ?>
-        </h2>
-        <?php if (trim((string) ($dept['description'] ?? '')) !== '') : ?>
-          <p class="dg-lead"><?= View::escape((string) $dept['description']) ?></p>
-        <?php endif; ?>
-        <p class="dg-muted" style="margin:0 0 0.75rem;">
-          <?php
-            $flags = [];
-            if (!empty($dept['allow_article_catalog'])) {
-                $flags[] = 'Artikel/Leistungen';
-            }
-            if (!empty($dept['allow_contact_delete'])) {
-                $flags[] = 'Kontakte löschen';
-            }
-            $mod = is_array($dept['module_labels'] ?? null) ? $dept['module_labels'] : [];
-            echo View::escape(implode(' · ', array_merge($flags, $mod)) ?: 'Keine besonderen Modulrechte');
-          ?>
-        </p>
+    <div class="dg-dept-accordion__toolbar">
+      <button type="button" class="dg-button dg-button--small" id="dg-hr-dept-expand-all">Alle aufklappen</button>
+      <button type="button" class="dg-button dg-button--small" id="dg-hr-dept-collapse-all">Alle zuklappen</button>
+    </div>
 
-        <h3 class="dg-subsection-title">Teams</h3>
-        <?php $teams = is_array($dept['teams'] ?? null) ? $dept['teams'] : []; ?>
-        <?php if ($teams === []) : ?>
-          <p class="dg-muted">Keine Teams in dieser Abteilung.</p>
-        <?php else : ?>
-          <div class="dg-table-wrap">
-            <table class="dg-table dg-table--compact">
-              <thead>
-                <tr>
-                  <th>Team</th>
-                  <th>Mitglieder</th>
-                  <th>Inventar</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($teams as $team) : ?>
-                  <?php
-                    $members = is_array($team['members'] ?? null) ? $team['members'] : [];
-                    $assets = is_array($team['assets'] ?? null) ? $team['assets'] : [];
-                    $memberLabels = array_map(static fn (array $m): string => (string) ($m['label'] ?? ''), $members);
-                    $assetLabels = [];
-                    foreach ($assets as $asset) {
-                      $line = (string) ($asset['kind_label'] ?? '') . ': ' . (string) ($asset['name'] ?? '');
-                      if (!empty($asset['parent_asset_id'])) {
-                        $line .= ' (im Fahrzeug)';
-                      }
-                      $assetLabels[] = $line;
-                    }
-                  ?>
-                  <tr>
-                    <td><strong><?= View::escape((string) ($team['name'] ?? '')) ?></strong></td>
-                    <td><?= View::escape($memberLabels !== [] ? implode(', ', $memberLabels) : '—') ?></td>
-                    <td><?= View::escape($assetLabels !== [] ? implode('; ', $assetLabels) : '—') ?></td>
-                    <td><?= !empty($team['is_active']) ? 'Aktiv' : 'Inaktiv' ?></td>
-                    <td>
-                      <a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($team['id'] ?? 0) ?>">Öffnen</a>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
+    <div id="dg-hr-abteilungen-accordion" class="dg-dept-accordion">
+      <?php foreach ($hrDepartments as $dept) : ?>
+        <?php
+          $teams = is_array($dept['teams'] ?? null) ? $dept['teams'] : [];
+          $without = is_array($dept['members_without_team'] ?? null) ? $dept['members_without_team'] : [];
+          $allMembers = is_array($dept['members'] ?? null) ? $dept['members'] : [];
+          $summaryParts = [];
+          $teamCount = count($teams);
+          $memberCount = count($allMembers);
+          if ($teamCount > 0) {
+              $summaryParts[] = $teamCount === 1 ? '1 Team' : $teamCount . ' Teams';
+          }
+          if ($memberCount > 0) {
+              $summaryParts[] = $memberCount === 1 ? '1 Mitglied' : $memberCount . ' Mitglieder';
+          }
+          if (!empty($dept['is_hr'])) {
+              $summaryParts[] = 'HR';
+          }
+          $summary = $summaryParts !== [] ? implode(' · ', $summaryParts) : 'Keine Teams / Mitglieder';
+        ?>
+        <section class="dg-dept-card" data-hr-dept-card>
+          <header class="dg-dept-accordion__header">
+            <button type="button" class="dg-dept-accordion__trigger" data-hr-dept-toggle aria-expanded="false">
+              <span class="dg-dept-accordion__icon" aria-hidden="true"></span>
+              <span class="dg-dept-accordion__label">
+                <strong class="dg-dept-accordion__title">
+                  <?= View::escape((string) ($dept['name'] ?? '')) ?>
+                  <?php if (!empty($dept['is_hr'])) : ?>
+                    <span class="dg-muted">· HR</span>
+                  <?php endif; ?>
+                </strong>
+                <span class="dg-dept-accordion__meta"><?= View::escape($summary) ?></span>
+              </span>
+            </button>
+          </header>
 
-        <h3 class="dg-subsection-title">Mitarbeiter ohne Team</h3>
-        <?php $without = is_array($dept['members_without_team'] ?? null) ? $dept['members_without_team'] : []; ?>
+          <div class="dg-dept-accordion__panel" data-hr-dept-panel hidden>
+            <?php if (trim((string) ($dept['description'] ?? '')) !== '') : ?>
+              <p class="dg-lead"><?= View::escape((string) $dept['description']) ?></p>
+            <?php endif; ?>
+            <p class="dg-muted" style="margin:0 0 0.75rem;">
+              <?php
+                $flags = [];
+                if (!empty($dept['allow_article_catalog'])) {
+                    $flags[] = 'Artikel/Leistungen';
+                }
+                if (!empty($dept['allow_contact_delete'])) {
+                    $flags[] = 'Kontakte löschen';
+                }
+                $mod = is_array($dept['module_labels'] ?? null) ? $dept['module_labels'] : [];
+                echo View::escape(implode(' · ', array_merge($flags, $mod)) ?: 'Keine besonderen Modulrechte');
+              ?>
+            </p>
+
+            <h3 class="dg-subsection-title">Teams</h3>
+            <?php if ($teams === []) : ?>
+              <p class="dg-muted">Keine Teams in dieser Abteilung.</p>
+            <?php else : ?>
+              <div class="dg-table-wrap">
+                <table class="dg-table dg-table--compact">
+                  <thead>
+                    <tr>
+                      <th>Team</th>
+                      <th>Mitglieder</th>
+                      <th>Inventar</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($teams as $team) : ?>
+                      <?php
+                        $members = is_array($team['members'] ?? null) ? $team['members'] : [];
+                        $assets = is_array($team['assets'] ?? null) ? $team['assets'] : [];
+                        $memberLabels = array_map(static fn (array $m): string => (string) ($m['label'] ?? ''), $members);
+                        $assetLabels = [];
+                        foreach ($assets as $asset) {
+                          $line = (string) ($asset['kind_label'] ?? '') . ': ' . (string) ($asset['name'] ?? '');
+                          if (!empty($asset['parent_asset_id'])) {
+                            $line .= ' (im Fahrzeug)';
+                          }
+                          $assetLabels[] = $line;
+                        }
+                      ?>
+                      <tr>
+                        <td><strong><?= View::escape((string) ($team['name'] ?? '')) ?></strong></td>
+                        <td><?= View::escape($memberLabels !== [] ? implode(', ', $memberLabels) : '—') ?></td>
+                        <td><?= View::escape($assetLabels !== [] ? implode('; ', $assetLabels) : '—') ?></td>
+                        <td><?= !empty($team['is_active']) ? 'Aktiv' : 'Inaktiv' ?></td>
+                        <td>
+                          <a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($team['id'] ?? 0) ?>">Öffnen</a>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php endif; ?>
+
+            <h3 class="dg-subsection-title">Mitarbeiter ohne Team</h3>
         <?php if ($without === []) : ?>
-          <p class="dg-muted">Alle Abteilungsmitglieder sind einem Team zugeordnet (oder es gibt keine Mitglieder).</p>
+          <p class="dg-muted">Keine: alle Abteilungsmitglieder sind einem Team zugeordnet — oder die Abteilung hat keine Mitglieder.</p>
         <?php else : ?>
+          <p class="dg-muted" style="margin:0 0 0.5rem;">Der Abteilung zugeordnet, aber noch keinem Team.</p>
           <ul class="dg-list">
             <?php foreach ($without as $ma) : ?>
               <li>
@@ -120,7 +153,6 @@ $canManageTeams = !empty($canManageTeams);
         <?php endif; ?>
 
         <h3 class="dg-subsection-title">Alle Abteilungsmitglieder</h3>
-        <?php $allMembers = is_array($dept['members'] ?? null) ? $dept['members'] : []; ?>
         <?php if ($allMembers === []) : ?>
           <p class="dg-muted">Keine Mitglieder (Zuordnung unter Einstellungen → Abteilungen).</p>
         <?php else : ?>
@@ -129,14 +161,18 @@ $canManageTeams = !empty($canManageTeams);
               <li>
                 <?= View::escape((string) ($ma['label'] ?? '')) ?>
                 <span class="dg-muted">· <?= View::escape((string) ($ma['role_label'] ?? '')) ?></span>
-                <?php if (!empty($ma['in_team'])) : ?>
+                <?php if (!empty($ma['auto_chef'])) : ?>
+                  <span class="dg-muted">· fest</span>
+                <?php elseif (!empty($ma['in_team'])) : ?>
                   <span class="dg-muted">· im Team</span>
                 <?php endif; ?>
               </li>
             <?php endforeach; ?>
           </ul>
         <?php endif; ?>
-      </section>
-    <?php endforeach; ?>
+          </div>
+        </section>
+      <?php endforeach; ?>
+    </div>
   <?php endif; ?>
 </div>

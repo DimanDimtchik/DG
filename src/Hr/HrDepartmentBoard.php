@@ -13,10 +13,27 @@ final class HrDepartmentBoard
         $usersById = self::usersById();
         $contactByUserId = self::contactIdByUserId();
         $employeeContacts = self::employeeContactOptions();
+        $ownership = CompanyExtendedSettings::resolveExecutiveOwnership();
+        $chefUserId = (int) ($ownership['leader_user_id'] ?? 0);
+        $ownerUserIds = array_fill_keys($ownership['owner_user_ids'] ?? [], true);
+        $adminUserIds = [];
+        $adminRole = (string) App::config('roles.admin', 'administrator');
+        foreach (UserRepository::all() as $user) {
+            if ($user instanceof User && $user->hasRole($adminRole) && $user->id > 0) {
+                $adminUserIds[$user->id] = true;
+            }
+        }
+        if ($chefUserId < 1) {
+            foreach (array_keys($adminUserIds) as $adminId) {
+                $chefUserId = (int) $adminId;
+                break;
+            }
+        }
 
         $out = [];
         foreach ($departments as $dept) {
             $deptId = (string) ($dept['id'] ?? '');
+            $isExecutive = DepartmentRepository::isExecutiveDepartment($deptId, (string) ($dept['name'] ?? ''));
             $teams = TeamRepository::list($deptId, false);
             $teamDetails = [];
             foreach ($teams as $teamRow) {
@@ -33,26 +50,24 @@ final class HrDepartmentBoard
             $withoutTeam = [];
             foreach ($dept['members'] as $member) {
                 $userId = (int) ($member['user_id'] ?? 0);
-                $user = $usersById[$userId] ?? null;
-                $contactId = $contactByUserId[$userId] ?? 0;
-                $label = $user !== null
-                    ? (trim((string) ($user['display_name'] ?? '')) !== ''
-                        ? (string) $user['display_name']
-                        : (string) ($user['username'] ?? ('User #' . $userId)))
-                    : ('User #' . $userId);
-                if ($contactId > 0 && isset($employeeContacts[$contactId])) {
-                    $label = $employeeContacts[$contactId];
-                }
-                $row = [
-                    'user_id' => $userId,
-                    'contact_id' => $contactId,
-                    'role' => (string) ($member['role'] ?? 'member'),
-                    'role_label' => (string) ($member['role'] ?? '') === 'leader' ? 'Abteilungsleiter / Planner' : 'Mitglied',
-                    'label' => $label,
-                    'in_team' => $contactId > 0 && isset($inTeamLookup[$contactId]),
-                ];
+                $role = (string) ($member['role'] ?? 'member');
+                $isChefLeader = $isExecutive && $userId > 0 && $userId === $chefUserId;
+                $isOwnerMember = $isExecutive && isset($ownerUserIds[$userId]) && !$isChefLeader;
+                $isAdminMember = $isExecutive && isset($adminUserIds[$userId]) && !$isChefLeader;
+                $row = self::memberRow(
+                    $userId,
+                    $role,
+                    $isChefLeader,
+                    $isOwnerMember,
+                    $isAdminMember,
+                    $usersById,
+                    $contactByUserId,
+                    $employeeContacts,
+                    $inTeamLookup
+                );
                 $membersOut[] = $row;
-                if (!$row['in_team']) {
+                // Chef / Inhaber / Admins der GF zählen nicht als „MA ohne Team“.
+                if (!$isChefLeader && !$isOwnerMember && !$isAdminMember && !$row['in_team']) {
                     $withoutTeam[] = $row;
                 }
             }
@@ -82,6 +97,58 @@ final class HrDepartmentBoard
         }
 
         return $out;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $usersById
+     * @param array<int, int> $contactByUserId
+     * @param array<int, string> $employeeContacts
+     * @param array<int, true> $inTeamLookup
+     * @return array<string, mixed>
+     */
+    private static function memberRow(
+        int $userId,
+        string $role,
+        bool $isChefLeader,
+        bool $isOwnerMember,
+        bool $isAdminMember,
+        array $usersById,
+        array $contactByUserId,
+        array $employeeContacts,
+        array $inTeamLookup
+    ): array {
+        $user = $usersById[$userId] ?? null;
+        $contactId = $contactByUserId[$userId] ?? 0;
+        $label = $user !== null
+            ? (trim((string) ($user['display_name'] ?? '')) !== ''
+                ? (string) $user['display_name']
+                : (string) ($user['username'] ?? ('User #' . $userId)))
+            : ('User #' . $userId);
+        if ($contactId > 0 && isset($employeeContacts[$contactId])) {
+            $label = $employeeContacts[$contactId];
+        }
+
+        if ($isChefLeader) {
+            $roleLabel = 'Chef / Abteilungsleiter';
+        } elseif ($isOwnerMember) {
+            $roleLabel = 'Inhaber';
+        } elseif ($isAdminMember) {
+            $roleLabel = 'Administrator';
+        } elseif ($role === 'leader') {
+            $roleLabel = 'Abteilungsleiter / Planner';
+        } else {
+            $roleLabel = 'Mitglied';
+        }
+
+        return [
+            'user_id' => $userId,
+            'contact_id' => $contactId,
+            'role' => $isChefLeader ? 'leader' : ($isAdminMember || $isOwnerMember ? 'member' : $role),
+            'role_label' => $roleLabel,
+            'label' => $label,
+            'in_team' => $contactId > 0 && isset($inTeamLookup[$contactId]),
+            'auto_chef' => $isChefLeader,
+        ];
     }
 
     /**

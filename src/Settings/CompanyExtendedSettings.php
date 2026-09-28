@@ -292,6 +292,58 @@ final class CompanyExtendedSettings
             null,
             'Änderung Firmeneinstellungen'
         );
+
+        DepartmentRepository::ensureExecutiveChefLeaders(true);
+    }
+
+    /**
+     * Ermittelt den Chef (Abteilungsleiter Geschäftsführung) aus den Inhabern:
+     * höchster Anteil gewinnt; bei Gleichstand der zuerst eingetragene.
+     *
+     * @return array{leader_user_id: int, owner_user_ids: list<int>}
+     */
+    public static function resolveExecutiveOwnership(): array
+    {
+        $owners = self::config()['owners'] ?? [];
+        if (!is_array($owners)) {
+            return ['leader_user_id' => 0, 'owner_user_ids' => []];
+        }
+
+        $shareByUser = [];
+        $ownerUserIds = [];
+        foreach ($owners as $owner) {
+            if (!is_array($owner)) {
+                continue;
+            }
+            $uid = (int) ($owner['user_id'] ?? 0);
+            if ($uid < 1) {
+                continue;
+            }
+            $shareRaw = str_replace(',', '.', (string) ($owner['share_percent'] ?? '0'));
+            $share = is_numeric($shareRaw) ? (float) $shareRaw : 0.0;
+            $share = max(0.0, min(100.0, $share));
+            if (!isset($shareByUser[$uid]) || $share > $shareByUser[$uid]) {
+                $shareByUser[$uid] = $share;
+            }
+            if (!in_array($uid, $ownerUserIds, true)) {
+                $ownerUserIds[] = $uid;
+            }
+        }
+
+        $leaderUserId = 0;
+        $bestShare = -1.0;
+        foreach ($ownerUserIds as $uid) {
+            $share = $shareByUser[$uid] ?? 0.0;
+            if ($leaderUserId === 0 || $share > $bestShare) {
+                $leaderUserId = $uid;
+                $bestShare = $share;
+            }
+        }
+
+        return [
+            'leader_user_id' => $leaderUserId,
+            'owner_user_ids' => $ownerUserIds,
+        ];
     }
 
     /**

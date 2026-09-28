@@ -45,11 +45,29 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
         $allowCatalog = !empty($dept['allow_article_catalog']);
         $deptName = trim((string) $dept['name']);
         $headerTitle = $deptName !== '' ? $deptName : 'Abteilung #' . ((int) $di + 1);
+        $isExecutiveDept = DepartmentRepository::isExecutiveDepartment((string) ($dept['id'] ?? ''), $deptName);
+        $assignableIds = [];
+        foreach ($departmentEmployees as $employee) {
+            $assignableIds[(int) $employee->id] = true;
+        }
+        // Chef (Admin) ist fest GF-Leiter — in den Einstellungen nicht manuell pflegbar.
+        $editableMembers = [];
+        foreach ($members as $member) {
+            $uid = (int) ($member['user_id'] ?? 0);
+            if ($uid > 0 && !isset($assignableIds[$uid])) {
+                continue;
+            }
+            $editableMembers[] = $member;
+        }
+        $members = $editableMembers !== [] ? $editableMembers : [['user_id' => 0, 'role' => 'member']];
         $memberCount = 0;
         foreach ($members as $member) {
             if ((int) ($member['user_id'] ?? 0) > 0) {
                 ++$memberCount;
             }
+        }
+        if ($isExecutiveDept) {
+            ++$memberCount; // Chef zählt in der Kurzinfo mit
         }
       ?>
       <section class="dg-dept-card" data-dept-card>
@@ -151,6 +169,9 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
         ]); ?>
 
         <h4 class="dg-subsection-title">Mitglieder</h4>
+        <?php if ($isExecutiveDept) : ?>
+          <p class="dg-field-hint">Nur der Chef ist Abteilungsleiter (Inhaber mit den meisten Anteilen, bei Gleichstand der erste). Andere Administratoren und Inhaber sind Mitglieder — ohne manuelle Zuordnung.</p>
+        <?php endif; ?>
         <div class="dg-dept-members" data-dept-members>
           <?php foreach ($members as $mi => $member) : ?>
             <div class="dg-dept-member-row" data-dept-member>

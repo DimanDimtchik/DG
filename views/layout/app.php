@@ -569,6 +569,9 @@ $belegeFocus = (string) ($belegeFocus ?? '');
     <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/recipe-flow.css')) ?>">
     <script src="<?= View::escape(Asset::url('/assets/js/recipe-flow.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/hr-abteilungen') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/hr-abteilungen.js')) ?>" defer></script>
+  <?php endif; ?>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
   <?php if (RoleResolver::isStaff($user)) : ?>
     <?php View::render('partials/kichel-widget', compact('user')); ?>

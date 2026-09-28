@@ -174,6 +174,7 @@ final class UserRepository
     public static function departmentsForUser(int $userId): array
     {
         if (self::useDatabase()) {
+            DepartmentRepository::ensureExecutiveChefLeaders();
             $stmt = Database::pdo()->prepare(
                 'SELECT d.id, d.name, m.member_role
                  FROM dg_department_members m
