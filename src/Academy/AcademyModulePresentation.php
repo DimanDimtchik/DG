@@ -54,28 +54,71 @@ final class AcademyModulePresentation
     }
 
     /**
-     * Alle CTA-Buttons unter dem Video: Praxis-Stelle + Modul-Thema.
+     * Buttons unter dem Video (CRM-Sprünge). Ziel: immer Praxis-Stelle + Orientierung.
+     *
+     * Reihenfolge:
+     * 1) Praxis (genaue Stelle aus dem Video, z. B. Mitarbeiterliste)
+     * 2) Modul-Thema (falls andere URL) bzw. Dashboard zur Orientierung
      *
      * @param array<string, mixed> $module
      * @return list<array{href: string, label: string, kind: string}>
      */
     public static function crmTargets(array $module): array
     {
-        $out = [];
-        $seen = [];
-
         $practice = self::practiceTarget($module);
+        $topic = self::crmTarget($module);
+        $out = [];
+
         if ($practice !== null) {
             $out[] = $practice;
-            $seen[$practice['href']] = true;
+        } elseif ($topic !== null && ($topic['href'] ?? '') !== '/app') {
+            $out[] = [
+                'href' => $topic['href'],
+                'label' => self::stelleLabelFromTopic($topic['label']),
+                'kind' => 'practice',
+            ];
         }
 
-        $topic = self::crmTarget($module);
-        if ($topic !== null && !isset($seen[$topic['href']])) {
+        $hrefs = [];
+        foreach ($out as $t) {
+            $hrefs[$t['href']] = true;
+        }
+
+        // Modul-Thema zusätzlich, wenn andere URL als Praxis
+        if ($topic !== null && !isset($hrefs[$topic['href']])) {
             $out[] = $topic;
+            $hrefs[$topic['href']] = true;
+        }
+
+        // Dashboard zur Orientierung (Videos starten dort), außer schon vorhanden
+        if (!isset($hrefs['/app'])) {
+            $out[] = [
+                'href' => '/app',
+                'label' => 'Zum Dashboard',
+                'kind' => 'dashboard',
+            ];
+            $hrefs['/app'] = true;
+        }
+
+        // Nur Dashboard (Überblicksvideo): zweite Stelle = Kontakte als Einstieg
+        if (count($out) === 1 && isset($hrefs['/app'])) {
+            $out[] = [
+                'href' => '/app?page=kontakte',
+                'label' => 'Zur Stelle: Kontakte',
+                'kind' => 'practice',
+            ];
         }
 
         return $out;
+    }
+
+    private static function stelleLabelFromTopic(string $topicLabel): string
+    {
+        if (str_starts_with($topicLabel, 'Zum Thema:')) {
+            return 'Zur Stelle:' . substr($topicLabel, strlen('Zum Thema:'));
+        }
+
+        return $topicLabel !== '' ? ('Zur Stelle: ' . $topicLabel) : 'Zur Stelle im CRM';
     }
 
     /**
@@ -343,6 +386,8 @@ final class AcademyModulePresentation
     private static function practiceDestKeyForSlug(string $slug): string
     {
         $map = [
+            'dashboard-ueberblick' => 'kontakte-liste',
+            'kichel-ueberblick' => 'kontakte-liste',
             'kontakte-felder-mitarbeiter' => 'kontakte-mitarbeiter-liste',
             'kontakte-felder-stamm' => 'kontakte-liste-bearbeiten',
             'kontakte-felder-adresse' => 'kontakte-liste-bearbeiten',
@@ -350,19 +395,33 @@ final class AcademyModulePresentation
             'kontakte-felder-bank' => 'kontakte-liste-bearbeiten',
             'kontakte-felder-social' => 'kontakte-liste-bearbeiten',
             'kontakte-felder-kunde-lieferant' => 'kontakte-liste-bearbeiten',
+            'kontakte-felder' => 'kontakte-liste-bearbeiten',
             'kontakte-ueberblick' => 'kontakte-liste',
             'terminkalender-neuer-termin' => 'terminkalender-neu',
             'terminkalender-online-buchung' => 'terminkalender',
             'terminkalender-online-kunde' => 'terminkalender',
             'terminkalender-ueberblick' => 'terminkalender',
+            'lager-ueberblick' => 'lager',
             'lager-platz-check' => 'lager',
             'lager-ein-ausgang' => 'lager',
             'lager-inventur' => 'lager',
+            'media-ueberblick' => 'bilder',
             'media-bearbeiten' => 'bilder',
             'media-zuschneiden-freistellen' => 'bilder',
+            'manuelle-buchungen-ueberblick' => 'buchhaltung-manuelle-buchung',
             'manuelle-buchungen-erfassen' => 'buchhaltung-manuelle-buchung',
+            'kassenbuch-ueberblick' => 'buchhaltung-kassenbuch',
+            'opos-ueberblick' => 'buchhaltung-opos',
+            'guv-ueberblick' => 'buchhaltung-auswertungen',
+            'bankabgleich-ueberblick' => 'buchhaltung-bankabgleich',
+            'steuerberater-export-ueberblick' => 'buchhaltung-steuerberater-export',
+            'statistik-ueberblick' => 'website-statistik',
+            'konten-ueberblick' => 'buchhaltung-konten',
+            'konten-hinweise' => 'buchhaltung-konten',
+            'konten-kontenuebersicht' => 'buchhaltung-kontenuebersicht',
             'akademie-kurs-lernen' => 'akademie',
             'akademie-tabs' => 'akademie',
+            'akademie-ueberblick' => 'akademie',
         ];
 
         return $map[$slug] ?? '';
@@ -376,7 +435,7 @@ final class AcademyModulePresentation
         return [
             'kontakte-liste' => [
                 'href' => '/app?page=kontakte',
-                'label' => 'Zur Kontaktliste',
+                'label' => 'Zur Stelle: Kontakte',
             ],
             'kontakte-liste-bearbeiten' => [
                 'href' => '/app?page=kontakte',
@@ -388,7 +447,7 @@ final class AcademyModulePresentation
             ],
             'terminkalender' => [
                 'href' => '/app?page=terminkalender',
-                'label' => 'Zum Terminkalender',
+                'label' => 'Zur Stelle: Terminkalender',
             ],
             'terminkalender-neu' => [
                 'href' => '/app?page=terminkalender&action=new',
@@ -396,19 +455,51 @@ final class AcademyModulePresentation
             ],
             'lager' => [
                 'href' => '/app?page=lager',
-                'label' => 'Zum Lager',
+                'label' => 'Zur Stelle: Lager',
             ],
             'bilder' => [
                 'href' => '/app?page=bilder',
-                'label' => 'Zur Media-Bibliothek',
+                'label' => 'Zur Stelle: Media',
             ],
             'buchhaltung-manuelle-buchung' => [
                 'href' => '/app?page=buchhaltung-manuelle-buchung',
-                'label' => 'Zur manuellen Buchung',
+                'label' => 'Zur Stelle: Manuelle Buchung',
+            ],
+            'buchhaltung-kassenbuch' => [
+                'href' => '/app?page=buchhaltung-kassenbuch',
+                'label' => 'Zur Stelle: Kassenbuch',
+            ],
+            'buchhaltung-opos' => [
+                'href' => '/app?page=buchhaltung-opos',
+                'label' => 'Zur Stelle: Offene Posten',
+            ],
+            'buchhaltung-auswertungen' => [
+                'href' => '/app?page=buchhaltung-auswertungen',
+                'label' => 'Zur Stelle: Bilanz & GuV',
+            ],
+            'buchhaltung-bankabgleich' => [
+                'href' => '/app?page=buchhaltung-bankabgleich',
+                'label' => 'Zur Stelle: Bankabgleich',
+            ],
+            'buchhaltung-steuerberater-export' => [
+                'href' => '/app?page=buchhaltung-steuerberater-export',
+                'label' => 'Zur Stelle: Steuerberater-Export',
+            ],
+            'buchhaltung-konten' => [
+                'href' => '/app?page=buchhaltung-konten',
+                'label' => 'Zur Stelle: Konten',
+            ],
+            'buchhaltung-kontenuebersicht' => [
+                'href' => '/app?page=buchhaltung-kontenuebersicht',
+                'label' => 'Zur Stelle: Kontenübersicht',
+            ],
+            'website-statistik' => [
+                'href' => '/app?page=website-statistik',
+                'label' => 'Zur Stelle: Website-Statistik',
             ],
             'akademie' => [
                 'href' => '/app?page=akademie',
-                'label' => 'Zur Akademie',
+                'label' => 'Zur Stelle: Akademie',
             ],
         ];
     }
