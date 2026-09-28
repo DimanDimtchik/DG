@@ -5,6 +5,8 @@ declare(strict_types=1);
 final class VoucherDocumentKind
 {
     public const OFFER = 'offer';
+    /** Interner/planbarer Auftrag (optional versendbar; Annahme → Auftragsbestätigung). */
+    public const WORK_ORDER = 'work_order';
     public const ORDER_CONFIRMATION = 'order_confirmation';
     public const DELIVERY_NOTE = 'delivery_note';
     public const PARTIAL_INVOICE = 'partial_invoice';
@@ -18,12 +20,27 @@ final class VoucherDocumentKind
     {
         return [
             self::OFFER => 'Angebot',
+            self::WORK_ORDER => 'Auftrag',
             self::ORDER_CONFIRMATION => 'Auftragsbestätigung',
             self::DELIVERY_NOTE => 'Lieferschein',
             self::PARTIAL_INVOICE => 'Abschlagsrechnung',
             self::INVOICE => 'Rechnung',
             self::FINAL_INVOICE => 'Schlussrechnung',
         ];
+    }
+
+    /** Dokumentarten für Menü Dienstleistungen (Auftrag/Angebot). */
+    public static function optionsForDienstleistungen(): array
+    {
+        return [
+            self::WORK_ORDER => 'Auftrag',
+            self::OFFER => 'Angebot',
+        ];
+    }
+
+    public static function isDienstleistungenKind(string $kind): bool
+    {
+        return in_array(self::sanitize($kind), [self::WORK_ORDER, self::OFFER], true);
     }
 
     public static function sanitize(string $kind): string
@@ -97,6 +114,7 @@ final class VoucherDocumentKind
 
         return in_array($kind, [
             self::OFFER,
+            self::WORK_ORDER,
             self::ORDER_CONFIRMATION,
             self::PARTIAL_INVOICE,
             self::INVOICE,
@@ -104,7 +122,7 @@ final class VoucherDocumentKind
         ], true);
     }
 
-  /**
+    /**
      * Nummernkreis-Schlüssel (NumberRangeSettings).
      */
     public static function numberRangeType(string $kind): ?string
@@ -113,6 +131,7 @@ final class VoucherDocumentKind
 
         return match ($kind) {
             self::OFFER => 'offer',
+            self::WORK_ORDER => 'work_order',
             self::ORDER_CONFIRMATION => 'order_confirmation',
             self::DELIVERY_NOTE => 'delivery_note',
             self::PARTIAL_INVOICE => 'partial_invoice',
@@ -132,13 +151,14 @@ final class VoucherDocumentKind
         $kind = self::sanitize($kind);
 
         return match ($kind) {
-            self::OFFER => [self::ORDER_CONFIRMATION, self::DELIVERY_NOTE, self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE],
+            self::OFFER => [self::WORK_ORDER, self::ORDER_CONFIRMATION, self::DELIVERY_NOTE, self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE],
+            self::WORK_ORDER => [self::ORDER_CONFIRMATION, self::DELIVERY_NOTE, self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE],
             self::ORDER_CONFIRMATION => [self::DELIVERY_NOTE, self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE],
             self::DELIVERY_NOTE => [self::PARTIAL_INVOICE, self::INVOICE, self::FINAL_INVOICE],
             self::PARTIAL_INVOICE => [self::PARTIAL_INVOICE, self::FINAL_INVOICE],
             self::INVOICE => [],
             self::FINAL_INVOICE => [],
-            default => [self::OFFER, self::INVOICE],
+            default => [self::OFFER, self::WORK_ORDER, self::INVOICE],
         };
     }
 
@@ -149,6 +169,7 @@ final class VoucherDocumentKind
     {
         return match (self::sanitize($kind)) {
             self::OFFER => 10,
+            self::WORK_ORDER => 15,
             self::ORDER_CONFIRMATION => 20,
             self::DELIVERY_NOTE => 30,
             self::PARTIAL_INVOICE => 40,
@@ -179,6 +200,7 @@ final class VoucherDocumentKind
 
         return in_array($kind, [
             self::OFFER,
+            self::WORK_ORDER,
             self::ORDER_CONFIRMATION,
             self::DELIVERY_NOTE,
             self::PARTIAL_INVOICE,
@@ -191,6 +213,7 @@ final class VoucherDocumentKind
     {
         return match (self::sanitize($documentKind)) {
             self::OFFER => 'Vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:',
+            self::WORK_ORDER => 'Interner Auftrag — Leistung und Einsatzplanung:',
             self::ORDER_CONFIRMATION => 'Wir bestätigen Ihren Auftrag wie folgt:',
             self::DELIVERY_NOTE => 'Wir liefern Ihnen folgende Artikel bzw. Leistungen:',
             self::PARTIAL_INVOICE => 'Wir berechnen Ihnen folgende Artikel bzw. Dienstleistungen (Abschlagsrechnung):',
@@ -206,6 +229,7 @@ final class VoucherDocumentKind
     {
         return match (self::sanitize($documentKind)) {
             self::OFFER => 'Dieses Angebot ist gültig bis zum {valid_until}. Bis dahin sind die genannten Preise verbindlich.',
+            self::WORK_ORDER => 'Interner Auftrag. Bei Versand an den Kunden und Annahme folgt die Auftragsbestätigung.',
             self::ORDER_CONFIRMATION => 'Wir freuen uns auf die Zusammenarbeit und stehen für Rückfragen gerne zur Verfügung.',
             self::DELIVERY_NOTE => 'Bitte prüfen Sie die Lieferung unverzüglich auf Vollständigkeit und Unversehrtheit.',
             default => '',

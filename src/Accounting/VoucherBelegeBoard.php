@@ -8,13 +8,14 @@ final class VoucherBelegeBoard
 {
     public const SECTION_ACTION = 'action';
     public const SECTION_OFFERS = 'offers';
+    public const SECTION_WORK_ORDERS = 'work_orders';
     public const SECTION_ORDER_CONFIRMATIONS = 'order_confirmations';
     public const SECTION_DELIVERY_NOTES = 'delivery_notes';
     public const SECTION_INVOICES = 'invoices';
     public const SECTION_CREDITS = 'credits';
     public const SECTION_INCOMING = 'incoming';
 
-    /** Einstieg aus Menü Dienstleistungen: nur Angebot (+ später Auftrag). */
+    /** Einstieg aus Menü Dienstleistungen: Auftrag und Angebot. */
     public const FOCUS_DIENSTLEISTUNGEN = 'dienstleistungen';
 
     /**
@@ -23,7 +24,7 @@ final class VoucherBelegeBoard
     public static function sectionsForFocus(string $focus): array
     {
         if ($focus === self::FOCUS_DIENSTLEISTUNGEN) {
-            return [self::SECTION_ACTION, self::SECTION_OFFERS];
+            return [self::SECTION_ACTION, self::SECTION_WORK_ORDERS, self::SECTION_OFFERS];
         }
 
         return array_keys(self::sectionDefinitions());
@@ -45,6 +46,10 @@ final class VoucherBelegeBoard
             self::SECTION_ACTION => [
                 'label' => 'Handlungsbedarf',
                 'meta' => 'Entwürfe, abgelaufene Angebote, angenommene ohne AB, überfällige Rechnungen',
+            ],
+            self::SECTION_WORK_ORDERS => [
+                'label' => 'Aufträge',
+                'meta' => 'Planbare Aufträge — vor Auftragsbestätigung',
             ],
             self::SECTION_OFFERS => [
                 'label' => 'Angebote',
@@ -125,11 +130,11 @@ final class VoucherBelegeBoard
 
         $sectionRaw = trim((string) ($input['section'] ?? ''));
         $section = self::sanitizeSection($sectionRaw !== '' ? $sectionRaw : (
-            $focus === self::FOCUS_DIENSTLEISTUNGEN ? self::SECTION_OFFERS : self::SECTION_ACTION
+            $focus === self::FOCUS_DIENSTLEISTUNGEN ? self::SECTION_WORK_ORDERS : self::SECTION_ACTION
         ));
         if (!in_array($section, $allowedSections, true)) {
             $section = $focus === self::FOCUS_DIENSTLEISTUNGEN
-                ? self::SECTION_OFFERS
+                ? self::SECTION_WORK_ORDERS
                 : self::SECTION_ACTION;
         }
 
@@ -192,6 +197,7 @@ final class VoucherBelegeBoard
             }
             $count = match ($id) {
                 self::SECTION_ACTION => $actionTotal,
+                self::SECTION_WORK_ORDERS => (int) ($counts['by_kind'][VoucherDocumentKind::WORK_ORDER]['total'] ?? 0),
                 self::SECTION_OFFERS => (int) ($counts['by_kind'][VoucherDocumentKind::OFFER]['total'] ?? 0),
                 self::SECTION_ORDER_CONFIRMATIONS => (int) ($counts['by_kind'][VoucherDocumentKind::ORDER_CONFIRMATION]['total'] ?? 0),
                 self::SECTION_DELIVERY_NOTES => (int) ($counts['by_kind'][VoucherDocumentKind::DELIVERY_NOTE]['total'] ?? 0),
@@ -203,6 +209,7 @@ final class VoucherBelegeBoard
             };
             $gross = match ($id) {
                 self::SECTION_ACTION => $actionGross,
+                self::SECTION_WORK_ORDERS => (float) ($counts['by_kind'][VoucherDocumentKind::WORK_ORDER]['gross'] ?? 0),
                 self::SECTION_OFFERS => (float) ($counts['by_kind'][VoucherDocumentKind::OFFER]['gross'] ?? 0),
                 self::SECTION_ORDER_CONFIRMATIONS => (float) ($counts['by_kind'][VoucherDocumentKind::ORDER_CONFIRMATION]['gross'] ?? 0),
                 self::SECTION_DELIVERY_NOTES => (float) ($counts['by_kind'][VoucherDocumentKind::DELIVERY_NOTE]['gross'] ?? 0),
@@ -570,6 +577,10 @@ final class VoucherBelegeBoard
             $byStatus = $counts['by_kind'][VoucherDocumentKind::OFFER]['by_status'] ?? [];
             $defs = self::statusChipDefs(VoucherDocumentStatus::allowedForKind(VoucherDocumentKind::OFFER), $byStatus);
             $defs = ['' => ['label' => 'Alle', 'count' => (int) ($counts['by_kind'][VoucherDocumentKind::OFFER]['total'] ?? 0)]] + $defs;
+        } elseif ($section === self::SECTION_WORK_ORDERS) {
+            $byStatus = $counts['by_kind'][VoucherDocumentKind::WORK_ORDER]['by_status'] ?? [];
+            $defs = self::statusChipDefs(VoucherDocumentStatus::allowedForKind(VoucherDocumentKind::WORK_ORDER), $byStatus);
+            $defs = ['' => ['label' => 'Alle', 'count' => (int) ($counts['by_kind'][VoucherDocumentKind::WORK_ORDER]['total'] ?? 0)]] + $defs;
         } elseif ($section === self::SECTION_ORDER_CONFIRMATIONS) {
             $byStatus = $counts['by_kind'][VoucherDocumentKind::ORDER_CONFIRMATION]['by_status'] ?? [];
             $defs = self::statusChipDefs(VoucherDocumentStatus::allowedForKind(VoucherDocumentKind::ORDER_CONFIRMATION), $byStatus);
@@ -775,6 +786,11 @@ final class VoucherBelegeBoard
 
         if ($section === self::SECTION_OFFERS) {
             $filters['document_kind'] = VoucherDocumentKind::OFFER;
+            if ($status !== '') {
+                $filters['document_status'] = $status;
+            }
+        } elseif ($section === self::SECTION_WORK_ORDERS) {
+            $filters['document_kind'] = VoucherDocumentKind::WORK_ORDER;
             if ($status !== '') {
                 $filters['document_status'] = $status;
             }

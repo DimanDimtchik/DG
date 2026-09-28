@@ -470,7 +470,9 @@ $belegeFocus = (string) ($belegeFocus ?? '');
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
         documentKindOptions: <?= json_encode(
-            VoucherDocumentKind::options(),
+            (!empty($belegeFormFocus) && $belegeFormFocus === VoucherBelegeBoard::FOCUS_DIENSTLEISTUNGEN)
+                ? VoucherDocumentKind::optionsForDienstleistungen()
+                : VoucherDocumentKind::options(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
         documentKindNumberLabels: <?= json_encode(
@@ -480,6 +482,7 @@ $belegeFocus = (string) ($belegeFocus ?? '');
         nonBookableDocumentKinds: <?= json_encode(
             [
                 VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::WORK_ORDER,
                 VoucherDocumentKind::ORDER_CONFIRMATION,
                 VoucherDocumentKind::DELIVERY_NOTE,
             ],

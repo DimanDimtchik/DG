@@ -82,6 +82,7 @@ final class VoucherDocumentStatus
                 self::CANCELLED,
                 self::EXPIRED,
             ],
+            VoucherDocumentKind::WORK_ORDER,
             VoucherDocumentKind::ORDER_CONFIRMATION => [
                 self::DRAFT,
                 self::SENT,
@@ -129,6 +130,7 @@ final class VoucherDocumentStatus
                 self::EXPIRED, self::CANCELLED => [],
                 default => [],
             },
+            VoucherDocumentKind::WORK_ORDER,
             VoucherDocumentKind::ORDER_CONFIRMATION => match ($current) {
                 '' => [self::SENT, self::ACCEPTED],
                 self::DRAFT => [self::SENT, self::ACCEPTED],

@@ -422,7 +422,7 @@ final class VoucherDocumentChain
         }
 
         $subtree = self::collectSubtree($rootId);
-        foreach ([VoucherDocumentKind::ORDER_CONFIRMATION, VoucherDocumentKind::OFFER] as $preferred) {
+        foreach ([VoucherDocumentKind::ORDER_CONFIRMATION, VoucherDocumentKind::WORK_ORDER, VoucherDocumentKind::OFFER] as $preferred) {
             foreach ($subtree as $row) {
                 if ((string) ($row['document_kind'] ?? '') === $preferred) {
                     return (int) ($row['id'] ?? 0);
@@ -447,6 +447,7 @@ final class VoucherDocumentChain
             $kind = (string) ($row['document_kind'] ?? '');
             if (in_array($kind, [
                 VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::WORK_ORDER,
                 VoucherDocumentKind::ORDER_CONFIRMATION,
                 VoucherDocumentKind::DELIVERY_NOTE,
                 VoucherDocumentKind::INVOICE,
@@ -671,6 +672,7 @@ final class VoucherDocumentChain
             $type = VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? 'expense'));
             if (in_array($rowKind, [
                 VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::WORK_ORDER,
                 VoucherDocumentKind::ORDER_CONFIRMATION,
                 VoucherDocumentKind::DELIVERY_NOTE,
             ], true)) {
@@ -810,6 +812,7 @@ final class VoucherDocumentChain
             $kind = VoucherDocumentKind::sanitize((string) ($pay['chain_document_kind'] ?? ''));
             if (in_array($kind, [
                 VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::WORK_ORDER,
                 VoucherDocumentKind::ORDER_CONFIRMATION,
                 VoucherDocumentKind::DELIVERY_NOTE,
                 '',

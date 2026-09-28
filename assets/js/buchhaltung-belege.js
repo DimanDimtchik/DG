@@ -187,8 +187,12 @@
     }
     var kind = getDocumentKind();
     var byKind = config.documentStatusByKind || {};
+    var options = config.documentKindOptions || {};
     if (!kind || !byKind[kind] || byKind[kind].length === 0) {
-      documentKindSelect.value = 'invoice';
+      var fallback = Object.keys(options).indexOf('invoice') >= 0
+        ? 'invoice'
+        : (Object.keys(options)[0] || 'invoice');
+      documentKindSelect.value = fallback;
     }
   }
 
@@ -217,7 +221,10 @@
       documentKindSelect.appendChild(option);
     });
     if (!documentKindSelect.value) {
-      documentKindSelect.value = 'invoice';
+      var fallback = Object.keys(options).indexOf('invoice') >= 0
+        ? 'invoice'
+        : (Object.keys(options)[0] || 'invoice');
+      documentKindSelect.value = fallback;
     }
   }
 
@@ -243,6 +250,7 @@
       return true;
     }
     return kind === 'offer'
+      || kind === 'work_order'
       || kind === 'order_confirmation'
       || kind === 'delivery_note'
       || kind === 'partial_invoice'

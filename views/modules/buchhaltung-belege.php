@@ -86,7 +86,7 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
     </div>
     <?php if ($canEdit && $dbConnected) : ?>
       <?php if ($isDienstleistungenFocus) : ?>
-        <a class="dg-button dg-button--primary" href="/app?page=buchhaltung-beleg-form&amp;action=new&amp;voucher_type=income&amp;document_kind=offer">Neues Angebot</a>
+        <a class="dg-button dg-button--primary" href="/app?page=buchhaltung-beleg-form&amp;action=new&amp;voucher_type=income&amp;document_kind=work_order&amp;focus=dienstleistungen">Neues Auftrag/Angebot</a>
         <a class="dg-button" href="/app?page=buchhaltung-belege">Alle Belege</a>
       <?php else : ?>
         <a class="dg-button dg-button--primary" href="/app?page=buchhaltung-beleg-form&amp;action=new">Neuer Beleg</a>
@@ -96,8 +96,7 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
 
   <?php if ($isDienstleistungenFocus) : ?>
     <div class="dg-flash dg-flash--info">
-      Dienstleistungen — Fokus Angebot/Auftrag.
-      Die Belegart <strong>Auftrag</strong> folgt als Nächstes.
+      Dienstleistungen — Fokus Auftrag und Angebot.
       Vollständige Belege (Rechnung &amp; Co.):
       <a href="/app?page=buchhaltung-belege">Buchhaltung → Belege</a>.
     </div>

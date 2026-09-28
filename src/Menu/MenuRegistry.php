@@ -417,7 +417,7 @@ final class MenuRegistry
             'rezeptur' => 'Stücklisten und Fertigungszeit — Vorkalkulation folgt schrittweise.',
             'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
-            'buchhaltung-belege' => 'Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
+            'buchhaltung-belege' => 'Auftrag, Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
             'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',

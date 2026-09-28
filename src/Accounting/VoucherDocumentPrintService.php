@@ -186,7 +186,11 @@ final class VoucherDocumentPrintService
         $depositCfg = DocumentPresentationSettings::depositConfig();
         if (
             ($depositCfg['mode'] ?? DocumentPresentationSettings::DEPOSIT_NONE) !== DocumentPresentationSettings::DEPOSIT_NONE
-            && in_array($kind, [VoucherDocumentKind::OFFER, VoucherDocumentKind::ORDER_CONFIRMATION], true)
+            && in_array($kind, [
+                VoucherDocumentKind::OFFER,
+                VoucherDocumentKind::WORK_ORDER,
+                VoucherDocumentKind::ORDER_CONFIRMATION,
+            ], true)
         ) {
             $depositBlock = self::formatDepositBlock($depositCfg, $voucher);
         }
@@ -333,10 +337,16 @@ final class VoucherDocumentPrintService
             $lines[] = $line . '.';
             $linkUrl = (string) ($acceptance['link_url'] ?? '');
             $linkLabel = (string) ($acceptance['link_label'] ?? 'Zur E-Mail');
-        } elseif (in_array($kind, [VoucherDocumentKind::ORDER_CONFIRMATION, VoucherDocumentKind::OFFER], true)) {
-            $line = $kind === VoucherDocumentKind::ORDER_CONFIRMATION
-                ? 'Auftragsbestätigung manuell erstellt'
-                : 'Angebot erstellt';
+        } elseif (in_array($kind, [
+            VoucherDocumentKind::ORDER_CONFIRMATION,
+            VoucherDocumentKind::WORK_ORDER,
+            VoucherDocumentKind::OFFER,
+        ], true)) {
+            $line = match ($kind) {
+                VoucherDocumentKind::ORDER_CONFIRMATION => 'Auftragsbestätigung manuell erstellt',
+                VoucherDocumentKind::WORK_ORDER => 'Auftrag erstellt',
+                default => 'Angebot erstellt',
+            };
             if ($createdAtLabel !== '') {
                 $line .= ' am ' . $createdAtLabel;
             }
@@ -782,6 +792,7 @@ final class VoucherDocumentPrintService
         if (!$books) {
             return match ($kind) {
                 VoucherDocumentKind::OFFER => 'Unverbindliches Angebot — ohne Buchungs- und Umsatzsteuerwirkung.',
+                VoucherDocumentKind::WORK_ORDER => 'Auftrag — ohne Buchungs- und Umsatzsteuerwirkung (noch keine Rechnung).',
                 VoucherDocumentKind::ORDER_CONFIRMATION => 'Auftragsbestätigung — noch keine Rechnung, keine Umsatzsteuer.',
                 VoucherDocumentKind::DELIVERY_NOTE => 'Lieferschein — kein Rechnungs- oder Buchungsbeleg.',
                 default => 'Unverbindlich — keine Buchung / keine UStVA-Meldung.',

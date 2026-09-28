@@ -899,6 +899,7 @@ switch ($path) {
         $websiteSection = MenuRegistry::websiteSection($user);
         $kdvSection = MenuRegistry::kdvSection($user);
         $belegeFocus = '';
+        $belegeFormFocus = '';
         $flash = Flash::pull();
         $canEdit = RoleResolver::canEdit($user);
         $sidebarItems = MenuRegistry::sidebarItems($user);
@@ -2906,7 +2907,12 @@ switch ($path) {
                 exit;
             } catch (Throwable $e) {
                 $contentTemplate = 'modules/buchhaltung-beleg-form';
-                $title = $editId > 0 ? 'Beleg bearbeiten' : 'Neuer Beleg';
+                $belegeFormFocus = VoucherBelegeBoard::sanitizeFocus((string) ($_POST['focus'] ?? $_GET['focus'] ?? ''));
+                $title = $editId > 0
+                    ? 'Beleg bearbeiten'
+                    : ($belegeFormFocus === VoucherBelegeBoard::FOCUS_DIENSTLEISTUNGEN
+                        ? 'Neues Auftrag/Angebot'
+                        : 'Neuer Beleg');
                 $currentPage = 'buchhaltung-belege';
                 $voucherId = $editId > 0 ? $editId : null;
                 $form = array_merge(VoucherRepository::emptyForm(), $_POST);
@@ -2935,7 +2941,8 @@ switch ($path) {
                     'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
-                    'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas'
+                    'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas',
+                    'belegeFormFocus'
                 ));
                 break;
             }
@@ -4936,13 +4943,23 @@ $legalProductsConfig = LegalProductSettings::config();
                 $isDraftVoucher = false;
                 $form = VoucherRepository::emptyForm();
                 $applyBelegContactPrefill($form);
+                $belegeFormFocus = VoucherBelegeBoard::sanitizeFocus((string) ($_GET['focus'] ?? ''));
                 $prefillKind = VoucherDocumentKind::sanitize((string) ($_GET['document_kind'] ?? ''));
                 $prefillVoucherType = VoucherRepository::normalizeVoucherType((string) ($_GET['voucher_type'] ?? 'income'));
-                if ($prefillKind !== '' && VoucherDocumentKind::voucherTypeSupportsDocumentKind($prefillVoucherType)) {
+                if ($belegeFormFocus === VoucherBelegeBoard::FOCUS_DIENSTLEISTUNGEN) {
+                    $form['voucher_type'] = 'income';
+                    if ($prefillKind === '' || !VoucherDocumentKind::isDienstleistungenKind($prefillKind)) {
+                        $prefillKind = VoucherDocumentKind::WORK_ORDER;
+                    }
+                    $form['document_kind'] = $prefillKind;
+                    $title = 'Neues Auftrag/Angebot';
+                } elseif ($prefillKind !== '' && VoucherDocumentKind::voucherTypeSupportsDocumentKind($prefillVoucherType)) {
                     $form['voucher_type'] = $prefillVoucherType;
                     $form['document_kind'] = $prefillKind;
                     if ($prefillKind === VoucherDocumentKind::OFFER) {
                         $title = 'Neues Angebot';
+                    } elseif ($prefillKind === VoucherDocumentKind::WORK_ORDER) {
+                        $title = 'Neuer Auftrag';
                     }
                 }
                 $formError = null;
@@ -6831,6 +6848,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
         $kdvSection = $kdvSection ?? MenuRegistry::kdvSection($user);
         $belegeFocus = $belegeFocus ?? '';
+        $belegeFormFocus = $belegeFormFocus ?? '';
         $websitePageList = $websitePageList ?? [];
         $websitePageId = $websitePageId ?? null;
         $websiteMenuForm = $websiteMenuForm ?? ['items' => [['label' => '', 'url' => '']]];
@@ -7115,6 +7133,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'buchhaltungSection',
             'websiteSection',
             'belegeFocus',
+            'belegeFormFocus',
             'currentPage',
             'settingsNav',
             'settingsSelection',

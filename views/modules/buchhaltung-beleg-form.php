@@ -42,7 +42,22 @@ if (
     }
 }
 $documentKindSelectValue = $showDocumentKindField ? $selectedDocumentKind : '';
-$documentKindOptions = VoucherDocumentKind::optionsForVoucherType($selectedType);
+$belegeFormFocus = VoucherBelegeBoard::sanitizeFocus((string) ($belegeFormFocus ?? ($_GET['focus'] ?? '')));
+$isDienstleistungenFormFocus = $belegeFormFocus === VoucherBelegeBoard::FOCUS_DIENSTLEISTUNGEN;
+$documentKindOptions = $isDienstleistungenFormFocus
+    ? VoucherDocumentKind::optionsForDienstleistungen()
+    : VoucherDocumentKind::optionsForVoucherType($selectedType);
+if ($isDienstleistungenFormFocus) {
+    $selectedType = 'income';
+    $form['voucher_type'] = 'income';
+    $showDocumentKindField = true;
+    $typeHint = VoucherRepository::voucherTypeHint('income');
+    if ($selectedDocumentKind === '' || !isset($documentKindOptions[$selectedDocumentKind])) {
+        $selectedDocumentKind = VoucherDocumentKind::WORK_ORDER;
+        $form['document_kind'] = $selectedDocumentKind;
+        $documentKindSelectValue = $selectedDocumentKind;
+    }
+}
 /** @var list<array<string, mixed>> $lineRows */
 $lineRows = is_array($form['lines'] ?? null) ? $form['lines'] : [];
 /** @var list<array<string, mixed>> $itemRows */
@@ -106,7 +121,13 @@ if ($autoInvoiceNumber && !$isEdit) {
     }
 }
 $invoiceNumberRequired = VoucherRepository::isExpenseType($selectedType) && !$autoInvoiceNumber && !$readOnly;
-$newContactUrl = '/app?page=kontakte&action=new&return_to=' . rawurlencode('/app?page=buchhaltung-beleg-form&action=new');
+$newContactUrl = '/app?page=kontakte&action=new&return_to=' . rawurlencode(
+    '/app?page=buchhaltung-beleg-form&action=new'
+    . ($isDienstleistungenFormFocus
+        ? '&voucher_type=income&document_kind=' . rawurlencode($selectedDocumentKind !== '' ? $selectedDocumentKind : VoucherDocumentKind::WORK_ORDER)
+            . '&focus=dienstleistungen'
+        : '')
+);
 $arapEnabled = !empty($form['arap_enabled']);
 $arapCurrentPercent = max(0, min(100, (int) ($form['arap_current_year_percent'] ?? 100)));
 $arapNextPercent = max(0, min(100, (int) ($form['arap_next_year_percent'] ?? (100 - $arapCurrentPercent))));
@@ -201,14 +222,26 @@ $paymentTermsPreview = PaymentTermsService::composeText(
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <?php
-        $backHref = '/app?page=buchhaltung-belege';
+        $backHref = $isDienstleistungenFormFocus
+            ? '/app?page=buchhaltung-belege&focus=dienstleistungen'
+            : '/app?page=buchhaltung-belege';
         View::partial('partials/back-nav', [
             'href' => $backHref,
-            'label' => 'Zurück zur Belegliste',
+            'label' => $isDienstleistungenFormFocus ? 'Zurück zu Auftrag/Angebot' : 'Zurück zur Belegliste',
         ]);
       ?>
-      <h1 class="dg-page-title"><?= $isEdit ? ($readOnly ? 'Beleg anzeigen' : 'Beleg bearbeiten') : 'Neuer Beleg' ?></h1>
-      <p class="dg-lead">Belegerfassung — Kontenrahmen <?= View::escape($skrLabel) ?></p>
+      <h1 class="dg-page-title"><?php
+        if ($isEdit) {
+            echo $readOnly ? 'Beleg anzeigen' : 'Beleg bearbeiten';
+        } elseif ($isDienstleistungenFormFocus) {
+            echo 'Neues Auftrag/Angebot';
+        } else {
+            echo 'Neuer Beleg';
+        }
+      ?></h1>
+      <p class="dg-lead"><?= $isDienstleistungenFormFocus
+        ? 'Auftrag oder Angebot — Kontenrahmen ' . View::escape($skrLabel)
+        : 'Belegerfassung — Kontenrahmen ' . View::escape($skrLabel) ?></p>
     </div>
     <?php if ($transferSupported && !$readOnly) : ?>
       <div class="dg-page-header__actions">
@@ -333,6 +366,9 @@ $paymentTermsPreview = PaymentTermsService::composeText(
   <form class="dg-form dg-panel dg-buchhaltung-beleg-form__form" method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-form" enctype="multipart/form-data"<?= $readOnly ? ' data-readonly="1"' : '' ?>>
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="voucher_save" value="1">
+    <?php if ($isDienstleistungenFormFocus) : ?>
+      <input type="hidden" name="focus" value="dienstleistungen">
+    <?php endif; ?>
     <input type="hidden" name="contact_id" id="dg-voucher-contact-id" value="<?= View::escape($form['contact_id'] ?? '') ?>">
     <input type="hidden" name="draft_voucher_id" id="dg-voucher-draft-id" value="<?= (int) ($voucherId ?? 0) ?>">
     <input type="hidden" name="parent_voucher_id" id="dg-voucher-parent-id" value="<?= View::escape((string) ($form['parent_voucher_id'] ?? '')) ?>">
@@ -392,19 +428,25 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       <div class="dg-form-grid">
         <label class="dg-field dg-field--wide">
           <span>Belegart *</span>
-          <select name="voucher_type" id="dg-voucher-type" required<?= $readOnly ? ' disabled' : '' ?>>
-            <?php foreach ($typeOptions as $value => $label) : ?>
-              <option value="<?= View::escape($value) ?>"<?= $selectedType === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
-            <?php endforeach; ?>
-          </select>
-          <small class="dg-field-hint" id="dg-voucher-type-hint"><?= View::escape($typeHint) ?></small>
+          <?php if ($isDienstleistungenFormFocus) : ?>
+            <input type="hidden" name="voucher_type" id="dg-voucher-type" value="income">
+            <input type="text" value="<?= View::escape($typeOptions['income'] ?? 'Einnahmen') ?>" readonly class="dg-input--computed">
+            <small class="dg-field-hint" id="dg-voucher-type-hint">Dienstleistungen — nur Einnahmen (Auftrag/Angebot).</small>
+          <?php else : ?>
+            <select name="voucher_type" id="dg-voucher-type" required<?= $readOnly ? ' disabled' : '' ?>>
+              <?php foreach ($typeOptions as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"<?= $selectedType === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <small class="dg-field-hint" id="dg-voucher-type-hint"><?= View::escape($typeHint) ?></small>
+          <?php endif; ?>
         </label>
         <label class="dg-field" id="dg-voucher-document-kind-field"<?= $showDocumentKindField ? '' : ' hidden' ?>>
           <span>Dokumentart</span>
           <?php if ($documentKindReadOnly) : ?>
             <input type="hidden" name="document_kind" id="dg-voucher-document-kind" value="<?= View::escape($selectedDocumentKind) ?>">
             <input type="text" value="<?= View::escape(VoucherDocumentKind::label($selectedDocumentKind)) ?>" readonly class="dg-input--computed">
-            <small class="dg-field-hint">Angebot, Lieferschein, Abschlags- und Schlussrechnung — nach dem Speichern nicht mehr änderbar.</small>
+            <small class="dg-field-hint">Angebot, Auftrag, Lieferschein, Abschlags- und Schlussrechnung — nach dem Speichern nicht mehr änderbar.</small>
           <?php else : ?>
             <select name="document_kind" id="dg-voucher-document-kind"<?= ($readOnly || !$showDocumentKindField) ? ' disabled' : '' ?>>
               <?php if ($documentKindOptions === []) : ?>
@@ -415,7 +457,9 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                 <?php endforeach; ?>
               <?php endif; ?>
             </select>
-            <small class="dg-field-hint">Nur bei Belegart <strong>Einnahmen</strong> — steuert Nummernkreis und Buchung (Angebot/AB/Lieferschein ohne Buchung).</small>
+            <small class="dg-field-hint"><?= $isDienstleistungenFormFocus
+              ? 'Nur <strong>Auftrag</strong> oder <strong>Angebot</strong> in diesem Einstieg.'
+              : 'Nur bei Belegart <strong>Einnahmen</strong> — steuert Nummernkreis und Buchung (Angebot/Auftrag/AB/Lieferschein ohne Buchung).' ?></small>
           <?php endif; ?>
         </label>
         <label class="dg-field" id="dg-voucher-document-status-field"<?= $showDocumentKindField && $documentStatusOptionsForKind !== [] ? '' : ' hidden' ?>>

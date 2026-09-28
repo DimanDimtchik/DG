@@ -27,6 +27,10 @@ final class DocumentPresentationSettings
                     'intro' => VoucherDocumentKind::defaultPositionIntroText(VoucherDocumentKind::OFFER),
                     'footer' => VoucherDocumentKind::defaultPositionFooterText(VoucherDocumentKind::OFFER),
                 ],
+                VoucherDocumentKind::WORK_ORDER => [
+                    'intro' => VoucherDocumentKind::defaultPositionIntroText(VoucherDocumentKind::WORK_ORDER),
+                    'footer' => VoucherDocumentKind::defaultPositionFooterText(VoucherDocumentKind::WORK_ORDER),
+                ],
                 VoucherDocumentKind::ORDER_CONFIRMATION => [
                     'intro' => VoucherDocumentKind::defaultPositionIntroText(VoucherDocumentKind::ORDER_CONFIRMATION),
                     'footer' => VoucherDocumentKind::defaultPositionFooterText(VoucherDocumentKind::ORDER_CONFIRMATION),
