@@ -41,7 +41,7 @@ $renderPerson = static function (array $ma, bool $showTeamHint = true): void {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Abteilungen</h1>
-      <p class="dg-lead">Ansicht der Abteilungen aus den Einstellungen (nur Lesen). Abteilungsleiter und Mitglieder getrennt; Namen verlinken zum Mitarbeiter-Kontakt.</p>
+      <p class="dg-lead">Ansicht der Abteilungen (nur Lesen). Abteilungsleiter und Mitglieder getrennt; Zuordnung über MA-Kontakte; Namen verlinken zum Kontakt.</p>
     </div>
     <div class="dg-page-header__actions">
       <?php if ($canManageTeams) : ?>

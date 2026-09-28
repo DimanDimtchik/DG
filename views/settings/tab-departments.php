@@ -1,14 +1,17 @@
 <?php
-/** @var list<array{id: string, name: string, description: string, sort_order: int, members: list<array{user_id: int, role: string}>}> $departmentsData */
+/** @var list<array{id: string, name: string, description: string, sort_order: int, members: list<array{contact_id?: int, user_id?: int, role: string}>}> $departmentsData */
+/** @var list<array{id: int, label: string, has_crm_user: bool}> $departmentStaffContacts */
 /** @var list<User> $departmentEmployees */
 /** @var array<string, mixed> $notificationTemplateData */
 /** @var bool $dbConnected */
+
+$departmentStaffContacts = is_array($departmentStaffContacts ?? null) ? $departmentStaffContacts : [];
 
 if ($departmentsData === []) {
     $departmentsData = DefaultDepartments::withModulesAndMembers();
     foreach ($departmentsData as $index => $department) {
         if ($department['members'] === []) {
-            $departmentsData[$index]['members'] = [['user_id' => 0, 'role' => 'member']];
+            $departmentsData[$index]['members'] = [['contact_id' => 0, 'role' => 'member']];
         }
     }
 }
@@ -18,8 +21,8 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 
   <p class="dg-lead">
-    Legen Sie Abteilungen an und ordnen Sie <strong>Mitarbeiter</strong> als Mitglied oder Abteilungsleiter zu.
-    Pro Abteilung steuern Sie die Sidebar-Sichtbarkeit, HR-Rechte sowie optional die Artikel- und Leistungspflege.
+    Legen Sie Abteilungen an und ordnen Sie <strong>Mitarbeiter-Kontakte</strong> (Rolle MA) als Mitglied oder Abteilungsleiter zu.
+    CRM-Zugang ist optional: ohne Login erscheint die Person nur in der Organisation; Planner-/Modulrechte gelten erst mit CRM-Benutzer.
   </p>
 
   <?php if (!$dbConnected) : ?>
@@ -39,7 +42,7 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
   <div id="dg-departments-repeater" class="dg-dept-accordion">
     <?php foreach ($departmentsData as $di => $dept) : ?>
       <?php
-        $members = $dept['members'] !== [] ? $dept['members'] : [['user_id' => 0, 'role' => 'member']];
+        $members = $dept['members'] !== [] ? $dept['members'] : [['contact_id' => 0, 'role' => 'member']];
         $deptModules = is_array($dept['modules'] ?? null) ? $dept['modules'] : DepartmentAccess::defaultModules();
         $isHr = !empty($dept['is_hr']);
         $allowCatalog = !empty($dept['allow_article_catalog']);
@@ -47,27 +50,23 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
         $headerTitle = $deptName !== '' ? $deptName : 'Abteilung #' . ((int) $di + 1);
         $isExecutiveDept = DepartmentRepository::isExecutiveDepartment((string) ($dept['id'] ?? ''), $deptName);
         $assignableIds = [];
-        foreach ($departmentEmployees as $employee) {
-            $assignableIds[(int) $employee->id] = true;
+        foreach ($departmentStaffContacts as $contact) {
+            $assignableIds[(int) $contact['id']] = true;
         }
-        // Chef (Admin) ist fest GF-Leiter — in den Einstellungen nicht manuell pflegbar.
         $editableMembers = [];
         foreach ($members as $member) {
-            $uid = (int) ($member['user_id'] ?? 0);
-            if ($uid > 0 && !isset($assignableIds[$uid])) {
+            $cid = (int) ($member['contact_id'] ?? 0);
+            if ($cid > 0 && !isset($assignableIds[$cid])) {
                 continue;
             }
             $editableMembers[] = $member;
         }
-        $members = $editableMembers !== [] ? $editableMembers : [['user_id' => 0, 'role' => 'member']];
+        $members = $editableMembers !== [] ? $editableMembers : [['contact_id' => 0, 'role' => 'member']];
         $memberCount = 0;
         foreach ($members as $member) {
-            if ((int) ($member['user_id'] ?? 0) > 0) {
+            if ((int) ($member['contact_id'] ?? 0) > 0) {
                 ++$memberCount;
             }
-        }
-        if ($isExecutiveDept) {
-            ++$memberCount; // Chef zählt in der Kurzinfo mit
         }
       ?>
       <section class="dg-dept-card" data-dept-card>
@@ -169,26 +168,28 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
         ]); ?>
 
         <h4 class="dg-subsection-title">Mitglieder</h4>
+        <p class="dg-field-hint">Zuordnung über Mitarbeiter-Kontakte. Ohne CRM-Zugang: nur Organisation. Mit CRM-Zugang: zusätzlich Modulrechte / Planner.</p>
         <?php if ($isExecutiveDept) : ?>
-          <p class="dg-field-hint">Nur der Chef ist Abteilungsleiter (Inhaber mit den meisten Anteilen, bei Gleichstand der erste). Andere Administratoren und Inhaber sind Mitglieder — ohne manuelle Zuordnung.</p>
+          <p class="dg-field-hint">Chef der Geschäftsführung (Mehrheits-Inhaber) wird automatisch als Abteilungsleiter gesetzt.</p>
         <?php endif; ?>
         <div class="dg-dept-members" data-dept-members>
           <?php foreach ($members as $mi => $member) : ?>
+            <?php $selectedContactId = (int) ($member['contact_id'] ?? 0); ?>
             <div class="dg-dept-member-row" data-dept-member>
               <label class="dg-field">
                 <span class="dg-sr-only">Mitarbeiter</span>
-                <select name="departments[<?= (int) $di ?>][members][<?= (int) $mi ?>][user_id]">
-                  <option value="0">— Mitarbeiter wählen —</option>
-                  <?php foreach ($departmentEmployees as $employee) : ?>
-                    <option value="<?= (int) $employee->id ?>"<?= (int) ($member['user_id'] ?? 0) === $employee->id ? ' selected' : '' ?>>
-                      <?= View::escape($employee->displayName) ?><?= RoleResolver::isActiveEmployee($employee) ? '' : ' (inaktiv)' ?>
+                <select name="departments[<?= (int) $di ?>][members][<?= (int) $mi ?>][contact_id]" data-member-contact>
+                  <option value="0">— Kontakt wählen —</option>
+                  <?php foreach ($departmentStaffContacts as $contact) : ?>
+                    <option value="<?= (int) $contact['id'] ?>"<?= $selectedContactId === (int) $contact['id'] ? ' selected' : '' ?>>
+                      <?= View::escape((string) $contact['label']) ?><?= !empty($contact['has_crm_user']) ? '' : ' (ohne CRM)' ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
               </label>
               <label class="dg-field">
                 <span class="dg-sr-only">Rolle</span>
-                <select name="departments[<?= (int) $di ?>][members][<?= (int) $mi ?>][role]">
+                <select name="departments[<?= (int) $di ?>][members][<?= (int) $mi ?>][role]" data-member-role>
                   <option value="member"<?= ($member['role'] ?? 'member') === 'member' ? ' selected' : '' ?>>Abteilungsmitglied</option>
                   <option value="leader"<?= ($member['role'] ?? '') === 'leader' ? ' selected' : '' ?>>Abteilungsleiter</option>
                 </select>
@@ -217,11 +218,11 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
   <div class="dg-dept-member-row" data-dept-member>
     <label class="dg-field">
       <span class="dg-sr-only">Mitarbeiter</span>
-      <select data-member-user>
-        <option value="0">— Mitarbeiter wählen —</option>
-        <?php foreach ($departmentEmployees as $employee) : ?>
-          <option value="<?= (int) $employee->id ?>">
-            <?= View::escape($employee->displayName) ?><?= RoleResolver::isActiveEmployee($employee) ? '' : ' (inaktiv)' ?>
+      <select data-member-contact>
+        <option value="0">— Kontakt wählen —</option>
+        <?php foreach ($departmentStaffContacts as $contact) : ?>
+          <option value="<?= (int) $contact['id'] ?>">
+            <?= View::escape((string) $contact['label']) ?><?= !empty($contact['has_crm_user']) ? '' : ' (ohne CRM)' ?>
           </option>
         <?php endforeach; ?>
       </select>

@@ -175,14 +175,23 @@ final class UserRepository
     {
         if (self::useDatabase()) {
             DepartmentRepository::ensureExecutiveChefLeaders();
+            $user = self::findById($userId);
+            if ($user === null) {
+                return [];
+            }
+            $contactId = DepartmentRepository::resolveContactIdForUser($user);
+            if ($contactId < 1) {
+                return [];
+            }
+
             $stmt = Database::pdo()->prepare(
                 'SELECT d.id, d.name, m.member_role
                  FROM dg_department_members m
                  INNER JOIN dg_departments d ON d.id = m.department_id
-                 WHERE m.user_id = :user_id
+                 WHERE m.contact_id = :contact_id
                  ORDER BY d.sort_order, d.name'
             );
-            $stmt->execute(['user_id' => $userId]);
+            $stmt->execute(['contact_id' => $contactId]);
 
             $result = [];
             while ($row = $stmt->fetch()) {

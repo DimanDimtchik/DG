@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function memberCount(card) {
     let count = 0;
-    card.querySelectorAll('[data-dept-member] select[name*="[user_id]"], [data-dept-member] select[data-member-user]').forEach((select) => {
+    card.querySelectorAll('[data-dept-member] select[name*="[contact_id]"], [data-dept-member] select[data-member-contact]').forEach((select) => {
       if (parseInt(select.value, 10) > 0) {
         count += 1;
       }
@@ -121,10 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       card.querySelectorAll('[data-dept-member]').forEach((row, memberIndex) => {
-        const userSelect = row.querySelector('select[data-member-user], select[name*="[user_id]"]');
+        const contactSelect = row.querySelector('select[data-member-contact], select[name*="[contact_id]"]');
         const roleSelect = row.querySelector('select[data-member-role], select[name*="[role]"]');
-        if (userSelect) {
-          userSelect.name = 'departments[' + deptIndex + '][members][' + memberIndex + '][user_id]';
+        if (contactSelect) {
+          contactSelect.name = 'departments[' + deptIndex + '][members][' + memberIndex + '][contact_id]';
         }
         if (roleSelect) {
           roleSelect.name = 'departments[' + deptIndex + '][members][' + memberIndex + '][role]';
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.target.matches('[data-dept-allow-catalog]')) {
       updateDeptSummary(card);
     }
-    if (event.target.matches('select[name*="[user_id]"], select[data-member-user]')) {
+    if (event.target.matches('select[name*="[contact_id]"], select[data-member-contact]')) {
       updateDeptSummary(card);
     }
   });

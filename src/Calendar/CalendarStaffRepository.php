@@ -428,25 +428,25 @@ final class CalendarStaffRepository
             }
 
             foreach ($department['members'] as $member) {
+                $contactId = (int) ($member['contact_id'] ?? 0);
                 $userId = (int) ($member['user_id'] ?? 0);
-                if ($userId < 1) {
+                if ($contactId < 1 && $userId < 1) {
                     continue;
                 }
 
-                $crmUser = UserRepository::findById($userId);
-                if (!$crmUser) {
-                    continue;
+                $crmUser = $userId > 0 ? UserRepository::findById($userId) : null;
+                if ($contactId < 1 && $crmUser !== null) {
+                    $contactId = ContactRepository::findStaffContactIdForUser($crmUser) ?? 0;
                 }
 
-                $contactId = ContactRepository::findStaffContactIdForUser($crmUser) ?? 0;
                 $contactLabel = '';
                 if ($contactId > 0) {
                     $contact = ContactRepository::findById($contactId);
                     $contactLabel = $contact ? $contact->listLabel() : '';
                 }
 
-                $calendarEmployeeId = $existingByUser[$userId]
-                    ?? ($contactId > 0 ? ($existingByContact[$contactId] ?? 0) : 0);
+                $calendarEmployeeId = ($userId > 0 ? ($existingByUser[$userId] ?? 0) : 0)
+                    ?: ($contactId > 0 ? ($existingByContact[$contactId] ?? 0) : 0);
                 $alreadyEmployee = $calendarEmployeeId > 0;
                 $hasContact = $contactId > 0;
                 $canAdd = $hasContact && !$alreadyEmployee;
@@ -458,7 +458,13 @@ final class CalendarStaffRepository
                     $hint = 'Kein passender Mitarbeiter-Kontakt (gleiche E-Mail oder Login in Kontakte).';
                 }
 
-                $userLabel = trim($crmUser->displayName) !== '' ? $crmUser->displayName : $crmUser->username;
+                $userLabel = $contactLabel;
+                if ($userLabel === '' && $crmUser !== null) {
+                    $userLabel = trim($crmUser->displayName) !== '' ? $crmUser->displayName : $crmUser->username;
+                }
+                if ($userLabel === '') {
+                    $userLabel = 'Kontakt #' . $contactId;
+                }
 
                 $suggestions[] = [
                     'department_id' => $departmentId,

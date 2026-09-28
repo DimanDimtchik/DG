@@ -10,23 +10,14 @@ final class HrDepartmentBoard
     public static function build(): array
     {
         $departments = DepartmentRepository::allWithMembers();
-        $usersById = self::usersById();
-        $contactByUserId = self::contactIdByUserId();
-        $employeeContacts = self::employeeContactOptions();
+        $contactLabels = self::employeeContactOptions();
         $ownership = CompanyExtendedSettings::resolveExecutiveOwnership();
         $chefUserId = (int) ($ownership['leader_user_id'] ?? 0);
-        $ownerUserIds = array_fill_keys($ownership['owner_user_ids'] ?? [], true);
-        $adminUserIds = [];
-        $adminRole = (string) App::config('roles.admin', 'administrator');
-        foreach (UserRepository::all() as $user) {
-            if ($user instanceof User && $user->hasRole($adminRole) && $user->id > 0) {
-                $adminUserIds[$user->id] = true;
-            }
-        }
-        if ($chefUserId < 1) {
-            foreach (array_keys($adminUserIds) as $adminId) {
-                $chefUserId = (int) $adminId;
-                break;
+        $chefContactId = 0;
+        if ($chefUserId > 0) {
+            $chefUser = UserRepository::findById($chefUserId);
+            if ($chefUser !== null) {
+                $chefContactId = DepartmentRepository::resolveContactIdForUser($chefUser);
             }
         }
 
@@ -51,20 +42,16 @@ final class HrDepartmentBoard
             $regularOut = [];
             $withoutTeam = [];
             foreach ($dept['members'] as $member) {
+                $contactId = (int) ($member['contact_id'] ?? 0);
                 $userId = (int) ($member['user_id'] ?? 0);
                 $role = (string) ($member['role'] ?? 'member');
-                $isChefLeader = $isExecutive && $userId > 0 && $userId === $chefUserId;
-                $isOwnerMember = $isExecutive && isset($ownerUserIds[$userId]) && !$isChefLeader;
-                $isAdminMember = $isExecutive && isset($adminUserIds[$userId]) && !$isChefLeader;
+                $isChefLeader = $isExecutive && $contactId > 0 && $chefContactId > 0 && $contactId === $chefContactId;
                 $row = self::memberRow(
+                    $contactId,
                     $userId,
                     $role,
                     $isChefLeader,
-                    $isOwnerMember,
-                    $isAdminMember,
-                    $usersById,
-                    $contactByUserId,
-                    $employeeContacts,
+                    $contactLabels,
                     $inTeamLookup
                 );
                 $membersOut[] = $row;
@@ -73,8 +60,7 @@ final class HrDepartmentBoard
                 } else {
                     $regularOut[] = $row;
                 }
-                // Chef / Inhaber / Admins der GF zählen nicht als „MA ohne Team“.
-                if (!$isChefLeader && !$isOwnerMember && !$isAdminMember && !$row['in_team']) {
+                if (!$isChefLeader && !$row['in_team']) {
                     $withoutTeam[] = $row;
                 }
             }
@@ -109,54 +95,41 @@ final class HrDepartmentBoard
     }
 
     /**
-     * @param array<int, array<string, mixed>> $usersById
-     * @param array<int, int> $contactByUserId
-     * @param array<int, string> $employeeContacts
+     * @param array<int, string> $contactLabels
      * @param array<int, true> $inTeamLookup
      * @return array<string, mixed>
      */
     private static function memberRow(
+        int $contactId,
         int $userId,
         string $role,
         bool $isChefLeader,
-        bool $isOwnerMember,
-        bool $isAdminMember,
-        array $usersById,
-        array $contactByUserId,
-        array $employeeContacts,
+        array $contactLabels,
         array $inTeamLookup
     ): array {
-        $user = $usersById[$userId] ?? null;
-        $contactId = $contactByUserId[$userId] ?? 0;
-        $label = $user !== null
-            ? (trim((string) ($user['display_name'] ?? '')) !== ''
-                ? (string) $user['display_name']
-                : (string) ($user['username'] ?? ('User #' . $userId)))
-            : ('User #' . $userId);
-        if ($contactId > 0 && isset($employeeContacts[$contactId])) {
-            $label = $employeeContacts[$contactId];
-        }
+        $label = $contactLabels[$contactId] ?? ('Kontakt #' . $contactId);
+        $hasCrm = $userId > 0;
 
         if ($isChefLeader) {
             $roleLabel = 'Chef / Abteilungsleiter';
-        } elseif ($isOwnerMember) {
-            $roleLabel = 'Inhaber';
-        } elseif ($isAdminMember) {
-            $roleLabel = 'Administrator';
         } elseif ($role === 'leader') {
             $roleLabel = 'Abteilungsleiter / Planner';
         } else {
             $roleLabel = 'Mitglied';
         }
+        if (!$hasCrm) {
+            $roleLabel .= ' · ohne CRM';
+        }
 
         return [
-            'user_id' => $userId,
             'contact_id' => $contactId,
-            'role' => $isChefLeader ? 'leader' : ($isAdminMember || $isOwnerMember ? 'member' : $role),
+            'user_id' => $userId,
+            'role' => $isChefLeader ? 'leader' : $role,
             'role_label' => $roleLabel,
             'label' => $label,
             'in_team' => $contactId > 0 && isset($inTeamLookup[$contactId]),
             'auto_chef' => $isChefLeader,
+            'has_crm_user' => $hasCrm,
         ];
     }
 
@@ -185,61 +158,6 @@ final class HrDepartmentBoard
                 $label = trim(trim((string) ($row['first_name'] ?? '')) . ' ' . trim((string) ($row['last_name'] ?? '')));
             }
             $out[$id] = $label !== '' ? $label : ('Kontakt #' . $id);
-        }
-
-        return $out;
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private static function usersById(): array
-    {
-        if (!Database::isConfigured()) {
-            return [];
-        }
-        $stmt = Database::pdo()->query('SELECT id, username, display_name, email FROM dg_users');
-        $out = [];
-        while ($row = $stmt->fetch()) {
-            $out[(int) $row['id']] = $row;
-        }
-
-        return $out;
-    }
-
-    /**
-     * @return array<int, int> user_id => contact_id
-     */
-    private static function contactIdByUserId(): array
-    {
-        if (!Database::isConfigured()) {
-            return [];
-        }
-
-        $out = [];
-        try {
-            $check = Database::pdo()->query("SHOW TABLES LIKE 'dg_calendar_employees'");
-            if ($check !== false && $check->fetchColumn() !== false) {
-                $stmt = Database::pdo()->query(
-                    'SELECT user_id, contact_id FROM dg_calendar_employees
-                     WHERE user_id > 0 AND contact_id > 0'
-                );
-                while ($row = $stmt->fetch()) {
-                    $out[(int) $row['user_id']] = (int) $row['contact_id'];
-                }
-            }
-        } catch (Throwable) {
-            // Fallback über Kontaktdaten unten
-        }
-
-        foreach (UserRepository::all() as $user) {
-            if (!$user instanceof User || $user->id < 1 || isset($out[$user->id])) {
-                continue;
-            }
-            $contactId = ContactRepository::findStaffContactIdForUser($user);
-            if ($contactId !== null && $contactId > 0) {
-                $out[$user->id] = $contactId;
-            }
         }
 
         return $out;

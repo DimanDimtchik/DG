@@ -114,7 +114,7 @@ final class OvertimeNotificationRecipients
                 continue;
             }
             foreach ($department['members'] ?? [] as $member) {
-                $email = self::emailForUserId((int) ($member['user_id'] ?? 0));
+                $email = self::emailForDepartmentMember($member);
                 if ($email !== null) {
                     $emails[] = $email;
                 }
@@ -148,7 +148,7 @@ final class OvertimeNotificationRecipients
                 if (($member['role'] ?? '') !== 'leader') {
                     continue;
                 }
-                $email = self::emailForUserId((int) ($member['user_id'] ?? 0));
+                $email = self::emailForDepartmentMember($member);
                 if ($email !== null) {
                     $emails[] = $email;
                 }
@@ -176,7 +176,7 @@ final class OvertimeNotificationRecipients
                 if (($member['role'] ?? '') !== 'leader') {
                     continue;
                 }
-                $email = self::emailForUserId((int) ($member['user_id'] ?? 0));
+                $email = self::emailForDepartmentMember($member);
                 if ($email !== null) {
                     $emails[] = $email;
                 }
@@ -208,7 +208,7 @@ final class OvertimeNotificationRecipients
             $leaders = [];
             $members = [];
             foreach ($department['members'] ?? [] as $member) {
-                $email = self::emailForUserId((int) ($member['user_id'] ?? 0));
+                $email = self::emailForDepartmentMember($member);
                 if ($email === null) {
                     continue;
                 }
@@ -257,39 +257,44 @@ final class OvertimeNotificationRecipients
      */
     private static function departmentIdsForEmployeeContact(?int $employeeContactId): array
     {
-        if ($employeeContactId === null || $employeeContactId < 1) {
-            return [];
-        }
-
-        $contact = ContactRepository::findById($employeeContactId);
-        if ($contact === null) {
-            return [];
-        }
-
-        $user = null;
-        $email = strtolower(trim($contact->email));
-        if ($email !== '') {
-            $user = UserRepository::findByEmail($email);
-        }
-        if ($user === null) {
-            $login = trim((string) ($contact->login ?? ''));
-            if ($login !== '') {
-                $user = UserRepository::findByUsername($login);
-            }
-        }
-        if ($user === null) {
+        if ($employeeContactId === null || $employeeContactId < 1 || !Database::isConfigured()) {
             return [];
         }
 
         $ids = [];
-        foreach (RoleResolver::departmentsFor($user) as $department) {
-            $id = trim((string) ($department['id'] ?? ''));
-            if ($id !== '') {
-                $ids[] = $id;
+        foreach (DepartmentRepository::allWithMembers() as $department) {
+            foreach ($department['members'] ?? [] as $member) {
+                if ((int) ($member['contact_id'] ?? 0) === $employeeContactId) {
+                    $id = trim((string) ($department['id'] ?? ''));
+                    if ($id !== '') {
+                        $ids[] = $id;
+                    }
+                    break;
+                }
             }
         }
 
         return $ids;
+    }
+
+    /**
+     * @param array<string, mixed> $member
+     */
+    private static function emailForDepartmentMember(array $member): ?string
+    {
+        $uid = (int) ($member['user_id'] ?? 0);
+        if ($uid > 0) {
+            $email = self::emailForUserId($uid);
+            if ($email !== null) {
+                return $email;
+            }
+        }
+        $cid = (int) ($member['contact_id'] ?? 0);
+        if ($cid > 0) {
+            return self::employeeEmailForContact($cid);
+        }
+
+        return null;
     }
 
     private static function emailForUserId(int $userId): ?string

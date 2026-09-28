@@ -91,71 +91,50 @@ try {
     );
 
     $insertMember = $pdo->prepare(
-
-        'INSERT INTO dg_department_members (department_id, user_id, member_role)
-
-         VALUES (:department_id, :user_id, :member_role)'
-
+        'INSERT INTO dg_department_members (department_id, contact_id, member_role)
+         VALUES (:department_id, :contact_id, :member_role)'
     );
 
-
-
     $membersByDept = DefaultDepartments::membersFromConfigFile();
-
     $departments = DefaultDepartments::withModulesAndMembers($membersByDept);
 
-
-
     foreach ($departments as $department) {
-
         $insertDept->execute([
-
             'id' => (string) $department['id'],
-
             'name' => (string) $department['name'],
-
             'description' => (string) $department['description'],
-
             'is_hr' => !empty($department['is_hr']) ? 1 : 0,
-
             'allow_contact_delete' => !empty($department['allow_contact_delete']) ? 1 : 0,
-
             'sort_order' => (int) $department['sort_order'],
-
         ]);
 
-
-
         foreach ($department['modules'] as $moduleKey => $level) {
-
             $insertModule->execute([
-
                 'department_id' => (string) $department['id'],
-
                 'module_key' => (string) $moduleKey,
-
                 'access_level' => (string) $level,
-
             ]);
-
         }
-
-
 
         foreach ($department['members'] as $member) {
-
+            $userId = (int) ($member['user_id'] ?? 0);
+            if ($userId < 1) {
+                continue;
+            }
+            $user = UserRepository::findById($userId);
+            if ($user === null) {
+                continue;
+            }
+            $contactId = ContactRepository::findStaffContactIdForUser($user);
+            if ($contactId === null || $contactId < 1) {
+                continue;
+            }
             $insertMember->execute([
-
                 'department_id' => (string) $department['id'],
-
-                'user_id' => (int) $member['user_id'],
-
+                'contact_id' => $contactId,
                 'member_role' => (string) ($member['role'] ?? 'member'),
-
             ]);
-
         }
-
     }
 
 

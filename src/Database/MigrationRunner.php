@@ -77,6 +77,10 @@ final class MigrationRunner
                     CalendarStaffRepository::autoLinkOrphanEmployeesToContacts();
                 }
 
+                if ($id === '109_department_members_contact.sql') {
+                    DepartmentRepository::migrateMembersSchemaToContacts($pdo);
+                }
+
                 self::executeFile($pdo, $file);
                 $stmt = $pdo->prepare('INSERT INTO dg_migrations (id) VALUES (:id)');
                 $stmt->execute(['id' => $id]);
@@ -280,6 +284,8 @@ final class MigrationRunner
             '108_hr_teams.sql' => self::tableExists($pdo, 'dg_teams')
                 && self::tableExists($pdo, 'dg_team_members')
                 && self::tableExists($pdo, 'dg_team_assets'),
+            '109_department_members_contact.sql' => self::columnExists($pdo, 'dg_department_members', 'contact_id')
+                && !self::columnExists($pdo, 'dg_department_members', 'user_id'),
             '102_mobile_app_auth.sql' => self::tableExists($pdo, 'dg_mobile_customer_accounts')
                 && self::tableExists($pdo, 'dg_mobile_tokens'),
             '103_mobile_app_download_page.sql' => true,
@@ -415,6 +421,7 @@ final class MigrationRunner
             '101_time_absence_attachments.sql' => true,
             '107_time_absence_adjustments.sql' => true,
             '108_hr_teams.sql' => true,
+            '109_department_members_contact.sql' => true,
             '102_mobile_app_auth.sql' => true,
             '103_mobile_app_download_page.sql' => true,
             '104_staff_access_invites.sql' => true,

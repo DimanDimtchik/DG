@@ -58,7 +58,7 @@
         <?php elseif ($settingsSelection['template'] === 'crm-appearance') : ?>
           <?php View::render('settings/tab-crm-appearance', compact('crmThemeConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'departments') : ?>
-          <?php View::render('settings/tab-departments', compact('departmentsData', 'departmentEmployees', 'notificationTemplateData', 'dbConnected')); ?>
+          <?php View::render('settings/tab-departments', compact('departmentsData', 'departmentStaffContacts', 'departmentEmployees', 'notificationTemplateData', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'calendar-team') : ?>
           <?php View::render('settings/tab-calendar-team', compact('dbConnected', 'calendarTeamTab', 'calendarAreas', 'calendarEmployees', 'calendarAbsences', 'calendarLinkUsers', 'calendarDepartmentOptions', 'calendarLinkContacts', 'calendarDepartmentSuggestions')); ?>
         <?php elseif ($settingsSelection['template'] === 'company') : ?>

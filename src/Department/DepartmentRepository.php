@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Department Repository.
+ * Department Repository — Mitglieder über Kontakte (MA), CRM-Rechte nur bei verknüpftem User.
  */
 final class DepartmentRepository
 {
@@ -12,7 +12,7 @@ final class DepartmentRepository
      *   name: string,
      *   description: string,
      *   sort_order: int,
-     *   members: list<array{user_id: int, role: string}>
+     *   members: list<array{contact_id: int, user_id: int, role: string}>
      * }>
      */
     public static function allWithMembers(): array
@@ -55,11 +55,16 @@ final class DepartmentRepository
 
         $ids = array_column($departments, 'id');
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        if (!self::membersUseContactId($pdo)) {
+            return $departments;
+        }
+
         $memberStmt = $pdo->prepare(
-            "SELECT department_id, user_id, member_role
+            "SELECT department_id, contact_id, member_role
              FROM dg_department_members
              WHERE department_id IN ({$placeholders})
-             ORDER BY member_role DESC, user_id ASC"
+             ORDER BY member_role DESC, contact_id ASC"
         );
         $memberStmt->execute($ids);
 
@@ -73,8 +78,10 @@ final class DepartmentRepository
             if (!isset($index[$deptId])) {
                 continue;
             }
+            $contactId = (int) $row['contact_id'];
             $departments[$index[$deptId]]['members'][] = [
-                'user_id' => (int) $row['user_id'],
+                'contact_id' => $contactId,
+                'user_id' => self::resolveUserIdForContact($contactId),
                 'role' => (string) $row['member_role'],
             ];
         }
@@ -104,15 +111,40 @@ final class DepartmentRepository
     }
 
     /**
-     * assignableEmployees.
+     * MA-Kontakte für Abteilungs-Zuordnung (mit/ohne CRM-Login).
      *
-     * @return list<User>
+     * @return list<array{id: int, label: string, has_crm_user: bool}>
      */
-        public static function assignableEmployees(): array
+    public static function assignableStaffContacts(): array
+    {
+        if (!Database::isConfigured()) {
+            return [];
+        }
+        $stmt = Database::pdo()->query(
+            "SELECT id, display_name, company_name, first_name, last_name, email, login
+             FROM dg_contacts
+             WHERE contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')
+             ORDER BY display_name ASC, id ASC"
+        );
+        $out = [];
+        while ($row = $stmt->fetch()) {
+            $id = (int) $row['id'];
+            $label = self::contactLabelFromRow($row);
+            $out[] = [
+                'id' => $id,
+                'label' => $label,
+                'has_crm_user' => self::resolveUserIdForContact($id) > 0,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** @deprecated Use assignableStaffContacts() */
+    public static function assignableEmployees(): array
     {
         $employeeRole = (string) App::config('roles.employee', 'dg_eigenmitarbeiter');
         $users = [];
-
         foreach (UserRepository::all() as $user) {
             if ($user->hasRole($employeeRole)) {
                 $users[] = $user;
@@ -122,9 +154,9 @@ final class DepartmentRepository
         return $users;
     }
 
-        /**
-     * Liefert Benutzer-IDs einer Abteilung
-     * @param string $departmentId Abteilungs-ID
+    /**
+     * CRM-User-IDs einer Abteilung (nur Kontakte mit auflösbarem Login).
+     *
      * @return list<int>
      */
     public static function userIdsForDepartment(string $departmentId): array
@@ -134,19 +166,28 @@ final class DepartmentRepository
             return [];
         }
 
+        if (!self::membersUseContactId(Database::pdo())) {
+            return [];
+        }
+
         $stmt = Database::pdo()->prepare(
-            'SELECT user_id FROM dg_department_members WHERE department_id = :department_id'
+            'SELECT contact_id FROM dg_department_members WHERE department_id = :department_id'
         );
         $stmt->execute(['department_id' => $departmentId]);
+        $out = [];
+        $seen = [];
+        while ($row = $stmt->fetch()) {
+            $uid = self::resolveUserIdForContact((int) $row['contact_id']);
+            if ($uid < 1 || isset($seen[$uid])) {
+                continue;
+            }
+            $seen[$uid] = true;
+            $out[] = $uid;
+        }
 
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        return $out;
     }
 
-    /**
-     * Liefert den Abteilungsnamen
-     * @param string $departmentId Abteilungs-ID
-     * @return string
-     */
     public static function departmentName(string $departmentId): string
     {
         $departmentId = trim($departmentId);
@@ -161,11 +202,6 @@ final class DepartmentRepository
         return $name ? (string) $name : '';
     }
 
-    /**
-     * Prüft, ob eine Abteilung existiert
-     * @param string $departmentId Abteilungs-ID
-     * @return bool
-     */
     public static function exists(string $departmentId): bool
     {
         $departmentId = trim($departmentId);
@@ -180,11 +216,9 @@ final class DepartmentRepository
     }
 
     /**
-     * optionsForSelect.
-     *
      * @return list<array{id: string, name: string}>
      */
-        public static function optionsForSelect(): array
+    public static function optionsForSelect(): array
     {
         $options = [];
         foreach (self::allWithMembers() as $department) {
@@ -197,13 +231,6 @@ final class DepartmentRepository
         return $options;
     }
 
-        /**
-     * Speichert Formulardaten
-     * @param array $input Formulardaten
-     * @return void
-     * @throws RuntimeException
-     * @throws InvalidArgumentException
-     */
     public static function saveFromPost(array $input): void
     {
         if (!Database::isConfigured()) {
@@ -231,8 +258,8 @@ final class DepartmentRepository
                  VALUES (:id, :name, :description, :is_hr, :allow_contact_delete, :is_purchasing, :allow_article_catalog, :sort_order)'
             );
             $memberStmt = $pdo->prepare(
-                'INSERT INTO dg_department_members (department_id, user_id, member_role)
-                 VALUES (:department_id, :user_id, :member_role)'
+                'INSERT INTO dg_department_members (department_id, contact_id, member_role)
+                 VALUES (:department_id, :contact_id, :member_role)'
             );
             $moduleStmt = $pdo->prepare(
                 'INSERT INTO dg_department_module_access (department_id, module_key, access_level)
@@ -260,16 +287,16 @@ final class DepartmentRepository
                     ]);
                 }
 
-                $seenUsers = [];
+                $seen = [];
                 foreach ($department['members'] as $member) {
-                    $userId = (int) $member['user_id'];
-                    if ($userId < 1 || isset($seenUsers[$userId])) {
+                    $contactId = (int) $member['contact_id'];
+                    if ($contactId < 1 || isset($seen[$contactId])) {
                         continue;
                     }
-                    $seenUsers[$userId] = true;
+                    $seen[$contactId] = true;
                     $memberStmt->execute([
                         'department_id' => $department['id'],
-                        'user_id' => $userId,
+                        'contact_id' => $contactId,
                         'member_role' => $member['role'],
                     ]);
                 }
@@ -284,134 +311,108 @@ final class DepartmentRepository
         }
     }
 
-        /**
-     * Bereinigt Abteilungs-Formulardaten
-     * @param array $raw Rohdaten
-     * @return list<array{id: string, name: string, description: string, members: list<array{user_id: int, role: string}>}>
-     * @throws InvalidArgumentException
+    /**
+     * Schema-Umbau user_id → contact_id (Migration 109).
      */
-    private static function sanitizeDepartments(array $raw): array
+    public static function migrateMembersSchemaToContacts(PDO $pdo): void
     {
-        $assignable = [];
-        foreach (self::assignableEmployees() as $user) {
-            $assignable[$user->id] = true;
+        if (!self::pdoTableExists($pdo, 'dg_department_members')) {
+            $pdo->exec(
+                "CREATE TABLE dg_department_members (
+                    department_id VARCHAR(64) NOT NULL,
+                    contact_id INT UNSIGNED NOT NULL,
+                    member_role ENUM('member', 'leader') NOT NULL DEFAULT 'member',
+                    PRIMARY KEY (department_id, contact_id),
+                    KEY idx_dept_members_contact (contact_id),
+                    CONSTRAINT fk_dept_member_dept FOREIGN KEY (department_id) REFERENCES dg_departments (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_dept_member_contact FOREIGN KEY (contact_id) REFERENCES dg_contacts (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            );
+
+            return;
         }
 
-        $existingIds = [];
-        foreach (self::allWithMembers() as $department) {
-            $existingIds[$department['id']] = true;
+        if (self::pdoColumnExists($pdo, 'dg_department_members', 'contact_id')
+            && !self::pdoColumnExists($pdo, 'dg_department_members', 'user_id')
+        ) {
+            return;
         }
 
-        $out = [];
-        foreach ($raw as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS dg_department_members_contact (
+                department_id VARCHAR(64) NOT NULL,
+                contact_id INT UNSIGNED NOT NULL,
+                member_role ENUM('member', 'leader') NOT NULL DEFAULT 'member',
+                PRIMARY KEY (department_id, contact_id),
+                KEY idx_dept_members_contact (contact_id),
+                CONSTRAINT fk_dept_member_v2_dept FOREIGN KEY (department_id) REFERENCES dg_departments (id) ON DELETE CASCADE,
+                CONSTRAINT fk_dept_member_v2_contact FOREIGN KEY (contact_id) REFERENCES dg_contacts (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
 
-            $name = trim((string) ($row['name'] ?? ''));
-            $description = trim((string) ($row['description'] ?? ''));
-            $id = trim((string) ($row['id'] ?? ''));
-
-            $members = [];
-            if (!empty($row['members']) && is_array($row['members'])) {
-                foreach ($row['members'] as $member) {
-                    if (!is_array($member)) {
-                        continue;
-                    }
-                    $userId = (int) ($member['user_id'] ?? 0);
-                    if ($userId < 1 || !isset($assignable[$userId])) {
-                        continue;
-                    }
-                    $role = (string) ($member['role'] ?? 'member');
-                    if (!in_array($role, ['member', 'leader'], true)) {
-                        $role = 'member';
-                    }
-                    $members[] = [
-                        'user_id' => $userId,
-                        'role' => $role,
-                    ];
+        if (self::pdoColumnExists($pdo, 'dg_department_members', 'user_id')) {
+            $rows = $pdo->query(
+                'SELECT department_id, user_id, member_role FROM dg_department_members'
+            )->fetchAll() ?: [];
+            $ins = $pdo->prepare(
+                'INSERT IGNORE INTO dg_department_members_contact (department_id, contact_id, member_role)
+                 VALUES (:department_id, :contact_id, :member_role)'
+            );
+            foreach ($rows as $row) {
+                $userId = (int) ($row['user_id'] ?? 0);
+                if ($userId < 1) {
+                    continue;
                 }
+                $user = UserRepository::findById($userId);
+                if ($user === null) {
+                    continue;
+                }
+                $contactId = ContactRepository::findStaffContactIdForUser($user);
+                if ($contactId === null || $contactId < 1) {
+                    continue;
+                }
+                $role = (string) ($row['member_role'] ?? 'member');
+                if (!in_array($role, ['member', 'leader'], true)) {
+                    $role = 'member';
+                }
+                $ins->execute([
+                    'department_id' => (string) $row['department_id'],
+                    'contact_id' => $contactId,
+                    'member_role' => $role,
+                ]);
             }
-
-            if ($name === '' && $members === []) {
-                continue;
-            }
-            if ($name === '') {
-                throw new InvalidArgumentException('Jede Abteilung mit Mitgliedern braucht einen Namen.');
-            }
-
-            if ($id === '' || !preg_match('/^[a-z0-9][a-z0-9_-]{0,62}$/i', $id)) {
-                $id = self::generateId($name, $existingIds);
-            }
-            if (isset($existingIds[$id]) && !self::idInCurrentBatch($id, $out)) {
-                // keep existing id
-            }
-            $existingIds[$id] = true;
-
-            $out[] = [
-                'id' => $id,
-                'name' => $name,
-                'description' => $description,
-                'is_hr' => !empty($row['is_hr']),
-                'allow_contact_delete' => !empty($row['allow_contact_delete']),
-                'is_purchasing' => !empty($row['is_purchasing']),
-                'allow_article_catalog' => !empty($row['allow_article_catalog']) || !empty($row['is_purchasing']),
-                'modules' => DepartmentAccess::sanitizeModules(is_array($row['modules'] ?? null) ? $row['modules'] : []),
-                'members' => $members,
-            ];
         }
 
-        return $out;
+        $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+        $pdo->exec('DROP TABLE dg_department_members');
+        $pdo->exec('RENAME TABLE dg_department_members_contact TO dg_department_members');
+        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
     }
 
-        /**
-     * Prüft, ob eine ID bereits in der Charge vorkommt
-     * @param string $id Datensatz-ID
-     * @param array $batch Aktuelle Charge
-     * @return bool
-     */
-    private static function idInCurrentBatch(string $id, array $batch): bool
+    public static function resolveUserIdForContact(int $contactId): int
     {
-        foreach ($batch as $row) {
-            if ($row['id'] === $id) {
-                return true;
-            }
+        if ($contactId < 1) {
+            return 0;
         }
+        $contact = ContactRepository::findById($contactId);
+        if ($contact === null) {
+            return 0;
+        }
+        $uid = MailboxMemberResolver::findUserIdForContact($contact);
 
-        return false;
+        return $uid !== null && $uid > 0 ? $uid : 0;
     }
 
-        /**
-     * Erzeugt eine eindeutige Abteilungs-ID
-     * @param string $name Name
-     * @param mixed $used Bereits vergebene IDs
-     * @return string
-     */
-    private static function generateId(string $name, array &$used): string
+    public static function resolveContactIdForUser(User $user): int
     {
-        $slug = preg_replace('/[^a-z0-9]+/', '-', strtolower($name)) ?? '';
-        $slug = trim((string) $slug, '-');
-        if ($slug === '') {
-            $slug = bin2hex(random_bytes(4));
-        }
-        $slug = substr($slug, 0, 48);
+        $cid = ContactRepository::findStaffContactIdForUser($user);
 
-        $base = 'dept-' . $slug;
-        $id = $base;
-        $suffix = 2;
-        while (isset($used[$id])) {
-            $id = $base . '-' . $suffix;
-            ++$suffix;
-        }
-        $used[$id] = true;
-
-        return $id;
+        return $cid !== null && $cid > 0 ? $cid : 0;
     }
 
     /**
-     * Chef = Inhaber mit den meisten Anteilen (CRM-Benutzer verknüpft).
-     * Bei Gleichstand: erster Inhaber in der Liste. Ohne Inhaber-User: erster Admin.
-     * Nur der Chef ist Abteilungsleiter; andere Admins und Inhaber sind Mitglieder.
+     * Chef = Inhaber mit den meisten Anteilen (als Kontakt).
+     * Nur der Chef ist Abteilungsleiter; andere Admins/Inhaber mit Kontakt = Mitglieder.
      */
     public static function ensureExecutiveChefLeaders(bool $force = false): void
     {
@@ -424,6 +425,12 @@ final class DepartmentRepository
         }
 
         $pdo = Database::pdo();
+        if (!self::membersUseContactId($pdo)) {
+            $done = true;
+
+            return;
+        }
+
         $deptId = self::resolveExecutiveDepartmentId($pdo);
         if ($deptId === null) {
             $done = true;
@@ -432,25 +439,51 @@ final class DepartmentRepository
         }
 
         $adminRole = (string) App::config('roles.admin', 'administrator');
-        $adminIds = [];
+        $adminContactIds = [];
         foreach (UserRepository::all() as $user) {
-            if ($user instanceof User && $user->hasRole($adminRole) && $user->id > 0) {
-                $adminIds[$user->id] = true;
+            if (!$user instanceof User || !$user->hasRole($adminRole) || $user->id < 1) {
+                continue;
+            }
+            $cid = self::resolveContactIdForUser($user);
+            if ($cid > 0) {
+                $adminContactIds[$cid] = true;
             }
         }
 
         $ownership = CompanyExtendedSettings::resolveExecutiveOwnership();
-        $ownerIds = $ownership['owner_user_ids'];
-        $chefId = (int) $ownership['leader_user_id'];
+        $ownerUserIds = $ownership['owner_user_ids'];
+        $chefUserId = (int) $ownership['leader_user_id'];
 
-        if ($chefId < 1) {
-            foreach (array_keys($adminIds) as $adminId) {
-                $chefId = (int) $adminId;
-                break;
+        $ownerContactIds = [];
+        foreach ($ownerUserIds as $uid) {
+            $user = UserRepository::findById((int) $uid);
+            if ($user === null) {
+                continue;
+            }
+            $cid = self::resolveContactIdForUser($user);
+            if ($cid > 0) {
+                $ownerContactIds[] = $cid;
             }
         }
 
-        if ($chefId < 1) {
+        $chefContactId = 0;
+        if ($chefUserId > 0) {
+            $chefUser = UserRepository::findById($chefUserId);
+            if ($chefUser !== null) {
+                $chefContactId = self::resolveContactIdForUser($chefUser);
+            }
+        }
+        if ($chefContactId < 1) {
+            foreach (array_keys($adminContactIds) as $cid) {
+                $chefContactId = (int) $cid;
+                break;
+            }
+        }
+        if ($chefContactId < 1 && $ownerContactIds !== []) {
+            $chefContactId = (int) $ownerContactIds[0];
+        }
+
+        if ($chefContactId < 1) {
             $done = true;
 
             return;
@@ -458,51 +491,49 @@ final class DepartmentRepository
 
         $existing = [];
         $stmt = $pdo->prepare(
-            'SELECT user_id, member_role FROM dg_department_members WHERE department_id = :department_id'
+            'SELECT contact_id, member_role FROM dg_department_members WHERE department_id = :department_id'
         );
         $stmt->execute(['department_id' => $deptId]);
         while ($row = $stmt->fetch()) {
-            $existing[(int) $row['user_id']] = (string) $row['member_role'];
+            $existing[(int) $row['contact_id']] = (string) $row['member_role'];
         }
 
         $upsert = $pdo->prepare(
-            'INSERT INTO dg_department_members (department_id, user_id, member_role)
-             VALUES (:department_id, :user_id, :member_role)
+            'INSERT INTO dg_department_members (department_id, contact_id, member_role)
+             VALUES (:department_id, :contact_id, :member_role)
              ON DUPLICATE KEY UPDATE member_role = VALUES(member_role)'
         );
 
-        // Ziel: genau ein Leiter (Chef); alle anderen Admins + Inhaber = Mitglied
         $desired = [];
-        foreach ($ownerIds as $uid) {
-            $desired[$uid] = 'member';
+        foreach ($ownerContactIds as $cid) {
+            $desired[$cid] = 'member';
         }
-        foreach (array_keys($adminIds) as $uid) {
-            $desired[(int) $uid] = 'member';
+        foreach (array_keys($adminContactIds) as $cid) {
+            $desired[(int) $cid] = 'member';
         }
-        $desired[$chefId] = 'leader';
+        $desired[$chefContactId] = 'leader';
 
         $changed = false;
-        foreach ($desired as $uid => $role) {
-            if (($existing[$uid] ?? '') === $role) {
+        foreach ($desired as $cid => $role) {
+            if (($existing[$cid] ?? '') === $role) {
                 continue;
             }
             $upsert->execute([
                 'department_id' => $deptId,
-                'user_id' => $uid,
+                'contact_id' => $cid,
                 'member_role' => $role,
             ]);
             $changed = true;
-            $existing[$uid] = $role;
+            $existing[$cid] = $role;
         }
 
-        // Fremde Leiter (nicht Chef) auf Mitglied setzen — nicht löschen
-        foreach ($existing as $uid => $role) {
-            if ($uid === $chefId || $role !== 'leader') {
+        foreach ($existing as $cid => $role) {
+            if ($cid === $chefContactId || $role !== 'leader') {
                 continue;
             }
             $upsert->execute([
                 'department_id' => $deptId,
-                'user_id' => $uid,
+                'contact_id' => $cid,
                 'member_role' => 'member',
             ]);
             $changed = true;
@@ -514,9 +545,6 @@ final class DepartmentRepository
         $done = true;
     }
 
-    /**
-     * @return string|null department_id
-     */
     public static function resolveExecutiveDepartmentId(?PDO $pdo = null): ?string
     {
         if ($pdo === null) {
@@ -545,9 +573,6 @@ final class DepartmentRepository
         return $preferred ?? $byName;
     }
 
-    /**
-     * Prüft, ob die Abteilung die Geschäftsführung ist (Chef-Leiter).
-     */
     public static function isExecutiveDepartment(string $departmentId, string $name = ''): bool
     {
         $departmentId = trim($departmentId);
@@ -560,10 +585,6 @@ final class DepartmentRepository
             || str_contains($nameLower, 'geschaeftsfuehr');
     }
 
-    /**
-     * Stellt Standarddaten in der Datenbank sicher
-     * @return void
-     */
     public static function ensureSeeded(): void
     {
         if (!self::useDatabase()) {
@@ -578,11 +599,6 @@ final class DepartmentRepository
         self::ensureMissingDefaults();
     }
 
-        /**
-     * Fehlende Standard-Abteilungen ergänzen (bestehende bleiben unverändert).
-     * @return int
-     * @throws RuntimeException
-     */
     public static function ensureMissingDefaults(): int
     {
         if (!Database::isConfigured()) {
@@ -659,19 +675,137 @@ final class DepartmentRepository
     }
 
     /**
-     * fromFile.
-     *
-     * @return list<array{id: string, name: string, description: string, sort_order: int, members: list<array{user_id: int, role: string}>}>
+     * @param array $raw
+     * @return list<array{id: string, name: string, description: string, members: list<array{contact_id: int, role: string}>}>
      */
-        private static function fromFile(): array
+    private static function sanitizeDepartments(array $raw): array
     {
-        return DefaultDepartments::withModulesAndMembers(DefaultDepartments::membersFromConfigFile());
+        $assignable = [];
+        foreach (self::assignableStaffContacts() as $contact) {
+            $assignable[(int) $contact['id']] = true;
+        }
+
+        $existingIds = [];
+        foreach (self::allWithMembers() as $department) {
+            $existingIds[$department['id']] = true;
+        }
+
+        $out = [];
+        foreach ($raw as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $name = trim((string) ($row['name'] ?? ''));
+            $description = trim((string) ($row['description'] ?? ''));
+            $id = trim((string) ($row['id'] ?? ''));
+
+            $members = [];
+            if (!empty($row['members']) && is_array($row['members'])) {
+                foreach ($row['members'] as $member) {
+                    if (!is_array($member)) {
+                        continue;
+                    }
+                    $contactId = (int) ($member['contact_id'] ?? $member['user_id'] ?? 0);
+                    if ($contactId < 1 || !isset($assignable[$contactId])) {
+                        continue;
+                    }
+                    $role = (string) ($member['role'] ?? 'member');
+                    if (!in_array($role, ['member', 'leader'], true)) {
+                        $role = 'member';
+                    }
+                    $members[] = [
+                        'contact_id' => $contactId,
+                        'role' => $role,
+                    ];
+                }
+            }
+
+            if ($name === '' && $members === []) {
+                continue;
+            }
+            if ($name === '') {
+                throw new InvalidArgumentException('Jede Abteilung mit Mitgliedern braucht einen Namen.');
+            }
+
+            if ($id === '' || !preg_match('/^[a-z0-9][a-z0-9_-]{0,62}$/i', $id)) {
+                $id = self::generateId($name, $existingIds);
+            }
+            $existingIds[$id] = true;
+
+            $out[] = [
+                'id' => $id,
+                'name' => $name,
+                'description' => $description,
+                'is_hr' => !empty($row['is_hr']),
+                'allow_contact_delete' => !empty($row['allow_contact_delete']),
+                'is_purchasing' => !empty($row['is_purchasing']),
+                'allow_article_catalog' => !empty($row['allow_article_catalog']) || !empty($row['is_purchasing']),
+                'modules' => DepartmentAccess::sanitizeModules(is_array($row['modules'] ?? null) ? $row['modules'] : []),
+                'members' => $members,
+            ];
+        }
+
+        return $out;
+    }
+
+    private static function idInCurrentBatch(string $id, array $batch): bool
+    {
+        foreach ($batch as $row) {
+            if ($row['id'] === $id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * Prüft, ob die Abteilungstabelle verfügbar ist
-     * @return bool
+     * @param array<string, true> $used
      */
+    private static function generateId(string $name, array &$used): string
+    {
+        $base = strtolower(trim($name));
+        $base = preg_replace('/[^a-z0-9]+/i', '-', $base) ?? 'dept';
+        $base = trim($base, '-');
+        if ($base === '') {
+            $base = 'dept';
+        }
+        if (strlen($base) > 48) {
+            $base = substr($base, 0, 48);
+        }
+        $id = $base;
+        $suffix = 2;
+        while (isset($used[$id])) {
+            $id = $base . '-' . $suffix;
+            ++$suffix;
+        }
+        $used[$id] = true;
+
+        return $id;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function fromFile(): array
+    {
+        $departments = DefaultDepartments::withModulesAndMembers(DefaultDepartments::membersFromConfigFile());
+        foreach ($departments as $i => $dept) {
+            $mapped = [];
+            foreach ($dept['members'] as $member) {
+                $mapped[] = [
+                    'contact_id' => 0,
+                    'user_id' => (int) ($member['user_id'] ?? 0),
+                    'role' => (string) ($member['role'] ?? 'member'),
+                ];
+            }
+            $departments[$i]['members'] = $mapped;
+        }
+
+        return $departments;
+    }
+
     private static function useDatabase(): bool
     {
         if (!Database::isConfigured()) {
@@ -685,5 +819,41 @@ final class DepartmentRepository
         } catch (Throwable) {
             return false;
         }
+    }
+
+    private static function membersUseContactId(PDO $pdo): bool
+    {
+        return self::pdoColumnExists($pdo, 'dg_department_members', 'contact_id')
+            && !self::pdoColumnExists($pdo, 'dg_department_members', 'user_id');
+    }
+
+    private static function pdoTableExists(PDO $pdo, string $table): bool
+    {
+        $stmt = $pdo->query('SHOW TABLES LIKE ' . $pdo->quote($table));
+
+        return $stmt !== false && $stmt->fetchColumn() !== false;
+    }
+
+    private static function pdoColumnExists(PDO $pdo, string $table, string $column): bool
+    {
+        $stmt = $pdo->query('SHOW COLUMNS FROM `' . str_replace('`', '``', $table) . '` LIKE ' . $pdo->quote($column));
+
+        return $stmt !== false && $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private static function contactLabelFromRow(array $row): string
+    {
+        $label = trim((string) ($row['display_name'] ?? ''));
+        if ($label === '') {
+            $label = trim((string) ($row['company_name'] ?? ''));
+        }
+        if ($label === '') {
+            $label = trim(trim((string) ($row['first_name'] ?? '')) . ' ' . trim((string) ($row['last_name'] ?? '')));
+        }
+
+        return $label !== '' ? $label : ('Kontakt #' . (int) ($row['id'] ?? 0));
     }
 }

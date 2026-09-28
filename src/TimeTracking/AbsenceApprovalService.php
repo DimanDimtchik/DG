@@ -154,29 +154,17 @@ final class AbsenceApprovalService
         if ($employeeContactId < 1 || !Database::isConfigured()) {
             return [];
         }
-        $contact = ContactRepository::findById($employeeContactId);
-        if ($contact === null) {
-            return [];
-        }
-        $user = null;
-        $email = strtolower(trim((string) ($contact->email ?? '')));
-        if ($email !== '') {
-            $user = UserRepository::findByEmail($email);
-        }
-        if ($user === null) {
-            $login = trim((string) ($contact->login ?? ''));
-            if ($login !== '') {
-                $user = UserRepository::findByUsername($login);
-            }
-        }
-        if ($user === null) {
-            return [];
-        }
         $ids = [];
-        foreach (RoleResolver::departmentsFor($user) as $department) {
-            $id = trim((string) ($department['id'] ?? ''));
-            if ($id !== '') {
-                $ids[] = $id;
+        foreach (DepartmentRepository::allWithMembers() as $department) {
+            foreach ($department['members'] ?? [] as $member) {
+                if ((int) ($member['contact_id'] ?? 0) !== $employeeContactId) {
+                    continue;
+                }
+                $id = trim((string) ($department['id'] ?? ''));
+                if ($id !== '') {
+                    $ids[] = $id;
+                }
+                break;
             }
         }
 

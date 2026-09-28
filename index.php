@@ -4278,6 +4278,7 @@ switch ($path) {
         $appearanceConfig = AppearanceSettings::forForm();
         $crmThemeConfig = CrmThemeSettings::forForm();
         $departmentsData = DepartmentRepository::allWithMembers();
+        $departmentStaffContacts = DepartmentRepository::assignableStaffContacts();
         $departmentEmployees = DepartmentRepository::assignableEmployees();
         $lagerStrukturTab = isset($_GET['lager_tab']) && in_array($_GET['lager_tab'], ['orte', 'hallen', 'regale', 'etiketten', 'einkauf'], true)
             ? (string) $_GET['lager_tab']
@@ -6938,6 +6939,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $appearanceConfig = $appearanceConfig ?? AppearanceSettings::forForm();
         $crmThemeConfig = $crmThemeConfig ?? CrmThemeSettings::forForm();
         $departmentsData = $departmentsData ?? DepartmentRepository::allWithMembers();
+        $departmentStaffContacts = $departmentStaffContacts ?? DepartmentRepository::assignableStaffContacts();
         $departmentEmployees = $departmentEmployees ?? DepartmentRepository::assignableEmployees();
         $lagerStrukturTab = $lagerStrukturTab ?? 'orte';
         $stockPurchaseForm = $stockPurchaseForm ?? StockPurchaseSettings::forForm();
@@ -7306,6 +7308,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'crmThemeConfig',
             'departmentsData',
             'departmentEmployees',
+            'departmentStaffContacts',
             'lagerStrukturTab',
             'stockPurchaseForm',
             'amazonBusinessForm',
