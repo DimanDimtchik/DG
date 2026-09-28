@@ -58,6 +58,11 @@ if ($isDienstleistungenFormFocus) {
         $documentKindSelectValue = $selectedDocumentKind;
     }
 }
+/** Auftrag/Angebot: Dateien bei internen Notizen (Zeichnungen), nicht E-Rechnungs-Import oben. */
+$useNotesFileUpload = $isDienstleistungenFormFocus
+    || in_array($selectedDocumentKind, [VoucherDocumentKind::WORK_ORDER, VoucherDocumentKind::OFFER], true);
+/** @var list<array<string, mixed>> $voucherFiles */
+$voucherFiles = is_array($form['files'] ?? null) ? $form['files'] : [];
 /** @var list<array<string, mixed>> $lineRows */
 $lineRows = is_array($form['lines'] ?? null) ? $form['lines'] : [];
 /** @var list<array<string, mixed>> $itemRows */
@@ -389,7 +394,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
     <?php endif; ?>
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $voucherId ?>"><?php endif; ?>
 
-    <?php if (!$readOnly) : ?>
+    <?php if (!$readOnly && !$useNotesFileUpload) : ?>
     <section class="dg-form-section dg-voucher-files">
       <h2 class="dg-subsection-title">Belegdatei (PDF / Bild / E-Rechnung)</h2>
       <div class="dg-voucher-files__dropzone" id="dg-voucher-file-dropzone">
@@ -1333,7 +1338,54 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       <label class="dg-field dg-field--wide">
         <span>Interne Notizen</span>
         <textarea name="notes" rows="3"<?= $readOnly ? ' readonly' : '' ?>><?= View::escape($form['notes'] ?? '') ?></textarea>
+        <small class="dg-field-hint">Nur intern — erscheint nicht auf dem Kunden-PDF.</small>
       </label>
+      <?php if ($useNotesFileUpload) : ?>
+        <div class="dg-voucher-files dg-voucher-files--notes" style="margin-top: 12px;">
+          <h3 class="dg-subsection-title">Dokumente / Zeichnungen</h3>
+          <?php if (!$readOnly) : ?>
+            <div class="dg-voucher-files__dropzone" id="dg-voucher-file-dropzone">
+              <input type="file" name="voucher_files[]" id="dg-voucher-file-input"
+                     accept="<?= View::escape(VoucherFileStorage::acceptAttributeNotes()) ?>" multiple>
+              <p class="dg-field-hint">
+                PDF oder Bild (JPG, PNG, WEBP, GIF) — Skizzen, Pläne, Vorgaben. Dateien werden sofort am Beleg gespeichert und bleiben intern.
+              </p>
+            </div>
+            <p class="dg-field-hint" id="dg-voucher-notes-upload-status" hidden></p>
+          <?php endif; ?>
+          <div class="dg-voucher-attachments" id="dg-voucher-attachments-live"<?= $voucherFiles === [] ? ' hidden' : '' ?>>
+            <?php if ($voucherFiles !== []) : ?>
+              <h3 class="dg-subsection-title">Gespeicherte Dateien</h3>
+              <ul class="dg-voucher-attachments__list">
+                <?php foreach ($voucherFiles as $file) : ?>
+                  <li class="dg-voucher-attachments__item">
+                    <?php if (!empty($file['is_image'])) : ?>
+                      <a href="<?= View::escape((string) $file['view_url']) ?>" target="_blank" rel="noopener" class="dg-voucher-attachments__thumb">
+                        <img src="<?= View::escape((string) $file['view_url']) ?>" alt="<?= View::escape((string) $file['original_name']) ?>" loading="lazy">
+                      </a>
+                    <?php else : ?>
+                      <a href="<?= View::escape((string) $file['view_url']) ?>" target="_blank" rel="noopener" class="dg-voucher-attachments__thumb dg-voucher-attachments__thumb--file">
+                        <?php View::render('partials/icon', ['name' => 'document']); ?>
+                      </a>
+                    <?php endif; ?>
+                    <div class="dg-voucher-attachments__meta">
+                      <a href="<?= View::escape((string) $file['view_url']) ?>" target="_blank" rel="noopener" class="dg-voucher-attachments__name"><?= View::escape((string) $file['original_name']) ?></a>
+                      <span class="dg-muted"><?= View::escape((string) ($file['size_label'] ?? '')) ?></span>
+                      <span class="dg-voucher-attachments__links">
+                        <a href="<?= View::escape((string) $file['download_url']) ?>">Herunterladen</a>
+                        <?php if (!$readOnly && (int) ($voucherId ?? 0) > 0) : ?>
+                          &middot;
+                          <button type="submit" form="dg-voucher-file-delete-<?= (int) $file['id'] ?>" class="dg-linklike dg-linklike--danger" onclick="return confirm('Diese Datei wirklich löschen?');">Löschen</button>
+                        <?php endif; ?>
+                      </span>
+                    </div>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endif; ?>
     </section>
 
     <?php if (!$readOnly) : ?>
@@ -1379,7 +1431,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
   /** @var list<array<string, mixed>> $voucherFiles */
   $voucherFiles = is_array($form['files'] ?? null) ? $form['files'] : [];
   ?>
-  <?php if ($isEdit && empty($isDraftVoucher) && $voucherFiles !== []) : ?>
+  <?php if (!$useNotesFileUpload && $voucherFiles !== []) : ?>
     <section class="dg-panel dg-voucher-attachments">
       <h2 class="dg-subsection-title">Angehängte Dateien</h2>
       <ul class="dg-voucher-attachments__list">
@@ -1409,7 +1461,8 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         <?php endforeach; ?>
       </ul>
     </section>
-    <?php if (!$readOnly) : ?>
+  <?php endif; ?>
+  <?php if ($voucherFiles !== [] && !$readOnly) : ?>
       <?php foreach ($voucherFiles as $file) : ?>
         <form method="post" action="/app?page=buchhaltung-beleg-form" id="dg-voucher-file-delete-<?= (int) $file['id'] ?>" class="dg-hidden-form">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -1418,7 +1471,6 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <input type="hidden" name="id" value="<?= (int) $voucherId ?>">
         </form>
       <?php endforeach; ?>
-    <?php endif; ?>
   <?php endif; ?>
 
   <template id="dg-voucher-invoice-item-row-template">

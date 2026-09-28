@@ -335,6 +335,13 @@ final class VoucherRepository
         MigrationRunner::runPending();
 
         $voucherType = self::sanitizeVoucherType((string) ($data['voucher_type'] ?? 'expense'));
+        $documentKind = '';
+        if (VoucherDocumentKind::voucherTypeSupportsDocumentKind($voucherType)) {
+            $documentKind = VoucherDocumentKind::sanitize((string) ($data['document_kind'] ?? ''));
+        }
+        $documentStatus = $documentKind !== ''
+            ? VoucherDocumentStatus::defaultForKind($documentKind)
+            : '';
         $voucherDate = trim((string) ($data['voucher_date'] ?? ''));
         if ($voucherDate === '' || strtotime($voucherDate) === false) {
             $voucherDate = date('Y-m-d');
@@ -349,15 +356,17 @@ final class VoucherRepository
 
         $stmt = Database::pdo()->prepare(
             'INSERT INTO dg_vouchers (
-                voucher_type, is_draft, voucher_date, contact_id, supplier_name, invoice_number, description,
+                voucher_type, document_kind, document_status, is_draft, voucher_date, contact_id, supplier_name, invoice_number, description,
                 gross_amount, net_amount, tax_amount, tax_rate, tax_key, account_number, payment_status, notes, created_by
             ) VALUES (
-                :voucher_type, 1, :voucher_date, NULL, :supplier_name, :invoice_number, :description,
+                :voucher_type, :document_kind, :document_status, 1, :voucher_date, NULL, :supplier_name, :invoice_number, :description,
                 0, 0, 0, 19, \'\', \'\', :payment_status, :notes, :created_by
             )'
         );
         $stmt->execute([
             'voucher_type' => $voucherType,
+            'document_kind' => $documentKind,
+            'document_status' => $documentStatus,
             'voucher_date' => $voucherDate,
             'supplier_name' => mb_substr($supplierName, 0, 191),
             'invoice_number' => mb_substr(trim((string) ($data['invoice_number'] ?? '')), 0, 100),

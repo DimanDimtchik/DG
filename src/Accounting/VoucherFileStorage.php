@@ -50,6 +50,12 @@ final class VoucherFileStorage
         return '.pdf,.jpg,.jpeg,.png,.webp,.gif,.xml';
     }
 
+    /** Accept für interne Anhänge (Zeichnungen/Dokumente) — ohne E-Rechnung-XML. */
+    public static function acceptAttributeNotes(): string
+    {
+        return '.pdf,.jpg,.jpeg,.png,.webp,.gif';
+    }
+
     /**
      * Verarbeitet einen $_FILES-Eintrag (multiple) und legt die Dateien am Beleg ab.
      *

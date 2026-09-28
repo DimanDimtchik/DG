@@ -17,6 +17,49 @@ const PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/p
 const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
 const importConfig = window.dgBuchhaltungBelege || {};
 
+function getDocumentKind() {
+  const select = document.getElementById('dg-voucher-document-kind');
+  if (select && select.value) {
+    return String(select.value);
+  }
+  const hidden = document.querySelector('#dg-voucher-form input[name="document_kind"]');
+  return hidden ? String(hidden.value || '') : '';
+}
+
+function getVoucherType() {
+  const select = document.getElementById('dg-voucher-type');
+  if (select && select.value) {
+    return String(select.value);
+  }
+  const hidden = document.querySelector('#dg-voucher-form input[name="voucher_type"]');
+  return hidden ? String(hidden.value || '') : '';
+}
+
+/** Auftrag/Angebot: nur Datei speichern, keine E-Rechnungs-/OCR-Analyse. */
+function isNotesAttachmentMode() {
+  const kind = getDocumentKind();
+  if (kind === 'offer' || kind === 'work_order') {
+    return true;
+  }
+  return !!document.querySelector('.dg-voucher-files--notes');
+}
+
+function setNotesUploadStatus(type, message) {
+  const el = $('dg-voucher-notes-upload-status');
+  if (!el) return;
+  if (!message) {
+    el.hidden = true;
+    el.textContent = '';
+    el.className = 'dg-field-hint';
+    return;
+  }
+  el.hidden = false;
+  el.textContent = message;
+  el.className = 'dg-field-hint'
+    + (type === 'error' ? ' dg-field-hint--error' : '')
+    + (type === 'ok' ? ' dg-field-hint--ok' : '');
+}
+
 function getVoucherId() {
   const hidden = document.querySelector('#dg-voucher-form input[name="id"]');
   const fromField = Number(hidden?.value || 0);
@@ -49,12 +92,16 @@ function setVoucherId(voucherId) {
     window.dgBuchhaltungBelege.voucherId = voucherId;
   }
   const returnBase = '/app?page=buchhaltung-beleg-form&action=edit&id=' + voucherId;
+  const focusParam = document.querySelector('#dg-voucher-form input[name="focus"]');
+  const returnWithFocus = focusParam && focusParam.value
+    ? returnBase + '&focus=' + encodeURIComponent(focusParam.value)
+    : returnBase;
   const newContactLink = $('dg-voucher-new-contact-link');
   if (newContactLink) {
-    newContactLink.href = '/app?page=kontakte&action=new&return_to=' + encodeURIComponent(returnBase);
+    newContactLink.href = '/app?page=kontakte&action=new&return_to=' + encodeURIComponent(returnWithFocus);
   }
   if (window.history && window.history.replaceState) {
-    window.history.replaceState(null, '', returnBase);
+    window.history.replaceState(null, '', returnWithFocus);
   }
 }
 
@@ -89,6 +136,13 @@ async function uploadFileImmediate(file) {
   const voucherId = getVoucherId();
   if (voucherId > 0) {
     body.set('voucher_id', String(voucherId));
+  } else {
+    const voucherType = getVoucherType() || 'income';
+    const documentKind = getDocumentKind();
+    body.set('voucher_type', voucherType);
+    if (documentKind) {
+      body.set('document_kind', documentKind);
+    }
   }
   const response = await fetch('/api/voucher?action=file_upload', {
     method: 'POST',
@@ -744,8 +798,32 @@ function applySuggestion() {
 
 async function handleFiles(files) {
   if (!files || files.length === 0) return;
-  const file = files[0];
   const input = $('dg-voucher-file-input');
+  const list = Array.from(files);
+  const notesMode = isNotesAttachmentMode();
+
+  if (notesMode) {
+    let lastData = null;
+    for (let i = 0; i < list.length; i += 1) {
+      const file = list[i];
+      try {
+        setNotesUploadStatus('working', `Speichere ${file.name || 'Datei'} (${i + 1}/${list.length}) …`);
+        lastData = await uploadFileImmediate(file);
+      } catch (error) {
+        setNotesUploadStatus('error', 'Datei konnte nicht gespeichert werden: ' + (error.message || String(error)));
+        if (input) input.value = '';
+        return;
+      }
+    }
+    const count = Array.isArray(lastData?.files) ? lastData.files.length : list.length;
+    setNotesUploadStatus('ok', count === 1
+      ? '1 Datei gespeichert (intern).'
+      : `${count} Dateien gespeichert (intern).`);
+    if (input) input.value = '';
+    return;
+  }
+
+  const file = list[0];
   showFilePreview(file);
   let uploadData = null;
   try {
@@ -784,7 +862,7 @@ function init() {
   if (Array.isArray(importConfig.initialFiles) && importConfig.initialFiles.length > 0) {
     renderAttachedFiles(importConfig.initialFiles);
     const latestFile = importConfig.initialFiles[importConfig.initialFiles.length - 1];
-    if (latestFile) {
+    if (latestFile && !isNotesAttachmentMode()) {
       showServerFilePreview(latestFile, latestFile.original_name || 'Beleg');
       const panel = $('dg-voucher-extract');
       if (panel) panel.hidden = false;

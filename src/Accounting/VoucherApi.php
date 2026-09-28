@@ -304,10 +304,21 @@ final class VoucherApi
                 }
             } else {
                 $original = (string) ($file['name'] ?? 'beleg');
+                $voucherType = VoucherRepository::normalizeVoucherType((string) ($_POST['voucher_type'] ?? 'expense'));
+                $documentKind = VoucherDocumentKind::sanitize((string) ($_POST['document_kind'] ?? ''));
+                if ($documentKind !== '' && !VoucherDocumentKind::voucherTypeSupportsDocumentKind($voucherType)) {
+                    $voucherType = 'income';
+                }
+                $draftNotes = VoucherDocumentKind::isDienstleistungenKind($documentKind)
+                    || in_array($documentKind, [VoucherDocumentKind::OFFER, VoucherDocumentKind::WORK_ORDER], true)
+                    ? 'Datei/Zeichnung hochgeladen — bitte Kontakt und Positionen ergänzen.'
+                    : 'Datei hochgeladen — bitte Kontakt und Beträge ergänzen.';
                 $voucherId = VoucherRepository::createDraft([
+                    'voucher_type' => $voucherType,
+                    'document_kind' => $documentKind,
                     'supplier_name' => pathinfo($original, PATHINFO_FILENAME) ?: 'Neuer Beleg',
                     'description' => 'Entwurf aus Datei-Upload: ' . $original,
-                    'notes' => 'Datei hochgeladen — bitte Kontakt und Beträge ergänzen.',
+                    'notes' => $draftNotes,
                 ], $user->id);
             }
 
