@@ -80,6 +80,30 @@ if ($isCompanyForm && $companyEmployees === []) {
       <p class="dg-lead dg-field--wide">Mitarbeiterdaten (Krankenkasse, SV-Nummer, Dokumente …) erscheinen nur bei Rolle <strong>Mitarbeiter</strong> oder <strong>Administrator</strong>.</p>
     </div>
 
+    <?php
+      $contactTeams = is_array($contactTeams ?? null) ? $contactTeams : [];
+      if ($contactTeams === [] && ($contactId ?? 0) > 0) {
+          $contactTeams = TeamRepository::teamsForContact((int) $contactId);
+      }
+    ?>
+    <?php if ($contactTeams !== []) : ?>
+      <section class="dg-panel dg-panel--nested">
+        <h2>Teams</h2>
+        <p class="dg-lead">Automatisch verknüpft über HR → Team. Bearbeitung im Team-Formular.</p>
+        <ul class="dg-list">
+          <?php foreach ($contactTeams as $ct) : ?>
+            <li>
+              <a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($ct['id'] ?? 0) ?>"><?= View::escape((string) ($ct['name'] ?? '')) ?></a>
+              <span class="dg-muted">
+                · <?= View::escape((string) ($ct['department_name'] ?? '')) ?>
+                · <?= View::escape((string) ($ct['member_role_label'] ?? '')) ?>
+              </span>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </section>
+    <?php endif; ?>
+
     <section class="dg-panel dg-panel--nested" data-company-section<?= !$isCompanyForm ? ' hidden' : '' ?>>
       <h2>Mitarbeiter der Firma</h2>
       <p class="dg-lead">Verknüpfen Sie bestehende Personen-Kontakte mit dieser Firma — inkl. Zuständigkeit und Erreichbarkeit bei der Firma.</p>

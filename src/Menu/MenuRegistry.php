@@ -59,6 +59,20 @@ final class MenuRegistry
                 'href' => '/app?page=akademie',
             ];
         }
+        if (TeamAccess::canView($user)) {
+            $items[] = [
+                'slug' => 'hr-abteilungen',
+                'label' => 'Abteilung',
+                'icon' => 'contacts',
+                'href' => '/app?page=hr-abteilungen',
+            ];
+            $items[] = [
+                'slug' => 'hr-teams',
+                'label' => 'Team',
+                'icon' => 'contacts',
+                'href' => '/app?page=hr-teams',
+            ];
+        }
         if (DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user)) {
             $items[] = [
                 'slug' => 'zeiterfassung',
@@ -630,6 +644,10 @@ final class MenuRegistry
 
         if ($slug === 'akademie') {
             return RoleResolver::canEdit($user);
+        }
+
+        if ($slug === 'hr-abteilungen' || $slug === 'hr-teams' || $slug === 'hr-team-form') {
+            return TeamAccess::canView($user);
         }
 
         if ($slug === 'artikel-leistungen' || $slug === 'lager') {

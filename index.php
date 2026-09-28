@@ -2084,6 +2084,66 @@ switch ($path) {
             exit;
         }
 
+        // POST: HR-Teams
+        if (
+            ($page === 'hr-team-form' || $page === 'hr-teams')
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'hr-team-form')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=hr-teams', true, 302);
+                exit;
+            }
+            $editTeamId = (int) ($_POST['id'] ?? 0);
+            $existingTeam = $editTeamId > 0 ? TeamRepository::findById($editTeamId) : null;
+            $departmentIdPost = trim((string) ($_POST['department_id'] ?? ($existingTeam['department_id'] ?? '')));
+
+            if (isset($_POST['team_delete'])) {
+                if ($existingTeam === null || !TeamAccess::canManageTeam($user, $existingTeam)) {
+                    Flash::set('error', 'Keine Berechtigung zum Löschen.');
+                    header('Location: /app?page=hr-teams', true, 302);
+                    exit;
+                }
+                try {
+                    TeamRepository::delete($editTeamId);
+                    Flash::set('success', 'Team gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=hr-teams', true, 302);
+                exit;
+            }
+
+            if (isset($_POST['team_save'])) {
+                if ($editTeamId > 0) {
+                    if ($existingTeam === null || !TeamAccess::canManageTeam($user, $existingTeam)) {
+                        Flash::set('error', 'Keine Berechtigung zum Bearbeiten.');
+                        header('Location: /app?page=hr-teams', true, 302);
+                        exit;
+                    }
+                } elseif (!TeamAccess::canManageDepartment($user, $departmentIdPost)) {
+                    Flash::set('error', 'Keine Berechtigung, Teams in dieser Abteilung anzulegen (Admin, HR oder Abteilungsleiter/Planner).');
+                    header('Location: /app?page=hr-team-form&action=new', true, 302);
+                    exit;
+                }
+                try {
+                    $saved = TeamRepository::save($_POST, $editTeamId > 0 ? $editTeamId : null, $user->id);
+                    Flash::set('success', 'Team gespeichert. Mitglieder sind am Kontakt verknüpft.');
+                    header('Location: /app?page=hr-team-form&action=edit&id=' . (int) $saved['id'], true, 302);
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', 'Team nicht gespeichert: ' . $e->getMessage());
+                    if ($editTeamId > 0) {
+                        header('Location: /app?page=hr-team-form&action=edit&id=' . $editTeamId, true, 302);
+                    } else {
+                        header('Location: /app?page=hr-team-form&action=new', true, 302);
+                    }
+                    exit;
+                }
+            }
+        }
+
         // POST: Einstellungen E-Mail / SMTP
         if (
             $page === 'einstellungen'
@@ -4797,6 +4857,75 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'akademie') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'hr-abteilungen' && MenuRegistry::canAccess($user, 'hr-abteilungen')) {
+            MigrationRunner::runPending();
+            $hrDepartments = HrDepartmentBoard::build();
+            $canManageTeams = TeamAccess::canManageAny($user);
+            $contentTemplate = 'modules/hr-abteilungen';
+            $title = 'Abteilungen';
+            $currentPage = 'hr-abteilungen';
+        } elseif ($page === 'hr-abteilungen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'hr-teams' && MenuRegistry::canAccess($user, 'hr-teams')) {
+            MigrationRunner::runPending();
+            $hrTeams = TeamRepository::list();
+            $canManageTeams = TeamAccess::canManageAny($user);
+            $contentTemplate = 'modules/hr-teams';
+            $title = 'Teams';
+            $currentPage = 'hr-teams';
+        } elseif ($page === 'hr-teams') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'hr-team-form' && MenuRegistry::canAccess($user, 'hr-team-form')) {
+            MigrationRunner::runPending();
+            $action = trim((string) ($_GET['action'] ?? 'new'));
+            $teamId = (int) ($_GET['id'] ?? 0);
+            $departmentOptions = DepartmentRepository::optionsForSelect();
+            if (!RoleResolver::isAdmin($user) && !DepartmentAccess::userInHrDepartment($user)) {
+                $departmentOptions = array_values(array_filter(
+                    $departmentOptions,
+                    static fn (array $d): bool => TeamAccess::canManageDepartment($user, (string) ($d['id'] ?? ''))
+                ));
+            }
+            $employeeContactOptions = HrDepartmentBoard::employeeContactOptions();
+            $formError = $formError ?? null;
+            if ($action === 'edit' && $teamId > 0) {
+                $team = TeamRepository::findById($teamId);
+                if ($team === null) {
+                    Flash::set('error', 'Team nicht gefunden.');
+                    header('Location: /app?page=hr-teams', true, 302);
+                    exit;
+                }
+                if (!isset($form)) {
+                    $form = TeamRepository::toForm($team);
+                }
+                $canEditTeam = TeamAccess::canManageTeam($user, $team);
+                $readOnly = !$canEditTeam;
+                $title = $readOnly ? 'Team anzeigen' : 'Team bearbeiten';
+            } else {
+                if (!isset($form)) {
+                    $form = TeamRepository::emptyForm();
+                    $prefillDept = trim((string) ($_GET['department_id'] ?? ''));
+                    if ($prefillDept !== '') {
+                        $form['department_id'] = $prefillDept;
+                    }
+                }
+                $teamId = null;
+                $canEditTeam = TeamAccess::canManageAny($user);
+                $readOnly = !$canEditTeam;
+                $title = 'Neues Team';
+                if (!$canEditTeam) {
+                    Flash::set('error', 'Keine Berechtigung, Teams anzulegen.');
+                    header('Location: /app?page=hr-teams', true, 302);
+                    exit;
+                }
+            }
+            $contentTemplate = 'modules/hr-team-form';
+            $currentPage = 'hr-teams';
+        } elseif ($page === 'hr-team-form') {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {
             $chartAccountCount = 0;
             $chartCatalogCount = ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
@@ -5494,6 +5623,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $canDeleteContact = ContactAccessResolver::canDeleteContact($user, $contact);
                 $linkFormContext = ContactCompanyLinkRepository::formContext($contact, []);
                 extract($linkFormContext);
+                $contactTeams = TeamRepository::teamsForContact($contactId);
                 $staffAccessStatus = StaffAccessInviteService::status($contactId);
                 $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
                 $staffAccessHasMailbox = ($uidForMb !== null && MailboxRepository::findPrivateForUser($uidForMb) !== null)
@@ -6785,6 +6915,16 @@ $legalProductsConfig = LegalProductSettings::config();
         $contactId = $contactId ?? null;
         $contact = $contact ?? null;
         $form = $form ?? null;
+        $hrDepartments = $hrDepartments ?? [];
+        $hrTeams = $hrTeams ?? [];
+        $canManageTeams = $canManageTeams ?? false;
+        $teamId = $teamId ?? null;
+        $employeeContactOptions = $employeeContactOptions ?? [];
+        $canEditTeam = $canEditTeam ?? false;
+        $readOnly = $readOnly ?? false;
+        $departmentOptions = $departmentOptions ?? [];
+        $formError = $formError ?? null;
+        $contactTeams = $contactTeams ?? [];
         $formError = $formError ?? null;
         $bankAccounts = $bankAccounts ?? ContactRepository::defaultBankAccounts();
         $employeeData = $employeeData ?? EmployeeData::empty();
@@ -7333,6 +7473,15 @@ $legalProductsConfig = LegalProductSettings::config();
             'contact',
             'form',
             'formError',
+            'hrDepartments',
+            'hrTeams',
+            'canManageTeams',
+            'teamId',
+            'employeeContactOptions',
+            'canEditTeam',
+            'readOnly',
+            'departmentOptions',
+            'contactTeams',
             'bankAccounts',
             'employeeData',
             'employeeFiles',

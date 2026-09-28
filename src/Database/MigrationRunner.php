@@ -277,6 +277,9 @@ final class MigrationRunner
             '100_time_absence_types.sql' => self::columnTypeAllows($pdo, 'dg_time_absences', 'type', 'ot_comp'),
             '101_time_absence_attachments.sql' => self::tableExists($pdo, 'dg_time_absence_attachments'),
             '107_time_absence_adjustments.sql' => self::tableExists($pdo, 'dg_time_absence_adjustments'),
+            '108_hr_teams.sql' => self::tableExists($pdo, 'dg_teams')
+                && self::tableExists($pdo, 'dg_team_members')
+                && self::tableExists($pdo, 'dg_team_assets'),
             '102_mobile_app_auth.sql' => self::tableExists($pdo, 'dg_mobile_customer_accounts')
                 && self::tableExists($pdo, 'dg_mobile_tokens'),
             '103_mobile_app_download_page.sql' => true,
@@ -411,6 +414,7 @@ final class MigrationRunner
             '100_time_absence_types.sql' => true,
             '101_time_absence_attachments.sql' => true,
             '107_time_absence_adjustments.sql' => true,
+            '108_hr_teams.sql' => true,
             '102_mobile_app_auth.sql' => true,
             '103_mobile_app_download_page.sql' => true,
             '104_staff_access_invites.sql' => true,
