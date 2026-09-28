@@ -7,7 +7,7 @@ declare(strict_types=1);
 final class MenuRegistry
 {
     /**
-     * Hauptmodule für die Seitenleiste (ohne Dashboard/Einstellungen).
+     * Hauptmodule für die Seitenleiste „Navigation“ (ohne Dashboard/Einstellungen/Sektionen).
      *
      * @return list<array{slug: string, label: string, icon: string}>
      */
@@ -26,21 +26,8 @@ final class MenuRegistry
         if (DepartmentAccess::canAccessModule($user, 'terminkalender') && $canEdit) {
             $items[] = ['slug' => 'terminkalender', 'label' => 'Terminkalender', 'icon' => 'calendar'];
         }
-        if (DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user)) {
-            $items[] = ['slug' => 'zeiterfassung', 'label' => 'Zeiterfassung', 'icon' => 'clock'];
-        }
         if (DepartmentAccess::canAccessModule($user, 'post') && $canEdit) {
             $items[] = ['slug' => 'post', 'label' => 'Post', 'icon' => 'mail'];
-        }
-        if (RoleResolver::canEdit($user)) {
-            $items[] = ['slug' => 'akademie', 'label' => 'Akademie', 'icon' => 'document'];
-        }
-        if (DepartmentAccess::userCanManageArticleCatalog($user) && $canEdit) {
-            $items[] = ['slug' => 'artikel-leistungen', 'label' => 'Artikel & Leistungen', 'icon' => 'catalog'];
-            $items[] = ['slug' => 'lager', 'label' => 'Lager', 'icon' => 'warehouse'];
-            if (self::isRezepturEnabled()) {
-                $items[] = ['slug' => 'rezeptur', 'label' => 'Rezeptur', 'icon' => 'document'];
-            }
         }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
@@ -50,6 +37,82 @@ final class MenuRegistry
         }
 
         return $items;
+    }
+
+    /**
+     * HR-Bereich: Akademie + Zeiterfassung (zwischen Navigation und Warenwirtschaft/Buchhaltung).
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function hrSection(User $user): ?array
+    {
+        if (RoleResolver::isCustomer($user)) {
+            return null;
+        }
+
+        $items = [];
+        if (RoleResolver::canEdit($user)) {
+            $items[] = [
+                'slug' => 'akademie',
+                'label' => 'Akademie',
+                'icon' => 'document',
+                'href' => '/app?page=akademie',
+            ];
+        }
+        if (DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user)) {
+            $items[] = [
+                'slug' => 'zeiterfassung',
+                'label' => 'Zeiterfassung',
+                'icon' => 'clock',
+                'href' => '/app?page=zeiterfassung',
+            ];
+        }
+
+        if ($items === []) {
+            return null;
+        }
+
+        return ['label' => 'HR', 'items' => $items];
+    }
+
+    /**
+     * Warenwirtschaft: Katalog, Lager, Rezeptur.
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function warenwirtschaftSection(User $user): ?array
+    {
+        if (RoleResolver::isCustomer($user) || !RoleResolver::canEdit($user)) {
+            return null;
+        }
+        if (!DepartmentAccess::userCanManageArticleCatalog($user)) {
+            return null;
+        }
+
+        $items = [
+            [
+                'slug' => 'artikel-leistungen',
+                'label' => 'Artikel & Leistungen',
+                'icon' => 'catalog',
+                'href' => '/app?page=artikel-leistungen',
+            ],
+            [
+                'slug' => 'lager',
+                'label' => 'Lager',
+                'icon' => 'warehouse',
+                'href' => '/app?page=lager',
+            ],
+        ];
+        if (self::isRezepturEnabled()) {
+            $items[] = [
+                'slug' => 'rezeptur',
+                'label' => 'Rezeptur',
+                'icon' => 'document',
+                'href' => '/app?page=rezeptur',
+            ];
+        }
+
+        return ['label' => 'Warenwirtschaft', 'items' => $items];
     }
 
     /**
@@ -367,6 +430,32 @@ final class MenuRegistry
                 'href' => $item['href'],
                 'description' => $descriptions[$item['slug']] ?? '',
             ];
+        }
+
+        $hr = self::hrSection($user);
+        if ($hr !== null) {
+            foreach ($hr['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => $descriptions[$item['slug']] ?? '',
+                ];
+            }
+        }
+
+        $warenwirtschaft = self::warenwirtschaftSection($user);
+        if ($warenwirtschaft !== null) {
+            foreach ($warenwirtschaft['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => $descriptions[$item['slug']] ?? '',
+                ];
+            }
         }
 
         $buchhaltung = self::buchhaltungSection($user);

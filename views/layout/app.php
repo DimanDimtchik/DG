@@ -7,6 +7,8 @@
 /** @var list<array{slug: string, label: string, icon: string, href: string}> $sidebarItems */
 /** @var array{slug: string, label: string, icon: string}|null $settingsItem */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $buchhaltungSection */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $hrSection */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $warenwirtschaftSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $websiteSection */
 /** @var string $currentPage */
 $homeHref = RoleResolver::isCustomer($user) ? '/app?area=profile' : '/app';
@@ -170,6 +172,49 @@ $pageTitle = $title . ' – ' . App::config('crm_name');
           <?php endforeach; ?>
         </ul>
       </section>
+
+      <?php if (!empty($hrSection)) : ?>
+        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-hr">
+          <h2 id="dg-sidebar-hr" class="dg-sidebar__heading"><?= View::escape($hrSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($hrSection['items'] as $item) : ?>
+              <?php
+                $isHrActive = $currentPage === $item['slug']
+                    || ($item['slug'] === 'zeiterfassung' && str_starts_with($currentPage, 'zeiterfassung-'))
+                    || ($item['slug'] === 'akademie' && str_starts_with($currentPage, 'akademie'));
+              ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isHrActive ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+
+      <?php if (!empty($warenwirtschaftSection)) : ?>
+        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-warenwirtschaft">
+          <h2 id="dg-sidebar-warenwirtschaft" class="dg-sidebar__heading"><?= View::escape($warenwirtschaftSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($warenwirtschaftSection['items'] as $item) : ?>
+              <?php
+                $isWwActive = $currentPage === $item['slug']
+                    || ($item['slug'] === 'rezeptur' && str_starts_with($currentPage, 'rezeptur'))
+                    || ($item['slug'] === 'lager' && str_starts_with($currentPage, 'lager'))
+                    || ($item['slug'] === 'artikel-leistungen' && str_starts_with($currentPage, 'artikel'));
+              ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isWwActive ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
 
       <?php if (!empty($buchhaltungSection)) : ?>
         <section class="dg-sidebar__section dg-sidebar__section--buchhaltung" aria-labelledby="dg-sidebar-buchhaltung">

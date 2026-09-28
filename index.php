@@ -892,6 +892,8 @@ switch ($path) {
         $menuItems = MenuRegistry::modules($user);
         $settingsItem = MenuRegistry::settingsItem($user);
         $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
+        $hrSection = MenuRegistry::hrSection($user);
+        $warenwirtschaftSection = MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = MenuRegistry::websiteSection($user);
         $kdvSection = MenuRegistry::kdvSection($user);
         $flash = Flash::pull();
@@ -2927,7 +2929,7 @@ switch ($path) {
                 $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'buchhaltungSection', 'websiteSection', 'kdvSection',
+                    'menuItems', 'settingsItem', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
                     'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas'
@@ -6805,6 +6807,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $postImapLive = $postImapLive ?? false;
         $postImapAsync = $postImapAsync ?? false;
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
+        $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
+        $warenwirtschaftSection = $warenwirtschaftSection ?? MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
         $kdvSection = $kdvSection ?? MenuRegistry::kdvSection($user);
         $websitePageList = $websitePageList ?? [];
@@ -7085,6 +7089,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'dept',
             'menuItems',
             'settingsItem',
+            'hrSection',
+            'warenwirtschaftSection',
             'buchhaltungSection',
             'websiteSection',
             'currentPage',
