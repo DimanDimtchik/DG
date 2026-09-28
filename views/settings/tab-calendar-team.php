@@ -15,7 +15,7 @@ $calendarLinkContacts = $calendarLinkContacts ?? [];
 $calendarDepartmentSuggestions = $calendarDepartmentSuggestions ?? [];
 $csrf = Csrf::token();
 ?>
-<nav class="dg-subtabs" aria-label="Team & Bereiche">
+<nav class="dg-subtabs" aria-label="Bereiche und Mitglieder">
   <a href="<?= View::escape($baseUrl . '&ctab=bereiche') ?>" class="dg-subtabs__link<?= $calendarTeamTab === 'bereiche' ? ' is-active' : '' ?>">Bereiche</a>
   <a href="<?= View::escape($baseUrl . '&ctab=mitarbeiter') ?>" class="dg-subtabs__link<?= $calendarTeamTab === 'mitarbeiter' ? ' is-active' : '' ?>">Mitarbeiter</a>
 </nav>

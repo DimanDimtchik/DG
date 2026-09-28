@@ -77,8 +77,8 @@ final class SettingsRegistry
                         'template' => 'calendar-appearance',
                     ],
                     'kalender-team' => [
-                        'label' => 'Team & Bereiche',
-                        'lead' => 'Mitarbeiter und Buchungsbereiche für den Terminkalender.',
+                        'label' => 'Bereiche und Mitglieder',
+                        'lead' => 'Buchungsbereiche und Mitarbeiter für den Terminkalender.',
                         'template' => 'calendar-team',
                     ],
                     'kalender-einbindung' => [
