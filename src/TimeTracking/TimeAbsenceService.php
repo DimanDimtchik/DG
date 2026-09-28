@@ -47,7 +47,34 @@ final class TimeAbsenceService
     }
 
     /**
-     * @return list<array{type: string, label: string, short: string, color: string, allows_half_day: bool, needs_evidence: bool}>
+     * Pflicht-Bestätigungstext für Mitarbeiter-Anträge (null = keine Checkbox).
+     */
+    public static function requestAcknowledgeText(string $type): ?string
+    {
+        return match ($type) {
+            'vacation' => 'Ich bestätige: Dieser Antrag gilt erst, wenn er genehmigt ist.',
+            'sick' => 'Ich bestätige: Die Krankmeldung gilt erst, wenn die Krankenkasse bestätigt hat.',
+            'unpaid_leave' => 'Ich bestätige: Für diesen Tag bzw. Zeitraum wird kein Entgelt gezahlt.',
+            'ot_comp' => 'Ich bestätige: Das Zeitkonto wird für diesen Abbau angepasst.',
+            default => null,
+        };
+    }
+
+    /**
+     * Pflicht-Checkbox für Typen mit requestAcknowledgeText.
+     */
+    public static function assertRequestAcknowledged(string $type, bool $acknowledged): void
+    {
+        if (self::requestAcknowledgeText($type) === null) {
+            return;
+        }
+        if (!$acknowledged) {
+            throw new InvalidArgumentException('Bitte den Hinweis bestätigen (Checkbox).');
+        }
+    }
+
+    /**
+     * @return list<array{type: string, label: string, short: string, color: string, allows_half_day: bool, needs_evidence: bool, acknowledge_text: string|null}>
      */
     public static function typeOptionsForKiosk(): array
     {
@@ -61,6 +88,7 @@ final class TimeAbsenceService
                 'color' => self::typeColor($type),
                 'allows_half_day' => $type === 'vacation',
                 'needs_evidence' => TimeAbsenceEvidenceStorage::allowsEvidence($type),
+                'acknowledge_text' => self::requestAcknowledgeText($type),
             ];
         }
 
@@ -242,6 +270,7 @@ final class TimeAbsenceService
         string $reason,
         bool $halfDay = false,
         array $evidenceFiles = [],
+        bool $acknowledged = false,
     ): array {
         if ($contactId < 1) {
             throw new InvalidArgumentException('Kein Mitarbeiter angemeldet.');
@@ -249,6 +278,7 @@ final class TimeAbsenceService
         if (!in_array($type, TimeTrackingSettings::enabledAbsenceTypesForKiosk(), true)) {
             throw new InvalidArgumentException('Dieser Abwesenheitstyp ist nicht freigeschaltet.');
         }
+        self::assertRequestAcknowledged($type, $acknowledged);
 
         $days = null;
         if ($halfDay) {
@@ -484,10 +514,12 @@ final class TimeAbsenceService
         string $reason,
         ?string $documentRef = null,
         array $evidenceFiles = [],
+        bool $acknowledged = false,
     ): array {
         if (!RoleResolver::canEdit($user)) {
             throw new RuntimeException('Keine Berechtigung.');
         }
+        self::assertRequestAcknowledged('sick', $acknowledged);
         $ownId = ContactRepository::findStaffContactIdForUser($user);
         if ($ownId === null) {
             throw new InvalidArgumentException('Kein Mitarbeiter-Kontakt verknüpft.');

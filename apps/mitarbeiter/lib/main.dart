@@ -973,6 +973,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
   final _toCtrl = TextEditingController();
   final _reasonCtrl = TextEditingController();
   bool _halfDay = false;
+  bool _acknowledged = false;
   String? _evidencePath;
   String? _evidenceName;
   bool _submitting = false;
@@ -1121,6 +1122,14 @@ class _AbsencesTabState extends State<AbsencesTab> {
       );
       return;
     }
+    final typeMeta = _selectedTypeMeta();
+    final ackText = typeMeta?['acknowledge_text']?.toString();
+    if (ackText != null && ackText.isNotEmpty && !_acknowledged) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte den Hinweis bestätigen (Checkbox).')),
+      );
+      return;
+    }
     final fromDt = parseFlexibleDate(_fromCtrl.text);
     final toDt = parseFlexibleDate(_toCtrl.text);
     if (fromDt == null || toDt == null) {
@@ -1143,6 +1152,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
             'date_to': dateTo,
             'reason': _reasonCtrl.text.trim(),
             if (_halfDay) 'half_day': '1',
+            if (_acknowledged) 'acknowledge': '1',
           },
           fileField: 'evidence',
           filePath: _evidencePath!,
@@ -1155,6 +1165,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
           'date_to': dateTo,
           'reason': _reasonCtrl.text.trim(),
           if (_halfDay) 'half_day': true,
+          if (_acknowledged) 'acknowledge': true,
         });
       }
       if (!mounted) return;
@@ -1170,6 +1181,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
           _toCtrl.clear();
           _reasonCtrl.clear();
           _halfDay = false;
+          _acknowledged = false;
           _evidencePath = null;
           _evidenceName = null;
         });
@@ -1441,6 +1453,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
                 selectedColor: _parseColor(m['color']?.toString(), opacity: 0.35),
                 onSelected: (_) => setState(() {
                   _formType = t;
+                  _acknowledged = false;
                   if (m['allows_half_day'] != true) _halfDay = false;
                   if (m['needs_evidence'] != true) {
                     _evidencePath = null;
@@ -1513,6 +1526,17 @@ class _AbsencesTabState extends State<AbsencesTab> {
                 style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
             ],
+            if ((typeMeta?['acknowledge_text']?.toString() ?? '').isNotEmpty)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _acknowledged,
+                onChanged: (v) => setState(() => _acknowledged = v ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  typeMeta!['acknowledge_text'].toString(),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: _submitting ? null : _submit,

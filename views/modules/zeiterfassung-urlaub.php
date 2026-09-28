@@ -107,6 +107,10 @@ $staffLabel = static function (int $cid) use ($staff): string {
           <span class="dg-field-label">Begründung</span>
           <textarea name="reason" rows="2" required maxlength="500" placeholder="z. B. Erholung / Familienurlaub"></textarea>
         </label>
+        <label class="dg-field" style="display:flex;gap:0.5rem;align-items:flex-start">
+          <input type="checkbox" name="acknowledge" value="1" required style="margin-top:0.25rem">
+          <span><?= View::escape(TimeAbsenceService::requestAcknowledgeText('vacation') ?? '') ?></span>
+        </label>
         <button type="submit" class="dg-button dg-button--primary">Antrag senden</button>
       </form>
     </section>

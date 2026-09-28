@@ -114,6 +114,10 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
         <p class="dg-field-hint">
           Status zunächst „beantragt“ — HR bestätigt. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.
         </p>
+        <label class="dg-field" style="display:flex;gap:0.5rem;align-items:flex-start">
+          <input type="checkbox" name="acknowledge" value="1" required style="margin-top:0.25rem">
+          <span><?= View::escape(TimeAbsenceService::requestAcknowledgeText('sick') ?? '') ?></span>
+        </label>
         <button type="submit" class="dg-button dg-button--primary">Krankmeldung senden</button>
       </form>
     </section>

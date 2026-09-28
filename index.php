@@ -250,7 +250,8 @@ if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
                     (string) ($_POST['date_to'] ?? ''),
                     (string) ($_POST['reason'] ?? ''),
                     !empty($_POST['half_day']),
-                    is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : []
+                    is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : [],
+                    !empty($_POST['acknowledge'])
                 );
                 $kioskFlash = $res['message'];
                 $kioskFlashType = 'success';
@@ -3955,7 +3956,8 @@ switch ($path) {
                         (string) ($_POST['date_from'] ?? ''),
                         (string) ($_POST['date_to'] ?? ''),
                         (string) ($_POST['reason'] ?? ''),
-                        !empty($_POST['half_day'])
+                        !empty($_POST['half_day']),
+                        !empty($_POST['acknowledge'])
                     );
                     Flash::set('success', $res['message']);
                 } elseif ($vacAction === 'cancel') {
@@ -4041,7 +4043,8 @@ switch ($path) {
                         trim((string) ($_POST['document_ref'] ?? '')) !== ''
                             ? (string) $_POST['document_ref']
                             : null,
-                        is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : []
+                        is_array($_FILES['evidence'] ?? null) ? $_FILES['evidence'] : [],
+                        !empty($_POST['acknowledge'])
                     );
                     Flash::set('success', $res['message']);
                 } elseif ($absAction === 'cancel') {

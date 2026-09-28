@@ -106,6 +106,7 @@ final class MobileStaffApi
             $to = (string) ($_POST['date_to'] ?? MobileApi::jsonBody()['date_to'] ?? '');
             $reason = (string) ($_POST['reason'] ?? MobileApi::jsonBody()['reason'] ?? '');
             $half = !empty($_POST['half_day']) || !empty(MobileApi::jsonBody()['half_day']);
+            $ack = !empty($_POST['acknowledge']) || !empty(MobileApi::jsonBody()['acknowledge']);
             $files = self::evidenceFilesFromRequest();
             $res = TimeAbsenceService::requestFromKiosk(
                 $contactId,
@@ -114,7 +115,8 @@ final class MobileStaffApi
                 $to,
                 $reason,
                 $half,
-                $files
+                $files,
+                $ack
             );
             MobileApi::ok($res);
         }

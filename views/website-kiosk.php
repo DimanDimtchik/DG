@@ -124,6 +124,15 @@ $absenceType = (string) ($kioskAbsenceType ?? '');
           <input id="evidence" type="file" name="evidence[]" accept=".jpg,.jpeg,.png,.webp,.pdf,image/*,application/pdf" multiple>
           <p class="muted" style="margin-top:.35rem">z. B. Attest fotografieren. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.</p>
         <?php endif; ?>
+        <?php
+          $ackText = TimeAbsenceService::requestAcknowledgeText($absenceType);
+        ?>
+        <?php if ($ackText !== null) : ?>
+          <label style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
+            <input type="checkbox" name="acknowledge" value="1" required style="width:auto;margin-top:.2rem">
+            <span><?= View::escape($ackText) ?></span>
+          </label>
+        <?php endif; ?>
         <div class="actions">
           <button type="submit" class="ok">Beantragen</button>
           <a class="btn secondary" href="/stempeluhr?view=absence">Zurück</a>

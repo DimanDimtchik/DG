@@ -27,10 +27,12 @@ final class TimeVacationService
         string $dateTo,
         string $reason,
         bool $halfDay = false,
+        bool $acknowledged = false,
     ): array {
         if (!RoleResolver::canEdit($user)) {
             throw new RuntimeException('Keine Berechtigung für Urlaubsantrag.');
         }
+        TimeAbsenceService::assertRequestAcknowledged('vacation', $acknowledged);
         $ownId = ContactRepository::findStaffContactIdForUser($user);
         if ($ownId === null || $ownId !== $contactId) {
             throw new RuntimeException('Urlaubsantrag nur für den eigenen Mitarbeiter-Kontakt.');
