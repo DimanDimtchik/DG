@@ -68,11 +68,35 @@
   const formPanel = document.getElementById('dg-article-form-panel');
   const submitBtn = document.getElementById('dg-article-submit');
   const cancelBtn = document.getElementById('dg-article-cancel');
+  const workLabel = document.getElementById('dg_article_work_label');
+  const areaLabel = document.getElementById('dg_article_area_label');
   const presets = [15, 30, 45, 60];
   const defaultNumber = numberInput ? numberInput.value : '';
 
   function kindLabel(kind) {
     return kind === 'product' ? 'Artikel' : 'Leistung';
+  }
+
+  function isProductKind() {
+    return catalogKindInput && catalogKindInput.value === 'product';
+  }
+
+  function toggleKindRequirements() {
+    const isProduct = isProductKind();
+    if (workSelect) {
+      workSelect.required = !isProduct;
+    }
+    if (workLabel) {
+      workLabel.textContent = isProduct ? 'Arbeitszeit' : 'Arbeitszeit *';
+    }
+    if (areaSelect) {
+      const needArea = !isProduct && areaSelect.getAttribute('data-staff-required') === '1';
+      areaSelect.required = needArea;
+      if (areaLabel) {
+        areaLabel.textContent = needArea ? 'Bereich *' : 'Bereich';
+      }
+    }
+    toggleCustomMinutes();
   }
 
   function toggleCustomMinutes() {
@@ -81,7 +105,7 @@
       customWrap.hidden = !show;
     }
     if (customInput) {
-      customInput.required = Boolean(show);
+      customInput.required = Boolean(show) && !isProductKind();
     }
   }
 
@@ -213,6 +237,7 @@
       initialStockWrap.hidden = !isProduct || idInput.value !== '';
     }
     updatePositionPreview();
+    toggleKindRequirements();
   }
 
   function escapeHtml(value) {
@@ -345,12 +370,15 @@
     if (!workSelect) {
       return;
     }
-    if (presets.includes(minutes)) {
-      workSelect.value = String(minutes);
+    const value = Number(minutes || 0);
+    if (value < 1) {
+      workSelect.value = '0';
+    } else if (presets.includes(value)) {
+      workSelect.value = String(value);
     } else {
       workSelect.value = '__custom__';
       if (customInput) {
-        customInput.value = String(minutes);
+        customInput.value = String(value);
       }
     }
     toggleCustomMinutes();
@@ -391,9 +419,10 @@
       if (priceInput) {
         priceInput.value = formatPriceForInput(data.price_gross);
       }
-      setWorkMinutes(Number(data.work_minutes || 30));
+      const minutes = data.work_minutes != null ? Number(data.work_minutes) : (kind === 'product' ? 0 : 30);
+      setWorkMinutes(minutes);
       if (areaSelect) {
-        areaSelect.value = data.area_id ? String(data.area_id) : '';
+        areaSelect.value = data.area_id ? String(data.area_id) : '0';
       }
       if (sortInput) {
         sortInput.value = String(data.sort_order || 0);

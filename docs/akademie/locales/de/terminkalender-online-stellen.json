@@ -1,0 +1,98 @@
+{
+  "video_slug": "terminkalender-online-stellen",
+  "locale": "de",
+  "title": "Terminkalender — Online stellen",
+  "voice": "de-DE-KatjaNeural",
+  "practice": {
+    "dest": "einstellungen-kalender-einbindung",
+    "label": "Zur Stelle: Einbindung"
+  },
+  "segments": [
+    {
+      "key": "intro",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "Der Terminkalender hat zwei Seiten: Im CRM verwalten Sie Termine selbst — und online können Kunden ohne Login einen Termin buchen. Dieses Video zeigt, was Sie dafür brauchen und wo Sie klicken."
+    },
+    {
+      "key": "nav-calendar",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "terminkalender",
+      "narration": "Vom Dashboard öffnen Sie den Terminkalender — über die Kachel oder das Menü."
+    },
+    {
+      "key": "list",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-list.png",
+      "mode": "overview",
+      "narration": "Das ist die interne Ansicht: alle Buchungen mit Leistung, Mitarbeiter, Kunde und Status. Hier legen Sie auch manuell neue Termine an."
+    },
+    {
+      "key": "nav-settings",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "focus_tile",
+      "tile_slug": "einstellungen",
+      "narration": "Damit Kunden online buchen können, richten Sie unter Einstellungen den Bereich Termine ein. Der Reihe nach:"
+    },
+    {
+      "key": "step-hours",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-arbeitszeiten.png",
+      "mode": "overview",
+      "narration": "Erstens Arbeitszeiten: Ab wann, an welchen Wochentagen und von wann bis wann freie Termine angeboten werden."
+    },
+    {
+      "key": "step-areas",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-bereiche.png",
+      "mode": "overview",
+      "narration": "Zweitens Bereiche: Tätigkeitsfelder wie Beratung oder Behandlung — unter Bereiche und Mitglieder, Tab Bereiche."
+    },
+    {
+      "key": "step-staff",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-mitglieder.png",
+      "mode": "overview",
+      "narration": "Drittens Mitarbeiter: Buchbare Personen mit Mitarbeiter-Kontakt und mindestens einem Bereich — Tab Mitarbeiter."
+    },
+    {
+      "key": "step-design",
+      "screenshot": "storage/media/training/einstellungen/einstellungen-kalender-design.png",
+      "mode": "overview",
+      "narration": "Optional Kalender Design: Farben der öffentlichen Buchungsseite — Vorlagen oder eigene Farben."
+    },
+    {
+      "key": "step-embed",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "overview",
+      "narration": "Dann Einbindung: Hier schalten Sie die Online-Buchung scharf."
+    },
+    {
+      "key": "field-enable",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "focus_field",
+      "field": "online_booking_enabled",
+      "section": "embed",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-embed-regions.json",
+      "narration": "Haken setzen: Terminvereinbarung online stellen — und speichern. Ohne diesen Haken bleibt die öffentliche Seite gesperrt."
+    },
+    {
+      "key": "field-url",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "focus_field",
+      "field": "public_url",
+      "section": "embed",
+      "regions_file": "storage/media/training/terminkalender/terminkalender-embed-regions.json",
+      "narration": "Den Link zur Buchungsseite teilen Sie per E-Mail, Website oder Google-Profil. Darunter finden Sie den QR-Code für Flyer und Empfang."
+    },
+    {
+      "key": "public",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-public-step1.png",
+      "mode": "overview",
+      "narration": "So sieht es für Kunden aus: Leistung wählen, Termin und Uhrzeit, dann Kontaktdaten — fertig."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/terminkalender/terminkalender-embed.png",
+      "mode": "overview",
+      "narration": "Kurz: Arbeitszeiten, Bereiche, Mitarbeiter, optional Design — dann Einbindung aktivieren und Link teilen. Details zu jedem Schritt finden Sie in den folgenden Videos. Viel Erfolg!"
+    }
+  ]
+}

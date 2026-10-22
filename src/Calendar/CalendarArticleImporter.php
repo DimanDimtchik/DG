@@ -354,7 +354,11 @@ final class CalendarArticleImporter
         }
 
         $workRaw = trim((string) ($raw['work_duration'] ?? ''));
-        $workMinutes = self::defaultWorkMinutesForUnit((string) ($raw['unit'] ?? ''), $workRaw);
+        if ($catalogKind === CalendarArticleCatalog::KIND_PRODUCT && $workRaw === '') {
+            $workMinutes = 0;
+        } else {
+            $workMinutes = self::defaultWorkMinutesForUnit((string) ($raw['unit'] ?? ''), $workRaw);
+        }
 
         return [
             'article_number' => $articleNumber,

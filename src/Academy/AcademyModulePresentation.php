@@ -294,6 +294,7 @@ final class AcademyModulePresentation
             'terminkalender-neuer-termin' => 'terminkalender',
             'terminkalender-online-buchung' => 'terminkalender',
             'terminkalender-online-kunde' => 'terminkalender',
+            'terminkalender-online-stellen' => 'terminkalender',
             'einstellungen-arbeitszeiten' => 'einstellungen',
             'einstellungen-kalender-design' => 'einstellungen',
             'einstellungen-kalender-bereiche' => 'einstellungen',
@@ -408,6 +409,7 @@ final class AcademyModulePresentation
             'terminkalender-online-buchung' => 'terminkalender',
             'terminkalender-online-kunde' => 'terminkalender',
             'terminkalender-ueberblick' => 'terminkalender',
+            'terminkalender-online-stellen' => 'einstellungen-kalender-einbindung',
             'einstellungen-arbeitszeiten' => 'einstellungen-arbeitszeiten',
             'einstellungen-kalender-design' => 'einstellungen-kalender-design',
             'einstellungen-kalender-bereiche' => 'einstellungen-kalender-bereiche',
@@ -479,6 +481,10 @@ final class AcademyModulePresentation
             'einstellungen-kalender-mitglieder' => [
                 'href' => '/app?page=einstellungen&tab=kalender-team&ctab=mitarbeiter',
                 'label' => 'Zur Stelle: Mitarbeiter',
+            ],
+            'einstellungen-kalender-einbindung' => [
+                'href' => '/app?page=einstellungen&tab=kalender-einbindung',
+                'label' => 'Zur Stelle: Einbindung',
             ],
             'lager' => [
                 'href' => '/app?page=lager',

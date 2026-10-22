@@ -16,6 +16,13 @@
     }
   },
   "fields": {
+    "online_booking_enabled": {
+      "x": 816,
+      "y": 288,
+      "w": 778,
+      "h": 45,
+      "label": "Terminvereinbarung online stellen"
+    },
     "public_url": {
       "x": 835,
       "y": 718,
@@ -28,7 +35,7 @@
       "y": 871,
       "w": 26,
       "h": 26,
-      "label": "#dg-booking-qrcode"
+      "label": "#dg-booking-qrcode,.dg-booking-qr-preview-panel"
     }
   }
 }

@@ -493,10 +493,11 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
         <input type="text" name="price_gross" id="dg_article_price" inputmode="decimal" placeholder="0,00" required<?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field">
-        <span>Arbeitszeit *</span>
-        <select name="work_minutes" id="dg_article_work_minutes" required<?= !$dbConnected ? ' disabled' : '' ?>>
+        <span id="dg_article_work_label">Arbeitszeit<?= $suggestedKind === CalendarArticleCatalog::KIND_SERVICE ? ' *' : '' ?></span>
+        <select name="work_minutes" id="dg_article_work_minutes"<?= $suggestedKind === CalendarArticleCatalog::KIND_SERVICE ? ' required' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
+          <option value="0"<?= $suggestedKind === CalendarArticleCatalog::KIND_PRODUCT ? ' selected' : '' ?>>— keine —</option>
           <?php foreach ($presets as $minutes) : ?>
-            <option value="<?= (int) $minutes ?>"<?= $minutes === 30 ? ' selected' : '' ?>><?= View::escape(CalendarArticleRepository::formatDuration($minutes)) ?></option>
+            <option value="<?= (int) $minutes ?>"<?= $suggestedKind === CalendarArticleCatalog::KIND_SERVICE && $minutes === 30 ? ' selected' : '' ?>><?= View::escape(CalendarArticleRepository::formatDuration($minutes)) ?></option>
           <?php endforeach; ?>
           <option value="__custom__">— Eigene Dauer —</option>
         </select>
@@ -506,13 +507,9 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
         <input type="number" name="custom_work_minutes" id="dg_article_custom_minutes" min="1" max="1440" step="1"<?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field">
-        <span>Bereich<?= $staffMode ? ' *' : '' ?></span>
-        <select name="area_id" id="dg_article_area"<?= $staffMode ? ' required' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-          <?php if (!$staffMode) : ?>
-            <option value="0">— Kein Bereich —</option>
-          <?php else : ?>
-            <option value="">— Bitte wählen —</option>
-          <?php endif; ?>
+        <span id="dg_article_area_label">Bereich<?= $staffMode && $suggestedKind === CalendarArticleCatalog::KIND_SERVICE ? ' *' : '' ?></span>
+        <select name="area_id" id="dg_article_area"<?= $staffMode && $suggestedKind === CalendarArticleCatalog::KIND_SERVICE ? ' required' : '' ?><?= $staffMode ? ' data-staff-required="1"' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
+          <option value="0">— Kein Bereich —</option>
           <?php foreach ($calendarAreas as $area) : ?>
             <?php if (empty($area['is_active'])) { continue; } ?>
             <option value="<?= (int) $area['id'] ?>"><?= View::escape((string) $area['name']) ?></option>

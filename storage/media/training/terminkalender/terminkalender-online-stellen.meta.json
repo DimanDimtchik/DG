@@ -1,0 +1,60 @@
+{
+  "title": "Terminkalender — Online stellen",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 113.8,
+  "segments": [
+    {
+      "key": "intro",
+      "duration_sec": 13.84
+    },
+    {
+      "key": "nav-calendar",
+      "duration_sec": 5.24
+    },
+    {
+      "key": "list",
+      "duration_sec": 10.48
+    },
+    {
+      "key": "nav-settings",
+      "duration_sec": 8.08
+    },
+    {
+      "key": "step-hours",
+      "duration_sec": 8.04
+    },
+    {
+      "key": "step-areas",
+      "duration_sec": 7.92
+    },
+    {
+      "key": "step-staff",
+      "duration_sec": 8.04
+    },
+    {
+      "key": "step-design",
+      "duration_sec": 6.84
+    },
+    {
+      "key": "step-embed",
+      "duration_sec": 4.4
+    },
+    {
+      "key": "field-enable",
+      "duration_sec": 9.16
+    },
+    {
+      "key": "field-url",
+      "duration_sec": 10.16
+    },
+    {
+      "key": "public",
+      "duration_sec": 7.16
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 14.44
+    }
+  ]
+}

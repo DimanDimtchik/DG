@@ -183,12 +183,18 @@ final class CalendarArticleRepository
         }
 
         if ($title === '') {
-            throw new InvalidArgumentException('Bezeichnung der Leistung ist erforderlich.');
+            throw new InvalidArgumentException('Bezeichnung ist erforderlich.');
         }
-        if ($workMinutes < 1) {
+        // Arbeitszeit / Bereich: Pflicht nur bei buchbaren Leistungen, nicht bei Artikeln.
+        if ($catalogKind === CalendarArticleCatalog::KIND_SERVICE && $workMinutes < 1) {
             throw new InvalidArgumentException('Gültige Arbeitszeit erforderlich.');
         }
-        if (CalendarStaffRepository::hasActiveEmployees() && $areaId < 1 && empty($input['import'])) {
+        if (
+            $catalogKind === CalendarArticleCatalog::KIND_SERVICE
+            && CalendarStaffRepository::hasActiveEmployees()
+            && $areaId < 1
+            && empty($input['import'])
+        ) {
             throw new InvalidArgumentException('Bitte einen Bereich zuordnen (Mitarbeiter-Zuordnung über Bereich).');
         }
 
@@ -594,10 +600,16 @@ final class CalendarArticleRepository
         if ($preset === '__custom__') {
             return self::sanitizeWorkMinutes($input['custom_work_minutes'] ?? 0);
         }
+        if ($preset === '' || $preset === '0') {
+            $custom = $input['custom_work_minutes'] ?? null;
+            if ($custom !== null && $custom !== '') {
+                return self::sanitizeWorkMinutes($custom);
+            }
 
-        $minutes = self::sanitizeWorkMinutes($preset !== '' ? $preset : ($input['custom_work_minutes'] ?? 30));
+            return 0;
+        }
 
-        return $minutes > 0 ? $minutes : 30;
+        return self::sanitizeWorkMinutes($preset);
     }
 
     /**
