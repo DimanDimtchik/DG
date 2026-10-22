@@ -70,6 +70,7 @@ final class CalendarEmbedSettings
             'center_media_id' => '',
             'center_image_size' => 'tiny',
             'center_emoji' => '📅',
+            'center_icon' => 'calendar',
         ];
     }
 
@@ -242,7 +243,7 @@ final class CalendarEmbedSettings
 
         $source = $pick(
             (string) ($input['center_image_source'] ?? $d['center_image_source']),
-            ['none', 'logo', 'favicon', 'custom', 'emoji'],
+            ['none', 'logo', 'favicon', 'custom', 'emoji', 'lucide'],
             'none'
         );
         $mediaId = trim((string) ($input['center_media_id'] ?? ''));
@@ -252,6 +253,12 @@ final class CalendarEmbedSettings
         $emoji = trim((string) ($input['center_emoji'] ?? $d['center_emoji']));
         if ($emoji === '' || mb_strlen($emoji) > 32) {
             $emoji = (string) $d['center_emoji'];
+        }
+        $icon = strtolower(trim((string) ($input['center_icon'] ?? $d['center_icon'])));
+        if ($icon === '' || $icon === 'auto' || !WebsiteMenuIcons::isValid($icon)) {
+            $icon = (string) $d['center_icon'];
+        } else {
+            $icon = WebsiteMenuIcons::canonicalId($icon);
         }
 
         $download = preg_replace('/[^a-zA-Z0-9._-]+/', '-', (string) ($input['download_name'] ?? $d['download_name'])) ?? 'termin-buchen';
@@ -304,6 +311,7 @@ final class CalendarEmbedSettings
                 (string) $d['center_image_size']
             ),
             'center_emoji' => $emoji,
+            'center_icon' => $icon,
         ];
     }
 

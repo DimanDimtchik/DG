@@ -256,111 +256,12 @@ $statusLabels = WebsitePageRepository::statusOptions();
   var wrap = document.getElementById('dg-website-menu-rows');
   if (!wrap) return;
 
-  var iconCatalog = null;
-  try {
-    var catalogEl = document.getElementById('dg-menu-icon-catalog');
-    if (catalogEl) iconCatalog = JSON.parse(catalogEl.textContent || '{}');
-  } catch (e) {
-    iconCatalog = { featured: [], special: [], icons: [] };
-  }
-
   function escapeHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  function iconSvgHtml(paths, stroke) {
-    if (!paths) return '<span class="dg-menu-icon-grid__none">∅</span>';
-    return '<svg class="dg-menu-icon-grid__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (stroke || '1.75') + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
-  }
-
-  function catalogLookup(id) {
-    if (!iconCatalog) return null;
-    var specials = iconCatalog.special || [];
-    for (var i = 0; i < specials.length; i++) {
-      if (specials[i].id === id) return specials[i];
-    }
-    var icons = iconCatalog.icons || [];
-    for (var j = 0; j < icons.length; j++) {
-      if (icons[j].id === id) return icons[j];
-    }
-    return null;
-  }
-
-  function featuredIcons() {
-    if (!iconCatalog) return [];
-    var featured = iconCatalog.featured || [];
-    var icons = iconCatalog.icons || [];
-    var map = {};
-    icons.forEach(function (item) { map[item.id] = item; });
-    return featured.map(function (id) { return map[id]; }).filter(Boolean);
-  }
-
-  function filterIcons(query) {
-    if (!iconCatalog) return [];
-    var q = String(query || '').trim().toLowerCase();
-    if (!q) {
-      return featuredIcons().slice(0, 48);
-    }
-    var out = [];
-    (iconCatalog.icons || []).forEach(function (item) {
-      var hay = (item.id + ' ' + item.label + ' ' + (item.tags || []).join(' ')).toLowerCase();
-      if (hay.indexOf(q) !== -1) out.push(item);
-    });
-    return out.slice(0, 80);
-  }
-
-  function renderIconGrid(field, query) {
-    var grid = field.querySelector('[data-menu-icon-grid]');
-    if (!grid || !iconCatalog) return;
-    var input = field.querySelector('[data-menu-icon-input]');
-    var current = input ? input.value : 'auto';
-    var stroke = field.getAttribute('data-stroke') || '1.75';
-    var suggested = field.getAttribute('data-suggested') || '';
-    var items = [];
-    var q = String(query || '').trim();
-    if (!q) {
-      items = (iconCatalog.special || []).slice();
-      featuredIcons().forEach(function (item) {
-        if (!items.some(function (x) { return x.id === item.id; })) items.push(item);
-      });
-    } else {
-      items = filterIcons(q);
-    }
-    var html = items.map(function (item) {
-      var pickId = item.id;
-      var previewPaths = item.paths;
-      if (pickId === 'auto' && suggested) {
-        var sug = catalogLookup(suggested);
-        previewPaths = sug ? sug.paths : '';
-      }
-      var selected = current === pickId;
-      return '<button type="button" class="dg-menu-icon-grid__item' + (selected ? ' is-selected' : '') + '" role="option" aria-selected="' + (selected ? 'true' : 'false') + '" data-menu-icon-pick data-value="' + escapeHtml(pickId) + '" data-label="' + escapeHtml(item.label) + '" data-paths="' + escapeHtml(item.paths || '') + '" title="' + escapeHtml(item.label) + '">' +
-        iconSvgHtml(previewPaths, stroke) +
-        '<span class="dg-menu-icon-grid__text">' + escapeHtml(item.label) + '</span></button>';
-    }).join('');
-    grid.innerHTML = html;
-    var hint = field.querySelector('[data-menu-icon-hint]');
-    if (hint) {
-      if (q && items.length === 0) {
-        hint.textContent = 'Kein Icon gefunden.';
-        hint.hidden = false;
-      } else if (q && items.length >= 80) {
-        hint.textContent = 'Mehr Treffer — Suche verfeinern.';
-        hint.hidden = false;
-      } else {
-        hint.hidden = true;
-      }
-    }
-  }
-
-  function ensureIconGrid(field) {
-    if (!field || field.getAttribute('data-icon-grid-ready') === '1') return;
-    renderIconGrid(field, '');
-    field.setAttribute('data-icon-grid-ready', '1');
   }
 
   function iconFieldHtml(name, fieldId, compact) {
@@ -554,70 +455,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
   });
 
   wrap.addEventListener('click', function (event) {
-    var pick = event.target.closest('[data-menu-icon-pick]');
-    if (pick) {
-      var field = pick.closest('[data-menu-icon-field]');
-      if (!field) return;
-      var input = field.querySelector('[data-menu-icon-input]');
-      var labelEl = field.querySelector('[data-menu-icon-label]');
-      var preview = field.querySelector('[data-menu-icon-preview]');
-      var value = pick.getAttribute('data-value') || 'auto';
-      var text = pick.getAttribute('data-label') || '';
-      var paths = pick.getAttribute('data-paths') || '';
-      var stroke = field.getAttribute('data-stroke') || '1.75';
-      if (input) input.value = value;
-      if (labelEl) labelEl.textContent = text;
-      if (preview) {
-        if (value === 'auto') {
-          var suggested = field.getAttribute('data-suggested') || '';
-          var sugItem = suggested ? catalogLookup(suggested) : null;
-          preview.innerHTML = sugItem && sugItem.paths ? iconSvgHtml(sugItem.paths, stroke) : '<span class="dg-menu-icon-field__empty">—</span>';
-        } else if (value === '' || !paths) {
-          preview.innerHTML = '<span class="dg-menu-icon-field__empty">—</span>';
-        } else {
-          preview.innerHTML = iconSvgHtml(paths, stroke);
-        }
-      }
-      field.querySelectorAll('.dg-menu-icon-grid__item').forEach(function (btn) {
-        var selected = btn.getAttribute('data-value') === value;
-        btn.classList.toggle('is-selected', selected);
-        btn.setAttribute('aria-selected', selected ? 'true' : 'false');
-      });
-      var panel = field.querySelector('[data-menu-icon-panel]');
-      if (panel) panel.hidden = true;
-      var trigger = field.querySelector('[data-menu-icon-open]');
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
-      event.preventDefault();
-      return;
-    }
-
-    var openBtn = event.target.closest('[data-menu-icon-open]');
-    if (openBtn) {
-      var openField = openBtn.closest('[data-menu-icon-field]');
-      var openPanel = openField && openField.querySelector('[data-menu-icon-panel]');
-      if (!openPanel) return;
-      ensureIconGrid(openField);
-      var willOpen = openPanel.hidden;
-      document.querySelectorAll('[data-menu-icon-panel]').forEach(function (p) { p.hidden = true; });
-      document.querySelectorAll('[data-menu-icon-open]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
-      if (willOpen) {
-        openPanel.hidden = false;
-        openBtn.setAttribute('aria-expanded', 'true');
-        var search = openField.querySelector('[data-menu-icon-search]');
-        if (search) {
-          search.value = '';
-          renderIconGrid(openField, '');
-          search.focus();
-        }
-      }
-      event.preventDefault();
-      return;
-    }
-
-    if (!event.target.closest('[data-menu-icon-field]')) {
-      document.querySelectorAll('[data-menu-icon-panel]').forEach(function (p) { p.hidden = true; });
-      document.querySelectorAll('[data-menu-icon-open]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
-    }
+    // Icon-Picker: assets/js/website-menu-icon-picker.js (document-delegated)
 
     var childAdd = event.target.closest('[data-menu-child-add]');
     if (childAdd) {
@@ -662,11 +500,6 @@ $statusLabels = WebsitePageRepository::statusOptions();
   wrap.addEventListener('input', function (event) {
     if (event.target && /\[url\]$/.test(event.target.name || '')) {
       refreshSuggestions();
-    }
-    var search = event.target.closest('[data-menu-icon-search]');
-    if (search) {
-      var searchField = search.closest('[data-menu-icon-field]');
-      if (searchField) renderIconGrid(searchField, search.value);
     }
   });
 

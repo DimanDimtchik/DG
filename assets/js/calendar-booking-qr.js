@@ -19,6 +19,7 @@
   var customUrl = root.getAttribute('data-center-custom-url') || '';
   var emojiActiveGroup = 'smileys';
   var emojiSearchQuery = '';
+  var lucideDataUrlCache = { key: '', url: '' };
 
   function $(sel) {
     return root.querySelector(sel) || document.querySelector(sel);
@@ -122,7 +123,12 @@
     return canvas.toDataURL('image/png');
   }
 
-  function centerImageUrl() {
+  function lucideIconId() {
+    var input = root.querySelector('#dg-qr-lucide-input') || root.querySelector('[name="qr[center_icon]"]');
+    return input ? String(input.value || '').trim() : 'calendar';
+  }
+
+  function centerImageUrlSync() {
     var source = centerSource();
     if (source === 'logo') {
       return root.getAttribute('data-logo-url') || '';
@@ -136,11 +142,40 @@
     if (source === 'emoji') {
       return emojiDataUrl(val('dg-qr-emoji', '📅'));
     }
+    if (source === 'lucide') {
+      return lucideDataUrlCache.url || '';
+    }
     return '';
   }
 
+  function resolveCenterImageUrl() {
+    var source = centerSource();
+    if (source !== 'lucide') {
+      return Promise.resolve(centerImageUrlSync());
+    }
+    var picker = window.DgMenuIconPicker;
+    var iconId = lucideIconId() || 'calendar';
+    var paths = picker && picker.paths ? picker.paths(iconId) : '';
+    if (!paths) {
+      lucideDataUrlCache = { key: '', url: '' };
+      return Promise.resolve('');
+    }
+    var fg = val('dg-qr-fg', '#1a1a1a');
+    var cacheKey = iconId + '|' + fg;
+    if (lucideDataUrlCache.key === cacheKey && lucideDataUrlCache.url) {
+      return Promise.resolve(lucideDataUrlCache.url);
+    }
+    if (!picker || !picker.pathsToDataUrl) {
+      return Promise.resolve('');
+    }
+    return picker.pathsToDataUrl(paths, fg).then(function (url) {
+      lucideDataUrlCache = { key: cacheKey, url: url || '' };
+      return lucideDataUrlCache.url;
+    });
+  }
+
   function usesCenter() {
-    return centerImageUrl() !== '';
+    return centerImageUrlSync() !== '' || centerSource() === 'lucide';
   }
 
   function centerSizeRatio() {
@@ -148,7 +183,7 @@
     if (source === 'favicon') {
       return 0.12;
     }
-    if (source === 'emoji') {
+    if (source === 'emoji' || source === 'lucide') {
       return 0.16;
     }
     return val('dg-qr-center-size', 'tiny') === 'small' ? 0.18 : 0.14;
@@ -165,10 +200,14 @@
     var source = centerSource();
     var customWrap = document.getElementById('dg-qr-center-custom-wrap');
     var emojiWrap = document.getElementById('dg-qr-center-emoji-wrap');
+    var lucideWrap = document.getElementById('dg-qr-center-lucide-wrap');
     var note = document.getElementById('dg-qr-ec-note');
     var ec = document.getElementById('dg-qr-ec');
     if (customWrap) {
       customWrap.hidden = source !== 'custom';
+    }
+    if (lucideWrap) {
+      lucideWrap.hidden = source !== 'lucide';
     }
     if (emojiWrap) {
       emojiWrap.hidden = source !== 'emoji';
@@ -177,7 +216,7 @@
       }
     }
     if (note) {
-      note.hidden = !usesCenter() && source === 'none';
+      note.hidden = source === 'none';
     }
     if (ec) {
       if (usesCenter() || source !== 'none') {
@@ -251,7 +290,7 @@
     }
   }
 
-  function readOptions(pixelSize) {
+  function readOptions(pixelSize, imageUrl) {
     var frameEnabled = val('dg-qr-frame-enabled', '0') === '1';
     var fg = val('dg-qr-fg', '#1a1a1a');
     var shape = val('dg-qr-shape', 'square');
@@ -275,7 +314,6 @@
         round: shape === 'circle' ? 1 : 0,
       },
     };
-    var imageUrl = centerImageUrl();
     if (imageUrl) {
       styling.image = imageUrl;
       styling.imageOptions = {
@@ -343,30 +381,40 @@
       setStatus('Bitte ein Bild aus der Mediathek wählen.', true);
       return;
     }
-
-    var opts = readOptions(previewPixelSize());
-    applyFrameStyles(opts.frame);
-    var cap = document.getElementById('dg-qr-caption-preview');
-    if (cap) {
-      cap.textContent = opts.caption;
-    }
-    var host = document.getElementById('dg-qr-canvas-host');
-    if (!host) {
+    if (source === 'lucide' && !lucideIconId()) {
+      setStatus('Bitte ein Lucide-Icon wählen.', true);
       return;
     }
-    host.innerHTML = '';
-    try {
-      qrInstance = new window.QRCodeStyling(opts.styling);
-      qrInstance.append(host);
-      var tip = usesCenter() ? 'Tipp: Mit dem Handy scannen und Lesbarkeit prüfen.' : '';
-      if (val('dg-qr-shape', 'square') === 'circle') {
-        tip = (tip ? tip + ' ' : '') + 'Kreis-Form: Module und Ecken wurden weicher gesetzt.';
+
+    resolveCenterImageUrl().then(function (imageUrl) {
+      if (source === 'lucide' && !imageUrl) {
+        setStatus('Lucide-Icon konnte nicht geladen werden.', true);
+        return;
       }
-      setStatus(tip);
-      updateFlyerSheet();
-    } catch (e) {
-      setStatus('QR-Code konnte nicht erzeugt werden.', true);
-    }
+      var opts = readOptions(previewPixelSize(), imageUrl);
+      applyFrameStyles(opts.frame);
+      var cap = document.getElementById('dg-qr-caption-preview');
+      if (cap) {
+        cap.textContent = opts.caption;
+      }
+      var host = document.getElementById('dg-qr-canvas-host');
+      if (!host) {
+        return;
+      }
+      host.innerHTML = '';
+      try {
+        qrInstance = new window.QRCodeStyling(opts.styling);
+        qrInstance.append(host);
+        var tip = imageUrl ? 'Tipp: Mit dem Handy scannen und Lesbarkeit prüfen.' : '';
+        if (val('dg-qr-shape', 'square') === 'circle') {
+          tip = (tip ? tip + ' ' : '') + 'Kreis-Form: Module und Ecken wurden weicher gesetzt.';
+        }
+        setStatus(tip);
+        updateFlyerSheet();
+      } catch (e) {
+        setStatus('QR-Code konnte nicht erzeugt werden.', true);
+      }
+    });
   }
 
   var flyerQrInstance = null;
@@ -457,31 +505,35 @@
     }
     var format = val('dg-flyer-format', 'a6');
     var pixel = format === 'a5' ? 160 : format === 'square' ? 150 : 140;
-    var opts = readOptions(pixel);
-    opts.styling.margin = Math.max(4, Math.min(12, parseInt(val('dg-qr-margin', '8'), 10) || 8));
-    host.innerHTML = '';
-    try {
-      flyerQrInstance = new window.QRCodeStyling(opts.styling);
-      flyerQrInstance.append(host);
-    } catch (ignore) {
-      host.textContent = 'QR nicht darstellbar';
-    }
+    resolveCenterImageUrl().then(function (imageUrl) {
+      var opts = readOptions(pixel, imageUrl);
+      opts.styling.margin = Math.max(4, Math.min(12, parseInt(val('dg-qr-margin', '8'), 10) || 8));
+      host.innerHTML = '';
+      try {
+        flyerQrInstance = new window.QRCodeStyling(opts.styling);
+        flyerQrInstance.append(host);
+      } catch (ignore) {
+        host.textContent = 'QR nicht darstellbar';
+      }
+    });
   }
 
   function getQrPngDataUrl(pixelSize) {
-    var opts = readOptions(pixelSize);
-    var instance = new window.QRCodeStyling(
-      Object.assign({}, opts.styling, {
-        type: 'canvas',
-        width: pixelSize,
-        height: pixelSize,
-      })
-    );
-    return instance.getRawData('png').then(function (blob) {
-      if (!blob) {
-        throw new Error('empty');
-      }
-      return blobToDataUrl(blob);
+    return resolveCenterImageUrl().then(function (imageUrl) {
+      var opts = readOptions(pixelSize, imageUrl);
+      var instance = new window.QRCodeStyling(
+        Object.assign({}, opts.styling, {
+          type: 'canvas',
+          width: pixelSize,
+          height: pixelSize,
+        })
+      );
+      return instance.getRawData('png').then(function (blob) {
+        if (!blob) {
+          throw new Error('empty');
+        }
+        return blobToDataUrl(blob);
+      });
     });
   }
 
@@ -783,22 +835,24 @@
       setStatus('QR-Bibliothek nicht geladen.', true);
       return;
     }
-    try {
-      harmonizeCircleStyles();
-      var exportSize = parseInt(val('dg-qr-export-size', '1200'), 10) || 1200;
-      var opts = readOptions(exportSize);
-      var instance = new window.QRCodeStyling(
-        Object.assign({}, opts.styling, {
-          type: extension === 'svg' ? 'svg' : 'canvas',
-          width: exportSize,
-          height: exportSize,
-        })
-      );
-      instance.download({ name: opts.downloadName, extension: extension });
-      setStatus(extension === 'png' ? 'PNG heruntergeladen.' : 'SVG heruntergeladen.');
-    } catch (e) {
-      setStatus('Download fehlgeschlagen.', true);
-    }
+    harmonizeCircleStyles();
+    var exportSize = parseInt(val('dg-qr-export-size', '1200'), 10) || 1200;
+    resolveCenterImageUrl()
+      .then(function (imageUrl) {
+        var opts = readOptions(exportSize, imageUrl);
+        var instance = new window.QRCodeStyling(
+          Object.assign({}, opts.styling, {
+            type: extension === 'svg' ? 'svg' : 'canvas',
+            width: exportSize,
+            height: exportSize,
+          })
+        );
+        instance.download({ name: opts.downloadName, extension: extension });
+        setStatus(extension === 'png' ? 'PNG heruntergeladen.' : 'SVG heruntergeladen.');
+      })
+      .catch(function () {
+        setStatus('Download fehlgeschlagen.', true);
+      });
   }
 
   function blobToDataUrl(blob) {
@@ -831,38 +885,39 @@
     win.document.close();
 
     var exportSize = parseInt(val('dg-qr-export-size', '1200'), 10) || 1200;
-    var opts = readOptions(exportSize);
-    var instance = new window.QRCodeStyling(
-      Object.assign({}, opts.styling, {
-        type: 'canvas',
-        width: exportSize,
-        height: exportSize,
+    resolveCenterImageUrl()
+      .then(function (imageUrl) {
+        var opts = readOptions(exportSize, imageUrl);
+        var instance = new window.QRCodeStyling(
+          Object.assign({}, opts.styling, {
+            type: 'canvas',
+            width: exportSize,
+            height: exportSize,
+          })
+        );
+        return instance
+          .getRawData('png')
+          .then(function (blob) {
+            if (!blob) {
+              return { dataUrl: null, opts: opts };
+            }
+            return blobToDataUrl(blob).then(function (dataUrl) {
+              return { dataUrl: dataUrl, opts: opts };
+            });
+          })
+          .catch(function () {
+            return { dataUrl: null, opts: opts };
+          });
       })
-    );
-
-    Promise.resolve()
-      .then(function () {
-        return instance.getRawData('png').then(function (blob) {
-          if (blob) {
-            return blobToDataUrl(blob);
+      .then(function (pack) {
+        var dataUrl = pack.dataUrl;
+        var opts = pack.opts;
+        if (!dataUrl) {
+          var previewCanvas = document.querySelector('#dg-qr-canvas-host canvas');
+          if (previewCanvas && typeof previewCanvas.toDataURL === 'function') {
+            dataUrl = previewCanvas.toDataURL('image/png');
           }
-          return null;
-        }).catch(function () {
-          return null;
-        });
-      })
-      .then(function (dataUrl) {
-        if (dataUrl) {
-          return dataUrl;
         }
-        // Fallback: sichtbare Vorschau als PNG (Canvas speichert Pixel — innerHTML nicht)
-        var previewCanvas = document.querySelector('#dg-qr-canvas-host canvas');
-        if (previewCanvas && typeof previewCanvas.toDataURL === 'function') {
-          return previewCanvas.toDataURL('image/png');
-        }
-        throw new Error('empty');
-      })
-      .then(function (dataUrl) {
         if (!dataUrl) {
           throw new Error('empty');
         }
@@ -904,7 +959,6 @@
         );
         win.document.close();
         win.focus();
-        // Bild kurz laden lassen, dann drucken
         setTimeout(function () {
           try {
             win.print();
@@ -1036,6 +1090,14 @@
     if (ev.target && ev.target.matches('[data-dg-qr-field], input[name="qr[center_image_source]"]')) {
       scheduleUpdate();
     }
+  });
+  root.addEventListener('dg-menu-icon-picked', function () {
+    var lucideRadio = root.querySelector('input[name="qr[center_image_source]"][value="lucide"]');
+    if (lucideRadio) {
+      lucideRadio.checked = true;
+    }
+    lucideDataUrlCache = { key: '', url: '' };
+    scheduleUpdate();
   });
   root.addEventListener('input', function (ev) {
     if (ev.target && ev.target.id === 'dg-qr-emoji-search') {

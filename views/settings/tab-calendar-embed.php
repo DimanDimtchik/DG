@@ -110,11 +110,12 @@ $ctaPresets = [
         </div>
 
         <fieldset class="dg-field dg-field--wide">
-          <legend>Mitte (Logo / Emoji)</legend>
+          <legend>Mitte (Logo / Icon / Emoji)</legend>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="none"<?= $centerSource === 'none' ? ' checked' : '' ?> data-dg-qr-field> Kein Logo</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="logo"<?= $centerSource === 'logo' ? ' checked' : '' ?><?= $qrLogoUrl === '' ? ' disabled' : '' ?> data-dg-qr-field> CRM-Logo</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="favicon"<?= $centerSource === 'favicon' ? ' checked' : '' ?><?= $qrFaviconUrl === '' ? ' disabled' : '' ?> data-dg-qr-field> Favicon (klein)</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="custom"<?= $centerSource === 'custom' ? ' checked' : '' ?> data-dg-qr-field> Bild aus Mediathek</label>
+          <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="lucide"<?= $centerSource === 'lucide' ? ' checked' : '' ?> data-dg-qr-field> Lucide-Icon</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="emoji"<?= $centerSource === 'emoji' ? ' checked' : '' ?> data-dg-qr-field> Emoji</label>
 
           <input type="hidden" name="qr[center_media_id]" id="dg-qr-center-media-id" value="<?= View::escape((string) $qr['center_media_id']) ?>">
@@ -136,6 +137,21 @@ $ctaPresets = [
             </label>
           </div>
 
+          <div id="dg-qr-center-lucide-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'lucide' ? '' : ' hidden' ?>>
+            <div class="dg-field dg-field--wide" style="margin:0">
+              <span>Icon wählen</span>
+              <?php View::partial('partials/website-menu-icon-field', [
+                  'name' => 'qr[center_icon]',
+                  'value' => (string) ($qr['center_icon'] ?? 'calendar'),
+                  'compact' => true,
+                  'suggested' => 'calendar',
+                  'fieldId' => 'dg-qr-lucide',
+                  'websiteMenuIconStyle' => [],
+              ]); ?>
+            </div>
+            <p class="dg-field-hint">Gleiche Lucide-Bibliothek wie beim Website-Menü — lokal, ohne CDN. Farbe folgt dem QR-Vordergrund.</p>
+          </div>
+
           <div id="dg-qr-center-emoji-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'emoji' ? '' : ' hidden' ?>>
             <div class="dg-booking-qr-emoji-toolbar">
               <input type="text" name="qr[center_emoji]" id="dg-qr-emoji" value="<?= View::escape((string) $qr['center_emoji']) ?>" maxlength="32" data-dg-qr-field class="dg-booking-qr-emoji-input" aria-label="Gewähltes Emoji">
@@ -145,10 +161,17 @@ $ctaPresets = [
             <div id="dg-qr-emoji-picks" class="dg-booking-qr-emoji-picks" role="listbox" aria-label="Emoji-Auswahl"></div>
             <p class="dg-field-hint">Über <span id="dg-qr-emoji-count">…</span> Emojis — Kategorien oder Suche. Beliebiges Emoji auch per Zwischenablage einfügen.</p>
           </div>
-          <p class="dg-field-hint" id="dg-qr-ec-note"<?= in_array($centerSource, ['logo', 'favicon', 'custom', 'emoji'], true) ? '' : ' hidden' ?>>
-            Bei Logo/Emoji wird die Fehlerkorrektur automatisch auf H (max.) gesetzt — bitte einmal mit dem Handy scannen.
+          <p class="dg-field-hint" id="dg-qr-ec-note"<?= in_array($centerSource, ['logo', 'favicon', 'custom', 'emoji', 'lucide'], true) ? '' : ' hidden' ?>>
+            Bei Logo/Icon/Emoji wird die Fehlerkorrektur automatisch auf H (max.) gesetzt — bitte einmal mit dem Handy scannen.
           </p>
         </fieldset>
+        <script type="application/json" id="dg-menu-icon-catalog"><?= json_encode([
+            'featured' => WebsiteMenuIcons::pickerFeaturedIds(),
+            'special' => [
+                ['id' => '', 'label' => 'Kein Icon', 'paths' => ''],
+            ],
+            'icons' => WebsiteMenuIcons::pickerCatalog(),
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) ?></script>
 
         <div class="dg-form-grid">
           <label class="dg-field">
