@@ -370,6 +370,7 @@ final class CalendarArticleImporter
             'area_id' => max(0, $defaultAreaId),
             'sort_order' => 0,
             'is_active' => 1,
+            'price_list_online' => 1,
         ];
     }
 

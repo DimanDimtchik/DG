@@ -158,6 +158,9 @@ final class MobileCustomerApi
             if (!is_array($row)) {
                 continue;
             }
+            if (!CalendarArticleRepository::isPriceListOnline($row)) {
+                continue;
+            }
             $articles[] = [
                 'id' => (int) ($row['id'] ?? 0),
                 'title' => (string) ($row['title'] ?? ''),

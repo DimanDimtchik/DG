@@ -346,12 +346,13 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
           <th>Bestand</th>
           <th>Positionscode</th>
           <th>Bereich</th>
+          <th>Online</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <?php if ($calendarArticles === []) : ?>
-          <tr><td colspan="11" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
+          <tr><td colspan="12" class="dg-muted">Noch keine Einträge angelegt.</td></tr>
         <?php else : ?>
           <?php foreach ($calendarArticles as $article) : ?>
             <tr>
@@ -390,6 +391,7 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
               <?php else : ?>—<?php endif; ?></td>
               <td><?= !empty($article['stock_position_code']) ? View::escape((string) $article['stock_position_code']) : '—' ?></td>
               <td><?= View::escape($areaNames[(int) ($article['area_id'] ?? 0)] ?? '—') ?></td>
+              <td><?= CalendarArticleRepository::isPriceListOnline($article) ? 'Ja' : 'Nein' ?></td>
               <td class="dg-table__actions">
                 <div class="dg-table__actions-group">
                 <button
@@ -410,6 +412,7 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                       'area_id' => (int) $article['area_id'],
                       'sort_order' => (int) $article['sort_order'],
                       'is_active' => (int) $article['is_active'],
+                      'price_list_online' => CalendarArticleRepository::isPriceListOnline($article) ? 1 : 0,
                       'track_stock' => (int) ($article['track_stock'] ?? 0),
                       'min_stock' => (float) ($article['min_stock'] ?? 0),
                       'stock_location_id' => (int) ($article['stock_location_id'] ?? 0),
@@ -530,6 +533,10 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
       </label>
       <label class="dg-field">
         <span><input type="checkbox" name="is_active" id="dg_article_active" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Eintrag ist aktiv</span>
+      </label>
+      <label class="dg-field">
+        <span><input type="checkbox" name="price_list_online" id="dg_article_price_list_online" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Preisliste Online</span>
+        <small class="dg-field-hint">Wenn nicht gesetzt, erscheint der Eintrag nicht in der Preisliste auf der Website.</small>
       </label>
       <div class="dg-field dg-field--wide" id="dg_article_stock_fields" hidden>
         <fieldset class="dg-fieldset">

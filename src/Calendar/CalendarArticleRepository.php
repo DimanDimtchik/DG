@@ -148,6 +148,10 @@ final class CalendarArticleRepository
         $areaId = max(0, (int) ($input['area_id'] ?? 0));
         $sortOrder = max(0, (int) ($input['sort_order'] ?? 0));
         $isActive = !empty($input['is_active']) ? 1 : 0;
+        // Formular: fehlende Checkbox = aus. Import ohne Flag: Standard an.
+        $priceListOnline = !empty($input['import'])
+            ? (array_key_exists('price_list_online', $input) ? (!empty($input['price_list_online']) ? 1 : 0) : 1)
+            : (!empty($input['price_list_online']) ? 1 : 0);
         $trackStock = $catalogKind === CalendarArticleCatalog::KIND_PRODUCT && !empty($input['track_stock']) ? 1 : 0;
         $minStock = 0.0;
         if ($trackStock === 1) {
@@ -204,6 +208,7 @@ final class CalendarArticleRepository
             'area_id' => $areaId,
             'sort_order' => $sortOrder,
             'is_active' => $isActive,
+            'price_list_online' => $priceListOnline,
             'track_stock' => $trackStock,
             'min_stock' => $minStock,
             'stock_ort' => $stockPosition['ort'],
@@ -225,6 +230,7 @@ final class CalendarArticleRepository
                  SET article_number = :article_number, catalog_kind = :catalog_kind, gtin = :gtin, title = :title, description = :description,
                      note = :note, unit = :unit, tax_type = :tax_type, price_gross = :price_gross,
                      work_minutes = :work_minutes, area_id = :area_id, sort_order = :sort_order, is_active = :is_active,
+                     price_list_online = :price_list_online,
                      track_stock = :track_stock, min_stock = :min_stock,
                      stock_ort = :stock_ort, stock_halle = :stock_halle, stock_regal = :stock_regal, stock_platz = :stock_platz,
                      stock_location_id = :stock_location_id, stock_hall_id = :stock_hall_id,
@@ -240,9 +246,9 @@ final class CalendarArticleRepository
         $fields['stock_qty'] = 0;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_calendar_articles
-             (article_number, catalog_kind, gtin, title, description, note, unit, tax_type, price_gross, work_minutes, area_id, sort_order, is_active, track_stock, stock_qty, min_stock, stock_ort, stock_halle, stock_regal, stock_platz, stock_location_id, stock_hall_id, stock_shelf_id, stock_place_id, stock_place_mode)
+             (article_number, catalog_kind, gtin, title, description, note, unit, tax_type, price_gross, work_minutes, area_id, sort_order, is_active, price_list_online, track_stock, stock_qty, min_stock, stock_ort, stock_halle, stock_regal, stock_platz, stock_location_id, stock_hall_id, stock_shelf_id, stock_place_id, stock_place_mode)
              VALUES
-             (:article_number, :catalog_kind, :gtin, :title, :description, :note, :unit, :tax_type, :price_gross, :work_minutes, :area_id, :sort_order, :is_active, :track_stock, :stock_qty, :min_stock, :stock_ort, :stock_halle, :stock_regal, :stock_platz, :stock_location_id, :stock_hall_id, :stock_shelf_id, :stock_place_id, :stock_place_mode)'
+             (:article_number, :catalog_kind, :gtin, :title, :description, :note, :unit, :tax_type, :price_gross, :work_minutes, :area_id, :sort_order, :is_active, :price_list_online, :track_stock, :stock_qty, :min_stock, :stock_ort, :stock_halle, :stock_regal, :stock_platz, :stock_location_id, :stock_hall_id, :stock_shelf_id, :stock_place_id, :stock_place_mode)'
         );
         $stmt->execute($fields);
         $newId = (int) $pdo->lastInsertId();
@@ -467,6 +473,10 @@ final class CalendarArticleRepository
             if ($id < 1) {
                 continue;
             }
+            // Nicht auf der Online-Preisliste → auch nicht in der öffentlichen Buchungsauswahl.
+            if (!self::isPriceListOnline($row)) {
+                continue;
+            }
             $options[] = [
                 'id' => $id,
                 'title' => (string) ($row['title'] ?? ''),
@@ -479,6 +489,21 @@ final class CalendarArticleRepository
         }
 
         return $options;
+    }
+
+    /**
+     * Sichtbar in der öffentlichen Preisliste / Online-Buchung auf der Website.
+     * Fehlt die Spalte (vor Migration), gilt der Eintrag als online.
+     *
+     * @param array<string, mixed> $row
+     */
+    public static function isPriceListOnline(array $row): bool
+    {
+        if (!array_key_exists('price_list_online', $row)) {
+            return true;
+        }
+
+        return !empty($row['price_list_online']);
     }
 
     /**

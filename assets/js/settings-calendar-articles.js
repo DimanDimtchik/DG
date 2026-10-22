@@ -20,6 +20,7 @@
   const descriptionInput = document.getElementById('dg_article_description');
   const noteInput = document.getElementById('dg_article_note');
   const activeInput = document.getElementById('dg_article_active');
+  const priceListOnlineInput = document.getElementById('dg_article_price_list_online');
   const stockFieldsWrap = document.getElementById('dg_article_stock_fields');
   const trackStockInput = document.getElementById('dg_article_track_stock');
   const initialStockWrap = document.getElementById('dg_article_initial_stock_wrap');
@@ -308,6 +309,9 @@
     if (activeInput) {
       activeInput.checked = true;
     }
+    if (priceListOnlineInput) {
+      priceListOnlineInput.checked = true;
+    }
     if (formTitle) {
       formTitle.textContent = 'Neu anlegen';
     }
@@ -402,6 +406,9 @@
       }
       if (activeInput) {
         activeInput.checked = Number(data.is_active || 0) === 1;
+      }
+      if (priceListOnlineInput) {
+        priceListOnlineInput.checked = Number(data.price_list_online ?? 1) === 1;
       }
       if (trackStockInput) {
         trackStockInput.checked = Boolean(data.track_stock);
