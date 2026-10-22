@@ -1,0 +1,3 @@
+-- Website-Seite „Preislisten“ (Artikel/Leistungen live) per PHP-Nachzug.
+-- Kein Schema — Marker, damit MigrationRunner::runPending auf Alt-Instanzen
+-- PriceListWebsiteService::ensureDraftWebsitePage() ausführt (siehe MigrationRunner).

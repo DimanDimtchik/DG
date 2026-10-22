@@ -134,6 +134,17 @@ final class WebsiteBootstrapService
             $result['apps_page'] = null;
         }
 
+        // Preislisten: Artikel/Leistungen live
+        try {
+            PriceListWebsiteService::ensureDraftWebsitePage($userId);
+            $pricePage = WebsitePageRepository::findBySlugAnyStatus(PriceListWebsiteService::PAGE_SLUG);
+            $result['preislisten_page'] = $pricePage !== null
+                ? ['id' => (int) $pricePage['id'], 'slug' => PriceListWebsiteService::PAGE_SLUG, 'action' => 'ensured']
+                : null;
+        } catch (Throwable) {
+            $result['preislisten_page'] = null;
+        }
+
         if ($homepage) {
             $existingHome = WebsitePageRepository::findBySlugAnyStatus('startseite');
             if ($existingHome === null || $overwrite) {
@@ -216,6 +227,7 @@ final class WebsiteBootstrapService
         $defaults = [
             ['label' => 'Start', 'url' => '/', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             ['label' => 'Terminkalender', 'url' => '/terminkalender', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
+            ['label' => 'Preislisten', 'url' => '/preislisten', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             ['label' => 'Apps', 'url' => '/apps', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             ['label' => 'Kontakt', 'url' => '/kontakt', 'auth_only' => false, 'icon' => 'auto', 'children' => []],
             [
@@ -259,7 +271,7 @@ final class WebsiteBootstrapService
      */
     private static function mergePreservedMenuItems(array $defaults): array
     {
-        $reserved = ['/', '/terminkalender', '/apps', '/kontakt', '#', '/impressum', '/datenschutz', '/agb', '/widerruf'];
+        $reserved = ['/', '/terminkalender', '/preislisten', '/apps', '/kontakt', '#', '/impressum', '/datenschutz', '/agb', '/widerruf'];
         $menu = SettingsStore::get('website.menu', []);
         if (!is_array($menu)) {
             return $defaults;

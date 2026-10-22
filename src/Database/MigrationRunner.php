@@ -108,6 +108,15 @@ final class MigrationRunner
                 // Soft: Seite kann später per Website-Bootstrap nachgezogen werden
             }
 
+            // Preislisten: /preislisten (auch Alt-Installationen)
+            try {
+                if (class_exists('PriceListWebsiteService')) {
+                    PriceListWebsiteService::ensureDraftWebsitePage();
+                }
+            } catch (Throwable) {
+                // Soft: Seite kann später per Website-Bootstrap nachgezogen werden
+            }
+
             return $count;
         } finally {
             self::$running = false;
@@ -291,6 +300,7 @@ final class MigrationRunner
             '103_mobile_app_download_page.sql' => true,
             '104_staff_access_invites.sql' => self::tableExists($pdo, 'dg_staff_access_events')
                 && self::tableExists($pdo, 'dg_mailbox_password_tokens'),
+            '110_price_list_website_page.sql' => true,
             default => false,
         };
     }
@@ -425,6 +435,7 @@ final class MigrationRunner
             '102_mobile_app_auth.sql' => true,
             '103_mobile_app_download_page.sql' => true,
             '104_staff_access_invites.sql' => true,
+            '110_price_list_website_page.sql' => true,
         ];
     }
 

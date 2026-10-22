@@ -31,10 +31,11 @@
     form: 'Formular',
     gallery: 'Galerie',
     online_booking: 'Online-Terminbuchung',
+    price_list: 'Preisliste (live)',
   };
   // Contact / system blocks not in generic insert menu.
   var blockTypes = Object.keys(typeLabels).filter(function (t) {
-    return t !== 'contact' && t !== 'online_booking';
+    return t !== 'contact' && t !== 'online_booking' && t !== 'price_list';
   });
   var builderCfg = window.dgWebsiteBuilder || {};
 
@@ -135,6 +136,7 @@
       case 'form': return { id: uid('blk'), type: 'form', form_id: 0 };
       case 'gallery': return { id: uid('blk'), type: 'gallery', images: [] };
       case 'online_booking': return { id: uid('blk'), type: 'online_booking' };
+      case 'price_list': return { id: uid('blk'), type: 'price_list' };
       default:        return { id: uid('blk'), type: 'text', text: 'Neuer Textabsatz.' };
     }
   }
@@ -1301,6 +1303,11 @@
           + '<strong>Online-Terminbuchung</strong><br>'
           + '<span style="color:#64748b;font-size:0.9em;">Leistung · Termin · Kontakt — live auf der Website</span></div>';
         break;
+      case 'price_list':
+        html += '<div class="dg-website-block__booking-preview" style="padding:16px;background:#f0f4f8;border:2px dashed #94a3b8;border-radius:8px;text-align:center;">'
+          + '<strong>Preisliste (live)</strong><br>'
+          + '<span style="color:#64748b;font-size:0.9em;">Artikel &amp; Leistungen aus dem CRM — gruppiert nach Bereich</span></div>';
+        break;
       case 'divider':
         var style = block.style || 'solid';
         var color = block.color || '#ddd';
@@ -2025,6 +2032,11 @@
           break;
         case 'online_booking':
           html += '<p class="dg-field-hint">Systemblock: zeigt das öffentliche Buchungsformular. Auf Terminkalender-Seiten bitte nicht entfernen.</p>';
+          break;
+        case 'price_list':
+          html += '<p class="dg-field-hint">Systemblock: zeigt aktive Artikel und Leistungen live aus dem Katalog. '
+            + 'Gruppierung nach Kalender-Bereich; ohne Bereich in Tabellen „Artikel“ und „Leistungen“. '
+            + 'Änderungen im CRM erscheinen automatisch auf der Website.</p>';
           break;
         case 'divider':
           html += '<label class="dg-field"><span>Stil</span><select name="style">' +

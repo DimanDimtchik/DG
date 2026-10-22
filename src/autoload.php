@@ -316,6 +316,8 @@ spl_autoload_register(static function (string $class): void {
         'WebsiteFormCaptcha' => '/src/Website/WebsiteFormCaptcha.php',
         'WebsiteHomepageTemplates' => '/src/Website/WebsiteHomepageTemplates.php',
         'WebsiteBootstrapService' => '/src/Website/WebsiteBootstrapService.php',
+        'PriceListWebsiteService' => '/src/Website/PriceListWebsiteService.php',
+        'PriceListPageRenderer' => '/src/Website/PriceListPageRenderer.php',
         'UpdateChecker' => '/src/Update/UpdateChecker.php',
         'LegalPageGenerator' => '/src/Legal/LegalPageGenerator.php',
         'LegalProductSettings' => '/src/Legal/LegalProductSettings.php',

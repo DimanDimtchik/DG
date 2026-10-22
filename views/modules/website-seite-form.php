@@ -112,6 +112,10 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
               <button type="button" class="dg-website-tool" data-add-block="online_booking">Online-Terminbuchung</button>
             </div>
           <?php endif; ?>
+          <h2>Katalog</h2>
+          <div class="dg-website-builder__palette-list">
+            <button type="button" class="dg-website-tool" data-add-block="price_list">Preisliste (live)</button>
+          </div>
           <h2>Vorlagen</h2>
           <p class="dg-field-hint">Fertige Abschnitte einfügen — danach anpassen.</p>
           <div class="dg-website-builder__palette-list" id="dg-website-pattern-list"></div>

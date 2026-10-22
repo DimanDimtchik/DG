@@ -90,6 +90,53 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
       color: #9a3412;
       margin: 12px 0;
     }
+
+    .ws-pricelist { margin: 8px 0 24px; }
+    .ws-pricelist__note { font-size: 0.9rem; opacity: 0.85; margin-bottom: 18px; }
+    .ws-pricelist__empty {
+      padding: 16px 18px; border-radius: 8px; background: #f8fafc;
+      border: 1px solid #e2e8f0; color: #475569;
+    }
+    .ws-pricelist__section { margin: 0 0 28px; }
+    .ws-pricelist__heading {
+      font-size: 1.25rem; margin: 0 0 10px; color: var(--ws-primary);
+      border-bottom: 2px solid var(--ws-primary); padding-bottom: 6px;
+    }
+    .ws-pricelist__table-wrap { overflow-x: auto; }
+    .ws-pricelist__table {
+      width: 100%; border-collapse: collapse; font-size: 0.95rem;
+      background: #fff;
+    }
+    .ws-pricelist__table th,
+    .ws-pricelist__table td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    .ws-pricelist__table th {
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em;
+      color: #64748b; background: #f8fafc;
+    }
+    .ws-pricelist__table tbody tr:hover { background: #f8fafc; }
+    .ws-pricelist__title { display: block; font-weight: 600; }
+    .ws-pricelist__desc {
+      display: block; margin-top: 2px; font-size: 0.88rem; color: #64748b;
+    }
+    .ws-pricelist__price { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    @media (max-width: 700px) {
+      .ws-pricelist__table thead { display: none; }
+      .ws-pricelist__table tr {
+        display: block; margin-bottom: 12px; border: 1px solid #e2e8f0;
+        border-radius: 8px; padding: 8px 0; background: #fff;
+      }
+      .ws-pricelist__table td {
+        display: flex; justify-content: space-between; gap: 12px;
+        border-bottom: 1px solid #f1f5f9; padding: 8px 12px;
+      }
+      .ws-pricelist__table td:last-child { border-bottom: none; }
+      .ws-pricelist__table td::before {
+        content: attr(data-label); font-weight: 600; color: #64748b; flex: 0 0 35%;
+      }
+    }
     .tk-book-wrap--embedded .tk-book {
       max-width: 100%;
       padding-left: 0;
@@ -562,6 +609,10 @@ if ($wsInteractionCss !== '') :
 
           case 'online_booking':
             PublicBookingPageRenderer::renderWidget($bookingPreview);
+            break;
+
+          case 'price_list':
+            echo PriceListPageRenderer::renderHtml();
             break;
 
           case 'divider':
