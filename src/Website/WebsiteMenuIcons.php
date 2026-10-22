@@ -636,4 +636,31 @@ final class WebsiteMenuIcons
             'chevron-down', 'heart', 'star', 'bell', 'clock', 'building', 'book-open', 'download',
         ];
     }
+
+    /**
+     * Featured icons for QR/Flyer center — Social/Kommunikation zuerst.
+     * (Unicode-Emoji enthält keine Markenlogos; Lucide schon.)
+     *
+     * @return list<string>
+     */
+    public static function pickerFeaturedIdsForQr(): array
+    {
+        $social = [
+            'facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'twitch', 'github', 'slack',
+            'share-2', 'message-circle', 'send', 'mail', 'at-sign', 'rss', 'globe', 'smartphone',
+            'camera', 'video', 'mic', 'megaphone', 'headphones', 'podcast', 'radio', 'tv',
+        ];
+        $rest = self::pickerFeaturedIds();
+        $out = [];
+        $seen = [];
+        foreach (array_merge($social, $rest) as $id) {
+            if (isset($seen[$id]) || !self::isValid($id) || $id === '' || $id === 'auto') {
+                continue;
+            }
+            $seen[$id] = true;
+            $out[] = $id;
+        }
+
+        return $out;
+    }
 }

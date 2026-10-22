@@ -5335,6 +5335,37 @@ body.dg-login-page {
   background: rgba(15, 118, 110, 0.08);
 }
 
+.dg-booking-qr-social-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+}
+
+.dg-booking-qr-social-quick__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--dg-border, #e2e8f0);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--dg-text, #0f172a);
+}
+
+.dg-booking-qr-social-quick__btn:hover {
+  border-color: var(--dg-primary, #0f766e);
+  background: rgba(15, 118, 110, 0.06);
+}
+
+.dg-booking-qr-social-quick__svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .dg-booking-qr-preview-panel {
   position: sticky;
   top: 16px;

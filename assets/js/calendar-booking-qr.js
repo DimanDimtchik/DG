@@ -1099,6 +1099,36 @@
     lucideDataUrlCache = { key: '', url: '' };
     scheduleUpdate();
   });
+
+  function applyLucideIconId(iconId) {
+    if (!iconId) {
+      return;
+    }
+    var picker = window.DgMenuIconPicker;
+    var field = root.querySelector('#dg-qr-center-lucide-wrap [data-menu-icon-field]');
+    var input = root.querySelector('#dg-qr-lucide-input') || root.querySelector('[name="qr[center_icon]"]');
+    var item = picker && picker.lookup ? picker.lookup(iconId) : null;
+    if (input) {
+      input.value = iconId;
+    }
+    if (field) {
+      var labelEl = field.querySelector('[data-menu-icon-label]');
+      var preview = field.querySelector('[data-menu-icon-preview]');
+      var stroke = field.getAttribute('data-stroke') || '1.75';
+      if (labelEl) {
+        labelEl.textContent = (item && item.label) || iconId;
+      }
+      if (preview && picker && item && item.paths) {
+        preview.innerHTML = picker.svgHtml(item.paths, stroke);
+      }
+    }
+    var lucideRadio = root.querySelector('input[name="qr[center_image_source]"][value="lucide"]');
+    if (lucideRadio) {
+      lucideRadio.checked = true;
+    }
+    lucideDataUrlCache = { key: '', url: '' };
+    scheduleUpdate();
+  }
   root.addEventListener('input', function (ev) {
     if (ev.target && ev.target.id === 'dg-qr-emoji-search') {
       emojiSearchQuery = ev.target.value || '';
@@ -1110,6 +1140,11 @@
     }
   });
   root.addEventListener('click', function (ev) {
+    var socialQuick = ev.target.closest('[data-qr-lucide-quick]');
+    if (socialQuick) {
+      applyLucideIconId(socialQuick.getAttribute('data-qr-lucide-quick') || '');
+      return;
+    }
     var groupBtn = ev.target.closest('[data-emoji-group]');
     if (groupBtn) {
       emojiActiveGroup = groupBtn.getAttribute('data-emoji-group') || 'smileys';

@@ -138,18 +138,34 @@ $ctaPresets = [
           </div>
 
           <div id="dg-qr-center-lucide-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'lucide' ? '' : ' hidden' ?>>
-            <div class="dg-field dg-field--wide" style="margin:0">
-              <span>Icon wählen</span>
+            <?php
+            $qrSocialQuick = ['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'share-2', 'message-circle', 'mail'];
+            ?>
+            <div class="dg-booking-qr-social-quick" role="group" aria-label="Social-Icons Schnellwahl">
+              <?php foreach ($qrSocialQuick as $socialId) :
+                  if (!WebsiteMenuIcons::isValid($socialId)) {
+                      continue;
+                  }
+                  $socialLabel = WebsiteMenuIcons::options()[$socialId] ?? $socialId;
+                  ?>
+                <button type="button" class="dg-booking-qr-social-quick__btn" data-qr-lucide-quick="<?= View::escape($socialId) ?>" title="<?= View::escape($socialLabel) ?>">
+                  <?= WebsiteMenuIcons::svg($socialId, 'dg-booking-qr-social-quick__svg') ?>
+                  <span><?= View::escape($socialLabel) ?></span>
+                </button>
+              <?php endforeach; ?>
+            </div>
+            <div class="dg-field dg-field--wide" style="margin:8px 0 0">
+              <span>Alle Lucide-Icons</span>
               <?php View::partial('partials/website-menu-icon-field', [
                   'name' => 'qr[center_icon]',
                   'value' => (string) ($qr['center_icon'] ?? 'calendar'),
                   'compact' => true,
-                  'suggested' => 'calendar',
+                  'suggested' => 'share-2',
                   'fieldId' => 'dg-qr-lucide',
                   'websiteMenuIconStyle' => [],
               ]); ?>
             </div>
-            <p class="dg-field-hint">Gleiche Lucide-Bibliothek wie beim Website-Menü — lokal, ohne CDN. Farbe folgt dem QR-Vordergrund.</p>
+            <p class="dg-field-hint">Social-Marken (Facebook, Instagram, …) sind <strong>Lucide-Icons</strong>, keine Unicode-Emojis. Lokal ohne CDN; Farbe = QR-Vordergrund.</p>
           </div>
 
           <div id="dg-qr-center-emoji-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'emoji' ? '' : ' hidden' ?>>
@@ -159,14 +175,14 @@ $ctaPresets = [
             </div>
             <div id="dg-qr-emoji-tabs" class="dg-booking-qr-emoji-tabs" role="tablist"></div>
             <div id="dg-qr-emoji-picks" class="dg-booking-qr-emoji-picks" role="listbox" aria-label="Emoji-Auswahl"></div>
-            <p class="dg-field-hint">Über <span id="dg-qr-emoji-count">…</span> Emojis — Kategorien oder Suche. Beliebiges Emoji auch per Zwischenablage einfügen.</p>
+            <p class="dg-field-hint">Über <span id="dg-qr-emoji-count">…</span> Emojis inkl. Kategorie „Medien &amp; Social“. Markenlogos (Facebook, Instagram, …) → Quelle <strong>Lucide-Icon</strong>. Beliebiges Emoji auch per Zwischenablage.</p>
           </div>
           <p class="dg-field-hint" id="dg-qr-ec-note"<?= in_array($centerSource, ['logo', 'favicon', 'custom', 'emoji', 'lucide'], true) ? '' : ' hidden' ?>>
             Bei Logo/Icon/Emoji wird die Fehlerkorrektur automatisch auf H (max.) gesetzt — bitte einmal mit dem Handy scannen.
           </p>
         </fieldset>
         <script type="application/json" id="dg-menu-icon-catalog"><?= json_encode([
-            'featured' => WebsiteMenuIcons::pickerFeaturedIds(),
+            'featured' => WebsiteMenuIcons::pickerFeaturedIdsForQr(),
             'special' => [
                 ['id' => '', 'label' => 'Kein Icon', 'paths' => ''],
             ],
