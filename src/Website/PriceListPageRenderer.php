@@ -133,7 +133,16 @@ final class PriceListPageRenderer
         $areas = [];
         try {
             if (class_exists('CalendarArticleRepository') && Database::isConfigured()) {
-                $articles = CalendarArticleRepository::all(true, null);
+                $articles = [];
+                foreach (CalendarArticleRepository::all(true, null) as $row) {
+                    if (!is_array($row)) {
+                        continue;
+                    }
+                    if (!CalendarArticleRepository::isPriceListOnline($row)) {
+                        continue;
+                    }
+                    $articles[] = $row;
+                }
             }
         } catch (Throwable) {
             $articles = [];
