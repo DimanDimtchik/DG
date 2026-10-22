@@ -36,10 +36,10 @@ Deploy direkt von `master` (siehe Abschnitt 2).
 .\deploy.bat
 ```
 
-oder mit Plugins:
+oder:
 
 ```powershell
-.\deploy.ps1 -WithPlugins
+.\deploy.ps1
 ```
 
 Deploy lädt u. a. `database/migrations/` mit hoch — **kein separates SQL-Skript nötig**.

@@ -10,14 +10,10 @@
 
 .PARAMETER Migrate
   Nach dem Upload php bin/db-migrate.php auf dem Server ausf??hren.
-
-.PARAMETER WithPlugins
-  Zus??tzlich Admin-Module aus dg-user-plugin und Terminkalender deployen (falls Repos vorhanden).
 #>
 [CmdletBinding()]
 param(
-    [switch]$Migrate,
-    [switch]$WithPlugins
+    [switch]$Migrate
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,24 +43,6 @@ if ($Migrate) {
     if ($LASTEXITCODE -ne 0) {
         Write-Error 'Migration fehlgeschlagen.'
         exit $LASTEXITCODE
-    }
-}
-
-if ($WithPlugins) {
-    $UserPluginDeploy = Join-Path (Split-Path $Root -Parent) 'dg-user-plugin\deploy-dg.ps1'
-    $CalendarDeploy = Join-Path (Split-Path $Root -Parent) 'Terminkalender\deploy-dg.ps1'
-
-    foreach ($script in @($UserPluginDeploy, $CalendarDeploy)) {
-        if (-not (Test-Path -LiteralPath $script)) {
-            Write-Warning "??bersprungen (nicht gefunden): $script"
-            continue
-        }
-        Write-Host "Deploying $script ..."
-        & $script
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Plugin-Deploy fehlgeschlagen: $script"
-            exit $LASTEXITCODE
-        }
     }
 }
 

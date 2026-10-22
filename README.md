@@ -19,13 +19,9 @@ Standalone-CRM für **dg.ganz-om.de** (ohne WordPress).
 | Eintrag | Modul | Zugriff |
 |---------|-------|---------|
 | Dashboard | Übersicht | alle CRM-Benutzer |
-| Kontakte | dg-user-plugin | Admin |
-| Terminkalender | Terminkalender-Plugin | Admin + Mitarbeiter |
-| Einstellungen | Vereinte Plugin-Tabs (unten im Menü) | Admin |
-
-Einstellungen bündeln alle Tabs aus **dg-user-plugin** (Kontakte) und **Terminkalender** in einer Oberfläche.
-
-Plugins liegen unter `admin/` auf dem Server (nicht öffentlich erreichbar). Shortcodes bleiben im Modul-Code; Seiten dafür legen wir später an.
+| Kontakte | `src/Contact` | Admin |
+| Terminkalender | `src/Calendar`, `src/Booking` | Admin + Mitarbeiter |
+| Einstellungen | `src/Settings` (unten im Menü) | Admin |
 
 ### Deploy
 
@@ -39,12 +35,6 @@ Optional mit Migrationen:
 
 ```powershell
 .\deploy.ps1 -Migrate
-```
-
-Plugins (falls Repos als Geschwisterordner liegen):
-
-```powershell
-.\deploy.ps1 -WithPlugins
 ```
 
 **Kaspersky:** `deploy.ps1` kann fälschlich als `PDM:Trojan.Win32.Generic` gemeldet werden (Heuristik wegen ssh/scp). Das ist ein **Fehlalarm** — kein Trojaner. Lösung: `deploy.bat` nutzen oder in Kaspersky eine Ausnahme für `C:\Users\dietr\Projects\DG` setzen und die Datei aus der Quarantäne wiederherstellen.
@@ -114,7 +104,7 @@ Details: `docs/IMPORT-FORMATE.md` · PC-Handoff: `docs/PC-HANDOFF.md`
 | `ohne_abteilung` | Mitarbeiter ohne Abteilung | Hinweis im Dashboard |
 | `gast` | Kein CRM-Zugang | Login abgelehnt |
 
-Rollen orientieren sich am **dg-user-plugin** (`administrator`, `dg_eigenmitarbeiter`, Abteilungen mit `member`/`leader`).
+Rollen: `administrator`, Mitarbeiter (`dg_eigenmitarbeiter`-Äquivalent), Abteilungen mit `member`/`leader`.
 
 ## Entwicklung
 

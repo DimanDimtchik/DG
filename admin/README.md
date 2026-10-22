@@ -1,25 +1,5 @@
-# Admin-Module für dg.ganz-om.de
+# Admin
 
-Diese Module werden für die CRM-Integration auf **dg.ganz-om.de** bereitgestellt.
+Früher lagen hier WordPress-Plugin-Bundles (`Kontakte/`, `Terminkalender/`) aus separaten Repos.
 
-| Ordner | CRM-Menü |
-|--------|----------|
-| `Kontakte/` | Kontakte (ehem. dg-user-plugin) |
-| `Terminkalender/` | Terminkalender |
-
-- **Shortcodes** bleiben im Modul-Code erhalten.
-- **Seiten** für Shortcodes werden später manuell angelegt (kein Auto-Setup).
-- Kontakte Standard-Ausgabemodus für CRM: `public_only` (kein WP-Admin-Menü).
-
-Deploy aus den Quell-Repos:
-
-```powershell
-..\dg-user-plugin\deploy-dg.ps1
-..\Terminkalender\deploy-dg.ps1
-```
-
-Oder alles zusammen aus dem DG-Repo:
-
-```powershell
-.\deploy.ps1 -WithPlugins
-```
+**Stand heute:** Kontakte, Terminkalender und Einstellungen sind native Module im CRM unter `src/` (u. a. `Contact`, `Calendar`, `Booking`, `Settings`). Deploy läuft nur noch über `deploy.bat` / `deploy.ps1` — keine Geschwister-Repos nötig.

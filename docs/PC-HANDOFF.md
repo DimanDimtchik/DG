@@ -118,7 +118,7 @@ php -S localhost:8080
 ### Code deployen
 
 ```powershell
-.\deploy.ps1 -WithPlugins
+.\deploy.ps1
 ```
 
 oder Server:
