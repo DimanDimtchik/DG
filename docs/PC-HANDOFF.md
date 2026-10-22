@@ -10,6 +10,22 @@
 
 ---
 
+## 0. Neues Gerät — Geschwister-Repos holen
+
+DG einmal klonen, dann die übrigen Projekte (jahresanschluss, klarwin, unfallbuch, WG) anlegen bzw. aktualisieren:
+
+```powershell
+cd $env:USERPROFILE\Projects
+git clone https://github.com/DimanDimtchik/DG.git
+cd DG
+.\bin\sync-git-repos.ps1              # fehlende Repos klonen
+.\bin\sync-git-repos.ps1 -PullExisting # optional: alle pullen
+```
+
+Die Repo-Liste steckt in `bin/sync-git-repos.ps1` (mit DG versioniert). Default-Zielordner ist der Elternordner von DG.
+
+---
+
 ## 1. Git — Branches checkouten
 
 ```powershell
