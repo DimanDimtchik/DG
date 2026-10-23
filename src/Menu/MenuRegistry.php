@@ -470,7 +470,7 @@ final class MenuRegistry
             'terminkalender' => 'Buchungen, Artikel und Kalender im Blick behalten.',
             'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
             'post' => 'E-Mail-Postfächer: Eingang lesen und Nachrichten versenden.',
-            'telefon' => 'Telefonanlage und Anrufe — in Vorbereitung.',
+            'telefon' => 'Telefon: Click-to-Call (Fritzbox/Softphone), Anrufliste, eingehendes Popup.',
             'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Final, Export.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'dienstleistungen-auftraege' => 'Angebote und Aufträge — Planung.',

@@ -24,12 +24,34 @@ final class ContactChannelLink
         return MenuRegistry::canAccess($user, 'post');
     }
 
-    /**
-     * CRM-Telefonanlage / Click-to-Call aktiv? (noch nicht)
-     */
+    /** CRM-Telefon / Click-to-Call (CTI aktiv + Telefon-Recht). */
     public static function preferCrmPhone(): bool
     {
-        return false;
+        if (!class_exists('AuthService') || !class_exists('MenuRegistry') || !class_exists('CtiSettings')) {
+            return false;
+        }
+        if (!CtiSettings::isEnabled()) {
+            return false;
+        }
+        $user = AuthService::user();
+        if ($user === null || RoleResolver::isCustomer($user)) {
+            return false;
+        }
+
+        return MenuRegistry::canAccess($user, 'telefon');
+    }
+
+    public static function dialUrl(string $phone, ?string $defaultCountry = null): string
+    {
+        $e164 = PhoneNormalizer::toE164($phone, $defaultCountry);
+        if ($e164 === null) {
+            $e164 = PhoneNormalizer::normalize($phone, $defaultCountry);
+        }
+        if ($e164 === '') {
+            return '';
+        }
+
+        return '/app?page=telefon&dial=' . rawurlencode($e164);
     }
 
     public static function composeUrl(string $email = '', ?int $mailboxId = null): string
@@ -76,7 +98,7 @@ final class ContactChannelLink
         }
 
         if (self::preferCrmPhone()) {
-            // Phase Telefon: CRM-Dialer
+            return self::dialUrl($e164, $defaultCountry);
         }
 
         return 'tel:' . $e164;

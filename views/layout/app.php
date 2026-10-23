@@ -645,6 +645,12 @@ $belegeFocus = (string) ($belegeFocus ?? '');
   <script src="<?= View::escape(Asset::url('/assets/js/website-url-assist.js')) ?>" defer></script>
   <script src="<?= View::escape(Asset::url('/assets/js/channel-assist.js')) ?>" defer></script>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
+  <?php if (MenuRegistry::canAccess($user, 'telefon') && class_exists('CtiSettings') && CtiSettings::isEnabled()) : ?>
+    <script>
+      window.dgCtiPopup = { enabled: true };
+    </script>
+    <script src="<?= View::escape(Asset::url('/assets/js/cti-popup.js')) ?>" defer></script>
+  <?php endif; ?>
   <?php if (RoleResolver::isStaff($user)) : ?>
     <?php View::render('partials/kichel-widget', compact('user')); ?>
   <?php endif; ?>

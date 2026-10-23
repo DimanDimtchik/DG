@@ -817,6 +817,10 @@ switch ($path) {
         PostSyncApi::handle();
         exit;
 
+    case '/api/cti':
+        CtiApi::handle();
+        exit;
+
     case '/api/mail-address-preview':
         MailAddressPreviewApi::handle();
         exit;
@@ -7397,6 +7401,28 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
             }
         } elseif ($page === 'telefon' && MenuRegistry::canAccess($user, 'telefon')) {
+            if (
+                $_SERVER['REQUEST_METHOD'] === 'POST'
+                && RoleResolver::isAdmin($user)
+                && isset($_POST['cti_save'])
+            ) {
+                if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                    Flash::set('error', 'Ungültiges Formular (CSRF).');
+                } else {
+                    try {
+                        CtiSettings::saveFromPost($_POST);
+                        Flash::set('success', 'CTI-Einstellungen gespeichert.');
+                    } catch (Throwable $e) {
+                        Flash::set('error', $e->getMessage());
+                    }
+                }
+                header('Location: /app?page=telefon', true, 302);
+                exit;
+            }
+            CallLogRepository::ensureReady();
+            $ctiConfig = CtiSettings::config();
+            $callLog = CallLogRepository::recent(50);
+            $telefonDial = trim((string) ($_GET['dial'] ?? ''));
             $contentTemplate = 'modules/telefon';
             $title = 'Telefon';
             $currentPage = 'telefon';
@@ -7937,6 +7963,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'postSearchMode',
             'postLinkContext',
             'postUiConfig',
+            'ctiConfig',
+            'callLog',
+            'telefonDial',
             'voucherLinkedMails',
             'smtpTestReport',
             'appearanceConfig',
