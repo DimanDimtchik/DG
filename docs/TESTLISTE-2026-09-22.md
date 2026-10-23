@@ -80,6 +80,15 @@
 - [ ] dg.ganz-om.de Login + Zeiterfassung
 - [ ] kontur-cosmetics.de Login + eine Seite
 
+## 8 · Kommunikation / Postfächer (P1–P6)
+
+Vollständige Smoke-Liste: [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) §P6.
+
+- [ ] Master: Liste → Ordner → Nachricht → Anhang
+- [ ] Shared Lesen vs. Senden
+- [ ] Compose + CRM-Link + Suche
+- [ ] Deploy Master → `sync-crm-from-master.sh` → Stichprobe ganz-soft / kontur
+
 ---
 
 Ältere Listen: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) (Statistik, Shop, Buchhaltung A–C) — bei Bedarf separat.

@@ -73,19 +73,25 @@ final class PostMailComposer
 
         $html = nl2br(htmlspecialchars($body, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
-        return MailService::send(
-            new MailMessage(
-                subject: $subject,
-                htmlBody: $html,
-                to: $to,
-                textBody: $body,
-                contactId: $contactId,
-                inReplyTo: $inReplyTo,
-                references: $references,
-            ),
-            $actor,
-            $mailboxId,
-        );
+        try {
+            return MailService::send(
+                new MailMessage(
+                    subject: $subject,
+                    htmlBody: $html,
+                    to: $to,
+                    textBody: $body,
+                    contactId: $contactId,
+                    inReplyTo: $inReplyTo,
+                    references: $references,
+                ),
+                $actor,
+                $mailboxId,
+            );
+        } catch (InvalidArgumentException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new RuntimeException(MailProviderError::userMessage($e->getMessage(), 'smtp'), 0, $e);
+        }
     }
 
     /**

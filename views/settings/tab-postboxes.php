@@ -16,7 +16,12 @@ $editId = (int) ($_GET['edit'] ?? 0);
 
 $editBox = $editId > 0 ? MailboxRepository::findById($editId) : null;
 
-$editMembers = $editBox ? MailboxRepository::memberUserIds($editId) : [];
+$editMemberPerms = [];
+if ($editBox) {
+    foreach (MailboxRepository::membersWithPermissions($editId) as $m) {
+        $editMemberPerms[(int) $m['user_id']] = $m;
+    }
+}
 
 $presetLabels = MailboxProviderPresets::labels();
 
@@ -234,21 +239,93 @@ $postboxCount = count($postboxes);
 
         <?php if (($editBox['type'] ?? 'shared') === 'shared' || !$editBox) : ?>
 
-          <label class="dg-field dg-field--wide">
+          <div class="dg-field dg-field--wide">
 
-            <span>Berechtigte Mitarbeiter (nur CRM-Benutzer mit aktivem Konto)</span>
+            <span>Berechtigte Mitarbeiter (Shared / Vertretung)</span>
 
-            <select name="mailbox_members[]" multiple size="8" class="dg-select-multi">
+            <p class="dg-field-hint">Lesen = Ordner und Nachrichten; Senden = Versand über dieses Postfach (setzt Lesen voraus). Privat-Postfächer bleiben beim Inhaber.</p>
 
-              <?php foreach ($postboxMemberOptions as $opt) : ?>
+            <?php if ($postboxMemberOptions === []) : ?>
 
-                <option value="<?= (int) $opt['user_id'] ?>"<?= in_array((int) $opt['user_id'], $editMembers, true) ? ' selected' : '' ?>><?= View::escape($opt['label']) ?></option>
+              <p class="dg-field-hint">Keine aktiven CRM-Mitarbeiter mit Benutzerkonto.</p>
 
-              <?php endforeach; ?>
+            <?php else : ?>
 
-            </select>
+              <div class="dg-table-wrap">
 
-          </label>
+                <table class="dg-table dg-table--compact">
+
+                  <thead>
+
+                    <tr>
+
+                      <th>Mitarbeiter</th>
+
+                      <th>Lesen</th>
+
+                      <th>Senden</th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    <?php foreach ($postboxMemberOptions as $opt) : ?>
+
+                      <?php
+
+                        $uid = (int) $opt['user_id'];
+
+                        $perm = $editMemberPerms[$uid] ?? null;
+
+                        $canRead = $perm !== null && !empty($perm['can_read']);
+
+                        $canSend = $perm !== null && !empty($perm['can_send']);
+
+                      ?>
+
+                      <tr>
+
+                        <td><?= View::escape((string) $opt['label']) ?></td>
+
+                        <td>
+
+                          <label class="dg-checkbox">
+
+                            <input type="checkbox" name="mailbox_member_read[]" value="<?= $uid ?>"<?= $canRead ? ' checked' : '' ?>>
+
+                            Lesen
+
+                          </label>
+
+                        </td>
+
+                        <td>
+
+                          <label class="dg-checkbox">
+
+                            <input type="checkbox" name="mailbox_member_send[]" value="<?= $uid ?>"<?= $canSend ? ' checked' : '' ?>>
+
+                            Senden
+
+                          </label>
+
+                        </td>
+
+                      </tr>
+
+                    <?php endforeach; ?>
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            <?php endif; ?>
+
+          </div>
 
         <?php endif; ?>
 

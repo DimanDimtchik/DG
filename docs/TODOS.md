@@ -47,7 +47,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Belegkette Kundendarstellung** — Deploy 2026-09-17 (Druck, Summen, Belegdarstellung, AB→Druck+Unterschrift)
 - [x] **AB aus Angebots-Mail-Antwort** — Migration 083 · Auto-AB + Annahme-Vermerk (Inbound In-Reply-To)
 - [x] **Anzahlung materialbasiert** — EK aus `dg_article_purchase_sources` (Preferred)
-- [ ] **Kommunikation / E-Mail-Postfächer (eigen):** Menü + UI — Plan [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) (P1–P6; kein Roundcube)
+- [x] **Kommunikation / E-Mail-Postfächer (eigen):** Menü + UI — Plan [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) (P1–P6 erledigt; Smoke/Deploy laut P6-Checkliste)
 - [ ] **Vor Hetzner:** `VOR-HETZNER-CHECK.md` (Shared Core, Asset-Minify, GoBD/§14/§19-Stichprobe)
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)

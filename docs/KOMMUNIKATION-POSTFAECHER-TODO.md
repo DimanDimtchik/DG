@@ -65,11 +65,31 @@ Stand: **2026-10-23**
 
 ### P6 — Härten & Betrieb
 
-- [ ] Rechte-Matrix (Shared-Postfach, Vertretung)
-- [ ] Anhänge: Größenlimit, MIME-Whitelist
-- [ ] Fehlertexte verständlich (Zugangsdaten, SSL, Ordner)
-- [ ] Smoke-Testliste (Master + ganz-soft / kontur)
-- [ ] Deploy nur Master → `sync-crm-from-master.sh`
+- [x] Rechte-Matrix Shared: Lesen/Senden pro Mitglied (`mailbox_member_read[]` / `mailbox_member_send[]`; Senden ⇒ Lesen). Privat = Inhaber. Keine zeitgebundene Vertretung (nur Shared-Mitglieder).
+- [x] Anhänge: Download max. 15 MiB, MIME-Whitelist / sonst `octet-stream`, `nosniff`, Dateiname hart (`MailAttachmentGuard`)
+- [x] Fehlertexte: `MailProviderError` (Zugangsdaten, Auth, SSL/TLS, Ordner, Timeout, Connect) in Sync-API + Compose-SMTP
+- [x] Smoke-Testliste (unten)
+- [x] Deploy: nur Master (`deploy.bat` / `deploy.ps1`) → Server `bash bin/sync-crm-from-master.sh` (kein `--delete` am Account-Root)
+
+#### Rechte kurz
+
+| Postfach | Lesen | Senden |
+|----------|-------|--------|
+| Privat | nur Inhaber | nur Inhaber |
+| Shared | Mitglieder mit `can_read` | Mitglieder mit `can_send` (+ implizit Lesen) |
+| Admin | immer | immer |
+
+#### Smoke (Master `dg.ganz-om.de`, danach Sync → `ganz-soft.de` / `kontur-cosmetics.de`)
+
+- [ ] Login + Menü **Kommunikation → E-Mail-Postfächer**
+- [ ] Postfach-Liste öffnen → ein Postfach → Ordner + Sync
+- [ ] Nachricht öffnen (HTML/Text) + Anhang-Download (.eml / Datei)
+- [ ] Shared nur Lesen: Liste ja, „Neue Nachricht“ / Antworten ohne Senderecht nein
+- [ ] Shared mit Senden: Compose + Versand → Gesendet
+- [ ] Kontakt-Vorschlag / Beleg verknüpfen (P5)
+- [ ] Suche `q=` und optional Kontakt-ID
+- [ ] Falsches IMAP-Passwort: verständlicher Fehler (+ KAS-Hinweis falls provisioniert)
+- [ ] Nach Deploy Master: `sync-crm-from-master.sh` auf Instanzen; Shift+Reload; gleiche Checks stichprobenartig
 
 ---
 

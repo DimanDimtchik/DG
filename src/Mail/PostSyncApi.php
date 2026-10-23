@@ -52,6 +52,7 @@ final class PostSyncApi
         $error = null;
         $authFailed = false;
         $imapError = '';
+        $errorCode = null;
         if (!$skipSync && ImapMailboxClient::hasCredentials($mailbox)) {
             try {
                 $synced = MailImapSync::syncFolder($mailbox, $folder, $force);
@@ -61,6 +62,25 @@ final class PostSyncApi
             $imapError = ImapMailboxClient::lastError();
             $authFailed = ImapMailboxClient::isAuthFailure()
                 || ($error !== null && str_contains(strtolower($error), 'anmeldung'));
+            if ($error !== null) {
+                $explained = MailProviderError::explain(
+                    $imapError !== '' ? $imapError : $error,
+                    'imap'
+                );
+                $error = $explained['message'];
+                $errorCode = $explained['code'];
+                if ($explained['code'] === 'auth') {
+                    $authFailed = true;
+                }
+            } elseif ($authFailed) {
+                $explained = MailProviderError::explain($imapError !== '' ? $imapError : 'authentication failed', 'imap');
+                $error = $explained['message'];
+                $errorCode = $explained['code'];
+            }
+        } elseif (!$skipSync && !ImapMailboxClient::hasCredentials($mailbox)) {
+            $explained = MailProviderError::explain('Zugangsdaten unvollständig', 'imap');
+            $error = $explained['message'];
+            $errorCode = $explained['code'];
         }
 
         $rows = MailLogRepository::folderMessagesForMailboxes([$mailboxId], $folder, $limit, $mailboxId, $offset);
@@ -71,13 +91,14 @@ final class PostSyncApi
         $hint = null;
         if ($authFailed && $kasProvisioned) {
             $hint = 'Unter Einstellungen → Postfächer → „IMAP-Passwort zurücksetzen“ klicken, dann erneut abrufen.';
-        } elseif ($error !== null && $imapError !== '' && $imapError !== $error) {
-            $hint = $imapError;
+        } elseif ($error !== null) {
+            $hint = MailProviderError::explain($imapError !== '' ? $imapError : $error, 'imap')['hint'];
         }
 
         echo json_encode([
             'ok' => $error === null,
             'error' => $error,
+            'error_code' => $errorCode,
             'auth_failed' => $authFailed,
             'imap_error' => $imapError !== '' ? $imapError : null,
             'hint' => $hint,

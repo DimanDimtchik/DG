@@ -2287,10 +2287,7 @@ switch ($path) {
             } else {
                 try {
                     $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
-                    $memberIds = [];
-                    foreach ((array) ($_POST['mailbox_members'] ?? []) as $rawId) {
-                        $memberIds[] = (int) $rawId;
-                    }
+                    $members = MailboxRepository::membersFromPost($_POST);
                     if ($mailboxId > 0) {
                         $existing = MailboxRepository::findById($mailboxId);
                         if ($existing === null) {
@@ -2298,14 +2295,14 @@ switch ($path) {
                         }
                         $data = MailboxProvisioner::normalizePostInput($_POST, $existing);
                         $data['type'] = $existing['type'];
-                        MailboxRepository::save($data, $mailboxId, ($existing['type'] ?? '') === 'shared' ? $memberIds : []);
+                        MailboxRepository::save($data, $mailboxId, ($existing['type'] ?? '') === 'shared' ? $members : []);
                         Flash::set('success', 'Postfach gespeichert.');
                     } elseif (!empty($_POST['provision_kas']) && KasSettings::isConfigured()) {
-                        MailboxProvisioner::createSharedFromForm($_POST, $memberIds);
+                        MailboxProvisioner::createSharedFromForm($_POST, $members);
                         Flash::set('success', 'Postfach angelegt (KAS).');
                     } else {
                         $data = MailboxProvisioner::normalizePostInput($_POST);
-                        MailboxRepository::save($data, null, $memberIds);
+                        MailboxRepository::save($data, null, $members);
                         Flash::set('success', 'Postfach angelegt.');
                     }
                 } catch (Throwable $e) {
@@ -6779,19 +6776,11 @@ $legalProductsConfig = LegalProductSettings::config();
                     || !MailboxRepository::userCanAccess($user, $mailboxId)
                 ) {
                     http_response_code(404);
+                    header('Content-Type: text/plain; charset=utf-8');
                     exit('Archiv nicht gefunden.');
                 }
                 $absolute = MailArchiveStorage::absolutePath((string) $row['storage_path']);
-                if (!is_readable($absolute)) {
-                    http_response_code(404);
-                    exit('Datei nicht gefunden.');
-                }
-                $name = 'mail-' . $mailId . '.eml';
-                header('Content-Type: message/rfc822');
-                header('Content-Disposition: attachment; filename="' . $name . '"');
-                header('Content-Length: ' . (string) filesize($absolute));
-                readfile($absolute);
-                exit;
+                MailAttachmentGuard::sendFile($absolute, 'mail-' . $mailId . '.eml', 'message/rfc822');
             }
 
             if (isset($_GET['mail_attachment'])) {
@@ -6806,6 +6795,7 @@ $legalProductsConfig = LegalProductSettings::config();
                     $mailboxId = (int) ($row['mailbox_id'] ?? 0);
                     if ($row === null || empty($row['storage_path']) || !MailboxRepository::userCanAccess($user, $mailboxId)) {
                         http_response_code(404);
+                        header('Content-Type: text/plain; charset=utf-8');
                         exit('Anhang nicht gefunden.');
                     }
                     $absolute = MailArchiveStorage::absolutePath((string) $row['storage_path']);
@@ -6816,22 +6806,26 @@ $legalProductsConfig = LegalProductSettings::config();
                         $imapPath = MailFolderCatalog::imapPathForView($attFolder !== '' ? $attFolder : 'INBOX', $imapMailbox);
                         $raw = ImapMailboxClient::fetchRawMessage($imapMailbox, $imapPath, $imapUid);
                         if ($raw !== null) {
+                            if (strlen($raw) > MailAttachmentGuard::MAX_BYTES * 2) {
+                                http_response_code(413);
+                                header('Content-Type: text/plain; charset=utf-8');
+                                exit('Nachricht zu groß für Anhang-Download.');
+                            }
                             $attachments = MailMimeReader::parse($raw)['attachments'] ?? [];
                         }
                     }
                 }
                 if (!isset($attachments[$partIndex])) {
                     http_response_code(404);
+                    header('Content-Type: text/plain; charset=utf-8');
                     exit('Anhang nicht gefunden.');
                 }
                 $att = $attachments[$partIndex];
-                $fname = (string) ($att['filename'] ?? 'anhang.bin');
-                $fname = str_replace(['"', "\r", "\n"], '', $fname);
-                header('Content-Type: ' . ((string) ($att['mime'] ?? 'application/octet-stream')));
-                header('Content-Disposition: attachment; filename="' . $fname . '"');
-                header('Content-Length: ' . (string) strlen((string) ($att['content'] ?? '')));
-                echo (string) ($att['content'] ?? '');
-                exit;
+                MailAttachmentGuard::sendContent(
+                    (string) ($att['filename'] ?? 'anhang.bin'),
+                    (string) ($att['mime'] ?? 'application/octet-stream'),
+                    (string) ($att['content'] ?? '')
+                );
             }
 
             $contentTemplate = 'modules/post';

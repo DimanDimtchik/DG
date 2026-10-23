@@ -165,18 +165,93 @@ final class MailboxRepository
 
     /**
      * Liefert Benutzer-IDs der Postfach-Mitglieder.
-     * @param int $mailboxId
-     * @return array<string, mixed>
+     *
+     * @return list<int>
      */
     public static function memberUserIds(int $mailboxId): array
+    {
+        return array_map(
+            static fn(array $row): int => (int) $row['user_id'],
+            self::membersWithPermissions($mailboxId)
+        );
+    }
+
+    /**
+     * Mitglieder inkl. Lesen/Senden-Rechte (Shared-Postfach / Vertretung).
+     *
+     * @return list<array{user_id: int, can_read: bool, can_send: bool}>
+     */
+    public static function membersWithPermissions(int $mailboxId): array
     {
         if ($mailboxId <= 0 || !Database::isConfigured()) {
             return [];
         }
-        $stmt = Database::pdo()->prepare('SELECT user_id FROM dg_mailbox_members WHERE mailbox_id = :id');
+        $stmt = Database::pdo()->prepare(
+            'SELECT user_id, can_read, can_send FROM dg_mailbox_members WHERE mailbox_id = :id ORDER BY user_id'
+        );
         $stmt->execute(['id' => $mailboxId]);
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $out[] = [
+                'user_id' => (int) ($row['user_id'] ?? 0),
+                'can_read' => !empty($row['can_read']),
+                'can_send' => !empty($row['can_send']),
+            ];
+        }
 
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        return $out;
+    }
+
+    /**
+     * Mitglieder aus POST (Lesen/Senden-Checkboxen; Legacy: mailbox_members[]).
+     *
+     * @param array<string, mixed> $post
+     * @return list<array{user_id: int, can_read: bool, can_send: bool}>
+     */
+    public static function membersFromPost(array $post): array
+    {
+        $reads = [];
+        foreach ((array) ($post['mailbox_member_read'] ?? []) as $raw) {
+            $id = (int) $raw;
+            if ($id > 0) {
+                $reads[$id] = true;
+            }
+        }
+        $sends = [];
+        foreach ((array) ($post['mailbox_member_send'] ?? []) as $raw) {
+            $id = (int) $raw;
+            if ($id > 0) {
+                $sends[$id] = true;
+            }
+        }
+        $legacy = [];
+        foreach ((array) ($post['mailbox_members'] ?? []) as $raw) {
+            $id = (int) $raw;
+            if ($id > 0) {
+                $legacy[$id] = true;
+            }
+        }
+
+        $ids = array_unique(array_merge(array_keys($reads), array_keys($sends), array_keys($legacy)));
+        $out = [];
+        $hasExplicitRights = $reads !== [] || $sends !== [] || isset($post['mailbox_member_read']) || isset($post['mailbox_member_send']);
+        foreach ($ids as $userId) {
+            $canSend = isset($sends[$userId]) || (!$hasExplicitRights && isset($legacy[$userId]));
+            $canRead = isset($reads[$userId]) || $canSend || (!$hasExplicitRights && isset($legacy[$userId]));
+            if (!$canRead && !$canSend) {
+                continue;
+            }
+            if ($canSend) {
+                $canRead = true;
+            }
+            $out[] = [
+                'user_id' => $userId,
+                'can_read' => $canRead,
+                'can_send' => $canSend,
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -291,7 +366,7 @@ final class MailboxRepository
      * Methode save.
      * @param array $data
      * @param int|null $id Datensatz-ID
-     * @param list<int> $memberUserIds
+     * @param list<int|array{user_id: int, can_read?: bool, can_send?: bool}> $memberUserIds
      * @return int
      * @throws InvalidArgumentException
      */
@@ -400,32 +475,55 @@ final class MailboxRepository
 
     /**
      * Synchronisiert die Mitglieder eines Shared-Postfachs.
-     * @param int $mailboxId Postfach-ID
-     * @param list<int> $userIds
-     * @return void
+     *
+     * @param list<int|array{user_id: int, can_read?: bool, can_send?: bool}> $members
      */
-    public static function syncMembers(int $mailboxId, array $userIds): void
+    public static function syncMembers(int $mailboxId, array $members): void
     {
         $pdo = Database::pdo();
         $pdo->prepare('DELETE FROM dg_mailbox_members WHERE mailbox_id = :id')->execute(['id' => $mailboxId]);
 
-        $validIds = [];
-        foreach ($userIds as $userId) {
-            $userId = (int) $userId;
-            if ($userId > 0 && MailboxMemberResolver::isActiveStaffUser($userId)) {
-                $validIds[$userId] = true;
+        /** @var array<int, array{can_read: bool, can_send: bool}> $valid */
+        $valid = [];
+        foreach ($members as $entry) {
+            if (is_int($entry) || is_string($entry)) {
+                $userId = (int) $entry;
+                $canRead = true;
+                $canSend = true;
+            } elseif (is_array($entry)) {
+                $userId = (int) ($entry['user_id'] ?? 0);
+                $canSend = !empty($entry['can_send']);
+                $canRead = !empty($entry['can_read']) || $canSend;
+            } else {
+                continue;
             }
+            if ($userId <= 0 || !MailboxMemberResolver::isActiveStaffUser($userId)) {
+                continue;
+            }
+            if (!$canRead && !$canSend) {
+                continue;
+            }
+            $valid[$userId] = [
+                'can_read' => $canRead || $canSend,
+                'can_send' => $canSend,
+            ];
         }
 
-        if ($validIds === []) {
+        if ($valid === []) {
             return;
         }
 
         $stmt = $pdo->prepare(
-            'INSERT INTO dg_mailbox_members (mailbox_id, user_id, can_read, can_send) VALUES (:mailbox_id, :user_id, 1, 1)'
+            'INSERT INTO dg_mailbox_members (mailbox_id, user_id, can_read, can_send)
+             VALUES (:mailbox_id, :user_id, :can_read, :can_send)'
         );
-        foreach (array_keys($validIds) as $userId) {
-            $stmt->execute(['mailbox_id' => $mailboxId, 'user_id' => $userId]);
+        foreach ($valid as $userId => $flags) {
+            $stmt->execute([
+                'mailbox_id' => $mailboxId,
+                'user_id' => $userId,
+                'can_read' => $flags['can_read'] ? 1 : 0,
+                'can_send' => $flags['can_send'] ? 1 : 0,
+            ]);
         }
     }
 
