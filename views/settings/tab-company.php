@@ -478,8 +478,11 @@ $bankSummary = $filledBanks > 0
     </div>
 
     <h4 class="dg-settings-section__subtitle">Zuständige Finanzämter</h4>
-    <p class="dg-field-hint">Mehrere Finanzämter möglich (z. B. verschiedene Standorte oder Steuerarten).</p>
-    <div class="dg-company-repeater" id="dg-finanzaemter-repeater" data-repeater="finanzaemter">
+    <p class="dg-field-hint">
+      Ein Finanzamt wird immer angezeigt. Weitere (z.&nbsp;B. anderer Standort oder Steuerart) über
+      „+ Finanzamt hinzufügen“.
+    </p>
+    <div class="dg-company-repeater" id="dg-finanzaemter-repeater" data-repeater="finanzaemter" data-repeater-min="1">
       <?php foreach ($finanzaemter as $i => $fa) : ?>
         <div class="dg-company-repeater__row" data-repeater-row>
           <label class="dg-field"><span>BuFa-Nr.</span><input type="text" name="finanzaemter[<?= (int) $i ?>][bufo_nr]" value="<?= View::escape((string) ($fa['bufo_nr'] ?? '')) ?>"></label>

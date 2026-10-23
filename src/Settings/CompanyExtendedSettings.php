@@ -173,9 +173,11 @@ final class CompanyExtendedSettings
             ]];
         }
 
-        if (empty($cfg['finanzaemter'])) {
-            $cfg['finanzaemter'] = [self::emptyFinanzamtRow()];
-        }
+        // Formular: nur echte Einträge (Name oder BuFa); sonst genau eine leere Zeile.
+        // Weitere Finanzämter bewusst über „+ Finanzamt hinzufügen“.
+        $cfg['finanzaemter'] = self::finanzaemterForForm(
+            is_array($cfg['finanzaemter'] ?? null) ? $cfg['finanzaemter'] : []
+        );
         if (empty($cfg['professional_chambers'])) {
             $cfg['professional_chambers'] = [self::emptyOrgRow(true)];
         }
@@ -607,13 +609,38 @@ final class CompanyExtendedSettings
                 // Keine harte Ablehnung — URL-Reste landen oben in website.
                 $item['email'] = '';
             }
-            if (self::rowIsEmpty($item, ['is_primary'])) {
+            // Nur Zeilen mit Identität behalten — reine Straßen-/Notiz-Reste entfallen.
+            if (trim($item['name']) === '' && trim($item['bufo_nr']) === '') {
                 continue;
             }
             $clean[] = $item;
         }
 
         return $clean;
+    }
+
+    /**
+     * Finanzämter für das Einstellungsformular: befüllte Zeilen, sonst genau eine leere.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    public static function finanzaemterForForm(array $rows): array
+    {
+        $filled = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = trim((string) ($row['name'] ?? ''));
+            $bufo = trim((string) ($row['bufo_nr'] ?? ''));
+            if ($name === '' && $bufo === '') {
+                continue;
+            }
+            $filled[] = $row;
+        }
+
+        return $filled !== [] ? array_values($filled) : [self::emptyFinanzamtRow()];
     }
 
     /**

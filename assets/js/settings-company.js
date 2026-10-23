@@ -471,10 +471,28 @@
 
     bindRepeaterRow(row);
     reindexRepeater(repeater);
+    syncRepeaterMinRows(repeater);
     if (type === 'owners') {
       updateOwnersShareTotal();
     }
     return row;
+  }
+
+  function syncRepeaterMinRows(repeater) {
+    if (!repeater) {
+      return;
+    }
+    const min = parseInt(repeater.dataset.repeaterMin || '0', 10) || 0;
+    const rows = repeater.querySelectorAll('[data-repeater-row]');
+    rows.forEach((row) => {
+      const removeBtn = row.querySelector('.dg-repeater-remove');
+      if (!removeBtn) {
+        return;
+      }
+      const hide = min > 0 && rows.length <= min;
+      removeBtn.hidden = hide;
+      removeBtn.disabled = hide;
+    });
   }
 
   function bindRepeaterRow(row) {
@@ -483,9 +501,15 @@
       removeBtn.addEventListener('click', () => {
         const repeater = row.closest('[data-repeater]');
         const section = row.closest('[data-company-section]');
+        const min = repeater ? (parseInt(repeater.dataset.repeaterMin || '0', 10) || 0) : 0;
+        const count = repeater ? repeater.querySelectorAll('[data-repeater-row]').length : 0;
+        if (min > 0 && count <= min) {
+          return;
+        }
         row.remove();
         if (repeater) {
           reindexRepeater(repeater);
+          syncRepeaterMinRows(repeater);
           if (repeater.dataset.repeater === 'owners') {
             updateOwnersShareTotal();
           }
@@ -533,6 +557,7 @@
   function initRepeaters() {
     document.querySelectorAll('[data-repeater]').forEach((repeater) => {
       repeater.querySelectorAll('[data-repeater-row]').forEach(bindRepeaterRow);
+      syncRepeaterMinRows(repeater);
     });
 
     document.querySelectorAll('[data-repeater-add]').forEach((btn) => {
