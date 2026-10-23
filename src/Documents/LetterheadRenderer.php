@@ -170,26 +170,40 @@ final class LetterheadRenderer
             return '';
         }
         $form = strtoupper((string) ($header['height_form'] ?? 'B')) === 'A' ? 'A' : 'B';
-        $pos = (string) ($header['logo_position'] ?? 'left');
-        if (!in_array($pos, ['left', 'center', 'right'], true)) {
-            $pos = 'left';
+        $logoPos = (string) ($header['logo_position'] ?? 'left');
+        if (!in_array($logoPos, ['left', 'center', 'right'], true)) {
+            $logoPos = 'left';
+        }
+        $namePos = (string) ($header['company_name_position'] ?? $logoPos);
+        if (!in_array($namePos, ['left', 'center', 'right'], true)) {
+            $namePos = 'left';
         }
         $logoH = (float) ($header['logo_max_height_mm'] ?? 18);
-        $parts = [];
+
+        /** @var array{left: list<string>, center: list<string>, right: list<string>} $slots */
+        $slots = ['left' => [], 'center' => [], 'right' => []];
         if (!empty($header['show_logo'])) {
             $url = LetterheadSettings::logoUrl($cfg);
-            $parts[] = '<img class="dg-lh-logo" src="' . self::e($url) . '" alt="" style="max-height:' . self::mm($logoH) . '">';
+            $slots[$logoPos][] = '<img class="dg-lh-logo" src="' . self::e($url) . '" alt="" style="max-height:' . self::mm($logoH) . '">';
         }
         if (!empty($header['show_company_name']) && $party['legal_name'] !== '') {
-            $parts[] = '<div class="dg-lh-company-name">' . self::e($party['legal_name']) . '</div>';
+            $slots[$namePos][] = '<div class="dg-lh-company-name">' . self::e($party['legal_name']) . '</div>';
         }
-        if ($parts === []) {
+        if ($slots['left'] === [] && $slots['center'] === [] && $slots['right'] === []) {
             return '';
         }
 
-        return '<header class="dg-lh-header dg-lh-header--' . self::e($pos) . ' dg-lh-header--form-' . $form . '">'
-            . implode('', $parts)
-            . '</header>';
+        $html = '<header class="dg-lh-header dg-lh-header--form-' . $form . '">';
+        foreach (['left', 'center', 'right'] as $slot) {
+            $html .= '<div class="dg-lh-header__slot dg-lh-header__slot--' . $slot . '">';
+            if ($slots[$slot] !== []) {
+                $html .= '<div class="dg-lh-header__stack">' . implode('', $slots[$slot]) . '</div>';
+            }
+            $html .= '</div>';
+        }
+        $html .= '</header>';
+
+        return $html;
     }
 
     /**
@@ -616,15 +630,28 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   position: relative; z-index: 1;
 }
 .dg-lh-header {
-  display: flex; align-items: center; gap: 4mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  column-gap: 3mm;
   min-height: {$headerForm}mm;
   margin: -{$mt}mm -{$mr}mm 4mm -{$ml}mm;
   padding: 3mm {$mr}mm 3mm {$ml}mm;
   box-sizing: border-box;
 }
-.dg-lh-header--left { justify-content: flex-start; }
-.dg-lh-header--center { justify-content: center; text-align: center; flex-direction: column; }
-.dg-lh-header--right { justify-content: flex-end; }
+.dg-lh-header__slot { min-width: 0; }
+.dg-lh-header__slot--left { justify-self: start; text-align: left; }
+.dg-lh-header__slot--center { justify-self: center; text-align: center; }
+.dg-lh-header__slot--right { justify-self: end; text-align: right; }
+.dg-lh-header__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: 2mm;
+}
+.dg-lh-header__slot--left .dg-lh-header__stack { align-items: flex-start; }
+.dg-lh-header__slot--center .dg-lh-header__stack { align-items: center; }
+.dg-lh-header__slot--right .dg-lh-header__stack { align-items: flex-end; }
 .dg-lh-logo { max-width: 55mm; width: auto; height: auto; display: block; }
 .dg-lh-company-name { font-size: 14pt; font-weight: 700; line-height: 1.2; }
 .dg-lh-window {

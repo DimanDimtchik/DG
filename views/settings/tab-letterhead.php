@@ -187,6 +187,19 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
               <option value="<?= View::escape($val) ?>"<?= ((string) ($header['logo_position'] ?? 'left') === $val) ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
             <?php endforeach; ?>
           </select>
+          <span class="dg-field-hint">Nur das Logo — unabhängig vom Firmennamen</span>
+        </label>
+        <label class="dg-field">
+          <span>Firmenname-Position</span>
+          <select name="header[company_name_position]"<?= $disabled ?>>
+            <?php
+              $namePos = (string) ($header['company_name_position'] ?? $header['logo_position'] ?? 'left');
+              foreach (['left' => 'Links', 'center' => 'Mitte', 'right' => 'Rechts'] as $val => $lbl) :
+            ?>
+              <option value="<?= View::escape($val) ?>"<?= $namePos === $val ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <span class="dg-field-hint">Nur der Firmenname — unabhängig vom Logo</span>
         </label>
         <label class="dg-field">
           <span>Logo-Höhe (mm)</span>

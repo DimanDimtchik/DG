@@ -43,6 +43,8 @@ final class LetterheadSettings
                 'show_company_name' => true,
                 'show_logo' => true,
                 'logo_position' => 'left',
+                /** Eigenständig vom Logo — links / mitte / rechts */
+                'company_name_position' => 'left',
                 'logo_max_height_mm' => 18.0,
                 'logo_media_id' => '',
                 /** DIN Briefkopf Form A ≈ 27 mm, Form B ≈ 45 mm */
@@ -923,6 +925,16 @@ final class LetterheadSettings
         if (!in_array($logoPos, ['left', 'center', 'right'], true)) {
             $logoPos = 'left';
         }
+        // Alte Configs: Firmenname folgte dem Logo — Fallback auf logo_position
+        $namePosRaw = $header['company_name_position'] ?? null;
+        if ($namePosRaw === null || $namePosRaw === '') {
+            $namePos = $logoPos;
+        } else {
+            $namePos = (string) $namePosRaw;
+        }
+        if (!in_array($namePos, ['left', 'center', 'right'], true)) {
+            $namePos = 'left';
+        }
         $heightForm = strtoupper((string) ($header['height_form'] ?? 'B'));
         if (!in_array($heightForm, ['A', 'B'], true)) {
             $heightForm = 'B';
@@ -1008,6 +1020,7 @@ final class LetterheadSettings
                 'show_company_name' => $flag($header, 'show_company_name', true),
                 'show_logo' => $flag($header, 'show_logo', true),
                 'logo_position' => $logoPos,
+                'company_name_position' => $namePos,
                 'logo_max_height_mm' => self::clampMm($header['logo_max_height_mm'] ?? $d['header']['logo_max_height_mm'], 5.0, 45.0),
                 'logo_media_id' => self::mediaId($header['logo_media_id'] ?? ''),
                 'height_form' => $heightForm,
