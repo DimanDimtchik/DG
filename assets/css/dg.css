@@ -7488,8 +7488,173 @@ body.dg-login-page {
 .dg-writer-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 8px 10px;
   margin-bottom: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 8px;
+  background: #f8f9fb;
+}
+.dg-writer-toolbar__group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding-right: 8px;
+  border-right: 1px solid var(--dg-border, #d0d5dd);
+}
+.dg-writer-toolbar__group:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+.dg-writer-toolbar__btn {
+  box-sizing: border-box;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: #fff;
+  color: #1a1a1a;
+  font: 600 13px/1 "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dg-writer-toolbar__btn:hover,
+.dg-writer-toolbar__btn:focus-visible {
+  border-color: #98a2b3;
+  outline: none;
+}
+.dg-writer-toolbar__btn.is-active {
+  background: #e8eef7;
+  border-color: #7aa2d4;
+}
+.dg-writer-toolbar__btn--b { font-weight: 800; }
+.dg-writer-toolbar__btn--i { font-style: italic; font-family: Georgia, serif; font-weight: 600; }
+.dg-writer-toolbar__btn--u span { text-decoration: underline; text-underline-offset: 2px; }
+.dg-writer-toolbar__btn--s span { text-decoration: line-through; }
+.dg-writer-toolbar__btn sub {
+  font-size: 0.65em;
+  vertical-align: baseline;
+  position: relative;
+  bottom: -0.2em;
+}
+.dg-writer-toolbar__select select {
+  height: 30px;
+  max-width: 140px;
+  padding: 0 6px;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+}
+.dg-writer-toolbar__select--size select {
+  max-width: 78px;
+}
+.dg-writer-toolbar__color {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+.dg-writer-toolbar__color:hover {
+  border-color: #98a2b3;
+}
+.dg-writer-toolbar__color-label {
+  font-weight: 700;
+  font-size: 13px;
+  pointer-events: none;
+  border-bottom: 3px solid #c62828;
+  line-height: 1;
+  padding-bottom: 1px;
+}
+.dg-writer-toolbar__color--mark .dg-writer-toolbar__color-label {
+  border-bottom-color: #f9a825;
+  font-size: 11px;
+}
+.dg-writer-toolbar__color input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+}
+.dg-writer-ico {
+  display: block;
+  width: 16px;
+  height: 12px;
+  background: linear-gradient(
+    to bottom,
+    currentColor 0 2px,
+    transparent 2px 5px,
+    currentColor 5px 7px,
+    transparent 7px 10px,
+    currentColor 10px 12px
+  );
+}
+.dg-writer-ico--align-left { width: 14px; }
+.dg-writer-ico--align-center {
+  width: 14px;
+  margin-inline: auto;
+  background: linear-gradient(
+    to bottom,
+    transparent 0 0,
+    currentColor 0 2px,
+    transparent 2px 5px,
+    currentColor 5px 7px,
+    transparent 7px 10px,
+    currentColor 10px 12px
+  );
+  box-shadow:
+    inset 2px 0 0 transparent,
+    inset -2px 0 0 transparent;
+  width: 12px;
+}
+.dg-writer-ico--align-right {
+  width: 14px;
+  background: linear-gradient(
+    to bottom,
+    currentColor 0 2px,
+    transparent 2px 5px,
+    currentColor 5px 7px,
+    transparent 7px 10px,
+    currentColor 10px 12px
+  );
+  clip-path: inset(0 0 0 20%);
+}
+.dg-writer-ico--align-justify { width: 16px; }
+.dg-writer-ico--bullet {
+  width: 16px;
+  height: 12px;
+  background:
+    radial-gradient(circle at 2px 1px, currentColor 1.2px, transparent 1.3px),
+    radial-gradient(circle at 2px 6px, currentColor 1.2px, transparent 1.3px),
+    radial-gradient(circle at 2px 11px, currentColor 1.2px, transparent 1.3px),
+    linear-gradient(
+      to bottom,
+      transparent 0 1px,
+      currentColor 1px 2px,
+      transparent 2px 6px,
+      currentColor 6px 7px,
+      transparent 7px 11px,
+      currentColor 11px 12px
+    );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: 0 0, 0 0, 0 0, 6px 0;
 }
 .dg-writer-editor {
   border: 1px solid var(--dg-border, #d0d5dd);

@@ -600,6 +600,12 @@ $belegeFocus = (string) ($belegeFocus ?? '');
         editable: <?= !empty($canEdit) && WriterDocument::normalizeStatus((string) (($writerForm['status'] ?? 'draft'))) === WriterDocument::STATUS_DRAFT ? 'true' : 'false' ?>,
         mediaListUrl: '/api/media?action=list',
         assistUrl: '/api/writer-assist',
+        previewUrl: <?= json_encode(
+            (($writerDocumentId ?? 0) > 0)
+                ? '/app?page=dokumentenverfasser-form&writer_preview=1&id=' . (int) $writerDocumentId
+                : '/app?page=dokumentenverfasser-form&writer_preview=1&sample=1',
+            JSON_THROW_ON_ERROR
+        ) ?>,
         csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
         initialJson: <?= json_encode(
             WriterDocument::tipTapDocument(is_array($writerForm ?? null) ? $writerForm : WriterDocument::empty()),

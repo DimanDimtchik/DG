@@ -290,7 +290,7 @@ final class LetterheadRenderer
         if ($bodyHtml !== '') {
             $safe = class_exists('MailHtmlSanitizer')
                 ? MailHtmlSanitizer::clean($bodyHtml)
-                : strip_tags($bodyHtml, '<p><br><strong><b><em><i><ul><ol><li><table><thead><tbody><tr><th><td><img><span><a>');
+                : strip_tags($bodyHtml, '<p><br><strong><b><em><i><u><s><del><mark><ul><ol><li><table><thead><tbody><tr><th><td><img><span><a>');
             $html .= '<div class="dg-lh-rich">' . $safe . '</div>';
         } else {
             $paragraphs = is_array($doc['paragraphs'] ?? null) ? $doc['paragraphs'] : [];

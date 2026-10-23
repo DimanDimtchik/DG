@@ -175,7 +175,7 @@ $disabled = $readOnly ? ' disabled' : '';
 
         <fieldset class="dg-fieldset">
           <legend>Text (TipTap)</legend>
-          <p class="dg-field-hint">Absätze mit Enter · Tabellen, Emoji, Icon und Mediathek über die Leiste. Rechtschreibung: Browser (DE). Klartext/LanguageTool: Assist darunter (nie Pflicht).</p>
+          <p class="dg-field-hint">Absätze mit Enter · Formatierung, Tabelle, Emoji, Icon und Mediathek über die Leiste. Rechtschreibung: Browser (DE). Klartext/LanguageTool: Assist darunter (nie Pflicht).</p>
           <?php
             $tipTapDoc = WriterDocument::tipTapDocument($form);
             $tipTapJson = json_encode($tipTapDoc, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
@@ -190,18 +190,70 @@ $disabled = $readOnly ? ' disabled' : '';
           </div>
           <?php if (!$readOnly) : ?>
             <div class="dg-writer-toolbar" role="toolbar" aria-label="Textformatierung">
-              <button type="button" class="dg-button" id="dg-writer-cmd-bold" title="Fett">Fett</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-italic" title="Kursiv">Kursiv</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-paragraph" title="Absatz">Absatz</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-bullet" title="Liste">• Liste</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-ordered" title="Nummerierung">1. Liste</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-table" title="Tabelle einfügen">Tabelle</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-table-add-row" title="Zeile">+ Zeile</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-table-add-col" title="Spalte">+ Spalte</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-table-delete" title="Tabelle löschen">Tabelle weg</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-emoji" title="Emoji">Emoji</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-lucide" title="Einfaches Symbol einfügen">Icon</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-media" title="Bild aus Mediathek">Mediathek</button>
+              <div class="dg-writer-toolbar__group">
+                <button type="button" class="dg-writer-toolbar__btn dg-writer-toolbar__btn--b" id="dg-writer-cmd-bold" title="Fett (Strg+B)" aria-label="Fett"><span aria-hidden="true">B</span></button>
+                <button type="button" class="dg-writer-toolbar__btn dg-writer-toolbar__btn--i" id="dg-writer-cmd-italic" title="Kursiv (Strg+I)" aria-label="Kursiv"><span aria-hidden="true">I</span></button>
+                <button type="button" class="dg-writer-toolbar__btn dg-writer-toolbar__btn--u" id="dg-writer-cmd-underline" title="Unterstreichen" aria-label="Unterstreichen"><span aria-hidden="true">U</span></button>
+                <button type="button" class="dg-writer-toolbar__btn dg-writer-toolbar__btn--s" id="dg-writer-cmd-strike" title="Durchstreichen" aria-label="Durchstreichen"><span aria-hidden="true">S</span></button>
+              </div>
+              <div class="dg-writer-toolbar__group">
+                <label class="dg-writer-toolbar__select" title="Schriftart">
+                  <span class="dg-visually-hidden">Schriftart</span>
+                  <select id="dg-writer-font-family" aria-label="Schriftart">
+                    <option value="">Schriftart</option>
+                    <option value="Segoe UI, Helvetica Neue, Arial, sans-serif">Segoe UI</option>
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                    <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Courier New', Courier, monospace">Courier New</option>
+                  </select>
+                </label>
+                <label class="dg-writer-toolbar__select dg-writer-toolbar__select--size" title="Schriftgröße">
+                  <span class="dg-visually-hidden">Schriftgröße</span>
+                  <select id="dg-writer-font-size" aria-label="Schriftgröße">
+                    <option value="">Größe</option>
+                    <?php foreach ([9, 10, 11, 12, 14, 16, 18, 20, 24] as $pt) : ?>
+                      <option value="<?= (int) $pt ?>pt"><?= (int) $pt ?> pt</option>
+                    <?php endforeach; ?>
+                  </select>
+                </label>
+                <label class="dg-writer-toolbar__color" title="Textfarbe">
+                  <span class="dg-writer-toolbar__color-label" aria-hidden="true">A</span>
+                  <input type="color" id="dg-writer-text-color" value="#1a1a1a" aria-label="Textfarbe">
+                </label>
+                <label class="dg-writer-toolbar__color dg-writer-toolbar__color--mark" title="Hervorhebung">
+                  <span class="dg-writer-toolbar__color-label" aria-hidden="true">▮</span>
+                  <input type="color" id="dg-writer-highlight-color" value="#fff59d" aria-label="Hervorhebung">
+                </label>
+              </div>
+              <div class="dg-writer-toolbar__group">
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-align-left" title="Linksbündig" aria-label="Linksbündig"><span class="dg-writer-ico dg-writer-ico--align-left" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-align-center" title="Zentriert" aria-label="Zentriert"><span class="dg-writer-ico dg-writer-ico--align-center" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-align-right" title="Rechtsbündig" aria-label="Rechtsbündig"><span class="dg-writer-ico dg-writer-ico--align-right" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-align-justify" title="Blocksatz" aria-label="Blocksatz"><span class="dg-writer-ico dg-writer-ico--align-justify" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-bullet" title="Aufzählung" aria-label="Aufzählung"><span class="dg-writer-ico dg-writer-ico--bullet" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-ordered" title="Nummerierung" aria-label="Nummerierung"><span aria-hidden="true">1.</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-indent-less" title="Einzug verringern" aria-label="Einzug verringern"><span aria-hidden="true">«</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-indent-more" title="Einzug vergrößern" aria-label="Einzug vergrößern"><span aria-hidden="true">»</span></button>
+              </div>
+              <div class="dg-writer-toolbar__group">
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-link" title="Link" aria-label="Link"><span aria-hidden="true">🔗</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-unlink" title="Link entfernen" aria-label="Link entfernen"><span aria-hidden="true">✕🔗</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table" title="Tabelle einfügen" aria-label="Tabelle"><span aria-hidden="true">▦</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table-add-row" title="Zeile hinzufügen" aria-label="Zeile"><span aria-hidden="true">+Z</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table-add-col" title="Spalte hinzufügen" aria-label="Spalte"><span aria-hidden="true">+S</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table-delete" title="Tabelle löschen" aria-label="Tabelle löschen"><span aria-hidden="true">⌫▦</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-emoji" title="Emoji" aria-label="Emoji"><span aria-hidden="true">☺</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-lucide" title="Icon einfügen" aria-label="Icon"><span aria-hidden="true">◇</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-media" title="Bild aus Mediathek" aria-label="Mediathek"><span aria-hidden="true">▣</span></button>
+              </div>
+              <div class="dg-writer-toolbar__group">
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-clear" title="Formatierung entfernen" aria-label="Formatierung entfernen"><span aria-hidden="true">T<sub>x</sub></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-print" title="Drucken" aria-label="Drucken" data-preview-url="<?= View::escape($previewUrl) ?>"><span aria-hidden="true">⎙</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-undo" title="Rückgängig (Strg+Z)" aria-label="Rückgängig"><span aria-hidden="true">↶</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-redo" title="Wiederholen (Strg+Y)" aria-label="Wiederholen"><span aria-hidden="true">↷</span></button>
+              </div>
             </div>
             <div id="dg-writer-emoji-panel" class="dg-writer-picker" hidden></div>
             <div id="dg-writer-lucide-panel" class="dg-writer-picker" hidden></div>

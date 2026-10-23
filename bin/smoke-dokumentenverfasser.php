@@ -72,6 +72,8 @@ foreach ([
     '/assets/js/writer-editor.js',
     '/assets/js/writer-assist.js',
     '/assets/js/writer-contact-picker.js',
+    '/bin/build-tiptap-writer.mjs',
+    '/bin/tiptap-writer-entry.mjs',
     '/views/modules/dokumentenverfasser.php',
     '/views/modules/dokumentenverfasser-form.php',
 ] as $rel) {
@@ -79,6 +81,15 @@ foreach ([
         $fail('Datei fehlt: ' . $rel);
     } else {
         $ok('Datei ' . $rel);
+    }
+}
+
+$vendor = (string) file_get_contents($root . '/assets/js/vendor/tiptap-writer.mjs');
+foreach (['Underline', 'TextStyle', 'Color', 'FontFamily', 'FontSize', 'TextAlign', 'Link', 'Highlight'] as $exp) {
+    if (!str_contains($vendor, 'as ' . $exp)) {
+        $fail('Vendor-Export fehlt: ' . $exp);
+    } else {
+        $ok('Vendor enthält ' . $exp);
     }
 }
 

@@ -1,5 +1,5 @@
 /**
- * Dokumentenverfasser D3 — TipTap-Editor (Absätze, Tabellen, Emoji, Lucide, Mediathek).
+ * Dokumentenverfasser — TipTap-Editor (kompakte Toolbar, Formatierung, Medien).
  */
 import {
   Editor,
@@ -10,6 +10,14 @@ import {
   TableRow,
   TableCell,
   TableHeader,
+  Underline,
+  TextStyle,
+  Color,
+  FontFamily,
+  FontSize,
+  TextAlign,
+  Link,
+  Highlight,
 } from './vendor/tiptap-writer.mjs';
 
 (function () {
@@ -73,6 +81,7 @@ import {
         paragraphsHost.appendChild(ta);
       });
     }
+    syncToolbarState();
   }
 
   var editor = new Editor({
@@ -85,8 +94,22 @@ import {
         blockquote: false,
         horizontalRule: false,
       }),
+      Underline,
+      TextStyle,
+      Color,
+      FontFamily,
+      FontSize,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
+      }),
+      Highlight.configure({ multicolor: true }),
       Placeholder.configure({
-        placeholder: 'Text schreiben … Absätze mit Enter. Tabellen und Medien über die Leiste.',
+        placeholder: 'Text schreiben … Absätze mit Enter. Formatierung und Medien über die Leiste.',
       }),
       Image.configure({
         inline: true,
@@ -98,7 +121,7 @@ import {
       TableHeader,
       TableCell,
     ],
-    content: initialDoc || (cfg.initialHtml || '<p></p>'),
+    content: initialDoc || cfg.initialHtml || '<p></p>',
     editorProps: {
       attributes: {
         class: 'dg-writer-prose',
@@ -108,6 +131,9 @@ import {
     },
     onUpdate: function () {
       syncHidden();
+    },
+    onSelectionUpdate: function () {
+      syncToolbarState();
     },
   });
 
@@ -123,10 +149,46 @@ import {
     el.addEventListener('click', function (ev) {
       ev.preventDefault();
       if (!editable) return;
-      fn();
+      fn(el);
       editor.chain().focus().run();
       syncHidden();
     });
+  }
+
+  function setActive(id, on) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('is-active', !!on);
+    el.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  function syncToolbarState() {
+    if (!editable) return;
+    setActive('dg-writer-cmd-bold', editor.isActive('bold'));
+    setActive('dg-writer-cmd-italic', editor.isActive('italic'));
+    setActive('dg-writer-cmd-underline', editor.isActive('underline'));
+    setActive('dg-writer-cmd-strike', editor.isActive('strike'));
+    setActive('dg-writer-cmd-bullet', editor.isActive('bulletList'));
+    setActive('dg-writer-cmd-ordered', editor.isActive('orderedList'));
+    setActive('dg-writer-cmd-align-left', editor.isActive({ textAlign: 'left' }));
+    setActive('dg-writer-cmd-align-center', editor.isActive({ textAlign: 'center' }));
+    setActive('dg-writer-cmd-align-right', editor.isActive({ textAlign: 'right' }));
+    setActive('dg-writer-cmd-align-justify', editor.isActive({ textAlign: 'justify' }));
+    setActive('dg-writer-cmd-link', editor.isActive('link'));
+
+    var mark = editor.getAttributes('textStyle') || {};
+    var fontSel = document.getElementById('dg-writer-font-family');
+    var sizeSel = document.getElementById('dg-writer-font-size');
+    var colorInp = document.getElementById('dg-writer-text-color');
+    if (fontSel && document.activeElement !== fontSel) {
+      fontSel.value = mark.fontFamily || '';
+    }
+    if (sizeSel && document.activeElement !== sizeSel) {
+      sizeSel.value = mark.fontSize || '';
+    }
+    if (colorInp && document.activeElement !== colorInp && mark.color) {
+      colorInp.value = mark.color;
+    }
   }
 
   btn('dg-writer-cmd-bold', function () {
@@ -135,8 +197,11 @@ import {
   btn('dg-writer-cmd-italic', function () {
     editor.chain().focus().toggleItalic().run();
   });
-  btn('dg-writer-cmd-paragraph', function () {
-    editor.chain().focus().setParagraph().run();
+  btn('dg-writer-cmd-underline', function () {
+    editor.chain().focus().toggleUnderline().run();
+  });
+  btn('dg-writer-cmd-strike', function () {
+    editor.chain().focus().toggleStrike().run();
   });
   btn('dg-writer-cmd-bullet', function () {
     editor.chain().focus().toggleBulletList().run();
@@ -144,12 +209,26 @@ import {
   btn('dg-writer-cmd-ordered', function () {
     editor.chain().focus().toggleOrderedList().run();
   });
+  btn('dg-writer-cmd-align-left', function () {
+    editor.chain().focus().setTextAlign('left').run();
+  });
+  btn('dg-writer-cmd-align-center', function () {
+    editor.chain().focus().setTextAlign('center').run();
+  });
+  btn('dg-writer-cmd-align-right', function () {
+    editor.chain().focus().setTextAlign('right').run();
+  });
+  btn('dg-writer-cmd-align-justify', function () {
+    editor.chain().focus().setTextAlign('justify').run();
+  });
+  btn('dg-writer-cmd-indent-more', function () {
+    editor.chain().focus().sinkListItem('listItem').run();
+  });
+  btn('dg-writer-cmd-indent-less', function () {
+    editor.chain().focus().liftListItem('listItem').run();
+  });
   btn('dg-writer-cmd-table', function () {
-    editor
-      .chain()
-      .focus()
-      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-      .run();
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   });
   btn('dg-writer-cmd-table-add-row', function () {
     editor.chain().focus().addRowAfter().run();
@@ -160,6 +239,103 @@ import {
   btn('dg-writer-cmd-table-delete', function () {
     editor.chain().focus().deleteTable().run();
   });
+  btn('dg-writer-cmd-undo', function () {
+    editor.chain().focus().undo().run();
+  });
+  btn('dg-writer-cmd-redo', function () {
+    editor.chain().focus().redo().run();
+  });
+  btn('dg-writer-cmd-clear', function () {
+    editor.chain().focus().unsetAllMarks().clearNodes().run();
+  });
+  btn('dg-writer-cmd-link', function () {
+    var prev = editor.getAttributes('link').href || 'https://';
+    var url = window.prompt('Link-Adresse (URL):', prev);
+    if (url === null) return;
+    url = String(url).trim();
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  });
+  btn('dg-writer-cmd-unlink', function () {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+  });
+  btn('dg-writer-cmd-print', function (el) {
+    syncHidden();
+    var url =
+      (el && el.getAttribute('data-preview-url')) ||
+      cfg.previewUrl ||
+      '/app?page=dokumentenverfasser-form&writer_preview=1&sample=1';
+    var w = window.open(url, '_blank', 'noopener');
+    if (!w) {
+      window.alert('Bitte Pop-ups für die Vorschau erlauben, dann erneut Drucken.');
+      return;
+    }
+    var tries = 0;
+    var timer = window.setInterval(function () {
+      tries += 1;
+      try {
+        if (w.document && w.document.readyState === 'complete') {
+          window.clearInterval(timer);
+          w.focus();
+          w.print();
+        }
+      } catch (err) {
+        /* cross-origin / still loading */
+      }
+      if (tries > 40) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+  });
+
+  var fontSel = document.getElementById('dg-writer-font-family');
+  if (fontSel) {
+    fontSel.addEventListener('change', function () {
+      if (!editable) return;
+      var v = fontSel.value;
+      if (!v) {
+        editor.chain().focus().unsetFontFamily().run();
+      } else {
+        editor.chain().focus().setFontFamily(v).run();
+      }
+      syncHidden();
+    });
+  }
+
+  var sizeSel = document.getElementById('dg-writer-font-size');
+  if (sizeSel) {
+    sizeSel.addEventListener('change', function () {
+      if (!editable) return;
+      var v = sizeSel.value;
+      if (!v) {
+        editor.chain().focus().unsetFontSize().run();
+      } else {
+        editor.chain().focus().setFontSize(v).run();
+      }
+      syncHidden();
+    });
+  }
+
+  var colorInp = document.getElementById('dg-writer-text-color');
+  if (colorInp) {
+    colorInp.addEventListener('input', function () {
+      if (!editable) return;
+      editor.chain().focus().setColor(colorInp.value).run();
+      syncHidden();
+    });
+  }
+
+  var hlInp = document.getElementById('dg-writer-highlight-color');
+  if (hlInp) {
+    hlInp.addEventListener('input', function () {
+      if (!editable) return;
+      editor.chain().focus().toggleHighlight({ color: hlInp.value }).run();
+      syncHidden();
+    });
+  }
 
   /* —— Emoji —— */
   var emojiPanel = document.getElementById('dg-writer-emoji-panel');
@@ -214,19 +390,18 @@ import {
         emojiPanel.querySelectorAll('.dg-writer-emoji-tab').forEach(function (t) {
           t.classList.toggle('is-active', t === tab);
         });
-        fill(tab.getAttribute('data-group'));
+        fill(tab.getAttribute('data-group') || '');
         return;
       }
       var pick = ev.target.closest('.dg-writer-emoji-btn');
-      if (pick) {
-        editor.chain().focus().insertContent(pick.getAttribute('data-emoji') || '').run();
-        emojiPanel.hidden = true;
-        syncHidden();
-      }
+      if (!pick) return;
+      editor.chain().focus().insertContent(pick.getAttribute('data-emoji') || '').run();
+      emojiPanel.hidden = true;
+      syncHidden();
     };
   }
 
-  /* —— Lucide —— */
+  /* —— Lucide / Icon —— */
   var lucidePanel = document.getElementById('dg-writer-lucide-panel');
   btn('dg-writer-cmd-lucide', function () {
     if (!lucidePanel) return;
@@ -236,42 +411,37 @@ import {
     }
   });
 
-  function catalogIcons() {
+  function lucideCatalog() {
+    var el = document.getElementById('dg-menu-icon-catalog');
+    if (!el) return [];
     try {
-      var el = document.getElementById('dg-menu-icon-catalog');
-      var data = el ? JSON.parse(el.textContent || '{}') : {};
-      return data.icons || [];
+      var data = JSON.parse(el.textContent || '{}');
+      return data.icons || data.items || [];
     } catch (e) {
       return [];
     }
   }
 
-  function lucideDataUrl(paths) {
+  function lucideDataUrl(pathsHtml) {
     var svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#333333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
-      paths +
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+      (pathsHtml || '') +
       '</svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
   function renderLucidePanel(query) {
     if (!lucidePanel) return;
-    var icons = catalogIcons();
     var q = String(query || '')
       .trim()
       .toLowerCase();
-    if (q) {
-      icons = icons.filter(function (ic) {
-        return (
-          String(ic.id || '')
-            .toLowerCase()
-            .indexOf(q) !== -1 ||
-          String(ic.label || '')
-            .toLowerCase()
-            .indexOf(q) !== -1
-        );
-      });
-    }
+    var icons = lucideCatalog().filter(function (ic) {
+      if (!q) return true;
+      var id = String(ic.id || '').toLowerCase();
+      var label = String(ic.label || '').toLowerCase();
+      var tags = Array.isArray(ic.tags) ? ic.tags.join(' ').toLowerCase() : '';
+      return id.indexOf(q) !== -1 || label.indexOf(q) !== -1 || tags.indexOf(q) !== -1;
+    });
     icons = icons.slice(0, 120);
     lucidePanel.innerHTML =
       '<label class="dg-field"><span>Icon suchen</span><input type="search" id="dg-writer-lucide-search" value="' +
@@ -282,9 +452,9 @@ import {
         .map(function (ic) {
           return (
             '<button type="button" class="dg-writer-lucide-btn" data-id="' +
-            escapeHtml(ic.id) +
+            escapeHtml(ic.id || '') +
             '" title="' +
-            escapeHtml(ic.label || ic.id) +
+            escapeHtml(ic.label || ic.id || '') +
             '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">' +
             (ic.paths || '') +
             '</svg></button>'
@@ -302,9 +472,9 @@ import {
     lucidePanel.onclick = function (ev) {
       var pick = ev.target.closest('.dg-writer-lucide-btn');
       if (!pick) return;
-      var id = pick.getAttribute('data-id');
-      var ic = catalogIcons().find(function (x) {
-        return x.id === id;
+      var id = pick.getAttribute('data-id') || '';
+      var ic = lucideCatalog().find(function (x) {
+        return String(x.id) === id;
       });
       if (!ic || !ic.paths) return;
       editor
@@ -312,7 +482,7 @@ import {
         .focus()
         .setImage({
           src: lucideDataUrl(ic.paths),
-          alt: ic.label || ic.id,
+          alt: ic.label || ic.id || 'icon',
           title: ic.id,
         })
         .run();
