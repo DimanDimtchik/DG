@@ -755,6 +755,10 @@ switch ($path) {
         MediaApi::handle();
         exit;
 
+    case '/api/writer-assist':
+        WriterAssistApi::handle();
+        exit;
+
     case '/api/website-videos':
         if ($_SERVER['REQUEST_METHOD'] !== 'GET' || (string) ($_GET['action'] ?? '') !== 'list') {
             http_response_code(405);
@@ -1263,14 +1267,21 @@ switch ($path) {
             $page === 'einstellungen'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
             && RoleResolver::isAdmin($user)
-            && (isset($_POST['letterhead_save']) || isset($_POST['letterhead_reset_din']))
+            && (
+                isset($_POST['letterhead_save'])
+                || isset($_POST['letterhead_reset_din'])
+                || isset($_POST['writer_assist_save'])
+            )
         ) {
             $redirect = SettingsRegistry::tabUrl('briefpapier');
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
                 Flash::set('error', 'Ungültiges Formular (CSRF).');
             } else {
                 try {
-                    if (isset($_POST['letterhead_reset_din'])) {
+                    if (isset($_POST['writer_assist_save'])) {
+                        WriterAssistSettings::saveFromPost($_POST);
+                        Flash::set('success', 'Text-Assist-Einstellungen gespeichert.');
+                    } elseif (isset($_POST['letterhead_reset_din'])) {
                         LetterheadSettings::resetDinLayoutFromStore();
                         Flash::set('success', 'DIN-Standardlayout wiederhergestellt (Zonen, Ränder, empfohlene Fuß-Schalter).');
                     } else {

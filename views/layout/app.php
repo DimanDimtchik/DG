@@ -596,6 +596,8 @@ $belegeFocus = (string) ($belegeFocus ?? '');
         paragraphsHostId: 'dg-writer-paragraphs-sync',
         editable: <?= !empty($canEdit) && WriterDocument::normalizeStatus((string) (($writerForm['status'] ?? 'draft'))) === WriterDocument::STATUS_DRAFT ? 'true' : 'false' ?>,
         mediaListUrl: '/api/media?action=list',
+        assistUrl: '/api/writer-assist',
+        csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
         initialJson: <?= json_encode(
             WriterDocument::tipTapDocument(is_array($writerForm ?? null) ? $writerForm : WriterDocument::empty()),
             JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS
@@ -604,6 +606,7 @@ $belegeFocus = (string) ($belegeFocus ?? '');
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/emoji-catalog.js')) ?>" defer></script>
     <script type="module" src="<?= View::escape(Asset::url('/assets/js/writer-editor.js')) ?>"></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/writer-assist.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/rezeptur-form') : ?>
     <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/recipe-flow.css')) ?>">

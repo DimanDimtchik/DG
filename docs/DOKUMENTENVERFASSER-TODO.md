@@ -149,7 +149,7 @@ Einstellungen: Checkboxen „PDF / TXT / MD / DOCX anbieten“.
 - [x] **D1** Datenmodell Dokument — `WriterDocument` + `WriterDocumentRepository`, Migration `112_writer_documents` (Betreff, Blöcke-JSON, Empfänger, Infoblock, Status Entwurf/Final/Archiv, Versionshistorie, Kontakt/Voucher-Felder)
 - [x] **D2** UI Liste + Form (`dokumentenverfasser` / `dokumentenverfasser-form`): Absätze+/−, Infoblock, Anrede/Gruß, A4-Rahmen via `LetterheadRenderer`, Final/Reopen/Archiv; Export-Buttons Platzhalter bis D5
 - [x] **D3** TipTap (`assets/js/writer-editor.js` + vendor `tiptap-writer.mjs`): Absätze/Listen, Tabellen, Emoji-Katalog, Lucide-Katalog, Mediathek-API; Speicherung `body.tiptap` + `body_html_cache`
-- [ ] **D4** Spellcheck + Klartext-Empfehlungen (lokal); LanguageTool optional
+- [x] **D4** Browser-Spellcheck DE; Klartext lokal (`WriterKlartextAssist`); LanguageTool opt-in (`WriterAssistSettings`, Self-Host, öffentliche Cloud nur mit Freigabe); API `/api/writer-assist`
 - [ ] **D5** Export-Pipeline PDF / TXT / MD / DOCX; Format-Schalter in Einstellungen
 - [ ] **D6** Kontakt-/Vorgangsbezug (optional P5-ähnlich)
 - [ ] **D7** Rechte (Modul `dokumentenverfasser`), Smoke, Deploy Master → Sync

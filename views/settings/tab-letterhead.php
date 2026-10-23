@@ -417,6 +417,47 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
 </form>
 
 <?php
+  $assist = WriterAssistSettings::config();
+?>
+<form method="post" action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>" class="dg-form" style="margin-top:20px">
+  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Text-Assist (D4)</summary>
+    <div class="dg-collapsible-form__body">
+      <p class="dg-field-hint">
+        Browser-Rechtschreibung ist Standard. Klartext-Hinweise laufen lokal im CRM.
+        LanguageTool nur optional (Self-Host empfohlen) — öffentliche Cloud nur mit bewusster Freigabe.
+      </p>
+      <div class="dg-form-grid">
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="klartext_enabled" value="1"<?= !empty($assist['klartext_enabled']) ? ' checked' : '' ?><?= $disabled ?>>
+          Klartext-Empfehlungen anbieten
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="languagetool_enabled" value="1"<?= !empty($assist['languagetool_enabled']) ? ' checked' : '' ?><?= $disabled ?>>
+          LanguageTool aktiv
+        </label>
+        <label class="dg-field">
+          <span>LanguageTool-URL</span>
+          <input type="url" name="languagetool_url" maxlength="500" placeholder="https://lt.meine-firma.de/v2/check" value="<?= View::escape((string) ($assist['languagetool_url'] ?? '')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Sprache</span>
+          <input name="languagetool_language" maxlength="10" value="<?= View::escape((string) ($assist['languagetool_language'] ?? 'de-DE')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="languagetool_allow_public_cloud" value="1"<?= !empty($assist['languagetool_allow_public_cloud']) ? ' checked' : '' ?><?= $disabled ?>>
+          Öffentliche LanguageTool-Cloud erlauben (api.languagetool.org) — Datenabfluss, nicht Standard
+        </label>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" name="writer_assist_save" value="1" class="dg-button dg-button--primary"<?= $disabled ?>>Assist speichern</button>
+      </div>
+    </div>
+  </details>
+</form>
+
+<?php
   $previewGuides = !empty($page['show_din_guides']) ? '1' : '0';
   $previewUrl = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=' . $previewGuides;
   $previewUrlGuidesOn = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=1';

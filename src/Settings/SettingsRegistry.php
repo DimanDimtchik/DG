@@ -318,7 +318,11 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             if (isset($_POST['ldap_save'])) {
                 return 'ldap';
             }
-            if (isset($_POST['letterhead_save']) || isset($_POST['letterhead_reset_din'])) {
+            if (
+                isset($_POST['letterhead_save'])
+                || isset($_POST['letterhead_reset_din'])
+                || isset($_POST['writer_assist_save'])
+            ) {
                 return 'briefpapier';
             }
         }

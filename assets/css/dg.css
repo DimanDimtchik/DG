@@ -7563,3 +7563,32 @@ body.dg-login-page {
 .dg-writer-emoji-tab.is-active {
   font-weight: 600;
 }
+
+/* Dokumentenverfasser Assist (D4) */
+.dg-writer-assist {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dg-border, #e4e7ec);
+}
+.dg-writer-assist__result {
+  margin-top: 10px;
+}
+.dg-writer-assist__card {
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 8px;
+  background: #f8f9fb;
+  padding: 12px 14px;
+}
+.dg-writer-assist__tips {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+}
+.dg-writer-assist__tip {
+  margin: 0 0 6px;
+}
+.dg-writer-assist__tip--warn {
+  color: #7a2e0e;
+}
+.dg-writer-assist__tip--info {
+  color: #344054;
+}

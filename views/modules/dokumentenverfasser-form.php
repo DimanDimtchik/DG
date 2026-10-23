@@ -82,7 +82,7 @@ $disabled = $readOnly ? ' disabled' : '';
           </label>
           <label class="dg-field">
             <span>Betreff</span>
-            <input name="subject" maxlength="500" value="<?= View::escape((string) ($form['subject'] ?? '')) ?>" required>
+            <input name="subject" maxlength="500" value="<?= View::escape((string) ($form['subject'] ?? '')) ?>" required spellcheck="true" lang="de">
           </label>
         </fieldset>
 
@@ -112,7 +112,7 @@ $disabled = $readOnly ? ' disabled' : '';
           <div class="dg-form-grid">
             <label class="dg-field">
               <span>Anrede</span>
-              <input name="greeting" id="dg-writer-greeting" maxlength="255" list="dg-writer-greeting-presets" value="<?= View::escape((string) ($form['greeting'] ?? '')) ?>">
+              <input name="greeting" id="dg-writer-greeting" maxlength="255" list="dg-writer-greeting-presets" value="<?= View::escape((string) ($form['greeting'] ?? '')) ?>" spellcheck="true" lang="de">
               <datalist id="dg-writer-greeting-presets">
                 <?php foreach (WriterDocument::greetingPresets() as $text => $lbl) : ?>
                   <option value="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
@@ -121,7 +121,7 @@ $disabled = $readOnly ? ' disabled' : '';
             </label>
             <label class="dg-field">
               <span>Grußformel</span>
-              <input name="closing" id="dg-writer-closing" maxlength="255" list="dg-writer-closing-presets" value="<?= View::escape((string) ($form['closing'] ?? '')) ?>">
+              <input name="closing" id="dg-writer-closing" maxlength="255" list="dg-writer-closing-presets" value="<?= View::escape((string) ($form['closing'] ?? '')) ?>" spellcheck="true" lang="de">
               <datalist id="dg-writer-closing-presets">
                 <?php foreach (WriterDocument::closingPresets() as $text => $lbl) : ?>
                   <option value="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
@@ -137,7 +137,7 @@ $disabled = $readOnly ? ' disabled' : '';
 
         <fieldset class="dg-fieldset">
           <legend>Text (TipTap)</legend>
-          <p class="dg-field-hint">Absätze mit Enter · Tabellen, Emoji, Lucide und Mediathek über die Leiste. Rechtschreibung: Browser (DE).</p>
+          <p class="dg-field-hint">Absätze mit Enter · Tabellen, Emoji, Lucide und Mediathek über die Leiste. Rechtschreibung: Browser (DE). Klartext/LanguageTool: Assist darunter (nie Pflicht).</p>
           <?php
             $tipTapDoc = WriterDocument::tipTapDocument($form);
             $tipTapJson = json_encode($tipTapDoc, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
@@ -170,6 +170,28 @@ $disabled = $readOnly ? ' disabled' : '';
             <div id="dg-writer-media-panel" class="dg-writer-picker" hidden></div>
           <?php endif; ?>
           <div id="dg-writer-editor" class="dg-writer-editor<?= $readOnly ? ' dg-writer-editor--readonly' : '' ?>"></div>
+          <?php
+            $assistCfg = WriterAssistSettings::config();
+            $assistKlartext = !empty($assistCfg['klartext_enabled']);
+            $assistLt = WriterAssistSettings::languageToolReady($assistCfg);
+          ?>
+          <?php if (!$readOnly && ($assistKlartext || $assistLt)) : ?>
+            <div class="dg-writer-assist" id="dg-writer-assist">
+              <h3 class="dg-subsection-title">Text-Assist</h3>
+              <p class="dg-field-hint">Hinweise sind optional. Speichern und Finalisieren gehen immer ohne Assist.</p>
+              <p class="dg-form-actions">
+                <?php if ($assistKlartext) : ?>
+                  <button type="button" class="dg-button" id="dg-writer-assist-klartext">Klartext prüfen</button>
+                <?php endif; ?>
+                <?php if ($assistLt) : ?>
+                  <button type="button" class="dg-button" id="dg-writer-assist-lt">Rechtschreibung (LanguageTool)</button>
+                <?php endif; ?>
+              </p>
+              <div id="dg-writer-assist-result" class="dg-writer-assist__result" hidden></div>
+            </div>
+          <?php elseif (!$readOnly) : ?>
+            <p class="dg-field-hint">Text-Assist ist aus. Admin: Einstellungen → Briefpapier → Text-Assist.</p>
+          <?php endif; ?>
         </fieldset>
 
         <div class="dg-form-actions">
