@@ -135,27 +135,41 @@ $disabled = $readOnly ? ' disabled' : '';
           </div>
         </fieldset>
 
-        <fieldset class="dg-fieldset"<?= $disabled ?>>
-          <legend>Absätze</legend>
-          <p class="dg-field-hint">TipTap folgt in D3. Hier: Klartext-Absätze mit Rechtschreibprüfung des Browsers.</p>
-          <div id="dg-writer-paragraphs">
-            <?php foreach ($paragraphs as $i => $text) : ?>
-              <div class="dg-writer-paragraph" data-index="<?= (int) $i ?>">
-                <label class="dg-field">
-                  <span>Absatz <?= (int) $i + 1 ?></span>
-                  <textarea name="paragraphs[]" rows="4" spellcheck="true" lang="de"><?= View::escape($text) ?></textarea>
-                </label>
-                <?php if (!$readOnly) : ?>
-                  <button type="button" class="dg-button dg-writer-paragraph__remove"<?= count($paragraphs) <= 1 ? ' disabled' : '' ?>>Absatz entfernen</button>
-                <?php endif; ?>
-              </div>
+        <fieldset class="dg-fieldset">
+          <legend>Text (TipTap)</legend>
+          <p class="dg-field-hint">Absätze mit Enter · Tabellen, Emoji, Lucide und Mediathek über die Leiste. Rechtschreibung: Browser (DE).</p>
+          <?php
+            $tipTapDoc = WriterDocument::tipTapDocument($form);
+            $tipTapJson = json_encode($tipTapDoc, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
+            $bodyHtmlCache = (string) ($form['body_html_cache'] ?? '');
+          ?>
+          <input type="hidden" name="body_tiptap" id="dg-writer-body-tiptap" value="<?= View::escape((string) $tipTapJson) ?>">
+          <input type="hidden" name="body_html_cache" id="dg-writer-body-html" value="<?= View::escape($bodyHtmlCache) ?>">
+          <div id="dg-writer-paragraphs-sync" hidden>
+            <?php foreach ($paragraphs as $text) : ?>
+              <textarea name="paragraphs[]"><?= View::escape($text) ?></textarea>
             <?php endforeach; ?>
           </div>
           <?php if (!$readOnly) : ?>
-            <p class="dg-form-actions">
-              <button type="button" class="dg-button" id="dg-writer-add-paragraph">+ Absatz</button>
-            </p>
+            <div class="dg-writer-toolbar" role="toolbar" aria-label="Textformatierung">
+              <button type="button" class="dg-button" id="dg-writer-cmd-bold" title="Fett">Fett</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-italic" title="Kursiv">Kursiv</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-paragraph" title="Absatz">Absatz</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-bullet" title="Liste">• Liste</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-ordered" title="Nummerierung">1. Liste</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-table" title="Tabelle einfügen">Tabelle</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-table-add-row" title="Zeile">+ Zeile</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-table-add-col" title="Spalte">+ Spalte</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-table-delete" title="Tabelle löschen">Tabelle weg</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-emoji" title="Emoji">Emoji</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-lucide" title="Lucide-Icon">Lucide</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-media" title="Bild aus Mediathek">Mediathek</button>
+            </div>
+            <div id="dg-writer-emoji-panel" class="dg-writer-picker" hidden></div>
+            <div id="dg-writer-lucide-panel" class="dg-writer-picker" hidden></div>
+            <div id="dg-writer-media-panel" class="dg-writer-picker" hidden></div>
           <?php endif; ?>
+          <div id="dg-writer-editor" class="dg-writer-editor<?= $readOnly ? ' dg-writer-editor--readonly' : '' ?>"></div>
         </fieldset>
 
         <div class="dg-form-actions">
@@ -234,41 +248,9 @@ $disabled = $readOnly ? ' disabled' : '';
 </div>
 
 <?php if (!$readOnly) : ?>
-<script>
-(function () {
-  var root = document.getElementById('dg-writer-paragraphs');
-  var addBtn = document.getElementById('dg-writer-add-paragraph');
-  if (!root || !addBtn) return;
-
-  function renumber() {
-    var blocks = root.querySelectorAll('.dg-writer-paragraph');
-    blocks.forEach(function (el, i) {
-      var span = el.querySelector('label > span');
-      if (span) span.textContent = 'Absatz ' + (i + 1);
-      var rm = el.querySelector('.dg-writer-paragraph__remove');
-      if (rm) rm.disabled = blocks.length <= 1;
-    });
-  }
-
-  addBtn.addEventListener('click', function () {
-    var first = root.querySelector('.dg-writer-paragraph');
-    if (!first) return;
-    var clone = first.cloneNode(true);
-    var ta = clone.querySelector('textarea');
-    if (ta) ta.value = '';
-    root.appendChild(clone);
-    renumber();
-  });
-
-  root.addEventListener('click', function (ev) {
-    var btn = ev.target.closest('.dg-writer-paragraph__remove');
-    if (!btn || btn.disabled) return;
-    var block = btn.closest('.dg-writer-paragraph');
-    if (!block) return;
-    if (root.querySelectorAll('.dg-writer-paragraph').length <= 1) return;
-    block.remove();
-    renumber();
-  });
-})();
-</script>
+  <script type="application/json" id="dg-menu-icon-catalog"><?= json_encode([
+      'featured' => WebsiteMenuIcons::pickerFeaturedIds(),
+      'special' => [],
+      'icons' => WebsiteMenuIcons::pickerCatalog(),
+  ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) ?></script>
 <?php endif; ?>

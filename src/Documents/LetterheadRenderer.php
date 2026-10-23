@@ -258,13 +258,21 @@ final class LetterheadRenderer
         if ($greeting !== '') {
             $html .= '<p class="dg-lh-greeting">' . self::e($greeting) . '</p>';
         }
-        $paragraphs = is_array($doc['paragraphs'] ?? null) ? $doc['paragraphs'] : [];
-        foreach ($paragraphs as $p) {
-            $p = trim((string) $p);
-            if ($p === '') {
-                continue;
+        $bodyHtml = trim((string) ($doc['body_html'] ?? ''));
+        if ($bodyHtml !== '') {
+            $safe = class_exists('MailHtmlSanitizer')
+                ? MailHtmlSanitizer::clean($bodyHtml)
+                : strip_tags($bodyHtml, '<p><br><strong><b><em><i><ul><ol><li><table><thead><tbody><tr><th><td><img><span><a>');
+            $html .= '<div class="dg-lh-rich">' . $safe . '</div>';
+        } else {
+            $paragraphs = is_array($doc['paragraphs'] ?? null) ? $doc['paragraphs'] : [];
+            foreach ($paragraphs as $p) {
+                $p = trim((string) $p);
+                if ($p === '') {
+                    continue;
+                }
+                $html .= '<p class="dg-lh-p">' . nl2br(self::e($p)) . '</p>';
             }
-            $html .= '<p class="dg-lh-p">' . nl2br(self::e($p)) . '</p>';
         }
         $closing = trim((string) ($doc['closing'] ?? ''));
         if ($closing !== '') {
@@ -556,6 +564,12 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 .dg-lh-subject--bold { font-weight: 700; }
 .dg-lh-subject__label { font-weight: 400; color: #555; }
 .dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; }
+.dg-lh-rich { font-size: 11pt; line-height: 1.45; margin: 0 0 3.5mm; }
+.dg-lh-rich p { margin: 0 0 3mm; }
+.dg-lh-rich ul, .dg-lh-rich ol { margin: 0 0 3mm; padding-left: 6mm; }
+.dg-lh-rich table, .dg-writer-table { border-collapse: collapse; width: 100%; margin: 0 0 3mm; font-size: 10pt; }
+.dg-lh-rich th, .dg-lh-rich td, .dg-writer-table th, .dg-writer-table td { border: 0.2mm solid #666; padding: 1.5mm 2mm; vertical-align: top; }
+.dg-lh-rich img, .dg-writer-img { max-width: 100%; height: auto; vertical-align: middle; }
 .dg-lh-footer {
   position: absolute;
   left: {$ml}mm; right: {$mr}mm; bottom: {$mb}mm;

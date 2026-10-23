@@ -7470,3 +7470,96 @@ body.dg-login-page {
 .dg-writer-paragraph__remove {
   margin-top: 6px;
 }
+
+/* Dokumentenverfasser TipTap (D3) */
+.dg-writer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.dg-writer-editor {
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 8px;
+  background: #fff;
+  min-height: 220px;
+}
+.dg-writer-editor .tiptap,
+.dg-writer-editor .ProseMirror,
+.dg-writer-prose {
+  min-height: 200px;
+  padding: 12px 14px;
+  outline: none;
+}
+.dg-writer-editor--readonly .ProseMirror {
+  background: #f8f9fb;
+}
+.dg-writer-prose p { margin: 0 0 0.75em; }
+.dg-writer-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 0.75em;
+}
+.dg-writer-prose th,
+.dg-writer-prose td {
+  border: 1px solid #98a2b3;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+.dg-writer-prose img.dg-writer-img,
+.dg-writer-prose img {
+  max-width: 100%;
+  height: auto;
+}
+.dg-writer-picker {
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 8px;
+  background: #f8f9fb;
+  padding: 10px;
+  margin-bottom: 8px;
+  max-height: 240px;
+  overflow: auto;
+}
+.dg-writer-picker__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.dg-writer-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dg-writer-emoji-btn {
+  border: 1px solid transparent;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.dg-writer-emoji-btn:hover,
+.dg-writer-lucide-btn:hover,
+.dg-writer-media-btn:hover {
+  border-color: var(--dg-border, #d0d5dd);
+}
+.dg-writer-lucide-btn,
+.dg-writer-media-btn {
+  border: 1px solid transparent;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+}
+.dg-writer-media-btn img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.dg-writer-emoji-tab.is-active {
+  font-weight: 600;
+}

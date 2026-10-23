@@ -169,6 +169,116 @@ final class WriterDocument
     }
 
     /**
+     * TipTap-JSON → strukturierte Blöcke (Absätze + Tabellen/HTML-Snippets).
+     *
+     * @param array<string, mixed> $tiptap
+     * @return list<array<string, mixed>>
+     */
+    public static function blocksFromTiptap(array $tiptap): array
+    {
+        $content = is_array($tiptap['content'] ?? null) ? $tiptap['content'] : [];
+        $blocks = [];
+        foreach ($content as $node) {
+            if (!is_array($node)) {
+                continue;
+            }
+            $type = (string) ($node['type'] ?? '');
+            if ($type === 'paragraph') {
+                $blocks[] = self::paragraphBlock(self::plainTextFromTipTapNode($node));
+            } elseif ($type === 'bulletList' || $type === 'orderedList') {
+                $blocks[] = [
+                    'type' => $type === 'orderedList' ? 'ordered_list' : 'bullet_list',
+                    'text' => self::plainTextFromTipTapNode($node),
+                    'html' => '',
+                ];
+            } elseif ($type === 'table') {
+                $blocks[] = [
+                    'type' => 'table',
+                    'text' => self::plainTextFromTipTapNode($node),
+                    'html' => '',
+                ];
+            } elseif ($type === 'image') {
+                $blocks[] = [
+                    'type' => 'image',
+                    'text' => trim((string) ($node['attrs']['alt'] ?? '')),
+                    'html' => '',
+                ];
+            }
+            if (count($blocks) >= 100) {
+                break;
+            }
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Initiales TipTap-JSON aus gespeichertem Dokument (oder Absätze → Doc).
+     *
+     * @param array<string, mixed> $doc
+     * @return array<string, mixed>
+     */
+    public static function tipTapDocument(array $doc): array
+    {
+        $body = is_array($doc['body'] ?? null) ? $doc['body'] : [];
+        if (is_array($body['tiptap'] ?? null) && ($body['tiptap']['type'] ?? '') === 'doc') {
+            return $body['tiptap'];
+        }
+
+        $paras = self::paragraphTexts($doc);
+        $content = [];
+        foreach ($paras as $text) {
+            $node = ['type' => 'paragraph'];
+            if ($text !== '') {
+                $node['content'] = [['type' => 'text', 'text' => $text]];
+            }
+            $content[] = $node;
+        }
+        if ($content === []) {
+            $content[] = ['type' => 'paragraph'];
+        }
+
+        return ['type' => 'doc', 'content' => $content];
+    }
+
+    /**
+     * @param array<string, mixed> $node
+     */
+    private static function plainTextFromTipTapNode(array $node): string
+    {
+        $parts = [];
+        if (($node['type'] ?? '') === 'text') {
+            return (string) ($node['text'] ?? '');
+        }
+        $children = is_array($node['content'] ?? null) ? $node['content'] : [];
+        foreach ($children as $child) {
+            if (!is_array($child)) {
+                continue;
+            }
+            $chunk = self::plainTextFromTipTapNode($child);
+            if ($chunk !== '') {
+                $parts[] = $chunk;
+            }
+        }
+
+        return trim(implode(' ', $parts));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $blocks
+     */
+    private static function blocksAreOnlyParagraphs(array $blocks): bool
+    {
+        foreach ($blocks as $block) {
+            if (($block['type'] ?? 'paragraph') !== 'paragraph') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Normalisiert Eingabe (POST/API/JSON) für Speichern.
      *
      * @param array<string, mixed> $input
@@ -198,7 +308,26 @@ final class WriterDocument
         $info = self::sanitizeInfo(is_array($input['info'] ?? null) ? $input['info'] : []);
         $body = self::sanitizeBody(is_array($input['body'] ?? null) ? $input['body'] : []);
 
-        // Formular: paragraphs[] hat Vorrang (inkl. leerer Absätze für die UI)
+        // TipTap-JSON aus Formular (hidden field body_tiptap)
+        if (array_key_exists('body_tiptap', $input)) {
+            $tiptapRaw = $input['body_tiptap'];
+            if (is_string($tiptapRaw) && $tiptapRaw !== '') {
+                $decoded = json_decode($tiptapRaw, true);
+                $body['tiptap'] = is_array($decoded) ? $decoded : null;
+            } elseif (is_array($tiptapRaw)) {
+                $body['tiptap'] = $tiptapRaw;
+            } else {
+                $body['tiptap'] = null;
+            }
+            if (is_array($body['tiptap'])) {
+                $fromTip = self::blocksFromTiptap($body['tiptap']);
+                if ($fromTip !== []) {
+                    $body['blocks'] = $fromTip;
+                }
+            }
+        }
+
+        // Formular: paragraphs[] (Fallback / Sync aus Editor)
         if (isset($input['paragraphs']) && is_array($input['paragraphs'])) {
             $blocks = [];
             foreach ($input['paragraphs'] as $p) {
@@ -210,7 +339,10 @@ final class WriterDocument
             if ($blocks === []) {
                 $blocks[] = self::paragraphBlock('');
             }
-            $body['blocks'] = $blocks;
+            // TipTap-Blöcke (Tabellen etc.) nicht überschreiben, wenn nur Absätze als Sync kommen
+            if ($body['tiptap'] === null || self::blocksAreOnlyParagraphs($body['blocks'])) {
+                $body['blocks'] = $blocks;
+            }
         }
 
         $htmlCache = trim((string) ($input['body_html_cache'] ?? ''));
@@ -305,12 +437,15 @@ final class WriterDocument
             }
         }
 
+        $bodyHtml = trim((string) ($clean['body_html_cache'] ?? ''));
+
         return [
             'recipient_lines' => $clean['recipient_lines'],
             'info' => $clean['info'],
             'subject' => $clean['subject'],
             'greeting' => $clean['greeting'],
             'paragraphs' => $paragraphs,
+            'body_html' => $bodyHtml,
             'closing' => $clean['closing'],
             'signature' => $clean['signature'],
         ];

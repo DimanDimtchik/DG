@@ -24,7 +24,13 @@ final class MediaApi
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && (string) ($_GET['action'] ?? '') === 'list') {
-            if (!RoleResolver::canEdit($user) || !MenuRegistry::canAccessWebsite($user)) {
+            $mayList = RoleResolver::canEdit($user)
+                && (
+                    MenuRegistry::canAccessWebsite($user)
+                    || MenuRegistry::canAccess($user, 'dokumentenverfasser')
+                    || RoleResolver::isAdmin($user)
+                );
+            if (!$mayList) {
                 self::error('Keine Berechtigung.', 403);
             }
             header('Content-Type: application/json; charset=utf-8');

@@ -586,6 +586,25 @@ $belegeFocus = (string) ($belegeFocus ?? '');
   <?php if (($contentTemplate ?? '') === 'modules/website-formular-form') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/website-form-builder.js')) ?>" defer></script>
   <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/dokumentenverfasser-form') : ?>
+    <script>
+      window.dgWriterEditor = {
+        mountId: 'dg-writer-editor',
+        formId: 'dg-writer-form',
+        jsonInputId: 'dg-writer-body-tiptap',
+        htmlInputId: 'dg-writer-body-html',
+        paragraphsHostId: 'dg-writer-paragraphs-sync',
+        editable: <?= !empty($canEdit) && WriterDocument::normalizeStatus((string) (($writerForm['status'] ?? 'draft'))) === WriterDocument::STATUS_DRAFT ? 'true' : 'false' ?>,
+        mediaListUrl: '/api/media?action=list',
+        initialJson: <?= json_encode(
+            WriterDocument::tipTapDocument(is_array($writerForm ?? null) ? $writerForm : WriterDocument::empty()),
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS
+        ) ?>
+      };
+    </script>
+    <script src="<?= View::escape(Asset::url('/assets/js/emoji-catalog.js')) ?>" defer></script>
+    <script type="module" src="<?= View::escape(Asset::url('/assets/js/writer-editor.js')) ?>"></script>
+  <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/rezeptur-form') : ?>
     <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/recipe-flow.css')) ?>">
     <script src="<?= View::escape(Asset::url('/assets/js/recipe-flow.js')) ?>" defer></script>
