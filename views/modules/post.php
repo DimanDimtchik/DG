@@ -510,29 +510,30 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         </div>
 
         <?php if ($postPageCount > 1 || $postTotalCount > 0) : ?>
-          <nav class="dg-post-pagination" aria-label="Seitenblätterung">
-            <p class="dg-post-pagination__status">
-              Seite <?= (int) $postPageNum ?> von <?= (int) $postPageCount ?>
-              <?php if ($postTotalCount > 0) : ?>
-                <span class="dg-muted">(<?= (int) $postTotalCount ?> Nachrichten · <?= (int) $postPageLimit ?> pro Seite)</span>
-              <?php endif; ?>
-            </p>
-            <p class="dg-form-actions dg-post-pagination__nav">
-              <?php if ($postPageNum > 1) : ?>
-                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, 1)) ?>">Erste</a>
-                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum - 1)) ?>">Zurück</a>
-              <?php else : ?>
-                <span class="dg-button dg-button--disabled" aria-disabled="true">Erste</span>
-                <span class="dg-button dg-button--disabled" aria-disabled="true">Zurück</span>
-              <?php endif; ?>
-              <?php if ($postPageNum < $postPageCount) : ?>
-                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum + 1)) ?>">Weiter</a>
-                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageCount)) ?>">Letzte</a>
-              <?php else : ?>
-                <span class="dg-button dg-button--disabled" aria-disabled="true">Weiter</span>
-                <span class="dg-button dg-button--disabled" aria-disabled="true">Letzte</span>
-              <?php endif; ?>
-            </p>
+          <?php
+            $postPagerCanPrev = $postPageNum > 1;
+            $postPagerCanNext = $postPageNum < $postPageCount;
+            $postPagerCountLabel = $postTotalCount === 1
+                ? '1 Eintrag'
+                : ((int) $postTotalCount . ' Einträge');
+          ?>
+          <nav class="dg-post-pager" aria-label="Seitenblätterung">
+            <span class="dg-post-pager__count"><?= View::escape($postPagerCountLabel) ?></span>
+            <?php if ($postPagerCanPrev) : ?>
+              <a class="dg-post-pager__btn" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, 1)) ?>" title="Erste Seite" aria-label="Erste Seite">&laquo;</a>
+              <a class="dg-post-pager__btn" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum - 1)) ?>" title="Vorherige Seite" aria-label="Vorherige Seite">&lt;</a>
+            <?php else : ?>
+              <span class="dg-post-pager__btn is-disabled" aria-disabled="true" title="Erste Seite">&laquo;</span>
+              <span class="dg-post-pager__btn is-disabled" aria-disabled="true" title="Vorherige Seite">&lt;</span>
+            <?php endif; ?>
+            <span class="dg-post-pager__page"><?= (int) $postPageNum ?> von <?= (int) $postPageCount ?></span>
+            <?php if ($postPagerCanNext) : ?>
+              <a class="dg-post-pager__btn" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum + 1)) ?>" title="Nächste Seite" aria-label="Nächste Seite">&gt;</a>
+              <a class="dg-post-pager__btn" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageCount)) ?>" title="Letzte Seite" aria-label="Letzte Seite">&raquo;</a>
+            <?php else : ?>
+              <span class="dg-post-pager__btn is-disabled" aria-disabled="true" title="Nächste Seite">&gt;</span>
+              <span class="dg-post-pager__btn is-disabled" aria-disabled="true" title="Letzte Seite">&raquo;</span>
+            <?php endif; ?>
           </nav>
         <?php endif; ?>
 
