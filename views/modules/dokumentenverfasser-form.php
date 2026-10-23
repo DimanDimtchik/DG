@@ -123,23 +123,26 @@ $disabled = $readOnly ? ' disabled' : '';
         <fieldset class="dg-fieldset"<?= $disabled ?>>
           <legend>Anrede &amp; Gruß</legend>
           <div class="dg-form-grid">
-            <label class="dg-field">
+            <label class="dg-field dg-field--wide">
               <span>Anrede</span>
-              <input name="greeting" id="dg-writer-greeting" maxlength="255" list="dg-writer-greeting-presets" value="<?= View::escape((string) ($form['greeting'] ?? '')) ?>" spellcheck="true" lang="de">
-              <datalist id="dg-writer-greeting-presets">
+              <select class="dg-select" data-dg-phrase-fill="dg-writer-greeting"<?= $disabled ?>>
+                <option value="">Vorlage übernehmen …</option>
                 <?php foreach (WriterDocument::greetingPresets() as $text => $lbl) : ?>
                   <option value="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
                 <?php endforeach; ?>
-              </datalist>
+              </select>
+              <input name="greeting" id="dg-writer-greeting" maxlength="255" value="<?= View::escape((string) ($form['greeting'] ?? '')) ?>" spellcheck="true" lang="de"<?= $disabled ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--wide">
               <span>Grußformel</span>
-              <input name="closing" id="dg-writer-closing" maxlength="255" list="dg-writer-closing-presets" value="<?= View::escape((string) ($form['closing'] ?? '')) ?>" spellcheck="true" lang="de">
-              <datalist id="dg-writer-closing-presets">
+              <select class="dg-select" data-dg-phrase-fill="dg-writer-closing"<?= $disabled ?>>
+                <option value="">Vorlage übernehmen …</option>
                 <?php foreach (WriterDocument::closingPresets() as $text => $lbl) : ?>
                   <option value="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
                 <?php endforeach; ?>
-              </datalist>
+              </select>
+              <textarea name="closing" id="dg-writer-closing" rows="3" maxlength="255" spellcheck="true" lang="de"<?= $disabled ?>><?= View::escape((string) ($form['closing'] ?? '')) ?></textarea>
+              <span class="dg-field-hint">Standard aus Briefpapier-Einstellungen · Mehrzeilig möglich</span>
             </label>
             <label class="dg-field">
               <span>Unterschrift / Name</span>
@@ -385,4 +388,18 @@ $disabled = $readOnly ? ' disabled' : '';
       'special' => [],
       'icons' => WebsiteMenuIcons::pickerCatalog(),
   ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) ?></script>
+  <script>
+  (function () {
+    document.querySelectorAll('[data-dg-phrase-fill]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.getAttribute('data-dg-phrase-fill');
+        var target = id ? document.getElementById(id) : null;
+        if (!target || !sel.value) return;
+        target.value = sel.value;
+        sel.selectedIndex = 0;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+  })();
+  </script>
 <?php endif; ?>

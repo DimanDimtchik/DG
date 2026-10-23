@@ -121,7 +121,45 @@ final class LetterheadSettings
                 'supervisory_chair' => '',
                 'managing_directors' => '',
             ],
+            /** Standard-Anrede/Gruß für neue Schreiben; Platzhalter {Firma} */
+            'phrases' => [
+                'greeting' => 'Sehr geehrte/r ',
+                'closing' => "Mit freundlichen Grüßen,\nIhr {Firma} Team",
+            ],
         ];
+    }
+
+    /**
+     * Aufgelöste Anrede/Gruß (mit Firmenname).
+     *
+     * @return array{greeting: string, closing: string}
+     */
+    public static function resolvedPhrases(?array $cfg = null): array
+    {
+        $cfg = $cfg ?? self::config();
+        $phrases = is_array($cfg['phrases'] ?? null) ? $cfg['phrases'] : [];
+        $defaults = self::defaults()['phrases'];
+        $greeting = (string) ($phrases['greeting'] ?? $defaults['greeting']);
+        $closing = (string) ($phrases['closing'] ?? $defaults['closing']);
+        $party = self::resolvedCompany($cfg);
+        $firma = trim((string) ($party['legal_name'] ?? ''));
+        if ($firma === '') {
+            $firma = 'unser';
+        }
+
+        return [
+            'greeting' => self::applyPhrasePlaceholders($greeting, $firma),
+            'closing' => self::applyPhrasePlaceholders($closing, $firma),
+        ];
+    }
+
+    public static function applyPhrasePlaceholders(string $text, string $firma): string
+    {
+        return str_ireplace(
+            ['{Firma}', '{firma}', '{FIRMA}'],
+            $firma,
+            $text
+        );
     }
 
     /**
@@ -382,8 +420,15 @@ final class LetterheadSettings
                 if ($iban === '' && $bic === '' && $bank === '') {
                     continue;
                 }
-                $parts = array_filter([$bank, $iban !== '' ? 'IBAN ' . $iban : '', $bic !== '' ? 'BIC ' . $bic : '']);
-                $bankLines[] = implode(' · ', $parts);
+                if ($bank !== '') {
+                    $bankLines[] = $bank;
+                }
+                if ($iban !== '') {
+                    $bankLines[] = 'IBAN ' . $iban;
+                }
+                if ($bic !== '') {
+                    $bankLines[] = 'BIC ' . $bic;
+                }
             }
         }
 
@@ -862,6 +907,7 @@ final class LetterheadSettings
         $links = is_array($input['links'] ?? null) ? $input['links'] : [];
         $bg = is_array($input['background'] ?? null) ? $input['background'] : [];
         $wm = is_array($input['watermark'] ?? null) ? $input['watermark'] : [];
+        $phrases = is_array($input['phrases'] ?? null) ? $input['phrases'] : [];
         $export = is_array($input['export_formats'] ?? null) ? $input['export_formats'] : [];
         $legal = is_array($input['legal_overrides'] ?? null) ? $input['legal_overrides'] : [];
 
@@ -1031,6 +1077,10 @@ final class LetterheadSettings
                 'outstanding_contributions' => mb_substr(trim((string) ($legal['outstanding_contributions'] ?? '')), 0, 80),
                 'supervisory_chair' => mb_substr(trim((string) ($legal['supervisory_chair'] ?? '')), 0, 120),
                 'managing_directors' => mb_substr(trim((string) ($legal['managing_directors'] ?? '')), 0, 500),
+            ],
+            'phrases' => [
+                'greeting' => mb_substr((string) ($phrases['greeting'] ?? $d['phrases']['greeting']), 0, 255),
+                'closing' => mb_substr((string) ($phrases['closing'] ?? $d['phrases']['closing']), 0, 255),
             ],
         ];
     }

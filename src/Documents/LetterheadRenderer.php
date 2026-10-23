@@ -49,14 +49,40 @@ final class LetterheadRenderer
                 'date' => $today,
             ],
             'subject' => 'Ihr Auftrag vom 1. Oktober 2026 — Bestätigung',
-            'greeting' => 'Sehr geehrte Frau Beispiel,',
+            'greeting' => self::sampleGreeting(),
             'paragraphs' => [
                 'vielen Dank für Ihre Anfrage. Gerne bestätigen wir Ihnen die besprochenen Leistungen wie folgt.',
                 'Die Umsetzung erfolgt nach Freigabe innerhalb von zehn Werktagen. Bei Rückfragen erreichen Sie uns unter den angegebenen Kontaktdaten.',
             ],
-            'closing' => 'Mit freundlichen Grüßen',
+            'closing' => self::sampleClosing(),
             'signature' => '',
         ];
+    }
+
+    private static function sampleGreeting(): string
+    {
+        if (!class_exists('LetterheadSettings')) {
+            return 'Sehr geehrte/r Frau Beispiel,';
+        }
+        $g = rtrim(LetterheadSettings::resolvedPhrases()['greeting']);
+        if ($g === '') {
+            return 'Sehr geehrte/r Frau Beispiel,';
+        }
+        if (preg_match('/,$/u', $g)) {
+            return $g;
+        }
+
+        return $g . ' Frau Beispiel,';
+    }
+
+    private static function sampleClosing(): string
+    {
+        if (!class_exists('LetterheadSettings')) {
+            return "Mit freundlichen Grüßen,\nIhr Team";
+        }
+        $c = LetterheadSettings::resolvedPhrases()['closing'];
+
+        return $c !== '' ? $c : "Mit freundlichen Grüßen,\nIhr Team";
     }
 
     /**
@@ -278,7 +304,7 @@ final class LetterheadRenderer
         }
         $closing = trim((string) ($doc['closing'] ?? ''));
         if ($closing !== '') {
-            $html .= '<p class="dg-lh-closing">' . self::e($closing) . '</p>';
+            $html .= '<p class="dg-lh-closing">' . nl2br(self::e($closing), false) . '</p>';
         }
         $signature = trim((string) ($doc['signature'] ?? ''));
         if ($signature !== '') {
@@ -333,13 +359,21 @@ final class LetterheadRenderer
             $push($addr);
         }
         if (!empty($footer['show_phone']) && $party['phone'] !== '') {
-            $push('Tel. ' . $party['phone']);
+            $telHref = self::telHref($party['phone']);
+            if ($telHref !== '') {
+                $pushHtml('Tel. ' . self::footerAnchor($telHref, $party['phone']));
+            } else {
+                $push('Tel. ' . $party['phone']);
+            }
         }
         if (!empty($footer['show_email']) && $party['email'] !== '') {
-            $push($party['email']);
+            $email = trim((string) $party['email']);
+            $pushHtml(self::footerAnchor('mailto:' . $email, $email));
         }
         if (!empty($footer['show_website']) && $party['website'] !== '') {
-            $push($party['website']);
+            $web = trim((string) $party['website']);
+            $webHref = preg_match('#^https?://#i', $web) ? $web : 'https://' . ltrim($web, '/');
+            $pushHtml(self::footerAnchor($webHref, $web, true));
         }
         if (!empty($footer['show_tax_number']) && $party['tax_number'] !== '') {
             $push('Steuernr. ' . $party['tax_number']);
@@ -371,8 +405,7 @@ final class LetterheadRenderer
             if ($url === '') {
                 continue;
             }
-            $href = self::e($url);
-            $linkBits[] = '<a class="dg-lh-footer__link" href="' . $href . '">' . self::e($label) . '</a>';
+            $linkBits[] = self::footerAnchor($url, $label, true);
         }
         if ($linkBits !== []) {
             $pushHtml(implode(' · ', $linkBits));
@@ -415,11 +448,8 @@ final class LetterheadRenderer
     public static function legalMandatoryLines(array $party): array
     {
         $lines = [];
-        $head = trim(implode(' · ', array_filter([
-            $party['legal_name'],
-            $party['company_type_label'],
-            $party['seat'] !== '' ? 'Sitz: ' . $party['seat'] : '',
-        ])));
+        // Nur Firmenname: Rechtsform steckt meist im Namen; Sitz/Ort steht bereits in der Anschrift.
+        $head = trim((string) ($party['legal_name'] ?? ''));
         if ($head !== '') {
             $lines[] = $head;
         }
@@ -641,7 +671,13 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 }
 .dg-lh-footer--rule { border-top: 0.25mm solid #999; padding-top: 2mm; }
 .dg-lh-footer__grid { display: grid; gap: 3mm; }
-.dg-lh-footer__link { color: inherit; text-decoration: underline; }
+.dg-lh-footer a,
+.dg-lh-footer__link {
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  pointer-events: auto;
+}
 .dg-lh-guides { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .dg-lh-guide--margin {
   position: absolute;
@@ -682,5 +718,32 @@ CSS;
     private static function e(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    /** tel:-URI für Softphone / native Anruf-Apps (ohne CRM-Telefonanlage). */
+    private static function telHref(string $phone): string
+    {
+        $digits = preg_replace('/[^\d+]/', '', trim($phone)) ?? '';
+        if ($digits === '' || $digits === '+') {
+            return '';
+        }
+        if (str_starts_with($digits, '00')) {
+            $digits = '+' . substr($digits, 2);
+        }
+
+        return 'tel:' . $digits;
+    }
+
+    private static function footerAnchor(string $href, string $label, bool $newTab = false): string
+    {
+        $href = trim($href);
+        $label = trim($label);
+        if ($href === '' || $label === '') {
+            return self::e($label);
+        }
+        $extra = $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+
+        return '<a class="dg-lh-footer__link" href="' . self::e($href) . '"' . $extra . '>'
+            . self::e($label) . '</a>';
     }
 }

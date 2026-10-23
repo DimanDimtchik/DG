@@ -532,6 +532,33 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     </div>
   </details>
 
+  <?php $phrases = is_array($cfg['phrases'] ?? null) ? $cfg['phrases'] : []; ?>
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Anrede &amp; Grußformel</summary>
+    <div class="dg-collapsible-form__body">
+      <p class="dg-field-hint">Standard für neue Schreiben. Platzhalter <code>{Firma}</code> wird durch den rechtlichen Firmennamen ersetzt.</p>
+      <div class="dg-form-grid">
+        <label class="dg-field dg-field--wide">
+          <span>Anrede (Standard)</span>
+          <input type="text" name="phrases[greeting]" maxlength="255"
+            value="<?= View::escape((string) ($phrases['greeting'] ?? 'Sehr geehrte/r ')) ?>"
+            placeholder="Sehr geehrte/r "<?= $disabled ?>>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Grußformel (Standard)</span>
+          <textarea name="phrases[closing]" rows="3" maxlength="255"<?= $disabled ?>><?= View::escape((string) ($phrases['closing'] ?? "Mit freundlichen Grüßen,\nIhr {Firma} Team")) ?></textarea>
+        </label>
+      </div>
+      <?php
+        $previewPhrases = LetterheadSettings::resolvedPhrases($cfg);
+      ?>
+      <p class="dg-field-hint" style="margin-top:8px">
+        Vorschau: <?= View::escape($previewPhrases['greeting']) ?>…
+        · <?= View::escape(preg_replace('/\s+/u', ' ', $previewPhrases['closing']) ?? '') ?>
+      </p>
+    </div>
+  </details>
+
   <details class="dg-collapsible-form" open>
     <summary class="dg-subsection-title dg-collapsible-form__summary">Export-Formate (Dokumentenverfasser)</summary>
     <div class="dg-collapsible-form__body">

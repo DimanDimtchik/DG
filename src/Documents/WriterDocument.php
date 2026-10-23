@@ -58,14 +58,21 @@ final class WriterDocument
      */
     public static function empty(): array
     {
+        $phrases = class_exists('LetterheadSettings')
+            ? LetterheadSettings::resolvedPhrases()
+            : [
+                'greeting' => 'Sehr geehrte/r ',
+                'closing' => "Mit freundlichen Grüßen,\nIhr Team",
+            ];
+
         return [
             'id' => 0,
             'status' => self::STATUS_DRAFT,
             'version' => 1,
             'title' => '',
             'subject' => '',
-            'greeting' => 'Sehr geehrte Damen und Herren,',
-            'closing' => 'Mit freundlichen Grüßen',
+            'greeting' => $phrases['greeting'],
+            'closing' => $phrases['closing'],
             'signature' => '',
             'recipient_lines' => [''],
             'info' => self::emptyInfo(),
@@ -122,13 +129,19 @@ final class WriterDocument
      */
     public static function greetingPresets(): array
     {
-        return [
+        $configured = class_exists('LetterheadSettings')
+            ? LetterheadSettings::resolvedPhrases()['greeting']
+            : 'Sehr geehrte/r ';
+        $presets = [
+            $configured => 'Standard (Einstellungen)',
             'Sehr geehrte Damen und Herren,' => 'Neutral',
             'Sehr geehrte Frau …,' => 'Frau',
             'Sehr geehrter Herr …,' => 'Herr',
             'Guten Tag,' => 'Kurz',
             'Liebe …,' => 'Persönlich',
         ];
+
+        return $presets;
     }
 
     /**
@@ -136,12 +149,18 @@ final class WriterDocument
      */
     public static function closingPresets(): array
     {
-        return [
-            'Mit freundlichen Grüßen' => 'Standard',
-            'Freundliche Grüße' => 'Kurz',
+        $configured = class_exists('LetterheadSettings')
+            ? LetterheadSettings::resolvedPhrases()['closing']
+            : "Mit freundlichen Grüßen,\nIhr Team";
+        $presets = [
+            $configured => 'Standard (Einstellungen)',
+            'Mit freundlichen Grüßen' => 'Kurz',
+            'Freundliche Grüße' => 'Locker',
             'Mit besten Grüßen' => 'Warm',
             'Hochachtungsvoll' => 'Formell',
         ];
+
+        return $presets;
     }
 
     /**
