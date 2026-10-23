@@ -211,13 +211,28 @@ $disabled = $readOnly ? ' disabled' : '';
 
         <fieldset class="dg-fieldset">
           <legend>Export</legend>
-          <p class="dg-field-hint">Freigeschaltete Formate aus Briefpapier-Einstellungen. Download folgt in D5.</p>
+          <p class="dg-field-hint">
+            Formate aus Einstellungen → Briefpapier.
+            <?php if (!$isEdit) : ?>
+              Bitte zuerst speichern — Export braucht eine Dokument-ID.
+            <?php else : ?>
+              PDF öffnet die Druckvorlage (Browser → „Als PDF speichern“, wie Belege). TXT/MD/DOCX starten einen Download. Export wird protokolliert.
+            <?php endif; ?>
+          </p>
           <p class="dg-form-actions">
-            <?php foreach (['pdf' => 'PDF', 'txt' => 'TXT', 'md' => 'Markdown', 'docx' => 'Word'] as $key => $lbl) : ?>
-              <?php if (!empty($exportFormats[$key])) : ?>
-                <button type="button" class="dg-button" disabled title="Export folgt in D5"><?= View::escape($lbl) ?></button>
+            <?php foreach (WriterExportService::formatLabels() as $key => $lbl) : ?>
+              <?php if (empty($exportFormats[$key])) {
+                  continue;
+              } ?>
+              <?php if ($isEdit) : ?>
+                <a class="dg-button" href="/app?page=dokumentenverfasser-form&amp;writer_export=1&amp;id=<?= (int) $writerDocumentId ?>&amp;format=<?= View::escape($key) ?>"<?= $key === 'pdf' ? ' target="_blank" rel="noopener"' : '' ?>><?= View::escape($lbl) ?></a>
+              <?php else : ?>
+                <button type="button" class="dg-button" disabled title="Zuerst speichern"><?= View::escape($lbl) ?></button>
               <?php endif; ?>
             <?php endforeach; ?>
+            <?php if (isset($user) && $user instanceof User && SettingsRegistry::canAccess($user)) : ?>
+              <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>">Formate einstellen</a>
+            <?php endif; ?>
           </p>
         </fieldset>
       </form>

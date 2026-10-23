@@ -1301,6 +1301,27 @@ switch ($path) {
             exit;
         }
 
+        // GET: Dokumentenverfasser Export (PDF-Druck / TXT / MD / DOCX)
+        if (
+            ($page === 'dokumentenverfasser' || $page === 'dokumentenverfasser-form')
+            && isset($_GET['writer_export'])
+            && MenuRegistry::canAccess($user, 'dokumentenverfasser')
+        ) {
+            $exportId = (int) ($_GET['id'] ?? 0);
+            $exportFormat = strtolower(trim((string) ($_GET['format'] ?? 'pdf')));
+            try {
+                WriterDocumentRepository::ensureReady();
+                WriterExportService::download($exportId, $exportFormat, $user->id);
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                $back = $exportId > 0
+                    ? '/app?page=dokumentenverfasser-form&action=edit&id=' . $exportId
+                    : '/app?page=dokumentenverfasser';
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+        }
+
         // GET: Dokumentenverfasser A4-Vorschau (gespeichertes Dokument oder Muster)
         if (
             ($page === 'dokumentenverfasser' || $page === 'dokumentenverfasser-form')
