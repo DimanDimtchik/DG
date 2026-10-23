@@ -18,6 +18,8 @@ spl_autoload_register(static function (string $class): void {
         'CompanyExtendedSettings' => '/src/Settings/CompanyExtendedSettings.php',
         'LetterheadSettings' => '/src/Documents/LetterheadSettings.php',
         'LetterheadRenderer' => '/src/Documents/LetterheadRenderer.php',
+        'WriterDocument' => '/src/Documents/WriterDocument.php',
+        'WriterDocumentRepository' => '/src/Documents/WriterDocumentRepository.php',
         'CompanyTypes' => '/src/Company/CompanyTypes.php',
         'CompanyAddressTypes' => '/src/Company/CompanyAddressTypes.php',
         'TaxAdvisorSettings' => '/src/Settings/TaxAdvisorSettings.php',

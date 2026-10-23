@@ -146,7 +146,7 @@ Einstellungen: Checkboxen „PDF / TXT / MD / DOCX anbieten“.
 
 ### 2.6 ToDo — Editor & Export (D1–D7)
 
-- [ ] **D1** Datenmodell Dokument (Betreff, Blöcke, Empfänger, Infoblock, Status Entwurf/Final)
+- [x] **D1** Datenmodell Dokument — `WriterDocument` + `WriterDocumentRepository`, Migration `112_writer_documents` (Betreff, Blöcke-JSON, Empfänger, Infoblock, Status Entwurf/Final/Archiv, Versionshistorie, Kontakt/Voucher-Felder)
 - [ ] **D2** UI `page=dokumentenverfasser`: Liste + Neu/Bearbeiten, Briefpapier-Rahmen
 - [ ] **D3** Editor: TipTap + Absätze (+), Tabellen, Emoji, Lucide, Mediathek
 - [ ] **D4** Spellcheck + Klartext-Empfehlungen (lokal); LanguageTool optional
