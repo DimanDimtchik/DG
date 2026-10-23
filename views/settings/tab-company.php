@@ -227,7 +227,7 @@ $bankSummary = $filledBanks > 0
         <div class="dg-radio-row">
           <label class="dg-field dg-field--check">
             <input type="radio" name="employee_count_mode" value="auto"<?= ($ext['employee_count_mode'] ?? 'auto') !== 'manual' ? ' checked' : '' ?>>
-            <span>Automatisch (<?= (int) $activeEmployeeCount ?> aktive CRM-Mitarbeiter)</span>
+            <span>Automatisch (<?= (int) $activeEmployeeCount ?> aktive Mitarbeiter-Kontakte)</span>
           </label>
           <label class="dg-field dg-field--check">
             <input type="radio" name="employee_count_mode" value="manual"<?= ($ext['employee_count_mode'] ?? '') === 'manual' ? ' checked' : '' ?>>
@@ -235,7 +235,10 @@ $bankSummary = $filledBanks > 0
             <input type="number" min="0" class="dg-input--narrow" name="employee_count_manual" value="<?= View::escape((string) ($ext['employee_count_manual'] ?? 0)) ?>">
           </label>
         </div>
-        <small class="dg-field-hint">Aktuell verwendet: <strong><?= (int) $displayEmployeeCount ?></strong></small>
+        <small class="dg-field-hint">
+          Aktuell verwendet: <strong><?= (int) $displayEmployeeCount ?></strong>
+          — Zählung aus Kontakten mit Rolle Mitarbeiter/Administrator ohne Austrittsdatum.
+        </small>
       </div>
     </div>
     </div>

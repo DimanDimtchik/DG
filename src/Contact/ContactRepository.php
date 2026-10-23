@@ -792,6 +792,36 @@ final class ContactRepository
     }
 
         /**
+     * Anzahl aktiver Mitarbeiter-Kontakte (Rolle MA/Admin, ohne Austrittsdatum).
+     */
+    public static function countActiveStaffContacts(): int
+    {
+        if (!Database::isConfigured()) {
+            return 0;
+        }
+
+        $stmt = Database::pdo()->query(
+            "SELECT employee_data
+             FROM dg_contacts
+             WHERE contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')"
+        );
+        if ($stmt === false) {
+            return 0;
+        }
+
+        $count = 0;
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $data = self::mapEmployeeData($row);
+            if (trim((string) ($data['exit_date'] ?? '')) !== '') {
+                continue;
+            }
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * Mitarbeiter-Kontakte für Kalender-Zuordnung (noch nicht anderem Kalender-Mitarbeiter zugeordnet).
      * @param int $forEmployeeId
      * @return list<array{id: int, label: string}>

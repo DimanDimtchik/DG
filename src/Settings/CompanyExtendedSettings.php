@@ -222,19 +222,12 @@ final class CompanyExtendedSettings
     }
 
     /**
-     * Methode active employee count.
-     * @return int
+     * Aktive Mitarbeiter für Firmendaten: Mitarbeiter-Kontakte ohne Austrittsdatum.
+     * (Nicht CRM-Logins — Kontakte können ohne Benutzerkonto angelegt sein.)
      */
     public static function activeEmployeeCount(): int
     {
-        $count = 0;
-        foreach (UserRepository::all() as $user) {
-            if ($user->employeeActive && ($user->hasRole('dg_eigenmitarbeiter') || $user->hasRole('administrator'))) {
-                $count++;
-            }
-        }
-
-        return $count;
+        return ContactRepository::countActiveStaffContacts();
     }
 
     /**
