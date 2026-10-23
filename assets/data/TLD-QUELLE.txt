@@ -1,0 +1,22 @@
+IANA Root Zone Database — Top-Level-Domain-Liste
+Datei: tlds-alpha-by-domain.txt
+Offizielle Quelle (kostenlos, öffentlich, zur Nutzung freigegeben):
+  https://data.iana.org/TLD/tlds-alpha-by-domain.txt
+MD5-Prüfsumme:
+  https://data.iana.org/TLD/tlds-alpha-by-domain.txt.md5
+
+Aktualisierungsrhythmus bei IANA:
+  KEIN fester Termin (nicht „jedes Jahr am 01.01.“).
+  Die Liste wird geschrieben, wenn sich die Root-Zone ändert
+  (neue oder zurückgezogene TLDs). Manchmal ändert sich nur der
+  Zeitstempel/Version-Header ohne inhaltliche TLD-Änderung.
+  Header-Beispiel: "# Version 2026102200, Last Updated Thu Oct 22 … UTC"
+
+CRM-Prüfung:
+  WebsiteTldListUpdater — automatisch max. alle 7 Tage (App::boot),
+  optional cron.php?job=tld-list-update
+  Aktive Kopie bevorzugt: storage/tlds-alpha-by-domain.txt
+  Fallback / Repo-Snapshot: assets/data/tlds-alpha-by-domain.txt
+
+Ergänzend (Public Suffix List, Mozilla — nicht dieselbe Datei):
+  https://publicsuffix.org/list/public_suffix_list.dat

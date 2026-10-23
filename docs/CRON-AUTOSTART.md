@@ -16,6 +16,7 @@ Auf KAS können Cronjobs nur manuell eingetragen werden. Das CRM nutzt deshalb *
 | Migrationen | `MigrationRunner::runOnCrmAccess()` | CRM `/app`, Benutzer mit Bearbeitungsrecht |
 | Tages-Backup | `BackupService::runIfDue()` | Erster Request pro Tag |
 | Update-Check | `UpdateChecker::runIfDue()` | Erster **Werktag** im Monat (Tag 1–7, DE-Feiertage) |
+| IANA-TLD-Liste | `WebsiteTldListUpdater::runIfDue()` | Max. alle **7 Tage** (kein fester IANA-Jahres-Termin) |
 | Datei-Integrität | `FileIntegrity::runIfDue()` | Max. alle 24 h |
 | Mitarbeiter-Purge (10 J.) | `EmployeeRetentionService::runOnCrmAccess()` | CRM `/app`, nur **1.–14. Januar**, 1× pro Sitzung |
 | **Mahnversand auto** | `DunningService::runIfDue()` | Erster Request pro Tag, wenn in Einstellungen aktiv |
@@ -29,6 +30,7 @@ Für feste Uhrzeiten oder Jobs ohne Website-Traffic:
 - `cron.php?job=employee-retention&token=…`
 - `cron.php?job=dunning-auto&token=…`
 - `cron.php?job=overtime-reminder&token=…`
+- `cron.php?job=tld-list-update&token=…` (optional `&force=1`)
 
 Token: `config/cron.local.php` (Vorlage: `config/cron.local.php.example`).
 

@@ -993,19 +993,11 @@ final class CompanyExtendedSettings
     }
 
     /**
-     * Normalisiert Website-/Termin-URLs (https://-Prefix wenn nötig).
+     * Normalisiert Website-/Termin-URLs (Leerzeichen, https://, Host).
      */
     private static function url(mixed $value): string
     {
-        $url = trim((string) $value);
-        if ($url === '') {
-            return '';
-        }
-        if (!preg_match('#^https?://#i', $url) && preg_match('#^[a-z0-9.-]+\.[a-z]{2,}(/|$)#i', $url)) {
-            $url = 'https://' . $url;
-        }
-
-        return $url;
+        return WebsiteUrlNormalizer::normalize((string) $value);
     }
 
     /**

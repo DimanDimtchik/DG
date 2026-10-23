@@ -50,6 +50,11 @@ final class App
 
         UpdateChecker::runIfDue();
         try {
+            WebsiteTldListUpdater::runIfDue();
+        } catch (Throwable) {
+            // IANA-TLD-Update darf Login/CRM nicht blockieren
+        }
+        try {
             BackupService::runIfDue();
         } catch (Throwable) {
             // Backup darf Login/CRM nicht blockieren

@@ -128,7 +128,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
           </label>
           <label class="dg-field dg-field--wide">
             <span>Website</span>
-            <input type="url" name="footer_website" value="<?= View::escape((string) ($layout['footer_website'] ?? '')) ?>" placeholder="<?= View::escape((string) (CompanySettings::config()['website'] ?? 'https://')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+            <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="footer_website" value="<?= View::escape((string) ($layout['footer_website'] ?? '')) ?>" placeholder="<?= View::escape((string) (CompanySettings::config()['website'] ?? 'https://')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
 
           <fieldset class="dg-fieldset dg-field--wide">
@@ -145,10 +145,13 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
                 <label class="dg-field dg-field--wide">
                   <span><?= View::escape($networkLabel) ?></span>
                   <input
-                    type="url"
+                    type="text"
+                    inputmode="url"
+                    autocomplete="url"
+                    data-website-url="1"
                     name="footer_social_<?= View::escape($networkKey) ?>"
                     value="<?= View::escape((string) ($layout['footer_social_' . $networkKey] ?? '')) ?>"
-                    placeholder="https://"
+                    placeholder="linkedin.com/company/…"
                     <?= !$dbConnected ? 'disabled' : '' ?>
                   >
                 </label>
@@ -167,15 +170,15 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
             <div class="dg-form-grid">
               <label class="dg-field dg-field--wide">
                 <span>Impressum (URL)</span>
-                <input type="url" name="footer_url_impressum" value="<?= View::escape((string) ($layout['footer_url_impressum'] ?? '')) ?>" placeholder="https://ihre-domain.de/impressum"<?= !$dbConnected ? ' disabled' : '' ?>>
+                <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="footer_url_impressum" value="<?= View::escape((string) ($layout['footer_url_impressum'] ?? '')) ?>" placeholder="https://ihre-domain.de/impressum"<?= !$dbConnected ? ' disabled' : '' ?>>
               </label>
               <label class="dg-field dg-field--wide">
                 <span>Datenschutz (URL)</span>
-                <input type="url" name="footer_url_datenschutz" value="<?= View::escape((string) ($layout['footer_url_datenschutz'] ?? '')) ?>" placeholder="https://ihre-domain.de/datenschutz"<?= !$dbConnected ? ' disabled' : '' ?>>
+                <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="footer_url_datenschutz" value="<?= View::escape((string) ($layout['footer_url_datenschutz'] ?? '')) ?>" placeholder="https://ihre-domain.de/datenschutz"<?= !$dbConnected ? ' disabled' : '' ?>>
               </label>
               <label class="dg-field dg-field--wide">
                 <span>AGB (URL)</span>
-                <input type="url" name="footer_url_agb" value="<?= View::escape((string) ($layout['footer_url_agb'] ?? '')) ?>" placeholder="https://ihre-domain.de/agb"<?= !$dbConnected ? ' disabled' : '' ?>>
+                <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="footer_url_agb" value="<?= View::escape((string) ($layout['footer_url_agb'] ?? '')) ?>" placeholder="https://ihre-domain.de/agb"<?= !$dbConnected ? ' disabled' : '' ?>>
               </label>
             </div>
           </fieldset>

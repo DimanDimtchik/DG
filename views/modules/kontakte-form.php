@@ -190,7 +190,7 @@ if ($isCompanyForm && $companyEmployees === []) {
       <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" value="<?= View::escape($form['email_2']) ?>"></label>
       <label class="dg-field"><span>Telefon 1</span><input name="phone_1" value="<?= View::escape($form['phone_1']) ?>"></label>
       <label class="dg-field"><span>Telefon 2</span><input name="phone_2" value="<?= View::escape($form['phone_2']) ?>"></label>
-      <label class="dg-field dg-field--wide"><span>Website</span><input name="website" value="<?= View::escape($form['website']) ?>"></label>
+      <label class="dg-field dg-field--wide"><span>Website</span><input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="website" value="<?= View::escape($form['website']) ?>" placeholder="ganz-om.de"></label>
       <label class="dg-field dg-field--wide">
         <span>Bemerkung (intern)</span>
         <textarea name="contact_note" rows="3" placeholder="z. B. Geräte-IP: 192.168.1.42 (OpenStage, Drucker …)"><?= View::escape($form['contact_note'] ?? '') ?></textarea>
@@ -262,7 +262,7 @@ if ($isCompanyForm && $companyEmployees === []) {
       <?php foreach ($socialFields as $fieldKey => $fieldLabel) : ?>
         <label class="dg-field dg-field--wide">
           <span><?= View::escape($fieldLabel) ?></span>
-          <input type="url" name="<?= View::escape($fieldKey) ?>" value="<?= View::escape($form[$fieldKey] ?? '') ?>" placeholder="https://">
+          <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="<?= View::escape($fieldKey) ?>" value="<?= View::escape($form[$fieldKey] ?? '') ?>" placeholder="https://">
         </label>
       <?php endforeach; ?>
     </div>

@@ -69,5 +69,24 @@ if (($_GET['job'] ?? '') === 'overtime-reminder') {
     exit;
 }
 
+if (($_GET['job'] ?? '') === 'tld-list-update') {
+    if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
+        http_response_code(403);
+        echo "Forbidden.\n";
+        exit;
+    }
+
+    try {
+        $force = isset($_GET['force']) && (string) $_GET['force'] === '1';
+        $result = WebsiteTldListUpdater::refresh($force);
+        echo date('c') . ' tld-list-update: ' . $result['message'] . "\n";
+        echo 'version=' . ($result['remote_version'] ?? '') . ' path=' . $result['path'] . "\n";
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo date('c') . ' tld-list-update FEHLER: ' . $e->getMessage() . "\n";
+    }
+    exit;
+}
+
 http_response_code(404);
 echo "Unbekannter Job.\n";

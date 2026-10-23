@@ -677,6 +677,10 @@ switch ($path) {
         FinanzamtLookupApi::handle();
         exit;
 
+    case '/api/website-url-check':
+        WebsiteUrlCheckApi::handle();
+        exit;
+
     case '/api/health-insurer-suggest':
         header('Content-Type: application/json; charset=utf-8');
         $apiUser = AuthService::user();

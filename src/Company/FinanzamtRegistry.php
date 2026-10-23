@@ -188,8 +188,8 @@ final class FinanzamtRegistry {
             }
             $website = '';
         }
-        if ($website !== '' && !preg_match('#^https?://#i', $website) && self::looks_like_url($website)) {
-            $website = 'https://' . preg_replace('#^//#', '', $website);
+        if ($website !== '') {
+            $website = WebsiteUrlNormalizer::normalize($website);
         }
 
         return [

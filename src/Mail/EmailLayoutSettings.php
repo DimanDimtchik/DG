@@ -379,14 +379,6 @@ final class EmailLayoutSettings
      */
     private static function normalizeUrl(string $url): string
     {
-        $url = trim($url);
-        if ($url === '') {
-            return '';
-        }
-        if (preg_match('#^https?://#i', $url)) {
-            return $url;
-        }
-
-        return 'https://' . $url;
+        return WebsiteUrlNormalizer::normalize($url);
     }
 }

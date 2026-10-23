@@ -576,6 +576,13 @@ $belegeFocus = (string) ($belegeFocus ?? '');
   <?php if (($contentTemplate ?? '') === 'modules/hr-abteilungen') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/hr-abteilungen.js')) ?>" defer></script>
   <?php endif; ?>
+  <script>
+    window.dgWebsiteUrlAssist = {
+      url: '/api/website-url-check',
+      csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>
+    };
+  </script>
+  <script src="<?= View::escape(Asset::url('/assets/js/website-url-assist.js')) ?>" defer></script>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
   <?php if (RoleResolver::isStaff($user)) : ?>
     <?php View::render('partials/kichel-widget', compact('user')); ?>

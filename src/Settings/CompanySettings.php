@@ -193,13 +193,6 @@ final class CompanySettings
      */
   private static function normalizeWebsite(string $url): string
   {
-    if ($url === '') {
-      return '';
-    }
-    if (preg_match('#^https?://#i', $url) === 1) {
-      return $url;
-    }
-
-    return 'https://' . $url;
+    return WebsiteUrlNormalizer::normalize($url);
   }
 }

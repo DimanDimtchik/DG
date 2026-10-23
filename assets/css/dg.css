@@ -1334,6 +1334,15 @@ code {
   color: #b42318;
 }
 
+.dg-field-hint--warn {
+  color: #8a6116;
+}
+
+.dg-website-url-hint[data-suggestion] {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .dg-stored-mail {
   margin: 0 0 16px;
   padding: 10px 12px;
