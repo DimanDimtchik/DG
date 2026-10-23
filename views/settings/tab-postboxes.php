@@ -36,10 +36,42 @@ $presetHints = MailboxProviderPresets::connectionDefaults($currentPreset, (strin
 $presetNote = MailboxProviderPresets::presetNote($currentPreset);
 
 $postboxCount = count($postboxes);
+$postUiConfig = $postUiConfig ?? PostUiSettings::config();
 
 ?>
 
 <div class="dg-notify-accordion" id="dg-postboxes-accordion">
+
+  <details class="dg-notify-section" open>
+    <summary class="dg-notify-section__summary">
+      <strong>Darstellung Post</strong>
+      <span class="dg-muted">Wie viele Mails pro Seite in der Postfach-Liste</span>
+    </summary>
+    <div class="dg-notify-section__body">
+      <form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('postfaecher')) ?>">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Nachrichten pro Seite</span>
+            <input
+              type="number"
+              name="messages_per_page"
+              min="<?= (int) PostUiSettings::MIN_PER_PAGE ?>"
+              max="<?= (int) PostUiSettings::MAX_PER_PAGE ?>"
+              step="1"
+              value="<?= (int) ($postUiConfig['messages_per_page'] ?? PostUiSettings::DEFAULT_PER_PAGE) ?>"
+              required
+            >
+            <span class="dg-field-hint">Standard <?= (int) PostUiSettings::DEFAULT_PER_PAGE ?> · erlaubt <?= (int) PostUiSettings::MIN_PER_PAGE ?>–<?= (int) PostUiSettings::MAX_PER_PAGE ?></span>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" name="post_ui_save" value="1" class="dg-button dg-button--primary">Darstellung speichern</button>
+        </div>
+      </form>
+    </div>
+  </details>
+
 
   <details class="dg-notify-section" id="dg-postbox-edit"<?= $editBox ? ' open' : '' ?>>
 

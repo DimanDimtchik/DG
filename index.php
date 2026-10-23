@@ -2526,6 +2526,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen — Post-Darstellung (Mails pro Seite)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['post_ui_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('postfaecher');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    PostUiSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Post-Darstellung gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen — Postfächer
         if (
             $page === 'einstellungen'
@@ -4582,6 +4604,7 @@ switch ($path) {
         $postboxes = MailboxRepository::allForAdmin();
         $postboxMemberOptions = MailboxMemberResolver::staffOptions();
         $kasConfigured = KasSettings::isConfigured();
+        $postUiConfig = PostUiSettings::config();
         $smtpTestReport = SmtpTestReport::pull();
         $appearanceConfig = AppearanceSettings::forForm();
         $crmThemeConfig = CrmThemeSettings::forForm();
@@ -7317,30 +7340,48 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
             } elseif (!$postCompose && !$postListMode) {
                 $filter = $postMailboxFilter > 0 ? $postMailboxFilter : null;
-                $postPageLimit = 50;
+                $postPageLimit = PostUiSettings::messagesPerPage();
+                $postPageNum = max(1, (int) ($_GET['p'] ?? 1));
+                $postPageOffset = ($postPageNum - 1) * $postPageLimit;
+                $postTotalCount = 0;
                 if ($postSearchMode) {
+                    // Eine Seite + „hat mehr“; Gesamtsumme nicht exakt nötig für Suche
                     $postInbox = MailLogRepository::searchForMailboxes(
                         $mailboxIds,
                         $postSearchQuery,
                         $postSearchContactId > 0 ? $postSearchContactId : null,
                         $filter,
-                        $postPageLimit,
-                        0
+                        $postPageLimit + 1,
+                        $postPageOffset
                     );
-                    $postHasMore = count($postInbox) >= $postPageLimit;
+                    $postHasMore = count($postInbox) > $postPageLimit;
+                    if ($postHasMore) {
+                        $postInbox = array_slice($postInbox, 0, $postPageLimit);
+                    }
+                    $postTotalCount = $postPageOffset + count($postInbox) + ($postHasMore ? 1 : 0);
                     $postImapAsync = false;
                     $postFolderLabel = $postSearchQuery !== ''
                         ? ('Suche: ' . $postSearchQuery)
                         : ('Kontakt #' . $postSearchContactId);
                 } else {
+                    $postTotalCount = MailLogRepository::countFolderMessagesForMailboxes(
+                        $mailboxIds,
+                        $postFolder,
+                        $filter
+                    );
+                    $postPageCount = max(1, (int) ceil($postTotalCount / $postPageLimit));
+                    if ($postPageNum > $postPageCount) {
+                        $postPageNum = $postPageCount;
+                        $postPageOffset = ($postPageNum - 1) * $postPageLimit;
+                    }
                     $postInbox = MailLogRepository::folderMessagesForMailboxes(
                         $mailboxIds,
                         $postFolder,
                         $postPageLimit,
                         $filter,
-                        0
+                        $postPageOffset
                     );
-                    $postHasMore = count($postInbox) >= $postPageLimit;
+                    $postHasMore = $postPageNum < $postPageCount;
                     $postImapAsync = false;
                     if ($postMailboxFilter > 0) {
                         foreach ($postMailboxes as $box) {
@@ -7350,6 +7391,14 @@ $legalProductsConfig = LegalProductSettings::config();
                                 break;
                             }
                         }
+                    }
+                }
+                if (!isset($postPageCount)) {
+                    $postPageCount = max(1, (int) ceil(max($postTotalCount, 1) / $postPageLimit));
+                    if (!$postHasMore && $postPageNum >= $postPageCount) {
+                        $postPageCount = max(1, $postPageNum);
+                    } elseif ($postHasMore) {
+                        $postPageCount = max($postPageCount, $postPageNum + 1);
                     }
                 }
             }
@@ -7533,6 +7582,11 @@ $legalProductsConfig = LegalProductSettings::config();
         $postListMode = $postListMode ?? false;
         $postMailboxCards = $postMailboxCards ?? [];
         $postHasMore = $postHasMore ?? false;
+        $postPageNum = $postPageNum ?? 1;
+        $postPageCount = $postPageCount ?? 1;
+        $postPageLimit = $postPageLimit ?? PostUiSettings::messagesPerPage();
+        $postTotalCount = $postTotalCount ?? 0;
+        $postUiConfig = $postUiConfig ?? PostUiSettings::config();
         $postSendableMailboxes = $postSendableMailboxes ?? [];
         $postFolder = $postFolder ?? 'INBOX';
         $postFolders = $postFolders ?? [];
@@ -7873,6 +7927,10 @@ $legalProductsConfig = LegalProductSettings::config();
             'postListMode',
             'postMailboxCards',
             'postHasMore',
+            'postPageNum',
+            'postPageCount',
+            'postPageLimit',
+            'postTotalCount',
             'postSendableMailboxes',
             'postFolder',
             'postFolders',
@@ -7884,6 +7942,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'postSearchContactId',
             'postSearchMode',
             'postLinkContext',
+            'postUiConfig',
             'voucherLinkedMails',
             'smtpTestReport',
             'appearanceConfig',

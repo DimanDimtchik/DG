@@ -32,6 +32,10 @@ $postCompose = $postCompose ?? false;
 $postListMode = $postListMode ?? false;
 $postMailboxCards = $postMailboxCards ?? [];
 $postHasMore = $postHasMore ?? false;
+$postPageNum = max(1, (int) ($postPageNum ?? 1));
+$postPageCount = max(1, (int) ($postPageCount ?? 1));
+$postPageLimit = max(1, (int) ($postPageLimit ?? PostUiSettings::messagesPerPage()));
+$postTotalCount = max(0, (int) ($postTotalCount ?? 0));
 $postSearchQuery = $postSearchQuery ?? '';
 $postSearchContactId = $postSearchContactId ?? 0;
 $postSearchMode = $postSearchMode ?? false;
@@ -61,10 +65,19 @@ $postCanLinkVoucher = MenuRegistry::canAccess($user, 'buchhaltung-belege')
 
 /** @var bool $postImapAsync */
 $postImapAsync = $postImapAsync ?? false;
-$postFolderQuery = static function (int $mailboxId, string $folderPath) use ($postMailboxFilter, $postFolder): string {
+$postFolderQuery = static function (int $mailboxId, string $folderPath, int $pageNum = 1) use ($postSearchQuery, $postSearchContactId): string {
     $params = ['page' => 'post', 'folder' => $folderPath];
     if ($mailboxId > 0) {
         $params['mailbox'] = (string) $mailboxId;
+    }
+    if ($pageNum > 1) {
+        $params['p'] = (string) $pageNum;
+    }
+    if ($postSearchQuery !== '') {
+        $params['q'] = $postSearchQuery;
+    }
+    if ($postSearchContactId > 0) {
+        $params['contact'] = (string) $postSearchContactId;
     }
 
     return '/app?' . http_build_query($params);
@@ -422,20 +435,20 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
         <?php endif; endif; ?>
       </aside>
 
+      <?php $postDoRefresh = !empty($_GET['refresh']); ?>
       <div
         class="dg-post-main"
         data-post-sync-root
-        data-post-sync="<?= $postImapAsync ? '1' : '0' ?>"
+        data-post-sync="0"
         data-mailbox="<?= (int) $postMailboxFilter ?>"
         data-folder="<?= View::escape($postFolder) ?>"
         data-is-sent="<?= $postIsSentFolder ? '1' : '0' ?>"
-        data-refresh="<?= !empty($_GET['refresh']) ? '1' : '0' ?>"
-        data-offset="<?= count($postInbox) ?>"
-        data-has-more="<?= !empty($postHasMore) ? '1' : '0' ?>"
-        data-limit="50"
+        data-refresh="<?= $postDoRefresh ? '1' : '0' ?>"
+        data-limit="<?= (int) $postPageLimit ?>"
+        data-list-url="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, 1)) ?>"
       >
         <h2 class="dg-post-main__title"><?= View::escape($postFolderLabel) ?></h2>
-        <?php if ($postImapAsync) : ?>
+        <?php if ($postDoRefresh) : ?>
           <div class="dg-post-sync" data-post-sync-panel aria-live="polite">
             <div class="dg-post-sync__bar" aria-hidden="true">
               <span class="dg-post-sync__bar-fill" data-post-sync-bar style="width:12%"></span>
@@ -448,6 +461,12 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             <p class="dg-post-sync__status" data-post-sync-status>Postfach wird geladen …</p>
             <p class="dg-post-sync__error" data-post-sync-error hidden></p>
           </div>
+        <?php endif; ?>
+
+        <?php if (!$postSearchMode && $postMailboxFilter > 0) : ?>
+          <p class="dg-form-actions dg-post-list-actions">
+            <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, 1) . '&refresh=1') ?>" title="Postfach neu vom Mailserver laden">Jetzt vom Server abrufen</a>
+          </p>
         <?php endif; ?>
 
         <div class="dg-panel" data-post-sync-empty<?= $postInbox !== [] ? ' hidden' : '' ?>>
@@ -489,17 +508,35 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             </tbody>
           </table>
         </div>
-        <?php if (!$postSearchMode) : ?>
-        <p class="dg-form-actions dg-post-load-more" data-post-load-more-wrap<?= empty($postHasMore) ? ' hidden' : '' ?>>
-          <button type="button" class="dg-button" data-post-load-more>Weitere Nachrichten laden</button>
-        </p>
+
+        <?php if ($postPageCount > 1 || $postTotalCount > 0) : ?>
+          <nav class="dg-post-pagination" aria-label="Seitenblätterung">
+            <p class="dg-post-pagination__status">
+              Seite <?= (int) $postPageNum ?> von <?= (int) $postPageCount ?>
+              <?php if ($postTotalCount > 0) : ?>
+                <span class="dg-muted">(<?= (int) $postTotalCount ?> Nachrichten · <?= (int) $postPageLimit ?> pro Seite)</span>
+              <?php endif; ?>
+            </p>
+            <p class="dg-form-actions dg-post-pagination__nav">
+              <?php if ($postPageNum > 1) : ?>
+                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, 1)) ?>">Erste</a>
+                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum - 1)) ?>">Zurück</a>
+              <?php else : ?>
+                <span class="dg-button dg-button--disabled" aria-disabled="true">Erste</span>
+                <span class="dg-button dg-button--disabled" aria-disabled="true">Zurück</span>
+              <?php endif; ?>
+              <?php if ($postPageNum < $postPageCount) : ?>
+                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum + 1)) ?>">Weiter</a>
+                <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageCount)) ?>">Letzte</a>
+              <?php else : ?>
+                <span class="dg-button dg-button--disabled" aria-disabled="true">Weiter</span>
+                <span class="dg-button dg-button--disabled" aria-disabled="true">Letzte</span>
+              <?php endif; ?>
+            </p>
+          </nav>
         <?php endif; ?>
-        <?php if ($postImapAsync && !$postSearchMode) : ?>
-          <p class="dg-form-actions">
-            <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder) . '&refresh=1') ?>">Jetzt vom Server abrufen</a>
-          </p>
-          <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>
-        <?php elseif ($postMailboxFilter > 0 && !$postSearchMode) : ?>
+
+        <?php if ($postMailboxFilter > 0 && !$postSearchMode) : ?>
           <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>
         <?php endif; ?>
       </div>

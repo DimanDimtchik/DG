@@ -146,16 +146,20 @@ final class LetterheadRenderer
         $bgHtml = self::renderBackground($cfg);
         $wmHtml = self::renderWatermark($cfg);
         $guidesHtml = $showGuides ? self::renderGuides($cfg) : '';
+        $foldHtml = self::renderFoldMarks($cfg);
+        $pageNumHtml = self::renderPageNumber($cfg);
 
         return '<article class="dg-lh-page">'
             . $bgHtml
             . $wmHtml
             . $guidesHtml
+            . $foldHtml
             . $headerHtml
             . $windowHtml
             . $infoHtml
             . $bodyHtml
             . $footerHtml
+            . $pageNumHtml
             . '</article>';
     }
 
@@ -599,6 +603,74 @@ final class LetterheadRenderer
     }
 
     /**
+     * DIN-Falzmarken (Knicklinien) und optionale Lochmarke — linker Blattrand.
+     * Positionen ab oberem Blattrand: 105 mm / 210 mm (DIN 5008), Loch 148,5 mm.
+     *
+     * @param array<string, mixed> $cfg
+     */
+    private static function renderFoldMarks(array $cfg): string
+    {
+        $page = is_array($cfg['page'] ?? null) ? $cfg['page'] : [];
+        $showFold = array_key_exists('show_fold_marks', $page)
+            ? !empty($page['show_fold_marks'])
+            : true;
+        $showPunch = !empty($page['show_punch_mark']);
+        if (!$showFold && !$showPunch) {
+            return '';
+        }
+
+        $html = '<div class="dg-lh-fold-marks" aria-hidden="true">';
+        if ($showFold) {
+            $html .= '<div class="dg-lh-fold" style="top:105mm" title="Falzmarke"></div>';
+            $html .= '<div class="dg-lh-fold" style="top:210mm" title="Falzmarke"></div>';
+        }
+        if ($showPunch) {
+            $html .= '<div class="dg-lh-fold dg-lh-fold--punch" style="top:148.5mm" title="Lochmarke"></div>';
+        }
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * Seitenzahl — CSS counter(page[/pages]) für Druck; Vorschau zeigt Beispieltext.
+     *
+     * @param array<string, mixed> $cfg
+     */
+    private static function renderPageNumber(array $cfg): string
+    {
+        $page = is_array($cfg['page'] ?? null) ? $cfg['page'] : [];
+        $pn = is_array($page['page_numbers'] ?? null) ? $page['page_numbers'] : [];
+        if (empty($pn['show'])) {
+            return '';
+        }
+        $format = (string) ($pn['format'] ?? 'seite_n_von_N');
+        $position = (string) ($pn['position'] ?? 'center');
+        if (!isset(LetterheadSettings::pageNumberPositionOptions()[$position])) {
+            $position = 'center';
+        }
+        $sample = match ($format) {
+            'n' => '1',
+            'n_slash_N' => '1 / 1',
+            'n_von_N' => '1 von 1',
+            'seite_n' => 'Seite 1',
+            default => 'Seite 1 von 1',
+        };
+        $mod = match ($format) {
+            'n' => 'n',
+            'n_slash_N' => 'n-slash-N',
+            'n_von_N' => 'n-von-N',
+            'seite_n' => 'seite-n',
+            default => 'seite-n-von-N',
+        };
+
+        return '<div class="dg-lh-pagenum dg-lh-pagenum--' . self::e($position)
+            . ' dg-lh-pagenum--fmt-' . self::e($mod) . '" aria-hidden="true">'
+            . '<span class="dg-lh-pagenum__sample">' . self::e($sample) . '</span>'
+            . '</div>';
+    }
+
+    /**
      * @param array<string, mixed> $cfg
      */
     private static function stylesheet(array $cfg, bool $showGuides): string
@@ -629,6 +701,40 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 .dg-lh-header, .dg-lh-window, .dg-lh-info, .dg-lh-body-content, .dg-lh-footer, .dg-lh-guides {
   position: relative; z-index: 1;
 }
+.dg-lh-fold-marks {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 8mm;
+  z-index: 3;
+  pointer-events: none;
+}
+.dg-lh-fold {
+  position: absolute;
+  left: 0;
+  width: 6mm;
+  height: 0;
+  border-top: 0.35mm solid #222;
+}
+.dg-lh-fold--punch {
+  width: 4mm;
+  border-top-style: dotted;
+  border-top-width: 0.45mm;
+}
+.dg-lh-pagenum {
+  position: absolute;
+  bottom: 6mm;
+  left: {$ml}mm;
+  right: {$mr}mm;
+  z-index: 3;
+  font-size: 8pt;
+  line-height: 1;
+  color: #333;
+  pointer-events: none;
+}
+.dg-lh-pagenum--left { text-align: left; }
+.dg-lh-pagenum--center { text-align: center; }
+.dg-lh-pagenum--right { text-align: right; }
+.dg-lh-pagenum__sample { display: inline; }
 .dg-lh-header {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -726,8 +832,21 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 }
 @media print {
   html, body.dg-lh-body { background: #fff; }
-  .dg-lh-page { margin: 0; box-shadow: none; }
+  .dg-lh-page { margin: 0; box-shadow: none; overflow: visible; }
   .dg-lh-guides { display: none !important; }
+  .dg-lh-fold-marks { z-index: 5; }
+  .dg-lh-pagenum {
+    position: fixed;
+    bottom: 8mm;
+    left: {$ml}mm;
+    right: {$mr}mm;
+  }
+  .dg-lh-pagenum__sample { display: none !important; }
+  .dg-lh-pagenum--fmt-n::after { content: counter(page); }
+  .dg-lh-pagenum--fmt-n-slash-N::after { content: counter(page) " / " counter(pages); }
+  .dg-lh-pagenum--fmt-n-von-N::after { content: counter(page) " von " counter(pages); }
+  .dg-lh-pagenum--fmt-seite-n::after { content: "Seite " counter(page); }
+  .dg-lh-pagenum--fmt-seite-n-von-N::after { content: "Seite " counter(page) " von " counter(pages); }
 }
 CSS;
     }

@@ -37,6 +37,17 @@ final class LetterheadSettings
                 'margin_bottom_mm' => 16.7,
                 'margin_left_mm' => 24.1,
                 'show_din_guides' => false,
+                /** DIN-Falzmarken / Knicklinien am linken Rand (Druck) */
+                'show_fold_marks' => true,
+                /** Lochmarke mittig (148,5 mm) */
+                'show_punch_mark' => false,
+                'page_numbers' => [
+                    'show' => false,
+                    /** n | n_slash_N | n_von_N | seite_n | seite_n_von_N */
+                    'format' => 'seite_n_von_N',
+                    /** left | center | right */
+                    'position' => 'center',
+                ],
             ],
             'header' => [
                 'show' => true,
@@ -1014,6 +1025,13 @@ final class LetterheadSettings
                 'margin_bottom_mm' => self::clampMm($page['margin_bottom_mm'] ?? $d['page']['margin_bottom_mm']),
                 'margin_left_mm' => self::clampMm($page['margin_left_mm'] ?? $d['page']['margin_left_mm']),
                 'show_din_guides' => $flag($page, 'show_din_guides', false),
+                'show_fold_marks' => $flag($page, 'show_fold_marks', true),
+                'show_punch_mark' => $flag($page, 'show_punch_mark', false),
+                'page_numbers' => self::sanitizePageNumbers(
+                    is_array($page['page_numbers'] ?? null) ? $page['page_numbers'] : [],
+                    is_array($d['page']['page_numbers'] ?? null) ? $d['page']['page_numbers'] : [],
+                    $fromForm
+                ),
             ],
             'header' => [
                 'show' => $flag($header, 'show', true),
@@ -1131,6 +1149,63 @@ final class LetterheadSettings
         }
 
         return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    /**
+     * Seitenzahl-Formate für UI und Renderer.
+     *
+     * @return array<string, string>
+     */
+    public static function pageNumberFormatOptions(): array
+    {
+        return [
+            'n' => '1',
+            'n_slash_N' => '1 / 3',
+            'n_von_N' => '1 von 3',
+            'seite_n' => 'Seite 1',
+            'seite_n_von_N' => 'Seite 1 von 3',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function pageNumberPositionOptions(): array
+    {
+        return [
+            'left' => 'Links',
+            'center' => 'Mitte',
+            'right' => 'Rechts',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $defaults
+     * @return array{show: bool, format: string, position: string}
+     */
+    private static function sanitizePageNumbers(array $input, array $defaults, bool $fromForm): array
+    {
+        $showDefault = !empty($defaults['show']);
+        if ($fromForm) {
+            $show = array_key_exists('show', $input) && !empty($input['show']) && (string) $input['show'] !== '0';
+        } else {
+            $show = array_key_exists('show', $input) ? !empty($input['show']) : $showDefault;
+        }
+        $format = (string) ($input['format'] ?? $defaults['format'] ?? 'seite_n_von_N');
+        if (!isset(self::pageNumberFormatOptions()[$format])) {
+            $format = 'seite_n_von_N';
+        }
+        $position = (string) ($input['position'] ?? $defaults['position'] ?? 'center');
+        if (!isset(self::pageNumberPositionOptions()[$position])) {
+            $position = 'center';
+        }
+
+        return [
+            'show' => $show,
+            'format' => $format,
+            'position' => $position,
+        ];
     }
 
     private static function clampMm(mixed $value, float $min = 5.0, float $max = 80.0): float

@@ -682,6 +682,66 @@ final class MailLogRepository
     }
 
     /**
+     * Anzahl Nachrichten in einem Ordner (für Pagination).
+     *
+     * @param list<int> $mailboxIds
+     */
+    public static function countFolderMessagesForMailboxes(
+        array $mailboxIds,
+        string $folderPath,
+        ?int $mailboxFilter = null,
+    ): int {
+        if (MailFolderCatalog::usesLocalSent($folderPath)) {
+            return self::countSentForMailboxes($mailboxIds, $mailboxFilter);
+        }
+        if ($mailboxIds === [] || !Database::isConfigured()) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+        $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+        $sql = "SELECT COUNT(*) FROM dg_mail_log
+                WHERE direction = 'in' AND status = 'received' AND mailbox_id IN ({$placeholders})";
+        $params = $mailboxIds;
+        if ($mailboxFilter !== null && $mailboxFilter > 0) {
+            $sql .= ' AND mailbox_id = ?';
+            $params[] = $mailboxFilter;
+        }
+        if (MailFolderLabels::isInbox($folderPath) || $folderPath === 'INBOX') {
+            $sql .= " AND (imap_folder = 'INBOX' OR imap_folder = '' OR imap_folder IS NULL)";
+        } elseif ($folderPath !== '' && $folderPath !== '__sent__') {
+            $sql .= ' AND imap_folder = ?';
+            $params[] = $folderPath;
+        }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param list<int> $mailboxIds
+     */
+    public static function countSentForMailboxes(array $mailboxIds, ?int $mailboxFilter = null): int
+    {
+        if ($mailboxIds === [] || !Database::isConfigured()) {
+            return 0;
+        }
+        MigrationRunner::runPending();
+        $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+        $sql = "SELECT COUNT(*) FROM dg_mail_log
+                WHERE direction = 'out' AND status = 'sent' AND mailbox_id IN ({$placeholders})";
+        $params = $mailboxIds;
+        if ($mailboxFilter !== null && $mailboxFilter > 0) {
+            $sql .= ' AND mailbox_id = ?';
+            $params[] = $mailboxFilter;
+        }
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Methode count unread for mailboxes.
      * @param array $mailboxIds
      * @return int

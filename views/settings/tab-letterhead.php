@@ -263,7 +263,46 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           <input type="checkbox" name="page[show_din_guides]" value="1"<?= !empty($page['show_din_guides']) ? ' checked' : '' ?><?= $disabled ?>>
           DIN-Hilfslinien in Vorschau (B4)
         </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="page[show_fold_marks]" value="1"<?= !empty($page['show_fold_marks'] ?? true) ? ' checked' : '' ?><?= $disabled ?>>
+          Falzmarken / Knicklinien (links, Druck)
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="page[show_punch_mark]" value="1"<?= !empty($page['show_punch_mark']) ? ' checked' : '' ?><?= $disabled ?>>
+          Lochmarke (Mitte links)
+        </label>
       </div>
+      <p class="dg-field-hint">Falzmarken bei 105&nbsp;mm und 210&nbsp;mm vom oberen Rand (DIN&nbsp;5008) — bleiben beim Druck sichtbar. Hilfslinien/Fenster nur in der Vorschau.</p>
+      <?php
+        $pageNumbers = is_array($page['page_numbers'] ?? null) ? $page['page_numbers'] : [];
+        $pnShow = !empty($pageNumbers['show']);
+        $pnFormat = (string) ($pageNumbers['format'] ?? 'seite_n_von_N');
+        $pnPos = (string) ($pageNumbers['position'] ?? 'center');
+      ?>
+      <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Seitenzahlen</h4>
+      <div class="dg-form-grid">
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="page[page_numbers][show]" value="1"<?= $pnShow ? ' checked' : '' ?><?= $disabled ?>>
+          Seitenzahl anzeigen
+        </label>
+        <label class="dg-field">
+          <span>Format</span>
+          <select name="page[page_numbers][format]"<?= $disabled ?>>
+            <?php foreach (LetterheadSettings::pageNumberFormatOptions() as $val => $lbl) : ?>
+              <option value="<?= View::escape($val) ?>"<?= $pnFormat === $val ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Position</span>
+          <select name="page[page_numbers][position]"<?= $disabled ?>>
+            <?php foreach (LetterheadSettings::pageNumberPositionOptions() as $val => $lbl) : ?>
+              <option value="<?= View::escape($val) ?>"<?= $pnPos === $val ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+      </div>
+      <p class="dg-field-hint">In der Vorschau Beispiel „Seite 1 von 1“. Beim Druck zählt der Browser (Seite X von Y).</p>
       <p class="dg-field-hint">Fenster-Standard: <?= (int) LetterheadSettings::ADDRESS_WINDOW_WIDTH_MM ?>×<?= (int) LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM ?> mm, <?= (int) LetterheadSettings::ADDRESS_WINDOW_LEFT_MM ?> mm vom linken Rand.</p>
       <div class="dg-form-grid">
         <label class="dg-field"><span>Fenster links (mm)</span>
