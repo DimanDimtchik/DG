@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Terminkalender einstellen – Kontur Cosmetics</title>
+<style>
+  @page { size: A4; margin: 14mm 13mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    color: #1a1816;
+    line-height: 1.45;
+    margin: 0;
+  }
+  h1 { font-size: 19pt; margin: 0 0 6px; color: #2c2824; }
+  h2 {
+    font-size: 13.5pt;
+    margin: 16px 0 8px;
+    padding: 6px 10px;
+    background: #f3efe8;
+    border-left: 5px solid #6e6258;
+  }
+  .lead { font-size: 12pt; color: #333; margin: 0 0 12px; }
+  .meta { font-size: 9.5pt; color: #666; margin-bottom: 12px; }
+  .step {
+    border: 1px solid #d5cfc6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 0 0 10px;
+    background: #fffcf8;
+  }
+  .step-num {
+    display: inline-block;
+    width: 1.55em;
+    height: 1.55em;
+    line-height: 1.55em;
+    text-align: center;
+    border-radius: 50%;
+    background: #6e6258;
+    color: #fff;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  ol.easy { margin: 6px 0 0; padding-left: 1.4em; }
+  ol.easy li { margin: 5px 0; }
+  .box {
+    background: #eef6ea;
+    border: 1px solid #b7d0ae;
+    padding: 10px 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+  .warn {
+    background: #fff6e8;
+    border: 1px solid #e0c48a;
+    padding: 10px 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+  .page-break { page-break-before: always; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  th, td { border: 1px solid #bbb; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: #f3efe8; width: 34%; }
+  .big { font-size: 12.5pt; }
+  ul.plain { margin: 6px 0; padding-left: 1.2em; }
+  .muted { color: #555; font-size: 10pt; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 10.5pt; }
+  .path {
+    display: inline-block;
+    background: #f3efe8;
+    border: 1px solid #d5cfc6;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10.5pt;
+    margin: 2px 0;
+  }
+  @media print {
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <h1>Terminkalender einstellen</h1>
+  <p class="lead">Schritt-für-Schritt-Anleitung für die Einstellungen des Terminkalenders im DG CRM.<br>
+  Speziell für <strong>Kontur Cosmetics</strong> — zum Ausdrucken und Nacharbeiten.</p>
+  <div class="meta">
+    Domain: <strong>kontur-cosmetics.de</strong> · Stand: 21.10.2026<br>
+    Login: <code>https://kontur-cosmetics.de/login</code>
+  </div>
+
+  <div class="box">
+    <strong>Was Sie am Ende können:</strong>
+    <ul class="plain">
+      <li>Öffnungszeiten hinterlegen</li>
+      <li>Bereiche und buchbare Mitarbeiter anlegen</li>
+      <li>Leistungen (Behandlungen) mit Dauer und Preis pflegen</li>
+      <li>Farben der Online-Buchung anpassen</li>
+      <li>Online-Terminbuchung für Kunden freischalten (Link / QR-Code)</li>
+    </ul>
+  </div>
+
+  <div class="warn">
+    <strong>Reihenfolge ist wichtig.</strong> Bitte in dieser Reihenfolge vorgehen:
+    <ol class="easy">
+      <li>Arbeitszeiten</li>
+      <li>Bereiche</li>
+      <li>Mitarbeiter</li>
+      <li>Leistungen</li>
+      <li>Kalender Design (optional)</li>
+      <li>Einbindung (Online-Buchung aktivieren)</li>
+    </ol>
+    Ohne Arbeitszeiten, Bereiche, Mitarbeiter und aktive Leistungen bleiben freie Online-Termine leer.
+  </div>
+
+  <h2>Einstieg</h2>
+  <div class="step">
+    <p><span class="step-num">0</span> Im CRM anmelden und Einstellungen öffnen</p>
+    <ol class="easy">
+      <li>Öffnen Sie <code>https://kontur-cosmetics.de/login</code></li>
+      <li>Mit Benutzer <strong>admin</strong> (oder <strong>info@kontur-cosmetics.de</strong>) anmelden</li>
+      <li>Vom Dashboard: Kachel <strong>Einstellungen</strong> öffnen</li>
+      <li>Links den Bereich <strong>Termine</strong> wählen</li>
+    </ol>
+    <p class="muted">Alle folgenden Punkte liegen unter <span class="path">Einstellungen → Termine</span>
+    bzw. bei Leistungen unter dem Katalog.</p>
+  </div>
+
+  <h2>Schritt 1: Arbeitszeiten</h2>
+  <div class="step">
+    <p><span class="step-num">1</span> <span class="path">Einstellungen → Termine → Arbeitszeiten</span></p>
+    <p>Hier legen Sie fest, an welchen Tagen und Uhrzeiten Termine angeboten werden (Kalender und Online-Buchung).</p>
+    <ol class="easy">
+      <li>„Neue Arbeitszeit hinzufügen“ öffnen</li>
+      <li><strong>Ab Datum</strong> setzen (z.&nbsp;B. 01.01. des Jahres — gilt ab diesem Tag)</li>
+      <li><strong>Startzeit</strong> und <strong>Endzeit</strong> wählen (z.&nbsp;B. 09:00–17:00)</li>
+      <li><strong>Wochentage</strong> anhaken (nur angehakte Tage sind buchbar)</li>
+      <li>Auf <strong>Arbeitszeit hinzufügen</strong> klicken</li>
+    </ol>
+    <div class="box">
+      <strong>Tipp für Kosmetikstudio:</strong> Oft Mo–Fr oder Di–Sa, ggf. kürzere Samstagszeiten.
+      Später können Sie eine zweite Regel mit neuem „Ab Datum“ anlegen (z.&nbsp;B. geänderte Winterzeiten).
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h2>Schritt 2: Bereiche anlegen</h2>
+  <div class="step">
+    <p><span class="step-num">2</span> <span class="path">Einstellungen → Termine → Bereiche und Mitglieder → Tab „Bereiche“</span></p>
+    <p>Bereiche sind Tätigkeitsfelder (z.&nbsp;B. Beratung, Gesichtsbehandlung, Make-up).</p>
+    <ol class="easy">
+      <li>Unten im Formular <strong>Bezeichnung</strong> eintragen (Pflicht)</li>
+      <li><strong>Abteilung</strong> optional — nur wenn Sie CRM-Abteilungen nutzen</li>
+      <li><strong>Reihenfolge</strong> setzen (kleinere Zahl = weiter oben in Listen)</li>
+      <li><strong>Aktiv</strong> anhaken</li>
+      <li><strong>Bereich speichern</strong></li>
+    </ol>
+    <p class="muted">Mindestens einen aktiven Bereich anlegen, bevor Sie Mitarbeiter zuordnen.</p>
+  </div>
+
+  <h2>Schritt 3: Mitarbeiter zuordnen</h2>
+  <div class="step">
+    <p><span class="step-num">3</span> <span class="path">Einstellungen → Termine → Bereiche und Mitglieder → Tab „Mitarbeiter“</span></p>
+    <p>Jeder Kalender-Mitarbeiter braucht einen <strong>Mitarbeiter-Kontakt</strong> aus den Kontakten.</p>
+    <ol class="easy">
+      <li>Falls noch nicht vorhanden: unter <strong>Kontakte</strong> den Mitarbeiter anlegen (als Mitarbeiter-Kontakt)</li>
+      <li>Zurück zu Bereichen und Mitglieder → Tab Mitarbeiter</li>
+      <li><strong>Kontakt</strong> wählen (Pflicht)</li>
+      <li><strong>Anzeigename</strong> optional — leer = Kontaktname</li>
+      <li>Mindestens einen <strong>Bereich</strong> anhaken (Pflicht)</li>
+      <li>Optional: CRM-Benutzer, Vorgesetzter, Reihenfolge</li>
+      <li><strong>Aktiv</strong> anhaken → <strong>Mitarbeiter speichern</strong></li>
+    </ol>
+    <div class="warn">
+      Ohne Kontakt und ohne Bereich ist niemand online buchbar.
+      Abwesenheiten (Urlaub/Krankheit) können Buchungstage blockieren — oft aus der Zeiterfassung.
+    </div>
+  </div>
+
+  <h2>Schritt 4: Leistungen (Behandlungen) anlegen</h2>
+  <div class="step">
+    <p><span class="step-num">4</span> Leistungen im Katalog (Artikel &amp; Leistungen)</p>
+    <p>Kunden wählen bei der Online-Buchung eine <strong>Leistung</strong> — mit Dauer, Preis und optionalem Bereich.</p>
+    <ol class="easy">
+      <li>Öffnen Sie den Katalog für Artikel/Leistungen (Menü bzw. Einstellungen, je nach Sicht)</li>
+      <li>Neue <strong>Leistung</strong> anlegen (nicht nur Warenartikel)</li>
+      <li>Name, Preis, Steuer und <strong>Dauer</strong> (Arbeitsminuten) setzen</li>
+      <li>Optional einen <strong>Kalender-Bereich</strong> zuordnen — steuert, welche Mitarbeiter angeboten werden</li>
+      <li><strong>Eintrag ist aktiv</strong> anhaken und speichern</li>
+    </ol>
+    <p class="muted">Nur aktive Leistungen erscheinen in der Online-Buchung (Schritt 1: Leistung wählen).</p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h2>Schritt 5: Kalender Design (Farben)</h2>
+  <div class="step">
+    <p><span class="step-num">5</span> <span class="path">Einstellungen → Termine → Kalender Design</span></p>
+    <p>Farben der öffentlichen Buchungsseite (Buttons, freie Zeiten, gebuchte Zeiten).</p>
+    <ol class="easy">
+      <li>Oben eine <strong>Farbvorlage</strong> wählen (z.&nbsp;B. Rosé und Beauty) — füllt alle Felder</li>
+      <li>Bei Bedarf die sieben Einzelfarben anpassen</li>
+      <li>Rechts die <strong>Live-Vorschau</strong> prüfen</li>
+      <li><strong>Kalender Design speichern</strong></li>
+    </ol>
+    <table>
+      <tr><th>Primärfarbe</th><td>Buttons und aktive Elemente</td></tr>
+      <tr><th>Button Hover</th><td>Farbe beim Darüberfahren mit der Maus</td></tr>
+      <tr><th>Termin-Slot</th><td>Hintergrund freier Zeiten</td></tr>
+      <tr><th>Ausgewählt</th><td>Hintergrund und Rahmen der gewählten Zeit</td></tr>
+      <tr><th>Gebucht</th><td>Bereits vergebene Zeiten (nicht wählbar)</td></tr>
+    </table>
+  </div>
+
+  <h2>Schritt 6: Online-Buchung freischalten</h2>
+  <div class="step">
+    <p><span class="step-num">6</span> <span class="path">Einstellungen → Termine → Einbindung</span></p>
+    <ol class="easy">
+      <li>Haken setzen: <strong>Terminvereinbarung online stellen</strong></li>
+      <li><strong>Seitentitel</strong> und <strong>Einleitungstext</strong> ausfüllen (sichtbar für Kunden)</li>
+      <li>Optional: Bestätigungstext nach erfolgreicher Buchung</li>
+      <li>Speichern</li>
+      <li>Den <strong>Link zur Buchungsseite</strong> kopieren oder „Seite öffnen“ testen</li>
+      <li>Optional: <strong>QR-Code</strong> / Flyer gestalten und ausdrucken (Empfang, Schaufenster)</li>
+    </ol>
+    <div class="box">
+      <strong>Öffentliche Adresse:</strong> erscheint auf dieser Einstellungsseite (typisch unter
+      <code>https://kontur-cosmetics.de/…</code>).<br>
+      Link teilen per E-Mail, Website, Google-Profil oder QR-Code.
+    </div>
+  </div>
+
+  <h2>So bucht der Kunde (Überblick)</h2>
+  <div class="step">
+    <ol class="easy">
+      <li><strong>Leistung</strong> wählen</li>
+      <li><strong>Datum und Uhrzeit</strong> wählen (nur freie Slots nach Ihren Arbeitszeiten)</li>
+      <li><strong>Kontaktdaten</strong> eingeben und buchen</li>
+    </ol>
+    <p class="muted">Optional kann der Kunde einen bestimmten Mitarbeiter wählen, wenn die Leistung einem Team/Bereich zugeordnet ist.</p>
+  </div>
+
+  <h2>Termine im CRM bearbeiten</h2>
+  <div class="step">
+    <p>Im Dashboard die Kachel <strong>Terminkalender</strong> öffnen:</p>
+    <ul class="plain">
+      <li>Liste aller Termine einsehen</li>
+      <li>Neuen Termin manuell anlegen</li>
+      <li>Online-Buchungen prüfen und ggf. nachbearbeiten</li>
+    </ul>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h2>Optional: E-Mail-Benachrichtigungen</h2>
+  <div class="step">
+    <p><span class="path">Einstellungen → Kommunikation → Benachrichtigungen</span></p>
+    <p>Hier können Sie Vorlagen für Terminkalender-E-Mails (z.&nbsp;B. Bestätigung) prüfen und anpassen.
+    Absender und Firmendaten sollten unter Firmendaten korrekt sein
+    (<strong>info@kontur-cosmetics.de</strong>).</p>
+  </div>
+
+  <h2>Wenn etwas nicht funktioniert</h2>
+  <table>
+    <tr>
+      <th>Keine freien Zeiten sichtbar</th>
+      <td>Arbeitszeiten fehlen oder Wochentag nicht angehakt; oder Mitarbeiter/Leistung nicht aktiv.</td>
+    </tr>
+    <tr>
+      <th>Keine Leistungen zur Auswahl</th>
+      <td>Keine aktive Leistung angelegt — Katalog prüfen.</td>
+    </tr>
+    <tr>
+      <th>Kein Mitarbeiter wählbar</th>
+      <td>Bereich + aktiver Mitarbeiter mit Kontakt und Bereichszuordnung nötig.</td>
+    </tr>
+    <tr>
+      <th>Buchungsseite zeigt Hinweis / deaktiviert</th>
+      <td>Unter Einbindung „Terminvereinbarung online stellen“ aktivieren und speichern.</td>
+    </tr>
+    <tr>
+      <th>Immer noch unsicher</th>
+      <td>Schreiben Sie an <strong>info@ganz-soft.de</strong> und nennen Sie den Schritt (1–6).</td>
+    </tr>
+  </table>
+
+  <h2>Checkliste</h2>
+  <div class="box">
+    <ol class="easy">
+      <li>☐ Login unter kontur-cosmetics.de/login</li>
+      <li>☐ Arbeitszeiten hinterlegt (Tage + Start/Ende)</li>
+      <li>☐ Mindestens ein aktiver Bereich</li>
+      <li>☐ Mindestens ein aktiver Mitarbeiter (mit Kontakt + Bereich)</li>
+      <li>☐ Mindestens eine aktive Leistung (mit Dauer)</li>
+      <li>☐ Kalender Design gespeichert (optional, empfohlen)</li>
+      <li>☐ Online-Buchung aktiviert und Link/QR getestet</li>
+      <li>☐ Probebuchung als Kunde durchgeführt</li>
+    </ol>
+  </div>
+
+  <p class="muted">Ganz Soft · info@ganz-soft.de · Speziell für Kontur Cosmetics (kontur-cosmetics.de) — Terminkalender-Einstellungen im DG CRM.</p>
+</body>
+</html>

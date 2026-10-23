@@ -31,8 +31,8 @@ if ($isCompanyForm && $companyEmployees === []) {
             $kontakteBackHref = $kontakteReturnTo;
             $kontakteBackLabel = 'Zurück zur Belegerfassung';
         } else {
-            $kontakteBackHref = $isEdit ? '/app?page=kontakte&id=' . (int) $contactId : '/app?page=kontakte';
-            $kontakteBackLabel = $isEdit ? 'Zurück zum Kontakt' : 'Zurück zur Liste';
+            $kontakteBackHref = '/app?page=kontakte';
+            $kontakteBackLabel = 'Zurück zu Kontakten';
         }
         View::partial('partials/back-nav', [
             'href' => $kontakteBackHref,

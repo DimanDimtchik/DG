@@ -3110,10 +3110,10 @@ switch ($path) {
             $guardWebsitePost();
             try {
                 $overwrite = !empty($_POST['bootstrap_overwrite']);
-                $enableMaintenance = !empty($_POST['bootstrap_maintenance']);
+                // Wartungsmodus nur über das eigene Formular (name=enabled) — Bootstrap ändert ihn nicht.
                 $result = WebsiteBootstrapService::bootstrap($user->id, [
                     'overwrite' => $overwrite,
-                    'enable_maintenance' => $enableMaintenance,
+                    'maintenance' => false,
                 ]);
                 $summary = [];
                 foreach ($result['legal'] as $legalPage) {
@@ -3128,11 +3128,7 @@ switch ($path) {
                 if (is_array($result['terminkalender_page'])) {
                     $summary[] = 'Terminkalender: ' . $result['terminkalender_page']['action'];
                 }
-                $msg = 'Pflichtseiten eingerichtet. ' . implode(' · ', $summary);
-                if (!empty($result['maintenance'])) {
-                    $msg .= ' · Wartungsmodus eingeschaltet';
-                }
-                Flash::set('success', $msg);
+                Flash::set('success', 'Pflichtseiten eingerichtet. ' . implode(' · ', $summary));
             } catch (Throwable $e) {
                 Flash::set('error', $e->getMessage());
             }
@@ -5642,7 +5638,13 @@ $legalProductsConfig = LegalProductSettings::config();
                     header('Location: /app?page=kontakte', true, 302);
                     exit;
                 }
-                if ($canEdit && ContactAccessResolver::canEditContact($user, $contact)) {
+                // Explizite Ansicht (action=view) nie auf Bearbeiten umleiten —
+                // sonst wirkt „Zurück“ / „Anzeigen“ wie ein toter Link.
+                if (
+                    $action !== 'view'
+                    && $canEdit
+                    && ContactAccessResolver::canEditContact($user, $contact)
+                ) {
                     header('Location: /app?page=kontakte&action=edit&id=' . $contactId, true, 302);
                     exit;
                 }

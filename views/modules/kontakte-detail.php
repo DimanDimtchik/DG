@@ -7,7 +7,7 @@
     <div>
       <?php View::partial('partials/back-nav', [
           'href' => '/app?page=kontakte',
-          'label' => 'Zurück zur Liste',
+          'label' => 'Zurück zu Kontakten',
       ]); ?>
       <h1 class="dg-page-title"><?= View::escape($contact->listLabel()) ?></h1>
       <p class="dg-lead">

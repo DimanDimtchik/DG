@@ -197,8 +197,8 @@ function applyCardEntry(card, raw) {
   if (entry) {
     entry.value = '';
     entry.placeholder = luhnOk(digits)
-      ? 'Erkannt und maskiert  Vollnummer nicht gespeichert'
-      : 'Prfziffer ungewhnlich  bitte Nummer prfen, Maske gesetzt';
+      ? 'Erkannt und maskiert â€” Vollnummer nicht gespeichert'
+      : 'PrÃ¼fziffer ungewÃ¶hnlich â€” bitte Nummer prÃ¼fen, Maske gesetzt';
   }
 }
 
@@ -426,9 +426,9 @@ function syncSocialInsuranceFields() {
       const officeSteps = stepsByOffice[filing.value] || [];
       const steps = [...officeSteps];
       if (status.value === 'requested') {
-        steps.unshift('Anmeldung luft bereits  SV-Nummer abwarten und nach Erhalt unten eintragen.');
+        steps.unshift('Anmeldung lÃ¤uft bereits â€” SV-Nummer abwarten und nach Erhalt unten eintragen.');
       } else {
-        steps.unshift('SV-Nummer fehlt noch  Mitarbeiter beim Arbeitgeber anmelden (siehe Schritte).');
+        steps.unshift('SV-Nummer fehlt noch â€” Mitarbeiter beim Arbeitgeber anmelden (siehe Schritte).');
       }
       guideSteps.innerHTML = '';
       steps.forEach((step) => {

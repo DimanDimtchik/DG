@@ -229,8 +229,13 @@ $ctaPresets = [
             <input type="number" name="qr[size]" id="dg-qr-size" value="<?= (int) $qr['size'] ?>" min="160" max="800" step="10" data-dg-qr-field>
           </label>
           <label class="dg-field">
-            <span>Quiet Zone (px)</span>
+            <span>Quiet Zone / weißer Rand (px)</span>
             <input type="number" name="qr[margin]" id="dg-qr-margin" value="<?= (int) $qr['margin'] ?>" min="0" max="80" data-dg-qr-field>
+            <small class="dg-field-hint">
+              Freier weißer Abstand um den QR-Code herum (Ruhezone).
+              Scanner brauchen diesen Rand, sonst wird der Code oft nicht erkannt.
+              Empfehlung: mindestens 16–24&nbsp;px; nicht auf 0 setzen.
+            </small>
           </label>
           <label class="dg-field">
             <span>Download-Auflösung (px)</span>
@@ -288,9 +293,12 @@ $ctaPresets = [
               </select>
             </label>
             <label class="dg-field">
-              <span>Weißraum um QR (mm)</span>
+              <span>Quiet Zone / Weißraum um QR (mm)</span>
               <input type="number" name="flyer[quiet_mm]" id="dg-flyer-quiet" value="<?= (int) ($flyer['quiet_mm'] ?? 8) ?>" min="5" max="20" data-dg-qr-field data-dg-flyer-field>
-              <small class="dg-field-hint">Empfohlen 5–12 mm (Scanbarkeit)</small>
+              <small class="dg-field-hint">
+                Gleicher Sinn wie oben: freier Rand um den Code auf dem Flyer.
+                Empfohlen 5–12&nbsp;mm — zu wenig Rand erschwert das Scannen.
+              </small>
             </label>
             <label class="dg-field">
               <span>Akzentfarbe (CTA)</span>

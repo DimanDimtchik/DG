@@ -68,9 +68,7 @@ if ($previewImage === '') {
         <label class="dg-field dg-field--checkbox">
           <span><input type="checkbox" name="bootstrap_overwrite" value="1"> Bestehende Seiten überschreiben (Startseite, Kontakt, Rechtstexte)</span>
         </label>
-        <label class="dg-field dg-field--checkbox">
-          <span><input type="checkbox" name="bootstrap_maintenance" value="1" checked> Wartungsmodus einschalten</span>
-        </label>
+        <p class="dg-muted">Wartungsmodus steuern Sie unten im Abschnitt „Wartungsmodus“ — nicht hier beim Anlegen der Pflichtseiten.</p>
         <div class="dg-form-actions">
           <button type="submit" class="dg-button dg-button--primary">Pflichtseiten jetzt anlegen</button>
         </div>

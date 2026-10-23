@@ -213,7 +213,7 @@ $roleLabels = [
                 <?php if (ContactAccessResolver::canEditContact($user, $contact)) : ?>
                   <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= $contact->id ?>">Bearbeiten</a>
                 <?php else : ?>
-                  <a href="/app?page=kontakte&amp;id=<?= $contact->id ?>">Anzeigen</a>
+                  <a href="/app?page=kontakte&amp;action=view&amp;id=<?= $contact->id ?>">Anzeigen</a>
                 <?php endif; ?>
               </td>
             </tr>
