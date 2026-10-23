@@ -365,16 +365,38 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
   <details class="dg-collapsible-form">
     <summary class="dg-subsection-title dg-collapsible-form__summary">Links &amp; rechtliche Ergänzungen</summary>
     <div class="dg-collapsible-form__body">
-      <p class="dg-field-hint">Leer = Übernahme aus E-Mail-Layout (Impressum/Datenschutz/AGB), falls dort gesetzt.</p>
+      <?php
+        $resolvedLinks = is_array($party['links'] ?? null) ? $party['links'] : [];
+        $linkSources = [
+            'impressum' => 'Impressum',
+            'datenschutz' => 'Datenschutz',
+            'agb' => 'AGB',
+            'widerruf' => 'Widerruf',
+        ];
+      ?>
+      <p class="dg-field-hint">Leer = automatisch aus E-Mail-Layout, sonst aus veröffentlichten Website-Seiten (Impressum, Datenschutz, AGB, Widerruf).</p>
       <div class="dg-form-grid">
-        <label class="dg-field dg-field--wide"><span>Impressum-URL</span>
-          <input type="url" name="links[impressum]" value="<?= View::escape((string) ($links['impressum'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
-        <label class="dg-field dg-field--wide"><span>Datenschutz-URL</span>
-          <input type="url" name="links[datenschutz]" value="<?= View::escape((string) ($links['datenschutz'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
-        <label class="dg-field dg-field--wide"><span>AGB-URL</span>
-          <input type="url" name="links[agb]" value="<?= View::escape((string) ($links['agb'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
-        <label class="dg-field dg-field--wide"><span>Widerrufsbelehrung-URL</span>
-          <input type="url" name="links[widerruf]" value="<?= View::escape((string) ($links['widerruf'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
+        <?php foreach ($linkSources as $linkKey => $linkLabel) :
+            $storedLink = trim((string) ($links[$linkKey] ?? ''));
+            $autoLink = trim((string) ($resolvedLinks[$linkKey] ?? ''));
+            $displayLink = $storedLink !== '' ? $storedLink : $autoLink;
+            $autoHint = '';
+            if ($storedLink === '' && $autoLink !== '') {
+                $fromSite = LetterheadSettings::publishedLegalPageUrl($linkKey) === $autoLink;
+                $autoHint = $fromSite
+                    ? 'Übernommen aus aktiver Website-Seite'
+                    : 'Übernommen aus E-Mail-Layout';
+            }
+            ?>
+        <label class="dg-field dg-field--wide">
+          <span><?= View::escape($linkLabel) ?>-URL</span>
+          <input type="url" name="links[<?= View::escape($linkKey) ?>]" value="<?= View::escape($displayLink) ?>"
+            placeholder="https://…"<?= $disabled ?>>
+          <?php if ($autoHint !== '') : ?>
+            <span class="dg-field-hint"><?= View::escape($autoHint) ?>. Ändern nur bei abweichender URL.</span>
+          <?php endif; ?>
+        </label>
+        <?php endforeach; ?>
       </div>
       <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Overrides (nur wenn Firmendaten fehlen)</h4>
       <div class="dg-form-grid">

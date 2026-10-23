@@ -311,20 +311,13 @@ final class LetterheadSettings
             }
         }
 
-        $emailLayout = class_exists('EmailLayoutSettings') ? EmailLayoutSettings::config() : [];
-        $link = static function (string $key) use ($linksCfg, $emailLayout): string {
+        $link = static function (string $key) use ($linksCfg): string {
             $own = trim((string) ($linksCfg[$key] ?? ''));
             if ($own !== '') {
                 return $own;
             }
-            $map = [
-                'impressum' => 'footer_url_impressum',
-                'datenschutz' => 'footer_url_datenschutz',
-                'agb' => 'footer_url_agb',
-            ];
-            $layoutKey = $map[$key] ?? '';
 
-            return $layoutKey !== '' ? trim((string) ($emailLayout[$layoutKey] ?? '')) : '';
+            return self::autoLegalLinkUrl($key);
         };
 
         $taxEst = trim((string) ($ext['tax_numbers']['est'] ?? ''));
@@ -359,9 +352,39 @@ final class LetterheadSettings
                 'impressum' => $link('impressum'),
                 'datenschutz' => $link('datenschutz'),
                 'agb' => $link('agb'),
-                'widerruf' => trim((string) ($linksCfg['widerruf'] ?? '')),
+                'widerruf' => $link('widerruf'),
             ],
         ];
+    }
+
+    /**
+     * Öffentliche URL einer Rechtstext-Seite, nur wenn veröffentlicht (aktiv).
+     */
+    public static function publishedLegalPageUrl(string $slug): string
+    {
+        $slug = strtolower(trim($slug));
+        $allowed = ['impressum', 'datenschutz', 'agb', 'widerruf'];
+        if (!in_array($slug, $allowed, true)) {
+            return '';
+        }
+        if (!class_exists('WebsitePageRepository') || !Database::isConfigured()) {
+            return '';
+        }
+
+        $page = WebsitePageRepository::findBySlugAnyStatus($slug);
+        if ($page === null) {
+            return '';
+        }
+        if ((string) ($page['status'] ?? '') !== WebsitePageRepository::STATUS_PUBLISHED) {
+            return '';
+        }
+
+        $base = class_exists('App') ? App::publicBaseUrl() : '';
+        if ($base !== '') {
+            return rtrim($base, '/') . '/' . $slug;
+        }
+
+        return '/' . $slug;
     }
 
     /**
@@ -871,10 +894,10 @@ final class LetterheadSettings
                 'show_links' => $flag($footer, 'show_links', true),
             ],
             'links' => [
-                'impressum' => self::urlOrEmpty($links['impressum'] ?? ''),
-                'datenschutz' => self::urlOrEmpty($links['datenschutz'] ?? ''),
-                'agb' => self::urlOrEmpty($links['agb'] ?? ''),
-                'widerruf' => self::urlOrEmpty($links['widerruf'] ?? ''),
+                'impressum' => self::linkOrKeepAuto($links['impressum'] ?? '', 'impressum', $fromForm),
+                'datenschutz' => self::linkOrKeepAuto($links['datenschutz'] ?? '', 'datenschutz', $fromForm),
+                'agb' => self::linkOrKeepAuto($links['agb'] ?? '', 'agb', $fromForm),
+                'widerruf' => self::linkOrKeepAuto($links['widerruf'] ?? '', 'widerruf', $fromForm),
             ],
             'background' => [
                 'mode' => $bgMode,
@@ -966,5 +989,64 @@ final class LetterheadSettings
         }
 
         return mb_substr($url, 0, 500);
+    }
+
+    /**
+     * Formular: Auto-URL (E-Mail-Layout / veröffentlichte Website-Seite) wieder leer speichern,
+     * damit die Quelle dynamisch bleibt. Abweichende URLs gelten als Override.
+     */
+    private static function linkOrKeepAuto(mixed $raw, string $key, bool $fromForm): string
+    {
+        $url = self::urlOrEmpty($raw);
+        if (!$fromForm || $url === '') {
+            return $url;
+        }
+
+        $auto = self::autoLegalLinkUrl($key);
+        if ($auto !== '' && self::urlsEquivalent($url, $auto)) {
+            return '';
+        }
+
+        return $url;
+    }
+
+    /**
+     * Automatische Link-Quelle ohne Briefpapier-Override (E-Mail-Layout, sonst Website).
+     */
+    public static function autoLegalLinkUrl(string $key): string
+    {
+        $key = strtolower(trim($key));
+        $emailLayout = class_exists('EmailLayoutSettings') ? EmailLayoutSettings::config() : [];
+        $map = [
+            'impressum' => 'footer_url_impressum',
+            'datenschutz' => 'footer_url_datenschutz',
+            'agb' => 'footer_url_agb',
+        ];
+        $layoutKey = $map[$key] ?? '';
+        if ($layoutKey !== '') {
+            $fromLayout = trim((string) ($emailLayout[$layoutKey] ?? ''));
+            if ($fromLayout !== '') {
+                return $fromLayout;
+            }
+        }
+
+        return self::publishedLegalPageUrl($key);
+    }
+
+    private static function urlsEquivalent(string $a, string $b): bool
+    {
+        $norm = static function (string $u): string {
+            $u = trim($u);
+            if ($u !== '' && !preg_match('#^https?://#i', $u) && str_starts_with($u, '/')) {
+                $base = class_exists('App') ? App::publicBaseUrl() : '';
+                if ($base !== '') {
+                    $u = rtrim($base, '/') . $u;
+                }
+            }
+
+            return strtolower(rtrim($u, '/'));
+        };
+
+        return $norm($a) !== '' && $norm($a) === $norm($b);
     }
 }
