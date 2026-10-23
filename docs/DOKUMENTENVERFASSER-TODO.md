@@ -78,7 +78,7 @@ Alles: **anzeigen/verstecken**, Größe, Position/Reihenfolge.
 ### 1.3 ToDo — Briefpapier (B1–B4)
 
 - [x] **B1** Datenmodell `LetterheadSettings` (`src/Documents/LetterheadSettings.php`, Store-Key `letterhead`, keine Extra-Tabelle) — DIN-Defaults, Infoblock, Fuß Pflicht/empfohlen, Export-Flags, `resolvedCompany()` / `missingMandatoryFields()`
-- [ ] **B2** Settings-UI: Logo Position/Größe, Zonen an/aus, Hintergrund/Wasserzeichen, Link-Felder
+- [x] **B2** Settings-UI: Tab **Einstellungen → Kommunikation → Briefpapier** (`tab-letterhead.php`) — Logo/Zonen/Infoblock/Fuß/Links/Hintergrund/Export; Soft-Hinweis Pflichtangaben beim Speichern
 - [ ] **B3** Pflichtangaben-Check je Rechtsform (Warnung wenn leer — soft speichern); empfohlene Felder standardmäßig sichtbar, einzeln abschaltbar; DIN-Zonen (Fenster, Infoblock, Fuß) als Default-Layout
 - [ ] **B4** Vorschau A4 (HTML/CSS mm-genau, DIN-Hilfslinien optional) — gleiche Renderer-Basis wie Export
 

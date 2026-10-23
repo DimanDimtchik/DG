@@ -167,7 +167,7 @@ final class LetterheadSettings
      */
     public static function saveFromPost(array $input): void
     {
-        SettingsStore::set(self::STORE_KEY, self::sanitize($input));
+        SettingsStore::set(self::STORE_KEY, self::sanitize($input, true));
     }
 
     /**
@@ -487,7 +487,7 @@ final class LetterheadSettings
      * @param array<string, mixed> $input
      * @return array<string, mixed>
      */
-    private static function sanitize(array $input): array
+    private static function sanitize(array $input, bool $fromForm = false): array
     {
         $d = self::defaults();
         $page = is_array($input['page'] ?? null) ? $input['page'] : [];
@@ -501,6 +501,14 @@ final class LetterheadSettings
         $bg = is_array($input['background'] ?? null) ? $input['background'] : [];
         $export = is_array($input['export_formats'] ?? null) ? $input['export_formats'] : [];
         $legal = is_array($input['legal_overrides'] ?? null) ? $input['legal_overrides'] : [];
+
+        $flag = static function (array $src, string $key, bool $default) use ($fromForm): bool {
+            if (array_key_exists($key, $src)) {
+                return !empty($src[$key]) && (string) $src[$key] !== '0';
+            }
+
+            return $fromForm ? false : $default;
+        };
 
         $logoPos = (string) ($header['logo_position'] ?? $d['header']['logo_position']);
         if (!in_array($logoPos, ['left', 'center', 'right'], true)) {
@@ -528,8 +536,14 @@ final class LetterheadSettings
             if ($label === '') {
                 $label = $defaultField['label'];
             }
+            $showDefault = !empty($defaultField['show']);
+            if ($fromForm) {
+                $show = array_key_exists('show', $row) && !empty($row['show']) && (string) $row['show'] !== '0';
+            } else {
+                $show = array_key_exists('show', $row) ? !empty($row['show']) : $showDefault;
+            }
             $infoFields[$key] = [
-                'show' => array_key_exists('show', $row) ? !empty($row['show']) : !empty($defaultField['show']),
+                'show' => $show,
                 'label' => mb_substr($label, 0, 80),
                 'order' => max(0, min(9999, (int) ($row['order'] ?? $defaultField['order']))),
             ];
@@ -540,6 +554,16 @@ final class LetterheadSettings
             $color = '';
         }
 
+        $exportFormats = [
+            'pdf' => $flag($export, 'pdf', true),
+            'txt' => $flag($export, 'txt', true),
+            'md' => $flag($export, 'md', false),
+            'docx' => $flag($export, 'docx', false),
+        ];
+        if (!in_array(true, $exportFormats, true)) {
+            $exportFormats['pdf'] = true;
+        }
+
         return [
             'page' => [
                 'format' => 'A4',
@@ -547,50 +571,50 @@ final class LetterheadSettings
                 'margin_right_mm' => self::clampMm($page['margin_right_mm'] ?? $d['page']['margin_right_mm']),
                 'margin_bottom_mm' => self::clampMm($page['margin_bottom_mm'] ?? $d['page']['margin_bottom_mm']),
                 'margin_left_mm' => self::clampMm($page['margin_left_mm'] ?? $d['page']['margin_left_mm']),
-                'show_din_guides' => !empty($page['show_din_guides']),
+                'show_din_guides' => $flag($page, 'show_din_guides', false),
             ],
             'header' => [
-                'show' => !array_key_exists('show', $header) || !empty($header['show']),
-                'show_company_name' => !array_key_exists('show_company_name', $header) || !empty($header['show_company_name']),
-                'show_logo' => !array_key_exists('show_logo', $header) || !empty($header['show_logo']),
+                'show' => $flag($header, 'show', true),
+                'show_company_name' => $flag($header, 'show_company_name', true),
+                'show_logo' => $flag($header, 'show_logo', true),
                 'logo_position' => $logoPos,
                 'logo_max_height_mm' => self::clampMm($header['logo_max_height_mm'] ?? $d['header']['logo_max_height_mm'], 5.0, 45.0),
                 'logo_media_id' => self::mediaId($header['logo_media_id'] ?? ''),
                 'height_form' => $heightForm,
             ],
             'sender_line' => [
-                'show' => !array_key_exists('show', $sender) || !empty($sender['show']),
+                'show' => $flag($sender, 'show', true),
                 'font_size_pt' => self::clampFloat($sender['font_size_pt'] ?? $d['sender_line']['font_size_pt'], 6.0, 12.0),
             ],
             'address_window' => [
-                'show' => !array_key_exists('show', $window) || !empty($window['show']),
+                'show' => $flag($window, 'show', true),
                 'left_mm' => self::clampMm($window['left_mm'] ?? $d['address_window']['left_mm'], 10.0, 40.0),
                 'top_mm' => self::clampMm($window['top_mm'] ?? $d['address_window']['top_mm'], 30.0, 80.0),
                 'width_mm' => self::clampMm($window['width_mm'] ?? $d['address_window']['width_mm'], 70.0, 100.0),
                 'height_mm' => self::clampMm($window['height_mm'] ?? $d['address_window']['height_mm'], 35.0, 55.0),
             ],
             'info_block' => [
-                'show' => !array_key_exists('show', $info) || !empty($info['show']),
+                'show' => $flag($info, 'show', true),
                 'fields' => $infoFields,
             ],
             'subject' => [
-                'bold' => !array_key_exists('bold', $subject) || !empty($subject['bold']),
-                'show_label' => !empty($subject['show_label']),
+                'bold' => $flag($subject, 'bold', true),
+                'show_label' => $flag($subject, 'show_label', false),
             ],
             'footer' => [
-                'show' => !array_key_exists('show', $footer) || !empty($footer['show']),
+                'show' => $flag($footer, 'show', true),
                 'font_size_pt' => self::clampFloat($footer['font_size_pt'] ?? $d['footer']['font_size_pt'], 5.0, 11.0),
-                'show_rule' => !array_key_exists('show_rule', $footer) || !empty($footer['show_rule']),
+                'show_rule' => $flag($footer, 'show_rule', true),
                 'columns' => max(1, min(4, (int) ($footer['columns'] ?? 3))),
-                'show_legal_mandatory' => !array_key_exists('show_legal_mandatory', $footer) || !empty($footer['show_legal_mandatory']),
-                'show_address' => !array_key_exists('show_address', $footer) || !empty($footer['show_address']),
-                'show_phone' => !array_key_exists('show_phone', $footer) || !empty($footer['show_phone']),
-                'show_email' => !array_key_exists('show_email', $footer) || !empty($footer['show_email']),
-                'show_website' => !array_key_exists('show_website', $footer) || !empty($footer['show_website']),
-                'show_bank' => !array_key_exists('show_bank', $footer) || !empty($footer['show_bank']),
-                'show_tax_number' => !array_key_exists('show_tax_number', $footer) || !empty($footer['show_tax_number']),
-                'show_vat_id' => !array_key_exists('show_vat_id', $footer) || !empty($footer['show_vat_id']),
-                'show_links' => !array_key_exists('show_links', $footer) || !empty($footer['show_links']),
+                'show_legal_mandatory' => $flag($footer, 'show_legal_mandatory', true),
+                'show_address' => $flag($footer, 'show_address', true),
+                'show_phone' => $flag($footer, 'show_phone', true),
+                'show_email' => $flag($footer, 'show_email', true),
+                'show_website' => $flag($footer, 'show_website', true),
+                'show_bank' => $flag($footer, 'show_bank', true),
+                'show_tax_number' => $flag($footer, 'show_tax_number', true),
+                'show_vat_id' => $flag($footer, 'show_vat_id', true),
+                'show_links' => $flag($footer, 'show_links', true),
             ],
             'links' => [
                 'impressum' => self::urlOrEmpty($links['impressum'] ?? ''),
@@ -604,14 +628,9 @@ final class LetterheadSettings
                 'media_id' => self::mediaId($bg['media_id'] ?? ''),
                 'opacity' => self::clampFloat($bg['opacity'] ?? 0.08, 0.02, 0.5),
                 'fit' => $fit,
-                'all_pages' => !array_key_exists('all_pages', $bg) || !empty($bg['all_pages']),
+                'all_pages' => $flag($bg, 'all_pages', true),
             ],
-            'export_formats' => [
-                'pdf' => !array_key_exists('pdf', $export) || !empty($export['pdf']),
-                'txt' => !empty($export['txt']),
-                'md' => !empty($export['md']),
-                'docx' => !empty($export['docx']),
-            ],
+            'export_formats' => $exportFormats,
             'legal_overrides' => [
                 'seat' => mb_substr(trim((string) ($legal['seat'] ?? '')), 0, 120),
                 'share_capital' => mb_substr(trim((string) ($legal['share_capital'] ?? '')), 0, 80),

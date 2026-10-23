@@ -1,0 +1,328 @@
+<?php
+/**
+ * Briefpapier / Schreibendesign (Dokumentenverfasser B2).
+ *
+ * @var array<string, mixed> $letterheadSettings
+ * @var array<string, mixed> $letterheadCompany
+ * @var list<array{key: string, label: string}> $letterheadMissingMandatory
+ * @var bool $dbConnected
+ */
+$cfg = $letterheadSettings ?? LetterheadSettings::forForm();
+$party = $letterheadCompany ?? LetterheadSettings::resolvedCompany($cfg);
+$missing = $letterheadMissingMandatory ?? LetterheadSettings::missingMandatoryFields($cfg);
+$page = is_array($cfg['page'] ?? null) ? $cfg['page'] : [];
+$header = is_array($cfg['header'] ?? null) ? $cfg['header'] : [];
+$sender = is_array($cfg['sender_line'] ?? null) ? $cfg['sender_line'] : [];
+$window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+$info = is_array($cfg['info_block'] ?? null) ? $cfg['info_block'] : [];
+$subject = is_array($cfg['subject'] ?? null) ? $cfg['subject'] : [];
+$footer = is_array($cfg['footer'] ?? null) ? $cfg['footer'] : [];
+$links = is_array($cfg['links'] ?? null) ? $cfg['links'] : [];
+$bg = is_array($cfg['background'] ?? null) ? $cfg['background'] : [];
+$export = is_array($cfg['export_formats'] ?? null) ? $cfg['export_formats'] : [];
+$legal = is_array($cfg['legal_overrides'] ?? null) ? $cfg['legal_overrides'] : [];
+$infoFields = LetterheadSettings::infoFieldsSorted($cfg, false);
+$logoUrl = LetterheadSettings::logoUrl($cfg);
+$disabled = !$dbConnected ? ' disabled' : '';
+?>
+<form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>">
+  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+  <input type="hidden" name="_letterhead_form" value="1">
+
+  <?php if (!$dbConnected) : ?>
+    <div class="dg-flash dg-flash--warning">
+      Zum Speichern ist eine funktionierende <a href="<?= View::escape(SettingsRegistry::tabUrl('datenbank')) ?>">Datenbankverbindung</a> erforderlich.
+    </div>
+  <?php endif; ?>
+
+  <p class="dg-lead">
+    Briefpapier nach DIN&nbsp;5008 (Zonen) mit gesetzlichen Pflichtangaben und empfohlenen Fußdaten.
+    Firmendaten kommen aus <a href="<?= View::escape(SettingsRegistry::tabUrl('firmendaten')) ?>">Firmendaten</a> — hier nur Layout und Sichtbarkeit.
+  </p>
+
+  <?php if ($missing !== []) : ?>
+    <div class="dg-flash dg-flash--warning">
+      <strong>Pflichtangaben unvollständig</strong> (Speichern möglich — bitte unter Firmendaten oder unten ergänzen):
+      <?= View::escape(implode(', ', array_map(static fn(array $f): string => $f['label'], $missing))) ?>
+    </div>
+  <?php endif; ?>
+
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Briefkopf &amp; Logo</summary>
+    <div class="dg-collapsible-form__body">
+      <div class="dg-form-grid">
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="header[show]" value="1"<?= !empty($header['show']) ? ' checked' : '' ?><?= $disabled ?>>
+          Briefkopf anzeigen
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="header[show_company_name]" value="1"<?= !empty($header['show_company_name']) ? ' checked' : '' ?><?= $disabled ?>>
+          Firmenname im Kopf
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="header[show_logo]" value="1"<?= !empty($header['show_logo']) ? ' checked' : '' ?><?= $disabled ?>>
+          Logo anzeigen
+        </label>
+        <label class="dg-field">
+          <span>Logo-Position</span>
+          <select name="header[logo_position]"<?= $disabled ?>>
+            <?php foreach (['left' => 'Links', 'center' => 'Mitte', 'right' => 'Rechts'] as $val => $lbl) : ?>
+              <option value="<?= View::escape($val) ?>"<?= ((string) ($header['logo_position'] ?? 'left') === $val) ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Logo-Höhe (mm)</span>
+          <input type="number" name="header[logo_max_height_mm]" min="5" max="45" step="0.5"
+            value="<?= View::escape((string) ($header['logo_max_height_mm'] ?? '18')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Briefkopf-Form (DIN)</span>
+          <select name="header[height_form]"<?= $disabled ?>>
+            <option value="A"<?= ((string) ($header['height_form'] ?? 'B') === 'A') ? ' selected' : '' ?>>Form A (~27 mm)</option>
+            <option value="B"<?= ((string) ($header['height_form'] ?? 'B') === 'B') ? ' selected' : '' ?>>Form B (~45 mm)</option>
+          </select>
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Logo Mediathek-ID (leer = Software-Logo)</span>
+          <input type="text" name="header[logo_media_id]" value="<?= View::escape((string) ($header['logo_media_id'] ?? '')) ?>"
+            placeholder="leer lassen für CRM-Logo"<?= $disabled ?>>
+          <span class="dg-field-hint">Aktuell: <img src="<?= View::escape($logoUrl) ?>" alt="" style="height:28px;vertical-align:middle;margin-left:6px"></span>
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">DIN-Zonen (Fenster, Futter, Ränder)</summary>
+    <div class="dg-collapsible-form__body">
+      <div class="dg-form-grid">
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="sender_line[show]" value="1"<?= !empty($sender['show']) ? ' checked' : '' ?><?= $disabled ?>>
+          Absenderzeile (Futter über Anschrift)
+        </label>
+        <label class="dg-field">
+          <span>Futter Schriftgröße (pt)</span>
+          <input type="number" name="sender_line[font_size_pt]" min="6" max="12" step="0.5"
+            value="<?= View::escape((string) ($sender['font_size_pt'] ?? '8')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="address_window[show]" value="1"<?= !empty($window['show']) ? ' checked' : '' ?><?= $disabled ?>>
+          Anschriftenfenster
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="page[show_din_guides]" value="1"<?= !empty($page['show_din_guides']) ? ' checked' : '' ?><?= $disabled ?>>
+          DIN-Hilfslinien in Vorschau (B4)
+        </label>
+      </div>
+      <p class="dg-field-hint">Fenster-Standard: <?= (int) LetterheadSettings::ADDRESS_WINDOW_WIDTH_MM ?>×<?= (int) LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM ?> mm, <?= (int) LetterheadSettings::ADDRESS_WINDOW_LEFT_MM ?> mm vom linken Rand.</p>
+      <div class="dg-form-grid">
+        <label class="dg-field"><span>Fenster links (mm)</span>
+          <input type="number" name="address_window[left_mm]" min="10" max="40" step="0.1" value="<?= View::escape((string) ($window['left_mm'] ?? '20')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Fenster oben (mm)</span>
+          <input type="number" name="address_window[top_mm]" min="30" max="80" step="0.1" value="<?= View::escape((string) ($window['top_mm'] ?? '50')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Fenster Breite (mm)</span>
+          <input type="number" name="address_window[width_mm]" min="70" max="100" step="0.1" value="<?= View::escape((string) ($window['width_mm'] ?? '85')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Fenster Höhe (mm)</span>
+          <input type="number" name="address_window[height_mm]" min="35" max="55" step="0.1" value="<?= View::escape((string) ($window['height_mm'] ?? '45')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Rand oben (mm)</span>
+          <input type="number" name="page[margin_top_mm]" min="5" max="40" step="0.1" value="<?= View::escape((string) ($page['margin_top_mm'] ?? '17')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Rand rechts (mm)</span>
+          <input type="number" name="page[margin_right_mm]" min="5" max="40" step="0.1" value="<?= View::escape((string) ($page['margin_right_mm'] ?? '20')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Rand unten (mm)</span>
+          <input type="number" name="page[margin_bottom_mm]" min="5" max="40" step="0.1" value="<?= View::escape((string) ($page['margin_bottom_mm'] ?? '16.7')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Rand links (mm)</span>
+          <input type="number" name="page[margin_left_mm]" min="5" max="40" step="0.1" value="<?= View::escape((string) ($page['margin_left_mm'] ?? '24.1')) ?>"<?= $disabled ?>></label>
+      </div>
+      <p class="dg-field-hint">Futter-Vorschau: <?= View::escape(LetterheadSettings::senderLineText($cfg) !== '' ? LetterheadSettings::senderLineText($cfg) : '— noch keine Firmendaten —') ?></p>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Infoblock (Ihre / Unsere Seite)</summary>
+    <div class="dg-collapsible-form__body">
+      <label class="dg-checkbox dg-field" style="margin-bottom:12px">
+        <input type="checkbox" name="info_block[show]" value="1"<?= !empty($info['show']) ? ' checked' : '' ?><?= $disabled ?>>
+        Infoblock rechts anzeigen
+      </label>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Anzeigen</th>
+              <th>Feld</th>
+              <th>Beschriftung</th>
+              <th>Reihenfolge</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($infoFields as $row) : ?>
+              <?php $key = $row['key']; ?>
+              <tr>
+                <td>
+                  <label class="dg-checkbox">
+                    <input type="checkbox" name="info_block[fields][<?= View::escape($key) ?>][show]" value="1"<?= !empty($row['show']) ? ' checked' : '' ?><?= $disabled ?>>
+                  </label>
+                </td>
+                <td><code><?= View::escape($key) ?></code></td>
+                <td>
+                  <input type="text" name="info_block[fields][<?= View::escape($key) ?>][label]"
+                    value="<?= View::escape($row['label']) ?>"<?= $disabled ?>>
+                </td>
+                <td style="width:6rem">
+                  <input type="number" name="info_block[fields][<?= View::escape($key) ?>][order]" min="0" max="9999"
+                    value="<?= (int) $row['order'] ?>"<?= $disabled ?>>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="dg-form-grid" style="margin-top:12px">
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="subject[bold]" value="1"<?= !empty($subject['bold']) ? ' checked' : '' ?><?= $disabled ?>>
+          Betreff fett
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="subject[show_label]" value="1"<?= !empty($subject['show_label']) ? ' checked' : '' ?><?= $disabled ?>>
+          Wort „Betreff:“ anzeigen (DIN: eher ohne)
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Fußzeile — Pflicht &amp; empfohlen</summary>
+    <div class="dg-collapsible-form__body">
+      <div class="dg-form-grid">
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="footer[show]" value="1"<?= !empty($footer['show']) ? ' checked' : '' ?><?= $disabled ?>>
+          Fußzeile anzeigen
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="footer[show_rule]" value="1"<?= !empty($footer['show_rule']) ? ' checked' : '' ?><?= $disabled ?>>
+          Trennlinie über Fuß
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="footer[show_legal_mandatory]" value="1"<?= !empty($footer['show_legal_mandatory']) ? ' checked' : '' ?><?= $disabled ?>>
+          Gesetzliche Pflichtangaben
+        </label>
+        <label class="dg-field">
+          <span>Schriftgröße Fuß (pt)</span>
+          <input type="number" name="footer[font_size_pt]" min="5" max="11" step="0.5"
+            value="<?= View::escape((string) ($footer['font_size_pt'] ?? '7')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Spalten</span>
+          <input type="number" name="footer[columns]" min="1" max="4" value="<?= (int) ($footer['columns'] ?? 3) ?>"<?= $disabled ?>>
+        </label>
+      </div>
+      <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Empfohlene Angaben</h4>
+      <div class="dg-form-grid">
+        <?php foreach (LetterheadSettings::recommendedFooterFields() as $rec) : ?>
+          <label class="dg-checkbox dg-field">
+            <input type="checkbox" name="footer[<?= View::escape($rec['key']) ?>]" value="1"<?= !empty($footer[$rec['key']]) ? ' checked' : '' ?><?= $disabled ?>>
+            <?= View::escape($rec['label']) ?>
+          </label>
+        <?php endforeach; ?>
+      </div>
+      <p class="dg-field-hint" style="margin-top:8px">
+        Aktuell aus Firma:
+        <?= View::escape($party['legal_name'] !== '' ? $party['legal_name'] : '—') ?>
+        <?php if ($party['company_type_label'] !== '') : ?> · <?= View::escape($party['company_type_label']) ?><?php endif; ?>
+        <?php if ($party['register_number'] !== '') : ?> · <?= View::escape(trim($party['register_court'] . ' ' . $party['register_number'])) ?><?php endif; ?>
+      </p>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form">
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Links &amp; rechtliche Ergänzungen</summary>
+    <div class="dg-collapsible-form__body">
+      <p class="dg-field-hint">Leer = Übernahme aus E-Mail-Layout (Impressum/Datenschutz/AGB), falls dort gesetzt.</p>
+      <div class="dg-form-grid">
+        <label class="dg-field dg-field--wide"><span>Impressum-URL</span>
+          <input type="url" name="links[impressum]" value="<?= View::escape((string) ($links['impressum'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
+        <label class="dg-field dg-field--wide"><span>Datenschutz-URL</span>
+          <input type="url" name="links[datenschutz]" value="<?= View::escape((string) ($links['datenschutz'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
+        <label class="dg-field dg-field--wide"><span>AGB-URL</span>
+          <input type="url" name="links[agb]" value="<?= View::escape((string) ($links['agb'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
+        <label class="dg-field dg-field--wide"><span>Widerrufsbelehrung-URL</span>
+          <input type="url" name="links[widerruf]" value="<?= View::escape((string) ($links['widerruf'] ?? '')) ?>" placeholder="https://…"<?= $disabled ?>></label>
+      </div>
+      <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Overrides (nur wenn Firmendaten fehlen)</h4>
+      <div class="dg-form-grid">
+        <label class="dg-field"><span>Sitz</span>
+          <input type="text" name="legal_overrides[seat]" value="<?= View::escape((string) ($legal['seat'] ?? '')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field dg-field--wide"><span>Geschäftsführer / Gesellschafter</span>
+          <input type="text" name="legal_overrides[managing_directors]" value="<?= View::escape((string) ($legal['managing_directors'] ?? '')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Aufsichtsratsvorsitz</span>
+          <input type="text" name="legal_overrides[supervisory_chair]" value="<?= View::escape((string) ($legal['supervisory_chair'] ?? '')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Stammkapital</span>
+          <input type="text" name="legal_overrides[share_capital]" value="<?= View::escape((string) ($legal['share_capital'] ?? '')) ?>"<?= $disabled ?>></label>
+        <label class="dg-field"><span>Ausstehende Einlagen</span>
+          <input type="text" name="legal_overrides[outstanding_contributions]" value="<?= View::escape((string) ($legal['outstanding_contributions'] ?? '')) ?>"<?= $disabled ?>></label>
+      </div>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form">
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Hintergrund / Wasserzeichen</summary>
+    <div class="dg-collapsible-form__body">
+      <div class="dg-form-grid">
+        <label class="dg-field">
+          <span>Modus</span>
+          <select name="background[mode]"<?= $disabled ?>>
+            <?php foreach (['none' => 'Keiner', 'color' => 'Farbe', 'image' => 'Bild', 'watermark' => 'Wasserzeichen'] as $val => $lbl) : ?>
+              <option value="<?= View::escape($val) ?>"<?= ((string) ($bg['mode'] ?? 'none') === $val) ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Farbe</span>
+          <input type="text" name="background[color]" value="<?= View::escape((string) ($bg['color'] ?? '')) ?>" placeholder="#f5f5f5"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Medien-ID</span>
+          <input type="text" name="background[media_id]" value="<?= View::escape((string) ($bg['media_id'] ?? '')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Deckkraft (0,02–0,5)</span>
+          <input type="number" name="background[opacity]" min="0.02" max="0.5" step="0.01"
+            value="<?= View::escape((string) ($bg['opacity'] ?? '0.08')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Einpassung</span>
+          <select name="background[fit]"<?= $disabled ?>>
+            <?php foreach (['contain' => 'Einpassen', 'cover' => 'Füllen', 'tile' => 'Kacheln'] as $val => $lbl) : ?>
+              <option value="<?= View::escape($val) ?>"<?= ((string) ($bg['fit'] ?? 'contain') === $val) ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="background[all_pages]" value="1"<?= !empty($bg['all_pages']) ? ' checked' : '' ?><?= $disabled ?>>
+          Auf allen Seiten
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form" open>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Export-Formate (Dokumentenverfasser)</summary>
+    <div class="dg-collapsible-form__body">
+      <p class="dg-field-hint">Welche Download-Buttons später auf der Schreibseite sichtbar sind. Mindestens PDF bleibt aktiv.</p>
+      <div class="dg-form-grid">
+        <?php foreach (['pdf' => 'PDF', 'txt' => 'Textdatei (.txt)', 'md' => 'Markdown (.md)', 'docx' => 'Word (.docx)'] as $key => $lbl) : ?>
+          <label class="dg-checkbox dg-field">
+            <input type="checkbox" name="export_formats[<?= View::escape($key) ?>]" value="1"<?= !empty($export[$key]) ? ' checked' : '' ?><?= $disabled ?>>
+            <?= View::escape($lbl) ?>
+          </label>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </details>
+
+  <div class="dg-form-actions">
+    <button type="submit" name="letterhead_save" value="1" class="dg-button dg-button--primary"<?= $disabled ?>>Briefpapier speichern</button>
+    <a class="dg-button" href="/app?page=dokumentenverfasser">Zum Dokumentenverfasser</a>
+  </div>
+</form>

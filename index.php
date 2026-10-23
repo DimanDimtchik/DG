@@ -1237,6 +1237,38 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Briefpapier (Dokumentenverfasser)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['letterhead_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('briefpapier');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    LetterheadSettings::saveFromPost($_POST);
+                    $missing = LetterheadSettings::missingMandatoryFields();
+                    if ($missing !== []) {
+                        Flash::set(
+                            'success',
+                            'Briefpapier gespeichert. Hinweis: Pflichtangaben unvollständig ('
+                            . implode(', ', array_map(static fn(array $f): string => $f['label'], $missing))
+                            . ').'
+                        );
+                    } else {
+                        Flash::set('success', 'Briefpapier gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Zeiterfassung
         if (
             $page === 'einstellungen'
@@ -4363,6 +4395,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $ldapConfig = LdapSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $documentPresentationSettings = DocumentPresentationSettings::forForm();
+        $letterheadSettings = LetterheadSettings::forForm();
+        $letterheadCompany = LetterheadSettings::resolvedCompany($letterheadSettings);
+        $letterheadMissingMandatory = LetterheadSettings::missingMandatoryFields($letterheadSettings);
         $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
@@ -7305,6 +7340,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $datevExportSettings = $datevExportSettings ?? DatevExportSettings::forForm();
         $accountingPaymentSettings = $accountingPaymentSettings ?? AccountingPaymentSettings::forForm();
         $documentPresentationSettings = $documentPresentationSettings ?? DocumentPresentationSettings::forForm();
+        $letterheadSettings = $letterheadSettings ?? LetterheadSettings::forForm();
+        $letterheadCompany = $letterheadCompany ?? LetterheadSettings::resolvedCompany($letterheadSettings);
+        $letterheadMissingMandatory = $letterheadMissingMandatory ?? LetterheadSettings::missingMandatoryFields($letterheadSettings);
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
@@ -7619,6 +7657,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'ldapConfig',
             'accountingPaymentSettings',
             'documentPresentationSettings',
+            'letterheadSettings',
+            'letterheadCompany',
+            'letterheadMissingMandatory',
             'timeTrackingSettings',
             'chartOfAccountsConfig',
             'chartAccountCount',

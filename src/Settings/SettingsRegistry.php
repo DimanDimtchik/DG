@@ -116,6 +116,11 @@ final class SettingsRegistry
                         'lead' => 'Kopf- und Fußzeile, E-Mail-Vorlagen für Terminkalender und freie Abteilungsvorlagen. Zuordnung pro Abteilung unter Einstellungen → HR → Abteilungen.',
                         'template' => 'notifications',
                     ],
+                    'briefpapier' => [
+                        'label' => 'Briefpapier',
+                        'lead' => 'DIN-5008-Zonen, Logo, Infoblock, Fußpflichtangaben und Exportformate für den Dokumentenverfasser.',
+                        'template' => 'letterhead',
+                    ],
                 ],
             ],
             'lager' => [
@@ -312,6 +317,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['ldap_save'])) {
                 return 'ldap';
+            }
+            if (isset($_POST['letterhead_save'])) {
+                return 'briefpapier';
             }
         }
 

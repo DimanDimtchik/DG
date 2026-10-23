@@ -85,6 +85,8 @@
           <?php View::render('settings/tab-payment-terms', compact('accountingPaymentSettings', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'belegdarstellung') : ?>
           <?php View::render('settings/tab-belegdarstellung', compact('documentPresentationSettings', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'letterhead') : ?>
+          <?php View::render('settings/tab-letterhead', compact('letterheadSettings', 'letterheadCompany', 'letterheadMissingMandatory', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'time-tracking') : ?>
           <?php View::render('settings/tab-time-tracking', compact('timeTrackingSettings', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'lager-struktur') : ?>
