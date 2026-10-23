@@ -901,6 +901,7 @@ switch ($path) {
         $hrSection = MenuRegistry::hrSection($user);
         $warenwirtschaftSection = MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = MenuRegistry::websiteSection($user);
+        $kommunikationSection = MenuRegistry::kommunikationSection($user);
         $kdvSection = MenuRegistry::kdvSection($user);
         $belegeFocus = '';
         $belegeFormFocus = '';
@@ -3002,7 +3003,7 @@ switch ($path) {
                 $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kdvSection',
+                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
                     'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas',
@@ -6741,7 +6742,7 @@ $legalProductsConfig = LegalProductSettings::config();
             }
 
             $contentTemplate = 'modules/post';
-            $title = 'Post';
+            $title = 'E-Mail-Postfächer';
             $currentPage = 'post';
             $postMailboxes = MailboxRepository::accessibleForUser($user);
             $postSendableMailboxes = MailboxRepository::sendableForUser($user);
@@ -6892,6 +6893,14 @@ $legalProductsConfig = LegalProductSettings::config();
                     }
                 }
             }
+        } elseif ($page === 'telefon' && MenuRegistry::canAccess($user, 'telefon')) {
+            $contentTemplate = 'modules/telefon';
+            $title = 'Telefon';
+            $currentPage = 'telefon';
+        } elseif ($page === 'dokumentenverfasser' && MenuRegistry::canAccess($user, 'dokumentenverfasser')) {
+            $contentTemplate = 'modules/dokumentenverfasser';
+            $title = 'Dokumentenverfasser';
+            $currentPage = 'dokumentenverfasser';
         } elseif ($page !== 'dashboard' && MenuRegistry::canAccess($user, $page)) {
             $contentTemplate = 'modules/' . $page;
             $title = ucfirst($page);
@@ -6994,6 +7003,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $warenwirtschaftSection = $warenwirtschaftSection ?? MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
+        $kommunikationSection = $kommunikationSection ?? MenuRegistry::kommunikationSection($user);
         $kdvSection = $kdvSection ?? MenuRegistry::kdvSection($user);
         $belegeFocus = $belegeFocus ?? '';
         $belegeFormFocus = $belegeFormFocus ?? '';
@@ -7280,6 +7290,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'warenwirtschaftSection',
             'buchhaltungSection',
             'websiteSection',
+            'kommunikationSection',
+            'kdvSection',
             'belegeFocus',
             'belegeFormFocus',
             'currentPage',

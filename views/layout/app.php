@@ -11,6 +11,7 @@
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $hrSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $warenwirtschaftSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $websiteSection */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $kommunikationSection */
 /** @var string $belegeFocus */
 /** @var string $currentPage */
 $homeHref = RoleResolver::isCustomer($user) ? '/app?area=profile' : '/app';
@@ -175,6 +176,22 @@ $belegeFocus = (string) ($belegeFocus ?? '');
           <?php endforeach; ?>
         </ul>
       </section>
+
+      <?php if (!empty($kommunikationSection)) : ?>
+        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kommunikation">
+          <h2 id="dg-sidebar-kommunikation" class="dg-sidebar__heading"><?= View::escape($kommunikationSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($kommunikationSection['items'] as $item) : ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $currentPage === $item['slug'] ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
 
       <?php if (!empty($dienstleistungenSection)) : ?>
         <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-dienstleistungen">

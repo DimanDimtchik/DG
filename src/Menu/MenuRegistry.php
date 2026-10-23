@@ -26,9 +26,7 @@ final class MenuRegistry
         if (DepartmentAccess::canAccessModule($user, 'terminkalender') && $canEdit) {
             $items[] = ['slug' => 'terminkalender', 'label' => 'Terminkalender', 'icon' => 'calendar'];
         }
-        if (DepartmentAccess::canAccessModule($user, 'post') && $canEdit) {
-            $items[] = ['slug' => 'post', 'label' => 'Post', 'icon' => 'mail'];
-        }
+        // „Post“ / E-Mail-Postfächer → kommunikationSection()
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
         }
@@ -202,6 +200,50 @@ final class MenuRegistry
         }
 
         return $items;
+    }
+
+    /**
+     * Kommunikation: Postfächer, Telefon (Platzhalter), Dokumentenverfasser (Platzhalter).
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function kommunikationSection(User $user): ?array
+    {
+        if (RoleResolver::isCustomer($user) || !RoleResolver::canEdit($user)) {
+            return null;
+        }
+
+        $items = [];
+        if (DepartmentAccess::canAccessModule($user, 'post')) {
+            $items[] = [
+                'slug' => 'post',
+                'label' => 'E-Mail-Postfächer',
+                'icon' => 'mail',
+                'href' => '/app?page=post',
+            ];
+        }
+
+        // Telefon / Dokumentenverfasser: Menü sichtbar sobald Post oder allgemein Bearbeitung erlaubt
+        if ($items !== [] || DepartmentAccess::canAccessModule($user, 'kontakte')) {
+            $items[] = [
+                'slug' => 'telefon',
+                'label' => 'Telefon',
+                'icon' => 'phone',
+                'href' => '/app?page=telefon',
+            ];
+            $items[] = [
+                'slug' => 'dokumentenverfasser',
+                'label' => 'Dokumentenverfasser',
+                'icon' => 'document',
+                'href' => '/app?page=dokumentenverfasser',
+            ];
+        }
+
+        if ($items === []) {
+            return null;
+        }
+
+        return ['label' => 'Kommunikation', 'items' => $items];
     }
 
     /**
@@ -424,7 +466,9 @@ final class MenuRegistry
             'kontakte' => 'Benutzer, Kunden, Lieferanten und Mitarbeiter verwalten.',
             'terminkalender' => 'Buchungen, Artikel und Kalender im Blick behalten.',
             'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
-            'post' => 'Postfächer, Eingang und Nachrichten versenden.',
+            'post' => 'E-Mail-Postfächer: Eingang lesen und Nachrichten versenden.',
+            'telefon' => 'Telefonanlage und Anrufe — in Vorbereitung.',
+            'dokumentenverfasser' => 'PDF, Word und Excel erstellen — in Vorbereitung.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'dienstleistungen-auftraege' => 'Angebote und Aufträge — Planung.',
             'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
@@ -499,6 +543,19 @@ final class MenuRegistry
         $hr = self::hrSection($user);
         if ($hr !== null) {
             foreach ($hr['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => $descriptions[$item['slug']] ?? '',
+                ];
+            }
+        }
+
+        $kommunikation = self::kommunikationSection($user);
+        if ($kommunikation !== null) {
+            foreach ($kommunikation['items'] as $item) {
                 $tiles[] = [
                     'slug' => $item['slug'],
                     'label' => $item['label'],
@@ -667,6 +724,15 @@ final class MenuRegistry
 
         if ($slug === 'post') {
             return DepartmentAccess::canAccessModule($user, 'post') && RoleResolver::canEdit($user);
+        }
+
+        if ($slug === 'telefon' || $slug === 'dokumentenverfasser') {
+            // Platzhalter: sichtbar für Bearbeiter mit Post- oder Kontakt-Recht
+            return RoleResolver::canEdit($user)
+                && (
+                    DepartmentAccess::canAccessModule($user, 'post')
+                    || DepartmentAccess::canAccessModule($user, 'kontakte')
+                );
         }
 
         if ($slug === 'zeiterfassung-team') {

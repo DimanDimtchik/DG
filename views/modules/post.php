@@ -47,7 +47,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
 <div class="dg-wrap">
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
-      <h1 class="dg-page-title">Post</h1>
+      <h1 class="dg-page-title">E-Mail-Postfächer</h1>
       <p class="dg-lead">Mehrere Postfächer — Ordner werden per IMAP vom Provider geladen (z.&nbsp;B. All-Inkl).</p>
     </div>
     <div class="dg-page-header__actions">
