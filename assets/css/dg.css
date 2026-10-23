@@ -796,6 +796,19 @@ code {
 .dg-field[hidden] { display: none !important; }
 .dg-field--wide { grid-column: 1 / -1; }
 .dg-field span { font-size: 12px; font-weight: 600; color: var(--dg-text); }
+/* Checkbox + Text in einer Zeile (nicht untereinander wie .dg-field) */
+.dg-checkbox,
+label.dg-checkbox.dg-field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+.dg-checkbox input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin: 0;
+}
 .dg-field input,
 .dg-field select,
 .dg-field textarea {
@@ -7591,4 +7604,40 @@ body.dg-login-page {
 }
 .dg-writer-assist__tip--info {
   color: #344054;
+}
+
+/* Briefpapier Mediathek-Picker */
+.dg-letterhead-media-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+.dg-letterhead-media-preview img {
+  height: 36px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 4px;
+  padding: 2px;
+}
+#dg-letterhead-media-picker .dg-website-media-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+#dg-letterhead-media-picker .dg-website-media-picker__item {
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 6px;
+  padding: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+#dg-letterhead-media-picker .dg-website-media-picker__item img {
+  width: 100%;
+  height: 72px;
+  object-fit: contain;
+  display: block;
 }

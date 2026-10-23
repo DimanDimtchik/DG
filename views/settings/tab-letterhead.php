@@ -28,10 +28,29 @@ $export = is_array($cfg['export_formats'] ?? null) ? $cfg['export_formats'] : []
 $legal = is_array($cfg['legal_overrides'] ?? null) ? $cfg['legal_overrides'] : [];
 $infoFields = LetterheadSettings::infoFieldsSorted($cfg, false);
 $logoUrl = LetterheadSettings::logoUrl($cfg);
+$logoMediaId = trim((string) ($header['logo_media_id'] ?? ''));
+$crmLogoUrl = class_exists('AppearanceSettings') ? AppearanceSettings::logoUrl() : Asset::url('/assets/img/logo.svg');
+$bgMediaId = trim((string) ($bg['media_id'] ?? ''));
+$bgMediaUrl = '';
+if ($bgMediaId !== '' && class_exists('MediaRepository')) {
+    MediaRepository::ensureTables();
+    $bgItem = MediaRepository::find($bgMediaId);
+    if (is_array($bgItem) && !empty($bgItem['url'])) {
+        $bgMediaUrl = (string) $bgItem['url'];
+    } elseif (class_exists('MediaStorage') && MediaId::isValid($bgMediaId)) {
+        $bgMediaUrl = MediaStorage::publicUrl($bgMediaId);
+    }
+}
 $disabled = !$dbConnected ? ' disabled' : '';
 $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['company_type'] ?? ''));
 ?>
-<form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>">
+<form
+  class="dg-form"
+  method="post"
+  action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>"
+  id="dg-letterhead-settings"
+  data-media-list-url="/api/media?action=list"
+>
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
   <input type="hidden" name="_letterhead_form" value="1">
 
@@ -172,12 +191,31 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
             <option value="B"<?= ((string) ($header['height_form'] ?? 'B') === 'B') ? ' selected' : '' ?>>Form B (~45 mm)</option>
           </select>
         </label>
-        <label class="dg-field dg-field--wide">
-          <span>Logo Mediathek-ID (leer = Software-Logo)</span>
-          <input type="text" name="header[logo_media_id]" value="<?= View::escape((string) ($header['logo_media_id'] ?? '')) ?>"
-            placeholder="leer lassen für CRM-Logo"<?= $disabled ?>>
-          <span class="dg-field-hint">Aktuell: <img src="<?= View::escape($logoUrl) ?>" alt="" style="height:28px;vertical-align:middle;margin-left:6px"></span>
-        </label>
+        <div class="dg-field dg-field--wide">
+          <span>Logo aus Mediathek</span>
+          <input type="hidden" name="header[logo_media_id]" id="dg-letterhead-logo-media-id" value="<?= View::escape($logoMediaId) ?>">
+          <p class="dg-form-actions" style="margin:0 0 8px">
+            <button type="button" class="dg-button" data-dg-media-pick-open
+              data-input="dg-letterhead-logo-media-id"
+              data-preview="dg-letterhead-logo-preview"
+              data-title="Logo wählen"<?= $disabled ?>>Bild wählen</button>
+            <button type="button" class="dg-button" data-dg-media-pick-clear
+              data-input="dg-letterhead-logo-media-id"
+              data-preview="dg-letterhead-logo-preview"<?= $disabled ?>>CRM-Logo verwenden</button>
+          </p>
+          <div
+            id="dg-letterhead-logo-preview"
+            class="dg-letterhead-media-preview"
+            data-fallback-url="<?= View::escape($crmLogoUrl) ?>"
+          >
+            <img src="<?= View::escape($logoUrl) ?>" alt="">
+            <?php if ($logoMediaId === '') : ?>
+              <span class="dg-field-hint">CRM-Logo</span>
+            <?php else : ?>
+              <span class="dg-field-hint">Mediathek</span>
+            <?php endif; ?>
+          </div>
+        </div>
       </div>
     </div>
   </details>
@@ -370,10 +408,27 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           <span>Farbe</span>
           <input type="text" name="background[color]" value="<?= View::escape((string) ($bg['color'] ?? '')) ?>" placeholder="#f5f5f5"<?= $disabled ?>>
         </label>
-        <label class="dg-field">
-          <span>Medien-ID</span>
-          <input type="text" name="background[media_id]" value="<?= View::escape((string) ($bg['media_id'] ?? '')) ?>"<?= $disabled ?>>
-        </label>
+        <div class="dg-field dg-field--wide">
+          <span>Hintergrundbild aus Mediathek</span>
+          <input type="hidden" name="background[media_id]" id="dg-letterhead-bg-media-id" value="<?= View::escape($bgMediaId) ?>">
+          <p class="dg-form-actions" style="margin:0 0 8px">
+            <button type="button" class="dg-button" data-dg-media-pick-open
+              data-input="dg-letterhead-bg-media-id"
+              data-preview="dg-letterhead-bg-preview"
+              data-title="Hintergrundbild wählen"<?= $disabled ?>>Bild wählen</button>
+            <button type="button" class="dg-button" data-dg-media-pick-clear
+              data-input="dg-letterhead-bg-media-id"
+              data-preview="dg-letterhead-bg-preview"<?= $disabled ?>>Entfernen</button>
+          </p>
+          <div id="dg-letterhead-bg-preview" class="dg-letterhead-media-preview">
+            <?php if ($bgMediaUrl !== '') : ?>
+              <img src="<?= View::escape($bgMediaUrl) ?>" alt="">
+            <?php else : ?>
+              <span class="dg-field-hint">Kein Bild gewählt</span>
+            <?php endif; ?>
+          </div>
+          <p class="dg-field-hint">Wirksam bei Modus „Bild“ oder „Wasserzeichen“.</p>
+        </div>
         <label class="dg-field">
           <span>Deckkraft (0,02–0,5)</span>
           <input type="number" name="background[opacity]" min="0.02" max="0.5" step="0.01"
