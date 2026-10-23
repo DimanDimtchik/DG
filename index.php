@@ -2498,6 +2498,34 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen — Postfach löschen
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['postbox_delete'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('postfaecher');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
+                    $existing = MailboxRepository::findById($mailboxId);
+                    if ($existing === null) {
+                        throw new RuntimeException('Postfach nicht gefunden.');
+                    }
+                    $email = (string) ($existing['email_address'] ?? '');
+                    MailboxRepository::deleteById($mailboxId);
+                    Flash::set('success', 'Postfach gelöscht' . ($email !== '' ? ': ' . $email : '') . '.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen — Postfächer
         if (
             $page === 'einstellungen'

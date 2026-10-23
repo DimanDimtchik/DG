@@ -122,6 +122,61 @@ final class MailboxRepository
     }
 
     /**
+     * Entfernt das Postfach aus dem CRM (Mitglieder per CASCADE).
+     * Mail-Log behält Einträge, mailbox_id wird auf NULL gesetzt.
+     * Provider-Postfach (KAS) wird nicht gelöscht.
+     */
+    public static function deleteById(int $mailboxId): void
+    {
+        if ($mailboxId < 1) {
+            throw new InvalidArgumentException('Postfach-ID fehlt.');
+        }
+        MigrationRunner::runPending();
+        $pdo = Database::pdo();
+        $mailbox = self::findById($mailboxId);
+        if ($mailbox === null) {
+            throw new InvalidArgumentException('Postfach nicht gefunden.');
+        }
+
+        $pdo->beginTransaction();
+        try {
+            if (self::mailLogHasMailboxColumn($pdo)) {
+                $pdo->prepare('UPDATE dg_mail_log SET mailbox_id = NULL WHERE mailbox_id = :id')
+                    ->execute(['id' => $mailboxId]);
+            }
+            try {
+                $pdo->prepare('DELETE FROM dg_mailbox_password_tokens WHERE mailbox_id = :id')
+                    ->execute(['id' => $mailboxId]);
+            } catch (Throwable) {
+                // Tabelle optional / ältere Installationen
+            }
+            $pdo->prepare('DELETE FROM dg_mailboxes WHERE id = :id')->execute(['id' => $mailboxId]);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    private static function mailLogHasMailboxColumn(PDO $pdo): bool
+    {
+        static $has = null;
+        if ($has !== null) {
+            return $has;
+        }
+        try {
+            $stmt = $pdo->query("SHOW COLUMNS FROM dg_mail_log LIKE 'mailbox_id'");
+            $has = $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Throwable) {
+            $has = false;
+        }
+
+        return $has;
+    }
+
+    /**
      * Listet alle Postfächer für Administratoren.
      * @return array<string, mixed>
      */
@@ -132,7 +187,7 @@ final class MailboxRepository
         }
         MigrationRunner::runPending();
         $stmt = Database::pdo()->query(
-            "SELECT * FROM dg_mailboxes ORDER BY type ASC, name ASC, email_address ASC"
+            "SELECT * FROM dg_mailboxes WHERE is_active = 1 ORDER BY type ASC, name ASC, email_address ASC"
         );
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

@@ -41,7 +41,7 @@ $postboxCount = count($postboxes);
 
 <div class="dg-notify-accordion" id="dg-postboxes-accordion">
 
-  <details class="dg-notify-section">
+  <details class="dg-notify-section" id="dg-postbox-edit"<?= $editBox ? ' open' : '' ?>>
 
     <summary class="dg-notify-section__summary">
 
@@ -347,6 +347,34 @@ $postboxCount = count($postboxes);
 
       </form>
 
+      <?php if ($editBox) : ?>
+
+        <form
+
+          method="post"
+
+          action="<?= View::escape(SettingsRegistry::tabUrl('postfaecher')) ?>"
+
+          class="dg-form"
+
+          style="margin-top:16px;padding-top:16px;border-top:1px solid var(--dg-border, #d0d5dd)"
+
+          onsubmit="return confirm('Postfach „<?= View::escape((string) ($editBox['email_address'] ?? '')) ?>“ wirklich aus dem CRM löschen?\n\nMail-Verlauf bleibt erhalten (ohne Postfach-Zuordnung). Ein All-Inkl-Postfach beim Provider wird nicht gelöscht.');"
+
+        >
+
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+
+          <input type="hidden" name="mailbox_id" value="<?= (int) $editBox['id'] ?>">
+
+          <button type="submit" name="postbox_delete" value="1" class="dg-button dg-button--danger">Postfach löschen</button>
+
+          <p class="dg-field-hint" style="margin-top:8px">Nur CRM-Eintrag. Provider-Postfach (All-Inkl o. Ä.) bleibt bestehen, bis Sie es dort manuell entfernen.</p>
+
+        </form>
+
+      <?php endif; ?>
+
     </div>
 
   </details>
@@ -457,7 +485,11 @@ $postboxCount = count($postboxes);
 
                   </td>
 
-                  <td><a href="<?= View::escape(SettingsRegistry::tabUrl('postfaecher') . '&edit=' . (int) $box['id']) ?>">Bearbeiten</a></td>
+                  <td class="dg-table__actions">
+
+                    <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('postfaecher') . '&edit=' . (int) $box['id'] . '#dg-postbox-edit') ?>">Bearbeiten</a>
+
+                  </td>
 
                 </tr>
 

@@ -258,7 +258,8 @@ final class SettingsRegistry
             if (isset($_POST['mail_address_save'])) {
                 return 'email';
             }
-            if (isset($_POST['postbox_save'])) {
+            if (isset($_POST['postbox_save']) || isset($_POST['postbox_delete'])
+                || isset($_POST['postbox_repair_imap']) || isset($_POST['postbox_provision_kas'])) {
                 return 'postfaecher';
             }
             if (isset($_POST['company_save'])) {
