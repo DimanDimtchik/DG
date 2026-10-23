@@ -1,15 +1,20 @@
 <?php
 /**
- * Briefpapier / Schreibendesign (Dokumentenverfasser B2).
+ * Briefpapier / Schreibendesign (Dokumentenverfasser B2/B3).
  *
  * @var array<string, mixed> $letterheadSettings
  * @var array<string, mixed> $letterheadCompany
  * @var list<array{key: string, label: string}> $letterheadMissingMandatory
+ * @var array<string, mixed> $letterheadCompliance
  * @var bool $dbConnected
  */
 $cfg = $letterheadSettings ?? LetterheadSettings::forForm();
 $party = $letterheadCompany ?? LetterheadSettings::resolvedCompany($cfg);
-$missing = $letterheadMissingMandatory ?? LetterheadSettings::missingMandatoryFields($cfg);
+$compliance = $letterheadCompliance ?? LetterheadSettings::complianceReport($cfg);
+$missing = $compliance['mandatory_missing'] ?? ($letterheadMissingMandatory ?? []);
+$recommendedGaps = $compliance['recommended_gaps'] ?? [];
+$dinOff = $compliance['din']['off'] ?? [];
+$dinCriticalOff = $compliance['din']['critical_off'] ?? [];
 $page = is_array($cfg['page'] ?? null) ? $cfg['page'] : [];
 $header = is_array($cfg['header'] ?? null) ? $cfg['header'] : [];
 $sender = is_array($cfg['sender_line'] ?? null) ? $cfg['sender_line'] : [];
@@ -24,6 +29,7 @@ $legal = is_array($cfg['legal_overrides'] ?? null) ? $cfg['legal_overrides'] : [
 $infoFields = LetterheadSettings::infoFieldsSorted($cfg, false);
 $logoUrl = LetterheadSettings::logoUrl($cfg);
 $disabled = !$dbConnected ? ' disabled' : '';
+$mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['company_type'] ?? ''));
 ?>
 <form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>">
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -38,14 +44,97 @@ $disabled = !$dbConnected ? ' disabled' : '';
   <p class="dg-lead">
     Briefpapier nach DIN&nbsp;5008 (Zonen) mit gesetzlichen Pflichtangaben und empfohlenen Fußdaten.
     Firmendaten kommen aus <a href="<?= View::escape(SettingsRegistry::tabUrl('firmendaten')) ?>">Firmendaten</a> — hier nur Layout und Sichtbarkeit.
+    Fehlende Pflichtangaben blockieren das Speichern <strong>nicht</strong> (Soft-Check).
   </p>
 
-  <?php if ($missing !== []) : ?>
-    <div class="dg-flash dg-flash--warning">
-      <strong>Pflichtangaben unvollständig</strong> (Speichern möglich — bitte unter Firmendaten oder unten ergänzen):
-      <?= View::escape(implode(', ', array_map(static fn(array $f): string => $f['label'], $missing))) ?>
+  <section class="dg-panel" style="margin-bottom:16px">
+    <h2 class="dg-subsection-title">Prüfstatus (B3)</h2>
+    <p class="dg-field-hint">
+      Rechtsform: <strong><?= View::escape((string) ($compliance['legal_form_label'] ?? '—')) ?></strong>
+      · <?= View::escape((string) ($compliance['summary'] ?? '')) ?>
+    </p>
+    <?php if (!empty($compliance['ok'])) : ?>
+      <div class="dg-flash dg-flash--success" style="margin:0">Pflichtangaben und kritische DIN-Zonen sind in Ordnung.</div>
+    <?php else : ?>
+      <div class="dg-flash dg-flash--warning" style="margin:0 0 12px">
+        Soft-Check: Speichern weiterhin möglich — bitte Lücken schließen, bevor Briefe produktiv gehen.
+      </div>
+    <?php endif; ?>
+
+    <div class="dg-form-grid" style="margin-top:12px">
+      <div class="dg-field dg-field--wide">
+        <span>Gesetzliche Pflichtangaben</span>
+        <ul class="dg-field-hint" style="margin:6px 0 0;padding-left:1.2em">
+          <?php foreach ($mandatoryDefs as $def) : ?>
+            <?php
+              $isMissing = false;
+              foreach ($missing as $m) {
+                  if (($m['key'] ?? '') === ($def['key'] ?? '')) {
+                      $isMissing = true;
+                      break;
+                  }
+              }
+            ?>
+            <li>
+              <?= $isMissing ? '⚠' : '✓' ?>
+              <?= View::escape((string) $def['label']) ?>
+              <?php if (!empty($def['basis'])) : ?>
+                <span class="dg-muted">(<?= View::escape((string) $def['basis']) ?>)</span>
+              <?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+          <?php foreach ($missing as $m) : ?>
+            <?php
+              $already = false;
+              foreach ($mandatoryDefs as $def) {
+                  if (($def['key'] ?? '') === ($m['key'] ?? '')) {
+                      $already = true;
+                      break;
+                  }
+              }
+              if ($already) {
+                  continue;
+              }
+            ?>
+            <li>⚠ <?= View::escape((string) ($m['label'] ?? '')) ?>
+              <?php if (!empty($m['basis'])) : ?>
+                <span class="dg-muted">(<?= View::escape((string) $m['basis']) ?>)</span>
+              <?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+      <div class="dg-field dg-field--wide">
+        <span>DIN-Zonen (Standardlayout)</span>
+        <ul class="dg-field-hint" style="margin:6px 0 0;padding-left:1.2em">
+          <?php foreach (LetterheadSettings::dinZoneDefinitions() as $zone) : ?>
+            <?php $zoneOff = false; foreach ($dinOff as $z) { if (($z['path'] ?? '') === $zone['path']) { $zoneOff = true; break; } } ?>
+            <li>
+              <?= $zoneOff ? '○ aus' : '● an' ?>
+              <?= View::escape((string) $zone['label']) ?>
+              <?php if (!empty($zone['critical'])) : ?><span class="dg-muted">(kritisch)</span><?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <?php if ($dinCriticalOff !== []) : ?>
+          <p class="dg-field-hint" style="margin-top:6px">Kritisch aus: <?= View::escape(implode(', ', array_map(static fn(array $z): string => (string) $z['label'], $dinCriticalOff))) ?></p>
+        <?php endif; ?>
+      </div>
+      <?php if ($recommendedGaps !== []) : ?>
+        <div class="dg-field dg-field--wide">
+          <span>Empfohlen aktiv, aber ohne Daten</span>
+          <p class="dg-field-hint"><?= View::escape(implode(', ', array_map(static fn(array $g): string => (string) $g['label'], $recommendedGaps))) ?>
+            — unter Firmendaten pflegen oder Schalter aus.</p>
+        </div>
+      <?php endif; ?>
     </div>
-  <?php endif; ?>
+    <p class="dg-form-actions" style="margin-top:12px">
+      <button type="submit" name="letterhead_reset_din" value="1" class="dg-button"<?= $disabled ?>
+        onclick="return confirm('DIN-Standardlayout und empfohlene Fuß-Schalter zurücksetzen? Logo/Links/Overrides bleiben.');">
+        DIN-Standardlayout wiederherstellen
+      </button>
+    </p>
+  </section>
 
   <details class="dg-collapsible-form" open>
     <summary class="dg-subsection-title dg-collapsible-form__summary">Briefkopf &amp; Logo</summary>

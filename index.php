@@ -1242,24 +1242,24 @@ switch ($path) {
             $page === 'einstellungen'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
             && RoleResolver::isAdmin($user)
-            && isset($_POST['letterhead_save'])
+            && (isset($_POST['letterhead_save']) || isset($_POST['letterhead_reset_din']))
         ) {
             $redirect = SettingsRegistry::tabUrl('briefpapier');
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
                 Flash::set('error', 'Ungültiges Formular (CSRF).');
             } else {
                 try {
-                    LetterheadSettings::saveFromPost($_POST);
-                    $missing = LetterheadSettings::missingMandatoryFields();
-                    if ($missing !== []) {
-                        Flash::set(
-                            'success',
-                            'Briefpapier gespeichert. Hinweis: Pflichtangaben unvollständig ('
-                            . implode(', ', array_map(static fn(array $f): string => $f['label'], $missing))
-                            . ').'
-                        );
+                    if (isset($_POST['letterhead_reset_din'])) {
+                        LetterheadSettings::resetDinLayoutFromStore();
+                        Flash::set('success', 'DIN-Standardlayout wiederhergestellt (Zonen, Ränder, empfohlene Fuß-Schalter).');
                     } else {
-                        Flash::set('success', 'Briefpapier gespeichert.');
+                        LetterheadSettings::saveFromPost($_POST);
+                        $report = LetterheadSettings::complianceReport();
+                        if (!$report['ok']) {
+                            Flash::set('success', 'Briefpapier gespeichert. ' . $report['summary'] . ' — Speichern war erlaubt (Soft-Check).');
+                        } else {
+                            Flash::set('success', 'Briefpapier gespeichert. ' . $report['summary'] . '.');
+                        }
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -4398,6 +4398,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadSettings = LetterheadSettings::forForm();
         $letterheadCompany = LetterheadSettings::resolvedCompany($letterheadSettings);
         $letterheadMissingMandatory = LetterheadSettings::missingMandatoryFields($letterheadSettings);
+        $letterheadCompliance = LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = TimeTrackingSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
@@ -7343,6 +7344,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadSettings = $letterheadSettings ?? LetterheadSettings::forForm();
         $letterheadCompany = $letterheadCompany ?? LetterheadSettings::resolvedCompany($letterheadSettings);
         $letterheadMissingMandatory = $letterheadMissingMandatory ?? LetterheadSettings::missingMandatoryFields($letterheadSettings);
+        $letterheadCompliance = $letterheadCompliance ?? LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
@@ -7660,6 +7662,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'letterheadSettings',
             'letterheadCompany',
             'letterheadMissingMandatory',
+            'letterheadCompliance',
             'timeTrackingSettings',
             'chartOfAccountsConfig',
             'chartAccountCount',

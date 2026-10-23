@@ -393,65 +393,115 @@ final class LetterheadSettings
     }
 
     /**
-     * Pflichtfelder je Rechtsform (für Soft-Warnung B3).
+     * Pflichtfelder je Rechtsform (Soft-Warnung — Speichern bleibt erlaubt).
      *
-     * @return list<array{key: string, label: string}>
+     * @return list<array{key: string, label: string, basis: string}>
      */
     public static function mandatoryFieldsForType(string $companyType): array
     {
         $companyType = strtolower(trim($companyType));
+        $with = static function (array $rows, string $basis): array {
+            return array_map(static function (array $row) use ($basis): array {
+                $row['basis'] = $basis;
+
+                return $row;
+            }, $rows);
+        };
+
+        if ($companyType === '') {
+            return $with([
+                ['key' => 'company_type', 'label' => 'Unternehmenstyp / Rechtsform'],
+                ['key' => 'legal_name', 'label' => 'Firma / rechtlicher Name'],
+            ], 'Angabe der Rechtsform unter Firmendaten');
+        }
+
         $baseName = [['key' => 'legal_name', 'label' => 'Firma / rechtlicher Name']];
 
         return match (true) {
-            in_array($companyType, ['gmbh', 'gmbh_igr', 'ug', 'ug_igr'], true) => array_merge($baseName, [
+            in_array($companyType, ['gmbh', 'gmbh_igr', 'ug', 'ug_igr'], true) => $with(array_merge($baseName, [
                 ['key' => 'company_type', 'label' => 'Rechtsform'],
                 ['key' => 'seat', 'label' => 'Sitz'],
                 ['key' => 'register_court', 'label' => 'Registergericht'],
                 ['key' => 'register_number', 'label' => 'Handelsregisternummer'],
                 ['key' => 'managing_directors', 'label' => 'Geschäftsführer'],
-            ]),
-            $companyType === 'ek' => array_merge($baseName, [
+            ]), '§ 35a GmbHG'),
+            $companyType === 'ek' => $with(array_merge($baseName, [
                 ['key' => 'company_type', 'label' => 'Rechtsform (e. K.)'],
                 ['key' => 'seat', 'label' => 'Niederlassung'],
                 ['key' => 'register_court', 'label' => 'Registergericht'],
                 ['key' => 'register_number', 'label' => 'Registernummer'],
-            ]),
-            in_array($companyType, ['ohg', 'kg', 'gmbh_co_kg'], true) => array_merge($baseName, [
+            ]), '§ 37a HGB'),
+            in_array($companyType, ['ohg', 'kg', 'gmbh_co_kg'], true) => $with(array_merge($baseName, [
                 ['key' => 'company_type', 'label' => 'Rechtsform'],
                 ['key' => 'seat', 'label' => 'Sitz'],
                 ['key' => 'register_court', 'label' => 'Registergericht'],
                 ['key' => 'register_number', 'label' => 'Registernummer'],
-            ]),
-            $companyType === 'gbr' => array_merge($baseName, [
+            ]), 'HGB (Personengesellschaft / GmbH & Co. KG)'),
+            $companyType === 'eg' => $with(array_merge($baseName, [
+                ['key' => 'company_type', 'label' => 'Rechtsform (e. G.)'],
+                ['key' => 'seat', 'label' => 'Sitz'],
+                ['key' => 'register_court', 'label' => 'Registergericht'],
+                ['key' => 'register_number', 'label' => 'Genossenschaftsregisternummer'],
+                ['key' => 'managing_directors', 'label' => 'Vorstand'],
+            ]), 'GenG (Geschäftsbriefe)'),
+            $companyType === 'gbr' => $with(array_merge($baseName, [
                 ['key' => 'managing_directors', 'label' => 'Gesellschafter (Namen)'],
-            ]),
-            default => $baseName,
+            ]), 'GewO / Praxis GbR'),
+            $companyType === 'partg' => $with(array_merge($baseName, [
+                ['key' => 'seat', 'label' => 'Sitz'],
+                ['key' => 'managing_directors', 'label' => 'Partner'],
+            ]), 'PartGG'),
+            in_array($companyType, ['einzelunternehmen', 'gewerbetreibender', 'freiberufler', 'freier_mitarbeiter'], true) => $with(array_merge($baseName, [
+                ['key' => 'seat', 'label' => 'Ort / Niederlassung'],
+            ]), 'Identität auf Geschäftsbriefen'),
+            $companyType === 'ltd' => $with(array_merge($baseName, [
+                ['key' => 'seat', 'label' => 'Sitz / Niederlassung'],
+                ['key' => 'managing_directors', 'label' => 'Directors / Vertreter'],
+            ]), 'Zweigniederlassung / ausländische Kapitalgesellschaft'),
+            default => $with($baseName, 'Mindestangabe Firma'),
         };
     }
 
     /**
-     * Empfohlene Fußangaben (Labels für UI).
+     * Empfohlene Fußangaben (Labels für UI) — Standard an, einzeln abschaltbar.
      *
-     * @return list<array{key: string, label: string}>
+     * @return list<array{key: string, label: string, data_key: string}>
      */
     public static function recommendedFooterFields(): array
     {
         return [
-            ['key' => 'show_address', 'label' => 'Anschrift'],
-            ['key' => 'show_phone', 'label' => 'Telefon'],
-            ['key' => 'show_email', 'label' => 'E-Mail'],
-            ['key' => 'show_website', 'label' => 'Website'],
-            ['key' => 'show_bank', 'label' => 'Bankverbindung'],
-            ['key' => 'show_tax_number', 'label' => 'Steuernummer'],
-            ['key' => 'show_vat_id', 'label' => 'USt-IdNr.'],
-            ['key' => 'show_links', 'label' => 'Links Impressum/Datenschutz/AGB/Widerruf'],
+            ['key' => 'show_address', 'label' => 'Anschrift', 'data_key' => 'address'],
+            ['key' => 'show_phone', 'label' => 'Telefon', 'data_key' => 'phone'],
+            ['key' => 'show_email', 'label' => 'E-Mail', 'data_key' => 'email'],
+            ['key' => 'show_website', 'label' => 'Website', 'data_key' => 'website'],
+            ['key' => 'show_bank', 'label' => 'Bankverbindung', 'data_key' => 'bank'],
+            ['key' => 'show_tax_number', 'label' => 'Steuernummer', 'data_key' => 'tax_number'],
+            ['key' => 'show_vat_id', 'label' => 'USt-IdNr.', 'data_key' => 'vat_id'],
+            ['key' => 'show_links', 'label' => 'Links Impressum/Datenschutz/AGB/Widerruf', 'data_key' => 'links'],
+        ];
+    }
+
+    /**
+     * DIN-Zonen, die als Standard-Layout aktiv sein sollen.
+     *
+     * @return list<array{path: string, label: string, critical: bool}>
+     */
+    public static function dinZoneDefinitions(): array
+    {
+        return [
+            ['path' => 'header.show', 'label' => 'Briefkopf', 'critical' => true],
+            ['path' => 'sender_line.show', 'label' => 'Absenderzeile (Futter)', 'critical' => false],
+            ['path' => 'address_window.show', 'label' => 'Anschriftenfenster', 'critical' => true],
+            ['path' => 'info_block.show', 'label' => 'Infoblock', 'critical' => false],
+            ['path' => 'footer.show', 'label' => 'Fußzeile', 'critical' => true],
+            ['path' => 'footer.show_legal_mandatory', 'label' => 'Gesetzliche Angaben in Fußzeile', 'critical' => true],
         ];
     }
 
     /**
      * Fehlende Pflichtangaben (Soft-Check).
      *
-     * @return list<array{key: string, label: string}>
+     * @return list<array{key: string, label: string, basis?: string}>
      */
     public static function missingMandatoryFields(?array $cfg = null): array
     {
@@ -466,7 +516,211 @@ final class LetterheadSettings
             }
         }
 
+        // Kapitalangabe freiwillig — wenn gesetzt, ausstehende Einlagen mitdenken (§ 35a Abs. 1 S. 2)
+        if (
+            in_array($party['company_type'], ['gmbh', 'gmbh_igr', 'ug', 'ug_igr'], true)
+            && trim($party['share_capital']) !== ''
+            && trim($party['outstanding_contributions']) === ''
+        ) {
+            $missing[] = [
+                'key' => 'outstanding_contributions',
+                'label' => 'Ausstehende Einlagen (weil Stammkapital angegeben)',
+                'basis' => '§ 35a Abs. 1 S. 2 GmbHG',
+            ];
+        }
+
         return $missing;
+    }
+
+    /**
+     * Empfohlene Fußfelder: aktiv aber ohne Daten.
+     *
+     * @return list<array{key: string, label: string}>
+     */
+    public static function recommendedEnabledWithoutData(?array $cfg = null): array
+    {
+        $cfg = $cfg ?? self::config();
+        $party = self::resolvedCompany($cfg);
+        $footer = is_array($cfg['footer'] ?? null) ? $cfg['footer'] : [];
+        $gaps = [];
+        foreach (self::recommendedFooterFields() as $rec) {
+            if (empty($footer[$rec['key']])) {
+                continue;
+            }
+            if (!self::recommendedDataPresent($rec['data_key'], $party)) {
+                $gaps[] = ['key' => $rec['key'], 'label' => $rec['label']];
+            }
+        }
+
+        return $gaps;
+    }
+
+    /**
+     * DIN-Zonen-Status.
+     *
+     * @return array{on: list<array{path: string, label: string, critical: bool}>, off: list<array{path: string, label: string, critical: bool}>, critical_off: list<array{path: string, label: string, critical: bool}>}
+     */
+    public static function dinZoneStatus(?array $cfg = null): array
+    {
+        $cfg = $cfg ?? self::config();
+        $on = [];
+        $off = [];
+        $criticalOff = [];
+        foreach (self::dinZoneDefinitions() as $zone) {
+            $enabled = self::pathFlag($cfg, $zone['path']);
+            if ($enabled) {
+                $on[] = $zone;
+            } else {
+                $off[] = $zone;
+                if (!empty($zone['critical'])) {
+                    $criticalOff[] = $zone;
+                }
+            }
+        }
+
+        return ['on' => $on, 'off' => $off, 'critical_off' => $criticalOff];
+    }
+
+    /**
+     * Gesamtstatus für Settings-UI / später Dokumentenseite.
+     *
+     * @return array{
+     *   ok: bool,
+     *   legal_form: string,
+     *   legal_form_label: string,
+     *   mandatory_missing: list<array{key: string, label: string, basis?: string}>,
+     *   recommended_gaps: list<array{key: string, label: string}>,
+     *   din: array{on: list, off: list, critical_off: list},
+     *   summary: string
+     * }
+     */
+    public static function complianceReport(?array $cfg = null): array
+    {
+        $cfg = $cfg ?? self::config();
+        $party = self::resolvedCompany($cfg);
+        $mandatoryMissing = self::missingMandatoryFields($cfg);
+        $recommendedGaps = self::recommendedEnabledWithoutData($cfg);
+        $din = self::dinZoneStatus($cfg);
+        $ok = $mandatoryMissing === [] && $din['critical_off'] === [];
+
+        $parts = [];
+        if ($mandatoryMissing === []) {
+            $parts[] = 'Pflichtangaben vollständig';
+        } else {
+            $parts[] = count($mandatoryMissing) . ' Pflichtangabe(n) fehlen';
+        }
+        if ($din['critical_off'] !== []) {
+            $parts[] = count($din['critical_off']) . ' kritische DIN-Zone(n) aus';
+        } else {
+            $parts[] = 'DIN-Kernzonen aktiv';
+        }
+        if ($recommendedGaps !== []) {
+            $parts[] = count($recommendedGaps) . ' empfohlene Angabe(n) ohne Daten';
+        }
+
+        return [
+            'ok' => $ok,
+            'legal_form' => $party['company_type'],
+            'legal_form_label' => $party['company_type_label'] !== '' ? $party['company_type_label'] : '— nicht gewählt —',
+            'mandatory_missing' => $mandatoryMissing,
+            'recommended_gaps' => $recommendedGaps,
+            'din' => $din,
+            'summary' => implode(' · ', $parts),
+        ];
+    }
+
+    /**
+     * DIN-Kernzonen und empfohlene Fuß-Schalter auf Defaults zurücksetzen (Layout only).
+     *
+     * @return array<string, mixed>
+     */
+    public static function applyDinLayoutDefaults(array $cfg): array
+    {
+        $defaults = self::defaults();
+        $cfg['page'] = array_merge(
+            is_array($cfg['page'] ?? null) ? $cfg['page'] : [],
+            [
+                'margin_top_mm' => $defaults['page']['margin_top_mm'],
+                'margin_right_mm' => $defaults['page']['margin_right_mm'],
+                'margin_bottom_mm' => $defaults['page']['margin_bottom_mm'],
+                'margin_left_mm' => $defaults['page']['margin_left_mm'],
+            ]
+        );
+        $cfg['header'] = array_merge(is_array($cfg['header'] ?? null) ? $cfg['header'] : [], [
+            'show' => true,
+            'height_form' => 'B',
+        ]);
+        $cfg['sender_line'] = array_merge(is_array($cfg['sender_line'] ?? null) ? $cfg['sender_line'] : [], [
+            'show' => true,
+        ]);
+        $cfg['address_window'] = array_merge(
+            is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [],
+            [
+                'show' => true,
+                'left_mm' => $defaults['address_window']['left_mm'],
+                'top_mm' => $defaults['address_window']['top_mm'],
+                'width_mm' => $defaults['address_window']['width_mm'],
+                'height_mm' => $defaults['address_window']['height_mm'],
+            ]
+        );
+        $cfg['info_block'] = array_merge(is_array($cfg['info_block'] ?? null) ? $cfg['info_block'] : [], [
+            'show' => true,
+        ]);
+        $cfg['footer'] = array_merge(is_array($cfg['footer'] ?? null) ? $cfg['footer'] : [], [
+            'show' => true,
+            'show_legal_mandatory' => true,
+            'show_address' => true,
+            'show_phone' => true,
+            'show_email' => true,
+            'show_website' => true,
+            'show_bank' => true,
+            'show_tax_number' => true,
+            'show_vat_id' => true,
+            'show_links' => true,
+        ]);
+
+        return $cfg;
+    }
+
+    public static function resetDinLayoutFromStore(): void
+    {
+        $cfg = self::applyDinLayoutDefaults(self::config());
+        SettingsStore::set(self::STORE_KEY, self::sanitize($cfg, false));
+    }
+
+    /**
+     * @param array<string, mixed> $party
+     */
+    private static function recommendedDataPresent(string $dataKey, array $party): bool
+    {
+        return match ($dataKey) {
+            'address' => trim($party['street'] . $party['postal'] . $party['city']) !== '',
+            'phone' => $party['phone'] !== '',
+            'email' => $party['email'] !== '',
+            'website' => $party['website'] !== '',
+            'bank' => $party['bank_lines'] !== [],
+            'tax_number' => $party['tax_number'] !== '',
+            'vat_id' => $party['vat_id'] !== '',
+            'links' => trim(implode('', $party['links'] ?? [])) !== '',
+            default => true,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private static function pathFlag(array $cfg, string $path): bool
+    {
+        $parts = explode('.', $path);
+        $node = $cfg;
+        foreach ($parts as $part) {
+            if (!is_array($node) || !array_key_exists($part, $node)) {
+                return false;
+            }
+            $node = $node[$part];
+        }
+
+        return !empty($node) && (string) $node !== '0';
     }
 
     /**
