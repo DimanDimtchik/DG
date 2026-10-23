@@ -422,7 +422,7 @@ $bankSummary = $filledBanks > 0
         <span>ESt-Grenzsteuersatz (%)</span>
         <input type="number" name="tax_rates[est_marginal]" min="0" max="55" step="0.1"
                value="<?= View::escape((string) ($ext['tax_rates']['est_marginal'] ?? 42)) ?>">
-        <small class="dg-field-hint">Für Einzelunternehmen / Personengesellschaften im Anschaffungsrechner.</small>
+        <small class="dg-field-hint">Geschätzter Orientierungswert für den Anschaffungsrechner (Einzelunternehmen / Personengesellschaften) — nicht für die Steuererklärung. Standard 42 % (häufiger Grenzbereich). Nur ändern, wenn Sie Ihren persönlichen Grenzsteuersatz sicher kennen (z. B. aus der letzten Veranlagung oder von Ihrer Steuerberatung). Bei Kapitalgesellschaften (GmbH/UG) wird dieses Feld nicht genutzt (dort KSt + SolZ).</small>
       </label>
       <label class="dg-field dg-field--wide">
         <span>Registergericht</span>
