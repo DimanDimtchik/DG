@@ -223,7 +223,7 @@ final class MenuRegistry
             ];
         }
 
-        // Telefon / Dokumentenverfasser: Menü sichtbar sobald Post oder allgemein Bearbeitung erlaubt
+        // Telefon: Platzhalter, sichtbar sobald Post oder Kontakte
         if ($items !== [] || DepartmentAccess::canAccessModule($user, 'kontakte')) {
             $items[] = [
                 'slug' => 'telefon',
@@ -231,6 +231,9 @@ final class MenuRegistry
                 'icon' => 'phone',
                 'href' => '/app?page=telefon',
             ];
+        }
+
+        if (DepartmentAccess::canAccessModule($user, 'dokumentenverfasser')) {
             $items[] = [
                 'slug' => 'dokumentenverfasser',
                 'label' => 'Dokumentenverfasser',
@@ -737,10 +740,7 @@ final class MenuRegistry
 
         if ($slug === 'dokumentenverfasser' || $slug === 'dokumentenverfasser-form') {
             return RoleResolver::canEdit($user)
-                && (
-                    DepartmentAccess::canAccessModule($user, 'post')
-                    || DepartmentAccess::canAccessModule($user, 'kontakte')
-                );
+                && DepartmentAccess::canAccessModule($user, 'dokumentenverfasser');
         }
 
         if ($slug === 'zeiterfassung-team') {

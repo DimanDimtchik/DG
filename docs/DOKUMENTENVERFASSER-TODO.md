@@ -152,7 +152,7 @@ Einstellungen: Checkboxen „PDF / TXT / MD / DOCX anbieten“.
 - [x] **D4** Browser-Spellcheck DE; Klartext lokal (`WriterKlartextAssist`); LanguageTool opt-in (`WriterAssistSettings`, Self-Host, öffentliche Cloud nur mit Freigabe); API `/api/writer-assist`
 - [x] **D5** Export `WriterExportService` — PDF = Briefpapier-Druck-HTML (Browser→PDF), TXT/MD Download, DOCX (OOXML/Zip); Formate aus Briefpapier-Checkboxen; Audit `writer_document_export`
 - [x] **D6** Kontakt-/Beleg-Verknüpfung (`WriterDocumentLinkService`, Audit, Empfänger aus Kontakt wenn leer); Listenfilter `?contact=`
-- [ ] **D7** Rechte (Modul `dokumentenverfasser`), Smoke, Deploy Master → Sync
+- [x] **D7** Modulrecht `dokumentenverfasser` in `DepartmentAccess` + Menü/`canAccess`; Smoke `bin/smoke-dokumentenverfasser.php`; Deploy Master → Sync (siehe §5)
 
 ---
 
@@ -183,8 +183,17 @@ B3 (Pflichtangaben-Warnung) parallel zu B2.
 
 ## 5. Smoke (nach D7)
 
+**Automatisch (lokal/CI):**
+
+```bash
+php bin/smoke-dokumentenverfasser.php
+```
+
+**Manuell auf Master `dg.ganz-om.de` (nach Deploy + Migration 112):**
+
 - [ ] Einstellungen Briefpapier: Logo Größe/Position, Fuß Pflichtangaben, Link Impressum
 - [ ] Neues Schreiben: Betreff, 2 Absätze, Tabelle, Mediathek-Bild
 - [ ] Export PDF + eines weiteren freigeschalteten Formats
-- [ ] Nur-PDF-Instanz: keine Word-Buttons
-- [ ] Deploy Master → `sync-crm-from-master.sh`
+- [ ] Nur-PDF-Instanz: keine Word-Buttons (Formate in Briefpapier abschalten)
+- [ ] Abteilung ohne Modul „Dokumentenverfasser“: Menüpunkt ausgeblendet
+- [x] Deploy Master → `bash bin/sync-crm-from-master.sh` (2026-10-23: Upload + Sync OK; `php bin/smoke-dokumentenverfasser.php` auf Master SMOKE_OK; MD5 index.php synchron)
