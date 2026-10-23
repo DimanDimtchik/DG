@@ -43,11 +43,11 @@ Stand: **2026-10-23**
 
 ### P3 — Postfach-UI (Lesen)
 
-- [ ] Ordnerleiste (IMAP-Ordner, deutsche Labels via `MailFolderLabels`)
-- [ ] Nachrichtenliste (Betreff, Von/An, Datum, gelesen/ungelesen)
-- [ ] Nachricht öffnen (Text/HTML sanitized, Anhänge download)
-- [ ] Pagination / „weitere laden“; Timeouts robust (KAS)
-- [ ] Bestehenden Sync/`MailLog` wo sinnvoll wiederverwenden, Lücken schließen
+- [x] Ordnerleiste (IMAP-Ordner, deutsche Labels via `MailFolderLabels`) — bestehend + nach P2 nur mit gewähltem Postfach
+- [x] Nachrichtenliste (Betreff, Von/An, Datum, gelesen/ungelesen) + Sync-API
+- [x] Nachricht öffnen: HTML sanitized (`MailHtmlSanitizer`), Text, Anhänge download, .eml
+- [x] „Weitere Nachrichten laden“ (Offset/Limit in API + UI); IMAP-Timeouts unverändert knapp
+- [x] MIME-Parser erweitert (`MailMimeReader::parse`), IMAP-Fetch mit Body HTML/Text
 
 ### P4 — Schreiben / Antworten (CRM-Compose)
 

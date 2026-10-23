@@ -30,6 +30,7 @@ $postMessage = $postMessage ?? null;
 $postCompose = $postCompose ?? false;
 $postListMode = $postListMode ?? false;
 $postMailboxCards = $postMailboxCards ?? [];
+$postHasMore = $postHasMore ?? false;
 $postComposeForm = array_merge([
     'mailbox_id' => '',
     'to' => '',
@@ -176,7 +177,8 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             class="dg-post-message__frame"
             title="E-Mail-Inhalt"
             sandbox=""
-            srcdoc="<?= htmlspecialchars($bodyHtml, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            referrerpolicy="no-referrer"
+            srcdoc="<?= htmlspecialchars(MailHtmlSanitizer::clean($bodyHtml), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
           ></iframe>
         <?php elseif ($bodyText !== '') : ?>
           <?= nl2br(View::escape($bodyText)) ?>
@@ -184,11 +186,37 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
           <?= nl2br(View::escape($bodyPreview)) ?>
         <?php endif; ?>
       </div>
+      <?php
+        $postAttachments = $postMessage['attachments'] ?? [];
+        if (is_array($postAttachments) && $postAttachments !== []) :
+      ?>
+        <div class="dg-post-attachments">
+          <h3 class="dg-subsection-title">Anhänge</h3>
+          <ul class="dg-post-attachments__list">
+            <?php foreach ($postAttachments as $attIndex => $att) : ?>
+              <?php
+                $attName = (string) ($att['filename'] ?? 'anhang.bin');
+                $attSize = (int) ($att['size'] ?? strlen((string) ($att['content'] ?? '')));
+                $attHref = (int) ($postMessage['id'] ?? 0) > 0
+                    ? '/app?page=post&id=' . (int) $postMessage['id'] . '&mail_attachment=' . (int) $attIndex
+                    : '/app?page=post&mailbox=' . (int) ($postMessage['mailbox_id'] ?? $postMailboxFilter)
+                        . '&uid=' . (int) ($postMessage['imap_uid'] ?? 0)
+                        . '&folder=' . rawurlencode((string) ($postMessage['imap_folder'] ?? $postFolder))
+                        . '&mail_attachment=' . (int) $attIndex;
+              ?>
+              <li>
+                <a href="<?= View::escape($attHref) ?>"><?= View::escape($attName) ?></a>
+                <span class="dg-field-hint"><?= $attSize > 0 ? number_format($attSize / 1024, 1, ',', '.') . ' KB' : '' ?></span>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
       <p class="dg-form-actions">
         <?php if ($postSendableMailboxes !== [] && (int) ($postMessage['id'] ?? 0) > 0) : ?>
           <a class="dg-button dg-button--primary" href="/app?page=post&amp;reply=<?= (int) $postMessage['id'] ?>">Antworten</a>
         <?php endif; ?>
-        <?php if (!empty($postMessage['storage_path'])) : ?>
+        <?php if (!empty($postMessage['storage_path']) && (int) ($postMessage['id'] ?? 0) > 0) : ?>
           <a class="dg-button" href="/app?page=post&amp;mail_archive=<?= (int) $postMessage['id'] ?>">.eml herunterladen</a>
         <?php endif; ?>
       </p>
@@ -248,6 +276,9 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
         data-folder="<?= View::escape($postFolder) ?>"
         data-is-sent="<?= $postIsSentFolder ? '1' : '0' ?>"
         data-refresh="<?= !empty($_GET['refresh']) ? '1' : '0' ?>"
+        data-offset="<?= count($postInbox) ?>"
+        data-has-more="<?= !empty($postHasMore) ? '1' : '0' ?>"
+        data-limit="50"
       >
         <h2 class="dg-post-main__title"><?= View::escape($postFolderLabel) ?></h2>
         <?php if ($postImapAsync) : ?>
@@ -304,10 +335,15 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             </tbody>
           </table>
         </div>
+        <p class="dg-form-actions dg-post-load-more" data-post-load-more-wrap<?= empty($postHasMore) ? ' hidden' : '' ?>>
+          <button type="button" class="dg-button" data-post-load-more>Weitere Nachrichten laden</button>
+        </p>
         <?php if ($postImapAsync) : ?>
           <p class="dg-form-actions">
             <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder) . '&refresh=1') ?>">Jetzt vom Server abrufen</a>
           </p>
+          <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>
+        <?php elseif ($postMailboxFilter > 0) : ?>
           <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>
         <?php endif; ?>
       </div>

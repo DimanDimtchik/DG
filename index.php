@@ -6720,8 +6720,6 @@ $legalProductsConfig = LegalProductSettings::config();
                 $mailboxId = (int) ($row['mailbox_id'] ?? 0);
                 if (
                     $row === null
-                    || ($row['direction'] ?? '') !== 'in'
-                    || ($row['status'] ?? '') !== 'received'
                     || empty($row['storage_path'])
                     || !MailboxRepository::userCanAccess($user, $mailboxId)
                 ) {
@@ -6738,6 +6736,46 @@ $legalProductsConfig = LegalProductSettings::config();
                 header('Content-Disposition: attachment; filename="' . $name . '"');
                 header('Content-Length: ' . (string) filesize($absolute));
                 readfile($absolute);
+                exit;
+            }
+
+            if (isset($_GET['mail_attachment'])) {
+                $partIndex = max(0, (int) $_GET['mail_attachment']);
+                $mailId = (int) ($_GET['id'] ?? 0);
+                $imapUid = (int) ($_GET['uid'] ?? 0);
+                $attMailboxId = max(0, (int) ($_GET['mailbox'] ?? 0));
+                $attFolder = trim((string) ($_GET['folder'] ?? 'INBOX'));
+                $attachments = [];
+                if ($mailId > 0) {
+                    $row = MailLogRepository::findById($mailId);
+                    $mailboxId = (int) ($row['mailbox_id'] ?? 0);
+                    if ($row === null || empty($row['storage_path']) || !MailboxRepository::userCanAccess($user, $mailboxId)) {
+                        http_response_code(404);
+                        exit('Anhang nicht gefunden.');
+                    }
+                    $absolute = MailArchiveStorage::absolutePath((string) $row['storage_path']);
+                    $attachments = MailMimeReader::parseFile($absolute)['attachments'] ?? [];
+                } elseif ($imapUid > 0 && $attMailboxId > 0 && MailboxRepository::userCanAccess($user, $attMailboxId)) {
+                    $imapMailbox = MailboxRepository::findById($attMailboxId);
+                    if ($imapMailbox !== null) {
+                        $imapPath = MailFolderCatalog::imapPathForView($attFolder !== '' ? $attFolder : 'INBOX', $imapMailbox);
+                        $raw = ImapMailboxClient::fetchRawMessage($imapMailbox, $imapPath, $imapUid);
+                        if ($raw !== null) {
+                            $attachments = MailMimeReader::parse($raw)['attachments'] ?? [];
+                        }
+                    }
+                }
+                if (!isset($attachments[$partIndex])) {
+                    http_response_code(404);
+                    exit('Anhang nicht gefunden.');
+                }
+                $att = $attachments[$partIndex];
+                $fname = (string) ($att['filename'] ?? 'anhang.bin');
+                $fname = str_replace(['"', "\r", "\n"], '', $fname);
+                header('Content-Type: ' . ((string) ($att['mime'] ?? 'application/octet-stream')));
+                header('Content-Disposition: attachment; filename="' . $fname . '"');
+                header('Content-Length: ' . (string) strlen((string) ($att['content'] ?? '')));
+                echo (string) ($att['content'] ?? '');
                 exit;
             }
 
@@ -6834,6 +6872,19 @@ $legalProductsConfig = LegalProductSettings::config();
                     exit;
                 }
                 $postImapLive = true;
+                if (!empty($postMessage['body_html'])) {
+                    $postMessage['body_html'] = MailHtmlSanitizer::clean((string) $postMessage['body_html']);
+                }
+                if (!empty($postMessage['attachments']) && is_array($postMessage['attachments'])) {
+                    $postMessage['attachments'] = array_map(
+                        static fn(array $a): array => [
+                            'filename' => (string) ($a['filename'] ?? 'anhang.bin'),
+                            'mime' => (string) ($a['mime'] ?? 'application/octet-stream'),
+                            'size' => (int) ($a['size'] ?? strlen((string) ($a['content'] ?? ''))),
+                        ],
+                        $postMessage['attachments']
+                    );
+                }
             } elseif (!$postCompose && $mailViewId > 0) {
                 $postMessage = MailLogRepository::findById($mailViewId);
                 $msgMailboxId = (int) ($postMessage['mailbox_id'] ?? 0);
@@ -6856,18 +6907,29 @@ $legalProductsConfig = LegalProductSettings::config();
                 MailLogRepository::markRead($mailViewId, ($postMessage['direction'] ?? '') === 'in');
                 $postMessage['body_html'] = '';
                 $postMessage['body_text'] = '';
+                $postMessage['attachments'] = [];
                 if (!empty($postMessage['storage_path'])) {
                     try {
                         $archivePath = MailArchiveStorage::absolutePath((string) $postMessage['storage_path']);
-                        $bodies = MailMimeReader::bodiesFromFile($archivePath);
-                        $postMessage['body_html'] = (string) ($bodies['html'] ?? '');
-                        $postMessage['body_text'] = (string) ($bodies['text'] ?? '');
+                        $parsed = MailMimeReader::parseFile($archivePath);
+                        $postMessage['body_html'] = MailHtmlSanitizer::clean((string) ($parsed['html'] ?? ''));
+                        $postMessage['body_text'] = (string) ($parsed['text'] ?? '');
+                        $postMessage['attachments'] = array_map(
+                            static fn(array $a): array => [
+                                'filename' => (string) ($a['filename'] ?? 'anhang.bin'),
+                                'mime' => (string) ($a['mime'] ?? 'application/octet-stream'),
+                                'size' => (int) ($a['size'] ?? 0),
+                            ],
+                            $parsed['attachments'] ?? []
+                        );
                     } catch (Throwable) {
                         // Archiv optional — Vorschau bleibt Fallback
                     }
                 }
                 if ($postMessage['body_html'] === '' && $postMessage['body_text'] === '') {
                     $postMessage['body_text'] = MailMessage::bodyPreview((string) ($postMessage['body_preview'] ?? ''));
+                } else {
+                    $postMessage['body_html'] = MailHtmlSanitizer::clean((string) $postMessage['body_html']);
                 }
                 $messageId = (string) ($postMessage['message_id'] ?? '');
                 if (
@@ -6882,17 +6944,30 @@ $legalProductsConfig = LegalProductSettings::config();
                         $imapBody = ImapMailboxClient::fetchMessage($imapMailbox, $imapFolder, $imapUid);
                         if ($imapBody !== null) {
                             $postMessage['body_preview'] = (string) ($imapBody['body_preview'] ?? '');
+                            $postMessage['body_html'] = MailHtmlSanitizer::clean((string) ($imapBody['body_html'] ?? ''));
+                            $postMessage['body_text'] = (string) ($imapBody['body_text'] ?? '');
+                            $postMessage['attachments'] = array_map(
+                                static fn(array $a): array => [
+                                    'filename' => (string) ($a['filename'] ?? 'anhang.bin'),
+                                    'mime' => (string) ($a['mime'] ?? 'application/octet-stream'),
+                                    'size' => (int) ($a['size'] ?? 0),
+                                ],
+                                is_array($imapBody['attachments'] ?? null) ? $imapBody['attachments'] : []
+                            );
                         }
                     }
                 }
             } elseif (!$postCompose && !$postListMode) {
                 $filter = $postMailboxFilter > 0 ? $postMailboxFilter : null;
+                $postPageLimit = 50;
                 $postInbox = MailLogRepository::folderMessagesForMailboxes(
                     $mailboxIds,
                     $postFolder,
-                    50,
-                    $filter
+                    $postPageLimit,
+                    $filter,
+                    0
                 );
+                $postHasMore = count($postInbox) >= $postPageLimit;
                 $postImapAsync = false;
                 if ($postMailboxFilter > 0) {
                     foreach ($postMailboxes as $box) {
@@ -7004,6 +7079,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $postComposeForm = $postComposeForm ?? [];
         $postListMode = $postListMode ?? false;
         $postMailboxCards = $postMailboxCards ?? [];
+        $postHasMore = $postHasMore ?? false;
         $postSendableMailboxes = $postSendableMailboxes ?? [];
         $postFolder = $postFolder ?? 'INBOX';
         $postFolders = $postFolders ?? [];
@@ -7329,6 +7405,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'postComposeForm',
             'postListMode',
             'postMailboxCards',
+            'postHasMore',
             'postSendableMailboxes',
             'postFolder',
             'postFolders',

@@ -225,9 +225,21 @@ final class ImapMailboxClient
             $fromName = isset($from->personal) ? self::decodeMime((string) $from->personal) : '';
         }
 
-        $body = (string) @imap_body($connection, (string) $msgNo);
-        if ($body === '') {
-            $body = (string) @imap_fetchbody($connection, $msgNo, '1');
+        $peek = defined('FT_PEEK') ? FT_PEEK : 0;
+        $headerRaw = (string) @imap_fetchheader($connection, $msgNo);
+        $bodyRaw = (string) @imap_body($connection, (string) $msgNo, $peek);
+        $raw = $headerRaw !== '' ? ($headerRaw . "\r\n" . $bodyRaw) : $bodyRaw;
+        $parsed = $raw !== '' ? MailMimeReader::parse($raw) : ['html' => '', 'text' => '', 'attachments' => []];
+        $text = (string) ($parsed['text'] ?? '');
+        $html = (string) ($parsed['html'] ?? '');
+        if ($text === '' && $html === '' && $bodyRaw !== '') {
+            $text = trim(strip_tags($bodyRaw));
+        }
+        $preview = $text !== '' ? $text : trim(strip_tags($html));
+        if (function_exists('mb_substr')) {
+            $preview = mb_substr($preview, 0, 500);
+        } else {
+            $preview = substr($preview, 0, 500);
         }
 
         return [
@@ -239,11 +251,40 @@ final class ImapMailboxClient
             'from_address' => $fromEmail,
             'from_name' => $fromName,
             'subject' => isset($header->subject) ? self::decodeMime((string) $header->subject) : '',
-            'body_preview' => trim(strip_tags($body)),
+            'body_html' => $html,
+            'body_text' => $text,
+            'body_preview' => $preview,
+            'attachments' => $parsed['attachments'] ?? [],
             'received_at' => isset($header->date) ? (string) $header->date : '',
             'created_at' => isset($header->date) ? (string) $header->date : '',
             'source' => 'imap',
         ];
+    }
+
+    /**
+     * Rohe MIME-Nachricht (für Anhang-Download).
+     */
+    public static function fetchRawMessage(array $mailbox, string $folder, int $uid): ?string
+    {
+        if (!self::isAvailable() || $uid <= 0) {
+            return null;
+        }
+        $connection = self::acquire($mailbox, $folder);
+        if ($connection === false) {
+            return null;
+        }
+        $msgNo = function_exists('imap_msgno') ? (int) @imap_msgno($connection, $uid) : 0;
+        if ($msgNo < 1) {
+            return null;
+        }
+        $peek = defined('FT_PEEK') ? FT_PEEK : 0;
+        $headerRaw = (string) @imap_fetchheader($connection, $msgNo);
+        $bodyRaw = (string) @imap_body($connection, (string) $msgNo, $peek);
+        if ($headerRaw === '' && $bodyRaw === '') {
+            return null;
+        }
+
+        return $headerRaw . "\r\n" . $bodyRaw;
     }
 
     /**

@@ -445,15 +445,19 @@ final class MailLogRepository
      * @param int|null $mailboxFilter
      * @return array<string, mixed>
      */
-    public static function sentForMailboxes(array $mailboxIds, int $limit = 50, ?int $mailboxFilter = null): array
-    {
+    public static function sentForMailboxes(
+        array $mailboxIds,
+        int $limit = 50,
+        ?int $mailboxFilter = null,
+        int $offset = 0,
+    ): array {
         if ($mailboxIds === [] || !Database::isConfigured()) {
             return [];
         }
         MigrationRunner::runPending();
         $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
         $sql = "SELECT id, mailbox_id, status, is_read, sent_at, created_at, from_address, from_name,
-                       to_addresses, subject, body_preview, contact_id
+                       to_addresses, subject, body_preview, contact_id, storage_path
                 FROM dg_mail_log
                 WHERE direction = 'out' AND status = 'sent' AND mailbox_id IN ({$placeholders})";
         $params = $mailboxIds;
@@ -461,8 +465,9 @@ final class MailLogRepository
             $sql .= ' AND mailbox_id = ?';
             $params[] = $mailboxFilter;
         }
-        $sql .= ' ORDER BY COALESCE(sent_at, created_at) DESC LIMIT ?';
-        $params[] = max(1, $limit);
+        $sql .= ' ORDER BY COALESCE(sent_at, created_at) DESC LIMIT ? OFFSET ?';
+        $params[] = max(1, min(100, $limit));
+        $params[] = max(0, $offset);
 
         $stmt = Database::pdo()->prepare($sql);
         foreach ($params as $i => $value) {
@@ -499,9 +504,10 @@ final class MailLogRepository
         string $folderPath,
         int $limit = 50,
         ?int $mailboxFilter = null,
+        int $offset = 0,
     ): array {
         if (MailFolderCatalog::usesLocalSent($folderPath)) {
-            return self::sentForMailboxes($mailboxIds, $limit, $mailboxFilter);
+            return self::sentForMailboxes($mailboxIds, $limit, $mailboxFilter, $offset);
         }
 
         if ($mailboxIds === [] || !Database::isConfigured()) {
@@ -510,7 +516,7 @@ final class MailLogRepository
         MigrationRunner::runPending();
         $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
         $sql = "SELECT id, mailbox_id, status, is_read, received_at, created_at, from_address, from_name,
-                       subject, body_preview, contact_id
+                       subject, body_preview, contact_id, storage_path
                 FROM dg_mail_log
                 WHERE direction = 'in' AND status = 'received' AND mailbox_id IN ({$placeholders})";
         $params = $mailboxIds;
@@ -524,8 +530,9 @@ final class MailLogRepository
             $sql .= ' AND imap_folder = ?';
             $params[] = $folderPath;
         }
-        $sql .= ' ORDER BY COALESCE(received_at, created_at) DESC LIMIT ?';
-        $params[] = max(1, $limit);
+        $sql .= ' ORDER BY COALESCE(received_at, created_at) DESC LIMIT ? OFFSET ?';
+        $params[] = max(1, min(100, $limit));
+        $params[] = max(0, $offset);
 
         $stmt = Database::pdo()->prepare($sql);
         foreach ($params as $i => $value) {
