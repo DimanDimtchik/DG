@@ -25,6 +25,7 @@ spl_autoload_register(static function (string $class): void {
         'WriterLanguageToolClient' => '/src/Documents/WriterLanguageToolClient.php',
         'WriterAssistApi' => '/src/Documents/WriterAssistApi.php',
         'WriterExportService' => '/src/Documents/WriterExportService.php',
+        'WriterDocumentLinkService' => '/src/Documents/WriterDocumentLinkService.php',
         'CompanyTypes' => '/src/Company/CompanyTypes.php',
         'CompanyAddressTypes' => '/src/Company/CompanyAddressTypes.php',
         'TaxAdvisorSettings' => '/src/Settings/TaxAdvisorSettings.php',

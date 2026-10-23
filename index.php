@@ -1350,6 +1350,54 @@ switch ($path) {
             exit;
         }
 
+        // POST: Dokumentenverfasser — Kontakt / Beleg verknüpfen (D6)
+        if (
+            $page === 'dokumentenverfasser-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['writer_link_contact'])
+                || isset($_POST['writer_unlink_contact'])
+                || isset($_POST['writer_link_voucher'])
+                || isset($_POST['writer_unlink_voucher'])
+            )
+            && MenuRegistry::canAccess($user, 'dokumentenverfasser-form')
+        ) {
+            $linkDocId = (int) ($_POST['id'] ?? 0);
+            $redirect = $linkDocId > 0
+                ? '/app?page=dokumentenverfasser-form&action=edit&id=' . $linkDocId
+                : '/app?page=dokumentenverfasser';
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: ' . $redirect, true, 302);
+                exit;
+            }
+            try {
+                WriterDocumentRepository::ensureReady();
+                if (isset($_POST['writer_unlink_contact'])) {
+                    WriterDocumentLinkService::unlinkContact($user, $linkDocId);
+                    Flash::set('success', 'Kontaktverknüpfung entfernt.');
+                } elseif (isset($_POST['writer_link_contact'])) {
+                    $ref = trim((string) ($_POST['contact_ref'] ?? ''));
+                    $contact = PostMailLinkService::resolveContactRef($ref);
+                    if ($contact === null) {
+                        throw new InvalidArgumentException('Kontakt nicht gefunden (ID oder E-Mail).');
+                    }
+                    WriterDocumentLinkService::linkContact($user, $linkDocId, $contact->id, true);
+                    Flash::set('success', 'Kontakt verknüpft.');
+                } elseif (isset($_POST['writer_unlink_voucher'])) {
+                    WriterDocumentLinkService::unlinkVoucher($user, $linkDocId);
+                    Flash::set('success', 'Belegverknüpfung entfernt.');
+                } else {
+                    WriterDocumentLinkService::linkVoucher($user, $linkDocId, (string) ($_POST['voucher_ref'] ?? ''));
+                    Flash::set('success', 'Beleg verknüpft.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Dokumentenverfasser speichern / finalisieren / öffnen / archivieren
         if (
             $page === 'dokumentenverfasser-form'
@@ -7314,6 +7362,11 @@ $legalProductsConfig = LegalProductSettings::config();
                         ? WriterDocumentRepository::listVersions((int) $writerDocumentId)
                         : [];
                 }
+                $writerLinkContext = WriterDocumentLinkService::contextForDocument(
+                    is_array($writerForm ?? null) ? $writerForm : WriterDocument::empty()
+                );
+                $writerCanLinkVoucher = MenuRegistry::canAccess($user, 'buchhaltung-belege')
+                    || MenuRegistry::canAccess($user, 'buchhaltung-beleg-form');
                 $contentTemplate = 'modules/dokumentenverfasser-form';
                 $title = (($writerDocumentId ?? 0) > 0) ? 'Dokument bearbeiten' : 'Neues Dokument';
                 $currentPage = 'dokumentenverfasser';
@@ -7322,9 +7375,21 @@ $legalProductsConfig = LegalProductSettings::config();
                 if ($writerStatusFilter !== '' && !isset(WriterDocument::statusOptions()[$writerStatusFilter])) {
                     $writerStatusFilter = '';
                 }
+                $writerContactFilter = (int) ($_GET['contact'] ?? 0);
+                if ($writerContactFilter < 1) {
+                    $writerContactFilter = 0;
+                }
                 $writerDocumentList = $dbConnected
-                    ? WriterDocumentRepository::listRecent(100, 0, $writerStatusFilter !== '' ? $writerStatusFilter : null)
+                    ? WriterDocumentRepository::listRecent(
+                        100,
+                        0,
+                        $writerStatusFilter !== '' ? $writerStatusFilter : null,
+                        $writerContactFilter > 0 ? $writerContactFilter : null
+                    )
                     : [];
+                $writerFilterContact = $writerContactFilter > 0
+                    ? ContactRepository::findById($writerContactFilter)
+                    : null;
                 $contentTemplate = 'modules/dokumentenverfasser';
                 $title = 'Dokumentenverfasser';
                 $currentPage = 'dokumentenverfasser';

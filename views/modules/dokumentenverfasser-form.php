@@ -6,6 +6,8 @@
  * @var int|null $writerDocumentId
  * @var list<array<string, mixed>> $writerVersions
  * @var array<string, bool> $writerExportFormats
+ * @var array{contact: ?Contact, voucher: ?array<string, mixed>} $writerLinkContext
+ * @var bool $writerCanLinkVoucher
  * @var string|null $formError
  * @var bool $canEdit
  * @var bool $dbConnected
@@ -22,6 +24,10 @@ $infoFields = LetterheadSettings::infoFieldsSorted(null, true);
 $recipientText = implode("\n", array_map('strval', is_array($form['recipient_lines'] ?? null) ? $form['recipient_lines'] : ['']));
 $versions = $writerVersions ?? [];
 $exportFormats = $writerExportFormats ?? ['pdf' => true, 'txt' => true, 'md' => false, 'docx' => false];
+$linkCtx = $writerLinkContext ?? ['contact' => null, 'voucher' => null];
+$linkedContact = $linkCtx['contact'] ?? null;
+$linkedVoucher = $linkCtx['voucher'] ?? null;
+$canLinkVoucher = !empty($writerCanLinkVoucher);
 $previewUrl = $isEdit
     ? '/app?page=dokumentenverfasser-form&writer_preview=1&id=' . (int) $writerDocumentId
     : '/app?page=dokumentenverfasser-form&writer_preview=1&sample=1';
@@ -92,6 +98,13 @@ $disabled = $readOnly ? ' disabled' : '';
             <span>Zeilen (eine pro Zeile)</span>
             <textarea name="recipient_lines" rows="5" spellcheck="true" lang="de"><?= View::escape($recipientText) ?></textarea>
           </label>
+          <?php if ($linkedContact instanceof Contact) : ?>
+            <p class="dg-field-hint">
+              Kontakt:
+              <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>"><?= View::escape($linkedContact->listLabel()) ?></a>
+              — Adresse kann unten unter „CRM-Verknüpfung“ gepflegt werden.
+            </p>
+          <?php endif; ?>
         </fieldset>
 
         <fieldset class="dg-fieldset"<?= $disabled ?>>
@@ -236,6 +249,88 @@ $disabled = $readOnly ? ' disabled' : '';
           </p>
         </fieldset>
       </form>
+
+      <?php if ($isEdit && $canEdit) : ?>
+        <section class="dg-panel dg-writer-crm-links" style="margin-top:16px">
+          <h2 class="dg-subsection-title">CRM-Verknüpfung</h2>
+          <p class="dg-field-hint">Kontakt und Beleg für die Nachvollziehbarkeit — Verknüpfungen werden auditiert (auch bei finalen Dokumenten).</p>
+
+          <div class="dg-writer-crm-links__block">
+            <h3 class="dg-subsection-title" style="font-size:1rem">Kontakt</h3>
+            <?php if ($linkedContact instanceof Contact) : ?>
+              <p>
+                Verknüpft:
+                <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>"><?= View::escape($linkedContact->listLabel()) ?></a>
+              </p>
+              <form method="post" action="/app?page=dokumentenverfasser-form" class="dg-inline-form">
+                <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                <input type="hidden" name="id" value="<?= (int) $writerDocumentId ?>">
+                <button type="submit" name="writer_unlink_contact" value="1" class="dg-button">Verknüpfung lösen</button>
+                <a class="dg-button" href="/app?page=dokumentenverfasser&amp;contact=<?= (int) $linkedContact->id ?>">Dokumente dieses Kontakts</a>
+              </form>
+            <?php else : ?>
+              <form method="post" action="/app?page=dokumentenverfasser-form" class="dg-form">
+                <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                <input type="hidden" name="id" value="<?= (int) $writerDocumentId ?>">
+                <label class="dg-field dg-field--wide">
+                  <span>Kontakt-ID oder E-Mail</span>
+                  <input type="text" name="contact_ref" required placeholder="123 oder name@firma.de">
+                </label>
+                <p class="dg-field-hint">Ist das Anschriftenfeld leer, werden Name und Adresse des Kontakts übernommen (nur Entwurf).</p>
+                <div class="dg-form-actions">
+                  <button type="submit" name="writer_link_contact" value="1" class="dg-button dg-button--primary">Kontakt verknüpfen</button>
+                </div>
+              </form>
+            <?php endif; ?>
+          </div>
+
+          <?php if ($canLinkVoucher) : ?>
+            <div class="dg-writer-crm-links__block" style="margin-top:16px">
+              <h3 class="dg-subsection-title" style="font-size:1rem">Beleg</h3>
+              <?php if (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0) : ?>
+                <p>
+                  Verknüpft:
+                  <a href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $linkedVoucher['id'] ?>">
+                    <?= View::escape((string) ($linkedVoucher['type_label'] ?? 'Beleg')) ?>
+                    <?= View::escape(trim((string) ($linkedVoucher['invoice_number'] ?? '')) !== ''
+                        ? (string) $linkedVoucher['invoice_number']
+                        : '#' . (int) $linkedVoucher['id']) ?>
+                  </a>
+                </p>
+                <form method="post" action="/app?page=dokumentenverfasser-form" class="dg-inline-form">
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="id" value="<?= (int) $writerDocumentId ?>">
+                  <button type="submit" name="writer_unlink_voucher" value="1" class="dg-button">Verknüpfung lösen</button>
+                </form>
+              <?php else : ?>
+                <form method="post" action="/app?page=dokumentenverfasser-form" class="dg-form">
+                  <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                  <input type="hidden" name="id" value="<?= (int) $writerDocumentId ?>">
+                  <label class="dg-field dg-field--wide">
+                    <span>Beleg-ID oder Belegnummer</span>
+                    <input type="text" name="voucher_ref" required placeholder="z. B. 42 oder RE-2026-001">
+                  </label>
+                  <div class="dg-form-actions">
+                    <button type="submit" name="writer_link_voucher" value="1" class="dg-button">Beleg verknüpfen</button>
+                  </div>
+                </form>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
+        </section>
+      <?php elseif ($isEdit && !$canEdit) : ?>
+        <?php if ($linkedContact instanceof Contact || (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0)) : ?>
+          <section class="dg-panel" style="margin-top:16px">
+            <h2 class="dg-subsection-title">CRM-Verknüpfung</h2>
+            <?php if ($linkedContact instanceof Contact) : ?>
+              <p>Kontakt: <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>"><?= View::escape($linkedContact->listLabel()) ?></a></p>
+            <?php endif; ?>
+            <?php if (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0) : ?>
+              <p>Beleg: <a href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $linkedVoucher['id'] ?>"><?= View::escape((string) ($linkedVoucher['invoice_number'] ?? ('#' . $linkedVoucher['id']))) ?></a></p>
+            <?php endif; ?>
+          </section>
+        <?php endif; ?>
+      <?php endif; ?>
 
       <?php if ($isEdit && $versions !== []) : ?>
         <section class="dg-panel" style="margin-top:16px">

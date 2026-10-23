@@ -151,7 +151,7 @@ Einstellungen: Checkboxen „PDF / TXT / MD / DOCX anbieten“.
 - [x] **D3** TipTap (`assets/js/writer-editor.js` + vendor `tiptap-writer.mjs`): Absätze/Listen, Tabellen, Emoji-Katalog, Lucide-Katalog, Mediathek-API; Speicherung `body.tiptap` + `body_html_cache`
 - [x] **D4** Browser-Spellcheck DE; Klartext lokal (`WriterKlartextAssist`); LanguageTool opt-in (`WriterAssistSettings`, Self-Host, öffentliche Cloud nur mit Freigabe); API `/api/writer-assist`
 - [x] **D5** Export `WriterExportService` — PDF = Briefpapier-Druck-HTML (Browser→PDF), TXT/MD Download, DOCX (OOXML/Zip); Formate aus Briefpapier-Checkboxen; Audit `writer_document_export`
-- [ ] **D6** Kontakt-/Vorgangsbezug (optional P5-ähnlich)
+- [x] **D6** Kontakt-/Beleg-Verknüpfung (`WriterDocumentLinkService`, Audit, Empfänger aus Kontakt wenn leer); Listenfilter `?contact=`
 - [ ] **D7** Rechte (Modul `dokumentenverfasser`), Smoke, Deploy Master → Sync
 
 ---

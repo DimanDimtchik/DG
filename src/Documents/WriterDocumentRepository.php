@@ -21,7 +21,7 @@ final class WriterDocumentRepository
     /**
      * @return list<array<string, mixed>>
      */
-    public static function listRecent(int $limit = 50, int $offset = 0, ?string $status = null): array
+    public static function listRecent(int $limit = 50, int $offset = 0, ?string $status = null, ?int $contactId = null): array
     {
         self::ensureReady();
         if (!Database::isConfigured()) {
@@ -36,9 +36,17 @@ final class WriterDocumentRepository
                 FROM dg_writer_documents d
                 LEFT JOIN dg_users u ON u.id = d.updated_by';
         $params = [];
+        $where = [];
         if ($status !== null && $status !== '') {
-            $sql .= ' WHERE d.status = :status';
+            $where[] = 'd.status = :status';
             $params['status'] = WriterDocument::normalizeStatus($status);
+        }
+        if ($contactId !== null && $contactId > 0) {
+            $where[] = 'd.contact_id = :contact_id';
+            $params['contact_id'] = $contactId;
+        }
+        if ($where !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
         }
         $sql .= ' ORDER BY d.updated_at DESC, d.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset;
 
@@ -46,6 +54,84 @@ final class WriterDocumentRepository
         $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Metadaten-Update (auch bei Final erlaubt — kein Inhalts-Overwrite).
+     */
+    public static function setContactId(int $id, ?int $contactId, ?int $userId): void
+    {
+        self::ensureReady();
+        if ($id <= 0 || !Database::isConfigured()) {
+            throw new InvalidArgumentException('Dokument ungültig.');
+        }
+        if (self::find($id) === null) {
+            throw new InvalidArgumentException('Dokument nicht gefunden.');
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_writer_documents
+             SET contact_id = :contact_id, updated_by = :updated_by
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            'contact_id' => $contactId !== null && $contactId > 0 ? $contactId : null,
+            'updated_by' => $userId,
+            'id' => $id,
+        ]);
+    }
+
+    public static function setVoucherId(int $id, ?int $voucherId, ?int $userId): void
+    {
+        self::ensureReady();
+        if ($id <= 0 || !Database::isConfigured()) {
+            throw new InvalidArgumentException('Dokument ungültig.');
+        }
+        if (self::find($id) === null) {
+            throw new InvalidArgumentException('Dokument nicht gefunden.');
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_writer_documents
+             SET voucher_id = :voucher_id, updated_by = :updated_by
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            'voucher_id' => $voucherId !== null && $voucherId > 0 ? $voucherId : null,
+            'updated_by' => $userId,
+            'id' => $id,
+        ]);
+    }
+
+    /**
+     * Empfängerzeilen setzen (z. B. aus Kontakt) — nur bei Entwurf.
+     *
+     * @param list<string> $lines
+     */
+    public static function setRecipientLines(int $id, array $lines, ?int $userId): void
+    {
+        self::ensureReady();
+        if ($id <= 0 || !Database::isConfigured()) {
+            throw new InvalidArgumentException('Dokument ungültig.');
+        }
+        $row = self::find($id);
+        if ($row === null) {
+            throw new InvalidArgumentException('Dokument nicht gefunden.');
+        }
+        if (WriterDocument::normalizeStatus((string) ($row['status'] ?? '')) !== WriterDocument::STATUS_DRAFT) {
+            return;
+        }
+        $clean = WriterDocument::sanitize(['recipient_lines' => $lines]);
+        $json = json_encode($clean['recipient_lines'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_writer_documents
+             SET recipient_json = :recipient_json, updated_by = :updated_by
+             WHERE id = :id AND status = :draft'
+        );
+        $stmt->execute([
+            'recipient_json' => $json,
+            'updated_by' => $userId,
+            'id' => $id,
+            'draft' => WriterDocument::STATUS_DRAFT,
+        ]);
     }
 
     /**

@@ -3,6 +3,8 @@
  * Dokumentenverfasser D2 — Liste.
  *
  * @var list<array<string, mixed>> $writerDocumentList
+ * @var Contact|null $writerFilterContact
+ * @var int $writerContactFilter
  * @var bool $canEdit
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
@@ -10,6 +12,10 @@
 $docs = $writerDocumentList ?? [];
 $statusLabels = WriterDocument::statusOptions();
 $filter = (string) ($writerStatusFilter ?? '');
+$contactFilter = (int) ($writerContactFilter ?? 0);
+$filterContact = $writerFilterContact ?? null;
+$statusQs = $filter !== '' ? '&amp;status=' . rawurlencode($filter) : '';
+$contactQs = $contactFilter > 0 ? '&amp;contact=' . $contactFilter : '';
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -37,17 +43,26 @@ $filter = (string) ($writerStatusFilter ?? '');
   <?php endif; ?>
 
   <p class="dg-form-actions" style="margin-bottom:12px">
-    <a class="dg-button<?= $filter === '' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser">Alle</a>
-    <a class="dg-button<?= $filter === 'draft' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=draft">Entwürfe</a>
-    <a class="dg-button<?= $filter === 'final' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=final">Final</a>
-    <a class="dg-button<?= $filter === 'archived' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=archived">Archiv</a>
+    <a class="dg-button<?= $filter === '' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser<?= $contactQs ?>">Alle</a>
+    <a class="dg-button<?= $filter === 'draft' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=draft<?= $contactQs ?>">Entwürfe</a>
+    <a class="dg-button<?= $filter === 'final' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=final<?= $contactQs ?>">Final</a>
+    <a class="dg-button<?= $filter === 'archived' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=archived<?= $contactQs ?>">Archiv</a>
   </p>
+
+  <?php if ($filterContact instanceof Contact) : ?>
+    <div class="dg-flash dg-flash--info" style="margin-bottom:12px">
+      Gefiltert nach Kontakt:
+      <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $filterContact->id ?>"><?= View::escape($filterContact->listLabel()) ?></a>
+      · <a href="/app?page=dokumentenverfasser<?= $filter !== '' ? '&amp;status=' . rawurlencode($filter) : '' ?>">Filter aufheben</a>
+    </div>
+  <?php endif; ?>
 
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
         <tr>
           <th>Titel / Betreff</th>
+          <th>Kontakt</th>
           <th>Status</th>
           <th>Version</th>
           <th>Geändert</th>
@@ -57,7 +72,7 @@ $filter = (string) ($writerStatusFilter ?? '');
       <tbody>
         <?php if ($docs === []) : ?>
           <tr>
-            <td colspan="5" class="dg-table__empty">Noch keine Dokumente. Legen Sie ein neues Dokument an.</td>
+            <td colspan="6" class="dg-table__empty">Noch keine Dokumente. Legen Sie ein neues Dokument an.</td>
           </tr>
         <?php else : ?>
           <?php foreach ($docs as $row) : ?>
@@ -76,9 +91,18 @@ $filter = (string) ($writerStatusFilter ?? '');
                   'archived' => 'dg-badge--muted',
                   default => 'dg-badge--muted',
               };
+              $cid = (int) ($row['contact_id'] ?? 0);
+              $cRow = $cid > 0 ? ContactRepository::findById($cid) : null;
             ?>
             <tr>
               <td><strong><?= View::escape($label) ?></strong></td>
+              <td>
+                <?php if ($cRow instanceof Contact) : ?>
+                  <a href="/app?page=dokumentenverfasser&amp;contact=<?= (int) $cRow->id ?><?= $statusQs ?>"><?= View::escape($cRow->listLabel()) ?></a>
+                <?php else : ?>
+                  <span class="dg-field-hint">—</span>
+                <?php endif; ?>
+              </td>
               <td>
                 <span class="dg-badge <?= $badgeClass ?>">
                   <?= View::escape($statusLabels[$status] ?? $status) ?>
