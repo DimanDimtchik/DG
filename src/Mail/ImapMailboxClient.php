@@ -438,7 +438,7 @@ final class ImapMailboxClient
      */
     private static function mailboxString(array $mailbox, string $folder): string
     {
-        return self::serverRef($mailbox) . $folder;
+        return self::serverRef($mailbox) . MailFolderLabels::encodePathForImap($folder);
     }
 
     /**
@@ -463,11 +463,15 @@ final class ImapMailboxClient
      */
     private static function pathFromFullMailbox(string $full, string $ref): string
     {
+        // Rohpfad behalten (Modified UTF-7) — Anzeige über MailFolderLabels::labelForPath
         if (str_starts_with($full, $ref)) {
-            return MailFolderLabels::decodePath(substr($full, strlen($ref)));
+            return substr($full, strlen($ref));
+        }
+        if (preg_match('/^\{[^}]+\}(.*)$/', $full, $m) === 1) {
+            return (string) $m[1];
         }
 
-        return MailFolderLabels::decodePath($full);
+        return $full;
     }
 
     /**
@@ -483,17 +487,17 @@ final class ImapMailboxClient
         if (MailFolderLabels::isSent($path)) {
             return 1;
         }
-        $upper = strtoupper(MailFolderLabels::baseName($path));
-        if (in_array($upper, ['DRAFTS', 'ENTWUERFE', 'ENTWURF'], true)) {
+        if (MailFolderLabels::isDrafts($path)) {
             return 2;
         }
+        $upper = mb_strtoupper(MailFolderLabels::baseName(MailFolderLabels::decodePath($path)), 'UTF-8');
         if (in_array($upper, ['ARCHIVE', 'ARCHIV'], true)) {
             return 3;
         }
         if (in_array($upper, ['JUNK', 'SPAM'], true)) {
             return 8;
         }
-        if (in_array($upper, ['TRASH', 'PAPIERKORB', 'DELETED'], true)) {
+        if (in_array($upper, ['TRASH', 'PAPIERKORB', 'DELETED', 'GELÖSCHT', 'GELOESCHT'], true)) {
             return 9;
         }
 

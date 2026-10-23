@@ -417,7 +417,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
             <a
               class="dg-post-folders__link<?= $isActive ? ' is-active' : '' ?>"
               href="<?= View::escape($postFolderQuery($postMailboxFilter, $folderPath)) ?>"
-            ><?= View::escape((string) ($folderRow['label'] ?? $folderPath)) ?></a>
+            ><?= View::escape(MailFolderLabels::labelForPath($folderPath !== '' ? $folderPath : (string) ($folderRow['label'] ?? ''))) ?></a>
           <?php endforeach; ?>
         </nav>
         <?php if (!ImapMailboxClient::isAvailable()) : ?>

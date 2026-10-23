@@ -7150,12 +7150,6 @@ $legalProductsConfig = LegalProductSettings::config();
             $postMailboxCards = $postListMode ? MailboxListService::cardsForUser($user) : [];
             $postFolders = $postListMode ? [] : MailFolderCatalog::foldersForView($postMailboxes, $postMailboxFilter);
             $postFolderLabel = MailFolderLabels::labelForPath($postFolder);
-            foreach ($postFolders as $folderRow) {
-                if (($folderRow['path'] ?? '') === $postFolder) {
-                    $postFolderLabel = (string) ($folderRow['label'] ?? $postFolderLabel);
-                    break;
-                }
-            }
             $postIsSentFolder = MailFolderCatalog::usesLocalSent($postFolder);
             $postImapLive = false;
             $postUnreadCount = MailLogRepository::countUnreadForMailboxes($mailboxIds);
