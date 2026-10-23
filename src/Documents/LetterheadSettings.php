@@ -80,7 +80,10 @@ final class LetterheadSettings
                 'show_bank' => true,
                 'show_tax_number' => true,
                 'show_vat_id' => true,
-                'show_links' => true,
+                'show_link_impressum' => true,
+                'show_link_datenschutz' => true,
+                'show_link_agb' => true,
+                'show_link_widerruf' => true,
             ],
             'links' => [
                 'impressum' => '',
@@ -93,6 +96,14 @@ final class LetterheadSettings
                 'color' => '',
                 'media_id' => '',
                 'opacity' => 0.08,
+                'fit' => 'contain',
+                'all_pages' => true,
+            ],
+            /** Unabhängig vom Hintergrund — beides gleichzeitig möglich */
+            'watermark' => [
+                'enabled' => false,
+                'media_id' => '',
+                'opacity' => 0.12,
                 'fit' => 'contain',
                 'all_pages' => true,
             ],
@@ -151,7 +162,12 @@ final class LetterheadSettings
             return $defaults;
         }
 
-        return self::deepMerge($defaults, is_array($stored) ? $stored : []);
+        $merged = self::deepMerge($defaults, is_array($stored) ? $stored : []);
+
+        return self::migrateLegacyShowLinks(
+            self::migrateLegacyWatermark($merged),
+            is_array($stored) ? $stored : []
+        );
     }
 
     /**
@@ -160,6 +176,66 @@ final class LetterheadSettings
     public static function forForm(): array
     {
         return self::config();
+    }
+
+    /**
+     * Alt: ein Schalter show_links → vier einzelne Link-Schalter.
+     *
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $stored Rohdaten aus dem Store
+     * @return array<string, mixed>
+     */
+    private static function migrateLegacyShowLinks(array $cfg, array $stored): array
+    {
+        $storedFooter = is_array($stored['footer'] ?? null) ? $stored['footer'] : [];
+        if (!array_key_exists('show_links', $storedFooter)) {
+            return $cfg;
+        }
+        $hasIndividual = false;
+        foreach (['impressum', 'datenschutz', 'agb', 'widerruf'] as $key) {
+            if (array_key_exists('show_link_' . $key, $storedFooter)) {
+                $hasIndividual = true;
+                break;
+            }
+        }
+        if (!$hasIndividual) {
+            $on = !empty($storedFooter['show_links']);
+            foreach (['impressum', 'datenschutz', 'agb', 'widerruf'] as $key) {
+                $cfg['footer']['show_link_' . $key] = $on;
+            }
+        }
+        unset($cfg['footer']['show_links']);
+
+        return $cfg;
+    }
+
+    /**
+     * Alt: mode=watermark im Hintergrund → eigener watermark-Block.
+     *
+     * @param array<string, mixed> $cfg
+     * @return array<string, mixed>
+     */
+    private static function migrateLegacyWatermark(array $cfg): array
+    {
+        $bg = is_array($cfg['background'] ?? null) ? $cfg['background'] : [];
+        if ((string) ($bg['mode'] ?? '') !== 'watermark') {
+            return $cfg;
+        }
+
+        $wm = is_array($cfg['watermark'] ?? null) ? $cfg['watermark'] : [];
+        $wmMedia = trim((string) ($wm['media_id'] ?? ''));
+        if ($wmMedia === '' && empty($wm['enabled'])) {
+            $cfg['watermark'] = [
+                'enabled' => trim((string) ($bg['media_id'] ?? '')) !== '',
+                'media_id' => (string) ($bg['media_id'] ?? ''),
+                'opacity' => (float) ($bg['opacity'] ?? 0.12),
+                'fit' => (string) ($bg['fit'] ?? 'contain'),
+                'all_pages' => !array_key_exists('all_pages', $bg) || !empty($bg['all_pages']),
+            ];
+        }
+        $cfg['background']['mode'] = 'none';
+
+        return $cfg;
     }
 
     /**
@@ -500,7 +576,10 @@ final class LetterheadSettings
             ['key' => 'show_bank', 'label' => 'Bankverbindung', 'data_key' => 'bank'],
             ['key' => 'show_tax_number', 'label' => 'Steuernummer', 'data_key' => 'tax_number'],
             ['key' => 'show_vat_id', 'label' => 'USt-IdNr.', 'data_key' => 'vat_id'],
-            ['key' => 'show_links', 'label' => 'Links Impressum/Datenschutz/AGB/Widerruf', 'data_key' => 'links'],
+            ['key' => 'show_link_impressum', 'label' => 'Link Impressum', 'data_key' => 'link_impressum'],
+            ['key' => 'show_link_datenschutz', 'label' => 'Link Datenschutz', 'data_key' => 'link_datenschutz'],
+            ['key' => 'show_link_agb', 'label' => 'Link AGB', 'data_key' => 'link_agb'],
+            ['key' => 'show_link_widerruf', 'label' => 'Link Widerruf', 'data_key' => 'link_widerruf'],
         ];
     }
 
@@ -699,7 +778,10 @@ final class LetterheadSettings
             'show_bank' => true,
             'show_tax_number' => true,
             'show_vat_id' => true,
-            'show_links' => true,
+            'show_link_impressum' => true,
+            'show_link_datenschutz' => true,
+            'show_link_agb' => true,
+            'show_link_widerruf' => true,
         ]);
 
         return $cfg;
@@ -724,7 +806,10 @@ final class LetterheadSettings
             'bank' => $party['bank_lines'] !== [],
             'tax_number' => $party['tax_number'] !== '',
             'vat_id' => $party['vat_id'] !== '',
-            'links' => trim(implode('', $party['links'] ?? [])) !== '',
+            'link_impressum' => trim((string) ($party['links']['impressum'] ?? '')) !== '',
+            'link_datenschutz' => trim((string) ($party['links']['datenschutz'] ?? '')) !== '',
+            'link_agb' => trim((string) ($party['links']['agb'] ?? '')) !== '',
+            'link_widerruf' => trim((string) ($party['links']['widerruf'] ?? '')) !== '',
             default => true,
         };
     }
@@ -776,6 +861,7 @@ final class LetterheadSettings
         $footer = is_array($input['footer'] ?? null) ? $input['footer'] : [];
         $links = is_array($input['links'] ?? null) ? $input['links'] : [];
         $bg = is_array($input['background'] ?? null) ? $input['background'] : [];
+        $wm = is_array($input['watermark'] ?? null) ? $input['watermark'] : [];
         $export = is_array($input['export_formats'] ?? null) ? $input['export_formats'] : [];
         $legal = is_array($input['legal_overrides'] ?? null) ? $input['legal_overrides'] : [];
 
@@ -797,12 +883,33 @@ final class LetterheadSettings
         }
 
         $bgMode = (string) ($bg['mode'] ?? 'none');
-        if (!in_array($bgMode, ['none', 'color', 'image', 'watermark'], true)) {
+        // Legacy: Wasserzeichen war Hintergrund-Modus
+        if ($bgMode === 'watermark') {
+            if (trim((string) ($wm['media_id'] ?? '')) === '' && trim((string) ($bg['media_id'] ?? '')) !== '') {
+                $wm['media_id'] = $bg['media_id'];
+                $wm['enabled'] = 1;
+                if (!array_key_exists('opacity', $wm)) {
+                    $wm['opacity'] = $bg['opacity'] ?? 0.12;
+                }
+                if (!array_key_exists('fit', $wm)) {
+                    $wm['fit'] = $bg['fit'] ?? 'contain';
+                }
+                if (!array_key_exists('all_pages', $wm) && array_key_exists('all_pages', $bg)) {
+                    $wm['all_pages'] = $bg['all_pages'];
+                }
+            }
+            $bgMode = 'none';
+        }
+        if (!in_array($bgMode, ['none', 'color', 'image'], true)) {
             $bgMode = 'none';
         }
         $fit = (string) ($bg['fit'] ?? 'contain');
         if (!in_array($fit, ['contain', 'cover', 'tile'], true)) {
             $fit = 'contain';
+        }
+        $wmFit = (string) ($wm['fit'] ?? 'contain');
+        if (!in_array($wmFit, ['contain', 'cover', 'tile'], true)) {
+            $wmFit = 'contain';
         }
 
         $infoFieldsIn = is_array($info['fields'] ?? null) ? $info['fields'] : [];
@@ -891,7 +998,10 @@ final class LetterheadSettings
                 'show_bank' => $flag($footer, 'show_bank', true),
                 'show_tax_number' => $flag($footer, 'show_tax_number', true),
                 'show_vat_id' => $flag($footer, 'show_vat_id', true),
-                'show_links' => $flag($footer, 'show_links', true),
+                'show_link_impressum' => self::legacyOrFlag($footer, 'show_link_impressum', 'show_links', $fromForm),
+                'show_link_datenschutz' => self::legacyOrFlag($footer, 'show_link_datenschutz', 'show_links', $fromForm),
+                'show_link_agb' => self::legacyOrFlag($footer, 'show_link_agb', 'show_links', $fromForm),
+                'show_link_widerruf' => self::legacyOrFlag($footer, 'show_link_widerruf', 'show_links', $fromForm),
             ],
             'links' => [
                 'impressum' => self::linkOrKeepAuto($links['impressum'] ?? '', 'impressum', $fromForm),
@@ -906,6 +1016,13 @@ final class LetterheadSettings
                 'opacity' => self::clampFloat($bg['opacity'] ?? 0.08, 0.02, 0.5),
                 'fit' => $fit,
                 'all_pages' => $flag($bg, 'all_pages', true),
+            ],
+            'watermark' => [
+                'enabled' => $flag($wm, 'enabled', false),
+                'media_id' => self::mediaId($wm['media_id'] ?? ''),
+                'opacity' => self::clampFloat($wm['opacity'] ?? 0.12, 0.02, 0.5),
+                'fit' => $wmFit,
+                'all_pages' => $flag($wm, 'all_pages', true),
             ],
             'export_formats' => $exportFormats,
             'legal_overrides' => [
@@ -989,6 +1106,21 @@ final class LetterheadSettings
         }
 
         return mb_substr($url, 0, 500);
+    }
+
+    /**
+     * Formular-Flag; bei Altdaten ohne Einzel-Key Fallback auf show_links.
+     */
+    private static function legacyOrFlag(array $footer, string $key, string $legacyKey, bool $fromForm): bool
+    {
+        if (array_key_exists($key, $footer)) {
+            return !empty($footer[$key]) && (string) $footer[$key] !== '0';
+        }
+        if (!$fromForm && array_key_exists($legacyKey, $footer)) {
+            return !empty($footer[$legacyKey]) && (string) $footer[$legacyKey] !== '0';
+        }
+
+        return $fromForm ? false : true;
     }
 
     /**

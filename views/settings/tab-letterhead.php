@@ -30,17 +30,26 @@ $infoFields = LetterheadSettings::infoFieldsSorted($cfg, false);
 $logoUrl = LetterheadSettings::logoUrl($cfg);
 $logoMediaId = trim((string) ($header['logo_media_id'] ?? ''));
 $crmLogoUrl = class_exists('AppearanceSettings') ? AppearanceSettings::logoUrl() : Asset::url('/assets/img/logo.svg');
+$wm = is_array($cfg['watermark'] ?? null) ? $cfg['watermark'] : [];
 $bgMediaId = trim((string) ($bg['media_id'] ?? ''));
-$bgMediaUrl = '';
-if ($bgMediaId !== '' && class_exists('MediaRepository')) {
-    MediaRepository::ensureTables();
-    $bgItem = MediaRepository::find($bgMediaId);
-    if (is_array($bgItem) && !empty($bgItem['url'])) {
-        $bgMediaUrl = (string) $bgItem['url'];
-    } elseif (class_exists('MediaStorage') && MediaId::isValid($bgMediaId)) {
-        $bgMediaUrl = MediaStorage::publicUrl($bgMediaId);
+$wmMediaId = trim((string) ($wm['media_id'] ?? ''));
+$resolveMediaUrl = static function (string $mediaId): string {
+    if ($mediaId === '' || !class_exists('MediaRepository')) {
+        return '';
     }
-}
+    MediaRepository::ensureTables();
+    $item = MediaRepository::find($mediaId);
+    if (is_array($item) && !empty($item['url'])) {
+        return (string) $item['url'];
+    }
+    if (class_exists('MediaStorage') && MediaId::isValid($mediaId)) {
+        return MediaStorage::publicUrl($mediaId);
+    }
+
+    return '';
+};
+$bgMediaUrl = $resolveMediaUrl($bgMediaId);
+$wmMediaUrl = $resolveMediaUrl($wmMediaId);
 $disabled = !$dbConnected ? ' disabled' : '';
 $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['company_type'] ?? ''));
 ?>
@@ -415,13 +424,14 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
   </details>
 
   <details class="dg-collapsible-form">
-    <summary class="dg-subsection-title dg-collapsible-form__summary">Hintergrund / Wasserzeichen</summary>
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Hintergrund</summary>
     <div class="dg-collapsible-form__body">
+      <p class="dg-field-hint">Seitenfarbe oder -bild. Wasserzeichen separat darunter — beides gleichzeitig möglich.</p>
       <div class="dg-form-grid">
         <label class="dg-field">
           <span>Modus</span>
           <select name="background[mode]"<?= $disabled ?>>
-            <?php foreach (['none' => 'Keiner', 'color' => 'Farbe', 'image' => 'Bild', 'watermark' => 'Wasserzeichen'] as $val => $lbl) : ?>
+            <?php foreach (['none' => 'Keiner', 'color' => 'Farbe', 'image' => 'Bild'] as $val => $lbl) : ?>
               <option value="<?= View::escape($val) ?>"<?= ((string) ($bg['mode'] ?? 'none') === $val) ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
             <?php endforeach; ?>
           </select>
@@ -449,7 +459,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
               <span class="dg-field-hint">Kein Bild gewählt</span>
             <?php endif; ?>
           </div>
-          <p class="dg-field-hint">Wirksam bei Modus „Bild“ oder „Wasserzeichen“.</p>
+          <p class="dg-field-hint">Wirksam bei Modus „Bild“.</p>
         </div>
         <label class="dg-field">
           <span>Deckkraft (0,02–0,5)</span>
@@ -466,6 +476,56 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         </label>
         <label class="dg-checkbox dg-field">
           <input type="checkbox" name="background[all_pages]" value="1"<?= !empty($bg['all_pages']) ? ' checked' : '' ?><?= $disabled ?>>
+          Auf allen Seiten
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <details class="dg-collapsible-form">
+    <summary class="dg-subsection-title dg-collapsible-form__summary">Wasserzeichen</summary>
+    <div class="dg-collapsible-form__body">
+      <p class="dg-field-hint">Zusätzlich zum Hintergrund — z.&nbsp;B. Logo oder Schriftzug als halbtransparentes Overlay.</p>
+      <div class="dg-form-grid">
+        <label class="dg-checkbox dg-field dg-field--wide">
+          <input type="checkbox" name="watermark[enabled]" value="1"<?= !empty($wm['enabled']) ? ' checked' : '' ?><?= $disabled ?>>
+          Wasserzeichen anzeigen
+        </label>
+        <div class="dg-field dg-field--wide">
+          <span>Bild aus Mediathek</span>
+          <input type="hidden" name="watermark[media_id]" id="dg-letterhead-wm-media-id" value="<?= View::escape($wmMediaId) ?>">
+          <p class="dg-form-actions" style="margin:0 0 8px">
+            <button type="button" class="dg-button" data-dg-media-pick-open
+              data-input="dg-letterhead-wm-media-id"
+              data-preview="dg-letterhead-wm-preview"
+              data-title="Wasserzeichen wählen"<?= $disabled ?>>Bild wählen</button>
+            <button type="button" class="dg-button" data-dg-media-pick-clear
+              data-input="dg-letterhead-wm-media-id"
+              data-preview="dg-letterhead-wm-preview"<?= $disabled ?>>Entfernen</button>
+          </p>
+          <div id="dg-letterhead-wm-preview" class="dg-letterhead-media-preview">
+            <?php if ($wmMediaUrl !== '') : ?>
+              <img src="<?= View::escape($wmMediaUrl) ?>" alt="">
+            <?php else : ?>
+              <span class="dg-field-hint">Kein Bild gewählt</span>
+            <?php endif; ?>
+          </div>
+        </div>
+        <label class="dg-field">
+          <span>Deckkraft (0,02–0,5)</span>
+          <input type="number" name="watermark[opacity]" min="0.02" max="0.5" step="0.01"
+            value="<?= View::escape((string) ($wm['opacity'] ?? '0.12')) ?>"<?= $disabled ?>>
+        </label>
+        <label class="dg-field">
+          <span>Einpassung</span>
+          <select name="watermark[fit]"<?= $disabled ?>>
+            <?php foreach (['contain' => 'Einpassen', 'cover' => 'Füllen', 'tile' => 'Kacheln'] as $val => $lbl) : ?>
+              <option value="<?= View::escape($val) ?>"<?= ((string) ($wm['fit'] ?? 'contain') === $val) ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-checkbox dg-field">
+          <input type="checkbox" name="watermark[all_pages]" value="1"<?= !empty($wm['all_pages']) ? ' checked' : '' ?><?= $disabled ?>>
           Auf allen Seiten
         </label>
       </div>

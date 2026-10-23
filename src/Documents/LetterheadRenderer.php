@@ -118,10 +118,12 @@ final class LetterheadRenderer
         $bodyHtml = self::renderBody($cfg, $doc);
         $footerHtml = self::renderFooter($cfg, $party);
         $bgHtml = self::renderBackground($cfg);
+        $wmHtml = self::renderWatermark($cfg);
         $guidesHtml = $showGuides ? self::renderGuides($cfg) : '';
 
         return '<article class="dg-lh-page">'
             . $bgHtml
+            . $wmHtml
             . $guidesHtml
             . $headerHtml
             . $windowHtml
@@ -299,6 +301,7 @@ final class LetterheadRenderer
         }
         $cols = max(1, min(4, (int) ($footer['columns'] ?? 3)));
         $font = (float) ($footer['font_size_pt'] ?? 7);
+        /** @var list<list<array{type: string, value: string}>> $columns */
         $columns = array_fill(0, $cols, []);
         $i = 0;
         $push = static function (string $text) use (&$columns, &$i, $cols): void {
@@ -306,7 +309,14 @@ final class LetterheadRenderer
             if ($text === '') {
                 return;
             }
-            $columns[$i % $cols][] = $text;
+            $columns[$i % $cols][] = ['type' => 'text', 'value' => $text];
+            $i++;
+        };
+        $pushHtml = static function (string $html) use (&$columns, &$i, $cols): void {
+            if (trim(strip_tags($html)) === '') {
+                return;
+            }
+            $columns[$i % $cols][] = ['type' => 'html', 'value' => $html];
             $i++;
         };
 
@@ -342,23 +352,30 @@ final class LetterheadRenderer
                 $push((string) $bankLine);
             }
         }
-        if (!empty($footer['show_links'])) {
-            $linkLabels = [
-                'impressum' => 'Impressum',
-                'datenschutz' => 'Datenschutz',
-                'agb' => 'AGB',
-                'widerruf' => 'Widerruf',
-            ];
-            $bits = [];
-            foreach ($linkLabels as $key => $label) {
-                $url = trim((string) ($party['links'][$key] ?? ''));
-                if ($url !== '') {
-                    $bits[] = $label;
-                }
+        $linkLabels = [
+            'impressum' => 'Impressum',
+            'datenschutz' => 'Datenschutz',
+            'agb' => 'AGB',
+            'widerruf' => 'Widerruf',
+        ];
+        $linkBits = [];
+        foreach ($linkLabels as $key => $label) {
+            $flagKey = 'show_link_' . $key;
+            $enabled = array_key_exists($flagKey, $footer)
+                ? !empty($footer[$flagKey])
+                : !empty($footer['show_links']);
+            if (!$enabled) {
+                continue;
             }
-            if ($bits !== []) {
-                $push(implode(' · ', $bits));
+            $url = trim((string) ($party['links'][$key] ?? ''));
+            if ($url === '') {
+                continue;
             }
+            $href = self::e($url);
+            $linkBits[] = '<a class="dg-lh-footer__link" href="' . $href . '">' . self::e($label) . '</a>';
+        }
+        if ($linkBits !== []) {
+            $pushHtml(implode(' · ', $linkBits));
         }
 
         $hasContent = false;
@@ -378,7 +395,11 @@ final class LetterheadRenderer
         foreach ($columns as $col) {
             $html .= '<div class="dg-lh-footer__col">';
             foreach ($col as $line) {
-                $html .= '<div>' . self::e($line) . '</div>';
+                if (($line['type'] ?? '') === 'html') {
+                    $html .= '<div>' . $line['value'] . '</div>';
+                } else {
+                    $html .= '<div>' . self::e((string) ($line['value'] ?? '')) . '</div>';
+                }
             }
             $html .= '</div>';
         }
@@ -436,7 +457,7 @@ final class LetterheadRenderer
     {
         $bg = is_array($cfg['background'] ?? null) ? $cfg['background'] : [];
         $mode = (string) ($bg['mode'] ?? 'none');
-        if ($mode === 'none') {
+        if ($mode === 'none' || $mode === 'watermark') {
             return '';
         }
         $opacity = (float) ($bg['opacity'] ?? 0.08);
@@ -449,7 +470,48 @@ final class LetterheadRenderer
 
             return '<div class="dg-lh-bg dg-lh-bg--color" style="' . $style . 'background:' . self::e($color) . '"></div>';
         }
-        $mediaId = trim((string) ($bg['media_id'] ?? ''));
+        if ($mode !== 'image') {
+            return '';
+        }
+
+        return self::renderMediaLayer(
+            'dg-lh-bg dg-lh-bg--image',
+            trim((string) ($bg['media_id'] ?? '')),
+            (float) ($bg['opacity'] ?? 0.08),
+            (string) ($bg['fit'] ?? 'contain')
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private static function renderWatermark(array $cfg): string
+    {
+        $wm = is_array($cfg['watermark'] ?? null) ? $cfg['watermark'] : [];
+        // Legacy: Hintergrund-Modus „watermark“ ohne eigenen Block
+        $legacyBg = is_array($cfg['background'] ?? null) ? $cfg['background'] : [];
+        if (empty($wm['enabled']) && (string) ($legacyBg['mode'] ?? '') === 'watermark') {
+            $wm = [
+                'enabled' => true,
+                'media_id' => $legacyBg['media_id'] ?? '',
+                'opacity' => $legacyBg['opacity'] ?? 0.12,
+                'fit' => $legacyBg['fit'] ?? 'contain',
+            ];
+        }
+        if (empty($wm['enabled'])) {
+            return '';
+        }
+
+        return self::renderMediaLayer(
+            'dg-lh-bg dg-lh-bg--watermark',
+            trim((string) ($wm['media_id'] ?? '')),
+            (float) ($wm['opacity'] ?? 0.12),
+            (string) ($wm['fit'] ?? 'contain')
+        );
+    }
+
+    private static function renderMediaLayer(string $class, string $mediaId, float $opacity, string $fit): string
+    {
         if ($mediaId === '' || !class_exists('MediaRepository')) {
             return '';
         }
@@ -459,13 +521,13 @@ final class LetterheadRenderer
         if ($url === '') {
             return '';
         }
-        $fit = (string) ($bg['fit'] ?? 'contain');
         $size = $fit === 'cover' ? 'cover' : ($fit === 'tile' ? 'auto' : 'contain');
         $repeat = $fit === 'tile' ? 'repeat' : 'no-repeat';
-
-        return '<div class="dg-lh-bg dg-lh-bg--image" style="' . $style
+        $style = 'opacity:' . max(0.02, min(0.5, $opacity)) . ';'
             . 'background-image:url(' . self::e($url) . ');background-size:' . $size
-            . ';background-repeat:' . $repeat . ';background-position:center"></div>';
+            . ';background-repeat:' . $repeat . ';background-position:center';
+
+        return '<div class="' . self::e($class) . '" style="' . $style . '"></div>';
     }
 
     /**
@@ -519,6 +581,7 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   overflow: hidden;
 }
 .dg-lh-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.dg-lh-bg--watermark { z-index: 0; }
 .dg-lh-header, .dg-lh-window, .dg-lh-info, .dg-lh-body-content, .dg-lh-footer, .dg-lh-guides {
   position: relative; z-index: 1;
 }
@@ -578,6 +641,7 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 }
 .dg-lh-footer--rule { border-top: 0.25mm solid #999; padding-top: 2mm; }
 .dg-lh-footer__grid { display: grid; gap: 3mm; }
+.dg-lh-footer__link { color: inherit; text-decoration: underline; }
 .dg-lh-guides { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .dg-lh-guide--margin {
   position: absolute;

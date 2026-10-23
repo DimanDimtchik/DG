@@ -1,5 +1,5 @@
 /**
- * Briefpapier-Einstellungen: Mediathek-Picker für Logo / Hintergrundbild.
+ * Briefpapier-Einstellungen: Mediathek-Picker für Logo / Hintergrund / Wasserzeichen.
  */
 (function () {
   'use strict';
