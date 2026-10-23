@@ -48,6 +48,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **AB aus Angebots-Mail-Antwort** — Migration 083 · Auto-AB + Annahme-Vermerk (Inbound In-Reply-To)
 - [x] **Anzahlung materialbasiert** — EK aus `dg_article_purchase_sources` (Preferred)
 - [x] **Kommunikation / E-Mail-Postfächer (eigen):** Menü + UI — Plan [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) (P1–P6 erledigt; Smoke/Deploy laut P6-Checkliste)
+- [ ] **Dokumentenverfasser:** Briefpapier (DIN 5008 + Pflichtangaben) + Editor/Export — Plan [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) (B1–B4, D1–D7)
 - [ ] **Vor Hetzner:** `VOR-HETZNER-CHECK.md` (Shared Core, Asset-Minify, GoBD/§14/§19-Stichprobe)
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
@@ -171,3 +172,4 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `LDAP-INTEGRATION.md` | LDAP-Vorbereitung |
 | `LAGER-WIRTSCHAFT.md` | Lager |
 | `KOMMUNIKATION-POSTFAECHER-TODO.md` | Kommunikation: Postfächer P1–P6 (eigene UI) |
+| `DOKUMENTENVERFASSER-TODO.md` | Dokumentenverfasser: Briefpapier + Editor (B/D) |
