@@ -36,10 +36,10 @@ Stand: **2026-10-23**
 
 ### P2 — Postfach-Liste
 
-- [ ] Seite: Liste der sichtbaren Postfächer (Adresse, Typ privat/shared, Status IMAP/SMTP)
-- [ ] Klick → Postfach öffnen (`/app?page=…&mailbox=id`)
-- [ ] Kurzstatus: Verbindungsfehler / letzte Sync-Zeit (soft)
-- [ ] Kein Embed fremder Webmailer; optional nur Link „Hoster-Webmail“ falls in Einstellungen hinterlegt
+- [x] Seite: Liste der sichtbaren Postfächer (Adresse, Typ privat/shared, Status IMAP/SMTP) — `/app?page=post`
+- [x] Klick → Postfach öffnen (`/app?page=post&mailbox=id`)
+- [x] Kurzstatus soft (Zugangsdaten + ungelesen + letzte Aktivität aus Mail-Log; kein Live-IMAP-Probe)
+- [x] Kein Embed fremder Webmailer; Admin-Link „Postfächer verwalten“
 
 ### P3 — Postfach-UI (Lesen)
 

@@ -551,21 +551,74 @@ final class MailLogRepository
      */
     public static function countUnreadForMailboxes(array $mailboxIds): int
     {
+        $map = self::unreadCountsByMailbox($mailboxIds);
+
+        return array_sum($map);
+    }
+
+    /**
+     * Ungelesene Eingänge je Postfach.
+     *
+     * @param list<int> $mailboxIds
+     * @return array<int, int>
+     */
+    public static function unreadCountsByMailbox(array $mailboxIds): array
+    {
         if ($mailboxIds === [] || !Database::isConfigured()) {
-            return 0;
+            return [];
         }
         $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
         $stmt = Database::pdo()->prepare(
-            "SELECT COUNT(*) FROM dg_mail_log
+            "SELECT mailbox_id, COUNT(*) AS cnt FROM dg_mail_log
              WHERE direction = 'in' AND status = 'received' AND is_read = 0
-               AND mailbox_id IN ({$placeholders})"
+               AND mailbox_id IN ({$placeholders})
+             GROUP BY mailbox_id"
         );
         foreach ($mailboxIds as $i => $id) {
-            $stmt->bindValue($i + 1, $id, PDO::PARAM_INT);
+            $stmt->bindValue($i + 1, (int) $id, PDO::PARAM_INT);
         }
         $stmt->execute();
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $out[(int) ($row['mailbox_id'] ?? 0)] = (int) ($row['cnt'] ?? 0);
+        }
 
-        return (int) $stmt->fetchColumn();
+        return $out;
+    }
+
+    /**
+     * Letzte Aktivität (Eingang/Ausgang) je Postfach.
+     *
+     * @param list<int> $mailboxIds
+     * @return array<int, string>
+     */
+    public static function lastActivityByMailbox(array $mailboxIds): array
+    {
+        if ($mailboxIds === [] || !Database::isConfigured()) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+        $stmt = Database::pdo()->prepare(
+            "SELECT mailbox_id,
+                    MAX(COALESCE(received_at, sent_at, created_at)) AS last_at
+             FROM dg_mail_log
+             WHERE mailbox_id IN ({$placeholders})
+             GROUP BY mailbox_id"
+        );
+        foreach ($mailboxIds as $i => $id) {
+            $stmt->bindValue($i + 1, (int) $id, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $mid = (int) ($row['mailbox_id'] ?? 0);
+            $at = trim((string) ($row['last_at'] ?? ''));
+            if ($mid > 0 && $at !== '') {
+                $out[$mid] = $at;
+            }
+        }
+
+        return $out;
     }
 
     /**

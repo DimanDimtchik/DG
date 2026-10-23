@@ -3415,6 +3415,97 @@ body.dg-login-page {
   font-size: 12px;
 }
 
+/* Post — Postfach-Liste (P2) */
+.dg-mailbox-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.dg-mailbox-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--dg-border);
+  border-radius: var(--dg-radius-sm);
+  background: var(--dg-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dg-mailbox-card:hover {
+  border-color: var(--dg-border-accent, #8aa4b8);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.dg-mailbox-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dg-mailbox-card__name {
+  font-size: 15px;
+}
+
+.dg-mailbox-card__email {
+  font-size: 13px;
+  color: var(--dg-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dg-mailbox-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+
+.dg-mailbox-card__status--ok {
+  color: #1a7f37;
+}
+
+.dg-mailbox-card__status--warn {
+  color: #8a6116;
+}
+
+.dg-mailbox-card__status--error {
+  color: #b42318;
+}
+
+.dg-mailbox-card__activity {
+  color: var(--dg-text-secondary);
+}
+
+.dg-mailbox-card__cta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dg-accent, #2b5a87);
+  justify-self: end;
+}
+
+.dg-badge--accent {
+  background: #e8f1fa;
+  color: #1e4a73;
+}
+
+@media (min-width: 720px) {
+  .dg-mailbox-card {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  }
+
+  .dg-mailbox-card__meta {
+    grid-column: auto;
+  }
+}
+
 /* Post module — Ordner (IMAP) */
 .dg-post-layout {
   display: grid;

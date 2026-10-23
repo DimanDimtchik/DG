@@ -6751,12 +6751,23 @@ $legalProductsConfig = LegalProductSettings::config();
                 $postMailboxes
             )));
             $postMailboxFilter = max(0, (int) ($_GET['mailbox'] ?? 0));
+            if ($postMailboxFilter > 0 && !MailboxRepository::userCanAccess($user, $postMailboxFilter)) {
+                Flash::set('error', 'Kein Zugriff auf dieses Postfach.');
+                header('Location: /app?page=post', true, 302);
+                exit;
+            }
             $postFolder = trim((string) ($_GET['folder'] ?? 'INBOX'));
             if ($postFolder === '') {
                 $postFolder = 'INBOX';
             }
             $postCompose = !empty($_GET['compose']);
-            $postFolders = MailFolderCatalog::foldersForView($postMailboxes, $postMailboxFilter);
+            $postListMode = !$postCompose
+                && $postMailboxFilter <= 0
+                && (int) ($_GET['id'] ?? 0) <= 0
+                && (int) ($_GET['uid'] ?? 0) <= 0
+                && (int) ($_GET['reply'] ?? 0) <= 0;
+            $postMailboxCards = $postListMode ? MailboxListService::cardsForUser($user) : [];
+            $postFolders = $postListMode ? [] : MailFolderCatalog::foldersForView($postMailboxes, $postMailboxFilter);
             $postFolderLabel = MailFolderLabels::labelForPath($postFolder);
             foreach ($postFolders as $folderRow) {
                 if (($folderRow['path'] ?? '') === $postFolder) {
@@ -6874,7 +6885,7 @@ $legalProductsConfig = LegalProductSettings::config();
                         }
                     }
                 }
-            } elseif (!$postCompose) {
+            } elseif (!$postCompose && !$postListMode) {
                 $filter = $postMailboxFilter > 0 ? $postMailboxFilter : null;
                 $postInbox = MailLogRepository::folderMessagesForMailboxes(
                     $mailboxIds,
@@ -6991,6 +7002,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $postMessage = $postMessage ?? null;
         $postCompose = $postCompose ?? false;
         $postComposeForm = $postComposeForm ?? [];
+        $postListMode = $postListMode ?? false;
+        $postMailboxCards = $postMailboxCards ?? [];
         $postSendableMailboxes = $postSendableMailboxes ?? [];
         $postFolder = $postFolder ?? 'INBOX';
         $postFolders = $postFolders ?? [];
@@ -7314,6 +7327,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'postMessage',
             'postCompose',
             'postComposeForm',
+            'postListMode',
+            'postMailboxCards',
             'postSendableMailboxes',
             'postFolder',
             'postFolders',

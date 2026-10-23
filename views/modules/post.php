@@ -1,4 +1,5 @@
 <?php
+/** @var User $user */
 /** @var list<array<string, mixed>> $postMailboxes */
 /** @var list<array<string, mixed>> $postSendableMailboxes */
 /** @var list<array<string, mixed>> $postInbox */
@@ -11,6 +12,8 @@
 /** @var int $postUnreadCount */
 /** @var array<string, mixed>|null $postMessage */
 /** @var bool $postCompose */
+/** @var bool $postListMode */
+/** @var list<array<string, mixed>> $postMailboxCards */
 /** @var array<string, string> $postComposeForm */
 
 $postMailboxes = $postMailboxes ?? [];
@@ -25,6 +28,8 @@ $postImapLive = $postImapLive ?? false;
 $postUnreadCount = $postUnreadCount ?? 0;
 $postMessage = $postMessage ?? null;
 $postCompose = $postCompose ?? false;
+$postListMode = $postListMode ?? false;
+$postMailboxCards = $postMailboxCards ?? [];
 $postComposeForm = array_merge([
     'mailbox_id' => '',
     'to' => '',
@@ -48,11 +53,16 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">E-Mail-Postfächer</h1>
-      <p class="dg-lead">Mehrere Postfächer — Ordner werden per IMAP vom Provider geladen (z.&nbsp;B. All-Inkl).</p>
+      <p class="dg-lead"><?= $postListMode
+          ? 'Wählen Sie ein Postfach — Ordner und Nachrichten laden danach per IMAP.'
+          : 'Ordner werden per IMAP vom Provider geladen (z.&nbsp;B. All-Inkl).' ?></p>
     </div>
     <div class="dg-page-header__actions">
       <?php if ($postMailboxes !== [] && $postSendableMailboxes !== []) : ?>
         <a class="dg-button dg-button--primary" href="/app?page=post&amp;compose=1">Neue Nachricht</a>
+      <?php endif; ?>
+      <?php if (RoleResolver::isAdmin($user)) : ?>
+        <a class="dg-button" href="/app?page=einstellungen&amp;tab=postfaecher">Postfächer verwalten</a>
       <?php endif; ?>
       <?php if ($postUnreadCount > 0) : ?>
         <span class="dg-badge"><?= (int) $postUnreadCount ?> ungelesen</span>
@@ -64,10 +74,37 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
     <div class="dg-panel">
       <p class="dg-lead">Kein Postfach zugewiesen. Unter <a href="/app?page=einstellungen&tab=postfaecher">Einstellungen → Postfächer</a> Google, Legacy oder weitere Adressen anlegen.</p>
     </div>
+  <?php elseif ($postListMode) : ?>
+    <div class="dg-mailbox-cards" role="list">
+      <?php foreach ($postMailboxCards as $card) : ?>
+        <a class="dg-mailbox-card" role="listitem" href="<?= View::escape((string) $card['open_href']) ?>">
+          <div class="dg-mailbox-card__main">
+            <strong class="dg-mailbox-card__name"><?= View::escape((string) $card['name']) ?></strong>
+            <span class="dg-mailbox-card__email"><?= View::escape((string) $card['email']) ?></span>
+          </div>
+          <div class="dg-mailbox-card__meta">
+            <span class="dg-badge"><?= View::escape((string) $card['type_label']) ?></span>
+            <?php if ((int) ($card['unread'] ?? 0) > 0) : ?>
+              <span class="dg-badge dg-badge--accent"><?= (int) $card['unread'] ?> ungelesen</span>
+            <?php endif; ?>
+            <span class="dg-mailbox-card__status dg-mailbox-card__status--<?= View::escape((string) $card['status_severity']) ?>">
+              <?= View::escape((string) $card['status_label']) ?>
+            </span>
+            <?php if (!empty($card['last_activity'])) : ?>
+              <span class="dg-mailbox-card__activity">Zuletzt: <?= View::escape((string) $card['last_activity']) ?></span>
+            <?php endif; ?>
+          </div>
+          <span class="dg-mailbox-card__cta">Öffnen</span>
+        </a>
+      <?php endforeach; ?>
+    </div>
+    <p class="dg-field-hint" style="margin-top:12px">Status ohne Live-Verbindung zum Mailserver (Zugangsdaten in den Einstellungen). Fremde Webmailer werden nicht eingebunden.</p>
   <?php elseif ($postCompose) : ?>
     <?php View::partial('partials/back-nav', [
-        'href' => $postFolderQuery($postMailboxFilter, $postFolder),
-        'label' => 'Zurück zu ' . $postFolderLabel,
+        'href' => $postMailboxFilter > 0
+            ? $postFolderQuery($postMailboxFilter, $postFolder)
+            : '/app?page=post',
+        'label' => $postMailboxFilter > 0 ? ('Zurück zu ' . $postFolderLabel) : 'Zurück zur Postfach-Liste',
     ]); ?>
     <form class="dg-form dg-panel" method="post" action="/app?page=post">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -110,9 +147,12 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
       $postDetailBackLabel = MailFolderCatalog::usesLocalSent($postDetailBackFolder) ? 'Gesendet' : $postFolderLabel;
     ?>
     <?php View::partial('partials/back-nav', [
-        'href' => $postFolderQuery($postMailboxFilter, $postDetailBackFolder),
+        'href' => $postFolderQuery($postMailboxFilter > 0 ? $postMailboxFilter : (int) ($postMessage['mailbox_id'] ?? 0), $postDetailBackFolder),
         'label' => 'Zurück zu ' . $postDetailBackLabel,
     ]); ?>
+    <p class="dg-field-hint" style="margin:0 0 12px">
+      <a href="/app?page=post">Alle Postfächer</a>
+    </p>
     <article class="dg-panel dg-post-message">
       <header class="dg-post-message__head">
         <h2><?= View::escape((string) ($postMessage['subject'] ?? '(Ohne Betreff)')) ?></h2>
@@ -154,6 +194,10 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
       </p>
     </article>
   <?php else : ?>
+    <?php View::partial('partials/back-nav', [
+        'href' => '/app?page=post',
+        'label' => 'Zurück zur Postfach-Liste',
+    ]); ?>
     <div class="dg-post-layout">
       <aside class="dg-post-folders" aria-label="E-Mail-Ordner">
         <form class="dg-post-folders__mailbox" method="get" action="/app">
@@ -161,8 +205,8 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
           <input type="hidden" name="folder" value="<?= View::escape($postFolder) ?>">
           <label>
             <span class="dg-post-folders__mailbox-label">Postfach</span>
-            <select name="mailbox" onchange="this.form.folder.value='INBOX'; this.form.submit()">
-              <option value="0"<?= $postMailboxFilter <= 0 ? ' selected' : '' ?>>Alle</option>
+            <select name="mailbox" onchange="if(this.value==='0'){window.location='/app?page=post';return false;} this.form.folder.value='INBOX'; this.form.submit()">
+              <option value="0">← Liste</option>
               <?php foreach ($postMailboxes as $box) : ?>
                 <option value="<?= (int) $box['id'] ?>"<?= $postMailboxFilter === (int) $box['id'] ? ' selected' : '' ?>><?= View::escape((string) ($box['name'] ?? $box['email_address'])) ?></option>
               <?php endforeach; ?>
@@ -181,9 +225,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             ><?= View::escape((string) ($folderRow['label'] ?? $folderPath)) ?></a>
           <?php endforeach; ?>
         </nav>
-        <?php if ($postMailboxFilter <= 0) : ?>
-          <p class="dg-post-folders__hint">Für alle Ordner (Gesendet, Spam, …) oben ein Postfach wählen.</p>
-        <?php elseif (!ImapMailboxClient::isAvailable()) : ?>
+        <?php if (!ImapMailboxClient::isAvailable()) : ?>
           <p class="dg-post-folders__hint">PHP-IMAP nicht aktiv — Standardordner angezeigt.</p>
         <?php else :
           $postSelectedHasImap = false;
