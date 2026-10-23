@@ -7386,6 +7386,20 @@ $legalProductsConfig = LegalProductSettings::config();
                         $writerDocumentId = null;
                         $writerForm = WriterDocument::empty();
                         $writerVersions = [];
+                        // Neues Dokument mit ?contact=… — Empfänger + Verknüpfung vorbefüllen
+                        $prefillContactId = (int) ($_GET['contact'] ?? 0);
+                        if ($prefillContactId > 0 && Database::isConfigured()) {
+                            $prefillContact = ContactRepository::findById($prefillContactId);
+                            if (
+                                $prefillContact !== null
+                                && ContactAccessResolver::canViewContact($user, $prefillContact)
+                            ) {
+                                $writerForm['contact_id'] = $prefillContact->id;
+                                $writerForm['recipient_lines'] = WriterDocumentLinkService::recipientLinesFromContact(
+                                    $prefillContact
+                                );
+                            }
+                        }
                     }
                 } else {
                     $writerDocumentId = $writerDocumentId ?? null;

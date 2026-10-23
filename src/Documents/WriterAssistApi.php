@@ -16,8 +16,22 @@ final class WriterAssistApi
             self::error('Keine Berechtigung.', 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            self::error('Nur POST erlaubt.', 405);
+        $method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        if ($method === 'GET') {
+            $action = trim((string) ($_GET['action'] ?? ''));
+            try {
+                match ($action) {
+                    'contacts' => self::contactSearch($user),
+                    'contact_address' => self::contactAddress($user),
+                    default => self::error('Unbekannte GET-Aktion (contacts, contact_address).'),
+                };
+            } catch (Throwable $e) {
+                self::error($e->getMessage());
+            }
+        }
+
+        if ($method !== 'POST') {
+            self::error('Nur GET oder POST erlaubt.', 405);
         }
 
         $csrf = $_POST['_csrf'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
@@ -42,6 +56,51 @@ final class WriterAssistApi
         } catch (Throwable $e) {
             self::error($e->getMessage());
         }
+    }
+
+    /** @return never */
+    private static function contactSearch(User $user): never
+    {
+        $query = trim((string) ($_GET['q'] ?? ''));
+        if (mb_strlen($query) < 1) {
+            self::ok(['items' => []]);
+        }
+        if (!Database::isConfigured()) {
+            self::ok(['items' => []]);
+        }
+
+        $items = ContactRepository::pickerItems($query, 15, $user);
+        $out = [];
+        foreach ($items as $item) {
+            $out[] = [
+                'id' => (int) ($item['id'] ?? 0),
+                'label' => (string) ($item['label'] ?? ''),
+                'meta' => (string) ($item['meta'] ?? ''),
+            ];
+        }
+        self::ok(['items' => $out]);
+    }
+
+    /** @return never */
+    private static function contactAddress(User $user): never
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        if ($id < 1) {
+            self::error('Kontakt-ID fehlt.', 400);
+        }
+        $contact = ContactRepository::findById($id);
+        if ($contact === null) {
+            self::error('Kontakt nicht gefunden.', 404);
+        }
+        if (!ContactAccessResolver::canViewContact($user, $contact)) {
+            self::error('Keine Berechtigung für diesen Kontakt.', 403);
+        }
+
+        self::ok([
+            'id' => $contact->id,
+            'label' => $contact->listLabel(),
+            'recipient_lines' => WriterDocumentLinkService::recipientLinesFromContact($contact),
+        ]);
     }
 
     /**

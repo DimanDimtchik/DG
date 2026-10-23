@@ -607,9 +607,15 @@ $belegeFocus = (string) ($belegeFocus ?? '');
         ) ?>
       };
     </script>
+    <script>
+      window.dgWriterContactPicker = {
+        apiUrl: '/api/writer-assist'
+      };
+    </script>
     <script src="<?= View::escape(Asset::url('/assets/js/emoji-catalog.js')) ?>" defer></script>
     <script type="module" src="<?= View::escape(Asset::url('/assets/js/writer-editor.js')) ?>"></script>
     <script src="<?= View::escape(Asset::url('/assets/js/writer-assist.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/writer-contact-picker.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/rezeptur-form') : ?>
     <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/recipe-flow.css')) ?>">

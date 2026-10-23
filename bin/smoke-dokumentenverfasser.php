@@ -71,6 +71,7 @@ foreach ([
     '/assets/js/vendor/tiptap-writer.mjs',
     '/assets/js/writer-editor.js',
     '/assets/js/writer-assist.js',
+    '/assets/js/writer-contact-picker.js',
     '/views/modules/dokumentenverfasser.php',
     '/views/modules/dokumentenverfasser-form.php',
 ] as $rel) {

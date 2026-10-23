@@ -92,19 +92,41 @@ $disabled = $readOnly ? ' disabled' : '';
           </label>
         </fieldset>
 
-        <fieldset class="dg-fieldset"<?= $disabled ?>>
+        <fieldset class="dg-fieldset" id="dg-writer-recipient-fieldset"<?= $disabled ?>>
           <legend>Empfänger (Anschriftenfeld)</legend>
-          <label class="dg-field">
-            <span>Zeilen (eine pro Zeile)</span>
-            <textarea name="recipient_lines" rows="5" spellcheck="true" lang="de"><?= View::escape($recipientText) ?></textarea>
-          </label>
-          <?php if ($linkedContact instanceof Contact) : ?>
+          <input type="hidden" name="contact_id" id="dg-writer-contact-id" value="<?= (int) ($form['contact_id'] ?? 0) ?>">
+          <?php if (!$readOnly) : ?>
+            <label class="dg-field dg-field--wide">
+              <span>Kontakt suchen</span>
+              <input
+                type="search"
+                id="dg-writer-contact-search"
+                autocomplete="off"
+                placeholder="Name, Firma, E-Mail, Kd.-Nr. …"
+                value="<?= $linkedContact instanceof Contact ? View::escape($linkedContact->listLabel()) : '' ?>"
+              >
+              <span class="dg-field-hint">Auswahl füllt die Adresse und verknüpft den Kontakt. Manuelle Adresse bleibt möglich.</span>
+              <div id="dg-writer-contact-results" class="dg-voucher-contact-results" hidden></div>
+            </label>
+            <p class="dg-form-actions" style="margin:0 0 8px" id="dg-writer-contact-actions"<?= ($linkedContact instanceof Contact || (int) ($form['contact_id'] ?? 0) > 0) ? '' : ' hidden' ?>>
+              <?php if ($linkedContact instanceof Contact) : ?>
+                <a class="dg-button dg-button--small" id="dg-writer-contact-open" href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>">Kontakt öffnen</a>
+              <?php else : ?>
+                <a class="dg-button dg-button--small" id="dg-writer-contact-open" href="#" hidden>Kontakt öffnen</a>
+              <?php endif; ?>
+              <button type="button" class="dg-button dg-button--small" id="dg-writer-contact-clear">Kontakt lösen</button>
+              <button type="button" class="dg-button dg-button--small" id="dg-writer-contact-refill">Adresse erneut übernehmen</button>
+            </p>
+          <?php elseif ($linkedContact instanceof Contact) : ?>
             <p class="dg-field-hint">
               Kontakt:
               <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>"><?= View::escape($linkedContact->listLabel()) ?></a>
-              — Adresse kann unten unter „CRM-Verknüpfung“ gepflegt werden.
             </p>
           <?php endif; ?>
+          <label class="dg-field">
+            <span>Zeilen (eine pro Zeile)</span>
+            <textarea name="recipient_lines" id="dg-writer-recipient-lines" rows="5" spellcheck="true" lang="de"<?= $disabled ?>><?= View::escape($recipientText) ?></textarea>
+          </label>
         </fieldset>
 
         <fieldset class="dg-fieldset"<?= $disabled ?>>
@@ -272,6 +294,7 @@ $disabled = $readOnly ? ' disabled' : '';
                 <a class="dg-button" href="/app?page=dokumentenverfasser&amp;contact=<?= (int) $linkedContact->id ?>">Dokumente dieses Kontakts</a>
               </form>
             <?php else : ?>
+              <p class="dg-field-hint">Kontakt bevorzugt oben unter Empfänger suchen. Alternativ per ID/E-Mail:</p>
               <form method="post" action="/app?page=dokumentenverfasser-form" class="dg-form">
                 <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                 <input type="hidden" name="id" value="<?= (int) $writerDocumentId ?>">
