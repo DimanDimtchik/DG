@@ -76,6 +76,7 @@ spl_autoload_register(static function (string $class): void {
         'MailboxProvisioner' => '/src/Mail/MailboxProvisioner.php',
         'MailboxProviderPresets' => '/src/Mail/MailboxProviderPresets.php',
         'PostMailComposer' => '/src/Mail/PostMailComposer.php',
+        'PostMailLinkService' => '/src/Mail/PostMailLinkService.php',
         'MailInboundApi' => '/src/Mail/MailInboundApi.php',
         'ImapMailboxClient' => '/src/Mail/ImapMailboxClient.php',
         'MailFolderCatalog' => '/src/Mail/MailFolderCatalog.php',

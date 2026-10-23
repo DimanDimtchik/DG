@@ -2316,7 +2316,7 @@ switch ($path) {
             exit;
         }
 
-        // POST: Post â€” Nachricht senden
+        // POST: Post — Nachricht senden
         if (
             $page === 'post'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -2324,7 +2324,7 @@ switch ($path) {
             && MenuRegistry::canAccess($user, 'post')
         ) {
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
-                Flash::set('error', 'UngÃ¼ltiges Formular (CSRF).');
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
                 header('Location: /app?page=post&compose=1', true, 302);
                 exit;
             }
@@ -2351,6 +2351,54 @@ switch ($path) {
                 header('Location: /app?page=post&compose=1', true, 302);
                 exit;
             }
+        }
+
+        // POST: Post — Kontakt / Beleg verknüpfen
+        if (
+            $page === 'post'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['post_link_contact'])
+                || isset($_POST['post_unlink_contact'])
+                || isset($_POST['post_link_voucher'])
+                || isset($_POST['post_unlink_voucher'])
+            )
+            && MenuRegistry::canAccess($user, 'post')
+        ) {
+            $mailId = (int) ($_POST['mail_id'] ?? 0);
+            $redirect = $mailId > 0 ? '/app?page=post&id=' . $mailId : '/app?page=post';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+                header('Location: ' . $redirect, true, 302);
+                exit;
+            }
+            try {
+                if (isset($_POST['post_unlink_contact'])) {
+                    PostMailLinkService::unlinkContact($user, $mailId);
+                    Flash::set('success', 'Kontaktverknüpfung entfernt.');
+                } elseif (isset($_POST['post_link_contact'])) {
+                    $ref = trim((string) ($_POST['contact_ref'] ?? ''));
+                    if ($ref === '' && !empty($_POST['suggested_contact_id'])) {
+                        $ref = (string) (int) $_POST['suggested_contact_id'];
+                    }
+                    $contact = PostMailLinkService::resolveContactRef($ref);
+                    if ($contact === null) {
+                        throw new InvalidArgumentException('Kontakt nicht gefunden (ID oder E-Mail).');
+                    }
+                    PostMailLinkService::linkContact($user, $mailId, $contact->id);
+                    Flash::set('success', 'Kontakt verknüpft.');
+                } elseif (isset($_POST['post_unlink_voucher'])) {
+                    PostMailLinkService::unlinkVoucher($user, $mailId);
+                    Flash::set('success', 'Belegverknüpfung entfernt.');
+                } else {
+                    PostMailLinkService::linkVoucher($user, $mailId, (string) ($_POST['voucher_ref'] ?? ''));
+                    Flash::set('success', 'Beleg verknüpft.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
         }
 
         // Mitarbeiter-Dokument: Browseransicht (inline) oder Download (nur mit ?doc=)
@@ -5188,6 +5236,7 @@ $legalProductsConfig = LegalProductSettings::config();
                     $voucherMailSubject = VoucherDocumentPrintService::defaultEmailSubject($voucher);
                     $voucherMailIntro = VoucherDocumentPrintService::defaultEmailIntro($voucher);
                 }
+                $voucherLinkedMails = MailLogRepository::listForVoucher($voucherId, 30);
                 $dunningConfig = AccountingPaymentSettings::dunningConfig();
                 $dunningLevels = is_array($dunningConfig['levels'] ?? null) ? $dunningConfig['levels'] : [];
                 $currentDunningLevel = (int) ($form['dunning_level'] ?? 0);
@@ -6805,12 +6854,22 @@ $legalProductsConfig = LegalProductSettings::config();
                 $postFolder = 'INBOX';
             }
             $postCompose = !empty($_GET['compose']);
+            $postSearchQuery = trim((string) ($_GET['q'] ?? ''));
+            $postSearchContactId = max(0, (int) ($_GET['contact'] ?? 0));
+            $postSearchMode = $postSearchQuery !== '' || $postSearchContactId > 0;
             $postListMode = !$postCompose
+                && !$postSearchMode
                 && $postMailboxFilter <= 0
                 && (int) ($_GET['id'] ?? 0) <= 0
                 && (int) ($_GET['uid'] ?? 0) <= 0
                 && (int) ($_GET['reply'] ?? 0) <= 0
                 && (int) ($_GET['forward'] ?? 0) <= 0;
+            $postLinkContext = [
+                'contact' => null,
+                'suggested' => null,
+                'voucher' => null,
+                'party_email' => '',
+            ];
             $postMailboxCards = $postListMode ? MailboxListService::cardsForUser($user) : [];
             $postFolders = $postListMode ? [] : MailFolderCatalog::foldersForView($postMailboxes, $postMailboxFilter);
             $postFolderLabel = MailFolderLabels::labelForPath($postFolder);
@@ -6940,7 +6999,16 @@ $legalProductsConfig = LegalProductSettings::config();
                     header('Location: /app?page=post', true, 302);
                     exit;
                 }
+                $wasUnread = empty($postMessage['is_read']);
                 MailLogRepository::markRead($mailViewId, ($postMessage['direction'] ?? '') === 'in');
+                PostMailLinkService::recordOpen($user, $postMessage);
+                if ($wasUnread && ($postMessage['direction'] ?? '') === 'in') {
+                    AuditLog::record('mail_mark_read', $user->id, json_encode([
+                        'mail_log_id' => $mailViewId,
+                        'mailbox_id' => $msgMailboxId,
+                    ], JSON_UNESCAPED_UNICODE));
+                }
+                $postLinkContext = PostMailLinkService::contextForMessage($postMessage);
                 $postMessage['body_html'] = '';
                 $postMessage['body_text'] = '';
                 $postMessage['attachments'] = [];
@@ -6996,21 +7064,37 @@ $legalProductsConfig = LegalProductSettings::config();
             } elseif (!$postCompose && !$postListMode) {
                 $filter = $postMailboxFilter > 0 ? $postMailboxFilter : null;
                 $postPageLimit = 50;
-                $postInbox = MailLogRepository::folderMessagesForMailboxes(
-                    $mailboxIds,
-                    $postFolder,
-                    $postPageLimit,
-                    $filter,
-                    0
-                );
-                $postHasMore = count($postInbox) >= $postPageLimit;
-                $postImapAsync = false;
-                if ($postMailboxFilter > 0) {
-                    foreach ($postMailboxes as $box) {
-                        if ((int) ($box['id'] ?? 0) === $postMailboxFilter
-                            && ImapMailboxClient::hasCredentials($box)) {
-                            $postImapAsync = true;
-                            break;
+                if ($postSearchMode) {
+                    $postInbox = MailLogRepository::searchForMailboxes(
+                        $mailboxIds,
+                        $postSearchQuery,
+                        $postSearchContactId > 0 ? $postSearchContactId : null,
+                        $filter,
+                        $postPageLimit,
+                        0
+                    );
+                    $postHasMore = count($postInbox) >= $postPageLimit;
+                    $postImapAsync = false;
+                    $postFolderLabel = $postSearchQuery !== ''
+                        ? ('Suche: ' . $postSearchQuery)
+                        : ('Kontakt #' . $postSearchContactId);
+                } else {
+                    $postInbox = MailLogRepository::folderMessagesForMailboxes(
+                        $mailboxIds,
+                        $postFolder,
+                        $postPageLimit,
+                        $filter,
+                        0
+                    );
+                    $postHasMore = count($postInbox) >= $postPageLimit;
+                    $postImapAsync = false;
+                    if ($postMailboxFilter > 0) {
+                        foreach ($postMailboxes as $box) {
+                            if ((int) ($box['id'] ?? 0) === $postMailboxFilter
+                                && ImapMailboxClient::hasCredentials($box)) {
+                                $postImapAsync = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -7123,6 +7207,16 @@ $legalProductsConfig = LegalProductSettings::config();
         $postIsSentFolder = $postIsSentFolder ?? false;
         $postImapLive = $postImapLive ?? false;
         $postImapAsync = $postImapAsync ?? false;
+        $postSearchQuery = $postSearchQuery ?? '';
+        $postSearchContactId = $postSearchContactId ?? 0;
+        $postSearchMode = $postSearchMode ?? false;
+        $postLinkContext = $postLinkContext ?? [
+            'contact' => null,
+            'suggested' => null,
+            'voucher' => null,
+            'party_email' => '',
+        ];
+        $voucherLinkedMails = $voucherLinkedMails ?? [];
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
@@ -7449,6 +7543,11 @@ $legalProductsConfig = LegalProductSettings::config();
             'postIsSentFolder',
             'postImapLive',
             'postImapAsync',
+            'postSearchQuery',
+            'postSearchContactId',
+            'postSearchMode',
+            'postLinkContext',
+            'voucherLinkedMails',
             'smtpTestReport',
             'appearanceConfig',
             'crmThemeConfig',

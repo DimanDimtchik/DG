@@ -58,10 +58,10 @@ Stand: **2026-10-23**
 
 ### P5 — CRM-Fachverknüpfung
 
-- [ ] Absender/Empfänger → Kontakt vorschlagen / verknüpfen
-- [ ] Belegkette: eingehende/ausgehende Mails an Beleg hängen (Ausbau Inbound/Outbound)
-- [ ] Suche über Postfach + Kontaktbezug
-- [ ] GoBD-taugliche Nachvollziehbarkeit (wer hat wann gelesen/gesendet — Protokoll, keine stillen Löschungen ohne Spur)
+- [x] Absender/Empfänger → Kontakt vorschlagen / verknüpfen (`PostMailLinkService`, UI an Nachricht)
+- [x] Belegkette: Mail ↔ Beleg (`setVoucherId` / Link-UI; Liste am Belegformular)
+- [x] Suche über Postfach + Kontaktbezug (`MailLogRepository::searchForMailboxes`, `q` / `contact`)
+- [x] GoBD: `AuditLog` bei Öffnen, Lesen, Senden, Verknüpfen/Lösen (kein stilles Entkoppeln ohne Spur)
 
 ### P6 — Härten & Betrieb
 

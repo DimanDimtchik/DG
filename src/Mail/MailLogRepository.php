@@ -162,13 +162,143 @@ final class MailLogRepository
         return (int) $pdo->lastInsertId();
     }
 
-    public static function setVoucherId(int $logId, int $voucherId): void
+    public static function setVoucherId(int $logId, ?int $voucherId): void
     {
-        if ($logId < 1 || $voucherId < 1 || !self::hasColumn('voucher_id')) {
+        if ($logId < 1 || !self::hasColumn('voucher_id')) {
             return;
         }
         $stmt = Database::pdo()->prepare('UPDATE dg_mail_log SET voucher_id = :voucher_id WHERE id = :id');
-        $stmt->execute(['voucher_id' => $voucherId, 'id' => $logId]);
+        $stmt->execute([
+            'voucher_id' => $voucherId !== null && $voucherId > 0 ? $voucherId : null,
+            'id' => $logId,
+        ]);
+    }
+
+    public static function setContactId(int $logId, ?int $contactId): void
+    {
+        if ($logId < 1 || !Database::isConfigured()) {
+            return;
+        }
+        $stmt = Database::pdo()->prepare('UPDATE dg_mail_log SET contact_id = :contact_id WHERE id = :id');
+        $stmt->execute([
+            'contact_id' => $contactId !== null && $contactId > 0 ? $contactId : null,
+            'id' => $logId,
+        ]);
+    }
+
+    /**
+     * Mails zu einem Beleg (Belegkette / GoBD-Nachweis).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listForVoucher(int $voucherId, int $limit = 50): array
+    {
+        if ($voucherId < 1 || !Database::isConfigured() || !self::hasColumn('voucher_id')) {
+            return [];
+        }
+        $limit = max(1, min(100, $limit));
+        $stmt = Database::pdo()->prepare(
+            "SELECT id, mailbox_id, direction, status, is_read, subject, from_address, from_name,
+                    to_addresses, contact_id, voucher_id, storage_path,
+                    COALESCE(received_at, sent_at, created_at) AS activity_at
+             FROM dg_mail_log
+             WHERE voucher_id = :vid
+             ORDER BY COALESCE(received_at, sent_at, created_at) DESC, id DESC
+             LIMIT {$limit}"
+        );
+        $stmt->execute(['vid' => $voucherId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return is_array($rows) ? self::enrichPartyLabels($rows) : [];
+    }
+
+    /**
+     * Suche über zugängliche Postfächer (Betreff, Adressen, Vorschau, Kontakt).
+     *
+     * @param list<int> $mailboxIds
+     * @return list<array<string, mixed>>
+     */
+    public static function searchForMailboxes(
+        array $mailboxIds,
+        string $query = '',
+        ?int $contactId = null,
+        ?int $mailboxFilter = null,
+        int $limit = 50,
+        int $offset = 0,
+    ): array {
+        $mailboxIds = array_values(array_filter(array_map('intval', $mailboxIds), static fn(int $id): bool => $id > 0));
+        $query = trim($query);
+        $contactId = $contactId !== null && $contactId > 0 ? $contactId : null;
+        if ($mailboxIds === [] || !Database::isConfigured()) {
+            return [];
+        }
+        if ($query === '' && $contactId === null) {
+            return [];
+        }
+
+        MigrationRunner::runPending();
+        $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+        $hasVoucher = self::hasColumn('voucher_id');
+        $sql = 'SELECT id, mailbox_id, direction, status, is_read, received_at, sent_at, created_at,
+                       from_address, from_name, to_addresses, subject, body_preview, contact_id, storage_path'
+            . ($hasVoucher ? ', voucher_id' : '')
+            . " FROM dg_mail_log
+                WHERE mailbox_id IN ({$placeholders})
+                  AND (
+                    (direction = 'in' AND status = 'received')
+                    OR (direction = 'out' AND status = 'sent')
+                  )";
+        $params = $mailboxIds;
+        if ($mailboxFilter !== null && $mailboxFilter > 0) {
+            $sql .= ' AND mailbox_id = ?';
+            $params[] = $mailboxFilter;
+        }
+        if ($contactId !== null) {
+            $sql .= ' AND contact_id = ?';
+            $params[] = $contactId;
+        }
+        if ($query !== '') {
+            $like = '%' . self::escapeLike($query) . '%';
+            $sql .= ' AND (
+                subject LIKE ? ESCAPE \'\\\\\'
+                OR from_address LIKE ? ESCAPE \'\\\\\'
+                OR from_name LIKE ? ESCAPE \'\\\\\'
+                OR to_addresses LIKE ? ESCAPE \'\\\\\'
+                OR body_preview LIKE ? ESCAPE \'\\\\\'
+            )';
+            array_push($params, $like, $like, $like, $like, $like);
+        }
+        $sql .= ' ORDER BY COALESCE(received_at, sent_at, created_at) DESC, id DESC LIMIT ? OFFSET ?';
+        $params[] = max(1, min(100, $limit));
+        $params[] = max(0, $offset);
+
+        $stmt = Database::pdo()->prepare($sql);
+        foreach ($params as $i => $value) {
+            $stmt->bindValue($i + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        return self::enrichPartyLabels(array_map(static function (array $row): array {
+            if (($row['direction'] ?? '') === 'out') {
+                $to = json_decode((string) ($row['to_addresses'] ?? '[]'), true);
+                $toFirst = is_array($to) && $to !== [] ? (string) $to[0] : '';
+                $row['from_address'] = $toFirst !== '' ? $toFirst : (string) ($row['from_address'] ?? '');
+                $row['from_name'] = '';
+            }
+            $row['received_at'] = $row['received_at'] ?? $row['sent_at'] ?? $row['created_at'] ?? '';
+            $row['source'] = 'search';
+
+            return $row;
+        }, $rows));
+    }
+
+    private static function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 
     /**

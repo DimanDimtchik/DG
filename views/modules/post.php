@@ -15,6 +15,7 @@
 /** @var bool $postListMode */
 /** @var list<array<string, mixed>> $postMailboxCards */
 /** @var array<string, string> $postComposeForm */
+/** @var array{contact: ?Contact, suggested: ?Contact, voucher: ?array<string, mixed>, party_email: string} $postLinkContext */
 
 $postMailboxes = $postMailboxes ?? [];
 $postSendableMailboxes = $postSendableMailboxes ?? [];
@@ -31,6 +32,15 @@ $postCompose = $postCompose ?? false;
 $postListMode = $postListMode ?? false;
 $postMailboxCards = $postMailboxCards ?? [];
 $postHasMore = $postHasMore ?? false;
+$postSearchQuery = $postSearchQuery ?? '';
+$postSearchContactId = $postSearchContactId ?? 0;
+$postSearchMode = $postSearchMode ?? false;
+$postLinkContext = $postLinkContext ?? [
+    'contact' => null,
+    'suggested' => null,
+    'voucher' => null,
+    'party_email' => '',
+];
 $postComposeForm = array_merge([
     'mailbox_id' => '',
     'to' => '',
@@ -46,6 +56,8 @@ $postComposeTitle = match ($postComposeMode) {
     'forward' => 'Weiterleiten',
     default => 'Neue Nachricht',
 };
+$postCanLinkVoucher = MenuRegistry::canAccess($user, 'buchhaltung-belege')
+    || MenuRegistry::canAccess($user, 'buchhaltung-beleg-form');
 
 /** @var bool $postImapAsync */
 $postImapAsync = $postImapAsync ?? false;
@@ -83,7 +95,33 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
     <div class="dg-panel">
       <p class="dg-lead">Kein Postfach zugewiesen. Unter <a href="/app?page=einstellungen&tab=postfaecher">Einstellungen → Postfächer</a> Google, Legacy oder weitere Adressen anlegen.</p>
     </div>
-  <?php elseif ($postListMode) : ?>
+  <?php else : ?>
+  <?php if (!$postCompose && $postMessage === null) : ?>
+  <form class="dg-panel dg-post-search" method="get" action="/app" style="margin-bottom:16px">
+    <input type="hidden" name="page" value="post">
+    <?php if ($postMailboxFilter > 0) : ?>
+      <input type="hidden" name="mailbox" value="<?= (int) $postMailboxFilter ?>">
+    <?php endif; ?>
+    <div class="dg-form-grid" style="align-items:end">
+      <label class="dg-field dg-field--wide">
+        <span>Suche (Betreff, Adresse, Vorschau)</span>
+        <input type="search" name="q" value="<?= View::escape($postSearchQuery) ?>" placeholder="z. B. Rechnung, kunde@…">
+      </label>
+      <label class="dg-field">
+        <span>Kontakt-ID</span>
+        <input type="number" name="contact" min="1" value="<?= $postSearchContactId > 0 ? (int) $postSearchContactId : '' ?>" placeholder="optional">
+      </label>
+      <div class="dg-form-actions" style="margin:0">
+        <button type="submit" class="dg-button dg-button--primary">Suchen</button>
+        <?php if ($postSearchMode) : ?>
+          <a class="dg-button" href="<?= View::escape($postMailboxFilter > 0 ? $postFolderQuery($postMailboxFilter, $postFolder) : '/app?page=post') ?>">Zurücksetzen</a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </form>
+  <?php endif; ?>
+
+  <?php if ($postListMode) : ?>
     <div class="dg-mailbox-cards" role="list">
       <?php foreach ($postMailboxCards as $card) : ?>
         <a class="dg-mailbox-card" role="listitem" href="<?= View::escape((string) $card['open_href']) ?>">
@@ -242,6 +280,101 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
         <?php endif; ?>
       </p>
     </article>
+
+    <?php if ((int) ($postMessage['id'] ?? 0) > 0) : ?>
+      <?php
+        $linkedContact = $postLinkContext['contact'] ?? null;
+        $suggestedContact = $postLinkContext['suggested'] ?? null;
+        $linkedVoucher = $postLinkContext['voucher'] ?? null;
+        $partyEmail = (string) ($postLinkContext['party_email'] ?? '');
+      ?>
+      <section class="dg-panel dg-post-crm-links" style="margin-top:16px">
+        <h2 class="dg-subsection-title">CRM-Verknüpfung</h2>
+        <p class="dg-field-hint">Kontakt und Beleg für die Belegkette — Verknüpfungen werden im Audit-Protokoll festgehalten.</p>
+
+        <div class="dg-post-crm-links__block">
+          <h3 class="dg-subsection-title" style="font-size:1rem">Kontakt</h3>
+          <?php if ($linkedContact instanceof Contact) : ?>
+            <p>
+              Verknüpft:
+              <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>"><?= View::escape($linkedContact->listLabel()) ?></a>
+              <?php if ($partyEmail !== '') : ?>
+                <span class="dg-field-hint">(<?= View::escape($partyEmail) ?>)</span>
+              <?php endif; ?>
+            </p>
+            <form method="post" action="/app?page=post" class="dg-inline-form">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
+              <button type="submit" name="post_unlink_contact" value="1" class="dg-button">Verknüpfung lösen</button>
+              <a class="dg-button" href="/app?page=post&amp;contact=<?= (int) $linkedContact->id ?>">Mails dieses Kontakts</a>
+            </form>
+          <?php else : ?>
+            <?php if ($suggestedContact instanceof Contact) : ?>
+              <form method="post" action="/app?page=post" class="dg-form" style="margin-bottom:12px">
+                <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
+                <input type="hidden" name="suggested_contact_id" value="<?= (int) $suggestedContact->id ?>">
+                <p>
+                  Vorschlag:
+                  <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $suggestedContact->id ?>"><?= View::escape($suggestedContact->listLabel()) ?></a>
+                  <?php if ($partyEmail !== '') : ?>
+                    <span class="dg-field-hint">(<?= View::escape($partyEmail) ?>)</span>
+                  <?php endif; ?>
+                </p>
+                <button type="submit" name="post_link_contact" value="1" class="dg-button dg-button--primary">Vorschlag übernehmen</button>
+              </form>
+            <?php elseif ($partyEmail !== '') : ?>
+              <p class="dg-field-hint">Kein Kontakt zu <?= View::escape($partyEmail) ?> — manuell verknüpfen oder in Kontakten anlegen.</p>
+            <?php endif; ?>
+            <form method="post" action="/app?page=post" class="dg-form">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
+              <label class="dg-field dg-field--wide">
+                <span>Kontakt-ID oder E-Mail</span>
+                <input type="text" name="contact_ref" value="<?= View::escape($partyEmail) ?>" placeholder="123 oder name@firma.de" required>
+              </label>
+              <div class="dg-form-actions">
+                <button type="submit" name="post_link_contact" value="1" class="dg-button">Kontakt verknüpfen</button>
+              </div>
+            </form>
+          <?php endif; ?>
+        </div>
+
+        <?php if ($postCanLinkVoucher) : ?>
+          <div class="dg-post-crm-links__block" style="margin-top:16px">
+            <h3 class="dg-subsection-title" style="font-size:1rem">Beleg</h3>
+            <?php if (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0) : ?>
+              <p>
+                Verknüpft:
+                <a href="/app?page=buchhaltung-beleg-form&amp;action=edit&amp;id=<?= (int) $linkedVoucher['id'] ?>">
+                  <?= View::escape((string) ($linkedVoucher['type_label'] ?? 'Beleg')) ?>
+                  <?= View::escape(trim((string) ($linkedVoucher['invoice_number'] ?? '')) !== ''
+                      ? (string) $linkedVoucher['invoice_number']
+                      : '#' . (int) $linkedVoucher['id']) ?>
+                </a>
+              </p>
+              <form method="post" action="/app?page=post" class="dg-inline-form">
+                <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
+                <button type="submit" name="post_unlink_voucher" value="1" class="dg-button">Verknüpfung lösen</button>
+              </form>
+            <?php else : ?>
+              <form method="post" action="/app?page=post" class="dg-form">
+                <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
+                <label class="dg-field dg-field--wide">
+                  <span>Beleg-ID oder Belegnummer</span>
+                  <input type="text" name="voucher_ref" required placeholder="z. B. 42 oder RE-2026-001">
+                </label>
+                <div class="dg-form-actions">
+                  <button type="submit" name="post_link_voucher" value="1" class="dg-button">Beleg verknüpfen</button>
+                </div>
+              </form>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
   <?php else : ?>
     <?php View::partial('partials/back-nav', [
         'href' => '/app?page=post',
@@ -356,18 +489,21 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             </tbody>
           </table>
         </div>
+        <?php if (!$postSearchMode) : ?>
         <p class="dg-form-actions dg-post-load-more" data-post-load-more-wrap<?= empty($postHasMore) ? ' hidden' : '' ?>>
           <button type="button" class="dg-button" data-post-load-more>Weitere Nachrichten laden</button>
         </p>
-        <?php if ($postImapAsync) : ?>
+        <?php endif; ?>
+        <?php if ($postImapAsync && !$postSearchMode) : ?>
           <p class="dg-form-actions">
             <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder) . '&refresh=1') ?>">Jetzt vom Server abrufen</a>
           </p>
           <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>
-        <?php elseif ($postMailboxFilter > 0) : ?>
+        <?php elseif ($postMailboxFilter > 0 && !$postSearchMode) : ?>
           <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>
         <?php endif; ?>
       </div>
     </div>
+  <?php endif; ?>
   <?php endif; ?>
 </div>

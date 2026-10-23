@@ -96,6 +96,16 @@ final class MailService
             );
             $client->sendMail($fromEmail, $recipients, $mime);
             MailLogRepository::markSent($logId);
+            if ($actor !== null) {
+                AuditLog::record('mail_send', $actor->id, json_encode([
+                    'mail_log_id' => $logId,
+                    'mailbox_id' => $mailboxId,
+                    'voucher_id' => $voucherId,
+                    'contact_id' => $message->contactId,
+                    'subject' => mb_substr($message->subject, 0, 200),
+                    'to' => array_slice($message->to, 0, 10),
+                ], JSON_UNESCAPED_UNICODE));
+            }
         } catch (Throwable $e) {
             MailLogRepository::markFailed($logId, $e->getMessage());
             throw $e;

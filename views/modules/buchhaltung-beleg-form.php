@@ -305,6 +305,51 @@ $paymentTermsPreview = PaymentTermsService::composeText(
     <p class="dg-field-hint" style="margin-top:-8px;margin-bottom:16px;"><?= View::escape($provenanceHint) ?></p>
   <?php endif; ?>
 
+  <?php
+    $voucherLinkedMails = $voucherLinkedMails ?? [];
+  ?>
+  <?php if ($isEdit && $voucherLinkedMails !== []) : ?>
+    <section class="dg-panel dg-voucher-linked-mails" style="margin-bottom: 20px;">
+      <h2 class="dg-subsection-title">Verknüpfte E-Mails</h2>
+      <p class="dg-field-hint">Ein-/Ausgänge aus dem Postfach, die an diesen Beleg gehängt sind (Belegkette / Prüfnachweis).</p>
+      <div class="dg-table-wrap">
+        <table class="dg-table">
+          <thead>
+            <tr>
+              <th>Richtung</th>
+              <th>Betreff</th>
+              <th>Gegenstelle</th>
+              <th>Datum</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($voucherLinkedMails as $mailRow) : ?>
+              <?php
+                $mailId = (int) ($mailRow['id'] ?? 0);
+                $dir = (string) ($mailRow['direction'] ?? '');
+                $dirLabel = $dir === 'out' ? 'Ausgang' : 'Eingang';
+                $party = MailPartyLabel::forMessageRow($mailRow);
+                $addr = (string) ($mailRow['from_address'] ?? '');
+              ?>
+              <tr>
+                <td><?= View::escape($dirLabel) ?></td>
+                <td>
+                  <?php if ($mailId > 0) : ?>
+                    <a href="/app?page=post&amp;id=<?= $mailId ?>"><?= View::escape((string) ($mailRow['subject'] ?? '(Ohne Betreff)')) ?></a>
+                  <?php else : ?>
+                    <?= View::escape((string) ($mailRow['subject'] ?? '')) ?>
+                  <?php endif; ?>
+                </td>
+                <td><?= View::escape($party !== '' ? $party : $addr) ?></td>
+                <td><?= View::escape((string) ($mailRow['activity_at'] ?? $mailRow['received_at'] ?? $mailRow['sent_at'] ?? $mailRow['created_at'] ?? '')) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <?php endif; ?>
+
   <?php if ($isEdit && !$readOnly && ($voucherMailCanSend ?? false)) : ?>
     <section class="dg-panel dg-voucher-email" id="dg-voucher-email-section" style="margin-bottom: 20px;">
       <h2 class="dg-subsection-title">Per E-Mail senden</h2>
