@@ -25,8 +25,14 @@ $legalOnly = in_array('--legal-only', $args, true);
 
 $options = [
     'overwrite' => $overwrite,
-    'enable_maintenance' => !$noMaintenance,
 ];
+
+// --no-maintenance: bestehenden Wartungsmodus nicht anfassen (nicht abschalten).
+if ($noMaintenance) {
+    $options['maintenance'] = false;
+} else {
+    $options['enable_maintenance'] = true;
+}
 
 if ($legalOnly) {
     $options['homepage'] = false;
