@@ -227,7 +227,8 @@ final class ImapMailboxClient
 
         $peek = defined('FT_PEEK') ? FT_PEEK : 0;
         $headerRaw = (string) @imap_fetchheader($connection, $msgNo);
-        $bodyRaw = (string) @imap_body($connection, (string) $msgNo, $peek);
+        // PHP 8.1+: imap_body erwartet int für message_num (String wirft TypeError → HTTP 500)
+        $bodyRaw = (string) @imap_body($connection, $msgNo, $peek);
         $raw = $headerRaw !== '' ? ($headerRaw . "\r\n" . $bodyRaw) : $bodyRaw;
         $parsed = $raw !== '' ? MailMimeReader::parse($raw) : ['html' => '', 'text' => '', 'attachments' => []];
         $text = (string) ($parsed['text'] ?? '');
@@ -279,7 +280,7 @@ final class ImapMailboxClient
         }
         $peek = defined('FT_PEEK') ? FT_PEEK : 0;
         $headerRaw = (string) @imap_fetchheader($connection, $msgNo);
-        $bodyRaw = (string) @imap_body($connection, (string) $msgNo, $peek);
+        $bodyRaw = (string) @imap_body($connection, $msgNo, $peek);
         if ($headerRaw === '' && $bodyRaw === '') {
             return null;
         }
