@@ -7443,3 +7443,30 @@ body.dg-login-page {
   background: #fff;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 }
+
+/* Dokumentenverfasser D2 */
+.dg-writer-layout {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .dg-writer-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.dg-writer-preview-wrap {
+  max-height: min(90vh, 297mm);
+}
+.dg-writer-preview-frame {
+  transform-origin: top center;
+}
+.dg-writer-paragraph + .dg-writer-paragraph {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dg-border, #e4e7ec);
+}
+.dg-writer-paragraph__remove {
+  margin-top: 6px;
+}

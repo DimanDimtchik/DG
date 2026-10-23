@@ -1290,6 +1290,97 @@ switch ($path) {
             exit;
         }
 
+        // GET: Dokumentenverfasser A4-Vorschau (gespeichertes Dokument oder Muster)
+        if (
+            ($page === 'dokumentenverfasser' || $page === 'dokumentenverfasser-form')
+            && isset($_GET['writer_preview'])
+            && MenuRegistry::canAccess($user, 'dokumentenverfasser')
+        ) {
+            $cfg = LetterheadSettings::config();
+            $docId = (int) ($_GET['id'] ?? 0);
+            $renderDoc = LetterheadRenderer::sampleDocument();
+            if ($docId > 0) {
+                $stored = WriterDocumentRepository::findDocument($docId);
+                if ($stored !== null) {
+                    $renderDoc = WriterDocument::toRenderDocument($stored);
+                }
+            }
+            header('Content-Type: text/html; charset=utf-8');
+            header('X-Robots-Tag: noindex');
+            echo LetterheadRenderer::renderFullHtml(
+                $renderDoc,
+                $cfg,
+                [
+                    'show_guides' => !empty($cfg['page']['show_din_guides']),
+                    'title' => 'Dokument-Vorschau',
+                ]
+            );
+            exit;
+        }
+
+        // POST: Dokumentenverfasser speichern / finalisieren / öffnen / archivieren
+        if (
+            $page === 'dokumentenverfasser-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['writer_save'])
+                || isset($_POST['writer_finalize'])
+                || isset($_POST['writer_reopen'])
+                || isset($_POST['writer_archive'])
+            )
+            && MenuRegistry::canAccess($user, 'dokumentenverfasser-form')
+        ) {
+            $editId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=dokumentenverfasser', true, 302);
+                exit;
+            }
+            try {
+                WriterDocumentRepository::ensureReady();
+                if (isset($_POST['writer_finalize']) && $editId > 0) {
+                    WriterDocumentRepository::saveDraft($_POST, $editId, $user->id);
+                    WriterDocumentRepository::finalize($editId, $user->id);
+                    Flash::set('success', 'Dokument finalisiert (Version gesichert).');
+                    header('Location: /app?page=dokumentenverfasser-form&action=edit&id=' . $editId, true, 302);
+                    exit;
+                }
+                if (isset($_POST['writer_reopen']) && $editId > 0) {
+                    WriterDocumentRepository::reopenAsDraft($editId, $user->id);
+                    Flash::set('success', 'Dokument erneut als Entwurf geöffnet (Version erhöht).');
+                    header('Location: /app?page=dokumentenverfasser-form&action=edit&id=' . $editId, true, 302);
+                    exit;
+                }
+                if (isset($_POST['writer_archive']) && $editId > 0) {
+                    WriterDocumentRepository::archive($editId, $user->id);
+                    Flash::set('success', 'Dokument archiviert.');
+                    header('Location: /app?page=dokumentenverfasser', true, 302);
+                    exit;
+                }
+                $newId = WriterDocumentRepository::saveDraft(
+                    $_POST,
+                    $editId > 0 ? $editId : null,
+                    $user->id
+                );
+                Flash::set('success', 'Entwurf gespeichert.');
+                header('Location: /app?page=dokumentenverfasser-form&action=edit&id=' . $newId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $formError = $e->getMessage();
+                $writerDocumentId = $editId > 0 ? $editId : null;
+                $existingDoc = $editId > 0 ? WriterDocumentRepository::findDocument($editId) : null;
+                $writerForm = array_merge(
+                    WriterDocument::empty(),
+                    WriterDocument::sanitize($_POST),
+                    [
+                        'id' => $editId,
+                        'status' => $existingDoc['status'] ?? WriterDocument::STATUS_DRAFT,
+                        'version' => (int) ($existingDoc['version'] ?? 1),
+                    ]
+                );
+            }
+        }
+
         // POST: Einstellungen Zeiterfassung
         if (
             $page === 'einstellungen'
@@ -7154,10 +7245,58 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/telefon';
             $title = 'Telefon';
             $currentPage = 'telefon';
-        } elseif ($page === 'dokumentenverfasser' && MenuRegistry::canAccess($user, 'dokumentenverfasser')) {
-            $contentTemplate = 'modules/dokumentenverfasser';
-            $title = 'Dokumentenverfasser';
-            $currentPage = 'dokumentenverfasser';
+        } elseif (
+            ($page === 'dokumentenverfasser' || $page === 'dokumentenverfasser-form')
+            && MenuRegistry::canAccess($user, $page === 'dokumentenverfasser-form' ? 'dokumentenverfasser-form' : 'dokumentenverfasser')
+        ) {
+            WriterDocumentRepository::ensureReady();
+            $dbConnected = Database::isConfigured();
+            $canEdit = RoleResolver::canEdit($user);
+            $writerExportFormats = LetterheadSettings::config()['export_formats'] ?? [
+                'pdf' => true,
+                'txt' => true,
+                'md' => false,
+                'docx' => false,
+            ];
+            if ($page === 'dokumentenverfasser-form') {
+                if (empty($formError)) {
+                    $writerDocumentId = (int) ($_GET['id'] ?? 0);
+                    $action = (string) ($_GET['action'] ?? ($writerDocumentId > 0 ? 'edit' : 'new'));
+                    if ($action === 'edit' && $writerDocumentId > 0) {
+                        $writerForm = WriterDocumentRepository::findDocument($writerDocumentId);
+                        if ($writerForm === null) {
+                            Flash::set('error', 'Dokument nicht gefunden.');
+                            header('Location: /app?page=dokumentenverfasser', true, 302);
+                            exit;
+                        }
+                        $writerVersions = WriterDocumentRepository::listVersions($writerDocumentId);
+                    } else {
+                        $writerDocumentId = null;
+                        $writerForm = WriterDocument::empty();
+                        $writerVersions = [];
+                    }
+                } else {
+                    $writerDocumentId = $writerDocumentId ?? null;
+                    $writerForm = $writerForm ?? WriterDocument::empty();
+                    $writerVersions = ($writerDocumentId ?? 0) > 0
+                        ? WriterDocumentRepository::listVersions((int) $writerDocumentId)
+                        : [];
+                }
+                $contentTemplate = 'modules/dokumentenverfasser-form';
+                $title = (($writerDocumentId ?? 0) > 0) ? 'Dokument bearbeiten' : 'Neues Dokument';
+                $currentPage = 'dokumentenverfasser';
+            } else {
+                $writerStatusFilter = trim((string) ($_GET['status'] ?? ''));
+                if ($writerStatusFilter !== '' && !isset(WriterDocument::statusOptions()[$writerStatusFilter])) {
+                    $writerStatusFilter = '';
+                }
+                $writerDocumentList = $dbConnected
+                    ? WriterDocumentRepository::listRecent(100, 0, $writerStatusFilter !== '' ? $writerStatusFilter : null)
+                    : [];
+                $contentTemplate = 'modules/dokumentenverfasser';
+                $title = 'Dokumentenverfasser';
+                $currentPage = 'dokumentenverfasser';
+            }
         } elseif ($page !== 'dashboard' && MenuRegistry::canAccess($user, $page)) {
             $contentTemplate = 'modules/' . $page;
             $title = ucfirst($page);

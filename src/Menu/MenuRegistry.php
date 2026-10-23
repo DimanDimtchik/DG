@@ -468,7 +468,7 @@ final class MenuRegistry
             'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
             'post' => 'E-Mail-Postfächer: Eingang lesen und Nachrichten versenden.',
             'telefon' => 'Telefonanlage und Anrufe — in Vorbereitung.',
-            'dokumentenverfasser' => 'PDF, Word und Excel erstellen — in Vorbereitung.',
+            'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Final, Export.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
             'dienstleistungen-auftraege' => 'Angebote und Aufträge — Planung.',
             'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
@@ -726,8 +726,16 @@ final class MenuRegistry
             return DepartmentAccess::canAccessModule($user, 'post') && RoleResolver::canEdit($user);
         }
 
-        if ($slug === 'telefon' || $slug === 'dokumentenverfasser') {
+        if ($slug === 'telefon') {
             // Platzhalter: sichtbar für Bearbeiter mit Post- oder Kontakt-Recht
+            return RoleResolver::canEdit($user)
+                && (
+                    DepartmentAccess::canAccessModule($user, 'post')
+                    || DepartmentAccess::canAccessModule($user, 'kontakte')
+                );
+        }
+
+        if ($slug === 'dokumentenverfasser' || $slug === 'dokumentenverfasser-form') {
             return RoleResolver::canEdit($user)
                 && (
                     DepartmentAccess::canAccessModule($user, 'post')

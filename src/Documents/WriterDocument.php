@@ -118,6 +118,57 @@ final class WriterDocument
     }
 
     /**
+     * @return array<string, string> Vorlage-Text => Kurzlabel
+     */
+    public static function greetingPresets(): array
+    {
+        return [
+            'Sehr geehrte Damen und Herren,' => 'Neutral',
+            'Sehr geehrte Frau …,' => 'Frau',
+            'Sehr geehrter Herr …,' => 'Herr',
+            'Guten Tag,' => 'Kurz',
+            'Liebe …,' => 'Persönlich',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function closingPresets(): array
+    {
+        return [
+            'Mit freundlichen Grüßen' => 'Standard',
+            'Freundliche Grüße' => 'Kurz',
+            'Mit besten Grüßen' => 'Warm',
+            'Hochachtungsvoll' => 'Formell',
+        ];
+    }
+
+    /**
+     * Absätze für Textareas aus Dokumentstruktur.
+     *
+     * @param array<string, mixed> $doc
+     * @return list<string>
+     */
+    public static function paragraphTexts(array $doc): array
+    {
+        $body = is_array($doc['body'] ?? null) ? $doc['body'] : [];
+        $blocks = is_array($body['blocks'] ?? null) ? $body['blocks'] : [];
+        $texts = [];
+        foreach ($blocks as $block) {
+            if (!is_array($block)) {
+                continue;
+            }
+            if (($block['type'] ?? 'paragraph') !== 'paragraph') {
+                continue;
+            }
+            $texts[] = (string) ($block['text'] ?? '');
+        }
+
+        return $texts !== [] ? $texts : [''];
+    }
+
+    /**
      * Normalisiert Eingabe (POST/API/JSON) für Speichern.
      *
      * @param array<string, mixed> $input
@@ -147,15 +198,14 @@ final class WriterDocument
         $info = self::sanitizeInfo(is_array($input['info'] ?? null) ? $input['info'] : []);
         $body = self::sanitizeBody(is_array($input['body'] ?? null) ? $input['body'] : []);
 
-        // Kurzform: paragraphs[] → Blöcke (Vorschau/Legacy)
-        if (isset($input['paragraphs']) && is_array($input['paragraphs']) && ($body['blocks'] === [] || self::blocksAreEmpty($body['blocks']))) {
+        // Formular: paragraphs[] hat Vorrang (inkl. leerer Absätze für die UI)
+        if (isset($input['paragraphs']) && is_array($input['paragraphs'])) {
             $blocks = [];
             foreach ($input['paragraphs'] as $p) {
-                $text = trim((string) $p);
-                if ($text === '') {
-                    continue;
+                $blocks[] = self::paragraphBlock(trim((string) $p));
+                if (count($blocks) >= 100) {
+                    break;
                 }
-                $blocks[] = self::paragraphBlock($text);
             }
             if ($blocks === []) {
                 $blocks[] = self::paragraphBlock('');
