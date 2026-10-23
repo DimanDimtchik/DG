@@ -1237,6 +1237,27 @@ switch ($path) {
             exit;
         }
 
+        // GET: Briefpapier-Vorschau (A4 HTML für iframe / Druck)
+        if (
+            $page === 'einstellungen'
+            && ($_GET['tab'] ?? '') === 'briefpapier'
+            && isset($_GET['letterhead_preview'])
+            && RoleResolver::isAdmin($user)
+        ) {
+            $cfg = LetterheadSettings::config();
+            $guides = array_key_exists('guides', $_GET)
+                ? !empty($_GET['guides'])
+                : !empty($cfg['page']['show_din_guides']);
+            header('Content-Type: text/html; charset=utf-8');
+            header('X-Robots-Tag: noindex');
+            echo LetterheadRenderer::renderFullHtml(
+                LetterheadRenderer::sampleDocument(),
+                $cfg,
+                ['show_guides' => $guides, 'title' => 'Briefpapier-Vorschau']
+            );
+            exit;
+        }
+
         // POST: Einstellungen Briefpapier (Dokumentenverfasser)
         if (
             $page === 'einstellungen'

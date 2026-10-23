@@ -415,3 +415,29 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     <a class="dg-button" href="/app?page=dokumentenverfasser">Zum Dokumentenverfasser</a>
   </div>
 </form>
+
+<?php
+  $previewGuides = !empty($page['show_din_guides']) ? '1' : '0';
+  $previewUrl = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=' . $previewGuides;
+  $previewUrlGuidesOn = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=1';
+  $previewUrlGuidesOff = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=0';
+?>
+<section class="dg-panel dg-letterhead-preview" style="margin-top:20px">
+  <h2 class="dg-subsection-title">A4-Vorschau (B4)</h2>
+  <p class="dg-field-hint">
+    Maße in Millimetern (DIN&nbsp;A4). Nach dem Speichern neu laden. Hilfslinien folgen der Checkbox „DIN-Hilfslinien“ oben — oder hier umschalten.
+  </p>
+  <p class="dg-form-actions" style="margin-bottom:12px">
+    <a class="dg-button" href="<?= View::escape($previewUrl) ?>" target="_blank" rel="noopener">Vorschau in neuem Tab</a>
+    <a class="dg-button" href="<?= View::escape($previewUrlGuidesOn) ?>" target="dg-letterhead-preview-frame">Hilfslinien an</a>
+    <a class="dg-button" href="<?= View::escape($previewUrlGuidesOff) ?>" target="dg-letterhead-preview-frame">Hilfslinien aus</a>
+  </p>
+  <div class="dg-letterhead-preview__frame-wrap">
+    <iframe
+      class="dg-letterhead-preview__frame"
+      name="dg-letterhead-preview-frame"
+      title="Briefpapier A4-Vorschau"
+      src="<?= View::escape($previewUrl) ?>"
+    ></iframe>
+  </div>
+</section>

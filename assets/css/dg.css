@@ -7423,3 +7423,23 @@ body.dg-login-page {
 
 
 
+
+/* Briefpapier A4-Vorschau (B4) */
+.dg-letterhead-preview__frame-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 8px;
+  background: #e8eaed;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+.dg-letterhead-preview__frame {
+  width: 210mm;
+  height: 297mm;
+  max-width: 100%;
+  border: 0;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}

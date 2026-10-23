@@ -1,0 +1,608 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * A4-Briefpapier-Renderer (B4) — HTML/CSS in mm.
+ * Gleiche Basis später für PDF-Export (D5).
+ */
+final class LetterheadRenderer
+{
+    public const PAGE_WIDTH_MM = 210.0;
+    public const PAGE_HEIGHT_MM = 297.0;
+
+    /**
+     * Beispieldokument für Einstellungs-Vorschau.
+     *
+     * @return array{
+     *   recipient_lines: list<string>,
+     *   info: array<string, string>,
+     *   subject: string,
+     *   greeting: string,
+     *   paragraphs: list<string>,
+     *   closing: string,
+     *   signature: string
+     * }
+     */
+    public static function sampleDocument(): array
+    {
+        $today = date('d.m.Y');
+
+        return [
+            'recipient_lines' => [
+                'Musterkunde GmbH',
+                'z. Hd. Frau Erika Beispiel',
+                'Musterstraße 12',
+                '12345 Musterstadt',
+            ],
+            'info' => [
+                'their_ref' => 'KD-8842',
+                'their_date' => '01.10.2026',
+                'their_handler' => 'E. Beispiel',
+                'their_case_no' => 'A-2026-11',
+                'our_ref' => 'BR-2026-0042',
+                'our_handler' => 'Max Mustermann',
+                'our_department' => 'Vertrieb',
+                'our_case_no' => 'V-7781',
+                'our_phone' => '',
+                'our_email' => '',
+                'date' => $today,
+            ],
+            'subject' => 'Ihr Auftrag vom 1. Oktober 2026 — Bestätigung',
+            'greeting' => 'Sehr geehrte Frau Beispiel,',
+            'paragraphs' => [
+                'vielen Dank für Ihre Anfrage. Gerne bestätigen wir Ihnen die besprochenen Leistungen wie folgt.',
+                'Die Umsetzung erfolgt nach Freigabe innerhalb von zehn Werktagen. Bei Rückfragen erreichen Sie uns unter den angegebenen Kontaktdaten.',
+            ],
+            'closing' => 'Mit freundlichen Grüßen',
+            'signature' => '',
+        ];
+    }
+
+    /**
+     * Vollständiges HTML-Dokument (iframe / Druck / später PDF).
+     *
+     * @param array<string, mixed> $document
+     * @param array<string, mixed>|null $cfg
+     * @param array{show_guides?: bool, title?: string} $options
+     */
+    public static function renderFullHtml(array $document = [], ?array $cfg = null, array $options = []): string
+    {
+        $cfg = $cfg ?? LetterheadSettings::config();
+        $showGuides = array_key_exists('show_guides', $options)
+            ? !empty($options['show_guides'])
+            : !empty($cfg['page']['show_din_guides']);
+        $title = trim((string) ($options['title'] ?? 'Briefvorschau'));
+        if ($title === '') {
+            $title = 'Briefvorschau';
+        }
+        $page = self::renderPage($document, $cfg, ['show_guides' => $showGuides]);
+        $css = self::stylesheet($cfg, $showGuides);
+        $safeTitle = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">'
+            . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            . '<title>' . $safeTitle . '</title>'
+            . '<style>' . $css . '</style></head><body class="dg-lh-body">'
+            . $page
+            . '</body></html>';
+    }
+
+    /**
+     * Eine A4-Seite als HTML-Fragment.
+     *
+     * @param array<string, mixed> $document
+     * @param array<string, mixed>|null $cfg
+     * @param array{show_guides?: bool} $options
+     */
+    public static function renderPage(array $document = [], ?array $cfg = null, array $options = []): string
+    {
+        $cfg = $cfg ?? LetterheadSettings::config();
+        $doc = array_merge(self::sampleDocument(), $document);
+        $party = LetterheadSettings::resolvedCompany($cfg);
+        $showGuides = !empty($options['show_guides']);
+
+        if (($doc['signature'] ?? '') === '') {
+            $doc['signature'] = $party['legal_name'] !== '' ? $party['legal_name'] : 'Ihre Firma';
+        }
+        if (($doc['info']['our_phone'] ?? '') === '') {
+            $doc['info']['our_phone'] = $party['phone'];
+        }
+        if (($doc['info']['our_email'] ?? '') === '') {
+            $doc['info']['our_email'] = $party['email'];
+        }
+
+        $headerHtml = self::renderHeader($cfg, $party);
+        $windowHtml = self::renderAddressWindow($cfg, $doc);
+        $infoHtml = self::renderInfoBlock($cfg, $doc);
+        $bodyHtml = self::renderBody($cfg, $doc);
+        $footerHtml = self::renderFooter($cfg, $party);
+        $bgHtml = self::renderBackground($cfg);
+        $guidesHtml = $showGuides ? self::renderGuides($cfg) : '';
+
+        return '<article class="dg-lh-page">'
+            . $bgHtml
+            . $guidesHtml
+            . $headerHtml
+            . $windowHtml
+            . $infoHtml
+            . $bodyHtml
+            . $footerHtml
+            . '</article>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $party
+     */
+    private static function renderHeader(array $cfg, array $party): string
+    {
+        $header = is_array($cfg['header'] ?? null) ? $cfg['header'] : [];
+        if (empty($header['show'])) {
+            return '';
+        }
+        $form = strtoupper((string) ($header['height_form'] ?? 'B')) === 'A' ? 'A' : 'B';
+        $pos = (string) ($header['logo_position'] ?? 'left');
+        if (!in_array($pos, ['left', 'center', 'right'], true)) {
+            $pos = 'left';
+        }
+        $logoH = (float) ($header['logo_max_height_mm'] ?? 18);
+        $parts = [];
+        if (!empty($header['show_logo'])) {
+            $url = LetterheadSettings::logoUrl($cfg);
+            $parts[] = '<img class="dg-lh-logo" src="' . self::e($url) . '" alt="" style="max-height:' . self::mm($logoH) . '">';
+        }
+        if (!empty($header['show_company_name']) && $party['legal_name'] !== '') {
+            $parts[] = '<div class="dg-lh-company-name">' . self::e($party['legal_name']) . '</div>';
+        }
+        if ($parts === []) {
+            return '';
+        }
+
+        return '<header class="dg-lh-header dg-lh-header--' . self::e($pos) . ' dg-lh-header--form-' . $form . '">'
+            . implode('', $parts)
+            . '</header>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     */
+    private static function renderAddressWindow(array $cfg, array $doc): string
+    {
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        $sender = is_array($cfg['sender_line'] ?? null) ? $cfg['sender_line'] : [];
+        if (empty($window['show'])) {
+            return '';
+        }
+        $left = (float) ($window['left_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_LEFT_MM);
+        $top = (float) ($window['top_mm'] ?? 50);
+        $width = (float) ($window['width_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_WIDTH_MM);
+        $height = (float) ($window['height_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM);
+        $inner = '';
+        if (!empty($sender['show'])) {
+            $font = (float) ($sender['font_size_pt'] ?? 8);
+            $inner .= '<div class="dg-lh-sender" style="font-size:' . self::pt($font) . '">'
+                . self::e(LetterheadSettings::senderLineText($cfg))
+                . '</div>';
+        }
+        $lines = is_array($doc['recipient_lines'] ?? null) ? $doc['recipient_lines'] : [];
+        $inner .= '<div class="dg-lh-recipient">';
+        foreach ($lines as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+            $inner .= '<div>' . self::e($line) . '</div>';
+        }
+        $inner .= '</div>';
+
+        return '<section class="dg-lh-window" style="left:' . self::mm($left) . ';top:' . self::mm($top)
+            . ';width:' . self::mm($width) . ';height:' . self::mm($height) . '">'
+            . $inner
+            . '</section>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     */
+    private static function renderInfoBlock(array $cfg, array $doc): string
+    {
+        $block = is_array($cfg['info_block'] ?? null) ? $cfg['info_block'] : [];
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        if (empty($block['show'])) {
+            return '';
+        }
+        $infoValues = is_array($doc['info'] ?? null) ? $doc['info'] : [];
+        $rows = '';
+        foreach (LetterheadSettings::infoFieldsSorted($cfg, true) as $field) {
+            $key = $field['key'];
+            $value = trim((string) ($infoValues[$key] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            $rows .= '<div class="dg-lh-info__row">'
+                . '<span class="dg-lh-info__label">' . self::e($field['label']) . '</span>'
+                . '<span class="dg-lh-info__value">' . self::e($value) . '</span>'
+                . '</div>';
+        }
+        if ($rows === '') {
+            return '';
+        }
+        $top = (float) ($window['top_mm'] ?? 50);
+        $left = (float) ($window['left_mm'] ?? 20) + (float) ($window['width_mm'] ?? 85) + 8.0;
+        $right = (float) ($cfg['page']['margin_right_mm'] ?? 20);
+
+        return '<aside class="dg-lh-info" style="top:' . self::mm($top) . ';left:' . self::mm($left)
+            . ';right:' . self::mm($right) . '">' . $rows . '</aside>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     */
+    private static function renderBody(array $cfg, array $doc): string
+    {
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        $subjectCfg = is_array($cfg['subject'] ?? null) ? $cfg['subject'] : [];
+        $top = (float) ($window['top_mm'] ?? 50) + (float) ($window['height_mm'] ?? 45) + 8.0;
+        $subject = trim((string) ($doc['subject'] ?? ''));
+        $html = '<section class="dg-lh-body-content" style="padding-top:' . self::mm($top) . '">';
+        if ($subject !== '') {
+            $label = !empty($subjectCfg['show_label']) ? '<span class="dg-lh-subject__label">Betreff: </span>' : '';
+            $weight = !empty($subjectCfg['bold']) ? ' dg-lh-subject--bold' : '';
+            $html .= '<div class="dg-lh-subject' . $weight . '">' . $label . self::e($subject) . '</div>';
+        }
+        $greeting = trim((string) ($doc['greeting'] ?? ''));
+        if ($greeting !== '') {
+            $html .= '<p class="dg-lh-greeting">' . self::e($greeting) . '</p>';
+        }
+        $paragraphs = is_array($doc['paragraphs'] ?? null) ? $doc['paragraphs'] : [];
+        foreach ($paragraphs as $p) {
+            $p = trim((string) $p);
+            if ($p === '') {
+                continue;
+            }
+            $html .= '<p class="dg-lh-p">' . nl2br(self::e($p)) . '</p>';
+        }
+        $closing = trim((string) ($doc['closing'] ?? ''));
+        if ($closing !== '') {
+            $html .= '<p class="dg-lh-closing">' . self::e($closing) . '</p>';
+        }
+        $signature = trim((string) ($doc['signature'] ?? ''));
+        if ($signature !== '') {
+            $html .= '<p class="dg-lh-signature">' . nl2br(self::e($signature)) . '</p>';
+        }
+        $html .= '</section>';
+
+        return $html;
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $party
+     */
+    private static function renderFooter(array $cfg, array $party): string
+    {
+        $footer = is_array($cfg['footer'] ?? null) ? $cfg['footer'] : [];
+        if (empty($footer['show'])) {
+            return '';
+        }
+        $cols = max(1, min(4, (int) ($footer['columns'] ?? 3)));
+        $font = (float) ($footer['font_size_pt'] ?? 7);
+        $columns = array_fill(0, $cols, []);
+        $i = 0;
+        $push = static function (string $text) use (&$columns, &$i, $cols): void {
+            $text = trim($text);
+            if ($text === '') {
+                return;
+            }
+            $columns[$i % $cols][] = $text;
+            $i++;
+        };
+
+        if (!empty($footer['show_legal_mandatory'])) {
+            foreach (self::legalMandatoryLines($party) as $line) {
+                $push($line);
+            }
+        }
+        if (!empty($footer['show_address'])) {
+            $addr = trim(implode(', ', array_filter([
+                $party['street'],
+                trim($party['postal'] . ' ' . $party['city']),
+            ])));
+            $push($addr);
+        }
+        if (!empty($footer['show_phone']) && $party['phone'] !== '') {
+            $push('Tel. ' . $party['phone']);
+        }
+        if (!empty($footer['show_email']) && $party['email'] !== '') {
+            $push($party['email']);
+        }
+        if (!empty($footer['show_website']) && $party['website'] !== '') {
+            $push($party['website']);
+        }
+        if (!empty($footer['show_tax_number']) && $party['tax_number'] !== '') {
+            $push('Steuernr. ' . $party['tax_number']);
+        }
+        if (!empty($footer['show_vat_id']) && $party['vat_id'] !== '') {
+            $push('USt-IdNr. ' . $party['vat_id']);
+        }
+        if (!empty($footer['show_bank'])) {
+            foreach ($party['bank_lines'] as $bankLine) {
+                $push((string) $bankLine);
+            }
+        }
+        if (!empty($footer['show_links'])) {
+            $linkLabels = [
+                'impressum' => 'Impressum',
+                'datenschutz' => 'Datenschutz',
+                'agb' => 'AGB',
+                'widerruf' => 'Widerruf',
+            ];
+            $bits = [];
+            foreach ($linkLabels as $key => $label) {
+                $url = trim((string) ($party['links'][$key] ?? ''));
+                if ($url !== '') {
+                    $bits[] = $label;
+                }
+            }
+            if ($bits !== []) {
+                $push(implode(' · ', $bits));
+            }
+        }
+
+        $hasContent = false;
+        foreach ($columns as $col) {
+            if ($col !== []) {
+                $hasContent = true;
+                break;
+            }
+        }
+        if (!$hasContent) {
+            return '';
+        }
+
+        $rule = !empty($footer['show_rule']) ? ' dg-lh-footer--rule' : '';
+        $html = '<footer class="dg-lh-footer' . $rule . '" style="font-size:' . self::pt($font) . '">';
+        $html .= '<div class="dg-lh-footer__grid" style="grid-template-columns:repeat(' . $cols . ',1fr)">';
+        foreach ($columns as $col) {
+            $html .= '<div class="dg-lh-footer__col">';
+            foreach ($col as $line) {
+                $html .= '<div>' . self::e($line) . '</div>';
+            }
+            $html .= '</div>';
+        }
+        $html .= '</div></footer>';
+
+        return $html;
+    }
+
+    /**
+     * @param array<string, mixed> $party
+     * @return list<string>
+     */
+    public static function legalMandatoryLines(array $party): array
+    {
+        $lines = [];
+        $head = trim(implode(' · ', array_filter([
+            $party['legal_name'],
+            $party['company_type_label'],
+            $party['seat'] !== '' ? 'Sitz: ' . $party['seat'] : '',
+        ])));
+        if ($head !== '') {
+            $lines[] = $head;
+        }
+        $reg = trim(implode(' ', array_filter([
+            $party['register_court'],
+            $party['register_number'],
+        ])));
+        if ($reg !== '') {
+            $lines[] = $reg;
+        }
+        if ($party['managing_directors'] !== '') {
+            $label = in_array($party['company_type'], ['gmbh', 'gmbh_igr', 'ug', 'ug_igr'], true)
+                ? 'Geschäftsführer'
+                : 'Vertretung';
+            $lines[] = $label . ': ' . $party['managing_directors'];
+        }
+        if ($party['supervisory_chair'] !== '') {
+            $lines[] = 'Aufsichtsratsvorsitz: ' . $party['supervisory_chair'];
+        }
+        if ($party['share_capital'] !== '') {
+            $cap = 'Stammkapital: ' . $party['share_capital'];
+            if ($party['outstanding_contributions'] !== '') {
+                $cap .= ' · Ausstehend: ' . $party['outstanding_contributions'];
+            }
+            $lines[] = $cap;
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private static function renderBackground(array $cfg): string
+    {
+        $bg = is_array($cfg['background'] ?? null) ? $cfg['background'] : [];
+        $mode = (string) ($bg['mode'] ?? 'none');
+        if ($mode === 'none') {
+            return '';
+        }
+        $opacity = (float) ($bg['opacity'] ?? 0.08);
+        $style = 'opacity:' . max(0.02, min(0.5, $opacity)) . ';';
+        if ($mode === 'color') {
+            $color = trim((string) ($bg['color'] ?? ''));
+            if ($color === '') {
+                return '';
+            }
+
+            return '<div class="dg-lh-bg dg-lh-bg--color" style="' . $style . 'background:' . self::e($color) . '"></div>';
+        }
+        $mediaId = trim((string) ($bg['media_id'] ?? ''));
+        if ($mediaId === '' || !class_exists('MediaRepository')) {
+            return '';
+        }
+        MediaRepository::ensureTables();
+        $item = MediaRepository::find($mediaId);
+        $url = is_array($item) ? (string) ($item['url'] ?? '') : '';
+        if ($url === '') {
+            return '';
+        }
+        $fit = (string) ($bg['fit'] ?? 'contain');
+        $size = $fit === 'cover' ? 'cover' : ($fit === 'tile' ? 'auto' : 'contain');
+        $repeat = $fit === 'tile' ? 'repeat' : 'no-repeat';
+
+        return '<div class="dg-lh-bg dg-lh-bg--image" style="' . $style
+            . 'background-image:url(' . self::e($url) . ');background-size:' . $size
+            . ';background-repeat:' . $repeat . ';background-position:center"></div>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private static function renderGuides(array $cfg): string
+    {
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        $left = (float) ($window['left_mm'] ?? 20);
+        $top = (float) ($window['top_mm'] ?? 50);
+        $width = (float) ($window['width_mm'] ?? 85);
+        $height = (float) ($window['height_mm'] ?? 45);
+        $ml = (float) ($cfg['page']['margin_left_mm'] ?? 24.1);
+        $mr = (float) ($cfg['page']['margin_right_mm'] ?? 20);
+        $mt = (float) ($cfg['page']['margin_top_mm'] ?? 17);
+        $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
+
+        return '<div class="dg-lh-guides" aria-hidden="true">'
+            . '<div class="dg-lh-guide dg-lh-guide--margin" style="left:' . self::mm($ml) . ';right:' . self::mm($mr)
+            . ';top:' . self::mm($mt) . ';bottom:' . self::mm($mb) . '"></div>'
+            . '<div class="dg-lh-guide dg-lh-guide--window" style="left:' . self::mm($left) . ';top:' . self::mm($top)
+            . ';width:' . self::mm($width) . ';height:' . self::mm($height) . '"></div>'
+            . '<div class="dg-lh-guide-label" style="left:' . self::mm($left) . ';top:' . self::mm(max(2, $top - 5)) . '">DIN-Fenster</div>'
+            . '</div>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private static function stylesheet(array $cfg, bool $showGuides): string
+    {
+        $ml = (float) ($cfg['page']['margin_left_mm'] ?? 24.1);
+        $mr = (float) ($cfg['page']['margin_right_mm'] ?? 20);
+        $mt = (float) ($cfg['page']['margin_top_mm'] ?? 17);
+        $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
+        $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
+
+        return <<<CSS
+@page { size: 210mm 297mm; margin: 0; }
+html, body.dg-lh-body { margin: 0; padding: 0; background: #e8eaef; }
+body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #1a1a1a; }
+.dg-lh-page {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 8mm auto;
+  background: #fff;
+  box-sizing: border-box;
+  padding: {$mt}mm {$mr}mm {$mb}mm {$ml}mm;
+  box-shadow: 0 2px 12px rgba(0,0,0,.12);
+  overflow: hidden;
+}
+.dg-lh-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.dg-lh-header, .dg-lh-window, .dg-lh-info, .dg-lh-body-content, .dg-lh-footer, .dg-lh-guides {
+  position: relative; z-index: 1;
+}
+.dg-lh-header {
+  display: flex; align-items: center; gap: 4mm;
+  min-height: {$headerForm}mm;
+  margin: -{$mt}mm -{$mr}mm 4mm -{$ml}mm;
+  padding: 3mm {$mr}mm 3mm {$ml}mm;
+  box-sizing: border-box;
+}
+.dg-lh-header--left { justify-content: flex-start; }
+.dg-lh-header--center { justify-content: center; text-align: center; flex-direction: column; }
+.dg-lh-header--right { justify-content: flex-end; }
+.dg-lh-logo { max-width: 55mm; width: auto; height: auto; display: block; }
+.dg-lh-company-name { font-size: 14pt; font-weight: 700; line-height: 1.2; }
+.dg-lh-window {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 1.5mm 2mm;
+  overflow: hidden;
+  font-size: 10pt;
+  line-height: 1.35;
+}
+.dg-lh-sender {
+  border-bottom: 0.2mm solid #333;
+  margin-bottom: 1.5mm;
+  padding-bottom: 0.5mm;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dg-lh-info {
+  position: absolute;
+  font-size: 8.5pt;
+  line-height: 1.35;
+}
+.dg-lh-info__row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1mm; margin-bottom: 1mm; }
+.dg-lh-info__label { color: #555; }
+.dg-lh-info__value { font-weight: 600; }
+.dg-lh-body-content { font-size: 11pt; line-height: 1.45; }
+.dg-lh-subject { margin: 0 0 5mm; }
+.dg-lh-subject--bold { font-weight: 700; }
+.dg-lh-subject__label { font-weight: 400; color: #555; }
+.dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; }
+.dg-lh-footer {
+  position: absolute;
+  left: {$ml}mm; right: {$mr}mm; bottom: {$mb}mm;
+  color: #333;
+  line-height: 1.3;
+}
+.dg-lh-footer--rule { border-top: 0.25mm solid #999; padding-top: 2mm; }
+.dg-lh-footer__grid { display: grid; gap: 3mm; }
+.dg-lh-guides { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.dg-lh-guide--margin {
+  position: absolute;
+  border: 0.3mm dashed #3b82f6;
+  opacity: .55;
+}
+.dg-lh-guide--window {
+  position: absolute;
+  border: 0.35mm solid #ef4444;
+  opacity: .7;
+  background: rgba(239,68,68,.04);
+}
+.dg-lh-guide-label {
+  position: absolute;
+  font-size: 7pt;
+  color: #b91c1c;
+  background: rgba(255,255,255,.85);
+  padding: 0.3mm 1mm;
+}
+@media print {
+  html, body.dg-lh-body { background: #fff; }
+  .dg-lh-page { margin: 0; box-shadow: none; }
+  .dg-lh-guides { display: none !important; }
+}
+CSS;
+    }
+
+    private static function mm(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.') . 'mm';
+    }
+
+    private static function pt(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.') . 'pt';
+    }
+
+    private static function e(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}

@@ -80,7 +80,7 @@ Alles: **anzeigen/verstecken**, Größe, Position/Reihenfolge.
 - [x] **B1** Datenmodell `LetterheadSettings` (`src/Documents/LetterheadSettings.php`, Store-Key `letterhead`, keine Extra-Tabelle) — DIN-Defaults, Infoblock, Fuß Pflicht/empfohlen, Export-Flags, `resolvedCompany()` / `missingMandatoryFields()`
 - [x] **B2** Settings-UI: Tab **Einstellungen → Kommunikation → Briefpapier** (`tab-letterhead.php`) — Logo/Zonen/Infoblock/Fuß/Links/Hintergrund/Export; Soft-Hinweis Pflichtangaben beim Speichern
 - [x] **B3** `complianceReport()` je Rechtsform (Basis §&nbsp;35a GmbHG / §&nbsp;37a HGB / …); Soft-Check; empfohlene Fußfelder an/Datenlücken; DIN-Zonen-Status + Button „DIN-Standardlayout wiederherstellen“
-- [ ] **B4** Vorschau A4 (HTML/CSS mm-genau, DIN-Hilfslinien optional) — gleiche Renderer-Basis wie Export
+- [x] **B4** Vorschau A4 (`LetterheadRenderer`, GET `letterhead_preview`, iframe in `tab-letterhead.php`) — mm-genau, DIN-Hilfslinien optional; gleiche Basis später für Export
 
 ---
 
