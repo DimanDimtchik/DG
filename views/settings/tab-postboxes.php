@@ -69,7 +69,9 @@ $postboxCount = count($postboxes);
 
         <strong>Empfang:</strong> IMAP-Daten in den IMAP→Webhook-Dienst eintragen + Webhook-URL in der Übersicht.<br>
 
-        <strong>Versand:</strong> SMTP-Daten hier hinterlegen (z.&nbsp;B. Google, Legacy-Adresse, Kasserver).
+        <strong>Versand:</strong> SMTP-Daten hier hinterlegen (z.&nbsp;B. Google, Legacy-Adresse, Kasserver).<br>
+
+        <strong>Prüfung:</strong> Beim Speichern wird die Anmeldung am Mailserver (IMAP und SMTP) getestet. Falsche Benutzer/Passwörter werden nicht übernommen.
 
       </p>
 

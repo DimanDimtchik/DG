@@ -104,6 +104,13 @@ final class MailboxRepository
             throw new InvalidArgumentException('Postfach-ID fehlt.');
         }
         MigrationRunner::runPending();
+        $mailbox = self::findById($mailboxId);
+        if ($mailbox === null) {
+            throw new InvalidArgumentException('Postfach nicht gefunden.');
+        }
+        $mailbox['imap_password'] = $imapPassword;
+        $mailbox['smtp_password'] = $smtpPassword;
+        MailboxCredentialVerifier::assertCanConnect($mailbox);
         $stmt = Database::pdo()->prepare(
             'UPDATE dg_mailboxes SET imap_password = :imap, smtp_password = :smtp WHERE id = :id'
         );
@@ -377,6 +384,7 @@ final class MailboxRepository
 
         $existing = ($id !== null && $id > 0) ? self::findById($id) : null;
         $data = MailboxProviderPresets::mergeFormInput($data, $existing);
+        MailboxCredentialVerifier::assertCanConnect($data);
 
         $type = ($data['type'] ?? '') === 'private' ? 'private' : 'shared';
         $name = trim((string) ($data['name'] ?? ''));

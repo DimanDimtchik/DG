@@ -79,6 +79,7 @@ spl_autoload_register(static function (string $class): void {
         'MailAddressBuilder' => '/src/Mail/MailAddressBuilder.php',
         'MailAddressPreviewApi' => '/src/Mail/MailAddressPreviewApi.php',
         'MailboxRepository' => '/src/Mail/MailboxRepository.php',
+        'MailboxCredentialVerifier' => '/src/Mail/MailboxCredentialVerifier.php',
         'MailboxListService' => '/src/Mail/MailboxListService.php',
         'MailHtmlSanitizer' => '/src/Mail/MailHtmlSanitizer.php',
         'MailboxMemberResolver' => '/src/Mail/MailboxMemberResolver.php',

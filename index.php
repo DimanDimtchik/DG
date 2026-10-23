@@ -2505,12 +2505,15 @@ switch ($path) {
             && RoleResolver::isAdmin($user)
             && isset($_POST['postbox_save'])
         ) {
+            $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
             $redirect = SettingsRegistry::tabUrl('postfaecher');
+            if ($mailboxId > 0) {
+                $redirect .= '&edit=' . $mailboxId;
+            }
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
-                Flash::set('error', 'UngÃ¼ltiges Formular (CSRF).');
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
             } else {
                 try {
-                    $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
                     $members = MailboxRepository::membersFromPost($_POST);
                     if ($mailboxId > 0) {
                         $existing = MailboxRepository::findById($mailboxId);
@@ -2520,14 +2523,15 @@ switch ($path) {
                         $data = MailboxProvisioner::normalizePostInput($_POST, $existing);
                         $data['type'] = $existing['type'];
                         MailboxRepository::save($data, $mailboxId, ($existing['type'] ?? '') === 'shared' ? $members : []);
-                        Flash::set('success', 'Postfach gespeichert.');
+                        Flash::set('success', 'Postfach gespeichert. IMAP/SMTP-Anmeldung geprüft.');
+                        $redirect = SettingsRegistry::tabUrl('postfaecher');
                     } elseif (!empty($_POST['provision_kas']) && KasSettings::isConfigured()) {
                         MailboxProvisioner::createSharedFromForm($_POST, $members);
-                        Flash::set('success', 'Postfach angelegt (KAS).');
+                        Flash::set('success', 'Postfach angelegt (KAS). IMAP/SMTP-Anmeldung geprüft.');
                     } else {
                         $data = MailboxProvisioner::normalizePostInput($_POST);
                         MailboxRepository::save($data, null, $members);
-                        Flash::set('success', 'Postfach angelegt.');
+                        Flash::set('success', 'Postfach angelegt. IMAP/SMTP-Anmeldung geprüft.');
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
