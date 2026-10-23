@@ -37,7 +37,15 @@ $postComposeForm = array_merge([
     'subject' => '',
     'body' => '',
     'reply_to_id' => '',
+    'forward_from_id' => '',
+    'mode' => 'new',
 ], $postComposeForm ?? []);
+$postComposeMode = (string) ($postComposeForm['mode'] ?? 'new');
+$postComposeTitle = match ($postComposeMode) {
+    'reply' => 'Antworten',
+    'forward' => 'Weiterleiten',
+    default => 'Neue Nachricht',
+};
 
 /** @var bool $postImapAsync */
 $postImapAsync = $postImapAsync ?? false;
@@ -60,7 +68,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
     </div>
     <div class="dg-page-header__actions">
       <?php if ($postMailboxes !== [] && $postSendableMailboxes !== []) : ?>
-        <a class="dg-button dg-button--primary" href="/app?page=post&amp;compose=1">Neue Nachricht</a>
+        <a class="dg-button dg-button--primary" href="/app?page=post&amp;compose=1<?= $postMailboxFilter > 0 ? '&amp;mailbox=' . (int) $postMailboxFilter : '' ?>">Neue Nachricht</a>
       <?php endif; ?>
       <?php if (RoleResolver::isAdmin($user)) : ?>
         <a class="dg-button" href="/app?page=einstellungen&amp;tab=postfaecher">Postfächer verwalten</a>
@@ -107,9 +115,17 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
             : '/app?page=post',
         'label' => $postMailboxFilter > 0 ? ('Zurück zu ' . $postFolderLabel) : 'Zurück zur Postfach-Liste',
     ]); ?>
+    <?php if ($postSendableMailboxes === []) : ?>
+      <div class="dg-panel">
+        <p class="dg-lead">Kein Postfach mit Senderecht. Unter <a href="/app?page=einstellungen&amp;tab=postfaecher">Einstellungen → Postfächer</a> prüfen.</p>
+      </div>
+    <?php else : ?>
     <form class="dg-form dg-panel" method="post" action="/app?page=post">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="reply_to_id" value="<?= View::escape($postComposeForm['reply_to_id']) ?>">
+      <input type="hidden" name="forward_from_id" value="<?= View::escape($postComposeForm['forward_from_id']) ?>">
+      <input type="hidden" name="compose_mode" value="<?= View::escape($postComposeMode) ?>">
+      <h2 class="dg-subsection-title"><?= View::escape($postComposeTitle) ?></h2>
       <div class="dg-form-grid">
         <label class="dg-field dg-field--wide">
           <span>Von (Postfach)</span>
@@ -124,7 +140,8 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
         </label>
         <label class="dg-field dg-field--wide">
           <span>An</span>
-          <input type="text" name="to" required value="<?= View::escape($postComposeForm['to']) ?>" placeholder="empfaenger@example.de">
+          <input type="text" name="to" required value="<?= View::escape($postComposeForm['to']) ?>" placeholder="empfaenger@example.de" autocomplete="email">
+          <span class="dg-field-hint">Mehrere Empfänger mit Komma oder Semikolon trennen.</span>
         </label>
         <label class="dg-field dg-field--wide">
           <span>Betreff</span>
@@ -132,7 +149,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
         </label>
         <label class="dg-field dg-field--wide">
           <span>Nachricht</span>
-          <textarea name="body" rows="12" required><?= View::escape($postComposeForm['body']) ?></textarea>
+          <textarea name="body" rows="14" required><?= View::escape($postComposeForm['body']) ?></textarea>
         </label>
       </div>
       <div class="dg-form-actions">
@@ -140,6 +157,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
         <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder)) ?>">Abbrechen</a>
       </div>
     </form>
+    <?php endif; ?>
   <?php elseif ($postMessage !== null) : ?>
     <?php
       $postDetailBackFolder = ($postMessage['direction'] ?? '') === 'out'
@@ -214,7 +232,10 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath) use ($po
       <?php endif; ?>
       <p class="dg-form-actions">
         <?php if ($postSendableMailboxes !== [] && (int) ($postMessage['id'] ?? 0) > 0) : ?>
-          <a class="dg-button dg-button--primary" href="/app?page=post&amp;reply=<?= (int) $postMessage['id'] ?>">Antworten</a>
+          <?php if (($postMessage['direction'] ?? '') === 'in') : ?>
+            <a class="dg-button dg-button--primary" href="/app?page=post&amp;reply=<?= (int) $postMessage['id'] ?>">Antworten</a>
+          <?php endif; ?>
+          <a class="dg-button" href="/app?page=post&amp;forward=<?= (int) $postMessage['id'] ?>">Weiterleiten</a>
         <?php endif; ?>
         <?php if (!empty($postMessage['storage_path']) && (int) ($postMessage['id'] ?? 0) > 0) : ?>
           <a class="dg-button" href="/app?page=post&amp;mail_archive=<?= (int) $postMessage['id'] ?>">.eml herunterladen</a>

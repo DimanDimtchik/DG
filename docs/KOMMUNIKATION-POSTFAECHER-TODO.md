@@ -51,10 +51,10 @@ Stand: **2026-10-23**
 
 ### P4 — Schreiben / Antworten (CRM-Compose)
 
-- [ ] Neue Nachricht + Antworten + Weiterleiten
-- [ ] Versand über vorhandenes SMTP der jeweiligen Mailbox
-- [ ] Kopie in Gesendet (IMAP und/oder lokales Archiv wie heute)
-- [ ] Assist Phase 2: `ContactChannelLink::preferCrmMail()` → CRM-Compose, `mailto:` als Fallback
+- [x] Neue Nachricht + Antworten + Weiterleiten (`compose` / `reply` / `forward`, Zitat, Wg:/Re:)
+- [x] Versand über vorhandenes SMTP der jeweiligen Mailbox (`PostMailComposer` → `MailService`)
+- [x] Kopie in Gesendet (lokales Archiv/`__sent__` wie `MailService`; Redirect nach Gesendet)
+- [x] Assist: `ContactChannelLink::preferCrmMail()` → `/app?page=post&compose=1&to=`, `mailto:` als Fallback-Link
 
 ### P5 — CRM-Fachverknüpfung
 

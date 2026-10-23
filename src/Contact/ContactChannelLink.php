@@ -4,25 +4,46 @@ declare(strict_types=1);
 
 /**
  * Anklickbare E-Mail-/Telefon-Links.
- * Heute: mailto: / tel: (Outlook, Softphone am PC).
- * Später: CRM-Compose / Telefonanlage — Hook-Punkte bewusst zentral.
+ * E-Mail: CRM-Compose wenn Post-Modul erlaubt, sonst mailto:; Mailto bleibt als Fallback.
  */
 final class ContactChannelLink
 {
     /**
-     * CRM-Posteingang/Compose aktiv? (Phase 2 — vorerst immer false)
+     * CRM-Compose bevorzugen (eingeloggter Nutzer mit Post-Recht).
      */
     public static function preferCrmMail(): bool
     {
-        return false;
+        if (!class_exists('AuthService') || !class_exists('MenuRegistry') || !class_exists('RoleResolver')) {
+            return false;
+        }
+        $user = AuthService::user();
+        if ($user === null || RoleResolver::isCustomer($user)) {
+            return false;
+        }
+
+        return MenuRegistry::canAccess($user, 'post');
     }
 
     /**
-     * CRM-Telefonanlage / Click-to-Call aktiv? (Phase 3 — vorerst immer false)
+     * CRM-Telefonanlage / Click-to-Call aktiv? (noch nicht)
      */
     public static function preferCrmPhone(): bool
     {
         return false;
+    }
+
+    public static function composeUrl(string $email = '', ?int $mailboxId = null): string
+    {
+        $params = ['page' => 'post', 'compose' => '1'];
+        $email = EmailNormalizer::normalize($email);
+        if ($email !== '') {
+            $params['to'] = $email;
+        }
+        if ($mailboxId !== null && $mailboxId > 0) {
+            $params['mailbox'] = (string) $mailboxId;
+        }
+
+        return '/app?' . http_build_query($params);
     }
 
     public static function emailHref(string $email): string
@@ -33,7 +54,7 @@ final class ContactChannelLink
         }
 
         if (self::preferCrmMail()) {
-            // Phase 2: return '/app/…compose?to=' . rawurlencode($email);
+            return self::composeUrl($email);
         }
 
         return 'mailto:' . $email;
@@ -55,7 +76,7 @@ final class ContactChannelLink
         }
 
         if (self::preferCrmPhone()) {
-            // Phase 3: return '/app/…dial?n=' . rawurlencode($e164);
+            // Phase Telefon: CRM-Dialer
         }
 
         return 'tel:' . $e164;
@@ -63,6 +84,7 @@ final class ContactChannelLink
 
     /**
      * HTML-Anker oder Platzhalter. Bereits escaped.
+     * Bei CRM-Compose zusätzlich kleiner mailto:-Fallback.
      */
     public static function emailHtml(string $email, string $empty = '—'): string
     {
@@ -76,9 +98,17 @@ final class ContactChannelLink
             return $label;
         }
 
-        return '<a class="dg-channel-link dg-channel-link--email" href="'
+        $html = '<a class="dg-channel-link dg-channel-link--email" href="'
             . View::escape($href)
             . '">' . $label . '</a>';
+
+        if (self::preferCrmMail()) {
+            $html .= ' <a class="dg-channel-link dg-channel-link--mailto-fallback" href="mailto:'
+                . View::escape($normalized)
+                . '" title="In Mailprogramm öffnen">↗</a>';
+        }
+
+        return $html;
     }
 
     /**

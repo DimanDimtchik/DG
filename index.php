@@ -2331,7 +2331,11 @@ switch ($path) {
             try {
                 PostMailComposer::sendFromPost($user, $_POST);
                 Flash::set('success', 'Nachricht wurde gesendet.');
-                header('Location: /app?page=post', true, 302);
+                $sentMailbox = (int) ($_POST['mailbox_id'] ?? 0);
+                $redirect = $sentMailbox > 0
+                    ? '/app?page=post&mailbox=' . $sentMailbox . '&folder=' . rawurlencode('__sent__')
+                    : '/app?page=post';
+                header('Location: ' . $redirect, true, 302);
                 exit;
             } catch (Throwable $e) {
                 Flash::set('error', $e->getMessage());
@@ -2341,6 +2345,8 @@ switch ($path) {
                     'subject' => (string) ($_POST['subject'] ?? ''),
                     'body' => (string) ($_POST['body'] ?? ''),
                     'reply_to_id' => (string) ($_POST['reply_to_id'] ?? ''),
+                    'forward_from_id' => (string) ($_POST['forward_from_id'] ?? ''),
+                    'mode' => (string) ($_POST['compose_mode'] ?? 'new'),
                 ];
                 header('Location: /app?page=post&compose=1', true, 302);
                 exit;
@@ -6803,7 +6809,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 && $postMailboxFilter <= 0
                 && (int) ($_GET['id'] ?? 0) <= 0
                 && (int) ($_GET['uid'] ?? 0) <= 0
-                && (int) ($_GET['reply'] ?? 0) <= 0;
+                && (int) ($_GET['reply'] ?? 0) <= 0
+                && (int) ($_GET['forward'] ?? 0) <= 0;
             $postMailboxCards = $postListMode ? MailboxListService::cardsForUser($user) : [];
             $postFolders = $postListMode ? [] : MailFolderCatalog::foldersForView($postMailboxes, $postMailboxFilter);
             $postFolderLabel = MailFolderLabels::labelForPath($postFolder);
@@ -6834,17 +6841,46 @@ $legalProductsConfig = LegalProductSettings::config();
                     && MailboxRepository::userCanAccess($user, $replyMailboxId)
                 ) {
                     $postCompose = true;
-                    $postComposeForm = [
-                        'mailbox_id' => (string) $replyMailboxId,
-                        'to' => (string) ($replyMsg['from_address'] ?? ''),
-                        'subject' => PostMailComposer::replySubject((string) ($replyMsg['subject'] ?? '')),
-                        'body' => '',
-                        'reply_to_id' => (string) $replyId,
-                    ];
+                    $postComposeForm = PostMailComposer::composeFromMessage($replyMsg, 'reply');
                 } else {
                     header('Location: /app?page=post', true, 302);
                     exit;
                 }
+            }
+
+            $forwardId = (int) ($_GET['forward'] ?? 0);
+            if ($forwardId > 0) {
+                $forwardMsg = MailLogRepository::findById($forwardId);
+                $forwardMailboxId = (int) ($forwardMsg['mailbox_id'] ?? 0);
+                if (
+                    $forwardMsg !== null
+                    && MailboxRepository::userCanAccess($user, $forwardMailboxId)
+                ) {
+                    $postCompose = true;
+                    $postComposeForm = PostMailComposer::composeFromMessage($forwardMsg, 'forward');
+                } else {
+                    header('Location: /app?page=post', true, 302);
+                    exit;
+                }
+            }
+
+            if ($postCompose && $postComposeForm === []) {
+                $composeTo = EmailNormalizer::normalize((string) ($_GET['to'] ?? ''));
+                $defaultMailbox = '';
+                if ($postMailboxFilter > 0 && MailboxRepository::userCanAccess($user, $postMailboxFilter, 'send')) {
+                    $defaultMailbox = (string) $postMailboxFilter;
+                } elseif (count($postSendableMailboxes) === 1) {
+                    $defaultMailbox = (string) (int) ($postSendableMailboxes[0]['id'] ?? 0);
+                }
+                $postComposeForm = [
+                    'mailbox_id' => $defaultMailbox,
+                    'to' => $composeTo !== '' && EmailNormalizer::isValidSyntax($composeTo) ? $composeTo : '',
+                    'subject' => '',
+                    'body' => '',
+                    'reply_to_id' => '',
+                    'forward_from_id' => '',
+                    'mode' => 'new',
+                ];
             }
 
             $mailViewId = (int) ($_GET['id'] ?? 0);
