@@ -1343,6 +1343,11 @@ code {
   text-underline-offset: 2px;
 }
 
+.dg-channel-link--phone,
+.dg-channel-link--email {
+  white-space: nowrap;
+}
+
 .dg-stored-mail {
   margin: 0 0 16px;
   padding: 10px 12px;

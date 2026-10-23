@@ -308,8 +308,8 @@ final class ContactCompanyLinkRepository
             $rows[] = [
                 'person_contact_id' => $personId,
                 'responsibility' => trim((string) ($row['responsibility'] ?? '')),
-                'work_email' => trim((string) ($row['work_email'] ?? '')),
-                'work_phone' => trim((string) ($row['work_phone'] ?? '')),
+                'work_email' => EmailNormalizer::normalize((string) ($row['work_email'] ?? '')),
+                'work_phone' => PhoneNormalizer::normalize((string) ($row['work_phone'] ?? '')),
                 'availability' => trim((string) ($row['availability'] ?? '')),
             ];
         }
@@ -327,8 +327,8 @@ final class ContactCompanyLinkRepository
         return [
             'employer_company_id' => max(0, (int) ($post['employer_company_id'] ?? 0)),
             'employer_responsibility' => trim((string) ($post['employer_responsibility'] ?? '')),
-            'employer_work_email' => trim((string) ($post['employer_work_email'] ?? '')),
-            'employer_work_phone' => trim((string) ($post['employer_work_phone'] ?? '')),
+            'employer_work_email' => EmailNormalizer::normalize((string) ($post['employer_work_email'] ?? '')),
+            'employer_work_phone' => PhoneNormalizer::normalize((string) ($post['employer_work_phone'] ?? '')),
             'employer_availability' => trim((string) ($post['employer_availability'] ?? '')),
         ];
     }

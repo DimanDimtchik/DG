@@ -201,13 +201,7 @@ $roleLabels = [
               <td><?= View::escape($contact->listLabel()) ?></td>
               <td><?= View::escape($contact->companyName) ?></td>
               <td><?= View::escape($contact->customerNumber) ?></td>
-              <td>
-                <?php if ($contact->email !== '') : ?>
-                  <a href="mailto:<?= View::escape($contact->email) ?>"><?= View::escape($contact->email) ?></a>
-                <?php else : ?>
-                  —
-                <?php endif; ?>
-              </td>
+              <td><?= ContactChannelLink::emailHtml($contact->email) ?></td>
               <td><?= View::escape($contact->roleLabel()) ?></td>
               <td class="dg-table__actions">
                 <?php if (ContactAccessResolver::canEditContact($user, $contact)) : ?>

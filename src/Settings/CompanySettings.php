@@ -138,8 +138,8 @@ final class CompanySettings
     $data = [
       'name' => trim((string) ($input['name'] ?? '')),
       'company_id' => self::sanitizeCompanyId((string) ($input['company_id'] ?? '')),
-      'email' => trim((string) ($input['email'] ?? '')),
-      'phone' => trim((string) ($input['phone'] ?? '')),
+      'email' => EmailNormalizer::normalize((string) ($input['email'] ?? '')),
+      'phone' => PhoneNormalizer::normalize((string) ($input['phone'] ?? '')),
       'website' => self::normalizeWebsite(trim((string) ($input['website'] ?? ''))),
       'street' => trim((string) ($input['street'] ?? '')),
       'postal' => trim((string) ($input['postal'] ?? '')),

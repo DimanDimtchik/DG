@@ -65,9 +65,9 @@ $selectedContactId = (int) ($taxAdvisorConfig['contact_id'] ?? 0);
         <a href="/app?page=kontakte&amp;id=<?= (int) $selectedContact->id ?>"><?= View::escape($selectedContact->listLabel()) ?></a>
       </dd>
       <dt>E-Mail</dt>
-      <dd><?= View::escape($selectedContact->email !== '' ? $selectedContact->email : '—') ?></dd>
+      <dd><?= ContactChannelLink::emailHtml($selectedContact->email) ?></dd>
       <dt>Telefon</dt>
-      <dd><?= View::escape($selectedContact->phone1 !== '' ? $selectedContact->phone1 : '—') ?></dd>
+      <dd><?= ContactChannelLink::phoneHtml($selectedContact->phone1) ?></dd>
       <dt>Adresse</dt>
       <dd><?= View::escape($selectedContact->addressLine1() !== '' ? $selectedContact->addressLine1() : '—') ?></dd>
       <dt>Steuernummer</dt>
@@ -117,14 +117,8 @@ $selectedContactId = (int) ($taxAdvisorConfig['contact_id'] ?? 0);
                   </a>
                 </td>
                 <td><?= View::escape((string) ($employee['responsibility'] !== '' ? $employee['responsibility'] : '—')) ?></td>
-                <td>
-                  <?php if (($employee['work_email'] ?? '') !== '') : ?>
-                    <a href="mailto:<?= View::escape((string) $employee['work_email']) ?>"><?= View::escape((string) $employee['work_email']) ?></a>
-                  <?php else : ?>
-                    —
-                  <?php endif; ?>
-                </td>
-                <td><?= View::escape((string) ($employee['work_phone'] !== '' ? $employee['work_phone'] : '—')) ?></td>
+                <td><?= ContactChannelLink::emailHtml((string) ($employee['work_email'] ?? '')) ?></td>
+                <td><?= ContactChannelLink::phoneHtml((string) ($employee['work_phone'] ?? '')) ?></td>
                 <td><?= View::escape((string) ($employee['availability'] !== '' ? $employee['availability'] : '—')) ?></td>
               </tr>
             <?php endforeach; ?>

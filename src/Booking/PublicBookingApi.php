@@ -73,8 +73,8 @@ final class PublicBookingApi
     private static function createBooking(array $post): int
     {
         $name = trim((string) ($post['customer_name'] ?? ''));
-        $email = strtolower(trim((string) ($post['customer_email'] ?? '')));
-        $phone = trim((string) ($post['customer_phone'] ?? ''));
+        $email = EmailNormalizer::normalize((string) ($post['customer_email'] ?? ''));
+        $phone = PhoneNormalizer::normalize((string) ($post['customer_phone'] ?? ''));
         $articleId = max(0, (int) ($post['article_id'] ?? 0));
         $employeeId = max(0, (int) ($post['employee_id'] ?? 0));
         $slotDatetime = trim((string) ($post['slot_datetime'] ?? ''));

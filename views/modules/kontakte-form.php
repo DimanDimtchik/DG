@@ -172,7 +172,7 @@ if ($isCompanyForm && $companyEmployees === []) {
 
     <h2>Kommunikation</h2>
     <div class="dg-form-grid">
-      <label class="dg-field"><span>E-Mail</span><input type="email" name="email" value="<?= View::escape($form['email']) ?>">
+      <label class="dg-field"><span>E-Mail</span><input type="email" name="email" data-email-assist="1" autocomplete="email" value="<?= View::escape($form['email']) ?>" placeholder="name@firma.de">
         <?php if (trim((string) ($form['email_existence_status'] ?? '')) !== '' && ($form['email_existence_status'] ?? '') !== 'unknown') : ?>
           <small class="dg-field-hint">
             DNS-Prüfung: <?= View::escape((string) $form['email_existence_status']) ?>
@@ -187,9 +187,9 @@ if ($isCompanyForm && $companyEmployees === []) {
           <small class="dg-field-hint">Bei Kunden wird die Domain per DNS (MX/A) geprüft und das Ergebnis gespeichert (erneut nach 90 Tagen oder bei E-Mail-Änderung).</small>
         <?php endif; ?>
       </label>
-      <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" value="<?= View::escape($form['email_2']) ?>"></label>
-      <label class="dg-field"><span>Telefon 1</span><input name="phone_1" value="<?= View::escape($form['phone_1']) ?>"></label>
-      <label class="dg-field"><span>Telefon 2</span><input name="phone_2" value="<?= View::escape($form['phone_2']) ?>"></label>
+      <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" data-email-assist="1" autocomplete="email" value="<?= View::escape($form['email_2']) ?>" placeholder="name@firma.de"></label>
+      <label class="dg-field"><span>Telefon 1</span><input type="tel" name="phone_1" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($form['phone_1']) ?>" placeholder="0171 1234567"></label>
+      <label class="dg-field"><span>Telefon 2</span><input type="tel" name="phone_2" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($form['phone_2']) ?>" placeholder="+49 30 123456"></label>
       <label class="dg-field dg-field--wide"><span>Website</span><input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="website" value="<?= View::escape($form['website']) ?>" placeholder="ganz-om.de"></label>
       <label class="dg-field dg-field--wide">
         <span>Bemerkung (intern)</span>

@@ -180,11 +180,11 @@ $bankSummary = $filledBanks > 0
       </label>
       <label class="dg-field">
         <span>E-Mail *</span>
-        <input type="email" name="email" value="<?= View::escape($companyConfig['email']) ?>" required>
+        <input type="email" name="email" data-email-assist="1" autocomplete="email" value="<?= View::escape($companyConfig['email']) ?>" required placeholder="info@firma.de">
       </label>
       <label class="dg-field">
         <span>Telefon</span>
-        <input type="text" name="phone" value="<?= View::escape($companyConfig['phone']) ?>">
+        <input type="tel" name="phone" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($companyConfig['phone']) ?>" placeholder="030 123456">
       </label>
       <label class="dg-field dg-field--wide">
         <span>Website</span>

@@ -581,8 +581,15 @@ $belegeFocus = (string) ($belegeFocus ?? '');
       url: '/api/website-url-check',
       csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>
     };
+    window.dgChannelAssist = {
+      defaultCountry: <?= json_encode(
+          strtoupper(trim((string) (CompanySettings::config()['country'] ?? 'DE'))) ?: 'DE',
+          JSON_THROW_ON_ERROR
+      ) ?>
+    };
   </script>
   <script src="<?= View::escape(Asset::url('/assets/js/website-url-assist.js')) ?>" defer></script>
+  <script src="<?= View::escape(Asset::url('/assets/js/channel-assist.js')) ?>" defer></script>
   <script src="<?= View::escape(Asset::url('/assets/js/admin.js')) ?>" defer></script>
   <?php if (RoleResolver::isStaff($user)) : ?>
     <?php View::render('partials/kichel-widget', compact('user')); ?>

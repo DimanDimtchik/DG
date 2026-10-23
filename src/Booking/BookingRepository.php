@@ -243,8 +243,8 @@ final class BookingRepository
             'employee_id' => max(0, (int) ($data['employee_id'] ?? 0)),
             'slot_datetime' => self::normalizeDatetime($slotDatetime),
             'customer_name' => trim((string) ($data['customer_name'] ?? '')),
-            'customer_email' => trim((string) ($data['customer_email'] ?? '')),
-            'customer_phone' => trim((string) ($data['customer_phone'] ?? '')),
+            'customer_email' => EmailNormalizer::normalize((string) ($data['customer_email'] ?? '')),
+            'customer_phone' => PhoneNormalizer::normalize((string) ($data['customer_phone'] ?? '')),
             'status' => trim((string) ($data['status'] ?? 'gebucht')) ?: 'gebucht',
             'admin_notes' => trim((string) ($data['admin_notes'] ?? '')),
         ];

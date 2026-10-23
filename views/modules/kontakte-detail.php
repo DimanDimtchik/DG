@@ -60,19 +60,13 @@
       <h2>Kommunikation</h2>
       <dl class="dg-dl">
         <dt>E-Mail</dt>
-        <dd>
-          <?php if ($contact->email !== '') : ?>
-            <a href="mailto:<?= View::escape($contact->email) ?>"><?= View::escape($contact->email) ?></a>
-          <?php else : ?>
-            —
-          <?php endif; ?>
-        </dd>
+        <dd><?= ContactChannelLink::emailHtml($contact->email) ?></dd>
         <dt>E-Mail 2</dt>
-        <dd><?= View::escape($contact->email2 !== '' ? $contact->email2 : '—') ?></dd>
+        <dd><?= ContactChannelLink::emailHtml($contact->email2) ?></dd>
         <dt>Telefon 1</dt>
-        <dd><?= View::escape($contact->phone1 !== '' ? $contact->phone1 : '—') ?></dd>
+        <dd><?= ContactChannelLink::phoneHtml($contact->phone1) ?></dd>
         <dt>Telefon 2</dt>
-        <dd><?= View::escape($contact->phone2 !== '' ? $contact->phone2 : '—') ?></dd>
+        <dd><?= ContactChannelLink::phoneHtml($contact->phone2) ?></dd>
         <dt>Website</dt>
         <dd>
           <?php if ($contact->website !== '') : ?>
@@ -223,7 +217,9 @@
                 <dt><?= View::escape($field['label']) ?></dt>
                 <dd>
                   <?php if ($field['kind'] === 'email') : ?>
-                    <a href="mailto:<?= View::escape($field['value']) ?>"><?= View::escape($field['value']) ?></a>
+                    <?= ContactChannelLink::emailHtml((string) $field['value']) ?>
+                  <?php elseif ($field['kind'] === 'phone') : ?>
+                    <?= ContactChannelLink::phoneHtml((string) $field['value']) ?>
                   <?php else : ?>
                     <?= View::escape($field['value']) ?>
                   <?php endif; ?>
@@ -272,8 +268,8 @@
                   </td>
                   <td><?= View::escape((string) ($person['department'] ?? '')) ?></td>
                   <td><?= View::escape((string) ($person['responsibility'] ?? '')) ?></td>
-                  <td><?= View::escape((string) ($person['email'] ?? '')) ?></td>
-                  <td><?= View::escape((string) ($person['phone'] ?? '')) ?></td>
+                  <td><?= ContactChannelLink::emailHtml((string) ($person['email'] ?? '')) ?></td>
+                  <td><?= ContactChannelLink::phoneHtml((string) ($person['phone'] ?? '')) ?></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -316,8 +312,8 @@
                       </a>
                     </td>
                     <td><?= View::escape((string) ($employee['responsibility'] !== '' ? $employee['responsibility'] : '—')) ?></td>
-                    <td><?= View::escape((string) ($employee['work_email'] !== '' ? $employee['work_email'] : '—')) ?></td>
-                    <td><?= View::escape((string) ($employee['work_phone'] !== '' ? $employee['work_phone'] : '—')) ?></td>
+                    <td><?= ContactChannelLink::emailHtml((string) ($employee['work_email'] ?? '')) ?></td>
+                    <td><?= ContactChannelLink::phoneHtml((string) ($employee['work_phone'] ?? '')) ?></td>
                     <td><?= View::escape((string) ($employee['availability'] !== '' ? $employee['availability'] : '—')) ?></td>
                   </tr>
                 <?php endforeach; ?>
@@ -339,9 +335,9 @@
           <dt>Zuständigkeitsbereich</dt>
           <dd><?= View::escape((string) ($employerLink['responsibility'] !== '' ? $employerLink['responsibility'] : '—')) ?></dd>
           <dt>E-Mail (dienstlich)</dt>
-          <dd><?= View::escape((string) ($employerLink['work_email'] !== '' ? $employerLink['work_email'] : '—')) ?></dd>
+          <dd><?= ContactChannelLink::emailHtml((string) ($employerLink['work_email'] ?? '')) ?></dd>
           <dt>Telefon (dienstlich)</dt>
-          <dd><?= View::escape((string) ($employerLink['work_phone'] !== '' ? $employerLink['work_phone'] : '—')) ?></dd>
+          <dd><?= ContactChannelLink::phoneHtml((string) ($employerLink['work_phone'] ?? '')) ?></dd>
           <dt>Erreichbarkeit / Öffnungszeiten</dt>
           <dd><?= View::escape((string) ($employerLink['availability'] !== '' ? $employerLink['availability'] : '—')) ?></dd>
         </dl>

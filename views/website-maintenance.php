@@ -147,7 +147,7 @@ $imgSrc = View::escape(Asset::url($imageUrl));
       <?php endif; ?>
       <?php if ($email !== '') : ?>
         <p class="wm-label">Fragen? Schreiben Sie uns:</p>
-        <p><a href="mailto:<?= View::escape($email) ?>"><?= View::escape($email) ?></a></p>
+        <p><?= ContactChannelLink::emailHtml((string) $email) ?></p>
       <?php else : ?>
         <p class="wm-label wm-label--unset"><?= View::escape(WebsiteMaintenanceSettings::NO_PUBLIC_CONTACT_MESSAGE) ?></p>
       <?php endif; ?>

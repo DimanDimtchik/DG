@@ -53,8 +53,8 @@ $baseUrl = '/app?page=terminkalender';
               <td><?= $booking->articleId > 0 ? View::escape(CalendarArticleRepository::title($booking->articleId)) : '—' ?><?php if ($booking->articleId > 0 && CalendarArticleRepository::priceGross($booking->articleId) > 0) : ?><br><small class="dg-muted"><?= View::escape(CalendarArticleValidator::formatPrice(CalendarArticleRepository::priceGross($booking->articleId))) ?></small><?php endif; ?></td>
               <td><?= $booking->employeeId > 0 ? View::escape(CalendarStaffRepository::employeeName($booking->employeeId)) : '—' ?></td>
               <td><?= View::escape($booking->customerName) ?></td>
-              <td><?= $booking->customerEmail !== '' ? '<a href="mailto:' . View::escape($booking->customerEmail) . '">' . View::escape($booking->customerEmail) . '</a>' : '—' ?></td>
-              <td><?= View::escape($booking->customerPhone !== '' ? $booking->customerPhone : '—') ?></td>
+              <td><?= ContactChannelLink::emailHtml($booking->customerEmail) ?></td>
+              <td><?= ContactChannelLink::phoneHtml($booking->customerPhone) ?></td>
               <td><?= View::escape($booking->statusLabel()) ?></td>
               <td class="dg-table__actions">
                 <?php if ($canEdit ?? false) : ?>

@@ -34,8 +34,8 @@
       <h2>Kunde</h2>
       <dl class="dg-dl">
         <dt>Name</dt><dd><?= View::escape($booking->customerName) ?></dd>
-        <dt>E-Mail</dt><dd><?= $booking->customerEmail !== '' ? '<a href="mailto:' . View::escape($booking->customerEmail) . '">' . View::escape($booking->customerEmail) . '</a>' : '—' ?></dd>
-        <dt>Telefon</dt><dd><?= View::escape($booking->customerPhone !== '' ? $booking->customerPhone : '—') ?></dd>
+        <dt>E-Mail</dt><dd><?= ContactChannelLink::emailHtml($booking->customerEmail) ?></dd>
+        <dt>Telefon</dt><dd><?= ContactChannelLink::phoneHtml($booking->customerPhone) ?></dd>
       </dl>
     </section>
     <?php if ($booking->adminNotes !== '') : ?>
