@@ -175,7 +175,7 @@ $disabled = $readOnly ? ' disabled' : '';
 
         <fieldset class="dg-fieldset">
           <legend>Text (TipTap)</legend>
-          <p class="dg-field-hint">Absätze mit Enter · Tabellen, Emoji, Lucide und Mediathek über die Leiste. Rechtschreibung: Browser (DE). Klartext/LanguageTool: Assist darunter (nie Pflicht).</p>
+          <p class="dg-field-hint">Absätze mit Enter · Tabellen, Emoji, Icon und Mediathek über die Leiste. Rechtschreibung: Browser (DE). Klartext/LanguageTool: Assist darunter (nie Pflicht).</p>
           <?php
             $tipTapDoc = WriterDocument::tipTapDocument($form);
             $tipTapJson = json_encode($tipTapDoc, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
@@ -200,7 +200,7 @@ $disabled = $readOnly ? ' disabled' : '';
               <button type="button" class="dg-button" id="dg-writer-cmd-table-add-col" title="Spalte">+ Spalte</button>
               <button type="button" class="dg-button" id="dg-writer-cmd-table-delete" title="Tabelle löschen">Tabelle weg</button>
               <button type="button" class="dg-button" id="dg-writer-cmd-emoji" title="Emoji">Emoji</button>
-              <button type="button" class="dg-button" id="dg-writer-cmd-lucide" title="Lucide-Icon">Lucide</button>
+              <button type="button" class="dg-button" id="dg-writer-cmd-lucide" title="Einfaches Symbol einfügen">Icon</button>
               <button type="button" class="dg-button" id="dg-writer-cmd-media" title="Bild aus Mediathek">Mediathek</button>
             </div>
             <div id="dg-writer-emoji-panel" class="dg-writer-picker" hidden></div>

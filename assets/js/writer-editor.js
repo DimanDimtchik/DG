@@ -274,7 +274,7 @@ import {
     }
     icons = icons.slice(0, 120);
     lucidePanel.innerHTML =
-      '<label class="dg-field"><span>Lucide suchen</span><input type="search" id="dg-writer-lucide-search" value="' +
+      '<label class="dg-field"><span>Icon suchen</span><input type="search" id="dg-writer-lucide-search" value="' +
       escapeHtml(query || '') +
       '" placeholder="z. B. mail, check"></label>' +
       '<div class="dg-writer-picker__grid dg-writer-lucide-grid">' +

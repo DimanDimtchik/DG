@@ -115,7 +115,7 @@ $ctaPresets = [
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="logo"<?= $centerSource === 'logo' ? ' checked' : '' ?><?= $qrLogoUrl === '' ? ' disabled' : '' ?> data-dg-qr-field> CRM-Logo</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="favicon"<?= $centerSource === 'favicon' ? ' checked' : '' ?><?= $qrFaviconUrl === '' ? ' disabled' : '' ?> data-dg-qr-field> Favicon (klein)</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="custom"<?= $centerSource === 'custom' ? ' checked' : '' ?> data-dg-qr-field> Bild aus Mediathek</label>
-          <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="lucide"<?= $centerSource === 'lucide' ? ' checked' : '' ?> data-dg-qr-field> Lucide-Icon</label>
+          <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="lucide"<?= $centerSource === 'lucide' ? ' checked' : '' ?> data-dg-qr-field> Icon</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="emoji"<?= $centerSource === 'emoji' ? ' checked' : '' ?> data-dg-qr-field> Emoji</label>
 
           <input type="hidden" name="qr[center_media_id]" id="dg-qr-center-media-id" value="<?= View::escape((string) $qr['center_media_id']) ?>">
@@ -149,7 +149,7 @@ $ctaPresets = [
                   'websiteMenuIconStyle' => [],
               ]); ?>
             </div>
-            <p class="dg-field-hint">Gleiche Lucide-Bibliothek wie beim Website-Menü — lokal, ohne CDN. Farbe folgt dem QR-Vordergrund.</p>
+            <p class="dg-field-hint">Gleiche Icon-Bibliothek wie beim Website-Menü — lokal, ohne CDN. Farbe folgt dem QR-Vordergrund.</p>
           </div>
 
           <div id="dg-qr-center-emoji-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'emoji' ? '' : ' hidden' ?>>

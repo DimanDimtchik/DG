@@ -382,13 +382,13 @@
       return;
     }
     if (source === 'lucide' && !lucideIconId()) {
-      setStatus('Bitte ein Lucide-Icon wählen.', true);
+      setStatus('Bitte ein Icon wählen.', true);
       return;
     }
 
     resolveCenterImageUrl().then(function (imageUrl) {
       if (source === 'lucide' && !imageUrl) {
-        setStatus('Lucide-Icon konnte nicht geladen werden.', true);
+        setStatus('Icon konnte nicht geladen werden.', true);
         return;
       }
       var opts = readOptions(previewPixelSize(), imageUrl);
