@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
 /**
- * Dokumentenverfasser D5 — Export PDF (Druck-HTML), TXT, MD, DOCX.
+ * Dokumentenverfasser D5 — Export PDF (Dompdf), TXT, MD, DOCX.
  * Formate folgen LetterheadSettings::export_formats.
  */
 final class WriterExportService
@@ -72,7 +75,7 @@ final class WriterExportService
             'txt' => self::streamText($doc, $basename . '.txt', 'text/plain; charset=utf-8', self::toPlainText($doc), $userId, $format),
             'md' => self::streamText($doc, $basename . '.md', 'text/markdown; charset=utf-8', self::toMarkdown($doc), $userId, $format),
             'docx' => self::streamBinary($doc, $basename . '.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', self::toDocxBinary($doc), $userId, $format),
-            'pdf' => self::streamPdfPrintHtml($doc, $basename, $userId),
+            'pdf' => self::streamPdf($doc, $basename, $userId),
             default => throw new InvalidArgumentException('Unbekanntes Exportformat.'),
         };
     }
@@ -265,36 +268,35 @@ final class WriterExportService
      * @param array<string, mixed> $doc
      * @return never
      */
-    private static function streamPdfPrintHtml(array $doc, string $basename, ?int $userId): never
+    private static function streamPdf(array $doc, string $basename, ?int $userId): never
     {
+        if (!class_exists(Dompdf::class)) {
+            throw new RuntimeException(
+                'PDF-Bibliothek (Dompdf) nicht geladen. Bitte vendor/ auf dem Server deployen (composer require dompdf/dompdf).'
+            );
+        }
+
         $renderDoc = WriterDocument::toRenderDocument($doc);
         $html = LetterheadRenderer::renderFullHtml(
             $renderDoc,
             LetterheadSettings::config(),
-            ['show_guides' => false, 'title' => $basename . ' — PDF-Druck']
-        );
-        // Druckleiste wie Belege (Browser → PDF speichern)
-        $toolbar = '<div class="dg-writer-export-print no-print" style="position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #d0d5dd;padding:10px 16px;font-family:system-ui,sans-serif;">'
-            . '<strong>PDF-Druckvorlage</strong> — '
-            . '<button type="button" onclick="window.print()" style="margin-left:8px;padding:6px 12px;cursor:pointer;">Drucken / als PDF speichern</button>'
-            . '<span style="margin-left:12px;color:#667085;font-size:13px;">Gleiche Pipeline wie Belege: Browser-Dialog → „Als PDF speichern“.</span>'
-            . '</div>';
-        $html = preg_replace('/<body([^>]*)>/i', '<body$1>' . $toolbar, $html, 1) ?? ($toolbar . $html);
-        if (!str_contains($html, '@media print')) {
-            // already in LetterheadRenderer
-        }
-        $html = str_replace(
-            '</head>',
-            '<style>@media print { .dg-writer-export-print, .no-print { display:none !important; } }</style></head>',
-            $html
+            ['show_guides' => false, 'title' => $basename]
         );
 
-        self::audit($doc, $userId, 'pdf');
-        header('Content-Type: text/html; charset=utf-8');
-        header('X-Robots-Tag: noindex');
-        header('Content-Disposition: inline; filename="' . self::headerFilename($basename . '-druck.html') . '"');
-        echo $html;
-        exit;
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('defaultFont', 'DejaVu Sans');
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        $pdf = $dompdf->output();
+        if (!is_string($pdf) || $pdf === '') {
+            throw new RuntimeException('PDF-Erzeugung fehlgeschlagen.');
+        }
+
+        self::streamBinary($doc, $basename . '.pdf', 'application/pdf', $pdf, $userId, 'pdf');
     }
 
     /**

@@ -134,16 +134,17 @@ final class LetterheadSettings
                 'supervisory_chair' => '',
                 'managing_directors' => '',
             ],
-            /** Standard-Anrede/Gruß für neue Schreiben; Platzhalter {Firma} */
+            /** Standard-Anrede/Gruß; Platzhalter {Firma}, {Name} */
             'phrases' => [
                 'greeting' => 'Sehr geehrte/r ',
-                'closing' => "Mit freundlichen Grüßen,\nIhr {Firma} Team",
+                // DIN 5008: Gruß, dann Firma, dann Name/Team je eigene Zeile
+                'closing' => "Mit freundlichen Grüßen,\nIhr {Firma}\n{Name} Team",
             ],
         ];
     }
 
     /**
-     * Aufgelöste Anrede/Gruß (mit Firmenname).
+     * Aufgelöste Anrede/Gruß (mit Firmenname / Ansprechpartner).
      *
      * @return array{greeting: string, closing: string}
      */
@@ -154,25 +155,117 @@ final class LetterheadSettings
         $defaults = self::defaults()['phrases'];
         $greeting = (string) ($phrases['greeting'] ?? $defaults['greeting']);
         $closing = (string) ($phrases['closing'] ?? $defaults['closing']);
-        $party = self::resolvedCompany($cfg);
-        $firma = trim((string) ($party['legal_name'] ?? ''));
-        if ($firma === '') {
-            $firma = 'unser';
+        // Ältere Einzeiler-Vorlage → neuer mehrzeiliger Standard
+        $legacyClosings = [
+            "Mit freundlichen Grüßen,\nIhr {Firma} Team",
+            "Mit freundlichen Grüßen,\nIhr {Firma}-Team",
+            'Mit freundlichen Grüßen, Ihr {Firma} Team',
+            'Mit freundlichen Grüßen, Ihr {Firma}-Team',
+        ];
+        if (in_array($closing, $legacyClosings, true)) {
+            $closing = $defaults['closing'];
         }
 
         return [
-            'greeting' => self::applyPhrasePlaceholders($greeting, $firma),
-            'closing' => self::applyPhrasePlaceholders($closing, $firma),
+            'greeting' => self::applyPhrasePlaceholders($greeting, $cfg),
+            'closing' => self::applyPhrasePlaceholders($closing, $cfg),
         ];
     }
 
-    public static function applyPhrasePlaceholders(string $text, string $firma): string
+    /**
+     * Ersetzt {Firma} / {Name} in Anrede- und Grußvorlagen.
+     *
+     * @param array<string, mixed>|string|null $cfg Letterhead-Config oder (legacy) Firmenname
+     */
+    public static function applyPhrasePlaceholders(string $text, array|string|null $cfg = null): string
     {
+        // Abwärtskompatibel: früher 2. Argument = Firmenname-String
+        if (is_string($cfg)) {
+            $firma = $cfg;
+            $name = '';
+        } else {
+            $firma = self::phraseFirmaLabel($cfg);
+            $name = self::phrasePersonLabel($cfg);
+        }
+        if ($firma === '') {
+            $firma = 'unser';
+        }
+        if ($name === '') {
+            $name = 'unser';
+        }
+
         return str_ireplace(
-            ['{Firma}', '{firma}', '{FIRMA}'],
-            $firma,
+            ['{Firma}', '{firma}', '{FIRMA}', '{Name}', '{name}', '{NAME}'],
+            [$firma, $firma, $firma, $name, $name, $name],
             $text
         );
+    }
+
+    /**
+     * Marken-/Kurzname für „Ihr {Firma}“ (ohne Inhaber, wenn möglich).
+     *
+     * @param array<string, mixed>|null $cfg
+     */
+    public static function phraseFirmaLabel(?array $cfg = null): string
+    {
+        $party = self::resolvedCompany($cfg);
+        $legal = trim((string) ($party['legal_name'] ?? ''));
+        $brand = trim(CompanySettings::displayName());
+        $person = self::phrasePersonLabel($cfg);
+
+        $stripPerson = static function (string $label) use ($person): string {
+            if ($label === '' || $person === '') {
+                return $label;
+            }
+            $suffix = ' ' . $person;
+            if (mb_strlen($label) > mb_strlen($suffix)
+                && mb_substr($label, -mb_strlen($suffix)) === $suffix
+            ) {
+                $stripped = trim(mb_substr($label, 0, -mb_strlen($suffix)));
+                if ($stripped !== '') {
+                    return $stripped;
+                }
+            }
+
+            return $label;
+        };
+
+        if ($brand !== '' && mb_strtolower($brand) !== mb_strtolower($person)) {
+            return $stripPerson($brand);
+        }
+        if ($legal !== '') {
+            return $stripPerson($legal);
+        }
+
+        return $brand;
+    }
+
+    /**
+     * Ansprechpartner / Inhaber für „{Name} Team“.
+     *
+     * @param array<string, mixed>|null $cfg
+     */
+    public static function phrasePersonLabel(?array $cfg = null): string
+    {
+        $party = self::resolvedCompany($cfg);
+        $directors = trim((string) ($party['managing_directors'] ?? ''));
+        if ($directors !== '') {
+            $first = trim((string) (explode(',', $directors)[0] ?? ''));
+            if ($first !== '') {
+                return $first;
+            }
+        }
+        if (class_exists('AuthService')) {
+            $user = AuthService::user();
+            if ($user !== null) {
+                $n = trim($user->displayName);
+                if ($n !== '') {
+                    return $n;
+                }
+            }
+        }
+
+        return '';
     }
 
     /**

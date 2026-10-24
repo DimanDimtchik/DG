@@ -265,10 +265,19 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         </label>
         <div class="dg-field dg-field--wide">
           <span>CRM-Belege anhängen</span>
-          <input type="search" id="dg-post-voucher-search" placeholder="Angebot, Auftrag, Rechnung…" autocomplete="off">
+          <label class="dg-field" style="margin:0;">
+            <span class="dg-field-hint">Belege des gewählten Kunden (letzte 12 Monate)</span>
+            <select id="dg-post-voucher-recent" disabled>
+              <option value="">Zuerst Kontakt wählen…</option>
+            </select>
+          </label>
+          <label class="dg-field" style="margin-top:10px;">
+            <span class="dg-field-hint">Ältere / andere Belege suchen</span>
+            <input type="search" id="dg-post-voucher-search" placeholder="Nummer, Name, Stichwort…" autocomplete="off">
+          </label>
           <div id="dg-post-voucher-results" class="dg-voucher-contact-results" hidden></div>
           <ul id="dg-post-voucher-chips" class="dg-post-attach-chips"></ul>
-          <span class="dg-field-hint">Als HTML-Druckanhang (Angebot, AB, Lieferschein, Rechnung …).</span>
+          <span class="dg-field-hint">Anhang als PDF; bei Rechnungen zusätzlich XRechnung-XML (eRechnung). Zusätzlich Dateien vom PC möglich.</span>
         </div>
         <label class="dg-field dg-field--wide">
           <span>Dateien vom PC</span>

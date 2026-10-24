@@ -830,6 +830,6 @@ final class VoucherDocumentPrintService
         $number = trim((string) ($voucher['invoice_number'] ?? ''));
         $base = $kindLabel . ($number !== '' ? '_' . preg_replace('/[^A-Za-z0-9._-]+/', '_', $number) : '');
 
-        return $base . '.html';
+        return $base . '.pdf';
     }
 }

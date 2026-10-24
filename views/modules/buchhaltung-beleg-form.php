@@ -353,7 +353,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
   <?php if ($isEdit && !$readOnly && ($voucherMailCanSend ?? false)) : ?>
     <section class="dg-panel dg-voucher-email" id="dg-voucher-email-section" style="margin-bottom: 20px;">
       <h2 class="dg-subsection-title">Per E-Mail senden</h2>
-      <p class="dg-field-hint">Versendet das Dokument an den Kunden — mit HTML-Anhang zum Drucken/PDF-Speichern.</p>
+      <p class="dg-field-hint">Versendet das Dokument an den Kunden — als PDF-Anhang; bei Rechnungen zusätzlich XRechnung-XML (eRechnung).</p>
       <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-form">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
         <input type="hidden" name="voucher_email_send" value="1">

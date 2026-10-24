@@ -11,8 +11,14 @@ echo Deploying DG CRM to dg.ganz-om.de ...
 scp -o BatchMode=yes -i "%KEY%" index.php bootstrap.php .htaccess cron.php %HOST%:%DEST%/
 if errorlevel 1 goto fail
 
-for %%I in (assets config src views database bin downloads) do (
-    scp -o BatchMode=yes -i "%KEY%" -r %%I %HOST%:%DEST%/
+for %%I in (assets config src views database bin downloads vendor) do (
+    if exist "%%I\" (
+        scp -o BatchMode=yes -i "%KEY%" -r %%I %HOST%:%DEST%/
+        if errorlevel 1 goto fail
+    )
+)
+if exist composer.json (
+    scp -o BatchMode=yes -i "%KEY%" composer.json composer.lock %HOST%:%DEST%/
     if errorlevel 1 goto fail
 )
 

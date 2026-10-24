@@ -150,7 +150,7 @@ $disabled = $readOnly ? ' disabled' : '';
               <select class="dg-select" data-dg-phrase-fill="dg-writer-greeting"<?= $disabled ?>>
                 <option value="">Vorlage übernehmen …</option>
                 <?php foreach (WriterDocument::greetingPresets() as $text => $lbl) : ?>
-                  <option value="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
+                  <option value="<?= View::escape($text) ?>" data-text="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
                 <?php endforeach; ?>
               </select>
               <input name="greeting" id="dg-writer-greeting" maxlength="255" value="<?= View::escape((string) ($form['greeting'] ?? '')) ?>" spellcheck="true" lang="de"<?= $disabled ?>>
@@ -160,7 +160,7 @@ $disabled = $readOnly ? ' disabled' : '';
               <select class="dg-select" data-dg-phrase-fill="dg-writer-closing"<?= $disabled ?>>
                 <option value="">Vorlage übernehmen …</option>
                 <?php foreach (WriterDocument::closingPresets() as $text => $lbl) : ?>
-                  <option value="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
+                  <option value="<?= View::escape($text) ?>" data-text="<?= View::escape($text) ?>"><?= View::escape($lbl) ?></option>
                 <?php endforeach; ?>
               </select>
               <textarea name="closing" id="dg-writer-closing" rows="3" maxlength="255" spellcheck="true" lang="de"<?= $disabled ?>><?= View::escape((string) ($form['closing'] ?? '')) ?></textarea>
@@ -304,9 +304,9 @@ $disabled = $readOnly ? ' disabled' : '';
           <p class="dg-field-hint">
             Formate aus Einstellungen → Briefpapier.
             <?php if (!$isEdit) : ?>
-              Bitte zuerst speichern — Export braucht eine Dokument-ID.
+              Zuerst „Entwurf speichern“ — danach ist PDF aktiv.
             <?php else : ?>
-              PDF öffnet die Druckvorlage (Browser → „Als PDF speichern“, wie Belege). TXT/MD/DOCX starten einen Download. Export wird protokolliert.
+              PDF als Datei-Download (Dompdf). TXT/MD/DOCX starten ebenfalls einen Download.
             <?php endif; ?>
           </p>
           <p class="dg-form-actions">
@@ -315,9 +315,9 @@ $disabled = $readOnly ? ' disabled' : '';
                   continue;
               } ?>
               <?php if ($isEdit) : ?>
-                <a class="dg-button" href="/app?page=dokumentenverfasser-form&amp;writer_export=1&amp;id=<?= (int) $writerDocumentId ?>&amp;format=<?= View::escape($key) ?>"<?= $key === 'pdf' ? ' target="_blank" rel="noopener"' : '' ?>><?= View::escape($lbl) ?></a>
+                <a class="dg-button" href="/app?page=dokumentenverfasser-form&amp;writer_export=1&amp;id=<?= (int) $writerDocumentId ?>&amp;format=<?= View::escape($key) ?>"><?= View::escape($lbl) ?></a>
               <?php else : ?>
-                <button type="button" class="dg-button" disabled title="Zuerst speichern"><?= View::escape($lbl) ?></button>
+                <button type="button" class="dg-button" disabled title="Zuerst Entwurf speichern"><?= View::escape($lbl) ?></button>
               <?php endif; ?>
             <?php endforeach; ?>
             <?php if (isset($user) && $user instanceof User && SettingsRegistry::canAccess($user)) : ?>
@@ -469,8 +469,10 @@ $disabled = $readOnly ? ' disabled' : '';
       sel.addEventListener('change', function () {
         var id = sel.getAttribute('data-dg-phrase-fill');
         var target = id ? document.getElementById(id) : null;
-        if (!target || !sel.value) return;
-        target.value = sel.value;
+        var opt = sel.selectedOptions && sel.selectedOptions[0];
+        if (!target || !sel.value || !opt) return;
+        // data-text behält Zeilenumbrüche (option.value kollabiert \n oft zu Leerzeichen)
+        target.value = opt.getAttribute('data-text') || sel.value;
         sel.selectedIndex = 0;
         target.dispatchEvent(new Event('input', { bubbles: true }));
       });

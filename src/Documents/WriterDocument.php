@@ -73,7 +73,9 @@ final class WriterDocument
             'subject' => '',
             'greeting' => $phrases['greeting'],
             'closing' => $phrases['closing'],
-            'signature' => '',
+            'signature' => class_exists('LetterheadSettings')
+                ? LetterheadSettings::phrasePersonLabel()
+                : '',
             'recipient_lines' => [''],
             'info' => self::emptyInfo(),
             'body' => self::emptyBody(),
@@ -154,6 +156,7 @@ final class WriterDocument
             : "Mit freundlichen Grüßen,\nIhr Team";
         $presets = [
             $configured => 'Standard (Einstellungen)',
+            "Mit freundlichen Grüßen,\nIhr Team" => 'Kurz mit Team',
             'Mit freundlichen Grüßen' => 'Kurz',
             'Freundliche Grüße' => 'Locker',
             'Mit besten Grüßen' => 'Warm',

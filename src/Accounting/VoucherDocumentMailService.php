@@ -97,12 +97,7 @@ final class VoucherDocumentMailService
 
         $attachments = [];
         if ($attachDocument) {
-            $attachmentHtml = VoucherDocumentPrintService::renderAttachmentHtml($voucher);
-            $attachments[] = [
-                'filename' => VoucherDocumentPrintService::attachmentFilename($voucher),
-                'content' => $attachmentHtml,
-                'mime' => 'text/html; charset=UTF-8',
-            ];
+            $attachments = VoucherMailAttachmentBuilder::forVoucher($voucher);
         }
 
         $contactId = (int) ($voucher['contact_id'] ?? 0);

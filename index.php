@@ -1309,7 +1309,7 @@ switch ($path) {
             exit;
         }
 
-        // GET: Dokumentenverfasser Export (PDF-Druck / TXT / MD / DOCX)
+        // GET: Dokumentenverfasser Export (PDF via Dompdf / TXT / MD / DOCX)
         if (
             ($page === 'dokumentenverfasser' || $page === 'dokumentenverfasser-form')
             && isset($_GET['writer_export'])
@@ -7438,12 +7438,7 @@ $legalProductsConfig = LegalProductSettings::config();
             WriterDocumentRepository::ensureReady();
             $dbConnected = Database::isConfigured();
             $canEdit = RoleResolver::canEdit($user);
-            $writerExportFormats = LetterheadSettings::config()['export_formats'] ?? [
-                'pdf' => true,
-                'txt' => true,
-                'md' => false,
-                'docx' => false,
-            ];
+            $writerExportFormats = WriterExportService::enabledFormats();
             if ($page === 'dokumentenverfasser-form') {
                 if (empty($formError)) {
                     $writerDocumentId = (int) ($_GET['id'] ?? 0);

@@ -88,27 +88,66 @@ final class PostComposeApi
             echo json_encode(['ok' => true, 'items' => []], JSON_UNESCAPED_UNICODE);
             return;
         }
-        $q = trim((string) ($_GET['q'] ?? ''));
-        if ($q === '' || !Database::isConfigured()) {
+        if (!Database::isConfigured()) {
             echo json_encode(['ok' => true, 'items' => []], JSON_UNESCAPED_UNICODE);
             return;
         }
+        $contactId = (int) ($_GET['contact_id'] ?? 0);
+        $q = trim((string) ($_GET['q'] ?? ''));
+        $months = (int) ($_GET['months'] ?? 0);
+        if ($months <= 0) {
+            $months = 12;
+        }
+        if ($months > 120) {
+            $months = 120;
+        }
+        // Ohne Kontakt und ohne Suchbegriff: nichts
+        if ($contactId < 1 && $q === '') {
+            echo json_encode(['ok' => true, 'items' => []], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        if ($contactId > 0) {
+            $contact = ContactRepository::findById($contactId);
+            if ($contact === null || !ContactAccessResolver::canViewContact($user, $contact)) {
+                echo json_encode(['ok' => true, 'items' => []], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+        }
         MigrationRunner::runPending();
-        $like = '%' . $q . '%';
-        $sql = "SELECT v.id, v.document_kind, v.invoice_number, v.supplier_name, v.voucher_date, v.contact_id,
+        $docKinds = "'offer','work_order','order_confirmation','delivery_note','partial_invoice','invoice','final_invoice'";
+        $params = [];
+        $where = [
+            'v.is_draft = 0',
+            "v.document_kind IN ($docKinds)",
+        ];
+        if ($contactId > 0) {
+            $where[] = 'v.contact_id = ?';
+            $params[] = $contactId;
+        }
+        // Dropdown: letzte N Monate für Kontakt (ohne Freitextsuche)
+        if ($q === '') {
+            $where[] = 'v.voucher_date >= ?';
+            $params[] = date('Y-m-d', strtotime('-' . $months . ' months'));
+            $limit = 80;
+        } else {
+            // Freitext: auch ältere Belege; optional auf Kontakt eingeschränkt
+            $like = '%' . $q . '%';
+            $where[] = '(
+                v.invoice_number LIKE ? OR v.supplier_name LIKE ? OR v.description LIKE ?
+                OR c.display_name LIKE ? OR c.company_name LIKE ?
+            )';
+            array_push($params, $like, $like, $like, $like, $like);
+            $limit = 25;
+        }
+        $sql = 'SELECT v.id, v.document_kind, v.invoice_number, v.supplier_name, v.voucher_date, v.contact_id,
                        c.display_name, c.company_name
                 FROM dg_vouchers v
                 LEFT JOIN dg_contacts c ON c.id = v.contact_id
-                WHERE v.is_draft = 0
-                  AND v.document_kind IN ('offer','work_order','order_confirmation','delivery_note','partial_invoice','invoice','final_invoice')
-                  AND (
-                    v.invoice_number LIKE ? OR v.supplier_name LIKE ? OR v.description LIKE ?
-                    OR c.display_name LIKE ? OR c.company_name LIKE ?
-                  )
+                WHERE ' . implode(' AND ', $where) . '
                 ORDER BY v.voucher_date DESC, v.id DESC
-                LIMIT 15";
+                LIMIT ' . (int) $limit;
         $stmt = Database::pdo()->prepare($sql);
-        $stmt->execute([$like, $like, $like, $like, $like]);
+        $stmt->execute($params);
         $items = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $kind = VoucherDocumentKind::label((string) ($row['document_kind'] ?? ''));
@@ -122,6 +161,7 @@ final class PostComposeApi
                 'id' => (int) $row['id'],
                 'label' => $label !== '' ? $label : ('Beleg #' . (int) $row['id']),
                 'meta' => (string) ($row['voucher_date'] ?? ''),
+                'kind' => (string) ($row['document_kind'] ?? ''),
             ];
         }
         echo json_encode(['ok' => true, 'items' => $items], JSON_UNESCAPED_UNICODE);

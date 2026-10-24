@@ -15,6 +15,7 @@
   var closingCustom = document.getElementById('dg-post-closing-custom');
   var customClosingText = '';
   var closingPrevValue = closing ? closing.value : '';
+  var voucherRecent = document.getElementById('dg-post-voucher-recent');
   var voucherSearch = document.getElementById('dg-post-voucher-search');
   var voucherResults = document.getElementById('dg-post-voucher-results');
   var voucherChips = document.getElementById('dg-post-voucher-chips');
@@ -31,6 +32,10 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function currentContactId() {
+    return contactId ? parseInt(contactId.value, 10) || 0 : 0;
   }
 
   function optionText(sel) {
@@ -145,6 +150,63 @@
       .catch(function () {});
   }
 
+  function resetVoucherRecent(placeholder) {
+    if (!voucherRecent) {
+      return;
+    }
+    voucherRecent.innerHTML = '<option value="">' + escapeHtml(placeholder || 'Zuerst Kontakt wählen…') + '</option>';
+    voucherRecent.disabled = true;
+  }
+
+  function fillVoucherRecent(items) {
+    if (!voucherRecent) {
+      return;
+    }
+    if (!items || !items.length) {
+      voucherRecent.innerHTML = '<option value="">Keine Belege in den letzten 12 Monaten</option>';
+      voucherRecent.disabled = true;
+      return;
+    }
+    voucherRecent.innerHTML =
+      '<option value="">Beleg auswählen…</option>' +
+      items
+        .map(function (item) {
+          return (
+            '<option value="' +
+            escapeHtml(String(item.id)) +
+            '" data-label="' +
+            escapeHtml(item.label || '') +
+            '">' +
+            escapeHtml((item.meta ? item.meta + ' · ' : '') + (item.label || '')) +
+            '</option>'
+          );
+        })
+        .join('');
+    voucherRecent.disabled = false;
+  }
+
+  function loadRecentVouchers(cid) {
+    if (!voucherRecent || cid < 1) {
+      resetVoucherRecent();
+      return;
+    }
+    voucherRecent.disabled = true;
+    voucherRecent.innerHTML = '<option value="">Lade Belege…</option>';
+    fetch(api + '?action=vouchers&contact_id=' + encodeURIComponent(String(cid)) + '&months=12', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' }
+    })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        fillVoucherRecent((data && data.items) || []);
+      })
+      .catch(function () {
+        resetVoucherRecent('Belege konnten nicht geladen werden');
+      });
+  }
+
   function pickContact(id) {
     if (id < 1) {
       return;
@@ -177,6 +239,7 @@
         if (cfg.isNew) {
           rebuildBody();
         }
+        loadRecentVouchers(parseInt(String(data.id), 10) || 0);
       })
       .catch(function () {});
   }
@@ -237,6 +300,14 @@
     }
   });
 
+  function addVoucher(id, label) {
+    if (!id) {
+      return;
+    }
+    voucherIds[String(id)] = label || ('Beleg #' + id);
+    renderVoucherChips();
+  }
+
   function renderVoucherChips() {
     if (!voucherChips) {
       return;
@@ -265,7 +336,12 @@
   }
 
   function searchVouchers(q) {
-    fetch(api + '?action=vouchers&q=' + encodeURIComponent(q), {
+    var cid = currentContactId();
+    var url = api + '?action=vouchers&q=' + encodeURIComponent(q);
+    if (cid > 0) {
+      url += '&contact_id=' + encodeURIComponent(String(cid));
+    }
+    fetch(url, {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
     })
@@ -301,16 +377,27 @@
         voucherResults.querySelectorAll('[data-id]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var id = btn.getAttribute('data-id');
-            voucherIds[id] = btn.getAttribute('data-label') || ('Beleg #' + id);
+            addVoucher(id, btn.getAttribute('data-label') || ('Beleg #' + id));
             if (voucherSearch) {
               voucherSearch.value = '';
             }
             voucherResults.hidden = true;
-            renderVoucherChips();
           });
         });
       })
       .catch(function () {});
+  }
+
+  if (voucherRecent) {
+    voucherRecent.addEventListener('change', function () {
+      var opt = voucherRecent.selectedOptions && voucherRecent.selectedOptions[0];
+      var id = voucherRecent.value;
+      if (!id || !opt) {
+        return;
+      }
+      addVoucher(id, opt.getAttribute('data-label') || opt.textContent || ('Beleg #' + id));
+      voucherRecent.value = '';
+    });
   }
 
   var vTimer = null;
@@ -326,5 +413,10 @@
         searchVouchers(q);
       }, 220);
     });
+  }
+
+  // Bereits gewählter Kontakt (z. B. Antwort/Weiterleitung)
+  if (currentContactId() > 0) {
+    loadRecentVouchers(currentContactId());
   }
 })();

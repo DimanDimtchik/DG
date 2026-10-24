@@ -105,7 +105,7 @@ final class PostMailComposer
     }
 
     /**
-     * CRM-Belege (HTML-Druck) + PC-Dateien.
+     * CRM-Belege (PDF, bei Rechnung + XRechnung-XML) + PC-Dateien.
      *
      * @param array<string, mixed> $input
      * @return list<array{filename: string, content: string, mime?: string}>
@@ -129,16 +129,9 @@ final class PostMailComposer
                 if ($voucher === null || !empty($voucher['is_draft'])) {
                     continue;
                 }
-                $html = VoucherDocumentPrintService::renderAttachmentHtml($voucher);
-                $kind = VoucherDocumentKind::label((string) ($voucher['document_kind'] ?? ''));
-                $num = trim((string) ($voucher['invoice_number'] ?? ''));
-                $base = trim($kind . ($num !== '' ? '-' . $num : '-' . $vid));
-                $base = preg_replace('/[^\pL\pN\-_]+/u', '_', $base) ?: ('Beleg-' . $vid);
-                $out[] = [
-                    'filename' => $base . '.html',
-                    'content' => $html,
-                    'mime' => 'text/html; charset=UTF-8',
-                ];
+                foreach (VoucherMailAttachmentBuilder::forVoucher($voucher) as $att) {
+                    $out[] = $att;
+                }
             }
         }
 
