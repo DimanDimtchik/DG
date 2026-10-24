@@ -7904,6 +7904,16 @@ $legalProductsConfig = LegalProductSettings::config();
         $acqCompany = $acqCompany ?? null;
         $acqAreas = $acqAreas ?? null;
         $acqPresets = $acqPresets ?? null;
+        $writerDocumentId = $writerDocumentId ?? null;
+        $writerForm = $writerForm ?? null;
+        $writerVersions = $writerVersions ?? [];
+        $writerExportFormats = $writerExportFormats ?? null;
+        $writerLinkContext = $writerLinkContext ?? null;
+        $writerCanLinkVoucher = $writerCanLinkVoucher ?? false;
+        $writerDocumentList = $writerDocumentList ?? [];
+        $writerStatusFilter = $writerStatusFilter ?? '';
+        $writerContactFilter = $writerContactFilter ?? 0;
+        $writerFilterContact = $writerFilterContact ?? null;
 
         View::render('layout/app', compact(
             'title',
@@ -8289,6 +8299,16 @@ $legalProductsConfig = LegalProductSettings::config();
             'recipeCostRates',
             'recipeCostRatesForm',
             'formError',
+            'writerDocumentId',
+            'writerForm',
+            'writerVersions',
+            'writerExportFormats',
+            'writerLinkContext',
+            'writerCanLinkVoucher',
+            'writerDocumentList',
+            'writerStatusFilter',
+            'writerContactFilter',
+            'writerFilterContact',
         ));
         break;
 
