@@ -71,6 +71,15 @@ final class PostMailComposer
             }
         }
 
+        $postedContactId = (int) ($input['contact_id'] ?? 0);
+        if ($postedContactId > 0) {
+            $contact = ContactRepository::findById($postedContactId);
+            if ($contact !== null && ContactAccessResolver::canViewContact($actor, $contact)) {
+                $contactId = $postedContactId;
+            }
+        }
+
+        $attachments = self::collectAttachments($actor, $input);
         $html = nl2br(htmlspecialchars($body, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
         try {
@@ -83,6 +92,7 @@ final class PostMailComposer
                     contactId: $contactId,
                     inReplyTo: $inReplyTo,
                     references: $references,
+                    attachments: $attachments,
                 ),
                 $actor,
                 $mailboxId,
@@ -92,6 +102,73 @@ final class PostMailComposer
         } catch (Throwable $e) {
             throw new RuntimeException(MailProviderError::userMessage($e->getMessage(), 'smtp'), 0, $e);
         }
+    }
+
+    /**
+     * CRM-Belege (HTML-Druck) + PC-Dateien.
+     *
+     * @param array<string, mixed> $input
+     * @return list<array{filename: string, content: string, mime?: string}>
+     */
+    private static function collectAttachments(User $actor, array $input): array
+    {
+        $out = [];
+        $voucherIds = $input['voucher_ids'] ?? [];
+        if (!is_array($voucherIds)) {
+            $voucherIds = $voucherIds !== '' && $voucherIds !== null ? [(int) $voucherIds] : [];
+        }
+        $canVoucher = MenuRegistry::canAccess($actor, 'buchhaltung-belege')
+            || MenuRegistry::canAccess($actor, 'buchhaltung-beleg-form');
+        if ($canVoucher) {
+            foreach ($voucherIds as $rawId) {
+                $vid = (int) $rawId;
+                if ($vid <= 0) {
+                    continue;
+                }
+                $voucher = VoucherRepository::findById($vid);
+                if ($voucher === null || !empty($voucher['is_draft'])) {
+                    continue;
+                }
+                $html = VoucherDocumentPrintService::renderAttachmentHtml($voucher);
+                $kind = VoucherDocumentKind::label((string) ($voucher['document_kind'] ?? ''));
+                $num = trim((string) ($voucher['invoice_number'] ?? ''));
+                $base = trim($kind . ($num !== '' ? '-' . $num : '-' . $vid));
+                $base = preg_replace('/[^\pL\pN\-_]+/u', '_', $base) ?: ('Beleg-' . $vid);
+                $out[] = [
+                    'filename' => $base . '.html',
+                    'content' => $html,
+                    'mime' => 'text/html; charset=UTF-8',
+                ];
+            }
+        }
+
+        $files = $_FILES['attachments'] ?? null;
+        if (is_array($files) && isset($files['name']) && is_array($files['name'])) {
+            $n = count($files['name']);
+            for ($i = 0; $i < $n && $i < 10; $i++) {
+                $err = (int) ($files['error'][$i] ?? UPLOAD_ERR_NO_FILE);
+                if ($err === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+                if ($err !== UPLOAD_ERR_OK) {
+                    throw new InvalidArgumentException('Datei-Upload fehlgeschlagen.');
+                }
+                $tmp = (string) ($files['tmp_name'][$i] ?? '');
+                $name = basename((string) ($files['name'][$i] ?? 'anhang.bin'));
+                $size = (int) ($files['size'][$i] ?? 0);
+                if ($tmp === '' || !is_uploaded_file($tmp) || $size <= 0 || $size > 12 * 1024 * 1024) {
+                    throw new InvalidArgumentException('Anhang ungültig oder zu groß (max. 12 MB).');
+                }
+                $content = file_get_contents($tmp);
+                if ($content === false || $content === '') {
+                    continue;
+                }
+                $mime = (string) ($files['type'][$i] ?? 'application/octet-stream');
+                $out[] = ['filename' => $name, 'content' => $content, 'mime' => $mime !== '' ? $mime : 'application/octet-stream'];
+            }
+        }
+
+        return $out;
     }
 
     /**

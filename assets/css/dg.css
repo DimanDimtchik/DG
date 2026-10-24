@@ -7883,3 +7883,33 @@ body.dg-login-page {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.dg-post-compose-phrases__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 8px 0;
+}
+.dg-post-attach-chips {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dg-post-attach-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  padding: 4px 8px;
+  background: #fff;
+}
+.dg-post-attach-chips button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}

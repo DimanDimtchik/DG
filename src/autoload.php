@@ -101,6 +101,8 @@ spl_autoload_register(static function (string $class): void {
         'MailImapSync' => '/src/Mail/MailImapSync.php',
         'PostSyncApi' => '/src/Mail/PostSyncApi.php',
         'PostUiSettings' => '/src/Mail/PostUiSettings.php',
+        'PostComposePhrases' => '/src/Mail/PostComposePhrases.php',
+        'PostComposeApi' => '/src/Mail/PostComposeApi.php',
         'MailPartyLabel' => '/src/Mail/MailPartyLabel.php',
         'MailSignatureResolver' => '/src/Mail/MailSignatureResolver.php',
         'MailFolderLabels' => '/src/Mail/MailFolderLabels.php',

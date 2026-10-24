@@ -53,6 +53,7 @@ $postComposeForm = array_merge([
     'reply_to_id' => '',
     'forward_from_id' => '',
     'mode' => 'new',
+    'contact_id' => '',
 ], $postComposeForm ?? []);
 $postComposeMode = (string) ($postComposeForm['mode'] ?? 'new');
 $postComposeTitle = match ($postComposeMode) {
@@ -171,11 +172,26 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         <p class="dg-lead">Kein Postfach mit Senderecht. Unter <a href="/app?page=einstellungen&amp;tab=postfaecher">Einstellungen → Postfächer</a> prüfen.</p>
       </div>
     <?php else : ?>
-    <form class="dg-form dg-panel" method="post" action="/app?page=post">
+    <?php
+      $postAuthorName = trim((string) ($user->displayName ?? ''));
+      $postGreetings = PostComposePhrases::greetings(null);
+      $postClosings = PostComposePhrases::closingParagraphs();
+      $postSignatures = PostComposePhrases::signatures($postAuthorName !== '' ? $postAuthorName : 'Ihr Team');
+      $postIsNewCompose = $postComposeMode === 'new' && trim((string) ($postComposeForm['body'] ?? '')) === '';
+      $postDefaultBody = $postIsNewCompose
+          ? PostComposePhrases::buildBody(
+              $postGreetings[0]['text'],
+              $postClosings[0]['text'],
+              $postSignatures[0]['text']
+          )
+          : (string) ($postComposeForm['body'] ?? '');
+    ?>
+    <form class="dg-form dg-panel" method="post" action="/app?page=post" enctype="multipart/form-data" id="dg-post-compose-form">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="reply_to_id" value="<?= View::escape($postComposeForm['reply_to_id']) ?>">
       <input type="hidden" name="forward_from_id" value="<?= View::escape($postComposeForm['forward_from_id']) ?>">
       <input type="hidden" name="compose_mode" value="<?= View::escape($postComposeMode) ?>">
+      <input type="hidden" name="contact_id" id="dg-post-contact-id" value="<?= View::escape((string) ($postComposeForm['contact_id'] ?? '')) ?>">
       <h2 class="dg-subsection-title"><?= View::escape($postComposeTitle) ?></h2>
       <div class="dg-form-grid">
         <label class="dg-field dg-field--wide">
@@ -189,18 +205,61 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
             <?php endforeach; ?>
           </select>
         </label>
-        <label class="dg-field dg-field--wide">
-          <span>An</span>
-          <input type="text" name="to" required value="<?= View::escape($postComposeForm['to']) ?>" placeholder="empfaenger@example.de" autocomplete="email">
-          <span class="dg-field-hint">Mehrere Empfänger mit Komma oder Semikolon trennen.</span>
-        </label>
+        <div class="dg-field dg-field--wide">
+          <span>An (Kontakt oder manuell)</span>
+          <input type="search" id="dg-post-contact-search" placeholder="Kontakt suchen…" autocomplete="off">
+          <div id="dg-post-contact-results" class="dg-voucher-contact-results" hidden></div>
+          <input type="text" name="to" id="dg-post-to" required value="<?= View::escape($postComposeForm['to']) ?>" placeholder="empfaenger@example.de" autocomplete="email">
+          <span class="dg-field-hint">Kontakt wählen setzt die E-Mail; manuell bleibt möglich (Komma/Semikolon für mehrere).</span>
+        </div>
         <label class="dg-field dg-field--wide">
           <span>Betreff</span>
           <input type="text" name="subject" required value="<?= View::escape($postComposeForm['subject']) ?>">
         </label>
+        <div class="dg-field dg-field--wide dg-post-compose-phrases">
+          <span>Textbausteine</span>
+          <div class="dg-post-compose-phrases__row">
+            <label class="dg-field">
+              <span>Begrüßung</span>
+              <select id="dg-post-greeting">
+                <?php foreach ($postGreetings as $g) : ?>
+                  <option value="<?= View::escape($g['id']) ?>" data-text="<?= View::escape($g['text']) ?>"><?= View::escape($g['label']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Schlussabsatz</span>
+              <select id="dg-post-closing">
+                <?php foreach ($postClosings as $c) : ?>
+                  <option value="<?= View::escape($c['id']) ?>" data-text="<?= View::escape($c['text']) ?>"><?= View::escape($c['label']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Grußformel</span>
+              <select id="dg-post-signature">
+                <?php foreach ($postSignatures as $s) : ?>
+                  <option value="<?= View::escape($s['id']) ?>" data-text="<?= View::escape($s['text']) ?>"><?= View::escape($s['label']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+          </div>
+          <button type="button" class="dg-button" id="dg-post-apply-phrases">Bausteine in Nachricht übernehmen</button>
+        </div>
         <label class="dg-field dg-field--wide">
           <span>Nachricht</span>
-          <textarea name="body" rows="14" required><?= View::escape($postComposeForm['body']) ?></textarea>
+          <textarea name="body" id="dg-post-body" rows="14" required><?= View::escape($postDefaultBody) ?></textarea>
+        </label>
+        <div class="dg-field dg-field--wide">
+          <span>CRM-Belege anhängen</span>
+          <input type="search" id="dg-post-voucher-search" placeholder="Angebot, Auftrag, Rechnung…" autocomplete="off">
+          <div id="dg-post-voucher-results" class="dg-voucher-contact-results" hidden></div>
+          <ul id="dg-post-voucher-chips" class="dg-post-attach-chips"></ul>
+          <span class="dg-field-hint">Als HTML-Druckanhang (Angebot, AB, Lieferschein, Rechnung …).</span>
+        </div>
+        <label class="dg-field dg-field--wide">
+          <span>Dateien vom PC</span>
+          <input type="file" name="attachments[]" id="dg-post-files" multiple>
         </label>
       </div>
       <div class="dg-form-actions">
@@ -208,6 +267,13 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         <a class="dg-button" href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder)) ?>">Abbrechen</a>
       </div>
     </form>
+    <script>
+      window.dgPostCompose = {
+        api: '/api/post-compose',
+        isNew: <?= $postIsNewCompose ? 'true' : 'false' ?>
+      };
+    </script>
+    <script src="<?= View::escape(Asset::url('/assets/js/post-compose.js')) ?>" defer></script>
     <?php endif; ?>
   <?php elseif ($postMessage !== null) : ?>
     <?php

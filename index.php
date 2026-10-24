@@ -817,6 +817,10 @@ switch ($path) {
         PostSyncApi::handle();
         exit;
 
+    case '/api/post-compose':
+        PostComposeApi::handle();
+        exit;
+
     case '/api/cti':
         CtiApi::handle();
         exit;
@@ -2626,6 +2630,7 @@ switch ($path) {
                     'reply_to_id' => (string) ($_POST['reply_to_id'] ?? ''),
                     'forward_from_id' => (string) ($_POST['forward_from_id'] ?? ''),
                     'mode' => (string) ($_POST['compose_mode'] ?? 'new'),
+                    'contact_id' => (string) ($_POST['contact_id'] ?? ''),
                 ];
                 header('Location: /app?page=post&compose=1', true, 302);
                 exit;
