@@ -11,6 +11,10 @@
   var closing = document.getElementById('dg-post-closing');
   var signature = document.getElementById('dg-post-signature');
   var applyBtn = document.getElementById('dg-post-apply-phrases');
+  var closingDialog = document.getElementById('dg-post-closing-custom-dialog');
+  var closingCustom = document.getElementById('dg-post-closing-custom');
+  var customClosingText = '';
+  var closingPrevValue = closing ? closing.value : '';
   var voucherSearch = document.getElementById('dg-post-voucher-search');
   var voucherResults = document.getElementById('dg-post-voucher-results');
   var voucherChips = document.getElementById('dg-post-voucher-chips');
@@ -36,11 +40,47 @@
     return sel.selectedOptions[0].getAttribute('data-text') || '';
   }
 
+  function closingText() {
+    if (!closing) {
+      return '';
+    }
+    if (closing.value === 'custom') {
+      return customClosingText.trim();
+    }
+    return optionText(closing).trim();
+  }
+
   function rebuildBody() {
     var g = optionText(greeting).trim();
-    var c = optionText(closing).trim();
+    var c = closingText();
     var s = optionText(signature).trim();
     body.value = g + '\n\n\n' + c + '\n\n' + s + '\n';
+  }
+
+  function openCustomClosing() {
+    if (!closingDialog || !closingCustom) {
+      var entered = window.prompt('Eigener Schlussabsatz:', customClosingText || '');
+      if (entered === null) {
+        if (closing) {
+          closing.value = closingPrevValue || 'vertrauen';
+        }
+        return;
+      }
+      customClosingText = entered;
+      if (closing && closing.selectedOptions[0]) {
+        closing.selectedOptions[0].setAttribute('data-text', customClosingText);
+      }
+      if (cfg.isNew) {
+        rebuildBody();
+      }
+      return;
+    }
+    closingCustom.value = customClosingText;
+    if (typeof closingDialog.showModal === 'function') {
+      closingDialog.showModal();
+    } else {
+      closingDialog.setAttribute('open', 'open');
+    }
   }
 
   function fillGreetingOptions(list, selectedId) {
@@ -158,7 +198,36 @@
   if (applyBtn) {
     applyBtn.addEventListener('click', rebuildBody);
   }
-  [greeting, closing, signature].forEach(function (sel) {
+  if (closing) {
+    closing.addEventListener('change', function () {
+      if (closing.value === 'custom') {
+        openCustomClosing();
+        return;
+      }
+      closingPrevValue = closing.value;
+      if (cfg.isNew) {
+        rebuildBody();
+      }
+    });
+  }
+  if (closingDialog) {
+    closingDialog.addEventListener('close', function () {
+      var val = closingDialog.returnValue;
+      if (val === 'ok') {
+        customClosingText = (closingCustom && closingCustom.value) || '';
+        if (closing && closing.selectedOptions[0]) {
+          closing.selectedOptions[0].setAttribute('data-text', customClosingText);
+        }
+        closingPrevValue = 'custom';
+        if (cfg.isNew) {
+          rebuildBody();
+        }
+      } else if (closing) {
+        closing.value = closingPrevValue && closingPrevValue !== 'custom' ? closingPrevValue : 'vertrauen';
+      }
+    });
+  }
+  [greeting, signature].forEach(function (sel) {
     if (sel) {
       sel.addEventListener('change', function () {
         if (cfg.isNew) {

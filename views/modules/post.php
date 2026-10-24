@@ -244,6 +244,19 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
               </select>
             </label>
           </div>
+          <dialog id="dg-post-closing-custom-dialog" class="dg-post-closing-dialog">
+            <form method="dialog" class="dg-form">
+              <h3 class="dg-subsection-title">Eigener Schlussabsatz</h3>
+              <label class="dg-field dg-field--wide">
+                <span>Ihr Text</span>
+                <textarea id="dg-post-closing-custom" rows="5" placeholder="Eigenen Schlussabsatz eingeben…"></textarea>
+              </label>
+              <div class="dg-form-actions">
+                <button type="submit" value="ok" class="dg-button dg-button--primary">Übernehmen</button>
+                <button type="submit" value="cancel" class="dg-button">Abbrechen</button>
+              </div>
+            </form>
+          </dialog>
           <button type="button" class="dg-button" id="dg-post-apply-phrases">Bausteine in Nachricht übernehmen</button>
         </div>
         <label class="dg-field dg-field--wide">

@@ -31,19 +31,24 @@ final class PostComposePhrases
     {
         return [
             [
-                'id' => 'verfuegung',
-                'label' => 'Zur Verfügung',
-                'text' => 'Vielen Dank im Voraus. Wir stehen Ihnen gerne jederzeit zur Verfügung.',
+                'id' => 'vertrauen',
+                'label' => 'Vertrauen & Zusammenarbeit',
+                'text' => 'Für weitere Fragen oder Informationen stehen wir Ihnen selbstverständlich jederzeit gerne zur Verfügung. Wir danken Ihnen herzlich für Ihr Vertrauen und die angenehme Zusammenarbeit.',
             ],
             [
-                'id' => 'rueckfragen',
-                'label' => 'Rückfragen',
-                'text' => 'Bei Rückfragen erreichen Sie uns gerne telefonisch oder per E-Mail.',
+                'id' => 'fragen',
+                'label' => 'Fragen & Dank',
+                'text' => 'Haben Sie noch Fragen? Melden Sie sich einfach telefonisch oder per E-Mail bei uns – wir sind gerne für Sie da. Vielen Dank für Ihre Unterstützung und Ihr Vertrauen.',
             ],
             [
-                'id' => 'freude',
-                'label' => 'Zusammenarbeit',
-                'text' => 'Wir freuen uns auf die weitere Zusammenarbeit und melden uns bei Bedarf umgehend.',
+                'id' => 'muhe',
+                'label' => 'Dank für Mühe',
+                'text' => 'Vorab bedanken wir uns ganz herzlich für Ihre Mühe und die Bearbeitung unseres Anliegens. Sollten Sie noch ergänzende Angaben benötigen, kommen Sie gerne jederzeit auf uns zu.',
+            ],
+            [
+                'id' => 'custom',
+                'label' => 'Ihr Text …',
+                'text' => '',
             ],
         ];
     }
