@@ -280,8 +280,9 @@ final class WriterExportService
         $html = LetterheadRenderer::renderFullHtml(
             $renderDoc,
             LetterheadSettings::config(),
-            ['show_guides' => false, 'title' => $basename]
+            ['show_guides' => false, 'title' => $basename, 'for_pdf' => true]
         );
+        $html = self::absolutizeResourceUrls($html);
 
         $options = new Options();
         $options->set('isRemoteEnabled', true);
@@ -390,6 +391,30 @@ final class WriterExportService
         $text = preg_replace("/\n{3,}/u", "\n\n", $text) ?? $text;
 
         return trim($text);
+    }
+
+    /** Dompdf: relative Medien- und Seiten-URLs absolut machen (Logo, Bilder, Impressum). */
+    private static function absolutizeResourceUrls(string $html): string
+    {
+        if (!class_exists('EmailLayoutSettings')) {
+            return $html;
+        }
+
+        return (string) preg_replace_callback(
+            '/\s(src|href)=(["\'])([^"\']+)\2/i',
+            static function (array $m): string {
+                $url = trim($m[3]);
+                if ($url === '' || str_starts_with($url, 'data:') || str_starts_with($url, '#')) {
+                    return $m[0];
+                }
+                if (preg_match('#^(https?://|mailto:|tel:)#i', $url)) {
+                    return $m[0];
+                }
+
+                return ' ' . $m[1] . '=' . $m[2] . EmailLayoutSettings::absoluteUrl($url) . $m[2];
+            },
+            $html
+        );
     }
 
     /**

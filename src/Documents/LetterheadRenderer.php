@@ -90,7 +90,7 @@ final class LetterheadRenderer
      *
      * @param array<string, mixed> $document
      * @param array<string, mixed>|null $cfg
-     * @param array{show_guides?: bool, title?: string} $options
+     * @param array{show_guides?: bool, title?: string, for_pdf?: bool} $options
      */
     public static function renderFullHtml(array $document = [], ?array $cfg = null, array $options = []): string
     {
@@ -98,18 +98,23 @@ final class LetterheadRenderer
         $showGuides = array_key_exists('show_guides', $options)
             ? !empty($options['show_guides'])
             : !empty($cfg['page']['show_din_guides']);
+        $forPdf = !empty($options['for_pdf']);
+        if ($forPdf) {
+            $showGuides = false;
+        }
         $title = trim((string) ($options['title'] ?? 'Briefvorschau'));
         if ($title === '') {
             $title = 'Briefvorschau';
         }
         $page = self::renderPage($document, $cfg, ['show_guides' => $showGuides]);
-        $css = self::stylesheet($cfg, $showGuides);
+        $css = self::stylesheet($cfg, $showGuides, $forPdf);
         $safeTitle = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $bodyClass = 'dg-lh-body' . ($forPdf ? ' dg-lh-body--pdf' : '');
 
         return '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">'
             . '<meta name="viewport" content="width=device-width, initial-scale=1">'
             . '<title>' . $safeTitle . '</title>'
-            . '<style>' . $css . '</style></head><body class="dg-lh-body">'
+            . '<style>' . $css . '</style></head><body class="' . $bodyClass . '">'
             . $page
             . '</body></html>';
     }
@@ -673,13 +678,71 @@ final class LetterheadRenderer
     /**
      * @param array<string, mixed> $cfg
      */
-    private static function stylesheet(array $cfg, bool $showGuides): string
+    private static function stylesheet(array $cfg, bool $showGuides, bool $forPdf = false): string
     {
         $ml = (float) ($cfg['page']['margin_left_mm'] ?? 24.1);
         $mr = (float) ($cfg['page']['margin_right_mm'] ?? 20);
         $mt = (float) ($cfg['page']['margin_top_mm'] ?? 17);
         $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
         $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
+
+        $pdfCss = '';
+        if ($forPdf) {
+            $pdfCss = <<<PDFCSS
+
+/* Dompdf: kein Browser-Preview-Rahmen, Fußzeile pro Seite, kein CSS-Grid/Flex */
+body.dg-lh-body--pdf,
+html body.dg-lh-body--pdf { background: #fff !important; }
+body.dg-lh-body--pdf .dg-lh-page {
+  margin: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+  padding-bottom: {$mb}mm;
+}
+body.dg-lh-body--pdf .dg-lh-fold-marks { display: none !important; }
+body.dg-lh-body--pdf .dg-lh-header {
+  display: table !important;
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+body.dg-lh-body--pdf .dg-lh-header__slot {
+  display: table-cell !important;
+  vertical-align: middle !important;
+  width: 33.33% !important;
+}
+body.dg-lh-body--pdf .dg-lh-header__stack {
+  display: block !important;
+}
+body.dg-lh-body--pdf .dg-lh-info__row {
+  display: block !important;
+  margin-bottom: 1mm !important;
+}
+body.dg-lh-body--pdf .dg-lh-info__label,
+body.dg-lh-body--pdf .dg-lh-info__value {
+  display: inline !important;
+}
+body.dg-lh-body--pdf .dg-lh-info__label::after { content: ": "; }
+body.dg-lh-body--pdf .dg-lh-footer {
+  position: fixed !important;
+  bottom: {$mb}mm !important;
+  left: {$ml}mm !important;
+  right: {$mr}mm !important;
+}
+body.dg-lh-body--pdf .dg-lh-footer__grid {
+  display: table !important;
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+body.dg-lh-body--pdf .dg-lh-footer__col {
+  display: table-cell !important;
+  vertical-align: top !important;
+  padding-right: 2mm !important;
+}
+body.dg-lh-body--pdf .dg-lh-body-content { page-break-inside: auto; }
+PDFCSS;
+        }
 
         return <<<CSS
 @page { size: 210mm 297mm; margin: 0; }
@@ -848,7 +911,8 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   .dg-lh-pagenum--fmt-seite-n::after { content: "Seite " counter(page); }
   .dg-lh-pagenum--fmt-seite-n-von-N::after { content: "Seite " counter(page) " von " counter(pages); }
 }
-CSS;
+CSS
+            . $pdfCss;
     }
 
     private static function mm(float $value): string
