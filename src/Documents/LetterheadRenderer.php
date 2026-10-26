@@ -106,7 +106,7 @@ final class LetterheadRenderer
         if ($title === '') {
             $title = 'Briefvorschau';
         }
-        $page = self::renderPage($document, $cfg, ['show_guides' => $showGuides]);
+        $page = self::renderPage($document, $cfg, ['show_guides' => $showGuides, 'for_pdf' => $forPdf]);
         $css = self::stylesheet($cfg, $showGuides, $forPdf);
         $safeTitle = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $bodyClass = 'dg-lh-body' . ($forPdf ? ' dg-lh-body--pdf' : '');
@@ -124,7 +124,7 @@ final class LetterheadRenderer
      *
      * @param array<string, mixed> $document
      * @param array<string, mixed>|null $cfg
-     * @param array{show_guides?: bool} $options
+     * @param array{show_guides?: bool, for_pdf?: bool} $options
      */
     public static function renderPage(array $document = [], ?array $cfg = null, array $options = []): string
     {
@@ -132,6 +132,7 @@ final class LetterheadRenderer
         $doc = array_merge(self::sampleDocument(), $document);
         $party = LetterheadSettings::resolvedCompany($cfg);
         $showGuides = !empty($options['show_guides']);
+        $forPdf = !empty($options['for_pdf']);
 
         if (($doc['signature'] ?? '') === '') {
             $doc['signature'] = $party['legal_name'] !== '' ? $party['legal_name'] : 'Ihre Firma';
@@ -144,22 +145,32 @@ final class LetterheadRenderer
         }
 
         $headerHtml = self::renderHeader($cfg, $party);
-        $windowHtml = self::renderAddressWindow($cfg, $doc);
-        $infoHtml = self::renderInfoBlock($cfg, $doc);
-        $bodyHtml = self::renderBody($cfg, $doc);
+        // PDF: Adresse+Info im Dokumentfluss (Tabelle), damit Text darunter volle Breite hat
+        // und nicht mit dem Infoblock kollidiert. Vorschau behält DIN-Absolutpositionen.
+        if ($forPdf) {
+            $metaHtml = self::renderMetaFlow($cfg, $doc);
+            $windowHtml = '';
+            $infoHtml = '';
+        } else {
+            $metaHtml = '';
+            $windowHtml = self::renderAddressWindow($cfg, $doc);
+            $infoHtml = self::renderInfoBlock($cfg, $doc);
+        }
+        $bodyHtml = self::renderBody($cfg, $doc, $forPdf);
         $footerHtml = self::renderFooter($cfg, $party);
         $bgHtml = self::renderBackground($cfg);
         $wmHtml = self::renderWatermark($cfg);
         $guidesHtml = $showGuides ? self::renderGuides($cfg) : '';
-        $foldHtml = self::renderFoldMarks($cfg);
+        $foldHtml = $forPdf ? '' : self::renderFoldMarks($cfg);
         $pageNumHtml = self::renderPageNumber($cfg);
 
-        return '<article class="dg-lh-page">'
+        return '<article class="dg-lh-page' . ($forPdf ? ' dg-lh-page--pdf' : '') . '">'
             . $bgHtml
             . $wmHtml
             . $guidesHtml
             . $foldHtml
             . $headerHtml
+            . $metaHtml
             . $windowHtml
             . $infoHtml
             . $bodyHtml
@@ -219,17 +230,9 @@ final class LetterheadRenderer
      * @param array<string, mixed> $cfg
      * @param array<string, mixed> $doc
      */
-    private static function renderAddressWindow(array $cfg, array $doc): string
+    private static function addressWindowInnerHtml(array $cfg, array $doc): string
     {
-        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
         $sender = is_array($cfg['sender_line'] ?? null) ? $cfg['sender_line'] : [];
-        if (empty($window['show'])) {
-            return '';
-        }
-        $left = (float) ($window['left_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_LEFT_MM);
-        $top = (float) ($window['top_mm'] ?? 50);
-        $width = (float) ($window['width_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_WIDTH_MM);
-        $height = (float) ($window['height_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM);
         $inner = '';
         if (!empty($sender['show'])) {
             $font = (float) ($sender['font_size_pt'] ?? 8);
@@ -248,9 +251,55 @@ final class LetterheadRenderer
         }
         $inner .= '</div>';
 
+        return $inner;
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     * @return list<string>
+     */
+    private static function infoBlockRowsHtml(array $cfg, array $doc): array
+    {
+        $block = is_array($cfg['info_block'] ?? null) ? $cfg['info_block'] : [];
+        if (empty($block['show'])) {
+            return [];
+        }
+        $infoValues = is_array($doc['info'] ?? null) ? $doc['info'] : [];
+        $rows = [];
+        foreach (LetterheadSettings::infoFieldsSorted($cfg, true) as $field) {
+            $key = $field['key'];
+            $value = trim((string) ($infoValues[$key] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            $rows[] = '<div class="dg-lh-info__row">'
+                . '<span class="dg-lh-info__label">' . self::e($field['label']) . '</span>'
+                . '<span class="dg-lh-info__value">' . self::e($value) . '</span>'
+                . '</div>';
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     */
+    private static function renderAddressWindow(array $cfg, array $doc): string
+    {
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        if (empty($window['show'])) {
+            return '';
+        }
+        $left = (float) ($window['left_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_LEFT_MM);
+        $top = (float) ($window['top_mm'] ?? 50);
+        $width = (float) ($window['width_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_WIDTH_MM);
+        $height = (float) ($window['height_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM);
+
         return '<section class="dg-lh-window" style="left:' . self::mm($left) . ';top:' . self::mm($top)
             . ';width:' . self::mm($width) . ';height:' . self::mm($height) . '">'
-            . $inner
+            . self::addressWindowInnerHtml($cfg, $doc)
             . '</section>';
     }
 
@@ -260,25 +309,9 @@ final class LetterheadRenderer
      */
     private static function renderInfoBlock(array $cfg, array $doc): string
     {
-        $block = is_array($cfg['info_block'] ?? null) ? $cfg['info_block'] : [];
         $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
-        if (empty($block['show'])) {
-            return '';
-        }
-        $infoValues = is_array($doc['info'] ?? null) ? $doc['info'] : [];
-        $rows = '';
-        foreach (LetterheadSettings::infoFieldsSorted($cfg, true) as $field) {
-            $key = $field['key'];
-            $value = trim((string) ($infoValues[$key] ?? ''));
-            if ($value === '') {
-                continue;
-            }
-            $rows .= '<div class="dg-lh-info__row">'
-                . '<span class="dg-lh-info__label">' . self::e($field['label']) . '</span>'
-                . '<span class="dg-lh-info__value">' . self::e($value) . '</span>'
-                . '</div>';
-        }
-        if ($rows === '') {
+        $rows = self::infoBlockRowsHtml($cfg, $doc);
+        if ($rows === []) {
             return '';
         }
         $top = (float) ($window['top_mm'] ?? 50);
@@ -286,19 +319,53 @@ final class LetterheadRenderer
         $right = (float) ($cfg['page']['margin_right_mm'] ?? 20);
 
         return '<aside class="dg-lh-info" style="top:' . self::mm($top) . ';left:' . self::mm($left)
-            . ';right:' . self::mm($right) . '">' . $rows . '</aside>';
+            . ';right:' . self::mm($right) . '">' . implode('', $rows) . '</aside>';
     }
 
     /**
-     * Vertikaler Start des Brieftexts ab Blattoberkante (unter Anschriftenfenster).
+     * Dompdf-tauglich: Adresse | Infoblock im Fluss (volle Textbreite darunter).
      *
      * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
      */
-    private static function bodyContentTopFromPageMm(array $cfg): float
+    private static function renderMetaFlow(array $cfg, array $doc): string
     {
         $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        $showWindow = !empty($window['show']);
+        $rows = self::infoBlockRowsHtml($cfg, $doc);
+        if (!$showWindow && $rows === []) {
+            return '';
+        }
+        $minH = (float) ($window['height_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM);
+        $addr = $showWindow
+            ? '<div class="dg-lh-meta__addr">' . self::addressWindowInnerHtml($cfg, $doc) . '</div>'
+            : '<div class="dg-lh-meta__addr"></div>';
+        $info = $rows !== []
+            ? '<div class="dg-lh-meta__info">' . implode('', $rows) . '</div>'
+            : '<div class="dg-lh-meta__info"></div>';
 
-        return (float) ($window['top_mm'] ?? 50) + (float) ($window['height_mm'] ?? 45) + 8.0;
+        return '<div class="dg-lh-meta" style="min-height:' . self::mm($minH) . '">'
+            . $addr
+            . $info
+            . '</div>';
+    }
+
+    /**
+     * Vertikaler Start des Brieftexts ab Blattoberkante (unter Fenster und Infoblock).
+     *
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     */
+    private static function bodyContentTopFromPageMm(array $cfg, array $doc = []): float
+    {
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+        $winTop = (float) ($window['top_mm'] ?? 50);
+        $winBottom = $winTop + (float) ($window['height_mm'] ?? 45);
+        $infoRows = count(self::infoBlockRowsHtml($cfg, $doc));
+        // ~5,2 mm je Infozeile (8,5 pt + Abstand) — Dompdf
+        $infoBottom = $infoRows > 0 ? $winTop + ($infoRows * 5.2) : $winTop;
+
+        return max($winBottom, $infoBottom) + 5.0;
     }
 
     /**
@@ -314,9 +381,10 @@ final class LetterheadRenderer
             return (float) ($cfg['page']['margin_top_mm'] ?? 17);
         }
         $form = strtoupper((string) ($header['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
+        // Dompdf: min-height oft überschritten (Logo + 2 Namenszeilen) — Puffer
+        $logoH = (float) ($header['logo_max_height_mm'] ?? 18);
 
-        // min-height Form A/B + margin-bottom 4mm (siehe stylesheet)
-        return $form + 4.0;
+        return max($form, $logoH + 16.0) + 4.0;
     }
 
     /**
@@ -339,14 +407,19 @@ final class LetterheadRenderer
      * @param array<string, mixed> $cfg
      * @param array<string, mixed> $doc
      */
-    private static function renderBody(array $cfg, array $doc): string
+    private static function renderBody(array $cfg, array $doc, bool $forPdf = false): string
     {
         $subjectCfg = is_array($cfg['subject'] ?? null) ? $cfg['subject'] : [];
-        // padding-top nur die Reststrecke: Fenster-Absolutmaß − schon belegter Header-Fluss
-        // (früher: volles Absolutmaß zusätzlich zum Header → riesige Lücke Adresse→Text)
-        $padTop = max(0.0, self::bodyContentTopFromPageMm($cfg) - self::headerFlowHeightFromPageMm($cfg));
+        // PDF: Meta-Block liegt schon im Fluss → kein künstliches padding-top
+        // Vorschau: Absolut-Fenster/Info → Reststrecke bis unter max(Fenster, Info)
+        if ($forPdf) {
+            $padStyle = 'padding-top:4mm';
+        } else {
+            $padTop = max(0.0, self::bodyContentTopFromPageMm($cfg, $doc) - self::headerFlowHeightFromPageMm($cfg));
+            $padStyle = 'padding-top:' . self::mm($padTop);
+        }
         $subject = trim((string) ($doc['subject'] ?? ''));
-        $html = '<section class="dg-lh-body-content" style="padding-top:' . self::mm($padTop) . '">';
+        $html = '<section class="dg-lh-body-content" style="' . $padStyle . '">';
         if ($subject !== '') {
             $label = !empty($subjectCfg['show_label']) ? '<span class="dg-lh-subject__label">Betreff: </span>' : '';
             $weight = !empty($subjectCfg['bold']) ? ' dg-lh-subject--bold' : '';
@@ -734,7 +807,6 @@ final class LetterheadRenderer
         $mt = (float) ($cfg['page']['margin_top_mm'] ?? 17);
         $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
         $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
-        $contentWidth = max(80.0, 210.0 - $ml - $mr);
 
         $pdfCss = '';
         if ($forPdf) {
@@ -765,6 +837,31 @@ body.dg-lh-body--pdf .dg-lh-header__slot {
 body.dg-lh-body--pdf .dg-lh-header__stack {
   display: block !important;
 }
+body.dg-lh-body--pdf .dg-lh-meta {
+  display: table !important;
+  width: 100% !important;
+  table-layout: fixed !important;
+  margin: 2mm 0 5mm 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+body.dg-lh-body--pdf .dg-lh-meta__addr,
+body.dg-lh-body--pdf .dg-lh-meta__info {
+  display: table-cell !important;
+  vertical-align: top !important;
+  box-sizing: border-box !important;
+}
+body.dg-lh-body--pdf .dg-lh-meta__addr {
+  width: 58% !important;
+  padding-right: 4mm !important;
+  font-size: 10pt !important;
+  line-height: 1.35 !important;
+}
+body.dg-lh-body--pdf .dg-lh-meta__info {
+  width: 42% !important;
+  font-size: 8.5pt !important;
+  line-height: 1.35 !important;
+}
 body.dg-lh-body--pdf .dg-lh-info__row {
   display: block !important;
   margin-bottom: 1mm !important;
@@ -791,11 +888,15 @@ body.dg-lh-body--pdf .dg-lh-footer__col {
   padding-right: 2mm !important;
 }
 body.dg-lh-body--pdf .dg-lh-body-content {
+  position: relative !important;
   page-break-inside: auto;
   display: block !important;
-  width: {$contentWidth}mm !important;
-  max-width: {$contentWidth}mm !important;
+  width: 100% !important;
+  max-width: 100% !important;
   box-sizing: border-box !important;
+  clear: both !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 body.dg-lh-body--pdf .dg-lh-subject,
 body.dg-lh-body--pdf .dg-lh-greeting,
@@ -925,9 +1026,23 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 .dg-lh-info__row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1mm; margin-bottom: 1mm; }
 .dg-lh-info__label { color: #555; }
 .dg-lh-info__value { font-weight: 600; }
+.dg-lh-meta {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin: 2mm 0 5mm 0;
+}
+.dg-lh-meta__addr,
+.dg-lh-meta__info {
+  display: table-cell;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+.dg-lh-meta__addr { width: 58%; padding-right: 4mm; font-size: 10pt; line-height: 1.35; }
+.dg-lh-meta__info { width: 42%; font-size: 8.5pt; line-height: 1.35; }
 .dg-lh-body-content {
   display: block;
-  width: {$contentWidth}mm;
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   clear: both;
