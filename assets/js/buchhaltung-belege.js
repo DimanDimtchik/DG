@@ -141,6 +141,7 @@
   var bookingSection = document.getElementById('dg-voucher-booking-section');
   var incomeVoucherTypes = config.incomeVoucherTypes || ['income', 'income_reduction', 'credit'];
   var revenueAccounts = config.revenueAccounts || { 19: '8410', 7: '8334', 0: '8192' };
+  var giftLiabilityAccount = String(config.giftLiabilityAccount || '1796');
   var articleSearchTimer = null;
   var syncingBookingFromItems = false;
 
@@ -1116,6 +1117,14 @@
     rates.forEach(function (rateKey) {
       var group = groups[rateKey];
       var account = revenueAccounts[group.taxRate] || revenueAccounts[19] || '8410';
+      // Kundengutschrift Mehrzweckgutschein: Verbindlichkeit, nicht §19-Konto 8192.
+      var titles = group.titles || [];
+      var isGiftTitle = titles.some(function (t) {
+        return /gutschein/i.test(String(t || ''));
+      });
+      if (getVoucherType() === 'credit' && (parseInt(String(group.taxRate), 10) === 0 || isGiftTitle)) {
+        account = giftLiabilityAccount || '1796';
+      }
       addBookingRow();
       var row = bookingBody.querySelector('.dg-voucher-split__row:last-child');
       if (!row) {

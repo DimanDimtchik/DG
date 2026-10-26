@@ -84,6 +84,45 @@ final class VoucherIncomePositions
         return $accounts[$rate] ?? $accounts[19];
     }
 
+    /**
+     * Mehrzweckgutschein (Kundengutschrift / 0 % „Gutschein“): Verbindlichkeit, nicht §19-Erlöskonto 8192.
+     */
+    public static function accountForInvoiceItem(
+        string $voucherType,
+        int $taxRate,
+        string $title,
+        string $skrType
+    ): string {
+        $voucherType = VoucherRepository::normalizeVoucherType($voucherType);
+        $taxRate = VoucherTaxKeys::sanitizeTaxRate($taxRate);
+        if ($voucherType === 'credit' && ($taxRate === 0 || self::looksLikeGiftVoucherTitle($title))) {
+            return self::giftLiabilityAccount($skrType);
+        }
+
+        return self::defaultRevenueAccount($taxRate, $skrType);
+    }
+
+    public static function looksLikeGiftVoucherTitle(string $title): bool
+    {
+        $title = trim($title);
+
+        return $title !== '' && preg_match('/gutschein/iu', $title) === 1;
+    }
+
+    public static function giftLiabilityAccount(string $skrType): string
+    {
+        $skrDefault = LedgerAccounts::giftVoucherLiabilityAccount($skrType);
+        if (!class_exists('GiftVoucherSettings')) {
+            return $skrDefault;
+        }
+        $configured = GiftVoucherSettings::get()['liability_account'] ?? '';
+        if ($configured === '' || $configured === GiftVoucherSettings::DEFAULT_LIABILITY_ACCOUNT) {
+            return $skrDefault;
+        }
+
+        return $configured;
+    }
+
         /**
      * searchArticles
      * @param string $query
@@ -290,7 +329,8 @@ final class VoucherIncomePositions
         $groups = [];
         foreach ($items as $item) {
             $taxRate = VoucherTaxKeys::sanitizeTaxRate((int) ($item['tax_rate'] ?? 19));
-            $accountNumber = self::defaultRevenueAccount($taxRate, $skrType);
+            $title = trim((string) ($item['title'] ?? ''));
+            $accountNumber = self::accountForInvoiceItem($voucherType, $taxRate, $title, $skrType);
             $key = $accountNumber . ':' . $taxRate;
             if (!isset($groups[$key])) {
                 $groups[$key] = [
@@ -301,7 +341,6 @@ final class VoucherIncomePositions
                 ];
             }
             $groups[$key]['gross_amount'] += (float) ($item['gross_amount'] ?? 0);
-            $title = trim((string) ($item['title'] ?? ''));
             if ($title !== '') {
                 $groups[$key]['titles'][] = $title;
             }

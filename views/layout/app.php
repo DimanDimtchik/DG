@@ -535,6 +535,10 @@ $belegeFocus = (string) ($belegeFocus ?? '');
             LedgerAccounts::tipPassThroughAccount($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
+        giftLiabilityAccount: <?= json_encode(
+            VoucherIncomePositions::giftLiabilityAccount($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
         documentLegalClauses: <?= json_encode(
             VoucherDocumentLegalClause::clientConfig(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
