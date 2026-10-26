@@ -290,16 +290,63 @@ final class LetterheadRenderer
     }
 
     /**
+     * Vertikaler Start des Brieftexts ab Blattoberkante (unter Anschriftenfenster).
+     *
+     * @param array<string, mixed> $cfg
+     */
+    private static function bodyContentTopFromPageMm(array $cfg): float
+    {
+        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
+
+        return (float) ($window['top_mm'] ?? 50) + (float) ($window['height_mm'] ?? 45) + 8.0;
+    }
+
+    /**
+     * Platz, den der Briefkopf im normalen Dokumentfluss ab Blattoberkante schon belegt
+     * (Header hat margin-top: −margin_top und sitzt damit am Blattrand).
+     *
+     * @param array<string, mixed> $cfg
+     */
+    private static function headerFlowHeightFromPageMm(array $cfg): float
+    {
+        $header = is_array($cfg['header'] ?? null) ? $cfg['header'] : [];
+        if (empty($header['show'])) {
+            return (float) ($cfg['page']['margin_top_mm'] ?? 17);
+        }
+        $form = strtoupper((string) ($header['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
+
+        // min-height Form A/B + margin-bottom 4mm (siehe stylesheet)
+        return $form + 4.0;
+    }
+
+    /**
+     * TipTap-/Editor-HTML: feste Breiten und Block-Schrumpfung entfernen.
+     */
+    private static function sanitizeBodyHtml(string $bodyHtml): string
+    {
+        $safe = class_exists('MailHtmlSanitizer')
+            ? MailHtmlSanitizer::clean($bodyHtml)
+            : strip_tags($bodyHtml, '<p><br><strong><b><em><i><u><s><del><mark><ul><ol><li><table><thead><tbody><tr><th><td><img><span><a>');
+        // TipTap/Editor-Breiten nicht in den Brief übernehmen
+        $safe = (string) preg_replace('/(?:max-|min-)?width\s*:\s*[^;"]+;?/i', '', $safe);
+        $safe = (string) preg_replace('/\s(?:width|max-width|min-width)\s*=\s*["\'][^"\']*["\']/i', '', $safe);
+        $safe = (string) preg_replace('/\sstyle\s*=\s*["\']\s*["\']/i', '', $safe);
+
+        return $safe;
+    }
+
+    /**
      * @param array<string, mixed> $cfg
      * @param array<string, mixed> $doc
      */
     private static function renderBody(array $cfg, array $doc): string
     {
-        $window = is_array($cfg['address_window'] ?? null) ? $cfg['address_window'] : [];
         $subjectCfg = is_array($cfg['subject'] ?? null) ? $cfg['subject'] : [];
-        $top = (float) ($window['top_mm'] ?? 50) + (float) ($window['height_mm'] ?? 45) + 8.0;
+        // padding-top nur die Reststrecke: Fenster-Absolutmaß − schon belegter Header-Fluss
+        // (früher: volles Absolutmaß zusätzlich zum Header → riesige Lücke Adresse→Text)
+        $padTop = max(0.0, self::bodyContentTopFromPageMm($cfg) - self::headerFlowHeightFromPageMm($cfg));
         $subject = trim((string) ($doc['subject'] ?? ''));
-        $html = '<section class="dg-lh-body-content" style="padding-top:' . self::mm($top) . '">';
+        $html = '<section class="dg-lh-body-content" style="padding-top:' . self::mm($padTop) . '">';
         if ($subject !== '') {
             $label = !empty($subjectCfg['show_label']) ? '<span class="dg-lh-subject__label">Betreff: </span>' : '';
             $weight = !empty($subjectCfg['bold']) ? ' dg-lh-subject--bold' : '';
@@ -311,13 +358,7 @@ final class LetterheadRenderer
         }
         $bodyHtml = trim((string) ($doc['body_html'] ?? ''));
         if ($bodyHtml !== '') {
-            $safe = class_exists('MailHtmlSanitizer')
-                ? MailHtmlSanitizer::clean($bodyHtml)
-                : strip_tags($bodyHtml, '<p><br><strong><b><em><i><u><s><del><mark><ul><ol><li><table><thead><tbody><tr><th><td><img><span><a>');
-            // TipTap/Editor-Breiten nicht in den Brief übernehmen
-            $safe = (string) preg_replace('/\s(?:width|max-width)\s*:\s*[^;"]+;?/i', '', $safe);
-            $safe = (string) preg_replace('/\s(?:width|max-width)\s*=\s*["\'][^"\']*["\']/i', '', $safe);
-            $html .= '<div class="dg-lh-rich">' . $safe . '</div>';
+            $html .= '<div class="dg-lh-rich">' . self::sanitizeBodyHtml($bodyHtml) . '</div>';
         } else {
             $paragraphs = is_array($doc['paragraphs'] ?? null) ? $doc['paragraphs'] : [];
             foreach ($paragraphs as $p) {
@@ -693,6 +734,7 @@ final class LetterheadRenderer
         $mt = (float) ($cfg['page']['margin_top_mm'] ?? 17);
         $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
         $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
+        $contentWidth = max(80.0, 210.0 - $ml - $mr);
 
         $pdfCss = '';
         if ($forPdf) {
@@ -748,7 +790,27 @@ body.dg-lh-body--pdf .dg-lh-footer__col {
   vertical-align: top !important;
   padding-right: 2mm !important;
 }
-body.dg-lh-body--pdf .dg-lh-body-content { page-break-inside: auto; }
+body.dg-lh-body--pdf .dg-lh-body-content {
+  page-break-inside: auto;
+  display: block !important;
+  width: {$contentWidth}mm !important;
+  max-width: {$contentWidth}mm !important;
+  box-sizing: border-box !important;
+}
+body.dg-lh-body--pdf .dg-lh-subject,
+body.dg-lh-body--pdf .dg-lh-greeting,
+body.dg-lh-body--pdf .dg-lh-p,
+body.dg-lh-body--pdf .dg-lh-closing,
+body.dg-lh-body--pdf .dg-lh-signature,
+body.dg-lh-body--pdf .dg-lh-rich,
+body.dg-lh-body--pdf .dg-lh-rich p,
+body.dg-lh-body--pdf .dg-lh-rich ul,
+body.dg-lh-body--pdf .dg-lh-rich ol,
+body.dg-lh-body--pdf .dg-lh-rich table {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
 PDFCSS;
         }
 
@@ -865,7 +927,7 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 .dg-lh-info__value { font-weight: 600; }
 .dg-lh-body-content {
   display: block;
-  width: 100%;
+  width: {$contentWidth}mm;
   max-width: 100%;
   box-sizing: border-box;
   clear: both;
