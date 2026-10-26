@@ -134,6 +134,84 @@ final class ContactRepository
     }
 
     /**
+     * Letzte Kontakte für Picker ohne Suchbegriff (z. B. „Kontakt öffnen“ im Writer).
+     *
+     * @return list<Contact>
+     */
+    public static function recentPicker(int $limit = 25, ?User $viewer = null): array
+    {
+        $limit = max(1, min(50, $limit));
+        [$where, $params] = self::buildSearchWhere('', $viewer);
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_contacts ' . $where . ' ORDER BY updated_at DESC, id DESC LIMIT ' . $limit
+        );
+        $stmt->execute($params);
+
+        $items = [];
+        while ($row = $stmt->fetch()) {
+            $contactId = (int) $row['id'];
+            if (EmployeeRetentionService::applyIfExpired($contactId)) {
+                $refetch = Database::pdo()->prepare('SELECT * FROM dg_contacts WHERE id = :id LIMIT 1');
+                $refetch->execute(['id' => $contactId]);
+                $row = $refetch->fetch() ?: $row;
+            }
+            $items[] = self::map($row);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{id: int, label: string, meta: string, customer_name: string, email: string, phone: string}>
+     */
+    public static function pickerRecent(int $limit = 25, ?User $viewer = null): array
+    {
+        $items = [];
+        foreach (self::recentPicker($limit, $viewer) as $contact) {
+            $label = trim($contact->companyName);
+            if ($label === '') {
+                $label = trim($contact->displayName);
+            }
+            if ($label === '') {
+                $label = trim($contact->firstName . ' ' . $contact->lastName);
+            }
+            if ($label === '') {
+                $label = trim($contact->email);
+            }
+            if ($label === '') {
+                $label = trim($contact->login);
+            }
+
+            $meta = [];
+            if ($contact->email !== '') {
+                $meta[] = $contact->email;
+            }
+            if ($contact->companyName !== '' && $label !== $contact->companyName) {
+                $meta[] = $contact->companyName;
+            }
+            if ($contact->customerNumber !== '') {
+                $meta[] = 'Kd.-Nr. ' . $contact->customerNumber;
+            }
+
+            $phone = trim($contact->phone1);
+            if ($phone === '') {
+                $phone = trim($contact->phone2);
+            }
+
+            $items[] = [
+                'id' => $contact->id,
+                'label' => $label,
+                'meta' => implode(' · ', $meta),
+                'customer_name' => $label,
+                'email' => trim($contact->email),
+                'phone' => $phone,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
      * Kontakt-Suchergebnisse für Picker (Terminkalender, Belege, …).
      *
      * @return list<array{id: int, label: string, meta: string, customer_name: string, email: string, phone: string}>

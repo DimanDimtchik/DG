@@ -615,7 +615,8 @@ $belegeFocus = (string) ($belegeFocus ?? '');
     </script>
     <script>
       window.dgWriterContactPicker = {
-        apiUrl: '/api/writer-assist'
+        apiUrl: '/api/writer-assist',
+        documentId: <?= (int) ($writerDocumentId ?? 0) ?>
       };
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/emoji-catalog.js')) ?>" defer></script>

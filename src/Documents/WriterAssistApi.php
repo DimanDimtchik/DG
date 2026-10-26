@@ -62,14 +62,19 @@ final class WriterAssistApi
     private static function contactSearch(User $user): never
     {
         $query = trim((string) ($_GET['q'] ?? ''));
-        if (mb_strlen($query) < 1) {
-            self::ok(['items' => []]);
-        }
+        $browse = !empty($_GET['browse']);
         if (!Database::isConfigured()) {
             self::ok(['items' => []]);
         }
 
-        $items = ContactRepository::pickerItems($query, 15, $user);
+        if (mb_strlen($query) < 1) {
+            if (!$browse) {
+                self::ok(['items' => []]);
+            }
+            $items = ContactRepository::pickerRecent(25, $user);
+        } else {
+            $items = ContactRepository::pickerItems($query, 15, $user);
+        }
         $out = [];
         foreach ($items as $item) {
             $out[] = [
@@ -99,7 +104,12 @@ final class WriterAssistApi
         self::ok([
             'id' => $contact->id,
             'label' => $contact->listLabel(),
+            'salutation' => $contact->salutation,
+            'first_name' => $contact->firstName,
+            'last_name' => $contact->lastName,
             'recipient_lines' => WriterDocumentLinkService::recipientLinesFromContact($contact),
+            'greetings' => WriterDocument::greetingPresetList($contact),
+            'default_greeting' => WriterDocument::defaultGreetingText($contact),
         ]);
     }
 

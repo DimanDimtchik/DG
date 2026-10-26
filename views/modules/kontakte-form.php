@@ -30,6 +30,12 @@ if ($isCompanyForm && $companyEmployees === []) {
         if ($kontakteReturnTo !== '' && str_contains($kontakteReturnTo, 'buchhaltung-beleg-form')) {
             $kontakteBackHref = $kontakteReturnTo;
             $kontakteBackLabel = 'Zurück zur Belegerfassung';
+        } elseif ($kontakteReturnTo !== '' && str_contains($kontakteReturnTo, 'dokumentenverfasser')) {
+            $kontakteBackHref = $kontakteReturnTo;
+            $kontakteBackLabel = 'Zurück zum Dokumentenverfasser';
+        } elseif ($kontakteReturnTo !== '' && str_starts_with($kontakteReturnTo, '/app?')) {
+            $kontakteBackHref = $kontakteReturnTo;
+            $kontakteBackLabel = 'Zurück';
         } else {
             $kontakteBackHref = '/app?page=kontakte';
             $kontakteBackLabel = 'Zurück zu Kontakten';

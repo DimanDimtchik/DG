@@ -1,5 +1,5 @@
 /**
- * Dokumentenverfasser: Kontakt suchen → Adresse + contact_id setzen.
+ * Dokumentenverfasser: Kontakt wählen / öffnen → Adresse + Anrede.
  */
 (function () {
   'use strict';
@@ -10,10 +10,11 @@
   var results = document.getElementById('dg-writer-contact-results');
   var contactIdInput = document.getElementById('dg-writer-contact-id');
   var recipient = document.getElementById('dg-writer-recipient-lines');
-  var actions = document.getElementById('dg-writer-contact-actions');
   var clearBtn = document.getElementById('dg-writer-contact-clear');
   var refillBtn = document.getElementById('dg-writer-contact-refill');
-  var openLink = document.getElementById('dg-writer-contact-open');
+  var openBtn = document.getElementById('dg-writer-contact-open');
+  var greetingSelect = document.getElementById('dg-writer-greeting-presets');
+  var greetingInput = document.getElementById('dg-writer-greeting');
   if (!search || !results || !contactIdInput || !recipient) {
     return;
   }
@@ -29,22 +30,61 @@
       .replace(/"/g, '&quot;');
   }
 
-  function showActions(show) {
-    if (actions) {
-      actions.hidden = !show;
+  function currentContactId() {
+    return parseInt(contactIdInput.value, 10) || 0;
+  }
+
+  function writerReturnUrl() {
+    var idInput = document.querySelector('#dg-writer-form input[name="id"]');
+    var docId = idInput ? parseInt(idInput.value, 10) || 0 : parseInt(String(cfg.documentId || 0), 10) || 0;
+    if (docId > 0) {
+      return '/app?page=dokumentenverfasser-form&action=edit&id=' + docId;
+    }
+    return '/app?page=dokumentenverfasser-form&action=new';
+  }
+
+  function syncOpenButton() {
+    if (!openBtn) {
+      return;
+    }
+    var id = currentContactId();
+    openBtn.setAttribute('data-has-contact', id > 0 ? '1' : '0');
+    openBtn.setAttribute('data-contact-id', String(id));
+    openBtn.textContent = id > 0 ? 'Kontakt öffnen' : 'Kontakt wählen';
+    if (clearBtn) {
+      clearBtn.hidden = id < 1;
+    }
+    if (refillBtn) {
+      refillBtn.hidden = id < 1;
     }
   }
 
-  function setOpenHref(id) {
-    if (!openLink) {
+  function fillGreetingPresets(list, defaultText) {
+    if (!greetingSelect || !list || !list.length) {
       return;
     }
-    if (id > 0) {
-      openLink.href = '/app?page=kontakte&action=edit&id=' + id;
-      openLink.hidden = false;
-    } else {
-      openLink.href = '#';
-      openLink.hidden = true;
+    var html = '<option value="">Vorlage übernehmen …</option>';
+    list.forEach(function (item) {
+      html +=
+        '<option value="' +
+        escapeHtml(item.text || '') +
+        '" data-text="' +
+        escapeHtml(item.text || '') +
+        '">' +
+        escapeHtml(item.label || '') +
+        '</option>';
+    });
+    greetingSelect.innerHTML = html;
+    if (greetingInput && defaultText) {
+      var current = (greetingInput.value || '').trim();
+      var looksPlaceholder =
+        current === '' ||
+        current.indexOf('…') !== -1 ||
+        current === 'Sehr geehrte/r ' ||
+        current === 'Sehr geehrte Damen und Herren,';
+      if (looksPlaceholder) {
+        greetingInput.value = defaultText;
+      }
     }
   }
 
@@ -60,8 +100,10 @@
     search.value = data.label || search.value;
     results.hidden = true;
     results.innerHTML = '';
-    showActions(id > 0);
-    setOpenHref(id);
+    syncOpenButton();
+    if (data.greetings) {
+      fillGreetingPresets(data.greetings, data.default_greeting || '');
+    }
   }
 
   function fetchAddress(id) {
@@ -92,15 +134,17 @@
           ? '<span class="dg-voucher-contact-results__meta">' + escapeHtml(item.meta) + '</span>'
           : '');
       btn.addEventListener('click', function () {
-        fetchAddress(item.id).then(function (payload) {
-          if (!payload || !payload.ok) {
-            window.alert((payload && payload.error) || 'Kontakt konnte nicht geladen werden.');
-            return;
-          }
-          applyContact(payload);
-        }).catch(function () {
-          window.alert('Kontakt konnte nicht geladen werden.');
-        });
+        fetchAddress(item.id)
+          .then(function (payload) {
+            if (!payload || !payload.ok) {
+              window.alert((payload && payload.error) || 'Kontakt konnte nicht geladen werden.');
+              return;
+            }
+            applyContact(payload);
+          })
+          .catch(function () {
+            window.alert('Kontakt konnte nicht geladen werden.');
+          });
       });
       results.appendChild(btn);
     });
@@ -132,6 +176,25 @@
       });
   }
 
+  function browseContacts() {
+    results.innerHTML = '<div class="dg-voucher-contact-results__empty">Kontakte werden geladen …</div>';
+    results.hidden = false;
+    search.focus();
+    fetch(apiUrl + '?action=contacts&browse=1', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (payload) {
+        renderItems((payload && payload.items) || []);
+      })
+      .catch(function () {
+        renderItems([]);
+      });
+  }
+
   search.addEventListener('input', function () {
     var q = search.value.trim();
     window.clearTimeout(timer);
@@ -147,18 +210,36 @@
   });
 
   document.addEventListener('click', function (ev) {
-    if (!results.hidden && !results.contains(ev.target) && ev.target !== search) {
+    if (
+      !results.hidden &&
+      !results.contains(ev.target) &&
+      ev.target !== search &&
+      ev.target !== openBtn &&
+      !(openBtn && openBtn.contains(ev.target))
+    ) {
       results.hidden = true;
     }
   });
+
+  if (openBtn) {
+    openBtn.addEventListener('click', function () {
+      var id = currentContactId();
+      if (id > 0) {
+        var ret = encodeURIComponent(writerReturnUrl());
+        window.location.href =
+          '/app?page=kontakte&action=edit&id=' + id + '&return_to=' + ret;
+        return;
+      }
+      browseContacts();
+    });
+  }
 
   if (clearBtn) {
     clearBtn.addEventListener('click', function () {
       contactIdInput.value = '0';
       lastAddress = null;
       search.value = '';
-      showActions(false);
-      setOpenHref(0);
+      syncOpenButton();
       results.hidden = true;
       results.innerHTML = '';
       search.focus();
@@ -167,7 +248,7 @@
 
   if (refillBtn) {
     refillBtn.addEventListener('click', function () {
-      var id = parseInt(contactIdInput.value, 10) || 0;
+      var id = currentContactId();
       if (id < 1) {
         return;
       }
@@ -186,9 +267,13 @@
     });
   }
 
-  var initialId = parseInt(contactIdInput.value, 10) || 0;
+  syncOpenButton();
+  var initialId = currentContactId();
   if (initialId > 0) {
-    showActions(true);
-    setOpenHref(initialId);
+    fetchAddress(initialId).then(function (payload) {
+      if (payload && payload.ok && payload.greetings) {
+        fillGreetingPresets(payload.greetings, null);
+      }
+    }).catch(function () {});
   }
 })();

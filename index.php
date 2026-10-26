@@ -5962,6 +5962,10 @@ $legalProductsConfig = LegalProductSettings::config();
                 $currentPage = 'kontakte';
                 $form = ContactRepository::toForm($contact);
                 $formError = null;
+                $kontakteReturnTo = trim((string) ($_GET['return_to'] ?? ''));
+                if ($kontakteReturnTo !== '' && (!str_starts_with($kontakteReturnTo, '/app?') || str_contains($kontakteReturnTo, '//'))) {
+                    $kontakteReturnTo = '';
+                }
                 $bankAccounts = $contact->bankAccounts !== [] ? $contact->bankAccounts : ContactRepository::defaultBankAccounts();
                 $employeeData = $contact->employeeData;
                 $employeeFiles = $contact->employeeFiles;
@@ -7455,18 +7459,27 @@ $legalProductsConfig = LegalProductSettings::config();
                         $writerDocumentId = null;
                         $writerForm = WriterDocument::empty();
                         $writerVersions = [];
-                        // Neues Dokument mit ?contact=… — Empfänger + Verknüpfung vorbefüllen
-                        $prefillContactId = (int) ($_GET['contact'] ?? 0);
-                        if ($prefillContactId > 0 && Database::isConfigured()) {
-                            $prefillContact = ContactRepository::findById($prefillContactId);
+                    }
+                    // ?contact= / ?contact_id= — Empfänger + Verknüpfung (auch nach Rückkehr vom Kontaktformular)
+                    $prefillContactId = (int) ($_GET['contact'] ?? $_GET['contact_id'] ?? 0);
+                    if ($prefillContactId > 0 && Database::isConfigured() && is_array($writerForm ?? null)) {
+                        $prefillContact = ContactRepository::findById($prefillContactId);
+                        if (
+                            $prefillContact !== null
+                            && ContactAccessResolver::canViewContact($user, $prefillContact)
+                        ) {
+                            $writerForm['contact_id'] = $prefillContact->id;
+                            $writerForm['recipient_lines'] = WriterDocumentLinkService::recipientLinesFromContact(
+                                $prefillContact
+                            );
+                            $currentGreeting = trim((string) ($writerForm['greeting'] ?? ''));
                             if (
-                                $prefillContact !== null
-                                && ContactAccessResolver::canViewContact($user, $prefillContact)
+                                $currentGreeting === ''
+                                || str_contains($currentGreeting, '…')
+                                || $currentGreeting === 'Sehr geehrte/r '
+                                || $currentGreeting === 'Sehr geehrte Damen und Herren,'
                             ) {
-                                $writerForm['contact_id'] = $prefillContact->id;
-                                $writerForm['recipient_lines'] = WriterDocumentLinkService::recipientLinesFromContact(
-                                    $prefillContact
-                                );
+                                $writerForm['greeting'] = WriterDocument::defaultGreetingText($prefillContact);
                             }
                         }
                     }

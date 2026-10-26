@@ -129,21 +129,73 @@ final class WriterDocument
     /**
      * @return array<string, string> Vorlage-Text => Kurzlabel
      */
-    public static function greetingPresets(): array
+    public static function greetingPresets(?Contact $contact = null): array
     {
         $configured = class_exists('LetterheadSettings')
             ? LetterheadSettings::resolvedPhrases()['greeting']
             : 'Sehr geehrte/r ';
-        $presets = [
+        $last = $contact !== null ? trim($contact->lastName) : '';
+        $first = $contact !== null ? trim($contact->firstName) : '';
+        $lastOrEllipsis = $last !== '' ? $last : '…';
+        $firstOrEllipsis = $first !== '' ? $first : '…';
+        $liebe = 'Liebe';
+        if ($contact !== null) {
+            $sal = mb_strtolower(trim($contact->salutation));
+            if (str_contains($sal, 'herr')) {
+                $liebe = 'Lieber';
+            }
+        }
+
+        return [
             $configured => 'Standard (Einstellungen)',
             'Sehr geehrte Damen und Herren,' => 'Neutral',
-            'Sehr geehrte Frau …,' => 'Frau',
-            'Sehr geehrter Herr …,' => 'Herr',
+            'Sehr geehrte Frau ' . $lastOrEllipsis . ',' => 'Frau',
+            'Sehr geehrter Herr ' . $lastOrEllipsis . ',' => 'Herr',
             'Guten Tag,' => 'Kurz',
-            'Liebe …,' => 'Persönlich',
+            $liebe . ' ' . $firstOrEllipsis . ',' => 'Persönlich',
         ];
+    }
 
-        return $presets;
+    /**
+     * Für JSON/Picker: Anrede-Vorlagen mit Kontaktnamen.
+     *
+     * @return list<array{id: string, label: string, text: string}>
+     */
+    public static function greetingPresetList(?Contact $contact = null): array
+    {
+        $out = [];
+        foreach (self::greetingPresets($contact) as $text => $label) {
+            $out[] = [
+                'id' => $label,
+                'label' => $label,
+                'text' => $text,
+            ];
+        }
+
+        return $out;
+    }
+
+    public static function defaultGreetingText(?Contact $contact): string
+    {
+        if ($contact === null) {
+            return 'Sehr geehrte Damen und Herren,';
+        }
+        $sal = mb_strtolower(trim($contact->salutation));
+        $last = trim($contact->lastName);
+        $first = trim($contact->firstName);
+        if (str_contains($sal, 'frau') && $last !== '') {
+            return 'Sehr geehrte Frau ' . $last . ',';
+        }
+        if (str_contains($sal, 'herr') && $last !== '') {
+            return 'Sehr geehrter Herr ' . $last . ',';
+        }
+        if ($first !== '') {
+            $liebe = str_contains($sal, 'herr') ? 'Lieber' : 'Liebe';
+
+            return $liebe . ' ' . $first . ',';
+        }
+
+        return 'Sehr geehrte Damen und Herren,';
     }
 
     /**
