@@ -29,10 +29,8 @@ ensureTable($pdo);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $path   = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/');
 
-// --- Admin routes (Bearer token) ---
-$adminToken = trim((string) ($dbConfig['admin_token'] ?? ''));
-
-if ($path === 'admin/licenses' && $method === 'GET' && authenticateAdmin($adminToken)) {
+// --- Admin routes (Bearer token + optional IP-Allowlist) ---
+if ($path === 'admin/licenses' && $method === 'GET' && assertAdminAccess($dbConfig)) {
     $domain = strtolower(trim((string) ($_GET['domain'] ?? '')));
     $key = trim((string) ($_GET['key'] ?? ''));
     if ($domain !== '' && $key !== '') {
@@ -52,7 +50,7 @@ if ($path === 'admin/licenses' && $method === 'GET' && authenticateAdmin($adminT
     exit;
 }
 
-if ($path === 'admin/licenses' && $method === 'POST' && authenticateAdmin($adminToken)) {
+if ($path === 'admin/licenses' && $method === 'POST' && assertAdminAccess($dbConfig)) {
     $input = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
     $domain   = strtolower(trim((string) ($input['domain'] ?? '')));
     $plan     = trim((string) ($input['plan'] ?? 'business'));
@@ -111,7 +109,7 @@ if ($path === 'admin/licenses' && $method === 'POST' && authenticateAdmin($admin
     exit;
 }
 
-if ($path === 'admin/licenses/by-key' && $method === 'PATCH' && authenticateAdmin($adminToken)) {
+if ($path === 'admin/licenses/by-key' && $method === 'PATCH' && assertAdminAccess($dbConfig)) {
     $input = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
     $licenseKey = strtoupper(trim((string) ($input['license_key'] ?? '')));
     $status = trim((string) ($input['status'] ?? ''));
@@ -131,7 +129,7 @@ if ($path === 'admin/licenses/by-key' && $method === 'PATCH' && authenticateAdmi
     exit;
 }
 
-if (str_starts_with($path, 'admin/licenses/') && $method === 'PATCH' && authenticateAdmin($adminToken)) {
+if (str_starts_with($path, 'admin/licenses/') && $method === 'PATCH' && assertAdminAccess($dbConfig)) {
     $id = (int) substr($path, strlen('admin/licenses/'));
     $input = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
     $status = trim((string) ($input['status'] ?? ''));
@@ -151,7 +149,7 @@ if (str_starts_with($path, 'admin/licenses/') && $method === 'PATCH' && authenti
     exit;
 }
 
-if (str_starts_with($path, 'admin/licenses/') && $method === 'DELETE' && authenticateAdmin($adminToken)) {
+if (str_starts_with($path, 'admin/licenses/') && $method === 'DELETE' && assertAdminAccess($dbConfig)) {
     $id = (int) substr($path, strlen('admin/licenses/'));
     $pdo->prepare('UPDATE lic_licenses SET status = :s WHERE id = :id')->execute(['s' => 'revoked', 'id' => $id]);
     echo json_encode(['revoked' => true]);
@@ -160,11 +158,13 @@ if (str_starts_with($path, 'admin/licenses/') && $method === 'DELETE' && authent
 
 // --- Public: license check ---
 if ($path === 'check' && $method === 'POST') {
+    $ip = clientIp();
+    enforceCheckRateLimit($pdo, $ip, $dbConfig);
+
     $input = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
     $domain     = strtolower(trim((string) ($input['domain'] ?? '')));
     $licenseKey = trim((string) ($input['license_key'] ?? ''));
     $version    = trim((string) ($input['version'] ?? ''));
-    $ip         = $_SERVER['REMOTE_ADDR'] ?? '';
 
     if ($domain === '' || $licenseKey === '') {
         http_response_code(400);
@@ -223,8 +223,12 @@ readfile(__DIR__ . '/login.html');
 
 // --- Helpers ---
 
-function authenticateAdmin(string $expectedToken): bool
+/**
+ * @param array<string, mixed> $dbConfig
+ */
+function assertAdminAccess(array $dbConfig): bool
 {
+    $expectedToken = trim((string) ($dbConfig['admin_token'] ?? ''));
     if ($expectedToken === '') {
         http_response_code(403);
         echo json_encode(['error' => 'no admin token configured']);
@@ -242,7 +246,66 @@ function authenticateAdmin(string $expectedToken): bool
         echo json_encode(['error' => 'forbidden']);
         exit;
     }
+
+    $allow = $dbConfig['admin_allow_ips'] ?? [];
+    if (is_array($allow) && $allow !== []) {
+        $ip = clientIp();
+        $normalized = array_values(array_filter(array_map(
+            static fn ($v): string => trim((string) $v),
+            $allow
+        )));
+        if ($normalized !== [] && !in_array($ip, $normalized, true)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'ip not allowed']);
+            exit;
+        }
+    }
+
     return true;
+}
+
+function clientIp(): string
+{
+    $ip = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+
+    return $ip !== '' ? $ip : '0.0.0.0';
+}
+
+/**
+ * @param array<string, mixed> $dbConfig
+ */
+function enforceCheckRateLimit(PDO $pdo, string $ip, array $dbConfig): void
+{
+    $perMinute = max(1, (int) ($dbConfig['rate_limit_per_minute'] ?? 60));
+    $failPerMinute = max(1, (int) ($dbConfig['rate_limit_fail_per_minute'] ?? 20));
+
+    try {
+        $totalStmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM lic_check_log
+             WHERE ip = :ip AND created_at >= (NOW() - INTERVAL 1 MINUTE)'
+        );
+        $totalStmt->execute(['ip' => $ip]);
+        $total = (int) $totalStmt->fetchColumn();
+        if ($total >= $perMinute) {
+            http_response_code(429);
+            echo json_encode(['valid' => false, 'error' => 'rate_limited']);
+            exit;
+        }
+
+        $failStmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM lic_check_log
+             WHERE ip = :ip AND valid = 0 AND created_at >= (NOW() - INTERVAL 1 MINUTE)'
+        );
+        $failStmt->execute(['ip' => $ip]);
+        $fails = (int) $failStmt->fetchColumn();
+        if ($fails >= $failPerMinute) {
+            http_response_code(429);
+            echo json_encode(['valid' => false, 'error' => 'rate_limited']);
+            exit;
+        }
+    } catch (Throwable) {
+        // Rate-Limit darf Check nicht blockieren, wenn Log-Tabelle fehlt/fehlerhaft.
+    }
 }
 
 function isValidLicenseStatus(string $status): bool
