@@ -159,6 +159,14 @@ final class MenuRegistry
                 'href' => '/app?page=rezeptur',
             ];
         }
+        if (self::isReklamationEnabled()) {
+            $items[] = [
+                'slug' => 'reklamation',
+                'label' => 'Reklamation',
+                'icon' => 'mail',
+                'href' => '/app?page=reklamation',
+            ];
+        }
 
         return ['label' => 'Warenwirtschaft', 'items' => $items];
     }
@@ -260,21 +268,29 @@ final class MenuRegistry
             return null;
         }
 
-        return [
-            'label' => 'Website',
-            'items' => [
-                [
-                    'slug' => 'website-seiten',
-                    'label' => 'Seiten',
-                    'icon' => 'document',
-                    'href' => '/app?page=website-seiten',
-                ],
-                [
-                    'slug' => 'website-formulare',
-                    'label' => 'Formulare',
-                    'icon' => 'mail',
-                    'href' => '/app?page=website-formulare',
-                ],
+        $items = [
+            [
+                'slug' => 'website-seiten',
+                'label' => 'Seiten',
+                'icon' => 'document',
+                'href' => '/app?page=website-seiten',
+            ],
+            [
+                'slug' => 'website-formulare',
+                'label' => 'Formulare',
+                'icon' => 'mail',
+                'href' => '/app?page=website-formulare',
+            ],
+        ];
+        if (self::isGutscheinEnabled()) {
+            $items[] = [
+                'slug' => 'website-gutschein-flyer',
+                'label' => 'Gutschein-Flyer',
+                'icon' => 'document',
+                'href' => '/app?page=website-gutschein-flyer',
+            ];
+        }
+        $items = array_merge($items, [
                 [
                     'slug' => 'website-statistik',
                     'label' => 'Statistik',
@@ -299,8 +315,9 @@ final class MenuRegistry
                     'icon' => 'palette',
                     'href' => '/app?page=website-design',
                 ],
-            ],
-        ];
+        ]);
+
+        return ['label' => 'Website', 'items' => $items];
     }
 
     /**
@@ -351,7 +368,7 @@ final class MenuRegistry
             return null;
         }
 
-        return [
+        $section = [
             'label' => 'Buchhaltung',
             'items' => [
                 [
@@ -367,10 +384,10 @@ final class MenuRegistry
                     'href' => '/app?page=buchhaltung-belege',
                 ],
                 [
-                    'slug' => 'buchhaltung-gutscheine',
+                    'slug' => 'gutscheine',
                     'label' => 'Gutscheine',
                     'icon' => 'receipt',
-                    'href' => '/app?page=buchhaltung-gutscheine',
+                    'href' => '/app?page=gutscheine',
                 ],
                 [
                     'slug' => 'buchhaltung-ueberweisungen',
@@ -452,6 +469,15 @@ final class MenuRegistry
                 ],
             ],
         ];
+
+        if (!self::isGutscheinEnabled()) {
+            $section['items'] = array_values(array_filter(
+                $section['items'],
+                static fn (array $item): bool => $item['slug'] !== 'gutscheine'
+            ));
+        }
+
+        return $section;
     }
 
     /** Admin oder Modul-Berechtigung „buchhaltung“. */
@@ -485,7 +511,12 @@ final class MenuRegistry
             'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Auftrag, Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
-            'buchhaltung-gutscheine' => 'Geschenkgutscheine anlegen und Restwerte verwalten — Einlösung auf der Rechnung.',
+            'gutscheine' => 'Mehrzweck-Gutscheine verkaufen, einlösen und Entschuldigungen aus Reklamation.',
+            'gutscheine-form' => 'Gutschein anlegen oder stornieren.',
+            'reklamation' => 'Reklamationen von der Annahme bis zu Maßnahmen und Entschuldigungs-Gutschein.',
+            'reklamation-form' => 'Reklamation erfassen, Maßnahmen festlegen und Entschuldigungs-Gutschein ausstellen.',
+            'website-gutschein-flyer' => 'Schlichten Gutschein-Flyer drucken (Code, Betrag, Gültigkeit).',
+            'buchhaltung-gutscheine' => 'Weiterleitung auf die Gutschein-Verwaltung.',
             'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',
@@ -664,7 +695,6 @@ final class MenuRegistry
             $slug === 'buchhaltung-konten'
             || $slug === 'buchhaltung-belege'
             || $slug === 'buchhaltung-beleg-form'
-            || $slug === 'buchhaltung-gutscheine'
             || $slug === 'buchhaltung-ueberweisungen'
             || $slug === 'buchhaltung-kontenuebersicht'
             || $slug === 'buchhaltung-opos'
@@ -693,6 +723,10 @@ final class MenuRegistry
 
         if ($slug === 'support-zuschauen') {
             return class_exists('SupportSession') && SupportSession::isActive();
+        }
+
+        if ($slug === 'website-gutschein-flyer') {
+            return self::isGutscheinEnabled() && self::canAccessWebsite($user);
         }
 
         if (
@@ -729,6 +763,22 @@ final class MenuRegistry
         if ($slug === 'rezeptur' || $slug === 'rezeptur-form'
             || $slug === 'rezeptur-maschinen' || $slug === 'rezeptur-maschine-form') {
             return self::isRezepturEnabled()
+                && DepartmentAccess::userCanManageArticleCatalog($user)
+                && RoleResolver::canEdit($user);
+        }
+
+        // Gutscheine: Buchhaltung ODER Artikel-/Warenwirtschaft (Menü steht unter Buchhaltung).
+        if ($slug === 'gutscheine' || $slug === 'gutscheine-form' || $slug === 'buchhaltung-gutscheine') {
+            if (!self::isGutscheinEnabled()) {
+                return false;
+            }
+
+            return self::canAccessBuchhaltung($user)
+                || (DepartmentAccess::userCanManageArticleCatalog($user) && RoleResolver::canEdit($user));
+        }
+
+        if ($slug === 'reklamation' || $slug === 'reklamation-form') {
+            return self::isReklamationEnabled()
                 && DepartmentAccess::userCanManageArticleCatalog($user)
                 && RoleResolver::canEdit($user);
         }
@@ -801,5 +851,17 @@ final class MenuRegistry
     public static function isRezepturEnabled(): bool
     {
         return (bool) App::config('features.rezeptur', true);
+    }
+
+    /** Feature-Flag Gutscheine. Abschalten: `features.gutschein` => false. */
+    public static function isGutscheinEnabled(): bool
+    {
+        return (bool) App::config('features.gutschein', true);
+    }
+
+    /** Feature-Flag Reklamation. Abschalten: `features.reklamation` => false. */
+    public static function isReklamationEnabled(): bool
+    {
+        return (bool) App::config('features.reklamation', true);
     }
 }

@@ -843,12 +843,45 @@
       return 0;
     }
     var sum = 0;
+    var saleSum = 0;
     giftBody.querySelectorAll('.dg-voucher-gift__row').forEach(function (row) {
       var amountField = row.querySelector('.dg-voucher-gift-amount');
-      sum += parseAmount(amountField ? amountField.value : '');
+      var amount = parseAmount(amountField ? amountField.value : '');
+      var kindField = row.querySelector('.dg-voucher-gift-kind');
+      if (kindField && kindField.value === 'sale') {
+        saleSum += amount;
+      } else {
+        sum += amount;
+      }
     });
     giftSumEl.textContent = formatAmount(sum);
+    var giftSaleSumEl = document.getElementById('dg-voucher-gift-sale-sum');
+    if (giftSaleSumEl) {
+      giftSaleSumEl.textContent = formatAmount(saleSum);
+    }
     return sum;
+  }
+
+  /** Verkauf: Bezeichnung statt Suche; Einlösung: Gutschein-Suche. */
+  function applyGiftKind(row) {
+    if (!row) {
+      return;
+    }
+    var kindField = row.querySelector('.dg-voucher-gift-kind');
+    var kind = kindField && kindField.value === 'sale' ? 'sale' : 'redeem';
+    row.setAttribute('data-gift-kind', kind);
+    var searchWrap = row.querySelector('.dg-voucher-gift-search-wrap');
+    var titleField = row.querySelector('.dg-voucher-gift-title');
+    var remainingField = row.querySelector('.dg-voucher-gift-remaining');
+    if (searchWrap) {
+      searchWrap.hidden = kind === 'sale';
+    }
+    if (titleField && titleField.tagName === 'INPUT' && titleField.type === 'text') {
+      titleField.hidden = kind !== 'sale';
+    }
+    if (remainingField && kind === 'sale') {
+      remainingField.value = '';
+    }
   }
 
   function reindexGiftRows() {
@@ -859,21 +892,29 @@
       row.setAttribute('data-gift-index', String(index));
       row.querySelectorAll('[name]').forEach(function (field) {
         var name = field.getAttribute('name') || '';
-        field.setAttribute('name', name.replace(/gift_redemptions\[\d+]/, 'gift_redemptions[' + index + ']'));
+        field.setAttribute('name', name.replace(/gift_(redemptions|lines)\[\d+]/, 'gift_$1[' + index + ']'));
       });
-      ['dg-voucher-gift-id', 'dg-voucher-gift-code', 'dg-voucher-gift-title', 'dg-voucher-gift-amount'].forEach(function (cls) {
-        var el = row.querySelector('.' + cls);
-        if (!el) {
-          return;
+      // Zeilen-Template (Cloud-Stil gift_lines) hat noch keine name-Attribute → setzen.
+      var giftLinesMode = !!row.querySelector('.dg-voucher-gift-kind');
+      var prefix = giftLinesMode ? 'gift_lines' : 'gift_redemptions';
+      var fieldNames = giftLinesMode
+        ? {
+          'dg-voucher-gift-kind': 'line_kind',
+          'dg-voucher-gift-id': 'gift_voucher_id',
+          'dg-voucher-gift-code': 'gift_code',
+          'dg-voucher-gift-title': 'title',
+          'dg-voucher-gift-amount': 'amount'
         }
-        if (cls === 'dg-voucher-gift-id') {
-          el.name = 'gift_redemptions[' + index + '][gift_voucher_id]';
-        } else if (cls === 'dg-voucher-gift-code') {
-          el.name = 'gift_redemptions[' + index + '][code]';
-        } else if (cls === 'dg-voucher-gift-title') {
-          el.name = 'gift_redemptions[' + index + '][title]';
-        } else if (cls === 'dg-voucher-gift-amount') {
-          el.name = 'gift_redemptions[' + index + '][amount_gross]';
+        : {
+          'dg-voucher-gift-id': 'gift_voucher_id',
+          'dg-voucher-gift-code': 'code',
+          'dg-voucher-gift-title': 'title',
+          'dg-voucher-gift-amount': 'amount_gross'
+        };
+      Object.keys(fieldNames).forEach(function (cls) {
+        var el = row.querySelector('.' + cls);
+        if (el) {
+          el.name = prefix + '[' + index + '][' + fieldNames[cls] + ']';
         }
       });
     });
@@ -891,6 +932,21 @@
     var remainingField = row.querySelector('.dg-voucher-gift-remaining');
     var amountField = row.querySelector('.dg-voucher-gift-amount');
     var removeBtn = row.querySelector('.dg-voucher-gift-remove');
+    var kindField = row.querySelector('.dg-voucher-gift-kind');
+
+    if (kindField) {
+      kindField.addEventListener('change', function () {
+        // Art gewechselt: Gutschein-Zuordnung zurücksetzen (Verkauf erzeugt neuen Code beim Speichern).
+        if (idField) idField.value = '';
+        if (codeField) codeField.value = '';
+        if (titleField) titleField.value = '';
+        if (query) query.value = '';
+        if (remainingField) remainingField.value = '';
+        applyGiftKind(row);
+        syncGiftSum();
+      });
+      applyGiftKind(row);
+    }
 
     function pickGift(item) {
       if (idField) idField.value = String(item.id || '');
@@ -974,6 +1030,10 @@
           if (query) query.value = '';
           if (remainingField) remainingField.value = '';
           if (amountField) amountField.value = '';
+          if (kindField) {
+            kindField.value = 'redeem';
+            applyGiftKind(row);
+          }
           syncGiftSum();
           return;
         }

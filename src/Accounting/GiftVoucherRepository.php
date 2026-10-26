@@ -3,13 +3,66 @@
 declare(strict_types=1);
 
 /**
- * Geschenkgutscheine (Stamm) und Einlösung auf Erlös-Belegen.
+ * Gutscheine (Stamm) — Geschenk-/Mehrzweckgutscheine und Entschuldigungs-Gutscheine —
+ * und Einlösung auf Belegen (dg_voucher_gift_redemptions).
+ *
+ * Schema: Migration 114 (+118: voucher_type, complaint_id, liability_account, expense_account).
+ * Zeilen enthalten Aliase für Cloud-Views: amount = face_value_gross, remaining = remaining_gross,
+ * issue_voucher_id = issued_voucher_id.
  */
 final class GiftVoucherRepository
 {
+    public const TYPE_SALE = 'sale';
+    public const TYPE_APOLOGY = 'apology';
+
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_REDEEMED = 'redeemed';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_EXPIRED = 'expired';
+
     public static function ensureTables(): void
     {
         MigrationRunner::runPending();
+    }
+
+    /** Alias für Cloud-Code. */
+    public static function ensureReady(): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+        self::ensureTables();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function typeOptions(): array
+    {
+        return [
+            self::TYPE_SALE => 'Geschenk (Verkauf)',
+            self::TYPE_APOLOGY => 'Entschuldigung (Garantieleistung)',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_ACTIVE => 'Aktiv',
+            self::STATUS_REDEEMED => 'Vollständig eingelöst',
+            self::STATUS_CANCELLED => 'Storniert',
+            self::STATUS_EXPIRED => 'Verfallen',
+        ];
+    }
+
+    public static function sanitizeType(string $type): string
+    {
+        $type = strtolower(trim($type));
+
+        return isset(self::typeOptions()[$type]) ? $type : self::TYPE_SALE;
     }
 
     /**
@@ -47,18 +100,34 @@ final class GiftVoucherRepository
     }
 
     /**
+     * Master: listAll(300) · Cloud: listAll('active', 200).
+     *
+     * @param int|string|null $statusOrLimit int = Limit (Master-Aufruf), string = Status-Filter
      * @return list<array<string, mixed>>
      */
-    public static function listAll(int $limit = 200): array
+    public static function listAll(int|string|null $statusOrLimit = null, int $limit = 200): array
     {
         self::ensureTables();
         if (!Database::isConfigured()) {
             return [];
         }
+        $status = null;
+        if (is_int($statusOrLimit)) {
+            $limit = $statusOrLimit;
+        } elseif (is_string($statusOrLimit) && trim($statusOrLimit) !== '') {
+            $status = trim($statusOrLimit);
+        }
         $limit = max(1, min(500, $limit));
-        $stmt = Database::pdo()->query(
-            'SELECT * FROM dg_gift_vouchers ORDER BY created_at DESC, id DESC LIMIT ' . $limit
-        );
+
+        $sql = 'SELECT * FROM dg_gift_vouchers';
+        $params = [];
+        if ($status !== null) {
+            $sql .= ' WHERE status = :status';
+            $params['status'] = $status;
+        }
+        $sql .= ' ORDER BY created_at DESC, id DESC LIMIT ' . $limit;
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
         $out = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $out[] = self::normalizeRow($row);
@@ -67,6 +136,9 @@ final class GiftVoucherRepository
         return $out;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public static function findById(int $id): ?array
     {
         self::ensureTables();
@@ -80,6 +152,19 @@ final class GiftVoucherRepository
         return $row ? self::normalizeRow($row) : null;
     }
 
+    /**
+     * Alias für Cloud-Code.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function find(int $id): ?array
+    {
+        return self::findById($id);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
     public static function findByCode(string $code): ?array
     {
         self::ensureTables();
@@ -95,20 +180,27 @@ final class GiftVoucherRepository
     }
 
     /**
+     * Legt einen Gutschein an und liefert die neue ID (Cloud-Kompatibilität; Master-Aufrufer ignorieren den Rückgabewert).
+     *
+     * Eingabe: face_value_gross ODER amount; optional remaining_gross, voucher_type, complaint_id,
+     * issued_voucher_id (Alias issue_voucher_id), liability_account, expense_account, contact_id, code, title,
+     * valid_until, notes. Ist der Schlüssel valid_until nicht gesetzt, gilt GiftVoucherSettings::default_valid_days;
+     * ein leerer String bedeutet bewusst „ohne Ablaufdatum“.
+     *
      * @param array<string, mixed> $input
-     * @return array<string, mixed>
      */
-    public static function create(array $input, ?int $userId): array
+    public static function create(array $input, ?int $userId = null): int
     {
         self::ensureTables();
-        $code = self::normalizeCode((string) ($input['code'] ?? ''));
-        if ($code === '') {
-            $code = self::generateCode();
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht konfiguriert.');
         }
-        if (self::findByCode($code) !== null) {
-            throw new InvalidArgumentException('Gutschein-Code ist bereits vergeben.');
-        }
-        $face = round(max(0.0, VoucherRepository::parseMoney($input['face_value_gross'] ?? 0)), 2);
+
+        $settings = GiftVoucherSettings::get();
+        $type = self::sanitizeType((string) ($input['voucher_type'] ?? self::TYPE_SALE));
+
+        $faceRaw = $input['face_value_gross'] ?? $input['amount'] ?? 0;
+        $face = round(max(0.0, VoucherRepository::parseMoney($faceRaw)), 2);
         if ($face <= 0.0) {
             throw new InvalidArgumentException('Nennwert muss größer als 0 sein.');
         }
@@ -118,41 +210,111 @@ final class GiftVoucherRepository
         if ($remaining > $face) {
             $remaining = $face;
         }
-        $contactId = (int) ($input['contact_id'] ?? 0);
-        $validUntil = trim((string) ($input['valid_until'] ?? ''));
+
+        $code = self::normalizeCode((string) ($input['code'] ?? ''));
+        if ($code === '') {
+            $code = self::generateCode();
+        }
+        if (self::findByCode($code) !== null) {
+            throw new InvalidArgumentException('Gutschein-Code ist bereits vergeben.');
+        }
+
+        if (array_key_exists('valid_until', $input)) {
+            $validUntil = trim((string) $input['valid_until']);
+        } else {
+            $validUntil = $settings['default_valid_days'] > 0
+                ? date('Y-m-d', strtotime('+' . $settings['default_valid_days'] . ' days'))
+                : '';
+        }
         if ($validUntil !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $validUntil)) {
             throw new InvalidArgumentException('Ungültiges Gültig-bis-Datum.');
         }
-        $title = trim((string) ($input['title'] ?? ''));
-        if ($title === '') {
-            $title = 'Geschenkgutschein';
+
+        $liability = preg_replace('/\D/', '', (string) ($input['liability_account'] ?? $settings['liability_account'])) ?? '';
+        if ($liability === '') {
+            $liability = $settings['liability_account'];
+        }
+        $expense = '';
+        if ($type === self::TYPE_APOLOGY) {
+            $expense = preg_replace('/\D/', '', (string) ($input['expense_account'] ?? $settings['expense_account'])) ?? '';
+            if ($expense === '') {
+                $expense = $settings['expense_account'];
+            }
         }
 
+        $contactId = max(0, (int) ($input['contact_id'] ?? 0));
+        $complaintId = max(0, (int) ($input['complaint_id'] ?? 0));
+        $issuedVoucherId = max(0, (int) ($input['issued_voucher_id'] ?? $input['issue_voucher_id'] ?? 0));
+
+        $title = trim((string) ($input['title'] ?? ''));
+        if ($title === '') {
+            $title = $type === self::TYPE_APOLOGY ? 'Entschuldigungs-Gutschein' : 'Geschenkgutschein';
+        }
+        $notes = trim((string) ($input['notes'] ?? ''));
+
         $stmt = Database::pdo()->prepare(
-            'INSERT INTO dg_gift_vouchers
-             (code, title, contact_id, face_value_gross, remaining_gross, status, valid_until, notes, created_by)
-             VALUES
-             (:code, :title, :contact_id, :face, :remaining, :status, :valid_until, :notes, :created_by)'
+            'INSERT INTO dg_gift_vouchers (
+                code, voucher_type, title, contact_id, complaint_id, face_value_gross, remaining_gross,
+                status, valid_until, issued_voucher_id, liability_account, expense_account, notes, created_by
+            ) VALUES (
+                :code, :voucher_type, :title, :contact_id, :complaint_id, :face, :remaining,
+                :status, :valid_until, :issued_voucher_id, :liability_account, :expense_account, :notes, :created_by
+            )'
         );
         $stmt->execute([
             'code' => $code,
+            'voucher_type' => $type,
             'title' => mb_substr($title, 0, 191),
             'contact_id' => $contactId > 0 ? $contactId : null,
+            'complaint_id' => $complaintId > 0 ? $complaintId : null,
             'face' => $face,
             'remaining' => $remaining,
-            'status' => $remaining <= 0.0 ? 'redeemed' : 'active',
+            'status' => $remaining <= 0.0 ? self::STATUS_REDEEMED : self::STATUS_ACTIVE,
             'valid_until' => $validUntil !== '' ? $validUntil : null,
-            'notes' => trim((string) ($input['notes'] ?? '')) ?: null,
+            'issued_voucher_id' => $issuedVoucherId > 0 ? $issuedVoucherId : null,
+            'liability_account' => mb_substr($liability, 0, 16),
+            'expense_account' => mb_substr($expense, 0, 16),
+            'notes' => $notes !== '' ? $notes : null,
             'created_by' => $userId !== null && $userId > 0 ? $userId : null,
         ]);
 
-        $id = (int) Database::pdo()->lastInsertId();
+        return (int) Database::pdo()->lastInsertId();
+    }
+
+    /**
+     * Stornieren (nur unberührte Gutscheine).
+     */
+    public static function cancel(int $id): void
+    {
         $row = self::findById($id);
         if ($row === null) {
-            throw new RuntimeException('Gutschein konnte nicht geladen werden.');
+            throw new InvalidArgumentException('Gutschein nicht gefunden.');
         }
+        if ((float) ($row['remaining_gross'] ?? 0) < (float) ($row['face_value_gross'] ?? 0) - 0.001) {
+            throw new InvalidArgumentException('Bereits teilweise eingelöste Gutscheine können nicht storniert werden.');
+        }
+        Database::pdo()->prepare(
+            'UPDATE dg_gift_vouchers SET status = :status, remaining_gross = 0 WHERE id = :id'
+        )->execute(['status' => self::STATUS_CANCELLED, 'id' => $id]);
+    }
 
-        return $row;
+    /**
+     * Status aus Restwert / Ablaufdatum neu bestimmen (stornierte bleiben storniert).
+     */
+    public static function refreshStatus(int $id): void
+    {
+        $row = self::findById($id);
+        if ($row === null || (string) ($row['status'] ?? '') === self::STATUS_CANCELLED) {
+            return;
+        }
+        $remaining = round((float) ($row['remaining_gross'] ?? 0), 2);
+        $status = $remaining <= 0.001 ? self::STATUS_REDEEMED : self::STATUS_ACTIVE;
+        $validUntil = (string) ($row['valid_until'] ?? '');
+        if ($status === self::STATUS_ACTIVE && $validUntil !== '' && $validUntil < date('Y-m-d')) {
+            $status = self::STATUS_EXPIRED;
+        }
+        Database::pdo()->prepare('UPDATE dg_gift_vouchers SET status = :status WHERE id = :id')
+            ->execute(['status' => $status, 'id' => $id]);
     }
 
     /**
@@ -301,10 +463,16 @@ final class GiftVoucherRepository
         return round($total, 2);
     }
 
-    private static function adjustRemaining(int $giftId, float $delta): void
+    /**
+     * Restwert ändern (delta < 0 = Einlösung, > 0 = Rückbuchung) und Status nachziehen.
+     */
+    public static function adjustRemaining(int $giftId, float $delta): void
     {
         $gift = self::findById($giftId);
         if ($gift === null) {
+            return;
+        }
+        if ((string) ($gift['status'] ?? '') === self::STATUS_CANCELLED) {
             return;
         }
         $face = round((float) ($gift['face_value_gross'] ?? 0), 2);
@@ -315,13 +483,13 @@ final class GiftVoucherRepository
         if ($remaining > $face) {
             $remaining = $face;
         }
-        $status = 'active';
+        $status = self::STATUS_ACTIVE;
         if ($remaining <= 0.0) {
-            $status = 'redeemed';
+            $status = self::STATUS_REDEEMED;
         }
         $validUntil = (string) ($gift['valid_until'] ?? '');
-        if ($status === 'active' && $validUntil !== '' && $validUntil < date('Y-m-d')) {
-            $status = 'expired';
+        if ($status === self::STATUS_ACTIVE && $validUntil !== '' && $validUntil < date('Y-m-d')) {
+            $status = self::STATUS_EXPIRED;
         }
         $stmt = Database::pdo()->prepare(
             'UPDATE dg_gift_vouchers SET remaining_gross = :remaining, status = :status WHERE id = :id'
@@ -343,37 +511,57 @@ final class GiftVoucherRepository
 
     public static function generateCode(): string
     {
-        try {
-            $hex = strtoupper(bin2hex(random_bytes(4)));
-        } catch (Throwable) {
-            $hex = strtoupper(substr(md5((string) microtime(true)), 0, 8));
-        }
+        do {
+            try {
+                $hex = strtoupper(bin2hex(random_bytes(4)));
+            } catch (Throwable) {
+                $hex = strtoupper(substr(md5((string) microtime(true)), 0, 8));
+            }
+            $code = 'GS-' . $hex;
+        } while (self::findByCode($code) !== null);
 
-        return 'GS-' . $hex;
+        return $code;
     }
 
     /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>
      */
-    private static function normalizeRow(array $row): array
+    public static function normalizeRow(array $row): array
     {
+        $face = round((float) ($row['face_value_gross'] ?? 0), 2);
+        $remaining = round((float) ($row['remaining_gross'] ?? 0), 2);
+        $issued = isset($row['issued_voucher_id']) && $row['issued_voucher_id'] !== null
+            ? (int) $row['issued_voucher_id'] : null;
+        $code = (string) ($row['code'] ?? '');
+        $title = (string) ($row['title'] ?? '');
+        $fmt = static fn (float $v): string => number_format($v, 2, ',', '.') . ' €';
+
         return [
             'id' => (int) ($row['id'] ?? 0),
-            'code' => (string) ($row['code'] ?? ''),
-            'title' => (string) ($row['title'] ?? ''),
+            'code' => $code,
+            'voucher_type' => (string) ($row['voucher_type'] ?? self::TYPE_SALE),
+            'title' => $title,
             'contact_id' => isset($row['contact_id']) && $row['contact_id'] !== null ? (int) $row['contact_id'] : null,
-            'face_value_gross' => round((float) ($row['face_value_gross'] ?? 0), 2),
-            'remaining_gross' => round((float) ($row['remaining_gross'] ?? 0), 2),
+            'complaint_id' => isset($row['complaint_id']) && $row['complaint_id'] !== null ? (int) $row['complaint_id'] : null,
+            'face_value_gross' => $face,
+            'remaining_gross' => $remaining,
+            // Aliase für Cloud-Views/-Code
+            'amount' => $face,
+            'remaining' => $remaining,
             'currency' => (string) ($row['currency'] ?? 'EUR'),
-            'status' => (string) ($row['status'] ?? 'active'),
-            'valid_until' => $row['valid_until'] !== null ? (string) $row['valid_until'] : null,
-            'issued_voucher_id' => isset($row['issued_voucher_id']) && $row['issued_voucher_id'] !== null
-                ? (int) $row['issued_voucher_id'] : null,
+            'status' => (string) ($row['status'] ?? self::STATUS_ACTIVE),
+            'valid_until' => isset($row['valid_until']) && $row['valid_until'] !== null ? (string) $row['valid_until'] : null,
+            'issued_voucher_id' => $issued,
+            'issue_voucher_id' => $issued,
+            'liability_account' => (string) ($row['liability_account'] ?? ''),
+            'expense_account' => (string) ($row['expense_account'] ?? ''),
             'notes' => (string) ($row['notes'] ?? ''),
+            'created_by' => isset($row['created_by']) && $row['created_by'] !== null ? (int) $row['created_by'] : null,
             'created_at' => (string) ($row['created_at'] ?? ''),
             'updated_at' => (string) ($row['updated_at'] ?? ''),
-            'label' => trim((string) ($row['code'] ?? '') . ' — ' . (string) ($row['title'] ?? '')),
+            'label' => trim($code . ' — ' . $title),
+            'remaining_label' => $fmt($remaining),
         ];
     }
 }

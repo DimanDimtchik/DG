@@ -405,6 +405,9 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                       'title' => (string) $article['title'],
                       'description' => (string) ($article['description'] ?? ''),
                       'note' => (string) ($article['note'] ?? ''),
+                      'warranty_kind' => (string) ($article['warranty_kind'] ?? ArticleWarranty::KIND_NONE),
+                      'warranty_months' => (int) ($article['warranty_months'] ?? 0),
+                      'warranty_text' => (string) ($article['warranty_text'] ?? ''),
                       'unit' => (string) ($article['unit'] ?? 'Stück'),
                       'tax_type' => (string) ($article['tax_type'] ?? 'ust19'),
                       'price_gross' => (float) ($article['price_gross'] ?? 0),
@@ -527,6 +530,23 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
       <label class="dg-field dg-field--wide">
         <span>Interne Notiz</span>
         <textarea name="note" id="dg_article_note" rows="2"<?= !$dbConnected ? ' disabled' : '' ?>></textarea>
+      </label>
+      <label class="dg-field">
+        <span>Garantie / Gewährleistung</span>
+        <select name="warranty_kind" id="dg_article_warranty_kind"<?= !$dbConnected ? ' disabled' : '' ?>>
+          <?php foreach (ArticleWarranty::kindOptions() as $wKey => $wLabel) : ?>
+            <option value="<?= View::escape($wKey) ?>"<?= $wKey === ArticleWarranty::KIND_NONE ? ' selected' : '' ?>><?= View::escape($wLabel) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="dg-field-hint"><?= View::escape(ArticleWarranty::hint()) ?></small>
+      </label>
+      <label class="dg-field">
+        <span>Dauer (Monate)</span>
+        <input type="number" name="warranty_months" id="dg_article_warranty_months" min="0" max="1200" value="0"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <label class="dg-field dg-field--wide">
+        <span>Garantie-/Gewährleistungsbeschreibung</span>
+        <textarea name="warranty_text" id="dg_article_warranty_text" rows="2" placeholder="Was und wie lange gilt — für Reklamation sofort sichtbar"<?= !$dbConnected ? ' disabled' : '' ?>></textarea>
       </label>
       <label class="dg-field">
         <span><input type="checkbox" name="is_active" id="dg_article_active" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Eintrag ist aktiv</span>

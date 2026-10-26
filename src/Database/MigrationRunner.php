@@ -301,6 +301,10 @@ final class MigrationRunner
             '104_staff_access_invites.sql' => self::tableExists($pdo, 'dg_staff_access_events')
                 && self::tableExists($pdo, 'dg_mailbox_password_tokens'),
             '110_price_list_website_page.sql' => true,
+            '117_article_warranty.sql' => self::columnExists($pdo, 'dg_calendar_articles', 'warranty_kind'),
+            '118_gift_voucher_extend.sql' => self::tableExists($pdo, 'dg_voucher_gift_lines')
+                && self::columnExists($pdo, 'dg_gift_vouchers', 'voucher_type'),
+            '119_complaints.sql' => self::tableExists($pdo, 'dg_complaints'),
             default => false,
         };
     }
@@ -436,6 +440,9 @@ final class MigrationRunner
             '103_mobile_app_download_page.sql' => true,
             '104_staff_access_invites.sql' => true,
             '110_price_list_website_page.sql' => true,
+            '117_article_warranty.sql' => true,
+            '118_gift_voucher_extend.sql' => true,
+            '119_complaints.sql' => true,
         ];
     }
 

@@ -1789,6 +1789,83 @@ switch ($path) {
             exit;
         }
 
+        // POST: Gutscheine
+        if (
+            ($page === 'gutscheine-form')
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'gutscheine-form')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: /app?page=gutscheine', true, 302);
+                exit;
+            }
+            try {
+                if (isset($_POST['gift_cancel'])) {
+                    GiftVoucherRepository::cancel((int) ($_POST['gift_voucher_id'] ?? 0));
+                    Flash::set('success', 'Gutschein storniert.');
+                    header('Location: /app?page=gutscheine', true, 302);
+                    exit;
+                }
+                if (isset($_POST['gift_create'])) {
+                    $newGiftId = GiftVoucherRepository::create([
+                        'voucher_type' => GiftVoucherRepository::TYPE_SALE,
+                        'amount' => $_POST['amount'] ?? 0,
+                        'valid_until' => (string) ($_POST['valid_until'] ?? ''),
+                        'title' => (string) ($_POST['title'] ?? ''),
+                        'notes' => (string) ($_POST['notes'] ?? ''),
+                        'contact_id' => (int) ($_POST['contact_id'] ?? 0),
+                    ], $user->id);
+                    Flash::set('success', 'Gutschein ausgestellt.');
+                    header('Location: /app?page=gutscheine-form&action=view&id=' . $newGiftId, true, 302);
+                    exit;
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: /app?page=gutscheine-form&action=new', true, 302);
+                exit;
+            }
+        }
+
+        // POST: Reklamation
+        if (
+            ($page === 'reklamation-form')
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'reklamation-form')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: /app?page=reklamation', true, 302);
+                exit;
+            }
+            $editComplaintId = (int) ($_POST['complaint_id'] ?? 0);
+            try {
+                if (isset($_POST['complaint_apology'])) {
+                    $giftId = ComplaintRepository::issueApologyVoucher(
+                        $editComplaintId,
+                        (float) str_replace(',', '.', (string) ($_POST['apology_amount'] ?? 0)),
+                        $user->id
+                    );
+                    Flash::set('success', 'Entschuldigungs-Gutschein ausgestellt.');
+                    header('Location: /app?page=gutscheine-form&action=view&id=' . $giftId, true, 302);
+                    exit;
+                }
+                if (isset($_POST['complaint_save'])) {
+                    $savedId = ComplaintRepository::save($_POST, $editComplaintId > 0 ? $editComplaintId : null, $user->id);
+                    Flash::set('success', 'Reklamation gespeichert.');
+                    header('Location: /app?page=reklamation-form&action=edit&id=' . $savedId, true, 302);
+                    exit;
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                $redir = $editComplaintId > 0
+                    ? '/app?page=reklamation-form&action=edit&id=' . $editComplaintId
+                    : '/app?page=reklamation-form&action=new';
+                header('Location: ' . $redir, true, 302);
+                exit;
+            }
+        }
+
         // POST: Rezeptur Kostensätze (R2)
         if (
             $page === 'rezeptur-maschinen'
@@ -5368,49 +5445,95 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'buchhaltung-belege') {
             header('Location: /app', true, 302);
             exit;
-        } elseif ($page === 'buchhaltung-gutscheine' && MenuRegistry::canAccess($user, 'buchhaltung-gutscheine')) {
-            $formError = null;
-            $giftForm = [
-                'code' => '',
-                'title' => 'Geschenkgutschein',
-                'face_value_gross' => '',
-                'valid_until' => '',
-                'notes' => '',
-            ];
-            if (
-                $_SERVER['REQUEST_METHOD'] === 'POST'
-                && isset($_POST['gift_voucher_create'])
-                && Csrf::verify($_POST['_csrf'] ?? null)
-                && RoleResolver::canEdit($user)
-            ) {
-                try {
-                    GiftVoucherRepository::create([
-                        'code' => (string) ($_POST['code'] ?? ''),
-                        'title' => (string) ($_POST['title'] ?? ''),
-                        'face_value_gross' => (string) ($_POST['face_value_gross'] ?? ''),
-                        'valid_until' => (string) ($_POST['valid_until'] ?? ''),
-                        'notes' => (string) ($_POST['notes'] ?? ''),
-                        'contact_id' => (int) ($_POST['contact_id'] ?? 0),
-                    ], $user->id);
-                    Flash::success('Gutschein angelegt.');
-                    header('Location: /app?page=buchhaltung-gutscheine', true, 302);
-                    exit;
-                } catch (Throwable $e) {
-                    $formError = $e->getMessage();
-                    $giftForm = [
-                        'code' => (string) ($_POST['code'] ?? ''),
-                        'title' => (string) ($_POST['title'] ?? 'Geschenkgutschein'),
-                        'face_value_gross' => (string) ($_POST['face_value_gross'] ?? ''),
-                        'valid_until' => (string) ($_POST['valid_until'] ?? ''),
-                        'notes' => (string) ($_POST['notes'] ?? ''),
-                    ];
-                }
-            }
-            $giftVouchers = GiftVoucherRepository::listAll(300);
-            $contentTemplate = 'modules/buchhaltung-gutscheine';
-            $title = 'Gutscheine';
-            $currentPage = 'buchhaltung-gutscheine';
         } elseif ($page === 'buchhaltung-gutscheine') {
+            // Alt-URL: Gutscheine liegen jetzt unter /app?page=gutscheine
+            header('Location: /app?page=gutscheine', true, 302);
+            exit;
+        } elseif (
+            ($page === 'gutscheine' || $page === 'gutscheine-form')
+            && MenuRegistry::canAccess($user, $page)
+        ) {
+            GiftVoucherRepository::ensureReady();
+            if ($page === 'gutscheine-form') {
+                $giftVoucherId = (int) ($_GET['id'] ?? 0);
+                $giftFormMode = (string) ($_GET['action'] ?? ($giftVoucherId > 0 ? 'view' : 'new'));
+                if ($giftFormMode === 'view' && $giftVoucherId > 0) {
+                    $giftVoucherForm = GiftVoucherRepository::find($giftVoucherId);
+                    if ($giftVoucherForm === null) {
+                        Flash::set('error', 'Gutschein nicht gefunden.');
+                        header('Location: /app?page=gutscheine', true, 302);
+                        exit;
+                    }
+                } else {
+                    $giftVoucherId = null;
+                    $giftVoucherForm = [];
+                    $giftFormMode = 'new';
+                }
+                $contentTemplate = 'modules/gutscheine-form';
+                $title = $giftFormMode === 'view' ? 'Gutschein' : 'Gutschein ausstellen';
+                $currentPage = 'gutscheine';
+            } else {
+                $giftVoucherList = GiftVoucherRepository::listAll();
+                $contentTemplate = 'modules/gutscheine';
+                $title = 'Gutscheine';
+                $currentPage = 'gutscheine';
+            }
+        } elseif ($page === 'gutscheine' || $page === 'gutscheine-form') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif (
+            ($page === 'reklamation' || $page === 'reklamation-form')
+            && MenuRegistry::canAccess($user, $page)
+        ) {
+            ComplaintRepository::ensureReady();
+            if ($page === 'reklamation-form') {
+                $complaintId = (int) ($_GET['id'] ?? 0);
+                $action = (string) ($_GET['action'] ?? ($complaintId > 0 ? 'edit' : 'new'));
+                if ($action === 'edit' && $complaintId > 0) {
+                    if (ComplaintRepository::find($complaintId) === null) {
+                        Flash::set('error', 'Reklamation nicht gefunden.');
+                        header('Location: /app?page=reklamation', true, 302);
+                        exit;
+                    }
+                    $complaintForm = ComplaintRepository::formForId($complaintId);
+                    $complaintEvents = ComplaintRepository::events($complaintId);
+                } else {
+                    $complaintId = null;
+                    $complaintForm = ComplaintRepository::emptyForm();
+                    $complaintEvents = [];
+                }
+                $contentTemplate = 'modules/reklamation-form';
+                $title = ($complaintId ?? 0) > 0 ? 'Reklamation bearbeiten' : 'Neue Reklamation';
+                $currentPage = 'reklamation';
+            } else {
+                $complaintList = ComplaintRepository::listAll();
+                $contentTemplate = 'modules/reklamation';
+                $title = 'Reklamation';
+                $currentPage = 'reklamation';
+            }
+        } elseif ($page === 'reklamation' || $page === 'reklamation-form') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif (
+            $page === 'website-gutschein-flyer'
+            && MenuRegistry::canAccess($user, 'website-gutschein-flyer')
+        ) {
+            GiftVoucherRepository::ensureReady();
+            $giftVoucherList = GiftVoucherRepository::listAll(GiftVoucherRepository::STATUS_ACTIVE);
+            $flyerId = (int) ($_GET['id'] ?? 0);
+            $flyerGift = $flyerId > 0 ? GiftVoucherRepository::find($flyerId) : null;
+            $companyName = '';
+            try {
+                $firm = CompanySettings::config();
+                $companyName = (string) ($firm['name'] ?? '');
+            } catch (Throwable) {
+                $companyName = '';
+            }
+            $companyLogoUrl = '';
+            $contentTemplate = 'modules/website-gutschein-flyer';
+            $title = 'Gutschein-Flyer';
+            $currentPage = 'website-gutschein-flyer';
+        } elseif ($page === 'website-gutschein-flyer') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-beleg-form' && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')) {

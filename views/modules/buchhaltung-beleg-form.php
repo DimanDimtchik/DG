@@ -955,6 +955,128 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       </div>
       <p class="dg-field-hint">Summe Positionen: <strong id="dg-voucher-invoice-items-sum">0,00</strong> €</p>
 
+      <?php if (MenuRegistry::isGutscheinEnabled()) : ?>
+      <?php
+        // Gutschein-Zeilen (Verkauf / Einlösung) — GiftVoucherService; Abzug mindert den Zahlbetrag.
+        $giftLineRows = is_array($form['gift_lines'] ?? null) ? array_values($form['gift_lines']) : [];
+        if ($giftLineRows === []) {
+            $giftLineRows[] = [
+                'line_kind' => 'redeem',
+                'gift_voucher_id' => '',
+                'gift_code' => '',
+                'title' => '',
+                'amount' => '',
+            ];
+        }
+        $showGiftRedemptions = $showInvoiceItems
+            && VoucherDocumentKind::isBookable($selectedDocumentKind, $selectedType);
+      ?>
+      <div id="dg-voucher-gift-section" class="dg-voucher-gift-section"<?= $showGiftRedemptions ? '' : ' hidden' ?> style="margin-top:18px">
+        <h3 class="dg-subsection-title">Gutscheine</h3>
+        <p class="dg-field-hint">
+          <strong>Verkauf:</strong> Mehrzweck-Gutschein verkaufen (ohne USt, Verbindlichkeit) — der Code wird beim Speichern erzeugt.
+          <strong>Einlösung:</strong> vorhandenen Gutschein wählen — der Betrag wird vom Zahlbetrag abgezogen.
+          Übersicht: <a href="/app?page=gutscheine">Gutscheine</a>.
+        </p>
+        <div class="dg-table-wrap">
+          <table class="dg-table dg-voucher-gift__table">
+            <thead>
+              <tr>
+                <th>Art</th>
+                <th>Gutschein / Bezeichnung</th>
+                <th>Restwert</th>
+                <th>Betrag brutto</th>
+                <?php if (!$readOnly) : ?><th></th><?php endif; ?>
+              </tr>
+            </thead>
+            <tbody id="dg-voucher-gift-body">
+              <?php foreach ($giftLineRows as $gIndex => $gRow) : ?>
+                <?php
+                  $gKind = (string) ($gRow['line_kind'] ?? 'redeem') === 'sale' ? 'sale' : 'redeem';
+                  $gId = (int) ($gRow['gift_voucher_id'] ?? 0);
+                  $gCode = (string) ($gRow['gift_code'] ?? '');
+                  $gTitle = (string) ($gRow['title'] ?? '');
+                  $gLabel = $gCode !== ''
+                      ? ($gTitle !== '' ? $gCode . ' — ' . $gTitle : $gCode)
+                      : '';
+                ?>
+                <tr class="dg-voucher-gift__row" data-gift-index="<?= (int) $gIndex ?>" data-gift-kind="<?= View::escape($gKind) ?>">
+                  <td data-label="Art">
+                    <?php if ($readOnly) : ?>
+                      <?= $gKind === 'sale' ? 'Verkauf' : 'Einlösung' ?>
+                      <input type="hidden" class="dg-voucher-gift-kind" name="gift_lines[<?= (int) $gIndex ?>][line_kind]" value="<?= View::escape($gKind) ?>">
+                    <?php else : ?>
+                      <select class="dg-voucher-gift-kind" name="gift_lines[<?= (int) $gIndex ?>][line_kind]">
+                        <option value="redeem"<?= $gKind === 'redeem' ? ' selected' : '' ?>>Einlösung</option>
+                        <option value="sale"<?= $gKind === 'sale' ? ' selected' : '' ?>>Verkauf</option>
+                      </select>
+                    <?php endif; ?>
+                  </td>
+                  <td data-label="Gutschein / Bezeichnung">
+                    <?php if ($readOnly) : ?>
+                      <?= View::escape($gLabel !== '' ? $gLabel : ($gTitle !== '' ? $gTitle : '—')) ?>
+                      <input type="hidden" class="dg-voucher-gift-id" name="gift_lines[<?= (int) $gIndex ?>][gift_voucher_id]" value="<?= $gId > 0 ? (int) $gId : '' ?>">
+                      <input type="hidden" class="dg-voucher-gift-code" name="gift_lines[<?= (int) $gIndex ?>][gift_code]" value="<?= View::escape($gCode) ?>">
+                      <input type="hidden" class="dg-voucher-gift-title" name="gift_lines[<?= (int) $gIndex ?>][title]" value="<?= View::escape($gTitle) ?>">
+                    <?php else : ?>
+                      <div class="dg-voucher-gift-search-wrap"<?= $gKind === 'sale' ? ' hidden' : '' ?>>
+                        <input
+                          type="search"
+                          class="dg-voucher-gift-query"
+                          placeholder="Code oder Titel suchen …"
+                          autocomplete="off"
+                          value="<?= View::escape($gLabel) ?>"
+                        >
+                        <div class="dg-article-search-results dg-voucher-gift-search-results" hidden></div>
+                      </div>
+                      <input type="hidden" class="dg-voucher-gift-id" name="gift_lines[<?= (int) $gIndex ?>][gift_voucher_id]" value="<?= $gId > 0 ? (int) $gId : '' ?>">
+                      <input type="hidden" class="dg-voucher-gift-code" name="gift_lines[<?= (int) $gIndex ?>][gift_code]" value="<?= View::escape($gCode) ?>">
+                      <input
+                        type="text"
+                        class="dg-voucher-gift-title"
+                        name="gift_lines[<?= (int) $gIndex ?>][title]"
+                        maxlength="255"
+                        placeholder="Bezeichnung (z. B. Mehrzweck-Gutschein)"
+                        value="<?= View::escape($gTitle) ?>"
+                        <?= $gKind === 'sale' ? '' : ' hidden' ?>
+                      >
+                    <?php endif; ?>
+                  </td>
+                  <td data-label="Restwert">
+                    <input type="text" class="dg-voucher-gift-remaining dg-input--computed" value="" readonly tabindex="-1">
+                  </td>
+                  <td data-label="Betrag brutto">
+                    <input
+                      type="text"
+                      class="dg-voucher-gift-amount"
+                      name="gift_lines[<?= (int) $gIndex ?>][amount]"
+                      inputmode="decimal"
+                      value="<?= View::escape((string) ($gRow['amount'] ?? '')) ?>"
+                      placeholder="0,00"
+                      <?= $readOnly ? ' readonly' : '' ?>
+                    >
+                  </td>
+                  <?php if (!$readOnly) : ?>
+                    <td>
+                      <button type="button" class="dg-button dg-button--ghost dg-voucher-gift-remove" aria-label="Zeile entfernen">×</button>
+                    </td>
+                  <?php endif; ?>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <?php if (!$readOnly) : ?>
+          <p class="dg-form-actions" style="margin-top:8px">
+            <button type="button" class="dg-button dg-button--small" id="dg-voucher-gift-add">Gutschein-Zeile hinzufügen</button>
+          </p>
+        <?php endif; ?>
+        <p class="dg-field-hint">
+          Gutschein-Verkauf gesamt: <strong id="dg-voucher-gift-sale-sum">0,00</strong> € ·
+          Gutschein-Abzug gesamt: <strong id="dg-voucher-gift-sum">0,00</strong> €
+        </p>
+      </div>
+      <?php else : ?>
       <?php
         $giftRedemptionRows = is_array($form['gift_redemptions'] ?? null) ? $form['gift_redemptions'] : [];
         if ($giftRedemptionRows === []) {
@@ -1047,6 +1169,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         <?php endif; ?>
         <p class="dg-field-hint">Gutschein-Abzug gesamt: <strong id="dg-voucher-gift-sum">0,00</strong> €</p>
       </div>
+      <?php endif; ?>
 
       <div id="dg-voucher-document-texts-footer"<?= $showDocumentPositionTexts ? '' : ' hidden' ?> style="margin-top: 12px;">
         <label class="dg-field dg-field--wide">
@@ -1678,6 +1801,36 @@ $paymentTermsPreview = PaymentTermsService::composeText(
     </tr>
   </template>
 
+  <?php if (MenuRegistry::isGutscheinEnabled()) : ?>
+  <template id="dg-voucher-gift-row-template">
+    <tr class="dg-voucher-gift__row" data-gift-kind="redeem">
+      <td data-label="Art">
+        <select class="dg-voucher-gift-kind">
+          <option value="redeem" selected>Einlösung</option>
+          <option value="sale">Verkauf</option>
+        </select>
+      </td>
+      <td data-label="Gutschein / Bezeichnung">
+        <div class="dg-voucher-gift-search-wrap">
+          <input type="search" class="dg-voucher-gift-query" placeholder="Code oder Titel suchen …" autocomplete="off">
+          <div class="dg-article-search-results dg-voucher-gift-search-results" hidden></div>
+        </div>
+        <input type="hidden" class="dg-voucher-gift-id">
+        <input type="hidden" class="dg-voucher-gift-code">
+        <input type="text" class="dg-voucher-gift-title" maxlength="255" placeholder="Bezeichnung (z. B. Mehrzweck-Gutschein)" hidden>
+      </td>
+      <td data-label="Restwert">
+        <input type="text" class="dg-voucher-gift-remaining dg-input--computed" readonly tabindex="-1">
+      </td>
+      <td data-label="Betrag brutto">
+        <input type="text" class="dg-voucher-gift-amount" inputmode="decimal" placeholder="0,00">
+      </td>
+      <td>
+        <button type="button" class="dg-button dg-button--ghost dg-voucher-gift-remove" aria-label="Zeile entfernen">×</button>
+      </td>
+    </tr>
+  </template>
+  <?php else : ?>
   <template id="dg-voucher-gift-row-template">
     <tr class="dg-voucher-gift__row">
       <td data-label="Gutschein">
@@ -1700,4 +1853,5 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       </td>
     </tr>
   </template>
+  <?php endif; ?>
 </div>

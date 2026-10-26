@@ -135,6 +135,12 @@ final class CalendarArticleRepository
         $title = trim((string) ($input['title'] ?? ''));
         $description = trim((string) ($input['description'] ?? ''));
         $note = trim((string) ($input['note'] ?? ''));
+        $warrantyKind = ArticleWarranty::sanitizeKind((string) ($input['warranty_kind'] ?? ArticleWarranty::KIND_NONE));
+        $warrantyMonths = max(0, min(1200, (int) ($input['warranty_months'] ?? 0)));
+        $warrantyText = trim((string) ($input['warranty_text'] ?? ''));
+        if ($warrantyKind === ArticleWarranty::KIND_NONE) {
+            $warrantyMonths = 0;
+        }
         $unit = !empty($input['import'])
             ? CalendarArticleValidator::normalizeUnitForImport((string) ($input['unit'] ?? ''))
             : CalendarArticleValidator::validateUnit((string) ($input['unit'] ?? 'Stück'));
@@ -207,6 +213,9 @@ final class CalendarArticleRepository
             'title' => $title,
             'description' => $description,
             'note' => $note,
+            'warranty_kind' => $warrantyKind,
+            'warranty_months' => $warrantyMonths,
+            'warranty_text' => $warrantyText,
             'unit' => $unit,
             'tax_type' => $taxType,
             'price_gross' => $priceGross,
@@ -234,7 +243,8 @@ final class CalendarArticleRepository
             $stmt = $pdo->prepare(
                 'UPDATE dg_calendar_articles
                  SET article_number = :article_number, catalog_kind = :catalog_kind, gtin = :gtin, title = :title, description = :description,
-                     note = :note, unit = :unit, tax_type = :tax_type, price_gross = :price_gross,
+                     note = :note, warranty_kind = :warranty_kind, warranty_months = :warranty_months, warranty_text = :warranty_text,
+                     unit = :unit, tax_type = :tax_type, price_gross = :price_gross,
                      work_minutes = :work_minutes, area_id = :area_id, sort_order = :sort_order, is_active = :is_active,
                      price_list_online = :price_list_online,
                      track_stock = :track_stock, min_stock = :min_stock,
@@ -252,9 +262,9 @@ final class CalendarArticleRepository
         $fields['stock_qty'] = 0;
         $stmt = $pdo->prepare(
             'INSERT INTO dg_calendar_articles
-             (article_number, catalog_kind, gtin, title, description, note, unit, tax_type, price_gross, work_minutes, area_id, sort_order, is_active, price_list_online, track_stock, stock_qty, min_stock, stock_ort, stock_halle, stock_regal, stock_platz, stock_location_id, stock_hall_id, stock_shelf_id, stock_place_id, stock_place_mode)
+             (article_number, catalog_kind, gtin, title, description, note, warranty_kind, warranty_months, warranty_text, unit, tax_type, price_gross, work_minutes, area_id, sort_order, is_active, price_list_online, track_stock, stock_qty, min_stock, stock_ort, stock_halle, stock_regal, stock_platz, stock_location_id, stock_hall_id, stock_shelf_id, stock_place_id, stock_place_mode)
              VALUES
-             (:article_number, :catalog_kind, :gtin, :title, :description, :note, :unit, :tax_type, :price_gross, :work_minutes, :area_id, :sort_order, :is_active, :price_list_online, :track_stock, :stock_qty, :min_stock, :stock_ort, :stock_halle, :stock_regal, :stock_platz, :stock_location_id, :stock_hall_id, :stock_shelf_id, :stock_place_id, :stock_place_mode)'
+             (:article_number, :catalog_kind, :gtin, :title, :description, :note, :warranty_kind, :warranty_months, :warranty_text, :unit, :tax_type, :price_gross, :work_minutes, :area_id, :sort_order, :is_active, :price_list_online, :track_stock, :stock_qty, :min_stock, :stock_ort, :stock_halle, :stock_regal, :stock_platz, :stock_location_id, :stock_hall_id, :stock_shelf_id, :stock_place_id, :stock_place_mode)'
         );
         $stmt->execute($fields);
         $newId = (int) $pdo->lastInsertId();

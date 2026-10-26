@@ -437,6 +437,9 @@ final class VoucherRepository
         $enriched['lines'] = self::linesForVoucher($id, true);
         $enriched['system_lines'] = self::linesForVoucher($id, false, true);
         $enriched['items'] = self::itemsForVoucher($id);
+        $enriched['gift_lines'] = MenuRegistry::isGutscheinEnabled()
+            ? GiftVoucherService::linesForVoucher($id)
+            : [];
         $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
         VoucherPaymentRepository::migrateLegacyPaidAmount($id);
         $enriched['payments'] = VoucherPaymentRepository::listForVoucher($id);
@@ -785,12 +788,29 @@ final class VoucherRepository
             ? VoucherIncomePositions::parseItemRows($data, $voucherType)
             : [];
         $gross = self::parseMoney($data['gross_amount'] ?? 0);
+
+        // Gutscheine (Verkauf/Einlösung) nur auf buchbaren Einnahmen-Belegen mit Positionen.
+        $giftBookable = $usesInvoiceItems && VoucherDocumentKind::isBookable($documentKind, $voucherType);
+        $giftServiceEnabled = MenuRegistry::isGutscheinEnabled();
+        /** @var list<array<string, mixed>> $giftLines */
+        $giftLines = ($giftServiceEnabled && $giftBookable) ? GiftVoucherService::parseGiftLines($data) : [];
+        /** @var list<array<string, mixed>> $legacyGiftRows */
+        $legacyGiftRows = $giftBookable ? GiftVoucherRepository::parseRedemptionRows($data) : [];
+        // Nur wenn gift_lines fehlen und ein altes gift_redemptions-POST vorliegt: Legacy-Pfad behalten.
+        $useGiftServicePath = $giftServiceEnabled && ($giftLines !== [] || $legacyGiftRows === []);
+
         /** @var list<array<string, mixed>> $lineRows */
         if ($usesInvoiceItems && $itemRows !== []) {
             $bookingLines = VoucherIncomePositions::bookingLinesFromItems($itemRows, $skrType, $voucherType);
-            if ($bookingLines === []) {
+            if ($bookingLines === [] && $giftLines === []) {
                 throw new InvalidArgumentException('Mindestens eine Rechnungsposition mit Betrag ist erforderlich.');
             }
+            if ($giftLines !== []) {
+                $bookingLines = array_merge($bookingLines, self::giftSaleBookingLines($giftLines, $voucherType));
+            }
+        } elseif ($giftLines !== [] && GiftVoucherService::bookingLinesForSales($giftLines) !== []) {
+            // Beleg nur mit Gutschein-Verkauf (ohne Artikelpositionen)
+            $bookingLines = self::giftSaleBookingLines($giftLines, $voucherType);
         } else {
             $bookingLines = self::parseLineRows($data, $reverseCharge, $reverseChargeType);
         }
@@ -857,12 +877,16 @@ final class VoucherRepository
         }
         $giftRedemptionRows = [];
         $giftRedeemedAmount = 0.0;
-        if ($usesInvoiceItems && VoucherDocumentKind::isBookable($documentKind, $voucherType)) {
-            $giftRedemptionRows = GiftVoucherRepository::parseRedemptionRows($data);
-            foreach ($giftRedemptionRows as $gr) {
-                $giftRedeemedAmount += (float) $gr['amount_gross'];
+        if ($giftBookable) {
+            if ($useGiftServicePath) {
+                $giftRedeemedAmount = GiftVoucherService::redeemTotal($giftLines);
+            } else {
+                $giftRedemptionRows = $legacyGiftRows;
+                foreach ($giftRedemptionRows as $gr) {
+                    $giftRedeemedAmount += (float) $gr['amount_gross'];
+                }
+                $giftRedeemedAmount = round($giftRedeemedAmount, 2);
             }
-            $giftRedeemedAmount = round($giftRedeemedAmount, 2);
             if ($giftRedeemedAmount > round(max(0.0, $gross - $discountAmount), 2) + 0.009) {
                 throw new InvalidArgumentException('Gutschein-Abzug darf den Betrag nach Rabatt nicht übersteigen.');
             }
@@ -998,11 +1022,7 @@ final class VoucherRepository
             $stmt->execute($fields);
             self::replaceLines($id, $lineRows);
             self::replaceItems($id, $itemRows);
-            $syncedGift = GiftVoucherRepository::syncRedemptionsForVoucher($id, $giftRedemptionRows);
-            if (abs($syncedGift - $giftRedeemedAmount) > 0.009) {
-                $pdo->prepare('UPDATE dg_vouchers SET gift_redeemed_amount = :g WHERE id = :id')
-                    ->execute(['g' => $syncedGift, 'id' => $id]);
-            }
+            self::syncGiftForVoucher($id, $useGiftServicePath, $giftLines, $giftRedemptionRows, $giftRedeemedAmount, $contactId, $userId);
             self::syncLedger($id);
             StockMovementService::syncForVoucher($id, $userId);
             StockReservationService::syncForVoucher($id);
@@ -1033,11 +1053,7 @@ final class VoucherRepository
         $newId = (int) $pdo->lastInsertId();
         self::replaceLines($newId, $lineRows);
         self::replaceItems($newId, $itemRows);
-        $syncedGift = GiftVoucherRepository::syncRedemptionsForVoucher($newId, $giftRedemptionRows);
-        if (abs($syncedGift - $giftRedeemedAmount) > 0.009) {
-            $pdo->prepare('UPDATE dg_vouchers SET gift_redeemed_amount = :g WHERE id = :id')
-                ->execute(['g' => $syncedGift, 'id' => $newId]);
-        }
+        self::syncGiftForVoucher($newId, $useGiftServicePath, $giftLines, $giftRedemptionRows, $giftRedeemedAmount, $contactId, $userId);
         self::syncLedger($newId);
         StockMovementService::syncForVoucher($newId, $userId);
         StockReservationService::syncForVoucher($newId);
@@ -1057,6 +1073,92 @@ final class VoucherRepository
         }
 
         return $newId;
+    }
+
+    /**
+     * Gutschein-Zeilen fürs Formular. Alte Belege mit nur gift_redemptions (vor Migration 118)
+     * werden als „redeem“-Zeilen angezeigt, damit ein erneutes Speichern sie nicht verwirft.
+     *
+     * @param mixed $existing bereits geladene gift_lines (z. B. aus findById)
+     * @return list<array<string, mixed>>
+     */
+    private static function giftLinesForForm(int $voucherId, mixed $existing): array
+    {
+        if (!MenuRegistry::isGutscheinEnabled() || $voucherId < 1) {
+            return [];
+        }
+        $lines = is_array($existing) ? $existing : GiftVoucherService::linesForVoucher($voucherId);
+        if ($lines !== []) {
+            return $lines;
+        }
+        foreach (GiftVoucherRepository::redemptionsForVoucher($voucherId) as $g) {
+            $lines[] = [
+                'line_kind' => 'redeem',
+                'gift_voucher_id' => (string) (int) ($g['gift_voucher_id'] ?? 0),
+                'gift_code' => (string) ($g['code'] ?? ''),
+                'title' => (string) ($g['title'] ?? ''),
+                'amount' => self::formatMoney((float) ($g['amount_gross'] ?? 0)),
+            ];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Gutschein-Verkauf als Buchungszeilen (0 % USt, Verbindlichkeit) — vollständige Zeilenstruktur für replaceLines().
+     *
+     * @param list<array<string, mixed>> $giftLines
+     * @return list<array<string, mixed>>
+     */
+    private static function giftSaleBookingLines(array $giftLines, string $voucherType): array
+    {
+        $postingSide = LedgerAccounts::primarySide($voucherType);
+        $rows = [];
+        foreach (GiftVoucherService::bookingLinesForSales($giftLines) as $line) {
+            $gross = round((float) ($line['gross_amount'] ?? 0), 2);
+            $rows[] = [
+                'line_kind' => VoucherReverseCharge::LINE_BOOKING,
+                'account_number' => preg_replace('/\D/', '', (string) ($line['account_number'] ?? '')) ?? '',
+                'description' => (string) ($line['description'] ?? 'Mehrzweck-Gutschein'),
+                'gross_amount' => $gross,
+                'net_amount' => $gross,
+                'tax_amount' => 0.0,
+                'tax_rate' => 0,
+                'ustva_kz' => '',
+                'posting_side' => $postingSide,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Gutschein-Zeilen (Service-Pfad) oder Legacy-Einlösungen synchronisieren und gift_redeemed_amount abgleichen.
+     * Die Einlösung mindert den Zahlbetrag über gift_redeemed_amount (amountDue) und wird in
+     * LedgerPostingService gebucht — daher bewusst KEINE zusätzliche METHOD_GIFT-Zahlung (sonst doppelte Minderung).
+     *
+     * @param list<array<string, mixed>> $giftLines
+     * @param list<array<string, mixed>> $legacyRows
+     */
+    private static function syncGiftForVoucher(
+        int $voucherId,
+        bool $useGiftService,
+        array $giftLines,
+        array $legacyRows,
+        float $expectedRedeemed,
+        ?int $contactId,
+        ?int $userId,
+    ): void {
+        if ($useGiftService) {
+            GiftVoucherService::syncForVoucher($voucherId, $giftLines, ['contact_id' => (int) $contactId], $userId);
+            $synced = GiftVoucherService::redeemTotal($giftLines);
+        } else {
+            $synced = GiftVoucherRepository::syncRedemptionsForVoucher($voucherId, $legacyRows);
+        }
+        if (abs($synced - $expectedRedeemed) > 0.009) {
+            Database::pdo()->prepare('UPDATE dg_vouchers SET gift_redeemed_amount = :g WHERE id = :id')
+                ->execute(['g' => $synced, 'id' => $voucherId]);
+        }
     }
 
     private static function finalizePayments(
@@ -1300,6 +1402,7 @@ final class VoucherRepository
             'discount_amount' => '',
             'gift_redeemed_amount' => '',
             'gift_redemptions' => [],
+            'gift_lines' => [],
             'paid_amount' => '',
             'paid_at' => '',
             'net_amount' => '',
@@ -1438,6 +1541,7 @@ final class VoucherRepository
                 },
                 GiftVoucherRepository::redemptionsForVoucher((int) ($row['id'] ?? 0))
             ),
+            'gift_lines' => self::giftLinesForForm((int) ($row['id'] ?? 0), $row['gift_lines'] ?? null),
             'paid_amount' => self::formatMoney((float) ($row['paid_amount'] ?? 0)),
             'paid_at' => (string) ($row['paid_at'] ?? ''),
             'net_amount' => self::formatMoney((float) ($row['net_amount'] ?? 0)),

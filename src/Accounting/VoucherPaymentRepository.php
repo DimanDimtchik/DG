@@ -9,6 +9,7 @@ final class VoucherPaymentRepository
     public const METHOD_PRIVATE = 'private';
     public const METHOD_DIRECT_DEBIT = 'direct_debit';
     public const METHOD_OTHER = 'other';
+    public const METHOD_GIFT = 'gift_voucher';
 
     /**
      * @return array<string, string>
@@ -20,6 +21,7 @@ final class VoucherPaymentRepository
             self::METHOD_CASH => 'Kasse',
             self::METHOD_PRIVATE => 'Privat',
             self::METHOD_DIRECT_DEBIT => 'Lastschrift',
+            self::METHOD_GIFT => 'Gutschein',
             self::METHOD_OTHER => 'Sonstiges',
         ];
     }

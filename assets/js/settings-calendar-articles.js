@@ -19,6 +19,9 @@
   const sortInput = document.getElementById('dg_article_sort');
   const descriptionInput = document.getElementById('dg_article_description');
   const noteInput = document.getElementById('dg_article_note');
+  const warrantyKindInput = document.getElementById('dg_article_warranty_kind');
+  const warrantyMonthsInput = document.getElementById('dg_article_warranty_months');
+  const warrantyTextInput = document.getElementById('dg_article_warranty_text');
   const activeInput = document.getElementById('dg_article_active');
   const priceListOnlineInput = document.getElementById('dg_article_price_list_online');
   const stockFieldsWrap = document.getElementById('dg_article_stock_fields');
@@ -432,6 +435,15 @@
       }
       if (noteInput) {
         noteInput.value = data.note || '';
+      }
+      if (warrantyKindInput) {
+        warrantyKindInput.value = data.warranty_kind || 'none';
+      }
+      if (warrantyMonthsInput) {
+        warrantyMonthsInput.value = String(data.warranty_months || 0);
+      }
+      if (warrantyTextInput) {
+        warrantyTextInput.value = data.warranty_text || '';
       }
       if (activeInput) {
         activeInput.checked = Number(data.is_active || 0) === 1;
