@@ -139,7 +139,7 @@
   var giftAddBtn = document.getElementById('dg-voucher-gift-add');
   var giftSearchTimer = null;
   var bookingSection = document.getElementById('dg-voucher-booking-section');
-  var incomeVoucherTypes = config.incomeVoucherTypes || ['income', 'income_reduction'];
+  var incomeVoucherTypes = config.incomeVoucherTypes || ['income', 'income_reduction', 'credit'];
   var revenueAccounts = config.revenueAccounts || { 19: '8410', 7: '8334', 0: '8192' };
   var articleSearchTimer = null;
   var syncingBookingFromItems = false;
@@ -679,9 +679,69 @@
     if (!row) {
       return true;
     }
-    var title = (row.querySelector('.dg-voucher-items-title') || {}).value || '';
+    var title = ((row.querySelector('.dg-voucher-items-title') || {}).value || '').trim();
     var gross = parseAmount((row.querySelector('.dg-voucher-items-gross') || {}).value || '0');
-    return title.trim() === '' && gross === 0;
+    var unitPrice = parseAmount((row.querySelector('.dg-voucher-items-unit-price') || {}).value || '0');
+    // Kundengutschrift-Vorlage „Gutschein“ ohne Betrag: keine Extra-Leerzeile erzeugen.
+    if (getVoucherType() === 'credit' && title === 'Gutschein' && gross === 0 && unitPrice === 0) {
+      return true;
+    }
+    return title === '' && gross === 0;
+  }
+
+  function applyCreditNoteItemDefaults(row, force) {
+    if (!row || readOnly || getVoucherType() !== 'credit') {
+      return;
+    }
+    var titleField = row.querySelector('.dg-voucher-items-title');
+    var queryField = row.querySelector('.dg-voucher-items-article-query');
+    var idField = row.querySelector('.dg-voucher-items-article-id');
+    var numberField = row.querySelector('.dg-voucher-items-article-number');
+    var kindField = row.querySelector('.dg-voucher-items-catalog-kind');
+    var areaField = row.querySelector('.dg-voucher-items-area');
+    var areaNameField = row.querySelector('.dg-voucher-items-area-name');
+    var qtyField = row.querySelector('.dg-voucher-items-quantity');
+    var unitField = row.querySelector('.dg-voucher-items-unit');
+    var taxField = row.querySelector('.dg-voucher-items-tax');
+    var taxTypeField = row.querySelector('.dg-voucher-items-tax-type');
+    var currentTitle = (titleField ? titleField.value : '').trim();
+    var hasAmount = parseAmount((row.querySelector('.dg-voucher-items-unit-price') || {}).value || '0') !== 0
+      || parseAmount((row.querySelector('.dg-voucher-items-gross') || {}).value || '0') !== 0;
+    if (!force && currentTitle !== '' && currentTitle !== 'Gutschein') {
+      return;
+    }
+    if (!force && hasAmount && currentTitle !== '' && currentTitle !== 'Gutschein') {
+      return;
+    }
+    if (idField) idField.value = '';
+    if (numberField) numberField.value = '';
+    if (kindField) kindField.value = '';
+    if (titleField) titleField.value = 'Gutschein';
+    if (queryField) queryField.value = 'Gutschein';
+    if (areaField) areaField.value = '';
+    if (areaNameField) areaNameField.value = '';
+    if (qtyField) qtyField.value = '1';
+    if (unitField) unitField.value = 'Stück';
+    if (taxField) taxField.value = '0';
+    if (taxTypeField) taxTypeField.value = taxTypeFromRate(0);
+  }
+
+  function applyCreditNoteDefaultsToItems() {
+    if (!invoiceItemsBody || readOnly || getVoucherType() !== 'credit') {
+      return;
+    }
+    var rows = invoiceItemsBody.querySelectorAll('.dg-voucher-items__row');
+    if (rows.length === 0) {
+      addInvoiceItemRow();
+      rows = invoiceItemsBody.querySelectorAll('.dg-voucher-items__row');
+    }
+    if (rows.length > 0) {
+      applyCreditNoteItemDefaults(rows[0], false);
+      var priceField = rows[0].querySelector('.dg-voucher-items-unit-price');
+      if (priceField && !String(priceField.value || '').trim()) {
+        priceField.focus();
+      }
+    }
   }
 
   function hasEmptyInvoiceItem() {
@@ -709,18 +769,39 @@
     });
   }
 
-  function updateInvoiceItemLineTotal(row) {
+  function updateInvoiceItemLineTotal(row, fromGrossField) {
     if (!row) {
       return 0;
     }
-    var qty = parseAmount((row.querySelector('.dg-voucher-items-quantity') || {}).value || '1');
+    var qtyField = row.querySelector('.dg-voucher-items-quantity');
+    var priceField = row.querySelector('.dg-voucher-items-unit-price');
+    var grossField = row.querySelector('.dg-voucher-items-gross');
+    var qty = parseAmount(qtyField ? qtyField.value : '1');
     if (qty <= 0) {
       qty = 1;
+      if (qtyField && !String(qtyField.value || '').trim()) {
+        qtyField.value = '1';
+      }
     }
-    var unitPrice = parseAmount((row.querySelector('.dg-voucher-items-unit-price') || {}).value || '0');
+    var unitPrice = parseAmount(priceField ? priceField.value : '0');
     var gross = Math.round(qty * unitPrice * 100) / 100;
-    var grossField = row.querySelector('.dg-voucher-items-gross');
     var articleId = (row.querySelector('.dg-voucher-items-article-id') || {}).value || '';
+
+    // Summe manuell: Einzelpreis daraus ableiten (Kundengutschrift / freie Positionen).
+    if (fromGrossField && grossField) {
+      gross = parseAmount(grossField.value || '0');
+      unitPrice = Math.round((gross / qty) * 100) / 100;
+      if (priceField) {
+        priceField.value = gross !== 0 ? formatAmount(unitPrice) : '';
+      }
+      if (gross !== 0) {
+        grossField.value = formatAmount(gross);
+      } else if (articleId) {
+        grossField.value = '0,00';
+      }
+      return gross;
+    }
+
     if (grossField) {
       if (gross !== 0) {
         grossField.value = formatAmount(gross);
@@ -1116,7 +1197,7 @@
       qtyField.select();
     }
     updateInvoiceItemLineTotal(row);
-    onInvoiceItemInput();
+    onInvoiceItemInput(row, false);
   }
 
   function updateStockAvailabilityHint(row, article) {
@@ -1244,14 +1325,35 @@
     areaNameField.value = selected ? (selected.getAttribute('data-area-name') || selected.textContent || '') : '';
   }
 
-  function onInvoiceItemInput() {
+  function onInvoiceItemInput(row, fromGrossField) {
+    if (row && fromGrossField) {
+      updateInvoiceItemLineTotal(row, true);
+    }
     syncInvoiceItemsSum();
     if (usesIncomeItems()) {
       syncBookingFromItems();
+      applyDerivedBookingLock(true);
     }
     if (!readOnly && invoiceItemsBody && !hasEmptyInvoiceItem()) {
       addInvoiceItemRow();
     }
+  }
+
+  function applyDerivedBookingLock(locked) {
+    if (!bookingBody) {
+      return;
+    }
+    bookingBody.querySelectorAll('input, select, button').forEach(function (field) {
+      if (field.classList.contains('dg-voucher-split-remove')) {
+        field.disabled = !!locked;
+        return;
+      }
+      if (field.tagName === 'SELECT') {
+        field.disabled = !!locked;
+      } else if (field.type === 'search' || field.type === 'text') {
+        field.readOnly = !!locked;
+      }
+    });
   }
 
   function bindInvoiceItemRow(row) {
@@ -1262,16 +1364,31 @@
     var removeBtn = row.querySelector('.dg-voucher-items-remove');
     var areaField = row.querySelector('.dg-voucher-items-area');
     var taxField = row.querySelector('.dg-voucher-items-tax');
+    var grossField = row.querySelector('.dg-voucher-items-gross');
     row.querySelectorAll('.dg-voucher-items-quantity, .dg-voucher-items-unit-price, .dg-voucher-items-unit').forEach(function (field) {
-      field.addEventListener('input', onInvoiceItemInput);
+      field.addEventListener('input', function () {
+        onInvoiceItemInput(row, false);
+      });
     });
+    if (grossField && !readOnly) {
+      grossField.readOnly = false;
+      grossField.removeAttribute('tabindex');
+      grossField.classList.remove('dg-input--computed');
+      grossField.placeholder = '0,00';
+      grossField.addEventListener('input', function () {
+        onInvoiceItemInput(row, true);
+      });
+      grossField.addEventListener('change', function () {
+        onInvoiceItemInput(row, true);
+      });
+    }
     if (taxField) {
       taxField.addEventListener('change', function () {
         var taxTypeField = row.querySelector('.dg-voucher-items-tax-type');
         if (taxTypeField) {
           taxTypeField.value = taxTypeFromRate(taxField.value);
         }
-        onInvoiceItemInput();
+        onInvoiceItemInput(row, false);
       });
     }
     if (areaField) {
@@ -1294,7 +1411,7 @@
         articleSearchTimer = setTimeout(function () {
           searchArticles(value, row);
         }, 250);
-        onInvoiceItemInput();
+        onInvoiceItemInput(row, false);
       });
       queryField.addEventListener('focus', function () {
         searchArticles(queryField.value.trim(), row);
@@ -1324,12 +1441,12 @@
                 : (field.classList.contains('dg-voucher-items-unit') ? 'Stück' : '');
             }
           });
-          onInvoiceItemInput();
+          onInvoiceItemInput(row, false);
           return;
         }
         row.remove();
         reindexInvoiceItems();
-        onInvoiceItemInput();
+        onInvoiceItemInput(null, false);
       });
     }
   }
@@ -1360,11 +1477,27 @@
     }
   }
 
+  function syncInvoiceItemsHint() {
+    var hint = document.getElementById('dg-voucher-invoice-items-hint');
+    if (!hint) {
+      return;
+    }
+    if (getVoucherType() === 'credit') {
+      hint.innerHTML = 'Kundengutschrift: Position ist mit <strong>Gutschein</strong> vorbelegt (Menge 1, Stück, USt 0&nbsp;%). '
+        + 'Bitte nur den <strong>Einzelpreis</strong> (oder die Summe) eintragen.';
+      return;
+    }
+    hint.innerHTML = 'Artikel und Leistungen aus dem Katalog — Buchungszeilen werden daraus automatisch erzeugt. '
+      + 'Betrag unter <strong>Einzelpreis</strong> oder direkt unter <strong>Summe</strong> eintragen. '
+      + '<span class="dg-muted">Leistungen mit <strong>IMP-*</strong> haben oft keinen Festpreis (0,00 €) — Summe oder Einzelpreis manuell setzen.</span>';
+  }
+
   function syncIncomeMode() {
     var income = usesIncomeItems();
     if (invoiceItemsSection) {
       invoiceItemsSection.hidden = !income;
     }
+    syncInvoiceItemsHint();
     syncGiftSectionVisibility();
     syncDocumentPositionTextsField();
     var arapSection = document.getElementById('dg-voucher-arap-section');
@@ -1383,26 +1516,19 @@
     if (bookingPanel) {
       bookingPanel.classList.toggle('dg-voucher-booking--derived', income);
     }
-    if (bookingBody) {
-      bookingBody.querySelectorAll('input, select, button').forEach(function (field) {
-        if (field.classList.contains('dg-voucher-split-remove')) {
-          field.disabled = income;
-          return;
-        }
-        if (field.tagName === 'SELECT') {
-          field.disabled = income;
-        } else if (field.type === 'search' || field.type === 'text') {
-          field.readOnly = income;
-        }
-      });
-    }
+    applyDerivedBookingLock(income);
     if (income) {
       if (invoiceItemsBody && invoiceItemsBody.querySelectorAll('.dg-voucher-items__row').length === 0) {
         addInvoiceItemRow();
       }
-      ensureTrailingInvoiceItemRow();
+      if (getVoucherType() === 'credit') {
+        applyCreditNoteDefaultsToItems();
+      } else {
+        ensureTrailingInvoiceItemRow();
+      }
       syncInvoiceItemsSum();
       syncBookingFromItems();
+      applyDerivedBookingLock(true);
     }
     refreshReverseChargePreview();
   }

@@ -85,19 +85,20 @@ if ($lineRows === []) {
     ];
 }
 if ($itemRows === []) {
+    $isCreditNoteDefaults = $selectedType === 'credit';
     $itemRows[] = [
         'article_id' => '',
         'catalog_kind' => '',
         'article_number' => '',
-        'title' => '',
+        'title' => $isCreditNoteDefaults ? 'Gutschein' : '',
         'area_id' => '',
         'area_name' => '',
         'unit' => 'Stück',
         'quantity' => '1',
         'unit_price_gross' => '',
         'gross_amount' => '',
-        'tax_rate' => '19',
-        'tax_type' => 'ust19',
+        'tax_rate' => $isCreditNoteDefaults ? '0' : '19',
+        'tax_type' => $isCreditNoteDefaults ? 'ust0' : 'ust19',
     ];
 }
 /** @var list<array<string, mixed>> $calendarAreas */
@@ -822,8 +823,14 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </label>
       </div>
       <p class="dg-field-hint" id="dg-voucher-invoice-items-hint">
-        Artikel und Leistungen aus dem Katalog — Buchungszeilen werden daraus automatisch erzeugt.
-        <span class="dg-muted">Leistungen mit <strong>IMP-*</strong> haben oft keinen Festpreis (0,00 €) — Betrag bitte manuell eintragen.</span>
+        <?php if ($selectedType === 'credit') : ?>
+          Kundengutschrift: Position ist mit <strong>Gutschein</strong> vorbelegt (Menge 1, Stück, USt 0&nbsp;%).
+          Bitte nur den <strong>Einzelpreis</strong> (oder die Summe) eintragen.
+        <?php else : ?>
+          Artikel und Leistungen aus dem Katalog — Buchungszeilen werden daraus automatisch erzeugt.
+          Betrag unter <strong>Einzelpreis</strong> oder direkt unter <strong>Summe</strong> eintragen.
+          <span class="dg-muted">Leistungen mit <strong>IMP-*</strong> haben oft keinen Festpreis (0,00 €) — Summe oder Einzelpreis manuell setzen.</span>
+        <?php endif; ?>
       </p>
       <div class="dg-table-wrap">
         <table class="dg-table dg-voucher-items__table">
@@ -928,11 +935,12 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                 <td data-label="Summe">
                   <input
                     type="text"
-                    class="dg-voucher-items-gross dg-input--computed"
+                    class="dg-voucher-items-gross"
                     name="items[<?= (int) $index ?>][gross_amount]"
+                    inputmode="decimal"
                     value="<?= View::escape((string) ($item['gross_amount'] ?? '')) ?>"
-                    readonly
-                    tabindex="-1"
+                    placeholder="0,00"
+                    <?= $readOnly ? ' readonly' : '' ?>
                   >
                 </td>
                 <?php if (!$readOnly) : ?>
@@ -1644,7 +1652,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <?php endforeach; ?>
         </select>
       </td>
-      <td data-label="Summe"><input type="text" class="dg-voucher-items-gross dg-input--computed" readonly tabindex="-1"></td>
+      <td data-label="Summe"><input type="text" class="dg-voucher-items-gross" inputmode="decimal" placeholder="0,00"></td>
       <td class="dg-voucher-items-remove-cell"><button type="button" class="dg-button dg-button--ghost dg-voucher-items-remove" aria-label="Position entfernen">×</button></td>
     </tr>
   </template>

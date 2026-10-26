@@ -258,7 +258,7 @@ final class VoucherIncomePositions
                 'area_name' => $areaName,
                 'unit' => trim((string) ($line['unit'] ?? 'Stück')) ?: 'Stück',
                 'quantity' => $quantity,
-                'unit_price_gross' => $unitPrice > 0 ? $unitPrice : round($gross / $quantity, 2),
+                'unit_price_gross' => $unitPrice != 0.0 ? $unitPrice : round($gross / $quantity, 2),
                 'gross_amount' => $gross,
                 'tax_rate' => $taxRate,
                 'tax_type' => $taxType,
