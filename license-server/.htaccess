@@ -4,9 +4,8 @@ RewriteBase /
 # Block crawlers
 Header set X-Robots-Tag "noindex, nofollow"
 
-# Force HTTPS
-RewriteCond %{HTTPS} !=on
-RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+# HTTPS erzwingt All-Inkl nach „SSL aktiv“ — hier kein Force-HTTPS
+# (sonst Redirect-Schleife, solange das Zertifikat noch fehlt).
 
 # Block config.php direct access
 RewriteRule ^config\.php$ - [F,L]
