@@ -314,6 +314,9 @@ final class LetterheadRenderer
             $safe = class_exists('MailHtmlSanitizer')
                 ? MailHtmlSanitizer::clean($bodyHtml)
                 : strip_tags($bodyHtml, '<p><br><strong><b><em><i><u><s><del><mark><ul><ol><li><table><thead><tbody><tr><th><td><img><span><a>');
+            // TipTap/Editor-Breiten nicht in den Brief übernehmen
+            $safe = (string) preg_replace('/\s(?:width|max-width)\s*:\s*[^;"]+;?/i', '', $safe);
+            $safe = (string) preg_replace('/\s(?:width|max-width)\s*=\s*["\'][^"\']*["\']/i', '', $safe);
             $html .= '<div class="dg-lh-rich">' . $safe . '</div>';
         } else {
             $paragraphs = is_array($doc['paragraphs'] ?? null) ? $doc['paragraphs'] : [];
@@ -330,8 +333,12 @@ final class LetterheadRenderer
             $html .= '<p class="dg-lh-closing">' . nl2br(self::e($closing), false) . '</p>';
         }
         $signature = trim((string) ($doc['signature'] ?? ''));
+        // DIN: nach Gruß zwei Leerzeilen Platz für Unterschrift, dann Name
+        if ($closing !== '' || $signature !== '') {
+            $html .= '<div class="dg-lh-sign-gap" aria-hidden="true">&nbsp;<br>&nbsp;</div>';
+        }
         if ($signature !== '') {
-            $html .= '<p class="dg-lh-signature">' . nl2br(self::e($signature)) . '</p>';
+            $html .= '<p class="dg-lh-signature">' . nl2br(self::e($signature), false) . '</p>';
         }
         $html .= '</section>';
 
@@ -624,10 +631,11 @@ final class LetterheadRenderer
             return '';
         }
 
+        // Absolute zum Blattrand (nicht Content-Box): Dompdf + overflow-sicher als Balken
         $html = '<div class="dg-lh-fold-marks" aria-hidden="true">';
         if ($showFold) {
-            $html .= '<div class="dg-lh-fold" style="top:105mm" title="Falzmarke"></div>';
-            $html .= '<div class="dg-lh-fold" style="top:210mm" title="Falzmarke"></div>';
+            $html .= '<div class="dg-lh-fold" style="top:105mm" title="Falzmarke 105 mm"></div>';
+            $html .= '<div class="dg-lh-fold" style="top:210mm" title="Falzmarke 210 mm"></div>';
         }
         if ($showPunch) {
             $html .= '<div class="dg-lh-fold dg-lh-fold--punch" style="top:148.5mm" title="Lochmarke"></div>';
@@ -752,36 +760,43 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   position: relative;
   width: 210mm;
   min-height: 297mm;
+  height: 297mm;
   margin: 8mm auto;
   background: #fff;
   box-sizing: border-box;
   padding: {$mt}mm {$mr}mm {$mb}mm {$ml}mm;
   box-shadow: 0 2px 12px rgba(0,0,0,.12);
-  overflow: hidden;
+  overflow: visible;
 }
 .dg-lh-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .dg-lh-bg--watermark { z-index: 0; }
 .dg-lh-header, .dg-lh-window, .dg-lh-info, .dg-lh-body-content, .dg-lh-footer, .dg-lh-guides {
   position: relative; z-index: 1;
 }
+/* Falzmarken: linker Blattrand (DIN 5008), absolute zum Padding-Rand = Blattkante */
 .dg-lh-fold-marks {
   position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 8mm;
-  z-index: 3;
+  left: 0;
+  top: 0;
+  width: 10mm;
+  height: 297mm;
+  z-index: 6;
   pointer-events: none;
 }
 .dg-lh-fold {
   position: absolute;
   left: 0;
-  width: 6mm;
-  height: 0;
-  border-top: 0.35mm solid #222;
+  width: 7mm;
+  height: 0.45mm;
+  background: #111;
+  border: none;
+  font-size: 0;
+  line-height: 0;
 }
 .dg-lh-fold--punch {
   width: 4mm;
-  border-top-style: dotted;
-  border-top-width: 0.45mm;
+  height: 0.4mm;
+  background: #333;
 }
 .dg-lh-pagenum {
   position: absolute;
@@ -848,15 +863,41 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 .dg-lh-info__row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1mm; margin-bottom: 1mm; }
 .dg-lh-info__label { color: #555; }
 .dg-lh-info__value { font-weight: 600; }
-.dg-lh-body-content { font-size: 11pt; line-height: 1.45; }
-.dg-lh-subject { margin: 0 0 5mm; }
+.dg-lh-body-content {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  clear: both;
+  font-size: 11pt;
+  line-height: 1.45;
+}
+.dg-lh-subject { margin: 0 0 5mm; width: 100%; }
 .dg-lh-subject--bold { font-weight: 700; }
 .dg-lh-subject__label { font-weight: 400; color: #555; }
-.dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; }
-.dg-lh-rich { font-size: 11pt; line-height: 1.45; margin: 0 0 3.5mm; }
-.dg-lh-rich p { margin: 0 0 3mm; }
-.dg-lh-rich ul, .dg-lh-rich ol { margin: 0 0 3mm; padding-left: 6mm; }
-.dg-lh-rich table, .dg-writer-table { border-collapse: collapse; width: 100%; margin: 0 0 3mm; font-size: 10pt; }
+.dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; width: 100%; max-width: 100%; }
+.dg-lh-closing { margin-bottom: 0; }
+.dg-lh-sign-gap {
+  display: block;
+  height: 2.9em;
+  line-height: 1.45;
+  font-size: 11pt;
+  margin: 0 0 0;
+  width: 100%;
+}
+.dg-lh-signature { margin-top: 0; }
+.dg-lh-rich {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: 11pt;
+  line-height: 1.45;
+  margin: 0 0 3.5mm;
+}
+.dg-lh-rich p { margin: 0 0 3mm; width: 100%; max-width: 100%; }
+.dg-lh-rich ul, .dg-lh-rich ol { margin: 0 0 3mm; padding-left: 6mm; width: 100%; max-width: 100%; box-sizing: border-box; }
+.dg-lh-rich table, .dg-writer-table { border-collapse: collapse; width: 100%; max-width: 100%; margin: 0 0 3mm; font-size: 10pt; }
 .dg-lh-rich th, .dg-lh-rich td, .dg-writer-table th, .dg-writer-table td { border: 0.2mm solid #666; padding: 1.5mm 2mm; vertical-align: top; }
 .dg-lh-rich img, .dg-writer-img { max-width: 100%; height: auto; vertical-align: middle; }
 .dg-lh-footer {
@@ -895,9 +936,9 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 }
 @media print {
   html, body.dg-lh-body { background: #fff; }
-  .dg-lh-page { margin: 0; box-shadow: none; overflow: visible; }
+  .dg-lh-page { margin: 0; box-shadow: none; overflow: visible; height: auto; min-height: 297mm; }
   .dg-lh-guides { display: none !important; }
-  .dg-lh-fold-marks { z-index: 5; }
+  .dg-lh-fold-marks { z-index: 6; display: block !important; }
   .dg-lh-pagenum {
     position: fixed;
     bottom: 8mm;
