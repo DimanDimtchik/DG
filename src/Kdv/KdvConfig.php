@@ -36,8 +36,8 @@ final class KdvConfig
 
     public static function licenseServerUrl(): string
     {
-        $url = self::get('license_server_url', 'https://dg-user.ganz-soft.de');
-        return rtrim($url !== '' ? $url : 'https://dg-user.ganz-soft.de', '/');
+        $url = self::get('license_server_url', 'https://license-server.ganz-soft.de');
+        return rtrim($url !== '' ? $url : 'https://license-server.ganz-soft.de', '/');
     }
 
     public static function licenseAdminToken(): string

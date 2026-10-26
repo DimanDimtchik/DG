@@ -6,7 +6,7 @@ declare(strict_types=1);
  */
 final class KdvLicenseClient
 {
-    private const DEFAULT_BASE = 'https://dg-user.ganz-soft.de';
+    private const DEFAULT_BASE = 'https://license-server.ganz-soft.de';
 
     public static function baseUrl(): string
     {

@@ -6,7 +6,7 @@ declare(strict_types=1);
  */
 final class LicenseGuard
 {
-    private const LICENSE_SERVER = 'https://dg-user.ganz-soft.de/check';
+    private const LICENSE_SERVER = 'https://license-server.ganz-soft.de/check';
     private const STATE_FILE     = '/storage/license_state.json';
     private const CHECK_INTERVAL = 86400; // 24h
     private const GRACE_DAYS     = 7;

@@ -11,14 +11,14 @@ INSTANCES=(
   "kontur-cosmetics.de|Kontur"
   "ganz-om.de|Platzhalter ganz-om"
 )
-LICENSE_SERVER="$ROOT/dg-user.ganz-soft.de"
+LICENSE_SERVER="$ROOT/license-server.ganz-soft.de"
 REFERENCE_LICENSE="$ROOT/ganz-soft.de/config/license.php"
 
 echo "=== CRM-Instanzen Diagnose ($(date -Iseconds)) ==="
 
 check_license_server() {
   echo
-  echo "--- Lizenzserver dg-user.ganz-soft.de ---"
+  echo "--- Lizenzserver license-server.ganz-soft.de ---"
   if [ ! -d "$LICENSE_SERVER" ]; then
     echo "FEHLT: Verzeichnis $LICENSE_SERVER"
     return
@@ -32,7 +32,7 @@ check_license_server() {
   code=$(curl -s -o /dev/null -w '%{http_code}' -m 10 -X POST \
     -H 'Content-Type: application/json' \
     -d '{"domain":"ganz-soft.de","license_key":"GS-TEST-TEST-TEST-TEST","version":"1.0.0"}' \
-    https://dg-user.ganz-soft.de/check 2>/dev/null || echo "000")
+    https://license-server.ganz-soft.de/check 2>/dev/null || echo "000")
   echo "HTTP /check (Test): $code (200/JSON erwartet, 500 = Server/DB kaputt)"
 }
 
