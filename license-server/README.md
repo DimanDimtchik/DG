@@ -2,7 +2,9 @@
 
 Der Lizenzserver liegt **nicht** mehr in diesem CRM-Repo.
 
-- **Repo:** `C:\Users\User\Projekts\dg-license-server` (GitHub: `dg-license-server`, sobald Remote steht)
+- **Lokal:** `C:\Users\User\Projekts\dg-license-server`
+- **Remote:** https://cursor.com/codebase/dietrich-ganz/dg-license-server  
+  (`https://origin.cursor.com/dietrich-ganz/dg-license-server.git`)
 - **Live:** https://license-server.ganz-soft.de  
 - **CRM-Client:** `src/Security/LicenseGuard.php`, `src/Kdv/KdvLicenseClient.php`
 
