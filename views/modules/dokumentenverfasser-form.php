@@ -246,15 +246,48 @@ $disabled = $readOnly ? ' disabled' : '';
                 <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table-add-row" title="Zeile hinzufügen" aria-label="Zeile"><span aria-hidden="true">+Z</span></button>
                 <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table-add-col" title="Spalte hinzufügen" aria-label="Spalte"><span aria-hidden="true">+S</span></button>
                 <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-table-delete" title="Tabelle löschen" aria-label="Tabelle löschen"><span aria-hidden="true">⌫▦</span></button>
-                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-emoji" title="Emoji" aria-label="Emoji"><span aria-hidden="true">☺</span></button>
-                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-lucide" title="Icon einfügen" aria-label="Icon"><span aria-hidden="true">◇</span></button>
-                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-media" title="Bild aus Mediathek" aria-label="Mediathek"><span aria-hidden="true">▣</span></button>
+                <button type="button" class="dg-writer-toolbar__btn dg-writer-toolbar__btn--emoji" id="dg-writer-cmd-emoji" title="Emoji" aria-label="Emoji"><span aria-hidden="true">😀</span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-lucide" title="Icon einfügen" aria-label="Icon"><span class="dg-writer-toolbar__svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/></svg></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-media" title="Bild aus Mediathek" aria-label="Mediathek"><span class="dg-writer-toolbar__svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5.5-5.5a1.5 1.5 0 0 0-2.12 0L3 19"/></svg></span></button>
               </div>
               <div class="dg-writer-toolbar__group">
                 <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-clear" title="Formatierung entfernen" aria-label="Formatierung entfernen"><span aria-hidden="true">T<sub>x</sub></span></button>
-                <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-print" title="Drucken" aria-label="Drucken" data-preview-url="<?= View::escape($previewUrl) ?>"><span aria-hidden="true">⎙</span></button>
                 <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-undo" title="Rückgängig (Strg+Z)" aria-label="Rückgängig"><span aria-hidden="true">↶</span></button>
                 <button type="button" class="dg-writer-toolbar__btn" id="dg-writer-cmd-redo" title="Wiederholen (Strg+Y)" aria-label="Wiederholen"><span aria-hidden="true">↷</span></button>
+              </div>
+            </div>
+            <div id="dg-writer-selection-bar" class="dg-writer-selection-bar" hidden>
+              <span class="dg-writer-selection-bar__label" id="dg-writer-sel-label">Auswahl</span>
+              <label class="dg-writer-selection-bar__field" id="dg-writer-sel-size-wrap" hidden>
+                <span>Größe</span>
+                <select id="dg-writer-sel-size" aria-label="Größe">
+                  <option value="12px">S</option>
+                  <option value="16px" selected>M</option>
+                  <option value="22px">L</option>
+                  <option value="32px">XL</option>
+                  <option value="48px">XXL</option>
+                </select>
+              </label>
+              <label class="dg-writer-selection-bar__field" id="dg-writer-sel-width-wrap" hidden>
+                <span>Breite</span>
+                <select id="dg-writer-sel-width" aria-label="Bildbreite">
+                  <option value="">Auto</option>
+                  <option value="80">80 px</option>
+                  <option value="120">120 px</option>
+                  <option value="200">200 px</option>
+                  <option value="320">320 px</option>
+                  <option value="480">480 px</option>
+                  <option value="100%">Volle Breite</option>
+                </select>
+              </label>
+              <label class="dg-writer-selection-bar__field dg-writer-selection-bar__color" id="dg-writer-sel-color-wrap" hidden title="Farbe">
+                <span>Farbe</span>
+                <input type="color" id="dg-writer-sel-color" value="#1a1a1a" aria-label="Farbe">
+              </label>
+              <div class="dg-writer-selection-bar__align" id="dg-writer-sel-align-wrap" hidden>
+                <button type="button" class="dg-writer-toolbar__btn" data-sel-align="left" title="Linksbündig" aria-label="Linksbündig"><span class="dg-writer-ico dg-writer-ico--align-left" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" data-sel-align="center" title="Zentriert" aria-label="Zentriert"><span class="dg-writer-ico dg-writer-ico--align-center" aria-hidden="true"></span></button>
+                <button type="button" class="dg-writer-toolbar__btn" data-sel-align="right" title="Rechtsbündig" aria-label="Rechtsbündig"><span class="dg-writer-ico dg-writer-ico--align-right" aria-hidden="true"></span></button>
               </div>
             </div>
             <div id="dg-writer-emoji-panel" class="dg-writer-picker" hidden></div>

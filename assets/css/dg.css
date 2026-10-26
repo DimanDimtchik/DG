@@ -7587,11 +7587,79 @@ body.dg-login-page {
 .dg-writer-toolbar__btn--i { font-style: italic; font-family: Georgia, serif; font-weight: 600; }
 .dg-writer-toolbar__btn--u span { text-decoration: underline; text-underline-offset: 2px; }
 .dg-writer-toolbar__btn--s span { text-decoration: line-through; }
+.dg-writer-toolbar__btn--emoji span {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  filter: saturate(1.25);
+}
+.dg-writer-toolbar__svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+.dg-writer-toolbar__svg svg {
+  display: block;
+}
 .dg-writer-toolbar__btn sub {
   font-size: 0.65em;
   vertical-align: baseline;
   position: relative;
   bottom: -0.2em;
+}
+.dg-writer-selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid #b8c9e0;
+  border-radius: 8px;
+  background: #eef4fb;
+}
+.dg-writer-selection-bar[hidden] {
+  display: none !important;
+}
+.dg-writer-selection-bar__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #344054;
+  margin-right: 4px;
+}
+.dg-writer-selection-bar__field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin: 0;
+}
+.dg-writer-selection-bar__field select {
+  height: 28px;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+  padding: 0 6px;
+}
+.dg-writer-selection-bar__color input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--dg-border, #d0d5dd);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+.dg-writer-selection-bar__align {
+  display: inline-flex;
+  gap: 2px;
+}
+#dg-writer-lucide-search {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
 }
 .dg-writer-toolbar__select select {
   height: 30px;
