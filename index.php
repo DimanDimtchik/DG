@@ -5368,6 +5368,51 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'buchhaltung-belege') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'buchhaltung-gutscheine' && MenuRegistry::canAccess($user, 'buchhaltung-gutscheine')) {
+            $formError = null;
+            $giftForm = [
+                'code' => '',
+                'title' => 'Geschenkgutschein',
+                'face_value_gross' => '',
+                'valid_until' => '',
+                'notes' => '',
+            ];
+            if (
+                $_SERVER['REQUEST_METHOD'] === 'POST'
+                && isset($_POST['gift_voucher_create'])
+                && Csrf::verify($_POST['_csrf'] ?? null)
+                && RoleResolver::canEdit($user)
+            ) {
+                try {
+                    GiftVoucherRepository::create([
+                        'code' => (string) ($_POST['code'] ?? ''),
+                        'title' => (string) ($_POST['title'] ?? ''),
+                        'face_value_gross' => (string) ($_POST['face_value_gross'] ?? ''),
+                        'valid_until' => (string) ($_POST['valid_until'] ?? ''),
+                        'notes' => (string) ($_POST['notes'] ?? ''),
+                        'contact_id' => (int) ($_POST['contact_id'] ?? 0),
+                    ], $user->id);
+                    Flash::success('Gutschein angelegt.');
+                    header('Location: /app?page=buchhaltung-gutscheine', true, 302);
+                    exit;
+                } catch (Throwable $e) {
+                    $formError = $e->getMessage();
+                    $giftForm = [
+                        'code' => (string) ($_POST['code'] ?? ''),
+                        'title' => (string) ($_POST['title'] ?? 'Geschenkgutschein'),
+                        'face_value_gross' => (string) ($_POST['face_value_gross'] ?? ''),
+                        'valid_until' => (string) ($_POST['valid_until'] ?? ''),
+                        'notes' => (string) ($_POST['notes'] ?? ''),
+                    ];
+                }
+            }
+            $giftVouchers = GiftVoucherRepository::listAll(300);
+            $contentTemplate = 'modules/buchhaltung-gutscheine';
+            $title = 'Gutscheine';
+            $currentPage = 'buchhaltung-gutscheine';
+        } elseif ($page === 'buchhaltung-gutscheine') {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'buchhaltung-beleg-form' && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')) {
             $applyBelegContactPrefill = static function (array &$form): void {
                 $prefillContactId = (int) ($_GET['contact_id'] ?? 0);

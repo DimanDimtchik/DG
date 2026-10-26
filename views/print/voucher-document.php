@@ -226,6 +226,61 @@ $customerLines = is_array($customerBox['lines'] ?? null) ? $customerBox['lines']
       <td>Gesamtbetrag</td>
       <td class="num"><?= $fmt($totals['gross'] ?? 0) ?> €</td>
     </tr>
+    <?php
+      $discountAmountPrint = VoucherRepository::parseMoney($voucher['discount_amount'] ?? 0);
+      $giftRedemptionRows = is_array($giftRedemptions ?? null) ? $giftRedemptions : [];
+      $giftRedeemedPrint = VoucherRepository::parseMoney($voucher['gift_redeemed_amount'] ?? 0);
+      if ($giftRedeemedPrint <= 0.0 && $giftRedemptionRows !== []) {
+          foreach ($giftRedemptionRows as $gPrintRow) {
+              $giftRedeemedPrint += VoucherRepository::parseMoney($gPrintRow['amount_gross'] ?? 0);
+          }
+          $giftRedeemedPrint = round($giftRedeemedPrint, 2);
+      }
+    ?>
+    <?php if ($discountAmountPrint > 0.0) : ?>
+      <tr>
+        <td>Abzgl. Rabatt / Skonto</td>
+        <td class="num">− <?= $fmt($discountAmountPrint) ?> €</td>
+      </tr>
+    <?php endif; ?>
+    <?php foreach ($giftRedemptionRows as $gPrintRow) : ?>
+      <?php
+        $gAmt = VoucherRepository::parseMoney($gPrintRow['amount_gross'] ?? 0);
+        if ($gAmt <= 0.0) {
+            continue;
+        }
+        $gCode = trim((string) ($gPrintRow['code'] ?? ''));
+        $gTitle = trim((string) ($gPrintRow['title'] ?? ''));
+        $gLabel = $gCode !== '' ? $gCode : 'Gutschein';
+        if ($gTitle !== '') {
+            $gLabel .= ' — ' . $gTitle;
+        }
+      ?>
+      <tr>
+        <td>Abzgl. Gutschein <?= View::escape($gLabel) ?></td>
+        <td class="num">− <?= $fmt($gAmt) ?> €</td>
+      </tr>
+    <?php endforeach; ?>
+    <?php if ($giftRedeemedPrint > 0.0 && $giftRedemptionRows === []) : ?>
+      <tr>
+        <td>Abzgl. Gutschein</td>
+        <td class="num">− <?= $fmt($giftRedeemedPrint) ?> €</td>
+      </tr>
+    <?php endif; ?>
+    <?php
+      $amountDuePrint = round(
+          max(0.0, VoucherRepository::parseMoney($totals['gross'] ?? 0) - $discountAmountPrint - $giftRedeemedPrint),
+          2
+      );
+      $showGiftDue = ($discountAmountPrint > 0.0 || $giftRedeemedPrint > 0.0)
+          && !(is_array($finalSummary) && ($finalSummary['partials'] ?? []) !== []);
+    ?>
+    <?php if ($showGiftDue) : ?>
+      <tr class="total">
+        <td><strong>Zahlbetrag</strong></td>
+        <td class="num"><strong><?= $fmt($amountDuePrint) ?> €</strong></td>
+      </tr>
+    <?php endif; ?>
     <?php if (is_array($finalSummary) && ($finalSummary['partials'] ?? []) !== []) : ?>
       <?php foreach ($finalSummary['partials'] as $partial) : ?>
         <tr>

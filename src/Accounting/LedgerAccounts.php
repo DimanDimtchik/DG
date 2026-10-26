@@ -108,7 +108,16 @@ final class LedgerAccounts
         return $isIncome ? '4736' : '4730';
     }
 
-        /**
+    /**
+     * Verbindlichkeit ausgegebene Geschenkgutscheine (Einlösung auf Rechnung).
+     * SKR04: 3786 · SKR03: 1796 (Kontenrahmen-Seed).
+     */
+    public static function giftVoucherLiabilityAccount(string $skrType): string
+    {
+        return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '3786' : '1796';
+    }
+
+    /**
      * Sammelkonto für Saldenvorträge (Eröffnungsbilanzwerte).
      * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return string
@@ -124,7 +133,7 @@ final class LedgerAccounts
         return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '9008' : '9008';
     }
 
-        /**
+    /**
      * Buchungsseite der Primärzeile (Aufwand/Ertrag) je Belegart.
      * @param string $voucherType Belegtyp
      * @return 'debit'|'credit'

@@ -367,6 +367,12 @@ final class MenuRegistry
                     'href' => '/app?page=buchhaltung-belege',
                 ],
                 [
+                    'slug' => 'buchhaltung-gutscheine',
+                    'label' => 'Gutscheine',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=buchhaltung-gutscheine',
+                ],
+                [
                     'slug' => 'buchhaltung-ueberweisungen',
                     'label' => 'Überweisungen',
                     'icon' => 'transfer',
@@ -479,6 +485,7 @@ final class MenuRegistry
             'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
             'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
             'buchhaltung-belege' => 'Auftrag, Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
+            'buchhaltung-gutscheine' => 'Geschenkgutscheine anlegen und Restwerte verwalten — Einlösung auf der Rechnung.',
             'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',
@@ -657,6 +664,7 @@ final class MenuRegistry
             $slug === 'buchhaltung-konten'
             || $slug === 'buchhaltung-belege'
             || $slug === 'buchhaltung-beleg-form'
+            || $slug === 'buchhaltung-gutscheine'
             || $slug === 'buchhaltung-ueberweisungen'
             || $slug === 'buchhaltung-kontenuebersicht'
             || $slug === 'buchhaltung-opos'

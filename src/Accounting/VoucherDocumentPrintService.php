@@ -224,6 +224,7 @@ final class VoucherDocumentPrintService
             'logoShapeClass' => AppearanceSettings::logoShapeClass(),
             'mandatoryLines' => self::mandatoryLines(),
             'totalsBreakdown' => self::totalsBreakdown($items, $voucher),
+            'giftRedemptions' => GiftVoucherRepository::redemptionsForVoucher((int) ($voucher['id'] ?? 0)),
             'introTextResolved' => $introText,
             'footerTextResolved' => $footerText,
             'validUntil' => $validUntil,

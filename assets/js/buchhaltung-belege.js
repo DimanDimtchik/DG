@@ -132,6 +132,12 @@
   var invoiceItemsBody = document.getElementById('dg-voucher-invoice-items-body');
   var invoiceItemRowTemplate = document.getElementById('dg-voucher-invoice-item-row-template');
   var invoiceItemsSumEl = document.getElementById('dg-voucher-invoice-items-sum');
+  var giftSection = document.getElementById('dg-voucher-gift-section');
+  var giftBody = document.getElementById('dg-voucher-gift-body');
+  var giftRowTemplate = document.getElementById('dg-voucher-gift-row-template');
+  var giftSumEl = document.getElementById('dg-voucher-gift-sum');
+  var giftAddBtn = document.getElementById('dg-voucher-gift-add');
+  var giftSearchTimer = null;
   var bookingSection = document.getElementById('dg-voucher-booking-section');
   var incomeVoucherTypes = config.incomeVoucherTypes || ['income', 'income_reduction'];
   var revenueAccounts = config.revenueAccounts || { 19: '8410', 7: '8334', 0: '8192' };
@@ -736,7 +742,178 @@
       sum += updateInvoiceItemLineTotal(row);
     });
     invoiceItemsSumEl.textContent = formatAmount(sum);
+    syncGiftSum();
     return sum;
+  }
+
+  function showsGiftRedemptions() {
+    return usesIncomeItems() && isBookableDocumentKind();
+  }
+
+  function syncGiftSectionVisibility() {
+    if (!giftSection) {
+      return;
+    }
+    giftSection.hidden = !showsGiftRedemptions();
+  }
+
+  function syncGiftSum() {
+    if (!giftBody || !giftSumEl) {
+      return 0;
+    }
+    var sum = 0;
+    giftBody.querySelectorAll('.dg-voucher-gift__row').forEach(function (row) {
+      var amountField = row.querySelector('.dg-voucher-gift-amount');
+      sum += parseAmount(amountField ? amountField.value : '');
+    });
+    giftSumEl.textContent = formatAmount(sum);
+    return sum;
+  }
+
+  function reindexGiftRows() {
+    if (!giftBody) {
+      return;
+    }
+    giftBody.querySelectorAll('.dg-voucher-gift__row').forEach(function (row, index) {
+      row.setAttribute('data-gift-index', String(index));
+      row.querySelectorAll('[name]').forEach(function (field) {
+        var name = field.getAttribute('name') || '';
+        field.setAttribute('name', name.replace(/gift_redemptions\[\d+]/, 'gift_redemptions[' + index + ']'));
+      });
+      ['dg-voucher-gift-id', 'dg-voucher-gift-code', 'dg-voucher-gift-title', 'dg-voucher-gift-amount'].forEach(function (cls) {
+        var el = row.querySelector('.' + cls);
+        if (!el) {
+          return;
+        }
+        if (cls === 'dg-voucher-gift-id') {
+          el.name = 'gift_redemptions[' + index + '][gift_voucher_id]';
+        } else if (cls === 'dg-voucher-gift-code') {
+          el.name = 'gift_redemptions[' + index + '][code]';
+        } else if (cls === 'dg-voucher-gift-title') {
+          el.name = 'gift_redemptions[' + index + '][title]';
+        } else if (cls === 'dg-voucher-gift-amount') {
+          el.name = 'gift_redemptions[' + index + '][amount_gross]';
+        }
+      });
+    });
+  }
+
+  function bindGiftRow(row) {
+    if (!row || readOnly) {
+      return;
+    }
+    var query = row.querySelector('.dg-voucher-gift-query');
+    var results = row.querySelector('.dg-voucher-gift-search-results');
+    var idField = row.querySelector('.dg-voucher-gift-id');
+    var codeField = row.querySelector('.dg-voucher-gift-code');
+    var titleField = row.querySelector('.dg-voucher-gift-title');
+    var remainingField = row.querySelector('.dg-voucher-gift-remaining');
+    var amountField = row.querySelector('.dg-voucher-gift-amount');
+    var removeBtn = row.querySelector('.dg-voucher-gift-remove');
+
+    function pickGift(item) {
+      if (idField) idField.value = String(item.id || '');
+      if (codeField) codeField.value = item.code || '';
+      if (titleField) titleField.value = item.title || '';
+      if (query) query.value = item.label || ((item.code || '') + (item.title ? ' — ' + item.title : ''));
+      if (remainingField) remainingField.value = item.remaining_label || formatAmount(item.remaining_gross || 0);
+      if (amountField && !String(amountField.value || '').trim()) {
+        amountField.value = formatAmount(item.remaining_gross || 0);
+      }
+      if (results) {
+        results.hidden = true;
+        results.innerHTML = '';
+      }
+      syncGiftSum();
+    }
+
+    if (query && results) {
+      query.addEventListener('input', function () {
+        window.clearTimeout(giftSearchTimer);
+        var q = query.value.trim();
+        if (q.length < 1) {
+          results.hidden = true;
+          results.innerHTML = '';
+          return;
+        }
+        giftSearchTimer = window.setTimeout(function () {
+          var contactIdInput = document.getElementById('dg-voucher-contact-id');
+          var contactId = contactIdInput ? parseInt(contactIdInput.value, 10) || 0 : 0;
+          var url = '/api/voucher?action=gift_voucher_search&q=' + encodeURIComponent(q);
+          if (contactId > 0) {
+            url += '&contact_id=' + contactId;
+          }
+          fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (payload) {
+              var items = (payload && payload.data && payload.data.items) || [];
+              if (!items.length) {
+                results.innerHTML = '<div class="dg-voucher-contact-results__empty">Keine Gutscheine gefunden.</div>';
+                results.hidden = false;
+                return;
+              }
+              results.innerHTML = items.map(function (item) {
+                return (
+                  '<button type="button" class="dg-voucher-contact-results__item" data-gift-id="' +
+                  String(item.id || '') +
+                  '"><span>' +
+                  escapeHtml(item.label || item.code || '') +
+                  '</span><span class="dg-voucher-contact-results__meta">Rest ' +
+                  escapeHtml(item.remaining_label || '') +
+                  '</span></button>'
+                );
+              }).join('');
+              results.hidden = false;
+              results.querySelectorAll('[data-gift-id]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                  var id = parseInt(btn.getAttribute('data-gift-id') || '0', 10);
+                  var item = items.find(function (x) { return parseInt(x.id, 10) === id; });
+                  if (item) pickGift(item);
+                });
+              });
+            })
+            .catch(function () {
+              results.innerHTML = '<div class="dg-voucher-contact-results__empty">Suche fehlgeschlagen.</div>';
+              results.hidden = false;
+            });
+        }, 220);
+      });
+    }
+
+    if (amountField) {
+      amountField.addEventListener('input', syncGiftSum);
+    }
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function () {
+        var rows = giftBody ? giftBody.querySelectorAll('.dg-voucher-gift__row') : [];
+        if (rows.length <= 1) {
+          if (idField) idField.value = '';
+          if (codeField) codeField.value = '';
+          if (titleField) titleField.value = '';
+          if (query) query.value = '';
+          if (remainingField) remainingField.value = '';
+          if (amountField) amountField.value = '';
+          syncGiftSum();
+          return;
+        }
+        row.remove();
+        reindexGiftRows();
+        syncGiftSum();
+      });
+    }
+  }
+
+  function addGiftRow() {
+    if (!giftBody || !giftRowTemplate || readOnly) {
+      return;
+    }
+    var clone = giftRowTemplate.content.cloneNode(true);
+    var row = clone.querySelector('.dg-voucher-gift__row');
+    giftBody.appendChild(clone);
+    if (row) {
+      bindGiftRow(row);
+    }
+    reindexGiftRows();
   }
 
   function collectInvoiceItems() {
@@ -1188,6 +1365,7 @@
     if (invoiceItemsSection) {
       invoiceItemsSection.hidden = !income;
     }
+    syncGiftSectionVisibility();
     syncDocumentPositionTextsField();
     var arapSection = document.getElementById('dg-voucher-arap-section');
     var showArap = supportsAccrualUi();
@@ -2504,6 +2682,7 @@
       syncDocumentStatusField();
       syncInvoiceNumberField();
       syncArapUi();
+      syncGiftSectionVisibility();
       syncOfferValidUntil(getDocumentKind() === 'offer');
       refreshReverseChargePreview();
       if (paymentTermsSection) {
@@ -2511,6 +2690,18 @@
       }
     });
   }
+
+  if (giftBody) {
+    giftBody.querySelectorAll('.dg-voucher-gift__row').forEach(bindGiftRow);
+    reindexGiftRows();
+    syncGiftSum();
+  }
+  if (giftAddBtn) {
+    giftAddBtn.addEventListener('click', function () {
+      addGiftRow();
+    });
+  }
+  syncGiftSectionVisibility();
 
   function setInvoiceRequired(required) {
     var invoiceInput = document.getElementById('dg-voucher-invoice-number');
@@ -2730,13 +2921,16 @@
     syncReverseChargeUi();
     reindexBookingRows();
     reindexInvoiceItems();
+    reindexGiftRows();
   });
 
   window.dgVoucherFormApi = {
     addBookingRow: addBookingRow,
     addInvoiceItemRow: addInvoiceItemRow,
+    addGiftRow: addGiftRow,
     reindexBookingRows: reindexBookingRows,
     reindexInvoiceItems: reindexInvoiceItems,
+    reindexGiftRows: reindexGiftRows,
     syncContactValidation: syncContactValidation,
     onBookingInput: onBookingInput,
     syncIncomeMode: syncIncomeMode,

@@ -855,6 +855,18 @@ final class VoucherRepository
         if ($discountPercent > 0 && $discountAmount <= 0.0 && $gross > 0) {
             $discountAmount = round($gross * $discountPercent / 100, 2);
         }
+        $giftRedemptionRows = [];
+        $giftRedeemedAmount = 0.0;
+        if ($usesInvoiceItems && VoucherDocumentKind::isBookable($documentKind, $voucherType)) {
+            $giftRedemptionRows = GiftVoucherRepository::parseRedemptionRows($data);
+            foreach ($giftRedemptionRows as $gr) {
+                $giftRedeemedAmount += (float) $gr['amount_gross'];
+            }
+            $giftRedeemedAmount = round($giftRedeemedAmount, 2);
+            if ($giftRedeemedAmount > round(max(0.0, $gross - $discountAmount), 2) + 0.009) {
+                throw new InvalidArgumentException('Gutschein-Abzug darf den Betrag nach Rabatt nicht übersteigen.');
+            }
+        }
         $formPaidAmount = round(max(0, self::parseMoney($data['paid_amount'] ?? 0)), 2);
         $paidAmount = $id > 0 ? VoucherPaymentRepository::totalPaid($id) : 0.0;
         $paidAt = trim((string) ($data['paid_at'] ?? ''));
@@ -875,10 +887,10 @@ final class VoucherRepository
                 $settlementAmount = round(max(0, self::parseMoney($data['paid_amount'] ?? 0)), 2);
             }
             if ($settlementAmount <= 0.0) {
-                $settlementAmount = round(max(0, $gross - $discountAmount - $paidAmount), 2);
+                $settlementAmount = round(max(0, $gross - $discountAmount - $giftRedeemedAmount - $paidAmount), 2);
             }
             if ($settlementAmount <= 0.0) {
-                $settlementAmount = round(max(0, $gross - $discountAmount), 2);
+                $settlementAmount = round(max(0, $gross - $discountAmount - $giftRedeemedAmount), 2);
             }
             if ($paidAt === '') {
                 $paidAt = date('Y-m-d');
@@ -917,6 +929,7 @@ final class VoucherRepository
             'gross_amount' => $amounts['gross_amount'],
             'discount_percent' => $discountPercent,
             'discount_amount' => $discountAmount,
+            'gift_redeemed_amount' => $giftRedeemedAmount,
             'paid_amount' => $paidAmount,
             'paid_at' => $paidAt !== '' ? $paidAt : null,
             'net_amount' => $amounts['net_amount'],
@@ -962,6 +975,7 @@ final class VoucherRepository
                     gross_amount = :gross_amount,
                     discount_percent = :discount_percent,
                     discount_amount = :discount_amount,
+                    gift_redeemed_amount = :gift_redeemed_amount,
                     paid_amount = :paid_amount,
                     paid_at = :paid_at,
                     net_amount = :net_amount,
@@ -984,6 +998,11 @@ final class VoucherRepository
             $stmt->execute($fields);
             self::replaceLines($id, $lineRows);
             self::replaceItems($id, $itemRows);
+            $syncedGift = GiftVoucherRepository::syncRedemptionsForVoucher($id, $giftRedemptionRows);
+            if (abs($syncedGift - $giftRedeemedAmount) > 0.009) {
+                $pdo->prepare('UPDATE dg_vouchers SET gift_redeemed_amount = :g WHERE id = :id')
+                    ->execute(['g' => $syncedGift, 'id' => $id]);
+            }
             self::syncLedger($id);
             StockMovementService::syncForVoucher($id, $userId);
             StockReservationService::syncForVoucher($id);
@@ -997,14 +1016,14 @@ final class VoucherRepository
             'INSERT INTO dg_vouchers (
                 voucher_type, document_kind, document_status, parent_voucher_id, voucher_date, delivery_date, arap_enabled, arap_current_year_percent, arap_next_year_percent,
                 contact_id, supplier_name, invoice_number, description,
-                gross_amount, discount_percent, discount_amount, paid_amount, paid_at,
+                gross_amount, discount_percent, discount_amount, gift_redeemed_amount, paid_amount, paid_at,
                 net_amount, tax_amount, tax_rate, tax_key, reverse_charge_type, ustva_snapshot,
                 account_number, payment_status, notes, document_intro_text, document_footer_text, document_legal_clauses,
                 payment_due_date, payment_term_tiers, created_by
             ) VALUES (
                 :voucher_type, :document_kind, :document_status, :parent_voucher_id, :voucher_date, :delivery_date, :arap_enabled, :arap_current_year_percent, :arap_next_year_percent,
                 :contact_id, :supplier_name, :invoice_number, :description,
-                :gross_amount, :discount_percent, :discount_amount, :paid_amount, :paid_at,
+                :gross_amount, :discount_percent, :discount_amount, :gift_redeemed_amount, :paid_amount, :paid_at,
                 :net_amount, :tax_amount, :tax_rate, :tax_key, :reverse_charge_type, :ustva_snapshot,
                 :account_number, :payment_status, :notes, :document_intro_text, :document_footer_text, :document_legal_clauses,
                 :payment_due_date, :payment_term_tiers, :created_by
@@ -1014,6 +1033,11 @@ final class VoucherRepository
         $newId = (int) $pdo->lastInsertId();
         self::replaceLines($newId, $lineRows);
         self::replaceItems($newId, $itemRows);
+        $syncedGift = GiftVoucherRepository::syncRedemptionsForVoucher($newId, $giftRedemptionRows);
+        if (abs($syncedGift - $giftRedeemedAmount) > 0.009) {
+            $pdo->prepare('UPDATE dg_vouchers SET gift_redeemed_amount = :g WHERE id = :id')
+                ->execute(['g' => $syncedGift, 'id' => $newId]);
+        }
         self::syncLedger($newId);
         StockMovementService::syncForVoucher($newId, $userId);
         StockReservationService::syncForVoucher($newId);
@@ -1274,6 +1298,8 @@ final class VoucherRepository
             'gross_amount' => '',
             'discount_percent' => '0',
             'discount_amount' => '',
+            'gift_redeemed_amount' => '',
+            'gift_redemptions' => [],
             'paid_amount' => '',
             'paid_at' => '',
             'net_amount' => '',
@@ -1399,6 +1425,19 @@ final class VoucherRepository
             'gross_amount' => self::formatMoney((float) ($row['gross_amount'] ?? 0)),
             'discount_percent' => (string) ($row['discount_percent'] ?? '0'),
             'discount_amount' => self::formatMoney((float) ($row['discount_amount'] ?? 0)),
+            'gift_redeemed_amount' => self::formatMoney((float) ($row['gift_redeemed_amount'] ?? 0)),
+            'gift_redemptions' => array_map(
+                static function (array $g): array {
+                    return [
+                        'gift_voucher_id' => (string) (int) ($g['gift_voucher_id'] ?? 0),
+                        'code' => (string) ($g['code'] ?? ''),
+                        'title' => (string) ($g['title'] ?? ''),
+                        'amount_gross' => self::formatMoney((float) ($g['amount_gross'] ?? 0)),
+                        'remaining_gross' => self::formatMoney((float) ($g['remaining_gross'] ?? 0)),
+                    ];
+                },
+                GiftVoucherRepository::redemptionsForVoucher((int) ($row['id'] ?? 0))
+            ),
             'paid_amount' => self::formatMoney((float) ($row['paid_amount'] ?? 0)),
             'paid_at' => (string) ($row['paid_at'] ?? ''),
             'net_amount' => self::formatMoney((float) ($row['net_amount'] ?? 0)),

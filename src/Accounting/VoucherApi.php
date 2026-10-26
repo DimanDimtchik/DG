@@ -71,6 +71,11 @@ final class VoucherApi
                 return;
             }
 
+            if ($action === 'gift_voucher_search') {
+                self::handleGiftVoucherSearch();
+                return;
+            }
+
             if ($action === 'ledger_preview') {
                 self::handleLedgerPreview();
                 return;
@@ -79,7 +84,7 @@ final class VoucherApi
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search, ledger_preview).',
+                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search, gift_voucher_search, ledger_preview).',
             ], JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(500);
@@ -262,6 +267,30 @@ final class VoucherApi
         echo json_encode([
             'success' => true,
             'data' => ['items' => VoucherIncomePositions::searchArticles($query, 15)],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function handleGiftVoucherSearch(): void
+    {
+        $query = trim((string) ($_GET['q'] ?? ''));
+        $contactId = (int) ($_GET['contact_id'] ?? 0);
+        $items = GiftVoucherRepository::listActive($contactId > 0 ? $contactId : null, $query, 20);
+        $out = [];
+        foreach ($items as $item) {
+            $out[] = [
+                'id' => (int) $item['id'],
+                'code' => (string) $item['code'],
+                'title' => (string) $item['title'],
+                'label' => (string) $item['label'],
+                'remaining_gross' => (float) $item['remaining_gross'],
+                'face_value_gross' => (float) $item['face_value_gross'],
+                'remaining_label' => number_format((float) $item['remaining_gross'], 2, ',', '.') . ' €',
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => ['items' => $out],
         ], JSON_UNESCAPED_UNICODE);
     }
 

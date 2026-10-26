@@ -87,7 +87,8 @@ final class VoucherPaymentRepository
     {
         $gross = VoucherRepository::parseMoney($voucher['gross_amount'] ?? 0);
         $discount = VoucherRepository::parseMoney($voucher['discount_amount'] ?? 0);
-        $due = round(max(0.0, $gross - $discount), 2);
+        $giftRedeemed = VoucherRepository::parseMoney($voucher['gift_redeemed_amount'] ?? 0);
+        $due = round(max(0.0, $gross - $discount - $giftRedeemed), 2);
 
         // Schlussrechnung: Positionen = Auftragssumme, Zahlbetrag = nach Abzug der Anzahlungen.
         $kind = VoucherDocumentKind::sanitize((string) ($voucher['document_kind'] ?? ''));

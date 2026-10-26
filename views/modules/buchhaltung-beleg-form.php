@@ -946,6 +946,100 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </table>
       </div>
       <p class="dg-field-hint">Summe Positionen: <strong id="dg-voucher-invoice-items-sum">0,00</strong> €</p>
+
+      <?php
+        $giftRedemptionRows = is_array($form['gift_redemptions'] ?? null) ? $form['gift_redemptions'] : [];
+        if ($giftRedemptionRows === []) {
+            $giftRedemptionRows[] = [
+                'gift_voucher_id' => '',
+                'code' => '',
+                'title' => '',
+                'amount_gross' => '',
+                'remaining_gross' => '',
+            ];
+        }
+        $showGiftRedemptions = $showInvoiceItems
+            && VoucherDocumentKind::isBookable($selectedDocumentKind, $selectedType);
+      ?>
+      <div id="dg-voucher-gift-section" class="dg-voucher-gift-section"<?= $showGiftRedemptions ? '' : ' hidden' ?> style="margin-top:18px">
+        <h3 class="dg-subsection-title">Gutscheine einlösen</h3>
+        <p class="dg-field-hint">
+          Geschenkgutscheine aus der Liste wählen — der Betrag wird vom Rechnungsbetrag abgezogen (Zahlbetrag).
+          Pflege: <a href="/app?page=buchhaltung-gutscheine">Buchhaltung → Gutscheine</a>.
+        </p>
+        <div class="dg-table-wrap">
+          <table class="dg-table dg-voucher-gift__table">
+            <thead>
+              <tr>
+                <th>Gutschein</th>
+                <th>Restwert</th>
+                <th>Abzug brutto</th>
+                <?php if (!$readOnly) : ?><th></th><?php endif; ?>
+              </tr>
+            </thead>
+            <tbody id="dg-voucher-gift-body">
+              <?php foreach ($giftRedemptionRows as $gIndex => $gRow) : ?>
+                <?php
+                  $gId = (int) ($gRow['gift_voucher_id'] ?? 0);
+                  $gCode = (string) ($gRow['code'] ?? '');
+                  $gTitle = (string) ($gRow['title'] ?? '');
+                  $gLabel = $gCode !== ''
+                      ? ($gTitle !== '' ? $gCode . ' — ' . $gTitle : $gCode)
+                      : '';
+                  $gRemaining = (string) ($gRow['remaining_gross'] ?? '');
+                ?>
+                <tr class="dg-voucher-gift__row" data-gift-index="<?= (int) $gIndex ?>">
+                  <td data-label="Gutschein">
+                    <?php if ($readOnly) : ?>
+                      <?= View::escape($gLabel !== '' ? $gLabel : '—') ?>
+                    <?php else : ?>
+                      <div class="dg-voucher-gift-search-wrap">
+                        <input
+                          type="search"
+                          class="dg-voucher-gift-query"
+                          placeholder="Code oder Titel suchen …"
+                          autocomplete="off"
+                          value="<?= View::escape($gLabel) ?>"
+                        >
+                        <input type="hidden" class="dg-voucher-gift-id" name="gift_redemptions[<?= (int) $gIndex ?>][gift_voucher_id]" value="<?= $gId > 0 ? (int) $gId : '' ?>">
+                        <input type="hidden" class="dg-voucher-gift-code" name="gift_redemptions[<?= (int) $gIndex ?>][code]" value="<?= View::escape($gCode) ?>">
+                        <input type="hidden" class="dg-voucher-gift-title" name="gift_redemptions[<?= (int) $gIndex ?>][title]" value="<?= View::escape($gTitle) ?>">
+                        <div class="dg-article-search-results dg-voucher-gift-search-results" hidden></div>
+                      </div>
+                    <?php endif; ?>
+                  </td>
+                  <td data-label="Restwert">
+                    <input type="text" class="dg-voucher-gift-remaining dg-input--computed" value="<?= View::escape($gRemaining) ?>" readonly tabindex="-1">
+                  </td>
+                  <td data-label="Abzug brutto">
+                    <input
+                      type="text"
+                      class="dg-voucher-gift-amount"
+                      name="gift_redemptions[<?= (int) $gIndex ?>][amount_gross]"
+                      inputmode="decimal"
+                      value="<?= View::escape((string) ($gRow['amount_gross'] ?? '')) ?>"
+                      placeholder="0,00"
+                      <?= $readOnly ? ' readonly' : '' ?>
+                    >
+                  </td>
+                  <?php if (!$readOnly) : ?>
+                    <td>
+                      <button type="button" class="dg-button dg-button--ghost dg-voucher-gift-remove" aria-label="Zeile entfernen">×</button>
+                    </td>
+                  <?php endif; ?>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <?php if (!$readOnly) : ?>
+          <p class="dg-form-actions" style="margin-top:8px">
+            <button type="button" class="dg-button dg-button--small" id="dg-voucher-gift-add">Gutschein hinzufügen</button>
+          </p>
+        <?php endif; ?>
+        <p class="dg-field-hint">Gutschein-Abzug gesamt: <strong id="dg-voucher-gift-sum">0,00</strong> €</p>
+      </div>
+
       <div id="dg-voucher-document-texts-footer"<?= $showDocumentPositionTexts ? '' : ' hidden' ?> style="margin-top: 12px;">
         <label class="dg-field dg-field--wide">
           <span>Zusätzlicher Freitext (nach den Positionen)</span>
@@ -1573,6 +1667,29 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </select>
       </td>
       <td><button type="button" class="dg-button dg-button--ghost dg-voucher-split-remove" aria-label="Zeile entfernen">×</button></td>
+    </tr>
+  </template>
+
+  <template id="dg-voucher-gift-row-template">
+    <tr class="dg-voucher-gift__row">
+      <td data-label="Gutschein">
+        <div class="dg-voucher-gift-search-wrap">
+          <input type="search" class="dg-voucher-gift-query" placeholder="Code oder Titel suchen …" autocomplete="off">
+          <input type="hidden" class="dg-voucher-gift-id">
+          <input type="hidden" class="dg-voucher-gift-code">
+          <input type="hidden" class="dg-voucher-gift-title">
+          <div class="dg-article-search-results dg-voucher-gift-search-results" hidden></div>
+        </div>
+      </td>
+      <td data-label="Restwert">
+        <input type="text" class="dg-voucher-gift-remaining dg-input--computed" readonly tabindex="-1">
+      </td>
+      <td data-label="Abzug brutto">
+        <input type="text" class="dg-voucher-gift-amount" inputmode="decimal" placeholder="0,00">
+      </td>
+      <td>
+        <button type="button" class="dg-button dg-button--ghost dg-voucher-gift-remove" aria-label="Zeile entfernen">×</button>
+      </td>
     </tr>
   </template>
 </div>

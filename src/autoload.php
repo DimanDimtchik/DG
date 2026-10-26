@@ -184,6 +184,7 @@ spl_autoload_register(static function (string $class): void {
         'VoucherApi' => '/src/Accounting/VoucherApi.php',
         'VoucherFileStorage' => '/src/Accounting/VoucherFileStorage.php',
         'VoucherIncomePositions' => '/src/Accounting/VoucherIncomePositions.php',
+        'GiftVoucherRepository' => '/src/Accounting/GiftVoucherRepository.php',
         'VoucherAccrual' => '/src/Accounting/VoucherAccrual.php',
         'VoucherDocumentKind' => '/src/Accounting/VoucherDocumentKind.php',
         'VoucherDocumentStatus' => '/src/Accounting/VoucherDocumentStatus.php',

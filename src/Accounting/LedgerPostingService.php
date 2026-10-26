@@ -210,8 +210,45 @@ final class LedgerPostingService
         }
 
         $postings = array_merge($postings, self::skontoPostings($voucher, $fiscalYear, $voucherDate, $voucherId, $contraAccount, $personAccount, $docFields, $description, $skrType));
+        $postings = array_merge($postings, self::giftVoucherPostings($voucher, $fiscalYear, $voucherDate, $voucherId, $contraAccount, $personAccount, $docFields, $description, $skrType));
 
         return $postings;
+    }
+
+    /**
+     * Einlösung Geschenkgutschein: Verbindlichkeit mindern, Forderung/Gegenkonto mindern.
+     *
+     * @param array<string, mixed> $voucher
+     * @param array{field1: string, field2: string} $docFields
+     * @return list<array<string, mixed>>
+     */
+    private static function giftVoucherPostings(
+        array $voucher,
+        int $fiscalYear,
+        string $voucherDate,
+        int $voucherId,
+        string $contraAccount,
+        string $personAccount,
+        array $docFields,
+        string $description,
+        string $skrType
+    ): array {
+        $amount = round((float) ($voucher['gift_redeemed_amount'] ?? 0), 2);
+        if ($amount <= 0.0) {
+            return [];
+        }
+        $voucherType = (string) ($voucher['voucher_type'] ?? 'expense');
+        if (!LedgerAccounts::isIncomeDirection($voucherType)) {
+            return [];
+        }
+
+        $liability = LedgerAccounts::giftVoucherLiabilityAccount($skrType);
+        $giftDesc = 'Gutschein-Einlösung' . ($description !== '' ? ' · ' . $description : '');
+
+        return [
+            self::row($fiscalYear, $voucherDate, $voucherId, $liability, $contraAccount, '', 'debit', $amount, 0, '', $giftDesc, $docFields),
+            self::row($fiscalYear, $voucherDate, $voucherId, $contraAccount, $liability, $personAccount, 'credit', $amount, 0, '', $giftDesc, $docFields),
+        ];
     }
 
     /**
