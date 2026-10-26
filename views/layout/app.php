@@ -539,6 +539,17 @@ $belegeFocus = (string) ($belegeFocus ?? '');
             VoucherIncomePositions::giftLiabilityAccount($chartOfAccountsConfig['skr_type'] ?? 'skr03'),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
         ) ?>,
+        giftLiabilityAccountName: <?= json_encode(
+            (static function () use ($chartOfAccountsConfig): string {
+                $skr = $chartOfAccountsConfig['skr_type'] ?? 'skr03';
+                ChartAccountRepository::ensureSeeded($skr);
+                $number = VoucherIncomePositions::giftLiabilityAccount($skr);
+                $row = ChartAccountRepository::findByNumber($number, $skr);
+
+                return (string) ($row['name'] ?? 'Ausgegebene Geschenkgutscheine');
+            })(),
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        ) ?>,
         documentLegalClauses: <?= json_encode(
             VoucherDocumentLegalClause::clientConfig(),
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE

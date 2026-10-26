@@ -415,7 +415,12 @@ final class ChartAccountRepository
             if (!ChartAccountBookingEligibility::isSearchableRowForVoucherType($row, $voucherType)) {
                 continue;
             }
-            if ($taxRate !== null && VoucherIncomePositions::usesInvoiceItems($voucherType)
+            // Gutschein-Verbindlichkeit hat keinen USt-Satz im Namen — trotzdem bei 0 %-Zeile vorschlagen.
+            $isGiftLiability = ChartAccountBookingEligibility::isGiftLiabilityAccountNumber(
+                (string) ($row['account_number'] ?? '')
+            );
+            if ($taxRate !== null && !$isGiftLiability
+                && VoucherIncomePositions::usesInvoiceItems($voucherType)
                 && !ChartAccountBookingEligibility::matchesVoucherTaxRate((string) ($row['name'] ?? ''), $taxRate)) {
                 continue;
             }

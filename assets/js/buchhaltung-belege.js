@@ -142,6 +142,7 @@
   var incomeVoucherTypes = config.incomeVoucherTypes || ['income', 'income_reduction', 'credit'];
   var revenueAccounts = config.revenueAccounts || { 19: '8410', 7: '8334', 0: '8192' };
   var giftLiabilityAccount = String(config.giftLiabilityAccount || '1796');
+  var giftLiabilityAccountName = String(config.giftLiabilityAccountName || 'Ausgegebene Geschenkgutscheine');
   var articleSearchTimer = null;
   var syncingBookingFromItems = false;
 
@@ -1138,8 +1139,10 @@
       if (accountField) {
         accountField.value = account;
       }
+      var knownName = account === giftLiabilityAccount ? giftLiabilityAccountName : '';
       if (queryField) {
-        queryField.value = account;
+        queryField.value = formatAccountLabel(account, knownName);
+        queryField.classList.remove('dg-input--error');
       }
       if (grossField) {
         grossField.value = formatAmount(group.gross);
@@ -1153,14 +1156,14 @@
             if (result.ok && result.data && result.data.success && result.data.data) {
               var acc = result.data.data;
               queryField.value = formatAccountLabel(acc.account_number, acc.name);
-            } else {
+            } else if (!knownName) {
               queryField.value = account;
             }
             queryField.classList.remove('dg-input--error');
           }
         })
         .catch(function () {
-          if (queryField) {
+          if (queryField && !knownName) {
             queryField.value = account;
           }
         })
@@ -2755,8 +2758,15 @@
         if (/^\d+$/.test(q)) {
           accountField.value = q;
           queryField.classList.remove('dg-input--error');
-          renderAccountResults(resultsEl, []);
-          if (q.length >= 3) {
+          // Ziffern: Vorschläge mit Kontoname (nicht nur stille Lookup).
+          if (q.length >= 2) {
+            searchAccounts(q, resultsEl, function (number, name, taxRate) {
+              setRowAccount(row, number, name, taxRate);
+            }, rowTaxRate(row));
+          } else {
+            renderAccountResults(resultsEl, []);
+          }
+          if (q.length >= 4) {
             fetchJson(apiUrl + '?action=account&number=' + encodeURIComponent(q) + accountLookupSuffix())
               .then(function (result) {
                 if (queryField.value.trim() !== q) {
@@ -2767,8 +2777,9 @@
                   queryField.value = formatAccountLabel(acc.account_number, acc.name);
                   accountField.value = String(acc.account_number || '');
                   queryField.classList.remove('dg-input--error');
+                  renderAccountResults(resultsEl, []);
                   applyAccountTaxRate(row, acc.suggested_tax_rate);
-                } else if (q.length >= 4) {
+                } else {
                   queryField.classList.add('dg-input--error');
                 }
                 onBookingInput();

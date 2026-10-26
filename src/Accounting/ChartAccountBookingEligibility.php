@@ -21,7 +21,21 @@ final class ChartAccountBookingEligibility
   /** Kontonummern, die trotz Aktiva/Passiva-Einordnung bebuchbar sind. */
   private const ALLOWED_BALANCE_SHEET = [
     '0320', '0520', '1000', '1200', '1210', '1400', '1600', '1800',
+    // Mehrzweckgutschein-Verbindlichkeit (SKR03 / SKR04)
+    '1796', '3786',
   ];
+
+  /** Verbindlichkeit ausgegebene Geschenkgutscheine — bei Einnahmen/Gutschrift wählbar. */
+  public const GIFT_LIABILITY_ACCOUNTS = [
+    '1796', '3786',
+  ];
+
+  public static function isGiftLiabilityAccountNumber(string $accountNumber): bool
+  {
+    $number = str_pad(preg_replace('/\D/', '', $accountNumber) ?? '', 4, '0', STR_PAD_LEFT);
+
+    return $number !== '' && in_array($number, self::GIFT_LIABILITY_ACCOUNTS, true);
+  }
 
   /** @var list<string> */
   private const EXCLUDED_NAME_FRAGMENTS = [
@@ -172,6 +186,13 @@ final class ChartAccountBookingEligibility
   ): bool {
     if (!self::isSearchable($skrType, $accountNumber, $name, $section)) {
       return false;
+    }
+
+    $type = self::sanitizeVoucherTypeForFilter($voucherType);
+    // Gutschein-Verbindlichkeit ist Bilanzkonto, gehört aber zur Einnahmen-/Gutschrift-Buchung.
+    if (self::isGiftLiabilityAccountNumber($accountNumber)
+        && in_array($type, ['income', 'income_reduction', 'credit'], true)) {
+      return true;
     }
 
     return in_array($section, self::allowedSectionsForVoucherType($voucherType), true);
