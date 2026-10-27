@@ -3,7 +3,7 @@
 > **Stand:** 2026-10-27 (Lohn-Produkt: zuerst Lexware-Office-Niveau, Baulohn später)  
 > **Ziel:** DG CRM als CRM+FiBu (+ Lohn) — Einsatz u. a. **IQ Strom GmbH** (Cloud, ≥3 Nutzer remote; perspektivisch ohne Steuerberater).  
 > **Reihenfolge:** A jetzt → B Hetzner → C nach Umzug → D Lohn / Jahresblock / Rest.  
-> Detailquellen: [`TODOS.md`](TODOS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) · [`buchhaltung-todo.html`](buchhaltung-todo.html) · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md)
+> Detailquellen: [`TODOS.md`](TODOS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) · [`buchhaltung-todo.html`](buchhaltung-todo.html) · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) · [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md)
 
 **Hinweis Behörden:** Keine Finanzamt-„Softwarefreigabe“. Extern: ELSTER-ID ✅ `34573`, Softwarezertifikat, ERiC, Hetzner-AVV. **Lohn:** ITSG erst für direkten SV-Versand aus DG (Stufe B). **Baulohn** ist Produktfeature **nach** Normal-Lohn (Stufe C), nicht an die IQ-Strom-SOKA-Jahresprüfung gekoppelt.
 
@@ -127,6 +127,8 @@ IQ-Strom-SOKA-Jahresprüfung (Ordner `Buchhaltung/BaulohnUntersuchung/`) ist **B
 
 **Heute im CRM:** nur Zeiterfassung + Lohn-**Export** (DATEV/Lex) + Upload fremder `payroll_slip` — **keine** Abrechnung.
 
+Detailkonzept aus dem abgerufenen Acrobat-Dokument: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). Architekturleitlinie: Strategy-Pattern fuer Berechnungs-Engines, gemeinsamer CRM-Code fuer alle Instanzen, Mandanten-/Branchenlogik ueber Stammdaten und Lohnarten.
+
 #### Stufe A — Normaler Lohn/Gehalt (Lexware-Office-Niveau) — **zuerst bauen**
 
 - [ ] Arbeitgeber-Stammdaten (Betriebsnummer, BG, Umlagen, Steuernummer, Bundesland)
@@ -134,6 +136,7 @@ IQ-Strom-SOKA-Jahresprüfung (Ordner `Buchhaltung/BaulohnUntersuchung/`) ist **B
 - [ ] Brutto→Netto: LSt, SolZ, KiSt, SV-Beiträge (Jahres-/Beitragspflege)
 - [ ] Lohnabrechnung PDF + Lohnkonto
 - [ ] Buchung freigegebener Monate ins Hauptbuch (Aufwand / Verbindlichkeiten)
+- [ ] SEPA-XML fuer Nettoauszahlungen
 - [ ] **Lohnsteuer-Anmeldung** per ELSTER (nach C1 / ERiC)
 - [ ] SV-Beiträge und Meldewerte **vorbereiten**; Versand zunächst über **SV-Meldeportal** (Übergang ok)
 - [ ] Anbindung an bestehende Zeiterfassung / Lohn-Export (Z6) wo sinnvoll
@@ -142,6 +145,7 @@ IQ-Strom-SOKA-Jahresprüfung (Ordner `Buchhaltung/BaulohnUntersuchung/`) ist **B
 
 - [ ] ITSG-**Systemuntersuchung** (§ 95b SGB IV) — auch Eigenbau prüfungspflichtig
 - [ ] Pilot ≥ 2 Anwender · Prod-MOD-ID · **jährliche** QS
+- [ ] ITSG-Trust-Center-Schluessel / Zertifikatsbetrieb und Meldeprotokolle
 - [ ] Beitragsnachweise + DEÜV-Meldungen **direkt aus DG** (ohne Portal-Manuell)
 - [ ] ELStAM-Abruf / Sofortmeldung soweit für Standardlohn nötig
 
