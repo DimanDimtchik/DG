@@ -21,6 +21,21 @@ Für DG CRM gilt:
 - **Maschinenkosten** bauen auf dem vorhandenen Rezeptur-Modul auf, nicht auf einem neuen parallelen ERP-Modul.
 - **Akademie** ist bereits das Zielmodul für Videos; Maschinenwissen soll daran verlinken.
 
+### Bereinigung: Bestand vs. neue Aufgaben
+
+| Thema aus PDF | DG CRM Stand | Bewertung |
+|---------------|--------------|-----------|
+| Zeiterfassung als Lohn-Vorbereitung | vorhanden: Stempelzeiten, Schichten, Urlaub/Krankheit, Rückstellungen, Lohn-Export | **nicht neu bauen** |
+| Fremde Lohnabrechnungen ablegen | vorhanden: Mitarbeiter-Dokumenttyp `payroll_slip` | **nicht neu bauen** |
+| Maschinen / Arbeitsplätze | vorhanden: `dg_work_centers`, Maschinen-Wizard, Stundensatz | **nicht neu bauen** |
+| Rezeptur / Routing / Snapshots | vorhanden: BOM, Routing, Kalkulations-Snapshots, Soll/Ist, Graph | **nicht neu bauen** |
+| Akademie-Videos | vorhanden: Kurse/Module, Video-Dateien, VTT-Regeln, Fortschritt | **nicht neu bauen** |
+| Standard-Lohnabrechnung berechnen | nicht vorhanden | **neues D0-A-Paket** |
+| Direkte SV-/ELStAM-/euBP-Meldungen | nicht vorhanden | **neues D0-B/C1-Paket nach Hetzner** |
+| Baulohn / SOKA / Saison-KUG | nicht vorhanden | **späteres D0-C-Paket** |
+| FiBu-Gemeinkosten automatisch auf Maschinenstunde umlegen | nicht vorhanden | **neue Rezeptur-/FiBu-Erweiterung** |
+| Fehlercode -> Handbuch + Akademie-Video | nicht vorhanden als Maschinen-Wissensbrücke | **kleine neue Erweiterung** |
+
 ---
 
 ## 2. Lohnabrechnung: CRM-Anpassung
