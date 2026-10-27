@@ -8251,6 +8251,27 @@ $legalProductsConfig = LegalProductSettings::config();
         $writerStatusFilter = $writerStatusFilter ?? '';
         $writerContactFilter = $writerContactFilter ?? 0;
         $writerFilterContact = $writerFilterContact ?? null;
+        $giftVoucherList = $giftVoucherList ?? [];
+        $giftVoucherForm = $giftVoucherForm ?? null;
+        $giftVoucherId = $giftVoucherId ?? null;
+        $giftFormMode = $giftFormMode ?? 'new';
+        $giftFlyerTemplates = $giftFlyerTemplates ?? [];
+        $giftFlyerTemplate = $giftFlyerTemplate ?? null;
+        $flyerTemplateList = $flyerTemplateList ?? [];
+        $flyerTemplateForm = $flyerTemplateForm ?? null;
+        $flyerTemplateId = $flyerTemplateId ?? null;
+        $flyerTemplateMode = $flyerTemplateMode ?? 'list';
+        $flyerGift = $flyerGift ?? null;
+        $flyerPrint = $flyerPrint ?? null;
+        $companyName = $companyName ?? '';
+        $companyLogoUrl = $companyLogoUrl ?? '';
+        $complaintList = $complaintList ?? [];
+        $complaintForm = $complaintForm ?? null;
+        $complaintId = $complaintId ?? null;
+        $complaintEvents = $complaintEvents ?? [];
+        $complaintAttachments = $complaintAttachments ?? [];
+        $complaintContactLabel = $complaintContactLabel ?? '';
+        $complaintVoucherLabel = $complaintVoucherLabel ?? '';
 
         View::render('layout/app', compact(
             'title',
@@ -8646,6 +8667,27 @@ $legalProductsConfig = LegalProductSettings::config();
             'writerStatusFilter',
             'writerContactFilter',
             'writerFilterContact',
+            'giftVoucherList',
+            'giftVoucherForm',
+            'giftVoucherId',
+            'giftFormMode',
+            'giftFlyerTemplates',
+            'giftFlyerTemplate',
+            'flyerTemplateList',
+            'flyerTemplateForm',
+            'flyerTemplateId',
+            'flyerTemplateMode',
+            'flyerGift',
+            'flyerPrint',
+            'companyName',
+            'companyLogoUrl',
+            'complaintList',
+            'complaintForm',
+            'complaintId',
+            'complaintEvents',
+            'complaintAttachments',
+            'complaintContactLabel',
+            'complaintVoucherLabel',
         ));
         break;
 
