@@ -305,6 +305,9 @@ final class MigrationRunner
             '118_gift_voucher_extend.sql' => self::tableExists($pdo, 'dg_voucher_gift_lines')
                 && self::columnExists($pdo, 'dg_gift_vouchers', 'voucher_type'),
             '119_complaints.sql' => self::tableExists($pdo, 'dg_complaints'),
+            '120_complaint_attachments.sql' => self::tableExists($pdo, 'dg_complaint_attachments'),
+            '121_flyer_templates.sql' => self::tableExists($pdo, 'dg_flyer_templates')
+                && self::columnExists($pdo, 'dg_gift_vouchers', 'flyer_template_id'),
             default => false,
         };
     }
@@ -443,6 +446,8 @@ final class MigrationRunner
             '117_article_warranty.sql' => true,
             '118_gift_voucher_extend.sql' => true,
             '119_complaints.sql' => true,
+            '120_complaint_attachments.sql' => true,
+            '121_flyer_templates.sql' => true,
         ];
     }
 

@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Gutscheine (Stamm) — Geschenk-/Mehrzweckgutscheine und Entschuldigungs-Gutscheine —
  * und Einlösung auf Belegen (dg_voucher_gift_redemptions).
  *
- * Schema: Migration 114 (+118: voucher_type, complaint_id, liability_account, expense_account).
+ * Schema: Migration 114 (+118 Typ/Konten, +121 flyer_template_id).
  * Zeilen enthalten Aliase für Cloud-Views: amount = face_value_gross, remaining = remaining_gross,
  * issue_voucher_id = issued_voucher_id.
  */
@@ -32,6 +32,7 @@ final class GiftVoucherRepository
             return;
         }
         self::ensureTables();
+        FlyerService::ensureReady();
     }
 
     /**
@@ -191,7 +192,8 @@ final class GiftVoucherRepository
      */
     public static function create(array $input, ?int $userId = null): int
     {
-        self::ensureTables();
+        // ensureReady: Migrationen inkl. flyer_template_id + Flyer-Vorlagen
+        self::ensureReady();
         if (!Database::isConfigured()) {
             throw new RuntimeException('Datenbank nicht konfiguriert.');
         }
@@ -251,14 +253,26 @@ final class GiftVoucherRepository
             $title = $type === self::TYPE_APOLOGY ? 'Entschuldigungs-Gutschein' : 'Geschenkgutschein';
         }
         $notes = trim((string) ($input['notes'] ?? ''));
+        $flyerTemplateId = max(0, (int) ($input['flyer_template_id'] ?? 0));
+        if ($flyerTemplateId > 0) {
+            $tpl = FlyerService::findTemplate($flyerTemplateId);
+            if ($tpl === null || (string) ($tpl['purpose'] ?? '') !== FlyerService::PURPOSE_GIFT_FORM) {
+                throw new InvalidArgumentException('Ungültige Flyer-Vorlage.');
+            }
+            if ((int) ($tpl['is_active'] ?? 0) !== 1) {
+                throw new InvalidArgumentException('Flyer-Vorlage ist nicht aktiv.');
+            }
+        } else {
+            $flyerTemplateId = FlyerService::defaultGiftTemplateId();
+        }
 
         $stmt = Database::pdo()->prepare(
             'INSERT INTO dg_gift_vouchers (
                 code, voucher_type, title, contact_id, complaint_id, face_value_gross, remaining_gross,
-                status, valid_until, issued_voucher_id, liability_account, expense_account, notes, created_by
+                status, valid_until, issued_voucher_id, liability_account, expense_account, notes, flyer_template_id, created_by
             ) VALUES (
                 :code, :voucher_type, :title, :contact_id, :complaint_id, :face, :remaining,
-                :status, :valid_until, :issued_voucher_id, :liability_account, :expense_account, :notes, :created_by
+                :status, :valid_until, :issued_voucher_id, :liability_account, :expense_account, :notes, :flyer_template_id, :created_by
             )'
         );
         $stmt->execute([
@@ -275,6 +289,7 @@ final class GiftVoucherRepository
             'liability_account' => mb_substr($liability, 0, 16),
             'expense_account' => mb_substr($expense, 0, 16),
             'notes' => $notes !== '' ? $notes : null,
+            'flyer_template_id' => $flyerTemplateId > 0 ? $flyerTemplateId : null,
             'created_by' => $userId !== null && $userId > 0 ? $userId : null,
         ]);
 
@@ -557,6 +572,8 @@ final class GiftVoucherRepository
             'liability_account' => (string) ($row['liability_account'] ?? ''),
             'expense_account' => (string) ($row['expense_account'] ?? ''),
             'notes' => (string) ($row['notes'] ?? ''),
+            'flyer_template_id' => isset($row['flyer_template_id']) && $row['flyer_template_id'] !== null
+                ? (int) $row['flyer_template_id'] : null,
             'created_by' => isset($row['created_by']) && $row['created_by'] !== null ? (int) $row['created_by'] : null,
             'created_at' => (string) ($row['created_at'] ?? ''),
             'updated_at' => (string) ($row['updated_at'] ?? ''),

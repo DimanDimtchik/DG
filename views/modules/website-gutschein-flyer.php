@@ -2,6 +2,7 @@
 /**
  * @var list<array<string, mixed>> $giftVoucherList
  * @var array<string, mixed>|null $flyerGift
+ * @var array<string, mixed>|null $flyerPrint
  * @var string $companyName
  * @var string $companyLogoUrl
  * @var bool $dbConnected
@@ -9,8 +10,13 @@
  */
 $gift = $flyerGift ?? null;
 $list = $giftVoucherList ?? [];
+$print = $flyerPrint ?? null;
 $companyName = $companyName ?? 'Gutschein';
 $logo = $companyLogoUrl ?? '';
+if ($print === null && is_array($gift)) {
+    $print = FlyerService::giftPrintModel($gift, null, $companyName, $logo);
+}
+$accent = is_array($print) ? (string) ($print['accent'] ?? '#2f5d50') : '#2f5d50';
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -18,7 +24,7 @@ $logo = $companyLogoUrl ?? '';
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Gutschein-Flyer</h1>
-      <p class="dg-lead">Schlicht und modern — zum Ausdrucken oder Verschenken.</p>
+      <p class="dg-lead">Formular-Flyer mit Gutscheinnummer — zum Ausdrucken oder Mitgeben. (Terminkalender-QR-Flyer sind separat unter Einstellungen.)</p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=gutscheine">Gutscheine</a>
@@ -45,18 +51,18 @@ $logo = $companyLogoUrl ?? '';
     </label>
   </form>
 
-  <?php if (is_array($gift)) : ?>
+  <?php if (is_array($gift) && is_array($print)) : ?>
     <style>
       .dg-gift-flyer {
         --gf-ink: #1a1a1a;
         --gf-muted: #5c5c5c;
         --gf-line: #e6e6e6;
-        --gf-accent: #2f5d50;
+        --gf-accent: <?= View::escape($accent) ?>;
         max-width: 420px;
-        margin: 2rem auto;
+        margin: var(--dg-space-5) auto;
         padding: 2.5rem 2rem;
         border: 1px solid var(--gf-line);
-        border-radius: 2px;
+        border-radius: var(--dg-radius-sm);
         background: linear-gradient(180deg, #ffffff 0%, #f7f7f5 100%);
         color: var(--gf-ink);
         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -67,53 +73,62 @@ $logo = $companyLogoUrl ?? '';
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--gf-muted);
-        margin-bottom: 1.25rem;
+        margin-bottom: var(--dg-space-4);
       }
       .dg-gift-flyer__logo {
         max-height: 48px;
-        margin-bottom: 1rem;
+        margin-bottom: var(--dg-space-3);
       }
       .dg-gift-flyer__title {
         font-size: 1.75rem;
         font-weight: 600;
-        margin: 0 0 0.5rem;
+        margin: 0 0 var(--dg-space-2);
+        color: var(--gf-ink);
+      }
+      .dg-gift-flyer__subtitle {
+        margin: 0 0 var(--dg-space-3);
+        color: var(--gf-muted);
+        font-size: 0.95rem;
       }
       .dg-gift-flyer__amount {
         font-size: 2.5rem;
         font-weight: 700;
         color: var(--gf-accent);
-        margin: 1.25rem 0;
+        margin: var(--dg-space-4) 0;
       }
       .dg-gift-flyer__code {
         display: inline-block;
-        margin-top: 0.75rem;
-        padding: 0.55rem 1rem;
+        margin-top: var(--dg-space-3);
+        padding: var(--dg-space-2) var(--dg-space-4);
         border: 1px dashed var(--gf-accent);
         letter-spacing: 0.08em;
         font-weight: 600;
       }
       .dg-gift-flyer__meta {
-        margin-top: 1.5rem;
+        margin-top: var(--dg-space-4);
         font-size: 0.9rem;
         color: var(--gf-muted);
       }
       @media print {
         .dg-print-hide, .dg-sidebar, .dg-topbar, .dg-page-header .dg-toolbar { display: none !important; }
-        .dg-gift-flyer { border: none; margin: 0; max-width: none; }
+        .dg-gift-flyer { border: none; margin: 0; max-width: none; box-shadow: none; }
       }
     </style>
     <article class="dg-gift-flyer">
-      <?php if ($logo !== '') : ?>
-        <img class="dg-gift-flyer__logo" src="<?= View::escape($logo) ?>" alt="">
+      <?php if (($print['logo_url'] ?? '') !== '') : ?>
+        <img class="dg-gift-flyer__logo" src="<?= View::escape((string) $print['logo_url']) ?>" alt="">
       <?php endif; ?>
-      <div class="dg-gift-flyer__brand"><?= View::escape($companyName) ?></div>
-      <h2 class="dg-gift-flyer__title"><?= View::escape((string) (($gift['title'] ?? '') !== '' ? $gift['title'] : 'Gutschein')) ?></h2>
-      <div class="dg-gift-flyer__amount"><?= View::escape(number_format((float) ($gift['face_value_gross'] ?? $gift['amount'] ?? 0), 2, ',', '.')) ?> €</div>
-      <div class="dg-gift-flyer__code"><?= View::escape((string) ($gift['code'] ?? '')) ?></div>
+      <div class="dg-gift-flyer__brand"><?= View::escape((string) $print['company_name']) ?></div>
+      <h2 class="dg-gift-flyer__title"><?= View::escape((string) $print['headline']) ?></h2>
+      <?php if (trim((string) ($print['subtitle'] ?? '')) !== '') : ?>
+        <p class="dg-gift-flyer__subtitle"><?= View::escape((string) $print['subtitle']) ?></p>
+      <?php endif; ?>
+      <div class="dg-gift-flyer__amount"><?= View::escape((string) $print['amount_label']) ?></div>
+      <div class="dg-gift-flyer__code"><?= View::escape((string) $print['code']) ?></div>
       <p class="dg-gift-flyer__meta">
-        Einlösbar für Artikel und Leistungen.<br>
-        <?php if (!empty($gift['valid_until'])) : ?>
-          Gültig bis <?= View::escape((string) $gift['valid_until']) ?>.
+        Bitte diesen Flyer oder die Rechnung beim Einlösen vorzeigen.<br>
+        <?php if (!empty($print['valid_until'])) : ?>
+          Gültig bis <?= View::escape((string) $print['valid_until']) ?>.
         <?php else : ?>
           Ohne Ablaufdatum.
         <?php endif; ?>

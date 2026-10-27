@@ -190,11 +190,17 @@ final class ComplaintRepository
             $warrantyText = trim((string) ($input['warranty_text'] ?? ''));
         }
 
+        $contactId = max(0, (int) ($input['contact_id'] ?? 0));
+        $contactName = mb_substr(trim((string) ($input['contact_name'] ?? '')), 0, 255);
+        if ($contactId > 0 && $contactName === '') {
+            $contactName = mb_substr(self::contactLabel($contactId), 0, 255);
+        }
+
         $fields = [
             'status' => $status,
             'fault' => $fault,
-            'contact_id' => max(0, (int) ($input['contact_id'] ?? 0)),
-            'contact_name' => mb_substr(trim((string) ($input['contact_name'] ?? '')), 0, 255),
+            'contact_id' => $contactId,
+            'contact_name' => $contactName,
             'source_voucher_id' => max(0, (int) ($input['source_voucher_id'] ?? 0)),
             'article_id' => $articleId,
             'article_title' => mb_substr($articleTitle, 0, 255),
@@ -355,5 +361,52 @@ final class ComplaintRepository
         $fault = strtolower(trim($fault));
 
         return isset(self::faultOptions()[$fault]) ? $fault : self::FAULT_UNCLEAR;
+    }
+
+    public static function contactLabel(int $contactId): string
+    {
+        if ($contactId < 1) {
+            return '';
+        }
+        $contact = ContactRepository::findById($contactId);
+
+        return $contact !== null ? $contact->listLabel() : '';
+    }
+
+    public static function voucherLabel(int $voucherId): string
+    {
+        if ($voucherId < 1 || !Database::isConfigured()) {
+            return '';
+        }
+        try {
+            $stmt = Database::pdo()->prepare(
+                'SELECT v.document_kind, v.invoice_number, v.supplier_name, v.voucher_date,
+                        c.display_name, c.company_name
+                 FROM dg_vouchers v
+                 LEFT JOIN dg_contacts c ON c.id = v.contact_id
+                 WHERE v.id = :id LIMIT 1'
+            );
+            $stmt->execute(['id' => $voucherId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!is_array($row)) {
+                return 'Beleg #' . $voucherId;
+            }
+            $rawKind = (string) ($row['document_kind'] ?? '');
+            $kind = VoucherDocumentKind::label($rawKind);
+            if ($kind === '') {
+                $kind = $rawKind !== '' ? $rawKind : 'Beleg';
+            }
+            $num = trim((string) ($row['invoice_number'] ?? ''));
+            $who = trim((string) ($row['company_name'] ?? ''));
+            if ($who === '') {
+                $who = trim((string) ($row['display_name'] ?? $row['supplier_name'] ?? ''));
+            }
+            $label = trim($kind . ($num !== '' ? ' ' . $num : '') . ($who !== '' ? ' — ' . $who : ''));
+            $date = trim((string) ($row['voucher_date'] ?? ''));
+
+            return $label !== '' ? ($label . ($date !== '' ? ' (' . $date . ')' : '')) : ('Beleg #' . $voucherId);
+        } catch (Throwable) {
+            return 'Beleg #' . $voucherId;
+        }
     }
 }

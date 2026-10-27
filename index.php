@@ -820,6 +820,9 @@ switch ($path) {
     case '/api/post-compose':
         PostComposeApi::handle();
         exit;
+    case '/api/complaint':
+        ComplaintApi::handle();
+        exit;
 
     case '/api/cti':
         CtiApi::handle();
@@ -1815,6 +1818,7 @@ switch ($path) {
                         'title' => (string) ($_POST['title'] ?? ''),
                         'notes' => (string) ($_POST['notes'] ?? ''),
                         'contact_id' => (int) ($_POST['contact_id'] ?? 0),
+                        'flyer_template_id' => (int) ($_POST['flyer_template_id'] ?? 0),
                     ], $user->id);
                     Flash::set('success', 'Gutschein ausgestellt.');
                     header('Location: /app?page=gutscheine-form&action=view&id=' . $newGiftId, true, 302);
@@ -1850,9 +1854,42 @@ switch ($path) {
                     header('Location: /app?page=gutscheine-form&action=view&id=' . $giftId, true, 302);
                     exit;
                 }
+                if (isset($_POST['complaint_delete_attachment'])) {
+                    $attId = (int) ($_POST['complaint_delete_attachment'] ?? 0);
+                    $att = ComplaintFileStorage::find($attId);
+                    if ($att === null || (int) ($att['complaint_id'] ?? 0) !== $editComplaintId) {
+                        throw new InvalidArgumentException('Anhang nicht gefunden.');
+                    }
+                    ComplaintFileStorage::delete($attId);
+                    ComplaintRepository::addEvent($editComplaintId, 'file', 'Anhang gelöscht: ' . (string) ($att['original_name'] ?? ''), $user->id);
+                    Flash::set('success', 'Anhang gelöscht.');
+                    header('Location: /app?page=reklamation-form&action=edit&id=' . $editComplaintId, true, 302);
+                    exit;
+                }
                 if (isset($_POST['complaint_save'])) {
                     $savedId = ComplaintRepository::save($_POST, $editComplaintId > 0 ? $editComplaintId : null, $user->id);
-                    Flash::set('success', 'Reklamation gespeichert.');
+                    $uploadCount = 0;
+                    if (!empty($_FILES['complaint_files'])) {
+                        $uploadCount = ComplaintFileStorage::storeUploads(
+                            $savedId,
+                            is_array($_FILES['complaint_files']) ? $_FILES['complaint_files'] : [],
+                            $user->id
+                        );
+                    }
+                    if ($uploadCount > 0) {
+                        ComplaintRepository::addEvent(
+                            $savedId,
+                            'file',
+                            $uploadCount === 1 ? '1 Datei hochgeladen' : $uploadCount . ' Dateien hochgeladen',
+                            $user->id
+                        );
+                    }
+                    Flash::set(
+                        'success',
+                        $uploadCount > 0
+                            ? 'Reklamation gespeichert (' . $uploadCount . ' Datei' . ($uploadCount === 1 ? '' : 'en') . ').'
+                            : 'Reklamation gespeichert.'
+                    );
                     header('Location: /app?page=reklamation-form&action=edit&id=' . $savedId, true, 302);
                     exit;
                 }
@@ -5457,6 +5494,8 @@ $legalProductsConfig = LegalProductSettings::config();
             if ($page === 'gutscheine-form') {
                 $giftVoucherId = (int) ($_GET['id'] ?? 0);
                 $giftFormMode = (string) ($_GET['action'] ?? ($giftVoucherId > 0 ? 'view' : 'new'));
+                $giftFlyerTemplates = FlyerService::listGiftTemplates(true);
+                $giftFlyerTemplate = null;
                 if ($giftFormMode === 'view' && $giftVoucherId > 0) {
                     $giftVoucherForm = GiftVoucherRepository::find($giftVoucherId);
                     if ($giftVoucherForm === null) {
@@ -5464,6 +5503,7 @@ $legalProductsConfig = LegalProductSettings::config();
                         header('Location: /app?page=gutscheine', true, 302);
                         exit;
                     }
+                    $giftFlyerTemplate = FlyerService::findTemplate((int) ($giftVoucherForm['flyer_template_id'] ?? 0));
                 } else {
                     $giftVoucherId = null;
                     $giftVoucherForm = [];
@@ -5489,6 +5529,27 @@ $legalProductsConfig = LegalProductSettings::config();
             if ($page === 'reklamation-form') {
                 $complaintId = (int) ($_GET['id'] ?? 0);
                 $action = (string) ($_GET['action'] ?? ($complaintId > 0 ? 'edit' : 'new'));
+                $downloadAtt = (int) ($_GET['download_attachment'] ?? 0);
+                if ($downloadAtt > 0 && $complaintId > 0) {
+                    $att = ComplaintFileStorage::find($downloadAtt);
+                    if ($att === null || (int) ($att['complaint_id'] ?? 0) !== $complaintId) {
+                        Flash::set('error', 'Anhang nicht gefunden.');
+                        header('Location: /app?page=reklamation-form&action=edit&id=' . $complaintId, true, 302);
+                        exit;
+                    }
+                    $abs = ComplaintFileStorage::absolutePath($att);
+                    if (!is_file($abs)) {
+                        Flash::set('error', 'Datei fehlt auf dem Server.');
+                        header('Location: /app?page=reklamation-form&action=edit&id=' . $complaintId, true, 302);
+                        exit;
+                    }
+                    $safeName = preg_replace('/[^\w.\- ()äöüÄÖÜß]+/u', '_', (string) ($att['original_name'] ?? 'anhang')) ?: 'anhang';
+                    header('Content-Type: ' . ((string) ($att['mime'] ?? '') !== '' ? (string) $att['mime'] : 'application/octet-stream'));
+                    header('Content-Length: ' . (string) filesize($abs));
+                    header('Content-Disposition: attachment; filename="' . str_replace('"', '', $safeName) . '"');
+                    readfile($abs);
+                    exit;
+                }
                 if ($action === 'edit' && $complaintId > 0) {
                     if (ComplaintRepository::find($complaintId) === null) {
                         Flash::set('error', 'Reklamation nicht gefunden.');
@@ -5497,10 +5558,16 @@ $legalProductsConfig = LegalProductSettings::config();
                     }
                     $complaintForm = ComplaintRepository::formForId($complaintId);
                     $complaintEvents = ComplaintRepository::events($complaintId);
+                    $complaintAttachments = ComplaintFileStorage::listForComplaint($complaintId);
+                    $complaintContactLabel = ComplaintRepository::contactLabel((int) ($complaintForm['contact_id'] ?? 0));
+                    $complaintVoucherLabel = ComplaintRepository::voucherLabel((int) ($complaintForm['source_voucher_id'] ?? 0));
                 } else {
                     $complaintId = null;
                     $complaintForm = ComplaintRepository::emptyForm();
                     $complaintEvents = [];
+                    $complaintAttachments = [];
+                    $complaintContactLabel = '';
+                    $complaintVoucherLabel = '';
                 }
                 $contentTemplate = 'modules/reklamation-form';
                 $title = ($complaintId ?? 0) > 0 ? 'Reklamation bearbeiten' : 'Neue Reklamation';
@@ -5519,6 +5586,7 @@ $legalProductsConfig = LegalProductSettings::config();
             && MenuRegistry::canAccess($user, 'website-gutschein-flyer')
         ) {
             GiftVoucherRepository::ensureReady();
+            FlyerService::ensureReady();
             $giftVoucherList = GiftVoucherRepository::listAll(GiftVoucherRepository::STATUS_ACTIVE);
             $flyerId = (int) ($_GET['id'] ?? 0);
             $flyerGift = $flyerId > 0 ? GiftVoucherRepository::find($flyerId) : null;
@@ -5530,6 +5598,11 @@ $legalProductsConfig = LegalProductSettings::config();
                 $companyName = '';
             }
             $companyLogoUrl = '';
+            $flyerPrint = null;
+            if (is_array($flyerGift)) {
+                $tpl = FlyerService::findTemplate((int) ($flyerGift['flyer_template_id'] ?? 0));
+                $flyerPrint = FlyerService::giftPrintModel($flyerGift, $tpl, $companyName, $companyLogoUrl);
+            }
             $contentTemplate = 'modules/website-gutschein-flyer';
             $title = 'Gutschein-Flyer';
             $currentPage = 'website-gutschein-flyer';

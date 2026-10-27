@@ -82,6 +82,11 @@
   align-items: center;
   gap: var(--dg-space-2);
 }
+.dg-btn-row > .dg-field-grow,
+.dg-btn-row > input.dg-field-grow {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
 @media (min-width: 900px) {
   .dg-btn-row--desktop-nowrap {
     flex-wrap: nowrap;
@@ -533,6 +538,16 @@ code {
   box-shadow: 0 1px 0 color-mix(in srgb, var(--dg-primary) 8%, transparent);
 }
 
+/* Aufeinanderfolgende Panels nicht verschmelzen (z. B. Video-Upload → Alle Videos) */
+.dg-panel + .dg-panel {
+  margin-top: var(--dg-space-5);
+}
+
+.dg-subtabs + .dg-panel,
+.dg-panel + .dg-subtabs {
+  margin-top: var(--dg-space-4);
+}
+
 .dg-panel h2 {
   margin: 0 0 var(--dg-space-3);
   padding-bottom: var(--dg-space-2);
@@ -855,6 +870,17 @@ code {
 }
 
 .dg-form h2:first-child { margin-top: 0; }
+
+/*
+ * Gestapelte Felder in .dg-form (ohne Grid): gleicher Abstand
+ * z. B. Dauer-Select → Checkbox auf Support-Freigabe.
+ */
+.dg-form > .dg-field + .dg-field,
+.dg-form > .dg-field + .dg-flash,
+.dg-form > .dg-flash + .dg-form-actions,
+.dg-form > .dg-field + .dg-form-actions {
+  margin-top: var(--dg-space-3);
+}
 
 .dg-form-grid {
   display: grid;

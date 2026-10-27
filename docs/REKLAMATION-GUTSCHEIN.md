@@ -44,7 +44,7 @@ Stand: **2026-10-26** · Status: **RG0–RG6 erledigt** · Zielsystem: DG CRM (B
 1. Neuer Beleg: nach Artikel/Leistungen → **Gutscheine** → Freitext.
 2. Module: `gutscheine`, `reklamation`, Flyer `website-gutschein-flyer`.
 3. Artikel: Garantie vs. Gewährleistung (Kurzhinweis) + Freitext.
-4. Flyer: schlicht A6/A5, Logo, Code, Betrag, Gültigkeit.
+4. Flyer: **Gutschein-Formular** (Vorlagen z. B. Standard/Geburtstag/8.&nbsp;März) mit aufgedruckter Nummer — getrennt vom Terminkalender-QR-Flyer. Klasse: `FlyerService`.
 
 ---
 

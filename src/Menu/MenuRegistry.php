@@ -520,7 +520,7 @@ final class MenuRegistry
             'gutscheine-form' => 'Einzelnen Gutschein anlegen, prüfen oder stornieren.',
             'reklamation' => 'Reklamationen von der Annahme bis zu Maßnahmen und Entschuldigung.',
             'reklamation-form' => 'Reklamation erfassen, Maßnahmen festlegen und Gutschein ausstellen.',
-            'website-gutschein-flyer' => 'Schlichten Flyer mit Code, Betrag und Gültigkeit zum Ausdrucken.',
+            'website-gutschein-flyer' => 'Gutschein-Formular-Flyer drucken — Vorlage + Gutscheinnummer auf dem Blatt.',
             'buchhaltung-gutscheine' => 'Schneller Einstieg in die Gutschein-Verwaltung aus der Buchhaltung.',
             'buchhaltung-ueberweisungen' => 'Zahlungen vorbereiten — inkl. QR-Code und Fotovorlage für die Bank.',
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Auszüge je Geschäftsjahr auf einen Blick.',

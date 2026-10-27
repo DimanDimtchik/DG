@@ -89,7 +89,7 @@ $hoursDefault = SupportAccessService::DEFAULT_HOURS;
           </span>
         </label>
 
-        <div class="dg-flash dg-flash--warning" style="margin:1rem 0">
+        <div class="dg-flash dg-flash--warning">
           Mit der Freigabe erlauben Sie Ganz Soft den Zugang zu diesem CRM für die gewählte Dauer.
           Sensible Daten können eingesehen werden. Beenden Sie die Freigabe, sobald der Support fertig ist.
         </div>
