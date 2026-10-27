@@ -1182,4 +1182,27 @@ final class CompanyExtendedSettings
 
         return trim((string) self::kleinunternehmerConfig()['hint_text']);
     }
+
+    /**
+     * @return array{enabled: bool, hint_text: string}
+     */
+    public static function photovoltaikConfig(): array
+    {
+        $pv = self::taxSpecialCases()['photovoltaik'] ?? [];
+
+        return [
+            'enabled' => !empty($pv['enabled']),
+            'hint_text' => (string) ($pv['hint_text'] ?? ''),
+        ];
+    }
+
+    public static function photovoltaikHint(): string
+    {
+        $cfg = self::photovoltaikConfig();
+        if (empty($cfg['enabled'])) {
+            return '';
+        }
+
+        return trim((string) $cfg['hint_text']);
+    }
 }

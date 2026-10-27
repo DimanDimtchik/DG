@@ -188,6 +188,15 @@ final class VoucherDocumentPrintService
                 (string) ($voucher['voucher_date'] ?? '')
             );
         }
+        $photovoltaikHint = '';
+        if (
+            $books
+            && $customerFacing
+            && $kleinunternehmerHint === ''
+            && self::hasPhotovoltaikZeroTaxLine($items, $voucher)
+        ) {
+            $photovoltaikHint = CompanyExtendedSettings::photovoltaikHint();
+        }
 
         $depositBlock = null;
         $depositCfg = DocumentPresentationSettings::depositConfig();
@@ -237,6 +246,7 @@ final class VoucherDocumentPrintService
             'validUntil' => $validUntil,
             'internalNotes' => $customerFacing ? '' : trim((string) ($voucher['notes'] ?? '')),
             'kleinunternehmerHint' => $kleinunternehmerHint,
+            'photovoltaikHint' => $photovoltaikHint,
             'depositBlock' => $depositBlock,
             'provenanceBlock' => self::provenanceBlock($voucher, $kind, $customerFacing),
             'signatureBlock' => self::signatureBlock($voucher, $kind, $customerFacing),
@@ -546,6 +556,28 @@ final class VoucherDocumentPrintService
             'gross' => round($gross, 2),
             'by_rate' => $rows,
         ];
+    }
+
+    /**
+     * PV-Hinweis nur bei echten 0-%-Ausgangszeilen, nicht bei Reverse Charge.
+     *
+     * @param list<array<string, mixed>> $items
+     * @param array<string, mixed> $voucher
+     */
+    public static function hasPhotovoltaikZeroTaxLine(array $items, array $voucher): bool
+    {
+        if (VoucherReverseCharge::sanitizeType((string) ($voucher['reverse_charge_type'] ?? '')) !== '') {
+            return false;
+        }
+
+        $breakdown = self::totalsBreakdown($items, $voucher);
+        foreach ($breakdown['by_rate'] as $row) {
+            if ((int) ($row['rate'] ?? -1) === 0 && abs((float) ($row['gross'] ?? 0)) > 0.009) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -320,6 +320,12 @@ $customerLines = is_array($customerBox['lines'] ?? null) ? $customerBox['lines']
   </div>
 <?php endif; ?>
 
+<?php if (trim((string) ($photovoltaikHint ?? '')) !== '') : ?>
+  <div class="vd-kleinunternehmer"<?= !empty($forEmail) ? ' style="margin-top:12px;font-size:12px;padding:8px 12px;background:#f8f9fb;border-left:3px solid #b8942f;"' : '' ?>>
+    <?= nl2br(View::escape(trim((string) $photovoltaikHint))) ?>
+  </div>
+<?php endif; ?>
+
 <?php if ($books && $primaryBank !== null) : ?>
   <div class="vd-bank"<?= !empty($forEmail) ? ' style="margin-top:16px;font-size:12px;"' : '' ?>>
     <strong>Zahlungsinformationen</strong><br>
