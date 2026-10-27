@@ -187,6 +187,7 @@ spl_autoload_register(static function (string $class): void {
         'GiftVoucherRepository' => '/src/Accounting/GiftVoucherRepository.php',
         'GiftVoucherSettings' => '/src/GiftVoucher/GiftVoucherSettings.php',
         'GiftVoucherService' => '/src/GiftVoucher/GiftVoucherService.php',
+        'GiftVoucherLegal' => '/src/GiftVoucher/GiftVoucherLegal.php',
         'ComplaintRepository' => '/src/Complaint/ComplaintRepository.php',
         'ComplaintFileStorage' => '/src/Complaint/ComplaintFileStorage.php',
         'ComplaintApi' => '/src/Complaint/ComplaintApi.php',

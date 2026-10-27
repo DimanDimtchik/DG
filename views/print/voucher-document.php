@@ -186,7 +186,7 @@ $customerLines = is_array($customerBox['lines'] ?? null) ? $customerBox['lines']
           }
         ?>
         <tr>
-          <td><?= View::escape($title) ?></td>
+          <td<?= !empty($item['is_gift_sale']) ? ' style="font-size:12px;line-height:1.35;"' : '' ?>><?= nl2br(View::escape($title)) ?></td>
           <td class="num"><?= View::escape((string) ($item['quantity'] ?? '1')) ?> <?= View::escape((string) ($item['unit'] ?? '')) ?></td>
           <td class="num"><?= $fmt($item['unit_price_gross'] ?? 0) ?> €</td>
           <td class="num"><?= (int) ($item['tax_rate'] ?? 19) ?> %</td>

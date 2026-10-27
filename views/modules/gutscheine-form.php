@@ -35,8 +35,16 @@ $occasionLabels = FlyerService::occasionLabels();
         <dt>Typ</dt><dd><?= View::escape($typeLabels[(string) ($form['voucher_type'] ?? '')] ?? '') ?></dd>
         <dt>Betrag</dt><dd><?= View::escape(number_format((float) ($form['face_value_gross'] ?? $form['amount'] ?? 0), 2, ',', '.')) ?> €</dd>
         <dt>Restwert</dt><dd><?= View::escape(number_format((float) ($form['remaining_gross'] ?? $form['remaining'] ?? 0), 2, ',', '.')) ?> €</dd>
-        <dt>Gültig bis</dt><dd><?= View::escape((string) ($form['valid_until'] ?? '—')) ?></dd>
+        <dt>Gültig bis</dt>
+        <dd>
+          <?= View::escape((string) ($form['valid_until'] ?? '—')) ?>
+          <?php if (trim((string) ($form['valid_until'] ?? '')) !== '') : ?>
+            <span class="dg-muted">(<?= View::escape(GiftVoucherLegal::formatValidUntilDisplay((string) $form['valid_until'])) ?>)</span>
+          <?php endif; ?>
+        </dd>
         <dt>Titel</dt><dd><?= View::escape((string) ($form['title'] ?? '—')) ?></dd>
+        <dt>Hinweise</dt>
+        <dd class="dg-field-hint"><?= View::escape(GiftVoucherLegal::customerFacingNotes((string) ($form['valid_until'] ?? GiftVoucherLegal::defaultValidUntil()))) ?></dd>
         <dt>Flyer</dt>
         <dd>
           <?php if (is_array($selectedTpl)) : ?>
@@ -77,9 +85,11 @@ $occasionLabels = FlyerService::occasionLabels();
           <span>Betrag (€) *</span>
           <input type="text" name="amount" inputmode="decimal" required placeholder="50,00"<?= !$dbConnected ? ' disabled' : '' ?>>
         </label>
+        <?php $autoValidUntil = GiftVoucherLegal::defaultValidUntil(); ?>
         <label class="dg-field">
           <span>Gültig bis</span>
-          <input type="date" name="valid_until"<?= !$dbConnected ? ' disabled' : '' ?>>
+          <input type="date" name="valid_until" value="<?= View::escape($autoValidUntil) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+          <span class="dg-field-hint">Automatisch nach §§&nbsp;195, 199 BGB: drei Jahre ab Schluss des Ausstellungsjahres (heute → <?= View::escape(GiftVoucherLegal::formatValidUntilDisplay($autoValidUntil)) ?>).</span>
         </label>
         <label class="dg-field dg-field--wide">
           <span>Titel</span>

@@ -708,6 +708,9 @@ final class FlyerService
             'qr_social_url' => $socialQrs[0]['url'] ?? '',
             'handwriting' => $layout['handwriting'],
             'footer' => (string) ($layout['footer'] ?? ''),
+            'legal_notes' => class_exists('GiftVoucherLegal')
+                ? GiftVoucherLegal::customerFacingNotes($valid !== '' ? $valid : GiftVoucherLegal::defaultValidUntil())
+                : '',
             'format' => (string) $layout['format'],
             'page_mm' => $pageMm,
         ];

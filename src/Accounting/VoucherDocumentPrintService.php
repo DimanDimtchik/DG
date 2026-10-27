@@ -145,6 +145,13 @@ final class VoucherDocumentPrintService
         if ($items === [] && $voucherId > 0) {
             $items = VoucherRepository::itemsForVoucher($voucherId);
         }
+        // Mehrzweck-Gutschein-Verkauf als Positionen mit Gültigkeit/Steuer-/Barhinweis
+        if ($voucherId > 0 && class_exists('GiftVoucherService') && MenuRegistry::isGutscheinEnabled()) {
+            $giftSaleItems = GiftVoucherService::printSaleItemsForVoucher($voucherId);
+            if ($giftSaleItems !== []) {
+                $items = array_merge($items, $giftSaleItems);
+            }
+        }
 
         $books = VoucherDocumentKind::isBookable($kind, (string) ($voucher['voucher_type'] ?? 'income'));
         $contact = null;

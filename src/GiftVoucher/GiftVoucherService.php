@@ -11,6 +11,70 @@ declare(strict_types=1);
 final class GiftVoucherService
 {
     /**
+     * Legt den System-Artikel „Mehrzweck-Gutschein“ an bzw. aktualisiert Beschreibung/Steuer
+     * (Installation + Nachzug auf bestehenden Instanzen).
+     */
+    public static function ensureDefaultCatalogArticle(): void
+    {
+        if (!Database::isConfigured() || !class_exists('CalendarArticleRepository')) {
+            return;
+        }
+        if (class_exists('MenuRegistry') && !MenuRegistry::isGutscheinEnabled()) {
+            return;
+        }
+        try {
+            MigrationRunner::runPending();
+            $number = GiftVoucherLegal::CATALOG_ARTICLE_NUMBER;
+            $title = GiftVoucherLegal::CATALOG_ARTICLE_TITLE;
+            $description = GiftVoucherLegal::catalogArticleDescription();
+            $existingId = CalendarArticleRepository::findIdByArticleNumber($number);
+            if ($existingId !== null && $existingId > 0) {
+                $pdo = Database::pdo();
+                $stmt = $pdo->prepare(
+                    'UPDATE dg_calendar_articles
+                     SET title = :title,
+                         description = :description,
+                         tax_type = \'ust0\',
+                         unit = \'Stück\',
+                         catalog_kind = :kind,
+                         track_stock = 0,
+                         is_active = 1,
+                         price_list_online = 1,
+                         work_minutes = 0
+                     WHERE id = :id'
+                );
+                $stmt->execute([
+                    'title' => $title,
+                    'description' => $description,
+                    'kind' => CalendarArticleCatalog::KIND_PRODUCT,
+                    'id' => $existingId,
+                ]);
+
+                return;
+            }
+            CalendarArticleRepository::save([
+                'article_number' => $number,
+                'catalog_kind' => CalendarArticleCatalog::KIND_PRODUCT,
+                'title' => $title,
+                'description' => $description,
+                'note' => 'Systemartikel Gutschein — Nennwert beim Verkauf setzen.',
+                'unit' => 'Stück',
+                'tax_type' => 'ust0',
+                'price_gross' => 0,
+                'work_minutes' => 0,
+                'area_id' => 0,
+                'sort_order' => 5,
+                'is_active' => 1,
+                'price_list_online' => 1,
+                'track_stock' => 0,
+                'import' => 1,
+            ]);
+        } catch (Throwable) {
+            // Katalog darf CRM-Start nicht blockieren
+        }
+    }
+
+    /**
      * @param array<string, mixed> $data POST-/Formular-Daten
      * @return list<array<string, mixed>>
      */
@@ -166,17 +230,26 @@ final class GiftVoucherService
                 $existing = $giftId > 0 ? GiftVoucherRepository::find($giftId) : null;
                 if ($existing !== null) {
                     $code = (string) ($existing['code'] ?? $code);
+                    $validUntil = (string) ($existing['valid_until'] ?? GiftVoucherLegal::defaultValidUntil());
+                    $baseTitle = trim((string) ($existing['title'] ?? ''));
+                    if ($baseTitle === '') {
+                        $baseTitle = 'Mehrzweck-Gutschein';
+                    }
+                    $title = GiftVoucherLegal::invoiceLineDescription($baseTitle, $code, $validUntil);
                 } else {
+                    $baseTitle = self::shortSaleTitle($title);
                     $giftId = GiftVoucherRepository::create([
                         'voucher_type' => GiftVoucherRepository::TYPE_SALE,
                         'amount' => $amount,
                         'contact_id' => $contactId,
                         'issued_voucher_id' => $voucherId,
-                        'title' => $title !== '' ? $title : 'Mehrzweck-Gutschein',
+                        'title' => $baseTitle,
                         'notes' => 'Verkauf über Beleg #' . $voucherId . ' (ohne USt, Verbindlichkeit)',
                     ], $userId);
                     $created = GiftVoucherRepository::find($giftId);
                     $code = (string) ($created['code'] ?? $code);
+                    $validUntil = (string) ($created['valid_until'] ?? GiftVoucherLegal::defaultValidUntil());
+                    $title = GiftVoucherLegal::invoiceLineDescription($baseTitle, $code, $validUntil);
                 }
             } elseif ($kind === 'redeem') {
                 $gift = $giftId > 0 ? GiftVoucherRepository::find($giftId) : GiftVoucherRepository::findByCode($code);
@@ -233,9 +306,25 @@ final class GiftVoucherService
             if ($amount <= 0) {
                 continue;
             }
+            $desc = trim((string) ($line['title'] ?? ''));
+            if ($desc === '') {
+                $desc = 'Mehrzweck-Gutschein';
+            }
+            // Falls noch keine rechtlichen Hinweise in der Bezeichnung stehen: ergänzen
+            if (!str_contains($desc, '§ 3 Abs. 13') && !str_contains($desc, 'UStG')) {
+                $code = strtoupper(trim((string) ($line['gift_code'] ?? '')));
+                $valid = GiftVoucherLegal::defaultValidUntil();
+                if ($code !== '') {
+                    $gift = GiftVoucherRepository::findByCode($code);
+                    if (is_array($gift) && trim((string) ($gift['valid_until'] ?? '')) !== '') {
+                        $valid = (string) $gift['valid_until'];
+                    }
+                }
+                $desc = GiftVoucherLegal::invoiceLineDescription($desc, $code, $valid);
+            }
             $out[] = [
                 'account_number' => $settings['liability_account'],
-                'description' => (string) ($line['title'] ?? 'Mehrzweck-Gutschein'),
+                'description' => $desc,
                 'gross_amount' => $amount,
                 'tax_rate' => 0,
                 'tax_type' => 'ust0',
@@ -317,5 +406,79 @@ final class GiftVoucherService
         }
         $pdo->prepare('DELETE FROM dg_voucher_gift_redemptions WHERE voucher_id = :id')
             ->execute(['id' => $belegId]);
+    }
+
+    /** Kurztitel ohne bereits angehängte Rechts-/Steuerhinweise. */
+    private static function shortSaleTitle(string $title): string
+    {
+        $title = trim($title);
+        if ($title === '' || str_contains($title, 'UStG') || str_contains($title, '§ 3 Abs.')) {
+            return 'Mehrzweck-Gutschein';
+        }
+        // Abgeschnittene Anreicherung aus früherem Sync
+        if (preg_match('/^(.*?)\\s+[—\\-]\\s+Nr\\./u', $title, $m) === 1) {
+            $cut = trim((string) ($m[1] ?? ''));
+            if ($cut !== '') {
+                return mb_substr($cut, 0, 191);
+            }
+        }
+
+        return mb_substr($title, 0, 191);
+    }
+
+    /**
+     * Verkaufszeilen für den Rechnungsdruck (Bezeichnung inkl. Gültigkeit/Steuer/Barauszahlung).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function printSaleItemsForVoucher(int $voucherId): array
+    {
+        $out = [];
+        foreach (self::linesForVoucher($voucherId) as $line) {
+            if ((string) ($line['line_kind'] ?? '') !== 'sale') {
+                continue;
+            }
+            $amount = round((float) str_replace(',', '.', (string) ($line['amount'] ?? 0)), 2);
+            if ($amount <= 0) {
+                continue;
+            }
+            $title = trim((string) ($line['title'] ?? ''));
+            $code = strtoupper(trim((string) ($line['gift_code'] ?? '')));
+            $validUntil = GiftVoucherLegal::defaultValidUntil();
+            $baseTitle = 'Mehrzweck-Gutschein';
+            if ($code !== '') {
+                $gift = GiftVoucherRepository::findByCode($code);
+                if (is_array($gift)) {
+                    $vu = trim((string) ($gift['valid_until'] ?? ''));
+                    if ($vu !== '') {
+                        $validUntil = $vu;
+                    }
+                    $stored = trim((string) ($gift['title'] ?? ''));
+                    if ($stored !== '') {
+                        $baseTitle = $stored;
+                    }
+                }
+            }
+            if ($title === '' || !str_contains($title, 'UStG')) {
+                $title = GiftVoucherLegal::invoiceLineDescription($baseTitle, $code, $validUntil);
+            }
+            $out[] = [
+                'article_id' => '',
+                'catalog_kind' => '',
+                'article_number' => '',
+                'title' => $title,
+                'area_id' => '',
+                'area_name' => '',
+                'unit' => 'Stück',
+                'quantity' => '1',
+                'unit_price_gross' => number_format($amount, 2, ',', ''),
+                'gross_amount' => number_format($amount, 2, ',', ''),
+                'tax_rate' => '0',
+                'tax_type' => 'ust0',
+                'is_gift_sale' => true,
+            ];
+        }
+
+        return $out;
     }
 }

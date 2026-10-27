@@ -235,6 +235,13 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
         opacity: 0.8;
         margin-top: 1mm;
       }
+      .dg-gift-flyer-sheet__legal {
+        font-size: 6.5pt;
+        line-height: 1.35;
+        opacity: 0.85;
+        text-align: left;
+        margin: 2mm 0 0;
+      }
       @media print {
         .dg-print-hide,
         .dg-sidebar,
@@ -330,6 +337,9 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
 
         <?php if (trim((string) ($print['footer'] ?? '')) !== '') : ?>
           <p class="dg-gift-flyer-sheet__footer"><?= View::escape((string) $print['footer']) ?></p>
+        <?php endif; ?>
+        <?php if (trim((string) ($print['legal_notes'] ?? '')) !== '') : ?>
+          <p class="dg-gift-flyer-sheet__legal"><?= View::escape((string) $print['legal_notes']) ?></p>
         <?php endif; ?>
       </div>
     </article>

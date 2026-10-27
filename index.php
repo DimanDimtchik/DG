@@ -4850,6 +4850,9 @@ $legalProductsConfig = LegalProductSettings::config();
             header('Location: ' . SettingsRegistry::tabUrl('abteilungen'), true, 302);
             exit;
         } elseif ($page === 'artikel-leistungen' && MenuRegistry::canAccess($user, 'artikel-leistungen')) {
+            if (MenuRegistry::isGutscheinEnabled()) {
+                GiftVoucherRepository::ensureReady();
+            }
             PurchaseListService::rebuildFromStock();
             $rawList = strtolower(trim((string) ($_GET['list'] ?? $_GET['catalog_view'] ?? '')));
             $catalogView = match ($rawList) {
@@ -5693,6 +5696,9 @@ $legalProductsConfig = LegalProductSettings::config();
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-beleg-form' && MenuRegistry::canAccess($user, 'buchhaltung-beleg-form')) {
+            if (MenuRegistry::isGutscheinEnabled()) {
+                GiftVoucherRepository::ensureReady();
+            }
             $applyBelegContactPrefill = static function (array &$form): void {
                 $prefillContactId = (int) ($_GET['contact_id'] ?? 0);
                 if ($prefillContactId < 1) {

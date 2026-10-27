@@ -33,6 +33,7 @@ final class GiftVoucherRepository
         }
         self::ensureTables();
         FlyerService::ensureReady();
+        GiftVoucherService::ensureDefaultCatalogArticle();
     }
 
     /**
@@ -185,8 +186,8 @@ final class GiftVoucherRepository
      *
      * Eingabe: face_value_gross ODER amount; optional remaining_gross, voucher_type, complaint_id,
      * issued_voucher_id (Alias issue_voucher_id), liability_account, expense_account, contact_id, code, title,
-     * valid_until, notes. Ist der Schlüssel valid_until nicht gesetzt, gilt GiftVoucherSettings::default_valid_days;
-     * ein leerer String bedeutet bewusst „ohne Ablaufdatum“.
+     * valid_until, notes. Leeres/fehlendes valid_until → automatisch §§ 195, 199 BGB
+     * (31.12. des Jahres Ausstellung + 3).
      *
      * @param array<string, mixed> $input
      */
@@ -221,14 +222,11 @@ final class GiftVoucherRepository
             throw new InvalidArgumentException('Gutschein-Code ist bereits vergeben.');
         }
 
-        if (array_key_exists('valid_until', $input)) {
-            $validUntil = trim((string) $input['valid_until']);
-        } else {
-            $validUntil = $settings['default_valid_days'] > 0
-                ? date('Y-m-d', strtotime('+' . $settings['default_valid_days'] . ' days'))
-                : '';
+        $validUntil = trim((string) ($input['valid_until'] ?? ''));
+        if ($validUntil === '') {
+            $validUntil = GiftVoucherLegal::defaultValidUntil();
         }
-        if ($validUntil !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $validUntil)) {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $validUntil)) {
             throw new InvalidArgumentException('Ungültiges Gültig-bis-Datum.');
         }
 
@@ -284,7 +282,7 @@ final class GiftVoucherRepository
             'face' => $face,
             'remaining' => $remaining,
             'status' => $remaining <= 0.0 ? self::STATUS_REDEEMED : self::STATUS_ACTIVE,
-            'valid_until' => $validUntil !== '' ? $validUntil : null,
+            'valid_until' => $validUntil,
             'issued_voucher_id' => $issuedVoucherId > 0 ? $issuedVoucherId : null,
             'liability_account' => mb_substr($liability, 0, 16),
             'expense_account' => mb_substr($expense, 0, 16),
