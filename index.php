@@ -1031,6 +1031,30 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Datensicherung
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['backup_action'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('backup');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungueltiges Formular (CSRF).');
+            } elseif (!Database::isConfigured()) {
+                Flash::set('error', 'Datensicherung erst nach eingerichteter Datenbank moeglich.');
+            } else {
+                try {
+                    $backupPath = BackupService::createBackup();
+                    Flash::set('success', 'Datensicherung erstellt: ' . basename($backupPath));
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Firmendaten
         if (
             $page === 'einstellungen'
@@ -4751,6 +4775,7 @@ switch ($path) {
             }
         }
         $mailConfig = MailSettings::forForm();
+        $backupInfo = BackupService::info();
         $mailReady = MailSettings::isConfigured();
         $mailRecent = MailLogRepository::recent();
         $mailAddressConfig = MailAddressSettings::forForm();
@@ -8304,6 +8329,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'flash',
             'dbConfig',
             'dbConnected',
+            'backupInfo',
             'mailConfig',
             'mailReady',
             'mailRecent',
