@@ -509,6 +509,13 @@ code {
   margin-top: var(--dg-space-5);
 }
 
+/* Formular-Raster → nächster Block (z. B. Hinweis unter Rolle → Arbeitgeber) */
+.dg-form-grid + .dg-panel,
+.dg-form-grid + .dg-panel--nested,
+.dg-panel--nested + .dg-panel--nested {
+  margin-top: var(--dg-space-5);
+}
+
 /* ── Panels & Cards ──────────────────────────────────────────── */
 
 .dg-page-header {
@@ -553,10 +560,14 @@ code {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--dg-space-4);
+  align-items: stretch;
 }
 
 .dg-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
   background: var(--dg-surface);
   border: 1px solid var(--dg-border-accent);
   border-top: 3px solid var(--dg-brand);
@@ -576,6 +587,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 36px;
   height: 36px;
   margin-bottom: var(--dg-space-3);
@@ -589,16 +601,29 @@ code {
 
 .dg-card h2 {
   margin: 0 0 var(--dg-space-2);
+  flex: 0 0 auto;
+  min-height: 1.35em;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--dg-heading);
 }
 
-.dg-card p {
+.dg-card p,
+.dg-card__desc {
   margin: 0;
+  flex: 1 1 auto;
   color: var(--dg-text-secondary);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.45;
+  /* fester Beschreibungsplatz: 3 Zeilen, überall gleich hoch */
+  min-height: calc(1.45em * 3);
+  max-height: calc(1.45em * 3);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 /* ── Toolbar, Suche, Tabelle ─────────────────────────────────── */

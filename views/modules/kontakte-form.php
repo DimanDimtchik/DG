@@ -82,8 +82,8 @@ if ($isCompanyForm && $companyEmployees === []) {
             <option value="<?= View::escape($val) ?>"<?= $selectedRole === $val ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
           <?php endforeach; ?>
         </select>
+        <span class="dg-field-hint">Mitarbeiterdaten (Krankenkasse, SV-Nummer, Dokumente …) erscheinen nur bei Rolle <strong>Mitarbeiter</strong> oder <strong>Administrator</strong>.</span>
       </label>
-      <p class="dg-lead dg-field--wide">Mitarbeiterdaten (Krankenkasse, SV-Nummer, Dokumente …) erscheinen nur bei Rolle <strong>Mitarbeiter</strong> oder <strong>Administrator</strong>.</p>
     </div>
 
     <?php

@@ -490,58 +490,63 @@ final class MenuRegistry
         return RoleResolver::isAdmin($user) || DepartmentAccess::canAccessModule($user, 'buchhaltung');
     }
 
-    /** Kurztexte für Dashboard-Kacheln (gleiche Reihenfolge wie Seitennavigation). */
     /**
+     * Kurztexte für Dashboard-Kacheln (Icon + Titel + Beschreibung).
+     * Ziel: 2–3 Zeilen, sachlich, überall vorhanden.
+     *
      * @return array<string, string> slug => Beschreibung
      */
     public static function moduleDescriptions(): array
     {
         return [
-            'profile' => 'Persönliche Daten und Zugang verwalten.',
-            'kontakte' => 'Benutzer, Kunden, Lieferanten und Mitarbeiter verwalten.',
-            'terminkalender' => 'Buchungen, Artikel und Kalender im Blick behalten.',
-            'zeiterfassung' => 'Einstempeln, Pausen und Teamübersicht für HR.',
-            'post' => 'E-Mail-Postfächer: Eingang lesen und Nachrichten versenden.',
-            'telefon' => 'Telefon: Click-to-Call (Fritzbox/Softphone), Anrufliste, eingehendes Popup.',
-            'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Final, Export.',
-            'artikel-leistungen' => 'Artikel- und Leistungskatalog pflegen.',
-            'dienstleistungen-auftraege' => 'Angebote und Aufträge — Planung.',
-            'lager' => 'Lagerbestände, Bewegungen aus Belegen und Inventur.',
-            'rezeptur' => 'Stücklisten und Fertigungszeit — Vorkalkulation folgt schrittweise.',
-            'bilder' => 'Media-Bibliothek: Logos, Fotos und Bilddateien verwalten.',
-            'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise einsehen.',
-            'buchhaltung-belege' => 'Auftrag, Angebot, Auftragsbestätigung, Lieferschein und Rechnung erfassen — Belegkette und Steuerfelder.',
-            'gutscheine' => 'Mehrzweck-Gutscheine verkaufen, einlösen und Entschuldigungen aus Reklamation.',
-            'gutscheine-form' => 'Gutschein anlegen oder stornieren.',
-            'reklamation' => 'Reklamationen von der Annahme bis zu Maßnahmen und Entschuldigungs-Gutschein.',
-            'reklamation-form' => 'Reklamation erfassen, Maßnahmen festlegen und Entschuldigungs-Gutschein ausstellen.',
-            'website-gutschein-flyer' => 'Schlichten Gutschein-Flyer drucken (Code, Betrag, Gültigkeit).',
-            'buchhaltung-gutscheine' => 'Weiterleitung auf die Gutschein-Verwaltung.',
-            'buchhaltung-ueberweisungen' => 'Überweisungen vorbereiten mit QR-Code und Fotovorlage.',
-            'buchhaltung-kontenuebersicht' => 'Kontensalden und Kontoauszüge je Geschäftsjahr.',
-            'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten (OPOS) mit Personenkonten.',
-            'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen.',
-            'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg (Soll = Haben).',
-            'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr.',
-            'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Belege zuordnen.',
-            'buchhaltung-steuerberater-export' => 'DATEV, Agenda, Addison — Buchungsstapel und Belege.',
-            'buchhaltung-ustva' => 'Umsatzsteuer-Voranmeldung und ELSTER-CSV — auch ohne Steuerberater.',
-            'buchhaltung-jahresabschluss' => 'Checkliste, GuV-Abschluss, Saldenvortrag — DIY-Assistent.',
-            'buchhaltung-anschaffungsrechner' => 'Barkauf, Leasing, Ratenkauf und Miete mit AfA- und Steuerorientierung vergleichen.',
-            'buchhaltung-bwa' => 'Betriebswirtschaftliche Auswertung je Zeitraum.',
-            'buchhaltung-susa' => 'Summen- und Saldenliste je Geschäftsjahr.',
-            'support-freigabe' => 'Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional Bildschirm-Zuschauen.',
-            'support-zuschauen' => 'Bildschirm des Kunden zuschauen während aktiver Support-Freigabe.',
-            'kdv-dashboard' => 'Übersicht SaaS-Kunden von Ganz Soft.',
-            'kdv-kunden' => 'SaaS-Kunden verwalten und Lizenzen zuordnen.',
-            'kdv-support' => 'Support-Freigaben aller SaaS-Kunden einsehen.',
-            'einstellungen' => 'Firma, E-Mail, Module und System konfigurieren.',
-            'website-seiten' => 'Seiten der öffentlichen Website anlegen und gestalten.',
-            'website-formulare' => 'Formulare visuell bauen, Einträge empfangen und in Seiten einbinden.',
-            'website-statistik' => 'Seitenaufrufe lokal und Links zu Google Analytics / Tag Manager.',
-            'website-menu' => 'Navigation der Website pflegen.',
-            'website-chrome' => 'Kopfzeile, Fußzeile und zusätzliche Skripte.',
-            'website-design' => 'Farben der öffentlichen Website.',
+            'profile' => 'Persönliche Daten, Passwort und Zugangseinstellungen für Ihr Konto.',
+            'kontakte' => 'Kunden, Lieferanten, Mitarbeiter und Behörden mit allen Unternehmensfeldern.',
+            'terminkalender' => 'Termine, Buchungen und Kalenderbereiche — Planung und Abstimmung im Team.',
+            'akademie' => 'Schulungen, Erklärvideos und Zertifikate zu den CRM-Modulen.',
+            'hr-abteilungen' => 'Abteilungen anlegen und Mitarbeitern zuordnen — Grundlage für Rechte und Akademie.',
+            'hr-teams' => 'Teams innerhalb der Abteilungen pflegen und Ansprechpartner zuweisen.',
+            'zeiterfassung' => 'Einstempeln, Pausen und Arbeitszeiten — Übersicht für Mitarbeiter und HR.',
+            'post' => 'E-Mail-Postfächer im CRM: Eingang lesen und Nachrichten versenden.',
+            'telefon' => 'Click-to-Call, Anrufliste und Popup bei eingehenden Anrufen.',
+            'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Finalisierung und Export.',
+            'artikel-leistungen' => 'Artikel- und Leistungskatalog — Basis für Angebote, Belege und Lager.',
+            'dienstleistungen-auftraege' => 'Angebote und Aufträge für Dienstleistungen erfassen und verfolgen.',
+            'lager' => 'Bestände, Orte und Bewegungen — von Wareneingang bis Inventur.',
+            'rezeptur' => 'Stücklisten und Fertigungszeit — Vorkalkulation wächst schrittweise nach.',
+            'bilder' => 'Media-Bibliothek für Logos, Fotos und Grafiken im System.',
+            'buchhaltung-konten' => 'Kontenrahmen durchsuchen und Kontenhinweise für die Buchführung.',
+            'buchhaltung-belege' => 'Angebot bis Rechnung erfassen — Belegkette, Steuerfelder und Konten.',
+            'gutscheine' => 'Mehrzweck-Gutscheine verkaufen, einlösen und aus Reklamation ausstellen.',
+            'gutscheine-form' => 'Einzelnen Gutschein anlegen, prüfen oder stornieren.',
+            'reklamation' => 'Reklamationen von der Annahme bis zu Maßnahmen und Entschuldigung.',
+            'reklamation-form' => 'Reklamation erfassen, Maßnahmen festlegen und Gutschein ausstellen.',
+            'website-gutschein-flyer' => 'Schlichten Flyer mit Code, Betrag und Gültigkeit zum Ausdrucken.',
+            'buchhaltung-gutscheine' => 'Schneller Einstieg in die Gutschein-Verwaltung aus der Buchhaltung.',
+            'buchhaltung-ueberweisungen' => 'Zahlungen vorbereiten — inkl. QR-Code und Fotovorlage für die Bank.',
+            'buchhaltung-kontenuebersicht' => 'Kontensalden und Auszüge je Geschäftsjahr auf einen Blick.',
+            'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten mit Personenkonten.',
+            'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.',
+            'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
+            'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
+            'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Umsätze Belegen zuordnen.',
+            'buchhaltung-steuerberater-export' => 'DATEV, Agenda oder Addison — Buchungsstapel und Belege exportieren.',
+            'buchhaltung-ustva' => 'Umsatzsteuer-Voranmeldung und ELSTER-CSV vorbereiten.',
+            'buchhaltung-jahresabschluss' => 'Checkliste, GuV-Abschluss und Saldenvortrag — DIY-Assistent.',
+            'buchhaltung-anschaffungsrechner' => 'Barkauf, Leasing, Rate und Miete mit AfA- und Steuerorientierung vergleichen.',
+            'buchhaltung-bwa' => 'Betriebswirtschaftliche Auswertung — Monatsüberblick fürs Management.',
+            'buchhaltung-susa' => 'Summen- und Saldenliste kompakt für Prüfung und Steuerberater.',
+            'support-freigabe' => 'Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional mit Zuschauen.',
+            'support-zuschauen' => 'Bildschirm des Kunden während einer aktiven Support-Freigabe mitverfolgen.',
+            'kdv-dashboard' => 'Übersicht über SaaS-Kunden und Lizenzstatus von Ganz Soft.',
+            'kdv-kunden' => 'SaaS-Kunden anlegen, verwalten und Lizenzen zuordnen.',
+            'kdv-support' => 'Support-Freigaben aller SaaS-Kunden zentral einsehen.',
+            'einstellungen' => 'Firma, E-Mail, Abteilungen, Module und System konfigurieren.',
+            'website-seiten' => 'Inhaltsseiten der öffentlichen Website anlegen und gestalten.',
+            'website-formulare' => 'Formulare bauen, Einträge empfangen und in Seiten einbinden.',
+            'website-statistik' => 'Lokale Aufrufe und Links zu Google Analytics / Tag Manager.',
+            'website-menu' => 'Navigation der Website — welche Seiten wo verlinkt sind.',
+            'website-chrome' => 'Kopfzeile, Fußzeile und zusätzliche Skripte der Website.',
+            'website-design' => 'Farben und Erscheinungsbild der öffentlichen Website.',
         ];
     }
 
@@ -564,7 +569,7 @@ final class MenuRegistry
                 'label' => $item['label'],
                 'icon' => $item['icon'],
                 'href' => $item['href'],
-                'description' => $descriptions[$item['slug']] ?? '',
+                'description' => self::tileDescription($item['slug'], $descriptions),
             ];
         }
 
@@ -576,7 +581,7 @@ final class MenuRegistry
                     'label' => $item['label'],
                     'icon' => $item['icon'],
                     'href' => $item['href'],
-                    'description' => $descriptions[$item['slug']] ?? '',
+                    'description' => self::tileDescription($item['slug'], $descriptions),
                 ];
             }
         }
@@ -589,7 +594,7 @@ final class MenuRegistry
                     'label' => $item['label'],
                     'icon' => $item['icon'],
                     'href' => $item['href'],
-                    'description' => $descriptions[$item['slug']] ?? '',
+                    'description' => self::tileDescription($item['slug'], $descriptions),
                 ];
             }
         }
@@ -602,7 +607,7 @@ final class MenuRegistry
                     'label' => $item['label'],
                     'icon' => $item['icon'],
                     'href' => $item['href'],
-                    'description' => $descriptions[$item['slug']] ?? '',
+                    'description' => self::tileDescription($item['slug'], $descriptions),
                 ];
             }
         }
@@ -615,7 +620,7 @@ final class MenuRegistry
                     'label' => $item['label'],
                     'icon' => $item['icon'],
                     'href' => $item['href'],
-                    'description' => $descriptions[$item['slug']] ?? '',
+                    'description' => self::tileDescription($item['slug'], $descriptions),
                 ];
             }
         }
@@ -628,7 +633,7 @@ final class MenuRegistry
                     'label' => $item['label'],
                     'icon' => $item['icon'],
                     'href' => $item['href'],
-                    'description' => $descriptions[$item['slug']] ?? '',
+                    'description' => self::tileDescription($item['slug'], $descriptions),
                 ];
             }
         }
@@ -641,7 +646,7 @@ final class MenuRegistry
                     'label' => $item['label'],
                     'icon' => $item['icon'],
                     'href' => $item['href'],
-                    'description' => $descriptions[$item['slug']] ?? '',
+                    'description' => self::tileDescription($item['slug'], $descriptions),
                 ];
             }
         }
@@ -653,11 +658,21 @@ final class MenuRegistry
                 'label' => $settings['label'],
                 'icon' => $settings['icon'],
                 'href' => '/app?page=einstellungen',
-                'description' => $descriptions['einstellungen'] ?? '',
+                'description' => self::tileDescription('einstellungen', $descriptions),
             ];
         }
 
         return $tiles;
+    }
+
+    /**
+     * @param array<string, string> $descriptions
+     */
+    private static function tileDescription(string $slug, array $descriptions): string
+    {
+        $text = trim((string) ($descriptions[$slug] ?? ''));
+
+        return $text !== '' ? $text : 'Öffnet diesen Bereich im CRM.';
     }
 
     /** @return array{slug: string, label: string, icon: string}|null Einstellungen-Menüpunkt oder null. */

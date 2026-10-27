@@ -19,9 +19,7 @@ $dashboardTiles = MenuRegistry::dashboardTiles($user);
             <?php View::render('partials/icon', ['name' => $tile['icon']]); ?>
           </span>
           <h2><?= View::escape($tile['label']) ?></h2>
-          <?php if ($tile['description'] !== '') : ?>
-            <p><?= View::escape($tile['description']) ?></p>
-          <?php endif; ?>
+          <p class="dg-card__desc"><?= View::escape((string) ($tile['description'] ?? '')) ?></p>
         </a>
       <?php endforeach; ?>
     </div>
