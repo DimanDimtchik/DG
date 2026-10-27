@@ -1,6 +1,6 @@
 # DG CRM — ERP-Erweiterung nach Lastenheft V2
 
-Stand: **2026-10-27** · Quelle: Adobe-PDF `lastenheft_erp_erweiterung_v2.pdf`  
+Stand: **2026-10-27** · Quelle: Adobe-PDF `lastenheft_erp_erweiterung_v2.pdf`
 Ziel: PDF-Inhalte in die bestehende DG-CRM-Architektur einordnen, ohne Sondercode pro Kundeninstanz.
 
 ---

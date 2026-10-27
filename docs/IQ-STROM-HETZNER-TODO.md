@@ -180,7 +180,7 @@ Ohne diese Punkte ersetzt DG Lex **nicht** vollständig für eine bilanzierungsp
   → [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md)
 - [ ] Amazon Business Stufe 2  
   → [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md)
-- [ ] ERP-Erweiterung: Maschinen-Gemeinkosten + Maschinenwissen/Akademie  
+- [ ] ERP-Erweiterung: Maschinen-Gemeinkosten + Maschinenwissen/Akademie
   → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
 - [ ] Stripe Shop live  
   → [`SHOP-TODO.md`](SHOP-TODO.md)
