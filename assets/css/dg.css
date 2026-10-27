@@ -56,7 +56,52 @@
   --dg-radius-sm: 3px;
   --dg-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --dg-transition: 150ms ease;
+
+  /* Spacing-Skala (Audit): überall gleiche Abstände statt Ad-hoc-Pixel */
+  --dg-space-1: 4px;
+  --dg-space-2: 8px;
+  --dg-space-3: 12px;
+  --dg-space-4: 16px;
+  --dg-space-5: 24px;
+  --dg-control-h: 40px; /* Standard-Eingabe / Normal-Button */
+  --dg-control-h-sm: 32px; /* .dg-button--small */
 }
+
+/* Spacing-Utilities — schrittweise statt Inline-margin nutzen */
+.dg-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dg-space-3);
+}
+.dg-stack--tight { gap: var(--dg-space-2); }
+.dg-stack--loose { gap: var(--dg-space-4); }
+
+.dg-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dg-space-2);
+}
+@media (min-width: 900px) {
+  .dg-btn-row--desktop-nowrap {
+    flex-wrap: nowrap;
+  }
+}
+
+.dg-mt-0 { margin-top: 0; }
+.dg-mt-1 { margin-top: var(--dg-space-1); }
+.dg-mt-2 { margin-top: var(--dg-space-2); }
+.dg-mt-3 { margin-top: var(--dg-space-3); }
+.dg-mt-4 { margin-top: var(--dg-space-4); }
+.dg-mt-5 { margin-top: var(--dg-space-5); }
+.dg-mb-0 { margin-bottom: 0; }
+.dg-mb-2 { margin-bottom: var(--dg-space-2); }
+.dg-mb-3 { margin-bottom: var(--dg-space-3); }
+.dg-mb-4 { margin-bottom: var(--dg-space-4); }
+.dg-mb-5 { margin-bottom: var(--dg-space-5); }
+.dg-gap-2 { gap: var(--dg-space-2); }
+.dg-gap-3 { gap: var(--dg-space-3); }
+.dg-gap-4 { gap: var(--dg-space-4); }
 
 /* ── Reset & Base ────────────────────────────────────────────── */
 
@@ -789,10 +834,10 @@ code {
 .dg-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px 16px;
+  gap: var(--dg-space-3) var(--dg-space-4);
 }
 
-.dg-field { display: flex; flex-direction: column; gap: 6px; }
+.dg-field { display: flex; flex-direction: column; gap: var(--dg-space-2); }
 .dg-field[hidden] { display: none !important; }
 .dg-field--wide { grid-column: 1 / -1; }
 .dg-field span { font-size: 12px; font-weight: 600; color: var(--dg-text); }
@@ -812,10 +857,14 @@ label.dg-checkbox.dg-field {
 .dg-field input,
 .dg-field select,
 .dg-field textarea {
+  min-height: var(--dg-control-h);
   padding: 8px 10px;
   border: 1px solid var(--dg-border-strong);
   border-radius: var(--dg-radius-sm);
   font: inherit;
+}
+.dg-field textarea {
+  min-height: calc(var(--dg-control-h) * 2.5);
 }
 .dg-field input:focus,
 .dg-field select:focus,
@@ -828,9 +877,10 @@ label.dg-checkbox.dg-field {
 .dg-form-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
+  align-items: center;
+  gap: var(--dg-space-2);
+  margin-top: var(--dg-space-5);
+  padding-top: var(--dg-space-4);
   border-top: 1px solid var(--dg-border);
 }
 
@@ -1220,6 +1270,7 @@ label.dg-checkbox.dg-field {
 }
 
 .dg-button--small {
+  min-height: var(--dg-control-h-sm);
   padding: 6px 12px;
   font-size: 12px;
 }
@@ -1565,7 +1616,8 @@ label.dg-checkbox.dg-field {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--dg-space-2);
+  min-height: var(--dg-control-h);
   border: 1px solid var(--dg-border-strong);
   border-radius: var(--dg-radius-sm);
   padding: 10px 16px;
@@ -1577,6 +1629,11 @@ label.dg-checkbox.dg-field {
   color: var(--dg-text);
   text-decoration: none;
   transition: background var(--dg-transition), border-color var(--dg-transition), opacity var(--dg-transition);
+}
+
+.dg-button--block {
+  display: flex;
+  width: 100%;
 }
 
 .dg-button:hover:not(:disabled) {
@@ -4608,13 +4665,13 @@ body.dg-login-page {
 .dg-field--actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--dg-space-2);
   align-items: center;
 }
 
 .dg-form-section + .dg-form-section {
-  margin-top: 24px;
-  padding-top: 24px;
+  margin-top: var(--dg-space-5);
+  padding-top: var(--dg-space-5);
   border-top: 1px solid var(--dg-border);
 }
 
@@ -4677,9 +4734,9 @@ body.dg-login-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--dg-space-3);
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: var(--dg-space-2);
 }
 
 .dg-form-section__head .dg-subsection-title {
@@ -7320,15 +7377,38 @@ body.dg-login-page {
 .dg-academy-modules {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: var(--dg-space-4);
+  margin-top: var(--dg-space-4);
+  align-items: stretch;
 }
 
 .dg-academy-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dg-space-2);
   border: 1px solid var(--dg-border);
   border-radius: var(--dg-radius-sm);
-  padding: 14px 16px;
+  padding: var(--dg-space-3) var(--dg-space-4);
   background: var(--dg-surface);
+  min-height: 100%;
+}
+.dg-academy-card > h3 {
+  margin: 0;
+  min-height: 1.4em;
+}
+.dg-academy-card > p.dg-muted {
+  margin: 0;
+  min-height: 1.35em;
+}
+.dg-academy-card > p:not(.dg-muted) {
+  flex: 1 1 auto;
+  margin: 0;
+}
+.dg-academy-card > .dg-button,
+.dg-academy-card > a.dg-button,
+.dg-academy-card > form {
+  margin-top: auto;
+  align-self: flex-start;
 }
 
 .dg-academy-rules {
