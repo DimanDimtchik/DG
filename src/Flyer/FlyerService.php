@@ -107,7 +107,13 @@ final class FlyerService
             'image_media_id' => '',
             'qr' => [
                 'booking' => false,
+                /** @deprecated Legacy-Flag; aktiv wenn social_keys nicht leer */
                 'social' => false,
+                /** Ausgewählte Keys aus Firmeneinstellungen (z. B. instagram) oder website */
+                'social_keys' => [],
+                /** Eigene Firmen-Website als wählbare Option (nur auf Wunsch) */
+                'offer_website' => false,
+                /** @deprecated Freitext-URL — wird nicht mehr gepflegt */
                 'social_url' => '',
             ],
             'handwriting' => [
@@ -195,10 +201,24 @@ final class FlyerService
         );
 
         $qrIn = is_array($data['qr'] ?? null) ? $data['qr'] : [];
-        $socialUrl = trim((string) ($qrIn['social_url'] ?? ''));
-        if ($socialUrl !== '' && !preg_match('#^https?://#i', $socialUrl)) {
-            $socialUrl = 'https://' . ltrim($socialUrl, '/');
+        $offerWebsite = !empty($qrIn['offer_website']);
+        // Nur Website gewünscht, keine SoMe-Profile: Key setzen
+        if ($offerWebsite && self::companySocialLinks() === [] && self::companyWebsiteUrl() !== '') {
+            $qrIn['social_keys'] = ['website'];
         }
+        $allowedKeys = self::allowedSocialKeys($offerWebsite);
+        $socialKeys = self::normalizeSocialKeys($qrIn['social_keys'] ?? null, $allowedKeys);
+        // Legacy: social_url / social-Flag → website wenn angeboten und kein Key gesetzt
+        if ($socialKeys === [] && !empty($qrIn['social'])) {
+            $legacyUrl = trim((string) ($qrIn['social_url'] ?? ''));
+            if ($offerWebsite || $legacyUrl !== '' || self::companyWebsiteUrl() !== '') {
+                $socialKeys = ['website'];
+                $offerWebsite = true;
+                $allowedKeys = self::allowedSocialKeys(true);
+                $socialKeys = self::normalizeSocialKeys(['website'], $allowedKeys);
+            }
+        }
+        $hasSocial = $socialKeys !== [];
 
         $hwIn = is_array($data['handwriting'] ?? null) ? $data['handwriting'] : [];
         $hwLabel = trim((string) ($hwIn['label'] ?? $base['handwriting']['label']));
@@ -228,8 +248,10 @@ final class FlyerService
             'image_media_id' => self::normalizeMediaId((string) ($data['image_media_id'] ?? '')),
             'qr' => [
                 'booking' => !empty($qrIn['booking']),
-                'social' => !empty($qrIn['social']),
-                'social_url' => mb_substr($socialUrl, 0, 500),
+                'social' => $hasSocial,
+                'social_keys' => $socialKeys,
+                'offer_website' => $offerWebsite,
+                'social_url' => '',
             ],
             'handwriting' => [
                 'enabled' => array_key_exists('enabled', $hwIn)
@@ -239,6 +261,105 @@ final class FlyerService
             ],
             'footer' => mb_substr($footer, 0, 500),
         ];
+    }
+
+    /**
+     * Soziale Profile aus Firmeneinstellungen (E-Mail-Layout), ohne Website.
+     *
+     * @return list<array{key: string, label: string, url: string}>
+     */
+    public static function companySocialLinks(): array
+    {
+        if (!class_exists('EmailLayoutSettings')) {
+            return [];
+        }
+
+        return EmailLayoutSettings::configuredSocialLinks();
+    }
+
+    /**
+     * Auswahloptionen für Social-QR-Dropdowns.
+     *
+     * @return list<array{key: string, label: string, url: string}>
+     */
+    public static function socialQrOptions(bool $offerWebsite): array
+    {
+        $options = self::companySocialLinks();
+        if ($offerWebsite) {
+            $website = self::companyWebsiteUrl();
+            if ($website !== '') {
+                $options[] = [
+                    'key' => 'website',
+                    'label' => 'Eigene Website',
+                    'url' => $website,
+                ];
+            }
+        }
+
+        return $options;
+    }
+
+    public static function companyWebsiteUrl(): string
+    {
+        try {
+            $firm = CompanySettings::config();
+            $url = trim((string) ($firm['website'] ?? ''));
+        } catch (Throwable) {
+            return '';
+        }
+        if ($url === '') {
+            return '';
+        }
+        if (!preg_match('#^https?://#i', $url)) {
+            $url = 'https://' . ltrim($url, '/');
+        }
+
+        return $url;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function allowedSocialKeys(bool $offerWebsite): array
+    {
+        $keys = [];
+        foreach (self::companySocialLinks() as $link) {
+            $keys[] = (string) $link['key'];
+        }
+        if ($offerWebsite && self::companyWebsiteUrl() !== '') {
+            $keys[] = 'website';
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @param mixed $raw
+     * @param list<string> $allowed
+     * @return list<string>
+     */
+    private static function normalizeSocialKeys($raw, array $allowed): array
+    {
+        $list = [];
+        if (is_string($raw) && $raw !== '') {
+            $list = [$raw];
+        } elseif (is_array($raw)) {
+            foreach ($raw as $item) {
+                $list[] = trim((string) $item);
+            }
+        }
+        $allowedMap = array_fill_keys($allowed, true);
+        $out = [];
+        $seen = [];
+        foreach ($list as $key) {
+            if ($key === '' || !isset($allowedMap[$key]) || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = $key;
+        }
+
+        return $out;
     }
 
     /**
@@ -277,8 +398,10 @@ final class FlyerService
             'image_media_id' => $layoutIn['image_media_id'] ?? '',
             'qr' => [
                 'booking' => !empty($layoutIn['qr_booking']) || !empty($layoutIn['qr']['booking']),
+                'offer_website' => !empty($layoutIn['offer_website']) || !empty($layoutIn['qr']['offer_website']),
+                'social_keys' => $layoutIn['social_keys'] ?? ($layoutIn['qr']['social_keys'] ?? []),
                 'social' => !empty($layoutIn['qr_social']) || !empty($layoutIn['qr']['social']),
-                'social_url' => $layoutIn['social_url'] ?? ($layoutIn['qr']['social_url'] ?? ''),
+                'social_url' => '',
             ],
             'handwriting' => [
                 'enabled' => !empty($layoutIn['handwriting_enabled'])
@@ -534,20 +657,23 @@ final class FlyerService
             }
         }
 
-        $socialUrl = '';
-        if (!empty($layout['qr']['social'])) {
-            $socialUrl = trim((string) ($layout['qr']['social_url'] ?? ''));
-            if ($socialUrl === '') {
-                try {
-                    $firm = CompanySettings::config();
-                    $socialUrl = trim((string) ($firm['website'] ?? ''));
-                } catch (Throwable) {
-                    $socialUrl = '';
-                }
+        $socialQrs = [];
+        $offerWebsite = !empty($layout['qr']['offer_website']);
+        $optionsByKey = [];
+        foreach (self::socialQrOptions($offerWebsite) as $opt) {
+            $optionsByKey[(string) $opt['key']] = $opt;
+        }
+        $keys = is_array($layout['qr']['social_keys'] ?? null) ? $layout['qr']['social_keys'] : [];
+        foreach ($keys as $key) {
+            $key = (string) $key;
+            if (!isset($optionsByKey[$key])) {
+                continue;
             }
-            if ($socialUrl !== '' && !preg_match('#^https?://#i', $socialUrl)) {
-                $socialUrl = 'https://' . ltrim($socialUrl, '/');
-            }
+            $socialQrs[] = [
+                'key' => $key,
+                'label' => (string) $optionsByKey[$key]['label'],
+                'url' => (string) $optionsByKey[$key]['url'],
+            ];
         }
 
         $pageMm = match ((string) $layout['format']) {
@@ -578,7 +704,8 @@ final class FlyerService
             'image_url' => $imageUrl,
             'contrast_banner' => !empty($layout['contrast_banner']),
             'qr_booking_url' => $bookingUrl,
-            'qr_social_url' => $socialUrl,
+            'qr_social' => $socialQrs,
+            'qr_social_url' => $socialQrs[0]['url'] ?? '',
             'handwriting' => $layout['handwriting'],
             'footer' => (string) ($layout['footer'] ?? ''),
             'format' => (string) $layout['format'],

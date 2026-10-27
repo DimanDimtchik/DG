@@ -27,7 +27,11 @@ $bgColor = is_array($print) ? (string) ($print['bg_color'] ?? '#ffffff') : '#fff
 $bgUrl = is_array($print) ? (string) ($print['bg_url'] ?? '') : '';
 $bgOpacity = is_array($print) ? (float) ($print['bg_opacity'] ?? 1) : 1;
 $hasBookingQr = is_array($print) && trim((string) ($print['qr_booking_url'] ?? '')) !== '';
-$hasSocialQr = is_array($print) && trim((string) ($print['qr_social_url'] ?? '')) !== '';
+$socialQrs = is_array($print) && is_array($print['qr_social'] ?? null) ? $print['qr_social'] : [];
+if ($socialQrs === [] && is_array($print) && trim((string) ($print['qr_social_url'] ?? '')) !== '') {
+    $socialQrs = [['key' => 'social', 'label' => 'Social', 'url' => (string) $print['qr_social_url']]];
+}
+$hasSocialQr = $socialQrs !== [];
 $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['handwriting'] : ['enabled' => false, 'label' => ''];
 ?>
 <div class="dg-wrap">
@@ -265,7 +269,6 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
       data-dg-gift-flyer
       data-format="<?= View::escape($format) ?>"
       <?php if ($hasBookingQr) : ?>data-qr-booking="<?= View::escape((string) $print['qr_booking_url']) ?>"<?php endif; ?>
-      <?php if ($hasSocialQr) : ?>data-qr-social="<?= View::escape((string) $print['qr_social_url']) ?>"<?php endif; ?>
     >
       <?php if ($bgMode === 'image' && $bgUrl !== '') : ?>
         <div class="dg-gift-flyer-sheet__bg" style="background-image:url('<?= View::escape($bgUrl) ?>')"></div>
@@ -306,12 +309,13 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
                 <span class="dg-gift-flyer-sheet__qr-label">Termin</span>
               </div>
             <?php endif; ?>
-            <?php if ($hasSocialQr) : ?>
+            <?php foreach ($socialQrs as $qi => $sqr) : ?>
+              <?php if (trim((string) ($sqr['url'] ?? '')) === '') { continue; } ?>
               <div class="dg-gift-flyer-sheet__qr">
-                <div data-dg-gift-qr="social" aria-hidden="true"></div>
-                <span class="dg-gift-flyer-sheet__qr-label">Social</span>
+                <div data-dg-gift-qr="social" data-qr-url="<?= View::escape((string) $sqr['url']) ?>" aria-hidden="true"></div>
+                <span class="dg-gift-flyer-sheet__qr-label"><?= View::escape((string) ($sqr['label'] ?? 'Social')) ?></span>
               </div>
-            <?php endif; ?>
+            <?php endforeach; ?>
           </div>
         <?php endif; ?>
 
@@ -353,11 +357,10 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
           var sheet = document.querySelector('[data-dg-gift-flyer]');
           if (!sheet) return;
           var booking = sheet.getAttribute('data-qr-booking') || '';
-          var social = sheet.getAttribute('data-qr-social') || '';
-          var bookingEl = sheet.querySelector('[data-dg-gift-qr="booking"]');
-          var socialEl = sheet.querySelector('[data-dg-gift-qr="social"]');
-          renderQr(bookingEl, booking);
-          renderQr(socialEl, social);
+          renderQr(sheet.querySelector('[data-dg-gift-qr="booking"]'), booking);
+          sheet.querySelectorAll('[data-dg-gift-qr="social"]').forEach(function (el) {
+            renderQr(el, el.getAttribute('data-qr-url') || '');
+          });
         }
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', run);

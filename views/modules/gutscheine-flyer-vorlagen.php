@@ -20,6 +20,14 @@ $bgMediaId = (string) ($layout['bg']['media_id'] ?? '');
 $bgPreview = $bgMediaId !== '' ? MediaStorage::publicUrl($bgMediaId) : '';
 $imageMediaId = (string) ($layout['image_media_id'] ?? '');
 $imagePreview = $imageMediaId !== '' ? MediaStorage::publicUrl($imageMediaId) : '';
+$companySocials = FlyerService::companySocialLinks();
+$companyWebsiteUrl = FlyerService::companyWebsiteUrl();
+$offerWebsite = !empty($layout['qr']['offer_website']);
+$selectedSocialKeys = is_array($layout['qr']['social_keys'] ?? null) ? array_values($layout['qr']['social_keys']) : [];
+$socialSlotCount = count($companySocials);
+if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
+    $socialSlotCount = 1;
+}
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -183,21 +191,57 @@ $imagePreview = $imageMediaId !== '' ? MediaStorage::publicUrl($imageMediaId) : 
         </div>
       </div>
 
-      <h2 class="dg-section-title">QR-Codes (max. 2)</h2>
-      <p class="dg-field-hint">Betrag und Gutscheincode werden immer systemseitig gedruckt — nicht als Freitext. QR mit Ruhezone ~8&nbsp;mm.</p>
-      <div class="dg-form-grid">
+      <h2 class="dg-section-title">QR-Codes</h2>
+      <p class="dg-field-hint">Betrag und Gutscheincode werden immer systemseitig gedruckt. Social-Links kommen aus den Firmeneinstellungen (E-Mail-Layout → Social Media). QR mit Ruhezone ~8&nbsp;mm.</p>
+      <div class="dg-stack">
         <label class="dg-field dg-field--check">
           <input type="checkbox" name="layout[qr_booking]" value="1"<?= !empty($layout['qr']['booking']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Termin-QR (öffentliche Booking-URL)</span>
         </label>
-        <label class="dg-field dg-field--check">
-          <input type="checkbox" name="layout[qr_social]" value="1"<?= !empty($layout['qr']['social']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
-          <span>Social-Hub-QR (ein Link)</span>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Social-Hub-URL (leer = Firmen-Website)</span>
-          <input type="url" name="layout[social_url]" placeholder="https://…" value="<?= View::escape((string) ($layout['qr']['social_url'] ?? '')) ?>"<?= !$canEdit ? ' disabled' : '' ?>>
-        </label>
+
+        <?php if ($companySocials !== []) : ?>
+          <?php if ($companyWebsiteUrl !== '') : ?>
+            <label class="dg-field dg-field--check">
+              <input type="checkbox" name="layout[offer_website]" id="dg-flyer-offer-website" value="1"<?= $offerWebsite ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
+              <span>Eigene Website in der Auswahl anbieten</span>
+            </label>
+          <?php endif; ?>
+          <div class="dg-form-grid" id="dg-flyer-social-slots">
+            <?php for ($si = 0; $si < $socialSlotCount; $si++) :
+                $selected = (string) ($selectedSocialKeys[$si] ?? '');
+                $slotLabel = $socialSlotCount === 1 ? 'Social-QR' : ('Social-QR ' . ($si + 1));
+                ?>
+              <label class="dg-field">
+                <span><?= View::escape($slotLabel) ?></span>
+                <select name="layout[social_keys][]"<?= !$canEdit ? ' disabled' : '' ?>>
+                  <option value="">— nicht verwenden —</option>
+                  <?php foreach ($companySocials as $link) : ?>
+                    <option value="<?= View::escape((string) $link['key']) ?>"<?= $selected === (string) $link['key'] ? ' selected' : '' ?>>
+                      <?= View::escape((string) $link['label']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                  <?php if ($companyWebsiteUrl !== '') : ?>
+                    <option
+                      value="website"
+                      class="dg-flyer-social-website-opt"
+                      <?= $selected === 'website' ? ' selected' : '' ?>
+                      <?= !$offerWebsite ? ' hidden disabled' : '' ?>
+                    >Eigene Website</option>
+                  <?php endif; ?>
+                </select>
+              </label>
+            <?php endfor; ?>
+          </div>
+          <p class="dg-field-hint">Pro ausgefülltem Profil in den Firmeneinstellungen ein Auswahlfeld. Leere Felder erzeugen keinen QR.</p>
+        <?php elseif ($companyWebsiteUrl !== '') : ?>
+          <label class="dg-field dg-field--check">
+            <input type="checkbox" name="layout[offer_website]" value="1"<?= $offerWebsite ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
+            <span>Social-QR mit eigener Website</span>
+          </label>
+          <p class="dg-field-hint">Keine Social-Media-Links in den Firmeneinstellungen — Website nur auf ausdrücklichen Wunsch.</p>
+        <?php else : ?>
+          <p class="dg-field-hint">Keine Social-Media-Links und keine Website in den Firmeneinstellungen. Bitte unter Einstellungen → Benachrichtigungen (E-Mail-Layout) bzw. Firma pflegen.</p>
+        <?php endif; ?>
       </div>
 
       <h2 class="dg-section-title">Handschrift &amp; Fußzeile</h2>
@@ -230,14 +274,32 @@ $imagePreview = $imageMediaId !== '' ? MediaStorage::publicUrl($imageMediaId) : 
         var mode = document.getElementById('dg-flyer-bg-mode');
         var colorWrap = document.getElementById('dg-flyer-bg-color-wrap');
         var mediaWrap = document.getElementById('dg-flyer-bg-media-wrap');
-        function sync() {
+        function syncBg() {
           if (!mode) return;
           var img = mode.value === 'image';
           if (colorWrap) colorWrap.hidden = img;
           if (mediaWrap) mediaWrap.hidden = !img;
         }
-        if (mode) mode.addEventListener('change', sync);
-        sync();
+        if (mode) mode.addEventListener('change', syncBg);
+        syncBg();
+
+        var offer = document.getElementById('dg-flyer-offer-website');
+        function syncWebsiteOpts() {
+          var on = !!(offer && offer.checked);
+          document.querySelectorAll('.dg-flyer-social-website-opt').forEach(function (opt) {
+            opt.hidden = !on;
+            opt.disabled = !on;
+            if (!on && opt.selected) {
+              opt.selected = false;
+              var sel = opt.closest('select');
+              if (sel) sel.value = '';
+            }
+          });
+        }
+        if (offer) {
+          offer.addEventListener('change', syncWebsiteOpts);
+          syncWebsiteOpts();
+        }
       })();
     </script>
 

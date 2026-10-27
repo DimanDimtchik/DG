@@ -261,9 +261,19 @@ final class EmailLayoutSettings
     }
 
     /**
+     * Ausgefüllte Social-Links aus Firmeneinstellungen (E-Mail-Layout).
+     *
+     * @return list<array{key: string, label: string, url: string}>
+     */
+    public static function configuredSocialLinks(): array
+    {
+        return self::resolvedSocialLinks(self::config());
+    }
+
+    /**
      * Führt aus: resolved social links.
      * @param array $cfg
-     * @return array<string, mixed>
+     * @return list<array{key: string, label: string, url: string}>
      */
     private static function resolvedSocialLinks(array $cfg): array
     {
@@ -271,7 +281,7 @@ final class EmailLayoutSettings
         foreach (self::socialNetworkLabels() as $key => $label) {
             $url = self::normalizeUrl((string) ($cfg['footer_social_' . $key] ?? ''));
             if ($url !== '') {
-                $links[] = ['label' => $label, 'url' => $url];
+                $links[] = ['key' => $key, 'label' => $label, 'url' => $url];
             }
         }
 
