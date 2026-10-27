@@ -23,12 +23,12 @@
     modal.innerHTML =
       '<div class="dg-modal__backdrop" data-close></div>' +
       '<div class="dg-modal__dialog dg-website-media-picker__dialog" role="dialog" aria-modal="true">' +
-      '<header class="dg-modal__header"><h2>' +
+      '<header class="dg-modal__head"><h2>' +
       escapeHtml(opts.title || 'Bild aus Mediathek') +
       '</h2>' +
       '<button type="button" class="dg-modal__close" data-close aria-label="Schließen">&times;</button></header>' +
       '<div class="dg-modal__body" data-body><p class="dg-field-hint">Laden …</p></div>' +
-      '<footer class="dg-modal__footer"><button type="button" class="dg-button" data-close>Abbrechen</button></footer>' +
+      '<footer class="dg-modal__foot"><button type="button" class="dg-button" data-close>Abbrechen</button></footer>' +
       '</div>';
     document.body.appendChild(modal);
     modal.addEventListener('click', function (ev) {
