@@ -140,7 +140,7 @@ $imagePreview = $imageMediaId !== '' ? MediaStorage::publicUrl($imageMediaId) : 
         </div>
       </div>
 
-      <div class="dg-form-grid">
+      <div class="dg-stack">
         <label class="dg-field dg-field--check">
           <input type="checkbox" name="layout[show_logo]" value="1"<?= !empty($layout['show_logo']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Firmenlogo anzeigen</span>
@@ -149,6 +149,9 @@ $imagePreview = $imageMediaId !== '' ? MediaStorage::publicUrl($imageMediaId) : 
           <input type="checkbox" name="layout[contrast_banner]" value="1"<?= !empty($layout['contrast_banner']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Kontrast-Banner hinter Überschrift (bei dunklem Bild)</span>
         </label>
+      </div>
+
+      <div class="dg-form-grid">
         <label class="dg-field dg-field--wide">
           <span>Überschrift</span>
           <input type="text" name="layout[headline]" maxlength="255" value="<?= View::escape((string) ($layout['headline'] ?? '')) ?>"<?= !$canEdit ? ' disabled' : '' ?>>

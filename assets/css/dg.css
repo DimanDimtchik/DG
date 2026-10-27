@@ -517,7 +517,18 @@ code {
 /* Formular-Raster → nächster Block (z. B. Hinweis unter Rolle → Arbeitgeber) */
 .dg-form-grid + .dg-panel,
 .dg-form-grid + .dg-panel--nested,
-.dg-panel--nested + .dg-panel--nested {
+.dg-form-grid + .dg-form-grid,
+.dg-form-grid + .dg-field,
+.dg-form-grid + .dg-stack,
+.dg-field + .dg-form-grid,
+.dg-field + .dg-stack,
+.dg-stack + .dg-form-grid,
+.dg-panel--nested + .dg-panel--nested,
+/* ausgeblendetes Zwischenfeld (z. B. Hintergrundbild) überspringen */
+.dg-form-grid + .dg-field[hidden] + .dg-form-grid,
+.dg-form-grid + .dg-field[hidden] + .dg-stack,
+.dg-field[hidden] + .dg-form-grid,
+.dg-field[hidden] + .dg-stack {
   margin-top: var(--dg-space-5);
 }
 
