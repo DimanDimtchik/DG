@@ -801,6 +801,10 @@ final class MenuRegistry
                 && DepartmentAccess::canAccessModule($user, 'dokumentenverfasser');
         }
 
+        // Basis-Slug (Menü/Kachel) — ohne diesen Fall landet /app?page=zeiterfassung auf dem Dashboard.
+        if ($slug === 'zeiterfassung') {
+            return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);
+        }
         if ($slug === 'zeiterfassung-team') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && TimeClockService::canViewTeam($user);
         }

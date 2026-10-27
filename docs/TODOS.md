@@ -2,7 +2,22 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-09-17** — Belegdarstellung/AB-Druck deployed + synced; Vor-Hetzner-Checkliste `VOR-HETZNER-CHECK.md`.
+Stand: **2026-10-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock).
+
+---
+
+## Aktive Implementierungs-Liste (verbindlich abarbeiten)
+
+| Phase | Datei | Inhalt |
+|-------|--------|--------|
+| **A → D** | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) | GoBD/Tests/IQ → Hetzner → ELSTER/LDAP → **Lohn D0 A→B→C** → E-Bilanz/KSt/GewSt & Rest |
+| Vor-Check | [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) | Shared Core, Minify, GoBD-Stichprobe |
+| ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
+| Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
+
+**Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
+
+**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper.
 
 ---
 
@@ -26,6 +41,10 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 
 ## Prioritäten (jetzt)
 
+> Offene Arbeitspakete mit Checkboxen: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** Phase A.  
+> Kurz: GoBD-Historie · FiBu-Tests · IQ-Instanz · Vor-Hetzner-Check — danach Umzug, nicht vorher Live-ELSTER.
+
+- [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
@@ -150,7 +169,9 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | LDAP / dg-user live | `LDAP-INTEGRATION.md` |
 | PHP 8.5 KAS-Umstellung | `PHP85-TEST-HANDOFF.md` |
 | Nextcloud cloud.ganz-om.de | `CLOUD-NEXTCLOUD-RESTORE.md` |
-| Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` |
+| Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` *(Code Z2–Z7 erledigt — Zeile historisch)* |
+| Baulohn-Modul (Produkt) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe C — **nach** Normal-Lohn (A), ideal nach B |
+| Lohn SV-Direktversand (ITSG) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe B — nach Stufe A |
 
 ---
 
@@ -164,6 +185,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 
 | Datei | Inhalt |
 |-------|--------|
+| `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
 | `PC-HANDOFF.md` | PC-Deploy, Import |
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung Deploy |
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |
