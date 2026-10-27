@@ -33,6 +33,11 @@ if ($socialQrs === [] && is_array($print) && trim((string) ($print['qr_social_ur
 }
 $hasSocialQr = $socialQrs !== [];
 $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['handwriting'] : ['enabled' => false, 'label' => ''];
+$validUntilRaw = is_array($print) ? trim((string) ($print['valid_until'] ?? '')) : '';
+$validUntilDisplay = $validUntilRaw !== '' && class_exists('GiftVoucherLegal')
+    ? GiftVoucherLegal::formatValidUntilDisplay($validUntilRaw)
+    : $validUntilRaw;
+$pageSizeCss = (float) $pageMm['w'] . 'mm ' . (float) $pageMm['h'] . 'mm';
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -46,7 +51,7 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
       <a class="dg-button" href="/app?page=gutscheine">Gutscheine</a>
       <a class="dg-button" href="/app?page=gutscheine-flyer-vorlagen">Vorlagen</a>
       <?php if (is_array($gift)) : ?>
-        <button type="button" class="dg-button dg-button--primary" onclick="window.print()">Drucken</button>
+        <button type="button" class="dg-button dg-button--primary" onclick="window.dgPrintGiftFlyer && window.dgPrintGiftFlyer()">Drucken</button>
       <?php endif; ?>
     </div>
   </header>
@@ -78,7 +83,7 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
   </form>
 
   <?php if (is_array($gift) && is_array($print)) : ?>
-    <style>
+    <style id="dg-gift-flyer-css">
       .dg-gift-flyer-sheet {
         --gf-ink: <?= View::escape($textColor) ?>;
         --gf-muted: #5c5c5c;
@@ -242,31 +247,103 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
         text-align: left;
         margin: 2mm 0 0;
       }
+      /* Ctrl+P Fallback: CRM-Chrome aus, eine Seite, kein Leerblatt */
       @media print {
-        .dg-print-hide,
-        .dg-sidebar,
-        .dg-topbar,
-        .dg-page-header,
-        .dg-flash {
-          display: none !important;
+        @page {
+          size: <?= View::escape($pageSizeCss) ?>;
+          margin: 0;
         }
-        .dg-wrap {
+        html {
           margin: 0 !important;
           padding: 0 !important;
+          background: #fff !important;
+        }
+        body,
+        body.dg-app {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #fff !important;
+          width: auto !important;
+          height: auto !important;
+          min-height: 0 !important;
+          overflow: visible !important;
+          display: block !important;
+        }
+        #dg-adminbar,
+        .dg-adminbar,
+        .dg-sidebar,
+        .dg-shell > aside,
+        .dg-support-banner,
+        .dg-firm-switch-notice,
+        .dg-print-hide,
+        .dg-page-header,
+        .dg-toolbar,
+        .dg-flash,
+        .dg-form,
+        .dg-panel,
+        script,
+        noscript {
+          display: none !important;
+          height: 0 !important;
+          overflow: hidden !important;
+        }
+        .dg-shell,
+        .dg-content,
+        #dg-content,
+        .dg-wrap {
+          display: block !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: auto !important;
           max-width: none !important;
+          min-height: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          flex: none !important;
         }
         .dg-gift-flyer-sheet {
-          border: none;
-          margin: 0;
-          box-shadow: none;
-          width: var(--gf-w);
-          height: var(--gf-h);
-          min-height: var(--gf-h);
-          page-break-after: always;
+          border: none !important;
+          margin: 0 !important;
+          box-shadow: none !important;
+          width: var(--gf-w) !important;
+          height: var(--gf-h) !important;
+          min-height: var(--gf-h) !important;
+          max-height: var(--gf-h) !important;
+          overflow: hidden !important;
+          page-break-after: avoid !important;
+          page-break-inside: avoid !important;
+          break-after: avoid !important;
+          break-inside: avoid !important;
         }
-        @page {
-          size: <?= (float) $pageMm['w'] ?>mm <?= (float) $pageMm['h'] ?>mm;
-          margin: 0;
+        .dg-gift-flyer-sheet__inner {
+          min-height: 0 !important;
+          height: 100% !important;
+          padding: 5mm !important;
+          gap: 1.5mm !important;
+        }
+        .dg-gift-flyer-sheet__qr {
+          padding: 3mm !important;
+        }
+        .dg-gift-flyer-sheet__qr canvas,
+        .dg-gift-flyer-sheet__qr img {
+          width: 16mm !important;
+          height: 16mm !important;
+        }
+        .dg-gift-flyer-sheet__hw {
+          min-height: 14mm !important;
+          margin-top: 1mm !important;
+          padding: 1.5mm 2mm 2mm !important;
+        }
+        .dg-gift-flyer-sheet__hw-lines {
+          gap: 3.5mm !important;
+        }
+        .dg-gift-flyer-sheet__legal {
+          font-size: 5.5pt !important;
+          line-height: 1.3 !important;
+          margin-top: auto !important;
         }
       }
     </style>
@@ -275,6 +352,8 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
       class="dg-gift-flyer-sheet"
       data-dg-gift-flyer
       data-format="<?= View::escape($format) ?>"
+      data-page-w="<?= (float) $pageMm['w'] ?>"
+      data-page-h="<?= (float) $pageMm['h'] ?>"
       <?php if ($hasBookingQr) : ?>data-qr-booking="<?= View::escape((string) $print['qr_booking_url']) ?>"<?php endif; ?>
     >
       <?php if ($bgMode === 'image' && $bgUrl !== '') : ?>
@@ -301,8 +380,8 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
         <div class="dg-gift-flyer-sheet__code"><?= View::escape((string) $print['code']) ?></div>
 
         <p class="dg-gift-flyer-sheet__meta">
-          <?php if (!empty($print['valid_until'])) : ?>
-            Gültig bis <?= View::escape((string) $print['valid_until']) ?>.
+          <?php if ($validUntilDisplay !== '') : ?>
+            Gültig bis <?= View::escape($validUntilDisplay) ?>.
           <?php else : ?>
             Ohne Ablaufdatum.
           <?php endif; ?>
@@ -372,6 +451,82 @@ $hw = is_array($print) && is_array($print['handwriting'] ?? null) ? $print['hand
             renderQr(el, el.getAttribute('data-qr-url') || '');
           });
         }
+        /**
+         * Sauberes Druckfenster ohne CRM-Shell (wie Termin-Flyer).
+         * Vermeidet Adminbar/Sidebar und die zweite Leerseite durch 100vh-Layout.
+         */
+        window.dgPrintGiftFlyer = function () {
+          var sheet = document.querySelector('[data-dg-gift-flyer]');
+          var cssEl = document.getElementById('dg-gift-flyer-css');
+          if (!sheet) {
+            window.print();
+            return;
+          }
+          var wMm = parseFloat(sheet.getAttribute('data-page-w') || '105') || 105;
+          var hMm = parseFloat(sheet.getAttribute('data-page-h') || '148') || 148;
+          var pageSize = wMm + 'mm ' + hMm + 'mm';
+          var win = window.open('', '_blank');
+          if (!win) {
+            window.print();
+            return;
+          }
+          var baseCss = cssEl ? cssEl.textContent : '';
+          var printCss =
+            '@page{size:' + pageSize + ';margin:0;}' +
+            'html,body{margin:0;padding:0;background:#fff;}' +
+            'body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}' +
+            '.dg-gift-flyer-sheet{' +
+              'margin:0!important;border:none!important;box-shadow:none!important;' +
+              'width:' + wMm + 'mm!important;height:' + hMm + 'mm!important;' +
+              'min-height:' + hMm + 'mm!important;max-height:' + hMm + 'mm!important;' +
+              'overflow:hidden!important;page-break-after:avoid!important;page-break-inside:avoid!important;' +
+            '}' +
+            '.dg-gift-flyer-sheet__inner{min-height:0!important;height:100%!important;padding:5mm!important;gap:1.5mm!important;}' +
+            '.dg-gift-flyer-sheet__qr{padding:3mm!important;}' +
+            '.dg-gift-flyer-sheet__qr canvas,.dg-gift-flyer-sheet__qr img{width:16mm!important;height:16mm!important;}' +
+            '.dg-gift-flyer-sheet__hw{min-height:14mm!important;margin-top:1mm!important;padding:1.5mm 2mm 2mm!important;}' +
+            '.dg-gift-flyer-sheet__hw-lines{gap:3.5mm!important;}' +
+            '.dg-gift-flyer-sheet__legal{font-size:5.5pt!important;line-height:1.3!important;margin-top:auto!important;}';
+          win.document.open();
+          win.document.write(
+            '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
+            '<title>Gutschein-Flyer</title><style>' + baseCss + '</style><style>' + printCss + '</style></head><body></body></html>'
+          );
+          win.document.close();
+          win.document.body.appendChild(sheet.cloneNode(true));
+          var printed = false;
+          var done = function () {
+            if (printed) {
+              return;
+            }
+            printed = true;
+            try {
+              win.focus();
+              win.print();
+            } catch (ignore) {}
+          };
+          var imgs = win.document.images;
+          if (!imgs || imgs.length === 0) {
+            setTimeout(done, 200);
+            return;
+          }
+          var left = imgs.length;
+          var tick = function () {
+            left -= 1;
+            if (left <= 0) {
+              setTimeout(done, 120);
+            }
+          };
+          Array.prototype.forEach.call(imgs, function (img) {
+            if (img.complete) {
+              tick();
+            } else {
+              img.addEventListener('load', tick);
+              img.addEventListener('error', tick);
+            }
+          });
+          setTimeout(done, 1500);
+        };
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', run);
         } else {
