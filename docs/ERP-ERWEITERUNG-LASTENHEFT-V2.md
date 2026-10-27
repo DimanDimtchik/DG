@@ -91,6 +91,15 @@ Der neue Baustein ist **Gemeinkosten-Aufschlag aus der FiBu**:
 4. Ergebnis: dynamischer EUR-Aufschlag pro Maschinenstunde.
 5. Rezeptur-Kalkulation speichert den verwendeten Aufschlag als Snapshot.
 
+### Start jetzt möglich
+
+Dieser Block muss nicht bis nach Lohn/ITSG warten, wenn er strikt als **nicht buchungswirksamer Kalkulationsvorschlag** umgesetzt wird:
+
+- Er liest Hauptbuch-/Kontengruppen und Maschinenstammdaten nur aus.
+- Er schreibt nur Einstellungen und Kalkulations-Snapshots.
+- Er erzeugt keine automatischen FiBu-Buchungen.
+- Er kann deshalb parallel zu A/B/C laufen und später erweitert werden.
+
 ### Grenzen
 
 - Keine stillen rückwirkenden Änderungen gebuchter Produktionsläufe.
@@ -152,10 +161,10 @@ CREATE TABLE dg_machine_knowledge_links (
 
 | Priorität | Paket | Wann |
 |-----------|-------|------|
-| 1 | Lohn D0-A sauber spezifizieren | nach A/B/C-Fibu- und Hetzner-Basis |
-| 2 | Lohn D0-A implementieren | vor ITSG-Automatik und Baulohn |
-| 3 | Maschinen-Gemeinkosten aus FiBu als Kalkulationsvorschlag | nach stabiler Rezeptur + Hauptbuch-Auswertung |
-| 4 | Maschinenwissen mit Akademie-Verlinkung | nach Rezeptur-Stabilisierung, klein umsetzbar |
+| 1 | Maschinen-Gemeinkosten aus FiBu als **nicht buchungswirksamer Kalkulationsvorschlag** | jetzt als kleiner ERP-Block möglich |
+| 2 | Maschinenwissen mit Akademie-Verlinkung | jetzt/parallel möglich, klein umsetzbar |
+| 3 | Lohn D0-A sauber spezifizieren | nach A/B/C-Fibu- und Hetzner-Basis |
+| 4 | Lohn D0-A implementieren | vor ITSG-Automatik und Baulohn |
 | 5 | ITSG / ELStAM / euBP / UV live | nach Hetzner, Zertifikaten und Testläufen |
 | 6 | Baulohn / SOKA / Saison-KUG | nach Standardlohn, idealerweise nach SV-Automatik |
 
