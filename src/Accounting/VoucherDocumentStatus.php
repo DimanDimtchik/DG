@@ -239,6 +239,17 @@ final class VoucherDocumentStatus
                     'document_status' => self::EXPIRED,
                     'id' => $id,
                 ]);
+                if ($stmt->rowCount() > 0) {
+                    $details = [
+                        'voucher_id' => $id,
+                        'document_kind' => $kind,
+                        'old_status' => $status,
+                        'new_status' => self::EXPIRED,
+                        'source' => 'auto_expire',
+                    ];
+                    $json = json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    AuditLog::record('voucher_document_status_change', null, is_string($json) ? $json : null);
+                }
             }
             $voucher['document_status'] = self::EXPIRED;
         } catch (Throwable) {
