@@ -108,7 +108,7 @@ $disabled = $readOnly ? ' disabled' : '';
               <span class="dg-field-hint">Auswahl füllt die Adresse und verknüpft den Kontakt. Manuelle Adresse bleibt möglich.</span>
               <div id="dg-writer-contact-results" class="dg-voucher-contact-results" hidden></div>
             </label>
-            <p class="dg-form-actions" style="margin:0 0 8px" id="dg-writer-contact-actions">
+            <p class="dg-btn-row dg-mt-2 dg-mb-3" id="dg-writer-contact-actions">
               <button type="button" class="dg-button dg-button--small" id="dg-writer-contact-open"
                 data-has-contact="<?= ($linkedContact instanceof Contact || (int) ($form['contact_id'] ?? 0) > 0) ? '1' : '0' ?>"
                 data-contact-id="<?= $linkedContact instanceof Contact ? (int) $linkedContact->id : (int) ($form['contact_id'] ?? 0) ?>"
@@ -304,7 +304,7 @@ $disabled = $readOnly ? ' disabled' : '';
             <div class="dg-writer-assist" id="dg-writer-assist">
               <h3 class="dg-subsection-title">Text-Assist</h3>
               <p class="dg-field-hint">Hinweise sind optional. Speichern und Finalisieren gehen immer ohne Assist.</p>
-              <p class="dg-form-actions">
+              <p class="dg-btn-row dg-mt-2">
                 <?php if ($assistKlartext) : ?>
                   <button type="button" class="dg-button" id="dg-writer-assist-klartext">Klartext prüfen</button>
                 <?php endif; ?>
@@ -334,7 +334,7 @@ $disabled = $readOnly ? ' disabled' : '';
           <?php endif; ?>
         </div>
 
-        <fieldset class="dg-fieldset">
+        <fieldset class="dg-fieldset dg-writer-export">
           <legend>Export</legend>
           <p class="dg-field-hint">
             Formate aus Einstellungen → Briefpapier.

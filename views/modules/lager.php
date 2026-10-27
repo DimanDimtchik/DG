@@ -260,8 +260,10 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
     <form class="dg-form-grid dg-form-grid--compact" id="dg-place-audit-form" autocomplete="off">
       <label class="dg-field dg-field--wide">
         <span>Strichcode scannen</span>
-        <input type="text" data-scan-input inputmode="numeric" autofocus placeholder="Platz, Regal, Halle, Karton oder Artikel">
-        <button type="button" class="dg-button dg-button--small dg-camera-scan-btn" data-camera-scan-trigger>Kamera</button>
+        <div class="dg-scan-input-row">
+          <input type="text" data-scan-input inputmode="numeric" autofocus placeholder="Platz, Regal, Halle, Karton oder Artikel">
+          <button type="button" class="dg-button dg-camera-scan-btn" data-camera-scan-trigger>Kamera</button>
+        </div>
       </label>
     </form>
 
@@ -374,11 +376,11 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
           <span>Notiz</span>
           <input type="text" name="inventory_note" maxlength="500" placeholder="Optional">
         </label>
-        <div class="dg-field dg-field--actions">
+        <div class="dg-field dg-field--actions dg-field--wide">
           <button type="submit" class="dg-button dg-button--primary">Inventur starten</button>
         </div>
       </form>
-      <p class="dg-field-hint">Es kann jeweils nur eine offene Inventur existieren. Alle Artikel mit Lagerführung werden übernommen.</p>
+      <p class="dg-field-hint dg-mt-3">Es kann jeweils nur eine offene Inventur existieren. Alle Artikel mit Lagerführung werden übernommen.</p>
     <?php elseif ($activeInventory === null) : ?>
       <p class="dg-muted">Keine offene Inventur.</p>
     <?php else : ?>

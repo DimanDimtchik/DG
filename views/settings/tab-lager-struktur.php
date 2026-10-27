@@ -39,7 +39,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     </div>
   <?php endif; ?>
 
-  <nav class="dg-subtabs" aria-label="Lagerstruktur">
+  <nav class="dg-subtabs dg-mt-4 dg-mb-4" aria-label="Lagerstruktur">
     <a href="<?= View::escape($tabBase . '&lager_tab=orte') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'orte' ? ' is-active' : '' ?>">Lagerorte</a>
     <a href="<?= View::escape($tabBase . '&lager_tab=hallen') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'hallen' ? ' is-active' : '' ?>">Hallen</a>
     <a href="<?= View::escape($tabBase . '&lager_tab=regale') ?>" class="dg-subtabs__link<?= $lagerStrukturTab === 'regale' ? ' is-active' : '' ?>">Regale &amp; Stellplätze</a>
@@ -64,7 +64,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
             <option value="warn"<?= ($stockPurchaseForm['shortage_policy'] ?? '') === 'warn' ? ' selected' : '' ?>>Nur warnen (Speichern erlaubt)</option>
             <option value="block"<?= ($stockPurchaseForm['shortage_policy'] ?? '') === 'block' ? ' selected' : '' ?>>Strenger Hinweis (Policy blockieren)</option>
           </select>
-          <small class="dg-field-hint">„Blockieren“ zeigt einen stärkeren Hinweis; Belegspeichern bleibt vorerst möglich (GoBD-Nacharbeit geplant).</small>
+          <small class="dg-field-hint dg-mt-2">„Blockieren“ zeigt einen stärkeren Hinweis; Belegspeichern bleibt vorerst möglich (GoBD-Nacharbeit geplant).</small>
         </label>
         <label class="dg-field">
           <span>Aktion bei Fehlmenge</span>

@@ -556,7 +556,7 @@ $riskClass = static function (?string $level): string {
           </ul>
         <?php endif; ?>
       </fieldset>
-      <div class="dg-field dg-field--actions dg-field--wide">
+      <div class="dg-field dg-field--actions dg-field--wide dg-btn-row dg-btn-row--desktop-nowrap">
         <button type="submit" name="academy_save_course" value="1" class="dg-button dg-button--primary">Kurs speichern</button>
         <a class="dg-button" href="/app?page=akademie&amp;view=admin&amp;admin_tab=kurse">Zurück zur Liste</a>
         <?php if ((int) ($academyAdminCourse['id'] ?? 0) > 0) : ?>
@@ -645,8 +645,9 @@ $riskClass = static function (?string $level): string {
       <input type="hidden" name="view" value="admin">
       <input type="hidden" name="course_id" value="<?= (int) ($academyAdminCourse['id'] ?? 0) ?>">
       <input type="hidden" name="module_key" value="lager">
-      <label class="dg-field">
-        <span><input type="checkbox" name="gate_active" value="1"> Lager-Modul sperren bis Schulung abgeschlossen (hart, wenn Modus „hart“)</span>
+      <label class="dg-field dg-field--wide dg-checkbox">
+        <input type="checkbox" name="gate_active" value="1">
+        <span>Lager-Modul sperren bis Schulung abgeschlossen (hart, wenn Modus „hart“)</span>
       </label>
       <div class="dg-field dg-field--actions">
         <button type="submit" name="academy_set_gate" value="1" class="dg-button">Gate speichern</button>
