@@ -56,6 +56,9 @@ $occasionLabels = FlyerService::occasionLabels();
       </dl>
       <p class="dg-btn-row">
         <a class="dg-button dg-button--primary" href="/app?page=website-gutschein-flyer&amp;id=<?= $id ?>">Flyer mit Nummer drucken</a>
+        <?php if (is_array($selectedTpl)) : ?>
+          <a class="dg-button" href="/app?page=gutscheine-flyer-vorlagen&amp;action=edit&amp;id=<?= (int) ($selectedTpl['id'] ?? 0) ?>">Vorlage</a>
+        <?php endif; ?>
         <?php if ($canEdit && (string) ($form['status'] ?? '') === 'active' && (float) ($form['remaining_gross'] ?? $form['remaining'] ?? 0) >= (float) ($form['face_value_gross'] ?? $form['amount'] ?? 0) - 0.001) : ?>
           <form method="post" action="/app?page=gutscheine-form" class="dg-inline-form">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -98,7 +101,7 @@ $occasionLabels = FlyerService::occasionLabels();
               </option>
             <?php endforeach; ?>
           </select>
-          <span class="dg-field-hint">Formular-Flyer (nicht der Terminkalender-QR). Beim Druck erscheint die neu vergebene Gutscheinnummer auf dem Flyer. Vorlagen später erweiterbar (Geburtstag, 8.&nbsp;März, …).</span>
+          <span class="dg-field-hint">Formular-Flyer (nicht der Terminkalender-QR). Beim Druck erscheint die neu vergebene Gutscheinnummer. <a href="/app?page=gutscheine-flyer-vorlagen">Vorlagen bearbeiten</a></span>
         </label>
         <label class="dg-field dg-field--wide">
           <span>Notiz</span>

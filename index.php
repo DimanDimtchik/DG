@@ -1831,6 +1831,36 @@ switch ($path) {
             }
         }
 
+        // POST: Gutschein-Flyer-Vorlagen
+        if (
+            ($page === 'gutscheine-flyer-vorlagen')
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'gutscheine-flyer-vorlagen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: /app?page=gutscheine-flyer-vorlagen', true, 302);
+                exit;
+            }
+            try {
+                if (isset($_POST['flyer_template_save'])) {
+                    $editId = (int) ($_POST['id'] ?? 0);
+                    $savedId = FlyerService::saveGiftTemplate($_POST, $editId > 0 ? $editId : null);
+                    Flash::set('success', 'Flyer-Vorlage gespeichert.');
+                    header('Location: /app?page=gutscheine-flyer-vorlagen&action=edit&id=' . $savedId, true, 302);
+                    exit;
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                $backId = (int) ($_POST['id'] ?? 0);
+                $back = $backId > 0
+                    ? '/app?page=gutscheine-flyer-vorlagen&action=edit&id=' . $backId
+                    : '/app?page=gutscheine-flyer-vorlagen&action=new';
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+        }
+
         // POST: Reklamation
         if (
             ($page === 'reklamation-form')
@@ -5522,6 +5552,43 @@ $legalProductsConfig = LegalProductSettings::config();
             header('Location: /app', true, 302);
             exit;
         } elseif (
+            $page === 'gutscheine-flyer-vorlagen'
+            && MenuRegistry::canAccess($user, 'gutscheine-flyer-vorlagen')
+        ) {
+            FlyerService::ensureReady();
+            $flyerTemplateAction = (string) ($_GET['action'] ?? 'list');
+            $flyerTemplateId = (int) ($_GET['id'] ?? 0);
+            $flyerTemplateList = FlyerService::listGiftTemplates(false);
+            $flyerTemplateForm = null;
+            $flyerTemplateMode = 'list';
+            if ($flyerTemplateAction === 'new') {
+                $flyerTemplateMode = 'new';
+                $flyerTemplateId = null;
+                $flyerTemplateForm = [
+                    'title' => '',
+                    'occasion' => 'general',
+                    'sort_order' => 40,
+                    'is_active' => 1,
+                    'layout_json' => null,
+                ];
+            } elseif ($flyerTemplateAction === 'edit' && $flyerTemplateId > 0) {
+                $flyerTemplateForm = FlyerService::findTemplate($flyerTemplateId);
+                if ($flyerTemplateForm === null || (string) ($flyerTemplateForm['purpose'] ?? '') !== FlyerService::PURPOSE_GIFT_FORM) {
+                    Flash::set('error', 'Vorlage nicht gefunden.');
+                    header('Location: /app?page=gutscheine-flyer-vorlagen', true, 302);
+                    exit;
+                }
+                $flyerTemplateMode = 'edit';
+            } else {
+                $flyerTemplateId = null;
+            }
+            $contentTemplate = 'modules/gutscheine-flyer-vorlagen';
+            $title = $flyerTemplateMode === 'list' ? 'Flyer-Vorlagen' : ($flyerTemplateMode === 'new' ? 'Neue Flyer-Vorlage' : 'Flyer-Vorlage bearbeiten');
+            $currentPage = 'gutscheine-flyer-vorlagen';
+        } elseif ($page === 'gutscheine-flyer-vorlagen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif (
             ($page === 'reklamation' || $page === 'reklamation-form')
             && MenuRegistry::canAccess($user, $page)
         ) {
@@ -5589,6 +5656,7 @@ $legalProductsConfig = LegalProductSettings::config();
             FlyerService::ensureReady();
             $giftVoucherList = GiftVoucherRepository::listAll(GiftVoucherRepository::STATUS_ACTIVE);
             $flyerId = (int) ($_GET['id'] ?? 0);
+            $previewTemplateId = (int) ($_GET['preview_template'] ?? 0);
             $flyerGift = $flyerId > 0 ? GiftVoucherRepository::find($flyerId) : null;
             $companyName = '';
             try {
@@ -5597,11 +5665,26 @@ $legalProductsConfig = LegalProductSettings::config();
             } catch (Throwable) {
                 $companyName = '';
             }
-            $companyLogoUrl = '';
+            $companyLogoUrl = class_exists('AppearanceSettings') ? (string) AppearanceSettings::logoUrl() : '';
             $flyerPrint = null;
             if (is_array($flyerGift)) {
                 $tpl = FlyerService::findTemplate((int) ($flyerGift['flyer_template_id'] ?? 0));
                 $flyerPrint = FlyerService::giftPrintModel($flyerGift, $tpl, $companyName, $companyLogoUrl);
+            } elseif ($previewTemplateId > 0) {
+                $tpl = FlyerService::findTemplate($previewTemplateId);
+                if ($tpl !== null) {
+                    $flyerGift = [
+                        'id' => 0,
+                        'code' => 'VORSCHAU-DEMO',
+                        'face_value_gross' => 50.0,
+                        'amount' => 50.0,
+                        'title' => (string) ($tpl['title'] ?? 'Gutschein'),
+                        'valid_until' => date('Y-m-d', strtotime('+1 year')),
+                        'flyer_template_id' => $previewTemplateId,
+                        'status' => 'active',
+                    ];
+                    $flyerPrint = FlyerService::giftPrintModel($flyerGift, $tpl, $companyName, $companyLogoUrl);
+                }
             }
             $contentTemplate = 'modules/website-gutschein-flyer';
             $title = 'Gutschein-Flyer';

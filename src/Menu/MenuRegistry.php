@@ -390,6 +390,12 @@ final class MenuRegistry
                     'href' => '/app?page=gutscheine',
                 ],
                 [
+                    'slug' => 'gutscheine-flyer-vorlagen',
+                    'label' => 'Flyer-Vorlagen',
+                    'icon' => 'document',
+                    'href' => '/app?page=gutscheine-flyer-vorlagen',
+                ],
+                [
                     'slug' => 'buchhaltung-ueberweisungen',
                     'label' => 'Überweisungen',
                     'icon' => 'transfer',
@@ -473,7 +479,7 @@ final class MenuRegistry
         if (!self::isGutscheinEnabled()) {
             $section['items'] = array_values(array_filter(
                 $section['items'],
-                static fn (array $item): bool => $item['slug'] !== 'gutscheine'
+                static fn (array $item): bool => !in_array($item['slug'], ['gutscheine', 'gutscheine-flyer-vorlagen'], true)
             ));
         }
 
@@ -518,6 +524,7 @@ final class MenuRegistry
             'buchhaltung-belege' => 'Angebot bis Rechnung erfassen — Belegkette, Steuerfelder und Konten.',
             'gutscheine' => 'Mehrzweck-Gutscheine verkaufen, einlösen und aus Reklamation ausstellen.',
             'gutscheine-form' => 'Einzelnen Gutschein anlegen, prüfen oder stornieren.',
+            'gutscheine-flyer-vorlagen' => 'Gutschein-Flyer-Vorlagen: Format, Hintergrund, Texte, QR und Handschrift-Zone.',
             'reklamation' => 'Reklamationen von der Annahme bis zu Maßnahmen und Entschuldigung.',
             'reklamation-form' => 'Reklamation erfassen, Maßnahmen festlegen und Gutschein ausstellen.',
             'website-gutschein-flyer' => 'Gutschein-Formular-Flyer drucken — Vorlage + Gutscheinnummer auf dem Blatt.',
@@ -741,7 +748,14 @@ final class MenuRegistry
         }
 
         if ($slug === 'website-gutschein-flyer') {
-            return self::isGutscheinEnabled() && self::canAccessWebsite($user);
+            // Druck auch aus Buchhaltung/Gutscheine — nicht nur Website-Rechte.
+            if (!self::isGutscheinEnabled()) {
+                return false;
+            }
+
+            return self::canAccessWebsite($user)
+                || self::canAccessBuchhaltung($user)
+                || (DepartmentAccess::userCanManageArticleCatalog($user) && RoleResolver::canEdit($user));
         }
 
         if (
@@ -783,7 +797,12 @@ final class MenuRegistry
         }
 
         // Gutscheine: Buchhaltung ODER Artikel-/Warenwirtschaft (Menü steht unter Buchhaltung).
-        if ($slug === 'gutscheine' || $slug === 'gutscheine-form' || $slug === 'buchhaltung-gutscheine') {
+        if (
+            $slug === 'gutscheine'
+            || $slug === 'gutscheine-form'
+            || $slug === 'gutscheine-flyer-vorlagen'
+            || $slug === 'buchhaltung-gutscheine'
+        ) {
             if (!self::isGutscheinEnabled()) {
                 return false;
             }

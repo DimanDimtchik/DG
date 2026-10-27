@@ -581,8 +581,14 @@ $belegeFocus = (string) ($belegeFocus ?? '');
     <script src="<?= View::escape(Asset::url('/assets/js/website-menu-icon-picker.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/calendar-booking-qr.js')) ?>" defer></script>
   <?php endif; ?>
-  <?php if (($settingsSelection['template'] ?? '') === 'letterhead') : ?>
+  <?php if (
+      ($settingsSelection['template'] ?? '') === 'letterhead'
+      || ($contentTemplate ?? '') === 'modules/gutscheine-flyer-vorlagen'
+  ) : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/letterhead-settings.js')) ?>" defer></script>
+  <?php endif; ?>
+  <?php if (($contentTemplate ?? '') === 'modules/website-gutschein-flyer') : ?>
+    <script src="<?= View::escape(Asset::url('/assets/js/vendor/qrcode.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/website-menu') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/website-menu-icon-picker.js')) ?>" defer></script>

@@ -20,7 +20,8 @@ $statusLabels = GiftVoucherRepository::statusOptions();
     <div class="dg-toolbar">
       <?php if ($canEdit && $dbConnected) : ?>
         <a class="dg-button dg-button--primary" href="/app?page=gutscheine-form&amp;action=new">Gutschein ausstellen</a>
-        <a class="dg-button" href="/app?page=website-gutschein-flyer">Flyer</a>
+        <a class="dg-button" href="/app?page=gutscheine-flyer-vorlagen">Flyer-Vorlagen</a>
+        <a class="dg-button" href="/app?page=website-gutschein-flyer">Flyer drucken</a>
       <?php endif; ?>
     </div>
   </header>
