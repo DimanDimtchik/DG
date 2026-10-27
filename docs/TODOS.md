@@ -14,6 +14,7 @@ Stand: **2026-10-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Vor-Check | [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) | Shared Core, Minify, GoBD-Stichprobe |
 | ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
+| ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) | Lohn/Baulohn, Zertifizierungen, Maschinenkosten, Akademie-Wissensbrücke |
 
 **Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
@@ -171,6 +172,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Nextcloud cloud.ganz-om.de | `CLOUD-NEXTCLOUD-RESTORE.md` |
 | Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` *(Code Z2–Z7 erledigt — Zeile historisch)* |
 | Baulohn-Modul (Produkt) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe C — **nach** Normal-Lohn (A), ideal nach B |
+| ERP-Erweiterung V2 | `ERP-ERWEITERUNG-LASTENHEFT-V2.md` — Maschinen-Gemeinkosten + Maschinenwissen/Akademie, nach stabiler Rezeptur/FiBu |
 | Lohn SV-Direktversand (ITSG) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe B — nach Stufe A |
 
 ---

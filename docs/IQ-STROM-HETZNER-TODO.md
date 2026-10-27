@@ -3,7 +3,7 @@
 > **Stand:** 2026-10-27 (Lohn-Produkt: zuerst Lexware-Office-Niveau, Baulohn später)  
 > **Ziel:** DG CRM als CRM+FiBu (+ Lohn) — Einsatz u. a. **IQ Strom GmbH** (Cloud, ≥3 Nutzer remote; perspektivisch ohne Steuerberater).  
 > **Reihenfolge:** A jetzt → B Hetzner → C nach Umzug → D Lohn / Jahresblock / Rest.  
-> Detailquellen: [`TODOS.md`](TODOS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) · [`buchhaltung-todo.html`](buchhaltung-todo.html) · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md)
+> Detailquellen: [`TODOS.md`](TODOS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) · [`buchhaltung-todo.html`](buchhaltung-todo.html) · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
 
 **Hinweis Behörden:** Keine Finanzamt-„Softwarefreigabe“. Extern: ELSTER-ID ✅ `34573`, Softwarezertifikat, ERiC, Hetzner-AVV. **Lohn:** ITSG erst für direkten SV-Versand aus DG (Stufe B). **Baulohn** ist Produktfeature **nach** Normal-Lohn (Stufe C), nicht an die IQ-Strom-SOKA-Jahresprüfung gekoppelt.
 
@@ -180,6 +180,8 @@ Ohne diese Punkte ersetzt DG Lex **nicht** vollständig für eine bilanzierungsp
   → [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md)
 - [ ] Amazon Business Stufe 2  
   → [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md)
+- [ ] ERP-Erweiterung: Maschinen-Gemeinkosten + Maschinenwissen/Akademie  
+  → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
 - [ ] Stripe Shop live  
   → [`SHOP-TODO.md`](SHOP-TODO.md)
 - [ ] Nextcloud `cloud.ganz-om.de` / IQ-Cloud  
