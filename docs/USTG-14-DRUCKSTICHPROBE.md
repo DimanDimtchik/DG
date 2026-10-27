@@ -1,6 +1,6 @@
 # §14 UStG Druckstichprobe — Ausgangsbelege
 
-> Zweck: kurze manuelle Stichprobe fuer DG CRM Druck/PDF vor Produktiv-FiBu.  
+> Zweck: kurze manuelle Stichprobe fuer DG CRM Druck/PDF vor Produktiv-FiBu.
 > Token-sparsam: auf Laptop/Testinstanz ausfuehren, nur Auffaelligkeiten mit Screenshot/PDF an den Agenten geben.
 
 ## Rahmen
@@ -38,7 +38,7 @@
 - [ ] Hinweis: unverbindlich / keine Rechnung / keine UStVA-Wirkung
 - [ ] Positionen und Summen plausibel
 
-Ergebnis: `OK / Fehler:`  
+Ergebnis: `OK / Fehler:`
 Notiz:
 
 ### 2. Auftragsbestaetigung
@@ -49,7 +49,7 @@ Notiz:
 - [ ] Keine Rechnungs-/UStVA-Wirkung behauptet
 - [ ] Optional Unterschriftsblock plausibel
 
-Ergebnis: `OK / Fehler:`  
+Ergebnis: `OK / Fehler:`
 Notiz:
 
 ### 3. Rechnung
@@ -62,7 +62,7 @@ Notiz:
 - [ ] Netto, USt und Brutto je Steuersatz korrekt
 - [ ] Zahlungsinformationen und Zahlungsziel sichtbar
 
-Ergebnis: `OK / Fehler:`  
+Ergebnis: `OK / Fehler:`
 Notiz:
 
 ### 4. Schlussrechnung
@@ -74,7 +74,7 @@ Notiz:
 - [ ] Restbetrag, Steuer und Brutto nachvollziehbar
 - [ ] Zahlungsziel sichtbar
 
-Ergebnis: `OK / Fehler:`  
+Ergebnis: `OK / Fehler:`
 Notiz:
 
 ### 5. Kundengutschrift
@@ -85,7 +85,7 @@ Notiz:
 - [ ] Steuerliche Behandlung entspricht der Ursprungskorrektur
 - [ ] Summen und Vorzeichen fachlich plausibel
 
-Ergebnis: `OK / Fehler:`  
+Ergebnis: `OK / Fehler:`
 Notiz:
 
 ## Sonderstichprobe gemischte Steuersaetze
@@ -98,7 +98,7 @@ Ein buchbarer Ausgangsbeleg mit mindestens:
 - [ ] Steuerblock zeigt getrennte Summen je Steuersatz
 - [ ] 0-%-Klausel passt zum Firmenflag: §19, §13b, PV §12 Abs. 3 oder §4
 
-Ergebnis: `OK / Fehler:`  
+Ergebnis: `OK / Fehler:`
 Notiz:
 
 ## Ablage der Nachweise

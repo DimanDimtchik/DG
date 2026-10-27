@@ -74,7 +74,7 @@
 - [ ] Bank Geisterumsätze (064)
 - [ ] Kichel
 - [ ] Belegdarstellung / AB-Druck Stichprobe
-- [ ] §14-UStG Druckstichprobe Ausgangsbelege  
+- [ ] §14-UStG Druckstichprobe Ausgangsbelege
   → [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
 
 ## 7 · Spot
