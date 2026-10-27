@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** Erzeugt ausführliche DG-Hinweise für SKR-Konten ohne manuelles Kuratieren. */
 final class ChartAccountHintBuilder
 {
-  private const GENERATOR_VERSION = '2026-07-06-v7';
+  private const GENERATOR_VERSION = '2026-10-27-v8';
 
   /**
    * Liefert die Version des Hinweis-Generators
@@ -406,9 +406,19 @@ final class ChartAccountHintBuilder
       'personal' => ['Minijob vs. sozialversicherungspflichtig', 'GF-Gehalt bei GmbH'],
       'fahrzeug' => ['1 %-Regelung / Privatanteil Firmenwagen', 'Leasing vs. Kauf'],
       'abschreibung' => ['Sonder-AfA und GWG-Grenze', 'Herabsetzung Nutzungsdauer'],
-      'bewirtung' => ['70 % Vorsteuerabzug', 'Teilnehmerliste aufbewahren'],
+      'bewirtung' => [
+        'Bewirtungsaufwand i. d. R. nur zu 70 % als Betriebsausgabe abziehbar; Vorsteuer bei ordnungsgemäßem Beleg regelmäßig voll abziehbar.',
+        'Teilnehmer, Anlass, Ort/Datum und Bewirtungsbeleg aufbewahren.',
+      ],
       default => ['Steuerliche Behandlung im Einzelfall prüfen', 'Abgrenzung zu ähnlichen Konten beachten'],
     };
+
+    if (in_array('bewirtung', $features, true)) {
+      $cases = [
+        'Bewirtungsaufwand i. d. R. nur zu 70 % als Betriebsausgabe abziehbar; Vorsteuer bei ordnungsgemäßem Beleg regelmäßig voll abziehbar.',
+        'Teilnehmer, Anlass, Ort/Datum und Bewirtungsbeleg aufbewahren.',
+      ];
+    }
 
     if (in_array('ust_7', $features, true)) {
       $cases[] = 'Ermäßigter Steuersatz 7 % — Anwendungsvoraussetzungen prüfen';
@@ -460,12 +470,12 @@ final class ChartAccountHintBuilder
     if ($category === 'erloes' || $section === 'ertrag') {
       return ['ust' => 'schuld', 'gewst' => 'erhoehung', 'kst' => 'erhoehung', 'est' => 'neutral'];
     }
+    if (in_array('bewirtung', $features, true)) {
+      return ['ust' => 'vorsteuer', 'gewst' => 'teilweise', 'kst' => 'teilweise', 'est' => 'neutral'];
+    }
     if ($section === 'aufwand' || in_array('material', $features, true) || in_array('personal', $features, true)) {
       $ust = in_array('keine_ust', $features, true) ? 'neutral' : (in_array('vorsteuer', $features, true) ? 'vorsteuer' : 'teilweise');
       return ['ust' => $ust, 'gewst' => 'minderung', 'kst' => 'minderung', 'est' => 'neutral'];
-    }
-    if (in_array('bewirtung', $features, true)) {
-      return ['ust' => 'teilweise', 'gewst' => 'teilweise', 'kst' => 'teilweise', 'est' => 'neutral'];
     }
 
     return ['ust' => 'neutral', 'gewst' => 'neutral', 'kst' => 'neutral', 'est' => 'neutral'];

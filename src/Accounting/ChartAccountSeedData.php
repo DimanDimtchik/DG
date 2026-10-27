@@ -303,12 +303,15 @@ final class ChartAccountSeedData
                     4 => 'Sonstige betriebliche Aufwendungen',
                     4 => 'Bewirtung',
                 ],
-                'features' => ['vorsteuer_70', 'teilentnahme'],
+                'features' => ['bewirtung', 'vorsteuer_moeglich', 'teilweise_abziehbar'],
                 'examples' => ['Geschäftsessen mit Kunden', 'Catering bei Veranstaltung'],
-                'edge_cases' => ['70 % Vorsteuerabzug', 'Nachweispflicht Teilnehmerliste'],
+                'edge_cases' => [
+                    'Bewirtungsaufwand i. d. R. nur zu 70 % als Betriebsausgabe abziehbar; Vorsteuer bei ordnungsgemäßem Beleg regelmäßig voll abziehbar.',
+                    'Nachweispflicht: Teilnehmer, Anlass, Ort/Datum und Bewirtungsbeleg.',
+                ],
                 'dependencies' => ['Bewirtungsbeleg'],
                 'classification' => ['balance_sheet' => false, 'guv' => true, 'eur' => true],
-                'tax_effects' => ['ust' => 'teilweise', 'gewst' => 'teilweise', 'kst' => 'teilweise', 'est' => 'neutral'],
+                'tax_effects' => ['ust' => 'vorsteuer', 'gewst' => 'teilweise', 'kst' => 'teilweise', 'est' => 'neutral'],
             ]),
             self::account('4900', 'Reisekosten Arbeitnehmer', '0', 'aufwand', [
                 'summary' => 'Fahrt-, Übernachtungs- und Verpflegungsmehraufwand von Mitarbeitern.',

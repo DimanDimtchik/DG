@@ -22,7 +22,7 @@
 - [ ] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Klausel §12 Abs. 3 wie bei §19 automatisch setzen (heute manuell)
 - [ ] **ARAP:** automatischer Prozent-Vorschlag aus Belegdatum (Restlaufzeit)  
   → [`buchhaltung-todo.html`](buchhaltung-todo.html) §4
-- [ ] **Kontohinweise** redaktionell prüfen (SKR-Hilfetexte)
+- [x] **Kontohinweise** redaktionell geprüft (SKR-Hilfetexte) — Bewirtung: 70-%-Grenze als Betriebsausgabenabzug, Vorsteuer nicht pauschal kuerzen
 
 ### A2 · Manuelle Tests (ganz-soft.de / Master)
 
