@@ -57,8 +57,11 @@ $bookingQuickHref = static function (array $range) use ($bookingQuickBase): stri
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
+$centerHourlyCosts = [];
 foreach ($centers as $center) {
-    $centerNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
+    $centerId = (int) ($center['id'] ?? 0);
+    $centerNames[$centerId] = (string) ($center['name'] ?? '');
+    $centerHourlyCosts[$centerId] = RecipeCostService::breakdown($center, $rates);
 }
 $maintenancePlanNames = [];
 $maintenancePlanEstimatedCosts = [];
@@ -89,6 +92,8 @@ $bookingSummary = [
     'blocked_hours' => 0.0,
     'other_hours' => 0.0,
     'estimated_maintenance_cost' => 0.0,
+    'machine_cost' => 0.0,
+    'loaded_cost' => 0.0,
 ];
 foreach ($bookingWindows as $booking) {
     if (($booking['booking_status'] ?? '') === 'cancelled') {
@@ -101,6 +106,11 @@ foreach ($bookingWindows as $booking) {
     }
     $hours = ($bookingEnd - $bookingStart) / 3600;
     $bookingSummary['total_hours'] += $hours;
+    $hourlyCosts = $centerHourlyCosts[(int) ($booking['work_center_id'] ?? 0)] ?? null;
+    if (is_array($hourlyCosts)) {
+        $bookingSummary['machine_cost'] += $hours * (float) ($hourlyCosts['machine_per_h'] ?? 0);
+        $bookingSummary['loaded_cost'] += $hours * (float) ($hourlyCosts['loaded_per_h'] ?? 0);
+    }
     $type = (string) ($booking['booking_type'] ?? 'other');
     if ($type === 'production') {
         $bookingSummary['production_hours'] += $hours;
@@ -463,6 +473,8 @@ $formatHelperMaterials = static function (mixed $json): string {
         <div><span class="dg-muted">Sperrzeit</span><br><strong><?= View::escape(number_format($bookingSummary['blocked_hours'], 2, ',', '.')) ?> h</strong></div>
         <div><span class="dg-muted">Sonstiges</span><br><strong><?= View::escape(number_format($bookingSummary['other_hours'], 2, ',', '.')) ?> h</strong></div>
         <div><span class="dg-muted">Wartungskosten geschätzt</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['estimated_maintenance_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Maschinenkosten Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">inkl. Lohn Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['loaded_cost'], 2)) ?></strong></div>
       </div>
     </div>
 
