@@ -73,7 +73,7 @@
 
 - [~] **Telefon/CTI Fritzbox:** manuell aktivieren (Code da) — Linphone, CallMonitor-Bridge
 - [ ] Multi-Firma Switcher Feinschliff nur falls für IQ/Holding nötig (MB1–MB4 Code ✅)
-- [ ] **ERP-Maschinenblock früh starten:** Gemeinkosten je Maschinenstunde als **nicht buchungswirksamer Vorschlag** + Maschinenwissen/Akademie
+- [ ] **ERP-Maschinenblock früh starten:** Belegungs-/Kapazitätsplan (Rohstoff/h, Output/h), Zusatz-/Verpackungsmaterial, Wartungsturnus/-kosten; danach Gemeinkosten je Maschinenstunde als **nicht buchungswirksamer Vorschlag** + Maschinenwissen/Akademie
   → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
 
 ---

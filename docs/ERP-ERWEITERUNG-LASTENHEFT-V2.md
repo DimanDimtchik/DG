@@ -108,7 +108,114 @@ Dieser Block muss nicht bis nach Lohn/ITSG warten, wenn er strikt als **nicht bu
 
 ---
 
-## 5. Maschinenwissen + Akademie
+## 5. Maschinen-Belegungsplan, Durchsatz, Zusatzstoffe, Wartung
+
+Dieser Nutzerplan war **nicht** im Adobe-PDF enthalten und ist im aktuellen Repo noch nicht als Plan angekommen. Er wird hier als eigener frueher Maschinenblock ergaenzt.
+
+### Zielbild
+
+Je Maschine soll DG CRM nicht nur einen Stundensatz kennen, sondern auch:
+
+- welche Rohstoffmenge die Maschine pro Stunde verarbeiten kann
+- welche Produktmenge pro Stunde herauskommt
+- welche Zusatzstoffe oder Verbrauchsmaterialien notwendig sind, z. B. Verpackungsmaterial
+- wann die Maschine belegt, frei oder in Wartung ist
+- welcher Wartungsturnus gilt und welche Hilfsmittel/Kosten anfallen
+
+### Teilpakete
+
+| Paket | Inhalt | Wirkung |
+|-------|--------|---------|
+| M0 | Maschinen-Kapazitaetsprofil | Rohstoff-Input/h, Produkt-Output/h, Ausbeute, Einheit |
+| M1 | Zusatz-/Verpackungsmaterial | Material je Produktionslauf oder je Output-Einheit |
+| M2 | Wartungsplan | Turnus nach Zeit, Laufstunden oder Zyklen; Hilfsmittel und Kosten |
+| M3 | Wartungsprotokoll | durchgefuehrte Wartung, Ist-Kosten, Belege, naechster Termin |
+| M4 | Belegungskalender | geplante Produktionsfenster, Wartungsfenster, Auslastung |
+| M5 | Kalkulationsintegration | Kapazitaet, Zusatzstoffe und Wartungskosten in Rezeptur-Snapshot |
+
+### Datenmodell-Skizze
+
+```sql
+CREATE TABLE dg_machine_capacity_profiles (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    work_center_id INT UNSIGNED NOT NULL,
+    recipe_id INT UNSIGNED NULL,
+    input_material_label VARCHAR(191) NOT NULL DEFAULT '',
+    input_article_id INT UNSIGNED NULL,
+    input_qty_per_hour DECIMAL(14, 4) NOT NULL DEFAULT 0,
+    output_product_label VARCHAR(191) NOT NULL DEFAULT '',
+    output_article_id INT UNSIGNED NULL,
+    output_qty_per_hour DECIMAL(14, 4) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NOT NULL DEFAULT '',
+    yield_percent DECIMAL(6, 2) NOT NULL DEFAULT 100.00,
+    valid_from DATE NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    notes VARCHAR(1000) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_machine_capacity_work_center (work_center_id),
+    KEY idx_machine_capacity_recipe (recipe_id)
+);
+
+CREATE TABLE dg_recipe_auxiliary_materials (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    recipe_id INT UNSIGNED NOT NULL,
+    article_id INT UNSIGNED NULL,
+    material_label VARCHAR(191) NOT NULL DEFAULT '',
+    role ENUM('packaging', 'additive', 'consumable', 'other') NOT NULL DEFAULT 'other',
+    qty_per_output_unit DECIMAL(14, 4) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NOT NULL DEFAULT '',
+    cost_per_unit DECIMAL(14, 4) NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (id),
+    KEY idx_recipe_aux_recipe (recipe_id)
+);
+
+CREATE TABLE dg_machine_maintenance_plans (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    work_center_id INT UNSIGNED NOT NULL,
+    title VARCHAR(191) NOT NULL,
+    interval_type ENUM('days', 'runtime_hours', 'cycles') NOT NULL,
+    interval_value DECIMAL(14, 2) NOT NULL,
+    planned_downtime_minutes INT UNSIGNED NOT NULL DEFAULT 0,
+    helper_materials_json JSON NULL,
+    estimated_material_cost DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    estimated_service_cost DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    next_due_date DATE NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_machine_maintenance_work_center (work_center_id)
+);
+
+CREATE TABLE dg_machine_maintenance_logs (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    maintenance_plan_id INT UNSIGNED NULL,
+    work_center_id INT UNSIGNED NOT NULL,
+    performed_at DATETIME NOT NULL,
+    runtime_hours_at_service DECIMAL(14, 2) NULL,
+    actual_material_cost DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    actual_service_cost DECIMAL(14, 2) NOT NULL DEFAULT 0.00,
+    notes VARCHAR(1000) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_machine_maintenance_log_work_center (work_center_id),
+    KEY idx_machine_maintenance_log_plan (maintenance_plan_id)
+);
+```
+
+### Fachliche Grenzen
+
+- Belegung und Wartung duerfen vorhandene Rezeptur-Snapshots nicht rueckwirkend veraendern.
+- Wartungskosten zuerst als Kalkulationsbestandteil / Vorschlag, nicht automatisch als FiBu-Buchung.
+- Verpackung/Zusatzstoffe koennen wie Material kalkuliert werden, sollten aber separat sichtbar bleiben.
+- Wartungsbelege gehoeren in die normale Belegkette bzw. `storage/vouchers`, nicht in eine parallele Dateiablage.
+
+---
+
+## 6. Maschinenwissen + Akademie
 
 ### Zielbild
 
@@ -157,20 +264,21 @@ CREATE TABLE dg_machine_knowledge_links (
 
 ---
 
-## 6. Priorität für DG CRM
+## 7. Priorität für DG CRM
 
 | Priorität | Paket | Wann |
 |-----------|-------|------|
-| 1 | Maschinen-Gemeinkosten aus FiBu als **nicht buchungswirksamer Kalkulationsvorschlag** | jetzt als kleiner ERP-Block möglich |
-| 2 | Maschinenwissen mit Akademie-Verlinkung | jetzt/parallel möglich, klein umsetzbar |
-| 3 | Lohn D0-A sauber spezifizieren | nach A/B/C-Fibu- und Hetzner-Basis |
-| 4 | Lohn D0-A implementieren | vor ITSG-Automatik und Baulohn |
-| 5 | ITSG / ELStAM / euBP / UV live | nach Hetzner, Zertifikaten und Testläufen |
-| 6 | Baulohn / SOKA / Saison-KUG | nach Standardlohn, idealerweise nach SV-Automatik |
+| 1 | Maschinen-Belegungsplan: Kapazitaet, Output/h, Zusatzstoffe, Wartung | jetzt als frueher Maschinenblock |
+| 2 | Maschinen-Gemeinkosten aus FiBu als **nicht buchungswirksamer Kalkulationsvorschlag** | nach Kapazitaets-/Wartungsgrundlage |
+| 3 | Maschinenwissen mit Akademie-Verlinkung | jetzt/parallel möglich, klein umsetzbar |
+| 4 | Lohn D0-A sauber spezifizieren | nach A/B/C-Fibu- und Hetzner-Basis |
+| 5 | Lohn D0-A implementieren | vor ITSG-Automatik und Baulohn |
+| 6 | ITSG / ELStAM / euBP / UV live | nach Hetzner, Zertifikaten und Testläufen |
+| 7 | Baulohn / SOKA / Saison-KUG | nach Standardlohn, idealerweise nach SV-Automatik |
 
 ---
 
-## 7. Nicht sofort bauen
+## 8. Nicht sofort bauen
 
 - Kein neues ERP-Monolith-Modul neben Rezeptur/Lager/Buchhaltung.
 - Keine Baulohn-Implementierung vor Normal-Lohn.
