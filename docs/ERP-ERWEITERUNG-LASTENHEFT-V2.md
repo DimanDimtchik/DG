@@ -126,7 +126,8 @@ Je Maschine soll DG CRM nicht nur einen Stundensatz kennen, sondern auch:
 
 | Paket | Inhalt | Wirkung |
 |-------|--------|---------|
-| M0 | Maschinen-Kapazitaetsprofil | Rohstoff-Input/h, Produkt-Output/h, Ausbeute, Einheit |
+| M0a | Datenmodellplan | [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md) |
+| M0b | Migrationen + Repository | Tabellen fuer Kapazitaet, Zusatzmaterial und Wartung |
 | M1 | Zusatz-/Verpackungsmaterial | Material je Produktionslauf oder je Output-Einheit |
 | M2 | Wartungsplan | Turnus nach Zeit, Laufstunden oder Zyklen; Hilfsmittel und Kosten |
 | M3 | Wartungsprotokoll | durchgefuehrte Wartung, Ist-Kosten, Belege, naechster Termin |
