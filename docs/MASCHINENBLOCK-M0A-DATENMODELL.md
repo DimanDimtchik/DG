@@ -1,6 +1,6 @@
 # Maschinenblock M0a — Datenmodellplan
 
-Stand: **2026-10-28** · Scope: Planung, keine Migration, keine UI  
+Stand: **2026-10-28** · Scope: Planung, keine Migration, keine UI
 Bezug: [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
 
 ---
