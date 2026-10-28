@@ -61,8 +61,11 @@ foreach ($centers as $center) {
     $centerNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
 }
 $maintenancePlanNames = [];
+$maintenancePlanEstimatedCosts = [];
 foreach ($maintenancePlans as $plan) {
-    $maintenancePlanNames[(int) ($plan['id'] ?? 0)] = (string) ($plan['title'] ?? '');
+    $planId = (int) ($plan['id'] ?? 0);
+    $maintenancePlanNames[$planId] = (string) ($plan['title'] ?? '');
+    $maintenancePlanEstimatedCosts[$planId] = (float) ($plan['estimated_material_cost'] ?? 0) + (float) ($plan['estimated_service_cost'] ?? 0);
 }
 $recipeNames = [];
 foreach ($recipeOptions as $recipe) {
@@ -79,6 +82,40 @@ $bookingStatusLabels = [
     'done' => 'erledigt',
     'cancelled' => 'storniert',
 ];
+$bookingSummary = [
+    'total_hours' => 0.0,
+    'production_hours' => 0.0,
+    'maintenance_hours' => 0.0,
+    'blocked_hours' => 0.0,
+    'other_hours' => 0.0,
+    'estimated_maintenance_cost' => 0.0,
+];
+foreach ($bookingWindows as $booking) {
+    if (($booking['booking_status'] ?? '') === 'cancelled') {
+        continue;
+    }
+    $bookingStart = strtotime((string) ($booking['starts_at'] ?? ''));
+    $bookingEnd = strtotime((string) ($booking['ends_at'] ?? ''));
+    if ($bookingStart === false || $bookingEnd === false || $bookingEnd <= $bookingStart) {
+        continue;
+    }
+    $hours = ($bookingEnd - $bookingStart) / 3600;
+    $bookingSummary['total_hours'] += $hours;
+    $type = (string) ($booking['booking_type'] ?? 'other');
+    if ($type === 'production') {
+        $bookingSummary['production_hours'] += $hours;
+    } elseif ($type === 'maintenance') {
+        $bookingSummary['maintenance_hours'] += $hours;
+    } elseif ($type === 'blocked') {
+        $bookingSummary['blocked_hours'] += $hours;
+    } else {
+        $bookingSummary['other_hours'] += $hours;
+    }
+    $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
+    if ($planId > 0) {
+        $bookingSummary['estimated_maintenance_cost'] += $maintenancePlanEstimatedCosts[$planId] ?? 0.0;
+    }
+}
 $bookingConflictIds = [];
 foreach ($bookingWindows as $leftIndex => $leftBooking) {
     if (($leftBooking['booking_status'] ?? '') === 'cancelled') {
@@ -415,6 +452,19 @@ $formatHelperMaterials = static function (mixed $json): string {
         <?php endforeach; ?>
       </div>
     </form>
+
+    <div class="dg-card" style="padding:12px;margin-bottom:16px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
+      <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung (M4a)</h3>
+      <p class="dg-field-hint" style="margin-top:0;">Nur Hinweiswerte aus der gefilterten Liste; keine FiBu-Buchung und keine automatische Umlage.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.95rem;">
+        <div><span class="dg-muted">Gesamt</span><br><strong><?= View::escape(number_format($bookingSummary['total_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Produktion</span><br><strong><?= View::escape(number_format($bookingSummary['production_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Wartung</span><br><strong><?= View::escape(number_format($bookingSummary['maintenance_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Sperrzeit</span><br><strong><?= View::escape(number_format($bookingSummary['blocked_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Sonstiges</span><br><strong><?= View::escape(number_format($bookingSummary['other_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Wartungskosten geschätzt</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['estimated_maintenance_cost'], 2)) ?></strong></div>
+      </div>
+    </div>
 
     <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
       <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
