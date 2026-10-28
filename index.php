@@ -5337,6 +5337,59 @@ $legalProductsConfig = LegalProductSettings::config();
                     false
                 );
                 $machineRecipeOptions = RecipeRepository::listAll();
+                if (($_GET['booking_export'] ?? '') === 'csv') {
+                    $workCenterNames = [];
+                    foreach ($workCenterList as $center) {
+                        $workCenterNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
+                    }
+                    $maintenancePlanNames = [];
+                    foreach ($machineMaintenancePlans as $plan) {
+                        $maintenancePlanNames[(int) ($plan['id'] ?? 0)] = (string) ($plan['title'] ?? '');
+                    }
+                    $recipeNames = [];
+                    foreach ($machineRecipeOptions as $recipe) {
+                        $recipeNames[(int) ($recipe['id'] ?? 0)] = (string) ($recipe['title'] ?? '');
+                    }
+                    $typeLabels = [
+                        'production' => 'Produktion',
+                        'maintenance' => 'Wartung',
+                        'blocked' => 'Sperrzeit',
+                        'other' => 'Sonstiges',
+                    ];
+                    $statusLabels = [
+                        'planned' => 'geplant',
+                        'done' => 'erledigt',
+                        'cancelled' => 'storniert',
+                    ];
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="maschinen-belegung.csv"');
+                    $out = fopen('php://output', 'wb');
+                    if ($out === false) {
+                        exit;
+                    }
+                    fwrite($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Maschine', 'Typ', 'Titel', 'Start', 'Ende', 'Rezeptur', 'Wartungsplan', 'Output', 'Einheit', 'Status', 'Notiz'], ';');
+                    foreach ($machineBookingWindows as $booking) {
+                        $recipeId = (int) ($booking['recipe_id'] ?? 0);
+                        $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
+                        $type = (string) ($booking['booking_type'] ?? 'other');
+                        $status = (string) ($booking['booking_status'] ?? 'planned');
+                        fputcsv($out, [
+                            $workCenterNames[(int) ($booking['work_center_id'] ?? 0)] ?? ('#' . (int) ($booking['work_center_id'] ?? 0)),
+                            $typeLabels[$type] ?? $type,
+                            (string) ($booking['title'] ?? ''),
+                            (string) ($booking['starts_at'] ?? ''),
+                            (string) ($booking['ends_at'] ?? ''),
+                            $recipeId > 0 ? ($recipeNames[$recipeId] ?? ('#' . $recipeId)) : '',
+                            $planId > 0 ? ($maintenancePlanNames[$planId] ?? ('#' . $planId)) : '',
+                            (string) ($booking['planned_output_qty'] ?? '0'),
+                            (string) ($booking['unit'] ?? ''),
+                            $statusLabels[$status] ?? $status,
+                            (string) ($booking['notes'] ?? ''),
+                        ], ';');
+                    }
+                    exit;
+                }
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $contentTemplate = 'modules/rezeptur-maschinen';

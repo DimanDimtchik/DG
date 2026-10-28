@@ -54,6 +54,14 @@ $bookingQuickHref = static function (array $range) use ($bookingQuickBase): stri
 
     return '/app?' . http_build_query($query) . '#booking';
 };
+$bookingExportQuery = $bookingQuickBase + ['booking_export' => 'csv'];
+if ($bookingFilterFrom !== '') {
+    $bookingExportQuery['booking_from'] = $bookingFilterFrom;
+}
+if ($bookingFilterTo !== '') {
+    $bookingExportQuery['booking_to'] = $bookingFilterTo;
+}
+$bookingExportHref = '/app?' . http_build_query($bookingExportQuery);
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
@@ -467,6 +475,7 @@ $formatHelperMaterials = static function (mixed $json): string {
       <div class="dg-form-actions">
         <button type="submit" class="dg-button">Belegung filtern</button>
         <a class="dg-button" href="/app?page=rezeptur-maschinen#booking">Filter zurücksetzen</a>
+        <a class="dg-button" href="<?= View::escape($bookingExportHref) ?>">CSV exportieren</a>
         <?php foreach ($bookingQuickRanges as $range) : ?>
           <a class="dg-button" href="<?= View::escape($bookingQuickHref($range)) ?>"><?= View::escape((string) $range['label']) ?></a>
         <?php endforeach; ?>
