@@ -3,6 +3,7 @@
  * @var list<array<string, mixed>> $workCenterList
  * @var list<array<string, mixed>> $machineCapacityProfiles
  * @var list<array<string, mixed>> $machineMaintenancePlans
+ * @var list<array<string, mixed>> $machineMaintenanceLogs
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -12,11 +13,16 @@
 $centers = $workCenterList ?? [];
 $capacityProfiles = $machineCapacityProfiles ?? [];
 $maintenancePlans = $machineMaintenancePlans ?? [];
+$maintenanceLogs = $machineMaintenanceLogs ?? [];
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
 foreach ($centers as $center) {
     $centerNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
+}
+$maintenancePlanNames = [];
+foreach ($maintenancePlans as $plan) {
+    $maintenancePlanNames[(int) ($plan['id'] ?? 0)] = (string) ($plan['title'] ?? '');
 }
 $intervalLabels = [
     'days' => 'Tage',
@@ -407,6 +413,102 @@ $formatHelperMaterials = static function (mixed $json): string {
           <?php endif; ?>
         </tbody>
       </table>
+    </div>
+
+    <div id="maintenance-log" style="margin-top:22px;border-top:1px solid var(--dg-border,#ddd);padding-top:16px;">
+      <h3 class="dg-subsection-title" style="margin-top:0;">Durchgeführte Wartung protokollieren (M2b)</h3>
+      <p class="dg-field-hint">Dokumentiert Ist-Zeitpunkt, Laufstundenstand und Ist-Kosten. Keine automatische Buchung.</p>
+
+      <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+        <form method="post" action="/app?page=rezeptur-maschinen#maintenance-log" class="dg-form" style="margin-bottom:16px;">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span>Maschine</span>
+              <select name="work_center_id" required>
+                <?php foreach ($centers as $center) : ?>
+                  <?php $cid = (int) ($center['id'] ?? 0); ?>
+                  <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Wartungsplan (optional)</span>
+              <select name="maintenance_plan_id">
+                <option value="0">— ohne Plan —</option>
+                <?php foreach ($maintenancePlans as $plan) : ?>
+                  <?php if (empty($plan['is_active'])) { continue; } ?>
+                  <?php $pid = (int) ($plan['id'] ?? 0); ?>
+                  <option value="<?= $pid ?>">
+                    <?= View::escape(($centerNames[(int) ($plan['work_center_id'] ?? 0)] ?? ('#' . (int) ($plan['work_center_id'] ?? 0))) . ' · ' . (string) ($plan['title'] ?? '')) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Durchgeführt am</span>
+              <input type="datetime-local" name="performed_at">
+            </label>
+            <label class="dg-field">
+              <span>Laufstundenstand</span>
+              <input name="runtime_hours_at_service" inputmode="decimal" placeholder="optional">
+            </label>
+            <label class="dg-field">
+              <span>Materialkosten Ist</span>
+              <input name="actual_material_cost" inputmode="decimal" value="0">
+            </label>
+            <label class="dg-field">
+              <span>Servicekosten Ist</span>
+              <input name="actual_service_cost" inputmode="decimal" value="0">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Notiz</span>
+              <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. Filter gewechselt, Dichtung geprüft"></textarea>
+            </label>
+          </div>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary" name="machine_maintenance_log_save" value="1">Wartung protokollieren</button>
+          </div>
+        </form>
+      <?php endif; ?>
+
+      <div class="dg-table-wrap">
+        <table class="dg-table">
+          <thead>
+            <tr>
+              <th>Maschine</th>
+              <th>Plan</th>
+              <th>Durchgeführt</th>
+              <th>Laufstunden</th>
+              <th>Ist-Kosten</th>
+              <th>Notiz</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if ($maintenanceLogs === []) : ?>
+              <tr>
+                <td colspan="6" class="dg-table__empty">Noch keine Wartungen protokolliert.</td>
+              </tr>
+            <?php else : ?>
+              <?php foreach ($maintenanceLogs as $log) : ?>
+                <?php
+                  $logWcId = (int) ($log['work_center_id'] ?? 0);
+                  $logPlanId = (int) ($log['maintenance_plan_id'] ?? 0);
+                  $actualCost = (float) ($log['actual_material_cost'] ?? 0) + (float) ($log['actual_service_cost'] ?? 0);
+                ?>
+                <tr>
+                  <td><?= View::escape($centerNames[$logWcId] ?? ('#' . $logWcId)) ?></td>
+                  <td><?= $logPlanId > 0 ? View::escape($maintenancePlanNames[$logPlanId] ?? ('#' . $logPlanId)) : '<span class="dg-muted">—</span>' ?></td>
+                  <td><?= View::escape((string) ($log['performed_at'] ?? '')) ?></td>
+                  <td><?= ($log['runtime_hours_at_service'] ?? null) !== null ? View::escape((string) $log['runtime_hours_at_service']) : '<span class="dg-muted">—</span>' ?></td>
+                  <td><?= View::escape(RecipeCostService::formatEur($actualCost, 2)) ?></td>
+                  <td><?= View::escape((string) ($log['notes'] ?? '')) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </div>

@@ -163,6 +163,8 @@ $logId = MachinePlanningRepository::createMaintenanceLog([
 $logs = MachinePlanningRepository::listMaintenanceLogs(1);
 assertM0b($logId > 0 && count($logs) === 1, 'Wartungslog anlegen und listen');
 assertM0b((float) $logs[0]['runtime_hours_at_service'] === 1234.5, 'Laufstunden im Wartungslog werden normalisiert');
+$allLogs = MachinePlanningRepository::listMaintenanceLogs();
+assertM0b(count($allLogs) === 1, 'Wartungslog global listen');
 MachinePlanningRepository::deactivateMaintenancePlan($planId);
 assertM0b(MachinePlanningRepository::listMaintenancePlans(1, true) === [], 'Wartungsplan deaktivieren');
 

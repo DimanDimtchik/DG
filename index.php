@@ -2072,6 +2072,27 @@ switch ($path) {
             exit;
         }
 
+        // POST: Maschinen-Wartungsprotokoll (M2b)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['machine_maintenance_log_save'])
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    MachinePlanningRepository::createMaintenanceLog($_POST);
+                    Flash::set('success', 'Wartung protokolliert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#maintenance-log', true, 302);
+            exit;
+        }
+
         // POST: Work Center speichern/löschen (R2)
         if (
             $page === 'rezeptur-maschine-form'
@@ -5268,6 +5289,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $workCenterList = WorkCenterRepository::listAll(false);
                 $machineCapacityProfiles = MachinePlanningRepository::listCapacityProfiles(null, false);
                 $machineMaintenancePlans = MachinePlanningRepository::listMaintenancePlans(null, false);
+                $machineMaintenanceLogs = MachinePlanningRepository::listMaintenanceLogs();
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $contentTemplate = 'modules/rezeptur-maschinen';
@@ -8297,6 +8319,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $workCenterList = $workCenterList ?? [];
         $machineCapacityProfiles = $machineCapacityProfiles ?? [];
         $machineMaintenancePlans = $machineMaintenancePlans ?? [];
+        $machineMaintenanceLogs = $machineMaintenanceLogs ?? [];
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8794,6 +8817,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'workCenterList',
             'machineCapacityProfiles',
             'machineMaintenancePlans',
+            'machineMaintenanceLogs',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',

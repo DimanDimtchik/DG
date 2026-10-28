@@ -224,18 +224,21 @@ final class MachinePlanningRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public static function listMaintenanceLogs(int $workCenterId): array
+    public static function listMaintenanceLogs(?int $workCenterId = null): array
     {
         self::ensureReady();
-        if ($workCenterId <= 0 || !Database::isConfigured()) {
+        if (!Database::isConfigured()) {
             return [];
         }
-        $stmt = Database::pdo()->prepare(
-            'SELECT * FROM dg_machine_maintenance_logs
-             WHERE work_center_id = :work_center_id
-             ORDER BY performed_at DESC, id DESC'
-        );
-        $stmt->execute(['work_center_id' => $workCenterId]);
+        $sql = 'SELECT * FROM dg_machine_maintenance_logs';
+        $params = [];
+        if ($workCenterId !== null && $workCenterId > 0) {
+            $sql .= ' WHERE work_center_id = :work_center_id';
+            $params['work_center_id'] = $workCenterId;
+        }
+        $sql .= ' ORDER BY performed_at DESC, id DESC';
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
