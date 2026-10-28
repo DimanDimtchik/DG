@@ -4,6 +4,8 @@
  * @var list<array<string, mixed>> $machineCapacityProfiles
  * @var list<array<string, mixed>> $machineMaintenancePlans
  * @var list<array<string, mixed>> $machineMaintenanceLogs
+ * @var list<array<string, mixed>> $machineBookingWindows
+ * @var list<array<string, mixed>> $machineRecipeOptions
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -14,6 +16,8 @@ $centers = $workCenterList ?? [];
 $capacityProfiles = $machineCapacityProfiles ?? [];
 $maintenancePlans = $machineMaintenancePlans ?? [];
 $maintenanceLogs = $machineMaintenanceLogs ?? [];
+$bookingWindows = $machineBookingWindows ?? [];
+$recipeOptions = $machineRecipeOptions ?? [];
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
@@ -24,6 +28,21 @@ $maintenancePlanNames = [];
 foreach ($maintenancePlans as $plan) {
     $maintenancePlanNames[(int) ($plan['id'] ?? 0)] = (string) ($plan['title'] ?? '');
 }
+$recipeNames = [];
+foreach ($recipeOptions as $recipe) {
+    $recipeNames[(int) ($recipe['id'] ?? 0)] = (string) ($recipe['title'] ?? '');
+}
+$bookingTypeLabels = [
+    'production' => 'Produktion',
+    'maintenance' => 'Wartung',
+    'blocked' => 'Sperrzeit',
+    'other' => 'Sonstiges',
+];
+$bookingStatusLabels = [
+    'planned' => 'geplant',
+    'done' => 'erledigt',
+    'cancelled' => 'storniert',
+];
 $intervalLabels = [
     'days' => 'Tage',
     'runtime_hours' => 'Laufstunden',
@@ -277,6 +296,171 @@ $formatHelperMaterials = static function (mixed $json): string {
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="capacity_profile_id" value="<?= $profileId ?>">
                       <button type="submit" class="dg-button dg-button--small" name="machine_capacity_deactivate" value="1">Deaktivieren</button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dg-card" id="booking" style="margin-top:20px;padding:16px;">
+    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b)</h2>
+    <p class="dg-field-hint">
+      Einfache Liste fuer geplante Produktion, Wartung und Sperrzeiten. Noch kein Drag-and-drop-Kalender und keine automatische Konfliktentscheidung.
+    </p>
+
+    <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Maschine</span>
+            <select name="work_center_id" required>
+              <?php foreach ($centers as $center) : ?>
+                <?php $cid = (int) ($center['id'] ?? 0); ?>
+                <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Typ</span>
+            <select name="booking_type">
+              <?php foreach ($bookingTypeLabels as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Titel</span>
+            <input name="title" required maxlength="191" placeholder="z. B. Charge Creme A">
+          </label>
+          <label class="dg-field">
+            <span>Rezeptur (optional)</span>
+            <select name="recipe_id">
+              <option value="0">— keine —</option>
+              <?php foreach ($recipeOptions as $recipe) : ?>
+                <?php $rid = (int) ($recipe['id'] ?? 0); ?>
+                <option value="<?= $rid ?>"><?= View::escape((string) ($recipe['title'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Wartungsplan (optional)</span>
+            <select name="maintenance_plan_id">
+              <option value="0">— keiner —</option>
+              <?php foreach ($maintenancePlans as $plan) : ?>
+                <?php if (empty($plan['is_active'])) { continue; } ?>
+                <?php $pid = (int) ($plan['id'] ?? 0); ?>
+                <option value="<?= $pid ?>">
+                  <?= View::escape(($centerNames[(int) ($plan['work_center_id'] ?? 0)] ?? ('#' . (int) ($plan['work_center_id'] ?? 0))) . ' · ' . (string) ($plan['title'] ?? '')) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Start</span>
+            <input type="datetime-local" name="starts_at" required>
+          </label>
+          <label class="dg-field">
+            <span>Ende</span>
+            <input type="datetime-local" name="ends_at" required>
+          </label>
+          <label class="dg-field">
+            <span>Geplanter Output</span>
+            <input name="planned_output_qty" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Einheit</span>
+            <input name="unit" maxlength="50" placeholder="kg, Stk, l">
+          </label>
+          <label class="dg-field">
+            <span>Status</span>
+            <select name="booking_status">
+              <option value="planned">geplant</option>
+              <option value="done">erledigt</option>
+            </select>
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Notiz</span>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. Rohstoff bereitstellen, Reinigung vorher einplanen"></textarea>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_booking_save" value="1">Belegungsfenster speichern</button>
+        </div>
+      </form>
+    <?php elseif ($centers === []) : ?>
+      <p class="dg-muted">Erst eine Maschine anlegen, dann Belegungsfenster erfassen.</p>
+    <?php endif; ?>
+
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Maschine</th>
+            <th>Typ</th>
+            <th>Titel</th>
+            <th>Zeitraum</th>
+            <th>Bezug</th>
+            <th>Output</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($bookingWindows === []) : ?>
+            <tr>
+              <td colspan="8" class="dg-table__empty">Noch keine Belegungsfenster.</td>
+            </tr>
+          <?php else : ?>
+            <?php foreach ($bookingWindows as $booking) : ?>
+              <?php
+                $bookingId = (int) ($booking['id'] ?? 0);
+                $bookingWcId = (int) ($booking['work_center_id'] ?? 0);
+                $bookingType = (string) ($booking['booking_type'] ?? 'other');
+                $bookingStatus = (string) ($booking['booking_status'] ?? 'planned');
+                $bookingRecipeId = (int) ($booking['recipe_id'] ?? 0);
+                $bookingPlanId = (int) ($booking['maintenance_plan_id'] ?? 0);
+                $bookingUnit = trim((string) ($booking['unit'] ?? ''));
+              ?>
+              <tr<?= $bookingStatus === 'cancelled' ? ' style="opacity:0.55;"' : '' ?>>
+                <td><?= View::escape($centerNames[$bookingWcId] ?? ('#' . $bookingWcId)) ?></td>
+                <td><?= View::escape($bookingTypeLabels[$bookingType] ?? 'Sonstiges') ?></td>
+                <td><strong><?= View::escape((string) ($booking['title'] ?? '')) ?></strong></td>
+                <td>
+                  <?= View::escape((string) ($booking['starts_at'] ?? '')) ?><br>
+                  <span class="dg-muted">bis <?= View::escape((string) ($booking['ends_at'] ?? '')) ?></span>
+                </td>
+                <td>
+                  <?php if ($bookingRecipeId > 0) : ?>
+                    <div>Rezept: <?= View::escape($recipeNames[$bookingRecipeId] ?? ('#' . $bookingRecipeId)) ?></div>
+                  <?php endif; ?>
+                  <?php if ($bookingPlanId > 0) : ?>
+                    <div>Wartung: <?= View::escape($maintenancePlanNames[$bookingPlanId] ?? ('#' . $bookingPlanId)) ?></div>
+                  <?php endif; ?>
+                  <?php if ($bookingRecipeId <= 0 && $bookingPlanId <= 0) : ?>
+                    <span class="dg-muted">—</span>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= View::escape((string) ($booking['planned_output_qty'] ?? '0')) ?>
+                  <?= View::escape($bookingUnit) ?>
+                </td>
+                <td>
+                  <span class="dg-badge <?= $bookingStatus === 'cancelled' ? 'dg-badge--muted' : 'dg-badge--ok' ?>">
+                    <?= View::escape($bookingStatusLabels[$bookingStatus] ?? $bookingStatus) ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected && $bookingStatus !== 'cancelled') : ?>
+                    <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
+                      <button type="submit" class="dg-button dg-button--small" name="machine_booking_cancel" value="1">Stornieren</button>
                     </form>
                   <?php endif; ?>
                 </td>

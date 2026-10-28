@@ -2093,6 +2093,32 @@ switch ($path) {
             exit;
         }
 
+        // POST: Maschinen-Belegungsfenster (M3b)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['machine_booking_save']) || isset($_POST['machine_booking_cancel']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    if (isset($_POST['machine_booking_cancel'])) {
+                        MachinePlanningRepository::cancelBookingWindow((int) ($_POST['booking_window_id'] ?? 0));
+                        Flash::set('success', 'Belegungsfenster storniert.');
+                    } else {
+                        MachinePlanningRepository::createBookingWindow($_POST);
+                        Flash::set('success', 'Belegungsfenster gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#booking', true, 302);
+            exit;
+        }
+
         // POST: Work Center speichern/löschen (R2)
         if (
             $page === 'rezeptur-maschine-form'
@@ -5290,6 +5316,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 $machineCapacityProfiles = MachinePlanningRepository::listCapacityProfiles(null, false);
                 $machineMaintenancePlans = MachinePlanningRepository::listMaintenancePlans(null, false);
                 $machineMaintenanceLogs = MachinePlanningRepository::listMaintenanceLogs();
+                $machineBookingWindows = MachinePlanningRepository::listBookingWindows(null, null, null, false);
+                $machineRecipeOptions = RecipeRepository::listAll();
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $contentTemplate = 'modules/rezeptur-maschinen';
@@ -8320,6 +8348,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $machineCapacityProfiles = $machineCapacityProfiles ?? [];
         $machineMaintenancePlans = $machineMaintenancePlans ?? [];
         $machineMaintenanceLogs = $machineMaintenanceLogs ?? [];
+        $machineBookingWindows = $machineBookingWindows ?? [];
+        $machineRecipeOptions = $machineRecipeOptions ?? [];
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8818,6 +8848,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'machineCapacityProfiles',
             'machineMaintenancePlans',
             'machineMaintenanceLogs',
+            'machineBookingWindows',
+            'machineRecipeOptions',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',
