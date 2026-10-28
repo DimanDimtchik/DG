@@ -2,6 +2,7 @@
 /**
  * @var list<array<string, mixed>> $workCenterList
  * @var list<array<string, mixed>> $machineCapacityProfiles
+ * @var list<array<string, mixed>> $machineMaintenancePlans
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -10,12 +11,32 @@
  */
 $centers = $workCenterList ?? [];
 $capacityProfiles = $machineCapacityProfiles ?? [];
+$maintenancePlans = $machineMaintenancePlans ?? [];
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
 foreach ($centers as $center) {
     $centerNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
 }
+$intervalLabels = [
+    'days' => 'Tage',
+    'runtime_hours' => 'Laufstunden',
+    'cycles' => 'Zyklen',
+];
+$formatHelperMaterials = static function (mixed $json): string {
+    if (!is_string($json) || trim($json) === '') {
+        return '';
+    }
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $items = array_values(array_filter(array_map(
+            static fn (mixed $item): string => trim((string) $item),
+            $decoded
+        )));
+        return implode(', ', $items);
+    }
+    return trim($json);
+};
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -250,6 +271,134 @@ foreach ($centers as $center) {
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="capacity_profile_id" value="<?= $profileId ?>">
                       <button type="submit" class="dg-button dg-button--small" name="machine_capacity_deactivate" value="1">Deaktivieren</button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dg-card" id="maintenance" style="margin-top:20px;padding:16px;">
+    <h2 class="dg-subsection-title" style="margin-top:0;">Wartungspläne (M2a)</h2>
+    <p class="dg-field-hint">
+      Erfasst den geplanten Turnus, erwartete Ausfallzeit, Hilfsmittel und Kosten.
+      Keine Wartungsprotokolle, keine Kalenderbelegung und keine FiBu-Buchung.
+    </p>
+
+    <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#maintenance" class="dg-form" style="margin-bottom:16px;">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Maschine</span>
+            <select name="work_center_id" required>
+              <?php foreach ($centers as $center) : ?>
+                <?php $cid = (int) ($center['id'] ?? 0); ?>
+                <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Titel</span>
+            <input name="title" required maxlength="191" placeholder="z. B. Monatswartung Mischer">
+          </label>
+          <label class="dg-field">
+            <span>Turnus nach</span>
+            <select name="interval_type">
+              <?php foreach ($intervalLabels as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Intervallwert</span>
+            <input name="interval_value" inputmode="decimal" value="30">
+          </label>
+          <label class="dg-field">
+            <span>Ausfallzeit (Min.)</span>
+            <input name="planned_downtime_minutes" type="number" min="0" step="1" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Materialkosten geschätzt</span>
+            <input name="estimated_material_cost" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Servicekosten geschätzt</span>
+            <input name="estimated_service_cost" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Nächster Termin</span>
+            <input type="date" name="next_due_date">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Hilfsmittel / Ersatzteile</span>
+            <textarea name="helper_materials_text" rows="2" maxlength="1000" placeholder="Ein Eintrag pro Zeile, z. B. Schmiermittel&#10;Dichtung"></textarea>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_maintenance_plan_save" value="1">Wartungsplan speichern</button>
+        </div>
+      </form>
+    <?php elseif ($centers === []) : ?>
+      <p class="dg-muted">Erst eine Maschine anlegen, dann Wartungspläne erfassen.</p>
+    <?php endif; ?>
+
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Maschine</th>
+            <th>Wartung</th>
+            <th>Turnus</th>
+            <th>Nächster Termin</th>
+            <th>Ausfall</th>
+            <th>Kosten</th>
+            <th>Hilfsmittel</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($maintenancePlans === []) : ?>
+            <tr>
+              <td colspan="9" class="dg-table__empty">Noch keine Wartungspläne.</td>
+            </tr>
+          <?php else : ?>
+            <?php foreach ($maintenancePlans as $plan) : ?>
+              <?php
+                $planId = (int) ($plan['id'] ?? 0);
+                $planActive = !empty($plan['is_active']);
+                $wcId = (int) ($plan['work_center_id'] ?? 0);
+                $intervalType = (string) ($plan['interval_type'] ?? 'days');
+                $estimatedCost = (float) ($plan['estimated_material_cost'] ?? 0) + (float) ($plan['estimated_service_cost'] ?? 0);
+                $helpers = $formatHelperMaterials($plan['helper_materials_json'] ?? null);
+              ?>
+              <tr<?= $planActive ? '' : ' style="opacity:0.55;"' ?>>
+                <td><?= View::escape($centerNames[$wcId] ?? ('#' . $wcId)) ?></td>
+                <td><strong><?= View::escape((string) ($plan['title'] ?? '')) ?></strong></td>
+                <td>
+                  <?= View::escape((string) ($plan['interval_value'] ?? '0')) ?>
+                  <?= View::escape($intervalLabels[$intervalType] ?? $intervalType) ?>
+                </td>
+                <td><?= View::escape((string) ($plan['next_due_date'] ?? '')) ?></td>
+                <td><?= (int) ($plan['planned_downtime_minutes'] ?? 0) ?> Min.</td>
+                <td><?= View::escape(RecipeCostService::formatEur($estimatedCost, 2)) ?></td>
+                <td><?= $helpers !== '' ? View::escape($helpers) : '<span class="dg-muted">—</span>' ?></td>
+                <td>
+                  <span class="dg-badge <?= $planActive ? 'dg-badge--ok' : 'dg-badge--muted' ?>">
+                    <?= $planActive ? 'aktiv' : 'inaktiv' ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected && $planActive) : ?>
+                    <form method="post" action="/app?page=rezeptur-maschinen#maintenance" style="display:inline;">
+                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="maintenance_plan_id" value="<?= $planId ?>">
+                      <button type="submit" class="dg-button dg-button--small" name="machine_maintenance_plan_deactivate" value="1">Deaktivieren</button>
                     </form>
                   <?php endif; ?>
                 </td>

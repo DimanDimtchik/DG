@@ -2039,6 +2039,39 @@ switch ($path) {
             exit;
         }
 
+        // POST: Maschinen-Wartungsplan (M2a)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['machine_maintenance_plan_save']) || isset($_POST['machine_maintenance_plan_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    if (isset($_POST['machine_maintenance_plan_deactivate'])) {
+                        MachinePlanningRepository::deactivateMaintenancePlan((int) ($_POST['maintenance_plan_id'] ?? 0));
+                        Flash::set('success', 'Wartungsplan deaktiviert.');
+                    } else {
+                        $data = $_POST;
+                        $helperLines = array_values(array_filter(array_map(
+                            static fn (string $line): string => trim($line),
+                            preg_split('/\R/u', (string) ($_POST['helper_materials_text'] ?? '')) ?: []
+                        )));
+                        $data['helper_materials_json'] = $helperLines === [] ? null : $helperLines;
+                        $data['is_active'] = 1;
+                        MachinePlanningRepository::createMaintenancePlan($data);
+                        Flash::set('success', 'Wartungsplan gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#maintenance', true, 302);
+            exit;
+        }
+
         // POST: Work Center speichern/löschen (R2)
         if (
             $page === 'rezeptur-maschine-form'
@@ -5234,6 +5267,7 @@ $legalProductsConfig = LegalProductSettings::config();
             } elseif ($page === 'rezeptur-maschinen') {
                 $workCenterList = WorkCenterRepository::listAll(false);
                 $machineCapacityProfiles = MachinePlanningRepository::listCapacityProfiles(null, false);
+                $machineMaintenancePlans = MachinePlanningRepository::listMaintenancePlans(null, false);
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $contentTemplate = 'modules/rezeptur-maschinen';
@@ -8262,6 +8296,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $recipeAuxiliaryMaterials = $recipeAuxiliaryMaterials ?? [];
         $workCenterList = $workCenterList ?? [];
         $machineCapacityProfiles = $machineCapacityProfiles ?? [];
+        $machineMaintenancePlans = $machineMaintenancePlans ?? [];
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8758,6 +8793,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'recipeAuxiliaryMaterials',
             'workCenterList',
             'machineCapacityProfiles',
+            'machineMaintenancePlans',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',
