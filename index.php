@@ -5338,13 +5338,20 @@ $legalProductsConfig = LegalProductSettings::config();
                 );
                 $machineRecipeOptions = RecipeRepository::listAll();
                 if (($_GET['booking_export'] ?? '') === 'csv') {
+                    $exportRates = RecipeCostSettings::get();
                     $workCenterNames = [];
+                    $workCenterHourlyCosts = [];
                     foreach ($workCenterList as $center) {
-                        $workCenterNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
+                        $centerId = (int) ($center['id'] ?? 0);
+                        $workCenterNames[$centerId] = (string) ($center['name'] ?? '');
+                        $workCenterHourlyCosts[$centerId] = RecipeCostService::breakdown($center, $exportRates);
                     }
                     $maintenancePlanNames = [];
+                    $maintenancePlanEstimatedCosts = [];
                     foreach ($machineMaintenancePlans as $plan) {
-                        $maintenancePlanNames[(int) ($plan['id'] ?? 0)] = (string) ($plan['title'] ?? '');
+                        $planId = (int) ($plan['id'] ?? 0);
+                        $maintenancePlanNames[$planId] = (string) ($plan['title'] ?? '');
+                        $maintenancePlanEstimatedCosts[$planId] = (float) ($plan['estimated_material_cost'] ?? 0) + (float) ($plan['estimated_service_cost'] ?? 0);
                     }
                     $recipeNames = [];
                     foreach ($machineRecipeOptions as $recipe) {
@@ -5361,6 +5368,47 @@ $legalProductsConfig = LegalProductSettings::config();
                         'done' => 'erledigt',
                         'cancelled' => 'storniert',
                     ];
+                    $exportSummary = [
+                        'total_hours' => 0.0,
+                        'production_hours' => 0.0,
+                        'maintenance_hours' => 0.0,
+                        'blocked_hours' => 0.0,
+                        'other_hours' => 0.0,
+                        'estimated_maintenance_cost' => 0.0,
+                        'machine_cost' => 0.0,
+                        'loaded_cost' => 0.0,
+                    ];
+                    foreach ($machineBookingWindows as $booking) {
+                        if (($booking['booking_status'] ?? '') === 'cancelled') {
+                            continue;
+                        }
+                        $bookingStart = strtotime((string) ($booking['starts_at'] ?? ''));
+                        $bookingEnd = strtotime((string) ($booking['ends_at'] ?? ''));
+                        if ($bookingStart === false || $bookingEnd === false || $bookingEnd <= $bookingStart) {
+                            continue;
+                        }
+                        $hours = ($bookingEnd - $bookingStart) / 3600;
+                        $exportSummary['total_hours'] += $hours;
+                        $hourlyCosts = $workCenterHourlyCosts[(int) ($booking['work_center_id'] ?? 0)] ?? null;
+                        if (is_array($hourlyCosts)) {
+                            $exportSummary['machine_cost'] += $hours * (float) ($hourlyCosts['machine_per_h'] ?? 0);
+                            $exportSummary['loaded_cost'] += $hours * (float) ($hourlyCosts['loaded_per_h'] ?? 0);
+                        }
+                        $type = (string) ($booking['booking_type'] ?? 'other');
+                        if ($type === 'production') {
+                            $exportSummary['production_hours'] += $hours;
+                        } elseif ($type === 'maintenance') {
+                            $exportSummary['maintenance_hours'] += $hours;
+                        } elseif ($type === 'blocked') {
+                            $exportSummary['blocked_hours'] += $hours;
+                        } else {
+                            $exportSummary['other_hours'] += $hours;
+                        }
+                        $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
+                        if ($planId > 0) {
+                            $exportSummary['estimated_maintenance_cost'] += $maintenancePlanEstimatedCosts[$planId] ?? 0.0;
+                        }
+                    }
                     header('Content-Type: text/csv; charset=utf-8');
                     header('Content-Disposition: attachment; filename="maschinen-belegung.csv"');
                     $out = fopen('php://output', 'wb');
@@ -5368,6 +5416,19 @@ $legalProductsConfig = LegalProductSettings::config();
                         exit;
                     }
                     fwrite($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Auswertung', 'Maschinenbelegung'], ';');
+                    fputcsv($out, ['Filter Maschine', $machineBookingFilterWorkCenterId > 0 ? ($workCenterNames[$machineBookingFilterWorkCenterId] ?? ('#' . $machineBookingFilterWorkCenterId)) : 'Alle'], ';');
+                    fputcsv($out, ['Filter von', $machineBookingFilterFrom], ';');
+                    fputcsv($out, ['Filter bis', $machineBookingFilterTo], ';');
+                    fputcsv($out, ['Gesamtstunden', number_format($exportSummary['total_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Produktionsstunden', number_format($exportSummary['production_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Wartungsstunden', number_format($exportSummary['maintenance_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Sperrzeitstunden', number_format($exportSummary['blocked_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Sonstige Stunden', number_format($exportSummary['other_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Wartungskosten geschätzt', number_format($exportSummary['estimated_maintenance_cost'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Maschinenkosten Vorschlag', number_format($exportSummary['machine_cost'], 2, ',', '.')], ';');
+                    fputcsv($out, ['inkl. Lohn Vorschlag', number_format($exportSummary['loaded_cost'], 2, ',', '.')], ';');
+                    fputcsv($out, [], ';');
                     fputcsv($out, ['Maschine', 'Typ', 'Titel', 'Start', 'Ende', 'Rezeptur', 'Wartungsplan', 'Output', 'Einheit', 'Status', 'Notiz'], ';');
                     foreach ($machineBookingWindows as $booking) {
                         $recipeId = (int) ($booking['recipe_id'] ?? 0);
