@@ -20,8 +20,9 @@
 - [ ] **Stichprobe gemischte Steuersätze** 19 % / 7 % / 0 % auf einem Beleg
 - [ ] **§19 / §13b / PV §12 Abs. 3** Klauseln am Druck prüfen (Firma-Flags in Einstellungen)
 - [ ] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Klausel §12 Abs. 3 wie bei §19 automatisch setzen (heute manuell)
-- [ ] **ARAP:** automatischer Prozent-Vorschlag aus Belegdatum (Restlaufzeit)  
-  → [`buchhaltung-todo.html`](buchhaltung-todo.html) §4
+- [x] **ARAP:** automatischer Prozent-Vorschlag aus Liefer-/Belegdatum (Restlaufzeit) ist im Belegformular-Code vorhanden.
+  Wichtig Jahresabschluss: kein zweiter ARAP-Prozess bauen — `VoucherAccrual` splittet die Belegbuchung und `LedgerPostingService` erzeugt die Auflösung zum 01.01. des Folgejahres; der Jahresabschluss sperrt/übernimmt danach nur die bestehenden Buchungen.
+  → `assets/js/buchhaltung-belege.js` · `src/Accounting/VoucherAccrual.php` · `src/Accounting/LedgerPostingService.php`
 - [x] **Kontohinweise** redaktionell geprüft (SKR-Hilfetexte) — Bewirtung: 70-%-Grenze als Betriebsausgabenabzug, Vorsteuer nicht pauschal kuerzen
 
 ### A2 · Manuelle Tests (ganz-soft.de / Master)
