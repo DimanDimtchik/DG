@@ -152,7 +152,7 @@ final class VoucherDocumentMailService
         }
 
         try {
-            VoucherRepository::updateDocumentStatus($voucherId, VoucherDocumentStatus::SENT);
+            VoucherRepository::updateDocumentStatus($voucherId, VoucherDocumentStatus::SENT, null, 'mail_send');
         } catch (Throwable) {
             // Versand darf nicht fehlschlagen, wenn Status nicht gesetzt werden kann.
         }

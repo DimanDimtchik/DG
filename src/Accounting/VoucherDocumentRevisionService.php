@@ -8,6 +8,7 @@ final class VoucherDocumentRevisionService
 {
     /**
      * Status, nach denen der Beleginhalt nicht mehr überschrieben werden darf.
+     * Geschlossene Status bleiben ebenfalls gesperrt, damit Storno-/Ablaufspuren pruefbar bleiben.
      *
      * @return list<string>
      */
@@ -17,6 +18,8 @@ final class VoucherDocumentRevisionService
             VoucherDocumentStatus::SENT,
             VoucherDocumentStatus::BILLED,
             VoucherDocumentStatus::ACCEPTED,
+            VoucherDocumentStatus::CANCELLED,
+            VoucherDocumentStatus::EXPIRED,
         ];
     }
 
@@ -70,7 +73,7 @@ final class VoucherDocumentRevisionService
     }
 
     /** Druck/PDF an Kunden: Entwurf → Versendet. */
-    public static function markSentOnPrint(int $voucherId): void
+    public static function markSentOnPrint(int $voucherId, ?int $userId = null): void
     {
         if ($voucherId < 1 || !Database::isConfigured()) {
             return;
@@ -94,7 +97,7 @@ final class VoucherDocumentRevisionService
         if (!VoucherDocumentStatus::isValidForKind(VoucherDocumentStatus::SENT, $kind)) {
             return;
         }
-        VoucherRepository::updateDocumentStatus($voucherId, VoucherDocumentStatus::SENT);
+        VoucherRepository::updateDocumentStatus($voucherId, VoucherDocumentStatus::SENT, $userId, 'print');
     }
 
     /**
@@ -117,9 +120,10 @@ final class VoucherDocumentRevisionService
         }
 
         $newStatusWanted = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
+        $oldStatus = VoucherDocumentStatus::sanitize((string) ($existing['document_status'] ?? ''));
         // Reines Stornieren ohne Inhalt neu: nur Status setzen.
         if ($newStatusWanted === VoucherDocumentStatus::CANCELLED) {
-            VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED);
+            VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED, $userId, 'revision_cancel');
 
             return [
                 'new_id' => $existingId,
@@ -135,7 +139,10 @@ final class VoucherDocumentRevisionService
             $oldLabel = 'Beleg';
         }
 
-        VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED);
+        $willCancelExisting = !VoucherDocumentStatus::isClosed($oldStatus);
+        if ($willCancelExisting) {
+            VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED, $userId, 'revision');
+        }
 
         $data['id'] = '';
         $data['document_status'] = VoucherDocumentStatus::DRAFT;
@@ -164,11 +171,20 @@ final class VoucherDocumentRevisionService
 
         $newId = VoucherRepository::save($data, null, $userId);
 
-        $msg = 'Alter Beleg storniert'
-            . ($oldNumber !== '' ? ' (' . $oldNumber . ')' : '')
-            . '. Korrektur als neuer Entwurf angelegt — bitte prüfen, speichern und erneut versenden.';
+        self::recordRevisionAudit($existingId, $newId, $userId, [
+            'document_kind' => $oldKind,
+            'old_status' => $oldStatus,
+            'old_invoice_number' => $oldNumber,
+            'existing_cancelled' => $willCancelExisting,
+        ]);
+
+        $msg = $willCancelExisting
+            ? ('Alter Beleg storniert'
+                . ($oldNumber !== '' ? ' (' . $oldNumber . ')' : '')
+                . '. Korrektur als neuer Entwurf angelegt — bitte prüfen, speichern und erneut versenden.')
+            : ('Alter Beleg bleibt unverändert. Korrektur als neuer Entwurf angelegt — bitte prüfen, speichern und erneut versenden.');
         if (VoucherPaymentRepository::totalPaid($existingId) > 0.01) {
-            $msg .= ' Hinweis: Vorhandene Zahlungen bleiben am stornierten Beleg — bei Bedarf neu zuordnen.';
+            $msg .= ' Hinweis: Vorhandene Zahlungen bleiben am Ursprungsbeleg — bei Bedarf neu zuordnen.';
         }
 
         return [
@@ -176,5 +192,18 @@ final class VoucherDocumentRevisionService
             'cancelled_id' => $existingId,
             'message' => $msg,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function recordRevisionAudit(int $oldId, int $newId, ?int $userId, array $context): void
+    {
+        $details = [
+            'old_voucher_id' => $oldId,
+            'new_voucher_id' => $newId,
+        ] + $context;
+        $json = json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        AuditLog::record('voucher_document_revision_created', $userId, is_string($json) ? $json : null);
     }
 }

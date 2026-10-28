@@ -3871,7 +3871,7 @@ switch ($path) {
                     ? VoucherDocumentKind::sanitize((string) ($before['document_kind'] ?? ''))
                     : '';
                 $newStatus = VoucherDocumentStatus::sanitize((string) ($_POST['document_status'] ?? ''));
-                VoucherRepository::updateDocumentStatus($voucherId, $newStatus);
+                VoucherRepository::updateDocumentStatus($voucherId, $newStatus, $user->id, 'workflow');
                 $stockWarnings = StockReservationService::takeLastWarnings();
                 if (
                     $kind === VoucherDocumentKind::OFFER
@@ -5802,7 +5802,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $voucher = VoucherDocumentStatus::markOfferExpiredIfDue($voucher);
                 if (trim((string) ($_GET['download'] ?? '')) === 'print') {
                     try {
-                        VoucherDocumentRevisionService::markSentOnPrint($voucherId);
+                        VoucherDocumentRevisionService::markSentOnPrint($voucherId, $user->id);
                         $voucher = VoucherRepository::findById($voucherId) ?? $voucher;
                         $showChainInternal = trim((string) ($_GET['show_chain'] ?? '')) === '1';
                         $html = VoucherDocumentPrintService::render($voucher, [

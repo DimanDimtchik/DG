@@ -679,6 +679,11 @@ final class VoucherRepository
             $existing = self::findById($id);
             if ($existing !== null) {
                 self::assertEditableFiscalYear((string) ($existing['voucher_date'] ?? ''));
+                if (VoucherDocumentRevisionService::isImmutable($existing)) {
+                    throw new InvalidArgumentException(
+                        'Dieser Ausgangsbeleg ist GoBD-gesperrt. Bitte Storno/Korrekturpfad nutzen; der Ursprungsbeleg darf nicht überschrieben werden.'
+                    );
+                }
             }
         }
 
@@ -1714,7 +1719,7 @@ final class VoucherRepository
     /**
      * Dokumentstatus setzen (Workflow, ohne vollständiges Formular).
      */
-    public static function updateDocumentStatus(int $voucherId, string $status): void
+    public static function updateDocumentStatus(int $voucherId, string $status, ?int $userId = null, string $source = 'workflow'): void
     {
         if (!Database::isConfigured() || $voucherId < 1) {
             throw new InvalidArgumentException('Beleg nicht gefunden.');
@@ -1723,7 +1728,7 @@ final class VoucherRepository
         MigrationRunner::runPending();
         // Ohne enrichRow/findById — sonst Rekursion mit markOfferExpiredIfDue.
         $stmt = Database::pdo()->prepare(
-            'SELECT voucher_type, document_kind FROM dg_vouchers WHERE id = :id LIMIT 1'
+            'SELECT voucher_type, document_kind, document_status FROM dg_vouchers WHERE id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $voucherId]);
         $voucher = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1740,6 +1745,7 @@ final class VoucherRepository
         if ($status === '' || !VoucherDocumentStatus::isValidForKind($status, $documentKind)) {
             throw new InvalidArgumentException('Ungültiger Dokumentstatus.');
         }
+        $previousStatus = VoucherDocumentStatus::sanitize((string) ($voucher['document_status'] ?? ''));
 
         $stmt = Database::pdo()->prepare(
             'UPDATE dg_vouchers SET document_status = :document_status WHERE id = :id'
@@ -1751,6 +1757,17 @@ final class VoucherRepository
 
         StockMovementService::syncForVoucher($voucherId, null);
         StockReservationService::syncForVoucher($voucherId);
+        if ($previousStatus !== $status) {
+            $details = [
+                'voucher_id' => $voucherId,
+                'document_kind' => $documentKind,
+                'old_status' => $previousStatus,
+                'new_status' => $status,
+                'source' => mb_substr(trim($source) !== '' ? trim($source) : 'workflow', 0, 50),
+            ];
+            $json = json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            AuditLog::record('voucher_document_status_change', $userId, is_string($json) ? $json : null);
+        }
     }
 
     /**

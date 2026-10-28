@@ -97,7 +97,7 @@ final class OfferAcceptanceMailService
                     && $current !== VoucherDocumentStatus::EXPIRED
                     && $current !== VoucherDocumentStatus::ACCEPTED
                 ) {
-                    VoucherRepository::updateDocumentStatus($offerId, VoucherDocumentStatus::ACCEPTED);
+                    VoucherRepository::updateDocumentStatus($offerId, VoucherDocumentStatus::ACCEPTED, null, 'mail_acceptance');
                 }
             } catch (Throwable) {
             }
