@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+define('DG_ROOT', dirname(__DIR__));
+
 require_once __DIR__ . '/../src/autoload.php';
 
 $recipe = [
