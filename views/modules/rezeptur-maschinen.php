@@ -94,6 +94,10 @@ $bookingSummary = [
     'estimated_maintenance_cost' => 0.0,
     'machine_cost' => 0.0,
     'loaded_cost' => 0.0,
+    'production_machine_cost' => 0.0,
+    'maintenance_machine_cost' => 0.0,
+    'blocked_machine_cost' => 0.0,
+    'other_machine_cost' => 0.0,
 ];
 foreach ($bookingWindows as $booking) {
     if (($booking['booking_status'] ?? '') === 'cancelled') {
@@ -106,20 +110,26 @@ foreach ($bookingWindows as $booking) {
     }
     $hours = ($bookingEnd - $bookingStart) / 3600;
     $bookingSummary['total_hours'] += $hours;
+    $machineCostForBooking = 0.0;
     $hourlyCosts = $centerHourlyCosts[(int) ($booking['work_center_id'] ?? 0)] ?? null;
     if (is_array($hourlyCosts)) {
-        $bookingSummary['machine_cost'] += $hours * (float) ($hourlyCosts['machine_per_h'] ?? 0);
+        $machineCostForBooking = $hours * (float) ($hourlyCosts['machine_per_h'] ?? 0);
+        $bookingSummary['machine_cost'] += $machineCostForBooking;
         $bookingSummary['loaded_cost'] += $hours * (float) ($hourlyCosts['loaded_per_h'] ?? 0);
     }
     $type = (string) ($booking['booking_type'] ?? 'other');
     if ($type === 'production') {
         $bookingSummary['production_hours'] += $hours;
+        $bookingSummary['production_machine_cost'] += $machineCostForBooking;
     } elseif ($type === 'maintenance') {
         $bookingSummary['maintenance_hours'] += $hours;
+        $bookingSummary['maintenance_machine_cost'] += $machineCostForBooking;
     } elseif ($type === 'blocked') {
         $bookingSummary['blocked_hours'] += $hours;
+        $bookingSummary['blocked_machine_cost'] += $machineCostForBooking;
     } else {
         $bookingSummary['other_hours'] += $hours;
+        $bookingSummary['other_machine_cost'] += $machineCostForBooking;
     }
     $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
     if ($planId > 0) {
@@ -475,6 +485,12 @@ $formatHelperMaterials = static function (mixed $json): string {
         <div><span class="dg-muted">Wartungskosten geschätzt</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['estimated_maintenance_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">Maschinenkosten Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['machine_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">inkl. Lohn Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['loaded_cost'], 2)) ?></strong></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.9rem;border-top:1px dashed var(--dg-border,#ddd);margin-top:10px;padding-top:10px;">
+        <div><span class="dg-muted">Kosten Produktion</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['production_machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Kosten Wartung</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['maintenance_machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Kosten Sperrzeit</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['blocked_machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Kosten Sonstiges</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['other_machine_cost'], 2)) ?></strong></div>
       </div>
     </div>
 
