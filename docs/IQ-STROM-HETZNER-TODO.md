@@ -17,6 +17,7 @@
   Speichern darf versendete/abgerechnete Belege nicht still überschreiben; Storno → neuer Entwurf bleibt Regel.  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §3
 - [ ] **Stichprobe §14 UStG** je Dokumentart (Angebot, AB, Rechnung, Schluss, Gutschrift) — Druck/PDF
+  → [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
 - [ ] **Stichprobe gemischte Steuersätze** 19 % / 7 % / 0 % auf einem Beleg
 - [ ] **§19 / §13b / PV §12 Abs. 3** Klauseln am Druck prüfen (Firma-Flags in Einstellungen)
 - [ ] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Klausel §12 Abs. 3 wie bei §19 automatisch setzen (heute manuell)

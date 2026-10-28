@@ -197,3 +197,4 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `LAGER-WIRTSCHAFT.md` | Lager |
 | `KOMMUNIKATION-POSTFAECHER-TODO.md` | Kommunikation: Postfächer P1–P6 (eigene UI) |
 | `DOKUMENTENVERFASSER-TODO.md` | Dokumentenverfasser: Briefpapier + Editor (B/D) |
+| `USTG-14-DRUCKSTICHPROBE.md` | Manuelle §14-UStG Druck-/PDF-Stichprobe für Ausgangsbelege |
