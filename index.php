@@ -2108,8 +2108,17 @@ switch ($path) {
                         MachinePlanningRepository::cancelBookingWindow((int) ($_POST['booking_window_id'] ?? 0));
                         Flash::set('success', 'Belegungsfenster storniert.');
                     } else {
+                        $bookingConflicts = MachinePlanningRepository::listBookingConflicts(
+                            (int) ($_POST['work_center_id'] ?? 0),
+                            (string) ($_POST['starts_at'] ?? ''),
+                            (string) ($_POST['ends_at'] ?? '')
+                        );
                         MachinePlanningRepository::createBookingWindow($_POST);
-                        Flash::set('success', 'Belegungsfenster gespeichert.');
+                        if ($bookingConflicts !== []) {
+                            Flash::set('warning', 'Belegungsfenster gespeichert, aber es gibt ' . count($bookingConflicts) . ' Überschneidung(en) für diese Maschine.');
+                        } else {
+                            Flash::set('success', 'Belegungsfenster gespeichert.');
+                        }
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());

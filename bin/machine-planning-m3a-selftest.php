@@ -78,10 +78,16 @@ assertM3a((float) $all[0]['planned_output_qty'] === 120.5, 'Kommazahl fuer gepla
 
 $overlap = MachinePlanningRepository::listBookingWindows(1, '2026-10-28 09:00:00', '2026-10-28 07:00:00', true);
 assertM3a(count($overlap) === 1, 'Zeitfenster-Ueberlappung wird gefunden');
+$conflicts = MachinePlanningRepository::listBookingConflicts(1, '2026-10-28 09:00:00', '2026-10-28 09:30:00');
+assertM3a(count($conflicts) === 1, 'Konflikt fuer gleiche Maschine wird gefunden');
+$otherMachineConflicts = MachinePlanningRepository::listBookingConflicts(2, '2026-10-28 09:00:00', '2026-10-28 09:30:00');
+assertM3a($otherMachineConflicts === [], 'Andere Maschine wird nicht als Konflikt gewertet');
 
 MachinePlanningRepository::cancelBookingWindow($bookingId);
 $withoutCancelled = MachinePlanningRepository::listBookingWindows(1, null, null, true);
 assertM3a($withoutCancelled === [], 'Stornierte Belegung wird optional ausgeblendet');
+$conflictsAfterCancel = MachinePlanningRepository::listBookingConflicts(1, '2026-10-28 09:00:00', '2026-10-28 09:30:00');
+assertM3a($conflictsAfterCancel === [], 'Stornierte Belegung wird nicht als Konflikt gewertet');
 
 $failed = false;
 try {

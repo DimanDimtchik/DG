@@ -328,6 +328,22 @@ final class MachinePlanningRepository
         $stmt->execute(['id' => $id]);
     }
 
+    /** @return list<array<string, mixed>> */
+    public static function listBookingConflicts(int $workCenterId, string $startsAt, string $endsAt, ?int $ignoreId = null): array
+    {
+        $starts = self::dateTime($startsAt);
+        $ends = self::dateTime($endsAt);
+        if (strtotime($ends) <= strtotime($starts)) {
+            throw new InvalidArgumentException('Belegungsfenster braucht ein Ende nach dem Start.');
+        }
+        $rows = self::listBookingWindows($workCenterId, $ends, $starts, true);
+        if ($ignoreId !== null && $ignoreId > 0) {
+            $rows = array_values(array_filter($rows, static fn (array $row): bool => (int) ($row['id'] ?? 0) !== $ignoreId));
+        }
+
+        return $rows;
+    }
+
     private static function requireDatabase(): void
     {
         if (!Database::isConfigured()) {
