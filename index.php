@@ -5368,6 +5368,15 @@ $legalProductsConfig = LegalProductSettings::config();
                         'done' => 'erledigt',
                         'cancelled' => 'storniert',
                     ];
+                    $csvCell = static function (mixed $value): string {
+                        $text = (string) $value;
+                        $trimmed = ltrim($text);
+                        if ($trimmed !== '' && in_array($trimmed[0], ['=', '+', '-', '@'], true)) {
+                            return "'" . $text;
+                        }
+
+                        return $text;
+                    };
                     $exportSummary = [
                         'total_hours' => 0.0,
                         'production_hours' => 0.0,
@@ -5417,7 +5426,7 @@ $legalProductsConfig = LegalProductSettings::config();
                     }
                     fwrite($out, "\xEF\xBB\xBF");
                     fputcsv($out, ['Auswertung', 'Maschinenbelegung'], ';');
-                    fputcsv($out, ['Filter Maschine', $machineBookingFilterWorkCenterId > 0 ? ($workCenterNames[$machineBookingFilterWorkCenterId] ?? ('#' . $machineBookingFilterWorkCenterId)) : 'Alle'], ';');
+                    fputcsv($out, ['Filter Maschine', $csvCell($machineBookingFilterWorkCenterId > 0 ? ($workCenterNames[$machineBookingFilterWorkCenterId] ?? ('#' . $machineBookingFilterWorkCenterId)) : 'Alle')], ';');
                     fputcsv($out, ['Filter von', $machineBookingFilterFrom], ';');
                     fputcsv($out, ['Filter bis', $machineBookingFilterTo], ';');
                     fputcsv($out, ['Gesamtstunden', number_format($exportSummary['total_hours'], 2, ',', '.')], ';');
@@ -5436,17 +5445,17 @@ $legalProductsConfig = LegalProductSettings::config();
                         $type = (string) ($booking['booking_type'] ?? 'other');
                         $status = (string) ($booking['booking_status'] ?? 'planned');
                         fputcsv($out, [
-                            $workCenterNames[(int) ($booking['work_center_id'] ?? 0)] ?? ('#' . (int) ($booking['work_center_id'] ?? 0)),
-                            $typeLabels[$type] ?? $type,
-                            (string) ($booking['title'] ?? ''),
+                            $csvCell($workCenterNames[(int) ($booking['work_center_id'] ?? 0)] ?? ('#' . (int) ($booking['work_center_id'] ?? 0))),
+                            $csvCell($typeLabels[$type] ?? $type),
+                            $csvCell($booking['title'] ?? ''),
                             (string) ($booking['starts_at'] ?? ''),
                             (string) ($booking['ends_at'] ?? ''),
-                            $recipeId > 0 ? ($recipeNames[$recipeId] ?? ('#' . $recipeId)) : '',
-                            $planId > 0 ? ($maintenancePlanNames[$planId] ?? ('#' . $planId)) : '',
+                            $csvCell($recipeId > 0 ? ($recipeNames[$recipeId] ?? ('#' . $recipeId)) : ''),
+                            $csvCell($planId > 0 ? ($maintenancePlanNames[$planId] ?? ('#' . $planId)) : ''),
                             (string) ($booking['planned_output_qty'] ?? '0'),
-                            (string) ($booking['unit'] ?? ''),
-                            $statusLabels[$status] ?? $status,
-                            (string) ($booking['notes'] ?? ''),
+                            $csvCell($booking['unit'] ?? ''),
+                            $csvCell($statusLabels[$status] ?? $status),
+                            $csvCell($booking['notes'] ?? ''),
                         ], ';');
                     }
                     exit;
