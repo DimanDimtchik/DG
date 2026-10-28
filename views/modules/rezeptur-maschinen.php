@@ -24,6 +24,36 @@ $recipeOptions = $machineRecipeOptions ?? [];
 $bookingFilterWorkCenterId = (int) ($machineBookingFilterWorkCenterId ?? 0);
 $bookingFilterFrom = (string) ($machineBookingFilterFrom ?? '');
 $bookingFilterTo = (string) ($machineBookingFilterTo ?? '');
+$bookingQuickBase = ['page' => 'rezeptur-maschinen'];
+if ($bookingFilterWorkCenterId > 0) {
+    $bookingQuickBase['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
+}
+$bookingToday = new DateTimeImmutable('today');
+$bookingQuickRanges = [
+    [
+        'label' => 'Heute',
+        'from' => $bookingToday->format('Y-m-d'),
+        'to' => $bookingToday->format('Y-m-d'),
+    ],
+    [
+        'label' => 'Nächste 7 Tage',
+        'from' => $bookingToday->format('Y-m-d'),
+        'to' => $bookingToday->modify('+6 days')->format('Y-m-d'),
+    ],
+    [
+        'label' => 'Dieser Monat',
+        'from' => $bookingToday->modify('first day of this month')->format('Y-m-d'),
+        'to' => $bookingToday->modify('last day of this month')->format('Y-m-d'),
+    ],
+];
+$bookingQuickHref = static function (array $range) use ($bookingQuickBase): string {
+    $query = $bookingQuickBase + [
+        'booking_from' => (string) $range['from'],
+        'booking_to' => (string) $range['to'],
+    ];
+
+    return '/app?' . http_build_query($query) . '#booking';
+};
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
@@ -380,6 +410,9 @@ $formatHelperMaterials = static function (mixed $json): string {
       <div class="dg-form-actions">
         <button type="submit" class="dg-button">Belegung filtern</button>
         <a class="dg-button" href="/app?page=rezeptur-maschinen#booking">Filter zurücksetzen</a>
+        <?php foreach ($bookingQuickRanges as $range) : ?>
+          <a class="dg-button" href="<?= View::escape($bookingQuickHref($range)) ?>"><?= View::escape((string) $range['label']) ?></a>
+        <?php endforeach; ?>
       </div>
     </form>
 
