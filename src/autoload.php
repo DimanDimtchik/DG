@@ -425,6 +425,7 @@ spl_autoload_register(static function (string $class): void {
         'RecipeSnapshotRepository' => '/src/Recipe/RecipeSnapshotRepository.php',
         'RecipeCostApi' => '/src/Recipe/RecipeCostApi.php',
         'RecipeActualRepository' => '/src/Recipe/RecipeActualRepository.php',
+        'MachinePlanningRepository' => '/src/Recipe/MachinePlanningRepository.php',
     ];
 
     if (!isset($map[$class])) {
