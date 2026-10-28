@@ -2,12 +2,12 @@
 declare(strict_types=1);
 
 /**
- * Daily automatic backup of database and customer-specific files.
+ * Daily automatic backup of database and instance-specific files.
  *
  * Backs up:
  * - Full database dump (mysqldump via exec or PDO fallback)
- * - storage/ directory (media, mail archives, contacts, logs)
- * - config/database.local.php, config/app.local.php
+ * - storage/ directory (vouchers, uploads, mail archives, logs and state files)
+ * - config/*.local.php
  *
  * Does NOT back up general CRM code (src/, views/, assets/) — those come from the update system.
  */
@@ -16,6 +16,7 @@ final class BackupService
     private const STATE_FILE = '/storage/backup-state.json';
     private const BACKUP_DIR = '/storage/backups';
     private const MAX_BACKUPS = 14; // keep 2 weeks
+    private const STORAGE_EXCLUDED_DIRS = ['backups', 'cache'];
 
     /**
      * Run daily backup if due (called from App::boot).
@@ -211,30 +212,42 @@ final class BackupService
 
     // ── File backup ─────────────────────────────────────────────────
 
-    /** Kopiert storage/* und lokale Config-Dateien in files/. */
+    /** Kopiert Instanzdaten aus storage/ und lokale Config-Dateien in files/. */
     private static function backupFiles(string $backupPath): void
     {
         $filesDir = $backupPath . '/files';
         mkdir($filesDir, 0750, true);
 
-        $customerDirs = ['storage/media', 'storage/mail', 'storage/contacts', 'storage/logs'];
-        foreach ($customerDirs as $relPath) {
-            $src = DG_ROOT . '/' . $relPath;
-            if (is_dir($src)) {
-                self::copyDir($src, $filesDir . '/' . $relPath);
-            }
+        self::copyInstanceStorage($filesDir);
+        self::copyLocalConfigs($filesDir);
+    }
+
+    private static function copyInstanceStorage(string $filesDir): void
+    {
+        $src = DG_ROOT . '/storage';
+        if (!is_dir($src)) {
+            return;
         }
 
-        $configFiles = ['config/database.local.php', 'config/app.local.php'];
-        foreach ($configFiles as $relPath) {
-            $src = DG_ROOT . '/' . $relPath;
-            if (file_exists($src)) {
-                $destDir = $filesDir . '/' . dirname($relPath);
-                if (!is_dir($destDir)) {
-                    mkdir($destDir, 0750, true);
-                }
-                copy($src, $filesDir . '/' . $relPath);
+        $excluded = array_map(
+            static fn (string $dir): string => 'storage/' . $dir,
+            self::STORAGE_EXCLUDED_DIRS
+        );
+        self::copyDir($src, $filesDir . '/storage', $excluded);
+    }
+
+    private static function copyLocalConfigs(string $filesDir): void
+    {
+        $configFiles = glob(DG_ROOT . '/config/*.local.php') ?: [];
+        foreach ($configFiles as $src) {
+            if (!is_file($src)) {
+                continue;
             }
+            $destDir = $filesDir . '/config';
+            if (!is_dir($destDir)) {
+                mkdir($destDir, 0750, true);
+            }
+            copy($src, $destDir . '/' . basename($src));
         }
     }
 
@@ -269,7 +282,7 @@ final class BackupService
     }
 
     /** Rekursives Kopieren eines Verzeichnisses. */
-    private static function copyDir(string $src, string $dst): void
+    private static function copyDir(string $src, string $dst, array $excludedRelativePaths = []): void
     {
         if (!is_dir($dst)) {
             mkdir($dst, 0750, true);
@@ -281,12 +294,25 @@ final class BackupService
             if ($item === '.' || $item === '..') continue;
             $s = $src . '/' . $item;
             $d = $dst . '/' . $item;
+            if (in_array(self::relativePath($s), $excludedRelativePaths, true)) {
+                continue;
+            }
             if (is_dir($s)) {
-                self::copyDir($s, $d);
+                self::copyDir($s, $d, $excludedRelativePaths);
             } else {
                 copy($s, $d);
             }
         }
+    }
+
+    private static function relativePath(string $path): string
+    {
+        $root = rtrim(str_replace('\\', '/', DG_ROOT), '/') . '/';
+        $normalized = str_replace('\\', '/', $path);
+        if (str_starts_with($normalized, $root)) {
+            return substr($normalized, strlen($root));
+        }
+        return ltrim($normalized, '/');
     }
 
     /** Rekursives Löschen eines Verzeichnisses. */

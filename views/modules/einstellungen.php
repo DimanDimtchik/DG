@@ -49,6 +49,8 @@
       <div class="dg-settings-main__body">
         <?php if ($settingsSelection['template'] === 'database') : ?>
           <?php View::render('settings/tab-system', compact('dbConfig', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'backup') : ?>
+          <?php View::render('settings/tab-backup', compact('backupInfo', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'email') : ?>
           <?php View::render('settings/tab-email', compact('mailConfig', 'mailReady', 'mailRecent', 'smtpTestReport', 'mailAddressConfig')); ?>
         <?php elseif ($settingsSelection['template'] === 'postboxes') : ?>

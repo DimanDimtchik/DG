@@ -48,3 +48,7 @@ CLI-Alternativen: `bin/db-purge-expired-employees.php`, `bin/run-migrations.php`
 ## Hinweis Mahnwesen
 
 Zahlungserinnerung = **Stufe 1** in den Mahnstufen (Einstellungen → Zahlungsbedingungen & Mahnung), kein separater Service.
+
+## Hinweis Tages-Backup
+
+Das Tages-Backup ist bewusst ein **Instanzdaten-Backup** für das Shared-Core-Zielbild: Datenbank-Dump, `storage/` ohne `storage/backups/` und `storage/cache/`, sowie alle `config/*.local.php`. Allgemeiner CRM-Code (`src/`, `views/`, `assets/` usw.) wird nicht pro Kundeninstanz gesichert, sondern kommt aus Git/Deploy.

@@ -26,6 +26,11 @@ final class SettingsRegistry
                         'lead' => 'MariaDB-Verbindung und Datenbank-Tabellen.',
                         'template' => 'database',
                     ],
+                    'backup' => [
+                        'label' => 'Datensicherung',
+                        'lead' => 'Tägliche Instanzdaten-Backups: Datenbank, storage/ und lokale Configs.',
+                        'template' => 'backup',
+                    ],
                     'email' => [
                         'label' => 'E-Mail / SMTP',
                         'lead' => 'SMTP-Server, Versand und Archiv ausgehender E-Mails.',
@@ -298,6 +303,9 @@ final class SettingsRegistry
             if (isset($_POST['db_action'])) {
                 return 'datenbank';
             }
+            if (isset($_POST['backup_action'])) {
+                return 'backup';
+            }
 if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'])) {
                 return 'lager-struktur';
             }
@@ -359,6 +367,7 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
 
         $map = [
             'system:database' => 'datenbank',
+            'system:backup' => 'backup',
             'system:email' => 'email',
             'kontakte:company' => 'firmendaten',
             'kontakte:general' => 'allgemein',
