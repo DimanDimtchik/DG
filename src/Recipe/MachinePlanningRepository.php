@@ -8,6 +8,8 @@ final class MachinePlanningRepository
 {
     private const AUX_ROLES = ['packaging', 'additive', 'consumable', 'other'];
     private const INTERVAL_TYPES = ['days', 'runtime_hours', 'cycles'];
+    private const BOOKING_TYPES = ['production', 'maintenance', 'blocked', 'other'];
+    private const BOOKING_STATUSES = ['planned', 'done', 'cancelled'];
 
     public static function ensureReady(): void
     {
@@ -241,6 +243,89 @@ final class MachinePlanningRepository
         $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @param array<string, mixed> $data */
+    public static function createBookingWindow(array $data): int
+    {
+        self::ensureReady();
+        self::requireDatabase();
+        $startsAt = self::dateTime((string) ($data['starts_at'] ?? ''));
+        $endsAt = self::dateTime((string) ($data['ends_at'] ?? ''));
+        if (strtotime($endsAt) <= strtotime($startsAt)) {
+            throw new InvalidArgumentException('Belegungsfenster braucht ein Ende nach dem Start.');
+        }
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_machine_booking_windows
+                (work_center_id, booking_type, recipe_id, maintenance_plan_id, maintenance_log_id,
+                 title, starts_at, ends_at, planned_output_qty, unit, booking_status, notes)
+             VALUES
+                (:work_center_id, :booking_type, :recipe_id, :maintenance_plan_id, :maintenance_log_id,
+                 :title, :starts_at, :ends_at, :planned_output_qty, :unit, :booking_status, :notes)'
+        );
+        $stmt->execute([
+            'work_center_id' => self::positiveInt($data['work_center_id'] ?? 0, 'Maschine'),
+            'booking_type' => self::enum((string) ($data['booking_type'] ?? 'production'), self::BOOKING_TYPES, 'production'),
+            'recipe_id' => self::nullablePositiveInt($data['recipe_id'] ?? null),
+            'maintenance_plan_id' => self::nullablePositiveInt($data['maintenance_plan_id'] ?? null),
+            'maintenance_log_id' => self::nullablePositiveInt($data['maintenance_log_id'] ?? null),
+            'title' => self::trimmed($data['title'] ?? '', 191),
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'planned_output_qty' => self::decimal($data['planned_output_qty'] ?? 0, 0.0),
+            'unit' => self::trimmed($data['unit'] ?? '', 50),
+            'booking_status' => self::enum((string) ($data['booking_status'] ?? 'planned'), self::BOOKING_STATUSES, 'planned'),
+            'notes' => self::trimmed($data['notes'] ?? '', 1000),
+        ]);
+
+        return (int) Database::pdo()->lastInsertId();
+    }
+
+    /** @return list<array<string, mixed>> */
+    public static function listBookingWindows(?int $workCenterId = null, ?string $startsBefore = null, ?string $endsAfter = null, bool $excludeCancelled = false): array
+    {
+        self::ensureReady();
+        if (!Database::isConfigured()) {
+            return [];
+        }
+        $where = [];
+        $params = [];
+        if ($workCenterId !== null && $workCenterId > 0) {
+            $where[] = 'work_center_id = :work_center_id';
+            $params['work_center_id'] = $workCenterId;
+        }
+        if ($startsBefore !== null && trim($startsBefore) !== '') {
+            $where[] = 'starts_at < :starts_before';
+            $params['starts_before'] = self::dateTime($startsBefore);
+        }
+        if ($endsAfter !== null && trim($endsAfter) !== '') {
+            $where[] = 'ends_at > :ends_after';
+            $params['ends_after'] = self::dateTime($endsAfter);
+        }
+        if ($excludeCancelled) {
+            $where[] = "booking_status <> 'cancelled'";
+        }
+        $sql = 'SELECT * FROM dg_machine_booking_windows';
+        if ($where !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY starts_at ASC, id ASC';
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public static function cancelBookingWindow(int $id): void
+    {
+        self::ensureReady();
+        if ($id <= 0 || !Database::isConfigured()) {
+            return;
+        }
+        $stmt = Database::pdo()->prepare(
+            "UPDATE dg_machine_booking_windows SET booking_status = 'cancelled' WHERE id = :id"
+        );
+        $stmt->execute(['id' => $id]);
     }
 
     private static function requireDatabase(): void
