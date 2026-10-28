@@ -5325,7 +5325,17 @@ $legalProductsConfig = LegalProductSettings::config();
                 $machineCapacityProfiles = MachinePlanningRepository::listCapacityProfiles(null, false);
                 $machineMaintenancePlans = MachinePlanningRepository::listMaintenancePlans(null, false);
                 $machineMaintenanceLogs = MachinePlanningRepository::listMaintenanceLogs();
-                $machineBookingWindows = MachinePlanningRepository::listBookingWindows(null, null, null, false);
+                $machineBookingFilterWorkCenterId = max(0, (int) ($_GET['booking_work_center_id'] ?? 0));
+                $machineBookingFilterFrom = trim((string) ($_GET['booking_from'] ?? ''));
+                $machineBookingFilterTo = trim((string) ($_GET['booking_to'] ?? ''));
+                $machineBookingStartsBefore = $machineBookingFilterTo !== '' ? $machineBookingFilterTo . ' 23:59:59' : null;
+                $machineBookingEndsAfter = $machineBookingFilterFrom !== '' ? $machineBookingFilterFrom . ' 00:00:00' : null;
+                $machineBookingWindows = MachinePlanningRepository::listBookingWindows(
+                    $machineBookingFilterWorkCenterId > 0 ? $machineBookingFilterWorkCenterId : null,
+                    $machineBookingStartsBefore,
+                    $machineBookingEndsAfter,
+                    false
+                );
                 $machineRecipeOptions = RecipeRepository::listAll();
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
@@ -8359,6 +8369,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $machineMaintenanceLogs = $machineMaintenanceLogs ?? [];
         $machineBookingWindows = $machineBookingWindows ?? [];
         $machineRecipeOptions = $machineRecipeOptions ?? [];
+        $machineBookingFilterWorkCenterId = $machineBookingFilterWorkCenterId ?? 0;
+        $machineBookingFilterFrom = $machineBookingFilterFrom ?? '';
+        $machineBookingFilterTo = $machineBookingFilterTo ?? '';
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8859,6 +8872,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'machineMaintenanceLogs',
             'machineBookingWindows',
             'machineRecipeOptions',
+            'machineBookingFilterWorkCenterId',
+            'machineBookingFilterFrom',
+            'machineBookingFilterTo',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',

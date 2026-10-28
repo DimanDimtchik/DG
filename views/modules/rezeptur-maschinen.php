@@ -6,6 +6,9 @@
  * @var list<array<string, mixed>> $machineMaintenanceLogs
  * @var list<array<string, mixed>> $machineBookingWindows
  * @var list<array<string, mixed>> $machineRecipeOptions
+ * @var int $machineBookingFilterWorkCenterId
+ * @var string $machineBookingFilterFrom
+ * @var string $machineBookingFilterTo
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -18,6 +21,9 @@ $maintenancePlans = $machineMaintenancePlans ?? [];
 $maintenanceLogs = $machineMaintenanceLogs ?? [];
 $bookingWindows = $machineBookingWindows ?? [];
 $recipeOptions = $machineRecipeOptions ?? [];
+$bookingFilterWorkCenterId = (int) ($machineBookingFilterWorkCenterId ?? 0);
+$bookingFilterFrom = (string) ($machineBookingFilterFrom ?? '');
+$bookingFilterTo = (string) ($machineBookingFilterTo ?? '');
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $centerNames = [];
@@ -348,6 +354,34 @@ $formatHelperMaterials = static function (mixed $json): string {
         Es gibt überlappende Belegungsfenster. Betroffene Zeilen sind mit „Konflikt“ markiert.
       </div>
     <?php endif; ?>
+
+    <form method="get" action="/app#booking" class="dg-form" style="margin-bottom:16px;">
+      <input type="hidden" name="page" value="rezeptur-maschinen">
+      <div class="dg-form-grid">
+        <label class="dg-field">
+          <span>Maschine filtern</span>
+          <select name="booking_work_center_id">
+            <option value="0">Alle Maschinen</option>
+            <?php foreach ($centers as $center) : ?>
+              <?php $cid = (int) ($center['id'] ?? 0); ?>
+              <option value="<?= $cid ?>"<?= $bookingFilterWorkCenterId === $cid ? ' selected' : '' ?>><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Von</span>
+          <input type="date" name="booking_from" value="<?= View::escape($bookingFilterFrom) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Bis</span>
+          <input type="date" name="booking_to" value="<?= View::escape($bookingFilterTo) ?>">
+        </label>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" class="dg-button">Belegung filtern</button>
+        <a class="dg-button" href="/app?page=rezeptur-maschinen#booking">Filter zurücksetzen</a>
+      </div>
+    </form>
 
     <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
       <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
