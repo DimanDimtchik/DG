@@ -1,6 +1,7 @@
 <?php
 /**
  * @var list<array<string, mixed>> $workCenterList
+ * @var list<array<string, mixed>> $machineCapacityProfiles
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -8,8 +9,13 @@
  * @var array{type: string, message: string}|null $flash
  */
 $centers = $workCenterList ?? [];
+$capacityProfiles = $machineCapacityProfiles ?? [];
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
+$centerNames = [];
+foreach ($centers as $center) {
+    $centerNames[(int) ($center['id'] ?? 0)] = (string) ($center['name'] ?? '');
+}
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -126,4 +132,132 @@ $rates = $recipeCostRates ?? RecipeCostSettings::get();
     Formel: K<sub>masch</sub> = (Anschaffung ÷ Nutzungsdauer) + (kW × Strom) + (m² × Raum).
     „inkl. Lohn“ = K<sub>masch</sub> + Bediener × Lohn.
   </p>
+
+  <section class="dg-card" id="capacity" style="margin-top:20px;padding:16px;">
+    <h2 class="dg-subsection-title" style="margin-top:0;">Kapazitätsprofile (M1a)</h2>
+    <p class="dg-field-hint">
+      Erfasst nur technische Leistung: Rohstoff-Input pro Stunde, Produkt-Output pro Stunde und Ausbeute.
+      Keine Belegung, keine Wartung, keine Buchung.
+    </p>
+
+    <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#capacity" class="dg-form" style="margin-bottom:16px;">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Maschine</span>
+            <select name="work_center_id" required>
+              <?php foreach ($centers as $center) : ?>
+                <?php $cid = (int) ($center['id'] ?? 0); ?>
+                <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Rohstoff / Input</span>
+            <input name="input_material_label" maxlength="191" placeholder="z. B. Rohmasse, Granulat, Teig">
+          </label>
+          <label class="dg-field">
+            <span>Input pro Stunde</span>
+            <input name="input_qty_per_hour" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Produkt / Output</span>
+            <input name="output_product_label" maxlength="191" placeholder="z. B. fertige Stücke, kg Produkt">
+          </label>
+          <label class="dg-field">
+            <span>Output pro Stunde</span>
+            <input name="output_qty_per_hour" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Einheit</span>
+            <input name="unit" maxlength="50" placeholder="kg, Stk, l">
+          </label>
+          <label class="dg-field">
+            <span>Ausbeute %</span>
+            <input name="yield_percent" inputmode="decimal" value="100">
+          </label>
+          <label class="dg-field">
+            <span>Gültig ab</span>
+            <input type="date" name="valid_from" value="<?= View::escape(date('Y-m-d')) ?>">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Notiz</span>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. abhängig von Rohstofffeuchte oder Verpackungsgröße"></textarea>
+          </label>
+        </div>
+        <input type="hidden" name="is_active" value="1">
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_capacity_save" value="1">Kapazitätsprofil speichern</button>
+        </div>
+      </form>
+    <?php elseif ($centers === []) : ?>
+      <p class="dg-muted">Erst eine Maschine anlegen, dann Kapazitätsprofile erfassen.</p>
+    <?php endif; ?>
+
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Maschine</th>
+            <th>Input / h</th>
+            <th>Output / h</th>
+            <th>Ausbeute</th>
+            <th>Gültig ab</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($capacityProfiles === []) : ?>
+            <tr>
+              <td colspan="7" class="dg-table__empty">Noch keine Kapazitätsprofile.</td>
+            </tr>
+          <?php else : ?>
+            <?php foreach ($capacityProfiles as $profile) : ?>
+              <?php
+                $profileId = (int) ($profile['id'] ?? 0);
+                $profileActive = !empty($profile['is_active']);
+                $wcId = (int) ($profile['work_center_id'] ?? 0);
+                $unit = trim((string) ($profile['unit'] ?? ''));
+              ?>
+              <tr<?= $profileActive ? '' : ' style="opacity:0.55;"' ?>>
+                <td><?= View::escape($centerNames[$wcId] ?? ('#' . $wcId)) ?></td>
+                <td>
+                  <?= View::escape((string) ($profile['input_qty_per_hour'] ?? '0')) ?>
+                  <?= View::escape($unit) ?>
+                  <?php if (($profile['input_material_label'] ?? '') !== '') : ?>
+                    <small class="dg-muted">· <?= View::escape((string) $profile['input_material_label']) ?></small>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= View::escape((string) ($profile['output_qty_per_hour'] ?? '0')) ?>
+                  <?= View::escape($unit) ?>
+                  <?php if (($profile['output_product_label'] ?? '') !== '') : ?>
+                    <small class="dg-muted">· <?= View::escape((string) $profile['output_product_label']) ?></small>
+                  <?php endif; ?>
+                </td>
+                <td><?= View::escape((string) ($profile['yield_percent'] ?? '100')) ?> %</td>
+                <td><?= View::escape((string) ($profile['valid_from'] ?? '')) ?></td>
+                <td>
+                  <span class="dg-badge <?= $profileActive ? 'dg-badge--ok' : 'dg-badge--muted' ?>">
+                    <?= $profileActive ? 'aktiv' : 'inaktiv' ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected && $profileActive) : ?>
+                    <form method="post" action="/app?page=rezeptur-maschinen#capacity" style="display:inline;">
+                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="capacity_profile_id" value="<?= $profileId ?>">
+                      <button type="submit" class="dg-button dg-button--small" name="machine_capacity_deactivate" value="1">Deaktivieren</button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>

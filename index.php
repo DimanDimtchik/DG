@@ -1978,6 +1978,32 @@ switch ($path) {
             exit;
         }
 
+        // POST: Maschinen-Kapazitätsprofil (M1a)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['machine_capacity_save']) || isset($_POST['machine_capacity_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    if (isset($_POST['machine_capacity_deactivate'])) {
+                        MachinePlanningRepository::deactivateCapacityProfile((int) ($_POST['capacity_profile_id'] ?? 0));
+                        Flash::set('success', 'Kapazitätsprofil deaktiviert.');
+                    } else {
+                        MachinePlanningRepository::createCapacityProfile($_POST);
+                        Flash::set('success', 'Kapazitätsprofil gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#capacity', true, 302);
+            exit;
+        }
+
         // POST: Work Center speichern/löschen (R2)
         if (
             $page === 'rezeptur-maschine-form'
@@ -5164,6 +5190,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $currentPage = 'rezeptur';
             } elseif ($page === 'rezeptur-maschinen') {
                 $workCenterList = WorkCenterRepository::listAll(false);
+                $machineCapacityProfiles = MachinePlanningRepository::listCapacityProfiles(null, false);
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $contentTemplate = 'modules/rezeptur-maschinen';
@@ -8190,6 +8217,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $recipeSnapshots = $recipeSnapshots ?? [];
         $recipeActuals = $recipeActuals ?? [];
         $workCenterList = $workCenterList ?? [];
+        $machineCapacityProfiles = $machineCapacityProfiles ?? [];
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8684,6 +8712,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'recipeSnapshots',
             'recipeActuals',
             'workCenterList',
+            'machineCapacityProfiles',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',
