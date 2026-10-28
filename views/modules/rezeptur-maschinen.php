@@ -43,6 +43,37 @@ $bookingStatusLabels = [
     'done' => 'erledigt',
     'cancelled' => 'storniert',
 ];
+$bookingConflictIds = [];
+foreach ($bookingWindows as $leftIndex => $leftBooking) {
+    if (($leftBooking['booking_status'] ?? '') === 'cancelled') {
+        continue;
+    }
+    $leftId = (int) ($leftBooking['id'] ?? 0);
+    $leftWcId = (int) ($leftBooking['work_center_id'] ?? 0);
+    $leftStart = strtotime((string) ($leftBooking['starts_at'] ?? ''));
+    $leftEnd = strtotime((string) ($leftBooking['ends_at'] ?? ''));
+    if ($leftId <= 0 || $leftWcId <= 0 || $leftStart === false || $leftEnd === false) {
+        continue;
+    }
+    foreach ($bookingWindows as $rightIndex => $rightBooking) {
+        if ($rightIndex <= $leftIndex || ($rightBooking['booking_status'] ?? '') === 'cancelled') {
+            continue;
+        }
+        $rightId = (int) ($rightBooking['id'] ?? 0);
+        if ($rightId <= 0 || (int) ($rightBooking['work_center_id'] ?? 0) !== $leftWcId) {
+            continue;
+        }
+        $rightStart = strtotime((string) ($rightBooking['starts_at'] ?? ''));
+        $rightEnd = strtotime((string) ($rightBooking['ends_at'] ?? ''));
+        if ($rightStart === false || $rightEnd === false) {
+            continue;
+        }
+        if ($leftStart < $rightEnd && $leftEnd > $rightStart) {
+            $bookingConflictIds[$leftId] = true;
+            $bookingConflictIds[$rightId] = true;
+        }
+    }
+}
 $intervalLabels = [
     'days' => 'Tage',
     'runtime_hours' => 'Laufstunden',
@@ -312,6 +343,11 @@ $formatHelperMaterials = static function (mixed $json): string {
     <p class="dg-field-hint">
       Einfache Liste fuer geplante Produktion, Wartung und Sperrzeiten. Noch kein Drag-and-drop-Kalender und keine automatische Konfliktentscheidung.
     </p>
+    <?php if ($bookingConflictIds !== []) : ?>
+      <div class="dg-flash dg-flash--warning" style="margin-bottom:12px;">
+        Es gibt überlappende Belegungsfenster. Betroffene Zeilen sind mit „Konflikt“ markiert.
+      </div>
+    <?php endif; ?>
 
     <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
       <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
@@ -426,11 +462,17 @@ $formatHelperMaterials = static function (mixed $json): string {
                 $bookingRecipeId = (int) ($booking['recipe_id'] ?? 0);
                 $bookingPlanId = (int) ($booking['maintenance_plan_id'] ?? 0);
                 $bookingUnit = trim((string) ($booking['unit'] ?? ''));
+                $hasBookingConflict = !empty($bookingConflictIds[$bookingId]);
               ?>
               <tr<?= $bookingStatus === 'cancelled' ? ' style="opacity:0.55;"' : '' ?>>
                 <td><?= View::escape($centerNames[$bookingWcId] ?? ('#' . $bookingWcId)) ?></td>
                 <td><?= View::escape($bookingTypeLabels[$bookingType] ?? 'Sonstiges') ?></td>
-                <td><strong><?= View::escape((string) ($booking['title'] ?? '')) ?></strong></td>
+                <td>
+                  <strong><?= View::escape((string) ($booking['title'] ?? '')) ?></strong>
+                  <?php if ($hasBookingConflict) : ?>
+                    <div style="margin-top:4px;"><span class="dg-badge dg-badge--warning">Konflikt</span></div>
+                  <?php endif; ?>
+                </td>
                 <td>
                   <?= View::escape((string) ($booking['starts_at'] ?? '')) ?><br>
                   <span class="dg-muted">bis <?= View::escape((string) ($booking['ends_at'] ?? '')) ?></span>
