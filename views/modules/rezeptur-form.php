@@ -7,6 +7,7 @@
  * @var array<string, mixed>|null $recipeCalc
  * @var list<array<string, mixed>> $recipeSnapshots
  * @var array<int, array<string, mixed>> $recipeActuals
+ * @var list<array<string, mixed>> $recipeAuxiliaryMaterials
  * @var string|null $formError
  * @var bool $canEdit
  * @var array{type: string, message: string}|null $flash
@@ -22,6 +23,13 @@ $workCenters = $recipeWorkCenterOptions ?? [];
 $calc = is_array($recipeCalc ?? null) ? $recipeCalc : null;
 $snapshots = $recipeSnapshots ?? [];
 $actualsMap = $recipeActuals ?? [];
+$auxiliaryMaterials = $recipeAuxiliaryMaterials ?? [];
+$auxiliaryRoleLabels = [
+    'packaging' => 'Verpackung',
+    'additive' => 'Zusatzstoff',
+    'consumable' => 'Hilfs-/Verbrauchsmaterial',
+    'other' => 'Sonstiges',
+];
 $plannedPreview = ($calc !== null)
     ? RecipeActualRepository::plannedFromRecipe($form, $routing, $calc)
     : null;
@@ -135,6 +143,86 @@ $plannedPreview = ($calc !== null)
       <?php endif; ?>
     </fieldset>
 
+    <fieldset class="dg-fieldset" id="auxiliary" <?= $readOnly ? 'disabled' : '' ?>>
+      <legend>Zusatz- und Verpackungsmaterial</legend>
+      <p class="dg-field-hint">Material je Ausgabeeinheit, z. B. Flasche, Etikett, Umkarton oder Prozesshilfsstoff. Aktive Positionen fließen in K<sub>mat</sub> ein.</p>
+      <?php if (!$isEdit) : ?>
+        <p class="dg-field-hint">Rezept zuerst speichern, danach Zusatz-/Verpackungsmaterial erfassen.</p>
+      <?php elseif (!$readOnly) : ?>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;">
+          <label class="dg-field">
+            <span>Material</span>
+            <input name="material_label" maxlength="191" placeholder="z. B. Etikett">
+          </label>
+          <label class="dg-field">
+            <span>Artikel</span>
+            <select name="article_id">
+              <option value="0">— keiner —</option>
+              <?php foreach ($articles as $art) : ?>
+                <option value="<?= (int) $art['id'] ?>"><?= View::escape((string) $art['title']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Rolle</span>
+            <select name="role">
+              <?php foreach ($auxiliaryRoleLabels as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Menge je Einheit</span>
+            <input name="qty_per_output_unit" inputmode="decimal" value="1">
+          </label>
+          <label class="dg-field">
+            <span>Einheit</span>
+            <input name="unit" maxlength="50" value="Stk">
+          </label>
+          <label class="dg-field">
+            <span>EK/Einh.</span>
+            <input name="cost_per_unit" inputmode="decimal" value="0">
+          </label>
+          <button type="submit" class="dg-button" name="recipe_auxiliary_save" value="1">Zusatzmaterial speichern</button>
+        </div>
+      <?php endif; ?>
+
+      <div class="dg-table-wrap" style="margin-top:12px;">
+        <table class="dg-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Rolle</th>
+              <th>Menge je Einheit</th>
+              <th>EK/Einh.</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if ($auxiliaryMaterials === []) : ?>
+              <tr><td colspan="6" class="dg-muted">Noch keine Zusatz-/Verpackungsmaterialien erfasst.</td></tr>
+            <?php else : ?>
+              <?php foreach ($auxiliaryMaterials as $aux) : ?>
+                <tr>
+                  <td><?= View::escape((string) ($aux['material_label'] ?? '')) ?></td>
+                  <td><?= View::escape($auxiliaryRoleLabels[(string) ($aux['role'] ?? 'other')] ?? 'Sonstiges') ?></td>
+                  <td><?= View::escape(number_format((float) ($aux['qty_per_output_unit'] ?? 0), 4, ',', '.')) ?> <?= View::escape((string) ($aux['unit'] ?? '')) ?></td>
+                  <td><?= View::escape(RecipeCostService::formatEur((float) ($aux['cost_per_unit'] ?? 0), 4)) ?></td>
+                  <td><?= !empty($aux['is_active']) ? 'aktiv' : 'inaktiv' ?></td>
+                  <td>
+                    <?php if (!$readOnly && !empty($aux['is_active'])) : ?>
+                      <button type="submit" class="dg-button dg-button--danger" name="recipe_auxiliary_deactivate" value="<?= (int) ($aux['id'] ?? 0) ?>">Deaktivieren</button>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+
     <fieldset class="dg-fieldset" <?= $readOnly ? 'disabled' : '' ?>>
       <legend>Arbeitsplan (Routing)</legend>
       <p class="dg-field-hint">Schritte mit Maschine, Rüst- und Laufzeit. Stundensatz aus Maschinen-Stammdaten.</p>
@@ -212,6 +300,14 @@ $plannedPreview = ($calc !== null)
           <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--dg-border,#ddd);padding-top:6px;"><dt>Δ Selbstkosten</dt><dd style="margin:0;" data-calc="delta_self_cost">0,00 €</dd></div>
           <div style="display:flex;justify-content:space-between;gap:8px;"><dt>Δ VK</dt><dd style="margin:0;" data-calc="delta_vk">0,00 €</dd></div>
         </dl>
+        <?php if (!empty($calc['auxiliary_lines']) && is_array($calc['auxiliary_lines'])) : ?>
+          <div class="dg-field-hint" style="margin-top:10px;">
+            Zusatzmaterial in K<sub>mat</sub>:
+            <?php foreach ($calc['auxiliary_lines'] as $auxLine) : ?>
+              <span><?= View::escape((string) ($auxLine['material_label'] ?? 'Material')) ?> <?= View::escape(RecipeCostService::formatEur((float) ($auxLine['line_cost'] ?? 0), 2)) ?></span>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
       <?php endif; ?>
 
       <?php if ($calc !== null && $canEdit) : ?>

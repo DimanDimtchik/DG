@@ -1727,6 +1727,40 @@ switch ($path) {
             }
         }
 
+        // POST: Rezeptur Zusatz-/Verpackungsmaterial (M1b)
+        if (
+            $page === 'rezeptur-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['recipe_auxiliary_save']) || isset($_POST['recipe_auxiliary_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-form')
+        ) {
+            $editRecipeId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user) || $editRecipeId <= 0) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur', true, 302);
+                exit;
+            }
+            try {
+                if (RecipeRepository::find($editRecipeId) === null) {
+                    throw new InvalidArgumentException('Rezept nicht gefunden.');
+                }
+                if (isset($_POST['recipe_auxiliary_deactivate'])) {
+                    MachinePlanningRepository::deactivateAuxiliaryMaterial((int) ($_POST['auxiliary_material_id'] ?? $_POST['recipe_auxiliary_deactivate'] ?? 0));
+                    Flash::set('success', 'Zusatzmaterial deaktiviert.');
+                } else {
+                    $data = $_POST;
+                    $data['recipe_id'] = $editRecipeId;
+                    $data['is_active'] = 1;
+                    MachinePlanningRepository::createAuxiliaryMaterial($data);
+                    Flash::set('success', 'Zusatz-/Verpackungsmaterial gespeichert.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=rezeptur-form&action=edit&id=' . $editRecipeId . '#auxiliary', true, 302);
+            exit;
+        }
+
         // POST: Rezeptur Produktionslauf-Snapshot + Soll/Ist (R3/R6)
         if (
             $page === 'rezeptur-form'
@@ -1745,8 +1779,9 @@ switch ($path) {
                 if (RecipeRepository::find($runId) === null) {
                     throw new InvalidArgumentException('Rezept nicht gefunden.');
                 }
-                $calc = RecipeCostService::calculate($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? []);
-                $payload = RecipeCostService::snapshotPayload($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], $calc);
+                $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($runId, true);
+                $calc = RecipeCostService::calculate($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], null, $auxiliary);
+                $payload = RecipeCostService::snapshotPayload($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], $calc, $auxiliary);
                 $snapshotId = RecipeSnapshotRepository::create(
                     $runId,
                     RecipeSnapshotRepository::KIND_RUN,
@@ -5167,12 +5202,20 @@ $legalProductsConfig = LegalProductSettings::config();
                 $recipeCalc = null;
                 $recipeSnapshots = [];
                 $recipeActuals = [];
+                $recipeAuxiliaryMaterials = [];
                 if (($recipeId ?? 0) > 0) {
+                    try {
+                        $recipeAuxiliaryMaterials = MachinePlanningRepository::listAuxiliaryMaterials((int) $recipeId, false);
+                    } catch (Throwable) {
+                        $recipeAuxiliaryMaterials = [];
+                    }
                     try {
                         $recipeCalc = RecipeCostService::calculate(
                             $recipeForm,
                             $recipeForm['bom'] ?? [],
-                            $recipeForm['routing'] ?? []
+                            $recipeForm['routing'] ?? [],
+                            null,
+                            array_values(array_filter($recipeAuxiliaryMaterials, static fn (array $row): bool => !empty($row['is_active'])))
                         );
                     } catch (Throwable) {
                         $recipeCalc = null;
@@ -8216,6 +8259,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $recipeCalc = $recipeCalc ?? null;
         $recipeSnapshots = $recipeSnapshots ?? [];
         $recipeActuals = $recipeActuals ?? [];
+        $recipeAuxiliaryMaterials = $recipeAuxiliaryMaterials ?? [];
         $workCenterList = $workCenterList ?? [];
         $machineCapacityProfiles = $machineCapacityProfiles ?? [];
         $workCenterForm = $workCenterForm ?? null;
@@ -8711,6 +8755,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'recipeCalc',
             'recipeSnapshots',
             'recipeActuals',
+            'recipeAuxiliaryMaterials',
             'workCenterList',
             'machineCapacityProfiles',
             'workCenterForm',

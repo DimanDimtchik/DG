@@ -101,7 +101,9 @@ final class RecipeCostService
             throw new InvalidArgumentException('Rezept nicht gefunden.');
         }
 
-        return self::calculate($form, $form['bom'] ?? [], $form['routing'] ?? []);
+        $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($recipeId, true);
+
+        return self::calculate($form, $form['bom'] ?? [], $form['routing'] ?? [], null, $auxiliary);
     }
 
     /**
@@ -109,9 +111,10 @@ final class RecipeCostService
      * @param list<array<string, mixed>> $bomLines
      * @param list<array<string, mixed>> $routingLines
      * @param array{electricity_eur_per_kwh?: float, room_eur_per_m2_h?: float, wage_eur_per_h?: float}|null $rates
+     * @param list<array<string, mixed>> $auxiliaryMaterials
      * @return array<string, mixed>
      */
-    public static function calculate(array $recipe, array $bomLines, array $routingLines, ?array $rates = null): array
+    public static function calculate(array $recipe, array $bomLines, array $routingLines, ?array $rates = null, array $auxiliaryMaterials = []): array
     {
         $rates = $rates ?? RecipeCostSettings::get();
         $marginPct = self::f($recipe['margin_pct'] ?? 0);
@@ -152,6 +155,37 @@ final class RecipeCostService
                 'unit' => (string) ($line['unit'] ?? 'Stk'),
                 'unit_cost' => $ek,
                 'ek_source' => $ekSource,
+                'line_cost' => $lineCost,
+            ];
+        }
+
+        $auxLines = [];
+        foreach ($auxiliaryMaterials as $line) {
+            if (!is_array($line) || empty($line['is_active'])) {
+                continue;
+            }
+            $label = trim((string) ($line['material_label'] ?? ''));
+            $role = (string) ($line['role'] ?? 'other');
+            $qtyPerOutput = self::f($line['qty_per_output_unit'] ?? 0);
+            $costPerUnit = self::f($line['cost_per_unit'] ?? 0);
+            if ($label === '' && $qtyPerOutput <= 0) {
+                continue;
+            }
+            $lineQty = $qtyPerOutput * $targetQty;
+            $lineCost = $lineQty * $costPerUnit;
+            $kMat += $lineCost;
+            if ($costPerUnit <= 0.0) {
+                $warnings[] = 'Kein Preis für Zusatzmaterial „' . ($label !== '' ? $label : ('#' . (int) ($line['id'] ?? 0))) . '“.';
+            }
+            $auxLines[] = [
+                'material_label' => $label,
+                'article_id' => (int) ($line['article_id'] ?? 0),
+                'role' => $role,
+                'qty_per_output_unit' => $qtyPerOutput,
+                'target_qty' => $targetQty,
+                'line_qty' => $lineQty,
+                'unit' => (string) ($line['unit'] ?? ''),
+                'cost_per_unit' => $costPerUnit,
                 'line_cost' => $lineCost,
             ];
         }
@@ -212,6 +246,7 @@ final class RecipeCostService
             'margin_pct' => $marginPct,
             'labor_minutes' => $laborMinutes,
             'material_lines' => $matLines,
+            'auxiliary_lines' => $auxLines,
             'routing_steps' => $routeSteps,
             'k_mat' => $kMat,
             'k_fert_routing' => $kFertRouting,
@@ -227,10 +262,11 @@ final class RecipeCostService
     }
 
     /**
+     * @param list<array<string, mixed>> $auxiliaryMaterials
      * @param array<string, mixed> $calcResult from calculate()
      * @return array{inputs: array<string, mixed>, result: array<string, mixed>}
      */
-    public static function snapshotPayload(array $recipe, array $bomLines, array $routingLines, array $calcResult): array
+    public static function snapshotPayload(array $recipe, array $bomLines, array $routingLines, array $calcResult, array $auxiliaryMaterials = []): array
     {
         return [
             'inputs' => [
@@ -243,6 +279,7 @@ final class RecipeCostService
                     'status' => (string) ($recipe['status'] ?? ''),
                 ],
                 'bom' => $bomLines,
+                'auxiliary_materials' => $auxiliaryMaterials,
                 'routing' => $routingLines,
                 'rates' => $calcResult['rates'] ?? RecipeCostSettings::get(),
             ],
@@ -256,6 +293,7 @@ final class RecipeCostService
                 'unit_self_cost' => $calcResult['unit_self_cost'] ?? 0,
                 'unit_vk' => $calcResult['unit_vk'] ?? 0,
                 'material_lines' => $calcResult['material_lines'] ?? [],
+                'auxiliary_lines' => $calcResult['auxiliary_lines'] ?? [],
                 'routing_steps' => $calcResult['routing_steps'] ?? [],
                 'warnings' => $calcResult['warnings'] ?? [],
             ],
