@@ -61,6 +61,8 @@ final class RecipeCostApi
                 $auxCost += (float) ($line['line_cost'] ?? 0);
             }
         }
+        $capacityLines = is_array($calc['capacity_lines'] ?? null) ? $calc['capacity_lines'] : [];
+        $routingSteps = is_array($calc['routing_steps'] ?? null) ? $calc['routing_steps'] : [];
         echo json_encode([
             'success' => true,
             'data' => [
@@ -79,6 +81,8 @@ final class RecipeCostApi
                 'base_electricity' => $calc['base_electricity'] ?? 0,
                 'auxiliary_lines' => $auxLines,
                 'auxiliary_cost' => $auxCost,
+                'capacity_lines' => $capacityLines,
+                'routing_steps' => $routingSteps,
                 'formatted' => [
                     'k_mat' => RecipeCostService::formatEur((float) ($calc['k_mat'] ?? 0), 2),
                     'k_fert' => RecipeCostService::formatEur((float) ($calc['k_fert'] ?? 0), 2),

@@ -31,7 +31,11 @@ final class RecipeActualRepository
     {
         $setup = 0.0;
         $run = 0.0;
-        foreach ($routingLines as $step) {
+        // Kapazitätsgefüllte Laufzeiten aus der Kalkulation bevorzugen (M5b).
+        $steps = is_array($calcResult['routing_steps'] ?? null) && $calcResult['routing_steps'] !== []
+            ? $calcResult['routing_steps']
+            : $routingLines;
+        foreach ($steps as $step) {
             if (!is_array($step)) {
                 continue;
             }

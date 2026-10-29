@@ -102,8 +102,32 @@ final class RecipeCostService
         }
 
         $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($recipeId, true);
+        $form['id'] = $recipeId;
 
         return self::calculate($form, $form['bom'] ?? [], $form['routing'] ?? [], null, $auxiliary);
+    }
+
+    /**
+     * Laufzeit aus Kapazitätsprofil (Min.): Zielmenge / (Output/h × Ausbeute).
+     *
+     * @param array<string, mixed> $profile
+     */
+    public static function capacityRunMinutesFromProfile(array $profile, float $targetQty): ?float
+    {
+        $outputPerHour = self::f($profile['output_qty_per_hour'] ?? 0);
+        if ($outputPerHour <= 0.0 || $targetQty <= 0.0) {
+            return null;
+        }
+        $yield = self::f($profile['yield_percent'] ?? 100);
+        if ($yield <= 0.0) {
+            $yield = 100.0;
+        }
+        $effectivePerHour = $outputPerHour * ($yield / 100.0);
+        if ($effectivePerHour <= 0.0) {
+            return null;
+        }
+
+        return ($targetQty / $effectivePerHour) * 60.0;
     }
 
     /**
@@ -112,10 +136,17 @@ final class RecipeCostService
      * @param list<array<string, mixed>> $routingLines
      * @param array{electricity_eur_per_kwh?: float, room_eur_per_m2_h?: float, wage_eur_per_h?: float}|null $rates
      * @param list<array<string, mixed>> $auxiliaryMaterials
+     * @param list<array<string, mixed>>|null $capacityProfiles null = Lookup über Repository
      * @return array<string, mixed>
      */
-    public static function calculate(array $recipe, array $bomLines, array $routingLines, ?array $rates = null, array $auxiliaryMaterials = []): array
-    {
+    public static function calculate(
+        array $recipe,
+        array $bomLines,
+        array $routingLines,
+        ?array $rates = null,
+        array $auxiliaryMaterials = [],
+        ?array $capacityProfiles = null
+    ): array {
         $rates = $rates ?? RecipeCostSettings::get();
         $marginPct = self::f($recipe['margin_pct'] ?? 0);
         $laborMinutes = self::f($recipe['labor_minutes'] ?? 0);
@@ -123,6 +154,7 @@ final class RecipeCostService
         if ($targetQty <= 0) {
             $targetQty = 1.0;
         }
+        $recipeId = (int) ($recipe['id'] ?? 0);
 
         $matLines = [];
         $kMat = 0.0;
@@ -191,7 +223,21 @@ final class RecipeCostService
         }
 
         $routeSteps = [];
+        $capacityLines = [];
         $kFertRouting = 0.0;
+        $profilesByWc = [];
+        if (is_array($capacityProfiles)) {
+            foreach ($capacityProfiles as $profileRow) {
+                if (!is_array($profileRow)) {
+                    continue;
+                }
+                $pidWc = (int) ($profileRow['work_center_id'] ?? 0);
+                if ($pidWc <= 0) {
+                    continue;
+                }
+                $profilesByWc[$pidWc][] = $profileRow;
+            }
+        }
         foreach ($routingLines as $step) {
             if (!is_array($step)) {
                 continue;
@@ -206,7 +252,27 @@ final class RecipeCostService
                 continue;
             }
             $setup = self::f($step['setup_min'] ?? 0);
-            $run = self::f($step['run_min'] ?? 0);
+            $manualRun = self::f($step['run_min'] ?? 0);
+            $profile = null;
+            if (isset($profilesByWc[$wcId])) {
+                $profile = self::pickCapacityProfile($profilesByWc[$wcId], $recipeId > 0 ? $recipeId : null);
+            } elseif (class_exists('MachinePlanningRepository')) {
+                $profile = MachinePlanningRepository::findBestCapacityProfile($wcId, $recipeId > 0 ? $recipeId : null);
+            }
+            $capacityRun = $profile !== null ? self::capacityRunMinutesFromProfile($profile, $targetQty) : null;
+            $run = $manualRun;
+            $runSource = 'routing';
+            if ($manualRun <= 0.0 && $capacityRun !== null) {
+                $run = $capacityRun;
+                $runSource = 'capacity';
+            } elseif ($manualRun > 0.0 && $capacityRun !== null) {
+                $delta = abs($manualRun - $capacityRun);
+                if ($delta > 0.5 && $delta / max($manualRun, $capacityRun) > 0.15) {
+                    $warnings[] = 'Kapazität für „' . (string) ($wc['name'] ?? ('#' . $wcId)) . '“ schlägt '
+                        . number_format($capacityRun, 1, ',', '.') . ' Min. vor (Routing: '
+                        . number_format($manualRun, 1, ',', '.') . ' Min.).';
+                }
+            }
             $hours = ($setup + $run) / 60.0;
             $loaded = self::loadedHourlyRate($wc, $rates);
             $machine = self::machineHourlyRate($wc, $rates);
@@ -218,11 +284,29 @@ final class RecipeCostService
                 'work_center_name' => (string) ($wc['name'] ?? ''),
                 'setup_min' => $setup,
                 'run_min' => $run,
+                'run_min_manual' => $manualRun,
+                'run_min_capacity' => $capacityRun,
+                'run_source' => $runSource,
                 'hours' => $hours,
                 'machine_per_h' => $machine,
                 'loaded_per_h' => $loaded,
                 'step_cost' => $stepCost,
             ];
+            if ($profile !== null && $capacityRun !== null) {
+                $capacityLines[] = [
+                    'work_center_id' => $wcId,
+                    'work_center_name' => (string) ($wc['name'] ?? ''),
+                    'capacity_profile_id' => (int) ($profile['id'] ?? 0),
+                    'recipe_id' => (int) ($profile['recipe_id'] ?? 0),
+                    'output_qty_per_hour' => self::f($profile['output_qty_per_hour'] ?? 0),
+                    'yield_percent' => self::f($profile['yield_percent'] ?? 100),
+                    'unit' => (string) ($profile['unit'] ?? ''),
+                    'target_qty' => $targetQty,
+                    'run_min_capacity' => $capacityRun,
+                    'run_min_used' => $run,
+                    'run_source' => $runSource,
+                ];
+            }
         }
 
         $wage = self::f($rates['wage_eur_per_h'] ?? 0);
@@ -247,6 +331,7 @@ final class RecipeCostService
             'labor_minutes' => $laborMinutes,
             'material_lines' => $matLines,
             'auxiliary_lines' => $auxLines,
+            'capacity_lines' => $capacityLines,
             'routing_steps' => $routeSteps,
             'k_mat' => $kMat,
             'k_fert_routing' => $kFertRouting,
@@ -271,6 +356,7 @@ final class RecipeCostService
         return [
             'inputs' => [
                 'recipe' => [
+                    'id' => (int) ($recipe['id'] ?? 0),
                     'title' => (string) ($recipe['title'] ?? ''),
                     'target_qty' => self::f($recipe['target_qty'] ?? 1),
                     'labor_minutes' => self::f($recipe['labor_minutes'] ?? 0),
@@ -281,6 +367,7 @@ final class RecipeCostService
                 'bom' => $bomLines,
                 'auxiliary_materials' => $auxiliaryMaterials,
                 'routing' => $routingLines,
+                'capacity_lines' => $calcResult['capacity_lines'] ?? [],
                 'rates' => $calcResult['rates'] ?? RecipeCostSettings::get(),
             ],
             'result' => [
@@ -294,6 +381,7 @@ final class RecipeCostService
                 'unit_vk' => $calcResult['unit_vk'] ?? 0,
                 'material_lines' => $calcResult['material_lines'] ?? [],
                 'auxiliary_lines' => $calcResult['auxiliary_lines'] ?? [],
+                'capacity_lines' => $calcResult['capacity_lines'] ?? [],
                 'routing_steps' => $calcResult['routing_steps'] ?? [],
                 'warnings' => $calcResult['warnings'] ?? [],
             ],
@@ -407,8 +495,8 @@ final class RecipeCostService
         $baseRates = RecipeCostSettings::get();
         $whatIf = self::normalizeWhatIf($whatIfRaw);
         $applied = self::applyWhatIf($recipe, $bomLines, $routingLines, $baseRates, $whatIf);
-        $calc = self::calculate($applied['recipe'], $applied['bom'], $applied['routing'], $applied['rates'], $auxiliaryMaterials);
-        $baseline = self::calculate($recipe, $bomLines, $routingLines, $baseRates, $auxiliaryMaterials);
+        $calc = self::calculate($applied['recipe'], $applied['bom'], $applied['routing'], $applied['rates'], $auxiliaryMaterials, null);
+        $baseline = self::calculate($recipe, $bomLines, $routingLines, $baseRates, $auxiliaryMaterials, null);
         $calc['what_if'] = $whatIf;
         $calc['baseline'] = [
             'k_mat' => $baseline['k_mat'] ?? 0,
@@ -429,6 +517,37 @@ final class RecipeCostService
     public static function formatEur(float $amount, int $decimals = 4): string
     {
         return number_format($amount, $decimals, ',', '.') . ' €';
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    /**
+     * Aus vorgegebenen Profilen wählen (Selftest / ohne DB): Rezept zuerst, sonst Allgemein.
+     *
+     * @param list<array<string, mixed>> $profiles
+     * @return array<string, mixed>|null
+     */
+    private static function pickCapacityProfile(array $profiles, ?int $recipeId): ?array
+    {
+        $fallback = null;
+        foreach ($profiles as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (array_key_exists('is_active', $row) && empty($row['is_active'])) {
+                continue;
+            }
+            $rowRecipeId = (int) ($row['recipe_id'] ?? 0);
+            if ($recipeId !== null && $recipeId > 0 && $rowRecipeId === $recipeId) {
+                return $row;
+            }
+            if ($rowRecipeId <= 0 && $fallback === null) {
+                $fallback = $row;
+            }
+        }
+
+        return $fallback;
     }
 
     /**

@@ -1779,6 +1779,7 @@ switch ($path) {
                 if (RecipeRepository::find($runId) === null) {
                     throw new InvalidArgumentException('Rezept nicht gefunden.');
                 }
+                $formSnap['id'] = $runId;
                 $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($runId, true);
                 $calc = RecipeCostService::calculate($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], null, $auxiliary);
                 $payload = RecipeCostService::snapshotPayload($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], $calc, $auxiliary);
@@ -5322,6 +5323,7 @@ $legalProductsConfig = LegalProductSettings::config();
                         $recipeAuxiliaryMaterials = [];
                     }
                     try {
+                        $recipeForm['id'] = (int) $recipeId;
                         $recipeCalc = RecipeCostService::calculate(
                             $recipeForm,
                             $recipeForm['bom'] ?? [],

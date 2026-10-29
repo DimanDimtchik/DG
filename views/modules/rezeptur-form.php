@@ -262,6 +262,8 @@ $plannedPreview = ($calc !== null)
       <?php endif; ?>
       <?php if ($workCenters === []) : ?>
         <p class="dg-field-hint">Noch keine Maschinen — zuerst unter <a href="/app?page=rezeptur-maschinen">Maschinen &amp; Stundensatz</a> anlegen.</p>
+      <?php else : ?>
+        <p class="dg-field-hint">Laufzeit 0 Min. wird aus dem Kapazitätsprofil der Maschine berechnet (Zielmenge ÷ Ausgabe/h × Ausbeute). Abweichung &gt; 15&nbsp;% zur manuellen Laufzeit erscheint als Hinweis.</p>
       <?php endif; ?>
     </fieldset>
 
@@ -308,6 +310,19 @@ $plannedPreview = ($calc !== null)
                 <span><?= View::escape((string) ($auxLine['material_label'] ?? 'Material')) ?> <?= View::escape(RecipeCostService::formatEur((float) ($auxLine['line_cost'] ?? 0), 2)) ?></span>
               <?php endforeach; ?>
             <?php endif; ?>
+          </span>
+        </div>
+        <?php
+          $capLinesUi = is_array($calc['capacity_lines'] ?? null) ? $calc['capacity_lines'] : [];
+          $capUsed = array_values(array_filter($capLinesUi, static fn ($row): bool => is_array($row) && (($row['run_source'] ?? '') === 'capacity')));
+        ?>
+        <div class="dg-field-hint" style="margin-top:8px;<?= $capUsed === [] ? 'display:none;' : '' ?>" id="dg-recipe-cap-hint">
+          Laufzeit aus Kapazität:
+          <span id="dg-recipe-cap-hint-body">
+            <?php foreach ($capUsed as $capLine) : ?>
+              <span><?= View::escape((string) ($capLine['work_center_name'] ?? ('WP #' . (int) ($capLine['work_center_id'] ?? 0)))) ?>
+                <?= View::escape(number_format((float) ($capLine['run_min_used'] ?? 0), 1, ',', '.')) ?> Min.</span>
+            <?php endforeach; ?>
           </span>
         </div>
       <?php endif; ?>
@@ -407,9 +422,21 @@ $plannedPreview = ($calc !== null)
                       }
                   }
                 ?>
+                <?php
+                  $snapCapLines = is_array($res['capacity_lines'] ?? null) ? $res['capacity_lines'] : [];
+                  $snapCapUsed = 0;
+                  foreach ($snapCapLines as $snapCapLine) {
+                      if (is_array($snapCapLine) && (($snapCapLine['run_source'] ?? '') === 'capacity')) {
+                          $snapCapUsed++;
+                      }
+                  }
+                ?>
                 <?php if ($snapAuxLines !== []) : ?>
                   · Zusatz <?= View::escape(RecipeCostService::formatEur($snapAuxCost, 2)) ?>
                   (<?= count($snapAuxLines) ?>)
+                <?php endif; ?>
+                <?php if ($snapCapUsed > 0) : ?>
+                  · Kapazität <?= (int) $snapCapUsed ?>
                 <?php endif; ?>
               </div>
               <?php if ($snapAuxLines !== []) : ?>
@@ -419,6 +446,16 @@ $plannedPreview = ($calc !== null)
                     <?php if (!is_array($snapAuxLine)) { continue; } ?>
                     <span><?= View::escape((string) ($snapAuxLine['material_label'] ?? 'Material')) ?>
                       <?= View::escape(RecipeCostService::formatEur((float) ($snapAuxLine['line_cost'] ?? 0), 2)) ?></span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+              <?php if ($snapCapUsed > 0) : ?>
+                <div class="dg-field-hint" style="margin:4px 0 0;">
+                  Kapazität im Snapshot:
+                  <?php foreach ($snapCapLines as $snapCapLine) : ?>
+                    <?php if (!is_array($snapCapLine) || (($snapCapLine['run_source'] ?? '') !== 'capacity')) { continue; } ?>
+                    <span><?= View::escape((string) ($snapCapLine['work_center_name'] ?? ('WP #' . (int) ($snapCapLine['work_center_id'] ?? 0)))) ?>
+                      <?= View::escape(number_format((float) ($snapCapLine['run_min_used'] ?? 0), 1, ',', '.')) ?> Min.</span>
                   <?php endforeach; ?>
                 </div>
               <?php endif; ?>
@@ -682,6 +719,24 @@ $plannedPreview = ($calc !== null)
         } else {
           auxHint.style.display = 'none';
           auxBody.innerHTML = '';
+        }
+      }
+      var capHint = document.getElementById('dg-recipe-cap-hint');
+      var capBody = document.getElementById('dg-recipe-cap-hint-body');
+      if (capHint && capBody) {
+        var capLines = (data.capacity_lines || []).filter(function (line) {
+          return line && line.run_source === 'capacity';
+        });
+        if (capLines.length) {
+          capHint.style.display = '';
+          capBody.innerHTML = capLines.map(function (line) {
+            var label = String((line && line.work_center_name) || ('WP #' + (line.work_center_id || 0))).replace(/</g, '&lt;');
+            var mins = Number((line && line.run_min_used) || 0).toFixed(1).replace('.', ',') + ' Min.';
+            return '<span>' + label + ' ' + mins + '</span>';
+          }).join(' ');
+        } else {
+          capHint.style.display = 'none';
+          capBody.innerHTML = '';
         }
       }
     }

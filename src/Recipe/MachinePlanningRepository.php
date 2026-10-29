@@ -86,6 +86,34 @@ final class MachinePlanningRepository
         self::deactivate('dg_machine_capacity_profiles', $id);
     }
 
+    /**
+     * Bestes aktives Kapazitätsprofil: zuerst rezeptbezogen, sonst Maschinen-Allgemein (recipe_id leer).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function findBestCapacityProfile(int $workCenterId, ?int $recipeId = null): ?array
+    {
+        if ($workCenterId <= 0) {
+            return null;
+        }
+        $rows = self::listCapacityProfiles($workCenterId, true);
+        $fallback = null;
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $rowRecipeId = (int) ($row['recipe_id'] ?? 0);
+            if ($recipeId !== null && $recipeId > 0 && $rowRecipeId === $recipeId) {
+                return $row;
+            }
+            if ($rowRecipeId <= 0 && $fallback === null) {
+                $fallback = $row;
+            }
+        }
+
+        return $fallback;
+    }
+
     /** @param array<string, mixed> $data */
     public static function createAuxiliaryMaterial(array $data): int
     {
