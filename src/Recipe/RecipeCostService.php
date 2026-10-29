@@ -394,15 +394,21 @@ final class RecipeCostService
      * @param list<array<string, mixed>> $bomLines
      * @param list<array<string, mixed>> $routingLines
      * @param array<string, mixed> $whatIfRaw
+     * @param list<array<string, mixed>> $auxiliaryMaterials
      * @return array<string, mixed>
      */
-    public static function calculateWhatIf(array $recipe, array $bomLines, array $routingLines, array $whatIfRaw = []): array
-    {
+    public static function calculateWhatIf(
+        array $recipe,
+        array $bomLines,
+        array $routingLines,
+        array $whatIfRaw = [],
+        array $auxiliaryMaterials = []
+    ): array {
         $baseRates = RecipeCostSettings::get();
         $whatIf = self::normalizeWhatIf($whatIfRaw);
         $applied = self::applyWhatIf($recipe, $bomLines, $routingLines, $baseRates, $whatIf);
-        $calc = self::calculate($applied['recipe'], $applied['bom'], $applied['routing'], $applied['rates']);
-        $baseline = self::calculate($recipe, $bomLines, $routingLines, $baseRates);
+        $calc = self::calculate($applied['recipe'], $applied['bom'], $applied['routing'], $applied['rates'], $auxiliaryMaterials);
+        $baseline = self::calculate($recipe, $bomLines, $routingLines, $baseRates, $auxiliaryMaterials);
         $calc['what_if'] = $whatIf;
         $calc['baseline'] = [
             'k_mat' => $baseline['k_mat'] ?? 0,

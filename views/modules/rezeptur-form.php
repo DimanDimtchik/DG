@@ -300,14 +300,16 @@ $plannedPreview = ($calc !== null)
           <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--dg-border,#ddd);padding-top:6px;"><dt>Δ Selbstkosten</dt><dd style="margin:0;" data-calc="delta_self_cost">0,00 €</dd></div>
           <div style="display:flex;justify-content:space-between;gap:8px;"><dt>Δ VK</dt><dd style="margin:0;" data-calc="delta_vk">0,00 €</dd></div>
         </dl>
-        <?php if (!empty($calc['auxiliary_lines']) && is_array($calc['auxiliary_lines'])) : ?>
-          <div class="dg-field-hint" style="margin-top:10px;">
-            Zusatzmaterial in K<sub>mat</sub>:
-            <?php foreach ($calc['auxiliary_lines'] as $auxLine) : ?>
-              <span><?= View::escape((string) ($auxLine['material_label'] ?? 'Material')) ?> <?= View::escape(RecipeCostService::formatEur((float) ($auxLine['line_cost'] ?? 0), 2)) ?></span>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+        <div class="dg-field-hint" style="margin-top:10px;<?= empty($calc['auxiliary_lines']) ? 'display:none;' : '' ?>" id="dg-recipe-aux-hint">
+          Zusatzmaterial in K<sub>mat</sub>:
+          <span id="dg-recipe-aux-hint-body">
+            <?php if (!empty($calc['auxiliary_lines']) && is_array($calc['auxiliary_lines'])) : ?>
+              <?php foreach ($calc['auxiliary_lines'] as $auxLine) : ?>
+                <span><?= View::escape((string) ($auxLine['material_label'] ?? 'Material')) ?> <?= View::escape(RecipeCostService::formatEur((float) ($auxLine['line_cost'] ?? 0), 2)) ?></span>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </span>
+        </div>
       <?php endif; ?>
 
       <?php if ($calc !== null && $canEdit) : ?>
@@ -396,7 +398,30 @@ $plannedPreview = ($calc !== null)
                 · <?= View::escape($whenLabel) ?>
                 · SK <?= View::escape(RecipeCostService::formatEur((float) ($res['self_cost'] ?? 0), 2)) ?>
                 · VK <?= View::escape(RecipeCostService::formatEur((float) ($res['vk'] ?? 0), 2)) ?>
+                <?php
+                  $snapAuxLines = is_array($res['auxiliary_lines'] ?? null) ? $res['auxiliary_lines'] : [];
+                  $snapAuxCost = 0.0;
+                  foreach ($snapAuxLines as $snapAuxLine) {
+                      if (is_array($snapAuxLine)) {
+                          $snapAuxCost += (float) ($snapAuxLine['line_cost'] ?? 0);
+                      }
+                  }
+                ?>
+                <?php if ($snapAuxLines !== []) : ?>
+                  · Zusatz <?= View::escape(RecipeCostService::formatEur($snapAuxCost, 2)) ?>
+                  (<?= count($snapAuxLines) ?>)
+                <?php endif; ?>
               </div>
+              <?php if ($snapAuxLines !== []) : ?>
+                <div class="dg-field-hint" style="margin:4px 0 0;">
+                  Zusatzmaterial im Snapshot:
+                  <?php foreach ($snapAuxLines as $snapAuxLine) : ?>
+                    <?php if (!is_array($snapAuxLine)) { continue; } ?>
+                    <span><?= View::escape((string) ($snapAuxLine['material_label'] ?? 'Material')) ?>
+                      <?= View::escape(RecipeCostService::formatEur((float) ($snapAuxLine['line_cost'] ?? 0), 2)) ?></span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
               <?php if (is_array($act)) : ?>
                 <?php
                   $dQty = (float) ($act['actual_qty'] ?? 0) - (float) ($act['planned_qty'] ?? 0);
@@ -595,6 +620,7 @@ $plannedPreview = ($calc !== null)
       });
       return {
         recipe: {
+          id: parseInt(box.getAttribute('data-recipe-id') || '0', 10) || 0,
           title: (form.querySelector('[name="title"]') || {}).value || '',
           target_qty: readNum('target_qty'),
           labor_minutes: readNum('labor_minutes'),
@@ -642,12 +668,29 @@ $plannedPreview = ($calc !== null)
           warnBox.innerHTML = '';
         }
       }
+      var auxHint = document.getElementById('dg-recipe-aux-hint');
+      var auxBody = document.getElementById('dg-recipe-aux-hint-body');
+      if (auxHint && auxBody) {
+        var auxLines = data.auxiliary_lines || [];
+        if (auxLines.length) {
+          auxHint.style.display = '';
+          auxBody.innerHTML = auxLines.map(function (line) {
+            var label = String((line && line.material_label) || 'Material').replace(/</g, '&lt;');
+            var cost = Number((line && line.line_cost) || 0).toFixed(2).replace('.', ',') + ' €';
+            return '<span>' + label + ' ' + cost + '</span>';
+          }).join(' ');
+        } else {
+          auxHint.style.display = 'none';
+          auxBody.innerHTML = '';
+        }
+      }
     }
     function postWhatIf() {
       var v = sliderVals();
       var body = new FormData();
       body.append('_csrf', csrf);
       body.append('action', 'whatif');
+      body.append('recipe_id', box.getAttribute('data-recipe-id') || '0');
       body.append('payload', JSON.stringify(collectPayload()));
       body.append('electricity_eur_per_kwh', String(v.elec));
       body.append('charge_factor', String(v.charge));

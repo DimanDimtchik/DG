@@ -372,8 +372,9 @@ final class RecipeRepository
                 'status' => $status,
                 'version' => $version,
             ];
-            $calc = RecipeCostService::calculate($formSnap, $bomLines, $routingLines);
-            $payload = RecipeCostService::snapshotPayload($formSnap, $bomLines, $routingLines, $calc);
+            $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($recipeId, true);
+            $calc = RecipeCostService::calculate($formSnap, $bomLines, $routingLines, null, $auxiliary);
+            $payload = RecipeCostService::snapshotPayload($formSnap, $bomLines, $routingLines, $calc, $auxiliary);
             RecipeSnapshotRepository::create(
                 $recipeId,
                 RecipeSnapshotRepository::KIND_SAVE,

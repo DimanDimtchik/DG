@@ -46,12 +46,21 @@ final class RecipeCostApi
             'charge_factor' => $_POST['charge_factor'] ?? 1,
             'setup_factor' => $_POST['setup_factor'] ?? 1,
         ];
+        $auxiliary = self::auxiliaryForPayload($payload);
         $calc = RecipeCostService::calculateWhatIf(
             $payload['recipe'],
             $payload['bom'],
             $payload['routing'],
-            $whatIf
+            $whatIf,
+            $auxiliary
         );
+        $auxLines = is_array($calc['auxiliary_lines'] ?? null) ? $calc['auxiliary_lines'] : [];
+        $auxCost = 0.0;
+        foreach ($auxLines as $line) {
+            if (is_array($line)) {
+                $auxCost += (float) ($line['line_cost'] ?? 0);
+            }
+        }
         echo json_encode([
             'success' => true,
             'data' => [
@@ -68,6 +77,8 @@ final class RecipeCostApi
                 'delta_vk' => $calc['delta_vk'] ?? 0,
                 'applied_target_qty' => $calc['applied_target_qty'] ?? 0,
                 'base_electricity' => $calc['base_electricity'] ?? 0,
+                'auxiliary_lines' => $auxLines,
+                'auxiliary_cost' => $auxCost,
                 'formatted' => [
                     'k_mat' => RecipeCostService::formatEur((float) ($calc['k_mat'] ?? 0), 2),
                     'k_fert' => RecipeCostService::formatEur((float) ($calc['k_fert'] ?? 0), 2),
@@ -77,6 +88,7 @@ final class RecipeCostApi
                     'unit_vk' => RecipeCostService::formatEur((float) ($calc['unit_vk'] ?? 0), 4),
                     'delta_self_cost' => RecipeCostService::formatEur((float) ($calc['delta_self_cost'] ?? 0), 2),
                     'delta_vk' => RecipeCostService::formatEur((float) ($calc['delta_vk'] ?? 0), 2),
+                    'auxiliary_cost' => RecipeCostService::formatEur($auxCost, 2),
                 ],
             ],
         ], JSON_UNESCAPED_UNICODE);
@@ -120,6 +132,9 @@ final class RecipeCostApi
             $recipe = is_array($decoded['recipe'] ?? null) ? $decoded['recipe'] : [];
             $bom = is_array($decoded['bom'] ?? null) ? $decoded['bom'] : [];
             $routing = is_array($decoded['routing'] ?? null) ? $decoded['routing'] : [];
+            if (!isset($recipe['id']) || (int) $recipe['id'] <= 0) {
+                $recipe['id'] = (int) ($_POST['recipe_id'] ?? 0);
+            }
 
             return ['recipe' => $recipe, 'bom' => $bom, 'routing' => $routing];
         }
@@ -138,6 +153,23 @@ final class RecipeCostApi
             'bom' => $form['bom'] ?? [],
             'routing' => $form['routing'] ?? [],
         ];
+    }
+
+    /**
+     * @param array{recipe: array<string, mixed>, bom: list<array<string, mixed>>, routing: list<array<string, mixed>>} $payload
+     * @return list<array<string, mixed>>
+     */
+    private static function auxiliaryForPayload(array $payload): array
+    {
+        $recipeId = (int) ($payload['recipe']['id'] ?? 0);
+        if ($recipeId <= 0) {
+            $recipeId = (int) ($_POST['recipe_id'] ?? 0);
+        }
+        if ($recipeId <= 0 || !class_exists('MachinePlanningRepository')) {
+            return [];
+        }
+
+        return MachinePlanningRepository::listAuxiliaryMaterials($recipeId, true);
     }
 
     private static function fail(string $message, int $code = 400): void
