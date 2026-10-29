@@ -5359,6 +5359,47 @@ $legalProductsConfig = LegalProductSettings::config();
                     $machineBookingEndsAfter,
                     false
                 );
+                $machineBookingCalMode = trim((string) ($_GET['booking_cal_mode'] ?? 'month'));
+                if (!in_array($machineBookingCalMode, ['month', 'week'], true)) {
+                    $machineBookingCalMode = 'month';
+                }
+                $machineBookingCalYm = trim((string) ($_GET['booking_cal_ym'] ?? ''));
+                if (!preg_match('/^\d{4}-\d{2}$/', $machineBookingCalYm)) {
+                    $machineBookingCalYm = $machineBookingFilterFrom !== ''
+                        ? substr($machineBookingFilterFrom, 0, 7)
+                        : date('Y-m');
+                }
+                $machineBookingCalWeek = trim((string) ($_GET['booking_cal_week'] ?? ''));
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $machineBookingCalWeek)) {
+                    $machineBookingCalWeek = $machineBookingFilterFrom !== ''
+                        ? $machineBookingFilterFrom
+                        : (($machineBookingCalYm !== '' ? $machineBookingCalYm . '-01' : date('Y-m-d')));
+                }
+                if ($machineBookingCalMode === 'week') {
+                    $calWeekTs = strtotime($machineBookingCalWeek . ' 12:00:00') ?: time();
+                    $calDow = (int) date('N', $calWeekTs);
+                    $calWeekStartTs = strtotime('-' . ($calDow - 1) . ' days', strtotime(date('Y-m-d', $calWeekTs) . ' 12:00:00'));
+                    $calRangeStart = date('Y-m-d 00:00:00', $calWeekStartTs);
+                    $calRangeEnd = date('Y-m-d 23:59:59', strtotime('+6 days', $calWeekStartTs));
+                    $machineBookingCalYm = date('Y-m', $calWeekStartTs);
+                } else {
+                    $calMonthTs = strtotime($machineBookingCalYm . '-01 12:00:00') ?: time();
+                    $machineBookingCalYm = date('Y-m', $calMonthTs);
+                    $calRangeStart = date('Y-m-01 00:00:00', $calMonthTs);
+                    $calRangeEnd = date('Y-m-t 23:59:59', $calMonthTs);
+                }
+                $machineBookingCalendarWindows = MachinePlanningRepository::listBookingWindows(
+                    $machineBookingFilterWorkCenterId > 0 ? $machineBookingFilterWorkCenterId : null,
+                    $calRangeEnd,
+                    $calRangeStart,
+                    false
+                );
+                $machineBookingCalendar = MachinePlanningRepository::buildBookingCalendarGrid(
+                    $machineBookingCalendarWindows,
+                    $machineBookingCalMode,
+                    $machineBookingCalYm,
+                    $machineBookingCalWeek
+                );
                 $machineBookingEditId = max(0, (int) ($_GET['booking_edit_id'] ?? 0));
                 $machineBookingEdit = $machineBookingEditId > 0
                     ? MachinePlanningRepository::findBookingWindow($machineBookingEditId)
@@ -8555,6 +8596,10 @@ $legalProductsConfig = LegalProductSettings::config();
         $machineBookingFilterFrom = $machineBookingFilterFrom ?? '';
         $machineBookingFilterTo = $machineBookingFilterTo ?? '';
         $machineBookingEdit = $machineBookingEdit ?? null;
+        $machineBookingCalendar = $machineBookingCalendar ?? null;
+        $machineBookingCalMode = $machineBookingCalMode ?? 'month';
+        $machineBookingCalYm = $machineBookingCalYm ?? date('Y-m');
+        $machineBookingCalWeek = $machineBookingCalWeek ?? date('Y-m-d');
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -9059,6 +9104,10 @@ $legalProductsConfig = LegalProductSettings::config();
             'machineBookingFilterFrom',
             'machineBookingFilterTo',
             'machineBookingEdit',
+            'machineBookingCalendar',
+            'machineBookingCalMode',
+            'machineBookingCalYm',
+            'machineBookingCalWeek',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',

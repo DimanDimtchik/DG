@@ -450,6 +450,149 @@ final class MachinePlanningRepository
     }
 
     /**
+     * Baut ein einfaches Wochen- oder Monatsgitter fuer die Belegungsansicht (ohne Drag-and-drop).
+     *
+     * @param list<array<string, mixed>> $windows
+     * @return array{
+     *   mode: 'month'|'week',
+     *   ym: string,
+     *   week_start: string,
+     *   week_end: string,
+     *   prev_ym: string,
+     *   next_ym: string,
+     *   prev_week: string,
+     *   next_week: string,
+     *   title: string,
+     *   weekday_labels: list<string>,
+     *   days: list<array{date: string, weekday: int, in_month: bool, is_today: bool, items: list<array<string, mixed>>}>
+     * }
+     */
+    public static function buildBookingCalendarGrid(
+        array $windows,
+        string $mode,
+        string $ym,
+        string $weekAnchorYmd
+    ): array {
+        $mode = $mode === 'week' ? 'week' : 'month';
+        if (!preg_match('/^\d{4}-\d{2}$/', $ym)) {
+            $ym = date('Y-m');
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $weekAnchorYmd)) {
+            $weekAnchorYmd = date('Y-m-d');
+        }
+        $weekdayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        $today = date('Y-m-d');
+        $byDate = [];
+        foreach ($windows as $booking) {
+            if (!is_array($booking) || ($booking['booking_status'] ?? '') === 'cancelled') {
+                continue;
+            }
+            $startTs = strtotime((string) ($booking['starts_at'] ?? ''));
+            $endTs = strtotime((string) ($booking['ends_at'] ?? ''));
+            if ($startTs === false || $endTs === false || $endTs <= $startTs) {
+                continue;
+            }
+            $cursor = strtotime(date('Y-m-d 00:00:00', $startTs));
+            $lastDay = strtotime(date('Y-m-d 00:00:00', $endTs));
+            // Endet genau um Mitternacht: letzter Kalendertag ist der Vortag.
+            if (date('H:i:s', $endTs) === '00:00:00') {
+                $lastDay = strtotime('-1 day', $lastDay);
+            }
+            if ($lastDay < $cursor) {
+                $lastDay = $cursor;
+            }
+            while ($cursor !== false && $cursor <= $lastDay) {
+                $dateKey = date('Y-m-d', $cursor);
+                $byDate[$dateKey][] = $booking;
+                $cursor = strtotime('+1 day', $cursor);
+            }
+        }
+
+        if ($mode === 'week') {
+            $anchorTs = strtotime($weekAnchorYmd . ' 12:00:00') ?: time();
+            $dow = (int) date('N', $anchorTs);
+            $weekStartTs = strtotime('-' . ($dow - 1) . ' days', strtotime(date('Y-m-d', $anchorTs) . ' 12:00:00'));
+            $days = [];
+            for ($i = 0; $i < 7; $i++) {
+                $ts = strtotime('+' . $i . ' days', $weekStartTs);
+                $dateKey = date('Y-m-d', $ts);
+                $days[] = [
+                    'date' => $dateKey,
+                    'weekday' => (int) date('N', $ts),
+                    'in_month' => true,
+                    'is_today' => $dateKey === $today,
+                    'items' => $byDate[$dateKey] ?? [],
+                ];
+            }
+            $weekStart = date('Y-m-d', $weekStartTs);
+            $weekEnd = date('Y-m-d', strtotime('+6 days', $weekStartTs));
+            $prevWeek = date('Y-m-d', strtotime('-7 days', $weekStartTs));
+            $nextWeek = date('Y-m-d', strtotime('+7 days', $weekStartTs));
+
+            return [
+                'mode' => 'week',
+                'ym' => date('Y-m', $weekStartTs),
+                'week_start' => $weekStart,
+                'week_end' => $weekEnd,
+                'prev_ym' => date('Y-m', strtotime('-1 month', strtotime(date('Y-m', $weekStartTs) . '-01'))),
+                'next_ym' => date('Y-m', strtotime('+1 month', strtotime(date('Y-m', $weekStartTs) . '-01'))),
+                'prev_week' => $prevWeek,
+                'next_week' => $nextWeek,
+                'title' => 'Woche ' . date('d.m.', $weekStartTs) . '–' . date('d.m.Y', strtotime($weekEnd)),
+                'weekday_labels' => $weekdayLabels,
+                'days' => $days,
+            ];
+        }
+
+        $monthStartTs = strtotime($ym . '-01 12:00:00') ?: time();
+        $ym = date('Y-m', $monthStartTs);
+        $firstDow = (int) date('N', $monthStartTs);
+        $gridStartTs = strtotime('-' . ($firstDow - 1) . ' days', strtotime($ym . '-01 12:00:00'));
+        $days = [];
+        $weekStartTs = $gridStartTs;
+        for ($week = 0; $week < 6; $week++) {
+            $weekDays = [];
+            $weekHasMonthDay = false;
+            for ($i = 0; $i < 7; $i++) {
+                $ts = strtotime('+' . $i . ' days', $weekStartTs);
+                $dateKey = date('Y-m-d', $ts);
+                $inMonth = date('Y-m', $ts) === $ym;
+                if ($inMonth) {
+                    $weekHasMonthDay = true;
+                }
+                $weekDays[] = [
+                    'date' => $dateKey,
+                    'weekday' => (int) date('N', $ts),
+                    'in_month' => $inMonth,
+                    'is_today' => $dateKey === $today,
+                    'items' => $inMonth ? ($byDate[$dateKey] ?? []) : [],
+                ];
+            }
+            if (!$weekHasMonthDay && $days !== []) {
+                break;
+            }
+            foreach ($weekDays as $day) {
+                $days[] = $day;
+            }
+            $weekStartTs = strtotime('+7 days', $weekStartTs);
+        }
+
+        return [
+            'mode' => 'month',
+            'ym' => $ym,
+            'week_start' => date('Y-m-d', $gridStartTs),
+            'week_end' => date('Y-m-t', $monthStartTs),
+            'prev_ym' => date('Y-m', strtotime('-1 month', $monthStartTs)),
+            'next_ym' => date('Y-m', strtotime('+1 month', $monthStartTs)),
+            'prev_week' => date('Y-m-d', strtotime('-7 days', $monthStartTs)),
+            'next_week' => date('Y-m-d', strtotime('+7 days', $monthStartTs)),
+            'title' => date('m/Y', $monthStartTs),
+            'weekday_labels' => $weekdayLabels,
+            'days' => $days,
+        ];
+    }
+
+    /**
      * @param list<array<string, mixed>> $windows
      * @return array{start: int, end: int, source: 'filter'|'bookings'}|null
      */

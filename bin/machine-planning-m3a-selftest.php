@@ -168,4 +168,54 @@ assertM3a($overbooked !== null && $overbooked > 100.0, 'Ueberbuchung darf ueber 
 $fallbackAvailable = MachinePlanningRepository::bookingAvailableHours($utilWindows, '', '', 1);
 assertM3a($fallbackAvailable !== null && abs($fallbackAvailable - 4.0) < 0.01, 'Ohne Filter: Verfuegbarkeit aus Fensterspanne');
 
+$grid = MachinePlanningRepository::buildBookingCalendarGrid(
+    [
+        [
+            'id' => 11,
+            'work_center_id' => 1,
+            'booking_type' => 'production',
+            'booking_status' => 'planned',
+            'title' => 'Charge',
+            'starts_at' => '2026-10-15 08:00:00',
+            'ends_at' => '2026-10-15 10:00:00',
+        ],
+        [
+            'id' => 12,
+            'work_center_id' => 1,
+            'booking_type' => 'maintenance',
+            'booking_status' => 'cancelled',
+            'title' => 'Ignorieren',
+            'starts_at' => '2026-10-15 09:00:00',
+            'ends_at' => '2026-10-15 11:00:00',
+        ],
+    ],
+    'month',
+    '2026-10',
+    '2026-10-15'
+);
+assertM3a(($grid['mode'] ?? '') === 'month' && ($grid['ym'] ?? '') === '2026-10', 'Monatskalender baut Metadaten');
+$day15 = null;
+foreach ($grid['days'] as $day) {
+    if (($day['date'] ?? '') === '2026-10-15') {
+        $day15 = $day;
+        break;
+    }
+}
+assertM3a(is_array($day15) && count($day15['items']) === 1, 'Kalender zeigt aktive Belegung am Tag, stornierte nicht');
+$weekGrid = MachinePlanningRepository::buildBookingCalendarGrid(
+    [
+        [
+            'id' => 21,
+            'booking_status' => 'planned',
+            'starts_at' => '2026-10-14 08:00:00',
+            'ends_at' => '2026-10-14 09:00:00',
+        ],
+    ],
+    'week',
+    '2026-10',
+    '2026-10-15'
+);
+assertM3a(count($weekGrid['days']) === 7, 'Wochenkalender hat 7 Tage');
+assertM3a(($weekGrid['week_start'] ?? '') === '2026-10-12', 'Wochenkalender startet am Montag');
+
 echo "Fertig.\n";

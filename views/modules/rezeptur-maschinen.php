@@ -10,6 +10,10 @@
  * @var string $machineBookingFilterFrom
  * @var string $machineBookingFilterTo
  * @var array<string, mixed>|null $machineBookingEdit
+ * @var array<string, mixed>|null $machineBookingCalendar
+ * @var string $machineBookingCalMode
+ * @var string $machineBookingCalYm
+ * @var string $machineBookingCalWeek
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -27,6 +31,10 @@ $bookingFilterFrom = (string) ($machineBookingFilterFrom ?? '');
 $bookingFilterTo = (string) ($machineBookingFilterTo ?? '');
 $bookingEdit = is_array($machineBookingEdit ?? null) ? $machineBookingEdit : null;
 $bookingEditId = (int) ($bookingEdit['id'] ?? 0);
+$bookingCalendar = is_array($machineBookingCalendar ?? null) ? $machineBookingCalendar : null;
+$bookingCalMode = (string) ($machineBookingCalMode ?? 'month');
+$bookingCalYm = (string) ($machineBookingCalYm ?? date('Y-m'));
+$bookingCalWeek = (string) ($machineBookingCalWeek ?? date('Y-m-d'));
 $bookingToLocal = static function (mixed $value): string {
     $raw = trim((string) $value);
     if ($raw === '') {
@@ -36,8 +44,8 @@ $bookingToLocal = static function (mixed $value): string {
 
     return $ts === false ? '' : date('Y-m-d\TH:i', $ts);
 };
-$bookingEditHref = static function (int $id) use ($bookingFilterWorkCenterId, $bookingFilterFrom, $bookingFilterTo): string {
-    $query = ['page' => 'rezeptur-maschinen', 'booking_edit_id' => (string) $id];
+$bookingQueryBase = static function (array $extra = []) use ($bookingFilterWorkCenterId, $bookingFilterFrom, $bookingFilterTo, $bookingCalMode, $bookingCalYm, $bookingCalWeek): array {
+    $query = ['page' => 'rezeptur-maschinen'] + $extra;
     if ($bookingFilterWorkCenterId > 0) {
         $query['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
     }
@@ -47,9 +55,24 @@ $bookingEditHref = static function (int $id) use ($bookingFilterWorkCenterId, $b
     if ($bookingFilterTo !== '') {
         $query['booking_to'] = $bookingFilterTo;
     }
+    $query['booking_cal_mode'] = $bookingCalMode;
+    $query['booking_cal_ym'] = $bookingCalYm;
+    $query['booking_cal_week'] = $bookingCalWeek;
 
-    return '/app?' . http_build_query($query) . '#booking';
+    return $query;
 };
+$bookingEditHref = static function (int $id) use ($bookingQueryBase): string {
+    return '/app?' . http_build_query($bookingQueryBase(['booking_edit_id' => (string) $id])) . '#booking';
+};
+$bookingCalHref = static function (array $extra) use ($bookingQueryBase): string {
+    return '/app?' . http_build_query($bookingQueryBase($extra)) . '#booking-cal';
+};
+$bookingChipColors = [
+    'production' => '#2f5d50',
+    'maintenance' => '#9a6b2f',
+    'blocked' => '#5c5c5c',
+    'other' => '#3a5f8a',
+];
 $bookingQuickBase = ['page' => 'rezeptur-maschinen'];
 if ($bookingFilterWorkCenterId > 0) {
     $bookingQuickBase['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
@@ -486,11 +509,11 @@ $formatHelperMaterials = static function (mixed $json): string {
   </section>
 
   <section class="dg-card" id="booking" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b / Bearbeiten)</h2>
+    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b / Kalender)</h2>
     <p class="dg-field-hint">
-      Einfache Liste fuer geplante Produktion, Wartung und Sperrzeiten.
+      Wochen-/Monatsansicht plus Liste fuer geplante Produktion, Wartung und Sperrzeiten.
       Bearbeiten und Status (geplant/erledigt) sind möglich; Storno bleibt getrennt.
-      Noch kein Drag-and-drop-Kalender und keine automatische Konfliktentscheidung.
+      Kein Drag-and-drop; Konflikt nur markieren, nicht automatisch entscheiden.
     </p>
     <?php if ($bookingConflictIds !== []) : ?>
       <div class="dg-flash dg-flash--warning" style="margin-bottom:12px;">
@@ -500,6 +523,9 @@ $formatHelperMaterials = static function (mixed $json): string {
 
     <form method="get" action="/app#booking" class="dg-form" style="margin-bottom:16px;">
       <input type="hidden" name="page" value="rezeptur-maschinen">
+      <input type="hidden" name="booking_cal_mode" value="<?= View::escape($bookingCalMode) ?>">
+      <input type="hidden" name="booking_cal_ym" value="<?= View::escape($bookingCalYm) ?>">
+      <input type="hidden" name="booking_cal_week" value="<?= View::escape($bookingCalWeek) ?>">
       <div class="dg-form-grid">
         <label class="dg-field">
           <span>Maschine filtern</span>
@@ -529,6 +555,176 @@ $formatHelperMaterials = static function (mixed $json): string {
         <?php endforeach; ?>
       </div>
     </form>
+
+    <?php if (is_array($bookingCalendar) && !empty($bookingCalendar['days'])) : ?>
+      <?php
+        $calendarConflictIds = $bookingConflictIds;
+        $calendarFlat = [];
+        foreach (($bookingCalendar['days'] ?? []) as $calDay) {
+            foreach (($calDay['items'] ?? []) as $calItem) {
+                if (!is_array($calItem)) {
+                    continue;
+                }
+                $cid = (int) ($calItem['id'] ?? 0);
+                if ($cid > 0) {
+                    $calendarFlat[$cid] = $calItem;
+                }
+            }
+        }
+        $calendarFlatList = array_values($calendarFlat);
+        foreach ($calendarFlatList as $leftIndex => $leftBooking) {
+            $leftId = (int) ($leftBooking['id'] ?? 0);
+            $leftWcId = (int) ($leftBooking['work_center_id'] ?? 0);
+            $leftStart = strtotime((string) ($leftBooking['starts_at'] ?? ''));
+            $leftEnd = strtotime((string) ($leftBooking['ends_at'] ?? ''));
+            if ($leftId <= 0 || $leftWcId <= 0 || $leftStart === false || $leftEnd === false) {
+                continue;
+            }
+            foreach ($calendarFlatList as $rightIndex => $rightBooking) {
+                if ($rightIndex <= $leftIndex) {
+                    continue;
+                }
+                $rightId = (int) ($rightBooking['id'] ?? 0);
+                if ($rightId <= 0 || (int) ($rightBooking['work_center_id'] ?? 0) !== $leftWcId) {
+                    continue;
+                }
+                $rightStart = strtotime((string) ($rightBooking['starts_at'] ?? ''));
+                $rightEnd = strtotime((string) ($rightBooking['ends_at'] ?? ''));
+                if ($rightStart === false || $rightEnd === false) {
+                    continue;
+                }
+                if ($leftStart < $rightEnd && $rightStart < $leftEnd) {
+                    $calendarConflictIds[$leftId] = true;
+                    $calendarConflictIds[$rightId] = true;
+                }
+            }
+        }
+      ?>
+      <style>
+        .dg-machine-cal { margin: 0 0 16px; }
+        .dg-machine-cal__nav { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+        .dg-machine-cal__title { font-weight:600; margin-right:auto; }
+        .dg-machine-cal__grid {
+          display:grid;
+          grid-template-columns:repeat(7, minmax(0, 1fr));
+          gap:4px;
+          border:1px solid var(--dg-border, #ddd);
+          padding:4px;
+          background:#fff;
+        }
+        .dg-machine-cal__head {
+          font-size:0.8rem;
+          text-align:center;
+          padding:4px;
+          color:var(--dg-muted, #666);
+          font-weight:600;
+        }
+        .dg-machine-cal__day {
+          min-height:88px;
+          border:1px solid var(--dg-border, #e6e6e6);
+          padding:4px;
+          background:#fafafa;
+          vertical-align:top;
+        }
+        .dg-machine-cal__day--out { opacity:0.35; background:#f3f3f3; }
+        .dg-machine-cal__day--today { outline:2px solid var(--dg-primary, #336); outline-offset:-2px; }
+        .dg-machine-cal__day-num { font-size:0.8rem; font-weight:600; margin-bottom:4px; }
+        .dg-machine-cal__chip {
+          display:block;
+          font-size:0.72rem;
+          line-height:1.25;
+          color:#fff;
+          text-decoration:none;
+          border-radius:3px;
+          padding:2px 4px;
+          margin:0 0 3px;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+        .dg-machine-cal__chip:hover { filter:brightness(1.08); }
+        .dg-machine-cal__chip--done { opacity:0.7; }
+        .dg-machine-cal__chip--conflict { box-shadow: inset 0 0 0 1px #c00; }
+        .dg-machine-cal__empty { color:#999; font-size:0.75rem; }
+        @media (max-width: 900px) {
+          .dg-machine-cal__day { min-height:72px; }
+          .dg-machine-cal__chip { font-size:0.68rem; }
+        }
+      </style>
+      <div class="dg-machine-cal" id="booking-cal">
+        <div class="dg-machine-cal__nav">
+          <div class="dg-machine-cal__title"><?= View::escape((string) ($bookingCalendar['title'] ?? '')) ?></div>
+          <?php if ($bookingCalMode === 'week') : ?>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'week', 'booking_cal_week' => (string) ($bookingCalendar['prev_week'] ?? $bookingCalWeek), 'booking_cal_ym' => (string) ($bookingCalendar['prev_ym'] ?? $bookingCalYm)])) ?>">← Woche</a>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'week', 'booking_cal_week' => (string) ($bookingCalendar['next_week'] ?? $bookingCalWeek), 'booking_cal_ym' => (string) ($bookingCalendar['next_ym'] ?? $bookingCalYm)])) ?>">Woche →</a>
+          <?php else : ?>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'month', 'booking_cal_ym' => (string) ($bookingCalendar['prev_ym'] ?? $bookingCalYm), 'booking_cal_week' => (string) ($bookingCalendar['prev_ym'] ?? $bookingCalYm) . '-01'])) ?>">← Monat</a>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'month', 'booking_cal_ym' => (string) ($bookingCalendar['next_ym'] ?? $bookingCalYm), 'booking_cal_week' => (string) ($bookingCalendar['next_ym'] ?? $bookingCalYm) . '-01'])) ?>">Monat →</a>
+          <?php endif; ?>
+          <a class="dg-button dg-button--small<?= $bookingCalMode === 'month' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'month', 'booking_cal_ym' => $bookingCalYm, 'booking_cal_week' => $bookingCalYm . '-01'])) ?>">Monat</a>
+          <a class="dg-button dg-button--small<?= $bookingCalMode === 'week' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'week', 'booking_cal_week' => $bookingCalWeek, 'booking_cal_ym' => $bookingCalYm])) ?>">Woche</a>
+        </div>
+        <div class="dg-machine-cal__grid" role="grid" aria-label="Maschinenbelegung Kalender">
+          <?php foreach (($bookingCalendar['weekday_labels'] ?? []) as $weekdayLabel) : ?>
+            <div class="dg-machine-cal__head"><?= View::escape((string) $weekdayLabel) ?></div>
+          <?php endforeach; ?>
+          <?php foreach (($bookingCalendar['days'] ?? []) as $day) : ?>
+            <?php
+              $dayDate = (string) ($day['date'] ?? '');
+              $dayItems = is_array($day['items'] ?? null) ? $day['items'] : [];
+              $dayClasses = 'dg-machine-cal__day';
+              if (empty($day['in_month'])) {
+                  $dayClasses .= ' dg-machine-cal__day--out';
+              }
+              if (!empty($day['is_today'])) {
+                  $dayClasses .= ' dg-machine-cal__day--today';
+              }
+            ?>
+            <div class="<?= View::escape($dayClasses) ?>">
+              <div class="dg-machine-cal__day-num"><?= View::escape($dayDate !== '' ? date('j', strtotime($dayDate)) : '') ?></div>
+              <?php if ($dayItems === []) : ?>
+                <?php if (!empty($day['in_month'])) : ?>
+                  <div class="dg-machine-cal__empty">—</div>
+                <?php endif; ?>
+              <?php else : ?>
+                <?php foreach ($dayItems as $calBooking) : ?>
+                  <?php
+                    $calId = (int) ($calBooking['id'] ?? 0);
+                    $calType = (string) ($calBooking['booking_type'] ?? 'other');
+                    $calStatus = (string) ($calBooking['booking_status'] ?? 'planned');
+                    $calTitle = trim((string) ($calBooking['title'] ?? ''));
+                    $calStartTs = strtotime((string) ($calBooking['starts_at'] ?? ''));
+                    $calTime = $calStartTs === false ? '' : date('H:i', $calStartTs);
+                    $calWc = (int) ($calBooking['work_center_id'] ?? 0);
+                    $calLabel = trim($calTime . ' ' . $calTitle);
+                    if ($bookingFilterWorkCenterId <= 0 && $calWc > 0) {
+                        $calLabel .= ' · ' . ($centerNames[$calWc] ?? ('#' . $calWc));
+                    }
+                    $chipClass = 'dg-machine-cal__chip';
+                    if ($calStatus === 'done') {
+                        $chipClass .= ' dg-machine-cal__chip--done';
+                    }
+                    if ($calId > 0 && !empty($calendarConflictIds[$calId])) {
+                        $chipClass .= ' dg-machine-cal__chip--conflict';
+                    }
+                    $chipColor = $bookingChipColors[$calType] ?? $bookingChipColors['other'];
+                  ?>
+                  <?php if ($calId > 0 && $canEdit) : ?>
+                    <a class="<?= View::escape($chipClass) ?>" style="background:<?= View::escape($chipColor) ?>;" href="<?= View::escape($bookingEditHref($calId)) ?>" title="<?= View::escape($calLabel) ?>">
+                      <?= View::escape($calLabel) ?>
+                    </a>
+                  <?php else : ?>
+                    <span class="<?= View::escape($chipClass) ?>" style="background:<?= View::escape($chipColor) ?>;" title="<?= View::escape($calLabel) ?>">
+                      <?= View::escape($calLabel) ?>
+                    </span>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <div class="dg-card" style="padding:12px;margin-bottom:16px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
       <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung (M4a)</h3>
