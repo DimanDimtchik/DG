@@ -131,12 +131,61 @@ final class RecipeCostService
     }
 
     /**
+     * Wartungskosten-Vorschlag (M5c): Anteil aus Wartungsplan, keine FiBu.
+     * runtime_hours → (Routing-h / Intervall) × Plan-Kosten; cycles → 1/Intervall × Kosten; days → nur Info.
+     *
+     * @param array<string, mixed> $plan
+     * @return array{
+     *   estimated_material_cost: float,
+     *   estimated_service_cost: float,
+     *   estimated_total: float,
+     *   suggested_share: float,
+     *   allocation: string,
+     *   note: string
+     * }
+     */
+    public static function maintenanceSuggestedShare(array $plan, float $routingHours): array
+    {
+        $estMat = self::f($plan['estimated_material_cost'] ?? 0);
+        $estSvc = self::f($plan['estimated_service_cost'] ?? 0);
+        $total = $estMat + $estSvc;
+        $interval = self::f($plan['interval_value'] ?? 0);
+        $type = (string) ($plan['interval_type'] ?? 'days');
+        $share = 0.0;
+        $allocation = 'none';
+        $note = '';
+        if ($type === 'runtime_hours' && $interval > 0.0 && $routingHours > 0.0) {
+            $share = ($routingHours / $interval) * $total;
+            $allocation = 'runtime_hours';
+            $note = 'Anteil nach Maschinenlaufzeit';
+        } elseif ($type === 'cycles' && $interval > 0.0) {
+            $share = (1.0 / $interval) * $total;
+            $allocation = 'cycles';
+            $note = 'Anteil je Produktionslauf (1 Zyklus)';
+        } elseif ($type === 'days') {
+            $note = 'Tage-Turnus: nicht anteilig umgelegt (nur Plan-Info)';
+        } else {
+            $note = 'Kein anteiliger Vorschlag (Intervall fehlt oder 0)';
+        }
+
+        return [
+            'estimated_material_cost' => $estMat,
+            'estimated_service_cost' => $estSvc,
+            'estimated_total' => $total,
+            'suggested_share' => $share,
+            'allocation' => $allocation,
+            'note' => $note,
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $recipe title/target_qty/labor_minutes/margin_pct
      * @param list<array<string, mixed>> $bomLines
      * @param list<array<string, mixed>> $routingLines
      * @param array{electricity_eur_per_kwh?: float, room_eur_per_m2_h?: float, wage_eur_per_h?: float}|null $rates
      * @param list<array<string, mixed>> $auxiliaryMaterials
      * @param list<array<string, mixed>>|null $capacityProfiles null = Lookup über Repository
+     * @param list<array<string, mixed>>|null $maintenancePlans null = Lookup über Repository
      * @return array<string, mixed>
      */
     public static function calculate(
@@ -145,7 +194,8 @@ final class RecipeCostService
         array $routingLines,
         ?array $rates = null,
         array $auxiliaryMaterials = [],
-        ?array $capacityProfiles = null
+        ?array $capacityProfiles = null,
+        ?array $maintenancePlans = null
     ): array {
         $rates = $rates ?? RecipeCostSettings::get();
         $marginPct = self::f($recipe['margin_pct'] ?? 0);
@@ -324,6 +374,71 @@ final class RecipeCostService
         $unitSelf = $selfCost / $targetQty;
         $unitVk = $vk / $targetQty;
 
+        // M5c: Wartungskosten nur als Vorschlag (ändert SK/VK nicht, keine FiBu).
+        $hoursByWc = [];
+        $nameByWc = [];
+        foreach ($routeSteps as $step) {
+            $wcIdStep = (int) ($step['work_center_id'] ?? 0);
+            if ($wcIdStep <= 0) {
+                continue;
+            }
+            $hoursByWc[$wcIdStep] = ($hoursByWc[$wcIdStep] ?? 0.0) + self::f($step['hours'] ?? 0);
+            if (!isset($nameByWc[$wcIdStep])) {
+                $nameByWc[$wcIdStep] = (string) ($step['work_center_name'] ?? ('#' . $wcIdStep));
+            }
+        }
+        $plansByWc = [];
+        $maintenanceInjected = is_array($maintenancePlans);
+        if ($maintenanceInjected) {
+            foreach ($maintenancePlans as $planRow) {
+                if (!is_array($planRow)) {
+                    continue;
+                }
+                $pidWc = (int) ($planRow['work_center_id'] ?? 0);
+                if ($pidWc <= 0) {
+                    continue;
+                }
+                if (array_key_exists('is_active', $planRow) && empty($planRow['is_active'])) {
+                    continue;
+                }
+                $plansByWc[$pidWc][] = $planRow;
+            }
+        }
+        $maintenanceLines = [];
+        $kMaintSuggested = 0.0;
+        foreach ($hoursByWc as $wcIdStep => $routingHours) {
+            if ($maintenanceInjected) {
+                $plans = $plansByWc[$wcIdStep] ?? [];
+            } elseif (class_exists('MachinePlanningRepository')) {
+                $plans = MachinePlanningRepository::listMaintenancePlans($wcIdStep, true);
+            } else {
+                $plans = [];
+            }
+            foreach ($plans as $plan) {
+                if (!is_array($plan)) {
+                    continue;
+                }
+                $shareInfo = self::maintenanceSuggestedShare($plan, $routingHours);
+                $kMaintSuggested += $shareInfo['suggested_share'];
+                $maintenanceLines[] = [
+                    'work_center_id' => $wcIdStep,
+                    'work_center_name' => $nameByWc[$wcIdStep] ?? ('#' . $wcIdStep),
+                    'maintenance_plan_id' => (int) ($plan['id'] ?? 0),
+                    'title' => (string) ($plan['title'] ?? ''),
+                    'interval_type' => (string) ($plan['interval_type'] ?? ''),
+                    'interval_value' => self::f($plan['interval_value'] ?? 0),
+                    'planned_downtime_minutes' => (int) ($plan['planned_downtime_minutes'] ?? 0),
+                    'routing_hours' => $routingHours,
+                    'estimated_material_cost' => $shareInfo['estimated_material_cost'],
+                    'estimated_service_cost' => $shareInfo['estimated_service_cost'],
+                    'estimated_total' => $shareInfo['estimated_total'],
+                    'suggested_share' => $shareInfo['suggested_share'],
+                    'allocation' => $shareInfo['allocation'],
+                    'note' => $shareInfo['note'],
+                ];
+            }
+        }
+
         return [
             'rates' => $rates,
             'target_qty' => $targetQty,
@@ -332,17 +447,20 @@ final class RecipeCostService
             'material_lines' => $matLines,
             'auxiliary_lines' => $auxLines,
             'capacity_lines' => $capacityLines,
+            'maintenance_lines' => $maintenanceLines,
             'routing_steps' => $routeSteps,
             'k_mat' => $kMat,
             'k_fert_routing' => $kFertRouting,
             'k_fert_labor_only' => $kFertLaborOnly,
             'k_fert' => $kFert,
+            'k_maint_suggested' => $kMaintSuggested,
             'self_cost' => $selfCost,
+            'self_cost_with_maint_suggested' => $selfCost + $kMaintSuggested,
             'vk' => $vk,
             'unit_self_cost' => $unitSelf,
             'unit_vk' => $unitVk,
             'warnings' => $warnings,
-            'formula' => 'K_mat + K_fert; VK = Selbstkosten × (1 + Marge%)',
+            'formula' => 'K_mat + K_fert; VK = Selbstkosten × (1 + Marge%); Wartung nur Vorschlag',
         ];
     }
 
@@ -368,6 +486,7 @@ final class RecipeCostService
                 'auxiliary_materials' => $auxiliaryMaterials,
                 'routing' => $routingLines,
                 'capacity_lines' => $calcResult['capacity_lines'] ?? [],
+                'maintenance_lines' => $calcResult['maintenance_lines'] ?? [],
                 'rates' => $calcResult['rates'] ?? RecipeCostSettings::get(),
             ],
             'result' => [
@@ -375,13 +494,17 @@ final class RecipeCostService
                 'k_fert' => $calcResult['k_fert'] ?? 0,
                 'k_fert_routing' => $calcResult['k_fert_routing'] ?? 0,
                 'k_fert_labor_only' => $calcResult['k_fert_labor_only'] ?? 0,
+                'k_maint_suggested' => $calcResult['k_maint_suggested'] ?? 0,
                 'self_cost' => $calcResult['self_cost'] ?? 0,
+                'self_cost_with_maint_suggested' => $calcResult['self_cost_with_maint_suggested']
+                    ?? ((float) ($calcResult['self_cost'] ?? 0) + (float) ($calcResult['k_maint_suggested'] ?? 0)),
                 'vk' => $calcResult['vk'] ?? 0,
                 'unit_self_cost' => $calcResult['unit_self_cost'] ?? 0,
                 'unit_vk' => $calcResult['unit_vk'] ?? 0,
                 'material_lines' => $calcResult['material_lines'] ?? [],
                 'auxiliary_lines' => $calcResult['auxiliary_lines'] ?? [],
                 'capacity_lines' => $calcResult['capacity_lines'] ?? [],
+                'maintenance_lines' => $calcResult['maintenance_lines'] ?? [],
                 'routing_steps' => $calcResult['routing_steps'] ?? [],
                 'warnings' => $calcResult['warnings'] ?? [],
             ],

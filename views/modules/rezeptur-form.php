@@ -325,6 +325,22 @@ $plannedPreview = ($calc !== null)
             <?php endforeach; ?>
           </span>
         </div>
+        <?php
+          $maintLinesUi = is_array($calc['maintenance_lines'] ?? null) ? $calc['maintenance_lines'] : [];
+          $kMaintUi = (float) ($calc['k_maint_suggested'] ?? 0);
+        ?>
+        <div class="dg-field-hint" style="margin-top:8px;<?= $maintLinesUi === [] ? 'display:none;' : '' ?>" id="dg-recipe-maint-hint">
+          Wartung Vorschlag (nicht in SK/VK, keine FiBu):
+          <strong data-calc="k_maint_suggested"><?= View::escape(RecipeCostService::formatEur($kMaintUi, 2)) ?></strong>
+          <span id="dg-recipe-maint-hint-body">
+            <?php foreach ($maintLinesUi as $maintLine) : ?>
+              <?php if (!is_array($maintLine)) { continue; } ?>
+              <span><?= View::escape((string) ($maintLine['title'] ?? 'Plan')) ?>
+                <?= View::escape(RecipeCostService::formatEur((float) ($maintLine['suggested_share'] ?? 0), 2)) ?>
+                (<?= View::escape((string) ($maintLine['note'] ?? '')) ?>)</span>
+            <?php endforeach; ?>
+          </span>
+        </div>
       <?php endif; ?>
 
       <?php if ($calc !== null && $canEdit) : ?>
@@ -435,8 +451,15 @@ $plannedPreview = ($calc !== null)
                   · Zusatz <?= View::escape(RecipeCostService::formatEur($snapAuxCost, 2)) ?>
                   (<?= count($snapAuxLines) ?>)
                 <?php endif; ?>
+                <?php
+                  $snapMaintLines = is_array($res['maintenance_lines'] ?? null) ? $res['maintenance_lines'] : [];
+                  $snapMaintSuggested = (float) ($res['k_maint_suggested'] ?? 0);
+                ?>
                 <?php if ($snapCapUsed > 0) : ?>
                   · Kapazität <?= (int) $snapCapUsed ?>
+                <?php endif; ?>
+                <?php if ($snapMaintLines !== [] || $snapMaintSuggested > 0) : ?>
+                  · Wartung <?= View::escape(RecipeCostService::formatEur($snapMaintSuggested, 2)) ?>
                 <?php endif; ?>
               </div>
               <?php if ($snapAuxLines !== []) : ?>
@@ -456,6 +479,16 @@ $plannedPreview = ($calc !== null)
                     <?php if (!is_array($snapCapLine) || (($snapCapLine['run_source'] ?? '') !== 'capacity')) { continue; } ?>
                     <span><?= View::escape((string) ($snapCapLine['work_center_name'] ?? ('WP #' . (int) ($snapCapLine['work_center_id'] ?? 0)))) ?>
                       <?= View::escape(number_format((float) ($snapCapLine['run_min_used'] ?? 0), 1, ',', '.')) ?> Min.</span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+              <?php if ($snapMaintLines !== []) : ?>
+                <div class="dg-field-hint" style="margin:4px 0 0;">
+                  Wartung Vorschlag im Snapshot:
+                  <?php foreach ($snapMaintLines as $snapMaintLine) : ?>
+                    <?php if (!is_array($snapMaintLine)) { continue; } ?>
+                    <span><?= View::escape((string) ($snapMaintLine['title'] ?? 'Plan')) ?>
+                      <?= View::escape(RecipeCostService::formatEur((float) ($snapMaintLine['suggested_share'] ?? 0), 2)) ?></span>
                   <?php endforeach; ?>
                 </div>
               <?php endif; ?>
@@ -737,6 +770,28 @@ $plannedPreview = ($calc !== null)
         } else {
           capHint.style.display = 'none';
           capBody.innerHTML = '';
+        }
+      }
+      var maintHint = document.getElementById('dg-recipe-maint-hint');
+      var maintBody = document.getElementById('dg-recipe-maint-hint-body');
+      if (maintHint && maintBody) {
+        var maintLines = data.maintenance_lines || [];
+        var maintFmt = (data.formatted && data.formatted.k_maint_suggested)
+          ? data.formatted.k_maint_suggested
+          : (Number(data.k_maint_suggested || 0).toFixed(2).replace('.', ',') + ' €');
+        var maintTotalEl = maintHint.querySelector('[data-calc="k_maint_suggested"]');
+        if (maintTotalEl) maintTotalEl.textContent = maintFmt;
+        if (maintLines.length) {
+          maintHint.style.display = '';
+          maintBody.innerHTML = maintLines.map(function (line) {
+            var title = String((line && line.title) || 'Plan').replace(/</g, '&lt;');
+            var share = Number((line && line.suggested_share) || 0).toFixed(2).replace('.', ',') + ' €';
+            var note = String((line && line.note) || '').replace(/</g, '&lt;');
+            return '<span>' + title + ' ' + share + (note ? ' (' + note + ')' : '') + '</span>';
+          }).join(' ');
+        } else {
+          maintHint.style.display = 'none';
+          maintBody.innerHTML = '';
         }
       }
     }
