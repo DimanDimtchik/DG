@@ -170,6 +170,26 @@ foreach ($bookingWindows as $booking) {
         $bookingSummary['estimated_maintenance_cost'] += $maintenancePlanEstimatedCosts[$planId] ?? 0.0;
     }
 }
+$bookingMachineCount = $bookingFilterWorkCenterId > 0 ? 1 : max(0, count($centers));
+$bookingAvailableHours = MachinePlanningRepository::bookingAvailableHours(
+    $bookingWindows,
+    $bookingFilterFrom,
+    $bookingFilterTo,
+    $bookingMachineCount
+);
+$bookingPeriod = MachinePlanningRepository::bookingPeriodBounds(
+    $bookingWindows,
+    $bookingFilterFrom,
+    $bookingFilterTo
+);
+$bookingUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+    (float) $bookingSummary['total_hours'],
+    $bookingAvailableHours
+);
+$bookingProductionUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+    (float) $bookingSummary['production_hours'],
+    $bookingAvailableHours
+);
 $bookingConflictIds = [];
 foreach ($bookingWindows as $leftIndex => $leftBooking) {
     if (($leftBooking['booking_status'] ?? '') === 'cancelled') {
@@ -512,13 +532,40 @@ $formatHelperMaterials = static function (mixed $json): string {
 
     <div class="dg-card" style="padding:12px;margin-bottom:16px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
       <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung (M4a)</h3>
-      <p class="dg-field-hint" style="margin-top:0;">Nur Hinweiswerte aus der gefilterten Liste; keine FiBu-Buchung und keine automatische Umlage.</p>
+      <p class="dg-field-hint" style="margin-top:0;">
+        Nur Hinweiswerte aus der gefilterten Liste; keine FiBu-Buchung und keine automatische Umlage.
+        Auslastung = belegte Stunden ÷ (Kalenderstunden im Zeitraum × Maschinenanzahl). Überlappungen können &gt;&nbsp;100 % ergeben.
+        <?php if ($bookingPeriod !== null && ($bookingPeriod['source'] ?? '') === 'bookings') : ?>
+          Zeitraum derzeit aus den sichtbaren Fenstern abgeleitet — für feste Auslastung bitte Von/Bis filtern.
+        <?php elseif ($bookingUtilizationPct === null) : ?>
+          Für Auslastung Zeitraum filtern oder Belegungen anlegen.
+        <?php endif; ?>
+      </p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.95rem;">
         <div><span class="dg-muted">Gesamt</span><br><strong><?= View::escape(number_format($bookingSummary['total_hours'], 2, ',', '.')) ?> h</strong></div>
         <div><span class="dg-muted">Produktion</span><br><strong><?= View::escape(number_format($bookingSummary['production_hours'], 2, ',', '.')) ?> h</strong></div>
         <div><span class="dg-muted">Wartung</span><br><strong><?= View::escape(number_format($bookingSummary['maintenance_hours'], 2, ',', '.')) ?> h</strong></div>
         <div><span class="dg-muted">Sperrzeit</span><br><strong><?= View::escape(number_format($bookingSummary['blocked_hours'], 2, ',', '.')) ?> h</strong></div>
         <div><span class="dg-muted">Sonstiges</span><br><strong><?= View::escape(number_format($bookingSummary['other_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div>
+          <span class="dg-muted">Verfügbar (Zeitraum)</span><br>
+          <strong>
+            <?php if ($bookingAvailableHours !== null) : ?>
+              <?= View::escape(number_format($bookingAvailableHours, 2, ',', '.')) ?> h
+              <span class="dg-muted" style="font-weight:normal;">· <?= (int) $bookingMachineCount ?> Maschine(n)</span>
+            <?php else : ?>
+              —
+            <?php endif; ?>
+          </strong>
+        </div>
+        <div>
+          <span class="dg-muted">Auslastung belegt</span><br>
+          <strong><?= $bookingUtilizationPct !== null ? View::escape(number_format($bookingUtilizationPct, 1, ',', '.')) . ' %' : '—' ?></strong>
+        </div>
+        <div>
+          <span class="dg-muted">Auslastung Produktion</span><br>
+          <strong><?= $bookingProductionUtilizationPct !== null ? View::escape(number_format($bookingProductionUtilizationPct, 1, ',', '.')) . ' %' : '—' ?></strong>
+        </div>
         <div><span class="dg-muted">Wartungskosten geschätzt</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['estimated_maintenance_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">Maschinenkosten Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['machine_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">inkl. Lohn Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['loaded_cost'], 2)) ?></strong></div>

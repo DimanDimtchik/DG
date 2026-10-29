@@ -410,6 +410,85 @@ final class MachinePlanningRepository
     }
 
     /**
+     * Verfügbare Maschinenstunden im Betrachtungszeitraum (Kalenderstunden × Maschinenanzahl).
+     * Mit Filter Von/Bis: ganzer Filterzeitraum. Sonst: Spanne der gelisteten (nicht stornierten) Fenster.
+     *
+     * @param list<array<string, mixed>> $windows
+     */
+    public static function bookingAvailableHours(
+        array $windows,
+        string $filterFromYmd,
+        string $filterToYmd,
+        int $machineCount
+    ): ?float {
+        $machineCount = max(0, $machineCount);
+        if ($machineCount <= 0) {
+            return null;
+        }
+        $period = self::bookingPeriodBounds($windows, $filterFromYmd, $filterToYmd);
+        if ($period === null) {
+            return null;
+        }
+        $seconds = $period['end'] - $period['start'];
+        if ($seconds <= 0) {
+            return null;
+        }
+
+        return ($seconds / 3600) * $machineCount;
+    }
+
+    /**
+     * Auslastung in Prozent (belegte Stunden / verfügbare Stunden). Überbuchung > 100 möglich.
+     */
+    public static function bookingUtilizationPercent(float $bookedHours, ?float $availableHours): ?float
+    {
+        if ($availableHours === null || $availableHours <= 0.0) {
+            return null;
+        }
+
+        return round(($bookedHours / $availableHours) * 100, 1);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $windows
+     * @return array{start: int, end: int, source: 'filter'|'bookings'}|null
+     */
+    public static function bookingPeriodBounds(array $windows, string $filterFromYmd, string $filterToYmd): ?array
+    {
+        $from = trim($filterFromYmd);
+        $to = trim($filterToYmd);
+        if ($from !== '' && $to !== '') {
+            $start = strtotime($from . ' 00:00:00');
+            $end = strtotime($to . ' 23:59:59');
+            if ($start === false || $end === false || $end <= $start) {
+                return null;
+            }
+
+            return ['start' => $start, 'end' => $end, 'source' => 'filter'];
+        }
+
+        $minStart = null;
+        $maxEnd = null;
+        foreach ($windows as $booking) {
+            if (!is_array($booking) || ($booking['booking_status'] ?? '') === 'cancelled') {
+                continue;
+            }
+            $bookingStart = strtotime((string) ($booking['starts_at'] ?? ''));
+            $bookingEnd = strtotime((string) ($booking['ends_at'] ?? ''));
+            if ($bookingStart === false || $bookingEnd === false || $bookingEnd <= $bookingStart) {
+                continue;
+            }
+            $minStart = $minStart === null ? $bookingStart : min($minStart, $bookingStart);
+            $maxEnd = $maxEnd === null ? $bookingEnd : max($maxEnd, $bookingEnd);
+        }
+        if ($minStart === null || $maxEnd === null || $maxEnd <= $minStart) {
+            return null;
+        }
+
+        return ['start' => $minStart, 'end' => $maxEnd, 'source' => 'bookings'];
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return array{
      *   work_center_id: int,

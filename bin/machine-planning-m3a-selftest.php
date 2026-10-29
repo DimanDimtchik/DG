@@ -152,4 +152,20 @@ try {
 }
 assertM3a($blocked, 'Stornierte Fenster lassen sich nicht bearbeiten');
 
+$utilWindows = [
+    [
+        'booking_status' => 'planned',
+        'starts_at' => '2026-10-01 08:00:00',
+        'ends_at' => '2026-10-01 12:00:00',
+    ],
+];
+$available = MachinePlanningRepository::bookingAvailableHours($utilWindows, '2026-10-01', '2026-10-01', 1);
+assertM3a($available !== null && abs($available - 24.0) < 0.01, 'Verfuegbare Stunden = 24h x 1 Maschine am Filtertag');
+$utilPct = MachinePlanningRepository::bookingUtilizationPercent(4.0, $available);
+assertM3a($utilPct !== null && abs($utilPct - (4 / 24 * 100)) < 0.05, 'Auslastung % aus 4h / 24h');
+$overbooked = MachinePlanningRepository::bookingUtilizationPercent(30.0, 24.0);
+assertM3a($overbooked !== null && $overbooked > 100.0, 'Ueberbuchung darf ueber 100 % liegen');
+$fallbackAvailable = MachinePlanningRepository::bookingAvailableHours($utilWindows, '', '', 1);
+assertM3a($fallbackAvailable !== null && abs($fallbackAvailable - 4.0) < 0.01, 'Ohne Filter: Verfuegbarkeit aus Fensterspanne');
+
 echo "Fertig.\n";

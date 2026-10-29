@@ -5458,6 +5458,21 @@ $legalProductsConfig = LegalProductSettings::config();
                             $exportSummary['estimated_maintenance_cost'] += $maintenancePlanEstimatedCosts[$planId] ?? 0.0;
                         }
                     }
+                    $exportMachineCount = $machineBookingFilterWorkCenterId > 0 ? 1 : max(0, count($workCenterList));
+                    $exportAvailableHours = MachinePlanningRepository::bookingAvailableHours(
+                        $machineBookingWindows,
+                        $machineBookingFilterFrom,
+                        $machineBookingFilterTo,
+                        $exportMachineCount
+                    );
+                    $exportUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+                        (float) $exportSummary['total_hours'],
+                        $exportAvailableHours
+                    );
+                    $exportProductionUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+                        (float) $exportSummary['production_hours'],
+                        $exportAvailableHours
+                    );
                     header('Content-Type: text/csv; charset=utf-8');
                     header('Content-Disposition: attachment; filename="maschinen-belegung.csv"');
                     $out = fopen('php://output', 'wb');
@@ -5469,11 +5484,15 @@ $legalProductsConfig = LegalProductSettings::config();
                     fputcsv($out, ['Filter Maschine', $csvCell($machineBookingFilterWorkCenterId > 0 ? ($workCenterNames[$machineBookingFilterWorkCenterId] ?? ('#' . $machineBookingFilterWorkCenterId)) : 'Alle')], ';');
                     fputcsv($out, ['Filter von', $machineBookingFilterFrom], ';');
                     fputcsv($out, ['Filter bis', $machineBookingFilterTo], ';');
+                    fputcsv($out, ['Maschinenanzahl Auslastung', (string) $exportMachineCount], ';');
                     fputcsv($out, ['Gesamtstunden', number_format($exportSummary['total_hours'], 2, ',', '.')], ';');
                     fputcsv($out, ['Produktionsstunden', number_format($exportSummary['production_hours'], 2, ',', '.')], ';');
                     fputcsv($out, ['Wartungsstunden', number_format($exportSummary['maintenance_hours'], 2, ',', '.')], ';');
                     fputcsv($out, ['Sperrzeitstunden', number_format($exportSummary['blocked_hours'], 2, ',', '.')], ';');
                     fputcsv($out, ['Sonstige Stunden', number_format($exportSummary['other_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Verfügbare Stunden', $exportAvailableHours !== null ? number_format($exportAvailableHours, 2, ',', '.') : ''], ';');
+                    fputcsv($out, ['Auslastung belegt %', $exportUtilizationPct !== null ? number_format($exportUtilizationPct, 1, ',', '.') : ''], ';');
+                    fputcsv($out, ['Auslastung Produktion %', $exportProductionUtilizationPct !== null ? number_format($exportProductionUtilizationPct, 1, ',', '.') : ''], ';');
                     fputcsv($out, ['Wartungskosten geschätzt', number_format($exportSummary['estimated_maintenance_cost'], 2, ',', '.')], ';');
                     fputcsv($out, ['Maschinenkosten Vorschlag', number_format($exportSummary['machine_cost'], 2, ',', '.')], ';');
                     fputcsv($out, ['inkl. Lohn Vorschlag', number_format($exportSummary['loaded_cost'], 2, ',', '.')], ';');
