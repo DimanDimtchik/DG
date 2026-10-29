@@ -2097,27 +2097,50 @@ switch ($path) {
         if (
             $page === 'rezeptur-maschinen'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
-            && (isset($_POST['machine_booking_save']) || isset($_POST['machine_booking_cancel']))
+            && (
+                isset($_POST['machine_booking_save'])
+                || isset($_POST['machine_booking_cancel'])
+                || isset($_POST['machine_booking_status'])
+            )
             && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
         ) {
             if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
                 Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
             } else {
                 try {
+                    $bookingWindowId = (int) ($_POST['booking_window_id'] ?? 0);
                     if (isset($_POST['machine_booking_cancel'])) {
-                        MachinePlanningRepository::cancelBookingWindow((int) ($_POST['booking_window_id'] ?? 0));
+                        MachinePlanningRepository::cancelBookingWindow($bookingWindowId);
                         Flash::set('success', 'Belegungsfenster storniert.');
+                    } elseif (isset($_POST['machine_booking_status'])) {
+                        MachinePlanningRepository::setBookingWindowStatus(
+                            $bookingWindowId,
+                            (string) ($_POST['booking_status'] ?? '')
+                        );
+                        Flash::set('success', 'Status aktualisiert.');
                     } else {
                         $bookingConflicts = MachinePlanningRepository::listBookingConflicts(
                             (int) ($_POST['work_center_id'] ?? 0),
                             (string) ($_POST['starts_at'] ?? ''),
-                            (string) ($_POST['ends_at'] ?? '')
+                            (string) ($_POST['ends_at'] ?? ''),
+                            $bookingWindowId > 0 ? $bookingWindowId : null
                         );
-                        MachinePlanningRepository::createBookingWindow($_POST);
-                        if ($bookingConflicts !== []) {
-                            Flash::set('warning', 'Belegungsfenster gespeichert, aber es gibt ' . count($bookingConflicts) . ' Überschneidung(en) für diese Maschine.');
+                        if ($bookingWindowId > 0) {
+                            MachinePlanningRepository::updateBookingWindow($bookingWindowId, $_POST);
+                            Flash::set(
+                                $bookingConflicts !== [] ? 'warning' : 'success',
+                                $bookingConflicts !== []
+                                    ? 'Belegungsfenster aktualisiert, aber es gibt ' . count($bookingConflicts) . ' Überschneidung(en) für diese Maschine.'
+                                    : 'Belegungsfenster aktualisiert.'
+                            );
                         } else {
-                            Flash::set('success', 'Belegungsfenster gespeichert.');
+                            MachinePlanningRepository::createBookingWindow($_POST);
+                            Flash::set(
+                                $bookingConflicts !== [] ? 'warning' : 'success',
+                                $bookingConflicts !== []
+                                    ? 'Belegungsfenster gespeichert, aber es gibt ' . count($bookingConflicts) . ' Überschneidung(en) für diese Maschine.'
+                                    : 'Belegungsfenster gespeichert.'
+                            );
                         }
                     }
                 } catch (Throwable $e) {
@@ -5336,6 +5359,23 @@ $legalProductsConfig = LegalProductSettings::config();
                     $machineBookingEndsAfter,
                     false
                 );
+                $machineBookingEditId = max(0, (int) ($_GET['booking_edit_id'] ?? 0));
+                $machineBookingEdit = $machineBookingEditId > 0
+                    ? MachinePlanningRepository::findBookingWindow($machineBookingEditId)
+                    : null;
+                if ($machineBookingEditId > 0 && $machineBookingEdit === null) {
+                    Flash::set('error', 'Belegungsfenster zum Bearbeiten nicht gefunden.');
+                    header('Location: /app?page=rezeptur-maschinen#booking', true, 302);
+                    exit;
+                }
+                if (
+                    is_array($machineBookingEdit)
+                    && (string) ($machineBookingEdit['booking_status'] ?? '') === 'cancelled'
+                ) {
+                    Flash::set('error', 'Stornierte Belegungsfenster können nicht bearbeitet werden.');
+                    header('Location: /app?page=rezeptur-maschinen#booking', true, 302);
+                    exit;
+                }
                 $machineRecipeOptions = RecipeRepository::listAll();
                 if (($_GET['booking_export'] ?? '') === 'csv') {
                     $exportRates = RecipeCostSettings::get();
@@ -8495,6 +8535,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $machineBookingFilterWorkCenterId = $machineBookingFilterWorkCenterId ?? 0;
         $machineBookingFilterFrom = $machineBookingFilterFrom ?? '';
         $machineBookingFilterTo = $machineBookingFilterTo ?? '';
+        $machineBookingEdit = $machineBookingEdit ?? null;
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8998,6 +9039,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'machineBookingFilterWorkCenterId',
             'machineBookingFilterFrom',
             'machineBookingFilterTo',
+            'machineBookingEdit',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',

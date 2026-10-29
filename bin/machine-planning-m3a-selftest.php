@@ -102,4 +102,54 @@ try {
 }
 assertM3a($failed, 'Ende vor Start wird abgelehnt');
 
+$editId = MachinePlanningRepository::createBookingWindow([
+    'work_center_id' => 3,
+    'booking_type' => 'production',
+    'title' => 'Editierbar',
+    'starts_at' => '2026-10-29 08:00:00',
+    'ends_at' => '2026-10-29 09:00:00',
+    'planned_output_qty' => 10,
+    'unit' => 'kg',
+    'booking_status' => 'planned',
+]);
+MachinePlanningRepository::updateBookingWindow($editId, [
+    'work_center_id' => 3,
+    'booking_type' => 'maintenance',
+    'title' => 'Editiert',
+    'starts_at' => '2026-10-29 08:30:00',
+    'ends_at' => '2026-10-29 09:30:00',
+    'planned_output_qty' => '15,5',
+    'unit' => 'h',
+    'booking_status' => 'done',
+    'notes' => 'nachgezogen',
+]);
+$edited = MachinePlanningRepository::findBookingWindow($editId);
+assertM3a(is_array($edited) && (string) $edited['title'] === 'Editiert', 'Belegungsfenster laesst sich bearbeiten');
+assertM3a((string) ($edited['booking_status'] ?? '') === 'done', 'Status erledigt beim Speichern');
+assertM3a((float) ($edited['planned_output_qty'] ?? 0) === 15.5, 'Output beim Bearbeiten normalisiert');
+MachinePlanningRepository::setBookingWindowStatus($editId, 'planned');
+$reopened = MachinePlanningRepository::findBookingWindow($editId);
+assertM3a((string) ($reopened['booking_status'] ?? '') === 'planned', 'Status wieder auf geplant setzen');
+$conflictsIgnoreSelf = MachinePlanningRepository::listBookingConflicts(
+    3,
+    '2026-10-29 08:30:00',
+    '2026-10-29 09:30:00',
+    $editId
+);
+assertM3a($conflictsIgnoreSelf === [], 'Konfliktpruefung ignoriert das eigene Fenster beim Update');
+MachinePlanningRepository::cancelBookingWindow($editId);
+$blocked = false;
+try {
+    MachinePlanningRepository::updateBookingWindow($editId, [
+        'work_center_id' => 3,
+        'title' => 'Darf nicht',
+        'starts_at' => '2026-10-29 10:00:00',
+        'ends_at' => '2026-10-29 11:00:00',
+        'booking_status' => 'planned',
+    ]);
+} catch (InvalidArgumentException) {
+    $blocked = true;
+}
+assertM3a($blocked, 'Stornierte Fenster lassen sich nicht bearbeiten');
+
 echo "Fertig.\n";

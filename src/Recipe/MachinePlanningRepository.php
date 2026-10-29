@@ -250,11 +250,7 @@ final class MachinePlanningRepository
     {
         self::ensureReady();
         self::requireDatabase();
-        $startsAt = self::dateTime((string) ($data['starts_at'] ?? ''));
-        $endsAt = self::dateTime((string) ($data['ends_at'] ?? ''));
-        if (strtotime($endsAt) <= strtotime($startsAt)) {
-            throw new InvalidArgumentException('Belegungsfenster braucht ein Ende nach dem Start.');
-        }
+        $row = self::normalizeBookingWindowPayload($data, false);
         $stmt = Database::pdo()->prepare(
             'INSERT INTO dg_machine_booking_windows
                 (work_center_id, booking_type, recipe_id, maintenance_plan_id, maintenance_log_id,
@@ -263,22 +259,91 @@ final class MachinePlanningRepository
                 (:work_center_id, :booking_type, :recipe_id, :maintenance_plan_id, :maintenance_log_id,
                  :title, :starts_at, :ends_at, :planned_output_qty, :unit, :booking_status, :notes)'
         );
-        $stmt->execute([
-            'work_center_id' => self::positiveInt($data['work_center_id'] ?? 0, 'Maschine'),
-            'booking_type' => self::enum((string) ($data['booking_type'] ?? 'production'), self::BOOKING_TYPES, 'production'),
-            'recipe_id' => self::nullablePositiveInt($data['recipe_id'] ?? null),
-            'maintenance_plan_id' => self::nullablePositiveInt($data['maintenance_plan_id'] ?? null),
-            'maintenance_log_id' => self::nullablePositiveInt($data['maintenance_log_id'] ?? null),
-            'title' => self::trimmed($data['title'] ?? '', 191),
-            'starts_at' => $startsAt,
-            'ends_at' => $endsAt,
-            'planned_output_qty' => self::decimal($data['planned_output_qty'] ?? 0, 0.0),
-            'unit' => self::trimmed($data['unit'] ?? '', 50),
-            'booking_status' => self::enum((string) ($data['booking_status'] ?? 'planned'), self::BOOKING_STATUSES, 'planned'),
-            'notes' => self::trimmed($data['notes'] ?? '', 1000),
-        ]);
+        $stmt->execute($row);
 
         return (int) Database::pdo()->lastInsertId();
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findBookingWindow(int $id): ?array
+    {
+        self::ensureReady();
+        if ($id <= 0 || !Database::isConfigured()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare('SELECT * FROM dg_machine_booking_windows WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Aktualisiert ein Belegungsfenster (Felder + Status geplant/erledigt).
+     * Stornierte Einträge werden nicht wieder geöffnet — dafür neu anlegen.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function updateBookingWindow(int $id, array $data): void
+    {
+        self::ensureReady();
+        self::requireDatabase();
+        $existing = self::findBookingWindow($id);
+        if ($existing === null) {
+            throw new InvalidArgumentException('Belegungsfenster nicht gefunden.');
+        }
+        if ((string) ($existing['booking_status'] ?? '') === 'cancelled') {
+            throw new InvalidArgumentException('Stornierte Belegungsfenster können nicht bearbeitet werden.');
+        }
+        $row = self::normalizeBookingWindowPayload($data, true);
+        if ($row['booking_status'] === 'cancelled') {
+            throw new InvalidArgumentException('Zum Stornieren bitte „Stornieren“ nutzen.');
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_machine_booking_windows SET
+                work_center_id = :work_center_id,
+                booking_type = :booking_type,
+                recipe_id = :recipe_id,
+                maintenance_plan_id = :maintenance_plan_id,
+                maintenance_log_id = :maintenance_log_id,
+                title = :title,
+                starts_at = :starts_at,
+                ends_at = :ends_at,
+                planned_output_qty = :planned_output_qty,
+                unit = :unit,
+                booking_status = :booking_status,
+                notes = :notes
+             WHERE id = :id AND booking_status <> \'cancelled\''
+        );
+        $row['id'] = $id;
+        $stmt->execute($row);
+    }
+
+    /** Schneller Statuswechsel planned ↔ done (kein Storno). */
+    public static function setBookingWindowStatus(int $id, string $status): void
+    {
+        self::ensureReady();
+        self::requireDatabase();
+        $normalized = trim($status);
+        if (!in_array($normalized, ['planned', 'done'], true)) {
+            throw new InvalidArgumentException('Ungültiger Status.');
+        }
+        $existing = self::findBookingWindow($id);
+        if ($existing === null) {
+            throw new InvalidArgumentException('Belegungsfenster nicht gefunden.');
+        }
+        if ((string) ($existing['booking_status'] ?? '') === 'cancelled') {
+            throw new InvalidArgumentException('Stornierte Belegungsfenster können nicht bearbeitet werden.');
+        }
+        $stmt = Database::pdo()->prepare(
+            "UPDATE dg_machine_booking_windows
+             SET booking_status = :booking_status
+             WHERE id = :id AND booking_status <> 'cancelled'"
+        );
+        $stmt->execute([
+            'id' => $id,
+            'booking_status' => $normalized,
+        ]);
     }
 
     /** @return list<array<string, mixed>> */
@@ -342,6 +407,56 @@ final class MachinePlanningRepository
         }
 
         return $rows;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array{
+     *   work_center_id: int,
+     *   booking_type: string,
+     *   recipe_id: ?int,
+     *   maintenance_plan_id: ?int,
+     *   maintenance_log_id: ?int,
+     *   title: string,
+     *   starts_at: string,
+     *   ends_at: string,
+     *   planned_output_qty: float,
+     *   unit: string,
+     *   booking_status: string,
+     *   notes: string
+     * }
+     */
+    private static function normalizeBookingWindowPayload(array $data, bool $forUpdate): array
+    {
+        $startsAt = self::dateTime((string) ($data['starts_at'] ?? ''));
+        $endsAt = self::dateTime((string) ($data['ends_at'] ?? ''));
+        if (strtotime($endsAt) <= strtotime($startsAt)) {
+            throw new InvalidArgumentException('Belegungsfenster braucht ein Ende nach dem Start.');
+        }
+        $title = self::trimmed($data['title'] ?? '', 191);
+        if ($title === '') {
+            throw new InvalidArgumentException('Titel fehlt.');
+        }
+        $statusDefault = $forUpdate ? 'planned' : 'planned';
+
+        return [
+            'work_center_id' => self::positiveInt($data['work_center_id'] ?? 0, 'Maschine'),
+            'booking_type' => self::enum((string) ($data['booking_type'] ?? 'production'), self::BOOKING_TYPES, 'production'),
+            'recipe_id' => self::nullablePositiveInt($data['recipe_id'] ?? null),
+            'maintenance_plan_id' => self::nullablePositiveInt($data['maintenance_plan_id'] ?? null),
+            'maintenance_log_id' => self::nullablePositiveInt($data['maintenance_log_id'] ?? null),
+            'title' => $title,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'planned_output_qty' => self::decimal($data['planned_output_qty'] ?? 0, 0.0),
+            'unit' => self::trimmed($data['unit'] ?? '', 50),
+            'booking_status' => self::enum(
+                (string) ($data['booking_status'] ?? $statusDefault),
+                self::BOOKING_STATUSES,
+                $statusDefault
+            ),
+            'notes' => self::trimmed($data['notes'] ?? '', 1000),
+        ];
     }
 
     private static function requireDatabase(): void

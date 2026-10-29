@@ -9,6 +9,7 @@
  * @var int $machineBookingFilterWorkCenterId
  * @var string $machineBookingFilterFrom
  * @var string $machineBookingFilterTo
+ * @var array<string, mixed>|null $machineBookingEdit
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -24,6 +25,31 @@ $recipeOptions = $machineRecipeOptions ?? [];
 $bookingFilterWorkCenterId = (int) ($machineBookingFilterWorkCenterId ?? 0);
 $bookingFilterFrom = (string) ($machineBookingFilterFrom ?? '');
 $bookingFilterTo = (string) ($machineBookingFilterTo ?? '');
+$bookingEdit = is_array($machineBookingEdit ?? null) ? $machineBookingEdit : null;
+$bookingEditId = (int) ($bookingEdit['id'] ?? 0);
+$bookingToLocal = static function (mixed $value): string {
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return '';
+    }
+    $ts = strtotime($raw);
+
+    return $ts === false ? '' : date('Y-m-d\TH:i', $ts);
+};
+$bookingEditHref = static function (int $id) use ($bookingFilterWorkCenterId, $bookingFilterFrom, $bookingFilterTo): string {
+    $query = ['page' => 'rezeptur-maschinen', 'booking_edit_id' => (string) $id];
+    if ($bookingFilterWorkCenterId > 0) {
+        $query['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
+    }
+    if ($bookingFilterFrom !== '') {
+        $query['booking_from'] = $bookingFilterFrom;
+    }
+    if ($bookingFilterTo !== '') {
+        $query['booking_to'] = $bookingFilterTo;
+    }
+
+    return '/app?' . http_build_query($query) . '#booking';
+};
 $bookingQuickBase = ['page' => 'rezeptur-maschinen'];
 if ($bookingFilterWorkCenterId > 0) {
     $bookingQuickBase['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
@@ -440,9 +466,11 @@ $formatHelperMaterials = static function (mixed $json): string {
   </section>
 
   <section class="dg-card" id="booking" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b)</h2>
+    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b / Bearbeiten)</h2>
     <p class="dg-field-hint">
-      Einfache Liste fuer geplante Produktion, Wartung und Sperrzeiten. Noch kein Drag-and-drop-Kalender und keine automatische Konfliktentscheidung.
+      Einfache Liste fuer geplante Produktion, Wartung und Sperrzeiten.
+      Bearbeiten und Status (geplant/erledigt) sind möglich; Storno bleibt getrennt.
+      Noch kein Drag-and-drop-Kalender und keine automatische Konfliktentscheidung.
     </p>
     <?php if ($bookingConflictIds !== []) : ?>
       <div class="dg-flash dg-flash--warning" style="margin-bottom:12px;">
@@ -504,15 +532,26 @@ $formatHelperMaterials = static function (mixed $json): string {
     </div>
 
     <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <?php
+        $editWc = (int) ($bookingEdit['work_center_id'] ?? 0);
+        $editType = (string) ($bookingEdit['booking_type'] ?? 'production');
+        $editRecipe = (int) ($bookingEdit['recipe_id'] ?? 0);
+        $editPlan = (int) ($bookingEdit['maintenance_plan_id'] ?? 0);
+        $editStatus = (string) ($bookingEdit['booking_status'] ?? 'planned');
+      ?>
       <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <?php if ($bookingEditId > 0) : ?>
+          <input type="hidden" name="booking_window_id" value="<?= $bookingEditId ?>">
+          <p class="dg-field-hint" style="margin-top:0;">Bearbeitung von Belegungsfenster #<?= $bookingEditId ?>.</p>
+        <?php endif; ?>
         <div class="dg-form-grid">
           <label class="dg-field">
             <span>Maschine</span>
             <select name="work_center_id" required>
               <?php foreach ($centers as $center) : ?>
                 <?php $cid = (int) ($center['id'] ?? 0); ?>
-                <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+                <option value="<?= $cid ?>"<?= $editWc === $cid ? ' selected' : '' ?>><?= View::escape((string) ($center['name'] ?? '')) ?></option>
               <?php endforeach; ?>
             </select>
           </label>
@@ -520,13 +559,13 @@ $formatHelperMaterials = static function (mixed $json): string {
             <span>Typ</span>
             <select name="booking_type">
               <?php foreach ($bookingTypeLabels as $value => $label) : ?>
-                <option value="<?= View::escape($value) ?>"><?= View::escape($label) ?></option>
+                <option value="<?= View::escape($value) ?>"<?= $editType === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
               <?php endforeach; ?>
             </select>
           </label>
           <label class="dg-field">
             <span>Titel</span>
-            <input name="title" required maxlength="191" placeholder="z. B. Charge Creme A">
+            <input name="title" required maxlength="191" placeholder="z. B. Charge Creme A" value="<?= View::escape((string) ($bookingEdit['title'] ?? '')) ?>">
           </label>
           <label class="dg-field">
             <span>Rezeptur (optional)</span>
@@ -534,7 +573,7 @@ $formatHelperMaterials = static function (mixed $json): string {
               <option value="0">— keine —</option>
               <?php foreach ($recipeOptions as $recipe) : ?>
                 <?php $rid = (int) ($recipe['id'] ?? 0); ?>
-                <option value="<?= $rid ?>"><?= View::escape((string) ($recipe['title'] ?? '')) ?></option>
+                <option value="<?= $rid ?>"<?= $editRecipe === $rid ? ' selected' : '' ?>><?= View::escape((string) ($recipe['title'] ?? '')) ?></option>
               <?php endforeach; ?>
             </select>
           </label>
@@ -545,7 +584,7 @@ $formatHelperMaterials = static function (mixed $json): string {
               <?php foreach ($maintenancePlans as $plan) : ?>
                 <?php if (empty($plan['is_active'])) { continue; } ?>
                 <?php $pid = (int) ($plan['id'] ?? 0); ?>
-                <option value="<?= $pid ?>">
+                <option value="<?= $pid ?>"<?= $editPlan === $pid ? ' selected' : '' ?>">
                   <?= View::escape(($centerNames[(int) ($plan['work_center_id'] ?? 0)] ?? ('#' . (int) ($plan['work_center_id'] ?? 0))) . ' · ' . (string) ($plan['title'] ?? '')) ?>
                 </option>
               <?php endforeach; ?>
@@ -553,34 +592,39 @@ $formatHelperMaterials = static function (mixed $json): string {
           </label>
           <label class="dg-field">
             <span>Start</span>
-            <input type="datetime-local" name="starts_at" required>
+            <input type="datetime-local" name="starts_at" required value="<?= View::escape($bookingToLocal($bookingEdit['starts_at'] ?? '')) ?>">
           </label>
           <label class="dg-field">
             <span>Ende</span>
-            <input type="datetime-local" name="ends_at" required>
+            <input type="datetime-local" name="ends_at" required value="<?= View::escape($bookingToLocal($bookingEdit['ends_at'] ?? '')) ?>">
           </label>
           <label class="dg-field">
             <span>Geplanter Output</span>
-            <input name="planned_output_qty" inputmode="decimal" value="0">
+            <input name="planned_output_qty" inputmode="decimal" value="<?= View::escape((string) ($bookingEdit['planned_output_qty'] ?? '0')) ?>">
           </label>
           <label class="dg-field">
             <span>Einheit</span>
-            <input name="unit" maxlength="50" placeholder="kg, Stk, l">
+            <input name="unit" maxlength="50" placeholder="kg, Stk, l" value="<?= View::escape((string) ($bookingEdit['unit'] ?? '')) ?>">
           </label>
           <label class="dg-field">
             <span>Status</span>
             <select name="booking_status">
-              <option value="planned">geplant</option>
-              <option value="done">erledigt</option>
+              <option value="planned"<?= $editStatus === 'planned' || $editStatus === '' ? ' selected' : '' ?>>geplant</option>
+              <option value="done"<?= $editStatus === 'done' ? ' selected' : '' ?>>erledigt</option>
             </select>
           </label>
           <label class="dg-field dg-field--wide">
             <span>Notiz</span>
-            <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. Rohstoff bereitstellen, Reinigung vorher einplanen"></textarea>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. Rohstoff bereitstellen, Reinigung vorher einplanen"><?= View::escape((string) ($bookingEdit['notes'] ?? '')) ?></textarea>
           </label>
         </div>
         <div class="dg-form-actions">
-          <button type="submit" class="dg-button dg-button--primary" name="machine_booking_save" value="1">Belegungsfenster speichern</button>
+          <button type="submit" class="dg-button dg-button--primary" name="machine_booking_save" value="1">
+            <?= $bookingEditId > 0 ? 'Änderungen speichern' : 'Belegungsfenster speichern' ?>
+          </button>
+          <?php if ($bookingEditId > 0) : ?>
+            <a class="dg-button" href="/app?page=rezeptur-maschinen#booking">Abbrechen</a>
+          <?php endif; ?>
         </div>
       </form>
     <?php elseif ($centers === []) : ?>
@@ -653,6 +697,22 @@ $formatHelperMaterials = static function (mixed $json): string {
                 </td>
                 <td class="dg-table__actions">
                   <?php if ($canEdit && $dbConnected && $bookingStatus !== 'cancelled') : ?>
+                    <a class="dg-button dg-button--small" href="<?= View::escape($bookingEditHref($bookingId)) ?>">Bearbeiten</a>
+                    <?php if ($bookingStatus === 'planned') : ?>
+                      <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                        <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
+                        <input type="hidden" name="booking_status" value="done">
+                        <button type="submit" class="dg-button dg-button--small" name="machine_booking_status" value="1">Erledigt</button>
+                      </form>
+                    <?php elseif ($bookingStatus === 'done') : ?>
+                      <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                        <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
+                        <input type="hidden" name="booking_status" value="planned">
+                        <button type="submit" class="dg-button dg-button--small" name="machine_booking_status" value="1">Wieder geplant</button>
+                      </form>
+                    <?php endif; ?>
                     <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
