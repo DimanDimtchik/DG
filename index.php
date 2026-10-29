@@ -1727,6 +1727,40 @@ switch ($path) {
             }
         }
 
+        // POST: Rezeptur Zusatz-/Verpackungsmaterial (M1b)
+        if (
+            $page === 'rezeptur-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['recipe_auxiliary_save']) || isset($_POST['recipe_auxiliary_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-form')
+        ) {
+            $editRecipeId = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user) || $editRecipeId <= 0) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur', true, 302);
+                exit;
+            }
+            try {
+                if (RecipeRepository::find($editRecipeId) === null) {
+                    throw new InvalidArgumentException('Rezept nicht gefunden.');
+                }
+                if (isset($_POST['recipe_auxiliary_deactivate'])) {
+                    MachinePlanningRepository::deactivateAuxiliaryMaterial((int) ($_POST['auxiliary_material_id'] ?? $_POST['recipe_auxiliary_deactivate'] ?? 0));
+                    Flash::set('success', 'Zusatzmaterial deaktiviert.');
+                } else {
+                    $data = $_POST;
+                    $data['recipe_id'] = $editRecipeId;
+                    $data['is_active'] = 1;
+                    MachinePlanningRepository::createAuxiliaryMaterial($data);
+                    Flash::set('success', 'Zusatz-/Verpackungsmaterial gespeichert.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=rezeptur-form&action=edit&id=' . $editRecipeId . '#auxiliary', true, 302);
+            exit;
+        }
+
         // POST: Rezeptur Produktionslauf-Snapshot + Soll/Ist (R3/R6)
         if (
             $page === 'rezeptur-form'
@@ -1745,8 +1779,10 @@ switch ($path) {
                 if (RecipeRepository::find($runId) === null) {
                     throw new InvalidArgumentException('Rezept nicht gefunden.');
                 }
-                $calc = RecipeCostService::calculate($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? []);
-                $payload = RecipeCostService::snapshotPayload($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], $calc);
+                $formSnap['id'] = $runId;
+                $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($runId, true);
+                $calc = RecipeCostService::calculate($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], null, $auxiliary);
+                $payload = RecipeCostService::snapshotPayload($formSnap, $formSnap['bom'] ?? [], $formSnap['routing'] ?? [], $calc, $auxiliary);
                 $snapshotId = RecipeSnapshotRepository::create(
                     $runId,
                     RecipeSnapshotRepository::KIND_RUN,
@@ -1975,6 +2011,144 @@ switch ($path) {
                 }
             }
             header('Location: /app?page=rezeptur-maschinen', true, 302);
+            exit;
+        }
+
+        // POST: Maschinen-Kapazitätsprofil (M1a)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['machine_capacity_save']) || isset($_POST['machine_capacity_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    if (isset($_POST['machine_capacity_deactivate'])) {
+                        MachinePlanningRepository::deactivateCapacityProfile((int) ($_POST['capacity_profile_id'] ?? 0));
+                        Flash::set('success', 'Kapazitätsprofil deaktiviert.');
+                    } else {
+                        MachinePlanningRepository::createCapacityProfile($_POST);
+                        Flash::set('success', 'Kapazitätsprofil gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#capacity', true, 302);
+            exit;
+        }
+
+        // POST: Maschinen-Wartungsplan (M2a)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['machine_maintenance_plan_save']) || isset($_POST['machine_maintenance_plan_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    if (isset($_POST['machine_maintenance_plan_deactivate'])) {
+                        MachinePlanningRepository::deactivateMaintenancePlan((int) ($_POST['maintenance_plan_id'] ?? 0));
+                        Flash::set('success', 'Wartungsplan deaktiviert.');
+                    } else {
+                        $data = $_POST;
+                        $helperLines = array_values(array_filter(array_map(
+                            static fn (string $line): string => trim($line),
+                            preg_split('/\R/u', (string) ($_POST['helper_materials_text'] ?? '')) ?: []
+                        )));
+                        $data['helper_materials_json'] = $helperLines === [] ? null : $helperLines;
+                        $data['is_active'] = 1;
+                        MachinePlanningRepository::createMaintenancePlan($data);
+                        Flash::set('success', 'Wartungsplan gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#maintenance', true, 302);
+            exit;
+        }
+
+        // POST: Maschinen-Wartungsprotokoll (M2b)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['machine_maintenance_log_save'])
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    MachinePlanningRepository::createMaintenanceLog($_POST);
+                    Flash::set('success', 'Wartung protokolliert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#maintenance-log', true, 302);
+            exit;
+        }
+
+        // POST: Maschinen-Belegungsfenster (M3b)
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['machine_booking_save'])
+                || isset($_POST['machine_booking_cancel'])
+                || isset($_POST['machine_booking_status'])
+            )
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    $bookingWindowId = (int) ($_POST['booking_window_id'] ?? 0);
+                    if (isset($_POST['machine_booking_cancel'])) {
+                        MachinePlanningRepository::cancelBookingWindow($bookingWindowId);
+                        Flash::set('success', 'Belegungsfenster storniert.');
+                    } elseif (isset($_POST['machine_booking_status'])) {
+                        MachinePlanningRepository::setBookingWindowStatus(
+                            $bookingWindowId,
+                            (string) ($_POST['booking_status'] ?? '')
+                        );
+                        Flash::set('success', 'Status aktualisiert.');
+                    } else {
+                        $bookingConflicts = MachinePlanningRepository::listBookingConflicts(
+                            (int) ($_POST['work_center_id'] ?? 0),
+                            (string) ($_POST['starts_at'] ?? ''),
+                            (string) ($_POST['ends_at'] ?? ''),
+                            $bookingWindowId > 0 ? $bookingWindowId : null
+                        );
+                        if ($bookingWindowId > 0) {
+                            MachinePlanningRepository::updateBookingWindow($bookingWindowId, $_POST);
+                            Flash::set(
+                                $bookingConflicts !== [] ? 'warning' : 'success',
+                                $bookingConflicts !== []
+                                    ? 'Belegungsfenster aktualisiert, aber es gibt ' . count($bookingConflicts) . ' Überschneidung(en) für diese Maschine.'
+                                    : 'Belegungsfenster aktualisiert.'
+                            );
+                        } else {
+                            MachinePlanningRepository::createBookingWindow($_POST);
+                            Flash::set(
+                                $bookingConflicts !== [] ? 'warning' : 'success',
+                                $bookingConflicts !== []
+                                    ? 'Belegungsfenster gespeichert, aber es gibt ' . count($bookingConflicts) . ' Überschneidung(en) für diese Maschine.'
+                                    : 'Belegungsfenster gespeichert.'
+                            );
+                        }
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#booking', true, 302);
             exit;
         }
 
@@ -5141,12 +5315,21 @@ $legalProductsConfig = LegalProductSettings::config();
                 $recipeCalc = null;
                 $recipeSnapshots = [];
                 $recipeActuals = [];
+                $recipeAuxiliaryMaterials = [];
                 if (($recipeId ?? 0) > 0) {
                     try {
+                        $recipeAuxiliaryMaterials = MachinePlanningRepository::listAuxiliaryMaterials((int) $recipeId, false);
+                    } catch (Throwable) {
+                        $recipeAuxiliaryMaterials = [];
+                    }
+                    try {
+                        $recipeForm['id'] = (int) $recipeId;
                         $recipeCalc = RecipeCostService::calculate(
                             $recipeForm,
                             $recipeForm['bom'] ?? [],
-                            $recipeForm['routing'] ?? []
+                            $recipeForm['routing'] ?? [],
+                            null,
+                            array_values(array_filter($recipeAuxiliaryMaterials, static fn (array $row): bool => !empty($row['is_active'])))
                         );
                     } catch (Throwable) {
                         $recipeCalc = null;
@@ -5164,6 +5347,221 @@ $legalProductsConfig = LegalProductSettings::config();
                 $currentPage = 'rezeptur';
             } elseif ($page === 'rezeptur-maschinen') {
                 $workCenterList = WorkCenterRepository::listAll(false);
+                $machineCapacityProfiles = MachinePlanningRepository::listCapacityProfiles(null, false);
+                $machineMaintenancePlans = MachinePlanningRepository::listMaintenancePlans(null, false);
+                $machineMaintenanceLogs = MachinePlanningRepository::listMaintenanceLogs();
+                $machineBookingFilterWorkCenterId = max(0, (int) ($_GET['booking_work_center_id'] ?? 0));
+                $machineBookingFilterFrom = trim((string) ($_GET['booking_from'] ?? ''));
+                $machineBookingFilterTo = trim((string) ($_GET['booking_to'] ?? ''));
+                $machineBookingStartsBefore = $machineBookingFilterTo !== '' ? $machineBookingFilterTo . ' 23:59:59' : null;
+                $machineBookingEndsAfter = $machineBookingFilterFrom !== '' ? $machineBookingFilterFrom . ' 00:00:00' : null;
+                $machineBookingWindows = MachinePlanningRepository::listBookingWindows(
+                    $machineBookingFilterWorkCenterId > 0 ? $machineBookingFilterWorkCenterId : null,
+                    $machineBookingStartsBefore,
+                    $machineBookingEndsAfter,
+                    false
+                );
+                $machineBookingCalMode = trim((string) ($_GET['booking_cal_mode'] ?? 'month'));
+                if (!in_array($machineBookingCalMode, ['month', 'week'], true)) {
+                    $machineBookingCalMode = 'month';
+                }
+                $machineBookingCalYm = trim((string) ($_GET['booking_cal_ym'] ?? ''));
+                if (!preg_match('/^\d{4}-\d{2}$/', $machineBookingCalYm)) {
+                    $machineBookingCalYm = $machineBookingFilterFrom !== ''
+                        ? substr($machineBookingFilterFrom, 0, 7)
+                        : date('Y-m');
+                }
+                $machineBookingCalWeek = trim((string) ($_GET['booking_cal_week'] ?? ''));
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $machineBookingCalWeek)) {
+                    $machineBookingCalWeek = $machineBookingFilterFrom !== ''
+                        ? $machineBookingFilterFrom
+                        : (($machineBookingCalYm !== '' ? $machineBookingCalYm . '-01' : date('Y-m-d')));
+                }
+                if ($machineBookingCalMode === 'week') {
+                    $calWeekTs = strtotime($machineBookingCalWeek . ' 12:00:00') ?: time();
+                    $calDow = (int) date('N', $calWeekTs);
+                    $calWeekStartTs = strtotime('-' . ($calDow - 1) . ' days', strtotime(date('Y-m-d', $calWeekTs) . ' 12:00:00'));
+                    $calRangeStart = date('Y-m-d 00:00:00', $calWeekStartTs);
+                    $calRangeEnd = date('Y-m-d 23:59:59', strtotime('+6 days', $calWeekStartTs));
+                    $machineBookingCalYm = date('Y-m', $calWeekStartTs);
+                } else {
+                    $calMonthTs = strtotime($machineBookingCalYm . '-01 12:00:00') ?: time();
+                    $machineBookingCalYm = date('Y-m', $calMonthTs);
+                    $calRangeStart = date('Y-m-01 00:00:00', $calMonthTs);
+                    $calRangeEnd = date('Y-m-t 23:59:59', $calMonthTs);
+                }
+                $machineBookingCalendarWindows = MachinePlanningRepository::listBookingWindows(
+                    $machineBookingFilterWorkCenterId > 0 ? $machineBookingFilterWorkCenterId : null,
+                    $calRangeEnd,
+                    $calRangeStart,
+                    false
+                );
+                $machineBookingCalendar = MachinePlanningRepository::buildBookingCalendarGrid(
+                    $machineBookingCalendarWindows,
+                    $machineBookingCalMode,
+                    $machineBookingCalYm,
+                    $machineBookingCalWeek
+                );
+                $machineBookingEditId = max(0, (int) ($_GET['booking_edit_id'] ?? 0));
+                $machineBookingEdit = $machineBookingEditId > 0
+                    ? MachinePlanningRepository::findBookingWindow($machineBookingEditId)
+                    : null;
+                if ($machineBookingEditId > 0 && $machineBookingEdit === null) {
+                    Flash::set('error', 'Belegungsfenster zum Bearbeiten nicht gefunden.');
+                    header('Location: /app?page=rezeptur-maschinen#booking', true, 302);
+                    exit;
+                }
+                if (
+                    is_array($machineBookingEdit)
+                    && (string) ($machineBookingEdit['booking_status'] ?? '') === 'cancelled'
+                ) {
+                    Flash::set('error', 'Stornierte Belegungsfenster können nicht bearbeitet werden.');
+                    header('Location: /app?page=rezeptur-maschinen#booking', true, 302);
+                    exit;
+                }
+                $machineRecipeOptions = RecipeRepository::listAll();
+                if (($_GET['booking_export'] ?? '') === 'csv') {
+                    $exportRates = RecipeCostSettings::get();
+                    $workCenterNames = [];
+                    $workCenterHourlyCosts = [];
+                    foreach ($workCenterList as $center) {
+                        $centerId = (int) ($center['id'] ?? 0);
+                        $workCenterNames[$centerId] = (string) ($center['name'] ?? '');
+                        $workCenterHourlyCosts[$centerId] = RecipeCostService::breakdown($center, $exportRates);
+                    }
+                    $maintenancePlanNames = [];
+                    $maintenancePlanEstimatedCosts = [];
+                    foreach ($machineMaintenancePlans as $plan) {
+                        $planId = (int) ($plan['id'] ?? 0);
+                        $maintenancePlanNames[$planId] = (string) ($plan['title'] ?? '');
+                        $maintenancePlanEstimatedCosts[$planId] = (float) ($plan['estimated_material_cost'] ?? 0) + (float) ($plan['estimated_service_cost'] ?? 0);
+                    }
+                    $recipeNames = [];
+                    foreach ($machineRecipeOptions as $recipe) {
+                        $recipeNames[(int) ($recipe['id'] ?? 0)] = (string) ($recipe['title'] ?? '');
+                    }
+                    $typeLabels = [
+                        'production' => 'Produktion',
+                        'maintenance' => 'Wartung',
+                        'blocked' => 'Sperrzeit',
+                        'other' => 'Sonstiges',
+                    ];
+                    $statusLabels = [
+                        'planned' => 'geplant',
+                        'done' => 'erledigt',
+                        'cancelled' => 'storniert',
+                    ];
+                    $csvCell = static function (mixed $value): string {
+                        $text = (string) $value;
+                        $trimmed = ltrim($text);
+                        if ($trimmed !== '' && in_array($trimmed[0], ['=', '+', '-', '@'], true)) {
+                            return "'" . $text;
+                        }
+
+                        return $text;
+                    };
+                    $exportSummary = [
+                        'total_hours' => 0.0,
+                        'production_hours' => 0.0,
+                        'maintenance_hours' => 0.0,
+                        'blocked_hours' => 0.0,
+                        'other_hours' => 0.0,
+                        'estimated_maintenance_cost' => 0.0,
+                        'machine_cost' => 0.0,
+                        'loaded_cost' => 0.0,
+                    ];
+                    foreach ($machineBookingWindows as $booking) {
+                        if (($booking['booking_status'] ?? '') === 'cancelled') {
+                            continue;
+                        }
+                        $bookingStart = strtotime((string) ($booking['starts_at'] ?? ''));
+                        $bookingEnd = strtotime((string) ($booking['ends_at'] ?? ''));
+                        if ($bookingStart === false || $bookingEnd === false || $bookingEnd <= $bookingStart) {
+                            continue;
+                        }
+                        $hours = ($bookingEnd - $bookingStart) / 3600;
+                        $exportSummary['total_hours'] += $hours;
+                        $hourlyCosts = $workCenterHourlyCosts[(int) ($booking['work_center_id'] ?? 0)] ?? null;
+                        if (is_array($hourlyCosts)) {
+                            $exportSummary['machine_cost'] += $hours * (float) ($hourlyCosts['machine_per_h'] ?? 0);
+                            $exportSummary['loaded_cost'] += $hours * (float) ($hourlyCosts['loaded_per_h'] ?? 0);
+                        }
+                        $type = (string) ($booking['booking_type'] ?? 'other');
+                        if ($type === 'production') {
+                            $exportSummary['production_hours'] += $hours;
+                        } elseif ($type === 'maintenance') {
+                            $exportSummary['maintenance_hours'] += $hours;
+                        } elseif ($type === 'blocked') {
+                            $exportSummary['blocked_hours'] += $hours;
+                        } else {
+                            $exportSummary['other_hours'] += $hours;
+                        }
+                        $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
+                        if ($planId > 0) {
+                            $exportSummary['estimated_maintenance_cost'] += $maintenancePlanEstimatedCosts[$planId] ?? 0.0;
+                        }
+                    }
+                    $exportMachineCount = $machineBookingFilterWorkCenterId > 0 ? 1 : max(0, count($workCenterList));
+                    $exportAvailableHours = MachinePlanningRepository::bookingAvailableHours(
+                        $machineBookingWindows,
+                        $machineBookingFilterFrom,
+                        $machineBookingFilterTo,
+                        $exportMachineCount
+                    );
+                    $exportUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+                        (float) $exportSummary['total_hours'],
+                        $exportAvailableHours
+                    );
+                    $exportProductionUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+                        (float) $exportSummary['production_hours'],
+                        $exportAvailableHours
+                    );
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="maschinen-belegung.csv"');
+                    $out = fopen('php://output', 'wb');
+                    if ($out === false) {
+                        exit;
+                    }
+                    fwrite($out, "\xEF\xBB\xBF");
+                    fputcsv($out, ['Auswertung', 'Maschinenbelegung'], ';');
+                    fputcsv($out, ['Filter Maschine', $csvCell($machineBookingFilterWorkCenterId > 0 ? ($workCenterNames[$machineBookingFilterWorkCenterId] ?? ('#' . $machineBookingFilterWorkCenterId)) : 'Alle')], ';');
+                    fputcsv($out, ['Filter von', $machineBookingFilterFrom], ';');
+                    fputcsv($out, ['Filter bis', $machineBookingFilterTo], ';');
+                    fputcsv($out, ['Maschinenanzahl Auslastung', (string) $exportMachineCount], ';');
+                    fputcsv($out, ['Gesamtstunden', number_format($exportSummary['total_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Produktionsstunden', number_format($exportSummary['production_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Wartungsstunden', number_format($exportSummary['maintenance_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Sperrzeitstunden', number_format($exportSummary['blocked_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Sonstige Stunden', number_format($exportSummary['other_hours'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Verfügbare Stunden', $exportAvailableHours !== null ? number_format($exportAvailableHours, 2, ',', '.') : ''], ';');
+                    fputcsv($out, ['Auslastung belegt %', $exportUtilizationPct !== null ? number_format($exportUtilizationPct, 1, ',', '.') : ''], ';');
+                    fputcsv($out, ['Auslastung Produktion %', $exportProductionUtilizationPct !== null ? number_format($exportProductionUtilizationPct, 1, ',', '.') : ''], ';');
+                    fputcsv($out, ['Wartungskosten geschätzt', number_format($exportSummary['estimated_maintenance_cost'], 2, ',', '.')], ';');
+                    fputcsv($out, ['Maschinenkosten Vorschlag', number_format($exportSummary['machine_cost'], 2, ',', '.')], ';');
+                    fputcsv($out, ['inkl. Lohn Vorschlag', number_format($exportSummary['loaded_cost'], 2, ',', '.')], ';');
+                    fputcsv($out, [], ';');
+                    fputcsv($out, ['Maschine', 'Typ', 'Titel', 'Start', 'Ende', 'Rezeptur', 'Wartungsplan', 'Output', 'Einheit', 'Status', 'Notiz'], ';');
+                    foreach ($machineBookingWindows as $booking) {
+                        $recipeId = (int) ($booking['recipe_id'] ?? 0);
+                        $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
+                        $type = (string) ($booking['booking_type'] ?? 'other');
+                        $status = (string) ($booking['booking_status'] ?? 'planned');
+                        fputcsv($out, [
+                            $csvCell($workCenterNames[(int) ($booking['work_center_id'] ?? 0)] ?? ('#' . (int) ($booking['work_center_id'] ?? 0))),
+                            $csvCell($typeLabels[$type] ?? $type),
+                            $csvCell($booking['title'] ?? ''),
+                            (string) ($booking['starts_at'] ?? ''),
+                            (string) ($booking['ends_at'] ?? ''),
+                            $csvCell($recipeId > 0 ? ($recipeNames[$recipeId] ?? ('#' . $recipeId)) : ''),
+                            $csvCell($planId > 0 ? ($maintenancePlanNames[$planId] ?? ('#' . $planId)) : ''),
+                            (string) ($booking['planned_output_qty'] ?? '0'),
+                            $csvCell($booking['unit'] ?? ''),
+                            $csvCell($statusLabels[$status] ?? $status),
+                            $csvCell($booking['notes'] ?? ''),
+                        ], ';');
+                    }
+                    exit;
+                }
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $contentTemplate = 'modules/rezeptur-maschinen';
@@ -8189,7 +8587,21 @@ $legalProductsConfig = LegalProductSettings::config();
         $recipeCalc = $recipeCalc ?? null;
         $recipeSnapshots = $recipeSnapshots ?? [];
         $recipeActuals = $recipeActuals ?? [];
+        $recipeAuxiliaryMaterials = $recipeAuxiliaryMaterials ?? [];
         $workCenterList = $workCenterList ?? [];
+        $machineCapacityProfiles = $machineCapacityProfiles ?? [];
+        $machineMaintenancePlans = $machineMaintenancePlans ?? [];
+        $machineMaintenanceLogs = $machineMaintenanceLogs ?? [];
+        $machineBookingWindows = $machineBookingWindows ?? [];
+        $machineRecipeOptions = $machineRecipeOptions ?? [];
+        $machineBookingFilterWorkCenterId = $machineBookingFilterWorkCenterId ?? 0;
+        $machineBookingFilterFrom = $machineBookingFilterFrom ?? '';
+        $machineBookingFilterTo = $machineBookingFilterTo ?? '';
+        $machineBookingEdit = $machineBookingEdit ?? null;
+        $machineBookingCalendar = $machineBookingCalendar ?? null;
+        $machineBookingCalMode = $machineBookingCalMode ?? 'month';
+        $machineBookingCalYm = $machineBookingCalYm ?? date('Y-m');
+        $machineBookingCalWeek = $machineBookingCalWeek ?? date('Y-m-d');
         $workCenterForm = $workCenterForm ?? null;
         $workCenterId = $workCenterId ?? null;
         $recipeCostRates = $recipeCostRates ?? null;
@@ -8683,7 +9095,21 @@ $legalProductsConfig = LegalProductSettings::config();
             'recipeCalc',
             'recipeSnapshots',
             'recipeActuals',
+            'recipeAuxiliaryMaterials',
             'workCenterList',
+            'machineCapacityProfiles',
+            'machineMaintenancePlans',
+            'machineMaintenanceLogs',
+            'machineBookingWindows',
+            'machineRecipeOptions',
+            'machineBookingFilterWorkCenterId',
+            'machineBookingFilterFrom',
+            'machineBookingFilterTo',
+            'machineBookingEdit',
+            'machineBookingCalendar',
+            'machineBookingCalMode',
+            'machineBookingCalYm',
+            'machineBookingCalWeek',
             'workCenterForm',
             'workCenterId',
             'recipeCostRates',

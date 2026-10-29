@@ -1,6 +1,19 @@
 <?php
 /**
  * @var list<array<string, mixed>> $workCenterList
+ * @var list<array<string, mixed>> $machineCapacityProfiles
+ * @var list<array<string, mixed>> $machineMaintenancePlans
+ * @var list<array<string, mixed>> $machineMaintenanceLogs
+ * @var list<array<string, mixed>> $machineBookingWindows
+ * @var list<array<string, mixed>> $machineRecipeOptions
+ * @var int $machineBookingFilterWorkCenterId
+ * @var string $machineBookingFilterFrom
+ * @var string $machineBookingFilterTo
+ * @var array<string, mixed>|null $machineBookingEdit
+ * @var array<string, mixed>|null $machineBookingCalendar
+ * @var string $machineBookingCalMode
+ * @var string $machineBookingCalYm
+ * @var string $machineBookingCalWeek
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var bool $canEdit
@@ -8,8 +21,248 @@
  * @var array{type: string, message: string}|null $flash
  */
 $centers = $workCenterList ?? [];
+$capacityProfiles = $machineCapacityProfiles ?? [];
+$maintenancePlans = $machineMaintenancePlans ?? [];
+$maintenanceLogs = $machineMaintenanceLogs ?? [];
+$bookingWindows = $machineBookingWindows ?? [];
+$recipeOptions = $machineRecipeOptions ?? [];
+$bookingFilterWorkCenterId = (int) ($machineBookingFilterWorkCenterId ?? 0);
+$bookingFilterFrom = (string) ($machineBookingFilterFrom ?? '');
+$bookingFilterTo = (string) ($machineBookingFilterTo ?? '');
+$bookingEdit = is_array($machineBookingEdit ?? null) ? $machineBookingEdit : null;
+$bookingEditId = (int) ($bookingEdit['id'] ?? 0);
+$bookingCalendar = is_array($machineBookingCalendar ?? null) ? $machineBookingCalendar : null;
+$bookingCalMode = (string) ($machineBookingCalMode ?? 'month');
+$bookingCalYm = (string) ($machineBookingCalYm ?? date('Y-m'));
+$bookingCalWeek = (string) ($machineBookingCalWeek ?? date('Y-m-d'));
+$bookingToLocal = static function (mixed $value): string {
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return '';
+    }
+    $ts = strtotime($raw);
+
+    return $ts === false ? '' : date('Y-m-d\TH:i', $ts);
+};
+$bookingQueryBase = static function (array $extra = []) use ($bookingFilterWorkCenterId, $bookingFilterFrom, $bookingFilterTo, $bookingCalMode, $bookingCalYm, $bookingCalWeek): array {
+    $query = ['page' => 'rezeptur-maschinen'] + $extra;
+    if ($bookingFilterWorkCenterId > 0) {
+        $query['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
+    }
+    if ($bookingFilterFrom !== '') {
+        $query['booking_from'] = $bookingFilterFrom;
+    }
+    if ($bookingFilterTo !== '') {
+        $query['booking_to'] = $bookingFilterTo;
+    }
+    $query['booking_cal_mode'] = $bookingCalMode;
+    $query['booking_cal_ym'] = $bookingCalYm;
+    $query['booking_cal_week'] = $bookingCalWeek;
+
+    return $query;
+};
+$bookingEditHref = static function (int $id) use ($bookingQueryBase): string {
+    return '/app?' . http_build_query($bookingQueryBase(['booking_edit_id' => (string) $id])) . '#booking';
+};
+$bookingCalHref = static function (array $extra) use ($bookingQueryBase): string {
+    return '/app?' . http_build_query($bookingQueryBase($extra)) . '#booking-cal';
+};
+$bookingChipColors = [
+    'production' => '#2f5d50',
+    'maintenance' => '#9a6b2f',
+    'blocked' => '#5c5c5c',
+    'other' => '#3a5f8a',
+];
+$bookingQuickBase = ['page' => 'rezeptur-maschinen'];
+if ($bookingFilterWorkCenterId > 0) {
+    $bookingQuickBase['booking_work_center_id'] = (string) $bookingFilterWorkCenterId;
+}
+$bookingToday = new DateTimeImmutable('today');
+$bookingQuickRanges = [
+    [
+        'label' => 'Heute',
+        'from' => $bookingToday->format('Y-m-d'),
+        'to' => $bookingToday->format('Y-m-d'),
+    ],
+    [
+        'label' => 'Nächste 7 Tage',
+        'from' => $bookingToday->format('Y-m-d'),
+        'to' => $bookingToday->modify('+6 days')->format('Y-m-d'),
+    ],
+    [
+        'label' => 'Dieser Monat',
+        'from' => $bookingToday->modify('first day of this month')->format('Y-m-d'),
+        'to' => $bookingToday->modify('last day of this month')->format('Y-m-d'),
+    ],
+];
+$bookingQuickHref = static function (array $range) use ($bookingQuickBase): string {
+    $query = $bookingQuickBase + [
+        'booking_from' => (string) $range['from'],
+        'booking_to' => (string) $range['to'],
+    ];
+
+    return '/app?' . http_build_query($query) . '#booking';
+};
+$bookingExportQuery = $bookingQuickBase + ['booking_export' => 'csv'];
+if ($bookingFilterFrom !== '') {
+    $bookingExportQuery['booking_from'] = $bookingFilterFrom;
+}
+if ($bookingFilterTo !== '') {
+    $bookingExportQuery['booking_to'] = $bookingFilterTo;
+}
+$bookingExportHref = '/app?' . http_build_query($bookingExportQuery);
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
+$centerNames = [];
+$centerHourlyCosts = [];
+foreach ($centers as $center) {
+    $centerId = (int) ($center['id'] ?? 0);
+    $centerNames[$centerId] = (string) ($center['name'] ?? '');
+    $centerHourlyCosts[$centerId] = RecipeCostService::breakdown($center, $rates);
+}
+$maintenancePlanNames = [];
+$maintenancePlanEstimatedCosts = [];
+foreach ($maintenancePlans as $plan) {
+    $planId = (int) ($plan['id'] ?? 0);
+    $maintenancePlanNames[$planId] = (string) ($plan['title'] ?? '');
+    $maintenancePlanEstimatedCosts[$planId] = (float) ($plan['estimated_material_cost'] ?? 0) + (float) ($plan['estimated_service_cost'] ?? 0);
+}
+$recipeNames = [];
+foreach ($recipeOptions as $recipe) {
+    $recipeNames[(int) ($recipe['id'] ?? 0)] = (string) ($recipe['title'] ?? '');
+}
+$bookingTypeLabels = [
+    'production' => 'Produktion',
+    'maintenance' => 'Wartung',
+    'blocked' => 'Sperrzeit',
+    'other' => 'Sonstiges',
+];
+$bookingStatusLabels = [
+    'planned' => 'geplant',
+    'done' => 'erledigt',
+    'cancelled' => 'storniert',
+];
+$bookingSummary = [
+    'total_hours' => 0.0,
+    'production_hours' => 0.0,
+    'maintenance_hours' => 0.0,
+    'blocked_hours' => 0.0,
+    'other_hours' => 0.0,
+    'estimated_maintenance_cost' => 0.0,
+    'machine_cost' => 0.0,
+    'loaded_cost' => 0.0,
+    'production_machine_cost' => 0.0,
+    'maintenance_machine_cost' => 0.0,
+    'blocked_machine_cost' => 0.0,
+    'other_machine_cost' => 0.0,
+];
+foreach ($bookingWindows as $booking) {
+    if (($booking['booking_status'] ?? '') === 'cancelled') {
+        continue;
+    }
+    $bookingStart = strtotime((string) ($booking['starts_at'] ?? ''));
+    $bookingEnd = strtotime((string) ($booking['ends_at'] ?? ''));
+    if ($bookingStart === false || $bookingEnd === false || $bookingEnd <= $bookingStart) {
+        continue;
+    }
+    $hours = ($bookingEnd - $bookingStart) / 3600;
+    $bookingSummary['total_hours'] += $hours;
+    $machineCostForBooking = 0.0;
+    $hourlyCosts = $centerHourlyCosts[(int) ($booking['work_center_id'] ?? 0)] ?? null;
+    if (is_array($hourlyCosts)) {
+        $machineCostForBooking = $hours * (float) ($hourlyCosts['machine_per_h'] ?? 0);
+        $bookingSummary['machine_cost'] += $machineCostForBooking;
+        $bookingSummary['loaded_cost'] += $hours * (float) ($hourlyCosts['loaded_per_h'] ?? 0);
+    }
+    $type = (string) ($booking['booking_type'] ?? 'other');
+    if ($type === 'production') {
+        $bookingSummary['production_hours'] += $hours;
+        $bookingSummary['production_machine_cost'] += $machineCostForBooking;
+    } elseif ($type === 'maintenance') {
+        $bookingSummary['maintenance_hours'] += $hours;
+        $bookingSummary['maintenance_machine_cost'] += $machineCostForBooking;
+    } elseif ($type === 'blocked') {
+        $bookingSummary['blocked_hours'] += $hours;
+        $bookingSummary['blocked_machine_cost'] += $machineCostForBooking;
+    } else {
+        $bookingSummary['other_hours'] += $hours;
+        $bookingSummary['other_machine_cost'] += $machineCostForBooking;
+    }
+    $planId = (int) ($booking['maintenance_plan_id'] ?? 0);
+    if ($planId > 0) {
+        $bookingSummary['estimated_maintenance_cost'] += $maintenancePlanEstimatedCosts[$planId] ?? 0.0;
+    }
+}
+$bookingMachineCount = $bookingFilterWorkCenterId > 0 ? 1 : max(0, count($centers));
+$bookingAvailableHours = MachinePlanningRepository::bookingAvailableHours(
+    $bookingWindows,
+    $bookingFilterFrom,
+    $bookingFilterTo,
+    $bookingMachineCount
+);
+$bookingPeriod = MachinePlanningRepository::bookingPeriodBounds(
+    $bookingWindows,
+    $bookingFilterFrom,
+    $bookingFilterTo
+);
+$bookingUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+    (float) $bookingSummary['total_hours'],
+    $bookingAvailableHours
+);
+$bookingProductionUtilizationPct = MachinePlanningRepository::bookingUtilizationPercent(
+    (float) $bookingSummary['production_hours'],
+    $bookingAvailableHours
+);
+$bookingConflictIds = [];
+foreach ($bookingWindows as $leftIndex => $leftBooking) {
+    if (($leftBooking['booking_status'] ?? '') === 'cancelled') {
+        continue;
+    }
+    $leftId = (int) ($leftBooking['id'] ?? 0);
+    $leftWcId = (int) ($leftBooking['work_center_id'] ?? 0);
+    $leftStart = strtotime((string) ($leftBooking['starts_at'] ?? ''));
+    $leftEnd = strtotime((string) ($leftBooking['ends_at'] ?? ''));
+    if ($leftId <= 0 || $leftWcId <= 0 || $leftStart === false || $leftEnd === false) {
+        continue;
+    }
+    foreach ($bookingWindows as $rightIndex => $rightBooking) {
+        if ($rightIndex <= $leftIndex || ($rightBooking['booking_status'] ?? '') === 'cancelled') {
+            continue;
+        }
+        $rightId = (int) ($rightBooking['id'] ?? 0);
+        if ($rightId <= 0 || (int) ($rightBooking['work_center_id'] ?? 0) !== $leftWcId) {
+            continue;
+        }
+        $rightStart = strtotime((string) ($rightBooking['starts_at'] ?? ''));
+        $rightEnd = strtotime((string) ($rightBooking['ends_at'] ?? ''));
+        if ($rightStart === false || $rightEnd === false) {
+            continue;
+        }
+        if ($leftStart < $rightEnd && $leftEnd > $rightStart) {
+            $bookingConflictIds[$leftId] = true;
+            $bookingConflictIds[$rightId] = true;
+        }
+    }
+}
+$intervalLabels = [
+    'days' => 'Tage',
+    'runtime_hours' => 'Laufstunden',
+    'cycles' => 'Zyklen',
+];
+$formatHelperMaterials = static function (mixed $json): string {
+    if (!is_string($json) || trim($json) === '') {
+        return '';
+    }
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $items = array_values(array_filter(array_map(
+            static fn (mixed $item): string => trim((string) $item),
+            $decoded
+        )));
+        return implode(', ', $items);
+    }
+    return trim($json);
+};
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -126,4 +379,819 @@ $rates = $recipeCostRates ?? RecipeCostSettings::get();
     Formel: K<sub>masch</sub> = (Anschaffung ÷ Nutzungsdauer) + (kW × Strom) + (m² × Raum).
     „inkl. Lohn“ = K<sub>masch</sub> + Bediener × Lohn.
   </p>
+
+  <section class="dg-card" id="capacity" style="margin-top:20px;padding:16px;">
+    <h2 class="dg-subsection-title" style="margin-top:0;">Kapazitätsprofile (M1a)</h2>
+    <p class="dg-field-hint">
+      Erfasst nur technische Leistung: Rohstoff-Input pro Stunde, Produkt-Output pro Stunde und Ausbeute.
+      Keine Belegung, keine Wartung, keine Buchung.
+    </p>
+
+    <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#capacity" class="dg-form" style="margin-bottom:16px;">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Maschine</span>
+            <select name="work_center_id" required>
+              <?php foreach ($centers as $center) : ?>
+                <?php $cid = (int) ($center['id'] ?? 0); ?>
+                <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Rohstoff / Input</span>
+            <input name="input_material_label" maxlength="191" placeholder="z. B. Rohmasse, Granulat, Teig">
+          </label>
+          <label class="dg-field">
+            <span>Input pro Stunde</span>
+            <input name="input_qty_per_hour" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Produkt / Output</span>
+            <input name="output_product_label" maxlength="191" placeholder="z. B. fertige Stücke, kg Produkt">
+          </label>
+          <label class="dg-field">
+            <span>Output pro Stunde</span>
+            <input name="output_qty_per_hour" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Einheit</span>
+            <input name="unit" maxlength="50" placeholder="kg, Stk, l">
+          </label>
+          <label class="dg-field">
+            <span>Ausbeute %</span>
+            <input name="yield_percent" inputmode="decimal" value="100">
+          </label>
+          <label class="dg-field">
+            <span>Gültig ab</span>
+            <input type="date" name="valid_from" value="<?= View::escape(date('Y-m-d')) ?>">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Notiz</span>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. abhängig von Rohstofffeuchte oder Verpackungsgröße"></textarea>
+          </label>
+        </div>
+        <input type="hidden" name="is_active" value="1">
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_capacity_save" value="1">Kapazitätsprofil speichern</button>
+        </div>
+      </form>
+    <?php elseif ($centers === []) : ?>
+      <p class="dg-muted">Erst eine Maschine anlegen, dann Kapazitätsprofile erfassen.</p>
+    <?php endif; ?>
+
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Maschine</th>
+            <th>Input / h</th>
+            <th>Output / h</th>
+            <th>Ausbeute</th>
+            <th>Gültig ab</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($capacityProfiles === []) : ?>
+            <tr>
+              <td colspan="7" class="dg-table__empty">Noch keine Kapazitätsprofile.</td>
+            </tr>
+          <?php else : ?>
+            <?php foreach ($capacityProfiles as $profile) : ?>
+              <?php
+                $profileId = (int) ($profile['id'] ?? 0);
+                $profileActive = !empty($profile['is_active']);
+                $wcId = (int) ($profile['work_center_id'] ?? 0);
+                $unit = trim((string) ($profile['unit'] ?? ''));
+              ?>
+              <tr<?= $profileActive ? '' : ' style="opacity:0.55;"' ?>>
+                <td><?= View::escape($centerNames[$wcId] ?? ('#' . $wcId)) ?></td>
+                <td>
+                  <?= View::escape((string) ($profile['input_qty_per_hour'] ?? '0')) ?>
+                  <?= View::escape($unit) ?>
+                  <?php if (($profile['input_material_label'] ?? '') !== '') : ?>
+                    <small class="dg-muted">· <?= View::escape((string) $profile['input_material_label']) ?></small>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= View::escape((string) ($profile['output_qty_per_hour'] ?? '0')) ?>
+                  <?= View::escape($unit) ?>
+                  <?php if (($profile['output_product_label'] ?? '') !== '') : ?>
+                    <small class="dg-muted">· <?= View::escape((string) $profile['output_product_label']) ?></small>
+                  <?php endif; ?>
+                </td>
+                <td><?= View::escape((string) ($profile['yield_percent'] ?? '100')) ?> %</td>
+                <td><?= View::escape((string) ($profile['valid_from'] ?? '')) ?></td>
+                <td>
+                  <span class="dg-badge <?= $profileActive ? 'dg-badge--ok' : 'dg-badge--muted' ?>">
+                    <?= $profileActive ? 'aktiv' : 'inaktiv' ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected && $profileActive) : ?>
+                    <form method="post" action="/app?page=rezeptur-maschinen#capacity" style="display:inline;">
+                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="capacity_profile_id" value="<?= $profileId ?>">
+                      <button type="submit" class="dg-button dg-button--small" name="machine_capacity_deactivate" value="1">Deaktivieren</button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dg-card" id="booking" style="margin-top:20px;padding:16px;">
+    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b / Kalender)</h2>
+    <p class="dg-field-hint">
+      Wochen-/Monatsansicht plus Liste fuer geplante Produktion, Wartung und Sperrzeiten.
+      Bearbeiten und Status (geplant/erledigt) sind möglich; Storno bleibt getrennt.
+      Kein Drag-and-drop; Konflikt nur markieren, nicht automatisch entscheiden.
+    </p>
+    <?php if ($bookingConflictIds !== []) : ?>
+      <div class="dg-flash dg-flash--warning" style="margin-bottom:12px;">
+        Es gibt überlappende Belegungsfenster. Betroffene Zeilen sind mit „Konflikt“ markiert.
+      </div>
+    <?php endif; ?>
+
+    <form method="get" action="/app#booking" class="dg-form" style="margin-bottom:16px;">
+      <input type="hidden" name="page" value="rezeptur-maschinen">
+      <input type="hidden" name="booking_cal_mode" value="<?= View::escape($bookingCalMode) ?>">
+      <input type="hidden" name="booking_cal_ym" value="<?= View::escape($bookingCalYm) ?>">
+      <input type="hidden" name="booking_cal_week" value="<?= View::escape($bookingCalWeek) ?>">
+      <div class="dg-form-grid">
+        <label class="dg-field">
+          <span>Maschine filtern</span>
+          <select name="booking_work_center_id">
+            <option value="0">Alle Maschinen</option>
+            <?php foreach ($centers as $center) : ?>
+              <?php $cid = (int) ($center['id'] ?? 0); ?>
+              <option value="<?= $cid ?>"<?= $bookingFilterWorkCenterId === $cid ? ' selected' : '' ?>><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Von</span>
+          <input type="date" name="booking_from" value="<?= View::escape($bookingFilterFrom) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Bis</span>
+          <input type="date" name="booking_to" value="<?= View::escape($bookingFilterTo) ?>">
+        </label>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" class="dg-button">Belegung filtern</button>
+        <a class="dg-button" href="/app?page=rezeptur-maschinen#booking">Filter zurücksetzen</a>
+        <a class="dg-button" href="<?= View::escape($bookingExportHref) ?>">CSV exportieren</a>
+        <?php foreach ($bookingQuickRanges as $range) : ?>
+          <a class="dg-button" href="<?= View::escape($bookingQuickHref($range)) ?>"><?= View::escape((string) $range['label']) ?></a>
+        <?php endforeach; ?>
+      </div>
+    </form>
+
+    <?php if (is_array($bookingCalendar) && !empty($bookingCalendar['days'])) : ?>
+      <?php
+        $calendarConflictIds = $bookingConflictIds;
+        $calendarFlat = [];
+        foreach (($bookingCalendar['days'] ?? []) as $calDay) {
+            foreach (($calDay['items'] ?? []) as $calItem) {
+                if (!is_array($calItem)) {
+                    continue;
+                }
+                $cid = (int) ($calItem['id'] ?? 0);
+                if ($cid > 0) {
+                    $calendarFlat[$cid] = $calItem;
+                }
+            }
+        }
+        $calendarFlatList = array_values($calendarFlat);
+        foreach ($calendarFlatList as $leftIndex => $leftBooking) {
+            $leftId = (int) ($leftBooking['id'] ?? 0);
+            $leftWcId = (int) ($leftBooking['work_center_id'] ?? 0);
+            $leftStart = strtotime((string) ($leftBooking['starts_at'] ?? ''));
+            $leftEnd = strtotime((string) ($leftBooking['ends_at'] ?? ''));
+            if ($leftId <= 0 || $leftWcId <= 0 || $leftStart === false || $leftEnd === false) {
+                continue;
+            }
+            foreach ($calendarFlatList as $rightIndex => $rightBooking) {
+                if ($rightIndex <= $leftIndex) {
+                    continue;
+                }
+                $rightId = (int) ($rightBooking['id'] ?? 0);
+                if ($rightId <= 0 || (int) ($rightBooking['work_center_id'] ?? 0) !== $leftWcId) {
+                    continue;
+                }
+                $rightStart = strtotime((string) ($rightBooking['starts_at'] ?? ''));
+                $rightEnd = strtotime((string) ($rightBooking['ends_at'] ?? ''));
+                if ($rightStart === false || $rightEnd === false) {
+                    continue;
+                }
+                if ($leftStart < $rightEnd && $rightStart < $leftEnd) {
+                    $calendarConflictIds[$leftId] = true;
+                    $calendarConflictIds[$rightId] = true;
+                }
+            }
+        }
+      ?>
+      <style>
+        .dg-machine-cal { margin: 0 0 16px; }
+        .dg-machine-cal__nav { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+        .dg-machine-cal__title { font-weight:600; margin-right:auto; }
+        .dg-machine-cal__grid {
+          display:grid;
+          grid-template-columns:repeat(7, minmax(0, 1fr));
+          gap:4px;
+          border:1px solid var(--dg-border, #ddd);
+          padding:4px;
+          background:#fff;
+        }
+        .dg-machine-cal__head {
+          font-size:0.8rem;
+          text-align:center;
+          padding:4px;
+          color:var(--dg-muted, #666);
+          font-weight:600;
+        }
+        .dg-machine-cal__day {
+          min-height:88px;
+          border:1px solid var(--dg-border, #e6e6e6);
+          padding:4px;
+          background:#fafafa;
+          vertical-align:top;
+        }
+        .dg-machine-cal__day--out { opacity:0.35; background:#f3f3f3; }
+        .dg-machine-cal__day--today { outline:2px solid var(--dg-primary, #336); outline-offset:-2px; }
+        .dg-machine-cal__day-num { font-size:0.8rem; font-weight:600; margin-bottom:4px; }
+        .dg-machine-cal__chip {
+          display:block;
+          font-size:0.72rem;
+          line-height:1.25;
+          color:#fff;
+          text-decoration:none;
+          border-radius:3px;
+          padding:2px 4px;
+          margin:0 0 3px;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+        .dg-machine-cal__chip:hover { filter:brightness(1.08); }
+        .dg-machine-cal__chip--done { opacity:0.7; }
+        .dg-machine-cal__chip--conflict { box-shadow: inset 0 0 0 1px #c00; }
+        .dg-machine-cal__empty { color:#999; font-size:0.75rem; }
+        @media (max-width: 900px) {
+          .dg-machine-cal__day { min-height:72px; }
+          .dg-machine-cal__chip { font-size:0.68rem; }
+        }
+      </style>
+      <div class="dg-machine-cal" id="booking-cal">
+        <div class="dg-machine-cal__nav">
+          <div class="dg-machine-cal__title"><?= View::escape((string) ($bookingCalendar['title'] ?? '')) ?></div>
+          <?php if ($bookingCalMode === 'week') : ?>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'week', 'booking_cal_week' => (string) ($bookingCalendar['prev_week'] ?? $bookingCalWeek), 'booking_cal_ym' => (string) ($bookingCalendar['prev_ym'] ?? $bookingCalYm)])) ?>">← Woche</a>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'week', 'booking_cal_week' => (string) ($bookingCalendar['next_week'] ?? $bookingCalWeek), 'booking_cal_ym' => (string) ($bookingCalendar['next_ym'] ?? $bookingCalYm)])) ?>">Woche →</a>
+          <?php else : ?>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'month', 'booking_cal_ym' => (string) ($bookingCalendar['prev_ym'] ?? $bookingCalYm), 'booking_cal_week' => (string) ($bookingCalendar['prev_ym'] ?? $bookingCalYm) . '-01'])) ?>">← Monat</a>
+            <a class="dg-button dg-button--small" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'month', 'booking_cal_ym' => (string) ($bookingCalendar['next_ym'] ?? $bookingCalYm), 'booking_cal_week' => (string) ($bookingCalendar['next_ym'] ?? $bookingCalYm) . '-01'])) ?>">Monat →</a>
+          <?php endif; ?>
+          <a class="dg-button dg-button--small<?= $bookingCalMode === 'month' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'month', 'booking_cal_ym' => $bookingCalYm, 'booking_cal_week' => $bookingCalYm . '-01'])) ?>">Monat</a>
+          <a class="dg-button dg-button--small<?= $bookingCalMode === 'week' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($bookingCalHref(['booking_cal_mode' => 'week', 'booking_cal_week' => $bookingCalWeek, 'booking_cal_ym' => $bookingCalYm])) ?>">Woche</a>
+        </div>
+        <div class="dg-machine-cal__grid" role="grid" aria-label="Maschinenbelegung Kalender">
+          <?php foreach (($bookingCalendar['weekday_labels'] ?? []) as $weekdayLabel) : ?>
+            <div class="dg-machine-cal__head"><?= View::escape((string) $weekdayLabel) ?></div>
+          <?php endforeach; ?>
+          <?php foreach (($bookingCalendar['days'] ?? []) as $day) : ?>
+            <?php
+              $dayDate = (string) ($day['date'] ?? '');
+              $dayItems = is_array($day['items'] ?? null) ? $day['items'] : [];
+              $dayClasses = 'dg-machine-cal__day';
+              if (empty($day['in_month'])) {
+                  $dayClasses .= ' dg-machine-cal__day--out';
+              }
+              if (!empty($day['is_today'])) {
+                  $dayClasses .= ' dg-machine-cal__day--today';
+              }
+            ?>
+            <div class="<?= View::escape($dayClasses) ?>">
+              <div class="dg-machine-cal__day-num"><?= View::escape($dayDate !== '' ? date('j', strtotime($dayDate)) : '') ?></div>
+              <?php if ($dayItems === []) : ?>
+                <?php if (!empty($day['in_month'])) : ?>
+                  <div class="dg-machine-cal__empty">—</div>
+                <?php endif; ?>
+              <?php else : ?>
+                <?php foreach ($dayItems as $calBooking) : ?>
+                  <?php
+                    $calId = (int) ($calBooking['id'] ?? 0);
+                    $calType = (string) ($calBooking['booking_type'] ?? 'other');
+                    $calStatus = (string) ($calBooking['booking_status'] ?? 'planned');
+                    $calTitle = trim((string) ($calBooking['title'] ?? ''));
+                    $calStartTs = strtotime((string) ($calBooking['starts_at'] ?? ''));
+                    $calTime = $calStartTs === false ? '' : date('H:i', $calStartTs);
+                    $calWc = (int) ($calBooking['work_center_id'] ?? 0);
+                    $calLabel = trim($calTime . ' ' . $calTitle);
+                    if ($bookingFilterWorkCenterId <= 0 && $calWc > 0) {
+                        $calLabel .= ' · ' . ($centerNames[$calWc] ?? ('#' . $calWc));
+                    }
+                    $chipClass = 'dg-machine-cal__chip';
+                    if ($calStatus === 'done') {
+                        $chipClass .= ' dg-machine-cal__chip--done';
+                    }
+                    if ($calId > 0 && !empty($calendarConflictIds[$calId])) {
+                        $chipClass .= ' dg-machine-cal__chip--conflict';
+                    }
+                    $chipColor = $bookingChipColors[$calType] ?? $bookingChipColors['other'];
+                  ?>
+                  <?php if ($calId > 0 && $canEdit) : ?>
+                    <a class="<?= View::escape($chipClass) ?>" style="background:<?= View::escape($chipColor) ?>;" href="<?= View::escape($bookingEditHref($calId)) ?>" title="<?= View::escape($calLabel) ?>">
+                      <?= View::escape($calLabel) ?>
+                    </a>
+                  <?php else : ?>
+                    <span class="<?= View::escape($chipClass) ?>" style="background:<?= View::escape($chipColor) ?>;" title="<?= View::escape($calLabel) ?>">
+                      <?= View::escape($calLabel) ?>
+                    </span>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <div class="dg-card" style="padding:12px;margin-bottom:16px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
+      <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung (M4a)</h3>
+      <p class="dg-field-hint" style="margin-top:0;">
+        Nur Hinweiswerte aus der gefilterten Liste; keine FiBu-Buchung und keine automatische Umlage.
+        Auslastung = belegte Stunden ÷ (Kalenderstunden im Zeitraum × Maschinenanzahl). Überlappungen können &gt;&nbsp;100 % ergeben.
+        <?php if ($bookingPeriod !== null && ($bookingPeriod['source'] ?? '') === 'bookings') : ?>
+          Zeitraum derzeit aus den sichtbaren Fenstern abgeleitet — für feste Auslastung bitte Von/Bis filtern.
+        <?php elseif ($bookingUtilizationPct === null) : ?>
+          Für Auslastung Zeitraum filtern oder Belegungen anlegen.
+        <?php endif; ?>
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.95rem;">
+        <div><span class="dg-muted">Gesamt</span><br><strong><?= View::escape(number_format($bookingSummary['total_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Produktion</span><br><strong><?= View::escape(number_format($bookingSummary['production_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Wartung</span><br><strong><?= View::escape(number_format($bookingSummary['maintenance_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Sperrzeit</span><br><strong><?= View::escape(number_format($bookingSummary['blocked_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div><span class="dg-muted">Sonstiges</span><br><strong><?= View::escape(number_format($bookingSummary['other_hours'], 2, ',', '.')) ?> h</strong></div>
+        <div>
+          <span class="dg-muted">Verfügbar (Zeitraum)</span><br>
+          <strong>
+            <?php if ($bookingAvailableHours !== null) : ?>
+              <?= View::escape(number_format($bookingAvailableHours, 2, ',', '.')) ?> h
+              <span class="dg-muted" style="font-weight:normal;">· <?= (int) $bookingMachineCount ?> Maschine(n)</span>
+            <?php else : ?>
+              —
+            <?php endif; ?>
+          </strong>
+        </div>
+        <div>
+          <span class="dg-muted">Auslastung belegt</span><br>
+          <strong><?= $bookingUtilizationPct !== null ? View::escape(number_format($bookingUtilizationPct, 1, ',', '.')) . ' %' : '—' ?></strong>
+        </div>
+        <div>
+          <span class="dg-muted">Auslastung Produktion</span><br>
+          <strong><?= $bookingProductionUtilizationPct !== null ? View::escape(number_format($bookingProductionUtilizationPct, 1, ',', '.')) . ' %' : '—' ?></strong>
+        </div>
+        <div><span class="dg-muted">Wartungskosten geschätzt</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['estimated_maintenance_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Maschinenkosten Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">inkl. Lohn Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['loaded_cost'], 2)) ?></strong></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.9rem;border-top:1px dashed var(--dg-border,#ddd);margin-top:10px;padding-top:10px;">
+        <div><span class="dg-muted">Kosten Produktion</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['production_machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Kosten Wartung</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['maintenance_machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Kosten Sperrzeit</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['blocked_machine_cost'], 2)) ?></strong></div>
+        <div><span class="dg-muted">Kosten Sonstiges</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['other_machine_cost'], 2)) ?></strong></div>
+      </div>
+    </div>
+
+    <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <?php
+        $editWc = (int) ($bookingEdit['work_center_id'] ?? 0);
+        $editType = (string) ($bookingEdit['booking_type'] ?? 'production');
+        $editRecipe = (int) ($bookingEdit['recipe_id'] ?? 0);
+        $editPlan = (int) ($bookingEdit['maintenance_plan_id'] ?? 0);
+        $editStatus = (string) ($bookingEdit['booking_status'] ?? 'planned');
+      ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <?php if ($bookingEditId > 0) : ?>
+          <input type="hidden" name="booking_window_id" value="<?= $bookingEditId ?>">
+          <p class="dg-field-hint" style="margin-top:0;">Bearbeitung von Belegungsfenster #<?= $bookingEditId ?>.</p>
+        <?php endif; ?>
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Maschine</span>
+            <select name="work_center_id" required>
+              <?php foreach ($centers as $center) : ?>
+                <?php $cid = (int) ($center['id'] ?? 0); ?>
+                <option value="<?= $cid ?>"<?= $editWc === $cid ? ' selected' : '' ?>><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Typ</span>
+            <select name="booking_type">
+              <?php foreach ($bookingTypeLabels as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"<?= $editType === $value ? ' selected' : '' ?>><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Titel</span>
+            <input name="title" required maxlength="191" placeholder="z. B. Charge Creme A" value="<?= View::escape((string) ($bookingEdit['title'] ?? '')) ?>">
+          </label>
+          <label class="dg-field">
+            <span>Rezeptur (optional)</span>
+            <select name="recipe_id">
+              <option value="0">— keine —</option>
+              <?php foreach ($recipeOptions as $recipe) : ?>
+                <?php $rid = (int) ($recipe['id'] ?? 0); ?>
+                <option value="<?= $rid ?>"<?= $editRecipe === $rid ? ' selected' : '' ?>><?= View::escape((string) ($recipe['title'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Wartungsplan (optional)</span>
+            <select name="maintenance_plan_id">
+              <option value="0">— keiner —</option>
+              <?php foreach ($maintenancePlans as $plan) : ?>
+                <?php if (empty($plan['is_active'])) { continue; } ?>
+                <?php $pid = (int) ($plan['id'] ?? 0); ?>
+                <option value="<?= $pid ?>"<?= $editPlan === $pid ? ' selected' : '' ?>">
+                  <?= View::escape(($centerNames[(int) ($plan['work_center_id'] ?? 0)] ?? ('#' . (int) ($plan['work_center_id'] ?? 0))) . ' · ' . (string) ($plan['title'] ?? '')) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Start</span>
+            <input type="datetime-local" name="starts_at" required value="<?= View::escape($bookingToLocal($bookingEdit['starts_at'] ?? '')) ?>">
+          </label>
+          <label class="dg-field">
+            <span>Ende</span>
+            <input type="datetime-local" name="ends_at" required value="<?= View::escape($bookingToLocal($bookingEdit['ends_at'] ?? '')) ?>">
+          </label>
+          <label class="dg-field">
+            <span>Geplanter Output</span>
+            <input name="planned_output_qty" inputmode="decimal" value="<?= View::escape((string) ($bookingEdit['planned_output_qty'] ?? '0')) ?>">
+          </label>
+          <label class="dg-field">
+            <span>Einheit</span>
+            <input name="unit" maxlength="50" placeholder="kg, Stk, l" value="<?= View::escape((string) ($bookingEdit['unit'] ?? '')) ?>">
+          </label>
+          <label class="dg-field">
+            <span>Status</span>
+            <select name="booking_status">
+              <option value="planned"<?= $editStatus === 'planned' || $editStatus === '' ? ' selected' : '' ?>>geplant</option>
+              <option value="done"<?= $editStatus === 'done' ? ' selected' : '' ?>>erledigt</option>
+            </select>
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Notiz</span>
+            <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. Rohstoff bereitstellen, Reinigung vorher einplanen"><?= View::escape((string) ($bookingEdit['notes'] ?? '')) ?></textarea>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_booking_save" value="1">
+            <?= $bookingEditId > 0 ? 'Änderungen speichern' : 'Belegungsfenster speichern' ?>
+          </button>
+          <?php if ($bookingEditId > 0) : ?>
+            <a class="dg-button" href="/app?page=rezeptur-maschinen#booking">Abbrechen</a>
+          <?php endif; ?>
+        </div>
+      </form>
+    <?php elseif ($centers === []) : ?>
+      <p class="dg-muted">Erst eine Maschine anlegen, dann Belegungsfenster erfassen.</p>
+    <?php endif; ?>
+
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Maschine</th>
+            <th>Typ</th>
+            <th>Titel</th>
+            <th>Zeitraum</th>
+            <th>Bezug</th>
+            <th>Output</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($bookingWindows === []) : ?>
+            <tr>
+              <td colspan="8" class="dg-table__empty">Noch keine Belegungsfenster.</td>
+            </tr>
+          <?php else : ?>
+            <?php foreach ($bookingWindows as $booking) : ?>
+              <?php
+                $bookingId = (int) ($booking['id'] ?? 0);
+                $bookingWcId = (int) ($booking['work_center_id'] ?? 0);
+                $bookingType = (string) ($booking['booking_type'] ?? 'other');
+                $bookingStatus = (string) ($booking['booking_status'] ?? 'planned');
+                $bookingRecipeId = (int) ($booking['recipe_id'] ?? 0);
+                $bookingPlanId = (int) ($booking['maintenance_plan_id'] ?? 0);
+                $bookingUnit = trim((string) ($booking['unit'] ?? ''));
+                $hasBookingConflict = !empty($bookingConflictIds[$bookingId]);
+              ?>
+              <tr<?= $bookingStatus === 'cancelled' ? ' style="opacity:0.55;"' : '' ?>>
+                <td><?= View::escape($centerNames[$bookingWcId] ?? ('#' . $bookingWcId)) ?></td>
+                <td><?= View::escape($bookingTypeLabels[$bookingType] ?? 'Sonstiges') ?></td>
+                <td>
+                  <strong><?= View::escape((string) ($booking['title'] ?? '')) ?></strong>
+                  <?php if ($hasBookingConflict) : ?>
+                    <div style="margin-top:4px;"><span class="dg-badge dg-badge--warning">Konflikt</span></div>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= View::escape((string) ($booking['starts_at'] ?? '')) ?><br>
+                  <span class="dg-muted">bis <?= View::escape((string) ($booking['ends_at'] ?? '')) ?></span>
+                </td>
+                <td>
+                  <?php if ($bookingRecipeId > 0) : ?>
+                    <div>Rezept: <?= View::escape($recipeNames[$bookingRecipeId] ?? ('#' . $bookingRecipeId)) ?></div>
+                  <?php endif; ?>
+                  <?php if ($bookingPlanId > 0) : ?>
+                    <div>Wartung: <?= View::escape($maintenancePlanNames[$bookingPlanId] ?? ('#' . $bookingPlanId)) ?></div>
+                  <?php endif; ?>
+                  <?php if ($bookingRecipeId <= 0 && $bookingPlanId <= 0) : ?>
+                    <span class="dg-muted">—</span>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= View::escape((string) ($booking['planned_output_qty'] ?? '0')) ?>
+                  <?= View::escape($bookingUnit) ?>
+                </td>
+                <td>
+                  <span class="dg-badge <?= $bookingStatus === 'cancelled' ? 'dg-badge--muted' : 'dg-badge--ok' ?>">
+                    <?= View::escape($bookingStatusLabels[$bookingStatus] ?? $bookingStatus) ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected && $bookingStatus !== 'cancelled') : ?>
+                    <a class="dg-button dg-button--small" href="<?= View::escape($bookingEditHref($bookingId)) ?>">Bearbeiten</a>
+                    <?php if ($bookingStatus === 'planned') : ?>
+                      <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                        <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
+                        <input type="hidden" name="booking_status" value="done">
+                        <button type="submit" class="dg-button dg-button--small" name="machine_booking_status" value="1">Erledigt</button>
+                      </form>
+                    <?php elseif ($bookingStatus === 'done') : ?>
+                      <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                        <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
+                        <input type="hidden" name="booking_status" value="planned">
+                        <button type="submit" class="dg-button dg-button--small" name="machine_booking_status" value="1">Wieder geplant</button>
+                      </form>
+                    <?php endif; ?>
+                    <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
+                      <button type="submit" class="dg-button dg-button--small" name="machine_booking_cancel" value="1">Stornieren</button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dg-card" id="maintenance" style="margin-top:20px;padding:16px;">
+    <h2 class="dg-subsection-title" style="margin-top:0;">Wartungspläne (M2a)</h2>
+    <p class="dg-field-hint">
+      Erfasst den geplanten Turnus, erwartete Ausfallzeit, Hilfsmittel und Kosten.
+      Keine Wartungsprotokolle, keine Kalenderbelegung und keine FiBu-Buchung.
+    </p>
+
+    <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#maintenance" class="dg-form" style="margin-bottom:16px;">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <div class="dg-form-grid">
+          <label class="dg-field">
+            <span>Maschine</span>
+            <select name="work_center_id" required>
+              <?php foreach ($centers as $center) : ?>
+                <?php $cid = (int) ($center['id'] ?? 0); ?>
+                <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Titel</span>
+            <input name="title" required maxlength="191" placeholder="z. B. Monatswartung Mischer">
+          </label>
+          <label class="dg-field">
+            <span>Turnus nach</span>
+            <select name="interval_type">
+              <?php foreach ($intervalLabels as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Intervallwert</span>
+            <input name="interval_value" inputmode="decimal" value="30">
+          </label>
+          <label class="dg-field">
+            <span>Ausfallzeit (Min.)</span>
+            <input name="planned_downtime_minutes" type="number" min="0" step="1" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Materialkosten geschätzt</span>
+            <input name="estimated_material_cost" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Servicekosten geschätzt</span>
+            <input name="estimated_service_cost" inputmode="decimal" value="0">
+          </label>
+          <label class="dg-field">
+            <span>Nächster Termin</span>
+            <input type="date" name="next_due_date">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Hilfsmittel / Ersatzteile</span>
+            <textarea name="helper_materials_text" rows="2" maxlength="1000" placeholder="Ein Eintrag pro Zeile, z. B. Schmiermittel&#10;Dichtung"></textarea>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_maintenance_plan_save" value="1">Wartungsplan speichern</button>
+        </div>
+      </form>
+    <?php elseif ($centers === []) : ?>
+      <p class="dg-muted">Erst eine Maschine anlegen, dann Wartungspläne erfassen.</p>
+    <?php endif; ?>
+
+    <div class="dg-table-wrap">
+      <table class="dg-table">
+        <thead>
+          <tr>
+            <th>Maschine</th>
+            <th>Wartung</th>
+            <th>Turnus</th>
+            <th>Nächster Termin</th>
+            <th>Ausfall</th>
+            <th>Kosten</th>
+            <th>Hilfsmittel</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($maintenancePlans === []) : ?>
+            <tr>
+              <td colspan="9" class="dg-table__empty">Noch keine Wartungspläne.</td>
+            </tr>
+          <?php else : ?>
+            <?php foreach ($maintenancePlans as $plan) : ?>
+              <?php
+                $planId = (int) ($plan['id'] ?? 0);
+                $planActive = !empty($plan['is_active']);
+                $wcId = (int) ($plan['work_center_id'] ?? 0);
+                $intervalType = (string) ($plan['interval_type'] ?? 'days');
+                $estimatedCost = (float) ($plan['estimated_material_cost'] ?? 0) + (float) ($plan['estimated_service_cost'] ?? 0);
+                $helpers = $formatHelperMaterials($plan['helper_materials_json'] ?? null);
+              ?>
+              <tr<?= $planActive ? '' : ' style="opacity:0.55;"' ?>>
+                <td><?= View::escape($centerNames[$wcId] ?? ('#' . $wcId)) ?></td>
+                <td><strong><?= View::escape((string) ($plan['title'] ?? '')) ?></strong></td>
+                <td>
+                  <?= View::escape((string) ($plan['interval_value'] ?? '0')) ?>
+                  <?= View::escape($intervalLabels[$intervalType] ?? $intervalType) ?>
+                </td>
+                <td><?= View::escape((string) ($plan['next_due_date'] ?? '')) ?></td>
+                <td><?= (int) ($plan['planned_downtime_minutes'] ?? 0) ?> Min.</td>
+                <td><?= View::escape(RecipeCostService::formatEur($estimatedCost, 2)) ?></td>
+                <td><?= $helpers !== '' ? View::escape($helpers) : '<span class="dg-muted">—</span>' ?></td>
+                <td>
+                  <span class="dg-badge <?= $planActive ? 'dg-badge--ok' : 'dg-badge--muted' ?>">
+                    <?= $planActive ? 'aktiv' : 'inaktiv' ?>
+                  </span>
+                </td>
+                <td class="dg-table__actions">
+                  <?php if ($canEdit && $dbConnected && $planActive) : ?>
+                    <form method="post" action="/app?page=rezeptur-maschinen#maintenance" style="display:inline;">
+                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                      <input type="hidden" name="maintenance_plan_id" value="<?= $planId ?>">
+                      <button type="submit" class="dg-button dg-button--small" name="machine_maintenance_plan_deactivate" value="1">Deaktivieren</button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="maintenance-log" style="margin-top:22px;border-top:1px solid var(--dg-border,#ddd);padding-top:16px;">
+      <h3 class="dg-subsection-title" style="margin-top:0;">Durchgeführte Wartung protokollieren (M2b)</h3>
+      <p class="dg-field-hint">Dokumentiert Ist-Zeitpunkt, Laufstundenstand und Ist-Kosten. Keine automatische Buchung.</p>
+
+      <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
+        <form method="post" action="/app?page=rezeptur-maschinen#maintenance-log" class="dg-form" style="margin-bottom:16px;">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span>Maschine</span>
+              <select name="work_center_id" required>
+                <?php foreach ($centers as $center) : ?>
+                  <?php $cid = (int) ($center['id'] ?? 0); ?>
+                  <option value="<?= $cid ?>"><?= View::escape((string) ($center['name'] ?? '')) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Wartungsplan (optional)</span>
+              <select name="maintenance_plan_id">
+                <option value="0">— ohne Plan —</option>
+                <?php foreach ($maintenancePlans as $plan) : ?>
+                  <?php if (empty($plan['is_active'])) { continue; } ?>
+                  <?php $pid = (int) ($plan['id'] ?? 0); ?>
+                  <option value="<?= $pid ?>">
+                    <?= View::escape(($centerNames[(int) ($plan['work_center_id'] ?? 0)] ?? ('#' . (int) ($plan['work_center_id'] ?? 0))) . ' · ' . (string) ($plan['title'] ?? '')) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Durchgeführt am</span>
+              <input type="datetime-local" name="performed_at">
+            </label>
+            <label class="dg-field">
+              <span>Laufstundenstand</span>
+              <input name="runtime_hours_at_service" inputmode="decimal" placeholder="optional">
+            </label>
+            <label class="dg-field">
+              <span>Materialkosten Ist</span>
+              <input name="actual_material_cost" inputmode="decimal" value="0">
+            </label>
+            <label class="dg-field">
+              <span>Servicekosten Ist</span>
+              <input name="actual_service_cost" inputmode="decimal" value="0">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Notiz</span>
+              <textarea name="notes" rows="2" maxlength="1000" placeholder="z. B. Filter gewechselt, Dichtung geprüft"></textarea>
+            </label>
+          </div>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary" name="machine_maintenance_log_save" value="1">Wartung protokollieren</button>
+          </div>
+        </form>
+      <?php endif; ?>
+
+      <div class="dg-table-wrap">
+        <table class="dg-table">
+          <thead>
+            <tr>
+              <th>Maschine</th>
+              <th>Plan</th>
+              <th>Durchgeführt</th>
+              <th>Laufstunden</th>
+              <th>Ist-Kosten</th>
+              <th>Notiz</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if ($maintenanceLogs === []) : ?>
+              <tr>
+                <td colspan="6" class="dg-table__empty">Noch keine Wartungen protokolliert.</td>
+              </tr>
+            <?php else : ?>
+              <?php foreach ($maintenanceLogs as $log) : ?>
+                <?php
+                  $logWcId = (int) ($log['work_center_id'] ?? 0);
+                  $logPlanId = (int) ($log['maintenance_plan_id'] ?? 0);
+                  $actualCost = (float) ($log['actual_material_cost'] ?? 0) + (float) ($log['actual_service_cost'] ?? 0);
+                ?>
+                <tr>
+                  <td><?= View::escape($centerNames[$logWcId] ?? ('#' . $logWcId)) ?></td>
+                  <td><?= $logPlanId > 0 ? View::escape($maintenancePlanNames[$logPlanId] ?? ('#' . $logPlanId)) : '<span class="dg-muted">—</span>' ?></td>
+                  <td><?= View::escape((string) ($log['performed_at'] ?? '')) ?></td>
+                  <td><?= ($log['runtime_hours_at_service'] ?? null) !== null ? View::escape((string) $log['runtime_hours_at_service']) : '<span class="dg-muted">—</span>' ?></td>
+                  <td><?= View::escape(RecipeCostService::formatEur($actualCost, 2)) ?></td>
+                  <td><?= View::escape((string) ($log['notes'] ?? '')) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </div>

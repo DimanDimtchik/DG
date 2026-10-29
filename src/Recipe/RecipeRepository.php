@@ -221,6 +221,7 @@ final class RecipeRepository
         }
 
         return [
+            'id' => $id,
             'title' => (string) ($row['title'] ?? ''),
             'target_qty' => self::formatDecimal((string) ($row['target_qty'] ?? '1')),
             'labor_minutes' => self::formatDecimal((string) ($row['labor_minutes'] ?? '0')),
@@ -365,6 +366,7 @@ final class RecipeRepository
         // Snapshot nach erfolgreichem Speichern (GoBD: Stand einfrieren)
         try {
             $formSnap = [
+                'id' => $recipeId,
                 'title' => $title,
                 'target_qty' => $targetQty,
                 'labor_minutes' => $laborMinutes,
@@ -372,8 +374,9 @@ final class RecipeRepository
                 'status' => $status,
                 'version' => $version,
             ];
-            $calc = RecipeCostService::calculate($formSnap, $bomLines, $routingLines);
-            $payload = RecipeCostService::snapshotPayload($formSnap, $bomLines, $routingLines, $calc);
+            $auxiliary = MachinePlanningRepository::listAuxiliaryMaterials($recipeId, true);
+            $calc = RecipeCostService::calculate($formSnap, $bomLines, $routingLines, null, $auxiliary);
+            $payload = RecipeCostService::snapshotPayload($formSnap, $bomLines, $routingLines, $calc, $auxiliary);
             RecipeSnapshotRepository::create(
                 $recipeId,
                 RecipeSnapshotRepository::KIND_SAVE,

@@ -7,6 +7,7 @@
  * @var array<string, mixed>|null $recipeCalc
  * @var list<array<string, mixed>> $recipeSnapshots
  * @var array<int, array<string, mixed>> $recipeActuals
+ * @var list<array<string, mixed>> $recipeAuxiliaryMaterials
  * @var string|null $formError
  * @var bool $canEdit
  * @var array{type: string, message: string}|null $flash
@@ -22,6 +23,13 @@ $workCenters = $recipeWorkCenterOptions ?? [];
 $calc = is_array($recipeCalc ?? null) ? $recipeCalc : null;
 $snapshots = $recipeSnapshots ?? [];
 $actualsMap = $recipeActuals ?? [];
+$auxiliaryMaterials = $recipeAuxiliaryMaterials ?? [];
+$auxiliaryRoleLabels = [
+    'packaging' => 'Verpackung',
+    'additive' => 'Zusatzstoff',
+    'consumable' => 'Hilfs-/Verbrauchsmaterial',
+    'other' => 'Sonstiges',
+];
 $plannedPreview = ($calc !== null)
     ? RecipeActualRepository::plannedFromRecipe($form, $routing, $calc)
     : null;
@@ -135,6 +143,86 @@ $plannedPreview = ($calc !== null)
       <?php endif; ?>
     </fieldset>
 
+    <fieldset class="dg-fieldset" id="auxiliary" <?= $readOnly ? 'disabled' : '' ?>>
+      <legend>Zusatz- und Verpackungsmaterial</legend>
+      <p class="dg-field-hint">Material je Ausgabeeinheit, z. B. Flasche, Etikett, Umkarton oder Prozesshilfsstoff. Aktive Positionen fließen in K<sub>mat</sub> ein.</p>
+      <?php if (!$isEdit) : ?>
+        <p class="dg-field-hint">Rezept zuerst speichern, danach Zusatz-/Verpackungsmaterial erfassen.</p>
+      <?php elseif (!$readOnly) : ?>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;">
+          <label class="dg-field">
+            <span>Material</span>
+            <input name="material_label" maxlength="191" placeholder="z. B. Etikett">
+          </label>
+          <label class="dg-field">
+            <span>Artikel</span>
+            <select name="article_id">
+              <option value="0">— keiner —</option>
+              <?php foreach ($articles as $art) : ?>
+                <option value="<?= (int) $art['id'] ?>"><?= View::escape((string) $art['title']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Rolle</span>
+            <select name="role">
+              <?php foreach ($auxiliaryRoleLabels as $value => $label) : ?>
+                <option value="<?= View::escape($value) ?>"><?= View::escape($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field">
+            <span>Menge je Einheit</span>
+            <input name="qty_per_output_unit" inputmode="decimal" value="1">
+          </label>
+          <label class="dg-field">
+            <span>Einheit</span>
+            <input name="unit" maxlength="50" value="Stk">
+          </label>
+          <label class="dg-field">
+            <span>EK/Einh.</span>
+            <input name="cost_per_unit" inputmode="decimal" value="0">
+          </label>
+          <button type="submit" class="dg-button" name="recipe_auxiliary_save" value="1">Zusatzmaterial speichern</button>
+        </div>
+      <?php endif; ?>
+
+      <div class="dg-table-wrap" style="margin-top:12px;">
+        <table class="dg-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Rolle</th>
+              <th>Menge je Einheit</th>
+              <th>EK/Einh.</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if ($auxiliaryMaterials === []) : ?>
+              <tr><td colspan="6" class="dg-muted">Noch keine Zusatz-/Verpackungsmaterialien erfasst.</td></tr>
+            <?php else : ?>
+              <?php foreach ($auxiliaryMaterials as $aux) : ?>
+                <tr>
+                  <td><?= View::escape((string) ($aux['material_label'] ?? '')) ?></td>
+                  <td><?= View::escape($auxiliaryRoleLabels[(string) ($aux['role'] ?? 'other')] ?? 'Sonstiges') ?></td>
+                  <td><?= View::escape(number_format((float) ($aux['qty_per_output_unit'] ?? 0), 4, ',', '.')) ?> <?= View::escape((string) ($aux['unit'] ?? '')) ?></td>
+                  <td><?= View::escape(RecipeCostService::formatEur((float) ($aux['cost_per_unit'] ?? 0), 4)) ?></td>
+                  <td><?= !empty($aux['is_active']) ? 'aktiv' : 'inaktiv' ?></td>
+                  <td>
+                    <?php if (!$readOnly && !empty($aux['is_active'])) : ?>
+                      <button type="submit" class="dg-button dg-button--danger" name="recipe_auxiliary_deactivate" value="<?= (int) ($aux['id'] ?? 0) ?>">Deaktivieren</button>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+
     <fieldset class="dg-fieldset" <?= $readOnly ? 'disabled' : '' ?>>
       <legend>Arbeitsplan (Routing)</legend>
       <p class="dg-field-hint">Schritte mit Maschine, Rüst- und Laufzeit. Stundensatz aus Maschinen-Stammdaten.</p>
@@ -174,6 +262,8 @@ $plannedPreview = ($calc !== null)
       <?php endif; ?>
       <?php if ($workCenters === []) : ?>
         <p class="dg-field-hint">Noch keine Maschinen — zuerst unter <a href="/app?page=rezeptur-maschinen">Maschinen &amp; Stundensatz</a> anlegen.</p>
+      <?php else : ?>
+        <p class="dg-field-hint">Laufzeit 0 Min. wird aus dem Kapazitätsprofil der Maschine berechnet (Zielmenge ÷ Ausgabe/h × Ausbeute). Abweichung &gt; 15&nbsp;% zur manuellen Laufzeit erscheint als Hinweis.</p>
       <?php endif; ?>
     </fieldset>
 
@@ -212,6 +302,45 @@ $plannedPreview = ($calc !== null)
           <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--dg-border,#ddd);padding-top:6px;"><dt>Δ Selbstkosten</dt><dd style="margin:0;" data-calc="delta_self_cost">0,00 €</dd></div>
           <div style="display:flex;justify-content:space-between;gap:8px;"><dt>Δ VK</dt><dd style="margin:0;" data-calc="delta_vk">0,00 €</dd></div>
         </dl>
+        <div class="dg-field-hint" style="margin-top:10px;<?= empty($calc['auxiliary_lines']) ? 'display:none;' : '' ?>" id="dg-recipe-aux-hint">
+          Zusatzmaterial in K<sub>mat</sub>:
+          <span id="dg-recipe-aux-hint-body">
+            <?php if (!empty($calc['auxiliary_lines']) && is_array($calc['auxiliary_lines'])) : ?>
+              <?php foreach ($calc['auxiliary_lines'] as $auxLine) : ?>
+                <span><?= View::escape((string) ($auxLine['material_label'] ?? 'Material')) ?> <?= View::escape(RecipeCostService::formatEur((float) ($auxLine['line_cost'] ?? 0), 2)) ?></span>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </span>
+        </div>
+        <?php
+          $capLinesUi = is_array($calc['capacity_lines'] ?? null) ? $calc['capacity_lines'] : [];
+          $capUsed = array_values(array_filter($capLinesUi, static fn ($row): bool => is_array($row) && (($row['run_source'] ?? '') === 'capacity')));
+        ?>
+        <div class="dg-field-hint" style="margin-top:8px;<?= $capUsed === [] ? 'display:none;' : '' ?>" id="dg-recipe-cap-hint">
+          Laufzeit aus Kapazität:
+          <span id="dg-recipe-cap-hint-body">
+            <?php foreach ($capUsed as $capLine) : ?>
+              <span><?= View::escape((string) ($capLine['work_center_name'] ?? ('WP #' . (int) ($capLine['work_center_id'] ?? 0)))) ?>
+                <?= View::escape(number_format((float) ($capLine['run_min_used'] ?? 0), 1, ',', '.')) ?> Min.</span>
+            <?php endforeach; ?>
+          </span>
+        </div>
+        <?php
+          $maintLinesUi = is_array($calc['maintenance_lines'] ?? null) ? $calc['maintenance_lines'] : [];
+          $kMaintUi = (float) ($calc['k_maint_suggested'] ?? 0);
+        ?>
+        <div class="dg-field-hint" style="margin-top:8px;<?= $maintLinesUi === [] ? 'display:none;' : '' ?>" id="dg-recipe-maint-hint">
+          Wartung Vorschlag (nicht in SK/VK, keine FiBu):
+          <strong data-calc="k_maint_suggested"><?= View::escape(RecipeCostService::formatEur($kMaintUi, 2)) ?></strong>
+          <span id="dg-recipe-maint-hint-body">
+            <?php foreach ($maintLinesUi as $maintLine) : ?>
+              <?php if (!is_array($maintLine)) { continue; } ?>
+              <span><?= View::escape((string) ($maintLine['title'] ?? 'Plan')) ?>
+                <?= View::escape(RecipeCostService::formatEur((float) ($maintLine['suggested_share'] ?? 0), 2)) ?>
+                (<?= View::escape((string) ($maintLine['note'] ?? '')) ?>)</span>
+            <?php endforeach; ?>
+          </span>
+        </div>
       <?php endif; ?>
 
       <?php if ($calc !== null && $canEdit) : ?>
@@ -300,7 +429,69 @@ $plannedPreview = ($calc !== null)
                 · <?= View::escape($whenLabel) ?>
                 · SK <?= View::escape(RecipeCostService::formatEur((float) ($res['self_cost'] ?? 0), 2)) ?>
                 · VK <?= View::escape(RecipeCostService::formatEur((float) ($res['vk'] ?? 0), 2)) ?>
+                <?php
+                  $snapAuxLines = is_array($res['auxiliary_lines'] ?? null) ? $res['auxiliary_lines'] : [];
+                  $snapAuxCost = 0.0;
+                  foreach ($snapAuxLines as $snapAuxLine) {
+                      if (is_array($snapAuxLine)) {
+                          $snapAuxCost += (float) ($snapAuxLine['line_cost'] ?? 0);
+                      }
+                  }
+                ?>
+                <?php
+                  $snapCapLines = is_array($res['capacity_lines'] ?? null) ? $res['capacity_lines'] : [];
+                  $snapCapUsed = 0;
+                  foreach ($snapCapLines as $snapCapLine) {
+                      if (is_array($snapCapLine) && (($snapCapLine['run_source'] ?? '') === 'capacity')) {
+                          $snapCapUsed++;
+                      }
+                  }
+                ?>
+                <?php if ($snapAuxLines !== []) : ?>
+                  · Zusatz <?= View::escape(RecipeCostService::formatEur($snapAuxCost, 2)) ?>
+                  (<?= count($snapAuxLines) ?>)
+                <?php endif; ?>
+                <?php
+                  $snapMaintLines = is_array($res['maintenance_lines'] ?? null) ? $res['maintenance_lines'] : [];
+                  $snapMaintSuggested = (float) ($res['k_maint_suggested'] ?? 0);
+                ?>
+                <?php if ($snapCapUsed > 0) : ?>
+                  · Kapazität <?= (int) $snapCapUsed ?>
+                <?php endif; ?>
+                <?php if ($snapMaintLines !== [] || $snapMaintSuggested > 0) : ?>
+                  · Wartung <?= View::escape(RecipeCostService::formatEur($snapMaintSuggested, 2)) ?>
+                <?php endif; ?>
               </div>
+              <?php if ($snapAuxLines !== []) : ?>
+                <div class="dg-field-hint" style="margin:4px 0 0;">
+                  Zusatzmaterial im Snapshot:
+                  <?php foreach ($snapAuxLines as $snapAuxLine) : ?>
+                    <?php if (!is_array($snapAuxLine)) { continue; } ?>
+                    <span><?= View::escape((string) ($snapAuxLine['material_label'] ?? 'Material')) ?>
+                      <?= View::escape(RecipeCostService::formatEur((float) ($snapAuxLine['line_cost'] ?? 0), 2)) ?></span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+              <?php if ($snapCapUsed > 0) : ?>
+                <div class="dg-field-hint" style="margin:4px 0 0;">
+                  Kapazität im Snapshot:
+                  <?php foreach ($snapCapLines as $snapCapLine) : ?>
+                    <?php if (!is_array($snapCapLine) || (($snapCapLine['run_source'] ?? '') !== 'capacity')) { continue; } ?>
+                    <span><?= View::escape((string) ($snapCapLine['work_center_name'] ?? ('WP #' . (int) ($snapCapLine['work_center_id'] ?? 0)))) ?>
+                      <?= View::escape(number_format((float) ($snapCapLine['run_min_used'] ?? 0), 1, ',', '.')) ?> Min.</span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+              <?php if ($snapMaintLines !== []) : ?>
+                <div class="dg-field-hint" style="margin:4px 0 0;">
+                  Wartung Vorschlag im Snapshot:
+                  <?php foreach ($snapMaintLines as $snapMaintLine) : ?>
+                    <?php if (!is_array($snapMaintLine)) { continue; } ?>
+                    <span><?= View::escape((string) ($snapMaintLine['title'] ?? 'Plan')) ?>
+                      <?= View::escape(RecipeCostService::formatEur((float) ($snapMaintLine['suggested_share'] ?? 0), 2)) ?></span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
               <?php if (is_array($act)) : ?>
                 <?php
                   $dQty = (float) ($act['actual_qty'] ?? 0) - (float) ($act['planned_qty'] ?? 0);
@@ -499,6 +690,7 @@ $plannedPreview = ($calc !== null)
       });
       return {
         recipe: {
+          id: parseInt(box.getAttribute('data-recipe-id') || '0', 10) || 0,
           title: (form.querySelector('[name="title"]') || {}).value || '',
           target_qty: readNum('target_qty'),
           labor_minutes: readNum('labor_minutes'),
@@ -546,12 +738,69 @@ $plannedPreview = ($calc !== null)
           warnBox.innerHTML = '';
         }
       }
+      var auxHint = document.getElementById('dg-recipe-aux-hint');
+      var auxBody = document.getElementById('dg-recipe-aux-hint-body');
+      if (auxHint && auxBody) {
+        var auxLines = data.auxiliary_lines || [];
+        if (auxLines.length) {
+          auxHint.style.display = '';
+          auxBody.innerHTML = auxLines.map(function (line) {
+            var label = String((line && line.material_label) || 'Material').replace(/</g, '&lt;');
+            var cost = Number((line && line.line_cost) || 0).toFixed(2).replace('.', ',') + ' €';
+            return '<span>' + label + ' ' + cost + '</span>';
+          }).join(' ');
+        } else {
+          auxHint.style.display = 'none';
+          auxBody.innerHTML = '';
+        }
+      }
+      var capHint = document.getElementById('dg-recipe-cap-hint');
+      var capBody = document.getElementById('dg-recipe-cap-hint-body');
+      if (capHint && capBody) {
+        var capLines = (data.capacity_lines || []).filter(function (line) {
+          return line && line.run_source === 'capacity';
+        });
+        if (capLines.length) {
+          capHint.style.display = '';
+          capBody.innerHTML = capLines.map(function (line) {
+            var label = String((line && line.work_center_name) || ('WP #' + (line.work_center_id || 0))).replace(/</g, '&lt;');
+            var mins = Number((line && line.run_min_used) || 0).toFixed(1).replace('.', ',') + ' Min.';
+            return '<span>' + label + ' ' + mins + '</span>';
+          }).join(' ');
+        } else {
+          capHint.style.display = 'none';
+          capBody.innerHTML = '';
+        }
+      }
+      var maintHint = document.getElementById('dg-recipe-maint-hint');
+      var maintBody = document.getElementById('dg-recipe-maint-hint-body');
+      if (maintHint && maintBody) {
+        var maintLines = data.maintenance_lines || [];
+        var maintFmt = (data.formatted && data.formatted.k_maint_suggested)
+          ? data.formatted.k_maint_suggested
+          : (Number(data.k_maint_suggested || 0).toFixed(2).replace('.', ',') + ' €');
+        var maintTotalEl = maintHint.querySelector('[data-calc="k_maint_suggested"]');
+        if (maintTotalEl) maintTotalEl.textContent = maintFmt;
+        if (maintLines.length) {
+          maintHint.style.display = '';
+          maintBody.innerHTML = maintLines.map(function (line) {
+            var title = String((line && line.title) || 'Plan').replace(/</g, '&lt;');
+            var share = Number((line && line.suggested_share) || 0).toFixed(2).replace('.', ',') + ' €';
+            var note = String((line && line.note) || '').replace(/</g, '&lt;');
+            return '<span>' + title + ' ' + share + (note ? ' (' + note + ')' : '') + '</span>';
+          }).join(' ');
+        } else {
+          maintHint.style.display = 'none';
+          maintBody.innerHTML = '';
+        }
+      }
     }
     function postWhatIf() {
       var v = sliderVals();
       var body = new FormData();
       body.append('_csrf', csrf);
       body.append('action', 'whatif');
+      body.append('recipe_id', box.getAttribute('data-recipe-id') || '0');
       body.append('payload', JSON.stringify(collectPayload()));
       body.append('electricity_eur_per_kwh', String(v.elec));
       body.append('charge_factor', String(v.charge));

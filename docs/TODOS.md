@@ -46,7 +46,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 > Kurz: GoBD-Historie · FiBu-Tests · IQ-Instanz · Vor-Hetzner-Check — danach Umzug, nicht vorher Live-ELSTER.
 
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
-- [ ] **ERP-Maschinenblock früh**: Gemeinkosten je Maschinenstunde nur als Vorschlag + Maschinenwissen/Akademie → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
+- [ ] **ERP-Maschinenblock früh**: Belegungs-/Kapazitätsplan, Zusatz-/Verpackungsmaterial, Wartung; M0a Datenmodell → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
