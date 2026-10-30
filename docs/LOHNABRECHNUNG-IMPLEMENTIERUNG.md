@@ -1321,15 +1321,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l4a` Brutto→Netto Spec | ✅ 2026-10-30 |
 | — | `l4b` Tabellen-Import/Versionierung | ✅ 2026-10-30 |
 | — | `l4c` StandardPayrollEngine + Tests | ✅ 2026-10-30 |
-| 1 | `l5a` Monatslauf Spec | **als Nächstes** |
+| — | `l5a` Monatslauf Spec | ✅ 2026-10-30 |
+| 1 | `l5b` Migration Läufe/Positionen | **als Nächstes** |
 
-Danach L5b → … nicht überspringen.
+Danach L5c → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l5a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L5a. Nicht andere L-Pakete.
+Lohn Implementierung: l5b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L5b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
