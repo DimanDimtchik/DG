@@ -121,6 +121,12 @@ final class MenuRegistry
                 'href' => '/app?page=lohn-auswertungen',
             ],
             [
+                'slug' => 'lohn-elster',
+                'label' => 'Lohnsteuer ELSTER',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-elster',
+            ],
+            [
                 'slug' => 'lohn-lohnarten',
                 'label' => 'Lohnarten',
                 'icon' => 'ledger',
@@ -930,6 +936,7 @@ final class MenuRegistry
             || $slug === 'lohn-monatslauf'
             || $slug === 'lohn-lohnkonto'
             || $slug === 'lohn-auswertungen'
+            || $slug === 'lohn-elster'
             || $slug === 'lohn'
         ) {
             return PayrollEmployeeAccess::canView($user);

@@ -60,6 +60,7 @@ final class PayrollEmployerSettings
             'baulohn_enabled' => false,
             'payroll_fibu_live' => false,
             'payroll_sepa_live' => false,
+            'payroll_lsta_live' => false,
             'fibu_accounts' => [],
             'notes' => '',
         ];
@@ -102,6 +103,7 @@ final class PayrollEmployerSettings
             'baulohn_enabled' => self::toBool($raw['baulohn_enabled'] ?? false),
             'payroll_fibu_live' => self::toBool($raw['payroll_fibu_live'] ?? false),
             'payroll_sepa_live' => self::toBool($raw['payroll_sepa_live'] ?? false),
+            'payroll_lsta_live' => self::toBool($raw['payroll_lsta_live'] ?? false),
             'fibu_accounts' => self::normalizeFibuAccounts($raw['fibu_accounts'] ?? []),
             'notes' => $notes,
         ];

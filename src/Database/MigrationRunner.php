@@ -320,6 +320,9 @@ final class MigrationRunner
             '130_payroll_fibu_batches.sql' => self::tableExists($pdo, 'dg_payroll_fibu_batches'),
             '131_payroll_sepa_exports.sql' => self::tableExists($pdo, 'dg_payroll_sepa_exports'),
             '132_payroll_sv_exports.sql' => self::tableExists($pdo, 'dg_payroll_sv_exports'),
+            '133_elster_submissions_payroll.sql' => self::tableExists($pdo, 'dg_elster_submissions')
+                && self::columnExists($pdo, 'dg_elster_submissions', 'payload_checksum')
+                && self::columnExists($pdo, 'dg_elster_submissions', 'detail_json'),
             default => false,
         };
     }
@@ -468,6 +471,7 @@ final class MigrationRunner
             '130_payroll_fibu_batches.sql' => true,
             '131_payroll_sepa_exports.sql' => true,
             '132_payroll_sv_exports.sql' => true,
+            '133_elster_submissions_payroll.sql' => true,
         ];
     }
 

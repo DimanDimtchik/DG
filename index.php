@@ -1574,6 +1574,52 @@ switch ($path) {
             exit;
         }
 
+        // POST: Lohnsteuer ELSTER Test-Payload (L10b)
+        if (
+            $page === 'lohn-elster'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollRunAccess::canView($user)
+        ) {
+            $monthPost = trim((string) ($_POST['month'] ?? $_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $monthPost)) {
+                $monthPost = date('Y-m');
+            }
+            $redirect = '/app?page=lohn-elster&month=' . rawurlencode($monthPost) . '&tab=lsta';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (!PayrollRunAccess::canSubmitLstaTest($user)) {
+                Flash::set('error', 'Keine Berechtigung für LStA-Test (lohn full).');
+            } else {
+                try {
+                    $action = trim((string) ($_POST['elster_action'] ?? ''));
+                    if ($action === 'lsta_live') {
+                        PayrollElsterService::submitLiveLsta(0, 0, (int) $user->id);
+                    }
+                    if ($action !== 'lsta_test') {
+                        throw new RuntimeException('Unbekannte ELSTER-Aktion.');
+                    }
+                    [$yy, $mm] = array_map('intval', explode('-', $monthPost));
+                    $result = PayrollElsterService::submitTestLsta(
+                        $yy,
+                        $mm,
+                        (int) $user->id,
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set(
+                        'success',
+                        'LStA-Test-Payload gespeichert'
+                        . ($result['submission_id'] ? ' #' . $result['submission_id'] : '')
+                        . ' · ' . $result['filename']
+                        . ' · ' . $result['worker']
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Monatslauf Aktionen (L5c)
         if (
             $page === 'lohn-monatslauf'
@@ -8161,6 +8207,66 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/lohn-auswertungen';
             $title = 'SV-Portal / Auswertungen';
             $currentPage = 'lohn-auswertungen';
+        } elseif ($page === 'lohn-elster' && MenuRegistry::canAccess($user, 'lohn-elster')) {
+            MigrationRunner::runPending();
+            PayrollRunRepository::ensureReady();
+            PayrollElsterService::ensureReady();
+            $payrollElsterMonth = trim((string) ($_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $payrollElsterMonth)) {
+                $payrollElsterMonth = date('Y-m');
+            }
+            [$elY, $elM] = array_map('intval', explode('-', $payrollElsterMonth));
+            $payrollElsterTab = trim((string) ($_GET['tab'] ?? 'lsta'));
+            if (!in_array($payrollElsterTab, ['lsta', 'lstb'], true)) {
+                $payrollElsterTab = 'lsta';
+            }
+            $payrollElsterLsta = null;
+            $payrollElsterLstb = null;
+            $payrollElsterError = null;
+            $payrollElsterChecklist = PayrollElsterService::auditorChecklist();
+            $payrollElsterCanTest = PayrollRunAccess::canSubmitLstaTest($user);
+            $payrollElsterLstaLive = PayrollElsterService::isLstaLiveFlag();
+            $payrollElsterServerOk = class_exists('ElsterSettings') && ElsterSettings::serverSupportsEric();
+            $payrollElsterEricReady = PayrollElsterService::canAttemptEricTest();
+            $payrollElsterSubmissions = PayrollElsterService::listRecentSubmissions(30);
+
+            if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+                try {
+                    if ($payrollElsterTab === 'lstb') {
+                        $prev = PayrollElsterService::previewLstb($elY);
+                        $csv = PayrollElsterService::toCsvLstb($prev);
+                        $fname = sprintf('lohn-lstb-%04d.csv', $elY);
+                    } else {
+                        $prev = PayrollElsterService::previewLsta($elY, $elM);
+                        $csv = PayrollElsterService::toCsvLsta($prev);
+                        $fname = sprintf('lohn-lsta-%04d-%02d.csv', $elY, $elM);
+                    }
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $fname . '"');
+                    header('X-Content-Type-Options: nosniff');
+                    echo $csv;
+                    exit;
+                } catch (Throwable $e) {
+                    $payrollElsterError = $e->getMessage();
+                }
+            }
+
+            try {
+                $payrollElsterLsta = PayrollElsterService::previewLsta($elY, $elM);
+            } catch (Throwable $e) {
+                $payrollElsterError = $e->getMessage();
+            }
+            try {
+                $payrollElsterLstb = PayrollElsterService::previewLstb($elY);
+            } catch (Throwable $e) {
+                if ($payrollElsterError === null) {
+                    $payrollElsterError = $e->getMessage();
+                }
+            }
+
+            $contentTemplate = 'modules/lohn-elster';
+            $title = 'Lohnsteuer ELSTER';
+            $currentPage = 'lohn-elster';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';

@@ -85,6 +85,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=lohn-lohnkonto">Lohnkonto</a>
       <a class="dg-button" href="/app?page=lohn-auswertungen&amp;month=<?= View::escape($month) ?><?= $runId > 0 ? '&amp;run=' . $runId : '' ?>">SV-Portal</a>
+      <a class="dg-button" href="/app?page=lohn-elster&amp;month=<?= View::escape($month) ?>">LSt ELSTER</a>
       <a class="dg-button" href="/app?page=lohn-lohnarten">Lohnarten</a>
       <a class="dg-button" href="/app?page=lohn-beitragstabellen">Beitragstabellen</a>
     </div>
@@ -492,6 +493,11 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             SV-Portal-Vorbereitung
           </a>
           — Beitragsnachweis-/Stamm-Kontrolllisten (kein Versand).
+          ·
+          <a href="/app?page=lohn-elster&amp;month=<?= View::escape($month) ?>">
+            LSt-Anmeldung Periode
+          </a>
+          (ELSTER-Vorschau, kein Live).
         </p>
       <?php endif; ?>
 

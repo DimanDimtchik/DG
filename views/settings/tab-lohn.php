@@ -201,6 +201,20 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1.25rem 0 0">
+      <legend class="dg-subsection-title" style="font-size:1rem">Lohnsteuer ELSTER (L10)</legend>
+      <p class="dg-field-hint">
+        Live-Anmeldung erst nach Gate G2 / L10c. L10b speichert Test-Payloads und Kontroll-CSV.
+        Zertifikat und ERiC-Modus unter Einstellungen → ELSTER. Nicht mit UStVA vermischen.
+      </p>
+      <label class="dg-field dg-field--checkbox">
+        <span>
+          <input type="checkbox" name="lohn[payroll_lsta_live]" value="1"<?= !empty($lohn['payroll_lsta_live']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
+          payroll_lsta_live — Live-LStA freischalten (nur mit L10c / G2)
+        </span>
+      </label>
+    </fieldset>
+
     <label class="dg-field dg-field--wide">
       <span>Interne Notiz (Prüfung)</span>
       <textarea name="lohn[notes]" rows="3" maxlength="2000"<?= !$dbConnected ? ' disabled' : '' ?>><?= View::escape((string) ($lohn['notes'] ?? '')) ?></textarea>

@@ -48,4 +48,10 @@ final class PayrollRunAccess
     {
         return self::canApprove($user);
     }
+
+    /** LStA ERiC-Test (L10b): lohn full. Live erst L10c. */
+    public static function canSubmitLstaTest(User $user): bool
+    {
+        return self::canApprove($user);
+    }
 }
