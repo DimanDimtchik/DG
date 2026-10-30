@@ -69,6 +69,13 @@ assertUi(str_contains($css, '--dg-space-4'), 'Spacing-Skala');
 assertUi(str_contains($css, 'Aktions-Abstand-Algorithmus'), 'Aktions-Abstand-Algorithmus');
 assertUi(str_contains($css, '.dg-form > .dg-form-grid + .dg-button'), 'Fallback Grid+Button');
 assertUi(str_contains($css, '.dg-form > .dg-field + .dg-button'), 'Fallback Feld+Button');
+assertUi(str_contains($css, '.dg-form-section') && str_contains($css, 'gap: var(--dg-space-3)'), 'form-section Gap für Feldstapel');
+$tabLohn = (string) file_get_contents($root . '/views/settings/tab-lohn.php');
+assertUi(str_contains($tabLohn, 'dg-form-section') && str_contains($tabLohn, 'Umlagen'), 'tab-lohn Umlagen in form-section');
+assertUi(
+    !preg_match('/Umlagen[\s\S]{0,200}style="margin:1rem/', $tabLohn),
+    'tab-lohn Umlagen ohne altes margin:1rem-Inline am fieldset-Kern'
+);
 
 $katalogPath = $root . '/docs/UI-KLASSENKATALOG.md';
 assertUi(is_readable($katalogPath), 'UI-KLASSENKATALOG.md');
