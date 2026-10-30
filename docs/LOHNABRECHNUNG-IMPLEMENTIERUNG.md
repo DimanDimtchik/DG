@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L2 ✅)  
+> **Stand:** 2026-10-30 (L0–L2 ✅ · L3a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** Serie **L2 abgeschlossen** · nächster Chat: **`l3a`** (Spec Lohnarten)
+> **Status:** L3a Spec Lohnarten ✅ · nächster Chat: **`l3b`** (Migration/CRUD)
 
 ---
 
@@ -568,21 +568,133 @@ Verhalten:
 
 ## Serie L3 — Lohnarten
 
-### L3a — Spec Lohnarten-Katalog
+> Einstieg: `l3a` · L3a ✅ · weiter mit `l3b`
 
-Arten: Festgehalt, Stundenlohn, Sachbezug, GwV, steuerfreie Erstattung, Zuschuss, Abzug; Steuer-/SV-Flags je Art; SKR-Gegenkonten-Hinweis (Buchung L7).
+### L3a — Spec Lohnarten-Katalog ✅ 2026-10-30
 
-**Nicht:** Branchen-Sonderarten Bau/Gastro.
+Nur Spezifikation — Schema/CRUD = **L3b**, MA-Zuordnung = **L3c**. Kein PHP in L3a.
+
+#### Ziel
+
+Mandantenfähiger Lohnarten-Stamm für Stufe A (Lexware-Office-Niveau): gleiche Codebasis, Daten je Instanz-DB. Lohnarten steuern Brutto-Positionen und Steuer-/SV-Behandlung in L4/L5 sowie FiBu-Hinweise in L7 — **ohne** Branchen-Sonderlogik Bau/Gastro/TVöD (kommt über Flags/spätere Arten in LC o. Ä.).
+
+#### Speicher-Entscheidung (verbindlich für L3b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Settings-JSON wie AG-`lohn` | **Nein** — Katalog wächst, braucht CRUD/Liste |
+| Tabelle Instanz-DB | **`dg_payroll_wage_types`** |
+| Seed | Standardkatalog einmalig je Instanz (idempotent nach `code`) |
+| Sonderarten Bau/Gastro | **nicht** im Seed; keine Codes `BAU_*` / `GASTRO_*` in A |
+
+#### Entity `WageType` (Felder)
+
+| Spalte / Key | Typ | Pflicht | Bedeutung |
+|--------------|-----|---------|-----------|
+| `id` | PK | ja | |
+| `code` | varchar 32 unique | ja | Stabiler Schlüssel, z. B. `SALARY_MONTH` |
+| `label` | varchar 120 | ja | Anzeigename DE |
+| `category` | enum/string | ja | siehe Kategorien |
+| `unit` | enum | ja | `month` / `hour` / `amount` / `percent` |
+| `direction` | enum | ja | `earning` (Bezug) / `deduction` (Abzug) |
+| `taxable` | bool | ja | unterliegt LSt |
+| `subject_to_sv` | bool | ja | unterliegt SV (AN/AG-Beitragsgrundlage) |
+| `flat_tax_possible` | bool | ja | Pauschalversteuerung möglich (Hinweis für L4, z. B. Minijob/GwV) |
+| `increases_net` | bool | ja | fließt in Netto positiv (meist = earning) |
+| `skr03_expense_hint` | varchar 16 | nein | Vorschlag Aufwandskonto SKR03 (nur Hint) |
+| `skr04_expense_hint` | varchar 16 | nein | Vorschlag SKR04 |
+| `skr03_liability_hint` | varchar 16 | nein | optional Verbindlichkeit |
+| `skr04_liability_hint` | varchar 16 | nein | |
+| `sort_order` | int | ja | UI-Reihenfolge |
+| `is_system` | bool | ja | Seed-Satz; `code` nicht löschen, nur deaktivieren |
+| `is_active` | bool | ja | Default true |
+| `notes` | text | nein | interne Prüfungshinweise |
+| `created_at` / `updated_at` | datetime | ja | |
+
+**Konten-Hints:** keine harten Buchungen in L3 — L7 mappt freigegebene Läufe; Hints sind Berater-/Mandanten-Vorschläge und dürfen leer sein. Kein Instanz-Sondercode: abweichende Konten später in Mandanten-Mapping (eigene Spalte optional ab L7, nicht in L3a erzwingen).
+
+#### Kategorien (`category`)
+
+| category | Bedeutung |
+|----------|-----------|
+| `salary` | Festgehalt / Monatslohn |
+| `hourly` | Stundenlohn |
+| `benefit` | Sachbezug / geldwerter Vorteil |
+| `allowance` | Zuschuss / Zulage (steuerpflichtig i. d. R.) |
+| `tax_free` | steuerfreie Erstattung (z. B. Reisekosten-Pauschale — nur wenn fachlich steuerfrei) |
+| `deduction` | Abzug (Nettolohnabzug / Vorschuss-Verrechnung o. Ä.) |
+| `other` | Sonstiges (sparsam) |
+
+#### Seed-Standardkatalog (Stufe A)
+
+| code | label | category | unit | direction | taxable | subject_to_sv | flat_tax_possible | sort |
+|------|-------|----------|------|-----------|---------|---------------|-------------------|------|
+| `SALARY_MONTH` | Festgehalt / Monatslohn | salary | month | earning | 1 | 1 | 0 | 10 |
+| `WAGE_HOUR` | Stundenlohn | hourly | hour | earning | 1 | 1 | 0 | 20 |
+| `OVERTIME_PAY` | Überstundenvergütung | hourly | hour | earning | 1 | 1 | 0 | 25 |
+| `BONUS` | Prämie / Zulage | allowance | amount | earning | 1 | 1 | 0 | 30 |
+| `BENEFIT_IN_KIND` | Sachbezug | benefit | amount | earning | 1 | 1 | 1 | 40 |
+| `FRINGE_BENEFIT` | Geldwerter Vorteil | benefit | amount | earning | 1 | 1 | 1 | 45 |
+| `TAX_FREE_REFUND` | Steuerfreie Erstattung | tax_free | amount | earning | 0 | 0 | 0 | 50 |
+| `EMPLOYER_ALLOWANCE` | Zuschuss Arbeitgeber | allowance | amount | earning | 1 | 1 | 0 | 55 |
+| `NET_DEDUCTION` | Nettolohnabzug | deduction | amount | deduction | 0 | 0 | 0 | 80 |
+| `ADVANCE_RECOVERY` | Vorschuss-Verrechnung | deduction | amount | deduction | 0 | 0 | 0 | 85 |
+
+SKR-Hints in L3b-Seed als **Platzhalter-Kommentare** setzen (z. B. personalaufwandnahe Konten laut Mandanten-SKR); konkrete Nummern mit Steuerberater je Mandant — Spec verlangt nur Spalten, keine verbindliche Kontonummer-Liste hier (vermeidet falsche GoBD-Buchungssuggestionen).
+
+#### Rechte & UI-Ort (Anschluss L0c)
+
+| Aktion | Recht |
+|--------|--------|
+| Lohnarten liste/lesen | `lohn` ≥ `partial` (oder Admin) |
+| Anlegen/Ändern/Deaktivieren | `lohn` ≥ `partial` + `canEdit`; System-`code` nicht umbenennen/löschen |
+| Seite | `lohn-lohnarten` (Menü später mit Modul-Seed) |
+
+#### Abgrenzung MA-Zuordnung (nur Spec-Rahmen für L3c)
+
+Tabelle später z. B. `dg_payroll_employee_wage_assignments`:
+
+| Feld | Bedeutung |
+|------|-----------|
+| `contact_id` | Mitarbeiter |
+| `wage_type_id` | Lohnart |
+| `amount` | Betrag oder Stundensatz (je `unit`) |
+| `valid_from` / `valid_to` | Zeitraum |
+| `priority` | Reihenfolge im Lauf |
+
+**Nicht** in L3a/L3b implementieren — nur damit L3b das FK-Ziel kennt.
+
+#### Bewusst nicht in L3
+
+| Thema | Wohin |
+|-------|--------|
+| Brutto→Netto | L4 |
+| Monatslauf-Positionen | L5 |
+| FiBu-Buchung | L7 |
+| Baulohn-/SOKA-/SFN-Arten | LC / später |
+| Nacht-/So-/Feiertagszuschläge komplex | später (nach A stabil) |
+
+#### Abnahme L3a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Tabelle + Feldkatalog + Seed-Liste dokumentiert | ✅ |
+| Steuer-/SV-Flags je Art | ✅ |
+| SKR nur als Hint-Spalten | ✅ |
+| Keine Bau/Gastro-Arten | ✅ |
+| Kein Code in diesem Chat | ✅ |
+
+**Nicht:** Migration, CRUD-UI, Engine, MA-Zuordnung-Code, Branchen-Sonderarten.
 
 ### L3b — Migration + CRUD
 
-Mandanten-Lohnarten; Seed Standardkatalog.
+Tabelle `dg_payroll_wage_types` laut L3a; Seed Standardkatalog; Repository + einfache Liste/Form (Rechte `lohn`); Systemzeilen nur deaktivierbar.
 
-**Nicht:** Engine.
+**Nicht:** Engine; keine MA-Zuordnung (L3c).
 
 ### L3c — Zuordnung MA ↔ Lohnart (Stamm)
 
-z. B. monatliches Festgehalt / Stundenlohn-Satz.
+z. B. monatliches Festgehalt / Stundenlohn-Satz; Tabelle Assignments laut L3a-Rahmen; UI an Mitarbeiterkarte oder unter Lohnarten.
 
 **Nicht:** Monatslauf.
 
@@ -784,15 +896,17 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l2a` MA-Felder Spec | ✅ 2026-10-30 |
 | — | `l2b` MA Felder/Validierung | ✅ 2026-10-30 |
 | — | `l2c` MA UI | ✅ 2026-10-30 |
-| 1 | `l3a` Lohnarten Spec | **als Nächstes** |
+| — | `l3a` Lohnarten Spec | ✅ 2026-10-30 |
+| 1 | `l3b` Lohnarten Migration/CRUD | **als Nächstes** |
+| 2 | `l3c` MA↔Lohnart Zuordnung | |
 
-Danach L3b → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
+Danach L4a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l3a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L3a. Nicht andere L-Pakete.
+Lohn Implementierung: l3b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L3b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
