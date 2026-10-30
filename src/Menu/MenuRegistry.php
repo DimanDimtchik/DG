@@ -103,6 +103,12 @@ final class MenuRegistry
 
         $items = [
             [
+                'slug' => 'lohn-monatslauf',
+                'label' => 'Monatslauf',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-monatslauf',
+            ],
+            [
                 'slug' => 'lohn-lohnarten',
                 'label' => 'Lohnarten',
                 'icon' => 'ledger',
@@ -906,7 +912,12 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-lohnexport') {
             return TimePayrollExportService::canExport($user);
         }
-        if ($slug === 'lohn-lohnarten' || $slug === 'lohn-beitragstabellen' || $slug === 'lohn') {
+        if (
+            $slug === 'lohn-lohnarten'
+            || $slug === 'lohn-beitragstabellen'
+            || $slug === 'lohn-monatslauf'
+            || $slug === 'lohn'
+        ) {
             return PayrollEmployeeAccess::canView($user);
         }
         if ($slug === 'zeiterfassung-stundenimport') {

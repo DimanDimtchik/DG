@@ -657,6 +657,92 @@ final class PayrollRunRepository
             ->execute(['id' => $runId, 'st' => self::STATUS_DRAFT]);
     }
 
+    /**
+     * Mitarbeiter-Kontakte für Monatslauf-Auswahl.
+     *
+     * @return list<array{id: int, label: string}>
+     */
+    public static function staffContactOptions(): array
+    {
+        if (!Database::isConfigured()) {
+            return [];
+        }
+        $stmt = Database::pdo()->query(
+            "SELECT id, display_name, first_name, last_name, company_name, login
+             FROM dg_contacts
+             WHERE contact_role IN ('dg_eigenmitarbeiter', 'administrator', 'mitarbeiter')
+             ORDER BY display_name ASC, id ASC
+             LIMIT 500"
+        );
+        if ($stmt === false) {
+            return [];
+        }
+        $out = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $label = trim((string) ($row['display_name'] ?? ''));
+            if ($label === '') {
+                $label = trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? ''));
+            }
+            if ($label === '') {
+                $label = trim((string) ($row['company_name'] ?? ''));
+            }
+            if ($label === '') {
+                $label = (string) ($row['login'] ?? ('#' . (int) $row['id']));
+            }
+            $out[] = ['id' => (int) $row['id'], 'label' => $label];
+        }
+
+        return $out;
+    }
+
+    public static function contactLabel(int $contactId): string
+    {
+        if ($contactId < 1 || !Database::isConfigured()) {
+            return '#' . $contactId;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT display_name, first_name, last_name, login FROM dg_contacts WHERE id = :id LIMIT 1'
+        );
+        $stmt->execute(['id' => $contactId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($row)) {
+            return '#' . $contactId;
+        }
+        $label = trim((string) ($row['display_name'] ?? ''));
+        if ($label === '') {
+            $label = trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? ''));
+        }
+        if ($label === '') {
+            $label = (string) ($row['login'] ?? ('#' . $contactId));
+        }
+
+        return $label;
+    }
+
+    public static function statusLabel(string $status): string
+    {
+        return match ($status) {
+            self::STATUS_DRAFT => 'Entwurf',
+            self::STATUS_CALCULATED => 'Berechnet',
+            self::STATUS_APPROVED => 'Freigegeben',
+            self::STATUS_LOCKED => 'Gesperrt',
+            default => $status,
+        };
+    }
+
+    public static function kindLabel(string $kind): string
+    {
+        return match ($kind) {
+            self::KIND_REGULAR => 'Normal',
+            self::KIND_CORRECTION => 'Korrektur',
+            self::KIND_STORNO => 'Storno',
+            default => $kind,
+        };
+    }
+
     private static function assertPeriod(int $year, int $month): void
     {
         if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {

@@ -1574,6 +1574,111 @@ switch ($path) {
             exit;
         }
 
+        // POST: Monatslauf Aktionen (L5c)
+        if (
+            $page === 'lohn-monatslauf'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollRunAccess::canView($user)
+        ) {
+            $monthPost = trim((string) ($_POST['month'] ?? $_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $monthPost)) {
+                $monthPost = date('Y-m');
+            }
+            $runIdPost = (int) ($_POST['run_id'] ?? 0);
+            $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                . ($runIdPost > 0 ? '&run=' . $runIdPost : '');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                $runAction = trim((string) ($_POST['run_action'] ?? ''));
+                $needsApprove = in_array($runAction, ['approve', 'lock', 'storno', 'correction'], true);
+                $needsEdit = in_array($runAction, [
+                    'create', 'add_employee', 'remove_employee', 'seed_assignments',
+                    'calculate', 'reopen', 'delete',
+                ], true);
+                try {
+                    if ($needsApprove && !PayrollRunAccess::canApprove($user)) {
+                        throw new RuntimeException('Keine Berechtigung für Freigabe/Sperre/Storno.');
+                    }
+                    if ($needsEdit && !PayrollRunAccess::canEditRun($user)) {
+                        throw new RuntimeException('Keine Berechtigung zum Bearbeiten des Monatslaufs.');
+                    }
+                    if ($runAction === 'create') {
+                        [$yy, $mm] = array_map('intval', explode('-', $monthPost));
+                        $created = PayrollRunRepository::createRegular($yy, $mm, (int) $user->id);
+                        Flash::set('success', 'Monatslauf angelegt.');
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . (int) $created['id'];
+                    } elseif ($runAction === 'add_employee') {
+                        $cid = (int) ($_POST['contact_id'] ?? 0);
+                        PayrollRunRepository::addEmployee($runIdPost, $cid);
+                        if (!empty($_POST['seed_assignments'])) {
+                            PayrollRunRepository::seedLinesFromAssignments($runIdPost, $cid);
+                        }
+                        Flash::set('success', 'Mitarbeiter hinzugefügt.');
+                    } elseif ($runAction === 'remove_employee') {
+                        PayrollRunRepository::removeEmployee($runIdPost, (int) ($_POST['contact_id'] ?? 0));
+                        Flash::set('success', 'Mitarbeiter entfernt.');
+                    } elseif ($runAction === 'seed_assignments') {
+                        $n = PayrollRunRepository::seedLinesFromAssignments(
+                            $runIdPost,
+                            (int) ($_POST['contact_id'] ?? 0)
+                        );
+                        Flash::set('success', $n . ' Lohnart-Position(en) aus Stamm übernommen.');
+                    } elseif ($runAction === 'calculate') {
+                        $stats = PayrollRunRepository::calculate($runIdPost, (int) $user->id);
+                        Flash::set(
+                            'success',
+                            sprintf(
+                                'Berechnet: %d ok, %d blocked, %d skipped.',
+                                (int) $stats['ok_count'],
+                                (int) $stats['blocked_count'],
+                                (int) $stats['skipped_count']
+                            )
+                        );
+                    } elseif ($runAction === 'reopen') {
+                        PayrollRunRepository::reopen($runIdPost, (int) $user->id, 'UI reopen');
+                        Flash::set('success', 'Lauf zurück auf Entwurf.');
+                    } elseif ($runAction === 'approve') {
+                        PayrollRunRepository::approve(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? '')
+                        );
+                        Flash::set('success', 'Lauf freigegeben.');
+                    } elseif ($runAction === 'lock') {
+                        PayrollRunRepository::lock(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? '')
+                        );
+                        Flash::set('success', 'Lauf gesperrt.');
+                    } elseif ($runAction === 'storno' || $runAction === 'correction') {
+                        $kind = $runAction === 'storno'
+                            ? PayrollRunRepository::KIND_STORNO
+                            : PayrollRunRepository::KIND_CORRECTION;
+                        $newRun = PayrollRunRepository::createSuperseding(
+                            $runIdPost,
+                            $kind,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? '')
+                        );
+                        Flash::set('success', ($runAction === 'storno' ? 'Storno' : 'Korrektur') . '-Lauf angelegt.');
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . (int) $newRun['id'];
+                    } elseif ($runAction === 'delete') {
+                        PayrollRunRepository::deleteDraft($runIdPost);
+                        Flash::set('success', 'Entwurf gelöscht.');
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost);
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Beitragstabellen Import/Ablösen/Patch (L4b)
         if (
             $page === 'lohn-beitragstabellen'
@@ -7668,6 +7773,54 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/lohn-beitragstabellen';
             $title = 'Beitragstabellen';
             $currentPage = 'lohn-beitragstabellen';
+        } elseif ($page === 'lohn-monatslauf' && MenuRegistry::canAccess($user, 'lohn-monatslauf')) {
+            MigrationRunner::runPending();
+            PayrollRunRepository::ensureReady();
+            $payrollRunMonth = trim((string) ($_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $payrollRunMonth)) {
+                $payrollRunMonth = date('Y-m');
+            }
+            [$py, $pm] = array_map('intval', explode('-', $payrollRunMonth));
+            $payrollRuns = PayrollRunRepository::listForPeriod($py, $pm);
+            $runViewId = (int) ($_GET['run'] ?? 0);
+            $payrollRun = $runViewId > 0 ? PayrollRunRepository::find($runViewId) : null;
+            if ($payrollRun !== null
+                && ((int) ($payrollRun['period_year'] ?? 0) !== $py
+                    || (int) ($payrollRun['period_month'] ?? 0) !== $pm)
+            ) {
+                // Run aus anderem Monat: Monat anpassen
+                $payrollRunMonth = sprintf(
+                    '%04d-%02d',
+                    (int) $payrollRun['period_year'],
+                    (int) $payrollRun['period_month']
+                );
+                $payrollRuns = PayrollRunRepository::listForPeriod(
+                    (int) $payrollRun['period_year'],
+                    (int) $payrollRun['period_month']
+                );
+            }
+            $payrollRunEmployees = $payrollRun !== null
+                ? PayrollRunRepository::employees((int) $payrollRun['id'])
+                : [];
+            $payrollRunEvents = $payrollRun !== null
+                ? PayrollRunRepository::events((int) $payrollRun['id'])
+                : [];
+            $payrollRunLinesByContact = [];
+            foreach ($payrollRunEmployees as $empRow) {
+                $cid = (int) ($empRow['contact_id'] ?? 0);
+                if ($cid > 0 && $payrollRun !== null) {
+                    $payrollRunLinesByContact[$cid] = PayrollRunRepository::linesForEmployee(
+                        (int) $payrollRun['id'],
+                        $cid
+                    );
+                }
+            }
+            $payrollStaffOptions = PayrollRunRepository::staffContactOptions();
+            $payrollRunCanEdit = PayrollRunAccess::canEditRun($user);
+            $payrollRunCanApprove = PayrollRunAccess::canApprove($user);
+            $contentTemplate = 'modules/lohn-monatslauf';
+            $title = 'Monatslauf';
+            $currentPage = 'lohn-monatslauf';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
@@ -8720,6 +8873,15 @@ $legalProductsConfig = LegalProductSettings::config();
         $payrollRateSetView = $payrollRateSetView ?? null;
         $payrollRateParams = $payrollRateParams ?? [];
         $payrollRateCanEdit = $payrollRateCanEdit ?? false;
+        $payrollRunMonth = $payrollRunMonth ?? date('Y-m');
+        $payrollRuns = $payrollRuns ?? [];
+        $payrollRun = $payrollRun ?? null;
+        $payrollRunEmployees = $payrollRunEmployees ?? [];
+        $payrollRunEvents = $payrollRunEvents ?? [];
+        $payrollRunLinesByContact = $payrollRunLinesByContact ?? [];
+        $payrollStaffOptions = $payrollStaffOptions ?? [];
+        $payrollRunCanEdit = $payrollRunCanEdit ?? false;
+        $payrollRunCanApprove = $payrollRunCanApprove ?? false;
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -9244,6 +9406,15 @@ $legalProductsConfig = LegalProductSettings::config();
             'payrollRateSetView',
             'payrollRateParams',
             'payrollRateCanEdit',
+            'payrollRunMonth',
+            'payrollRuns',
+            'payrollRun',
+            'payrollRunEmployees',
+            'payrollRunEvents',
+            'payrollRunLinesByContact',
+            'payrollStaffOptions',
+            'payrollRunCanEdit',
+            'payrollRunCanApprove',
             'timeShiftAssignmentMap',
             'timeVacContactId',
             'timeVacContactLabel',
