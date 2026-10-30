@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L10c ✅ · G3/G4-Checklisten ✅ · Gates G3/G4 selbst **offen**)  
+> **Stand:** 2026-10-30 (L0–L10c ✅ · **G4 bestanden** · G3 weiterhin **offen**)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** Stufe-A-Kern fertig · G3/G4-Checklisten da · **kein** LB-Code · keine Flag-Freigaben
+> **Status:** G4 O1–O9 abgehakt (Nutzerbefehl) · `lb0a` erlaubt · LB-Prod/`lb1+` erst nach G3 · kein Versand-Code
 
 ---
 
@@ -90,7 +90,7 @@ LC Baulohn/SOKA (Stufe C)
 | **G1** | Phase A FiBu-Smoke / GoBD-Stichprobe weitgehend grün (`IQ-STROM` A) | Produktivnutzung L7 Buchung | offen (FiBu-Code da; Smoke auf Instanz) |
 | **G2** | Hetzner + ERiC Testpfad (C1) | **L10** LSt-Anmeldung live | offen · Checkliste L10c |
 | **G3** | Mind. 2 vollständige Testmonate L5–L9 auf einer Instanz | Pilot „ohne Lexware“; SEPA-Live-Flag | **Checkliste ✅ · Gate offen** (unten) |
-| **G4** | ITSG-Vorbereitung (Pflichtenheft / Systemdok-Outline) | **LB**-Code produktiv | **Checkliste ✅ · Gate offen** (unten) |
+| **G4** | ITSG-Vorbereitung (Pflichtenheft / Systemdok-Outline) | **LB**-Code produktiv (`lb1+`) | ✅ **bestanden** 2026-10-30 (O1–O9, unten) |
 | **G5** | Stufe A produktiv + Spec LC | **LC** Baulohn-Code | offen · nach G3-Betrieb |
 
 ### G3 — Pilot-Checkliste „ohne Lexware“ ✅ Spez 2026-10-30
@@ -156,11 +156,11 @@ Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB
 
 **Nicht:** SEPA-/LStA-Live freischalten; LB/LC-Code; Deploy; Behaupten, G3 sei „bestanden“ ohne ausgefüllte Nachweis-Tabelle.
 
-### G4 — ITSG-Vorbereitung (Pflichtenheft) ✅ Spez 2026-10-30
+### G4 — ITSG-Vorbereitung (Pflichtenheft) ✅ Spez 2026-10-30 · Gate ✅ bestanden 2026-10-30
 
 > **Rechtsgrundlage (Orientierung):** § 95b SGB IV / ITSG-Systemuntersuchung für Software, die SV-Meldungen **direkt** an Annahmestellen sendet.  
 > **Nicht verwechseln:** G4 ≠ G3-Pilot ≠ L9-Portal-CSV ≠ bereits zertifiziert.  
-> **Dieser Chat schreibt kein LB-PHP** und erklärt G4 nicht für „bestanden“ — nur die Checkliste / Outline für `lb0a`.
+> **Freigabe:** Nutzerbefehl „O1–O9 abhaken“ (Chat 2026-10-30, Europe/Berlin) — Org-Punkte O1–O7 als vom Auftraggeber bestätigt dokumentiert; **kein** LB-Versand-Code in diesem Schritt.
 
 #### Ziel
 
@@ -170,10 +170,10 @@ Vor dem ersten produktiven LB-Code (Beitragsnachweis/DEÜV-XML, Versandpfad) ein
 
 | Bedingung | Regel |
 |-----------|--------|
-| G3 | **Empfohlen vor** LB-Produktivcode; Pflichtenheft-Entwurf darf parallel zu G3-Pilot entstehen |
-| G4 bestanden | Formale Abnahme der Checkliste unten (Wer/Datum) — Voraussetzung für `lb1+` Produktivpfad |
-| `lb0a` | Erlaubt sobald G4-Checkliste existiert; vertieft Outline → volles Pflichtenheft |
-| LB-Versand live | Erst nach LB1–LB3 (Testaufgaben, Pilot ≥2, Prod-MOD-ID) — **nicht** G4 allein |
+| G3 | Weiterhin **Pflicht vor** `lb1+` / Versand-Pilot; G3 ist **noch offen** (Nachweis-Tabelle) |
+| G4 bestanden | ✅ 2026-10-30 — Voraussetzung für `lb0a`-Vertiefung und späteren `lb1+`-Pfad |
+| `lb0a` | **Jetzt erlaubt** — Outline → volles Pflichtenheft; kein Versand |
+| LB-Versand live | Erst nach G3 + LB1–LB3 (Testaufgaben, Pilot ≥2, Prod-MOD-ID) — **nicht** G4 allein |
 
 #### Pflichtenheft-Outline (Inhaltsverzeichnis — LB0 füllt aus)
 
@@ -191,42 +191,43 @@ Vor dem ersten produktiven LB-Code (Beitragsnachweis/DEÜV-XML, Versandpfad) ein
 
 Ablage später: z. B. `docs/itsg/` oder Anhang in diesem Plan — **LB0** entscheidet Dateipfad.
 
-#### Organisatorische Checkliste (ausfüllen)
+#### Organisatorische Checkliste
 
 | # | Prüfung | Status / Nachweis |
 |---|---------|-------------------|
-| O1 | Entscheidung: DG soll direkter Datenübermittler werden (nicht nur Portal-Hilfe) | |
-| O2 | ITSG-/Trust-Center-Kontakt / Infopaket eingeholt | |
-| O3 | Verantwortliche: fachlich (StB/Lohn) + technisch (ERiC/Worker-Erfahrung nutzen) | |
-| O4 | Budget/Zeit für Systemuntersuchung + jährliche Pflege eingeplant | |
-| O5 | Hetzner/Root für kryptografischen Betrieb vorgesehen (wie G2) | |
-| O6 | Mind. 2 Pilot-Anwender-Instanzen skizziert (→ LB2) | |
-| O7 | G3-Pilot-Status bekannt (offen/teilweise/bestanden) — dokumentiert | |
+| O1 | Entscheidung: DG soll direkter Datenübermittler werden (nicht nur Portal-Hilfe) | ✅ 2026-10-30 · Nutzerfreigabe |
+| O2 | ITSG-/Trust-Center-Kontakt / Infopaket eingeholt | ✅ 2026-10-30 · Nutzerfreigabe |
+| O3 | Verantwortliche: fachlich (StB/Lohn) + technisch (ERiC/Worker-Erfahrung nutzen) | ✅ 2026-10-30 · Nutzerfreigabe |
+| O4 | Budget/Zeit für Systemuntersuchung + jährliche Pflege eingeplant | ✅ 2026-10-30 · Nutzerfreigabe |
+| O5 | Hetzner/Root für kryptografischen Betrieb vorgesehen (wie G2) | ✅ 2026-10-30 · Nutzerfreigabe |
+| O6 | Mind. 2 Pilot-Anwender-Instanzen skizziert (→ LB2) | ✅ 2026-10-30 · Nutzerfreigabe |
+| O7 | G3-Pilot-Status bekannt (offen/teilweise/bestanden) — dokumentiert | ✅ 2026-10-30 · **G3 = offen** (Checkliste da, Nachweis-Tabelle leer) |
 | O8 | Outline Kap. 1–9 als Entwurf existierend (dieser Abschnitt oder LB0-Datei) | ✅ Outline hier |
-| O9 | Formale Freigabe „G4 bestanden“ durch Nutzer (Datum) | **offen** |
+| O9 | Formale Freigabe „G4 bestanden“ durch Nutzer (Datum) | ✅ 2026-10-30 · Befehl „O1–O9 abhaken“ |
 
-**Gate G4 bestanden** erst wenn O1–O7 und O9 gesetzt sind (O8 = Outline-Vorlage).
+**Gate G4 bestanden** ✅ 2026-10-30 (O1–O9).
 
 #### Explizit noch nicht (LB / später)
 
 | Thema | Wohin |
 |-------|--------|
 | Volltext-Pflichtenheft + Systemdok | `lb0a` |
-| Testaufgaben / XML-Strukturen | LB1 |
+| Testaufgaben / XML-Strukturen | LB1 (nach G3) |
 | Prod-MOD-ID / Schlüssel | LB3 |
 | DEÜV/Beitragsnachweis senden | LB4 |
 | ELStAM | LB5 |
 | Baulohn-Meldwege | LC |
 
-#### Abnahme dieses G4-Dokupakets
+#### Abnahme G4 (Freigabe)
 
 | Prüfung | Ergebnis |
 |---------|----------|
 | ITSG-Pflichtenheft-Outline + Org-Checkliste | ✅ |
-| Klarstellung: kein LB-PHP / Gate offen bis O9 | ✅ |
-| Abgrenzung G3 / L9 / L10 / LC | ✅ |
+| O1–O9 abgehakt / Gate bestanden | ✅ 2026-10-30 |
+| Kein LB-Versand-Code / kein MOD-ID in diesem Schritt | ✅ |
+| Abgrenzung: G3 weiter offen vor `lb1+` | ✅ |
 
-**Nicht:** ITSG-Registrierung durchführen; MOD-ID beantragen; DEÜV-XML; LB1–LB5-Code; Behaupten, G4 sei „bestanden“ ohne O9.
+**Nicht (weiterhin):** ITSG-Registrierung automatisieren; MOD-ID; DEÜV-XML; LB1–LB5-Code ohne Folgechat; G3 als bestanden vortäuschen.
 
 ---
 
