@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L9b ✅)  
+> **Stand:** 2026-10-30 (L0–L10a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L9b SV-Portal-Export ✅ · nächster Chat: **`l10a`** (LSt/ELSTER Spec)
+> **Status:** L10a Spec LSt/ELSTER ✅ · nächster Chat: **`l10b`** (ERiC-Testmodus)
 
 ---
 
@@ -1916,19 +1916,127 @@ CSV (Pflicht) aus L9a-Aggregaten; Seite `lohn-auswertungen` + Download/Audit. PD
 
 ## Serie L10 — Lohnsteuer-Anmeldung (ELSTER)
 
-> Gate **G2** zwingend.
+> Einstieg: `l10a` · L10a ✅ · weiter mit `l10b`  
+> Gate **G2** zwingend für **Live**-Abgabe: Hetzner + ERiC-Testpfad (IQ-STROM **C1** / [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md)).  
+> Auf **Kasserver** bleibt ERiC blockiert (`ElsterSettings::serverSupportsEric` / `AGENTS.md`) — Spec/Test-Code darf entstehen, **kein** Prod-Senden.
 
-### L10a — Spec LSt-Anmeldung / Bescheinigung
+### L10a — Spec LSt-Anmeldung / Bescheinigung ✅ 2026-10-30
 
-Anbindung ERiC-Pfad; Testzertifikat zuerst; Payload+Antwort speichern.
+Nur Spezifikation — Testmodus-Code = **L10b**, Produktiv-Checkliste = **L10c**. Kein PHP in L10a. Keine UStVA-XML, kein Live-Versand auf Shared Hosting, kein ELStAM (LB).
 
-**Nicht:** UStVA vermischen; nicht auf Kasserver live.
+#### Ziel
+
+Zwei ELSTER-Lohnsteuer-Verfahren aus **gesperrten** Monatsläufen vorbereiten und (nach G2) über denselben ERiC-Worker senden wie die Buchhaltungs-UStVA — aber **eigene** Datenaufbereitung, UI und `form_type`:
+
+| Verfahren | Periode | Inhalt (fachlich) | Priorität Stufe A |
+|-----------|---------|-------------------|-------------------|
+| **Lohnsteuer-Anmeldung (LStA)** | Monat (Default) oder Quartal laut FA-Rhythmus AG | Summe LSt + SolZ + KiSt (+ ggf. pauschale LSt) an Finanzamt | **Zuerst** (L10b) |
+| **Lohnsteuerbescheinigung** | Kalenderjahr je MA | Elektronische Bescheinigung an FA (IdNr., Bezüge, einbehaltene Steuer) | **Zweite** Welle in L10b/c — Spec hier, Bau darf nach LStA folgen |
+
+CRM speichert **Payload + Antwort** (Ticket, Fehler, Antwort-PDF falls ERiC liefert) prüfbar — GoBD/Betriebsprüfung.
+
+#### Abgrenzung zu bestehendem ELSTER (UStVA)
+
+| UStVA (Buchhaltung) | Lohn L10 |
+|---------------------|----------|
+| `UstvaReportService` / Beleg-Kennziffern | Aggregation aus `dg_payroll_run_employees.result_json` |
+| `ElsterExportService` CSV UStVA/EÜR | Eigene LStA-/Bescheinigungs-Builder (kein Kennziffer-Mix) |
+| `form_type='ustva'` in `dg_elster_submissions` | `form_type='lsta'` bzw. `'lstb'` (Bescheinigung) |
+| Seite `buchhaltung-ustva` | Eigene Lohn-Seite (z. B. `lohn-elster` / Tab unter Auswertungen) — **nicht** UStVA-Button missbrauchen |
+| Testmerker UStVA `700000004` | LSt-Testpfad laut ERiC/ELSTER-Doku für Lohnsteuer (L10b konkretisieren; **nicht** UStVA-Merker blind kopieren) |
+
+**Wiederverwenden:** `ElsterSettings`, `ElsterEricClient` (Worker-URL, Readiness, Hersteller-ID `34573`), Zertifikat/PIN-Handling, `dg_elster_submissions` (+ ggf. Spalten erweitern), Logging `storage/logs/elster.log` ohne Secrets.  
+**Nicht wiederverwenden:** UStVA-XML-Builder-Felder als LStA-Inhalt.
+
+#### Gate G2 & Betriebsmodi
+
+| Modus | Wann | Verhalten |
+|-------|------|-----------|
+| Spec / Offline-Vorschau | immer (auch Kasserver) | Summen/Kontroll-CSV aus locked Runs — **kein** ERiC-Call |
+| ERiC-Test (L10b) | `eric_test_mode` + Test-Zertifikat + `server_ready` | dryRun / Testfinanzamt; Abgabe mit `test_mode=1` |
+| ERiC-Live (L10c) | G2 + Nutzerbefehl + echtes Zertifikat + `eric_test_mode=0` | Prod-Abgabe; ohne G2 UI disabled |
+
+Flag-Idee (L10b, parallel SEPA/FiBu): `payroll_lsta_live` in `company_extended.lohn` Default **false** — zusätzlich zu globalem ELSTER-Modus. Ohne Flag nur Vorschau/Test.
+
+#### Voraussetzungen Daten
+
+| Regel | Entscheidung |
+|-------|--------------|
+| Quelle LStA | Alle **nicht superseded** Runs der Anmeldeperiode mit `status=locked`, `kind∈{regular,correction}` — **kein** Storno-Run in Summen (Korrektur über correction-Results / manuelle Berichtigung) |
+| MA | Nur `emp_status=ok` mit `result_json` |
+| Beträge LStA | Σ `lst`, Σ `solz`, Σ `kst`; Σ `flat_lst` **getrennt** ausweisen (Pauschalierung Mini — Meldeweg L10b gegen amtliches Schema prüfen, nicht still addieren) |
+| AG | Steuernummer, Finanzamt/BuFö aus L1-Snapshot; leer → Hard-Block Senden |
+| Bescheinigung | Je MA Kalenderjahr: Summen aus locked Runs des Jahres + Stammdaten IdNr. (`tax_id`), Steuerklasse, Religion, Eintritt/Austritt |
+| IdNr. | 11 Ziffern; fehlend → MA von Bescheinigungs-Sendung ausschließen + Liste |
+| ELStAM | **Nicht** in L10; manuelle Merkmale aus L2 bleiben maßgeblich |
+| FiBu/SEPA/SV | Keine harte Voraussetzung; empfohlen: Periode abgeschlossen (L5 lock) bevor LStA |
+
+#### Payload-Rahmen (für L10b)
+
+| Artefakt | Speicherung |
+|----------|-------------|
+| Request-XML/Bytes | `storage/payroll/elster/` + Hash; optional LONGTEXT in Meta |
+| Antwort ERiC | `response_summary`, Transfer-Ticket, Fehlercode-Mapping |
+| Antwort-PDF | Pfad in `dg_elster_submissions.pdf_path` wenn geliefert |
+| Audit | `AuditLog` + Zeile in `dg_elster_submissions` (`form_type`, Periode, `test_mode`, `submitted_by`) |
+
+Optional eigene Meta `dg_payroll_lsta_batches` (run_ids[], checksum Summen) — **oder** nur `dg_elster_submissions` + JSON-Detailspalte. Default Spec: **`dg_elster_submissions` erweitern** (`payload_checksum`, `detail_json`) statt paralleler Schattentabelle, sofern Migration schlank bleibt.
+
+#### Service-Skizze (Bau = L10b)
+
+`PayrollElsterService` (Arbeitstitel):
+
+- `previewLsta(year, month|quarter): amounts + warnings + source_run_ids`  
+- `previewLstb(year, contactId|all): rows[]`  
+- `buildLstaPayload(...)` / `buildLstbPayload(...)` — Schema-Version dokumentieren  
+- `submitTest(...)` / `submitLive(...)` → `ElsterEricClient`  
+- `auditorChecklist()` — G2, Test≠Prod-Zertifikat, UStVA getrennt, Flat getrennt, Storno-Regel  
+
+Kontroll-CSV analog L9b für Offline-Abstimmung mit Steuerberater **vor** ERiC.
+
+#### Rechte & UI-Skizze
+
+| Aktion | Recht |
+|--------|-------|
+| Vorschau / Kontroll-CSV | `lohn` ≥ `partial` |
+| Test-Senden | `lohn` === `full` + ELSTER-Readiness Test |
+| Live-Senden | `full` + `payroll_lsta_live` + G2 + Admin-Bestätigung |
+| Zertifikat/Modus | Einstellungen ELSTER (bestehend, Admin) |
+
+UI: neuer Menüpunkt unter Lohn (nicht unter UStVA) „Lohnsteuer ELSTER“; klarer Banner „kein UStVA“. Monatslauf: Link „LSt-Anmeldung Periode“ wenn locked.
+
+#### Abgrenzung
+
+| Thema | Wohin |
+|-------|--------|
+| Testmodus-Implementierung | L10b |
+| Produktiv-Freigabe-Checkliste | L10c (nur nach explizitem Nutzerbefehl) |
+| UStVA / EÜR ERiC | Buchhaltung / `ELSTER-ERIC-TODO` — **nicht** L10 |
+| ELStAM-Abruf | LB |
+| SV-Portal / ITSG | L9 / LB |
+| LSt-Tarif „echt“ statt Fixture | Tabellenimport L4 — L10 sendet **berechnete** Beträge, ersetzt keine Tarifengine |
+
+#### Abnahme L10a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| LStA + Bescheinigung spezifiziert; Priorität LStA zuerst | ✅ |
+| Wiederverwendung ERiC-Infrastruktur; Trennung UStVA | ✅ |
+| G2 / Kasserver-Block / Test vor Live; Payload-Audit | ✅ |
+| Rechte/UI-Skizze; Flat/Storno/IdNr. Regeln | ✅ |
+| Kein PHP / kein Live auf Kasserver / kein ELStAM | ✅ |
+
+**Nicht:** PHP-Code, ERiC-Worker-Installation, Live-Abgabe, UStVA vermischen, ELStAM.
 
 ### L10b — Implementierung Testmodus
 
+`PayrollElsterService` Vorschau + Payload + Test-Senden (nur wenn Server ERiC ready); Kontroll-CSV; Meta/Audit. Live-Button aus.
+
+**Nicht:** Produktiv-Senden ohne L10c; UStVA-Code umbiegen.
+
 ### L10c — Produktiv-Gate Checkliste
 
-Nur nach explizitem Nutzerbefehl und Hetzner-Freigabe.
+Nur nach explizitem Nutzerbefehl und Hetzner-Freigabe. Checkliste G2 + Zertifikat + `payroll_lsta_live` + Stichprobe Testmandant.
 
 ---
 
@@ -2008,15 +2116,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l8b` SEPA-Generator + Download + Audit | ✅ 2026-10-30 |
 | — | `l9a` Spec SV-Kontrolllisten / Beitragsnachweis-Vorbereitung | ✅ 2026-10-30 |
 | — | `l9b` Export CSV/PDF Kontrolle (SV-Portal) | ✅ 2026-10-30 |
-| 1 | `l10a` Spec LSt-Anmeldung / Bescheinigung (ELSTER) | **als Nächstes** |
+| — | `l10a` Spec LSt-Anmeldung / Bescheinigung (ELSTER) | ✅ 2026-10-30 |
+| 1 | `l10b` Implementierung ERiC-Testmodus LStA | **als Nächstes** |
 
-Danach L10b → … nicht überspringen (Gate G2).
+Danach L10c → … nicht überspringen (Gate G2 für Live).
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l10a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L10a. Nicht andere L-Pakete.
+Lohn Implementierung: l10b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L10b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
