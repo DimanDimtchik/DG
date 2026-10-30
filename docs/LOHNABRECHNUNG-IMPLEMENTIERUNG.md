@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0 ✅ · L1 ✅)  
+> **Stand:** 2026-10-30 (L0–L1 ✅ · L2a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** Serie **L1 abgeschlossen** · nächster Chat: **`l2a`** (Spec MA-Lohnfelder)
+> **Status:** L2a Spec MA-Lohnfelder ✅ · nächster Chat: **`l2b`** (Felder/Validierung in `EmployeeData`)
 
 ---
 
@@ -184,7 +184,7 @@ Admin/`RoleResolver` mit System-Vollzugriff: wie bei anderen Modulen üblich mit
 | `lohn-auswertungen` | Kontrolllisten / SV-Vorbereitung | `partial` | L9; Versand bleibt Portal |
 | Settings-Tab `lohn` bzw. Seite AG | Arbeitgeber-Stamm | **`full`** | L1 — Betriebsnummer etc. |
 
-**MA-Lohnfelder (L2):** bleiben in **Kontakt → Mitarbeiterkarte** (kein eigener Menüpunkt). Speichern: wer Kontakte/`EmployeeData` editieren darf **und** `lohn` ≥ `partial` (sonst nur Anzeige ohne Lohn-Sektion-Edit). Exact Gate in L2a festziehen.
+**MA-Lohnfelder (L2):** bleiben in **Kontakt → Mitarbeiterkarte** (kein eigener Menüpunkt). Speichern laut **L2a Rechte-Gate** (unten).
 
 #### Menü-Platzierung
 
@@ -388,24 +388,133 @@ Verhalten:
 
 ## Serie L2 — Mitarbeiter Steuer / SV / Beschäftigung
 
-> Einstieg: `l2a`  
+> Einstieg: `l2a` · L2a ✅ · weiter mit `l2b`  
 > Baut auf `EmployeeData` auf — **erweitern**, nicht paralleles HR-System.
 
-### L2a — Spec MA-Lohnfelder
+### L2a — Spec MA-Lohnfelder ✅ 2026-10-30
 
-Pflicht für Abrechnung: Steuer-ID, Steuerklasse, Kinderfreibeträge, Konfession/KiSt-Merkmal, SV-Nummer, Krankenkasse, Beitragsgruppenschlüssel, Personengruppe, Beschäftigungsart (Voll/Teil/Mini/Midi/GF), Eintritt/Austritt, IBAN Auszahlung, Jahresentgelt-Schätzer (Midi), Flag beherrschender GF + Begründung.
+Nur Spezifikation — Felder/Validierung = **L2b**, UI-Sektion = **L2c**. Kein PHP in L2a.
 
-**Nicht:** Brutto-Netto-Formel.
+#### Ziel
+
+Mitarbeiterstammdaten für Stufe-A-Abrechnung (Lexware-Office-Niveau) in der bestehenden Kontakt-Mitarbeiterkarte. Kein zweites HR-/Payroll-Personenmodell.
+
+#### Speicher-Entscheidung (verbindlich für L2b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Neue Tabelle `dg_payroll_employee` | **Nein** in L2 |
+| Paralleles JSON neben `employee_data` | **Nein** |
+| Erweiterung | Keys in **`EmployeeData::fields()`** / JSON `employee_data` |
+| Neue UI-Sektion | `section` = **`payroll`** Label „Lohnabrechnung“ |
+| IBAN Auszahlung | Primär **Kontakt-`bank_accounts`** (Index/`is_primary`); optional Key `payroll_payout_bank_index` in employee_data |
+
+#### Feldkatalog
+
+**A — Wiederverwenden (Ist)**
+
+| Bedarf | Quelle | Pflicht Lauf? | Hinweis |
+|--------|--------|---------------|---------|
+| Name / Kontakt | Kontaktstamm | ja | kein Duplikat |
+| Geburtsdatum | `birth_date` | ja (SV/LSt) | schon `personal` |
+| SV-Nummer | `social_security_number` | ja* | *bei sv-pflichtig / Status received |
+| SV-Status / Meldestelle | `social_security_status`, `social_filing_office` | ja | Hinweise/DEÜV-Draft behalten |
+| Krankenkasse Name | `health_insurance` | ja* | Text; Kassennummer optional neu |
+| Eintritt / Austritt | `entry_date`, `exit_date` | Eintritt ja | Austritt nur wenn beendet |
+| Vertragsdaten / Sollzeit | `contract_*`, `daily_work_minutes`, `working_hours` | nein für Netto | Zeiterfassung |
+| Beschäftigungsart (Zeit) | `employment_type` | erweitern → B | heute: regular/minijob/intern |
+| Freitext Gehalt | `salary` | nein | bleibt Hinweis; **Beträge/Lohnarten = L3** |
+| Fremde Lohn-PDF | `payroll_slip` | nein | parallel bis L6 |
+| Bankkonten | Kontakt `bank_accounts` | für SEPA | Auswahl Index |
+
+**B — Neu in `EmployeeData` (section `payroll`)**
+
+| Key | Typ | Default | Pflicht Lauf | Bedeutung |
+|-----|-----|---------|--------------|-----------|
+| `tax_id` | text | `''` | ja | Steuerliche Identifikationsnummer (11 Ziffern Plausibilität L2b/c) |
+| `tax_class` | select 1–6 / `''` | `''` | ja | Steuerklasse; Stufe A manuell (L0b D4, kein ELStAM) |
+| `child_allowances` | number 0–99 Schritt 0,5 | `''` | ja (0 ok) | Kinderfreibeträge (Zähler) |
+| `religion_code` | select | `''` | ja | KiSt-Merkmal: `none` / `ek` / `rk` / `other` (Labels DE) |
+| `health_insurance_company_number` | text | `''` | empfohlen | Betriebsnummer der Krankenkasse (8-stellig wenn gesetzt) |
+| `contribution_group_key` | text | `''` | ja* | Beitragsgruppenschlüssel (KV/RV/AV/PV-Stellen, Format L2b) |
+| `person_group_key` | text | `''` | ja* | Personengruppenschlüssel DEÜV (z. B. 101) |
+| `payroll_employment_type` | select | `''` | ja | `fulltime` / `parttime` / `minijob` / `midijob` / `managing_director` |
+| `annual_earnings_estimate_eur` | number | `''` | wenn midijob | Jahresentgelt-Schätzer Midi |
+| `controlling_managing_director` | checkbox | `0` | wenn GF | Beherrschender GF (L0b D2) |
+| `controlling_md_rationale` | textarea | `''` | wenn Flag | Begründung + ideal Datum der Prüfung im Text |
+| `sv_exempt` | checkbox | `0` | nein | nur setzbar wenn GF-Flag; sonst ignorieren/warnen |
+| `payroll_payout_bank_index` | int ≥ 0 | `0` | für L8 | Index in Kontakt-`bank_accounts` |
+| `payroll_notes` | textarea | `''` | nein | interne Lohn-Hinweise |
+
+\*bei `payroll_employment_type` ∈ {fulltime, parttime, midijob}; bei minijob/GF abweichende Pflichtmatrix siehe unten.
+
+**C — Bewusst nicht in L2**
+
+| Thema | Wohin |
+|-------|--------|
+| Brutto→Netto / Tabellen | L4 |
+| Lohnarten-Zuordnung Betrag | L3 |
+| ELStAM-Abruf | LB |
+| Baulohn/SOKA-Felder | LC |
+| Eigene Netto-PDF | L6 |
+
+#### Beschäftigungsart: Mapping Zeit ↔ Lohn
+
+| `payroll_employment_type` (neu, führend für Lauf) | Empfohlenes `employment_type` (Zeit) | Pflichtmatrix Lauf (Kurz) |
+|---------------------------------------------------|--------------------------------------|---------------------------|
+| `fulltime` / `parttime` | `regular` | tax_id, tax_class, child_allowances, religion, SV-Nr., KK, Beitrags-/Personengruppe, Eintritt, Bank |
+| `minijob` | `minijob` (+ oft `kbs_minijob`) | tax_id, tax_class o. Pauschale-Hinweis, Eintritt, Bank; SV-Nr. wenn vorhanden; Personengruppe Minijob |
+| `midijob` | `regular` | wie Voll/Teil + `annual_earnings_estimate_eur` |
+| `managing_director` | `regular` | tax_*; wenn `controlling_managing_director`: Begründung Pflicht; `sv_exempt` nur dann erlaubt |
+
+`employment_type` (Zeit) **nicht löschen** — Zeiterfassung/Minijob-Hilfen bleiben. L2b darf bei Speichern Lohn-Typ → Zeit-Typ **weich syncen** (Dokumentation in L2b), ohne stilles Überschreiben gegen Nutzerabsicht ohne Hinweis.
+
+#### Rechte-Gate (verbindlich, löst L0c-Offenheit)
+
+| Aktion | Bedingung |
+|--------|-----------|
+| Sektion „Lohnabrechnung“ **sehen** | Kontakt Mitarbeiterkarte sichtbar **und** (`lohn` ≥ `partial` **oder** Admin **oder** bis Modul `lohn` noch nicht geseedet: Admin/HR wie heutige EmployeeData-Sicht) |
+| Sektion **speichern** | Kontakt speichern erlaubt **und** (`lohn` ≥ `partial` **oder** Admin). Ohne `lohn`-Recht: Felder read-only bzw. nicht im POST übernehmen |
+| Übergang bis Modul geseedet | Speichern der neuen Keys für **Admin** erlaubt (wie Settings L1c); sobald `DepartmentAccess::MODULE_LABELS['lohn']` live: Gate wie Tabelle |
+
+L2b implementiert Helper z. B. `PayrollEmployerSettings`-analog `PayrollEmployeeAccess::canView/canEdit(User)` — Spec-Name frei, Verhalten fest.
+
+#### Validierung (für L2b/c — Regeln)
+
+| Feld | Regel |
+|------|--------|
+| `tax_id` | Nur Ziffern; Länge 11 wenn gesetzt; leer = Warnung, Speichern ok; Lauf blockt später |
+| `tax_class` | `''` oder 1–6 |
+| `child_allowances` | leer oder Zahl ≥ 0, Schritt 0,5 |
+| `religion_code` | Allowlist |
+| `contribution_group_key` / `person_group_key` | Zeichenvorrat/Länge plausibel (L2b konkret); keine Behörden-API |
+| `controlling_md_rationale` | wenn Flag: min. 10 Zeichen |
+| `sv_exempt` | nur mit GF-Flag; sonst false erzwingen |
+| IBAN gewählt | `BankDirectory::validateIban` wenn IBAN vorhanden; leer → SEPA später blocken |
+
+Keine Live-Abfrage ELStAM/ITSG/KK in L2.
+
+#### Abnahme L2a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Speicher = EmployeeData section `payroll`, keine Parallel-Tabelle | ✅ |
+| A/B/C-Feldkatalog + Pflichtmatrix | ✅ |
+| Rechte-Gate spezifiziert | ✅ |
+| GF-Flag + Begründung (D2) | ✅ |
+| Kein Code / keine Brutto-Netto-Formel | ✅ |
+
+**Nicht:** Migration, UI, Berechnung, ELStAM, Baulohn-Felder.
 
 ### L2b — Migration + Validierung
 
-Masken/Constraints; fehlende Pflichtfelder blockieren Monatslauf später (L5), nicht Speichern grundsätzlich (Entwurf erlaubt).
+`EmployeeData::fields()` um Katalog B erweitern; `sectionLabels['payroll']`; Select-Optionen; Normalize/Sanitize laut L2a; fehlende Pflichtfelder = Warnung / Lauf-Block erst L5, Speichern erlaubt.
 
 **Nicht:** Berechnung.
 
 ### L2c — UI Kontakt/Mitarbeiterkarte
 
-Klar getrennte Sektion „Lohnabrechnung“; Hinweise Meldestelle behalten.
+Klar getrennte Sektion „Lohnabrechnung“; Hinweise Meldestelle behalten; Gate laut L2a.
 
 **Nicht:** PDF erzeugen.
 
@@ -626,17 +735,17 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l1a` AG-Stamm Spec | ✅ 2026-10-30 |
 | — | `l1b` AG Store/`company_extended.lohn` | ✅ 2026-10-30 |
 | — | `l1c` AG UI | ✅ 2026-10-30 |
-| 1 | `l2a` MA-Felder Spec | **als Nächstes** |
-| 2 | `l2b` MA Migration | |
-| 3 | `l2c` MA UI | |
+| — | `l2a` MA-Felder Spec | ✅ 2026-10-30 |
+| 1 | `l2b` MA Felder/Validierung | **als Nächstes** |
+| 2 | `l2c` MA UI | |
 
 Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l2a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L2a. Nicht andere L-Pakete.
+Lohn Implementierung: l2b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L2b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
