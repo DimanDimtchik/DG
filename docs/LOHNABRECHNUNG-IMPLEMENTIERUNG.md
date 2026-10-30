@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L4 ✅)  
+> **Stand:** 2026-10-30 (L0–L4 ✅ · L5a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L4c StandardPayrollEngine ✅ · nächster Chat: **`l5a`** (Monatslauf Spec)
+> **Status:** L5a Spec Monatslauf ✅ · nächster Chat: **`l5b`** (Migration Läufe)
 
 ---
 
@@ -983,23 +983,186 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-### L5a — Spec Lauf & GoBD-Workflow
+> Einstieg: `l5a` · L5a ✅ · weiter mit `l5b`
 
-Zustände: `draft` → `calculated` → `approved` → `locked`.  
-Korrektur nur über `storno`/`correction` mit Begründung und Benutzer.  
-Übernahme Zeiten: Z6-Datenquellen / Z6e Auszahlung soft-degraden.
+### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
-**Nicht:** Buchung ins Hauptbuch (L7).
+Nur Spezifikation — Schema/CRUD = **L5b**, UI = **L5c**. Kein PHP in L5a. Keine FiBu-Buchung (L7), kein PDF (L6), kein SEPA (L8).
+
+#### Ziel
+
+Pro Mandant/Instanz einen **Abrechnungsmonat** mit GoBD-fähigem Lebenszyklus: Entwurf → Berechnung (L4c) → Freigabe → Sperre. Freigegebene/gesperrte Ergebnisse werden **nicht still überschrieben** (L0b D8). Korrektur nur über neuen Lauf `storno`/`correction` mit Begründung und Benutzer. Zeiten aus Z6 fließen als **Eingabe** ein — Z6-Export bleibt parallel und unabhängig.
+
+#### Lauf-Hierarchie (verbindlich für L5b)
+
+| Ebene | Bedeutung |
+|-------|-----------|
+| **Run** (`dg_payroll_runs`) | Ein Abrechnungslauf für `(period_year, period_month)` + optional `kind` |
+| **Employee result** (`dg_payroll_run_employees`) | Ein MA in diesem Lauf; hält Snapshot-Refs + `PayrollCalcResult`-Beträge |
+| **Line** (`dg_payroll_run_lines`) | Positionen je MA (Lohnarten, Stub-Stunden, manuelle Korrekturen vor Freigabe) |
+| **Status event** (`dg_payroll_run_events`) | Append-only Historie Statuswechsel / Storno-Link |
+
+Ein **Kalendermonat** kann mehrere Runs haben: genau ein „aktueller“ produktiver Run (`kind=regular`, nicht storniert); plus `storno`/`correction`-Runs die auf `supersedes_run_id` zeigen.
+
+#### Zustandsautomat
+
+```text
+draft ──calculate──► calculated ──approve──► approved ──lock──► locked
+  │                     │                      │
+  │◄──reopen*───────────┘                      │
+  │                                            │
+  └── (löschen nur draft, leer)                └── storno/correction → neuer Run (draft)
+```
+
+| Status | Bedeutung | Mutationen erlaubt |
+|--------|-----------|-------------------|
+| `draft` | Lauf angelegt; Positionen/MA-Auswahl editierbar | MA hinzu/entfernen, Lines edit, Zeiten neu laden, löschen wenn ohne Berechnung |
+| `calculated` | Engine gelaufen; Beträge gespeichert | Lines nur mit Neuberechnung; zurück auf `draft` (`reopen`) mit Audit |
+| `approved` | fachlich freigegeben | **keine** Betragsänderung; nur `lock` oder `storno`/`correction` |
+| `locked` | revisionssicher für PDF/FiBu/SEPA-Nachfolge | nur `storno`/`correction` (neuer Run); kein Unlock |
+
+\*`reopen` calculated→draft: nur `lohn`≥`partial`+`canEdit`; löscht gespeicherte Result-Beträge oder markiert `stale` — L5b wählt **löschen Result-Amounts + Events behalten**.
+
+#### Transitionen & Rechte (Anschluss L0c)
+
+| Von → Nach | Aktion | Recht |
+|------------|--------|-------|
+| — → `draft` | Lauf anlegen | `lohn` ≥ `partial` + `canEdit` |
+| `draft` → `calculated` | `calculate` (Engine L4c je MA) | `partial` + `canEdit` |
+| `calculated` → `draft` | `reopen` | `partial` + `canEdit` |
+| `calculated` → `approved` | `approve` | **`full`** + `canEdit` |
+| `approved` → `locked` | `lock` | **`full`** + `canEdit` |
+| `approved`/`locked` → neuer Run | `storno` / `correction` | **`full`** + `canEdit` |
+| `draft` löschen | nur ohne abhängige Events außer create | `partial` + `canEdit` |
+
+Jeder Statuswechsel: Zeile in `dg_payroll_run_events` (`from_status`, `to_status`, `user_id`, `at`, `reason` — reason Pflicht ab `approve`/`storno`/`correction`/`lock`).
+
+#### Run-Arten (`kind`)
+
+| `kind` | Verwendung |
+|--------|------------|
+| `regular` | Normaler Monatslauf |
+| `correction` | Korrekturabrechnung; `supersedes_run_id` = stornierter/zu ersetzender Run; `reason` Pflicht (min. 10 Zeichen) |
+| `storno` | Storno-Kennzeichnung des Vorgänger-Runs; erzeugt Gegenlauf oder markiert Vorgänger `superseded` — L5b: Vorgänger-Status bleibt historisch `locked`/`approved`, Flag `is_superseded=1`; neuer `storno`-Run trägt Negativ-/Hinweislogik erst in L6/L7 aus |
+
+Nach `storno`/`correction`: Vorgänger darf **nicht** erneut freigegeben werden; UI zeigt „ersetzt durch Run #…“.
+
+#### Tabellenrahmen (für L5b — keine Migration hier)
+
+##### `dg_payroll_runs`
+
+| Spalte | Typ | Bedeutung |
+|--------|-----|-----------|
+| `id` | PK | |
+| `period_year` / `period_month` | SMALLINT / TINYINT | Abrechnungsmonat |
+| `kind` | ENUM/VARCHAR | `regular` / `correction` / `storno` |
+| `status` | VARCHAR | `draft`/`calculated`/`approved`/`locked` |
+| `supersedes_run_id` | NULL FK | Vorgänger bei correction/storno |
+| `is_superseded` | TINYINT | 1 wenn durch neueren Run ersetzt |
+| `rate_set_id` | NULL FK | verwendete Beitragstabelle (L4b) |
+| `label` | VARCHAR(120) | optional |
+| `created_at` / `created_by_user_id` | | |
+| `approved_at` / `approved_by_user_id` | | |
+| `locked_at` / `locked_by_user_id` | | |
+| `notes` | TEXT | intern |
+
+UNIQUE sinnvoll: kein zweiter **nicht-superseded** `regular`-Run für dieselbe Periode (L5b erzwingen).
+
+##### `dg_payroll_run_employees`
+
+| Spalte | Bedeutung |
+|--------|-----------|
+| `run_id`, `contact_id` | PK/UNIQUE Paar |
+| `status` | `pending` / `ok` / `blocked` / `skipped` (MA-Ebene) |
+| `engine` | z. B. `standard` |
+| `path` | `standard`/`mini`/`midi`/`gf` |
+| `result_json` | serialisierte Amounts aus `PayrollCalcResult` (prüfbar) |
+| Snapshot-Felder oder JSON | MA-payroll + AG-lohn + Assignments zum Berechnungszeitpunkt |
+| `warnings_json` | Engine-Warnungen |
+| `net_pay` / `gross_total` | denormalisiert für Listen |
+
+##### `dg_payroll_run_lines`
+
+| Spalte | Bedeutung |
+|--------|-----------|
+| `run_id`, `contact_id` | |
+| `source` | `assignment` / `time` / `manual` / `ot_payout` |
+| `wage_type_id` / `code` | |
+| `amount`, `hours`, `unit`, `direction`, Flags taxable/SV | Eingabe für Engine |
+| `sort_order` | |
+
+Vor `calculate`: Lines aus L3c-Assignments + Z6-Quellen aufbauen/aktualisieren (nur in `draft`). Nach `calculated`: Lines einfrieren bis `reopen`.
+
+##### `dg_payroll_run_events`
+
+Append-only: `run_id`, `from_status`, `to_status`, `user_id`, `created_at`, `reason`, optional `details_json`.
+
+#### Berechnung (Anschluss L4c)
+
+1. Nur aus `draft` (oder nach `reopen`).
+2. Für jeden MA mit `status≠skipped`: `PayrollCalcRequest` aus Snapshots + Lines + `rate_set` (`findForPeriod` oder Run-`rate_set_id`).
+3. `StandardPayrollEngine::calculate`; bei `ok=false` → MA `blocked`, Lauf darf trotzdem auf `calculated` — Freigabe blockt wenn offene `blocked` (konfigurierbar: **Default: Freigabe verboten solange blocked>0**).
+4. Speichern Result + Snapshots; Run → `calculated`.
+5. Keine Ledger-Buchung, kein PDF in L5.
+
+#### Zeiten / Z6-Anschluss (soft)
+
+| Quelle | Nutzung in L5 | Fehlt / Fehler |
+|--------|---------------|----------------|
+| L3c Assignments (Festgehalt/Satz) | Basis-Lines `source=assignment` | Warnung; Lauf möglich wenn andere Lines |
+| Stub-/Zeiterfassung Stunden für `WAGE_HOUR` | Line `source=time` (Stunden × Satz) | Soft: MA `blocked` oder Warning — **Default Warning + blocked wenn Typ parttime/hourly ohne Stunden** |
+| Z6e Überstunden-Auszahlung | Line `source=ot_payout` wenn markiert zur Auszahlung | Soft-degraden: fehlt → Warning „OT-Auszahlung nicht übernommen“, kein Hard-Fail des Monats |
+| Z6 DATEV/Lex-**Export** | **nicht** ersetzen; bleibt eigene Seite | — |
+
+Prinzip: Z6-Modulrechte unverändert; Monatslauf **liest** Daten, schreibt nicht zurück in Z6-Exporte. Keine harte Kopplung an erfolgreichen Z6-Download.
+
+#### Plausibilität vor Freigabe
+
+| Check | Wirkung |
+|-------|---------|
+| MA `blocked` vorhanden | Freigabe **nein** |
+| `rate_set_id` fehlt / inaktiv | calculate **nein** |
+| AG Betriebsnummer leer | Warning; Freigabe in Stufe A **noch erlaubt** mit Pflicht-`reason`-Zusatz „Betriebsnummer fehlt“ (oder block — **Default: block approve**) |
+| Summe `net_pay` = 0 alle MA | Warning, Freigabe mit reason möglich |
+| Superseded regular existiert parallel | UI verhindert zweiten regular |
+
+#### UI-Ort (Rahmen L5c)
+
+- Seite `lohn-monatslauf`: Monatswähler, Liste Runs, Detail mit MA-Tabelle, Aktionen laut Rechte.
+- Kein SEPA-/ELSTER-Button in L5.
+
+#### Abgrenzung
+
+| Thema | Wohin |
+|-------|--------|
+| PDF Abrechnung | L6 |
+| FiBu | L7 |
+| SEPA | L8 |
+| Portal/SV-Dateien | L9 |
+| Engine-Formel | L4c (unverändert aufrufen) |
+| Baulohn | LC |
+
+#### Abnahme L5a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Zustände draft→…→locked + Rechte | ✅ |
+| Storno/Correction ohne Soft-Overwrite (D8) | ✅ |
+| Tabellenrahmen Run/Employee/Line/Event | ✅ |
+| Z6 soft-degrade dokumentiert | ✅ |
+| Kein PHP / keine FiBu | ✅ |
+
+**Nicht:** Migration, UI-Code, PDF, Ledger-Buchung, SEPA, ELSTER.
 
 ### L5b — Migration Läufe + Positionen + Audit
 
-Tabellen Abrechnungsmonat, Positionen, Statushistorie.
+Migration laut L5a-Tabellenrahmen; Repository + Statusübergänge + Event-Schreiben.
 
 **Nicht:** PDF.
 
 ### L5c — UI Monatslauf (Liste, berechnen, Freigabe)
 
-Rechte: berechnen/edit = edit; freigeben/sperren = full oder gesondert.
+Seite `lohn-monatslauf`; Rechte: berechnen/edit = `partial`+`canEdit`; freigeben/sperren/storno = `full`.
 
 **Nicht:** SEPA, ELSTER.
 
