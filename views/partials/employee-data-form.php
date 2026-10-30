@@ -4,10 +4,16 @@
 /** @var int|null $contactId */
 /** @var bool $showEmployeeFields */
 /** @var bool $canEdit */
+/** @var list<array<string, string>> $bankAccounts */
 $employeeData = $employeeData ?? EmployeeData::empty();
 $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
 $showEmployeeFields = $showEmployeeFields ?? false;
 $canEdit = $canEdit ?? false;
+$bankAccounts = $bankAccounts ?? [];
+$authUser = class_exists('AuthService') ? AuthService::user() : null;
+$canViewPayroll = $authUser instanceof User && PayrollEmployeeAccess::canView($authUser);
+$canEditPayroll = $canEdit && $authUser instanceof User && PayrollEmployeeAccess::canEdit($authUser);
+$payrollWarnings = $canViewPayroll ? EmployeeData::collectPayrollWarnings($employeeData) : [];
 $svDraftStatus = trim($employeeData['social_registration_status'] ?? SocialSecurityRegistrationDraft::STATUS_NONE);
 $svDraftAt = trim($employeeData['social_registration_draft_at'] ?? '');
 $hasSvDraft = trim($employeeData['social_registration_draft_json'] ?? '') !== '';
@@ -35,7 +41,30 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
   <?php endif; ?>
 
   <?php foreach ($grouped as $sectionKey => $sectionFields) : ?>
+    <?php if ($sectionKey === 'payroll' && !$canViewPayroll) : ?>
+      <?php continue; ?>
+    <?php endif; ?>
     <h3><?= View::escape($sections[$sectionKey] ?? $sectionKey) ?></h3>
+    <?php if ($sectionKey === 'payroll') : ?>
+      <p class="dg-lead">
+        Stammdaten für die <strong>eigene Lohnabrechnung</strong> (Stufe A). Steuerklasse manuell — kein ELStAM in dieser Stufe.
+        SV-Meldestelle und Krankenkassenname bleiben unter Sozialversicherung bzw. Gesundheitsdaten.
+        Beträge/Lohnarten folgen später; Freitext „Lohn / Gehalt“ unter Arbeitsvertrag ist nur Hinweis.
+      </p>
+      <?php if (!$canEditPayroll) : ?>
+        <p class="dg-field-hint">Nur Lesen — zum Speichern der Lohnfelder Admin-Recht bzw. Modul „Lohn &amp; Gehalt“ nötig.</p>
+      <?php endif; ?>
+      <?php if ($payrollWarnings !== []) : ?>
+        <div class="dg-flash dg-flash--warning">
+          <p><strong>Hinweise</strong> (Speichern bleibt möglich; Monatslauf später):</p>
+          <ul>
+            <?php foreach ($payrollWarnings as $w) : ?>
+              <li><?= View::escape((string) $w) ?></li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
     <?php if ($sectionKey === 'social') : ?>
       <p class="dg-lead">
         Die <strong>Sozialversicherungsnummer</strong> ist eine einheitliche Nummer für alle Zweige.
@@ -97,11 +126,51 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               $required = false;
           }
           $selectOptions = $meta['type'] === 'select' ? EmployeeData::selectOptions($key) : [];
+          $payrollReadonly = $sectionKey === 'payroll' && !$canEditPayroll;
+          $roAttr = $payrollReadonly ? ' disabled' : '';
         ?>
-        <?php if ($meta['type'] === 'textarea') : ?>
+        <?php if ($sectionKey === 'payroll' && $key === 'payroll_payout_bank_index') : ?>
+          <label class="dg-field dg-field--wide">
+            <span><?= View::escape($meta['label']) ?></span>
+            <select name="<?= View::escape($name) ?>"<?= $roAttr ?>>
+              <?php if ($bankAccounts === []) : ?>
+                <option value="0">Kein Bankkonto — bitte oben unter Bankverbindung anlegen</option>
+              <?php else : ?>
+                <?php foreach ($bankAccounts as $bi => $account) : ?>
+                  <?php
+                    $iban = trim((string) ($account['iban'] ?? ''));
+                    $blabel = trim((string) ($account['label'] ?? ''));
+                    $holder = trim((string) ($account['account_holder'] ?? ''));
+                    $opt = implode(' · ', array_filter([$blabel !== '' ? $blabel : null, $holder !== '' ? $holder : null, $iban !== '' ? $iban : 'ohne IBAN']));
+                  ?>
+                  <option value="<?= (int) $bi ?>"<?= (string) (int) $value === (string) (int) $bi ? ' selected' : '' ?>><?= View::escape($opt) ?></option>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </select>
+            <small class="dg-field-hint">Konten aus dem Block Bankverbindung dieses Kontakts (SEPA später L8).</small>
+          </label>
+        <?php elseif ($sectionKey === 'payroll' && $key === 'child_allowances') : ?>
+          <label class="dg-field">
+            <span><?= View::escape($meta['label']) ?></span>
+            <input type="number" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>" min="0" max="99" step="0.5" placeholder="0 oder 0,5 …"<?= $roAttr ?>>
+          </label>
+        <?php elseif ($sectionKey === 'payroll' && $key === 'annual_earnings_estimate_eur') : ?>
+          <label class="dg-field">
+            <span><?= View::escape($meta['label']) ?></span>
+            <input type="number" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>" min="0" step="0.01" placeholder="z. B. 22000"<?= $roAttr ?>>
+          </label>
+        <?php elseif ($sectionKey === 'payroll' && $key === 'sv_exempt') : ?>
+          <label class="dg-field dg-field--checkbox">
+            <span>
+              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?><?= $roAttr ?>>
+              <?= View::escape($meta['label']) ?>
+            </span>
+          </label>
+          <p class="dg-field-hint dg-field--wide">Nur wirksam mit Flag „Beherrschender Geschäftsführer“ — sonst beim Speichern verworfen.</p>
+        <?php elseif ($meta['type'] === 'textarea') : ?>
           <label class="dg-field dg-field--wide">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <textarea name="<?= View::escape($name) ?>" rows="3"<?= $required ? ' required data-employee-required' : '' ?>><?= View::escape($value) ?></textarea>
+            <textarea name="<?= View::escape($name) ?>" rows="3"<?= $required ? ' required data-employee-required' : '' ?><?= $roAttr ?>><?= View::escape($value) ?></textarea>
           </label>
         <?php elseif ($meta['type'] === 'select' && $selectOptions !== []) : ?>
           <label class="dg-field<?= $key === 'social_filing_office' ? ' dg-field--wide' : '' ?>">
@@ -111,6 +180,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?php if ($key === 'social_security_status') : ?>data-social-status<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
               <?php if ($key === 'social_filing_office') : ?>data-social-filing-office<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
               <?php if ($key === 'gender') : ?><?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
+              <?= $roAttr ?>
             >
               <?php foreach ($selectOptions as $optVal => $optLabel) : ?>
                 <option value="<?= View::escape($optVal) ?>"<?= $value === $optVal ? ' selected' : '' ?>><?= View::escape($optLabel) ?></option>
@@ -188,7 +258,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
         <?php elseif ($meta['type'] === 'checkbox') : ?>
           <label class="dg-field dg-field--checkbox">
             <span>
-              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?>>
+              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?><?= $roAttr ?>>
               <?= View::escape($meta['label']) ?>
             </span>
           </label>
@@ -204,12 +274,13 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               step="1"
               placeholder="z. B. 480 (= 8 h)"
               <?= $required ? ' required data-employee-required' : '' ?>
+              <?= $roAttr ?>
             >
           </label>
         <?php else : ?>
           <label class="dg-field">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input type="<?= View::escape($meta['type']) ?>" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>"<?= $required ? ' required data-employee-required' : '' ?>>
+            <input type="<?= View::escape($meta['type']) ?>" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>"<?= $required ? ' required data-employee-required' : '' ?><?= $roAttr ?>>
           </label>
         <?php endif; ?>
       <?php endforeach; ?>

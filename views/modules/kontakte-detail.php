@@ -160,16 +160,37 @@
           <dd><?= $healthInsuranceNumber !== '' ? View::escape($healthInsuranceNumber) : '—' ?></dd>
         </dl>
         <?php
-          $otherDetailFields = array_values(array_filter(
-              $employeeDetailFields,
-              static fn(array $field): bool => !in_array($field['label'], [
-                  'Krankenkasse / Krankenversicherung',
-                  'Versichertennummer',
-                  'Krankenversicherungsnummer (Versichertennr.)',
-                  'Krankenversicherungsnummer',
-                  'Krankenkasse',
-              ], true)
-          ));
+          $payrollLabels = [];
+          foreach (EmployeeData::fields() as $fieldMeta) {
+              if (($fieldMeta['section'] ?? '') === 'payroll') {
+                  $payrollLabels[] = (string) ($fieldMeta['label'] ?? '');
+              }
+          }
+          $healthSkip = [
+              'Krankenkasse / Krankenversicherung',
+              'Versichertennummer',
+              'Krankenversicherungsnummer (Versichertennr.)',
+              'Krankenversicherungsnummer',
+              'Krankenkasse',
+          ];
+          $payrollDetailFields = [];
+          $otherDetailFields = [];
+          foreach ($employeeDetailFields as $field) {
+              $label = (string) ($field['label'] ?? '');
+              if (in_array($label, $healthSkip, true)) {
+                  continue;
+              }
+              if (in_array($label, $payrollLabels, true)) {
+                  $payrollDetailFields[] = $field;
+              } else {
+                  $otherDetailFields[] = $field;
+              }
+          }
+          $detailUser = class_exists('AuthService') ? AuthService::user() : null;
+          $canViewPayrollDetail = $detailUser instanceof User && PayrollEmployeeAccess::canView($detailUser);
+          $payrollWarningsDetail = $canViewPayrollDetail
+              ? EmployeeData::collectPayrollWarnings($contact->employeeData)
+              : [];
         ?>
         <?php if ($otherDetailFields !== []) : ?>
           <h3 class="dg-subsection-title">Weitere Angaben</h3>
@@ -179,8 +200,30 @@
               <dd><?= nl2br(View::escape($field['value'])) ?></dd>
             <?php endforeach; ?>
           </dl>
-        <?php elseif ($healthInsurance === '' && $healthInsuranceNumber === '') : ?>
+        <?php elseif ($healthInsurance === '' && $healthInsuranceNumber === '' && $payrollDetailFields === []) : ?>
           <p class="dg-lead">Noch keine weiteren Mitarbeiterdaten erfasst.</p>
+        <?php endif; ?>
+        <?php if ($canViewPayrollDetail) : ?>
+          <h3 class="dg-subsection-title">Lohnabrechnung</h3>
+          <?php if ($payrollWarningsDetail !== []) : ?>
+            <div class="dg-flash dg-flash--warning">
+              <ul>
+                <?php foreach ($payrollWarningsDetail as $w) : ?>
+                  <li><?= View::escape((string) $w) ?></li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          <?php endif; ?>
+          <?php if ($payrollDetailFields !== []) : ?>
+            <dl class="dg-dl">
+              <?php foreach ($payrollDetailFields as $field) : ?>
+                <dt><?= View::escape($field['label']) ?></dt>
+                <dd><?= nl2br(View::escape($field['value'])) ?></dd>
+              <?php endforeach; ?>
+            </dl>
+          <?php else : ?>
+            <p class="dg-lead">Noch keine Lohn-Stammdaten erfasst.</p>
+          <?php endif; ?>
         <?php endif; ?>
       </section>
 

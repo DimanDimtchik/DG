@@ -235,7 +235,7 @@ if ($isCompanyForm && $companyEmployees === []) {
       <label class="dg-field"><span>Land</span><input name="address1_country" value="<?= View::escape($form['address1_country']) ?>" maxlength="2"></label>
     </div>
 
-    <?php View::partial('partials/employee-data-form', compact('employeeData', 'employeeFiles', 'contactId', 'showEmployeeFields', 'canEdit')); ?>
+    <?php View::partial('partials/employee-data-form', compact('employeeData', 'employeeFiles', 'contactId', 'showEmployeeFields', 'canEdit', 'bankAccounts')); ?>
 
     <?php if (!$isEdit && !empty($showEmployeeFields)) : ?>
       <?php

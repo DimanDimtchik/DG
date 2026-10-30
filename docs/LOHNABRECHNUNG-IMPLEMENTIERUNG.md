@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L1 ✅ · L2a–b ✅)  
+> **Stand:** 2026-10-30 (L0–L2 ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L2b Felder/Validierung ✅ · nächster Chat: **`l2c`** (UI Mitarbeiterkarte)
+> **Status:** Serie **L2 abgeschlossen** · nächster Chat: **`l3a`** (Spec Lohnarten)
 
 ---
 
@@ -388,7 +388,7 @@ Verhalten:
 
 ## Serie L2 — Mitarbeiter Steuer / SV / Beschäftigung
 
-> Einstieg: `l2a` · L2a ✅ · L2b ✅ · weiter mit `l2c`  
+> Einstieg: `l2a` · **Serie L2 ✅**  
 > Baut auf `EmployeeData` auf — **erweitern**, nicht paralleles HR-System.
 
 ### L2a — Spec MA-Lohnfelder ✅ 2026-10-30
@@ -538,11 +538,31 @@ Verhalten:
 
 **Nicht:** Berechnung; dedizierte UI-Gestaltung (L2c) — generisches Formular zeigt neue Felder ggf. schon mit, Feinschliff L2c.
 
-### L2c — UI Kontakt/Mitarbeiterkarte
+### L2c — UI Kontakt/Mitarbeiterkarte ✅ 2026-10-30
 
-Klar getrennte Sektion „Lohnabrechnung“; Hinweise Meldestelle behalten; Gate laut L2a (`PayrollEmployeeAccess`); Warnungen aus `collectPayrollWarnings`.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Formular-Sektion + Gate/Warnungen | `views/partials/employee-data-form.php` |
+| Bank-Index als Select | Kontakt-`bankAccounts` |
+| Detail-Ansicht Sektion | `views/modules/kontakte-detail.php` |
+| Checkbox-Anzeige Ja/Nein | `EmployeeData::detailFields` |
 
-**Nicht:** PDF erzeugen.
+Verhalten:
+
+- Sektion nur bei `PayrollEmployeeAccess::canView`; Felder `disabled` ohne `canEdit` (Preserve beim Speichern bleibt L2b).
+- Warnungen aus `collectPayrollWarnings`; Speichern nicht blockiert.
+- Meldestelle-/SV-Hinweise unverändert in Sektion Sozialversicherung.
+- Kein PDF erzeugen.
+
+#### Abnahme L2c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Getrennte Sektion Lohnabrechnung | ✅ |
+| Gate + Warnungen | ✅ |
+| Kein PDF / keine Berechnung | ✅ |
+
+**Nicht:** PDF erzeugen, Lohnarten-UI (L3), Monatslauf.
 
 ---
 
@@ -763,15 +783,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l1c` AG UI | ✅ 2026-10-30 |
 | — | `l2a` MA-Felder Spec | ✅ 2026-10-30 |
 | — | `l2b` MA Felder/Validierung | ✅ 2026-10-30 |
-| 1 | `l2c` MA UI | **als Nächstes** |
+| — | `l2c` MA UI | ✅ 2026-10-30 |
+| 1 | `l3a` Lohnarten Spec | **als Nächstes** |
 
-Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
+Danach L3b → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l2c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L2c. Nicht andere L-Pakete.
+Lohn Implementierung: l3a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L3a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

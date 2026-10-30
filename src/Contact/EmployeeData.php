@@ -919,6 +919,9 @@ final class EmployeeData
                     $value = $options[$value] ?? $value;
                 }
             }
+            if ($meta['type'] === 'checkbox') {
+                $value = $value === '1' ? 'Ja' : 'Nein';
+            }
             if ($key === 'disability_degree' && $value !== '') {
                 $value .= ' %';
             }
