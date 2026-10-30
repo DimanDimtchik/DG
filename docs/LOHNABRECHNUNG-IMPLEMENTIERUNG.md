@@ -2315,27 +2315,34 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l10b` Implementierung ERiC-Testmodus LStA | ✅ 2026-10-30 |
 | — | `l10c` Produktiv-Gate Checkliste LStA | ✅ 2026-10-30 |
 
-**Stufe-A-Kern L0–L10 abgeschlossen** · **G3-Checkliste** dokumentiert (Gate selbst offen bis 2 Testmonate nachgewiesen).
+**Stufe-A-Kern L0–L10 abgeschlossen** · **G3- und G4-Checklisten** dokumentiert (Gates selbst offen bis Nachweis/O9).
 
 Weiterbetrieb:
-1. Pilot: Nachweis-Tabelle G3 auf Instanz ausfüllen (2 Monate L5–L9).  
-2. Danach optional: SEPA-Live / Lexware-Cutover nur mit Nutzerbefehl.  
-3. `lb0a` erst nach **G3 + G4**. Baulohn `lc0a` erst nach **G5**.
+1. Pilot G3: Nachweis-Tabelle 2 Monate L5–L9.  
+2. Org G4: Checkliste O1–O7 + Freigabe O9.  
+3. Optional parallel: SEPA-Live / Lexware-Cutover nur mit Nutzerbefehl (nach G3).  
+4. `lb0a` Pflichtenheft-Vertiefung — produktiv erst wenn **G3 + G4 bestanden**. Baulohn `lc0a` erst nach **G5**.
 
-Prompt Pilot-Nachweis (kein Code):
+Prompt Pilot-Nachweis G3 (kein Code):
 
 ```text
 Lohn G3: Nachweis-Tabelle in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md § G3
 für Instanz … Monate … ausfüllen / abhaken. Kein Flag-Unlock ohne Befehl.
 ```
 
-Prompt für LB (nur wenn G3+G4):
+Prompt G4-Freigabe (kein Code):
+
+```text
+Lohn G4: Org-Checkliste O1–O9 in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md § G4
+abhaken und Freigabe O9 setzen. Kein LB-Code.
+```
+
+Prompt für LB0 (Outline → volles Pflichtenheft; Versand erst später):
 
 ```text
 Lohn Implementierung: lb0a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt LB0. Nicht andere L-/LC-Pakete.
-Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
-Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
+Nur Abschnitt LB0 / G4-Outline vertiefen. Nicht LB1–LB5, nicht LC.
+Abgrenzung „Nicht:“ einhalten. Kein Versand-Code.
 ```
 
 Prompt Live-Unlock (nur nach explizitem Nutzerbefehl, nicht automatisch):
