@@ -98,10 +98,12 @@ $isSystem = $edit !== null && (int) ($edit['is_system'] ?? 0) === 1;
           <span>Notiz</span>
           <textarea name="notes" rows="2"><?= View::escape((string) ($edit['notes'] ?? '')) ?></textarea>
         </label>
-        <button type="submit" class="dg-button dg-button--primary"><?= $editId > 0 ? 'Speichern' : 'Anlegen' ?></button>
-        <?php if ($editId > 0) : ?>
-          <a class="dg-button" href="/app?page=lohn-lohnarten">Abbrechen</a>
-        <?php endif; ?>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary"><?= $editId > 0 ? 'Speichern' : 'Anlegen' ?></button>
+          <?php if ($editId > 0) : ?>
+            <a class="dg-button" href="/app?page=lohn-lohnarten">Abbrechen</a>
+          <?php endif; ?>
+        </div>
       </form>
     </section>
   <?php else : ?>

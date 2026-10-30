@@ -893,6 +893,36 @@ code {
   margin-top: var(--dg-space-3);
 }
 
+/*
+ * Aktions-Abstand-Algorithmus (global, kein Einzel-Fix):
+ * Nach Grid/Feld darf ein Button nie „verschmelzen“.
+ * Bevorzugt Markup: .dg-form-actions / .dg-btn-row / .dg-field--actions.
+ * Fallback: nackter .dg-button direkt nach Grid/Feld bekommt trotzdem Luft.
+ */
+.dg-form > .dg-form-grid + .dg-field {
+  margin-top: var(--dg-space-3);
+}
+
+.dg-form > .dg-form-grid + .dg-form-actions,
+.dg-form > .dg-form-grid + .dg-btn-row,
+.dg-form > .dg-form-grid + .dg-field--actions,
+.dg-form > .dg-form-grid + .dg-button,
+.dg-form > .dg-form-grid + a.dg-button,
+.dg-form > .dg-field + .dg-button,
+.dg-form > .dg-field + a.dg-button,
+.dg-form > .dg-field + .dg-btn-row,
+.dg-form > .dg-field + .dg-field--actions {
+  margin-top: var(--dg-space-4);
+}
+
+/* Mehrere nackte Aktions-Buttons in einer Zeile (Speichern + Abbrechen) */
+.dg-form > .dg-button + .dg-button,
+.dg-form > .dg-button + a.dg-button,
+.dg-form > a.dg-button + .dg-button,
+.dg-form > a.dg-button + a.dg-button {
+  margin-left: var(--dg-space-2);
+}
+
 .dg-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
