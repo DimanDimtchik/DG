@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L10c ✅ · Stufe-A-Kern)  
+> **Stand:** 2026-10-30 (L0–L10c ✅ · G3-Checkliste ✅ · Gate G3 selbst **offen**)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L10c Produktiv-Gate-Checkliste ✅ · Live-Senden **nicht** freigeschaltet · nächster Chat: **`lb0a`** (erst nach G3+G4)
+> **Status:** Stufe-A-Kern fertig · **G3** Pilot-Checkliste dokumentiert, Nachweis 2 Testmonate ausstehend · `payroll_sepa_live` / LStA-Live / LB **nicht** freigeschaltet
 
 ---
 
@@ -84,16 +84,80 @@ LC Baulohn/SOKA (Stufe C)
 
 ## 3. Gates (nicht überspringen)
 
-| Gate | Bedingung | Blockiert |
-|------|-----------|-----------|
-| **G0** | Nutzer bestätigt: Start Serie L0 (dieser Plan akzeptiert) | L1+ · **✅ 2026-10-30** |
-| **G1** | Phase A FiBu-Smoke / GoBD-Stichprobe weitgehend grün (`IQ-STROM` A) | Produktivnutzung L7 Buchung |
-| **G2** | Hetzner + ERiC Testpfad (C1) | **L10** LSt-Anmeldung live |
-| **G3** | Mind. 2 vollständige Testmonate L5–L9 auf einer Instanz | Pilot „ohne Lexware“ |
-| **G4** | ITSG-Vorbereitung (Pflichtenheft) | **LB**-Code produktiv |
-| **G5** | Stufe A produktiv + Spec LC | **LC** Baulohn-Code |
+| Gate | Bedingung | Blockiert | Stand |
+|------|-----------|-----------|-------|
+| **G0** | Nutzer bestätigt: Start Serie L0 (dieser Plan akzeptiert) | L1+ | ✅ 2026-10-30 |
+| **G1** | Phase A FiBu-Smoke / GoBD-Stichprobe weitgehend grün (`IQ-STROM` A) | Produktivnutzung L7 Buchung | offen (FiBu-Code da; Smoke auf Instanz) |
+| **G2** | Hetzner + ERiC Testpfad (C1) | **L10** LSt-Anmeldung live | offen · Checkliste L10c |
+| **G3** | Mind. 2 vollständige Testmonate L5–L9 auf einer Instanz | Pilot „ohne Lexware“; SEPA-Live-Flag | **Checkliste ✅ · Gate offen** (unten) |
+| **G4** | ITSG-Vorbereitung (Pflichtenheft) | **LB**-Code produktiv | offen · nach G3 |
+| **G5** | Stufe A produktiv + Spec LC | **LC** Baulohn-Code | offen · nach G3-Betrieb |
+
+### G3 — Pilot-Checkliste „ohne Lexware“ ✅ Spez 2026-10-30
+
+> **Nicht verwechseln:** G3 ≠ Live-ITSG (LB) ≠ LStA-Live (L10c/G2) ≠ Baulohn (G5).  
+> **Dieser Chat weist G3 nicht nach** — er liefert die Checkliste. Gate gilt erst, wenn die Tabelle unten mit Instanz/Perioden/Wer/Datum ausgefüllt ist.
+
+#### Ziel
+
+Auf **einer** CRM-Instanz (empfohlen Master-Test `dg.ganz-om.de` oder dedizierter Pilot) zwei **verschiedene** Kalendermonate durchgängig mit DG-Lohn fahren: von Entwurf bis SV-Portal-Vorbereitung — parallel Lexware nur noch als Schattenvergleich, nicht als führendes System.
+
+#### Was zählt als „vollständiger Testmonat“
+
+Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB):
+
+| Schritt | Paket | Pflicht | Nachweis |
+|---------|-------|---------|----------|
+| AG-/MA-Stamm plausibel | L1–L2 | ja | Steuernr., BN, IdNr./StKl., KK, Beitrags-/Personengruppe |
+| Lohnarten + Zuordnung | L3 | ja | mind. 1 Festgehalt oder Stundenlohn |
+| Beitragstabelle Periode | L4 | ja | aktives Rate-Set für Monat |
+| Monatslauf draft→calc→approve→**lock** | L5 | ja | Run `locked`, nicht superseded; Event-Historie |
+| PDF Abrechnung final | L6 | ja | Doc unter `storage/payroll` / Lohnkonto-Link |
+| FiBu-Übernahme **oder** bewusste Ausnahme | L7 | ja* | Meta `dg_payroll_fibu_batches` **oder** dokumentiert „nur Probe / Flag aus + Begründung“ |
+| SEPA-XML erzeugt | L8 | ja* | Meta Export (PROBE erlaubt, wenn `payroll_sepa_live` aus) |
+| SV-Portal CSV Beitragsnachweis + Stamm | L9 | ja | Download/Historie `lohn-auswertungen` |
+| LStA-Vorschau/Kontroll-CSV | L10b | empfohlen | kein Live nötig |
+| Schattenvergleich Lexware/Berater | — | empfohlen | Abweichungen ≤ dokumentierter Toleranz / begründet |
+
+\*FiBu/SEPA: wenn Live-Flags aus, reicht **Probe**/Admin-Probe mit gespeicherter Begründung im Monatskommentar/Audit — aber Datei/Buchung muss existieren bzw. Ausnahme schriftlich.
+
+#### Zwei-Monats-Nachweis (ausfüllen bei Pilot)
+
+| Feld | Monat A | Monat B |
+|------|---------|---------|
+| Instanz (Domain) | | |
+| Periode (YYYY-MM) | | |
+| Run-ID(s) locked | | |
+| MA-Anzahl ok | | |
+| FiBu Batch / Ausnahme | | |
+| SEPA Export-ID / PROBE | | |
+| SV-CSV Datum | | |
+| Lexware-Delta / OK | | |
+| Wer / Datum | | |
+
+**Gate G3 bestanden** erst wenn Monat A **und** B vollständig und vom Nutzer/Berater abgenommen.
+
+#### Nach bestandenem G3 (eigene Chats, nicht automatisch)
+
+| Aktion | Bedingung |
+|--------|-----------|
+| `payroll_sepa_live` auf Pilot-Instanz erwägen | G3 ✅ + Nutzerbefehl |
+| Parallelbetrieb Lexware beenden | bewusste Entscheidung, nicht Code |
+| `lb0a` ITSG-Pflichtenheft | zusätzlich **G4** |
+| LStA-Live | weiterhin **G2** + L10c-Unlock-Befehl |
+
+#### Abnahme dieses G3-Dokupakets
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Checkliste 2 Testmonate L5–L9 spezifiziert | ✅ |
+| Abgrenzung G2/G4/G5 / keine Auto-Freigabe Flags | ✅ |
+| Gate-Status bleibt **offen** bis Nachweis | ✅ |
+
+**Nicht:** SEPA-/LStA-Live freischalten; LB/LC-Code; Deploy; Behaupten, G3 sei „bestanden“ ohne ausgefüllte Nachweis-Tabelle.
 
 ---
+
 
 ## 4. Entscheide (Defaults — token-sparend fest)
 
@@ -2178,10 +2242,21 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l10b` Implementierung ERiC-Testmodus LStA | ✅ 2026-10-30 |
 | — | `l10c` Produktiv-Gate Checkliste LStA | ✅ 2026-10-30 |
 
-**Stufe-A-Kern L0–L10 abgeschlossen** (Live-LStA Unlock = eigener Chat nach G2 + Nutzerbefehl).  
-Weiter: **G3**-Pilot → erst dann `lb0a` (ITSG). Baulohn `lc0a` erst nach G5.
+**Stufe-A-Kern L0–L10 abgeschlossen** · **G3-Checkliste** dokumentiert (Gate selbst offen bis 2 Testmonate nachgewiesen).
 
-Prompt für nächsten Chat (nur wenn G3+G4):
+Weiterbetrieb:
+1. Pilot: Nachweis-Tabelle G3 auf Instanz ausfüllen (2 Monate L5–L9).  
+2. Danach optional: SEPA-Live / Lexware-Cutover nur mit Nutzerbefehl.  
+3. `lb0a` erst nach **G3 + G4**. Baulohn `lc0a` erst nach **G5**.
+
+Prompt Pilot-Nachweis (kein Code):
+
+```text
+Lohn G3: Nachweis-Tabelle in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md § G3
+für Instanz … Monate … ausfüllen / abhaken. Kein Flag-Unlock ohne Befehl.
+```
+
+Prompt für LB (nur wenn G3+G4):
 
 ```text
 Lohn Implementierung: lb0a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
