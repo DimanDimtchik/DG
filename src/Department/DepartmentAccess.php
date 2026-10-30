@@ -12,6 +12,7 @@ final class DepartmentAccess
         'post' => 'Post',
         'dokumentenverfasser' => 'Dokumentenverfasser',
         'zeiterfassung' => 'Zeiterfassung',
+        'lohn' => 'Lohn & Gehalt',
         'buchhaltung' => 'Buchhaltung',
     ];
 
@@ -39,6 +40,7 @@ final class DepartmentAccess
             'post' => 'full',
             'dokumentenverfasser' => 'full',
             'zeiterfassung' => 'full',
+            'lohn' => 'none',
             'buchhaltung' => 'none',
         ];
     }

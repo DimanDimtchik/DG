@@ -914,6 +914,7 @@ switch ($path) {
         $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
         $dienstleistungenSection = MenuRegistry::dienstleistungenSection($user);
         $hrSection = MenuRegistry::hrSection($user);
+        $lohnSection = MenuRegistry::lohnSection($user);
         $warenwirtschaftSection = MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = MenuRegistry::websiteSection($user);
         $kommunikationSection = MenuRegistry::kommunikationSection($user);
@@ -1535,6 +1536,35 @@ switch ($path) {
                         Flash::set('success', 'Keine Änderungen an den Lohn-Stammdaten.');
                     } else {
                         Flash::set('success', 'Lohn-Stammdaten Arbeitgeber gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Lohnarten CRUD (L3b)
+        if (
+            $page === 'lohn-lohnarten'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollEmployeeAccess::canEdit($user)
+        ) {
+            $redirect = '/app?page=lohn-lohnarten';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                $actionWt = trim((string) ($_POST['wage_type_action'] ?? ''));
+                try {
+                    if ($actionWt === 'save') {
+                        $editId = (int) ($_POST['id'] ?? 0);
+                        $newId = PayrollWageTypeRepository::save($_POST, $editId > 0 ? $editId : null);
+                        Flash::set('success', 'Lohnart gespeichert.');
+                        $redirect = '/app?page=lohn-lohnarten&edit=' . $newId;
+                    } elseif ($actionWt === 'deactivate') {
+                        PayrollWageTypeRepository::deactivateOrDelete((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Lohnart deaktiviert bzw. gelöscht.');
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
@@ -3709,7 +3739,7 @@ switch ($path) {
                 $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
+                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'lohnSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
                     'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas',
@@ -7524,6 +7554,16 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-rueckstellung';
             $title = 'Rückstellungen';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'lohn-lohnarten' && MenuRegistry::canAccess($user, 'lohn-lohnarten')) {
+            MigrationRunner::runPending();
+            PayrollWageTypeRepository::ensureReady();
+            $payrollWageTypes = PayrollWageTypeRepository::all(false);
+            $editWageId = (int) ($_GET['edit'] ?? 0);
+            $payrollWageTypeEdit = $editWageId > 0 ? PayrollWageTypeRepository::find($editWageId) : null;
+            $payrollWageCanEdit = PayrollEmployeeAccess::canEdit($user);
+            $contentTemplate = 'modules/lohn-lohnarten';
+            $title = 'Lohnarten';
+            $currentPage = 'lohn-lohnarten';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
@@ -8420,6 +8460,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
+        $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
         $warenwirtschaftSection = $warenwirtschaftSection ?? MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
         $kommunikationSection = $kommunikationSection ?? MenuRegistry::kommunikationSection($user);
@@ -8566,6 +8607,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeKontoReductions = $timeKontoReductions ?? [];
         $timeKontoStaffOptions = $timeKontoStaffOptions ?? [];
         $timeShiftTemplates = $timeShiftTemplates ?? [];
+        $payrollWageTypes = $payrollWageTypes ?? [];
+        $payrollWageTypeEdit = $payrollWageTypeEdit ?? null;
+        $payrollWageCanEdit = $payrollWageCanEdit ?? false;
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -8756,6 +8800,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'settingsItem',
             'dienstleistungenSection',
             'hrSection',
+            'lohnSection',
             'warenwirtschaftSection',
             'buchhaltungSection',
             'websiteSection',
@@ -9080,6 +9125,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeShiftWeekDates',
             'timeShiftStaff',
             'timeShiftActiveTemplates',
+            'payrollWageTypes',
+            'payrollWageTypeEdit',
+            'payrollWageCanEdit',
             'timeShiftAssignmentMap',
             'timeVacContactId',
             'timeVacContactLabel',

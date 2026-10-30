@@ -9,6 +9,7 @@
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $buchhaltungSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $dienstleistungenSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $hrSection */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $lohnSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $warenwirtschaftSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $websiteSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $kommunikationSection */
@@ -228,6 +229,27 @@ $belegeFocus = (string) ($belegeFocus ?? '');
               ?>
               <li>
                 <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isHrActive ? ' is-active' : '' ?>">
+                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
+                  <span><?= View::escape($item['label']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+
+      <?php if (!empty($lohnSection)) : ?>
+        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-lohn">
+          <h2 id="dg-sidebar-lohn" class="dg-sidebar__heading"><?= View::escape($lohnSection['label']) ?></h2>
+          <ul class="dg-sidebar__list">
+            <?php foreach ($lohnSection['items'] as $item) : ?>
+              <?php
+                $isLohnActive = $currentPage === $item['slug']
+                    || ($item['slug'] === 'lohn-lohnarten' && str_starts_with($currentPage, 'lohn-'))
+                    || ($item['slug'] === 'einstellungen-lohn' && ($currentPage ?? '') === 'einstellungen' && (($_GET['tab'] ?? '') === 'lohn'));
+              ?>
+              <li>
+                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isLohnActive ? ' is-active' : '' ?>">
                   <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
                   <span><?= View::escape($item['label']) ?></span>
                 </a>

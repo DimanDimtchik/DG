@@ -308,6 +308,7 @@ final class MigrationRunner
             '120_complaint_attachments.sql' => self::tableExists($pdo, 'dg_complaint_attachments'),
             '121_flyer_templates.sql' => self::tableExists($pdo, 'dg_flyer_templates')
                 && self::columnExists($pdo, 'dg_gift_vouchers', 'flyer_template_id'),
+            '125_payroll_wage_types.sql' => self::tableExists($pdo, 'dg_payroll_wage_types'),
             default => false,
         };
     }
@@ -448,6 +449,7 @@ final class MigrationRunner
             '119_complaints.sql' => true,
             '120_complaint_attachments.sql' => true,
             '121_flyer_templates.sql' => true,
+            '125_payroll_wage_types.sql' => true,
         ];
     }
 

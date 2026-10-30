@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L2 ✅ · L3a ✅)  
+> **Stand:** 2026-10-30 (L0–L2 ✅ · L3a–b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L3a Spec Lohnarten ✅ · nächster Chat: **`l3b`** (Migration/CRUD)
+> **Status:** L3b Migration/CRUD ✅ · nächster Chat: **`l3c`** (MA↔Lohnart)
 
 ---
 
@@ -568,7 +568,7 @@ Verhalten:
 
 ## Serie L3 — Lohnarten
 
-> Einstieg: `l3a` · L3a ✅ · weiter mit `l3b`
+> Einstieg: `l3a` · L3a ✅ · L3b ✅ · weiter mit `l3c`
 
 ### L3a — Spec Lohnarten-Katalog ✅ 2026-10-30
 
@@ -686,9 +686,26 @@ Tabelle später z. B. `dg_payroll_employee_wage_assignments`:
 
 **Nicht:** Migration, CRUD-UI, Engine, MA-Zuordnung-Code, Branchen-Sonderarten.
 
-### L3b — Migration + CRUD
+### L3b — Migration + CRUD ✅ 2026-10-30
 
-Tabelle `dg_payroll_wage_types` laut L3a; Seed Standardkatalog; Repository + einfache Liste/Form (Rechte `lohn`); Systemzeilen nur deaktivierbar.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Migration | `database/migrations/125_payroll_wage_types.sql` |
+| Repository + Seed | `PayrollWageTypeRepository` |
+| Modul `lohn` in `DepartmentAccess` | default `none` |
+| Menü-Sektion | `MenuRegistry::lohnSection` |
+| Seite | `/app?page=lohn-lohnarten` · `views/modules/lohn-lohnarten.php` |
+| Selftest | `bin/payroll-wage-types-l3b-selftest.php` |
+
+Verhalten: Seed 10 System-Arten; System-`code` readonly; Deaktivieren statt Löschen bei `is_system`; SKR-Hints leer pflegbar.
+
+#### Abnahme L3b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Tabelle + Seed laut L3a | ✅ |
+| CRUD mit `PayrollEmployeeAccess` | ✅ |
+| Keine Engine / keine MA-Zuordnung | ✅ |
 
 **Nicht:** Engine; keine MA-Zuordnung (L3c).
 
@@ -897,16 +914,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l2b` MA Felder/Validierung | ✅ 2026-10-30 |
 | — | `l2c` MA UI | ✅ 2026-10-30 |
 | — | `l3a` Lohnarten Spec | ✅ 2026-10-30 |
-| 1 | `l3b` Lohnarten Migration/CRUD | **als Nächstes** |
-| 2 | `l3c` MA↔Lohnart Zuordnung | |
+| — | `l3b` Lohnarten Migration/CRUD | ✅ 2026-10-30 |
+| 1 | `l3c` MA↔Lohnart Zuordnung | **als Nächstes** |
 
 Danach L4a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l3b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L3b. Nicht andere L-Pakete.
+Lohn Implementierung: l3c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L3c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
