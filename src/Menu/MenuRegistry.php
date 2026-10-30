@@ -88,6 +88,70 @@ final class MenuRegistry
     }
 
     /**
+     * Lohn & Gehalt (zwischen HR und Buchhaltung) — L0c / L3b.
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function lohnSection(User $user): ?array
+    {
+        if (RoleResolver::isCustomer($user)) {
+            return null;
+        }
+        if (!PayrollEmployeeAccess::canView($user)) {
+            return null;
+        }
+
+        $items = [
+            [
+                'slug' => 'lohn-monatslauf',
+                'label' => 'Monatslauf',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-monatslauf',
+            ],
+            [
+                'slug' => 'lohn-lohnkonto',
+                'label' => 'Lohnkonto',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-lohnkonto',
+            ],
+            [
+                'slug' => 'lohn-auswertungen',
+                'label' => 'SV-Portal / Auswertungen',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-auswertungen',
+            ],
+            [
+                'slug' => 'lohn-elster',
+                'label' => 'Lohnsteuer ELSTER',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-elster',
+            ],
+            [
+                'slug' => 'lohn-lohnarten',
+                'label' => 'Lohnarten',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-lohnarten',
+            ],
+            [
+                'slug' => 'lohn-beitragstabellen',
+                'label' => 'Beitragstabellen',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-beitragstabellen',
+            ],
+        ];
+        if (RoleResolver::isAdmin($user)) {
+            $items[] = [
+                'slug' => 'einstellungen-lohn',
+                'label' => 'AG-Stammdaten',
+                'icon' => 'settings',
+                'href' => SettingsRegistry::tabUrl('lohn'),
+            ];
+        }
+
+        return ['label' => 'Lohn & Gehalt', 'items' => $items];
+    }
+
+    /**
      * Dienstleistungen: Auftrag/Angebot + Leistungen (zwischen Navigation und HR).
      *
      * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
@@ -865,6 +929,17 @@ final class MenuRegistry
         }
         if ($slug === 'zeiterfassung-lohnexport') {
             return TimePayrollExportService::canExport($user);
+        }
+        if (
+            $slug === 'lohn-lohnarten'
+            || $slug === 'lohn-beitragstabellen'
+            || $slug === 'lohn-monatslauf'
+            || $slug === 'lohn-lohnkonto'
+            || $slug === 'lohn-auswertungen'
+            || $slug === 'lohn-elster'
+            || $slug === 'lohn'
+        ) {
+            return PayrollEmployeeAccess::canView($user);
         }
         if ($slug === 'zeiterfassung-stundenimport') {
             return TimeHoursImportService::canImport($user);

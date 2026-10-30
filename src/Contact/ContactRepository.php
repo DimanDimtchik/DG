@@ -521,6 +521,10 @@ final class ContactRepository
             if ($existingContact !== null) {
                 $employeeData = EmployeeData::mergeSystemMeta($employeeData, $existingContact->employeeData);
             }
+            $authUser = class_exists('AuthService') ? AuthService::user() : null;
+            $mayEditPayroll = $authUser instanceof User && PayrollEmployeeAccess::canEdit($authUser);
+            $previousPayroll = $existingContact !== null ? $existingContact->employeeData : EmployeeData::empty();
+            $employeeData = EmployeeData::preservePayrollIfDenied($employeeData, $previousPayroll, $mayEditPayroll);
             $fields['employee_data'] = json_encode($employeeData, JSON_UNESCAPED_UNICODE);
             $fields['employee_files'] = ContactFileStorage::encodeFiles($existingFiles);
         } else {
@@ -581,6 +585,16 @@ final class ContactRepository
                 'employee_files' => ContactFileStorage::encodeFiles($merged),
                 'id' => $contactId,
             ]);
+        }
+
+        // Lohn L3c: MA↔Lohnart nur bei Schreibrecht + explizitem Formular-Flag
+        if ($hasEmployee) {
+            $authUserAssign = class_exists('AuthService') ? AuthService::user() : null;
+            $mayEditAssign = $authUserAssign instanceof User && PayrollEmployeeAccess::canEdit($authUserAssign);
+            if ($mayEditAssign && !empty($data['payroll_wage_assignments_sync'])) {
+                $assignRows = PayrollEmployeeWageAssignmentRepository::parseFromPost($data);
+                PayrollEmployeeWageAssignmentRepository::syncForContact($contactId, $assignRows);
+            }
         }
 
         $savedContact = self::findById($contactId);

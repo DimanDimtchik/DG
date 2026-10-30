@@ -4,10 +4,21 @@
 /** @var int|null $contactId */
 /** @var bool $showEmployeeFields */
 /** @var bool $canEdit */
+/** @var list<array<string, string>> $bankAccounts */
+/** @var list<array<string, mixed>> $payrollWageAssignments */
+/** @var list<array<string, mixed>> $payrollWageTypeOptions */
 $employeeData = $employeeData ?? EmployeeData::empty();
 $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
 $showEmployeeFields = $showEmployeeFields ?? false;
 $canEdit = $canEdit ?? false;
+$bankAccounts = $bankAccounts ?? [];
+$payrollWageAssignments = $payrollWageAssignments ?? [];
+$payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
+$authUser = class_exists('AuthService') ? AuthService::user() : null;
+$canViewPayroll = $authUser instanceof User && PayrollEmployeeAccess::canView($authUser);
+$canEditPayroll = $canEdit && $authUser instanceof User && PayrollEmployeeAccess::canEdit($authUser);
+$wageUnitLabels = PayrollWageTypeRepository::unitLabels();
+$payrollWarnings = $canViewPayroll ? EmployeeData::collectPayrollWarnings($employeeData) : [];
 $svDraftStatus = trim($employeeData['social_registration_status'] ?? SocialSecurityRegistrationDraft::STATUS_NONE);
 $svDraftAt = trim($employeeData['social_registration_draft_at'] ?? '');
 $hasSvDraft = trim($employeeData['social_registration_draft_json'] ?? '') !== '';
@@ -35,7 +46,31 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
   <?php endif; ?>
 
   <?php foreach ($grouped as $sectionKey => $sectionFields) : ?>
+    <?php if ($sectionKey === 'payroll' && !$canViewPayroll) : ?>
+      <?php continue; ?>
+    <?php endif; ?>
     <h3><?= View::escape($sections[$sectionKey] ?? $sectionKey) ?></h3>
+    <?php if ($sectionKey === 'payroll') : ?>
+      <p class="dg-lead">
+        Stammdaten für die <strong>eigene Lohnabrechnung</strong> (Stufe A). Steuerklasse manuell — kein ELStAM in dieser Stufe.
+        SV-Meldestelle und Krankenkassenname bleiben unter Sozialversicherung bzw. Gesundheitsdaten.
+        Lohnarten-Zuordnung unten (Festgehalt/Stundenlohn); Freitext „Lohn / Gehalt“ unter Arbeitsvertrag ist nur Hinweis.
+        Kein Monatslauf in diesem Block.
+      </p>
+      <?php if (!$canEditPayroll) : ?>
+        <p class="dg-field-hint">Nur Lesen — zum Speichern der Lohnfelder Admin-Recht bzw. Modul „Lohn &amp; Gehalt“ nötig.</p>
+      <?php endif; ?>
+      <?php if ($payrollWarnings !== []) : ?>
+        <div class="dg-flash dg-flash--warning">
+          <p><strong>Hinweise</strong> (Speichern bleibt möglich; Monatslauf später):</p>
+          <ul>
+            <?php foreach ($payrollWarnings as $w) : ?>
+              <li><?= View::escape((string) $w) ?></li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
     <?php if ($sectionKey === 'social') : ?>
       <p class="dg-lead">
         Die <strong>Sozialversicherungsnummer</strong> ist eine einheitliche Nummer für alle Zweige.
@@ -97,11 +132,51 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               $required = false;
           }
           $selectOptions = $meta['type'] === 'select' ? EmployeeData::selectOptions($key) : [];
+          $payrollReadonly = $sectionKey === 'payroll' && !$canEditPayroll;
+          $roAttr = $payrollReadonly ? ' disabled' : '';
         ?>
-        <?php if ($meta['type'] === 'textarea') : ?>
+        <?php if ($sectionKey === 'payroll' && $key === 'payroll_payout_bank_index') : ?>
+          <label class="dg-field dg-field--wide">
+            <span><?= View::escape($meta['label']) ?></span>
+            <select name="<?= View::escape($name) ?>"<?= $roAttr ?>>
+              <?php if ($bankAccounts === []) : ?>
+                <option value="0">Kein Bankkonto — bitte oben unter Bankverbindung anlegen</option>
+              <?php else : ?>
+                <?php foreach ($bankAccounts as $bi => $account) : ?>
+                  <?php
+                    $iban = trim((string) ($account['iban'] ?? ''));
+                    $blabel = trim((string) ($account['label'] ?? ''));
+                    $holder = trim((string) ($account['account_holder'] ?? ''));
+                    $opt = implode(' · ', array_filter([$blabel !== '' ? $blabel : null, $holder !== '' ? $holder : null, $iban !== '' ? $iban : 'ohne IBAN']));
+                  ?>
+                  <option value="<?= (int) $bi ?>"<?= (string) (int) $value === (string) (int) $bi ? ' selected' : '' ?>><?= View::escape($opt) ?></option>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </select>
+            <small class="dg-field-hint">Konten aus dem Block Bankverbindung dieses Kontakts (SEPA später L8).</small>
+          </label>
+        <?php elseif ($sectionKey === 'payroll' && $key === 'child_allowances') : ?>
+          <label class="dg-field">
+            <span><?= View::escape($meta['label']) ?></span>
+            <input type="number" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>" min="0" max="99" step="0.5" placeholder="0 oder 0,5 …"<?= $roAttr ?>>
+          </label>
+        <?php elseif ($sectionKey === 'payroll' && $key === 'annual_earnings_estimate_eur') : ?>
+          <label class="dg-field">
+            <span><?= View::escape($meta['label']) ?></span>
+            <input type="number" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>" min="0" step="0.01" placeholder="z. B. 22000"<?= $roAttr ?>>
+          </label>
+        <?php elseif ($sectionKey === 'payroll' && $key === 'sv_exempt') : ?>
+          <label class="dg-field dg-field--checkbox">
+            <span>
+              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?><?= $roAttr ?>>
+              <?= View::escape($meta['label']) ?>
+            </span>
+          </label>
+          <p class="dg-field-hint dg-field--wide">Nur wirksam mit Flag „Beherrschender Geschäftsführer“ — sonst beim Speichern verworfen.</p>
+        <?php elseif ($meta['type'] === 'textarea') : ?>
           <label class="dg-field dg-field--wide">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <textarea name="<?= View::escape($name) ?>" rows="3"<?= $required ? ' required data-employee-required' : '' ?>><?= View::escape($value) ?></textarea>
+            <textarea name="<?= View::escape($name) ?>" rows="3"<?= $required ? ' required data-employee-required' : '' ?><?= $roAttr ?>><?= View::escape($value) ?></textarea>
           </label>
         <?php elseif ($meta['type'] === 'select' && $selectOptions !== []) : ?>
           <label class="dg-field<?= $key === 'social_filing_office' ? ' dg-field--wide' : '' ?>">
@@ -111,6 +186,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?php if ($key === 'social_security_status') : ?>data-social-status<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
               <?php if ($key === 'social_filing_office') : ?>data-social-filing-office<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
               <?php if ($key === 'gender') : ?><?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
+              <?= $roAttr ?>
             >
               <?php foreach ($selectOptions as $optVal => $optLabel) : ?>
                 <option value="<?= View::escape($optVal) ?>"<?= $value === $optVal ? ' selected' : '' ?>><?= View::escape($optLabel) ?></option>
@@ -188,7 +264,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
         <?php elseif ($meta['type'] === 'checkbox') : ?>
           <label class="dg-field dg-field--checkbox">
             <span>
-              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?>>
+              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?><?= $roAttr ?>>
               <?= View::escape($meta['label']) ?>
             </span>
           </label>
@@ -204,16 +280,139 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               step="1"
               placeholder="z. B. 480 (= 8 h)"
               <?= $required ? ' required data-employee-required' : '' ?>
+              <?= $roAttr ?>
             >
           </label>
         <?php else : ?>
           <label class="dg-field">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input type="<?= View::escape($meta['type']) ?>" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>"<?= $required ? ' required data-employee-required' : '' ?>>
+            <input type="<?= View::escape($meta['type']) ?>" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>"<?= $required ? ' required data-employee-required' : '' ?><?= $roAttr ?>>
           </label>
         <?php endif; ?>
       <?php endforeach; ?>
     </div>
+    <?php if ($sectionKey === 'payroll') : ?>
+      <?php if ($canEditPayroll) : ?>
+        <input type="hidden" name="payroll_wage_assignments_sync" value="1">
+      <?php endif; ?>
+      <h4 class="dg-subsection-title">Lohnarten-Zuordnung</h4>
+      <p class="dg-lead">
+        Stamm: monatliches Festgehalt, Stundenlohnsatz o. Ä. Priorität steuert die Reihenfolge im späteren Lauf.
+        Leere Zeilen und „Entfernen“ löschen die Zuordnung beim Speichern.
+      </p>
+      <?php
+        $assignRows = $payrollWageAssignments !== []
+            ? $payrollWageAssignments
+            : PayrollEmployeeWageAssignmentRepository::formRows([]);
+        $activeWageOptions = [];
+        $inactiveWageOptions = [];
+        foreach ($payrollWageTypeOptions as $wt) {
+            if (!is_array($wt)) {
+                continue;
+            }
+            if ((int) ($wt['is_active'] ?? 0) === 1) {
+                $activeWageOptions[] = $wt;
+            } else {
+                $inactiveWageOptions[] = $wt;
+            }
+        }
+      ?>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Lohnart</th>
+              <th>Betrag / Satz</th>
+              <th>Gültig ab</th>
+              <th>Gültig bis</th>
+              <th>Prio</th>
+              <th>Notiz</th>
+              <?php if ($canEditPayroll) : ?>
+                <th></th>
+              <?php endif; ?>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($assignRows as $ai => $arow) : ?>
+              <?php
+                $aId = (int) ($arow['id'] ?? 0);
+                $aWageId = (int) ($arow['wage_type_id'] ?? 0);
+                $aAmount = isset($arow['amount_display']) && (string) $arow['amount_display'] !== ''
+                    ? (string) $arow['amount_display']
+                    : (string) ($arow['amount'] ?? '');
+                $aFrom = (string) ($arow['valid_from'] ?? '');
+                $aTo = (string) ($arow['valid_to'] ?? '');
+                $aPrio = (int) ($arow['priority'] ?? 0);
+                $aNotes = (string) ($arow['notes'] ?? '');
+                $aDelete = !empty($arow['delete']);
+                $roAssign = $canEditPayroll ? '' : ' disabled';
+              ?>
+              <tr>
+                <td>
+                  <?php if ($aId > 0) : ?>
+                    <input type="hidden" name="payroll_wage_assignments[<?= (int) $ai ?>][id]" value="<?= $aId ?>">
+                  <?php endif; ?>
+                  <select name="payroll_wage_assignments[<?= (int) $ai ?>][wage_type_id]"<?= $roAssign ?>>
+                    <option value="0">— wählen —</option>
+                    <?php foreach ($activeWageOptions as $wt) : ?>
+                      <option value="<?= (int) ($wt['id'] ?? 0) ?>"<?= $aWageId === (int) ($wt['id'] ?? 0) ? ' selected' : '' ?>>
+                        <?= View::escape((string) ($wt['code'] ?? '') . ' — ' . (string) ($wt['label'] ?? '')) ?>
+                        (<?= View::escape($wageUnitLabels[(string) ($wt['unit'] ?? '')] ?? (string) ($wt['unit'] ?? '')) ?>)
+                      </option>
+                    <?php endforeach; ?>
+                    <?php if ($aWageId > 0) : ?>
+                      <?php foreach ($inactiveWageOptions as $wt) : ?>
+                        <?php if ($aWageId === (int) ($wt['id'] ?? 0)) : ?>
+                          <option value="<?= $aWageId ?>" selected>
+                            <?= View::escape((string) ($wt['code'] ?? '') . ' — ' . (string) ($wt['label'] ?? '') . ' (inaktiv)') ?>
+                          </option>
+                        <?php endif; ?>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
+                  </select>
+                </td>
+                <td>
+                  <input type="text" name="payroll_wage_assignments[<?= (int) $ai ?>][amount]"
+                         value="<?= View::escape($aAmount) ?>" placeholder="z. B. 2.500,00"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="date" name="payroll_wage_assignments[<?= (int) $ai ?>][valid_from]"
+                         value="<?= View::escape($aFrom) ?>"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="date" name="payroll_wage_assignments[<?= (int) $ai ?>][valid_to]"
+                         value="<?= View::escape($aTo) ?>"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="number" name="payroll_wage_assignments[<?= (int) $ai ?>][priority]"
+                         value="<?= $aPrio ?>" step="1" style="width:4.5rem"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="text" name="payroll_wage_assignments[<?= (int) $ai ?>][notes]"
+                         value="<?= View::escape($aNotes) ?>" maxlength="500"<?= $roAssign ?>>
+                </td>
+                <?php if ($canEditPayroll) : ?>
+                  <td>
+                    <?php if ($aId > 0 || $aWageId > 0) : ?>
+                      <label class="dg-field dg-field--checkbox">
+                        <input type="checkbox" name="payroll_wage_assignments[<?= (int) $ai ?>][delete]" value="1"<?= $aDelete ? ' checked' : '' ?>>
+                        Entfernen
+                      </label>
+                    <?php endif; ?>
+                  </td>
+                <?php endif; ?>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php if ($activeWageOptions === [] && $canEditPayroll) : ?>
+        <p class="dg-field-hint">
+          Keine aktiven Lohnarten — zuerst unter
+          <a href="/app?page=lohn-lohnarten">Lohnarten</a> anlegen oder aktivieren.
+        </p>
+      <?php endif; ?>
+    <?php endif; ?>
     <?php if ($sectionKey === 'disability') : ?>
       <div class="dg-form-grid">
         <?php foreach (EmployeeData::disabilityDocumentTypes() as $docType => $docLabel) : ?>
@@ -241,10 +440,12 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
       </label>
     <?php endforeach; ?>
     <label class="dg-field dg-field--wide">
-      <span>Lohnabrechnung / payroll_slip (Upload)</span>
+      <span>Externe Lohn-PDFs / payroll_slip (Upload)</span>
       <p class="dg-lead">
-        Vom Steuerberater erhaltene PDF-Abrechnung ablegen (Monat im Dateinamen empfohlen).
-        Keine Generierung im CRM — mehrere Dateien möglich.
+        Vom Steuerberater/Lohnbüro erhaltene PDF ablegen (Monat im Dateinamen empfohlen).
+        Parallel erzeugt das CRM eigene Final-PDFs nach Sperre des Monatslaufs —
+        siehe <a href="/app?page=lohn-lohnkonto">Lohnkonto</a> und Kontaktansicht „CRM-Abrechnungen“.
+        Mehrere Dateien möglich; fremde Uploads werden nicht automatisch gelöscht.
       </p>
       <input type="file" name="employee_files[payroll_slip][]" multiple accept=".pdf,application/pdf">
     </label>

@@ -106,6 +106,11 @@ final class SettingsRegistry
                         'lead' => 'Pausenregeln, ArbZG, Zeitkontoregelung und Rückstellungs-Parameter (Konten mit Steuerberater).',
                         'template' => 'time-tracking',
                     ],
+                    'lohn' => [
+                        'label' => 'Lohn & Gehalt',
+                        'lead' => 'Arbeitgeber-Stammdaten für die Lohnabrechnung (Umlagen, Bundesland, SEPA-Konto). Firmendaten bleiben unter Grundlagen → Firmendaten.',
+                        'template' => 'lohn',
+                    ],
                 ],
             ],
             'kommunikation' => [
@@ -333,6 +338,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
                 || isset($_POST['writer_assist_save'])
             ) {
                 return 'briefpapier';
+            }
+            if (isset($_POST['payroll_lohn_save']) || isset($_POST['time_tracking_save'])) {
+                return isset($_POST['payroll_lohn_save']) ? 'lohn' : 'zeiterfassung';
             }
         }
 

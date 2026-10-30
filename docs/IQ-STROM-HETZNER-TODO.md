@@ -131,7 +131,9 @@ IQ-Strom-SOKA-Jahresprüfung (Ordner `Buchhaltung/BaulohnUntersuchung/`) ist **B
 
 **Heute im CRM:** nur Zeiterfassung + Lohn-**Export** (DATEV/Lex) + Upload fremder `payroll_slip` — **keine** Abrechnung.
 
-Detailkonzept aus dem abgerufenen Acrobat-Dokument: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). Architekturleitlinie: Strategy-Pattern fuer Berechnungs-Engines, gemeinsamer CRM-Code fuer alle Instanzen, Mandanten-/Branchenlogik ueber Stammdaten und Lohnarten.
+Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).  
+**Implementierungsplan (token-sparend, Serien L0–L10 / LB / LC):** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md).  
+Architekturleitlinie: Strategy-Pattern fuer Berechnungs-Engines, gemeinsamer CRM-Code fuer alle Instanzen, Mandanten-/Branchenlogik ueber Stammdaten und Lohnarten.
 
 #### Stufe A — Normaler Lohn/Gehalt (Lexware-Office-Niveau) — **zuerst bauen**
 

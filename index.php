@@ -914,6 +914,7 @@ switch ($path) {
         $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
         $dienstleistungenSection = MenuRegistry::dienstleistungenSection($user);
         $hrSection = MenuRegistry::hrSection($user);
+        $lohnSection = MenuRegistry::lohnSection($user);
         $warenwirtschaftSection = MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = MenuRegistry::websiteSection($user);
         $kommunikationSection = MenuRegistry::kommunikationSection($user);
@@ -1510,6 +1511,325 @@ switch ($path) {
                 try {
                     TimeTrackingSettings::saveFromPost($_POST);
                     Flash::set('success', 'Zeiterfassung-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Lohn AG-Stamm (L1c)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['payroll_lohn_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('lohn');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $changes = PayrollEmployerSettings::saveFromPost($_POST, $user->id);
+                    if ($changes === []) {
+                        Flash::set('success', 'Keine Änderungen an den Lohn-Stammdaten.');
+                    } else {
+                        Flash::set('success', 'Lohn-Stammdaten Arbeitgeber gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Lohnarten CRUD (L3b)
+        if (
+            $page === 'lohn-lohnarten'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollEmployeeAccess::canEdit($user)
+        ) {
+            $redirect = '/app?page=lohn-lohnarten';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                $actionWt = trim((string) ($_POST['wage_type_action'] ?? ''));
+                try {
+                    if ($actionWt === 'save') {
+                        $editId = (int) ($_POST['id'] ?? 0);
+                        $newId = PayrollWageTypeRepository::save($_POST, $editId > 0 ? $editId : null);
+                        Flash::set('success', 'Lohnart gespeichert.');
+                        $redirect = '/app?page=lohn-lohnarten&edit=' . $newId;
+                    } elseif ($actionWt === 'deactivate') {
+                        PayrollWageTypeRepository::deactivateOrDelete((int) ($_POST['id'] ?? 0));
+                        Flash::set('success', 'Lohnart deaktiviert bzw. gelöscht.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Lohnsteuer ELSTER Test-Payload (L10b)
+        if (
+            $page === 'lohn-elster'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollRunAccess::canView($user)
+        ) {
+            $monthPost = trim((string) ($_POST['month'] ?? $_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $monthPost)) {
+                $monthPost = date('Y-m');
+            }
+            $redirect = '/app?page=lohn-elster&month=' . rawurlencode($monthPost) . '&tab=lsta';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (!PayrollRunAccess::canSubmitLstaTest($user)) {
+                Flash::set('error', 'Keine Berechtigung für LStA-Test (lohn full).');
+            } else {
+                try {
+                    $action = trim((string) ($_POST['elster_action'] ?? ''));
+                    if ($action === 'lsta_live') {
+                        PayrollElsterService::submitLiveLsta(0, 0, (int) $user->id);
+                    }
+                    if ($action !== 'lsta_test') {
+                        throw new RuntimeException('Unbekannte ELSTER-Aktion.');
+                    }
+                    [$yy, $mm] = array_map('intval', explode('-', $monthPost));
+                    $result = PayrollElsterService::submitTestLsta(
+                        $yy,
+                        $mm,
+                        (int) $user->id,
+                        (string) ($_POST['reason'] ?? '')
+                    );
+                    Flash::set(
+                        'success',
+                        'LStA-Test-Payload gespeichert'
+                        . ($result['submission_id'] ? ' #' . $result['submission_id'] : '')
+                        . ' · ' . $result['filename']
+                        . ' · ' . $result['worker']
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Monatslauf Aktionen (L5c)
+        if (
+            $page === 'lohn-monatslauf'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollRunAccess::canView($user)
+        ) {
+            $monthPost = trim((string) ($_POST['month'] ?? $_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $monthPost)) {
+                $monthPost = date('Y-m');
+            }
+            $runIdPost = (int) ($_POST['run_id'] ?? 0);
+            $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                . ($runIdPost > 0 ? '&run=' . $runIdPost : '');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                $runAction = trim((string) ($_POST['run_action'] ?? ''));
+                $needsApprove = in_array($runAction, ['approve', 'lock', 'storno', 'correction'], true);
+                $needsEdit = in_array($runAction, [
+                    'create', 'add_employee', 'remove_employee', 'seed_assignments',
+                    'calculate', 'reopen', 'delete',
+                ], true);
+                $needsFibu = $runAction === 'fibu_book';
+                $needsSepa = $runAction === 'sepa_export';
+                try {
+                    if ($needsApprove && !PayrollRunAccess::canApprove($user)) {
+                        throw new RuntimeException('Keine Berechtigung für Freigabe/Sperre/Storno.');
+                    }
+                    if ($needsEdit && !PayrollRunAccess::canEditRun($user)) {
+                        throw new RuntimeException('Keine Berechtigung zum Bearbeiten des Monatslaufs.');
+                    }
+                    if ($needsFibu && !PayrollRunAccess::canPostFibu($user)) {
+                        throw new RuntimeException('Keine Berechtigung für FiBu-Übernahme (lohn full + Buchhaltung).');
+                    }
+                    if ($needsSepa && !PayrollRunAccess::canExportSepa($user)) {
+                        throw new RuntimeException('Keine Berechtigung für SEPA-Auszahlung (lohn full).');
+                    }
+                    if ($runAction === 'create') {
+                        [$yy, $mm] = array_map('intval', explode('-', $monthPost));
+                        $created = PayrollRunRepository::createRegular($yy, $mm, (int) $user->id);
+                        Flash::set('success', 'Monatslauf angelegt.');
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . (int) $created['id'];
+                    } elseif ($runAction === 'add_employee') {
+                        $cid = (int) ($_POST['contact_id'] ?? 0);
+                        PayrollRunRepository::addEmployee($runIdPost, $cid);
+                        if (!empty($_POST['seed_assignments'])) {
+                            PayrollRunRepository::seedLinesFromAssignments($runIdPost, $cid);
+                        }
+                        Flash::set('success', 'Mitarbeiter hinzugefügt.');
+                    } elseif ($runAction === 'remove_employee') {
+                        PayrollRunRepository::removeEmployee($runIdPost, (int) ($_POST['contact_id'] ?? 0));
+                        Flash::set('success', 'Mitarbeiter entfernt.');
+                    } elseif ($runAction === 'seed_assignments') {
+                        $n = PayrollRunRepository::seedLinesFromAssignments(
+                            $runIdPost,
+                            (int) ($_POST['contact_id'] ?? 0)
+                        );
+                        Flash::set('success', $n . ' Lohnart-Position(en) aus Stamm übernommen.');
+                    } elseif ($runAction === 'calculate') {
+                        $stats = PayrollRunRepository::calculate($runIdPost, (int) $user->id);
+                        Flash::set(
+                            'success',
+                            sprintf(
+                                'Berechnet: %d ok, %d blocked, %d skipped.',
+                                (int) $stats['ok_count'],
+                                (int) $stats['blocked_count'],
+                                (int) $stats['skipped_count']
+                            )
+                        );
+                    } elseif ($runAction === 'reopen') {
+                        PayrollRunRepository::reopen($runIdPost, (int) $user->id, 'UI reopen');
+                        Flash::set('success', 'Lauf zurück auf Entwurf.');
+                    } elseif ($runAction === 'approve') {
+                        PayrollRunRepository::approve(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? '')
+                        );
+                        Flash::set('success', 'Lauf freigegeben.');
+                    } elseif ($runAction === 'lock') {
+                        PayrollRunRepository::lock(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? '')
+                        );
+                        Flash::set('success', 'Lauf gesperrt.');
+                    } elseif ($runAction === 'storno' || $runAction === 'correction') {
+                        $kind = $runAction === 'storno'
+                            ? PayrollRunRepository::KIND_STORNO
+                            : PayrollRunRepository::KIND_CORRECTION;
+                        $newRun = PayrollRunRepository::createSuperseding(
+                            $runIdPost,
+                            $kind,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? '')
+                        );
+                        Flash::set('success', ($runAction === 'storno' ? 'Storno' : 'Korrektur') . '-Lauf angelegt.');
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . (int) $newRun['id'];
+                    } elseif ($runAction === 'delete') {
+                        PayrollRunRepository::deleteDraft($runIdPost);
+                        Flash::set('success', 'Entwurf gelöscht.');
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost);
+                    } elseif ($runAction === 'fibu_book') {
+                        $forceProbe = !empty($_POST['force_probe']) && RoleResolver::isAdmin($user);
+                        $postingDate = trim((string) ($_POST['posting_date'] ?? ''));
+                        $result = PayrollFibuService::book(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? ''),
+                            $postingDate !== '' ? $postingDate : null,
+                            $forceProbe
+                        );
+                        if (!empty($result['idempotent'])) {
+                            Flash::set(
+                                'success',
+                                'FiBu bereits vorhanden (Batch #' . (int) ($result['manual_batch_id'] ?? 0) . ') — idempotent.'
+                            );
+                        } else {
+                            Flash::set(
+                                'success',
+                                'In FiBu übernommen (Batch #' . (int) ($result['manual_batch_id'] ?? 0) . ').'
+                            );
+                        }
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&fibu=1';
+                    } elseif ($runAction === 'sepa_export') {
+                        $execDate = trim((string) ($_POST['exec_date'] ?? ''));
+                        $sepaResult = PayrollSepaService::export(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? ''),
+                            $execDate !== '' ? $execDate : null
+                        );
+                        $exportId = (int) ($sepaResult['meta']['id'] ?? 0);
+                        $probeNote = !empty($sepaResult['meta']['is_probe']) ? ' (PROBE — nicht produktiv)' : '';
+                        Flash::set(
+                            'success',
+                            'SEPA-XML erzeugt #' . $exportId
+                            . ' · ' . (int) ($sepaResult['meta']['tx_count'] ?? 0) . ' Tx'
+                            . ' · CtrlSum ' . (string) ($sepaResult['meta']['ctrl_sum'] ?? '0')
+                            . $probeNote
+                        );
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&sepa=1&sepa_dl=' . $exportId;
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    if ($runAction === 'fibu_book' && $runIdPost > 0) {
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&fibu=1';
+                    }
+                    if ($runAction === 'sepa_export' && $runIdPost > 0) {
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&sepa=1';
+                    }
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Beitragstabellen Import/Ablösen/Patch (L4b)
+        if (
+            $page === 'lohn-beitragstabellen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollEmployeeAccess::canEdit($user)
+        ) {
+            $redirect = '/app?page=lohn-beitragstabellen';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                $rateAction = trim((string) ($_POST['rate_action'] ?? ''));
+                try {
+                    if ($rateAction === 'import') {
+                        $text = trim((string) ($_POST['rate_csv_text'] ?? ''));
+                        if ($text === '' && isset($_FILES['rate_csv']) && is_array($_FILES['rate_csv'])) {
+                            $err = (int) ($_FILES['rate_csv']['error'] ?? UPLOAD_ERR_NO_FILE);
+                            if ($err === UPLOAD_ERR_OK) {
+                                $tmp = (string) ($_FILES['rate_csv']['tmp_name'] ?? '');
+                                $raw = $tmp !== '' ? file_get_contents($tmp) : false;
+                                if ($raw === false) {
+                                    throw new RuntimeException('CSV-Datei konnte nicht gelesen werden.');
+                                }
+                                $text = $raw;
+                            } elseif ($err !== UPLOAD_ERR_NO_FILE) {
+                                throw new RuntimeException('Upload fehlgeschlagen (Code ' . $err . ').');
+                            }
+                        }
+                        if ($text === '') {
+                            throw new InvalidArgumentException('Bitte CSV-Datei oder Text angeben.');
+                        }
+                        $newSetId = PayrollRateTableRepository::importFromText($text, (int) $user->id);
+                        Flash::set('success', 'Beitragstabelle importiert.');
+                        $redirect = '/app?page=lohn-beitragstabellen&view=' . $newSetId;
+                    } elseif ($rateAction === 'supersede') {
+                        PayrollRateTableRepository::supersede((int) ($_POST['id'] ?? 0), (int) $user->id);
+                        Flash::set('success', 'Tabellensatz abgelöst (deaktiviert).');
+                    } elseif ($rateAction === 'patch') {
+                        $sid = (int) ($_POST['rate_set_id'] ?? 0);
+                        PayrollRateTableRepository::patchParam(
+                            $sid,
+                            (string) ($_POST['param_key'] ?? ''),
+                            (string) ($_POST['param_value'] ?? ''),
+                            (int) $user->id
+                        );
+                        Flash::set('success', 'Parameter korrigiert (Audit).');
+                        $redirect = '/app?page=lohn-beitragstabellen&view=' . $sid;
+                    }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -3449,6 +3769,26 @@ switch ($path) {
                 $canDeleteContact = $existingForForm !== null && ContactAccessResolver::canDeleteContact($user, $existingForForm);
                 $linkFormContext = ContactCompanyLinkRepository::formContext($existingForForm, $_POST);
                 extract($linkFormContext);
+                $payrollWageTypeOptions = PayrollWageTypeRepository::all(false);
+                $payrollWageAssignments = [];
+                $rawAssign = $_POST['payroll_wage_assignments'] ?? null;
+                if (is_array($rawAssign)) {
+                    foreach ($rawAssign as $row) {
+                        if (!is_array($row)) {
+                            continue;
+                        }
+                        $payrollWageAssignments[] = [
+                            'id' => (int) ($row['id'] ?? 0),
+                            'wage_type_id' => (int) ($row['wage_type_id'] ?? 0),
+                            'amount' => (string) ($row['amount'] ?? ''),
+                            'valid_from' => (string) ($row['valid_from'] ?? ''),
+                            'valid_to' => (string) ($row['valid_to'] ?? ''),
+                            'priority' => (int) ($row['priority'] ?? 0),
+                            'notes' => (string) ($row['notes'] ?? ''),
+                            'delete' => !empty($row['delete']),
+                        ];
+                    }
+                }
                 $dbConfig = DatabaseSettings::forForm();
                 $dbConnected = Database::isConfigured();
                 try {
@@ -3461,7 +3801,7 @@ switch ($path) {
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
                     'menuItems', 'settingsItem', 'currentPage', 'settingsNav', 'settingsSelection',
-                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'contactId', 'form', 'formError', 'bankAccounts', 'employeeData', 'employeeFiles', 'showEmployeeFields', 'allowedContactRoles', 'canDeleteContact', 'companyEmployees', 'employerForm', 'companyContactOptions', 'personContactOptions', 'kontakteReturnTo'
+                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'contactId', 'form', 'formError', 'bankAccounts', 'employeeData', 'employeeFiles', 'showEmployeeFields', 'allowedContactRoles', 'canDeleteContact', 'companyEmployees', 'employerForm', 'companyContactOptions', 'personContactOptions', 'kontakteReturnTo', 'payrollWageAssignments', 'payrollWageTypeOptions'
                 ));
                 break;
             }
@@ -3683,7 +4023,7 @@ switch ($path) {
                 $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
+                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'lohnSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
                     'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas',
@@ -4999,6 +5339,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadMissingMandatory = LetterheadSettings::missingMandatoryFields($letterheadSettings);
         $letterheadCompliance = LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = TimeTrackingSettings::forForm();
+        $payrollEmployerForm = PayrollEmployerSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
             try {
@@ -6689,6 +7030,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 $showEmployeeFields = ContactAccessResolver::canEditContact($user);
                 $linkFormContext = ContactCompanyLinkRepository::formContext(null, []);
                 extract($linkFormContext);
+                $payrollWageTypeOptions = PayrollWageTypeRepository::all(true);
+                $payrollWageAssignments = PayrollEmployeeWageAssignmentRepository::formRows([]);
             } elseif ($action === 'edit' && $contactId > 0) {
                 if (!RoleResolver::canEdit($user)) {
                     header('Location: /app?page=kontakte&id=' . $contactId, true, 302);
@@ -6726,6 +7069,10 @@ $legalProductsConfig = LegalProductSettings::config();
                 $canDeleteContact = ContactAccessResolver::canDeleteContact($user, $contact);
                 $linkFormContext = ContactCompanyLinkRepository::formContext($contact, []);
                 extract($linkFormContext);
+                $payrollWageTypeOptions = PayrollWageTypeRepository::all(false);
+                $payrollWageAssignments = PayrollEmployeeWageAssignmentRepository::formRows(
+                    PayrollEmployeeWageAssignmentRepository::forContact($contactId)
+                );
                 $contactTeams = TeamRepository::teamsForContact($contactId);
                 $staffAccessStatus = StaffAccessInviteService::status($contactId);
                 $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
@@ -6765,6 +7112,24 @@ $legalProductsConfig = LegalProductSettings::config();
                 $employerLink = !$contact->isCompany()
                     ? ContactCompanyLinkRepository::employerForPerson($contact->id)
                     : null;
+                $payrollWageAssignments = $showEmployeeFields
+                    ? PayrollEmployeeWageAssignmentRepository::forContact($contact->id)
+                    : [];
+                $payrollCrmDocuments = [];
+                if (
+                    $showEmployeeFields
+                    && PayrollEmployeeAccess::canView($user)
+                    && class_exists('PayrollDocumentRepository')
+                ) {
+                    PayrollDocumentRepository::ensureReady();
+                    if (PayrollDocumentRepository::tableReady()) {
+                        $payrollCrmDocuments = array_values(array_filter(
+                            PayrollDocumentRepository::listForContact($contact->id),
+                            static fn (array $d): bool => (string) ($d['kind'] ?? '') === PayrollDocumentRepository::KIND_PAYSLIP
+                                && (int) ($d['is_final'] ?? 0) === 1
+                        ));
+                    }
+                }
             } else {
                 $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
                 $contactImportErrors = [];
@@ -7497,6 +7862,412 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-rueckstellung';
             $title = 'Rückstellungen';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'lohn-lohnarten' && MenuRegistry::canAccess($user, 'lohn-lohnarten')) {
+            MigrationRunner::runPending();
+            PayrollWageTypeRepository::ensureReady();
+            $payrollWageTypes = PayrollWageTypeRepository::all(false);
+            $editWageId = (int) ($_GET['edit'] ?? 0);
+            $payrollWageTypeEdit = $editWageId > 0 ? PayrollWageTypeRepository::find($editWageId) : null;
+            $payrollWageCanEdit = PayrollEmployeeAccess::canEdit($user);
+            $contentTemplate = 'modules/lohn-lohnarten';
+            $title = 'Lohnarten';
+            $currentPage = 'lohn-lohnarten';
+        } elseif ($page === 'lohn-beitragstabellen' && MenuRegistry::canAccess($user, 'lohn-beitragstabellen')) {
+            MigrationRunner::runPending();
+            PayrollRateTableRepository::ensureReady();
+            if (trim((string) ($_GET['download'] ?? '')) === 'example') {
+                $csv = PayrollRateTableRepository::exampleImportCsv();
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="payroll-rate-example.csv"');
+                echo $csv;
+                exit;
+            }
+            $payrollRateSets = PayrollRateTableRepository::all(false);
+            $viewRateId = (int) ($_GET['view'] ?? 0);
+            $payrollRateSetView = $viewRateId > 0 ? PayrollRateTableRepository::find($viewRateId) : null;
+            $payrollRateParams = $payrollRateSetView !== null
+                ? PayrollRateTableRepository::paramsForSet($viewRateId)
+                : [];
+            $payrollRateCanEdit = PayrollEmployeeAccess::canEdit($user);
+            $contentTemplate = 'modules/lohn-beitragstabellen';
+            $title = 'Beitragstabellen';
+            $currentPage = 'lohn-beitragstabellen';
+        } elseif ($page === 'lohn-monatslauf' && MenuRegistry::canAccess($user, 'lohn-monatslauf')) {
+            MigrationRunner::runPending();
+            PayrollRunRepository::ensureReady();
+            $payrollRunMonth = trim((string) ($_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $payrollRunMonth)) {
+                $payrollRunMonth = date('Y-m');
+            }
+            [$py, $pm] = array_map('intval', explode('-', $payrollRunMonth));
+            $payrollRuns = PayrollRunRepository::listForPeriod($py, $pm);
+            $runViewId = (int) ($_GET['run'] ?? 0);
+            $payrollRun = $runViewId > 0 ? PayrollRunRepository::find($runViewId) : null;
+            if ($payrollRun !== null
+                && ((int) ($payrollRun['period_year'] ?? 0) !== $py
+                    || (int) ($payrollRun['period_month'] ?? 0) !== $pm)
+            ) {
+                // Run aus anderem Monat: Monat anpassen
+                $payrollRunMonth = sprintf(
+                    '%04d-%02d',
+                    (int) $payrollRun['period_year'],
+                    (int) $payrollRun['period_month']
+                );
+                $payrollRuns = PayrollRunRepository::listForPeriod(
+                    (int) $payrollRun['period_year'],
+                    (int) $payrollRun['period_month']
+                );
+            }
+            $payrollRunEmployees = $payrollRun !== null
+                ? PayrollRunRepository::employees((int) $payrollRun['id'])
+                : [];
+            $payrollRunEvents = $payrollRun !== null
+                ? PayrollRunRepository::events((int) $payrollRun['id'])
+                : [];
+            $payrollRunLinesByContact = [];
+            foreach ($payrollRunEmployees as $empRow) {
+                $cid = (int) ($empRow['contact_id'] ?? 0);
+                if ($cid > 0 && $payrollRun !== null) {
+                    $payrollRunLinesByContact[$cid] = PayrollRunRepository::linesForEmployee(
+                        (int) $payrollRun['id'],
+                        $cid
+                    );
+                }
+            }
+            $payrollStaffOptions = PayrollRunRepository::staffContactOptions();
+            $payrollRunCanEdit = PayrollRunAccess::canEditRun($user);
+            $payrollRunCanApprove = PayrollRunAccess::canApprove($user);
+            $payrollRunCanPostFibu = PayrollRunAccess::canPostFibu($user);
+            $payrollRunCanExportSepa = PayrollRunAccess::canExportSepa($user);
+            $payrollFibuLive = PayrollFibuService::isLive();
+            $payrollFibuMeta = null;
+            $payrollFibuPreview = null;
+            $payrollFibuPreviewError = null;
+            $payrollFibuShow = trim((string) ($_GET['fibu'] ?? '')) === '1'
+                || ($payrollRun !== null
+                    && (string) ($payrollRun['status'] ?? '') === PayrollRunRepository::STATUS_LOCKED);
+            if ($payrollRun !== null) {
+                PayrollFibuService::ensureReady();
+                $payrollFibuMeta = PayrollFibuService::findMetaByRunId((int) $payrollRun['id']);
+                if ($payrollFibuShow || $payrollFibuMeta !== null) {
+                    try {
+                        $st = (string) ($payrollRun['status'] ?? '');
+                        if (in_array($st, [
+                            PayrollRunRepository::STATUS_APPROVED,
+                            PayrollRunRepository::STATUS_LOCKED,
+                        ], true)) {
+                            $payrollFibuPreview = PayrollFibuService::preview((int) $payrollRun['id']);
+                        }
+                    } catch (Throwable $e) {
+                        $payrollFibuPreviewError = $e->getMessage();
+                    }
+                }
+            }
+            $payrollFibuRoleLabels = PayrollFibuService::roleLabels();
+            $payrollFibuChecklist = PayrollFibuService::auditorChecklist();
+
+            $payrollSepaLive = PayrollSepaService::isLive();
+            $payrollSepaExports = [];
+            $payrollSepaPreview = null;
+            $payrollSepaPreviewError = null;
+            $payrollSepaShow = trim((string) ($_GET['sepa'] ?? '')) === '1'
+                || ($payrollRun !== null
+                    && (string) ($payrollRun['status'] ?? '') === PayrollRunRepository::STATUS_LOCKED);
+            $payrollSepaChecklist = PayrollSepaService::auditorChecklist();
+            if ($payrollRun !== null) {
+                PayrollSepaService::ensureReady();
+                $payrollSepaExports = PayrollSepaService::listExportsForRun((int) $payrollRun['id']);
+                $sepaDlId = (int) ($_GET['sepa_dl'] ?? 0);
+                if ($sepaDlId > 0 && PayrollRunAccess::canExportSepa($user)) {
+                    $sepaMeta = PayrollSepaService::findExport($sepaDlId);
+                    if (
+                        $sepaMeta !== null
+                        && (int) ($sepaMeta['run_id'] ?? 0) === (int) $payrollRun['id']
+                    ) {
+                        try {
+                            $xml = PayrollSepaService::readStoredXml($sepaDlId);
+                        } catch (Throwable $e) {
+                            Flash::set('error', $e->getMessage());
+                            header(
+                                'Location: /app?page=lohn-monatslauf&month=' . rawurlencode($payrollRunMonth)
+                                . '&run=' . (int) $payrollRun['id'] . '&sepa=1',
+                                true,
+                                302
+                            );
+                            exit;
+                        }
+                        if ($xml === null) {
+                            http_response_code(404);
+                            exit('SEPA-Datei nicht gefunden.');
+                        }
+                        $dlName = (string) ($sepaMeta['filename'] ?? ('lohn-sepa-' . $sepaDlId . '.xml'));
+                        header('Content-Type: application/xml; charset=UTF-8');
+                        header('Content-Disposition: attachment; filename="' . str_replace('"', '', $dlName) . '"');
+                        header('Content-Length: ' . (string) strlen($xml));
+                        header('X-Content-Type-Options: nosniff');
+                        echo $xml;
+                        exit;
+                    }
+                }
+                if ($payrollSepaShow || $payrollSepaExports !== []) {
+                    try {
+                        $st = (string) ($payrollRun['status'] ?? '');
+                        if ($st === PayrollRunRepository::STATUS_LOCKED) {
+                            $execQ = trim((string) ($_GET['exec_date'] ?? ''));
+                            $payrollSepaPreview = PayrollSepaService::preview(
+                                (int) $payrollRun['id'],
+                                $execQ !== '' ? $execQ : null
+                            );
+                        }
+                    } catch (Throwable $e) {
+                        $payrollSepaPreviewError = $e->getMessage();
+                    }
+                }
+            }
+
+            $contentTemplate = 'modules/lohn-monatslauf';
+            $title = 'Monatslauf';
+            $currentPage = 'lohn-monatslauf';
+        } elseif ($page === 'lohn-lohnkonto' && MenuRegistry::canAccess($user, 'lohn-lohnkonto')) {
+            MigrationRunner::runPending();
+            PayrollDocumentRepository::ensureReady();
+            $lohnkontoYear = (int) ($_GET['year'] ?? date('Y'));
+            if ($lohnkontoYear < 2000 || $lohnkontoYear > 2100) {
+                $lohnkontoYear = (int) date('Y');
+            }
+            $lohnkontoContactId = (int) ($_GET['contact_id'] ?? 0);
+            $lohnkontoIncludeDrafts = trim((string) ($_GET['drafts'] ?? '')) === '1';
+            $lohnkontoStaffOptions = PayrollRunRepository::staffContactOptions();
+            $lohnkontoContactLabel = '';
+            if ($lohnkontoContactId > 0) {
+                $lohnkontoContactLabel = PayrollRunRepository::contactLabel($lohnkontoContactId);
+            }
+
+            $dl = trim((string) ($_GET['download'] ?? ''));
+            if ($dl === 'pdf') {
+                $docId = (int) ($_GET['doc'] ?? 0);
+                $doc = $docId > 0 ? PayrollDocumentRepository::find($docId) : null;
+                if ($doc === null || (int) ($doc['is_final'] ?? 0) !== 1) {
+                    http_response_code(404);
+                    exit('PDF nicht gefunden.');
+                }
+                try {
+                    $bin = PayrollDocumentRepository::readBinary($docId);
+                } catch (Throwable $e) {
+                    http_response_code(500);
+                    exit($e->getMessage());
+                }
+                if ($bin === null) {
+                    http_response_code(404);
+                    exit('PDF-Datei fehlt.');
+                }
+                $fname = basename((string) ($doc['storage_path'] ?? ('lohn-' . $docId . '.pdf')));
+                $safe = str_replace(['"', "\r", "\n"], '', $fname);
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: inline; filename="' . $safe . '"');
+                header('Content-Length: ' . (string) strlen($bin));
+                header('X-Content-Type-Options: nosniff');
+                echo $bin;
+                exit;
+            }
+            if ($dl === 'csv') {
+                if ($lohnkontoContactId < 1) {
+                    Flash::set('error', 'Für CSV bitte Mitarbeiter wählen.');
+                    header('Location: /app?page=lohn-lohnkonto&year=' . $lohnkontoYear, true, 302);
+                    exit;
+                }
+                $csvRows = PayrollLohnkontoService::rowsForContactYear(
+                    $lohnkontoContactId,
+                    $lohnkontoYear,
+                    $lohnkontoIncludeDrafts
+                );
+                $csvTotals = PayrollLohnkontoService::yearTotals($csvRows);
+                $csv = PayrollLohnkontoService::toCsv(
+                    $lohnkontoContactId,
+                    $lohnkontoContactLabel !== '' ? $lohnkontoContactLabel : ('#' . $lohnkontoContactId),
+                    $lohnkontoYear,
+                    $csvRows,
+                    $csvTotals
+                );
+                $csvName = PayrollLohnkontoService::csvFilename($lohnkontoContactId, $lohnkontoYear);
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="' . $csvName . '"');
+                echo $csv;
+                exit;
+            }
+
+            $lohnkontoRows = $lohnkontoContactId > 0
+                ? PayrollLohnkontoService::rowsForContactYear(
+                    $lohnkontoContactId,
+                    $lohnkontoYear,
+                    $lohnkontoIncludeDrafts
+                )
+                : [];
+            $lohnkontoTotals = PayrollLohnkontoService::yearTotals($lohnkontoRows);
+            $contentTemplate = 'modules/lohn-lohnkonto';
+            $title = 'Lohnkonto';
+            $currentPage = 'lohn-lohnkonto';
+        } elseif ($page === 'lohn-auswertungen' && MenuRegistry::canAccess($user, 'lohn-auswertungen')) {
+            MigrationRunner::runPending();
+            PayrollRunRepository::ensureReady();
+            PayrollSvPortalService::ensureReady();
+            $payrollSvMonth = trim((string) ($_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $payrollSvMonth)) {
+                $payrollSvMonth = date('Y-m');
+            }
+            [$svY, $svM] = array_map('intval', explode('-', $payrollSvMonth));
+            $payrollSvRuns = PayrollRunRepository::listForPeriod($svY, $svM);
+            $payrollSvRunId = (int) ($_GET['run'] ?? 0);
+            $payrollSvRun = $payrollSvRunId > 0 ? PayrollRunRepository::find($payrollSvRunId) : null;
+            if ($payrollSvRun === null) {
+                foreach ($payrollSvRuns as $cand) {
+                    if (
+                        (string) ($cand['status'] ?? '') === PayrollRunRepository::STATUS_LOCKED
+                        && empty($cand['is_superseded'])
+                    ) {
+                        $payrollSvRun = $cand;
+                        $payrollSvRunId = (int) ($cand['id'] ?? 0);
+                        break;
+                    }
+                }
+            }
+            $payrollSvTab = trim((string) ($_GET['tab'] ?? 'beitrag'));
+            if (!in_array($payrollSvTab, ['beitrag', 'stamm'], true)) {
+                $payrollSvTab = 'beitrag';
+            }
+            $payrollSvBeitrag = null;
+            $payrollSvStamm = null;
+            $payrollSvError = null;
+            $payrollSvExports = [];
+            $payrollSvChecklist = PayrollSvPortalService::auditorChecklist();
+
+            if ($payrollSvRun !== null) {
+                $payrollSvExports = PayrollSvPortalService::listExportsForRun((int) $payrollSvRun['id']);
+                $svDl = (int) ($_GET['sv_dl'] ?? 0);
+                if ($svDl > 0) {
+                    $svMeta = PayrollSvPortalService::findExport($svDl);
+                    if (
+                        $svMeta !== null
+                        && (int) ($svMeta['run_id'] ?? 0) === (int) $payrollSvRun['id']
+                    ) {
+                        try {
+                            $csvBin = PayrollSvPortalService::readStoredCsv($svDl);
+                        } catch (Throwable $e) {
+                            Flash::set('error', $e->getMessage());
+                            header(
+                                'Location: /app?page=lohn-auswertungen&month=' . rawurlencode($payrollSvMonth)
+                                . '&run=' . (int) $payrollSvRun['id'],
+                                true,
+                                302
+                            );
+                            exit;
+                        }
+                        if ($csvBin === null) {
+                            http_response_code(404);
+                            exit('SV-CSV nicht gefunden.');
+                        }
+                        $dlName = (string) ($svMeta['filename'] ?? ('lohn-sv-' . $svDl . '.csv'));
+                        header('Content-Type: text/csv; charset=utf-8');
+                        header('Content-Disposition: attachment; filename="' . str_replace('"', '', $dlName) . '"');
+                        header('X-Content-Type-Options: nosniff');
+                        echo $csvBin;
+                        exit;
+                    }
+                }
+                if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+                    $kind = trim((string) ($_GET['kind'] ?? PayrollSvPortalService::KIND_COMBINED));
+                    try {
+                        $exported = PayrollSvPortalService::exportCsv(
+                            (int) $payrollSvRun['id'],
+                            $kind,
+                            (int) $user->id,
+                            'Kontroll-CSV SV-Portal'
+                        );
+                        header('Content-Type: text/csv; charset=utf-8');
+                        header(
+                            'Content-Disposition: attachment; filename="'
+                            . str_replace('"', '', (string) $exported['filename']) . '"'
+                        );
+                        header('X-Content-Type-Options: nosniff');
+                        echo $exported['csv'];
+                        exit;
+                    } catch (Throwable $e) {
+                        $payrollSvError = $e->getMessage();
+                    }
+                }
+                try {
+                    $combined = PayrollSvPortalService::previewCombined((int) $payrollSvRun['id']);
+                    $payrollSvBeitrag = $combined['beitrag'];
+                    $payrollSvStamm = $combined['stamm'];
+                } catch (Throwable $e) {
+                    $payrollSvError = $e->getMessage();
+                }
+            }
+
+            $contentTemplate = 'modules/lohn-auswertungen';
+            $title = 'SV-Portal / Auswertungen';
+            $currentPage = 'lohn-auswertungen';
+        } elseif ($page === 'lohn-elster' && MenuRegistry::canAccess($user, 'lohn-elster')) {
+            MigrationRunner::runPending();
+            PayrollRunRepository::ensureReady();
+            PayrollElsterService::ensureReady();
+            $payrollElsterMonth = trim((string) ($_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $payrollElsterMonth)) {
+                $payrollElsterMonth = date('Y-m');
+            }
+            [$elY, $elM] = array_map('intval', explode('-', $payrollElsterMonth));
+            $payrollElsterTab = trim((string) ($_GET['tab'] ?? 'lsta'));
+            if (!in_array($payrollElsterTab, ['lsta', 'lstb'], true)) {
+                $payrollElsterTab = 'lsta';
+            }
+            $payrollElsterLsta = null;
+            $payrollElsterLstb = null;
+            $payrollElsterError = null;
+            $payrollElsterChecklist = PayrollElsterService::auditorChecklist();
+            $payrollElsterGateChecklist = PayrollElsterService::productionGateChecklist();
+            $payrollElsterCanTest = PayrollRunAccess::canSubmitLstaTest($user);
+            $payrollElsterLstaLive = PayrollElsterService::isLstaLiveFlag();
+            $payrollElsterServerOk = class_exists('ElsterSettings') && ElsterSettings::serverSupportsEric();
+            $payrollElsterEricReady = PayrollElsterService::canAttemptEricTest();
+            $payrollElsterSubmissions = PayrollElsterService::listRecentSubmissions(30);
+
+            if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+                try {
+                    if ($payrollElsterTab === 'lstb') {
+                        $prev = PayrollElsterService::previewLstb($elY);
+                        $csv = PayrollElsterService::toCsvLstb($prev);
+                        $fname = sprintf('lohn-lstb-%04d.csv', $elY);
+                    } else {
+                        $prev = PayrollElsterService::previewLsta($elY, $elM);
+                        $csv = PayrollElsterService::toCsvLsta($prev);
+                        $fname = sprintf('lohn-lsta-%04d-%02d.csv', $elY, $elM);
+                    }
+                    header('Content-Type: text/csv; charset=utf-8');
+                    header('Content-Disposition: attachment; filename="' . $fname . '"');
+                    header('X-Content-Type-Options: nosniff');
+                    echo $csv;
+                    exit;
+                } catch (Throwable $e) {
+                    $payrollElsterError = $e->getMessage();
+                }
+            }
+
+            try {
+                $payrollElsterLsta = PayrollElsterService::previewLsta($elY, $elM);
+            } catch (Throwable $e) {
+                $payrollElsterError = $e->getMessage();
+            }
+            try {
+                $payrollElsterLstb = PayrollElsterService::previewLstb($elY);
+            } catch (Throwable $e) {
+                if ($payrollElsterError === null) {
+                    $payrollElsterError = $e->getMessage();
+                }
+            }
+
+            $contentTemplate = 'modules/lohn-elster';
+            $title = 'Lohnsteuer ELSTER';
+            $currentPage = 'lohn-elster';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
@@ -8320,6 +9091,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $employeeData = $employeeData ?? EmployeeData::empty();
         $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
         $showEmployeeFields = $showEmployeeFields ?? false;
+        $payrollWageAssignments = $payrollWageAssignments ?? [];
+        $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
         $staffAccessStatus = $staffAccessStatus ?? [];
         $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;
         $bookingId = $bookingId ?? null;
@@ -8393,6 +9166,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
+        $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
         $warenwirtschaftSection = $warenwirtschaftSection ?? MenuRegistry::warenwirtschaftSection($user);
         $websiteSection = $websiteSection ?? MenuRegistry::websiteSection($user);
         $kommunikationSection = $kommunikationSection ?? MenuRegistry::kommunikationSection($user);
@@ -8489,6 +9263,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadMissingMandatory = $letterheadMissingMandatory ?? LetterheadSettings::missingMandatoryFields($letterheadSettings);
         $letterheadCompliance = $letterheadCompliance ?? LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
+        $payrollEmployerForm = $payrollEmployerForm ?? PayrollEmployerSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];
@@ -8538,6 +9313,40 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeKontoReductions = $timeKontoReductions ?? [];
         $timeKontoStaffOptions = $timeKontoStaffOptions ?? [];
         $timeShiftTemplates = $timeShiftTemplates ?? [];
+        $payrollWageTypes = $payrollWageTypes ?? [];
+        $payrollWageTypeEdit = $payrollWageTypeEdit ?? null;
+        $payrollWageCanEdit = $payrollWageCanEdit ?? false;
+        $payrollRateSets = $payrollRateSets ?? [];
+        $payrollRateSetView = $payrollRateSetView ?? null;
+        $payrollRateParams = $payrollRateParams ?? [];
+        $payrollRateCanEdit = $payrollRateCanEdit ?? false;
+        $payrollRunMonth = $payrollRunMonth ?? date('Y-m');
+        $payrollRuns = $payrollRuns ?? [];
+        $payrollRun = $payrollRun ?? null;
+        $payrollRunEmployees = $payrollRunEmployees ?? [];
+        $payrollRunEvents = $payrollRunEvents ?? [];
+        $payrollRunLinesByContact = $payrollRunLinesByContact ?? [];
+        $payrollStaffOptions = $payrollStaffOptions ?? [];
+        $payrollRunCanEdit = $payrollRunCanEdit ?? false;
+        $payrollRunCanApprove = $payrollRunCanApprove ?? false;
+        $payrollRunCanPostFibu = $payrollRunCanPostFibu ?? false;
+        $payrollFibuLive = $payrollFibuLive ?? false;
+        $payrollFibuMeta = $payrollFibuMeta ?? null;
+        $payrollFibuPreview = $payrollFibuPreview ?? null;
+        $payrollFibuPreviewError = $payrollFibuPreviewError ?? null;
+        $payrollFibuShow = $payrollFibuShow ?? false;
+        $payrollFibuRoleLabels = $payrollFibuRoleLabels ?? [];
+        $payrollFibuChecklist = $payrollFibuChecklist ?? [];
+        $lohnkontoYear = $lohnkontoYear ?? (int) date('Y');
+        $lohnkontoContactId = $lohnkontoContactId ?? 0;
+        $lohnkontoContactLabel = $lohnkontoContactLabel ?? '';
+        $lohnkontoIncludeDrafts = $lohnkontoIncludeDrafts ?? false;
+        $lohnkontoRows = $lohnkontoRows ?? [];
+        $lohnkontoTotals = $lohnkontoTotals ?? [
+            'gross_total' => 0.0, 'lst' => 0.0, 'sv_an' => 0.0, 'net_pay' => 0.0, 'count' => 0,
+        ];
+        $lohnkontoStaffOptions = $lohnkontoStaffOptions ?? [];
+        $payrollCrmDocuments = $payrollCrmDocuments ?? [];
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -8728,6 +9537,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'settingsItem',
             'dienstleistungenSection',
             'hrSection',
+            'lohnSection',
             'warenwirtschaftSection',
             'buchhaltungSection',
             'websiteSection',
@@ -8861,6 +9671,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'letterheadMissingMandatory',
             'letterheadCompliance',
             'timeTrackingSettings',
+            'payrollEmployerForm',
             'chartOfAccountsConfig',
             'chartAccountCount',
             'chartCatalogCount',
@@ -8969,6 +9780,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'employeeData',
             'employeeFiles',
             'showEmployeeFields',
+            'payrollWageAssignments',
+            'payrollWageTypeOptions',
             'staffAccessStatus',
             'staffAccessHasMailbox',
             'allowedContactRoles',
@@ -9051,6 +9864,38 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeShiftWeekDates',
             'timeShiftStaff',
             'timeShiftActiveTemplates',
+            'payrollWageTypes',
+            'payrollWageTypeEdit',
+            'payrollWageCanEdit',
+            'payrollRateSets',
+            'payrollRateSetView',
+            'payrollRateParams',
+            'payrollRateCanEdit',
+            'payrollRunMonth',
+            'payrollRuns',
+            'payrollRun',
+            'payrollRunEmployees',
+            'payrollRunEvents',
+            'payrollRunLinesByContact',
+            'payrollStaffOptions',
+            'payrollRunCanEdit',
+            'payrollRunCanApprove',
+            'payrollRunCanPostFibu',
+            'payrollFibuLive',
+            'payrollFibuMeta',
+            'payrollFibuPreview',
+            'payrollFibuPreviewError',
+            'payrollFibuShow',
+            'payrollFibuRoleLabels',
+            'payrollFibuChecklist',
+            'lohnkontoYear',
+            'lohnkontoContactId',
+            'lohnkontoContactLabel',
+            'lohnkontoIncludeDrafts',
+            'lohnkontoRows',
+            'lohnkontoTotals',
+            'lohnkontoStaffOptions',
+            'payrollCrmDocuments',
             'timeShiftAssignmentMap',
             'timeVacContactId',
             'timeVacContactLabel',

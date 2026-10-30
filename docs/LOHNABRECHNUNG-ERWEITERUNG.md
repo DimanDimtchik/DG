@@ -1,7 +1,8 @@
 # Lohnabrechnungs-Erweiterung — Konzept aus Acrobat-Dokument
 
 > Quelle: Acrobat-Dokument `entwicklungsplan_lohnsoftware.pdf` aus <https://acrobat.adobe.com/id/urn:aaid:sc:EU:8bb9b7d3-555b-430f-84c7-502247d7e749>, abgerufen am 2026-10-27.  
-> Status: fachliches Produktkonzept fuer DG CRM; keine Implementierung und keine Rechts-/Steuerfreigabe.
+> Status: fachliches Produktkonzept fuer DG CRM; keine Implementierung und keine Rechts-/Steuerfreigabe.  
+> **Umsetzung (token-sparend):** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — Serien L0–L10 / LB / LC.
 
 ## Zielbild
 
@@ -53,9 +54,11 @@ Ziel: DG CRM kann einfache deutsche Lohn- und Gehaltsabrechnungen erstellen, buc
 
 Direkte SV-Meldungen sind erst nach ITSG-Systemuntersuchung produktiv. Ohne Zertifizierung duerfen Annahmestellen Meldungen ablehnen.
 
+**LB0a (2026-10-30):** Pflichtenheft + Systemdok-Outline unter [`itsg/PFLICHTENHEFT-STUFE-B.md`](itsg/PFLICHTENHEFT-STUFE-B.md) · [`itsg/SYSTEMDOKUMENTATION-OUTLINE.md`](itsg/SYSTEMDOKUMENTATION-OUTLINE.md). Implementierung (`lb1+`) erst nach Gate **G3**.
+
 Notwendige Schritte:
 
-1. Pflichtenheft und technische Systemdokumentation erstellen.
+1. Pflichtenheft und technische Systemdokumentation erstellen. ✅ LB0a (Outline Systemdok; Volltext Systemdok folgt mit LB1/LB3)
 2. ITSG-Testaufgaben mathematisch korrekt loesen und XML-Meldestrukturen erzeugen.
 3. Pilotbetrieb mit mindestens zwei Anwendern.
 4. Prod-MOD-ID und kryptografische ITSG-Schluessel in Betrieb nehmen.
@@ -111,8 +114,10 @@ Kernanforderungen:
 
 ## Offene Entscheidungen vor Implementierung
 
-- Eigene Tabellenpflege fuer Steuer-/SV-Werte oder initial importierte Jahreswerte?
-- Wie wird ein beherrschender Geschaeftsfuehrer sv-rechtlich geprueft und dokumentiert?
-- Soll SEPA schon in Stufe A produktiv sein oder erst nach mehreren Testmonaten?
-- Wie werden ELStAM-Aenderungen gegen manuell gepflegte Steuerdaten abgegrenzt?
-- Welche Kanzlei-/Beraterexporte sind fuer Lohnkonto, SV-Pruefung und Jahreslohnkonto notwendig?
+> **Erledigt in L0b (2026-10-30):** verbindliche Defaults in [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) § L0b (D1–D8). Kurz:
+
+- Tabellen: Jahresimport + Versionierung + Audit (nicht nur lose Pflege).
+- Beherrschender GF: Flag + Begruendungsfeld; kein stilles sv-frei.
+- SEPA: Generator in A, Live-Flag erst nach Pilot (G3).
+- ELStAM: Stufe A manuell; Abruf erst Stufe B (LB).
+- Berater: Lohnkonto-PDF + Kontroll-CSV; Z6-Zeitenexport parallel.

@@ -22,7 +22,7 @@ final class LedgerExportRepository
              FROM dg_ledger_postings p
              LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
              WHERE p.fiscal_year = :y
-               AND p.source IN ('voucher', 'manual', 'closing')
+               AND p.source IN ('voucher', 'manual', 'closing', 'payroll')
                AND p.posting_date BETWEEN :start AND :end
              ORDER BY p.posting_date ASC, p.id ASC"
         );

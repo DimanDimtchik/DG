@@ -40,6 +40,8 @@ Für DG CRM gilt:
 
 ## 2. Lohnabrechnung: CRM-Anpassung
 
+Umsetzungsplan (token-sparend): [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md).
+
 ### Reihenfolge
 
 | Stufe | Inhalt | DG-Entscheidung |

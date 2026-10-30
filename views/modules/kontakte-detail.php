@@ -160,16 +160,37 @@
           <dd><?= $healthInsuranceNumber !== '' ? View::escape($healthInsuranceNumber) : '—' ?></dd>
         </dl>
         <?php
-          $otherDetailFields = array_values(array_filter(
-              $employeeDetailFields,
-              static fn(array $field): bool => !in_array($field['label'], [
-                  'Krankenkasse / Krankenversicherung',
-                  'Versichertennummer',
-                  'Krankenversicherungsnummer (Versichertennr.)',
-                  'Krankenversicherungsnummer',
-                  'Krankenkasse',
-              ], true)
-          ));
+          $payrollLabels = [];
+          foreach (EmployeeData::fields() as $fieldMeta) {
+              if (($fieldMeta['section'] ?? '') === 'payroll') {
+                  $payrollLabels[] = (string) ($fieldMeta['label'] ?? '');
+              }
+          }
+          $healthSkip = [
+              'Krankenkasse / Krankenversicherung',
+              'Versichertennummer',
+              'Krankenversicherungsnummer (Versichertennr.)',
+              'Krankenversicherungsnummer',
+              'Krankenkasse',
+          ];
+          $payrollDetailFields = [];
+          $otherDetailFields = [];
+          foreach ($employeeDetailFields as $field) {
+              $label = (string) ($field['label'] ?? '');
+              if (in_array($label, $healthSkip, true)) {
+                  continue;
+              }
+              if (in_array($label, $payrollLabels, true)) {
+                  $payrollDetailFields[] = $field;
+              } else {
+                  $otherDetailFields[] = $field;
+              }
+          }
+          $detailUser = class_exists('AuthService') ? AuthService::user() : null;
+          $canViewPayrollDetail = $detailUser instanceof User && PayrollEmployeeAccess::canView($detailUser);
+          $payrollWarningsDetail = $canViewPayrollDetail
+              ? EmployeeData::collectPayrollWarnings($contact->employeeData)
+              : [];
         ?>
         <?php if ($otherDetailFields !== []) : ?>
           <h3 class="dg-subsection-title">Weitere Angaben</h3>
@@ -179,8 +200,108 @@
               <dd><?= nl2br(View::escape($field['value'])) ?></dd>
             <?php endforeach; ?>
           </dl>
-        <?php elseif ($healthInsurance === '' && $healthInsuranceNumber === '') : ?>
+        <?php elseif ($healthInsurance === '' && $healthInsuranceNumber === '' && $payrollDetailFields === []) : ?>
           <p class="dg-lead">Noch keine weiteren Mitarbeiterdaten erfasst.</p>
+        <?php endif; ?>
+        <?php if ($canViewPayrollDetail) : ?>
+          <h3 class="dg-subsection-title">Lohnabrechnung</h3>
+          <?php if ($payrollWarningsDetail !== []) : ?>
+            <div class="dg-flash dg-flash--warning">
+              <ul>
+                <?php foreach ($payrollWarningsDetail as $w) : ?>
+                  <li><?= View::escape((string) $w) ?></li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          <?php endif; ?>
+          <?php if ($payrollDetailFields !== []) : ?>
+            <dl class="dg-dl">
+              <?php foreach ($payrollDetailFields as $field) : ?>
+                <dt><?= View::escape($field['label']) ?></dt>
+                <dd><?= nl2br(View::escape($field['value'])) ?></dd>
+              <?php endforeach; ?>
+            </dl>
+          <?php else : ?>
+            <p class="dg-lead">Noch keine Lohn-Stammdaten erfasst.</p>
+          <?php endif; ?>
+          <p class="dg-lead">
+            <a href="/app?page=lohn-lohnkonto&amp;contact_id=<?= (int) $contact->id ?>&amp;year=<?= (int) date('Y') ?>">Lohnkonto öffnen</a>
+            — Jahresübersicht Brutto/Netto und CRM-Abrechnungs-PDFs.
+          </p>
+          <?php
+            $crmDocs = is_array($payrollCrmDocuments ?? null) ? $payrollCrmDocuments : [];
+          ?>
+          <h4 class="dg-subsection-title">CRM-Abrechnungen</h4>
+          <?php if ($crmDocs === []) : ?>
+            <p class="dg-lead">Noch keine Final-PDF aus gesperrten Monatsläufen.</p>
+          <?php else : ?>
+            <ul class="dg-doc-list__items">
+              <?php foreach ($crmDocs as $crmDoc) : ?>
+                <?php
+                  $crmDocId = (int) ($crmDoc['id'] ?? 0);
+                  $crmYm = sprintf(
+                      '%02d/%04d',
+                      (int) ($crmDoc['period_month'] ?? 0),
+                      (int) ($crmDoc['period_year'] ?? 0)
+                  );
+                ?>
+                <li>
+                  <?= View::escape($crmYm) ?> · Run #<?= (int) ($crmDoc['run_id'] ?? 0) ?>
+                  —
+                  <a href="/app?page=lohn-lohnkonto&amp;download=pdf&amp;doc=<?= $crmDocId ?>">PDF</a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+          <?php
+            $detailAssignments = $payrollWageAssignments ?? [];
+            $unitLabelsDetail = PayrollWageTypeRepository::unitLabels();
+          ?>
+          <h4 class="dg-subsection-title">Lohnarten-Zuordnung</h4>
+          <?php if ($detailAssignments === []) : ?>
+            <p class="dg-lead">Keine Lohnarten zugeordnet.</p>
+          <?php else : ?>
+            <div class="dg-table-wrap">
+              <table class="dg-table dg-table--compact">
+                <thead>
+                  <tr>
+                    <th>Lohnart</th>
+                    <th>Betrag / Satz</th>
+                    <th>Einheit</th>
+                    <th>Gültig</th>
+                    <th>Prio</th>
+                    <th>Notiz</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($detailAssignments as $da) : ?>
+                    <?php
+                      $from = trim((string) ($da['valid_from'] ?? ''));
+                      $to = trim((string) ($da['valid_to'] ?? ''));
+                      if ($from !== '' && $to !== '') {
+                          $validity = $from . ' – ' . $to;
+                      } elseif ($from !== '') {
+                          $validity = 'ab ' . $from;
+                      } elseif ($to !== '') {
+                          $validity = 'bis ' . $to;
+                      } else {
+                          $validity = 'unbefristet';
+                      }
+                      $unitKey = (string) ($da['wage_unit'] ?? '');
+                    ?>
+                    <tr>
+                      <td><?= View::escape((string) ($da['wage_code'] ?? '') . ' — ' . (string) ($da['wage_label'] ?? '')) ?></td>
+                      <td><?= View::escape((string) ($da['amount_display'] ?? $da['amount'] ?? '')) ?></td>
+                      <td><?= View::escape($unitLabelsDetail[$unitKey] ?? $unitKey) ?></td>
+                      <td><?= View::escape($validity) ?></td>
+                      <td><?= (int) ($da['priority'] ?? 0) ?></td>
+                      <td><?= View::escape((string) ($da['notes'] ?? '')) ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
         <?php endif; ?>
       </section>
 

@@ -308,6 +308,21 @@ final class MigrationRunner
             '120_complaint_attachments.sql' => self::tableExists($pdo, 'dg_complaint_attachments'),
             '121_flyer_templates.sql' => self::tableExists($pdo, 'dg_flyer_templates')
                 && self::columnExists($pdo, 'dg_gift_vouchers', 'flyer_template_id'),
+            '125_payroll_wage_types.sql' => self::tableExists($pdo, 'dg_payroll_wage_types'),
+            '126_payroll_employee_wage_assignments.sql' => self::tableExists($pdo, 'dg_payroll_employee_wage_assignments'),
+            '127_payroll_rate_tables.sql' => self::tableExists($pdo, 'dg_payroll_rate_sets')
+                && self::tableExists($pdo, 'dg_payroll_rate_params'),
+            '128_payroll_runs.sql' => self::tableExists($pdo, 'dg_payroll_runs')
+                && self::tableExists($pdo, 'dg_payroll_run_employees')
+                && self::tableExists($pdo, 'dg_payroll_run_lines')
+                && self::tableExists($pdo, 'dg_payroll_run_events'),
+            '129_payroll_documents.sql' => self::tableExists($pdo, 'dg_payroll_documents'),
+            '130_payroll_fibu_batches.sql' => self::tableExists($pdo, 'dg_payroll_fibu_batches'),
+            '131_payroll_sepa_exports.sql' => self::tableExists($pdo, 'dg_payroll_sepa_exports'),
+            '132_payroll_sv_exports.sql' => self::tableExists($pdo, 'dg_payroll_sv_exports'),
+            '133_elster_submissions_payroll.sql' => self::tableExists($pdo, 'dg_elster_submissions')
+                && self::columnExists($pdo, 'dg_elster_submissions', 'payload_checksum')
+                && self::columnExists($pdo, 'dg_elster_submissions', 'detail_json'),
             default => false,
         };
     }
@@ -448,6 +463,15 @@ final class MigrationRunner
             '119_complaints.sql' => true,
             '120_complaint_attachments.sql' => true,
             '121_flyer_templates.sql' => true,
+            '125_payroll_wage_types.sql' => true,
+            '126_payroll_employee_wage_assignments.sql' => true,
+            '127_payroll_rate_tables.sql' => true,
+            '128_payroll_runs.sql' => true,
+            '129_payroll_documents.sql' => true,
+            '130_payroll_fibu_batches.sql' => true,
+            '131_payroll_sepa_exports.sql' => true,
+            '132_payroll_sv_exports.sql' => true,
+            '133_elster_submissions_payroll.sql' => true,
         ];
     }
 

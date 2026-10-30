@@ -91,6 +91,8 @@
           <?php View::render('settings/tab-letterhead', compact('letterheadSettings', 'letterheadCompany', 'letterheadMissingMandatory', 'letterheadCompliance', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'time-tracking') : ?>
           <?php View::render('settings/tab-time-tracking', compact('timeTrackingSettings', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'lohn') : ?>
+          <?php View::render('settings/tab-lohn', compact('payrollEmployerForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'lager-struktur') : ?>
           <?php View::render('settings/tab-lager-struktur', compact('dbConnected', 'lagerStrukturTab', 'stockLocations', 'stockHalls', 'stockShelves', 'stockLocationOptions')); ?>
         <?php elseif ($settingsSelection['template'] === 'legal-products') : ?>
