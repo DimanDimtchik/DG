@@ -388,7 +388,7 @@ Verhalten:
 
 ## Serie L2 — Mitarbeiter Steuer / SV / Beschäftigung
 
-> Einstieg: `l2a` · L2a ✅ · weiter mit `l2b`  
+> Einstieg: `l2a` · L2a ✅ · L2b ✅ · weiter mit `l2c`  
 > Baut auf `EmployeeData` auf — **erweitern**, nicht paralleles HR-System.
 
 ### L2a — Spec MA-Lohnfelder ✅ 2026-10-30
@@ -506,15 +506,41 @@ Keine Live-Abfrage ELStAM/ITSG/KK in L2.
 
 **Nicht:** Migration, UI, Berechnung, ELStAM, Baulohn-Felder.
 
-### L2b — Migration + Validierung
+### L2b — Migration + Validierung ✅ 2026-10-30
 
-`EmployeeData::fields()` um Katalog B erweitern; `sectionLabels['payroll']`; Select-Optionen; Normalize/Sanitize laut L2a; fehlende Pflichtfelder = Warnung / Lauf-Block erst L5, Speichern erlaubt.
+Keine SQL-Migration (`employee_data` JSON).
 
-**Nicht:** Berechnung.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Felder Katalog B + section `payroll` | `EmployeeData::fields()` / `sectionLabels()` |
+| Select-Optionen | tax_class, religion_code, payroll_employment_type |
+| Sanitize / Soft-Sync Zeit-Typ | `sanitizePayrollFields`, `softSyncEmploymentTypeFromPayroll` |
+| Warnungen / Lauf-Lücken | `collectPayrollWarnings`, `missingPayrollFieldsForRun` |
+| Preserve ohne Edit-Recht | `preservePayrollIfDenied` + Hook in `ContactRepository` |
+| Rechte-Helper | `PayrollEmployeeAccess` (`canView`/`canEdit`) |
+| Selftest | `bin/payroll-employee-l2b-selftest.php` |
+
+Verhalten:
+
+- Speichern mit unvollständigen Pflichtfeldern **erlaubt**; Lücken nur Warnung / `missingPayrollFieldsForRun` für L5.
+- `sv_exempt` nur mit beherrschendem GF; GF-Flag nur bei Typ `managing_director`.
+- Soft-Sync: `payroll_employment_type` → `employment_type` nur wenn leer oder bereits kompatibel.
+- Modul `lohn` noch **nicht** in `MODULE_LABELS`: `canEdit` nur Admin; `canView` Admin/Edit/HR.
+
+#### Abnahme L2b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Keys in EmployeeData, keine Parallel-Tabelle | ✅ |
+| Sanitize laut L2a | ✅ |
+| Access-Helper | ✅ |
+| Keine Brutto-Netto-Berechnung / keine UI-Sektion neu gestaltet | ✅ (UI = L2c) |
+
+**Nicht:** Berechnung; dedizierte UI-Gestaltung (L2c) — generisches Formular zeigt neue Felder ggf. schon mit, Feinschliff L2c.
 
 ### L2c — UI Kontakt/Mitarbeiterkarte
 
-Klar getrennte Sektion „Lohnabrechnung“; Hinweise Meldestelle behalten; Gate laut L2a.
+Klar getrennte Sektion „Lohnabrechnung“; Hinweise Meldestelle behalten; Gate laut L2a (`PayrollEmployeeAccess`); Warnungen aus `collectPayrollWarnings`.
 
 **Nicht:** PDF erzeugen.
 
@@ -736,16 +762,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l1b` AG Store/`company_extended.lohn` | ✅ 2026-10-30 |
 | — | `l1c` AG UI | ✅ 2026-10-30 |
 | — | `l2a` MA-Felder Spec | ✅ 2026-10-30 |
-| 1 | `l2b` MA Felder/Validierung | **als Nächstes** |
-| 2 | `l2c` MA UI | |
+| — | `l2b` MA Felder/Validierung | ✅ 2026-10-30 |
+| 1 | `l2c` MA UI | **als Nächstes** |
 
 Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l2b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L2b. Nicht andere L-Pakete.
+Lohn Implementierung: l2c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L2c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
