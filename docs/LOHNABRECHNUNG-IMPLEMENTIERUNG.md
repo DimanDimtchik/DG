@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L8b ✅)  
+> **Stand:** 2026-10-30 (L0–L9a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L8b SEPA-Generator ✅ · nächster Chat: **`l9a`** (SV-Portal Spec)
+> **Status:** L9a Spec SV-Portal ✅ · nächster Chat: **`l9b`** (Export CSV/PDF)
 
 ---
 
@@ -1712,15 +1712,194 @@ XML-Erzeugung, Meta `dg_payroll_sepa_exports`, Download, Probe-Kennzeichnung, UI
 
 ## Serie L9 — SV-Vorbereitung / Meldeportal-Export
 
-### L9a — Spec Kontrolllisten & Beitragsnachweis-Vorbereitung
+> Einstieg: `l9a` · L9a ✅ · weiter mit `l9b`  
+> L0b **D7 / E2:** in Stufe A nur **Portal-Vorbereitung/Export** — kein ITSG-Direktversand (§ 95b SGB IV / Systemuntersuchung = **LB**).  
+> Gate **G3** (Pilot ohne Lexware) setzt mind. 2 Testmonate inkl. L9 voraus — nicht mit Live-ITSG verwechseln.
 
-Werte für manuelles SV-Meldeportal; **kein** direkter Versand.
+### L9a — Spec Kontrolllisten & Beitragsnachweis-Vorbereitung ✅ 2026-10-30
 
-**Nicht:** ITSG-Zertifikat, DEÜV-Senden.
+Nur Spezifikation — CSV/PDF-Export + UI = **L9b**. Kein PHP in L9a. Kein ITSG-Zertifikat, kein DEÜV-/Beitragsnachweis-XML-Versand, keine Annahmestellen-API.
+
+#### Ziel
+
+Aus einem **gesperrten** Monatslauf (`locked`, nicht superseded) die Werte erzeugen, die ein Sachbearbeiter **manuell** im **SV-Meldeportal** (bzw. bei der Einzugsstelle) braucht:
+
+1. **Beitragsnachweis-Vorbereitung** — Summen je KK/Einzugsstelle und Beitragsart (AN+AG) für den Zahl-/Nachweis-Monat  
+2. **Stamm-/Melde-Kontrollliste** — je ok-MA: Pflichtfelder für DEÜV-Handpflege im Portal (Anmeldung/Änderung/Abmeldung) prüfen, Lücken listen  
+3. **Umlagen-/Pauschal-Übersicht** — U1/U2/U3 und Minijob-Pauschalen getrennt ausweisen  
+
+Das CRM **sendet nichts**. Ausgabe = Kontrollliste + Export (L9b) zum Abtippen/Abgleichen im Portal.
+
+#### Abgrenzung Stufe A vs. B
+
+| Stufe A (L9) | Stufe B (LB) |
+|--------------|--------------|
+| Zahlen + Checklisten + CSV/PDF | Beitragsnachweis + DEÜV **direkt** aus DG |
+| Nutzer tippt/uploadet im Meldeportal | ITSG Prod-MOD-ID, Testaufgaben, Pilot ≥2 |
+| `SocialSecurityRegistrationDraft` bleibt Hilfs-Draft Anmeldung | DEÜV-XML echt, ELStAM-Abruf |
+| Kein digitaler BG-Lohnnachweis | UV/BG digital später (nicht L9) |
+
+#### Voraussetzungen & Trigger
+
+| Regel | Entscheidung |
+|-------|--------------|
+| Quelle Zahlen | Run `status=locked` + `is_superseded=0` |
+| MA in Summen | Nur `emp_status=ok` mit lesbarem `result_json` |
+| Storno-Run | **Keine** Beitragsnachweis-Summen aus Storno (wie L8); Korrektur-Run: Summen aus **eigenen** ok-Results; Hinweis UI „Vorgänger ggf. im Portal stornieren/korrigieren“ |
+| Correction | Erlaubt — Nutzer muss Portal-Korrektur selbst steuern |
+| FiBu / SEPA | **Keine** harte Voraussetzung; empfohlen: erst FiBu (L7), dann Portal-Zahlen, SEPA unabhängig |
+| Rechte Vorschau | `lohn` ≥ `partial` (Menü `lohn-auswertungen`, L0c) |
+| Rechte Export-Datei (L9b) | `lohn` ≥ `partial`; Audit-Meta wenn gespeichert |
+| Flag „live send“ | **Keins** — es gibt keinen Versandkanal in A |
+| Betriebsnummer AG | Snapshot/`employerSnapshot.betriebsnummer` — leer → Hard-Warnung auf Liste („Portal-Absender fehlt“); Freigabe Lauf bleibt L5-Regel |
+
+#### Datenquellen (bestehend, keine neuen Stammtabellen in L9a)
+
+| Bedarf | Quelle |
+|--------|--------|
+| AG Betriebsnummer, Name, U1/U2/U3-Flags | `PayrollEmployerSettings::employerSnapshot` / `lohn` |
+| MA Name, Eintritt/Austritt | Kontakt + `employee_data` |
+| SV-Nr., Meldestelle, KK-Name | `social_security_number`, `social_filing_office`, `health_insurance` |
+| KK-Betriebsnummer | `health_insurance_company_number` |
+| Beitrags-/Personengruppe | `contribution_group_key`, `person_group_key` |
+| Beschäftigungsart | `payroll_employment_type` (+ Engine-`path`: regular/mini/midi) |
+| Beitragsbeträge Monat | `result_json`: `kv_an/ag`, `rv_an/ag`, `av_an/ag`, `pv_an/ag`, `u1`/`u2`/`u3`, `flat_lst`/`flat_other`, `gross_sv`, `gross_total` |
+| Anmeldungs-Draft (optional Hinweis) | `SocialSecurityRegistrationDraft` / `social_registration_*` — **nicht** Portal-Ersatz |
+
+Keine neuen EmployeeData-Keys in L9a. Fehlende KK-BN → Zeile unter „ohne KK-BN“ + Warnung (Aggregation trotzdem, Gruppe `UNKNOWN`).
+
+#### Beitragsnachweis-Vorbereitung (fachliche Aggregation)
+
+**Zielstruktur** (eine Periode = ein locked Run bzw. gewählter Monat mit genau einem aktiven locked regular/correction):
+
+| Aggregat-Schlüssel | Felder |
+|--------------------|--------|
+| Primär | `health_insurance_company_number` (8 Ziffern) oder `UNKNOWN` |
+| Sekundär (Anzeige) | KK-Name (`health_insurance`), ggf. `social_filing_office` |
+| Optional Split | `contribution_group_key` (wenn gesetzt) — UI darf „nach Beitragsgruppe“ aufklappen |
+
+**Summenspalten je Schlüssel (EUR, 2 Dezimalen):**
+
+| Spalte | Formel aus ok-MA `result_json` |
+|--------|--------------------------------|
+| KV gesamt | Σ (`kv_an` + `kv_ag`) |
+| RV gesamt | Σ (`rv_an` + `rv_ag`) |
+| AV gesamt | Σ (`av_an` + `av_ag`) |
+| PV gesamt | Σ (`pv_an` + `pv_ag`) |
+| SV AN | Σ (`kv_an`+`rv_an`+`av_an`+`pv_an`) |
+| SV AG | Σ (`kv_ag`+`rv_ag`+`av_ag`+`pv_ag`) |
+| U1 / U2 / U3 | Σ je Feld (nur wenn AG-Flag/Param > 0) |
+| Flat (Mini o. Ä.) | Σ (`flat_lst` + `flat_other`) — **getrennt** von SV-Pflicht |
+| SV-Brutto | Σ `gross_sv` (Kontroll) |
+| MA-Anzahl | Anzahl ok-MA in der Gruppe |
+
+**Kontrollgleichung (Soft):**  
+`SV_AN + SV_AG` ≈ Summe der vier Zweige; Abweichung > 0,01 € → Warnung „Zerlegung inkonsistent“ (wie FiBu Hard-Fail-Idee, hier nur Soft auf Liste).
+
+**Minijob / GF sv_exempt:**  
+MA mit Engine-Pfad `mini` oder `sv_exempt`: in SV-Pflicht-Summen nur was `result_json` wirklich trägt; Flat-Zeilen immer sichtbar. Keine stillen Nullen ohne Hinweis „Pfad=mini/exempt“.
+
+**Zahlziel im Portal:** Nutzer überweist/meldet laut Einzugsstelle — CRM liefert **keine** SEPA an KK (L8 = nur Netto-MA). Hinweistext in UI: „SV-Beiträge nicht über Lohn-SEPA.“
+
+#### Stamm-/Melde-Kontrollliste (DEÜV-Vorbereitung, ohne Senden)
+
+Pro ok-MA eine Zeile + Ampel:
+
+| Check | Pflicht wenn | Fail → |
+|-------|--------------|--------|
+| Betriebsnummer AG | immer | Run-Warnung |
+| Personengruppe | fulltime/parttime/midijob; mini: Minijob-Schlüssel | Lücke |
+| Beitragsgruppe | sv-pflichtig (nicht exempt) | Lücke |
+| KK-Name | sv-pflichtig | Lücke |
+| KK-Betriebsnummer | empfohlen; für Beitragsnachweis-Gruppierung | Soft-Warnung |
+| SV-Nummer | wenn Status received / sv-pflichtig | Lücke |
+| Eintritt | immer | Lücke |
+| Austritt | wenn Austrittsmonat = Periode | Hinweis „Abmeldung prüfen“ |
+| Steuer-ID | LSt/ELSTER später; Soft für L9 | Soft |
+| Anmeldungs-Draft | wenn `social_registration_status` ≠ done/none je Policy | Hinweis Link Kontaktkarte |
+
+**Meldearten (nur Checklisten-Hinweise, keine XML):**
+
+| Ereignis | Portal-Handlung (Text) |
+|----------|------------------------|
+| Eintritt in Periode | Anmeldung DEÜV im Portal |
+| Austritt in Periode | Abmeldung |
+| Wechsel KK / Beitrags-/Personengruppe ggü. Vormonat* | Änderung |
+| Sonst | Keine Meldepflicht aus Lauf ableiten |
+
+\*Vormonat-Vergleich: L9b **optional** wenn Vorgänger-locked-Run existiert; sonst manueller Hinweis „Stamm gegen Vormonat prüfen“. L9a verpflichtet den Diff nicht als Hard-Fail.
+
+Bestehendes `SocialSecurityRegistrationDraft` weiter für Eintritts-Anmeldung nutzen — L9 listet nur, ersetzt den Draft nicht.
+
+#### UV / BG
+
+Digitaler Lohnnachweis / UV-Meldeverfahren: **nicht** in L9 (L1: Mitgliedsnummer pflegen reicht). Checkliste darf optional `bg_data` „Mitgliedsnummer gesetzt?“ als Soft-Hinweis zeigen — keine Datei.
+
+#### Persistenz & Protokoll (Rahmen für L9b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Meta-Tabelle | Optional `dg_payroll_sv_exports`: `id`, `run_id`, `created_at`, `created_by_user_id`, `kind` (`beitragsnachweis`\|`stammkontrolle`\|`combined`), `checksum`, `filename`, `reason` |
+| Dateiformate L9b | **CSV** (UTF-8 BOM, DE-Zahlen) Pflicht; **PDF** Kontrollblatt optional |
+| Speicherung | `storage/payroll/sv/` analog SEPA/PDF — empfohlen für Prüfer |
+| Mehrfach-Export | Erlaubt; kein „gemeldet“-Status am Run (Portal ist Quelle der Wahrheit) |
+| Idempotenz | Keine Behörden-MsgId; Dateiname `lohn-sv-{runId}-{YmdHis}.csv` |
+
+Kein Flag analog `payroll_sepa_live` — Export ist immer „Hilfe für manuelles Portal“.
+
+#### Rechte & UI-Skizze (Bau = L9b)
+
+| Aktion | Recht |
+|--------|-------|
+| Seite Auswertungen / Vorschau Summen | `lohn` ≥ `partial` |
+| CSV/PDF Download | `lohn` ≥ `partial` |
+| AG-Stammlücken beheben | Settings Lohn / Firma (bestehend) |
+| DEÜV senden / ITSG | **nicht** in A |
+
+Menü: `lohn-auswertungen` (L0c) — Filter Monat/Run, Tabs „Beitragsnachweis“ / „Stammkontrolle“, Link vom gesperrten Monatslauf „SV-Portal-Vorbereitung“.  
+Zusätzlich Kurzblock am Monatslauf (optional L9b): Summen-Teaser + Link.
+
+#### Service-Skizze (Namen frei, Verhalten fest für L9b)
+
+`PayrollSvPortalService` (Arbeitstitel):
+
+- `previewBeitragsnachweis(runId): groups[] + warnings[]`  
+- `previewStammkontrolle(runId): rows[] + gaps[]`  
+- `toCsv(...)` / optional `toPdf(...)`  
+- `auditorChecklist(): string[]` (Prüfer: locked, keine ITSG-Sendung, Flat getrennt, Storno-Regel)
+
+Wiederverwenden: Aggregation-Ideen aus `PayrollFibuService::aggregateAmounts` (SV-Zerlegung), Maskierung sensibler Felder analog SEPA-IBAN (SV-Nr. maskieren in UI).
+
+#### Abgrenzung
+
+| Thema | Wohin |
+|-------|--------|
+| CSV/PDF + UI | L9b |
+| ITSG / DEÜV-XML senden | LB |
+| ELStAM | LB |
+| LSt-Anmeldung ELSTER | L10 |
+| SEPA Netto-MA | L8 |
+| SEPA an Krankenkasse | **nicht** in A |
+| Digitaler BG-Lohnnachweis | später / nicht L9 |
+| Neuer PHP-Code | **nicht** L9a |
+
+#### Abnahme L9a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Beitragsnachweis-Aggregation je KK spezifiziert | ✅ |
+| Stamm-/DEÜV-Kontrollliste ohne Senden | ✅ |
+| Storno/Correction/Flat/Umlagen abgegrenzt | ✅ |
+| Rechte/UI/`lohn-auswertungen`; Persistenz-Rahmen L9b | ✅ |
+| Kein PHP / kein ITSG / kein DEÜV-Versand | ✅ |
+
+**Nicht:** Generator-Code, CSV/PDF-Dateien, ITSG-Zertifikat, DEÜV-Senden, LB-Pakete.
 
 ### L9b — Export CSV/PDF Kontrolle
 
-**Nicht:** LB-Pakete.
+CSV (Pflicht) + optional PDF aus L9a-Aggregaten; Seite `lohn-auswertungen` + Download/Audit.
+
+**Nicht:** LB-Pakete; kein ITSG-Versand.
 
 ---
 
@@ -1816,15 +1995,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l7c` UI FiBu-Übernahme + Stichprobe | ✅ 2026-10-30 |
 | — | `l8a` Spec SEPA-XML | ✅ 2026-10-30 |
 | — | `l8b` SEPA-Generator + Download + Audit | ✅ 2026-10-30 |
-| 1 | `l9a` Spec SV-Kontrolllisten / Beitragsnachweis-Vorbereitung | **als Nächstes** |
+| — | `l9a` Spec SV-Kontrolllisten / Beitragsnachweis-Vorbereitung | ✅ 2026-10-30 |
+| 1 | `l9b` Export CSV/PDF Kontrolle (SV-Portal) | **als Nächstes** |
 
-Danach L9b → … nicht überspringen.
+Danach L10a → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l9a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L9a. Nicht andere L-Pakete.
+Lohn Implementierung: l9b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L9b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
