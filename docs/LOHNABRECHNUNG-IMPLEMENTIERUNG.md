@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L5 ✅)  
+> **Stand:** 2026-10-30 (L0–L5 ✅ · L6a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L5c UI Monatslauf ✅ · nächster Chat: **`l6a`** (PDF/Lohnkonto Spec)
+> **Status:** L6a Spec PDF/Lohnkonto ✅ · nächster Chat: **`l6b`** (PDF-Generator)
 
 ---
 
@@ -1200,21 +1200,162 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-### L6a — Spec PDF + Lohnkonto
+> Einstieg: `l6a` · L6a ✅ · weiter mit `l6b`
 
-Mindestangaben Abrechnung (Arbeitgeber, MA, Zeitraum, Brutto-Positionen, Abzüge, Netto, AG-Anteile Ausweis wo üblich).  
-Lohnkonto: chronologische Übersicht je MA/Jahr.  
-Eigene PDF **ersetzt nicht** sofort fremde `payroll_slip`-Ablage — parallel.
+### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
-**Nicht:** Behördenmeldung.
+Nur Spezifikation — Generator/Speicher = **L6b**, Lohnkonto-UI/Export = **L6c**. Kein PHP in L6a. Keine Behördenmeldung, kein SEPA, keine FiBu.
+
+#### Ziel
+
+Aus **gesperrten** Monatsläufen (`status=locked`, nicht superseded) je MA eine revisionssichere **Lohnabrechnungs-PDF** erzeugen und ablegen. Parallel bleibt die fremde Ablage `payroll_slip` an der Mitarbeiterkarte (L0/L2) — eigene PDF ersetzt sie **nicht** sofort (Übergang Lexware/Kanzlei, D5). **Lohnkonto**: chronologische Übersicht je MA/Jahr aus gespeicherten Run-Ergebnissen (+ optional Link zur PDF).
+
+#### Trigger & Voraussetzungen
+
+| Regel | Entscheidung |
+|-------|--------------|
+| Wann erzeugen? | Nach `lock` (automatisch Queue/Sync in L6b) **oder** manuell „PDF erzeugen“ nur wenn Run `locked` und MA `ok` |
+| Entwurf-PDF | Optional aus `calculated`/`approved` mit Wasserzeichen „ENTWURF — nicht verbindlich“; **nicht** revisionssicher, überschreibbar |
+| Verbindliche PDF | Nur aus `locked` + MA-Status `ok`; Datei unveränderlich |
+| Storno/Correction | Neue PDF für neuen locked Run; Vorgänger-PDF bleibt; Lohnkonto zeigt beide mit Kennzeichnung |
+| Fehlende Betriebsnummer | Lock ist in L5 bereits geblockt — PDF setzt voraus, dass AG-Snapshot vollständig genug war |
+
+#### Mindestangaben Abrechnung (PDF-Inhalt)
+
+**Kopf / Arbeitgeber**
+
+| Feld | Quelle |
+|------|--------|
+| Arbeitgeber-Name (legal/display) | L1 Snapshot / `PayrollEmployerSettings::employerSnapshot` |
+| Anschrift | Firmendaten |
+| Betriebsnummer | Snapshot |
+| Steuernummer (ESt) / Finanzamt-Kurz | Snapshot soweit vorhanden |
+| Abrechnungsmonat | Run `period_year`/`period_month` |
+| Dokumenttitel | „Lohnabrechnung“ + Periode |
+| Run-ID / Art (`regular`/`correction`/`storno`) | Run |
+| Erzeugt am / Benutzer | Lock- bzw. Generate-Zeitpunkt |
+
+**Mitarbeiter**
+
+| Feld | Quelle |
+|------|--------|
+| Name, Anschrift | Kontaktstamm (Snapshot zum Calculate) |
+| Personal-/Steuer-ID (steuerliche IdNr.) | payroll `tax_id` (maskierbar in UI-Druckoption später) |
+| Steuerklasse, Kinderfreibeträge, KiSt-Merkmal | Snapshot |
+| SV-Nummer (wenn vorhanden) | employee_data |
+| Beschäftigungsart / Pfad | `path` / `payroll_employment_type` |
+| Eintritt | `entry_date` |
+
+**Beträge (Körper)**
+
+| Block | Inhalt |
+|-------|--------|
+| Brutto-Positionen | Run-Lines (code, Bezeichnung wenn vorhanden, Betrag, Stunden) |
+| Steuerpflichtiges Brutto / SV-Brutto | Result `gross_taxable` / `gross_sv` |
+| Abzüge AN | LSt, SolZ, KiSt, KV/RV/AV/PV AN, Nettolohnabzüge, ggf. `flat_lst_employee_share` |
+| Netto / Auszahlungsbetrag | `net_pay` |
+| AG-Anteile (Ausweis) | KV/RV/AV/PV AG, Umlagen U1/U2/U3, Minijob-Pauschalen `flat_lst`/`flat_other` |
+| AG-Kosten gesamt | `employer_cost` (Hinweis „intern/Kontroll“) |
+| Warnungen | optional klein gedruckt, wenn im Result |
+
+**Fuß**
+
+| Angabe | Inhalt |
+|--------|--------|
+| Hinweis | „Dies ist eine Abrechnung aus dem DG-CRM. Keine ELStAM-/Behördenübermittlung.“ |
+| Parallel-Hinweis Stufe A | „Fremde Lohnbüro-PDFs können weiterhin unter Mitarbeiterdokumente liegen.“ |
+| Seiten / Dateiname | `lohn-{contactId}-{YYYYMM}-run{runId}.pdf` |
+
+Keine Bank-IBAN-Vollanzeige Pflicht in A (optional maskiert aus payout-Index); SEPA = L8.
+
+#### Speicher-Entscheidung (verbindlich für L6b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Nur File ohne DB-Meta | **Nein** |
+| Tabelle `dg_payroll_documents` | **Ja** |
+| Dateipfad | Instanz-Storage analog Kontakt-Uploads / Belege (L6b konkretisiert Pfad-Helper) |
+| Inhalt nach `locked` | **immutable** — kein Überschreiben; neue Version = neuer Datensatz nur bei neuem Run |
+
+##### `dg_payroll_documents` (Rahmen)
+
+| Spalte | Bedeutung |
+|--------|-----------|
+| `id` | PK |
+| `run_id` | FK Run |
+| `contact_id` | FK Kontakt |
+| `kind` | `payslip` / `payslip_draft` / später `lohnkonto_export` |
+| `period_year` / `period_month` | denormalisiert |
+| `storage_path` | relativ Instanz |
+| `checksum` | SHA-256 Datei |
+| `byte_size` | |
+| `is_final` | 1 = aus locked (unveränderlich) |
+| `created_at` / `created_by_user_id` | |
+| UNIQUE | sinnvoll `(run_id, contact_id, kind)` für `payslip` final — ein Final je MA/Run |
+
+#### Lohnkonto (fachlich)
+
+| Aspekt | Spec |
+|--------|------|
+| Scope | Je `contact_id` + Kalenderjahr |
+| Zeilen | Jeder nicht-skipped MA-Eintrag aus Runs mit Status ≥ `calculated` (empfohlen: nur `approved`/`locked` für „verbindlich“; Entwurf ausblendbar) |
+| Spalten mind. | Monat, Run#, Art, Status, Brutto, LSt, SV-AN-Summe, Netto, PDF-Link, superseded-Flag |
+| Sortierung | Monat ASC, Run-ID ASC |
+| Jahres-Summen | Brutto, Netto, LSt, SV-AN (aus denormalisierten Feldern / result_json) |
+| Export | Kontroll-CSV (D5) in L6c; Lohnkonto-PDF optional Sammeldruck |
+| Rechte | `lohn` ≥ `partial` sehen; Final-PDF Download wie sehen; Erzeugen final = `full` oder generate nach Lock durch System |
+
+Seite: `lohn-lohnkonto` (L0c). Einstieg auch von Kontakt-Mitarbeiterkarte (Link „Lohnkonto“) in L6c.
+
+#### Parallelität `payroll_slip`
+
+| Regel | |
+|-------|--|
+| Fremde Uploads | bleiben; keine Auto-Löschung bei eigener PDF |
+| UI | Kontakt zeigt beide Blöcke: „CRM-Abrechnungen“ (dg_payroll_documents) + „Externe Lohn-PDFs“ (`payroll_slip`) |
+| Cutover | erst nach bewusster Betriebsentscheidung (nicht in L6a automatisieren) |
+
+#### Rechte (Kurz)
+
+| Aktion | Mindest |
+|--------|---------|
+| Entwurf-PDF sehen/erzeugen | `partial` + `canEdit` |
+| Final-PDF erzeugen (falls manuell) | `full` + `canEdit` (oder auto bei Lock) |
+| Final-PDF / Lohnkonto sehen | `partial` |
+| Kontroll-CSV Lohnkonto | `partial` |
+
+#### Abgrenzung
+
+| Thema | Wohin |
+|-------|--------|
+| PDF-Binary schreiben | L6b |
+| Lohnkonto-UI + CSV | L6c |
+| FiBu | L7 |
+| SEPA | L8 |
+| ELSTER/SV-Meldung | L10 / LB / L9 |
+| Layout-Pixel-Feinschliff | L6b (Briefpapier-Anbindung wenn vorhanden, sonst schlichtes CRM-PDF) |
+
+#### Abnahme L6a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| PDF-Mindestangaben + Dateiname | ✅ |
+| Speicher `dg_payroll_documents` + Immutability | ✅ |
+| Lohnkonto-Spalten/Jahr | ✅ |
+| Parallel `payroll_slip` | ✅ |
+| Kein PHP / keine Behördenmeldung | ✅ |
+
+**Nicht:** Generator-Code, UI, FiBu, SEPA, ELSTER.
 
 ### L6b — PDF-Generator + Speicherung
 
-Revisionssicher an Mandant/MA/Periode; nach `locked` unveränderlich.
+Migration `dg_payroll_documents`; Generator aus locked Run; Checksum; Draft-Wasserzeichen optional.
 
 **Nicht:** FiBu.
 
 ### L6c — Lohnkonto-UI + Export
+
+Seite `lohn-lohnkonto` + Kontroll-CSV; Links Final-PDF.
 
 **Nicht:** SEPA.
 
@@ -1354,15 +1495,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l5a` Monatslauf Spec | ✅ 2026-10-30 |
 | — | `l5b` Migration Läufe/Positionen | ✅ 2026-10-30 |
 | — | `l5c` UI Monatslauf | ✅ 2026-10-30 |
-| 1 | `l6a` PDF/Lohnkonto Spec | **als Nächstes** |
+| — | `l6a` PDF/Lohnkonto Spec | ✅ 2026-10-30 |
+| 1 | `l6b` PDF-Generator/Speicherung | **als Nächstes** |
 
-Danach L6b → … nicht überspringen.
+Danach L6c → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l6a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L6a. Nicht andere L-Pakete.
+Lohn Implementierung: l6b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L6b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
