@@ -69,10 +69,10 @@ $statusLabel = static function (string $kind) use ($status): string {
         <div class="dg-panel" style="padding:1rem">
           <h3 class="dg-subsection-title" style="margin-top:0">CRM-Zugang</h3>
           <p class="dg-muted" style="margin:0 0 .75rem"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_CRM)) ?></p>
-          <fieldset class="dg-field">
+          <fieldset class="dg-form-section dg-field">
             <legend class="dg-field-label">Modus</legend>
-            <label><input type="radio" name="staff_crm_mode" value="link" checked> Link senden</label>
-            <label style="margin-left:1rem"><input type="radio" name="staff_crm_mode" value="manual"> Manuell eingeben</label>
+            <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_crm_mode" value="link" checked> Link senden</span></label>
+            <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_crm_mode" value="manual"> Manuell eingeben</span></label>
           </fieldset>
           <div data-staff-mode-panel="crm-link">
             <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
@@ -100,10 +100,10 @@ $statusLabel = static function (string $kind) use ($status): string {
         <div class="dg-panel" style="padding:1rem">
           <h3 class="dg-subsection-title" style="margin-top:0">Stempeluhr-PIN</h3>
           <p class="dg-muted" style="margin:0 0 .75rem"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_PIN)) ?></p>
-          <fieldset class="dg-field">
+          <fieldset class="dg-form-section dg-field">
             <legend class="dg-field-label">Modus</legend>
-            <label><input type="radio" name="staff_pin_mode" value="link" checked> Link senden</label>
-            <label style="margin-left:1rem"><input type="radio" name="staff_pin_mode" value="manual"> Manuell eingeben</label>
+            <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_pin_mode" value="link" checked> Link senden</span></label>
+            <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_pin_mode" value="manual"> Manuell eingeben</span></label>
           </fieldset>
           <div data-staff-mode-panel="pin-link">
             <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
@@ -135,10 +135,10 @@ $statusLabel = static function (string $kind) use ($status): string {
           <?php if (!$hasMailbox) : ?>
             <p class="dg-flash dg-flash--warning">Kein privates Postfach verknüpft — zuerst anlegen (Einstellungen → Postfächer oder Auto-Anlage).</p>
           <?php else : ?>
-            <fieldset class="dg-field">
+            <fieldset class="dg-form-section dg-field">
               <legend class="dg-field-label">Modus</legend>
-              <label><input type="radio" name="staff_mailbox_mode" value="link" checked> Link senden</label>
-              <label style="margin-left:1rem"><input type="radio" name="staff_mailbox_mode" value="manual"> Manuell eingeben</label>
+              <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_mailbox_mode" value="link" checked> Link senden</span></label>
+              <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_mailbox_mode" value="manual"> Manuell eingeben</span></label>
             </fieldset>
             <div data-staff-mode-panel="mailbox-link">
               <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">

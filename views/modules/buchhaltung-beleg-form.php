@@ -695,7 +695,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
 
           <?php if (!$readOnly) : ?>
             <div id="dg-voucher-payment-add-form" class="dg-voucher-payments__add" style="margin-top: 12px;">
-              <fieldset>
+              <fieldset class="dg-form-section dg-fieldset">
                 <legend>Neue Zahlung erfassen</legend>
                 <div class="dg-form-grid">
                   <label class="dg-field">
@@ -719,7 +719,9 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     <input type="text" name="payment_new_reference" form="dg-voucher-payment-add" maxlength="255" placeholder="optional">
                   </label>
                 </div>
-                <button type="submit" class="dg-button dg-button--primary dg-button--small" form="dg-voucher-payment-add">Zahlung buchen</button>
+                <div class="dg-form-actions">
+                  <button type="submit" class="dg-button dg-button--primary dg-button--small" form="dg-voucher-payment-add">Zahlung buchen</button>
+                </div>
               </fieldset>
             </div>
           <?php endif; ?>
@@ -1185,7 +1187,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <small class="dg-field-hint"><?= View::escape($documentFooterHint) ?></small>
         </label>
 
-        <fieldset class="dg-field dg-field--wide dg-voucher-legal-clauses">
+        <fieldset class="dg-form-section dg-field dg-field--wide dg-voucher-legal-clauses">
           <legend>Gesetzliche Hinweise (Vorlagen)</legend>
           <p class="dg-field-hint">
             Standardformulierungen nach UStG — auf Rechnung, PDF und E-Mail unter dem Freitext.
@@ -1368,7 +1370,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <?php endif; ?>
         <?php endif; ?>
       <?php else : ?>
-        <label class="dg-field dg-field--wide dg-voucher-arap-toggle">
+        <label class="dg-field dg-field--checkbox dg-field--wide dg-voucher-arap-toggle">>
           <span class="dg-checkbox">
             <input type="checkbox" name="arap_enabled" id="dg-voucher-arap-enabled" value="1"<?= $arapEnabled ? ' checked' : '' ?>>
             <span><?= View::escape($arapTypeLabel) ?> aktivieren</span>

@@ -195,7 +195,7 @@ $historyArchive = array_values(array_filter(
       </label>
     </div>
 
-    <fieldset class="dg-field dg-field--wide dg-number-range-increment">
+    <fieldset class="dg-form-section dg-field dg-field--wide dg-number-range-increment">
       <legend>Erhöhen bei nächster Nummer</legend>
       <label><input type="radio" name="number_range[increment_part]" value="prefix"<?= ($numberRangeDoc['increment_part'] ?? 'number') === 'prefix' ? ' checked' : '' ?>> Prefix</label>
       <label><input type="radio" name="number_range[increment_part]" value="number"<?= ($numberRangeDoc['increment_part'] ?? 'number') === 'number' ? ' checked' : '' ?>> Nummer (Standard)</label>

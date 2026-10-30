@@ -109,7 +109,7 @@ $formId = (int) ($formRow['id'] ?? 0);
               <td><?= View::escape($created !== '' ? date('d.m.Y H:i', strtotime($created) ?: time()) : '—') ?></td>
               <td><?= View::escape($preview !== '' ? $preview : '—') ?></td>
               <td class="dg-table__actions">
-                <a href="/app?page=website-formular-inbox&amp;id=<?= $formId ?>&amp;submission=<?= (int) ($sub['id'] ?? 0) ?>">Öffnen</a>
+                <a class="dg-button dg-button--small" href="/app?page=website-formular-inbox&amp;id=<?= $formId ?>&amp;submission=<?= (int) ($sub['id'] ?? 0) ?>">Öffnen</a>
               </td>
             </tr>
           <?php endforeach; ?>

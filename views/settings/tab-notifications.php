@@ -46,7 +46,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
           Farben und Linkgestaltung kommen aus <a href="<?= View::escape($softwareDesignUrl) ?>">Software Design</a>.
         </p>
         <div class="dg-form-grid">
-          <label class="dg-field dg-field--wide">
+          <label class="dg-field dg-field--checkbox dg-field--wide">>
             <span>
               <input type="checkbox" name="header_show_logo" value="1"<?= !empty($layout['header_show_logo']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
               Logo in der Kopfzeile anzeigen
@@ -104,7 +104,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
               Bei Postfächern nach <a href="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>">Mitarbeiter-Formel</a> wird automatisch der <strong>Anzeigename des Kontakts</strong> verwendet.
             </small>
           </label>
-          <label class="dg-field dg-field--wide">
+          <label class="dg-field dg-field--checkbox dg-field--wide">>
             <span>
               <input type="checkbox" name="footer_show_company_block" value="1"<?= !empty($layout['footer_show_company_block']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
               Firmenblock unter der Signatur anzeigen
@@ -133,7 +133,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
 
           <fieldset class="dg-fieldset dg-field--wide">
             <legend class="dg-subsection-title">Social Media</legend>
-            <label class="dg-field dg-field--wide">
+            <label class="dg-field dg-field--checkbox dg-field--wide">>
               <span>
                 <input type="checkbox" name="footer_show_social_links" value="1"<?= !empty($layout['footer_show_social_links']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
                 Social-Media-Leiste im Fuß anzeigen
@@ -161,7 +161,7 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
 
           <fieldset class="dg-fieldset dg-field--wide">
             <legend class="dg-subsection-title">Rechtliche Links</legend>
-            <label class="dg-field dg-field--wide">
+            <label class="dg-field dg-field--checkbox dg-field--wide">>
               <span>
                 <input type="checkbox" name="footer_show_legal_links" value="1"<?= !empty($layout['footer_show_legal_links']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
                 Impressum, Datenschutz und AGB verlinken
@@ -249,13 +249,13 @@ $tokenGroups = CalendarEmailTokens::referenceGroups();
             <section class="dg-panel dg-panel--compact">
               <h4 class="dg-subsection-title">Automatischer Versand</h4>
               <div class="dg-form-grid">
-                <label class="dg-field dg-field--wide">
+                <label class="dg-field dg-field--checkbox dg-field--wide">>
                   <span>
                     <input type="checkbox" name="calendar_send_customer_email" value="1"<?= !empty($delivery['send_customer_email']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
                     Kunden-E-Mails senden (Bestätigung und Storno)
                   </span>
                 </label>
-                <label class="dg-field dg-field--wide">
+                <label class="dg-field dg-field--checkbox dg-field--wide">>
                   <span>
                     <input type="checkbox" name="calendar_send_admin_email" value="1"<?= !empty($delivery['send_admin_email']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
                     Interne Benachrichtigung bei neuer Buchung

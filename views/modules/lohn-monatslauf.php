@@ -92,7 +92,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
   </header>
 
   <section class="dg-panel">
-    <form method="get" action="/app" class="dg-form" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap">
+    <form method="get" action="/app" class="dg-form dg-btn-row">
       <input type="hidden" name="page" value="lohn-monatslauf">
       <label class="dg-field">
         <span>Monat</span>
@@ -194,7 +194,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canApprove && $isCalculated && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form dg-btn-row">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="approve">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -206,7 +206,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canApprove && $isApproved && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form dg-btn-row">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="lock">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -218,7 +218,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canApprove && ($isApproved || $isLocked) && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>" class="dg-form dg-btn-row">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
             <input type="hidden" name="month" value="<?= View::escape($month) ?>">
@@ -234,7 +234,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
 
       <?php if ($canEdit && $isDraft && !$isSuperseded) : ?>
         <h3 class="dg-subsection-title">Mitarbeiter hinzufügen</h3>
-        <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+        <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form dg-btn-row">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="run_action" value="add_employee">
           <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -453,7 +453,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </details>
 
           <?php if ($canPostFibu && $isLocked && $fibuMeta === null) : ?>
-            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1" class="dg-form" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:end">
+            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1" class="dg-form dg-btn-row">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="run_action" value="fibu_book">
               <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -581,7 +581,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </details>
 
           <?php if ($canExportSepa) : ?>
-            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1" class="dg-form" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:end">
+            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1" class="dg-form dg-btn-row">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="run_action" value="sepa_export">
               <input type="hidden" name="run_id" value="<?= $runId ?>">

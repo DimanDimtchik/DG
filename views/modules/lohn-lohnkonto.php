@@ -47,7 +47,7 @@ $baseQs = 'page=lohn-lohnkonto&year=' . $year
   </header>
 
   <section class="dg-panel">
-    <form method="get" action="/app" class="dg-form" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:end">
+    <form method="get" action="/app" class="dg-form dg-btn-row">
       <input type="hidden" name="page" value="lohn-lohnkonto">
       <label class="dg-field">
         <span>Mitarbeiter</span>
@@ -64,9 +64,11 @@ $baseQs = 'page=lohn-lohnkonto&year=' . $year
         <span>Jahr</span>
         <input type="number" name="year" min="2000" max="2100" value="<?= $year ?>" required>
       </label>
-      <label class="dg-field" style="flex-direction:row;align-items:center;gap:.4rem">
-        <input type="checkbox" name="drafts" value="1"<?= $includeDrafts ? ' checked' : '' ?>>
-        <span>Entwürfe (calculated) anzeigen</span>
+      <label class="dg-field dg-field--checkbox">
+        <span>
+          <input type="checkbox" name="drafts" value="1"<?= $includeDrafts ? ' checked' : '' ?>>
+          Entwürfe (calculated) anzeigen
+        </span>
       </label>
       <button type="submit" class="dg-button dg-button--primary">Anzeigen</button>
     </form>

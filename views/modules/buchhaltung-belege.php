@@ -162,7 +162,7 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
         <span>Suche</span>
         <input type="search" name="s" value="<?= View::escape($search) ?>" placeholder="Lieferant, Rechnungsnr., Buchungstext, Konto …">
       </label>
-      <label class="dg-field dg-field--check">
+      <label class="dg-field dg-field--checkbox dg-field--check">>
         <span class="dg-visually-hidden">Nur Handlungsbedarf</span>
         <label class="dg-checkbox">
           <input type="checkbox" name="actionable" value="1"<?= $actionableOnly ? ' checked' : '' ?>>

@@ -75,7 +75,7 @@ $unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
               <td class="dg-table__num"><?= View::escape((string) ($doc['gross_display'] ?? '0,00')) ?> €</td>
               <td>
                 <?php if (empty($doc['is_current'])) : ?>
-                  <a href="<?= View::escape((string) ($doc['url'] ?? '#')) ?>">Öffnen</a>
+                  <a class="dg-button dg-button--small" href="<?= View::escape((string) ($doc['url'] ?? '#')) ?>">Öffnen</a>
                 <?php else : ?>
                   —
                 <?php endif; ?>

@@ -183,7 +183,7 @@ $postUiConfig = $postUiConfig ?? PostUiSettings::config();
 
           <?php if (!$editBox && $kasConfigured) : ?>
 
-            <label class="dg-field dg-field--wide">
+            <label class="dg-field dg-field--checkbox dg-field--wide">>
 
               <span><input type="checkbox" name="provision_kas" value="1"> Stattdessen bei Kasserver per KAS-API anlegen</span>
 

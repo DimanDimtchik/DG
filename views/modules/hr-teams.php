@@ -49,7 +49,7 @@ $canManageTeams = !empty($canManageTeams);
               <td><?= (int) ($team['member_count'] ?? 0) ?></td>
               <td><?= (int) ($team['asset_count'] ?? 0) ?></td>
               <td><?= !empty($team['is_active']) ? 'Aktiv' : 'Inaktiv' ?></td>
-              <td><a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($team['id'] ?? 0) ?>">Öffnen</a></td>
+              <td class="dg-table__actions"><a class="dg-button dg-button--small" href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($team['id'] ?? 0) ?>">Öffnen</a></td>
             </tr>
           <?php endforeach; ?>
         </tbody>

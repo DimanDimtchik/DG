@@ -205,9 +205,9 @@ $roleLabels = [
               <td><?= View::escape($contact->roleLabel()) ?></td>
               <td class="dg-table__actions">
                 <?php if (ContactAccessResolver::canEditContact($user, $contact)) : ?>
-                  <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= $contact->id ?>">Bearbeiten</a>
+                  <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=edit&amp;id=<?= $contact->id ?>">Bearbeiten</a>
                 <?php else : ?>
-                  <a href="/app?page=kontakte&amp;action=view&amp;id=<?= $contact->id ?>">Anzeigen</a>
+                  <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=view&amp;id=<?= $contact->id ?>">Anzeigen</a>
                 <?php endif; ?>
               </td>
             </tr>

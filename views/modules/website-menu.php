@@ -38,7 +38,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
     <section class="dg-panel dg-panel--nested" aria-labelledby="dg-menu-layout-heading">
       <h2 id="dg-menu-layout-heading">Darstellung</h2>
       <p class="dg-field-hint">Legen Sie fest, ob die Navigation immer horizontal, immer als mobiles Menü oder ab einer Breite umgeschaltet wird.</p>
-      <fieldset class="dg-field" style="border:0;padding:0;margin:0;">
+      <fieldset class="dg-form-section dg-field" style="border:0;padding:0;margin:0;">
         <legend class="dg-sr-only">Menüdarstellung</legend>
         <?php foreach ($layoutOptions as $value => $label) : ?>
           <label class="dg-field dg-field--checkbox">

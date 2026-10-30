@@ -67,7 +67,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
   </div>
 
   <section class="dg-panel">
-    <form method="get" action="/app" class="dg-form" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:end">
+    <form method="get" action="/app" class="dg-form dg-btn-row">
       <input type="hidden" name="page" value="lohn-elster">
       <label class="dg-field">
         <span>Monat (LStA)</span>
@@ -117,7 +117,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     <div class="dg-toolbar" style="margin:1rem 0;flex-wrap:wrap;gap:.5rem">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base) ?>&amp;tab=lsta&amp;download=csv">Kontroll-CSV</a>
       <?php if ($canTest) : ?>
-        <form method="post" action="<?= View::escape($base) ?>&amp;tab=lsta" class="dg-form" style="display:flex;gap:.5rem;align-items:end">
+        <form method="post" action="<?= View::escape($base) ?>&amp;tab=lsta" class="dg-form dg-btn-row">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="elster_action" value="lsta_test">
           <input type="hidden" name="month" value="<?= View::escape($month) ?>">

@@ -33,7 +33,7 @@ $modeLabels = NotificationTemplateSettings::modeLabels();
   $inheritFrom = (string) ($modeRow['inherit_from'] ?? '');
 ?>
 
-<fieldset class="dg-dept-email-area" data-dept-email-area>
+<fieldset class="dg-form-section dg-dept-email-area" data-dept-email-area>
   <legend class="dg-dept-email-area__legend">Abteilungsvorlagen</legend>
   <p class="dg-field-hint">Freie E-Mail-Vorlagen dieser Abteilung, ohne Trennung nach Kommunikation oder Buchhaltung.</p>
 

@@ -186,7 +186,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editLocation['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--checkbox">>
               <span><input type="checkbox" name="is_active" value="1"<?= !$editLocation || !empty($editLocation['is_active']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>> Aktiv</span>
             </label>
           </div>
@@ -305,7 +305,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editHall['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--checkbox">>
               <span><input type="checkbox" name="is_active" value="1"<?= !$editHall || !empty($editHall['is_active']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>> Aktiv</span>
             </label>
           </div>
@@ -451,7 +451,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editShelf['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--checkbox">>
               <span><input type="checkbox" name="is_active" value="1"<?= !$editShelf || !empty($editShelf['is_active']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>> Aktiv</span>
             </label>
           </div>

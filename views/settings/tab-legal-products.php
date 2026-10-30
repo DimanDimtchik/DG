@@ -28,9 +28,9 @@ $statusOptions = LegalProductSettings::statusOptions();
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php endif; ?>
 
-  <fieldset class="dg-form-grid"<?= !$dbConnected ? ' disabled' : '' ?>>
+  <fieldset class="dg-fieldset dg-form-grid"<?= !$dbConnected ? ' disabled' : '' ?>>
     <legend>Mehrprodukt-Rechtstexte</legend>
-    <label class="dg-field dg-field--wide">
+    <label class="dg-field dg-field--checkbox dg-field--wide">>
       <span>
         <input type="checkbox" name="legal_multi_product" value="1"<?= !empty($cfg['multi_product_enabled']) ? ' checked' : '' ?>>
         Mehrprodukt-Modus aktivieren (Tabs je Produkt/Gruppe)
@@ -88,7 +88,7 @@ $statusOptions = LegalProductSettings::statusOptions();
                     <?= View::escape($statusLabel) ?>
                   </span>
                   <br>
-                  <a href="/app?page=website-recht&amp;slug=<?= rawurlencode($slug) ?>&amp;product=<?= rawurlencode($tab['key']) ?>">Bearbeiten</a>
+                  <a class="dg-button dg-button--small" href="/app?page=website-recht&amp;slug=<?= rawurlencode($slug) ?>&amp;product=<?= rawurlencode($tab['key']) ?>">Bearbeiten</a>
                 </td>
               <?php endforeach; ?>
             </tr>

@@ -58,9 +58,9 @@ $baseUrl = '/app?page=terminkalender';
               <td><?= View::escape($booking->statusLabel()) ?></td>
               <td class="dg-table__actions">
                 <?php if ($canEdit ?? false) : ?>
-                  <a href="/app?page=terminkalender&amp;action=edit&amp;id=<?= $booking->id ?>">Bearbeiten</a>
+                  <a class="dg-button dg-button--small" href="/app?page=terminkalender&amp;action=edit&amp;id=<?= $booking->id ?>">Bearbeiten</a>
                 <?php else : ?>
-                  <a href="/app?page=terminkalender&amp;id=<?= $booking->id ?>">Anzeigen</a>
+                  <a class="dg-button dg-button--small" href="/app?page=terminkalender&amp;id=<?= $booking->id ?>">Anzeigen</a>
                 <?php endif; ?>
               </td>
             </tr>

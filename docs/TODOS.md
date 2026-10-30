@@ -18,7 +18,7 @@ Stand: **2026-10-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G4 ✅** · **LB0a ✅** · **master+Deploy** · **G3 offen**. **UI:** [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) in `AGENTS.md` §7 · Guard `php bin/ui-form-spacing-selftest.php`.
+**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G4 ✅** · **LB0a ✅** · **master+Deploy** · **G3 offen**. **UI:** [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) · Guard `php bin/ui-form-spacing-selftest.php` · Scan `php bin/ui-crm-scan.php` (Vollscan 2026-10-30: Aktionslinks + form-section/naked-submit bereinigt; Rest-Hinweise Checkbox-Markup).
 
 ---
 

@@ -179,7 +179,9 @@ Erlaubt für **modulspezifische** Layouts (Kalender-Raster, Lager-Scan, Akademie
 
 ## 12. Guard / Allowlist
 
-- Lohn-Views: **null** nackte Aktionslinks  
-- Rest: Legacy-Allowlist in `bin/ui-form-spacing-selftest.php` — Counts dürfen **nicht wachsen**  
-- Link+Button-Mix in derselben `td`: **verboten** (auch Legacy)  
+- Lohn-Views: **null** nackte Aktionslinks; Filterzeilen = `.dg-form.dg-btn-row` (kein Inline `display:flex`)  
+- CRM-weit: **null** nackte Aktionslinks (`Bearbeiten`/`Anzeigen`/…); Allowlist in `bin/ui-form-spacing-selftest.php` aktuell **leer**  
+- Link+Button-Mix in derselben `td`: **verboten**  
+- Nackter Submit direkt nach Textarea: **verboten** (immer `.dg-form-actions`)  
+- Report-Scan: `php bin/ui-crm-scan.php` (zusätzliche Hinweiskategorien, z. B. Checkbox-Markup)  
 - Katalog-Datei und Kernklassen in `dg.css` müssen existieren (Selftest)

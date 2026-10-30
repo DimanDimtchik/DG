@@ -403,7 +403,9 @@ $plannedPreview = ($calc !== null)
             <span>Notiz</span>
             <textarea name="actual_note" rows="2" maxlength="1000"></textarea>
           </label>
-          <button type="submit" class="dg-button dg-button--primary" name="recipe_run_snapshot" value="1">Produktionsdurchlauf protokollieren</button>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary" name="recipe_run_snapshot" value="1">Produktionsdurchlauf protokollieren</button>
+          </div>
         </form>
       <?php elseif ($isEdit && $canEdit) : ?>
         <p class="dg-field-hint" style="margin-top:14px;">Nach Speichern / Kalkulation kann ein Produktionsdurchlauf protokolliert werden.</p>
@@ -534,7 +536,9 @@ $plannedPreview = ($calc !== null)
                       <label class="dg-field"><span>Notiz</span>
                         <textarea name="note" rows="2" maxlength="1000"><?= View::escape((string) ($act['note'] ?? '')) ?></textarea>
                       </label>
-                      <button type="submit" class="dg-button" name="recipe_actual_update" value="1">Ist speichern</button>
+                      <div class="dg-form-actions">
+                        <button type="submit" class="dg-button" name="recipe_actual_update" value="1">Ist speichern</button>
+                      </div>
                     </form>
                   </details>
                 <?php endif; ?>
