@@ -52,7 +52,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
     <h3><?= View::escape($sections[$sectionKey] ?? $sectionKey) ?></h3>
     <?php if ($sectionKey === 'payroll') : ?>
       <p class="dg-lead">
-        Stammdaten für die <strong>eigene Lohnabrechnung</strong> (Stufe A). Steuerklasse manuell — kein ELStAM in dieser Stufe.
+        Stammdaten für die <strong>eigene Lohnabrechnung</strong>. Steuerklasse manuell — ELStAM folgt später.
         SV-Meldestelle und Krankenkassenname bleiben unter Sozialversicherung bzw. Gesundheitsdaten.
         Lohnarten-Zuordnung unten (Festgehalt/Stundenlohn); Freitext „Lohn / Gehalt“ unter Arbeitsvertrag ist nur Hinweis.
         Kein Monatslauf in diesem Block.
@@ -153,7 +153,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
                 <?php endforeach; ?>
               <?php endif; ?>
             </select>
-            <small class="dg-field-hint">Konten aus dem Block Bankverbindung dieses Kontakts (SEPA später L8).</small>
+            <small class="dg-field-hint">Konten aus dem Block Bankverbindung dieses Kontakts.</small>
           </label>
         <?php elseif ($sectionKey === 'payroll' && $key === 'child_allowances') : ?>
           <label class="dg-field">

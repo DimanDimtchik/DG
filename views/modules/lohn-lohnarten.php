@@ -21,7 +21,7 @@ $isSystem = $edit !== null && (int) ($edit['is_system'] ?? 0) === 1;
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Lohnarten</h1>
-      <p class="dg-lead">Stufe A — Standardkatalog (ohne Bau/Gastro). SKR-Hints sind Vorschläge für L7, keine automatische Buchung.</p>
+      <p class="dg-lead">Standardkatalog (ohne Bau/Gastro). Kontenvorschläge sind Hinweise — keine automatische Buchung.</p>
     </div>
     <div class="dg-toolbar">
       <?php if (RoleResolver::isAdmin($user ?? AuthService::user())) : ?>
