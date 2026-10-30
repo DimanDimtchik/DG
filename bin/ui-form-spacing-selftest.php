@@ -2,12 +2,13 @@
 declare(strict_types=1);
 
 /**
- * Zukunftssicherer UI-Guard:
- * 1) CSS-Algorithmen vorhanden
+ * Zukunftssicherer UI-Guard (Klassenkatalog + Markup):
+ * 1) docs/UI-KLASSENKATALOG.md + Kernklassen in dg.css
  * 2) Lohn-Views ohne Anti-Muster
  * 3) Keine neuen nackten Tabellen-Aktionslinks außerhalb der Legacy-Allowlist
  *
  * Usage: php bin/ui-form-spacing-selftest.php
+ * Katalog: docs/UI-KLASSENKATALOG.md
  */
 $root = dirname(__DIR__);
 
@@ -65,16 +66,59 @@ function uiHasMixedLinkAndButtonInActions(string $html): bool
 
 $css = (string) file_get_contents($root . '/assets/css/dg.css');
 assertUi(str_contains($css, '--dg-space-4'), 'Spacing-Skala');
-assertUi(str_contains($css, '.dg-button--small'), 'Button small');
-assertUi(str_contains($css, '.dg-button--primary'), 'Button primary');
 assertUi(str_contains($css, 'Aktions-Abstand-Algorithmus'), 'Aktions-Abstand-Algorithmus');
 assertUi(str_contains($css, '.dg-form > .dg-form-grid + .dg-button'), 'Fallback Grid+Button');
 assertUi(str_contains($css, '.dg-form > .dg-field + .dg-button'), 'Fallback Feld+Button');
-assertUi(str_contains($css, '.dg-form-actions'), 'dg-form-actions');
-assertUi(str_contains($css, '.dg-table__actions-group'), 'dg-table__actions-group');
 
-assertUi(is_readable($root . '/docs/UI-FORM-REGELN.md'), 'UI-FORM-REGELN.md');
-assertUi(is_readable($root . '/AGENTS.md') && str_contains((string) file_get_contents($root . '/AGENTS.md'), 'UI-FORM-REGELN'), 'AGENTS.md verweist auf UI-FORM-REGELN');
+$katalogPath = $root . '/docs/UI-KLASSENKATALOG.md';
+assertUi(is_readable($katalogPath), 'UI-KLASSENKATALOG.md');
+$katalog = (string) file_get_contents($katalogPath);
+assertUi(str_contains($katalog, '## 5. Links'), 'Katalog: Links/a-Tag');
+assertUi(str_contains($katalog, '## 6. Buttons'), 'Katalog: Buttons');
+assertUi(str_contains($katalog, '## 8. Tabellen'), 'Katalog: Tabellen');
+assertUi(str_contains($katalog, '## 3. Flächen'), 'Katalog: Panels');
+
+$agents = (string) file_get_contents($root . '/AGENTS.md');
+assertUi(str_contains($agents, 'UI-KLASSENKATALOG'), 'AGENTS.md verweist auf UI-KLASSENKATALOG');
+assertUi(is_readable($root . '/docs/UI-FORM-REGELN.md'), 'UI-FORM-REGELN.md (Kurzverweis)');
+$formRegeln = (string) file_get_contents($root . '/docs/UI-FORM-REGELN.md');
+assertUi(str_contains($formRegeln, 'UI-KLASSENKATALOG.md'), 'Form-Regeln zeigen auf Katalog');
+
+/** @var list<string> $coreClasses */
+$coreClasses = [
+    'dg-wrap',
+    'dg-page-title',
+    'dg-page-header',
+    'dg-lead',
+    'dg-panel',
+    'dg-button',
+    'dg-button--primary',
+    'dg-button--small',
+    'dg-button--ghost',
+    'dg-button--danger',
+    'dg-button--warning',
+    'dg-button--back',
+    'dg-form',
+    'dg-form-grid',
+    'dg-form-actions',
+    'dg-field',
+    'dg-btn-row',
+    'dg-table',
+    'dg-table-wrap',
+    'dg-table__actions',
+    'dg-table__actions-group',
+    'dg-badge',
+    'dg-flash',
+    'dg-stack',
+    'dg-sidebar__link',
+    'dg-linklike',
+];
+foreach ($coreClasses as $cls) {
+    assertUi(
+        str_contains($css, '.' . $cls) || str_contains($css, '.' . str_replace('__', '__', $cls)),
+        "CSS Kernklasse .{$cls}"
+    );
+}
 
 // Lohn: streng — null Toleranz
 foreach (glob($root . '/views/modules/lohn-*.php') ?: [] as $path) {

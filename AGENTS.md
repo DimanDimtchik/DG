@@ -109,14 +109,17 @@ Technik: `bin/academy-build-dashboard-video.sh`
 
 > Nutzer muss **nicht** in jedem Chat „benutze existierende CSS-Logik“ schreiben. Diese Regel gilt **immer**.
 
-Vollständige Muster: **[`docs/UI-FORM-REGELN.md`](docs/UI-FORM-REGELN.md)** · Implementierung: `assets/css/dg.css` · Guard: `php bin/ui-form-spacing-selftest.php`
+**Kanonsich:** **[`docs/UI-KLASSENKATALOG.md`](docs/UI-KLASSENKATALOG.md)** (Buttons, `a`-Tags, Tabellen, Panels, Tokens, Feature-Grenzen)  
+Kurz/Form: [`docs/UI-FORM-REGELN.md`](docs/UI-FORM-REGELN.md) · CSS: `assets/css/dg.css` (**eine** Datei) · Guard: `php bin/ui-form-spacing-selftest.php`
 
 | Pflicht | Verboten |
 |---------|----------|
+| Katalog-Klassen für Seite/Panel/Form/Tabelle/Button/Link-Aktion | Parallelwelt pro Modul („eigene Buttons nur für Lohn“) |
 | `.dg-form` + `.dg-field` / `.dg-form-grid` | Eigenes Button-/Spacing-CSS „kurz mal so“ |
 | Submit in `.dg-form-actions` (oder `.dg-btn-row` / `.dg-field--actions`) | Nackter `<button>` direkt unter Textarea/Grid |
 | Tabellen-Aktionen: `.dg-button.dg-button--small` in `.dg-table__actions-group` | Nackter Textlink (`Bearbeiten`) neben einem `.dg-button` |
-| Bestehende Varianten: `--primary` / `--small` / `--ghost` / `--danger` / `--warning` / `--back` | Neue Button-Klassen erfinden |
+| Aktions-`<a>` = `.dg-button*`; Fließtext-Links bleiben normal | Neue Link-/Button-Klassen erfinden |
 | Abstände über `--dg-space-*` / Utilities | Ad-hoc `style="margin…"` für Layout |
+| Feature-Klassen nur für echte Sonder-UI | Feature-Klasse als Ersatz für Kern-Primitive |
 
-**Bei jeder UI-Änderung** (Views unter `views/`): Guard ausführen und grün halten. Neue nackte Aktionslinks außerhalb der Legacy-Allowlist im Selftest = Fail.
+**Bei jeder UI-Änderung** (Views unter `views/`): Katalog lesen, Guard grün. Neue nackte Aktionslinks außerhalb der Legacy-Allowlist = Fail.
