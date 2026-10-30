@@ -62,6 +62,11 @@ upload_target() {
   echo "OK: $label"
 }
 
+# CRM-CSS minifizieren (dg.app.min.css); Offline-Stub dg.min.css unberührt
+if [[ -x "$ROOT/bin/minify-dg-css.sh" ]] || [[ -f "$ROOT/bin/minify-dg-css.sh" ]]; then
+  bash "$ROOT/bin/minify-dg-css.sh" || echo "deploy-via-rsync: minify skipped/failed (continue)" >&2
+fi
+
 echo "Deploying DG CRM via rsync (user ${USER_NAME}) ..."
 upload_target "dg.ganz-om.de" "Master dg.ganz-om.de"
 

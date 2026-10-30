@@ -72,6 +72,10 @@ bye
   echo "OK: $label"
 }
 
+if [[ -f "$(dirname "$0")/minify-dg-css.sh" ]]; then
+  bash "$(dirname "$0")/minify-dg-css.sh" || echo "deploy-via-sftp: minify skipped/failed (continue)" >&2
+fi
+
 echo "Deploying DG CRM via SFTP (SSH key, user ${USER_NAME}) ..."
 upload_target "dg.ganz-om.de" "Master dg.ganz-om.de"
 
