@@ -125,7 +125,7 @@ final class PayrollRateTableRepository
                 'valid_from' => '2026-01-01',
                 'valid_to' => null,
                 'label' => self::FIXTURE_LABEL,
-                'source_note' => 'System-Seed L4b — nur Tests/Fixture, keine Amtswerte',
+                'source_note' => 'System-Beispiel — nur Tests, keine Amtswerte',
                 'checksum' => '',
                 'is_active' => 1,
             ],
@@ -419,7 +419,7 @@ final class PayrollRateTableRepository
             'valid_from,2026-01-01',
             'valid_to,',
             'label,EXAMPLE-IMPORT-2026',
-            'source_note,Beispiel CSV L4b',
+            'source_note,Beispiel CSV',
             'is_active,1',
         ];
         foreach (self::fixtureParams() as $key => $val) {

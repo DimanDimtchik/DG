@@ -87,7 +87,7 @@ $slotStep = CalendarWorkingHoursRepository::slotStepMinutes();
       </label>
     </div>
 
-    <fieldset class="dg-field dg-field--wide dg-working-hours-weekdays">
+    <fieldset class="dg-form-section dg-field dg-field--wide dg-working-hours-weekdays">
       <legend>Wochentage *</legend>
       <div class="dg-working-hours-weekdays__grid">
         <?php foreach ($weekdayLabels as $num => $label) : ?>

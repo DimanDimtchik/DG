@@ -92,7 +92,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
   </header>
 
   <section class="dg-panel">
-    <form method="get" action="/app" class="dg-form" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap">
+    <form method="get" action="/app" class="dg-form dg-btn-row">
       <input type="hidden" name="page" value="lohn-monatslauf">
       <label class="dg-field">
         <span>Monat</span>
@@ -194,7 +194,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canApprove && $isCalculated && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form dg-btn-row">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="approve">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -206,7 +206,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canApprove && $isApproved && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form dg-btn-row">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="lock">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -218,7 +218,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canApprove && ($isApproved || $isLocked) && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>" class="dg-form dg-btn-row">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
             <input type="hidden" name="month" value="<?= View::escape($month) ?>">
@@ -234,7 +234,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
 
       <?php if ($canEdit && $isDraft && !$isSuperseded) : ?>
         <h3 class="dg-subsection-title">Mitarbeiter hinzufügen</h3>
-        <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:end;flex-wrap:wrap">
+        <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-form dg-btn-row">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="run_action" value="add_employee">
           <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -352,14 +352,14 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
       <?php if ($runId > 0 && ($isApproved || $isLocked) && !$isSuperseded) : ?>
         <h3 class="dg-subsection-title">FiBu-Übernahme</h3>
         <p class="dg-lead">
-          Sammelbuchung laut L7 (Personalaufwand, FA, SV, Nettolöhne, AG-Sozialaufwand).
-          Live-Flag:
+          Sammelbuchung (Personalaufwand, Finanzamt, SV, Nettolöhne, AG-Sozialaufwand).
+          Produktiv:
           <?php if ($fibuLive) : ?>
             <strong>an</strong>
           <?php else : ?>
-            <strong>aus</strong> — unter
-            <a href="<?= View::escape(SettingsRegistry::tabUrl('lohn')) ?>">Einstellungen → Lohn</a>
-            freischalten (Gate G1). Admin darf Probe buchen.
+            <strong>aus</strong> — freischalten unter
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('lohn')) ?>">Einstellungen → Lohn</a>.
+            Admin darf Probe buchen.
           <?php endif; ?>
           <?php if (!$fibuShow) : ?>
             · <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1">Vorschau anzeigen</a>
@@ -453,7 +453,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </details>
 
           <?php if ($canPostFibu && $isLocked && $fibuMeta === null) : ?>
-            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1" class="dg-form" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:end">
+            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1" class="dg-form dg-btn-row">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="run_action" value="fibu_book">
               <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -470,7 +470,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                 <label class="dg-field dg-field--checkbox">
                   <span>
                     <input type="checkbox" name="force_probe" value="1">
-                    Admin-Probe ohne Live-Flag
+                    Probebuchung als Admin (ohne Produktiv-Freigabe)
                   </span>
                 </label>
               <?php endif; ?>
@@ -479,7 +479,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
               </button>
             </form>
             <?php if (!$fibuLive && !$isAdminUser) : ?>
-              <p class="dg-field-hint">Buchung gesperrt: Live-Flag aus und kein Admin-Probe.</p>
+              <p class="dg-field-hint">Buchung gesperrt: Produktiv-Freigabe fehlt (Einstellungen → Lohn).</p>
             <?php endif; ?>
           <?php elseif ($isApproved && !$isLocked) : ?>
             <p class="dg-field-hint">Vorschau möglich — verbindliche Übernahme erst nach Sperre.</p>
@@ -506,15 +506,13 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
       <?php if ($runId > 0 && $isLocked && !$isSuperseded && $sepaKindOk) : ?>
         <h3 class="dg-subsection-title">SEPA-Auszahlung</h3>
         <p class="dg-lead">
-          pain.001.001.03 Sammler (Netto) für Bank-Upload — kein automatischer Versand.
-          Live-Flag:
+          SEPA-Sammeldatei (Netto) zum Upload bei der Bank — kein automatischer Versand.
+          Produktiv:
           <?php if ($sepaLive) : ?>
             <strong>an</strong>
           <?php else : ?>
-            <strong>aus</strong> — Dateien mit
-            <code>-PROBE</code> kennzeichnen; freischalten unter
-            <a href="<?= View::escape(SettingsRegistry::tabUrl('lohn')) ?>">Einstellungen → Lohn</a>
-            (Gate G3).
+            <strong>aus</strong> — nur Testdateien; freischalten unter
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('lohn')) ?>">Einstellungen → Lohn</a>.
           <?php endif; ?>
           Empfohlen: zuerst FiBu, dann SEPA.
           <?php if (!$sepaShow) : ?>
@@ -547,7 +545,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
               · CtrlSum <?= View::escape($money((float) ($sepaPreview['ctrl_sum'] ?? 0))) ?> €
               · Ausführung <?= View::escape((string) ($sepaPreview['reqd_exec_date'] ?? '')) ?>
               <?php if (!empty($sepaPreview['probe']) || !$sepaLive) : ?>
-                · <strong>PROBE</strong>
+                · <strong>Test</strong>
               <?php endif; ?>
             </p>
             <?php if ($sepaTx !== []) : ?>
@@ -581,7 +579,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </details>
 
           <?php if ($canExportSepa) : ?>
-            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1" class="dg-form" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:end">
+            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1" class="dg-form dg-btn-row">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="run_action" value="sepa_export">
               <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -595,14 +593,14 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                 <input type="text" name="reason" required minlength="10" placeholder="z. B. Nettoauszahlung nach Sperre geprüft" style="min-width:16rem">
               </label>
               <button type="submit" class="dg-button dg-button--primary">
-                <?= $sepaLive ? 'SEPA-XML erzeugen' : 'PROBE-XML erzeugen' ?>
+                <?= $sepaLive ? 'SEPA-Datei erzeugen' : 'Testdatei erzeugen' ?>
               </button>
             </form>
             <?php if (!$sepaLive) : ?>
-              <p class="dg-field-hint">Ohne Live-Flag: Dateiname endet auf <code>-PROBE.xml</code>, InitgPty mit „(PROBE)“ — nicht an die Bank senden.</p>
+              <p class="dg-field-hint">Ohne Freigabe: Datei ist als Test gekennzeichnet — nicht an die Bank senden.</p>
             <?php endif; ?>
           <?php else : ?>
-            <p class="dg-field-hint">SEPA-Export nur mit Modulrecht lohn = full.</p>
+            <p class="dg-field-hint">SEPA-Export nur mit vollem Lohn-Recht.</p>
           <?php endif; ?>
 
           <?php if ($sepaExports !== []) : ?>
@@ -619,7 +617,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                       <td><?= View::escape((string) ($ex['created_at'] ?? '')) ?></td>
                       <td class="num"><?= (int) ($ex['tx_count'] ?? 0) ?></td>
                       <td class="num"><?= View::escape($money((float) ($ex['ctrl_sum'] ?? 0))) ?></td>
-                      <td><?= !empty($ex['is_probe']) ? 'PROBE' : 'live' ?></td>
+                      <td><?= !empty($ex['is_probe']) ? 'Test' : 'Produktiv' ?></td>
                       <td>
                         <?php if ($canExportSepa) : ?>
                           <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1&amp;sepa_dl=<?= (int) ($ex['id'] ?? 0) ?>">
@@ -638,7 +636,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
         <?php endif; ?>
       <?php elseif ($runId > 0 && $isLocked && !$isSuperseded && $runKind === PayrollRunRepository::KIND_STORNO) : ?>
         <h3 class="dg-subsection-title">SEPA-Auszahlung</h3>
-        <p class="dg-lead">Storno-Run erzeugt keine Auszahlungs-SEPA (L8a).</p>
+        <p class="dg-lead">Ein Storno-Lauf erzeugt keine Auszahlungs-SEPA.</p>
       <?php endif; ?>
 
       <h3 class="dg-subsection-title">Statushistorie</h3>

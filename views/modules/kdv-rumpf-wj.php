@@ -51,7 +51,7 @@ $opts = $kdvOrgOptions ?? [];
         </p>
         <form method="post" action="/app?page=kdv-rumpf-wj&amp;org_id=<?= $orgId ?>" style="margin-bottom:12px;">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-          <label class="dg-field" style="display:flex;gap:8px;align-items:center;">
+          <label class="dg-field dg-field--checkbox" style="display:flex;gap:8px;align-items:center;">>
             <input type="checkbox" name="share_contacts" value="1"<?= !empty($org['share_contacts']) ? ' checked' : '' ?>>
             <span>Shared Contacts für diese Org markieren</span>
           </label>

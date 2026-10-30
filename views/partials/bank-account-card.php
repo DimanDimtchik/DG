@@ -18,7 +18,7 @@
       </select>
     </label>
     <label class="dg-field"><span>Bezeichnung</span><input name="bank_accounts[<?= (int) $i ?>][label]" value="<?= View::escape((string) ($account['label'] ?? '')) ?>"></label>
-    <label class="dg-field dg-field--check" data-bank-field="is_primary">
+    <label class="dg-field dg-field--checkbox dg-field--check" data-bank-field="is_primary">>
       <input type="checkbox" name="bank_accounts[<?= (int) $i ?>][is_primary]" value="1"<?= !empty($account['is_primary']) ? ' checked' : '' ?>>
       <span>Hauptkonto auf Dokumenten (Rechnung)</span>
     </label>

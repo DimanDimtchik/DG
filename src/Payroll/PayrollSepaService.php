@@ -45,11 +45,11 @@ final class PayrollSepaService
         return [
             'Lauf status=locked, nicht superseded; Storno-Run ohne Auszahlungs-SEPA.',
             'Nur ok-MA mit net_pay > 0 und gültiger Empfänger-IBAN in der Sammlerdatei.',
-            'Absender-IBAN aus Settings Lohn (payroll_bank_account_index) / Firmendaten Bankkonten.',
-            'Flag payroll_sepa_live nur nach Gate G3 setzen — ohne Flag nur …-PROBE.xml.',
-            'XML-Checksumme (SHA-256) und Meta dg_payroll_sepa_exports gegen Bankupload prüfen.',
-            'FiBu (L7) empfohlen vor SEPA; Bankausgleich der Verb. Nettolöhne bleibt manuell.',
-            'Kein automatischer Bankversand — Upload nur im Online-Banking / EBICS des Mandanten.',
+            'Absender-IBAN aus Einstellungen → Lohn bzw. Firmendaten-Bankkonten.',
+            'Produktiv-SEPA erst nach Freigabe setzen — sonst nur Testdateien.',
+            'Datei-Prüfsumme und Export-Eintrag gegen den Bank-Upload prüfen.',
+            'FiBu-Buchung empfohlen vor SEPA; Bankausgleich der Nettolöhne bleibt manuell.',
+            'Kein automatischer Bankversand — Upload nur im Online-Banking des Mandanten.',
         ];
     }
 

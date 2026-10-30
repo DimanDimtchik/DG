@@ -48,7 +48,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
       <h1 class="dg-page-title">Lohnsteuer ELSTER</h1>
       <p class="dg-lead">
         Lohnsteuer-Anmeldung und -bescheinigung aus gesperrten Läufen.
-        <strong>Kein UStVA</strong> — eigene Payloads. Live-Senden erst nach Gate G2 / L10c.
+        Getrennt von der UStVA. Live-Senden erst nach Freigabe unter Einstellungen → Lohn.
       </p>
     </div>
     <div class="dg-toolbar">
@@ -59,15 +59,15 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
   </header>
 
   <div class="dg-flash dg-flash--warning">
-    L10b-Testmodus: Kontroll-CSV und lokale Vorbereitungspayloads.
-    Amtliches ELSTER-LStA-Schema / Worker-Anbindung folgen mit ERiC auf Hetzner.
+    Derzeit Testmodus: Kontroll-CSV und lokale Vorbereitung.
+    Die direkte Übermittlung an das Finanzamt folgt nach Server-Umzug (ERiC).
     <?php if (!$serverOk) : ?>
-      · Server unterstützt ERiC derzeit nicht (Kasserver).
+      · Dieser Server unterstützt die Direktübermittlung noch nicht.
     <?php endif; ?>
   </div>
 
   <section class="dg-panel">
-    <form method="get" action="/app" class="dg-form" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:end">
+    <form method="get" action="/app" class="dg-form dg-btn-row">
       <input type="hidden" name="page" value="lohn-elster">
       <label class="dg-field">
         <span>Monat (LStA)</span>
@@ -76,8 +76,8 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
       <button type="submit" class="dg-button dg-button--primary">Anzeigen</button>
     </form>
     <p class="dg-field-hint">
-      ERiC-Test bereit: <?= $ericReady ? 'ja' : 'nein' ?> ·
-      payroll_lsta_live: <?= $lstaLive ? 'an' : 'aus' ?>
+      Testbereit: <?= $ericReady ? 'ja' : 'nein' ?> ·
+      Live-Anmeldung: <?= $lstaLive ? 'freigeschaltet' : 'gesperrt' ?>
     </p>
   </section>
 
@@ -117,7 +117,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     <div class="dg-toolbar" style="margin:1rem 0;flex-wrap:wrap;gap:.5rem">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base) ?>&amp;tab=lsta&amp;download=csv">Kontroll-CSV</a>
       <?php if ($canTest) : ?>
-        <form method="post" action="<?= View::escape($base) ?>&amp;tab=lsta" class="dg-form" style="display:flex;gap:.5rem;align-items:end">
+        <form method="post" action="<?= View::escape($base) ?>&amp;tab=lsta" class="dg-form dg-btn-row">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="elster_action" value="lsta_test">
           <input type="hidden" name="month" value="<?= View::escape($month) ?>">
@@ -132,7 +132,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
       <?php else : ?>
         <p class="dg-field-hint">Test-Payload speichern: Recht lohn=full erforderlich.</p>
       <?php endif; ?>
-      <button type="button" class="dg-button" disabled title="L10c / Gate G2">Live an Finanzamt (gesperrt)</button>
+      <button type="button" class="dg-button" disabled title="Noch nicht freigeschaltet">Live an Finanzamt (gesperrt)</button>
     </div>
   <?php endif; ?>
 
@@ -148,7 +148,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     <?php endif; ?>
     <p class="dg-field-hint">
       Eligibel: <?= (int) ($lstb['eligible_count'] ?? 0) ?> ·
-      Bescheinigungs-Versand folgt nach LStA/ERiC (Vorschau + CSV in L10b).
+      Bescheinigungs-Versand folgt nach Live-Anmeldung (aktuell Vorschau + CSV).
     </p>
     <div class="dg-toolbar" style="margin-bottom:1rem">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base) ?>&amp;tab=lstb&amp;download=csv">Bescheinigungs-CSV <?= $y ?></a>
@@ -184,10 +184,10 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
   </details>
 
   <details class="dg-panel" style="margin:1rem 0">
-    <summary><strong>L10c Produktiv-Gate (Live noch gesperrt)</strong></summary>
+    <summary><strong>Checkliste vor Live-Anmeldung</strong></summary>
     <p class="dg-field-hint">
-      Live-Senden bleibt deaktiviert, bis alle Punkte erfüllt sind und ein Chat mit explizitem
-      Nutzerbefehl den Unlock ausführt. Flag <code>payroll_lsta_live</code> allein reicht nicht.
+      Live-Senden bleibt gesperrt, bis alle Punkte erfüllt sind und die Freigabe
+      unter Einstellungen → Lohn bewusst gesetzt wurde.
     </p>
     <ol>
       <?php foreach ($gateChecklist as $item) : ?>

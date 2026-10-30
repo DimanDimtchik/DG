@@ -70,6 +70,7 @@ assertUi(str_contains($css, 'Aktions-Abstand-Algorithmus'), 'Aktions-Abstand-Alg
 assertUi(str_contains($css, '.dg-form > .dg-form-grid + .dg-button'), 'Fallback Grid+Button');
 assertUi(str_contains($css, '.dg-form > .dg-field + .dg-button'), 'Fallback Feld+Button');
 assertUi(str_contains($css, '.dg-form-section') && str_contains($css, 'gap: var(--dg-space-3)'), 'form-section Gap für Feldstapel');
+assertUi(str_contains($css, '.dg-form.dg-btn-row'), 'Filterzeile .dg-form.dg-btn-row');
 $tabLohn = (string) file_get_contents($root . '/views/settings/tab-lohn.php');
 assertUi(str_contains($tabLohn, 'dg-form-section') && str_contains($tabLohn, 'Umlagen'), 'tab-lohn Umlagen in form-section');
 assertUi(
@@ -134,6 +135,10 @@ foreach (glob($root . '/views/modules/lohn-*.php') ?: [] as $path) {
     assertUi(!uiHasNakedSubmitAfterTextarea($html), "{$rel}: kein nackter Submit nach Textarea");
     assertUi(uiBareActionLinkCount($html) === 0, "{$rel}: keine nackten Aktionslinks (Count=0)");
     assertUi(!uiHasMixedLinkAndButtonInActions($html), "{$rel}: kein Link+Button-Mix in Aktionszelle");
+    assertUi(
+        !preg_match('/<form\b[^>]*\bdg-form\b[^>]*style="[^"]*display\s*:\s*flex/i', $html),
+        "{$rel}: Filterzeilen ohne Inline display:flex (nutze dg-btn-row)"
+    );
     if (str_contains($html, 'dg-form') && (str_contains($html, 'Importieren') || str_contains($html, 'Anlegen') || str_contains($html, 'Speichern'))) {
         assertUi(str_contains($html, 'dg-form-actions'), "{$rel}: Formulare mit Submit nutzen dg-form-actions");
     }
@@ -141,25 +146,12 @@ foreach (glob($root . '/views/modules/lohn-*.php') ?: [] as $path) {
 
 /**
  * Legacy-Allowlist: bekannte Altlasten (Count je Datei).
+ * Nach CRM-Vollscan 2026-10-30: Aktionslinks auf dg-button umgestellt → leer.
  * Neue Dateien mit nackten Aktionslinks → FAIL.
- * Mehr Treffer als erlaubt in einer Allowlist-Datei → FAIL.
- * Weniger Treffer → Hinweis, Allowlist senken (kein FAIL).
  *
  * @var array<string, int>
  */
-$legacyAllow = [
-    'views/modules/akademie.php' => 2,
-    'views/modules/gutscheine-flyer-vorlagen.php' => 1,
-    'views/modules/gutscheine.php' => 1,
-    'views/modules/hr-abteilungen.php' => 1,
-    'views/modules/hr-teams.php' => 1,
-    'views/modules/kontakte.php' => 2,
-    'views/modules/terminkalender.php' => 2,
-    'views/modules/website-formular-inbox.php' => 1,
-    'views/modules/zeiterfassung-abwesenheit.php' => 1,
-    'views/partials/voucher-document-chain.php' => 1,
-    'views/settings/tab-legal-products.php' => 1,
-];
+$legacyAllow = [];
 
 $iterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($root . '/views', FilesystemIterator::SKIP_DOTS)
@@ -204,6 +196,7 @@ foreach ($shrinkHints as $hint) {
 
 // Mix-Pattern global verbieten (auch Legacy): Link + Button in derselben td
 $mixHits = [];
+$nakedHits = [];
 foreach ($iterator as $fileInfo) {
     if (!$fileInfo->isFile() || $fileInfo->getExtension() !== 'php') {
         continue;
@@ -214,7 +207,62 @@ foreach ($iterator as $fileInfo) {
     if (uiHasMixedLinkAndButtonInActions($html)) {
         $mixHits[] = $rel;
     }
+    if (uiHasNakedSubmitAfterTextarea($html)) {
+        $nakedHits[] = $rel;
+    }
 }
 assertUi($mixHits === [], 'Kein Link+Button-Mix in Aktionszellen' . ($mixHits ? ': ' . implode(', ', $mixHits) : ''));
+assertUi($nakedHits === [], 'Kein nackter Submit nach Textarea' . ($nakedHits ? ': ' . implode(', ', $nakedHits) : ''));
+
+
+/**
+ * Endnutzer-Sprache: keine internen Plan-Codes / Setting-Keys in Views.
+ * Erlaubt in PHP-Kommentaren; verboten in sichtbarem Markup/Text.
+ *
+ * @return list<string>
+ */
+function uiPlanJargonHits(string $html, string $rel): array
+{
+    $hits = [];
+    $lines = preg_split("/\r\n|\n|\r/", $html) ?: [];
+    $patterns = [
+        'stufe' => '/Stufe\s+[A-D0-9]+\b/u',
+        'gate' => '/Gate\s+G?\d+/u',
+        'plan_L' => '/\((?:L\d{1,2}[a-c]?)\)/u',
+        'plan_M' => '/\((?:M\d[a-z]?)(?:\s*\/[^)]*)?\)/u',
+        'live_flag' => '/Live-Flag|nur Flag\b/u',
+        'payroll_label' => '/payroll_[a-z0-9_]+\s*[—–-]/u',
+    ];
+    foreach ($lines as $n => $line) {
+        $trim = ltrim($line);
+        if ($trim === '' || str_starts_with($trim, '//') || str_starts_with($trim, '*') || str_starts_with($trim, '/*') || str_starts_with($trim, '/**')) {
+            continue;
+        }
+        $lineForKeys = $line;
+        if (preg_match('/name=["\'][^"\']*payroll_[^"\']*["\']/', $line) && !preg_match('/payroll_[a-z0-9_]+\s*[—–-]/u', $line)) {
+            $lineForKeys = preg_replace('/name=["\'][^"\']*["\']/', '', $line) ?? $line;
+        }
+        foreach ($patterns as $kind => $rx) {
+            if (preg_match($rx, $lineForKeys)) {
+                $hits[] = "{$rel}:" . ($n + 1) . " ({$kind})";
+            }
+        }
+    }
+    return $hits;
+}
+
+$jargonHits = [];
+foreach ($iterator as $fileInfo) {
+    if (!$fileInfo->isFile() || $fileInfo->getExtension() !== 'php') {
+        continue;
+    }
+    $full = $fileInfo->getPathname();
+    $rel = str_replace('\\', '/', substr($full, strlen($root) + 1));
+    $html = (string) file_get_contents($full);
+    foreach (uiPlanJargonHits($html, $rel) as $hit) {
+        $jargonHits[] = $hit;
+    }
+}
+assertUi($jargonHits === [], 'Keine Plan-/Key-Jargon in Views' . ($jargonHits ? ': ' . implode('; ', array_slice($jargonHits, 0, 20)) : ''));
 
 echo "UI-Form-Spacing Selftest bestanden.\n";

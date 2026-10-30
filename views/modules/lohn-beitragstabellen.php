@@ -81,7 +81,7 @@ $canEditRates = !empty($payrollRateCanEdit);
                 <td><?= View::escape((string) $pv) ?></td>
                 <?php if ($canEditRates && !empty($view['is_active'])) : ?>
                   <td>
-                    <form method="post" action="/app?page=lohn-beitragstabellen&amp;view=<?= $viewId ?>" class="dg-form" style="display:flex;gap:.5rem;align-items:center">
+                    <form method="post" action="/app?page=lohn-beitragstabellen&amp;view=<?= $viewId ?>" class="dg-form dg-btn-row">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="rate_action" value="patch">
                       <input type="hidden" name="rate_set_id" value="<?= $viewId ?>">

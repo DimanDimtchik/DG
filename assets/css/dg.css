@@ -87,6 +87,11 @@
   flex: 1 1 12rem;
   min-width: 0;
 }
+/* Filter-/Aktionszeile mit Feldern (Label oben): an Unterkante ausrichten */
+.dg-form.dg-btn-row {
+  align-items: flex-end;
+  gap: var(--dg-space-3);
+}
 @media (min-width: 900px) {
   .dg-btn-row--desktop-nowrap {
     flex-wrap: nowrap;

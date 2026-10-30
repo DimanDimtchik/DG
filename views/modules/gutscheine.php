@@ -68,9 +68,10 @@ $statusLabels = GiftVoucherRepository::statusOptions();
               <td><?= View::escape(number_format((float) ($row['remaining_gross'] ?? $row['remaining'] ?? 0), 2, ',', '.')) ?> €</td>
               <td><?= View::escape((string) ($row['valid_until'] ?? '—')) ?></td>
               <td class="dg-table__actions">
-                <a href="/app?page=gutscheine-form&amp;action=view&amp;id=<?= $gid ?>">Anzeigen</a>
-                ·
-                <a href="/app?page=website-gutschein-flyer&amp;id=<?= $gid ?>">Flyer</a>
+                <div class="dg-table__actions-group">
+                  <a class="dg-button dg-button--small" href="/app?page=gutscheine-form&amp;action=view&amp;id=<?= $gid ?>">Anzeigen</a>
+                  <a class="dg-button dg-button--small dg-button--ghost" href="/app?page=website-gutschein-flyer&amp;id=<?= $gid ?>">Flyer</a>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>

@@ -110,7 +110,7 @@ Technik: `bin/academy-build-dashboard-video.sh`
 > Nutzer muss **nicht** in jedem Chat „benutze existierende CSS-Logik“ schreiben. Diese Regel gilt **immer**.
 
 **Kanonsich:** **[`docs/UI-KLASSENKATALOG.md`](docs/UI-KLASSENKATALOG.md)** (Buttons, `a`-Tags, Tabellen, Panels, Tokens, Feature-Grenzen)  
-Kurz/Form: [`docs/UI-FORM-REGELN.md`](docs/UI-FORM-REGELN.md) · CSS: `assets/css/dg.css` (**eine** Datei) · Guard: `php bin/ui-form-spacing-selftest.php`
+Kurz/Form: [`docs/UI-FORM-REGELN.md`](docs/UI-FORM-REGELN.md) · CSS: `assets/css/dg.css` (**eine** Datei) · Guard: `php bin/ui-form-spacing-selftest.php` · Scan: `php bin/ui-crm-scan.php`
 
 | Pflicht | Verboten |
 |---------|----------|
@@ -122,4 +122,5 @@ Kurz/Form: [`docs/UI-FORM-REGELN.md`](docs/UI-FORM-REGELN.md) · CSS: `assets/cs
 | Abstände über `--dg-space-*` / Utilities | Ad-hoc `style="margin…"` für Layout |
 | Feature-Klassen nur für echte Sonder-UI | Feature-Klasse als Ersatz für Kern-Primitive |
 
-**Bei jeder UI-Änderung** (Views unter `views/`): Katalog lesen, Guard grün. Neue nackte Aktionslinks außerhalb der Legacy-Allowlist = Fail.
+**Bei jeder UI-Änderung** (Views unter `views/`): Katalog lesen, Guard grün. Nackte Aktionslinks (`Bearbeiten`/`Anzeigen`/…) = Fail. Nackter Submit nach Textarea = Fail.  
+**Endnutzer-Texte:** kurze, verständliche Sprache — **keine** internen Plan-Codes (`L8`, `Gate G3`, `Stufe C`, `M1a` …) und **keine** Setting-/DB-Keys als sichtbare Labels (`payroll_*`). Plan-Codes nur in Docs/Kommentaren.

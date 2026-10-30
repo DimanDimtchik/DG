@@ -68,7 +68,7 @@ $hasStoredPass = ($mailConfig['smtp_password'] ?? '') !== '';
 
 
 
-  <label class="dg-field dg-field--wide">
+  <label class="dg-field dg-field--checkbox dg-field--wide">>
 
     <span><input type="checkbox" name="enabled" value="1"<?= !empty($mailConfig['enabled']) ? ' checked' : '' ?>> E-Mail-Versand aktiviert</span>
 
@@ -383,10 +383,10 @@ $kasConfigured = KasSettings::isConfigured();
   <form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>" id="dg-mail-address-form">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 
-    <label class="dg-field dg-field--wide">
+    <label class="dg-field dg-field--checkbox dg-field--wide">>
       <span><input type="checkbox" name="mail_address_enabled" value="1"<?= !empty($mailAddressConfig['enabled']) ? ' checked' : '' ?>> Automatische Postfach-Anlage aktiviert</span>
     </label>
-    <label class="dg-field dg-field--wide">
+    <label class="dg-field dg-field--checkbox dg-field--wide">>
       <span><input type="checkbox" name="auto_on_contact_create" value="1"<?= !empty($mailAddressConfig['auto_on_contact_create']) ? ' checked' : '' ?>> Standard-Checkbox im Kontaktformular (Mitarbeiter/Admin)</span>
     </label>
 

@@ -353,7 +353,7 @@ $riskClass = static function (?string $level): string {
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="view" value="admin">
       <input type="hidden" name="module_id" value="<?= (int) ($academyAdminVideo['id'] ?? 0) ?>">
-      <fieldset class="dg-field dg-field--wide dg-academy-module-pick">
+      <fieldset class="dg-form-section dg-field dg-field--wide dg-academy-module-pick">
         <legend>Abteilungen (optional, Mehrfachauswahl)</legend>
         <p class="dg-field-hint">Nichts ausgewählt = Video gilt für alle Abteilungen.</p>
         <?php if ($academyDepartments === []) : ?>
@@ -459,7 +459,7 @@ $riskClass = static function (?string $level): string {
                 <td>
                   <a href="/app?page=akademie&amp;view=video-vorschau&amp;module_id=<?= (int) ($video['id'] ?? 0) ?>">Ansehen</a>
                   ·
-                  <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;video_id=<?= (int) ($video['id'] ?? 0) ?>">Bearbeiten</a>
+                  <a class="dg-button dg-button--small" href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;video_id=<?= (int) ($video['id'] ?? 0) ?>">Bearbeiten</a>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -480,7 +480,7 @@ $riskClass = static function (?string $level): string {
         <span>Titel</span>
         <input type="text" name="title" maxlength="200" required value="<?= View::escape((string) ($academyAdminCourse['title'] ?? '')) ?>">
       </label>
-      <fieldset class="dg-field dg-field--wide dg-academy-module-pick">
+      <fieldset class="dg-form-section dg-field dg-field--wide dg-academy-module-pick">
         <legend>Abteilungen (optional, Mehrfachauswahl)</legend>
         <p class="dg-field-hint">Leer = Kurs für alle. Videos im Kurs werden immer vollständig gezeigt.</p>
         <?php if ($academyDepartments === []) : ?>
@@ -535,7 +535,7 @@ $riskClass = static function (?string $level): string {
       <label class="dg-field dg-field--checkbox">
         <span><input type="checkbox" name="is_published" value="1"<?= !empty($academyAdminCourse['is_published']) ? ' checked' : '' ?>> Veröffentlicht</span>
       </label>
-      <fieldset class="dg-field dg-field--wide dg-academy-module-pick">
+      <fieldset class="dg-form-section dg-field dg-field--wide dg-academy-module-pick">
         <legend>Videos für diesen Kurs (Mehrfachauswahl)</legend>
         <?php if ($academyLibraryVideos === []) : ?>
           <p class="dg-muted">Noch keine Videos in der Bibliothek. <a href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos">Video hochladen</a></p>
@@ -596,7 +596,7 @@ $riskClass = static function (?string $level): string {
                       <td><?= View::escape(AcademyTier::labels()[(string) ($course['min_tier'] ?? '')] ?? '') ?></td>
                       <td><?= View::escape(AcademyAccessMode::labels()[(string) ($course['access_mode_default'] ?? '')] ?? '') ?></td>
                       <td><?= !empty($course['is_published']) ? 'veröffentlicht' : 'Entwurf' ?></td>
-                      <td><a href="/app?page=akademie&amp;view=admin&amp;course_id=<?= (int) ($course['id'] ?? 0) ?>">Bearbeiten</a></td>
+                      <td class="dg-table__actions"><a class="dg-button dg-button--small" href="/app?page=akademie&amp;view=admin&amp;course_id=<?= (int) ($course['id'] ?? 0) ?>">Bearbeiten</a></td>
                     </tr>
                   <?php endforeach; ?>
                 </tbody>

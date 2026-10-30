@@ -51,7 +51,7 @@ $base = '/app?page=lohn-auswertungen&month=' . rawurlencode($month)
   </header>
 
   <section class="dg-panel">
-    <form method="get" action="/app" class="dg-form" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:end">
+    <form method="get" action="/app" class="dg-form dg-btn-row">
       <input type="hidden" name="page" value="lohn-auswertungen">
       <label class="dg-field">
         <span>Monat</span>

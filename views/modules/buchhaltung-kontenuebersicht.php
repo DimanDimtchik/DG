@@ -66,7 +66,7 @@ $accountLink = static fn (string $acc): string => $period->appendToUrl($baseUrl 
           <span>Suche</span>
           <input type="search" name="s" value="<?= View::escape($search) ?>" placeholder="Kontonummer oder Bezeichnung …">
         </label>
-        <label class="dg-field dg-field--check">
+        <label class="dg-field dg-field--checkbox dg-field--check">>
           <span>Leere Konten</span>
           <input type="checkbox" name="empty" value="1"<?= $showEmpty ? ' checked' : '' ?>>
         </label>

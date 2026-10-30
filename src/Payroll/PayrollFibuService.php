@@ -44,7 +44,7 @@ final class PayrollFibuService
             'Monatslauf ist gesperrt (locked) und nicht ersetzt.',
             'PDF-Abrechnungen der ok-MA vorhanden (Lohnkonto / CRM-Abrechnungen).',
             'Konten SKR bestätigt (Defaults oder Overrides unter Einstellungen → Lohn).',
-            'Flag payroll_fibu_live nur nach Gate G1 / Berater-Freigabe setzen.',
+            'Freigabe „Lohnläufe ins Journal schreiben“ erst nach Steuerberater-Kontenfreigabe setzen.',
             'Belegkette: Run → Journalbatch (source=payroll) → PDF nachvollziehbar.',
             'Bei Korrektur: ggf. zuerst Storno-Lauf buchen, dann Korrektur-Lauf.',
             'Keine USt auf Lohnzeilen; kein SEPA in diesem Schritt.',
@@ -400,7 +400,7 @@ final class PayrollFibuService
         }
         if (!self::isLive() && !$forceProbe) {
             throw new RuntimeException(
-                'FiBu-Lohnbuchung ist nicht freigeschaltet (payroll_fibu_live). Gate G1 / L7c.'
+                'FiBu-Lohnbuchung ist nicht freigeschaltet. Bitte unter Einstellungen → Lohn die Produktiv-Übernahme aktivieren.'
             );
         }
 

@@ -80,10 +80,9 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     </form>
 
     <?php $amazonBusinessForm = $amazonBusinessForm ?? AmazonBusinessSettings::forForm(); ?>
-    <h3 class="dg-subsection-title" style="margin-top:2rem">Amazon Business (Stufe 2)</h3>
+    <h3 class="dg-subsection-title" style="margin-top:2rem">Amazon Business</h3>
     <p class="dg-lead">
-      Halbautomatische Bestellung aus der Einkaufsliste. Zuerst Developer-Zugang beantragen
-      (siehe <code>docs/AMAZON-BUSINESS-STUFE2.md</code>), dann Credentials hier hinterlegen.
+      Halbautomatische Bestellung aus der Einkaufsliste. Zugang und Zugangsdaten hier hinterlegen.
       Der Bestell-Button an der Einkaufsliste folgt in einem nächsten Schritt.
     </p>
     <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&lager_tab=einkauf') ?>">
@@ -186,7 +185,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editLocation['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--checkbox">>
               <span><input type="checkbox" name="is_active" value="1"<?= !$editLocation || !empty($editLocation['is_active']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>> Aktiv</span>
             </label>
           </div>
@@ -305,7 +304,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editHall['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--checkbox">>
               <span><input type="checkbox" name="is_active" value="1"<?= !$editHall || !empty($editHall['is_active']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>> Aktiv</span>
             </label>
           </div>
@@ -451,7 +450,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
               <span>Sortierung</span>
               <input type="number" name="sort_order" value="<?= (int) ($editShelf['sort_order'] ?? 0) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
             </label>
-            <label class="dg-field">
+            <label class="dg-field dg-field--checkbox">>
               <span><input type="checkbox" name="is_active" value="1"<?= !$editShelf || !empty($editShelf['is_active']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>> Aktiv</span>
             </label>
           </div>

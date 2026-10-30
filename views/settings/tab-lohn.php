@@ -1,6 +1,6 @@
 <?php
 /**
- * Lohn L1c — Arbeitgeber-Stamm (Settings).
+ * Lohn — Arbeitgeber-Stamm (Settings).
  *
  * @var array<string, mixed> $payrollEmployerForm
  * @var bool $dbConnected
@@ -27,7 +27,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
 
   <?php if ($warnings !== []) : ?>
     <div class="dg-flash dg-flash--warning">
-      <p><strong>Hinweise zur Vollständigkeit</strong> (Speichern der Lohn-Felder bleibt möglich; Monatslauf erst später):</p>
+      <p><strong>Hinweise zur Vollständigkeit</strong> (Speichern bleibt möglich; Monatslauf braucht vollständige Stammdaten):</p>
       <ul>
         <?php foreach ($warnings as $w) : ?>
           <li><?= View::escape((string) $w) ?></li>
@@ -37,10 +37,11 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
   <?php endif; ?>
 
   <section class="dg-form-section">
-    <h3 class="dg-subsection-title">Aus Firmendaten (nur Anzeige)</h3>
+    <h3 class="dg-subsection-title">Aus Firmendaten</h3>
     <p class="dg-field-hint">
-      Name, Steuernummer, Betriebsnummer, Finanzamt, BG und Bankkonten pflegen Sie unter
-      <a href="<?= View::escape($firmaUrl) ?>">Einstellungen → Firmendaten</a> — hier keine Doppelpflege.
+      Nur Anzeige — gepflegt unter
+      <a href="<?= View::escape($firmaUrl) ?>">Einstellungen → Firmendaten</a>
+      (eine Quelle, keine Doppelpflege).
     </p>
     <div class="dg-form-grid">
       <div class="dg-field">
@@ -102,7 +103,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
             </option>
           <?php endforeach; ?>
         </select>
-        <small class="dg-field-hint">Nicht automatisch aus PLZ abgeleitet — bewusst setzen.</small>
+        <small class="dg-field-hint">Bitte bewusst setzen — nicht automatisch aus der PLZ.</small>
       </label>
 
       <label class="dg-field">
@@ -114,13 +115,13 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
             </option>
           <?php endforeach; ?>
         </select>
-        <small class="dg-field-hint">Kontenliste aus Firmendaten. Live-SEPA erst nach Pilot (Flag in L8).</small>
+        <small class="dg-field-hint">Konten aus Firmendaten. Produktiv-SEPA erst nach Freigabe unten.</small>
       </label>
     </div>
 
-    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
       <legend class="dg-subsection-title">Umlagen</legend>
-      <p class="dg-field-hint">Teilnahme bewusst setzen (auch „nein“). Werte fließen später in die Berechnung (L4).</p>
+      <p class="dg-field-hint">Teilnahme bewusst setzen (auch „nein“). Die Sätze fließen in die Lohnberechnung.</p>
       <label class="dg-field dg-field--checkbox">
         <span>
           <input type="checkbox" name="lohn[umlage_u1]" value="1"<?= !empty($lohn['umlage_u1']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
@@ -131,7 +132,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
         <span>U1-Erstattungssatz (Schlüssel)</span>
         <input type="text" name="lohn[u1_erstattungssatz_key]" maxlength="64"
                value="<?= View::escape((string) ($lohn['u1_erstattungssatz_key'] ?? '')) ?>"
-               placeholder="z. B. Tarifkennzeichen — Werte ab L4"
+               placeholder="z. B. Tarifkennzeichen"
                <?= !$dbConnected ? ' disabled' : '' ?>>
       </label>
       <label class="dg-field dg-field--checkbox">
@@ -148,27 +149,26 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
-      <legend class="dg-subsection-title">Baulohn (Stufe C)</legend>
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">Baulohn</legend>
       <label class="dg-field dg-field--checkbox">
         <span>
           <input type="checkbox" name="lohn[baulohn_enabled]" value="1"<?= !empty($lohn['baulohn_enabled']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-          Baulohn aktiv (nur Flag — ohne Funktion bis Stufe C)
+          Bauhauptgewerbe vormerken (Funktion folgt später)
         </span>
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
-      <legend class="dg-subsection-title">FiBu-Übernahme (L7)</legend>
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">FiBu-Übernahme</legend>
       <p class="dg-field-hint">
-        Live-Buchung erst nach Gate G1 / Steuerberater-Kontenfreigabe.
-        Defaults SKR03: 4120/4130/1740/1741/1742 · SKR04: 6200/6220/3500/3510/3520.
-        Leere Override = Default des aktiven Kontenrahmens.
+        Produktiv erst nach Kontenfreigabe mit dem Steuerberater.
+        Leer lassen = Standard des aktiven Kontenrahmens (SKR03/SKR04).
       </p>
       <label class="dg-field dg-field--checkbox">
         <span>
           <input type="checkbox" name="lohn[payroll_fibu_live]" value="1"<?= !empty($lohn['payroll_fibu_live']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-          payroll_fibu_live — Lohnläufe dürfen ins Journal geschrieben werden
+          Lohnläufe ins Journal schreiben (produktiv)
         </span>
       </label>
       <?php
@@ -181,45 +181,43 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
             <span><?= View::escape($label) ?></span>
             <input type="text" name="lohn[fibu_accounts][<?= View::escape($role) ?>]" maxlength="16"
                    value="<?= View::escape((string) ($fibuAcc[$role] ?? '')) ?>"
-                   placeholder="Default SKR"
+                   placeholder="Standard-Konto"
                    <?= !$dbConnected ? ' disabled' : '' ?>>
           </label>
         <?php endforeach; ?>
       </div>
     </fieldset>
 
-    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
-      <legend class="dg-subsection-title">SEPA-Auszahlung (L8)</legend>
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">SEPA-Auszahlung</legend>
       <p class="dg-field-hint">
-        pain.001.001.03 Sammler (Netto) für Bank-Upload. Live erst nach Gate G3.
-        Ohne Flag erzeugt der Monatslauf nur kennzeichnete PROBE-Dateien.
-        Absenderkonto = Index oben (payroll_bank_account_index) in Firmendaten-Bankkonten.
-        Kein automatischer Bankversand.
+        Sammeldatei (Netto) zum Upload bei der Bank. Absenderkonto siehe oben.
+        Ohne Freigabe nur Testdateien — nicht an die Bank senden. Kein automatischer Versand.
       </p>
       <label class="dg-field dg-field--checkbox">
         <span>
           <input type="checkbox" name="lohn[payroll_sepa_live]" value="1"<?= !empty($lohn['payroll_sepa_live']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-          payroll_sepa_live — SEPA-XML ohne PROBE-Kennzeichnung (produktiv)
+          SEPA-Dateien produktiv erzeugen (ohne Test-Kennzeichnung)
         </span>
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
-      <legend class="dg-subsection-title">Lohnsteuer ELSTER (L10)</legend>
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">Lohnsteuer-Anmeldung (ELSTER)</legend>
       <p class="dg-field-hint">
-        Live-Anmeldung erst nach Gate G2 / L10c. L10b speichert Test-Payloads und Kontroll-CSV.
-        Zertifikat und ERiC-Modus unter Einstellungen → ELSTER. Nicht mit UStVA vermischen.
+        Zertifikat und Modus unter Einstellungen → ELSTER.
+        Ohne Freigabe nur Test und Kontrolle — getrennt von der UStVA.
       </p>
       <label class="dg-field dg-field--checkbox">
         <span>
           <input type="checkbox" name="lohn[payroll_lsta_live]" value="1"<?= !empty($lohn['payroll_lsta_live']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-          payroll_lsta_live — Live-LStA freischalten (nur mit L10c / G2)
+          Lohnsteuer-Anmeldung live an ELSTER senden
         </span>
       </label>
     </fieldset>
 
     <label class="dg-field dg-field--wide">
-      <span>Interne Notiz (Prüfung)</span>
+      <span>Interne Notiz</span>
       <textarea name="lohn[notes]" rows="3" maxlength="2000"<?= !$dbConnected ? ' disabled' : '' ?>><?= View::escape((string) ($lohn['notes'] ?? '')) ?></textarea>
     </label>
   </section>

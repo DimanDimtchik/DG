@@ -52,7 +52,7 @@ $editId = (int) ($edit['id'] ?? 0);
         <input type="number" name="sort_order" step="1"
                value="<?= (int) ($edit['sort_order'] ?? 0) ?>">
       </label>
-      <label class="dg-field">
+      <label class="dg-field dg-field--checkbox">>
         <input type="checkbox" name="active" value="1"<?= ($edit === null || !empty($edit['active'])) ? ' checked' : '' ?>>
         Aktiv
       </label>

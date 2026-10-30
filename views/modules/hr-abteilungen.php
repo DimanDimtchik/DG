@@ -198,8 +198,8 @@ $renderPerson = static function (array $ma, bool $showTeamHint = true): void {
                         </td>
                         <td><?= View::escape($assetLabels !== [] ? implode('; ', $assetLabels) : '—') ?></td>
                         <td><?= !empty($team['is_active']) ? 'Aktiv' : 'Inaktiv' ?></td>
-                        <td>
-                          <a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($team['id'] ?? 0) ?>">Öffnen</a>
+                        <td class="dg-table__actions">
+                          <a class="dg-button dg-button--small" href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($team['id'] ?? 0) ?>">Öffnen</a>
                         </td>
                       </tr>
                     <?php endforeach; ?>

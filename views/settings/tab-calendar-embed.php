@@ -38,7 +38,7 @@ $ctaPresets = [
   </p>
 
   <div class="dg-form-grid">
-    <label class="dg-field dg-field--wide">
+    <label class="dg-field dg-field--checkbox dg-field--wide">>
       <span>
         <input type="checkbox" name="online_booking_enabled" value="1"<?= $isEnabled ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
         Terminvereinbarung online stellen
@@ -109,7 +109,7 @@ $ctaPresets = [
           </label>
         </div>
 
-        <fieldset class="dg-field dg-field--wide">
+        <fieldset class="dg-form-section dg-field dg-field--wide">
           <legend>Mitte (Logo / Icon / Emoji)</legend>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="none"<?= $centerSource === 'none' ? ' checked' : '' ?> data-dg-qr-field> Kein Logo</label>
           <label class="dg-radio"><input type="radio" name="qr[center_image_source]" value="logo"<?= $centerSource === 'logo' ? ' checked' : '' ?><?= $qrLogoUrl === '' ? ' disabled' : '' ?> data-dg-qr-field> CRM-Logo</label>
@@ -207,7 +207,7 @@ $ctaPresets = [
           </label>
         </div>
 
-        <fieldset class="dg-field dg-field--wide">
+        <fieldset class="dg-form-section dg-field dg-field--wide">
           <legend>Rahmenvorlage</legend>
           <label class="dg-radio"><input type="radio" name="qr[frame_preset]" value="none"<?= ($qr['frame_preset'] ?? '') === 'none' ? ' checked' : '' ?> data-dg-qr-preset data-dg-qr-field> Kein Rahmen</label>
           <label class="dg-radio"><input type="radio" name="qr[frame_preset]" value="classic"<?= ($qr['frame_preset'] ?? '') === 'classic' ? ' checked' : '' ?> data-dg-qr-preset data-dg-qr-field> Klassisch</label>
@@ -255,7 +255,7 @@ $ctaPresets = [
             </select>
           </label>
         </div>
-        <fieldset class="dg-field dg-field--wide" style="margin-top:16px">
+        <fieldset class="dg-form-section dg-field dg-field--wide" style="margin-top:16px">
           <legend>Flyer-Text &amp; Layout</legend>
           <label class="dg-field dg-field--wide">
             <span>Überschrift (Headline)</span>
@@ -335,7 +335,7 @@ $ctaPresets = [
             </div>
             <small class="dg-field-hint">Bild deckt den Flyer ab (cover). QR bleibt auf weißem Feld lesbar.</small>
           </div>
-          <label class="dg-field dg-field--wide">
+          <label class="dg-field dg-field--checkbox dg-field--wide">>
             <span>
               <input type="hidden" name="flyer[show_logo]" value="0">
               <input type="checkbox" name="flyer[show_logo]" id="dg-flyer-show-logo" value="1"<?= !empty($flyer['show_logo']) ? ' checked' : '' ?> data-dg-qr-field data-dg-flyer-field>

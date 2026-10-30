@@ -26,7 +26,7 @@ $mode = (string) ($cfg['mode'] ?? ElsterSettings::MODE_CSV);
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php endif; ?>
 
-  <fieldset class="dg-form-grid"<?= !$dbConnected ? ' disabled' : '' ?>>
+  <fieldset class="dg-fieldset dg-form-grid"<?= !$dbConnected ? ' disabled' : '' ?>>
     <legend>Betriebsmodus</legend>
     <label class="dg-field dg-field--wide">
       <span>ELSTER-Modus</span>

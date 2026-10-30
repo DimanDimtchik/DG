@@ -44,12 +44,12 @@ final class PayrollSvPortalService
     {
         return [
             'Nur locked, nicht superseded; Storno-Run ohne Beitragsnachweis-Summen.',
-            'CSV ist Portal-Hilfe — kein ITSG-/DEÜV-Versand aus dem CRM (Stufe A / L9).',
-            'Flat (Minijob-Pauschale) getrennt von SV-Pflicht ausweisen.',
-            'Gruppierung primär nach KK-Betriebsnummer; UNKNOWN = ohne BN.',
-            'SV-Nummer in der UI maskieren; voll in CSV nur für berechtigte Nutzer.',
-            'SV-Beiträge nicht über Lohn-SEPA (L8) zahlen.',
-            'Meta dg_payroll_sv_exports / Checksumme gegen Download prüfen.',
+            'CSV ist Hilfe für das SV-Portal — kein automatischer Meldeversand aus dem CRM.',
+            'Minijob-Pauschale getrennt von der SV-Pflicht ausweisen.',
+            'Gruppierung primär nach KK-Betriebsnummer; ohne Nummer = eigene Gruppe.',
+            'SV-Nummer in der Oberfläche maskieren; vollständig in der CSV nur für Berechtigte.',
+            'SV-Beiträge nicht über die Lohn-SEPA-Auszahlung zahlen.',
+            'Export-Eintrag und Prüfsumme gegen den Download prüfen.',
         ];
     }
 

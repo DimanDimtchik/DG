@@ -26,7 +26,7 @@ $list = PayrollFibuService::auditorChecklist();
 assertL7c(count($list) >= 5, 'Checkliste Einträge');
 $joined = implode(' ', $list);
 assertL7c(str_contains($joined, 'locked'), 'Checkliste locked');
-assertL7c(str_contains($joined, 'payroll_fibu_live') || str_contains($joined, 'G1'), 'Checkliste Gate/Flag');
+assertL7c(str_contains($joined, 'Journal') || str_contains($joined, 'Freigabe'), 'Checkliste Freigabe/Journal');
 assertL7c(str_contains($joined, 'USt') || str_contains($joined, 'SEPA'), 'Checkliste Abgrenzung');
 
 assertL7c(method_exists('PayrollRunAccess', 'canPostFibu'), 'canPostFibu');
