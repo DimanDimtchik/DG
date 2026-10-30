@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a ✅ · weiter mit `l5b`
+> Einstieg: `l5a` · L5a–b ✅ · weiter mit `l5c`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1154,11 +1154,27 @@ Prinzip: Z6-Modulrechte unverändert; Monatslauf **liest** Daten, schreibt nicht
 
 **Nicht:** Migration, UI-Code, PDF, Ledger-Buchung, SEPA, ELSTER.
 
-### L5b — Migration Läufe + Positionen + Audit
+### L5b — Migration Läufe + Positionen + Audit ✅ 2026-10-30
 
-Migration laut L5a-Tabellenrahmen; Repository + Statusübergänge + Event-Schreiben.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Migration | `database/migrations/128_payroll_runs.sql` |
+| Repository | `PayrollRunRepository` |
+| Rechte | `PayrollRunAccess` (`canEditRun` / `canApprove`) |
+| Selftest | `bin/payroll-runs-l5b-selftest.php` |
 
-**Nicht:** PDF.
+Verhalten: ein aktiver `regular`-Run je Periode; `calculate` → L4c je MA; `reopen` löscht Result-Amounts; `approve` blockt bei blocked-MA / fehlender Betriebsnummer; `lock`; `storno`/`correction` setzt `is_superseded` und legt neuen `draft` mit kopierten Lines; Events + `AuditLog` `payroll_run_status`.
+
+#### Abnahme L5b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| 4 Tabellen laut L5a | ✅ |
+| Statusübergänge + Events | ✅ |
+| Calculate-Hook L4c | ✅ |
+| Kein PDF / keine Monatslauf-UI | ✅ |
+
+**Nicht:** PDF; UI `lohn-monatslauf` = L5c.
 
 ### L5c — UI Monatslauf (Liste, berechnen, Freigabe)
 
@@ -1322,15 +1338,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l4b` Tabellen-Import/Versionierung | ✅ 2026-10-30 |
 | — | `l4c` StandardPayrollEngine + Tests | ✅ 2026-10-30 |
 | — | `l5a` Monatslauf Spec | ✅ 2026-10-30 |
-| 1 | `l5b` Migration Läufe/Positionen | **als Nächstes** |
+| — | `l5b` Migration Läufe/Positionen | ✅ 2026-10-30 |
+| 1 | `l5c` UI Monatslauf | **als Nächstes** |
 
-Danach L5c → … nicht überspringen.
+Danach L6a → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l5b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L5b. Nicht andere L-Pakete.
+Lohn Implementierung: l5c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L5c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
