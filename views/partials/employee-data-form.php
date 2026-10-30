@@ -440,10 +440,12 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
       </label>
     <?php endforeach; ?>
     <label class="dg-field dg-field--wide">
-      <span>Lohnabrechnung / payroll_slip (Upload)</span>
+      <span>Externe Lohn-PDFs / payroll_slip (Upload)</span>
       <p class="dg-lead">
-        Vom Steuerberater erhaltene PDF-Abrechnung ablegen (Monat im Dateinamen empfohlen).
-        Keine Generierung im CRM — mehrere Dateien möglich.
+        Vom Steuerberater/Lohnbüro erhaltene PDF ablegen (Monat im Dateinamen empfohlen).
+        Parallel erzeugt das CRM eigene Final-PDFs nach Sperre des Monatslaufs —
+        siehe <a href="/app?page=lohn-lohnkonto">Lohnkonto</a> und Kontaktansicht „CRM-Abrechnungen“.
+        Mehrere Dateien möglich; fremde Uploads werden nicht automatisch gelöscht.
       </p>
       <input type="file" name="employee_files[payroll_slip][]" multiple accept=".pdf,application/pdf">
     </label>

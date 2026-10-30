@@ -44,6 +44,7 @@ $isSuperseded = !empty($run['is_superseded']);
       </p>
     </div>
     <div class="dg-toolbar">
+      <a class="dg-button" href="/app?page=lohn-lohnkonto">Lohnkonto</a>
       <a class="dg-button" href="/app?page=lohn-lohnarten">Lohnarten</a>
       <a class="dg-button" href="/app?page=lohn-beitragstabellen">Beitragstabellen</a>
     </div>

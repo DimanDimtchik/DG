@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L6b ✅)  
+> **Stand:** 2026-10-30 (L0–L6 ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L6b PDF-Generator ✅ · nächster Chat: **`l6c`** (Lohnkonto-UI)
+> **Status:** L6c Lohnkonto-UI ✅ · nächster Chat: **`l7a`** (FiBu-Buchung Spec)
 
 ---
 
@@ -1200,7 +1200,7 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-> Einstieg: `l6a` · L6a–b ✅ · weiter mit `l6c`
+> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l7a`
 
 ### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
@@ -1364,11 +1364,21 @@ Migration `129_payroll_documents.sql` → `dg_payroll_documents`. Generator Domp
 
 **Nicht:** FiBu, Lohnkonto-UI (L6c), SEPA, Behördenmeldung.
 
-### L6c — Lohnkonto-UI + Export
+### L6c — Lohnkonto-UI + Export ✅ 2026-10-30
 
-Seite `lohn-lohnkonto` + Kontroll-CSV; Links Final-PDF.
+Seite `/app?page=lohn-lohnkonto` (`PayrollLohnkontoService`): MA/Jahr, Spalten Monat/Run/Art/Status/Brutto/LSt/SV-AN/Netto/PDF/ersetzt, Jahressummen (ohne superseded), Kontroll-CSV, Final-PDF-Download. Menü + Link von Kontaktkarte („CRM-Abrechnungen“ parallel zu `payroll_slip`). Selftest: `bin/payroll-lohnkonto-l6c-selftest.php`.
 
-**Nicht:** SEPA.
+#### Abnahme L6c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Seite + Menü `lohn-lohnkonto` | ✅ |
+| Spalten/Summen/Entwurf-Filter | ✅ |
+| Kontroll-CSV (BOM, DE-Zahlen) | ✅ |
+| Final-PDF-Download + Kontakt-Blöcke | ✅ |
+| Kein SEPA / keine FiBu | ✅ |
+
+**Nicht:** SEPA, FiBu (L7), Behördenmeldung.
 
 ---
 
@@ -1508,15 +1518,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l5c` UI Monatslauf | ✅ 2026-10-30 |
 | — | `l6a` PDF/Lohnkonto Spec | ✅ 2026-10-30 |
 | — | `l6b` PDF-Generator/Speicherung | ✅ 2026-10-30 |
-| 1 | `l6c` Lohnkonto-UI + Export | **als Nächstes** |
+| — | `l6c` Lohnkonto-UI + Export | ✅ 2026-10-30 |
+| 1 | `l7a` Spec Buchungssätze | **als Nächstes** |
 
-Danach L7a → … nicht überspringen.
+Danach L7b → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l6c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L6c. Nicht andere L-Pakete.
+Lohn Implementierung: l7a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L7a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

@@ -224,6 +224,35 @@
           <?php else : ?>
             <p class="dg-lead">Noch keine Lohn-Stammdaten erfasst.</p>
           <?php endif; ?>
+          <p class="dg-lead">
+            <a href="/app?page=lohn-lohnkonto&amp;contact_id=<?= (int) $contact->id ?>&amp;year=<?= (int) date('Y') ?>">Lohnkonto öffnen</a>
+            — Jahresübersicht Brutto/Netto und CRM-Abrechnungs-PDFs.
+          </p>
+          <?php
+            $crmDocs = is_array($payrollCrmDocuments ?? null) ? $payrollCrmDocuments : [];
+          ?>
+          <h4 class="dg-subsection-title">CRM-Abrechnungen</h4>
+          <?php if ($crmDocs === []) : ?>
+            <p class="dg-lead">Noch keine Final-PDF aus gesperrten Monatsläufen.</p>
+          <?php else : ?>
+            <ul class="dg-doc-list__items">
+              <?php foreach ($crmDocs as $crmDoc) : ?>
+                <?php
+                  $crmDocId = (int) ($crmDoc['id'] ?? 0);
+                  $crmYm = sprintf(
+                      '%02d/%04d',
+                      (int) ($crmDoc['period_month'] ?? 0),
+                      (int) ($crmDoc['period_year'] ?? 0)
+                  );
+                ?>
+                <li>
+                  <?= View::escape($crmYm) ?> · Run #<?= (int) ($crmDoc['run_id'] ?? 0) ?>
+                  —
+                  <a href="/app?page=lohn-lohnkonto&amp;download=pdf&amp;doc=<?= $crmDocId ?>">PDF</a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
           <?php
             $detailAssignments = $payrollWageAssignments ?? [];
             $unitLabelsDetail = PayrollWageTypeRepository::unitLabels();

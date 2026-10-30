@@ -7011,6 +7011,21 @@ $legalProductsConfig = LegalProductSettings::config();
                 $payrollWageAssignments = $showEmployeeFields
                     ? PayrollEmployeeWageAssignmentRepository::forContact($contact->id)
                     : [];
+                $payrollCrmDocuments = [];
+                if (
+                    $showEmployeeFields
+                    && PayrollEmployeeAccess::canView($user)
+                    && class_exists('PayrollDocumentRepository')
+                ) {
+                    PayrollDocumentRepository::ensureReady();
+                    if (PayrollDocumentRepository::tableReady()) {
+                        $payrollCrmDocuments = array_values(array_filter(
+                            PayrollDocumentRepository::listForContact($contact->id),
+                            static fn (array $d): bool => (string) ($d['kind'] ?? '') === PayrollDocumentRepository::KIND_PAYSLIP
+                                && (int) ($d['is_final'] ?? 0) === 1
+                        ));
+                    }
+                }
             } else {
                 $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
                 $contactImportErrors = [];
@@ -7821,6 +7836,85 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/lohn-monatslauf';
             $title = 'Monatslauf';
             $currentPage = 'lohn-monatslauf';
+        } elseif ($page === 'lohn-lohnkonto' && MenuRegistry::canAccess($user, 'lohn-lohnkonto')) {
+            MigrationRunner::runPending();
+            PayrollDocumentRepository::ensureReady();
+            $lohnkontoYear = (int) ($_GET['year'] ?? date('Y'));
+            if ($lohnkontoYear < 2000 || $lohnkontoYear > 2100) {
+                $lohnkontoYear = (int) date('Y');
+            }
+            $lohnkontoContactId = (int) ($_GET['contact_id'] ?? 0);
+            $lohnkontoIncludeDrafts = trim((string) ($_GET['drafts'] ?? '')) === '1';
+            $lohnkontoStaffOptions = PayrollRunRepository::staffContactOptions();
+            $lohnkontoContactLabel = '';
+            if ($lohnkontoContactId > 0) {
+                $lohnkontoContactLabel = PayrollRunRepository::contactLabel($lohnkontoContactId);
+            }
+
+            $dl = trim((string) ($_GET['download'] ?? ''));
+            if ($dl === 'pdf') {
+                $docId = (int) ($_GET['doc'] ?? 0);
+                $doc = $docId > 0 ? PayrollDocumentRepository::find($docId) : null;
+                if ($doc === null || (int) ($doc['is_final'] ?? 0) !== 1) {
+                    http_response_code(404);
+                    exit('PDF nicht gefunden.');
+                }
+                try {
+                    $bin = PayrollDocumentRepository::readBinary($docId);
+                } catch (Throwable $e) {
+                    http_response_code(500);
+                    exit($e->getMessage());
+                }
+                if ($bin === null) {
+                    http_response_code(404);
+                    exit('PDF-Datei fehlt.');
+                }
+                $fname = basename((string) ($doc['storage_path'] ?? ('lohn-' . $docId . '.pdf')));
+                $safe = str_replace(['"', "\r", "\n"], '', $fname);
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: inline; filename="' . $safe . '"');
+                header('Content-Length: ' . (string) strlen($bin));
+                header('X-Content-Type-Options: nosniff');
+                echo $bin;
+                exit;
+            }
+            if ($dl === 'csv') {
+                if ($lohnkontoContactId < 1) {
+                    Flash::set('error', 'Für CSV bitte Mitarbeiter wählen.');
+                    header('Location: /app?page=lohn-lohnkonto&year=' . $lohnkontoYear, true, 302);
+                    exit;
+                }
+                $csvRows = PayrollLohnkontoService::rowsForContactYear(
+                    $lohnkontoContactId,
+                    $lohnkontoYear,
+                    $lohnkontoIncludeDrafts
+                );
+                $csvTotals = PayrollLohnkontoService::yearTotals($csvRows);
+                $csv = PayrollLohnkontoService::toCsv(
+                    $lohnkontoContactId,
+                    $lohnkontoContactLabel !== '' ? $lohnkontoContactLabel : ('#' . $lohnkontoContactId),
+                    $lohnkontoYear,
+                    $csvRows,
+                    $csvTotals
+                );
+                $csvName = PayrollLohnkontoService::csvFilename($lohnkontoContactId, $lohnkontoYear);
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="' . $csvName . '"');
+                echo $csv;
+                exit;
+            }
+
+            $lohnkontoRows = $lohnkontoContactId > 0
+                ? PayrollLohnkontoService::rowsForContactYear(
+                    $lohnkontoContactId,
+                    $lohnkontoYear,
+                    $lohnkontoIncludeDrafts
+                )
+                : [];
+            $lohnkontoTotals = PayrollLohnkontoService::yearTotals($lohnkontoRows);
+            $contentTemplate = 'modules/lohn-lohnkonto';
+            $title = 'Lohnkonto';
+            $currentPage = 'lohn-lohnkonto';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
@@ -8882,6 +8976,16 @@ $legalProductsConfig = LegalProductSettings::config();
         $payrollStaffOptions = $payrollStaffOptions ?? [];
         $payrollRunCanEdit = $payrollRunCanEdit ?? false;
         $payrollRunCanApprove = $payrollRunCanApprove ?? false;
+        $lohnkontoYear = $lohnkontoYear ?? (int) date('Y');
+        $lohnkontoContactId = $lohnkontoContactId ?? 0;
+        $lohnkontoContactLabel = $lohnkontoContactLabel ?? '';
+        $lohnkontoIncludeDrafts = $lohnkontoIncludeDrafts ?? false;
+        $lohnkontoRows = $lohnkontoRows ?? [];
+        $lohnkontoTotals = $lohnkontoTotals ?? [
+            'gross_total' => 0.0, 'lst' => 0.0, 'sv_an' => 0.0, 'net_pay' => 0.0, 'count' => 0,
+        ];
+        $lohnkontoStaffOptions = $lohnkontoStaffOptions ?? [];
+        $payrollCrmDocuments = $payrollCrmDocuments ?? [];
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -9415,6 +9519,14 @@ $legalProductsConfig = LegalProductSettings::config();
             'payrollStaffOptions',
             'payrollRunCanEdit',
             'payrollRunCanApprove',
+            'lohnkontoYear',
+            'lohnkontoContactId',
+            'lohnkontoContactLabel',
+            'lohnkontoIncludeDrafts',
+            'lohnkontoRows',
+            'lohnkontoTotals',
+            'lohnkontoStaffOptions',
+            'payrollCrmDocuments',
             'timeShiftAssignmentMap',
             'timeVacContactId',
             'timeVacContactLabel',

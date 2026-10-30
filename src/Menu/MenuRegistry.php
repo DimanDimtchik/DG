@@ -109,6 +109,12 @@ final class MenuRegistry
                 'href' => '/app?page=lohn-monatslauf',
             ],
             [
+                'slug' => 'lohn-lohnkonto',
+                'label' => 'Lohnkonto',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-lohnkonto',
+            ],
+            [
                 'slug' => 'lohn-lohnarten',
                 'label' => 'Lohnarten',
                 'icon' => 'ledger',
@@ -916,6 +922,7 @@ final class MenuRegistry
             $slug === 'lohn-lohnarten'
             || $slug === 'lohn-beitragstabellen'
             || $slug === 'lohn-monatslauf'
+            || $slug === 'lohn-lohnkonto'
             || $slug === 'lohn'
         ) {
             return PayrollEmployeeAccess::canView($user);
