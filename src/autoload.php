@@ -16,6 +16,7 @@ spl_autoload_register(static function (string $class): void {
         'SettingsStore' => '/src/Settings/SettingsStore.php',
         'CompanySettings' => '/src/Settings/CompanySettings.php',
         'CompanyExtendedSettings' => '/src/Settings/CompanyExtendedSettings.php',
+        'PayrollEmployerSettings' => '/src/Settings/PayrollEmployerSettings.php',
         'LetterheadSettings' => '/src/Documents/LetterheadSettings.php',
         'LetterheadRenderer' => '/src/Documents/LetterheadRenderer.php',
         'WriterDocument' => '/src/Documents/WriterDocument.php',

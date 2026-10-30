@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0 ✅ · L1a ✅)  
+> **Stand:** 2026-10-30 (L0 ✅ · L1a ✅ · L1b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L1a Spec AG-Stamm ✅ · nächster Chat: **`l1b`** (Migration/Store — noch kein UI außer falls unumgänglich)
+> **Status:** L1b Store ✅ · nächster Chat: **`l1c`** (Settings-UI AG-Stamm)
 
 ---
 
@@ -229,7 +229,7 @@ Kein Zusammenlegen der Module: Zeitenexport ≠ Lohnabrechnung (prüftechnisch u
 
 ## Serie L1 — Arbeitgeber-Stammdaten
 
-> Einstieg: `l1a` · L1a ✅ · weiter mit `l1b`
+> Einstieg: `l1a` · L1a ✅ · L1b ✅ · weiter mit `l1c`
 
 ### L1a — Spec AG-Stamm ✅ 2026-10-30
 
@@ -324,15 +324,41 @@ UI-Ort L1c: Settings-Tab **„Lohn“** (oder Unterbereich Firma→Lohn) — nic
 
 **Nicht:** Migration, Repository-Code, UI, MA-Felder, Berechnung, SV-Meldung senden.
 
-### L1b — Migration + Repository AG-Stamm
+### L1b — Migration + Repository AG-Stamm ✅ 2026-10-30
 
-Store-Erweiterung `company_extended.lohn` laut L1a Feldkatalog B + Defaults; Lesen der A-Felder aus bestehenden Keys; Audit bei Änderung.
+Keine SQL-Migration: Settings-JSON `company_extended` (wie L1a).
 
-**Nicht:** UI außer minimal Settings-Tab wenn nötig in L1c.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Klasse `PayrollEmployerSettings` | `src/Settings/PayrollEmployerSettings.php` |
+| Defaults/Normalize `lohn` | in `CompanyExtendedSettings` |
+| Speichern nur Lohn-Block | `PayrollEmployerSettings::saveLohn()` |
+| Lesen A+B | `PayrollEmployerSettings::employerSnapshot()` |
+| Audit Feld-Diff | `AuditLog` action `payroll_employer_lohn` (JSON changes) |
+| Autoload | `src/autoload.php` |
+| Selftest (ohne DB) | `bin/payroll-employer-l1b-selftest.php` |
+
+Verhalten:
+
+- Bundesland-Allowlist ISO-3166-2 DE; unbekannte Werte → leer.
+- U1/U2/U3 und `baulohn_enabled` als Bool (Default false); **keine** Baulohn-Berechnung.
+- `saveFromPost` (Firma-UI): `lohn` nur überschreiben wenn im Post; sonst Store behalten.
+- `CompanyMasterHistoryRepository` zusätzlich angerufen — bei reinem Lohn-Diff kann Fingerprint unverändert bleiben; **führend ist AuditLog**.
+
+#### Abnahme L1b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Store-Key nested `lohn`, keine `dg_payroll_employer`-Tabelle | ✅ |
+| A-Felder nur gelesen im Snapshot | ✅ |
+| Audit Diff Feld/alt/neu | ✅ |
+| Keine Settings-UI in diesem Paket | ✅ |
+
+**Nicht:** UI/Settings-Tab (L1c), MA-Felder, Berechnung, SV-Meldung.
 
 ### L1c — Settings-UI AG-Stamm
 
-Validierung Betriebsnummer-Format (Plausibilität, keine Behörden-API).
+Validierung Betriebsnummer-Format (Plausibilität, keine Behörden-API). Anbindung `PayrollEmployerSettings::saveLohn` / Snapshot-Anzeige A-Felder.
 
 **Nicht:** SV-Meldung senden.
 
@@ -576,8 +602,8 @@ Kein Deploy außer Nutzer sagt „deploy“.
 |---|-------------|--------|
 | — | `l0a`–`l0c` Spec-Rahmen / Entscheide / Rechte | ✅ 2026-10-30 |
 | — | `l1a` AG-Stamm Spec | ✅ 2026-10-30 |
-| 1 | `l1b` AG Store/`company_extended.lohn` | **als Nächstes** |
-| 2 | `l1c` AG UI | |
+| — | `l1b` AG Store/`company_extended.lohn` | ✅ 2026-10-30 |
+| 1 | `l1c` AG UI | **als Nächstes** |
 | 4 | `l2a` MA-Felder Spec | |
 | 5 | `l2b` MA Migration | |
 | 6 | `l2c` MA UI | |
@@ -587,8 +613,8 @@ Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l1b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L1b. Nicht andere L-Pakete.
+Lohn Implementierung: l1c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L1c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

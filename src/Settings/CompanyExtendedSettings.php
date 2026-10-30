@@ -74,6 +74,8 @@ final class CompanyExtendedSettings
             'addresses' => [],
             'owners' => [],
             'bank_accounts' => [],
+            /** Lohn L1b: AG-Zusatzfelder (Umlagen, Bundesland, SEPA-Index, Baulohn-Flag ohne Logik). */
+            'lohn' => PayrollEmployerSettings::lohnDefaults(),
             // Steuerliche Sonderfälle (0 % MwSt / USt-Sonderregelungen) — Firmenstatus, nicht Belegdarstellung
             'tax_special_cases' => [
                 'kleinunternehmer' => [
@@ -402,6 +404,7 @@ final class CompanyExtendedSettings
         $cfg['addresses'] = self::normalizeAddresses(is_array($cfg['addresses'] ?? null) ? $cfg['addresses'] : []);
         $cfg['owners'] = self::normalizeOwners(is_array($cfg['owners'] ?? null) ? $cfg['owners'] : []);
         $cfg['bank_accounts'] = self::normalizeBankAccounts(is_array($cfg['bank_accounts'] ?? null) ? $cfg['bank_accounts'] : []);
+        $cfg['lohn'] = PayrollEmployerSettings::normalizeLohn(is_array($cfg['lohn'] ?? null) ? $cfg['lohn'] : []);
 
         if (empty($cfg['bg_data']['company_number']) && !empty($cfg['bg_data']['member_no'])) {
             $cfg['bg_data']['company_number'] = $cfg['bg_data']['member_no'];
@@ -449,6 +452,16 @@ final class CompanyExtendedSettings
         $cfg['addresses'] = self::normalizeAddresses(is_array($input['addresses'] ?? null) ? $input['addresses'] : []);
         $cfg['owners'] = self::normalizeOwners(is_array($input['owners'] ?? null) ? $input['owners'] : []);
         $cfg['bank_accounts'] = self::normalizeBankAccounts(is_array($input['bank_accounts'] ?? null) ? $input['bank_accounts'] : []);
+
+        // Lohn-Block: nur überschreiben wenn im Post vorhanden — sonst bestehenden Store behalten (L1c-UI später).
+        if (array_key_exists('lohn', $input) && is_array($input['lohn'])) {
+            $cfg['lohn'] = PayrollEmployerSettings::sanitizeLohn($input['lohn']);
+        } else {
+            $prev = SettingsStore::get(self::STORE_KEY, []);
+            $cfg['lohn'] = PayrollEmployerSettings::normalizeLohn(
+                is_array($prev['lohn'] ?? null) ? $prev['lohn'] : []
+            );
+        }
 
         $est = trim((string) ($cfg['tax_numbers']['est'] ?? ''));
         $plz = trim(CompanySettings::config()['postal'] ?? '');
