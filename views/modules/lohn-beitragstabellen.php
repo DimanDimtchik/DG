@@ -51,7 +51,9 @@ $canEditRates = !empty($payrollRateCanEdit);
             <textarea name="rate_csv_text" rows="8" placeholder="valid_from,2026-01-01&#10;label,MEIN-IMPORT&#10;param,lst_fixture_factor,0.14"></textarea>
           </label>
         </div>
-        <button type="submit" class="dg-button dg-button--primary">Importieren</button>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">Importieren</button>
+        </div>
       </form>
     </section>
   <?php endif; ?>
