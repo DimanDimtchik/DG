@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l6c`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l7a`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
