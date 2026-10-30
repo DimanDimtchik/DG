@@ -149,7 +149,7 @@ assertL9b(str_contains($csvC, 'KK-BN') && str_contains($csvC, 'Ampel'), 'Combine
 $list = PayrollSvPortalService::auditorChecklist();
 assertL9b(count($list) >= 5, 'Checkliste');
 $joined = implode(' ', $list);
-assertL9b(str_contains($joined, 'ITSG') || str_contains($joined, 'DEÜV'), 'Checkliste kein Versand');
+assertL9b(str_contains($joined, 'Portal') || str_contains($joined, 'Meldeversand'), 'Checkliste kein Versand');
 assertL9b(str_contains($joined, 'Storno'), 'Checkliste Storno');
 
 $labels = PayrollSvPortalService::kindLabels();

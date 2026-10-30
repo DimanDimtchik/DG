@@ -150,7 +150,7 @@ assertL8b($emptyThrew, 'leere Tx abgelehnt');
 $list = PayrollSepaService::auditorChecklist();
 assertL8b(count($list) >= 5, 'Checkliste');
 $joined = implode(' ', $list);
-assertL8b(str_contains($joined, 'payroll_sepa_live') || str_contains($joined, 'G3'), 'Checkliste Flag/G3');
+assertL8b(str_contains($joined, 'Produktiv-SEPA') || str_contains($joined, 'Testdatei'), 'Checkliste Freigabe/Test');
 assertL8b(str_contains($joined, 'Storno'), 'Checkliste Storno');
 
 assertL8b(

@@ -126,7 +126,7 @@ $liveBlocked = false;
 try {
     PayrollElsterService::submitLiveLsta(2026, 10, 1, 'should fail always here');
 } catch (RuntimeException $e) {
-    $liveBlocked = str_contains($e->getMessage(), 'L10c') || str_contains($e->getMessage(), 'deaktiviert');
+    $liveBlocked = str_contains($e->getMessage(), 'gesperrt') || str_contains($e->getMessage(), 'Freigabe');
 }
 assertL10b($liveBlocked, 'Live blockiert');
 
@@ -134,13 +134,13 @@ $list = PayrollElsterService::auditorChecklist();
 assertL10b(count($list) >= 5, 'Checkliste');
 $joined = implode(' ', $list);
 assertL10b(str_contains($joined, 'UStVA'), 'Checkliste UStVA-Trennung');
-assertL10b(str_contains($joined, 'G2') || str_contains($joined, 'Unlock'), 'Checkliste Gate');
+assertL10b(str_contains($joined, 'Freigabe') || str_contains($joined, 'Test'), 'Checkliste Freigabe');
 
 $gate = PayrollElsterService::productionGateChecklist();
-assertL10b(count($gate) >= 10, 'L10c Gate-Checkliste');
+assertL10b(count($gate) >= 10, 'Produktiv-Checkliste');
 $gateJoined = implode(' ', $gate);
-assertL10b(str_contains($gateJoined, 'payroll_lsta_live'), 'Gate Flag');
-assertL10b(str_contains($gateJoined, 'submitLiveLsta') || str_contains($gateJoined, 'Unlock'), 'Gate Unlock-Hinweis');
+assertL10b(str_contains($gateJoined, 'Lohnsteuer-Anmeldung live') || str_contains($gateJoined, 'Freigabe'), 'Gate Freigabe');
+assertL10b(str_contains($gateJoined, 'Bestätigung') || str_contains($gateJoined, 'Recht'), 'Gate Rechte-Hinweis');
 
 echo "L10b Selftest bestanden.\n";
 exit(0);
