@@ -123,17 +123,18 @@ $canEditRates = !empty($payrollRateCanEdit);
                 <td><?= View::escape((string) ($row['valid_from'] ?? '')) ?></td>
                 <td><?= View::escape((string) (($row['valid_to'] ?? '') ?: '—')) ?></td>
                 <td><?= !empty($row['is_active']) ? 'ja' : 'nein' ?></td>
-                <td>
-                  <a href="/app?page=lohn-beitragstabellen&amp;view=<?= (int) ($row['id'] ?? 0) ?>">Anzeigen</a>
-                  <?php if ($canEditRates && !empty($row['is_active'])) : ?>
-                    ·
-                    <form method="post" action="/app?page=lohn-beitragstabellen" style="display:inline" onsubmit="return confirm('Satz ablösen (deaktivieren)?');">
-                      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-                      <input type="hidden" name="rate_action" value="supersede">
-                      <input type="hidden" name="id" value="<?= (int) ($row['id'] ?? 0) ?>">
-                      <button type="submit" class="dg-button dg-button--ghost dg-button--small">Ablösen</button>
-                    </form>
-                  <?php endif; ?>
+                <td class="dg-table__actions">
+                  <div class="dg-table__actions-group">
+                    <a class="dg-button dg-button--small" href="/app?page=lohn-beitragstabellen&amp;view=<?= (int) ($row['id'] ?? 0) ?>">Anzeigen</a>
+                    <?php if ($canEditRates && !empty($row['is_active'])) : ?>
+                      <form method="post" action="/app?page=lohn-beitragstabellen" onsubmit="return confirm('Satz ablösen (deaktivieren)?');">
+                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                        <input type="hidden" name="rate_action" value="supersede">
+                        <input type="hidden" name="id" value="<?= (int) ($row['id'] ?? 0) ?>">
+                        <button type="submit" class="dg-button dg-button--small">Ablösen</button>
+                      </form>
+                    <?php endif; ?>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>

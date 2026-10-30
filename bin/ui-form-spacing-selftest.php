@@ -33,5 +33,16 @@ foreach (['lohn-lohnarten.php', 'lohn-beitragstabellen.php'] as $f) {
     );
 }
 
+$lohnarten = (string) file_get_contents($root . '/views/modules/lohn-lohnarten.php');
+assertUi(
+    str_contains($lohnarten, 'dg-button dg-button--small') && str_contains($lohnarten, '>Bearbeiten</a>'),
+    'lohn-lohnarten: Bearbeiten als Small-Button'
+);
+assertUi(str_contains($lohnarten, 'dg-table__actions-group'), 'lohn-lohnarten: actions-group');
+assertUi(
+    !preg_match('/<a href="\/app\?page=lohn-lohnarten[^"]*">Bearbeiten<\/a>/', $lohnarten),
+    'lohn-lohnarten: kein nackter Bearbeiten-Link'
+);
+
 assertUi(is_readable($root . '/docs/UI-FORM-REGELN.md'), 'UI-FORM-REGELN.md');
 echo "UI-Form-Spacing Selftest bestanden.\n";
