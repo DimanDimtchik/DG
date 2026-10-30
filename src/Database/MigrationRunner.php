@@ -312,6 +312,10 @@ final class MigrationRunner
             '126_payroll_employee_wage_assignments.sql' => self::tableExists($pdo, 'dg_payroll_employee_wage_assignments'),
             '127_payroll_rate_tables.sql' => self::tableExists($pdo, 'dg_payroll_rate_sets')
                 && self::tableExists($pdo, 'dg_payroll_rate_params'),
+            '128_payroll_runs.sql' => self::tableExists($pdo, 'dg_payroll_runs')
+                && self::tableExists($pdo, 'dg_payroll_run_employees')
+                && self::tableExists($pdo, 'dg_payroll_run_lines')
+                && self::tableExists($pdo, 'dg_payroll_run_events'),
             default => false,
         };
     }
@@ -455,6 +459,7 @@ final class MigrationRunner
             '125_payroll_wage_types.sql' => true,
             '126_payroll_employee_wage_assignments.sql' => true,
             '127_payroll_rate_tables.sql' => true,
+            '128_payroll_runs.sql' => true,
         ];
     }
 

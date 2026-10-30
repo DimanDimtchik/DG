@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L4 ✅ · L5a ✅)  
+> **Stand:** 2026-10-30 (L0–L4 ✅ · L5a–b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L5a Spec Monatslauf ✅ · nächster Chat: **`l5b`** (Migration Läufe)
+> **Status:** L5b Migration Monatslauf ✅ · nächster Chat: **`l5c`** (UI Monatslauf)
 
 ---
 

@@ -65,6 +65,8 @@ spl_autoload_register(static function (string $class): void {
         'PayrollCalcResult' => '/src/Payroll/PayrollCalcResult.php',
         'PayrollEngineInterface' => '/src/Payroll/PayrollEngineInterface.php',
         'StandardPayrollEngine' => '/src/Payroll/StandardPayrollEngine.php',
+        'PayrollRunAccess' => '/src/Payroll/PayrollRunAccess.php',
+        'PayrollRunRepository' => '/src/Payroll/PayrollRunRepository.php',
         'SocialSecurityRegistrationDraft' => '/src/Contact/SocialSecurityRegistrationDraft.php',
         'EmployeeRetentionService' => '/src/Contact/EmployeeRetentionService.php',
         'StaffAccessEventRepository' => '/src/Contact/StaffAccessEventRepository.php',
