@@ -245,7 +245,6 @@ $belegeFocus = (string) ($belegeFocus ?? '');
             <?php foreach ($lohnSection['items'] as $item) : ?>
               <?php
                 $isLohnActive = $currentPage === $item['slug']
-                    || ($item['slug'] === 'lohn-lohnarten' && str_starts_with($currentPage, 'lohn-'))
                     || ($item['slug'] === 'einstellungen-lohn' && ($currentPage ?? '') === 'einstellungen' && (($_GET['tab'] ?? '') === 'lohn'));
               ?>
               <li>

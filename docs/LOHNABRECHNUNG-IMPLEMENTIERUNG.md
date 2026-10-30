@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L3 ✅ · L4a ✅)  
+> **Stand:** 2026-10-30 (L0–L3 ✅ · L4a–b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L4a Spec Rechenkern ✅ · nächster Chat: **`l4b`** (Tabellen-Import)
+> **Status:** L4b Tabellen-Import ✅ · nächster Chat: **`l4c`** (StandardPayrollEngine)
 
 ---
 
@@ -737,7 +737,7 @@ Felder: `contact_id`, `wage_type_id`, `amount`, `valid_from`/`valid_to`, `priori
 
 ## Serie L4 — Brutto→Netto-Kern (ohne UI-Lauf)
 
-> Einstieg: `l4a` · L4a ✅ · weiter mit `l4b`
+> Einstieg: `l4a` · L4a–b ✅ · weiter mit `l4c`
 
 ### L4a — Spec Rechenkern + Tabellen ✅ 2026-10-30
 
@@ -931,15 +931,34 @@ L4c: goldene Zahlen für V1–V6 fest in Testfile hardcoden (aus FIXTURE berechn
 
 **Nicht:** Migration, Import-UI, Engine-PHP, ITSG-XML, Baulohn, ELSTER, PDF.
 
-### L4b — Tabellen-Import + Versionierung (Code)
+### L4b — Tabellen-Import + Versionierung (Code) ✅ 2026-10-30
 
-Migration laut L4a; Import-Pfad für Jahresdatei; Audit; Fixture-Seed für Tests.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Migration | `database/migrations/127_payroll_rate_tables.sql` |
+| Repository | `PayrollRateTableRepository` |
+| Fixture-Seed | `FIXTURE-2026-A` inkl. `midi_an_factor=0.7` |
+| CSV-Import | `importFromText` / Seite Upload+Text |
+| Audit | `payroll_rate_import` · `payroll_rate_supersede` · `payroll_rate_param_patch` |
+| UI | `/app?page=lohn-beitragstabellen` |
+| Selftest | `bin/payroll-rate-tables-l4b-selftest.php` |
 
-**Nicht:** Monatslauf-UI.
+Verhalten: Allowlist-Keys; kein zweiter aktiver Satz mit gleichem `valid_from`; Ablösen statt Löschen; manuelle Param-Korrektur mit Alt/Neu-Audit. Periode-Auswahl `findForPeriod` für L4c.
+
+#### Abnahme L4b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Migration + Fixture laut L4a | ✅ |
+| Import-Pfad + Checksum | ✅ |
+| Audit Import/Ablösen/Patch | ✅ |
+| Kein Monatslauf / keine Engine | ✅ |
+
+**Nicht:** Monatslauf-UI; keine Engine-Berechnung (L4c).
 
 ### L4c — `StandardPayrollEngine` + Unit-Tests
 
-`PayrollEngineInterface`; nur `StandardPayrollEngine`. Tests gegen L4a-Vektoren V1–V6.
+`PayrollEngineInterface`; nur `StandardPayrollEngine`. Tests gegen L4a-Vektoren V1–V6; Rate-Set aus L4b.
 
 **Nicht:** PDF, FiBu, SEPA.
 
@@ -1120,15 +1139,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l3b` Lohnarten Migration/CRUD | ✅ 2026-10-30 |
 | — | `l3c` MA↔Lohnart Zuordnung | ✅ 2026-10-30 |
 | — | `l4a` Brutto→Netto Spec | ✅ 2026-10-30 |
-| 1 | `l4b` Tabellen-Import/Versionierung | **als Nächstes** |
+| — | `l4b` Tabellen-Import/Versionierung | ✅ 2026-10-30 |
+| 1 | `l4c` StandardPayrollEngine + Tests | **als Nächstes** |
 
-Danach L4c → … nicht überspringen.
+Danach L5a → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l4b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L4b. Nicht andere L-Pakete.
+Lohn Implementierung: l4c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L4c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

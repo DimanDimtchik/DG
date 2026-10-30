@@ -108,6 +108,12 @@ final class MenuRegistry
                 'icon' => 'ledger',
                 'href' => '/app?page=lohn-lohnarten',
             ],
+            [
+                'slug' => 'lohn-beitragstabellen',
+                'label' => 'Beitragstabellen',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-beitragstabellen',
+            ],
         ];
         if (RoleResolver::isAdmin($user)) {
             $items[] = [
@@ -900,7 +906,7 @@ final class MenuRegistry
         if ($slug === 'zeiterfassung-lohnexport') {
             return TimePayrollExportService::canExport($user);
         }
-        if ($slug === 'lohn-lohnarten' || $slug === 'lohn') {
+        if ($slug === 'lohn-lohnarten' || $slug === 'lohn-beitragstabellen' || $slug === 'lohn') {
             return PayrollEmployeeAccess::canView($user);
         }
         if ($slug === 'zeiterfassung-stundenimport') {

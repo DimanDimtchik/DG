@@ -1574,6 +1574,61 @@ switch ($path) {
             exit;
         }
 
+        // POST: Beitragstabellen Import/Ablösen/Patch (L4b)
+        if (
+            $page === 'lohn-beitragstabellen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && PayrollEmployeeAccess::canEdit($user)
+        ) {
+            $redirect = '/app?page=lohn-beitragstabellen';
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                $rateAction = trim((string) ($_POST['rate_action'] ?? ''));
+                try {
+                    if ($rateAction === 'import') {
+                        $text = trim((string) ($_POST['rate_csv_text'] ?? ''));
+                        if ($text === '' && isset($_FILES['rate_csv']) && is_array($_FILES['rate_csv'])) {
+                            $err = (int) ($_FILES['rate_csv']['error'] ?? UPLOAD_ERR_NO_FILE);
+                            if ($err === UPLOAD_ERR_OK) {
+                                $tmp = (string) ($_FILES['rate_csv']['tmp_name'] ?? '');
+                                $raw = $tmp !== '' ? file_get_contents($tmp) : false;
+                                if ($raw === false) {
+                                    throw new RuntimeException('CSV-Datei konnte nicht gelesen werden.');
+                                }
+                                $text = $raw;
+                            } elseif ($err !== UPLOAD_ERR_NO_FILE) {
+                                throw new RuntimeException('Upload fehlgeschlagen (Code ' . $err . ').');
+                            }
+                        }
+                        if ($text === '') {
+                            throw new InvalidArgumentException('Bitte CSV-Datei oder Text angeben.');
+                        }
+                        $newSetId = PayrollRateTableRepository::importFromText($text, (int) $user->id);
+                        Flash::set('success', 'Beitragstabelle importiert.');
+                        $redirect = '/app?page=lohn-beitragstabellen&view=' . $newSetId;
+                    } elseif ($rateAction === 'supersede') {
+                        PayrollRateTableRepository::supersede((int) ($_POST['id'] ?? 0), (int) $user->id);
+                        Flash::set('success', 'Tabellensatz abgelöst (deaktiviert).');
+                    } elseif ($rateAction === 'patch') {
+                        $sid = (int) ($_POST['rate_set_id'] ?? 0);
+                        PayrollRateTableRepository::patchParam(
+                            $sid,
+                            (string) ($_POST['param_key'] ?? ''),
+                            (string) ($_POST['param_value'] ?? ''),
+                            (int) $user->id
+                        );
+                        Flash::set('success', 'Parameter korrigiert (Audit).');
+                        $redirect = '/app?page=lohn-beitragstabellen&view=' . $sid;
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Schriften
         if (
             $page === 'einstellungen'
@@ -7593,6 +7648,26 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/lohn-lohnarten';
             $title = 'Lohnarten';
             $currentPage = 'lohn-lohnarten';
+        } elseif ($page === 'lohn-beitragstabellen' && MenuRegistry::canAccess($user, 'lohn-beitragstabellen')) {
+            MigrationRunner::runPending();
+            PayrollRateTableRepository::ensureReady();
+            if (trim((string) ($_GET['download'] ?? '')) === 'example') {
+                $csv = PayrollRateTableRepository::exampleImportCsv();
+                header('Content-Type: text/csv; charset=utf-8');
+                header('Content-Disposition: attachment; filename="payroll-rate-example.csv"');
+                echo $csv;
+                exit;
+            }
+            $payrollRateSets = PayrollRateTableRepository::all(false);
+            $viewRateId = (int) ($_GET['view'] ?? 0);
+            $payrollRateSetView = $viewRateId > 0 ? PayrollRateTableRepository::find($viewRateId) : null;
+            $payrollRateParams = $payrollRateSetView !== null
+                ? PayrollRateTableRepository::paramsForSet($viewRateId)
+                : [];
+            $payrollRateCanEdit = PayrollEmployeeAccess::canEdit($user);
+            $contentTemplate = 'modules/lohn-beitragstabellen';
+            $title = 'Beitragstabellen';
+            $currentPage = 'lohn-beitragstabellen';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
@@ -8641,6 +8716,10 @@ $legalProductsConfig = LegalProductSettings::config();
         $payrollWageTypes = $payrollWageTypes ?? [];
         $payrollWageTypeEdit = $payrollWageTypeEdit ?? null;
         $payrollWageCanEdit = $payrollWageCanEdit ?? false;
+        $payrollRateSets = $payrollRateSets ?? [];
+        $payrollRateSetView = $payrollRateSetView ?? null;
+        $payrollRateParams = $payrollRateParams ?? [];
+        $payrollRateCanEdit = $payrollRateCanEdit ?? false;
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -9161,6 +9240,10 @@ $legalProductsConfig = LegalProductSettings::config();
             'payrollWageTypes',
             'payrollWageTypeEdit',
             'payrollWageCanEdit',
+            'payrollRateSets',
+            'payrollRateSetView',
+            'payrollRateParams',
+            'payrollRateCanEdit',
             'timeShiftAssignmentMap',
             'timeVacContactId',
             'timeVacContactLabel',
