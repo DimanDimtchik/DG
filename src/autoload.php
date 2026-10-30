@@ -71,6 +71,7 @@ spl_autoload_register(static function (string $class): void {
         'PayrollPayslipPdfService' => '/src/Payroll/PayrollPayslipPdfService.php',
         'PayrollDocumentRepository' => '/src/Payroll/PayrollDocumentRepository.php',
         'PayrollLohnkontoService' => '/src/Payroll/PayrollLohnkontoService.php',
+        'PayrollFibuService' => '/src/Payroll/PayrollFibuService.php',
         'SocialSecurityRegistrationDraft' => '/src/Contact/SocialSecurityRegistrationDraft.php',
         'EmployeeRetentionService' => '/src/Contact/EmployeeRetentionService.php',
         'StaffAccessEventRepository' => '/src/Contact/StaffAccessEventRepository.php',

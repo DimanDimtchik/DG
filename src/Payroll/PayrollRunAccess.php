@@ -32,4 +32,14 @@ final class PayrollRunAccess
 
         return DepartmentAccess::moduleLevel($user, 'lohn') === 'full';
     }
+
+    /** FiBu-Übernahme (L7): full + Buchhaltung. */
+    public static function canPostFibu(User $user): bool
+    {
+        if (!self::canApprove($user)) {
+            return false;
+        }
+
+        return MenuRegistry::canAccessBuchhaltung($user);
+    }
 }

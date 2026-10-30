@@ -58,6 +58,8 @@ final class PayrollEmployerSettings
             'u1_erstattungssatz_key' => '',
             'payroll_bank_account_index' => 0,
             'baulohn_enabled' => false,
+            'payroll_fibu_live' => false,
+            'fibu_accounts' => [],
             'notes' => '',
         ];
     }
@@ -97,8 +99,40 @@ final class PayrollEmployerSettings
             'u1_erstattungssatz_key' => $u1Key,
             'payroll_bank_account_index' => max(0, (int) ($raw['payroll_bank_account_index'] ?? 0)),
             'baulohn_enabled' => self::toBool($raw['baulohn_enabled'] ?? false),
+            'payroll_fibu_live' => self::toBool($raw['payroll_fibu_live'] ?? false),
+            'fibu_accounts' => self::normalizeFibuAccounts($raw['fibu_accounts'] ?? []),
             'notes' => $notes,
         ];
+    }
+
+    /**
+     * Konten-Overrides für L7 (Rollen → Kontonummer, nur Ziffern).
+     *
+     * @param mixed $raw
+     * @return array<string, string>
+     */
+    public static function normalizeFibuAccounts(mixed $raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $roles = [
+            'expense_wages',
+            'expense_social',
+            'liability_net',
+            'liability_tax',
+            'liability_sv',
+        ];
+        $out = [];
+        foreach ($roles as $role) {
+            $num = preg_replace('/\D/', '', (string) ($raw[$role] ?? '')) ?? '';
+            $num = mb_substr($num, 0, 16);
+            if ($num !== '') {
+                $out[$role] = $num;
+            }
+        }
+
+        return $out;
     }
 
     /**

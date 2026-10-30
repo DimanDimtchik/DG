@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L7a ✅)  
+> **Stand:** 2026-10-30 (L0–L7b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L7a Spec FiBu-Buchungssätze ✅ · nächster Chat: **`l7b`** (Buchungs-Service)
+> **Status:** L7b Buchungs-Service ✅ · nächster Chat: **`l7c`** (FiBu-UI)
 
 ---
 
@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l7b`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l7c`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1200,7 +1200,7 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l7b`
+> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l7c`
 
 ### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
@@ -1384,7 +1384,7 @@ Seite `/app?page=lohn-lohnkonto` (`PayrollLohnkontoService`): MA/Jahr, Spalten M
 
 ## Serie L7 — FiBu-Buchung
 
-> Einstieg: `l7a` · L7a ✅ · weiter mit `l7b`  
+> Einstieg: `l7a` · L7a–b ✅ · weiter mit `l7c`  
 > Gate **G1** vor **Produktiv**-Buchung (Flag). Spec/Code L7a–c dürfen vor G1 entstehen — Schreiben ins Journal nur mit `payroll_fibu_live` **oder** Admin-Probe auf Master.
 
 ### L7a — Spec Buchungssätze ✅ 2026-10-30
@@ -1524,11 +1524,22 @@ Textzeile Beschreibung: `Lohn {MM/YYYY} Run #{id} ({kind})` + Kurz-Reason.
 
 **Nicht:** Ledger-Code, UI, SEPA, ELSTER, USt-Logik.
 
-### L7b — Buchungs-Service + Protokoll
+### L7b — Buchungs-Service + Protokoll ✅ 2026-10-30
 
-Anbindung `ManualLedgerService` / `dg_ledger_postings` + Meta-Tabelle; Idempotenz; Storno-Contra; Export-Allowlist `payroll`.
+`PayrollFibuService`: Aggregation ok-MA, Zeilenaufbau SKR03/04, `ManualLedgerService::createBatch` mit `source=payroll`, Marker `payroll:run:{id}`, Meta `dg_payroll_fibu_batches` (Migration **130**), Idempotenz, Storno-Invertierung, Flag `payroll_fibu_live` + `fibu_accounts` in `PayrollEmployerSettings`. Export-Allowlist um `payroll` ergänzt. Rechte: `PayrollRunAccess::canPostFibu`. Selftest: `bin/payroll-fibu-l7b-selftest.php`.
 
-**Nicht:** SEPA-Datei.
+#### Abnahme L7b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Migration 130 + Runner | ✅ |
+| Aggregate / Zerlegung Hard-Fail / Soll=Haben | ✅ |
+| book() Live-Flag / forceProbe / Idempotenz | ✅ |
+| Storno-Contra Invertierung | ✅ |
+| Export source=payroll | ✅ |
+| Keine SEPA / keine UI | ✅ |
+
+**Nicht:** SEPA-Datei; UI „In FiBu übernehmen“ = L7c.
 
 ### L7c — UI „In FiBu übernehmen“ + Stichprobe
 
@@ -1654,15 +1665,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l6b` PDF-Generator/Speicherung | ✅ 2026-10-30 |
 | — | `l6c` Lohnkonto-UI + Export | ✅ 2026-10-30 |
 | — | `l7a` Spec Buchungssätze | ✅ 2026-10-30 |
-| 1 | `l7b` Buchungs-Service + Protokoll | **als Nächstes** |
+| — | `l7b` Buchungs-Service + Protokoll | ✅ 2026-10-30 |
+| 1 | `l7c` UI FiBu-Übernahme + Stichprobe | **als Nächstes** |
 
-Danach L7c → … nicht überspringen.
+Danach L8a → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l7b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L7b. Nicht andere L-Pakete.
+Lohn Implementierung: l7c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L7c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
