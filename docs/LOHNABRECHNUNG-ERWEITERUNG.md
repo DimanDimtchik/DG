@@ -1,7 +1,8 @@
 # Lohnabrechnungs-Erweiterung — Konzept aus Acrobat-Dokument
 
 > Quelle: Acrobat-Dokument `entwicklungsplan_lohnsoftware.pdf` aus <https://acrobat.adobe.com/id/urn:aaid:sc:EU:8bb9b7d3-555b-430f-84c7-502247d7e749>, abgerufen am 2026-10-27.  
-> Status: fachliches Produktkonzept fuer DG CRM; keine Implementierung und keine Rechts-/Steuerfreigabe.
+> Status: fachliches Produktkonzept fuer DG CRM; keine Implementierung und keine Rechts-/Steuerfreigabe.  
+> **Umsetzung (token-sparend):** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — Serien L0–L10 / LB / LC.
 
 ## Zielbild
 
