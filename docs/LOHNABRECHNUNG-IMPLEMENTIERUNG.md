@@ -93,10 +93,10 @@ LC Baulohn/SOKA (Stufe C)
 | **G4** | ITSG-Vorbereitung (Pflichtenheft / Systemdok-Outline) | **LB**-Code produktiv (`lb1+`) | ✅ **bestanden** 2026-10-30 (O1–O9, unten) |
 | **G5** | Stufe A produktiv + Spec LC | **LC** Baulohn-Code | offen · nach G3-Betrieb |
 
-### G3 — Pilot-Checkliste „ohne Lexware“ ✅ Spez 2026-10-30
+### G3 — Pilot-Checkliste „ohne Lexware“ ✅ Spez 2026-10-30 · Nachweis-Versuch 2026-10-30
 
 > **Nicht verwechseln:** G3 ≠ Live-ITSG (LB) ≠ LStA-Live (L10c/G2) ≠ Baulohn (G5).  
-> **Dieser Chat weist G3 nicht nach** — er liefert die Checkliste. Gate gilt erst, wenn die Tabelle unten mit Instanz/Perioden/Wer/Datum ausgefüllt ist.
+> **Gate bleibt offen**, bis die Nachweis-Tabelle mit Instanz/Perioden/Wer/Datum aus zwei kompletten Monaten steht und abgenommen ist.
 
 #### Ziel
 
@@ -125,17 +125,33 @@ Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB
 
 | Feld | Monat A | Monat B |
 |------|---------|---------|
-| Instanz (Domain) | | |
-| Periode (YYYY-MM) | | |
-| Run-ID(s) locked | | |
-| MA-Anzahl ok | | |
-| FiBu Batch / Ausnahme | | |
-| SEPA Export-ID / PROBE | | |
-| SV-CSV Datum | | |
-| Lexware-Delta / OK | | |
-| Wer / Datum | | |
+| Instanz (Domain) | — | — |
+| Periode (YYYY-MM) | — | — |
+| Run-ID(s) locked | — | — |
+| MA-Anzahl ok | — | — |
+| FiBu Batch / Ausnahme | — | — |
+| SEPA Export-ID / PROBE | — | — |
+| SV-CSV Datum | — | — |
+| Lexware-Delta / OK | — | — |
+| Wer / Datum | — | — |
 
 **Gate G3 bestanden** erst wenn Monat A **und** B vollständig und vom Nutzer/Berater abgenommen.
+
+#### Nachweis-Protokoll 2026-10-30 (Cloud-Agent)
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| SSH Master `dg.ganz-om.de` | ✅ `SSH_OK` |
+| Payroll-PHP auf Server (`StandardPayrollEngine`, SEPA/SV/ELSTER) | ❌ fehlt (Branch noch nicht gemergt/deployt) |
+| Migrationen Lohn `125`–`133` in `dg_migrations` | ❌ letzte Migration Server = `124_…` |
+| Tabellen `dg_payroll_runs` / SEPA / SV / FiBu | ❌ keine |
+| `storage/payroll/` | ❌ fehlt |
+| Zwei locked Perioden L5–L9 | ❌ nicht erbringbar |
+| **GATE_STATUS** | **`open`** — kein Abhaken |
+
+**Werkzeug (nach Merge+Deploy+Pilot):** `php bin/payroll-g3-evidence.php --domain=dg.ganz-om.de --markdown`  
+Selftest Offline: `php bin/payroll-g3-evidence.php --selftest` → `SELFTEST_OK`.  
+Skript füllt die Tabelle aus der Instanz-DB; Lexware-Delta und „Wer/Datum“ bleiben manuell. **Kein Flag-Unlock.**
 
 #### Nach bestandenem G3 (eigene Chats, nicht automatisch)
 
@@ -143,7 +159,7 @@ Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB
 |--------|-----------|
 | `payroll_sepa_live` auf Pilot-Instanz erwägen | G3 ✅ + Nutzerbefehl |
 | Parallelbetrieb Lexware beenden | bewusste Entscheidung, nicht Code |
-| `lb0a` ITSG-Pflichtenheft | zusätzlich **G4** |
+| `lb0a` ITSG-Pflichtenheft | zusätzlich **G4** (bereits ✅) |
 | LStA-Live | weiterhin **G2** + L10c-Unlock-Befehl |
 
 #### Abnahme dieses G3-Dokupakets
@@ -152,9 +168,10 @@ Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB
 |---------|----------|
 | Checkliste 2 Testmonate L5–L9 spezifiziert | ✅ |
 | Abgrenzung G2/G4/G5 / keine Auto-Freigabe Flags | ✅ |
-| Gate-Status bleibt **offen** bis Nachweis | ✅ |
+| Nachweis-Versuch 2026-10-30 dokumentiert (Blocker Deploy) | ✅ |
+| Gate-Status bleibt **offen** bis echte Pilot-Daten | ✅ |
 
-**Nicht:** SEPA-/LStA-Live freischalten; LB/LC-Code; Deploy; Behaupten, G3 sei „bestanden“ ohne ausgefüllte Nachweis-Tabelle.
+**Nicht:** SEPA-/LStA-Live freischalten; LB/LC-Code; Deploy ohne Befehl; Behaupten, G3 sei „bestanden“ ohne ausgefüllte Nachweis-Tabelle.
 
 ### G4 — ITSG-Vorbereitung (Pflichtenheft) ✅ Spez 2026-10-30 · Gate ✅ bestanden 2026-10-30
 
@@ -2319,16 +2336,17 @@ Kein Deploy außer Nutzer sagt „deploy“.
 **Stufe-A-Kern L0–L10 abgeschlossen** · **G4 bestanden** 2026-10-30 · **G3 offen**.
 
 Weiterbetrieb:
-1. Pilot G3: Nachweis-Tabelle 2 Monate L5–L9 (Blocker für `lb1+` / Versand).  
+1. **G3 weiterhin offen** — Nachweis 2026-10-30: Master ohne Payroll-Schema (PR nicht deployt). Nach Merge→Deploy→2 Pilotmonate: `php bin/payroll-g3-evidence.php --domain=… --markdown` und Tabelle abnehmen.  
 2. `lb0a` Pflichtenheft-Vertiefung (jetzt erlaubt; kein Versand).  
 3. Optional nach G3: SEPA-Live / Lexware-Cutover nur mit Nutzerbefehl.  
 4. Baulohn `lc0a` erst nach **G5**.
 
-Prompt Pilot-Nachweis G3 (kein Code):
+Prompt G3-Nachweis (nach Deploy + 2 Testmonaten):
 
 ```text
-Lohn G3: Nachweis-Tabelle in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md § G3
-für Instanz … Monate … ausfüllen / abhaken. Kein Flag-Unlock ohne Befehl.
+Lohn G3: php bin/payroll-g3-evidence.php --domain=dg.ganz-om.de --markdown
+Ergebnis in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md § G3 Tabelle übernehmen / abnehmen.
+Kein Flag-Unlock ohne Befehl.
 ```
 
 Prompt für LB0 (nächster sinnvoller Code-/Spec-Chat):
