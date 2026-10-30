@@ -136,8 +136,10 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                 <td><?= View::escape(PayrollRunRepository::statusLabel((string) ($row['status'] ?? ''))) ?></td>
                 <td><?= View::escape((string) ($row['label'] ?? '')) ?></td>
                 <td><?= !empty($row['is_superseded']) ? 'ja' : '—' ?></td>
-                <td>
-                  <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= (int) ($row['id'] ?? 0) ?>">Öffnen</a>
+                <td class="dg-table__actions">
+                  <div class="dg-table__actions-group">
+                    <a class="dg-button dg-button--small" href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= (int) ($row['id'] ?? 0) ?>">Öffnen</a>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>

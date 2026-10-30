@@ -1,11 +1,13 @@
 # CRM UI — Form-/Button-Regeln (verbindlich)
 
-> Stand: 2026-10-30 · Quelle: `assets/css/dg.css` (Spacing-Skala, Button- und Aktions-Algorithmen)
+> Stand: 2026-10-30 · Quelle: `assets/css/dg.css` (Spacing-Skala, Button- und Aktions-Algorithmen)  
+> **Verankert in:** [`AGENTS.md`](../AGENTS.md) §7 · `.cursor/rules/00-dg-regeln.mdc` · Guard `bin/ui-form-spacing-selftest.php`  
+> **Kein Extra-Prompt nötig** — Agenten müssen diese Regeln bei jeder UI-Arbeit von selbst einhalten.
 
-## Warum manche Seiten „willkürlich“ wirken
+## Warum manche Seiten „willkürlich“ wirkten
 
 Das Design-System greift **nur**, wenn das Markup die vorgesehenen Klassen nutzt.  
-Neue Lohn-Seiten haben oft nackte `<button class="dg-button">` direkt nach Textarea/Grid gelegt — dann fehlen Abstand und Aktionszeile → **Verschmelzung**.
+Ohne `.dg-form-actions` / `.dg-button--small` entstehen Verschmelzung und Link-neben-Button.
 
 ## Pflicht-Muster
 

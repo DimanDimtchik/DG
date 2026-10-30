@@ -102,3 +102,21 @@ Verbindliche Regeln: **[`docs/akademie/VIDEO-REGELN.md`](docs/akademie/VIDEO-REG
 Kurz: Dashboard-Start · echte CRM-Screenshots · einfache Sprache · **Stimme DE: `de-DE-KatjaNeural`** · Szenario-first · VTT Pflicht · Demo-Daten · Störfaktoren weg · kurze Clips · UI-Änderung → neu aufnehmen · Texte in `locales/{sprache}/*.json`.
 
 Technik: `bin/academy-build-dashboard-video.sh`
+
+---
+
+## 7. UI / CSS — einheitlich (verbindlich, **ohne** Extra-Prompt)
+
+> Nutzer muss **nicht** in jedem Chat „benutze existierende CSS-Logik“ schreiben. Diese Regel gilt **immer**.
+
+Vollständige Muster: **[`docs/UI-FORM-REGELN.md`](docs/UI-FORM-REGELN.md)** · Implementierung: `assets/css/dg.css` · Guard: `php bin/ui-form-spacing-selftest.php`
+
+| Pflicht | Verboten |
+|---------|----------|
+| `.dg-form` + `.dg-field` / `.dg-form-grid` | Eigenes Button-/Spacing-CSS „kurz mal so“ |
+| Submit in `.dg-form-actions` (oder `.dg-btn-row` / `.dg-field--actions`) | Nackter `<button>` direkt unter Textarea/Grid |
+| Tabellen-Aktionen: `.dg-button.dg-button--small` in `.dg-table__actions-group` | Nackter Textlink (`Bearbeiten`) neben einem `.dg-button` |
+| Bestehende Varianten: `--primary` / `--small` / `--ghost` / `--danger` / `--warning` / `--back` | Neue Button-Klassen erfinden |
+| Abstände über `--dg-space-*` / Utilities | Ad-hoc `style="margin…"` für Layout |
+
+**Bei jeder UI-Änderung** (Views unter `views/`): Guard ausführen und grün halten. Neue nackte Aktionslinks außerhalb der Legacy-Allowlist im Selftest = Fail.
