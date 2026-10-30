@@ -1597,6 +1597,7 @@ switch ($path) {
                     'calculate', 'reopen', 'delete',
                 ], true);
                 $needsFibu = $runAction === 'fibu_book';
+                $needsSepa = $runAction === 'sepa_export';
                 try {
                     if ($needsApprove && !PayrollRunAccess::canApprove($user)) {
                         throw new RuntimeException('Keine Berechtigung für Freigabe/Sperre/Storno.');
@@ -1606,6 +1607,9 @@ switch ($path) {
                     }
                     if ($needsFibu && !PayrollRunAccess::canPostFibu($user)) {
                         throw new RuntimeException('Keine Berechtigung für FiBu-Übernahme (lohn full + Buchhaltung).');
+                    }
+                    if ($needsSepa && !PayrollRunAccess::canExportSepa($user)) {
+                        throw new RuntimeException('Keine Berechtigung für SEPA-Auszahlung (lohn full).');
                     }
                     if ($runAction === 'create') {
                         [$yy, $mm] = array_map('intval', explode('-', $monthPost));
@@ -1697,12 +1701,35 @@ switch ($path) {
                         }
                         $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
                             . '&run=' . $runIdPost . '&fibu=1';
+                    } elseif ($runAction === 'sepa_export') {
+                        $execDate = trim((string) ($_POST['exec_date'] ?? ''));
+                        $sepaResult = PayrollSepaService::export(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? ''),
+                            $execDate !== '' ? $execDate : null
+                        );
+                        $exportId = (int) ($sepaResult['meta']['id'] ?? 0);
+                        $probeNote = !empty($sepaResult['meta']['is_probe']) ? ' (PROBE — nicht produktiv)' : '';
+                        Flash::set(
+                            'success',
+                            'SEPA-XML erzeugt #' . $exportId
+                            . ' · ' . (int) ($sepaResult['meta']['tx_count'] ?? 0) . ' Tx'
+                            . ' · CtrlSum ' . (string) ($sepaResult['meta']['ctrl_sum'] ?? '0')
+                            . $probeNote
+                        );
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&sepa=1&sepa_dl=' . $exportId;
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                     if ($runAction === 'fibu_book' && $runIdPost > 0) {
                         $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
                             . '&run=' . $runIdPost . '&fibu=1';
+                    }
+                    if ($runAction === 'sepa_export' && $runIdPost > 0) {
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&sepa=1';
                     }
                 }
             }
@@ -7865,6 +7892,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $payrollRunCanEdit = PayrollRunAccess::canEditRun($user);
             $payrollRunCanApprove = PayrollRunAccess::canApprove($user);
             $payrollRunCanPostFibu = PayrollRunAccess::canPostFibu($user);
+            $payrollRunCanExportSepa = PayrollRunAccess::canExportSepa($user);
             $payrollFibuLive = PayrollFibuService::isLive();
             $payrollFibuMeta = null;
             $payrollFibuPreview = null;
@@ -7891,6 +7919,66 @@ $legalProductsConfig = LegalProductSettings::config();
             }
             $payrollFibuRoleLabels = PayrollFibuService::roleLabels();
             $payrollFibuChecklist = PayrollFibuService::auditorChecklist();
+
+            $payrollSepaLive = PayrollSepaService::isLive();
+            $payrollSepaExports = [];
+            $payrollSepaPreview = null;
+            $payrollSepaPreviewError = null;
+            $payrollSepaShow = trim((string) ($_GET['sepa'] ?? '')) === '1'
+                || ($payrollRun !== null
+                    && (string) ($payrollRun['status'] ?? '') === PayrollRunRepository::STATUS_LOCKED);
+            $payrollSepaChecklist = PayrollSepaService::auditorChecklist();
+            if ($payrollRun !== null) {
+                PayrollSepaService::ensureReady();
+                $payrollSepaExports = PayrollSepaService::listExportsForRun((int) $payrollRun['id']);
+                $sepaDlId = (int) ($_GET['sepa_dl'] ?? 0);
+                if ($sepaDlId > 0 && PayrollRunAccess::canExportSepa($user)) {
+                    $sepaMeta = PayrollSepaService::findExport($sepaDlId);
+                    if (
+                        $sepaMeta !== null
+                        && (int) ($sepaMeta['run_id'] ?? 0) === (int) $payrollRun['id']
+                    ) {
+                        try {
+                            $xml = PayrollSepaService::readStoredXml($sepaDlId);
+                        } catch (Throwable $e) {
+                            Flash::set('error', $e->getMessage());
+                            header(
+                                'Location: /app?page=lohn-monatslauf&month=' . rawurlencode($payrollRunMonth)
+                                . '&run=' . (int) $payrollRun['id'] . '&sepa=1',
+                                true,
+                                302
+                            );
+                            exit;
+                        }
+                        if ($xml === null) {
+                            http_response_code(404);
+                            exit('SEPA-Datei nicht gefunden.');
+                        }
+                        $dlName = (string) ($sepaMeta['filename'] ?? ('lohn-sepa-' . $sepaDlId . '.xml'));
+                        header('Content-Type: application/xml; charset=UTF-8');
+                        header('Content-Disposition: attachment; filename="' . str_replace('"', '', $dlName) . '"');
+                        header('Content-Length: ' . (string) strlen($xml));
+                        header('X-Content-Type-Options: nosniff');
+                        echo $xml;
+                        exit;
+                    }
+                }
+                if ($payrollSepaShow || $payrollSepaExports !== []) {
+                    try {
+                        $st = (string) ($payrollRun['status'] ?? '');
+                        if ($st === PayrollRunRepository::STATUS_LOCKED) {
+                            $execQ = trim((string) ($_GET['exec_date'] ?? ''));
+                            $payrollSepaPreview = PayrollSepaService::preview(
+                                (int) $payrollRun['id'],
+                                $execQ !== '' ? $execQ : null
+                            );
+                        }
+                    } catch (Throwable $e) {
+                        $payrollSepaPreviewError = $e->getMessage();
+                    }
+                }
+            }
+
             $contentTemplate = 'modules/lohn-monatslauf';
             $title = 'Monatslauf';
             $currentPage = 'lohn-monatslauf';

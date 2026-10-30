@@ -42,4 +42,10 @@ final class PayrollRunAccess
 
         return MenuRegistry::canAccessBuchhaltung($user);
     }
+
+    /** SEPA-Auszahlung (L8): lohn full — Live-Flag steuert Probe vs. produktiv. */
+    public static function canExportSepa(User $user): bool
+    {
+        return self::canApprove($user);
+    }
 }

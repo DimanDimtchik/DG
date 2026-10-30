@@ -12,6 +12,7 @@
  * @var bool $payrollRunCanEdit
  * @var bool $payrollRunCanApprove
  * @var bool $payrollRunCanPostFibu
+ * @var bool $payrollRunCanExportSepa
  * @var bool $payrollFibuLive
  * @var array<string, mixed>|null $payrollFibuMeta
  * @var array<string, mixed>|null $payrollFibuPreview
@@ -19,6 +20,12 @@
  * @var bool $payrollFibuShow
  * @var array<string, string> $payrollFibuRoleLabels
  * @var list<string> $payrollFibuChecklist
+ * @var bool $payrollSepaLive
+ * @var list<array<string, mixed>> $payrollSepaExports
+ * @var array<string, mixed>|null $payrollSepaPreview
+ * @var string|null $payrollSepaPreviewError
+ * @var bool $payrollSepaShow
+ * @var list<string> $payrollSepaChecklist
  * @var array{type: string, message: string}|null $flash
  * @var User|null $user
  */
@@ -35,6 +42,7 @@ $staffOptions = is_array($payrollStaffOptions ?? null) ? $payrollStaffOptions : 
 $canEdit = !empty($payrollRunCanEdit);
 $canApprove = !empty($payrollRunCanApprove);
 $canPostFibu = !empty($payrollRunCanPostFibu);
+$canExportSepa = !empty($payrollRunCanExportSepa);
 $fibuLive = !empty($payrollFibuLive);
 $fibuMeta = is_array($payrollFibuMeta ?? null) ? $payrollFibuMeta : null;
 $fibuPreview = is_array($payrollFibuPreview ?? null) ? $payrollFibuPreview : null;
@@ -42,7 +50,19 @@ $fibuPreviewError = trim((string) ($payrollFibuPreviewError ?? ''));
 $fibuShow = !empty($payrollFibuShow);
 $fibuRoleLabels = is_array($payrollFibuRoleLabels ?? null) ? $payrollFibuRoleLabels : PayrollFibuService::roleLabels();
 $fibuChecklist = is_array($payrollFibuChecklist ?? null) ? $payrollFibuChecklist : PayrollFibuService::auditorChecklist();
+$sepaLive = !empty($payrollSepaLive);
+$sepaExports = is_array($payrollSepaExports ?? null) ? $payrollSepaExports : [];
+$sepaPreview = is_array($payrollSepaPreview ?? null) ? $payrollSepaPreview : null;
+$sepaPreviewError = trim((string) ($payrollSepaPreviewError ?? ''));
+$sepaShow = !empty($payrollSepaShow);
+$sepaChecklist = is_array($payrollSepaChecklist ?? null) ? $payrollSepaChecklist : PayrollSepaService::auditorChecklist();
 $isAdminUser = isset($user) && $user instanceof User && RoleResolver::isAdmin($user);
+$runKind = (string) ($run['kind'] ?? PayrollRunRepository::KIND_REGULAR);
+$sepaKindOk = in_array($runKind, [
+    PayrollRunRepository::KIND_REGULAR,
+    PayrollRunRepository::KIND_CORRECTION,
+    '',
+], true);
 $runStatus = (string) ($run['status'] ?? '');
 $isDraft = $runStatus === PayrollRunRepository::STATUS_DRAFT;
 $isCalculated = $runStatus === PayrollRunRepository::STATUS_CALCULATED;
@@ -58,8 +78,8 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
     <div>
       <h1 class="dg-page-title">Monatslauf</h1>
       <p class="dg-lead">
-        Entwurf → Berechnung → Freigabe → Sperre → optional FiBu-Übernahme.
-        Korrektur nur über Storno/Korrektur-Lauf. Kein SEPA hier.
+        Entwurf → Berechnung → Freigabe → Sperre → optional FiBu → optional SEPA-XML.
+        Korrektur nur über Storno/Korrektur-Lauf. Storno-Run ohne Auszahlungs-SEPA.
       </p>
     </div>
     <div class="dg-toolbar">
@@ -463,6 +483,144 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <p class="dg-field-hint">Korrektur-Lauf: prüfen, ob der Vorgänger per Storno-FiBu ausgeglichen wurde.</p>
           <?php endif; ?>
         <?php endif; ?>
+      <?php endif; ?>
+
+      <?php if ($runId > 0 && $isLocked && !$isSuperseded && $sepaKindOk) : ?>
+        <h3 class="dg-subsection-title">SEPA-Auszahlung</h3>
+        <p class="dg-lead">
+          pain.001.001.03 Sammler (Netto) für Bank-Upload — kein automatischer Versand.
+          Live-Flag:
+          <?php if ($sepaLive) : ?>
+            <strong>an</strong>
+          <?php else : ?>
+            <strong>aus</strong> — Dateien mit
+            <code>-PROBE</code> kennzeichnen; freischalten unter
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('lohn')) ?>">Einstellungen → Lohn</a>
+            (Gate G3).
+          <?php endif; ?>
+          Empfohlen: zuerst FiBu, dann SEPA.
+          <?php if (!$sepaShow) : ?>
+            · <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1">Vorschau anzeigen</a>
+          <?php endif; ?>
+        </p>
+
+        <?php if ($sepaPreviewError !== '') : ?>
+          <div class="dg-flash dg-flash--warning"><?= View::escape($sepaPreviewError) ?></div>
+        <?php endif; ?>
+
+        <?php if ($sepaShow || $sepaExports !== []) : ?>
+          <?php if ($sepaPreview !== null) : ?>
+            <?php
+              $sepaTx = is_array($sepaPreview['transactions'] ?? null) ? $sepaPreview['transactions'] : [];
+              $sepaWarn = is_array($sepaPreview['warnings'] ?? null) ? $sepaPreview['warnings'] : [];
+            ?>
+            <?php if ($sepaWarn !== []) : ?>
+              <div class="dg-flash dg-flash--warning">
+                <ul>
+                  <?php foreach ($sepaWarn as $sw) : ?>
+                    <li><?= View::escape((string) $sw) ?></li>
+                  <?php endforeach; ?>
+                </ul>
+              </div>
+            <?php endif; ?>
+            <p class="dg-field-hint">
+              Absender <?= View::escape(PayrollSepaService::maskIban((string) ($sepaPreview['debtor_iban'] ?? ''))) ?>
+              · <?= (int) ($sepaPreview['tx_count'] ?? 0) ?> Tx
+              · CtrlSum <?= View::escape($money((float) ($sepaPreview['ctrl_sum'] ?? 0))) ?> €
+              · Ausführung <?= View::escape((string) ($sepaPreview['reqd_exec_date'] ?? '')) ?>
+              <?php if (!empty($sepaPreview['probe']) || !$sepaLive) : ?>
+                · <strong>PROBE</strong>
+              <?php endif; ?>
+            </p>
+            <?php if ($sepaTx !== []) : ?>
+              <div class="dg-table-wrap">
+                <table class="dg-table dg-table--compact">
+                  <thead>
+                    <tr><th>MA</th><th>IBAN</th><th>Betrag</th><th>EndToEnd</th></tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($sepaTx as $tx) : ?>
+                      <tr>
+                        <td><?= View::escape((string) ($tx['name'] ?? '')) ?></td>
+                        <td><?= View::escape(PayrollSepaService::maskIban((string) ($tx['iban'] ?? ''))) ?></td>
+                        <td class="num"><?= View::escape($money((float) ($tx['amount'] ?? 0))) ?></td>
+                        <td><code><?= View::escape((string) ($tx['end_to_end_id'] ?? '')) ?></code></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php endif; ?>
+          <?php endif; ?>
+
+          <details class="dg-panel" style="margin:1rem 0">
+            <summary><strong>Betriebsprüfer-Stichprobe SEPA</strong></summary>
+            <ol>
+              <?php foreach ($sepaChecklist as $item) : ?>
+                <li><?= View::escape((string) $item) ?></li>
+              <?php endforeach; ?>
+            </ol>
+          </details>
+
+          <?php if ($canExportSepa) : ?>
+            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1" class="dg-form" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:end">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="run_action" value="sepa_export">
+              <input type="hidden" name="run_id" value="<?= $runId ?>">
+              <input type="hidden" name="month" value="<?= View::escape($month) ?>">
+              <label class="dg-field">
+                <span>Ausführungsdatum</span>
+                <input type="date" name="exec_date" value="<?= View::escape((string) ($sepaPreview['reqd_exec_date'] ?? PayrollSepaService::nextBusinessDay())) ?>" required>
+              </label>
+              <label class="dg-field">
+                <span>Begründung (≥10)</span>
+                <input type="text" name="reason" required minlength="10" placeholder="z. B. Nettoauszahlung nach Sperre geprüft" style="min-width:16rem">
+              </label>
+              <button type="submit" class="dg-button dg-button--primary">
+                <?= $sepaLive ? 'SEPA-XML erzeugen' : 'PROBE-XML erzeugen' ?>
+              </button>
+            </form>
+            <?php if (!$sepaLive) : ?>
+              <p class="dg-field-hint">Ohne Live-Flag: Dateiname endet auf <code>-PROBE.xml</code>, InitgPty mit „(PROBE)“ — nicht an die Bank senden.</p>
+            <?php endif; ?>
+          <?php else : ?>
+            <p class="dg-field-hint">SEPA-Export nur mit Modulrecht lohn = full.</p>
+          <?php endif; ?>
+
+          <?php if ($sepaExports !== []) : ?>
+            <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:1.25rem">Bisherige Exporte</h4>
+            <div class="dg-table-wrap">
+              <table class="dg-table dg-table--compact">
+                <thead>
+                  <tr><th>ID</th><th>Zeit</th><th>Tx</th><th>Summe</th><th>Art</th><th>Datei</th></tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($sepaExports as $ex) : ?>
+                    <tr>
+                      <td>#<?= (int) ($ex['id'] ?? 0) ?></td>
+                      <td><?= View::escape((string) ($ex['created_at'] ?? '')) ?></td>
+                      <td class="num"><?= (int) ($ex['tx_count'] ?? 0) ?></td>
+                      <td class="num"><?= View::escape($money((float) ($ex['ctrl_sum'] ?? 0))) ?></td>
+                      <td><?= !empty($ex['is_probe']) ? 'PROBE' : 'live' ?></td>
+                      <td>
+                        <?php if ($canExportSepa) : ?>
+                          <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;sepa=1&amp;sepa_dl=<?= (int) ($ex['id'] ?? 0) ?>">
+                            <?= View::escape((string) ($ex['filename'] ?? 'download.xml')) ?>
+                          </a>
+                        <?php else : ?>
+                          <?= View::escape((string) ($ex['filename'] ?? '')) ?>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
+        <?php endif; ?>
+      <?php elseif ($runId > 0 && $isLocked && !$isSuperseded && $runKind === PayrollRunRepository::KIND_STORNO) : ?>
+        <h3 class="dg-subsection-title">SEPA-Auszahlung</h3>
+        <p class="dg-lead">Storno-Run erzeugt keine Auszahlungs-SEPA (L8a).</p>
       <?php endif; ?>
 
       <h3 class="dg-subsection-title">Statushistorie</h3>

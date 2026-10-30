@@ -318,6 +318,7 @@ final class MigrationRunner
                 && self::tableExists($pdo, 'dg_payroll_run_events'),
             '129_payroll_documents.sql' => self::tableExists($pdo, 'dg_payroll_documents'),
             '130_payroll_fibu_batches.sql' => self::tableExists($pdo, 'dg_payroll_fibu_batches'),
+            '131_payroll_sepa_exports.sql' => self::tableExists($pdo, 'dg_payroll_sepa_exports'),
             default => false,
         };
     }
@@ -464,6 +465,7 @@ final class MigrationRunner
             '128_payroll_runs.sql' => true,
             '129_payroll_documents.sql' => true,
             '130_payroll_fibu_batches.sql' => true,
+            '131_payroll_sepa_exports.sql' => true,
         ];
     }
 

@@ -59,6 +59,7 @@ final class PayrollEmployerSettings
             'payroll_bank_account_index' => 0,
             'baulohn_enabled' => false,
             'payroll_fibu_live' => false,
+            'payroll_sepa_live' => false,
             'fibu_accounts' => [],
             'notes' => '',
         ];
@@ -100,6 +101,7 @@ final class PayrollEmployerSettings
             'payroll_bank_account_index' => max(0, (int) ($raw['payroll_bank_account_index'] ?? 0)),
             'baulohn_enabled' => self::toBool($raw['baulohn_enabled'] ?? false),
             'payroll_fibu_live' => self::toBool($raw['payroll_fibu_live'] ?? false),
+            'payroll_sepa_live' => self::toBool($raw['payroll_sepa_live'] ?? false),
             'fibu_accounts' => self::normalizeFibuAccounts($raw['fibu_accounts'] ?? []),
             'notes' => $notes,
         ];

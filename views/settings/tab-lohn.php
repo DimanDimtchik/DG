@@ -185,6 +185,22 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </div>
     </fieldset>
 
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1.25rem 0 0">
+      <legend class="dg-subsection-title" style="font-size:1rem">SEPA-Auszahlung (L8)</legend>
+      <p class="dg-field-hint">
+        pain.001.001.03 Sammler (Netto) für Bank-Upload. Live erst nach Gate G3.
+        Ohne Flag erzeugt der Monatslauf nur kennzeichnete PROBE-Dateien.
+        Absenderkonto = Index oben (payroll_bank_account_index) in Firmendaten-Bankkonten.
+        Kein automatischer Bankversand.
+      </p>
+      <label class="dg-field dg-field--checkbox">
+        <span>
+          <input type="checkbox" name="lohn[payroll_sepa_live]" value="1"<?= !empty($lohn['payroll_sepa_live']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
+          payroll_sepa_live — SEPA-XML ohne PROBE-Kennzeichnung (produktiv)
+        </span>
+      </label>
+    </fieldset>
+
     <label class="dg-field dg-field--wide">
       <span>Interne Notiz (Prüfung)</span>
       <textarea name="lohn[notes]" rows="3" maxlength="2000"<?= !$dbConnected ? ' disabled' : '' ?>><?= View::escape((string) ($lohn['notes'] ?? '')) ?></textarea>

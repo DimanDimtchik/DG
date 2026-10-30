@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L8a ✅)  
+> **Stand:** 2026-10-30 (L0–L8b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L8a Spec SEPA-XML ✅ · nächster Chat: **`l8b`** (SEPA-Generator)
+> **Status:** L8b SEPA-Generator ✅ · nächster Chat: **`l9a`** (SV-Portal Spec)
 
 ---
 
@@ -1561,7 +1561,7 @@ Monatslauf: Vorschau Konten/Zeilen, Betriebsprüfer-Checkliste, Buchung mit Begr
 
 ## Serie L8 — SEPA-Auszahlung
 
-> Einstieg: `l8a` · L8a ✅ · weiter mit `l8b`  
+> Einstieg: `l8a` · L8a ✅ · L8b ✅ · weiter mit `l9a`  
 > Flag **`payroll_sepa_live`** default **aus** bis Gate **G3** (L0b D3 / E4). Generator-Code darf vor G3 entstehen — **Download der XML** ohne Live-Flag nur als Wasserzeichen-/Probe-Datei oder blockiert (Entscheidung unten).
 
 ### L8a — Spec SEPA-XML ✅ 2026-10-30
@@ -1691,9 +1691,20 @@ Menü/Einstieg: Button am gesperrten Monatslauf „SEPA-Auszahlung“ + Settings
 
 **Nicht:** Generator-Code, UI-Download, Bank-API, Echtgeld ohne Flag.
 
-### L8b — Generator + Download + Audit
+### L8b — Generator + Download + Audit ✅ 2026-10-30
 
 XML-Erzeugung, Meta `dg_payroll_sepa_exports`, Download, Probe-Kennzeichnung, UI am Monatslauf.
+
+`PayrollSepaService`: pain.001.001.03 Sammler aus locked regular/correction, Storno blockiert, Netto>0 + IBAN, Absender aus `payroll_bank_account_index`, Flag `payroll_sepa_live` (Default aus) → sonst `-PROBE.xml` + InitgPty-Suffix. Migration **131**, Storage `storage/payroll/sepa/`, Rechte `PayrollRunAccess::canExportSepa`. Monatslauf-UI Vorschau/Export/Download-Historie; Settings → Lohn Flag. Selftest: `bin/payroll-sepa-l8b-selftest.php`.
+
+#### Abnahme L8b
+
+| Kriterium | Status |
+|-----------|--------|
+| pain.001 XML + Meta + Checksum/Storage | ✅ |
+| Probe vs. Live-Flag; Storno ohne SEPA | ✅ |
+| UI Monatslauf + Settings-Flag | ✅ |
+| Selftest ohne DB | ✅ |
 
 **Nicht:** Bank-API.
 
@@ -1804,15 +1815,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l7b` Buchungs-Service + Protokoll | ✅ 2026-10-30 |
 | — | `l7c` UI FiBu-Übernahme + Stichprobe | ✅ 2026-10-30 |
 | — | `l8a` Spec SEPA-XML | ✅ 2026-10-30 |
-| 1 | `l8b` SEPA-Generator + Download + Audit | **als Nächstes** |
+| — | `l8b` SEPA-Generator + Download + Audit | ✅ 2026-10-30 |
+| 1 | `l9a` Spec SV-Kontrolllisten / Beitragsnachweis-Vorbereitung | **als Nächstes** |
 
-Danach L9a → … nicht überspringen.
+Danach L9b → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l8b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L8b. Nicht andere L-Pakete.
+Lohn Implementierung: l9a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L9a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
