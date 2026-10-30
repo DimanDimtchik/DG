@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–b ✅ · weiter mit `l5c`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l6a`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1176,11 +1176,25 @@ Verhalten: ein aktiver `regular`-Run je Periode; `calculate` → L4c je MA; `reo
 
 **Nicht:** PDF; UI `lohn-monatslauf` = L5c.
 
-### L5c — UI Monatslauf (Liste, berechnen, Freigabe)
+### L5c — UI Monatslauf (Liste, berechnen, Freigabe) ✅ 2026-10-30
 
-Seite `lohn-monatslauf`; Rechte: berechnen/edit = `partial`+`canEdit`; freigeben/sperren/storno = `full`.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Seite | `/app?page=lohn-monatslauf` · `views/modules/lohn-monatslauf.php` |
+| Menü | `MenuRegistry::lohnSection` → Monatslauf |
+| Aktionen | anlegen, MA+/−, Stamm-Lines, berechnen, reopen, freigeben, sperren, storno/correction, Entwurf löschen |
 
-**Nicht:** SEPA, ELSTER.
+Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; freigeben/sperren/storno = `canApprove`.
+
+#### Abnahme L5c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Liste + Detail + Statushistorie | ✅ |
+| Rechte partial vs full | ✅ |
+| Kein SEPA / kein ELSTER | ✅ |
+
+**Nicht:** SEPA, ELSTER, PDF (L6), FiBu (L7).
 
 ---
 
@@ -1339,15 +1353,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l4c` StandardPayrollEngine + Tests | ✅ 2026-10-30 |
 | — | `l5a` Monatslauf Spec | ✅ 2026-10-30 |
 | — | `l5b` Migration Läufe/Positionen | ✅ 2026-10-30 |
-| 1 | `l5c` UI Monatslauf | **als Nächstes** |
+| — | `l5c` UI Monatslauf | ✅ 2026-10-30 |
+| 1 | `l6a` PDF/Lohnkonto Spec | **als Nächstes** |
 
-Danach L6a → … nicht überspringen.
+Danach L6b → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l5c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L5c. Nicht andere L-Pakete.
+Lohn Implementierung: l6a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L6a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
