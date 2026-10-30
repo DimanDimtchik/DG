@@ -172,6 +172,106 @@ final class PayrollEmployerSettings
     }
 
     /**
+     * Formular-Daten für Settings-Tab L1c.
+     *
+     * @return array{
+     *   lohn: array<string, mixed>,
+     *   snapshot: array<string, mixed>,
+     *   warnings: list<string>,
+     *   bundesland_labels: array<string, string>,
+     *   bank_options: list<array{index: int, label: string}>
+     * }
+     */
+    public static function forForm(): array
+    {
+        $snapshot = self::employerSnapshot();
+        $ext = CompanyExtendedSettings::config();
+        $banks = is_array($ext['bank_accounts'] ?? null) ? $ext['bank_accounts'] : [];
+        $bankOptions = [];
+        foreach ($banks as $i => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $iban = trim((string) ($row['iban'] ?? ''));
+            $label = trim((string) ($row['label'] ?? ''));
+            $holder = trim((string) ($row['account_holder'] ?? ''));
+            $parts = array_filter([$label !== '' ? $label : null, $holder !== '' ? $holder : null, $iban !== '' ? $iban : 'ohne IBAN']);
+            $bankOptions[] = [
+                'index' => (int) $i,
+                'label' => implode(' · ', $parts),
+            ];
+        }
+        if ($bankOptions === []) {
+            $bankOptions[] = ['index' => 0, 'label' => 'Kein Bankkonto hinterlegt (Firmendaten)'];
+        }
+
+        return [
+            'lohn' => self::lohnConfig(),
+            'snapshot' => $snapshot,
+            'warnings' => self::collectWarnings($snapshot),
+            'bundesland_labels' => self::bundeslandLabels(),
+            'bank_options' => $bankOptions,
+        ];
+    }
+
+    /**
+     * Speichert Lohn-Felder aus Settings-POST (nur Nested lohn.* / flache Keys).
+     *
+     * @param array<string, mixed> $post
+     * @return list<array{field: string, old: mixed, new: mixed}>
+     */
+    public static function saveFromPost(array $post, ?int $userId = null): array
+    {
+        $raw = is_array($post['lohn'] ?? null) ? $post['lohn'] : $post;
+
+        return self::saveLohn($raw, $userId);
+    }
+
+    /**
+     * Plausibilitäts-Hinweise (Speichern der Lohn-Felder bleibt erlaubt).
+     *
+     * @param array<string, mixed> $snapshot
+     * @return list<string>
+     */
+    public static function collectWarnings(array $snapshot): array
+    {
+        $warnings = [];
+        $bnRaw = trim((string) ($snapshot['betriebsnummer'] ?? ''));
+        $bnDigits = preg_replace('/\D+/', '', $bnRaw) ?? '';
+        if ($bnDigits === '') {
+            $warnings[] = 'Betriebsnummer fehlt (Firmendaten → Agentur für Arbeit). Monatslauf später blockiert.';
+        } elseif (strlen($bnDigits) !== 8) {
+            $warnings[] = 'Betriebsnummer sollte 8 Ziffern haben (aktuell: ' . strlen($bnDigits) . '). Speichern der Lohn-Felder ist erlaubt.';
+        }
+
+        if (trim((string) ($snapshot['tax_number_est'] ?? '')) === '') {
+            $warnings[] = 'Steuernummer (ESt/LSt) fehlt unter Firmendaten.';
+        }
+
+        $fa = is_array($snapshot['finanzamt'] ?? null) ? $snapshot['finanzamt'] : [];
+        if (trim((string) ($fa['name'] ?? '')) === '' && trim((string) ($fa['bufo_nr'] ?? '')) === '') {
+            $warnings[] = 'Kein Finanzamt hinterlegt (Firmendaten).';
+        }
+
+        $lohn = is_array($snapshot['lohn'] ?? null) ? $snapshot['lohn'] : [];
+        if (trim((string) ($lohn['bundesland'] ?? '')) === '') {
+            $warnings[] = 'Bundesland für Lohn noch nicht gesetzt (KiSt/LSt-Bezug).';
+        }
+
+        $bank = $snapshot['payroll_bank'] ?? null;
+        $iban = is_array($bank) ? trim((string) ($bank['iban'] ?? '')) : '';
+        if ($iban === '') {
+            $warnings[] = 'SEPA-Absenderkonto ohne IBAN — Auszahlung (L8) später blockiert.';
+        }
+
+        if (trim((string) ($snapshot['employer_name'] ?? '')) === '') {
+            $warnings[] = 'Firmenname fehlt.';
+        }
+
+        return $warnings;
+    }
+
+    /**
      * Speichert nur company_extended.lohn; übrige Firmendaten unverändert.
      * Audit: Feld-Diff wer/wann über AuditLog (action payroll_employer_lohn).
      *

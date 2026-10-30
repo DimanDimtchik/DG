@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0 ✅ · L1a ✅ · L1b ✅)  
+> **Stand:** 2026-10-30 (L0 ✅ · L1 ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L1b Store ✅ · nächster Chat: **`l1c`** (Settings-UI AG-Stamm)
+> **Status:** Serie **L1 abgeschlossen** · nächster Chat: **`l2a`** (Spec MA-Lohnfelder)
 
 ---
 
@@ -229,7 +229,7 @@ Kein Zusammenlegen der Module: Zeitenexport ≠ Lohnabrechnung (prüftechnisch u
 
 ## Serie L1 — Arbeitgeber-Stammdaten
 
-> Einstieg: `l1a` · L1a ✅ · L1b ✅ · weiter mit `l1c`
+> Einstieg: `l1a` · **Serie L1 ✅**
 
 ### L1a — Spec AG-Stamm ✅ 2026-10-30
 
@@ -356,11 +356,33 @@ Verhalten:
 
 **Nicht:** UI/Settings-Tab (L1c), MA-Felder, Berechnung, SV-Meldung.
 
-### L1c — Settings-UI AG-Stamm
+### L1c — Settings-UI AG-Stamm ✅ 2026-10-30
 
-Validierung Betriebsnummer-Format (Plausibilität, keine Behörden-API). Anbindung `PayrollEmployerSettings::saveLohn` / Snapshot-Anzeige A-Felder.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Settings-Tab HR → **Lohn & Gehalt** | `SettingsRegistry` tab `lohn` |
+| View | `views/settings/tab-lohn.php` |
+| POST `payroll_lohn_save` | `index.php` (Admin + CSRF) |
+| `forForm` / `saveFromPost` / `collectWarnings` | `PayrollEmployerSettings` |
 
-**Nicht:** SV-Meldung senden.
+Verhalten:
+
+- A-Felder nur Anzeige + Link Firmendaten (keine Doppelpflege).
+- B-Felder editierbar; Speichern via `saveLohn` + Audit.
+- Warnungen (Betriebsnummer ≠ 8 Ziffern, fehlende Steuernr./FA/Bundesland/IBAN) — Speichern erlaubt.
+- `baulohn_enabled` mit Hinweis ohne Funktion bis LC.
+- Recht: wie andere Settings-Tabs = Admin (`SettingsRegistry::canAccess`).
+
+#### Abnahme L1c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Tab unter Einstellungen → HR | ✅ |
+| Betriebsnummer-Plausibilität als Warnung | ✅ |
+| Kein SV-Versand / keine Behörden-API | ✅ |
+| Keine MA-Felder / keine Berechnung | ✅ |
+
+**Nicht:** SV-Meldung senden, Modul-Seed `lohn` in Abteilungen (später mit Menü L5+), Monatslauf.
 
 ---
 
@@ -603,18 +625,18 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l0a`–`l0c` Spec-Rahmen / Entscheide / Rechte | ✅ 2026-10-30 |
 | — | `l1a` AG-Stamm Spec | ✅ 2026-10-30 |
 | — | `l1b` AG Store/`company_extended.lohn` | ✅ 2026-10-30 |
-| 1 | `l1c` AG UI | **als Nächstes** |
-| 4 | `l2a` MA-Felder Spec | |
-| 5 | `l2b` MA Migration | |
-| 6 | `l2c` MA UI | |
+| — | `l1c` AG UI | ✅ 2026-10-30 |
+| 1 | `l2a` MA-Felder Spec | **als Nächstes** |
+| 2 | `l2b` MA Migration | |
+| 3 | `l2c` MA UI | |
 
 Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l1c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L1c. Nicht andere L-Pakete.
+Lohn Implementierung: l2a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L2a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

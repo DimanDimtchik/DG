@@ -1518,6 +1518,32 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Lohn AG-Stamm (L1c)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['payroll_lohn_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('lohn');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $changes = PayrollEmployerSettings::saveFromPost($_POST, $user->id);
+                    if ($changes === []) {
+                        Flash::set('success', 'Keine Änderungen an den Lohn-Stammdaten.');
+                    } else {
+                        Flash::set('success', 'Lohn-Stammdaten Arbeitgeber gespeichert.');
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Schriften
         if (
             $page === 'einstellungen'
@@ -4999,6 +5025,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadMissingMandatory = LetterheadSettings::missingMandatoryFields($letterheadSettings);
         $letterheadCompliance = LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = TimeTrackingSettings::forForm();
+        $payrollEmployerForm = PayrollEmployerSettings::forForm();
         $chartOfAccountsConfig = ChartOfAccountsSettings::forForm();
         if (Database::isConfigured()) {
             try {
@@ -8489,6 +8516,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadMissingMandatory = $letterheadMissingMandatory ?? LetterheadSettings::missingMandatoryFields($letterheadSettings);
         $letterheadCompliance = $letterheadCompliance ?? LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
+        $payrollEmployerForm = $payrollEmployerForm ?? PayrollEmployerSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];
@@ -8861,6 +8889,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'letterheadMissingMandatory',
             'letterheadCompliance',
             'timeTrackingSettings',
+            'payrollEmployerForm',
             'chartOfAccountsConfig',
             'chartAccountCount',
             'chartCatalogCount',

@@ -47,5 +47,15 @@ $fields = array_column($diff, 'field');
 assertL1b(in_array('umlage_u3', $fields, true) && in_array('bundesland', $fields, true), 'Diff enthält geänderte Felder');
 assertL1b(count(PayrollEmployerSettings::bundeslandLabels()) === 16, '16 Bundesländer');
 
-echo "L1b Selftest bestanden.\n";
+$warn = PayrollEmployerSettings::collectWarnings([
+    'betriebsnummer' => '123',
+    'tax_number_est' => '',
+    'finanzamt' => ['bufo_nr' => '', 'name' => ''],
+    'lohn' => ['bundesland' => ''],
+    'payroll_bank' => ['iban' => ''],
+    'employer_name' => 'Test GmbH',
+]);
+assertL1b(count($warn) >= 3, 'L1c Warnungen bei unvollständigen A/B-Feldern');
+
+echo "L1b/L1c Selftest bestanden.\n";
 exit(0);
