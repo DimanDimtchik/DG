@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0a–c ✅)  
+> **Stand:** 2026-10-30 (L0 ✅ · L1a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** Serie L0 abgeschlossen · nächster Code-/Spec-Chat: **`l1a`** — **kein** Produktivcode in L0
+> **Status:** L1a Spec AG-Stamm ✅ · nächster Chat: **`l1b`** (Migration/Store — noch kein UI außer falls unumgänglich)
 
 ---
 
@@ -229,17 +229,104 @@ Kein Zusammenlegen der Module: Zeitenexport ≠ Lohnabrechnung (prüftechnisch u
 
 ## Serie L1 — Arbeitgeber-Stammdaten
 
-> Einstieg: `l1a`
+> Einstieg: `l1a` · L1a ✅ · weiter mit `l1b`
 
-### L1a — Spec AG-Stamm
+### L1a — Spec AG-Stamm ✅ 2026-10-30
 
-Felder (Minimum Lexware-Niveau): Betriebsnummer, Steuernummer, Finanzamt-Ref, Bundesland, BG/UV, Umlagen U1/U2/U3-Teilnahme, Bank/IBAN Absender, Name Arbeitgeber, ggf. `baulohn_enabled` Flag (ohne Logik).
+Nur Spezifikation — Umsetzung Store = **L1b**, UI = **L1c**. Kein PHP in L1a.
 
-**Nicht:** MA-Felder, Berechnung, Code.
+#### Ziel
+
+Arbeitgeber-Stammdaten auf Lexware-Office-Mindestniveau für spätere L4–L9, **ohne** paralleles Firmenstammsystem. Wiederverwendung von `CompanySettings` / `CompanyExtendedSettings` wo Daten schon existieren; nur lohn-spezifische Lücken neu.
+
+#### Speicher-Entscheidung (verbindlich für L1b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Neue Tabelle `dg_payroll_*` nur für AG-Stamm | **Nein** in L1 |
+| Neuer Settings-Block | **`company_extended.lohn`** (Nested unter Store-Key `company_extended`) |
+| Bestehende Keys | Lesen/Weiterverwenden; bei Speichern Lohn-UI keine Doppelpflege erzwingen — Anzeige „aus Firmendaten“ + Link Einstellungen→Firma |
+
+Audit: Änderungen an `lohn.*` und an referenzierten Pflichtfeldern über bestehendes Firmen-Historien-Muster (`CompanyMasterHistoryRepository` o. Ä.) — Detail in L1b; L1a verlangt nur: **wer/wann/Feld/alt/neu** nachvollziehbar.
+
+#### Feldkatalog
+
+**A — Wiederverwenden (Quelle heute)**
+
+| Lohn-Bedarf | Quelle (Ist) | Pflicht für Monatslauf später? | Hinweis |
+|-------------|--------------|--------------------------------|---------|
+| Name Arbeitgeber | `company.name` bzw. `company_extended.legal_name` (Anzeige: legal_name falls gesetzt, sonst name) | ja | Kein zweites Namensfeld in `lohn` |
+| Anschrift | `company.street/postal/city/country` | ja (PDF L6) | nur lesen |
+| Steuernummer (LSt-relevant) | `company_extended.tax_numbers.est` (Fallback `company.tax_number`) | ja | USt-Id (`ust`/vat_id) **nicht** als LSt-Steuernummer missbrauchen |
+| Finanzamt | `finanzaemter[]` / `finanzamt_resolved` (BuFö-Nr., Name) | ja | Primär: resolved/erstes FA mit BuFö; keine Behörden-API in L1 |
+| Betriebsnummer | `employment_agency.betriebsnummer` | ja | BA-Betriebsnummer des AG; Format-Check in L1c |
+| BG / UV | `bg_data.*` (carrier, company_number/member_no, …) | empfohlen (L9 UV später) | Mitgliedsnummer pflegen; kein digitaler Lohnnachweis in A |
+| Bankkonten Stamm | `bank_accounts[]` (`BankAccountTypes`) | für SEPA L8 | Auswahl Absenderkonto über Index/Flag in `lohn` |
+
+**B — Neu unter `company_extended.lohn` (L1b anlegen)**
+
+| Key | Typ | Default | Pflicht Lauf | Bedeutung |
+|-----|-----|---------|--------------|-----------|
+| `bundesland` | string ISO-3166-2 DE (`DE-BY` …) oder leer | `''` | ja | KiSt/LSt-Tabellenbezug; **nicht** still aus PLZ raten in L1 — Nutzer setzt; optional Hilfsvorschlag erst L1c |
+| `umlage_u1` | bool | `false` | ja* | Teilnahme U1 (Krankheit) |
+| `umlage_u2` | bool | `false` | ja* | Teilnahme U2 (Mutterschaft) |
+| `umlage_u3` | bool | `false` | ja* | Insolvenzgeldumlage (gesetzl. Regelfall oft ja — Default trotzdem bewusst setzen, nicht silent true ohne UI) |
+| `u1_erstattungssatz_key` | string | `''` | wenn U1 | z. B. Tarifkennzeichen/Prozent-Schlüssel laut Beitragstabelle (Werte erst L4) |
+| `payroll_bank_account_index` | int ≥ 0 | `0` | für L8 | Index in `bank_accounts` = SEPA-Absender |
+| `baulohn_enabled` | bool | `false` | nein | **Nur Flag** (L0b D6) — **keine** Bau-Logik, keine SOKA-Felder |
+| `notes` | string | `''` | nein | Interne Prüfungshinweise (z. B. GF-SV-Klärung auf Firmenebene) |
+
+\*„Pflicht“ = Feld muss explizit gesetzt/bestätigt sein (auch `false`), nicht „muss true sein“.
+
+**C — Bewusst nicht in L1**
+
+| Thema | Wohin |
+|-------|--------|
+| MA Steuer/SV/IBAN Empfänger | L2 |
+| Lohnarten | L3 |
+| Beitragssätze / Jahrestabellen | L4 |
+| ITSG-Zertifikat / MOD-ID | LB |
+| SOKA / Winterbau | LC |
+| ELSTER-Org-Zertifikat | C1 / L10 |
+
+#### Validierung (Spec für L1c — hier nur Regeln)
+
+| Feld | Regel |
+|------|--------|
+| Betriebsnummer | Nur Ziffern; Länge **8** (übliche BA-Betriebsnummer); leer = Warnung, Speichern erlaubt; Monatslauf-Block erst L5 |
+| Steuernummer est | Nicht leer für Lauf; Format Plausibilität wie bestehende FA-Ermittlung — **keine** neue Elster-Prüfziffer-Wissenschaft in L1 |
+| BuFö / Finanzamt | Mind. ein Finanzamt-Eintrag oder `finanzamt_resolved` mit Name |
+| IBAN Absender | Aus gewähltem `bank_accounts[i]`; IBAN-Normalisierung bestehend nutzen; Leer → SEPA später blocken |
+| `bundesland` | Allowlist DE-Länderkürzel |
+| `baulohn_enabled` | Bool; UI-Hinweis „ohne Funktion bis LC“ |
+
+Keine Live-Abfrage BA/ITSG/BG in L1.
+
+#### Rechte & UI-Ort (Anschluss L0c)
+
+| Aktion | Recht |
+|--------|--------|
+| AG-Lohnfelder lesen | `lohn` ≥ `partial` |
+| AG-Lohnfelder / Umlagen / Flag schreiben | `lohn` === `full` |
+| Firmendaten name/Steuernummer/BG/Betriebsnummer ändern | weiterhin Firmen-Einstellungen; Lohn-UI darf **anzeigen** und bei `full` optional Deep-Link — **kein** zweites Schreibrecht ohne Firma-Recht |
+
+UI-Ort L1c: Settings-Tab **„Lohn“** (oder Unterbereich Firma→Lohn) — nicht unter Zeiterfassung.
+
+#### Abnahme L0→L1a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Feldkatalog A/B/C vollständig | ✅ |
+| Store: `company_extended.lohn`, keine Parallel-AG-Tabelle | ✅ |
+| `baulohn_enabled` ohne Logik | ✅ |
+| U1/U2/U3 + Bundesland als Lücken geschlossen | ✅ |
+| Kein Code / keine Migration in diesem Chat | ✅ |
+
+**Nicht:** Migration, Repository-Code, UI, MA-Felder, Berechnung, SV-Meldung senden.
 
 ### L1b — Migration + Repository AG-Stamm
 
-Eine Tabelle/Setting-Block je Instanz; Audit bei Änderung.
+Store-Erweiterung `company_extended.lohn` laut L1a Feldkatalog B + Defaults; Lesen der A-Felder aus bestehenden Keys; Audit bei Änderung.
 
 **Nicht:** UI außer minimal Settings-Tab wenn nötig in L1c.
 
@@ -488,9 +575,9 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | # | Prompt-Kurz | Status |
 |---|-------------|--------|
 | — | `l0a`–`l0c` Spec-Rahmen / Entscheide / Rechte | ✅ 2026-10-30 |
-| 1 | `l1a` AG-Stamm Spec | **als Nächstes** |
-| 2 | `l1b` AG Migration | |
-| 3 | `l1c` AG UI | |
+| — | `l1a` AG-Stamm Spec | ✅ 2026-10-30 |
+| 1 | `l1b` AG Store/`company_extended.lohn` | **als Nächstes** |
+| 2 | `l1c` AG UI | |
 | 4 | `l2a` MA-Felder Spec | |
 | 5 | `l2b` MA Migration | |
 | 6 | `l2c` MA UI | |
@@ -500,8 +587,8 @@ Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l1a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L1a. Nicht andere L-Pakete.
+Lohn Implementierung: l1b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L1b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
