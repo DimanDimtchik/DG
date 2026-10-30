@@ -345,8 +345,9 @@ Admin/`RoleResolver` mit System-Vollzugriff: wie bei anderen Modulen üblich mit
 
 #### Menü-Platzierung
 
-- Eigene Sidebar-Sektion **„Lohn & Gehalt“** zwischen **HR** und **Buchhaltung** (nicht unter Zeiterfassung verstecken).
-- Icon-Vorschlag: an Buchhaltung/HR angelehnt (konkret in UI-Chat).
+- **Seit 2026-10-30:** Lohn-Punkte liegen in der Sidebar-Sektion **HR** (nach Zeiterfassung): Monatslauf, Lohnkonto, SV-Portal, ELSTER, Lohnarten, Beitragstabellen, AG-Stammdaten.  
+  Umsetzung: `MenuRegistry::lohnMenuItems()` → `hrSection()`; `lohnSection()` liefert absichtlich `null` (keine zweite Überschrift).
+- Früher L0c-Default „eigene Sektion Lohn & Gehalt“ ist damit bewusst aufgehoben (Nutzer: Menü zusammenfassen).
 
 #### Abgrenzung Zeiterfassung Z6
 
@@ -850,7 +851,7 @@ Tabelle später z. B. `dg_payroll_employee_wage_assignments`:
 | Migration | `database/migrations/125_payroll_wage_types.sql` |
 | Repository + Seed | `PayrollWageTypeRepository` |
 | Modul `lohn` in `DepartmentAccess` | default `none` |
-| Menü-Sektion | `MenuRegistry::lohnSection` |
+| Menü (unter HR) | `MenuRegistry::lohnMenuItems` → `hrSection` |
 | Seite | `/app?page=lohn-lohnarten` · `views/modules/lohn-lohnarten.php` |
 | Selftest | `bin/payroll-wage-types-l3b-selftest.php` |
 

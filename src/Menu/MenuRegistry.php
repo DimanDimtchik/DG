@@ -38,7 +38,8 @@ final class MenuRegistry
     }
 
     /**
-     * HR-Bereich: Akademie + Zeiterfassung (zwischen Navigation und Warenwirtschaft/Buchhaltung).
+     * HR-Bereich: Akademie, Organisation, Zeiterfassung, Lohn & Gehalt
+     * (zwischen Navigation und Warenwirtschaft/Buchhaltung).
      *
      * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
      */
@@ -80,6 +81,10 @@ final class MenuRegistry
             ];
         }
 
+        foreach (self::lohnMenuItems($user) as $lohnItem) {
+            $items[] = $lohnItem;
+        }
+
         if ($items === []) {
             return null;
         }
@@ -88,17 +93,17 @@ final class MenuRegistry
     }
 
     /**
-     * Lohn & Gehalt (zwischen HR und Buchhaltung) — L0c / L3b.
+     * Lohn-Menüpunkte (werden unter HR geführt — keine eigene Sidebar-Sektion mehr).
      *
-     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     * @return list<array{slug: string, label: string, icon: string, href: string}>
      */
-    public static function lohnSection(User $user): ?array
+    public static function lohnMenuItems(User $user): array
     {
         if (RoleResolver::isCustomer($user)) {
-            return null;
+            return [];
         }
         if (!PayrollEmployeeAccess::canView($user)) {
-            return null;
+            return [];
         }
 
         $items = [
@@ -142,13 +147,24 @@ final class MenuRegistry
         if (RoleResolver::isAdmin($user)) {
             $items[] = [
                 'slug' => 'einstellungen-lohn',
-                'label' => 'AG-Stammdaten',
+                'label' => 'AG-Stammdaten (Lohn)',
                 'icon' => 'settings',
                 'href' => SettingsRegistry::tabUrl('lohn'),
             ];
         }
 
-        return ['label' => 'Lohn & Gehalt', 'items' => $items];
+        return $items;
+    }
+
+    /**
+     * @deprecated Seit HR-Zusammenfassung: immer null — Punkte liegen in {@see hrSection()}.
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function lohnSection(User $user): ?array
+    {
+        unset($user);
+        return null;
     }
 
     /**
@@ -576,6 +592,13 @@ final class MenuRegistry
             'hr-abteilungen' => 'Abteilungen anlegen und Mitarbeitern zuordnen — Grundlage für Rechte und Akademie.',
             'hr-teams' => 'Teams innerhalb der Abteilungen pflegen und Ansprechpartner zuweisen.',
             'zeiterfassung' => 'Einstempeln, Pausen und Arbeitszeiten — Übersicht für Mitarbeiter und HR.',
+            'lohn-monatslauf' => 'Lohnabrechnung je Monat: berechnen, freigeben, sperren und Dokumente erzeugen.',
+            'lohn-lohnkonto' => 'Lohnkonto je Mitarbeiter und Jahr — chronologische Abrechnungsübersicht.',
+            'lohn-auswertungen' => 'SV-Portal-Vorbereitung: Beitragsnachweis und Stammkontrolle als CSV.',
+            'lohn-elster' => 'Lohnsteuer-Anmeldung vorbereiten (Test/Audit) — Live erst nach Gate.',
+            'lohn-lohnarten' => 'Lohnartenkatalog pflegen und Mitarbeitern zuordnen.',
+            'lohn-beitragstabellen' => 'Versionierte SV-/Lohnsteuertabellen für die Brutto-Netto-Berechnung.',
+            'einstellungen-lohn' => 'Arbeitgeber-Stammdaten für die Lohnabrechnung (BN, Steuernummer, Flags).',
             'post' => 'E-Mail-Postfächer im CRM: Eingang lesen und Nachrichten versenden.',
             'telefon' => 'Click-to-Call, Anrufliste und Popup bei eingehenden Anrufen.',
             'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Finalisierung und Export.',
