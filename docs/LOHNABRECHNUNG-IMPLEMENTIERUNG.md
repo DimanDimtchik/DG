@@ -143,16 +143,18 @@ Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB
 | Prüfung | Ergebnis |
 |---------|----------|
 | SSH Master `dg.ganz-om.de` | ✅ `SSH_OK` |
-| Payroll-PHP auf Server (`StandardPayrollEngine`, SEPA/SV/ELSTER) | ❌ fehlt (Branch noch nicht gemergt/deployt) |
-| Migrationen Lohn `125`–`133` in `dg_migrations` | ❌ letzte Migration Server = `124_…` |
-| Tabellen `dg_payroll_runs` / SEPA / SV / FiBu | ❌ keine |
-| `storage/payroll/` | ❌ fehlt |
-| Zwei locked Perioden L5–L9 | ❌ nicht erbringbar |
-| **GATE_STATUS** | **`open`** — kein Abhaken |
+| Merge `master` | ✅ `c8c6296` / Doku `815aa02` |
+| Deploy rsync Master + `sync-crm-from-master.sh` | ✅ 2026-10-30 ~13:14 Europe/Berlin · MD5 `index.php` gleich auf 4 Instanzen |
+| Payroll-PHP (`StandardPayrollEngine`, SEPA/SV) | ✅ auf Master + Live + Kontur |
+| Migrationen Lohn `125`–`133` | ✅ Master / ganz-soft / kontur (`dg_payroll_runs=yes`) |
+| `storage/payroll/{sepa,sv,elster}` | ✅ angelegt (Master; Live/Kontur mit) |
+| Selftests L8b / L9b auf Master | ✅ |
+| Zwei locked Perioden L5–L9 | ❌ noch **0** komplette Pilotmonate |
+| **GATE_STATUS** | **`open`** — Schema da, Pilot ausstehend |
 
-**Werkzeug (nach Merge+Deploy+Pilot):** `php bin/payroll-g3-evidence.php --domain=dg.ganz-om.de --markdown`  
-Selftest Offline: `php bin/payroll-g3-evidence.php --selftest` → `SELFTEST_OK`.  
-Skript füllt die Tabelle aus der Instanz-DB; Lexware-Delta und „Wer/Datum“ bleiben manuell. **Kein Flag-Unlock.**
+**Werkzeug:** `php bin/payroll-g3-evidence.php --domain=dg.ganz-om.de --markdown`  
+Selftest: `php bin/payroll-g3-evidence.php --selftest` → `SELFTEST_OK`.  
+Lexware-Delta und „Wer/Datum“ manuell. **Kein Flag-Unlock.**
 
 #### Nach bestandenem G3 (eigene Chats, nicht automatisch)
 
@@ -2372,7 +2374,7 @@ Kein Deploy außer Nutzer sagt „deploy“.
 **Stufe-A-Kern L0–L10 abgeschlossen** · **G4 ✅** · **LB0a ✅** 2026-10-30 · **G3 offen**.
 
 Weiterbetrieb:
-1. **G3 weiterhin offen** — Nachweis 2026-10-30: Master ohne Payroll-Schema. Nach Merge→Deploy→2 Pilotmonate: `php bin/payroll-g3-evidence.php --domain=… --markdown` und Tabelle abnehmen.  
+1. **G3 weiterhin offen** — Deploy ✅ 2026-10-30; Evidence zeigt `COMPLETE_MONTHS=0`. Nächster Schritt: 2 Pilotmonate L5–L9 auf `dg.ganz-om.de`, dann Evidence + Abnahme.  
 2. **LB0a erledigt** — Volltext in `docs/itsg/`. Nächstes LB-Paket: **`lb1a`** erst nach G3 (Testaufgaben/XML-Spec, kein Prod-Versand).  
 3. Optional nach G3: SEPA-Live / Lexware-Cutover nur mit Nutzerbefehl.  
 4. Baulohn `lc0a` erst nach **G5**.

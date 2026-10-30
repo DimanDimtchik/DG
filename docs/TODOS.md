@@ -18,7 +18,7 @@ Stand: **2026-10-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G4 ✅** · **LB0a ✅** · **in `master` gemergt** 2026-10-30 (`c8c6296`) · **G3 offen** · als Nächstes **Deploy Master + Sync + Migrationen + Pilot** · danach Evidence/`lb1a` · `lb1+`/Versand erst nach G3.
+**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G4 ✅** · **LB0a ✅** · **master+Deploy** 2026-10-30 (rsync Master, Sync Instanzen, Migrationen 125–133, `dg_payroll_runs` ok) · **G3 offen** (0 Pilotmonate) · als Nächstes **G3-Pilot** zwei Monate auf `dg.ganz-om.de` · danach Evidence/`lb1a` · kein Versand ohne G3.
 
 ---
 
