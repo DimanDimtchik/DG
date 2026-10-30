@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L7 ✅)  
+> **Stand:** 2026-10-30 (L0–L8a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L7c FiBu-UI ✅ · nächster Chat: **`l8a`** (SEPA Spec)
+> **Status:** L8a Spec SEPA-XML ✅ · nächster Chat: **`l8b`** (SEPA-Generator)
 
 ---
 
@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l8a`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l8b`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1200,7 +1200,7 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l8a`
+> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l8b`
 
 ### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
@@ -1384,7 +1384,7 @@ Seite `/app?page=lohn-lohnkonto` (`PayrollLohnkontoService`): MA/Jahr, Spalten M
 
 ## Serie L7 — FiBu-Buchung
 
-> Einstieg: `l7a` · L7a–c ✅ · weiter mit `l8a`  
+> Einstieg: `l7a` · L7a–c ✅ · weiter mit `l8b`  
 > Gate **G1** vor **Produktiv**-Buchung (Flag). Spec/Code L7a–c dürfen vor G1 entstehen — Schreiben ins Journal nur mit `payroll_fibu_live` **oder** Admin-Probe auf Master.
 
 ### L7a — Spec Buchungssätze ✅ 2026-10-30
@@ -1561,13 +1561,139 @@ Monatslauf: Vorschau Konten/Zeilen, Betriebsprüfer-Checkliste, Buchung mit Begr
 
 ## Serie L8 — SEPA-Auszahlung
 
-### L8a — Spec SEPA-XML
+> Einstieg: `l8a` · L8a ✅ · weiter mit `l8b`  
+> Flag **`payroll_sepa_live`** default **aus** bis Gate **G3** (L0b D3 / E4). Generator-Code darf vor G3 entstehen — **Download der XML** ohne Live-Flag nur als Wasserzeichen-/Probe-Datei oder blockiert (Entscheidung unten).
 
-Sammler Netto; IBAN-Validierung; Protokoll; Flag `payroll_sepa_live`.
+### L8a — Spec SEPA-XML ✅ 2026-10-30
 
-**Nicht:** Echtgeld ohne Flag.
+Nur Spezifikation — Generator/Download/Audit = **L8b**. Kein PHP in L8a. Keine Bank-API, kein automatischer Versand, kein Echtgeld ohne Flag.
+
+#### Ziel
+
+Aus einem **gesperrten** Monatslauf (`locked`, nicht superseded) eine **SEPA-Credit-Transfer-Sammlerdatei** (ISO 20022) erzeugen: Auszahlungsnetto je ok-MA an deren IBAN. Datei dient dem Bank-Upload (Online-Banking / EBICS-Client des Mandanten) — das CRM sendet **nicht** selbst.
+
+#### Format & Profil
+
+| Punkt | Entscheidung |
+|-------|--------------|
+| Schema Stufe A | **`pain.001.001.03`** (weit verbreitet DE; Lexware-Office-Niveau) |
+| Encoding | UTF-8 |
+| Zahlungstyp | Credit Transfer (Überweisung), Batch Booking empfohlen `true` |
+| Währung | EUR only in A |
+| Service Level | `SEPA` |
+| Local Instrument | leer / Standard SCT (kein Instant in A) |
+| Charset Verwendungszweck | SEPA-restricted: analog `PaymentReferenceFormula` / Bank-Transfer-Sanitize (A–Z a–z 0–9 `/-?:().,'+` und Leerzeichen); Umlaute transliterieren oder ersetzen |
+| BIC | Pflicht wenn IBAN nicht DE **oder** Bank verlangt; für DE-IBAN: aus BLZ via `BankDirectory` ergänzen wenn möglich (wie `BankTransferRepository::resolveBic`) |
+
+Später optional `pain.001.001.09` als zweites Profil — **nicht** in A erzwingen.
+
+#### Voraussetzungen & Trigger
+
+| Regel | Entscheidung |
+|-------|--------------|
+| Quelle | Nur Run `locked` + `is_superseded=0` |
+| MA | Nur `emp_status=ok` mit `net_pay` > 0 |
+| Betrag | `net_pay` je MA (keine Brutto-/FA-/SV-Zeilen in SEPA) |
+| Absender (Debtor) | AG-Konto: `company_extended.bank_accounts[ payroll_bank_account_index ]` (L1) — IBAN Pflicht, validiert |
+| Empfänger (Creditor) | Kontakt-`bank_accounts[ payroll_payout_bank_index ]` (L2); Fallback Index 0 / `is_primary` wenn Index ungültig — **nur wenn gültige IBAN** |
+| IBAN-Check | `BankDirectory::normalizeIban` + `validateIban`; ungültig/leer → MA in Datei **übersprungen** + Fehlerliste (Hard: Datei trotzdem erzeugbar wenn ≥1 gültig; Soft: UI warnt) |
+| Gesamtsumme 0 | Abbruch: keine Datei |
+| Rechte | `lohn` === `full` (L0c); Download Probe ohne Live: Admin ok |
+| Flag | `payroll_sepa_live` in `company_extended.lohn` (Default false) |
+| Ohne Live-Flag | L8b: XML-Erzeugung für **Vorschau/Download mit Dateiname `…-PROBE.xml`** und Header-Kommentar/InitgPty-Name-Suffix ` (PROBE)` erlaubt; Bankenupload-Hinweis in UI „nicht produktiv“. Alternativ hart blocken — **Default: Probe-Download erlaubt**, klar gekennzeichnet |
+| Mit Live-Flag | Dateiname ohne PROBE; Audit „live“ |
+
+FiBu (L7) ist **keine** harte Voraussetzung für SEPA-Datei (Bank braucht XML unabhängig). Empfohlen: zuerst FiBu, dann SEPA — UI-Hinweis L8b. Bankausgleich der Verb. Nettolöhne bleibt manuell / spätere Buchungsvorlage (nicht L8).
+
+#### Datei-Inhalt (fachlich)
+
+**Group Header**
+
+| Feld | Inhalt |
+|------|--------|
+| MsgId | `DG-LOHN-{runId}-{YmdHis}` (≤35 Zeichen, eindeutig) |
+| CreDtTm | Erzeugungszeit UTC/local ISO |
+| NbOfTxs / CtrlSum | Anzahl Transaktionen / Summe Netto |
+| InitgPty/Nm | Arbeitgeber-Name (Snapshot/Firma), ggf. ` (PROBE)` |
+
+**Payment Information (eine PmtInf je Datei in A)**
+
+| Feld | Inhalt |
+|------|--------|
+| PmtInfId | `PMT-RUN-{runId}` |
+| PmtMtd | `TRF` |
+| BtchBookg | `true` |
+| ReqDt / ReqDtTm | Ausführungsdatum: Default = nächster Bankarbeitstag nach Erzeugung **oder** explizit UI (L8b); nicht in der Vergangenheit |
+| Dbtr / DbtrAcct / DbtrAgt | Name, IBAN, BIC Absender |
+
+**Credit Transfer Transaction Information (je MA)**
+
+| Feld | Inhalt |
+|------|--------|
+| EndToEndId | `E2E-R{runId}-C{contactId}` (≤35, stabil für Idempotenz/Wiederholung gleicher Run) |
+| Amt/InstdAmt Ccy=EUR | `net_pay` 2 Dezimalen |
+| CdtrAgt BIC | wenn bekannt |
+| Cdtr/Nm | MA Anzeigename (Kontakt) |
+| CdtrAcct/IBAN | Empfänger-IBAN |
+| RmtInf/Ustrd | `Lohn {MM/YYYY} Run#{runId}` (+ optional Personal-/Login-Kurz), SEPA-sanitize |
+
+Storno-/Correction-Runs: gleiche Regeln aus **eigenen** ok-Results. Negativ-Netto in A → MA überspringen + Warnung (Auszahlung nicht per SCT negativ). Storno-Auszahlung = i. d. R. keine neue SEPA aus Storno-Run, sondern Korrektur außerhalb / manuell — Spec: **Storno-Run erzeugt keine Auszahlungs-SEPA** (nur `kind=regular|correction`).
+
+#### Persistenz & Protokoll (Rahmen für L8b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Meta-Tabelle | `dg_payroll_sepa_exports`: `id`, `run_id`, `created_at`, `created_by_user_id`, `is_live`, `is_probe`, `tx_count`, `ctrl_sum`, `msg_id`, `checksum` (SHA-256 der XML-Bytes), `filename`, `reason` |
+| Mehrfach-Export | Erlaubt (Bank kann Datei verwerfen); jeder Export neuer Meta-Satz. Optional UI „bereits exportiert am …“ |
+| Speicherung XML-Binary | Optional unter `storage/payroll/sepa/` analog L6; **mindestens** Download-Stream + Audit-Meta. Empfehlung: speichern für Prüfer |
+| Idempotenz EndToEndId | Stabil je Run+MA → bei Re-Export gleiche E2E-IDs (Bank erkennt Duplikate eher) |
+| Kein Auto-Mark „bezahlt“ | Run/MA-Status bleibt; optionales Flag `sepa_exported_at` später — nicht in A erzwingen |
+
+#### Abgrenzung zu bestehenden CRM-Überweisungen
+
+| Bestehend | Lohn-SEPA |
+|-----------|-----------|
+| `BankTransferRepository` / GiroCode je Lieferantenbeleg | Sammler aus Payroll-Run |
+| Einzel-EPC-QR | pain.001 Sammler-XML |
+| CAMT.053 Import | unverändert; Matching Lohn-E2E später optional |
+
+Wiederverwenden: IBAN/BIC-Hilfen (`BankDirectory`, `resolveBic`), SEPA-Zeichenfilter. **Nicht** Lieferanten-Transfer-Tabelle für Lohn missbrauchen (eigene Meta).
+
+#### Rechte & UI-Skizze (nur Spec, Bau = L8b)
+
+| Aktion | Recht |
+|--------|-------|
+| Vorschau Transaktionsliste | `lohn` ≥ `partial` |
+| XML erzeugen/downloaden (Probe) | `full` oder Admin |
+| XML live | `full` + `payroll_sepa_live` |
+| Flag schalten | Admin (Settings Lohn, analog `payroll_fibu_live`) |
+
+Menü/Einstieg: Button am gesperrten Monatslauf „SEPA-Auszahlung“ + Settings-Flag neben FiBu.
+
+#### Abgrenzung
+
+| Thema | Wohin |
+|-------|--------|
+| XML schreiben / Meta / Download | L8b |
+| Bank-API / EBICS / Instant | **nie** in A; nicht L8 |
+| FiBu Bank gegen Verb. Netto | manuell / später; nicht L8 |
+| SV-/LSt-Zahlung | nicht SEPA-Lohnnetto (andere Verfahren) |
+
+#### Abnahme L8a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| pain.001.001.03 Sammler Netto spezifiziert | ✅ |
+| Absender/Empfänger-Quellen + IBAN-Validierung | ✅ |
+| Flag/Probe/G3; Storno ohne Auszahlungs-SEPA | ✅ |
+| Meta/Audit-Rahmen; Abgrenzung BankTransfer | ✅ |
+| Kein PHP / keine Bank-API | ✅ |
+
+**Nicht:** Generator-Code, UI-Download, Bank-API, Echtgeld ohne Flag.
 
 ### L8b — Generator + Download + Audit
+
+XML-Erzeugung, Meta `dg_payroll_sepa_exports`, Download, Probe-Kennzeichnung, UI am Monatslauf.
 
 **Nicht:** Bank-API.
 
@@ -1677,15 +1803,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l7a` Spec Buchungssätze | ✅ 2026-10-30 |
 | — | `l7b` Buchungs-Service + Protokoll | ✅ 2026-10-30 |
 | — | `l7c` UI FiBu-Übernahme + Stichprobe | ✅ 2026-10-30 |
-| 1 | `l8a` Spec SEPA-XML | **als Nächstes** |
+| — | `l8a` Spec SEPA-XML | ✅ 2026-10-30 |
+| 1 | `l8b` SEPA-Generator + Download + Audit | **als Nächstes** |
 
-Danach L8b → … nicht überspringen.
+Danach L9a → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l8a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L8a. Nicht andere L-Pakete.
+Lohn Implementierung: l8b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L8b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
