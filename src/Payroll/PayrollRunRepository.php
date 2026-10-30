@@ -535,6 +535,21 @@ final class PayrollRunRepository
             'UPDATE dg_payroll_runs SET locked_at = NOW(), locked_by_user_id = :uid WHERE id = :id'
         )->execute(['uid' => $userId, 'id' => $runId]);
         self::setStatus($runId, self::STATUS_APPROVED, self::STATUS_LOCKED, $userId, $reason, []);
+        // L6b: Final-PDFs für ok-MA (Fehler protokollieren, Lock bleibt bestehen)
+        if (class_exists('PayrollDocumentRepository')) {
+            try {
+                $pdf = PayrollDocumentRepository::generateFinalsForRun($runId, $userId);
+                self::addEvent($runId, self::STATUS_LOCKED, self::STATUS_LOCKED, $userId, 'PDF nach Sperre', [
+                    'created' => $pdf['created'] ?? 0,
+                    'skipped' => $pdf['skipped'] ?? 0,
+                    'errors' => $pdf['errors'] ?? [],
+                ]);
+            } catch (Throwable $e) {
+                self::addEvent($runId, self::STATUS_LOCKED, self::STATUS_LOCKED, $userId, 'PDF nach Sperre fehlgeschlagen', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**

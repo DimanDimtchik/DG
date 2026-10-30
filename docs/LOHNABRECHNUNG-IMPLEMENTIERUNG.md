@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L5 ✅ · L6a ✅)  
+> **Stand:** 2026-10-30 (L0–L6b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L6a Spec PDF/Lohnkonto ✅ · nächster Chat: **`l6b`** (PDF-Generator)
+> **Status:** L6b PDF-Generator ✅ · nächster Chat: **`l6c`** (Lohnkonto-UI)
 
 ---
 
@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l6a`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l6c`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1200,7 +1200,7 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-> Einstieg: `l6a` · L6a ✅ · weiter mit `l6b`
+> Einstieg: `l6a` · L6a–b ✅ · weiter mit `l6c`
 
 ### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
@@ -1347,11 +1347,22 @@ Seite: `lohn-lohnkonto` (L0c). Einstieg auch von Kontakt-Mitarbeiterkarte (Link 
 
 **Nicht:** Generator-Code, UI, FiBu, SEPA, ELSTER.
 
-### L6b — PDF-Generator + Speicherung
+### L6b — PDF-Generator + Speicherung ✅ 2026-10-30
 
-Migration `dg_payroll_documents`; Generator aus locked Run; Checksum; Draft-Wasserzeichen optional.
+Migration `129_payroll_documents.sql` → `dg_payroll_documents`. Generator Dompdf (`PayrollPayslipPdfService`), Ablage `storage/payroll/{YYYY}/{MM}/lohn-{contactId}-{YYYYMM}-run{runId}[.draft].pdf`, SHA-256, Immutability Final. Auto nach `PayrollRunRepository::lock` für MA `ok`; Draft optional überschreibbar. Selftest: `bin/payroll-documents-l6b-selftest.php`.
 
-**Nicht:** FiBu.
+#### Abnahme L6b
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Migration 129 + MigrationRunner | ✅ |
+| Storage-Pfad + Immutability Final | ✅ |
+| HTML Mindestangaben + Draft-Wasserzeichen | ✅ |
+| Dompdf Binary + Checksum (wenn vendor) | ✅ |
+| Lock-Hook Finals (Event bei Fehler) | ✅ |
+| Keine FiBu / keine Lohnkonto-UI | ✅ |
+
+**Nicht:** FiBu, Lohnkonto-UI (L6c), SEPA, Behördenmeldung.
 
 ### L6c — Lohnkonto-UI + Export
 
@@ -1496,15 +1507,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l5b` Migration Läufe/Positionen | ✅ 2026-10-30 |
 | — | `l5c` UI Monatslauf | ✅ 2026-10-30 |
 | — | `l6a` PDF/Lohnkonto Spec | ✅ 2026-10-30 |
-| 1 | `l6b` PDF-Generator/Speicherung | **als Nächstes** |
+| — | `l6b` PDF-Generator/Speicherung | ✅ 2026-10-30 |
+| 1 | `l6c` Lohnkonto-UI + Export | **als Nächstes** |
 
-Danach L6c → … nicht überspringen.
+Danach L7a → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l6b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L6b. Nicht andere L-Pakete.
+Lohn Implementierung: l6c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L6c. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
