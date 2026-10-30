@@ -224,6 +224,55 @@
           <?php else : ?>
             <p class="dg-lead">Noch keine Lohn-Stammdaten erfasst.</p>
           <?php endif; ?>
+          <?php
+            $detailAssignments = $payrollWageAssignments ?? [];
+            $unitLabelsDetail = PayrollWageTypeRepository::unitLabels();
+          ?>
+          <h4 class="dg-subsection-title">Lohnarten-Zuordnung</h4>
+          <?php if ($detailAssignments === []) : ?>
+            <p class="dg-lead">Keine Lohnarten zugeordnet.</p>
+          <?php else : ?>
+            <div class="dg-table-wrap">
+              <table class="dg-table dg-table--compact">
+                <thead>
+                  <tr>
+                    <th>Lohnart</th>
+                    <th>Betrag / Satz</th>
+                    <th>Einheit</th>
+                    <th>Gültig</th>
+                    <th>Prio</th>
+                    <th>Notiz</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($detailAssignments as $da) : ?>
+                    <?php
+                      $from = trim((string) ($da['valid_from'] ?? ''));
+                      $to = trim((string) ($da['valid_to'] ?? ''));
+                      if ($from !== '' && $to !== '') {
+                          $validity = $from . ' – ' . $to;
+                      } elseif ($from !== '') {
+                          $validity = 'ab ' . $from;
+                      } elseif ($to !== '') {
+                          $validity = 'bis ' . $to;
+                      } else {
+                          $validity = 'unbefristet';
+                      }
+                      $unitKey = (string) ($da['wage_unit'] ?? '');
+                    ?>
+                    <tr>
+                      <td><?= View::escape((string) ($da['wage_code'] ?? '') . ' — ' . (string) ($da['wage_label'] ?? '')) ?></td>
+                      <td><?= View::escape((string) ($da['amount_display'] ?? $da['amount'] ?? '')) ?></td>
+                      <td><?= View::escape($unitLabelsDetail[$unitKey] ?? $unitKey) ?></td>
+                      <td><?= View::escape($validity) ?></td>
+                      <td><?= (int) ($da['priority'] ?? 0) ?></td>
+                      <td><?= View::escape((string) ($da['notes'] ?? '')) ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
         <?php endif; ?>
       </section>
 

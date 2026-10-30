@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L2 ✅ · L3a–b ✅)  
+> **Stand:** 2026-10-30 (L0–L3 ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L3b Migration/CRUD ✅ · nächster Chat: **`l3c`** (MA↔Lohnart)
+> **Status:** L0–L3 ✅ · nächster Chat: **`l4a`** (Brutto→Netto Spec)
 
 ---
 
@@ -568,7 +568,7 @@ Verhalten:
 
 ## Serie L3 — Lohnarten
 
-> Einstieg: `l3a` · L3a ✅ · L3b ✅ · weiter mit `l3c`
+> Einstieg: `l3a` · L3a–c ✅ · weiter mit `l4a`
 
 ### L3a — Spec Lohnarten-Katalog ✅ 2026-10-30
 
@@ -709,11 +709,29 @@ Verhalten: Seed 10 System-Arten; System-`code` readonly; Deaktivieren statt Lös
 
 **Nicht:** Engine; keine MA-Zuordnung (L3c).
 
-### L3c — Zuordnung MA ↔ Lohnart (Stamm)
+### L3c — Zuordnung MA ↔ Lohnart (Stamm) ✅ 2026-10-30
 
-z. B. monatliches Festgehalt / Stundenlohn-Satz; Tabelle Assignments laut L3a-Rahmen; UI an Mitarbeiterkarte oder unter Lohnarten.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Migration | `database/migrations/126_payroll_employee_wage_assignments.sql` |
+| Repository | `PayrollEmployeeWageAssignmentRepository` |
+| Speichern | `ContactRepository::save` bei `PayrollEmployeeAccess::canEdit` |
+| UI Formular | Mitarbeiterkarte → Sektion Lohnabrechnung → Tabelle Zuordnung |
+| UI Detail | `kontakte-detail` unter Lohnabrechnung |
+| Selftest | `bin/payroll-employee-wage-assignments-l3c-selftest.php` |
 
-**Nicht:** Monatslauf.
+Felder: `contact_id`, `wage_type_id`, `amount`, `valid_from`/`valid_to`, `priority`, `notes`. Sync ersetzt den Satz je MA beim Speichern (nur mit Lohn-Schreibrecht). Ohne Recht bleiben Zuordnungen unverändert.
+
+#### Abnahme L3c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Tabelle laut L3a-Rahmen | ✅ |
+| Formular + Detail an MA-Karte | ✅ |
+| Rechte über `PayrollEmployeeAccess` | ✅ |
+| Kein Monatslauf / keine Engine | ✅ |
+
+**Nicht:** Monatslauf; keine Brutto→Netto-Rechnung (L4).
 
 ---
 
@@ -915,15 +933,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l2c` MA UI | ✅ 2026-10-30 |
 | — | `l3a` Lohnarten Spec | ✅ 2026-10-30 |
 | — | `l3b` Lohnarten Migration/CRUD | ✅ 2026-10-30 |
-| 1 | `l3c` MA↔Lohnart Zuordnung | **als Nächstes** |
+| — | `l3c` MA↔Lohnart Zuordnung | ✅ 2026-10-30 |
+| 1 | `l4a` Brutto→Netto Spec | **als Nächstes** |
 
-Danach L4a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
+Danach L4b → … nicht überspringen. **L4 erst wenn L1–L3 stabil** (jetzt erfüllt).
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l3c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L3c. Nicht andere L-Pakete.
+Lohn Implementierung: l4a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L4a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

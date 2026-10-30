@@ -59,6 +59,7 @@ spl_autoload_register(static function (string $class): void {
         'EmployeeData' => '/src/Contact/EmployeeData.php',
         'PayrollEmployeeAccess' => '/src/Contact/PayrollEmployeeAccess.php',
         'PayrollWageTypeRepository' => '/src/Payroll/PayrollWageTypeRepository.php',
+        'PayrollEmployeeWageAssignmentRepository' => '/src/Payroll/PayrollEmployeeWageAssignmentRepository.php',
         'SocialSecurityRegistrationDraft' => '/src/Contact/SocialSecurityRegistrationDraft.php',
         'EmployeeRetentionService' => '/src/Contact/EmployeeRetentionService.php',
         'StaffAccessEventRepository' => '/src/Contact/StaffAccessEventRepository.php',

@@ -5,14 +5,19 @@
 /** @var bool $showEmployeeFields */
 /** @var bool $canEdit */
 /** @var list<array<string, string>> $bankAccounts */
+/** @var list<array<string, mixed>> $payrollWageAssignments */
+/** @var list<array<string, mixed>> $payrollWageTypeOptions */
 $employeeData = $employeeData ?? EmployeeData::empty();
 $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
 $showEmployeeFields = $showEmployeeFields ?? false;
 $canEdit = $canEdit ?? false;
 $bankAccounts = $bankAccounts ?? [];
+$payrollWageAssignments = $payrollWageAssignments ?? [];
+$payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
 $authUser = class_exists('AuthService') ? AuthService::user() : null;
 $canViewPayroll = $authUser instanceof User && PayrollEmployeeAccess::canView($authUser);
 $canEditPayroll = $canEdit && $authUser instanceof User && PayrollEmployeeAccess::canEdit($authUser);
+$wageUnitLabels = PayrollWageTypeRepository::unitLabels();
 $payrollWarnings = $canViewPayroll ? EmployeeData::collectPayrollWarnings($employeeData) : [];
 $svDraftStatus = trim($employeeData['social_registration_status'] ?? SocialSecurityRegistrationDraft::STATUS_NONE);
 $svDraftAt = trim($employeeData['social_registration_draft_at'] ?? '');
@@ -49,7 +54,8 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
       <p class="dg-lead">
         Stammdaten für die <strong>eigene Lohnabrechnung</strong> (Stufe A). Steuerklasse manuell — kein ELStAM in dieser Stufe.
         SV-Meldestelle und Krankenkassenname bleiben unter Sozialversicherung bzw. Gesundheitsdaten.
-        Beträge/Lohnarten folgen später; Freitext „Lohn / Gehalt“ unter Arbeitsvertrag ist nur Hinweis.
+        Lohnarten-Zuordnung unten (Festgehalt/Stundenlohn); Freitext „Lohn / Gehalt“ unter Arbeitsvertrag ist nur Hinweis.
+        Kein Monatslauf in diesem Block.
       </p>
       <?php if (!$canEditPayroll) : ?>
         <p class="dg-field-hint">Nur Lesen — zum Speichern der Lohnfelder Admin-Recht bzw. Modul „Lohn &amp; Gehalt“ nötig.</p>
@@ -285,6 +291,128 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
         <?php endif; ?>
       <?php endforeach; ?>
     </div>
+    <?php if ($sectionKey === 'payroll') : ?>
+      <?php if ($canEditPayroll) : ?>
+        <input type="hidden" name="payroll_wage_assignments_sync" value="1">
+      <?php endif; ?>
+      <h4 class="dg-subsection-title">Lohnarten-Zuordnung</h4>
+      <p class="dg-lead">
+        Stamm: monatliches Festgehalt, Stundenlohnsatz o. Ä. Priorität steuert die Reihenfolge im späteren Lauf.
+        Leere Zeilen und „Entfernen“ löschen die Zuordnung beim Speichern.
+      </p>
+      <?php
+        $assignRows = $payrollWageAssignments !== []
+            ? $payrollWageAssignments
+            : PayrollEmployeeWageAssignmentRepository::formRows([]);
+        $activeWageOptions = [];
+        $inactiveWageOptions = [];
+        foreach ($payrollWageTypeOptions as $wt) {
+            if (!is_array($wt)) {
+                continue;
+            }
+            if ((int) ($wt['is_active'] ?? 0) === 1) {
+                $activeWageOptions[] = $wt;
+            } else {
+                $inactiveWageOptions[] = $wt;
+            }
+        }
+      ?>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Lohnart</th>
+              <th>Betrag / Satz</th>
+              <th>Gültig ab</th>
+              <th>Gültig bis</th>
+              <th>Prio</th>
+              <th>Notiz</th>
+              <?php if ($canEditPayroll) : ?>
+                <th></th>
+              <?php endif; ?>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($assignRows as $ai => $arow) : ?>
+              <?php
+                $aId = (int) ($arow['id'] ?? 0);
+                $aWageId = (int) ($arow['wage_type_id'] ?? 0);
+                $aAmount = isset($arow['amount_display']) && (string) $arow['amount_display'] !== ''
+                    ? (string) $arow['amount_display']
+                    : (string) ($arow['amount'] ?? '');
+                $aFrom = (string) ($arow['valid_from'] ?? '');
+                $aTo = (string) ($arow['valid_to'] ?? '');
+                $aPrio = (int) ($arow['priority'] ?? 0);
+                $aNotes = (string) ($arow['notes'] ?? '');
+                $aDelete = !empty($arow['delete']);
+                $roAssign = $canEditPayroll ? '' : ' disabled';
+              ?>
+              <tr>
+                <td>
+                  <?php if ($aId > 0) : ?>
+                    <input type="hidden" name="payroll_wage_assignments[<?= (int) $ai ?>][id]" value="<?= $aId ?>">
+                  <?php endif; ?>
+                  <select name="payroll_wage_assignments[<?= (int) $ai ?>][wage_type_id]"<?= $roAssign ?>>
+                    <option value="0">— wählen —</option>
+                    <?php foreach ($activeWageOptions as $wt) : ?>
+                      <option value="<?= (int) ($wt['id'] ?? 0) ?>"<?= $aWageId === (int) ($wt['id'] ?? 0) ? ' selected' : '' ?>>
+                        <?= View::escape((string) ($wt['code'] ?? '') . ' — ' . (string) ($wt['label'] ?? '')) ?>
+                        (<?= View::escape($wageUnitLabels[(string) ($wt['unit'] ?? '')] ?? (string) ($wt['unit'] ?? '')) ?>)
+                      </option>
+                    <?php endforeach; ?>
+                    <?php if ($aWageId > 0) : ?>
+                      <?php foreach ($inactiveWageOptions as $wt) : ?>
+                        <?php if ($aWageId === (int) ($wt['id'] ?? 0)) : ?>
+                          <option value="<?= $aWageId ?>" selected>
+                            <?= View::escape((string) ($wt['code'] ?? '') . ' — ' . (string) ($wt['label'] ?? '') . ' (inaktiv)') ?>
+                          </option>
+                        <?php endif; ?>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
+                  </select>
+                </td>
+                <td>
+                  <input type="text" name="payroll_wage_assignments[<?= (int) $ai ?>][amount]"
+                         value="<?= View::escape($aAmount) ?>" placeholder="z. B. 2.500,00"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="date" name="payroll_wage_assignments[<?= (int) $ai ?>][valid_from]"
+                         value="<?= View::escape($aFrom) ?>"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="date" name="payroll_wage_assignments[<?= (int) $ai ?>][valid_to]"
+                         value="<?= View::escape($aTo) ?>"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="number" name="payroll_wage_assignments[<?= (int) $ai ?>][priority]"
+                         value="<?= $aPrio ?>" step="1" style="width:4.5rem"<?= $roAssign ?>>
+                </td>
+                <td>
+                  <input type="text" name="payroll_wage_assignments[<?= (int) $ai ?>][notes]"
+                         value="<?= View::escape($aNotes) ?>" maxlength="500"<?= $roAssign ?>>
+                </td>
+                <?php if ($canEditPayroll) : ?>
+                  <td>
+                    <?php if ($aId > 0 || $aWageId > 0) : ?>
+                      <label class="dg-field dg-field--checkbox">
+                        <input type="checkbox" name="payroll_wage_assignments[<?= (int) $ai ?>][delete]" value="1"<?= $aDelete ? ' checked' : '' ?>>
+                        Entfernen
+                      </label>
+                    <?php endif; ?>
+                  </td>
+                <?php endif; ?>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php if ($activeWageOptions === [] && $canEditPayroll) : ?>
+        <p class="dg-field-hint">
+          Keine aktiven Lohnarten — zuerst unter
+          <a href="/app?page=lohn-lohnarten">Lohnarten</a> anlegen oder aktivieren.
+        </p>
+      <?php endif; ?>
+    <?php endif; ?>
     <?php if ($sectionKey === 'disability') : ?>
       <div class="dg-form-grid">
         <?php foreach (EmployeeData::disabilityDocumentTypes() as $docType => $docLabel) : ?>

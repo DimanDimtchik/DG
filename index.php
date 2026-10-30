@@ -3505,6 +3505,26 @@ switch ($path) {
                 $canDeleteContact = $existingForForm !== null && ContactAccessResolver::canDeleteContact($user, $existingForForm);
                 $linkFormContext = ContactCompanyLinkRepository::formContext($existingForForm, $_POST);
                 extract($linkFormContext);
+                $payrollWageTypeOptions = PayrollWageTypeRepository::all(false);
+                $payrollWageAssignments = [];
+                $rawAssign = $_POST['payroll_wage_assignments'] ?? null;
+                if (is_array($rawAssign)) {
+                    foreach ($rawAssign as $row) {
+                        if (!is_array($row)) {
+                            continue;
+                        }
+                        $payrollWageAssignments[] = [
+                            'id' => (int) ($row['id'] ?? 0),
+                            'wage_type_id' => (int) ($row['wage_type_id'] ?? 0),
+                            'amount' => (string) ($row['amount'] ?? ''),
+                            'valid_from' => (string) ($row['valid_from'] ?? ''),
+                            'valid_to' => (string) ($row['valid_to'] ?? ''),
+                            'priority' => (int) ($row['priority'] ?? 0),
+                            'notes' => (string) ($row['notes'] ?? ''),
+                            'delete' => !empty($row['delete']),
+                        ];
+                    }
+                }
                 $dbConfig = DatabaseSettings::forForm();
                 $dbConnected = Database::isConfigured();
                 try {
@@ -3517,7 +3537,7 @@ switch ($path) {
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
                     'menuItems', 'settingsItem', 'currentPage', 'settingsNav', 'settingsSelection',
-                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'contactId', 'form', 'formError', 'bankAccounts', 'employeeData', 'employeeFiles', 'showEmployeeFields', 'allowedContactRoles', 'canDeleteContact', 'companyEmployees', 'employerForm', 'companyContactOptions', 'personContactOptions', 'kontakteReturnTo'
+                    'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'contactId', 'form', 'formError', 'bankAccounts', 'employeeData', 'employeeFiles', 'showEmployeeFields', 'allowedContactRoles', 'canDeleteContact', 'companyEmployees', 'employerForm', 'companyContactOptions', 'personContactOptions', 'kontakteReturnTo', 'payrollWageAssignments', 'payrollWageTypeOptions'
                 ));
                 break;
             }
@@ -6746,6 +6766,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 $showEmployeeFields = ContactAccessResolver::canEditContact($user);
                 $linkFormContext = ContactCompanyLinkRepository::formContext(null, []);
                 extract($linkFormContext);
+                $payrollWageTypeOptions = PayrollWageTypeRepository::all(true);
+                $payrollWageAssignments = PayrollEmployeeWageAssignmentRepository::formRows([]);
             } elseif ($action === 'edit' && $contactId > 0) {
                 if (!RoleResolver::canEdit($user)) {
                     header('Location: /app?page=kontakte&id=' . $contactId, true, 302);
@@ -6783,6 +6805,10 @@ $legalProductsConfig = LegalProductSettings::config();
                 $canDeleteContact = ContactAccessResolver::canDeleteContact($user, $contact);
                 $linkFormContext = ContactCompanyLinkRepository::formContext($contact, []);
                 extract($linkFormContext);
+                $payrollWageTypeOptions = PayrollWageTypeRepository::all(false);
+                $payrollWageAssignments = PayrollEmployeeWageAssignmentRepository::formRows(
+                    PayrollEmployeeWageAssignmentRepository::forContact($contactId)
+                );
                 $contactTeams = TeamRepository::teamsForContact($contactId);
                 $staffAccessStatus = StaffAccessInviteService::status($contactId);
                 $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
@@ -6822,6 +6848,9 @@ $legalProductsConfig = LegalProductSettings::config();
                 $employerLink = !$contact->isCompany()
                     ? ContactCompanyLinkRepository::employerForPerson($contact->id)
                     : null;
+                $payrollWageAssignments = $showEmployeeFields
+                    ? PayrollEmployeeWageAssignmentRepository::forContact($contact->id)
+                    : [];
             } else {
                 $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
                 $contactImportErrors = [];
@@ -8387,6 +8416,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $employeeData = $employeeData ?? EmployeeData::empty();
         $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
         $showEmployeeFields = $showEmployeeFields ?? false;
+        $payrollWageAssignments = $payrollWageAssignments ?? [];
+        $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
         $staffAccessStatus = $staffAccessStatus ?? [];
         $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;
         $bookingId = $bookingId ?? null;
@@ -9043,6 +9074,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'employeeData',
             'employeeFiles',
             'showEmployeeFields',
+            'payrollWageAssignments',
+            'payrollWageTypeOptions',
             'staffAccessStatus',
             'staffAccessHasMailbox',
             'allowedContactRoles',

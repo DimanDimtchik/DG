@@ -587,6 +587,16 @@ final class ContactRepository
             ]);
         }
 
+        // Lohn L3c: MA↔Lohnart nur bei Schreibrecht + explizitem Formular-Flag
+        if ($hasEmployee) {
+            $authUserAssign = class_exists('AuthService') ? AuthService::user() : null;
+            $mayEditAssign = $authUserAssign instanceof User && PayrollEmployeeAccess::canEdit($authUserAssign);
+            if ($mayEditAssign && !empty($data['payroll_wage_assignments_sync'])) {
+                $assignRows = PayrollEmployeeWageAssignmentRepository::parseFromPost($data);
+                PayrollEmployeeWageAssignmentRepository::syncForContact($contactId, $assignRows);
+            }
+        }
+
         $savedContact = self::findById($contactId);
         if ($savedContact !== null) {
             if ($savedContact->isCompany()) {
