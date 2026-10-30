@@ -1339,7 +1339,7 @@ Verhalten: ein aktiver `regular`-Run je Periode; `calculate` → L4c je MA; `reo
 | Lieferobjekt | Ort |
 |--------------|-----|
 | Seite | `/app?page=lohn-monatslauf` · `views/modules/lohn-monatslauf.php` |
-| Menü | `MenuRegistry::lohnSection` → Monatslauf |
+| Menü | HR → `lohnMenuItems` / Monatslauf |
 | Aktionen | anlegen, MA+/−, Stamm-Lines, berechnen, reopen, freigeben, sperren, storno/correction, Entwurf löschen |
 
 Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; freigeben/sperren/storno = `canApprove`.
