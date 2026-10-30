@@ -1,9 +1,10 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L10c ✅ · **G4 bestanden** · G3 weiterhin **offen**)  
+> **Stand:** 2026-10-30 (L0–L10c ✅ · **G4 bestanden** · **LB0a ✅** · G3 weiterhin **offen**)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
+> **ITSG Stufe B:** [`itsg/PFLICHTENHEFT-STUFE-B.md`](itsg/PFLICHTENHEFT-STUFE-B.md) · [`itsg/SYSTEMDOKUMENTATION-OUTLINE.md`](itsg/SYSTEMDOKUMENTATION-OUTLINE.md)  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** G4 O1–O9 abgehakt (Nutzerbefehl) · `lb0a` erlaubt · LB-Prod/`lb1+` erst nach G3 · kein Versand-Code
+> **Status:** G4 ✅ · LB0a ✅ · `lb1+` erst nach **G3** · kein Versand-Code
 
 ---
 
@@ -189,10 +190,10 @@ Vor dem ersten produktiven LB-Code (Beitragsnachweis/DEÜV-XML, Versandpfad) ein
 |-----------|--------|
 | G3 | Weiterhin **Pflicht vor** `lb1+` / Versand-Pilot; G3 ist **noch offen** (Nachweis-Tabelle) |
 | G4 bestanden | ✅ 2026-10-30 — Voraussetzung für `lb0a`-Vertiefung und späteren `lb1+`-Pfad |
-| `lb0a` | **Jetzt erlaubt** — Outline → volles Pflichtenheft; kein Versand |
-| LB-Versand live | Erst nach G3 + LB1–LB3 (Testaufgaben, Pilot ≥2, Prod-MOD-ID) — **nicht** G4 allein |
+| `lb0a` | ✅ **2026-10-30** — Volltext unter [`docs/itsg/`](itsg/README.md); kein Versand |
+| LB-Versand live | Erst nach G3 + LB1–LB3 (Testaufgaben, Pilot ≥2, Prod-MOD-ID) — **nicht** G4/LB0 allein |
 
-#### Pflichtenheft-Outline (Inhaltsverzeichnis — LB0 füllt aus)
+#### Pflichtenheft-Outline (Inhaltsverzeichnis — **LB0a ausgefüllt**)
 
 | Kap. | Inhalt | Pflicht vor LB-Prod |
 |------|--------|---------------------|
@@ -206,7 +207,7 @@ Vor dem ersten produktiven LB-Code (Beitragsnachweis/DEÜV-XML, Versandpfad) ein
 | 8 | Betriebsführung: Rezertifizierung bei Gesetzesänderung, Incident, Rollback auf Portal L9 | ja |
 | 9 | Abgrenzung Parallelbetrieb Meldeportal während Pilot | ja |
 
-Ablage später: z. B. `docs/itsg/` oder Anhang in diesem Plan — **LB0** entscheidet Dateipfad.
+**Ablage (LB0a):** [`docs/itsg/PFLICHTENHEFT-STUFE-B.md`](itsg/PFLICHTENHEFT-STUFE-B.md) · Systemdok-Outline: [`docs/itsg/SYSTEMDOKUMENTATION-OUTLINE.md`](itsg/SYSTEMDOKUMENTATION-OUTLINE.md) · Index: [`docs/itsg/README.md`](itsg/README.md).
 
 #### Organisatorische Checkliste
 
@@ -228,7 +229,7 @@ Ablage später: z. B. `docs/itsg/` oder Anhang in diesem Plan — **LB0** ents
 
 | Thema | Wohin |
 |-------|--------|
-| Volltext-Pflichtenheft + Systemdok | `lb0a` |
+| Volltext-Pflichtenheft + Systemdok-Outline | ✅ `lb0a` → `docs/itsg/` |
 | Testaufgaben / XML-Strukturen | LB1 (nach G3) |
 | Prod-MOD-ID / Schlüssel | LB3 |
 | DEÜV/Beitragsnachweis senden | LB4 |
@@ -2254,19 +2255,54 @@ Hilfsmethode (nur Text): `PayrollElsterService::productionGateChecklist()` — A
 
 ## Serie LB — ITSG / SV-Direkt (Stufe B)
 
-> Erst nach **G3 + G4** (beide Gates bestanden, nicht nur Checklisten).  
-> G4-Outline: § 3 G4 · Vertiefung: `lb0a`. Eigene Chats `lb0a` …
+> **G4 ✅** · Spec **LB0a ✅** · Implementierung/`lb1+` erst wenn zusätzlich **G3 ✅**.  
+> Dokumente: [`docs/itsg/`](itsg/README.md)
 
-| Paket | Inhalt |
-|-------|--------|
-| LB0 | Spec Pflichtenheft / Systemdok (token-sparend, nur Outline) |
-| LB1 | Testaufgaben / XML-Strukturen (kein Prod-Versand) |
-| LB2 | Pilot ≥ 2 Anwender |
-| LB3 | Prod-MOD-ID / Schlüsselbetrieb |
-| LB4 | Beitragsnachweis + DEÜV direkt |
-| LB5 | ELStAM-Abruf soweit nötig |
+| Paket | Inhalt | Status |
+|-------|--------|--------|
+| LB0 | Spec Pflichtenheft / Systemdok | ✅ **LB0a** 2026-10-30 |
+| LB1 | Testaufgaben / XML-Strukturen (kein Prod-Versand) | ⏳ nach G3 |
+| LB2 | Pilot ≥ 2 Anwender | ⏳ |
+| LB3 | Prod-MOD-ID / Schlüsselbetrieb | ⏳ |
+| LB4 | Beitragsnachweis + DEÜV direkt | ⏳ |
+| LB5 | ELStAM-Abruf soweit nötig | ⏳ |
 
 **Nicht:** Baulohn in LB-Chats.
+
+### LB0a — Volltext Pflichtenheft + Systemdok-Outline ✅ 2026-10-30
+
+> Nur Dokumentation. **Kein** PHP, **kein** Versand, **kein** MOD-ID.
+
+#### Lieferumfang
+
+| Datei | Inhalt |
+|-------|--------|
+| [`docs/itsg/PFLICHTENHEFT-STUFE-B.md`](itsg/PFLICHTENHEFT-STUFE-B.md) | Kap. 1–9: Produkt, Scope, Out-of-Scope, Architektur, Datenquellen, Protokoll, Test, Betrieb, Portal-Parallel |
+| [`docs/itsg/SYSTEMDOKUMENTATION-OUTLINE.md`](itsg/SYSTEMDOKUMENTATION-OUTLINE.md) | Outline A–H für spätere Voll-Systemdok |
+| [`docs/itsg/README.md`](itsg/README.md) | Index |
+
+#### Fachliche Kernentscheidungen (kurz)
+
+| # | Entscheidung |
+|---|--------------|
+| D-LB1 | Beitragsnachweis + DEÜV An-/Ab-/Änderung in Scope; Sofortmeldung nur bedingt |
+| D-LB2 | ELStAM = LB5; Baulohn/SOKA = LC; ELSTER LSt = L10 (getrennt) |
+| D-LB3 | Architektur CRM → Signing-Worker (Hetzner); kein Shared-Hosting-Prod-Schlüssel |
+| D-LB4 | Zahlen nur aus locked Runs / gleicher Aggregation wie L9; keine Schattenengine |
+| D-LB5 | Jede Meldung: Payload, Checksumme, Antwort, User, Zeit; Rollback = Flag aus + Portal L9 |
+| D-LB6 | `lb1+` weiterhin blockiert bis G3-Nachweis |
+
+#### Abnahme LB0a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| G4-Outline Kap. 1–9 ausgefüllt | ✅ |
+| Systemdok-Outline vorhanden | ✅ |
+| Dateipfad `docs/itsg/` | ✅ |
+| Kein Versand-Code / kein LB1–LB5-Bau | ✅ |
+| G3-Bindung für `lb1+` bestätigt | ✅ |
+
+**Nicht:** XML/Testaufgaben (LB1); Worker-Code; Prod-Registrierung; Flag-Unlock; Deploy.
 
 ---
 
@@ -2333,13 +2369,17 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l10b` Implementierung ERiC-Testmodus LStA | ✅ 2026-10-30 |
 | — | `l10c` Produktiv-Gate Checkliste LStA | ✅ 2026-10-30 |
 
-**Stufe-A-Kern L0–L10 abgeschlossen** · **G4 bestanden** 2026-10-30 · **G3 offen**.
+**Stufe-A-Kern L0–L10 abgeschlossen** · **G4 ✅** · **LB0a ✅** 2026-10-30 · **G3 offen**.
 
 Weiterbetrieb:
-1. **G3 weiterhin offen** — Nachweis 2026-10-30: Master ohne Payroll-Schema (PR nicht deployt). Nach Merge→Deploy→2 Pilotmonate: `php bin/payroll-g3-evidence.php --domain=… --markdown` und Tabelle abnehmen.  
-2. `lb0a` Pflichtenheft-Vertiefung (jetzt erlaubt; kein Versand).  
+1. **G3 weiterhin offen** — Nachweis 2026-10-30: Master ohne Payroll-Schema. Nach Merge→Deploy→2 Pilotmonate: `php bin/payroll-g3-evidence.php --domain=… --markdown` und Tabelle abnehmen.  
+2. **LB0a erledigt** — Volltext in `docs/itsg/`. Nächstes LB-Paket: **`lb1a`** erst nach G3 (Testaufgaben/XML-Spec, kein Prod-Versand).  
 3. Optional nach G3: SEPA-Live / Lexware-Cutover nur mit Nutzerbefehl.  
 4. Baulohn `lc0a` erst nach **G5**.
+
+| # | Prompt-Kurz | Status |
+|---|-------------|--------|
+| — | `lb0a` Pflichtenheft + Systemdok-Outline | ✅ 2026-10-30 |
 
 Prompt G3-Nachweis (nach Deploy + 2 Testmonaten):
 
@@ -2349,12 +2389,11 @@ Ergebnis in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md § G3 Tabelle übernehmen / a
 Kein Flag-Unlock ohne Befehl.
 ```
 
-Prompt für LB0 (nächster sinnvoller Code-/Spec-Chat):
+Prompt für LB1 (erst nach G3):
 
 ```text
-Lohn Implementierung: lb0a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt LB0 / G4-Outline vertiefen. Nicht LB1–LB5, nicht LC.
-Abgrenzung „Nicht:“ einhalten. Kein Versand-Code.
+Lohn Implementierung: lb1a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md und docs/itsg/PFLICHTENHEFT-STUFE-B.md
+Nur Testaufgaben-Rahmen / XML-Struktur-Spec. Kein Prod-Versand, kein MOD-ID, nicht LB2–LB5, nicht LC.
 ```
 
 Prompt Live-Unlock (nur nach explizitem Nutzerbefehl, nicht automatisch):
