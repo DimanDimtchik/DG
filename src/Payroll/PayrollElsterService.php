@@ -44,11 +44,39 @@ final class PayrollElsterService
             'Nur locked, nicht superseded; Storno-Runs nicht in LStA-Summen.',
             'LSt / SolZ / KiSt getrennt; flat_lst nicht still zur LSt addieren.',
             'Kein UStVA-XML / keine buchhaltung-ustva-Buttons für Lohnsteuer.',
-            'Live-Senden erst L10c nach Gate G2 — L10b nur Test/Vorschau.',
+            'Live-Senden erst nach Gate G2 + explizitem Unlock-Chat — bis dahin nur Test/Vorschau.',
             'Kasserver: kein ERiC — nur Kontroll-CSV und Payload-Datei lokal.',
             'Test-Zertifikat ≠ Prod-Zertifikat; eric_test_mode prüfen.',
             'Steuernummer/Finanzamt aus AG-Stamm; IdNr. für Bescheinigung 11-stellig.',
             'Payload + Checksumme in dg_elster_submissions (form_type=lsta/lstb) prüfen.',
+        ];
+    }
+
+    /**
+     * L10c Produktiv-Gate — nur Checkliste, kein Unlock.
+     *
+     * @return list<string>
+     */
+    public static function productionGateChecklist(): array
+    {
+        return [
+            'G2-1 Hetzner/Root: ElsterSettings::serverSupportsEric / server_ready.',
+            'G2-2 ERiC-Worker erreichbar (elster-readiness /health).',
+            'G2-3 Hersteller-ID in Einstellungen ELSTER.',
+            'G2-4 Echtes Prod-Zertifikat (nicht Test) + Offline-Backup.',
+            'G2-5 UStVA-ERiC-Testpfad (C1) mindestens einmal erfolgreich.',
+            'G2-6 Amtliches LStA-Schema im Worker (nicht nur DG-LSTA-PREP-1).',
+            'F1 Locked-Monat: LSt/SolZ/KiSt = Berater-Kontroll-CSV.',
+            'F2 Flat-LSt getrennt ausgewiesen.',
+            'F3 Storno nicht in Summen; Correction bewusst.',
+            'F4 Steuernummer + Finanzamt/BuFö gesetzt.',
+            'F5 Test-Payload test_mode=1 in dg_elster_submissions vorhanden.',
+            'F6 Prod: eric_test_mode aus, Modus eric.',
+            'F7 payroll_lsta_live erst nach G2+F1–F5 setzen.',
+            'F8 Recht lohn=full + Bestätigungsdialog.',
+            'F9 Antwort Ticket/PDF/Fehler auditierbar.',
+            'F10 Kein UStVA-Formular für Lohn.',
+            'Unlock nur nach explizitem Nutzerbefehl in eigenem Chat — submitLiveLsta sonst blockiert.',
         ];
     }
 
@@ -532,7 +560,7 @@ final class PayrollElsterService
     public static function submitLiveLsta(int $year, int $month, ?int $userId, string $reason = ''): never
     {
         throw new RuntimeException(
-            'Live-Lohnsteuer-Anmeldung ist in L10b deaktiviert. Erst L10c nach Gate G2 / Nutzerbefehl.'
+            'Live-Lohnsteuer-Anmeldung gesperrt. L10c-Gate-Checkliste erfüllen und expliziten Unlock-Chat abwarten (Gate G2).'
         );
     }
 

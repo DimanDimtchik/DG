@@ -8224,6 +8224,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $payrollElsterLstb = null;
             $payrollElsterError = null;
             $payrollElsterChecklist = PayrollElsterService::auditorChecklist();
+            $payrollElsterGateChecklist = PayrollElsterService::productionGateChecklist();
             $payrollElsterCanTest = PayrollRunAccess::canSubmitLstaTest($user);
             $payrollElsterLstaLive = PayrollElsterService::isLstaLiveFlag();
             $payrollElsterServerOk = class_exists('ElsterSettings') && ElsterSettings::serverSupportsEric();

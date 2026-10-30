@@ -9,6 +9,7 @@
  * @var string|null $payrollElsterError
  * @var list<array<string, mixed>> $payrollElsterSubmissions
  * @var list<string> $payrollElsterChecklist
+ * @var list<string> $payrollElsterGateChecklist
  * @var bool $payrollElsterCanTest
  * @var bool $payrollElsterEricReady
  * @var bool $payrollElsterServerOk
@@ -29,6 +30,9 @@ $lstb = is_array($payrollElsterLstb ?? null) ? $payrollElsterLstb : null;
 $error = trim((string) ($payrollElsterError ?? ''));
 $subs = is_array($payrollElsterSubmissions ?? null) ? $payrollElsterSubmissions : [];
 $checklist = is_array($payrollElsterChecklist ?? null) ? $payrollElsterChecklist : PayrollElsterService::auditorChecklist();
+$gateChecklist = is_array($payrollElsterGateChecklist ?? null)
+    ? $payrollElsterGateChecklist
+    : PayrollElsterService::productionGateChecklist();
 $canTest = !empty($payrollElsterCanTest);
 $ericReady = !empty($payrollElsterEricReady);
 $serverOk = !empty($payrollElsterServerOk);
@@ -174,6 +178,19 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     <summary><strong>Betriebsprüfer-Stichprobe</strong></summary>
     <ol>
       <?php foreach ($checklist as $item) : ?>
+        <li><?= View::escape((string) $item) ?></li>
+      <?php endforeach; ?>
+    </ol>
+  </details>
+
+  <details class="dg-panel" style="margin:1rem 0">
+    <summary><strong>L10c Produktiv-Gate (Live noch gesperrt)</strong></summary>
+    <p class="dg-field-hint">
+      Live-Senden bleibt deaktiviert, bis alle Punkte erfüllt sind und ein Chat mit explizitem
+      Nutzerbefehl den Unlock ausführt. Flag <code>payroll_lsta_live</code> allein reicht nicht.
+    </p>
+    <ol>
+      <?php foreach ($gateChecklist as $item) : ?>
         <li><?= View::escape((string) $item) ?></li>
       <?php endforeach; ?>
     </ol>

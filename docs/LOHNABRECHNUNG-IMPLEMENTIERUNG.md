@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L10b ✅)  
+> **Stand:** 2026-10-30 (L0–L10c ✅ · Stufe-A-Kern)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L10b ERiC-Testmodus ✅ · nächster Chat: **`l10c`** (Produktiv-Gate)
+> **Status:** L10c Produktiv-Gate-Checkliste ✅ · Live-Senden **nicht** freigeschaltet · nächster Chat: **`lb0a`** (erst nach G3+G4)
 
 ---
 
@@ -1916,7 +1916,7 @@ CSV (Pflicht) aus L9a-Aggregaten; Seite `lohn-auswertungen` + Download/Audit. PD
 
 ## Serie L10 — Lohnsteuer-Anmeldung (ELSTER)
 
-> Einstieg: `l10a` · L10a ✅ · L10b ✅ · weiter mit `l10c`  
+> Einstieg: `l10a` · L10a–c ✅ · Live erst nach **explizitem** Nutzerbefehl + G2  
 > Gate **G2** zwingend für **Live**-Abgabe: Hetzner + ERiC-Testpfad (IQ-STROM **C1** / [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md)).  
 > Auf **Kasserver** bleibt ERiC blockiert (`ElsterSettings::serverSupportsEric` / `AGENTS.md`) — Spec/Test-Code darf entstehen, **kein** Prod-Senden.
 
@@ -2043,11 +2043,60 @@ UI: neuer Menüpunkt unter Lohn (nicht unter UStVA) „Lohnsteuer ELSTER“; kla
 
 **Nicht:** Produktiv-Senden ohne L10c; UStVA-Code umbiegen; amtliches ELSTER-XML final (folgt Worker).
 
-### L10c — Produktiv-Gate Checkliste
+### L10c — Produktiv-Gate Checkliste ✅ 2026-10-30
 
-Nur nach explizitem Nutzerbefehl und Hetzner-Freigabe. Checkliste G2 + Zertifikat + `payroll_lsta_live` + Stichprobe Testmandant.
+**Zweck:** Verbindliche Freigabe-Checkliste vor dem ersten **Live**-LStA-Versand.  
+**Dieser Chat schaltet Live nicht frei** — `PayrollElsterService::submitLiveLsta` bleibt blockiert, bis ein späterer Chat mit **explizitem Nutzerbefehl** (Wortlaut z. B. „LStA Live freischalten“) den Unlock-Code baut.
+
+Hilfsmethode (nur Text): `PayrollElsterService::productionGateChecklist()` — Anzeige auf `lohn-elster`.
+
+#### Gate-Voraussetzungen (alle müssen „ja“ sein)
+
+| # | Prüfung | Nachweis |
+|---|---------|----------|
+| G2-1 | Root-Server Hetzner (o. ä.), nicht Kasserver | `ElsterSettings::serverSupportsEric()` / `config/elster.local.php` `server_ready` |
+| G2-2 | ERiC Linux installiert, Worker erreichbar | `bin/elster-readiness.php` · Worker `/health` |
+| G2-3 | Hersteller-ID hinterlegt | Einstellungen ELSTER (`34573` o. aktuell) |
+| G2-4 | **Echtes** Softwarezertifikat (nicht Test) für Prod | Zertifikat hochgeladen; Offline-Backup |
+| G2-5 | UStVA-ERiC-Pfad mindestens Test erfolgreich (C1) | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) Phase 4/5 Stichprobe |
+| G2-6 | Amtliches LStA-Schema im Worker angebunden (nicht nur `DG-LSTA-PREP-1`) | L10b-Nachfolge / Worker-Release dokumentiert |
+
+#### Fachliche Stichprobe vor erstem Live
+
+| # | Prüfung | Nachweis |
+|---|---------|----------|
+| F1 | Mind. 1 locked Monat mit ok-MA, Vorschau LSt/SolZ/KiSt = Steuerberater-Kontrolle | Kontroll-CSV `lohn-elster` |
+| F2 | Flat-LSt **nicht** still in LSt summiert | CSV/UI-Spalte getrennt |
+| F3 | Storno-Run nicht in Summen; Correction bewusst | Warnungen L10b |
+| F4 | AG Steuernummer + Finanzamt/BuFö gesetzt | `employerSnapshot` |
+| F5 | Test-Payload (`test_mode=1`) auf Testmandant durchgelaufen | Zeile in `dg_elster_submissions` |
+| F6 | `eric_test_mode` für Prod-Versuch bewusst **aus**; Modus `eric` | Einstellungen ELSTER |
+| F7 | Flag `payroll_lsta_live` erst **nach** G2-1…6 + F1…5 setzen | Settings → Lohn |
+| F8 | Rechte: nur `lohn=full` + Bestätigungsdialog | UI L10-Unlock-Chat |
+| F9 | Antwort Ticket/PDF/Fehler in Historie prüfbar | `dg_elster_submissions` + AuditLog |
+| F10 | Kein UStVA-Formular für Lohn missbraucht | Eigene Seite `lohn-elster` |
+
+#### Freigabe-Protokoll (wenn Unlock-Chat kommt)
+
+1. Nutzerbefehl wörtlich dokumentieren (Chat/PR).  
+2. Checkliste G2-1…6 und F1…10 abhaken (Datum, Wer).  
+3. Code: `submitLiveLsta` implementieren / Entsperren **nur dann**.  
+4. Erste Live-Abgabe: Testmandant oder bewusst gewählter Pilot; Berichtigungspfad klären.  
+5. Bei Fehler: Flag sofort aus, `eric_test_mode` zurück.
+
+#### Abnahme L10c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Produktiv-Gate-Checkliste vollständig | ✅ |
+| Klarstellung: kein Live-Unlock in diesem Paket | ✅ |
+| `productionGateChecklist()` für UI | ✅ |
+| Kein Prod-Senden / Flag bleibt Default aus | ✅ |
+
+**Nicht:** `submitLiveLsta` freischalten; Zertifikat installieren; Deploy; LB/LC.
 
 ---
+
 
 ## Serie LB — ITSG / SV-Direkt (Stufe B)
 
@@ -2127,18 +2176,25 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l9b` Export CSV/PDF Kontrolle (SV-Portal) | ✅ 2026-10-30 |
 | — | `l10a` Spec LSt-Anmeldung / Bescheinigung (ELSTER) | ✅ 2026-10-30 |
 | — | `l10b` Implementierung ERiC-Testmodus LStA | ✅ 2026-10-30 |
-| 1 | `l10c` Produktiv-Gate Checkliste LStA | **als Nächstes** |
+| — | `l10c` Produktiv-Gate Checkliste LStA | ✅ 2026-10-30 |
 
-Danach Stufe-A-Kern L0–L10 abgeschlossen → LB nur nach G3+G4.
+**Stufe-A-Kern L0–L10 abgeschlossen** (Live-LStA Unlock = eigener Chat nach G2 + Nutzerbefehl).  
+Weiter: **G3**-Pilot → erst dann `lb0a` (ITSG). Baulohn `lc0a` erst nach G5.
 
-Prompt für nächsten Chat:
+Prompt für nächsten Chat (nur wenn G3+G4):
 
 ```text
-Lohn Implementierung: l10c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L10c. Nicht andere L-Pakete.
+Lohn Implementierung: lb0a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt LB0. Nicht andere L-/LC-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
-Nur Checkliste/Doku — kein Live-Senden ohne expliziten Nutzerbefehl.
+```
+
+Prompt Live-Unlock (nur nach explizitem Nutzerbefehl, nicht automatisch):
+
+```text
+Lohn: LStA Live freischalten laut L10c-Checkliste in docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Unlock submitLiveLsta nach abgehakter Gate-Liste. Kein LB/LC.
 ```
 
 ---

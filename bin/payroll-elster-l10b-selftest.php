@@ -134,7 +134,13 @@ $list = PayrollElsterService::auditorChecklist();
 assertL10b(count($list) >= 5, 'Checkliste');
 $joined = implode(' ', $list);
 assertL10b(str_contains($joined, 'UStVA'), 'Checkliste UStVA-Trennung');
-assertL10b(str_contains($joined, 'G2') || str_contains($joined, 'L10c'), 'Checkliste Gate');
+assertL10b(str_contains($joined, 'G2') || str_contains($joined, 'Unlock'), 'Checkliste Gate');
+
+$gate = PayrollElsterService::productionGateChecklist();
+assertL10b(count($gate) >= 10, 'L10c Gate-Checkliste');
+$gateJoined = implode(' ', $gate);
+assertL10b(str_contains($gateJoined, 'payroll_lsta_live'), 'Gate Flag');
+assertL10b(str_contains($gateJoined, 'submitLiveLsta') || str_contains($gateJoined, 'Unlock'), 'Gate Unlock-Hinweis');
 
 echo "L10b Selftest bestanden.\n";
 exit(0);
