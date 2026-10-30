@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L3 ✅ · L4a–b ✅)  
+> **Stand:** 2026-10-30 (L0–L4 ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L4b Tabellen-Import ✅ · nächster Chat: **`l4c`** (StandardPayrollEngine)
+> **Status:** L4c StandardPayrollEngine ✅ · nächster Chat: **`l5a`** (Monatslauf Spec)
 
 ---
 
@@ -737,7 +737,7 @@ Felder: `contact_id`, `wage_type_id`, `amount`, `valid_from`/`valid_to`, `priori
 
 ## Serie L4 — Brutto→Netto-Kern (ohne UI-Lauf)
 
-> Einstieg: `l4a` · L4a–b ✅ · weiter mit `l4c`
+> Einstieg: `l4a` · L4a–c ✅ · weiter mit `l5a`
 
 ### L4a — Spec Rechenkern + Tabellen ✅ 2026-10-30
 
@@ -956,11 +956,28 @@ Verhalten: Allowlist-Keys; kein zweiter aktiver Satz mit gleichem `valid_from`; 
 
 **Nicht:** Monatslauf-UI; keine Engine-Berechnung (L4c).
 
-### L4c — `StandardPayrollEngine` + Unit-Tests
+### L4c — `StandardPayrollEngine` + Unit-Tests ✅ 2026-10-30
 
-`PayrollEngineInterface`; nur `StandardPayrollEngine`. Tests gegen L4a-Vektoren V1–V6; Rate-Set aus L4b.
+| Lieferobjekt | Ort |
+|--------------|-----|
+| Interface | `PayrollEngineInterface` |
+| DTO | `PayrollCalcRequest` / `PayrollCalcResult` |
+| Engine | `StandardPayrollEngine` (pure, kein DB-Write) |
+| Rate-Hydration | `StandardPayrollEngine::hydrateRates` → L4b |
+| Selftest V1–V6 | `bin/payroll-engine-l4c-selftest.php` |
 
-**Nicht:** PDF, FiBu, SEPA.
+Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × steuerpflichtiges Brutto; Midi-AN × `midi_an_factor`; Minijob-Pauschalen AG-getragen (`flat_lst_employee_share=0`); GF+`sv_exempt` ohne SV/Umlagen.  
+`employer_cost` = gross_total + AG-SV + Umlagen + flat_lst + flat_other.
+
+#### Abnahme L4c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Nur `StandardPayrollEngine` | ✅ |
+| V1–V6 goldene Fixture-Werte | ✅ |
+| Kein PDF / FiBu / SEPA / Monatslauf-UI | ✅ |
+
+**Nicht:** PDF, FiBu, SEPA, Persistenz (L5).
 
 ---
 
@@ -1140,15 +1157,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l3c` MA↔Lohnart Zuordnung | ✅ 2026-10-30 |
 | — | `l4a` Brutto→Netto Spec | ✅ 2026-10-30 |
 | — | `l4b` Tabellen-Import/Versionierung | ✅ 2026-10-30 |
-| 1 | `l4c` StandardPayrollEngine + Tests | **als Nächstes** |
+| — | `l4c` StandardPayrollEngine + Tests | ✅ 2026-10-30 |
+| 1 | `l5a` Monatslauf Spec | **als Nächstes** |
 
-Danach L5a → … nicht überspringen.
+Danach L5b → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l4c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L4c. Nicht andere L-Pakete.
+Lohn Implementierung: l5a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L5a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
