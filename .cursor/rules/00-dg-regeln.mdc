@@ -15,5 +15,6 @@ alwaysApply: true
 3. **Wartungsmodus:** ein `WebsiteMaintenanceRenderer` · Kontakt aus CRM (Wartung → Firma) · sonst „Öffentliche Kontaktdaten noch nicht gesetzt.“
 4. **Rolle:** Steuerrecht + Steuerberater-Praxis + Prüfbarkeit mitdenken
 5. **Nicht:** Account-Root mit `--delete` syncen · Stripe live · ELSTER auf Kasserver
+6. **UI:** immer `docs/UI-FORM-REGELN.md` / `dg.css` — `.dg-form-actions`, Tabellen-Aktionen nur `.dg-button--small` in `.dg-table__actions-group`; Guard `php bin/ui-form-spacing-selftest.php`. Kein Extra-Prompt nötig.
 
 Details und Deploy-Ablauf: `AGENTS.md`
