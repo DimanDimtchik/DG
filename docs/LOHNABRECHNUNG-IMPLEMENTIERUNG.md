@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L10c ✅ · G3-Checkliste ✅ · Gate G3 selbst **offen**)  
+> **Stand:** 2026-10-30 (L0–L10c ✅ · G3/G4-Checklisten ✅ · Gates G3/G4 selbst **offen**)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** Stufe-A-Kern fertig · **G3** Pilot-Checkliste dokumentiert, Nachweis 2 Testmonate ausstehend · `payroll_sepa_live` / LStA-Live / LB **nicht** freigeschaltet
+> **Status:** Stufe-A-Kern fertig · G3/G4-Checklisten da · **kein** LB-Code · keine Flag-Freigaben
 
 ---
 
@@ -90,7 +90,7 @@ LC Baulohn/SOKA (Stufe C)
 | **G1** | Phase A FiBu-Smoke / GoBD-Stichprobe weitgehend grün (`IQ-STROM` A) | Produktivnutzung L7 Buchung | offen (FiBu-Code da; Smoke auf Instanz) |
 | **G2** | Hetzner + ERiC Testpfad (C1) | **L10** LSt-Anmeldung live | offen · Checkliste L10c |
 | **G3** | Mind. 2 vollständige Testmonate L5–L9 auf einer Instanz | Pilot „ohne Lexware“; SEPA-Live-Flag | **Checkliste ✅ · Gate offen** (unten) |
-| **G4** | ITSG-Vorbereitung (Pflichtenheft) | **LB**-Code produktiv | offen · nach G3 |
+| **G4** | ITSG-Vorbereitung (Pflichtenheft / Systemdok-Outline) | **LB**-Code produktiv | **Checkliste ✅ · Gate offen** (unten) |
 | **G5** | Stufe A produktiv + Spec LC | **LC** Baulohn-Code | offen · nach G3-Betrieb |
 
 ### G3 — Pilot-Checkliste „ohne Lexware“ ✅ Spez 2026-10-30
@@ -155,6 +155,78 @@ Je Monat müssen **alle** Zeilen „Pflicht“ erledigt sein (gleiche Instanz-DB
 | Gate-Status bleibt **offen** bis Nachweis | ✅ |
 
 **Nicht:** SEPA-/LStA-Live freischalten; LB/LC-Code; Deploy; Behaupten, G3 sei „bestanden“ ohne ausgefüllte Nachweis-Tabelle.
+
+### G4 — ITSG-Vorbereitung (Pflichtenheft) ✅ Spez 2026-10-30
+
+> **Rechtsgrundlage (Orientierung):** § 95b SGB IV / ITSG-Systemuntersuchung für Software, die SV-Meldungen **direkt** an Annahmestellen sendet.  
+> **Nicht verwechseln:** G4 ≠ G3-Pilot ≠ L9-Portal-CSV ≠ bereits zertifiziert.  
+> **Dieser Chat schreibt kein LB-PHP** und erklärt G4 nicht für „bestanden“ — nur die Checkliste / Outline für `lb0a`.
+
+#### Ziel
+
+Vor dem ersten produktiven LB-Code (Beitragsnachweis/DEÜV-XML, Versandpfad) ein **Pflichtenheft + Systemdokumentations-Outline** haben, das ITSG-Anforderungen und DG-Architektur klar trennt: was schon Stufe A liefert (Portal-Export L9) vs. was Stufe B bauen muss.
+
+#### Abhängigkeiten
+
+| Bedingung | Regel |
+|-----------|--------|
+| G3 | **Empfohlen vor** LB-Produktivcode; Pflichtenheft-Entwurf darf parallel zu G3-Pilot entstehen |
+| G4 bestanden | Formale Abnahme der Checkliste unten (Wer/Datum) — Voraussetzung für `lb1+` Produktivpfad |
+| `lb0a` | Erlaubt sobald G4-Checkliste existiert; vertieft Outline → volles Pflichtenheft |
+| LB-Versand live | Erst nach LB1–LB3 (Testaufgaben, Pilot ≥2, Prod-MOD-ID) — **nicht** G4 allein |
+
+#### Pflichtenheft-Outline (Inhaltsverzeichnis — LB0 füllt aus)
+
+| Kap. | Inhalt | Pflicht vor LB-Prod |
+|------|--------|---------------------|
+| 1 | Produkt/Hersteller, Hersteller-ID-Kontext, Ansprechpartner | ja |
+| 2 | Scope Stufe B: Beitragsnachweis, DEÜV (An-/Ab-/Änderung), Sofortmeldung nur wenn nötig | ja |
+| 3 | Out-of-Scope: Baulohn/SOKA (LC), ELStAM optional LB5, UStVA/ELSTER (L10) | ja |
+| 4 | Architektur: CRM-App → Signing/Worker → Annahmestelle; Schlüsselablage; kein Shared-Hosting-Prod | ja |
+| 5 | Datenquellen: locked Runs, MA-Stamm, KK-BN, Beitrags-/Personengruppe (Anschluss L9) | ja |
+| 6 | Protokollierung: Payload, Antwort, Ticket, Benutzer, Zeit (GoBD / Prüfbarkeit) | ja |
+| 7 | Testkonzept: ITSG-Testaufgaben, Testdaten, kein Prod-Schlüssel in Dev | ja |
+| 8 | Betriebsführung: Rezertifizierung bei Gesetzesänderung, Incident, Rollback auf Portal L9 | ja |
+| 9 | Abgrenzung Parallelbetrieb Meldeportal während Pilot | ja |
+
+Ablage später: z. B. `docs/itsg/` oder Anhang in diesem Plan — **LB0** entscheidet Dateipfad.
+
+#### Organisatorische Checkliste (ausfüllen)
+
+| # | Prüfung | Status / Nachweis |
+|---|---------|-------------------|
+| O1 | Entscheidung: DG soll direkter Datenübermittler werden (nicht nur Portal-Hilfe) | |
+| O2 | ITSG-/Trust-Center-Kontakt / Infopaket eingeholt | |
+| O3 | Verantwortliche: fachlich (StB/Lohn) + technisch (ERiC/Worker-Erfahrung nutzen) | |
+| O4 | Budget/Zeit für Systemuntersuchung + jährliche Pflege eingeplant | |
+| O5 | Hetzner/Root für kryptografischen Betrieb vorgesehen (wie G2) | |
+| O6 | Mind. 2 Pilot-Anwender-Instanzen skizziert (→ LB2) | |
+| O7 | G3-Pilot-Status bekannt (offen/teilweise/bestanden) — dokumentiert | |
+| O8 | Outline Kap. 1–9 als Entwurf existierend (dieser Abschnitt oder LB0-Datei) | ✅ Outline hier |
+| O9 | Formale Freigabe „G4 bestanden“ durch Nutzer (Datum) | **offen** |
+
+**Gate G4 bestanden** erst wenn O1–O7 und O9 gesetzt sind (O8 = Outline-Vorlage).
+
+#### Explizit noch nicht (LB / später)
+
+| Thema | Wohin |
+|-------|--------|
+| Volltext-Pflichtenheft + Systemdok | `lb0a` |
+| Testaufgaben / XML-Strukturen | LB1 |
+| Prod-MOD-ID / Schlüssel | LB3 |
+| DEÜV/Beitragsnachweis senden | LB4 |
+| ELStAM | LB5 |
+| Baulohn-Meldwege | LC |
+
+#### Abnahme dieses G4-Dokupakets
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| ITSG-Pflichtenheft-Outline + Org-Checkliste | ✅ |
+| Klarstellung: kein LB-PHP / Gate offen bis O9 | ✅ |
+| Abgrenzung G3 / L9 / L10 / LC | ✅ |
+
+**Nicht:** ITSG-Registrierung durchführen; MOD-ID beantragen; DEÜV-XML; LB1–LB5-Code; Behaupten, G4 sei „bestanden“ ohne O9.
 
 ---
 
@@ -2164,7 +2236,8 @@ Hilfsmethode (nur Text): `PayrollElsterService::productionGateChecklist()` — A
 
 ## Serie LB — ITSG / SV-Direkt (Stufe B)
 
-> Erst nach G3 + G4. Eigene Chats `lb0a` …
+> Erst nach **G3 + G4** (beide Gates bestanden, nicht nur Checklisten).  
+> G4-Outline: § 3 G4 · Vertiefung: `lb0a`. Eigene Chats `lb0a` …
 
 | Paket | Inhalt |
 |-------|--------|
