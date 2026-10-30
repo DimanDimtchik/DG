@@ -18,7 +18,7 @@ Stand: **2026-10-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G3/G4-Checklisten ✅** (Gates **offen** bis Nachweis/O9) · SEPA-/LStA-Live und LB-Prod erst nach bestandenem Gate + Nutzerbefehl · `lb0a` = Pflichtenheft-Vertiefung.
+**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G4 bestanden** 2026-10-30 (O1–O9) · **G3 offen** · als Nächstes **`lb0a`** (Pflichtenheft) oder G3-Nachweis · `lb1+`/Versand erst nach G3.
 
 ---
 
