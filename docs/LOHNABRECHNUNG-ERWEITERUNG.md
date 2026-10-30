@@ -112,8 +112,10 @@ Kernanforderungen:
 
 ## Offene Entscheidungen vor Implementierung
 
-- Eigene Tabellenpflege fuer Steuer-/SV-Werte oder initial importierte Jahreswerte?
-- Wie wird ein beherrschender Geschaeftsfuehrer sv-rechtlich geprueft und dokumentiert?
-- Soll SEPA schon in Stufe A produktiv sein oder erst nach mehreren Testmonaten?
-- Wie werden ELStAM-Aenderungen gegen manuell gepflegte Steuerdaten abgegrenzt?
-- Welche Kanzlei-/Beraterexporte sind fuer Lohnkonto, SV-Pruefung und Jahreslohnkonto notwendig?
+> **Erledigt in L0b (2026-10-30):** verbindliche Defaults in [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) § L0b (D1–D8). Kurz:
+
+- Tabellen: Jahresimport + Versionierung + Audit (nicht nur lose Pflege).
+- Beherrschender GF: Flag + Begruendungsfeld; kein stilles sv-frei.
+- SEPA: Generator in A, Live-Flag erst nach Pilot (G3).
+- ELStAM: Stufe A manuell; Abruf erst Stufe B (LB).
+- Berater: Lohnkonto-PDF + Kontroll-CSV; Z6-Zeitenexport parallel.

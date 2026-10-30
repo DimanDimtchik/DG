@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30  
+> **Stand:** 2026-10-30 (L0a–c ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** Plan / Spec-Rahmen — **kein** Produktivcode in diesem Dokument
+> **Status:** Serie L0 abgeschlossen · nächster Code-/Spec-Chat: **`l1a`** — **kein** Produktivcode in L0
 
 ---
 
@@ -86,7 +86,7 @@ LC Baulohn/SOKA (Stufe C)
 
 | Gate | Bedingung | Blockiert |
 |------|-----------|-----------|
-| **G0** | Nutzer bestätigt: Start Serie L0 (dieser Plan akzeptiert) | L1+ |
+| **G0** | Nutzer bestätigt: Start Serie L0 (dieser Plan akzeptiert) | L1+ · **✅ 2026-10-30** |
 | **G1** | Phase A FiBu-Smoke / GoBD-Stichprobe weitgehend grün (`IQ-STROM` A) | Produktivnutzung L7 Buchung |
 | **G2** | Hetzner + ERiC Testpfad (C1) | **L10** LSt-Anmeldung live |
 | **G3** | Mind. 2 vollständige Testmonate L5–L9 auf einer Instanz | Pilot „ohne Lexware“ |
@@ -106,15 +106,15 @@ LC Baulohn/SOKA (Stufe C)
 | E5 | ELStAM | Abruf erst LB; in A manuelle Steuerklasse/Freibeträge |
 | E6 | Baulohn | Nur Mandanten-Flag-Platzhalter in L1 — **kein** Rechenkern |
 | E7 | Strategy-Pattern Engines | Interface ab L4; nur `StandardPayrollEngine` in A |
-| E8 | Rechte | Lohn-Modulrecht + `canViewTeam`/Buchhaltung analog Z6; Freigabe enger als Entwurf |
+| E8 | Rechte | Modul `lohn` (`none`/`partial`/`full`) analog `DepartmentAccess`; Freigabe/Sperre/FiBu/SEPA nur `full` · ✅ L0b |
 
-Offene Fachfragen aus Detailkonzept (nicht im Code raten) → Paket **L0b**.
+Offene Fachfragen aus Detailkonzept → **L0b ✅** (unten verbindlich).
 
 ---
 
-## Serie L0 — Spec-Rahmen & Abgrenzung
+## Serie L0 — Spec-Rahmen & Abgrenzung ✅
 
-> Einstieg: `l0a`  
+> Einstieg war: `l0a` · Serie **abgeschlossen 2026-10-30**  
 > **Kein** Code außer Plan-Pflege.
 
 ### L0a — Spec-Rahmen dieses Plans ✅ 2026-10-30
@@ -125,27 +125,105 @@ Offene Fachfragen aus Detailkonzept (nicht im Code raten) → Paket **L0b**.
 
 **Nicht:** Migration, UI, Beitragssätze einbauen.
 
-### L0b — Offene Fachentscheide (Checkliste)
+### L0b — Offene Fachentscheide ✅ 2026-10-30
 
-Kurzer Chat: nur die offenen Punkte aus Detailkonzept § „Offene Entscheidungen“ + Defaults E1–E8 bestätigen oder ändern.
+Gate **G0** mit Start „L0“ angenommen. Defaults E1–E8 und Detailkonzept-Fragen sind für Stufe A **verbindlich** (Änderung nur durch neuen Spec-Chat, nicht im Code raten).
 
-| Thema | Vorschlag |
-|-------|-----------|
-| Tabellenpflege | Jahresimport + Version; manuelle Korrektur mit Audit |
-| Beherrschender GF | Flag + Begründungsfeld; sv-frei nur mit dokumentierter Prüfung |
-| SEPA produktiv | Flag `payroll_sepa_live` default aus bis G3 |
-| ELStAM vs. manuell | A = manuell; Konfliktfeld erst LB |
-| Berater-Export | Lohnkonto-PDF + CSV-Kontrolle; DATEV-Lohn weiter Z6 parallel |
+| # | Thema | Entscheidung | Fachliche Begründung (RA/StB/Prüfer) |
+|---|--------|--------------|--------------------------------------|
+| D1 | Beitragstabellen LSt/SV | **Jahresimport** + `gültig_ab`-Versionierung; manuelle Korrektur nur mit AuditLog (wer/wann/alt/neu) | Jahreswechsel prüfbar; stille Satzänderung = GoBD-Risiko |
+| D2 | Beherrschender GF | Pflicht-**Flag** + **Begründungsfeld** (Freitext, mind. Datum der Prüfung); `sv_frei` nur wenn Flag gesetzt | Statusklärung dokumentieren (Sozialversicherungspflicht GF); keine Automatik „GmbH-GF = sv-frei“ |
+| D3 | SEPA in Stufe A | Generator in **L8**; Flag `payroll_sepa_live` **default aus** bis Gate **G3** | Fehlbuchungen/Doppelzahlungen vor Pilot vermeiden |
+| D4 | ELStAM vs. manuell | Stufe A: Steuerklasse/Freibeträge/KiSt **manuell** pflegen; ELStAM-Abruf erst **LB**; bei späterem Abruf: Konflikt = Abruf gewinnt erst nach Bestätigung | Keine Scheingenauigkeit ohne BZSt-Anbindung |
+| D5 | Berater-Exporte | Ab L6: **Lohnkonto-PDF** + **Kontroll-CSV**; **Z6 DATEV/Lex Zeitenexport bleibt** parallel; keine DATEV-Lohnabrechnungsersatz-API in A | Übergangsphase Lexware/Kanzlei; Zeiten ≠ Nettoabrechnung |
+| D6 | Produktumfang A | Wie E1: Festgehalt, Stundenlohn, Mini/Midi, GF — **kein** Baulohn-Rechenkern (nur Flag-Platzhalter L1) | Lexware-Office-Niveau zuerst |
+| D7 | SV-Versand A | Nur **Portal-Vorbereitung/Export** (L9); kein ITSG-Direktversand | § 95b SGB IV / Systemuntersuchung = Stufe B |
+| D8 | Korrektur freigegebener Monate | Nur **Storno/Korrekturabrechnung** mit Begründung — kein Überschreiben | GoBD / Lohnkonto-Nachvollziehbarkeit |
 
-**Nicht:** Code, Schema.
+#### Abnahme L0b
 
-### L0c — Modulrecht & Menü-Skizze (Spec)
+| Prüfung | Ergebnis |
+|---------|----------|
+| D1–D8 dokumentiert | ✅ |
+| E1–E8 mit L0b konsistent | ✅ |
+| Kein Code / kein Schema | ✅ |
 
-- Modul-Slug z. B. `lohn` (Level view/edit/full).
-- Menü: Stammdaten AG · MA-Lohnfelder · Lohnarten · Monatslauf · Auswertungen.
-- Abgrenzung zu `zeiterfassung-lohnexport` (bleibt Zeiten-Export).
+**Nicht:** Migration, UI, Beitragssätze, Rechte-Seed in DB.
 
-**Nicht:** Migration Rechte-Seed außer Spec-Tabelle.
+### L0c — Modulrecht & Menü-Skizze ✅ 2026-10-30
+
+Anschluss an bestehendes Muster `DepartmentAccess` (`none` / `partial` / `full`) — **nicht** view/edit/full.
+
+#### Modul
+
+| Feld | Wert |
+|------|------|
+| `module_key` | `lohn` |
+| Label | `Lohn & Gehalt` |
+| Default neuer Abteilungen | `none` (wie `buchhaltung`) |
+| Seed-Empfehlung (später L1+) | HR- und Buchhaltungs-Abteilungen: mind. `partial`; Freigabe-Rollen: `full` |
+
+#### Bedeutungen der Level
+
+| Level | Darf | Darf nicht |
+|-------|------|------------|
+| `none` | — | Alle Lohn-Seiten |
+| `partial` | Monatslauf **ansehen**, Entwurf berechnen/Positionen editieren (wenn `RoleResolver::canEdit`), Lohnarten/MA-Lohnfelder pflegen, Kontroll-CSV/PDF Entwurf | Freigabe, Sperre, FiBu-Übernahme, SEPA-Download live, AG-kritische Stammdaten ändern |
+| `full` | alles partial + Freigabe/Sperre/Storno, FiBu-Übernahme, SEPA (wenn Flag), AG-Stamm, Tabellenimport | ITSG-Prod (LB), Baulohn-Kern (LC) |
+
+Admin/`RoleResolver` mit System-Vollzugriff: wie bei anderen Modulen üblich mitbehandlen (kein Sonderweg pro Domain).
+
+#### Seiten-Slugs (Menü später; Code erst ab L1+)
+
+| Slug | Label | Mindest-Level | Bemerkung |
+|------|-------|---------------|-----------|
+| `lohn` | Übersicht / Einstieg | `partial` | Kachel + Kurzstatus offener Monate |
+| `lohn-monatslauf` | Monatslauf | `partial` (Freigabe-Aktionen: `full`) | Kern-UI L5 |
+| `lohn-lohnarten` | Lohnarten | `partial` | L3 |
+| `lohn-lohnkonto` | Lohnkonto | `partial` | L6 |
+| `lohn-auswertungen` | Kontrolllisten / SV-Vorbereitung | `partial` | L9; Versand bleibt Portal |
+| Settings-Tab `lohn` bzw. Seite AG | Arbeitgeber-Stamm | **`full`** | L1 — Betriebsnummer etc. |
+
+**MA-Lohnfelder (L2):** bleiben in **Kontakt → Mitarbeiterkarte** (kein eigener Menüpunkt). Speichern: wer Kontakte/`EmployeeData` editieren darf **und** `lohn` ≥ `partial` (sonst nur Anzeige ohne Lohn-Sektion-Edit). Exact Gate in L2a festziehen.
+
+#### Menü-Platzierung
+
+- Eigene Sidebar-Sektion **„Lohn & Gehalt“** zwischen **HR** und **Buchhaltung** (nicht unter Zeiterfassung verstecken).
+- Icon-Vorschlag: an Buchhaltung/HR angelehnt (konkret in UI-Chat).
+
+#### Abgrenzung Zeiterfassung Z6
+
+| Thema | Modul / Seite | Bleibt |
+|-------|---------------|--------|
+| Zeiten CSV / DATEV Lohn-Zeiten / Lexoffice Zeiten | `zeiterfassung` · `zeiterfassung-lohnexport` | ✅ unverändert; Recht weiter `TimePayrollExportService::canExport` (= `canViewTeam`) |
+| Fremde `payroll_slip` | Kontaktakte | ✅ |
+| Eigene Netto-Abrechnung / FiBu-Lohnbuchung | Modul `lohn` | neu ab L4+ |
+
+Kein Zusammenlegen der Module: Zeitenexport ≠ Lohnabrechnung (prüftechnisch und für Berater klarer).
+
+#### Rechte-Matrix Aktionen (verbindlich für spätere `can*`-Hilfen)
+
+| Aktion | Mindestbedingung |
+|--------|------------------|
+| Übersicht / Entwurf sehen | `lohn` ≥ `partial` |
+| Entwurf berechnen / Positionen ändern | `lohn` ≥ `partial` + `canEdit` |
+| Freigabe / Sperre / Storno | `lohn` === `full` + `canEdit` |
+| FiBu-Übernahme (L7) | `lohn` === `full` + Buchhaltungszugriff (`canAccessBuchhaltung` oder gleichwertig) |
+| SEPA-Datei (L8) | `lohn` === `full` + Flag `payroll_sepa_live` |
+| AG-Stamm ändern (L1) | `lohn` === `full` |
+| Beitragstabellen-Import (L4) | `lohn` === `full` |
+| Z6 Zeitenexport | unverändert **ohne** `lohn`-Pflicht |
+
+#### Abnahme L0c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| `module_key=lohn` + Level wie CRM | ✅ |
+| Menü getrennt von Z6 | ✅ |
+| Freigabe enger als Entwurf | ✅ |
+| Kein DB-Seed / kein PHP in diesem Paket | ✅ |
+
+**Nicht:** Migration `dg_department_module_access`, MenuRegistry-Code, UI.
 
 ---
 
@@ -405,20 +483,28 @@ Kein Deploy außer Nutzer sagt „deploy“.
 
 ---
 
-## 6. Empfohlene Chat-Kette (erste 8 Chats)
+## 6. Empfohlene Chat-Kette (nächste Chats)
 
-| # | Prompt-Kurz | Warum token-sparend |
-|---|-------------|---------------------|
-| 1 | `l0b` Offene Entscheide | Nur Tabelle, kein Code |
-| 2 | `l0c` Modulrecht Spec | Nur Spec |
-| 3 | `l1a` AG-Stamm Spec | Nur Spec |
-| 4 | `l1b` AG Migration | Eine Migration |
-| 5 | `l1c` AG UI | Eine Settings-Seite |
-| 6 | `l2a` MA-Felder Spec | Nur Spec |
-| 7 | `l2b` MA Migration | Schema + Validierung |
-| 8 | `l2c` MA UI | Eine Sektion |
+| # | Prompt-Kurz | Status |
+|---|-------------|--------|
+| — | `l0a`–`l0c` Spec-Rahmen / Entscheide / Rechte | ✅ 2026-10-30 |
+| 1 | `l1a` AG-Stamm Spec | **als Nächstes** |
+| 2 | `l1b` AG Migration | |
+| 3 | `l1c` AG UI | |
+| 4 | `l2a` MA-Felder Spec | |
+| 5 | `l2b` MA Migration | |
+| 6 | `l2c` MA UI | |
 
 Danach L3a → … nicht überspringen. **L4 erst wenn L1–L3 stabil.**
+
+Prompt für nächsten Chat:
+
+```text
+Lohn Implementierung: l1a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L1a. Nicht andere L-Pakete.
+Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
+Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
+```
 
 ---
 
