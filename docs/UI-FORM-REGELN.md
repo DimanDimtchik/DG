@@ -17,7 +17,8 @@ Neue Lohn-Seiten haben oft nackte `<button class="dg-button">` direkt nach Texta
    - Hauptaktion: `.dg-button--primary` (oder erster Submit in Aktionszeile ohne Variante)
    - Kompakt in Tabellen: `.dg-button--small`
    - Sekundär/Ghost/Danger: `--ghost` / `--danger` / `--warning` / `--back`
-5. Keine Ad-hoc-`style="margin…"` für Abstände — `--dg-space-*` / Utilities (`.dg-mt-3`, `.dg-stack`, `.dg-gap-3`)
+5. Tabellen-Aktionen: **alle** Aktionen als `.dg-button.dg-button--small` in `.dg-table__actions` → `.dg-table__actions-group` — **kein** nackter Textlink neben einem Button (z. B. Bearbeiten + Deaktivieren).
+6. Keine Ad-hoc-`style="margin…"` für Abstände — `--dg-space-*` / Utilities (`.dg-mt-3`, `.dg-stack`, `.dg-gap-3`)
 
 ## CSS-Sicherheitsnetz
 
