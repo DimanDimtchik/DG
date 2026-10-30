@@ -23,7 +23,7 @@ Bezug: Shared-Core-Idee · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) ·
 
 | Asset | Beobachtung | Maßnahme |
 |-------|-------------|----------|
-| `assets/css/dg.css` | Groß; `dg.min.css` existiert, Layout lädt oft die Quelle | Build-Schritt: bei Deploy minifizieren + `Asset` wählt `.min` in Produktion |
+| `assets/css/dg.css` | Groß; App-Minify `dg.app.min.css` | ✅ `bin/minify-dg-css.sh` + `Asset::crmStylesheetUrl()` (Deploy ruft Minify auf). `dg.min.css` = Offline-Stub |
 | Viele Einzel-JS | Seite lädt nur bedarfsweise (gut) | Beibehalten; Bundle nur wo sinnvoll (z. B. Belege) |
 | Vendor bereits `.min` | cropper, JsBarcode, … | Unverändert |
 | Kein einheitlicher Build | Manuell | Optional: `bin/minify-assets.sh` (cssnano / terser) im Deploy |

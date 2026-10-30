@@ -18,7 +18,11 @@ Cloud-/Lokal-Agenten erfinden **keine** parallelen Klassen pro Seite.
 | Layout-Shell | App-Rahmen | `.dg-sidebar`, `.dg-adminbar`, `.dg-wrap` |
 | Feature-Zusätze | nur echte Sonder-UI | `.dg-lager…`, `.dg-akademie…` — **kein** Ersatz für Kern-Buttons/Tabellen |
 
-Es gibt **keine** tausend CSS-Dateien pro Seite. Es gibt **eine** `dg.css` mit ~880 `.dg-*`-Klassen; neu schreiben nur, was der Katalog nicht abdeckt — und dann den Katalog nachziehen.
+Es gibt **keine** tausend CSS-Dateien pro Seite. Es gibt **eine** Quelle `dg.css` mit ~880 `.dg-*`-Klassen; neu schreiben nur, was der Katalog nicht abdeckt — und dann den Katalog nachziehen.
+
+**Auslieferung (ohne Split):** `bin/minify-dg-css.sh` erzeugt `assets/css/dg.app.min.css`.  
+`Asset::crmStylesheetUrl()` liefert die Min-Datei, wenn sie aktuell ist.  
+`assets/css/dg.min.css` = **nur** Offline-Stub (nicht die App). Debug: `DG_CSS_SOURCE=1`.
 
 ---
 

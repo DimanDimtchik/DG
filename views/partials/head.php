@@ -19,5 +19,5 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="<?= View::escape($googleFontsHref) ?>">
   <?php endif; ?>
-  <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/dg.css')) ?>">
+  <link rel="stylesheet" href="<?= View::escape(Asset::crmStylesheetUrl()) ?>">
   <style>:root { --dg-font: <?= htmlspecialchars($uiFontFamily, ENT_QUOTES, 'UTF-8') ?>; <?= CrmFrontendTheme::rootDeclarations() ?> }</style>
