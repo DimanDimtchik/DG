@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L6 ✅)  
+> **Stand:** 2026-10-30 (L0–L7a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L6c Lohnkonto-UI ✅ · nächster Chat: **`l7a`** (FiBu-Buchung Spec)
+> **Status:** L7a Spec FiBu-Buchungssätze ✅ · nächster Chat: **`l7b`** (Buchungs-Service)
 
 ---
 
@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l7a`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l7b`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1200,7 +1200,7 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l7a`
+> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l7b`
 
 ### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
@@ -1384,23 +1384,157 @@ Seite `/app?page=lohn-lohnkonto` (`PayrollLohnkontoService`): MA/Jahr, Spalten M
 
 ## Serie L7 — FiBu-Buchung
 
-> Gate **G1** vor Produktivbuchung.
+> Einstieg: `l7a` · L7a ✅ · weiter mit `l7b`  
+> Gate **G1** vor **Produktiv**-Buchung (Flag). Spec/Code L7a–c dürfen vor G1 entstehen — Schreiben ins Journal nur mit `payroll_fibu_live` **oder** Admin-Probe auf Master.
 
-### L7a — Spec Buchungssätze
+### L7a — Spec Buchungssätze ✅ 2026-10-30
 
-Lohnaufwand, AG-Anteile, Verbindlichkeiten FA/SV/Netto; SKR03/04 laut Mandant; Idempotenz bei erneutem Versuch; nur aus `approved`/`locked`.
+Nur Spezifikation — Service/Ledger-Schreiben = **L7b**, UI „In FiBu übernehmen“ = **L7c**. Kein PHP in L7a. Keine SEPA-Datei (L8). Keine USt-Subsumtion auf Lohn.
 
-**Nicht:** steuersubsumtion USt auf Lohn.
+#### Ziel
+
+Aus einem **gesperrten** Monatslauf (`status=locked`, nicht `is_superseded`) eine **ausgeglichene Sammelbuchung** ins bestehende Journal `dg_ledger_postings` erzeugen: Personalaufwand, Arbeitgeber-Sozialaufwand, Verbindlichkeiten Finanzamt / SV / Nettolöhne. Nachvollziehbar zur Run-ID und zu den MA-Results (L4/L5) sowie PDF (L6).
+
+#### Voraussetzungen & Trigger
+
+| Regel | Entscheidung |
+|-------|--------------|
+| Verbindliche Buchung | Nur Run `locked` und `is_superseded=0` |
+| Preview (ohne Schreiben) | Aus `approved` oder `locked` erlaubt (L7c) |
+| MA-Auswahl | Nur MA mit `emp_status=ok` und vorhandenem `result_json`; `blocked`/`skipped`/`pending` fließen nicht ein |
+| Aggregat | **Sammelbuchung je Run** (Summe aller ok-MA) — keine personenbezogene Personenkonten-Pflicht in Stufe A |
+| Geschäftsjahr | `posting_date` im offenen GJ (`FiscalYearService`); sonst Abbruch |
+| Gate G1 / Live-Flag | Flag `payroll_fibu_live` (Settings/`company_extended.lohn`, Default **false**). Ohne Flag: L7b wirft / UI disabled außer Admin-Probe auf Master |
+| Rechte | `lohn` === `full` **und** Buchhaltungszugriff (`canAccessBuchhaltung` o. Ä., L0c) |
+| Begründung | Pflicht ≥10 Zeichen bei Übernahme (wie Freigabe/Sperre) |
+
+#### Betragsquellen (aus Run, Summe ok-MA)
+
+| Symbol | Quelle je MA (`result_json` / denorm.) | Bedeutung |
+|--------|----------------------------------------|-----------|
+| `B` | `gross_total` | Brutto gesamt |
+| `LSt` | `lst` | Lohnsteuer |
+| `SolZ` | `solz` | Solidaritätszuschlag |
+| `KiSt` | `kst` | Kirchensteuer |
+| `SV_AN` | `kv_an+rv_an+av_an+pv_an` | SV-AN |
+| `SV_AG` | `kv_ag+rv_ag+av_ag+pv_ag` | SV-AG |
+| `U` | `u1+u2+u3` | Umlagen |
+| `Flat` | `flat_lst+flat_other` | Minijob-Pauschalen (AG-getragen in A) |
+| `NetAbz` | `net_deductions` (+ `flat_lst_employee_share` falls >0) | sonstige Nettolohnabzüge |
+| `N` | `net_pay` | Auszahlungsnetto |
+
+**Plausibilität vor Buchung (Soft→Hard):**
+
+1. Hard: `| B − (LSt+SolZ+KiSt+SV_AN+NetAbz+N) | ≤ 0,02` je MA (Rundung); sonst Run nicht buchbar.
+2. Hard: Summe Soll = Summe Haben nach Aufbau (Ledger-Assert wie `ManualLedgerService`).
+3. Soft-Warnung: `employer_cost` weicht von `B+SV_AG+U+Flat` ab (nur Hinweis).
+
+Keine USt: `tax_rate=0`, leerer/`0`-`tax_key` — Lohn ist **kein** umsatzsteuerlicher Leistungsumsatz des AG an den AN in diesem Buchungskreis.
+
+#### Buchungslogik Stufe A (Sammel, zwei Aufwandskonten)
+
+Klassische deutsche Lohn-Sammelbuchung, **ohne** Bankzahlung (Bank = L8 SEPA / manueller Ausgleich):
+
+**Satz 1 — Bruttoverteilung**
+
+| Seite | Konto-Rolle | Betrag |
+|-------|-------------|--------|
+| Soll | Personalaufwand Löhne/Gehälter | `B` |
+| Haben | Verbindlichkeit LSt (FA) | `LSt+SolZ+KiSt` |
+| Haben | Verbindlichkeit SV | `SV_AN` |
+| Haben | Verbindlichkeit Nettolöhne | `N + NetAbz` |
+
+(Wenn `NetAbz>0`: Betrag bleibt in Nettolohn-Verbindlichkeit gebündelt in A; Aufteilung eigene Abzugskonten = später optional.)
+
+**Satz 2 — Arbeitgeberaufwand**
+
+| Seite | Konto-Rolle | Betrag |
+|-------|-------------|--------|
+| Soll | Sozialaufwand AG (gesetzl. soziale Aufwendungen) | `SV_AG + U + Flat` |
+| Haben | Verbindlichkeit SV | `SV_AG + U + Flat` |
+
+Nullbeträge weglassen (keine 0-Zeilen). Wenn Satz 2 Summe 0 (theoretisch): nur Satz 1.
+
+**Kontrollgleichung Aufwand:** Soll gesamt = `B + SV_AG + U + Flat` (= fachlich `employer_cost` bei Engine-Konsistenz).
+
+#### Konten-Mapping SKR03 / SKR04
+
+Kein Instanz-Sondercode. Aktiver Rahmen: `ChartOfAccountsSettings::activeSkrType()`.
+
+| Rolle | Default-Vorschlag SKR03 | Default-Vorschlag SKR04 | Pflege |
+|-------|-------------------------|-------------------------|--------|
+| Personalaufwand Löhne | `4120` | `6200` | override |
+| Sozialaufwand AG | `4130` | `6220` | override |
+| Verb. Nettolöhne | `1740` | `3500` | override |
+| Verb. LSt/SolZ/KiSt (FA) | `1741` | `3510` | override (Sammel FA) |
+| Verb. SV | `1742` | `3520` | override |
+
+**Overrides:** Nested unter `company_extended.lohn.fibu_accounts` (Keys der Rollen, je SKR oder gemeinsam). Leere Override → Default-Vorschlag. Konto **muss** in `dg_chart_accounts` des aktiven SKR existieren (wie Manual-Buchung) — sonst Abbruch mit Klartext.
+
+L3-`skr03_expense_hint` / `skr04_expense_hint` an Lohnarten: in Stufe A **nicht** für Sammelbuchung ausgewertet (zu fein); bleiben Hinweis für Berater / spätere personen-/lohnartenbezogene Buchung.
+
+Defaults sind **Vorschläge**, keine Steuerberater-Freigabe — Mandant/Berater bestätigt Konten vor Live-Flag (Checkliste L7c).
+
+#### Persistenz & Idempotenz
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Ledger-Zeilen | Über Muster `ManualLedgerService::createBatch` mit `source = 'payroll'` |
+| Marker | `document_field1 = payroll:run:{runId}` (≤36 Zeichen) — Lookup analog `findBatchIdBySourceMarker` |
+| Meta-Tabelle | `dg_payroll_fibu_batches`: `id`, `run_id` **UNIQUE**, `manual_batch_id`, `posting_date`, `checksum` (Hash der Zeilen+Beträge), `created_at`, `created_by_user_id`, `reason`, `kind` (`regular`/`storno_contra`/`correction`) |
+| Erneuter Versuch | Wenn Meta/Marker existiert → **kein** zweites Journal; bestehenden Batch zurückgeben (Idempotenz) |
+| Löschen/Überschreiben | **Verboten** nach erfolgreicher Buchung; auch bei closed GJ kein Delete (wie Manual) |
+| Export | `LedgerExportRepository` muss `source='payroll'` in die Export-Allowlist aufnehmen (L7b) |
+
+Buchungsdatum Default: letzter Kalendertag der Run-Periode (`period_year`/`period_month`); Override in UI optional (L7c), muss im Run-Monat oder Folgemonat bis FJ-Ende liegen (L7b validiert).
+
+Textzeile Beschreibung: `Lohn {MM/YYYY} Run #{id} ({kind})` + Kurz-Reason.
+
+#### Storno / Correction
+
+| Fall | FiBu-Verhalten |
+|------|----------------|
+| Run wird superseded **nach** Buchung | Alte Batch bleibt (immutable); kein Auto-Löschen |
+| Neuer `storno`-Run, locked | Neue Batch `kind=storno_contra`: **Invertierung** der gebuchten Zeilen des `supersedes_run_id` (Seiten tauschen). Voraussetzung: Vorgänger war gebucht; sonst Warnung „nichts zu stornieren“ |
+| Neuer `correction`-Run, locked | Neue Batch wie Regulär aus **eigenen** ok-Results (`kind=correction`). Vorgänger-Batch bleibt; fachlich i. d. R. vorher Storno-Run buchen — UI-Hinweis L7c |
+| Engine liefert keine Negativ-Storno-Beträge in A | Contra kommt aus Invertierung der Vorgänger-Batch, nicht aus Engine |
+
+#### Abgrenzung
+
+| Thema | Wohin |
+|-------|--------|
+| Journal schreiben / Meta-Migration | L7b |
+| UI-Button + Preview + Checkliste | L7c |
+| Bankausgleich / SEPA | L8 |
+| SV-Portal-Zahlen | L9 (keine Buchung) |
+| LSt-Anmeldung ELSTER | L10 |
+| USt auf Lohn | **nie** in L7 |
+| Baulohn-Sonderkonten | LC |
+
+#### Abnahme L7a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Trigger nur locked + ok-MA; Preview approved ok | ✅ |
+| Sätze Aufwand / FA / SV / Netto + AG-Sozialaufwand spezifiziert | ✅ |
+| SKR03/04 Defaults + Override-Pfad | ✅ |
+| Idempotenz Marker + Meta UNIQUE(run_id) | ✅ |
+| Storno = Invertierung; kein Überschreiben | ✅ |
+| Gate/Flag G1; keine USt; kein PHP | ✅ |
+
+**Nicht:** Ledger-Code, UI, SEPA, ELSTER, USt-Logik.
 
 ### L7b — Buchungs-Service + Protokoll
 
-Anbindung bestehendes Ledger; Rollback-Verbot nach Lock — Storno-Buchung.
+Anbindung `ManualLedgerService` / `dg_ledger_postings` + Meta-Tabelle; Idempotenz; Storno-Contra; Export-Allowlist `payroll`.
 
 **Nicht:** SEPA-Datei.
 
 ### L7c — UI „In FiBu übernehmen“ + Stichprobe
 
-Abnahme mit Betriebsprüfer-Checkliste (Belegkette Monat → Buchung → PDF).
+Abnahme mit Betriebsprüfer-Checkliste (Belegkette Monat → Buchung → PDF); Konten-Bestätigung vor Live-Flag.
+
+**Nicht:** SEPA.
 
 ---
 
@@ -1519,15 +1653,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l6a` PDF/Lohnkonto Spec | ✅ 2026-10-30 |
 | — | `l6b` PDF-Generator/Speicherung | ✅ 2026-10-30 |
 | — | `l6c` Lohnkonto-UI + Export | ✅ 2026-10-30 |
-| 1 | `l7a` Spec Buchungssätze | **als Nächstes** |
+| — | `l7a` Spec Buchungssätze | ✅ 2026-10-30 |
+| 1 | `l7b` Buchungs-Service + Protokoll | **als Nächstes** |
 
-Danach L7b → … nicht überspringen.
+Danach L7c → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l7a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L7a. Nicht andere L-Pakete.
+Lohn Implementierung: l7b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L7b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
