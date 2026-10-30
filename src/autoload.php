@@ -57,6 +57,7 @@ spl_autoload_register(static function (string $class): void {
         'HealthInsurerDirectory' => '/src/Contact/HealthInsurerDirectory.php',
         'EmployeeDocuments' => '/src/Contact/EmployeeDocuments.php',
         'EmployeeData' => '/src/Contact/EmployeeData.php',
+        'PayrollEmployeeAccess' => '/src/Contact/PayrollEmployeeAccess.php',
         'SocialSecurityRegistrationDraft' => '/src/Contact/SocialSecurityRegistrationDraft.php',
         'EmployeeRetentionService' => '/src/Contact/EmployeeRetentionService.php',
         'StaffAccessEventRepository' => '/src/Contact/StaffAccessEventRepository.php',

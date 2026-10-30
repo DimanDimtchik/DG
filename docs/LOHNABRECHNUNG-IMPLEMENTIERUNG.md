@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L1 ✅ · L2a ✅)  
+> **Stand:** 2026-10-30 (L0–L1 ✅ · L2a–b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L2a Spec MA-Lohnfelder ✅ · nächster Chat: **`l2b`** (Felder/Validierung in `EmployeeData`)
+> **Status:** L2b Felder/Validierung ✅ · nächster Chat: **`l2c`** (UI Mitarbeiterkarte)
 
 ---
 

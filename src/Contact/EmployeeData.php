@@ -85,7 +85,22 @@ final class EmployeeData
             'daily_work_minutes' => ['label' => 'Soll-Arbeitszeit pro Tag (Minuten)', 'type' => 'number', 'section' => 'contract'],
             'employment_type' => ['label' => 'Beschäftigungsart (Zeiterfassung)', 'type' => 'select', 'section' => 'contract'],
             'overtime_allowed' => ['label' => 'Überstunden erlaubt', 'type' => 'checkbox', 'section' => 'contract'],
-            'salary' => ['label' => 'Lohn / Gehalt', 'type' => 'text', 'section' => 'contract'],
+            'salary' => ['label' => 'Lohn / Gehalt (Freitext)', 'type' => 'text', 'section' => 'contract'],
+            // Lohn L2b — Abrechnungsstammdaten (Beträge/Lohnarten = L3)
+            'tax_id' => ['label' => 'Steuerliche Identifikationsnummer', 'type' => 'text', 'section' => 'payroll'],
+            'tax_class' => ['label' => 'Steuerklasse', 'type' => 'select', 'section' => 'payroll'],
+            'child_allowances' => ['label' => 'Kinderfreibeträge (Zähler)', 'type' => 'number', 'section' => 'payroll'],
+            'religion_code' => ['label' => 'Konfession / Kirchensteuer', 'type' => 'select', 'section' => 'payroll'],
+            'health_insurance_company_number' => ['label' => 'Betriebsnummer Krankenkasse', 'type' => 'text', 'section' => 'payroll'],
+            'contribution_group_key' => ['label' => 'Beitragsgruppenschlüssel', 'type' => 'text', 'section' => 'payroll'],
+            'person_group_key' => ['label' => 'Personengruppenschlüssel', 'type' => 'text', 'section' => 'payroll'],
+            'payroll_employment_type' => ['label' => 'Beschäftigungsart (Lohn)', 'type' => 'select', 'section' => 'payroll'],
+            'annual_earnings_estimate_eur' => ['label' => 'Jahresentgelt-Schätzer Midi (€)', 'type' => 'number', 'section' => 'payroll'],
+            'controlling_managing_director' => ['label' => 'Beherrschender Geschäftsführer', 'type' => 'checkbox', 'section' => 'payroll'],
+            'controlling_md_rationale' => ['label' => 'Begründung GF / SV-Prüfung', 'type' => 'textarea', 'section' => 'payroll'],
+            'sv_exempt' => ['label' => 'SV-frei (nur mit GF-Flag)', 'type' => 'checkbox', 'section' => 'payroll'],
+            'payroll_payout_bank_index' => ['label' => 'SEPA-Auszahlungskonto (Index)', 'type' => 'number', 'section' => 'payroll'],
+            'payroll_notes' => ['label' => 'Interne Lohn-Hinweise', 'type' => 'textarea', 'section' => 'payroll'],
             'subsidy_amount' => ['label' => 'Beihilfebetrag', 'type' => 'text', 'section' => 'subsidy'],
             'subsidy_carrier' => ['label' => 'Beihilfeträger', 'type' => 'text', 'section' => 'subsidy'],
             'qualifications' => ['label' => 'Qualifikationen (Ausbildung, Erfahrung, Zertifizierungen)', 'type' => 'textarea', 'section' => 'qualification'],
@@ -110,6 +125,7 @@ final class EmployeeData
             'disability' => 'Behinderung',
             'employment' => 'Beschäftigungsdaten',
             'contract' => 'Arbeitsvertragsdaten',
+            'payroll' => 'Lohnabrechnung',
             'subsidy' => 'Beihilfedaten',
             'qualification' => 'Qualifikationsdaten',
             'assessment' => 'Beurteilung',
@@ -117,6 +133,21 @@ final class EmployeeData
             'documents' => 'Dokumente',
             'retention' => 'Speicherdauer',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function payrollFieldKeys(): array
+    {
+        $keys = [];
+        foreach (self::fields() as $key => $meta) {
+            if (($meta['section'] ?? '') === 'payroll') {
+                $keys[] = $key;
+            }
+        }
+
+        return $keys;
     }
 
     /**
@@ -238,6 +269,9 @@ final class EmployeeData
             'social_security_status' => self::socialSecurityStatusOptions(),
             'social_filing_office' => self::socialFilingOfficeOptions(),
             'employment_type' => self::employmentTypeOptions(),
+            'tax_class' => self::taxClassOptions(),
+            'religion_code' => self::religionCodeOptions(),
+            'payroll_employment_type' => self::payrollEmploymentTypeOptions(),
             default => [],
         };
     }
@@ -255,8 +289,57 @@ final class EmployeeData
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function taxClassOptions(): array
+    {
+        return [
+            '' => '—',
+            '1' => 'I',
+            '2' => 'II',
+            '3' => 'III',
+            '4' => 'IV',
+            '5' => 'V',
+            '6' => 'VI',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function religionCodeOptions(): array
+    {
+        return [
+            '' => '—',
+            'none' => 'Keine Kirchensteuer / konfessionslos',
+            'ek' => 'Evangelisch',
+            'rk' => 'Römisch-katholisch',
+            'other' => 'Andere / sonstige KiSt-pflichtig',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function payrollEmploymentTypeOptions(): array
+    {
+        return [
+            '' => '—',
+            'fulltime' => 'Vollzeit',
+            'parttime' => 'Teilzeit',
+            'minijob' => 'Minijob (geringfügig)',
+            'midijob' => 'Midijob (Übergangsbereich)',
+            'managing_director' => 'Geschäftsführer',
+        ];
+    }
+
     public static function isMinijob(array $data): bool
     {
+        $payroll = trim((string) ($data['payroll_employment_type'] ?? ''));
+        if ($payroll === 'minijob') {
+            return true;
+        }
         $type = trim((string) ($data['employment_type'] ?? ''));
 
         return $type === 'minijob' || trim((string) ($data['social_filing_office'] ?? '')) === 'kbs_minijob';
@@ -476,6 +559,8 @@ final class EmployeeData
         $codes = self::parseSupplementaryCodes($out['disability_supplementary_codes']);
         $out['disability_supplementary_codes'] = $codes !== [] ? implode(', ', $codes) : '';
 
+        $out = self::sanitizePayrollFields($out);
+
         $out['retention_until'] = self::computeRetentionUntil($out['exit_date'] ?? '');
 
         foreach (self::systemManagedMetaKeys() as $key) {
@@ -494,6 +579,215 @@ final class EmployeeData
         }
 
         return $out;
+    }
+
+    /**
+     * Lohn L2b: Plausibilität ohne Behörden-API; Speichern bleibt erlaubt.
+     *
+     * @param array<string, string> $out
+     * @return array<string, string>
+     */
+    private static function sanitizePayrollFields(array $out): array
+    {
+        $taxId = preg_replace('/\D+/', '', (string) ($out['tax_id'] ?? '')) ?? '';
+        $out['tax_id'] = $taxId;
+
+        $taxClass = trim((string) ($out['tax_class'] ?? ''));
+        $out['tax_class'] = isset(self::taxClassOptions()[$taxClass]) ? $taxClass : '';
+
+        $out['child_allowances'] = self::normalizeChildAllowances((string) ($out['child_allowances'] ?? ''));
+
+        $religion = trim((string) ($out['religion_code'] ?? ''));
+        $out['religion_code'] = isset(self::religionCodeOptions()[$religion]) ? $religion : '';
+
+        $kkBn = preg_replace('/\D+/', '', (string) ($out['health_insurance_company_number'] ?? '')) ?? '';
+        $out['health_insurance_company_number'] = $kkBn;
+
+        $cg = preg_replace('/[^0-9]/', '', (string) ($out['contribution_group_key'] ?? '')) ?? '';
+        $out['contribution_group_key'] = mb_substr($cg, 0, 8);
+
+        $pg = preg_replace('/[^0-9]/', '', (string) ($out['person_group_key'] ?? '')) ?? '';
+        $out['person_group_key'] = mb_substr($pg, 0, 3);
+
+        $pet = trim((string) ($out['payroll_employment_type'] ?? ''));
+        $out['payroll_employment_type'] = isset(self::payrollEmploymentTypeOptions()[$pet]) ? $pet : '';
+
+        $annual = str_replace(',', '.', trim((string) ($out['annual_earnings_estimate_eur'] ?? '')));
+        if ($annual === '' || !is_numeric($annual)) {
+            $out['annual_earnings_estimate_eur'] = '';
+        } else {
+            $out['annual_earnings_estimate_eur'] = rtrim(rtrim(number_format(max(0.0, (float) $annual), 2, '.', ''), '0'), '.');
+        }
+
+        $isMd = ($out['controlling_managing_director'] ?? '') === '1';
+        $isGfType = ($out['payroll_employment_type'] ?? '') === 'managing_director';
+        if (!$isGfType) {
+            $out['controlling_managing_director'] = '';
+            $isMd = false;
+        }
+        if (!$isMd) {
+            $out['sv_exempt'] = '';
+        }
+        $out['controlling_md_rationale'] = mb_substr(trim((string) ($out['controlling_md_rationale'] ?? '')), 0, 2000);
+        $out['payroll_notes'] = mb_substr(trim((string) ($out['payroll_notes'] ?? '')), 0, 2000);
+
+        $bankIdx = (int) ($out['payroll_payout_bank_index'] ?? 0);
+        $out['payroll_payout_bank_index'] = (string) max(0, $bankIdx);
+
+        // Weich: employment_type nur setzen wenn leer oder bereits kompatibel — kein stilles Überschreiben (L2a).
+        self::softSyncEmploymentTypeFromPayroll($out);
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, string> $out
+     */
+    private static function softSyncEmploymentTypeFromPayroll(array &$out): void
+    {
+        $pet = (string) ($out['payroll_employment_type'] ?? '');
+        if ($pet === '') {
+            return;
+        }
+        $want = $pet === 'minijob' ? 'minijob' : 'regular';
+        $cur = trim((string) ($out['employment_type'] ?? ''));
+        if ($cur === '' || $cur === $want) {
+            $out['employment_type'] = $want;
+        }
+    }
+
+    private static function normalizeChildAllowances(string $raw): string
+    {
+        $raw = str_replace(',', '.', trim($raw));
+        if ($raw === '' || !is_numeric($raw)) {
+            return '';
+        }
+        $v = (float) $raw;
+        if ($v < 0) {
+            $v = 0.0;
+        }
+        if ($v > 99) {
+            $v = 99.0;
+        }
+        // Schritt 0,5
+        $v = round($v * 2) / 2;
+
+        return fmod($v, 1.0) === 0.0 ? (string) (int) $v : number_format($v, 1, '.', '');
+    }
+
+    /**
+     * Bewahrt Payroll-Keys aus $existing, wenn Speichern der Sektion nicht erlaubt ist (L2a Gate / L2c).
+     *
+     * @param array<string, string> $incoming sanitize()-Ergebnis
+     * @param array<string, string> $existing bisher gespeichert
+     * @return array<string, string>
+     */
+    public static function preservePayrollIfDenied(array $incoming, array $existing, bool $mayEditPayroll): array
+    {
+        if ($mayEditPayroll) {
+            return $incoming;
+        }
+        foreach (self::payrollFieldKeys() as $key) {
+            $incoming[$key] = (string) ($existing[$key] ?? '');
+        }
+
+        return $incoming;
+    }
+
+    /**
+     * Warnungen für UI / späteren Monatslauf (blockiert Speichern nicht).
+     *
+     * @param array<string, string> $data
+     * @return list<string>
+     */
+    public static function collectPayrollWarnings(array $data): array
+    {
+        $warnings = [];
+        $pet = trim((string) ($data['payroll_employment_type'] ?? ''));
+        $taxId = trim((string) ($data['tax_id'] ?? ''));
+        if ($taxId !== '' && strlen($taxId) !== 11) {
+            $warnings[] = 'Steuer-ID sollte 11 Ziffern haben (aktuell: ' . strlen($taxId) . ').';
+        } elseif ($taxId === '' && $pet !== '') {
+            $warnings[] = 'Steuer-ID fehlt — Monatslauf später blockiert.';
+        }
+
+        $kkBn = trim((string) ($data['health_insurance_company_number'] ?? ''));
+        if ($kkBn !== '' && strlen($kkBn) !== 8) {
+            $warnings[] = 'Betriebsnummer Krankenkasse sollte 8 Ziffern haben.';
+        }
+
+        if (($data['controlling_managing_director'] ?? '') === '1') {
+            $rationale = trim((string) ($data['controlling_md_rationale'] ?? ''));
+            if (mb_strlen($rationale) < 10) {
+                $warnings[] = 'Begründung beherrschender GF zu kurz (mind. 10 Zeichen, Prüfung dokumentieren).';
+            }
+        }
+
+        if ($pet === 'midijob' && trim((string) ($data['annual_earnings_estimate_eur'] ?? '')) === '') {
+            $warnings[] = 'Midi-Job: Jahresentgelt-Schätzer fehlt.';
+        }
+
+        if ($pet === 'managing_director' && ($data['controlling_managing_director'] ?? '') !== '1') {
+            $warnings[] = 'GF ohne Flag „beherrschend“ — SV-Status manuell prüfen.';
+        }
+
+        foreach (self::missingPayrollFieldsForRun($data) as $label) {
+            $warnings[] = 'Für Monatslauf fehlt noch: ' . $label;
+        }
+
+        return array_values(array_unique($warnings));
+    }
+
+    /**
+     * Pflichtlücken laut L2a-Matrix (für L5-Block; Speichern ok).
+     *
+     * @param array<string, string> $data
+     * @return list<string> lesbare Labels
+     */
+    public static function missingPayrollFieldsForRun(array $data): array
+    {
+        $pet = trim((string) ($data['payroll_employment_type'] ?? ''));
+        if ($pet === '') {
+            return ['Beschäftigungsart (Lohn)'];
+        }
+
+        $missing = [];
+        $need = static function (string $key, string $label) use ($data, &$missing): void {
+            if (trim((string) ($data[$key] ?? '')) === '') {
+                $missing[] = $label;
+            }
+        };
+
+        $need('tax_id', 'Steuer-ID');
+        $need('tax_class', 'Steuerklasse');
+        // 0 ist gültig — nur komplett leer zählt als Lücke
+        if (trim((string) ($data['child_allowances'] ?? '')) === '') {
+            $missing[] = 'Kinderfreibeträge (0 eintragen wenn keine)';
+        }
+        $need('religion_code', 'Konfession / KiSt');
+        $need('entry_date', 'Eintritt');
+
+        $svRequired = in_array($pet, ['fulltime', 'parttime', 'midijob'], true)
+            || ($pet === 'managing_director' && ($data['sv_exempt'] ?? '') !== '1');
+        if ($svRequired) {
+            $need('social_security_number', 'SV-Nummer');
+            $need('health_insurance', 'Krankenkasse');
+            $need('contribution_group_key', 'Beitragsgruppenschlüssel');
+            $need('person_group_key', 'Personengruppenschlüssel');
+        }
+        if ($pet === 'minijob') {
+            $need('person_group_key', 'Personengruppenschlüssel');
+        }
+        if ($pet === 'midijob') {
+            $need('annual_earnings_estimate_eur', 'Jahresentgelt-Schätzer');
+        }
+        if ($pet === 'managing_director' && ($data['controlling_managing_director'] ?? '') === '1') {
+            if (mb_strlen(trim((string) ($data['controlling_md_rationale'] ?? ''))) < 10) {
+                $missing[] = 'GF-Begründung';
+            }
+        }
+
+        return array_values(array_unique($missing));
     }
 
     /**
