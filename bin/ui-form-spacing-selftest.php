@@ -214,4 +214,55 @@ foreach ($iterator as $fileInfo) {
 assertUi($mixHits === [], 'Kein Link+Button-Mix in Aktionszellen' . ($mixHits ? ': ' . implode(', ', $mixHits) : ''));
 assertUi($nakedHits === [], 'Kein nackter Submit nach Textarea' . ($nakedHits ? ': ' . implode(', ', $nakedHits) : ''));
 
+
+/**
+ * Endnutzer-Sprache: keine internen Plan-Codes / Setting-Keys in Views.
+ * Erlaubt in PHP-Kommentaren; verboten in sichtbarem Markup/Text.
+ *
+ * @return list<string>
+ */
+function uiPlanJargonHits(string $html, string $rel): array
+{
+    $hits = [];
+    $lines = preg_split("/\r\n|\n|\r/", $html) ?: [];
+    $patterns = [
+        'stufe' => '/Stufe\s+[A-D0-9]+\b/u',
+        'gate' => '/Gate\s+G?\d+/u',
+        'plan_L' => '/\((?:L\d{1,2}[a-c]?)\)/u',
+        'plan_M' => '/\((?:M\d[a-z]?)(?:\s*\/[^)]*)?\)/u',
+        'live_flag' => '/Live-Flag|nur Flag\b/u',
+        'payroll_label' => '/payroll_[a-z0-9_]+\s*[—–-]/u',
+    ];
+    foreach ($lines as $n => $line) {
+        $trim = ltrim($line);
+        if ($trim === '' || str_starts_with($trim, '//') || str_starts_with($trim, '*') || str_starts_with($trim, '/*') || str_starts_with($trim, '/**')) {
+            continue;
+        }
+        $lineForKeys = $line;
+        if (preg_match('/name=["\'][^"\']*payroll_[^"\']*["\']/', $line) && !preg_match('/payroll_[a-z0-9_]+\s*[—–-]/u', $line)) {
+            $lineForKeys = preg_replace('/name=["\'][^"\']*["\']/', '', $line) ?? $line;
+        }
+        foreach ($patterns as $kind => $rx) {
+            if (preg_match($rx, $lineForKeys)) {
+                $hits[] = "{$rel}:" . ($n + 1) . " ({$kind})";
+            }
+        }
+    }
+    return $hits;
+}
+
+$jargonHits = [];
+foreach ($iterator as $fileInfo) {
+    if (!$fileInfo->isFile() || $fileInfo->getExtension() !== 'php') {
+        continue;
+    }
+    $full = $fileInfo->getPathname();
+    $rel = str_replace('\\', '/', substr($full, strlen($root) + 1));
+    $html = (string) file_get_contents($full);
+    foreach (uiPlanJargonHits($html, $rel) as $hit) {
+        $jargonHits[] = $hit;
+    }
+}
+assertUi($jargonHits === [], 'Keine Plan-/Key-Jargon in Views' . ($jargonHits ? ': ' . implode('; ', array_slice($jargonHits, 0, 20)) : ''));
+
 echo "UI-Form-Spacing Selftest bestanden.\n";

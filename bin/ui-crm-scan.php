@@ -29,6 +29,7 @@ function uiCrmScan(string $root): array
         'field_stack_without_section' => [],
         'inline_flex_dg_form' => [],
         'checkbox_without_field_checkbox' => [],
+        'plan_jargon_in_views' => [],
     ];
 
     $iterator = new RecursiveIteratorIterator(
@@ -101,6 +102,21 @@ function uiCrmScan(string $root): array
                 }
             }
         }
+
+        $lines = preg_split("/\r\n|\n|\r/", $html) ?: [];
+        foreach ($lines as $line) {
+            $trim = ltrim($line);
+            if ($trim === '' || str_starts_with($trim, '//') || str_starts_with($trim, '*') || str_starts_with($trim, '/*')) {
+                continue;
+            }
+            if (preg_match('/Stufe\s+[A-D0-9]+\b|Gate\s+G?\d+|\((?:L\d{1,2}[a-c]?|M\d[a-z]?)(?:\s*\/[^)]*)?\)|Live-Flag|nur Flag\b|payroll_[a-z0-9_]+\s*[—–-]/u', $line)) {
+                if (preg_match('/name=["\'][^"\']*payroll_[^"\']*["\']/', $line) && !preg_match('/payroll_[a-z0-9_]+\s*[—–-]|Stufe|Gate|Live-Flag|\(L|\(M|nur Flag/u', $line)) {
+                    continue;
+                }
+                $results['plan_jargon_in_views'][] = $rel;
+                break;
+            }
+        }
     }
 
     return $results;
@@ -133,6 +149,7 @@ if ($out !== null && $out !== '') {
 
 $blocking = array_merge(
     $results['naked_submit_after_textarea'],
-    $results['bare_action_links']
+    $results['bare_action_links'],
+    $results['plan_jargon_in_views']
 );
 exit($blocking === [] ? 0 : 2);

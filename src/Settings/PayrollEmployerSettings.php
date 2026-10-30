@@ -299,7 +299,7 @@ final class PayrollEmployerSettings
         $bank = $snapshot['payroll_bank'] ?? null;
         $iban = is_array($bank) ? trim((string) ($bank['iban'] ?? '')) : '';
         if ($iban === '') {
-            $warnings[] = 'SEPA-Absenderkonto ohne IBAN — Auszahlung (L8) später blockiert.';
+            $warnings[] = 'SEPA-Absenderkonto ohne IBAN — Auszahlung später blockiert.';
         }
 
         if (trim((string) ($snapshot['employer_name'] ?? '')) === '') {

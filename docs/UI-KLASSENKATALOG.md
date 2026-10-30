@@ -183,5 +183,6 @@ Erlaubt für **modulspezifische** Layouts (Kalender-Raster, Lager-Scan, Akademie
 - CRM-weit: **null** nackte Aktionslinks (`Bearbeiten`/`Anzeigen`/…); Allowlist in `bin/ui-form-spacing-selftest.php` aktuell **leer**  
 - Link+Button-Mix in derselben `td`: **verboten**  
 - Nackter Submit direkt nach Textarea: **verboten** (immer `.dg-form-actions`)  
+- **Endnutzer-Sprache:** keine Plan-Codes in Views (`L7`, `L10`, `Gate G1`, `Stufe A/C`, `M1a` …) und keine Setting-Keys als Label (`payroll_fibu_live — …`). Keys bleiben nur in `name=`/Code.  
 - Report-Scan: `php bin/ui-crm-scan.php` (zusätzliche Hinweiskategorien, z. B. Checkbox-Markup)  
 - Katalog-Datei und Kernklassen in `dg.css` müssen existieren (Selftest)

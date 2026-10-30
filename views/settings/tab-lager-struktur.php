@@ -80,10 +80,9 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     </form>
 
     <?php $amazonBusinessForm = $amazonBusinessForm ?? AmazonBusinessSettings::forForm(); ?>
-    <h3 class="dg-subsection-title" style="margin-top:2rem">Amazon Business (Stufe 2)</h3>
+    <h3 class="dg-subsection-title" style="margin-top:2rem">Amazon Business</h3>
     <p class="dg-lead">
-      Halbautomatische Bestellung aus der Einkaufsliste. Zuerst Developer-Zugang beantragen
-      (siehe <code>docs/AMAZON-BUSINESS-STUFE2.md</code>), dann Credentials hier hinterlegen.
+      Halbautomatische Bestellung aus der Einkaufsliste. Zugang und Zugangsdaten hier hinterlegen.
       Der Bestell-Button an der Einkaufsliste folgt in einem nächsten Schritt.
     </p>
     <form class="dg-form" method="post" action="<?= View::escape($tabBase . '&lager_tab=einkauf') ?>">

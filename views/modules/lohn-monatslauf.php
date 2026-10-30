@@ -470,7 +470,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                 <label class="dg-field dg-field--checkbox">
                   <span>
                     <input type="checkbox" name="force_probe" value="1">
-                    Admin-Probe ohne Live-Flag
+                    Probebuchung als Admin (ohne Produktiv-Freigabe)
                   </span>
                 </label>
               <?php endif; ?>
@@ -479,7 +479,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
               </button>
             </form>
             <?php if (!$fibuLive && !$isAdminUser) : ?>
-              <p class="dg-field-hint">Buchung gesperrt: Live-Flag aus und kein Admin-Probe.</p>
+              <p class="dg-field-hint">Buchung gesperrt: Produktiv-Freigabe fehlt (Einstellungen → Lohn).</p>
             <?php endif; ?>
           <?php elseif ($isApproved && !$isLocked) : ?>
             <p class="dg-field-hint">Vorschau möglich — verbindliche Übernahme erst nach Sperre.</p>

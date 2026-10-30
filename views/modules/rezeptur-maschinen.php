@@ -381,7 +381,7 @@ $formatHelperMaterials = static function (mixed $json): string {
   </p>
 
   <section class="dg-card" id="capacity" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Kapazitätsprofile (M1a)</h2>
+    <h2 class="dg-subsection-title" style="margin-top:0;">Kapazitätsprofile</h2>
     <p class="dg-field-hint">
       Erfasst nur technische Leistung: Rohstoff-Input pro Stunde, Produkt-Output pro Stunde und Ausbeute.
       Keine Belegung, keine Wartung, keine Buchung.
@@ -509,7 +509,7 @@ $formatHelperMaterials = static function (mixed $json): string {
   </section>
 
   <section class="dg-card" id="booking" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (M3b / Kalender)</h2>
+    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (Kalender)</h2>
     <p class="dg-field-hint">
       Wochen-/Monatsansicht plus Liste fuer geplante Produktion, Wartung und Sperrzeiten.
       Bearbeiten und Status (geplant/erledigt) sind möglich; Storno bleibt getrennt.
@@ -727,7 +727,7 @@ $formatHelperMaterials = static function (mixed $json): string {
     <?php endif; ?>
 
     <div class="dg-card" style="padding:12px;margin-bottom:16px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
-      <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung (M4a)</h3>
+      <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung</h3>
       <p class="dg-field-hint" style="margin-top:0;">
         Nur Hinweiswerte aus der gefilterten Liste; keine FiBu-Buchung und keine automatische Umlage.
         Auslastung = belegte Stunden ÷ (Kalenderstunden im Zeitraum × Maschinenanzahl). Überlappungen können &gt;&nbsp;100 % ergeben.
@@ -972,7 +972,7 @@ $formatHelperMaterials = static function (mixed $json): string {
   </section>
 
   <section class="dg-card" id="maintenance" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Wartungspläne (M2a)</h2>
+    <h2 class="dg-subsection-title" style="margin-top:0;">Wartungspläne</h2>
     <p class="dg-field-hint">
       Erfasst den geplanten Turnus, erwartete Ausfallzeit, Hilfsmittel und Kosten.
       Keine Wartungsprotokolle, keine Kalenderbelegung und keine FiBu-Buchung.
@@ -1099,7 +1099,7 @@ $formatHelperMaterials = static function (mixed $json): string {
     </div>
 
     <div id="maintenance-log" style="margin-top:22px;border-top:1px solid var(--dg-border,#ddd);padding-top:16px;">
-      <h3 class="dg-subsection-title" style="margin-top:0;">Durchgeführte Wartung protokollieren (M2b)</h3>
+      <h3 class="dg-subsection-title" style="margin-top:0;">Durchgeführte Wartung protokollieren</h3>
       <p class="dg-field-hint">Dokumentiert Ist-Zeitpunkt, Laufstundenstand und Ist-Kosten. Keine automatische Buchung.</p>
 
       <?php if ($canEdit && $dbConnected && $centers !== []) : ?>

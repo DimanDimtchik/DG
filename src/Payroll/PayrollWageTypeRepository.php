@@ -111,7 +111,7 @@ final class PayrollWageTypeRepository
                 'skr03_liability_hint' => '',
                 'skr04_liability_hint' => '',
                 'sort_order' => (int) $row['sort_order'],
-                'notes' => 'System-Seed L3b — SKR-Hints mit Steuerberater pflegen',
+                'notes' => 'System-Beispiel — Kontenvorschläge mit Steuerberater pflegen',
             ]);
         }
     }
