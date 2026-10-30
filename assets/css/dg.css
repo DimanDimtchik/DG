@@ -883,14 +883,43 @@ code {
 .dg-form h2:first-child { margin-top: 0; }
 
 /*
- * Gestapelte Felder in .dg-form (ohne Grid): gleicher Abstand
- * z. B. Dauer-Select → Checkbox auf Support-Freigabe.
+ * Gestapelte Felder: gleicher Abstand — auch in fieldset / .dg-form-section
+ * (nicht nur direkte Kinder von .dg-form; sonst kleben Umlagen-Checkboxen).
  */
 .dg-form > .dg-field + .dg-field,
 .dg-form > .dg-field + .dg-flash,
 .dg-form > .dg-flash + .dg-form-actions,
-.dg-form > .dg-field + .dg-form-actions {
+.dg-form > .dg-field + .dg-form-actions,
+.dg-fieldset > .dg-field + .dg-field,
+.dg-stack > .dg-field + .dg-field {
   margin-top: var(--dg-space-3);
+}
+
+/*
+ * .dg-form-section (fieldset oder div): vertikaler Rhythmus per gap.
+ * Dececkt Checkbox-Stapel + Textfeld dazwischen (Umlagen), ohne Doppel-Margin.
+ */
+.dg-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dg-space-3);
+  min-width: 0;
+}
+.dg-form-section > .dg-field,
+.dg-form-section > .dg-field-hint,
+.dg-form-section > .dg-form-grid,
+.dg-form-section > .dg-stack,
+.dg-form-section > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.dg-form-section > legend.dg-subsection-title,
+.dg-form-section > .dg-subsection-title {
+  margin: 0;
+  float: none;
+  width: auto;
+  padding: 0;
+  border: 0;
 }
 
 /*

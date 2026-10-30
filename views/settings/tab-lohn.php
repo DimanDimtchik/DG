@@ -118,8 +118,8 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </div>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1rem 0 0">
-      <legend class="dg-subsection-title" style="font-size:1rem">Umlagen</legend>
+    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">Umlagen</legend>
       <p class="dg-field-hint">Teilnahme bewusst setzen (auch „nein“). Werte fließen später in die Berechnung (L4).</p>
       <label class="dg-field dg-field--checkbox">
         <span>
@@ -127,7 +127,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
           U1 (Krankheit / Ausgleichsverfahren)
         </span>
       </label>
-      <label class="dg-field">
+      <label class="dg-field dg-field--wide">
         <span>U1-Erstattungssatz (Schlüssel)</span>
         <input type="text" name="lohn[u1_erstattungssatz_key]" maxlength="64"
                value="<?= View::escape((string) ($lohn['u1_erstattungssatz_key'] ?? '')) ?>"
@@ -148,15 +148,18 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
-    <label class="dg-field dg-field--checkbox" style="margin-top:1rem">
-      <span>
-        <input type="checkbox" name="lohn[baulohn_enabled]" value="1"<?= !empty($lohn['baulohn_enabled']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
-        Baulohn aktiv (nur Flag — ohne Funktion bis Stufe C)
-      </span>
-    </label>
+    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">Baulohn (Stufe C)</legend>
+      <label class="dg-field dg-field--checkbox">
+        <span>
+          <input type="checkbox" name="lohn[baulohn_enabled]" value="1"<?= !empty($lohn['baulohn_enabled']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
+          Baulohn aktiv (nur Flag — ohne Funktion bis Stufe C)
+        </span>
+      </label>
+    </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1.25rem 0 0">
-      <legend class="dg-subsection-title" style="font-size:1rem">FiBu-Übernahme (L7)</legend>
+    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">FiBu-Übernahme (L7)</legend>
       <p class="dg-field-hint">
         Live-Buchung erst nach Gate G1 / Steuerberater-Kontenfreigabe.
         Defaults SKR03: 4120/4130/1740/1741/1742 · SKR04: 6200/6220/3500/3510/3520.
@@ -185,8 +188,8 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </div>
     </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1.25rem 0 0">
-      <legend class="dg-subsection-title" style="font-size:1rem">SEPA-Auszahlung (L8)</legend>
+    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">SEPA-Auszahlung (L8)</legend>
       <p class="dg-field-hint">
         pain.001.001.03 Sammler (Netto) für Bank-Upload. Live erst nach Gate G3.
         Ohne Flag erzeugt der Monatslauf nur kennzeichnete PROBE-Dateien.
@@ -201,8 +204,8 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1.25rem 0 0">
-      <legend class="dg-subsection-title" style="font-size:1rem">Lohnsteuer ELSTER (L10)</legend>
+    <fieldset class="dg-form-section dg-mt-4" style="border:0;padding:0;margin-left:0;margin-right:0">
+      <legend class="dg-subsection-title">Lohnsteuer ELSTER (L10)</legend>
       <p class="dg-field-hint">
         Live-Anmeldung erst nach Gate G2 / L10c. L10b speichert Test-Payloads und Kontroll-CSV.
         Zertifikat und ERiC-Modus unter Einstellungen → ELSTER. Nicht mit UStVA vermischen.

@@ -121,7 +121,7 @@ Utilities: `.dg-mt-*`, `.dg-mb-*`, `.dg-gap-*`, `.dg-stack` / `--tight` / `--loo
 | Feldgrid | `.dg-form-grid` (+ `--compact`) |
 | Feld | `label.dg-field` (+ `--wide` `--checkbox` `--actions`) |
 | Checkbox-Zeile | `.dg-checkbox` / `.dg-field--checkbox` |
-| Abschnitte | `.dg-form-section` |
+| Abschnitte | `.dg-form-section` (flex-Spalte + `gap` — auch für Checkbox-Stapel in fieldset) |
 | **Aktionszeile** | `.dg-form-actions` (+ `--split`) — **Pflicht** vor Submit |
 | Inline-Filter | `.dg-btn-row` |
 | Nur-GET-Filter neben Feld | `.dg-btn-row` / Stack, nicht nackter Button unter Textarea |
