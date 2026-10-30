@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L3 ✅)  
+> **Stand:** 2026-10-30 (L0–L3 ✅ · L4a ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L0–L3 ✅ · nächster Chat: **`l4a`** (Brutto→Netto Spec)
+> **Status:** L4a Spec Rechenkern ✅ · nächster Chat: **`l4b`** (Tabellen-Import)
 
 ---
 
@@ -737,24 +737,209 @@ Felder: `contact_id`, `wage_type_id`, `amount`, `valid_from`/`valid_to`, `priori
 
 ## Serie L4 — Brutto→Netto-Kern (ohne UI-Lauf)
 
-### L4a — Spec Rechenkern + Tabellen
+> Einstieg: `l4a` · L4a ✅ · weiter mit `l4b`
 
-- Eingaben/Ausgaben je MA-Monat (Brutto, LSt, SolZ, KiSt, KV/PV/RV/AV AN/AG, Umlagen, Netto).
-- Jahreswerte versioniert (`gültig_ab`).
-- Mini/Midi/Pauschalen; GF sv-frei-Pfad.
-- Testvektoren (mind. 5 Fälle) in Spec-Tabelle — **ohne** Behörden-Geheimnisse.
+### L4a — Spec Rechenkern + Tabellen ✅ 2026-10-30
 
-**Nicht:** ITSG-XML, Baulohn, ELSTER.
+Nur Spezifikation — Import/Versionierung = **L4b**, Engine-Code/Tests = **L4c**. Kein PHP in L4a. Kein Monatslauf-UI (L5).
+
+#### Ziel
+
+Deterministischer **Brutto→Netto-Kern** für Stufe A (Lexware-Office-Niveau): gleiche Codebasis, Tabellenwerte je Instanz-DB, versioniert mit `gültig_ab` (L0b D1). Engine liest nur freigegebene Tabellenversionen + MA-/AG-Stamm (L1–L3). Ergebnis ist **Berechnungsobjekt** für L5 — nicht PDF, nicht FiBu, nicht Meldung.
+
+#### Speicher-Entscheidung (verbindlich für L4b)
+
+| Ansatz | Entscheidung |
+|--------|--------------|
+| Sätze hardcodiert in PHP | **Nein** (Jahreswechsel / GoBD) |
+| Lose Settings-JSON ohne Version | **Nein** |
+| Tabellenkopf + Parameterzeilen in Instanz-DB | **Ja** |
+| Tabellenname (L4b) | `dg_payroll_rate_sets` + `dg_payroll_rate_params` |
+| Ergebnis-Persistenz Monat | **Nein** in L4 — erst L5 (`draft`/`calculated`…) |
+
+##### `dg_payroll_rate_sets` (Kopf)
+
+| Spalte | Typ | Bedeutung |
+|--------|-----|-----------|
+| `id` | PK | |
+| `valid_from` | DATE NOT NULL | Wirksamkeitsbeginn (`gültig_ab`) |
+| `valid_to` | DATE NULL | optional Ende; sonst „offen bis nächste Version“ |
+| `label` | VARCHAR(120) | z. B. `FIXTURE-2026-A` oder Import-Bezeichnung |
+| `source_note` | VARCHAR(255) | Herkunft (Datei/Lieferant); **keine** Behörden-Geheimnisse im Repo |
+| `checksum` | VARCHAR(64) | optional Hash der Importdatei |
+| `is_active` | TINYINT | 1 = für Engine wählbar |
+| `created_at` / `created_by_user_id` | | Audit-Anlage |
+| `superseded_at` / `superseded_by_user_id` | | Audit bei Ablösung |
+
+Eindeutigkeit: kein zweiter aktiver Satz mit gleichem `valid_from`. Auswahlregel Engine: für Abrechnungsmonat `M` den Satz mit max(`valid_from`) ≤ Monatsende und (`valid_to` IS NULL OR `valid_to` ≥ Monatsbeginn), sonst Fehler „Tabelle fehlt“.
+
+##### `dg_payroll_rate_params` (Werte)
+
+| Spalte | Typ | Bedeutung |
+|--------|-----|-----------|
+| `id` | PK | |
+| `rate_set_id` | FK | → `dg_payroll_rate_sets` |
+| `param_key` | VARCHAR(64) | Allowlist unten |
+| `param_value` | DECIMAL(18,8) | numerisch; Prozentsätze als Anteil (0.146 = 14,6 %) oder EUR |
+| UNIQUE | (`rate_set_id`, `param_key`) | |
+
+##### Parameter-Allowlist Stufe A (L4b-Seed nur Fixtures / Import)
+
+| `param_key` | Einheit | Verwendung |
+|-------------|---------|------------|
+| `minijob_month_limit_eur` | EUR | Geringfügigkeitsgrenze Monat |
+| `midi_lower_eur` / `midi_upper_eur` | EUR | Übergangsbereich Grenzen |
+| `kv_an_rate` / `kv_ag_rate` | Anteil | KV AN/AG (ohne Zusatzbeitrag) |
+| `kv_additional_an_rate` | Anteil | Zusatzbeitrag AN (Durchschnitt/Mandant — Import) |
+| `rv_an_rate` / `rv_ag_rate` | Anteil | RV |
+| `av_an_rate` / `av_ag_rate` | Anteil | AV |
+| `pv_an_rate` / `pv_ag_rate` | Anteil | PV Basis |
+| `pv_childless_surcharge_an` | Anteil | Zuschlag kinderlos AN (wenn Merkmal gesetzt; Stufe A: optional Flag später / 0 in Fixture) |
+| `bbg_kv_month_eur` / `bbg_rv_month_eur` | EUR | BBG Monat (KV/PV bzw. RV/AV) — Import |
+| `u1_rate` / `u2_rate` / `u3_rate` | Anteil | Umlagen AG (aus AG-Stamm-Satzart × Tabelle) |
+| `minijob_flat_lst_rate` / `minijob_flat_kv_rate` | Anteil | Pauschalen Minijob (wenn Pauschal-Pfad) |
+| `solz_rate` | Anteil | Solidaritätszuschlag auf LSt (Vereinfachung Stufe A) |
+| `kst_ek_rate` / `kst_rk_rate` | Anteil | Kirchensteuer auf LSt je Merkmal |
+| `lst_fixture_factor` | Anteil | **nur Fixture/Tests:** Pseudo-LSt = Faktor × steuerpflichtiges Brutto — **kein** EStG-Tarif im Repo |
+
+**Bewusst nicht in L4a/L4b als Repo-Wahrheit:** amtliche LSt-Jahrestabellen, geheime Schlüssel, ELSTER-Payloads. Produktiv-LSt in L4c: entweder (a) importierte Tabellenzeilen (später erweiterbar) oder (b) bis Import existiert **nur** Fixture-Faktor + dokumentierte Lücke „LSt-Tarif = Importpflicht“. Stufe-A-Produkt: L4b muss vor produktivem Lauf echte Parameter liefern; Unit-Tests laufen gegen `FIXTURE-*`.
+
+#### Engine-Schnittstelle (Rahmen für L4c)
+
+```text
+PayrollEngineInterface::calculate(PayrollCalcRequest): PayrollCalcResult
+StandardPayrollEngine — einzige Implementierung in Stufe A
+(BaulohnEngine / … erst LC — nicht registrieren)
+```
+
+| Teil | Inhalt |
+|------|--------|
+| **Request** | `contact_id`, `period_ymd` (Monatsanfang), Snapshot AG (`PayrollEmployerSettings`), Snapshot MA (`employee_data` payroll + Stammdaten), Lohnarten-Zuordnungen (L3c), optionale Zeit-/Einmalbeträge (L5 füllt; L4c Tests stubben), `rate_set_id` oder Auto-Wahl |
+| **Result** | siehe Ausgaben-Katalog; `rate_set_id` + `engine` = `standard`; `warnings[]`; bei Blockern `ok=false` |
+
+Kein Schreiben in DB in L4c — pure Funktion. Persistenz = L5.
+
+#### Eingaben je MA-Monat (Katalog)
+
+| Gruppe | Quelle | Pflicht für `ok` |
+|--------|--------|------------------|
+| Periode | Aufrufer | ja |
+| AG-Stamm | L1 `company_extended.lohn` | Betriebsnummer/Umlage-Satzart wenn SV/Umlage |
+| MA Stammdaten | L2 payroll + Kontakt | laut L2a-Pflichtmatrix je `payroll_employment_type` |
+| Lohnarten-Beträge | L3c Assignments (gültig in Periode) + Stub-Stunden | mind. eine Brutto-Position oder Stub |
+| Beitragsgruppen | `contribution_group_key` / `person_group_key` | ja außer dokumentiertem Mini-/GF-Sonderpfad |
+| Steuermerkmale | tax_id, tax_class, child_allowances, religion_code | ja außer Mini-Pauschal ohne LSt-Einzeln |
+| Rate-Set | DB | ja |
+
+#### Ausgaben je MA-Monat (Katalog)
+
+Beträge in EUR, 2 Nachkommastellen kaufmännisch; Zwischenschritte intern 4+ Stellen ok.
+
+| Key | Bedeutung |
+|-----|-----------|
+| `gross_taxable` | steuerpflichtiges Brutto (Summe Lohnarten mit `taxable`) |
+| `gross_sv` | SV-Brutto (Flags `subject_to_sv`, nach Mini/Midi/BBG-Regeln) |
+| `gross_total` | Summe earnings (Richtung earning) |
+| `lst` | Lohnsteuer |
+| `solz` | Solidaritätszuschlag |
+| `kst` | Kirchensteuer |
+| `kv_an` / `kv_ag` | KV AN/AG inkl. Zusatzbeitrag-Anteil laut Param |
+| `rv_an` / `rv_ag` | RV |
+| `av_an` / `av_ag` | AV |
+| `pv_an` / `pv_ag` | PV |
+| `u1` / `u2` / `u3` | Umlagen **nur AG** |
+| `flat_lst` / `flat_other` | Pauschalsteuern/-abgaben (Mini o. Ä.) |
+| `net_deductions` | Nettolohnabzüge (Lohnarten `deduction`) |
+| `net_pay` | Auszahlungsnetto |
+| `employer_cost` | AG-Kosten ≈ gross_total + AG-SV + Umlagen + AG-Pauschalen (Definition in L4c festhalten) |
+| `lines[]` | Positionen: wage_type_id/code, amount, flags-Auswirkung |
+
+**Netto-Formel (Stufe A, verbindlich):**
+
+`net_pay = gross_total − lst − solz − kst − (kv_an+rv_an+av_an+pv_an) − net_deductions − flat_lst_employee_share`
+
+Pauschalen Minijob: soweit gesetzlich AG-getragen → nicht von `net_pay` abziehen; in `flat_*` + `employer_cost` ausweisen. L4c dokumentiert die Aufteilung je Param-Pfad.
+
+#### Rechenpfade nach Beschäftigungsart
+
+| `payroll_employment_type` | Pfad | Kurzregeln |
+|---------------------------|------|------------|
+| `fulltime` / `parttime` | **Standard** | LSt via Tarif/Import bzw. Fixture-Faktor; SV nach Beitragsgruppe × Sätze × BBG; KiSt/SolZ aus LSt; Umlagen aus AG-Satzart |
+| `minijob` | **Mini** | Brutto ≤ `minijob_month_limit_eur` (sonst Warnung/Block „kein Mini“); Pauschal-KV/LSt laut Param **oder** individueller Steuerpfad wenn Stamm so gesetzt; RV-Aufstockung Stufe A: nur wenn MA-Flag später — Default Fixture ohne Aufstockung |
+| `midijob` | **Midi / Übergang** | SV-Brutto im Band `midi_lower`…`midi_upper`; reduzierte AN-Last nach importierter Formel-Parametern (L4b Keys erweiterbar, z. B. `midi_factor_*`); LSt wie Standard auf steuerpflichtiges Brutto; `annual_earnings_estimate_eur` nur Plausibilitäts-Warnung in A, keine automatische Umschlüsselung |
+| `managing_director` | **GF** | LSt/SolZ/KiSt wie Standard; wenn `controlling_managing_director` **und** `sv_exempt`: **kein** KV/RV/AV/PV AN/AG, Umlagen 0, Warning „SV-frei laut Stamm“; ohne Flag `sv_exempt` ignorieren (L2b); ohne Flag aber Typ GF → Standard-SV |
+
+Stundenlohn: Menge × Satz aus Assignment `WAGE_HOUR` / Stub-Stunden in Request — gleiche Pfade.
+
+#### Strategy & Abgrenzung Code
+
+| Thema | L4 |
+|-------|-----|
+| Interface + `StandardPayrollEngine` | L4c |
+| Andere Engines | nicht in A |
+| Monatslauf-UI / Status | L5 |
+| PDF | L6 |
+| FiBu | L7 |
+| SEPA | L8 |
+| ITSG / ELSTER / ELStAM | LB / L10 / Gates |
+| Baulohn | LC |
+
+#### Testvektoren (mind. 5) — nur **FIXTURE**, keine Amtswerte
+
+Gemeinsames Rate-Set `FIXTURE-2026-A` (Beispieldaten für Unit-Tests; **nicht** produktiv übernehmen):
+
+| param_key | value |
+|-----------|-------|
+| `minijob_month_limit_eur` | 560 |
+| `midi_lower_eur` | 560.01 |
+| `midi_upper_eur` | 2000 |
+| `kv_an_rate` / `kv_ag_rate` | 0.073 / 0.073 |
+| `kv_additional_an_rate` | 0.017 |
+| `rv_an_rate` / `rv_ag_rate` | 0.093 / 0.093 |
+| `av_an_rate` / `av_ag_rate` | 0.013 / 0.013 |
+| `pv_an_rate` / `pv_ag_rate` | 0.017 / 0.017 |
+| `pv_childless_surcharge_an` | 0 |
+| `bbg_kv_month_eur` / `bbg_rv_month_eur` | 5000 / 7500 |
+| `u1_rate` / `u2_rate` / `u3_rate` | 0.017 / 0.004 / 0.0006 |
+| `minijob_flat_lst_rate` / `minijob_flat_kv_rate` | 0.02 / 0.13 |
+| `solz_rate` | 0.055 |
+| `kst_ek_rate` / `kst_rk_rate` | 0.09 / 0.09 |
+| `lst_fixture_factor` | 0.14 |
+
+Rundungstest: Endbeträge auf 2 Dezimalen; L4c legt Banker’s vs. kaufmännisch fest (Default **kaufmännisch** ROUND_HALF_UP).
+
+| # | Name | Input (Kurz) | Erwartete Kern-Outputs (logisch) |
+|---|------|--------------|----------------------------------|
+| V1 | Festgehalt Standard | Typ fulltime, Assignment SALARY_MONTH 3000, StKl 1, religion none, Beitragsgruppe voll | `gross_total=3000`; `lst=420` (=0,14×3000); `solz=23.10`; SV-AN aus gross_sv=3000; `kst=0`; `net_pay` = 3000−420−23.10−Σ AN |
+| V2 | Stundenlohn | Typ parttime, WAGE_HOUR 15 × 80 h Stub | `gross_total=1200`; LSt/SV analog V1-Faktoren auf 1200 |
+| V3 | Minijob Pauschale | Typ minijob, Brutto 520, Pauschal-Pfad | `flat_lst`/`flat_other` aus 2 %/13 % auf 520; kein individueller `lst` (oder 0); SV-AN 0 im Default-Fixture; Brutto ≤ Limit |
+| V4 | Midijob Band | Typ midijob, Brutto 1200, Schätzer gesetzt | `gross_sv` im Midi-Band; AN-SV **niedriger** als reines Standard auf 1200 (L4c: konkrete Midi-Formel mit zusätzlichen Fixture-Params `midi_an_factor=0.7` o. Ä. — in L4b-Seed dokumentieren); LSt wie Faktor×1200 |
+| V5 | GF sv-frei | Typ managing_director, Flags controlling+sv_exempt+Begründung, Gehalt 5000 | `lst`/`solz`/`kst` wie Standard-Faktor; **alle** `*_an`/`*_ag` SV = 0; Umlagen 0; Warning gesetzt |
+| V6 | Nettolohnabzug | wie V1 + Assignment NET_DEDUCTION 100 | `net_deductions=100`; `net_pay` um 100 niedriger als V1 |
+
+L4c: goldene Zahlen für V1–V6 fest in Testfile hardcoden (aus FIXTURE berechnet); bei Formeländerung Spec+Vektoren zusammen anpassen.
+
+#### Abnahme L4a
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Ein-/Ausgaben-Katalog + Netto-Formel | ✅ |
+| Tabellen `rate_sets`/`rate_params` + Allowlist | ✅ |
+| Mini/Midi/GF-Pfade | ✅ |
+| ≥5 Fixture-Testvektoren, keine Amtsgeheimnisse | ✅ |
+| Kein PHP / kein Import-Code / kein Monatslauf | ✅ |
+
+**Nicht:** Migration, Import-UI, Engine-PHP, ITSG-XML, Baulohn, ELSTER, PDF.
 
 ### L4b — Tabellen-Import + Versionierung (Code)
 
-Import-Pfad für Jahresdatei; Audit.
+Migration laut L4a; Import-Pfad für Jahresdatei; Audit; Fixture-Seed für Tests.
 
 **Nicht:** Monatslauf-UI.
 
 ### L4c — `StandardPayrollEngine` + Unit-Tests
 
-Strategy-Interface; nur Standard-Engine. Tests gegen L4a-Vektoren.
+`PayrollEngineInterface`; nur `StandardPayrollEngine`. Tests gegen L4a-Vektoren V1–V6.
 
 **Nicht:** PDF, FiBu, SEPA.
 
@@ -934,15 +1119,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l3a` Lohnarten Spec | ✅ 2026-10-30 |
 | — | `l3b` Lohnarten Migration/CRUD | ✅ 2026-10-30 |
 | — | `l3c` MA↔Lohnart Zuordnung | ✅ 2026-10-30 |
-| 1 | `l4a` Brutto→Netto Spec | **als Nächstes** |
+| — | `l4a` Brutto→Netto Spec | ✅ 2026-10-30 |
+| 1 | `l4b` Tabellen-Import/Versionierung | **als Nächstes** |
 
-Danach L4b → … nicht überspringen. **L4 erst wenn L1–L3 stabil** (jetzt erfüllt).
+Danach L4c → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l4a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L4a. Nicht andere L-Pakete.
+Lohn Implementierung: l4b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L4b. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```
