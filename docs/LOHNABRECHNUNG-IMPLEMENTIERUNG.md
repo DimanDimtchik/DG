@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L9a ✅)  
+> **Stand:** 2026-10-30 (L0–L9b ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L9a Spec SV-Portal ✅ · nächster Chat: **`l9b`** (Export CSV/PDF)
+> **Status:** L9b SV-Portal-Export ✅ · nächster Chat: **`l10a`** (LSt/ELSTER Spec)
 
 ---
 
@@ -1712,7 +1712,7 @@ XML-Erzeugung, Meta `dg_payroll_sepa_exports`, Download, Probe-Kennzeichnung, UI
 
 ## Serie L9 — SV-Vorbereitung / Meldeportal-Export
 
-> Einstieg: `l9a` · L9a ✅ · weiter mit `l9b`  
+> Einstieg: `l9a` · L9a ✅ · L9b ✅ · weiter mit `l10a`  
 > L0b **D7 / E2:** in Stufe A nur **Portal-Vorbereitung/Export** — kein ITSG-Direktversand (§ 95b SGB IV / Systemuntersuchung = **LB**).  
 > Gate **G3** (Pilot ohne Lexware) setzt mind. 2 Testmonate inkl. L9 voraus — nicht mit Live-ITSG verwechseln.
 
@@ -1895,11 +1895,22 @@ Wiederverwenden: Aggregation-Ideen aus `PayrollFibuService::aggregateAmounts` (S
 
 **Nicht:** Generator-Code, CSV/PDF-Dateien, ITSG-Zertifikat, DEÜV-Senden, LB-Pakete.
 
-### L9b — Export CSV/PDF Kontrolle
+### L9b — Export CSV/PDF Kontrolle ✅ 2026-10-30
 
-CSV (Pflicht) + optional PDF aus L9a-Aggregaten; Seite `lohn-auswertungen` + Download/Audit.
+CSV (Pflicht) aus L9a-Aggregaten; Seite `lohn-auswertungen` + Download/Audit. PDF-Kontrollblatt bewusst **nicht** in L9b (optional später).
 
-**Nicht:** LB-Pakete; kein ITSG-Versand.
+`PayrollSvPortalService`: Beitragsnachweis je KK-BN (+ UNKNOWN), Stammkontrolle mit Ampel/Meldehinweis, CSV UTF-8-BOM DE-Zahlen, Meta `dg_payroll_sv_exports` (Migration **132**), Storage `storage/payroll/sv/`. Menü + Seite `/app?page=lohn-auswertungen`, Link vom gesperrten Monatslauf. Selftest: `bin/payroll-sv-portal-l9b-selftest.php`.
+
+#### Abnahme L9b
+
+| Kriterium | Status |
+|-----------|--------|
+| Aggregation + Stammkontrolle laut L9a | ✅ |
+| CSV Download (Beitrag/Stamm/kombiniert) + Meta | ✅ |
+| UI `lohn-auswertungen` + Monatslauf-Link | ✅ |
+| Selftest ohne DB; kein ITSG/DEÜV-Versand | ✅ |
+
+**Nicht:** LB-Pakete; kein ITSG-Versand; kein PDF in diesem Paket.
 
 ---
 
@@ -1996,15 +2007,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l8a` Spec SEPA-XML | ✅ 2026-10-30 |
 | — | `l8b` SEPA-Generator + Download + Audit | ✅ 2026-10-30 |
 | — | `l9a` Spec SV-Kontrolllisten / Beitragsnachweis-Vorbereitung | ✅ 2026-10-30 |
-| 1 | `l9b` Export CSV/PDF Kontrolle (SV-Portal) | **als Nächstes** |
+| — | `l9b` Export CSV/PDF Kontrolle (SV-Portal) | ✅ 2026-10-30 |
+| 1 | `l10a` Spec LSt-Anmeldung / Bescheinigung (ELSTER) | **als Nächstes** |
 
-Danach L10a → … nicht überspringen.
+Danach L10b → … nicht überspringen (Gate G2).
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l9b laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L9b. Nicht andere L-Pakete.
+Lohn Implementierung: l10a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L10a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

@@ -84,6 +84,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=lohn-lohnkonto">Lohnkonto</a>
+      <a class="dg-button" href="/app?page=lohn-auswertungen&amp;month=<?= View::escape($month) ?><?= $runId > 0 ? '&amp;run=' . $runId : '' ?>">SV-Portal</a>
       <a class="dg-button" href="/app?page=lohn-lohnarten">Lohnarten</a>
       <a class="dg-button" href="/app?page=lohn-beitragstabellen">Beitragstabellen</a>
     </div>
@@ -483,6 +484,15 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <p class="dg-field-hint">Korrektur-Lauf: prüfen, ob der Vorgänger per Storno-FiBu ausgeglichen wurde.</p>
           <?php endif; ?>
         <?php endif; ?>
+      <?php endif; ?>
+
+      <?php if ($runId > 0 && $isLocked && !$isSuperseded) : ?>
+        <p class="dg-field-hint" style="margin:1rem 0">
+          <a href="/app?page=lohn-auswertungen&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>">
+            SV-Portal-Vorbereitung
+          </a>
+          — Beitragsnachweis-/Stamm-Kontrolllisten (kein Versand).
+        </p>
       <?php endif; ?>
 
       <?php if ($runId > 0 && $isLocked && !$isSuperseded && $sepaKindOk) : ?>

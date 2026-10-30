@@ -115,6 +115,12 @@ final class MenuRegistry
                 'href' => '/app?page=lohn-lohnkonto',
             ],
             [
+                'slug' => 'lohn-auswertungen',
+                'label' => 'SV-Portal / Auswertungen',
+                'icon' => 'ledger',
+                'href' => '/app?page=lohn-auswertungen',
+            ],
+            [
                 'slug' => 'lohn-lohnarten',
                 'label' => 'Lohnarten',
                 'icon' => 'ledger',
@@ -923,6 +929,7 @@ final class MenuRegistry
             || $slug === 'lohn-beitragstabellen'
             || $slug === 'lohn-monatslauf'
             || $slug === 'lohn-lohnkonto'
+            || $slug === 'lohn-auswertungen'
             || $slug === 'lohn'
         ) {
             return PayrollEmployeeAccess::canView($user);

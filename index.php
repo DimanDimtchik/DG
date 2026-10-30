@@ -8061,6 +8061,106 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/lohn-lohnkonto';
             $title = 'Lohnkonto';
             $currentPage = 'lohn-lohnkonto';
+        } elseif ($page === 'lohn-auswertungen' && MenuRegistry::canAccess($user, 'lohn-auswertungen')) {
+            MigrationRunner::runPending();
+            PayrollRunRepository::ensureReady();
+            PayrollSvPortalService::ensureReady();
+            $payrollSvMonth = trim((string) ($_GET['month'] ?? ''));
+            if (!preg_match('/^\d{4}-\d{2}$/', $payrollSvMonth)) {
+                $payrollSvMonth = date('Y-m');
+            }
+            [$svY, $svM] = array_map('intval', explode('-', $payrollSvMonth));
+            $payrollSvRuns = PayrollRunRepository::listForPeriod($svY, $svM);
+            $payrollSvRunId = (int) ($_GET['run'] ?? 0);
+            $payrollSvRun = $payrollSvRunId > 0 ? PayrollRunRepository::find($payrollSvRunId) : null;
+            if ($payrollSvRun === null) {
+                foreach ($payrollSvRuns as $cand) {
+                    if (
+                        (string) ($cand['status'] ?? '') === PayrollRunRepository::STATUS_LOCKED
+                        && empty($cand['is_superseded'])
+                    ) {
+                        $payrollSvRun = $cand;
+                        $payrollSvRunId = (int) ($cand['id'] ?? 0);
+                        break;
+                    }
+                }
+            }
+            $payrollSvTab = trim((string) ($_GET['tab'] ?? 'beitrag'));
+            if (!in_array($payrollSvTab, ['beitrag', 'stamm'], true)) {
+                $payrollSvTab = 'beitrag';
+            }
+            $payrollSvBeitrag = null;
+            $payrollSvStamm = null;
+            $payrollSvError = null;
+            $payrollSvExports = [];
+            $payrollSvChecklist = PayrollSvPortalService::auditorChecklist();
+
+            if ($payrollSvRun !== null) {
+                $payrollSvExports = PayrollSvPortalService::listExportsForRun((int) $payrollSvRun['id']);
+                $svDl = (int) ($_GET['sv_dl'] ?? 0);
+                if ($svDl > 0) {
+                    $svMeta = PayrollSvPortalService::findExport($svDl);
+                    if (
+                        $svMeta !== null
+                        && (int) ($svMeta['run_id'] ?? 0) === (int) $payrollSvRun['id']
+                    ) {
+                        try {
+                            $csvBin = PayrollSvPortalService::readStoredCsv($svDl);
+                        } catch (Throwable $e) {
+                            Flash::set('error', $e->getMessage());
+                            header(
+                                'Location: /app?page=lohn-auswertungen&month=' . rawurlencode($payrollSvMonth)
+                                . '&run=' . (int) $payrollSvRun['id'],
+                                true,
+                                302
+                            );
+                            exit;
+                        }
+                        if ($csvBin === null) {
+                            http_response_code(404);
+                            exit('SV-CSV nicht gefunden.');
+                        }
+                        $dlName = (string) ($svMeta['filename'] ?? ('lohn-sv-' . $svDl . '.csv'));
+                        header('Content-Type: text/csv; charset=utf-8');
+                        header('Content-Disposition: attachment; filename="' . str_replace('"', '', $dlName) . '"');
+                        header('X-Content-Type-Options: nosniff');
+                        echo $csvBin;
+                        exit;
+                    }
+                }
+                if (trim((string) ($_GET['download'] ?? '')) === 'csv') {
+                    $kind = trim((string) ($_GET['kind'] ?? PayrollSvPortalService::KIND_COMBINED));
+                    try {
+                        $exported = PayrollSvPortalService::exportCsv(
+                            (int) $payrollSvRun['id'],
+                            $kind,
+                            (int) $user->id,
+                            'Kontroll-CSV SV-Portal'
+                        );
+                        header('Content-Type: text/csv; charset=utf-8');
+                        header(
+                            'Content-Disposition: attachment; filename="'
+                            . str_replace('"', '', (string) $exported['filename']) . '"'
+                        );
+                        header('X-Content-Type-Options: nosniff');
+                        echo $exported['csv'];
+                        exit;
+                    } catch (Throwable $e) {
+                        $payrollSvError = $e->getMessage();
+                    }
+                }
+                try {
+                    $combined = PayrollSvPortalService::previewCombined((int) $payrollSvRun['id']);
+                    $payrollSvBeitrag = $combined['beitrag'];
+                    $payrollSvStamm = $combined['stamm'];
+                } catch (Throwable $e) {
+                    $payrollSvError = $e->getMessage();
+                }
+            }
+
+            $contentTemplate = 'modules/lohn-auswertungen';
+            $title = 'SV-Portal / Auswertungen';
+            $currentPage = 'lohn-auswertungen';
         } elseif ($page === 'zeiterfassung-lohnexport' && MenuRegistry::canAccess($user, 'zeiterfassung-lohnexport')) {
             MigrationRunner::runPending();
             $rawMonth = isset($_GET['month']) ? trim((string) $_GET['month']) : '';
