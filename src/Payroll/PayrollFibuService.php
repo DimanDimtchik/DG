@@ -19,6 +19,38 @@ final class PayrollFibuService
     public const ROLE_LIABILITY_TAX = 'liability_tax';
     public const ROLE_LIABILITY_SV = 'liability_sv';
 
+    /**
+     * @return array<string, string> role => Label DE
+     */
+    public static function roleLabels(): array
+    {
+        return [
+            self::ROLE_EXPENSE_WAGES => 'Personalaufwand Löhne',
+            self::ROLE_EXPENSE_SOCIAL => 'Sozialaufwand AG',
+            self::ROLE_LIABILITY_NET => 'Verb. Nettolöhne',
+            self::ROLE_LIABILITY_TAX => 'Verb. LSt/SolZ/KiSt (FA)',
+            self::ROLE_LIABILITY_SV => 'Verb. SV',
+        ];
+    }
+
+    /**
+     * Betriebsprüfer-Stichprobe (UI-Checkliste L7c).
+     *
+     * @return list<string>
+     */
+    public static function auditorChecklist(): array
+    {
+        return [
+            'Monatslauf ist gesperrt (locked) und nicht ersetzt.',
+            'PDF-Abrechnungen der ok-MA vorhanden (Lohnkonto / CRM-Abrechnungen).',
+            'Konten SKR bestätigt (Defaults oder Overrides unter Einstellungen → Lohn).',
+            'Flag payroll_fibu_live nur nach Gate G1 / Berater-Freigabe setzen.',
+            'Belegkette: Run → Journalbatch (source=payroll) → PDF nachvollziehbar.',
+            'Bei Korrektur: ggf. zuerst Storno-Lauf buchen, dann Korrektur-Lauf.',
+            'Keine USt auf Lohnzeilen; kein SEPA in diesem Schritt.',
+        ];
+    }
+
     public static function ensureReady(): void
     {
         if (!Database::isConfigured()) {

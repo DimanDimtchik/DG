@@ -1,9 +1,9 @@
 # Lohnabrechnung — Implementierungsplan (token-sparend)
 
-> **Stand:** 2026-10-30 (L0–L7b ✅)  
+> **Stand:** 2026-10-30 (L0–L7 ✅)  
 > **Fachquellen:** [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) (Detailkonzept) · [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § D0 · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) §2  
 > **Vorbild Betriebsstil:** [`ZEITERFASSUNG-PLAN.md`](ZEITERFASSUNG-PLAN.md) Serien Z2–Z6  
-> **Status:** L7b Buchungs-Service ✅ · nächster Chat: **`l7c`** (FiBu-UI)
+> **Status:** L7c FiBu-UI ✅ · nächster Chat: **`l8a`** (SEPA Spec)
 
 ---
 
@@ -983,7 +983,7 @@ Verhalten: Rundung `ROUND_HALF_UP` 2 Dezimalen; LSt = `lst_fixture_factor` × st
 
 ## Serie L5 — Monatslauf, Entwurf, Freigabe, Sperre
 
-> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l7c`
+> Einstieg: `l5a` · L5a–c ✅ · weiter mit `l8a`
 
 ### L5a — Spec Lauf & GoBD-Workflow ✅ 2026-10-30
 
@@ -1200,7 +1200,7 @@ Rechte: sehen = `PayrollRunAccess::canView`; edit/calculate = `canEditRun`; frei
 
 ## Serie L6 — PDF-Abrechnung & Lohnkonto
 
-> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l7c`
+> Einstieg: `l6a` · L6a–c ✅ · weiter mit `l8a`
 
 ### L6a — Spec PDF + Lohnkonto ✅ 2026-10-30
 
@@ -1384,7 +1384,7 @@ Seite `/app?page=lohn-lohnkonto` (`PayrollLohnkontoService`): MA/Jahr, Spalten M
 
 ## Serie L7 — FiBu-Buchung
 
-> Einstieg: `l7a` · L7a–b ✅ · weiter mit `l7c`  
+> Einstieg: `l7a` · L7a–c ✅ · weiter mit `l8a`  
 > Gate **G1** vor **Produktiv**-Buchung (Flag). Spec/Code L7a–c dürfen vor G1 entstehen — Schreiben ins Journal nur mit `payroll_fibu_live` **oder** Admin-Probe auf Master.
 
 ### L7a — Spec Buchungssätze ✅ 2026-10-30
@@ -1541,11 +1541,21 @@ Textzeile Beschreibung: `Lohn {MM/YYYY} Run #{id} ({kind})` + Kurz-Reason.
 
 **Nicht:** SEPA-Datei; UI „In FiBu übernehmen“ = L7c.
 
-### L7c — UI „In FiBu übernehmen“ + Stichprobe
+### L7c — UI „In FiBu übernehmen“ + Stichprobe ✅ 2026-10-30
 
-Abnahme mit Betriebsprüfer-Checkliste (Belegkette Monat → Buchung → PDF); Konten-Bestätigung vor Live-Flag.
+Monatslauf: Vorschau Konten/Zeilen, Betriebsprüfer-Checkliste, Buchung mit Begründung/`posting_date`, Admin-Probe ohne Live-Flag. Settings → Lohn: `payroll_fibu_live` + Konten-Overrides. Rechte `canPostFibu`. Selftest: `bin/payroll-fibu-l7c-selftest.php`.
 
-**Nicht:** SEPA.
+#### Abnahme L7c
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Preview approved/locked + Book nur locked | ✅ |
+| Checkliste + Kontenanzeige | ✅ |
+| Live-Flag / Admin-Probe / Idempotenz-Hinweis | ✅ |
+| Settings Overrides | ✅ |
+| Kein SEPA | ✅ |
+
+**Nicht:** SEPA (L8).
 
 ---
 
@@ -1666,15 +1676,16 @@ Kein Deploy außer Nutzer sagt „deploy“.
 | — | `l6c` Lohnkonto-UI + Export | ✅ 2026-10-30 |
 | — | `l7a` Spec Buchungssätze | ✅ 2026-10-30 |
 | — | `l7b` Buchungs-Service + Protokoll | ✅ 2026-10-30 |
-| 1 | `l7c` UI FiBu-Übernahme + Stichprobe | **als Nächstes** |
+| — | `l7c` UI FiBu-Übernahme + Stichprobe | ✅ 2026-10-30 |
+| 1 | `l8a` Spec SEPA-XML | **als Nächstes** |
 
-Danach L8a → … nicht überspringen.
+Danach L8b → … nicht überspringen.
 
 Prompt für nächsten Chat:
 
 ```text
-Lohn Implementierung: l7c laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
-Nur Abschnitt L7c. Nicht andere L-Pakete.
+Lohn Implementierung: l8a laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md
+Nur Abschnitt L8a. Nicht andere L-Pakete.
 Abgrenzung „Nicht:“ aus dem Abschnitt einhalten.
 Nach Abschluss: Status im Plan-Abschnitt setzen, kurzer Abnahme-Check.
 ```

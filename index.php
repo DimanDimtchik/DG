@@ -1596,12 +1596,16 @@ switch ($path) {
                     'create', 'add_employee', 'remove_employee', 'seed_assignments',
                     'calculate', 'reopen', 'delete',
                 ], true);
+                $needsFibu = $runAction === 'fibu_book';
                 try {
                     if ($needsApprove && !PayrollRunAccess::canApprove($user)) {
                         throw new RuntimeException('Keine Berechtigung für Freigabe/Sperre/Storno.');
                     }
                     if ($needsEdit && !PayrollRunAccess::canEditRun($user)) {
                         throw new RuntimeException('Keine Berechtigung zum Bearbeiten des Monatslaufs.');
+                    }
+                    if ($needsFibu && !PayrollRunAccess::canPostFibu($user)) {
+                        throw new RuntimeException('Keine Berechtigung für FiBu-Übernahme (lohn full + Buchhaltung).');
                     }
                     if ($runAction === 'create') {
                         [$yy, $mm] = array_map('intval', explode('-', $monthPost));
@@ -1670,9 +1674,36 @@ switch ($path) {
                         PayrollRunRepository::deleteDraft($runIdPost);
                         Flash::set('success', 'Entwurf gelöscht.');
                         $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost);
+                    } elseif ($runAction === 'fibu_book') {
+                        $forceProbe = !empty($_POST['force_probe']) && RoleResolver::isAdmin($user);
+                        $postingDate = trim((string) ($_POST['posting_date'] ?? ''));
+                        $result = PayrollFibuService::book(
+                            $runIdPost,
+                            (int) $user->id,
+                            (string) ($_POST['reason'] ?? ''),
+                            $postingDate !== '' ? $postingDate : null,
+                            $forceProbe
+                        );
+                        if (!empty($result['idempotent'])) {
+                            Flash::set(
+                                'success',
+                                'FiBu bereits vorhanden (Batch #' . (int) ($result['manual_batch_id'] ?? 0) . ') — idempotent.'
+                            );
+                        } else {
+                            Flash::set(
+                                'success',
+                                'In FiBu übernommen (Batch #' . (int) ($result['manual_batch_id'] ?? 0) . ').'
+                            );
+                        }
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&fibu=1';
                     }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
+                    if ($runAction === 'fibu_book' && $runIdPost > 0) {
+                        $redirect = '/app?page=lohn-monatslauf&month=' . rawurlencode($monthPost)
+                            . '&run=' . $runIdPost . '&fibu=1';
+                    }
                 }
             }
             header('Location: ' . $redirect, true, 302);
@@ -7833,6 +7864,33 @@ $legalProductsConfig = LegalProductSettings::config();
             $payrollStaffOptions = PayrollRunRepository::staffContactOptions();
             $payrollRunCanEdit = PayrollRunAccess::canEditRun($user);
             $payrollRunCanApprove = PayrollRunAccess::canApprove($user);
+            $payrollRunCanPostFibu = PayrollRunAccess::canPostFibu($user);
+            $payrollFibuLive = PayrollFibuService::isLive();
+            $payrollFibuMeta = null;
+            $payrollFibuPreview = null;
+            $payrollFibuPreviewError = null;
+            $payrollFibuShow = trim((string) ($_GET['fibu'] ?? '')) === '1'
+                || ($payrollRun !== null
+                    && (string) ($payrollRun['status'] ?? '') === PayrollRunRepository::STATUS_LOCKED);
+            if ($payrollRun !== null) {
+                PayrollFibuService::ensureReady();
+                $payrollFibuMeta = PayrollFibuService::findMetaByRunId((int) $payrollRun['id']);
+                if ($payrollFibuShow || $payrollFibuMeta !== null) {
+                    try {
+                        $st = (string) ($payrollRun['status'] ?? '');
+                        if (in_array($st, [
+                            PayrollRunRepository::STATUS_APPROVED,
+                            PayrollRunRepository::STATUS_LOCKED,
+                        ], true)) {
+                            $payrollFibuPreview = PayrollFibuService::preview((int) $payrollRun['id']);
+                        }
+                    } catch (Throwable $e) {
+                        $payrollFibuPreviewError = $e->getMessage();
+                    }
+                }
+            }
+            $payrollFibuRoleLabels = PayrollFibuService::roleLabels();
+            $payrollFibuChecklist = PayrollFibuService::auditorChecklist();
             $contentTemplate = 'modules/lohn-monatslauf';
             $title = 'Monatslauf';
             $currentPage = 'lohn-monatslauf';
@@ -8976,6 +9034,14 @@ $legalProductsConfig = LegalProductSettings::config();
         $payrollStaffOptions = $payrollStaffOptions ?? [];
         $payrollRunCanEdit = $payrollRunCanEdit ?? false;
         $payrollRunCanApprove = $payrollRunCanApprove ?? false;
+        $payrollRunCanPostFibu = $payrollRunCanPostFibu ?? false;
+        $payrollFibuLive = $payrollFibuLive ?? false;
+        $payrollFibuMeta = $payrollFibuMeta ?? null;
+        $payrollFibuPreview = $payrollFibuPreview ?? null;
+        $payrollFibuPreviewError = $payrollFibuPreviewError ?? null;
+        $payrollFibuShow = $payrollFibuShow ?? false;
+        $payrollFibuRoleLabels = $payrollFibuRoleLabels ?? [];
+        $payrollFibuChecklist = $payrollFibuChecklist ?? [];
         $lohnkontoYear = $lohnkontoYear ?? (int) date('Y');
         $lohnkontoContactId = $lohnkontoContactId ?? 0;
         $lohnkontoContactLabel = $lohnkontoContactLabel ?? '';
@@ -9519,6 +9585,14 @@ $legalProductsConfig = LegalProductSettings::config();
             'payrollStaffOptions',
             'payrollRunCanEdit',
             'payrollRunCanApprove',
+            'payrollRunCanPostFibu',
+            'payrollFibuLive',
+            'payrollFibuMeta',
+            'payrollFibuPreview',
+            'payrollFibuPreviewError',
+            'payrollFibuShow',
+            'payrollFibuRoleLabels',
+            'payrollFibuChecklist',
             'lohnkontoYear',
             'lohnkontoContactId',
             'lohnkontoContactLabel',

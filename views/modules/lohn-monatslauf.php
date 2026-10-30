@@ -11,7 +11,16 @@
  * @var list<array{id: int, label: string}> $payrollStaffOptions
  * @var bool $payrollRunCanEdit
  * @var bool $payrollRunCanApprove
+ * @var bool $payrollRunCanPostFibu
+ * @var bool $payrollFibuLive
+ * @var array<string, mixed>|null $payrollFibuMeta
+ * @var array<string, mixed>|null $payrollFibuPreview
+ * @var string|null $payrollFibuPreviewError
+ * @var bool $payrollFibuShow
+ * @var array<string, string> $payrollFibuRoleLabels
+ * @var list<string> $payrollFibuChecklist
  * @var array{type: string, message: string}|null $flash
+ * @var User|null $user
  */
 $month = preg_match('/^\d{4}-\d{2}$/', (string) ($payrollRunMonth ?? ''))
     ? (string) $payrollRunMonth
@@ -25,12 +34,22 @@ $linesByContact = is_array($payrollRunLinesByContact ?? null) ? $payrollRunLines
 $staffOptions = is_array($payrollStaffOptions ?? null) ? $payrollStaffOptions : [];
 $canEdit = !empty($payrollRunCanEdit);
 $canApprove = !empty($payrollRunCanApprove);
+$canPostFibu = !empty($payrollRunCanPostFibu);
+$fibuLive = !empty($payrollFibuLive);
+$fibuMeta = is_array($payrollFibuMeta ?? null) ? $payrollFibuMeta : null;
+$fibuPreview = is_array($payrollFibuPreview ?? null) ? $payrollFibuPreview : null;
+$fibuPreviewError = trim((string) ($payrollFibuPreviewError ?? ''));
+$fibuShow = !empty($payrollFibuShow);
+$fibuRoleLabels = is_array($payrollFibuRoleLabels ?? null) ? $payrollFibuRoleLabels : PayrollFibuService::roleLabels();
+$fibuChecklist = is_array($payrollFibuChecklist ?? null) ? $payrollFibuChecklist : PayrollFibuService::auditorChecklist();
+$isAdminUser = isset($user) && $user instanceof User && RoleResolver::isAdmin($user);
 $runStatus = (string) ($run['status'] ?? '');
 $isDraft = $runStatus === PayrollRunRepository::STATUS_DRAFT;
 $isCalculated = $runStatus === PayrollRunRepository::STATUS_CALCULATED;
 $isApproved = $runStatus === PayrollRunRepository::STATUS_APPROVED;
 $isLocked = $runStatus === PayrollRunRepository::STATUS_LOCKED;
 $isSuperseded = !empty($run['is_superseded']);
+$money = static fn (float $v): string => number_format($v, 2, ',', '.');
 ?>
 <div class="dg-wrap dg-lohn-monatslauf">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -39,8 +58,8 @@ $isSuperseded = !empty($run['is_superseded']);
     <div>
       <h1 class="dg-page-title">Monatslauf</h1>
       <p class="dg-lead">
-        Entwurf → Berechnung → Freigabe → Sperre. Korrektur nur über Storno/Korrektur-Lauf.
-        Kein SEPA und keine FiBu auf dieser Seite.
+        Entwurf → Berechnung → Freigabe → Sperre → optional FiBu-Übernahme.
+        Korrektur nur über Storno/Korrektur-Lauf. Kein SEPA hier.
       </p>
     </div>
     <div class="dg-toolbar">
@@ -304,6 +323,146 @@ $isSuperseded = !empty($run['is_superseded']);
             </tbody>
           </table>
         </div>
+      <?php endif; ?>
+
+      <?php if ($runId > 0 && ($isApproved || $isLocked) && !$isSuperseded) : ?>
+        <h3 class="dg-subsection-title">FiBu-Übernahme</h3>
+        <p class="dg-lead">
+          Sammelbuchung laut L7 (Personalaufwand, FA, SV, Nettolöhne, AG-Sozialaufwand).
+          Live-Flag:
+          <?php if ($fibuLive) : ?>
+            <strong>an</strong>
+          <?php else : ?>
+            <strong>aus</strong> — unter
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('lohn')) ?>">Einstellungen → Lohn</a>
+            freischalten (Gate G1). Admin darf Probe buchen.
+          <?php endif; ?>
+          <?php if (!$fibuShow) : ?>
+            · <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1">Vorschau anzeigen</a>
+          <?php endif; ?>
+        </p>
+
+        <?php if ($fibuMeta !== null) : ?>
+          <div class="dg-flash dg-flash--success">
+            Bereits gebucht: Meta #<?= (int) ($fibuMeta['id'] ?? 0) ?>,
+            Journal-Batch #<?= (int) ($fibuMeta['manual_batch_id'] ?? 0) ?>,
+            Datum <?= View::escape((string) ($fibuMeta['posting_date'] ?? '')) ?>,
+            Art <?= View::escape((string) ($fibuMeta['kind'] ?? '')) ?>.
+            Erneutes Buchen ist idempotent (keine Doppelbuchung).
+          </div>
+        <?php endif; ?>
+
+        <?php if ($fibuPreviewError !== '') : ?>
+          <div class="dg-flash dg-flash--warning"><?= View::escape($fibuPreviewError) ?></div>
+        <?php endif; ?>
+
+        <?php if ($fibuShow || $fibuMeta !== null) : ?>
+          <?php if ($fibuPreview !== null) : ?>
+            <?php
+              $prevAccounts = is_array($fibuPreview['accounts'] ?? null) ? $fibuPreview['accounts'] : [];
+              $prevLines = is_array($fibuPreview['lines'] ?? null) ? $fibuPreview['lines'] : [];
+              $prevAmounts = is_array($fibuPreview['amounts'] ?? null) ? $fibuPreview['amounts'] : [];
+              $prevWarnings = is_array($fibuPreview['warnings'] ?? null) ? $fibuPreview['warnings'] : [];
+            ?>
+            <?php if ($prevWarnings !== []) : ?>
+              <div class="dg-flash dg-flash--warning">
+                <ul>
+                  <?php foreach ($prevWarnings as $pw) : ?>
+                    <li><?= View::escape((string) $pw) ?></li>
+                  <?php endforeach; ?>
+                </ul>
+              </div>
+            <?php endif; ?>
+            <div class="dg-table-wrap">
+              <p class="dg-field-hint">
+                Geplantes Datum: <?= View::escape((string) ($fibuPreview['posting_date'] ?? '')) ?>
+                · <?= View::escape((string) ($fibuPreview['description'] ?? '')) ?>
+                · Art <?= View::escape((string) ($fibuPreview['fibu_kind'] ?? '')) ?>
+              </p>
+              <table class="dg-table dg-table--compact">
+                <thead>
+                  <tr><th>Rolle / Konto</th><th>Nummer</th></tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($fibuRoleLabels as $role => $label) : ?>
+                    <tr>
+                      <td><?= View::escape($label) ?></td>
+                      <td><?= View::escape((string) ($prevAccounts[$role] ?? '—')) ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+              <table class="dg-table dg-table--compact" style="margin-top:1rem">
+                <thead>
+                  <tr><th>Konto</th><th>Seite</th><th>Betrag</th><th>Text</th></tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($prevLines as $pl) : ?>
+                    <tr>
+                      <td><?= View::escape((string) ($pl['account_number'] ?? '')) ?></td>
+                      <td><?= View::escape((string) ($pl['side'] ?? '')) ?></td>
+                      <td class="num"><?= View::escape($money((float) ($pl['amount'] ?? 0))) ?></td>
+                      <td><?= View::escape((string) ($pl['description'] ?? '')) ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+              <?php if ($prevAmounts !== [] && empty($prevAmounts['note'])) : ?>
+                <p class="dg-field-hint">
+                  MA ok: <?= (int) ($prevAmounts['employee_count'] ?? 0) ?> ·
+                  Brutto <?= View::escape($money((float) ($prevAmounts['gross_total'] ?? 0))) ?> ·
+                  Netto <?= View::escape($money((float) ($prevAmounts['net_pay'] ?? 0))) ?> ·
+                  FA <?= View::escape($money((float) ($prevAmounts['fa'] ?? 0))) ?> ·
+                  SV-AN <?= View::escape($money((float) ($prevAmounts['sv_an'] ?? 0))) ?>
+                </p>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
+
+          <details class="dg-panel" style="margin:1rem 0">
+            <summary><strong>Betriebsprüfer-Stichprobe</strong></summary>
+            <ol>
+              <?php foreach ($fibuChecklist as $item) : ?>
+                <li><?= View::escape((string) $item) ?></li>
+              <?php endforeach; ?>
+            </ol>
+          </details>
+
+          <?php if ($canPostFibu && $isLocked && $fibuMeta === null) : ?>
+            <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>&amp;fibu=1" class="dg-form" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:end">
+              <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+              <input type="hidden" name="run_action" value="fibu_book">
+              <input type="hidden" name="run_id" value="<?= $runId ?>">
+              <input type="hidden" name="month" value="<?= View::escape($month) ?>">
+              <label class="dg-field">
+                <span>Buchungsdatum</span>
+                <input type="date" name="posting_date" value="<?= View::escape((string) ($fibuPreview['posting_date'] ?? '')) ?>">
+              </label>
+              <label class="dg-field">
+                <span>Begründung (≥10)</span>
+                <input type="text" name="reason" required minlength="10" placeholder="z. B. Monat übernommen nach Prüfung" style="min-width:16rem">
+              </label>
+              <?php if (!$fibuLive && $isAdminUser) : ?>
+                <label class="dg-field dg-field--checkbox">
+                  <span>
+                    <input type="checkbox" name="force_probe" value="1">
+                    Admin-Probe ohne Live-Flag
+                  </span>
+                </label>
+              <?php endif; ?>
+              <button type="submit" class="dg-button dg-button--primary"<?= ($fibuLive || $isAdminUser) ? '' : ' disabled' ?>>
+                In FiBu übernehmen
+              </button>
+            </form>
+            <?php if (!$fibuLive && !$isAdminUser) : ?>
+              <p class="dg-field-hint">Buchung gesperrt: Live-Flag aus und kein Admin-Probe.</p>
+            <?php endif; ?>
+          <?php elseif ($isApproved && !$isLocked) : ?>
+            <p class="dg-field-hint">Vorschau möglich — verbindliche Übernahme erst nach Sperre.</p>
+          <?php elseif ((string) ($run['kind'] ?? '') === PayrollRunRepository::KIND_CORRECTION && $fibuMeta === null) : ?>
+            <p class="dg-field-hint">Korrektur-Lauf: prüfen, ob der Vorgänger per Storno-FiBu ausgeglichen wurde.</p>
+          <?php endif; ?>
+        <?php endif; ?>
       <?php endif; ?>
 
       <h3 class="dg-subsection-title">Statushistorie</h3>

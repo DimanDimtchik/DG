@@ -155,6 +155,36 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </span>
     </label>
 
+    <fieldset class="dg-form-section" style="border:0;padding:0;margin:1.25rem 0 0">
+      <legend class="dg-subsection-title" style="font-size:1rem">FiBu-Übernahme (L7)</legend>
+      <p class="dg-field-hint">
+        Live-Buchung erst nach Gate G1 / Steuerberater-Kontenfreigabe.
+        Defaults SKR03: 4120/4130/1740/1741/1742 · SKR04: 6200/6220/3500/3510/3520.
+        Leere Override = Default des aktiven Kontenrahmens.
+      </p>
+      <label class="dg-field dg-field--checkbox">
+        <span>
+          <input type="checkbox" name="lohn[payroll_fibu_live]" value="1"<?= !empty($lohn['payroll_fibu_live']) ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
+          payroll_fibu_live — Lohnläufe dürfen ins Journal geschrieben werden
+        </span>
+      </label>
+      <?php
+        $fibuAcc = is_array($lohn['fibu_accounts'] ?? null) ? $lohn['fibu_accounts'] : [];
+        $fibuLabels = PayrollFibuService::roleLabels();
+      ?>
+      <div class="dg-form-grid">
+        <?php foreach ($fibuLabels as $role => $label) : ?>
+          <label class="dg-field">
+            <span><?= View::escape($label) ?></span>
+            <input type="text" name="lohn[fibu_accounts][<?= View::escape($role) ?>]" maxlength="16"
+                   value="<?= View::escape((string) ($fibuAcc[$role] ?? '')) ?>"
+                   placeholder="Default SKR"
+                   <?= !$dbConnected ? ' disabled' : '' ?>>
+          </label>
+        <?php endforeach; ?>
+      </div>
+    </fieldset>
+
     <label class="dg-field dg-field--wide">
       <span>Interne Notiz (Prüfung)</span>
       <textarea name="lohn[notes]" rows="3" maxlength="2000"<?= !$dbConnected ? ' disabled' : '' ?>><?= View::escape((string) ($lohn['notes'] ?? '')) ?></textarea>

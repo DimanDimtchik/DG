@@ -18,7 +18,7 @@ Stand: **2026-10-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L7b ✅** · als Nächstes **`l7c`**.
+**Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L7 ✅** · als Nächstes **`l8a`**.
 
 ---
 
