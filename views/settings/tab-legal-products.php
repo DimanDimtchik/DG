@@ -30,7 +30,7 @@ $statusOptions = LegalProductSettings::statusOptions();
 
   <fieldset class="dg-fieldset dg-form-grid"<?= !$dbConnected ? ' disabled' : '' ?>>
     <legend>Mehrprodukt-Rechtstexte</legend>
-    <label class="dg-field dg-field--checkbox dg-field--wide">>
+    <label class="dg-field dg-field--checkbox dg-field--wide">
       <span>
         <input type="checkbox" name="legal_multi_product" value="1"<?= !empty($cfg['multi_product_enabled']) ? ' checked' : '' ?>>
         Mehrprodukt-Modus aktivieren (Tabs je Produkt/Gruppe)

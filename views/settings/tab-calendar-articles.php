@@ -548,17 +548,17 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
         <span>Garantie-/Gewährleistungsbeschreibung</span>
         <textarea name="warranty_text" id="dg_article_warranty_text" rows="2" placeholder="Was und wie lange gilt — für Reklamation sofort sichtbar"<?= !$dbConnected ? ' disabled' : '' ?>></textarea>
       </label>
-      <label class="dg-field dg-field--checkbox">>
+      <label class="dg-field dg-field--checkbox">
         <span><input type="checkbox" name="is_active" id="dg_article_active" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Eintrag ist aktiv</span>
       </label>
-      <label class="dg-field dg-field--checkbox">>
+      <label class="dg-field dg-field--checkbox">
         <span><input type="checkbox" name="price_list_online" id="dg_article_price_list_online" value="1" checked<?= !$dbConnected ? ' disabled' : '' ?>> Preisliste Online</span>
         <small class="dg-field-hint">Wenn nicht gesetzt, erscheint der Eintrag nicht in der Preisliste auf der Website.</small>
       </label>
       <div class="dg-field dg-field--wide" id="dg_article_stock_fields" hidden>
         <fieldset class="dg-fieldset">
           <legend>Lager (nur Artikel)</legend>
-          <label class="dg-field dg-field--checkbox">>
+          <label class="dg-field dg-field--checkbox">
             <span><input type="checkbox" name="track_stock" id="dg_article_track_stock" value="1"<?= !$dbConnected ? ' disabled' : '' ?>> Lager führen</span>
           </label>
           <label class="dg-field" id="dg_article_initial_stock_wrap">

@@ -216,7 +216,7 @@ if ($isCompanyForm && $companyEmployees === []) {
           $autoMailDefault = $autoMailEnabled && CrmRole::hasEmployeeProfile($selectedRole);
           $kasConfiguredForForm = KasSettings::isConfigured();
         ?>
-        <label class="dg-field dg-field--checkbox dg-field--wide" data-auto-mailbox-row>>
+        <label class="dg-field dg-field--checkbox dg-field--wide" data-auto-mailbox-row>
           <span>
             <input type="checkbox" name="auto_create_mailbox" value="1" id="contact_auto_create_mailbox" data-auto-enabled="<?= $autoMailEnabled ? '1' : '0' ?>"<?= $autoMailDefault ? ' checked' : '' ?>>
             E-Mail-Adresse / privates Postfach automatisch anlegen

@@ -76,7 +76,7 @@ $baseUrl = '/app?page=buchhaltung-ustva';
           'pageSlug' => 'buchhaltung-ustva',
           'years' => $years,
       ]); ?>
-      <label class="dg-field dg-field--checkbox dg-field--check">>
+      <label class="dg-field dg-field--checkbox dg-field--check">
         <span>Berichtigung</span>
         <input type="checkbox" name="berichtigung" value="1"<?= $berichtigung ? ' checked' : '' ?>>
       </label>

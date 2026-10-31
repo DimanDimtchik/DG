@@ -119,7 +119,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
         <p style="margin-top:12px;">
           <a class="dg-button" href="/app?page=kdv-umfirmierung&amp;from_id=<?= (int) ($c['id'] ?? 0) ?>">Umfirmierung starten…</a>
         </p>
-        <label class="dg-field dg-field--checkbox" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">>
+        <label class="dg-field dg-field--checkbox" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
           <input type="checkbox" name="mf_make_archive_slot" value="1">
           <span>Als <strong>Archiv-Slot</strong> setzen (Umfirmierung Vorgänger): Slot „Archiv“, Preis 0 €, Gültig bis +<?= (int) MultiFirmaPricingService::ARCHIVE_DEFAULT_MONTHS ?> Monate falls leer. Beziehung → Vorgänger.</span>
         </label>
@@ -205,7 +205,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           <input class="dg-input" type="date" name="contract_end" value="<?= View::escape($c['contract_end'] ?? '') ?>">
         </label>
       </div>
-      <label class="dg-field dg-field--checkbox" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">>
+      <label class="dg-field dg-field--checkbox" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
         <input type="checkbox" name="mf_apply_price" value="1"<?= !$isEdit || (float) ($c['monthly_price'] ?? 0) <= 0 ? ' checked' : '' ?>>
         <span>Beim Speichern <strong>MF2-Preis übernehmen</strong> (Listenpreis bzw. −20 % Zusatzfirma / 0 € Archiv).</span>
       </label>

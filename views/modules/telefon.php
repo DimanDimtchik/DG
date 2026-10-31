@@ -86,7 +86,7 @@ $ctiOn = CtiSettings::isEnabled();
   <form class="dg-form" method="post" action="/app?page=telefon">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <div class="dg-form-grid">
-      <label class="dg-field dg-field--checkbox">>
+      <label class="dg-field dg-field--checkbox">
         <span><input type="checkbox" name="enabled" value="1"<?= !empty($ctiConfig['enabled']) ? ' checked' : '' ?>> CTI aktiv</span>
       </label>
       <label class="dg-field">
@@ -107,7 +107,7 @@ $ctiOn = CtiSettings::isEnabled();
         <span>Fritz-Host (für Bridge)</span>
         <input type="text" name="fritz_host" value="<?= View::escape((string) ($ctiConfig['fritz_host'] ?? 'fritz.box')) ?>">
       </label>
-      <label class="dg-field dg-field--checkbox dg-field--wide">>
+      <label class="dg-field dg-field--checkbox dg-field--wide">
         <span>Bridge-Token</span>
         <input type="text" name="bridge_token" value="<?= View::escape((string) ($ctiConfig['bridge_token'] ?? '')) ?>" readonly>
         <span class="dg-field-hint"><label><input type="checkbox" name="bridge_token_rotate" value="1"> neues Token erzeugen</label></span>

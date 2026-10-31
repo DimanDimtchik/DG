@@ -80,14 +80,14 @@ $formatUsageDate = static function (?string $value): string {
           <div><dt>Format</dt><dd><?= View::escape(strtoupper((string) ($mediaItem['extension'] ?? ''))) ?></dd></div>
           <div><dt>Hochgeladen</dt><dd><?= View::escape((string) ($mediaItem['uploaded_at'] ?? '')) ?></dd></div>
         </dl>
-        <label class="dg-field dg-field--checkbox dg-field--wide dg-media-favicon-toggle">>
+        <label class="dg-field dg-field--checkbox dg-field--wide dg-media-favicon-toggle">
           <span>
             <input type="checkbox" id="dg-media-use-logo"<?= $isLogo ? ' checked' : '' ?>>
             Als CRM-Logo in Kopfzeile
           </span>
           <small class="dg-field-hint">Zeigt dieses Bild in der CRM-Kopfzeile und auf der Login-Seite — nur wenn Sie es aktivieren.</small>
         </label>
-        <label class="dg-field dg-field--checkbox dg-field--wide dg-media-favicon-toggle">>
+        <label class="dg-field dg-field--checkbox dg-field--wide dg-media-favicon-toggle">
           <span>
             <input type="checkbox" id="dg-media-use-favicon"<?= $isFavicon ? ' checked' : '' ?>>
             Als Favicon für Browser benutzen
@@ -149,7 +149,7 @@ $formatUsageDate = static function (?string $value): string {
                 </select>
               </label>
             </div>
-            <label class="dg-field dg-field--checkbox dg-field--wide dg-media-favicon-toggle">>
+            <label class="dg-field dg-field--checkbox dg-field--wide dg-media-favicon-toggle">
               <span>
                 <input type="checkbox" name="keep_aspect" id="dg-media-keep-aspect" value="1" checked>
                 Verhältnis beibehalten

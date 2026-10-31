@@ -505,7 +505,7 @@ $bankSummary = $filledBanks > 0
           <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="finanzaemter[<?= (int) $i ?>][appointment_url]" value="<?= View::escape((string) ($fa['appointment_url'] ?? '')) ?>" placeholder="https://…"></label>
           <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea name="finanzaemter[<?= (int) $i ?>][opening_hours]" rows="4"><?= View::escape(FinanzamtOpeningHours::toPlainText((string) ($fa['opening_hours'] ?? ''))) ?></textarea></label>
           <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" name="finanzaemter[<?= (int) $i ?>][notes]" value="<?= View::escape((string) ($fa['notes'] ?? '')) ?>"></label>
-          <label class="dg-field dg-field--checkbox dg-field--check">>
+          <label class="dg-field dg-field--checkbox dg-field--check">
             <input type="checkbox" name="finanzaemter[<?= (int) $i ?>][is_primary]" value="1"<?= !empty($fa['is_primary']) ? ' checked' : '' ?>>
             <span>Haupt-Finanzamt</span>
           </label>
@@ -866,7 +866,7 @@ $bankSummary = $filledBanks > 0
     <label class="dg-field dg-field--wide"><span>Terminvereinbarung (URL)</span><input type="text" inputmode="url" autocomplete="url" data-website-url="1" data-name="finanzaemter[__INDEX__][appointment_url]" placeholder="https://…"></label>
     <label class="dg-field dg-field--wide"><span>Öffnungszeiten</span><textarea data-name="finanzaemter[__INDEX__][opening_hours]" rows="4"></textarea></label>
     <label class="dg-field dg-field--wide"><span>Notiz</span><input type="text" data-name="finanzaemter[__INDEX__][notes]"></label>
-    <label class="dg-field dg-field--checkbox dg-field--check">><input type="checkbox" data-name="finanzaemter[__INDEX__][is_primary]" value="1"><span>Haupt-Finanzamt</span></label>
+    <label class="dg-field dg-field--checkbox dg-field--check"><input type="checkbox" data-name="finanzaemter[__INDEX__][is_primary]" value="1"><span>Haupt-Finanzamt</span></label>
     <button type="button" class="dg-button dg-button--ghost dg-repeater-remove">Entfernen</button>
   </div>
 </template>

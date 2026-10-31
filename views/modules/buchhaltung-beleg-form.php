@@ -1370,7 +1370,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <?php endif; ?>
         <?php endif; ?>
       <?php else : ?>
-        <label class="dg-field dg-field--checkbox dg-field--wide dg-voucher-arap-toggle">>
+        <label class="dg-field dg-field--checkbox dg-field--wide dg-voucher-arap-toggle">
           <span class="dg-checkbox">
             <input type="checkbox" name="arap_enabled" id="dg-voucher-arap-enabled" value="1"<?= $arapEnabled ? ' checked' : '' ?>>
             <span><?= View::escape($arapTypeLabel) ?> aktivieren</span>

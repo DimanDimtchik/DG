@@ -114,7 +114,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
         <p class="dg-field-hint">
           Status zunächst „beantragt“ — HR bestätigt. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.
         </p>
-        <label class="dg-field dg-field--checkbox" style="display:flex;gap:0.5rem;align-items:flex-start">>
+        <label class="dg-field dg-field--checkbox" style="display:flex;gap:0.5rem;align-items:flex-start">
           <input type="checkbox" name="acknowledge" value="1" required style="margin-top:0.25rem">
           <span><?= View::escape(TimeAbsenceService::requestAcknowledgeText('sick') ?? '') ?></span>
         </label>
@@ -231,7 +231,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
             <input type="date" name="date_to" required>
           </label>
         </div>
-        <label class="dg-field dg-field--checkbox" id="abs-hr-halfday-wrap">>
+        <label class="dg-field dg-field--checkbox" id="abs-hr-halfday-wrap">
           <span class="dg-field-label">
             <input type="checkbox" name="half_day" value="1"> Halber Tag (nur Urlaub, gleiches Von/Bis)
           </span>

@@ -107,20 +107,20 @@ $departmentModuleLabels = DepartmentAccess::MODULE_LABELS;
         </div>
 
         <div class="dg-form-grid dg-dept-flags">
-          <label class="dg-field dg-field--checkbox dg-field--wide">>
+          <label class="dg-field dg-field--checkbox dg-field--wide">
             <span>
               <input type="checkbox" name="departments[<?= (int) $di ?>][is_hr]" value="1" data-dept-is-hr<?= $isHr ? ' checked' : '' ?>>
               HR-Rechte (alle Kontakte inkl. Mitarbeiter &amp; Admin)
             </span>
           </label>
-          <label class="dg-field dg-field--checkbox dg-field--wide dg-dept-delete-flag" data-dept-delete-flag<?= $isHr ? '' : ' hidden' ?>>>
+          <label class="dg-field dg-field--checkbox dg-field--wide dg-dept-delete-flag" data-dept-delete-flag<?= $isHr ? '' : ' hidden' ?>>
             <span>
               <input type="checkbox" name="departments[<?= (int) $di ?>][allow_contact_delete]" value="1"<?= !empty($dept['allow_contact_delete']) ? ' checked' : '' ?>>
               Kunden/Lieferanten löschen erlauben (optional)
             </span>
             <small class="dg-field-hint">Gilt für Mitglieder dieser Abteilung mit HR-Rechten. Bearbeiten ist immer erlaubt; CRM-Administratoren dürfen immer löschen.</small>
           </label>
-          <label class="dg-field dg-field--checkbox dg-field--wide">>
+          <label class="dg-field dg-field--checkbox dg-field--wide">
             <span>
               <input type="checkbox" name="departments[<?= (int) $di ?>][allow_article_catalog]" value="1" data-dept-allow-catalog<?= $allowCatalog ? ' checked' : '' ?>>
               Artikel- und Leistungspflege erlauben

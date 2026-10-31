@@ -38,7 +38,7 @@ $ctaPresets = [
   </p>
 
   <div class="dg-form-grid">
-    <label class="dg-field dg-field--checkbox dg-field--wide">>
+    <label class="dg-field dg-field--checkbox dg-field--wide">
       <span>
         <input type="checkbox" name="online_booking_enabled" value="1"<?= $isEnabled ? ' checked' : '' ?><?= !$dbConnected ? ' disabled' : '' ?>>
         Terminvereinbarung online stellen
@@ -335,7 +335,7 @@ $ctaPresets = [
             </div>
             <small class="dg-field-hint">Bild deckt den Flyer ab (cover). QR bleibt auf weißem Feld lesbar.</small>
           </div>
-          <label class="dg-field dg-field--checkbox dg-field--wide">>
+          <label class="dg-field dg-field--checkbox dg-field--wide">
             <span>
               <input type="hidden" name="flyer[show_logo]" value="0">
               <input type="checkbox" name="flyer[show_logo]" id="dg-flyer-show-logo" value="1"<?= !empty($flyer['show_logo']) ? ' checked' : '' ?> data-dg-qr-field data-dg-flyer-field>

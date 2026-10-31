@@ -125,7 +125,7 @@ $steps = [
           <span>Wie viele Personen bedienen die Maschine?</span>
           <input name="operators" inputmode="decimal" value="<?= View::escape((string) ($form['operators'] ?? '1')) ?>" data-wc-input <?= $readOnly ? 'readonly' : '' ?>>
         </label>
-        <label class="dg-field dg-field--checkbox dg-field--inline">>
+        <label class="dg-field dg-field--checkbox dg-field--inline">
           <span>
             <input type="checkbox" name="is_active" value="1"<?= !empty($form['is_active']) ? ' checked' : '' ?> <?= $readOnly ? 'disabled' : '' ?>> In der Auswahl aktiv (für Rezepte nutzbar)
           </span>

@@ -92,7 +92,7 @@ $csrf = Csrf::token();
           <span>Reihenfolge</span>
           <input type="number" name="sort_order" id="dg_area_sort" min="0" value="0">
         </label>
-        <label class="dg-field dg-field--checkbox">>
+        <label class="dg-field dg-field--checkbox">
           <span><input type="checkbox" name="is_active" id="dg_area_active" value="1" checked> Bereich ist aktiv</span>
         </label>
       </div>
@@ -307,7 +307,7 @@ $csrf = Csrf::token();
             <span>Anzeigename (Kalender)</span>
             <input type="text" name="name" id="dg_employee_name" placeholder="leer = Kontaktname">
           </label>
-          <label class="dg-field dg-field--checkbox dg-field--wide">>
+          <label class="dg-field dg-field--checkbox dg-field--wide">
             <span>Bereiche *</span>
             <div class="dg-cal-area-checkboxes">
               <?php foreach ($calendarAreas as $area) : ?>
@@ -345,7 +345,7 @@ $csrf = Csrf::token();
               <?php endforeach; ?>
             </select>
           </label>
-          <label class="dg-field dg-field--checkbox">>
+          <label class="dg-field dg-field--checkbox">
             <span><input type="checkbox" name="is_active" id="dg_employee_active" value="1" checked> Mitarbeiter ist aktiv</span>
           </label>
         </div>

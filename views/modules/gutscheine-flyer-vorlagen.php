@@ -86,7 +86,7 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
           <span>Sortierung</span>
           <input type="number" name="sort_order" value="<?= (int) ($form['sort_order'] ?? 0) ?>"<?= !$canEdit ? ' disabled' : '' ?>>
         </label>
-        <label class="dg-field dg-field--checkbox dg-field--check">>
+        <label class="dg-field dg-field--checkbox dg-field--check">
           <input type="checkbox" name="is_active" value="1"<?= !empty($form['is_active']) || $mode === 'new' ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Aktiv (auswählbar beim Ausstellen)</span>
         </label>
@@ -149,11 +149,11 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
       </div>
 
       <div class="dg-stack">
-        <label class="dg-field dg-field--checkbox dg-field--check">>
+        <label class="dg-field dg-field--checkbox dg-field--check">
           <input type="checkbox" name="layout[show_logo]" value="1"<?= !empty($layout['show_logo']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Firmenlogo anzeigen</span>
         </label>
-        <label class="dg-field dg-field--checkbox dg-field--check">>
+        <label class="dg-field dg-field--checkbox dg-field--check">
           <input type="checkbox" name="layout[contrast_banner]" value="1"<?= !empty($layout['contrast_banner']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Kontrast-Banner hinter Überschrift (bei dunklem Bild)</span>
         </label>
@@ -194,14 +194,14 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
       <h2 class="dg-section-title">QR-Codes</h2>
       <p class="dg-field-hint">Betrag und Gutscheincode werden immer systemseitig gedruckt. Social-Links kommen aus den Firmeneinstellungen (E-Mail-Layout → Social Media). QR mit Ruhezone ~8&nbsp;mm.</p>
       <div class="dg-stack">
-        <label class="dg-field dg-field--checkbox dg-field--check">>
+        <label class="dg-field dg-field--checkbox dg-field--check">
           <input type="checkbox" name="layout[qr_booking]" value="1"<?= !empty($layout['qr']['booking']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Termin-QR (öffentliche Booking-URL)</span>
         </label>
 
         <?php if ($companySocials !== []) : ?>
           <?php if ($companyWebsiteUrl !== '') : ?>
-            <label class="dg-field dg-field--checkbox dg-field--check">>
+            <label class="dg-field dg-field--checkbox dg-field--check">
               <input type="checkbox" name="layout[offer_website]" id="dg-flyer-offer-website" value="1"<?= $offerWebsite ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
               <span>Eigene Website in der Auswahl anbieten</span>
             </label>
@@ -234,7 +234,7 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
           </div>
           <p class="dg-field-hint">Pro ausgefülltem Profil in den Firmeneinstellungen ein Auswahlfeld. Leere Felder erzeugen keinen QR.</p>
         <?php elseif ($companyWebsiteUrl !== '') : ?>
-          <label class="dg-field dg-field--checkbox dg-field--check">>
+          <label class="dg-field dg-field--checkbox dg-field--check">
             <input type="checkbox" name="layout[offer_website]" value="1"<?= $offerWebsite ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
             <span>Social-QR mit eigener Website</span>
           </label>
@@ -246,7 +246,7 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
 
       <h2 class="dg-section-title">Handschrift &amp; Fußzeile</h2>
       <div class="dg-form-grid">
-        <label class="dg-field dg-field--checkbox dg-field--check">>
+        <label class="dg-field dg-field--checkbox dg-field--check">
           <input type="checkbox" name="layout[handwriting_enabled]" value="1"<?= !empty($layout['handwriting']['enabled']) ? ' checked' : '' ?><?= !$canEdit ? ' disabled' : '' ?>>
           <span>Handschrift-Zone (leer zum Beschreiben)</span>
         </label>
