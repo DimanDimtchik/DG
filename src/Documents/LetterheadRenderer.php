@@ -145,38 +145,40 @@ final class LetterheadRenderer
         }
 
         $headerHtml = self::renderHeader($cfg, $party);
-        // PDF: Adresse+Info im Dokumentfluss (Tabelle), damit Text darunter volle Breite hat
-        // und nicht mit dem Infoblock kollidiert. Vorschau behält DIN-Absolutpositionen.
-        if ($forPdf) {
-            $metaHtml = self::renderMetaFlow($cfg, $doc);
-            $windowHtml = '';
-            $infoHtml = '';
-        } else {
-            $metaHtml = '';
-            $windowHtml = self::renderAddressWindow($cfg, $doc);
-            $infoHtml = self::renderInfoBlock($cfg, $doc);
-        }
+        // Adresse und Infoblock in einer Tabelle: die höhere Spalte schiebt den
+        // Brieftext nach unten. Der Text darunter hat die volle Satzbreite.
+        $metaHtml = self::renderMetaFlow($cfg, $doc);
         $bodyHtml = self::renderBody($cfg, $doc, $forPdf);
         $footerHtml = self::renderFooter($cfg, $party);
         $bgHtml = self::renderBackground($cfg);
         $wmHtml = self::renderWatermark($cfg);
         $guidesHtml = $showGuides ? self::renderGuides($cfg) : '';
-        $foldHtml = $forPdf ? '' : self::renderFoldMarks($cfg);
+        $foldHtml = self::renderFoldMarks($cfg);
         $pageNumHtml = self::renderPageNumber($cfg);
+        // In der Bildschirmvorschau: Linien bei 297 mm / 594 mm … als Seitengrenzen
+        $seamsHtml = $forPdf ? '' : '<div class="dg-lh-page-seams" aria-hidden="true"></div>';
 
-        return '<article class="dg-lh-page' . ($forPdf ? ' dg-lh-page--pdf' : '') . '">'
-            . $bgHtml
+        $pageInner = $bgHtml
             . $wmHtml
             . $guidesHtml
-            . $foldHtml
+            . ($forPdf ? '' : $foldHtml)
+            . $seamsHtml
             . $headerHtml
             . $metaHtml
-            . $windowHtml
-            . $infoHtml
             . $bodyHtml
-            . $footerHtml
-            . $pageNumHtml
+            . ($forPdf ? '' : $footerHtml)
+            . $pageNumHtml;
+
+        $article = '<article class="dg-lh-page' . ($forPdf ? ' dg-lh-page--pdf' : '') . '">'
+            . $pageInner
             . '</article>';
+
+        // Dompdf: fixierte Falz-/Fußzeile außerhalb der fließenden Seite → auf jeder Seite
+        if ($forPdf) {
+            return $foldHtml . $footerHtml . $article;
+        }
+
+        return $article;
     }
 
     /**
@@ -336,18 +338,56 @@ final class LetterheadRenderer
         if (!$showWindow && $rows === []) {
             return '';
         }
-        $minH = (float) ($window['height_mm'] ?? LetterheadSettings::ADDRESS_WINDOW_HEIGHT_MM);
+        $winTop = (float) ($window['top_mm'] ?? 50);
+        $marginTop = max(0.0, $winTop - self::headerFlowHeightFromPageMm($cfg));
         $addr = $showWindow
-            ? '<div class="dg-lh-meta__addr">' . self::addressWindowInnerHtml($cfg, $doc) . '</div>'
-            : '<div class="dg-lh-meta__addr"></div>';
-        $info = $rows !== []
-            ? '<div class="dg-lh-meta__info">' . implode('', $rows) . '</div>'
-            : '<div class="dg-lh-meta__info"></div>';
+            ? self::addressWindowInnerHtml($cfg, $doc)
+            : '';
+        $pairs = self::infoPairs($cfg, $doc);
+        $style = 'width:100%;table-layout:fixed;border-collapse:collapse;margin-top:' . self::mm($marginTop);
+        $html = '<table class="dg-lh-meta" width="100%" cellspacing="0" cellpadding="0" style="' . $style . '">';
+        if ($pairs === []) {
+            $html .= '<tr><td class="dg-lh-meta__addr" width="100%" valign="top" colspan="3">' . $addr . '</td></tr>';
+        } else {
+            $first = true;
+            foreach ($pairs as $pair) {
+                $html .= '<tr>'
+                    . '<td class="dg-lh-meta__addr" width="50%" valign="top">' . ($first ? $addr : '&#160;') . '</td>'
+                    . '<td class="dg-lh-info__label" width="22%" valign="top">' . self::e($pair['label']) . '</td>'
+                    . '<td class="dg-lh-info__value" width="28%" valign="top">' . self::e($pair['value']) . '</td>'
+                    . '</tr>';
+                $first = false;
+            }
+        }
 
-        return '<div class="dg-lh-meta" style="min-height:' . self::mm($minH) . '">'
-            . $addr
-            . $info
-            . '</div>';
+        return $html . '</table>';
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $doc
+     * @return list<array{label: string, value: string}>
+     */
+    private static function infoPairs(array $cfg, array $doc): array
+    {
+        $block = is_array($cfg['info_block'] ?? null) ? $cfg['info_block'] : [];
+        if (empty($block['show'])) {
+            return [];
+        }
+        $infoValues = is_array($doc['info'] ?? null) ? $doc['info'] : [];
+        $pairs = [];
+        foreach (LetterheadSettings::infoFieldsSorted($cfg, true) as $field) {
+            $value = trim((string) ($infoValues[$field['key']] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            $pairs[] = [
+                'label' => (string) $field['label'],
+                'value' => $value,
+            ];
+        }
+
+        return $pairs;
     }
 
     /**
@@ -410,14 +450,8 @@ final class LetterheadRenderer
     private static function renderBody(array $cfg, array $doc, bool $forPdf = false): string
     {
         $subjectCfg = is_array($cfg['subject'] ?? null) ? $cfg['subject'] : [];
-        // PDF: Meta-Block liegt schon im Fluss → kein künstliches padding-top
-        // Vorschau: Absolut-Fenster/Info → Reststrecke bis unter max(Fenster, Info)
-        if ($forPdf) {
-            $padStyle = 'padding-top:4mm';
-        } else {
-            $padTop = max(0.0, self::bodyContentTopFromPageMm($cfg, $doc) - self::headerFlowHeightFromPageMm($cfg));
-            $padStyle = 'padding-top:' . self::mm($padTop);
-        }
+        // Meta-Tabelle liegt im Fluss: Text beginnt darunter, über die volle Satzbreite.
+        $padStyle = 'padding-top:4mm';
         $subject = trim((string) ($doc['subject'] ?? ''));
         $html = '<section class="dg-lh-body-content" style="' . $padStyle . '">';
         if ($subject !== '') {
@@ -807,6 +841,10 @@ final class LetterheadRenderer
         $mt = (float) ($cfg['page']['margin_top_mm'] ?? 17);
         $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
         $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
+        $contentW = max(80.0, self::PAGE_WIDTH_MM - $ml - $mr);
+        // Fußzeile ist im PDF fixiert → Platz am unteren Rand jeder Seite freilassen
+        $footerBandMm = 24.0;
+        $pdfPadBottom = $mb + $footerBandMm;
 
         $pdfCss = '';
         if ($forPdf) {
@@ -816,18 +854,50 @@ final class LetterheadRenderer
 body.dg-lh-body--pdf,
 html body.dg-lh-body--pdf { background: #fff !important; }
 body.dg-lh-body--pdf .dg-lh-page {
+  display: block !important;
   margin: 0 !important;
   box-shadow: none !important;
   min-height: 0 !important;
   height: auto !important;
   overflow: visible !important;
-  padding-bottom: {$mb}mm;
+  width: auto !important;
+  max-width: 210mm !important;
+  /* Satzspiegel über Padding — rechter Rand bleibt 20 mm (kein Überlauf) */
+  padding-top: {$mt}mm !important;
+  padding-right: {$mr}mm !important;
+  padding-bottom: {$pdfPadBottom}mm !important;
+  padding-left: {$ml}mm !important;
+  box-sizing: border-box !important;
 }
-body.dg-lh-body--pdf .dg-lh-fold-marks { display: none !important; }
+/* Falzmarken am linken Blattrand (DIN 5008), nicht am Content-Rand */
+body.dg-lh-body--pdf .dg-lh-fold-marks {
+  display: block !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 10mm !important;
+  height: 297mm !important;
+  z-index: 6 !important;
+}
+body.dg-lh-body--pdf .dg-lh-fold {
+  position: absolute !important;
+  left: 0 !important;
+  width: 7mm !important;
+  height: 0.45mm !important;
+  background: #111 !important;
+}
+body.dg-lh-body--pdf .dg-lh-fold--punch {
+  width: 4mm !important;
+  height: 0.4mm !important;
+  background: #333 !important;
+}
 body.dg-lh-body--pdf .dg-lh-header {
   display: table !important;
   width: 100% !important;
   table-layout: fixed !important;
+  /* Kein negativer Rand — sonst treibt Dompdf die Satzbreite über den rechten Rand */
+  margin: 0 0 4mm 0 !important;
+  padding: 0 !important;
 }
 body.dg-lh-body--pdf .dg-lh-header__slot {
   display: table-cell !important;
@@ -838,39 +908,30 @@ body.dg-lh-body--pdf .dg-lh-header__stack {
   display: block !important;
 }
 body.dg-lh-body--pdf .dg-lh-meta {
-  display: table !important;
   width: 100% !important;
+  border-collapse: collapse !important;
   table-layout: fixed !important;
-  margin: 2mm 0 5mm 0 !important;
-  border-collapse: separate !important;
-  border-spacing: 0 !important;
-}
-body.dg-lh-body--pdf .dg-lh-meta__addr,
-body.dg-lh-body--pdf .dg-lh-meta__info {
-  display: table-cell !important;
-  vertical-align: top !important;
-  box-sizing: border-box !important;
+  margin-bottom: 2mm !important;
 }
 body.dg-lh-body--pdf .dg-lh-meta__addr {
-  width: 58% !important;
-  padding-right: 4mm !important;
+  width: 50% !important;
+  vertical-align: top !important;
+  box-sizing: border-box !important;
+  padding-right: 3mm !important;
   font-size: 10pt !important;
   line-height: 1.35 !important;
 }
-body.dg-lh-body--pdf .dg-lh-meta__info {
-  width: 42% !important;
-  font-size: 8.5pt !important;
-  line-height: 1.35 !important;
-}
-body.dg-lh-body--pdf .dg-lh-info__row {
-  display: block !important;
-  margin-bottom: 1mm !important;
-}
 body.dg-lh-body--pdf .dg-lh-info__label,
 body.dg-lh-body--pdf .dg-lh-info__value {
-  display: inline !important;
+  display: table-cell !important;
+  vertical-align: top !important;
+  font-size: 8.5pt !important;
+  line-height: 1.35 !important;
+  padding: 0 0 1.2mm 0 !important;
+  word-wrap: break-word !important;
 }
-body.dg-lh-body--pdf .dg-lh-info__label::after { content: ": "; }
+body.dg-lh-body--pdf .dg-lh-info__label { width: 22% !important; color: #555 !important; padding-right: 2mm !important; }
+body.dg-lh-body--pdf .dg-lh-info__value { width: 28% !important; font-weight: 600 !important; }
 body.dg-lh-body--pdf .dg-lh-footer {
   position: fixed !important;
   bottom: {$mb}mm !important;
@@ -887,16 +948,38 @@ body.dg-lh-body--pdf .dg-lh-footer__col {
   vertical-align: top !important;
   padding-right: 2mm !important;
 }
+body.dg-lh-body--pdf .dg-lh-body-content,
+body.dg-lh-body--pdf .dg-lh-meta,
+body.dg-lh-body--pdf .dg-lh-subject,
+body.dg-lh-body--pdf .dg-lh-greeting,
+body.dg-lh-body--pdf .dg-lh-p,
+body.dg-lh-body--pdf .dg-lh-closing,
+body.dg-lh-body--pdf .dg-lh-signature,
+body.dg-lh-body--pdf .dg-lh-rich,
+body.dg-lh-body--pdf .dg-lh-rich p {
+  max-width: {$contentW}mm !important;
+}
 body.dg-lh-body--pdf .dg-lh-body-content {
   position: relative !important;
   page-break-inside: auto;
   display: block !important;
   width: 100% !important;
-  max-width: 100% !important;
   box-sizing: border-box !important;
   clear: both !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+body.dg-lh-body--pdf .dg-lh-subject,
+body.dg-lh-body--pdf .dg-lh-greeting,
+body.dg-lh-body--pdf .dg-lh-closing,
+body.dg-lh-body--pdf .dg-lh-signature,
+body.dg-lh-body--pdf .dg-lh-sign-gap {
+  page-break-inside: avoid;
+}
+body.dg-lh-body--pdf .dg-lh-p,
+body.dg-lh-body--pdf .dg-lh-rich p {
+  orphans: 2;
+  widows: 2;
 }
 body.dg-lh-body--pdf .dg-lh-subject,
 body.dg-lh-body--pdf .dg-lh-greeting,
@@ -909,7 +992,7 @@ body.dg-lh-body--pdf .dg-lh-rich ul,
 body.dg-lh-body--pdf .dg-lh-rich ol,
 body.dg-lh-body--pdf .dg-lh-rich table {
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: {$contentW}mm !important;
   box-sizing: border-box !important;
 }
 PDFCSS;
@@ -921,9 +1004,11 @@ html, body.dg-lh-body { margin: 0; padding: 0; background: #e8eaef; }
 body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #1a1a1a; }
 .dg-lh-page {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 210mm;
   min-height: 297mm;
-  height: 297mm;
+  height: auto;
   margin: 8mm auto;
   background: #fff;
   box-sizing: border-box;
@@ -1014,45 +1099,39 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   margin-bottom: 1.5mm;
   padding-bottom: 0.5mm;
   color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
 }
-.dg-lh-info {
-  position: absolute;
-  font-size: 8.5pt;
-  line-height: 1.35;
-}
-.dg-lh-info__row { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1mm; margin-bottom: 1mm; }
-.dg-lh-info__label { color: #555; }
-.dg-lh-info__value { font-weight: 600; }
+.dg-lh-info__label,
+.dg-lh-info__value { vertical-align: top; padding: 0 0 1.2mm 0; overflow-wrap: anywhere; word-wrap: break-word; }
+.dg-lh-info__label { width: 22%; color: #555; padding-right: 2mm; font-size: 8.5pt; line-height: 1.35; }
+.dg-lh-info__value { width: 28%; font-weight: 600; font-size: 8.5pt; line-height: 1.35; }
 .dg-lh-meta {
-  display: table;
   width: 100%;
+  border-collapse: collapse;
   table-layout: fixed;
-  margin: 2mm 0 5mm 0;
+  margin: 0 0 2mm 0;
 }
 .dg-lh-meta__addr,
-.dg-lh-meta__info {
-  display: table-cell;
+.dg-lh-info__label,
+.dg-lh-info__value {
   vertical-align: top;
   box-sizing: border-box;
 }
-.dg-lh-meta__addr { width: 58%; padding-right: 4mm; font-size: 10pt; line-height: 1.35; }
-.dg-lh-meta__info { width: 42%; font-size: 8.5pt; line-height: 1.35; }
+.dg-lh-meta__addr { width: 50%; padding-right: 3mm; font-size: 10pt; line-height: 1.35; }
 .dg-lh-body-content {
   display: block;
   width: 100%;
-  max-width: 100%;
+  max-width: none;
   box-sizing: border-box;
   clear: both;
   font-size: 11pt;
   line-height: 1.45;
 }
-.dg-lh-subject { margin: 0 0 5mm; width: 100%; }
+.dg-lh-subject { margin: 0 0 5mm; width: 100%; max-width: none; }
 .dg-lh-subject--bold { font-weight: 700; }
 .dg-lh-subject__label { font-weight: 400; color: #555; }
-.dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; width: 100%; max-width: 100%; }
+.dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; width: 100%; max-width: none; }
 .dg-lh-closing { margin-bottom: 0; }
 .dg-lh-sign-gap {
   display: block;
@@ -1066,20 +1145,22 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 .dg-lh-rich {
   display: block;
   width: 100%;
-  max-width: 100%;
+  max-width: none;
   box-sizing: border-box;
   font-size: 11pt;
   line-height: 1.45;
   margin: 0 0 3.5mm;
 }
-.dg-lh-rich p { margin: 0 0 3mm; width: 100%; max-width: 100%; }
+.dg-lh-rich p { margin: 0 0 3mm; width: 100%; max-width: none; }
 .dg-lh-rich ul, .dg-lh-rich ol { margin: 0 0 3mm; padding-left: 6mm; width: 100%; max-width: 100%; box-sizing: border-box; }
 .dg-lh-rich table, .dg-writer-table { border-collapse: collapse; width: 100%; max-width: 100%; margin: 0 0 3mm; font-size: 10pt; }
 .dg-lh-rich th, .dg-lh-rich td, .dg-writer-table th, .dg-writer-table td { border: 0.2mm solid #666; padding: 1.5mm 2mm; vertical-align: top; }
 .dg-lh-rich img, .dg-writer-img { max-width: 100%; height: auto; vertical-align: middle; }
 .dg-lh-footer {
-  position: absolute;
-  left: {$ml}mm; right: {$mr}mm; bottom: {$mb}mm;
+  position: relative;
+  margin-top: auto;
+  width: 100%;
+  flex-shrink: 0;
   color: #333;
   line-height: 1.3;
 }
@@ -1091,6 +1172,22 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   text-decoration: underline;
   cursor: pointer;
   pointer-events: auto;
+}
+.dg-lh-page-seams {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(297mm - 0.35mm),
+    #94a3b8 calc(297mm - 0.35mm),
+    #94a3b8 297mm
+  );
 }
 .dg-lh-guides { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .dg-lh-guide--margin {
@@ -1113,9 +1210,26 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
 }
 @media print {
   html, body.dg-lh-body { background: #fff; }
-  .dg-lh-page { margin: 0; box-shadow: none; overflow: visible; height: auto; min-height: 297mm; }
-  .dg-lh-guides { display: none !important; }
+  .dg-lh-page {
+    display: block;
+    margin: 0;
+    box-shadow: none;
+    overflow: visible;
+    height: auto;
+    min-height: 297mm;
+    padding-bottom: {$pdfPadBottom}mm;
+  }
+  .dg-lh-guides,
+  .dg-lh-page-seams { display: none !important; }
   .dg-lh-fold-marks { z-index: 6; display: block !important; }
+  .dg-lh-footer {
+    position: fixed;
+    left: {$ml}mm;
+    right: {$mr}mm;
+    bottom: {$mb}mm;
+    margin-top: 0;
+    width: auto;
+  }
   .dg-lh-pagenum {
     position: fixed;
     bottom: 8mm;

@@ -109,7 +109,10 @@ final class WriterExportService
         }
         $lines[] = '';
         if ($clean['greeting'] !== '') {
-            $lines[] = $clean['greeting'];
+            $lines[] = WriterDocument::resolveGreeting(
+                $clean['greeting'],
+                WriterDocument::contactForGreeting($clean)
+            );
             $lines[] = '';
         }
         foreach (WriterDocument::paragraphTexts(array_merge($doc, ['body' => $clean['body']])) as $p) {
@@ -176,7 +179,10 @@ final class WriterExportService
             $md[] = '';
         }
         if ($clean['greeting'] !== '') {
-            $md[] = self::escapeMd($clean['greeting']);
+            $md[] = self::escapeMd(WriterDocument::resolveGreeting(
+                $clean['greeting'],
+                WriterDocument::contactForGreeting($clean)
+            ));
             $md[] = '';
         }
         foreach (WriterDocument::paragraphTexts(array_merge($doc, ['body' => $clean['body']])) as $p) {

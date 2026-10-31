@@ -175,10 +175,54 @@ final class WriterDocument
         return $out;
     }
 
+    public static function neutralGreeting(): string
+    {
+        return 'Sehr geehrte Damen und Herren,';
+    }
+
+    /**
+     * Anrede für Vorschau, PDF und Formular.
+     * Platzhalter „…“ wird durch den Namen des gewählten Kontakts ersetzt
+     * (Herr/Frau = Nachname, Liebe/Lieber = Vorname).
+     * Ohne Kontakt und ohne fertige Anrede: neutrale Form.
+     */
+    public static function resolveGreeting(string $greeting, ?Contact $contact): string
+    {
+        $greeting = trim($greeting);
+        $neutral = self::neutralGreeting();
+        $incomplete = $greeting === ''
+            || $greeting === 'Sehr geehrte/r'
+            || $greeting === 'Sehr geehrte/r '
+            || str_contains($greeting, '…')
+            || str_contains($greeting, '...');
+
+        if ($contact === null) {
+            return $incomplete ? $neutral : $greeting;
+        }
+        if (!$incomplete) {
+            return $greeting;
+        }
+        if ($greeting === '' || $greeting === 'Sehr geehrte/r' || $greeting === 'Sehr geehrte/r ') {
+            return self::defaultGreetingText($contact);
+        }
+
+        $last = trim($contact->lastName);
+        $first = trim($contact->firstName);
+        $personal = preg_match('/\b(Liebe|Lieber)\b/u', $greeting) === 1;
+        $name = $personal
+            ? ($first !== '' ? $first : $last)
+            : ($last !== '' ? $last : $first);
+        if ($name === '') {
+            return self::defaultGreetingText($contact);
+        }
+
+        return str_replace(['…', '...'], $name, $greeting);
+    }
+
     public static function defaultGreetingText(?Contact $contact): string
     {
         if ($contact === null) {
-            return 'Sehr geehrte Damen und Herren,';
+            return self::neutralGreeting();
         }
         $sal = mb_strtolower(trim($contact->salutation));
         $last = trim($contact->lastName);
@@ -196,6 +240,25 @@ final class WriterDocument
         }
 
         return 'Sehr geehrte Damen und Herren,';
+    }
+
+    /**
+     * @param array<string, mixed> $doc sanitize()-Struktur mit contact_id
+     */
+    public static function contactForGreeting(array $doc): ?Contact
+    {
+        $contactId = (int) ($doc['contact_id'] ?? 0);
+        if (
+            $contactId < 1
+            || !class_exists('ContactRepository')
+            || !class_exists('Database')
+            || !Database::isConfigured()
+        ) {
+            return null;
+        }
+        $contact = ContactRepository::findById($contactId);
+
+        return $contact instanceof Contact ? $contact : null;
     }
 
     /**
@@ -517,7 +580,7 @@ final class WriterDocument
             'recipient_lines' => $clean['recipient_lines'],
             'info' => $clean['info'],
             'subject' => $clean['subject'],
-            'greeting' => $clean['greeting'],
+            'greeting' => self::resolveGreeting($clean['greeting'], self::contactForGreeting($clean)),
             'paragraphs' => $paragraphs,
             'body_html' => $bodyHtml,
             'closing' => $clean['closing'],

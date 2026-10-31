@@ -59,7 +59,36 @@
     }
   }
 
-  function fillGreetingPresets(list, defaultText) {
+  function resolveGreetingText(current, payload, replacePreset) {
+    var neutral = 'Sehr geehrte Damen und Herren,';
+    current = (current || '').trim();
+    if (!payload) {
+      return neutral;
+    }
+    var placeholder =
+      current === '' ||
+      current === 'Sehr geehrte/r' ||
+      current === 'Sehr geehrte/r ' ||
+      current === neutral;
+    var presetLike =
+      /^(Sehr geehrter Herr .+|Sehr geehrte Frau .+|Liebe .+|Lieber .+)$/.test(current);
+    if (placeholder || (replacePreset && presetLike)) {
+      return payload.default_greeting || neutral;
+    }
+    if (current.indexOf('…') === -1 && current.indexOf('...') === -1) {
+      return current;
+    }
+    var last = String(payload.last_name || '').trim();
+    var first = String(payload.first_name || '').trim();
+    var personal = /\b(Liebe|Lieber)\b/.test(current);
+    var name = personal ? first || last : last || first;
+    if (!name) {
+      return payload.default_greeting || neutral;
+    }
+    return current.replace(/…|\.\.\./g, name);
+  }
+
+  function fillGreetingPresets(list) {
     if (!greetingSelect || !list || !list.length) {
       return;
     }
@@ -75,17 +104,6 @@
         '</option>';
     });
     greetingSelect.innerHTML = html;
-    if (greetingInput && defaultText) {
-      var current = (greetingInput.value || '').trim();
-      var looksPlaceholder =
-        current === '' ||
-        current.indexOf('…') !== -1 ||
-        current === 'Sehr geehrte/r ' ||
-        current === 'Sehr geehrte Damen und Herren,';
-      if (looksPlaceholder) {
-        greetingInput.value = defaultText;
-      }
-    }
   }
 
   function applyContact(data) {
@@ -102,7 +120,10 @@
     results.innerHTML = '';
     syncOpenButton();
     if (data.greetings) {
-      fillGreetingPresets(data.greetings, data.default_greeting || '');
+      fillGreetingPresets(data.greetings);
+    }
+    if (greetingInput) {
+      greetingInput.value = resolveGreetingText(greetingInput.value, data, true);
     }
   }
 
@@ -239,6 +260,9 @@
       contactIdInput.value = '0';
       lastAddress = null;
       search.value = '';
+      if (greetingInput) {
+        greetingInput.value = resolveGreetingText(greetingInput.value, null);
+      }
       syncOpenButton();
       results.hidden = true;
       results.innerHTML = '';
@@ -271,9 +295,12 @@
   var initialId = currentContactId();
   if (initialId > 0) {
     fetchAddress(initialId).then(function (payload) {
-      if (payload && payload.ok && payload.greetings) {
-        fillGreetingPresets(payload.greetings, null);
-      }
+        if (payload && payload.ok && payload.greetings) {
+          fillGreetingPresets(payload.greetings);
+          if (greetingInput) {
+            greetingInput.value = resolveGreetingText(greetingInput.value, payload, false);
+          }
+        }
     }).catch(function () {});
   }
 })();

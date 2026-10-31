@@ -9017,6 +9017,15 @@ $legalProductsConfig = LegalProductSettings::config();
                 $writerLinkContext = WriterDocumentLinkService::contextForDocument(
                     is_array($writerForm ?? null) ? $writerForm : WriterDocument::empty()
                 );
+                $greetingContact = ($writerLinkContext['contact'] ?? null) instanceof Contact
+                    ? $writerLinkContext['contact']
+                    : null;
+                if (is_array($writerForm ?? null)) {
+                    $writerForm['greeting'] = WriterDocument::resolveGreeting(
+                        (string) ($writerForm['greeting'] ?? ''),
+                        $greetingContact
+                    );
+                }
                 $writerCanLinkVoucher = MenuRegistry::canAccess($user, 'buchhaltung-belege')
                     || MenuRegistry::canAccess($user, 'buchhaltung-beleg-form');
                 $contentTemplate = 'modules/dokumentenverfasser-form';

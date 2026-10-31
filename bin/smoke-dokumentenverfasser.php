@@ -120,6 +120,38 @@ if (count($render['paragraphs'] ?? []) < 2) {
     $ok('toRenderDocument paragraphs=' . count($render['paragraphs']));
 }
 
+$neutral = 'Sehr geehrte Damen und Herren,';
+$herr = new Contact(
+    1, '', 'Herr', 'Dietrich', 'Ganz', 'Dietrich Ganz', '',
+    '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '',
+    '', '', [], [], [], [], []
+);
+$frau = new Contact(
+    2, '', 'Frau', 'Anna', 'Meier', 'Anna Meier', '',
+    '', '', '', '', '', '', '', '', '',
+    '', '', '', '', '', '', '', '', '', '',
+    '', '', [], [], [], [], []
+);
+$greetingCases = [
+    ['Sehr geehrter Herr …,', $herr, 'Sehr geehrter Herr Ganz,'],
+    ['Sehr geehrte Frau ...,', $frau, 'Sehr geehrte Frau Meier,'],
+    ['Liebe …,', $frau, 'Liebe Anna,'],
+    ['Lieber …,', $herr, 'Lieber Dietrich,'],
+    ['Sehr geehrter Herr …', null, $neutral],
+    ['', null, $neutral],
+    ['Sehr geehrte/r ', null, $neutral],
+    ['Guten Tag,', null, 'Guten Tag,'],
+    ['Guten Tag,', $herr, 'Guten Tag,'],
+];
+foreach ($greetingCases as [$input, $contact, $expected]) {
+    $got = WriterDocument::resolveGreeting($input, $contact);
+    if ($got !== $expected) {
+        $fail('resolveGreeting «' . $input . '» => «' . $got . '» erwartet «' . $expected . '»');
+    }
+}
+$ok('resolveGreeting');
+
 $txt = WriterExportService::toPlainText($clean);
 $md = WriterExportService::toMarkdown($clean);
 if (!str_contains($txt, 'Erster Absatz') || !str_contains($md, '# Smoke-Brief')) {
@@ -144,8 +176,16 @@ $html = LetterheadRenderer::renderFullHtml($render, LetterheadSettings::defaults
 ]);
 if (!str_contains($html, 'Smoke-Brief') || !str_contains($html, 'dg-lh-page')) {
     $fail('LetterheadRenderer HTML');
+} elseif (str_contains($html, 'class="dg-lh-window"') || !str_contains($html, 'class="dg-lh-meta"')) {
+    $fail('LetterheadRenderer: Adresse muss in der Meta-Tabelle liegen');
 } else {
-    $ok('LetterheadRenderer HTML');
+    $metaPos = strpos($html, 'class="dg-lh-meta"');
+    $bodyPos = strpos($html, 'class="dg-lh-body-content"');
+    if ($metaPos === false || $bodyPos === false || $metaPos > $bodyPos) {
+        $fail('LetterheadRenderer: Text steht nicht unter der Adresszeile');
+    } else {
+        $ok('LetterheadRenderer HTML');
+    }
 }
 
 $klar = WriterKlartextAssist::analyze(
