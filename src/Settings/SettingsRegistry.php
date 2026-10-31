@@ -20,31 +20,45 @@ final class SettingsRegistry
                         'label' => 'Firmendaten',
                         'lead' => 'Firma, Anschrift, Kontakt, Steuernummern und steuerliche Sonderfälle (u. a. § 19).',
                         'template' => 'company',
+                        'kichel_aliases' => [
+                            'firma', 'firmenadresse', 'ust-id', 'ustid', 'steuernummer', '§19', 'paragraf 19', 'kleinunternehmer',
+                        ],
                     ],
                     'datenbank' => [
                         'label' => 'Datenbank',
                         'lead' => 'MariaDB-Verbindung und Datenbank-Tabellen.',
                         'template' => 'database',
+                        'kichel_aliases' => ['mariadb', 'mysql', 'db verbindung', 'datenbankverbindung'],
                     ],
                     'backup' => [
                         'label' => 'Datensicherung',
                         'lead' => 'Tägliche Instanzdaten-Backups: Datenbank, storage/ und lokale Configs.',
                         'template' => 'backup',
+                        'kichel_aliases' => [
+                            'backup', 'backups', 'sicherung', 'datensicherung', 'restore', 'wiederherstellen', 'sicherheitskopie',
+                        ],
                     ],
                     'email' => [
                         'label' => 'E-Mail / SMTP',
                         'lead' => 'SMTP-Server, Versand und Archiv ausgehender E-Mails.',
                         'template' => 'email',
+                        'kichel_aliases' => ['smtp', 'absender', 'mailserver', 'ausgehende mails'],
                     ],
                     'schriften' => [
                         'label' => 'Schriften',
                         'lead' => 'Schriftarten für die CRM-Oberfläche und HTML-E-Mails.',
                         'template' => 'fonts',
+                        'kichel_aliases' => ['schriftart', 'schriftarten', 'font', 'fonts', 'typografie'],
                     ],
                     'crm-darstellung' => [
                         'label' => 'Software Design',
                         'lead' => 'Farben der CRM-Oberfläche: Menü, Seitenleiste, Hintergrund und Buttons.',
                         'template' => 'crm-appearance',
+                        'kichel_aliases' => [
+                            'farbe', 'farben', 'textfarbe', 'markenfarbe', 'primärfarbe', 'primaerfarbe',
+                            'color', 'colors', 'crm farbe', 'crm farben', 'software design',
+                            'oberflächenfarbe', 'oberflaechenfarbe', 'theme',
+                        ],
                     ],
                 ],
             ],
@@ -55,16 +69,21 @@ final class SettingsRegistry
                         'label' => 'Allgemein',
                         'lead' => 'Allgemeine CRM-Optionen und Standardverhalten.',
                         'template' => 'placeholder',
+                        'kichel_aliases' => ['allgemeine einstellungen', 'crm optionen'],
                     ],
                     'ldap' => [
                         'label' => 'Anmeldung / LDAP',
                         'lead' => 'Externes Verzeichnis (LDAP) und WordPress dg-user — Vorbereitung bis Server-Umzug.',
                         'template' => 'ldap',
+                        'kichel_aliases' => ['ldap', 'login verzeichnis', 'active directory', 'ad anbindung', 'single sign-on'],
                     ],
                     'nummernkreise' => [
                         'label' => 'Nummernkreise',
                         'lead' => 'Belege (Angebot, Rechnung, Schlussrechnung) und Stammdaten (Artikel, Leistung, Kunde, Lieferant).',
                         'template' => 'number-ranges',
+                        'kichel_aliases' => [
+                            'angebotsnummer', 'rechnungsnummer', 'belegnummer', 'nummernkreis', 'nummernkreise',
+                        ],
                     ],
                 ],
             ],
@@ -75,21 +94,29 @@ final class SettingsRegistry
                         'label' => 'Arbeitszeiten',
                         'lead' => 'Öffnungs- und Buchungszeiten im Kalender.',
                         'template' => 'working-hours',
+                        'kichel_aliases' => ['öffnungszeiten', 'oeffnungszeiten', 'buchungszeiten', 'kalender zeiten'],
                     ],
                     'kalender-darstellung' => [
                         'label' => 'Kalender Design',
                         'lead' => 'Farben des öffentlichen Buchungskalenders (Shortcode und Einbindung).',
                         'template' => 'calendar-appearance',
+                        'kichel_aliases' => [
+                            'kalenderfarbe', 'kalender farbe', 'kalenderfarben', 'kalender design',
+                        ],
                     ],
                     'kalender-team' => [
                         'label' => 'Bereiche und Mitglieder',
                         'lead' => 'Buchungsbereiche und Mitarbeiter für den Terminkalender.',
                         'template' => 'calendar-team',
+                        'kichel_aliases' => ['kalenderbereiche', 'buchungsbereiche', 'kalender mitarbeiter'],
                     ],
                     'kalender-einbindung' => [
                         'label' => 'Einbindung',
                         'lead' => 'Online-Terminbuchung für Kunden aktivieren und öffentliche Buchungsseite verwalten.',
                         'template' => 'calendar-embed',
+                        'kichel_aliases' => [
+                            'terminbuchung', 'online buchung', 'qr code', 'qr-code', 'kalender qr', 'flyer kalender', 'app download',
+                        ],
                     ],
                 ],
             ],
@@ -100,11 +127,16 @@ final class SettingsRegistry
                         'label' => 'Abteilungen',
                         'lead' => 'Abteilungen und Zuordnung von Mitarbeitern.',
                         'template' => 'departments',
+                        'kichel_aliases' => ['abteilung', 'abteilungen', 'personal struktur'],
                     ],
                     'zeiterfassung' => [
                         'label' => 'Zeiterfassung',
                         'lead' => 'Pausenregeln, ArbZG, Zeitkontoregelung und Rückstellungs-Parameter (Konten mit Steuerberater).',
                         'template' => 'time-tracking',
+                        'kichel_aliases' => [
+                            'pausenregeln', 'arbzg', 'zeitkonto', 'überstunden regelung', 'ueberstunden regelung',
+                            'urlaubsrückstellung', 'urlaubsrueckstellung',
+                        ],
                     ],
                     'lohn' => [
                         'label' => 'Lohn & Gehalt',
@@ -120,16 +152,21 @@ final class SettingsRegistry
                         'label' => 'Postfächer',
                         'lead' => 'Allgemeine Postfächer, Zugriffsrechte und Webhook-URLs für IMAP→Webhook-Dienste.',
                         'template' => 'postboxes',
+                        'kichel_aliases' => ['imap', 'postfach', 'postfaecher', 'mailbox', 'e-mail abruf'],
                     ],
                     'benachrichtigungen' => [
                         'label' => 'Benachrichtigungen',
                         'lead' => 'Kopf- und Fußzeile, E-Mail-Vorlagen für Terminkalender und freie Abteilungsvorlagen. Zuordnung pro Abteilung unter Einstellungen → HR → Abteilungen.',
                         'template' => 'notifications',
+                        'kichel_aliases' => ['e-mail vorlage', 'mail vorlage', 'social media links', 'facebook link'],
                     ],
                     'briefpapier' => [
                         'label' => 'Briefpapier',
                         'lead' => 'DIN-5008-Zonen, Logo, Infoblock, Fußpflichtangaben und Exportformate für den Dokumentenverfasser.',
                         'template' => 'letterhead',
+                        'kichel_aliases' => [
+                            'briefpapier', 'din 5008', 'din-5008', 'briefkopf', 'letterhead', 'dokumentenverfasser einstellung',
+                        ],
                     ],
                 ],
             ],
@@ -140,6 +177,7 @@ final class SettingsRegistry
                         'label' => 'Lagerstruktur',
                         'lead' => 'Lagerorte, Hallen, Regale und Stellplätze — Stammdaten für Positionscodes.',
                         'template' => 'lager-struktur',
+                        'kichel_aliases' => ['lagerort', 'halle', 'regal', 'stellplatz', 'lagerplätze', 'lagerplaetze'],
                     ],
                 ],
             ],
@@ -150,26 +188,31 @@ final class SettingsRegistry
                         'label' => 'Kontenrahmen',
                         'lead' => 'Standardkontenrahmen SKR03 oder SKR04 für die Buchhaltung.',
                         'template' => 'chart-of-accounts',
+                        'kichel_aliases' => ['skr03', 'skr04', 'skr 03', 'skr 04', 'kontenplan'],
                     ],
                     'steuerkanzlei' => [
                         'label' => 'Steuerkanzlei',
                         'lead' => 'Steuerkanzlei als Firmen-Kontakt zuordnen und verknüpfte Ansprechpartner einsehen.',
                         'template' => 'steuerkanzlei',
+                        'kichel_aliases' => ['steuerberater einstellung', 'kanzlei', 'datev empfänger'],
                     ],
                     'elster' => [
                         'label' => 'ELSTER / ERiC',
                         'lead' => 'Vorbereitung direkter ELSTER-Übermittlung — bis Server-Umzug: CSV-Modus.',
                         'template' => 'elster',
+                        'kichel_aliases' => ['eric', 'elster', 'hersteller-id', 'hersteller id'],
                     ],
                     'payment-terms' => [
                         'label' => 'Zahlungsbedingungen & Mahnung',
                         'lead' => 'Skonto-Stufen mit Zeitvorgaben und automatischer Mahnversand mit Mahngebühren.',
                         'template' => 'payment-terms',
+                        'kichel_aliases' => ['skonto', 'mahnung', 'mahngebühr', 'zahlungsziel', 'zahlungsbedingung'],
                     ],
                     'belegdarstellung' => [
                         'label' => 'Belegdarstellung',
                         'lead' => 'Kunden-PDF der Belegkette: Textvorlagen und Anzahlung — nicht Nummernkreise; § 19 unter Firmendaten.',
                         'template' => 'belegdarstellung',
+                        'kichel_aliases' => ['beleg pdf', 'kunden pdf', 'anzahlung text', 'belegvorlage'],
                     ],
                 ],
             ],
@@ -180,6 +223,9 @@ final class SettingsRegistry
                         'label' => 'Rechtliches / Produkte',
                         'lead' => 'Impressum, Datenschutz, AGB, Widerruf — allgemein oder je Produktgruppe (Tabs).',
                         'template' => 'legal-products',
+                        'kichel_aliases' => [
+                            'impressum', 'datenschutz', 'agb', 'widerruf', 'rechtstexte', 'mehrprodukt', 'produktgruppen recht',
+                        ],
                     ],
                 ],
             ],
@@ -195,12 +241,16 @@ final class SettingsRegistry
         $flat = [];
         foreach (self::navigation() as $sectionId => $section) {
             foreach ($section['tabs'] as $tabId => $tab) {
+                $aliases = $tab['kichel_aliases'] ?? [];
                 $flat[$tabId] = [
                     'label' => $tab['label'],
                     'lead' => $tab['lead'],
                     'template' => $tab['template'],
                     'section' => $sectionId,
                     'sectionLabel' => $section['label'],
+                    'kichel_aliases' => is_array($aliases)
+                        ? array_values(array_filter(array_map('strval', $aliases), static fn (string $a): bool => $a !== ''))
+                        : [],
                 ];
             }
         }

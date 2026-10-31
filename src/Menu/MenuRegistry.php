@@ -645,6 +645,84 @@ final class MenuRegistry
     }
 
     /**
+     * Kichel-Suchaliase je Menü-/Modul-Slug (Synonyme, Tippfehler, Nutzerwortschatz).
+     * Quelle der Wahrheit neben Label/Beschreibung — neue Module hier mitpflegen.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function kichelAliases(): array
+    {
+        return [
+            'bilder' => [
+                'media', 'medien', 'bildbibliothek', 'medialbibliothek', 'bilder', 'logo hochladen', 'favicon',
+            ],
+            'akademie' => [
+                'schulungsvideo', 'schulungsvideos', 'erklärvideo', 'erklaervideo', 'lernvideo', 'video kurs',
+            ],
+            'buchhaltung-ustva' => [
+                'umsatzsteuervoranmeldung', 'umsatzsteuer-voranmeldung', 'umsatzsteuer voranmeldung',
+                'ust voranmeldung', 'ust-voranmeldung', 'ustva',
+            ],
+            'buchhaltung-belege' => [
+                'angebot erstellen', 'angebot anlegen', 'neues angebot', 'auftragsbestätigung', 'auftragsbestaetigung',
+                'lieferschein', 'belegkette', 'folgebeleg',
+            ],
+            'website-design' => [
+                'website farbe', 'website farben', 'webseitenfarbe', 'webseitenfarben', 'website design',
+            ],
+            'zeiterfassung' => [
+                'stempeluhr', 'einstempeln', 'ausstempeln', 'kiosk', 'pin stempel', 'schichtplan', 'schicht',
+                'urlaub', 'krankheit', 'abwesenheit', 'überstunden', 'ueberstunden', 'lohn export', 'datev lohn',
+            ],
+            'telefon' => [
+                'anruf', 'anrufen', 'fritzbox', 'cti', 'softphone', 'click to call', 'anrufliste', 'callmonitor',
+            ],
+            'dokumentenverfasser' => [
+                'brief schreiben', 'briefverfasser', 'textverarbeitung', 'word ersatz', 'pdf brief', 'tiptap',
+            ],
+            'rezeptur' => [
+                'stückliste', 'stueckliste', 'bom', 'vorkalkulation', 'rezept', 'fertigungszeit', 'maschinenkosten',
+            ],
+            'reklamation' => [
+                'reklamieren', 'beschwerde', 'beanstandung', 'kundenzufriedenheit',
+            ],
+            'gutscheine' => [
+                'gutschein', 'mehrzweckgutschein', 'geschenkgutschein', 'gutschein einlösen', 'gutschein einloesen',
+            ],
+            'gutscheine-flyer-vorlagen' => [
+                'gutschein flyer', 'flyer vorlage', 'flyer vorlagen',
+            ],
+            'website-gutschein-flyer' => [
+                'gutschein drucken', 'flyer drucken', 'gutscheinformular',
+            ],
+            'buchhaltung-anschaffungsrechner' => [
+                'anschaffung', 'anschaffungsrechner', 'leasing', 'barkauf', 'ratenkauf', 'afa', 'af a', 'mietkauf',
+            ],
+            'lager' => [
+                'bestand', 'wareneingang', 'warenausgang', 'inventur', 'lagerbewegung',
+            ],
+            'post' => [
+                'e-mail', 'email', 'posteingang', 'mailbox', 'imap post',
+            ],
+            'kontakte' => [
+                'kunden', 'lieferanten', 'mitarbeiter', 'kontaktimport', 'csv import kontakte', 'massenimport',
+            ],
+            'terminkalender' => [
+                'termine', 'kalender', 'buchungskalender', 'terminplanung',
+            ],
+            'kdv-dashboard' => [
+                'saas', 'multi firma', 'multifirma', 'kdv', 'lizenzübersicht', 'lizenzuebersicht',
+            ],
+            'kdv-kunden' => [
+                'saas kunden', 'mandanten', 'firmenswitch', 'umfirmierung', 'sso firma',
+            ],
+            'support-freigabe' => [
+                'support freigabe', 'fernwartung', 'zugang ganz soft',
+            ],
+        ];
+    }
+
+    /**
      * Alle Navigationspunkte für das Dashboard (ohne „Dashboard“ selbst).
      *
      * @return list<array{slug: string, label: string, icon: string, href: string, description: string}>

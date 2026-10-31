@@ -3,86 +3,15 @@ declare(strict_types=1);
 
 /**
  * Schicht A: CRM-Navigation aus MenuRegistry + SettingsRegistry (ohne Hardcoding pro Frage).
+ *
+ * Such-Aliase liegen als Metadaten bei den Quellen:
+ * - Menü: MenuRegistry::kichelAliases()
+ * - Einstellungen: SettingsRegistry-Tab → kichel_aliases
  */
 final class KichelNavIndex
 {
     /** @var array<string, list<array<string, mixed>>> */
     private static array $cache = [];
-
-    /** @var array<string, list<string>> Navigations-Aliase (Query-Substring → Menü-ID) */
-    private const QUERY_ALIASES = [
-        'bilder' => [
-            'media',
-            'medien',
-            'bildbibliothek',
-            'medialbibliothek',
-            'bilder',
-            'logo hochladen',
-            'favicon',
-        ],
-        'akademie' => [
-            'schulungsvideo',
-            'schulungsvideos',
-            'erklärvideo',
-            'erklaervideo',
-            'lernvideo',
-            'video kurs',
-        ],
-        'buchhaltung-ustva' => [
-            'umsatzsteuervoranmeldung',
-            'umsatzsteuer-voranmeldung',
-            'umsatzsteuer voranmeldung',
-            'ust voranmeldung',
-            'ust-voranmeldung',
-            'ustva',
-        ],
-        'buchhaltung-belege' => [
-            'angebot erstellen',
-            'angebot anlegen',
-            'neues angebot',
-            'auftragsbestätigung',
-            'auftragsbestaetigung',
-            'lieferschein',
-            'belegkette',
-            'folgebeleg',
-        ],
-        'settings:nummernkreise' => [
-            'angebotsnummer',
-            'rechnungsnummer',
-            'belegnummer',
-            'nummernkreis',
-            'nummernkreise',
-        ],
-        'settings:crm-darstellung' => [
-            'farbe',
-            'farben',
-            'textfarbe',
-            'markenfarbe',
-            'primärfarbe',
-            'primaerfarbe',
-            'color',
-            'colors',
-            'crm farbe',
-            'crm farben',
-            'software design',
-            'oberflächenfarbe',
-            'oberflaechenfarbe',
-            'theme',
-        ],
-        'settings:kalender-darstellung' => [
-            'kalenderfarbe',
-            'kalender farbe',
-            'kalenderfarben',
-            'kalender design',
-        ],
-        'website-design' => [
-            'website farbe',
-            'website farben',
-            'webseitenfarbe',
-            'webseitenfarben',
-            'website design',
-        ],
-    ];
 
     /** Dokumentarten: dürfen nicht über Nummernkreis-Lead („… Angebot, Rechnung …“) gewinnen. */
     private const DOCUMENT_INTENT_TOKENS = [
@@ -106,7 +35,8 @@ final class KichelNavIndex
      *   description: string,
      *   href: string,
      *   kind: string,
-     *   section: string
+     *   section: string,
+     *   aliases: list<string>
      * }>
      */
     public static function entriesForUser(User $user): array
@@ -118,6 +48,7 @@ final class KichelNavIndex
 
         $entries = [];
         $descriptions = MenuRegistry::moduleDescriptions();
+        $menuAliases = MenuRegistry::kichelAliases();
 
         $push = static function (
             array &$target,
@@ -126,10 +57,18 @@ final class KichelNavIndex
             string $href,
             string $kind,
             string $section,
-            string $description = ''
+            string $description = '',
+            array $aliases = []
         ): void {
             if ($label === '' || $href === '') {
                 return;
+            }
+            $cleanAliases = [];
+            foreach ($aliases as $alias) {
+                $alias = mb_strtolower(trim((string) $alias), 'UTF-8');
+                if ($alias !== '') {
+                    $cleanAliases[] = $alias;
+                }
             }
             $target[] = [
                 'id' => $id,
@@ -138,6 +77,7 @@ final class KichelNavIndex
                 'href' => $href,
                 'kind' => $kind,
                 'section' => $section,
+                'aliases' => array_values(array_unique($cleanAliases)),
             ];
         };
 
@@ -150,11 +90,16 @@ final class KichelNavIndex
                 (string) ($item['href'] ?? ''),
                 'module',
                 'Hauptmenü',
-                $descriptions[$slug] ?? ''
+                $descriptions[$slug] ?? '',
+                $menuAliases[$slug] ?? []
             );
         }
 
         $sections = [
+            MenuRegistry::kommunikationSection($user),
+            MenuRegistry::dienstleistungenSection($user),
+            MenuRegistry::hrSection($user),
+            MenuRegistry::warenwirtschaftSection($user),
             MenuRegistry::buchhaltungSection($user),
             MenuRegistry::websiteSection($user),
             MenuRegistry::kdvSection($user),
@@ -173,7 +118,8 @@ final class KichelNavIndex
                     (string) ($item['href'] ?? ''),
                     'section',
                     $sectionLabel,
-                    $descriptions[$slug] ?? ''
+                    $descriptions[$slug] ?? '',
+                    $menuAliases[$slug] ?? []
                 );
             }
         }
@@ -186,12 +132,14 @@ final class KichelNavIndex
                 '/app?page=einstellungen',
                 'settings',
                 'System',
-                $descriptions['einstellungen'] ?? 'Firma, E-Mail, Module und System konfigurieren.'
+                $descriptions['einstellungen'] ?? 'Firma, E-Mail, Module und System konfigurieren.',
+                $menuAliases['einstellungen'] ?? []
             );
 
             foreach (SettingsRegistry::allTabs() as $tabId => $tab) {
                 $sectionLabel = (string) ($tab['sectionLabel'] ?? 'Einstellungen');
                 $lead = (string) ($tab['lead'] ?? '');
+                $tabAliases = is_array($tab['kichel_aliases'] ?? null) ? $tab['kichel_aliases'] : [];
                 $push(
                     $entries,
                     'settings:' . $tabId,
@@ -199,7 +147,8 @@ final class KichelNavIndex
                     SettingsRegistry::tabUrl($tabId),
                     'settings-tab',
                     $sectionLabel,
-                    $lead
+                    $lead,
+                    $tabAliases
                 );
             }
         }
@@ -235,6 +184,14 @@ final class KichelNavIndex
     }
 
     /**
+     * Cache leeren (Tests / nach Registry-Änderungen in derselben PHP-Request-Kette).
+     */
+    public static function clearCache(): void
+    {
+        self::$cache = [];
+    }
+
+    /**
      * @param array<string, mixed> $entry
      * @param list<string> $tokens
      */
@@ -244,6 +201,8 @@ final class KichelNavIndex
         $description = mb_strtolower((string) ($entry['description'] ?? ''), 'UTF-8');
         $id = mb_strtolower((string) ($entry['id'] ?? ''), 'UTF-8');
         $section = mb_strtolower((string) ($entry['section'] ?? ''), 'UTF-8');
+        /** @var list<string> $aliases */
+        $aliases = is_array($entry['aliases'] ?? null) ? $entry['aliases'] : [];
         $score = 0;
 
         if ($label !== '' && str_contains($normalizedQuery, $label)) {
@@ -269,6 +228,16 @@ final class KichelNavIndex
             }
         }
 
+        foreach ($aliases as $phrase) {
+            if ($phrase === '') {
+                continue;
+            }
+            if (str_contains($normalizedQuery, $phrase)) {
+                $score += 14;
+                break;
+            }
+        }
+
         if ($id === 'support-freigabe' && in_array('support', $tokens, true) && in_array('freigabe', $tokens, true)) {
             $score += 12;
         }
@@ -277,18 +246,6 @@ final class KichelNavIndex
         }
         if ($id === 'support-freigabe' && str_contains($normalizedQuery, 'support freigabe')) {
             $score += 6;
-        }
-
-        foreach (self::QUERY_ALIASES as $aliasId => $phrases) {
-            if ($id !== $aliasId) {
-                continue;
-            }
-            foreach ($phrases as $phrase) {
-                if ($phrase !== '' && str_contains($normalizedQuery, $phrase)) {
-                    $score += 14;
-                    break;
-                }
-            }
         }
 
         // Einzelnes Stichwort „Angebot“ / „Lieferschein“ → Belege, nicht Nummernkreise-Lead.

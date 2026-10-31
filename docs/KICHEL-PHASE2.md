@@ -48,6 +48,9 @@ Nutzerfrage
 | `src/Kichel/KichelMoneyLogic.php` | Beträge in PHP |
 | `src/Kichel/KichelOllamaClient.php` | Ollama nur `phrase()`, Fakten unveränderlich |
 | `src/Kichel/KichelAssistant.php` | Orchestrierung |
+| `MenuRegistry::kichelAliases()` | Such-Aliase Menü/Module (Quelle der Wahrheit) |
+| `SettingsRegistry` → `kichel_aliases` | Such-Aliase je Einstellungs-Tab |
+| `bin/kichel-nav-alias-selftest.php` | Smoke: Backup/Telefon/… treffen korrekt |
 | `src/Kichel/KichelLegalPages.php` | Pflichtseiten mit Ansehen-/Bearbeiten-Links |
 | `src/Kichel/KichelProtocolRepository.php` | Anfragen-Protokoll (Admin) |
 | Migration **067** | Tabelle `dg_kichel_log` |

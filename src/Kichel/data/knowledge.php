@@ -143,12 +143,79 @@ return [
     ],
     [
         'id' => 'zeiterfassung',
-        'keywords' => ['zeiterfassung', 'stempeluhr', 'arbzg', 'überstunden', 'pause'],
+        'keywords' => [
+            'zeiterfassung', 'stempeluhr', 'arbzg', 'überstunden', 'ueberstunden', 'pause',
+            'kiosk', 'schichtplan', 'schicht', 'urlaub', 'krankheit', 'abwesenheit', 'lohn export',
+        ],
         'title' => 'Zeiterfassung',
-        'answer' => 'Die Stempeluhr findest du im Menü unter Zeiterfassung.',
+        'answer' => 'Stempeln, Schichten, Urlaub/Krankheit und Lohn-Export findest du unter Zeiterfassung. '
+            . 'Regeln (Pause, ArbZG, Zeitkonto) unter Einstellungen → HR → Zeiterfassung.',
         'href' => '/app?page=zeiterfassung',
         'action_label' => 'Zeiterfassung öffnen',
         'tags' => ['personal'],
+    ],
+    [
+        'id' => 'backup',
+        'keywords' => [
+            'backup', 'backups', 'sicherung', 'datensicherung', 'restore', 'wiederherstellen', 'sicherheitskopie',
+        ],
+        'title' => 'Datensicherung',
+        'answer' => 'Instanzdaten-Backups (Datenbank, storage/, lokale Configs) findest du unter '
+            . 'Einstellungen → Grundlagen → Datensicherung. Dort kannst du auch manuell sichern. '
+            . 'Wiederherstellen ist eine Server-Aufgabe.',
+        'href' => '/app?page=einstellungen&tab=backup',
+        'action_label' => 'Datensicherung öffnen',
+        'tags' => ['system', 'backup'],
+    ],
+    [
+        'id' => 'telefon-cti',
+        'keywords' => ['telefon', 'anruf', 'fritzbox', 'cti', 'softphone', 'callmonitor', 'anrufliste'],
+        'title' => 'Telefon / CTI',
+        'answer' => 'Click-to-Call, Anrufliste und eingehende Anrufe findest du unter Kommunikation → Telefon '
+            . '(Fritzbox/CTI, Softphone).',
+        'href' => '/app?page=telefon',
+        'action_label' => 'Telefon öffnen',
+        'tags' => ['kommunikation'],
+    ],
+    [
+        'id' => 'dokumentenverfasser',
+        'keywords' => ['dokumentenverfasser', 'briefpapier', 'brief schreiben', 'letterhead', 'din 5008'],
+        'title' => 'Dokumentenverfasser',
+        'answer' => 'Briefe und Texte mit Briefpapier schreibst du unter Kommunikation → Dokumentenverfasser. '
+            . 'Briefpapier-Layout: Einstellungen → Kommunikation → Briefpapier.',
+        'href' => '/app?page=dokumentenverfasser',
+        'action_label' => 'Dokumentenverfasser öffnen',
+        'tags' => ['kommunikation'],
+    ],
+    [
+        'id' => 'anschaffungsrechner',
+        'keywords' => ['anschaffung', 'anschaffungsrechner', 'leasing', 'barkauf', 'ratenkauf', 'afa'],
+        'title' => 'Anschaffungsrechner',
+        'answer' => 'Barkauf, Leasing, Rate und Miete mit AfA-Orientierung vergleichst du unter '
+            . 'Buchhaltung → Anschaffungsrechner.',
+        'href' => '/app?page=buchhaltung-anschaffungsrechner',
+        'action_label' => 'Anschaffungsrechner öffnen',
+        'tags' => ['buchhaltung'],
+    ],
+    [
+        'id' => 'rezeptur-maschinen',
+        'keywords' => ['rezeptur', 'stückliste', 'stueckliste', 'bom', 'maschine', 'maschinenbelegung', 'wartung'],
+        'title' => 'Rezeptur / Maschinen',
+        'answer' => 'Stücklisten und Vorkalkulation liegen unter Warenwirtschaft → Rezeptur. '
+            . 'Maschinenbelegung und Wartung hängen am Rezeptur-/Maschinenblock.',
+        'href' => '/app?page=rezeptur',
+        'action_label' => 'Rezeptur öffnen',
+        'tags' => ['warenwirtschaft'],
+    ],
+    [
+        'id' => 'reklamation-gutschein',
+        'keywords' => ['reklamation', 'gutschein', 'mehrzweckgutschein', 'beschwerde', 'flyer'],
+        'title' => 'Reklamation / Gutscheine',
+        'answer' => 'Reklamationen und Maßnahmen: Warenwirtschaft → Reklamation. '
+            . 'Mehrzweck-Gutscheine und Flyer unter Buchhaltung → Gutscheine bzw. Flyer-Vorlagen.',
+        'href' => '/app?page=reklamation',
+        'action_label' => 'Reklamation öffnen',
+        'tags' => ['warenwirtschaft', 'buchhaltung'],
     ],
     [
         'id' => 'logo-bilder',
