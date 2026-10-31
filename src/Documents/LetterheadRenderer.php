@@ -289,7 +289,8 @@ JS;
 
         // Dompdf: Fußzeile fixiert außerhalb der fließenden Seite → auf jeder Seite
         if ($forPdf) {
-            return $footerHtml . $article;
+            // Fußzeile nach dem Inhalt: position:fixed je Seite, ohne Fluss-Kollision
+            return $article . $footerHtml;
         }
 
         return '<div class="dg-lh-stack">' . $article . '</div>';
@@ -663,16 +664,19 @@ JS;
             }
         }
         $closing = trim((string) ($doc['closing'] ?? ''));
-        if ($closing !== '') {
-            $html .= '<p class="dg-lh-closing">' . nl2br(self::e($closing), false) . '</p>';
-        }
         $signature = trim((string) ($doc['signature'] ?? ''));
-        // DIN: nach Gruß zwei Leerzeilen Platz für Unterschrift, dann Name
+        // Gruß + Unterschriftsblock zusammenhalten (kein Seitenumbruch dazwischen)
         if ($closing !== '' || $signature !== '') {
+            $html .= '<div class="dg-lh-closing-block">';
+            if ($closing !== '') {
+                $html .= '<p class="dg-lh-closing">' . nl2br(self::e($closing), false) . '</p>';
+            }
+            // DIN: nach Gruß zwei Leerzeilen Platz für Unterschrift, dann Name
             $html .= '<div class="dg-lh-sign-gap" aria-hidden="true">&nbsp;<br>&nbsp;</div>';
-        }
-        if ($signature !== '') {
-            $html .= '<p class="dg-lh-signature">' . nl2br(self::e($signature), false) . '</p>';
+            if ($signature !== '') {
+                $html .= '<p class="dg-lh-signature">' . nl2br(self::e($signature), false) . '</p>';
+            }
+            $html .= '</div>';
         }
         $html .= '</section>';
 
@@ -1028,9 +1032,11 @@ JS;
         $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
         $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
         $contentW = max(80.0, self::PAGE_WIDTH_MM - $ml - $mr);
-        // Fußzeile ist im PDF fixiert → unterer @page-Rand freilassen (jede Seite)
-        $footerBandMm = 24.0;
-        $pdfPadBottom = $mb + $footerBandMm;
+        // Dompdf: fixed liegt in der Content-Box (innerhalb @page). Freiraum für den
+        // Fuß deshalb als padding-bottom am Fließinhalt, @page-bottom nur Papierrand.
+        $footerBandMm = 40.0;
+        $pdfPageBottomMm = max(12.0, min($mb, 16.0));
+        $pdfPadBottom = $mb + $footerBandMm; // Browser-Druckvorschau
 
         $pdfCss = '';
         if ($forPdf) {
@@ -1048,7 +1054,7 @@ body.dg-lh-body--pdf .dg-lh-page {
   /* auto: width:210mm / 100% sprengt in Dompdf den @page-Satzspiegel */
   width: auto !important;
   max-width: none !important;
-  padding: 0 !important;
+  padding: 0 0 {$footerBandMm}mm 0 !important;
   box-sizing: border-box !important;
 }
 /* Falzmarken am linken Blattrand (DIN 5008), nicht am Content-Rand */
@@ -1115,35 +1121,47 @@ body.dg-lh-body--pdf .dg-lh-info__value {
 body.dg-lh-body--pdf .dg-lh-info__label { width: 22% !important; color: #555 !important; padding-right: 2mm !important; }
 body.dg-lh-body--pdf .dg-lh-info__value { width: 28% !important; font-weight: 600 !important; }
 body.dg-lh-body--pdf .dg-lh-footer {
+  /* fixed = Content-Box in Dompdf; left/width 100% = Satzspiegel */
   position: fixed !important;
-  bottom: {$mb}mm !important;
-  left: {$ml}mm !important;
-  right: {$mr}mm !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  right: auto !important;
+  box-sizing: border-box !important;
+  z-index: 4 !important;
+  overflow: hidden !important;
 }
 body.dg-lh-body--pdf .dg-lh-footer__grid {
   display: table !important;
   width: 100% !important;
+  max-width: 100% !important;
   table-layout: fixed !important;
 }
 body.dg-lh-body--pdf .dg-lh-footer__col {
   display: table-cell !important;
   vertical-align: top !important;
   padding-right: 2mm !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+body.dg-lh-body--pdf .dg-lh-meta {
+  max-width: {$contentW}mm !important;
 }
 body.dg-lh-body--pdf .dg-lh-body-content {
   position: relative !important;
   page-break-inside: auto;
   display: block !important;
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: {$contentW}mm !important;
   box-sizing: border-box !important;
   clear: both !important;
 }
+body.dg-lh-body--pdf .dg-lh-closing-block {
+  page-break-inside: avoid !important;
+}
 body.dg-lh-body--pdf .dg-lh-subject,
-body.dg-lh-body--pdf .dg-lh-greeting,
-body.dg-lh-body--pdf .dg-lh-closing,
-body.dg-lh-body--pdf .dg-lh-signature,
-body.dg-lh-body--pdf .dg-lh-sign-gap {
+body.dg-lh-body--pdf .dg-lh-greeting {
   page-break-inside: avoid;
 }
 body.dg-lh-body--pdf .dg-lh-p,
@@ -1162,14 +1180,15 @@ body.dg-lh-body--pdf .dg-lh-rich ul,
 body.dg-lh-body--pdf .dg-lh-rich ol,
 body.dg-lh-body--pdf .dg-lh-rich table {
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: {$contentW}mm !important;
   box-sizing: border-box !important;
 }
 body.dg-lh-body--pdf .dg-lh-pagenum {
   position: fixed !important;
-  bottom: 8mm !important;
-  left: {$ml}mm !important;
-  right: {$mr}mm !important;
+  bottom: 1mm !important;
+  left: 0 !important;
+  width: 100% !important;
+  right: auto !important;
   z-index: 5 !important;
 }
 body.dg-lh-body--pdf .dg-lh-pagenum__sample { display: none !important; }
@@ -1181,9 +1200,10 @@ body.dg-lh-body--pdf .dg-lh-pagenum--fmt-seite-n-von-N::after { content: "Seite 
 PDFCSS;
         }
 
-        // Eine @page-Regel: Dompdf übernimmt Folgeseiten-Ränder nur so zuverlässig
+        // Eine @page-Regel: Dompdf übernimmt Folgeseiten-Ränder nur so zuverlässig.
+        // PDF: unterer Rand nur Papier; Fuß-Freiraum = padding-bottom am .dg-lh-page.
         $pageRule = $forPdf
-            ? "@page { size: 210mm 297mm; margin: {$mt}mm {$mr}mm {$pdfPadBottom}mm {$ml}mm; }"
+            ? "@page { size: 210mm 297mm; margin: {$mt}mm {$mr}mm {$pdfPageBottomMm}mm {$ml}mm; }"
             : '@page { size: 210mm 297mm; margin: 0; }';
 
         $css = <<<CSS
