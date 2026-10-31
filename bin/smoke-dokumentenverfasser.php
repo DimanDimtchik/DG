@@ -183,9 +183,24 @@ if (!str_contains($html, 'Smoke-Brief') || !str_contains($html, 'dg-lh-page')) {
     $bodyPos = strpos($html, 'class="dg-lh-body-content"');
     if ($metaPos === false || $bodyPos === false || $metaPos > $bodyPos) {
         $fail('LetterheadRenderer: Text steht nicht unter der Adresszeile');
+    } elseif (!str_contains($html, 'dg-lh-stack') || !str_contains($html, 'contentLimit')) {
+        $fail('LetterheadRenderer: Vorschau-Stack/Pagination fehlt');
     } else {
         $ok('LetterheadRenderer HTML');
     }
+}
+
+$pdfHtml = LetterheadRenderer::renderFullHtml($render, LetterheadSettings::defaults(), [
+    'show_guides' => false,
+    'title' => 'Smoke PDF',
+    'for_pdf' => true,
+]);
+if (!preg_match('/@page\s*\{[^}]*margin:\s*[0-9.]+mm/s', $pdfHtml)) {
+    $fail('LetterheadRenderer PDF: @page-Ränder fehlen');
+} elseif (str_contains($pdfHtml, 'class="dg-lh-fold-marks"')) {
+    $fail('LetterheadRenderer PDF: Falzmarken gehören in page_script, nicht ins HTML');
+} else {
+    $ok('LetterheadRenderer PDF @page');
 }
 
 $klar = WriterKlartextAssist::analyze(

@@ -111,12 +111,123 @@ final class LetterheadRenderer
         $safeTitle = htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $bodyClass = 'dg-lh-body' . ($forPdf ? ' dg-lh-body--pdf' : '');
 
+        $previewScript = $forPdf ? '' : self::previewPaginationScript();
+
         return '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">'
             . '<meta name="viewport" content="width=device-width, initial-scale=1">'
             . '<title>' . $safeTitle . '</title>'
             . '<style>' . $css . '</style></head><body class="' . $bodyClass . '">'
             . $page
+            . $previewScript
             . '</body></html>';
+    }
+
+    /**
+     * Bildschirmvorschau: Inhalt auf echte A4-Blätter verteilen (297 mm, oberer Rand ab Blatt 2).
+     */
+    private static function previewPaginationScript(): string
+    {
+        return <<<'JS'
+<script>
+(function () {
+  var stack = document.querySelector(".dg-lh-stack");
+  var src = stack && stack.querySelector(".dg-lh-page");
+  if (!src || src.classList.contains("dg-lh-page--pdf")) return;
+
+  var probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;left:-9999px;height:297mm;width:210mm;";
+  document.body.appendChild(probe);
+  var pagePx = probe.offsetHeight || 1123;
+  document.body.removeChild(probe);
+
+  var mt = parseFloat(src.getAttribute("data-dg-lh-mt") || "17") || 17;
+  var mb = parseFloat(src.getAttribute("data-dg-lh-mb") || "16.7") || 16.7;
+  var mm = pagePx / 297;
+  var padTop = mt * mm;
+  var padBottom = (mb + 24) * mm;
+
+  var folds = src.querySelector(".dg-lh-fold-marks");
+  var header = src.querySelector(".dg-lh-header");
+  var meta = src.querySelector(".dg-lh-meta");
+  var body = src.querySelector(".dg-lh-body-content");
+  var footer = src.querySelector(".dg-lh-footer");
+  var cont = src.querySelector(".dg-lh-cont-header");
+  var pagenum = src.querySelector(".dg-lh-pagenum");
+  if (!body) return;
+
+  var blocks = [];
+  Array.prototype.forEach.call(body.children, function (child) {
+    if (child.classList.contains("dg-lh-rich") && child.children.length) {
+      Array.prototype.forEach.call(child.children, function (inner) {
+        blocks.push(inner);
+      });
+    } else {
+      blocks.push(child);
+    }
+  });
+  if (!blocks.length) return;
+
+  var footerH = footer ? footer.getBoundingClientRect().height : 0;
+  if (folds) folds.remove();
+  if (header) header.remove();
+  if (meta) meta.remove();
+  if (cont) cont.remove();
+  if (footer) footer.remove();
+  if (pagenum) pagenum.remove();
+  blocks.forEach(function (b) { b.remove(); });
+  stack.innerHTML = "";
+
+  function contentLimit(sheet) {
+    var used = 0;
+    Array.prototype.forEach.call(sheet.children, function (el) {
+      if (el.classList.contains("dg-lh-body-slot")) return;
+      if (el.classList.contains("dg-lh-footer")) return;
+      if (el.classList.contains("dg-lh-pagenum")) return;
+      if (el.classList.contains("dg-lh-fold-marks")) return;
+      used += el.getBoundingClientRect().height;
+    });
+    return pagePx - padTop - padBottom - used - footerH - 4;
+  }
+
+  function makeSheet(isFirst) {
+    var sheet = document.createElement("article");
+    sheet.className = "dg-lh-page dg-lh-page--sheet" + (isFirst ? " dg-lh-page--first" : " dg-lh-page--cont");
+    if (isFirst && folds) sheet.appendChild(folds);
+    if (!isFirst && cont) {
+      var c = cont.cloneNode(true);
+      c.hidden = false;
+      sheet.appendChild(c);
+    }
+    if (isFirst && header) sheet.appendChild(header);
+    if (isFirst && meta) sheet.appendChild(meta);
+    var slot = document.createElement("div");
+    slot.className = "dg-lh-body-slot";
+    sheet.appendChild(slot);
+    if (footer) sheet.appendChild(footer.cloneNode(true));
+    if (pagenum) sheet.appendChild(pagenum.cloneNode(true));
+    stack.appendChild(sheet);
+    return slot;
+  }
+
+  var slot = makeSheet(true);
+  var limit = contentLimit(slot.parentNode);
+
+  blocks.forEach(function (block) {
+    slot.appendChild(block);
+    var h = 0;
+    Array.prototype.forEach.call(slot.children, function (ch) {
+      h += ch.getBoundingClientRect().height;
+    });
+    if (h > limit && slot.children.length > 1) {
+      slot.removeChild(block);
+      slot = makeSheet(false);
+      limit = contentLimit(slot.parentNode);
+      slot.appendChild(block);
+    }
+  });
+})();
+</script>
+JS;
     }
 
     /**
@@ -153,32 +264,107 @@ final class LetterheadRenderer
         $bgHtml = self::renderBackground($cfg);
         $wmHtml = self::renderWatermark($cfg);
         $guidesHtml = $showGuides ? self::renderGuides($cfg) : '';
-        $foldHtml = self::renderFoldMarks($cfg);
+        // Falzmarken im PDF nur Seite 1 (page_script); in der Vorschau auf dem ersten Blatt
+        $foldHtml = $forPdf ? '' : self::renderFoldMarks($cfg);
         $pageNumHtml = self::renderPageNumber($cfg);
-        // In der Bildschirmvorschau: Linien bei 297 mm / 594 mm … als Seitengrenzen
-        $seamsHtml = $forPdf ? '' : '<div class="dg-lh-page-seams" aria-hidden="true"></div>';
+        $contHeaderHtml = $forPdf ? '' : self::renderContinuationHeader($cfg, $party);
 
         $pageInner = $bgHtml
             . $wmHtml
             . $guidesHtml
-            . ($forPdf ? '' : $foldHtml)
-            . $seamsHtml
+            . $foldHtml
+            . $contHeaderHtml
             . $headerHtml
             . $metaHtml
             . $bodyHtml
             . ($forPdf ? '' : $footerHtml)
             . $pageNumHtml;
 
-        $article = '<article class="dg-lh-page' . ($forPdf ? ' dg-lh-page--pdf' : '') . '">'
+        $article = '<article class="dg-lh-page' . ($forPdf ? ' dg-lh-page--pdf' : '') . '"'
+            . ' data-dg-lh-mt="' . self::e((string) (float) ($cfg['page']['margin_top_mm'] ?? 17)) . '"'
+            . ' data-dg-lh-mb="' . self::e((string) (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7)) . '"'
+            . '>'
             . $pageInner
             . '</article>';
 
-        // Dompdf: fixierte Falz-/Fußzeile außerhalb der fließenden Seite → auf jeder Seite
+        // Dompdf: Fußzeile fixiert außerhalb der fließenden Seite → auf jeder Seite
         if ($forPdf) {
-            return $foldHtml . $footerHtml . $article;
+            return $footerHtml . $article;
         }
 
-        return $article;
+        return '<div class="dg-lh-stack">' . $article . '</div>';
+    }
+
+    /**
+     * Kurzkopf für Folgeseiten (Firma) — in der Vorschau per JS nur ab Blatt 2.
+     *
+     * @param array<string, mixed> $cfg
+     * @param array<string, mixed> $party
+     */
+    private static function renderContinuationHeader(array $cfg, array $party): string
+    {
+        $name = trim((string) ($party['legal_name'] ?? ''));
+        if ($name === '') {
+            $name = trim((string) ($party['name'] ?? ''));
+        }
+        if ($name === '') {
+            return '';
+        }
+
+        return '<div class="dg-lh-cont-header" hidden>' . self::e($name) . '</div>';
+    }
+
+    /**
+     * Dompdf: Falzmarken nur Seite 1, Fortsetzungskopf ab Seite 2.
+     * Vor $dompdf->render() per setCallbacks (end_document) — page_script vor render
+     * geht verloren, wenn Dompdf die Canvas wegen @page-Größe neu anlegt.
+     *
+     * @param object $dompdf Dompdf\Dompdf
+     * @param array<string, mixed>|null $cfg
+     */
+    public static function attachPdfPageDecorations(object $dompdf, ?array $cfg = null): void
+    {
+        if (!method_exists($dompdf, 'setCallbacks')) {
+            return;
+        }
+        $cfg = $cfg ?? LetterheadSettings::config();
+        $page = is_array($cfg['page'] ?? null) ? $cfg['page'] : [];
+        $showFold = array_key_exists('show_fold_marks', $page)
+            ? !empty($page['show_fold_marks'])
+            : true;
+        $showPunch = !empty($page['show_punch_mark']);
+        $party = LetterheadSettings::resolvedCompany($cfg);
+        $contName = trim((string) ($party['legal_name'] ?? ''));
+        $ml = (float) ($page['margin_left_mm'] ?? 24.1);
+
+        $mm = static fn (float $v): float => $v * 72.0 / 25.4;
+        $dompdf->setCallbacks([
+            [
+                'event' => 'end_document',
+                'f' => static function (
+                    int $pageNumber,
+                    int $pageCount,
+                    $pdf,
+                    $fontMetrics
+                ) use ($showFold, $showPunch, $contName, $ml, $mm): void {
+                    if ($pageNumber === 1 && $showFold) {
+                        $pdf->line(0.0, $mm(105.0), $mm(7.0), $mm(105.0), [0.07, 0.07, 0.07], 0.7);
+                        $pdf->line(0.0, $mm(210.0), $mm(7.0), $mm(210.0), [0.07, 0.07, 0.07], 0.7);
+                    }
+                    if ($pageNumber === 1 && $showPunch) {
+                        $pdf->line(0.0, $mm(148.5), $mm(4.0), $mm(148.5), [0.2, 0.2, 0.2], 0.6);
+                    }
+                    if ($pageNumber > 1 && $contName !== '') {
+                        $font = $fontMetrics->getFont('DejaVu Sans');
+                        if ($font === null) {
+                            $font = $fontMetrics->getFont('Helvetica');
+                        }
+                        $label = $contName . ' · Seite ' . $pageNumber . ' von ' . $pageCount;
+                        $pdf->text($mm($ml), $mm(10.0), $label, $font, 8.0, [0.33, 0.33, 0.33]);
+                    }
+                },
+            ],
+        ]);
     }
 
     /**
@@ -842,7 +1028,7 @@ final class LetterheadRenderer
         $mb = (float) ($cfg['page']['margin_bottom_mm'] ?? 16.7);
         $headerForm = strtoupper((string) ($cfg['header']['height_form'] ?? 'B')) === 'A' ? 27.0 : 45.0;
         $contentW = max(80.0, self::PAGE_WIDTH_MM - $ml - $mr);
-        // Fußzeile ist im PDF fixiert → Platz am unteren Rand jeder Seite freilassen
+        // Fußzeile ist im PDF fixiert → unterer @page-Rand freilassen (jede Seite)
         $footerBandMm = 24.0;
         $pdfPadBottom = $mb + $footerBandMm;
 
@@ -850,9 +1036,8 @@ final class LetterheadRenderer
         if ($forPdf) {
             $pdfCss = <<<PDFCSS
 
-/* Dompdf: kein Browser-Preview-Rahmen, Fußzeile pro Seite, kein CSS-Grid/Flex */
 body.dg-lh-body--pdf,
-html body.dg-lh-body--pdf { background: #fff !important; }
+html body.dg-lh-body--pdf { background: #fff !important; margin: 0 !important; padding: 0 !important; }
 body.dg-lh-body--pdf .dg-lh-page {
   display: block !important;
   margin: 0 !important;
@@ -860,13 +1045,10 @@ body.dg-lh-body--pdf .dg-lh-page {
   min-height: 0 !important;
   height: auto !important;
   overflow: visible !important;
+  /* auto: width:210mm / 100% sprengt in Dompdf den @page-Satzspiegel */
   width: auto !important;
-  max-width: 210mm !important;
-  /* Satzspiegel über Padding — rechter Rand bleibt 20 mm (kein Überlauf) */
-  padding-top: {$mt}mm !important;
-  padding-right: {$mr}mm !important;
-  padding-bottom: {$pdfPadBottom}mm !important;
-  padding-left: {$ml}mm !important;
+  max-width: none !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
 }
 /* Falzmarken am linken Blattrand (DIN 5008), nicht am Content-Rand */
@@ -948,26 +1130,14 @@ body.dg-lh-body--pdf .dg-lh-footer__col {
   vertical-align: top !important;
   padding-right: 2mm !important;
 }
-body.dg-lh-body--pdf .dg-lh-body-content,
-body.dg-lh-body--pdf .dg-lh-meta,
-body.dg-lh-body--pdf .dg-lh-subject,
-body.dg-lh-body--pdf .dg-lh-greeting,
-body.dg-lh-body--pdf .dg-lh-p,
-body.dg-lh-body--pdf .dg-lh-closing,
-body.dg-lh-body--pdf .dg-lh-signature,
-body.dg-lh-body--pdf .dg-lh-rich,
-body.dg-lh-body--pdf .dg-lh-rich p {
-  max-width: {$contentW}mm !important;
-}
 body.dg-lh-body--pdf .dg-lh-body-content {
   position: relative !important;
   page-break-inside: auto;
   display: block !important;
   width: 100% !important;
+  max-width: 100% !important;
   box-sizing: border-box !important;
   clear: both !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
 }
 body.dg-lh-body--pdf .dg-lh-subject,
 body.dg-lh-body--pdf .dg-lh-greeting,
@@ -992,16 +1162,39 @@ body.dg-lh-body--pdf .dg-lh-rich ul,
 body.dg-lh-body--pdf .dg-lh-rich ol,
 body.dg-lh-body--pdf .dg-lh-rich table {
   width: 100% !important;
-  max-width: {$contentW}mm !important;
+  max-width: 100% !important;
   box-sizing: border-box !important;
 }
+body.dg-lh-body--pdf .dg-lh-pagenum {
+  position: fixed !important;
+  bottom: 8mm !important;
+  left: {$ml}mm !important;
+  right: {$mr}mm !important;
+  z-index: 5 !important;
+}
+body.dg-lh-body--pdf .dg-lh-pagenum__sample { display: none !important; }
+body.dg-lh-body--pdf .dg-lh-pagenum--fmt-n::after { content: counter(page) !important; }
+body.dg-lh-body--pdf .dg-lh-pagenum--fmt-n-slash-N::after { content: counter(page) " / " counter(pages) !important; }
+body.dg-lh-body--pdf .dg-lh-pagenum--fmt-n-von-N::after { content: counter(page) " von " counter(pages) !important; }
+body.dg-lh-body--pdf .dg-lh-pagenum--fmt-seite-n::after { content: "Seite " counter(page) !important; }
+body.dg-lh-body--pdf .dg-lh-pagenum--fmt-seite-n-von-N::after { content: "Seite " counter(page) " von " counter(pages) !important; }
 PDFCSS;
         }
 
-        return <<<CSS
-@page { size: 210mm 297mm; margin: 0; }
-html, body.dg-lh-body { margin: 0; padding: 0; background: #e8eaef; }
-body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #1a1a1a; }
+        // Eine @page-Regel: Dompdf übernimmt Folgeseiten-Ränder nur so zuverlässig
+        $pageRule = $forPdf
+            ? "@page { size: 210mm 297mm; margin: {$mt}mm {$mr}mm {$pdfPadBottom}mm {$ml}mm; }"
+            : '@page { size: 210mm 297mm; margin: 0; }';
+
+        $css = <<<CSS
+{$pageRule}
+/* Dompdf: html { margin/padding } zerstört @page-Ränder — nur body stylen */
+body.dg-lh-body { margin: 0; padding: 0; background: #e8eaef; font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #1a1a1a; }
+body.dg-lh-body--pdf { background: #fff; }
+.dg-lh-stack {
+  display: block;
+  padding: 4mm 0 12mm;
+}
 .dg-lh-page {
   position: relative;
   display: flex;
@@ -1016,6 +1209,28 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   box-shadow: 0 2px 12px rgba(0,0,0,.12);
   overflow: visible;
 }
+body.dg-lh-body--pdf .dg-lh-stack { padding: 0; }
+.dg-lh-page--sheet {
+  height: 297mm;
+  min-height: 297mm;
+  max-height: 297mm;
+  overflow: hidden;
+  margin: 8mm auto 12mm;
+}
+.dg-lh-page--cont .dg-lh-cont-header {
+  display: block;
+  font-size: 8.5pt;
+  color: #555;
+  border-bottom: 0.2mm solid #ccc;
+  padding-bottom: 1.5mm;
+  margin-bottom: 4mm;
+}
+.dg-lh-body-slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+.dg-lh-cont-header[hidden] { display: none !important; }
 .dg-lh-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .dg-lh-bg--watermark { z-index: 0; }
 .dg-lh-header, .dg-lh-window, .dg-lh-info, .dg-lh-body-content, .dg-lh-footer, .dg-lh-guides {
@@ -1128,10 +1343,12 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   font-size: 11pt;
   line-height: 1.45;
 }
-.dg-lh-subject { margin: 0 0 5mm; width: 100%; max-width: none; }
+/* DIN 5008: Betreff etwas abgesetzt, danach Anrede */
+.dg-lh-subject { margin: 0 0 6mm; width: 100%; max-width: none; }
 .dg-lh-subject--bold { font-weight: 700; }
 .dg-lh-subject__label { font-weight: 400; color: #555; }
-.dg-lh-greeting, .dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; width: 100%; max-width: none; }
+.dg-lh-greeting { margin: 0 0 4mm; width: 100%; max-width: none; }
+.dg-lh-p, .dg-lh-closing, .dg-lh-signature { margin: 0 0 3.5mm; width: 100%; max-width: none; }
 .dg-lh-closing { margin-bottom: 0; }
 .dg-lh-sign-gap {
   display: block;
@@ -1173,22 +1390,6 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   cursor: pointer;
   pointer-events: auto;
 }
-.dg-lh-page-seams {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 4;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(297mm - 0.35mm),
-    #94a3b8 calc(297mm - 0.35mm),
-    #94a3b8 297mm
-  );
-}
 .dg-lh-guides { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .dg-lh-guide--margin {
   position: absolute;
@@ -1208,8 +1409,15 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   background: rgba(255,255,255,.85);
   padding: 0.3mm 1mm;
 }
+CSS;
+
+        // Dompdf nutzt Print-Media — @media print darf die @page-Ränder nicht überschreiben
+        $printCss = '';
+        if (!$forPdf) {
+            $printCss = <<<PRINTCSS
+
 @media print {
-  html, body.dg-lh-body { background: #fff; }
+  body.dg-lh-body { background: #fff; }
   .dg-lh-page {
     display: block;
     margin: 0;
@@ -1219,8 +1427,9 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
     min-height: 297mm;
     padding-bottom: {$pdfPadBottom}mm;
   }
-  .dg-lh-guides,
-  .dg-lh-page-seams { display: none !important; }
+  .dg-lh-guides { display: none !important; }
+  .dg-lh-stack { padding: 0; }
+  .dg-lh-page--sheet { margin: 0; box-shadow: none; page-break-after: always; }
   .dg-lh-fold-marks { z-index: 6; display: block !important; }
   .dg-lh-footer {
     position: fixed;
@@ -1243,8 +1452,10 @@ body.dg-lh-body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; 
   .dg-lh-pagenum--fmt-seite-n::after { content: "Seite " counter(page); }
   .dg-lh-pagenum--fmt-seite-n-von-N::after { content: "Seite " counter(page) " von " counter(pages); }
 }
-CSS
-            . $pdfCss;
+PRINTCSS;
+        }
+
+        return $css . $printCss . $pdfCss;
     }
 
     private static function mm(float $value): string

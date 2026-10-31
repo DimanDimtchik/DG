@@ -283,9 +283,10 @@ final class WriterExportService
         }
 
         $renderDoc = WriterDocument::toRenderDocument($doc);
+        $letterCfg = LetterheadSettings::config();
         $html = LetterheadRenderer::renderFullHtml(
             $renderDoc,
-            LetterheadSettings::config(),
+            $letterCfg,
             ['show_guides' => false, 'title' => $basename, 'for_pdf' => true]
         );
         $html = self::absolutizeResourceUrls($html);
@@ -297,6 +298,7 @@ final class WriterExportService
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html, 'UTF-8');
         $dompdf->setPaper('A4', 'portrait');
+        LetterheadRenderer::attachPdfPageDecorations($dompdf, $letterCfg);
         $dompdf->render();
         $pdf = $dompdf->output();
         if (!is_string($pdf) || $pdf === '') {
