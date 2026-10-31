@@ -532,22 +532,29 @@ JS;
             : '';
         $pairs = self::infoPairs($cfg, $doc);
         $style = 'width:100%;table-layout:fixed;border-collapse:collapse;margin-top:' . self::mm($marginTop);
-        $html = '<table class="dg-lh-meta" width="100%" cellspacing="0" cellpadding="0" style="' . $style . '">';
-        if ($pairs === []) {
-            $html .= '<tr><td class="dg-lh-meta__addr" width="100%" valign="top" colspan="3">' . $addr . '</td></tr>';
-        } else {
-            $first = true;
+        // Eine Zeile Adresse | Infoblock — sonst zieht die Adresse nur die erste Info-Zeile hoch
+        // und Dompdf lässt zwischen „Ihr Zeichen“ und der nächsten Zeile eine Lücke.
+        $infoInner = '';
+        if ($pairs !== []) {
+            $infoInner = '<table class="dg-lh-info-table" width="100%" cellspacing="0" cellpadding="0">';
             foreach ($pairs as $pair) {
-                $html .= '<tr>'
-                    . '<td class="dg-lh-meta__addr" width="50%" valign="top">' . ($first ? $addr : '&#160;') . '</td>'
-                    . '<td class="dg-lh-info__label" width="22%" valign="top">' . self::e($pair['label']) . '</td>'
-                    . '<td class="dg-lh-info__value" width="28%" valign="top">' . self::e($pair['value']) . '</td>'
+                $infoInner .= '<tr>'
+                    . '<td class="dg-lh-info__label" width="48%" valign="top">' . self::e($pair['label']) . '</td>'
+                    . '<td class="dg-lh-info__value" width="52%" valign="top">' . self::e($pair['value']) . '</td>'
                     . '</tr>';
-                $first = false;
             }
+            $infoInner .= '</table>';
         }
+        $html = '<table class="dg-lh-meta" width="100%" cellspacing="0" cellpadding="0" style="' . $style . '"><tr>';
+        if ($showWindow) {
+            $html .= '<td class="dg-lh-meta__addr" width="55%" valign="top">' . $addr . '</td>';
+            $html .= '<td class="dg-lh-meta__info" width="45%" valign="top">' . $infoInner . '</td>';
+        } else {
+            $html .= '<td class="dg-lh-meta__info" width="100%" valign="top">' . $infoInner . '</td>';
+        }
+        $html .= '</tr></table>';
 
-        return $html . '</table>';
+        return $html;
     }
 
     /**
@@ -1102,24 +1109,33 @@ body.dg-lh-body--pdf .dg-lh-meta {
   margin-bottom: 2mm !important;
 }
 body.dg-lh-body--pdf .dg-lh-meta__addr {
-  width: 50% !important;
+  width: 55% !important;
   vertical-align: top !important;
   box-sizing: border-box !important;
   padding-right: 3mm !important;
   font-size: 10pt !important;
   line-height: 1.35 !important;
 }
+body.dg-lh-body--pdf .dg-lh-meta__info {
+  width: 45% !important;
+  vertical-align: top !important;
+  box-sizing: border-box !important;
+}
+body.dg-lh-body--pdf .dg-lh-info-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important;
+}
 body.dg-lh-body--pdf .dg-lh-info__label,
 body.dg-lh-body--pdf .dg-lh-info__value {
-  display: table-cell !important;
   vertical-align: top !important;
   font-size: 8.5pt !important;
   line-height: 1.35 !important;
   padding: 0 0 1.2mm 0 !important;
   word-wrap: break-word !important;
 }
-body.dg-lh-body--pdf .dg-lh-info__label { width: 22% !important; color: #555 !important; padding-right: 2mm !important; }
-body.dg-lh-body--pdf .dg-lh-info__value { width: 28% !important; font-weight: 600 !important; }
+body.dg-lh-body--pdf .dg-lh-info__label { width: 48% !important; color: #555 !important; padding-right: 2mm !important; }
+body.dg-lh-body--pdf .dg-lh-info__value { width: 52% !important; font-weight: 600 !important; }
 body.dg-lh-body--pdf .dg-lh-footer {
   /* fixed = Content-Box in Dompdf; left/width 100% = Satzspiegel */
   position: fixed !important;
@@ -1337,10 +1353,15 @@ body.dg-lh-body--pdf .dg-lh-stack { padding: 0; }
   white-space: normal;
   overflow: visible;
 }
+.dg-lh-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
 .dg-lh-info__label,
 .dg-lh-info__value { vertical-align: top; padding: 0 0 1.2mm 0; overflow-wrap: anywhere; word-wrap: break-word; }
-.dg-lh-info__label { width: 22%; color: #555; padding-right: 2mm; font-size: 8.5pt; line-height: 1.35; }
-.dg-lh-info__value { width: 28%; font-weight: 600; font-size: 8.5pt; line-height: 1.35; }
+.dg-lh-info__label { width: 48%; color: #555; padding-right: 2mm; font-size: 8.5pt; line-height: 1.35; }
+.dg-lh-info__value { width: 52%; font-weight: 600; font-size: 8.5pt; line-height: 1.35; }
 .dg-lh-meta {
   width: 100%;
   border-collapse: collapse;
@@ -1348,12 +1369,14 @@ body.dg-lh-body--pdf .dg-lh-stack { padding: 0; }
   margin: 0 0 2mm 0;
 }
 .dg-lh-meta__addr,
+.dg-lh-meta__info,
 .dg-lh-info__label,
 .dg-lh-info__value {
   vertical-align: top;
   box-sizing: border-box;
 }
-.dg-lh-meta__addr { width: 50%; padding-right: 3mm; font-size: 10pt; line-height: 1.35; }
+.dg-lh-meta__addr { width: 55%; padding-right: 3mm; font-size: 10pt; line-height: 1.35; }
+.dg-lh-meta__info { width: 45%; }
 .dg-lh-body-content {
   display: block;
   width: 100%;
