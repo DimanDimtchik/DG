@@ -58,6 +58,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
       <div class="dg-form-grid dg-form-grid--2col">
         <div>
           <h3>Aktiva</h3>
+          <div class="dg-table-wrap">
           <table class="dg-table">
             <thead><tr><th>Konto</th><th>Bezeichnung</th><th class="dg-table__num">Saldo</th></tr></thead>
             <tbody>
@@ -70,10 +71,12 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
               <?php endforeach; ?>
             </tbody>
           </table>
+          </div>
           <p><strong>Summe Aktiva:</strong> <?= $fmt((float) ($bs['totals']['aktiva'] ?? 0)) ?> €</p>
         </div>
         <div>
           <h3>Passiva</h3>
+          <div class="dg-table-wrap">
           <table class="dg-table">
             <thead><tr><th>Konto</th><th>Bezeichnung</th><th class="dg-table__num">Saldo</th></tr></thead>
             <tbody>
@@ -86,6 +89,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
               <?php endforeach; ?>
             </tbody>
           </table>
+          </div>
           <p><strong>Summe Passiva:</strong> <?= $fmt((float) ($bs['totals']['passiva'] ?? 0)) ?> €</p>
           <p class="dg-muted">Jahresüberschuss (GuV): <?= $fmt((float) ($bs['result'] ?? 0)) ?> €</p>
         </div>
@@ -94,6 +98,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
   <?php else : ?>
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Gewinn- und Verlustrechnung</h2>
+      <div class="dg-table-wrap">
       <table class="dg-table">
         <thead><tr><th>Konto</th><th>Bezeichnung</th><th class="dg-table__num">Betrag</th></tr></thead>
         <tbody>
@@ -118,6 +123,7 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
           <tr><td colspan="2"><strong>Jahresüberschuss / -fehlbetrag</strong></td><td class="dg-table__num"><strong><?= $fmt((float) ($pl['totals']['result'] ?? 0)) ?> €</strong></td></tr>
         </tbody>
       </table>
+      </div>
     </section>
   <?php endif; ?>
 </div>

@@ -19,7 +19,8 @@ $gateError = $provisionGateError ?? null;
   <?php if ($result !== null): ?>
   <div class="dg-panel">
     <h2><?= $result['success'] ? 'Bereitstellung erfolgreich' : 'Bereitstellung mit Fehlern' ?></h2>
-    <table class="dg-table" style="margin-top:12px;">
+    <div class="dg-table-wrap">
+    <table class="dg-table">
       <thead><tr><th>Schritt</th><th>Status</th><th>Details</th></tr></thead>
       <tbody>
         <?php foreach ($result['steps'] as $s): ?>
@@ -31,6 +32,7 @@ $gateError = $provisionGateError ?? null;
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
     <?php if (!empty($result['install_url'])): ?>
     <div style="margin-top:16px; padding:16px; background:#f0f7ff; border:1px solid #cde; border-radius:6px;">
       <strong>Install-URL:</strong>

@@ -106,11 +106,11 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
           <tr><th>Steuernummer</th><td><?= View::escape((string) ($lsta['tax_number_est'] ?? '')) ?></td></tr>
           <tr><th>Finanzamt</th><td><?= View::escape((string) ($lsta['finanzamt_name'] ?? '')) ?> <?= View::escape((string) ($lsta['finanzamt_bufo'] ?? '')) ?></td></tr>
           <tr><th>Runs</th><td><?= View::escape(implode(', ', is_array($lsta['source_run_ids'] ?? null) ? $lsta['source_run_ids'] : [])) ?></td></tr>
-          <tr><th>LSt</th><td class="num"><?= View::escape($money((float) ($a['lst'] ?? 0))) ?> €</td></tr>
-          <tr><th>SolZ</th><td class="num"><?= View::escape($money((float) ($a['solz'] ?? 0))) ?> €</td></tr>
-          <tr><th>KiSt</th><td class="num"><?= View::escape($money((float) ($a['kst'] ?? 0))) ?> €</td></tr>
-          <tr><th>Flat-LSt (getrennt)</th><td class="num"><?= View::escape($money((float) ($a['flat_lst'] ?? 0))) ?> €</td></tr>
-          <tr><th>MA ok</th><td class="num"><?= (int) ($a['employee_count'] ?? 0) ?></td></tr>
+          <tr><th>LSt</th><td class="dg-table__num"><?= View::escape($money((float) ($a['lst'] ?? 0))) ?> €</td></tr>
+          <tr><th>SolZ</th><td class="dg-table__num"><?= View::escape($money((float) ($a['solz'] ?? 0))) ?> €</td></tr>
+          <tr><th>KiSt</th><td class="dg-table__num"><?= View::escape($money((float) ($a['kst'] ?? 0))) ?> €</td></tr>
+          <tr><th>Flat-LSt (getrennt)</th><td class="dg-table__num"><?= View::escape($money((float) ($a['flat_lst'] ?? 0))) ?> €</td></tr>
+          <tr><th>MA ok</th><td class="dg-table__num"><?= (int) ($a['employee_count'] ?? 0) ?></td></tr>
         </tbody>
       </table>
     </div>
@@ -156,16 +156,16 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     <div class="dg-table-wrap">
       <table class="dg-table dg-table--compact">
         <thead>
-          <tr><th>MA</th><th>IdNr</th><th>LSt</th><th>SolZ</th><th>KiSt</th><th>Eligibel</th></tr>
+          <tr><th>MA</th><th>IdNr</th><th class="dg-table__num">LSt</th><th class="dg-table__num">SolZ</th><th class="dg-table__num">KiSt</th><th>Eligibel</th></tr>
         </thead>
         <tbody>
           <?php foreach ($rows as $row) : ?>
             <tr>
               <td><?= View::escape((string) ($row['label'] ?? '')) ?></td>
               <td><code><?= View::escape((string) ($row['tax_id'] ?? '')) ?></code></td>
-              <td class="num"><?= View::escape($money((float) ($row['lst'] ?? 0))) ?></td>
-              <td class="num"><?= View::escape($money((float) ($row['solz'] ?? 0))) ?></td>
-              <td class="num"><?= View::escape($money((float) ($row['kst'] ?? 0))) ?></td>
+              <td class="dg-table__num"><?= View::escape($money((float) ($row['lst'] ?? 0))) ?></td>
+              <td class="dg-table__num"><?= View::escape($money((float) ($row['solz'] ?? 0))) ?></td>
+              <td class="dg-table__num"><?= View::escape($money((float) ($row['kst'] ?? 0))) ?></td>
               <td><?= !empty($row['eligible']) ? 'ja' : 'nein' ?></td>
             </tr>
           <?php endforeach; ?>

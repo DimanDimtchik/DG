@@ -416,16 +416,16 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                   <?php endforeach; ?>
                 </tbody>
               </table>
-              <table class="dg-table dg-table--compact" style="margin-top:1rem">
+              <table class="dg-table dg-table--compact dg-mt-4">
                 <thead>
-                  <tr><th>Konto</th><th>Seite</th><th>Betrag</th><th>Text</th></tr>
+                  <tr><th>Konto</th><th>Seite</th><th class="dg-table__num">Betrag</th><th>Text</th></tr>
                 </thead>
                 <tbody>
                   <?php foreach ($prevLines as $pl) : ?>
                     <tr>
                       <td><?= View::escape((string) ($pl['account_number'] ?? '')) ?></td>
                       <td><?= View::escape((string) ($pl['side'] ?? '')) ?></td>
-                      <td class="num"><?= View::escape($money((float) ($pl['amount'] ?? 0))) ?></td>
+                      <td class="dg-table__num"><?= View::escape($money((float) ($pl['amount'] ?? 0))) ?></td>
                       <td><?= View::escape((string) ($pl['description'] ?? '')) ?></td>
                     </tr>
                   <?php endforeach; ?>
@@ -552,14 +552,14 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
               <div class="dg-table-wrap">
                 <table class="dg-table dg-table--compact">
                   <thead>
-                    <tr><th>MA</th><th>IBAN</th><th>Betrag</th><th>EndToEnd</th></tr>
+                    <tr><th>MA</th><th>IBAN</th><th class="dg-table__num">Betrag</th><th>EndToEnd</th></tr>
                   </thead>
                   <tbody>
                     <?php foreach ($sepaTx as $tx) : ?>
                       <tr>
                         <td><?= View::escape((string) ($tx['name'] ?? '')) ?></td>
                         <td><?= View::escape(PayrollSepaService::maskIban((string) ($tx['iban'] ?? ''))) ?></td>
-                        <td class="num"><?= View::escape($money((float) ($tx['amount'] ?? 0))) ?></td>
+                        <td class="dg-table__num"><?= View::escape($money((float) ($tx['amount'] ?? 0))) ?></td>
                         <td><code><?= View::escape((string) ($tx['end_to_end_id'] ?? '')) ?></code></td>
                       </tr>
                     <?php endforeach; ?>
@@ -608,15 +608,15 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <div class="dg-table-wrap">
               <table class="dg-table dg-table--compact">
                 <thead>
-                  <tr><th>ID</th><th>Zeit</th><th>Tx</th><th>Summe</th><th>Art</th><th>Datei</th></tr>
+                  <tr><th>ID</th><th>Zeit</th><th class="dg-table__num">Tx</th><th class="dg-table__num">Summe</th><th>Art</th><th>Datei</th></tr>
                 </thead>
                 <tbody>
                   <?php foreach ($sepaExports as $ex) : ?>
                     <tr>
                       <td>#<?= (int) ($ex['id'] ?? 0) ?></td>
                       <td><?= View::escape((string) ($ex['created_at'] ?? '')) ?></td>
-                      <td class="num"><?= (int) ($ex['tx_count'] ?? 0) ?></td>
-                      <td class="num"><?= View::escape($money((float) ($ex['ctrl_sum'] ?? 0))) ?></td>
+                      <td class="dg-table__num"><?= (int) ($ex['tx_count'] ?? 0) ?></td>
+                      <td class="dg-table__num"><?= View::escape($money((float) ($ex['ctrl_sum'] ?? 0))) ?></td>
                       <td><?= !empty($ex['is_probe']) ? 'Test' : 'Produktiv' ?></td>
                       <td>
                         <?php if ($canExportSepa) : ?>

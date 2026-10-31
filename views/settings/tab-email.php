@@ -278,6 +278,8 @@ $hasStoredPass = ($mailConfig['smtp_password'] ?? '') !== '';
 
     <h3>Letzte ausgehende E-Mails</h3>
 
+    <div class="dg-table-wrap">
+
     <table class="dg-table dg-table--compact">
 
       <thead>
@@ -363,6 +365,8 @@ $hasStoredPass = ($mailConfig['smtp_password'] ?? '') !== '';
       </tbody>
 
     </table>
+
+    </div>
 
   </section>
 

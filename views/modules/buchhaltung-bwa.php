@@ -38,6 +38,7 @@ $printUrl = $period->appendToUrl('/app?page=buchhaltung-bwa&download=print');
   </form>
 
   <section class="dg-panel">
+    <div class="dg-table-wrap">
     <table class="dg-table">
       <thead><tr><th>Position</th><th class="dg-table__num">Betrag</th></tr></thead>
       <tbody>
@@ -49,5 +50,6 @@ $printUrl = $period->appendToUrl('/app?page=buchhaltung-bwa&download=print');
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
   </section>
 </div>

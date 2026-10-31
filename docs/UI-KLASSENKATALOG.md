@@ -140,6 +140,8 @@ Abstand: Tokens / `.dg-stack`; CSS-Fallback für nackte Buttons nach Grid/Feld e
 | Aktionsgruppe | `.dg-table__actions-group` |
 | Leer / Zahl / Summe | `.dg-table__empty` / `__num` / `__total` |
 
+`th`/`td.dg-table__num` ist global rechtsbündig (`tabular-nums`, einzeilig). Jede `.dg-table` steht in `.dg-table-wrap`. Druckansichten behalten ihr eigenes `num`.
+
 Alle Zellen-Aktionen = Small-Buttons in `__actions-group`. Kein Mix Link+Button in derselben `td`.
 
 ---

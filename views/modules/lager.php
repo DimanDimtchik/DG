@@ -443,6 +443,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php if ($stockInventories !== []) : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Abgeschlossene Inventuren</h2>
+    <div class="dg-table-wrap">
     <table class="dg-table dg-table--compact">
       <thead><tr><th>ID</th><th>Stichtag</th><th>Abgeschlossen</th><th>Notiz</th><th></th></tr></thead>
       <tbody>
@@ -464,6 +465,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
         <?php endforeach; ?>
       </tbody>
     </table>
+    </div>
   </section>
   <?php endif; ?>
 

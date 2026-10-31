@@ -287,7 +287,8 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           </ul>
         <?php endif; ?>
         <?php if ($provLast['steps'] !== []) : ?>
-          <table class="dg-table" style="margin-top:8px;">
+          <div class="dg-table-wrap dg-mt-2">
+          <table class="dg-table">
             <thead><tr><th>Schritt</th><th>OK</th><th>Detail</th></tr></thead>
             <tbody>
               <?php foreach ($provLast['steps'] as $step) : ?>
@@ -299,6 +300,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
               <?php endforeach; ?>
             </tbody>
           </table>
+          </div>
         <?php endif; ?>
       <?php else : ?>
         <p class="dg-field-hint">Noch kein Provision-Lauf gespeichert.</p>

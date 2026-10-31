@@ -781,6 +781,14 @@ code {
   color: var(--dg-heading);
 }
 
+/* Zahlenspalte überall gleich — schlägt text-align:left von th/td */
+.dg-table th.dg-table__num,
+.dg-table td.dg-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .dg-table tbody tr:hover {
   background: var(--dg-surface-muted);
 }
@@ -4879,12 +4887,6 @@ body.dg-login-page {
   color: var(--dg-muted);
 }
 
-.dg-buchhaltung-belege__table .dg-table__num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 .dg-buchhaltung-belege__account {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
@@ -6165,12 +6167,6 @@ body.dg-login-page {
 }
 .dg-ledger-filters .dg-field--check {
   align-self: end;
-}
-.dg-ledger-overview__table .dg-table__num,
-.dg-ledger-statement__table .dg-table__num {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  text-align: right;
 }
 /* Kontonummer schmal und einzeilig, Bezeichnung darf umbrechen,
    damit die Zahlenspalten immer sichtbar bleiben. */

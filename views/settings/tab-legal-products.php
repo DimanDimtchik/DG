@@ -64,6 +64,7 @@ $statusOptions = LegalProductSettings::statusOptions();
   <?php if (!empty($cfg['multi_product_enabled'])) : ?>
     <section class="dg-panel">
       <h3 class="dg-subsection-title">Rechtstexte bearbeiten</h3>
+      <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
           <tr>
@@ -95,6 +96,7 @@ $statusOptions = LegalProductSettings::statusOptions();
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
     </section>
   <?php endif; ?>
 

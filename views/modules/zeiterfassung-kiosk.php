@@ -28,6 +28,7 @@ $staff = is_array($kioskStaffOptions ?? null) ? $kioskStaffOptions : [];
     <?php if ($pending === []) : ?>
       <p class="dg-muted">Keine offenen Anfragen.</p>
     <?php else : ?>
+      <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
           <tr>
@@ -61,6 +62,7 @@ $staff = is_array($kioskStaffOptions ?? null) ? $kioskStaffOptions : [];
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
     <?php endif; ?>
   </section>
 

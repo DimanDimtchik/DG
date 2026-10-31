@@ -113,8 +113,9 @@ $csrf = Csrf::token();
       })();
     </script>
     <?php if ($closings !== []) : ?>
-      <table class="dg-table" style="margin-top:1rem;">
-        <thead><tr><th>Datum</th><th>Soll</th><th>Ist</th><th>Differenz</th><th>Notiz</th></tr></thead>
+      <div class="dg-table-wrap dg-mt-4">
+      <table class="dg-table">
+        <thead><tr><th>Datum</th><th class="dg-table__num">Soll</th><th class="dg-table__num">Ist</th><th class="dg-table__num">Differenz</th><th>Notiz</th></tr></thead>
         <tbody>
           <?php foreach ($closings as $closing) : ?>
             <tr>
@@ -127,6 +128,7 @@ $csrf = Csrf::token();
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
     <?php endif; ?>
   </section>
   <?php endif; ?>

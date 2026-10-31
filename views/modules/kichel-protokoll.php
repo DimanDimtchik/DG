@@ -19,6 +19,7 @@ $rows = $kichelLogRows ?? [];
     </div>
   <?php else : ?>
     <div class="dg-panel">
+      <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
           <tr>
@@ -47,6 +48,7 @@ $rows = $kichelLogRows ?? [];
           <?php endforeach; ?>
         </tbody>
       </table>
+      </div>
     </div>
   <?php endif; ?>
 </div>

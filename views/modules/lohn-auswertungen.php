@@ -124,10 +124,10 @@ $base = '/app?page=lohn-auswertungen&month=' . rawurlencode($month)
         <table class="dg-table dg-table--compact">
           <thead>
             <tr>
-              <th>KK-BN</th><th>KK</th><th>MA</th>
-              <th>KV</th><th>RV</th><th>AV</th><th>PV</th>
-              <th>SV-AN</th><th>SV-AG</th>
-              <th>U1</th><th>U2</th><th>U3</th><th>Flat</th>
+              <th>KK-BN</th><th>KK</th><th class="dg-table__num">MA</th>
+              <th class="dg-table__num">KV</th><th class="dg-table__num">RV</th><th class="dg-table__num">AV</th><th class="dg-table__num">PV</th>
+              <th class="dg-table__num">SV-AN</th><th class="dg-table__num">SV-AG</th>
+              <th class="dg-table__num">U1</th><th class="dg-table__num">U2</th><th class="dg-table__num">U3</th><th class="dg-table__num">Flat</th>
             </tr>
           </thead>
           <tbody>
@@ -135,34 +135,34 @@ $base = '/app?page=lohn-auswertungen&month=' . rawurlencode($month)
               <tr>
                 <td><code><?= View::escape((string) ($g['kk_bn'] ?? '')) ?></code></td>
                 <td><?= View::escape((string) ($g['kk_name'] ?? '')) ?></td>
-                <td class="num"><?= (int) ($g['employee_count'] ?? 0) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['kv'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['rv'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['av'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['pv'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['sv_an'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['sv_ag'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['u1'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['u2'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['u3'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($g['flat'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= (int) ($g['employee_count'] ?? 0) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['kv'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['rv'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['av'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['pv'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['sv_an'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['sv_ag'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['u1'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['u2'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['u3'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($g['flat'] ?? 0))) ?></td>
               </tr>
             <?php endforeach; ?>
             <?php if ($groups !== []) : ?>
               <tr>
                 <td><strong>TOTAL</strong></td>
                 <td></td>
-                <td class="num"><?= (int) ($totals['employee_count'] ?? 0) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['kv'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['rv'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['av'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['pv'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['sv_an'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['sv_ag'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['u1'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['u2'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['u3'] ?? 0))) ?></td>
-                <td class="num"><?= View::escape($money((float) ($totals['flat'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= (int) ($totals['employee_count'] ?? 0) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['kv'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['rv'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['av'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['pv'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['sv_an'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['sv_ag'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['u1'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['u2'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['u3'] ?? 0))) ?></td>
+                <td class="dg-table__num"><?= View::escape($money((float) ($totals['flat'] ?? 0))) ?></td>
               </tr>
             <?php endif; ?>
           </tbody>

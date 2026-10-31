@@ -95,10 +95,10 @@ $baseQs = 'page=lohn-lohnkonto&year=' . $year
                 <th>Run</th>
                 <th>Art</th>
                 <th>Status</th>
-                <th>Brutto</th>
-                <th>LSt</th>
-                <th>SV-AN</th>
-                <th>Netto</th>
+                <th class="dg-table__num">Brutto</th>
+                <th class="dg-table__num">LSt</th>
+                <th class="dg-table__num">SV-AN</th>
+                <th class="dg-table__num">Netto</th>
                 <th>PDF</th>
                 <th>Hinweis</th>
               </tr>
@@ -128,10 +128,10 @@ $baseQs = 'page=lohn-lohnkonto&year=' . $year
                   <td><a href="<?= View::escape($monthHref) ?>">#<?= $rid ?></a></td>
                   <td><?= View::escape((string) ($row['kind_label'] ?? '')) ?></td>
                   <td><?= View::escape((string) ($row['run_status'] ?? '') . ' / ' . (string) ($row['emp_status'] ?? '')) ?></td>
-                  <td class="num"><?= View::escape($money((float) ($row['gross_total'] ?? 0))) ?></td>
-                  <td class="num"><?= View::escape($money((float) ($row['lst'] ?? 0))) ?></td>
-                  <td class="num"><?= View::escape($money((float) ($row['sv_an'] ?? 0))) ?></td>
-                  <td class="num"><?= View::escape($money((float) ($row['net_pay'] ?? 0))) ?></td>
+                  <td class="dg-table__num"><?= View::escape($money((float) ($row['gross_total'] ?? 0))) ?></td>
+                  <td class="dg-table__num"><?= View::escape($money((float) ($row['lst'] ?? 0))) ?></td>
+                  <td class="dg-table__num"><?= View::escape($money((float) ($row['sv_an'] ?? 0))) ?></td>
+                  <td class="dg-table__num"><?= View::escape($money((float) ($row['net_pay'] ?? 0))) ?></td>
                   <td>
                     <?php if ($docId > 0) : ?>
                       <a href="/app?page=lohn-lohnkonto&amp;download=pdf&amp;doc=<?= $docId ?>">PDF</a>
@@ -146,10 +146,10 @@ $baseQs = 'page=lohn-lohnkonto&year=' . $year
             <tfoot>
               <tr>
                 <th colspan="4">Jahres-Summe (ohne ersetzt, <?= (int) ($totals['count'] ?? 0) ?> Läufe)</th>
-                <th class="num"><?= View::escape($money((float) ($totals['gross_total'] ?? 0))) ?></th>
-                <th class="num"><?= View::escape($money((float) ($totals['lst'] ?? 0))) ?></th>
-                <th class="num"><?= View::escape($money((float) ($totals['sv_an'] ?? 0))) ?></th>
-                <th class="num"><?= View::escape($money((float) ($totals['net_pay'] ?? 0))) ?></th>
+                <th class="dg-table__num"><?= View::escape($money((float) ($totals['gross_total'] ?? 0))) ?></th>
+                <th class="dg-table__num"><?= View::escape($money((float) ($totals['lst'] ?? 0))) ?></th>
+                <th class="dg-table__num"><?= View::escape($money((float) ($totals['sv_an'] ?? 0))) ?></th>
+                <th class="dg-table__num"><?= View::escape($money((float) ($totals['net_pay'] ?? 0))) ?></th>
                 <th colspan="2"></th>
               </tr>
             </tfoot>
