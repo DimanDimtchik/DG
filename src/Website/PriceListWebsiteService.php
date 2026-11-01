@@ -95,14 +95,15 @@ final class PriceListWebsiteService
                             [
                                 'id' => 'blk-pricelist-h',
                                 'type' => 'heading',
-                                'text' => 'Preislisten',
+                                'text' => 'Preisliste',
                                 'level' => 'h1',
                             ],
                             [
                                 'id' => 'blk-pricelist-t',
                                 'type' => 'text',
-                                'text' => 'Hier finden Sie unsere aktuellen Artikel und Leistungen. '
-                                    . 'Die Übersicht aktualisiert sich automatisch, wenn Einträge im CRM geändert werden.',
+                                'text' => 'Pflegeprodukte und Behandlungen auf einen Blick — klar, aktuell und ohne Hin-und-Her. '
+                                    . 'Was Sie hier sehen, kommt direkt aus dem Katalog: ändern Sie Preise oder Leistungen im CRM, '
+                                    . 'aktualisiert sich die Website von selbst. So wirkt Ihre Seite vom ersten Tag an vollständig und professionell.',
                             ],
                         ],
                     ]],

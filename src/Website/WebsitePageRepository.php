@@ -388,18 +388,22 @@ final class WebsitePageRepository
         $layout = $data['layout'] ?? null;
         if (is_string($layout)) {
             $decoded = json_decode($layout, true);
-            $layout = is_array($decoded) ? $decoded : self::emptyLayout();
+            $layout = is_array($decoded) ? $decoded : null;
         }
+        $existing = null;
         if ($id !== null && $id > 0) {
             $existing = self::findById($id);
-            if ($existing !== null && self::isOnlineBookingPage($existing)) {
-                $layout = is_array($layout) ? $layout : self::onlineBookingLayout();
-                $layout = self::ensureOnlineBookingStructure($layout);
+        }
+        // Nie stillschweigend auf Standard-Vorlage zurücksetzen (sonst gehen Editor-Inhalte verloren)
+        if (!is_array($layout) || !isset($layout['rows']) || !is_array($layout['rows'])) {
+            if ($existing !== null && is_array($existing['layout'] ?? null)) {
+                $layout = $existing['layout'];
+            } else {
+                $layout = self::emptyLayout();
             }
         }
-
-        if (!is_array($layout) || !isset($layout['rows']) || !is_array($layout['rows'])) {
-            $layout = self::emptyLayout();
+        if ($existing !== null && self::isOnlineBookingPage($existing)) {
+            $layout = self::ensureOnlineBookingStructure($layout);
         }
         $layoutChanged = false;
         $layout = WebsiteFormRepository::convertContactBlocksInLayout($layout, $userId, $layoutChanged);
@@ -551,13 +555,15 @@ final class WebsitePageRepository
             $decoded = json_decode($raw, true);
             if (is_array($decoded)) {
                 $pageKind = (string) ($decoded['page_kind'] ?? '');
-                if ($pageKind === self::PAGE_KIND_ONLINE_BOOKING) {
-                    $layout = self::onlineBookingLayout();
-                } elseif (isset($decoded['rows']) && is_array($decoded['rows'])) {
+                if (isset($decoded['rows']) && is_array($decoded['rows'])) {
+                    // Gespeicherte Zeilen behalten (auch bei page_kind=online_booking)
                     $layout = WebsiteContent::normalizeLayout($decoded);
                     if ($pageKind !== '') {
                         $layout['page_kind'] = $pageKind;
                     }
+                } elseif ($pageKind === self::PAGE_KIND_ONLINE_BOOKING) {
+                    // Nur Fallback, wenn noch keine rows gespeichert sind
+                    $layout = self::onlineBookingLayout();
                 } elseif ($pageKind !== '') {
                     $layout['page_kind'] = $pageKind;
                     $layout['rows'] = [];
@@ -569,7 +575,7 @@ final class WebsitePageRepository
             self::sanitizeSlug((string) ($row['slug'] ?? '')) === 'terminkalender'
             && (string) ($layout['page_kind'] ?? '') !== self::PAGE_KIND_ONLINE_BOOKING
         ) {
-            $layout = self::onlineBookingLayout();
+            $layout = self::ensureOnlineBookingStructure($layout);
         }
 
         return [

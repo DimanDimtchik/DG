@@ -1275,7 +1275,11 @@
           : '<div class="dg-website-block__image-placeholder">Bild — Mediathek, URL oder Upload rechts</div>';
         break;
       case 'button':
-        html += '<span class="dg-website-block__btn">' + escapeHtml(block.label || block.text || 'Button') + '</span>';
+        var btnPending = !!block.pending || !String(block.url || '').trim() || String(block.url || '') === '#' || String(block.url || '').toLowerCase() === 'pending';
+        html += '<span class="dg-website-block__btn"' + (btnPending ? ' style="opacity:0.45;border-style:dashed;" title="Öffentlich unsichtbar (kein Link)"' : '') + '>'
+          + escapeHtml(block.label || block.text || 'Button')
+          + (btnPending ? ' · versteckt' : '')
+          + '</span>';
         break;
       case 'spacer':
         html += '<div class="dg-website-block__spacer" style="height:' + (parseInt(block.height, 10) || 24) + 'px"></div>';
@@ -1963,7 +1967,10 @@
     var html = '<div class="dg-website-media-picker__grid dg-website-video-picker__grid">';
     items.forEach(function (item) {
       var label = item.title || 'Video';
-      var meta = item.source === 'academy' ? 'Akademie' : 'Mediathek';
+      var meta = 'Mediathek';
+      if (item.source === 'academy' || item.source === 'academy-missing') meta = 'Akademie';
+      if (item.source === 'kern' || item.source === 'kern-missing') meta = 'Kern-Katalog';
+      if (item.playable === false) meta += ' · Datei fehlt';
       var dur = formatVideoDuration(item.duration_sec);
       if (dur) meta += ' · ' + dur;
       html += '<button type="button" class="dg-website-media-picker__item dg-website-video-picker__item" data-video-pick-id="' + escapeHtml(item.id) + '" title="' + escapeHtml(label) + '">' +
@@ -2019,6 +2026,16 @@
         case 'button':
           html += textFieldWithCharPicker('Beschriftung', 'label', block.label || block.text);
           html += fieldHtml('Link', 'url', block.url);
+          html += '<label class="dg-field">Plattform<select name="platform">'
+            + '<option value=""' + (!block.platform ? ' selected' : '') + '>—</option>'
+            + '<option value="android"' + (block.platform === 'android' ? ' selected' : '') + '>Android</option>'
+            + '<option value="ios"' + (block.platform === 'ios' ? ' selected' : '') + '>Apple</option>'
+            + '<option value="windows"' + (block.platform === 'windows' ? ' selected' : '') + '>Windows</option>'
+            + '</select></label>';
+          html += '<label class="dg-field dg-field--inline"><span>'
+            + '<input type="checkbox" name="pending" value="1"' + (block.pending || !String(block.url || '').trim() || String(block.url || '').toLowerCase() === 'pending' ? ' checked' : '') + '> '
+            + 'Öffentlich unsichtbar (kein Store-Link)</span></label>';
+          html += '<p class="dg-field-hint">Apple-/Android-Buttons ohne Link bleiben auf der Website unsichtbar, bis die URL gesetzt und „unsichtbar“ aus ist.</p>';
           break;
         case 'spacer':
           html += fieldHtml('Höhe (px)', 'height', String(block.height || 24), 'type="number" min="8" max="160"');
@@ -2536,6 +2553,40 @@
           if (quoteBox.checked) blockQ.quote = true;
           else delete blockQ.quote;
           persist(layoutQ);
+          render({ keepInspector: true });
+        }
+        return;
+      }
+      var pendingBox = event.target.closest('input[name="pending"][type="checkbox"]');
+      if (pendingBox && selected.blockId) {
+        var layoutP = parseLayout();
+        var blockP = findBlock(layoutP, selected.blockId);
+        if (blockP) {
+          if (pendingBox.checked) {
+            blockP.pending = true;
+            if (!String(blockP.url || '').trim() || String(blockP.url) === '#') {
+              blockP.url = 'pending';
+            }
+          } else {
+            delete blockP.pending;
+            if (String(blockP.url || '').toLowerCase() === 'pending') {
+              blockP.url = '';
+            }
+          }
+          persist(layoutP);
+          render({ keepInspector: true });
+        }
+        return;
+      }
+      var platformSelect = event.target.closest('select[name="platform"]');
+      if (platformSelect && selected.blockId) {
+        var layoutPl = parseLayout();
+        var blockPl = findBlock(layoutPl, selected.blockId);
+        if (blockPl) {
+          var pv = String(platformSelect.value || '').trim();
+          if (pv) blockPl.platform = pv;
+          else delete blockPl.platform;
+          persist(layoutPl);
           render({ keepInspector: true });
         }
         return;

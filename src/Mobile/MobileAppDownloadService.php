@@ -2,7 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Vorinstallierte Website-Seite „Apps“ — Download Termin-Kalender- und Mitarbeiter-App.
+ * Vorinstallierte Website-Seite „Apps“ — Termin- und Mitarbeiter-App.
+ * Je App: Android- und Apple-Button; ohne Store-Link bleibt der Button öffentlich unsichtbar.
+ * Weitere Produkte (z. B. KlarWin, WG) nur als Instanz-Inhalt auf der Website-Seite, nicht hier.
  */
 final class MobileAppDownloadService
 {
@@ -113,57 +115,49 @@ final class MobileAppDownloadService
                     ]],
                 ],
                 [
-                    'id' => 'row-apps-cards',
+                    'id' => 'row-apps-crm',
                     'columns' => [
                         [
                             'id' => 'col-kalender',
                             'width' => 6,
-                            'blocks' => [
+                            'blocks' => array_merge(
                                 [
-                                    'id' => 'blk-kal-h',
-                                    'type' => 'heading',
-                                    'text' => 'Termin-App (Kalender)',
-                                    'level' => 'h2',
+                                    [
+                                        'id' => 'blk-kal-h',
+                                        'type' => 'heading',
+                                        'text' => 'Termin-App (Kalender)',
+                                        'level' => 'h2',
+                                    ],
+                                    [
+                                        'id' => 'blk-kal-t',
+                                        'type' => 'text',
+                                        'text' => 'Für Kunden: Leistungen ansehen, Wunschtermin wählen und buchen. '
+                                            . 'Anmeldung mit E-Mail und Passwort.',
+                                    ],
                                 ],
-                                [
-                                    'id' => 'blk-kal-t',
-                                    'type' => 'text',
-                                    'text' => 'Für Kunden: Leistungen ansehen, Wunschtermin wählen und buchen. '
-                                        . 'Anmeldung mit E-Mail und Passwort.',
-                                ],
-                                [
-                                    'id' => 'blk-kal-btn',
-                                    'type' => 'button',
-                                    'text' => 'Termin-App herunterladen (Android)',
-                                    'url' => '/' . self::KALENDER_APK,
-                                    'style' => 'primary',
-                                ],
-                            ],
+                                self::platformButtons('kal', '/' . self::KALENDER_APK, '')
+                            ),
                         ],
                         [
                             'id' => 'col-mitarbeiter',
                             'width' => 6,
-                            'blocks' => [
+                            'blocks' => array_merge(
                                 [
-                                    'id' => 'blk-ma-h',
-                                    'type' => 'heading',
-                                    'text' => 'Mitarbeiter-App',
-                                    'level' => 'h2',
+                                    [
+                                        'id' => 'blk-ma-h',
+                                        'type' => 'heading',
+                                        'text' => 'Mitarbeiter-App',
+                                        'level' => 'h2',
+                                    ],
+                                    [
+                                        'id' => 'blk-ma-t',
+                                        'type' => 'text',
+                                        'text' => 'Für Mitarbeiter: Termine und Stempelzeiten im Blick. '
+                                            . 'Anmeldung mit Kennung und Stempeluhr-PIN.',
+                                    ],
                                 ],
-                                [
-                                    'id' => 'blk-ma-t',
-                                    'type' => 'text',
-                                    'text' => 'Für Mitarbeiter: Termine und Stempelzeiten im Blick. '
-                                        . 'Anmeldung mit Kennung und Stempeluhr-PIN.',
-                                ],
-                                [
-                                    'id' => 'blk-ma-btn',
-                                    'type' => 'button',
-                                    'text' => 'Mitarbeiter-App herunterladen (Android)',
-                                    'url' => '/' . self::MITARBEITER_APK,
-                                    'style' => 'primary',
-                                ],
-                            ],
+                                self::platformButtons('ma', '/' . self::MITARBEITER_APK, '')
+                            ),
                         ],
                     ],
                 ],
@@ -176,14 +170,62 @@ final class MobileAppDownloadService
                             [
                                 'id' => 'blk-apps-hint',
                                 'type' => 'text',
-                                'text' => 'Hinweis: Mitarbeiter können per Kontaktakte zur App und zu Passwort/PIN eingeladen werden. '
-                                    . 'Android-APKs liegen unter downloads/ auf dem Server. iOS-Links folgen (TestFlight). '
-                                    . 'Fehlt die APK-Datei, erscheint beim Klick eine Fehlermeldung.',
+                                'text' => 'Hinweis: Zu jeder App gibt es einen Android- und einen Apple-Button. '
+                                    . 'Apple-Downloads bleiben unsichtbar, bis der App-Store- oder TestFlight-Link hinterlegt ist. '
+                                    . 'Mitarbeiter können per Kontaktakte zur App und zu Passwort/PIN eingeladen werden. '
+                                    . 'Fehlt die Android-APK-Datei unter downloads/, erscheint beim Klick eine Fehlermeldung.',
                             ],
                         ],
                     ]],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * Android- + Apple-Button. Leerer URL → öffentlich unsichtbar (pending).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function platformButtons(string $idPrefix, string $androidUrl, string $appleUrl): array
+    {
+        return [
+            self::downloadButton(
+                'blk-' . $idPrefix . '-android',
+                'Android herunterladen',
+                $androidUrl,
+                'android',
+                $androidUrl === ''
+            ),
+            self::downloadButton(
+                'blk-' . $idPrefix . '-apple',
+                'Apple herunterladen',
+                $appleUrl,
+                'ios',
+                $appleUrl === ''
+            ),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function downloadButton(
+        string $id,
+        string $label,
+        string $url,
+        string $platform,
+        bool $pending
+    ): array {
+        return [
+            'id' => $id,
+            'type' => 'button',
+            'text' => $label,
+            'label' => $label,
+            'url' => $pending ? 'pending' : $url,
+            'platform' => $platform,
+            'pending' => $pending,
+            'style' => 'primary',
         ];
     }
 

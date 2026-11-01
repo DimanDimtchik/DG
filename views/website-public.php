@@ -240,7 +240,33 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-block h1 { font-size: 2rem; margin-bottom: 12px; }
     .ws-block h2 { font-size: 1.5rem; margin-bottom: 10px; }
     .ws-block h3 { font-size: 1.25rem; margin-bottom: 8px; }
+    .ws-block h4 { font-size: 1.1rem; margin: 16px 0 8px; }
     .ws-block p { margin-bottom: 8px; }
+    .ws-content-table-wrap { overflow-x: auto; margin: 12px 0 20px; }
+    .ws-content-table {
+      width: 100%; border-collapse: collapse; font-size: 0.95rem;
+      background: #fff; border: 1px solid #cbd5e1;
+    }
+    .ws-content-table th,
+    .ws-content-table td {
+      text-align: left; padding: 10px 12px; vertical-align: top;
+      border: 1px solid #cbd5e1;
+    }
+    .ws-content-table th {
+      background: #f1f5f9; font-weight: 600; color: #334155;
+    }
+    .ws-content-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .ws-block table:not(.ws-content-table):not(.ws-pricelist__table) {
+      width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.95rem;
+      border: 1px solid #cbd5e1;
+    }
+    .ws-block table:not(.ws-content-table):not(.ws-pricelist__table) th,
+    .ws-block table:not(.ws-content-table):not(.ws-pricelist__table) td {
+      border: 1px solid #cbd5e1; padding: 10px 12px; vertical-align: top; text-align: left;
+    }
+    .ws-block table:not(.ws-content-table):not(.ws-pricelist__table) th {
+      background: #f1f5f9; font-weight: 600;
+    }
     .ws-block blockquote.ws-quote {
       margin: 0 0 12px;
       padding: 10px 14px;
@@ -248,9 +274,17 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
       background: color-mix(in srgb, var(--ws-primary) 8%, transparent);
       border-radius: 0 6px 6px 0;
     }
-    .ws-block img { max-width: 100%; height: auto; border-radius: 6px; }
-    .ws-block .ws-btn { display: inline-block; padding: 10px 24px; background: var(--ws-primary); color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: opacity 0.15s; border: none; cursor: pointer; font: inherit; }
+    .ws-block img { max-width: 100%; height: auto; border-radius: 6px; margin: 0 0 12px; display: block; }
+    .ws-feature-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px; margin: 0 0 10px;
+      border-radius: 12px; background: #f3efe9; color: #5c4a3a;
+    }
+    .ws-feature-icon svg { width: 28px; height: 28px; display: block; }
+    .ws-block .ws-btn { display: inline-block; padding: 10px 24px; background: var(--ws-primary); color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: opacity 0.15s; border: none; cursor: pointer; font: inherit; margin: 0 8px 8px 0; }
     .ws-block .ws-btn:hover { opacity: 0.85; }
+    /* App-Store-Buttons ohne Link: im DOM, öffentlich unsichtbar */
+    .ws-block .ws-btn--pending { display: none !important; }
 
     .ws-form { margin: 8px 0 16px; }
     .ws-form__flash { padding: 12px 14px; border-radius: 8px; margin-bottom: 12px; }
@@ -565,8 +599,19 @@ if ($wsInteractionCss !== '') :
 
           case 'button':
             $label = $block['label'] ?? $block['text'] ?? 'Klicken';
-            $url = $block['url'] ?? '#';
-            echo '<a href="' . View::escape($url) . '" class="ws-btn">' . View::escape($label) . '</a>';
+            $url = trim((string) ($block['url'] ?? ''));
+            $pending = !empty($block['pending'])
+                || $url === ''
+                || $url === '#'
+                || strcasecmp($url, 'pending') === 0;
+            $btnClass = 'ws-btn' . ($pending ? ' ws-btn--pending' : '');
+            $href = $pending ? '#' : $url;
+            $platform = strtolower(trim((string) ($block['platform'] ?? '')));
+            $dataPlatform = $platform !== '' ? ' data-platform="' . View::escape($platform) . '"' : '';
+            echo '<a href="' . View::escape($href) . '" class="' . View::escape($btnClass) . '"'
+                . ($pending ? ' hidden aria-hidden="true" tabindex="-1"' : '')
+                . $dataPlatform . '>'
+                . View::escape($label) . '</a>';
             break;
 
           case 'spacer':
