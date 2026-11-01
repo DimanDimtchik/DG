@@ -21,6 +21,9 @@ final class LedgerPostingService
         if ($voucher === null) {
             return;
         }
+        if (!empty($voucher['voided_at'])) {
+            return;
+        }
 
         if (!VoucherDocumentKind::isBookable(
             (string) ($voucher['document_kind'] ?? ''),
@@ -133,7 +136,13 @@ final class LedgerPostingService
             $taxKey = self::taxKeyForLine($voucher, $rate, $reverseCharge);
 
             $primaryAmount = $net;
-            $taxAccount = LedgerAccounts::taxAccount($skrType, $voucherType, $rate);
+            $taxAccount = LedgerAccounts::taxAccountForVoucher(
+                $skrType,
+                $voucherType,
+                $rate,
+                $voucherDate,
+                $reverseCharge
+            );
             $bookTaxSeparately = !$reverseCharge && $tax != 0.0 && self::accountExists($taxAccount, $skrType);
             if (!$bookTaxSeparately) {
                 $primaryAmount = $gross;
@@ -211,8 +220,78 @@ final class LedgerPostingService
 
         $postings = array_merge($postings, self::skontoPostings($voucher, $fiscalYear, $voucherDate, $voucherId, $contraAccount, $personAccount, $docFields, $description, $skrType));
         $postings = array_merge($postings, self::giftVoucherPostings($voucher, $fiscalYear, $voucherDate, $voucherId, $contraAccount, $personAccount, $docFields, $description, $skrType));
+        $postings = array_merge($postings, self::istVatRealizationPostings($voucher, $fiscalYear, $voucherDate, $voucherId, $docFields, $description, $skrType, $reverseCharge));
 
         return $postings;
+    }
+
+    /**
+     * Ist-Versteuerung: anteilige USt vom Verrechnungskonto auf Zahllast bei Zahlungseingang.
+     *
+     * @param array<string, mixed> $voucher
+     * @param array{field1: string, field2: string} $docFields
+     * @return list<array<string, mixed>>
+     */
+    private static function istVatRealizationPostings(
+        array $voucher,
+        int $fiscalYear,
+        string $voucherDate,
+        int $voucherId,
+        array $docFields,
+        string $description,
+        string $skrType,
+        bool $reverseCharge
+    ): array {
+        if ($reverseCharge || !LedgerAccounts::isIncomeDirection((string) ($voucher['voucher_type'] ?? ''))) {
+            return [];
+        }
+        if (!VatTaxationSettings::isIstOn($voucherDate)) {
+            return [];
+        }
+        $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
+        $taxTotal = round((float) ($voucher['tax_amount'] ?? 0), 2);
+        if ($gross <= 0.0 || $taxTotal == 0.0) {
+            return [];
+        }
+        $paid = round((float) ($voucher['paid_amount'] ?? 0), 2);
+        if ($voucherId > 0) {
+            $paid = max($paid, round(VoucherPaymentRepository::totalPaid($voucherId), 2));
+        }
+        if ($paid <= 0.0) {
+            return [];
+        }
+        $share = min(1.0, $paid / $gross);
+        $taxRealize = round($taxTotal * $share, 2);
+        if (abs($taxRealize) < 0.005) {
+            return [];
+        }
+        $rate = (int) ($voucher['tax_rate'] ?? 19);
+        $clearing = LedgerAccounts::istClearingAccount($skrType);
+        $ustAccount = LedgerAccounts::taxAccount($skrType, (string) ($voucher['voucher_type'] ?? 'income'), $rate);
+        if ($clearing === $ustAccount || !self::accountExists($clearing, $skrType) || !self::accountExists($ustAccount, $skrType)) {
+            return [];
+        }
+        $desc = 'Ist-USt vereinnahmt' . ($description !== '' ? ' · ' . $description : '');
+        $amount = abs($taxRealize);
+        // Verrechnungskonto mindern (Haben, wenn USt dort im Haben stand) → USt-Zahllast belasten.
+        // Bei Einnahme: USt ursprünglich Haben auf Clearing; Realisation: Soll Clearing, Haben USt.
+        $sideClearing = $taxRealize >= 0 ? 'debit' : 'credit';
+        $sideUst = $taxRealize >= 0 ? 'credit' : 'debit';
+        $realizeDate = trim((string) ($voucher['paid_at'] ?? ''));
+        if ($realizeDate === '' || strtotime($realizeDate) === false) {
+            $realizeDate = $voucherDate;
+        } else {
+            $realizeDate = date('Y-m-d', strtotime($realizeDate));
+        }
+        $realizeYear = (int) substr($realizeDate, 0, 4);
+        if ($realizeYear < 2000) {
+            $realizeYear = $fiscalYear;
+        }
+
+        return [
+            self::row($realizeYear, $realizeDate, $voucherId, $clearing, $ustAccount, '', $sideClearing, $amount, $rate, '', $desc, $docFields),
+            self::row($realizeYear, $realizeDate, $voucherId, $ustAccount, $clearing, '', $sideUst, $amount, $rate, '', $desc, $docFields),
+        ];
     }
 
     /**

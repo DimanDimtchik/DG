@@ -67,4 +67,15 @@ $base = '/app?page=buchhaltung-steuerberater-export&year=' . (int) $year;
     </div>
     <p class="dg-field-hint">Agenda und Addison importieren über Transfer → DATEV-Import-Assistent in der Kanzlei-Software.</p>
   </section>
+
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">GoBD-Prüferexport</h2>
+    <p class="dg-field-hint">
+      Maschinenlesbarer Zeitraumexport (Journal, Belegindex, Konten, USt-Versteuerung) inkl. Manifest-Hash —
+      zur Vorlage bei Betriebsprüfung. Verfahrensdokumentation: siehe Produktdoku.
+    </p>
+    <div class="dg-form-actions">
+      <a class="dg-button dg-button--primary" href="<?= View::escape($base . '&download=gobd') ?>">GoBD-Prüferexport (ZIP)</a>
+    </div>
+  </section>
 </div>

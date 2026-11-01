@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Nach Druck/Versand: Ausgangsbelege nicht überschreiben — stornieren und neu anlegen.
+ * GoBD: gebuchte/versendete Belege nicht überschreiben — stornieren und neu anlegen.
+ * Ausgang: nach Druck/Versand. Eingang: sobald nicht mehr Entwurf (is_draft = 0).
  */
 final class VoucherDocumentRevisionService
 {
@@ -28,17 +29,22 @@ final class VoucherDocumentRevisionService
         if ($voucher === null) {
             return false;
         }
+        if (!empty($voucher['voided_at'])) {
+            return true;
+        }
         $type = VoucherRepository::normalizeVoucherType((string) ($voucher['voucher_type'] ?? ''));
-        if ($type !== 'income') {
-            return false;
-        }
-        $kind = VoucherDocumentKind::sanitize((string) ($voucher['document_kind'] ?? ''));
-        if ($kind === '') {
-            return false;
-        }
-        $status = VoucherDocumentStatus::sanitize((string) ($voucher['document_status'] ?? ''));
+        if ($type === 'income') {
+            $kind = VoucherDocumentKind::sanitize((string) ($voucher['document_kind'] ?? ''));
+            if ($kind === '') {
+                return false;
+            }
+            $status = VoucherDocumentStatus::sanitize((string) ($voucher['document_status'] ?? ''));
 
-        return in_array($status, self::immutableStatuses(), true);
+            return in_array($status, self::immutableStatuses(), true);
+        }
+
+        // Eingangs-/sonstige Belege: nach Buchung (kein Entwurf) inhaltlich gesperrt.
+        return empty($voucher['is_draft']);
     }
 
     /**
@@ -119,11 +125,15 @@ final class VoucherDocumentRevisionService
             throw new InvalidArgumentException('Beleg ist nicht gesperrt — normales Speichern nutzen.');
         }
 
+        $voucherType = VoucherRepository::normalizeVoucherType((string) ($existing['voucher_type'] ?? 'expense'));
         $newStatusWanted = VoucherDocumentStatus::sanitize((string) ($data['document_status'] ?? ''));
         $oldStatus = VoucherDocumentStatus::sanitize((string) ($existing['document_status'] ?? ''));
-        // Reines Stornieren ohne Inhalt neu: nur Status setzen.
-        if ($newStatusWanted === VoucherDocumentStatus::CANCELLED) {
-            VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED, $userId, 'revision_cancel');
+        // Reines Stornieren ohne Inhalt neu: nur Status setzen (Ausgang) bzw. voiden (Eingang).
+        if ($newStatusWanted === VoucherDocumentStatus::CANCELLED || !empty($data['void_only'])) {
+            if ($voucherType === 'income') {
+                VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED, $userId, 'revision_cancel');
+            }
+            VoucherRepository::markVoided($existingId, $userId, 'revision_cancel');
 
             return [
                 'new_id' => $existingId,
@@ -136,13 +146,14 @@ final class VoucherDocumentRevisionService
         $oldKind = VoucherDocumentKind::sanitize((string) ($existing['document_kind'] ?? ''));
         $oldLabel = VoucherDocumentKind::label($oldKind);
         if ($oldLabel === '') {
-            $oldLabel = 'Beleg';
+            $oldLabel = $voucherType === 'income' ? 'Beleg' : 'Eingangsbeleg';
         }
 
-        $willCancelExisting = !VoucherDocumentStatus::isClosed($oldStatus);
+        $willCancelExisting = $voucherType === 'income' && !VoucherDocumentStatus::isClosed($oldStatus);
         if ($willCancelExisting) {
             VoucherRepository::updateDocumentStatus($existingId, VoucherDocumentStatus::CANCELLED, $userId, 'revision');
         }
+        VoucherRepository::markVoided($existingId, $userId, 'revision');
 
         $data['id'] = '';
         $data['document_status'] = VoucherDocumentStatus::DRAFT;
@@ -150,6 +161,10 @@ final class VoucherDocumentRevisionService
         $data['paid_amount'] = '';
         $data['paid_at'] = '';
         $data['payment_status'] = VoucherPaymentStatus::OPEN;
+        if ($voucherType !== 'income') {
+            // Neuer Eingangsbeleg startet als Entwurf und wird erst nach Prüfung gebucht.
+            $data['is_draft'] = '1';
+        }
         // Kette: neuer Beleg hängt am gleichen Vorgänger (Geschwister zum Storno).
         $parentId = (int) ($existing['parent_voucher_id'] ?? 0);
         if ($parentId > 0) {
@@ -163,7 +178,7 @@ final class VoucherDocumentRevisionService
         $revNote = 'Ersetzt stornierten '
             . $oldLabel
             . ($oldNumber !== '' ? ' ' . $oldNumber : ' #' . $existingId)
-            . ' (Korrektur nach Druck/Versand).';
+            . ' (GoBD-Korrektur — Ursprungsbeleg unverändert/storniert).';
         $data['notes'] = $note !== '' ? $note . "\n" . $revNote : $revNote;
 
         // Keine Zahlungsübernahme beim Speichern — Zahlungen bleiben am Storno-Beleg.
@@ -176,13 +191,12 @@ final class VoucherDocumentRevisionService
             'old_status' => $oldStatus,
             'old_invoice_number' => $oldNumber,
             'existing_cancelled' => $willCancelExisting,
+            'voucher_type' => $voucherType,
         ]);
 
-        $msg = $willCancelExisting
-            ? ('Alter Beleg storniert'
-                . ($oldNumber !== '' ? ' (' . $oldNumber . ')' : '')
-                . '. Korrektur als neuer Entwurf angelegt — bitte prüfen, speichern und erneut versenden.')
-            : ('Alter Beleg bleibt unverändert. Korrektur als neuer Entwurf angelegt — bitte prüfen, speichern und erneut versenden.');
+        $msg = 'Alter Beleg storniert'
+            . ($oldNumber !== '' ? ' (' . $oldNumber . ')' : '')
+            . '. Korrektur als neuer Entwurf angelegt — bitte prüfen und speichern.';
         if (VoucherPaymentRepository::totalPaid($existingId) > 0.01) {
             $msg .= ' Hinweis: Vorhandene Zahlungen bleiben am Ursprungsbeleg — bei Bedarf neu zuordnen.';
         }

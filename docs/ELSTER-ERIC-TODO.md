@@ -1,7 +1,8 @@
 # ELSTER / ERiC — Todo nach Server-Umzug
 
 > **Nicht vor Umzug starten** (Kasserver: kein ERiC).  
-> Voraussetzung: Root-Server gemäß [SERVER-MIGRATION.md](./SERVER-MIGRATION.md) — Favorit **Hetzner SX65-2**.
+> Voraussetzung: Root-Server gemäß [SERVER-MIGRATION.md](./SERVER-MIGRATION.md) — Favorit **Hetzner SX65-2**.  
+> **FiBu-Verkauf:** Live-ERiC ist Verkaufsblocker für DIY-FiBu — parallel AVV/AGB ([`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)).
 
 ---
 

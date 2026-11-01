@@ -13,9 +13,9 @@
 
 ### A1 · GoBD / Belege / FiBu-Härte (Blocker für Produktiv-FiBu)
 
-- [ ] **GoBD Änderungshistorie / Unveränderbarkeit** schließen  
-  Speichern darf versendete/abgerechnete Belege nicht still überschreiben; Storno → neuer Entwurf bleibt Regel.  
-  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §3
+- [x] **GoBD Änderungshistorie / Unveränderbarkeit** schließen  
+  Ausgang: Revision/Storno; Eingang nach Buchung gesperrt; manuelle Buchung = Gegenbuchung (kein DELETE).  
+  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §3 · [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)
 - [ ] **Stichprobe §14 UStG** je Dokumentart (Angebot, AB, Rechnung, Schluss, Gutschrift) — Druck/PDF
   → [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
 - [ ] **Stichprobe gemischte Steuersätze** 19 % / 7 % / 0 % auf einem Beleg
@@ -65,6 +65,8 @@
 
 ### A5 · Kleine FiBu-Fixes (jetzt sinnvoll)
 
+- [x] **Soll-/Ist-Versteuerung** inkl. FA-Bescheid, UStVA nach Zahlung, Verrechnungskonto — [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md)
+- [x] **GoBD-Prüferexport** + Verfahrensdoku-Vorlage — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)
 - [ ] GmbH-Hinweise: Jahresabschluss-UI nicht als „EÜR ohne Kanzlei“ positionieren, wenn `company_type` = GmbH / Gewinnermittlung = Bilanz
 - [ ] ZUGFeRD-Ausgang: Entscheidung dokumentieren — vorerst PDF + XRechnung-XML ok bis Ende Übergangsfrist; Ticket für eingebettetes Factur-X
 - [ ] E-Rechnung §13b: prüfen, ob XRechnung-XML Reverse-Charge korrekt setzt (BT-Felder); sonst Fix vor Produktivversand

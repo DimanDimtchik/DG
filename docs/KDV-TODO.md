@@ -74,7 +74,7 @@
 
 ## Phase 7: Recht & Compliance
 
-- [ ] AGB für Hosting-Kunden (Auftragsverarbeitungsvertrag / AVV)
+- [ ] AGB für Hosting-Kunden (Auftragsverarbeitungsvertrag / AVV) — **FiBu-Verkaufsblocker** parallel zu ELSTER live; siehe [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)
 - [ ] Datenschutz: Wo liegen Kundendaten? (Dokumentation für DSGVO)
 - [ ] Backup-Strategie pro Kunde (automatische DB-Backups, Aufbewahrungsfrist)
 - [ ] Löschkonzept: Daten löschen nach Vertragsende (Frist definieren)

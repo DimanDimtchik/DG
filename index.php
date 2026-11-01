@@ -1079,6 +1079,104 @@ switch ($path) {
             exit;
         }
 
+        // POST: Firmen-Nachweis (empfohlen/optional)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['company_proof_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('firmendaten');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $key = trim((string) ($_POST['proof_key'] ?? ''));
+                    $meta = is_array($_POST['proof'] ?? null) ? $_POST['proof'] : [];
+                    $file = is_array($_FILES['proof_file'] ?? null) ? $_FILES['proof_file'] : null;
+                    CompanyProofStorage::store($key, $meta, $file, (int) $user->id);
+                    Flash::set('success', 'Nachweis gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect . '#dg-company-proofs', true, 302);
+            exit;
+        }
+
+        // GET: Firmen-Nachweis Download
+        if (
+            $page === 'einstellungen'
+            && RoleResolver::isAdmin($user)
+            && trim((string) ($_GET['download'] ?? '')) === 'company_proof'
+        ) {
+            $proof = CompanyProofStorage::findById((int) ($_GET['id'] ?? 0));
+            $path = $proof !== null ? CompanyProofStorage::absolutePath($proof) : null;
+            if ($path === null || $proof === null) {
+                Flash::set('error', 'Nachweis nicht gefunden.');
+                header('Location: ' . SettingsRegistry::tabUrl('firmendaten'), true, 302);
+                exit;
+            }
+            header('Content-Type: ' . (string) ($proof['file_mime'] ?? 'application/octet-stream'));
+            header('Content-Disposition: attachment; filename="' . rawurlencode((string) ($proof['file_original_name'] ?? 'nachweis.pdf')) . '"');
+            header('Content-Length: ' . (string) filesize($path));
+            readfile($path);
+            exit;
+        }
+
+        // POST: Soll-/Ist-Versteuerung (FA-Bescheid)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['vat_taxation_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('firmendaten');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    $input = is_array($_POST['vat_taxation'] ?? null) ? $_POST['vat_taxation'] : [];
+                    $file = is_array($_FILES['vat_taxation_bescheid'] ?? null) ? $_FILES['vat_taxation_bescheid'] : null;
+                    VatTaxationSettings::activate($input, $file, (int) $user->id);
+                    Flash::set('success', 'Versteuerungsart gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // GET: FA-Bescheid Ist-Versteuerung herunterladen
+        if (
+            $page === 'einstellungen'
+            && RoleResolver::isAdmin($user)
+            && trim((string) ($_GET['download'] ?? '')) === 'vat_bescheid'
+        ) {
+            $regimeId = (int) ($_GET['id'] ?? 0);
+            $found = null;
+            foreach (VatTaxationSettings::history() as $row) {
+                if ((int) ($row['id'] ?? 0) === $regimeId) {
+                    $found = $row;
+                    break;
+                }
+            }
+            $path = $found !== null ? VatTaxationSettings::absoluteFilePath($found) : null;
+            if ($path === null || $found === null) {
+                Flash::set('error', 'Bescheid-Datei nicht gefunden.');
+                header('Location: ' . SettingsRegistry::tabUrl('firmendaten'), true, 302);
+                exit;
+            }
+            $mime = (string) ($found['file_mime'] ?? 'application/octet-stream');
+            $name = (string) ($found['file_original_name'] ?? 'bescheid.pdf');
+            header('Content-Type: ' . $mime);
+            header('Content-Disposition: attachment; filename="' . rawurlencode($name) . '"');
+            header('Content-Length: ' . (string) filesize($path));
+            readfile($path);
+            exit;
+        }
+
         // POST: Einstellungen Steuerkanzlei
         if (
             $page === 'einstellungen'
@@ -4507,10 +4605,14 @@ switch ($path) {
             $redirect = '/app?page=buchhaltung-manuelle-buchung&year=' . $manualYear;
             if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
                 Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
-            } elseif (isset($_POST['manual_journal_delete'])) {
+            } elseif (isset($_POST['manual_journal_delete']) || isset($_POST['manual_journal_void'])) {
                 try {
-                    ManualLedgerService::deleteBatch((int) ($_POST['manual_batch_id'] ?? 0));
-                    Flash::set('success', 'Manuelle Buchung gelöscht.');
+                    ManualLedgerService::voidBatch(
+                        (int) ($_POST['manual_batch_id'] ?? 0),
+                        (int) $user->id,
+                        (string) ($_POST['void_reason'] ?? 'Storno')
+                    );
+                    Flash::set('success', 'Manuelle Buchung storniert (Gegenbuchung erzeugt).');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -6838,6 +6940,15 @@ $legalProductsConfig = LegalProductSettings::config();
                         $zip = SteuerberaterPaketService::buildZip($exportYear);
                         header('Content-Type: application/zip');
                         header('Content-Disposition: attachment; filename="' . $zip['filename'] . '"');
+                        readfile($zip['path']);
+                        @unlink($zip['path']);
+                        exit;
+                    }
+                    if ($download === 'gobd') {
+                        $zip = GobdAuditExportService::buildZip($exportYear);
+                        header('Content-Type: application/zip');
+                        header('Content-Disposition: attachment; filename="' . $zip['filename'] . '"');
+                        header('X-Content-SHA256: ' . $zip['sha256']);
                         readfile($zip['path']);
                         @unlink($zip['path']);
                         exit;

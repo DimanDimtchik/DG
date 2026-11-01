@@ -107,24 +107,101 @@ final class ManualLedgerService
         return $rows;
     }
 
+    /**
+     * @deprecated GoBD: bitte voidBatch nutzen — stilles Löschen ist nicht mehr erlaubt.
+     */
     public static function deleteBatch(int $batchId): void
     {
+        self::voidBatch($batchId, null, 'Storno (ehem. Löschen)');
+    }
+
+    /**
+     * Storno einer manuellen Buchung: Gegenbuchung + Markierung, kein stilles DELETE.
+     */
+    public static function voidBatch(int $batchId, ?int $userId, string $reason = ''): int
+    {
         if (!Database::isConfigured() || $batchId < 1) {
-            return;
+            throw new InvalidArgumentException('Buchungsstapel fehlt.');
         }
         MigrationRunner::runPending();
 
         $pdo = Database::pdo();
-        $stmt = $pdo->prepare('SELECT fiscal_year FROM dg_manual_journal_batches WHERE id = :id');
+        $stmt = $pdo->prepare('SELECT * FROM dg_manual_journal_batches WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $batchId]);
-        $year = (int) $stmt->fetchColumn();
+        $batch = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($batch)) {
+            throw new InvalidArgumentException('Manuelle Buchung nicht gefunden.');
+        }
+        if (!empty($batch['voided_at'])) {
+            throw new RuntimeException('Diese Buchung ist bereits storniert.');
+        }
+        $year = (int) ($batch['fiscal_year'] ?? 0);
         if ($year > 0 && FiscalYearService::isClosed($year)) {
-            throw new RuntimeException('Abgeschlossenes Geschäftsjahr — manuelle Buchung kann nicht gelöscht werden.');
+            throw new RuntimeException('Abgeschlossenes Geschäftsjahr — manuelle Buchung kann nicht storniert werden.');
         }
 
-        $pdo->prepare('DELETE FROM dg_ledger_postings WHERE manual_batch_id = :id')
-            ->execute(['id' => $batchId]);
-        $pdo->prepare('DELETE FROM dg_manual_journal_batches WHERE id = :id')->execute(['id' => $batchId]);
+        $linesStmt = $pdo->prepare(
+            'SELECT account_number, contra_account, side, amount, tax_key, description, document_field1, source
+             FROM dg_ledger_postings WHERE manual_batch_id = :id ORDER BY id ASC'
+        );
+        $linesStmt->execute(['id' => $batchId]);
+        $reverseLines = [];
+        $source = 'manual';
+        while ($row = $linesStmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $side = (string) ($row['side'] ?? 'debit') === 'credit' ? 'debit' : 'credit';
+            $reverseLines[] = [
+                'account_number' => (string) ($row['account_number'] ?? ''),
+                'contra_account' => (string) ($row['contra_account'] ?? ''),
+                'side' => $side,
+                'amount' => (float) ($row['amount'] ?? 0),
+                'tax_key' => (string) ($row['tax_key'] ?? ''),
+                'description' => 'Storno: ' . trim((string) ($row['description'] ?? '')),
+                'document_field1' => (string) ($row['document_field1'] ?? ''),
+            ];
+            $src = trim((string) ($row['source'] ?? ''));
+            if ($src !== '') {
+                $source = $src;
+            }
+        }
+        if ($reverseLines === []) {
+            throw new RuntimeException('Keine Buchungszeilen zum Stornieren.');
+        }
+
+        $reason = mb_substr(trim($reason) !== '' ? trim($reason) : 'Storno manueller Buchung', 0, 500);
+        $origDesc = trim((string) ($batch['description'] ?? ''));
+        $voidDesc = 'Storno zu manueller Buchung #' . $batchId
+            . ($origDesc !== '' ? ' · ' . $origDesc : '');
+
+        $voidBatchId = self::createBatch(
+            (string) ($batch['batch_date'] ?? date('Y-m-d')),
+            $voidDesc,
+            $reverseLines,
+            $userId,
+            $source ?? 'manual'
+        );
+
+        $pdo->prepare(
+            'UPDATE dg_manual_journal_batches
+             SET voided_at = NOW(), voided_by = :uid, void_reason = :reason, void_batch_id = :vid
+             WHERE id = :id'
+        )->execute([
+            'uid' => $userId !== null && $userId > 0 ? $userId : null,
+            'reason' => $reason,
+            'vid' => $voidBatchId,
+            'id' => $batchId,
+        ]);
+
+        $json = json_encode([
+            'batch_id' => $batchId,
+            'void_batch_id' => $voidBatchId,
+            'reason' => $reason,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        AuditLog::record('manual_journal_voided', $userId, is_string($json) ? $json : null);
+
+        return $voidBatchId;
     }
 
     /**

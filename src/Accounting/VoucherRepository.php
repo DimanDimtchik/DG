@@ -679,9 +679,14 @@ final class VoucherRepository
             $existing = self::findById($id);
             if ($existing !== null) {
                 self::assertEditableFiscalYear((string) ($existing['voucher_date'] ?? ''));
+                if (!empty($existing['voided_at'])) {
+                    throw new InvalidArgumentException(
+                        'Dieser Beleg ist storniert und darf nicht mehr geändert werden.'
+                    );
+                }
                 if (VoucherDocumentRevisionService::isImmutable($existing)) {
                     throw new InvalidArgumentException(
-                        'Dieser Ausgangsbeleg ist GoBD-gesperrt. Bitte Storno/Korrekturpfad nutzen; der Ursprungsbeleg darf nicht überschrieben werden.'
+                        'Dieser Beleg ist GoBD-gesperrt. Bitte Storno/Korrekturpfad nutzen; der Ursprungsbeleg darf nicht überschrieben werden.'
                     );
                 }
             }
@@ -1770,6 +1775,35 @@ final class VoucherRepository
         }
     }
 
+    /** GoBD-Storno: Beleg bleibt erhalten, fällt aus UStVA/Journal-Neubuchung. */
+    public static function markVoided(int $voucherId, ?int $userId, string $source = 'void'): void
+    {
+        if ($voucherId < 1 || !Database::isConfigured()) {
+            return;
+        }
+        MigrationRunner::runPending();
+        $existing = self::findById($voucherId);
+        if ($existing === null) {
+            return;
+        }
+        if (!empty($existing['voided_at'])) {
+            return;
+        }
+        $stmt = Database::pdo()->prepare(
+            'UPDATE dg_vouchers SET voided_at = NOW(), voided_by = :uid WHERE id = :id AND voided_at IS NULL'
+        );
+        $stmt->execute([
+            'uid' => $userId !== null && $userId > 0 ? $userId : null,
+            'id' => $voucherId,
+        ]);
+        LedgerPostingService::deleteForVoucher($voucherId);
+        $json = json_encode([
+            'voucher_id' => $voucherId,
+            'source' => mb_substr(trim($source) !== '' ? trim($source) : 'void', 0, 50),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        AuditLog::record('voucher_voided', $userId, is_string($json) ? $json : null);
+    }
+
     /**
      * @param array<string, mixed> $acceptance
      */
@@ -2027,7 +2061,11 @@ final class VoucherRepository
         $row['supplier_display'] = $supplierDisplay;
         $row['account_name'] = $accountName;
         $row['is_draft'] = !empty($row['is_draft']);
+        $row['voided_at'] = !empty($row['voided_at']) ? (string) $row['voided_at'] : null;
         $row['type_label'] = self::typeLabel((string) ($row['voucher_type'] ?? ''));
+        if ($row['voided_at'] !== null) {
+            $row['type_label'] = 'Storno · ' . (string) $row['type_label'];
+        }
         $documentKind = (string) ($row['document_kind'] ?? '');
         $row['document_kind_label'] = VoucherDocumentKind::label($documentKind);
         if ($documentKind !== '' && VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? '')) === 'income') {

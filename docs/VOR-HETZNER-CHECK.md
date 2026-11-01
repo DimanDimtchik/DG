@@ -48,7 +48,7 @@ Perspektive: GoBD · UStG · Belegpflicht · Datenschutz · Handelsregister-Anga
 | Netto / USt je Satz / Brutto | ✅ Summentabelle | Test gemischte Sätze 7/19/0 |
 | § 19 Kleinunternehmer-Hinweis | ✅ Firmendaten → Steuerliche Sonderfälle | Produktiv aktivieren wenn zutreffend |
 | Skonto / Mahnung / Teilzahlung | ✅ | Smoke-Test |
-| Unveränderbarkeit / Änderungsnachweis | ⚠️ Speichern überschreibt | GoBD: Änderungshistorie / Storno-Konzept prüfen |
+| Unveränderbarkeit / Änderungsnachweis | ✅ Ausgang Revision; Eingang nach Buchung gesperrt; manuelle Buchung = Storno/Gegenbuchung | Smoke auf Instanz; siehe `FIBU-VERKAUFSREIFE.md` |
 | Aufbewahrung Belegdateien | ✅ Storage pro Instanz | Backup-Konzept Hetzner |
 | DATEV / UStVA / ELSTER | ✅ / ELSTER live blockiert | Nach Hetzner ERiC |
 

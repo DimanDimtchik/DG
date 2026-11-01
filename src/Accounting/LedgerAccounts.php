@@ -93,6 +93,34 @@ final class LedgerAccounts
         return $taxRate === 7 ? '1571' : '1576';
     }
 
+    /** DATEV Verrechnungskonto Ist-Versteuerung (SKR03 1390 / SKR04 1490). */
+    public static function istClearingAccount(string $skrType): string
+    {
+        return ChartOfAccountsSettings::sanitizeSkrType($skrType) === 'skr04' ? '1490' : '1390';
+    }
+
+    /**
+     * Steuerkonto für Belegbuchung: bei Ist-Versteuerung Ausgangs-USt zunächst auf Verrechnungskonto.
+     */
+    public static function taxAccountForVoucher(
+        string $skrType,
+        string $voucherType,
+        int $taxRate,
+        string $voucherDate,
+        bool $reverseCharge = false
+    ): string {
+        if (
+            !$reverseCharge
+            && self::isIncomeDirection($voucherType)
+            && class_exists('VatTaxationSettings')
+            && VatTaxationSettings::isIstOn($voucherDate)
+        ) {
+            return self::istClearingAccount($skrType);
+        }
+
+        return self::taxAccount($skrType, $voucherType, $taxRate);
+    }
+
     /**
      * Skontokonto je Belegart (Erhaltene Skonti / Gewährte Skonti).
      */

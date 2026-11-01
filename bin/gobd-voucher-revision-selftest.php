@@ -39,10 +39,21 @@ foreach ([
 $draft = $base;
 ok(!VoucherDocumentRevisionService::isImmutable($draft), 'Entwurf bleibt normal bearbeitbar');
 
-$expense = $base;
-$expense['voucher_type'] = 'expense';
-$expense['document_status'] = VoucherDocumentStatus::SENT;
-ok(!VoucherDocumentRevisionService::isImmutable($expense), 'Eingangsbeleg wird nicht durch Ausgangsbeleg-Sperre blockiert');
+$expenseDraft = $base;
+$expenseDraft['voucher_type'] = 'expense';
+$expenseDraft['document_kind'] = '';
+$expenseDraft['document_status'] = '';
+$expenseDraft['is_draft'] = true;
+ok(!VoucherDocumentRevisionService::isImmutable($expenseDraft), 'Eingangs-Entwurf bleibt bearbeitbar');
+
+$expenseBooked = $expenseDraft;
+$expenseBooked['is_draft'] = false;
+ok(VoucherDocumentRevisionService::isImmutable($expenseBooked), 'Gebuchter Eingangsbeleg ist GoBD-gesperrt');
+
+$voided = $expenseDraft;
+$voided['is_draft'] = true;
+$voided['voided_at'] = '2026-11-01 10:00:00';
+ok(VoucherDocumentRevisionService::isImmutable($voided), 'Stornierter Beleg bleibt gesperrt');
 
 $existing = $base;
 $existing['document_status'] = VoucherDocumentStatus::SENT;

@@ -37,7 +37,8 @@ final class UstvaReportService
      *   positions: list<array{kz: string, label: string, net: float, tax: float, amount: float}>,
      *   payable: float,
      *   is_nullmeldung: bool,
-     *   berichtigung: bool
+     *   berichtigung: bool,
+     *   taxation: array{method: string, valid_from: string, label: string, has_bescheid: bool}
      * }
      */
     public static function report(int $year, ?int $month = null, array $opts = []): array
@@ -50,15 +51,15 @@ final class UstvaReportService
         /** @var array<string, array{net: float, tax: float}> $agg */
         $agg = [];
 
-        $where = 'v.is_draft = 0 AND YEAR(v.voucher_date) = :y';
+        $where = 'v.is_draft = 0 AND v.voided_at IS NULL AND YEAR(v.voucher_date) = :y';
         $params = ['y' => $year];
         if ($month !== null && $month >= 1 && $month <= 12) {
             $where .= ' AND MONTH(v.voucher_date) = :m';
             $params['m'] = $month;
         }
 
-        $sql = "SELECT v.id, v.voucher_type, v.document_kind, v.net_amount, v.tax_amount, v.tax_rate,
-                       v.reverse_charge_type, v.ustva_snapshot,
+        $sql = "SELECT v.id, v.voucher_type, v.document_kind, v.voucher_date, v.net_amount, v.tax_amount, v.tax_rate,
+                       v.gross_amount, v.reverse_charge_type, v.ustva_snapshot,
                        vl.net_amount AS line_net, vl.tax_amount AS line_tax, vl.tax_rate AS line_rate
                 FROM dg_vouchers v
                 LEFT JOIN dg_voucher_lines vl ON vl.voucher_id = v.id
@@ -68,6 +69,7 @@ final class UstvaReportService
         $stmt->execute($params);
 
         $processedRc = [];
+        $processedIstIncome = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             if (!is_array($row)) {
                 continue;
@@ -87,6 +89,15 @@ final class UstvaReportService
                 continue;
             }
             if ($rcType !== '') {
+                continue;
+            }
+
+            // Ist-Versteuerung: Ausgangs-USt nicht nach Belegdatum — siehe Zahlungsaggregation.
+            if (
+                LedgerAccounts::isIncomeDirection($type)
+                && VatTaxationSettings::isIstOn((string) ($row['voucher_date'] ?? ''))
+            ) {
+                $processedIstIncome[$voucherId] = true;
                 continue;
             }
 
@@ -123,6 +134,7 @@ final class UstvaReportService
             }
         }
 
+        self::mergeIstIncomeFromPayments($agg, $year, $month);
         self::mergeSkontoFromLedger($agg, $year, $month);
 
         $inputTotal = round(
@@ -167,6 +179,7 @@ final class UstvaReportService
         usort($positions, static fn (array $a, array $b): int => strnatcmp($a['kz'], $b['kz']));
 
         $isNullmeldung = $positions === [] || ($payable == 0.0 && $outputTotal == 0.0 && $inputTotal == 0.0);
+        $taxation = VatTaxationSettings::summaryForPeriod($year, $month);
 
         return [
             'year' => $year,
@@ -176,7 +189,85 @@ final class UstvaReportService
             'payable' => $payable,
             'is_nullmeldung' => $isNullmeldung,
             'berichtigung' => !empty($opts['berichtigung']),
+            'taxation' => $taxation,
         ];
+    }
+
+    /**
+     * Ist: Ausgangsumsätze nach Zahlungseingang (Teilzahlung anteilig Netto/USt).
+     *
+     * @param array<string, array{net: float, tax: float}> $agg
+     */
+    private static function mergeIstIncomeFromPayments(array &$agg, int $year, ?int $month): void
+    {
+        $where = 'v.is_draft = 0 AND v.voided_at IS NULL
+                  AND YEAR(p.payment_date) = :y
+                  AND p.amount <> 0';
+        $params = ['y' => $year];
+        if ($month !== null && $month >= 1 && $month <= 12) {
+            $where .= ' AND MONTH(p.payment_date) = :m';
+            $params['m'] = $month;
+        }
+
+        $sql = "SELECT p.amount AS payment_amount, p.payment_date,
+                       v.id, v.voucher_type, v.document_kind, v.voucher_date,
+                       v.gross_amount, v.net_amount, v.tax_amount, v.tax_rate,
+                       v.reverse_charge_type
+                FROM dg_voucher_payments p
+                INNER JOIN dg_vouchers v ON v.id = p.voucher_id
+                WHERE {$where}
+                ORDER BY p.id ASC";
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $type = VoucherRepository::normalizeVoucherType((string) ($row['voucher_type'] ?? 'expense'));
+            if (!LedgerAccounts::isIncomeDirection($type)) {
+                continue;
+            }
+            if (trim((string) ($row['reverse_charge_type'] ?? '')) !== '') {
+                continue;
+            }
+            $documentKind = (string) ($row['document_kind'] ?? '');
+            if (!VoucherDocumentKind::isBookable($documentKind, $type)) {
+                continue;
+            }
+            $voucherDate = (string) ($row['voucher_date'] ?? '');
+            if (!VatTaxationSettings::isIstOn($voucherDate)) {
+                continue;
+            }
+            $gross = round((float) ($row['gross_amount'] ?? 0), 2);
+            $net = round((float) ($row['net_amount'] ?? 0), 2);
+            $tax = round((float) ($row['tax_amount'] ?? 0), 2);
+            $rate = (int) ($row['tax_rate'] ?? 19);
+            if ($gross <= 0.0 && ($net != 0.0 || $tax != 0.0)) {
+                $gross = round($net + $tax, 2);
+            }
+            if ($gross <= 0.0) {
+                continue;
+            }
+            $pay = round((float) ($row['payment_amount'] ?? 0), 2);
+            if ($pay == 0.0) {
+                continue;
+            }
+            $share = $pay / $gross;
+            $netPart = round($net * $share, 2);
+            $taxPart = round($tax * $share, 2);
+            $sign = self::directionSign($type);
+            $netPart *= $sign;
+            $taxPart *= $sign;
+
+            if ($rate === 7) {
+                self::addAgg($agg, '86', $netPart, 0.0);
+                self::addAgg($agg, '35', 0.0, $taxPart);
+            } else {
+                self::addAgg($agg, '81', $netPart, 0.0);
+                self::addAgg($agg, '83', 0.0, $taxPart);
+            }
+        }
     }
 
     /**
@@ -191,10 +282,11 @@ final class UstvaReportService
             $params['m'] = $month;
         }
 
-        $sql = "SELECT p.account_number, p.side, p.amount, p.tax_rate, v.voucher_type
+        $sql = "SELECT p.account_number, p.side, p.amount, p.tax_rate, v.voucher_type, v.voucher_date
                 FROM dg_ledger_postings p
                 LEFT JOIN dg_vouchers v ON v.id = p.voucher_id
-                WHERE {$where} AND p.tax_rate > 0";
+                WHERE {$where} AND p.tax_rate > 0
+                  AND (v.id IS NULL OR v.voided_at IS NULL)";
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
         $meta = LedgerRepository::accountMeta();
@@ -212,6 +304,7 @@ final class UstvaReportService
             $isIncome = LedgerAccounts::isIncomeDirection((string) ($row['voucher_type'] ?? 'expense'))
                 || $section === 'passiva';
 
+            // Ist: Skonto-USt-Korrektur folgt dem Zahlungszeitpunkt (posting_date bereits gefiltert).
             if ($isIncome) {
                 self::addAgg($agg, $rate === 7 ? '35' : '83', 0.0, -$amount);
             } else {
@@ -293,7 +386,7 @@ final class UstvaReportService
 
     /**
      * @param array{berichtigung?: bool} $opts
-     * @return array{year: int, month: int|null, period_label: string, positions: list<array<string, mixed>>, payable: float, is_nullmeldung: bool, berichtigung: bool}
+     * @return array{year: int, month: int|null, period_label: string, positions: list<array<string, mixed>>, payable: float, is_nullmeldung: bool, berichtigung: bool, taxation: array<string, mixed>}
      */
     private static function emptyReport(int $year, ?int $month, array $opts = []): array
     {
@@ -305,6 +398,7 @@ final class UstvaReportService
             'payable' => 0.0,
             'is_nullmeldung' => true,
             'berichtigung' => !empty($opts['berichtigung']),
+            'taxation' => VatTaxationSettings::summaryForPeriod($year, $month),
         ];
     }
 }

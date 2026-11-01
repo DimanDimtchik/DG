@@ -105,11 +105,13 @@ $csrf = Csrf::token();
                 <td><?= (int) ($batch['line_count'] ?? 0) ?></td>
                 <td class="dg-table__num"><?= number_format((float) ($batch['total_debit'] ?? 0), 2, ',', '.') ?> €</td>
                 <td>
-                  <?php if ($canEdit) : ?>
-                    <form method="post" action="/app?page=buchhaltung-manuelle-buchung&year=<?= (int) $year ?>" onsubmit="return confirm('Buchung löschen?');">
+                  <?php if (!empty($batch['voided_at'])) : ?>
+                    <span class="dg-muted">storniert</span>
+                  <?php elseif ($canEdit) : ?>
+                    <form method="post" action="/app?page=buchhaltung-manuelle-buchung&year=<?= (int) $year ?>" onsubmit="return confirm('Buchung stornieren? Es wird eine Gegenbuchung erzeugt (kein Löschen).');">
                       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
                       <input type="hidden" name="manual_batch_id" value="<?= (int) ($batch['id'] ?? 0) ?>">
-                      <button type="submit" name="manual_journal_delete" value="1" class="dg-linklike dg-linklike--danger">Löschen</button>
+                      <button type="submit" name="manual_journal_void" value="1" class="dg-button dg-button--small">Stornieren</button>
                     </form>
                   <?php endif; ?>
                 </td>

@@ -56,6 +56,21 @@ $baseUrl = '/app?page=buchhaltung-ustva';
     </div>
   <?php endif; ?>
 
+  <?php
+    $taxation = is_array($report['taxation'] ?? null) ? $report['taxation'] : VatTaxationSettings::summaryForPeriod($year, $month);
+  ?>
+  <div class="dg-flash dg-flash--info">
+    Versteuerung in diesem Zeitraum:
+    <strong><?= View::escape((string) ($taxation['label'] ?? 'Soll-Versteuerung')) ?></strong>
+    <?php if (($taxation['method'] ?? '') === VatTaxationSettings::METHOD_IST) : ?>
+      — Ausgangs-USt nach Zahlungseingang
+      <?= !empty($taxation['has_bescheid']) ? '· FA-Bescheid hinterlegt' : '· Hinweis: Bescheid in Firmendaten prüfen' ?>
+    <?php else : ?>
+      — Ausgangs-USt nach Belegdatum
+    <?php endif; ?>
+    · <a href="<?= View::escape(SettingsRegistry::tabUrl('firmendaten')) ?>">Firmeneinstellung</a>
+  </div>
+
   <?php if (!empty($report['is_nullmeldung'])) : ?>
     <div class="dg-flash dg-flash--info">Nullmeldung möglich — alle Kennziffern im Zeitraum sind null.</div>
   <?php endif; ?>
