@@ -838,22 +838,26 @@ $bankSummary = $filledBanks > 0
 $proofCatalog = CompanyProofStorage::catalog();
 $proofActive = CompanyProofStorage::activeByKey();
 $proofUrl = SettingsRegistry::tabUrl('firmendaten');
+$vatHistory = VatTaxationSettings::history();
+$vatCurrent = VatTaxationSettings::regimeOn(date('Y-m-d'));
+$vatMethod = (string) ($vatCurrent['method'] ?? VatTaxationSettings::METHOD_SOLL);
 ?>
-<section class="dg-panel" id="dg-company-proofs">
+<div class="dg-stack" id="dg-company-proofs">
+<section class="dg-panel">
   <h3 class="dg-settings-section__subtitle">Nachweise (empfohlen / optional)</h3>
   <p class="dg-field-hint">
     Ablage von FA-/Behörden-Schreiben und Auszügen zu den Firmendaten oben.
-    Pflicht-Bescheid nur bei Ist-Versteuerung (Abschnitt darunter). Details:
-    <code>docs/FIRMEN-NACHWEIS-MATRIX.md</code>.
+    Pflicht-Bescheid nur bei Ist-Versteuerung (Abschnitt darunter).
   </p>
+
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
         <tr>
           <th>Nachweis</th>
           <th>Stufe</th>
-          <th>Aktuell</th>
-          <th>Hochladen</th>
+          <th>Stand</th>
+          <th class="dg-table__actions">Datei</th>
         </tr>
       </thead>
       <tbody>
@@ -861,6 +865,7 @@ $proofUrl = SettingsRegistry::tabUrl('firmendaten');
           <?php
             $cur = $proofActive[$proofKey] ?? null;
             $levelLabel = ($meta['level'] ?? '') === CompanyProofStorage::LEVEL_OPTIONAL ? 'optional' : 'empfohlen';
+            $hasFile = is_array($cur) && (int) ($cur['id'] ?? 0) > 0;
           ?>
           <tr>
             <td>
@@ -869,52 +874,60 @@ $proofUrl = SettingsRegistry::tabUrl('firmendaten');
             </td>
             <td><?= View::escape($levelLabel) ?></td>
             <td>
-              <?php if (is_array($cur) && (int) ($cur['id'] ?? 0) > 0) : ?>
-                <a class="dg-button dg-button--small" href="<?= View::escape($proofUrl . '&download=company_proof&id=' . (int) $cur['id']) ?>">
-                  <?= View::escape((string) ($cur['file_original_name'] ?? 'Datei')) ?>
-                </a>
-                <?php if (trim((string) ($cur['document_date'] ?? '')) !== '') : ?>
-                  <br><span class="dg-muted"><?= View::escape((string) $cur['document_date']) ?></span>
-                <?php endif; ?>
+              <?php if ($hasFile) : ?>
+                <?= View::escape(trim((string) ($cur['document_date'] ?? '')) !== '' ? (string) $cur['document_date'] : 'hinterlegt') ?>
+              <?php else : ?>
+                <span class="dg-muted">fehlt</span>
+              <?php endif; ?>
+            </td>
+            <td class="dg-table__actions">
+              <?php if ($hasFile) : ?>
+                <div class="dg-table__actions-group">
+                  <a class="dg-button dg-button--small" href="<?= View::escape($proofUrl . '&download=company_proof&id=' . (int) $cur['id']) ?>">
+                    <?= View::escape((string) ($cur['file_original_name'] ?? 'Herunterladen')) ?>
+                  </a>
+                </div>
               <?php else : ?>
                 <span class="dg-muted">—</span>
               <?php endif; ?>
-            </td>
-            <td>
-              <form class="dg-form" method="post" action="<?= View::escape($proofUrl) ?>" enctype="multipart/form-data">
-                <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-                <input type="hidden" name="proof_key" value="<?= View::escape($proofKey) ?>">
-                <div class="dg-form-grid dg-form-grid--compact">
-                  <label class="dg-field">
-                    <span>Datei</span>
-                    <input type="file" name="proof_file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
-                  </label>
-                  <label class="dg-field">
-                    <span>Datum</span>
-                    <input type="date" name="proof[document_date]">
-                  </label>
-                  <label class="dg-field">
-                    <span>Aktenzeichen</span>
-                    <input type="text" name="proof[reference_no]" maxlength="120" autocomplete="off">
-                  </label>
-                </div>
-                <div class="dg-form-actions">
-                  <button type="submit" name="company_proof_save" value="1" class="dg-button dg-button--small">Speichern</button>
-                </div>
-              </form>
             </td>
           </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
   </div>
+
+  <form class="dg-form" method="post" action="<?= View::escape($proofUrl) ?>" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+    <h4 class="dg-settings-section__subtitle">Nachweis hochladen</h4>
+    <div class="dg-form-grid">
+      <label class="dg-field dg-field--wide">
+        <span>Typ</span>
+        <select name="proof_key" required>
+          <?php foreach ($proofCatalog as $proofKey => $meta) : ?>
+            <option value="<?= View::escape($proofKey) ?>"><?= View::escape((string) ($meta['label'] ?? $proofKey)) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field dg-field--wide">
+        <span>Datei (PDF/Bild)</span>
+        <input type="file" name="proof_file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+      </label>
+      <label class="dg-field">
+        <span>Dokumentdatum</span>
+        <input type="date" name="proof[document_date]">
+      </label>
+      <label class="dg-field">
+        <span>Aktenzeichen</span>
+        <input type="text" name="proof[reference_no]" maxlength="120" autocomplete="off">
+      </label>
+    </div>
+    <div class="dg-form-actions">
+      <button type="submit" name="company_proof_save" value="1" class="dg-button dg-button--primary">Nachweis speichern</button>
+    </div>
+  </form>
 </section>
 
-<?php
-$vatHistory = VatTaxationSettings::history();
-$vatCurrent = VatTaxationSettings::regimeOn(date('Y-m-d'));
-$vatMethod = (string) ($vatCurrent['method'] ?? VatTaxationSettings::METHOD_SOLL);
-?>
 <section class="dg-panel">
   <h3 class="dg-settings-section__subtitle">Soll- / Ist-Versteuerung (USt)</h3>
   <p class="dg-field-hint">
@@ -974,7 +987,7 @@ $vatMethod = (string) ($vatCurrent['method'] ?? VatTaxationSettings::METHOD_SOLL
   </form>
 
   <?php if ($vatHistory !== []) : ?>
-    <div class="dg-table-wrap" style="margin-top:var(--dg-space-4);">
+    <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
           <tr>
@@ -982,8 +995,8 @@ $vatMethod = (string) ($vatCurrent['method'] ?? VatTaxationSettings::METHOD_SOLL
             <th>Art</th>
             <th>Bescheid</th>
             <th>Aktenzeichen</th>
-            <th>Datei</th>
             <th>Status</th>
+            <th class="dg-table__actions">Datei</th>
           </tr>
         </thead>
         <tbody>
@@ -993,16 +1006,18 @@ $vatMethod = (string) ($vatCurrent['method'] ?? VatTaxationSettings::METHOD_SOLL
               <td><?= ((string) ($vr['method'] ?? '') === VatTaxationSettings::METHOD_IST) ? 'Ist' : 'Soll' ?></td>
               <td><?= View::escape((string) ($vr['bescheid_date'] ?? '')) ?: '—' ?></td>
               <td><?= View::escape((string) ($vr['aktenzeichen'] ?? '')) ?: '—' ?></td>
-              <td>
+              <td><?= !empty($vr['superseded_at']) ? 'ersetzt' : 'aktiv' ?></td>
+              <td class="dg-table__actions">
                 <?php if (!empty($vr['has_bescheid']) && (int) ($vr['id'] ?? 0) > 0) : ?>
-                  <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('firmendaten') . '&download=vat_bescheid&id=' . (int) $vr['id']) ?>">
-                    <?= View::escape((string) ($vr['file_original_name'] ?? 'Bescheid')) ?>
-                  </a>
+                  <div class="dg-table__actions-group">
+                    <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('firmendaten') . '&download=vat_bescheid&id=' . (int) $vr['id']) ?>">
+                      <?= View::escape((string) ($vr['file_original_name'] ?? 'Bescheid')) ?>
+                    </a>
+                  </div>
                 <?php else : ?>
-                  —
+                  <span class="dg-muted">—</span>
                 <?php endif; ?>
               </td>
-              <td><?= !empty($vr['superseded_at']) ? 'ersetzt' : 'aktiv' ?></td>
             </tr>
           <?php endforeach; ?>
         </tbody>
@@ -1010,6 +1025,7 @@ $vatMethod = (string) ($vatCurrent['method'] ?? VatTaxationSettings::METHOD_SOLL
     </div>
   <?php endif; ?>
 </section>
+</div>
 
 <template id="dg-tpl-owners">
   <div class="dg-company-repeater__row dg-company-repeater__row--owners" data-repeater-row>
