@@ -242,6 +242,8 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-block h3 { font-size: 1.25rem; margin-bottom: 8px; }
     .ws-block h4 { font-size: 1.1rem; margin: 16px 0 8px; }
     .ws-block p { margin-bottom: 8px; }
+    .ws-block .ws-list { margin: 0 0 12px 1.25rem; padding-left: 1.25rem; }
+    .ws-block .ws-list li + li { margin-top: 4px; }
     .ws-content-table-wrap { overflow-x: auto; margin: 12px 0 20px; }
     .ws-content-table {
       width: 100%; border-collapse: collapse; font-size: 0.95rem;
@@ -586,6 +588,29 @@ if ($wsInteractionCss !== '') :
                 echo '<blockquote class="ws-quote">' . $textBody . '</blockquote>';
             } else {
                 echo '<p>' . $textBody . '</p>';
+            }
+            break;
+
+          case 'list':
+            $listType = (string) ($block['list_type'] ?? '') === 'ol' ? 'ol' : 'ul';
+            $allowedMarkers = $listType === 'ol'
+                ? ['decimal', 'decimal-leading-zero', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman']
+                : ['disc', 'circle', 'square', 'none'];
+            $marker = trim((string) ($block['marker'] ?? ''));
+            if (!in_array($marker, $allowedMarkers, true)) {
+                $marker = $allowedMarkers[0];
+            }
+            $rawItems = preg_split('/\R/u', (string) ($block['items'] ?? '')) ?: [];
+            $items = array_values(array_filter(array_map(
+                static fn (string $item): string => trim($item),
+                $rawItems
+            ), static fn (string $item): bool => $item !== ''));
+            if ($items !== []) {
+                echo '<' . $listType . ' class="ws-list" style="list-style-type:' . View::escape($marker) . ';">';
+                foreach ($items as $item) {
+                    echo '<li>' . WebsiteContent::renderInlineMarkup(WebsiteContent::normalizePlainText($item)) . '</li>';
+                }
+                echo '</' . $listType . '>';
             }
             break;
 

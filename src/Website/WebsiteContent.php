@@ -156,6 +156,18 @@ final class WebsiteContent
                             unset($block['quote']);
                         }
                     }
+                    if ($type === 'list') {
+                        $block['items'] = isset($block['items']) && is_string($block['items'])
+                            ? self::normalizePlainText($block['items'])
+                            : '';
+                        $listType = (string) ($block['list_type'] ?? 'ul');
+                        $block['list_type'] = $listType === 'ol' ? 'ol' : 'ul';
+                        $markers = $block['list_type'] === 'ol'
+                            ? ['decimal', 'decimal-leading-zero', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman']
+                            : ['disc', 'circle', 'square', 'none'];
+                        $marker = (string) ($block['marker'] ?? '');
+                        $block['marker'] = in_array($marker, $markers, true) ? $marker : $markers[0];
+                    }
                     if ($type === 'button') {
                         if (isset($block['label']) && is_string($block['label'])) {
                             $block['label'] = self::normalizePlainText($block['label']);

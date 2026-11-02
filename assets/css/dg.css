@@ -6770,6 +6770,18 @@ body.dg-login-page {
   white-space: pre-wrap;
 }
 
+.dg-website-block__list {
+  margin: 0;
+  padding-left: 1.4rem;
+  color: var(--dg-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dg-website-block__list li + li {
+  margin-top: var(--dg-space-1);
+}
+
 .dg-website-block__image {
   display: block;
   width: 100%;

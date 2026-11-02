@@ -91,6 +91,7 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
           <div class="dg-website-builder__palette-list">
             <button type="button" class="dg-website-tool" data-add-block="heading">Überschrift</button>
             <button type="button" class="dg-website-tool" data-add-block="text">Text</button>
+            <button type="button" class="dg-website-tool" data-add-block="list">Liste</button>
             <button type="button" class="dg-website-tool" data-add-block="image">Bild</button>
             <button type="button" class="dg-website-tool" data-add-block="button">Button</button>
             <button type="button" class="dg-website-tool" data-add-block="spacer">Abstand</button>

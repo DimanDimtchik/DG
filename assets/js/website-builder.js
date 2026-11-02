@@ -21,6 +21,7 @@
   var typeLabels = {
     heading: 'Überschrift',
     text: 'Text',
+    list: 'Liste',
     image: 'Bild',
     button: 'Button',
     spacer: 'Abstand',
@@ -126,6 +127,7 @@
   function defaultBlock(type) {
     switch (type) {
       case 'heading': return { id: uid('blk'), type: 'heading', text: 'Überschrift', level: 'h2' };
+      case 'list': return { id: uid('blk'), type: 'list', items: 'Erster Punkt\nZweiter Punkt', list_type: 'ul', marker: 'disc' };
       case 'image':   return { id: uid('blk'), type: 'image', src: '', alt: '' };
       case 'button':  return { id: uid('blk'), type: 'button', label: 'Mehr erfahren', url: '#' };
       case 'spacer':  return { id: uid('blk'), type: 'spacer', height: 24 };
@@ -184,6 +186,53 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function listItems(value) {
+    return String(value || '')
+      .split(/\r?\n/)
+      .map(function (line) { return line.trim(); })
+      .filter(Boolean);
+  }
+
+  function normalizeListType(value) {
+    return value === 'ol' ? 'ol' : 'ul';
+  }
+
+  function listMarkerOptions(type) {
+    if (normalizeListType(type) === 'ol') {
+      return [
+        ['decimal', '1, 2, 3'],
+        ['decimal-leading-zero', '01, 02, 03'],
+        ['lower-alpha', 'a, b, c'],
+        ['upper-alpha', 'A, B, C'],
+        ['lower-roman', 'i, ii, iii'],
+        ['upper-roman', 'I, II, III'],
+      ];
+    }
+    return [
+      ['disc', 'Punkt'],
+      ['circle', 'Kreis'],
+      ['square', 'Quadrat'],
+      ['none', 'Ohne Zeichen'],
+    ];
+  }
+
+  function normalizeListMarker(type, marker) {
+    var options = listMarkerOptions(type).map(function (option) { return option[0]; });
+    marker = String(marker || '').trim();
+    if (options.indexOf(marker) !== -1) return marker;
+    return options[0];
+  }
+
+  function listMarkerSelectHtml(type, marker) {
+    var options = listMarkerOptions(type);
+    var selected = normalizeListMarker(type, marker);
+    var html = '<label class="dg-field"><span>Auflistungszeichen</span><select name="marker">';
+    options.forEach(function (option) {
+      html += '<option value="' + escapeHtml(option[0]) + '"' + (option[0] === selected ? ' selected' : '') + '>' + escapeHtml(option[1]) + '</option>';
+    });
+    return html + '</select></label>';
   }
 
   var ADV_DISPLAY = ['block', 'inline', 'inline-block', 'flex', 'none'];
@@ -1269,6 +1318,20 @@
         html += '<p class="dg-website-block__heading dg-website-block__heading--' + level + '">' +
           (renderInlineMarkupHtml(block.text) || '<span class="dg-field-hint">Überschrift</span>') + '</p>';
         break;
+      case 'list':
+        var listType = normalizeListType(block.list_type);
+        var listMarker = normalizeListMarker(listType, block.marker);
+        var entries = listItems(block.items);
+        if (entries.length) {
+          html += '<' + listType + ' class="dg-website-block__list" style="list-style-type:' + escapeHtml(listMarker) + ';">';
+          entries.forEach(function (entry) {
+            html += '<li>' + renderInlineMarkupHtml(entry) + '</li>';
+          });
+          html += '</' + listType + '>';
+        } else {
+          html += '<div class="dg-website-block__image-placeholder">Liste — Einträge rechts zeilenweise pflegen</div>';
+        }
+        break;
       case 'image':
         html += block.src
           ? '<img class="dg-website-block__image" src="' + escapeHtml(block.src) + '" alt="' + escapeHtml(block.alt) + '">'
@@ -2018,6 +2081,16 @@
             '<option value="h3"' + (block.level === 'h3' ? ' selected' : '') + '>Klein</option>' +
             '</select></label>';
           break;
+        case 'list':
+          var inspectorListType = normalizeListType(block.list_type);
+          html += textareaHtml('Einträge (eine Zeile je Punkt)', 'items', block.items || '', 8);
+          html += '<label class="dg-field"><span>Listentyp</span><select name="list_type">' +
+            '<option value="ul"' + (inspectorListType === 'ul' ? ' selected' : '') + '>Aufzählung</option>' +
+            '<option value="ol"' + (inspectorListType === 'ol' ? ' selected' : '') + '>Nummeriert</option>' +
+            '</select></label>';
+          html += listMarkerSelectHtml(inspectorListType, block.marker);
+          html += '<p class="dg-field-hint">Jede Zeile wird als eigener Listenpunkt ausgegeben. **Fett** und [Link](https://…) sind wie im Textblock möglich.</p>';
+          break;
         case 'image':
           html += fieldHtml('Bild-URL', 'src', block.src);
           html += imageUploadHtml('src');
@@ -2587,6 +2660,22 @@
           if (pv) blockPl.platform = pv;
           else delete blockPl.platform;
           persist(layoutPl);
+          render({ keepInspector: true });
+        }
+        return;
+      }
+      var listSelect = event.target.closest('select[name="list_type"], select[name="marker"]');
+      if (listSelect && selected.blockId) {
+        var layoutLs = parseLayout();
+        var blockLs = findBlock(layoutLs, selected.blockId);
+        if (blockLs) {
+          if (listSelect.name === 'list_type') {
+            blockLs.list_type = normalizeListType(listSelect.value);
+            blockLs.marker = normalizeListMarker(blockLs.list_type, blockLs.marker);
+          } else {
+            blockLs.marker = normalizeListMarker(blockLs.list_type, listSelect.value);
+          }
+          persist(layoutLs);
           render({ keepInspector: true });
         }
         return;
