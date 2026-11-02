@@ -162,11 +162,22 @@ final class WebsiteContent
                             : '';
                         $listType = (string) ($block['list_type'] ?? 'ul');
                         $block['list_type'] = $listType === 'ol' ? 'ol' : 'ul';
-                        $markers = $block['list_type'] === 'ol'
-                            ? ['decimal', 'decimal-leading-zero', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman']
-                            : ['disc', 'circle', 'square', 'none'];
-                        $marker = (string) ($block['marker'] ?? '');
-                        $block['marker'] = in_array($marker, $markers, true) ? $marker : $markers[0];
+                        $block['marker'] = WebsiteListMarkers::normalize(
+                            $block['list_type'],
+                            (string) ($block['marker'] ?? '')
+                        );
+                        $markerImage = WebsiteListMarkers::normalizeImageUrl(
+                            (string) ($block['marker_image'] ?? '')
+                        );
+                        if ($block['marker'] === 'image') {
+                            $block['marker_image'] = $markerImage;
+                            if ($markerImage === '') {
+                                $block['marker'] = 'disc';
+                                unset($block['marker_image']);
+                            }
+                        } else {
+                            unset($block['marker_image']);
+                        }
                     }
                     if ($type === 'button') {
                         if (isset($block['label']) && is_string($block['label'])) {

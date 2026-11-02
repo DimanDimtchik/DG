@@ -244,6 +244,21 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-block p { margin-bottom: 8px; }
     .ws-block .ws-list { margin: 0 0 12px 1.25rem; padding-left: 1.25rem; }
     .ws-block .ws-list li + li { margin-top: 4px; }
+    .ws-block .ws-list.ws-list--custom { list-style: none; padding-left: 0; margin-left: 0; }
+    .ws-block .ws-list.ws-list--custom > li { position: relative; padding-left: 1.55em; }
+    .ws-block .ws-list.ws-list--custom > li::before {
+      position: absolute; left: 0; top: 0; line-height: inherit;
+    }
+    .ws-block .ws-list--m-heart > li::before { content: "♥"; color: var(--ws-primary, #2563eb); }
+    .ws-block .ws-list--m-arrow > li::before { content: "→"; }
+    .ws-block .ws-list--m-arrow-bold > li::before { content: "➤"; color: var(--ws-primary, #2563eb); }
+    .ws-block .ws-list--m-diamond > li::before { content: "◆"; }
+    .ws-block .ws-list--m-check > li::before { content: "✓"; color: #15803d; }
+    .ws-block .ws-list--m-star > li::before { content: "★"; color: #ca8a04; }
+    .ws-block .ws-list--m-image > li::before {
+      content: ""; top: 0.2em; width: 1.1em; height: 1.1em;
+      background: var(--ws-list-marker-image) center / contain no-repeat;
+    }
     .ws-content-table-wrap { overflow-x: auto; margin: 12px 0 20px; }
     .ws-content-table {
       width: 100%; border-collapse: collapse; font-size: 0.95rem;
@@ -593,20 +608,20 @@ if ($wsInteractionCss !== '') :
 
           case 'list':
             $listType = (string) ($block['list_type'] ?? '') === 'ol' ? 'ol' : 'ul';
-            $allowedMarkers = $listType === 'ol'
-                ? ['decimal', 'decimal-leading-zero', 'lower-alpha', 'upper-alpha', 'lower-roman', 'upper-roman']
-                : ['disc', 'circle', 'square', 'none'];
-            $marker = trim((string) ($block['marker'] ?? ''));
-            if (!in_array($marker, $allowedMarkers, true)) {
-                $marker = $allowedMarkers[0];
-            }
+            $marker = WebsiteListMarkers::normalize($listType, (string) ($block['marker'] ?? ''));
+            $markerImage = WebsiteListMarkers::normalizeImageUrl((string) ($block['marker_image'] ?? ''));
+            $listAttrs = WebsiteListMarkers::presentation($listType, $marker, $markerImage);
             $rawItems = preg_split('/\R/u', (string) ($block['items'] ?? '')) ?: [];
             $items = array_values(array_filter(array_map(
                 static fn (string $item): string => trim($item),
                 $rawItems
             ), static fn (string $item): bool => $item !== ''));
             if ($items !== []) {
-                echo '<' . $listType . ' class="ws-list" style="list-style-type:' . View::escape($marker) . ';">';
+                echo '<' . $listType . ' class="' . View::escape($listAttrs['class']) . '"';
+                if ($listAttrs['style'] !== '') {
+                    echo ' style="' . View::escape($listAttrs['style']) . '"';
+                }
+                echo '>';
                 foreach ($items as $item) {
                     echo '<li>' . WebsiteContent::renderInlineMarkup(WebsiteContent::normalizePlainText($item)) . '</li>';
                 }

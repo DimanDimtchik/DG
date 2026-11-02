@@ -127,7 +127,7 @@
   function defaultBlock(type) {
     switch (type) {
       case 'heading': return { id: uid('blk'), type: 'heading', text: 'Überschrift', level: 'h2' };
-      case 'list': return { id: uid('blk'), type: 'list', items: 'Erster Punkt\nZweiter Punkt', list_type: 'ul', marker: 'disc' };
+      case 'list': return { id: uid('blk'), type: 'list', items: 'Erster Punkt\nZweiter Punkt', list_type: 'ul', marker: 'disc', marker_image: '' };
       case 'image':   return { id: uid('blk'), type: 'image', src: '', alt: '' };
       case 'button':  return { id: uid('blk'), type: 'button', label: 'Mehr erfahren', url: '#' };
       case 'spacer':  return { id: uid('blk'), type: 'spacer', height: 24 };
@@ -199,39 +199,110 @@
     return value === 'ol' ? 'ol' : 'ul';
   }
 
-  function listMarkerOptions(type) {
-    if (normalizeListType(type) === 'ol') {
-      return [
-        ['decimal', '1, 2, 3'],
-        ['decimal-leading-zero', '01, 02, 03'],
-        ['lower-alpha', 'a, b, c'],
-        ['upper-alpha', 'A, B, C'],
-        ['lower-roman', 'i, ii, iii'],
-        ['upper-roman', 'I, II, III'],
-      ];
+  /** Spiegel zu src/Website/WebsiteListMarkers.php */
+  var LIST_MARKER_UL_CSS = [
+    ['disc', 'Punkt'],
+    ['circle', 'Kreis'],
+    ['square', 'Quadrat'],
+    ['none', 'Ohne Zeichen'],
+  ];
+  var LIST_MARKER_UL_SYMBOLS = [
+    ['symbol:heart', 'Herz ♥'],
+    ['symbol:arrow', 'Pfeil →'],
+    ['symbol:arrow-bold', 'Pfeil fett ➤'],
+    ['symbol:diamond', 'Raute ◆'],
+    ['symbol:check', 'Häkchen ✓'],
+    ['symbol:star', 'Stern ★'],
+  ];
+  var LIST_MARKER_OL = [
+    ['decimal', '1, 2, 3'],
+    ['decimal-leading-zero', '01, 02, 03'],
+    ['lower-alpha', 'a, b, c'],
+    ['upper-alpha', 'A, B, C'],
+    ['lower-roman', 'i, ii, iii'],
+    ['upper-roman', 'I, II, III'],
+  ];
+  var LIST_MARKER_SYMBOL_CLASS = {
+    'symbol:heart': 'm-heart',
+    'symbol:arrow': 'm-arrow',
+    'symbol:arrow-bold': 'm-arrow-bold',
+    'symbol:diamond': 'm-diamond',
+    'symbol:check': 'm-check',
+    'symbol:star': 'm-star',
+  };
+
+  function listMarkerIds(type) {
+    var t = normalizeListType(type);
+    if (t === 'ol') {
+      return LIST_MARKER_OL.map(function (row) { return row[0]; });
     }
-    return [
-      ['disc', 'Punkt'],
-      ['circle', 'Kreis'],
-      ['square', 'Quadrat'],
-      ['none', 'Ohne Zeichen'],
-    ];
+    var ids = LIST_MARKER_UL_CSS.map(function (row) { return row[0]; });
+    LIST_MARKER_UL_SYMBOLS.forEach(function (row) { ids.push(row[0]); });
+    ids.push('image');
+    return ids;
   }
 
   function normalizeListMarker(type, marker) {
-    var options = listMarkerOptions(type).map(function (option) { return option[0]; });
+    var allowed = listMarkerIds(type);
     marker = String(marker || '').trim();
-    if (options.indexOf(marker) !== -1) return marker;
-    return options[0];
+    if (allowed.indexOf(marker) !== -1) return marker;
+    return normalizeListType(type) === 'ol' ? 'decimal' : 'disc';
+  }
+
+  function isSafeListMarkerImageUrl(url) {
+    return isSafeContentHref(url);
+  }
+
+  function cssUrlValue(url) {
+    url = String(url || '').trim();
+    if (!isSafeListMarkerImageUrl(url)) return '';
+    return 'url("' + url.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '")';
+  }
+
+  function listMarkerPresentation(type, marker, markerImage) {
+    var listType = normalizeListType(type);
+    marker = normalizeListMarker(listType, marker);
+    markerImage = String(markerImage || '').trim();
+    var base = 'dg-website-block__list';
+    if (marker === 'image') {
+      var cssUrl = cssUrlValue(markerImage);
+      if (!cssUrl) {
+        return { className: base, style: 'list-style-type:disc' };
+      }
+      return {
+        className: base + ' dg-website-block__list--custom dg-website-block__list--m-image',
+        style: '--ws-list-marker-image:' + cssUrl,
+      };
+    }
+    if (LIST_MARKER_SYMBOL_CLASS[marker]) {
+      return {
+        className: base + ' dg-website-block__list--custom dg-website-block__list--' + LIST_MARKER_SYMBOL_CLASS[marker],
+        style: '',
+      };
+    }
+    return { className: base, style: 'list-style-type:' + marker };
   }
 
   function listMarkerSelectHtml(type, marker) {
-    var options = listMarkerOptions(type);
-    var selected = normalizeListMarker(type, marker);
+    var listType = normalizeListType(type);
+    var selected = normalizeListMarker(listType, marker);
     var html = '<label class="dg-field"><span>Auflistungszeichen</span><select name="marker">';
-    options.forEach(function (option) {
-      html += '<option value="' + escapeHtml(option[0]) + '"' + (option[0] === selected ? ' selected' : '') + '>' + escapeHtml(option[1]) + '</option>';
-    });
+    function addOptions(rows) {
+      rows.forEach(function (option) {
+        html += '<option value="' + escapeHtml(option[0]) + '"' + (option[0] === selected ? ' selected' : '') + '>' + escapeHtml(option[1]) + '</option>';
+      });
+    }
+    if (listType === 'ol') {
+      addOptions(LIST_MARKER_OL);
+    } else {
+      html += '<optgroup label="Standard">';
+      addOptions(LIST_MARKER_UL_CSS);
+      html += '</optgroup><optgroup label="Symbole">';
+      addOptions(LIST_MARKER_UL_SYMBOLS);
+      html += '</optgroup><optgroup label="Medien">';
+      html += '<option value="image"' + (selected === 'image' ? ' selected' : '') + '>Eigenes Bild …</option>';
+      html += '</optgroup>';
+    }
     return html + '</select></label>';
   }
 
@@ -1320,10 +1391,14 @@
         break;
       case 'list':
         var listType = normalizeListType(block.list_type);
-        var listMarker = normalizeListMarker(listType, block.marker);
+        var listPresent = listMarkerPresentation(listType, block.marker, block.marker_image);
         var entries = listItems(block.items);
         if (entries.length) {
-          html += '<' + listType + ' class="dg-website-block__list" style="list-style-type:' + escapeHtml(listMarker) + ';">';
+          html += '<' + listType + ' class="' + escapeHtml(listPresent.className) + '"';
+          if (listPresent.style) {
+            html += ' style="' + escapeHtml(listPresent.style) + '"';
+          }
+          html += '>';
           entries.forEach(function (entry) {
             html += '<li>' + renderInlineMarkupHtml(entry) + '</li>';
           });
@@ -2089,6 +2164,11 @@
             '<option value="ol"' + (inspectorListType === 'ol' ? ' selected' : '') + '>Nummeriert</option>' +
             '</select></label>';
           html += listMarkerSelectHtml(inspectorListType, block.marker);
+          if (normalizeListMarker(inspectorListType, block.marker) === 'image') {
+            html += fieldHtml('Marker-Bild (URL)', 'marker_image', block.marker_image || '');
+            html += imageUploadHtml('marker_image');
+            html += '<p class="dg-field-hint">Kleines Bild als Aufzählungszeichen (Mediathek oder Upload). Empfohlen: quadratisch, ca. 32–64 px.</p>';
+          }
           html += '<p class="dg-field-hint">Jede Zeile wird als eigener Listenpunkt ausgegeben. **Fett** und [Link](https://…) sind wie im Textblock möglich.</p>';
           break;
         case 'image':
@@ -2672,8 +2752,10 @@
           if (listSelect.name === 'list_type') {
             blockLs.list_type = normalizeListType(listSelect.value);
             blockLs.marker = normalizeListMarker(blockLs.list_type, blockLs.marker);
+            if (blockLs.list_type === 'ol') delete blockLs.marker_image;
           } else {
             blockLs.marker = normalizeListMarker(blockLs.list_type, listSelect.value);
+            if (blockLs.marker !== 'image') delete blockLs.marker_image;
           }
           persist(layoutLs);
           render({ keepInspector: true });

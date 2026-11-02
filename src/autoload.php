@@ -354,6 +354,7 @@ spl_autoload_register(static function (string $class): void {
         'WebsiteVideoLibrary' => '/src/Website/WebsiteVideoLibrary.php',
         'WebsiteSettings' => '/src/Website/WebsiteSettings.php',
         'WebsiteContent' => '/src/Website/WebsiteContent.php',
+        'WebsiteListMarkers' => '/src/Website/WebsiteListMarkers.php',
         'WebsiteBlockAdvanced' => '/src/Website/WebsiteBlockAdvanced.php',
         'WebsiteMenuIcons' => '/src/Website/WebsiteMenuIcons.php',
         'WebsiteMaintenanceSettings' => '/src/Website/WebsiteMaintenanceSettings.php',
