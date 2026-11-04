@@ -27,6 +27,18 @@
   display: block;
 }
 
+.dg-kichel-fab.dg-kichel-avatar--photo {
+  padding: 0;
+  background: #fff;
+  overflow: hidden;
+}
+
+.dg-kichel-fab.dg-kichel-avatar--photo img {
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 999px;
+}
+
 .dg-kichel-panel {
   position: fixed;
   right: 1.25rem;
@@ -60,6 +72,13 @@
   width: 2rem;
   height: 2rem;
   flex-shrink: 0;
+}
+
+.dg-kichel-panel__head img.dg-kichel-avatar--photo {
+  border-radius: 999px;
+  object-fit: cover;
+  object-position: center 18%;
+  background: #fff;
 }
 
 .dg-kichel-panel__head > div:nth-child(2) {

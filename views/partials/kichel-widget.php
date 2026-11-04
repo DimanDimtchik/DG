@@ -3,14 +3,21 @@
 /** @var User|null $user */
 $kichelUser = $user ?? AuthService::user();
 $kichelIsAdmin = $kichelUser instanceof User && RoleResolver::isAdmin($kichelUser);
+$kichelIconPath = is_file(DG_ROOT . '/assets/img/kichel-mascot.jpg')
+    ? '/assets/img/kichel-mascot.jpg'
+    : '/assets/img/kichel.svg';
+$kichelIconUrl = Asset::url($kichelIconPath);
+$kichelIconClass = str_ends_with($kichelIconPath, '.jpg') || str_ends_with($kichelIconPath, '.png')
+    ? ' dg-kichel-avatar--photo'
+    : '';
 ?>
 <link rel="stylesheet" href="<?= View::escape(Asset::url('/assets/css/kichel.css')) ?>">
-<button type="button" class="dg-kichel-fab" data-kichel-fab aria-expanded="false" aria-controls="dg-kichel-panel" title="Kichel — CRM-Hilfe">
-  <img src="<?= View::escape(Asset::url('/assets/img/kichel.svg')) ?>" alt="">
+<button type="button" class="dg-kichel-fab<?= $kichelIconClass ?>" data-kichel-fab aria-expanded="false" aria-controls="dg-kichel-panel" title="Kichel — CRM-Hilfe">
+  <img src="<?= View::escape($kichelIconUrl) ?>" alt="">
 </button>
 <div id="dg-kichel-panel" class="dg-kichel-panel" data-kichel-panel hidden role="dialog" aria-label="Kichel Hilfe">
   <div class="dg-kichel-panel__head">
-    <img src="<?= View::escape(Asset::url('/assets/img/kichel.svg')) ?>" alt="">
+    <img class="<?= trim($kichelIconClass) ?>" src="<?= View::escape($kichelIconUrl) ?>" alt="">
     <div>
       <strong>Kichel</strong>
       <span>Schnelle Hilfe im CRM</span>
