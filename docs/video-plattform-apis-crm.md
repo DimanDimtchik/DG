@@ -279,9 +279,10 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 
 **Warum zweitens:** Review planbar; gut für B2B-Company-Pages; Credentials nur in Instanz-Settings.
 
-### Phase 3 — weitere CRM-Tenants: Instagram
-1. Meta App, Business Verification, Advanced Access für `content_publish`.
-2. Nur Professional Accounts; Reels-Pipeline (300 MB, Transcode).
+### Phase 3 — Instagram (Reels)
+1. Meta App, Business Verification, Advanced Access für `content_publish`.  
+   **CRM-Scaffold 3-1:** Settings-Tab *Instagram Publish* + OAuth — [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md). App/BV/Advanced manuell **pro Tenant**.
+2. Nur Professional Accounts; Reels-Pipeline (300 MB) — **Code 3-2**.
 3. Erwartung managen: kein Caption-Edit nach Publish; Delete je nach Login-Pfad.
 
 ### Phase 4 — optional / vorsichtig: TikTok

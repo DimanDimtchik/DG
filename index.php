@@ -153,6 +153,47 @@ if ($path === '/oauth/linkedin/start' || $path === '/oauth/linkedin/callback') {
     exit;
 }
 
+if ($path === '/oauth/instagram/start' || $path === '/oauth/instagram/callback') {
+    $oauthUser = AuthService::user();
+    if ($oauthUser === null || !RoleResolver::isAdmin($oauthUser)) {
+        header('Location: /login', true, 302);
+        exit;
+    }
+    MigrationRunner::runPending();
+    if ($path === '/oauth/instagram/start') {
+        try {
+            $state = bin2hex(random_bytes(16));
+            $_SESSION['instagram_oauth_state'] = $state;
+            header('Location: ' . InstagramOAuthClient::authorizationUrl($state), true, 302);
+        } catch (Throwable $e) {
+            Flash::set('error', $e->getMessage());
+            header('Location: ' . SettingsRegistry::tabUrl('instagram-publish'), true, 302);
+        }
+        exit;
+    }
+    $stateExpected = (string) ($_SESSION['instagram_oauth_state'] ?? '');
+    unset($_SESSION['instagram_oauth_state']);
+    $stateGot = (string) ($_GET['state'] ?? '');
+    if ($stateExpected === '' || !hash_equals($stateExpected, $stateGot)) {
+        Flash::set('error', 'Ungültiger OAuth-State. Bitte erneut verbinden.');
+        header('Location: ' . SettingsRegistry::tabUrl('instagram-publish'), true, 302);
+        exit;
+    }
+    if (isset($_GET['error'])) {
+        Flash::set('error', 'Instagram/Meta: ' . (string) ($_GET['error_description'] ?? $_GET['error']));
+        header('Location: ' . SettingsRegistry::tabUrl('instagram-publish'), true, 302);
+        exit;
+    }
+    try {
+        $msg = InstagramTokenService::completeOAuth((string) ($_GET['code'] ?? ''));
+        Flash::set('success', $msg);
+    } catch (Throwable $e) {
+        Flash::set('error', $e->getMessage());
+    }
+    header('Location: ' . SettingsRegistry::tabUrl('instagram-publish'), true, 302);
+    exit;
+}
+
 // Mobile Apps JSON-API (ohne CRM-Session)
 if ($path === '/api/mobile' || str_starts_with($path, '/api/mobile/')) {
     MobileApi::handle($path);
@@ -1613,6 +1654,31 @@ switch ($path) {
                 try {
                     LinkedInPublishSettings::saveFromPost($_POST);
                     Flash::set('success', 'LinkedIn-Publish-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen Instagram Publish (Meta / Reels)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (isset($_POST['instagram_publish_save']) || isset($_POST['instagram_oauth_disconnect']))
+        ) {
+            $redirect = SettingsRegistry::tabUrl('instagram-publish');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (isset($_POST['instagram_oauth_disconnect'])) {
+                InstagramTokenService::disconnect();
+                Flash::set('success', 'Instagram-Verbindung getrennt.');
+            } else {
+                try {
+                    InstagramPublishSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Instagram-Publish-Einstellungen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -6087,6 +6153,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $linkedinRecruitingForm = LinkedInRecruitingSettings::forForm();
         $youtubePublishForm = YouTubePublishSettings::forForm();
         $linkedinPublishForm = LinkedInPublishSettings::forForm();
+        $instagramPublishForm = InstagramPublishSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $documentPresentationSettings = DocumentPresentationSettings::forForm();
         $letterheadSettings = LetterheadSettings::forForm();
@@ -10199,6 +10266,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $linkedinRecruitingForm = $linkedinRecruitingForm ?? LinkedInRecruitingSettings::forForm();
         $youtubePublishForm = $youtubePublishForm ?? YouTubePublishSettings::forForm();
         $linkedinPublishForm = $linkedinPublishForm ?? LinkedInPublishSettings::forForm();
+        $instagramPublishForm = $instagramPublishForm ?? InstagramPublishSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];

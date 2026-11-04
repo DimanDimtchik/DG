@@ -101,6 +101,8 @@
           <?php View::render('settings/tab-youtube-publish', compact('youtubePublishForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'linkedin-publish') : ?>
           <?php View::render('settings/tab-linkedin-publish', compact('linkedinPublishForm', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'instagram-publish') : ?>
+          <?php View::render('settings/tab-instagram-publish', compact('instagramPublishForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'xing-recruiting') : ?>
           <?php View::render('settings/tab-xing-recruiting', compact('xingRecruitingForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'linkedin-recruiting') : ?>

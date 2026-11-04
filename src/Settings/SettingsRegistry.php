@@ -216,6 +216,14 @@ final class SettingsRegistry
                             'linkedin video', 'linkedin publish', 'linkedin seite video', 'community management',
                         ],
                     ],
+                    'instagram-publish' => [
+                        'label' => 'Instagram Publish',
+                        'lead' => 'Meta-App, Access-Stufe und OAuth für Reels auf Instagram Professional (Content Publishing).',
+                        'template' => 'instagram-publish',
+                        'kichel_aliases' => [
+                            'instagram', 'instagram reels', 'instagram publish', 'meta app', 'instagram oauth',
+                        ],
+                    ],
                 ],
             ],
             'lager' => [
@@ -445,6 +453,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['linkedin_publish_save']) || isset($_POST['linkedin_oauth_disconnect'])) {
                 return 'linkedin-publish';
+            }
+            if (isset($_POST['instagram_publish_save']) || isset($_POST['instagram_oauth_disconnect'])) {
+                return 'instagram-publish';
             }
             if (isset($_POST['recruiting_privacy_save'])) {
                 return 'recruiting-privacy';

@@ -202,7 +202,7 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 | Perms `instagram_content_publish` / business variant | ja |
 | Login-Pfad wählen | FB-Login wenn Delete nötig; sonst IG-Login einfacher |
 
-Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/content-publishing/) · [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media/) · [App Review](https://developers.facebook.com/docs/instagram-platform/app-review/)
+Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/content-publishing/) · [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media/) · [App Review](https://developers.facebook.com/docs/instagram-platform/app-review/) · Checkliste [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md)
 
 ### CRM-Deltas
 
@@ -214,19 +214,27 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 | Öffentliche `video_url` **oder** resumable (rupload) | URL braucht erreichbaren Host (**W** mit Public-URL; groß **V**) |
 | Flags | `caption_editable=false` nach Publish |
 
-### API-Schritte
+### Phase 3-1 (App + CRM-Scaffold) — Stand
 
-1. Connect Professional Account (**W**)
-2. `POST /{ig-user-id}/media` (`REELS`) → Status pollen → `media_publish`
-3. Schedule nur CRM-deferred
-4. Comments/Insights optional nachziehen; Delete nur FB-Login-Pfad
+- [x] Checkliste Meta App / BV / Advanced Access — [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md)
+- [x] CRM-Tab **Instagram Publish** (App-ID/Secret, Login-Pfad, Access-Stufe, optional Page/IG-ID)
+- [x] OAuth FB- oder IG-Login → `dg_oauth_connections.platform=instagram`
+- [x] Selftest `bin/instagram-publish-selftest.php`
+- [ ] Manuell: Meta-App, Verification, Advanced Access, Connect (pro Tenant)
+
+### Phase 3-2 (Upload) — noch offen
+
+- [ ] `POST /{ig-user-id}/media` (`REELS`) → Status pollen → `media_publish`
+- [ ] Schedule nur CRM-deferred; Quota `content_publishing_limit`
+- [ ] Kein Caption-Edit nach Publish in UI
 
 ### Acceptance
 
-- [ ] Reel erscheint auf IG-Account
-- [ ] Quota `content_publishing_limit` geprüft vor Job
-- [ ] Kein Caption-Edit nach Publish in UI angeboten
-- [ ] Advanced Access für ≥1 Test-Tenant ok **oder** klar „nur App-Rollen“ für DG
+- [x] Connect-Scaffold — Code 3-1
+- [ ] Reel erscheint auf IG-Account — 3-2 + Live
+- [ ] Quota vor Job geprüft — 3-2
+- [ ] Kein Caption-Edit nach Publish in UI — 3-2
+- [ ] Advanced Access dokumentiert / manuell — Checkliste 3-1
 
 ### Do NOT yet
 
@@ -235,6 +243,8 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 - [ ] Product Tagging (außer explizit gefordert)
 
 **Host:** Container-Polling Cron **W**; große Dateien + stabile Public-URL **V** besser.
+
+**Code 3-1:** Settings/OAuth · Selftest `bin/instagram-publish-selftest.php`.
 
 ---
 

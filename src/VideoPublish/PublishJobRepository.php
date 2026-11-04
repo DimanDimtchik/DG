@@ -10,6 +10,7 @@ final class PublishJobRepository
 
     public const PLATFORM_YOUTUBE = 'youtube';
     public const PLATFORM_LINKEDIN = 'linkedin';
+    public const PLATFORM_INSTAGRAM = 'instagram';
 
     public static function ensureReady(): void
     {
