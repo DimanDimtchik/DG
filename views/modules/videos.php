@@ -3,13 +3,16 @@
  * @var list<array<string, mixed>> $videoAssets
  * @var bool $youtubeConnected
  * @var bool $linkedinConnected
+ * @var bool $instagramConnected
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
 $videoAssets = is_array($videoAssets ?? null) ? $videoAssets : [];
 $youtubeConnected = !empty($youtubeConnected);
 $linkedinConnected = !empty($linkedinConnected);
+$instagramConnected = !empty($instagramConnected);
 $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
+$anyPlatform = $youtubeConnected || $linkedinConnected || $instagramConnected;
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -17,19 +20,21 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Videos</h1>
-      <p class="dg-lead">Videos speichern und auf YouTube oder LinkedIn veröffentlichen (max. 100 MB).</p>
+      <p class="dg-lead">Videos speichern und auf YouTube, LinkedIn oder Instagram veröffentlichen (max. 100 MB).</p>
     </div>
     <div class="dg-page-header__actions">
       <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">YouTube</a>
       <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-publish')) ?>">LinkedIn</a>
+      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('instagram-publish')) ?>">Instagram</a>
     </div>
   </header>
 
-  <?php if (!$youtubeConnected && !$linkedinConnected) : ?>
+  <?php if (!$anyPlatform) : ?>
     <div class="dg-flash dg-flash--warning">
       Noch keine Plattform verbunden.
       <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">YouTube</a>
       <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-publish')) ?>">LinkedIn</a>
+      <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('instagram-publish')) ?>">Instagram</a>
     </div>
   <?php endif; ?>
 

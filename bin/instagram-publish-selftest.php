@@ -57,10 +57,16 @@ if (!defined('DG_ROOT')) {
 }
 
 require DG_ROOT . '/src/VideoPublish/VideoPublishCrypto.php';
+require DG_ROOT . '/src/VideoPublish/VideoAssetStorage.php';
+require DG_ROOT . '/src/VideoPublish/VideoAssetRepository.php';
 require DG_ROOT . '/src/VideoPublish/OAuthConnectionRepository.php';
+require DG_ROOT . '/src/VideoPublish/PublishJobRepository.php';
+require DG_ROOT . '/src/VideoPublish/PublishPostRepository.php';
 require DG_ROOT . '/src/VideoPublish/InstagramPublishSettings.php';
 require DG_ROOT . '/src/VideoPublish/InstagramOAuthClient.php';
 require DG_ROOT . '/src/VideoPublish/InstagramTokenService.php';
+require DG_ROOT . '/src/VideoPublish/InstagramApiClient.php';
+require DG_ROOT . '/src/VideoPublish/InstagramReelsPublishService.php';
 
 $fail = 0;
 
@@ -89,6 +95,51 @@ Database::$pdo->exec(
         status TEXT,
         connected_at TEXT,
         meta_json TEXT
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_video_assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        stored_name TEXT,
+        original_name TEXT,
+        mime_type TEXT,
+        size_bytes INTEGER,
+        sha256 TEXT,
+        created_by INTEGER,
+        created_at TEXT
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_publish_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        asset_id INTEGER,
+        platform TEXT,
+        state TEXT,
+        attempts INTEGER DEFAULT 0,
+        last_error TEXT,
+        external_id TEXT,
+        upload_session_url TEXT,
+        upload_offset INTEGER DEFAULT 0,
+        payload_json TEXT,
+        stored_name TEXT,
+        mime_type TEXT,
+        size_bytes INTEGER,
+        created_by INTEGER,
+        created_at TEXT,
+        updated_at TEXT
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_publish_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER,
+        platform TEXT,
+        external_id TEXT,
+        title TEXT,
+        description TEXT,
+        privacy TEXT,
+        published_at TEXT,
+        editable_flags TEXT
     )'
 );
 
@@ -161,8 +212,41 @@ OAuthConnectionRepository::upsert(OAuthConnectionRepository::PLATFORM_INSTAGRAM,
 ]);
 expect_true(OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM), 'connected');
 expect_true(InstagramTokenService::accessToken() === 'tok', 'access token');
+
+$signed = VideoAssetStorage::signedPublicUrl('clip.mp4', 600);
+expect_true(str_contains($signed, '/video-publish-public/clip.mp4'), 'signed public path');
+$parts = parse_url($signed);
+parse_str((string) ($parts['query'] ?? ''), $q);
+expect_true(
+    VideoAssetStorage::verifyPublicSignature('clip.mp4', (int) ($q['e'] ?? 0), (string) ($q['s'] ?? '')),
+    'signed public signature'
+);
+expect_true(
+    !VideoAssetStorage::verifyPublicSignature('clip.mp4', time() - 10, (string) ($q['s'] ?? '')),
+    'expired signature rejected'
+);
+
+VideoAssetStorage::ensureDir();
+$demoPath = VideoAssetStorage::absolutePath('selftest-ig.mp4');
+file_put_contents($demoPath, str_repeat('0', 2048));
+Database::$pdo->exec(
+    "INSERT INTO dg_video_assets (stored_name, original_name, mime_type, size_bytes, sha256, created_by, created_at)
+     VALUES ('selftest-ig.mp4', 'selftest-ig.mp4', 'video/mp4', 2048, 'abc', 1, datetime('now'))"
+);
+$assetId = (int) Database::$pdo->lastInsertId();
+$jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_INSTAGRAM, [
+    'title' => 'Test',
+    'caption' => 'Hallo',
+    'ig_phase' => 'init',
+    'scheduled_at' => date('Y-m-d H:i:s', time() + 3600),
+], 1);
+$step = InstagramReelsPublishService::processJob($jobId);
+expect_true($step['ok'] === true && $step['done'] === false, 'scheduled job waits');
+expect_true(str_contains($step['message'], 'Geplant'), 'scheduled message');
+
 InstagramTokenService::disconnect();
 expect_true(!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM), 'disconnected');
+@unlink($demoPath);
 
 if ($fail > 0) {
     fwrite(STDERR, "instagram-publish-selftest: $fail Fehler\n");

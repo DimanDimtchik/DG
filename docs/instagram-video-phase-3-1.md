@@ -16,8 +16,8 @@ Keine Kundenfirma und keine Personen im Kern hardcoden — App und Professional-
 | Business Verification / Advanced Access | ✅ Status-Felder + Checkliste | Review/Screencast manuell |
 | CRM-Tab *Instagram Publish* | ✅ | — |
 | OAuth Connect (FB-Login oder IG-Login) | ✅ | Token-Pflege / Page-Wahl-UX |
-| Reels container → publish | ❌ | ✅ 3-2 |
-| Caption-Edit nach Publish | nie (API) | UI nicht anbieten |
+| Reels container → publish | ❌ | ✅ 3-2 (Code fertig; Live nach Connect) |
+| Caption-Edit nach Publish | nie (API) | UI bietet keins |
 | Kommentare / Insights | ❌ | optional 3-3 |
 
 ---
@@ -84,9 +84,12 @@ Scopes (Instagram-Pfad, CRM):
 
 ---
 
-## Phase 3-2 (nächster Code) — noch nicht
+## Phase 3-2 (Code) — erledigt
 
 1. Media-Container `REELS` + Status-Polling + `media_publish`  
-2. Öffentliche `video_url` oder resumable  
-3. CRM-`scheduled_at`  
-4. Quota `content_publishing_limit` vor Job
+2. Facebook-Login: resumable (`rupload.facebook.com`); IG-Login: signierte `/video-publish-public/…`  
+3. CRM-`scheduled_at` + Queue  
+4. Quota `content_publishing_limit` vor Job (weich)  
+5. Delete nur FB-Login-Pfad  
+
+Live-Test erst nach manueller Meta-App + Connect (Checkliste oben).

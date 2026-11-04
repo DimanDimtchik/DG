@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Cron / runIfDue: aktive YouTube- und LinkedIn-Jobs weiterführen. */
+/** Cron / runIfDue: aktive YouTube-, LinkedIn- und Instagram-Jobs weiterführen. */
 final class VideoPublishQueueService
 {
     /**
@@ -50,6 +50,22 @@ final class VideoPublishQueueService
                 $result['processed']++;
                 for ($i = 0; $i < $maxChunksPerJob; $i++) {
                     $step = LinkedInResumableUploadService::processJob($jobId);
+                    $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
+                    self::tallyStep($result, $jobId, $step);
+                    if (!empty($step['done'])) {
+                        break;
+                    }
+                }
+                continue;
+            }
+            if ($platform === PublishJobRepository::PLATFORM_INSTAGRAM) {
+                if (!InstagramPublishSettings::credentialsReady()) {
+                    $result['messages'][] = '#' . $jobId . ': Instagram nicht konfiguriert.';
+                    continue;
+                }
+                $result['processed']++;
+                for ($i = 0; $i < $maxChunksPerJob; $i++) {
+                    $step = InstagramReelsPublishService::processJob($jobId);
                     $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
                     self::tallyStep($result, $jobId, $step);
                     if (!empty($step['done'])) {

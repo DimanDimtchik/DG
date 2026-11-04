@@ -112,4 +112,36 @@ final class VideoAssetStorage
             @unlink($path);
         }
     }
+
+    /**
+     * Kurzlebige öffentliche HTTPS-URL (Meta holt video_url serverseitig).
+     */
+    public static function signedPublicUrl(string $storedName, int $ttlSeconds = 3600): string
+    {
+        $storedName = basename($storedName);
+        $exp = time() + max(300, $ttlSeconds);
+        $sig = self::publicSignature($storedName, $exp);
+        $base = class_exists('App') ? rtrim(App::publicBaseUrl(), '/') : '';
+
+        return $base . '/video-publish-public/' . rawurlencode($storedName)
+            . '?e=' . $exp . '&s=' . rawurlencode($sig);
+    }
+
+    public static function publicSignature(string $storedName, int $expiresAt): string
+    {
+        $storedName = basename($storedName);
+        $seed = defined('DG_ROOT') ? (string) DG_ROOT : __DIR__;
+
+        return hash_hmac('sha256', $storedName . '|' . $expiresAt, $seed . '|video-publish-public');
+    }
+
+    public static function verifyPublicSignature(string $storedName, int $expiresAt, string $signature): bool
+    {
+        if ($expiresAt < time() || $signature === '') {
+            return false;
+        }
+        $expected = self::publicSignature($storedName, $expiresAt);
+
+        return hash_equals($expected, $signature);
+    }
 }

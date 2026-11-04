@@ -153,6 +153,43 @@ if ($path === '/oauth/linkedin/start' || $path === '/oauth/linkedin/callback') {
     exit;
 }
 
+// Kurzlebige öffentliche Video-URL für Instagram video_url (ohne Session)
+if (str_starts_with($path, '/video-publish-public/')) {
+    $stored = rawurldecode(substr($path, strlen('/video-publish-public/')));
+    $stored = basename(str_replace(['\\', "\0"], '', $stored));
+    $exp = (int) ($_GET['e'] ?? 0);
+    $sig = (string) ($_GET['s'] ?? '');
+    if ($stored === '' || !VideoAssetStorage::verifyPublicSignature($stored, $exp, $sig)) {
+        http_response_code(403);
+        echo 'Forbidden';
+        exit;
+    }
+    try {
+        $abs = VideoAssetStorage::absolutePath($stored);
+    } catch (Throwable) {
+        http_response_code(404);
+        echo 'Not found';
+        exit;
+    }
+    if (!is_file($abs)) {
+        http_response_code(404);
+        echo 'Not found';
+        exit;
+    }
+    $mime = 'video/mp4';
+    $ext = strtolower(pathinfo($stored, PATHINFO_EXTENSION));
+    if ($ext === 'webm') {
+        $mime = 'video/webm';
+    } elseif ($ext === 'mov') {
+        $mime = 'video/quicktime';
+    }
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . (string) filesize($abs));
+    header('Cache-Control: private, max-age=300');
+    readfile($abs);
+    exit;
+}
+
 if ($path === '/oauth/instagram/start' || $path === '/oauth/instagram/callback') {
     $oauthUser = AuthService::user();
     if ($oauthUser === null || !RoleResolver::isAdmin($oauthUser)) {
@@ -3839,6 +3876,47 @@ switch ($path) {
                 header('Location: /app?page=videos-form&id=' . $assetId . '#linkedin-engagement', true, 302);
                 exit;
             }
+            if (isset($_POST['video_instagram_publish']) && $assetId > 0) {
+                try {
+                    if (!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM)) {
+                        throw new RuntimeException('Instagram ist nicht verbunden.');
+                    }
+                    $scheduled = trim((string) ($_POST['ig_scheduled_at'] ?? ''));
+                    if ($scheduled !== '') {
+                        $scheduled = str_replace('T', ' ', $scheduled);
+                    }
+                    $title = trim((string) ($_POST['ig_title'] ?? $_POST['title'] ?? ''));
+                    $caption = (string) ($_POST['ig_caption'] ?? $_POST['caption'] ?? '');
+                    $shareToFeed = !empty($_POST['ig_share_to_feed']);
+                    $jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_INSTAGRAM, [
+                        'title' => $title !== '' ? $title : 'Reel',
+                        'caption' => $caption,
+                        'description' => $caption,
+                        'scheduled_at' => $scheduled,
+                        'share_to_feed' => $shareToFeed ? 1 : 0,
+                        'ig_phase' => 'init',
+                    ], $user->id);
+                    $step = InstagramReelsPublishService::processJob($jobId);
+                    Flash::set(
+                        !empty($step['ok']) ? 'success' : 'error',
+                        'Instagram-Job #' . $jobId . ': ' . $step['message']
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
+            if (isset($_POST['video_instagram_delete']) && $assetId > 0) {
+                try {
+                    InstagramReelsPublishService::deletePublished((int) ($_POST['job_id'] ?? 0));
+                    Flash::set('success', 'Beitrag auf Instagram gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
             if (isset($_POST['video_linkedin_comment_delete']) && $assetId > 0) {
                 try {
                     LinkedInEngagementService::deleteComment(
@@ -7060,6 +7138,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $videoAssets = VideoAssetRepository::listAll();
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
             $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
+            $instagramConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM);
             $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/videos';
             $title = 'Videos';
@@ -7080,6 +7159,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $publishJobs = PublishJobRepository::listForAsset($assetId);
             $latestYoutubePost = null;
             $latestLinkedinPost = null;
+            $latestInstagramPost = null;
             foreach ($publishJobs as $j) {
                 if ((string) ($j['state'] ?? '') !== PublishJobRepository::STATE_PUBLISHED) {
                     continue;
@@ -7091,10 +7171,16 @@ $legalProductsConfig = LegalProductSettings::config();
                 if ($plat === PublishJobRepository::PLATFORM_LINKEDIN && $latestLinkedinPost === null) {
                     $latestLinkedinPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
                 }
+                if ($plat === PublishJobRepository::PLATFORM_INSTAGRAM && $latestInstagramPost === null) {
+                    $latestInstagramPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
+                }
             }
             $latestPost = $latestYoutubePost; // Abwärtskompatibilität View
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
             $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
+            $instagramConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM);
+            $instagramCanDelete = (InstagramPublishSettings::config()['login_path'] ?? '')
+                === InstagramPublishSettings::LOGIN_FACEBOOK;
             $linkedinEngagement = [
                 'post_urn' => '',
                 'comments' => [],

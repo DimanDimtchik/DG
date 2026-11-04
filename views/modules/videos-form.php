@@ -5,8 +5,11 @@
  * @var array<string, mixed>|null $latestPost
  * @var array<string, mixed>|null $latestYoutubePost
  * @var array<string, mixed>|null $latestLinkedinPost
+ * @var array<string, mixed>|null $latestInstagramPost
  * @var bool $youtubeConnected
  * @var bool $linkedinConnected
+ * @var bool $instagramConnected
+ * @var bool $instagramCanDelete
  * @var array<string, mixed> $linkedinEngagement
  * @var string|null $formError
  * @var array{type: string, message: string}|null $flash
@@ -17,8 +20,11 @@ $latestYoutubePost = is_array($latestYoutubePost ?? null)
     ? $latestYoutubePost
     : (is_array($latestPost ?? null) ? $latestPost : null);
 $latestLinkedinPost = is_array($latestLinkedinPost ?? null) ? $latestLinkedinPost : null;
+$latestInstagramPost = is_array($latestInstagramPost ?? null) ? $latestInstagramPost : null;
 $youtubeConnected = !empty($youtubeConnected);
 $linkedinConnected = !empty($linkedinConnected);
+$instagramConnected = !empty($instagramConnected);
+$instagramCanDelete = !empty($instagramCanDelete);
 $linkedinEngagement = is_array($linkedinEngagement ?? null) ? $linkedinEngagement : [
     'post_urn' => '',
     'comments' => [],
@@ -35,6 +41,7 @@ $assetId = (int) ($asset['id'] ?? 0);
 $stateLabels = PublishJobRepository::stateOptions();
 $publishedYoutubeJob = null;
 $publishedLinkedinJob = null;
+$publishedInstagramJob = null;
 foreach ($publishJobs as $j) {
     if ((string) ($j['state'] ?? '') !== PublishJobRepository::STATE_PUBLISHED || (string) ($j['external_id'] ?? '') === '') {
         continue;
@@ -45,6 +52,9 @@ foreach ($publishJobs as $j) {
     }
     if ($plat === PublishJobRepository::PLATFORM_LINKEDIN && $publishedLinkedinJob === null) {
         $publishedLinkedinJob = $j;
+    }
+    if ($plat === PublishJobRepository::PLATFORM_INSTAGRAM && $publishedInstagramJob === null) {
+        $publishedInstagramJob = $j;
     }
 }
 $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO_FILENAME);
@@ -190,6 +200,72 @@ $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO
       </form>
     <?php endif; ?>
   </section>
+
+  <section class="dg-panel dg-mb-4">
+    <h2 class="dg-subsection-title">Auf Instagram veröffentlichen</h2>
+    <p class="dg-muted">
+      Reels (MP4/MOV). Caption nach Publish nicht mehr änderbar.
+      Facebook-Login: Resume-Upload; Instagram-Login: kurzlebige öffentliche Datei-URL.
+    </p>
+    <?php if (!$instagramConnected) : ?>
+      <p class="dg-muted">Zuerst Instagram in den Einstellungen verbinden.</p>
+      <div class="dg-btn-row">
+        <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('instagram-publish')) ?>">Instagram-Einstellungen</a>
+      </div>
+    <?php else : ?>
+      <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="video_instagram_publish" value="1">
+        <div class="dg-form-grid">
+          <label class="dg-field dg-field--wide">
+            <span>Interner Titel</span>
+            <input type="text" name="ig_title" maxlength="200" value="<?= View::escape((string) ($_POST['ig_title'] ?? $defaultTitle)) ?>">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Caption</span>
+            <textarea name="ig_caption" rows="5" maxlength="2200"><?= View::escape((string) ($_POST['ig_caption'] ?? '')) ?></textarea>
+            <span class="dg-field-hint">Max. ca. 2200 Zeichen. Nach dem Posten nicht mehr editierbar.</span>
+          </label>
+          <label class="dg-field dg-field--checkbox">
+            <span class="dg-checkbox">
+              <input type="checkbox" name="ig_share_to_feed" value="1"<?= !isset($_POST['ig_share_to_feed']) || !empty($_POST['ig_share_to_feed']) ? ' checked' : '' ?>>
+              <span>Auch im Feed zeigen</span>
+            </span>
+          </label>
+          <label class="dg-field">
+            <span>Geplant (optional)</span>
+            <input type="datetime-local" name="ig_scheduled_at" value="<?= View::escape((string) ($_POST['ig_scheduled_at'] ?? '')) ?>">
+            <span class="dg-field-hint">CRM startet Container/Publish zum Termin.</span>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">Als Reel veröffentlichen</button>
+        </div>
+      </form>
+    <?php endif; ?>
+  </section>
+
+  <?php if ($publishedInstagramJob !== null) : ?>
+    <section class="dg-panel dg-mb-4">
+      <h2 class="dg-subsection-title">Instagram</h2>
+      <p class="dg-muted">
+        Media-ID: <?= View::escape((string) ($publishedInstagramJob['external_id'] ?? '')) ?>
+        · Caption ist nach Publish fest (API).
+      </p>
+      <?php if ($instagramCanDelete) : ?>
+        <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>" class="dg-form" onsubmit="return confirm('Beitrag wirklich auf Instagram löschen?');">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="video_instagram_delete" value="1">
+          <input type="hidden" name="job_id" value="<?= (int) ($publishedInstagramJob['id'] ?? 0) ?>">
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--danger">Auf Instagram löschen</button>
+          </div>
+        </form>
+      <?php else : ?>
+        <p class="dg-muted">Löschen aus dem CRM nur mit Facebook-Login-Pfad.</p>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
 
   <?php if ($publishedLinkedinJob !== null) : ?>
     <section class="dg-panel dg-mb-4">

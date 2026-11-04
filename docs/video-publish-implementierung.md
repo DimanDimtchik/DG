@@ -222,19 +222,22 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 - [x] Selftest `bin/instagram-publish-selftest.php`
 - [ ] Manuell: Meta-App, Verification, Advanced Access, Connect (pro Tenant)
 
-### Phase 3-2 (Upload) — noch offen
+### Phase 3-2 (Upload) — Stand
 
-- [ ] `POST /{ig-user-id}/media` (`REELS`) → Status pollen → `media_publish`
-- [ ] Schedule nur CRM-deferred; Quota `content_publishing_limit`
-- [ ] Kein Caption-Edit nach Publish in UI
+- [x] `InstagramApiClient`: resumable Container + rupload **oder** `video_url` (signierte öffentliche URL)
+- [x] `InstagramReelsPublishService` + Queue (init → upload/wait → publish)
+- [x] Quota-Check `content_publishing_limit` (weich, wenn Endpoint fehlt)
+- [x] CRM-`scheduled_at`; Videos-UI Caption + Share-to-Feed; kein Caption-Edit nach Publish
+- [x] Delete nur Facebook-Login-Pfad
+- [ ] Live gegen Meta Dev/Advanced (nach App + Connect)
 
 ### Acceptance
 
 - [x] Connect-Scaffold — Code 3-1
-- [ ] Reel erscheint auf IG-Account — 3-2 + Live
-- [ ] Quota vor Job geprüft — 3-2
-- [ ] Kein Caption-Edit nach Publish in UI — 3-2
-- [ ] Advanced Access dokumentiert / manuell — Checkliste 3-1
+- [x] Container → media_publish Pipeline — Code 3-2; Live nach Connect
+- [x] Quota vor Job geprüft — Code (weich)
+- [x] Kein Caption-Edit nach Publish in UI — 3-2
+- [ ] Advanced Access / Live-Smoke — manuell
 
 ### Do NOT yet
 
@@ -244,7 +247,7 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 
 **Host:** Container-Polling Cron **W**; große Dateien + stabile Public-URL **V** besser.
 
-**Code 3-1:** Settings/OAuth · Selftest `bin/instagram-publish-selftest.php`.
+**Code:** 3-1 Settings/OAuth · 3-2 Reels Publish · Selftest `bin/instagram-publish-selftest.php` · Checkliste [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md).
 
 ---
 
