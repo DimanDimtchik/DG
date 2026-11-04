@@ -231,7 +231,12 @@ if ($path === '/rekrut' || str_starts_with($path, '/rekrut/')) {
 
     if ($rekrutRest === '') {
         $rekrutJobs = RecruitingPublicService::publishedJobs();
-        View::render('public/rekrut-list', compact('rekrutJobs', 'rekrutCompany'));
+        RecruitingPublicService::renderWithWebsiteChrome(
+            'public/rekrut-list',
+            compact('rekrutJobs', 'rekrutCompany'),
+            'Stellenangebote – ' . $rekrutCompany,
+            RecruitingPublicService::PAGE_SLUG
+        );
         exit;
     }
 
@@ -296,13 +301,20 @@ if ($path === '/rekrut' || str_starts_with($path, '/rekrut/')) {
         }
     }
 
-    View::render('public/rekrut-detail', compact(
-        'rekrutJob',
-        'rekrutCompany',
-        'rekrutForm',
-        'rekrutError',
-        'rekrutSuccess'
-    ));
+    $rekrutTitle = (string) ($rekrutJob['title'] ?? 'Stelle') . ' – ' . $rekrutCompany;
+    $rekrutPathSlug = RecruitingPublicService::PAGE_SLUG . '/' . (string) ($rekrutJob['slug'] ?? $rekrutRest);
+    RecruitingPublicService::renderWithWebsiteChrome(
+        'public/rekrut-detail',
+        compact(
+            'rekrutJob',
+            'rekrutCompany',
+            'rekrutForm',
+            'rekrutError',
+            'rekrutSuccess'
+        ),
+        $rekrutTitle,
+        $rekrutPathSlug
+    );
     exit;
 }
 

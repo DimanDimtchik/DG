@@ -18,7 +18,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 
 - [x] Menü HR: Stellen, Bewerber (`hr-stellen`, `hr-bewerber` — Platzhalter-Seiten)
 - [x] Daten: Migration `136_recruiting.sql` · `dg_job_postings` / `dg_applicants` / `dg_job_applications` (+ Events/Files) · CRM-CRUD
-- [x] Öffentlich: `/rekrut` Liste + Detail + Bewerbungsformular (auch im Wartungsmodus)
+- [x] Öffentlich: `/rekrut` Liste + Detail + Bewerbungsformular (auch im Wartungsmodus; Kopf/Navi/Fuß wie Website)
 - [x] Website → Seiten: Entwurf „Karriere / Bewerbungen“ (Slug `rekrut`) analog Stempeluhr — Live bleibt `/rekrut`
 - [x] Datenschutztext + Speicherdauer-Hinweis bei Bewerbung (Einwilligung Pflicht; Hinweis + Link Datenschutz)
 - [x] Löschung nach Frist (`RecruitingRetentionService::runIfDue` + optional `cron.php?job=recruiting-retention`; Absage/Zurückgezogen; laufende + hired ausnehmen)

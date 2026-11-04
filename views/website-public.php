@@ -15,13 +15,20 @@ $layout = $page['layout'] ?? ['rows' => []];
 $bookingPreview = !empty($previewMode);
 $needsBookingAssets = PublicBookingPageRenderer::pageNeedsAssets(is_array($page) ? $page : []);
 $siteName = View::escape($chrome['header_title'] ?: (string) App::config('crm_name'));
+$seoCanonical = trim((string) ($page['canonical_path'] ?? ''));
+if ($seoCanonical === '') {
+    $seoCanonical = (string) ($page['slug'] ?? '');
+}
 $seoPage = [
     'title' => (string) ($page['title'] ?? ''),
     'description' => (string) ($page['description'] ?? ''),
-    'url' => App::publicBaseUrl() . '/' . ltrim((string) ($page['slug'] ?? ''), '/'),
+    'url' => App::publicBaseUrl() . '/' . ltrim($seoCanonical, '/'),
     'type' => 'website',
 ];
-if (($page['slug'] ?? '') === 'startseite') {
+if (($page['slug'] ?? '') === 'startseite' && $seoCanonical === '') {
+    $seoPage['url'] = App::publicBaseUrl() . '/';
+}
+if ($seoCanonical === 'startseite' || $seoCanonical === '/') {
     $seoPage['url'] = App::publicBaseUrl() . '/';
 }
 $previewMode = !empty($previewMode);
@@ -351,6 +358,9 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
   <link rel="stylesheet" href="<?= View::escape(CalendarFrontendTheme::bookingStylesheetHref()) ?>">
   <style><?= CalendarFrontendTheme::inlineCss() ?></style>
 <?php endif; ?>
+<?php if (!empty($extraHeadHtml)) : ?>
+  <?= $extraHeadHtml ?>
+<?php endif; ?>
   <?= WebsiteAnalytics::headHtml() ?>
   <?php if (!empty($chrome['header_js'])): ?>
   <?= $chrome['header_js'] ?>
@@ -521,6 +531,9 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 </script>
 
 <main class="ws-main">
+<?php if (isset($mainContentHtml) && is_string($mainContentHtml) && $mainContentHtml !== '') : ?>
+<?= $mainContentHtml ?>
+<?php else : ?>
 <?php
 $wsInteractionCss = '';
 foreach (($layout['rows'] ?? []) as $ixRow) {
@@ -758,6 +771,7 @@ if ($wsInteractionCss !== '') :
     <?php endforeach; ?>
   </div>
 <?php endforeach; ?>
+<?php endif; ?>
 </main>
 
 <footer class="ws-footer">

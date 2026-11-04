@@ -1,6 +1,6 @@
 <?php
 /**
- * Öffentliche Stellenliste /rekrut
+ * Öffentliche Stellenliste /rekrut (Inhalt für Website-Chrome).
  *
  * @var list<array<string, mixed>> $rekrutJobs
  * @var string $rekrutCompany
@@ -8,16 +8,8 @@
 $jobs = is_array($rekrutJobs ?? null) ? $rekrutJobs : [];
 $company = (string) ($rekrutCompany ?? 'Karriere');
 $typeLabels = JobPostingRepository::employmentTypeOptions();
-$pageTitle = 'Stellenangebote – ' . $company;
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<?php View::render('partials/head', compact('pageTitle')); ?>
-<meta name="robots" content="index,follow">
-</head>
-<body>
-<div class="dg-wrap">
+<div class="dg-wrap ws-rekrut">
   <header class="dg-page-header">
     <p class="dg-muted"><?= View::escape($company) ?></p>
     <h1 class="dg-page-title">Offene Stellen</h1>
@@ -56,5 +48,3 @@ $pageTitle = 'Stellenangebote – ' . $company;
     </div>
   <?php endif; ?>
 </div>
-</body>
-</html>

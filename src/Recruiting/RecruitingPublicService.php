@@ -210,4 +210,44 @@ final class RecruitingPublicService
 
         return (string) (App::config('crm_name') ?: 'Karriere');
     }
+
+    /**
+     * Öffentliche /rekrut-Seiten im Website-Chrome (Kopf/Navi/Fuß) wie normale CMS-Seiten.
+     *
+     * @param array<string, mixed> $viewVars
+     */
+    public static function renderWithWebsiteChrome(string $view, array $viewVars, string $title, string $pathSlug = self::PAGE_SLUG): void
+    {
+        ob_start();
+        View::render($view, $viewVars);
+        $mainContentHtml = (string) ob_get_clean();
+
+        $fontFamily = class_exists('AppearanceSettings')
+            ? AppearanceSettings::uiFontFamily()
+            : 'system-ui, sans-serif';
+        $themeVars = class_exists('CrmFrontendTheme')
+            ? CrmFrontendTheme::rootDeclarations()
+            : '';
+
+        $extraHeadHtml = '<link rel="stylesheet" href="' . htmlspecialchars(Asset::crmStylesheetUrl(), ENT_QUOTES, 'UTF-8') . '">'
+            . '<style>:root { --dg-font: ' . htmlspecialchars($fontFamily, ENT_QUOTES, 'UTF-8') . '; ' . $themeVars . ' }'
+            . '.ws-main .ws-rekrut.dg-wrap { max-width: none; margin: 0; padding: 0; }</style>';
+
+        // Menü-Aktivierung über Slug „rekrut“; Canonical behält Detail-Pfad /rekrut/{slug}.
+        View::render('website-public', [
+            'page' => [
+                'title' => $title,
+                'slug' => self::PAGE_SLUG,
+                'canonical_path' => $pathSlug,
+                'status' => WebsitePageRepository::STATUS_PUBLISHED,
+                'description' => '',
+                'layout' => ['version' => 1, 'rows' => []],
+            ],
+            'mainContentHtml' => $mainContentHtml,
+            'extraHeadHtml' => $extraHeadHtml,
+            'chrome' => WebsiteSettings::chrome(),
+            'menu' => WebsiteSettings::publicMenu(),
+            'design' => WebsiteSettings::design(),
+        ]);
+    }
 }

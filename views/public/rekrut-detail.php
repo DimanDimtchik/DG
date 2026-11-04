@@ -1,6 +1,6 @@
 <?php
 /**
- * Öffentliche Stellen-Detailseite + Bewerbungsformular.
+ * Öffentliche Stellen-Detailseite + Bewerbungsformular (Inhalt für Website-Chrome).
  *
  * @var array<string, mixed> $rekrutJob
  * @var string $rekrutCompany
@@ -19,19 +19,11 @@ $loc = trim((string) ($job['location'] ?? ''));
 $slug = (string) ($job['slug'] ?? '');
 $jobId = (int) ($job['id'] ?? 0);
 $title = (string) ($job['title'] ?? 'Stelle');
-$pageTitle = $title . ' – ' . $company;
 $privacyUrl = RecruitingPublicService::privacyPageUrl();
 $retentionHint = RecruitingPublicService::publicRetentionHint();
 $consentLabel = RecruitingPublicService::publicConsentLabel();
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<?php View::render('partials/head', compact('pageTitle')); ?>
-<meta name="robots" content="index,follow">
-</head>
-<body>
-<div class="dg-wrap">
+<div class="dg-wrap ws-rekrut">
   <header class="dg-page-header">
     <?php
       View::partial('partials/back-nav', [
@@ -136,5 +128,3 @@ $consentLabel = RecruitingPublicService::publicConsentLabel();
     <?php endif; ?>
   </section>
 </div>
-</body>
-</html>
