@@ -16,6 +16,8 @@ $applicationFiles = is_array($applicationFiles ?? null) ? $applicationFiles : []
 $statusLabels = JobApplicationRepository::statusOptions();
 $sourceLabels = JobApplicationRepository::sourceOptions();
 $fileKindLabels = RecruitingFileStorage::kindOptions();
+$linkedContactId = (int) ($applicationForm['contact_id'] ?? 0);
+$isHired = (string) ($applicationForm['status'] ?? '') === JobApplicationRepository::STATUS_HIRED;
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -28,7 +30,7 @@ $fileKindLabels = RecruitingFileStorage::kindOptions();
       ]);
     ?>
     <h1 class="dg-page-title"><?= $isEdit ? 'Bewerbung bearbeiten' : 'Neue Bewerbung' ?></h1>
-    <p class="dg-lead">Bewerberdaten, Status-Pipeline und Unterlagen.</p>
+    <p class="dg-lead">Bewerberdaten, Status-Pipeline und Unterlagen. Status „Eingestellt“ legt den Mitarbeiter-Kontakt an bzw. verknüpft ihn.</p>
   </header>
 
   <?php if (!empty($formError)) : ?>
@@ -112,13 +114,26 @@ $fileKindLabels = RecruitingFileStorage::kindOptions();
         <label class="dg-field">
           <span>Löschen ab (Datum)</span>
           <input type="date" name="retention_until" value="<?= View::escape((string) ($applicationForm['retention_until'] ?? '')) ?>">
-          <span class="dg-field-hint">Bei Absage standardmäßig <?= (int) JobApplicationRepository::DEFAULT_RETENTION_MONTHS ?> Monate — Cron folgt später.</span>
+          <span class="dg-field-hint">Bei Absage standardmäßig <?= (int) JobApplicationRepository::DEFAULT_RETENTION_MONTHS ?> Monate; automatische Löschung danach.</span>
         </label>
         <label class="dg-field dg-field--wide">
           <span>Anschreiben / Freitext</span>
           <textarea name="cover_letter" rows="6"><?= View::escape((string) ($applicationForm['cover_letter'] ?? '')) ?></textarea>
         </label>
       </div>
+      <?php if ($isEdit && ($isHired || $linkedContactId > 0)) : ?>
+        <div class="dg-panel dg-mt-3">
+          <h3 class="dg-subsection-title">Mitarbeiter-Kontakt</h3>
+          <?php if ($linkedContactId > 0) : ?>
+            <p class="dg-muted">Verknüpft mit Kontakt #<?= $linkedContactId ?>.</p>
+            <div class="dg-btn-row">
+              <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=edit&amp;id=<?= $linkedContactId ?>">Mitarbeiter öffnen</a>
+            </div>
+          <?php else : ?>
+            <p class="dg-muted">Noch kein Kontakt verknüpft — Speichern mit Status „Eingestellt“ legt ihn an.</p>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
     </section>
 
     <?php if ($isEdit) : ?>

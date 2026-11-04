@@ -156,6 +156,7 @@ spl_autoload_register(static function (string $class): void {
         'RecruitingFileStorage' => '/src/Recruiting/RecruitingFileStorage.php',
         'RecruitingPublicService' => '/src/Recruiting/RecruitingPublicService.php',
         'RecruitingRetentionService' => '/src/Recruiting/RecruitingRetentionService.php',
+        'RecruitingHireService' => '/src/Recruiting/RecruitingHireService.php',
         'CountryCodes' => '/src/NumberRange/CountryCodes.php',
         'InvoiceNumberTokens' => '/src/NumberRange/InvoiceNumberTokens.php',
         'InvoiceNumberBuilder' => '/src/NumberRange/InvoiceNumberBuilder.php',

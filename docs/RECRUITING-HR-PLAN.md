@@ -21,7 +21,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 - [x] Öffentlich: `/rekrut` Liste + Detail + Bewerbungsformular (auch im Wartungsmodus)
 - [x] Datenschutztext + Speicherdauer-Hinweis bei Bewerbung (Einwilligung Pflicht; Hinweis + Link Datenschutz)
 - [x] Löschung nach Frist (`RecruitingRetentionService::runIfDue` + optional `cron.php?job=recruiting-retention`; Absage/Zurückgezogen; laufende + hired ausnehmen)
-- [ ] Zusage → Kontakt/Mitarbeiter (bestehendes HR-Modell nutzen)
+- [x] Zusage → Kontakt/Mitarbeiter (`RecruitingHireService` bei Status „Eingestellt“ → `dg_contacts` / Eigenmitarbeiter; Link in Bewerberakte)
 
 ### B — Anzeigen-Export
 
@@ -44,4 +44,4 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 
 ## Nächster Schritt
 
-Nur **Phase A** spezifizieren/umsetzen, wenn Priorität freigegeben.
+**Phase A erledigt.** Als Nächstes Phase B (Anzeigen-Export Xing/LinkedIn) oder Projekt-Prioritäten (UI/Hetzner/Lohn).

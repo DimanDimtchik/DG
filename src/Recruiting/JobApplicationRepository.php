@@ -172,6 +172,7 @@ final class JobApplicationRepository
             'source' => self::SOURCE_MANUAL,
             'retention_until' => '',
             'privacy_consent' => '0',
+            'contact_id' => '0',
         ];
     }
 
@@ -199,6 +200,7 @@ final class JobApplicationRepository
             'source' => self::sanitizeSource((string) ($row['source'] ?? self::SOURCE_MANUAL)),
             'retention_until' => (string) ($row['retention_until'] ?? ''),
             'privacy_consent' => !empty($row['applicant_privacy_consent_at']) ? '1' : '0',
+            'contact_id' => (string) ((int) ($row['applicant_contact_id'] ?? 0)),
         ];
     }
 
@@ -231,10 +233,13 @@ final class JobApplicationRepository
             'phone' => (string) ($input['phone'] ?? ''),
             'city' => (string) ($input['city'] ?? ''),
             'notes' => (string) ($input['notes'] ?? ''),
-            'contact_id' => (int) ($input['contact_id'] ?? 0),
             'retention_until' => (string) ($input['applicant_retention_until'] ?? ''),
             'privacy_consent_at' => '',
         ];
+        // contact_id nur setzen, wenn explizit übergeben — sonst bestehende Verknüpfung behalten
+        if (array_key_exists('contact_id', $input)) {
+            $applicantPayload['contact_id'] = (int) $input['contact_id'];
+        }
         if (!empty($input['privacy_consent'])) {
             $applicantPayload['privacy_consent_at'] = date('Y-m-d H:i:s');
         } elseif ($applicantId > 0) {
@@ -328,6 +333,10 @@ final class JobApplicationRepository
                 );
             }
 
+            if ($status === self::STATUS_HIRED) {
+                self::syncHire($id, $userId);
+            }
+
             return $id;
         }
 
@@ -375,7 +384,19 @@ final class JobApplicationRepository
         $newId = (int) $pdo->lastInsertId();
         self::addEvent($newId, 'created', null, $status, 'Bewerbung erfasst', $userId);
 
+        if ($status === self::STATUS_HIRED) {
+            self::syncHire($newId, $userId);
+        }
+
         return $newId;
+    }
+
+    private static function syncHire(int $applicationId, ?int $userId): void
+    {
+        if (!RecruitingHireService::contactsReady()) {
+            return;
+        }
+        RecruitingHireService::ensureEmployeeFromApplication($applicationId, $userId);
     }
 
     public static function addEvent(

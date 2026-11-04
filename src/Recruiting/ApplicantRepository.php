@@ -103,6 +103,10 @@ final class ApplicantRepository
             }
         }
 
+        $contactId = array_key_exists('contact_id', $input)
+            ? max(0, (int) $input['contact_id'])
+            : null;
+
         $fields = [
             'email' => mb_substr($email, 0, 191),
             'first_name' => $first,
@@ -110,17 +114,20 @@ final class ApplicantRepository
             'phone' => mb_substr(trim((string) ($input['phone'] ?? '')), 0, 64),
             'city' => mb_substr(trim((string) ($input['city'] ?? '')), 0, 120),
             'notes' => trim((string) ($input['notes'] ?? '')),
-            'contact_id' => max(0, (int) ($input['contact_id'] ?? 0)),
             'privacy_consent_at' => self::nullableDateTime($input['privacy_consent_at'] ?? null),
             'retention_until' => self::nullableDate($input['retention_until'] ?? null),
         ];
 
         $pdo = Database::pdo();
         if ($id !== null && $id > 0) {
-            if (self::find($id) === null) {
+            $existing = self::find($id);
+            if ($existing === null) {
                 throw new InvalidArgumentException('Bewerber nicht gefunden.');
             }
             $fields['id'] = $id;
+            $fields['contact_id'] = $contactId !== null
+                ? $contactId
+                : max(0, (int) ($existing['contact_id'] ?? 0));
             $stmt = $pdo->prepare(
                 'UPDATE dg_applicants SET
                     email = :email, first_name = :first_name, last_name = :last_name,
@@ -132,6 +139,8 @@ final class ApplicantRepository
 
             return $id;
         }
+
+        $fields['contact_id'] = $contactId ?? 0;
 
         $stmt = $pdo->prepare(
             'INSERT INTO dg_applicants (
@@ -145,6 +154,20 @@ final class ApplicantRepository
         $stmt->execute($fields);
 
         return (int) $pdo->lastInsertId();
+    }
+
+    public static function linkContact(int $applicantId, int $contactId): void
+    {
+        self::ensureReady();
+        if ($applicantId < 1 || $contactId < 1 || !Database::isConfigured() || !self::tableReady()) {
+            return;
+        }
+        if (self::find($applicantId) === null) {
+            throw new InvalidArgumentException('Bewerber nicht gefunden.');
+        }
+        Database::pdo()->prepare(
+            'UPDATE dg_applicants SET contact_id = :cid WHERE id = :id'
+        )->execute(['cid' => $contactId, 'id' => $applicantId]);
     }
 
     public static function normalizeEmail(string $email): string

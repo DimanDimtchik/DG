@@ -45,6 +45,7 @@ require dirname(__DIR__) . '/src/Recruiting/JobApplicationRepository.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingFileStorage.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingPublicService.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingRetentionService.php';
+require dirname(__DIR__) . '/src/Recruiting/RecruitingHireService.php';
 
 function assertRecruit(bool $ok, string $msg): void
 {
@@ -340,5 +341,27 @@ assertRecruit(
     RecruitingRetentionService::listDueApplications('2026-11-04') === [],
     'Keine weiteren fälligen Absagen'
 );
+
+assertRecruit(!RecruitingHireService::contactsReady(), 'Hire ohne dg_contacts überspringt');
+
+$keepApplicantId = (int) (JobApplicationRepository::find($keepAppId)['applicant_id'] ?? 0);
+ApplicantRepository::linkContact($keepApplicantId, 99);
+$linked = ApplicantRepository::find($keepApplicantId);
+assertRecruit((int) ($linked['contact_id'] ?? 0) === 99, 'linkContact setzt contact_id');
+ApplicantRepository::save([
+    'email' => 'active@example.com',
+    'first_name' => 'Akt',
+    'last_name' => 'Iv',
+    'phone' => '',
+    'city' => '',
+    'notes' => 'update ohne contact_id',
+    'privacy_consent_at' => date('Y-m-d H:i:s'),
+], $keepApplicantId);
+$linked2 = ApplicantRepository::find($keepApplicantId);
+assertRecruit((int) ($linked2['contact_id'] ?? 0) === 99, 'contact_id bleibt ohne explizites Feld');
+
+$formHired = JobApplicationRepository::formForId($hiredAppId);
+assertRecruit(($formHired['status'] ?? '') === 'hired', 'Formular Status hired');
+assertRecruit(array_key_exists('contact_id', $formHired), 'Formular enthält contact_id');
 
 echo "Recruiting Phase-A Selftest bestanden.\n";

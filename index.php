@@ -3326,7 +3326,17 @@ switch ($path) {
                             (string) ($_POST['file_kind'] ?? RecruitingFileStorage::KIND_OTHER)
                         );
                     }
-                    Flash::set('success', 'Bewerbung gespeichert.');
+                    $flashMsg = 'Bewerbung gespeichert.';
+                    $savedRow = JobApplicationRepository::find($savedId);
+                    if (
+                        is_array($savedRow)
+                        && (string) ($savedRow['status'] ?? '') === JobApplicationRepository::STATUS_HIRED
+                        && (int) ($savedRow['applicant_contact_id'] ?? 0) > 0
+                    ) {
+                        $cid = (int) $savedRow['applicant_contact_id'];
+                        $flashMsg = 'Bewerbung gespeichert. Mitarbeiter-Kontakt #' . $cid . ' verknüpft.';
+                    }
+                    Flash::set('success', $flashMsg);
                     header('Location: /app?page=hr-bewerber-form&action=edit&id=' . $savedId, true, 302);
                     exit;
                 } catch (Throwable $e) {
