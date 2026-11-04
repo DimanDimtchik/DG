@@ -81,6 +81,15 @@ final class MigrationRunner
                     DepartmentRepository::migrateMembersSchemaToContacts($pdo);
                 }
 
+                // 024 setzt Modulrechte auf dept-buchhaltung — Abteilung muss vorher existieren
+                if ($id === '024_chart_of_accounts.sql') {
+                    try {
+                        DepartmentRepository::ensureMissingDefaults();
+                    } catch (Throwable) {
+                        // Tabelle/Schema ggf. noch nicht bereit — SQL ist jetzt FK-sicher
+                    }
+                }
+
                 self::executeFile($pdo, $file);
                 $stmt = $pdo->prepare('INSERT INTO dg_migrations (id) VALUES (:id)');
                 $stmt->execute(['id' => $id]);
@@ -88,6 +97,15 @@ final class MigrationRunner
             }
 
             self::$completedThisRequest = true;
+
+            // Akademie: Kern-Videokatalog als Module nachziehen (MP4 optional)
+            try {
+                if (class_exists('AcademyTrainingCatalog')) {
+                    AcademyTrainingCatalog::ensureAcademyModules();
+                }
+            } catch (Throwable) {
+                // Soft: Katalog kann später per Picker/CRM nachgezogen werden
+            }
 
             // Z7: Stempeluhr-Website-Seite als Entwurf (auch Alt-Installationen)
             try {

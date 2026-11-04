@@ -25,6 +25,17 @@ WHERE NOT EXISTS (
     WHERE m.department_id = d.id AND m.module_key = 'buchhaltung'
 );
 
+-- Nur wenn Standard-Abteilung schon existiert (Frische Installs: Abteilungen kommen danach via ensureMissingDefaults)
 INSERT INTO dg_department_module_access (department_id, module_key, access_level)
-VALUES ('dept-buchhaltung', 'buchhaltung', 'full')
-ON DUPLICATE KEY UPDATE access_level = 'full';
+SELECT d.id, 'buchhaltung', 'full'
+FROM dg_departments d
+WHERE d.id = 'dept-buchhaltung'
+  AND NOT EXISTS (
+    SELECT 1 FROM dg_department_module_access m
+    WHERE m.department_id = d.id AND m.module_key = 'buchhaltung'
+  );
+
+UPDATE dg_department_module_access m
+INNER JOIN dg_departments d ON d.id = m.department_id AND d.id = 'dept-buchhaltung'
+SET m.access_level = 'full'
+WHERE m.module_key = 'buchhaltung';

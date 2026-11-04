@@ -20,6 +20,8 @@ Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** **UI/CSS-Rest** (siehe oben) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link).
+
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 
 **Lohn (Produkt):** **D0 Stufe A** = normale L+G wie Lexware Office (SV vorerst Portal) → **B** ITSG-Automatik → **C** Baulohn-Modul (später, aber vorgesehen). IQ-SOKA-Jahresprüfung ist nur Betriebsakte, kein Produkt-Stopper. Detailkonzept: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md). **Umsetzung:** [`LOHNABRECHNUNG-IMPLEMENTIERUNG.md`](LOHNABRECHNUNG-IMPLEMENTIERUNG.md) — **L0–L10c ✅** · **G4 ✅** · **LB0a ✅** · **master+Deploy** · **G3 offen**. **UI 2026-10-30:** Scan+Jargon+Deploy ✅ · **offen nächste Session: CSS/Spacing-Probleme.**

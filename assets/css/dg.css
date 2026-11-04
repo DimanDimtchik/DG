@@ -6756,11 +6756,15 @@ body.dg-login-page {
   font-family: var(--dg-font);
   font-weight: 700;
   line-height: 1.3;
+  font-size: var(--ws-heading-base);
 }
 
-.dg-website-block__heading--h1 { font-size: 1.55rem; }
-.dg-website-block__heading--h2 { font-size: 1.25rem; }
-.dg-website-block__heading--h3 { font-size: 1.05rem; }
+.dg-website-block__heading--h1 { --ws-heading-base: 1.55rem; }
+.dg-website-block__heading--h2 { --ws-heading-base: 1.25rem; }
+.dg-website-block__heading--h3 { --ws-heading-base: 1.05rem; }
+.dg-website-block__heading--h4 { --ws-heading-base: 0.98rem; }
+.dg-website-block__heading--h5 { --ws-heading-base: 0.92rem; }
+.dg-website-block__heading--h6 { --ws-heading-base: 0.86rem; }
 
 .dg-website-block__text {
   margin: 0;
@@ -6768,6 +6772,50 @@ body.dg-login-page {
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.dg-website-block__list {
+  margin: 0;
+  padding-left: 1.4rem;
+  color: var(--dg-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dg-website-block__list li + li {
+  margin-top: var(--dg-space-1);
+}
+
+.dg-website-block__list.dg-website-block__list--custom {
+  list-style: none;
+  padding-left: 0;
+}
+
+.dg-website-block__list.dg-website-block__list--custom > li {
+  position: relative;
+  padding-left: 1.55em;
+}
+
+.dg-website-block__list.dg-website-block__list--custom > li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  line-height: inherit;
+}
+
+.dg-website-block__list--m-heart > li::before { content: "♥"; color: var(--dg-primary, #2563eb); }
+.dg-website-block__list--m-arrow > li::before { content: "→"; }
+.dg-website-block__list--m-arrow-bold > li::before { content: "➤"; color: var(--dg-primary, #2563eb); }
+.dg-website-block__list--m-diamond > li::before { content: "◆"; }
+.dg-website-block__list--m-check > li::before { content: "✓"; color: #15803d; }
+.dg-website-block__list--m-star > li::before { content: "★"; color: #ca8a04; }
+
+.dg-website-block__list--m-image > li::before {
+  content: "";
+  top: 0.2em;
+  width: 1.1em;
+  height: 1.1em;
+  background: var(--ws-list-marker-image) center / contain no-repeat;
 }
 
 .dg-website-block__image {
