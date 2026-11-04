@@ -3170,6 +3170,90 @@ switch ($path) {
             }
         }
 
+        // POST: Recruiting Stellen
+        if (
+            $page === 'hr-stelle-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'hr-stelle-form')
+            && isset($_POST['job_posting_save'])
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=hr-stellen', true, 302);
+                exit;
+            }
+            $editJobId = (int) ($_POST['id'] ?? 0);
+            try {
+                $savedId = JobPostingRepository::save($_POST, $editJobId > 0 ? $editJobId : null, $user->id);
+                Flash::set('success', 'Stelle gespeichert.');
+                header('Location: /app?page=hr-stelle-form&action=edit&id=' . $savedId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header(
+                    'Location: ' . ($editJobId > 0
+                        ? '/app?page=hr-stelle-form&action=edit&id=' . $editJobId
+                        : '/app?page=hr-stelle-form&action=new'),
+                    true,
+                    302
+                );
+                exit;
+            }
+        }
+
+        // POST: Recruiting Bewerbung
+        if (
+            $page === 'hr-bewerber-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'hr-bewerber-form')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=hr-bewerber', true, 302);
+                exit;
+            }
+            $editAppId = (int) ($_POST['id'] ?? 0);
+            if (isset($_POST['recruiting_file_delete']) && $editAppId > 0) {
+                try {
+                    RecruitingFileStorage::delete((int) $_POST['recruiting_file_delete'], $user->id);
+                    Flash::set('success', 'Datei gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=hr-bewerber-form&action=edit&id=' . $editAppId, true, 302);
+                exit;
+            }
+            if (isset($_POST['job_application_save'])) {
+                try {
+                    $savedId = JobApplicationRepository::save($_POST, $editAppId > 0 ? $editAppId : null, $user->id);
+                    $uploadField = isset($_FILES['recruiting_files']) && is_array($_FILES['recruiting_files'])
+                        ? $_FILES['recruiting_files']
+                        : [];
+                    if ($uploadField !== []) {
+                        RecruitingFileStorage::storeUploads(
+                            $savedId,
+                            $uploadField,
+                            $user->id,
+                            (string) ($_POST['file_kind'] ?? RecruitingFileStorage::KIND_OTHER)
+                        );
+                    }
+                    Flash::set('success', 'Bewerbung gespeichert.');
+                    header('Location: /app?page=hr-bewerber-form&action=edit&id=' . $savedId, true, 302);
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header(
+                        'Location: ' . ($editAppId > 0
+                            ? '/app?page=hr-bewerber-form&action=edit&id=' . $editAppId
+                            : '/app?page=hr-bewerber-form&action=new'),
+                        true,
+                        302
+                    );
+                    exit;
+                }
+            }
+        }
+
         // POST: Einstellungen E-Mail / SMTP
         if (
             $page === 'einstellungen'
@@ -6314,17 +6398,79 @@ $legalProductsConfig = LegalProductSettings::config();
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'hr-stellen' && MenuRegistry::canAccess($user, 'hr-stellen')) {
+            MigrationRunner::runPending();
+            $jobPostings = JobPostingRepository::listAll();
+            $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/hr-stellen';
             $title = 'Stellen';
             $currentPage = 'hr-stellen';
         } elseif ($page === 'hr-stellen') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'hr-stelle-form' && MenuRegistry::canAccess($user, 'hr-stelle-form')) {
+            MigrationRunner::runPending();
+            $action = trim((string) ($_GET['action'] ?? 'new'));
+            $jobPostingId = (int) ($_GET['id'] ?? 0);
+            $departmentOptions = DepartmentRepository::optionsForSelect();
+            $formError = $formError ?? null;
+            if ($action === 'edit' && $jobPostingId > 0) {
+                if (JobPostingRepository::find($jobPostingId) === null) {
+                    Flash::set('error', 'Stelle nicht gefunden.');
+                    header('Location: /app?page=hr-stellen', true, 302);
+                    exit;
+                }
+                $jobForm = JobPostingRepository::formForId($jobPostingId);
+                $title = 'Stelle bearbeiten';
+            } else {
+                $jobPostingId = null;
+                $jobForm = JobPostingRepository::emptyForm();
+                $title = 'Neue Stelle';
+            }
+            $contentTemplate = 'modules/hr-stelle-form';
+            $currentPage = 'hr-stellen';
+        } elseif ($page === 'hr-stelle-form') {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'hr-bewerber' && MenuRegistry::canAccess($user, 'hr-bewerber')) {
+            MigrationRunner::runPending();
+            $jobApplications = JobApplicationRepository::listAll();
+            $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/hr-bewerber';
             $title = 'Bewerber';
             $currentPage = 'hr-bewerber';
         } elseif ($page === 'hr-bewerber') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'hr-bewerber-form' && MenuRegistry::canAccess($user, 'hr-bewerber-form')) {
+            MigrationRunner::runPending();
+            $action = trim((string) ($_GET['action'] ?? 'new'));
+            $applicationId = (int) ($_GET['id'] ?? 0);
+            $jobPostingOptions = JobPostingRepository::optionsForSelect();
+            $applicationEvents = [];
+            $applicationFiles = [];
+            $formError = $formError ?? null;
+            if ($action === 'edit' && $applicationId > 0) {
+                if (JobApplicationRepository::find($applicationId) === null) {
+                    Flash::set('error', 'Bewerbung nicht gefunden.');
+                    header('Location: /app?page=hr-bewerber', true, 302);
+                    exit;
+                }
+                $applicationForm = JobApplicationRepository::formForId($applicationId);
+                $applicationEvents = JobApplicationRepository::events($applicationId);
+                $applicationFiles = RecruitingFileStorage::listForApplication($applicationId);
+                $title = 'Bewerbung bearbeiten';
+            } else {
+                $applicationId = null;
+                $applicationForm = JobApplicationRepository::emptyForm();
+                $prefillJob = (int) ($_GET['job_posting_id'] ?? 0);
+                if ($prefillJob > 0) {
+                    $applicationForm['job_posting_id'] = (string) $prefillJob;
+                }
+                $title = 'Neue Bewerbung';
+            }
+            $contentTemplate = 'modules/hr-bewerber-form';
+            $currentPage = 'hr-bewerber';
+        } elseif ($page === 'hr-bewerber-form') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {

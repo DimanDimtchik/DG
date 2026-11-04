@@ -17,7 +17,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 ### A — CRM + eigene Bewerbungsseite (ohne Plattform-API)
 
 - [x] Menü HR: Stellen, Bewerber (`hr-stellen`, `hr-bewerber` — Platzhalter-Seiten)
-- [ ] Daten: `job_postings`, `applicants` / Bewerbungen, Status-Pipeline, Dateien
+- [x] Daten: Migration `136_recruiting.sql` · `dg_job_postings` / `dg_applicants` / `dg_job_applications` (+ Events/Files) · CRM-CRUD
 - [ ] Öffentlich: `/rekrut` Liste + Detail + Registrierung/Bewerbung (pro Instanz)
 - [ ] Datenschutztext + Speicherdauer-Hinweis bei Bewerbung
 - [ ] Cron: Löschung nach Frist (Absage/Ende Verfahren; laufende Verfahren ausnehmen)

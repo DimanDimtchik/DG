@@ -967,7 +967,9 @@ final class MenuRegistry
             || $slug === 'hr-teams'
             || $slug === 'hr-team-form'
             || $slug === 'hr-stellen'
+            || $slug === 'hr-stelle-form'
             || $slug === 'hr-bewerber'
+            || $slug === 'hr-bewerber-form'
         ) {
             return TeamAccess::canView($user);
         }
