@@ -30,7 +30,7 @@ $isHired = (string) ($applicationForm['status'] ?? '') === JobApplicationReposit
       ]);
     ?>
     <h1 class="dg-page-title"><?= $isEdit ? 'Bewerbung bearbeiten' : 'Neue Bewerbung' ?></h1>
-    <p class="dg-lead">Bewerberdaten, Status-Pipeline und Unterlagen. Status „Eingestellt“ legt den Mitarbeiter-Kontakt an bzw. verknüpft ihn.</p>
+    <p class="dg-lead">Person, Status und Unterlagen. Mit Status „Eingestellt“ wird der Mitarbeiter-Kontakt angelegt oder verknüpft.</p>
   </header>
 
   <?php if (!empty($formError)) : ?>
@@ -213,7 +213,7 @@ $isHired = (string) ($applicationForm['status'] ?? '') === JobApplicationReposit
             <?php foreach ($applicationEvents as $event) : ?>
               <tr>
                 <td><?= View::escape((string) ($event['created_at'] ?? '')) ?></td>
-                <td><?= View::escape((string) ($event['event_kind'] ?? '')) ?></td>
+                <td><?= View::escape(JobApplicationRepository::eventKindLabel((string) ($event['event_kind'] ?? ''))) ?></td>
                 <td><?= View::escape((string) ($event['body'] ?? '')) ?></td>
               </tr>
             <?php endforeach; ?>

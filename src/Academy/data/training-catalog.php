@@ -413,6 +413,18 @@ return array (
   ),
   34 => 
   array (
+    'key' => 'recruiting/recruiting-ueberblick',
+    'folder' => 'recruiting',
+    'slug' => 'recruiting-ueberblick',
+    'title' => 'Recruiting — Überblick',
+    'duration_sec' => 86,
+    'video_path' => 'media/training/recruiting/recruiting-ueberblick.mp4',
+    'subtitle_vtt_path' => 'media/training/recruiting/recruiting-ueberblick.vtt',
+    'locale' => 'de',
+    'voice' => 'de-DE-KatjaNeural',
+  ),
+  35 => 
+  array (
     'key' => 'statistik/statistik-ueberblick',
     'folder' => 'statistik',
     'slug' => 'statistik-ueberblick',
@@ -423,7 +435,7 @@ return array (
     'locale' => 'de',
     'voice' => 'de-DE-KatjaNeural',
   ),
-  35 => 
+  36 => 
   array (
     'key' => 'steuerberater-export/steuerberater-export-ueberblick',
     'folder' => 'steuerberater-export',
@@ -435,7 +447,7 @@ return array (
     'locale' => 'de',
     'voice' => 'de-DE-KatjaNeural',
   ),
-  36 => 
+  37 => 
   array (
     'key' => 'terminkalender/terminkalender-neuer-termin',
     'folder' => 'terminkalender',
@@ -447,7 +459,7 @@ return array (
     'locale' => 'de',
     'voice' => 'de-DE-KatjaNeural',
   ),
-  37 => 
+  38 => 
   array (
     'key' => 'terminkalender/terminkalender-online-stellen',
     'folder' => 'terminkalender',
@@ -459,7 +471,7 @@ return array (
     'locale' => 'de',
     'voice' => 'de-DE-KatjaNeural',
   ),
-  38 => 
+  39 => 
   array (
     'key' => 'terminkalender/terminkalender-online-buchung',
     'folder' => 'terminkalender',
@@ -471,7 +483,7 @@ return array (
     'locale' => 'de',
     'voice' => 'de-DE-KatjaNeural',
   ),
-  39 => 
+  40 => 
   array (
     'key' => 'terminkalender/terminkalender-ueberblick',
     'folder' => 'terminkalender',

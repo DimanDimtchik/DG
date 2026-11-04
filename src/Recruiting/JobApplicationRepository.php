@@ -83,6 +83,28 @@ final class JobApplicationRepository
     }
 
     /**
+     * @return array<string, string>
+     */
+    public static function eventKindOptions(): array
+    {
+        return [
+            'created' => 'Erfasst',
+            'status' => 'Status',
+            'hire' => 'Einstellung',
+            'mail_hr' => 'E-Mail Personal',
+            'mail_applicant' => 'E-Mail Bewerber',
+            'note' => 'Notiz',
+        ];
+    }
+
+    public static function eventKindLabel(string $kind): string
+    {
+        $opts = self::eventKindOptions();
+
+        return $opts[$kind] ?? $kind;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public static function listAll(int $limit = 200): array

@@ -13,7 +13,7 @@ $statusLabels = JobApplicationRepository::statusOptions();
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Bewerber</h1>
-      <p class="dg-lead">Bewerbungen mit Status-Pipeline und Unterlagen.</p>
+      <p class="dg-lead">Bewerbungen mit Status und Unterlagen.</p>
     </div>
     <div class="dg-page-header__actions">
       <a class="dg-button dg-button--primary" href="/app?page=hr-bewerber-form&amp;action=new">Neue Bewerbung</a>

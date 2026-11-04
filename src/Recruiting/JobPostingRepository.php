@@ -116,6 +116,31 @@ final class JobPostingRepository
     /**
      * @return array<string, string>
      */
+    public static function publishEventKindOptions(): array
+    {
+        return [
+            'queued' => 'Vorgemerkt',
+            'published' => 'Veröffentlicht',
+            'updated' => 'Aktualisiert',
+            'withdrawn' => 'Zurückgezogen',
+            'error' => 'Fehler',
+            'skipped' => 'Übersprungen',
+            'note' => 'Hinweis',
+            'flag' => 'Kennzeichnung',
+            'info' => 'Hinweis',
+        ];
+    }
+
+    public static function publishEventKindLabel(string $kind): string
+    {
+        $opts = self::publishEventKindOptions();
+
+        return $opts[$kind] ?? $kind;
+    }
+
+    /**
+     * @return array<string, string>
+     */
     public static function publishStatusOptions(): array
     {
         return [

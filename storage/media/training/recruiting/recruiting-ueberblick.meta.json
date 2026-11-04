@@ -1,0 +1,36 @@
+{
+  "title": "Recruiting — Überblick",
+  "locale": "de",
+  "voice": "de-DE-KatjaNeural",
+  "duration_sec": 86.0,
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "duration_sec": 9.4
+    },
+    {
+      "key": "nav-hr",
+      "duration_sec": 11.4
+    },
+    {
+      "key": "stellen-liste",
+      "duration_sec": 12.96
+    },
+    {
+      "key": "stelle-form",
+      "duration_sec": 16.08
+    },
+    {
+      "key": "bewerber-liste",
+      "duration_sec": 9.44
+    },
+    {
+      "key": "bewerber-form",
+      "duration_sec": 15.84
+    },
+    {
+      "key": "abschluss",
+      "duration_sec": 10.84
+    }
+  ]
+}

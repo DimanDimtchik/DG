@@ -34,14 +34,11 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
       ]);
     ?>
     <h1 class="dg-page-title"><?= $isEdit ? 'Stelle bearbeiten' : 'Neue Stelle' ?></h1>
-    <p class="dg-lead">Stammdaten für die öffentliche Bewerbungsseite. Xing/LinkedIn bekommen nur den Link auf unsere Seite — Bewerbungen laufen immer hier.</p>
+    <p class="dg-lead">Angaben für die öffentliche Bewerbungsseite. Xing und LinkedIn zeigen nur den Link dorthin — Bewerbungen landen immer im CRM.</p>
     <?php if ($isEdit && (string) ($jobForm['status'] ?? '') === JobPostingRepository::STATUS_PUBLISHED && (string) ($jobForm['slug'] ?? '') !== '') : ?>
-      <p class="dg-muted">
-        Öffentlich:
-        <a href="<?= View::escape($applyUrl) ?>" target="_blank" rel="noopener">
-          <?= View::escape($applyUrl) ?>
-        </a>
-      </p>
+      <div class="dg-btn-row dg-mt-2">
+        <a class="dg-button dg-button--small" href="<?= View::escape($applyUrl) ?>" target="_blank" rel="noopener">Öffentliche Seite öffnen</a>
+      </div>
     <?php endif; ?>
   </header>
 
@@ -149,23 +146,20 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
             <?php endif; ?>
           </div>
         </div>
-        <p class="dg-field-hint dg-mt-2">
-          Xing: <?= View::escape($xingStatusLabel) ?> —
-          <?php if (!$xingReady) : ?>
-            <a href="<?= View::escape(SettingsRegistry::tabUrl('xing-recruiting')) ?>">Einstellungen</a>.
-          <?php else : ?>
-            „An Xing senden“ legt die Anzeige an.
-          <?php endif; ?>
-        </p>
-        <p class="dg-field-hint">
-          LinkedIn: <?= View::escape($linkedinStatusLabel) ?> —
-          <?php if (!$linkedinReady) : ?>
-            <a href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-recruiting')) ?>">Einstellungen</a>
-            (App-Review-Haken + Firmen-ID + Credentials).
-          <?php else : ?>
-            „An LinkedIn senden“ nutzt die Job Posting API; Bewerben-Link bleibt diese URL.
-          <?php endif; ?>
-        </p>
+        <p class="dg-muted dg-mt-2">Xing: <?= View::escape($xingStatusLabel) ?></p>
+        <p class="dg-muted">LinkedIn: <?= View::escape($linkedinStatusLabel) ?></p>
+        <?php if (!$xingReady || !$linkedinReady) : ?>
+          <div class="dg-btn-row dg-mt-2">
+            <?php if (!$xingReady) : ?>
+              <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('xing-recruiting')) ?>">Xing einrichten</a>
+            <?php endif; ?>
+            <?php if (!$linkedinReady) : ?>
+              <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-recruiting')) ?>">LinkedIn einrichten</a>
+            <?php endif; ?>
+          </div>
+        <?php else : ?>
+          <p class="dg-field-hint dg-mt-2">Mit „Speichern und an … senden“ wird die Anzeige aktualisiert. Der Bewerben-Link bleibt die eigene Seite.</p>
+        <?php endif; ?>
       <?php endif; ?>
     </section>
 
@@ -183,7 +177,7 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
 
   <?php if ($isEdit && $publishEvents !== []) : ?>
     <section class="dg-panel dg-mt-4">
-      <h2 class="dg-subsection-title">Publish-Protokoll</h2>
+      <h2 class="dg-subsection-title">Verlauf Anzeigen-Export</h2>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">
           <thead>
@@ -203,7 +197,7 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
               <tr>
                 <td><?= View::escape((string) ($event['created_at'] ?? '')) ?></td>
                 <td><?= View::escape($channelLabels[$ch] ?? $ch) ?></td>
-                <td><?= View::escape($kind) ?></td>
+                <td><?= View::escape(JobPostingRepository::publishEventKindLabel($kind)) ?></td>
                 <td><?= View::escape((string) ($event['body'] ?? '')) ?></td>
               </tr>
             <?php endforeach; ?>

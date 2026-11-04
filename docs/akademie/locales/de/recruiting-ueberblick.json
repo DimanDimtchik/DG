@@ -1,0 +1,50 @@
+{
+  "video_slug": "recruiting-ueberblick",
+  "locale": "de",
+  "title": "Recruiting — Überblick",
+  "voice": "de-DE-KatjaNeural",
+  "segments": [
+    {
+      "key": "nav-dashboard",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "In diesem Video zeigen wir Stellen und Bewerber im CRM. Sie starten wie immer im Dashboard — Ihrer Startseite nach dem Login."
+    },
+    {
+      "key": "nav-hr",
+      "screenshot": "storage/media/training/allgemein/dashboard-capture.png",
+      "mode": "overview",
+      "narration": "Im Menü links finden Sie den Bereich Personal oder HR. Dort öffnen Sie Stellen und Bewerber. Es gibt keine eigene Kachel auf dem Dashboard — der Weg führt über dieses Menü."
+    },
+    {
+      "key": "stellen-liste",
+      "screenshot": "storage/media/training/recruiting/hr-stellen.png",
+      "mode": "overview",
+      "narration": "Unter Stellen sehen Sie alle offenen und geschlossenen Angebote. Mit Neue Stelle legen Sie eine Anzeige an. Über Öffentliche Seite gelangen Sie zur Bewerbungsseite für Bewerber."
+    },
+    {
+      "key": "stelle-form",
+      "screenshot": "storage/media/training/recruiting/hr-stelle-form.png",
+      "mode": "overview",
+      "narration": "Im Formular tragen Sie Titel, Ort, Beschreibung und Status ein. Erst mit Status Veröffentlicht erscheint die Stelle auf der öffentlichen Seite. Xing und LinkedIn sind optional — sie zeigen nur den Link zu Ihrer eigenen Bewerbungsseite."
+    },
+    {
+      "key": "bewerber-liste",
+      "screenshot": "storage/media/training/recruiting/hr-bewerber.png",
+      "mode": "overview",
+      "narration": "Unter Bewerber sehen Sie alle eingegangenen Bewerbungen: Name, Stelle und Status. Mit Bearbeiten öffnen Sie die Akte."
+    },
+    {
+      "key": "bewerber-form",
+      "screenshot": "storage/media/training/recruiting/hr-bewerber-form.png",
+      "mode": "overview",
+      "narration": "In der Akte pflegen Sie Status und Unterlagen. Bei Absage setzt das CRM eine Löschfrist. Bei Eingestellt wird der Mitarbeiter-Kontakt angelegt oder verknüpft. Speichern Sie Ihre Änderungen unten."
+    },
+    {
+      "key": "abschluss",
+      "screenshot": "storage/media/training/recruiting/hr-stellen.png",
+      "mode": "overview",
+      "narration": "Kurz gesagt: Stelle im CRM veröffentlichen, Bewerbung auf der eigenen Seite, Akte und Status im CRM. Viel Erfolg beim Recruiting!"
+    }
+  ]
+}
