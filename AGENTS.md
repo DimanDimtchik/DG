@@ -9,7 +9,7 @@
 Wenn der Nutzer **ohne konkrete Aufgabe** schreibt oder eine neue Session beginnt: **zuerst** in 3–5 Sätzen mitteilen:
 
 1. **Rolle** (Rechtsanwalt Steuerrecht · Steuerberater · Betriebsprüfer)
-2. **Entwicklung:** nur Master `dg.ganz-om.de` · Updates per `sync-crm-from-master.sh`
+2. **Entwicklung:** Dev = `ganz-om.de` · Code-Kern/Master = `dg.ganz-soft.de` · Sync auf Instanzen per `sync-crm-from-master.sh`
 3. **Stand:** kurz aus `docs/TODOS.md` (Branch, Top-Priorität)
 
 Erst danach mit der eigentlichen Aufgabe beginnen. *(Cursor Rules-UI zeigt Projekt-Regeln oft nicht — deshalb hier explizit.)*
@@ -32,27 +32,32 @@ Bei Buchhaltungs-, Beleg- und Steuerfeatures: gesetzliche Korrektheit, praktisch
 
 | Was | Regel |
 |-----|--------|
-| **Entwickeln** | Nur auf **`dg.ganz-om.de`** (Master-CRM im Repo + Server-Pfad `…/dg.ganz-om.de/`) |
-| **Code verteilen** | Nach Deploy des Masters: `bin/sync-crm-from-master.sh` auf alle CRM-Instanzen |
-| **Gleicher Code** | Alle Instanzen nutzen **dieselben** PHP-Dateien (`index.php`, `src/`, `views/`, …) — **kein Sondercode** pro Domain |
-| **Eigene Daten** | Jede Instanz hat **eigene DB** und `config/*.local.php` — **nie** fremde Instanz-DB anzapfen |
-| **Merge** | Einzelentwickler: getestet → direkt **`master`**, keine Pflicht-PRs |
+| **Dev** | **`ganz-om.de`** — hier neue CRM-Instanz installieren, entwickeln, testen |
+| **Code-Kern (Master)** | **`dg.ganz-soft.de`** — nur CRM-Code; Deploy der freigegebenen Stände hierher |
+| **Code verteilen** | Nach Deploy des Kerns: `bin/sync-crm-from-master.sh` auf CRM-Instanzen |
+| **Gleicher Code** | Alle Instanzen nutzen **dieselben** PHP-Dateien — **kein Sondercode** pro Domain |
+| **Eigene Daten** | Jede Instanz: **eigene DB** + eigene Dateien (`config/*.local.php`, `storage/`, …) — **nie** fremde Instanz-DB |
+| **Merge** | Getestet auf Dev → Code-Kern → Sync; Git: freigegeben → **`master`** |
+
+Domain-Übersicht: [`docs/SERVER-DOMAIN-DATENBANK.md`](docs/SERVER-DOMAIN-DATENBANK.md)
 
 ### Instanzen (CRM)
 
 | Instanz | Rolle |
 |---------|--------|
-| `dg.ganz-om.de` | Master — hier entwickeln & deployen |
-| `ganz-soft.de` | Live-Test / Produktion (Sync vom Master) |
-| `kontur-cosmetics.de` | Kunden-Instanz (Sync vom Master) |
-| `ganz-om.de` | Platzhalter bis CRM-Install (Sync vom Master, ohne DB) |
+| `dg.ganz-soft.de` | **Code-Kern / Master** — nur Code; Sync-Quelle |
+| `ganz-om.de` | **Dev** — entwickeln & testen; wenn ok → Kern |
+| `dg.ganz-om.de` | CRM **Firma Ganz OM** (Einzelunternehmen) — nicht Code-Master |
+| `ganz-soft.de` | CRM für spätere **Ganz Soft GmbH** — **wie Kunde** behandeln |
+| `kontur-cosmetics.de` | Kunden-Instanz |
+| `office.iqstrom.com` | Kunden-Instanz **IQ Strom GmbH** (Account `w01f1176`) — echte Daten |
 | `shop.ganz-soft.de` | **Eigenes** Projekt unter `shop/` — **nicht** im CRM-Sync |
 
 ### Deploy-Ablauf
 
-**PC:** `deploy.bat` / `deploy.ps1` → Master hochladen  
+**PC:** `deploy.bat` / `deploy.ps1` → Code-Kern **`dg.ganz-soft.de`**  
 
-**Server (nach Master-Upload):**
+**Server (nach Kern-Upload):**
 
 ```bash
 bash bin/sync-crm-from-master.sh

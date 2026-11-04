@@ -10,8 +10,8 @@ alwaysApply: true
 
 ## Kurzfassung (verbindlich)
 
-1. **Entwickeln** nur auf Master `dg.ganz-om.de` · **Updates** per `bin/sync-crm-from-master.sh` auf alle CRM-Instanzen
-2. **Gleicher Code** überall · **eigene DB** pro Instanz · **kein Sondercode** pro Domain · **nie** fremde Instanz-DB
+1. **Dev** `ganz-om.de` · **Code-Kern/Master** `dg.ganz-soft.de` · **Updates** per `bin/sync-crm-from-master.sh` · Firmen-CRM `dg.ganz-om.de` · Kunden u. a. `ganz-soft.de`, `kontur-cosmetics.de`, `office.iqstrom.com`
+2. **Gleicher Code** überall · **eigene DB** + eigene Instanz-Dateien · **kein Sondercode** pro Domain · **nie** fremde Instanz-DB
 3. **Wartungsmodus:** ein `WebsiteMaintenanceRenderer` · Kontakt aus CRM (Wartung → Firma) · sonst „Öffentliche Kontaktdaten noch nicht gesetzt.“
 4. **Rolle:** Steuerrecht + Steuerberater-Praxis + Prüfbarkeit mitdenken
 5. **Nicht:** Account-Root mit `--delete` syncen · Stripe live · ELSTER auf Kasserver

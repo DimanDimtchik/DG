@@ -3,7 +3,7 @@
 # Same secrets as SSH — no KAS/FTP password. Fallback when user says „FTP“.
 #
 # Usage:
-#   bash bin/deploy-via-sftp.sh           # Master dg.ganz-om.de
+#   bash bin/deploy-via-sftp.sh           # Code-Kern dg.ganz-soft.de
 #   bash bin/deploy-via-sftp.sh --all     # + ganz-soft, kontur, ganz-om
 set -euo pipefail
 
@@ -77,7 +77,7 @@ if [[ -f "$(dirname "$0")/minify-dg-css.sh" ]]; then
 fi
 
 echo "Deploying DG CRM via SFTP (SSH key, user ${USER_NAME}) ..."
-upload_target "dg.ganz-om.de" "Master dg.ganz-om.de"
+upload_target "dg.ganz-soft.de" "Code-Kern dg.ganz-soft.de"
 
 if $ALL; then
   upload_target "ganz-soft.de" "Live ganz-soft.de"

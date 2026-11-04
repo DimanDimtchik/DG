@@ -3,10 +3,10 @@ rem DG CRM deploy (scp/ssh). Bei Kaspersky-Fehlalarm: dieses .bat statt deploy.p
 setlocal
 set KEY=%USERPROFILE%\.ssh\id_ed25519_ganzom
 set HOST=ssh-w0217246@dg.ganz-om.de
-set DEST=www/htdocs/w0217246/dg.ganz-om.de
+set DEST=www/htdocs/w0217246/dg.ganz-soft.de
 cd /d "%~dp0"
 
-echo Deploying DG CRM to dg.ganz-om.de ...
+echo Deploying DG CRM code-core to dg.ganz-soft.de ...
 
 scp -o BatchMode=yes -i "%KEY%" index.php bootstrap.php .htaccess cron.php %HOST%:%DEST%/
 if errorlevel 1 goto fail

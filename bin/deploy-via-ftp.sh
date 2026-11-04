@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploy DG CRM per FTP (Port 21) — optionaler Fallback, braucht DG_KAS_LOGIN + DG_KAS_AUTH_DATA.
 # KlarWin nutzte SFTP + SSH-Key (deploy-via-sftp.sh), nicht dieses Skript.
-# Spiegelt deploy.bat: Master dg.ganz-om.de, optional weitere Instanzen.
+# Spiegelt deploy.bat: Code-Kern dg.ganz-soft.de, optional weitere Instanzen.
 #
 # Voraussetzung: bash bin/cloud-agent-ftp-setup.sh → OK
 #
@@ -79,7 +79,7 @@ bye
 }
 
 echo "Deploying DG CRM via FTP to $FTP_HOST (user $FTP_USER) ..."
-upload_target "dg.ganz-om.de" "Master dg.ganz-om.de"
+upload_target "dg.ganz-soft.de" "Code-Kern dg.ganz-soft.de"
 
 if $ALL; then
   upload_target "ganz-soft.de" "Live ganz-soft.de"

@@ -53,15 +53,14 @@
 
 ### A4 · IQ Strom GmbH — Instanz vorbereiten (noch Kasserver oder parallele Domain ok)
 
-- [ ] **CRM-Instanz IQ Strom** anlegen (eigene DB + `config/*.local.php`, Sync vom Master — kein Sondercode)
+- [ ] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`): Code syncen + `config/*.local.php` an DB „DB Office IQ CRM“ — kein Sondercode
 - [ ] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt, Gewinnermittlung **Bilanz**, SKR wählen
 - [ ] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung**
 - [ ] ≥ **3 Benutzer** + Rechte (Buchhaltung / Angebote / Admin)
 - [ ] Nummernkreise, Bankverbindung, Briefpapier/Logo
 - [ ] Migrationskonzept Lexoffice → DG: Kontakte, Artikel, offene Belege, Bank (CSV/Excel)
 - [ ] **Parallelbetrieb** festlegen: Zeitraum Lex + DG (Empfehlung 1–2 Monate), was wo Originalbeleg ist
-- [ ] Domain/TLS für IQ (z. B. crm.iqstrom… / bestehendes Hosting) dokumentieren  
-  → [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (IQ All-Inkl / SSH)
+- [~] Domain/TLS: Subdomain + DB angelegt, SSL beantragt → [`SERVER-DOMAIN-DATENBANK.md`](SERVER-DOMAIN-DATENBANK.md) · SSH [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (`IQ_ALLINKL_*`)
 
 ### A5 · Kleine FiBu-Fixes (jetzt sinnvoll)
 

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Sync CRM code FROM master (dg.ganz-om.de) TO live instances.
+# Sync CRM code FROM code-core (dg.ganz-soft.de) TO CRM instances.
 # Preserves each instance's local config and storage.
 # NEVER use --delete against the account root (would wipe sibling domains).
 # Tenant folders at domain root (e.g. klarwin/) are user content — never delete.
 set -euo pipefail
 ROOT=/www/htdocs/w0217246
-MASTER="$ROOT/dg.ganz-om.de"
+MASTER="$ROOT/dg.ganz-soft.de"
 
 EXCLUDES=(
   --exclude 'config/database.local.php'
@@ -67,16 +67,19 @@ fi
 VER=$(php -r 'echo include $argv[1];' "$MASTER/config/version.php")
 echo "version: $VER"
 
-# Live ganz-soft.de: Domain zeigt auf /ganz-soft.de/ (KAS Webspace, nicht Account-Root).
-sync_to "$ROOT/ganz-soft.de" "ganz-soft.de (Live)" yes
+# Dev
+sync_to "$ROOT/ganz-om.de" "ganz-om.de (Dev)" yes
+# Firma Ganz OM
+sync_to "$ROOT/dg.ganz-om.de" "dg.ganz-om.de (Firma Ganz OM)" yes
+# Künftig GmbH — wie Kunde
+sync_to "$ROOT/ganz-soft.de" "ganz-soft.de (Kunde/künftig GmbH)" yes
 sync_to "$ROOT/kontur-cosmetics.de" "kontur-cosmetics.de" yes
-# ganz-om.de: gleicher CRM-Code wie Live-Instanzen, ohne DB bis CRM-Install.
-sync_to "$ROOT/ganz-om.de" "ganz-om.de (Platzhalter)" yes
+# office.iqstrom.com liegt auf Account w01f1176 — eigener Sync, nicht hier.
 
 # Cleanup accidental top-level copies from bad scp
 rm -rf "$ROOT/Install" "$ROOT/Website" 2>/dev/null || true
 
 echo
 echo "=== Post-sync MD5 check (index.php) ==="
-md5sum "$MASTER/index.php" "$ROOT/ganz-soft.de/index.php" "$ROOT/kontur-cosmetics.de/index.php" "$ROOT/ganz-om.de/index.php"
+md5sum "$MASTER/index.php" "$ROOT/ganz-om.de/index.php" "$ROOT/dg.ganz-om.de/index.php" "$ROOT/ganz-soft.de/index.php" "$ROOT/kontur-cosmetics.de/index.php"
 echo DONE

@@ -1,7 +1,7 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  L??dt das DG-CRM per scp/ssh auf dg.ganz-om.de hoch.
+  Lädt das DG-CRM per scp/ssh auf den Code-Kern dg.ganz-soft.de hoch.
 
 .DESCRIPTION
   Ruft deploy.bat auf (kein cmd /c, kein verschachteltes PowerShell, keine Downloads).
@@ -25,7 +25,7 @@ if (-not (Test-Path -LiteralPath $DeployBat)) {
     exit 1
 }
 
-Write-Host 'Deploying DG CRM to dg.ganz-om.de (via deploy.bat) ...'
+Write-Host 'Deploying DG CRM code-core to dg.ganz-soft.de (via deploy.bat) ...'
 
 & $DeployBat
 if ($LASTEXITCODE -ne 0) {
@@ -36,7 +36,7 @@ if ($LASTEXITCODE -ne 0) {
 if ($Migrate) {
     $Key = Join-Path $env:USERPROFILE '.ssh\id_ed25519_ganzom'
     $SshTarget = 'ssh-w0217246@dg.ganz-om.de'
-    $RemoteDir = 'www/htdocs/w0217246/dg.ganz-om.de'
+    $RemoteDir = 'www/htdocs/w0217246/dg.ganz-soft.de'
 
     Write-Host 'Running database migrations ...'
     & ssh -o BatchMode=yes -i $Key $SshTarget "cd $RemoteDir && php bin/db-migrate.php"

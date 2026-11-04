@@ -1,0 +1,12 @@
+domain;account;db_login;system;usage;status
+dg.ganz-soft.de;w0217246;;CRM Code-Kern;Nur Code Master; Instanzen ziehen Code von hier;ok-ziel
+ganz-om.de;w0217246;d046bc57;CRM Dev;Entwickeln und testen; wenn ok auf Code-Master;dev
+dg.ganz-om.de;w0217246;d0477ae6;CRM Firma Ganz OM;Eigenes CRM Einzelunternehmen Ganz OM;ok
+ganz-soft.de;w0217246;d046f637;CRM Kunde kuenftig;Spaeter Ganz Soft GmbH wie Kunde behandeln;ok
+kontur-cosmetics.de;w0217246;d047f810;CRM Kunde;Kundeninstanz Kontur Cosmetics;ok
+office.iqstrom.com;w01f1176;office.iqstrom.com;CRM Kunde IQ Strom;Neue Installation echte Daten ab 2026-11-01;neu
+cloud.ganz-om.de;w0217246;d046bc58;Nextcloud;Datei-Cloud;ok
+shop.ganz-soft.de;w0217246;d0472653;Shop;SaaS-Shop nicht im CRM-Sync;ok
+kasse.ganz-soft.de;w0217246;d0472650;Kasse;Kassensystem;ok
+license-server.ganz-soft.de;w0217246;d048ba6c;Lizenzserver;LicenseGuard und KDV;ok
+wg.ganz-soft.de;w0217246;;WG-Tool;Experiment;ok

@@ -2,12 +2,11 @@
 declare(strict_types=1);
 
 /**
- * Sync CRM code from dg.ganz-om.de master to other installs.
- * ROOT (ganz-soft.de live) gets a safe partial sync (never deletes sibling domains).
+ * Sync CRM code from dg.ganz-soft.de (code core) to other installs.
  * Dedicated CRM folders get a full code sync with local-config preservation.
  */
 $root = '/www/htdocs/w0217246';
-$master = $root . '/dg.ganz-om.de';
+$master = $root . '/dg.ganz-soft.de';
 
 $localConfigNames = [
     'database.local.php',
@@ -109,22 +108,23 @@ function md5fileOrMissing(string $path): string
     return is_file($path) ? md5_file($path) : 'MISSING';
 }
 
-echo "Master version: " . (require $master . '/config/version.php') . PHP_EOL;
+echo "Code-core version: " . (require $master . '/config/version.php') . PHP_EOL;
 
-// --- Dedicated CRM folder sync ---
+// --- Dedicated CRM folder sync (never account root) ---
 $dedicatedTargets = [
-    $root . '/ganz-soft.de' => 'ganz-soft.de (subdir)',
+    $root . '/ganz-om.de' => 'ganz-om.de (Dev)',
+    $root . '/dg.ganz-om.de' => 'dg.ganz-om.de (Firma Ganz OM)',
+    $root . '/ganz-soft.de' => 'ganz-soft.de (Kunde/künftig GmbH)',
     $root . '/kontur-cosmetics.de' => 'kontur-cosmetics.de',
 ];
 
 foreach ($dedicatedTargets as $target => $label) {
     echo "=== Full sync -> $label ===\n";
-    if (!is_file($target . '/index.php')) {
-        echo "SKIP: no CRM at $target\n";
+    if (!is_dir($target)) {
+        echo "SKIP: missing $target\n";
         continue;
     }
     $backup = backupLocalConfigs($target, $localConfigNames);
-    // Sync code dirs + selected files + non-local config
     foreach ($codeDirs as $dir) {
         syncDir($master . '/' . $dir, $target . '/' . $dir, true);
     }
@@ -132,30 +132,16 @@ foreach ($dedicatedTargets as $target => $label) {
         syncFile($master . '/' . $file, $target . '/' . $file);
     }
     syncConfigNonLocal($master, $target, $localConfigNames);
-    // Keep bin helper scripts in sync too (non-destructive)
     syncDir($master . '/bin', $target . '/bin', false);
     restoreLocalConfigs($target, $backup);
     echo "OK: $label\n";
 }
 
-// --- Safe ROOT sync (ganz-soft.de live) ---
-echo "=== Safe partial sync -> __ROOT__ (ganz-soft.de live) ===\n";
-$rootBackup = backupLocalConfigs($root, $localConfigNames);
-foreach ($codeDirs as $dir) {
-    syncDir($master . '/' . $dir, $root . '/' . $dir, true);
-}
-foreach ($codeFiles as $file) {
-    syncFile($master . '/' . $file, $root . '/' . $file);
-}
-syncConfigNonLocal($master, $root, $localConfigNames);
-syncDir($master . '/bin', $root . '/bin', false);
-restoreLocalConfigs($root, $rootBackup);
-echo "OK: __ROOT__\n";
-
 echo "=== MD5 index.php ===\n";
 foreach ([
-    'master' => $master . '/index.php',
-    'root' => $root . '/index.php',
+    'code-core' => $master . '/index.php',
+    'ganz-om.de' => $root . '/ganz-om.de/index.php',
+    'dg.ganz-om.de' => $root . '/dg.ganz-om.de/index.php',
     'ganz-soft.de' => $root . '/ganz-soft.de/index.php',
     'kontur' => $root . '/kontur-cosmetics.de/index.php',
 ] as $label => $path) {

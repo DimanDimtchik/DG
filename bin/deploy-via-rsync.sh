@@ -2,7 +2,7 @@
 # Deploy DG CRM via rsync over SSH (same key as deploy.bat / cloud-agent-ssh-setup).
 #
 # Usage:
-#   bash bin/deploy-via-rsync.sh           # Master dg.ganz-om.de
+#   bash bin/deploy-via-rsync.sh           # Code-Kern dg.ganz-soft.de
 #   bash bin/deploy-via-rsync.sh --all     # + ganz-soft, kontur, ganz-om
 set -euo pipefail
 
@@ -68,7 +68,7 @@ if [[ -x "$ROOT/bin/minify-dg-css.sh" ]] || [[ -f "$ROOT/bin/minify-dg-css.sh" ]
 fi
 
 echo "Deploying DG CRM via rsync (user ${USER_NAME}) ..."
-upload_target "dg.ganz-om.de" "Master dg.ganz-om.de"
+upload_target "dg.ganz-soft.de" "Code-Kern dg.ganz-soft.de"
 
 if $ALL; then
   upload_target "ganz-soft.de" "Live ganz-soft.de"
