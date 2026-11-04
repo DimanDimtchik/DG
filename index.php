@@ -1448,6 +1448,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen LinkedIn Job Posting
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['linkedin_recruiting_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('linkedin-recruiting');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    LinkedInRecruitingSettings::saveFromPost($_POST);
+                    Flash::set('success', 'LinkedIn-Stellenexport gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Kontenrahmen
         if (
             $page === 'einstellungen'
@@ -3298,19 +3320,35 @@ switch ($path) {
                 $savedId = JobPostingRepository::save($_POST, $editJobId > 0 ? $editJobId : null, $user->id);
                 $flashMsg = 'Stelle gespeichert.';
                 $wantXingNow = !empty($_POST['xing_publish_now']);
+                $wantLinkedInNow = !empty($_POST['linkedin_publish_now']);
                 $cfgXing = XingRecruitingSettings::config();
+                $cfgLi = LinkedInRecruitingSettings::config();
                 $rowAfter = JobPostingRepository::find($savedId);
                 $xingQueued = is_array($rowAfter)
                     && !empty($rowAfter['export_xing'])
                     && (string) ($rowAfter['xing_publish_status'] ?? '') === JobPostingRepository::PUBLISH_QUEUED;
+                $liQueued = is_array($rowAfter)
+                    && !empty($rowAfter['export_linkedin'])
+                    && (string) ($rowAfter['linkedin_publish_status'] ?? '') === JobPostingRepository::PUBLISH_QUEUED;
+                $publishFailed = false;
                 if ($wantXingNow || ($xingQueued && !empty($cfgXing['auto_publish_queued']))) {
                     $pub = XingRecruitingPublishService::publishJob($savedId, $user->id);
                     $flashMsg .= ' ' . $pub['message'];
                     if (!$pub['ok']) {
-                        Flash::set('error', $flashMsg);
-                        header('Location: /app?page=hr-stelle-form&action=edit&id=' . $savedId, true, 302);
-                        exit;
+                        $publishFailed = true;
                     }
+                }
+                if ($wantLinkedInNow || ($liQueued && !empty($cfgLi['auto_publish_queued']))) {
+                    $pubLi = LinkedInRecruitingPublishService::publishJob($savedId, $user->id);
+                    $flashMsg .= ' ' . $pubLi['message'];
+                    if (!$pubLi['ok']) {
+                        $publishFailed = true;
+                    }
+                }
+                if ($publishFailed) {
+                    Flash::set('error', $flashMsg);
+                    header('Location: /app?page=hr-stelle-form&action=edit&id=' . $savedId, true, 302);
+                    exit;
                 }
                 Flash::set('success', $flashMsg);
                 header('Location: /app?page=hr-stelle-form&action=edit&id=' . $savedId, true, 302);
@@ -5685,6 +5723,7 @@ switch ($path) {
 $legalProductsConfig = LegalProductSettings::config();
         $ldapConfig = LdapSettings::forForm();
         $xingRecruitingForm = XingRecruitingSettings::forForm();
+        $linkedinRecruitingForm = LinkedInRecruitingSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $documentPresentationSettings = DocumentPresentationSettings::forForm();
         $letterheadSettings = LetterheadSettings::forForm();
@@ -9714,6 +9753,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $payrollEmployerForm = $payrollEmployerForm ?? PayrollEmployerSettings::forForm();
         $xingRecruitingForm = $xingRecruitingForm ?? XingRecruitingSettings::forForm();
+        $linkedinRecruitingForm = $linkedinRecruitingForm ?? LinkedInRecruitingSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];

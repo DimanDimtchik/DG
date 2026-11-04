@@ -74,6 +74,9 @@ final class CompanySettings
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingSettings.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingClient.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingPublishService.php';
+require dirname(__DIR__) . '/src/Recruiting/LinkedInRecruitingSettings.php';
+require dirname(__DIR__) . '/src/Recruiting/LinkedInRecruitingClient.php';
+require dirname(__DIR__) . '/src/Recruiting/LinkedInRecruitingPublishService.php';
 
 function assertRecruit(bool $ok, string $msg): void
 {
@@ -503,4 +506,41 @@ assertRecruit(!XingRecruitingSettings::isReady(), 'Ohne Vertrag nicht bereit');
 $blocked = XingRecruitingPublishService::publishJob(1, 1);
 assertRecruit($blocked['ok'] === false, 'Publish ohne Vertrag blockiert');
 assertRecruit(str_contains($blocked['message'], 'Jobvertrag') || str_contains($blocked['message'], 'Vertrag'), 'Hinweis Vertragspflicht');
+
+assertRecruit(LinkedInRecruitingClient::mapEmploymentStatus('internship') === 'INTERNSHIP', 'LinkedIn employment INTERNSHIP');
+assertRecruit(LinkedInRecruitingClient::externalJobPostingId(42) === 'dg-42', 'LinkedIn external id');
+assertRecruit(!LinkedInRecruitingSettings::isReady(), 'LinkedIn ohne Config nicht bereit');
+SettingsStore::set(LinkedInRecruitingSettings::STORE_KEY, [
+    'enabled' => true,
+    'app_review_approved' => false,
+    'auto_publish_queued' => false,
+    'listing_type' => 'BASIC',
+    'company_id' => '12345',
+    'client_id' => 'cid',
+    'client_secret' => 'csec',
+    'access_token' => '',
+    'access_token_expires_at' => 0,
+]);
+assertRecruit(!LinkedInRecruitingSettings::isReady(), 'Ohne App-Review nicht bereit');
+$blockedLi = LinkedInRecruitingPublishService::publishJob(1, 1);
+assertRecruit($blockedLi['ok'] === false, 'Publish ohne App-Review blockiert');
+assertRecruit(str_contains($blockedLi['message'], 'App-Review'), 'Hinweis App-Review');
+SettingsStore::set(LinkedInRecruitingSettings::STORE_KEY, array_merge(LinkedInRecruitingSettings::config(), [
+    'app_review_approved' => true,
+]));
+assertRecruit(LinkedInRecruitingSettings::isReady(), 'LinkedIn mit Review + Creds bereit');
+assertRecruit(LinkedInRecruitingSettings::companyUrn() === 'urn:li:company:12345', 'Company URN');
+$liPayload = LinkedInRecruitingClient::buildJobElement([
+    'id' => 9,
+    'title' => 'Entwickler',
+    'summary' => 'Kurz',
+    'body' => 'Lang',
+    'location' => 'München',
+    'slug' => 'entwickler',
+    'employment_type' => 'full_time',
+], 'CREATE');
+assertRecruit(($liPayload['jobPostingOperationType'] ?? '') === 'CREATE', 'LinkedIn CREATE');
+assertRecruit(($liPayload['companyApplyUrl'] ?? '') === 'https://example.test/rekrut/entwickler', 'LinkedIn apply URL');
+assertRecruit(($liPayload['company'] ?? '') === 'urn:li:company:12345', 'LinkedIn company URN in payload');
+assertRecruit(($liPayload['externalJobPostingId'] ?? '') === 'dg-9', 'LinkedIn external in payload');
 echo "Recruiting Phase-A Selftest bestanden.\n";

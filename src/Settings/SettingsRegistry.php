@@ -151,6 +151,14 @@ final class SettingsRegistry
                             'xing', 'xing jobs', 'xing stellen', 'e-recruiting', 'stellenexport xing',
                         ],
                     ],
+                    'linkedin-recruiting' => [
+                        'label' => 'LinkedIn Stellenexport',
+                        'lead' => 'Job Posting API: nur nach App-Review / Partner-Freigabe; OAuth2 Client Credentials und Firmen-Seiten-ID.',
+                        'template' => 'linkedin-recruiting',
+                        'kichel_aliases' => [
+                            'linkedin', 'linkedin jobs', 'linkedin stellen', 'stellenexport linkedin', 'app review linkedin',
+                        ],
+                    ],
                 ],
             ],
             'kommunikation' => [
@@ -402,6 +410,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['xing_recruiting_save'])) {
                 return 'xing-recruiting';
+            }
+            if (isset($_POST['linkedin_recruiting_save'])) {
+                return 'linkedin-recruiting';
             }
         }
 

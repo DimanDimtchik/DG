@@ -95,6 +95,8 @@
           <?php View::render('settings/tab-lohn', compact('payrollEmployerForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'xing-recruiting') : ?>
           <?php View::render('settings/tab-xing-recruiting', compact('xingRecruitingForm', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'linkedin-recruiting') : ?>
+          <?php View::render('settings/tab-linkedin-recruiting', compact('linkedinRecruitingForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'lager-struktur') : ?>
           <?php View::render('settings/tab-lager-struktur', compact('dbConnected', 'lagerStrukturTab', 'stockLocations', 'stockHalls', 'stockShelves', 'stockLocationOptions')); ?>
         <?php elseif ($settingsSelection['template'] === 'legal-products') : ?>

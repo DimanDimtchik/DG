@@ -17,6 +17,8 @@ $publishStatusLabels = JobPostingRepository::publishStatusOptions();
 $channelLabels = JobPostingRepository::channelOptions();
 $xingReady = XingRecruitingSettings::isReady();
 $xingStatusLabel = XingRecruitingSettings::statusLabel(XingRecruitingSettings::config());
+$linkedinReady = LinkedInRecruitingSettings::isReady();
+$linkedinStatusLabel = LinkedInRecruitingSettings::statusLabel(LinkedInRecruitingSettings::config());
 $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
     ? JobPostingRepository::publicUrl((string) $jobForm['slug'])
     : JobPostingRepository::publicUrl();
@@ -148,13 +150,20 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
           </div>
         </div>
         <p class="dg-field-hint dg-mt-2">
-          Xing-API: <?= View::escape($xingStatusLabel) ?>.
+          Xing: <?= View::escape($xingStatusLabel) ?> —
           <?php if (!$xingReady) : ?>
-            Einrichtung unter
-            <a href="<?= View::escape(SettingsRegistry::tabUrl('xing-recruiting')) ?>">Einstellungen → HR → Xing Stellenexport</a>
-            (nur mit Kunden-Jobvertrag oder Test-IDs).
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('xing-recruiting')) ?>">Einstellungen</a>.
           <?php else : ?>
-            Mit „Speichern und an Xing senden“ wird die Anzeige angelegt; Bewerben-Link bleibt diese URL.
+            „An Xing senden“ legt die Anzeige an.
+          <?php endif; ?>
+        </p>
+        <p class="dg-field-hint">
+          LinkedIn: <?= View::escape($linkedinStatusLabel) ?> —
+          <?php if (!$linkedinReady) : ?>
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-recruiting')) ?>">Einstellungen</a>
+            (App-Review-Haken + Firmen-ID + Credentials).
+          <?php else : ?>
+            „An LinkedIn senden“ nutzt die Job Posting API; Bewerben-Link bleibt diese URL.
           <?php endif; ?>
         </p>
       <?php endif; ?>
@@ -164,6 +173,9 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
       <button type="submit" class="dg-button dg-button--primary">Speichern</button>
       <?php if ($isEdit && $xingReady) : ?>
         <button type="submit" class="dg-button" name="xing_publish_now" value="1">Speichern und an Xing senden</button>
+      <?php endif; ?>
+      <?php if ($isEdit && $linkedinReady) : ?>
+        <button type="submit" class="dg-button" name="linkedin_publish_now" value="1">Speichern und an LinkedIn senden</button>
       <?php endif; ?>
       <a class="dg-button" href="/app?page=hr-stellen">Abbrechen</a>
     </div>
