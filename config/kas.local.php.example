@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 /**
- * KAS-API für automatische Postfach-Anlage bei Kasserver.
- * Kopieren nach config/kas.local.php und Zugangsdaten eintragen.
+ * KAS-API (Betreiber) — Kunden sehen diese Daten nicht.
+ * Liegt typisch unter Account-Root `…/config/kas.local.php` oder Instanz `config/kas.local.php`.
+ * Installationsassistent füllt KAS daraus im Hintergrund (keine KAS-Felder in der UI).
  */
 return [
     'kas_login' => 'w123456',

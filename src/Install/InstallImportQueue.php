@@ -269,12 +269,17 @@ final class InstallImportQueue
 
     public static function templateDownload(string $type): ?string
     {
-        return match ($type) {
-            self::TYPE_CONTACTS => InstallContactImporter::templateCsv(),
-            self::TYPE_EMPLOYEES => InstallEmployeeImporter::templateCsv(),
-            self::TYPE_BOOKINGS => InstallBookingImporter::templateCsv(),
-            self::TYPE_ARTICLES => CalendarArticleImporter::templateCsv(),
+        $class = match ($type) {
+            self::TYPE_CONTACTS => InstallContactImporter::class,
+            self::TYPE_EMPLOYEES => InstallEmployeeImporter::class,
+            self::TYPE_BOOKINGS => InstallBookingImporter::class,
+            self::TYPE_ARTICLES => CalendarArticleImporter::class,
             default => null,
         };
+        if ($class === null || !method_exists($class, 'templateCsv')) {
+            return null;
+        }
+
+        return $class::templateCsv();
     }
 }

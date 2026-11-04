@@ -174,4 +174,20 @@ final class InstallEmployeeImporter
 
         return $default;
     }
+
+    public static function templateCsv(): string
+    {
+        return InstallCsvHelper::templateCsv(
+            ['Name', 'Vorname', 'Nachname', 'Bereich', 'E-Mail', 'Login', 'Aktiv'],
+            [
+                'Name' => 'Max Mustermann',
+                'Vorname' => 'Max',
+                'Nachname' => 'Mustermann',
+                'Bereich' => 'Allgemein',
+                'E-Mail' => 'max@beispiel.de',
+                'Login' => 'max.mustermann',
+                'Aktiv' => 'ja',
+            ]
+        );
+    }
 }

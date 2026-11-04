@@ -119,9 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $postedStep = (int) ($_POST['step'] ?? 1);
 
     if ($postedStep === 1) {
+        $kasCreds = installKasCredentials();
+        $kasLogin = $kasCreds['login'] ?? trim((string) ($_POST['kas_login'] ?? ''));
+        $kasPass = $kasCreds['pass'] ?? (string) ($_POST['kas_pass'] ?? '');
+
         $wizard['db'] = [
-            'kas_login' => trim($_POST['kas_login'] ?? ''),
-            'kas_pass'  => trim($_POST['kas_pass'] ?? ''),
+            'kas_login' => $kasLogin,
+            'kas_pass'  => $kasPass,
             'db_host'   => 'localhost',
             'db_name'   => '',
             'db_user'   => '',
@@ -138,10 +142,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $db = $wizard['db'];
         if ($db['kas_login'] === '') {
-            $errors[] = 'KAS-Login ist erforderlich.';
+            $errors[] = $kasCreds === null
+                ? 'Hosting-Zugang fehlt (Betreiber: config/kas.local.php hinterlegen).'
+                : 'KAS-Login ist erforderlich.';
         }
         if ($db['kas_pass'] === '') {
-            $errors[] = 'KAS-Passwort ist erforderlich.';
+            $errors[] = $kasCreds === null
+                ? 'Hosting-Zugang unvollständig (Betreiber: config/kas.local.php).'
+                : 'KAS-Passwort ist erforderlich.';
         }
 
         if (empty($errors)) {
@@ -293,13 +301,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($postedStep === 5) {
         $wizard['import'] = ['enabled' => []];
-        foreach (array_keys(InstallImportQueue::TYPES) as $importType) {
-            if (($_POST['import_' . $importType] ?? '') === '1') {
-                $wizard['import']['enabled'][$importType] = true;
+        $skipImport = isset($_POST['import_skip']) || (($_POST['import_skip'] ?? '') === '1');
+        if (!$skipImport) {
+            foreach (array_keys(InstallImportQueue::TYPES) as $importType) {
+                if (($_POST['import_' . $importType] ?? '') === '1') {
+                    $wizard['import']['enabled'][$importType] = true;
+                }
             }
         }
 
-        if (!empty($wizard['import']['enabled'])) {
+        if (!$skipImport && !empty($wizard['import']['enabled'])) {
             try {
                 $sources = [];
                 foreach (array_keys($wizard['import']['enabled']) as $importType) {
@@ -431,6 +442,8 @@ function performInstallation(array $wizard, bool $deferLock = false): array
         require_once DG_ROOT . '/src/App.php';
         App::reloadConfig();
         MigrationRunner::runPending();
+        // Standard-Abteilungen inkl. Modulrechte (Migration 024 greift ggf. vor Seed)
+        DepartmentRepository::ensureMissingDefaults();
 
         // Save company settings
         CompanySettings::save([
@@ -446,47 +459,78 @@ function performInstallation(array $wizard, bool $deferLock = false): array
             'vat_id'     => $legal['vat_id'],
         ]);
 
-        // Create users with email verification tokens
+        // Create users with email verification tokens (zuerst dg_users, dann Token wegen FK)
         $invited = [];
-        $userId = 1;
         $usersConfig = [];
+        $pdo = Database::pdo();
+        $roleMap = [
+            'administrator'       => ['administrator'],
+            'dg_eigenmitarbeiter' => ['dg_eigenmitarbeiter'],
+        ];
+        $insertUser = $pdo->prepare(
+            'INSERT INTO dg_users (username, password_hash, email, display_name, role, employee_active)
+             VALUES (:username, :password_hash, :email, :display_name, :role, 1)'
+        );
+        $insertToken = $pdo->prepare(
+            'INSERT INTO dg_password_reset_tokens (user_id, token_hash, expires_at)
+             VALUES (:uid, :hash, DATE_ADD(NOW(), INTERVAL 7 DAY))'
+        );
 
         foreach ($users as $u) {
-            $token = bin2hex(random_bytes(32));
+            $email = (string) $u['email'];
+            $displayName = (string) ($u['display_name'] ?: explode('@', $email)[0]);
+            $usernameBase = strtolower((string) (explode('@', $email)[0] ?? 'user'));
+            $usernameBase = preg_replace('/[^a-z0-9._-]/', '', $usernameBase) ?: 'user';
+            $username = $usernameBase;
+            $n = 0;
+            while (UserRepository::usernameExists($username)) {
+                ++$n;
+                $username = $usernameBase . $n;
+                if ($n > 50) {
+                    $username = $usernameBase . '-' . bin2hex(random_bytes(2));
+                    break;
+                }
+            }
 
-            $pdo = Database::pdo();
-            $stmt = $pdo->prepare(
-                'INSERT INTO dg_password_reset_tokens (user_id, token_hash, expires_at)
-                 VALUES (:uid, :hash, DATE_ADD(NOW(), INTERVAL 7 DAY))'
-            );
-            $stmt->execute([
+            $roles = $roleMap[$u['role']] ?? ['administrator'];
+            $role = (string) ($roles[0] ?? 'administrator');
+            // Zufallshash — Passwort setzt der Nutzer über den Einladungslink
+            $passwordHash = password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+
+            $insertUser->execute([
+                'username' => $username,
+                'password_hash' => $passwordHash,
+                'email' => $email,
+                'display_name' => $displayName,
+                'role' => $role,
+            ]);
+            $userId = (int) $pdo->lastInsertId();
+            if ($userId < 1) {
+                throw new RuntimeException('Benutzer konnte nicht angelegt werden: ' . $email);
+            }
+
+            $token = bin2hex(random_bytes(32));
+            $insertToken->execute([
                 'uid'  => $userId,
                 'hash' => hash('sha256', $token),
             ]);
 
-            $roleMap = [
-                'administrator'       => ['administrator'],
-                'dg_eigenmitarbeiter' => ['dg_eigenmitarbeiter'],
-            ];
-
             $usersConfig[$userId] = [
                 'id'              => $userId,
-                'username'        => strtolower(explode('@', $u['email'])[0]),
-                'display_name'    => $u['display_name'] ?: explode('@', $u['email'])[0],
-                'email'           => $u['email'],
-                'password_hash'   => '',
-                'roles'           => $roleMap[$u['role']] ?? ['administrator'],
+                'username'        => $username,
+                'display_name'    => $displayName,
+                'email'           => $email,
+                'password_hash'   => $passwordHash,
+                'roles'           => $roles,
                 'employee_active' => true,
             ];
 
             $invited[] = [
-                'email' => $u['email'],
-                'name'  => $usersConfig[$userId]['display_name'],
+                'email' => $email,
+                'name'  => $displayName,
                 'token' => $token,
                 'role'  => $u['role'],
             ];
-
-            $userId++;
         }
 
         // Write users.php
@@ -497,7 +541,7 @@ function performInstallation(array $wizard, bool $deferLock = false): array
             $usersPhp .= "            'username' => " . var_export($u['username'], true) . ",\n";
             $usersPhp .= "            'display_name' => " . var_export($u['display_name'], true) . ",\n";
             $usersPhp .= "            'email' => " . var_export($u['email'], true) . ",\n";
-            $usersPhp .= "            'password_hash' => '',\n";
+            $usersPhp .= "            'password_hash' => " . var_export($u['password_hash'], true) . ",\n";
             $usersPhp .= "            'roles' => " . var_export($u['roles'], true) . ",\n";
             $usersPhp .= "            'employee_active' => " . ($u['employee_active'] ? 'true' : 'false') . ",\n";
             $usersPhp .= "        ],\n";
@@ -690,7 +734,9 @@ function kasCreateDatabase(string $kasLogin, string $kasPassword): ?array
 function systemChecks(): array
 {
     $checks = [];
-    $checks['PHP >= 8.1'] = version_compare(PHP_VERSION, '8.1.0', '>=');
+    // Mindest PHP 8.5 (Sicherheitsstand); Label zeigt die laufende Version, damit keine Verwechslung mit 8.1 entsteht.
+    $phpOk = version_compare(PHP_VERSION, '8.5.0', '>=');
+    $checks['PHP ' . PHP_VERSION . ' (mindestens 8.5)'] = $phpOk;
     $checks['PDO MySQL']  = extension_loaded('pdo_mysql');
     $checks['mbstring']   = extension_loaded('mbstring');
     $checks['json']       = extension_loaded('json');
@@ -700,6 +746,38 @@ function systemChecks(): array
     $checks['mail() verfügbar'] = function_exists('mail');
     return $checks;
 }
+
+/**
+ * Betreiber-KAS aus config/kas.local.php (Kunden sehen KAS nicht; Hosting wird vom Anbieter verwaltet).
+ *
+ * @return array{login: string, pass: string}|null
+ */
+function installKasCredentials(): ?array
+{
+    $candidates = [
+        DG_ROOT . '/config/kas.local.php',
+        dirname(DG_ROOT) . '/config/kas.local.php',
+    ];
+    foreach ($candidates as $path) {
+        if (!is_file($path)) {
+            continue;
+        }
+        $cfg = @include $path;
+        if (!is_array($cfg)) {
+            continue;
+        }
+        $login = trim((string) ($cfg['kas_login'] ?? ''));
+        $pass = (string) ($cfg['kas_auth_data'] ?? $cfg['kas_pass'] ?? '');
+        if ($login !== '' && $pass !== '') {
+            return ['login' => $login, 'pass' => $pass];
+        }
+    }
+
+    return null;
+}
+
+$kasManaged = installKasCredentials();
+$kasHidden = $kasManaged !== null;
 
 $checks = systemChecks();
 $allPassed = !in_array(false, $checks, true);
@@ -930,6 +1008,10 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
 
 <form method="post" class="card">
 <input type="hidden" name="step" value="1">
+<?php if ($kasHidden): ?>
+<h2>Datenbank</h2>
+<p class="hint">Die Datenbank wird im Hintergrund über Ihr Hosting eingerichtet. Sie brauchen keine Server-Zugangsdaten.</p>
+<?php else: ?>
 <h2>Datenbank (KAS-API)</h2>
 <p class="hint">Die Datenbank wird automatisch über die All-Inkl KAS-API erstellt. Geben Sie Ihre KAS-Zugangsdaten ein.</p>
 
@@ -939,8 +1021,10 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
 
 <label for="kas_pass">KAS-Passwort *</label>
 <input type="password" id="kas_pass" name="kas_pass" required>
+<p class="hint">Für Kundeninstallationen hinterlegt der Anbieter <code>config/kas.local.php</code> — dann entfallen diese Felder.</p>
 
 <h2 style="margin-top:24px;">Datenbank</h2>
+<?php endif; ?>
 <label>
     <input type="radio" name="use_existing_db" value="0" <?= empty($wizard['db']['use_existing']) ? 'checked' : '' ?>
            onchange="document.getElementById('existing-db').style.display='none'">
@@ -961,16 +1045,16 @@ input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px 
     <p class="hint">Die bestehende Datenbank wird weiterverwendet. Vorhandene CRM-Tabellen werden aktualisiert.</p>
 </div>
 
-<h2 style="margin-top:24px;">E-Mail-Versand (SMTP)</h2>
-<p class="hint">Damit das CRM E-Mails senden kann (Aktivierung, Passwort-Reset, Benachrichtigungen). Die SMTP-Daten werden automatisch aus dem KAS-Login abgeleitet.</p>
+<h2 style="margin-top:24px;">E-Mail-Versand</h2>
+<p class="hint">Damit das CRM E-Mails senden kann (Aktivierung, Passwort-Reset, Benachrichtigungen).</p>
 
 <label for="smtp_email">Absender-E-Mail *</label>
 <input type="email" id="smtp_email" name="smtp_email" placeholder="info@kundenname.de" value="<?= htmlspecialchars($wizard['smtp']['email'] ?? '') ?>" required>
-<p class="hint">Muss als Postfach im KAS existieren (z.B. info@kundenname.de)</p>
+<p class="hint">Muss als Postfach bei Ihrem Hosting existieren (z. B. info@ihre-domain.de).</p>
 
 <label for="smtp_password">E-Mail-Passwort *</label>
 <input type="password" id="smtp_password" name="smtp_password" value="<?= htmlspecialchars($wizard['smtp']['password'] ?? '') ?>" required>
-<p class="hint">Das Passwort des E-Mail-Postfachs (nicht das KAS-Passwort)</p>
+<p class="hint">Das Passwort dieses E-Mail-Postfachs<?= $kasHidden ? '' : ' (nicht das KAS-Passwort)' ?>.</p>
 
 <div class="nav-buttons">
     <button type="submit" class="btn" <?= $allPassed ? '' : 'disabled' ?>>Weiter →</button>
@@ -1271,7 +1355,8 @@ function addOwner(){
 <form method="post" enctype="multipart/form-data" class="card">
 <input type="hidden" name="step" value="5">
 <h2>Bestehende Daten importieren (optional)</h2>
-<p class="hint">Laden Sie einfach die Dateien hoch, die Ihr bisheriges Programm erzeugt — meist eine <strong>Excel-Datei (.xlsx)</strong> oder ein Export. Sie müssen nichts umwandeln: Wir erkennen die Spalten automatisch.</p>
+<p class="hint"><strong>Nichts zu importieren?</strong> Lassen Sie alle Häkchen weg und klicken Sie auf <strong>Weiter</strong> — der Import ist freiwillig.</p>
+<p class="hint">Sonst: Dateien aus dem bisherigen Programm hochladen (meist Excel .xlsx). Spalten werden automatisch erkannt.</p>
 
 <?php
 $importSources = InstallImportSourcePresets::all();
@@ -1327,7 +1412,8 @@ $selectedSource = InstallImportSourcePresets::normalize($wizard['import']['sourc
 
 <div class="nav-buttons">
     <a href="?step=4" class="btn btn-secondary">← Zurück</a>
-    <button type="submit" class="btn">Weiter →</button>
+    <button type="submit" class="btn" name="import_skip" value="1">Ohne Import weiter →</button>
+    <button type="submit" class="btn btn-secondary" name="import_continue" value="1">Weiter mit Auswahl →</button>
 </div>
 </form>
 
