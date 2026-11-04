@@ -29,7 +29,9 @@ return [
     // Testmerker UStVA (nur mit Test-Zertifikat):
     'test_merker_ustva' => '700000004',
 
-    // Zertifikat-Pfade (Dateien nie ins Git):
+    // Zertifikat-Pfade (Dateien nie ins Git); CRM-Upload nutzt storage/elster/ zusätzlich:
     'certificate_path' => '/etc/dg/elster/certificate.pfx',
-    // PIN separat in SettingsStore (verschlüsselt) — folgt in Phase 3
+
+    // Optional: zusätzliches Geheimnis für Passwort-Verschlüsselung im CRM (sonst abgeleitet aus DG_ROOT):
+    // 'certificate_secret' => 'langer-zufaelliger-string',
 ];

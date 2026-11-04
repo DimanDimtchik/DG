@@ -1223,6 +1223,33 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen ELSTER — Zertifikat / Passwort / Frist
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['elster_certificate_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('elster');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    ElsterCertificateStorage::saveFromPost(
+                        $_POST,
+                        isset($_FILES['elster_certificate']) && is_array($_FILES['elster_certificate'])
+                            ? $_FILES['elster_certificate']
+                            : null
+                    );
+                    Flash::set('success', 'ELSTER-Zertifikat gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
 // POST: Einstellungen Rechtliches / Mehrprodukt-Tabs
         if (
             $page === 'einstellungen'

@@ -19,14 +19,12 @@ final class ElsterSettings
      */
     public static function defaults(): array
     {
-        return [
+        return array_merge([
             'mode' => self::MODE_CSV,
             'eric_test_mode' => true,
             'eric_worker_url' => '',
             'manufacturer_id' => '',
-            'certificate_uploaded' => false,
-            'certificate_label' => '',
-        ];
+        ], ElsterCertificateStorage::metaDefaults());
     }
 
     /**
@@ -67,18 +65,21 @@ final class ElsterSettings
             $mode = self::MODE_CSV;
         }
 
-        return [
+        $cert = ElsterCertificateStorage::meta();
+
+        return array_merge($cert, [
             'mode' => $mode,
             'eric_test_mode' => !empty($stored['eric_test_mode']),
             'eric_worker_url' => trim((string) ($stored['eric_worker_url'] ?? '')),
             'manufacturer_id' => trim((string) ($stored['manufacturer_id'] ?? '')),
-            'certificate_uploaded' => !empty($stored['certificate_uploaded']),
-            'certificate_label' => trim((string) ($stored['certificate_label'] ?? '')),
             'local_configured' => $local !== [],
             'eric_path' => trim((string) ($local['eric_path'] ?? '')),
             'server_supports_eric' => self::serverSupportsEric(),
             'readiness' => ElsterEricClient::readiness(),
-        ];
+            'reminder_recipients_preview' => ElsterCertificateReminderService::reminderRecipients(),
+            'buchhaltung_emails' => ElsterCertificateReminderService::emailsForBuchhaltung(),
+            'gf_emails' => ElsterCertificateReminderService::emailsForGeschaeftsfuehrung(),
+        ]);
     }
 
     public static function mode(): string
@@ -111,6 +112,8 @@ final class ElsterSettings
     }
 
     /**
+     * Speichert Betriebsmodus-Felder; Zertifikat separat über ElsterCertificateStorage.
+     *
      * @throws InvalidArgumentException
      */
     public static function saveFromPost(array $input): void
@@ -123,14 +126,16 @@ final class ElsterSettings
             );
         }
 
-        SettingsStore::set(self::STORE_KEY, [
+        $current = Database::isConfigured()
+            ? SettingsStore::get(self::STORE_KEY, self::defaults())
+            : self::defaults();
+
+        SettingsStore::set(self::STORE_KEY, array_merge($current, [
             'mode' => $requestedMode,
             'eric_test_mode' => !empty($input['elster_eric_test_mode']),
             'eric_worker_url' => trim((string) ($input['elster_eric_worker_url'] ?? '')),
             'manufacturer_id' => trim((string) ($input['elster_manufacturer_id'] ?? '')),
-            'certificate_uploaded' => !empty(SettingsStore::get(self::STORE_KEY, [])['certificate_uploaded']),
-            'certificate_label' => trim((string) (SettingsStore::get(self::STORE_KEY, [])['certificate_label'] ?? '')),
-        ]);
+        ]));
     }
 
     public static function sanitizeMode(string $mode): string

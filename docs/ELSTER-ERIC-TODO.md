@@ -16,6 +16,7 @@
 - [x] Einstellungen-Tab ELSTER (Vorbereitung, Modus CSV)
 - [x] `config/elster.local.php.example`
 - [x] `bin/elster-readiness.php`
+- [x] **Zertifikat-Vorbereitung:** Upload `.pfx`, Ablaufdatum, Passwort (ELSTER-Regeln, verschlüsselt), Link Mein-ELSTER-Login, Erinnerung 90/40/30/2 Tage an Buchhaltung (GF nur ohne Buchhalter) — `ElsterCertificateStorage` / `ElsterCertificateReminderService`
 
 ---
 
@@ -100,7 +101,7 @@
 - [ ] USt-Jahreserklärung
 - [ ] KDV-Kundeninstanzen: ERiC pro Mandant vs. zentraler Worker (Architektur entscheiden)
 - [ ] Automatische ERiC-Mindestversion prüfen (Cron + Admin-Warnung)
-- [ ] Zertifikat-Ablauf 30 Tage vorher mailen
+- [x] Zertifikat-Ablauf-Erinnerung (90/40/30/2 Tage) — Vorbereitung; Live-ERiC weiter nach Umzug
 
 ---
 

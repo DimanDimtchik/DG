@@ -69,6 +69,31 @@ if (($_GET['job'] ?? '') === 'overtime-reminder') {
     exit;
 }
 
+if (($_GET['job'] ?? '') === 'elster-certificate-reminder') {
+    if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
+        http_response_code(403);
+        echo "Forbidden.\n";
+        exit;
+    }
+
+    if (!Database::isConfigured()) {
+        http_response_code(500);
+        echo "Datenbank nicht konfiguriert.\n";
+        exit;
+    }
+
+    $result = ElsterCertificateReminderService::runAutomatic();
+    echo date('c') . " elster-certificate-reminder: gesendet={$result['sent']}, übersprungen={$result['skipped']}";
+    if ($result['threshold'] !== null) {
+        echo ", schwelle={$result['threshold']}";
+    }
+    echo "\n";
+    foreach ($result['errors'] as $error) {
+        echo "FEHLER: {$error}\n";
+    }
+    exit;
+}
+
 if (($_GET['job'] ?? '') === 'tld-list-update') {
     if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
         http_response_code(403);

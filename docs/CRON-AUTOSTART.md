@@ -22,6 +22,7 @@ Auf KAS können Cronjobs nur manuell eingetragen werden. Das CRM nutzt deshalb *
 | **Mahnversand auto** | `DunningService::runIfDue()` | Erster Request pro Tag, wenn in Einstellungen aktiv |
 | **Zeiterfassung offener Tag** | `TimeClockService::runIfDue()` | Erster Request pro Tag — schließt Vortag ohne Ausstempeln + Tagesaggregation |
 | **Überstunden-Erinnerung** | `OvertimeReminderService::runIfDue()` | Am **1. des Monats** — ArbZG Ø > 48 h/Woche in 6 Kalendermonaten |
+| **ELSTER-Zertifikat-Ablauf** | `ElsterCertificateReminderService::runIfDue()` | Täglich 1× — Schwellen 90/40/30/2 Tage; Empfänger Buchhaltung, sonst GF |
 
 ## Optional: HTTP-Cron (`cron.php`)
 
@@ -31,6 +32,7 @@ Für feste Uhrzeiten oder Jobs ohne Website-Traffic:
 - `cron.php?job=dunning-auto&token=…`
 - `cron.php?job=overtime-reminder&token=…`
 - `cron.php?job=tld-list-update&token=…` (optional `&force=1`)
+- `cron.php?job=elster-certificate-reminder&token=…`
 
 Token: `config/cron.local.php` (Vorlage: `config/cron.local.php.example`).
 

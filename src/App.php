@@ -80,6 +80,11 @@ final class App
         } catch (Throwable) {
             // Urlaubsplanungs-Erinnerung darf Seitenaufruf nicht blockieren
         }
+        try {
+            ElsterCertificateReminderService::runIfDue();
+        } catch (Throwable) {
+            // ELSTER-Zertifikat-Erinnerung darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

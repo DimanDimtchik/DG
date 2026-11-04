@@ -72,13 +72,32 @@ final class ElsterEricClient
                 : 'Bei ELSTER als Softwarehersteller registrieren (docs/ELSTER-ERIC-TODO.md).',
         ];
 
+        $certMeta = class_exists('ElsterCertificateStorage')
+            ? ElsterCertificateStorage::meta()
+            : [];
+        $certOk = !empty($certMeta['certificate_uploaded'])
+            && !empty($certMeta['certificate_password_set'])
+            && (($certMeta['expiry_status'] ?? '') !== 'expired');
+        $certDetail = 'Zertifikat und Passwort unter Einstellungen → ELSTER hinterlegen.';
+        if (!empty($certMeta['certificate_uploaded'])) {
+            $certDetail = 'Datei: ' . trim((string) ($certMeta['certificate_label'] ?? 'hinterlegt'));
+            $exp = trim((string) ($certMeta['certificate_expires_at'] ?? ''));
+            if ($exp !== '') {
+                $certDetail .= ', Ablauf ' . $exp;
+            }
+            if (empty($certMeta['certificate_password_set'])) {
+                $certDetail .= ' — Passwort fehlt.';
+                $certOk = false;
+            }
+            if (($certMeta['expiry_status'] ?? '') === 'expired') {
+                $certDetail .= ' — abgelaufen.';
+            }
+        }
         $items[] = [
             'id' => 'certificate',
             'label' => 'ELSTER-Zertifikat',
-            'ok' => !empty($stored['certificate_uploaded']),
-            'detail' => !empty($stored['certificate_uploaded'])
-                ? 'Zertifikat markiert als hochgeladen (Upload-UI folgt mit ERiC).'
-                : 'Test-Zertifikat für Entwicklung, echtes Zertifikat nur für Produktion.',
+            'ok' => $certOk,
+            'detail' => $certDetail,
         ];
 
         $ready = true;
