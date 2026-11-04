@@ -270,7 +270,8 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 **Warum zuerst:** beste API-Passung, wenig Partner-Politik, volles Post-Management.
 
 ### Phase 2 — DG / IQ Strom: LinkedIn
-1. LinkedIn Developer App als **juristische Person**; Community Management Development → Integration → Standard Tier (Screencast).
+1. LinkedIn Developer App als **juristische Person**; Community Management Development → Integration → Standard Tier (Screencast).  
+   **CRM-Scaffold 2-1:** Settings-Tab *LinkedIn Publish* + OAuth-Connect — Checkliste [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md). App-Anlage/Review manuell.
 2. Primär **Company Page** (`w_organization_social`); optional Member-Posts.
 3. Videos API + Posts API; Scheduling im CRM; Comments/Insights nachziehen.
 

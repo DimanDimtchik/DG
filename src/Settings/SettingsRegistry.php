@@ -208,6 +208,14 @@ final class SettingsRegistry
                             'youtube', 'youtube upload', 'video youtube', 'gcp youtube', 'youtube oauth',
                         ],
                     ],
+                    'linkedin-publish' => [
+                        'label' => 'LinkedIn Publish',
+                        'lead' => 'Community-Management-App und Page-Admin-OAuth für Video-Posts (getrennt vom Stellenexport).',
+                        'template' => 'linkedin-publish',
+                        'kichel_aliases' => [
+                            'linkedin video', 'linkedin publish', 'linkedin seite video', 'community management',
+                        ],
+                    ],
                 ],
             ],
             'lager' => [
@@ -434,6 +442,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['youtube_publish_save']) || isset($_POST['youtube_oauth_disconnect'])) {
                 return 'youtube-publish';
+            }
+            if (isset($_POST['linkedin_publish_save']) || isset($_POST['linkedin_oauth_disconnect'])) {
+                return 'linkedin-publish';
             }
             if (isset($_POST['recruiting_privacy_save'])) {
                 return 'recruiting-privacy';

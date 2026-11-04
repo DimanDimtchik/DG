@@ -112,6 +112,47 @@ if ($path === '/oauth/youtube/start' || $path === '/oauth/youtube/callback') {
     exit;
 }
 
+if ($path === '/oauth/linkedin/start' || $path === '/oauth/linkedin/callback') {
+    $oauthUser = AuthService::user();
+    if ($oauthUser === null || !RoleResolver::isAdmin($oauthUser)) {
+        header('Location: /login', true, 302);
+        exit;
+    }
+    MigrationRunner::runPending();
+    if ($path === '/oauth/linkedin/start') {
+        try {
+            $state = bin2hex(random_bytes(16));
+            $_SESSION['linkedin_oauth_state'] = $state;
+            header('Location: ' . LinkedInOAuthClient::authorizationUrl($state), true, 302);
+        } catch (Throwable $e) {
+            Flash::set('error', $e->getMessage());
+            header('Location: ' . SettingsRegistry::tabUrl('linkedin-publish'), true, 302);
+        }
+        exit;
+    }
+    $stateExpected = (string) ($_SESSION['linkedin_oauth_state'] ?? '');
+    unset($_SESSION['linkedin_oauth_state']);
+    $stateGot = (string) ($_GET['state'] ?? '');
+    if ($stateExpected === '' || !hash_equals($stateExpected, $stateGot)) {
+        Flash::set('error', 'Ungültiger OAuth-State. Bitte erneut verbinden.');
+        header('Location: ' . SettingsRegistry::tabUrl('linkedin-publish'), true, 302);
+        exit;
+    }
+    if (isset($_GET['error'])) {
+        Flash::set('error', 'LinkedIn: ' . (string) ($_GET['error_description'] ?? $_GET['error']));
+        header('Location: ' . SettingsRegistry::tabUrl('linkedin-publish'), true, 302);
+        exit;
+    }
+    try {
+        $msg = LinkedInTokenService::completeOAuth((string) ($_GET['code'] ?? ''));
+        Flash::set('success', $msg);
+    } catch (Throwable $e) {
+        Flash::set('error', $e->getMessage());
+    }
+    header('Location: ' . SettingsRegistry::tabUrl('linkedin-publish'), true, 302);
+    exit;
+}
+
 // Mobile Apps JSON-API (ohne CRM-Session)
 if ($path === '/api/mobile' || str_starts_with($path, '/api/mobile/')) {
     MobileApi::handle($path);
@@ -1529,6 +1570,31 @@ switch ($path) {
                 try {
                     YouTubePublishSettings::saveFromPost($_POST);
                     Flash::set('success', 'YouTube-Publish-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen LinkedIn Publish (Video / Community Management)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (isset($_POST['linkedin_publish_save']) || isset($_POST['linkedin_oauth_disconnect']))
+        ) {
+            $redirect = SettingsRegistry::tabUrl('linkedin-publish');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (isset($_POST['linkedin_oauth_disconnect'])) {
+                LinkedInTokenService::disconnect();
+                Flash::set('success', 'LinkedIn-Verbindung getrennt.');
+            } else {
+                try {
+                    LinkedInPublishSettings::saveFromPost($_POST);
+                    Flash::set('success', 'LinkedIn-Publish-Einstellungen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -5924,6 +5990,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $xingRecruitingForm = XingRecruitingSettings::forForm();
         $linkedinRecruitingForm = LinkedInRecruitingSettings::forForm();
         $youtubePublishForm = YouTubePublishSettings::forForm();
+        $linkedinPublishForm = LinkedInPublishSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $documentPresentationSettings = DocumentPresentationSettings::forForm();
         $letterheadSettings = LetterheadSettings::forForm();
@@ -9995,6 +10062,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $xingRecruitingForm = $xingRecruitingForm ?? XingRecruitingSettings::forForm();
         $linkedinRecruitingForm = $linkedinRecruitingForm ?? LinkedInRecruitingSettings::forForm();
         $youtubePublishForm = $youtubePublishForm ?? YouTubePublishSettings::forForm();
+        $linkedinPublishForm = $linkedinPublishForm ?? LinkedInPublishSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];

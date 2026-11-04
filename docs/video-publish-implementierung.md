@@ -144,20 +144,30 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 4. Edit: Posts PARTIAL_UPDATE commentary; Delete: `DELETE /rest/posts/{urn}`
 5. Comments/Insights: **nach** stabilem Publish nachziehen
 
+### Phase 2-1 (App + CRM-Scaffold) — Stand
+
+- [x] Checkliste juristische Person / Community Management — [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md)
+- [x] CRM-Tab **LinkedIn Publish** (Credentials, Org-ID, Review-Tier, OAuth Connect)
+- [x] `dg_oauth_connections.platform=linkedin` + Crypto (wie YouTube)
+- [ ] Manuell: App unter IQ Strom GmbH anlegen, Dev-Tier, Redirect, Connect (Dietrich)
+- [ ] Standard-Tier / Screencast — später
+
 ### Acceptance
 
-- [ ] IQ-Strom-Page verbunden; Post erscheint im Feed
-- [ ] Caption edit + Delete aus CRM
-- [ ] Geplanter Job feuert per Cron zum Termin
-- [ ] Dev-Tier-Limits dokumentiert; Standard-Tier-Antrag gestartet/bestanden
+- [ ] IQ-Strom-Page verbunden; Post erscheint im Feed — Upload erst 2-2
+- [ ] Caption edit + Delete aus CRM — erst 2-2
+- [ ] Geplanter Job feuert per Cron zum Termin — erst 2-2
+- [~] Dev-Tier-Limits dokumentiert; Standard-Tier-Antrag gestartet/bestanden — Limits in Checkliste; Antrag manuell
 
 ### Do NOT yet
 
-- [ ] Instagram / TikTok
-- [ ] Full Comments/Analytics UI (Stub ok)
-- [ ] Eigenes Transcode außer MP4-Check
+- [x] Instagram / TikTok — bewusst Phase 3–4
+- [x] Full Comments/Analytics UI (Stub ok) — bewusst später
+- [x] Eigenes Transcode außer MP4-Check — bewusst später
 
 **Host:** wie YT — Chunk-Upload **W→V**.
+
+**Code (Phase 2-1):** `LinkedInPublishSettings` / OAuth / Tab `linkedin-publish` · Selftest `bin/linkedin-publish-selftest.php`.
 
 ---
 

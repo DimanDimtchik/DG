@@ -4,6 +4,7 @@ declare(strict_types=1);
 final class OAuthConnectionRepository
 {
     public const PLATFORM_YOUTUBE = 'youtube';
+    public const PLATFORM_LINKEDIN = 'linkedin';
 
     public const STATUS_DISCONNECTED = 'disconnected';
     public const STATUS_CONNECTED = 'connected';
@@ -156,9 +157,15 @@ final class OAuthConnectionRepository
     public static function isConnected(string $platform): bool
     {
         $row = self::findByPlatform($platform);
+        if ($row === null || (string) ($row['status'] ?? '') !== self::STATUS_CONNECTED) {
+            return false;
+        }
+        // YouTube: Refresh nötig. LinkedIn: oft nur Access (~60d) ohne Partner-Refresh.
+        if ($platform === self::PLATFORM_YOUTUBE) {
+            return self::decryptedRefreshToken($platform) !== '';
+        }
 
-        return $row !== null
-            && (string) ($row['status'] ?? '') === self::STATUS_CONNECTED
-            && self::decryptedRefreshToken($platform) !== '';
+        return self::decryptedAccessToken($platform) !== ''
+            || self::decryptedRefreshToken($platform) !== '';
     }
 }
