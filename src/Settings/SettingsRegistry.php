@@ -224,6 +224,14 @@ final class SettingsRegistry
                             'instagram', 'instagram reels', 'instagram publish', 'meta app', 'instagram oauth',
                         ],
                     ],
+                    'tiktok-publish' => [
+                        'label' => 'TikTok Publish',
+                        'lead' => 'TT4D-App, Inbox/Direct-Modus und Creator-OAuth für Content Posting (Audit vor Direct).',
+                        'template' => 'tiktok-publish',
+                        'kichel_aliases' => [
+                            'tiktok', 'tik tok', 'tiktok publish', 'tiktok upload', 'tt4d',
+                        ],
+                    ],
                 ],
             ],
             'lager' => [
@@ -456,6 +464,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['instagram_publish_save']) || isset($_POST['instagram_oauth_disconnect'])) {
                 return 'instagram-publish';
+            }
+            if (isset($_POST['tiktok_publish_save']) || isset($_POST['tiktok_oauth_disconnect'])) {
+                return 'tiktok-publish';
             }
             if (isset($_POST['recruiting_privacy_save'])) {
                 return 'recruiting-privacy';

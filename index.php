@@ -231,6 +231,47 @@ if ($path === '/oauth/instagram/start' || $path === '/oauth/instagram/callback')
     exit;
 }
 
+if ($path === '/oauth/tiktok/start' || $path === '/oauth/tiktok/callback') {
+    $oauthUser = AuthService::user();
+    if ($oauthUser === null || !RoleResolver::isAdmin($oauthUser)) {
+        header('Location: /login', true, 302);
+        exit;
+    }
+    MigrationRunner::runPending();
+    if ($path === '/oauth/tiktok/start') {
+        try {
+            $state = bin2hex(random_bytes(16));
+            $_SESSION['tiktok_oauth_state'] = $state;
+            header('Location: ' . TikTokOAuthClient::authorizationUrl($state), true, 302);
+        } catch (Throwable $e) {
+            Flash::set('error', $e->getMessage());
+            header('Location: ' . SettingsRegistry::tabUrl('tiktok-publish'), true, 302);
+        }
+        exit;
+    }
+    $stateExpected = (string) ($_SESSION['tiktok_oauth_state'] ?? '');
+    unset($_SESSION['tiktok_oauth_state']);
+    $stateGot = (string) ($_GET['state'] ?? '');
+    if ($stateExpected === '' || !hash_equals($stateExpected, $stateGot)) {
+        Flash::set('error', 'Ungültiger OAuth-State. Bitte erneut verbinden.');
+        header('Location: ' . SettingsRegistry::tabUrl('tiktok-publish'), true, 302);
+        exit;
+    }
+    if (isset($_GET['error'])) {
+        Flash::set('error', 'TikTok: ' . (string) ($_GET['error_description'] ?? $_GET['error']));
+        header('Location: ' . SettingsRegistry::tabUrl('tiktok-publish'), true, 302);
+        exit;
+    }
+    try {
+        $msg = TikTokTokenService::completeOAuth((string) ($_GET['code'] ?? ''));
+        Flash::set('success', $msg);
+    } catch (Throwable $e) {
+        Flash::set('error', $e->getMessage());
+    }
+    header('Location: ' . SettingsRegistry::tabUrl('tiktok-publish'), true, 302);
+    exit;
+}
+
 // Mobile Apps JSON-API (ohne CRM-Session)
 if ($path === '/api/mobile' || str_starts_with($path, '/api/mobile/')) {
     MobileApi::handle($path);
@@ -1716,6 +1757,31 @@ switch ($path) {
                 try {
                     InstagramPublishSettings::saveFromPost($_POST);
                     Flash::set('success', 'Instagram-Publish-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen TikTok Publish
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (isset($_POST['tiktok_publish_save']) || isset($_POST['tiktok_oauth_disconnect']))
+        ) {
+            $redirect = SettingsRegistry::tabUrl('tiktok-publish');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (isset($_POST['tiktok_oauth_disconnect'])) {
+                TikTokTokenService::disconnect();
+                Flash::set('success', 'TikTok-Verbindung getrennt.');
+            } else {
+                try {
+                    TikTokPublishSettings::saveFromPost($_POST);
+                    Flash::set('success', 'TikTok-Publish-Einstellungen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -6272,6 +6338,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $youtubePublishForm = YouTubePublishSettings::forForm();
         $linkedinPublishForm = LinkedInPublishSettings::forForm();
         $instagramPublishForm = InstagramPublishSettings::forForm();
+        $tiktokPublishForm = TikTokPublishSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $documentPresentationSettings = DocumentPresentationSettings::forForm();
         $letterheadSettings = LetterheadSettings::forForm();
@@ -7179,6 +7246,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
             $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
             $instagramConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM);
+            $tiktokConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_TIKTOK);
             $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/videos';
             $title = 'Videos';
@@ -10417,6 +10485,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $youtubePublishForm = $youtubePublishForm ?? YouTubePublishSettings::forForm();
         $linkedinPublishForm = $linkedinPublishForm ?? LinkedInPublishSettings::forForm();
         $instagramPublishForm = $instagramPublishForm ?? InstagramPublishSettings::forForm();
+        $tiktokPublishForm = $tiktokPublishForm ?? TikTokPublishSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];

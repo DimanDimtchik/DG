@@ -286,9 +286,10 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 3. Comments/Insights — **Code 3-3** (`InstagramEngagementService`); kein Caption-Edit nach Publish; Delete je nach Login-Pfad.
 
 ### Phase 4 — optional / vorsichtig: TikTok
-1. Nur wenn CRM klar als **öffentliches Multi-Tenant-Creator-/Marketing-Produkt** positioniert ist (nicht „internes Upload-Hilfstool“).
+1. Nur wenn CRM klar als **öffentliches Multi-Tenant-Creator-/Marketing-Produkt** positioniert ist (nicht „internes Upload-Hilfstool“).  
+   **CRM-Scaffold 4-1:** Settings-Tab *TikTok Publish* + OAuth — [`tiktok-video-phase-4-1.md`](tiktok-video-phase-4-1.md). TT4D-App/Audit manuell **pro Tenant**.
 2. UX-Guidelines 1:1; dann Audit für Direct Post.
-3. Bis Audit: höchstens Inbox-Upload als „Draft nach TikTok“ — kein echter One-Click.
+3. Bis Audit: höchstens Inbox-Upload als „Draft nach TikTok“ — kein echter One-Click (Upload = 4-2).
 4. Für rein internes Einzelpersonen-Nutzen: eher **skip** oder manuell in der TikTok-App.
 
 ### Nicht tun

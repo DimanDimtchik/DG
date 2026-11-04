@@ -249,7 +249,7 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 
 ### Do NOT yet
 
-- [ ] TikTok
+- [x] TikTok Settings/OAuth — Code 4-1; Upload 4-2
 - [ ] Stories als Kernfeature
 - [ ] Product Tagging (außer explizit gefordert)
 
@@ -273,7 +273,7 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 | UX Guidelines 1:1 (Privacy manuell, Disclosure, Preview, Creator-Info laden, …) | ja — sonst Audit fail |
 | Produkt-Position ≠ „internes Upload-Hilfstool“ | ja |
 
-Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-api) · [Direct Post](https://developers.tiktok.com/doc/content-posting-api-get-started) · [Media Transfer](https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide) · [Guidelines](https://developers.tiktok.com/doc/content-sharing-guidelines) · [OAuth](https://developers.tiktok.com/doc/oauth-user-access-token-management)
+Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-api) · [Direct Post](https://developers.tiktok.com/doc/content-posting-api-get-started) · [Media Transfer](https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide) · [Guidelines](https://developers.tiktok.com/doc/content-sharing-guidelines) · [OAuth](https://developers.tiktok.com/doc/oauth-user-access-token-management) · Checkliste [`tiktok-video-phase-4-1.md`](tiktok-video-phase-4-1.md)
 
 ### CRM-Deltas
 
@@ -282,30 +282,41 @@ Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-a
 | Connection | Creator; Access 24 h + Refresh 365 d (Rotation speichern!) |
 | Creator-Info | `max_video_post_duration_sec` vor jedem Post laden |
 | Job | init → FILE_UPLOAD chunks **oder** PULL_FROM_URL (Domain verifiziert) → status fetch/webhook |
-| UX-Pflichten | Felder laut Guidelines — Feature-Flag `tt_direct_ok` erst nach Audit |
+| UX-Pflichten | Felder laut Guidelines — CRM-Flag `audit_ok` erst nach Audit |
+
+### Phase 4-1 (Settings + OAuth) — Stand
+
+- [x] Settings-Tab *TikTok Publish* (Client Key/Secret, Inbox/Direct, Audit-Flag)
+- [x] OAuth start/callback + Token-Vault (`platform=tiktok`)
+- [x] Refresh-Rotation im Token-Service vorbereitet
+- [x] Selftest `bin/tiktok-publish-selftest.php`
+- [ ] Live Connect gegen TT4D (manuell pro Tenant)
 
 ### API-Schritte
 
-1. OAuth Creator (**W**)
-2. Ohne Audit: höchstens Inbox (`video.upload`) = Draft in App — **kein** echter One-Click
-3. Nach Audit: Direct Post `video.publish`
+1. OAuth Creator (**W**) — Code 4-1
+2. Ohne Audit: höchstens Inbox (`video.upload`) = Draft in App — **kein** echter One-Click — Upload 4-2
+3. Nach Audit: Direct Post `video.publish` — 4-2
 4. Post-Edit/Delete über Posting-API **nicht** erwarten
 
 ### Acceptance
 
+- [x] Connect-Scaffold — Code 4-1
 - [ ] Audit bestanden **oder** bewusster Skip
 - [ ] Direct: Video öffentlich ohne Extra-Schritt in TikTok-App
 - [ ] Rate 6 req/min / Creator-Tagescaps eingehalten
-- [ ] Refresh-Rotation persistiert
+- [x] Refresh-Rotation persistiert (Code; Live nach Connect)
 
 ### Do NOT yet / Skip-Kriterien
 
-- [ ] Vor Phase 1–3 bauen
+- [x] Vor Phase 1–3 bauen — erledigt, Reihenfolge eingehalten
 - [ ] Als reines DG-internes Utility vermarkten
 - [ ] Inbox als „One-Click“ verkaufen
 - [ ] Für rein internes Einzelpersonen-Nutzen: eher **manuell in TikTok-App** / Phase 4 weglassen
 
 **Host:** Chunk/PULL + Webhooks **V** empfohlen; Token-Refresh Cron **W** ok.
+
+**Code:** 4-1 Settings/OAuth · Selftest `bin/tiktok-publish-selftest.php` · Checkliste [`tiktok-video-phase-4-1.md`](tiktok-video-phase-4-1.md).
 
 ---
 

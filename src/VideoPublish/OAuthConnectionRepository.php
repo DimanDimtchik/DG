@@ -6,6 +6,7 @@ final class OAuthConnectionRepository
     public const PLATFORM_YOUTUBE = 'youtube';
     public const PLATFORM_LINKEDIN = 'linkedin';
     public const PLATFORM_INSTAGRAM = 'instagram';
+    public const PLATFORM_TIKTOK = 'tiktok';
 
     public const STATUS_DISCONNECTED = 'disconnected';
     public const STATUS_CONNECTED = 'connected';
