@@ -342,6 +342,15 @@ final class MenuRegistry
             ];
         }
 
+        if (RoleResolver::canEdit($user)) {
+            $items[] = [
+                'slug' => 'videos',
+                'label' => 'Videos',
+                'icon' => 'document',
+                'href' => '/app?page=videos',
+            ];
+        }
+
         if ($items === []) {
             return null;
         }
@@ -616,6 +625,7 @@ final class MenuRegistry
             'post' => 'E-Mail-Postfächer im CRM: Eingang lesen und Nachrichten versenden.',
             'telefon' => 'Click-to-Call, Anrufliste und Popup bei eingehenden Anrufen.',
             'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Finalisierung und Export.',
+            'videos' => 'Videos speichern und auf YouTube veröffentlichen.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog — Basis für Angebote, Belege und Lager.',
             'dienstleistungen-auftraege' => 'Angebote und Aufträge für Dienstleistungen erfassen und verfolgen.',
             'lager' => 'Bestände, Orte und Bewegungen — von Wareneingang bis Inventur.',
@@ -1026,6 +1036,10 @@ final class MenuRegistry
         if ($slug === 'dokumentenverfasser' || $slug === 'dokumentenverfasser-form') {
             return RoleResolver::canEdit($user)
                 && DepartmentAccess::canAccessModule($user, 'dokumentenverfasser');
+        }
+
+        if ($slug === 'videos' || $slug === 'videos-form') {
+            return RoleResolver::canEdit($user);
         }
 
         // Basis-Slug (Menü/Kachel) — ohne diesen Fall landet /app?page=zeiterfassung auf dem Dashboard.

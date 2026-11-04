@@ -70,6 +70,48 @@ if (preg_match('#^/vorschau/([a-z0-9-]+)$#', $path, $previewMatch)) {
     exit;
 }
 
+// YouTube OAuth (Session erforderlich)
+if ($path === '/oauth/youtube/start' || $path === '/oauth/youtube/callback') {
+    $oauthUser = AuthService::user();
+    if ($oauthUser === null || !RoleResolver::isAdmin($oauthUser)) {
+        header('Location: /login', true, 302);
+        exit;
+    }
+    MigrationRunner::runPending();
+    if ($path === '/oauth/youtube/start') {
+        try {
+            $state = bin2hex(random_bytes(16));
+            $_SESSION['youtube_oauth_state'] = $state;
+            header('Location: ' . YouTubeOAuthClient::authorizationUrl($state, true), true, 302);
+        } catch (Throwable $e) {
+            Flash::set('error', $e->getMessage());
+            header('Location: ' . SettingsRegistry::tabUrl('youtube-publish'), true, 302);
+        }
+        exit;
+    }
+    $stateExpected = (string) ($_SESSION['youtube_oauth_state'] ?? '');
+    unset($_SESSION['youtube_oauth_state']);
+    $stateGot = (string) ($_GET['state'] ?? '');
+    if ($stateExpected === '' || !hash_equals($stateExpected, $stateGot)) {
+        Flash::set('error', 'Ungültiger OAuth-State. Bitte erneut verbinden.');
+        header('Location: ' . SettingsRegistry::tabUrl('youtube-publish'), true, 302);
+        exit;
+    }
+    if (isset($_GET['error'])) {
+        Flash::set('error', 'Google: ' . (string) ($_GET['error_description'] ?? $_GET['error']));
+        header('Location: ' . SettingsRegistry::tabUrl('youtube-publish'), true, 302);
+        exit;
+    }
+    try {
+        YouTubeTokenService::completeOAuth((string) ($_GET['code'] ?? ''));
+        Flash::set('success', 'YouTube-Kanal verbunden.');
+    } catch (Throwable $e) {
+        Flash::set('error', $e->getMessage());
+    }
+    header('Location: ' . SettingsRegistry::tabUrl('youtube-publish'), true, 302);
+    exit;
+}
+
 // Mobile Apps JSON-API (ohne CRM-Session)
 if ($path === '/api/mobile' || str_starts_with($path, '/api/mobile/')) {
     MobileApi::handle($path);
@@ -1462,6 +1504,31 @@ switch ($path) {
                 try {
                     LinkedInRecruitingSettings::saveFromPost($_POST);
                     Flash::set('success', 'LinkedIn-Stellenexport gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
+        // POST: Einstellungen YouTube Publish
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (isset($_POST['youtube_publish_save']) || isset($_POST['youtube_oauth_disconnect']))
+        ) {
+            $redirect = SettingsRegistry::tabUrl('youtube-publish');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (isset($_POST['youtube_oauth_disconnect'])) {
+                YouTubeTokenService::disconnect();
+                Flash::set('success', 'YouTube-Verbindung getrennt.');
+            } else {
+                try {
+                    YouTubePublishSettings::saveFromPost($_POST);
+                    Flash::set('success', 'YouTube-Publish-Einstellungen gespeichert.');
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                 }
@@ -3470,6 +3537,92 @@ switch ($path) {
                     );
                     exit;
                 }
+            }
+        }
+
+        // POST: Videos (Upload / Publish / Edit / Delete)
+        if (
+            ($page === 'videos' || $page === 'videos-form')
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && MenuRegistry::canAccess($user, 'videos')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+                header('Location: /app?page=videos', true, 302);
+                exit;
+            }
+            MigrationRunner::runPending();
+            if (isset($_POST['video_asset_upload'])) {
+                try {
+                    $meta = VideoAssetStorage::storeUpload($_FILES['video_file'] ?? []);
+                    $id = VideoAssetRepository::create($meta, $user->id);
+                    Flash::set('success', 'Video hochgeladen.');
+                    header('Location: /app?page=videos-form&id=' . $id, true, 302);
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=videos', true, 302);
+                }
+                exit;
+            }
+            $assetId = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+            if (isset($_POST['video_asset_delete']) && $assetId > 0) {
+                try {
+                    VideoAssetRepository::delete($assetId);
+                    Flash::set('success', 'Video lokal gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos', true, 302);
+                exit;
+            }
+            if (isset($_POST['video_youtube_publish']) && $assetId > 0) {
+                try {
+                    if (!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE)) {
+                        throw new RuntimeException('YouTube ist nicht verbunden.');
+                    }
+                    $publishAt = trim((string) ($_POST['publishAt'] ?? ''));
+                    if ($publishAt !== '') {
+                        $publishAt = str_replace('T', ' ', $publishAt);
+                    }
+                    $jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_YOUTUBE, [
+                        'title' => trim((string) ($_POST['title'] ?? '')),
+                        'description' => (string) ($_POST['description'] ?? ''),
+                        'privacy' => (string) ($_POST['privacy'] ?? 'private'),
+                        'publishAt' => $publishAt,
+                        'tags' => (string) ($_POST['tags'] ?? ''),
+                        'categoryId' => '22',
+                    ], $user->id);
+                    // Sofort ersten Chunk anstoßen
+                    $step = YouTubeResumableUploadService::processJob($jobId);
+                    Flash::set(
+                        !empty($step['ok']) ? 'success' : 'error',
+                        'Job #' . $jobId . ': ' . $step['message']
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
+            if (isset($_POST['video_youtube_update']) && $assetId > 0) {
+                try {
+                    YouTubeResumableUploadService::updatePublished((int) ($_POST['job_id'] ?? 0), $_POST);
+                    Flash::set('success', 'YouTube-Metadaten aktualisiert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
+            if (isset($_POST['video_youtube_delete']) && $assetId > 0) {
+                try {
+                    YouTubeResumableUploadService::deletePublished((int) ($_POST['job_id'] ?? 0));
+                    Flash::set('success', 'Video auf YouTube gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
             }
         }
 
@@ -5770,6 +5923,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $recruitingMailForm = RecruitingMailSettings::forForm();
         $xingRecruitingForm = XingRecruitingSettings::forForm();
         $linkedinRecruitingForm = LinkedInRecruitingSettings::forForm();
+        $youtubePublishForm = YouTubePublishSettings::forForm();
         $accountingPaymentSettings = AccountingPaymentSettings::forForm();
         $documentPresentationSettings = DocumentPresentationSettings::forForm();
         $letterheadSettings = LetterheadSettings::forForm();
@@ -6664,6 +6818,44 @@ $legalProductsConfig = LegalProductSettings::config();
             $title = 'Bewerber';
             $currentPage = 'hr-bewerber';
         } elseif ($page === 'hr-bewerber') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'videos' && MenuRegistry::canAccess($user, 'videos')) {
+            MigrationRunner::runPending();
+            VideoPublishQueueService::runIfDue();
+            $videoAssets = VideoAssetRepository::listAll();
+            $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
+            $dbConnected = Database::isConfigured();
+            $contentTemplate = 'modules/videos';
+            $title = 'Videos';
+            $currentPage = 'videos';
+        } elseif ($page === 'videos') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'videos-form' && MenuRegistry::canAccess($user, 'videos-form')) {
+            MigrationRunner::runPending();
+            VideoPublishQueueService::runIfDue();
+            $assetId = (int) ($_GET['id'] ?? 0);
+            $videoAsset = VideoAssetRepository::find($assetId);
+            if ($videoAsset === null) {
+                Flash::set('error', 'Video nicht gefunden.');
+                header('Location: /app?page=videos', true, 302);
+                exit;
+            }
+            $publishJobs = PublishJobRepository::listForAsset($assetId);
+            $latestPost = null;
+            foreach ($publishJobs as $j) {
+                if ((string) ($j['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED) {
+                    $latestPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
+                    break;
+                }
+            }
+            $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
+            $formError = $formError ?? null;
+            $contentTemplate = 'modules/videos-form';
+            $title = (string) ($videoAsset['original_name'] ?? 'Video');
+            $currentPage = 'videos';
+        } elseif ($page === 'videos-form') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'hr-bewerber-form' && MenuRegistry::canAccess($user, 'hr-bewerber-form')) {
@@ -9802,6 +9994,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $recruitingMailForm = $recruitingMailForm ?? RecruitingMailSettings::forForm();
         $xingRecruitingForm = $xingRecruitingForm ?? XingRecruitingSettings::forForm();
         $linkedinRecruitingForm = $linkedinRecruitingForm ?? LinkedInRecruitingSettings::forForm();
+        $youtubePublishForm = $youtubePublishForm ?? YouTubePublishSettings::forForm();
         $datevExportYears = $datevExportYears ?? [(int) date('Y')];
         $cashYear = $cashYear ?? (int) date('Y');
         $cashYears = $cashYears ?? [(int) date('Y')];

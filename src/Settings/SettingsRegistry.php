@@ -200,6 +200,14 @@ final class SettingsRegistry
                             'briefpapier', 'din 5008', 'din-5008', 'briefkopf', 'letterhead', 'dokumentenverfasser einstellung',
                         ],
                     ],
+                    'youtube-publish' => [
+                        'label' => 'YouTube Publish',
+                        'lead' => 'GCP OAuth-Client und Kanalverbindung für Video-Upload über die YouTube Data API.',
+                        'template' => 'youtube-publish',
+                        'kichel_aliases' => [
+                            'youtube', 'youtube upload', 'video youtube', 'gcp youtube', 'youtube oauth',
+                        ],
+                    ],
                 ],
             ],
             'lager' => [
@@ -423,6 +431,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['payroll_lohn_save']) || isset($_POST['time_tracking_save'])) {
                 return isset($_POST['payroll_lohn_save']) ? 'lohn' : 'zeiterfassung';
+            }
+            if (isset($_POST['youtube_publish_save']) || isset($_POST['youtube_oauth_disconnect'])) {
+                return 'youtube-publish';
             }
             if (isset($_POST['recruiting_privacy_save'])) {
                 return 'recruiting-privacy';

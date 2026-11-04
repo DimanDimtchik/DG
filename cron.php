@@ -116,6 +116,29 @@ if (($_GET['job'] ?? '') === 'recruiting-retention') {
     exit;
 }
 
+if (($_GET['job'] ?? '') === 'video-publish') {
+    if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
+        http_response_code(403);
+        echo "Forbidden.\n";
+        exit;
+    }
+
+    if (!Database::isConfigured()) {
+        http_response_code(500);
+        echo "Datenbank nicht konfiguriert.\n";
+        exit;
+    }
+
+    MigrationRunner::runPending();
+    $result = VideoPublishQueueService::runAutomatic(5, 10);
+    echo date('c') . " video-publish: processed={$result['processed']}"
+        . ", published={$result['published']}, failed={$result['failed']}\n";
+    foreach ($result['messages'] as $msg) {
+        echo $msg . "\n";
+    }
+    exit;
+}
+
 if (($_GET['job'] ?? '') === 'tld-list-update') {
     if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
         http_response_code(403);

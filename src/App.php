@@ -90,6 +90,11 @@ final class App
         } catch (Throwable) {
             // Bewerber-Löschfrist darf Seitenaufruf nicht blockieren
         }
+        try {
+            VideoPublishQueueService::runIfDue();
+        } catch (Throwable) {
+            // YouTube-Upload-Queue darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

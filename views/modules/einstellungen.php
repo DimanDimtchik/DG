@@ -97,6 +97,8 @@
           <?php View::render('settings/tab-recruiting-privacy', compact('recruitingPrivacyForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'recruiting-mail') : ?>
           <?php View::render('settings/tab-recruiting-mail', compact('recruitingMailForm', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'youtube-publish') : ?>
+          <?php View::render('settings/tab-youtube-publish', compact('youtubePublishForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'xing-recruiting') : ?>
           <?php View::render('settings/tab-xing-recruiting', compact('xingRecruitingForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'linkedin-recruiting') : ?>
