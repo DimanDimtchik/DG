@@ -6,10 +6,14 @@
  * @var array<string, mixed>|null $latestYoutubePost
  * @var array<string, mixed>|null $latestLinkedinPost
  * @var array<string, mixed>|null $latestInstagramPost
+ * @var array<string, mixed>|null $latestTiktokPost
  * @var bool $youtubeConnected
  * @var bool $linkedinConnected
  * @var bool $instagramConnected
+ * @var bool $tiktokConnected
  * @var bool $instagramCanDelete
+ * @var string $tiktokPostingMode
+ * @var array<string, mixed> $tiktokCreatorInfo
  * @var array<string, mixed> $linkedinEngagement
  * @var array<string, mixed> $instagramEngagement
  * @var string|null $formError
@@ -22,10 +26,25 @@ $latestYoutubePost = is_array($latestYoutubePost ?? null)
     : (is_array($latestPost ?? null) ? $latestPost : null);
 $latestLinkedinPost = is_array($latestLinkedinPost ?? null) ? $latestLinkedinPost : null;
 $latestInstagramPost = is_array($latestInstagramPost ?? null) ? $latestInstagramPost : null;
+$latestTiktokPost = is_array($latestTiktokPost ?? null) ? $latestTiktokPost : null;
 $youtubeConnected = !empty($youtubeConnected);
 $linkedinConnected = !empty($linkedinConnected);
 $instagramConnected = !empty($instagramConnected);
+$tiktokConnected = !empty($tiktokConnected);
 $instagramCanDelete = !empty($instagramCanDelete);
+$tiktokPostingMode = (string) ($tiktokPostingMode ?? TikTokPublishSettings::MODE_INBOX);
+$tiktokCreatorInfo = is_array($tiktokCreatorInfo ?? null) ? $tiktokCreatorInfo : [
+    'privacy_level_options' => [],
+    'max_video_post_duration_sec' => 0,
+    'creator_username' => '',
+    'error' => '',
+];
+$ttPrivacyLabels = [
+    'PUBLIC_TO_EVERYONE' => 'Öffentlich',
+    'MUTUAL_FOLLOW_FRIENDS' => 'Freunde',
+    'FOLLOWER_OF_CREATOR' => 'Follower',
+    'SELF_ONLY' => 'Nur ich',
+];
 $linkedinEngagement = is_array($linkedinEngagement ?? null) ? $linkedinEngagement : [
     'post_urn' => '',
     'comments' => [],
@@ -57,6 +76,7 @@ $stateLabels = PublishJobRepository::stateOptions();
 $publishedYoutubeJob = null;
 $publishedLinkedinJob = null;
 $publishedInstagramJob = null;
+$publishedTiktokJob = null;
 foreach ($publishJobs as $j) {
     if ((string) ($j['state'] ?? '') !== PublishJobRepository::STATE_PUBLISHED || (string) ($j['external_id'] ?? '') === '') {
         continue;
@@ -70,6 +90,9 @@ foreach ($publishJobs as $j) {
     }
     if ($plat === PublishJobRepository::PLATFORM_INSTAGRAM && $publishedInstagramJob === null) {
         $publishedInstagramJob = $j;
+    }
+    if ($plat === PublishJobRepository::PLATFORM_TIKTOK && $publishedTiktokJob === null) {
+        $publishedTiktokJob = $j;
     }
 }
 $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO_FILENAME);
@@ -259,6 +282,125 @@ $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO
       </form>
     <?php endif; ?>
   </section>
+
+  <section class="dg-panel dg-mb-4">
+    <h2 class="dg-subsection-title">Auf TikTok veröffentlichen</h2>
+    <?php
+      $ttIsDirect = $tiktokPostingMode === TikTokPublishSettings::MODE_DIRECT;
+      $ttPrivacyOpts = is_array($tiktokCreatorInfo['privacy_level_options'] ?? null)
+          ? $tiktokCreatorInfo['privacy_level_options']
+          : [];
+      $ttMaxSec = (int) ($tiktokCreatorInfo['max_video_post_duration_sec'] ?? 0);
+    ?>
+    <p class="dg-muted">
+      <?php if ($ttIsDirect) : ?>
+        Direct Post (nach Audit). Privacy manuell wählen — keine Vorbelegung.
+        Caption nach Publish nicht mehr änderbar; Löschen über die API nicht vorgesehen.
+      <?php else : ?>
+        Inbox / Draft: Video landet in der TikTok-Inbox; der Creator beendet den Post in der App
+        (kein echter One-Click).
+      <?php endif; ?>
+      <?php if ($ttMaxSec > 0) : ?>
+        Max. Videolänge laut Konto: <?= $ttMaxSec ?> s.
+      <?php endif; ?>
+    </p>
+    <?php if (!$tiktokConnected) : ?>
+      <p class="dg-muted">Zuerst TikTok in den Einstellungen verbinden.</p>
+      <div class="dg-btn-row">
+        <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('tiktok-publish')) ?>">TikTok-Einstellungen</a>
+      </div>
+    <?php elseif (($tiktokCreatorInfo['error'] ?? '') !== '') : ?>
+      <div class="dg-flash dg-flash--warning"><?= View::escape((string) $tiktokCreatorInfo['error']) ?></div>
+      <p class="dg-muted">Creator-Info konnte nicht geladen werden — erneut verbinden oder später versuchen.</p>
+    <?php else : ?>
+      <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="video_tiktok_publish" value="1">
+        <div class="dg-form-grid">
+          <label class="dg-field dg-field--wide">
+            <span>Titel / Caption</span>
+            <textarea name="tt_caption" rows="4" maxlength="2200"><?= View::escape((string) ($_POST['tt_caption'] ?? $defaultTitle)) ?></textarea>
+            <span class="dg-field-hint">Max. 2200 Zeichen (UTF-16). Bei Inbox oft in der App nachbearbeitet.</span>
+          </label>
+          <input type="hidden" name="tt_title" value="<?= View::escape((string) ($_POST['tt_title'] ?? $defaultTitle)) ?>">
+          <?php if ($ttIsDirect) : ?>
+            <label class="dg-field">
+              <span>Sichtbarkeit</span>
+              <select name="tt_privacy_level" required>
+                <option value="">— bitte wählen —</option>
+                <?php foreach ($ttPrivacyOpts as $opt) : ?>
+                  <?php
+                    $opt = (string) $opt;
+                    $lab = $ttPrivacyLabels[$opt] ?? $opt;
+                  ?>
+                  <option value="<?= View::escape($opt) ?>"<?= (string) ($_POST['tt_privacy_level'] ?? '') === $opt ? ' selected' : '' ?>>
+                    <?= View::escape($lab) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <span class="dg-field-hint">Nur Stufen, die TikTok für dieses Konto erlaubt.</span>
+            </label>
+            <label class="dg-field dg-field--checkbox">
+              <span class="dg-checkbox">
+                <input type="checkbox" name="tt_brand_content" value="1"<?= !empty($_POST['tt_brand_content']) ? ' checked' : '' ?>>
+                <span>Bezahlte Partnerschaft (Drittanbieter)</span>
+              </span>
+            </label>
+            <label class="dg-field dg-field--checkbox">
+              <span class="dg-checkbox">
+                <input type="checkbox" name="tt_brand_organic" value="1"<?= !empty($_POST['tt_brand_organic']) ? ' checked' : '' ?>>
+                <span>Eigenes Business bewerben</span>
+              </span>
+            </label>
+            <label class="dg-field dg-field--checkbox">
+              <span class="dg-checkbox">
+                <input type="checkbox" name="tt_is_aigc" value="1"<?= !empty($_POST['tt_is_aigc']) ? ' checked' : '' ?>>
+                <span>KI-generierter Inhalt</span>
+              </span>
+            </label>
+            <label class="dg-field dg-field--checkbox">
+              <span class="dg-checkbox">
+                <input type="checkbox" name="tt_disable_comment" value="1"<?= !empty($_POST['tt_disable_comment']) ? ' checked' : '' ?>>
+                <span>Kommentare aus</span>
+              </span>
+            </label>
+            <label class="dg-field dg-field--checkbox">
+              <span class="dg-checkbox">
+                <input type="checkbox" name="tt_disable_duet" value="1"<?= !empty($_POST['tt_disable_duet']) ? ' checked' : '' ?>>
+                <span>Duet aus</span>
+              </span>
+            </label>
+            <label class="dg-field dg-field--checkbox">
+              <span class="dg-checkbox">
+                <input type="checkbox" name="tt_disable_stitch" value="1"<?= !empty($_POST['tt_disable_stitch']) ? ' checked' : '' ?>>
+                <span>Stitch aus</span>
+              </span>
+            </label>
+          <?php endif; ?>
+          <label class="dg-field">
+            <span>Geplant (optional)</span>
+            <input type="datetime-local" name="tt_scheduled_at" value="<?= View::escape((string) ($_POST['tt_scheduled_at'] ?? '')) ?>">
+            <span class="dg-field-hint">CRM startet Upload zum Termin (TikTok plant nicht).</span>
+          </label>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">
+            <?= $ttIsDirect ? 'Auf TikTok posten' : 'Als Draft an TikTok senden' ?>
+          </button>
+        </div>
+      </form>
+    <?php endif; ?>
+  </section>
+
+  <?php if ($publishedTiktokJob !== null) : ?>
+    <section class="dg-panel dg-mb-4">
+      <h2 class="dg-subsection-title">TikTok</h2>
+      <p class="dg-muted">
+        ID: <?= View::escape((string) ($publishedTiktokJob['external_id'] ?? '')) ?>
+        · Nach Publish keine Caption-Änderung / kein Löschen über die Posting-API.
+      </p>
+    </section>
+  <?php endif; ?>
 
   <?php if ($publishedInstagramJob !== null) : ?>
     <section class="dg-panel dg-mb-4">

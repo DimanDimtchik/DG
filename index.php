@@ -3973,6 +3973,43 @@ switch ($path) {
                 header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
                 exit;
             }
+            if (isset($_POST['video_tiktok_publish']) && $assetId > 0) {
+                try {
+                    if (!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_TIKTOK)) {
+                        throw new RuntimeException('TikTok ist nicht verbunden.');
+                    }
+                    $scheduled = trim((string) ($_POST['tt_scheduled_at'] ?? ''));
+                    if ($scheduled !== '') {
+                        $scheduled = str_replace('T', ' ', $scheduled);
+                    }
+                    $title = trim((string) ($_POST['tt_title'] ?? $_POST['title'] ?? ''));
+                    $caption = (string) ($_POST['tt_caption'] ?? $_POST['caption'] ?? $title);
+                    $privacy = trim((string) ($_POST['tt_privacy_level'] ?? ''));
+                    $jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_TIKTOK, [
+                        'title' => $title !== '' ? $title : 'TikTok',
+                        'caption' => $caption,
+                        'description' => $caption,
+                        'scheduled_at' => $scheduled,
+                        'privacy_level' => $privacy,
+                        'disable_duet' => !empty($_POST['tt_disable_duet']) ? 1 : 0,
+                        'disable_stitch' => !empty($_POST['tt_disable_stitch']) ? 1 : 0,
+                        'disable_comment' => !empty($_POST['tt_disable_comment']) ? 1 : 0,
+                        'brand_content_toggle' => !empty($_POST['tt_brand_content']) ? 1 : 0,
+                        'brand_organic_toggle' => !empty($_POST['tt_brand_organic']) ? 1 : 0,
+                        'is_aigc' => !empty($_POST['tt_is_aigc']) ? 1 : 0,
+                        'tt_phase' => 'init',
+                    ], $user->id);
+                    $step = TikTokPublishService::processJob($jobId);
+                    Flash::set(
+                        !empty($step['ok']) ? 'success' : 'error',
+                        'TikTok-Job #' . $jobId . ': ' . $step['message']
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
             if (isset($_POST['video_instagram_delete']) && $assetId > 0) {
                 try {
                     InstagramReelsPublishService::deletePublished((int) ($_POST['job_id'] ?? 0));
@@ -7268,6 +7305,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $latestYoutubePost = null;
             $latestLinkedinPost = null;
             $latestInstagramPost = null;
+            $latestTiktokPost = null;
             foreach ($publishJobs as $j) {
                 if ((string) ($j['state'] ?? '') !== PublishJobRepository::STATE_PUBLISHED) {
                     continue;
@@ -7282,13 +7320,38 @@ $legalProductsConfig = LegalProductSettings::config();
                 if ($plat === PublishJobRepository::PLATFORM_INSTAGRAM && $latestInstagramPost === null) {
                     $latestInstagramPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
                 }
+                if ($plat === PublishJobRepository::PLATFORM_TIKTOK && $latestTiktokPost === null) {
+                    $latestTiktokPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
+                }
             }
             $latestPost = $latestYoutubePost; // Abwärtskompatibilität View
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
             $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
             $instagramConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM);
+            $tiktokConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_TIKTOK);
             $instagramCanDelete = (InstagramPublishSettings::config()['login_path'] ?? '')
                 === InstagramPublishSettings::LOGIN_FACEBOOK;
+            $tiktokPostingMode = (string) (TikTokPublishSettings::config()['posting_mode']
+                ?? TikTokPublishSettings::MODE_INBOX);
+            $tiktokCreatorInfo = [
+                'privacy_level_options' => [],
+                'max_video_post_duration_sec' => 0,
+                'creator_username' => '',
+                'error' => '',
+            ];
+            if ($tiktokConnected) {
+                try {
+                    $ttInfo = TikTokApiClient::queryCreatorInfo(TikTokTokenService::accessToken());
+                    $tiktokCreatorInfo = [
+                        'privacy_level_options' => $ttInfo['privacy_level_options'],
+                        'max_video_post_duration_sec' => $ttInfo['max_video_post_duration_sec'],
+                        'creator_username' => $ttInfo['creator_username'],
+                        'error' => '',
+                    ];
+                } catch (Throwable $e) {
+                    $tiktokCreatorInfo['error'] = $e->getMessage();
+                }
+            }
             $linkedinEngagement = [
                 'post_urn' => '',
                 'comments' => [],

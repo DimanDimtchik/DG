@@ -193,6 +193,8 @@ spl_autoload_register(static function (string $class): void {
         'TikTokPublishSettings' => '/src/VideoPublish/TikTokPublishSettings.php',
         'TikTokOAuthClient' => '/src/VideoPublish/TikTokOAuthClient.php',
         'TikTokTokenService' => '/src/VideoPublish/TikTokTokenService.php',
+        'TikTokApiClient' => '/src/VideoPublish/TikTokApiClient.php',
+        'TikTokPublishService' => '/src/VideoPublish/TikTokPublishService.php',
         'CountryCodes' => '/src/NumberRange/CountryCodes.php',
         'InvoiceNumberTokens' => '/src/NumberRange/InvoiceNumberTokens.php',
         'InvoiceNumberBuilder' => '/src/NumberRange/InvoiceNumberBuilder.php',

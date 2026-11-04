@@ -289,7 +289,8 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 1. Nur wenn CRM klar als **öffentliches Multi-Tenant-Creator-/Marketing-Produkt** positioniert ist (nicht „internes Upload-Hilfstool“).  
    **CRM-Scaffold 4-1:** Settings-Tab *TikTok Publish* + OAuth — [`tiktok-video-phase-4-1.md`](tiktok-video-phase-4-1.md). TT4D-App/Audit manuell **pro Tenant**.
 2. UX-Guidelines 1:1; dann Audit für Direct Post.
-3. Bis Audit: höchstens Inbox-Upload als „Draft nach TikTok“ — kein echter One-Click (Upload = 4-2).
+3. Bis Audit: höchstens Inbox-Upload als „Draft nach TikTok“ — kein echter One-Click.  
+   **Code 4-2:** `TikTokPublishService` (Creator-Info → FILE_UPLOAD → Status); Direct nur mit `audit_ok`.
 4. Für rein internes Einzelpersonen-Nutzen: eher **skip** oder manuell in der TikTok-App.
 
 ### Nicht tun

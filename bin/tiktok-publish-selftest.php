@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * TikTok Publish Phase 4-1: Settings, OAuth-URL (ohne echte TikTok-Calls).
+ * TikTok Publish Phase 4-1/4-2: Settings, OAuth-URL, Chunk-Plan, Scheduling (ohne Live-API).
  * php bin/tiktok-publish-selftest.php
  */
 
@@ -57,10 +57,16 @@ if (!defined('DG_ROOT')) {
 }
 
 require DG_ROOT . '/src/VideoPublish/VideoPublishCrypto.php';
+require DG_ROOT . '/src/VideoPublish/VideoAssetStorage.php';
+require DG_ROOT . '/src/VideoPublish/VideoAssetRepository.php';
 require DG_ROOT . '/src/VideoPublish/OAuthConnectionRepository.php';
+require DG_ROOT . '/src/VideoPublish/PublishJobRepository.php';
+require DG_ROOT . '/src/VideoPublish/PublishPostRepository.php';
 require DG_ROOT . '/src/VideoPublish/TikTokPublishSettings.php';
 require DG_ROOT . '/src/VideoPublish/TikTokOAuthClient.php';
 require DG_ROOT . '/src/VideoPublish/TikTokTokenService.php';
+require DG_ROOT . '/src/VideoPublish/TikTokApiClient.php';
+require DG_ROOT . '/src/VideoPublish/TikTokPublishService.php';
 
 $fail = 0;
 
@@ -89,6 +95,50 @@ Database::$pdo->exec(
         status TEXT,
         connected_at TEXT,
         meta_json TEXT
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_video_assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        stored_name TEXT,
+        original_name TEXT,
+        mime_type TEXT,
+        size_bytes INTEGER,
+        sha256 TEXT,
+        created_by INTEGER,
+        created_at TEXT
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_publish_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        asset_id INTEGER,
+        platform TEXT,
+        state TEXT,
+        attempts INTEGER DEFAULT 0,
+        last_error TEXT,
+        payload_json TEXT,
+        upload_session_url TEXT,
+        upload_offset INTEGER DEFAULT 0,
+        external_id TEXT,
+        created_by INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        stored_name TEXT,
+        size_bytes INTEGER,
+        mime_type TEXT
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_publish_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER,
+        platform TEXT,
+        external_id TEXT,
+        title TEXT,
+        description TEXT,
+        privacy TEXT,
+        published_at TEXT,
+        editable_flags TEXT
     )'
 );
 
@@ -169,8 +219,35 @@ expect_true(OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PL
 $token = TikTokTokenService::accessToken();
 expect_true($token === 'access-tt', 'access token readable');
 
+$planSmall = TikTokApiClient::chunkPlan(2048);
+expect_true($planSmall['total_chunk_count'] === 1 && $planSmall['chunk_size'] === 2048, 'small file single chunk');
+$planBig = TikTokApiClient::chunkPlan(25_000_000);
+expect_true($planBig['chunk_size'] >= TikTokApiClient::MIN_CHUNK, 'big chunk >= 5MB');
+expect_true($planBig['total_chunk_count'] >= 2, 'big file multi chunk');
+expect_true(TikTokApiClient::contentTypeForPath('x.mp4') === 'video/mp4', 'mp4 content-type');
+expect_true(TikTokApiClient::contentTypeForPath('x.mov') === 'video/quicktime', 'mov content-type');
+
+VideoAssetStorage::ensureDir();
+$demoPath = VideoAssetStorage::absolutePath('selftest-tt.mp4');
+file_put_contents($demoPath, str_repeat('0', 2048));
+Database::$pdo->exec(
+    "INSERT INTO dg_video_assets (stored_name, original_name, mime_type, size_bytes, sha256, created_by, created_at)
+     VALUES ('selftest-tt.mp4', 'selftest-tt.mp4', 'video/mp4', 2048, 'abc', 1, datetime('now'))"
+);
+$assetId = (int) Database::$pdo->lastInsertId();
+$jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_TIKTOK, [
+    'title' => 'Test',
+    'caption' => 'Hallo',
+    'tt_phase' => 'init',
+    'scheduled_at' => date('Y-m-d H:i:s', time() + 3600),
+], 1);
+$step = TikTokPublishService::processJob($jobId);
+expect_true($step['ok'] === true && $step['done'] === false, 'scheduled job waits');
+expect_true(str_contains($step['message'], 'Geplant'), 'scheduled message');
+
 TikTokTokenService::disconnect();
 expect_true(!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_TIKTOK), 'disconnected');
+@unlink($demoPath);
 
 if ($fail > 0) {
     fwrite(STDERR, "tiktok-publish-selftest: $fail Fehler\n");

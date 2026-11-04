@@ -16,8 +16,8 @@ Keine Kundenfirma und keine Personen im Kern hardcoden — App und Creator-Konto
 | Client-Audit / Direct-Flag | ✅ Status-Felder | Audit manuell |
 | CRM-Tab *TikTok Publish* | ✅ | — |
 | OAuth Connect (Creator) | ✅ | Token-Refresh-Cron optional |
-| Inbox Upload (`video.upload`) | ❌ | 4-2 |
-| Direct Post (`video.publish`) | ❌ | 4-2 nach Audit |
+| Inbox Upload (`video.upload`) | ❌ | ✅ 4-2 (Code; Live nach Connect) |
+| Direct Post (`video.publish`) | ❌ | ✅ 4-2 Code + `audit_ok`; Live nach Audit |
 | Caption-Edit / Delete nach Publish | nie (API) | UI bietet keins |
 
 ---
@@ -76,10 +76,12 @@ Access-Token ~24 h, Refresh ~365 d — **Rotation speichern** (CRM tut das b
 
 ---
 
-## Phase 4-2 (geplant)
+## Phase 4-2 (Code) — erledigt
 
-1. Creator-Info (`max_video_post_duration_sec`) vor jedem Job  
-2. Inbox: init → FILE_UPLOAD / PULL_FROM_URL → Status  
-3. Direct nur mit `audit_ok` + UX-Pflichten  
+1. Creator-Info vor Job + in Videos-UI (Privacy-Optionen, max. Dauer)  
+2. Inbox: init → FILE_UPLOAD-Chunks → Status `SEND_TO_USER_INBOX`  
+3. Direct: nur bei `audit_ok`; Privacy manuell; Brand-/AIGC-Schalter  
 4. CRM-`scheduled_at` (API plant nicht)  
-5. Kein Caption-Edit/Delete über Posting-API erwarten  
+5. Queue `VideoPublishQueueService` + Selftest  
+
+Live erst nach TT4D-App, Connect und ggf. Audit. PULL_FROM_URL bewusst nicht (Domain-Verify pro Tenant).  

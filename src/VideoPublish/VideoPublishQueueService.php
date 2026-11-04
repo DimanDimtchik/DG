@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Cron / runIfDue: aktive YouTube-, LinkedIn- und Instagram-Jobs weiterführen. */
+/** Cron / runIfDue: aktive YouTube-, LinkedIn-, Instagram- und TikTok-Jobs weiterführen. */
 final class VideoPublishQueueService
 {
     /**
@@ -66,6 +66,22 @@ final class VideoPublishQueueService
                 $result['processed']++;
                 for ($i = 0; $i < $maxChunksPerJob; $i++) {
                     $step = InstagramReelsPublishService::processJob($jobId);
+                    $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
+                    self::tallyStep($result, $jobId, $step);
+                    if (!empty($step['done'])) {
+                        break;
+                    }
+                }
+                continue;
+            }
+            if ($platform === PublishJobRepository::PLATFORM_TIKTOK) {
+                if (!TikTokPublishSettings::credentialsReady()) {
+                    $result['messages'][] = '#' . $jobId . ': TikTok nicht konfiguriert.';
+                    continue;
+                }
+                $result['processed']++;
+                for ($i = 0; $i < $maxChunksPerJob; $i++) {
+                    $step = TikTokPublishService::processJob($jobId);
                     $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
                     self::tallyStep($result, $jobId, $step);
                     if (!empty($step['done'])) {
