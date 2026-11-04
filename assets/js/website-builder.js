@@ -21,6 +21,7 @@
   var typeLabels = {
     heading: 'Überschrift',
     text: 'Text',
+    list: 'Liste',
     image: 'Bild',
     button: 'Button',
     spacer: 'Abstand',
@@ -123,9 +124,155 @@
     return result;
   }
 
+  var HEADING_LEVELS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  var HEADING_PRESET_FACTORS = { large: 1.25, medium: 1, small: 0.8 };
+
+  function normalizeHeadingLevel(level) {
+    var v = String(level || '').toLowerCase();
+    return HEADING_LEVELS.indexOf(v) >= 0 ? v : 'h2';
+  }
+
+  function headingLevelNumber(level) {
+    return parseInt(normalizeHeadingLevel(level).charAt(1), 10) || 2;
+  }
+
+  function normalizeHeadingSizePreset(preset) {
+    var v = String(preset || '').toLowerCase();
+    return ['', 'large', 'medium', 'small', 'custom'].indexOf(v) >= 0 ? v : '';
+  }
+
+  function headingFontSizeStyle(block) {
+    var preset = normalizeHeadingSizePreset(block && block.size_preset);
+    if (preset === 'large' || preset === 'medium' || preset === 'small') {
+      var factor = HEADING_PRESET_FACTORS[preset];
+      if (preset === 'medium') return 'font-size:var(--ws-heading-base)';
+      return 'font-size:calc(var(--ws-heading-base)*' + factor + ')';
+    }
+    if (preset === 'custom') {
+      var raw = String(block.font_size || '').trim();
+      var num = parseFloat(raw);
+      if (!(num > 0) || num > 500) return '';
+      var unit = String(block.font_size_unit || '%').toLowerCase() === 'px' ? 'px' : '%';
+      if (unit === 'px') return 'font-size:' + Math.round(num) + 'px';
+      return 'font-size:calc(var(--ws-heading-base)*' + (num / 100) + ')';
+    }
+    return '';
+  }
+
+  function collectHeadingBlocks(layout) {
+    var out = [];
+    (layout.rows || []).forEach(function (row) {
+      (row.columns || []).forEach(function (col) {
+        (col.blocks || []).forEach(function (block) {
+          if (block && block.type === 'heading') {
+            out.push(block);
+          }
+        });
+      });
+    });
+    return out;
+  }
+
+  /** Flache Blockliste in Dokumentreihenfolge (Zeile → Spalte → Block). */
+  function flattenBlocks(layout) {
+    var out = [];
+    (layout.rows || []).forEach(function (row) {
+      (row.columns || []).forEach(function (col) {
+        (col.blocks || []).forEach(function (block) {
+          if (block) out.push(block);
+        });
+      });
+    });
+    return out;
+  }
+
+  /**
+   * Vorherige Überschrift für eine Einfügeposition.
+   * @param {string} [afterBlockId] Einfügen nach diesem Block (inkl. wenn er selbst Überschrift ist)
+   * @param {string} [beforeBlockId] Einfügen vor diesem Block (exkl.)
+   * @param {string} [beforeColId] Einfügen am Anfang/Ende dieser Spalte: alles davor in Dokumentreihenfolge
+   */
+  function findPreviousHeadingForInsert(layout, afterBlockId, beforeBlockId, beforeColId) {
+    var prev = null;
+    var rows = layout.rows || [];
+    for (var r = 0; r < rows.length; r++) {
+      var cols = rows[r].columns || [];
+      for (var c = 0; c < cols.length; c++) {
+        var col = cols[c];
+        if (beforeColId && col.id === beforeColId && !afterBlockId) {
+          return prev;
+        }
+        var blocks = col.blocks || [];
+        for (var b = 0; b < blocks.length; b++) {
+          var block = blocks[b];
+          if (beforeBlockId && block.id === beforeBlockId) return prev;
+          if (block.type === 'heading') prev = block;
+          if (afterBlockId && block.id === afterBlockId) return prev;
+        }
+      }
+    }
+    return prev;
+  }
+
+  /**
+   * Google-übliche Gliederung: eine H1, danach ohne Stufensprung.
+   * Nur Vorschlag — manuell jederzeit änderbar.
+   * @param {object|null} prevHeading Vorherige Überschrift in Dokumentreihenfolge
+   * @param {object} layout
+   * @param {string} [ignoreBlockId] eigene ID beim Prüfen „hat schon H1“
+   */
+  function suggestHeadingLevel(prevHeading, layout, ignoreBlockId) {
+    var headings = collectHeadingBlocks(layout).filter(function (h) {
+      return !ignoreBlockId || h.id !== ignoreBlockId;
+    });
+    if (!headings.length && !prevHeading) return 'h1';
+
+    var hasH1 = headings.some(function (h) {
+      return normalizeHeadingLevel(h.level) === 'h1';
+    });
+    if (prevHeading && normalizeHeadingLevel(prevHeading.level) === 'h1') {
+      hasH1 = true;
+    }
+    if (!hasH1) return 'h1';
+    if (!prevHeading) return 'h2';
+    var n = headingLevelNumber(prevHeading.level);
+    if (n <= 1) return 'h2';
+    return 'h' + Math.min(n, 6);
+  }
+
+  function headingSeoHints(layout, block) {
+    var hints = [];
+    var level = normalizeHeadingLevel(block.level);
+    var headings = collectHeadingBlocks(layout);
+    var h1Count = headings.filter(function (h) {
+      return normalizeHeadingLevel(h.level) === 'h1';
+    }).length;
+    if (level === 'h1' && h1Count > 1) {
+      hints.push('Mehrere H1 auf dieser Seite — Suchmaschinen erwarten meist nur eine.');
+    }
+    var prev = null;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].id === block.id) {
+        prev = i > 0 ? headings[i - 1] : null;
+        break;
+      }
+    }
+    if (prev) {
+      var prevN = headingLevelNumber(prev.level);
+      var curN = headingLevelNumber(level);
+      if (curN > prevN + 1) {
+        hints.push('Stufe übersprungen (nach H' + prevN + ' kommt meist H' + (prevN + 1) + ').');
+      }
+    } else if (level !== 'h1' && h1Count === 0) {
+      hints.push('Erste Überschrift ist oft H1 (Seitentitel).');
+    }
+    return hints;
+  }
+
   function defaultBlock(type) {
     switch (type) {
       case 'heading': return { id: uid('blk'), type: 'heading', text: 'Überschrift', level: 'h2' };
+      case 'list': return { id: uid('blk'), type: 'list', items: 'Erster Punkt\nZweiter Punkt', list_type: 'ul', marker: 'disc', marker_image: '' };
       case 'image':   return { id: uid('blk'), type: 'image', src: '', alt: '' };
       case 'button':  return { id: uid('blk'), type: 'button', label: 'Mehr erfahren', url: '#' };
       case 'spacer':  return { id: uid('blk'), type: 'spacer', height: 24 };
@@ -184,6 +331,124 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function listItems(value) {
+    return String(value || '')
+      .split(/\r?\n/)
+      .map(function (line) { return line.trim(); })
+      .filter(Boolean);
+  }
+
+  function normalizeListType(value) {
+    return value === 'ol' ? 'ol' : 'ul';
+  }
+
+  /** Spiegel zu src/Website/WebsiteListMarkers.php */
+  var LIST_MARKER_UL_CSS = [
+    ['disc', 'Punkt'],
+    ['circle', 'Kreis'],
+    ['square', 'Quadrat'],
+    ['none', 'Ohne Zeichen'],
+  ];
+  var LIST_MARKER_UL_SYMBOLS = [
+    ['symbol:heart', 'Herz ♥'],
+    ['symbol:arrow', 'Pfeil →'],
+    ['symbol:arrow-bold', 'Pfeil fett ➤'],
+    ['symbol:diamond', 'Raute ◆'],
+    ['symbol:check', 'Häkchen ✓'],
+    ['symbol:star', 'Stern ★'],
+  ];
+  var LIST_MARKER_OL = [
+    ['decimal', '1, 2, 3'],
+    ['decimal-leading-zero', '01, 02, 03'],
+    ['lower-alpha', 'a, b, c'],
+    ['upper-alpha', 'A, B, C'],
+    ['lower-roman', 'i, ii, iii'],
+    ['upper-roman', 'I, II, III'],
+  ];
+  var LIST_MARKER_SYMBOL_CLASS = {
+    'symbol:heart': 'm-heart',
+    'symbol:arrow': 'm-arrow',
+    'symbol:arrow-bold': 'm-arrow-bold',
+    'symbol:diamond': 'm-diamond',
+    'symbol:check': 'm-check',
+    'symbol:star': 'm-star',
+  };
+
+  function listMarkerIds(type) {
+    var t = normalizeListType(type);
+    if (t === 'ol') {
+      return LIST_MARKER_OL.map(function (row) { return row[0]; });
+    }
+    var ids = LIST_MARKER_UL_CSS.map(function (row) { return row[0]; });
+    LIST_MARKER_UL_SYMBOLS.forEach(function (row) { ids.push(row[0]); });
+    ids.push('image');
+    return ids;
+  }
+
+  function normalizeListMarker(type, marker) {
+    var allowed = listMarkerIds(type);
+    marker = String(marker || '').trim();
+    if (allowed.indexOf(marker) !== -1) return marker;
+    return normalizeListType(type) === 'ol' ? 'decimal' : 'disc';
+  }
+
+  function isSafeListMarkerImageUrl(url) {
+    return isSafeContentHref(url);
+  }
+
+  function cssUrlValue(url) {
+    url = String(url || '').trim();
+    if (!isSafeListMarkerImageUrl(url)) return '';
+    return 'url("' + url.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '")';
+  }
+
+  function listMarkerPresentation(type, marker, markerImage) {
+    var listType = normalizeListType(type);
+    marker = normalizeListMarker(listType, marker);
+    markerImage = String(markerImage || '').trim();
+    var base = 'dg-website-block__list';
+    if (marker === 'image') {
+      var cssUrl = cssUrlValue(markerImage);
+      if (!cssUrl) {
+        return { className: base, style: 'list-style-type:disc' };
+      }
+      return {
+        className: base + ' dg-website-block__list--custom dg-website-block__list--m-image',
+        style: '--ws-list-marker-image:' + cssUrl,
+      };
+    }
+    if (LIST_MARKER_SYMBOL_CLASS[marker]) {
+      return {
+        className: base + ' dg-website-block__list--custom dg-website-block__list--' + LIST_MARKER_SYMBOL_CLASS[marker],
+        style: '',
+      };
+    }
+    return { className: base, style: 'list-style-type:' + marker };
+  }
+
+  function listMarkerSelectHtml(type, marker) {
+    var listType = normalizeListType(type);
+    var selected = normalizeListMarker(listType, marker);
+    var html = '<label class="dg-field"><span>Auflistungszeichen</span><select name="marker">';
+    function addOptions(rows) {
+      rows.forEach(function (option) {
+        html += '<option value="' + escapeHtml(option[0]) + '"' + (option[0] === selected ? ' selected' : '') + '>' + escapeHtml(option[1]) + '</option>';
+      });
+    }
+    if (listType === 'ol') {
+      addOptions(LIST_MARKER_OL);
+    } else {
+      html += '<optgroup label="Standard">';
+      addOptions(LIST_MARKER_UL_CSS);
+      html += '</optgroup><optgroup label="Symbole">';
+      addOptions(LIST_MARKER_UL_SYMBOLS);
+      html += '</optgroup><optgroup label="Medien">';
+      html += '<option value="image"' + (selected === 'image' ? ' selected' : '') + '>Eigenes Bild …</option>';
+      html += '</optgroup>';
+    }
+    return html + '</select></label>';
   }
 
   var ADV_DISPLAY = ['block', 'inline', 'inline-block', 'flex', 'none'];
@@ -1265,9 +1530,29 @@
 
     switch (block.type) {
       case 'heading':
-        var level = block.level === 'h1' || block.level === 'h3' ? block.level : 'h2';
-        html += '<p class="dg-website-block__heading dg-website-block__heading--' + level + '">' +
+        var level = normalizeHeadingLevel(block.level);
+        var headingStyle = headingFontSizeStyle(block);
+        html += '<p class="dg-website-block__heading dg-website-block__heading--' + level + '"' +
+          (headingStyle ? ' style="' + escapeHtml(headingStyle) + '"' : '') + '>' +
           (renderInlineMarkupHtml(block.text) || '<span class="dg-field-hint">Überschrift</span>') + '</p>';
+        break;
+      case 'list':
+        var listType = normalizeListType(block.list_type);
+        var listPresent = listMarkerPresentation(listType, block.marker, block.marker_image);
+        var entries = listItems(block.items);
+        if (entries.length) {
+          html += '<' + listType + ' class="' + escapeHtml(listPresent.className) + '"';
+          if (listPresent.style) {
+            html += ' style="' + escapeHtml(listPresent.style) + '"';
+          }
+          html += '>';
+          entries.forEach(function (entry) {
+            html += '<li>' + renderInlineMarkupHtml(entry) + '</li>';
+          });
+          html += '</' + listType + '>';
+        } else {
+          html += '<div class="dg-website-block__image-placeholder">Liste — Einträge rechts zeilenweise pflegen</div>';
+        }
         break;
       case 'image':
         html += block.src
@@ -2012,11 +2297,65 @@
       switch (block.type) {
         case 'heading':
           html += textFieldWithCharPicker('Text', 'text', block.text);
-          html += '<label class="dg-field"><span>Größe</span><select name="level">' +
-            '<option value="h1"' + (block.level === 'h1' ? ' selected' : '') + '>Groß</option>' +
-            '<option value="h2"' + (block.level !== 'h1' && block.level !== 'h3' ? ' selected' : '') + '>Mittel</option>' +
-            '<option value="h3"' + (block.level === 'h3' ? ' selected' : '') + '>Klein</option>' +
+          var curLevel = normalizeHeadingLevel(block.level);
+          var prevForSuggest = null;
+          flattenBlocks(layout).some(function (b) {
+            if (b.id === block.id) return true;
+            if (b.type === 'heading') prevForSuggest = b;
+            return false;
+          });
+          var suggested = suggestHeadingLevel(prevForSuggest, layout, block.id);
+          html += '<label class="dg-field"><span>Überschriften-Ebene</span><select name="level">';
+          HEADING_LEVELS.forEach(function (lv) {
+            var label = lv.toUpperCase();
+            if (lv === 'h1') label += ' — Seitentitel';
+            html += '<option value="' + lv + '"' + (curLevel === lv ? ' selected' : '') + '>' + label + '</option>';
+          });
+          html += '</select></label>';
+          if (suggested !== curLevel) {
+            html += '<p class="dg-field-hint">Vorschlag (Suchmaschinen): <strong>' + suggested.toUpperCase() + '</strong> ' +
+              '<button type="button" class="dg-button dg-button--small" data-apply-heading-suggest="' +
+              escapeHtml(suggested) + '">Übernehmen</button></p>';
+          } else {
+            html += '<p class="dg-field-hint">Ebene passt zum üblichen Aufbau (eine H1, danach ohne Sprung).</p>';
+          }
+          headingSeoHints(layout, block).forEach(function (hint) {
+            html += '<p class="dg-field-hint">' + escapeHtml(hint) + '</p>';
+          });
+          var sizePreset = normalizeHeadingSizePreset(block.size_preset);
+          html += '<label class="dg-field"><span>Textgröße</span><select name="size_preset">' +
+            '<option value=""' + (sizePreset === '' ? ' selected' : '') + '>Standard (für diese Ebene)</option>' +
+            '<option value="large"' + (sizePreset === 'large' ? ' selected' : '') + '>Groß (125 %)</option>' +
+            '<option value="medium"' + (sizePreset === 'medium' ? ' selected' : '') + '>Mittel (100 %)</option>' +
+            '<option value="small"' + (sizePreset === 'small' ? ' selected' : '') + '>Klein (80 %)</option>' +
+            '<option value="custom"' + (sizePreset === 'custom' ? ' selected' : '') + '>Eigene Größe</option>' +
             '</select></label>';
+          if (sizePreset === 'custom') {
+            var sizeUnit = String(block.font_size_unit || '%').toLowerCase() === 'px' ? 'px' : '%';
+            html += '<div class="dg-form-grid">' +
+              '<label class="dg-field"><span>Wert</span><input type="number" name="font_size" min="1" max="500" step="any" value="' +
+              escapeHtml(String(block.font_size || '')) + '"></label>' +
+              '<label class="dg-field"><span>Einheit</span><select name="font_size_unit">' +
+              '<option value="%"' + (sizeUnit === '%' ? ' selected' : '') + '>% der Ebenen-Größe</option>' +
+              '<option value="px"' + (sizeUnit === 'px' ? ' selected' : '') + '>Pixel (px)</option>' +
+              '</select></label></div>' +
+              '<p class="dg-field-hint">Prozent bezieht sich auf die Standardgröße von ' + curLevel.toUpperCase() + '.</p>';
+          }
+          break;
+        case 'list':
+          var inspectorListType = normalizeListType(block.list_type);
+          html += textareaHtml('Einträge (eine Zeile je Punkt)', 'items', block.items || '', 8);
+          html += '<label class="dg-field"><span>Listentyp</span><select name="list_type">' +
+            '<option value="ul"' + (inspectorListType === 'ul' ? ' selected' : '') + '>Aufzählung</option>' +
+            '<option value="ol"' + (inspectorListType === 'ol' ? ' selected' : '') + '>Nummeriert</option>' +
+            '</select></label>';
+          html += listMarkerSelectHtml(inspectorListType, block.marker);
+          if (normalizeListMarker(inspectorListType, block.marker) === 'image') {
+            html += fieldHtml('Marker-Bild (URL)', 'marker_image', block.marker_image || '');
+            html += imageUploadHtml('marker_image');
+            html += '<p class="dg-field-hint">Kleines Bild als Aufzählungszeichen (Mediathek oder Upload). Empfohlen: quadratisch, ca. 32–64 px.</p>';
+          }
+          html += '<p class="dg-field-hint">Jede Zeile wird als eigener Listenpunkt ausgegeben. **Fett** und [Link](https://…) sind wie im Textblock möglich.</p>';
           break;
         case 'image':
           html += fieldHtml('Bild-URL', 'src', block.src);
@@ -2141,6 +2480,13 @@
     };
   }
 
+  function applyHeadingSuggestion(layout, block, afterBlockId, beforeBlockId, beforeColId) {
+    if (!block || block.type !== 'heading') return block;
+    var prev = findPreviousHeadingForInsert(layout, afterBlockId || '', beforeBlockId || '', beforeColId || '');
+    block.level = suggestHeadingLevel(prev, layout, block.id);
+    return block;
+  }
+
   function insertBlockAt(layout, type) {
     var block = defaultBlock(type);
     var slot = pendingInsert;
@@ -2149,6 +2495,11 @@
       var pos = findBlockPosition(layout, slot.blockId);
       if (pos) {
         var at = slot.mode === 'block-before' ? pos.index : pos.index + 1;
+        if (slot.mode === 'block-after') {
+          applyHeadingSuggestion(layout, block, slot.blockId, '', '');
+        } else {
+          applyHeadingSuggestion(layout, block, '', slot.blockId, '');
+        }
         pos.col.blocks.splice(at, 0, block);
         selected = { type: 'block', rowId: pos.row.id, colId: pos.col.id, blockId: block.id };
         pendingInsert = null;
@@ -2161,6 +2512,12 @@
       var colPos = findColumnPosition(layout, slot.colId);
       if (colInto) {
         colInto.blocks = colInto.blocks || [];
+        var lastInCol = colInto.blocks.length ? colInto.blocks[colInto.blocks.length - 1] : null;
+        if (lastInCol) {
+          applyHeadingSuggestion(layout, block, lastInCol.id, '', '');
+        } else {
+          applyHeadingSuggestion(layout, block, '', '', colInto.id);
+        }
         colInto.blocks.push(block);
         selected = {
           type: 'block',
@@ -2177,6 +2534,7 @@
     if (selected.blockId) {
       var afterPos = findBlockPosition(layout, selected.blockId);
       if (afterPos) {
+        applyHeadingSuggestion(layout, block, selected.blockId, '', '');
         afterPos.col.blocks.splice(afterPos.index + 1, 0, block);
         selected = { type: 'block', rowId: afterPos.row.id, colId: afterPos.col.id, blockId: block.id };
         pendingInsert = null;
@@ -2188,6 +2546,12 @@
     var col = findColumn(layout, selected.colId);
     if (!col) return null;
     col.blocks = col.blocks || [];
+    var lastBlock = col.blocks.length ? col.blocks[col.blocks.length - 1] : null;
+    if (lastBlock) {
+      applyHeadingSuggestion(layout, block, lastBlock.id, '', '');
+    } else {
+      applyHeadingSuggestion(layout, block, '', '', col.id);
+    }
     col.blocks.push(block);
     selected.blockId = block.id;
     selected.type = 'block';
@@ -2591,6 +2955,54 @@
         }
         return;
       }
+      var listSelect = event.target.closest('select[name="list_type"], select[name="marker"]');
+      if (listSelect && selected.blockId) {
+        var layoutLs = parseLayout();
+        var blockLs = findBlock(layoutLs, selected.blockId);
+        if (blockLs) {
+          if (listSelect.name === 'list_type') {
+            blockLs.list_type = normalizeListType(listSelect.value);
+            blockLs.marker = normalizeListMarker(blockLs.list_type, blockLs.marker);
+            if (blockLs.list_type === 'ol') delete blockLs.marker_image;
+          } else {
+            blockLs.marker = normalizeListMarker(blockLs.list_type, listSelect.value);
+            if (blockLs.marker !== 'image') delete blockLs.marker_image;
+          }
+          persist(layoutLs);
+          render({ keepInspector: true });
+        }
+        return;
+      }
+      var headingSelect = event.target.closest('select[name="level"], select[name="size_preset"], select[name="font_size_unit"]');
+      if (headingSelect && selected.blockId) {
+        var layoutHd = parseLayout();
+        var blockHd = findBlock(layoutHd, selected.blockId);
+        if (blockHd && blockHd.type === 'heading') {
+          if (headingSelect.name === 'level') {
+            blockHd.level = normalizeHeadingLevel(headingSelect.value);
+          } else if (headingSelect.name === 'size_preset') {
+            var sp = normalizeHeadingSizePreset(headingSelect.value);
+            if (sp === '') {
+              delete blockHd.size_preset;
+              delete blockHd.font_size;
+              delete blockHd.font_size_unit;
+            } else {
+              blockHd.size_preset = sp;
+              if (sp !== 'custom') {
+                delete blockHd.font_size;
+                delete blockHd.font_size_unit;
+              } else if (!blockHd.font_size_unit) {
+                blockHd.font_size_unit = '%';
+              }
+            }
+          } else {
+            blockHd.font_size_unit = String(headingSelect.value || '%').toLowerCase() === 'px' ? 'px' : '%';
+          }
+          persist(layoutHd);
+          render();
+        }
+        return;
+      }
       var select = event.target.closest('select[name="form_id"]');
       if (select && selected.blockId) {
         var layout = parseLayout();
@@ -2625,6 +3037,18 @@
     });
 
     inspector.addEventListener('click', function (event) {
+      var applySuggest = event.target.closest('[data-apply-heading-suggest]');
+      if (applySuggest && selected.blockId) {
+        event.preventDefault();
+        var layoutSg = parseLayout();
+        var blockSg = findBlock(layoutSg, selected.blockId);
+        if (blockSg && blockSg.type === 'heading') {
+          blockSg.level = normalizeHeadingLevel(applySuggest.getAttribute('data-apply-heading-suggest'));
+          persist(layoutSg);
+          render();
+        }
+        return;
+      }
       var formatBold = event.target.closest('[data-format-bold]');
       if (formatBold) {
         event.preventDefault();

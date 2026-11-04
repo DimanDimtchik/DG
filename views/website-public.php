@@ -237,11 +237,30 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 
     /* Blocks */
     .ws-block { margin-bottom: 16px; }
-    .ws-block h1 { font-size: 2rem; margin-bottom: 12px; }
-    .ws-block h2 { font-size: 1.5rem; margin-bottom: 10px; }
-    .ws-block h3 { font-size: 1.25rem; margin-bottom: 8px; }
-    .ws-block h4 { font-size: 1.1rem; margin: 16px 0 8px; }
+    .ws-block h1 { --ws-heading-base: 2rem; font-size: var(--ws-heading-base); margin-bottom: 12px; }
+    .ws-block h2 { --ws-heading-base: 1.5rem; font-size: var(--ws-heading-base); margin-bottom: 10px; }
+    .ws-block h3 { --ws-heading-base: 1.25rem; font-size: var(--ws-heading-base); margin-bottom: 8px; }
+    .ws-block h4 { --ws-heading-base: 1.1rem; font-size: var(--ws-heading-base); margin: 16px 0 8px; }
+    .ws-block h5 { --ws-heading-base: 1rem; font-size: var(--ws-heading-base); margin: 14px 0 6px; }
+    .ws-block h6 { --ws-heading-base: 0.9rem; font-size: var(--ws-heading-base); margin: 12px 0 6px; }
     .ws-block p { margin-bottom: 8px; }
+    .ws-block .ws-list { margin: 0 0 12px 1.25rem; padding-left: 1.25rem; }
+    .ws-block .ws-list li + li { margin-top: 4px; }
+    .ws-block .ws-list.ws-list--custom { list-style: none; padding-left: 0; margin-left: 0; }
+    .ws-block .ws-list.ws-list--custom > li { position: relative; padding-left: 1.55em; }
+    .ws-block .ws-list.ws-list--custom > li::before {
+      position: absolute; left: 0; top: 0; line-height: inherit;
+    }
+    .ws-block .ws-list--m-heart > li::before { content: "♥"; color: var(--ws-primary, #2563eb); }
+    .ws-block .ws-list--m-arrow > li::before { content: "→"; }
+    .ws-block .ws-list--m-arrow-bold > li::before { content: "➤"; color: var(--ws-primary, #2563eb); }
+    .ws-block .ws-list--m-diamond > li::before { content: "◆"; }
+    .ws-block .ws-list--m-check > li::before { content: "✓"; color: #15803d; }
+    .ws-block .ws-list--m-star > li::before { content: "★"; color: #ca8a04; }
+    .ws-block .ws-list--m-image > li::before {
+      content: ""; top: 0.2em; width: 1.1em; height: 1.1em;
+      background: var(--ws-list-marker-image) center / contain no-repeat;
+    }
     .ws-content-table-wrap { overflow-x: auto; margin: 12px 0 20px; }
     .ws-content-table {
       width: 100%; border-collapse: collapse; font-size: 0.95rem;
@@ -576,8 +595,11 @@ if ($wsInteractionCss !== '') :
       <div class="<?= View::escape($wsBlockClass) ?>"<?= $blockIdAttr !== '' ? ' data-block-id="' . View::escape($blockIdAttr) . '"' : '' ?><?= $advStyle !== '' ? ' style="' . View::escape($advStyle) . '"' : '' ?><?= WebsiteBlockAdvanced::toHtmlAttributes($adv) ?>>
         <?php switch ($type):
           case 'heading':
-            $level = in_array($block['level'] ?? '', ['h1','h2','h3'], true) ? $block['level'] : 'h2';
-            echo "<{$level}>" . WebsiteContent::renderHeadingText((string) ($block['text'] ?? '')) . "</{$level}>";
+            $level = WebsiteHeading::normalizeLevel($block['level'] ?? 'h2');
+            $headingSizeStyle = WebsiteHeading::fontSizeStyle($block);
+            echo '<' . $level . ($headingSizeStyle !== '' ? ' style="' . View::escape($headingSizeStyle) . '"' : '') . '>'
+              . WebsiteContent::renderHeadingText((string) ($block['text'] ?? ''))
+              . '</' . $level . '>';
             break;
 
           case 'text':
@@ -586,6 +608,29 @@ if ($wsInteractionCss !== '') :
                 echo '<blockquote class="ws-quote">' . $textBody . '</blockquote>';
             } else {
                 echo '<p>' . $textBody . '</p>';
+            }
+            break;
+
+          case 'list':
+            $listType = (string) ($block['list_type'] ?? '') === 'ol' ? 'ol' : 'ul';
+            $marker = WebsiteListMarkers::normalize($listType, (string) ($block['marker'] ?? ''));
+            $markerImage = WebsiteListMarkers::normalizeImageUrl((string) ($block['marker_image'] ?? ''));
+            $listAttrs = WebsiteListMarkers::presentation($listType, $marker, $markerImage);
+            $rawItems = preg_split('/\R/u', (string) ($block['items'] ?? '')) ?: [];
+            $items = array_values(array_filter(array_map(
+                static fn (string $item): string => trim($item),
+                $rawItems
+            ), static fn (string $item): bool => $item !== ''));
+            if ($items !== []) {
+                echo '<' . $listType . ' class="' . View::escape($listAttrs['class']) . '"';
+                if ($listAttrs['style'] !== '') {
+                    echo ' style="' . View::escape($listAttrs['style']) . '"';
+                }
+                echo '>';
+                foreach ($items as $item) {
+                    echo '<li>' . WebsiteContent::renderInlineMarkup(WebsiteContent::normalizePlainText($item)) . '</li>';
+                }
+                echo '</' . $listType . '>';
             }
             break;
 

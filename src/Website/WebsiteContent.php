@@ -149,11 +149,37 @@ final class WebsiteContent
                     if (($type === 'text' || $type === 'heading') && isset($block['text']) && is_string($block['text'])) {
                         $block['text'] = self::normalizePlainText($block['text']);
                     }
+                    if ($type === 'heading') {
+                        $block = WebsiteHeading::normalizeBlock($block);
+                    }
                     if ($type === 'text') {
                         if (!empty($block['quote'])) {
                             $block['quote'] = true;
                         } else {
                             unset($block['quote']);
+                        }
+                    }
+                    if ($type === 'list') {
+                        $block['items'] = isset($block['items']) && is_string($block['items'])
+                            ? self::normalizePlainText($block['items'])
+                            : '';
+                        $listType = (string) ($block['list_type'] ?? 'ul');
+                        $block['list_type'] = $listType === 'ol' ? 'ol' : 'ul';
+                        $block['marker'] = WebsiteListMarkers::normalize(
+                            $block['list_type'],
+                            (string) ($block['marker'] ?? '')
+                        );
+                        $markerImage = WebsiteListMarkers::normalizeImageUrl(
+                            (string) ($block['marker_image'] ?? '')
+                        );
+                        if ($block['marker'] === 'image') {
+                            $block['marker_image'] = $markerImage;
+                            if ($markerImage === '') {
+                                $block['marker'] = 'disc';
+                                unset($block['marker_image']);
+                            }
+                        } else {
+                            unset($block['marker_image']);
                         }
                     }
                     if ($type === 'button') {

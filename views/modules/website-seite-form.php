@@ -7,7 +7,18 @@
 $isEdit = ($websitePageId ?? 0) > 0;
 $readOnly = !($canEdit ?? false);
 $form = $form ?? WebsitePageRepository::emptyForm();
-$layoutJson = json_encode($form['layout'] ?? WebsitePageRepository::emptyLayout(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+$flash = $flash ?? null;
+try {
+    $layoutJson = json_encode(
+        $form['layout'] ?? WebsitePageRepository::emptyLayout(),
+        JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR
+    );
+} catch (Throwable $e) {
+    $layoutJson = json_encode(WebsitePageRepository::emptyLayout(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    if (empty($formError)) {
+        $formError = 'Seiteninhalt konnte nicht geladen werden. Bitte speichern Sie die Seite erneut oder stellen Sie eine ältere Version wieder her.';
+    }
+}
 $statusOptions = WebsitePageRepository::statusOptions();
 $initialSlug = WebsitePageRepository::sanitizeSlug((string) ($form['slug'] ?? ''));
 $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
@@ -39,7 +50,7 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
     <?php endif; ?>
   </header>
 
-  <?php View::render('partials/flash', compact('flash')); ?>
+  <?php View::render('partials/flash', ['flash' => $flash]); ?>
 
   <?php if (!empty($formError)) : ?>
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
@@ -91,6 +102,7 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
           <div class="dg-website-builder__palette-list">
             <button type="button" class="dg-website-tool" data-add-block="heading">Überschrift</button>
             <button type="button" class="dg-website-tool" data-add-block="text">Text</button>
+            <button type="button" class="dg-website-tool" data-add-block="list">Liste</button>
             <button type="button" class="dg-website-tool" data-add-block="image">Bild</button>
             <button type="button" class="dg-website-tool" data-add-block="button">Button</button>
             <button type="button" class="dg-website-tool" data-add-block="spacer">Abstand</button>

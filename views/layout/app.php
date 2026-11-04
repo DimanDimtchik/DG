@@ -598,16 +598,31 @@ $belegeFocus = (string) ($belegeFocus ?? '');
     <script src="<?= View::escape(Asset::url('/assets/js/website-menu-icon-picker.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/website-seite-form') : ?>
+    <?php
+      try {
+          $dgWebsiteBuilderJson = json_encode([
+              'mediaListUrl' => '/api/media?action=list',
+              'videoListUrl' => '/api/website-videos?action=list',
+              'csrf' => Csrf::token(),
+              'forms' => $websiteFormOptions ?? [],
+              'patterns' => WebsitePagePatterns::forEditor(),
+              'pageKind' => (string) (($form['layout']['page_kind'] ?? '') ?: ''),
+              'isOnlineBookingPage' => WebsitePageRepository::isOnlineBookingPage($form ?? []),
+          ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+      } catch (Throwable) {
+          $dgWebsiteBuilderJson = json_encode([
+              'mediaListUrl' => '/api/media?action=list',
+              'videoListUrl' => '/api/website-videos?action=list',
+              'csrf' => Csrf::token(),
+              'forms' => [],
+              'patterns' => [],
+              'pageKind' => '',
+              'isOnlineBookingPage' => false,
+          ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+      }
+    ?>
     <script>
-      window.dgWebsiteBuilder = {
-        mediaListUrl: '/api/media?action=list',
-        videoListUrl: '/api/website-videos?action=list',
-        csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
-        forms: <?= json_encode($websiteFormOptions ?? [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
-        patterns: <?= json_encode(WebsitePagePatterns::forEditor(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) ?>,
-        pageKind: <?= json_encode((string) (($form['layout']['page_kind'] ?? '') ?: ''), JSON_THROW_ON_ERROR) ?>,
-        isOnlineBookingPage: <?= WebsitePageRepository::isOnlineBookingPage($form ?? []) ? 'true' : 'false' ?>
-      };
+      window.dgWebsiteBuilder = <?= $dgWebsiteBuilderJson ?>;
     </script>
     <script src="<?= View::escape(Asset::url('/assets/js/website-builder.js')) ?>" defer></script>
   <?php endif; ?>

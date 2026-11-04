@@ -49,6 +49,36 @@ $layout = WebsiteContent::normalizeLayout([
 ]);
 assertTrue(($layout['rows'][0]['columns'][0]['blocks'][0]['quote'] ?? null) === true, 'quote bool');
 
+assertTrue(WebsiteHeading::normalizeLevel('h4') === 'h4', 'heading h4');
+assertTrue(WebsiteHeading::normalizeLevel('H7') === 'h2', 'heading fallback');
+$hBlock = WebsiteHeading::normalizeBlock([
+    'type' => 'heading',
+    'level' => 'h3',
+    'size_preset' => 'custom',
+    'font_size' => '120',
+    'font_size_unit' => '%',
+]);
+assertTrue(($hBlock['level'] ?? '') === 'h3', 'heading keep level');
+assertTrue(str_contains(WebsiteHeading::fontSizeStyle($hBlock), '--ws-heading-base'), 'heading % size');
+$hLarge = WebsiteHeading::fontSizeStyle(['size_preset' => 'large']);
+assertTrue(str_contains($hLarge, '1.25'), 'heading large preset');
+
+$layoutH = WebsiteContent::normalizeLayout([
+    'rows' => [[
+        'columns' => [[
+            'blocks' => [[
+                'type' => 'heading',
+                'text' => 'Titel',
+                'level' => 'h5',
+                'size_preset' => 'small',
+            ]],
+        ]],
+    ]],
+]);
+$nb = $layoutH['rows'][0]['columns'][0]['blocks'][0];
+assertTrue(($nb['level'] ?? '') === 'h5', 'normalize heading level');
+assertTrue(($nb['size_preset'] ?? '') === 'small', 'normalize size preset');
+
 if ($failures > 0) {
     echo "FAILED: $failures\n";
     exit(1);
