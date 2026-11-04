@@ -47,6 +47,34 @@ require dirname(__DIR__) . '/src/Recruiting/RecruitingPublicService.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingRetentionService.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingHireService.php';
 
+final class SettingsStore
+{
+    /** @var array<string, array<string, mixed>> */
+    public static array $data = [];
+
+    public static function get(string $key, array $defaults = []): array
+    {
+        return array_merge($defaults, self::$data[$key] ?? []);
+    }
+
+    public static function set(string $key, array $value): void
+    {
+        self::$data[$key] = $value;
+    }
+}
+
+final class CompanySettings
+{
+    public static function config(): array
+    {
+        return ['name' => 'Test GmbH'];
+    }
+}
+
+require dirname(__DIR__) . '/src/Recruiting/XingRecruitingSettings.php';
+require dirname(__DIR__) . '/src/Recruiting/XingRecruitingClient.php';
+require dirname(__DIR__) . '/src/Recruiting/XingRecruitingPublishService.php';
+
 function assertRecruit(bool $ok, string $msg): void
 {
     if (!$ok) {
@@ -430,4 +458,49 @@ $draftPlan = JobPostingRepository::planChannelState(
     'Xing'
 );
 assertRecruit($draftPlan['status'] === JobPostingRepository::PUBLISH_NONE, 'Ohne Veröffentlichung kein Queue');
+
+assertRecruit(XingRecruitingClient::mapJobType('internship') === 'INTERN', 'Xing job_type INTERN');
+assertRecruit(!XingRecruitingSettings::isReady(), 'Xing ohne Config nicht bereit');
+SettingsStore::set(XingRecruitingSettings::STORE_KEY, [
+    'enabled' => true,
+    'use_test_contract' => true,
+    'auto_activate' => true,
+    'auto_publish_queued' => false,
+    'organization_id' => '',
+    'order_id' => '',
+    'company_name' => '',
+    'company_profile_url' => '',
+    'consumer_key' => 'ck',
+    'consumer_secret' => 'cs',
+    'access_token' => 'at',
+    'access_token_secret' => 'ats',
+]);
+assertRecruit(XingRecruitingSettings::isReady(), 'Xing mit Test-Vertrag + OAuth bereit');
+assertRecruit(XingRecruitingSettings::effectiveOrganizationId(XingRecruitingSettings::config()) === '5160', 'Test Org-ID');
+$payload = XingRecruitingClient::buildCreatePayload([
+    'id' => 7,
+    'title' => 'Lagerhelfer',
+    'summary' => 'Kurz',
+    'body' => "Absatz 1\n\nAbsatz 2",
+    'location' => 'Berlin',
+    'slug' => 'lagerhelfer',
+    'employment_type' => 'full_time',
+]);
+assertRecruit(($payload['reply_setting'] ?? '') === 'url', 'Xing reply_setting url');
+assertRecruit(($payload['reply_url'] ?? '') === 'https://example.test/rekrut/lagerhelfer', 'Xing reply_url /rekrut');
+assertRecruit(($payload['company_name'] ?? '') === 'Test GmbH', 'Xing Firmenname');
+assertRecruit((int) ($payload['organization_id'] ?? 0) === 5160, 'Payload Org-ID');
+$oauth = XingRecruitingClient::oauthQueryParams(XingRecruitingSettings::config());
+assertRecruit(($oauth['oauth_signature_method'] ?? '') === 'PLAINTEXT', 'OAuth PLAINTEXT');
+assertRecruit(($oauth['oauth_signature'] ?? '') === 'cs&ats', 'OAuth Signatur');
+SettingsStore::set(XingRecruitingSettings::STORE_KEY, array_merge(XingRecruitingSettings::config(), [
+    'enabled' => true,
+    'use_test_contract' => false,
+    'organization_id' => '',
+    'order_id' => '',
+]));
+assertRecruit(!XingRecruitingSettings::isReady(), 'Ohne Vertrag nicht bereit');
+$blocked = XingRecruitingPublishService::publishJob(1, 1);
+assertRecruit($blocked['ok'] === false, 'Publish ohne Vertrag blockiert');
+assertRecruit(str_contains($blocked['message'], 'Jobvertrag') || str_contains($blocked['message'], 'Vertrag'), 'Hinweis Vertragspflicht');
 echo "Recruiting Phase-A Selftest bestanden.\n";

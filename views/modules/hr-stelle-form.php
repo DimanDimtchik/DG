@@ -15,6 +15,8 @@ $statusLabels = JobPostingRepository::statusOptions();
 $typeLabels = JobPostingRepository::employmentTypeOptions();
 $publishStatusLabels = JobPostingRepository::publishStatusOptions();
 $channelLabels = JobPostingRepository::channelOptions();
+$xingReady = XingRecruitingSettings::isReady();
+$xingStatusLabel = XingRecruitingSettings::statusLabel(XingRecruitingSettings::config());
 $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
     ? JobPostingRepository::publicUrl((string) $jobForm['slug'])
     : JobPostingRepository::publicUrl();
@@ -145,12 +147,24 @@ $applyUrl = (string) ($jobForm['slug'] ?? '') !== ''
             <?php endif; ?>
           </div>
         </div>
-        <p class="dg-field-hint dg-mt-2">Die Plattform-API folgt später — aktuell wird der Export nur vorgemerkt und protokolliert.</p>
+        <p class="dg-field-hint dg-mt-2">
+          Xing-API: <?= View::escape($xingStatusLabel) ?>.
+          <?php if (!$xingReady) : ?>
+            Einrichtung unter
+            <a href="<?= View::escape(SettingsRegistry::tabUrl('xing-recruiting')) ?>">Einstellungen → HR → Xing Stellenexport</a>
+            (nur mit Kunden-Jobvertrag oder Test-IDs).
+          <?php else : ?>
+            Mit „Speichern und an Xing senden“ wird die Anzeige angelegt; Bewerben-Link bleibt diese URL.
+          <?php endif; ?>
+        </p>
       <?php endif; ?>
     </section>
 
     <div class="dg-form-actions">
       <button type="submit" class="dg-button dg-button--primary">Speichern</button>
+      <?php if ($isEdit && $xingReady) : ?>
+        <button type="submit" class="dg-button" name="xing_publish_now" value="1">Speichern und an Xing senden</button>
+      <?php endif; ?>
       <a class="dg-button" href="/app?page=hr-stellen">Abbrechen</a>
     </div>
   </form>

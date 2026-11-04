@@ -143,6 +143,14 @@ final class SettingsRegistry
                         'lead' => 'Arbeitgeber-Stammdaten für die Lohnabrechnung (Umlagen, Bundesland, SEPA-Konto). Firmendaten bleiben unter Grundlagen → Firmendaten.',
                         'template' => 'lohn',
                     ],
+                    'xing-recruiting' => [
+                        'label' => 'Xing Stellenexport',
+                        'lead' => 'E-Recruiting-API: Jobvertrag (organization/order) und OAuth — nur mit Xing-Kundenvertrag oder Test-IDs.',
+                        'template' => 'xing-recruiting',
+                        'kichel_aliases' => [
+                            'xing', 'xing jobs', 'xing stellen', 'e-recruiting', 'stellenexport xing',
+                        ],
+                    ],
                 ],
             ],
             'kommunikation' => [
@@ -391,6 +399,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['payroll_lohn_save']) || isset($_POST['time_tracking_save'])) {
                 return isset($_POST['payroll_lohn_save']) ? 'lohn' : 'zeiterfassung';
+            }
+            if (isset($_POST['xing_recruiting_save'])) {
+                return 'xing-recruiting';
             }
         }
 

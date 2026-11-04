@@ -26,7 +26,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 ### B — Anzeigen-Export
 
 - [x] Stelle: Checkboxen Xing / LinkedIn + Publish-Status/Protokoll (Migration `137`, Status vorgemerkt/…, Ereignistabelle)
-- [ ] Xing E-Recruiting-API (nur mit Kunden-Jobvertrag)
+- [x] Xing E-Recruiting-API (nur mit Kunden-Jobvertrag / explizite Test-IDs; Settings HR → Xing; Publish-Service + OAuth 1.0a)
 - [ ] LinkedIn Jobs / Community soweit freigegeben (App-Review)
 - [x] Bewerben-URL immer Instanz-`/rekrut/...` (`JobPostingRepository::publicUrl`, im Stellenformular angezeigt)
 
@@ -44,4 +44,4 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 
 ## Nächster Schritt
 
-**B1 erledigt.** Als Nächstes Xing-/LinkedIn-API (Kundenvertrag / App-Review) oder Projekt-Prioritäten (UI/Hetzner/Lohn).
+**Xing-API erledigt (vertragspflichtig).** Als Nächstes LinkedIn Jobs (App-Review) oder Projekt-Prioritäten (UI/Hetzner/Lohn).
