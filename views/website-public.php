@@ -76,7 +76,17 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
 <?php endforeach; ?>
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--ws-text); background: var(--ws-bg); line-height: 1.6; }
+    html { height: 100%; }
+    body {
+      min-height: 100%;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--ws-text);
+      background: var(--ws-bg);
+      line-height: 1.6;
+    }
     a { color: var(--ws-primary); }
     .ws-preview-banner {
       background: #fef3c7;
@@ -151,7 +161,7 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     }
 
     /* Header */
-    .ws-header { background: var(--ws-primary); color: #fff; padding: 20px 0; }
+    .ws-header { flex-shrink: 0; width: 100%; background: var(--ws-primary); color: #fff; padding: 20px 0; }
     .ws-header__inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     .ws-header__brand { flex: 1 1 auto; min-width: 0; }
     .ws-header__title { font-size: 1.4rem; font-weight: 700; }
@@ -223,7 +233,7 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-header.is-compact .ws-nav__item.is-open > .ws-nav__sub { display: block; }
 
     /* Main */
-    .ws-main { max-width: 1140px; margin: 0 auto; padding: 40px 20px; }
+    .ws-main { flex: 1 0 auto; width: 100%; max-width: 1140px; margin: 0 auto; padding: 40px 20px; }
     .ws-legal-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
     .ws-legal-tabs a {
       display: inline-block; padding: 8px 14px; border-radius: 6px;
@@ -350,8 +360,16 @@ if (!empty($_GET['form_err']) && $flashFormId > 0) {
     .ws-form__paragraph { margin: 0; color: #555; }
     .ws-form__captcha input[type="text"] { max-width: 140px; }
 
-    /* Footer */
-    .ws-footer { background: #f5f5f5; color: #666; padding: 24px 0; margin-top: 40px; border-top: 1px solid #e0e0e0; }
+    /* Footer — bei kurzem Inhalt am unteren Fensterrand */
+    .ws-footer {
+      flex-shrink: 0;
+      width: 100%;
+      background: #f5f5f5;
+      color: #666;
+      padding: 24px 0;
+      margin-top: 40px;
+      border-top: 1px solid #e0e0e0;
+    }
     .ws-footer__inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; text-align: center; font-size: 0.9rem; }
   </style>
 <?php if ($needsBookingAssets) : ?>
