@@ -183,6 +183,7 @@ spl_autoload_register(static function (string $class): void {
         'LinkedInTokenService' => '/src/VideoPublish/LinkedInTokenService.php',
         'LinkedInApiClient' => '/src/VideoPublish/LinkedInApiClient.php',
         'LinkedInResumableUploadService' => '/src/VideoPublish/LinkedInResumableUploadService.php',
+        'LinkedInEngagementService' => '/src/VideoPublish/LinkedInEngagementService.php',
         'CountryCodes' => '/src/NumberRange/CountryCodes.php',
         'InvoiceNumberTokens' => '/src/NumberRange/InvoiceNumberTokens.php',
         'InvoiceNumberBuilder' => '/src/NumberRange/InvoiceNumberBuilder.php',

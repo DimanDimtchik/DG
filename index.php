@@ -3742,6 +3742,32 @@ switch ($path) {
                 header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
                 exit;
             }
+            if (isset($_POST['video_linkedin_comment_reply']) && $assetId > 0) {
+                try {
+                    LinkedInEngagementService::reply(
+                        (int) ($_POST['job_id'] ?? 0),
+                        (string) ($_POST['comment_text'] ?? '')
+                    );
+                    Flash::set('success', 'Kommentar als Unternehmensseite gesendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId . '#linkedin-engagement', true, 302);
+                exit;
+            }
+            if (isset($_POST['video_linkedin_comment_delete']) && $assetId > 0) {
+                try {
+                    LinkedInEngagementService::deleteComment(
+                        (int) ($_POST['job_id'] ?? 0),
+                        (string) ($_POST['comment_id'] ?? '')
+                    );
+                    Flash::set('success', 'Kommentar gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId . '#linkedin-engagement', true, 302);
+                exit;
+            }
         }
 
         // POST: Einstellungen E-Mail / SMTP
@@ -6980,6 +7006,28 @@ $legalProductsConfig = LegalProductSettings::config();
             $latestPost = $latestYoutubePost; // Abwärtskompatibilität View
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
             $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
+            $linkedinEngagement = [
+                'post_urn' => '',
+                'comments' => [],
+                'summary' => ['likes' => 0, 'comments' => 0],
+                'insights' => [
+                    'video_views' => 0,
+                    'viewers' => 0,
+                    'time_watched_ms' => 0,
+                    'time_watched_label' => '—',
+                ],
+                'error' => '',
+            ];
+            foreach ($publishJobs as $j) {
+                if (
+                    (string) ($j['platform'] ?? '') === PublishJobRepository::PLATFORM_LINKEDIN
+                    && (string) ($j['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED
+                    && (string) ($j['external_id'] ?? '') !== ''
+                ) {
+                    $linkedinEngagement = LinkedInEngagementService::loadForJob((int) ($j['id'] ?? 0));
+                    break;
+                }
+            }
             $formError = $formError ?? null;
             $contentTemplate = 'modules/videos-form';
             $title = (string) ($videoAsset['original_name'] ?? 'Video');

@@ -67,6 +67,7 @@ require DG_ROOT . '/src/VideoPublish/LinkedInOAuthClient.php';
 require DG_ROOT . '/src/VideoPublish/LinkedInTokenService.php';
 require DG_ROOT . '/src/VideoPublish/LinkedInApiClient.php';
 require DG_ROOT . '/src/VideoPublish/LinkedInResumableUploadService.php';
+require DG_ROOT . '/src/VideoPublish/LinkedInEngagementService.php';
 require DG_ROOT . '/src/VideoPublish/YouTubePublishSettings.php';
 require DG_ROOT . '/src/VideoPublish/YouTubeOAuthClient.php';
 require DG_ROOT . '/src/VideoPublish/YouTubeTokenService.php';
@@ -180,6 +181,8 @@ expect_true(str_contains($url, 'linkedin.com/oauth/v2/authorization'), 'OAuth Ho
 expect_true(str_contains($url, 'state=' . $state), 'OAuth state');
 expect_true(str_contains($url, 'w_organization_social'), 'org write scope');
 expect_true(str_contains($url, 'r_organization_social'), 'org read scope');
+expect_true(str_contains($url, 'w_organization_social_feed'), 'feed write scope');
+expect_true(str_contains($url, 'r_organization_social_feed'), 'feed read scope');
 expect_true(str_contains($url, 'openid'), 'openid scope');
 
 OAuthConnectionRepository::upsert(OAuthConnectionRepository::PLATFORM_LINKEDIN, [
@@ -266,6 +269,9 @@ expect_true(!str_contains(strtolower($step2['message']), 'bearer'), 'Kein Token 
 
 $queue = VideoPublishQueueService::runAutomatic(5, 2);
 expect_true(is_array($queue) && isset($queue['processed']), 'Queue läuft ohne Crash');
+
+$eng = LinkedInEngagementService::loadForJob($jobId);
+expect_true(($eng['error'] ?? '') !== '', 'Engagement ohne published Post → Fehler');
 
 @unlink($path);
 

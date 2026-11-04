@@ -7,6 +7,7 @@
  * @var array<string, mixed>|null $latestLinkedinPost
  * @var bool $youtubeConnected
  * @var bool $linkedinConnected
+ * @var array<string, mixed> $linkedinEngagement
  * @var string|null $formError
  * @var array{type: string, message: string}|null $flash
  */
@@ -18,6 +19,18 @@ $latestYoutubePost = is_array($latestYoutubePost ?? null)
 $latestLinkedinPost = is_array($latestLinkedinPost ?? null) ? $latestLinkedinPost : null;
 $youtubeConnected = !empty($youtubeConnected);
 $linkedinConnected = !empty($linkedinConnected);
+$linkedinEngagement = is_array($linkedinEngagement ?? null) ? $linkedinEngagement : [
+    'post_urn' => '',
+    'comments' => [],
+    'summary' => ['likes' => 0, 'comments' => 0],
+    'insights' => [
+        'video_views' => 0,
+        'viewers' => 0,
+        'time_watched_ms' => 0,
+        'time_watched_label' => '—',
+    ],
+    'error' => '',
+];
 $assetId = (int) ($asset['id'] ?? 0);
 $stateLabels = PublishJobRepository::stateOptions();
 $publishedYoutubeJob = null;
@@ -204,6 +217,100 @@ $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO
           <button type="submit" class="dg-button dg-button--danger">Auf LinkedIn löschen</button>
         </div>
       </form>
+    </section>
+
+    <section class="dg-panel dg-mb-4" id="linkedin-engagement">
+      <h2 class="dg-subsection-title">LinkedIn: Insights &amp; Kommentare</h2>
+      <?php if (($linkedinEngagement['error'] ?? '') !== '') : ?>
+        <div class="dg-flash dg-flash--warning"><?= View::escape((string) $linkedinEngagement['error']) ?></div>
+        <p class="dg-muted">Falls neu: LinkedIn erneut verbinden (zusätzliche Feed-Scopes für Kommentare).</p>
+      <?php else : ?>
+        <?php
+          $sum = is_array($linkedinEngagement['summary'] ?? null) ? $linkedinEngagement['summary'] : [];
+          $ins = is_array($linkedinEngagement['insights'] ?? null) ? $linkedinEngagement['insights'] : [];
+          $comments = is_array($linkedinEngagement['comments'] ?? null) ? $linkedinEngagement['comments'] : [];
+        ?>
+        <div class="dg-table-wrap dg-mb-3">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr>
+                <th>Likes</th>
+                <th>Kommentare</th>
+                <th>Video-Views</th>
+                <th>Zuschauer</th>
+                <th>Watch-Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><?= (int) ($sum['likes'] ?? 0) ?></td>
+                <td><?= (int) ($sum['comments'] ?? 0) ?></td>
+                <td><?= (int) ($ins['video_views'] ?? 0) ?></td>
+                <td><?= (int) ($ins['viewers'] ?? 0) ?></td>
+                <td><?= View::escape((string) ($ins['time_watched_label'] ?? '—')) ?></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="dg-muted dg-mb-3">Video-Views nur bei ugcPost-URN und Daten &lt; 6 Monate. Likes/Kommentare über Social Actions.</p>
+
+        <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>#linkedin-engagement" class="dg-form dg-mb-4">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="video_linkedin_comment_reply" value="1">
+          <input type="hidden" name="job_id" value="<?= (int) ($publishedLinkedinJob['id'] ?? 0) ?>">
+          <div class="dg-form-grid">
+            <label class="dg-field dg-field--wide">
+              <span>Antwort als Unternehmensseite</span>
+              <textarea name="comment_text" rows="3" required></textarea>
+            </label>
+          </div>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary">Kommentar senden</button>
+          </div>
+        </form>
+
+        <div class="dg-table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th>Zeit</th>
+                <th>Autor</th>
+                <th>Text</th>
+                <th class="dg-table__num">Likes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if ($comments === []) : ?>
+                <tr><td colspan="5" class="dg-table__empty">Noch keine Kommentare.</td></tr>
+              <?php else : ?>
+                <?php foreach ($comments as $c) : ?>
+                  <?php if (!is_array($c)) {
+                      continue;
+                  } ?>
+                  <tr>
+                    <td><?= View::escape((string) ($c['created_label'] ?? '—')) ?></td>
+                    <td><?= View::escape((string) ($c['actor'] ?? '')) ?></td>
+                    <td><?= View::escape((string) ($c['text'] ?? '')) ?></td>
+                    <td class="dg-table__num"><?= (int) ($c['likes'] ?? 0) ?></td>
+                    <td class="dg-table__actions">
+                      <div class="dg-table__actions-group">
+                        <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>#linkedin-engagement" class="dg-form" onsubmit="return confirm('Kommentar löschen?');">
+                          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                          <input type="hidden" name="video_linkedin_comment_delete" value="1">
+                          <input type="hidden" name="job_id" value="<?= (int) ($publishedLinkedinJob['id'] ?? 0) ?>">
+                          <input type="hidden" name="comment_id" value="<?= View::escape((string) ($c['id'] ?? '')) ?>">
+                          <button type="submit" class="dg-button dg-button--small dg-button--danger">Löschen</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
     </section>
   <?php endif; ?>
 

@@ -274,7 +274,7 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
    **CRM-Scaffold 2-1:** Settings-Tab *LinkedIn Publish* + OAuth-Connect — Checkliste [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md). App-Anlage/Review manuell.
 2. Primär **Company Page** (`w_organization_social`); optional Member-Posts.  
    **Code 2-2:** Multipart-Upload + Posts create/edit/delete + CRM-`scheduled_at` im Modul Videos.
-3. Videos API + Posts API; Scheduling im CRM; Comments/Insights nachziehen (Comments/Insights noch offen).
+3. Videos API + Posts API; Scheduling im CRM; Comments/Insights nachziehen — **Code 2-3** (Kommentare + Basis-Insights im Videos-Modul).
 
 **Warum zweitens:** explizit gewünscht; Review planbar; gut für B2B (IQ Strom).
 

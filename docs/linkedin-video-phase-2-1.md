@@ -44,6 +44,7 @@ Recruiting nutzt **Client Credentials** / Job Posting. Video braucht **Member-OA
 - Access-Token ca. **60 Tage**
 - Programmatic Refresh (~1 Jahr) nur nach Partner-Freischaltung — sonst vor Ablauf erneut verbinden
 - Scopes (MVP Company Page): `openid` `profile` `w_organization_social` `r_organization_social`  
+  plus Feed (Kommentare): `w_organization_social_feed` `r_organization_social_feed`  
   Optional später: `w_member_social` für persönliche Posts
 
 ---

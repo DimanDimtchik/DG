@@ -6,6 +6,8 @@ final class LinkedInApiClient
 {
     public const VIDEOS_URL = 'https://api.linkedin.com/rest/videos';
     public const POSTS_URL = 'https://api.linkedin.com/rest/posts';
+    public const SOCIAL_ACTIONS_URL = 'https://api.linkedin.com/rest/socialActions';
+    public const VIDEO_ANALYTICS_URL = 'https://api.linkedin.com/rest/videoAnalytics';
 
     /**
      * @return array{
@@ -204,6 +206,163 @@ final class LinkedInApiClient
         if ($result['status'] >= 400 && $result['status'] !== 404) {
             throw new RuntimeException(self::errorMessage($result['body'], $result['status']));
         }
+    }
+
+    /**
+     * @return list<array{id: string, text: string, actor: string, created_ms: int, likes: int}>
+     */
+    public static function listComments(string $accessToken, string $postUrn): array
+    {
+        $url = self::SOCIAL_ACTIONS_URL . '/' . rawurlencode($postUrn) . '/comments';
+        $raw = self::httpJson('GET', $url, null, self::authHeaders($accessToken));
+        $elements = $raw['elements'] ?? null;
+        if (!is_array($elements)) {
+            return [];
+        }
+        $out = [];
+        foreach ($elements as $el) {
+            if (!is_array($el)) {
+                continue;
+            }
+            $likes = 0;
+            if (isset($el['likesSummary']) && is_array($el['likesSummary'])) {
+                $likes = (int) ($el['likesSummary']['totalLikes'] ?? $el['likesSummary']['aggregatedTotalLikes'] ?? 0);
+            }
+            $out[] = [
+                'id' => (string) ($el['id'] ?? ''),
+                'text' => (string) ($el['message']['text'] ?? ''),
+                'actor' => (string) ($el['actor'] ?? ''),
+                'created_ms' => (int) ($el['created']['time'] ?? 0),
+                'likes' => $likes,
+            ];
+        }
+
+        return $out;
+    }
+
+    public static function createComment(
+        string $accessToken,
+        string $postUrn,
+        string $actorUrn,
+        string $text
+    ): string {
+        $text = trim($text);
+        if ($text === '') {
+            throw new InvalidArgumentException('Kommentartext fehlt.');
+        }
+        $url = self::SOCIAL_ACTIONS_URL . '/' . rawurlencode($postUrn) . '/comments';
+        $body = json_encode([
+            'actor' => $actorUrn,
+            'object' => $postUrn,
+            'message' => ['text' => $text],
+        ], JSON_UNESCAPED_UNICODE);
+        $result = self::httpRaw('POST', $url, (string) $body, self::authHeaders($accessToken), false);
+        if ($result['status'] >= 400) {
+            throw new RuntimeException(self::errorMessage($result['body'], $result['status']));
+        }
+        $id = (string) ($result['headers']['x-restli-id'] ?? '');
+        if ($id === '') {
+            $json = json_decode($result['body'], true);
+            $id = is_array($json) ? (string) ($json['id'] ?? '') : '';
+        }
+        if ($id === '') {
+            throw new RuntimeException('Kommentar ohne ID.');
+        }
+
+        return $id;
+    }
+
+    public static function deleteComment(
+        string $accessToken,
+        string $postUrn,
+        string $commentId,
+        string $actorUrn
+    ): void {
+        $url = self::SOCIAL_ACTIONS_URL . '/' . rawurlencode($postUrn)
+            . '/comments/' . rawurlencode($commentId)
+            . '?actor=' . rawurlencode($actorUrn);
+        $result = self::httpRaw('DELETE', $url, null, array_merge(self::authHeaders($accessToken), [
+            'X-RestLi-Method: DELETE',
+        ]), false);
+        if ($result['status'] >= 400 && $result['status'] !== 404) {
+            throw new RuntimeException(self::errorMessage($result['body'], $result['status']));
+        }
+    }
+
+    /**
+     * Likes/Comments-Zähler am Post (Social Actions).
+     *
+     * @return array{likes: int, comments: int}
+     */
+    public static function getSocialSummary(string $accessToken, string $postUrn): array
+    {
+        $url = self::SOCIAL_ACTIONS_URL . '/' . rawurlencode($postUrn);
+        try {
+            $raw = self::httpJson('GET', $url, null, self::authHeaders($accessToken));
+        } catch (Throwable) {
+            return ['likes' => 0, 'comments' => 0];
+        }
+        $likes = 0;
+        $comments = 0;
+        if (isset($raw['likesSummary']) && is_array($raw['likesSummary'])) {
+            $likes = (int) ($raw['likesSummary']['totalLikes'] ?? $raw['likesSummary']['aggregatedTotalLikes'] ?? 0);
+        }
+        if (isset($raw['commentsSummary']) && is_array($raw['commentsSummary'])) {
+            $comments = (int) ($raw['commentsSummary']['totalFirstLevelComments']
+                ?? $raw['commentsSummary']['aggregatedTotalComments']
+                ?? $raw['commentsSummary']['count']
+                ?? 0);
+        }
+
+        return ['likes' => $likes, 'comments' => $comments];
+    }
+
+    /**
+     * Video-Analytics (nur ugcPost). Fehlt die Metrik → 0.
+     *
+     * @return array{video_views: int, viewers: int, time_watched_ms: int}
+     */
+    public static function getVideoInsights(string $accessToken, string $ugcPostUrn): array
+    {
+        $out = [
+            'video_views' => 0,
+            'viewers' => 0,
+            'time_watched_ms' => 0,
+        ];
+        if ($ugcPostUrn === '' || !str_contains($ugcPostUrn, 'ugcPost')) {
+            return $out;
+        }
+        foreach (
+            [
+                'VIDEO_VIEW' => 'video_views',
+                'VIEWER' => 'viewers',
+                'TIME_WATCHED_FOR_VIDEO_VIEWS' => 'time_watched_ms',
+            ] as $type => $key
+        ) {
+            $url = self::VIDEO_ANALYTICS_URL
+                . '?q=entity'
+                . '&entity=' . rawurlencode($ugcPostUrn)
+                . '&type=' . rawurlencode($type)
+                . '&aggregation=ALL';
+            try {
+                $raw = self::httpJson('GET', $url, null, self::authHeaders($accessToken));
+                $elements = $raw['elements'] ?? null;
+                if (!is_array($elements) || $elements === []) {
+                    continue;
+                }
+                $sum = 0;
+                foreach ($elements as $el) {
+                    if (is_array($el)) {
+                        $sum += (int) ($el['value'] ?? 0);
+                    }
+                }
+                $out[$key] = $sum;
+            } catch (Throwable) {
+                // Insights optional — Post/Comments bleiben nutzbar
+            }
+        }
+
+        return $out;
     }
 
     /**

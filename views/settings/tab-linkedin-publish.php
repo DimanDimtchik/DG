@@ -12,9 +12,10 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
 
   <div class="dg-panel dg-panel--notice">
     <p>
-      LinkedIn <strong>Community Management</strong> für Video-Posts auf der Unternehmensseite.
+      LinkedIn <strong>Community Management</strong> für Video-Posts, Kommentare und Insights auf der Unternehmensseite.
       Getrennt vom Stellenexport (Job Posting). App muss unter einer
       <strong>juristischen Person</strong> laufen; Produktion braucht später Standard Tier + Screencast.
+      Nach Scope-Erweiterung bitte erneut verbinden.
     </p>
     <p class="dg-muted">
       Doku:

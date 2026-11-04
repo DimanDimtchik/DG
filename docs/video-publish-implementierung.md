@@ -160,22 +160,31 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 - [x] Selftest erweitert (Schedule-Wartezustand, Fehler ohne Token)
 - [ ] Live gegen LinkedIn Dev-Tier (nach manueller App + Connect)
 
+### Phase 2-3 (Comments + Insights) — Stand
+
+- [x] Scopes `r_/w_organization_social_feed` (+ bestehende Org-Scopes)
+- [x] Kommentare listen / als Org antworten / löschen
+- [x] Social Summary (Likes/Comments) + Video Analytics (Views/Viewers/Watch-Time bei ugcPost)
+- [x] Videos-UI-Abschnitt „Insights & Kommentare“
+- [ ] Live nach Connect mit Feed-Scopes
+
 ### Acceptance
 
 - [x] IQ-Strom-Page verbunden; Post erscheint im Feed — Code fertig; Live nach App/Connect
 - [x] Caption edit + Delete aus CRM — `PARTIAL_UPDATE` / `DELETE` Posts
 - [x] Geplanter Job feuert per Cron zum Termin — `scheduled_at` + Queue/`runIfDue`
+- [x] Comments/Insights im CRM — Phase 2-3 Code
 - [~] Dev-Tier-Limits dokumentiert; Standard-Tier-Antrag gestartet/bestanden — Limits in Checkliste; Antrag manuell
 
 ### Do NOT yet
 
 - [x] Instagram / TikTok — bewusst Phase 3–4
-- [x] Full Comments/Analytics UI (Stub ok) — bewusst später
+- [x] Full Comments/Analytics UI (Stub ok) — MVP-Liste + Insights-Tabelle (kein Dashboard)
 - [x] Eigenes Transcode außer MP4-Check — nur MP4-Check
 
 **Host:** wie YT — Chunk-Upload **W→V**.
 
-**Code:** Phase 2-1 Settings/OAuth · Phase 2-2 Upload/Posts · Selftest `bin/linkedin-publish-selftest.php`.
+**Code:** 2-1 Settings/OAuth · 2-2 Upload/Posts · 2-3 Engagement · Selftest `bin/linkedin-publish-selftest.php`.
 
 ---
 

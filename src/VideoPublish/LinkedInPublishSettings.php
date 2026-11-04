@@ -13,6 +13,9 @@ final class LinkedInPublishSettings
     public const SCOPE_PROFILE = 'profile';
     public const SCOPE_ORG_WRITE = 'w_organization_social';
     public const SCOPE_ORG_READ = 'r_organization_social';
+    /** Comments/Reactions (Community Management Feed). */
+    public const SCOPE_ORG_FEED_WRITE = 'w_organization_social_feed';
+    public const SCOPE_ORG_FEED_READ = 'r_organization_social_feed';
 
     /** API-Version Header für REST-Calls (YYYYMM). */
     public const API_VERSION = '202610';
@@ -96,6 +99,8 @@ final class LinkedInPublishSettings
             self::SCOPE_PROFILE,
             self::SCOPE_ORG_WRITE,
             self::SCOPE_ORG_READ,
+            self::SCOPE_ORG_FEED_WRITE,
+            self::SCOPE_ORG_FEED_READ,
         ];
     }
 
