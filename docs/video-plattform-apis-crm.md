@@ -271,10 +271,11 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 
 ### Phase 2 — LinkedIn (Company Page)
 1. LinkedIn Developer App als **juristische Person des Tenants**; Community Management Development → Integration → Standard Tier (Screencast).  
-   **CRM-Scaffold 2-1:** Settings-Tab *LinkedIn Publish* + OAuth-Connect — Checkliste [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md). App-Anlage/Review manuell **pro Tenant**.
+   **CRM-Scaffold 2-1:** Settings-Tab *LinkedIn Publish* + OAuth-Connect — [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md).  
+   **Live-Gate (Redirects, Smoke, Screencast):** [`linkedin-video-phase-2-live.md`](linkedin-video-phase-2-live.md) — App-Anlage manuell **pro Tenant**.
 2. Primär **Company Page** (`w_organization_social`); optional Member-Posts.  
    **Code 2-2:** Multipart-Upload + Posts create/edit/delete + CRM-`scheduled_at` im Modul Videos.
-3. Videos API + Posts API; Scheduling im CRM; Comments/Insights nachziehen — **Code 2-3** (Kommentare + Basis-Insights im Videos-Modul).
+3. Videos API + Posts API; Scheduling im CRM; Comments/Insights — **Code 2-3**.
 
 **Warum zweitens:** Review planbar; gut für B2B-Company-Pages; Credentials nur in Instanz-Settings.
 

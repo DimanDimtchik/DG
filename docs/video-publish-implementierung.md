@@ -146,11 +146,11 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 
 ### Phase 2-1 (App + CRM-Scaffold) — Stand
 
-- [x] Checkliste juristische Person / Community Management — [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md)
-- [x] CRM-Tab **LinkedIn Publish** (Credentials, Org-ID, Review-Tier, OAuth Connect)
+- [x] Checkliste + Live-Gate-Vorbereitung — [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md) · [`linkedin-video-phase-2-live.md`](linkedin-video-phase-2-live.md)
+- [x] CRM-Tab **LinkedIn Publish** (Credentials, Org-ID, Review-Tier, OAuth Connect, Redirect-URI Readonly)
 - [x] `dg_oauth_connections.platform=linkedin` + Crypto (wie YouTube)
-- [ ] Manuell: App unter der juristischen Person des Tenants anlegen, Dev-Tier, Redirect, Connect
-- [ ] Standard-Tier / Screencast — später
+- [ ] Manuell: App / Dev-Tier / Redirect / Connect / Smoke — Live-Doc (Credentials folgen)
+- [ ] Standard-Tier / Screencast — nach Smoke; Skript Live-Doc Abschnitt D
 
 ### Phase 2-2 (Upload + Posts) — Stand
 
@@ -158,7 +158,7 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 - [x] `LinkedInResumableUploadService` + Queue (YouTube + LinkedIn)
 - [x] Videos-UI: LinkedIn Publish / Commentary-Edit / Delete + CRM-`scheduled_at`
 - [x] Selftest erweitert (Schedule-Wartezustand, Fehler ohne Token)
-- [ ] Live gegen LinkedIn Dev-Tier (nach manueller App + Connect)
+- [ ] Live gegen LinkedIn Dev-Tier — Smoke Live-Doc Abschnitt C
 
 ### Phase 2-3 (Comments + Insights) — Stand
 
@@ -166,15 +166,15 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 - [x] Kommentare listen / als Org antworten / löschen
 - [x] Social Summary (Likes/Comments) + Video Analytics (Views/Viewers/Watch-Time bei ugcPost)
 - [x] Videos-UI-Abschnitt „Insights & Kommentare“
-- [ ] Live nach Connect mit Feed-Scopes
+- [ ] Live nach Connect mit Feed-Scopes — Smoke Live-Doc Abschnitt C
 
 ### Acceptance
 
-- [x] Company Page verbunden; Post erscheint im Feed — Code fertig; Live nach App/Connect (pro Tenant)
+- [x] Company Page posten — Code fertig; Live nach App/Connect (pro Tenant)
 - [x] Caption edit + Delete aus CRM — `PARTIAL_UPDATE` / `DELETE` Posts
 - [x] Geplanter Job feuert per Cron zum Termin — `scheduled_at` + Queue/`runIfDue`
 - [x] Comments/Insights im CRM — Phase 2-3 Code
-- [~] Dev-Tier-Limits dokumentiert; Standard-Tier-Antrag gestartet/bestanden — Limits in Checkliste; Antrag manuell
+- [~] Dev-Tier-Limits + Screencast-Skript dokumentiert; Antrag manuell nach Smoke
 
 ### Do NOT yet
 
@@ -184,7 +184,7 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 
 **Host:** wie YT — Chunk-Upload **W→V**.
 
-**Code:** 2-1 Settings/OAuth · 2-2 Upload/Posts · 2-3 Engagement · Selftest `bin/linkedin-publish-selftest.php`.
+**Code:** 2-1 Settings/OAuth · 2-2 Upload/Posts · 2-3 Engagement · Selftest `bin/linkedin-publish-selftest.php` · Live-Gate [`linkedin-video-phase-2-live.md`](linkedin-video-phase-2-live.md).
 
 ---
 
