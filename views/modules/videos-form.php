@@ -16,6 +16,7 @@
  * @var array<string, mixed> $tiktokCreatorInfo
  * @var array<string, mixed> $linkedinEngagement
  * @var array<string, mixed> $instagramEngagement
+ * @var array<string, mixed> $tiktokEngagement
  * @var string|null $formError
  * @var array{type: string, message: string}|null $flash
  */
@@ -69,6 +70,28 @@ $instagramEngagement = is_array($instagramEngagement ?? null) ? $instagramEngage
         'saved' => 0,
         'total_interactions' => 0,
     ],
+    'error' => '',
+];
+$tiktokEngagement = is_array($tiktokEngagement ?? null) ? $tiktokEngagement : [
+    'video_id' => '',
+    'share_url' => '',
+    'title' => '',
+    'insights' => [
+        'views' => 0,
+        'likes' => 0,
+        'comments' => 0,
+        'shares' => 0,
+        'duration' => 0,
+    ],
+    'account' => [
+        'follower_count' => 0,
+        'following_count' => 0,
+        'likes_count' => 0,
+        'video_count' => 0,
+        'display_name' => '',
+    ],
+    'comments_available' => false,
+    'comments_note' => '',
     'error' => '',
 ];
 $assetId = (int) ($asset['id'] ?? 0);
@@ -399,6 +422,58 @@ $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO
         ID: <?= View::escape((string) ($publishedTiktokJob['external_id'] ?? '')) ?>
         · Nach Publish keine Caption-Änderung / kein Löschen über die Posting-API.
       </p>
+    </section>
+
+    <section class="dg-panel dg-mb-4" id="tiktok-engagement">
+      <h2 class="dg-subsection-title">TikTok: Insights</h2>
+      <?php if (($tiktokEngagement['error'] ?? '') !== '') : ?>
+        <div class="dg-flash dg-flash--warning"><?= View::escape((string) $tiktokEngagement['error']) ?></div>
+        <p class="dg-muted">Falls neu: TikTok erneut verbinden (Video-Listen-Scope). Inbox-Drafts ohne Item-ID haben noch keine Insights.</p>
+      <?php else : ?>
+        <?php
+          $ttIns = is_array($tiktokEngagement['insights'] ?? null) ? $tiktokEngagement['insights'] : [];
+          $ttAcc = is_array($tiktokEngagement['account'] ?? null) ? $tiktokEngagement['account'] : [];
+        ?>
+        <?php if (($tiktokEngagement['title'] ?? '') !== '' || ($tiktokEngagement['share_url'] ?? '') !== '') : ?>
+          <p class="dg-muted dg-mb-3">
+            <?= View::escape((string) ($tiktokEngagement['title'] ?? '')) ?>
+            <?php if (($tiktokEngagement['share_url'] ?? '') !== '') : ?>
+              · <a href="<?= View::escape((string) $tiktokEngagement['share_url']) ?>" target="_blank" rel="noopener">Auf TikTok öffnen</a>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
+        <div class="dg-table-wrap dg-mb-3">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr>
+                <th>Views</th>
+                <th>Likes</th>
+                <th>Kommentare (Anzahl)</th>
+                <th>Shares</th>
+                <th>Dauer (s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><?= (int) ($ttIns['views'] ?? 0) ?></td>
+                <td><?= (int) ($ttIns['likes'] ?? 0) ?></td>
+                <td><?= (int) ($ttIns['comments'] ?? 0) ?></td>
+                <td><?= (int) ($ttIns['shares'] ?? 0) ?></td>
+                <td><?= (int) ($ttIns['duration'] ?? 0) ?></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <?php if ((int) ($ttAcc['follower_count'] ?? 0) > 0 || (string) ($ttAcc['display_name'] ?? '') !== '') : ?>
+          <p class="dg-muted dg-mb-3">
+            Konto<?= ($ttAcc['display_name'] ?? '') !== '' ? ': ' . View::escape((string) $ttAcc['display_name']) : '' ?>
+            · Follower <?= (int) ($ttAcc['follower_count'] ?? 0) ?>
+            · Videos <?= (int) ($ttAcc['video_count'] ?? 0) ?>
+            · Likes gesamt <?= (int) ($ttAcc['likes_count'] ?? 0) ?>
+          </p>
+        <?php endif; ?>
+        <p class="dg-muted"><?= View::escape((string) ($tiktokEngagement['comments_note'] ?? '')) ?></p>
+      <?php endif; ?>
     </section>
   <?php endif; ?>
 

@@ -7378,6 +7378,28 @@ $legalProductsConfig = LegalProductSettings::config();
                 ],
                 'error' => '',
             ];
+            $tiktokEngagement = [
+                'video_id' => '',
+                'share_url' => '',
+                'title' => '',
+                'insights' => [
+                    'views' => 0,
+                    'likes' => 0,
+                    'comments' => 0,
+                    'shares' => 0,
+                    'duration' => 0,
+                ],
+                'account' => [
+                    'follower_count' => 0,
+                    'following_count' => 0,
+                    'likes_count' => 0,
+                    'video_count' => 0,
+                    'display_name' => '',
+                ],
+                'comments_available' => false,
+                'comments_note' => '',
+                'error' => '',
+            ];
             foreach ($publishJobs as $j) {
                 if (
                     (string) ($j['platform'] ?? '') === PublishJobRepository::PLATFORM_LINKEDIN
@@ -7395,6 +7417,16 @@ $legalProductsConfig = LegalProductSettings::config();
                     && (string) ($j['external_id'] ?? '') !== ''
                 ) {
                     $instagramEngagement = InstagramEngagementService::loadForJob((int) ($j['id'] ?? 0));
+                    break;
+                }
+            }
+            foreach ($publishJobs as $j) {
+                if (
+                    (string) ($j['platform'] ?? '') === PublishJobRepository::PLATFORM_TIKTOK
+                    && (string) ($j['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED
+                    && (string) ($j['external_id'] ?? '') !== ''
+                ) {
+                    $tiktokEngagement = TikTokEngagementService::loadForJob((int) ($j['id'] ?? 0));
                     break;
                 }
             }

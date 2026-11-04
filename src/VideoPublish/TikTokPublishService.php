@@ -220,6 +220,8 @@ final class TikTokPublishService
                     $ext = $publishId;
                     if ($st['publicly_available_post_ids'] !== []) {
                         $ext = $st['publicly_available_post_ids'][0];
+                        $payload['publicly_available_post_ids'] = $st['publicly_available_post_ids'];
+                        $payload['video_id'] = $ext;
                     }
 
                     return self::markDone(

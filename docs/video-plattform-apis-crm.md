@@ -291,7 +291,8 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 2. UX-Guidelines 1:1; dann Audit für Direct Post.
 3. Bis Audit: höchstens Inbox-Upload als „Draft nach TikTok“ — kein echter One-Click.  
    **Code 4-2:** `TikTokPublishService` (Creator-Info → FILE_UPLOAD → Status); Direct nur mit `audit_ok`.
-4. Für rein internes Einzelpersonen-Nutzen: eher **skip** oder manuell in der TikTok-App.
+4. Insights — **Code 4-3** (`TikTokEngagementService` / Display API); Kommentar-Moderation **nicht** über Produkt-API.
+5. Für rein internes Einzelpersonen-Nutzen: eher **skip** oder manuell in der TikTok-App.
 
 ### Nicht tun
 - Content ID / YouTube Partner API ohne Partnervertrag.

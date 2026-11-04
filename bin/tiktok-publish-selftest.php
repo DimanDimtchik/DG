@@ -67,6 +67,7 @@ require DG_ROOT . '/src/VideoPublish/TikTokOAuthClient.php';
 require DG_ROOT . '/src/VideoPublish/TikTokTokenService.php';
 require DG_ROOT . '/src/VideoPublish/TikTokApiClient.php';
 require DG_ROOT . '/src/VideoPublish/TikTokPublishService.php';
+require DG_ROOT . '/src/VideoPublish/TikTokEngagementService.php';
 
 $fail = 0;
 
@@ -161,6 +162,8 @@ expect_true(TikTokPublishSettings::credentialsReady($cfg), 'credentials ready');
 
 $scopes = TikTokPublishSettings::scopes($cfg);
 expect_true(in_array('user.info.basic', $scopes, true), 'basic scope');
+expect_true(in_array('user.info.stats', $scopes, true), 'stats scope');
+expect_true(in_array('video.list', $scopes, true), 'video.list scope');
 expect_true(in_array('video.upload', $scopes, true), 'upload scope');
 expect_true(!in_array('video.publish', $scopes, true), 'no publish without audit');
 
@@ -244,6 +247,12 @@ $jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_T
 $step = TikTokPublishService::processJob($jobId);
 expect_true($step['ok'] === true && $step['done'] === false, 'scheduled job waits');
 expect_true(str_contains($step['message'], 'Geplant'), 'scheduled message');
+
+expect_true(TikTokApiClient::looksLikeVideoItemId('7123456789012345678'), 'numeric item id');
+expect_true(!TikTokApiClient::looksLikeVideoItemId('v_inbox_file~v2.123'), 'publish_id not item');
+$eng = TikTokEngagementService::loadForJob($jobId);
+expect_true(($eng['error'] ?? '') !== '', 'engagement ohne published Post → Fehler');
+expect_true(($eng['comments_available'] ?? true) === false, 'comments not available via product API');
 
 TikTokTokenService::disconnect();
 expect_true(!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_TIKTOK), 'disconnected');

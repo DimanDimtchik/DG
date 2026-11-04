@@ -13,6 +13,8 @@ final class TikTokPublishSettings
     public const MODE_DIRECT = 'direct';
 
     public const SCOPE_USER_INFO_BASIC = 'user.info.basic';
+    public const SCOPE_USER_INFO_STATS = 'user.info.stats';
+    public const SCOPE_VIDEO_LIST = 'video.list';
     public const SCOPE_VIDEO_UPLOAD = 'video.upload';
     public const SCOPE_VIDEO_PUBLISH = 'video.publish';
 
@@ -97,7 +99,11 @@ final class TikTokPublishSettings
     public static function scopes(?array $cfg = null): array
     {
         $cfg ??= self::config();
-        $scopes = [self::SCOPE_USER_INFO_BASIC];
+        $scopes = [
+            self::SCOPE_USER_INFO_BASIC,
+            self::SCOPE_USER_INFO_STATS,
+            self::SCOPE_VIDEO_LIST,
+        ];
         if (($cfg['posting_mode'] ?? self::MODE_INBOX) === self::MODE_DIRECT
             && !empty($cfg['audit_ok'])
         ) {

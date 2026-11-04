@@ -195,6 +195,7 @@ spl_autoload_register(static function (string $class): void {
         'TikTokTokenService' => '/src/VideoPublish/TikTokTokenService.php',
         'TikTokApiClient' => '/src/VideoPublish/TikTokApiClient.php',
         'TikTokPublishService' => '/src/VideoPublish/TikTokPublishService.php',
+        'TikTokEngagementService' => '/src/VideoPublish/TikTokEngagementService.php',
         'CountryCodes' => '/src/NumberRange/CountryCodes.php',
         'InvoiceNumberTokens' => '/src/NumberRange/InvoiceNumberTokens.php',
         'InvoiceNumberBuilder' => '/src/NumberRange/InvoiceNumberBuilder.php',

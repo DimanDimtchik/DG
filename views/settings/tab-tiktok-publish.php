@@ -17,6 +17,8 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
       der Creator beendet den Post in der TikTok-App. Direct Post
       (<code>video.publish</code>) erst nach bestandenem Audit und
       klarer Produkt-Position als öffentliches Creator-/Marketing-CRM.
+      Insights brauchen <code>video.list</code> — nach Scope-Erweiterung erneut verbinden.
+      Kommentar-Moderation über die Produkt-API nicht möglich.
     </p>
     <p class="dg-muted">
       Doku:

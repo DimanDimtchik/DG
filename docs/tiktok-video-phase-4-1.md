@@ -19,6 +19,8 @@ Keine Kundenfirma und keine Personen im Kern hardcoden — App und Creator-Konto
 | Inbox Upload (`video.upload`) | ❌ | ✅ 4-2 (Code; Live nach Connect) |
 | Direct Post (`video.publish`) | ❌ | ✅ 4-2 Code + `audit_ok`; Live nach Audit |
 | Caption-Edit / Delete nach Publish | nie (API) | UI bietet keins |
+| Insights (Views/Likes/…) | ❌ | ✅ 4-3 Display API (`video.list`) |
+| Kommentar-Moderation | nie (Produkt-API) | Hinweis in UI; Research-API kein CRM-Pfad |
 
 ---
 
@@ -84,4 +86,14 @@ Access-Token ~24 h, Refresh ~365 d — **Rotation speichern** (CRM tut das b
 4. CRM-`scheduled_at` (API plant nicht)  
 5. Queue `VideoPublishQueueService` + Selftest  
 
-Live erst nach TT4D-App, Connect und ggf. Audit. PULL_FROM_URL bewusst nicht (Domain-Verify pro Tenant).  
+Live erst nach TT4D-App, Connect und ggf. Audit. PULL_FROM_URL bewusst nicht (Domain-Verify pro Tenant).
+
+---
+
+## Phase 4-3 (Code) — erledigt
+
+1. Scopes `video.list` + `user.info.stats` (erneut verbinden)  
+2. Display-API Insights: Views, Likes, Kommentar-Anzahl, Shares, Dauer  
+3. Optional Account-Stats (Follower/Videos)  
+4. Videos-UI „TikTok: Insights“ — **keine** Kommentar-CRUD (Produkt-API erlaubt das nicht)  
+5. Inbox ohne Item-ID: klarer Hinweis statt Fake-Daten  

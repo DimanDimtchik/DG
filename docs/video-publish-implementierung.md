@@ -300,17 +300,26 @@ Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-a
 - [x] Kein Caption-Edit/Delete in UI (API)
 - [ ] Live gegen TT4D (nach Connect; Direct nach Audit)
 
+### Phase 4-3 (Insights) — Stand
+
+- [x] Scopes `video.list` / `user.info.stats`
+- [x] `TikTokEngagementService`: Views/Likes/Comment-Count/Shares (+ Account-Stats)
+- [x] UI-Hinweis: keine Kommentar-Moderation über Produkt-API
+- [ ] Live nach Connect mit Display-Scopes
+
 ### API-Schritte
 
 1. OAuth Creator (**W**) — Code 4-1
 2. Ohne Audit: höchstens Inbox (`video.upload`) = Draft in App — **kein** echter One-Click — Code 4-2
 3. Nach Audit: Direct Post `video.publish` — Code 4-2
 4. Post-Edit/Delete über Posting-API **nicht** erwarten
+5. Insights Display API — Code 4-3; Comments nur in TikTok-App
 
 ### Acceptance
 
 - [x] Connect-Scaffold — Code 4-1
 - [x] Inbox/Direct-Pipeline — Code 4-2; Live nach Connect/Audit
+- [x] Insights im CRM — Code 4-3 (kein Comment-CRUD)
 - [ ] Audit bestanden **oder** bewusster Skip
 - [ ] Direct: Video öffentlich ohne Extra-Schritt in TikTok-App
 - [ ] Rate 6 req/min / Creator-Tagescaps eingehalten
@@ -325,7 +334,7 @@ Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-a
 
 **Host:** Chunk/PULL + Webhooks **V** empfohlen; Token-Refresh Cron **W** ok.
 
-**Code:** 4-1 Settings/OAuth · 4-2 Upload · Selftest `bin/tiktok-publish-selftest.php` · Checkliste [`tiktok-video-phase-4-1.md`](tiktok-video-phase-4-1.md).
+**Code:** 4-1 Settings/OAuth · 4-2 Upload · 4-3 Insights · Selftest `bin/tiktok-publish-selftest.php` · Checkliste [`tiktok-video-phase-4-1.md`](tiktok-video-phase-4-1.md).
 
 ---
 
