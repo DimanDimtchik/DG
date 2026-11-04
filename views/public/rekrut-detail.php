@@ -21,7 +21,8 @@ $jobId = (int) ($job['id'] ?? 0);
 $title = (string) ($job['title'] ?? 'Stelle');
 $pageTitle = $title . ' – ' . $company;
 $privacyUrl = RecruitingPublicService::privacyPageUrl();
-$months = (int) RecruitingPublicService::RETENTION_HINT_MONTHS;
+$retentionHint = RecruitingPublicService::publicRetentionHint();
+$consentLabel = RecruitingPublicService::publicConsentLabel();
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -77,9 +78,7 @@ $months = (int) RecruitingPublicService::RETENTION_HINT_MONTHS;
       <?php endif; ?>
 
       <p class="dg-muted">
-        Ihre Angaben speichern wir nur für dieses Bewerbungsverfahren.
-        Nach Absage oder Verfahrensende löschen wir sie in der Regel nach <?= $months ?> Monaten
-        (laufende Verfahren ausgenommen).
+        <?= View::escape($retentionHint) ?>
         Details: <a href="<?= View::escape($privacyUrl) ?>">Datenschutz</a>.
       </p>
 
@@ -123,7 +122,7 @@ $months = (int) RecruitingPublicService::RETENTION_HINT_MONTHS;
             <label class="dg-field dg-field--checkbox dg-field--wide">
               <span class="dg-checkbox">
                 <input type="checkbox" name="privacy_consent" value="1" required<?= !empty($form['privacy_consent']) ? ' checked' : '' ?>>
-                <span>Ich willige ein, dass meine Bewerbungsdaten für dieses Verfahren gespeichert werden. *</span>
+                <span><?= View::escape($consentLabel) ?></span>
               </span>
             </label>
           </div>

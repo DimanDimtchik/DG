@@ -199,6 +199,15 @@ final class LegalPageGenerator
             . 'und für den Fall von Anschlussfragen bei uns gespeichert. Diese Daten geben wir nicht ohne Ihre Einwilligung weiter. '
             . 'Grundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) bzw. Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).</p>';
 
+        if (class_exists('RecruitingPrivacySettings')) {
+            $html .= RecruitingPrivacySettings::privacyPolicyParagraphHtml();
+        } else {
+            $html .= '<h3>Bewerbungen</h3>';
+            $html .= '<p>Wenn Sie sich über unsere Karriereseite bewerben, verarbeiten wir Ihre Bewerbungsdaten zur Durchführung '
+                . 'des Bewerbungsverfahrens. Nach Absage oder Verfahrensende löschen wir die Daten grundsätzlich nach wenigen Monaten, '
+                . 'soweit keine längere Speicherung zur Rechtsverteidigung oder aufgrund gesetzlicher Pflichten erforderlich ist.</p>';
+        }
+
         // Online shop / payments
         if (self::hasBusinessKind($kinds, ['products', 'both'])) {
             $html .= '<h2>5. Online-Shop / Bestellungen</h2>';

@@ -4,7 +4,33 @@ declare(strict_types=1);
 /** Öffentliche Bewerbungsseite /rekrut (pro Instanz). */
 final class RecruitingPublicService
 {
+    /** @deprecated Nutze retentionHintMonths() — folgt Instanz-Einstellung. */
     public const RETENTION_HINT_MONTHS = JobApplicationRepository::DEFAULT_RETENTION_MONTHS;
+
+    public static function retentionHintMonths(): int
+    {
+        return JobApplicationRepository::retentionMonths();
+    }
+
+    public static function publicRetentionHint(): string
+    {
+        if (class_exists('RecruitingPrivacySettings')) {
+            return RecruitingPrivacySettings::publicRetentionHint();
+        }
+
+        return 'Ihre Angaben speichern wir nur für dieses Bewerbungsverfahren. '
+            . 'Nach Absage oder Verfahrensende löschen wir sie in der Regel nach '
+            . self::retentionHintMonths() . ' Monaten (laufende Verfahren ausgenommen).';
+    }
+
+    public static function publicConsentLabel(): string
+    {
+        if (class_exists('RecruitingPrivacySettings')) {
+            return RecruitingPrivacySettings::publicConsentLabel();
+        }
+
+        return 'Ich willige ein, dass meine Bewerbungsdaten für dieses Bewerbungsverfahren gespeichert und verarbeitet werden. *';
+    }
 
     /**
      * @return list<array<string, mixed>>

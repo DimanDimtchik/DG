@@ -33,7 +33,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 ### C — Feinschliff
 
 - [x] E-Mail-Benachrichtigungen HR + Bewerber (Settings HR → Recruiting E-Mail; Eingang HR+Bewerber; Status Gespräch/Angebot/Zusage/Absage)
-- [ ] Fristen/DSGVO final mit DSB/Anwalt
+- [x] Fristen/DSGVO final mit DSB/Anwalt (Settings HR → Recruiting Datenschutz; Checkliste [`RECRUITING-DSGVO-DSB.md`](RECRUITING-DSGVO-DSB.md); Generator-Absatz Bewerbungen; Freigabe-Haken pro Instanz)
 - [ ] Akademie-Kurzclip; UI laut `UI-KLASSENKATALOG.md`
 
 ## Regeln (kurz)
@@ -44,4 +44,4 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 
 ## Nächster Schritt
 
-**Recruiting-Mails erledigt.** Offen in Phase C: DSGVO/Fristen mit DSB · Akademie-Clip. Sonst Projekt-Prioritäten (UI/Hetzner/Lohn).
+**DSGVO/Fristen-Paket erledigt** (Technik + Checkliste; echte Freigabe = DSB/Anwalt je Instanz). Offen Phase C: Akademie-Clip. Sonst Projekt-Prioritäten (UI/Hetzner/Lohn).

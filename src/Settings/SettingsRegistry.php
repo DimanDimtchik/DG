@@ -143,6 +143,14 @@ final class SettingsRegistry
                         'lead' => 'Arbeitgeber-Stammdaten für die Lohnabrechnung (Umlagen, Bundesland, SEPA-Konto). Firmendaten bleiben unter Grundlagen → Firmendaten.',
                         'template' => 'lohn',
                     ],
+                    'recruiting-privacy' => [
+                        'label' => 'Recruiting Datenschutz',
+                        'lead' => 'Löschfrist nach Absage, Texte auf /rekrut und Freigabe-Vermerk für DSB/Anwalt.',
+                        'template' => 'recruiting-privacy',
+                        'kichel_aliases' => [
+                            'bewerbung datenschutz', 'bewerber löschfrist', 'recruiting dsgvo', 'speicherdauer bewerbung',
+                        ],
+                    ],
                     'recruiting-mail' => [
                         'label' => 'Recruiting E-Mail',
                         'lead' => 'Benachrichtigungen an Personalstelle und Bewerber bei neuer Bewerbung und Statuswechsel.',
@@ -415,6 +423,9 @@ if (isset($_POST['stock_location_save']) || isset($_POST['stock_location_delete'
             }
             if (isset($_POST['payroll_lohn_save']) || isset($_POST['time_tracking_save'])) {
                 return isset($_POST['payroll_lohn_save']) ? 'lohn' : 'zeiterfassung';
+            }
+            if (isset($_POST['recruiting_privacy_save'])) {
+                return 'recruiting-privacy';
             }
             if (isset($_POST['recruiting_mail_save'])) {
                 return 'recruiting-mail';

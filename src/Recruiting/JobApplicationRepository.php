@@ -18,8 +18,17 @@ final class JobApplicationRepository
     public const SOURCE_LINKEDIN = 'linkedin';
     public const SOURCE_OTHER = 'other';
 
-    /** Standard-Aufbewahrung nach Absage/Ende (Monate) — Löschung via RecruitingRetentionService::runIfDue(). */
+    /** Standard-Aufbewahrung nach Absage/Ende (Monate) — Überschreibbar via RecruitingPrivacySettings. */
     public const DEFAULT_RETENTION_MONTHS = 6;
+
+    public static function retentionMonths(): int
+    {
+        if (class_exists('RecruitingPrivacySettings')) {
+            return RecruitingPrivacySettings::retentionMonths();
+        }
+
+        return self::DEFAULT_RETENTION_MONTHS;
+    }
 
     public static function ensureReady(): void
     {
@@ -445,7 +454,7 @@ final class JobApplicationRepository
 
     public static function defaultRetentionDate(): string
     {
-        return date('Y-m-d', strtotime('+' . self::DEFAULT_RETENTION_MONTHS . ' months') ?: time());
+        return date('Y-m-d', strtotime('+' . self::retentionMonths() . ' months') ?: time());
     }
 
     private static function nullableDate(mixed $value): ?string

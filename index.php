@@ -1492,6 +1492,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Recruiting Datenschutz / Fristen
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['recruiting_privacy_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('recruiting-privacy');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    RecruitingPrivacySettings::saveFromPost($_POST);
+                    Flash::set('success', 'Recruiting-Datenschutz / Löschfristen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Kontenrahmen
         if (
             $page === 'einstellungen'
@@ -5744,6 +5766,7 @@ switch ($path) {
         $elsterConfig = ElsterSettings::forForm();
 $legalProductsConfig = LegalProductSettings::config();
         $ldapConfig = LdapSettings::forForm();
+        $recruitingPrivacyForm = RecruitingPrivacySettings::forForm();
         $recruitingMailForm = RecruitingMailSettings::forForm();
         $xingRecruitingForm = XingRecruitingSettings::forForm();
         $linkedinRecruitingForm = LinkedInRecruitingSettings::forForm();
@@ -9775,6 +9798,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $letterheadCompliance = $letterheadCompliance ?? LetterheadSettings::complianceReport($letterheadSettings);
         $timeTrackingSettings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
         $payrollEmployerForm = $payrollEmployerForm ?? PayrollEmployerSettings::forForm();
+        $recruitingPrivacyForm = $recruitingPrivacyForm ?? RecruitingPrivacySettings::forForm();
         $recruitingMailForm = $recruitingMailForm ?? RecruitingMailSettings::forForm();
         $xingRecruitingForm = $xingRecruitingForm ?? XingRecruitingSettings::forForm();
         $linkedinRecruitingForm = $linkedinRecruitingForm ?? LinkedInRecruitingSettings::forForm();

@@ -114,7 +114,7 @@ $isHired = (string) ($applicationForm['status'] ?? '') === JobApplicationReposit
         <label class="dg-field">
           <span>Löschen ab (Datum)</span>
           <input type="date" name="retention_until" value="<?= View::escape((string) ($applicationForm['retention_until'] ?? '')) ?>">
-          <span class="dg-field-hint">Bei Absage standardmäßig <?= (int) JobApplicationRepository::DEFAULT_RETENTION_MONTHS ?> Monate; automatische Löschung danach.</span>
+          <span class="dg-field-hint">Bei Absage standardmäßig <?= (int) JobApplicationRepository::retentionMonths() ?> Monate; automatische Löschung danach. Einstellung: HR → Recruiting Datenschutz.</span>
         </label>
         <label class="dg-field dg-field--wide">
           <span>Anschreiben / Freitext</span>

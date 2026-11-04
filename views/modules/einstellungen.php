@@ -93,6 +93,8 @@
           <?php View::render('settings/tab-time-tracking', compact('timeTrackingSettings', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'lohn') : ?>
           <?php View::render('settings/tab-lohn', compact('payrollEmployerForm', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'recruiting-privacy') : ?>
+          <?php View::render('settings/tab-recruiting-privacy', compact('recruitingPrivacyForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'recruiting-mail') : ?>
           <?php View::render('settings/tab-recruiting-mail', compact('recruitingMailForm', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'xing-recruiting') : ?>

@@ -85,6 +85,7 @@ final class CompanySettings
 
 require dirname(__DIR__) . '/src/Recruiting/RecruitingMailSettings.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingMailService.php';
+require dirname(__DIR__) . '/src/Recruiting/RecruitingPrivacySettings.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingSettings.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingClient.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingPublishService.php';
@@ -582,5 +583,31 @@ assertRecruit(RecruitingMailSettings::notifyHrEmail() === 'hr@example.test', 'Ma
 assertRecruit(RecruitingMailService::sendHrNewApplication($keepAppId) === false, 'Ohne SMTP kein HR-Versand');
 assertRecruit(RecruitingMailService::sendApplicantConfirmation($keepAppId) === false, 'Ohne SMTP keine Bestätigung');
 assertRecruit(RecruitingMailService::sendApplicantStatus($keepAppId, 'received', 'interview') === false, 'Ohne SMTP kein Status-Mail');
+
+assertRecruit(JobApplicationRepository::retentionMonths() === 6, 'Standard-Löschfrist 6 Monate');
+assertRecruit(str_contains(RecruitingPublicService::publicRetentionHint(), '6 Monaten'), 'Öffentlicher Hinweis 6 Monate');
+SettingsStore::set(RecruitingPrivacySettings::STORE_KEY, [
+    'retention_months' => 3,
+    'public_retention_hint' => '',
+    'public_consent_label' => 'Test-Einwilligung *',
+    'dsb_signed_off' => 1,
+    'dsb_signed_off_at' => '2026-11-04',
+    'dsb_note' => 'Freigabe Test',
+]);
+assertRecruit(JobApplicationRepository::retentionMonths() === 3, 'Löschfrist aus Settings');
+assertRecruit(str_contains(RecruitingPublicService::publicRetentionHint(), '3 Monaten'), 'Hinweis folgt Einstellungen');
+assertRecruit(RecruitingPublicService::publicConsentLabel() === 'Test-Einwilligung *', 'Consent-Text Override');
+$policy = RecruitingPrivacySettings::privacyPolicyParagraphHtml();
+assertRecruit(str_contains($policy, 'Bewerbungen'), 'Datenschutz-Absatz Bewerbungen');
+assertRecruit(str_contains($policy, '3 Monaten'), 'Datenschutz-Absatz Frist');
+RecruitingPrivacySettings::saveFromPost([
+    'recruiting_retention_months' => '12',
+    'recruiting_public_retention_hint' => '',
+    'recruiting_public_consent_label' => '',
+    'recruiting_dsb_signed_off' => '1',
+    'recruiting_dsb_note' => 'ok',
+]);
+assertRecruit(RecruitingPrivacySettings::retentionMonths() === 12, 'Privacy save 12 Monate');
+assertRecruit(!empty(RecruitingPrivacySettings::forForm()['dsb_signed_off']), 'DSB-Freigabe gesetzt');
 
 echo "Recruiting Phase-A Selftest bestanden.\n";
