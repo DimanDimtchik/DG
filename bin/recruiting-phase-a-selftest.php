@@ -44,6 +44,7 @@ require dirname(__DIR__) . '/src/Recruiting/ApplicantRepository.php';
 require dirname(__DIR__) . '/src/Recruiting/JobApplicationRepository.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingFileStorage.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingPublicService.php';
+require dirname(__DIR__) . '/src/Recruiting/RecruitingRetentionService.php';
 
 function assertRecruit(bool $ok, string $msg): void
 {
@@ -265,5 +266,79 @@ try {
     $noConsent = true;
 }
 assertRecruit($noConsent, 'Ohne Datenschutz-Einwilligung abgelehnt');
+
+// Retention: fällige Absage löschen inkl. Datei + verwaister Bewerber
+$retJobId = JobPostingRepository::save([
+    'title' => 'Test Retention',
+    'summary' => 'x',
+    'body' => 'y',
+    'location' => 'Ort',
+    'employment_type' => 'full_time',
+    'status' => 'published',
+], null, 1);
+$retAppId = JobApplicationRepository::save([
+    'job_posting_id' => $retJobId,
+    'email' => 'retention@example.com',
+    'first_name' => 'Ret',
+    'last_name' => 'Ension',
+    'status' => 'rejected',
+    'source' => 'manual',
+    'privacy_consent' => '1',
+    'retention_until' => '2020-01-01',
+], null, 1);
+$tmpRet = tempnam(sys_get_temp_dir(), 'dgrec');
+assertRecruit($tmpRet !== false, 'Tempdatei Retention');
+file_put_contents($tmpRet, '%PDF-1.4 retention');
+RecruitingFileStorage::storeUploads($retAppId, [
+    'name' => 'cv.pdf',
+    'type' => 'application/pdf',
+    'tmp_name' => $tmpRet,
+    'error' => UPLOAD_ERR_OK,
+    'size' => (int) filesize($tmpRet),
+], 1, RecruitingFileStorage::KIND_CV);
+$retFiles = RecruitingFileStorage::listForApplication($retAppId);
+assertRecruit($retFiles !== [], 'Retention-Datei vorhanden');
+$retPath = RecruitingFileStorage::absolutePath($retFiles[0]);
+$retApplicantId = (int) (JobApplicationRepository::find($retAppId)['applicant_id'] ?? 0);
+
+$keepAppId = JobApplicationRepository::save([
+    'job_posting_id' => $retJobId,
+    'email' => 'active@example.com',
+    'first_name' => 'Akt',
+    'last_name' => 'Iv',
+    'status' => 'screening',
+    'source' => 'manual',
+    'privacy_consent' => '1',
+    'retention_until' => '2020-01-01',
+], null, 1);
+$hiredAppId = JobApplicationRepository::save([
+    'job_posting_id' => JobPostingRepository::save([
+        'title' => 'Hired Spot',
+        'summary' => 'x',
+        'body' => 'y',
+        'location' => 'Ort',
+        'employment_type' => 'full_time',
+        'status' => 'published',
+    ], null, 1),
+    'email' => 'hired@example.com',
+    'first_name' => 'Hi',
+    'last_name' => 'Red',
+    'status' => 'hired',
+    'source' => 'manual',
+    'privacy_consent' => '1',
+    'retention_until' => '2020-01-01',
+], null, 1);
+
+$purge = RecruitingRetentionService::runAutomatic('2026-11-04');
+assertRecruit($purge['deleted_applications'] >= 1, 'Fällige Absage gelöscht');
+assertRecruit(JobApplicationRepository::find($retAppId) === null, 'Absage-Akte weg');
+assertRecruit(!is_file($retPath), 'Absage-Datei weg');
+assertRecruit(ApplicantRepository::find($retApplicantId) === null, 'Verwaister Bewerber gelöscht');
+assertRecruit(JobApplicationRepository::find($keepAppId) !== null, 'Laufendes Verfahren bleibt');
+assertRecruit(JobApplicationRepository::find($hiredAppId) !== null, 'Eingestellt bleibt');
+assertRecruit(
+    RecruitingRetentionService::listDueApplications('2026-11-04') === [],
+    'Keine weiteren fälligen Absagen'
+);
 
 echo "Recruiting Phase-A Selftest bestanden.\n";

@@ -18,7 +18,7 @@ final class JobApplicationRepository
     public const SOURCE_LINKEDIN = 'linkedin';
     public const SOURCE_OTHER = 'other';
 
-    /** Standard-Aufbewahrung nach Absage/Ende (Monate) — Cron folgt später. */
+    /** Standard-Aufbewahrung nach Absage/Ende (Monate) — Löschung via RecruitingRetentionService::runIfDue(). */
     public const DEFAULT_RETENTION_MONTHS = 6;
 
     public static function ensureReady(): void

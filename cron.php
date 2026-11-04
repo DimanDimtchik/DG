@@ -94,6 +94,28 @@ if (($_GET['job'] ?? '') === 'elster-certificate-reminder') {
     exit;
 }
 
+if (($_GET['job'] ?? '') === 'recruiting-retention') {
+    if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
+        http_response_code(403);
+        echo "Forbidden.\n";
+        exit;
+    }
+
+    if (!Database::isConfigured()) {
+        http_response_code(500);
+        echo "Datenbank nicht konfiguriert.\n";
+        exit;
+    }
+
+    $result = RecruitingRetentionService::runAutomatic();
+    echo date('c') . " recruiting-retention: applications={$result['deleted_applications']}"
+        . ", applicants={$result['deleted_applicants']}, skipped={$result['skipped']}\n";
+    foreach ($result['errors'] as $error) {
+        echo "FEHLER: {$error}\n";
+    }
+    exit;
+}
+
 if (($_GET['job'] ?? '') === 'tld-list-update') {
     if (!CronSettings::isAuthorized($_GET['token'] ?? null)) {
         http_response_code(403);

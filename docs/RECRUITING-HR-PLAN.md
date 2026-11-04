@@ -20,7 +20,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 - [x] Daten: Migration `136_recruiting.sql` · `dg_job_postings` / `dg_applicants` / `dg_job_applications` (+ Events/Files) · CRM-CRUD
 - [x] Öffentlich: `/rekrut` Liste + Detail + Bewerbungsformular (auch im Wartungsmodus)
 - [x] Datenschutztext + Speicherdauer-Hinweis bei Bewerbung (Einwilligung Pflicht; Hinweis + Link Datenschutz)
-- [ ] Cron: Löschung nach Frist (Absage/Ende Verfahren; laufende Verfahren ausnehmen)
+- [x] Löschung nach Frist (`RecruitingRetentionService::runIfDue` + optional `cron.php?job=recruiting-retention`; Absage/Zurückgezogen; laufende + hired ausnehmen)
 - [ ] Zusage → Kontakt/Mitarbeiter (bestehendes HR-Modell nutzen)
 
 ### B — Anzeigen-Export

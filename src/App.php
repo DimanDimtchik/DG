@@ -85,6 +85,11 @@ final class App
         } catch (Throwable) {
             // ELSTER-Zertifikat-Erinnerung darf Seitenaufruf nicht blockieren
         }
+        try {
+            RecruitingRetentionService::runIfDue();
+        } catch (Throwable) {
+            // Bewerber-Löschfrist darf Seitenaufruf nicht blockieren
+        }
     }
 
     /**

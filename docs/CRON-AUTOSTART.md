@@ -23,6 +23,7 @@ Auf KAS können Cronjobs nur manuell eingetragen werden. Das CRM nutzt deshalb *
 | **Zeiterfassung offener Tag** | `TimeClockService::runIfDue()` | Erster Request pro Tag — schließt Vortag ohne Ausstempeln + Tagesaggregation |
 | **Überstunden-Erinnerung** | `OvertimeReminderService::runIfDue()` | Am **1. des Monats** — ArbZG Ø > 48 h/Woche in 6 Kalendermonaten |
 | **ELSTER-Zertifikat-Ablauf** | `ElsterCertificateReminderService::runIfDue()` | Täglich 1× — Schwellen 90/40/30/2 Tage; Empfänger Buchhaltung, sonst GF |
+| **Bewerber-Löschung (Frist)** | `RecruitingRetentionService::runIfDue()` | Täglich 1× — Absage/Zurückgezogen nach `retention_until` (Dateien + Akte; Bewerber nur wenn ohne weitere Bewerbung) |
 
 ## Optional: HTTP-Cron (`cron.php`)
 
@@ -33,6 +34,7 @@ Für feste Uhrzeiten oder Jobs ohne Website-Traffic:
 - `cron.php?job=overtime-reminder&token=…`
 - `cron.php?job=tld-list-update&token=…` (optional `&force=1`)
 - `cron.php?job=elster-certificate-reminder&token=…`
+- `cron.php?job=recruiting-retention&token=…`
 
 Token: `config/cron.local.php` (Vorlage: `config/cron.local.php.example`).
 

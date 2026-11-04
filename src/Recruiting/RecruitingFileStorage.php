@@ -224,6 +224,33 @@ final class RecruitingFileStorage
         return true;
     }
 
+    /** Alle Dateien einer Bewerbung (DB + Disk + Ordner). */
+    public static function deleteAllForApplication(int $applicationId): int
+    {
+        if ($applicationId < 1 || !self::tableReady()) {
+            return 0;
+        }
+        $files = self::listForApplication($applicationId);
+        $n = 0;
+        foreach ($files as $file) {
+            $path = self::absolutePath($file);
+            if (is_file($path)) {
+                @unlink($path);
+            }
+            $n++;
+        }
+        Database::pdo()->prepare(
+            'DELETE FROM dg_job_application_files WHERE application_id = :aid'
+        )->execute(['aid' => $applicationId]);
+
+        $dir = self::applicationDir($applicationId);
+        if (is_dir($dir)) {
+            @rmdir($dir);
+        }
+
+        return $n;
+    }
+
     private static function applicationDir(int $applicationId): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . $applicationId;
