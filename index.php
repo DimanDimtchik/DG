@@ -128,6 +128,95 @@ if ($path === '/app-connect') {
     exit;
 }
 
+// Öffentliches Bewerbungsportal — ohne CRM-Login, auch im Wartungsmodus
+if ($path === '/rekrut' || str_starts_with($path, '/rekrut/')) {
+    if (!Database::isConfigured()) {
+        http_response_code(503);
+        echo 'Bewerbungsseite nicht verfügbar (keine Datenbank).';
+        exit;
+    }
+    MigrationRunner::runPending();
+
+    $rekrutRest = trim(substr($path, strlen('/rekrut')), '/');
+    $rekrutCompany = RecruitingPublicService::companyLabel();
+
+    if ($rekrutRest === '') {
+        $rekrutJobs = RecruitingPublicService::publishedJobs();
+        View::render('public/rekrut-list', compact('rekrutJobs', 'rekrutCompany'));
+        exit;
+    }
+
+    if (str_contains($rekrutRest, '/')) {
+        http_response_code(404);
+        echo 'Nicht gefunden.';
+        exit;
+    }
+
+    $rekrutJob = RecruitingPublicService::publishedJobBySlug(rawurldecode($rekrutRest));
+    if ($rekrutJob === null) {
+        http_response_code(404);
+        echo 'Stelle nicht gefunden oder nicht veröffentlicht.';
+        exit;
+    }
+
+    $rekrutForm = [
+        'first_name' => '',
+        'last_name' => '',
+        'email' => '',
+        'phone' => '',
+        'city' => '',
+        'cover_letter' => '',
+        'privacy_consent' => '',
+    ];
+    $rekrutError = null;
+    $rekrutSuccess = isset($_GET['ok']) && (string) $_GET['ok'] === '1';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rekrut_apply'])) {
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            $rekrutError = 'Ungültiges Formular. Bitte erneut absenden.';
+            $rekrutForm = array_merge($rekrutForm, [
+                'first_name' => (string) ($_POST['first_name'] ?? ''),
+                'last_name' => (string) ($_POST['last_name'] ?? ''),
+                'email' => (string) ($_POST['email'] ?? ''),
+                'phone' => (string) ($_POST['phone'] ?? ''),
+                'city' => (string) ($_POST['city'] ?? ''),
+                'cover_letter' => (string) ($_POST['cover_letter'] ?? ''),
+                'privacy_consent' => !empty($_POST['privacy_consent']) ? '1' : '',
+            ]);
+        } else {
+            try {
+                $files = isset($_FILES['recruiting_files']) && is_array($_FILES['recruiting_files'])
+                    ? $_FILES['recruiting_files']
+                    : [];
+                RecruitingPublicService::submitApplication($_POST, $files);
+                $slugOk = (string) ($rekrutJob['slug'] ?? '');
+                header('Location: ' . JobPostingRepository::publicUrl($slugOk) . '?ok=1#bewerben', true, 302);
+                exit;
+            } catch (Throwable $e) {
+                $rekrutError = $e->getMessage();
+                $rekrutForm = [
+                    'first_name' => (string) ($_POST['first_name'] ?? ''),
+                    'last_name' => (string) ($_POST['last_name'] ?? ''),
+                    'email' => (string) ($_POST['email'] ?? ''),
+                    'phone' => (string) ($_POST['phone'] ?? ''),
+                    'city' => (string) ($_POST['city'] ?? ''),
+                    'cover_letter' => (string) ($_POST['cover_letter'] ?? ''),
+                    'privacy_consent' => !empty($_POST['privacy_consent']) ? '1' : '',
+                ];
+            }
+        }
+    }
+
+    View::render('public/rekrut-detail', compact(
+        'rekrutJob',
+        'rekrutCompany',
+        'rekrutForm',
+        'rekrutError',
+        'rekrutSuccess'
+    ));
+    exit;
+}
+
 // Öffentliche Stempeluhr (Kiosk) — ohne CRM-Login, auch im Wartungsmodus
 if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
     if (!Database::isConfigured()) {

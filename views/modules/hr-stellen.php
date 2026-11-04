@@ -19,6 +19,7 @@ $typeLabels = JobPostingRepository::employmentTypeOptions();
     <div class="dg-page-header__actions">
       <a class="dg-button dg-button--primary" href="/app?page=hr-stelle-form&amp;action=new">Neue Stelle</a>
       <a class="dg-button" href="/app?page=hr-bewerber">Zu Bewerber</a>
+      <a class="dg-button" href="<?= View::escape(JobPostingRepository::publicUrl()) ?>" target="_blank" rel="noopener">Öffentliche Seite</a>
     </div>
   </header>
 

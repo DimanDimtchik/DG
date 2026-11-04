@@ -94,6 +94,63 @@ final class JobPostingRepository
     }
 
     /**
+     * Öffentliche Stellenliste (nur veröffentlicht).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listPublished(int $limit = 100): array
+    {
+        self::ensureReady();
+        if (!Database::isConfigured() || !self::tableReady()) {
+            return [];
+        }
+        $limit = max(1, min(200, $limit));
+        $stmt = Database::pdo()->prepare(
+            'SELECT id, title, slug, summary, location, employment_type, published_at, updated_at
+             FROM dg_job_postings
+             WHERE status = :status
+             ORDER BY published_at DESC, id DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['status' => self::STATUS_PUBLISHED]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function findPublishedBySlug(string $slug): ?array
+    {
+        self::ensureReady();
+        $slug = trim($slug);
+        if ($slug === '' || !Database::isConfigured() || !self::tableReady()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_job_postings
+             WHERE slug = :slug AND status = :status
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'slug' => $slug,
+            'status' => self::STATUS_PUBLISHED,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public static function publicUrl(string $slug = ''): string
+    {
+        $base = rtrim(App::publicBaseUrl(), '/') . '/rekrut';
+        $slug = trim($slug);
+
+        return $slug === '' ? $base : $base . '/' . rawurlencode($slug);
+    }
+
+    /**
      * @return list<array{id: int, title: string}>
      */
     public static function optionsForSelect(bool $onlyOpen = false): array

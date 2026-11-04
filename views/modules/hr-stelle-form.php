@@ -23,7 +23,15 @@ $typeLabels = JobPostingRepository::employmentTypeOptions();
       ]);
     ?>
     <h1 class="dg-page-title"><?= $isEdit ? 'Stelle bearbeiten' : 'Neue Stelle' ?></h1>
-    <p class="dg-lead">Stammdaten für die spätere öffentliche Bewerbungsseite.</p>
+    <p class="dg-lead">Stammdaten für die öffentliche Bewerbungsseite unter <code>/rekrut</code>.</p>
+    <?php if ($isEdit && (string) ($jobForm['status'] ?? '') === JobPostingRepository::STATUS_PUBLISHED && (string) ($jobForm['slug'] ?? '') !== '') : ?>
+      <p class="dg-muted">
+        Öffentlich:
+        <a href="<?= View::escape(JobPostingRepository::publicUrl((string) $jobForm['slug'])) ?>" target="_blank" rel="noopener">
+          <?= View::escape(JobPostingRepository::publicUrl((string) $jobForm['slug'])) ?>
+        </a>
+      </p>
+    <?php endif; ?>
   </header>
 
   <?php if (!empty($formError)) : ?>

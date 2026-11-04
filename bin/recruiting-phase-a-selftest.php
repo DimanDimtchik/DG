@@ -26,10 +26,24 @@ final class MigrationRunner
     }
 }
 
+final class App
+{
+    public static function publicBaseUrl(): string
+    {
+        return 'https://example.test';
+    }
+
+    public static function config(string $key, mixed $default = null): mixed
+    {
+        return $default;
+    }
+}
+
 require dirname(__DIR__) . '/src/Recruiting/JobPostingRepository.php';
 require dirname(__DIR__) . '/src/Recruiting/ApplicantRepository.php';
 require dirname(__DIR__) . '/src/Recruiting/JobApplicationRepository.php';
 require dirname(__DIR__) . '/src/Recruiting/RecruitingFileStorage.php';
+require dirname(__DIR__) . '/src/Recruiting/RecruitingPublicService.php';
 
 function assertRecruit(bool $ok, string $msg): void
 {
@@ -220,5 +234,36 @@ try {
     $dupFailed = true;
 }
 assertRecruit($dupFailed, 'Doppelbewerbung gleiche Stelle/E-Mail verhindert');
+
+$published = JobPostingRepository::listPublished();
+assertRecruit(count($published) === 1, 'listPublished findet veröffentlichte Stelle');
+$bySlug = JobPostingRepository::findPublishedBySlug((string) ($job['slug'] ?? ''));
+assertRecruit(is_array($bySlug), 'findPublishedBySlug');
+assertRecruit(JobPostingRepository::publicUrl('lagerhelfer-m-w-d') === 'https://example.test/rekrut/lagerhelfer-m-w-d', 'publicUrl');
+
+$pubId = RecruitingPublicService::submitApplication([
+    'job_posting_id' => $jobId,
+    'email' => 'online@example.com',
+    'first_name' => 'Otto',
+    'last_name' => 'Online',
+    'cover_letter' => 'Online-Bewerbung',
+    'privacy_consent' => '1',
+], []);
+assertRecruit($pubId > 0, 'Öffentliche Bewerbung angelegt');
+$pubRow = JobApplicationRepository::find($pubId);
+assertRecruit(($pubRow['source'] ?? '') === 'website', 'Quelle website');
+
+$noConsent = false;
+try {
+    RecruitingPublicService::submitApplication([
+        'job_posting_id' => $jobId,
+        'email' => 'x@example.com',
+        'first_name' => 'X',
+        'last_name' => 'Y',
+    ], []);
+} catch (InvalidArgumentException) {
+    $noConsent = true;
+}
+assertRecruit($noConsent, 'Ohne Datenschutz-Einwilligung abgelehnt');
 
 echo "Recruiting Phase-A Selftest bestanden.\n";
