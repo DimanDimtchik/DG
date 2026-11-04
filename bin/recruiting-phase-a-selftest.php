@@ -67,10 +67,24 @@ final class CompanySettings
 {
     public static function config(): array
     {
-        return ['name' => 'Test GmbH'];
+        return ['name' => 'Test GmbH', 'email' => 'hr@example.test'];
+    }
+
+    public static function displayName(): string
+    {
+        return trim((string) (self::config()['name'] ?? ''));
+    }
+
+    public static function mailEmail(): string
+    {
+        $email = trim((string) (self::config()['email'] ?? ''));
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
     }
 }
 
+require dirname(__DIR__) . '/src/Recruiting/RecruitingMailSettings.php';
+require dirname(__DIR__) . '/src/Recruiting/RecruitingMailService.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingSettings.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingClient.php';
 require dirname(__DIR__) . '/src/Recruiting/XingRecruitingPublishService.php';
@@ -543,4 +557,30 @@ assertRecruit(($liPayload['jobPostingOperationType'] ?? '') === 'CREATE', 'Linke
 assertRecruit(($liPayload['companyApplyUrl'] ?? '') === 'https://example.test/rekrut/entwickler', 'LinkedIn apply URL');
 assertRecruit(($liPayload['company'] ?? '') === 'urn:li:company:12345', 'LinkedIn company URN in payload');
 assertRecruit(($liPayload['externalJobPostingId'] ?? '') === 'dg-9', 'LinkedIn external in payload');
+
+assertRecruit(RecruitingMailSettings::notifyHrEmail() === 'hr@example.test', 'HR-Mail Fallback Firmen-E-Mail');
+SettingsStore::set(RecruitingMailSettings::STORE_KEY, [
+    'send_hr_on_apply' => 1,
+    'send_applicant_confirmation' => 1,
+    'send_applicant_status' => 1,
+    'notify_hr_email' => 'personal@example.test',
+]);
+assertRecruit(RecruitingMailSettings::notifyHrEmail() === 'personal@example.test', 'HR-Mail Override');
+$formMail = RecruitingMailSettings::forForm();
+assertRecruit(!empty($formMail['send_hr_on_apply']), 'Mail-Form HR an');
+assertRecruit($formMail['effective_hr_email'] === 'personal@example.test', 'Mail-Form effective');
+RecruitingMailSettings::saveFromPost([
+    'recruiting_send_hr_on_apply' => '1',
+    'recruiting_send_applicant_confirmation' => '',
+    'recruiting_send_applicant_status' => '1',
+    'recruiting_notify_hr_email' => '',
+]);
+$savedMail = RecruitingMailSettings::config();
+assertRecruit(!empty($savedMail['send_hr_on_apply']), 'Mail save HR an');
+assertRecruit(empty($savedMail['send_applicant_confirmation']), 'Mail save Bestätigung aus');
+assertRecruit(RecruitingMailSettings::notifyHrEmail() === 'hr@example.test', 'Mail save Fallback wieder Firma');
+assertRecruit(RecruitingMailService::sendHrNewApplication($keepAppId) === false, 'Ohne SMTP kein HR-Versand');
+assertRecruit(RecruitingMailService::sendApplicantConfirmation($keepAppId) === false, 'Ohne SMTP keine Bestätigung');
+assertRecruit(RecruitingMailService::sendApplicantStatus($keepAppId, 'received', 'interview') === false, 'Ohne SMTP kein Status-Mail');
+
 echo "Recruiting Phase-A Selftest bestanden.\n";

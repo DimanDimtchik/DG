@@ -157,6 +157,8 @@ spl_autoload_register(static function (string $class): void {
         'RecruitingPublicService' => '/src/Recruiting/RecruitingPublicService.php',
         'RecruitingRetentionService' => '/src/Recruiting/RecruitingRetentionService.php',
         'RecruitingHireService' => '/src/Recruiting/RecruitingHireService.php',
+        'RecruitingMailSettings' => '/src/Recruiting/RecruitingMailSettings.php',
+        'RecruitingMailService' => '/src/Recruiting/RecruitingMailService.php',
         'XingRecruitingSettings' => '/src/Recruiting/XingRecruitingSettings.php',
         'XingRecruitingClient' => '/src/Recruiting/XingRecruitingClient.php',
         'XingRecruitingPublishService' => '/src/Recruiting/XingRecruitingPublishService.php',

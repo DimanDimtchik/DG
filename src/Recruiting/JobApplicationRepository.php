@@ -331,6 +331,9 @@ final class JobApplicationRepository
                         . ' → ' . (self::statusOptions()[$status] ?? $status),
                     $userId
                 );
+                if (class_exists('RecruitingMailService')) {
+                    RecruitingMailService::afterStatusChange($id, $prevStatus, $status);
+                }
             }
 
             if ($status === self::STATUS_HIRED) {

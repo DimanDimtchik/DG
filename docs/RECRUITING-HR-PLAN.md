@@ -32,7 +32,7 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 
 ### C — Feinschliff
 
-- [ ] E-Mail-Benachrichtigungen HR + Bewerber
+- [x] E-Mail-Benachrichtigungen HR + Bewerber (Settings HR → Recruiting E-Mail; Eingang HR+Bewerber; Status Gespräch/Angebot/Zusage/Absage)
 - [ ] Fristen/DSGVO final mit DSB/Anwalt
 - [ ] Akademie-Kurzclip; UI laut `UI-KLASSENKATALOG.md`
 
@@ -44,4 +44,4 @@ Stelle im CRM → optional Publish Xing/LinkedIn (Link = unsere URL) → Bewerbe
 
 ## Nächster Schritt
 
-**Phase B Anzeigen-Export erledigt** (Xing + LinkedIn, jeweils freigabepflichtig). Als Nächstes Phase C oder Projekt-Prioritäten (UI/Hetzner/Lohn).
+**Recruiting-Mails erledigt.** Offen in Phase C: DSGVO/Fristen mit DSB · Akademie-Clip. Sonst Projekt-Prioritäten (UI/Hetzner/Lohn).

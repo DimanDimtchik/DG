@@ -82,6 +82,10 @@ final class RecruitingPublicService
             RecruitingFileStorage::storeUploads($applicationId, $files, null, $kind);
         }
 
+        if (class_exists('RecruitingMailService')) {
+            RecruitingMailService::afterPublicApplication($applicationId);
+        }
+
         return $applicationId;
     }
 
