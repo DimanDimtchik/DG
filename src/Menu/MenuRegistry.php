@@ -38,7 +38,7 @@ final class MenuRegistry
     }
 
     /**
-     * HR-Bereich: Akademie, Organisation, Zeiterfassung, Lohn & Gehalt
+     * HR-Bereich: Akademie, Organisation, Stellen/Bewerber, Zeiterfassung, Lohn & Gehalt
      * (zwischen Navigation und Warenwirtschaft/Buchhaltung).
      *
      * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
@@ -70,6 +70,18 @@ final class MenuRegistry
                 'label' => 'Team',
                 'icon' => 'contacts',
                 'href' => '/app?page=hr-teams',
+            ];
+            $items[] = [
+                'slug' => 'hr-stellen',
+                'label' => 'Stellen',
+                'icon' => 'document',
+                'href' => '/app?page=hr-stellen',
+            ];
+            $items[] = [
+                'slug' => 'hr-bewerber',
+                'label' => 'Bewerber',
+                'icon' => 'contacts',
+                'href' => '/app?page=hr-bewerber',
             ];
         }
         if (DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user)) {
@@ -591,6 +603,8 @@ final class MenuRegistry
             'akademie' => 'Schulungen, Erklärvideos und Zertifikate zu den CRM-Modulen.',
             'hr-abteilungen' => 'Abteilungen anlegen und Mitarbeitern zuordnen — Grundlage für Rechte und Akademie.',
             'hr-teams' => 'Teams innerhalb der Abteilungen pflegen und Ansprechpartner zuweisen.',
+            'hr-stellen' => 'Offene Stellen pflegen und für die Bewerbungsseite freigeben.',
+            'hr-bewerber' => 'Bewerbungen und Bewerberakte — Status und Unterlagen im CRM.',
             'zeiterfassung' => 'Einstempeln, Pausen und Arbeitszeiten — Übersicht für Mitarbeiter und HR.',
             'lohn-monatslauf' => 'Lohnabrechnung je Monat: berechnen, freigeben, sperren und Dokumente erzeugen.',
             'lohn-lohnkonto' => 'Lohnkonto je Mitarbeiter und Jahr — chronologische Abrechnungsübersicht.',
@@ -669,6 +683,12 @@ final class MenuRegistry
             ],
             'website-design' => [
                 'website farbe', 'website farben', 'webseitenfarbe', 'webseitenfarben', 'website design',
+            ],
+            'hr-stellen' => [
+                'stelle', 'stellenanzeige', 'stellenausschreibung', 'job', 'rekrut', 'recruiting', 'karriere',
+            ],
+            'hr-bewerber' => [
+                'bewerbung', 'bewerber', 'bewerberakte', 'applicant', 'rekrutierung', 'recruiting bewerber',
             ],
             'zeiterfassung' => [
                 'stempeluhr', 'einstempeln', 'ausstempeln', 'kiosk', 'pin stempel', 'schichtplan', 'schicht',
@@ -942,7 +962,13 @@ final class MenuRegistry
             return RoleResolver::canEdit($user);
         }
 
-        if ($slug === 'hr-abteilungen' || $slug === 'hr-teams' || $slug === 'hr-team-form') {
+        if (
+            $slug === 'hr-abteilungen'
+            || $slug === 'hr-teams'
+            || $slug === 'hr-team-form'
+            || $slug === 'hr-stellen'
+            || $slug === 'hr-bewerber'
+        ) {
             return TeamAccess::canView($user);
         }
 

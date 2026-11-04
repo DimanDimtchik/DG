@@ -6284,6 +6284,20 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'hr-team-form') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'hr-stellen' && MenuRegistry::canAccess($user, 'hr-stellen')) {
+            $contentTemplate = 'modules/hr-stellen';
+            $title = 'Stellen';
+            $currentPage = 'hr-stellen';
+        } elseif ($page === 'hr-stellen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'hr-bewerber' && MenuRegistry::canAccess($user, 'hr-bewerber')) {
+            $contentTemplate = 'modules/hr-bewerber';
+            $title = 'Bewerber';
+            $currentPage = 'hr-bewerber';
+        } elseif ($page === 'hr-bewerber') {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'buchhaltung-konten' && MenuRegistry::canAccess($user, 'buchhaltung-konten')) {
             $chartAccountCount = 0;
             $chartCatalogCount = ChartAccountCatalog::catalogCount(ChartOfAccountsSettings::activeSkrType());
