@@ -443,7 +443,9 @@ switch ($path) {
             $username = trim((string) ($_POST['username'] ?? ''));
             $password = (string) ($_POST['password'] ?? '');
 
-            if ($username === '' || $password === '') {
+            if (!Database::isConfigured() && !is_file(DG_ROOT . '/config/users.php')) {
+                $error = 'Anmeldung nicht möglich — für diese Domain ist das CRM noch nicht eingerichtet (keine Datenbank).';
+            } elseif ($username === '' || $password === '') {
                 $error = 'Bitte Benutzername und Passwort eingeben.';
             } else {
                 $result = AuthService::attempt($username, $password);

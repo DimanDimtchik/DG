@@ -607,7 +607,14 @@ final class UserRepository
     private static function loadFile(): array
     {
         if (self::$fileData === null) {
-            self::$fileData = require DG_ROOT . '/config/users.php';
+            $path = DG_ROOT . '/config/users.php';
+            if (!is_file($path)) {
+                // Platzhalter-Instanz ohne DB/users.php (z. B. ganz-om.de vor CRM-Install)
+                self::$fileData = ['users' => [], 'departments' => []];
+            } else {
+                $data = require $path;
+                self::$fileData = is_array($data) ? $data : ['users' => [], 'departments' => []];
+            }
         }
 
         return self::$fileData;
