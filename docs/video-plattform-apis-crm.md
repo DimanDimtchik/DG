@@ -118,7 +118,7 @@ Dev-Tier-Limits (Overview): ca. **500 Calls/App** und **100/Member** pro 24h —
 - Ohne Refresh: vor Ablauf erneut verbinden (Consent oft still, wenn Session aktiv).
 
 ### Verdict: **möglich aber schwer**
-Technisch solide Server-Pipeline und gutes Post-Management. Gatekeeper ist App Review (Legal Org + Standard Tier). Für Dietrich Ganz / IQ Strom (Company Page + ggf. persönlich) der richtige zweite Kanal nach YouTube — Review-Aufwand ernst nehmen.
+Technisch solide Server-Pipeline und gutes Post-Management. Gatekeeper ist App Review (Legal Org + Standard Tier). Für B2B-Company-Pages (plus optional persönlich) der richtige zweite Kanal nach YouTube — Review-Aufwand ernst nehmen.
 
 ---
 
@@ -179,7 +179,7 @@ Direct Post = Publish-fokussiert, kein LinkedIn-/YouTube-ähnliches Post-CMS.
 - Doc: [OAuth Token Management](https://developers.tiktok.com/doc/oauth-user-access-token-management)
 
 ### Verdict: **möglich aber schwer** (Multi-Tenant-Produkt) / **kaum praktikabel** (nur DG-intern)
-Technik ok; Policy/UX/Audit machen „One-Click aus dem CRM“ teuer. Für Dietrich Ganz persönlich **nicht Phase 1**. Für spätere Tenants nur, wenn CRM klar als externes Creator-Tool positioniert und UX-Guidelines 1:1 umgesetzt werden. Inbox-Upload als Fallback = kein echter One-Click.
+Technik ok; Policy/UX/Audit machen „One-Click aus dem CRM“ teuer. Nicht als Phase-1-Kanal. Für Tenants nur, wenn CRM klar als externes Creator-Tool positioniert und UX-Guidelines 1:1 umgesetzt werden. Inbox-Upload als Fallback = kein echter One-Click.
 
 ---
 
@@ -259,9 +259,9 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 
 ---
 
-## Empfohlene Phasen — Dietrich Ganz / IQ Strom + Multi-Tenant
+## Empfohlene Phasen — Multi-Tenant CRM
 
-### Phase 1 — DG persönlich (MVP): YouTube
+### Phase 1 — MVP: YouTube
 1. GCP + YouTube Data API, Resumable Upload, Offline-OAuth.
 2. CRM: Video ablegen → One-Click Upload → Titel/Beschreibung/Privacy → Liste + Edit/Delete.
 3. Optional: `publishAt` für Planung; später Analytics-Scope.
@@ -269,14 +269,14 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 
 **Warum zuerst:** beste API-Passung, wenig Partner-Politik, volles Post-Management.
 
-### Phase 2 — DG / IQ Strom: LinkedIn
-1. LinkedIn Developer App als **juristische Person**; Community Management Development → Integration → Standard Tier (Screencast).  
-   **CRM-Scaffold 2-1:** Settings-Tab *LinkedIn Publish* + OAuth-Connect — Checkliste [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md). App-Anlage/Review manuell.
+### Phase 2 — LinkedIn (Company Page)
+1. LinkedIn Developer App als **juristische Person des Tenants**; Community Management Development → Integration → Standard Tier (Screencast).  
+   **CRM-Scaffold 2-1:** Settings-Tab *LinkedIn Publish* + OAuth-Connect — Checkliste [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md). App-Anlage/Review manuell **pro Tenant**.
 2. Primär **Company Page** (`w_organization_social`); optional Member-Posts.  
    **Code 2-2:** Multipart-Upload + Posts create/edit/delete + CRM-`scheduled_at` im Modul Videos.
 3. Videos API + Posts API; Scheduling im CRM; Comments/Insights nachziehen — **Code 2-3** (Kommentare + Basis-Insights im Videos-Modul).
 
-**Warum zweitens:** explizit gewünscht; Review planbar; gut für B2B (IQ Strom).
+**Warum zweitens:** Review planbar; gut für B2B-Company-Pages; Credentials nur in Instanz-Settings.
 
 ### Phase 3 — weitere CRM-Tenants: Instagram
 1. Meta App, Business Verification, Advanced Access für `content_publish`.
@@ -287,7 +287,7 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 1. Nur wenn CRM klar als **öffentliches Multi-Tenant-Creator-/Marketing-Produkt** positioniert ist (nicht „internes Upload-Hilfstool“).
 2. UX-Guidelines 1:1; dann Audit für Direct Post.
 3. Bis Audit: höchstens Inbox-Upload als „Draft nach TikTok“ — kein echter One-Click.
-4. Für **nur Dietrich Ganz intern:** eher **skip** oder manuell in TikTok-App.
+4. Für rein internes Einzelpersonen-Nutzen: eher **skip** oder manuell in der TikTok-App.
 
 ### Nicht tun
 - Content ID / YouTube Partner API ohne Partnervertrag.

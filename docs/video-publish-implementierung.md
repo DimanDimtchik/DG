@@ -1,6 +1,6 @@
 # Video-Publish — Implementierungsplan DG CRM (Multi-Tenant)
 
-**Für:** Dietrich / IQ Strom + spätere CRM-Tenants · **Stand:** Nov. 2026  
+**Für:** Multi-Tenant DG CRM · **Stand:** Nov. 2026  
 **Bezug:** [`video-plattform-apis-crm.md`](video-plattform-apis-crm.md) (API-Recherche; nicht duplizieren)  
 **Prefs:** all-inkl jetzt · VPS später · eigene CRM-Lösung · kein fremder Social-Gateway  
 **Reihenfolge (Pflicht):** Phase 1 YouTube → 2 LinkedIn → 3 Instagram → 4 TikTok  
@@ -112,7 +112,7 @@ Docs: [videos.insert](https://developers.google.com/youtube/v3/docs/videos/inser
 
 ## Phase 2 — LinkedIn
 
-**Ziel:** Company Page (IQ Strom) Video-Post; optional Member; CRM-seitiges Scheduling.
+**Ziel:** Company-Page-Video-Post (Tenant); optional Member; CRM-seitiges Scheduling.
 
 ### Prerequisites
 
@@ -149,7 +149,7 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 - [x] Checkliste juristische Person / Community Management — [`linkedin-video-phase-2-1.md`](linkedin-video-phase-2-1.md)
 - [x] CRM-Tab **LinkedIn Publish** (Credentials, Org-ID, Review-Tier, OAuth Connect)
 - [x] `dg_oauth_connections.platform=linkedin` + Crypto (wie YouTube)
-- [ ] Manuell: App unter IQ Strom GmbH anlegen, Dev-Tier, Redirect, Connect (Dietrich)
+- [ ] Manuell: App unter der juristischen Person des Tenants anlegen, Dev-Tier, Redirect, Connect
 - [ ] Standard-Tier / Screencast — später
 
 ### Phase 2-2 (Upload + Posts) — Stand
@@ -170,7 +170,7 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 
 ### Acceptance
 
-- [x] IQ-Strom-Page verbunden; Post erscheint im Feed — Code fertig; Live nach App/Connect
+- [x] Company Page verbunden; Post erscheint im Feed — Code fertig; Live nach App/Connect (pro Tenant)
 - [x] Caption edit + Delete aus CRM — `PARTIAL_UPDATE` / `DELETE` Posts
 - [x] Geplanter Job feuert per Cron zum Termin — `scheduled_at` + Queue/`runIfDue`
 - [x] Comments/Insights im CRM — Phase 2-3 Code
@@ -282,7 +282,7 @@ Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-a
 - [ ] Vor Phase 1–3 bauen
 - [ ] Als reines DG-internes Utility vermarkten
 - [ ] Inbox als „One-Click“ verkaufen
-- [ ] Für **nur Dietrich intern:** eher **manuell in TikTok-App** / Phase 4 weglassen
+- [ ] Für rein internes Einzelpersonen-Nutzen: eher **manuell in TikTok-App** / Phase 4 weglassen
 
 **Host:** Chunk/PULL + Webhooks **V** empfohlen; Token-Refresh Cron **W** ok.
 
@@ -303,17 +303,17 @@ Docs: [Content Posting](https://developers.tiktok.com/products/content-posting-a
 
 ## MVP-Schnitt
 
-### A — Dietrich persönlich (empfohlen zuerst)
+### A — Kern-MVP (empfohlen zuerst)
 
 | Scope | Inhalt | Host |
 |-------|--------|------|
 | Foundation | OAuth-Store, Asset, Job+Cron, Publish-Button | **W** |
-| Phase 1 | YouTube eigener Kanal: Upload, Edit, Delete; optional publishAt | **W→V** |
-| Phase 2 | LinkedIn **Company Page** IQ Strom; CRM-Schedule; Caption edit/delete | **W→V** |
+| Phase 1 | YouTube-Kanal: Upload, Edit, Delete; optional publishAt | **W→V** |
+| Phase 2 | LinkedIn **Company Page** (Tenant); CRM-Schedule; Caption edit/delete | **W→V** |
 | Review-Parallel | YT OAuth-Verify + Quota; LI Standard-Tier-Screencast | organisatorisch |
-| Weglassen | IG, TT, Analytics, Comments-UI, Transcode, Multi-Tenant-Onboarding-UX | — |
+| Weglassen | IG, TT, Analytics-Dashboard, Transcode | — |
 
-### B — Multi-Tenant-Extras (nach A)
+### B — Weitere Tenant-/Plattform-Extras (nach A)
 
 | Extra | Wann |
 |-------|------|

@@ -21,16 +21,17 @@ Recruiting nutzt **Client Credentials** / Job Posting. Video braucht **Member-OA
 
 ---
 
-## Manuell (Dietrich / IQ Strom)
+## Manuell (pro Tenant / Instanz)
 
-- [ ] LinkedIn Developer Portal: App unter **juristischer Person** (empfohlen: **IQ Strom GmbH** für Company Page)
+LinkedIn verlangt eine Developer-App unter einer **juristischen Person** und eine **Company Page**. Welche Firma/Page das ist, entscheidet der jeweilige Tenant — **kein** Firmenname im CRM-Kern hardcoden.
+
+- [ ] LinkedIn Developer Portal: App unter der **juristischen Person des Seitenbetreibers** (Company Page)
 - [ ] Business-E-Mail, Legal Name, Adresse, Website, Privacy Policy hinterlegen
 - [ ] Produkt **Community Management** anfordern (Development Tier)
-- [ ] Redirect-URI (Dev): `https://ganz-om.de/oauth/linkedin/callback`
-- [ ] Später Firmen-/Kunden-Instanz: jeweilige `{publicBaseUrl}/oauth/linkedin/callback` ergänzen
-- [ ] Member mit **Page-Admin**-Rolle an der IQ-Strom-Unternehmensseite
-- [ ] Organization ID / URN notieren (`urn:li:organization:…`)
-- [ ] Client ID + Client Secret in CRM → Einstellungen → Kommunikation → **LinkedIn Publish**
+- [ ] Redirect-URI: `{publicBaseUrl}/oauth/linkedin/callback` der **jeweiligen** CRM-Instanz (Dev zuerst, dann Produktiv-Instanzen)
+- [ ] Member mit **Page-Admin**-Rolle an der Unternehmensseite des Tenants
+- [ ] Organization ID / URN notieren (`urn:li:organization:…`) — nur in Instanz-Settings
+- [ ] Client ID + Client Secret in CRM → Einstellungen → Kommunikation → **LinkedIn Publish** (Instanz-DB)
 - [ ] „Mit LinkedIn verbinden“ (Page-Admin-Konto) — Status *verbunden*
 - [ ] Dev-Tier-Limits kennen: ca. **500 Calls/App** und **100/Member** / 24h — Produktion braucht Standard Tier
 

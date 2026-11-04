@@ -97,6 +97,7 @@ bash bin/sync-crm-from-master.sh
 - **ELSTER/ERiC live:** auf Kasserver blockiert — erst nach Hetzner-Umzug
 - **SSH:** `DG_ALLINKL_SSH_USER` = SSH-User (`ssh-…`), **nicht** KAS-Login `w0217246`
 - **Chats:** möglichst 1 Cloud- + 1 Lokal-Chat; Aufräum-Liste in `docs/TODOS.md`
+- **Kein Tenant im Kern:** DG CRM ist branchenneutrales Multi-Tenant-Produkt. In `src/`, `views/`, Produkt-Defaults, UI-Texten und Feature-Plänen **keine** Kunden-/Instanz-Firmen und **keine** Personen aus Kundenakten (z. B. keine „erste Page = Firma X“, keine Hardcodes von Ansprechpartnern). Firmendaten nur aus der **jeweiligen Instanz-DB** / Settings. Ausnahme: reine **Ops-/Deploy-Docs und Host-Skripte** dürfen Infrastruktur-Hosts nennen — das ist kein Produktinhalt.
 
 ---
 

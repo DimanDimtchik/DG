@@ -10,11 +10,12 @@ alwaysApply: true
 
 ## Kurzfassung (verbindlich)
 
-1. **Dev** `ganz-om.de` · **Code-Kern/Master** `dg.ganz-soft.de` · **Updates** per `bin/sync-crm-from-master.sh` · Firmen-CRM `dg.ganz-om.de` · Kunden u. a. `ganz-soft.de`, `kontur-cosmetics.de`, `office.iqstrom.com`
+1. **Dev** `ganz-om.de` · **Code-Kern/Master** `dg.ganz-soft.de` · **Updates** per `bin/sync-crm-from-master.sh` · weitere Hosts nur in Ops-Docs (keine Kundenfirma als Produkt-Default)
 2. **Gleicher Code** überall · **eigene DB** + eigene Instanz-Dateien · **kein Sondercode** pro Domain · **nie** fremde Instanz-DB
-3. **Wartungsmodus:** ein `WebsiteMaintenanceRenderer` · Kontakt aus CRM (Wartung → Firma) · sonst „Öffentliche Kontaktdaten noch nicht gesetzt.“
-4. **Rolle:** Steuerrecht + Steuerberater-Praxis + Prüfbarkeit mitdenken
-5. **Nicht:** Account-Root mit `--delete` syncen · Stripe live · ELSTER auf Kasserver
-6. **UI:** immer `docs/UI-KLASSENKATALOG.md` (+ Form-Kurz `UI-FORM-REGELN.md`) / eine Datei `dg.css` — Kern-Primitives für Page/Panel/Form/Table/Button/`a`-Aktionen; Guard `php bin/ui-form-spacing-selftest.php`. Kein Extra-Prompt nötig.
+3. **Kein Tenant im Kern:** keine Kunden-/Instanz-Firmen und keine Personen aus Kundenakten in `src/`/`views/`/UI/Feature-Plänen; Daten nur aus Instanz-Settings/DB
+4. **Wartungsmodus:** ein `WebsiteMaintenanceRenderer` · Kontakt aus CRM (Wartung → Firma) · sonst „Öffentliche Kontaktdaten noch nicht gesetzt.“
+5. **Rolle:** Steuerrecht + Steuerberater-Praxis + Prüfbarkeit mitdenken
+6. **Nicht:** Account-Root mit `--delete` syncen · Stripe live · ELSTER auf Kasserver
+7. **UI:** immer `docs/UI-KLASSENKATALOG.md` (+ Form-Kurz `UI-FORM-REGELN.md`) / eine Datei `dg.css` — Kern-Primitives für Page/Panel/Form/Table/Button/`a`-Aktionen; Guard `php bin/ui-form-spacing-selftest.php`. Kein Extra-Prompt nötig.
 
 Details und Deploy-Ablauf: `AGENTS.md`
