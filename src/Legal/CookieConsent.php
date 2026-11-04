@@ -84,7 +84,7 @@ final class CookieConsent
       <h3>Cookie-Einstellungen</h3>
       <p>Wir verwenden Cookies, um Ihnen die bestmögliche Nutzung unserer Website zu ermöglichen.
          Technisch notwendige Cookies werden immer gesetzt. Weitere Cookies setzen wir nur mit Ihrer Einwilligung.
-         <a href="/datenschutz">Mehr erfahren</a></p>
+         <a href="/datenschutz#cookies">Mehr erfahren</a></p>
     </div>
     <div class="dg-cc-details" id="dg-cc-details" style="display:none">
       {$categories}
@@ -167,26 +167,38 @@ JS;
     /** @return string HTML table for Datenschutzerklärung. */
     public static function cookieListHtml(): string
     {
-        $html = '<h3>Verwendete Cookies</h3>';
-        $html .= '<table><thead><tr><th>Name</th><th>Zweck</th><th>Kategorie</th><th>Speicherdauer</th></tr></thead><tbody>';
+        $html = '<h4>Verwendete Cookies</h4>';
+        $html .= '<p>Übersicht der aktuell eingesetzten Cookies bzw. vergleichbarer Speicherungen. '
+            . 'Kategorien entsprechen dem Einwilligungsdialog der Website.</p>';
+        $html .= '<div class="ws-content-table-wrap"><table class="ws-content-table">'
+            . '<thead><tr><th>Name</th><th>Zweck</th><th>Kategorie</th><th>Speicherdauer</th></tr></thead><tbody>';
 
-        $html .= '<tr><td>' . self::COOKIE_NAME . '</td><td>Speichert Ihre Cookie-Einstellungen</td><td>Notwendig</td><td>1 Jahr</td></tr>';
+        $html .= '<tr><td>' . htmlspecialchars(self::COOKIE_NAME) . '</td><td>Speichert Ihre Cookie-Einstellungen</td><td>'
+            . htmlspecialchars(self::CATEGORIES['necessary']['label']) . '</td><td>1 Jahr</td></tr>';
 
         $sessionName = (string) App::config('session_name', 'dg_crm_session');
-        $html .= '<tr><td>' . htmlspecialchars($sessionName) . '</td><td>Session-Cookie für Anmeldung</td><td>Notwendig</td><td>Sitzungsende</td></tr>';
+        $html .= '<tr><td>' . htmlspecialchars($sessionName) . '</td><td>Session-Cookie für Anmeldung und Sitzung</td><td>'
+            . htmlspecialchars(self::CATEGORIES['necessary']['label']) . '</td><td>Sitzungsende</td></tr>';
+
+        // Lokale Seitenaufrufe (ohne Extra-Cookie): nur mit Statistik-Einwilligung
+        $html .= '<tr><td>—</td><td>Lokale Seitenaufruf-Zählung im CRM (ohne zusätzliches Tracking-Cookie; '
+            . 'nur bei Einwilligung „Statistik“)</td><td>'
+            . htmlspecialchars(self::CATEGORIES['analytics']['label']) . '</td><td>serverseitig</td></tr>';
 
         if (class_exists('WebsiteAnalytics') && WebsiteAnalytics::isConfigured()) {
             $ids = WebsiteAnalytics::configuredIds();
-            if ($ids['gtm_id'] !== '') {
+            if (($ids['gtm_id'] ?? '') !== '') {
                 $html .= '<tr><td>_ga, _gid, _gat, …</td><td>Google Tag Manager / ggf. eingebundene Tags ('
-                    . htmlspecialchars($ids['gtm_id']) . ')</td><td>Statistik</td><td>bis 2 Jahre</td></tr>';
-            } elseif ($ids['ga_id'] !== '') {
+                    . htmlspecialchars((string) $ids['gtm_id']) . ')</td><td>'
+                    . htmlspecialchars(self::CATEGORIES['analytics']['label']) . '</td><td>bis 2 Jahre</td></tr>';
+            } elseif (($ids['ga_id'] ?? '') !== '') {
                 $html .= '<tr><td>_ga, _ga_*, _gid</td><td>Google Analytics 4 ('
-                    . htmlspecialchars($ids['ga_id']) . ')</td><td>Statistik</td><td>bis 2 Jahre</td></tr>';
+                    . htmlspecialchars((string) $ids['ga_id']) . ')</td><td>'
+                    . htmlspecialchars(self::CATEGORIES['analytics']['label']) . '</td><td>bis 2 Jahre</td></tr>';
             }
         }
 
-        $html .= '</tbody></table>';
+        $html .= '</tbody></table></div>';
 
         return $html;
     }

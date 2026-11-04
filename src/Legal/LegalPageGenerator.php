@@ -186,11 +186,12 @@ final class LegalPageGenerator
             . 'Uhrzeit der Serveranfrage, IP-Adresse. Diese Daten werden nicht mit anderen Datenquellen zusammengeführt. '
             . 'Grundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).</p>';
 
-        // Cookies
-        $html .= '<h3>Cookies</h3>';
+        // Cookies (Details inkl. Tabelle — Anker für Cookie-Banner)
+        $html .= '<h3 id="cookies">Cookies</h3>';
         $html .= '<p>Diese Website verwendet Cookies. Technisch notwendige Cookies werden auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO gesetzt. '
             . 'Alle anderen Cookies werden nur mit Ihrer ausdrücklichen Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO / § 25 TDDDG gesetzt. '
-            . 'Details finden Sie in unserer Cookie-Richtlinie.</p>';
+            . 'Sie können Ihre Auswahl jederzeit über den Cookie-Hinweis der Website ändern bzw. neu treffen (Cookie löschen und Seite neu laden).</p>';
+        $html .= CookieConsent::cookieListHtml();
 
         // Contact forms
         $html .= '<h3>Kontaktformular</h3>';
