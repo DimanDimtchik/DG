@@ -15,6 +15,15 @@ final class JobPostingRepository
     public const TYPE_INTERNSHIP = 'internship';
     public const TYPE_OTHER = 'other';
 
+    public const CHANNEL_XING = 'xing';
+    public const CHANNEL_LINKEDIN = 'linkedin';
+
+    public const PUBLISH_NONE = 'none';
+    public const PUBLISH_QUEUED = 'queued';
+    public const PUBLISH_PUBLISHED = 'published';
+    public const PUBLISH_ERROR = 'error';
+    public const PUBLISH_WITHDRAWN = 'withdrawn';
+
     public static function ensureReady(): void
     {
         if (!Database::isConfigured()) {
@@ -30,6 +39,35 @@ final class JobPostingRepository
         }
         try {
             Database::pdo()->query('SELECT 1 FROM dg_job_postings LIMIT 1');
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /** Migration 137: Export-Flags + Publish-Status. */
+    public static function publishChannelsReady(): bool
+    {
+        if (!self::tableReady()) {
+            return false;
+        }
+        try {
+            Database::pdo()->query('SELECT export_xing, xing_publish_status FROM dg_job_postings LIMIT 1');
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    public static function publishEventsReady(): bool
+    {
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        try {
+            Database::pdo()->query('SELECT 1 FROM dg_job_posting_publish_events LIMIT 1');
 
             return true;
         } catch (Throwable) {
@@ -61,6 +99,31 @@ final class JobPostingRepository
             self::TYPE_MINI => 'Minijob',
             self::TYPE_INTERNSHIP => 'Praktikum / Ausbildung',
             self::TYPE_OTHER => 'Sonstiges',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function channelOptions(): array
+    {
+        return [
+            self::CHANNEL_XING => 'Xing',
+            self::CHANNEL_LINKEDIN => 'LinkedIn',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function publishStatusOptions(): array
+    {
+        return [
+            self::PUBLISH_NONE => 'Nicht geplant',
+            self::PUBLISH_QUEUED => 'Vorgemerkt',
+            self::PUBLISH_PUBLISHED => 'Auf Plattform veröffentlicht',
+            self::PUBLISH_ERROR => 'Fehler',
+            self::PUBLISH_WITHDRAWN => 'Zurückgezogen',
         ];
     }
 
@@ -210,6 +273,14 @@ final class JobPostingRepository
             'employment_type' => self::TYPE_FULL_TIME,
             'status' => self::STATUS_DRAFT,
             'department_id' => '',
+            'export_xing' => '0',
+            'export_linkedin' => '0',
+            'xing_publish_status' => self::PUBLISH_NONE,
+            'linkedin_publish_status' => self::PUBLISH_NONE,
+            'xing_last_message' => '',
+            'linkedin_last_message' => '',
+            'xing_published_at' => '',
+            'linkedin_published_at' => '',
         ];
     }
 
@@ -232,6 +303,14 @@ final class JobPostingRepository
             'employment_type' => self::sanitizeEmploymentType((string) ($row['employment_type'] ?? self::TYPE_FULL_TIME)),
             'status' => self::sanitizeStatus((string) ($row['status'] ?? self::STATUS_DRAFT)),
             'department_id' => (string) ($row['department_id'] ?? ''),
+            'export_xing' => !empty($row['export_xing']) ? '1' : '0',
+            'export_linkedin' => !empty($row['export_linkedin']) ? '1' : '0',
+            'xing_publish_status' => self::sanitizePublishStatus((string) ($row['xing_publish_status'] ?? self::PUBLISH_NONE)),
+            'linkedin_publish_status' => self::sanitizePublishStatus((string) ($row['linkedin_publish_status'] ?? self::PUBLISH_NONE)),
+            'xing_last_message' => (string) ($row['xing_last_message'] ?? ''),
+            'linkedin_last_message' => (string) ($row['linkedin_last_message'] ?? ''),
+            'xing_published_at' => (string) ($row['xing_published_at'] ?? ''),
+            'linkedin_published_at' => (string) ($row['linkedin_published_at'] ?? ''),
         ];
     }
 
@@ -261,6 +340,7 @@ final class JobPostingRepository
 
         $publishedAt = null;
         $closedAt = null;
+        $existing = null;
         if ($id !== null && $id > 0) {
             $existing = self::find($id);
             if ($existing === null) {
@@ -289,6 +369,30 @@ final class JobPostingRepository
             }
         }
 
+        $channelsReady = self::publishChannelsReady();
+        $exportXing = !empty($input['export_xing']) ? 1 : 0;
+        $exportLinkedin = !empty($input['export_linkedin']) ? 1 : 0;
+        $prev = ($id !== null && $id > 0) ? ($existing ?? self::find($id)) : null;
+
+        $xingStatus = self::PUBLISH_NONE;
+        $linkedinStatus = self::PUBLISH_NONE;
+        $xingMsg = '';
+        $linkedinMsg = '';
+        $xingPublishedAt = null;
+        $linkedinPublishedAt = null;
+        $xingRef = '';
+        $linkedinRef = '';
+        if (is_array($prev) && $channelsReady) {
+            $xingStatus = self::sanitizePublishStatus((string) ($prev['xing_publish_status'] ?? self::PUBLISH_NONE));
+            $linkedinStatus = self::sanitizePublishStatus((string) ($prev['linkedin_publish_status'] ?? self::PUBLISH_NONE));
+            $xingMsg = (string) ($prev['xing_last_message'] ?? '');
+            $linkedinMsg = (string) ($prev['linkedin_last_message'] ?? '');
+            $xingPublishedAt = $prev['xing_published_at'] ?? null;
+            $linkedinPublishedAt = $prev['linkedin_published_at'] ?? null;
+            $xingRef = (string) ($prev['xing_external_ref'] ?? '');
+            $linkedinRef = (string) ($prev['linkedin_external_ref'] ?? '');
+        }
+
         $fields = [
             'title' => mb_substr($title, 0, 191),
             'slug' => $slug,
@@ -305,16 +409,94 @@ final class JobPostingRepository
         $pdo = Database::pdo();
         if ($id !== null && $id > 0) {
             $fields['id'] = $id;
-            $stmt = $pdo->prepare(
-                'UPDATE dg_job_postings SET
-                    title = :title, slug = :slug, summary = :summary, body = :body,
-                    location = :location, employment_type = :employment_type, status = :status,
-                    department_id = :department_id, published_at = :published_at, closed_at = :closed_at
-                 WHERE id = :id'
-            );
-            $stmt->execute($fields);
+            if ($channelsReady) {
+                $xingPlan = self::planChannelState(
+                    $exportXing === 1,
+                    $status,
+                    $xingStatus,
+                    (string) ($prev['export_xing'] ?? '0') === '1' || !empty($prev['export_xing']),
+                    'Xing'
+                );
+                $liPlan = self::planChannelState(
+                    $exportLinkedin === 1,
+                    $status,
+                    $linkedinStatus,
+                    (string) ($prev['export_linkedin'] ?? '0') === '1' || !empty($prev['export_linkedin']),
+                    'LinkedIn'
+                );
+                $fields['export_xing'] = $exportXing;
+                $fields['export_linkedin'] = $exportLinkedin;
+                $fields['xing_publish_status'] = $xingPlan['status'];
+                $fields['linkedin_publish_status'] = $liPlan['status'];
+                $fields['xing_last_message'] = $xingPlan['message'] !== '' ? $xingPlan['message'] : $xingMsg;
+                $fields['linkedin_last_message'] = $liPlan['message'] !== '' ? $liPlan['message'] : $linkedinMsg;
+                $fields['xing_published_at'] = $xingPublishedAt;
+                $fields['linkedin_published_at'] = $linkedinPublishedAt;
+                $fields['xing_external_ref'] = $xingRef;
+                $fields['linkedin_external_ref'] = $linkedinRef;
+                if ($xingPlan['status'] === self::PUBLISH_WITHDRAWN) {
+                    // published_at behalten für Historie
+                }
+                $stmt = $pdo->prepare(
+                    'UPDATE dg_job_postings SET
+                        title = :title, slug = :slug, summary = :summary, body = :body,
+                        location = :location, employment_type = :employment_type, status = :status,
+                        department_id = :department_id, published_at = :published_at, closed_at = :closed_at,
+                        export_xing = :export_xing, export_linkedin = :export_linkedin,
+                        xing_publish_status = :xing_publish_status, linkedin_publish_status = :linkedin_publish_status,
+                        xing_published_at = :xing_published_at, linkedin_published_at = :linkedin_published_at,
+                        xing_external_ref = :xing_external_ref, linkedin_external_ref = :linkedin_external_ref,
+                        xing_last_message = :xing_last_message, linkedin_last_message = :linkedin_last_message
+                     WHERE id = :id'
+                );
+                $stmt->execute($fields);
+                self::logChannelPlan($id, self::CHANNEL_XING, $xingStatus, $xingPlan, $userId);
+                self::logChannelPlan($id, self::CHANNEL_LINKEDIN, $linkedinStatus, $liPlan, $userId);
+            } else {
+                $stmt = $pdo->prepare(
+                    'UPDATE dg_job_postings SET
+                        title = :title, slug = :slug, summary = :summary, body = :body,
+                        location = :location, employment_type = :employment_type, status = :status,
+                        department_id = :department_id, published_at = :published_at, closed_at = :closed_at
+                     WHERE id = :id'
+                );
+                $stmt->execute($fields);
+            }
 
             return $id;
+        }
+
+        if ($channelsReady) {
+            $xingPlan = self::planChannelState($exportXing === 1, $status, self::PUBLISH_NONE, false, 'Xing');
+            $liPlan = self::planChannelState($exportLinkedin === 1, $status, self::PUBLISH_NONE, false, 'LinkedIn');
+            $stmt = $pdo->prepare(
+                'INSERT INTO dg_job_postings (
+                    title, slug, summary, body, location, employment_type, status,
+                    department_id, published_at, closed_at, created_by,
+                    export_xing, export_linkedin, xing_publish_status, linkedin_publish_status,
+                    xing_last_message, linkedin_last_message
+                ) VALUES (
+                    :title, :slug, :summary, :body, :location, :employment_type, :status,
+                    :department_id, :published_at, :closed_at, :created_by,
+                    :export_xing, :export_linkedin, :xing_publish_status, :linkedin_publish_status,
+                    :xing_last_message, :linkedin_last_message
+                )'
+            );
+            $stmt->execute([
+                ...$fields,
+                'created_by' => ($userId !== null && $userId > 0) ? $userId : null,
+                'export_xing' => $exportXing,
+                'export_linkedin' => $exportLinkedin,
+                'xing_publish_status' => $xingPlan['status'],
+                'linkedin_publish_status' => $liPlan['status'],
+                'xing_last_message' => $xingPlan['message'],
+                'linkedin_last_message' => $liPlan['message'],
+            ]);
+            $newId = (int) $pdo->lastInsertId();
+            self::logChannelPlan($newId, self::CHANNEL_XING, self::PUBLISH_NONE, $xingPlan, $userId);
+            self::logChannelPlan($newId, self::CHANNEL_LINKEDIN, self::PUBLISH_NONE, $liPlan, $userId);
+
+            return $newId;
         }
 
         $stmt = $pdo->prepare(
@@ -334,6 +516,163 @@ final class JobPostingRepository
         return (int) $pdo->lastInsertId();
     }
 
+    /**
+     * @return array{status: string, message: string, event_kind: string, changed: bool}
+     */
+    public static function planChannelState(
+        bool $wantExport,
+        string $jobStatus,
+        string $prevPublishStatus,
+        bool $prevWantExport,
+        string $channelLabel
+    ): array {
+        $prevPublishStatus = self::sanitizePublishStatus($prevPublishStatus);
+        $applyUrlHint = 'Bewerben-Link bleibt die eigene Seite (/rekrut/…).';
+
+        if (!$wantExport) {
+            if (!$prevWantExport && $prevPublishStatus === self::PUBLISH_NONE) {
+                return [
+                    'status' => self::PUBLISH_NONE,
+                    'message' => '',
+                    'event_kind' => 'note',
+                    'changed' => false,
+                ];
+            }
+            if (in_array($prevPublishStatus, [self::PUBLISH_QUEUED, self::PUBLISH_PUBLISHED, self::PUBLISH_ERROR], true)
+                || $prevWantExport
+            ) {
+                return [
+                    'status' => self::PUBLISH_WITHDRAWN,
+                    'message' => $channelLabel . ': Export abgewählt.',
+                    'event_kind' => 'withdrawn',
+                    'changed' => $prevPublishStatus !== self::PUBLISH_WITHDRAWN || $prevWantExport,
+                ];
+            }
+
+            return [
+                'status' => $prevPublishStatus,
+                'message' => '',
+                'event_kind' => 'note',
+                'changed' => false,
+            ];
+        }
+
+        if ($jobStatus !== self::STATUS_PUBLISHED) {
+            $msg = $channelLabel . ': Export gewünscht — Stelle zuerst auf „Veröffentlicht“ setzen.';
+            if ($prevPublishStatus === self::PUBLISH_QUEUED || $prevPublishStatus === self::PUBLISH_PUBLISHED) {
+                return [
+                    'status' => self::PUBLISH_WITHDRAWN,
+                    'message' => $channelLabel . ': Stelle nicht mehr öffentlich — Plattform-Export pausiert.',
+                    'event_kind' => 'withdrawn',
+                    'changed' => true,
+                ];
+            }
+
+            return [
+                'status' => self::PUBLISH_NONE,
+                'message' => $msg,
+                'event_kind' => $prevWantExport && $prevPublishStatus === self::PUBLISH_NONE ? 'note' : 'flag',
+                'changed' => !$prevWantExport || $prevPublishStatus !== self::PUBLISH_NONE,
+            ];
+        }
+
+        // Stelle veröffentlicht + Export an → vorgemerkt (API folgt in Phase B)
+        if (in_array($prevPublishStatus, [self::PUBLISH_PUBLISHED, self::PUBLISH_QUEUED], true) && $prevWantExport) {
+            return [
+                'status' => $prevPublishStatus,
+                'message' => '',
+                'event_kind' => 'note',
+                'changed' => false,
+            ];
+        }
+
+        return [
+            'status' => self::PUBLISH_QUEUED,
+            'message' => $channelLabel . ': zur Veröffentlichung vorgemerkt (Plattform-API folgt). ' . $applyUrlHint,
+            'event_kind' => 'queued',
+            'changed' => true,
+        ];
+    }
+
+    /**
+     * @param array{status: string, message: string, event_kind: string, changed: bool} $plan
+     */
+    private static function logChannelPlan(
+        int $jobId,
+        string $channel,
+        string $fromStatus,
+        array $plan,
+        ?int $userId
+    ): void {
+        if ($jobId < 1 || empty($plan['changed'])) {
+            return;
+        }
+        self::addPublishEvent(
+            $jobId,
+            $channel,
+            (string) ($plan['event_kind'] ?? 'note'),
+            $fromStatus,
+            (string) ($plan['status'] ?? self::PUBLISH_NONE),
+            (string) ($plan['message'] ?? ''),
+            $userId
+        );
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function publishEvents(int $jobPostingId, int $limit = 100): array
+    {
+        self::ensureReady();
+        if ($jobPostingId < 1 || !self::publishEventsReady()) {
+            return [];
+        }
+        $limit = max(1, min(200, $limit));
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_job_posting_publish_events
+             WHERE job_posting_id = :id
+             ORDER BY id DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['id' => $jobPostingId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
+    }
+
+    public static function addPublishEvent(
+        int $jobPostingId,
+        string $channel,
+        string $kind,
+        ?string $fromStatus,
+        ?string $toStatus,
+        string $body,
+        ?int $userId
+    ): void {
+        if ($jobPostingId < 1 || !self::publishEventsReady()) {
+            return;
+        }
+        $channels = self::channelOptions();
+        if (!isset($channels[$channel])) {
+            $channel = self::CHANNEL_XING;
+        }
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_job_posting_publish_events
+                (job_posting_id, channel, event_kind, from_status, to_status, body, created_by)
+             VALUES
+                (:job_id, :channel, :kind, :from_status, :to_status, :body, :by)'
+        );
+        $stmt->execute([
+            'job_id' => $jobPostingId,
+            'channel' => $channel,
+            'kind' => mb_substr($kind, 0, 32),
+            'from_status' => $fromStatus,
+            'to_status' => $toStatus,
+            'body' => $body,
+            'by' => ($userId !== null && $userId > 0) ? $userId : null,
+        ]);
+    }
+
     public static function sanitizeStatus(string $status): string
     {
         $opts = self::statusOptions();
@@ -346,6 +685,13 @@ final class JobPostingRepository
         $opts = self::employmentTypeOptions();
 
         return isset($opts[$type]) ? $type : self::TYPE_FULL_TIME;
+    }
+
+    public static function sanitizePublishStatus(string $status): string
+    {
+        $opts = self::publishStatusOptions();
+
+        return isset($opts[$status]) ? $status : self::PUBLISH_NONE;
     }
 
     public static function slugify(string $value): string

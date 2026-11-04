@@ -7,6 +7,7 @@
 $jobPostings = is_array($jobPostings ?? null) ? $jobPostings : [];
 $statusLabels = JobPostingRepository::statusOptions();
 $typeLabels = JobPostingRepository::employmentTypeOptions();
+$publishStatusLabels = JobPostingRepository::publishStatusOptions();
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -34,25 +35,37 @@ $typeLabels = JobPostingRepository::employmentTypeOptions();
             <th>Ort</th>
             <th>Art</th>
             <th>Status</th>
+            <th>Xing</th>
+            <th>LinkedIn</th>
             <th class="dg-table__num">Bewerbungen</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <?php if ($jobPostings === []) : ?>
-            <tr><td colspan="6" class="dg-table__empty">Noch keine Stellen angelegt.</td></tr>
+            <tr><td colspan="8" class="dg-table__empty">Noch keine Stellen angelegt.</td></tr>
           <?php else : ?>
             <?php foreach ($jobPostings as $row) : ?>
               <?php
                 $id = (int) ($row['id'] ?? 0);
                 $status = (string) ($row['status'] ?? '');
                 $type = (string) ($row['employment_type'] ?? '');
+                $xingSt = (string) ($row['xing_publish_status'] ?? '');
+                $liSt = (string) ($row['linkedin_publish_status'] ?? '');
+                $xingLabel = !empty($row['export_xing'])
+                    ? ($publishStatusLabels[$xingSt] ?? $xingSt)
+                    : '—';
+                $liLabel = !empty($row['export_linkedin'])
+                    ? ($publishStatusLabels[$liSt] ?? $liSt)
+                    : '—';
               ?>
               <tr>
                 <td><strong><?= View::escape((string) ($row['title'] ?? '')) ?></strong></td>
                 <td><?= View::escape((string) ($row['location'] ?? '') !== '' ? (string) $row['location'] : '—') ?></td>
                 <td><?= View::escape($typeLabels[$type] ?? $type) ?></td>
                 <td><?= View::escape($statusLabels[$status] ?? $status) ?></td>
+                <td><?= View::escape($xingLabel) ?></td>
+                <td><?= View::escape($liLabel) ?></td>
                 <td class="dg-table__num"><?= (int) ($row['application_count'] ?? 0) ?></td>
                 <td class="dg-table__actions">
                   <div class="dg-table__actions-group">

@@ -75,11 +75,34 @@ Database::$pdo->exec(
         employment_type TEXT NOT NULL DEFAULT "full_time",
         status TEXT NOT NULL DEFAULT "draft",
         department_id TEXT NULL,
+        export_xing INTEGER NOT NULL DEFAULT 0,
+        export_linkedin INTEGER NOT NULL DEFAULT 0,
+        xing_publish_status TEXT NOT NULL DEFAULT "none",
+        linkedin_publish_status TEXT NOT NULL DEFAULT "none",
+        xing_published_at TEXT NULL,
+        linkedin_published_at TEXT NULL,
+        xing_external_ref TEXT NOT NULL DEFAULT "",
+        linkedin_external_ref TEXT NOT NULL DEFAULT "",
+        xing_last_message TEXT NOT NULL DEFAULT "",
+        linkedin_last_message TEXT NOT NULL DEFAULT "",
         published_at TEXT NULL,
         closed_at TEXT NULL,
         created_by INTEGER NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )'
+);
+Database::$pdo->exec(
+    'CREATE TABLE dg_job_posting_publish_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_posting_id INTEGER NOT NULL,
+        channel TEXT NOT NULL,
+        event_kind TEXT NOT NULL DEFAULT "note",
+        from_status TEXT NULL,
+        to_status TEXT NULL,
+        body TEXT NULL,
+        created_by INTEGER NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )'
 );
 Database::$pdo->exec(
@@ -364,4 +387,47 @@ $formHired = JobApplicationRepository::formForId($hiredAppId);
 assertRecruit(($formHired['status'] ?? '') === 'hired', 'Formular Status hired');
 assertRecruit(array_key_exists('contact_id', $formHired), 'Formular enthält contact_id');
 
+
+assertRecruit(JobPostingRepository::publishChannelsReady(), 'Publish-Kanäle Schema bereit');
+$exportJobId = JobPostingRepository::save([
+    'title' => 'Export Test',
+    'summary' => 'x',
+    'body' => 'y',
+    'location' => 'Ort',
+    'employment_type' => 'full_time',
+    'status' => 'published',
+    'export_xing' => '1',
+    'export_linkedin' => '1',
+], null, 1);
+$exportRow = JobPostingRepository::find($exportJobId);
+assertRecruit(!empty($exportRow['export_xing']), 'Xing-Export gesetzt');
+assertRecruit(!empty($exportRow['export_linkedin']), 'LinkedIn-Export gesetzt');
+assertRecruit(($exportRow['xing_publish_status'] ?? '') === JobPostingRepository::PUBLISH_QUEUED, 'Xing vorgemerkt');
+assertRecruit(($exportRow['linkedin_publish_status'] ?? '') === JobPostingRepository::PUBLISH_QUEUED, 'LinkedIn vorgemerkt');
+$pubEvents = JobPostingRepository::publishEvents($exportJobId);
+assertRecruit(count($pubEvents) >= 2, 'Publish-Protokoll Einträge');
+
+JobPostingRepository::save([
+    'title' => 'Export Test',
+    'summary' => 'x',
+    'body' => 'y',
+    'location' => 'Ort',
+    'employment_type' => 'full_time',
+    'status' => 'published',
+    'export_xing' => '0',
+    'export_linkedin' => '1',
+], $exportJobId, 1);
+$exportRow2 = JobPostingRepository::find($exportJobId);
+assertRecruit(empty($exportRow2['export_xing']), 'Xing-Export abgewählt');
+assertRecruit(($exportRow2['xing_publish_status'] ?? '') === JobPostingRepository::PUBLISH_WITHDRAWN, 'Xing zurückgezogen');
+assertRecruit(($exportRow2['linkedin_publish_status'] ?? '') === JobPostingRepository::PUBLISH_QUEUED, 'LinkedIn bleibt vorgemerkt');
+
+$draftPlan = JobPostingRepository::planChannelState(
+    true,
+    JobPostingRepository::STATUS_DRAFT,
+    JobPostingRepository::PUBLISH_NONE,
+    false,
+    'Xing'
+);
+assertRecruit($draftPlan['status'] === JobPostingRepository::PUBLISH_NONE, 'Ohne Veröffentlichung kein Queue');
 echo "Recruiting Phase-A Selftest bestanden.\n";

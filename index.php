@@ -6512,6 +6512,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $jobPostingId = (int) ($_GET['id'] ?? 0);
             $departmentOptions = DepartmentRepository::optionsForSelect();
             $formError = $formError ?? null;
+            $publishEvents = [];
             if ($action === 'edit' && $jobPostingId > 0) {
                 if (JobPostingRepository::find($jobPostingId) === null) {
                     Flash::set('error', 'Stelle nicht gefunden.');
@@ -6519,6 +6520,7 @@ $legalProductsConfig = LegalProductSettings::config();
                     exit;
                 }
                 $jobForm = JobPostingRepository::formForId($jobPostingId);
+                $publishEvents = JobPostingRepository::publishEvents($jobPostingId);
                 $title = 'Stelle bearbeiten';
             } else {
                 $jobPostingId = null;
