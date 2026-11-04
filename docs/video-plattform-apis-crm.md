@@ -283,7 +283,7 @@ Technisch machbar für Professional Accounts; Multi-Tenant braucht Advanced Acce
 1. Meta App, Business Verification, Advanced Access für `content_publish`.  
    **CRM-Scaffold 3-1:** Settings-Tab *Instagram Publish* + OAuth — [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md). App/BV/Advanced manuell **pro Tenant**.
 2. Nur Professional Accounts; Reels-Pipeline — **Code 3-2** (`InstagramReelsPublishService`: Container → rupload/`video_url` → `media_publish`).
-3. Erwartung managen: kein Caption-Edit nach Publish; Delete je nach Login-Pfad.
+3. Comments/Insights — **Code 3-3** (`InstagramEngagementService`); kein Caption-Edit nach Publish; Delete je nach Login-Pfad.
 
 ### Phase 4 — optional / vorsichtig: TikTok
 1. Nur wenn CRM klar als **öffentliches Multi-Tenant-Creator-/Marketing-Produkt** positioniert ist (nicht „internes Upload-Hilfstool“).

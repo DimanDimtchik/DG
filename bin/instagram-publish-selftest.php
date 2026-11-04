@@ -67,6 +67,7 @@ require DG_ROOT . '/src/VideoPublish/InstagramOAuthClient.php';
 require DG_ROOT . '/src/VideoPublish/InstagramTokenService.php';
 require DG_ROOT . '/src/VideoPublish/InstagramApiClient.php';
 require DG_ROOT . '/src/VideoPublish/InstagramReelsPublishService.php';
+require DG_ROOT . '/src/VideoPublish/InstagramEngagementService.php';
 
 $fail = 0;
 
@@ -191,8 +192,18 @@ expect_true($cfgIg['app_secret'] === 'secret-xyz', 'secret retained when empty')
 expect_true($cfgIg['login_path'] === 'instagram', 'ig login path');
 $igScopes = InstagramPublishSettings::scopes($cfgIg);
 expect_true(in_array('instagram_business_content_publish', $igScopes, true), 'ig business publish scope');
+expect_true(in_array('instagram_business_manage_comments', $igScopes, true), 'ig comments scope');
+expect_true(in_array('instagram_business_manage_insights', $igScopes, true), 'ig insights scope');
 $urlIg = InstagramOAuthClient::authorizationUrl('state-2');
 expect_true(str_contains($urlIg, 'instagram.com/oauth/authorize'), 'ig auth host');
+$fbScopes = InstagramPublishSettings::scopes([
+    'login_path' => 'facebook',
+    'enabled' => true,
+    'app_id' => 'x',
+    'app_secret' => 'y',
+]);
+expect_true(in_array('instagram_manage_comments', $fbScopes, true), 'fb comments scope');
+expect_true(in_array('instagram_manage_insights', $fbScopes, true), 'fb insights scope');
 
 $form = InstagramPublishSettings::forForm();
 expect_true($form['credentials_ready'] === true, 'form credentials ready');
@@ -243,6 +254,9 @@ $jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_I
 $step = InstagramReelsPublishService::processJob($jobId);
 expect_true($step['ok'] === true && $step['done'] === false, 'scheduled job waits');
 expect_true(str_contains($step['message'], 'Geplant'), 'scheduled message');
+
+$eng = InstagramEngagementService::loadForJob($jobId);
+expect_true(($eng['error'] ?? '') !== '', 'engagement ohne published Post → Fehler');
 
 InstagramTokenService::disconnect();
 expect_true(!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM), 'disconnected');

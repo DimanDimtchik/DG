@@ -11,6 +11,7 @@
  * @var bool $instagramConnected
  * @var bool $instagramCanDelete
  * @var array<string, mixed> $linkedinEngagement
+ * @var array<string, mixed> $instagramEngagement
  * @var string|null $formError
  * @var array{type: string, message: string}|null $flash
  */
@@ -34,6 +35,20 @@ $linkedinEngagement = is_array($linkedinEngagement ?? null) ? $linkedinEngagemen
         'viewers' => 0,
         'time_watched_ms' => 0,
         'time_watched_label' => '—',
+    ],
+    'error' => '',
+];
+$instagramEngagement = is_array($instagramEngagement ?? null) ? $instagramEngagement : [
+    'media_id' => '',
+    'comments' => [],
+    'insights' => [
+        'plays' => 0,
+        'reach' => 0,
+        'likes' => 0,
+        'comments' => 0,
+        'shares' => 0,
+        'saved' => 0,
+        'total_interactions' => 0,
     ],
     'error' => '',
 ];
@@ -263,6 +278,110 @@ $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO
         </form>
       <?php else : ?>
         <p class="dg-muted">Löschen aus dem CRM nur mit Facebook-Login-Pfad.</p>
+      <?php endif; ?>
+    </section>
+
+    <section class="dg-panel dg-mb-4" id="instagram-engagement">
+      <h2 class="dg-subsection-title">Instagram: Insights &amp; Kommentare</h2>
+      <?php if (($instagramEngagement['error'] ?? '') !== '') : ?>
+        <div class="dg-flash dg-flash--warning"><?= View::escape((string) $instagramEngagement['error']) ?></div>
+        <p class="dg-muted">Falls neu: Instagram erneut verbinden (Kommentar-/Insights-Scopes).</p>
+      <?php else : ?>
+        <?php
+          $igIns = is_array($instagramEngagement['insights'] ?? null) ? $instagramEngagement['insights'] : [];
+          $igComments = is_array($instagramEngagement['comments'] ?? null) ? $instagramEngagement['comments'] : [];
+        ?>
+        <div class="dg-table-wrap dg-mb-3">
+          <table class="dg-table dg-table--compact">
+            <thead>
+              <tr>
+                <th>Plays</th>
+                <th>Reichweite</th>
+                <th>Likes</th>
+                <th>Kommentare</th>
+                <th>Shares</th>
+                <th>Gespeichert</th>
+                <th>Interaktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><?= (int) ($igIns['plays'] ?? 0) ?></td>
+                <td><?= (int) ($igIns['reach'] ?? 0) ?></td>
+                <td><?= (int) ($igIns['likes'] ?? 0) ?></td>
+                <td><?= (int) ($igIns['comments'] ?? 0) ?></td>
+                <td><?= (int) ($igIns['shares'] ?? 0) ?></td>
+                <td><?= (int) ($igIns['saved'] ?? 0) ?></td>
+                <td><?= (int) ($igIns['total_interactions'] ?? 0) ?></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="dg-muted dg-mb-3">Metriken hängen von Meta-Freigabe und Medientyp ab; manche Werte können 0 bleiben.</p>
+
+        <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>#instagram-engagement" class="dg-form dg-mb-4">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="video_instagram_comment_reply" value="1">
+          <input type="hidden" name="job_id" value="<?= (int) ($publishedInstagramJob['id'] ?? 0) ?>">
+          <div class="dg-form-grid">
+            <label class="dg-field dg-field--wide">
+              <span>Antwort als Instagram-Konto</span>
+              <textarea name="comment_text" rows="3" required></textarea>
+            </label>
+          </div>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary">Kommentar senden</button>
+          </div>
+        </form>
+
+        <div class="dg-table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th>Zeit</th>
+                <th>Autor</th>
+                <th>Text</th>
+                <th class="dg-table__num">Likes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if ($igComments === []) : ?>
+                <tr><td colspan="5" class="dg-table__empty">Noch keine Kommentare.</td></tr>
+              <?php else : ?>
+                <?php foreach ($igComments as $c) : ?>
+                  <?php if (!is_array($c)) {
+                      continue;
+                  } ?>
+                  <tr>
+                    <td><?= View::escape((string) ($c['created_label'] ?? '—')) ?></td>
+                    <td><?= View::escape((string) ($c['username'] ?? '')) ?></td>
+                    <td><?= View::escape((string) ($c['text'] ?? '')) ?></td>
+                    <td class="dg-table__num"><?= (int) ($c['likes'] ?? 0) ?></td>
+                    <td class="dg-table__actions">
+                      <div class="dg-table__actions-group">
+                        <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>#instagram-engagement" class="dg-form">
+                          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                          <input type="hidden" name="video_instagram_comment_hide" value="1">
+                          <input type="hidden" name="job_id" value="<?= (int) ($publishedInstagramJob['id'] ?? 0) ?>">
+                          <input type="hidden" name="comment_id" value="<?= View::escape((string) ($c['id'] ?? '')) ?>">
+                          <button type="submit" class="dg-button dg-button--small">Ausblenden</button>
+                        </form>
+                        <form method="post" action="/app?page=videos-form&amp;id=<?= $assetId ?>#instagram-engagement" class="dg-form" onsubmit="return confirm('Kommentar löschen?');">
+                          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                          <input type="hidden" name="video_instagram_comment_delete" value="1">
+                          <input type="hidden" name="job_id" value="<?= (int) ($publishedInstagramJob['id'] ?? 0) ?>">
+                          <input type="hidden" name="comment_id" value="<?= View::escape((string) ($c['id'] ?? '')) ?>">
+                          <button type="submit" class="dg-button dg-button--small dg-button--danger">Löschen</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
       <?php endif; ?>
     </section>
   <?php endif; ?>

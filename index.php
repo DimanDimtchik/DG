@@ -3917,6 +3917,46 @@ switch ($path) {
                 header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
                 exit;
             }
+            if (isset($_POST['video_instagram_comment_reply']) && $assetId > 0) {
+                try {
+                    InstagramEngagementService::reply(
+                        (int) ($_POST['job_id'] ?? 0),
+                        (string) ($_POST['comment_text'] ?? '')
+                    );
+                    Flash::set('success', 'Kommentar auf Instagram gesendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId . '#instagram-engagement', true, 302);
+                exit;
+            }
+            if (isset($_POST['video_instagram_comment_delete']) && $assetId > 0) {
+                try {
+                    InstagramEngagementService::deleteComment(
+                        (int) ($_POST['job_id'] ?? 0),
+                        (string) ($_POST['comment_id'] ?? '')
+                    );
+                    Flash::set('success', 'Kommentar gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId . '#instagram-engagement', true, 302);
+                exit;
+            }
+            if (isset($_POST['video_instagram_comment_hide']) && $assetId > 0) {
+                try {
+                    InstagramEngagementService::hideComment(
+                        (int) ($_POST['job_id'] ?? 0),
+                        (string) ($_POST['comment_id'] ?? ''),
+                        true
+                    );
+                    Flash::set('success', 'Kommentar ausgeblendet.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId . '#instagram-engagement', true, 302);
+                exit;
+            }
             if (isset($_POST['video_linkedin_comment_delete']) && $assetId > 0) {
                 try {
                     LinkedInEngagementService::deleteComment(
@@ -7193,6 +7233,20 @@ $legalProductsConfig = LegalProductSettings::config();
                 ],
                 'error' => '',
             ];
+            $instagramEngagement = [
+                'media_id' => '',
+                'comments' => [],
+                'insights' => [
+                    'plays' => 0,
+                    'reach' => 0,
+                    'likes' => 0,
+                    'comments' => 0,
+                    'shares' => 0,
+                    'saved' => 0,
+                    'total_interactions' => 0,
+                ],
+                'error' => '',
+            ];
             foreach ($publishJobs as $j) {
                 if (
                     (string) ($j['platform'] ?? '') === PublishJobRepository::PLATFORM_LINKEDIN
@@ -7200,6 +7254,16 @@ $legalProductsConfig = LegalProductSettings::config();
                     && (string) ($j['external_id'] ?? '') !== ''
                 ) {
                     $linkedinEngagement = LinkedInEngagementService::loadForJob((int) ($j['id'] ?? 0));
+                    break;
+                }
+            }
+            foreach ($publishJobs as $j) {
+                if (
+                    (string) ($j['platform'] ?? '') === PublishJobRepository::PLATFORM_INSTAGRAM
+                    && (string) ($j['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED
+                    && (string) ($j['external_id'] ?? '') !== ''
+                ) {
+                    $instagramEngagement = InstagramEngagementService::loadForJob((int) ($j['id'] ?? 0));
                     break;
                 }
             }

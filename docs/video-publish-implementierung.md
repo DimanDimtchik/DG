@@ -231,12 +231,20 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 - [x] Delete nur Facebook-Login-Pfad
 - [ ] Live gegen Meta Dev/Advanced (nach App + Connect)
 
+### Phase 3-3 (Comments + Insights) — Stand
+
+- [x] Scopes Comments/Insights (FB- und IG-Login-Varianten)
+- [x] `InstagramEngagementService` + API: listen / antworten / ausblenden / löschen
+- [x] Media-Insights-Tabelle in Videos-UI
+- [ ] Live nach Connect mit freigegebenen Permissions
+
 ### Acceptance
 
 - [x] Connect-Scaffold — Code 3-1
 - [x] Container → media_publish Pipeline — Code 3-2; Live nach Connect
 - [x] Quota vor Job geprüft — Code (weich)
 - [x] Kein Caption-Edit nach Publish in UI — 3-2
+- [x] Comments/Insights im CRM — Code 3-3
 - [ ] Advanced Access / Live-Smoke — manuell
 
 ### Do NOT yet
@@ -247,7 +255,7 @@ Docs: [Content Publishing](https://developers.facebook.com/docs/instagram-platfo
 
 **Host:** Container-Polling Cron **W**; große Dateien + stabile Public-URL **V** besser.
 
-**Code:** 3-1 Settings/OAuth · 3-2 Reels Publish · Selftest `bin/instagram-publish-selftest.php` · Checkliste [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md).
+**Code:** 3-1 Settings/OAuth · 3-2 Reels · 3-3 Engagement · Selftest `bin/instagram-publish-selftest.php` · Checkliste [`instagram-video-phase-3-1.md`](instagram-video-phase-3-1.md).
 
 ---
 

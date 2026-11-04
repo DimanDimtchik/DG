@@ -206,6 +206,127 @@ final class InstagramApiClient
         );
     }
 
+    /**
+     * @return list<array{id: string, text: string, username: string, timestamp: string, like_count: int}>
+     */
+    public static function listComments(string $accessToken, string $mediaId): array
+    {
+        $raw = self::graphGet($mediaId . '/comments', $accessToken, [
+            'fields' => 'id,text,username,timestamp,like_count',
+            'limit' => 50,
+        ]);
+        $data = is_array($raw['data'] ?? null) ? $raw['data'] : [];
+        $out = [];
+        foreach ($data as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $out[] = [
+                'id' => (string) ($row['id'] ?? ''),
+                'text' => (string) ($row['text'] ?? ''),
+                'username' => (string) ($row['username'] ?? ''),
+                'timestamp' => (string) ($row['timestamp'] ?? ''),
+                'like_count' => (int) ($row['like_count'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
+
+    public static function createMediaComment(string $accessToken, string $mediaId, string $message): string
+    {
+        $message = trim($message);
+        if ($message === '') {
+            throw new InvalidArgumentException('Kommentartext fehlt.');
+        }
+        $raw = self::httpJson(
+            'POST',
+            self::graphBase() . '/' . rawurlencode($mediaId) . '/comments',
+            http_build_query([
+                'message' => $message,
+                'access_token' => $accessToken,
+            ]),
+            ['Content-Type: application/x-www-form-urlencoded']
+        );
+        $id = (string) ($raw['id'] ?? '');
+        if ($id === '') {
+            throw new RuntimeException('Instagram: Kommentar ohne ID.');
+        }
+
+        return $id;
+    }
+
+    public static function deleteComment(string $accessToken, string $commentId): void
+    {
+        self::httpJson(
+            'DELETE',
+            self::graphBase() . '/' . rawurlencode($commentId) . '?' . http_build_query([
+                'access_token' => $accessToken,
+            ]),
+            null,
+            []
+        );
+    }
+
+    public static function hideComment(string $accessToken, string $commentId, bool $hide = true): void
+    {
+        self::httpJson(
+            'POST',
+            self::graphBase() . '/' . rawurlencode($commentId),
+            http_build_query([
+                'hide' => $hide ? 'true' : 'false',
+                'access_token' => $accessToken,
+            ]),
+            ['Content-Type: application/x-www-form-urlencoded']
+        );
+    }
+
+    /**
+     * @return array{plays: int, reach: int, likes: int, comments: int, shares: int, saved: int, total_interactions: int}
+     */
+    public static function getMediaInsights(string $accessToken, string $mediaId): array
+    {
+        $out = [
+            'plays' => 0,
+            'reach' => 0,
+            'likes' => 0,
+            'comments' => 0,
+            'shares' => 0,
+            'saved' => 0,
+            'total_interactions' => 0,
+        ];
+        $metrics = 'plays,reach,likes,comments,shares,saved,total_interactions';
+        try {
+            $raw = self::graphGet($mediaId . '/insights', $accessToken, [
+                'metric' => $metrics,
+            ]);
+        } catch (Throwable $e) {
+            // Ältere/eingeschränkte Metriken — Fallback ohne plays
+            try {
+                $raw = self::graphGet($mediaId . '/insights', $accessToken, [
+                    'metric' => 'reach,likes,comments,shares,saved',
+                ]);
+            } catch (Throwable $e2) {
+                throw new RuntimeException('Insights: ' . $e2->getMessage(), 0, $e2);
+            }
+        }
+        $data = is_array($raw['data'] ?? null) ? $raw['data'] : [];
+        foreach ($data as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = (string) ($row['name'] ?? '');
+            if ($name === '' || !array_key_exists($name, $out)) {
+                continue;
+            }
+            $values = is_array($row['values'] ?? null) ? $row['values'] : [];
+            $val = $values[0]['value'] ?? ($row['value'] ?? 0);
+            $out[$name] = (int) $val;
+        }
+
+        return $out;
+    }
+
     private static function graphBase(): string
     {
         $cfg = InstagramPublishSettings::config();

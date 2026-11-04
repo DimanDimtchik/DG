@@ -18,7 +18,7 @@ Keine Kundenfirma und keine Personen im Kern hardcoden — App und Professional-
 | OAuth Connect (FB-Login oder IG-Login) | ✅ | Token-Pflege / Page-Wahl-UX |
 | Reels container → publish | ❌ | ✅ 3-2 (Code fertig; Live nach Connect) |
 | Caption-Edit nach Publish | nie (API) | UI bietet keins |
-| Kommentare / Insights | ❌ | optional 3-3 |
+| Kommentare / Insights | ❌ | ✅ 3-3 (Code; Live nach Connect + Scopes) |
 
 ---
 
@@ -93,3 +93,14 @@ Scopes (Instagram-Pfad, CRM):
 5. Delete nur FB-Login-Pfad  
 
 Live-Test erst nach manueller Meta-App + Connect (Checkliste oben).
+
+---
+
+## Phase 3-3 (Code) — erledigt
+
+1. Scopes: `instagram_manage_comments` / `instagram_manage_insights` (FB) bzw. Business-Varianten (IG-Login)  
+2. Kommentare listen / antworten / ausblenden / löschen  
+3. Media-Insights (plays, reach, likes, comments, shares, saved, total_interactions)  
+4. Videos-UI-Abschnitt „Instagram: Insights & Kommentare“  
+
+Nach Scope-Erweiterung: erneut verbinden. Live erst mit freigegebenen Permissions.

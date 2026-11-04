@@ -189,6 +189,7 @@ spl_autoload_register(static function (string $class): void {
         'InstagramTokenService' => '/src/VideoPublish/InstagramTokenService.php',
         'InstagramApiClient' => '/src/VideoPublish/InstagramApiClient.php',
         'InstagramReelsPublishService' => '/src/VideoPublish/InstagramReelsPublishService.php',
+        'InstagramEngagementService' => '/src/VideoPublish/InstagramEngagementService.php',
         'CountryCodes' => '/src/NumberRange/CountryCodes.php',
         'InvoiceNumberTokens' => '/src/NumberRange/InvoiceNumberTokens.php',
         'InvoiceNumberBuilder' => '/src/NumberRange/InvoiceNumberBuilder.php',

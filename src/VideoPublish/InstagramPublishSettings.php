@@ -23,10 +23,14 @@ final class InstagramPublishSettings
     public const SCOPE_FB_PAGES_SHOW = 'pages_show_list';
     public const SCOPE_FB_PAGES_ENGAGE = 'pages_read_engagement';
     public const SCOPE_FB_BUSINESS = 'business_management';
+    public const SCOPE_FB_MANAGE_COMMENTS = 'instagram_manage_comments';
+    public const SCOPE_FB_MANAGE_INSIGHTS = 'instagram_manage_insights';
 
     /** Instagram-Login-Pfad. */
     public const SCOPE_IG_BASIC = 'instagram_business_basic';
     public const SCOPE_IG_CONTENT_PUBLISH = 'instagram_business_content_publish';
+    public const SCOPE_IG_MANAGE_COMMENTS = 'instagram_business_manage_comments';
+    public const SCOPE_IG_MANAGE_INSIGHTS = 'instagram_business_manage_insights';
 
     /**
      * @return array<string, mixed>
@@ -118,6 +122,8 @@ final class InstagramPublishSettings
             return [
                 self::SCOPE_IG_BASIC,
                 self::SCOPE_IG_CONTENT_PUBLISH,
+                self::SCOPE_IG_MANAGE_COMMENTS,
+                self::SCOPE_IG_MANAGE_INSIGHTS,
             ];
         }
 
@@ -127,6 +133,8 @@ final class InstagramPublishSettings
             self::SCOPE_FB_PAGES_SHOW,
             self::SCOPE_FB_PAGES_ENGAGE,
             self::SCOPE_FB_BUSINESS,
+            self::SCOPE_FB_MANAGE_COMMENTS,
+            self::SCOPE_FB_MANAGE_INSIGHTS,
         ];
     }
 

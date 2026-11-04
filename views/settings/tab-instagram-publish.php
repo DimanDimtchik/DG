@@ -15,7 +15,7 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
       Instagram <strong>Professional</strong>-Konto (Business/Creator) für Reels über die Meta Graph API.
       Meta-App unter dem Business Portfolio des Seitenbetreibers; für fremde Konten meist
       <strong>Business Verification</strong> und <strong>Advanced Access</strong> für
-      <code>instagram_content_publish</code>. Upload folgt in einem späteren Schritt — hier nur App und Verbindung.
+      Publish-, Kommentar- und Insights-Rechte. Nach Scope-Erweiterung bitte erneut verbinden.
     </p>
     <p class="dg-muted">
       Doku:
