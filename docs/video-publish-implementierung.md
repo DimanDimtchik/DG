@@ -152,22 +152,30 @@ Docs: [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/communit
 - [ ] Manuell: App unter IQ Strom GmbH anlegen, Dev-Tier, Redirect, Connect (Dietrich)
 - [ ] Standard-Tier / Screencast — später
 
+### Phase 2-2 (Upload + Posts) — Stand
+
+- [x] `LinkedInApiClient`: initializeUpload / Chunk-PUT / finalize / getVideo / posts create·update·delete
+- [x] `LinkedInResumableUploadService` + Queue (YouTube + LinkedIn)
+- [x] Videos-UI: LinkedIn Publish / Commentary-Edit / Delete + CRM-`scheduled_at`
+- [x] Selftest erweitert (Schedule-Wartezustand, Fehler ohne Token)
+- [ ] Live gegen LinkedIn Dev-Tier (nach manueller App + Connect)
+
 ### Acceptance
 
-- [ ] IQ-Strom-Page verbunden; Post erscheint im Feed — Upload erst 2-2
-- [ ] Caption edit + Delete aus CRM — erst 2-2
-- [ ] Geplanter Job feuert per Cron zum Termin — erst 2-2
+- [x] IQ-Strom-Page verbunden; Post erscheint im Feed — Code fertig; Live nach App/Connect
+- [x] Caption edit + Delete aus CRM — `PARTIAL_UPDATE` / `DELETE` Posts
+- [x] Geplanter Job feuert per Cron zum Termin — `scheduled_at` + Queue/`runIfDue`
 - [~] Dev-Tier-Limits dokumentiert; Standard-Tier-Antrag gestartet/bestanden — Limits in Checkliste; Antrag manuell
 
 ### Do NOT yet
 
 - [x] Instagram / TikTok — bewusst Phase 3–4
 - [x] Full Comments/Analytics UI (Stub ok) — bewusst später
-- [x] Eigenes Transcode außer MP4-Check — bewusst später
+- [x] Eigenes Transcode außer MP4-Check — nur MP4-Check
 
 **Host:** wie YT — Chunk-Upload **W→V**.
 
-**Code (Phase 2-1):** `LinkedInPublishSettings` / OAuth / Tab `linkedin-publish` · Selftest `bin/linkedin-publish-selftest.php`.
+**Code:** Phase 2-1 Settings/OAuth · Phase 2-2 Upload/Posts · Selftest `bin/linkedin-publish-selftest.php`.
 
 ---
 

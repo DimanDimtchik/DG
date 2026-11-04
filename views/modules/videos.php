@@ -2,11 +2,13 @@
 /**
  * @var list<array<string, mixed>> $videoAssets
  * @var bool $youtubeConnected
+ * @var bool $linkedinConnected
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
 $videoAssets = is_array($videoAssets ?? null) ? $videoAssets : [];
 $youtubeConnected = !empty($youtubeConnected);
+$linkedinConnected = !empty($linkedinConnected);
 $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
 ?>
 <div class="dg-wrap">
@@ -15,17 +17,19 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Videos</h1>
-      <p class="dg-lead">Videos speichern und auf YouTube veröffentlichen (max. 100 MB).</p>
+      <p class="dg-lead">Videos speichern und auf YouTube oder LinkedIn veröffentlichen (max. 100 MB).</p>
     </div>
     <div class="dg-page-header__actions">
-      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">YouTube-Einstellungen</a>
+      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">YouTube</a>
+      <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-publish')) ?>">LinkedIn</a>
     </div>
   </header>
 
-  <?php if (!$youtubeConnected) : ?>
+  <?php if (!$youtubeConnected && !$linkedinConnected) : ?>
     <div class="dg-flash dg-flash--warning">
-      YouTube ist noch nicht verbunden.
-      <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">Einrichten</a>
+      Noch keine Plattform verbunden.
+      <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">YouTube</a>
+      <a class="dg-button dg-button--small" href="<?= View::escape(SettingsRegistry::tabUrl('linkedin-publish')) ?>">LinkedIn</a>
     </div>
   <?php endif; ?>
 

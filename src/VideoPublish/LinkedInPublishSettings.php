@@ -14,8 +14,8 @@ final class LinkedInPublishSettings
     public const SCOPE_ORG_WRITE = 'w_organization_social';
     public const SCOPE_ORG_READ = 'r_organization_social';
 
-    /** API-Version Header für spätere REST-Calls (YYYYMM). */
-    public const API_VERSION = '202510';
+    /** API-Version Header für REST-Calls (YYYYMM). */
+    public const API_VERSION = '202610';
 
     /**
      * @return array<string, mixed>

@@ -60,9 +60,11 @@ Recruiting nutzt **Client Credentials** / Job Posting. Video braucht **Member-OA
 
 ---
 
-## Nächster Block (2-2+)
+## Phase 2-2 (Code) — erledigt
 
-1. `POST /rest/videos?action=initializeUpload` → Chunks → Finalize  
+1. `POST /rest/videos?action=initializeUpload` → Chunks → Finalize → wait `AVAILABLE`  
 2. `POST /rest/posts` (`lifecycleState: PUBLISHED`)  
-3. Edit commentary / Delete  
+3. Edit commentary (`PARTIAL_UPDATE`) / Delete  
 4. CRM-`scheduled_at` (kein natives LI-Schedule)
+
+Live-Test erst nach manueller App + Connect (Checkliste oben).

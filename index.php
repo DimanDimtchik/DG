@@ -3690,6 +3690,58 @@ switch ($path) {
                 header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
                 exit;
             }
+            if (isset($_POST['video_linkedin_publish']) && $assetId > 0) {
+                try {
+                    if (!OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN)) {
+                        throw new RuntimeException('LinkedIn ist nicht verbunden.');
+                    }
+                    if (LinkedInPublishSettings::organizationUrn() === '') {
+                        throw new RuntimeException('Organization-ID in den LinkedIn-Publish-Einstellungen setzen.');
+                    }
+                    $scheduled = trim((string) ($_POST['scheduled_at'] ?? ''));
+                    if ($scheduled !== '') {
+                        $scheduled = str_replace('T', ' ', $scheduled);
+                    }
+                    $title = trim((string) ($_POST['li_title'] ?? $_POST['title'] ?? ''));
+                    $commentary = (string) ($_POST['li_commentary'] ?? $_POST['commentary'] ?? '');
+                    $jobId = PublishJobRepository::create($assetId, PublishJobRepository::PLATFORM_LINKEDIN, [
+                        'title' => $title,
+                        'commentary' => $commentary,
+                        'description' => $commentary,
+                        'scheduled_at' => $scheduled,
+                        'li_phase' => 'init',
+                    ], $user->id);
+                    $step = LinkedInResumableUploadService::processJob($jobId);
+                    Flash::set(
+                        !empty($step['ok']) ? 'success' : 'error',
+                        'LinkedIn-Job #' . $jobId . ': ' . $step['message']
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
+            if (isset($_POST['video_linkedin_update']) && $assetId > 0) {
+                try {
+                    LinkedInResumableUploadService::updatePublished((int) ($_POST['job_id'] ?? 0), $_POST);
+                    Flash::set('success', 'LinkedIn-Beitrag aktualisiert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
+            if (isset($_POST['video_linkedin_delete']) && $assetId > 0) {
+                try {
+                    LinkedInResumableUploadService::deletePublished((int) ($_POST['job_id'] ?? 0));
+                    Flash::set('success', 'Beitrag auf LinkedIn gelöscht.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+                header('Location: /app?page=videos-form&id=' . $assetId, true, 302);
+                exit;
+            }
         }
 
         // POST: Einstellungen E-Mail / SMTP
@@ -6892,6 +6944,7 @@ $legalProductsConfig = LegalProductSettings::config();
             VideoPublishQueueService::runIfDue();
             $videoAssets = VideoAssetRepository::listAll();
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
+            $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
             $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/videos';
             $title = 'Videos';
@@ -6910,14 +6963,23 @@ $legalProductsConfig = LegalProductSettings::config();
                 exit;
             }
             $publishJobs = PublishJobRepository::listForAsset($assetId);
-            $latestPost = null;
+            $latestYoutubePost = null;
+            $latestLinkedinPost = null;
             foreach ($publishJobs as $j) {
-                if ((string) ($j['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED) {
-                    $latestPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
-                    break;
+                if ((string) ($j['state'] ?? '') !== PublishJobRepository::STATE_PUBLISHED) {
+                    continue;
+                }
+                $plat = (string) ($j['platform'] ?? '');
+                if ($plat === PublishJobRepository::PLATFORM_YOUTUBE && $latestYoutubePost === null) {
+                    $latestYoutubePost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
+                }
+                if ($plat === PublishJobRepository::PLATFORM_LINKEDIN && $latestLinkedinPost === null) {
+                    $latestLinkedinPost = PublishPostRepository::findByJob((int) ($j['id'] ?? 0));
                 }
             }
+            $latestPost = $latestYoutubePost; // Abwärtskompatibilität View
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
+            $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
             $formError = $formError ?? null;
             $contentTemplate = 'modules/videos-form';
             $title = (string) ($videoAsset['original_name'] ?? 'Video');

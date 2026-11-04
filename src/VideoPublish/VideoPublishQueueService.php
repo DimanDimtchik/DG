@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Cron / runIfDue: aktive YouTube-Jobs weiterführen. */
+/** Cron / runIfDue: aktive YouTube- und LinkedIn-Jobs weiterführen. */
 final class VideoPublishQueueService
 {
     /**
@@ -18,35 +18,43 @@ final class VideoPublishQueueService
         if (!Database::isConfigured() || !PublishJobRepository::tableReady()) {
             return $result;
         }
-        if (!YouTubePublishSettings::credentialsReady()) {
-            $result['messages'][] = 'YouTube nicht konfiguriert.';
-
-            return $result;
-        }
 
         $jobs = PublishJobRepository::listActive($maxJobs);
         foreach ($jobs as $job) {
-            if ((string) ($job['platform'] ?? '') !== PublishJobRepository::PLATFORM_YOUTUBE) {
-                continue;
-            }
+            $platform = (string) ($job['platform'] ?? '');
             $jobId = (int) ($job['id'] ?? 0);
             if ($jobId < 1) {
                 continue;
             }
-            $result['processed']++;
-            for ($i = 0; $i < $maxChunksPerJob; $i++) {
-                $step = YouTubeResumableUploadService::processJob($jobId);
-                $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
-                if (!empty($step['done'])) {
-                    if (!empty($step['ok'])) {
-                        $fresh = PublishJobRepository::find($jobId);
-                        if (($fresh['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED) {
-                            $result['published']++;
-                        }
-                    } else {
-                        $result['failed']++;
+            if ($platform === PublishJobRepository::PLATFORM_YOUTUBE) {
+                if (!YouTubePublishSettings::credentialsReady()) {
+                    $result['messages'][] = '#' . $jobId . ': YouTube nicht konfiguriert.';
+                    continue;
+                }
+                $result['processed']++;
+                for ($i = 0; $i < $maxChunksPerJob; $i++) {
+                    $step = YouTubeResumableUploadService::processJob($jobId);
+                    $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
+                    self::tallyStep($result, $jobId, $step);
+                    if (!empty($step['done'])) {
+                        break;
                     }
-                    break;
+                }
+                continue;
+            }
+            if ($platform === PublishJobRepository::PLATFORM_LINKEDIN) {
+                if (!LinkedInPublishSettings::credentialsReady()) {
+                    $result['messages'][] = '#' . $jobId . ': LinkedIn nicht konfiguriert.';
+                    continue;
+                }
+                $result['processed']++;
+                for ($i = 0; $i < $maxChunksPerJob; $i++) {
+                    $step = LinkedInResumableUploadService::processJob($jobId);
+                    $result['messages'][] = '#' . $jobId . ': ' . $step['message'];
+                    self::tallyStep($result, $jobId, $step);
+                    if (!empty($step['done'])) {
+                        break;
+                    }
                 }
             }
         }
@@ -77,5 +85,24 @@ final class VideoPublishQueueService
             'published' => $result['published'],
             'failed' => $result['failed'],
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * @param array{processed: int, published: int, failed: int, messages: list<string>} $result
+     * @param array{ok: bool, message: string, done: bool} $step
+     */
+    private static function tallyStep(array &$result, int $jobId, array $step): void
+    {
+        if (empty($step['done'])) {
+            return;
+        }
+        if (!empty($step['ok'])) {
+            $fresh = PublishJobRepository::find($jobId);
+            if (($fresh['state'] ?? '') === PublishJobRepository::STATE_PUBLISHED) {
+                $result['published']++;
+            }
+        } else {
+            $result['failed']++;
+        }
     }
 }

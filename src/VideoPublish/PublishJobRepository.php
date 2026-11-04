@@ -9,6 +9,7 @@ final class PublishJobRepository
     public const STATE_FAILED = 'failed';
 
     public const PLATFORM_YOUTUBE = 'youtube';
+    public const PLATFORM_LINKEDIN = 'linkedin';
 
     public static function ensureReady(): void
     {
