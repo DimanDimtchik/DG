@@ -584,6 +584,20 @@ assertRecruit(RecruitingMailService::sendHrNewApplication($keepAppId) === false,
 assertRecruit(RecruitingMailService::sendApplicantConfirmation($keepAppId) === false, 'Ohne SMTP keine Bestätigung');
 assertRecruit(RecruitingMailService::sendApplicantStatus($keepAppId, 'received', 'interview') === false, 'Ohne SMTP kein Status-Mail');
 
+assertRecruit(RecruitingPublicService::PAGE_SLUG === 'rekrut', 'Website-Seiten-Slug rekrut');
+assertRecruit(
+    RecruitingPublicService::isRecruitingWebsitePage(['slug' => 'rekrut', 'layout' => []]),
+    'isRecruitingWebsitePage per Slug'
+);
+assertRecruit(
+    RecruitingPublicService::isRecruitingWebsitePage(['slug' => 'x', 'layout' => ['page_kind' => 'recruiting']]),
+    'isRecruitingWebsitePage per page_kind'
+);
+assertRecruit(
+    (RecruitingPublicService::websitePageLayout()['page_kind'] ?? '') === 'recruiting',
+    'websitePageLayout page_kind'
+);
+
 assertRecruit(JobApplicationRepository::retentionMonths() === 6, 'Standard-Löschfrist 6 Monate');
 assertRecruit(str_contains(RecruitingPublicService::publicRetentionHint(), '6 Monaten'), 'Öffentlicher Hinweis 6 Monate');
 SettingsStore::set(RecruitingPrivacySettings::STORE_KEY, [

@@ -135,6 +135,15 @@ final class MigrationRunner
                 // Soft: Seite kann später per Website-Bootstrap nachgezogen werden
             }
 
+            // Karriere / Bewerbungen: Seitenlisten-Eintrag für /rekrut
+            try {
+                if (class_exists('RecruitingPublicService')) {
+                    RecruitingPublicService::ensureDraftWebsitePage();
+                }
+            } catch (Throwable) {
+                // Soft: Seite kann später per Website → Seiten nachgezogen werden
+            }
+
             return $count;
         } finally {
             self::$running = false;

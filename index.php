@@ -213,6 +213,12 @@ if ($path === '/app-connect') {
 
 // Öffentliches Bewerbungsportal — ohne CRM-Login, auch im Wartungsmodus
 if ($path === '/rekrut' || str_starts_with($path, '/rekrut/')) {
+    if (Database::isConfigured()) {
+        try {
+            RecruitingPublicService::ensureDraftWebsitePage();
+        } catch (Throwable) {
+        }
+    }
     if (!Database::isConfigured()) {
         http_response_code(503);
         echo 'Bewerbungsseite nicht verfügbar (keine Datenbank).';
@@ -6921,6 +6927,10 @@ $legalProductsConfig = LegalProductSettings::config();
             exit;
         } elseif ($page === 'hr-stellen' && MenuRegistry::canAccess($user, 'hr-stellen')) {
             MigrationRunner::runPending();
+            try {
+                RecruitingPublicService::ensureDraftWebsitePage((int) ($user->id ?? 0));
+            } catch (Throwable) {
+            }
             $jobPostings = JobPostingRepository::listAll();
             $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/hr-stellen';
@@ -8055,6 +8065,10 @@ $legalProductsConfig = LegalProductSettings::config();
                     WebsiteFormRepository::ensureTables();
                     try {
                         TimeKioskService::ensureDraftWebsitePage((int) ($user->id ?? 0));
+                    } catch (Throwable) {
+                    }
+                    try {
+                        RecruitingPublicService::ensureDraftWebsitePage((int) ($user->id ?? 0));
                     } catch (Throwable) {
                     }
                     $migratedPages = WebsiteFormRepository::migrateLegacyContactBlocksInPages($user->id);

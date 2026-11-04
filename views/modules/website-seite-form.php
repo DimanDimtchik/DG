@@ -65,6 +65,16 @@ $previewPath = $initialSlug !== '' ? '/vorschau/' . $initialSlug : '';
     </div>
   <?php endif; ?>
 
+  <?php if (class_exists('RecruitingPublicService') && RecruitingPublicService::isRecruitingWebsitePage($form)) : ?>
+    <div class="dg-flash dg-flash--info">
+      <strong>Karriere / Bewerbungen.</strong>
+      Die öffentliche Stellenliste und die Bewerbungsformulare laufen unter
+      <a href="/rekrut" target="_blank" rel="noopener">/rekrut</a>
+      (auch im Wartungsmodus). Diesen Listeneintrag brauchen Sie für Übersicht und Website-Menü —
+      den Slug bitte auf <code>rekrut</code> belassen. Stellen pflegen: HR → Stellen.
+    </div>
+  <?php endif; ?>
+
   <form class="dg-form dg-website-editor__form" method="post" action="/app?page=website-seite-form" id="dg-website-page-form">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="website_page_save" value="1">

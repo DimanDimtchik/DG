@@ -4,8 +4,88 @@ declare(strict_types=1);
 /** Öffentliche Bewerbungsseite /rekrut (pro Instanz). */
 final class RecruitingPublicService
 {
+    public const PAGE_SLUG = 'rekrut';
+
     /** @deprecated Nutze retentionHintMonths() — folgt Instanz-Einstellung. */
     public const RETENTION_HINT_MONTHS = JobApplicationRepository::DEFAULT_RETENTION_MONTHS;
+
+    /**
+     * Entwurf in Website → Seiten (wie Stempeluhr), damit Karriere in der Liste und im Menü sichtbar wird.
+     * Live-Inhalt bleibt die Route /rekrut — nicht der Builder.
+     */
+    public static function ensureDraftWebsitePage(?int $userId = null): void
+    {
+        if (!Database::isConfigured() || !class_exists('WebsitePageRepository')) {
+            return;
+        }
+        $existing = WebsitePageRepository::findBySlugAnyStatus(self::PAGE_SLUG);
+        if ($existing !== null) {
+            return;
+        }
+        WebsitePageRepository::save([
+            'title' => 'Karriere / Bewerbungen',
+            'slug' => self::PAGE_SLUG,
+            'status' => WebsitePageRepository::STATUS_DRAFT,
+            'layout' => self::websitePageLayout(),
+        ], null, $userId);
+    }
+
+    /**
+     * @return array{rows: list<array<string, mixed>>, page_kind: string}
+     */
+    public static function websitePageLayout(): array
+    {
+        return [
+            'page_kind' => 'recruiting',
+            'rows' => [[
+                'id' => 'row-rekrut-intro',
+                'columns' => [[
+                    'id' => 'col-rekrut-intro',
+                    'width' => 12,
+                    'blocks' => [
+                        [
+                            'id' => 'blk-rekrut-h',
+                            'type' => 'heading',
+                            'text' => 'Karriere / Bewerbungen',
+                            'level' => 'h1',
+                        ],
+                        [
+                            'id' => 'blk-rekrut-t',
+                            'type' => 'text',
+                            'text' => 'Diese Seite ist als Entwurf in der Seitenliste angelegt. '
+                                . 'Die Bewerbungsübersicht und die Formulare laufen fest unter /rekrut '
+                                . '(auch im Wartungsmodus). Veröffentlichen Sie die Seite und setzen Sie '
+                                . 'sie ins Website-Menü, wenn der Eintrag öffentlich verlinkt werden soll. '
+                                . 'Stellen pflegen Sie unter HR → Stellen.',
+                        ],
+                        [
+                            'id' => 'blk-rekrut-btn',
+                            'type' => 'button',
+                            'label' => 'Zu den Stellen',
+                            'url' => '/rekrut',
+                        ],
+                    ],
+                ]],
+            ]],
+        ];
+    }
+
+    public static function isRecruitingWebsitePage(array $pageOrForm): bool
+    {
+        $rawSlug = (string) ($pageOrForm['slug'] ?? '');
+        $slug = class_exists('WebsitePageRepository')
+            ? WebsitePageRepository::sanitizeSlug($rawSlug)
+            : strtolower(trim($rawSlug));
+        if ($slug === self::PAGE_SLUG) {
+            return true;
+        }
+        $layout = $pageOrForm['layout'] ?? [];
+        if (!is_array($layout)) {
+            return false;
+        }
+
+        return (string) ($layout['page_kind'] ?? '') === 'recruiting';
+    }
 
     public static function retentionHintMonths(): int
     {

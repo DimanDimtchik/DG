@@ -18,6 +18,7 @@ $expected = [
     'stempeluhr' => 'Stempeluhr-Kiosk (Entwurf ok)',
     'apps' => 'Mobile Apps Download (Entwurf ok)',
     'preislisten' => 'Preislisten (Entwurf ok)',
+    'rekrut' => 'Karriere / Bewerbungen (Entwurf ok)',
 ];
 
 if (!Database::isConfigured()) {

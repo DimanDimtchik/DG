@@ -121,6 +121,19 @@ final class WebsiteBootstrapService
             $result['stempeluhr_page'] = null;
         }
 
+        // Karriere / Bewerbungen: Entwurf in Seitenliste (Route /rekrut)
+        try {
+            if (class_exists('RecruitingPublicService')) {
+                RecruitingPublicService::ensureDraftWebsitePage($userId);
+                $rekrutPage = WebsitePageRepository::findBySlugAnyStatus(RecruitingPublicService::PAGE_SLUG);
+                $result['rekrut_page'] = $rekrutPage !== null
+                    ? ['id' => (int) $rekrutPage['id'], 'slug' => RecruitingPublicService::PAGE_SLUG, 'action' => 'ensured']
+                    : null;
+            }
+        } catch (Throwable) {
+            $result['rekrut_page'] = null;
+        }
+
         // Mobile Apps: Download-Seite /apps
         try {
             MobileAppDownloadService::ensureDraftWebsitePage($userId);
