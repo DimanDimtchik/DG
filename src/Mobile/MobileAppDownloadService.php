@@ -31,7 +31,7 @@ final class MobileAppDownloadService
         self::ensureMenuItem();
     }
 
-    /** Menüpunkt „Apps“ nachziehen (ohne Duplikat). */
+    /** Menüpunkt „Apps“ nachziehen (ohne Duplikat, auch wenn nur im Untermenü). */
     public static function ensureMenuItem(): void
     {
         if (!Database::isConfigured()) {
@@ -42,14 +42,8 @@ final class MobileAppDownloadService
             $menu = [];
         }
         $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $url = rtrim((string) ($item['url'] ?? ''), '/');
-            if ($url === '/apps') {
-                return;
-            }
+        if (WebsiteSettings::menuHasUrl('/apps', $items)) {
+            return;
         }
 
         $entry = [

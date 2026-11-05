@@ -25,7 +25,7 @@ final class PriceListWebsiteService
         self::ensureMenuItem();
     }
 
-    /** Menüpunkt „Preislisten“ nachziehen (ohne Duplikat). */
+    /** Menüpunkt „Preislisten“ nachziehen (ohne Duplikat, auch wenn nur im Untermenü). */
     public static function ensureMenuItem(): void
     {
         if (!Database::isConfigured()) {
@@ -36,14 +36,8 @@ final class PriceListWebsiteService
             $menu = [];
         }
         $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $url = rtrim((string) ($item['url'] ?? ''), '/');
-            if ($url === '/' . self::PAGE_SLUG) {
-                return;
-            }
+        if (WebsiteSettings::menuHasUrl('/' . self::PAGE_SLUG, $items)) {
+            return;
         }
 
         $entry = [

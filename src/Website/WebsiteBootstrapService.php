@@ -312,14 +312,8 @@ final class WebsiteBootstrapService
             $menu = [];
         }
         $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $url = rtrim((string) ($item['url'] ?? ''), '/');
-            if ($url === '/terminkalender') {
-                return;
-            }
+        if (WebsiteSettings::menuHasUrl('/terminkalender', $items)) {
+            return;
         }
 
         $entry = [
@@ -344,7 +338,7 @@ final class WebsiteBootstrapService
         SettingsStore::set('website.menu', $menu);
     }
 
-    /** Menüpunkt „Apps“ für bestehende Instanzen nachziehen (ohne doppelten Eintrag). */
+    /** Menüpunkt „Apps“ für bestehende Instanzen nachziehen (ohne doppelten Eintrag, auch Untermenü). */
     private static function ensureAppsMenuItem(): void
     {
         $menu = SettingsStore::get('website.menu', []);
@@ -352,14 +346,8 @@ final class WebsiteBootstrapService
             $menu = [];
         }
         $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $url = rtrim((string) ($item['url'] ?? ''), '/');
-            if ($url === '/apps') {
-                return;
-            }
+        if (WebsiteSettings::menuHasUrl('/apps', $items)) {
+            return;
         }
 
         $entry = [

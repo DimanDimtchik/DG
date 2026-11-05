@@ -89,6 +89,62 @@ final class WebsiteSettings
     }
 
     /**
+     * Ob eine URL bereits im Menü vorkommt (Top-Level oder Unterpunkt).
+     * Verhindert, dass ensureMenuItem() Einträge erneut oben einfügt, die nur gruppiert sind.
+     *
+     * @param list<array<string, mixed>>|null $items null = aus Settings laden
+     */
+    public static function menuHasUrl(string $url, ?array $items = null): bool
+    {
+        $needle = self::normalizeMenuUrl($url);
+        if ($needle === '') {
+            return false;
+        }
+        if ($items === null) {
+            $menu = SettingsStore::get(self::MENU_KEY, self::menuDefaults());
+            $items = is_array($menu) && is_array($menu['items'] ?? null) ? $menu['items'] : [];
+        }
+
+        return self::menuItemsContainUrl($items, $needle);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     */
+    private static function menuItemsContainUrl(array $items, string $needle): bool
+    {
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            if (self::normalizeMenuUrl((string) ($item['url'] ?? '')) === $needle) {
+                return true;
+            }
+            $children = is_array($item['children'] ?? null) ? $item['children'] : [];
+            if ($children !== [] && self::menuItemsContainUrl($children, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function normalizeMenuUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '' || $url === '#') {
+            return $url;
+        }
+        $path = parse_url($url, PHP_URL_PATH);
+        if (is_string($path) && $path !== '') {
+            $url = $path;
+        }
+        $url = rtrim($url, '/');
+
+        return $url === '' ? '/' : $url;
+    }
+
+    /**
      * Full menu as stored (editor). Includes private entries.
      *
      * @return array{items: list<array<string, mixed>>, layout: string, breakpoint: int}
