@@ -300,6 +300,13 @@ if ($isCompanyForm && $companyEmployees === []) {
           'showEmployeeFields' => true,
           'canEdit' => !empty($canEdit),
       ]);
+      View::partial('partials/hr-personnel-events', [
+          'contactId' => (int) $contactId,
+          'employeeData' => $employeeData ?? EmployeeData::empty(),
+          'showEmployeeFields' => true,
+          'canEdit' => !empty($canEdit),
+          'hrPersonnelContact' => isset($contact) && $contact instanceof Contact ? $contact : null,
+      ]);
     ?>
     <div class="dg-panel">
       <?php

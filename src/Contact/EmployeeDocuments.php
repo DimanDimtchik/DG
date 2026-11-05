@@ -68,8 +68,18 @@ final class EmployeeDocuments
             if (!is_array($entries) || isset($entries['path'])) {
                 continue;
             }
-            $itemLabel = $type === 'medical_certificates' ? 'Ärztliches Attest' : $label;
-            $fallbackName = $type === 'payroll_slip' ? 'Lohnabrechnung' : 'Datei';
+            $itemLabel = match ($type) {
+                'medical_certificates' => 'Ärztliches Attest',
+                'written_warnings' => 'Abmahnung',
+                'termination_letters' => 'Kündigung / Aufhebung',
+                default => $label,
+            };
+            $fallbackName = match ($type) {
+                'payroll_slip' => 'Lohnabrechnung',
+                'written_warnings' => 'Abmahnung',
+                'termination_letters' => 'Kündigung',
+                default => 'Datei',
+            };
             foreach ($entries as $index => $entry) {
                 if (!is_array($entry) || empty($entry['path'])) {
                     continue;

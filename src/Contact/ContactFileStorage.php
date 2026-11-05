@@ -370,6 +370,36 @@ final class ContactFileStorage
     }
 
     /**
+     * Hängt eine Binärdatei an einen Multi-Dokument-Typ (Liste) an.
+     *
+     * @param list<array<string, string>> $existingList
+     * @return array{entry: array{path: string, original_name: string, uploaded_at: string, mime: string}, index: int, list: list<array<string, string>>}
+     */
+    public static function appendBinaryDocument(
+        int $contactId,
+        string $type,
+        string $binary,
+        string $originalName,
+        string $mime = 'application/pdf',
+        array $existingList = []
+    ): array {
+        $entry = self::storeBinaryDocument($contactId, $type, $binary, $originalName, $mime, []);
+        $list = [];
+        foreach ($existingList as $item) {
+            if (is_array($item) && !empty($item['path'])) {
+                $list[] = $item;
+            }
+        }
+        $list[] = $entry;
+
+        return [
+            'entry' => $entry,
+            'index' => count($list) - 1,
+            'list' => $list,
+        ];
+    }
+
+    /**
      * contactDir
      * @param int $contactId Kontakt-ID
      * @return string

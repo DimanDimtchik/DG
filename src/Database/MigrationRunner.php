@@ -350,6 +350,7 @@ final class MigrationRunner
             '133_elster_submissions_payroll.sql' => self::tableExists($pdo, 'dg_elster_submissions')
                 && self::columnExists($pdo, 'dg_elster_submissions', 'payload_checksum')
                 && self::columnExists($pdo, 'dg_elster_submissions', 'detail_json'),
+            '139_hr_personnel_events.sql' => self::tableExists($pdo, 'dg_hr_personnel_events'),
             default => false,
         };
     }

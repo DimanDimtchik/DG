@@ -4705,6 +4705,62 @@ switch ($path) {
             exit;
         }
 
+        // POST: Personalvorgänge (Abmahnung / Kündigung / Akte)
+        if (
+            $page === 'kontakte'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['hr_personnel_add_note'])
+                || isset($_POST['hr_personnel_generate_warning'])
+                || isset($_POST['hr_personnel_generate_termination'])
+                || isset($_POST['hr_personnel_update_delivery'])
+            )
+        ) {
+            if (!MenuRegistry::canAccess($user, 'kontakte')) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            $editId = (int) ($_POST['id'] ?? 0);
+            $redirectEdit = '/app?page=kontakte&action=edit&id=' . $editId;
+            try {
+                if (!RoleResolver::canEdit($user)) {
+                    throw new RuntimeException('Keine Berechtigung zum Bearbeiten.');
+                }
+                $existingContact = $editId > 0 ? ContactRepository::findById($editId) : null;
+                if ($existingContact === null) {
+                    throw new RuntimeException('Kontakt nicht gefunden.');
+                }
+                ContactAccessResolver::assertCanEdit($user, $existingContact);
+                $uid = $user instanceof User ? $user->id : null;
+                if (isset($_POST['hr_personnel_add_note'])) {
+                    $upload = is_array($_FILES['hr_event_file'] ?? null) ? $_FILES['hr_event_file'] : [];
+                    $result = HrPersonnelEventService::addNote($editId, $_POST, $uid, $upload);
+                } elseif (isset($_POST['hr_personnel_generate_warning'])) {
+                    $result = HrPersonnelEventService::generateWarning($editId, $_POST, $uid);
+                } elseif (isset($_POST['hr_personnel_generate_termination'])) {
+                    $result = HrPersonnelEventService::generateTermination($editId, $_POST, $uid);
+                } else {
+                    $result = HrPersonnelEventService::updateDelivery($editId, (int) ($_POST['event_id'] ?? 0), $_POST);
+                }
+                if (empty($result['ok'])) {
+                    Flash::set('error', (string) ($result['message'] ?? 'Aktion fehlgeschlagen.'));
+                } else {
+                    Flash::set('success', (string) ($result['message'] ?? 'Gespeichert.'));
+                }
+                header('Location: ' . $redirectEdit, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . ($editId > 0 ? $redirectEdit : '/app?page=kontakte'), true, 302);
+                exit;
+            }
+        }
+
         // POST: Arbeitsvertrag-PDF erzeugen
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_generate_employment_contract'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte')) {
