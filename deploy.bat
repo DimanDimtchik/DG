@@ -8,6 +8,21 @@ cd /d "%~dp0"
 
 echo Deploying DG CRM code-core to dg.ganz-soft.de ...
 
+rem CRM-CSS minifizieren, sonst lädt der Server veraltetes dg.app.min.css
+rem Wichtig: npx ist eine .cmd — ohne "call" bricht deploy.bat danach ab.
+where bash >nul 2>&1
+if not errorlevel 1 (
+  bash bin/minify-dg-css.sh
+) else (
+  where npx >nul 2>&1
+  if not errorlevel 1 (
+    echo Minifying dg.css via npx ...
+    call npx --yes clean-css-cli@5.6.3 -o assets/css/dg.app.min.css assets/css/dg.css
+  ) else (
+    echo WARN: minify skipped - bash/npx missing. dg.app.min.css ggf. veraltet.
+  )
+)
+
 scp -o BatchMode=yes -i "%KEY%" index.php bootstrap.php .htaccess cron.php %HOST%:%DEST%/
 if errorlevel 1 goto fail
 

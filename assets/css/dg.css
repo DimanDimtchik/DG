@@ -2050,7 +2050,7 @@ body.dg-login-page {
   margin-bottom: var(--dg-space-4);
 }
 
-.dg-login__form label span {
+.dg-login__label {
   display: block;
   margin-bottom: var(--dg-space-2);
   font-size: 13px;
@@ -2072,6 +2072,72 @@ body.dg-login-page {
   border-color: var(--dg-primary);
   box-shadow: 0 0 0 3px var(--dg-focus-ring);
   outline: none;
+}
+
+.dg-password-field {
+  position: relative;
+  display: block;
+}
+
+.dg-password-field input {
+  padding-right: 2.85rem;
+}
+
+/* Browser-eigenes Auge ausblenden — wir nutzen unser Icon */
+.dg-password-field input::-ms-reveal,
+.dg-password-field input::-ms-clear {
+  display: none;
+}
+
+.dg-password-field__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0 var(--dg-radius-sm) var(--dg-radius-sm) 0;
+  background: transparent;
+  color: #5a5a5a;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.dg-password-field__toggle:hover {
+  color: #1a1a1a;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dg-password-field__toggle:focus-visible {
+  outline: 2px solid var(--dg-primary);
+  outline-offset: -2px;
+}
+
+.dg-password-field__toggle[aria-pressed="true"] {
+  color: #1a1a1a;
+}
+
+.dg-password-field__icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.dg-password-field__icon--hide,
+.dg-password-field__toggle[aria-pressed="true"] .dg-password-field__icon--show {
+  display: none;
+}
+
+.dg-password-field__toggle[aria-pressed="true"] .dg-password-field__icon--hide {
+  display: block;
 }
 
 .dg-login__error {

@@ -153,6 +153,7 @@ Alle Zellen-Aktionen = Small-Buttons in `__actions-group`. Kein Mix Link+Button 
 | Baustein | Klasse |
 |----------|--------|
 | Sidebar | `.dg-sidebar` + `__section` `__heading` `__toggle` `__chevron` `__list` `__link` `__icon` (Bereiche als Akkordeon: `__section--collapsible` / `.is-open`) |
+| Passwort-Feld | `.dg-password-field` + `__toggle` `__icon` (Anzeigen/Verbergen via `data-password-toggle`) |
 | Admin-Leiste | `.dg-adminbar` (+ BEM-Kinder) |
 | Unter-Tabs | `.dg-subtabs` / `__link` / `__group` |
 | Pagination | `.dg-pagination` |
