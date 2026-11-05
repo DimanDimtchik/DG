@@ -17,7 +17,6 @@ $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
 $authUser = class_exists('AuthService') ? AuthService::user() : null;
 $canViewPayroll = $authUser instanceof User && PayrollEmployeeAccess::canView($authUser);
 $canEditPayroll = $canEdit && $authUser instanceof User && PayrollEmployeeAccess::canEdit($authUser);
-$wageUnitLabels = PayrollWageTypeRepository::unitLabels();
 $payrollWarnings = $canViewPayroll ? EmployeeData::collectPayrollWarnings($employeeData) : [];
 $svDraftStatus = trim($employeeData['social_registration_status'] ?? SocialSecurityRegistrationDraft::STATUS_NONE);
 $svDraftAt = trim($employeeData['social_registration_draft_at'] ?? '');
@@ -466,15 +465,14 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
                     <option value="0">— wählen —</option>
                     <?php foreach ($activeWageOptions as $wt) : ?>
                       <option value="<?= (int) ($wt['id'] ?? 0) ?>"<?= $aWageId === (int) ($wt['id'] ?? 0) ? ' selected' : '' ?>>
-                        <?= View::escape((string) ($wt['code'] ?? '') . ' — ' . (string) ($wt['label'] ?? '')) ?>
-                        (<?= View::escape($wageUnitLabels[(string) ($wt['unit'] ?? '')] ?? (string) ($wt['unit'] ?? '')) ?>)
+                        <?= View::escape(trim((string) ($wt['label'] ?? '')) !== '' ? (string) $wt['label'] : 'Lohnart') ?>
                       </option>
                     <?php endforeach; ?>
                     <?php if ($aWageId > 0) : ?>
                       <?php foreach ($inactiveWageOptions as $wt) : ?>
                         <?php if ($aWageId === (int) ($wt['id'] ?? 0)) : ?>
                           <option value="<?= $aWageId ?>" selected>
-                            <?= View::escape((string) ($wt['code'] ?? '') . ' — ' . (string) ($wt['label'] ?? '') . ' (inaktiv)') ?>
+                            <?= View::escape((trim((string) ($wt['label'] ?? '')) !== '' ? (string) $wt['label'] : 'Lohnart') . ' (inaktiv)') ?>
                           </option>
                         <?php endif; ?>
                       <?php endforeach; ?>

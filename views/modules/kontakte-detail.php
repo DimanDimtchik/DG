@@ -290,7 +290,7 @@
                       $unitKey = (string) ($da['wage_unit'] ?? '');
                     ?>
                     <tr>
-                      <td><?= View::escape((string) ($da['wage_code'] ?? '') . ' — ' . (string) ($da['wage_label'] ?? '')) ?></td>
+                      <td><?= View::escape(trim((string) ($da['wage_label'] ?? '')) !== '' ? (string) $da['wage_label'] : 'Lohnart') ?></td>
                       <td><?= View::escape((string) ($da['amount_display'] ?? $da['amount'] ?? '')) ?></td>
                       <td><?= View::escape($unitLabelsDetail[$unitKey] ?? $unitKey) ?></td>
                       <td><?= View::escape($validity) ?></td>
