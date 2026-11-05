@@ -311,6 +311,60 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?= $roAttr ?>
             >
           </label>
+        <?php elseif ($key === 'training_video_url') : ?>
+          <?php
+            $trainingLinkOptions = class_exists('AcademyRepository')
+              ? AcademyRepository::trainingLinkOptions()
+              : [];
+            $trainingCourses = [];
+            $trainingVideos = [];
+            foreach ($trainingLinkOptions as $opt) {
+                if (($opt['kind'] ?? '') === 'course') {
+                    $trainingCourses[] = $opt;
+                } else {
+                    $trainingVideos[] = $opt;
+                }
+            }
+          ?>
+          <label class="dg-field dg-field--wide" data-training-video-field>
+            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
+            <input
+              type="url"
+              inputmode="url"
+              name="<?= View::escape($name) ?>"
+              value="<?= View::escape($value) ?>"
+              data-training-video-url
+              placeholder="https://…"
+              <?= $required ? ' required data-employee-required' : '' ?>
+              <?= $roAttr ?>
+            >
+            <?php if ($trainingLinkOptions !== []) : ?>
+              <select data-training-video-pick<?= $roAttr !== '' ? ' disabled' : '' ?> aria-label="Aus Akademie wählen">
+                <option value="">— Kurs oder Video aus Akademie wählen —</option>
+                <?php if ($trainingCourses !== []) : ?>
+                  <optgroup label="Kurse">
+                    <?php foreach ($trainingCourses as $opt) : ?>
+                      <option value="<?= View::escape((string) $opt['url']) ?>"<?= $value === (string) $opt['url'] ? ' selected' : '' ?>>
+                        <?= View::escape((string) $opt['label']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </optgroup>
+                <?php endif; ?>
+                <?php if ($trainingVideos !== []) : ?>
+                  <optgroup label="Videos">
+                    <?php foreach ($trainingVideos as $opt) : ?>
+                      <option value="<?= View::escape((string) $opt['url']) ?>"<?= $value === (string) $opt['url'] ? ' selected' : '' ?>>
+                        <?= View::escape((string) $opt['label']) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </optgroup>
+                <?php endif; ?>
+              </select>
+              <small class="dg-field-hint">Auswahl übernimmt den Link. Externe URLs bleiben manuell möglich.</small>
+            <?php else : ?>
+              <small class="dg-field-hint">Noch keine veröffentlichten Akademie-Kurse oder Videos — Link manuell eintragen oder unter Akademie anlegen.</small>
+            <?php endif; ?>
+          </label>
         <?php else : ?>
           <label class="dg-field">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>

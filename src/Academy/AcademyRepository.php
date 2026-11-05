@@ -291,6 +291,86 @@ final class AcademyRepository
         return is_file($abs) ? '/' . $rel : null;
     }
 
+    /**
+     * Auswahl für Mitarbeiterfeld „Schulungsvideo / Online-Link“:
+     * veröffentlichte Kurse + Videos (öffentliche MP4-URL oder Akademie-Deep-Link).
+     *
+     * @return list<array{kind: 'course'|'video', label: string, url: string}>
+     */
+    public static function trainingLinkOptions(): array
+    {
+        if (!Database::isConfigured() || !class_exists('App')) {
+            return [];
+        }
+
+        $base = rtrim(App::publicBaseUrl(), '/');
+        $out = [];
+        $seen = [];
+
+        $add = static function (string $kind, string $label, string $url) use (&$out, &$seen): void {
+            $label = trim($label);
+            $url = trim($url);
+            if ($label === '' || $url === '' || isset($seen[$url])) {
+                return;
+            }
+            $seen[$url] = true;
+            $out[] = [
+                'kind' => $kind === 'course' ? 'course' : 'video',
+                'label' => $label,
+                'url' => $url,
+            ];
+        };
+
+        foreach (self::publishedCourses() as $course) {
+            $slug = trim((string) ($course['slug'] ?? ''));
+            $title = trim((string) ($course['title'] ?? ''));
+            if ($slug === '' || $title === '') {
+                continue;
+            }
+            $courseUrl = $base . '/app?page=akademie&view=kurs&slug=' . rawurlencode($slug);
+            $add('course', $title, $courseUrl);
+
+            foreach (self::modulesForCourse((int) ($course['id'] ?? 0), true, false) as $module) {
+                $moduleTitle = trim((string) ($module['title'] ?? ''));
+                if ($moduleTitle === '') {
+                    continue;
+                }
+                $public = self::publicVideoUrl($module);
+                if ($public !== null) {
+                    $add('video', $moduleTitle . ' — ' . $title, $base . $public);
+                    continue;
+                }
+                $add(
+                    'video',
+                    $moduleTitle . ' — ' . $title,
+                    $base . '/app?page=akademie&view=modul&slug=' . rawurlencode($slug)
+                        . '&module_id=' . (int) ($module['id'] ?? 0)
+                );
+            }
+        }
+
+        foreach (self::allVideos(true, false) as $module) {
+            $moduleTitle = trim((string) ($module['title'] ?? ''));
+            $public = self::publicVideoUrl($module);
+            if ($moduleTitle === '' || $public === null) {
+                continue;
+            }
+            $add('video', $moduleTitle, $base . $public);
+        }
+
+        usort($out, static function (array $a, array $b): int {
+            $ka = $a['kind'] === 'course' ? 0 : 1;
+            $kb = $b['kind'] === 'course' ? 0 : 1;
+            if ($ka !== $kb) {
+                return $ka <=> $kb;
+            }
+
+            return strcasecmp($a['label'], $b['label']);
+        });
+
+        return $out;
+    }
+
     /** @return list<array<string, mixed>> */
     public static function modulesForCourse(int $courseId, bool $activeOnly = true, bool $playableOnly = false): array
     {
