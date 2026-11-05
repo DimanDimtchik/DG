@@ -298,6 +298,7 @@ if ($isCompanyForm && $companyEmployees === []) {
       View::partial('partials/employment-contract-generate', [
           'contactId' => (int) $contactId,
           'employeeData' => $employeeData ?? EmployeeData::empty(),
+          'employeeFiles' => $employeeFiles ?? ContactFileStorage::emptyFiles(),
           'showEmployeeFields' => true,
           'canEdit' => !empty($canEdit),
           'employmentContractContact' => isset($contact) && $contact instanceof Contact ? $contact : null,

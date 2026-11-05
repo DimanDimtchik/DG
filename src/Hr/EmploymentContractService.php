@@ -75,23 +75,31 @@ final class EmploymentContractService
         $originalName = 'Arbeitsvertrag-' . $slug . '-' . date('Y-m-d') . '.pdf';
 
         $files = ContactFileStorage::normalizeFiles($contact->employeeFiles);
+        $previous = is_array($files['employment_contract'] ?? null) ? $files['employment_contract'] : [];
+        $hadPrevious = !empty($previous['path']);
         $stored = ContactFileStorage::storeBinaryDocument(
             $contactId,
             'employment_contract',
             $pdf,
             $originalName,
             'application/pdf',
-            is_array($files['employment_contract'] ?? null) ? $files['employment_contract'] : []
+            $previous
         );
         $files['employment_contract'] = $stored;
         ContactRepository::updateEmployeeFiles($contactId, $files);
 
+        $viewUrl = EmployeeDocuments::viewUrl($contactId, 'employment_contract');
         $download = EmployeeDocuments::downloadUrl($contactId, 'employment_contract');
+        $message = 'Arbeitsvertrag als PDF angelegt — unter Mitarbeiterdaten → Hochgeladene Dokumente bzw. Dokumente „Arbeitsvertrag“.';
+        if ($hadPrevious) {
+            $message .= ' Ein vorheriger Upload wurde ersetzt.';
+        }
 
         return [
             'ok' => true,
-            'message' => 'Arbeitsvertrag als PDF angelegt. Ein vorheriger Upload wurde ersetzt.',
+            'message' => $message,
             'file' => $stored,
+            'view_url' => $viewUrl,
             'download_url' => $download,
             'preview' => [
                 'contract_type' => $ctx['contract_type'],
