@@ -76,7 +76,7 @@ Hardware-TSE braucht einen lokalen Dienst auf dem Kassen-PC/Mini-PC. Das CRM spr
 
 | ID | Aufgabe | Status |
 |----|---------|--------|
-| K0 | Anbieterzugang klaeren: fiskaly Testzugang, Preise, Vertrag, Limits | [ ] |
+| K0 | Anbieterzugang klaeren: fiskaly Testzugang, Preise, Vertrag, Limits — Detail: [`REGISTERKASSE-TSE-K0-FISKALY.md`](REGISTERKASSE-TSE-K0-FISKALY.md) | [ ] |
 | K1 | Datenmodell fuer Filialen, Kassen, TSE-Zuordnungen, Bons, Zahlungen, Tagesabschluesse | [ ] |
 | K2 | Mock-TSE bauen, damit Entwicklung ohne echten Anbieter laeuft | [ ] |
 | K3 | `TseProviderInterface` und Provider-Auswahl pro Kasse | [ ] |
