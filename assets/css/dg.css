@@ -3114,10 +3114,23 @@ body.dg-login-page {
   background-position: 0 0, 0 6px, 6px -6px, -6px 0;
 }
 
+.dg-media-svg-section + .dg-media-svg-section,
+.dg-media-svg-section + .dg-form-actions {
+  margin-top: var(--dg-space-5);
+}
+
 .dg-media-svg-subtitle {
   margin: 0 0 var(--dg-space-3);
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+.dg-media-svg-size-presets {
+  margin-bottom: var(--dg-space-3);
+}
+
+.dg-media-svg-size-fields {
+  max-width: 28rem;
 }
 
 .dg-media-svg-list {

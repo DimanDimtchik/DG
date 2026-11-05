@@ -489,7 +489,7 @@ final class MediaApi
     }
 
     /**
-     * Persist SVG color / stroke-width edits in place.
+     * Persist SVG color / stroke-width / size edits in place.
      */
     private static function svgSave(): never
     {
@@ -513,13 +513,14 @@ final class MediaApi
 
         $colorMap = self::decodeJsonMap($_POST['colors'] ?? '{}');
         $strokeWidthMap = self::decodeJsonMap($_POST['stroke_widths'] ?? '{}');
-        if ($colorMap === [] && $strokeWidthMap === []) {
+        $size = self::decodeSvgSize($_POST['size'] ?? null);
+        if ($colorMap === [] && $strokeWidthMap === [] && $size === null) {
             self::error('Keine Änderungen übermittelt.');
         }
 
         $original = MediaSvgEditor::readFile($path);
         try {
-            $updated = MediaSvgEditor::apply($original, $colorMap, $strokeWidthMap);
+            $updated = MediaSvgEditor::apply($original, $colorMap, $strokeWidthMap, $size);
         } catch (InvalidArgumentException $e) {
             self::error($e->getMessage());
         }
@@ -535,7 +536,12 @@ final class MediaApi
         MediaStorage::applyReadablePermissions($path);
 
         $sanitized = MediaSvgEditor::readFile($path);
-        [$width, $height] = MediaImageProcessor::readDimensions($path, 'image/svg+xml');
+        $display = MediaSvgEditor::readRootSize($sanitized);
+        $width = $display['width'];
+        $height = $display['height'];
+        if ($width === null || $height === null) {
+            [$width, $height] = MediaImageProcessor::readDimensions($path, 'image/svg+xml');
+        }
         MediaRepository::updateFileMeta($mediaId, [
             'stored_name' => (string) $item['stored_name'],
             'mime_type' => 'image/svg+xml',
@@ -556,6 +562,27 @@ final class MediaApi
             'analysis' => $analysis,
             'preview_url' => MediaStorage::adminPreviewUrl($mediaId, time()),
         ]);
+    }
+
+    /**
+     * @return array{width: int, height: int}|null
+     */
+    private static function decodeSvgSize(mixed $raw): ?array
+    {
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : null;
+        }
+        if (!is_array($raw)) {
+            return null;
+        }
+        $width = MediaSvgEditor::normalizeSizePx($raw['width'] ?? null);
+        $height = MediaSvgEditor::normalizeSizePx($raw['height'] ?? null);
+        if ($width === null || $height === null) {
+            return null;
+        }
+
+        return ['width' => $width, 'height' => $height];
     }
 
     /**

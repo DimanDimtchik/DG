@@ -521,12 +521,15 @@
     });
   }
 
-  // --- SVG color / stroke-width editor ---
+  // --- SVG color / stroke-width / size editor ---
   (function initSvgEditor() {
     var form = document.getElementById('dg-media-svg-form');
     var dataEl = document.getElementById('dg-media-svg-data');
     var preview = document.getElementById('dg-media-preview');
     var resetBtn = document.getElementById('dg-media-svg-reset');
+    var sizeW = document.getElementById('dg-media-svg-size-w');
+    var sizeH = document.getElementById('dg-media-svg-size-h');
+    var sizeSquare = document.getElementById('dg-media-svg-size-square');
     if (!form || !dataEl || !preview) return;
 
     var state;
@@ -538,10 +541,31 @@
     if (!state.markup) return;
 
     var originalMarkup = state.markup;
+    var originalSize = state.size || {};
+    var sizeMin = Number(state.size_min) || 16;
+    var sizeMax = Number(state.size_max) || 4096;
     var previewObjectUrl = null;
 
     function escapeRegExp(value) {
       return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function clampSize(value) {
+      var n = Math.round(Number(value));
+      if (!isFinite(n)) return null;
+      if (n < sizeMin || n > sizeMax) return null;
+      return n;
+    }
+
+    function collectSize() {
+      if (!sizeW || !sizeH) return null;
+      var width = clampSize(sizeW.value);
+      var height = clampSize(sizeH.value);
+      if (width === null || height === null) return null;
+      var origW = originalSize.width != null ? Number(originalSize.width) : null;
+      var origH = originalSize.height != null ? Number(originalSize.height) : null;
+      if (origW === width && origH === height) return null;
+      return { width: width, height: height };
     }
 
     function collectMaps() {
@@ -567,7 +591,7 @@
           widths[from] = to;
         }
       });
-      return { colors: colors, widths: widths };
+      return { colors: colors, widths: widths, size: collectSize() };
     }
 
     function replaceColor(markup, from, to) {
@@ -605,6 +629,28 @@
       return markup;
     }
 
+    function setOrAddAttr(tag, name, value) {
+      var re = new RegExp('\\b' + escapeRegExp(name) + '\\s*=\\s*(["\\\'])[^"\\\']*\\1', 'i');
+      if (re.test(tag)) {
+        return tag.replace(re, name + '="' + value + '"');
+      }
+      return tag.replace(/<svg\b/i, '<svg ' + name + '="' + value + '"');
+    }
+
+    function applyRootSize(markup, width, height) {
+      return markup.replace(/<svg\b[^>]*>/i, function (tag) {
+        var hasViewBox = /\bviewBox\s*=/i.test(tag) || /\bviewbox\s*=/i.test(tag);
+        if (!hasViewBox) {
+          var vbW = originalSize.width || width;
+          var vbH = originalSize.height || height;
+          tag = setOrAddAttr(tag, 'viewBox', '0 0 ' + vbW + ' ' + vbH);
+        }
+        tag = setOrAddAttr(tag, 'width', String(width));
+        tag = setOrAddAttr(tag, 'height', String(height));
+        return tag;
+      });
+    }
+
     function buildMarkup() {
       var maps = collectMaps();
       var markup = originalMarkup;
@@ -622,6 +668,15 @@
         .forEach(function (from) {
           markup = replaceWidth(markup, from, maps.widths[from]);
         });
+      if (maps.size) {
+        markup = applyRootSize(markup, maps.size.width, maps.size.height);
+      } else if (sizeW && sizeH) {
+        var w = clampSize(sizeW.value);
+        var h = clampSize(sizeH.value);
+        if (w !== null && h !== null) {
+          markup = applyRootSize(markup, w, h);
+        }
+      }
       return markup;
     }
 
@@ -660,6 +715,14 @@
       updatePreview();
     }
 
+    function setSquareSize(px) {
+      if (!sizeW || !sizeH) return;
+      sizeW.value = String(px);
+      sizeH.value = String(px);
+      if (sizeSquare) sizeSquare.checked = true;
+      updatePreview();
+    }
+
     form.querySelectorAll('.dg-media-svg-color, .dg-media-svg-color-text').forEach(function (input) {
       input.addEventListener('input', function () {
         syncColorInputs(input);
@@ -668,6 +731,36 @@
     form.querySelectorAll('.dg-media-svg-width').forEach(function (input) {
       input.addEventListener('input', updatePreview);
     });
+    form.querySelectorAll('[data-svg-size-preset]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var px = clampSize(btn.getAttribute('data-svg-size-preset'));
+        if (px !== null) setSquareSize(px);
+      });
+    });
+    if (sizeW) {
+      sizeW.addEventListener('input', function () {
+        if (sizeSquare && sizeSquare.checked && sizeH) {
+          sizeH.value = sizeW.value;
+        }
+        updatePreview();
+      });
+    }
+    if (sizeH) {
+      sizeH.addEventListener('input', function () {
+        if (sizeSquare && sizeSquare.checked && sizeW) {
+          sizeW.value = sizeH.value;
+        }
+        updatePreview();
+      });
+    }
+    if (sizeSquare) {
+      sizeSquare.addEventListener('change', function () {
+        if (sizeSquare.checked && sizeW && sizeH) {
+          sizeH.value = sizeW.value;
+          updatePreview();
+        }
+      });
+    }
 
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
@@ -685,6 +778,13 @@
             el.value = String(width.value).replace(/[^0-9.]/g, '') || width.value;
           });
         });
+        if (sizeW && sizeH) {
+          var rw = originalSize.width != null ? Number(originalSize.width) : 150;
+          var rh = originalSize.height != null ? Number(originalSize.height) : rw;
+          sizeW.value = String(rw);
+          sizeH.value = String(rh);
+          if (sizeSquare) sizeSquare.checked = rw === rh;
+        }
         updatePreview();
       });
     }
@@ -692,18 +792,30 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var maps = collectMaps();
-      if (Object.keys(maps.colors).length === 0 && Object.keys(maps.widths).length === 0) {
+      if (
+        Object.keys(maps.colors).length === 0 &&
+        Object.keys(maps.widths).length === 0 &&
+        !maps.size
+      ) {
         alert('Keine Änderungen zum Speichern.');
+        return;
+      }
+      if (sizeW && sizeH && (clampSize(sizeW.value) === null || clampSize(sizeH.value) === null)) {
+        alert('Größe muss zwischen ' + sizeMin + ' und ' + sizeMax + ' Pixel liegen.');
         return;
       }
       var mediaId = form.getAttribute('data-media-id') || '';
       var saveBtn = document.getElementById('dg-media-svg-save');
       if (saveBtn) saveBtn.disabled = true;
-      post('svg_save', {
+      var payload = {
         media_id: mediaId,
         colors: JSON.stringify(maps.colors),
         stroke_widths: JSON.stringify(maps.widths),
-      })
+      };
+      if (maps.size) {
+        payload.size = JSON.stringify(maps.size);
+      }
+      post('svg_save', payload)
         .then(function (res) {
           if (saveBtn) saveBtn.disabled = false;
           handleResponse(res);

@@ -178,7 +178,11 @@ $formatUsageDate = static function (?string $value): string {
         <?php else : ?>
           <?php
             $svgMarkup = '';
-            $svgAnalysis = ['colors' => [], 'stroke_widths' => []];
+            $svgAnalysis = [
+                'colors' => [],
+                'stroke_widths' => [],
+                'size' => ['width' => null, 'height' => null, 'width_raw' => null, 'height_raw' => null, 'view_box' => null],
+            ];
             try {
                 $svgPath = MediaStorage::absolutePath($mediaId, (string) ($mediaItem['stored_name'] ?? ''));
                 if (is_file($svgPath)) {
@@ -188,10 +192,18 @@ $formatUsageDate = static function (?string $value): string {
             } catch (Throwable $e) {
                 $svgMarkup = '';
             }
+            $svgSizeW = (int) ($svgAnalysis['size']['width'] ?? 0);
+            $svgSizeH = (int) ($svgAnalysis['size']['height'] ?? 0);
+            if ($svgSizeW <= 0) {
+                $svgSizeW = 150;
+            }
+            if ($svgSizeH <= 0) {
+                $svgSizeH = $svgSizeW;
+            }
           ?>
           <form class="dg-form dg-panel" id="dg-media-svg-form" data-media-id="<?= View::escape($mediaId) ?>">
             <h2>SVG bearbeiten</h2>
-            <p class="dg-field-hint">Farben und Linienbreiten aus der Datei. Änderungen erscheinen sofort in der Vorschau; mit Speichern werden sie in die SVG-Datei geschrieben.</p>
+            <p class="dg-field-hint">Größe, Farben und Linienbreiten aus der Datei. Änderungen erscheinen sofort in der Vorschau; mit Speichern werden sie in die SVG-Datei geschrieben.</p>
 
             <?php if ($svgMarkup === '') : ?>
               <p class="dg-lead">SVG-Inhalt konnte nicht geladen werden.</p>
@@ -200,9 +212,62 @@ $formatUsageDate = static function (?string $value): string {
                   'markup' => $svgMarkup,
                   'colors' => $svgAnalysis['colors'],
                   'stroke_widths' => $svgAnalysis['stroke_widths'],
+                  'size' => $svgAnalysis['size'],
+                  'size_presets' => MediaSvgEditor::SIZE_PRESETS,
+                  'size_min' => MediaSvgEditor::SIZE_MIN,
+                  'size_max' => MediaSvgEditor::SIZE_MAX,
               ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) ?></script>
 
-              <div id="dg-media-svg-colors">
+              <div class="dg-media-svg-section" id="dg-media-svg-size">
+                <h3 class="dg-media-svg-subtitle">Größe</h3>
+                <p class="dg-field-hint">
+                  Anzeigegröße der SVG (width/height). Die Zeichenfläche (viewBox) bleibt erhalten, damit Linien und Formen nicht verzerrt werden.
+                  <?php if (($svgAnalysis['size']['width'] ?? null) !== null && ($svgAnalysis['size']['height'] ?? null) !== null) : ?>
+                    Aktuell: <?= (int) $svgAnalysis['size']['width'] ?>×<?= (int) $svgAnalysis['size']['height'] ?> px.
+                  <?php endif; ?>
+                </p>
+                <div class="dg-btn-row dg-media-svg-size-presets" role="group" aria-label="Größen-Vorlagen">
+                  <?php foreach (MediaSvgEditor::SIZE_PRESETS as $preset) : ?>
+                    <button type="button" class="dg-button dg-button--small" data-svg-size-preset="<?= (int) $preset ?>"><?= (int) $preset ?>×<?= (int) $preset ?></button>
+                  <?php endforeach; ?>
+                </div>
+                <div class="dg-form-grid dg-media-svg-size-fields">
+                  <label class="dg-field">
+                    <span>Breite (px)</span>
+                    <input
+                      type="number"
+                      id="dg-media-svg-size-w"
+                      class="dg-media-svg-size-input"
+                      value="<?= (int) $svgSizeW ?>"
+                      min="<?= (int) MediaSvgEditor::SIZE_MIN ?>"
+                      max="<?= (int) MediaSvgEditor::SIZE_MAX ?>"
+                      step="1"
+                      required
+                    >
+                  </label>
+                  <label class="dg-field">
+                    <span>Höhe (px)</span>
+                    <input
+                      type="number"
+                      id="dg-media-svg-size-h"
+                      class="dg-media-svg-size-input"
+                      value="<?= (int) $svgSizeH ?>"
+                      min="<?= (int) MediaSvgEditor::SIZE_MIN ?>"
+                      max="<?= (int) MediaSvgEditor::SIZE_MAX ?>"
+                      step="1"
+                      required
+                    >
+                  </label>
+                  <label class="dg-field dg-field--checkbox">
+                    <span>
+                      <input type="checkbox" id="dg-media-svg-size-square" checked>
+                      Quadratisch (Breite = Höhe)
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="dg-media-svg-section" id="dg-media-svg-colors">
                 <?php if ($svgAnalysis['colors'] === []) : ?>
                   <p class="dg-field-hint">Keine editierbaren Farben gefunden.</p>
                 <?php else : ?>
@@ -243,7 +308,7 @@ $formatUsageDate = static function (?string $value): string {
                 <?php endif; ?>
               </div>
 
-              <div id="dg-media-svg-widths" style="margin-top:16px;">
+              <div class="dg-media-svg-section" id="dg-media-svg-widths">
                 <?php if ($svgAnalysis['stroke_widths'] === []) : ?>
                   <p class="dg-field-hint">Keine Linienbreiten gefunden.</p>
                 <?php else : ?>
@@ -270,7 +335,7 @@ $formatUsageDate = static function (?string $value): string {
                 <?php endif; ?>
               </div>
 
-              <div class="dg-form-actions" style="margin-top:16px;">
+              <div class="dg-form-actions">
                 <button type="submit" class="dg-button dg-button--primary" id="dg-media-svg-save">SVG speichern</button>
                 <button type="button" class="dg-button" id="dg-media-svg-reset">Zurücksetzen</button>
               </div>

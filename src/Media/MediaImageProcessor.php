@@ -7,7 +7,7 @@ declare(strict_types=1);
 final class MediaImageProcessor
 {
     /**
-     * Read width/height; for SVG prefers viewBox, then absolute width/height attributes.
+     * Read width/height; for SVG prefers absolute width/height, then viewBox.
      *
      * @return array{0: ?int, 1: ?int} [width, height]
      */
@@ -50,6 +50,12 @@ final class MediaImageProcessor
             return [null, null];
         }
 
+        $width = self::parseSvgLengthAttr($xml, 'width');
+        $height = self::parseSvgLengthAttr($xml, 'height');
+        if ($width !== null && $height !== null) {
+            return [$width, $height];
+        }
+
         if (preg_match(
             '/\bviewBox\s*=\s*["\']\s*[0-9.+-eE]+\s+[0-9.+-eE]+\s+([0-9.+-eE]+)\s+([0-9.+-eE]+)\s*["\']/i',
             $xml,
@@ -60,12 +66,6 @@ final class MediaImageProcessor
             if ($w > 0 && $h > 0) {
                 return [$w, $h];
             }
-        }
-
-        $width = self::parseSvgLengthAttr($xml, 'width');
-        $height = self::parseSvgLengthAttr($xml, 'height');
-        if ($width !== null && $height !== null) {
-            return [$width, $height];
         }
 
         return [null, null];
