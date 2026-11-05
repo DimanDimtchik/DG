@@ -4,6 +4,9 @@ declare(strict_types=1);
 /**
  * Lohn L2b Selftest — sanitize/Warnungen ohne DB.
  */
+if (!defined('DG_ROOT')) {
+    define('DG_ROOT', dirname(__DIR__));
+}
 require_once dirname(__DIR__) . '/src/autoload.php';
 
 function assertL2b(bool $ok, string $msg): void
@@ -39,6 +42,39 @@ assertL2b($clean['payroll_payout_bank_index'] === '0', 'Bank-Index ≥ 0');
 assertL2b($clean['controlling_managing_director'] === '', 'GF-Flag ohne managing_director Typ verworfen');
 assertL2b($clean['sv_exempt'] === '', 'sv_exempt ohne GF-Flag verworfen');
 assertL2b($clean['employment_type'] === 'regular', 'weich sync fulltime → regular');
+
+$softKeys = EmployeeData::sanitize([
+    'payroll_employment_type' => 'minijob',
+    'person_group_key' => '',
+    'contribution_group_key' => '',
+]);
+assertL2b($softKeys['person_group_key'] === '109', 'Minijob → Personengruppe 109');
+assertL2b($softKeys['contribution_group_key'] === '6500', 'Minijob → Beitragsgruppe 6500');
+
+$miniRvExemptKept = EmployeeData::sanitize([
+    'payroll_employment_type' => 'minijob',
+    'person_group_key' => '109',
+    'contribution_group_key' => '6100',
+]);
+assertL2b($miniRvExemptKept['contribution_group_key'] === '6100', 'Minijob 6100 (RV-Befreiung) bleibt beim Speichern');
+
+$customKept = EmployeeData::sanitize([
+    'payroll_employment_type' => 'fulltime',
+    'person_group_key' => '119',
+    'contribution_group_key' => '3333',
+]);
+assertL2b($customKept['person_group_key'] === '119', 'individuelle Personengruppe bleibt');
+assertL2b($customKept['contribution_group_key'] === '3333', 'individuelle Beitragsgruppe bleibt');
+
+$gfExempt = EmployeeData::sanitize([
+    'payroll_employment_type' => 'managing_director',
+    'controlling_managing_director' => '1',
+    'sv_exempt' => '1',
+    'person_group_key' => '',
+    'contribution_group_key' => '',
+]);
+assertL2b($gfExempt['person_group_key'] === '', 'SV-freier GF ohne Auto-Personengruppe');
+assertL2b($gfExempt['contribution_group_key'] === '', 'SV-freier GF ohne Auto-Beitragsgruppe');
 
 $gf = EmployeeData::sanitize([
     'payroll_employment_type' => 'managing_director',
@@ -78,7 +114,7 @@ $preserved = EmployeeData::preservePayrollIfDenied(
 );
 assertL2b($preserved['tax_id'] === '11111111111', 'preservePayrollIfDenied behält Bestand');
 
-assertL2b(PayrollEmployeeAccess::moduleRegistered() === false, 'Modul lohn noch nicht in MODULE_LABELS');
+assertL2b(PayrollEmployeeAccess::moduleRegistered() === true, 'Modul lohn in MODULE_LABELS registriert');
 
 echo "L2b Selftest bestanden.\n";
 exit(0);

@@ -390,6 +390,7 @@ $belegeFocus = (string) ($belegeFocus ?? '');
     <script src="<?= View::escape(Asset::url('/assets/js/health-insurer-autocomplete.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/disability-supplementary.js')) ?>" defer></script>
     <script src="<?= View::escape(Asset::url('/assets/js/training-video-picker.js')) ?>" defer></script>
+    <script src="<?= View::escape(Asset::url('/assets/js/payroll-sv-group-suggest.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($settingsSelection['template'] ?? '') === 'crm-appearance') : ?>
     <script src="<?= View::escape(Asset::url('/assets/js/settings-crm-appearance.js')) ?>" defer></script>

@@ -38,7 +38,15 @@ $filingOfficeHints = [
 ];
 $disabilitySupplementaryOptions = EmployeeData::disabilitySupplementaryOptions();
 $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice();
-?><div class="dg-employee-section" data-employee-section<?= $showEmployeeFields ? '' : ' hidden' ?> data-filing-hints="<?= View::escape(json_encode($filingOfficeHints, JSON_UNESCAPED_UNICODE)) ?>" data-social-steps="<?= View::escape(json_encode($socialApplicationSteps, JSON_UNESCAPED_UNICODE)) ?>">
+?><div
+  class="dg-employee-section"
+  data-employee-section<?= $showEmployeeFields ? '' : ' hidden' ?>
+  data-filing-hints="<?= View::escape(json_encode($filingOfficeHints, JSON_UNESCAPED_UNICODE)) ?>"
+  data-social-steps="<?= View::escape(json_encode($socialApplicationSteps, JSON_UNESCAPED_UNICODE)) ?>"
+  data-sv-group-suggestions="<?= View::escape(json_encode(EmployeeData::svGroupKeySuggestionsByEmploymentType(), JSON_UNESCAPED_UNICODE)) ?>"
+  data-sv-known-person="<?= View::escape(json_encode(EmployeeData::knownDefaultPersonGroupKeys(), JSON_UNESCAPED_UNICODE)) ?>"
+  data-sv-known-contrib="<?= View::escape(json_encode(EmployeeData::knownDefaultContributionGroupKeys(), JSON_UNESCAPED_UNICODE)) ?>"
+>
   <h2>Mitarbeiterdaten</h2>
   <p class="dg-lead">Vertrauliche Personalinformationen — nur für Rolle Mitarbeiter oder Administrator. Speicherdauer: 10 Jahre nach Austritt.</p>
   <?php if (($contactId ?? 0) > 0) : ?>
@@ -186,6 +194,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?php if ($key === 'social_security_status') : ?>data-social-status<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
               <?php if ($key === 'social_filing_office') : ?>data-social-filing-office<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
               <?php if ($key === 'gender') : ?><?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
+              <?php if ($key === 'payroll_employment_type') : ?>data-payroll-employment-type<?php endif; ?>
               <?= $roAttr ?>
             >
               <?php foreach ($selectOptions as $optVal => $optLabel) : ?>
@@ -310,6 +319,25 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?= $required ? ' required data-employee-required' : '' ?>
               <?= $roAttr ?>
             >
+          </label>
+        <?php elseif ($key === 'person_group_key' || $key === 'contribution_group_key') : ?>
+          <label class="dg-field">
+            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
+            <input
+              type="text"
+              inputmode="numeric"
+              name="<?= View::escape($name) ?>"
+              value="<?= View::escape($value) ?>"
+              <?php if ($key === 'person_group_key') : ?>data-person-group-key maxlength="3" placeholder="z. B. 101"<?php endif; ?>
+              <?php if ($key === 'contribution_group_key') : ?>data-contribution-group-key maxlength="8" placeholder="z. B. 1111"<?php endif; ?>
+              <?= $required ? ' required data-employee-required' : '' ?>
+              <?= $roAttr ?>
+            >
+            <?php if ($key === 'person_group_key') : ?>
+              <small class="dg-field-hint" data-sv-group-hint>Wird aus der Beschäftigungsart (Lohn) vorgeschlagen, wenn leer oder Standardwert.</small>
+            <?php else : ?>
+              <small class="dg-field-hint">Vier Stellen KV·RV·AV·PV — Vorschlag aus Beschäftigungsart, jederzeit änderbar.</small>
+            <?php endif; ?>
           </label>
         <?php elseif ($key === 'training_video_url') : ?>
           <?php

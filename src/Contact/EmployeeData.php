@@ -340,6 +340,62 @@ final class EmployeeData
         ];
     }
 
+    /**
+     * Typische DEÜV-Defaults je Beschäftigungsart (Lohn) — nur Vorschlag, prüfbar überschreibbar.
+     *
+     * @return array<string, array{person_group_key: string, contribution_group_key: string, hint: string}>
+     */
+    public static function svGroupKeySuggestionsByEmploymentType(): array
+    {
+        $standardHint = 'Typisch sozialversicherungspflichtig (Personengruppe 101, Beitragsgruppe 1111).';
+        $miniHint = 'Minijob-Zentrale: Personengruppe 109, Beitragsgruppe 6500 (RV-pflichtig). '
+            . 'Bei RV-Befreiung oft 6100 — bitte prüfen.';
+
+        return [
+            'fulltime' => [
+                'person_group_key' => '101',
+                'contribution_group_key' => '1111',
+                'hint' => $standardHint,
+            ],
+            'parttime' => [
+                'person_group_key' => '101',
+                'contribution_group_key' => '1111',
+                'hint' => $standardHint,
+            ],
+            'midijob' => [
+                'person_group_key' => '101',
+                'contribution_group_key' => '1111',
+                'hint' => $standardHint . ' Übergangsbereich steuert die Berechnung, nicht die Personengruppe.',
+            ],
+            'minijob' => [
+                'person_group_key' => '109',
+                'contribution_group_key' => '6500',
+                'hint' => $miniHint,
+            ],
+            'managing_director' => [
+                'person_group_key' => '101',
+                'contribution_group_key' => '1111',
+                'hint' => $standardHint . ' Nur wenn nicht SV-frei; bei SV-frei leer lassen und prüfen.',
+            ],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function knownDefaultPersonGroupKeys(): array
+    {
+        return ['101', '109'];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function knownDefaultContributionGroupKeys(): array
+    {
+        return ['1111', '6500', '6100'];
+    }
+
     public static function isMinijob(array $data): bool
     {
         $payroll = trim((string) ($data['payroll_employment_type'] ?? ''));
@@ -644,6 +700,7 @@ final class EmployeeData
 
         // Weich: employment_type nur setzen wenn leer oder bereits kompatibel — kein stilles Überschreiben (L2a).
         self::softSyncEmploymentTypeFromPayroll($out);
+        self::softSyncSvGroupKeysFromPayroll($out);
 
         return $out;
     }
@@ -661,6 +718,35 @@ final class EmployeeData
         $cur = trim((string) ($out['employment_type'] ?? ''));
         if ($cur === '' || $cur === $want) {
             $out['employment_type'] = $want;
+        }
+    }
+
+    /**
+     * Personen-/Beitragsgruppe weich vorbelegen: leer oder bekannter Default — nie individuelle Werte.
+     *
+     * @param array<string, string> $out
+     */
+    private static function softSyncSvGroupKeysFromPayroll(array &$out): void
+    {
+        $pet = trim((string) ($out['payroll_employment_type'] ?? ''));
+        if ($pet === '') {
+            return;
+        }
+        if ($pet === 'managing_director' && ($out['sv_exempt'] ?? '') === '1') {
+            return;
+        }
+        $map = self::svGroupKeySuggestionsByEmploymentType();
+        if (!isset($map[$pet])) {
+            return;
+        }
+        $suggest = $map[$pet];
+
+        // Nur leere Felder — bekannte Alternativen (z. B. Minijob 6100 bei RV-Befreiung) nicht überschreiben.
+        if (trim((string) ($out['person_group_key'] ?? '')) === '') {
+            $out['person_group_key'] = $suggest['person_group_key'];
+        }
+        if (trim((string) ($out['contribution_group_key'] ?? '')) === '') {
+            $out['contribution_group_key'] = $suggest['contribution_group_key'];
         }
     }
 
