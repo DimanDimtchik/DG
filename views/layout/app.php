@@ -164,173 +164,169 @@ $belegeFocus = (string) ($belegeFocus ?? '');
 
   <div class="dg-shell">
     <aside id="dg-sidebar" class="dg-sidebar" aria-label="Seitenleiste">
-      <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-nav">
-        <h2 id="dg-sidebar-nav" class="dg-sidebar__heading">Navigation</h2>
-        <ul class="dg-sidebar__list">
-          <?php foreach ($sidebarItems as $item) : ?>
-            <li>
-              <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $currentPage === $item['slug'] ? ' is-active' : '' ?>">
-                <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                <span><?= View::escape($item['label']) ?></span>
-              </a>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      </section>
+      <?php
+        $settingsTab = (string) ($_GET['tab'] ?? '');
+        $markActive = static function (array $items, callable $isActive) use ($currentPage): array {
+            $out = [];
+            foreach ($items as $item) {
+                $row = $item;
+                $row['is_active'] = (bool) $isActive($item, $currentPage);
+                $out[] = $row;
+            }
+            return $out;
+        };
+        $sectionHasActive = static function (array $items): bool {
+            foreach ($items as $item) {
+                if (!empty($item['is_active'])) {
+                    return true;
+                }
+            }
+            return false;
+        };
 
-      <?php if (!empty($kommunikationSection)) : ?>
-        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kommunikation">
-          <h2 id="dg-sidebar-kommunikation" class="dg-sidebar__heading"><?= View::escape($kommunikationSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($kommunikationSection['items'] as $item) : ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $currentPage === $item['slug'] ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
+        $navItems = $markActive($sidebarItems, static fn (array $item, string $page): bool => $page === $item['slug']);
+        View::render('partials/sidebar-section', [
+            'sectionId' => 'nav',
+            'sectionLabel' => 'Navigation',
+            'sectionItems' => $navItems,
+            'sectionOpen' => $sectionHasActive($navItems),
+        ]);
 
-      <?php if (!empty($dienstleistungenSection)) : ?>
-        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-dienstleistungen">
-          <h2 id="dg-sidebar-dienstleistungen" class="dg-sidebar__heading"><?= View::escape($dienstleistungenSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($dienstleistungenSection['items'] as $item) : ?>
-              <?php
-                $isDlActive = ($item['slug'] === 'dienstleistungen-auftraege'
-                        && $currentPage === 'buchhaltung-belege'
-                        && $belegeFocus === 'dienstleistungen')
-                    || ($item['slug'] === 'artikel-leistungen'
-                        && ($currentPage === 'artikel-leistungen' || str_starts_with($currentPage, 'artikel')));
-              ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isDlActive ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
+        if (!empty($kommunikationSection)) {
+            $kommItems = $markActive(
+                $kommunikationSection['items'],
+                static fn (array $item, string $page): bool => $page === $item['slug']
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'kommunikation',
+                'sectionLabel' => (string) $kommunikationSection['label'],
+                'sectionItems' => $kommItems,
+                'sectionOpen' => $sectionHasActive($kommItems),
+            ]);
+        }
 
-      <?php if (!empty($hrSection)) : ?>
-        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-hr">
-          <h2 id="dg-sidebar-hr" class="dg-sidebar__heading"><?= View::escape($hrSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($hrSection['items'] as $item) : ?>
-              <?php
-                $isHrActive = $currentPage === $item['slug']
-                    || ($item['slug'] === 'zeiterfassung' && str_starts_with($currentPage, 'zeiterfassung-'))
-                    || ($item['slug'] === 'akademie' && str_starts_with($currentPage, 'akademie'))
-                    || ($item['slug'] === 'einstellungen-lohn'
-                        && ($currentPage ?? '') === 'einstellungen'
-                        && (($_GET['tab'] ?? '') === 'lohn'));
-              ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isHrActive ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
+        if (!empty($dienstleistungenSection)) {
+            $dlItems = $markActive(
+                $dienstleistungenSection['items'],
+                static function (array $item, string $page) use ($belegeFocus): bool {
+                    return ($item['slug'] === 'dienstleistungen-auftraege'
+                            && $page === 'buchhaltung-belege'
+                            && $belegeFocus === 'dienstleistungen')
+                        || ($item['slug'] === 'artikel-leistungen'
+                            && ($page === 'artikel-leistungen' || str_starts_with($page, 'artikel')));
+                }
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'dienstleistungen',
+                'sectionLabel' => (string) $dienstleistungenSection['label'],
+                'sectionItems' => $dlItems,
+                'sectionOpen' => $sectionHasActive($dlItems),
+            ]);
+        }
 
-      <?php if (!empty($warenwirtschaftSection)) : ?>
-        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-warenwirtschaft">
-          <h2 id="dg-sidebar-warenwirtschaft" class="dg-sidebar__heading"><?= View::escape($warenwirtschaftSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($warenwirtschaftSection['items'] as $item) : ?>
-              <?php
-                $isWwActive = $currentPage === $item['slug']
-                    || ($item['slug'] === 'rezeptur' && str_starts_with($currentPage, 'rezeptur'))
-                    || ($item['slug'] === 'lager' && str_starts_with($currentPage, 'lager'))
-                    || ($item['slug'] === 'artikel-leistungen' && str_starts_with($currentPage, 'artikel'));
-              ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isWwActive ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
+        if (!empty($hrSection)) {
+            $hrItems = $markActive(
+                $hrSection['items'],
+                static function (array $item, string $page) use ($settingsTab): bool {
+                    return $page === $item['slug']
+                        || ($item['slug'] === 'zeiterfassung' && str_starts_with($page, 'zeiterfassung-'))
+                        || ($item['slug'] === 'akademie' && str_starts_with($page, 'akademie'))
+                        || ($item['slug'] === 'einstellungen-lohn'
+                            && $page === 'einstellungen'
+                            && $settingsTab === 'lohn');
+                }
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'hr',
+                'sectionLabel' => (string) $hrSection['label'],
+                'sectionItems' => $hrItems,
+                'sectionOpen' => $sectionHasActive($hrItems),
+            ]);
+        }
 
-      <?php if (!empty($buchhaltungSection)) : ?>
-        <section class="dg-sidebar__section dg-sidebar__section--buchhaltung" aria-labelledby="dg-sidebar-buchhaltung">
-          <h2 id="dg-sidebar-buchhaltung" class="dg-sidebar__heading"><?= View::escape($buchhaltungSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($buchhaltungSection['items'] as $item) : ?>
-              <?php
-                $isBuhaActive = $currentPage === $item['slug']
-                    && !($item['slug'] === 'buchhaltung-belege' && $belegeFocus === 'dienstleistungen');
-              ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isBuhaActive ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
+        if (!empty($warenwirtschaftSection)) {
+            $wwItems = $markActive(
+                $warenwirtschaftSection['items'],
+                static function (array $item, string $page): bool {
+                    return $page === $item['slug']
+                        || ($item['slug'] === 'rezeptur' && str_starts_with($page, 'rezeptur'))
+                        || ($item['slug'] === 'lager' && str_starts_with($page, 'lager'))
+                        || ($item['slug'] === 'artikel-leistungen' && str_starts_with($page, 'artikel'));
+                }
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'warenwirtschaft',
+                'sectionLabel' => (string) $warenwirtschaftSection['label'],
+                'sectionItems' => $wwItems,
+                'sectionOpen' => $sectionHasActive($wwItems),
+            ]);
+        }
 
-      <?php if (!empty($websiteSection)) : ?>
-        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-website">
-          <h2 id="dg-sidebar-website" class="dg-sidebar__heading"><?= View::escape($websiteSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($websiteSection['items'] as $item) : ?>
-              <?php
-                $isWebsiteActive = $currentPage === $item['slug']
-                    || ($item['slug'] === 'website-seiten' && $currentPage === 'website-seite-form')
-                    || ($item['slug'] === 'website-formulare' && ($currentPage === 'website-formular-form' || $currentPage === 'website-formular-inbox'));
-              ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $isWebsiteActive ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
-      <?php if (!empty($kdvSection)) : ?>
-        <section class="dg-sidebar__section" aria-labelledby="dg-sidebar-kdv">
-          <h2 id="dg-sidebar-kdv" class="dg-sidebar__heading"><?= View::escape($kdvSection['label']) ?></h2>
-          <ul class="dg-sidebar__list">
-            <?php foreach ($kdvSection['items'] as $item) : ?>
-              <li>
-                <a href="<?= View::escape($item['href']) ?>" class="dg-sidebar__link<?= $currentPage === $item['slug'] ? ' is-active' : '' ?>">
-                  <?php View::render('partials/icon', ['name' => $item['icon']]); ?>
-                  <span><?= View::escape($item['label']) ?></span>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-      <?php endif; ?>
-      <?php if (!empty($settingsItem)) : ?>
-        <section class="dg-sidebar__section dg-sidebar__section--system" aria-labelledby="dg-sidebar-system">
-          <h2 id="dg-sidebar-system" class="dg-sidebar__heading">System</h2>
-          <ul class="dg-sidebar__list">
-            <li>
-              <a href="/app?page=einstellungen" class="dg-sidebar__link<?= $currentPage === 'einstellungen' ? ' is-active' : '' ?>">
-                <?php View::render('partials/icon', ['name' => 'settings']); ?>
-                <span><?= View::escape($settingsItem['label']) ?></span>
-              </a>
-            </li>
-          </ul>
-        </section>
-      <?php endif; ?>
+        if (!empty($buchhaltungSection)) {
+            $buhaItems = $markActive(
+                $buchhaltungSection['items'],
+                static function (array $item, string $page) use ($belegeFocus): bool {
+                    return $page === $item['slug']
+                        && !($item['slug'] === 'buchhaltung-belege' && $belegeFocus === 'dienstleistungen');
+                }
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'buchhaltung',
+                'sectionLabel' => (string) $buchhaltungSection['label'],
+                'sectionItems' => $buhaItems,
+                'sectionOpen' => $sectionHasActive($buhaItems),
+                'sectionModifier' => 'buchhaltung',
+            ]);
+        }
+
+        if (!empty($websiteSection)) {
+            $websiteItems = $markActive(
+                $websiteSection['items'],
+                static function (array $item, string $page): bool {
+                    return $page === $item['slug']
+                        || ($item['slug'] === 'website-seiten' && $page === 'website-seite-form')
+                        || ($item['slug'] === 'website-formulare'
+                            && ($page === 'website-formular-form' || $page === 'website-formular-inbox'));
+                }
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'website',
+                'sectionLabel' => (string) $websiteSection['label'],
+                'sectionItems' => $websiteItems,
+                'sectionOpen' => $sectionHasActive($websiteItems),
+            ]);
+        }
+
+        if (!empty($kdvSection)) {
+            $kdvItems = $markActive(
+                $kdvSection['items'],
+                static fn (array $item, string $page): bool => $page === $item['slug']
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'kdv',
+                'sectionLabel' => (string) $kdvSection['label'],
+                'sectionItems' => $kdvItems,
+                'sectionOpen' => $sectionHasActive($kdvItems),
+            ]);
+        }
+
+        if (!empty($settingsItem)) {
+            $systemItems = [[
+                'slug' => 'einstellungen',
+                'label' => (string) $settingsItem['label'],
+                'icon' => 'settings',
+                'href' => '/app?page=einstellungen',
+                'is_active' => $currentPage === 'einstellungen' && $settingsTab !== 'lohn',
+            ]];
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'system',
+                'sectionLabel' => 'System',
+                'sectionItems' => $systemItems,
+                'sectionOpen' => $sectionHasActive($systemItems),
+                'sectionModifier' => 'system',
+            ]);
+        }
+      ?>
     </aside>
 
     <main id="dg-content" class="dg-content">

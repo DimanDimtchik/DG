@@ -419,7 +419,7 @@ code {
 }
 
 .dg-sidebar__section {
-  padding: var(--dg-space-3) 0 var(--dg-space-2);
+  padding: var(--dg-space-1) 0;
 }
 
 .dg-sidebar__section--system {
@@ -429,20 +429,76 @@ code {
 }
 
 .dg-sidebar__heading {
-  margin: 0 0 var(--dg-space-2);
-  padding: 0 var(--dg-space-4) var(--dg-space-2);
+  margin: 0;
+  padding: 0;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #fff;
+}
+
+.dg-sidebar__section:not(.dg-sidebar__section--collapsible) > .dg-sidebar__heading {
+  padding: var(--dg-space-2) var(--dg-space-4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dg-sidebar__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dg-space-2);
+  width: 100%;
+  margin: 0;
+  padding: 10px var(--dg-space-4);
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dg-sidebar__toggle:hover {
+  background: var(--dg-menu-bg-hover);
+  color: #fff;
+}
+
+.dg-sidebar__toggle:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: -2px;
+}
+
+.dg-sidebar__toggle-label {
+  min-width: 0;
+}
+
+.dg-sidebar__chevron {
+  width: 0.45em;
+  height: 0.45em;
+  flex-shrink: 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.85;
+  transition: transform 0.15s ease;
+}
+
+.dg-sidebar__section.is-open > .dg-sidebar__heading .dg-sidebar__chevron {
+  transform: rotate(45deg);
 }
 
 .dg-sidebar__list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--dg-space-1) 0 var(--dg-space-2);
+}
+
+.dg-sidebar__section--collapsible:not(.is-open) > .dg-sidebar__list {
+  display: none;
 }
 
 .dg-sidebar__link {
@@ -2104,8 +2160,18 @@ body.dg-login-page {
 
   .dg-sidebar__heading {
     font-size: 0;
-    padding: 0 var(--dg-space-2) var(--dg-space-2);
-    margin-bottom: var(--dg-space-1);
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+
+  .dg-sidebar__toggle {
+    display: none;
+  }
+
+  /* Schmale Icon-Leiste: alle Untermenüs sichtbar (nur Icons) */
+  .dg-sidebar__section--collapsible:not(.is-open) > .dg-sidebar__list {
+    display: block;
   }
 
   .dg-sidebar__link {

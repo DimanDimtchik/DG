@@ -1,4 +1,16 @@
 document.addEventListener('click', (event) => {
+  const sidebarToggle = event.target.closest('[data-sidebar-toggle]');
+  if (sidebarToggle) {
+    const section = sidebarToggle.closest('[data-sidebar-section]');
+    if (section) {
+      const willOpen = !section.classList.contains('is-open');
+      section.classList.toggle('is-open', willOpen);
+      sidebarToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+    event.preventDefault();
+    return;
+  }
+
   const toggle = event.target.closest('[data-menu-toggle]');
   const menus = document.querySelectorAll('[data-menu]');
 
