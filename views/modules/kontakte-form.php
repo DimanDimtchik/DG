@@ -293,7 +293,15 @@ if ($isCompanyForm && $companyEmployees === []) {
   </form>
 
   <?php if ($isEdit && !empty($showEmployeeFields)) : ?>
-    <div class="dg-panel" style="margin-top:16px">
+    <?php
+      View::partial('partials/employment-contract-generate', [
+          'contactId' => (int) $contactId,
+          'employeeData' => $employeeData ?? EmployeeData::empty(),
+          'showEmployeeFields' => true,
+          'canEdit' => !empty($canEdit),
+      ]);
+    ?>
+    <div class="dg-panel">
       <?php
         $staffAccessStatus = $staffAccessStatus ?? StaffAccessInviteService::status((int) $contactId);
         $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;

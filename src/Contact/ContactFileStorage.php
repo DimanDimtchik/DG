@@ -313,6 +313,63 @@ final class ContactFileStorage
     }
 
     /**
+     * Speichert eine erzeugte Binärdatei (z. B. Vertrags-PDF) und ersetzt ggf. den bisherigen Eintrag.
+     *
+     * @param array<string, string> $existingEntry
+     * @return array{path: string, original_name: string, uploaded_at: string, mime: string}
+     */
+    public static function storeBinaryDocument(
+        int $contactId,
+        string $type,
+        string $binary,
+        string $originalName,
+        string $mime = 'application/pdf',
+        array $existingEntry = []
+    ): array {
+        if ($contactId <= 0) {
+            throw new InvalidArgumentException('Ungültige Kontakt-ID.');
+        }
+        if ($binary === '') {
+            throw new InvalidArgumentException('Leere Datei.');
+        }
+        if (strlen($binary) > self::MAX_BYTES) {
+            throw new InvalidArgumentException('Datei zu groß (max. 10 MB).');
+        }
+        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        if ($ext === '' || !isset(self::MIME_MAP[$ext])) {
+            $ext = 'pdf';
+            $mime = 'application/pdf';
+            $originalName = pathinfo($originalName, PATHINFO_FILENAME) . '.pdf';
+        }
+        if ($mime === '') {
+            $mime = self::MIME_MAP[$ext];
+        }
+
+        $dir = self::contactDir($contactId);
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            throw new RuntimeException('Upload-Verzeichnis konnte nicht erstellt werden.');
+        }
+
+        $storedName = $type . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+        $relative = 'contacts/' . $contactId . '/' . $storedName;
+        $target = $dir . '/' . $storedName;
+        if (file_put_contents($target, $binary) === false) {
+            throw new RuntimeException('Datei konnte nicht gespeichert werden.');
+        }
+
+        if (!empty($existingEntry['path'])) {
+            self::deletePath((string) $existingEntry['path']);
+        }
+
+        return [
+            'path' => $relative,
+            'original_name' => $originalName,
+            'uploaded_at' => date('c'),
+            'mime' => $mime,
+        ];
+    }
+
+    /**
      * contactDir
      * @param int $contactId Kontakt-ID
      * @return string

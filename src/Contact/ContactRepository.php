@@ -613,7 +613,23 @@ final class ContactRepository
         return $contactId;
     }
 
-        /**
+    /**
+     * @param array<string, array<string, string>|list<array<string, string>>> $employeeFiles
+     */
+    public static function updateEmployeeFiles(int $id, array $employeeFiles): void
+    {
+        if ($id <= 0) {
+            throw new InvalidArgumentException('Ungültige Kontakt-ID.');
+        }
+        $pdo = Database::pdo();
+        $stmt = $pdo->prepare('UPDATE dg_contacts SET employee_files = :employee_files WHERE id = :id');
+        $stmt->execute([
+            'employee_files' => ContactFileStorage::encodeFiles($employeeFiles),
+            'id' => $id,
+        ]);
+    }
+
+    /**
      * updateEmployeeData
      * @param int $id Datensatz-ID
      * @param array $employeeData

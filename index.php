@@ -4705,6 +4705,63 @@ switch ($path) {
             exit;
         }
 
+        // POST: Arbeitsvertrag-PDF erzeugen
+        if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_generate_employment_contract'])) {
+            if (!MenuRegistry::canAccess($user, 'kontakte')) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            $editId = (int) ($_POST['id'] ?? 0);
+            $redirectEdit = '/app?page=kontakte&action=edit&id=' . $editId;
+            try {
+                if (!RoleResolver::canEdit($user)) {
+                    throw new RuntimeException('Keine Berechtigung zum Bearbeiten.');
+                }
+                $existingContact = $editId > 0 ? ContactRepository::findById($editId) : null;
+                if ($existingContact === null) {
+                    throw new RuntimeException('Kontakt nicht gefunden.');
+                }
+                ContactAccessResolver::assertCanEdit($user, $existingContact);
+                $result = EmploymentContractService::generate($editId, [
+                    'contract_type' => (string) ($_POST['contract_type'] ?? ''),
+                    'annex_training' => !empty($_POST['annex_training']),
+                    'annex_pension' => !empty($_POST['annex_pension']),
+                    'annex_ifsg' => !empty($_POST['annex_ifsg']),
+                    'annex_video' => !empty($_POST['annex_video']),
+                    'force' => !empty($_POST['force']),
+                ]);
+                if (!$result['ok']) {
+                    $msg = (string) ($result['message'] ?? 'Vertrag konnte nicht erzeugt werden.');
+                    if (!empty($result['missing']) && is_array($result['missing'])) {
+                        $labels = [];
+                        foreach ($result['missing'] as $row) {
+                            if (is_array($row) && isset($row['label'])) {
+                                $labels[] = (string) $row['label'];
+                            }
+                        }
+                        if ($labels !== []) {
+                            $msg .= ' Fehlt: ' . implode('; ', $labels) . '.';
+                        }
+                    }
+                    Flash::set('error', $msg);
+                    header('Location: ' . $redirectEdit, true, 302);
+                    exit;
+                }
+                Flash::set('success', (string) ($result['message'] ?? 'Arbeitsvertrag erzeugt. Siehe Dokumente am Kontakt.'));
+                header('Location: ' . $redirectEdit, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . ($editId > 0 ? $redirectEdit : '/app?page=kontakte'), true, 302);
+                exit;
+            }
+        }
+
         // POST: Kontakt speichern
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_save'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte')) {
