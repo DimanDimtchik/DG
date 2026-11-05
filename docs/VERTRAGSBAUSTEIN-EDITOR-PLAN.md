@@ -113,4 +113,13 @@ Mehrsprachigkeit · Diff-UI · Word-Import · Klausel-Marktplatz · Branchen-Pac
 | Fallback | `EmploymentContractClauses::bodyHtml` → Katalog+Renderer |
 | Selftest | `php bin/contract-template-v0-selftest.php` |
 
-**V1 als Nächstes:** HR-Menü + Editor UI.
+### V1 Status (2026-11-05)
+
+| Stück | Ort |
+|-------|-----|
+| Menü | HR → Vertragsvorlagen |
+| Liste | `views/modules/hr-vertragsvorlagen.php` |
+| Editor | `views/modules/hr-vertragsvorlage-form.php` |
+| Speichern | `ContractTemplateRepository::saveDraft` → Status `draft` |
+
+**V2 als Nächstes:** Freigabe + Version + Audit. (PDF nutzt Freigabe erst ab V3.)

@@ -84,6 +84,14 @@ final class MenuRegistry
                 'href' => '/app?page=hr-bewerber',
             ];
         }
+        if (RoleResolver::canEdit($user)) {
+            $items[] = [
+                'slug' => 'hr-vertragsvorlagen',
+                'label' => 'Vertragsvorlagen',
+                'icon' => 'document',
+                'href' => '/app?page=hr-vertragsvorlagen',
+            ];
+        }
         if (DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user)) {
             $items[] = [
                 'slug' => 'zeiterfassung',
@@ -613,6 +621,7 @@ final class MenuRegistry
             'hr-abteilungen' => 'Abteilungen anlegen und Mitarbeitern zuordnen — Grundlage für Rechte und Akademie.',
             'hr-teams' => 'Teams innerhalb der Abteilungen pflegen und Ansprechpartner zuweisen.',
             'hr-stellen' => 'Offene Stellen pflegen und für die Bewerbungsseite freigeben.',
+            'hr-vertragsvorlagen' => 'Klauseln und Paragraphen von Arbeits- und anderen Verträgen bearbeiten.',
             'hr-bewerber' => 'Bewerbungen und Bewerberakte — Status und Unterlagen im CRM.',
             'zeiterfassung' => 'Einstempeln, Pausen und Arbeitszeiten — Übersicht für Mitarbeiter und HR.',
             'lohn-monatslauf' => 'Lohnabrechnung je Monat: berechnen, freigeben, sperren und Dokumente erzeugen.',
@@ -699,6 +708,10 @@ final class MenuRegistry
             ],
             'hr-bewerber' => [
                 'bewerbung', 'bewerber', 'bewerberakte', 'applicant', 'rekrutierung', 'recruiting bewerber',
+            ],
+            'hr-vertragsvorlagen' => [
+                'arbeitsvertrag', 'vertragsvorlage', 'vertragsklausel', 'klausel editor', 'vertragsbaustein',
+                'nachweisgesetz vorlage',
             ],
             'zeiterfassung' => [
                 'stempeluhr', 'einstempeln', 'ausstempeln', 'kiosk', 'pin stempel', 'schichtplan', 'schicht',
@@ -969,6 +982,10 @@ final class MenuRegistry
         }
 
         if ($slug === 'akademie') {
+            return RoleResolver::canEdit($user);
+        }
+
+        if ($slug === 'hr-vertragsvorlagen' || $slug === 'hr-vertragsvorlage-form') {
             return RoleResolver::canEdit($user);
         }
 

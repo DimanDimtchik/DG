@@ -3607,6 +3607,43 @@ switch ($path) {
             exit;
         }
 
+        // POST: Vertragsvorlagen (HR V1)
+        if (
+            ($page === 'hr-vertragsvorlage-form' || $page === 'hr-vertragsvorlagen')
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['contract_template_save'])
+            && MenuRegistry::canAccess($user, 'hr-vertragsvorlage-form')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=hr-vertragsvorlagen', true, 302);
+                exit;
+            }
+            if (!RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung zum Speichern.');
+                header('Location: /app?page=hr-vertragsvorlagen', true, 302);
+                exit;
+            }
+            $tplId = (int) ($_POST['id'] ?? 0);
+            try {
+                MigrationRunner::runPending();
+                ContractTemplateRepository::ensureSeeded((int) ($user->id ?? 0));
+                $result = ContractTemplateRepository::saveDraft($tplId, $_POST, (int) ($user->id ?? 0));
+                if (!empty($result['ok'])) {
+                    Flash::set('success', (string) $result['message']);
+                    header('Location: /app?page=hr-vertragsvorlage-form&id=' . (int) $result['id'], true, 302);
+                    exit;
+                }
+                Flash::set('error', (string) ($result['message'] ?? 'Speichern fehlgeschlagen.'));
+                header('Location: /app?page=hr-vertragsvorlage-form&id=' . $tplId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: /app?page=hr-vertragsvorlage-form&id=' . $tplId, true, 302);
+                exit;
+            }
+        }
+
         // POST: HR-Teams
         if (
             ($page === 'hr-team-form' || $page === 'hr-teams')
@@ -7387,6 +7424,41 @@ $legalProductsConfig = LegalProductSettings::config();
             $title = 'Bewerber';
             $currentPage = 'hr-bewerber';
         } elseif ($page === 'hr-bewerber') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'hr-vertragsvorlagen' && MenuRegistry::canAccess($user, 'hr-vertragsvorlagen')) {
+            MigrationRunner::runPending();
+            $dbConnected = Database::isConfigured();
+            if ($dbConnected) {
+                ContractTemplateRepository::ensureSeeded((int) ($user->id ?? 0));
+            }
+            $contractTemplates = $dbConnected ? ContractTemplateRepository::allTemplates() : [];
+            $contentTemplate = 'modules/hr-vertragsvorlagen';
+            $title = 'Vertragsvorlagen';
+            $currentPage = 'hr-vertragsvorlagen';
+        } elseif ($page === 'hr-vertragsvorlagen') {
+            header('Location: /app', true, 302);
+            exit;
+        } elseif ($page === 'hr-vertragsvorlage-form' && MenuRegistry::canAccess($user, 'hr-vertragsvorlage-form')) {
+            MigrationRunner::runPending();
+            $dbConnected = Database::isConfigured();
+            if ($dbConnected) {
+                ContractTemplateRepository::ensureSeeded((int) ($user->id ?? 0));
+            }
+            $tplId = (int) ($_GET['id'] ?? 0);
+            $contractTemplate = $tplId > 0 ? ContractTemplateRepository::findById($tplId) : null;
+            if ($contractTemplate === null) {
+                Flash::set('error', 'Vorlage nicht gefunden.');
+                header('Location: /app?page=hr-vertragsvorlagen', true, 302);
+                exit;
+            }
+            $contractBlocks = ContractTemplateRepository::blocksForTemplate((int) $contractTemplate['id']);
+            $canEdit = RoleResolver::canEdit($user);
+            $formError = $formError ?? null;
+            $contentTemplate = 'modules/hr-vertragsvorlage-form';
+            $title = 'Vertragsvorlage';
+            $currentPage = 'hr-vertragsvorlagen';
+        } elseif ($page === 'hr-vertragsvorlage-form') {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'videos' && MenuRegistry::canAccess($user, 'videos')) {
