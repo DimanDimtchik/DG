@@ -31,6 +31,11 @@ Ziel: TEST-Integration starten, LIVE-/Vertragsmodell für DG CRM als Kassenanbie
 - [ ] Quickstart durchgehen: Auth → TSS → Client → Transaktion signieren  
   Quelle: [Quick Start SIGN DE](https://workspace.fiskaly.com/getting-started/quickstart/)
 - [ ] Credentials **nicht** ins Git — nur Instanz-Config / Secrets (z. B. Cloud-Agent Secrets, `config/*.local.php`)
+- [ ] **Cursor Cloud Agent:** [Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents) → **Runtime Secrets** (siehe [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)):
+  - `FISKALY_SIGN_DE_API_KEY`
+  - `FISKALY_SIGN_DE_API_SECRET`
+  - Danach **neuen Cloud-Agent** starten (laufende Runs sehen neue Secrets nicht)
+- [ ] Prüfung: `php bin/fiskaly-auth-smoke.php` → Ausgabe `OK: fiskaly TEST-Auth erfolgreich`
 
 ### B — Geschäftsmodell DG CRM klären (mit fiskaly Sales)
 
