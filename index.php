@@ -3607,11 +3607,11 @@ switch ($path) {
             exit;
         }
 
-        // POST: Vertragsvorlagen (HR V1)
+        // POST: Vertragsvorlagen speichern / freigeben (HR V1/V2)
         if (
             ($page === 'hr-vertragsvorlage-form' || $page === 'hr-vertragsvorlagen')
             && $_SERVER['REQUEST_METHOD'] === 'POST'
-            && isset($_POST['contract_template_save'])
+            && (isset($_POST['contract_template_save']) || isset($_POST['contract_template_publish']))
             && MenuRegistry::canAccess($user, 'hr-vertragsvorlage-form')
         ) {
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
@@ -3620,7 +3620,7 @@ switch ($path) {
                 exit;
             }
             if (!RoleResolver::canEdit($user)) {
-                Flash::set('error', 'Keine Berechtigung zum Speichern.');
+                Flash::set('error', 'Keine Berechtigung.');
                 header('Location: /app?page=hr-vertragsvorlagen', true, 302);
                 exit;
             }
@@ -3628,13 +3628,17 @@ switch ($path) {
             try {
                 MigrationRunner::runPending();
                 ContractTemplateRepository::ensureSeeded((int) ($user->id ?? 0));
-                $result = ContractTemplateRepository::saveDraft($tplId, $_POST, (int) ($user->id ?? 0));
+                if (isset($_POST['contract_template_publish'])) {
+                    $result = ContractTemplateRepository::publish($tplId, (int) ($user->id ?? 0));
+                } else {
+                    $result = ContractTemplateRepository::saveDraft($tplId, $_POST, (int) ($user->id ?? 0));
+                }
                 if (!empty($result['ok'])) {
                     Flash::set('success', (string) $result['message']);
                     header('Location: /app?page=hr-vertragsvorlage-form&id=' . (int) $result['id'], true, 302);
                     exit;
                 }
-                Flash::set('error', (string) ($result['message'] ?? 'Speichern fehlgeschlagen.'));
+                Flash::set('error', (string) ($result['message'] ?? 'Aktion fehlgeschlagen.'));
                 header('Location: /app?page=hr-vertragsvorlage-form&id=' . $tplId, true, 302);
                 exit;
             } catch (Throwable $e) {

@@ -178,9 +178,106 @@ final class ContractTemplateRepository
 
         return [
             'ok' => true,
-            'message' => 'Entwurf gespeichert. Freigabe für die PDF-Erzeugung folgt in einem späteren Schritt.',
+            'message' => 'Entwurf gespeichert. Zum Nutzen in neuen PDFs bitte freigeben.',
             'id' => $templateId,
         ];
+    }
+
+    /**
+     * Freigabe: Version erhöhen, Status published, Audit (V2).
+     *
+     * @return array{ok: bool, message: string, id: int, version: string}
+     */
+    public static function publish(int $templateId, int $userId): array
+    {
+        if (!self::tableReady()) {
+            return ['ok' => false, 'message' => 'Vertragsvorlagen-Tabellen fehlen — Migration 140 ausführen.', 'id' => 0, 'version' => ''];
+        }
+        $tpl = self::findById($templateId);
+        if ($tpl === null) {
+            return ['ok' => false, 'message' => 'Vorlage nicht gefunden.', 'id' => 0, 'version' => ''];
+        }
+
+        $blocks = self::blocksForTemplate($templateId);
+        $enabledWithText = 0;
+        $snapshot = [];
+        foreach ($blocks as $b) {
+            $en = (int) ($b['enabled'] ?? 0) === 1;
+            $body = trim(strip_tags((string) ($b['body_html'] ?? '')));
+            if ($en && $body !== '') {
+                ++$enabledWithText;
+            }
+            $snapshot[] = [
+                'block_key' => (string) ($b['block_key'] ?? ''),
+                'title' => (string) ($b['title'] ?? ''),
+                'enabled' => $en ? 1 : 0,
+                'is_annex' => (int) ($b['is_annex'] ?? 0),
+                'sort_order' => (int) ($b['sort_order'] ?? 0),
+                'body_sha256' => hash('sha256', (string) ($b['body_html'] ?? '')),
+            ];
+        }
+        if ($enabledWithText < 1) {
+            return [
+                'ok' => false,
+                'message' => 'Freigabe nicht möglich: mindestens ein aktiver Baustein mit Text nötig.',
+                'id' => $templateId,
+                'version' => (string) ($tpl['version'] ?? ''),
+            ];
+        }
+
+        $oldVersion = trim((string) ($tpl['version'] ?? '1.0'));
+        if ($oldVersion === '') {
+            $oldVersion = '1.0';
+        }
+        $newVersion = self::bumpVersion($oldVersion);
+        $wasPublished = (($tpl['status'] ?? '') === 'published');
+
+        // Erneute Freigabe ohne Entwurf: trotzdem neue Version (kein stilles Überschreiben).
+        $pdo = Database::pdo();
+        $pdo->prepare(
+            'UPDATE dg_contract_templates
+             SET status = \'published\', version = :ver, updated_by = :uid,
+                 published_at = NOW(), updated_at = NOW()
+             WHERE id = :id'
+        )->execute([
+            'ver' => $newVersion,
+            'uid' => $userId > 0 ? $userId : null,
+            'id' => $templateId,
+        ]);
+
+        if (class_exists('AuditLog')) {
+            AuditLog::record('contract_template_publish', $userId > 0 ? $userId : null, json_encode([
+                'template_id' => $templateId,
+                'code' => (string) ($tpl['code'] ?? ''),
+                'title' => (string) ($tpl['title'] ?? ''),
+                'from_status' => (string) ($tpl['status'] ?? ''),
+                'was_published' => $wasPublished,
+                'version_from' => $oldVersion,
+                'version_to' => $newVersion,
+                'enabled_blocks' => $enabledWithText,
+                'blocks' => $snapshot,
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        return [
+            'ok' => true,
+            'message' => 'Vorlage freigegeben als Version ' . $newVersion . '.',
+            'id' => $templateId,
+            'version' => $newVersion,
+        ];
+    }
+
+    public static function bumpVersion(string $current): string
+    {
+        $current = trim($current);
+        if (preg_match('/^(\d+)\.(\d+)$/', $current, $m)) {
+            return $m[1] . '.' . ((int) $m[2] + 1);
+        }
+        if (preg_match('/^(\d+)$/', $current, $m)) {
+            return ((int) $m[1] + 1) . '.0';
+        }
+
+        return '1.1';
     }
 
     /** @return list<array<string, mixed>> */

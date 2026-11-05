@@ -23,6 +23,12 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
         Kennung <?= View::escape((string) ($contractTemplate['code'] ?? '')) ?>
         · Status <?= View::escape($statusLabels[$status] ?? $status) ?>
         · Version <?= View::escape((string) ($contractTemplate['version'] ?? '')) ?>
+        <?php
+          $publishedAt = trim((string) ($contractTemplate['published_at'] ?? ''));
+          if ($publishedAt !== '') :
+        ?>
+          · Freigegeben <?= View::escape($publishedAt) ?>
+        <?php endif; ?>
       </p>
     </div>
     <div class="dg-page-header__actions">
@@ -37,6 +43,7 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
   <p class="dg-field-hint">
     Platzhalter wie <code>{{employee_name}}</code> oder <code>{{clause_salary}}</code> nicht entfernen —
     sie werden beim PDF-Erzeugen befüllt. HTML: Absätze, Listen, Fett/Kursiv.
+    Speichern erzeugt einen Entwurf; Freigabe setzt eine neue Versionsnummer und protokolliert den Stand.
   </p>
 
   <form class="dg-form dg-panel" method="post" action="/app?page=hr-vertragsvorlage-form&amp;id=<?= $tid ?>">
@@ -97,4 +104,24 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
       </div>
     <?php endif; ?>
   </form>
+
+  <?php if ($canEdit) : ?>
+    <form
+      class="dg-form dg-panel"
+      method="post"
+      action="/app?page=hr-vertragsvorlage-form&amp;id=<?= $tid ?>"
+      onsubmit="return confirm('Vorlage freigeben? Es wird eine neue Version gesetzt und der Stand protokolliert.');"
+    >
+      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+      <input type="hidden" name="id" value="<?= $tid ?>">
+      <input type="hidden" name="contract_template_publish" value="1">
+      <p class="dg-lead">
+        Freigabe macht den aktuellen Baustein-Stand zur gültigen Vorlage (neue Version).
+        Offene Entwurfsänderungen bitte vorher speichern.
+      </p>
+      <div class="dg-form-actions">
+        <button type="submit" class="dg-button dg-button--primary">Freigeben</button>
+      </div>
+    </form>
+  <?php endif; ?>
 </div>

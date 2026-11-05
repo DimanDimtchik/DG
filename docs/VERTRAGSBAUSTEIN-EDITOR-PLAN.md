@@ -122,4 +122,13 @@ Mehrsprachigkeit · Diff-UI · Word-Import · Klausel-Marktplatz · Branchen-Pac
 | Editor | `views/modules/hr-vertragsvorlage-form.php` |
 | Speichern | `ContractTemplateRepository::saveDraft` → Status `draft` |
 
-**V2 als Nächstes:** Freigabe + Version + Audit. (PDF nutzt Freigabe erst ab V3.)
+### V2 Status (2026-11-05)
+
+| Stück | Ort |
+|-------|-----|
+| Freigabe | `ContractTemplateRepository::publish` → Status `published`, Version bump, `published_at` |
+| Audit | `AuditLog::record('contract_template_publish', …)` inkl. Block-Snapshot (SHA-256) |
+| UI | Freigabe-Formular auf `hr-vertragsvorlage-form` · POST `contract_template_publish` |
+| Version | `bumpVersion` (`1.0` → `1.1`, …) |
+
+**V3 als Nächstes:** PDF-Generate lädt nur `publishedWithBlocks` (Draft nicht produktiv).

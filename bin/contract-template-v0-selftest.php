@@ -87,6 +87,11 @@ $miniHtml = ContractTemplateRenderer::render(
 assertV0(str_contains($miniHtml, 'geringfügige Beschäftigung'), 'Minijob-SGB-Klausel');
 assertV0(str_contains($miniHtml, 'Rentenversicherungsbefreiung'), 'Minijob-Anlage RV');
 
+assertV0(ContractTemplateRepository::bumpVersion('1.0') === '1.1', 'bumpVersion 1.0→1.1');
+assertV0(ContractTemplateRepository::bumpVersion('2.9') === '2.10', 'bumpVersion 2.9→2.10');
+assertV0(ContractTemplateRepository::bumpVersion('3') === '4.0', 'bumpVersion 3→4.0');
+assertV0(ContractTemplateRepository::bumpVersion('x') === '1.1', 'bumpVersion Fallback');
+
 if (ContractTemplateRepository::tableReady()) {
     $seed = ContractTemplateRepository::ensureSeeded();
     assertV0(($seed['created'] + $seed['skipped']) === 3, 'Seed deckt 3 Codes ab');
@@ -98,5 +103,5 @@ if (ContractTemplateRepository::tableReady()) {
     echo "SKIP: DB/Tabellen nicht bereit — nur Katalog-Tests.\n";
 }
 
-echo "V0 Selftest bestanden.\n";
+echo "V0/V2 Selftest bestanden.\n";
 exit(0);
