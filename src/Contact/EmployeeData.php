@@ -300,6 +300,7 @@ final class EmployeeData
      */
     public static function taxClassOptions(): array
     {
+        // Keys werden von PHP zu int (1…6) — Vergleiche/HTML immer als String "(string)".
         return [
             '' => '—',
             '1' => 'I',
@@ -309,6 +310,27 @@ final class EmployeeData
             '5' => 'V',
             '6' => 'VI',
         ];
+    }
+
+    /** Normalisiert Steuerklasse (1–6); akzeptiert auch römische Schreibweise I–VI. */
+    public static function normalizeTaxClass(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+        $roman = [
+            'I' => '1', 'II' => '2', 'III' => '3', 'IV' => '4', 'V' => '5', 'VI' => '6',
+        ];
+        $upper = strtoupper($raw);
+        if (isset($roman[$upper])) {
+            $raw = $roman[$upper];
+        }
+        if (!preg_match('/^[1-6]$/', $raw)) {
+            return '';
+        }
+
+        return $raw;
     }
 
     /**
@@ -656,8 +678,7 @@ final class EmployeeData
         $taxId = preg_replace('/\D+/', '', (string) ($out['tax_id'] ?? '')) ?? '';
         $out['tax_id'] = $taxId;
 
-        $taxClass = trim((string) ($out['tax_class'] ?? ''));
-        $out['tax_class'] = isset(self::taxClassOptions()[$taxClass]) ? $taxClass : '';
+        $out['tax_class'] = self::normalizeTaxClass((string) ($out['tax_class'] ?? ''));
 
         $out['child_allowances'] = self::normalizeChildAllowances((string) ($out['child_allowances'] ?? ''));
 

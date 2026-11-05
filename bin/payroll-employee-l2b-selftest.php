@@ -43,6 +43,17 @@ assertL2b($clean['controlling_managing_director'] === '', 'GF-Flag ohne managing
 assertL2b($clean['sv_exempt'] === '', 'sv_exempt ohne GF-Flag verworfen');
 assertL2b($clean['employment_type'] === 'regular', 'weich sync fulltime → regular');
 
+$taxNorm = EmployeeData::sanitize(['tax_class' => 'I', 'payroll_employment_type' => 'fulltime']);
+assertL2b($taxNorm['tax_class'] === '1', 'Steuerklasse I → 1');
+$taxKeep = EmployeeData::sanitize(['tax_class' => '1', 'payroll_employment_type' => 'fulltime']);
+assertL2b($taxKeep['tax_class'] === '1', 'Steuerklasse 1 bleibt 1');
+$taxBad = EmployeeData::sanitize(['tax_class' => '7', 'payroll_employment_type' => 'fulltime']);
+assertL2b($taxBad['tax_class'] === '', 'Steuerklasse 7 verworfen');
+// PHP castet Option-Keys zu int — UI-Vergleich muss string-cast nutzen
+$taxOptKeys = array_keys(EmployeeData::taxClassOptions());
+assertL2b(in_array(1, $taxOptKeys, true), 'taxClassOptions-Key 1 ist int (PHP)');
+assertL2b((string) '1' === (string) 1, 'string-cast macht Steuerklasse-Select vergleichbar');
+
 $softKeys = EmployeeData::sanitize([
     'payroll_employment_type' => 'minijob',
     'person_group_key' => '',

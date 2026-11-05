@@ -198,7 +198,7 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?= $roAttr ?>
             >
               <?php foreach ($selectOptions as $optVal => $optLabel) : ?>
-                <option value="<?= View::escape($optVal) ?>"<?= $value === $optVal ? ' selected' : '' ?>><?= View::escape($optLabel) ?></option>
+                <option value="<?= View::escape((string) $optVal) ?>"<?= (string) $value === (string) $optVal ? ' selected' : '' ?>><?= View::escape($optLabel) ?></option>
               <?php endforeach; ?>
             </select>
           </label>
