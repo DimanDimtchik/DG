@@ -6200,6 +6200,73 @@ switch ($path) {
             exit;
         }
 
+        // POST: Arbeitsplan Woche (Day-Windows → Buchungsslots)
+        if (
+            $page === 'zeiterfassung-arbeitsplan'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['arbeitsplan_action'])
+            && MenuRegistry::canAccess($user, 'zeiterfassung-arbeitsplan')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=zeiterfassung-arbeitsplan', true, 302);
+                exit;
+            }
+            $weekMonday = TimeShiftAssignmentRepository::mondayOfWeek(
+                (string) ($_POST['week_monday'] ?? date('Y-m-d'))
+            );
+            $empId = (int) ($_POST['employee_id'] ?? 0);
+            try {
+                $ownContact = ContactRepository::findStaffContactIdForUser($user);
+                $ownEmpId = $ownContact !== null
+                    ? CalendarStaffRepository::findEmployeeIdByContactId((int) $ownContact)
+                    : 0;
+                $canTeam = TimeClockService::canViewTeam($user);
+                if ($empId < 1 || (!$canTeam && $empId !== $ownEmpId)) {
+                    throw new RuntimeException('Keine Berechtigung für diesen Mitarbeiter.');
+                }
+                if ((string) ($_POST['arbeitsplan_action'] ?? '') === 'save_week') {
+                    MigrationRunner::runPending();
+                    $rawDays = is_array($_POST['days'] ?? null) ? $_POST['days'] : [];
+                    $map = [];
+                    foreach ($rawDays as $date => $windows) {
+                        $date = (string) $date;
+                        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !is_array($windows)) {
+                            continue;
+                        }
+                        $list = [];
+                        foreach ($windows as $w) {
+                            if (!is_array($w)) {
+                                continue;
+                            }
+                            $list[] = [
+                                'start_time' => trim((string) ($w['start_time'] ?? '')),
+                                'end_time' => trim((string) ($w['end_time'] ?? '')),
+                            ];
+                        }
+                        $map[$date] = $list;
+                    }
+                    $res = CalendarStaffRepository::replaceDayWindowsMap(
+                        $empId,
+                        $map,
+                        (int) ($user->id ?? 0)
+                    );
+                    Flash::set('success', (string) ($res['message'] ?? 'Arbeitsplan gespeichert.'));
+                } else {
+                    Flash::set('error', 'Unbekannte Aktion.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header(
+                'Location: /app?page=zeiterfassung-arbeitsplan&week=' . rawurlencode($weekMonday)
+                . '&employee_id=' . $empId,
+                true,
+                302
+            );
+            exit;
+        }
+
         // POST: Schichtplan Woche (Z3c)
         if (
             $page === 'zeiterfassung-schichten'
@@ -9916,6 +9983,68 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/zeiterfassung-schichten';
             $title = 'Schichtplan';
             $currentPage = 'zeiterfassung';
+        } elseif ($page === 'zeiterfassung-arbeitsplan' && MenuRegistry::canAccess($user, 'zeiterfassung-arbeitsplan')) {
+            MigrationRunner::runPending();
+            $arbeitsplanTableReady = CalendarStaffRepository::dayWindowsTableReady();
+            $weekRaw = isset($_GET['week']) ? (string) $_GET['week'] : date('Y-m-d');
+            $arbeitsplanWeekMonday = TimeShiftAssignmentRepository::mondayOfWeek($weekRaw);
+            $arbeitsplanWeekDates = TimeShiftAssignmentRepository::weekDates($arbeitsplanWeekMonday);
+            $arbeitsplanCanPickEmployee = TimeClockService::canViewTeam($user);
+            $arbeitsplanEmployeeOptions = [];
+            foreach (CalendarStaffRepository::getEmployees(true) as $emp) {
+                if (!is_array($emp) || (int) ($emp['contact_id'] ?? 0) < 1) {
+                    continue;
+                }
+                $arbeitsplanEmployeeOptions[] = [
+                    'id' => (int) ($emp['id'] ?? 0),
+                    'name' => (string) ($emp['name'] ?? ''),
+                ];
+            }
+            $ownContact = ContactRepository::findStaffContactIdForUser($user);
+            $ownEmpId = $ownContact !== null
+                ? CalendarStaffRepository::findEmployeeIdByContactId((int) $ownContact)
+                : 0;
+            $reqEmp = isset($_GET['employee_id']) ? (int) $_GET['employee_id'] : 0;
+            if ($arbeitsplanCanPickEmployee && $reqEmp > 0) {
+                $arbeitsplanEmployeeId = $reqEmp;
+            } elseif ($ownEmpId > 0) {
+                $arbeitsplanEmployeeId = $ownEmpId;
+            } elseif ($arbeitsplanCanPickEmployee && $arbeitsplanEmployeeOptions !== []) {
+                $arbeitsplanEmployeeId = (int) ($arbeitsplanEmployeeOptions[0]['id'] ?? 0);
+            } else {
+                $arbeitsplanEmployeeId = 0;
+            }
+            if (!$arbeitsplanCanPickEmployee && $ownEmpId > 0 && $arbeitsplanEmployeeId !== $ownEmpId) {
+                $arbeitsplanEmployeeId = $ownEmpId;
+            }
+            $arbeitsplanEmployeeName = '';
+            if ($arbeitsplanEmployeeId > 0) {
+                $arbeitsplanEmployeeName = CalendarStaffRepository::employeeName($arbeitsplanEmployeeId);
+            }
+            $sundayAp = $arbeitsplanWeekDates[6] ?? $arbeitsplanWeekMonday;
+            $arbeitsplanWindowsByDate = [];
+            if ($arbeitsplanEmployeeId > 0 && $arbeitsplanTableReady) {
+                foreach (CalendarStaffRepository::listDayWindows(
+                    $arbeitsplanEmployeeId,
+                    $arbeitsplanWeekMonday,
+                    $sundayAp
+                ) as $row) {
+                    $d = (string) ($row['work_date'] ?? '');
+                    if ($d === '') {
+                        continue;
+                    }
+                    if (!isset($arbeitsplanWindowsByDate[$d])) {
+                        $arbeitsplanWindowsByDate[$d] = [];
+                    }
+                    $arbeitsplanWindowsByDate[$d][] = [
+                        'start_time' => (string) ($row['start_time'] ?? ''),
+                        'end_time' => (string) ($row['end_time'] ?? ''),
+                    ];
+                }
+            }
+            $contentTemplate = 'modules/zeiterfassung-arbeitsplan';
+            $title = 'Arbeitsplan';
+            $currentPage = 'zeiterfassung';
         } elseif ($page === 'zeiterfassung-schicht-vorlagen' && MenuRegistry::canAccess($user, 'zeiterfassung-schicht-vorlagen')) {
             MigrationRunner::runPending();
             $editId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -10895,6 +11024,14 @@ $legalProductsConfig = LegalProductSettings::config();
         $timeShiftStaff = $timeShiftStaff ?? [];
         $timeShiftActiveTemplates = $timeShiftActiveTemplates ?? [];
         $timeShiftAssignmentMap = $timeShiftAssignmentMap ?? [];
+        $arbeitsplanWeekMonday = $arbeitsplanWeekMonday ?? date('Y-m-d');
+        $arbeitsplanWeekDates = $arbeitsplanWeekDates ?? [];
+        $arbeitsplanEmployeeId = $arbeitsplanEmployeeId ?? 0;
+        $arbeitsplanEmployeeName = $arbeitsplanEmployeeName ?? '';
+        $arbeitsplanEmployeeOptions = $arbeitsplanEmployeeOptions ?? [];
+        $arbeitsplanCanPickEmployee = $arbeitsplanCanPickEmployee ?? false;
+        $arbeitsplanWindowsByDate = $arbeitsplanWindowsByDate ?? [];
+        $arbeitsplanTableReady = $arbeitsplanTableReady ?? false;
         $timeVacContactId = $timeVacContactId ?? null;
         $timeVacContactLabel = $timeVacContactLabel ?? '';
         $timeVacYear = $timeVacYear ?? (int) date('Y');
@@ -11406,6 +11543,14 @@ $legalProductsConfig = LegalProductSettings::config();
             'timeShiftWeekDates',
             'timeShiftStaff',
             'timeShiftActiveTemplates',
+            'arbeitsplanWeekMonday',
+            'arbeitsplanWeekDates',
+            'arbeitsplanEmployeeId',
+            'arbeitsplanEmployeeName',
+            'arbeitsplanEmployeeOptions',
+            'arbeitsplanCanPickEmployee',
+            'arbeitsplanWindowsByDate',
+            'arbeitsplanTableReady',
             'payrollWageTypes',
             'payrollWageTypeEdit',
             'payrollWageCanEdit',

@@ -624,6 +624,7 @@ final class MenuRegistry
             'hr-vertragsvorlagen' => 'Klauseln und Paragraphen von Arbeits- und anderen Verträgen bearbeiten.',
             'hr-bewerber' => 'Bewerbungen und Bewerberakte — Status und Unterlagen im CRM.',
             'zeiterfassung' => 'Einstempeln, Pausen und Arbeitszeiten — Übersicht für Mitarbeiter und HR.',
+            'zeiterfassung-arbeitsplan' => 'Geplante Arbeitszeiten eintragen — öffnen buchbare Termine im Kalender.',
             'lohn-monatslauf' => 'Lohnabrechnung je Monat: berechnen, freigeben, sperren und Dokumente erzeugen.',
             'lohn-lohnkonto' => 'Lohnkonto je Mitarbeiter und Jahr — chronologische Abrechnungsübersicht.',
             'lohn-auswertungen' => 'SV-Portal-Vorbereitung: Beitragsnachweis und Stammkontrolle als CSV.',
@@ -1077,6 +1078,9 @@ final class MenuRegistry
         }
         if ($slug === 'zeiterfassung-schichten') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && TimeClockService::canViewTeam($user);
+        }
+        if ($slug === 'zeiterfassung-arbeitsplan') {
+            return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);
         }
         if ($slug === 'zeiterfassung-urlaub') {
             return DepartmentAccess::canAccessModule($user, 'zeiterfassung') && RoleResolver::canEdit($user);

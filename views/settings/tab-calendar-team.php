@@ -257,8 +257,10 @@ $csrf = Csrf::token();
                     <?php if ($hasHours) : ?>
                       <span class="dg-cal-hours-summary"><?= View::escape($hoursSummary) ?></span>
                     <?php else : ?>
-                      <span class="dg-cal-warning">Noch keine Arbeitszeiten (nicht buchbar)</span>
+                      <span class="dg-cal-warning">Noch kein Wochenraster</span>
                     <?php endif; ?>
+                    <br>
+                    <a class="dg-button dg-button--small" href="/app?page=zeiterfassung-arbeitsplan&amp;employee_id=<?= (int) $employee['id'] ?>">Arbeitsplan</a>
                   </td>
                   <td><?= (int) $employee['sort_order'] ?></td>
                   <td><?= $linkedUser ? View::escape($linkedUser->displayName) : '—' ?></td>

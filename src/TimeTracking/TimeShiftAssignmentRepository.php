@@ -92,6 +92,13 @@ final class TimeShiftAssignmentRepository
                 'DELETE FROM dg_time_shift_assignments WHERE contact_id = :cid AND work_date = :d'
             );
             $del->execute(['cid' => $contactId, 'd' => $workDate]);
+            if (class_exists('CalendarStaffRepository')) {
+                try {
+                    CalendarStaffRepository::clearDayWindowsForContactDate($contactId, $workDate);
+                } catch (Throwable) {
+                    // Kalender optional
+                }
+            }
 
             return;
         }
@@ -111,6 +118,19 @@ final class TimeShiftAssignmentRepository
             'd' => $workDate,
             'tid' => $templateId,
         ]);
+
+        if (class_exists('CalendarStaffRepository')) {
+            try {
+                CalendarStaffRepository::syncDayWindowFromShift(
+                    $contactId,
+                    $workDate,
+                    (string) ($tpl['start_time'] ?? ''),
+                    (string) ($tpl['end_time'] ?? '')
+                );
+            } catch (Throwable) {
+                // Kalender optional
+            }
+        }
     }
 
     /**

@@ -23,12 +23,16 @@ $weekEnd = $dates !== [] ? $dates[count($dates) - 1] : $monday;
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Schichtplan</h1>
-      <p class="dg-lead">Z3c — Zuordnung Mitarbeiter × Tag · <?= View::escape(
-          (new DateTimeImmutable($monday))->format('d.m.Y') . ' – ' . (new DateTimeImmutable($weekEnd))->format('d.m.Y')
-      ) ?></p>
+      <p class="dg-lead">
+        Zuordnung Mitarbeiter × Tag · öffnet auch Buchungsfenster im Terminkalender (bei Kalender-Mitarbeiter).
+        · <?= View::escape(
+            (new DateTimeImmutable($monday))->format('d.m.Y') . ' – ' . (new DateTimeImmutable($weekEnd))->format('d.m.Y')
+        ) ?>
+      </p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=zeiterfassung-schicht-vorlagen">Vorlagen</a>
+      <a class="dg-button" href="/app?page=zeiterfassung-arbeitsplan">Arbeitsplan</a>
       <a class="dg-button" href="/app?page=zeiterfassung-team">Team heute</a>
     </div>
   </header>

@@ -164,6 +164,86 @@ final class MobileStaffApi
             ]);
         }
 
+        if ($head === 'arbeitsplan' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
+            $week = trim((string) ($_GET['week'] ?? ''));
+            if ($week === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $week)) {
+                $week = (new DateTimeImmutable('monday this week'))->format('Y-m-d');
+            }
+            $monday = TimeShiftAssignmentRepository::mondayOfWeek($week);
+            $dates = TimeShiftAssignmentRepository::weekDates($monday);
+            $sunday = $dates[6] ?? $monday;
+            $employeeId = CalendarStaffRepository::findEmployeeIdByContactId($contactId);
+            $days = [];
+            foreach ($dates as $d) {
+                $days[$d] = [];
+            }
+            if ($employeeId > 0 && CalendarStaffRepository::dayWindowsTableReady()) {
+                foreach (CalendarStaffRepository::listDayWindows($employeeId, $monday, $sunday) as $row) {
+                    $d = (string) ($row['work_date'] ?? '');
+                    if ($d === '' || !isset($days[$d])) {
+                        continue;
+                    }
+                    $days[$d][] = [
+                        'start_time' => (string) ($row['start_time'] ?? ''),
+                        'end_time' => (string) ($row['end_time'] ?? ''),
+                    ];
+                }
+            }
+            MobileApi::ok([
+                'week_monday' => $monday,
+                'week_sunday' => $sunday,
+                'employee_id' => $employeeId,
+                'calendar_linked' => $employeeId > 0,
+                'days' => $days,
+            ]);
+        }
+
+        if ($head === 'arbeitsplan' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            $employeeId = CalendarStaffRepository::findEmployeeIdByContactId($contactId);
+            if ($employeeId < 1) {
+                MobileApi::fail(400, 'Kein Kalender-Mitarbeiter verknüpft.', 'no_calendar_employee');
+            }
+            if (!CalendarStaffRepository::dayWindowsTableReady()) {
+                MobileApi::fail(503, 'Arbeitsplan nicht verfügbar (Migration).', 'migration');
+            }
+            $body = MobileApi::jsonBody();
+            $rawDays = $body['days'] ?? null;
+            if (!is_array($rawDays)) {
+                MobileApi::fail(400, 'days erforderlich.', 'bad_request');
+            }
+            $map = [];
+            foreach ($rawDays as $date => $windows) {
+                $date = (string) $date;
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                    continue;
+                }
+                $list = [];
+                if (is_array($windows)) {
+                    foreach ($windows as $w) {
+                        if (!is_array($w)) {
+                            continue;
+                        }
+                        $list[] = [
+                            'start_time' => trim((string) ($w['start_time'] ?? '')),
+                            'end_time' => trim((string) ($w['end_time'] ?? '')),
+                        ];
+                    }
+                }
+                $map[$date] = $list;
+            }
+            try {
+                $res = CalendarStaffRepository::replaceDayWindowsMap($employeeId, $map, null);
+                MobileApi::ok([
+                    'employee_id' => $employeeId,
+                    'message' => (string) ($res['message'] ?? 'Gespeichert.'),
+                    'days' => (int) ($res['days'] ?? 0),
+                    'windows' => (int) ($res['windows'] ?? 0),
+                ]);
+            } catch (Throwable $e) {
+                MobileApi::fail(400, $e->getMessage(), 'bad_request');
+            }
+        }
+
         if ($head === 'documents' && $sub === 'download' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
             self::downloadDocument($contactId);
         }

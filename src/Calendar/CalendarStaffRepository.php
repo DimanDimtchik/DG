@@ -739,6 +739,9 @@ final class CalendarStaffRepository
 
         $pdo->prepare('DELETE FROM dg_calendar_employee_areas WHERE employee_id = :id')->execute(['id' => $id]);
         $pdo->prepare('DELETE FROM dg_calendar_employee_hours WHERE employee_id = :id')->execute(['id' => $id]);
+        if (self::dayWindowsTableReady()) {
+            $pdo->prepare('DELETE FROM dg_calendar_employee_day_windows WHERE employee_id = :id')->execute(['id' => $id]);
+        }
         $pdo->prepare('DELETE FROM dg_calendar_employee_absences WHERE employee_id = :id')->execute(['id' => $id]);
         $pdo->prepare('DELETE FROM dg_calendar_employees WHERE id = :id')->execute(['id' => $id]);
 
@@ -787,6 +790,253 @@ final class CalendarStaffRepository
         }
 
         return ['message' => 'Arbeitszeiten gespeichert.', 'count' => $saved];
+    }
+
+    public static function dayWindowsTableReady(): bool
+    {
+        if (!self::useDatabase()) {
+            return false;
+        }
+        try {
+            $r = Database::pdo()->query("SHOW TABLES LIKE 'dg_calendar_employee_day_windows'");
+
+            return $r !== false && $r->fetchColumn() !== false;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Kalender-Mitarbeiter-ID zum Kontakt (aktive Zeile bevorzugt).
+     */
+    public static function findEmployeeIdByContactId(int $contactId): int
+    {
+        if ($contactId < 1 || !self::useDatabase()) {
+            return 0;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT id FROM dg_calendar_employees
+             WHERE contact_id = :cid
+             ORDER BY is_active DESC, sort_order ASC, id ASC
+             LIMIT 1'
+        );
+        $stmt->execute(['cid' => $contactId]);
+        $id = $stmt->fetchColumn();
+
+        return $id !== false ? (int) $id : 0;
+    }
+
+    /**
+     * @return list<array{id: int, work_date: string, start_time: string, end_time: string, updated_by: int|null}>
+     */
+    public static function listDayWindows(int $employeeId, string $fromYmd, string $toYmd): array
+    {
+        if (!self::dayWindowsTableReady()
+            || $employeeId < 1
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromYmd)
+            || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $toYmd)
+        ) {
+            return [];
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT id, work_date, start_time, end_time, updated_by
+             FROM dg_calendar_employee_day_windows
+             WHERE employee_id = :eid AND work_date >= :from AND work_date <= :to
+             ORDER BY work_date ASC, start_time ASC, id ASC'
+        );
+        $stmt->execute(['eid' => $employeeId, 'from' => $fromYmd, 'to' => $toYmd]);
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $out[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'work_date' => (string) ($row['work_date'] ?? ''),
+                'start_time' => (string) ($row['start_time'] ?? ''),
+                'end_time' => (string) ($row['end_time'] ?? ''),
+                'updated_by' => isset($row['updated_by']) && $row['updated_by'] !== null
+                    ? (int) $row['updated_by']
+                    : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array{id: int, work_date: string, start_time: string, end_time: string}>
+     */
+    public static function listDayWindowsForDate(int $employeeId, string $workDate): array
+    {
+        return self::listDayWindows($employeeId, $workDate, $workDate);
+    }
+
+    /**
+     * Ersetzt Planfenster eines Tages (leeres Array = Tag löschen → Wochenraster-Fallback).
+     *
+     * @param list<array{start_time?: string, end_time?: string}> $windows
+     * @return array{message: string, count: int}
+     */
+    public static function replaceDayWindowsForDate(
+        int $employeeId,
+        string $workDate,
+        array $windows,
+        ?int $updatedBy = null
+    ): array {
+        if ($employeeId < 1 || self::getEmployee($employeeId) === null) {
+            throw new InvalidArgumentException('Mitarbeiter nicht gefunden.');
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $workDate)) {
+            throw new InvalidArgumentException('Ungültiges Datum.');
+        }
+        if (!self::dayWindowsTableReady()) {
+            throw new RuntimeException('Arbeitsplan-Tabelle fehlt — Migration 141 ausführen.');
+        }
+
+        $normalized = [];
+        foreach ($windows as $window) {
+            if (!is_array($window)) {
+                continue;
+            }
+            $start = self::normalizeTime((string) ($window['start_time'] ?? ''));
+            $end = self::normalizeTime((string) ($window['end_time'] ?? ''));
+            if ($start === '' || $end === '' || $start >= $end) {
+                continue;
+            }
+            $normalized[] = ['start_time' => $start, 'end_time' => $end];
+        }
+
+        $pdo = Database::pdo();
+        $pdo->prepare(
+            'DELETE FROM dg_calendar_employee_day_windows WHERE employee_id = :eid AND work_date = :d'
+        )->execute(['eid' => $employeeId, 'd' => $workDate]);
+
+        if ($normalized === []) {
+            return ['message' => 'Planfenster für den Tag entfernt (Wochenraster gilt wieder).', 'count' => 0];
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO dg_calendar_employee_day_windows
+                (employee_id, work_date, start_time, end_time, updated_by)
+             VALUES (:eid, :d, :start, :end, :uid)'
+        );
+        $uid = $updatedBy !== null && $updatedBy > 0 ? $updatedBy : null;
+        foreach ($normalized as $w) {
+            $stmt->execute([
+                'eid' => $employeeId,
+                'd' => $workDate,
+                'start' => $w['start_time'],
+                'end' => $w['end_time'],
+                'uid' => $uid,
+            ]);
+        }
+
+        return ['message' => 'Arbeitsplan für den Tag gespeichert.', 'count' => count($normalized)];
+    }
+
+    /**
+     * Speichert Wochen-/Monatsplan: days[YYYY-MM-DD] = list of {start_time,end_time}.
+     * Fehlende Tage in $days werden nicht angefasst; leere Liste löscht den Tag.
+     *
+     * @param array<string, list<array{start_time?: string, end_time?: string}>> $days
+     * @return array{message: string, days: int, windows: int}
+     */
+    public static function replaceDayWindowsMap(int $employeeId, array $days, ?int $updatedBy = null): array
+    {
+        $dayCount = 0;
+        $windowCount = 0;
+        foreach ($days as $date => $windows) {
+            $date = (string) $date;
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                continue;
+            }
+            if (!is_array($windows)) {
+                $windows = [];
+            }
+            $res = self::replaceDayWindowsForDate($employeeId, $date, $windows, $updatedBy);
+            ++$dayCount;
+            $windowCount += (int) ($res['count'] ?? 0);
+        }
+
+        return [
+            'message' => 'Arbeitsplan gespeichert (' . $dayCount . ' Tage, ' . $windowCount . ' Fenster).',
+            'days' => $dayCount,
+            'windows' => $windowCount,
+        ];
+    }
+
+    /**
+     * Planfenster für den Tag, sonst Wochenraster.
+     *
+     * @return list<array{start_time: string, end_time: string}>
+     */
+    public static function resolveWindowsForDay(int $employeeId, DateTimeImmutable $day): array
+    {
+        if ($employeeId < 1) {
+            return [];
+        }
+        if (self::dayWindowsTableReady()) {
+            $dated = self::listDayWindowsForDate($employeeId, $day->format('Y-m-d'));
+            if ($dated !== []) {
+                $out = [];
+                foreach ($dated as $row) {
+                    $out[] = [
+                        'start_time' => (string) ($row['start_time'] ?? ''),
+                        'end_time' => (string) ($row['end_time'] ?? ''),
+                    ];
+                }
+
+                return $out;
+            }
+        }
+
+        return self::getHoursForWeekday($employeeId, (int) $day->format('N'));
+    }
+
+    /**
+     * Schicht → Kalender-Planfenster (ein Fenster; Übernacht-Schichten werden übersprungen).
+     */
+    public static function syncDayWindowFromShift(
+        int $contactId,
+        string $workDate,
+        string $startTime,
+        string $endTime,
+        ?int $updatedBy = null
+    ): void {
+        $employeeId = self::findEmployeeIdByContactId($contactId);
+        if ($employeeId < 1 || !self::dayWindowsTableReady()) {
+            return;
+        }
+        $start = self::normalizeTime($startTime);
+        $end = self::normalizeTime($endTime);
+        if ($start === '' || $end === '' || $start >= $end) {
+            // Übernacht oder ungültig: Planfenster löschen, Wochenraster bleibt
+            self::replaceDayWindowsForDate($employeeId, $workDate, [], $updatedBy);
+
+            return;
+        }
+        self::replaceDayWindowsForDate(
+            $employeeId,
+            $workDate,
+            [['start_time' => $start, 'end_time' => $end]],
+            $updatedBy
+        );
+    }
+
+    /**
+     * Schicht gelöscht → Planfenster für den Tag entfernen.
+     */
+    public static function clearDayWindowsForContactDate(
+        int $contactId,
+        string $workDate,
+        ?int $updatedBy = null
+    ): void {
+        $employeeId = self::findEmployeeIdByContactId($contactId);
+        if ($employeeId < 1 || !self::dayWindowsTableReady()) {
+            return;
+        }
+        self::replaceDayWindowsForDate($employeeId, $workDate, [], $updatedBy);
     }
 
     /**
@@ -1038,8 +1288,7 @@ final class CalendarStaffRepository
             return false;
         }
 
-        $weekday = (int) $slotStart->format('N');
-        $windows = self::getHoursForWeekday($employeeId, $weekday);
+        $windows = self::resolveWindowsForDay($employeeId, $slotStart);
         if ($windows === []) {
             return false;
         }
@@ -1095,7 +1344,6 @@ final class CalendarStaffRepository
      */
     public static function getMergedDayWindowsForEmployees(array $employeeIds, DateTimeImmutable $day): array
     {
-        $weekday = (int) $day->format('N');
         $ranges = [];
 
         foreach ($employeeIds as $employeeId) {
@@ -1107,7 +1355,7 @@ final class CalendarStaffRepository
                 continue;
             }
 
-            foreach (self::getHoursForWeekday($employeeId, $weekday) as $window) {
+            foreach (self::resolveWindowsForDay($employeeId, $day) as $window) {
                 $bounds = self::windowBoundsOnDay($day, $window['start_time'], $window['end_time']);
                 if ($bounds !== null) {
                     $ranges[] = $bounds;
