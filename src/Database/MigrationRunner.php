@@ -351,6 +351,8 @@ final class MigrationRunner
                 && self::columnExists($pdo, 'dg_elster_submissions', 'payload_checksum')
                 && self::columnExists($pdo, 'dg_elster_submissions', 'detail_json'),
             '139_hr_personnel_events.sql' => self::tableExists($pdo, 'dg_hr_personnel_events'),
+            '140_contract_templates.sql' => self::tableExists($pdo, 'dg_contract_templates')
+                && self::tableExists($pdo, 'dg_contract_template_blocks'),
             default => false,
         };
     }
@@ -500,6 +502,8 @@ final class MigrationRunner
             '131_payroll_sepa_exports.sql' => true,
             '132_payroll_sv_exports.sql' => true,
             '133_elster_submissions_payroll.sql' => true,
+            '139_hr_personnel_events.sql' => true,
+            '140_contract_templates.sql' => true,
         ];
     }
 
