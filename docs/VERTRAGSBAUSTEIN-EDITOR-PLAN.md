@@ -131,4 +131,13 @@ Mehrsprachigkeit · Diff-UI · Word-Import · Klausel-Marktplatz · Branchen-Pac
 | UI | Freigabe-Formular auf `hr-vertragsvorlage-form` · POST `contract_template_publish` |
 | Version | `bumpVersion` (`1.0` → `1.1`, …) |
 
-**V3 als Nächstes:** PDF-Generate lädt nur `publishedWithBlocks` (Draft nicht produktiv).
+### V3 Status (2026-11-05)
+
+| Stück | Ort |
+|-------|-----|
+| Resolve | `EmploymentContractClauses::resolveForType` → nur `published`, sonst Katalog |
+| PDF | `EmploymentContractPdfService` rendert resolved Blocks; leerer Body / offene `{{…}}` → Fehler |
+| Seed vor Generate | `EmploymentContractService::generate` ruft `ensureSeeded` |
+| Prüfnachweis | `our_ref` enthält `-v{Version}` bei published |
+
+**V4 optional:** Vorschau-PDF im Editor + weiterer Dokumenttyp.

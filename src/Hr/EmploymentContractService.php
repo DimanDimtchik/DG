@@ -67,6 +67,14 @@ final class EmploymentContractService
             ),
         ];
 
+        if (class_exists('ContractTemplateRepository') && ContractTemplateRepository::tableReady()) {
+            try {
+                ContractTemplateRepository::ensureSeeded();
+            } catch (Throwable) {
+                // PDF läuft dann über Katalog-Fallback
+            }
+        }
+
         $pdf = EmploymentContractPdfService::renderPdf($ctx['placeholders'], $opts);
         $nameSlug = EmploymentContractContext::fileNameSlug(
             (string) ($ctx['placeholders']['employee_name'] ?? '')

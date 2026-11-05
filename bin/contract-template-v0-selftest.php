@@ -92,6 +92,13 @@ assertV0(ContractTemplateRepository::bumpVersion('2.9') === '2.10', 'bumpVersion
 assertV0(ContractTemplateRepository::bumpVersion('3') === '4.0', 'bumpVersion 3→4.0');
 assertV0(ContractTemplateRepository::bumpVersion('x') === '1.1', 'bumpVersion Fallback');
 
+$resolvedCatalog = EmploymentContractClauses::resolveForType(EmploymentContractContext::TYPE_FULLTIME);
+assertV0($resolvedCatalog['blocks'] !== [], 'resolveForType liefert Bausteine');
+$fromResolve = ContractTemplateRenderer::render($resolvedCatalog['blocks'], $fixture, $opts);
+assertV0($fromResolve === $fromCatalog || $resolvedCatalog['source'] === 'published', 'Resolve-Render konsistent oder published');
+assertV0(!str_contains($fromResolve, '{{'), 'Resolve-HTML ohne offene Platzhalter (V3-Tor)');
+assertV0(trim(strip_tags($fromResolve)) !== '', 'Resolve-HTML nicht leer (V3-Tor)');
+
 if (ContractTemplateRepository::tableReady()) {
     $seed = ContractTemplateRepository::ensureSeeded();
     assertV0(($seed['created'] + $seed['skipped']) === 3, 'Seed deckt 3 Codes ab');
@@ -99,9 +106,16 @@ if (ContractTemplateRepository::tableReady()) {
     assertV0($pub !== null, 'Published Fulltime aus DB');
     $fromDb = ContractTemplateRenderer::render($pub['blocks'], $fixture, $opts);
     assertV0($fromDb === $fromCatalog, 'DB-Seed-Render = Katalog (Abbruch-Tor V0)');
+    $resolvedPub = EmploymentContractClauses::resolveForType(EmploymentContractContext::TYPE_FULLTIME);
+    assertV0($resolvedPub['source'] === 'published', 'V3 Resolve nutzt published');
+    assertV0(
+        ContractTemplateRenderer::render($resolvedPub['blocks'], $fixture, $opts) === $fromDb,
+        'V3 Resolve-Render = published DB'
+    );
 } else {
     echo "SKIP: DB/Tabellen nicht bereit — nur Katalog-Tests.\n";
+    assertV0($resolvedCatalog['source'] === 'catalog', 'ohne DB: Resolve = Katalog');
 }
 
-echo "V0/V2 Selftest bestanden.\n";
+echo "V0/V2/V3 Selftest bestanden.\n";
 exit(0);

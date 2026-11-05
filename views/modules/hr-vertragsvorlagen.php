@@ -15,7 +15,8 @@ $statusLabels = ContractTemplateRepository::statusLabels();
       <h1 class="dg-page-title">Vertragsvorlagen</h1>
       <p class="dg-lead">
         Paragraphen und Anlagen für Arbeitsverträge bearbeiten.
-        Speichern = Entwurf · Freigabe = neue Version mit Protokoll. Die PDF-Erzeugung aus freigegebenen Vorlagen folgt als nächster Schritt.
+        Speichern = Entwurf · Freigabe = neue Version mit Protokoll.
+        Neue Arbeitsvertrag-PDFs nutzen nur freigegebene Vorlagen (Entwurf nicht).
       </p>
     </div>
   </header>

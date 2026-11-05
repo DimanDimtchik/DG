@@ -2,8 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Arbeitsvertrags-HTML — nutzt ContractTemplateCatalog + Renderer (V0).
- * Fallback bleibt API-kompatibel für EmploymentContractPdfService.
+ * Arbeitsvertrags-HTML — V3: freigegebene Vorlage aus DB, sonst Katalog-Fallback.
  */
 final class EmploymentContractClauses
 {
@@ -21,9 +20,53 @@ final class EmploymentContractClauses
     public static function bodyHtml(array $p, array $opts): string
     {
         $type = (string) ($opts['contract_type'] ?? EmploymentContractContext::TYPE_FULLTIME);
-        $code = ContractTemplateCatalog::codeForContractType($type);
-        $blocks = ContractTemplateCatalog::blocksForCode($code);
+        $resolved = self::resolveForType($type);
 
-        return ContractTemplateRenderer::render($blocks, $p, $opts);
+        return ContractTemplateRenderer::render($resolved['blocks'], $p, $opts);
+    }
+
+    /**
+     * Bausteine für Vertragstyp: nur Status published aus DB, sonst Katalog.
+     *
+     * @return array{
+     *   code: string,
+     *   source: 'published'|'catalog',
+     *   version: string,
+     *   template_id: int,
+     *   blocks: list<array<string, mixed>>
+     * }
+     */
+    public static function resolveForType(string $contractType): array
+    {
+        $code = ContractTemplateCatalog::codeForContractType($contractType);
+        if (
+            class_exists('ContractTemplateRepository')
+            && ContractTemplateRepository::tableReady()
+        ) {
+            try {
+                $pub = ContractTemplateRepository::publishedWithBlocks($code);
+                if ($pub !== null && $pub['blocks'] !== []) {
+                    $tpl = $pub['template'];
+
+                    return [
+                        'code' => $code,
+                        'source' => 'published',
+                        'version' => (string) ($tpl['version'] ?? ''),
+                        'template_id' => (int) ($tpl['id'] ?? 0),
+                        'blocks' => $pub['blocks'],
+                    ];
+                }
+            } catch (Throwable) {
+                // Katalog-Fallback
+            }
+        }
+
+        return [
+            'code' => $code,
+            'source' => 'catalog',
+            'version' => '',
+            'template_id' => 0,
+            'blocks' => ContractTemplateCatalog::blocksForCode($code),
+        ];
     }
 }

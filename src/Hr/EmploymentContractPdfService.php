@@ -21,10 +21,30 @@ final class EmploymentContractPdfService
             );
         }
 
-        $bodyHtml = EmploymentContractClauses::bodyHtml($placeholders, $opts);
+        $type = (string) ($opts['contract_type'] ?? EmploymentContractContext::TYPE_FULLTIME);
+        $resolved = EmploymentContractClauses::resolveForType($type);
+        $bodyHtml = ContractTemplateRenderer::render($resolved['blocks'], $placeholders, $opts);
+        if (trim(strip_tags($bodyHtml)) === '') {
+            throw new RuntimeException(
+                'Vertragsvorlage liefert keinen Text. Freigegebene Vorlage prüfen oder Katalog-Fallback.'
+            );
+        }
+        if (str_contains($bodyHtml, '{{')) {
+            throw new RuntimeException(
+                'Vertragsvorlage enthält unersetzte Platzhalter — Baustein-Text prüfen.'
+            );
+        }
+
         $typeLabel = (string) ($placeholders['contract_type_label'] ?? 'Arbeitsvertrag');
         $employee = (string) ($placeholders['employee_name'] ?? '');
         $subject = 'Arbeitsvertrag — ' . $typeLabel . ($employee !== '' ? ' — ' . $employee : '');
+        $ourRef = 'AV-' . date('Ymd');
+        if ($resolved['source'] === 'published' && $resolved['version'] !== '') {
+            $safeVer = preg_replace('/[^0-9.]/', '', $resolved['version']) ?? '';
+            if ($safeVer !== '') {
+                $ourRef .= '-v' . $safeVer;
+            }
+        }
 
         $recipientLines = [(string) ($placeholders['employee_name'] ?? '')];
         foreach (EmploymentContractContext::addressLines((string) ($placeholders['employee_address'] ?? '')) as $line) {
@@ -36,7 +56,7 @@ final class EmploymentContractPdfService
                 static fn(string $l): bool => trim($l) !== ''
             )),
             'info' => [
-                'our_ref' => 'AV-' . date('Ymd'),
+                'our_ref' => $ourRef,
                 'our_handler' => '',
                 'date' => (string) ($placeholders['today'] ?? date('d.m.Y')),
             ],

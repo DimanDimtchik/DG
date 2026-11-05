@@ -44,6 +44,7 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
     Platzhalter wie <code>{{employee_name}}</code> oder <code>{{clause_salary}}</code> nicht entfernen —
     sie werden beim PDF-Erzeugen befüllt. HTML: Absätze, Listen, Fett/Kursiv.
     Speichern erzeugt einen Entwurf; Freigabe setzt eine neue Versionsnummer und protokolliert den Stand.
+    Neue PDFs nutzen nur den freigegebenen Stand.
   </p>
 
   <form class="dg-form dg-panel" method="post" action="/app?page=hr-vertragsvorlage-form&amp;id=<?= $tid ?>">
