@@ -80,7 +80,7 @@ final class MediaRepository
         foreach ($rows as $row) {
             $mediaId = (string) $row['media_id'];
             $row['usages'] = self::usageForMedia($mediaId);
-            $row['url'] = MediaStorage::publicUrl($mediaId);
+            $row['url'] = MediaStorage::publicUrlForItem($row);
             $out[] = $row;
         }
 
@@ -123,7 +123,7 @@ final class MediaRepository
             return null;
         }
 
-        $row['url'] = MediaStorage::publicUrl($mediaId);
+        $row['url'] = MediaStorage::publicUrlForItem($row);
         $row['usages'] = self::usageForMedia($mediaId);
 
         return $row;

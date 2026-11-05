@@ -248,10 +248,85 @@ final class MediaStorage
 
     /**
      * Public delivery URL (`/app/media?id=…`).
+     * Appends &v=filemtime so Browser/CDN nach SVG-Edits die neue Datei laden.
      */
-    public static function publicUrl(string $mediaId): string
+    public static function publicUrl(string $mediaId, ?int $version = null): string
     {
-        return '/app/media?id=' . rawurlencode($mediaId);
+        $url = '/app/media?id=' . rawurlencode($mediaId);
+        if ($version === null) {
+            $version = self::contentVersion($mediaId);
+        }
+        if ($version !== null && $version > 0) {
+            $url .= '&v=' . $version;
+        }
+
+        return $url;
+    }
+
+    /**
+     * Public URL with explicit version from a media DB row (preferred when available).
+     *
+     * @param array<string, mixed> $item
+     */
+    public static function publicUrlForItem(array $item): string
+    {
+        $mediaId = (string) ($item['media_id'] ?? '');
+        if ($mediaId === '') {
+            return '';
+        }
+        $stored = (string) ($item['stored_name'] ?? '');
+        $version = null;
+        if ($stored !== '') {
+            $path = self::absolutePath($mediaId, $stored);
+            if (is_file($path)) {
+                $mtime = @filemtime($path);
+                if (is_int($mtime) && $mtime > 0) {
+                    $version = $mtime;
+                }
+            }
+        }
+        if ($version === null) {
+            $bytes = (int) ($item['size_bytes'] ?? 0);
+            if ($bytes > 0) {
+                $version = $bytes;
+            }
+        }
+
+        return self::publicUrl($mediaId, $version);
+    }
+
+    /**
+     * Newest mtime in the media folder (for cache-busting without a DB roundtrip).
+     */
+    public static function contentVersion(string $mediaId): ?int
+    {
+        if (!MediaId::isValid($mediaId)) {
+            return null;
+        }
+        $dir = self::baseDir() . '/' . $mediaId;
+        if (!is_dir($dir)) {
+            return null;
+        }
+        $latest = 0;
+        $files = @scandir($dir);
+        if (!is_array($files)) {
+            return null;
+        }
+        foreach ($files as $name) {
+            if ($name === '.' || $name === '..' || str_starts_with($name, '.')) {
+                continue;
+            }
+            $path = $dir . '/' . $name;
+            if (!is_file($path)) {
+                continue;
+            }
+            $mtime = @filemtime($path);
+            if (is_int($mtime) && $mtime > $latest) {
+                $latest = $mtime;
+            }
+        }
+
+        return $latest > 0 ? $latest : null;
     }
 
     /**

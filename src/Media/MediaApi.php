@@ -125,8 +125,8 @@ final class MediaApi
                 'extension' => (string) ($row['extension'] ?? ''),
                 'width' => isset($row['width']) ? (int) $row['width'] : null,
                 'height' => isset($row['height']) ? (int) $row['height'] : null,
-                'url' => MediaStorage::publicUrl($mediaId),
-                'preview_url' => MediaStorage::publicUrl($mediaId),
+                'url' => MediaStorage::publicUrlForItem($row),
+                'preview_url' => MediaStorage::publicUrlForItem($row),
             ];
         }
 
@@ -182,29 +182,43 @@ final class MediaApi
         }
 
         $mime = (string) $item['mime_type'];
-        self::sendMediaHeaders($mime, $publicCache, (int) filesize($path));
-        readfile($path);
-        exit;
-    }
+        $length = (int) filesize($path);
+        $mtime = (int) (@filemtime($path) ?: time());
+        $etag = '"' . dechex($length) . '-' . dechex($mtime) . '"';
 
-    /**
-     * Media responses must not inherit the app CSP: browsers apply it to SVG-as-<img>
-     * and then block internal paint servers like fill="url(#id)".
-     */
-    private static function sendMediaHeaders(string $mime, bool $publicCache, int $length): void
-    {
         header_remove('Content-Security-Policy');
-        // PHP session_start() may have set no-cache; favicons/media need stable caching.
         if ($publicCache) {
             header_remove('Pragma');
             header_remove('Expires');
         }
         header('Content-Type: ' . $mime);
+        header('ETag: ' . $etag);
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
+        // Media library files are edited (SVG-Größe/Farben) — revalidate instead of 24h stale cache.
+        header('Cache-Control: ' . ($publicCache
+            ? 'public, max-age=0, must-revalidate'
+            : 'private, max-age=0, must-revalidate'));
+        header('X-Content-Type-Options: nosniff');
+
+        $ifNoneMatch = trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''));
+        if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+            http_response_code(304);
+            exit;
+        }
+        $ifModified = trim((string) ($_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? ''));
+        if ($ifModified !== '') {
+            $since = strtotime($ifModified);
+            if ($since !== false && $since >= $mtime) {
+                http_response_code(304);
+                exit;
+            }
+        }
+
         if ($length > 0) {
             header('Content-Length: ' . (string) $length);
         }
-        header('Cache-Control: ' . ($publicCache ? 'public, max-age=86400' : 'private, max-age=3600'));
-        header('X-Content-Type-Options: nosniff');
+        readfile($path);
+        exit;
     }
 
     /**
@@ -231,8 +245,27 @@ final class MediaApi
             exit;
         }
 
-        self::sendMediaHeaders($file['mime'], true, (int) filesize($file['path']));
-        readfile($file['path']);
+        $path = $file['path'];
+        $length = (int) filesize($path);
+        $mtime = (int) (@filemtime($path) ?: time());
+        $etag = '"' . dechex($length) . '-' . dechex($mtime) . '"';
+        header_remove('Content-Security-Policy');
+        header_remove('Pragma');
+        header_remove('Expires');
+        header('Content-Type: ' . $file['mime']);
+        header('ETag: ' . $etag);
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
+        header('Cache-Control: public, max-age=0, must-revalidate');
+        header('X-Content-Type-Options: nosniff');
+        $ifNoneMatch = trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''));
+        if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
+            http_response_code(304);
+            exit;
+        }
+        if ($length > 0) {
+            header('Content-Length: ' . (string) $length);
+        }
+        readfile($path);
         exit;
     }
 
@@ -264,9 +297,10 @@ final class MediaApi
             throw $e;
         }
 
+        $item = MediaRepository::find($mediaId) ?? ['media_id' => $mediaId, 'stored_name' => $stored['stored_name'] ?? '', 'size_bytes' => $stored['size_bytes'] ?? 0];
         self::ok([
             'media_id' => $mediaId,
-            'url' => MediaStorage::publicUrl($mediaId),
+            'url' => MediaStorage::publicUrlForItem($item),
             'redirect' => '/app?page=bilder&action=edit&id=' . rawurlencode($mediaId),
         ]);
     }

@@ -203,7 +203,7 @@ $formatUsageDate = static function (?string $value): string {
           ?>
           <form class="dg-form dg-panel" id="dg-media-svg-form" data-media-id="<?= View::escape($mediaId) ?>">
             <h2>SVG bearbeiten</h2>
-            <p class="dg-field-hint">Größe, Farben und Linienbreiten aus der Datei. Änderungen erscheinen sofort in der Vorschau; mit Speichern werden sie in die SVG-Datei geschrieben.</p>
+            <p class="dg-field-hint">Größe, Farben und Linienbreiten aus der Datei. Änderungen erscheinen sofort in der Vorschau — erst mit „SVG speichern“ werden sie in die Datei geschrieben und auf der Website sichtbar.</p>
 
             <?php if ($svgMarkup === '') : ?>
               <p class="dg-lead">SVG-Inhalt konnte nicht geladen werden.</p>
@@ -335,6 +335,7 @@ $formatUsageDate = static function (?string $value): string {
                 <?php endif; ?>
               </div>
 
+              <p class="dg-field-hint" id="dg-media-svg-dirty" hidden>Ungespeicherte Änderungen — bitte „SVG speichern“ klicken.</p>
               <div class="dg-form-actions">
                 <button type="submit" class="dg-button dg-button--primary" id="dg-media-svg-save">SVG speichern</button>
                 <button type="button" class="dg-button" id="dg-media-svg-reset">Zurücksetzen</button>

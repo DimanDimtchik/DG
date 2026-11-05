@@ -715,21 +715,31 @@
       updatePreview();
     }
 
+    function setDirty(isDirty) {
+      var hint = document.getElementById('dg-media-svg-dirty');
+      if (hint) hint.hidden = !isDirty;
+    }
+
     function setSquareSize(px) {
       if (!sizeW || !sizeH) return;
       sizeW.value = String(px);
       sizeH.value = String(px);
       if (sizeSquare) sizeSquare.checked = true;
+      setDirty(true);
       updatePreview();
     }
 
     form.querySelectorAll('.dg-media-svg-color, .dg-media-svg-color-text').forEach(function (input) {
       input.addEventListener('input', function () {
+        setDirty(true);
         syncColorInputs(input);
       });
     });
     form.querySelectorAll('.dg-media-svg-width').forEach(function (input) {
-      input.addEventListener('input', updatePreview);
+      input.addEventListener('input', function () {
+        setDirty(true);
+        updatePreview();
+      });
     });
     form.querySelectorAll('[data-svg-size-preset]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -742,6 +752,7 @@
         if (sizeSquare && sizeSquare.checked && sizeH) {
           sizeH.value = sizeW.value;
         }
+        setDirty(true);
         updatePreview();
       });
     }
@@ -750,6 +761,7 @@
         if (sizeSquare && sizeSquare.checked && sizeW) {
           sizeW.value = sizeH.value;
         }
+        setDirty(true);
         updatePreview();
       });
     }
@@ -757,6 +769,7 @@
       sizeSquare.addEventListener('change', function () {
         if (sizeSquare.checked && sizeW && sizeH) {
           sizeH.value = sizeW.value;
+          setDirty(true);
           updatePreview();
         }
       });
@@ -764,6 +777,7 @@
 
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
+        setDirty(false);
         (state.colors || []).forEach(function (color) {
           form.querySelectorAll('[data-svg-color-from="' + String(color.value).replace(/"/g, '\\"') + '"]').forEach(function (el) {
             if (el.type === 'color' && color.hex) {
