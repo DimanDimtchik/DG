@@ -15,10 +15,24 @@ $contractTypeLabels = EmploymentContractContext::typeLabels();
 $isMinijobGuess = $contractTypeGuess === EmploymentContractContext::TYPE_MINIJOB;
 $hasTrainingVideo = trim((string) ($employeeData['training_video_url'] ?? '')) !== '';
 $hasIfsgDuty = !empty($employeeData['food_hygiene_duty']);
+$contractContact = isset($employmentContractContact) && $employmentContractContact instanceof Contact
+    ? $employmentContractContact
+    : ContactRepository::findById($contactId);
+$missingPreview = [];
+if ($contractContact instanceof Contact) {
+    $ctxPreview = EmploymentContractContext::build($contractContact, ['contract_type' => $contractTypeGuess]);
+    $missingPreview = $ctxPreview['missing'];
+}
 ?>
 <form class="dg-form dg-panel" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
   <h2>Arbeitsvertrag erzeugen</h2>
   <p class="dg-lead">Erzeugt ein PDF aus Stammdaten und Firmenangaben und legt es als Dokument „Arbeitsvertrag“ ab. Ein vorhandener Vertrag wird ersetzt. Bitte vor Unterzeichnung prüfen.</p>
+  <?php if ($missingPreview !== []) : ?>
+    <div class="dg-flash dg-flash--warning" role="status">
+      Noch unvollständig für den Nachweis (bitte in den Mitarbeiterdaten ergänzen oder „Trotzdem erzeugen“ nutzen):
+      <?= View::escape(implode('; ', array_map(static fn(array $m): string => (string) ($m['label'] ?? ''), $missingPreview))) ?>.
+    </div>
+  <?php endif; ?>
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
   <input type="hidden" name="id" value="<?= $contactId ?>">
   <input type="hidden" name="contact_generate_employment_contract" value="1">

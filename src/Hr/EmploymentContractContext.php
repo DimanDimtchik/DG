@@ -153,14 +153,19 @@ final class EmploymentContractContext
 
     public static function isMinor(string $birthDate, string $asOf): bool
     {
-        $birth = date_create(trim($birthDate));
+        $birthDate = trim($birthDate);
+        // PHP date_create('') liefert „jetzt“ — ohne echtes Geburtsdatum nie als minderjährig werten.
+        if ($birthDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}/', $birthDate)) {
+            return false;
+        }
+        $birth = date_create($birthDate);
         $ref = date_create(trim($asOf) !== '' ? trim($asOf) : 'today');
         if (!$birth instanceof DateTimeInterface || !$ref instanceof DateTimeInterface) {
             return false;
         }
         $age = (int) $birth->diff($ref)->y;
 
-        return $age < 18;
+        return $age >= 0 && $age < 18;
     }
 
     /**

@@ -23,6 +23,7 @@ if ($isCompanyForm && $companyEmployees === []) {
 }
 ?>
 <div class="dg-wrap">
+  <?php View::render('partials/flash', ['flash' => $flash ?? null]); ?>
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <?php
@@ -299,6 +300,7 @@ if ($isCompanyForm && $companyEmployees === []) {
           'employeeData' => $employeeData ?? EmployeeData::empty(),
           'showEmployeeFields' => true,
           'canEdit' => !empty($canEdit),
+          'employmentContractContact' => isset($contact) && $contact instanceof Contact ? $contact : null,
       ]);
       View::partial('partials/hr-personnel-events', [
           'contactId' => (int) $contactId,
