@@ -1,16 +1,10 @@
 /**
- * Krankenkassen-Vorschläge (GKV + PKV) beim Tippen
+ * Krankenkassen-Vorschläge (GKV + PKV) beim Tippen — füllt Name, Website, Termin-URL.
  */
 (function () {
   'use strict';
 
   const cfg = window.dgHealthInsurerConfig || {};
-
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
-  }
 
   function postSuggest(value) {
     const body = new FormData();
@@ -27,6 +21,23 @@
 
   function typeLabel(type) {
     return type === 'pkv' ? 'PKV' : 'GKV';
+  }
+
+  function fillRelatedFields(root, insurer) {
+    const scope = root || document;
+    const website = scope.querySelector('[data-health-insurer-website]');
+    const appointment = scope.querySelector('[data-health-insurer-appointment]');
+    if (website && insurer.website) {
+      website.value = insurer.website;
+      website.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (appointment) {
+      const url = insurer.appointment_url || '';
+      if (url) {
+        appointment.value = url;
+        appointment.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
   }
 
   function renderMatches(container, matches, onPick) {
@@ -64,6 +75,7 @@
       return;
     }
 
+    const formRoot = input.closest('.dg-employee-section') || document;
     postSuggest(val).then((response) => {
       if (!response.success) {
         return;
@@ -72,6 +84,7 @@
       renderMatches(container, matches, (insurer) => {
         input.value = insurer.name;
         input.dispatchEvent(new Event('change', { bubbles: true }));
+        fillRelatedFields(formRoot, insurer);
       });
       if (!matches.length) {
         container.innerHTML =
@@ -87,7 +100,7 @@
     }
     input.dataset.healthInsurerBound = '1';
 
-    const container = input.parentElement?.querySelector('.dg-health-insurer-suggest');
+    const container = input.parentElement && input.parentElement.querySelector('.dg-health-insurer-suggest');
     if (!container) {
       return;
     }

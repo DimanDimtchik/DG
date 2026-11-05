@@ -4,15 +4,15 @@ declare(strict_types=1);
 /** Gesetzliche (GKV) und private (PKV) Krankenversicherer — Vorschlagsliste beim Tippen. */
 final class HealthInsurerDirectory
 {
-    /** @var list<array{name: string, type: string, code?: string}>|null */
+    /** @var list<array{name: string, type: string, code?: string, website?: string, appointment_url?: string}>|null */
     private static ?array $insurers = null;
 
     /**
      * insurers.
      *
-     * @return list<array{name: string, type: string, code?: string}>
+     * @return list<array{name: string, type: string, code?: string, website?: string, appointment_url?: string}>
      */
-        public static function insurers(): array
+    public static function insurers(): array
     {
         if (self::$insurers !== null) {
             return self::$insurers;
@@ -31,10 +31,10 @@ final class HealthInsurerDirectory
         return self::$insurers;
     }
 
-        /**
+    /**
      * searchByName
      * @param string $input Formulardaten
-     * @return list<array{name: string, type: string, code?: string}>
+     * @return list<array{name: string, type: string, code?: string, website?: string, appointment_url?: string}>
      */
     public static function searchByName(string $input): array
     {
@@ -45,14 +45,20 @@ final class HealthInsurerDirectory
 
         $matches = [];
         foreach (self::insurers() as $insurer) {
-            $name = mb_strtolower($insurer['name'] ?? '');
+            $name = mb_strtolower((string) ($insurer['name'] ?? ''));
             $code = (string) ($insurer['code'] ?? '');
             if (
                 str_contains($name, $query)
                 || preg_match('/\b' . preg_quote($query, '/') . '/u', $name)
                 || ($code !== '' && str_contains($code, $query))
             ) {
-                $matches[] = $insurer;
+                $matches[] = [
+                    'name' => (string) ($insurer['name'] ?? ''),
+                    'type' => (string) ($insurer['type'] ?? 'gkv'),
+                    'code' => $code,
+                    'website' => (string) ($insurer['website'] ?? ''),
+                    'appointment_url' => (string) ($insurer['appointment_url'] ?? ''),
+                ];
             }
             if (count($matches) >= 10) {
                 break;

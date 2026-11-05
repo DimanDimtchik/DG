@@ -1,84 +1,544 @@
 [
-  {"name": "Techniker Krankenkasse", "type": "gkv", "code": "101575519"},
-  {"name": "Barmer", "type": "gkv", "code": "109328827"},
-  {"name": "DAK-Gesundheit", "type": "gkv", "code": "101520078"},
-  {"name": "AOK Bayern", "type": "gkv", "code": "108310400"},
-  {"name": "AOK Baden-Württemberg", "type": "gkv", "code": "108018007"},
-  {"name": "AOK Bremen/Bremerhaven", "type": "gkv", "code": "103119199"},
-  {"name": "AOK Hessen", "type": "gkv", "code": "105313145"},
-  {"name": "AOK Niedersachsen", "type": "gkv", "code": "102114819"},
-  {"name": "AOK Nordost", "type": "gkv", "code": "109519005"},
-  {"name": "AOK NordWest", "type": "gkv", "code": "103411401"},
-  {"name": "AOK PLUS", "type": "gkv", "code": "107299005"},
-  {"name": "AOK Rheinland/Hamburg", "type": "gkv", "code": "104212505"},
-  {"name": "AOK Rheinland-Pfalz/Saarland", "type": "gkv", "code": "107310373"},
-  {"name": "AOK Sachsen-Anhalt", "type": "gkv", "code": "101307202"},
-  {"name": "AOK Sachsen", "type": "gkv", "code": "107299005"},
-  {"name": "AOK Thüringen", "type": "gkv", "code": "109519005"},
-  {"name": "hkk Krankenkasse", "type": "gkv", "code": "103170002"},
-  {"name": "KKH - Kaufmännische Krankenkasse", "type": "gkv", "code": "102171012"},
-  {"name": "HEK - Hanseatische Krankenkasse", "type": "gkv", "code": "105830016"},
-  {"name": "IKK classic", "type": "gkv", "code": "100696012"},
-  {"name": "IKK gesund plus", "type": "gkv", "code": "101300129"},
-  {"name": "IKK Südwest", "type": "gkv", "code": "109303301"},
-  {"name": "BKK Mobil Oil", "type": "gkv", "code": "101520078"},
-  {"name": "BKK VBU", "type": "gkv", "code": "103119199"},
-  {"name": "BKK firmus", "type": "gkv", "code": "103119199"},
-  {"name": "BKK GILDEMEISTER SEIDENSTICKER", "type": "gkv", "code": "103119199"},
-  {"name": "BKK Pfalz", "type": "gkv", "code": "106431652"},
-  {"name": "BKK ProVita", "type": "gkv", "code": "108591499"},
-  {"name": "BKK Scheufelen", "type": "gkv", "code": "108018007"},
-  {"name": "BKK VerbundPlus", "type": "gkv", "code": "108018007"},
-  {"name": "BKK Wirtschaft & Finanzen", "type": "gkv", "code": "105830016"},
-  {"name": "BKK ZF & Partner", "type": "gkv", "code": "108018007"},
-  {"name": "BMW BKK", "type": "gkv", "code": "108018007"},
-  {"name": "Bosch BKK", "type": "gkv", "code": "108018007"},
-  {"name": "Continentale Betriebskrankenkasse", "type": "gkv", "code": "103119199"},
-  {"name": "Daimler BKK", "type": "gkv", "code": "108018007"},
-  {"name": "Deutsche Rentenversicherung Knappschaft-Bahn-See", "type": "gkv", "code": "109905003"},
-  {"name": "energie-BKK", "type": "gkv", "code": "103119199"},
-  {"name": "Handelskrankenkasse (hkk)", "type": "gkv", "code": "103170002"},
-  {"name": "Knappschaft", "type": "gkv", "code": "109905003"},
-  {"name": "mhplus Betriebskrankenkasse", "type": "gkv", "code": "108018007"},
-  {"name": "mobil krankenkasse", "type": "gkv", "code": "101520078"},
-  {"name": "pronova BKK", "type": "gkv", "code": "106431652"},
-  {"name": "R+V Betriebskrankenkasse", "type": "gkv", "code": "106431652"},
-  {"name": "Salus BKK", "type": "gkv", "code": "108018007"},
-  {"name": "SBK Siemens-Betriebskrankenkasse", "type": "gkv", "code": "108018007"},
-  {"name": "Securvita BKK", "type": "gkv", "code": "105830016"},
-  {"name": "SKD BKK", "type": "gkv", "code": "108018007"},
-  {"name": "Viactiv Krankenkasse", "type": "gkv", "code": "103119199"},
-  {"name": "vivida bkk", "type": "gkv", "code": "108018007"},
-  {"name": "Allianz Private Krankenversicherungs-AG", "type": "pkv"},
-  {"name": "AXA Krankenversicherung AG", "type": "pkv"},
-  {"name": "ARAG Krankenversicherungs-AG", "type": "pkv"},
-  {"name": "Barmenia Krankenversicherung AG", "type": "pkv"},
-  {"name": "Central Krankenversicherung AG", "type": "pkv"},
-  {"name": "Continentale Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "Debeka Krankenversicherungsverein a. G.", "type": "pkv"},
-  {"name": "DEVK Krankenversicherungs-AG", "type": "pkv"},
-  {"name": "DKV Deutsche Krankenversicherung AG", "type": "pkv"},
-  {"name": "ENVIVAS Krankenversicherung AG", "type": "pkv"},
-  {"name": "ERGO Krankenversicherung AG", "type": "pkv"},
-  {"name": "Gothaer Krankenversicherung AG", "type": "pkv"},
-  {"name": "Hallesche Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "HanseMerkur Krankenversicherung AG", "type": "pkv"},
-  {"name": "HUK-COBURG-Krankenversicherung AG", "type": "pkv"},
-  {"name": "Inter Krankenversicherung AG", "type": "pkv"},
-  {"name": "LKH Landeskrankenhilfe V.a.G.", "type": "pkv"},
-  {"name": "LVM Krankenversicherungs-AG", "type": "pkv"},
-  {"name": "Mecklenburgische Krankenversicherungs-AG", "type": "pkv"},
-  {"name": "Münchener Verein Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "NÜRNBERGER Krankenversicherung AG", "type": "pkv"},
-  {"name": "R+V Krankenversicherung AG", "type": "pkv"},
-  {"name": "Signal Iduna Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "SDK Süddeutsche Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "Universa Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "Württembergische Krankenversicherung AG", "type": "pkv"},
-  {"name": "DBV Deutsche Beamtenversicherung AG", "type": "pkv"},
-  {"name": "Concordia Krankenversicherungs-AG", "type": "pkv"},
-  {"name": "PAX-Familienfürsorge Krankenversicherung AG", "type": "pkv"},
-  {"name": "Süddeutsche Krankenversicherung a.G.", "type": "pkv"},
-  {"name": "Union Krankenversicherung AG", "type": "pkv"},
-  {"name": "Victoria Krankenversicherung AG", "type": "pkv"}
+    {
+        "name": "Techniker Krankenkasse",
+        "type": "gkv",
+        "code": "101575519",
+        "website": "https://www.tk.de",
+        "appointment_url": "https://www.tk.de/techniker/krankheit-und-behandlungen/praxisbesuch-und-klinikaufenthalt/tk-terminservice-2009696"
+    },
+    {
+        "name": "Barmer",
+        "type": "gkv",
+        "code": "109328827",
+        "website": "https://www.barmer.de",
+        "appointment_url": "https://www.barmer.de/unsere-leistungen/leistungen-a-z/beratung-und-hilfen/termine-beim-facharzt-1055498"
+    },
+    {
+        "name": "DAK-Gesundheit",
+        "type": "gkv",
+        "code": "101520078",
+        "website": "https://www.dak.de",
+        "appointment_url": "https://www.dak.de/dak/leistungen/dak-arzttermin-hotline_12336"
+    },
+    {
+        "name": "AOK Bayern",
+        "type": "gkv",
+        "code": "108310400",
+        "website": "https://www.aok.de/pk/bayern/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Baden-Württemberg",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.aok.de/pk/bw/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Bremen/Bremerhaven",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.aok.de/pk/bremen/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Hessen",
+        "type": "gkv",
+        "code": "105313145",
+        "website": "https://www.aok.de/pk/hessen/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Niedersachsen",
+        "type": "gkv",
+        "code": "102114819",
+        "website": "https://www.aok.de/pk/niedersachsen/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Nordost",
+        "type": "gkv",
+        "code": "109519005",
+        "website": "https://www.aok.de/pk/nordost/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK NordWest",
+        "type": "gkv",
+        "code": "103411401",
+        "website": "https://www.aok.de/pk/nordwest/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK PLUS",
+        "type": "gkv",
+        "code": "107299005",
+        "website": "https://www.aok.de/pk/plus/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Rheinland/Hamburg",
+        "type": "gkv",
+        "code": "104212505",
+        "website": "https://www.aok.de/pk/rh/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Rheinland-Pfalz/Saarland",
+        "type": "gkv",
+        "code": "107310373",
+        "website": "https://www.aok.de/pk/rps/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Sachsen-Anhalt",
+        "type": "gkv",
+        "code": "101307202",
+        "website": "https://www.aok.de/pk/sachsen-anhalt/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Sachsen",
+        "type": "gkv",
+        "code": "107299005",
+        "website": "https://www.aok.de/pk/plus/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "AOK Thüringen",
+        "type": "gkv",
+        "code": "109519005",
+        "website": "https://www.aok.de/pk/nordost/",
+        "appointment_url": "https://www.aok.de/pk/leistungen/medizinische-behandlung/facharztterminservice/"
+    },
+    {
+        "name": "hkk Krankenkasse",
+        "type": "gkv",
+        "code": "103170002",
+        "website": "https://www.hkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "KKH - Kaufmännische Krankenkasse",
+        "type": "gkv",
+        "code": "102171012",
+        "website": "https://www.kkh.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "HEK - Hanseatische Krankenkasse",
+        "type": "gkv",
+        "code": "105830016",
+        "website": "https://www.hek.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "IKK classic",
+        "type": "gkv",
+        "code": "100696012",
+        "website": "https://www.ikk-classic.de",
+        "appointment_url": "https://terminservice.4sigma.de/ikk-classic/index.php"
+    },
+    {
+        "name": "IKK gesund plus",
+        "type": "gkv",
+        "code": "101300129",
+        "website": "https://www.ikk-gesundplus.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "IKK Südwest",
+        "type": "gkv",
+        "code": "109303301",
+        "website": "https://www.ikk-suedwest.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK Mobil Oil",
+        "type": "gkv",
+        "code": "101520078",
+        "website": "https://www.bkk-mobil-oil.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK VBU",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.bkk-vbu.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK firmus",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.bkk-firmus.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK GILDEMEISTER SEIDENSTICKER",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.bkkgs.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK Pfalz",
+        "type": "gkv",
+        "code": "106431652",
+        "website": "https://www.bkkpfalz.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK ProVita",
+        "type": "gkv",
+        "code": "108591499",
+        "website": "https://www.bkk-provita.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK Scheufelen",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.bkk-scheufelen.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK VerbundPlus",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.bkk-verbundplus.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK Wirtschaft & Finanzen",
+        "type": "gkv",
+        "code": "105830016",
+        "website": "https://www.bkk-wf.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BKK ZF & Partner",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.bkk-zf-partner.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "BMW BKK",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.bmw-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Bosch BKK",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.bosch-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Continentale Betriebskrankenkasse",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.continentale-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Daimler BKK",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.daimler-bkk.com",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Deutsche Rentenversicherung Knappschaft-Bahn-See",
+        "type": "gkv",
+        "code": "109905003",
+        "website": "https://www.kbs.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "energie-BKK",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.energie-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Handelskrankenkasse (hkk)",
+        "type": "gkv",
+        "code": "103170002",
+        "website": "https://www.hkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Knappschaft",
+        "type": "gkv",
+        "code": "109905003",
+        "website": "https://www.kbs.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "mhplus Betriebskrankenkasse",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.mhplus.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "mobil krankenkasse",
+        "type": "gkv",
+        "code": "101520078",
+        "website": "https://www.mobil-krankenkasse.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "pronova BKK",
+        "type": "gkv",
+        "code": "106431652",
+        "website": "https://www.pronovabkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "R+V Betriebskrankenkasse",
+        "type": "gkv",
+        "code": "106431652",
+        "website": "https://www.ruv-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Salus BKK",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.salus-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "SBK Siemens-Betriebskrankenkasse",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.sbk.org",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Securvita BKK",
+        "type": "gkv",
+        "code": "105830016",
+        "website": "https://www.securvita.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "SKD BKK",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.skd-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Viactiv Krankenkasse",
+        "type": "gkv",
+        "code": "103119199",
+        "website": "https://www.viactiv.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "vivida bkk",
+        "type": "gkv",
+        "code": "108018007",
+        "website": "https://www.vivida-bkk.de",
+        "appointment_url": "https://www.116117-termine.de"
+    },
+    {
+        "name": "Allianz Private Krankenversicherungs-AG",
+        "type": "pkv",
+        "website": "https://www.allianz.de/gesundheit/krankenversicherung/",
+        "appointment_url": ""
+    },
+    {
+        "name": "AXA Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.axa.de/krankenversicherung",
+        "appointment_url": ""
+    },
+    {
+        "name": "ARAG Krankenversicherungs-AG",
+        "type": "pkv",
+        "website": "https://www.arag.de/krankenversicherung/",
+        "appointment_url": ""
+    },
+    {
+        "name": "Barmenia Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.barmenia.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Central Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.central.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Continentale Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.continentale.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Debeka Krankenversicherungsverein a. G.",
+        "type": "pkv",
+        "website": "https://www.debeka.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "DEVK Krankenversicherungs-AG",
+        "type": "pkv",
+        "website": "https://www.devk.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "DKV Deutsche Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.dkv.com",
+        "appointment_url": ""
+    },
+    {
+        "name": "ENVIVAS Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.envivas.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "ERGO Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.ergo.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Gothaer Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.gothaer.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Hallesche Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.hallesche.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "HanseMerkur Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.hansemerkur.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "HUK-COBURG-Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.huk.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Inter Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.inter.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "LKH Landeskrankenhilfe V.a.G.",
+        "type": "pkv",
+        "website": "https://www.lkh.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "LVM Krankenversicherungs-AG",
+        "type": "pkv",
+        "website": "https://www.lvm.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Mecklenburgische Krankenversicherungs-AG",
+        "type": "pkv",
+        "website": "https://www.mecklenburgische.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Münchener Verein Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.muenchener-verein.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "NÜRNBERGER Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.nuernberger.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "R+V Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.ruv.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Signal Iduna Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.signal-iduna.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "SDK Süddeutsche Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.sdk.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Universa Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.universa.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Württembergische Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.wuerttembergische.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "DBV Deutsche Beamtenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.dbv.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Concordia Krankenversicherungs-AG",
+        "type": "pkv",
+        "website": "https://www.concordia.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "PAX-Familienfürsorge Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.pax.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Süddeutsche Krankenversicherung a.G.",
+        "type": "pkv",
+        "website": "https://www.sdk.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Union Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.ukv.de",
+        "appointment_url": ""
+    },
+    {
+        "name": "Victoria Krankenversicherung AG",
+        "type": "pkv",
+        "website": "https://www.ergo.de",
+        "appointment_url": ""
+    }
 ]

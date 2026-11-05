@@ -283,6 +283,34 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
               <?= $roAttr ?>
             >
           </label>
+        <?php elseif ($key === 'health_insurance_website') : ?>
+          <label class="dg-field dg-field--wide">
+            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
+            <input
+              type="url"
+              inputmode="url"
+              name="<?= View::escape($name) ?>"
+              value="<?= View::escape($value) ?>"
+              data-health-insurer-website
+              placeholder="https://…"
+              <?= $required ? ' required data-employee-required' : '' ?>
+              <?= $roAttr ?>
+            >
+          </label>
+        <?php elseif ($key === 'health_insurance_appointment_url') : ?>
+          <label class="dg-field dg-field--wide">
+            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
+            <input
+              type="url"
+              inputmode="url"
+              name="<?= View::escape($name) ?>"
+              value="<?= View::escape($value) ?>"
+              data-health-insurer-appointment
+              placeholder="https://…"
+              <?= $required ? ' required data-employee-required' : '' ?>
+              <?= $roAttr ?>
+            >
+          </label>
         <?php else : ?>
           <label class="dg-field">
             <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
