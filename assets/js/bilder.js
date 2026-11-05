@@ -521,6 +521,164 @@
     });
   }
 
+  // Live SVG markup for raster export (set by SVG editor when available).
+  window.dgMediaBuildSvgMarkup = null;
+
+  // --- SVG → PNG/JPEG/WebP export (canvas; same derived-media path as crop) ---
+  (function initSvgExport() {
+    var exportForm = document.getElementById('dg-media-svg-export-form');
+    if (!exportForm) return;
+
+    var widthInput = document.getElementById('dg-media-svg-export-w');
+    var heightInput = document.getElementById('dg-media-svg-export-h');
+    var formatSelect = document.getElementById('dg-media-svg-export-format');
+    var keepAspectCheck = document.getElementById('dg-media-svg-export-aspect');
+    var submitBtn = document.getElementById('dg-media-svg-export-submit');
+    var origW = parseInt(exportForm.getAttribute('data-orig-width') || '0', 10) || 0;
+    var origH = parseInt(exportForm.getAttribute('data-orig-height') || '0', 10) || 0;
+    var aspectSyncing = false;
+
+    function pairedDim(changed, value) {
+      if (origW < 1 || origH < 1) return value;
+      if (changed === 'width') return Math.max(1, Math.round(origH * (value / origW)));
+      return Math.max(1, Math.round(origW * (value / origH)));
+    }
+
+    if (widthInput && heightInput && keepAspectCheck && origW > 0 && origH > 0) {
+      widthInput.addEventListener('input', function () {
+        if (aspectSyncing || !keepAspectCheck.checked) return;
+        var w = parseInt(widthInput.value, 10);
+        if (!(w > 0)) return;
+        aspectSyncing = true;
+        heightInput.value = String(pairedDim('width', w));
+        aspectSyncing = false;
+      });
+      heightInput.addEventListener('input', function () {
+        if (aspectSyncing || !keepAspectCheck.checked) return;
+        var h = parseInt(heightInput.value, 10);
+        if (!(h > 0)) return;
+        aspectSyncing = true;
+        widthInput.value = String(pairedDim('height', h));
+        aspectSyncing = false;
+      });
+    }
+
+    function applyRootSize(markup, width, height) {
+      return markup.replace(/<svg\b[^>]*>/i, function (tag) {
+        function setOrAdd(attrName, value) {
+          var re = new RegExp('\\b' + attrName + '\\s*=\\s*(["\\\'])[^"\\\']*\\1', 'i');
+          if (re.test(tag)) {
+            return tag.replace(re, attrName + '="' + value + '"');
+          }
+          return tag.replace(/<svg\b/i, '<svg ' + attrName + '="' + value + '"');
+        }
+        if (!/\bviewBox\s*=/i.test(tag) && !/\bviewbox\s*=/i.test(tag)) {
+          tag = setOrAdd('viewBox', '0 0 ' + (origW || width) + ' ' + (origH || height));
+        }
+        tag = setOrAdd('width', String(width));
+        tag = setOrAdd('height', String(height));
+        return tag;
+      });
+    }
+
+    function loadSvgMarkup() {
+      if (typeof window.dgMediaBuildSvgMarkup === 'function') {
+        return Promise.resolve(window.dgMediaBuildSvgMarkup());
+      }
+      var preview = document.getElementById('dg-media-preview');
+      if (!preview || !preview.src) {
+        return Promise.reject(new Error('SVG konnte nicht geladen werden.'));
+      }
+      return fetch(preview.src, { credentials: 'same-origin' }).then(function (r) {
+        if (!r.ok) throw new Error('SVG konnte nicht geladen werden.');
+        return r.text();
+      });
+    }
+
+    function rasterize(markup, width, height, mime) {
+      var sized = applyRootSize(markup, width, height);
+      var blob = new Blob([sized], { type: 'image/svg+xml;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      return new Promise(function (resolve, reject) {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            if (!ctx) {
+              URL.revokeObjectURL(url);
+              reject(new Error('Canvas nicht verfügbar.'));
+              return;
+            }
+            if (mime === 'image/jpeg') {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, width, height);
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            URL.revokeObjectURL(url);
+            var quality = mime === 'image/jpeg' ? 0.88 : mime === 'image/webp' ? 0.85 : undefined;
+            canvas.toBlob(
+              function (out) {
+                if (!out) {
+                  reject(new Error('Export fehlgeschlagen (Browser unterstützt das Format ggf. nicht).'));
+                  return;
+                }
+                resolve(out);
+              },
+              mime,
+              quality
+            );
+          } catch (err) {
+            URL.revokeObjectURL(url);
+            reject(err);
+          }
+        };
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          reject(new Error('SVG konnte nicht gerendert werden.'));
+        };
+        img.src = url;
+      });
+    }
+
+    exportForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var w = parseInt(widthInput && widthInput.value, 10);
+      var h = parseInt(heightInput && heightInput.value, 10);
+      if (!(w > 0) || !(h > 0) || w > 10000 || h > 10000) {
+        alert('Breite und Höhe müssen zwischen 1 und 10000 Pixel liegen.');
+        return;
+      }
+      var formatKey = (formatSelect && formatSelect.value) || 'png';
+      var mime =
+        formatKey === 'jpeg' ? 'image/jpeg' : formatKey === 'webp' ? 'image/webp' : 'image/png';
+      var ext = formatKey === 'jpeg' ? 'jpg' : formatKey;
+      var mediaId = exportForm.getAttribute('data-media-id') || '';
+      if (submitBtn) submitBtn.disabled = true;
+      loadSvgMarkup()
+        .then(function (markup) {
+          return rasterize(markup, w, h, mime);
+        })
+        .then(function (outBlob) {
+          return post(
+            'crop',
+            { media_id: mediaId, variant: 'raster' },
+            { blob: outBlob, name: 'export.' + ext }
+          );
+        })
+        .then(function (res) {
+          if (submitBtn) submitBtn.disabled = false;
+          handleResponse(res);
+        })
+        .catch(function (err) {
+          if (submitBtn) submitBtn.disabled = false;
+          alert((err && err.message) || 'Export fehlgeschlagen.');
+        });
+    });
+  })();
+
   // --- SVG color / stroke-width / size editor ---
   (function initSvgEditor() {
     var form = document.getElementById('dg-media-svg-form');
@@ -679,6 +837,8 @@
       }
       return markup;
     }
+
+    window.dgMediaBuildSvgMarkup = buildMarkup;
 
     function updatePreview() {
       var markup = buildMarkup();

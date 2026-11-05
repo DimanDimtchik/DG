@@ -431,7 +431,11 @@ final class MediaApi
         }
 
         $variant = trim((string) ($_POST['variant'] ?? 'crop'));
-        $variantLabel = $variant === 'freigestellt' ? 'Freigestellt' : 'Zuschnitt';
+        $variantLabel = match ($variant) {
+            'freigestellt' => 'Freigestellt',
+            'raster', 'groesse-format' => 'Größe/Format',
+            default => 'Zuschnitt',
+        };
 
         $newId = self::createDerivedMedia($item, $binary, $mime, $variantLabel, $user);
 

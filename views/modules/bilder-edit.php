@@ -342,6 +342,44 @@ $formatUsageDate = static function (?string $value): string {
               </div>
             <?php endif; ?>
           </form>
+
+          <form
+            class="dg-form dg-panel"
+            id="dg-media-svg-export-form"
+            data-media-id="<?= View::escape($mediaId) ?>"
+            data-orig-width="<?= (int) $svgSizeW ?>"
+            data-orig-height="<?= (int) $svgSizeH ?>"
+          >
+            <h2>Als Rasterbild exportieren</h2>
+            <p class="dg-field-hint">Erzeugt ein neues PNG-, JPEG- oder WebP-Bild in der Mediathek. Das SVG bleibt unverändert. Offene Farb-/Größenänderungen aus dem Editor oben fließen mit ein (auch ohne „SVG speichern“).</p>
+            <div class="dg-form-grid">
+              <label class="dg-field">
+                <span>Breite (px)</span>
+                <input type="number" name="max_width" id="dg-media-svg-export-w" min="1" max="10000" value="<?= (int) $svgSizeW ?>" required>
+              </label>
+              <label class="dg-field">
+                <span>Höhe (px)</span>
+                <input type="number" name="max_height" id="dg-media-svg-export-h" min="1" max="10000" value="<?= (int) $svgSizeH ?>" required>
+              </label>
+              <label class="dg-field">
+                <span>Zielformat</span>
+                <select name="target_format" id="dg-media-svg-export-format">
+                  <option value="png">PNG (mit Transparenz)</option>
+                  <option value="webp">WebP</option>
+                  <option value="jpeg">JPEG</option>
+                </select>
+              </label>
+            </div>
+            <label class="dg-field dg-field--checkbox dg-field--wide">
+              <span>
+                <input type="checkbox" name="keep_aspect" id="dg-media-svg-export-aspect" value="1" checked>
+                Verhältnis beibehalten
+              </span>
+            </label>
+            <div class="dg-form-actions">
+              <button type="submit" class="dg-button dg-button--primary" id="dg-media-svg-export-submit">Als neues Bild anlegen</button>
+            </div>
+          </form>
         <?php endif; ?>
 
         <section class="dg-panel dg-panel--danger">
