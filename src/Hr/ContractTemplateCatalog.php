@@ -10,9 +10,10 @@ final class ContractTemplateCatalog
     public const CODE_FULLTIME = 'employment_fulltime';
     public const CODE_PARTTIME = 'employment_parttime';
     public const CODE_MINIJOB = 'employment_minijob';
+    public const CODE_WARNING = 'hr_warning';
 
     /**
-     * @return array<string, array{title: string, contract_type: string}>
+     * @return array<string, array{title: string, contract_type?: string, event_type?: string}>
      */
     public static function templates(): array
     {
@@ -29,6 +30,10 @@ final class ContractTemplateCatalog
                 'title' => 'Arbeitsvertrag Minijob',
                 'contract_type' => EmploymentContractContext::TYPE_MINIJOB,
             ],
+            self::CODE_WARNING => [
+                'title' => 'Abmahnung',
+                'event_type' => HrPersonnelEventRepository::TYPE_WARNING,
+            ],
         ];
     }
 
@@ -41,8 +46,21 @@ final class ContractTemplateCatalog
         };
     }
 
+    public static function codeForEventType(string $eventType): ?string
+    {
+        return match ($eventType) {
+            HrPersonnelEventRepository::TYPE_WARNING => self::CODE_WARNING,
+            default => null,
+        };
+    }
+
+    public static function isHrEventCode(string $code): bool
+    {
+        return $code === self::CODE_WARNING;
+    }
+
     /**
-     * @return list<array{block_key: string, title: string, body_html: string, is_annex: int, enabled: int}>
+     * @return list<array{block_key: string, title: string, body_html: string, is_annex: int, enabled: int, sort_order?: int}>
      */
     public static function blocksForCode(string $code): array
     {
@@ -50,7 +68,10 @@ final class ContractTemplateCatalog
         if ($meta === null) {
             return [];
         }
-        $type = $meta['contract_type'];
+        if ($code === self::CODE_WARNING) {
+            return self::warningBlocks();
+        }
+        $type = (string) ($meta['contract_type'] ?? EmploymentContractContext::TYPE_FULLTIME);
         $blocks = [];
         $n = 0;
         $add = static function (
@@ -188,6 +209,57 @@ final class ContractTemplateCatalog
             . '<p>{{clause_annex_ifsg_note}}</p>'
             . '<p>{{clause_annex_ifsg_confirm}}</p>',
             true
+        );
+
+        return $blocks;
+    }
+
+    /**
+     * @return list<array{block_key: string, title: string, body_html: string, is_annex: int, enabled: int, sort_order: int}>
+     */
+    private static function warningBlocks(): array
+    {
+        $blocks = [];
+        $n = 0;
+        $add = static function (string $key, string $title, string $body) use (&$blocks, &$n): void {
+            $blocks[] = [
+                'block_key' => $key,
+                'title' => $title,
+                'body_html' => $body,
+                'is_annex' => 0,
+                'enabled' => 1,
+                'sort_order' => $n++,
+            ];
+        };
+        $add(
+            'hr_disclaimer',
+            'Hinweis',
+            '<p>{{hr_disclaimer}}</p>'
+        );
+        $add(
+            'hr_warning_intro',
+            'Einleitung',
+            '<p>{{hr_warning_intro}}</p>'
+        );
+        $add(
+            'hr_facts',
+            'Sachverhalt',
+            '<p><strong>Sachverhalt</strong></p><p>{{facts_html}}</p>'
+        );
+        $add(
+            'hr_expectation',
+            'Erwartung',
+            '<p><strong>Erwartung</strong></p><p>{{expectation_html}}</p>'
+        );
+        $add(
+            'hr_threat',
+            'Androhung',
+            '<p><strong>Androhung</strong></p><p>{{threat_html}}</p>'
+        );
+        $add(
+            'hr_employer_footer',
+            'Arbeitgeber',
+            '<p>{{hr_employer_footer_html}}</p>'
         );
 
         return $blocks;

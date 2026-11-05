@@ -184,6 +184,61 @@ final class ContractTemplateRepository
     }
 
     /**
+     * Bausteine für Vorschau: POST-Overlay auf DB-Stand (ohne Speichern).
+     *
+     * @param array<string, mixed> $post
+     * @return list<array<string, mixed>>
+     */
+    public static function blocksOverlayFromPost(int $templateId, array $post): array
+    {
+        $existing = self::blocksForTemplate($templateId);
+        if ($existing === []) {
+            return [];
+        }
+        $byId = [];
+        foreach ($existing as $row) {
+            $byId[(int) ($row['id'] ?? 0)] = $row;
+        }
+        $rawBlocks = $post['blocks'] ?? [];
+        if (!is_array($rawBlocks) || $rawBlocks === []) {
+            return $existing;
+        }
+        $out = [];
+        $sort = 0;
+        foreach ($rawBlocks as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $bid = (int) ($row['id'] ?? 0);
+            if ($bid < 1 || !isset($byId[$bid])) {
+                continue;
+            }
+            $base = $byId[$bid];
+            $body = (string) ($row['body_html'] ?? $base['body_html'] ?? '');
+            if (class_exists('MailHtmlSanitizer')) {
+                $body = MailHtmlSanitizer::clean($body);
+            } else {
+                $body = strip_tags($body, '<p><br><strong><b><em><i><u><ul><ol><li><span><a>');
+            }
+            $blockTitle = mb_substr(trim((string) ($row['title'] ?? '')), 0, 255);
+            if ($blockTitle === '') {
+                $blockTitle = (string) ($base['title'] ?? 'Abschnitt');
+            }
+            $out[] = [
+                'id' => $bid,
+                'block_key' => (string) ($base['block_key'] ?? ''),
+                'title' => $blockTitle,
+                'body_html' => $body,
+                'enabled' => !empty($row['enabled']) ? 1 : 0,
+                'is_annex' => (int) ($base['is_annex'] ?? 0),
+                'sort_order' => $sort++,
+            ];
+        }
+
+        return $out !== [] ? $out : $existing;
+    }
+
+    /**
      * Freigabe: Version erhöhen, Status published, Audit (V2).
      *
      * @return array{ok: bool, message: string, id: int, version: string}

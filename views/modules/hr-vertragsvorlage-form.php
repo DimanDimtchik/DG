@@ -32,6 +32,14 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
       </p>
     </div>
     <div class="dg-page-header__actions">
+      <?php if ($tid > 0) : ?>
+        <a
+          class="dg-button"
+          href="/app?page=hr-vertragsvorlage-form&amp;id=<?= $tid ?>&amp;preview=1"
+          target="_blank"
+          rel="noopener"
+        >Vorschau (gespeichert)</a>
+      <?php endif; ?>
       <a class="dg-button" href="/app?page=hr-vertragsvorlagen">Zur Liste</a>
     </div>
   </header>
@@ -50,7 +58,6 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
   <form class="dg-form dg-panel" method="post" action="/app?page=hr-vertragsvorlage-form&amp;id=<?= $tid ?>">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <input type="hidden" name="id" value="<?= $tid ?>">
-    <input type="hidden" name="contract_template_save" value="1">
 
     <div class="dg-form-grid">
       <label class="dg-field dg-field--wide">
@@ -100,7 +107,8 @@ $tid = (int) ($contractTemplate['id'] ?? 0);
 
     <?php if ($canEdit) : ?>
       <div class="dg-form-actions">
-        <button type="submit" class="dg-button dg-button--primary">Als Entwurf speichern</button>
+        <button type="submit" name="contract_template_save" value="1" class="dg-button dg-button--primary">Als Entwurf speichern</button>
+        <button type="submit" name="contract_template_preview" value="1" class="dg-button" formtarget="_blank">Vorschau-PDF</button>
         <a class="dg-button" href="/app?page=hr-vertragsvorlagen">Abbrechen</a>
       </div>
     <?php endif; ?>

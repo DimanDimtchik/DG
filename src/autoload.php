@@ -158,6 +158,7 @@ spl_autoload_register(static function (string $class): void {
         'ContractTemplateCatalog' => '/src/Hr/ContractTemplateCatalog.php',
         'ContractTemplateRenderer' => '/src/Hr/ContractTemplateRenderer.php',
         'ContractTemplateRepository' => '/src/Hr/ContractTemplateRepository.php',
+        'ContractTemplatePreviewService' => '/src/Hr/ContractTemplatePreviewService.php',
         'HrPersonnelEventRepository' => '/src/Hr/HrPersonnelEventRepository.php',
         'HrPersonnelEventPdfService' => '/src/Hr/HrPersonnelEventPdfService.php',
         'HrPersonnelEventService' => '/src/Hr/HrPersonnelEventService.php',

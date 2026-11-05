@@ -140,4 +140,13 @@ Mehrsprachigkeit · Diff-UI · Word-Import · Klausel-Marktplatz · Branchen-Pac
 | Seed vor Generate | `EmploymentContractService::generate` ruft `ensureSeeded` |
 | Prüfnachweis | `our_ref` enthält `-v{Version}` bei published |
 
-**V4 optional:** Vorschau-PDF im Editor + weiterer Dokumenttyp.
+### V4 Status (2026-11-05)
+
+| Stück | Ort |
+|-------|-----|
+| Vorschau-PDF | `ContractTemplatePreviewService` · Demo-Platzhalter · GET `preview=1` / POST `contract_template_preview` |
+| Unbekannte `{{…}}` | leer + Hinweiszeile in der Vorschau |
+| Abmahnung | Katalog-Code `hr_warning` · Seed · `HrPersonnelEventPdfService` nutzt published/Katalog |
+| Platzhalter Abmahnung | `warningExtraBag` (`facts_html`, `expectation_html`, …) |
+
+**Stop:** Kündigung/Aufhebung weiter PHP-Text bis eigener Katalog-Code nötig.

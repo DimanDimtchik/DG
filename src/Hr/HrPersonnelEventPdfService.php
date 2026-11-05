@@ -22,8 +22,20 @@ final class HrPersonnelEventPdfService
         }
 
         $kind = (string) ($payload['event_type'] ?? HrPersonnelEventRepository::TYPE_WARNING);
-        $bodyHtml = self::bodyHtml($placeholders, $payload, $kind);
+        $resolved = self::resolveTemplate($kind);
+        $bodyHtml = self::bodyHtml($placeholders, $payload, $kind, $resolved);
         $subject = self::subjectFor($kind, $placeholders);
+        $ourRef = 'HR-' . date('Ymd');
+        if (
+            $resolved !== null
+            && ($resolved['source'] ?? '') === 'published'
+            && ($resolved['version'] ?? '') !== ''
+        ) {
+            $safeVer = preg_replace('/[^0-9.]/', '', (string) $resolved['version']) ?? '';
+            if ($safeVer !== '') {
+                $ourRef .= '-v' . $safeVer;
+            }
+        }
 
         $recipientLines = [(string) ($placeholders['employee_name'] ?? '')];
         foreach (EmploymentContractContext::addressLines((string) ($placeholders['employee_address'] ?? '')) as $line) {
@@ -35,7 +47,7 @@ final class HrPersonnelEventPdfService
                 static fn(string $l): bool => trim($l) !== ''
             )),
             'info' => [
-                'our_ref' => 'HR-' . date('Ymd'),
+                'our_ref' => $ourRef,
                 'our_handler' => '',
                 'date' => (string) ($payload['event_date_de'] ?? $placeholders['today'] ?? date('d.m.Y')),
             ],
@@ -73,11 +85,104 @@ final class HrPersonnelEventPdfService
     }
 
     /**
+     * @return array{code: string, source: string, version: string, blocks: list<array<string, mixed>>}|null
+     */
+    private static function resolveTemplate(string $kind): ?array
+    {
+        $code = ContractTemplateCatalog::codeForEventType($kind);
+        if ($code === null) {
+            return null;
+        }
+        if (class_exists('ContractTemplateRepository') && ContractTemplateRepository::tableReady()) {
+            try {
+                ContractTemplateRepository::ensureSeeded();
+                $pub = ContractTemplateRepository::publishedWithBlocks($code);
+                if ($pub !== null && $pub['blocks'] !== []) {
+                    return [
+                        'code' => $code,
+                        'source' => 'published',
+                        'version' => (string) ($pub['template']['version'] ?? ''),
+                        'blocks' => $pub['blocks'],
+                    ];
+                }
+            } catch (Throwable) {
+                // Katalog
+            }
+        }
+        $blocks = ContractTemplateCatalog::blocksForCode($code);
+        if ($blocks === []) {
+            return null;
+        }
+
+        return [
+            'code' => $code,
+            'source' => 'catalog',
+            'version' => '',
+            'blocks' => $blocks,
+        ];
+    }
+
+    /**
      * @param array<string, string> $p
      * @param array<string, mixed> $payload
+     * @return array<string, string>
      */
-    private static function bodyHtml(array $p, array $payload, string $kind): string
+    public static function warningExtraBag(array $p, array $payload): array
     {
+        $e = static fn(string $t): string => htmlspecialchars($t, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $expectation = trim((string) ($payload['expectation_text'] ?? ''));
+        if ($expectation === '') {
+            $expectation = 'Wir erwarten, dass Sie das beanstandete Verhalten sofort und dauerhaft unterlassen '
+                . 'und die vertraglichen Pflichten vollständig einhalten.';
+        }
+        $threat = trim((string) ($payload['threat_text'] ?? ''));
+        if ($threat === '') {
+            $threat = 'Für den Wiederholungs- oder einen gleichartigen Fall behalten wir uns arbeitsrechtliche '
+                . 'Maßnahmen bis hin zur Kündigung des Arbeitsverhältnisses vor.';
+        }
+        $employerAddr = implode('<br>', array_map(
+            $e,
+            EmploymentContractContext::addressLines((string) ($p['employer_address'] ?? ''))
+        ));
+
+        return [
+            'hr_disclaimer' => $e(
+                'Dieses Schreiben ist ein Entwurfs-/Dokumentationshilfsmittel. '
+                . 'Rechtswirkungen hängen vom Einzelfall und dem Zugang ab. Kein Ersatz für Rechtsberatung.'
+            ),
+            'hr_warning_intro' => $e(
+                'hiermit sprechen wir eine Abmahnung wegen des nachfolgenden Sachverhalts aus.'
+            ),
+            'facts_html' => nl2br($e(trim((string) ($payload['facts_text'] ?? ''))), false),
+            'expectation_html' => nl2br($e($expectation), false),
+            'threat_html' => nl2br($e($threat), false),
+            'hr_employer_footer_html' => $e('Arbeitgeber: ' . ($p['employer_name'] ?? ''))
+                . ($employerAddr !== '' ? '<br>' . $employerAddr : ''),
+        ];
+    }
+
+    /**
+     * @param array<string, string> $p
+     * @param array<string, mixed> $payload
+     * @param array{code: string, source: string, version: string, blocks: list<array<string, mixed>>}|null $resolved
+     */
+    private static function bodyHtml(array $p, array $payload, string $kind, ?array $resolved = null): string
+    {
+        if ($kind === HrPersonnelEventRepository::TYPE_WARNING && $resolved !== null) {
+            $html = ContractTemplateRenderer::render(
+                $resolved['blocks'],
+                $p,
+                [
+                    'contract_type' => EmploymentContractContext::TYPE_FULLTIME,
+                    'is_minor' => false,
+                ],
+                self::warningExtraBag($p, $payload)
+            );
+            if (trim(strip_tags($html)) !== '') {
+                return $html;
+            }
+        }
+
         $e = static fn(string $t): string => htmlspecialchars($t, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $parts = [];
         $parts[] = '<p>' . $e(
@@ -86,25 +191,14 @@ final class HrPersonnelEventPdfService
         ) . '</p>';
 
         if ($kind === HrPersonnelEventRepository::TYPE_WARNING) {
-            $parts[] = '<p>' . $e(
-                'hiermit sprechen wir eine Abmahnung wegen des nachfolgenden Sachverhalts aus.'
-            ) . '</p>';
+            $extra = self::warningExtraBag($p, $payload);
+            $parts[] = '<p>' . $extra['hr_warning_intro'] . '</p>';
             $parts[] = '<p><strong>' . $e('Sachverhalt') . '</strong></p>';
-            $parts[] = '<p>' . nl2br($e(trim((string) ($payload['facts_text'] ?? ''))), false) . '</p>';
-            $expectation = trim((string) ($payload['expectation_text'] ?? ''));
-            if ($expectation === '') {
-                $expectation = 'Wir erwarten, dass Sie das beanstandete Verhalten sofort und dauerhaft unterlassen '
-                    . 'und die vertraglichen Pflichten vollständig einhalten.';
-            }
+            $parts[] = '<p>' . $extra['facts_html'] . '</p>';
             $parts[] = '<p><strong>' . $e('Erwartung') . '</strong></p>';
-            $parts[] = '<p>' . nl2br($e($expectation), false) . '</p>';
-            $threat = trim((string) ($payload['threat_text'] ?? ''));
-            if ($threat === '') {
-                $threat = 'Für den Wiederholungs- oder einen gleichartigen Fall behalten wir uns arbeitsrechtliche '
-                    . 'Maßnahmen bis hin zur Kündigung des Arbeitsverhältnisses vor.';
-            }
+            $parts[] = '<p>' . $extra['expectation_html'] . '</p>';
             $parts[] = '<p><strong>' . $e('Androhung') . '</strong></p>';
-            $parts[] = '<p>' . nl2br($e($threat), false) . '</p>';
+            $parts[] = '<p>' . $extra['threat_html'] . '</p>';
         } elseif ($kind === HrPersonnelEventRepository::TYPE_TERM_AGREEMENT) {
             $parts[] = '<p>' . $e(
                 'hiermit bestätigen wir die einvernehmliche Beendigung des Arbeitsverhältnisses '
@@ -137,13 +231,7 @@ final class HrPersonnelEventPdfService
             ) . '</p>';
         }
 
-        $employerAddr = implode('<br>', array_map(
-            $e,
-            EmploymentContractContext::addressLines((string) ($p['employer_address'] ?? ''))
-        ));
-        $parts[] = '<p>' . $e('Arbeitgeber: ' . ($p['employer_name'] ?? ''))
-            . ($employerAddr !== '' ? '<br>' . $employerAddr : '')
-            . '</p>';
+        $parts[] = '<p>' . self::warningExtraBag($p, $payload)['hr_employer_footer_html'] . '</p>';
 
         return implode("\n", $parts);
     }

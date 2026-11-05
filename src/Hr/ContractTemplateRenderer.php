@@ -10,22 +10,36 @@ final class ContractTemplateRenderer
      * @param list<array{block_key?: string, body_html?: string, is_annex?: int|bool, enabled?: int|bool}> $blocks
      * @param array<string, string> $placeholders
      * @param array<string, mixed> $opts contract_type, is_minor, annex_*
+     * @param array<string, string> $extraBag zusätzliche Platzhalter (z. B. Abmahnung facts_html)
+     * @param list<string>|null $missingKeys unbekannte Schlüssel (Ausgabe)
      */
-    public static function render(array $blocks, array $placeholders, array $opts): string
-    {
+    public static function render(
+        array $blocks,
+        array $placeholders,
+        array $opts,
+        array $extraBag = [],
+        ?array &$missingKeys = null
+    ): string {
         $type = (string) ($opts['contract_type'] ?? EmploymentContractContext::TYPE_FULLTIME);
         $bag = self::expandPlaceholders($placeholders, $type, $opts);
+        foreach ($extraBag as $k => $v) {
+            $bag[(string) $k] = (string) $v;
+        }
+        $foundMissing = [];
         $parts = [];
         foreach ($blocks as $block) {
             if (!self::includeBlock($block, $opts, $type)) {
                 continue;
             }
-            $html = self::replacePlaceholders((string) ($block['body_html'] ?? ''), $bag);
+            $html = self::replacePlaceholders((string) ($block['body_html'] ?? ''), $bag, $foundMissing);
             $html = self::stripEmptyParagraphs($html);
             if (trim(strip_tags($html)) === '') {
                 continue;
             }
             $parts[] = $html;
+        }
+        if ($missingKeys !== null) {
+            $missingKeys = array_values(array_unique($foundMissing));
         }
 
         return implode("\n", $parts);
@@ -303,15 +317,23 @@ final class ContractTemplateRenderer
         return $html;
     }
 
-    /** @param array<string, string> $bag */
-    private static function replacePlaceholders(string $html, array $bag): string
+    /**
+     * @param array<string, string> $bag
+     * @param list<string> $missingKeys
+     */
+    private static function replacePlaceholders(string $html, array $bag, array &$missingKeys = []): string
     {
         return (string) preg_replace_callback(
             '/\{\{\s*([a-z0-9_]+)\s*\}\}/i',
-            static function (array $m) use ($bag): string {
+            static function (array $m) use ($bag, &$missingKeys): string {
                 $key = $m[1];
+                if (!array_key_exists($key, $bag)) {
+                    $missingKeys[] = $key;
 
-                return $bag[$key] ?? '';
+                    return '';
+                }
+
+                return $bag[$key];
             },
             $html
         );

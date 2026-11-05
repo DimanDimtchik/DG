@@ -3607,11 +3607,15 @@ switch ($path) {
             exit;
         }
 
-        // POST: Vertragsvorlagen speichern / freigeben (HR V1/V2)
+        // POST: Vertragsvorlagen speichern / freigeben / Vorschau (HR V1–V4)
         if (
             ($page === 'hr-vertragsvorlage-form' || $page === 'hr-vertragsvorlagen')
             && $_SERVER['REQUEST_METHOD'] === 'POST'
-            && (isset($_POST['contract_template_save']) || isset($_POST['contract_template_publish']))
+            && (
+                isset($_POST['contract_template_save'])
+                || isset($_POST['contract_template_publish'])
+                || isset($_POST['contract_template_preview'])
+            )
             && MenuRegistry::canAccess($user, 'hr-vertragsvorlage-form')
         ) {
             if (!Csrf::verify($_POST['_csrf'] ?? null)) {
@@ -3619,12 +3623,29 @@ switch ($path) {
                 header('Location: /app?page=hr-vertragsvorlagen', true, 302);
                 exit;
             }
+            $tplId = (int) ($_POST['id'] ?? 0);
+            if (isset($_POST['contract_template_preview'])) {
+                try {
+                    MigrationRunner::runPending();
+                    ContractTemplateRepository::ensureSeeded((int) ($user->id ?? 0));
+                    $pdf = ContractTemplatePreviewService::renderPdf($tplId, $_POST);
+                    $safe = 'Vertragsvorlage-Vorschau-' . $tplId . '.pdf';
+                    header('Content-Type: application/pdf');
+                    header('Content-Disposition: inline; filename="' . $safe . '"');
+                    header('Content-Length: ' . (string) strlen($pdf));
+                    echo $pdf;
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=hr-vertragsvorlage-form&id=' . $tplId, true, 302);
+                    exit;
+                }
+            }
             if (!RoleResolver::canEdit($user)) {
                 Flash::set('error', 'Keine Berechtigung.');
                 header('Location: /app?page=hr-vertragsvorlagen', true, 302);
                 exit;
             }
-            $tplId = (int) ($_POST['id'] ?? 0);
             try {
                 MigrationRunner::runPending();
                 ContractTemplateRepository::ensureSeeded((int) ($user->id ?? 0));
@@ -7455,6 +7476,21 @@ $legalProductsConfig = LegalProductSettings::config();
                 Flash::set('error', 'Vorlage nicht gefunden.');
                 header('Location: /app?page=hr-vertragsvorlagen', true, 302);
                 exit;
+            }
+            if (isset($_GET['preview'])) {
+                try {
+                    $pdf = ContractTemplatePreviewService::renderPdf((int) $contractTemplate['id'], null);
+                    $safe = 'Vertragsvorlage-Vorschau-' . (int) $contractTemplate['id'] . '.pdf';
+                    header('Content-Type: application/pdf');
+                    header('Content-Disposition: inline; filename="' . $safe . '"');
+                    header('Content-Length: ' . (string) strlen($pdf));
+                    echo $pdf;
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=hr-vertragsvorlage-form&id=' . $tplId, true, 302);
+                    exit;
+                }
             }
             $contractBlocks = ContractTemplateRepository::blocksForTemplate((int) $contractTemplate['id']);
             $canEdit = RoleResolver::canEdit($user);

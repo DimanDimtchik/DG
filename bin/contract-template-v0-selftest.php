@@ -60,7 +60,23 @@ $opts = [
 $code = ContractTemplateCatalog::codeForContractType(EmploymentContractContext::TYPE_FULLTIME);
 $catalogBlocks = ContractTemplateCatalog::blocksForCode($code);
 assertV0($catalogBlocks !== [], 'Katalog Vollzeit hat Bausteine');
-assertV0(count(ContractTemplateCatalog::templates()) === 3, '3 Vorlagen-Codes');
+assertV0(count(ContractTemplateCatalog::templates()) === 4, '4 Vorlagen-Codes inkl. Abmahnung');
+assertV0(ContractTemplateCatalog::codeForEventType(HrPersonnelEventRepository::TYPE_WARNING) === ContractTemplateCatalog::CODE_WARNING, 'Event→Code Abmahnung');
+$warnBlocks = ContractTemplateCatalog::blocksForCode(ContractTemplateCatalog::CODE_WARNING);
+assertV0($warnBlocks !== [], 'Abmahnung-Katalog hat Bausteine');
+$warnHtml = ContractTemplateRenderer::render(
+    $warnBlocks,
+    $fixture,
+    $opts,
+    HrPersonnelEventPdfService::warningExtraBag($fixture, [
+        'facts_text' => "Zeile 1\nZeile 2",
+        'expectation_text' => '',
+        'threat_text' => '',
+    ])
+);
+assertV0(str_contains($warnHtml, 'Abmahnung'), 'Abmahnung-Text im HTML');
+assertV0(str_contains($warnHtml, 'Zeile 1'), 'Sachverhalt im HTML');
+assertV0(!str_contains($warnHtml, '{{'), 'Abmahnung ohne offene Platzhalter');
 
 $fromCatalog = ContractTemplateRenderer::render($catalogBlocks, $fixture, $opts);
 $fromClauses = EmploymentContractClauses::bodyHtml($fixture, $opts);
@@ -101,7 +117,9 @@ assertV0(trim(strip_tags($fromResolve)) !== '', 'Resolve-HTML nicht leer (V3-Tor
 
 if (ContractTemplateRepository::tableReady()) {
     $seed = ContractTemplateRepository::ensureSeeded();
-    assertV0(($seed['created'] + $seed['skipped']) === 3, 'Seed deckt 3 Codes ab');
+    assertV0(($seed['created'] + $seed['skipped']) === 4, 'Seed deckt 4 Codes ab');
+    $warnPub = ContractTemplateRepository::publishedWithBlocks(ContractTemplateCatalog::CODE_WARNING);
+    assertV0($warnPub !== null, 'Published Abmahnung aus DB (nach Seed)');
     $pub = ContractTemplateRepository::publishedWithBlocks($code);
     assertV0($pub !== null, 'Published Fulltime aus DB');
     $fromDb = ContractTemplateRenderer::render($pub['blocks'], $fixture, $opts);
@@ -117,5 +135,5 @@ if (ContractTemplateRepository::tableReady()) {
     assertV0($resolvedCatalog['source'] === 'catalog', 'ohne DB: Resolve = Katalog');
 }
 
-echo "V0/V2/V3 Selftest bestanden.\n";
+echo "V0–V4 Selftest bestanden.\n";
 exit(0);
