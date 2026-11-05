@@ -25,11 +25,15 @@ final class HrPersonnelEventPdfService
         $bodyHtml = self::bodyHtml($placeholders, $payload, $kind);
         $subject = self::subjectFor($kind, $placeholders);
 
+        $recipientLines = [(string) ($placeholders['employee_name'] ?? '')];
+        foreach (EmploymentContractContext::addressLines((string) ($placeholders['employee_address'] ?? '')) as $line) {
+            $recipientLines[] = $line;
+        }
         $doc = [
-            'recipient_lines' => array_values(array_filter([
-                (string) ($placeholders['employee_name'] ?? ''),
-                (string) ($placeholders['employee_address'] ?? ''),
-            ], static fn(string $l): bool => trim($l) !== '')),
+            'recipient_lines' => array_values(array_filter(
+                $recipientLines,
+                static fn(string $l): bool => trim($l) !== ''
+            )),
             'info' => [
                 'our_ref' => 'HR-' . date('Ymd'),
                 'our_handler' => '',
@@ -133,8 +137,13 @@ final class HrPersonnelEventPdfService
             ) . '</p>';
         }
 
-        $parts[] = '<p>' . $e('Arbeitgeber: ' . ($p['employer_name'] ?? '')) . '<br>'
-            . $e((string) ($p['employer_address'] ?? '')) . '</p>';
+        $employerAddr = implode('<br>', array_map(
+            $e,
+            EmploymentContractContext::addressLines((string) ($p['employer_address'] ?? ''))
+        ));
+        $parts[] = '<p>' . $e('Arbeitgeber: ' . ($p['employer_name'] ?? ''))
+            . ($employerAddr !== '' ? '<br>' . $employerAddr : '')
+            . '</p>';
 
         return implode("\n", $parts);
     }

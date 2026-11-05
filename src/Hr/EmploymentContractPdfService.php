@@ -26,11 +26,15 @@ final class EmploymentContractPdfService
         $employee = (string) ($placeholders['employee_name'] ?? '');
         $subject = 'Arbeitsvertrag — ' . $typeLabel . ($employee !== '' ? ' — ' . $employee : '');
 
+        $recipientLines = [(string) ($placeholders['employee_name'] ?? '')];
+        foreach (EmploymentContractContext::addressLines((string) ($placeholders['employee_address'] ?? '')) as $line) {
+            $recipientLines[] = $line;
+        }
         $doc = [
-            'recipient_lines' => array_values(array_filter([
-                (string) ($placeholders['employee_name'] ?? ''),
-                (string) ($placeholders['employee_address'] ?? ''),
-            ], static fn(string $l): bool => trim($l) !== '')),
+            'recipient_lines' => array_values(array_filter(
+                $recipientLines,
+                static fn(string $l): bool => trim($l) !== ''
+            )),
             'info' => [
                 'our_ref' => 'AV-' . date('Ymd'),
                 'our_handler' => '',

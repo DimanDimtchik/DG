@@ -48,19 +48,22 @@ final class EmploymentContractContext
             $employeeName = trim($contact->displayName);
         }
 
-        $employeeAddress = self::joinNonEmpty([
+        $employeeAddress = self::formatPostalAddress(
+            trim($contact->address1Extra),
             trim($contact->address1Street),
-            trim(trim($contact->address1Postal) . ' ' . trim($contact->address1City)),
-            trim($contact->address1Country) !== '' && strtoupper(trim($contact->address1Country)) !== 'DE'
-                ? trim($contact->address1Country)
-                : '',
-        ], ', ');
+            trim($contact->address1Postal),
+            trim($contact->address1City),
+            trim($contact->address1Country)
+        );
 
         $employerName = CompanySettings::displayName();
-        $employerAddress = self::joinNonEmpty([
+        $employerAddress = self::formatPostalAddress(
+            '',
             trim((string) ($company['street'] ?? '')),
-            trim(trim((string) ($company['postal'] ?? '')) . ' ' . trim((string) ($company['city'] ?? ''))),
-        ], ', ');
+            trim((string) ($company['postal'] ?? '')),
+            trim((string) ($company['city'] ?? '')),
+            trim((string) ($company['country'] ?? 'DE'))
+        );
 
         $vacation = trim((string) ($ed['vacation_days_annual'] ?? ''));
         if ($vacation === '' && $contact->id > 0 && class_exists('TimeVacationEntitlementRepository')) {
@@ -216,6 +219,55 @@ final class EmploymentContractContext
         $dt = date_create($ymd);
 
         return $dt instanceof DateTimeInterface ? $dt->format('d.m.Y') : $ymd;
+    }
+
+    /**
+     * Postanschrift mehrzeilig (DIN-üblich): Zusatz, Straße, PLZ Ort [, Land].
+     */
+    public static function formatPostalAddress(
+        string $extra,
+        string $street,
+        string $postal,
+        string $city,
+        string $country = 'DE'
+    ): string {
+        $country = trim($country);
+        $parts = [
+            trim($extra),
+            trim($street),
+            trim(trim($postal) . ' ' . trim($city)),
+            $country !== '' && strtoupper($country) !== 'DE' ? $country : '',
+        ];
+
+        return self::joinNonEmpty($parts, "\n");
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function addressLines(string $address): array
+    {
+        $lines = preg_split('/\R/u', $address) ?: [];
+        $out = [];
+        foreach ($lines as $line) {
+            $line = trim((string) $line);
+            if ($line !== '') {
+                $out[] = $line;
+            }
+        }
+
+        return $out;
+    }
+
+    /** Dateiname-sicherer Namensbestandteil (Umlaute → ae/oe/ue). */
+    public static function fileNameSlug(string $value): string
+    {
+        $s = mb_strtolower(trim($value), 'UTF-8');
+        $s = strtr($s, ['ä' => 'ae', 'ö' => 'oe', 'ü' => 'ue', 'ß' => 'ss']);
+        $s = preg_replace('/[^a-z0-9]+/', '-', $s) ?? '';
+        $s = trim($s, '-');
+
+        return $s !== '' ? mb_substr($s, 0, 80) : 'ohne-name';
     }
 
     /**

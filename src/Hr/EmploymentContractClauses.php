@@ -72,16 +72,26 @@ final class EmploymentContractClauses
         return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
+    private static function eMultiline(string $text): string
+    {
+        $parts = [];
+        foreach (EmploymentContractContext::addressLines($text) as $line) {
+            $parts[] = self::e($line);
+        }
+
+        return implode('<br>', $parts);
+    }
+
     /** @param array<string, string> $p */
     private static function parties(array $p): string
     {
         return '<p><strong>Zwischen</strong><br>'
             . self::e($p['employer_name']) . '<br>'
-            . self::e($p['employer_address'])
+            . self::eMultiline($p['employer_address'])
             . '<br><br><strong>und</strong><br>'
             . self::e($p['employee_name'])
             . ($p['employee_birth_date'] !== '' ? '<br>geb. am ' . self::e($p['employee_birth_date']) : '')
-            . '<br>' . self::e($p['employee_address'])
+            . '<br>' . self::eMultiline($p['employee_address'])
             . '<br><br>wird folgender Arbeitsvertrag geschlossen:</p>';
     }
 

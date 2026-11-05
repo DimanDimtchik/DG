@@ -68,11 +68,14 @@ final class EmploymentContractService
         ];
 
         $pdf = EmploymentContractPdfService::renderPdf($ctx['placeholders'], $opts);
-        $slug = $ctx['contract_type'];
+        $nameSlug = EmploymentContractContext::fileNameSlug(
+            (string) ($ctx['placeholders']['employee_name'] ?? '')
+        );
+        $typeSlug = $ctx['contract_type'];
         if ($ctx['is_minor']) {
-            $slug .= '-minderjaehrig';
+            $typeSlug .= '-minderjaehrig';
         }
-        $originalName = 'Arbeitsvertrag-' . $slug . '-' . date('Y-m-d') . '.pdf';
+        $originalName = 'Arbeitsvertrag-' . $nameSlug . '-' . $typeSlug . '-' . date('Y-m-d') . '.pdf';
 
         $files = ContactFileStorage::normalizeFiles($contact->employeeFiles);
         $previous = is_array($files['employment_contract'] ?? null) ? $files['employment_contract'] : [];
