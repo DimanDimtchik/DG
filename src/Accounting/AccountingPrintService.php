@@ -84,22 +84,25 @@ final class AccountingPrintService
     color: #8a93a3;
     pointer-events: none;
   }
-  /* DIN-Faltmarken (Fensterumschlag / DL), bezogen auf Blattkante inkl. Padding */
+  /* DIN-Faltmarken (Fensterumschlag / DL): nur 1. Seite, Positionen ab Blattoberkante */
   .vd-fold-marks {
     position: absolute;
     left: 0;
     top: 0;
-    width: 0;
-    height: 100%;
+    width: 10mm;
+    height: 297mm;
+    overflow: hidden;
     pointer-events: none;
+    z-index: 6;
   }
   .vd-fold-marks::before,
   .vd-fold-marks::after {
     content: "";
     position: absolute;
     left: 0;
-    width: 6mm;
-    border-top: 0.4pt solid #8a93a3;
+    width: 7mm;
+    height: 0;
+    border-top: 0.45pt solid #8a93a3;
   }
   .vd-fold-marks::before { top: 87mm; }
   .vd-fold-marks::after { top: 192mm; }
@@ -195,11 +198,18 @@ final class AccountingPrintService
       padding: 0;
       box-shadow: none;
       background: none;
+      overflow: visible;
     }
     .vd-a4__page-mark { display: none; }
-    /* Bei @page-Rand 14 mm: Marken relativ zum bedruckbaren Bereich */
-    .vd-fold-marks::before { top: calc(87mm - 14mm); }
-    .vd-fold-marks::after { top: calc(192mm - 14mm); }
+    /* @page-Rand 14 mm: Marken-Container an die Blattkante zurückschieben */
+    .vd-fold-marks {
+      left: -14mm;
+      top: -14mm;
+      height: 297mm;
+    }
+    .vd-fold-marks::before { top: 87mm; }
+    .vd-fold-marks::after { top: 192mm; }
+    .vd-page-footer { display: none; }
   }';
         }
 
