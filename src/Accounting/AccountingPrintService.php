@@ -282,10 +282,10 @@ JS;
   {$printButton}
   <div class="vd-a4">
     {$body}
-    <div class="vd-page-footer">
-      <span>{$escapedCompany}</span>
-      <span>{$escapedTitle}</span>
-    </div>
+  </div>
+  <div class="vd-page-footer">
+    <span>{$escapedCompany}</span>
+    <span>{$escapedTitle}</span>
   </div>
   {$pageMarkScript}
 </body>
