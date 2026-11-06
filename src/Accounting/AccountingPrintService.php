@@ -170,6 +170,13 @@ final class AccountingPrintService
   .vd-signatures__name { margin: 1mm 0 8mm; font-size: 9pt; color: #5c6678; }
   .vd-signatures__line { border-bottom: 1px solid #1c2330; height: 14mm; margin-bottom: 1.5mm; }
   .vd-signatures__caption { font-size: 8pt; color: #5c6678; }
+  .vd-tse { margin-top: 6mm; padding: 3mm 3mm 2mm; border: 1px solid #dfe3ea; page-break-inside: avoid; }
+  .vd-tse__title { font-size: 9pt; font-weight: 700; margin: 0 0 2mm; color: #1c2330; }
+  .vd-tse__row { display: table; width: 100%; }
+  .vd-tse__qr { display: table-cell; width: 28mm; vertical-align: top; }
+  .vd-tse__qr svg { width: 26mm; height: 26mm; display: block; }
+  .vd-tse__meta { display: table-cell; vertical-align: top; padding-left: 3mm; font-size: 8pt; line-height: 1.35; color: #1c2330; }
+  .vd-tse__meta div { margin: 0 0 0.8mm; }
   .vd-page-footer {
     margin-top: 8mm;
     padding-top: 2mm;

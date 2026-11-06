@@ -186,6 +186,10 @@ final class CashJournalRepository
         $amount = round((float) ($row['amount'] ?? 0), 2);
         $row['amount_display'] = number_format($amount, 2, ',', '.') . ' €';
         $row['side_label'] = ($row['side'] ?? '') === 'in' ? 'Ein' : 'Aus';
+        $voucherId = (int) ($row['voucher_id'] ?? 0);
+        $row['tse_signed'] = $voucherId > 0
+            && class_exists('TseTransactionRepository')
+            && TseTransactionRepository::hasFinishedForVoucher($voucherId);
 
         return $row;
     }

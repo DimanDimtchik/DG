@@ -1195,6 +1195,8 @@ final class VoucherRepository
                     null,
                     $userId,
                 );
+            } catch (InvalidArgumentException $e) {
+                throw $e;
             } catch (Throwable) {
                 VoucherPaymentRepository::syncVoucherSettlement($voucherId);
             }

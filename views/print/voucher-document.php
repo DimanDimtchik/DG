@@ -397,6 +397,37 @@ $paymentTermsText = trim((string) ($paymentTermsText ?? ''));
   </div>
 <?php endif; ?>
 
+<?php
+$tseBlock = is_array($tseBlock ?? null) ? $tseBlock : null;
+?>
+<?php if ($tseBlock !== null && ($tseBlock['qr_svg'] ?? '') !== '') : ?>
+  <div class="vd-tse"<?= !empty($forEmail) ? ' style="margin-top:16px;padding:8px 12px;border:1px solid #dfe3ea;font-size:11px;"' : '' ?>>
+    <div class="vd-tse__title">TSE-Absicherung (KassenSichV)</div>
+    <div class="vd-tse__row"<?= !empty($forEmail) ? ' style="display:table;width:100%;"' : '' ?>>
+      <div class="vd-tse__qr"<?= !empty($forEmail) ? ' style="display:table-cell;width:90px;vertical-align:top;"' : '' ?>>
+        <?= $tseBlock['qr_svg'] ?>
+      </div>
+      <div class="vd-tse__meta"<?= !empty($forEmail) ? ' style="display:table-cell;vertical-align:top;padding-left:12px;"' : '' ?>>
+        <?php if (($tseBlock['client_serial'] ?? '') !== '') : ?>
+          <div>Kasse: <?= View::escape((string) $tseBlock['client_serial']) ?></div>
+        <?php endif; ?>
+        <?php if (($tseBlock['signature_counter'] ?? '') !== '') : ?>
+          <div>Signaturzähler: <?= View::escape((string) $tseBlock['signature_counter']) ?></div>
+        <?php endif; ?>
+        <?php if (($tseBlock['tx_number'] ?? '') !== '') : ?>
+          <div>Transaktion: <?= View::escape((string) $tseBlock['tx_number']) ?></div>
+        <?php endif; ?>
+        <?php if (($tseBlock['time_label'] ?? '') !== '') : ?>
+          <div>Zeit: <?= View::escape((string) $tseBlock['time_label']) ?></div>
+        <?php endif; ?>
+        <?php if (($tseBlock['algorithm'] ?? '') !== '') : ?>
+          <div>Algorithmus: <?= View::escape((string) $tseBlock['algorithm']) ?></div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
+
 <?php if (is_array($signatureBlock ?? null)) : ?>
   <?php
     $sigPlace = trim((string) ($signatureBlock['place'] ?? ''));

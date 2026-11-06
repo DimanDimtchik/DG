@@ -1532,6 +1532,49 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen TSE
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && (isset($_POST['tse_save']) || isset($_POST['tse_ping']))
+        ) {
+            $redirect = SettingsRegistry::tabUrl('tse');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } elseif (isset($_POST['tse_save'])) {
+                try {
+                    TseSettings::saveFromPost($_POST);
+                    Flash::set('success', 'TSE-Einstellungen gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            } else {
+                try {
+                    if (!TseSettings::isReady()) {
+                        throw new InvalidArgumentException('Zugangsdaten unvollständig — zuerst speichern.');
+                    }
+                    $client = new TseSignDeClient();
+                    $tss = $client->retrieveTss();
+                    $tseClient = $client->retrieveClient();
+                    $state = (string) ($tss['state'] ?? '');
+                    $clientState = (string) ($tseClient['state'] ?? '');
+                    $serial = (string) ($tseClient['serial_number'] ?? '');
+                    Flash::set(
+                        'success',
+                        'TSE erreichbar. Status: ' . ($state !== '' ? $state : 'unbekannt')
+                        . ', Kasse: ' . ($clientState !== '' ? $clientState : 'unbekannt')
+                        . ($serial !== '' ? ', Nr. ' . $serial : '')
+                        . '.'
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen ELSTER — Zertifikat / Passwort / Frist
         if (
             $page === 'einstellungen'
@@ -6608,6 +6651,7 @@ switch ($path) {
         $taxAdvisorConfig = TaxAdvisorSettings::forForm();
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
+        $tseConfig = TseSettings::forForm();
 $legalProductsConfig = LegalProductSettings::config();
         $ldapConfig = LdapSettings::forForm();
         $recruitingPrivacyForm = RecruitingPrivacySettings::forForm();
@@ -11341,6 +11385,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'taxAdvisorConfig',
             'taxAdvisorCompanyOptions',
             'elsterConfig',
+            'tseConfig',
 'legalProductsConfig',
             'ldapConfig',
             'accountingPaymentSettings',

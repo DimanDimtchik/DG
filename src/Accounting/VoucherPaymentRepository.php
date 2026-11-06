@@ -55,11 +55,23 @@ final class VoucherPaymentRepository
         $stmt->execute(['id' => $voucherId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $out = [];
+        $ids = [];
         foreach ($rows as $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $out[] = self::mapRow($row);
+            $mapped = self::mapRow($row);
+            $out[] = $mapped;
+            $ids[] = (int) $mapped['id'];
+        }
+        if ($ids !== [] && class_exists('TseTransactionRepository')) {
+            $tseMap = TseTransactionRepository::mapByPaymentIds($ids);
+            foreach ($out as $i => $mapped) {
+                $tse = $tseMap[(int) $mapped['id']] ?? null;
+                $out[$i]['tse'] = is_array($tse) ? $tse : null;
+                $out[$i]['tse_signed'] = is_array($tse)
+                    && (string) ($tse['state'] ?? '') === TseTransactionRepository::STATE_FINISHED;
+            }
         }
 
         return $out;
@@ -208,6 +220,7 @@ final class VoucherPaymentRepository
 
         $paymentId = (int) Database::pdo()->lastInsertId();
         self::syncVoucherSettlement($voucherId);
+        self::signCashPaymentOrRollback($voucherId, $paymentId, self::sanitizeMethod($method));
 
         return $paymentId;
     }
@@ -221,6 +234,12 @@ final class VoucherPaymentRepository
             throw new InvalidArgumentException('Zahlung nicht gefunden.');
         }
         MigrationRunner::runPending();
+
+        if (class_exists('TseTransactionRepository') && TseTransactionRepository::paymentIsSigned($paymentId)) {
+            throw new InvalidArgumentException(
+                'TSE-signierte Barzahlung kann nicht gelöscht werden. Dafür braucht es einen Storno-Beleg.'
+            );
+        }
 
         $stmt = Database::pdo()->prepare(
             'DELETE FROM dg_voucher_payments WHERE id = :id AND voucher_id = :voucher_id'
@@ -382,6 +401,37 @@ final class VoucherPaymentRepository
             'bank_transaction_id' => (int) ($row['bank_transaction_id'] ?? 0),
             'bank_transfer_id' => (int) ($row['bank_transfer_id'] ?? 0),
             'created_at' => (string) ($row['created_at'] ?? ''),
+            'tse' => null,
+            'tse_signed' => false,
         ];
+    }
+
+    private static function signCashPaymentOrRollback(int $voucherId, int $paymentId, string $method): void
+    {
+        if (!class_exists('TseSignService') || $method !== self::METHOD_CASH) {
+            return;
+        }
+        $voucher = VoucherRepository::findById($voucherId);
+        if ($voucher === null || !TseSignService::shouldSign($voucher, $method)) {
+            return;
+        }
+        try {
+            TseSignService::signCashPayment($voucherId, $paymentId);
+        } catch (Throwable $e) {
+            Database::pdo()->prepare(
+                'DELETE FROM dg_voucher_payments WHERE id = :id AND voucher_id = :voucher_id'
+            )->execute(['id' => $paymentId, 'voucher_id' => $voucherId]);
+            if (class_exists('TseTransactionRepository') && TseTransactionRepository::tableExists()) {
+                Database::pdo()->prepare(
+                    'DELETE FROM dg_tse_transactions WHERE voucher_payment_id = :id'
+                )->execute(['id' => $paymentId]);
+            }
+            self::syncVoucherSettlement($voucherId);
+            $msg = trim($e->getMessage());
+            if ($msg === '') {
+                $msg = 'TSE-Signatur fehlgeschlagen.';
+            }
+            throw new InvalidArgumentException('Barzahlung nicht gespeichert. ' . $msg, 0, $e);
+        }
     }
 }

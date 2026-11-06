@@ -1,0 +1,31 @@
+-- TSE-Signaturen zu Barzahlungen (KassenSichV / Fiskaly SIGN DE)
+
+CREATE TABLE IF NOT EXISTS dg_tse_transactions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    voucher_id INT UNSIGNED NOT NULL,
+    voucher_payment_id INT UNSIGNED NOT NULL,
+    tse_tx_id CHAR(36) NOT NULL,
+    tss_id CHAR(36) NOT NULL,
+    tse_client_id CHAR(36) NOT NULL,
+    state VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    tx_number INT UNSIGNED NULL,
+    revision INT UNSIGNED NULL,
+    signature_value TEXT NULL,
+    signature_algorithm VARCHAR(64) NULL,
+    signature_counter VARCHAR(32) NULL,
+    qr_code_data TEXT NULL,
+    time_start INT UNSIGNED NULL,
+    time_end INT UNSIGNED NULL,
+    client_serial_number VARCHAR(70) NULL,
+    tss_serial_number VARCHAR(128) NULL,
+    receipt_type VARCHAR(32) NULL,
+    amount_gross DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    error_message VARCHAR(500) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_tse_payment (voucher_payment_id),
+    UNIQUE KEY uq_tse_tx (tse_tx_id),
+    KEY idx_tse_voucher (voucher_id),
+    KEY idx_tse_state (state)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

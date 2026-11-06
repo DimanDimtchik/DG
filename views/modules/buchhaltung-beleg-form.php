@@ -654,6 +654,11 @@ $paymentTermsPreview = PaymentTermsService::composeText(
             · Gezahlt: <strong id="dg-voucher-total-paid"><?= View::escape($voucherTotalPaid) ?> €</strong>
             · Offen: <strong id="dg-voucher-open-amount"><?= View::escape($voucherOpenAmount) ?> €</strong>
           </p>
+          <?php if (class_exists('TseSettings') && TseSettings::isEnabled()) : ?>
+            <p class="dg-field-hint">
+              Barzahlungen auf Rechnungen werden TSE-signiert. Der Prüf-QR-Code steht auf dem Belegdruck.
+            </p>
+          <?php endif; ?>
           <?php if ($voucherPayments !== []) : ?>
             <div class="dg-table-wrap">
               <table class="dg-table">
@@ -663,25 +668,40 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                     <th>Art</th>
                     <th class="dg-table__num">Betrag</th>
                     <th>Verwendungszweck</th>
+                    <th>TSE</th>
                     <?php if (!$readOnly) : ?><th></th><?php endif; ?>
                   </tr>
                 </thead>
                 <tbody>
                   <?php foreach ($voucherPayments as $payment) : ?>
+                    <?php $tseSigned = !empty($payment['tse_signed']); ?>
                     <tr>
                       <td><?= View::escape((string) ($payment['payment_date'] ?? '')) ?></td>
                       <td><?= View::escape((string) ($payment['payment_method_label'] ?? '')) ?></td>
                       <td class="dg-table__num"><?= View::escape((string) ($payment['amount_display'] ?? '')) ?> €</td>
                       <td><?= View::escape((string) ($payment['reference_text'] ?? '')) ?></td>
+                      <td>
+                        <?php if ($tseSigned) : ?>
+                          <span class="dg-badge dg-badge--ok">Signiert</span>
+                        <?php else : ?>
+                          <span class="dg-muted">—</span>
+                        <?php endif; ?>
+                      </td>
                       <?php if (!$readOnly) : ?>
                         <td>
-                          <button
-                            type="submit"
-                            class="dg-button dg-button--ghost dg-button--small"
-                            form="dg-voucher-payment-delete-<?= (int) ($payment['id'] ?? 0) ?>"
-                            aria-label="Zahlung löschen"
-                            onclick="return confirm('Zahlung wirklich entfernen?');"
-                          >×</button>
+                          <?php if ($tseSigned) : ?>
+                            <span class="dg-muted" title="TSE-signierte Barzahlung kann nicht gelöscht werden.">—</span>
+                          <?php else : ?>
+                            <span class="dg-table__actions-group">
+                              <button
+                                type="submit"
+                                class="dg-button dg-button--ghost dg-button--small"
+                                form="dg-voucher-payment-delete-<?= (int) ($payment['id'] ?? 0) ?>"
+                                aria-label="Zahlung löschen"
+                                onclick="return confirm('Zahlung wirklich entfernen?');"
+                              >×</button>
+                            </span>
+                          <?php endif; ?>
                         </td>
                       <?php endif; ?>
                     </tr>

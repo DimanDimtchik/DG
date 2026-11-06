@@ -266,6 +266,15 @@ final class SettingsRegistry
                         'template' => 'elster',
                         'kichel_aliases' => ['eric', 'elster', 'hersteller-id', 'hersteller id'],
                     ],
+                    'tse' => [
+                        'label' => 'TSE / Kassensicherung',
+                        'lead' => 'Technische Sicherungseinrichtung für Barzahlungen: Signatur und Prüf-QR-Code auf dem Beleg.',
+                        'template' => 'tse',
+                        'kichel_aliases' => [
+                            'tse', 'kassensicherung', 'kassensichv', 'fiskaly', 'kassen qr', 'qr beleg',
+                            'technisch sicherheitseinrichtung',
+                        ],
+                    ],
                     'payment-terms' => [
                         'label' => 'Zahlungsbedingungen & Mahnung',
                         'lead' => 'Skonto-Stufen mit Zeitvorgaben und automatischer Mahnversand mit Mahngebühren.',
@@ -394,6 +403,9 @@ final class SettingsRegistry
             }
             if (isset($_POST['tax_advisor_save'])) {
                 return 'steuerkanzlei';
+            }
+            if (isset($_POST['tse_save']) || isset($_POST['tse_ping'])) {
+                return 'tse';
             }
             if (isset($_POST['appearance_save'])) {
                 return 'schriften';

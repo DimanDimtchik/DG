@@ -146,6 +146,7 @@ $csrf = Csrf::token();
               <th>Konto</th>
               <th>Text</th>
               <th class="dg-table__num">Betrag</th>
+              <th>TSE</th>
               <th></th>
             </tr>
           </thead>
@@ -158,8 +159,17 @@ $csrf = Csrf::token();
                 <td><?= View::escape((string) ($entry['description'] ?? '')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($entry['amount_display'] ?? '')) ?></td>
                 <td>
+                  <?php if (!empty($entry['tse_signed'])) : ?>
+                    <span class="dg-badge dg-badge--ok">Signiert</span>
+                  <?php else : ?>
+                    <span class="dg-muted">—</span>
+                  <?php endif; ?>
+                </td>
+                <td>
                   <?php if (!empty($entry['voucher_id'])) : ?>
-                    <a href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) $entry['voucher_id'] ?>">Beleg</a>
+                    <span class="dg-table__actions-group">
+                      <a class="dg-button dg-button--small" href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) $entry['voucher_id'] ?>">Beleg</a>
+                    </span>
                   <?php endif; ?>
                 </td>
               </tr>

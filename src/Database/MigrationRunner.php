@@ -354,6 +354,7 @@ final class MigrationRunner
             '140_contract_templates.sql' => self::tableExists($pdo, 'dg_contract_templates')
                 && self::tableExists($pdo, 'dg_contract_template_blocks'),
             '141_calendar_employee_day_windows.sql' => self::tableExists($pdo, 'dg_calendar_employee_day_windows'),
+            '142_tse_transactions.sql' => self::tableExists($pdo, 'dg_tse_transactions'),
             default => false,
         };
     }
@@ -506,6 +507,7 @@ final class MigrationRunner
             '139_hr_personnel_events.sql' => true,
             '140_contract_templates.sql' => true,
             '141_calendar_employee_day_windows.sql' => true,
+            '142_tse_transactions.sql' => true,
         ];
     }
 

@@ -250,6 +250,7 @@ final class VoucherDocumentPrintService
             'depositBlock' => $depositBlock,
             'provenanceBlock' => self::provenanceBlock($voucher, $kind, $customerFacing),
             'signatureBlock' => self::signatureBlock($voucher, $kind, $customerFacing),
+            'tseBlock' => self::tseBlock($voucherId),
         ];
     }
 
@@ -264,6 +265,24 @@ final class VoucherDocumentPrintService
      *   contractor_name: string
      * }|null
      */
+    /**
+     * TSE-Prüfblock (QR + Pflichtangaben) für Barzahlungen.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function tseBlock(int $voucherId): ?array
+    {
+        if ($voucherId < 1 || !class_exists('TseTransactionRepository') || !class_exists('TseSignService')) {
+            return null;
+        }
+        $tx = TseTransactionRepository::latestFinishedForVoucher($voucherId);
+        if ($tx === null) {
+            return null;
+        }
+
+        return TseSignService::printBlock($tx);
+    }
+
     public static function signatureBlock(array $voucher, string $kind, bool $customerFacing): ?array
     {
         if (VoucherDocumentKind::sanitize($kind) !== VoucherDocumentKind::ORDER_CONFIRMATION) {
