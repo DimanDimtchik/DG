@@ -37,6 +37,46 @@ final class CashReceiptRepository
         return $rows;
     }
 
+    /**
+     * Neueste Bons (K7a Liste).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listRecent(int $limit = 50, ?int $registerId = null): array
+    {
+        if (!self::tableExists()) {
+            return [];
+        }
+        $limit = max(1, min(200, $limit));
+        $sql = 'SELECT r.*,
+                       reg.code AS register_code, reg.name AS register_name,
+                       l.code AS location_code, l.name AS location_name
+                FROM dg_cash_receipts r
+                LEFT JOIN dg_cash_registers reg ON reg.id = r.register_id
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id';
+        $params = [];
+        if ($registerId !== null && $registerId > 0) {
+            $sql .= ' WHERE r.register_id = :rid';
+            $params['rid'] = $registerId;
+        }
+        $sql .= ' ORDER BY r.id DESC LIMIT ' . $limit;
+        $stmt = $params === []
+            ? Database::pdo()->query($sql)
+            : Database::pdo()->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+        if ($params !== []) {
+            $stmt->execute($params);
+        }
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     /** @param array<string, mixed> $data */
     public static function insertReceipt(array $data): int
     {
@@ -77,6 +117,25 @@ final class CashReceiptRepository
         CashRegisterTable::update(self::TABLE, $id, $data);
     }
 
+    /** @return array<string, mixed>|null */
+    public static function findLineById(int $lineId): ?array
+    {
+        return CashRegisterTable::findById(self::LINES, $lineId);
+    }
+
+    public static function nextLineNo(int $receiptId): int
+    {
+        if ($receiptId <= 0 || !CashRegisterTable::tableExists(self::LINES)) {
+            return 1;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(MAX(line_no), 0) FROM dg_cash_receipt_lines WHERE receipt_id = :rid'
+        );
+        $stmt->execute(['rid' => $receiptId]);
+
+        return ((int) $stmt->fetchColumn()) + 1;
+    }
+
     /** @param array<string, mixed> $data */
     public static function insertLine(array $data): int
     {
@@ -92,6 +151,52 @@ final class CashReceiptRepository
             'gross_amount' => round((float) ($data['gross_amount'] ?? 0), 2),
             'tax_rate' => (int) ($data['tax_rate'] ?? 19),
         ]);
+    }
+
+    /** @param array<string, mixed> $data */
+    public static function updateLine(int $lineId, array $data): void
+    {
+        $fields = [];
+        foreach (['article_id', 'article_number', 'title', 'unit', 'quantity', 'unit_price_gross', 'gross_amount', 'tax_rate'] as $key) {
+            if (!array_key_exists($key, $data)) {
+                continue;
+            }
+            $fields[$key] = $data[$key];
+        }
+        if (isset($fields['article_number'])) {
+            $fields['article_number'] = trim((string) $fields['article_number']);
+        }
+        if (isset($fields['title'])) {
+            $fields['title'] = trim((string) $fields['title']);
+        }
+        if (isset($fields['unit'])) {
+            $fields['unit'] = trim((string) $fields['unit']) ?: 'Stück';
+        }
+        if (isset($fields['quantity'])) {
+            $fields['quantity'] = round((float) $fields['quantity'], 3);
+        }
+        if (isset($fields['unit_price_gross'])) {
+            $fields['unit_price_gross'] = round((float) $fields['unit_price_gross'], 2);
+        }
+        if (isset($fields['gross_amount'])) {
+            $fields['gross_amount'] = round((float) $fields['gross_amount'], 2);
+        }
+        if (isset($fields['tax_rate'])) {
+            $fields['tax_rate'] = (int) $fields['tax_rate'];
+        }
+        if (isset($fields['article_id'])) {
+            $fields['article_id'] = (int) $fields['article_id'];
+        }
+        CashRegisterTable::update(self::LINES, $lineId, $fields);
+    }
+
+    public static function deleteLine(int $lineId): void
+    {
+        if ($lineId <= 0 || !CashRegisterTable::tableExists(self::LINES)) {
+            return;
+        }
+        Database::pdo()->prepare('DELETE FROM dg_cash_receipt_lines WHERE id = :id')
+            ->execute(['id' => $lineId]);
     }
 
     public static function deleteLinesForReceipt(int $receiptId): void

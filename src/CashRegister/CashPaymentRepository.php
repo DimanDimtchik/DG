@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Zahlungen je Bon (K1j Stub). */
+/** Zahlungen je Bon (K1j / K7c). */
 final class CashPaymentRepository
 {
     private const TABLE = 'dg_cash_payments';
@@ -9,6 +9,12 @@ final class CashPaymentRepository
     public static function tableExists(): bool
     {
         return CashRegisterTable::tableExists(self::TABLE);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findById(int $id): ?array
+    {
+        return CashRegisterTable::findById(self::TABLE, $id);
     }
 
     /** @return list<array<string, mixed>> */
@@ -29,6 +35,19 @@ final class CashPaymentRepository
         return $rows;
     }
 
+    public static function nextLineNo(int $receiptId): int
+    {
+        if ($receiptId <= 0 || !self::tableExists()) {
+            return 1;
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT COALESCE(MAX(line_no), 0) FROM dg_cash_payments WHERE receipt_id = :rid'
+        );
+        $stmt->execute(['rid' => $receiptId]);
+
+        return ((int) $stmt->fetchColumn()) + 1;
+    }
+
     /** @param array<string, mixed> $data */
     public static function insert(array $data): int
     {
@@ -44,6 +63,15 @@ final class CashPaymentRepository
         ]);
     }
 
+    public static function delete(int $paymentId): void
+    {
+        if ($paymentId <= 0 || !self::tableExists()) {
+            return;
+        }
+        Database::pdo()->prepare('DELETE FROM dg_cash_payments WHERE id = :id')
+            ->execute(['id' => $paymentId]);
+    }
+
     public static function deleteForReceipt(int $receiptId): void
     {
         if ($receiptId <= 0 || !self::tableExists()) {
@@ -51,5 +79,16 @@ final class CashPaymentRepository
         }
         Database::pdo()->prepare('DELETE FROM dg_cash_payments WHERE receipt_id = :rid')
             ->execute(['rid' => $receiptId]);
+    }
+
+    /** @return array<string, string> */
+    public static function methodLabels(): array
+    {
+        return [
+            'cash' => 'Bar',
+            'ec' => 'EC',
+            'card' => 'Karte',
+            'voucher' => 'Gutschein',
+        ];
     }
 }

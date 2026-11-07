@@ -2970,6 +2970,99 @@ switch ($path) {
             }
         }
 
+        // POST: Registerkasse Bon starten (K7a)
+        if (
+            $page === 'registerkasse-bons'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_receipt_start'])
+            && MenuRegistry::canAccess($user, 'registerkasse-bons')
+        ) {
+            $backList = '/app?page=registerkasse-bons';
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . $backList, true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $backList, true, 302);
+                exit;
+            }
+            try {
+                $startRegId = max(0, (int) ($_POST['register_id'] ?? 0));
+                $receiptId = CashReceiptService::startDraft($startRegId, (int) $user->id);
+                Flash::set('success', 'Bon als Entwurf gestartet.');
+                header('Location: /app?page=registerkasse-bon&id=' . $receiptId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . $backList, true, 302);
+                exit;
+            }
+        }
+
+        // POST: Registerkasse Bon-Positionen (K7b) / Zahlungen (K7c)
+        if (
+            $page === 'registerkasse-bon'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['cash_receipt_line_add'])
+                || isset($_POST['cash_receipt_line_save'])
+                || isset($_POST['cash_receipt_line_delete'])
+                || isset($_POST['cash_receipt_payment_add'])
+                || isset($_POST['cash_receipt_payment_delete'])
+            )
+            && MenuRegistry::canAccess($user, 'registerkasse-bon')
+        ) {
+            $lineReceiptId = max(0, (int) ($_GET['id'] ?? $_POST['receipt_id'] ?? 0));
+            $backBon = '/app?page=registerkasse-bon&id=' . $lineReceiptId;
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . ($lineReceiptId > 0 ? $backBon : '/app?page=registerkasse-bons'), true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $backBon, true, 302);
+                exit;
+            }
+            try {
+                if ($lineReceiptId <= 0) {
+                    throw new RuntimeException('Bon fehlt.');
+                }
+                if (isset($_POST['cash_receipt_payment_delete'])) {
+                    CashReceiptService::removePayment($lineReceiptId, max(0, (int) ($_POST['payment_id'] ?? 0)));
+                    Flash::set('success', 'Zahlung entfernt.');
+                } elseif (isset($_POST['cash_receipt_payment_add'])) {
+                    CashReceiptService::addPayment($lineReceiptId, $_POST);
+                    Flash::set('success', 'Zahlung erfasst — Bon ist zahlend.');
+                } elseif (isset($_POST['cash_receipt_line_delete'])) {
+                    CashReceiptService::removeLine($lineReceiptId, max(0, (int) ($_POST['line_id'] ?? 0)));
+                    Flash::set('success', 'Position entfernt.');
+                } elseif (isset($_POST['cash_receipt_line_save'])) {
+                    CashReceiptService::updateLine(
+                        $lineReceiptId,
+                        max(0, (int) ($_POST['line_id'] ?? 0)),
+                        $_POST
+                    );
+                    Flash::set('success', 'Position gespeichert.');
+                } else {
+                    CashReceiptService::addLine($lineReceiptId, $_POST);
+                    Flash::set('success', 'Position hinzugefügt.');
+                }
+                header('Location: ' . $backBon, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                $editQs = '';
+                if (isset($_POST['cash_receipt_line_save'])) {
+                    $editQs = '&line_id=' . max(0, (int) ($_POST['line_id'] ?? 0));
+                }
+                header('Location: ' . $backBon . $editQs, true, 302);
+                exit;
+            }
+        }
+
         // POST: Registerkasse TSE-Zuordnung speichern (K6a) / Verbindung prüfen (K6c)
         if (
             $page === 'registerkasse-tse-form'
@@ -8865,6 +8958,42 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/registerkasse-kasse-form';
             $title = $cashRegisterId > 0 ? 'Kasse bearbeiten' : 'Kasse anlegen';
             $currentPage = 'registerkasse-kassen';
+        } elseif ($page === 'registerkasse-bons' && MenuRegistry::canAccess($user, 'registerkasse-bons')) {
+            $cashReceiptRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashRegisterOptions = Database::isConfigured()
+                ? CashRegisterRepository::listAll(null, true)
+                : [];
+            $cashReceipts = Database::isConfigured()
+                ? CashReceiptRepository::listRecent(50, $cashReceiptRegisterId > 0 ? $cashReceiptRegisterId : null)
+                : [];
+            $contentTemplate = 'modules/registerkasse-bons';
+            $title = 'Bons';
+            $currentPage = 'registerkasse-bons';
+        } elseif ($page === 'registerkasse-bon' && MenuRegistry::canAccess($user, 'registerkasse-bon')) {
+            $cashReceiptId = max(0, (int) ($_GET['id'] ?? 0));
+            $cashReceipt = null;
+            if ($cashReceiptId > 0 && Database::isConfigured()) {
+                $cashReceipt = CashReceiptRepository::findById($cashReceiptId);
+            }
+            if ($cashReceipt === null) {
+                Flash::set('error', 'Bon nicht gefunden.');
+                header('Location: /app?page=registerkasse-bons', true, 302);
+                exit;
+            }
+            $cashReceiptLines = CashReceiptRepository::listLines($cashReceiptId);
+            $cashReceiptPayments = CashPaymentRepository::listByReceipt($cashReceiptId);
+            $cashReceiptRegister = CashRegisterRepository::findById((int) ($cashReceipt['register_id'] ?? 0));
+            $cashReceiptEditLine = null;
+            $editLineId = max(0, (int) ($_GET['line_id'] ?? 0));
+            if ($editLineId > 0 && ($cashReceipt['status'] ?? '') === 'draft') {
+                $maybeLine = CashReceiptRepository::findLineById($editLineId);
+                if ($maybeLine !== null && (int) ($maybeLine['receipt_id'] ?? 0) === $cashReceiptId) {
+                    $cashReceiptEditLine = $maybeLine;
+                }
+            }
+            $contentTemplate = 'modules/registerkasse-bon';
+            $title = 'Bon';
+            $currentPage = 'registerkasse-bons';
         } elseif ($page === 'registerkasse-tse' && MenuRegistry::canAccess($user, 'registerkasse-tse')) {
             $cashTseRows = Database::isConfigured() ? CashTseAssignmentRepository::listWithRegisters() : [];
             $contentTemplate = 'modules/registerkasse-tse';
@@ -8896,7 +9025,9 @@ $legalProductsConfig = LegalProductSettings::config();
             $title = 'TSE zuordnen';
             $currentPage = 'registerkasse-tse';
         } elseif (
-            $page === 'registerkasse-filialen'
+            $page === 'registerkasse-bons'
+            || $page === 'registerkasse-bon'
+            || $page === 'registerkasse-filialen'
             || $page === 'registerkasse-filiale-form'
             || $page === 'registerkasse-kassen'
             || $page === 'registerkasse-kasse-form'
@@ -11185,6 +11316,14 @@ $legalProductsConfig = LegalProductSettings::config();
         $cashTseForm = $cashTseForm ?? [];
         $cashTseRegister = $cashTseRegister ?? [];
         $cashTseRegisterId = $cashTseRegisterId ?? 0;
+        $cashReceipts = $cashReceipts ?? [];
+        $cashReceipt = $cashReceipt ?? [];
+        $cashReceiptLines = $cashReceiptLines ?? [];
+        $cashReceiptPayments = $cashReceiptPayments ?? [];
+        $cashReceiptRegister = $cashReceiptRegister ?? null;
+        $cashReceiptEditLine = $cashReceiptEditLine ?? null;
+        $cashReceiptRegisterId = $cashReceiptRegisterId ?? 0;
+        $cashRegisterOptions = $cashRegisterOptions ?? [];
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
@@ -11597,6 +11736,14 @@ $legalProductsConfig = LegalProductSettings::config();
             'cashTseForm',
             'cashTseRegister',
             'cashTseRegisterId',
+            'cashReceipts',
+            'cashReceipt',
+            'cashReceiptLines',
+            'cashReceiptPayments',
+            'cashReceiptRegister',
+            'cashReceiptEditLine',
+            'cashReceiptRegisterId',
+            'cashRegisterOptions',
             'settingsNav',
             'settingsSelection',
             'flash',

@@ -32,6 +32,29 @@ final class CashSessionRepository
         return $row === false ? null : $row;
     }
 
+    /**
+     * Offene Sitzung je Kasse — sonst minimale Sitzung (K7a; UI-Öffnen folgt in K11a).
+     */
+    public static function ensureOpenForRegister(int $registerId, ?int $openedBy = null): int
+    {
+        if ($registerId <= 0) {
+            throw new RuntimeException('Kasse für Sitzung fehlt.');
+        }
+        $open = self::findOpenByRegister($registerId);
+        if ($open !== null) {
+            return (int) $open['id'];
+        }
+
+        return self::insert([
+            'register_id' => $registerId,
+            'business_date' => date('Y-m-d'),
+            'status' => 'open',
+            'opening_balance' => 0,
+            'opened_by' => $openedBy,
+            'opened_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
     /** @param array<string, mixed> $data */
     public static function insert(array $data): int
     {

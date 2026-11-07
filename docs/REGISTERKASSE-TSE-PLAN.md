@@ -156,9 +156,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K7a | Bon starten (Draft, register_id, operator) | 🟡 | [ ] |
-| K7b | Position hinzufügen/ändern nur solange Draft | 🟡 | [ ] |
-| K7c | Zahlung erfassen → Bon „zahlend“ | 🟡 | [ ] |
+| K7a | Bon starten (Draft, register_id, operator) | 🟡 | [x] `CashReceiptService::startDraft` |
+| K7b | Position hinzufügen/ändern nur solange Draft | 🟡 | [x] add/update/removeLine |
+| K7c | Zahlung erfassen → Bon „zahlend“ | 🟡 | [x] status=`paying` |
 | K7d | TSE finish + Bon festschreiben (immutable) | 🔴 | [ ] |
 | K7e | Bon-Druck/PDF-Stub (Pflichtfelder + Platz QR) | 🟡 | [ ] |
 | K7f | Selftest: Draft→Position→Mock-TSE→fest | 🟡 | [ ] |
@@ -316,7 +316,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
 
-1. **K9a** Ist-Stand Beleg-TSE oder **K7a** Bon starten (Draft)
+1. **K7d** TSE finish + festschreiben (🔴) oder **K9a** Ist-Stand Beleg-TSE
 2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live
 3. **K3b** FiskalyTseProvider (🔴) — für echte Ping-Prüfung gegen fiskaly
 4. **K4a–K4c** — Filial-Admin (je einzeln)  
@@ -532,7 +532,7 @@ Bon inkl. Positionen. Zahlungen separat (K1g). `status=finalized` → keine Änd
 | `voucher_id` | INT UNSIGNED | NULL | NULL | Optional: Beleg/Rechnung (K9), ohne FK-Zwang |
 | `receipt_number` | INT UNSIGNED | NOT NULL | — | Nummernkreis der Kasse; UNIQUE je `register_id` |
 | `receipt_number_display` | VARCHAR(48) | NOT NULL | `''` | Anzeige inkl. Prefix |
-| `status` | VARCHAR(16) | NOT NULL | `'draft'` | `draft` · `finalized` · `cancelled` (Abbruch vor Finish) |
+| `status` | VARCHAR(16) | NOT NULL | `'draft'` | `draft` · `paying` · `finalized` · `cancelled` (Abbruch vor Finish) |
 | `receipt_type` | VARCHAR(16) | NOT NULL | `'sale'` | `sale` · `storno` |
 | `storno_of_receipt_id` | INT UNSIGNED | NULL | NULL | Referenz Originalbon (K13); kein FK (Historie) |
 | `operator_id` | INT UNSIGNED | NULL | NULL | User-ID Bediener |
@@ -575,7 +575,7 @@ Bon inkl. Positionen. Zahlungen separat (K1g). `status=finalized` → keine Änd
 **Regeln**
 
 - Bonnummer bei Anlegen aus `dg_cash_registers.next_receipt_number` (atomar, K5d/K7a).
-- `draft`: Positionen änderbar; `finalized`: unveränderbar; Storno = neuer Bon `receipt_type=storno`.
+- `draft`: Positionen änderbar; erste Zahlung → `paying` (Positionen gesperrt, Zahlungen änderbar); `finalized`: unveränderbar; Storno = neuer Bon `receipt_type=storno`.
 - Parallel zu `dg_tse_transactions` (Beleg-Barzahlung); Verknüpfung über `voucher_id` / K9.
 
 **Migration:** `147_cash_receipts.sql` (nach `146`).
@@ -840,7 +840,7 @@ interface TseProviderInterface
 | K4 | Admin Filialen | [x] K4a–K4d |
 | K5 | Admin Kassen | [x] K5a–K5d |
 | K6 | Admin TSE-Zuordnung | [x] K6a–K6d |
-| K7 | Bonfluss | [ ] |
+| K7 | Bonfluss | [~] K7a–K7c; offen K7d–K7f |
 | K8 | Zahlungsarten | [ ] |
 | K9 | Barverkauf Auftrag/Rechnung | [~] Beleg-Barzahlung TSE da |
 | K10–K21 | Rest | [ ] |
