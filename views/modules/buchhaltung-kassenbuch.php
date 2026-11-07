@@ -37,6 +37,12 @@ $csrf = Csrf::token();
     </div>
   </header>
 
+  <div class="dg-flash dg-flash--info">
+    Das Kassenbuch ist getrennt von der Registerkasse (Ladenkasse). Der Tagesabschluss hier zählt den
+    Kassenbuch-Bestand — nicht die Summen der Ladenkasse.
+    <a class="dg-button dg-button--small" href="/app?page=registerkasse-tagesabschluss">Zur Registerkasse</a>
+  </div>
+
   <?php if (!$dbConnected) : ?>
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php endif; ?>
@@ -69,6 +75,7 @@ $csrf = Csrf::token();
     <p class="dg-field-hint">
       Der Soll-Bestand kommt aus dem Kassenbuch (Anfangsbestand + Ein − Aus an diesem Tag) und ist nicht änderbar.
       Den gezählten Bestand tragen Sie nach dem Nachzählen ein — die Differenz wird gespeichert.
+      Nicht verwechseln mit dem Tagesabschluss der Registerkasse.
     </p>
     <form method="post" action="/app?page=buchhaltung-kassenbuch" class="dg-form-grid dg-form-grid--compact" id="dg-cash-day-close-form">
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">

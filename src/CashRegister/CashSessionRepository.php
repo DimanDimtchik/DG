@@ -71,6 +71,41 @@ final class CashSessionRepository
         return $map;
     }
 
+    /**
+     * Sitzungen einer Kasse an einem Geschäftstag.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listByRegisterDate(int $registerId, string $businessDate): array
+    {
+        if ($registerId <= 0 || $businessDate === '' || !self::tableExists()) {
+            return [];
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT * FROM dg_cash_sessions
+             WHERE register_id = :rid AND business_date = :d
+             ORDER BY id ASC'
+        );
+        $stmt->execute(['rid' => $registerId, 'd' => $businessDate]);
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /** Summe Anfangsbestände aller Sitzungen (Kasse + Tag). */
+    public static function sumOpeningBalance(int $registerId, string $businessDate): float
+    {
+        $sum = 0.0;
+        foreach (self::listByRegisterDate($registerId, $businessDate) as $row) {
+            $sum = round($sum + (float) ($row['opening_balance'] ?? 0), 2);
+        }
+
+        return $sum;
+    }
+
     /** @param array<string, mixed> $data */
     public static function insert(array $data): int
     {

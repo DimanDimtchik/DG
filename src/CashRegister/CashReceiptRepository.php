@@ -52,6 +52,95 @@ final class CashReceiptRepository
         return (int) $stmt->fetchColumn();
     }
 
+    /** Offene Bons (draft/paying) für Kasse + Geschäftstag (über Sitzung). */
+    public static function countUnfinishedByRegisterDate(int $registerId, string $businessDate): int
+    {
+        if ($registerId <= 0 || $businessDate === '' || !self::tableExists() || !CashSessionRepository::tableExists()) {
+            return 0;
+        }
+        $stmt = Database::pdo()->prepare(
+            "SELECT COUNT(*) FROM dg_cash_receipts r
+             INNER JOIN dg_cash_sessions s ON s.id = r.session_id
+             WHERE r.register_id = :rid
+               AND s.business_date = :d
+               AND r.status IN ('draft', 'paying')"
+        );
+        $stmt->execute(['rid' => $registerId, 'd' => $businessDate]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Aggregat finalized Bons + Zahlarten für Tagesabschluss (K12a).
+     *
+     * @return array{
+     *   receipt_count: int,
+     *   total_gross: float,
+     *   total_cash: float,
+     *   total_ec: float,
+     *   total_card: float,
+     *   total_voucher: float
+     * }
+     */
+    public static function dayTotalsByRegisterDate(int $registerId, string $businessDate): array
+    {
+        $empty = [
+            'receipt_count' => 0,
+            'total_gross' => 0.0,
+            'total_cash' => 0.0,
+            'total_ec' => 0.0,
+            'total_card' => 0.0,
+            'total_voucher' => 0.0,
+        ];
+        if ($registerId <= 0 || $businessDate === '' || !self::tableExists() || !CashSessionRepository::tableExists()) {
+            return $empty;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            "SELECT COUNT(*) AS cnt, COALESCE(SUM(r.total_gross), 0) AS gross
+             FROM dg_cash_receipts r
+             INNER JOIN dg_cash_sessions s ON s.id = r.session_id
+             WHERE r.register_id = :rid
+               AND s.business_date = :d
+               AND r.status = 'finalized'"
+        );
+        $stmt->execute(['rid' => $registerId, 'd' => $businessDate]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $empty['receipt_count'] = (int) ($row['cnt'] ?? 0);
+        $empty['total_gross'] = round((float) ($row['gross'] ?? 0), 2);
+
+        if (!CashPaymentRepository::tableExists()) {
+            return $empty;
+        }
+
+        $pay = Database::pdo()->prepare(
+            "SELECT p.payment_method AS method, COALESCE(SUM(p.amount), 0) AS total
+             FROM dg_cash_payments p
+             INNER JOIN dg_cash_receipts r ON r.id = p.receipt_id
+             INNER JOIN dg_cash_sessions s ON s.id = r.session_id
+             WHERE r.register_id = :rid
+               AND s.business_date = :d
+               AND r.status = 'finalized'
+             GROUP BY p.payment_method"
+        );
+        $pay->execute(['rid' => $registerId, 'd' => $businessDate]);
+        while ($pRow = $pay->fetch(PDO::FETCH_ASSOC)) {
+            $method = strtolower(trim((string) ($pRow['method'] ?? '')));
+            $amount = round((float) ($pRow['total'] ?? 0), 2);
+            if ($method === 'cash') {
+                $empty['total_cash'] = $amount;
+            } elseif ($method === 'ec') {
+                $empty['total_ec'] = $amount;
+            } elseif ($method === 'card') {
+                $empty['total_card'] = $amount;
+            } elseif ($method === 'voucher') {
+                $empty['total_voucher'] = $amount;
+            }
+        }
+
+        return $empty;
+    }
+
     /**
      * Neueste Bons (K7a Liste).
      *

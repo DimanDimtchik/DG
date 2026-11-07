@@ -638,6 +638,12 @@ final class MenuRegistry
                     'href' => '/app?page=registerkasse-kassen',
                 ],
                 [
+                    'slug' => 'registerkasse-tagesabschluss',
+                    'label' => 'Tagesabschluss',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-tagesabschluss',
+                ],
+                [
                     'slug' => 'registerkasse-tse',
                     'label' => 'TSE-Zuordnung',
                     'icon' => 'settings',
@@ -701,6 +707,7 @@ final class MenuRegistry
             'registerkasse-kassen' => 'Kassen je Filiale mit eigener ID und Bon-Nummernkreis.',
             'registerkasse-sitzung-oeffnen' => 'Kassensitzung öffnen — Bediener und Anfangsbestand erfassen.',
             'registerkasse-sitzung-schliessen' => 'Kassensitzung schließen — Zählung folgt beim Tagesabschluss.',
+            'registerkasse-tagesabschluss' => 'Tagesabschluss je Kasse und Filialsumme der Kassen.',
             'registerkasse-tse' => 'TSE-Provider, TSE-ID und Client je Kasse zuordnen.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
@@ -999,6 +1006,7 @@ final class MenuRegistry
             || $slug === 'registerkasse-kasse-form'
             || $slug === 'registerkasse-sitzung-oeffnen'
             || $slug === 'registerkasse-sitzung-schliessen'
+            || $slug === 'registerkasse-tagesabschluss'
             || $slug === 'registerkasse-tse'
             || $slug === 'registerkasse-tse-form'
             || $slug === 'buchhaltung-manuelle-buchung'

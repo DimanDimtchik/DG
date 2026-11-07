@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Tagesabschluss je Registerkasse (K1j Stub). */
+/** Tagesabschluss je Registerkasse (K1h / K12). */
 final class CashRegisterDayClosingRepository
 {
     private const TABLE = 'dg_cash_register_day_closings';
@@ -31,6 +31,83 @@ final class CashRegisterDayClosingRepository
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row === false ? null : $row;
+    }
+
+    /**
+     * Abschlüsse einer Filiale an einem Geschäftstag (K12c).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listByLocationDate(int $locationId, string $businessDate): array
+    {
+        if ($locationId <= 0 || $businessDate === '' || !self::tableExists()) {
+            return [];
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT c.*,
+                    reg.code AS register_code, reg.name AS register_name,
+                    l.code AS location_code, l.name AS location_name
+             FROM dg_cash_register_day_closings c
+             LEFT JOIN dg_cash_registers reg ON reg.id = c.register_id
+             LEFT JOIN dg_cash_locations l ON l.id = c.location_id
+             WHERE c.location_id = :lid AND c.business_date = :d
+             ORDER BY reg.sort_order ASC, reg.id ASC'
+        );
+        $stmt->execute(['lid' => $locationId, 'd' => $businessDate]);
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Neueste Abschlüsse (Listen-UI).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listRecent(int $limit = 30, ?int $registerId = null, ?int $locationId = null): array
+    {
+        if (!self::tableExists()) {
+            return [];
+        }
+        $limit = max(1, min(100, $limit));
+        $sql = 'SELECT c.*,
+                       reg.code AS register_code, reg.name AS register_name,
+                       l.code AS location_code, l.name AS location_name
+                FROM dg_cash_register_day_closings c
+                LEFT JOIN dg_cash_registers reg ON reg.id = c.register_id
+                LEFT JOIN dg_cash_locations l ON l.id = c.location_id';
+        $where = [];
+        $params = [];
+        if ($registerId !== null && $registerId > 0) {
+            $where[] = 'c.register_id = :rid';
+            $params['rid'] = $registerId;
+        }
+        if ($locationId !== null && $locationId > 0) {
+            $where[] = 'c.location_id = :lid';
+            $params['lid'] = $locationId;
+        }
+        if ($where !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY c.business_date DESC, c.id DESC LIMIT ' . $limit;
+        $stmt = $params === []
+            ? Database::pdo()->query($sql)
+            : Database::pdo()->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+        if ($params !== []) {
+            $stmt->execute($params);
+        }
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
     }
 
     /** @param array<string, mixed> $data */

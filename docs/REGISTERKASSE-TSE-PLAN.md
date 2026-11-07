@@ -212,10 +212,27 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K12a | Abschluss pro Kasse (Summen Bar/EC/Karte/Gutschein) | 🟡 | [ ] |
-| K12b | Nach Abschluss keine neuen Bons auf dem Tag (Regel) | 🟡 | [ ] |
-| K12c | Optional Filialabschluss = Summe Kassen | 🟡 | [ ] |
-| K12d | Abgrenzung FiBu-`dg_cash_day_closings` dokumentieren | 🟢 | [x] siehe K1h |
+| K12a | Abschluss pro Kasse (Summen Bar/EC/Karte/Gutschein) | 🟡 | [x] `CashRegisterDayClosingService` + UI `registerkasse-tagesabschluss` |
+| K12b | Nach Abschluss keine neuen Bons auf dem Tag (Regel) | 🟡 | [x] `isClosed` in `startDraft` + `CashSessionService::open` |
+| K12c | Optional Filialabschluss = Summe Kassen | 🟡 | [x] `locationSummary` + UI Filialfilter (keine Extra-Tabelle) |
+| K12d | Abgrenzung FiBu-`dg_cash_day_closings` dokumentieren | 🟢 | [x] K1h-Tabelle + Abschnitt unten + UI-Hinweise |
+
+#### K12d — Abgrenzung FiBu-Kassenbuch vs. Registerkasse (verbindlich)
+
+Zwei getrennte Tagesabschlüsse — **nicht** mischen, **nicht** dieselbe Tabelle:
+
+| | FiBu-Kassenbuch | Registerkasse |
+|--|-----------------|---------------|
+| Tabelle | `dg_cash_day_closings` (Migration 054) | `dg_cash_register_day_closings` (149 / K1h) |
+| Service | `CashDayCloseService` | `CashRegisterDayClosingService` |
+| UI | Buchhaltung → Kassenbuch | Registerkasse → Tagesabschluss |
+| Granularität | 1× je Kalendertag (ganze Instanz) | 1× je Kasse + Geschäftstag |
+| Inhalt | Ein/Aus aus Kassenbuch-Journal | Summen Bar/EC/Karte/Gutschein aus Bons |
+| Filiale/Kasse | nein | ja (`location_id`, `register_id`) |
+
+- Register-Abschluss sperrt neue Bons/Sitzungen am Tag (**K12b**); FiBu-Abschluss tut das **nicht**.
+- Filialsumme (**K12c**) addiert nur Register-Abschlüsse — kein Eintrag in `dg_cash_day_closings`.
+- Spätere FiBu-Buchungen aus der Kasse (**K15**) sind Anbindung, kein Ersatz für eine der beiden Tabellen.
 
 ---
 
@@ -914,4 +931,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
 | K10 | Mobile Kasse | [x] K10a–c |
 | K11 | Kassensitzung | [x] K11a–c |
-| K12–K21 | Rest | [ ] |
+| K12 | Tagesabschluss | [x] K12a–d |
+| K13–K21 | Rest | [ ] |

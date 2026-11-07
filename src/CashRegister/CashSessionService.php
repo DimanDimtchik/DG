@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Kassensitzung öffnen (K11a) / schließen (K11c).
  * Bon ohne offene Sitzung: CashReceiptService::startDraft (K11b).
- * Zählung/Tagesabschluss: K12.
+ * Abgeschlossener Tag: keine neue Sitzung (K12b); Zählung in K12a.
  */
 final class CashSessionService
 {
@@ -53,6 +53,12 @@ final class CashSessionService
         }
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             throw new RuntimeException('Geschäftstag ungültig.');
+        }
+
+        if (CashRegisterDayClosingService::isClosed($registerId, $date)) {
+            throw new RuntimeException(
+                'Geschäftstag ist abgeschlossen — keine neue Sitzung für diesen Tag.'
+            );
         }
 
         return CashSessionRepository::insert([

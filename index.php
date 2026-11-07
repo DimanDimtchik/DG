@@ -3038,6 +3038,48 @@ switch ($path) {
             }
         }
 
+        // POST: Registerkasse Tagesabschluss (K12a)
+        if (
+            $page === 'registerkasse-tagesabschluss'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_day_closing_save'])
+            && MenuRegistry::canAccess($user, 'registerkasse-tagesabschluss')
+        ) {
+            $closeRegId = max(0, (int) ($_POST['register_id'] ?? $_GET['register_id'] ?? 0));
+            $closeDate = trim((string) ($_POST['business_date'] ?? $_GET['business_date'] ?? date('Y-m-d')));
+            $closeLocId = max(0, (int) ($_POST['location_id'] ?? $_GET['location_id'] ?? 0));
+            $backCloseDay = '/app?page=registerkasse-tagesabschluss'
+                . ($closeRegId > 0 ? '&register_id=' . $closeRegId : '')
+                . ($closeLocId > 0 ? '&location_id=' . $closeLocId : '')
+                . '&business_date=' . rawurlencode($closeDate);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . $backCloseDay, true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $backCloseDay, true, 302);
+                exit;
+            }
+            try {
+                $closingId = CashRegisterDayClosingService::close(
+                    $closeRegId,
+                    $closeDate,
+                    (int) $user->id,
+                    $_POST['counted_balance'] ?? null,
+                    trim((string) ($_POST['notes'] ?? ''))
+                );
+                Flash::set('success', 'Tagesabschluss gespeichert (#' . $closingId . ').');
+                header('Location: ' . $backCloseDay, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . $backCloseDay, true, 302);
+                exit;
+            }
+        }
+
         // POST: Registerkasse Bon starten (K7a)
         if (
             $page === 'registerkasse-bons'
@@ -9063,6 +9105,63 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/registerkasse-sitzung-schliessen';
             $title = 'Kasse schließen';
             $currentPage = 'registerkasse-kassen';
+        } elseif ($page === 'registerkasse-tagesabschluss' && MenuRegistry::canAccess($user, 'registerkasse-tagesabschluss')) {
+            $cashDayClosingRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashDayClosingLocationId = max(0, (int) ($_GET['location_id'] ?? 0));
+            $cashDayClosingDate = trim((string) ($_GET['business_date'] ?? date('Y-m-d')));
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $cashDayClosingDate)) {
+                $cashDayClosingDate = date('Y-m-d');
+            }
+            $cashLocationOptions = Database::isConfigured() ? CashLocationRepository::listAll(false) : [];
+            $cashRegisterOptions = Database::isConfigured()
+                ? CashRegisterRepository::listAll(null, false)
+                : [];
+            $cashDayClosingPreview = null;
+            $cashLocationDaySummary = null;
+            $cashDayClosingCounted = '';
+            $cashDayClosingNotes = '';
+            if ($cashDayClosingRegisterId > 0 && Database::isConfigured()) {
+                try {
+                    $cashDayClosingPreview = CashRegisterDayClosingService::preview(
+                        $cashDayClosingRegisterId,
+                        $cashDayClosingDate
+                    );
+                    $cashDayClosingCounted = number_format(
+                        (float) $cashDayClosingPreview['expected_balance'],
+                        2,
+                        ',',
+                        ''
+                    );
+                    if ($cashDayClosingLocationId <= 0) {
+                        $cashDayClosingLocationId = (int) ($cashDayClosingPreview['location_id'] ?? 0);
+                    }
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    $cashDayClosingPreview = null;
+                }
+            } elseif ($cashDayClosingLocationId > 0 && Database::isConfigured()) {
+                try {
+                    $cashLocationDaySummary = CashRegisterDayClosingService::locationSummary(
+                        $cashDayClosingLocationId,
+                        $cashDayClosingDate
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    $cashLocationDaySummary = null;
+                }
+            }
+            $cashDayClosings = Database::isConfigured()
+                ? CashRegisterDayClosingRepository::listRecent(
+                    30,
+                    $cashDayClosingRegisterId > 0 ? $cashDayClosingRegisterId : null,
+                    $cashDayClosingRegisterId <= 0 && $cashDayClosingLocationId > 0
+                        ? $cashDayClosingLocationId
+                        : null
+                )
+                : [];
+            $contentTemplate = 'modules/registerkasse-tagesabschluss';
+            $title = 'Tagesabschluss';
+            $currentPage = 'registerkasse-tagesabschluss';
         } elseif ($page === 'registerkasse-kasse-form' && MenuRegistry::canAccess($user, 'registerkasse-kasse-form')) {
             $cashRegisterId = max(0, (int) ($_GET['id'] ?? 0));
             $cashLocationOptions = Database::isConfigured() ? CashLocationRepository::listAll(false) : [];
@@ -9177,6 +9276,7 @@ $legalProductsConfig = LegalProductSettings::config();
             || $page === 'registerkasse-kasse-form'
             || $page === 'registerkasse-sitzung-oeffnen'
             || $page === 'registerkasse-sitzung-schliessen'
+            || $page === 'registerkasse-tagesabschluss'
             || $page === 'registerkasse-tse'
             || $page === 'registerkasse-tse-form'
         ) {

@@ -20,6 +20,7 @@ final class CashReceiptService
     /**
      * Neuen Verkaufsbon im Status draft anlegen (Nummer + Sitzung + Bediener).
      * K11b: ohne offene Kassensitzung kein neuer Bon.
+     * K12b: nach Tagesabschluss keine neuen Bons auf dem Geschäftstag.
      *
      * @return int receipt id
      */
@@ -52,6 +53,13 @@ final class CashReceiptService
         $sessionId = (int) ($session['id'] ?? 0);
         if ($sessionId <= 0) {
             throw new RuntimeException('Keine offene Kassensitzung — bitte Kasse zuerst öffnen.');
+        }
+
+        $businessDate = trim((string) ($session['business_date'] ?? ''));
+        if ($businessDate !== '' && CashRegisterDayClosingService::isClosed($registerId, $businessDate)) {
+            throw new RuntimeException(
+                'Geschäftstag ist abgeschlossen — keine neuen Bons für diesen Tag.'
+            );
         }
 
         $tseAssignmentId = null;
