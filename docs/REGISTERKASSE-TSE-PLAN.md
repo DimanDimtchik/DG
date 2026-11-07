@@ -470,11 +470,33 @@ Details: **[`docs/CASH-ERS-MELDEWEG-SPEC.md`](CASH-ERS-MELDEWEG-SPEC.md)**. Live
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K20a | Nummernkreise Mehrkassen | 🟡 | [ ] |
-| K20b | Gemischte Zahlung | 🟡 | [ ] |
-| K20c | Storno-Referenz | 🟡 | [ ] |
-| K20d | TSE-Ausfall-Flag | 🟡 | [ ] |
-| K20e | Manuelle Smoke-Checkliste (1 Seite) | 🟢 | [ ] |
+| K20a | Nummernkreise Mehrkassen | 🟡 | [x] `bin/cash-multi-register-numbers-selftest.php` |
+| K20b | Gemischte Zahlung | 🟡 | [x] `bin/cash-mixed-payment-selftest.php` |
+| K20c | Storno-Referenz | 🟡 | [x] `bin/cash-storno-reference-selftest.php` |
+| K20d | TSE-Ausfall-Flag | 🟡 | [x] `bin/cash-tse-outage-flag-selftest.php` |
+| K20e | Manuelle Smoke-Checkliste (1 Seite) | 🟢 | [x] [`docs/REGISTERKASSE-SMOKE.md`](REGISTERKASSE-SMOKE.md) |
+
+#### K20a — umgesetzt
+
+Nachweis D4: jede Kasse eigener Bon-Nummernkreis. Selftest legt 3 Kassen (2 Filialen) an, vergibt verschachtelt Draft-Bons (`startDraft`), prüft gleiche Nummernzahl auf verschiedenen Kassen, unabhängige Zähler, UNIQUE `(register_id, receipt_number)`.  
+Baut auf K5d/`allocateNextReceiptNumber` und K10b auf.
+
+#### K20b — umgesetzt
+
+Nachweis D2/K8d: gemischt = mehrere `dg_cash_payments`-Zeilen (cash/ec/card/voucher), **kein** `payment_method=mixed`. Selftest: Teilzahlung blockiert `finalizeWithoutTse`, Vollzahlung finalisiert, `payment_summary_json` mit 4 Einträgen.
+
+#### K20c — umgesetzt
+
+Nachweis Storno-Referenz: `storno_of_receipt_id` nur am Storno-Bon; Original unverändert; eigene Bonnummer; Draft-/Doppel-/Storno-von-Storno abgewiesen; Journal + CSV „Storno-von“. Ergänzt K13c.
+
+#### K20d — umgesetzt
+
+Nachweis Ausfall-Flag: Assignment `outage_active` aktuell / Bon `tse_outage` historisch; Isolation zwischen Kassen; Flag bleibt nach `clearOutage` und Finalize; Journal/CSV „TSE-Ausfall“. Ergänzt K14a.
+
+#### K20e — umgesetzt
+
+Einseitige manuelle Smoke-Checkliste: Stammdaten → Bon/Zahlung → Storno/Ausfall → Abschluss/Export → Kassenmeldung → Guards.  
+**[`docs/REGISTERKASSE-SMOKE.md`](REGISTERKASSE-SMOKE.md)** · Dev `ganz-om.de`, TSE nur test/Mock.
 
 ---
 
@@ -1097,4 +1119,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K17 | DSFinV-K | [~] K17a+b+d ✅; offen K17c |
 | K18 | Prüferpaket / TSE-TAR | [~] K18a+c ✅; K18b später |
 | K19 | Kassenmeldung / ERS | [~] K19a+b ✅; K19c später |
-| K20–K21 | Rest | [ ] |
+| K20 | Tests | [x] K20a–e ✅ |
+| K21 | Verfahrensdoku | [ ] |
