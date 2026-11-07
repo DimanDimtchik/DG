@@ -1,6 +1,6 @@
 <?php
 /**
- * Registerkasse — Bon-Liste + Draft starten (K7a).
+ * Registerkasse — Bon-Liste + Draft starten (K7a; Layout K10c).
  *
  * @var list<array<string, mixed>> $cashReceipts
  * @var list<array<string, mixed>> $cashRegisterOptions
@@ -20,7 +20,7 @@ $statusLabels = [
     'cancelled' => 'Abgebrochen',
 ];
 ?>
-<div class="dg-wrap">
+<div class="dg-wrap dg-cash-bon">
   <?php View::render('partials/flash', compact('flash')); ?>
 
   <header class="dg-page-header dg-page-header--toolbar">
@@ -106,8 +106,8 @@ $statusLabels = [
             <th>Bon</th>
             <th>Kasse</th>
             <th>Status</th>
-            <th>Gestartet</th>
-            <th>Brutto</th>
+            <th class="dg-cash-bon__col-started">Gestartet</th>
+            <th class="dg-table__num">Brutto</th>
             <th></th>
           </tr>
         </thead>
@@ -138,8 +138,8 @@ $statusLabels = [
                 <td><strong><?= View::escape($display) ?></strong></td>
                 <td><?= View::escape($regLabel !== '' ? $regLabel : '—') ?></td>
                 <td><span class="dg-badge <?= $badge ?>"><?= View::escape($statusLabel) ?></span></td>
-                <td><?= View::escape((string) ($row['started_at'] ?? '—')) ?></td>
-                <td><?= View::escape(number_format((float) ($row['total_gross'] ?? 0), 2, ',', '.')) ?> €</td>
+                <td class="dg-cash-bon__col-started"><?= View::escape((string) ($row['started_at'] ?? '—')) ?></td>
+                <td class="dg-table__num"><?= View::escape(number_format((float) ($row['total_gross'] ?? 0), 2, ',', '.')) ?> €</td>
                 <td class="dg-table__actions">
                   <div class="dg-table__actions-group">
                     <?php if ($id > 0) : ?>

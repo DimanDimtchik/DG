@@ -1,6 +1,6 @@
 <?php
 /**
- * Registerkasse — Kasse anlegen/bearbeiten (K5b Formular; Speichern = K5c).
+ * Registerkasse — Kasse anlegen/bearbeiten (K5b/K10a Typ inkl. mobile).
  *
  * @var array<string, mixed> $cashRegisterForm
  * @var int $cashRegisterId
@@ -26,7 +26,7 @@ $backHref = '/app?page=registerkasse-kassen' . ($backLocation > 0 ? '&location_i
 
   <header class="dg-page-header">
     <h1 class="dg-page-title"><?= $isEdit ? 'Kasse bearbeiten' : 'Kasse anlegen' ?></h1>
-    <p class="dg-lead">Kassen-ID, Filiale und Bon-Nummernkreis — eine Kasse = ein Terminal.</p>
+    <p class="dg-lead">Kassen-ID, Filiale und Bon-Nummernkreis — Ladenkasse, Schalter oder mobile Kasse.</p>
   </header>
 
   <?php if (!$dbConnected) : ?>
@@ -95,6 +95,7 @@ $backHref = '/app?page=registerkasse-kassen' . ($backLocation > 0 ? '&location_i
             </option>
           <?php endforeach; ?>
         </select>
+        <small class="dg-field-hint">Mobile Kasse = eigener Nummernkreis und eigene TSE-Zuordnung, nicht an einen Ladentisch gebunden.</small>
       </label>
 
       <label class="dg-field">

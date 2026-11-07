@@ -2919,16 +2919,12 @@ switch ($path) {
                 exit;
             }
             try {
-                $type = trim((string) ($_POST['register_type'] ?? 'store'));
-                if (!isset(CashRegisterRepository::typeLabels()[$type])) {
-                    $type = 'store';
-                }
                 $locationId = (int) ($_POST['location_id'] ?? 0);
                 $payload = [
                     'location_id' => $locationId,
                     'code' => trim((string) ($_POST['code'] ?? '')),
                     'name' => trim((string) ($_POST['name'] ?? '')),
-                    'register_type' => $type,
+                    'register_type' => CashRegisterRepository::sanitizeType((string) ($_POST['register_type'] ?? 'store')),
                     'next_receipt_number' => max(1, (int) ($_POST['next_receipt_number'] ?? 1)),
                     'receipt_number_prefix' => trim((string) ($_POST['receipt_number_prefix'] ?? '')),
                     'notes' => trim((string) ($_POST['notes'] ?? '')),

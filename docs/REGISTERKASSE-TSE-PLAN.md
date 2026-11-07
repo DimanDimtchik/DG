@@ -192,9 +192,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K10a | Kasse-Typ `mobile` im Modell/UI | 🟡 | [ ] |
-| K10b | Eigene Kassen-ID + Nummernkreis erzwingen (Selftest) | 🟡 | [ ] |
-| K10c | Responsive Bon-UI (nur Layout, Katalog) | 🟡 | [ ] |
+| K10a | Kasse-Typ `mobile` im Modell/UI | 🟡 | [x] typeLabels + Formular + sanitizeType |
+| K10b | Eigene Kassen-ID + Nummernkreis erzwingen (Selftest) | 🟡 | [x] `requireUniqueCode` + Identity-Selftest |
+| K10c | Responsive Bon-UI (nur Layout, Katalog) | 🟡 | [x] `.dg-cash-bon` |
 
 ---
 
@@ -912,4 +912,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K7 | Bonfluss | [~] K7a–K7c; offen K7d–K7f |
 | K8 | Zahlungsarten | [ ] |
 | K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
-| K10–K21 | Rest | [ ] |
+| K10 | Mobile Kasse | [x] K10a–c |
+| K11–K21 | Rest | [ ] |

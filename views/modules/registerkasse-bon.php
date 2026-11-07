@@ -1,6 +1,6 @@
 <?php
 /**
- * Registerkasse — Bon-Detail (K7a–K7c: Draft, Positionen, Zahlungen).
+ * Registerkasse — Bon-Detail (K7a–K7c; Layout K10c).
  *
  * @var array<string, mixed> $cashReceipt
  * @var list<array<string, mixed>> $cashReceiptLines
@@ -58,7 +58,7 @@ $paidTotal = round($paidTotal, 2);
 $openAmount = round($totalGross - $paidTotal, 2);
 $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '';
 ?>
-<div class="dg-wrap">
+<div class="dg-wrap dg-cash-bon">
   <?php View::render('partials/flash', compact('flash')); ?>
 
   <a class="dg-button dg-button--back" href="/app?page=registerkasse-bons">← Zurück zur Bon-Liste</a>
@@ -72,6 +72,14 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
       <?php endif; ?>
     </p>
   </header>
+
+  <div class="dg-cash-bon__totals dg-panel" aria-live="polite">
+    <div class="dg-btn-row">
+      <span>Brutto <strong><?= View::escape(number_format($totalGross, 2, ',', '.')) ?> €</strong></span>
+      <span>Bezahlt <strong><?= View::escape(number_format($paidTotal, 2, ',', '.')) ?> €</strong></span>
+      <span>Offen <strong><?= View::escape(number_format($openAmount, 2, ',', '.')) ?> €</strong></span>
+    </div>
+  </div>
 
   <div class="dg-panel">
     <h2 class="dg-subsection-title">Kopf</h2>
@@ -114,10 +122,10 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
           <tr>
             <th>#</th>
             <th>Artikel</th>
-            <th>Menge</th>
-            <th>Einzel brutto</th>
-            <th>Summe</th>
-            <th>USt %</th>
+            <th class="dg-table__num">Menge</th>
+            <th class="dg-table__num dg-cash-bon__col-unit">Einzel</th>
+            <th class="dg-table__num">Summe</th>
+            <th class="dg-table__num dg-cash-bon__col-tax">USt</th>
             <?php if ($canChange) : ?><th></th><?php endif; ?>
           </tr>
         </thead>
@@ -137,11 +145,11 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
                     <span class="dg-muted">(<?= View::escape((string) $line['article_number']) ?>)</span>
                   <?php endif; ?>
                 </td>
-                <td><?= View::escape(rtrim(rtrim(number_format((float) ($line['quantity'] ?? 0), 3, ',', '.'), '0'), ',')) ?>
+                <td class="dg-table__num"><?= View::escape(rtrim(rtrim(number_format((float) ($line['quantity'] ?? 0), 3, ',', '.'), '0'), ',')) ?>
                   <?= View::escape((string) ($line['unit'] ?? '')) ?></td>
-                <td><?= View::escape(number_format((float) ($line['unit_price_gross'] ?? 0), 2, ',', '.')) ?> €</td>
-                <td><?= View::escape(number_format((float) ($line['gross_amount'] ?? 0), 2, ',', '.')) ?> €</td>
-                <td><?= (int) ($line['tax_rate'] ?? 0) ?></td>
+                <td class="dg-table__num dg-cash-bon__col-unit"><?= View::escape(number_format((float) ($line['unit_price_gross'] ?? 0), 2, ',', '.')) ?> €</td>
+                <td class="dg-table__num"><?= View::escape(number_format((float) ($line['gross_amount'] ?? 0), 2, ',', '.')) ?> €</td>
+                <td class="dg-table__num dg-cash-bon__col-tax"><?= (int) ($line['tax_rate'] ?? 0) ?></td>
                 <?php if ($canChange) : ?>
                   <td class="dg-table__actions">
                     <div class="dg-table__actions-group">
