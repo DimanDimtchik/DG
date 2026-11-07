@@ -328,6 +328,7 @@ spl_autoload_register(static function (string $class): void {
         'CashRegisterDayClosingRepository' => '/src/CashRegister/CashRegisterDayClosingRepository.php',
         'CashAuditLogRepository' => '/src/CashRegister/CashAuditLogRepository.php',
         'CashExportRepository' => '/src/CashRegister/CashExportRepository.php',
+        'MockTseProvider' => '/src/CashRegister/MockTseProvider.php',
         'QrCodeSvg' => '/src/Support/QrCodeSvg.php',
         'AccountingPeriodFilter' => '/src/Accounting/AccountingPeriodFilter.php',
         'AccountingPrintService' => '/src/Accounting/AccountingPrintService.php',

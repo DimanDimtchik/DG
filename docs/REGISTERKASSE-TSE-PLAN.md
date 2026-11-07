@@ -102,9 +102,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K2a | Interface-Skizze in Doc (Methoden, Return-Felder) | 🟢 | [ ] |
-| K2b | `MockTseProvider` start/update/finish/cancel (feste Testwerte) | 🟡 | [ ] |
-| K2c | Selftest Mock ohne Netz | 🟡 | [ ] |
+| K2a | Interface-Skizze in Doc (Methoden, Return-Felder) | 🟢 | [x] siehe § K2 Specs |
+| K2b | `MockTseProvider` start/update/finish/cancel (feste Testwerte) | 🟡 | [x] `MockTseProvider.php` |
+| K2c | Selftest Mock ohne Netz | 🟡 | [x] `bin/mock-tse-selftest.php` |
 
 ---
 
@@ -316,9 +316,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
 
-1. **K2a** — Interface-Skizze Doc  
+1. **K3a** — `TseProviderInterface` PHP  
 2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
-3. **K2b / K2c** — Mock + Selftest  
+3. **K3c** — Provider-Factory mock|fiskaly  
 4. **K3a** — Interface PHP  
 5. **K4a–K4c** — Filial-Admin (je einzeln)  
 6. **K9a** — Ist-Stand Beleg-TSE festhalten  
@@ -709,6 +709,114 @@ Bestehender Code (`TseSignDeClient`, `TseSignService`) wird in **K3b** hinter da
 
 ---
 
+## K2 Specs
+
+### K2a — `TseProviderInterface` Skizze (2026-11-07)
+
+Nur Spec für **K3a** (PHP) und **K2b** (Mock). Keine Exceptions-Typen erfinden: bei Fehler `RuntimeException` mit klarer Meldung (wie heute `TseSignDeClient`).
+
+**Kontext je Aufruf** (aus `dg_cash_tse_assignments` + Instanz-Secrets):
+
+| Feld | Bedeutung |
+|------|-----------|
+| `provider` | `mock` · `fiskaly` · … |
+| `environment` | `test` · `live` |
+| `tss_id` / `client_id` | UUIDs (Mock: feste Test-UUIDs erlaubt) |
+| Secrets | **nicht** im Interface; Factory lädt aus Settings/Env |
+
+#### Einheitliches Tx-Ergebnis `TseTxResult` (assoziatives Array)
+
+Alle start/update/finish/cancel liefern dieselben Keys (fehlende = `null` / `''`):
+
+| Key | Typ | Bedeutung |
+|-----|-----|-----------|
+| `tse_tx_id` | string | Transaktions-UUID |
+| `state` | string | `ACTIVE` · `FINISHED` · `CANCELLED` |
+| `tx_number` | int\|null | TSE-Transaktionsnummer |
+| `revision` | int\|null | Provider-Revision |
+| `signature_value` | string\|null | |
+| `signature_algorithm` | string\|null | |
+| `signature_counter` | string\|null | |
+| `qr_code_data` | string\|null | KassenSichV-QR-Payload |
+| `time_start` | int\|null | Unix |
+| `time_end` | int\|null | Unix |
+| `tss_serial_number` | string | |
+| `client_serial_number` | string | oft = Kassen-`code` |
+| `raw` | array\|null | optional Provider-Rohantwort (Debug; nicht auf Bon drucken) |
+
+Passt auf Spalten in `dg_cash_receipts` / `dg_tse_transactions`.
+
+#### Methoden
+
+```text
+interface TseProviderInterface
+{
+  /** Provider-Kurzname: mock | fiskaly | … */
+  getName(): string
+
+  /** TSS/Client erreichbar? Kein Bon. */
+  getStatus(): TseStatusResult
+
+  /**
+   * Bon starten (ACTIVE).
+   * $txId = vorgegebene UUID (Client generiert, wie Fiskaly).
+   * $input = Beträge/USt für erste Buchung (kann leer/0 sein).
+   */
+  startTransaction(string $txId, TseTxInput $input): TseTxResult
+
+  /** Positionen/Betrag nachziehen solange ACTIVE. */
+  updateTransaction(string $txId, int $revision, TseTxInput $input): TseTxResult
+
+  /** Abschließen → FINISHED + Signatur/QR. */
+  finishTransaction(string $txId, int $revision, TseTxInput $input): TseTxResult
+
+  /** Abbruch vor Finish → CANCELLED. */
+  cancelTransaction(string $txId, int $revision): TseTxResult
+
+  /**
+   * Rohdaten/Export-Hinweis für K18 (TAR o. Ä.).
+   * Darf Stub werfen „not implemented“ bis K18.
+   */
+  exportData(TseExportRequest $request): TseExportResult
+}
+```
+
+#### `TseTxInput` (Eingabe Signatur)
+
+| Key | Typ | Bedeutung |
+|-----|-----|-----------|
+| `receipt_type` | string | z. B. `RECEIPT` · `CANCELLATION` (Provider-Mapping in Adapter) |
+| `amount_gross` | float | Bon-Brutto |
+| `vat_amounts` | list of `{vat_rate_code, amount}` | wie `TseSignService::allocateVatAmounts` / Fiskaly |
+| `client_serial_number` | string | optional Override |
+| `process_type` / `process_data` | string | optional, Default leer/Kassen-Beleg |
+
+#### `TseStatusResult`
+
+| Key | Typ | Bedeutung |
+|-----|-----|-----------|
+| `ok` | bool | Verbindung + TSS nutzbar |
+| `state` | string | z. B. TSS `INITIALIZED` |
+| `tss_id` | string | |
+| `client_id` | string | |
+| `tss_serial_number` | string | |
+| `certificate_valid_until` | string\|null | ISO-Datum wenn bekannt |
+| `message` | string | Hinweis / letzter Fehler |
+
+#### `TseExportRequest` / `TseExportResult` (für später K18)
+
+| Request | Result |
+|---------|--------|
+| `date_from`, `date_to` (optional) | `ok` bool |
+| `format` (`tar`\|`json`\|…) | `file_bytes` oder `download_ref` |
+| | `checksum`, `message` |
+
+**Mock (K2b):** feste UUIDs/Serien, `signature_value=MOCK-…`, `qr_code_data` nichtleer, kein HTTP.  
+**K3a:** PHP-Interface exakt nach dieser Skizze (Arrays oder kleine DTO-Klassen — Entscheidung in K3a, Default = arrays).  
+**K3b:** `FiskalyTseProvider` wrappt `TseSignDeClient` + VAT-Logik aus `TseSignService`.
+
+---
+
 ## Nicht vergessen
 
 - Kein Sondercode pro Kundeninstanz; keine Kundendaten als Kern-Defaults.
@@ -727,7 +835,7 @@ Bestehender Code (`TseSignDeClient`, `TseSignService`) wird in **K3b** hinter da
 |----|--------|--------|
 | K0 | Anbieterzugang | [~] K0i Preis-Hypothese da; nur noch Sales-Zeile (Go Live) |
 | K1 | Datenmodell | [x] K1a–K1k |
-| K2 | Mock-TSE | [ ] |
+| K2 | Mock-TSE | [x] K2a–K2c |
 | K3 | Provider-Interface | [ ] |
 | K4 | Admin Filialen | [ ] |
 | K5 | Admin Kassen | [ ] |
