@@ -9259,18 +9259,24 @@ switch ($path) {
                 $cashJournalDateTo = $cashJournalDate;
             }
 
-            if (
-                isset($_GET['export'])
-                && (string) $_GET['export'] === 'csv'
-                && Database::isConfigured()
-            ) {
+            if (isset($_GET['export']) && Database::isConfigured()) {
+                $exportKind = (string) $_GET['export'];
                 try {
-                    CashReceiptJournalCsvExport::downloadAndExit(
-                        $cashJournalDateFrom,
-                        $cashJournalDateTo,
-                        $cashJournalRegisterId,
-                        (int) ($user->id ?? 0)
-                    );
+                    if ($exportKind === 'csv') {
+                        CashReceiptJournalCsvExport::downloadAndExit(
+                            $cashJournalDateFrom,
+                            $cashJournalDateTo,
+                            $cashJournalRegisterId,
+                            (int) ($user->id ?? 0)
+                        );
+                    }
+                    if ($exportKind === 'dsfinvk') {
+                        CashDsfinvkStubExport::downloadAndExit(
+                            $cashJournalDateFrom,
+                            $cashJournalDateTo,
+                            (int) ($user->id ?? 0)
+                        );
+                    }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                     header(

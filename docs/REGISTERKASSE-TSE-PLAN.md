@@ -401,10 +401,22 @@ Bon finalized
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K17a | Pflicht-Dateien/Felder als Spec-Doc | 🟢 | [ ] |
-| K17b | Export-Stub (leere/Minimal-CSV-Struktur) | 🟡 | [ ] |
-| K17c | Befüllung aus cash_*-Tabellen | 🔴 | [ ] |
-| K17d | Selftest: ZIP enthält erwartete Dateinamen | 🟡 | [ ] |
+| K17a | Pflicht-Dateien/Felder als Spec-Doc | 🟢 | [x] [`docs/DSFINVK-SPEC.md`](DSFINVK-SPEC.md) (DSFinV-K 2.3, 20 CSV + Index) |
+| K17b | Export-Stub (leere/Minimal-CSV-Struktur) | 🟡 | [x] `CashDsfinvkStubExport` ZIP + Download Journal |
+| K17c | Befüllung aus cash_*-Tabellen | 🔴 | [ ] Mapping in Spec §3–4 |
+| K17d | Selftest: ZIP enthält erwartete Dateinamen | 🟡 | [x] `bin/cash-dsfinvk-zip-names-selftest.php` |
+
+#### K17a — Kurz
+
+Verbindliche Datei-/Feld-Spec für den Prüfungsexport: **20 CSV** (Stamm / Abschluss / Einzelaufzeichnung) + `index.xml` + DTD.  
+Details und DG-Quellen: **[`docs/DSFINVK-SPEC.md`](DSFINVK-SPEC.md)**. Stub = K17b ✅, Daten = K17c, TSE-TAR = K18.
+
+#### K17b — Stub (umgesetzt)
+
+- `CashDsfinvkStubExport::buildZip` / `downloadAndExit` — 20 CSV (nur Kopf), `index.xml`, DTD-Platzhalter, `README.txt`
+- UI: Bon-Journal → „DSFinV-K Struktur (Stub)“
+- Selftest Struktur: `bin/cash-dsfinvk-stub-selftest.php`
+- Selftest Dateinamen (K17d): `bin/cash-dsfinvk-zip-names-selftest.php`
 
 ---
 
@@ -1054,4 +1066,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K14 | TSE-Ausfall | [~] K14a–c ✅; offen K14d |
 | K15 | FiBu-Buchungen | [~] K15a–d ✅; offen K15e |
 | K16 | Journale | [x] K16a–c |
-| K17–K21 | Rest | [ ] |
+| K17 | DSFinV-K | [~] K17a+b+d ✅; offen K17c |
+| K18–K21 | Rest | [ ] |

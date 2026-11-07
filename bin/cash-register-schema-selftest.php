@@ -69,6 +69,7 @@ $classes = [
     'CashRegisterFiBuSettings',
     'CashRegisterFiBuPostingService',
     'CashReceiptJournalCsvExport',
+    'CashDsfinvkStubExport',
     'CashSessionRepository',
     'CashReceiptRepository',
     'CashPaymentRepository',

@@ -117,6 +117,30 @@ $methodLabels = CashPaymentRepository::methodLabels();
     <p class="dg-field-hint">Festgeschriebene Bons im Zeitraum, Semikolon-getrennt, UTF-8 mit BOM (Excel).</p>
   </form>
 
+  <form class="dg-panel dg-form" method="get" action="/app">
+    <input type="hidden" name="page" value="registerkasse-journal">
+    <input type="hidden" name="export" value="dsfinvk">
+    <input type="hidden" name="business_date" value="<?= View::escape($filterDate) ?>">
+    <h2 class="dg-subsection-title">DSFinV-K Struktur (Stub)</h2>
+    <div class="dg-form-grid">
+      <label class="dg-field">
+        <span>Von</span>
+        <input type="date" name="date_from" value="<?= View::escape($dateFrom) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <label class="dg-field">
+        <span>Bis</span>
+        <input type="date" name="date_to" value="<?= View::escape($dateTo) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <div class="dg-field dg-field--actions">
+        <button type="submit" class="dg-button"<?= !$dbConnected ? ' disabled' : '' ?>>ZIP herunterladen</button>
+      </div>
+    </div>
+    <p class="dg-field-hint">
+      Leeres Pflichtpaket (20 CSV nur mit Kopfzeilen, index.xml, DTD) für die Prüfschnittstelle —
+      noch ohne Bon-Daten. Befüllung folgt später.
+    </p>
+  </form>
+
   <div class="dg-panel">
     <div class="dg-table-wrap">
       <table class="dg-table">
