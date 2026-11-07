@@ -1533,6 +1533,28 @@ switch ($path) {
             exit;
         }
 
+        // POST: Einstellungen Registerkasse FiBu (Zahlart → Konto)
+        if (
+            $page === 'einstellungen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && RoleResolver::isAdmin($user)
+            && isset($_POST['cash_register_fibu_save'])
+        ) {
+            $redirect = SettingsRegistry::tabUrl('registerkasse-fibu');
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF).');
+            } else {
+                try {
+                    CashRegisterFiBuSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Konten für Registerkasse gespeichert.');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: ' . $redirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen TSE
         if (
             $page === 'einstellungen'
@@ -7043,7 +7065,8 @@ switch ($path) {
         $taxAdvisorCompanyOptions = ContactCompanyLinkRepository::companyOptions();
         $elsterConfig = ElsterSettings::forForm();
         $tseConfig = TseSettings::forForm();
-$legalProductsConfig = LegalProductSettings::config();
+        $cashRegisterFiBuConfig = CashRegisterFiBuSettings::forForm();
+        $legalProductsConfig = LegalProductSettings::config();
         $ldapConfig = LdapSettings::forForm();
         $recruitingPrivacyForm = RecruitingPrivacySettings::forForm();
         $recruitingMailForm = RecruitingMailSettings::forForm();
@@ -12134,7 +12157,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'taxAdvisorCompanyOptions',
             'elsterConfig',
             'tseConfig',
-'legalProductsConfig',
+            'cashRegisterFiBuConfig',
+            'legalProductsConfig',
             'ldapConfig',
             'accountingPaymentSettings',
             'documentPresentationSettings',

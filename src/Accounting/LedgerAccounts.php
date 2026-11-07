@@ -146,6 +146,21 @@ final class LedgerAccounts
     }
 
     /**
+     * Standard-Erlöskonto je USt-Satz (Registerkasse / Barverkauf).
+     * SKR03: 8300 (7 %) / 8400 (19 %) · SKR04: 4300 / 4400.
+     */
+    public static function revenueAccount(string $skrType, int $taxRate): string
+    {
+        $skr = ChartOfAccountsSettings::sanitizeSkrType($skrType);
+        $reduced = $taxRate === 7;
+        if ($skr === 'skr04') {
+            return $reduced ? '4300' : '4400';
+        }
+
+        return $reduced ? '8300' : '8400';
+    }
+
+    /**
      * Sammelkonto für Saldenvorträge (Eröffnungsbilanzwerte).
      * @param string $skrType Kontenrahmen (skr03/skr04)
      * @return string

@@ -251,6 +251,8 @@ final class CashReceiptService
             'status' => self::STATUS_FINALIZED,
             'finished_at' => date('Y-m-d H:i:s'),
         ]);
+        // K15b–d: Bar/EC/Karte/Gutschein → FiBu (Storno: K15e)
+        CashRegisterFiBuPostingService::postForFinalizedReceipt($receiptId);
     }
 
     /**

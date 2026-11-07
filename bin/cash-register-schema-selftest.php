@@ -53,6 +53,7 @@ $migrations = [
     '149_cash_register_day_closings.sql',
     '150_cash_audit_exports.sql',
     '152_cash_tse_outage.sql',
+    '153_cash_journal_receipt.sql',
 ];
 foreach ($migrations as $file) {
     $path = DG_ROOT . '/database/migrations/' . $file;
@@ -65,6 +66,8 @@ $classes = [
     'CashRegisterRepository',
     'CashTseAssignmentRepository',
     'CashTseOutageService',
+    'CashRegisterFiBuSettings',
+    'CashRegisterFiBuPostingService',
     'CashSessionRepository',
     'CashReceiptRepository',
     'CashPaymentRepository',

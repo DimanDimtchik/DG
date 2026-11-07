@@ -20,7 +20,7 @@ Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** **UI/CSS-Rest** (siehe oben) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). Registerkasse/TSE — Mini-IDs [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) (K6 ✅ · K7a–c ✅ · K9a+b ✅ · K10–K12 ✅ · K13c ✅ · K14a–c ✅; offen: **K13a UI/TSE**, **K13b**, **K14d**; bewusst später: **K7d/e/f**, **K3b**, Rest **K8**/K9c–d).
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). Registerkasse/TSE — Mini-IDs [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) (K6 ✅ · K7a–c ✅ · K9a+b ✅ · K10–K12 ✅ · K13c ✅ · K14a–c ✅ · K15a–d ✅; offen: **K13a UI/TSE**, **K13b**, **K14d**, **K15e**; bewusst später: **K7d/e/f**, **K3b**, Rest **K8**/K9c–d).
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 

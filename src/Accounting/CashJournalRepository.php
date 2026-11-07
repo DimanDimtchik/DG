@@ -1,7 +1,10 @@
 <?php
 declare(strict_types=1);
 
-/** Kassenbuch — Ein-/Ausgänge aus Barzahlungen (dg_voucher_payments method=cash). */
+/**
+ * Kassenbuch — Ein-/Ausgänge aus Barzahlungen
+ * (Beleg: dg_voucher_payments method=cash · Registerkasse: K15b).
+ */
 final class CashJournalRepository
 {
     /**
@@ -175,6 +178,113 @@ final class CashJournalRepository
                 'description' => mb_substr($desc, 0, 500),
             ]);
         }
+    }
+
+    /**
+     * K15b: Baranteil eines festgeschriebenen Registerkassen-Bons ins FiBu-Kassenbuch.
+     * Idempotent (Löschen + Neuaufbau je cash_receipt_id). Kein Ersatz für Register-Tagesabschluss.
+     */
+    public static function syncForCashReceipt(int $receiptId): void
+    {
+        if (!Database::isConfigured() || $receiptId < 1) {
+            return;
+        }
+        if (!CashReceiptRepository::tableExists() || !CashPaymentRepository::tableExists()) {
+            return;
+        }
+        MigrationRunner::runPending();
+        if (!self::hasCashReceiptColumn()) {
+            return;
+        }
+
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM dg_cash_journal WHERE cash_receipt_id = :id')
+            ->execute(['id' => $receiptId]);
+
+        $receipt = CashReceiptRepository::findById($receiptId);
+        if ($receipt === null) {
+            return;
+        }
+        if (($receipt['status'] ?? '') !== CashReceiptService::STATUS_FINALIZED) {
+            return;
+        }
+        if (($receipt['receipt_type'] ?? CashReceiptService::TYPE_SALE) !== CashReceiptService::TYPE_SALE) {
+            return;
+        }
+
+        $cashAmount = 0.0;
+        foreach (CashPaymentRepository::listByReceipt($receiptId) as $pay) {
+            if (strtolower(trim((string) ($pay['payment_method'] ?? ''))) !== 'cash') {
+                continue;
+            }
+            $cashAmount = round($cashAmount + (float) ($pay['amount'] ?? 0), 2);
+        }
+        if ($cashAmount <= 0) {
+            return;
+        }
+
+        $skr = ChartOfAccountsSettings::activeSkrType();
+        $cashAccount = CashRegisterFiBuSettings::accountForMethod('cash', $skr);
+        $entryDate = self::receiptEntryDate($receipt);
+        $display = trim((string) ($receipt['receipt_number_display'] ?? ''));
+        if ($display === '') {
+            $display = (string) (int) ($receipt['receipt_number'] ?? $receiptId);
+        }
+        $desc = 'Registerkasse Bon ' . $display . ' · Bar';
+
+        $pdo->prepare(
+            'INSERT INTO dg_cash_journal
+                (entry_date, voucher_id, cash_receipt_id, account_number, side, amount, description)
+             VALUES
+                (:entry_date, NULL, :cash_receipt_id, :account_number, :side, :amount, :description)'
+        )->execute([
+            'entry_date' => $entryDate,
+            'cash_receipt_id' => $receiptId,
+            'account_number' => $cashAccount,
+            'side' => 'in',
+            'amount' => $cashAmount,
+            'description' => mb_substr($desc, 0, 500),
+        ]);
+    }
+
+    private static function hasCashReceiptColumn(): bool
+    {
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $stmt = Database::pdo()->query("SHOW COLUMNS FROM dg_cash_journal LIKE 'cash_receipt_id'");
+            $cached = $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Throwable) {
+            $cached = false;
+        }
+
+        return $cached;
+    }
+
+    /**
+     * @param array<string, mixed> $receipt
+     */
+    private static function receiptEntryDate(array $receipt): string
+    {
+        $finished = trim((string) ($receipt['finished_at'] ?? ''));
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $finished, $m) === 1) {
+            return $m[1];
+        }
+        $sessionId = (int) ($receipt['session_id'] ?? 0);
+        if ($sessionId > 0 && CashSessionRepository::tableExists()) {
+            $session = CashSessionRepository::findById($sessionId);
+            $bd = trim((string) ($session['business_date'] ?? ''));
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $bd) === 1) {
+                return $bd;
+            }
+        }
+
+        return date('Y-m-d');
     }
 
     /**

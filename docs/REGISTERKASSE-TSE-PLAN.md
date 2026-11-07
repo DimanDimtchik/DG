@@ -315,11 +315,75 @@ Bon-Finish braucht TSE
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K15a | Mapping Zahlart → Konten (Settings/Doc) | 🟢 | [ ] |
-| K15b | Buchung Bar bei Bon-Finish | 🔴 | [ ] |
-| K15c | Buchung EC/Karte | 🟡 | [ ] |
-| K15d | Buchung Gutschein | 🟡 | [ ] |
+| K15a | Mapping Zahlart → Konten (Settings/Doc) | 🟢 | [x] Spec unten + `CashRegisterFiBuSettings` + Einstellungen-Tab |
+| K15b | Buchung Bar bei Bon-Finish | 🔴 | [x] `cash` + FiBu-Kassenbuch `syncForCashReceipt` (Migration 153) |
+| K15c | Buchung EC/Karte | 🟡 | [x] `CashRegisterFiBuPostingService` + Hook `finalizeWithoutTse` |
+| K15d | Buchung Gutschein | 🟡 | [x] `voucher` in `bookableMethods` → Soll Verbindlichkeit |
 | K15e | Storno-Buchung | 🔴 | [ ] |
+
+#### K15a — Spec: Zahlart → Konten (verbindlich)
+
+**Zweck:** Vor den echten FiBu-Buchungen (K15b–e) festlegen, **welches Bestandskonto** je Zahlart belastet wird. Ohne klares Mapping keine GoBD-taugliche Automatik.
+
+**Was gemappt wird (Zahlungsseite)**
+
+| Zahlart (`payment_method`) | Bedeutung | Soll bei Verkauf (Gegenkonto zum Erlös) |
+|----------------------------|-----------|----------------------------------------|
+| `cash` | Bar | Kassenkonto |
+| `ec` | EC-Kartenzahlung | Bank oder Geldtransit |
+| `card` | Kreditkarte | Bank oder Geldtransit (oft = EC) |
+| `voucher` | Gutschein-Einlösung | Gutscheinverbindlichkeit (nicht Erlöskonto) |
+
+**Gemischt:** keine eigene Zahlart `mixed` — mehrere `dg_cash_payments`-Zeilen, jede mit eigenem Konto aus dem Mapping (wie K1g).
+
+**Was hier nicht gemappt wird**
+
+- Erlöskonten und USt-Konten → aus Bon-Positionen / Steuersatz in **K15b+** (wie Belegbuchung über `LedgerAccounts::taxAccount*`).
+- FiBu-Kassenbuch (`dg_cash_day_closings`) und Register-Tagesabschluss (`dg_cash_register_day_closings`) → bleiben eigene Tabellen (K12d); K15 schreibt **Ledger-Buchungen**, ersetzt keinen der beiden Abschlüsse.
+
+**Standardkonten (Produkt-Default, überschreibbar je Instanz)**
+
+| Zahlart | SKR03 | SKR04 | Abgleich |
+|---------|-------|-------|----------|
+| Bar | 1000 | 1600 | `LedgerAccounts::contraAccount` cash |
+| EC | 1200 | 1800 | Bank wie Beleg-Bank |
+| Karte | 1200 | 1800 | wie EC bis Instanz trennt |
+| Gutschein | 1796 | 3786 | `LedgerAccounts::giftVoucherLiabilityAccount` |
+
+**Settings**
+
+- Store-Key: `cash_register_fibu` (`CashRegisterFiBuSettings`)
+- UI: Einstellungen → Buchhaltung → **Registerkasse FiBu**
+- Gespeichert werden nur Abweichungen vom Default des **aktuellen** Kontenrahmens (SKR-Wechsel → Defaults greifen wieder, Overrides bleiben nur wenn gesetzt)
+- API für K15b: `CashRegisterFiBuSettings::accountForMethod($method)`
+
+**Buchungslogik (umgesetzt K15b–d)**
+
+```
+Bon finalized
+  → je buchbarer payment-Zeile: Soll Mapping(Zahlart) / Haben Erlöse+USt (anteilig)
+  → zusätzlich bei Bar: Zeile in dg_cash_journal (cash_receipt_id)
+  → Storno (K15e): Gegenbuchung — noch offen
+```
+
+**Nicht tun**
+
+- Firmenspezifische Konten im Kern hardcoden
+- Erlöse „Barerlöse 19 %“ fest an Zahlart koppeln
+- Mapping mit FiBu-Kassenbuch-Tagesabschluss verwechseln
+
+**Selftest:** `bin/cash-register-fibu-settings-selftest.php`
+
+#### K15b–d — Bar/EC/Karte/Gutschein buchen (umgesetzt)
+
+- Service: `CashRegisterFiBuPostingService` — `bookableMethods()` = `cash`/`ec`/`card`/`voucher`
+- Bei `CashReceiptService::finalizeWithoutTse`: nach Status `finalized` → `postForFinalizedReceipt`
+- Journal: Quelle `cash_register`, Marker `document_field1` = `cr:{receiptId}`, Batch über `ManualLedgerService`
+- Soll: Mapping-Konto je Zahlart · Haben: anteilige Erlöse + USt
+- **K15b extra:** `CashJournalRepository::syncForCashReceipt` → FiBu-Kassenbuch (`dg_cash_journal.cash_receipt_id`, Migration `153`); ersetzt weder Register- noch FiBu-Tagesabschluss
+- Idempotent: vorhandener Ledger-Batch zum Marker wird wiederverwendet; Kassenbuch Delete+Insert
+- Storno-Bons: bewusst kein Auto-Post (K15e)
+- Selftest: `bin/cash-register-fibu-ec-card-selftest.php`
 
 ---
 
@@ -988,4 +1052,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K12 | Tagesabschluss | [x] K12a–d |
 | K13 | Storno | [~] K13c ✅ + K13a Datenpfad ohne TSE; offen K13b + UI |
 | K14 | TSE-Ausfall | [~] K14a–c ✅; offen K14d |
-| K15–K21 | Rest | [ ] |
+| K15 | FiBu-Buchungen | [~] K15a–d ✅; offen K15e |
+| K16–K21 | Rest | [ ] |

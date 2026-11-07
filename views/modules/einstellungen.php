@@ -81,7 +81,10 @@
           <?php View::render('settings/tab-elster', compact('elsterConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'tse') : ?>
           <?php View::render('settings/tab-tse', compact('tseConfig', 'dbConnected')); ?>
+        <?php elseif ($settingsSelection['template'] === 'registerkasse-fibu') : ?>
+          <?php View::render('settings/tab-registerkasse-fibu', compact('cashRegisterFiBuConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'ldap') : ?>
+
           <?php View::render('settings/tab-ldap', compact('ldapConfig', 'dbConnected')); ?>
         <?php elseif ($settingsSelection['template'] === 'chart-of-accounts') : ?>
           <?php View::render('settings/tab-chart-of-accounts', compact('chartOfAccountsConfig', 'dbConnected', 'datevExportSettings')); ?>
