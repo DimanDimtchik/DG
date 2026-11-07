@@ -504,8 +504,20 @@ Einseitige manuelle Smoke-Checkliste: Stammdaten → Bon/Zahlung → Storno/Ausf
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K21a | Baustein-Text Registerkasse/TSE (Vorlage) | 🟢 | [ ] |
-| K21b | Einbindung in Verfahrensdoku-Modul/Export | 🟡 | [ ] |
+| K21a | Baustein-Text Registerkasse/TSE (Vorlage) | 🟢 | [x] [`docs/VERFAHRENSDOKUMENTATION-REGISTERKASSE.md`](VERFAHRENSDOKUMENTATION-REGISTERKASSE.md) |
+| K21b | Einbindung in Verfahrensdoku-Modul/Export | 🟡 | [x] `VerfahrensdokumentationExport` + Steuerberater-UI / GoBD-ZIP |
+
+#### K21a — Kurz
+
+GoBD-/KassenSichV-Baustein (R1–R9): Geltung, System, Prozess, Unveränderbarkeit, Prüferexport, §146a-Meldung, Organisation, Unterschriften.  
+Anhang zur FiBu-Vorlage; Nutzer füllt Platzhalter. CRM-Export-Einbindung = **K21b** ✅.
+
+#### K21b — umgesetzt
+
+- `VerfahrensdokumentationExport` — ZIP beider Vorlagen + Einzel-Download Markdown
+- UI: Buchhaltung → Steuerberater-Export → Abschnitt „Verfahrensdokumentation“
+- GoBD-Prüferexport enthält Ordner `verfahrensdokumentation/` (FiBu + Registerkasse)
+- Selftest: `bin/verfahrensdoku-export-selftest.php`
 
 ---
 
@@ -1120,4 +1132,4 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K18 | Prüferpaket / TSE-TAR | [~] K18a+c ✅; K18b später |
 | K19 | Kassenmeldung / ERS | [~] K19a+b ✅; K19c später |
 | K20 | Tests | [x] K20a–e ✅ |
-| K21 | Verfahrensdoku | [ ] |
+| K21 | Verfahrensdoku | [x] K21a+b ✅ |

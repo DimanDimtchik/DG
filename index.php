@@ -8961,6 +8961,15 @@ switch ($path) {
                         @unlink($zip['path']);
                         exit;
                     }
+                    if ($download === 'verfahrensdoku') {
+                        VerfahrensdokumentationExport::downloadZipAndExit((int) ($user->id ?? 0));
+                    }
+                    if ($download === 'verfahrensdoku-fibu') {
+                        VerfahrensdokumentationExport::downloadMarkdownAndExit('fibu');
+                    }
+                    if ($download === 'verfahrensdoku-kasse') {
+                        VerfahrensdokumentationExport::downloadMarkdownAndExit('registerkasse');
+                    }
                     $export = match ($download) {
                         'datev' => DatevExtfExporter::export($exportYear, includeManual: true),
                         'agenda' => AgendaExporter::export($exportYear),

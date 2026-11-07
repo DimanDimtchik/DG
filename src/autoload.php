@@ -303,6 +303,7 @@ spl_autoload_register(static function (string $class): void {
         'UstvaReportService' => '/src/Accounting/UstvaReportService.php',
         'VatTaxationSettings' => '/src/Accounting/VatTaxationSettings.php',
         'GobdAuditExportService' => '/src/Accounting/GobdAuditExportService.php',
+        'VerfahrensdokumentationExport' => '/src/Accounting/VerfahrensdokumentationExport.php',
         'ElsterExportService' => '/src/Accounting/ElsterExportService.php',
         'ElsterEricClient' => '/src/Accounting/ElsterEricClient.php',
         'ElsterCertificatePassword' => '/src/Accounting/ElsterCertificatePassword.php',
