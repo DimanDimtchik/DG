@@ -3133,7 +3133,7 @@ switch ($path) {
             }
         }
 
-        // POST: Registerkasse Bon-Positionen (K7b) / Zahlungen (K7c)
+        // POST: Registerkasse Bon-Positionen (K7b) / Zahlungen (K7c) / Festschreiben (K8d, ohne TSE bis K7d)
         if (
             $page === 'registerkasse-bon'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -3143,6 +3143,7 @@ switch ($path) {
                 || isset($_POST['cash_receipt_line_delete'])
                 || isset($_POST['cash_receipt_payment_add'])
                 || isset($_POST['cash_receipt_payment_delete'])
+                || isset($_POST['cash_receipt_finalize'])
             )
             && MenuRegistry::canAccess($user, 'registerkasse-bon')
         ) {
@@ -3162,7 +3163,10 @@ switch ($path) {
                 if ($lineReceiptId <= 0) {
                     throw new RuntimeException('Bon fehlt.');
                 }
-                if (isset($_POST['cash_receipt_payment_delete'])) {
+                if (isset($_POST['cash_receipt_finalize'])) {
+                    CashReceiptService::finalizeWithoutTse($lineReceiptId);
+                    Flash::set('success', 'Bon festgeschrieben (ohne TSE — Signatur folgt).');
+                } elseif (isset($_POST['cash_receipt_payment_delete'])) {
                     CashReceiptService::removePayment($lineReceiptId, max(0, (int) ($_POST['payment_id'] ?? 0)));
                     Flash::set('success', 'Zahlung entfernt.');
                 } elseif (isset($_POST['cash_receipt_payment_add'])) {

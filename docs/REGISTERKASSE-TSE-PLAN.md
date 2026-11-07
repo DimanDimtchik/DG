@@ -169,11 +169,46 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K8a | Bar | 🟡 | [ ] |
-| K8b | EC / Karte (ohne Terminal-Integration zuerst: Betrag+Art) | 🟡 | [ ] |
-| K8c | Gutschein (Anbindung vorhandenes Gift-Voucher wenn möglich) | 🟡 | [ ] |
-| K8d | Gemischt: Summe = Bon brutto, Rest offen blockiert Finish | 🟡 | [ ] |
-| K8e | Selftest gemischte Zahlung | 🟡 | [ ] |
+| K8a | Bar | 🟡 | [x] Default + „Rest bar“ + Selftest |
+| K8b | EC / Karte (ohne Terminal-Integration zuerst: Betrag+Art) | 🟡 | [x] Rest EC/Karte + Selftest |
+| K8c | Gutschein (Anbindung vorhandenes Gift-Voucher wenn möglich) | 🟡 | [x] Code → `dg_gift_vouchers` |
+| K8d | Gemischt: Summe = Bon brutto, Rest offen blockiert Finish | 🟡 | [x] UI + `isFullyPaid` / Guard |
+| K8e | Selftest gemischte Zahlung | 🟡 | [x] `cash-mixed-payment-selftest` (+ Alias) |
+
+#### K8a — umgesetzt
+
+- `payment_method=cash` · Label „Bar“ · im Bon-Formular vorausgewählt
+- UI: Schnellaktion „Rest bar“ (offener Betrag)
+- Finalize → FiBu-Kassenkonto + `CashJournalRepository::syncForCashReceipt` (K15b)
+- Selftest: `bin/cash-payment-cash-selftest.php`
+
+#### K8b — umgesetzt
+
+- `payment_method=ec` / `card` · Betrag + optionale Terminal-Referenz — **kein** Terminal-Protokoll
+- UI: Schnellaktionen „Rest EC“ / „Rest Karte“ neben Rest bar
+- FiBu: Bankkonto (K15c); Hints via `CashPaymentRepository::methodHints`
+- Selftest: `bin/cash-payment-ec-card-selftest.php`
+
+#### K8c — umgesetzt
+
+- Zahlart `voucher` + Feld Gutschein-Code → `GiftVoucherRepository::findByCode`
+- Restwert prüfen, `gift_voucher_id` speichern, `adjustRemaining` bei Add/Remove/Storno
+- UI: `gift_code` am Bon; FiBu-Verbindlichkeit wie K15d
+- Selftest: `bin/cash-payment-voucher-selftest.php`
+
+#### K8d — umgesetzt
+
+- Gemischt = mehrere `dg_cash_payments`-Zeilen (kein `payment_method=mixed`)
+- `paymentOpenAmount` / `isFullyPaid`; `finalizeWithoutTse` blockiert bei Rest &gt; 0
+- UI: Warnung bei offenem Rest; Button „Bon festschreiben“ nur bei Summe = Brutto
+- Selftest: `bin/cash-mixed-payment-selftest.php` (K20b)
+
+#### K8e — umgesetzt
+
+- Nachweis gemischter Zahlung: Bar+EC+Karte+Gutschein als **vier Zeilen**, kein `mixed`
+- Teilzahlung blockiert Finish; Vollzahlung → `finalized` + `payment_summary_json`
+- Selftest: `bin/cash-mixed-payment-selftest.php` (= K20b)
+- Alias: `bin/cash-payment-mixed-selftest.php` (Namensschema wie K8a–c)
 
 ---
 
@@ -483,7 +518,7 @@ Baut auf K5d/`allocateNextReceiptNumber` und K10b auf.
 
 #### K20b — umgesetzt
 
-Nachweis D2/K8d: gemischt = mehrere `dg_cash_payments`-Zeilen (cash/ec/card/voucher), **kein** `payment_method=mixed`. Selftest: Teilzahlung blockiert `finalizeWithoutTse`, Vollzahlung finalisiert, `payment_summary_json` mit 4 Einträgen.
+Nachweis D2/K8d/K8e: gemischt = mehrere `dg_cash_payments`-Zeilen (cash/ec/card/voucher), **kein** `payment_method=mixed`. Selftest: Teilzahlung blockiert `finalizeWithoutTse`, Vollzahlung finalisiert, `payment_summary_json` mit 4 Einträgen. Alias `bin/cash-payment-mixed-selftest.php`.
 
 #### K20c — umgesetzt
 
@@ -523,10 +558,10 @@ Anhang zur FiBu-Vorlage; Nutzer füllt Platzhalter. CRM-Export-Einbindung = **K2
 
 ## Empfohlene Reihenfolge (nächste Mini-Schritte)
 
-1. **K7d** TSE finish + festschreiben (🔴) — danach K7e/f und K8d/e  
-2. **K3b** FiskalyTseProvider (🔴) — Beleg-Pfad und Registerkasse teilen denselben Adapter  
-3. **K8c** Gutschein-Anbindung (optional)  
-4. **K9c/d** Auftrag→Bon / Doppel-Signatur (🔴)  
+1. **K7d** TSE finish + festschreiben (🔴) — danach K7e/f
+2. **K3b** FiskalyTseProvider (🔴) — Beleg-Pfad und Registerkasse teilen denselben Adapter
+3. **K9c/d** Auftrag→Bon / Doppel-Signatur (🔴)
+4. **K13b** / **K15e** Storno TSE + FiBu
 5. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
 
 Erledigt bis hier u. a.: K0–K2, K3a/c/d, K4–K6, K7a–c, K9a+b. Bewusst später: K7d–f, K3b, Rest K8/K9.
@@ -1119,7 +1154,7 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K5 | Admin Kassen | [x] K5a–K5d |
 | K6 | Admin TSE-Zuordnung | [x] K6a–K6d |
 | K7 | Bonfluss | [~] K7a–K7c; offen K7d–K7f |
-| K8 | Zahlungsarten | [ ] |
+| K8 | Zahlungsarten | [x] K8a–e ✅ |
 | K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
 | K10 | Mobile Kasse | [x] K10a–c |
 | K11 | Kassensitzung | [x] K11a–c |

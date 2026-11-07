@@ -91,4 +91,19 @@ final class CashPaymentRepository
             'voucher' => 'Gutschein',
         ];
     }
+
+    /**
+     * Kurzer Hinweis je Zahlart (Bon-UI, ohne Terminal-Anbindung).
+     *
+     * @return array<string, string>
+     */
+    public static function methodHints(): array
+    {
+        return [
+            'cash' => 'Bargeld — bei Festschreiben ins FiBu-Kassenbuch.',
+            'ec' => 'EC/girocard — Betrag und Art; kein Terminal-Anschluss (Referenz optional).',
+            'card' => 'Kredit-/Debitkarte — Betrag und Art; kein Terminal-Anschluss (Referenz optional).',
+            'voucher' => 'Gutschein — Code eingeben; Restwert wird geprüft und gemindert.',
+        ];
+    }
 }

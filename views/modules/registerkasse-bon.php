@@ -290,11 +290,51 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
   </div>
 
   <?php if ($canPay && $lines !== [] && $openAmount > 0) : ?>
+    <?php
+      $openLabel = number_format($openAmount, 2, ',', '.');
+      $methodHints = CashPaymentRepository::methodHints();
+    ?>
+    <?php if ($payments !== []) : ?>
+      <div class="dg-flash dg-flash--warning">
+        Noch <?= View::escape($openLabel) ?> € offen — Festschreiben erst bei vollständiger Zahlung.
+      </div>
+    <?php endif; ?>
+    <div class="dg-panel">
+      <h2 class="dg-subsection-title">Schnell: Restbetrag</h2>
+      <p class="dg-field-hint">
+        Offen <?= View::escape($openLabel) ?> € — Bar, EC oder Karte in einem Schritt.
+        EC/Karte ohne Terminal-Anbindung: nur Betrag und Art (Referenz optional im Formular darunter).
+      </p>
+      <div class="dg-btn-row">
+        <form class="dg-form dg-inline-form" method="post" action="<?= $bonUrl ?>">
+          <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+          <input type="hidden" name="cash_receipt_payment_add" value="1">
+          <input type="hidden" name="payment_method" value="cash">
+          <input type="hidden" name="amount" value="<?= View::escape($defaultPayAmount) ?>">
+          <button type="submit" class="dg-button dg-button--primary">Rest bar (<?= View::escape($openLabel) ?> €)</button>
+        </form>
+        <form class="dg-form dg-inline-form" method="post" action="<?= $bonUrl ?>">
+          <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+          <input type="hidden" name="cash_receipt_payment_add" value="1">
+          <input type="hidden" name="payment_method" value="ec">
+          <input type="hidden" name="amount" value="<?= View::escape($defaultPayAmount) ?>">
+          <button type="submit" class="dg-button">Rest EC (<?= View::escape($openLabel) ?> €)</button>
+        </form>
+        <form class="dg-form dg-inline-form" method="post" action="<?= $bonUrl ?>">
+          <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+          <input type="hidden" name="cash_receipt_payment_add" value="1">
+          <input type="hidden" name="payment_method" value="card">
+          <input type="hidden" name="amount" value="<?= View::escape($defaultPayAmount) ?>">
+          <button type="submit" class="dg-button">Rest Karte (<?= View::escape($openLabel) ?> €)</button>
+        </form>
+      </div>
+    </div>
+
     <form class="dg-form dg-panel" method="post" action="<?= $bonUrl ?>">
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="cash_receipt_payment_add" value="1">
       <h2 class="dg-subsection-title">Zahlung erfassen</h2>
-      <p class="dg-field-hint">Erste Zahlung setzt den Bon auf „Zahlend“ (Positionen gesperrt). Offen: <?= View::escape(number_format($openAmount, 2, ',', '.')) ?> €.</p>
+      <p class="dg-field-hint">Erste Zahlung setzt den Bon auf „Zahlend“ (Positionen gesperrt). Offen: <?= View::escape($openLabel) ?> €. Bar ist vorausgewählt.</p>
       <div class="dg-form-grid">
         <label class="dg-field">
           <span>Zahlungsart *</span>
@@ -303,16 +343,25 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
               <option value="<?= View::escape($code) ?>"<?= $code === 'cash' ? ' selected' : '' ?>><?= View::escape($label) ?></option>
             <?php endforeach; ?>
           </select>
+          <small class="dg-field-hint"><?= View::escape((string) ($methodHints['ec'] ?? '')) ?></small>
         </label>
         <label class="dg-field">
           <span>Betrag *</span>
           <input type="text" name="amount" required inputmode="decimal"
                  value="<?= View::escape($defaultPayAmount) ?>">
         </label>
+        <label class="dg-field">
+          <span>Gutschein-Code</span>
+          <input type="text" name="gift_code" maxlength="64"
+                 placeholder="bei Zahlart Gutschein"
+                 autocomplete="off">
+          <small class="dg-field-hint"><?= View::escape((string) ($methodHints['voucher'] ?? '')) ?></small>
+        </label>
         <label class="dg-field dg-field--full">
           <span>Referenz (optional)</span>
           <input type="text" name="external_ref" maxlength="128"
-                 placeholder="Terminal / Trace">
+                 placeholder="z. B. Trace-/Belegnr. Terminal">
+          <small class="dg-field-hint">Bei EC/Karte: manuelle Notiz vom Terminal — keine automatische Terminal-Anbindung. Bei Gutschein leer = Code.</small>
         </label>
       </div>
       <div class="dg-form-actions">
@@ -322,6 +371,19 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
   <?php elseif ($canPay && $lines === []) : ?>
     <div class="dg-flash dg-flash--warning">Zuerst Positionen erfassen, dann zahlen.</div>
   <?php elseif ($canPay && $openAmount <= 0 && $payments !== []) : ?>
-    <div class="dg-flash dg-flash--success">Vollständig bezahlt — Festschreiben folgt im nächsten Schritt.</div>
+    <div class="dg-panel">
+      <h2 class="dg-subsection-title">Festschreiben</h2>
+      <p class="dg-field-hint">
+        Summe der Zahlungen entspricht dem Bon-Brutto (gemischt = mehrere Zeilen).
+        TSE-Signatur folgt später — jetzt ohne TSE festschreiben.
+      </p>
+      <form class="dg-form" method="post" action="<?= $bonUrl ?>">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="cash_receipt_finalize" value="1">
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary">Bon festschreiben</button>
+        </div>
+      </form>
+    </div>
   <?php endif; ?>
 </div>

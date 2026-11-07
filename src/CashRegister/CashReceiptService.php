@@ -188,18 +188,44 @@ final class CashReceiptService
             );
         }
 
+        $giftVoucherId = isset($input['gift_voucher_id']) && (int) $input['gift_voucher_id'] > 0
+            ? (int) $input['gift_voucher_id']
+            : null;
+        $externalRef = trim((string) ($input['external_ref'] ?? ''));
+        if ($method === 'voucher') {
+            $resolved = self::resolveGiftVoucherForPayment($input, $amount);
+            $giftVoucherId = (int) $resolved['id'];
+            $amount = (float) $resolved['amount'];
+            if ($externalRef === '') {
+                $externalRef = (string) $resolved['code'];
+            }
+            if ($amount - $remaining > 0.009) {
+                throw new RuntimeException(
+                    'Gutschein-Betrag übersteigt den offenen Rest ('
+                    . number_format($remaining, 2, ',', '.') . ' €).'
+                );
+            }
+        } elseif ($giftVoucherId !== null) {
+            // gift_voucher_id nur bei Zahlart Gutschein
+            $giftVoucherId = null;
+        }
+
         $paymentId = CashPaymentRepository::insert([
             'receipt_id' => $receiptId,
             'line_no' => CashPaymentRepository::nextLineNo($receiptId),
             'payment_method' => $method,
             'amount' => round($amount, 2),
             'currency' => 'EUR',
-            'gift_voucher_id' => isset($input['gift_voucher_id']) && (int) $input['gift_voucher_id'] > 0
-                ? (int) $input['gift_voucher_id']
-                : null,
-            'external_ref' => trim((string) ($input['external_ref'] ?? '')),
+            'gift_voucher_id' => $giftVoucherId,
+            'external_ref' => $externalRef,
             'notes' => trim((string) ($input['notes'] ?? '')),
         ]);
+
+        if ($method === 'voucher' && $giftVoucherId !== null && $giftVoucherId > 0
+            && class_exists('GiftVoucherRepository')
+        ) {
+            GiftVoucherRepository::adjustRemaining($giftVoucherId, -1 * round($amount, 2));
+        }
 
         self::refreshPaymentState($receiptId);
 
@@ -217,6 +243,15 @@ final class CashReceiptService
         if ($row === null || (int) ($row['receipt_id'] ?? 0) !== $receiptId) {
             throw new RuntimeException('Zahlung gehört nicht zu diesem Bon.');
         }
+        if (($row['payment_method'] ?? '') === 'voucher'
+            && (int) ($row['gift_voucher_id'] ?? 0) > 0
+            && class_exists('GiftVoucherRepository')
+        ) {
+            GiftVoucherRepository::adjustRemaining(
+                (int) $row['gift_voucher_id'],
+                round((float) ($row['amount'] ?? 0), 2)
+            );
+        }
         CashPaymentRepository::delete($paymentId);
         self::refreshPaymentState($receiptId);
     }
@@ -231,8 +266,24 @@ final class CashReceiptService
         return round($sum, 2);
     }
 
+    /** Offener Restbetrag (K8d) — Brutto minus Summe Zahlungen. */
+    public static function paymentOpenAmount(int $receiptId): float
+    {
+        $receipt = self::requireReceipt($receiptId);
+        $gross = round((float) ($receipt['total_gross'] ?? 0), 2);
+
+        return round($gross - self::paymentTotal($receiptId), 2);
+    }
+
+    /** Summe Zahlungen deckt Bon-Brutto (K8d). */
+    public static function isFullyPaid(int $receiptId): bool
+    {
+        return abs(self::paymentOpenAmount($receiptId)) <= 0.009;
+    }
+
     /**
      * Voll bezahlten Bon ohne TSE festschreiben (Test-/Zwischenpfad bis TSE-Finish).
+     * K8d: offener Rest blockiert Finish.
      */
     public static function finalizeWithoutTse(int $receiptId): void
     {
@@ -244,8 +295,15 @@ final class CashReceiptService
         if ($gross <= 0) {
             throw new RuntimeException('Bon-Brutto ist 0.');
         }
-        if (abs(self::paymentTotal($receiptId) - $gross) > 0.009) {
-            throw new RuntimeException('Bon ist nicht vollständig bezahlt.');
+        $open = self::paymentOpenAmount($receiptId);
+        if ($open > 0.009) {
+            throw new RuntimeException(
+                'Bon ist nicht vollständig bezahlt — noch offen: '
+                . number_format($open, 2, ',', '.') . ' €.'
+            );
+        }
+        if ($open < -0.009) {
+            throw new RuntimeException('Zahlungen übersteigen den Bon-Brutto.');
         }
         CashReceiptRepository::updateReceipt($receiptId, [
             'status' => self::STATUS_FINALIZED,
@@ -353,22 +411,79 @@ final class CashReceiptService
 
         if (CashPaymentRepository::tableExists()) {
             foreach (CashPaymentRepository::listByReceipt($originalReceiptId) as $pay) {
+                $payAmount = round((float) ($pay['amount'] ?? 0), 2);
+                $giftId = isset($pay['gift_voucher_id']) && (int) $pay['gift_voucher_id'] > 0
+                    ? (int) $pay['gift_voucher_id']
+                    : null;
                 CashPaymentRepository::insert([
                     'receipt_id' => $stornoId,
                     'line_no' => (int) ($pay['line_no'] ?? 1),
                     'payment_method' => (string) ($pay['payment_method'] ?? 'cash'),
-                    'amount' => round(-1 * (float) ($pay['amount'] ?? 0), 2),
+                    'amount' => round(-1 * $payAmount, 2),
                     'currency' => (string) ($pay['currency'] ?? 'EUR'),
-                    'gift_voucher_id' => isset($pay['gift_voucher_id']) && (int) $pay['gift_voucher_id'] > 0
-                        ? (int) $pay['gift_voucher_id']
-                        : null,
+                    'gift_voucher_id' => $giftId,
                     'external_ref' => (string) ($pay['external_ref'] ?? ''),
                     'notes' => trim((string) ($pay['notes'] ?? '')),
                 ]);
+                // Gutschein-Restwert zurückbuchen (Einlösung am Original rückgängig)
+                if (($pay['payment_method'] ?? '') === 'voucher'
+                    && $giftId !== null
+                    && $payAmount > 0
+                    && class_exists('GiftVoucherRepository')
+                ) {
+                    GiftVoucherRepository::adjustRemaining($giftId, $payAmount);
+                }
             }
         }
 
         return $stornoId;
+    }
+
+    /**
+     * Gutschein für Bon-Zahlung auflösen (K8c) — Code oder ID, Restwert prüfen.
+     *
+     * @param array<string, mixed> $input
+     * @return array{id: int, code: string, amount: float}
+     */
+    private static function resolveGiftVoucherForPayment(array $input, float $amount): array
+    {
+        if (!class_exists('GiftVoucherRepository') || !Database::isConfigured()) {
+            throw new RuntimeException('Gutschein-Stamm nicht verfügbar — bitte Migrationen prüfen.');
+        }
+        GiftVoucherRepository::ensureTables();
+        $code = trim((string) ($input['gift_code'] ?? $input['voucher_code'] ?? ''));
+        $giftId = max(0, (int) ($input['gift_voucher_id'] ?? 0));
+        $gift = $giftId > 0
+            ? GiftVoucherRepository::findById($giftId)
+            : ($code !== '' ? GiftVoucherRepository::findByCode($code) : null);
+        if ($gift === null) {
+            throw new RuntimeException(
+                'Gutschein nicht gefunden' . ($code !== '' ? ': ' . $code : '') . ' — Code prüfen.'
+            );
+        }
+        if ((string) ($gift['status'] ?? '') !== GiftVoucherRepository::STATUS_ACTIVE) {
+            throw new RuntimeException('Gutschein ist nicht aktiv: ' . (string) ($gift['code'] ?? ''));
+        }
+        $validUntil = trim((string) ($gift['valid_until'] ?? ''));
+        if ($validUntil !== '' && $validUntil < date('Y-m-d')) {
+            throw new RuntimeException('Gutschein ist abgelaufen: ' . (string) ($gift['code'] ?? ''));
+        }
+        $rest = round((float) ($gift['remaining_gross'] ?? $gift['remaining'] ?? 0), 2);
+        if ($rest <= 0) {
+            throw new RuntimeException('Gutschein hat keinen Restwert mehr.');
+        }
+        if ($amount - $rest > 0.009) {
+            throw new RuntimeException(
+                'Einlösebetrag übersteigt Gutschein-Restwert ('
+                . number_format($rest, 2, ',', '.') . ' €).'
+            );
+        }
+
+        return [
+            'id' => (int) ($gift['id'] ?? 0),
+            'code' => (string) ($gift['code'] ?? $code),
+            'amount' => round($amount, 2),
+        ];
     }
 
     /** Snapshot für Selftest K13c (Original unverändert). */
