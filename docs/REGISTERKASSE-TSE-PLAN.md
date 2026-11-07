@@ -202,9 +202,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K11a | Kasse öffnen: Bediener, Anfangsbestand | 🟡 | [ ] |
-| K11b | Ohne offene Sitzung kein Bon (Guard) | 🟡 | [ ] |
-| K11c | Sitzung schließen (Zählung optional später) | 🟡 | [ ] |
+| K11a | Kasse öffnen: Bediener, Anfangsbestand | 🟡 | [x] `CashSessionService::open` + UI `registerkasse-sitzung-oeffnen` |
+| K11b | Ohne offene Sitzung kein Bon (Guard) | 🟡 | [x] `startDraft` + Bon-UI nur offene Kassen; kein `ensureOpen` |
+| K11c | Sitzung schließen (Zählung optional später) | 🟡 | [x] `CashSessionService::close` + UI; Guard offene Bons; Zählung → K12 |
 
 ---
 
@@ -913,4 +913,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K8 | Zahlungsarten | [ ] |
 | K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
 | K10 | Mobile Kasse | [x] K10a–c |
-| K11–K21 | Rest | [ ] |
+| K11 | Kassensitzung | [x] K11a–c |
+| K12–K21 | Rest | [ ] |

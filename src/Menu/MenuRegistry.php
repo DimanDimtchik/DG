@@ -699,6 +699,8 @@ final class MenuRegistry
             'registerkasse-bons' => 'Verkaufsbons starten und Entwürfe je Kasse verfolgen.',
             'registerkasse-filialen' => 'Betriebsstätten und Filialen für die Registerkasse verwalten.',
             'registerkasse-kassen' => 'Kassen je Filiale mit eigener ID und Bon-Nummernkreis.',
+            'registerkasse-sitzung-oeffnen' => 'Kassensitzung öffnen — Bediener und Anfangsbestand erfassen.',
+            'registerkasse-sitzung-schliessen' => 'Kassensitzung schließen — Zählung folgt beim Tagesabschluss.',
             'registerkasse-tse' => 'TSE-Provider, TSE-ID und Client je Kasse zuordnen.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
@@ -995,6 +997,8 @@ final class MenuRegistry
             || $slug === 'registerkasse-filiale-form'
             || $slug === 'registerkasse-kassen'
             || $slug === 'registerkasse-kasse-form'
+            || $slug === 'registerkasse-sitzung-oeffnen'
+            || $slug === 'registerkasse-sitzung-schliessen'
             || $slug === 'registerkasse-tse'
             || $slug === 'registerkasse-tse-form'
             || $slug === 'buchhaltung-manuelle-buchung'

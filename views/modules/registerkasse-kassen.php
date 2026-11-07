@@ -1,9 +1,10 @@
 <?php
 /**
- * Registerkasse — Kassen-Liste (K5a), gefiltert nach Filiale.
+ * Registerkasse — Kassen-Liste (K5a), gefiltert nach Filiale; Sitzungsstatus (K11a).
  *
  * @var list<array<string, mixed>> $cashRegisters
  * @var list<array<string, mixed>> $cashLocationOptions
+ * @var array<int, array<string, mixed>> $cashOpenSessionsByRegister
  * @var int $cashRegisterLocationId 0 = alle
  * @var bool $canEdit
  * @var bool $dbConnected
@@ -11,6 +12,7 @@
  */
 $rows = $cashRegisters ?? [];
 $locations = $cashLocationOptions ?? [];
+$openSessions = $cashOpenSessionsByRegister ?? [];
 $locationId = (int) ($cashRegisterLocationId ?? 0);
 $typeLabels = CashRegisterRepository::typeLabels();
 ?>
@@ -68,13 +70,14 @@ $typeLabels = CashRegisterRepository::typeLabels();
             <th>Typ</th>
             <th>Nächste Bon-Nr.</th>
             <th>Status</th>
+            <th>Sitzung</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <?php if ($rows === []) : ?>
             <tr>
-              <td colspan="7" class="dg-table__empty">
+              <td colspan="8" class="dg-table__empty">
                 <?php if ($locations === []) : ?>
                   Zuerst eine Filiale anlegen.
                 <?php elseif ($locationId > 0) : ?>
@@ -99,6 +102,7 @@ $typeLabels = CashRegisterRepository::typeLabels();
                 $prefix = trim((string) ($row['receipt_number_prefix'] ?? ''));
                 $nextNo = (int) ($row['next_receipt_number'] ?? 1);
                 $nextDisplay = $prefix !== '' ? $prefix . $nextNo : (string) $nextNo;
+                $session = $openSessions[$rid] ?? null;
               ?>
               <tr>
                 <td><strong><?= View::escape((string) ($row['code'] ?? '')) ?></strong></td>
@@ -111,9 +115,25 @@ $typeLabels = CashRegisterRepository::typeLabels();
                     <?= $active ? 'Aktiv' : 'Inaktiv' ?>
                   </span>
                 </td>
+                <td>
+                  <?php if ($session !== null) : ?>
+                    <span class="dg-badge dg-badge--ok">Offen</span>
+                    <small class="dg-field-hint">
+                      <?= View::escape((string) ($session['business_date'] ?? '')) ?>
+                      · <?= View::escape(number_format((float) ($session['opening_balance'] ?? 0), 2, ',', '.')) ?> €
+                    </small>
+                  <?php else : ?>
+                    <span class="dg-badge dg-badge--muted">Geschlossen</span>
+                  <?php endif; ?>
+                </td>
                 <td class="dg-table__actions">
                   <div class="dg-table__actions-group">
                     <?php if ($canEdit && $rid > 0) : ?>
+                      <?php if ($session === null && $active) : ?>
+                        <a class="dg-button dg-button--small" href="/app?page=registerkasse-sitzung-oeffnen&amp;register_id=<?= $rid ?>">Öffnen</a>
+                      <?php elseif ($session !== null) : ?>
+                        <a class="dg-button dg-button--small" href="/app?page=registerkasse-sitzung-schliessen&amp;register_id=<?= $rid ?>">Schließen</a>
+                      <?php endif; ?>
                       <a class="dg-button dg-button--small" href="/app?page=registerkasse-kasse-form&amp;id=<?= $rid ?>">Bearbeiten</a>
                       <a class="dg-button dg-button--small" href="/app?page=registerkasse-tse-form&amp;register_id=<?= $rid ?>">TSE</a>
                     <?php endif; ?>

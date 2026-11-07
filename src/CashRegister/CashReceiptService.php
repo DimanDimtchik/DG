@@ -19,6 +19,7 @@ final class CashReceiptService
 
     /**
      * Neuen Verkaufsbon im Status draft anlegen (Nummer + Sitzung + Bediener).
+     * K11b: ohne offene Kassensitzung kein neuer Bon.
      *
      * @return int receipt id
      */
@@ -44,10 +45,14 @@ final class CashReceiptService
             throw new RuntimeException('Filiale der Kasse fehlt.');
         }
 
-        $sessionId = CashSessionRepository::ensureOpenForRegister(
-            $registerId,
-            $operatorId > 0 ? $operatorId : null
-        );
+        $session = CashSessionRepository::findOpenByRegister($registerId);
+        if ($session === null) {
+            throw new RuntimeException('Keine offene Kassensitzung — bitte Kasse zuerst öffnen.');
+        }
+        $sessionId = (int) ($session['id'] ?? 0);
+        if ($sessionId <= 0) {
+            throw new RuntimeException('Keine offene Kassensitzung — bitte Kasse zuerst öffnen.');
+        }
 
         $tseAssignmentId = null;
         $tse = CashTseAssignmentRepository::findByRegisterId($registerId);

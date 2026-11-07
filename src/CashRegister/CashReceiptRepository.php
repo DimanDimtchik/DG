@@ -37,6 +37,21 @@ final class CashReceiptRepository
         return $rows;
     }
 
+    /** Offene Bons einer Sitzung (draft/paying) — Guard für K11c. */
+    public static function countUnfinishedBySession(int $sessionId): int
+    {
+        if ($sessionId <= 0 || !self::tableExists()) {
+            return 0;
+        }
+        $stmt = Database::pdo()->prepare(
+            "SELECT COUNT(*) FROM dg_cash_receipts
+             WHERE session_id = :sid AND status IN ('draft', 'paying')"
+        );
+        $stmt->execute(['sid' => $sessionId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
     /**
      * Neueste Bons (K7a Liste).
      *

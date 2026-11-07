@@ -55,6 +55,7 @@ $regId = CashRegisterRepository::insert([
     'is_active' => 1,
 ]);
 
+CashSessionService::open($regId, 9, 0);
 $receiptId = CashReceiptService::startDraft($regId, 9);
 CashReceiptService::addLine($receiptId, [
     'title' => 'Brot',

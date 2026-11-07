@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Kassensitzungen (K1j Stub). */
+/** Kassensitzungen (K1e / K11). */
 final class CashSessionRepository
 {
     private const TABLE = 'dg_cash_sessions';
@@ -33,26 +33,42 @@ final class CashSessionRepository
     }
 
     /**
-     * Offene Sitzung je Kasse — sonst minimale Sitzung (K7a; UI-Öffnen folgt in K11a).
+     * Offene Sitzungen für mehrere Kassen (Listen-UI).
+     *
+     * @param list<int> $registerIds
+     * @return array<int, array<string, mixed>> register_id => session row
      */
-    public static function ensureOpenForRegister(int $registerId, ?int $openedBy = null): int
+    public static function mapOpenByRegisterIds(array $registerIds): array
     {
-        if ($registerId <= 0) {
-            throw new RuntimeException('Kasse für Sitzung fehlt.');
+        $ids = [];
+        foreach ($registerIds as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $ids[$id] = $id;
+            }
         }
-        $open = self::findOpenByRegister($registerId);
-        if ($open !== null) {
-            return (int) $open['id'];
+        if ($ids === [] || !self::tableExists()) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM dg_cash_sessions
+             WHERE status = 'open' AND register_id IN ({$placeholders})
+             ORDER BY id ASC"
+        );
+        $stmt->execute(array_values($ids));
+        $map = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if ($row === false) {
+                break;
+            }
+            $rid = (int) ($row['register_id'] ?? 0);
+            if ($rid > 0) {
+                $map[$rid] = $row;
+            }
         }
 
-        return self::insert([
-            'register_id' => $registerId,
-            'business_date' => date('Y-m-d'),
-            'status' => 'open',
-            'opening_balance' => 0,
-            'opened_by' => $openedBy,
-            'opened_at' => date('Y-m-d H:i:s'),
-        ]);
+        return $map;
     }
 
     /** @param array<string, mixed> $data */

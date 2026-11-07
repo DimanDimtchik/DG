@@ -1,9 +1,10 @@
 <?php
 /**
- * Registerkasse — Bon-Liste + Draft starten (K7a; Layout K10c).
+ * Registerkasse — Bon-Liste + Draft starten (K7a; Layout K10c; Guard K11b).
  *
  * @var list<array<string, mixed>> $cashReceipts
  * @var list<array<string, mixed>> $cashRegisterOptions
+ * @var list<array<string, mixed>> $cashOpenRegisterOptions
  * @var int $cashReceiptRegisterId
  * @var bool $canEdit
  * @var bool $dbConnected
@@ -11,6 +12,7 @@
  */
 $rows = $cashReceipts ?? [];
 $registers = $cashRegisterOptions ?? [];
+$openRegisters = $cashOpenRegisterOptions ?? [];
 $filterReg = (int) ($cashReceiptRegisterId ?? 0);
 $csrf = Csrf::token();
 $statusLabels = [
@@ -37,7 +39,7 @@ $statusLabels = [
     </div>
   <?php endif; ?>
 
-  <?php if ($canEdit && $dbConnected && $registers !== []) : ?>
+  <?php if ($canEdit && $dbConnected && $openRegisters !== []) : ?>
     <form class="dg-form dg-panel" method="post" action="/app?page=registerkasse-bons">
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
       <input type="hidden" name="cash_receipt_start" value="1">
@@ -47,7 +49,7 @@ $statusLabels = [
           <span>Kasse *</span>
           <select name="register_id" required>
             <option value="">— bitte wählen —</option>
-            <?php foreach ($registers as $reg) : ?>
+            <?php foreach ($openRegisters as $reg) : ?>
               <?php
                 $rid = (int) ($reg['id'] ?? 0);
                 $label = trim((string) ($reg['code'] ?? ''));
@@ -64,12 +66,18 @@ $statusLabels = [
               </option>
             <?php endforeach; ?>
           </select>
+          <small class="dg-field-hint">Nur Kassen mit offener Sitzung.</small>
         </label>
       </div>
       <div class="dg-form-actions">
         <button type="submit" class="dg-button dg-button--primary">Bon starten</button>
       </div>
     </form>
+  <?php elseif ($canEdit && $dbConnected && $registers !== []) : ?>
+    <div class="dg-flash dg-flash--warning">
+      Keine offene Kassensitzung — bitte zuerst eine Kasse öffnen.
+      <a class="dg-button dg-button--small" href="/app?page=registerkasse-kassen">Zu den Kassen</a>
+    </div>
   <?php elseif ($canEdit && $dbConnected) : ?>
     <div class="dg-flash dg-flash--warning">
       Keine aktive Kasse.

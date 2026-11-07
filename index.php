@@ -2966,6 +2966,78 @@ switch ($path) {
             }
         }
 
+        // POST: Registerkasse Sitzung öffnen (K11a)
+        if (
+            $page === 'registerkasse-sitzung-oeffnen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_session_open'])
+            && MenuRegistry::canAccess($user, 'registerkasse-sitzung-oeffnen')
+        ) {
+            $openRegId = max(0, (int) ($_POST['register_id'] ?? $_GET['register_id'] ?? 0));
+            $backOpen = '/app?page=registerkasse-sitzung-oeffnen' . ($openRegId > 0 ? '&register_id=' . $openRegId : '');
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . $backOpen, true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $backOpen, true, 302);
+                exit;
+            }
+            try {
+                $sessionId = CashSessionService::open(
+                    max(0, (int) ($_POST['register_id'] ?? 0)),
+                    max(0, (int) ($_POST['opened_by'] ?? 0)),
+                    $_POST['opening_balance'] ?? 0,
+                    trim((string) ($_POST['business_date'] ?? '')),
+                    trim((string) ($_POST['notes'] ?? ''))
+                );
+                Flash::set('success', 'Kasse geöffnet (Sitzung #' . $sessionId . ').');
+                header('Location: /app?page=registerkasse-kassen', true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . $backOpen, true, 302);
+                exit;
+            }
+        }
+
+        // POST: Registerkasse Sitzung schließen (K11c)
+        if (
+            $page === 'registerkasse-sitzung-schliessen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_session_close'])
+            && MenuRegistry::canAccess($user, 'registerkasse-sitzung-schliessen')
+        ) {
+            $closeRegId = max(0, (int) ($_POST['register_id'] ?? $_GET['register_id'] ?? 0));
+            $backClose = '/app?page=registerkasse-sitzung-schliessen' . ($closeRegId > 0 ? '&register_id=' . $closeRegId : '');
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . $backClose, true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $backClose, true, 302);
+                exit;
+            }
+            try {
+                $closedId = CashSessionService::close(
+                    $closeRegId,
+                    (int) $user->id,
+                    trim((string) ($_POST['notes'] ?? ''))
+                );
+                Flash::set('success', 'Sitzung geschlossen (#' . $closedId . ').');
+                header('Location: /app?page=registerkasse-kassen', true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . $backClose, true, 302);
+                exit;
+            }
+        }
+
         // POST: Registerkasse Bon starten (K7a)
         if (
             $page === 'registerkasse-bons'
@@ -8921,13 +8993,75 @@ $legalProductsConfig = LegalProductSettings::config();
             $cashRegisterLocationId = max(0, (int) ($_GET['location_id'] ?? 0));
             $cashLocationOptions = Database::isConfigured() ? CashLocationRepository::listAll(false) : [];
             $cashRegisters = [];
+            $cashOpenSessionsByRegister = [];
             if (Database::isConfigured()) {
                 $cashRegisters = $cashRegisterLocationId > 0
                     ? CashRegisterRepository::listByLocation($cashRegisterLocationId, false)
                     : CashRegisterRepository::listAll(null, false);
+                $regIds = [];
+                foreach ($cashRegisters as $regRow) {
+                    $regIds[] = (int) ($regRow['id'] ?? 0);
+                }
+                $cashOpenSessionsByRegister = CashSessionRepository::mapOpenByRegisterIds($regIds);
             }
             $contentTemplate = 'modules/registerkasse-kassen';
             $title = 'Kassen';
+            $currentPage = 'registerkasse-kassen';
+        } elseif ($page === 'registerkasse-sitzung-oeffnen' && MenuRegistry::canAccess($user, 'registerkasse-sitzung-oeffnen')) {
+            $cashSessionRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashRegisterOptions = Database::isConfigured()
+                ? CashRegisterRepository::listAll(null, true)
+                : [];
+            $cashSessionRegister = null;
+            $cashSessionOpen = null;
+            if ($cashSessionRegisterId > 0 && Database::isConfigured()) {
+                $cashSessionRegister = CashRegisterRepository::findById($cashSessionRegisterId);
+                if ($cashSessionRegister === null) {
+                    Flash::set('error', 'Kasse nicht gefunden.');
+                    header('Location: /app?page=registerkasse-kassen', true, 302);
+                    exit;
+                }
+                $locRow = CashLocationRepository::findById((int) ($cashSessionRegister['location_id'] ?? 0));
+                if ($locRow !== null) {
+                    $cashSessionRegister['location_code'] = (string) ($locRow['code'] ?? '');
+                    $cashSessionRegister['location_name'] = (string) ($locRow['name'] ?? '');
+                }
+                $cashSessionOpen = CashSessionRepository::findOpenByRegister($cashSessionRegisterId);
+            }
+            $cashSessionOperators = Database::isConfigured() ? UserRepository::all() : [];
+            $cashSessionOpenedBy = (int) $user->id;
+            $cashSessionOpeningBalance = '0,00';
+            $cashSessionBusinessDate = date('Y-m-d');
+            $cashSessionNotes = '';
+            $contentTemplate = 'modules/registerkasse-sitzung-oeffnen';
+            $title = 'Kasse öffnen';
+            $currentPage = 'registerkasse-kassen';
+        } elseif ($page === 'registerkasse-sitzung-schliessen' && MenuRegistry::canAccess($user, 'registerkasse-sitzung-schliessen')) {
+            $cashSessionRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashSessionRegister = null;
+            $cashSessionOpen = null;
+            $cashSessionUnfinishedCount = 0;
+            $cashSessionNotes = '';
+            if ($cashSessionRegisterId > 0 && Database::isConfigured()) {
+                $cashSessionRegister = CashRegisterRepository::findById($cashSessionRegisterId);
+                if ($cashSessionRegister === null) {
+                    Flash::set('error', 'Kasse nicht gefunden.');
+                    header('Location: /app?page=registerkasse-kassen', true, 302);
+                    exit;
+                }
+                $cashSessionOpen = CashSessionRepository::findOpenByRegister($cashSessionRegisterId);
+                if ($cashSessionOpen !== null) {
+                    $cashSessionUnfinishedCount = CashReceiptRepository::countUnfinishedBySession(
+                        (int) ($cashSessionOpen['id'] ?? 0)
+                    );
+                }
+            } elseif ($cashSessionRegisterId <= 0) {
+                Flash::set('error', 'Bitte eine Kasse wählen.');
+                header('Location: /app?page=registerkasse-kassen', true, 302);
+                exit;
+            }
+            $contentTemplate = 'modules/registerkasse-sitzung-schliessen';
+            $title = 'Kasse schließen';
             $currentPage = 'registerkasse-kassen';
         } elseif ($page === 'registerkasse-kasse-form' && MenuRegistry::canAccess($user, 'registerkasse-kasse-form')) {
             $cashRegisterId = max(0, (int) ($_GET['id'] ?? 0));
@@ -8960,6 +9094,19 @@ $legalProductsConfig = LegalProductSettings::config();
             $cashRegisterOptions = Database::isConfigured()
                 ? CashRegisterRepository::listAll(null, true)
                 : [];
+            $cashOpenRegisterOptions = [];
+            if ($cashRegisterOptions !== []) {
+                $openMap = CashSessionRepository::mapOpenByRegisterIds(array_map(
+                    static fn (array $r): int => (int) ($r['id'] ?? 0),
+                    $cashRegisterOptions
+                ));
+                foreach ($cashRegisterOptions as $regOpt) {
+                    $ridOpt = (int) ($regOpt['id'] ?? 0);
+                    if ($ridOpt > 0 && isset($openMap[$ridOpt])) {
+                        $cashOpenRegisterOptions[] = $regOpt;
+                    }
+                }
+            }
             $cashReceipts = Database::isConfigured()
                 ? CashReceiptRepository::listRecent(50, $cashReceiptRegisterId > 0 ? $cashReceiptRegisterId : null)
                 : [];
@@ -9028,6 +9175,8 @@ $legalProductsConfig = LegalProductSettings::config();
             || $page === 'registerkasse-filiale-form'
             || $page === 'registerkasse-kassen'
             || $page === 'registerkasse-kasse-form'
+            || $page === 'registerkasse-sitzung-oeffnen'
+            || $page === 'registerkasse-sitzung-schliessen'
             || $page === 'registerkasse-tse'
             || $page === 'registerkasse-tse-form'
         ) {
