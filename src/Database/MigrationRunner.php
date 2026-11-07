@@ -369,6 +369,8 @@ final class MigrationRunner
             '152_cash_tse_outage.sql' => self::columnExists($pdo, 'dg_cash_tse_assignments', 'outage_active')
                 && self::columnExists($pdo, 'dg_cash_receipts', 'tse_outage'),
             '153_cash_journal_receipt.sql' => self::columnExists($pdo, 'dg_cash_journal', 'cash_receipt_id'),
+            '154_cash_ers_melde.sql' => self::tableExists($pdo, 'dg_cash_ers_taxpayer')
+                && self::tableExists($pdo, 'dg_cash_ers_clients'),
             default => false,
         };
     }
@@ -533,6 +535,7 @@ final class MigrationRunner
             '151_voucher_payment_cash_register.sql' => true,
             '152_cash_tse_outage.sql' => true,
             '153_cash_journal_receipt.sql' => true,
+            '154_cash_ers_melde.sql' => true,
         ];
     }
 

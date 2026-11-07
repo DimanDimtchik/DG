@@ -447,9 +447,22 @@ Reihenfolge: Spec ✅ → **K18c** ✅ → **K18b** (echte TAR, später).
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K19a | Felder für §146a-Meldung speichern (ohne Senden) | 🟡 | [ ] |
-| K19b | Spec SUBMIT DE / Meldeweg | 🟢 | [ ] |
-| K19c | Senden erst nach Hetzner/Freigabe (wie ELSTER) | 🔴 | [ ] |
+| K19a | Felder für §146a-Meldung speichern (ohne Senden) | 🟡 | [x] `154` + UI Kassenmeldung |
+| K19b | Spec SUBMIT DE / Meldeweg | 🟢 | [x] [`docs/CASH-ERS-MELDEWEG-SPEC.md`](CASH-ERS-MELDEWEG-SPEC.md) |
+| K19c | Senden erst nach Hetzner/Freigabe (wie ELSTER) | 🔴 | [ ] bewusst später |
+
+#### K19a — umgesetzt
+
+- Migration `154_cash_ers_melde.sql`: `dg_cash_ers_taxpayer` (13er-Steuernummer / BuFst) + `dg_cash_ers_clients` (je Kasse)
+- Repos: `CashErsTaxpayerRepository`, `CashErsClientRepository` — Speichern + Audit, **kein** API-Call
+- UI: Menü Registerkasse → Kassenmeldung / Formular je Kasse
+- Selftest: `bin/cash-ers-melde-selftest.php`
+- Senden = K19c; API-Spec = K19b ✅
+
+#### K19b — Kurz
+
+Ontologie Taxpayer / Establishment / Client / TSS / Submission; Feldmapping K19a→SUBMIT DE; Workflow inkl. Preview-PDF + `legal_consent`; Guardrails wie ELSTER.  
+Details: **[`docs/CASH-ERS-MELDEWEG-SPEC.md`](CASH-ERS-MELDEWEG-SPEC.md)**. Live-Sendung = K19c.
 
 ---
 
@@ -499,6 +512,8 @@ dg_cash_payments
 dg_cash_register_day_closings  -- Registerkasse (K1h); FiBu-Kassenbuch bleibt dg_cash_day_closings (054)
 dg_cash_audit_log
 dg_cash_exports
+dg_cash_ers_taxpayer
+dg_cash_ers_clients
 ```
 
 **Abgrenzung:** `dg_stock_locations` = Lagerorte. `dg_cash_locations` = Betriebsstätten/Filialen der Registerkasse. Nicht zusammenlegen.
@@ -1081,4 +1096,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K16 | Journale | [x] K16a–c |
 | K17 | DSFinV-K | [~] K17a+b+d ✅; offen K17c |
 | K18 | Prüferpaket / TSE-TAR | [~] K18a+c ✅; K18b später |
-| K19–K21 | Rest | [ ] |
+| K19 | Kassenmeldung / ERS | [~] K19a+b ✅; K19c später |
+| K20–K21 | Rest | [ ] |

@@ -3251,6 +3251,79 @@ switch ($path) {
             }
         }
 
+        // POST: Kassenmeldung Steuerpflichtiger (K19a)
+        if (
+            $page === 'registerkasse-meldung'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_ers_taxpayer_save'])
+            && MenuRegistry::canAccess($user, 'registerkasse-meldung')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: /app?page=registerkasse-meldung', true, 302);
+                exit;
+            }
+            try {
+                if (!Database::isConfigured()) {
+                    throw new RuntimeException('Datenbank nicht verbunden.');
+                }
+                CashErsTaxpayerRepository::save([
+                    'tax_number' => (string) ($_POST['tax_number'] ?? ''),
+                    'tax_office_number' => (string) ($_POST['tax_office_number'] ?? ''),
+                    'notes' => (string) ($_POST['notes'] ?? ''),
+                ], (int) ($user->id ?? 0));
+                Flash::set('success', 'Steuerdaten für die Kassenmeldung gespeichert (noch nicht gesendet).');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: /app?page=registerkasse-meldung', true, 302);
+            exit;
+        }
+
+        // POST: Kassenmeldung Meldefelder je Kasse (K19a)
+        if (
+            $page === 'registerkasse-meldung-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_ers_client_save'])
+            && MenuRegistry::canAccess($user, 'registerkasse-meldung-form')
+        ) {
+            $ersRegId = max(0, (int) ($_POST['register_id'] ?? $_GET['register_id'] ?? 0));
+            $back = '/app?page=registerkasse-meldung-form&register_id=' . $ersRegId;
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . ($ersRegId > 0 ? $back : '/app?page=registerkasse-meldung'), true, 302);
+                exit;
+            }
+            try {
+                if (!Database::isConfigured()) {
+                    throw new RuntimeException('Datenbank nicht verbunden.');
+                }
+                CashErsClientRepository::upsertForRegister([
+                    'register_id' => $ersRegId,
+                    'ers_type' => (string) ($_POST['ers_type'] ?? '1'),
+                    'manufacturer' => (string) ($_POST['manufacturer'] ?? ''),
+                    'model' => (string) ($_POST['model'] ?? ''),
+                    'serial_number' => (string) ($_POST['serial_number'] ?? ''),
+                    'software' => (string) ($_POST['software'] ?? ''),
+                    'software_version' => (string) ($_POST['software_version'] ?? ''),
+                    'date_acquisition' => (string) ($_POST['date_acquisition'] ?? ''),
+                    'date_commissioning' => (string) ($_POST['date_commissioning'] ?? ''),
+                    'date_tss_commissioning' => (string) ($_POST['date_tss_commissioning'] ?? ''),
+                    'date_decommissioning' => (string) ($_POST['date_decommissioning'] ?? ''),
+                    'decommissioning_reason' => (string) ($_POST['decommissioning_reason'] ?? ''),
+                    'remarks' => (string) ($_POST['remarks'] ?? ''),
+                    'notes' => (string) ($_POST['notes'] ?? ''),
+                ], (int) ($user->id ?? 0));
+                Flash::set('success', 'Meldefelder gespeichert (noch nicht gesendet).');
+                header('Location: ' . $back, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . ($ersRegId > 0 ? $back : '/app?page=registerkasse-meldung'), true, 302);
+                exit;
+            }
+        }
+
         // POST: Gutscheine
         if (
             ($page === 'gutscheine-form')
@@ -9378,6 +9451,36 @@ switch ($path) {
             $contentTemplate = 'modules/registerkasse-tse-form';
             $title = 'TSE zuordnen';
             $currentPage = 'registerkasse-tse';
+        } elseif ($page === 'registerkasse-meldung' && MenuRegistry::canAccess($user, 'registerkasse-meldung')) {
+            $cashErsLocationId = max(0, (int) ($_GET['location_id'] ?? 0));
+            $cashLocationOptions = Database::isConfigured()
+                ? CashLocationRepository::listAll(false)
+                : [];
+            $cashErsTaxpayer = Database::isConfigured()
+                ? CashErsTaxpayerRepository::get()
+                : ['tax_number' => '', 'tax_office_number' => '', 'notes' => ''];
+            $cashErsRows = Database::isConfigured()
+                ? CashErsClientRepository::listWithRegisters(
+                    $cashErsLocationId > 0 ? $cashErsLocationId : null
+                )
+                : [];
+            $contentTemplate = 'modules/registerkasse-meldung';
+            $title = 'Kassenmeldung';
+            $currentPage = 'registerkasse-meldung';
+        } elseif ($page === 'registerkasse-meldung-form' && MenuRegistry::canAccess($user, 'registerkasse-meldung-form')) {
+            $cashErsRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashErsRegister = $cashErsRegisterId > 0 && Database::isConfigured()
+                ? CashRegisterRepository::findById($cashErsRegisterId)
+                : null;
+            if ($cashErsRegister === null) {
+                Flash::set('error', 'Kasse nicht gefunden.');
+                header('Location: /app?page=registerkasse-meldung', true, 302);
+                exit;
+            }
+            $cashErsForm = CashErsClientRepository::formDefaults($cashErsRegisterId);
+            $contentTemplate = 'modules/registerkasse-meldung-form';
+            $title = 'Meldefelder Kasse';
+            $currentPage = 'registerkasse-meldung';
         } elseif (
             $page === 'registerkasse-bons'
             || $page === 'registerkasse-bon'
@@ -9390,6 +9493,8 @@ switch ($path) {
             || $page === 'registerkasse-tagesabschluss'
             || $page === 'registerkasse-tse'
             || $page === 'registerkasse-tse-form'
+            || $page === 'registerkasse-meldung'
+            || $page === 'registerkasse-meldung-form'
         ) {
             header('Location: /app', true, 302);
             exit;

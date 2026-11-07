@@ -54,6 +54,7 @@ $migrations = [
     '150_cash_audit_exports.sql',
     '152_cash_tse_outage.sql',
     '153_cash_journal_receipt.sql',
+    '154_cash_ers_melde.sql',
 ];
 foreach ($migrations as $file) {
     $path = DG_ROOT . '/database/migrations/' . $file;
@@ -70,6 +71,9 @@ $classes = [
     'CashRegisterFiBuPostingService',
     'CashReceiptJournalCsvExport',
     'CashDsfinvkStubExport',
+    'CashPrueferpaketExport',
+    'CashErsTaxpayerRepository',
+    'CashErsClientRepository',
     'CashSessionRepository',
     'CashReceiptRepository',
     'CashPaymentRepository',
@@ -104,6 +108,8 @@ $tables = [
     'dg_cash_register_day_closings' => ['id', 'location_id', 'register_id', 'business_date', 'total_cash', 'total_gross', 'receipt_count'],
     'dg_cash_audit_log' => ['id', 'event_type', 'severity', 'message', 'created_at'],
     'dg_cash_exports' => ['id', 'export_type', 'status', 'file_path', 'created_at'],
+    'dg_cash_ers_taxpayer' => ['id', 'tax_number', 'tax_office_number', 'updated_at'],
+    'dg_cash_ers_clients' => ['id', 'register_id', 'ers_type', 'manufacturer', 'model', 'serial_number', 'data_status'],
 ];
 
 foreach ($tables as $table => $cols) {

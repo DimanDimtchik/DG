@@ -655,6 +655,12 @@ final class MenuRegistry
                     'icon' => 'settings',
                     'href' => '/app?page=registerkasse-tse',
                 ],
+                [
+                    'slug' => 'registerkasse-meldung',
+                    'label' => 'Kassenmeldung',
+                    'icon' => 'settings',
+                    'href' => '/app?page=registerkasse-meldung',
+                ],
             ],
         ];
     }
@@ -716,6 +722,8 @@ final class MenuRegistry
             'registerkasse-sitzung-schliessen' => 'Kassensitzung schließen — Zählung folgt beim Tagesabschluss.',
             'registerkasse-tagesabschluss' => 'Tagesabschluss je Kasse und Filialsumme der Kassen.',
             'registerkasse-tse' => 'TSE-Provider, TSE-ID und Client je Kasse zuordnen.',
+            'registerkasse-meldung' => 'Meldefelder für die Kassenmitteilung speichern — noch ohne Versand.',
+            'registerkasse-meldung-form' => 'Meldefelder einer einzelnen Kasse bearbeiten.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
             'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Umsätze Belegen zuordnen.',
@@ -1017,6 +1025,8 @@ final class MenuRegistry
             || $slug === 'registerkasse-tagesabschluss'
             || $slug === 'registerkasse-tse'
             || $slug === 'registerkasse-tse-form'
+            || $slug === 'registerkasse-meldung'
+            || $slug === 'registerkasse-meldung-form'
             || $slug === 'buchhaltung-manuelle-buchung'
             || $slug === 'buchhaltung-auswertungen'
             || $slug === 'buchhaltung-bwa'
