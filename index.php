@@ -2970,6 +2970,62 @@ switch ($path) {
             }
         }
 
+        // POST: Registerkasse TSE-Zuordnung speichern (K6a) / Verbindung prüfen (K6c)
+        if (
+            $page === 'registerkasse-tse-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['cash_tse_save']) || isset($_POST['cash_tse_ping']))
+            && MenuRegistry::canAccess($user, 'registerkasse-tse-form')
+        ) {
+            $tseRegId = max(0, (int) ($_POST['register_id'] ?? $_GET['register_id'] ?? 0));
+            $back = '/app?page=registerkasse-tse-form&register_id=' . $tseRegId;
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . ($tseRegId > 0 ? $back : '/app?page=registerkasse-tse'), true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+            try {
+                if ($tseRegId <= 0 || CashRegisterRepository::findById($tseRegId) === null) {
+                    throw new RuntimeException('Kasse nicht gefunden.');
+                }
+                if (isset($_POST['cash_tse_ping'])) {
+                    $ping = CashTseConnectionCheck::runForRegister($tseRegId);
+                    Flash::set(!empty($ping['ok']) ? 'success' : 'error', (string) ($ping['message'] ?? 'Prüfung fehlgeschlagen.'));
+                    header('Location: ' . $back, true, 302);
+                    exit;
+                }
+                $provider = strtolower(trim((string) ($_POST['provider'] ?? 'mock')));
+                if (!in_array($provider, ['mock', 'fiskaly'], true)) {
+                    throw new RuntimeException('Unbekannter Provider.');
+                }
+                $environment = strtolower(trim((string) ($_POST['environment'] ?? 'test')));
+                if (!in_array($environment, ['test', 'live'], true)) {
+                    $environment = 'test';
+                }
+                CashTseAssignmentRepository::upsertForRegister([
+                    'register_id' => $tseRegId,
+                    'provider' => $provider,
+                    'environment' => $environment,
+                    'tss_id' => trim((string) ($_POST['tss_id'] ?? '')),
+                    'client_id' => trim((string) ($_POST['client_id'] ?? '')),
+                    'notes' => trim((string) ($_POST['notes'] ?? '')),
+                    'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                ]);
+                Flash::set('success', 'TSE-Zuordnung gespeichert.');
+                header('Location: ' . $back, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . ($tseRegId > 0 ? $back : '/app?page=registerkasse-tse'), true, 302);
+                exit;
+            }
+        }
+
         // POST: Gutscheine
         if (
             ($page === 'gutscheine-form')
@@ -8809,11 +8865,43 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/registerkasse-kasse-form';
             $title = $cashRegisterId > 0 ? 'Kasse bearbeiten' : 'Kasse anlegen';
             $currentPage = 'registerkasse-kassen';
+        } elseif ($page === 'registerkasse-tse' && MenuRegistry::canAccess($user, 'registerkasse-tse')) {
+            $cashTseRows = Database::isConfigured() ? CashTseAssignmentRepository::listWithRegisters() : [];
+            $contentTemplate = 'modules/registerkasse-tse';
+            $title = 'TSE-Zuordnung';
+            $currentPage = 'registerkasse-tse';
+        } elseif ($page === 'registerkasse-tse-form' && MenuRegistry::canAccess($user, 'registerkasse-tse-form')) {
+            $cashTseRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashTseRegister = null;
+            if ($cashTseRegisterId > 0 && Database::isConfigured()) {
+                $cashTseRegister = CashRegisterRepository::findById($cashTseRegisterId);
+            }
+            if ($cashTseRegister === null) {
+                Flash::set('error', 'Kasse nicht gefunden.');
+                header('Location: /app?page=registerkasse-tse', true, 302);
+                exit;
+            }
+            $existingTse = Database::isConfigured()
+                ? CashTseAssignmentRepository::findByRegisterId($cashTseRegisterId)
+                : null;
+            $cashTseForm = $existingTse ?? [
+                'provider' => 'mock',
+                'environment' => 'test',
+                'tss_id' => '',
+                'client_id' => '',
+                'notes' => '',
+                'is_active' => 1,
+            ];
+            $contentTemplate = 'modules/registerkasse-tse-form';
+            $title = 'TSE zuordnen';
+            $currentPage = 'registerkasse-tse';
         } elseif (
             $page === 'registerkasse-filialen'
             || $page === 'registerkasse-filiale-form'
             || $page === 'registerkasse-kassen'
             || $page === 'registerkasse-kasse-form'
+            || $page === 'registerkasse-tse'
+            || $page === 'registerkasse-tse-form'
         ) {
             header('Location: /app', true, 302);
             exit;
@@ -11093,6 +11181,10 @@ $legalProductsConfig = LegalProductSettings::config();
         $cashRegisterLocationId = $cashRegisterLocationId ?? 0;
         $cashRegisterForm = $cashRegisterForm ?? [];
         $cashRegisterId = $cashRegisterId ?? 0;
+        $cashTseRows = $cashTseRows ?? [];
+        $cashTseForm = $cashTseForm ?? [];
+        $cashTseRegister = $cashTseRegister ?? [];
+        $cashTseRegisterId = $cashTseRegisterId ?? 0;
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
@@ -11501,6 +11593,10 @@ $legalProductsConfig = LegalProductSettings::config();
             'cashRegisterLocationId',
             'cashRegisterForm',
             'cashRegisterId',
+            'cashTseRows',
+            'cashTseForm',
+            'cashTseRegister',
+            'cashTseRegisterId',
             'settingsNav',
             'settingsSelection',
             'flash',

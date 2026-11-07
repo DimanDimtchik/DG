@@ -115,6 +115,7 @@ $typeLabels = CashRegisterRepository::typeLabels();
                   <div class="dg-table__actions-group">
                     <?php if ($canEdit && $rid > 0) : ?>
                       <a class="dg-button dg-button--small" href="/app?page=registerkasse-kasse-form&amp;id=<?= $rid ?>">Bearbeiten</a>
+                      <a class="dg-button dg-button--small" href="/app?page=registerkasse-tse-form&amp;register_id=<?= $rid ?>">TSE</a>
                     <?php endif; ?>
                   </div>
                 </td>

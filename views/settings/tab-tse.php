@@ -1,5 +1,7 @@
 <?php
 /**
+ * Einstellungen → TSE (Übergang K6d: bleibt; Registerkasse hat eigene Zuordnung).
+ *
  * @var array<string, mixed> $tseConfig
  * @var bool $dbConnected
  */
@@ -7,14 +9,22 @@ $cfg = $tseConfig ?? TseSettings::forForm();
 $fromEnv = is_array($cfg['from_env'] ?? null) ? $cfg['from_env'] : [];
 $enabled = !empty($cfg['enabled']);
 $env = (string) ($cfg['environment'] ?? TseSettings::ENV_TEST);
+$cashTseUrl = '/app?page=registerkasse-tse';
 ?>
 <form class="dg-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('tse')) ?>">
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 
   <div class="dg-panel dg-panel--notice">
     <p>
-      Barzahlungen auf Ausgangsrechnungen werden mit der technischen Sicherungseinrichtung (TSE) signiert.
-      Der Prüf-QR-Code erscheint auf dem Belegdruck. Ohne eingeschaltete TSE bleibt die Kasse unverändert.
+      Hier: Zugangsdaten und TSE für <strong>Barzahlungen auf Ausgangsrechnungen</strong>
+      (Prüf-QR auf dem Belegdruck). Ohne Einschalten bleibt die Beleg-Kasse unverändert.
+    </p>
+    <p>
+      Für die <strong>Registerkasse</strong> (Filiale / Kasse / Bon) liegen Provider, TSE-ID und Client
+      unter Registerkasse → TSE-Zuordnung — dieser Tab bleibt als Übergang bestehen.
+    </p>
+    <p class="dg-btn-row">
+      <a class="dg-button" href="<?= View::escape($cashTseUrl) ?>">Zur TSE-Zuordnung (Registerkasse)</a>
     </p>
   </div>
 

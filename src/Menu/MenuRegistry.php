@@ -631,6 +631,12 @@ final class MenuRegistry
                     'icon' => 'receipt',
                     'href' => '/app?page=registerkasse-kassen',
                 ],
+                [
+                    'slug' => 'registerkasse-tse',
+                    'label' => 'TSE-Zuordnung',
+                    'icon' => 'settings',
+                    'href' => '/app?page=registerkasse-tse',
+                ],
             ],
         ];
     }
@@ -686,6 +692,7 @@ final class MenuRegistry
             'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.',
             'registerkasse-filialen' => 'Betriebsstätten und Filialen für die Registerkasse verwalten.',
             'registerkasse-kassen' => 'Kassen je Filiale mit eigener ID und Bon-Nummernkreis.',
+            'registerkasse-tse' => 'TSE-Provider, TSE-ID und Client je Kasse zuordnen.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
             'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Umsätze Belegen zuordnen.',
@@ -979,6 +986,8 @@ final class MenuRegistry
             || $slug === 'registerkasse-filiale-form'
             || $slug === 'registerkasse-kassen'
             || $slug === 'registerkasse-kasse-form'
+            || $slug === 'registerkasse-tse'
+            || $slug === 'registerkasse-tse-form'
             || $slug === 'buchhaltung-manuelle-buchung'
             || $slug === 'buchhaltung-auswertungen'
             || $slug === 'buchhaltung-bwa'

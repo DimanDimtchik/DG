@@ -145,10 +145,10 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K6a | UI: Kasse ↔ Provider/TSS/Client (ohne Live-Call) | 🟡 | [ ] |
-| K6b | Status-Felder anzeigen (last_ok, Zertifikat-Ablauf wenn bekannt) | 🟡 | [ ] |
-| K6c | Button „Verbindung prüfen“ (nur TEST, kurz) | 🔴 | [ ] |
-| K6d | Bestehenden Tab Einstellungen→TSE als Übergang belassen oder verlinken | 🟢 | [~] |
+| K6a | UI: Kasse ↔ Provider/TSS/Client (ohne Live-Call) | 🟡 | [x] `registerkasse-tse` |
+| K6b | Status-Felder anzeigen (last_ok, Zertifikat-Ablauf wenn bekannt) | 🟡 | [x] |
+| K6c | Button „Verbindung prüfen“ (nur TEST, kurz) | 🔴 | [x] `CashTseConnectionCheck` |
+| K6d | Bestehenden Tab Einstellungen→TSE als Übergang belassen oder verlinken | 🟢 | [x] beidseitig verlinkt |
 
 ---
 
@@ -316,9 +316,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
 
-1. **K6a** — TSE-Zuordnung UI (ohne Live-Call)  
-2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
-3. **K6b** — Statusfelder TSE  
+1. **K9a** Ist-Stand Beleg-TSE oder **K7a** Bon starten (Draft)
+2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live
+3. **K3b** FiskalyTseProvider (🔴) — für echte Ping-Prüfung gegen fiskaly
 4. **K4a–K4c** — Filial-Admin (je einzeln)  
 5. **K9a** — Ist-Stand Beleg-TSE festhalten  
 6. **K5** — Admin Kassen  
@@ -839,7 +839,7 @@ interface TseProviderInterface
 | K3 | Provider-Interface | [~] K3a+K3c+K3d; offen nur K3b 🔴 |
 | K4 | Admin Filialen | [x] K4a–K4d |
 | K5 | Admin Kassen | [x] K5a–K5d |
-| K6 | Admin TSE-Zuordnung | [~] Einstellungs-Tab existiert |
+| K6 | Admin TSE-Zuordnung | [x] K6a–K6d |
 | K7 | Bonfluss | [ ] |
 | K8 | Zahlungsarten | [ ] |
 | K9 | Barverkauf Auftrag/Rechnung | [~] Beleg-Barzahlung TSE da |

@@ -43,6 +43,62 @@ final class CashTseAssignmentRepository
     }
 
     /**
+     * Insert oder Update für eine Kasse (max. eine Zeile je register_id).
+     *
+     * @param array<string, mixed> $data muss register_id enthalten
+     */
+    public static function upsertForRegister(array $data): int
+    {
+        $registerId = (int) ($data['register_id'] ?? 0);
+        if ($registerId <= 0) {
+            throw new RuntimeException('Kasse für TSE-Zuordnung fehlt.');
+        }
+        $existing = self::findByRegisterId($registerId);
+        if ($existing === null) {
+            if (!array_key_exists('is_active', $data)) {
+                $data['is_active'] = 1;
+            }
+
+            return self::insert($data);
+        }
+        $id = (int) $existing['id'];
+        unset($data['register_id']);
+        self::update($id, $data);
+
+        return $id;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listWithRegisters(): array
+    {
+        if (!self::tableExists() || !CashRegisterRepository::tableExists()) {
+            return [];
+        }
+        $sql = 'SELECT r.id AS register_id, r.code AS register_code, r.name AS register_name,
+                       r.is_active AS register_active,
+                       l.code AS location_code, l.name AS location_name,
+                       a.id AS assignment_id, a.provider, a.environment, a.tss_id, a.client_id,
+                       a.is_active AS assignment_active,
+                       a.last_state, a.last_checked_at, a.last_error, a.certificate_valid_until
+                FROM dg_cash_registers r
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id
+                LEFT JOIN dg_cash_tse_assignments a ON a.register_id = r.id
+                ORDER BY l.sort_order ASC, l.name ASC, r.sort_order ASC, r.id ASC';
+        $stmt = Database::pdo()->query($sql);
+        if ($stmt === false) {
+            return [];
+        }
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return array<string, mixed>
      */
