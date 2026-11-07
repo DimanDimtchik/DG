@@ -37,11 +37,14 @@ final class CashRegisterRepository
         if ($locationId <= 0 || !self::tableExists()) {
             return [];
         }
-        $sql = 'SELECT * FROM dg_cash_registers WHERE location_id = :lid';
+        $sql = 'SELECT r.*, l.code AS location_code, l.name AS location_name
+                FROM dg_cash_registers r
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id
+                WHERE r.location_id = :lid';
         if ($activeOnly) {
-            $sql .= ' AND is_active = 1';
+            $sql .= ' AND r.is_active = 1';
         }
-        $sql .= ' ORDER BY sort_order ASC, id ASC';
+        $sql .= ' ORDER BY r.sort_order ASC, r.id ASC';
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute(['lid' => $locationId]);
         $rows = [];
@@ -50,6 +53,46 @@ final class CashRegisterRepository
         }
 
         return $rows;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listAll(?int $locationId = null, bool $activeOnly = false): array
+    {
+        if (!self::tableExists()) {
+            return [];
+        }
+        if ($locationId !== null && $locationId > 0) {
+            return self::listByLocation($locationId, $activeOnly);
+        }
+        $sql = 'SELECT r.*, l.code AS location_code, l.name AS location_name
+                FROM dg_cash_registers r
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id';
+        if ($activeOnly) {
+            $sql .= ' WHERE r.is_active = 1';
+        }
+        $sql .= ' ORDER BY l.sort_order ASC, l.name ASC, r.sort_order ASC, r.id ASC';
+        $stmt = Database::pdo()->query($sql);
+        if ($stmt === false) {
+            return [];
+        }
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /** @return array<string, string> */
+    public static function typeLabels(): array
+    {
+        return [
+            'store' => 'Ladenkasse',
+            'mobile' => 'Mobile Kasse',
+            'counter' => 'Schalter',
+        ];
     }
 
     /** @param array<string, mixed> $data */
@@ -97,5 +140,54 @@ final class CashRegisterRepository
             $fields['sort_order'] = (int) $fields['sort_order'];
         }
         CashRegisterTable::update(self::TABLE, $id, $fields);
+    }
+
+    public static function formatReceiptNumber(string $prefix, int $number): string
+    {
+        $prefix = trim($prefix);
+
+        return $prefix !== '' ? $prefix . $number : (string) $number;
+    }
+
+    /**
+     * Vergibt die nächste Bonnummer atomar und erhöht den Zähler (K5d).
+     *
+     * @return array{number: int, display: string, prefix: string}
+     */
+    public static function allocateNextReceiptNumber(int $registerId): array
+    {
+        if ($registerId <= 0 || !self::tableExists()) {
+            throw new RuntimeException('Kasse für Nummernvergabe nicht gefunden.');
+        }
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT next_receipt_number, receipt_number_prefix
+                 FROM dg_cash_registers WHERE id = :id FOR UPDATE'
+            );
+            $stmt->execute(['id' => $registerId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row === false) {
+                throw new RuntimeException('Kasse für Nummernvergabe nicht gefunden.');
+            }
+            $number = max(1, (int) ($row['next_receipt_number'] ?? 1));
+            $prefix = trim((string) ($row['receipt_number_prefix'] ?? ''));
+            $pdo->prepare(
+                'UPDATE dg_cash_registers SET next_receipt_number = :n WHERE id = :id'
+            )->execute(['n' => $number + 1, 'id' => $registerId]);
+            $pdo->commit();
+
+            return [
+                'number' => $number,
+                'display' => self::formatReceiptNumber($prefix, $number),
+                'prefix' => $prefix,
+            ];
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 }

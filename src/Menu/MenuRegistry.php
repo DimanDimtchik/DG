@@ -625,6 +625,12 @@ final class MenuRegistry
                     'icon' => 'receipt',
                     'href' => '/app?page=registerkasse-filialen',
                 ],
+                [
+                    'slug' => 'registerkasse-kassen',
+                    'label' => 'Kassen',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-kassen',
+                ],
             ],
         ];
     }
@@ -679,6 +685,7 @@ final class MenuRegistry
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten mit Personenkonten.',
             'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.',
             'registerkasse-filialen' => 'Betriebsstätten und Filialen für die Registerkasse verwalten.',
+            'registerkasse-kassen' => 'Kassen je Filiale mit eigener ID und Bon-Nummernkreis.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
             'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Umsätze Belegen zuordnen.',
@@ -970,6 +977,8 @@ final class MenuRegistry
             || $slug === 'buchhaltung-kassenbuch'
             || $slug === 'registerkasse-filialen'
             || $slug === 'registerkasse-filiale-form'
+            || $slug === 'registerkasse-kassen'
+            || $slug === 'registerkasse-kasse-form'
             || $slug === 'buchhaltung-manuelle-buchung'
             || $slug === 'buchhaltung-auswertungen'
             || $slug === 'buchhaltung-bwa'

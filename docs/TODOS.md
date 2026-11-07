@@ -20,7 +20,7 @@ Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** **UI/CSS-Rest** (siehe oben) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). Registerkasse/TSE — Mini-IDs [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) (K4 Filialen ✅; als Nächstes **K5a**; K3b 🔴 später).
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). Registerkasse/TSE — Mini-IDs [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) (K5 Kassen ✅; als Nächstes **K6a**; K3b 🔴 später).
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 

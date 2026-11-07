@@ -2899,6 +2899,77 @@ switch ($path) {
             }
         }
 
+        // POST: Registerkasse Kasse speichern (K5c)
+        if (
+            $page === 'registerkasse-kasse-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_register_save'])
+            && MenuRegistry::canAccess($user, 'registerkasse-kasse-form')
+        ) {
+            $regId = max(0, (int) ($_POST['cash_register_id'] ?? $_GET['id'] ?? 0));
+            $back = '/app?page=registerkasse-kasse-form' . ($regId > 0 ? '&id=' . $regId : '');
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+            try {
+                $type = trim((string) ($_POST['register_type'] ?? 'store'));
+                if (!isset(CashRegisterRepository::typeLabels()[$type])) {
+                    $type = 'store';
+                }
+                $locationId = (int) ($_POST['location_id'] ?? 0);
+                $payload = [
+                    'location_id' => $locationId,
+                    'code' => trim((string) ($_POST['code'] ?? '')),
+                    'name' => trim((string) ($_POST['name'] ?? '')),
+                    'register_type' => $type,
+                    'next_receipt_number' => max(1, (int) ($_POST['next_receipt_number'] ?? 1)),
+                    'receipt_number_prefix' => trim((string) ($_POST['receipt_number_prefix'] ?? '')),
+                    'notes' => trim((string) ($_POST['notes'] ?? '')),
+                    'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                ];
+                if ($payload['code'] === '' || $payload['name'] === '') {
+                    throw new RuntimeException('Kassen-ID und Name sind Pflicht.');
+                }
+                if ($locationId <= 0 || CashLocationRepository::findById($locationId) === null) {
+                    throw new RuntimeException('Bitte eine gültige Filiale wählen.');
+                }
+                if ($regId > 0) {
+                    $existingReg = CashRegisterRepository::findById($regId);
+                    if ($existingReg === null) {
+                        throw new RuntimeException('Kasse nicht gefunden.');
+                    }
+                    unset($payload['code']);
+                    CashRegisterRepository::update($regId, $payload);
+                    Flash::set('success', 'Kasse gespeichert.');
+                    header('Location: /app?page=registerkasse-kasse-form&id=' . $regId, true, 302);
+                    exit;
+                }
+                $dupReg = CashRegisterRepository::findByCode($payload['code']);
+                if ($dupReg !== null) {
+                    throw new RuntimeException('Kassen-ID ist bereits vergeben.');
+                }
+                $newRegId = CashRegisterRepository::insert($payload);
+                Flash::set('success', 'Kasse angelegt.');
+                header('Location: /app?page=registerkasse-kasse-form&id=' . $newRegId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                $locQs = max(0, (int) ($_POST['location_id'] ?? 0));
+                if ($regId <= 0 && $locQs > 0) {
+                    $back .= '&location_id=' . $locQs;
+                }
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+        }
+
         // POST: Gutscheine
         if (
             ($page === 'gutscheine-form')
@@ -8700,7 +8771,50 @@ $legalProductsConfig = LegalProductSettings::config();
             $contentTemplate = 'modules/registerkasse-filiale-form';
             $title = $cashLocationId > 0 ? 'Filiale bearbeiten' : 'Filiale anlegen';
             $currentPage = 'registerkasse-filialen';
-        } elseif ($page === 'registerkasse-filialen' || $page === 'registerkasse-filiale-form') {
+        } elseif ($page === 'registerkasse-kassen' && MenuRegistry::canAccess($user, 'registerkasse-kassen')) {
+            $cashRegisterLocationId = max(0, (int) ($_GET['location_id'] ?? 0));
+            $cashLocationOptions = Database::isConfigured() ? CashLocationRepository::listAll(false) : [];
+            $cashRegisters = [];
+            if (Database::isConfigured()) {
+                $cashRegisters = $cashRegisterLocationId > 0
+                    ? CashRegisterRepository::listByLocation($cashRegisterLocationId, false)
+                    : CashRegisterRepository::listAll(null, false);
+            }
+            $contentTemplate = 'modules/registerkasse-kassen';
+            $title = 'Kassen';
+            $currentPage = 'registerkasse-kassen';
+        } elseif ($page === 'registerkasse-kasse-form' && MenuRegistry::canAccess($user, 'registerkasse-kasse-form')) {
+            $cashRegisterId = max(0, (int) ($_GET['id'] ?? 0));
+            $cashLocationOptions = Database::isConfigured() ? CashLocationRepository::listAll(false) : [];
+            $prefillLocation = max(0, (int) ($_GET['location_id'] ?? 0));
+            $cashRegisterForm = [
+                'location_id' => $prefillLocation,
+                'code' => '',
+                'name' => '',
+                'register_type' => 'store',
+                'next_receipt_number' => 1,
+                'receipt_number_prefix' => '',
+                'notes' => '',
+                'is_active' => 1,
+            ];
+            if ($cashRegisterId > 0 && Database::isConfigured()) {
+                $existingReg = CashRegisterRepository::findById($cashRegisterId);
+                if ($existingReg === null) {
+                    Flash::set('error', 'Kasse nicht gefunden.');
+                    header('Location: /app?page=registerkasse-kassen', true, 302);
+                    exit;
+                }
+                $cashRegisterForm = $existingReg;
+            }
+            $contentTemplate = 'modules/registerkasse-kasse-form';
+            $title = $cashRegisterId > 0 ? 'Kasse bearbeiten' : 'Kasse anlegen';
+            $currentPage = 'registerkasse-kassen';
+        } elseif (
+            $page === 'registerkasse-filialen'
+            || $page === 'registerkasse-filiale-form'
+            || $page === 'registerkasse-kassen'
+            || $page === 'registerkasse-kasse-form'
+        ) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'einstellungen') {
@@ -10974,6 +11088,11 @@ $legalProductsConfig = LegalProductSettings::config();
         $cashLocationStatus = $cashLocationStatus ?? 'all';
         $cashLocationForm = $cashLocationForm ?? [];
         $cashLocationId = $cashLocationId ?? 0;
+        $cashRegisters = $cashRegisters ?? [];
+        $cashLocationOptions = $cashLocationOptions ?? [];
+        $cashRegisterLocationId = $cashRegisterLocationId ?? 0;
+        $cashRegisterForm = $cashRegisterForm ?? [];
+        $cashRegisterId = $cashRegisterId ?? 0;
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
@@ -11377,6 +11496,11 @@ $legalProductsConfig = LegalProductSettings::config();
             'cashLocationStatus',
             'cashLocationForm',
             'cashLocationId',
+            'cashRegisters',
+            'cashLocationOptions',
+            'cashRegisterLocationId',
+            'cashRegisterForm',
+            'cashRegisterId',
             'settingsNav',
             'settingsSelection',
             'flash',

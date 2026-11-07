@@ -134,10 +134,10 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K5a | Listen-Seite je Filiale | 🟡 | [ ] |
-| K5b | Formular: Kassen-ID, Nummernkreis-Start, Standort, aktiv | 🟡 | [ ] |
-| K5c | Speichern + eindeutige Kassen-ID je Instanz prüfen | 🟡 | [ ] |
-| K5d | Selftest Nummernkreis-Vergabe (nächste Bonnummer) | 🟡 | [ ] |
+| K5a | Listen-Seite je Filiale | 🟡 | [x] `registerkasse-kassen` |
+| K5b | Formular: Kassen-ID, Nummernkreis-Start, Standort, aktiv | 🟡 | [x] `registerkasse-kasse-form` |
+| K5c | Speichern + eindeutige Kassen-ID je Instanz prüfen | 🟡 | [x] |
+| K5d | Selftest Nummernkreis-Vergabe (nächste Bonnummer) | 🟡 | [x] `allocateNextReceiptNumber` |
 
 ---
 
@@ -316,9 +316,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
 
-1. **K5a** — Admin Kassen-Liste  
+1. **K6a** — TSE-Zuordnung UI (ohne Live-Call)  
 2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
-3. **K5b** — Kassen-Formular  
+3. **K6b** — Statusfelder TSE  
 4. **K4a–K4c** — Filial-Admin (je einzeln)  
 5. **K9a** — Ist-Stand Beleg-TSE festhalten  
 6. **K5** — Admin Kassen  
@@ -838,7 +838,7 @@ interface TseProviderInterface
 | K2 | Mock-TSE | [x] K2a–K2c |
 | K3 | Provider-Interface | [~] K3a+K3c+K3d; offen nur K3b 🔴 |
 | K4 | Admin Filialen | [x] K4a–K4d |
-| K5 | Admin Kassen | [ ] |
+| K5 | Admin Kassen | [x] K5a–K5d |
 | K6 | Admin TSE-Zuordnung | [~] Einstellungs-Tab existiert |
 | K7 | Bonfluss | [ ] |
 | K8 | Zahlungsarten | [ ] |
