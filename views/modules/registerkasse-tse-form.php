@@ -40,13 +40,42 @@ $clientSerial = trim((string) ($form['client_serial_number'] ?? ''));
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php endif; ?>
 
+  <?php
+    $cashTseOutageActive = !empty($form['outage_active']);
+    $cashTseOutageMessage = $cashTseOutageActive
+        ? trim((string) ($form['last_error'] ?? ''))
+        : '';
+    $cashTseOutages = [];
+    if ($cashTseOutageActive) {
+        $cashTseOutages[] = [
+            'register_id' => $registerId,
+            'register_code' => (string) ($register['code'] ?? ''),
+            'register_name' => (string) ($register['name'] ?? ''),
+            'outage_since' => (string) ($form['outage_since'] ?? ''),
+            'last_error' => (string) ($form['last_error'] ?? ''),
+        ];
+    }
+    View::render('partials/cash-tse-outage-banner', compact('cashTseOutages', 'cashTseOutageActive', 'cashTseOutageMessage'));
+  ?>
+
   <div class="dg-panel">
     <h2 class="dg-subsection-title">Prüfstatus</h2>
     <dl class="dg-dl">
+      <dt>Ausfall</dt>
+      <dd>
+        <?php if (!empty($form['outage_active'])) : ?>
+          <span class="dg-badge dg-badge--error">Aktiv</span>
+          <?php if (trim((string) ($form['outage_since'] ?? '')) !== '') : ?>
+            seit <?= View::escape((string) $form['outage_since']) ?>
+          <?php endif; ?>
+        <?php else : ?>
+          <span class="dg-badge dg-badge--muted">Nein</span>
+        <?php endif; ?>
+      </dd>
       <dt>Letzter Status</dt>
       <dd>
         <?php if ($lastState !== '') : ?>
-          <span class="dg-badge <?= $lastError === '' ? 'dg-badge--ok' : 'dg-badge--error' ?>">
+          <span class="dg-badge <?= ($lastError === '' && empty($form['outage_active'])) ? 'dg-badge--ok' : 'dg-badge--error' ?>">
             <?= View::escape($lastState) ?>
           </span>
         <?php else : ?>

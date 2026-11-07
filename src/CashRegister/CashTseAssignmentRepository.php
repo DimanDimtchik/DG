@@ -81,7 +81,8 @@ final class CashTseAssignmentRepository
                        l.code AS location_code, l.name AS location_name,
                        a.id AS assignment_id, a.provider, a.environment, a.tss_id, a.client_id,
                        a.is_active AS assignment_active,
-                       a.last_state, a.last_checked_at, a.last_error, a.certificate_valid_until
+                       a.last_state, a.last_checked_at, a.last_error, a.certificate_valid_until,
+                       a.outage_active, a.outage_since
                 FROM dg_cash_registers r
                 LEFT JOIN dg_cash_locations l ON l.id = r.location_id
                 LEFT JOIN dg_cash_tse_assignments a ON a.register_id = r.id
@@ -117,6 +118,8 @@ final class CashTseAssignmentRepository
             'last_state' => static fn ($v) => trim((string) $v),
             'last_checked_at' => static fn ($v) => $v !== null && $v !== '' ? (string) $v : null,
             'last_error' => static fn ($v) => trim((string) $v),
+            'outage_active' => static fn ($v) => !empty($v) ? 1 : 0,
+            'outage_since' => static fn ($v) => $v !== null && $v !== '' ? (string) $v : null,
             'notes' => static fn ($v) => trim((string) $v),
             'is_active' => static fn ($v) => !empty($v) ? 1 : 0,
         ];

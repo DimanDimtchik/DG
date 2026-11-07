@@ -30,6 +30,22 @@ $tseSettingsUrl = SettingsRegistry::tabUrl('tse');
     </div>
   <?php endif; ?>
 
+  <?php
+    $cashTseOutages = [];
+    foreach ($rows as $outRow) {
+        if (!empty($outRow['outage_active'])) {
+            $cashTseOutages[] = [
+                'register_id' => (int) ($outRow['register_id'] ?? 0),
+                'register_code' => (string) ($outRow['register_code'] ?? ''),
+                'register_name' => (string) ($outRow['register_name'] ?? ''),
+                'outage_since' => (string) ($outRow['outage_since'] ?? ''),
+                'last_error' => (string) ($outRow['last_error'] ?? ''),
+            ];
+        }
+    }
+    View::render('partials/cash-tse-outage-banner', compact('cashTseOutages'));
+  ?>
+
   <div class="dg-panel">
     <p class="dg-field-hint">
       API-Schlüssel und Beleg-Barzahlung-TSE: <a href="<?= View::escape($tseSettingsUrl) ?>">Einstellungen → TSE</a>
@@ -66,8 +82,9 @@ $tseSettingsUrl = SettingsRegistry::tabUrl('tse');
                 $lastChecked = trim((string) ($row['last_checked_at'] ?? ''));
                 $certUntil = trim((string) ($row['certificate_valid_until'] ?? ''));
                 $lastError = trim((string) ($row['last_error'] ?? ''));
-                $statusOk = $has && $lastState !== '' && $lastError === '';
-                $statusLabel = !$has ? 'offen' : ($lastState !== '' ? $lastState : 'ungeprüft');
+                $outage = !empty($row['outage_active']);
+                $statusOk = $has && !$outage && $lastState !== '' && $lastError === '';
+                $statusLabel = !$has ? 'offen' : ($outage ? 'Ausfall' : ($lastState !== '' ? $lastState : 'ungeprüft'));
                 $regLabel = trim((string) ($row['register_code'] ?? ''));
                 if ($regLabel !== '' && trim((string) ($row['register_name'] ?? '')) !== '') {
                     $regLabel .= ' — ' . trim((string) $row['register_name']);
@@ -83,8 +100,8 @@ $tseSettingsUrl = SettingsRegistry::tabUrl('tse');
                 <td><?= View::escape($locLabel !== '' ? $locLabel : '—') ?></td>
                 <td><?= View::escape($providerCell) ?></td>
                 <td>
-                  <span class="dg-badge <?= $statusOk ? 'dg-badge--ok' : ($lastError !== '' ? 'dg-badge--error' : 'dg-badge--muted') ?>"
-                        <?= $lastError !== '' ? ' title="' . View::escape($lastError) . '"' : '' ?>>
+                  <span class="dg-badge <?= $statusOk ? 'dg-badge--ok' : (($outage || $lastError !== '') ? 'dg-badge--error' : 'dg-badge--muted') ?>"
+                        <?= ($outage || $lastError !== '') ? ' title="' . View::escape($outage ? ($lastError !== '' ? $lastError : 'TSE-Ausfall') : $lastError) . '"' : '' ?>>
                     <?= View::escape($statusLabel) ?>
                   </span>
                 </td>

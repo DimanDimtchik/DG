@@ -37,6 +37,30 @@ final class CashReceiptRepository
         return $rows;
     }
 
+    /**
+     * Vorhandener Storno-Bon zum Original (K13a/c) — egal welcher Status außer cancelled.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function findStornoOf(int $originalReceiptId): ?array
+    {
+        if ($originalReceiptId <= 0 || !self::tableExists()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM dg_cash_receipts
+             WHERE storno_of_receipt_id = :oid
+               AND receipt_type = 'storno'
+               AND status <> 'cancelled'
+             ORDER BY id DESC
+             LIMIT 1"
+        );
+        $stmt->execute(['oid' => $originalReceiptId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row === false ? null : $row;
+    }
+
     /** Offene Bons einer Sitzung (draft/paying) — Guard für K11c. */
     public static function countUnfinishedBySession(int $sessionId): int
     {
@@ -201,6 +225,7 @@ final class CashReceiptRepository
             'vat_summary_json' => $data['vat_summary_json'] ?? null,
             'payment_summary_json' => $data['payment_summary_json'] ?? null,
             'tse_tx_id' => trim((string) ($data['tse_tx_id'] ?? '')),
+            'tse_outage' => !empty($data['tse_outage']) ? 1 : 0,
             'transaction_number' => isset($data['transaction_number']) ? (int) $data['transaction_number'] : null,
             'tse_serial' => trim((string) ($data['tse_serial'] ?? '')),
             'signature_counter' => trim((string) ($data['signature_counter'] ?? '')),

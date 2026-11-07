@@ -39,6 +39,11 @@ $statusLabels = [
     </div>
   <?php endif; ?>
 
+  <?php
+    $cashTseOutages = $cashTseOutages ?? [];
+    View::render('partials/cash-tse-outage-banner', compact('cashTseOutages'));
+  ?>
+
   <?php if ($canEdit && $dbConnected && $openRegisters !== []) : ?>
     <form class="dg-form dg-panel" method="post" action="/app?page=registerkasse-bons">
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">

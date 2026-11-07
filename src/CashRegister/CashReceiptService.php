@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 /**
  * Bonfluss — Draft (K7a), Positionen (K7b), Zahlungen → paying (K7c).
+ * Storno ohne TSE-Finish (K13a Datenpfad); TSE-Storno → K13b.
  */
 final class CashReceiptService
 {
@@ -10,6 +11,9 @@ final class CashReceiptService
     public const STATUS_PAYING = 'paying';
     public const STATUS_FINALIZED = 'finalized';
     public const STATUS_CANCELLED = 'cancelled';
+
+    public const TYPE_SALE = 'sale';
+    public const TYPE_STORNO = 'storno';
 
     /** @var list<int> */
     private const TAX_RATES = [19, 7, 0];
@@ -225,6 +229,210 @@ final class CashReceiptService
         }
 
         return round($sum, 2);
+    }
+
+    /**
+     * Voll bezahlten Bon ohne TSE festschreiben (Test-/Zwischenpfad bis TSE-Finish).
+     */
+    public static function finalizeWithoutTse(int $receiptId): void
+    {
+        $receipt = self::requirePayable($receiptId);
+        if (CashReceiptRepository::listLines($receiptId) === []) {
+            throw new RuntimeException('Bon ohne Positionen kann nicht festgeschrieben werden.');
+        }
+        $gross = round((float) ($receipt['total_gross'] ?? 0), 2);
+        if ($gross <= 0) {
+            throw new RuntimeException('Bon-Brutto ist 0.');
+        }
+        if (abs(self::paymentTotal($receiptId) - $gross) > 0.009) {
+            throw new RuntimeException('Bon ist nicht vollständig bezahlt.');
+        }
+        CashReceiptRepository::updateReceipt($receiptId, [
+            'status' => self::STATUS_FINALIZED,
+            'finished_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * Storno-Bon zum festgeschriebenen Verkauf (K13a, ohne TSE).
+     * Original bleibt unverändert; neuer Bon mit receipt_type=storno + Referenz.
+     *
+     * @return int storno receipt id
+     */
+    public static function stornoFromFinalized(int $originalReceiptId, int $operatorId, string $notes = ''): int
+    {
+        $original = self::requireReceipt($originalReceiptId);
+        if (($original['status'] ?? '') !== self::STATUS_FINALIZED) {
+            throw new RuntimeException('Nur festgeschriebene Bons können storniert werden.');
+        }
+        if (($original['receipt_type'] ?? self::TYPE_SALE) !== self::TYPE_SALE) {
+            throw new RuntimeException('Nur Verkaufsbons können storniert werden.');
+        }
+        if (CashReceiptRepository::findStornoOf($originalReceiptId) !== null) {
+            throw new RuntimeException('Für diesen Bon existiert bereits ein Storno.');
+        }
+
+        $registerId = (int) ($original['register_id'] ?? 0);
+        if ($registerId <= 0) {
+            throw new RuntimeException('Kasse des Originalbons fehlt.');
+        }
+
+        $session = CashSessionRepository::findOpenByRegister($registerId);
+        if ($session === null) {
+            throw new RuntimeException('Keine offene Kassensitzung — bitte Kasse zuerst öffnen.');
+        }
+        $sessionId = (int) ($session['id'] ?? 0);
+        $businessDate = trim((string) ($session['business_date'] ?? ''));
+        if ($businessDate !== '' && CashRegisterDayClosingService::isClosed($registerId, $businessDate)) {
+            throw new RuntimeException('Geschäftstag ist abgeschlossen — kein Storno an diesem Tag.');
+        }
+
+        $locationId = (int) ($original['location_id'] ?? 0);
+        if ($locationId <= 0) {
+            throw new RuntimeException('Filiale des Originalbons fehlt.');
+        }
+
+        $tseAssignmentId = null;
+        $tse = CashTseAssignmentRepository::findByRegisterId($registerId);
+        if ($tse !== null && !empty($tse['is_active']) && (int) ($tse['id'] ?? 0) > 0) {
+            $tseAssignmentId = (int) $tse['id'];
+        }
+
+        $number = CashRegisterRepository::allocateNextReceiptNumber($registerId);
+        $now = date('Y-m-d H:i:s');
+        $origDisplay = trim((string) ($original['receipt_number_display'] ?? ''));
+        if ($origDisplay === '') {
+            $origDisplay = (string) (int) ($original['receipt_number'] ?? 0);
+        }
+        $note = trim($notes);
+        if ($note === '') {
+            $note = 'Storno zu Bon ' . $origDisplay;
+        }
+
+        $stornoId = CashReceiptRepository::insertReceipt([
+            'location_id' => $locationId,
+            'register_id' => $registerId,
+            'session_id' => $sessionId,
+            'tse_assignment_id' => $tseAssignmentId,
+            'voucher_id' => isset($original['voucher_id']) && (int) $original['voucher_id'] > 0
+                ? (int) $original['voucher_id']
+                : null,
+            'receipt_number' => $number['number'],
+            'receipt_number_display' => $number['display'],
+            'status' => self::STATUS_FINALIZED,
+            'receipt_type' => self::TYPE_STORNO,
+            'storno_of_receipt_id' => $originalReceiptId,
+            'operator_id' => $operatorId > 0 ? $operatorId : null,
+            'total_gross' => round(-1 * (float) ($original['total_gross'] ?? 0), 2),
+            'total_net' => round(-1 * (float) ($original['total_net'] ?? 0), 2),
+            'vat_summary_json' => self::negateVatSummaryJson($original['vat_summary_json'] ?? null),
+            'payment_summary_json' => self::negatePaymentSummaryJson($original['payment_summary_json'] ?? null),
+            'started_at' => $now,
+            'finished_at' => $now,
+            'notes' => $note,
+        ]);
+
+        foreach (CashReceiptRepository::listLines($originalReceiptId) as $line) {
+            $qty = round((float) ($line['quantity'] ?? 0), 3);
+            $gross = round((float) ($line['gross_amount'] ?? 0), 2);
+            CashReceiptRepository::insertLine([
+                'receipt_id' => $stornoId,
+                'line_no' => (int) ($line['line_no'] ?? 1),
+                'article_id' => (int) ($line['article_id'] ?? 0),
+                'article_number' => (string) ($line['article_number'] ?? ''),
+                'title' => (string) ($line['title'] ?? ''),
+                'unit' => (string) ($line['unit'] ?? 'Stück'),
+                'quantity' => round(-1 * $qty, 3),
+                'unit_price_gross' => round((float) ($line['unit_price_gross'] ?? 0), 2),
+                'gross_amount' => round(-1 * $gross, 2),
+                'tax_rate' => (int) ($line['tax_rate'] ?? 19),
+            ]);
+        }
+
+        if (CashPaymentRepository::tableExists()) {
+            foreach (CashPaymentRepository::listByReceipt($originalReceiptId) as $pay) {
+                CashPaymentRepository::insert([
+                    'receipt_id' => $stornoId,
+                    'line_no' => (int) ($pay['line_no'] ?? 1),
+                    'payment_method' => (string) ($pay['payment_method'] ?? 'cash'),
+                    'amount' => round(-1 * (float) ($pay['amount'] ?? 0), 2),
+                    'currency' => (string) ($pay['currency'] ?? 'EUR'),
+                    'gift_voucher_id' => isset($pay['gift_voucher_id']) && (int) $pay['gift_voucher_id'] > 0
+                        ? (int) $pay['gift_voucher_id']
+                        : null,
+                    'external_ref' => (string) ($pay['external_ref'] ?? ''),
+                    'notes' => trim((string) ($pay['notes'] ?? '')),
+                ]);
+            }
+        }
+
+        return $stornoId;
+    }
+
+    /** Snapshot für Selftest K13c (Original unverändert). */
+    public static function integritySnapshot(int $receiptId): array
+    {
+        $receipt = self::requireReceipt($receiptId);
+        $lines = CashReceiptRepository::listLines($receiptId);
+        $payments = CashPaymentRepository::tableExists()
+            ? CashPaymentRepository::listByReceipt($receiptId)
+            : [];
+
+        return [
+            'receipt' => $receipt,
+            'lines' => $lines,
+            'payments' => $payments,
+            'line_count' => count($lines),
+            'payment_count' => count($payments),
+        ];
+    }
+
+    private static function negateVatSummaryJson(mixed $json): ?string
+    {
+        if ($json === null || $json === '') {
+            return null;
+        }
+        $data = is_string($json) ? json_decode($json, true) : $json;
+        if (!is_array($data)) {
+            return is_string($json) ? $json : null;
+        }
+        foreach ($data as &$row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            foreach (['gross', 'net', 'tax'] as $key) {
+                if (isset($row[$key])) {
+                    $row[$key] = round(-1 * (float) $row[$key], 2);
+                }
+            }
+        }
+        unset($row);
+        $encoded = json_encode(array_values($data), JSON_UNESCAPED_UNICODE);
+
+        return $encoded === false ? null : $encoded;
+    }
+
+    private static function negatePaymentSummaryJson(mixed $json): ?string
+    {
+        if ($json === null || $json === '') {
+            return null;
+        }
+        $data = is_string($json) ? json_decode($json, true) : $json;
+        if (!is_array($data)) {
+            return is_string($json) ? $json : null;
+        }
+        foreach ($data as &$row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (isset($row['amount'])) {
+                $row['amount'] = round(-1 * (float) $row['amount'], 2);
+            }
+        }
+        unset($row);
+        $encoded = json_encode(array_values($data), JSON_UNESCAPED_UNICODE);
+
+        return $encoded === false ? null : $encoded;
     }
 
     /** payment_summary_json + Status draft/paying. */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 /**
  * Wählt den TSE-Provider (K3c).
  * mock → MockTseProvider; fiskaly → K3b (noch nicht).
+ * Nachsignatur nur bei provider.supportsDeferredSignature() (K14c); Fiskaly bis Freigabe false.
  */
 final class TseProviderFactory
 {

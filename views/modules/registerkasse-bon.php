@@ -63,6 +63,16 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
 
   <a class="dg-button dg-button--back" href="/app?page=registerkasse-bons">← Zurück zur Bon-Liste</a>
 
+  <?php
+    $cashTseOutages = $cashTseOutages ?? [];
+    View::render('partials/cash-tse-outage-banner', compact('cashTseOutages'));
+    if (!empty($receipt['tse_outage'])) :
+  ?>
+    <div class="dg-flash dg-flash--warning" role="status">
+      Dieser Bon ist mit TSE-Ausfall gekennzeichnet (historisches Flag).
+    </div>
+  <?php endif; ?>
+
   <header class="dg-page-header">
     <h1 class="dg-page-title">Bon <?= View::escape($display !== '' ? $display : '#' . $receiptId) ?></h1>
     <p class="dg-lead">

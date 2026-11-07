@@ -240,9 +240,9 @@ Zwei getrennte Tagesabschlüsse — **nicht** mischen, **nicht** dieselbe Tabell
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K13a | Storno-Bon mit Referenz auf Original (kein Edit) | 🔴 | [ ] |
+| K13a | Storno-Bon mit Referenz auf Original (kein Edit) | 🔴 | [~] Datenpfad ohne TSE: `stornoFromFinalized` + `finalizeWithoutTse`; UI/TSE offen |
 | K13b | TSE cancel/finish Storno laut Provider | 🔴 | [ ] |
-| K13c | Selftest: Original unverändert, Storno verknüpft | 🟡 | [ ] |
+| K13c | Selftest: Original unverändert, Storno verknüpft | 🟡 | [x] `bin/cash-receipt-storno-selftest.php` |
 
 ---
 
@@ -250,10 +250,64 @@ Zwei getrennte Tagesabschlüsse — **nicht** mischen, **nicht** dieselbe Tabell
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K14a | Ausfall-Flag + Audit-Log-Eintrag | 🟡 | [ ] |
-| K14b | UI-Warnung sichtbar | 🟡 | [ ] |
-| K14c | Nachsignatur-Pfad nur wenn Anbieter erlaubt (Spec zuerst) | 🟢 | [ ] |
-| K14d | Implementierung Nachsignatur | 🔴 | [ ] |
+| K14a | Ausfall-Flag + Audit-Log-Eintrag | 🟡 | [x] `CashTseOutageService` + Migration `152_cash_tse_outage.sql` |
+| K14b | UI-Warnung sichtbar | 🟡 | [x] Partial `cash-tse-outage-banner` auf Kassen/Bons/TSE |
+| K14c | Nachsignatur-Pfad nur wenn Anbieter erlaubt (Spec zuerst) | 🟢 | [x] Spec unten + `TseProviderInterface::supportsDeferredSignature` |
+| K14d | Implementierung Nachsignatur | 🔴 | [ ] nur wenn Capability `true` |
+
+#### K14c — Spec: Nachsignatur nur wenn Anbieter erlaubt (verbindlich)
+
+**Problem:** Bei TSE-Ausfall (Netz, Gerät, TSS down) darf die Kasse den Verkauf nicht „heimlich“ als signiert darstellen. Manche Anbieter erlauben eine **Nachsignatur** (Bon zuerst speichern, Signatur nachholen). Andere nicht — dann nur Ausfallprotokoll / Verkaufssperre laut Betriebsanweisung, **kein** Nachsignatur-Queue.
+
+**Kernregel (Prüfer/GoBD)**
+
+1. Nachsignatur-Queue und UI „wird nachsigniert“ nur, wenn der **aktive Provider** `supportsDeferredSignature() === true` liefert.
+2. Ist die Capability `false`: **kein** Speichern in einer Nachsignatur-Warteschlange; Ausfall → Flag + Audit (K14a) + Warnung (K14b); Bon-Finish mit TSE blockieren bzw. klarer Abbruch — Details Betriebsanweisung in K14a/b.
+3. Capability kommt **nur vom Provider**, nie aus Instanz-Settings „wir wollen trotzdem nachsignieren“.
+4. Mock darf `true` sein (Tests). Produktiv-Provider: Default **`false`**, bis Herstellerdokumentation und K14d das explizit freigeben.
+5. Nachsignierte Bons bleiben im Journal erkennbar (Ausfall-Flag bleibt historisch; Signatur nachgezogen — DSFinV/Nachschau).
+
+**Capability-Matrix (Stand Spec)**
+
+| Provider | `supportsDeferredSignature` | Begründung |
+|----------|----------------------------|------------|
+| `mock` | `true` | Testpfad für K14d ohne Netz |
+| `fiskaly` (Cloud) | `false` bis Freigabe | Keine Eigenbau-Offline-Signatur; nur wenn Fiskaly-Produkt/API Nachsignatur ausdrücklich hergibt (K14d + Vendor-Doku) |
+| Swissbit / lokal (später) | `false` bis Freigabe | Nur nach Connector-/Herstellerfreigabe |
+
+**App-Ablauf (Soll für K14d — noch nicht bauen)**
+
+```
+Bon-Finish braucht TSE
+  → getStatus()/start|finish schlägt fehl
+  → K14a: Ausfall-Flag + Audit
+  → K14b: UI-Warnung
+  → if !provider.supportsDeferredSignature():
+        Finish abbrechen (kein „fertig signiert“)
+     else:
+        Bon als „Ausfall / Nachsignatur ausstehend“ speichern (Queue)
+        Später Job: finish/nachziehen laut Provider-API → K14d
+```
+
+**Abgrenzung**
+
+| Thema | Hier (K14c) | Später |
+|-------|-------------|--------|
+| Spec + Capability-API | ✅ | — |
+| Ausfall-Flag / Audit | ✅ K14a | — |
+| UI-Warnung | ✅ K14b | — |
+| Queue + Nachzieh-Job | — | K14d (nur wenn Capability true) |
+| DSFinV-Export Ausfallfälle | — | K18 |
+
+**Nicht tun**
+
+- Eigenes „Soft-Signieren“ oder QR ohne TSE erfinden
+- Nachsignatur für alle Provider hardcoden
+- Ausfall-Bons als normal `finalized` + voll signiert markieren
+
+**Code-Hook:** `TseProviderInterface::supportsDeferredSignature(): bool` (K14c); Implementierung Mock `true`, Factory-Default für unbekannte/`fiskaly` bis K14d: `false`.
+
+**K14a (umgesetzt):** `CashTseOutageService::recordOutage` / `clearOutage` · Flags `dg_cash_tse_assignments.outage_active` (aktuell) + `dg_cash_receipts.tse_outage` (historisch am Bon) · Audit `tse.outage` / `tse.outage.cleared` · Migration `152_cash_tse_outage.sql`.
 
 ---
 
@@ -932,4 +986,6 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K10 | Mobile Kasse | [x] K10a–c |
 | K11 | Kassensitzung | [x] K11a–c |
 | K12 | Tagesabschluss | [x] K12a–d |
-| K13–K21 | Rest | [ ] |
+| K13 | Storno | [~] K13c ✅ + K13a Datenpfad ohne TSE; offen K13b + UI |
+| K14 | TSE-Ausfall | [~] K14a–c ✅; offen K14d |
+| K15–K21 | Rest | [ ] |

@@ -55,6 +55,13 @@ interface TseProviderInterface
     public function getName(): string;
 
     /**
+     * Darf die App bei TSE-Ausfall Bons speichern und später nachsignieren? (K14c)
+     * false = keine Nachsignatur-Queue; Ausfall nur Flag/Warnung/Abbruch (K14a/b).
+     * true nur laut Anbieter — Implementierung Nachzug: K14d.
+     */
+    public function supportsDeferredSignature(): bool;
+
+    /**
      * TSS/Client erreichbar? Kein Bon.
      *
      * @return array<string, mixed>

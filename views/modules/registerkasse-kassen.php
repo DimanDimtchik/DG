@@ -5,6 +5,8 @@
  * @var list<array<string, mixed>> $cashRegisters
  * @var list<array<string, mixed>> $cashLocationOptions
  * @var array<int, array<string, mixed>> $cashOpenSessionsByRegister
+ * @var array<int, true> $cashTseOutageByRegister
+ * @var list<array<string, mixed>> $cashTseOutages
  * @var int $cashRegisterLocationId 0 = alle
  * @var bool $canEdit
  * @var bool $dbConnected
@@ -13,6 +15,8 @@
 $rows = $cashRegisters ?? [];
 $locations = $cashLocationOptions ?? [];
 $openSessions = $cashOpenSessionsByRegister ?? [];
+$outageByRegister = $cashTseOutageByRegister ?? [];
+$cashTseOutages = $cashTseOutages ?? [];
 $locationId = (int) ($cashRegisterLocationId ?? 0);
 $typeLabels = CashRegisterRepository::typeLabels();
 ?>
@@ -37,6 +41,8 @@ $typeLabels = CashRegisterRepository::typeLabels();
       <a href="<?= View::escape(SettingsRegistry::tabUrl('datenbank')) ?>">Einstellungen → Datenbank</a>
     </div>
   <?php endif; ?>
+
+  <?php View::render('partials/cash-tse-outage-banner', compact('cashTseOutages')); ?>
 
   <form class="dg-panel dg-form" method="get" action="/app">
     <input type="hidden" name="page" value="registerkasse-kassen">
@@ -103,6 +109,7 @@ $typeLabels = CashRegisterRepository::typeLabels();
                 $nextNo = (int) ($row['next_receipt_number'] ?? 1);
                 $nextDisplay = $prefix !== '' ? $prefix . $nextNo : (string) $nextNo;
                 $session = $openSessions[$rid] ?? null;
+                $hasOutage = isset($outageByRegister[$rid]);
               ?>
               <tr>
                 <td><strong><?= View::escape((string) ($row['code'] ?? '')) ?></strong></td>
@@ -114,6 +121,9 @@ $typeLabels = CashRegisterRepository::typeLabels();
                   <span class="dg-badge <?= $active ? 'dg-badge--ok' : 'dg-badge--muted' ?>">
                     <?= $active ? 'Aktiv' : 'Inaktiv' ?>
                   </span>
+                  <?php if ($hasOutage) : ?>
+                    <span class="dg-badge dg-badge--error" title="TSE-Ausfall">TSE-Ausfall</span>
+                  <?php endif; ?>
                 </td>
                 <td>
                   <?php if ($session !== null) : ?>

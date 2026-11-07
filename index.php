@@ -9046,6 +9046,14 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
                 $cashOpenSessionsByRegister = CashSessionRepository::mapOpenByRegisterIds($regIds);
             }
+            $cashTseOutages = Database::isConfigured() ? CashTseOutageService::listActiveOutages() : [];
+            $cashTseOutageByRegister = [];
+            foreach ($cashTseOutages as $outageRow) {
+                $oid = (int) ($outageRow['register_id'] ?? 0);
+                if ($oid > 0) {
+                    $cashTseOutageByRegister[$oid] = true;
+                }
+            }
             $contentTemplate = 'modules/registerkasse-kassen';
             $title = 'Kassen';
             $currentPage = 'registerkasse-kassen';
@@ -9209,6 +9217,7 @@ $legalProductsConfig = LegalProductSettings::config();
             $cashReceipts = Database::isConfigured()
                 ? CashReceiptRepository::listRecent(50, $cashReceiptRegisterId > 0 ? $cashReceiptRegisterId : null)
                 : [];
+            $cashTseOutages = Database::isConfigured() ? CashTseOutageService::listActiveOutages() : [];
             $contentTemplate = 'modules/registerkasse-bons';
             $title = 'Bons';
             $currentPage = 'registerkasse-bons';
@@ -9232,6 +9241,16 @@ $legalProductsConfig = LegalProductSettings::config();
                 $maybeLine = CashReceiptRepository::findLineById($editLineId);
                 if ($maybeLine !== null && (int) ($maybeLine['receipt_id'] ?? 0) === $cashReceiptId) {
                     $cashReceiptEditLine = $maybeLine;
+                }
+            }
+            $cashTseOutages = [];
+            $bonRegId = (int) ($cashReceipt['register_id'] ?? 0);
+            if ($bonRegId > 0 && CashTseOutageService::isOutageActive($bonRegId)) {
+                foreach (CashTseOutageService::listActiveOutages() as $outageRow) {
+                    if ((int) ($outageRow['register_id'] ?? 0) === $bonRegId) {
+                        $cashTseOutages[] = $outageRow;
+                        break;
+                    }
                 }
             }
             $contentTemplate = 'modules/registerkasse-bon';
@@ -11562,6 +11581,9 @@ $legalProductsConfig = LegalProductSettings::config();
         $cashTseForm = $cashTseForm ?? [];
         $cashTseRegister = $cashTseRegister ?? [];
         $cashTseRegisterId = $cashTseRegisterId ?? 0;
+        $cashTseOutages = $cashTseOutages ?? [];
+        $cashTseOutageByRegister = $cashTseOutageByRegister ?? [];
+        $cashOpenSessionsByRegister = $cashOpenSessionsByRegister ?? [];
         $cashReceipts = $cashReceipts ?? [];
         $cashReceipt = $cashReceipt ?? [];
         $cashReceiptLines = $cashReceiptLines ?? [];
@@ -11570,6 +11592,7 @@ $legalProductsConfig = LegalProductSettings::config();
         $cashReceiptEditLine = $cashReceiptEditLine ?? null;
         $cashReceiptRegisterId = $cashReceiptRegisterId ?? 0;
         $cashRegisterOptions = $cashRegisterOptions ?? [];
+        $cashOpenRegisterOptions = $cashOpenRegisterOptions ?? [];
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
@@ -11982,6 +12005,9 @@ $legalProductsConfig = LegalProductSettings::config();
             'cashTseForm',
             'cashTseRegister',
             'cashTseRegisterId',
+            'cashTseOutages',
+            'cashTseOutageByRegister',
+            'cashOpenSessionsByRegister',
             'cashReceipts',
             'cashReceipt',
             'cashReceiptLines',
@@ -11990,6 +12016,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'cashReceiptEditLine',
             'cashReceiptRegisterId',
             'cashRegisterOptions',
+            'cashOpenRegisterOptions',
             'settingsNav',
             'settingsSelection',
             'flash',

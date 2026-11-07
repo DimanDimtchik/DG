@@ -25,6 +25,12 @@ final class MockTseProvider implements TseProviderInterface
         return self::NAME;
     }
 
+    /** Mock: Nachsignatur-Pfad für Tests erlaubt (K14c). */
+    public function supportsDeferredSignature(): bool
+    {
+        return true;
+    }
+
     /**
      * @return array{
      *   ok: bool,

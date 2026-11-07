@@ -26,6 +26,8 @@ expect_true(class_exists('MockTseProvider'), 'Klasse MockTseProvider');
 $mock = new MockTseProvider();
 expect_true($mock instanceof TseProviderInterface, 'Mock implementiert TseProviderInterface');
 expect_true($mock->getName() === 'mock', 'getName = mock');
+expect_true(method_exists($mock, 'supportsDeferredSignature'), 'K14c Capability-Methode');
+expect_true($mock->supportsDeferredSignature() === true, 'Mock erlaubt Nachsignatur-Pfad (Tests)');
 
 $status = $mock->getStatus();
 expect_true(!empty($status['ok']), 'getStatus ok');

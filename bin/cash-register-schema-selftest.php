@@ -52,6 +52,7 @@ $migrations = [
     '148_cash_payments.sql',
     '149_cash_register_day_closings.sql',
     '150_cash_audit_exports.sql',
+    '152_cash_tse_outage.sql',
 ];
 foreach ($migrations as $file) {
     $path = DG_ROOT . '/database/migrations/' . $file;
@@ -63,6 +64,7 @@ $classes = [
     'CashLocationRepository',
     'CashRegisterRepository',
     'CashTseAssignmentRepository',
+    'CashTseOutageService',
     'CashSessionRepository',
     'CashReceiptRepository',
     'CashPaymentRepository',
@@ -89,9 +91,9 @@ MigrationRunner::runPending();
 $tables = [
     'dg_cash_locations' => ['id', 'code', 'name', 'street', 'zip', 'city', 'country', 'is_active', 'sort_order'],
     'dg_cash_registers' => ['id', 'location_id', 'code', 'register_type', 'next_receipt_number', 'receipt_number_prefix', 'is_active'],
-    'dg_cash_tse_assignments' => ['id', 'register_id', 'provider', 'environment', 'tss_id', 'client_id', 'is_active'],
+    'dg_cash_tse_assignments' => ['id', 'register_id', 'provider', 'environment', 'tss_id', 'client_id', 'is_active', 'outage_active'],
     'dg_cash_sessions' => ['id', 'register_id', 'business_date', 'status', 'opening_balance', 'opened_by'],
-    'dg_cash_receipts' => ['id', 'location_id', 'register_id', 'session_id', 'receipt_number', 'status', 'receipt_type', 'total_gross', 'tse_tx_id'],
+    'dg_cash_receipts' => ['id', 'location_id', 'register_id', 'session_id', 'receipt_number', 'status', 'receipt_type', 'total_gross', 'tse_tx_id', 'tse_outage'],
     'dg_cash_receipt_lines' => ['id', 'receipt_id', 'line_no', 'title', 'quantity', 'gross_amount', 'tax_rate'],
     'dg_cash_payments' => ['id', 'receipt_id', 'line_no', 'payment_method', 'amount'],
     'dg_cash_register_day_closings' => ['id', 'location_id', 'register_id', 'business_date', 'total_cash', 'total_gross', 'receipt_count'],
