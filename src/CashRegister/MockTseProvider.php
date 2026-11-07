@@ -2,34 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Mock-TSE ohne Netz (K2b) — feste Testwerte laut Plan K2a.
- * PHP-Interface folgt in K3a; Methodensignaturen bereits kompatibel.
- *
- * @phpstan-type TseTxInput array{
- *   receipt_type?: string,
- *   amount_gross?: float|int|string,
- *   vat_amounts?: list<array{vat_rate_code?: string, vat_rate?: string, amount?: float|int|string}>,
- *   client_serial_number?: string,
- *   process_type?: string,
- *   process_data?: string
- * }
- * @phpstan-type TseTxResult array{
- *   tse_tx_id: string,
- *   state: string,
- *   tx_number: int|null,
- *   revision: int|null,
- *   signature_value: string|null,
- *   signature_algorithm: string|null,
- *   signature_counter: string|null,
- *   qr_code_data: string|null,
- *   time_start: int|null,
- *   time_end: int|null,
- *   tss_serial_number: string,
- *   client_serial_number: string,
- *   raw: array<string, mixed>|null
- * }
+ * Mock-TSE ohne Netz (K2b) — feste Testwerte laut Plan K2a / Interface K3a.
  */
-final class MockTseProvider
+final class MockTseProvider implements TseProviderInterface
 {
     public const NAME = 'mock';
 

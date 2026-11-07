@@ -112,10 +112,10 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K3a | `TseProviderInterface` PHP (leer + Signaturen) | 🟡 | [ ] |
+| K3a | `TseProviderInterface` PHP (leer + Signaturen) | 🟡 | [x] `TseProviderInterface.php` |
 | K3b | `FiskalyTseProvider` aus bestehendem `TseSignDeClient` ausdünnen/wickeln | 🔴 | [ ] |
-| K3c | Provider-Factory: Auswahl mock|fiskaly (Setting/Kasse) | 🟡 | [ ] |
-| K3d | Selftest Factory + Mock-Pfad | 🟡 | [ ] |
+| K3c | Provider-Factory: Auswahl mock|fiskaly (Setting/Kasse) | 🟡 | [x] `TseProviderFactory` |
+| K3d | Selftest Factory + Mock-Pfad | 🟡 | [x] `bin/tse-provider-factory-selftest.php` |
 
 ---
 
@@ -316,16 +316,16 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
 
-1. **K3a** — `TseProviderInterface` PHP  
+1. **K4a** — Filial-Admin Liste  
 2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
-3. **K3c** — Provider-Factory mock|fiskaly  
-4. **K3a** — Interface PHP  
-5. **K4a–K4c** — Filial-Admin (je einzeln)  
-6. **K9a** — Ist-Stand Beleg-TSE festhalten  
-7. **K5** — Admin Kassen  
-8. **K6** — Admin TSE-Zuordnung  
-9. **K1** Deploy: Migrationen 143–150 auf Dev laufen lassen  
-10. **K3b** — Fiskaly-Wrapper (🔴, erst nach Mock)
+3. **K4b** — Filial-Formular  
+4. **K4a–K4c** — Filial-Admin (je einzeln)  
+5. **K9a** — Ist-Stand Beleg-TSE festhalten  
+6. **K5** — Admin Kassen  
+7. **K6** — Admin TSE-Zuordnung  
+8. **K1** Deploy: Migrationen 143–150 auf Dev  
+9. **K3b** — Fiskaly-Wrapper (🔴)  
+10. **K7a** — Bon starten (Draft)
 
 Erst danach **K3b** (🔴 Fiskaly-Wrapper) und Bonfluss **K7**.
 
@@ -812,8 +812,8 @@ interface TseProviderInterface
 | | `checksum`, `message` |
 
 **Mock (K2b):** feste UUIDs/Serien, `signature_value=MOCK-…`, `qr_code_data` nichtleer, kein HTTP.  
-**K3a:** PHP-Interface exakt nach dieser Skizze (Arrays oder kleine DTO-Klassen — Entscheidung in K3a, Default = arrays).  
-**K3b:** `FiskalyTseProvider` wrappt `TseSignDeClient` + VAT-Logik aus `TseSignService`.
+**K3a:** erledigt — `TseProviderInterface` mit Arrays; `MockTseProvider implements TseProviderInterface`.  
+**K3b:** `FiskalyTseProvider` wrappt `TseSignDeClient` + VAT-Logik aus `TseSignService` (🔴).
 
 ---
 
@@ -836,7 +836,7 @@ interface TseProviderInterface
 | K0 | Anbieterzugang | [~] K0i Preis-Hypothese da; nur noch Sales-Zeile (Go Live) |
 | K1 | Datenmodell | [x] K1a–K1k |
 | K2 | Mock-TSE | [x] K2a–K2c |
-| K3 | Provider-Interface | [ ] |
+| K3 | Provider-Interface | [~] K3a+K3c+K3d; offen nur K3b 🔴 |
 | K4 | Admin Filialen | [ ] |
 | K5 | Admin Kassen | [ ] |
 | K6 | Admin TSE-Zuordnung | [~] Einstellungs-Tab existiert |

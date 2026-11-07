@@ -20,9 +20,11 @@ function expect_true(bool $cond, string $msg): void
     }
 }
 
+expect_true(interface_exists('TseProviderInterface'), 'Interface TseProviderInterface');
 expect_true(class_exists('MockTseProvider'), 'Klasse MockTseProvider');
 
 $mock = new MockTseProvider();
+expect_true($mock instanceof TseProviderInterface, 'Mock implementiert TseProviderInterface');
 expect_true($mock->getName() === 'mock', 'getName = mock');
 
 $status = $mock->getStatus();
