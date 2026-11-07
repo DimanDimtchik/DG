@@ -1,0 +1,68 @@
+<?php
+declare(strict_types=1);
+
+/** Kassensitzungen (K1j Stub). */
+final class CashSessionRepository
+{
+    private const TABLE = 'dg_cash_sessions';
+
+    public static function tableExists(): bool
+    {
+        return CashRegisterTable::tableExists(self::TABLE);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findById(int $id): ?array
+    {
+        return CashRegisterTable::findById(self::TABLE, $id);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function findOpenByRegister(int $registerId): ?array
+    {
+        if ($registerId <= 0 || !self::tableExists()) {
+            return null;
+        }
+        $stmt = Database::pdo()->prepare(
+            "SELECT * FROM dg_cash_sessions WHERE register_id = :rid AND status = 'open' ORDER BY id DESC LIMIT 1"
+        );
+        $stmt->execute(['rid' => $registerId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row === false ? null : $row;
+    }
+
+    /** @param array<string, mixed> $data */
+    public static function insert(array $data): int
+    {
+        return CashRegisterTable::insert(self::TABLE, [
+            'register_id' => (int) ($data['register_id'] ?? 0),
+            'business_date' => (string) ($data['business_date'] ?? date('Y-m-d')),
+            'status' => trim((string) ($data['status'] ?? 'open')) ?: 'open',
+            'opening_balance' => round((float) ($data['opening_balance'] ?? 0), 2),
+            'closing_expected_balance' => $data['closing_expected_balance'] ?? null,
+            'closing_counted_balance' => $data['closing_counted_balance'] ?? null,
+            'closing_difference' => $data['closing_difference'] ?? null,
+            'opened_by' => isset($data['opened_by']) ? (int) $data['opened_by'] : null,
+            'closed_by' => isset($data['closed_by']) ? (int) $data['closed_by'] : null,
+            'opened_at' => (string) ($data['opened_at'] ?? date('Y-m-d H:i:s')),
+            'closed_at' => $data['closed_at'] ?? null,
+            'notes' => trim((string) ($data['notes'] ?? '')),
+        ]);
+    }
+
+    /** @param array<string, mixed> $data */
+    public static function update(int $id, array $data): void
+    {
+        $fields = [];
+        foreach ([
+            'status', 'closing_expected_balance', 'closing_counted_balance', 'closing_difference',
+            'closed_by', 'closed_at', 'notes', 'opening_balance', 'business_date',
+        ] as $key) {
+            if (array_key_exists($key, $data)) {
+                $fields[$key] = $data[$key];
+            }
+        }
+        CashRegisterTable::update(self::TABLE, $id, $fields);
+    }
+}

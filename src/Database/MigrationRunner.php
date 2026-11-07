@@ -355,6 +355,16 @@ final class MigrationRunner
                 && self::tableExists($pdo, 'dg_contract_template_blocks'),
             '141_calendar_employee_day_windows.sql' => self::tableExists($pdo, 'dg_calendar_employee_day_windows'),
             '142_tse_transactions.sql' => self::tableExists($pdo, 'dg_tse_transactions'),
+            '143_cash_locations.sql' => self::tableExists($pdo, 'dg_cash_locations'),
+            '144_cash_registers.sql' => self::tableExists($pdo, 'dg_cash_registers'),
+            '145_cash_tse_assignments.sql' => self::tableExists($pdo, 'dg_cash_tse_assignments'),
+            '146_cash_sessions.sql' => self::tableExists($pdo, 'dg_cash_sessions'),
+            '147_cash_receipts.sql' => self::tableExists($pdo, 'dg_cash_receipts')
+                && self::tableExists($pdo, 'dg_cash_receipt_lines'),
+            '148_cash_payments.sql' => self::tableExists($pdo, 'dg_cash_payments'),
+            '149_cash_register_day_closings.sql' => self::tableExists($pdo, 'dg_cash_register_day_closings'),
+            '150_cash_audit_exports.sql' => self::tableExists($pdo, 'dg_cash_audit_log')
+                && self::tableExists($pdo, 'dg_cash_exports'),
             default => false,
         };
     }
@@ -508,6 +518,14 @@ final class MigrationRunner
             '140_contract_templates.sql' => true,
             '141_calendar_employee_day_windows.sql' => true,
             '142_tse_transactions.sql' => true,
+            '143_cash_locations.sql' => true,
+            '144_cash_registers.sql' => true,
+            '145_cash_tse_assignments.sql' => true,
+            '146_cash_sessions.sql' => true,
+            '147_cash_receipts.sql' => true,
+            '148_cash_payments.sql' => true,
+            '149_cash_register_day_closings.sql' => true,
+            '150_cash_audit_exports.sql' => true,
         ];
     }
 
