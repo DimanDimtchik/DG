@@ -160,8 +160,22 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | K7b | Position hinzufügen/ändern nur solange Draft | 🟡 | [x] add/update/removeLine |
 | K7c | Zahlung erfassen → Bon „zahlend“ | 🟡 | [x] status=`paying` |
 | K7d | TSE finish + Bon festschreiben (immutable) | 🔴 | [ ] |
-| K7e | Bon-Druck/PDF-Stub (Pflichtfelder + Platz QR) | 🟡 | [ ] |
-| K7f | Selftest: Draft→Position→Mock-TSE→fest | 🟡 | [ ] |
+| K7e | Bon-Druck/PDF-Stub (Pflichtfelder + Platz QR) | 🟡 | [x] HTML/PDF + QR-Platz |
+| K7f | Selftest: Draft→Position→Mock-TSE→fest | 🟡 | [x] `cash-receipt-flow-selftest` |
+
+#### K7e — umgesetzt
+
+- `CashReceiptPrintService::renderHtml` — Firma/Adresse, Bonnr., Zeit, Positionen, USt, Zahlungen
+- TSE-Block: QR+Prüfdaten aus Bon-Feldern; sonst Platzhalter „Platz für TSE-QR-Code“
+- `CashReceiptPdfService` (Dompdf); Download `?download=html|pdf` am Bon
+- UI: „Beleg anzeigen“ / „PDF“; Selftest `bin/cash-receipt-print-selftest.php`
+
+#### K7f — umgesetzt
+
+- Fluss: `startDraft` → `addLine` → `addPayment` → `finalizeWithTse(MockTseProvider)`
+- Speichert `tse_tx_id`, Signatur, QR, Serien am Bon; Status `finalized`; Druck ohne QR-Platzhalter
+- UI-Festschreiben nutzt `finalizeWithTse` (Mock/Assignment; Fiskaly weiter K3b/K7d)
+- Selftest: `bin/cash-receipt-flow-selftest.php`
 
 ---
 
@@ -558,13 +572,12 @@ Anhang zur FiBu-Vorlage; Nutzer füllt Platzhalter. CRM-Export-Einbindung = **K2
 
 ## Empfohlene Reihenfolge (nächste Mini-Schritte)
 
-1. **K7d** TSE finish + festschreiben (🔴) — danach K7e/f
-2. **K3b** FiskalyTseProvider (🔴) — Beleg-Pfad und Registerkasse teilen denselben Adapter
-3. **K9c/d** Auftrag→Bon / Doppel-Signatur (🔴)
-4. **K13b** / **K15e** Storno TSE + FiBu
-5. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
+1. **K3b** FiskalyTseProvider (🔴) — dann K7d Fiskaly-Finish am Bon
+2. **K9c/d** Auftrag→Bon / Doppel-Signatur (🔴)
+3. **K13b** / **K15e** Storno TSE + FiBu
+4. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live
 
-Erledigt bis hier u. a.: K0–K2, K3a/c/d, K4–K6, K7a–c, K9a+b. Bewusst später: K7d–f, K3b, Rest K8/K9.
+Erledigt bis hier u. a.: K0–K2, K3a/c/d, K4–K6, K7a–c+e+f, K8, K9a+b. Bewusst später: K7d, K3b, Rest K9c/d.
 
 ---
 
@@ -1153,7 +1166,7 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K4 | Admin Filialen | [x] K4a–K4d |
 | K5 | Admin Kassen | [x] K5a–K5d |
 | K6 | Admin TSE-Zuordnung | [x] K6a–K6d |
-| K7 | Bonfluss | [~] K7a–K7c; offen K7d–K7f |
+| K7 | Bonfluss | [~] K7a–c+e+f ✅; offen K7d 🔴 (Fiskaly-Finish) |
 | K8 | Zahlungsarten | [x] K8a–e ✅ |
 | K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
 | K10 | Mobile Kasse | [x] K10a–c |

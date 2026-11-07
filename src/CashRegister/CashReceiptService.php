@@ -282,10 +282,101 @@ final class CashReceiptService
     }
 
     /**
-     * Voll bezahlten Bon ohne TSE festschreiben (Test-/Zwischenpfad bis TSE-Finish).
+     * Voll bezahlten Bon ohne TSE festschreiben (Test-/Zwischenpfad).
      * K8d: offener Rest blockiert Finish.
      */
     public static function finalizeWithoutTse(int $receiptId): void
+    {
+        self::assertReadyToFinalize($receiptId);
+        CashReceiptRepository::updateReceipt($receiptId, [
+            'status' => self::STATUS_FINALIZED,
+            'finished_at' => date('Y-m-d H:i:s'),
+        ]);
+        // K15b–d: Bar/EC/Karte/Gutschein → FiBu (Storno: K15e)
+        CashRegisterFiBuPostingService::postForFinalizedReceipt($receiptId);
+    }
+
+    /**
+     * Bon mit TSE abschließen und festschreiben (K7f / Vorbereitung K7d).
+     * Default-Provider: Mock bzw. Assignment über TseProviderFactory.
+     *
+     * @return array<string, mixed> Provider-Finish-Ergebnis
+     */
+    public static function finalizeWithTse(int $receiptId, ?TseProviderInterface $provider = null): array
+    {
+        $receipt = self::assertReadyToFinalize($receiptId);
+        if (trim((string) ($receipt['tse_tx_id'] ?? '')) !== ''
+            && ($receipt['status'] ?? '') === self::STATUS_FINALIZED
+        ) {
+            throw new RuntimeException('Bon ist bereits mit TSE festgeschrieben.');
+        }
+
+        $registerId = (int) ($receipt['register_id'] ?? 0);
+        $register = $registerId > 0 ? CashRegisterRepository::findById($registerId) : null;
+        $clientSerial = is_array($register)
+            ? trim((string) ($register['code'] ?? ''))
+            : '';
+        if ($clientSerial === '') {
+            $clientSerial = MockTseProvider::CLIENT_SERIAL;
+        }
+
+        if ($provider === null) {
+            $assignment = null;
+            $assignmentId = (int) ($receipt['tse_assignment_id'] ?? 0);
+            if ($assignmentId > 0 && class_exists('CashTseAssignmentRepository')) {
+                $assignment = CashTseAssignmentRepository::findById($assignmentId);
+            } elseif ($registerId > 0 && class_exists('CashTseAssignmentRepository')) {
+                $assignment = CashTseAssignmentRepository::findByRegisterId($registerId);
+            }
+            $provider = TseProviderFactory::fromAssignment(
+                is_array($assignment) ? $assignment : null
+            );
+        }
+
+        $gross = round((float) ($receipt['total_gross'] ?? 0), 2);
+        $input = [
+            'receipt_type' => (string) ($receipt['receipt_type'] ?? 'sale'),
+            'amount_gross' => $gross,
+            'client_serial_number' => $clientSerial,
+        ];
+
+        $txId = class_exists('TseSignService')
+            ? TseSignService::uuidV4()
+            : self::uuidV4Fallback();
+        $start = $provider->startTransaction($txId, $input);
+        $rev = (int) ($start['revision'] ?? 1);
+        $upd = $provider->updateTransaction($txId, $rev, $input);
+        $rev = (int) ($upd['revision'] ?? $rev);
+        $fin = $provider->finishTransaction($txId, $rev, $input);
+        if (($fin['state'] ?? '') !== 'FINISHED') {
+            throw new RuntimeException('TSE-Abschluss fehlgeschlagen (kein FINISHED).');
+        }
+        $qr = trim((string) ($fin['qr_code_data'] ?? ''));
+        if ($qr === '') {
+            throw new RuntimeException('TSE-Abschluss ohne QR-Daten.');
+        }
+
+        CashReceiptRepository::updateReceipt($receiptId, [
+            'status' => self::STATUS_FINALIZED,
+            'finished_at' => date('Y-m-d H:i:s'),
+            'tse_tx_id' => (string) ($fin['tse_tx_id'] ?? $txId),
+            'transaction_number' => isset($fin['tx_number']) ? (int) $fin['tx_number'] : null,
+            'tse_serial' => (string) ($fin['tss_serial_number'] ?? ''),
+            'signature_counter' => (string) ($fin['signature_counter'] ?? ''),
+            'signature_value' => $fin['signature_value'] ?? null,
+            'signature_algorithm' => (string) ($fin['signature_algorithm'] ?? ''),
+            'qr_code_data' => $qr,
+            'time_start' => isset($fin['time_start']) ? (int) $fin['time_start'] : null,
+            'time_end' => isset($fin['time_end']) ? (int) $fin['time_end'] : null,
+            'tse_outage' => 0,
+        ]);
+        CashRegisterFiBuPostingService::postForFinalizedReceipt($receiptId);
+
+        return $fin;
+    }
+
+    /** @return array<string, mixed> */
+    private static function assertReadyToFinalize(int $receiptId): array
     {
         $receipt = self::requirePayable($receiptId);
         if (CashReceiptRepository::listLines($receiptId) === []) {
@@ -305,12 +396,17 @@ final class CashReceiptService
         if ($open < -0.009) {
             throw new RuntimeException('Zahlungen übersteigen den Bon-Brutto.');
         }
-        CashReceiptRepository::updateReceipt($receiptId, [
-            'status' => self::STATUS_FINALIZED,
-            'finished_at' => date('Y-m-d H:i:s'),
-        ]);
-        // K15b–d: Bar/EC/Karte/Gutschein → FiBu (Storno: K15e)
-        CashRegisterFiBuPostingService::postForFinalizedReceipt($receiptId);
+
+        return $receipt;
+    }
+
+    private static function uuidV4Fallback(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 
     /**

@@ -81,6 +81,16 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
         · Kasse <?= View::escape($regLabel) ?>
       <?php endif; ?>
     </p>
+    <div class="dg-btn-row">
+      <a class="dg-button dg-button--small"
+         href="<?= $bonUrl ?>&amp;download=html"
+         target="_blank" rel="noopener">Beleg anzeigen</a>
+      <?php if (class_exists('CashReceiptPdfService') && CashReceiptPdfService::isAvailable()) : ?>
+        <a class="dg-button dg-button--small"
+           href="<?= $bonUrl ?>&amp;download=pdf"
+           target="_blank" rel="noopener">PDF</a>
+      <?php endif; ?>
+    </div>
   </header>
 
   <div class="dg-cash-bon__totals dg-panel" aria-live="polite">
@@ -375,7 +385,7 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
       <h2 class="dg-subsection-title">Festschreiben</h2>
       <p class="dg-field-hint">
         Summe der Zahlungen entspricht dem Bon-Brutto (gemischt = mehrere Zeilen).
-        TSE-Signatur folgt später — jetzt ohne TSE festschreiben.
+        Festschreiben signiert über die TSE der Kasse (Mock oder zugewiesener Anbieter).
       </p>
       <form class="dg-form" method="post" action="<?= $bonUrl ?>">
         <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">

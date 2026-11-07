@@ -3164,8 +3164,8 @@ switch ($path) {
                     throw new RuntimeException('Bon fehlt.');
                 }
                 if (isset($_POST['cash_receipt_finalize'])) {
-                    CashReceiptService::finalizeWithoutTse($lineReceiptId);
-                    Flash::set('success', 'Bon festgeschrieben (ohne TSE — Signatur folgt).');
+                    CashReceiptService::finalizeWithTse($lineReceiptId);
+                    Flash::set('success', 'Bon festgeschrieben und TSE-signiert.');
                 } elseif (isset($_POST['cash_receipt_payment_delete'])) {
                     CashReceiptService::removePayment($lineReceiptId, max(0, (int) ($_POST['payment_id'] ?? 0)));
                     Flash::set('success', 'Zahlung entfernt.');
@@ -9413,6 +9413,43 @@ switch ($path) {
             $cashReceiptLines = CashReceiptRepository::listLines($cashReceiptId);
             $cashReceiptPayments = CashPaymentRepository::listByReceipt($cashReceiptId);
             $cashReceiptRegister = CashRegisterRepository::findById((int) ($cashReceipt['register_id'] ?? 0));
+
+            // K7e: Bon-Druck HTML/PDF (Pflichtfelder + QR-Platz)
+            $cashBonDownload = strtolower(trim((string) ($_GET['download'] ?? '')));
+            if (in_array($cashBonDownload, ['pdf', 'html'], true)) {
+                try {
+                    if ($cashBonDownload === 'html') {
+                        $html = CashReceiptPrintService::renderHtml(
+                            $cashReceipt,
+                            $cashReceiptLines,
+                            $cashReceiptPayments,
+                            is_array($cashReceiptRegister) ? $cashReceiptRegister : null
+                        );
+                        $name = CashReceiptPrintService::filename($cashReceipt, 'html');
+                        header('Content-Type: text/html; charset=UTF-8');
+                        header('Content-Disposition: inline; filename="' . rawurlencode($name) . '"');
+                        echo $html;
+                        exit;
+                    }
+                    $pdf = CashReceiptPdfService::renderPdf(
+                        $cashReceipt,
+                        $cashReceiptLines,
+                        $cashReceiptPayments,
+                        is_array($cashReceiptRegister) ? $cashReceiptRegister : null
+                    );
+                    $name = CashReceiptPrintService::filename($cashReceipt, 'pdf');
+                    header('Content-Type: application/pdf');
+                    header('Content-Disposition: inline; filename="' . rawurlencode($name) . '"');
+                    header('Content-Length: ' . (string) strlen($pdf));
+                    echo $pdf;
+                    exit;
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header('Location: /app?page=registerkasse-bon&id=' . $cashReceiptId, true, 302);
+                    exit;
+                }
+            }
+
             $cashReceiptEditLine = null;
             $editLineId = max(0, (int) ($_GET['line_id'] ?? 0));
             if ($editLineId > 0 && ($cashReceipt['status'] ?? '') === 'draft') {

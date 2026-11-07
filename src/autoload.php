@@ -336,6 +336,8 @@ spl_autoload_register(static function (string $class): void {
         'CashSessionService' => '/src/CashRegister/CashSessionService.php',
         'CashReceiptRepository' => '/src/CashRegister/CashReceiptRepository.php',
         'CashReceiptService' => '/src/CashRegister/CashReceiptService.php',
+        'CashReceiptPrintService' => '/src/CashRegister/CashReceiptPrintService.php',
+        'CashReceiptPdfService' => '/src/CashRegister/CashReceiptPdfService.php',
         'CashPaymentRepository' => '/src/CashRegister/CashPaymentRepository.php',
         'CashRegisterDayClosingRepository' => '/src/CashRegister/CashRegisterDayClosingRepository.php',
         'CashRegisterDayClosingService' => '/src/CashRegister/CashRegisterDayClosingService.php',
