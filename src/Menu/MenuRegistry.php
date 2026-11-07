@@ -606,6 +606,30 @@ final class MenuRegistry
     }
 
     /**
+     * Registerkasse (Filialen, später Kassen/TSE) — gleiche Rechte wie Buchhaltung.
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function registerkasseSection(User $user): ?array
+    {
+        if (!self::canAccessBuchhaltung($user)) {
+            return null;
+        }
+
+        return [
+            'label' => 'Registerkasse',
+            'items' => [
+                [
+                    'slug' => 'registerkasse-filialen',
+                    'label' => 'Filialen',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-filialen',
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Kurztexte für Dashboard-Kacheln (Icon + Titel + Beschreibung).
      * Ziel: 2–3 Zeilen, sachlich, überall vorhanden.
      *
@@ -654,6 +678,7 @@ final class MenuRegistry
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Auszüge je Geschäftsjahr auf einen Blick.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten mit Personenkonten.',
             'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.',
+            'registerkasse-filialen' => 'Betriebsstätten und Filialen für die Registerkasse verwalten.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
             'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Umsätze Belegen zuordnen.',
@@ -854,6 +879,19 @@ final class MenuRegistry
             }
         }
 
+        $registerkasse = self::registerkasseSection($user);
+        if ($registerkasse !== null) {
+            foreach ($registerkasse['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => self::tileDescription($item['slug'], $descriptions),
+                ];
+            }
+        }
+
         $website = self::websiteSection($user);
         if ($website !== null) {
             foreach ($website['items'] as $item) {
@@ -930,6 +968,8 @@ final class MenuRegistry
             || $slug === 'buchhaltung-kontenuebersicht'
             || $slug === 'buchhaltung-opos'
             || $slug === 'buchhaltung-kassenbuch'
+            || $slug === 'registerkasse-filialen'
+            || $slug === 'registerkasse-filiale-form'
             || $slug === 'buchhaltung-manuelle-buchung'
             || $slug === 'buchhaltung-auswertungen'
             || $slug === 'buchhaltung-bwa'

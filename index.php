@@ -1223,6 +1223,7 @@ switch ($path) {
         $menuItems = MenuRegistry::modules($user);
         $settingsItem = MenuRegistry::settingsItem($user);
         $buchhaltungSection = MenuRegistry::buchhaltungSection($user);
+        $registerkasseSection = MenuRegistry::registerkasseSection($user);
         $dienstleistungenSection = MenuRegistry::dienstleistungenSection($user);
         $hrSection = MenuRegistry::hrSection($user);
         $lohnSection = MenuRegistry::lohnSection($user);
@@ -2837,6 +2838,65 @@ switch ($path) {
             }
             header('Location: /app?page=rezeptur-form&action=edit&id=' . $runId, true, 302);
             exit;
+        }
+
+        // POST: Registerkasse Filiale speichern (K4c)
+        if (
+            $page === 'registerkasse-filiale-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['cash_location_save'])
+            && MenuRegistry::canAccess($user, 'registerkasse-filiale-form')
+        ) {
+            $locId = max(0, (int) ($_POST['cash_location_id'] ?? $_GET['id'] ?? 0));
+            $back = '/app?page=registerkasse-filiale-form' . ($locId > 0 ? '&id=' . $locId : '');
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Ungültiges Formular (CSRF) bzw. keine Berechtigung.');
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+            if (!Database::isConfigured()) {
+                Flash::set('error', 'Datenbank nicht verbunden.');
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
+            try {
+                $payload = [
+                    'code' => trim((string) ($_POST['code'] ?? '')),
+                    'name' => trim((string) ($_POST['name'] ?? '')),
+                    'street' => trim((string) ($_POST['street'] ?? '')),
+                    'zip' => trim((string) ($_POST['zip'] ?? '')),
+                    'city' => trim((string) ($_POST['city'] ?? '')),
+                    'country' => trim((string) ($_POST['country'] ?? 'DE')),
+                    'notes' => trim((string) ($_POST['notes'] ?? '')),
+                    'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                ];
+                if ($payload['code'] === '' || $payload['name'] === '') {
+                    throw new RuntimeException('Kürzel und Name sind Pflicht.');
+                }
+                if ($locId > 0) {
+                    $existing = CashLocationRepository::findById($locId);
+                    if ($existing === null) {
+                        throw new RuntimeException('Filiale nicht gefunden.');
+                    }
+                    unset($payload['code']);
+                    CashLocationRepository::update($locId, $payload);
+                    Flash::set('success', 'Filiale gespeichert.');
+                    header('Location: /app?page=registerkasse-filiale-form&id=' . $locId, true, 302);
+                    exit;
+                }
+                $dup = CashLocationRepository::findByCode($payload['code']);
+                if ($dup !== null) {
+                    throw new RuntimeException('Kürzel ist bereits vergeben.');
+                }
+                $newId = CashLocationRepository::insert($payload);
+                Flash::set('success', 'Filiale angelegt.');
+                header('Location: /app?page=registerkasse-filiale-form&id=' . $newId, true, 302);
+                exit;
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: ' . $back, true, 302);
+                exit;
+            }
         }
 
         // POST: Gutscheine
@@ -5273,7 +5333,7 @@ switch ($path) {
                 $calendarAreas = CalendarStaffRepository::getAreas();
                 View::render('layout/app', compact(
                     'title', 'user', 'navMode', 'departments', 'contentTemplate', 'area', 'dept',
-                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'lohnSection', 'warenwirtschaftSection', 'buchhaltungSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
+                    'menuItems', 'settingsItem', 'dienstleistungenSection', 'hrSection', 'lohnSection', 'warenwirtschaftSection', 'buchhaltungSection', 'registerkasseSection', 'websiteSection', 'kommunikationSection', 'kdvSection',
                     'currentPage', 'settingsNav', 'settingsSelection',
                     'flash', 'dbConfig', 'dbConnected', 'canEdit', 'sidebarItems', 'voucherId', 'form', 'formError',
                     'chartOfAccountsConfig', 'voucherChain', 'followUpKinds', 'chainSummary', 'calendarAreas',
@@ -8605,6 +8665,44 @@ $legalProductsConfig = LegalProductSettings::config();
         } elseif ($page === 'buchhaltung-kassenbuch') {
             header('Location: /app', true, 302);
             exit;
+        } elseif ($page === 'registerkasse-filialen' && MenuRegistry::canAccess($user, 'registerkasse-filialen')) {
+            $cashLocationStatus = strtolower(trim((string) ($_GET['status'] ?? 'all')));
+            if (!in_array($cashLocationStatus, ['all', 'active', 'inactive'], true)) {
+                $cashLocationStatus = 'all';
+            }
+            $cashLocations = Database::isConfigured()
+                ? CashLocationRepository::listFiltered($cashLocationStatus)
+                : [];
+            $contentTemplate = 'modules/registerkasse-filialen';
+            $title = 'Filialen';
+            $currentPage = 'registerkasse-filialen';
+        } elseif ($page === 'registerkasse-filiale-form' && MenuRegistry::canAccess($user, 'registerkasse-filiale-form')) {
+            $cashLocationId = max(0, (int) ($_GET['id'] ?? 0));
+            $cashLocationForm = [
+                'code' => '',
+                'name' => '',
+                'street' => '',
+                'zip' => '',
+                'city' => '',
+                'country' => 'DE',
+                'notes' => '',
+                'is_active' => 1,
+            ];
+            if ($cashLocationId > 0 && Database::isConfigured()) {
+                $existing = CashLocationRepository::findById($cashLocationId);
+                if ($existing === null) {
+                    Flash::set('error', 'Filiale nicht gefunden.');
+                    header('Location: /app?page=registerkasse-filialen', true, 302);
+                    exit;
+                }
+                $cashLocationForm = $existing;
+            }
+            $contentTemplate = 'modules/registerkasse-filiale-form';
+            $title = $cashLocationId > 0 ? 'Filiale bearbeiten' : 'Filiale anlegen';
+            $currentPage = 'registerkasse-filialen';
+        } elseif ($page === 'registerkasse-filialen' || $page === 'registerkasse-filiale-form') {
+            header('Location: /app', true, 302);
+            exit;
         } elseif ($page === 'einstellungen') {
             if (!MenuRegistry::canAccess($user, 'einstellungen')) {
                 header('Location: /app', true, 302);
@@ -10871,6 +10969,11 @@ $legalProductsConfig = LegalProductSettings::config();
         ];
         $voucherLinkedMails = $voucherLinkedMails ?? [];
         $buchhaltungSection = $buchhaltungSection ?? MenuRegistry::buchhaltungSection($user);
+        $registerkasseSection = $registerkasseSection ?? MenuRegistry::registerkasseSection($user);
+        $cashLocations = $cashLocations ?? [];
+        $cashLocationStatus = $cashLocationStatus ?? 'all';
+        $cashLocationForm = $cashLocationForm ?? [];
+        $cashLocationId = $cashLocationId ?? 0;
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
         $hrSection = $hrSection ?? MenuRegistry::hrSection($user);
         $lohnSection = $lohnSection ?? MenuRegistry::lohnSection($user);
@@ -11263,12 +11366,17 @@ $legalProductsConfig = LegalProductSettings::config();
             'lohnSection',
             'warenwirtschaftSection',
             'buchhaltungSection',
+            'registerkasseSection',
             'websiteSection',
             'kommunikationSection',
             'kdvSection',
             'belegeFocus',
             'belegeFormFocus',
             'currentPage',
+            'cashLocations',
+            'cashLocationStatus',
+            'cashLocationForm',
+            'cashLocationId',
             'settingsNav',
             'settingsSelection',
             'flash',

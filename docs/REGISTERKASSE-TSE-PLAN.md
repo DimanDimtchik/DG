@@ -123,10 +123,10 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K4a | Menüpunkt + leere Listen-Seite (UI-Katalog) | 🟡 | [ ] |
-| K4b | Formular anlegen/bearbeiten (Name, Adresse, aktiv) | 🟡 | [ ] |
-| K4c | Speichern POST + Flash + CSRF | 🟡 | [ ] |
-| K4d | Liste mit aktiv/inaktiv-Filter | 🟡 | [ ] |
+| K4a | Menüpunkt + leere Listen-Seite (UI-Katalog) | 🟡 | [x] `registerkasse-filialen` |
+| K4b | Formular anlegen/bearbeiten (Name, Adresse, aktiv) | 🟡 | [x] `registerkasse-filiale-form` |
+| K4c | Speichern POST + Flash + CSRF | 🟡 | [x] |
+| K4d | Liste mit aktiv/inaktiv-Filter | 🟡 | [x] |
 
 ---
 
@@ -316,9 +316,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
 
-1. **K4a** — Filial-Admin Liste  
+1. **K5a** — Admin Kassen-Liste  
 2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
-3. **K4b** — Filial-Formular  
+3. **K5b** — Kassen-Formular  
 4. **K4a–K4c** — Filial-Admin (je einzeln)  
 5. **K9a** — Ist-Stand Beleg-TSE festhalten  
 6. **K5** — Admin Kassen  
@@ -837,7 +837,7 @@ interface TseProviderInterface
 | K1 | Datenmodell | [x] K1a–K1k |
 | K2 | Mock-TSE | [x] K2a–K2c |
 | K3 | Provider-Interface | [~] K3a+K3c+K3d; offen nur K3b 🔴 |
-| K4 | Admin Filialen | [ ] |
+| K4 | Admin Filialen | [x] K4a–K4d |
 | K5 | Admin Kassen | [ ] |
 | K6 | Admin TSE-Zuordnung | [~] Einstellungs-Tab existiert |
 | K7 | Bonfluss | [ ] |

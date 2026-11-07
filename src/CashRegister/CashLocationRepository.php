@@ -37,6 +37,26 @@ final class CashLocationRepository
         return CashRegisterTable::listAll(self::TABLE, $activeOnly);
     }
 
+    /**
+     * @param 'all'|'active'|'inactive' $status
+     * @return list<array<string, mixed>>
+     */
+    public static function listFiltered(string $status = 'all'): array
+    {
+        if ($status === 'active') {
+            return self::listAll(true);
+        }
+        $rows = self::listAll(false);
+        if ($status === 'inactive') {
+            return array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => empty($row['is_active'])
+            ));
+        }
+
+        return $rows;
+    }
+
     /** @param array<string, mixed> $data */
     public static function insert(array $data): int
     {
