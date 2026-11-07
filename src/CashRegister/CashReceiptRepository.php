@@ -205,6 +205,106 @@ final class CashReceiptRepository
         return $rows;
     }
 
+    /**
+     * Unveränderbares Bon-Journal (K16a): nur festgeschriebene Bons, Filter Kasse/Geschäftstag.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listJournal(
+        ?int $registerId = null,
+        ?string $businessDate = null,
+        int $limit = 200
+    ): array {
+        if (!self::tableExists()) {
+            return [];
+        }
+        $limit = max(1, min(500, $limit));
+        $sql = 'SELECT r.*,
+                       reg.code AS register_code, reg.name AS register_name,
+                       l.code AS location_code, l.name AS location_name,
+                       s.business_date AS business_date
+                FROM dg_cash_receipts r
+                LEFT JOIN dg_cash_registers reg ON reg.id = r.register_id
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id
+                LEFT JOIN dg_cash_sessions s ON s.id = r.session_id
+                WHERE r.status = \'finalized\'';
+        $params = [];
+        if ($registerId !== null && $registerId > 0) {
+            $sql .= ' AND r.register_id = :rid';
+            $params['rid'] = $registerId;
+        }
+        $date = trim((string) $businessDate);
+        if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1) {
+            $sql .= ' AND s.business_date = :bd';
+            $params['bd'] = $date;
+        }
+        $sql .= ' ORDER BY s.business_date DESC, r.finished_at DESC, r.id DESC LIMIT ' . $limit;
+        $stmt = $params === []
+            ? Database::pdo()->query($sql)
+            : Database::pdo()->prepare($sql);
+        if ($stmt === false) {
+            return [];
+        }
+        if ($params !== []) {
+            $stmt->execute($params);
+        }
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Festgeschriebene Bons im Zeitraum (K16b CSV).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function listJournalRange(
+        ?int $registerId,
+        string $dateFrom,
+        string $dateTo,
+        int $limit = 5000
+    ): array {
+        if (!self::tableExists()) {
+            return [];
+        }
+        $from = trim($dateFrom);
+        $to = trim($dateTo);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) !== 1 || preg_match('/^\d{4}-\d{2}-\d{2}$/', $to) !== 1) {
+            throw new InvalidArgumentException('Zeitraum ungültig — bitte Von/Bis als Datum angeben.');
+        }
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+        $limit = max(1, min(10000, $limit));
+        $sql = 'SELECT r.*,
+                       reg.code AS register_code, reg.name AS register_name,
+                       l.code AS location_code, l.name AS location_name,
+                       s.business_date AS business_date
+                FROM dg_cash_receipts r
+                LEFT JOIN dg_cash_registers reg ON reg.id = r.register_id
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id
+                LEFT JOIN dg_cash_sessions s ON s.id = r.session_id
+                WHERE r.status = \'finalized\'
+                  AND s.business_date BETWEEN :df AND :dt';
+        $params = ['df' => $from, 'dt' => $to];
+        if ($registerId !== null && $registerId > 0) {
+            $sql .= ' AND r.register_id = :rid';
+            $params['rid'] = $registerId;
+        }
+        $sql .= ' ORDER BY s.business_date ASC, r.finished_at ASC, r.id ASC LIMIT ' . $limit;
+        $stmt = Database::pdo()->prepare($sql);
+        $stmt->execute($params);
+        $rows = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     /** @param array<string, mixed> $data */
     public static function insertReceipt(array $data): int
     {

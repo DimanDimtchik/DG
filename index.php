@@ -9244,6 +9244,61 @@ switch ($path) {
             $contentTemplate = 'modules/registerkasse-bons';
             $title = 'Bons';
             $currentPage = 'registerkasse-bons';
+        } elseif ($page === 'registerkasse-journal' && MenuRegistry::canAccess($user, 'registerkasse-journal')) {
+            $cashJournalRegisterId = max(0, (int) ($_GET['register_id'] ?? 0));
+            $cashJournalDate = trim((string) ($_GET['business_date'] ?? date('Y-m-d')));
+            if ($cashJournalDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $cashJournalDate)) {
+                $cashJournalDate = date('Y-m-d');
+            }
+            $cashJournalDateFrom = trim((string) ($_GET['date_from'] ?? $cashJournalDate));
+            $cashJournalDateTo = trim((string) ($_GET['date_to'] ?? $cashJournalDate));
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $cashJournalDateFrom)) {
+                $cashJournalDateFrom = $cashJournalDate;
+            }
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $cashJournalDateTo)) {
+                $cashJournalDateTo = $cashJournalDate;
+            }
+
+            if (
+                isset($_GET['export'])
+                && (string) $_GET['export'] === 'csv'
+                && Database::isConfigured()
+            ) {
+                try {
+                    CashReceiptJournalCsvExport::downloadAndExit(
+                        $cashJournalDateFrom,
+                        $cashJournalDateTo,
+                        $cashJournalRegisterId,
+                        (int) ($user->id ?? 0)
+                    );
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                    header(
+                        'Location: /app?page=registerkasse-journal'
+                        . '&register_id=' . $cashJournalRegisterId
+                        . '&business_date=' . rawurlencode($cashJournalDate)
+                        . '&date_from=' . rawurlencode($cashJournalDateFrom)
+                        . '&date_to=' . rawurlencode($cashJournalDateTo),
+                        true,
+                        302
+                    );
+                    exit;
+                }
+            }
+
+            $cashRegisterOptions = Database::isConfigured()
+                ? CashRegisterRepository::listAll(null, false)
+                : [];
+            $cashJournalReceipts = Database::isConfigured()
+                ? CashReceiptRepository::listJournal(
+                    $cashJournalRegisterId > 0 ? $cashJournalRegisterId : null,
+                    $cashJournalDate !== '' ? $cashJournalDate : null,
+                    200
+                )
+                : [];
+            $contentTemplate = 'modules/registerkasse-journal';
+            $title = 'Bon-Journal';
+            $currentPage = 'registerkasse-journal';
         } elseif ($page === 'registerkasse-bon' && MenuRegistry::canAccess($user, 'registerkasse-bon')) {
             $cashReceiptId = max(0, (int) ($_GET['id'] ?? 0));
             $cashReceipt = null;
@@ -11614,6 +11669,11 @@ switch ($path) {
         $cashReceiptRegister = $cashReceiptRegister ?? null;
         $cashReceiptEditLine = $cashReceiptEditLine ?? null;
         $cashReceiptRegisterId = $cashReceiptRegisterId ?? 0;
+        $cashJournalReceipts = $cashJournalReceipts ?? [];
+        $cashJournalRegisterId = $cashJournalRegisterId ?? 0;
+        $cashJournalDate = $cashJournalDate ?? date('Y-m-d');
+        $cashJournalDateFrom = $cashJournalDateFrom ?? $cashJournalDate;
+        $cashJournalDateTo = $cashJournalDateTo ?? $cashJournalDate;
         $cashRegisterOptions = $cashRegisterOptions ?? [];
         $cashOpenRegisterOptions = $cashOpenRegisterOptions ?? [];
         $dienstleistungenSection = $dienstleistungenSection ?? MenuRegistry::dienstleistungenSection($user);
@@ -12038,6 +12098,11 @@ switch ($path) {
             'cashReceiptRegister',
             'cashReceiptEditLine',
             'cashReceiptRegisterId',
+            'cashJournalReceipts',
+            'cashJournalRegisterId',
+            'cashJournalDate',
+            'cashJournalDateFrom',
+            'cashJournalDateTo',
             'cashRegisterOptions',
             'cashOpenRegisterOptions',
             'settingsNav',

@@ -30,6 +30,9 @@ $statusLabels = [
       <h1 class="dg-page-title">Bons</h1>
       <p class="dg-lead">Verkaufsbons je Kasse — neuer Bon startet als Entwurf.</p>
     </div>
+    <div class="dg-page-header__actions">
+      <a class="dg-button" href="/app?page=registerkasse-journal">Zum Bon-Journal</a>
+    </div>
   </header>
 
   <?php if (!$dbConnected) : ?>

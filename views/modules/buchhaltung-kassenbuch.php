@@ -39,8 +39,12 @@ $csrf = Csrf::token();
 
   <div class="dg-flash dg-flash--info">
     Das Kassenbuch ist getrennt von der Registerkasse (Ladenkasse). Der Tagesabschluss hier zählt den
-    Kassenbuch-Bestand — nicht die Summen der Ladenkasse.
-    <a class="dg-button dg-button--small" href="/app?page=registerkasse-tagesabschluss">Zur Registerkasse</a>
+    Kassenbuch-Bestand — nicht die Summen der Ladenkasse. Baranteile aus Registerkassen-Bons erscheinen
+    hier als Einzahlungen; alle Zahlarten der Ladenkasse stehen im Bon-Journal.
+    <span class="dg-btn-row">
+      <a class="dg-button dg-button--small" href="/app?page=registerkasse-journal">Zum Bon-Journal</a>
+      <a class="dg-button dg-button--small" href="/app?page=registerkasse-tagesabschluss">Zum Register-Tagesabschluss</a>
+    </span>
   </div>
 
   <?php if (!$dbConnected) : ?>

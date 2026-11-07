@@ -626,6 +626,12 @@ final class MenuRegistry
                     'href' => '/app?page=registerkasse-bons',
                 ],
                 [
+                    'slug' => 'registerkasse-journal',
+                    'label' => 'Bon-Journal',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-journal',
+                ],
+                [
                     'slug' => 'registerkasse-filialen',
                     'label' => 'Filialen',
                     'icon' => 'receipt',
@@ -703,6 +709,7 @@ final class MenuRegistry
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten mit Personenkonten.',
             'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.',
             'registerkasse-bons' => 'Verkaufsbons starten und Entwürfe je Kasse verfolgen.',
+            'registerkasse-journal' => 'Festgeschriebene Bons unveränderbar nach Kasse und Tag einsehen.',
             'registerkasse-filialen' => 'Betriebsstätten und Filialen für die Registerkasse verwalten.',
             'registerkasse-kassen' => 'Kassen je Filiale mit eigener ID und Bon-Nummernkreis.',
             'registerkasse-sitzung-oeffnen' => 'Kassensitzung öffnen — Bediener und Anfangsbestand erfassen.',
@@ -1000,6 +1007,7 @@ final class MenuRegistry
             || $slug === 'buchhaltung-kassenbuch'
             || $slug === 'registerkasse-bons'
             || $slug === 'registerkasse-bon'
+            || $slug === 'registerkasse-journal'
             || $slug === 'registerkasse-filialen'
             || $slug === 'registerkasse-filiale-form'
             || $slug === 'registerkasse-kassen'

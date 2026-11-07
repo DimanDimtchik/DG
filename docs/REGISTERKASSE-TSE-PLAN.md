@@ -391,9 +391,9 @@ Bon finalized
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K16a | Unveränderbare Bon-Liste (Filter Kasse/Tag) | 🟡 | [ ] |
-| K16b | Export CSV Zeitraum | 🟡 | [ ] |
-| K16c | Abgleich/Anzeige vs. FiBu-Kassenbuch (nur Link/Hinweis) | 🟢 | [ ] |
+| K16a | Unveränderbare Bon-Liste (Filter Kasse/Tag) | 🟡 | [x] `listJournal` + Seite `registerkasse-journal` |
+| K16b | Export CSV Zeitraum | 🟡 | [x] `CashReceiptJournalCsvExport` + `listJournalRange` |
+| K16c | Abgleich/Anzeige vs. FiBu-Kassenbuch (nur Link/Hinweis) | 🟢 | [x] Hinweis + Links Journal ↔ Kassenbuch |
 
 ---
 
@@ -1053,4 +1053,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K13 | Storno | [~] K13c ✅ + K13a Datenpfad ohne TSE; offen K13b + UI |
 | K14 | TSE-Ausfall | [~] K14a–c ✅; offen K14d |
 | K15 | FiBu-Buchungen | [~] K15a–d ✅; offen K15e |
-| K16–K21 | Rest | [ ] |
+| K16 | Journale | [x] K16a–c |
+| K17–K21 | Rest | [ ] |
