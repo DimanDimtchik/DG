@@ -5861,6 +5861,7 @@ switch ($path) {
                         null,
                         null,
                         $user->id,
+                        max(0, (int) ($_POST['payment_new_cash_register_id'] ?? 0)) ?: null,
                     );
                     Flash::set('success', 'Zahlung erfasst.');
                 } catch (Throwable $e) {

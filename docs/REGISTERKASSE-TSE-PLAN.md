@@ -181,8 +181,8 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K9a | Ist-Stand dokumentieren (Beleg-Barzahlung + `dg_tse_transactions`) | 🟢 | [~] |
-| K9b | Beleg-Barzahlung an `cash_register` koppeln (welche Kasse) | 🟡 | [ ] |
+| K9a | Ist-Stand dokumentieren (Beleg-Barzahlung + `dg_tse_transactions`) | 🟢 | [x] siehe § K9a |
+| K9b | Beleg-Barzahlung an `cash_register` koppeln (welche Kasse) | 🟡 | [x] `cash_register_id` + UI |
 | K9c | Optional: aus Auftrag Bon erzeugen (gleiche Provider-Pipeline) | 🔴 | [ ] |
 | K9d | Doppelte Signatur vermeiden (ein Zahlungsweg = eine Tx) | 🔴 | [ ] |
 
@@ -314,20 +314,15 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ---
 
-## Empfohlene Reihenfolge (nächste 10 Mini-Schritte)
+## Empfohlene Reihenfolge (nächste Mini-Schritte)
 
-1. **K7d** TSE finish + festschreiben (🔴) oder **K9a** Ist-Stand Beleg-TSE
-2. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live
-3. **K3b** FiskalyTseProvider (🔴) — für echte Ping-Prüfung gegen fiskaly
-4. **K4a–K4c** — Filial-Admin (je einzeln)  
-5. **K9a** — Ist-Stand Beleg-TSE festhalten  
-6. **K5** — Admin Kassen  
-7. **K6** — Admin TSE-Zuordnung  
-8. **K1** Deploy: Migrationen 143–150 auf Dev  
-9. **K3b** — Fiskaly-Wrapper (🔴)  
-10. **K7a** — Bon starten (Draft)
+1. **K7d** TSE finish + festschreiben (🔴) — danach K7e/f und K8d/e  
+2. **K3b** FiskalyTseProvider (🔴) — Beleg-Pfad und Registerkasse teilen denselben Adapter  
+3. **K8c** Gutschein-Anbindung (optional)  
+4. **K9c/d** Auftrag→Bon / Doppel-Signatur (🔴)  
+5. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live  
 
-Erst danach **K3b** (🔴 Fiskaly-Wrapper) und Bonfluss **K7**.
+Erledigt bis hier u. a.: K0–K2, K3a/c/d, K4–K6, K7a–c, K9a+b. Bewusst später: K7d–f, K3b, Rest K8/K9.
 
 ---
 
@@ -817,6 +812,80 @@ interface TseProviderInterface
 
 ---
 
+## K9 Specs
+
+### K9a — Ist-Stand Beleg-Barzahlung / TSE (2026-11-07)
+
+Dokumentation des **laufenden** Pfads (kein Umbau). Parallele Registerkasse (`dg_cash_*`) bleibt getrennt bis K9b+.
+
+#### Zweck
+
+Ausgangsrechnung (income, buchbarer Beleg) → Zahlungsmethode **Bar** → bei eingeschalteter TSE Pflicht-Signatur über fiskaly SIGN DE v2 → QR/Metadaten auf Belegdruck. Ohne TSE-Schalter: bisheriges Verhalten unverändert.
+
+#### Konfiguration (Instanz)
+
+| Quelle | Inhalt |
+|--------|--------|
+| UI | Einstellungen → TSE (`views/settings/tab-tse.php`) — Speichern + „Verbindung prüfen“ |
+| Store | `TseSettings::STORE_KEY = tse` (enabled, environment test/live, api_key/secret, tss_id, client_id) |
+| Env-Fallback | `FISKALY_SIGN_DE_API_KEY` / `_SECRET`, `TSE_TSS_ID` bzw. `TSE_Test_ID`, `TSE_CLIENT_ID` bzw. `TSE_TEST_Client_ID` |
+| API-Basis | Test: `kassensichv-middleware.fiskaly.com/api/v2` · Live: `kassensichv.fiskaly.com/api/v2` |
+| Ready | `TseSettings::isReady()` — alle Zugangsdaten gesetzt |
+
+Registerkasse-Zuordnung (`dg_cash_tse_assignments`, K6) wird hier **nicht** gelesen.
+
+#### Ablauf (Code)
+
+1. `VoucherPaymentRepository` legt Barzahlung an.
+2. `signCashPaymentOrRollback` → bei Fehler: Zahlung + ggf. TSE-Zeile löschen, Exception an UI.
+3. `TseSignService::shouldSign($voucher, method)` — nur wenn TSE an, Methode cash, Beleg income + buchbar.
+4. `TseSignService::signCashPayment` — UUID, ACTIVE in DB, `TseSignDeClient::upsertTransaction` rev.1 ACTIVE → rev.2 FINISHED inkl. `schema` (`buildReceiptSchema` / `allocateVatAmounts`).
+5. Erfolg: `dg_tse_transactions` state `FINISHED` + Signatur/QR; Fehler: state `FAILED` + `error_message`, Exception weiter.
+
+Selftest: `bin/tse-sign-selftest.php`. Ping ohne Bon: Einstellungen → TSE (`retrieveTss` / `retrieveClient`).
+
+#### Tabelle `dg_tse_transactions` (Migration `142`)
+
+| Spalte | Bedeutung |
+|--------|-----------|
+| `voucher_id` / `voucher_payment_id` | Beleg + Zahlungszeile; UNIQUE je Zahlung |
+| `tse_tx_id` / `tss_id` / `tse_client_id` | Provider-UUIDs |
+| `state` | `ACTIVE` · `FINISHED` · `CANCELLED` · `FAILED` |
+| `tx_number`, `revision`, Signaturfelder, `qr_code_data`, Zeiten, Serien | aus Finish-Antwort |
+| `receipt_type`, `amount_gross` | Kontext (RECEIPT / Betrag) |
+| `error_message` | bei FAILED |
+
+Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
+
+#### Ausgabe / Prüfbarkeit
+
+- Druck: `VoucherDocumentPrintService` → `TseSignService::printBlock` (QR-SVG + Serien/Zähler/Zeit) nur bei `FINISHED` + nichtleerem QR.
+- Kassenbuch-Liste: Flag `tse_signed` an Zahlungen.
+- Eine Barzahlung = höchstens eine TSE-Tx (`uq_tse_payment`) — Basis für K9d.
+
+#### Abgrenzung Registerkasse
+
+| Beleg-Pfad (jetzt) | Registerkasse (K1–K7) |
+|--------------------|------------------------|
+| `dg_tse_transactions` + `TseSignService` | `dg_cash_receipts` / payments / sessions |
+| TSS/Client aus `TseSettings` (1× Instanz) | TSS/Client je Kasse in `dg_cash_tse_assignments` |
+| Direkter `TseSignDeClient` | `TseProviderInterface` + Mock; fiskaly erst K3b |
+| Trigger: Beleg-Barzahlung | Trigger: Bon finish (K7d, offen) |
+
+**Folgen:** K9b = welche Kasse bei Beleg-Bar; K3b = gemeinsamer Fiskaly-Adapter; K9c/d = Auftrag→Bon / keine Doppel-Signatur.
+
+### K9b — Beleg-Barzahlung ↔ Kasse (2026-11-07)
+
+| Was | Detail |
+|-----|--------|
+| Spalte | `dg_voucher_payments.cash_register_id` NULL → FK `dg_cash_registers` (Migration **151**) |
+| UI | Beleg → Zahlung: Feld „Kasse (bei Bar)“ wenn aktive Kassen existieren |
+| Pflicht | Bar + ≥1 aktive Kasse → Kasse wählen; genau 1 Kasse = Auto |
+| TSE | API-Key/Secret weiter `TseSettings`; TSS/Client/Umgebung aus `dg_cash_tse_assignments` der Kasse wenn gesetzt (`TseSignService::clientConfigForPayment`) |
+| Fallback | Keine Kassen angelegt → wie bisher ohne `cash_register_id`; keine Zuordnung → Settings-TSS/Client |
+
+---
+
 ## Nicht vergessen
 
 - Kein Sondercode pro Kundeninstanz; keine Kundendaten als Kern-Defaults.
@@ -842,5 +911,5 @@ interface TseProviderInterface
 | K6 | Admin TSE-Zuordnung | [x] K6a–K6d |
 | K7 | Bonfluss | [~] K7a–K7c; offen K7d–K7f |
 | K8 | Zahlungsarten | [ ] |
-| K9 | Barverkauf Auftrag/Rechnung | [~] Beleg-Barzahlung TSE da |
+| K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
 | K10–K21 | Rest | [ ] |

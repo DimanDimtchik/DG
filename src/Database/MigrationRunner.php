@@ -365,6 +365,7 @@ final class MigrationRunner
             '149_cash_register_day_closings.sql' => self::tableExists($pdo, 'dg_cash_register_day_closings'),
             '150_cash_audit_exports.sql' => self::tableExists($pdo, 'dg_cash_audit_log')
                 && self::tableExists($pdo, 'dg_cash_exports'),
+            '151_voucher_payment_cash_register.sql' => self::columnExists($pdo, 'dg_voucher_payments', 'cash_register_id'),
             default => false,
         };
     }
@@ -526,6 +527,7 @@ final class MigrationRunner
             '148_cash_payments.sql' => true,
             '149_cash_register_day_closings.sql' => true,
             '150_cash_audit_exports.sql' => true,
+            '151_voucher_payment_cash_register.sql' => true,
         ];
     }
 

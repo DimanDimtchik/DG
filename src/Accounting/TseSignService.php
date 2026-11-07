@@ -69,7 +69,7 @@ final class TseSignService
 
         $amount = round((float) ($payment['amount'] ?? 0), 2);
         $schema = self::buildReceiptSchema($voucher, $amount);
-        $client ??= new TseSignDeClient();
+        $client ??= new TseSignDeClient(self::clientConfigForPayment($payment));
         $txId = self::uuidV4();
 
         TseTransactionRepository::upsert([
@@ -246,6 +246,45 @@ final class TseSignService
     public static function money(float $amount): string
     {
         return number_format(round($amount, 2), 2, '.', '');
+    }
+
+    /**
+     * Instanz-Secrets + optional TSS/Client aus Kassen-Zuordnung (K9b).
+     *
+     * @param array<string, mixed> $payment
+     * @return array<string, mixed>
+     */
+    public static function clientConfigForPayment(array $payment): array
+    {
+        $cfg = TseSettings::effective();
+        $registerId = (int) ($payment['cash_register_id'] ?? 0);
+        if ($registerId <= 0 || !class_exists('CashTseAssignmentRepository')) {
+            return $cfg;
+        }
+        if (!CashTseAssignmentRepository::tableExists()) {
+            return $cfg;
+        }
+        $assignment = CashTseAssignmentRepository::findByRegisterId($registerId);
+        if ($assignment === null || empty($assignment['is_active'])) {
+            return $cfg;
+        }
+        $tss = trim((string) ($assignment['tss_id'] ?? ''));
+        $clientId = trim((string) ($assignment['client_id'] ?? ''));
+        if ($tss !== '') {
+            $cfg['tss_id'] = $tss;
+        }
+        if ($clientId !== '') {
+            $cfg['client_id'] = $clientId;
+        }
+        $env = strtolower(trim((string) ($assignment['environment'] ?? '')));
+        if ($env === TseSettings::ENV_TEST || $env === TseSettings::ENV_LIVE) {
+            $cfg['environment'] = $env;
+            $cfg['base_url'] = $env === TseSettings::ENV_LIVE
+                ? TseSettings::LIVE_BASE_URL
+                : TseSettings::TEST_BASE_URL;
+        }
+
+        return $cfg;
     }
 
     /**
