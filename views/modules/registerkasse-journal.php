@@ -141,6 +141,42 @@ $methodLabels = CashPaymentRepository::methodLabels();
     </p>
   </form>
 
+  <form class="dg-panel dg-form" method="get" action="/app">
+    <input type="hidden" name="page" value="registerkasse-journal">
+    <input type="hidden" name="export" value="pruefer">
+    <input type="hidden" name="business_date" value="<?= View::escape($filterDate) ?>">
+    <h2 class="dg-subsection-title">Prüferpaket (Kasse)</h2>
+    <div class="dg-form-grid">
+      <label class="dg-field">
+        <span>Kasse</span>
+        <select name="register_id"<?= !$dbConnected ? ' disabled' : '' ?>>
+          <option value="0"<?= $filterReg === 0 ? ' selected' : '' ?>>Alle Kassen</option>
+          <?php foreach ($registers as $reg) : ?>
+            <?php $rid = (int) ($reg['id'] ?? 0); ?>
+            <option value="<?= $rid ?>"<?= $filterReg === $rid ? ' selected' : '' ?>>
+              <?= View::escape(trim((string) ($reg['code'] ?? '') . ' — ' . (string) ($reg['name'] ?? ''))) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+      <label class="dg-field">
+        <span>Von</span>
+        <input type="date" name="date_from" value="<?= View::escape($dateFrom) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <label class="dg-field">
+        <span>Bis</span>
+        <input type="date" name="date_to" value="<?= View::escape($dateTo) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <div class="dg-field dg-field--actions">
+        <button type="submit" class="dg-button dg-button--primary"<?= !$dbConnected ? ' disabled' : '' ?>>Prüferpaket herunterladen</button>
+      </div>
+    </div>
+    <p class="dg-field-hint">
+      ZIP für die Kassen-Nachschau: DSFinV-K-Struktur, TSE-Status (noch ohne Provider-TAR),
+      Bon-Journal und Manifest. Getrennt vom FiBu-GoBD-Export unter Steuerberater-Export.
+    </p>
+  </form>
+
   <div class="dg-panel">
     <div class="dg-table-wrap">
       <table class="dg-table">

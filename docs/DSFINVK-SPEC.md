@@ -193,7 +193,7 @@ Mindestens die im Zeitraum vorkommenden Sätze (typisch 19 %, 7 %, 0 %) mi
 | **K17b** | ✅ Stub: ZIP mit Minimal-CSV + Kopfzeilen + `index.xml` + DTD (`CashDsfinvkStubExport`) |
 | **K17c** | Befüllung aus `dg_cash_*` |
 | **K17d** | ✅ Selftest Dateinamen: `bin/cash-dsfinvk-zip-names-selftest.php` |
-| **K18** | TSE-TAR / Prüferpaket (kann DSFinV-K + TAR bündeln) |
+| **K18** | TSE-TAR / Prüferpaket — Spec [`CASH-PRUEFERPAKET-SPEC.md`](CASH-PRUEFERPAKET-SPEC.md) (K18a); kann DSFinV-K + TAR bündeln |
 
 **Nicht tun**
 

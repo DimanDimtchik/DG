@@ -9277,6 +9277,14 @@ switch ($path) {
                             (int) ($user->id ?? 0)
                         );
                     }
+                    if ($exportKind === 'pruefer') {
+                        CashPrueferpaketExport::downloadAndExit(
+                            $cashJournalDateFrom,
+                            $cashJournalDateTo,
+                            $cashJournalRegisterId,
+                            (int) ($user->id ?? 0)
+                        );
+                    }
                 } catch (Throwable $e) {
                     Flash::set('error', $e->getMessage());
                     header(

@@ -424,9 +424,22 @@ Details und DG-Quellen: **[`docs/DSFINVK-SPEC.md`](DSFINVK-SPEC.md)**. Stub = K1
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K18a | Spec Inhalt Prüferpaket | 🟢 | [ ] |
-| K18b | TAR/Export über Provider-API | 🔴 | [ ] |
-| K18c | Paket-Download in Admin-UI | 🟡 | [ ] |
+| K18a | Spec Inhalt Prüferpaket | 🟢 | [x] [`docs/CASH-PRUEFERPAKET-SPEC.md`](CASH-PRUEFERPAKET-SPEC.md) |
+| K18b | TAR/Export über Provider-API | 🔴 | [ ] bewusst später |
+| K18c | Paket-Download in Admin-UI | 🟡 | [x] `CashPrueferpaketExport` + Journal-UI |
+
+#### K18a — Kurz
+
+Prüferpaket = äußerer **ZIP** mit `dsfinvk/` (K17), `tse/` (Provider-TAR oder dokumentierter Stub), `manifest.json`, `README.txt`, optional Journal.  
+Getrennt vom FiBu-GoBD-Export. Details: **[`docs/CASH-PRUEFERPAKET-SPEC.md`](CASH-PRUEFERPAKET-SPEC.md)**.  
+Reihenfolge: Spec ✅ → **K18c** ✅ → **K18b** (echte TAR, später).
+
+#### K18c — umgesetzt
+
+- `CashPrueferpaketExport::buildZip` / `downloadAndExit` — ZIP: `dsfinvk/` (K17-Stub), `tse/EXPORT_STATUS.txt` (stub), Journal-CSV, `manifest.json`, `README.txt`
+- UI: Bon-Journal → „Prüferpaket (Kasse)“ (`export=pruefer`)
+- Meta: `dg_cash_exports.export_type=pruefer` · Audit `export.pruefer`
+- Selftest: `bin/cash-prueferpaket-selftest.php`
 
 ---
 
@@ -1067,4 +1080,5 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K15 | FiBu-Buchungen | [~] K15a–d ✅; offen K15e |
 | K16 | Journale | [x] K16a–c |
 | K17 | DSFinV-K | [~] K17a+b+d ✅; offen K17c |
-| K18–K21 | Rest | [ ] |
+| K18 | Prüferpaket / TSE-TAR | [~] K18a+c ✅; K18b später |
+| K19–K21 | Rest | [ ] |
