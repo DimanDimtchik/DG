@@ -121,7 +121,9 @@
 
 ### A6 · Laufende Nebenpunkte (jetzt, niedrige Priorität neben A1–A4)
 
-- [~] **Telefon/CTI Fritzbox:** manuell aktivieren (Code da) — Linphone, CallMonitor-Bridge
+- [~] **Telefon/CTI Fritzbox:** Code ✅ · Statusnotiz ✅ PA6a 2026-11-08 · **Aktivierung Org/LAN offen**  
+  → auf `office.iqstrom.com`: CTI noch **aus** (Defaults) · CallMonitor/Linphone/Bridge nur vor Ort  
+  → [`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md)
 - [ ] Multi-Firma Switcher Feinschliff nur falls für IQ/Holding nötig (MB1–MB4 Code ✅)
 - [x] **ERP-Maschinenblock** (M0–M5) + Gemeinkosten (nicht buchungswirksam) + Maschinenwissen/Akademie — Code ✅ 2026-11-08  
   → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) E0–E2 ✅ · M0a: [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)

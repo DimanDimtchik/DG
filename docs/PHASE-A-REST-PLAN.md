@@ -45,7 +45,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · AVV-Unterschrift Org [~] |
 | A4 Kunden-Instanz vorbereiten | ✅ PA4a–i (2026-11-08) |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
-| A6 Telefon CTI | [~] manuell |
+| A6 Telefon CTI | [~] Statusnotiz ✅ PA6a · Aktivierung Org/LAN |
 | A6 Multi-Firma Feinschliff | nur falls nötig |
 | A6 ERP Maschinenblock + Gemeinkosten + Wissen | ✅ M0–M5 + ERP-Rest E1/E2 |
 
@@ -179,7 +179,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA6a | Telefon/CTI Fritzbox manuell aktivieren (Linphone/CallMonitor) — Statusnotiz | 🔴 | [ ] |
+| PA6a | Telefon/CTI Fritzbox manuell aktivieren (Linphone/CallMonitor) — Statusnotiz | 🔴 | [x] 2026-11-08 → [`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md) · Code/Migration ✅ · Instanz CTI aus · LAN-Aktivierung Org |
 | PA6b | Multi-Firma Switcher nur bei konkretem Bedarf | 🟡 | [ ] deferred |
 | PA6c | ERP Maschinenblock / Gemeinkosten / Wissen | — | [x] 2026-11-08 M0–M5 + E1/E2 |
 
@@ -187,12 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. **PA6a** Telefon/CTI Statusnotiz (falls jetzt) · sonst Org: **AVV-Unterschrift**  
-2. Phase B: Hardware/Hetzner laut Checkliste
+1. Org: **AVV-Unterschrift** · optional CTI vor Ort laut [`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md)  
+2. Phase B: Hardware/Hetzner laut Checkliste · PA6b nur bei Bedarf
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA6a laut docs/PHASE-A-REST-PLAN.md. Telefon/CTI Fritzbox Statusnotiz. Kein Tenant-Hardcode.`  
-Oder Org: `AVV/TOM laut HETZNER-AVV-TOM-CHECKLISTE.md — nur Unterschrift/Konto, kein Code.`
+`AVV/TOM laut HETZNER-AVV-TOM-CHECKLISTE.md — nur Unterschrift/Konto, kein Code.`  
+Oder: `CTI vor Ort aktivieren laut docs/CTI-FRITZBOX-STATUS.md (Fritz CallMonitor + Linphone + Bridge).`
 
 ---
 
@@ -212,3 +212,4 @@ Oder Org: `AVV/TOM laut HETZNER-AVV-TOM-CHECKLISTE.md — nur Unterschrift/Konto
 | [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | PA3e Deploy rsync/SSH Prep ohne Cutover |
 | [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) | PA3b Backup/Restore-Nachweis Dev |
 | [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) | PA3d AVV/TOM Status + Org-Checkliste |
+| [`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md) | PA6a CTI/Fritzbox Statusnotiz · LAN-Aktivierung Org |
