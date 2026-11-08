@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 | **Credentials nie committen** | Nur Settings-UI / Instanz-DB |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID A5c laut docs/AMAZON-BUSINESS-REST-PLAN.md. TODOS.md Amazon-Zeile auf [~]/[x] je nach Live-Test. Nur docs/TODOS.md. Kein Refactor. Am Ende: php bin/amazon-business-stufe2-selftest.php.`
+`Amazon Stufe-2 Rest A0–A5 Code ✅. Nächster Schritt Mensch: Onboarding / Live-Checkliste M1–M5 in docs/AMAZON-BUSINESS-REST-PLAN.md; danach TODOS.md Amazon auf [x].`
 
 **Nicht im Agent-Chat:** ganzen `index.php` umbauen, Sandbox-E2E gegen Amazon live, Rechnung-Import, Stufe-3-Cron.
 
@@ -116,7 +116,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | A5a | Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen | 🟢 | [x] 2026-11-08 `DepartmentAccess::userCanManageArticleCatalog` (kein Extra-Gate) |
 | A5b | Kurz-Selftest oder manueller Checkliste-Haken in diesem Plan | 🟢 | [x] 2026-11-08 `bin/amazon-business-stufe2-selftest.php` |
-| A5c | `TODOS.md` Amazon-Zeile auf `[~]`/`[x]` je nach Live-Test | 🟢 | [ ] |
+| A5c | `TODOS.md` Amazon-Zeile auf `[~]`/`[x]` je nach Live-Test | 🟢 | [x] 2026-11-08 `[~]` (kein Live-E2E; [x] nach Onboarding) |
 
 ---
 
@@ -145,7 +145,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | A2 | Order-Service | [x] |
 | A3 | Einkaufsliste UI | [x] A3a–A3c |
 | A4 | Artikelstamm | [x] A4a–A4b |
-| A5 | Rechte / Abschluss | [~] A5a/A5b ✅; A5c offen |
+| A5 | Rechte / Abschluss | [x] A5a–A5c |
 
 ---
 

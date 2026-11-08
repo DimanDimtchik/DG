@@ -2,9 +2,9 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
+Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Amazon Stufe-2 Rest tokenarm → [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) (**A1a** Migration zuerst). UI/CSS U0–U5 ✅. Optional U2b Sichtcheck. Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md).
+**Nächste Session:** Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). Amazon Stufe-2 Code A0–A5 ✅, Live/[~] bis Onboarding. Optional U2b Sichtcheck.
 
 ---
 
@@ -83,7 +83,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
-- [ ] **Amazon Business Stufe 2** — Fach: [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md) · **tokenarm Rest:** [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) (A0–A5; A+B ✅, offen C–F) · Onboarding API = Mensch parallel
+- [~] **Amazon Business Stufe 2** — Code A0–A5 ✅ (Selftest `bin/amazon-business-stufe2-selftest.php`) · Fach: [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md) · Plan: [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) · **[x] erst nach Live-Bestellung** · Onboarding API = Mensch parallel
 - [x] **Zeiterfassung Phase 2** — Z2a–Z2e ✅
 - [x] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d ✅
 - [x] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e ✅
