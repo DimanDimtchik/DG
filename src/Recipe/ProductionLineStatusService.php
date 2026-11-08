@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * FL3b/FL4a: Offline-Status Blocking/Starving + Engpass-Hinweis — kein PLC.
+ * FL3b/FL4a/FL4b: Offline-Status, Engpass, grober Linien-Durchsatz — kein PLC.
  */
 final class ProductionLineStatusService
 {
@@ -18,7 +18,8 @@ final class ProductionLineStatusService
      *   line_status: string,
      *   stations: list<array<string, mixed>>,
      *   buffers: list<array<string, mixed>>,
-     *   bottleneck: array<string, mixed>|null
+     *   bottleneck: array<string, mixed>|null,
+     *   line_throughput: array<string, mixed>|null
      * }|null
      */
     public static function evaluate(int $lineId, array $options = []): ?array
@@ -65,7 +66,8 @@ final class ProductionLineStatusService
      *   line_status: string,
      *   stations: list<array<string, mixed>>,
      *   buffers: list<array<string, mixed>>,
-     *   bottleneck: array<string, mixed>|null
+     *   bottleneck: array<string, mixed>|null,
+     *   line_throughput: array<string, mixed>|null
      * }
      */
     public static function evaluateFromState(
@@ -169,10 +171,9 @@ final class ProductionLineStatusService
         }
 
         $lineStatus = self::lineStatus($statusList, $rawOk);
-        $bottleneck = self::resolveBottleneck(
-            $stationOut,
-            is_array($options['throughputs'] ?? null) ? $options['throughputs'] : []
-        );
+        $throughputs = is_array($options['throughputs'] ?? null) ? $options['throughputs'] : [];
+        $bottleneck = self::resolveBottleneck($stationOut, $throughputs);
+        $lineThroughput = self::resolveLineThroughput($lineStatus, $bottleneck, $bufferOut);
 
         return [
             'line_id' => $lineId,
@@ -180,6 +181,7 @@ final class ProductionLineStatusService
             'stations' => $stationOut,
             'buffers' => $bufferOut,
             'bottleneck' => $bottleneck,
+            'line_throughput' => $lineThroughput,
         ];
     }
 
@@ -259,6 +261,75 @@ final class ProductionLineStatusService
             'output_qty_per_hour' => $bestQty,
             'unit' => $unit,
             'hint' => $hint,
+        ];
+    }
+
+    /**
+     * Grober Linien-Durchsatz = min(Station-Output/h) = Engpass-Rate.
+     * Puffer-Annahme: bei ausreichenden Puffern dauerhaft haltbar; bei Linienstopp effektiv 0.
+     *
+     * @param array<string, mixed>|null $bottleneck
+     * @param list<array<string, mixed>> $buffers
+     * @return array{
+     *   qty_per_hour: float,
+     *   unit: string,
+     *   assumption: string,
+     *   hint: string
+     * }|null
+     */
+    public static function resolveLineThroughput(
+        string $lineStatus,
+        ?array $bottleneck,
+        array $buffers = []
+    ): ?array {
+        if ($bottleneck === null) {
+            return null;
+        }
+        $unit = (string) ($bottleneck['unit'] ?? '');
+        $bnQty = (float) ($bottleneck['output_qty_per_hour'] ?? 0);
+        if ($bnQty <= 0) {
+            return null;
+        }
+
+        if ($lineStatus === 'stopped' || $lineStatus === 'stopped_material') {
+            return [
+                'qty_per_hour' => 0.0,
+                'unit' => $unit,
+                'assumption' => 'zero_while_line_stopped',
+                'hint' => 'Linien-Durchsatz derzeit 0 — Linie steht (Material oder keine lauffähige Station).',
+            ];
+        }
+
+        $anyBlock = false;
+        $anyStarve = false;
+        foreach ($buffers as $b) {
+            if (!empty($b['blocks_predecessor'])) {
+                $anyBlock = true;
+            }
+            if (!empty($b['starves_successor'])) {
+                $anyStarve = true;
+            }
+        }
+
+        $qtyFmt = rtrim(rtrim(number_format($bnQty, 4, ',', ''), '0'), ',');
+        $unitPart = $unit !== '' ? ' ' . $unit : '';
+
+        if ($anyBlock || $anyStarve || $lineStatus === 'constrained' || $lineStatus === 'degraded') {
+            return [
+                'qty_per_hour' => $bnQty,
+                'unit' => $unit,
+                'assumption' => 'bottleneck_rate_if_buffers_recover',
+                'hint' => 'Grober Linien-Durchsatz ca. ' . $qtyFmt . $unitPart
+                    . '/h (Engpass), sobald Puffer Blocking/Starving auflösen — Annahme: Puffer reichen für Dauerlauf am Engpass.',
+            ];
+        }
+
+        return [
+            'qty_per_hour' => $bnQty,
+            'unit' => $unit,
+            'assumption' => 'bottleneck_with_adequate_buffers',
+            'hint' => 'Grober Linien-Durchsatz ca. ' . $qtyFmt . $unitPart
+                . '/h — Minimum der Stations-Outputs (Engpass), Annahme ausreichende Puffer.',
         ];
     }
 

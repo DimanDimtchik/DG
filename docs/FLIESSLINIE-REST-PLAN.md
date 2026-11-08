@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL4b laut docs/FLIESSLINIE-REST-PLAN.md. Optional Linien-Durchsatz = min(Station). Oder FL5a Material. Kein UI.`
+`Nur Mini-ID FL5a laut docs/FLIESSLINIE-REST-PLAN.md. Regel Rohware fehlt → stopped_material. Kein UI.`
 
 ---
 
@@ -159,7 +159,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL1 | Linie + Stationen (Stammdaten) | [x] FL1a–d ✅ | 🟡 |
 | FL2 | Puffer zwischen Stationen | [x] FL2a–c ✅ | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [x] FL3a–c ✅ | 🟡 |
-| FL4 | Engpass / Takt-Hinweis | [~] FL4a ✅ | 🟢🟡 |
+| FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
 | FL6 | Störung / Wartung propagiert | [ ] | 🟡 |
 | FL7 | UI Linie + Status | [ ] | 🟡🔴 |
@@ -210,7 +210,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | FL4a | Engpass aus Kapazitätsprofilen (Output/h) der Linien-Stationen ableiten · Hinweistext | 🟢🟡 | [x] 2026-11-08 `resolveBottleneck` + Hint · Selftest |
-| FL4b | Optional: grober Linien-Durchsatz = min(Station-Durchsätze) unter Puffer-Annahmen | 🟡 | [ ] |
+| FL4b | Optional: grober Linien-Durchsatz = min(Station-Durchsätze) unter Puffer-Annahmen | 🟡 | [x] 2026-11-08 `line_throughput` · Selftest |
 
 ### FL5 — Materialmangel
 
@@ -277,8 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL5a laut docs/FLIESSLINIE-REST-PLAN.md. Regel Rohware fehlt → stopped_material. Doc oder kleiner Code. Kein UI.`  
-(Optional parallel: FL4b Linien-Durchsatz.)
+`Nur Mini-ID FL5a laut docs/FLIESSLINIE-REST-PLAN.md. Regel Rohware fehlt → stopped_material. Kein UI.`
 
 ---
 
@@ -302,4 +301,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `src/Recipe/ProductionLineStatusService.php` | FL3b Offline-Status |
 | `bin/production-line-status-selftest.php` | FL3c blocked/starved Selftest |
 | `bin/production-line-bottleneck-selftest.php` | FL4a Engpass-Hinweis Selftest |
+| `bin/production-line-throughput-selftest.php` | FL4b Linien-Durchsatz Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine · FL4a Output/h |

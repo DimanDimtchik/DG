@@ -116,13 +116,22 @@ Output: {
 
 ---
 
-## Engpass (FL4a)
+## Engpass (FL4a) & Linien-Durchsatz (FL4b)
 
-Zusätzlich zu Blocking/Starving liefert `ProductionLineStatusService` optional `bottleneck`:
+`ProductionLineStatusService` liefert optional:
 
-- Quelle: aktives Kapazitätsprofil je Work Center (`output_qty_per_hour`)  
-- Engpass = Station mit **geringstem positivem** Output/h  
-- `hint`: kurzer Endnutzer-Text („Engpass: … begrenzt die Linie …“) — **keine** Plan-Codes  
+| Feld | Regel |
+|------|--------|
+| `bottleneck` | Station mit **geringstem positivem** `output_qty_per_hour` + `hint` |
+| `line_throughput` | grob **= Engpass-Rate** (min der Stations-Outputs) |
+
+Puffer-Annahmen für `line_throughput`:
+
+- Linie `running` → Rate Engpass, Annahme ausreichende Puffer  
+- `constrained` / `degraded` / Blocking/Starving-Flags → gleiche Rate, Annahme „nach Erholung der Puffer“  
+- `stopped` / `stopped_material` → **0**  
+
+Keine Plan-Codes in `hint`-Texten.
 
 ---
 
@@ -130,7 +139,6 @@ Zusätzlich zu Blocking/Starving liefert `ProductionLineStatusService` optional 
 
 - Echtzeit-PLC / Sensorik  
 - Automatisches Ändern von `current_qty` (Simulationstakte = später optional)  
-- Linien-Durchsatz unter Puffer-Annahmen (FL4b)  
 - Lagerbuchung von WIP  
 
 ---
