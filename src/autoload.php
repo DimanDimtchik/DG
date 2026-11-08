@@ -10,6 +10,7 @@ spl_autoload_register(static function (string $class): void {
         'EmailExistenceChecker' => '/src/Auth/EmailExistenceChecker.php',
         'User' => '/src/User/User.php',
         'UserRepository' => '/src/User/UserRepository.php',
+        'UserSignatureStore' => '/src/User/UserSignatureStore.php',
         'RoleResolver' => '/src/User/RoleResolver.php',
         'MenuRegistry' => '/src/Menu/MenuRegistry.php',
         'SettingsRegistry' => '/src/Settings/SettingsRegistry.php',
