@@ -84,7 +84,7 @@ $accountDigits = (int) ($chartOfAccountsConfig['account_digits'] ?? 4);
   </div>
 </form>
 
-<section class="dg-panel" style="margin-top: 20px;">
+<section class="dg-panel dg-mt-5">
   <header class="dg-panel__toolbar dg-panel__toolbar--lead">
     <div>
       <h3 class="dg-subsection-title">Aktiver Rahmen: <?= View::escape($skrOptions[$activeSkr] ?? strtoupper($activeSkr)) ?></h3>

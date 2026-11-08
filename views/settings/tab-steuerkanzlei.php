@@ -51,7 +51,7 @@ $selectedContactId = (int) ($taxAdvisorConfig['contact_id'] ?? 0);
 </form>
 
 <?php if ($selectedContact !== null) : ?>
-  <section class="dg-panel" style="margin-top: 20px;">
+  <section class="dg-panel dg-mt-5">
     <header class="dg-panel__toolbar dg-panel__toolbar--lead">
       <div>
         <h3 class="dg-subsection-title">Stammdaten der Steuerkanzlei</h3>
@@ -85,7 +85,7 @@ $selectedContactId = (int) ($taxAdvisorConfig['contact_id'] ?? 0);
     </dl>
   </section>
 
-  <section class="dg-panel dg-panel--wide" style="margin-top: 20px;">
+  <section class="dg-panel dg-panel--wide dg-mt-5">
     <header class="dg-panel__toolbar dg-panel__toolbar--lead">
       <div>
         <h3 class="dg-subsection-title">Mitarbeiter der Steuerkanzlei</h3>
