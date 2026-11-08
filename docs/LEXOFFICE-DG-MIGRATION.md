@@ -38,7 +38,7 @@ Stammdaten und offene Vorgänge aus **Lexoffice** (Export CSV/Excel) in eine **D
 - [ ] CRM-Instanz mit eigener DB, Locals, Sync vom Code-Kern
 - [ ] Einstellungen → Firma: Rechtsform, Gewinnermittlung, Steuernr., USt-IdNr., Finanzamt, SKR
 - [ ] Steuerliche Sonderfälle nur wenn fachlich nötig (§13b, PV, …)
-- [ ] Nummernkreise so setzen, dass **keine Kollision** mit Lexoffice-Nummern entsteht (Lücke oder Prefix)
+- [x] Nummernkreise so setzen, dass **keine Kollision** mit Lexoffice-Nummern entsteht (Lücke oder Prefix) — ✅ PA4e 2026-11-08: `RE-/AN-…-{JJJJ}{MM}-{NR}` ab **5000** (Lexoffice-Stichprobe ≤0338)
 - [ ] ≥1 Admin + Buchhaltungs-Rolle zum Testen
 - [ ] Lexoffice-Export **frisch** ziehen und lokal sichern (nicht im Git)
 
