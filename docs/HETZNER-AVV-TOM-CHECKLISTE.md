@@ -1,9 +1,28 @@
 # Hetzner AVV / TOMs — Checkliste & Status (PA3d)
 
-> Stand: **2026-11-08** · Mini-ID **PA3d** · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A3  
-> **Nur Organisation / Status.** Kein Cutover, kein Server-Kauf in diesem Ticket.
+> Stand: **2026-11-08** · Mini-ID **PA3d** · Org-Laufzettel nachgezogen (CTI vor Ort entfällt → **Org-AVV**)  
+> Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A3  
+> **Nur Organisation / Status.** Kein Cutover, kein Server-Kauf. Agent unterschreibt **nicht**.
 
 Verwandt: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`KDV-TODO.md`](KDV-TODO.md) (Kunden-AVV/AGB separat)
+
+---
+
+## Org-Laufzettel (jetzt, Schreibtisch)
+
+Reihenfolge für den Menschen mit Hetzner-Login. Kein Vor-Ort nötig.
+
+1. **Konto:** Einloggen unter [accounts.hetzner.com](https://accounts.hetzner.com/) (Robot/Cloud — gleiches Kundenkonto wie für den späteren Server).  
+2. **AVV öffnen:** Account → **AV-Vertrag / DPA** → [accounts.hetzner.com/account/dpa](https://accounts.hetzner.com/account/dpa).  
+3. **Lesen & annehmen:** aktuelle Fassung AV + TOMs im Account bestätigen/unterzeichnen (nicht die veraltete PDF-Kopie aus dem Web allein).  
+4. **PDF sichern:** AVV + TOMs (+ ggf. Prüfbericht) **außerhalb Git** ablegen (Firmenablage / verschlüsselter Ordner).  
+5. **Stichprobe TOMs:** Anlage 2 überfliegen (Zutritt, Zugang, Weitergabe, Verfügbarkeit, Trennung) — Lücken zur eigenen Verfahrensdoku notieren.  
+6. **Rückmeldung an Agent/Doc:** Datum, AV/TOM-Version, Ablageort (ohne PII) → Abschnitt **D** unten ausfüllen lassen.
+
+Öffentliche Referenz-PDFs (Stand-Check 2026-11-08: HTTP 200):  
+[DPA DE](https://www.hetzner.com/AV/DPA_de.pdf) · [TOM](https://www.hetzner.com/AV/TOM.pdf) · [Datenschutz-Übersicht](https://docs.hetzner.com/de/general/company-and-policy/data-protection-at-hetzner/)
+
+**Nicht verwechseln:** Kunden-AVV/AGB von DG als Hosting-Anbieter = [`KDV-TODO.md`](KDV-TODO.md) / FiBu-Verkauf — **anderer** Vertrag.
 
 ---
 
@@ -12,6 +31,7 @@ Verwandt: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · [`FIBU-VERKAUFSREIFE.m
 | Thema | Status | Wer |
 |-------|--------|-----|
 | Checkliste dokumentiert (dieses Doc) | ✅ 2026-11-08 PA3d | Agent/Doc |
+| Org-Laufzettel (Schreibtisch) | ✅ 2026-11-08 nachgezogen | Agent/Doc |
 | Hetzner-Kundenkonto / Robot | ⬜ offen | Mensch |
 | AV-Vertrag (AVV) mit Hetzner Online GmbH abgeschlossen | ⬜ offen | Mensch |
 | TOMs gelesen / abgelegt | ⬜ offen | Mensch |

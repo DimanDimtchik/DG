@@ -42,7 +42,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ✅ PA1a/b/c (2026-11-08) |
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
-| A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · AVV-Unterschrift Org [~] |
+| A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · Org-AVV Laufzettel ✅ · Unterschrift Mensch [~] |
 | A4 Kunden-Instanz vorbereiten | ✅ PA4a–i (2026-11-08) |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
 | A6 Telefon CTI | [~] Statusnotiz ✅ PA6a · Aktivierung Org/LAN |
@@ -58,7 +58,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [~] PA2a–i ✅ | 🔴 |
-| PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
+| PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · Org-AVV Laufzettel ✅ · Signatur Mensch [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [x] PA4a–i ✅ 2026-11-08 | 🔴🟢 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] PA6a/c ✅ · PA6b deferred | 🔴 |
@@ -125,7 +125,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | PA3a | Shared-Core-Ordnerplan dokumentieren/prüfen ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1) | 🟢 | [x] 2026-11-08 §1.1 Ist/Ziel |
 | PA3b | Backup/Restore-Test durchführen + Notiz ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4) | 🔴 | [x] 2026-11-08 → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) |
 | PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [x] 2026-11-08 Selftest grün; Deploy: rsync/sftp/`deploy.bat` → `minify-dg-css.sh` |
-| PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [x] 2026-11-08 → [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) · Signatur ⬜ |
+| PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [x] 2026-11-08 → [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) · Org-Laufzettel ✅ · Signatur ⬜ Mensch |
 | PA3e | Deploy-Pipeline Prep (rsync/SSH) dokumentieren — **ohne** Cutover | 🟢 | [x] 2026-11-08 → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) |
 | PA3f | A3-Haken in IQ-STROM-TODO | 🟢 | [x] 2026-11-08 Standzeile + PA3b/d klar offen |
 
@@ -187,12 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Org: **AVV-Unterschrift** · optional CTI vor Ort laut [`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md)  
-2. Phase B: Hardware/Hetzner laut Checkliste · PA6b nur bei Bedarf
+1. **Mensch:** Hetzner-AVV annehmen (Laufzettel in [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md)) · Rückmeldung Datum/Version/Ablage  
+2. Danach Phase B / Hardware · CTI nur wenn wieder vor Ort ([`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md))
 
-**Prompt Start (nächster Chat):**  
-`AVV/TOM laut HETZNER-AVV-TOM-CHECKLISTE.md — nur Unterschrift/Konto, kein Code.`  
-Oder: `CTI vor Ort aktivieren laut docs/CTI-FRITZBOX-STATUS.md (Fritz CallMonitor + Linphone + Bridge).`
+**Prompt nach AVV-Abschluss (Mensch meldet zurück):**  
+`Hetzner-AVV erledigt. Trage in docs/HETZNER-AVV-TOM-CHECKLISTE.md Abschnitt D ein: Datum=… Version=… Ablageort=… (ohne PII). Haken A3 setzen. Kein Cutover.`
 
 ---
 
