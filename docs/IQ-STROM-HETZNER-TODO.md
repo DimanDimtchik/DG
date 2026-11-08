@@ -94,7 +94,8 @@
 - [x] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt Bad Kissingen, Gewinnermittlung **Bilanz**, SKR04 — ✅ PA4b 2026-11-08 (Instanz-DB `office.iqstrom.com`; Quelle Impressum + JA2024-Protokoll)
 - [x] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung** — ✅ PA4c 2026-11-08 (`office.iqstrom.com` Firmeneinstellungen)
 - [x] ≥ **3 Benutzer** + Rechte (Buchhaltung / Angebote / Admin) — ✅ PA4d 2026-11-08 · Aktivierungslinks auf Server `storage/pa4d-invite-links.txt`
-- [ ] Nummernkreise, Bankverbindung, Briefpapier/Logo
+- [x] Nummernkreise, Bankverbindung, Briefpapier/Logo — ✅ PA4e 2026-11-08  
+  → Nummern: `RE-/AN-/…-{JJJJ}{MM}-{NR}` ab Zähler **5000** (Lücke zu Lexoffice ≤0338) · Bank: VR-Bank Main-Rhön FirmenKonto (Auszug) · Logo/Briefpapier aus Website-Upload (Instanz-Medienbibliothek)
 - [x] Migrationskonzept Lexoffice → DG: Kontakte, Artikel, offene Belege, Bank (CSV/Excel) — Checkliste ✅ PA4f 2026-11-08  
   → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) · Parallelbetrieb = PA4g
 - [x] **Parallelbetrieb** festlegen: Zeitraum Lex + DG (1–2 Monate), Originalbeleg-Regel — ✅ PA4g 2026-11-08  
