@@ -10,17 +10,11 @@ final class ProductionLineStatusService
      * @param array{
      *   down_station_orders?: list<int>|array<int, bool>,
      *   raw_material_ok?: bool,
+     *   missing_aux_from_station_order?: int|null,
      *   recipe_id?: int|null,
      *   throughputs?: list<array{station_order: int, output_qty_per_hour: float|string, unit?: string, label?: string}>
      * } $options
-     * @return array{
-     *   line_id: int,
-     *   line_status: string,
-     *   stations: list<array<string, mixed>>,
-     *   buffers: list<array<string, mixed>>,
-     *   bottleneck: array<string, mixed>|null,
-     *   line_throughput: array<string, mixed>|null
-     * }|null
+     * @return array<string, mixed>|null
      */
     public static function evaluate(int $lineId, array $options = []): ?array
     {
@@ -59,6 +53,7 @@ final class ProductionLineStatusService
      * @param array{
      *   down_station_orders?: list<int>|array<int, bool>,
      *   raw_material_ok?: bool,
+     *   missing_aux_from_station_order?: int|null,
      *   throughputs?: list<array{station_order: int, output_qty_per_hour: float|string, unit?: string, label?: string}>
      * } $options
      * @return array{
@@ -67,7 +62,9 @@ final class ProductionLineStatusService
      *   stations: list<array<string, mixed>>,
      *   buffers: list<array<string, mixed>>,
      *   bottleneck: array<string, mixed>|null,
-     *   line_throughput: array<string, mixed>|null
+     *   line_throughput: array<string, mixed>|null,
+     *   raw_material: array<string, mixed>,
+     *   auxiliary_material: array<string, mixed>
      * }
      */
     public static function evaluateFromState(
@@ -85,6 +82,12 @@ final class ProductionLineStatusService
         $rawOk = array_key_exists('raw_material_ok', $options)
             ? (bool) $options['raw_material_ok']
             : true;
+        $auxFrom = isset($options['missing_aux_from_station_order'])
+            ? (int) $options['missing_aux_from_station_order']
+            : 0;
+        if ($auxFrom < 0) {
+            $auxFrom = 0;
+        }
 
         $bufByAfterOrder = [];
         foreach ($buffers as $b) {
@@ -151,6 +154,11 @@ final class ProductionLineStatusService
                     $status = 'starved';
                     $reasons[] = 'raw_material_missing';
                 }
+                // FL5b: fehlender Hilfsstoff ab Station k → ab k starved
+                if ($status === 'running' && $auxFrom > 0 && $order >= $auxFrom) {
+                    $status = 'starved';
+                    $reasons[] = 'aux_material_missing';
+                }
                 if ($status === 'running' && $order > 1) {
                     $bufIn = $bufByAfterOrder[$order - 1] ?? null;
                     if ($bufIn !== null) {
@@ -185,6 +193,15 @@ final class ProductionLineStatusService
                 ? 'Rohware am Eingang ausreichend (Annahme).'
                 : 'Rohware am Linieneingang fehlt — Linie gestoppt, erste Station steht.',
         ];
+        $auxOk = $auxFrom <= 0;
+        $auxiliaryMaterial = [
+            'ok' => $auxOk,
+            'from_station_order' => $auxOk ? null : $auxFrom,
+            'hint' => $auxOk
+                ? 'Hilfsstoffe an den Stationen ausreichend (Annahme).'
+                : ('Hilfsstoff fehlt ab Station ' . $auxFrom
+                    . ' — diese und folgende Stationen stehen.'),
+        ];
 
         return [
             'line_id' => $lineId,
@@ -194,6 +211,7 @@ final class ProductionLineStatusService
             'bottleneck' => $bottleneck,
             'line_throughput' => $lineThroughput,
             'raw_material' => $rawMaterial,
+            'auxiliary_material' => $auxiliaryMaterial,
         ];
     }
 

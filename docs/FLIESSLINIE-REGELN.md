@@ -100,6 +100,15 @@ function lineStatus():
 
 Lager-/BOM-Anbindung = **FL5c** (nur lesen). Bis dahin setzt der Aufrufer `raw_material_ok` manuell/Option.
 
+### FL5b — Hilfsstoff ab Station *k*
+
+| Option | Wirkung |
+|--------|---------|
+| `missing_aux_from_station_order = k` (*k* ≥ 1) | Alle Stationen mit `order ≥ k` (soweit nicht `down`/`blocked`/bereits starved) → `starved`, Reason `aux_material_missing` |
+| `auxiliary_material` im Ergebnis | `{ ok, from_station_order, hint }` |
+
+Linienstatus folgt den Stationszuständen (`constrained` wenn davor noch etwas läuft, sonst `stopped`). Rohware-Flag (`stopped_material`) hat Vorrang auf Linien-Ebene.
+
 ---
 
 ## Pseudocode Engine-Vertrag (für FL3b)
