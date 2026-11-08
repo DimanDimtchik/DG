@@ -1,7 +1,9 @@
 # DG CRM — ERP-Erweiterung nach Lastenheft V2
 
-Stand: **2026-10-27** · Quelle: Adobe-PDF `lastenheft_erp_erweiterung_v2.pdf`
+Stand: **2026-10-27** (Rest tokenarm: **2026-11-08**) · Quelle: Adobe-PDF `lastenheft_erp_erweiterung_v2.pdf`  
 Ziel: PDF-Inhalte in die bestehende DG-CRM-Architektur einordnen, ohne Sondercode pro Kundeninstanz.
+
+**Free-Plan / offener Rest:** Mini-IDs → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) (E0 Inventar; E1 Gemeinkosten, E2 Maschinenwissen; E3–E5 Gates). M0–M5 und Lohn D0-A Code sind erledigt — siehe Inventar dort.
 
 ---
 
