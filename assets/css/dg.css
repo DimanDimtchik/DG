@@ -5068,6 +5068,22 @@ body.dg-login-page {
   box-shadow: none;
 }
 
+/* Nur-Anzeige in Formularen (z. B. Firmendaten-Snapshot Einstellungen → Lohn) */
+.dg-readonly {
+  margin: 0;
+  padding: var(--dg-space-2) var(--dg-space-3);
+  border: 1px solid var(--dg-border-strong, #c5ccd8);
+  border-radius: var(--dg-radius-sm);
+  background: var(--dg-surface-muted);
+  color: var(--dg-text);
+  min-height: var(--dg-control-h, 2.25rem);
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+.dg-field > .dg-readonly {
+  width: 100%;
+}
+
 .dg-voucher-contact-results {
   display: flex;
   flex-direction: column;

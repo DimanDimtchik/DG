@@ -114,8 +114,8 @@ $absenceType = (string) ($kioskAbsenceType ?? '');
         <label for="reason">Grund</label>
         <textarea id="reason" name="reason" required maxlength="500" placeholder="Kurz begründen"></textarea>
         <?php if ($absenceType === 'vacation') : ?>
-          <label style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
-            <input type="checkbox" name="half_day" value="1" style="width:auto">
+          <label class="dg-checkbox" style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
+            <input type="checkbox" name="half_day" value="1">
             Halber Tag (gleiches Von/Bis)
           </label>
         <?php endif; ?>
@@ -128,8 +128,8 @@ $absenceType = (string) ($kioskAbsenceType ?? '');
           $ackText = TimeAbsenceService::requestAcknowledgeText($absenceType);
         ?>
         <?php if ($ackText !== null) : ?>
-          <label style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
-            <input type="checkbox" name="acknowledge" value="1" required style="width:auto;margin-top:.2rem">
+          <label class="dg-checkbox" style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
+            <input type="checkbox" name="acknowledge" value="1" required>
             <span><?= View::escape($ackText) ?></span>
           </label>
         <?php endif; ?>

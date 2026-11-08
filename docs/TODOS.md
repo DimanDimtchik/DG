@@ -4,7 +4,7 @@
 
 Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session (Priorität UI/CSS):** Verbleibende CSS-/Spacing-Probleme systematisch lösen (nicht nur Text-Jargon) — Checkbox-Layouts, Form-Abstände, Readonly-Blöcke (z. B. Firmendaten in Einstellungen → Lohn), Rest aus `php bin/ui-crm-scan.php`. Katalog [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) + Guard.
+**Nächste Session (Priorität UI/CSS):** tokenarmer Mini-Plan **[`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md)** — **U0+U1 erledigt**; Free-Plan weiter mit **U2a** (`tab-lohn.php`, 1 Chat). Katalog [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) + Guard.
 
 ---
 
@@ -18,7 +18,7 @@ Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) | Lohn/Baulohn, Zertifizierungen, Maschinenkosten, Akademie-Wissensbrücke |
 
-**Nächster Block:** **UI/CSS-Rest** (siehe oben) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
+**Nächster Block:** **UI/CSS-Rest** → [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link).
 
@@ -51,7 +51,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 > Offene Arbeitspakete mit Checkboxen: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** Phase A.  
 > Kurz: GoBD-Historie · FiBu-Tests · IQ-Instanz · Vor-Hetzner-Check — danach Umzug, nicht vorher Live-ELSTER.
 
-- [ ] **UI/CSS-Rest (nächste Session):** Spacing/Checkboxen/Readonly-Blöcke systematisch — `ui-crm-scan.php` + Katalog; nicht erneut nur Text-Jargon
+- [~] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0+U1 ✅ · offen: U2 Lohn → U3 Settings → U4 Module → U5 (tokenarm / Free-Plan, 1 Chat = 1 Mini-ID)
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten

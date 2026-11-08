@@ -36,7 +36,20 @@ Es gibt **keine** tausend CSS-Dateien pro Seite. Es gibt **eine** Quelle `dg.css
 | `--dg-border`, `--dg-surface`, `--dg-text*` | Flächen/Text |
 | `--dg-radius-sm`, `--dg-font`, `--dg-transition` | Form/Typo |
 
-Utilities: `.dg-mt-*`, `.dg-mb-*`, `.dg-gap-*`, `.dg-stack` / `--tight` / `--loose`.
+### Utilities statt Inline-Spacing
+
+| Statt Inline … | Klasse |
+|----------------|--------|
+| `margin-top: 0.5rem` / `8px` | `.dg-mt-2` |
+| `margin-top: 0.75rem` / `12px` | `.dg-mt-3` |
+| `margin-top: 1rem` / `16px` | `.dg-mt-4` |
+| `margin-top: 1.5rem` / `24px` | `.dg-mt-5` |
+| analog unten | `.dg-mb-2` … `.dg-mb-5` |
+| mehrere Blöcke untereinander | `.dg-stack` (+ `--tight` / `--loose`) |
+| Gap in Flex/Grid | `.dg-gap-*` (wo im CSS vorhanden) |
+
+**Nicht:** `style="margin…"`, `style="padding…"`, `style="display:flex;gap…"` für Standard-Form-/Panel-Abstände.  
+**Nicht in diesem Katalog erzwingen:** `views/print/*` und E-Mail-HTML — eigenes Layout; Scan-Fails dort nur mit ausdrücklicher Mini-ID anfassen (siehe [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md)).
 
 ---
 
@@ -122,11 +135,14 @@ Utilities: `.dg-mt-*`, `.dg-mb-*`, `.dg-gap-*`, `.dg-stack` / `--tight` / `--loo
 | Feld | `label.dg-field` (+ `--wide` `--checkbox` `--actions`) |
 | Checkbox-Zeile | `.dg-checkbox` / `.dg-field--checkbox` |
 | Abschnitte | `.dg-form-section` (flex-Spalte + `gap` — auch für Checkbox-Stapel in fieldset) |
+| Nur-Anzeige | `.dg-readonly` (Snapshot/Firmendaten in Formularen — kein zweites Input) |
 | **Aktionszeile** | `.dg-form-actions` (+ `--split`) — **Pflicht** vor Submit |
 | Inline-Filter | `.dg-btn-row` |
 | Nur-GET-Filter neben Feld | `.dg-btn-row` / Stack, nicht nackter Button unter Textarea |
 
-Abstand: Tokens / `.dg-stack`; CSS-Fallback für nackte Buttons nach Grid/Feld existiert — ersetzt **nicht** `.dg-form-actions`.
+Abstand: Tokens / `.dg-stack` / Utilities `.dg-mt-*` `.dg-mb-*` — **kein** Ad-hoc `style="margin…"`.  
+CSS-Fallback für nackte Buttons nach Grid/Feld existiert — ersetzt **nicht** `.dg-form-actions`.  
+Offener Rest (tokenarm): [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md).
 
 ---
 
@@ -190,4 +206,5 @@ Erlaubt für **modulspezifische** Layouts (Kalender-Raster, Lager-Scan, Akademie
 - Nackter Submit direkt nach Textarea: **verboten** (immer `.dg-form-actions`)  
 - **Endnutzer-Sprache:** keine Plan-Codes in Views (`L7`, `L10`, `Gate G1`, `Stufe A/C`, `M1a` …) und keine Setting-Keys als Label (`payroll_fibu_live — …`). Keys bleiben nur in `name=`/Code.  
 - Report-Scan: `php bin/ui-crm-scan.php` (zusätzliche Hinweiskategorien, z. B. Checkbox-Markup)  
-- Katalog-Datei und Kernklassen in `dg.css` müssen existieren (Selftest)
+- Katalog-Datei und Kernklassen in `dg.css` müssen existieren (Selftest)  
+- **Print / E-Mail:** `views/print/*` und Mail-Templates sind **keine** Pflicht-Ziele für Spacing-/Checkbox-Wellen; Guard/Scan dort nur bei benannter Mini-ID (U0c).
