@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 | **Credentials nie committen** | Nur Settings-UI / Instanz-DB |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID A5c laut docs/AMAZON-BUSINESS-REST-PLAN.md. TODOS.md Amazon-Zeile auf [~]/[x] je nach Live-Test. Nur docs/TODOS.md. Kein Refactor.`
+`Nur Mini-ID A5c laut docs/AMAZON-BUSINESS-REST-PLAN.md. TODOS.md Amazon-Zeile auf [~]/[x] je nach Live-Test. Nur docs/TODOS.md. Kein Refactor. Am Ende: php bin/amazon-business-stufe2-selftest.php.`
 
 **Nicht im Agent-Chat:** ganzen `index.php` umbauen, Sandbox-E2E gegen Amazon live, Rechnung-Import, Stufe-3-Cron.
 
@@ -40,10 +40,10 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 |-------|--------|
 | A Einstellungen UI + Store | ✅ `AmazonBusinessSettings`, Lagerstruktur → Einkauf |
 | B API-Client + Auth | ✅ Skelett `AmazonBusinessAuth` / `AmazonBusinessClient` |
-| C Artikelstamm-Hinweise | ❌ ASIN-Hinweis / Amazon-Kennzeichnung an Einkaufsquelle |
-| D Einkaufsliste-Button | ❌ POST `purchase_list_amazon_order` + UI |
-| E Persistenz Order-Ref | ❌ Migration + Speichern an Listeneintrag |
-| F Rechte / CSRF / Deploy-Hinweise | 🟡 CSRF-Muster existiert; Amazon-Pfad verdrahten |
+| C Artikelstamm-Hinweise | ✅ ASIN-Hinweis + Amazon-Lieferant Soft-Hinweis |
+| D Einkaufsliste-Button | ✅ POST + Button `canOrderItem` + Order-ID |
+| E Persistenz Order-Ref | ✅ Migration 142 + `markAmazonOrdered` |
+| F Rechte / CSRF / Deploy-Hinweise | ✅ gleicher Gate `userCanManageArticleCatalog` + CSRF |
 | Amazon Developer-Zugang | 🔴 Mensch parallel (Tage–Wochen) |
 
 Migration: **`142_purchase_list_amazon.sql`** (082 war schon KDV; Stand geprüft 2026-11-08).
@@ -114,7 +114,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| A5a | Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen | 🟢 | [ ] |
+| A5a | Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen | 🟢 | [x] 2026-11-08 `DepartmentAccess::userCanManageArticleCatalog` (kein Extra-Gate) |
 | A5b | Kurz-Selftest oder manueller Checkliste-Haken in diesem Plan | 🟢 | [x] 2026-11-08 `bin/amazon-business-stufe2-selftest.php` |
 | A5c | `TODOS.md` Amazon-Zeile auf `[~]`/`[x]` je nach Live-Test | 🟢 | [ ] |
 
@@ -145,7 +145,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | A2 | Order-Service | [x] |
 | A3 | Einkaufsliste UI | [x] A3a–A3c |
 | A4 | Artikelstamm | [x] A4a–A4b |
-| A5 | Rechte / Abschluss | [~] A5b ✅; A5a/A5c offen |
+| A5 | Rechte / Abschluss | [~] A5a/A5b ✅; A5c offen |
 
 ---
 
@@ -166,7 +166,7 @@ Prüft: Migration 142 · Order-Service · Autoload · `markAmazonOrdered` · POS
 | M3 | Testartikel: bevorzugte Quelle + ASIN | [ ] |
 | M4 | Button nur bei ready+ASIN sichtbar | [ ] |
 | M5 | Sandbox-/Live-Bestellung ok, Order-ID unter Nachbestellt | [ ] 🔴 |
-| M6 | Rolle ohne Artikelkatalog: POST wirkungslos / kein Menü | [ ] |
+| M6 | Rolle ohne Artikelkatalog: POST wirkungslos / kein Menü | [~] Gate = `userCanManageArticleCatalog` (A5a; Selftest) |
 
 ---
 

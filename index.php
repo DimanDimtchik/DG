@@ -3365,6 +3365,7 @@ switch ($path) {
                             );
                         }
                     } elseif (isset($_POST['purchase_list_amazon_order'])) {
+                        // Rechte/CSRF: gleicher Block-Gate wie purchase_list_* (userCanManageArticleCatalog + Csrf::verify oben).
                         $orderedQty = PurchaseListService::parseQtyInput($_POST['suggested_qty'] ?? '');
                         $amazonResult = AmazonBusinessOrderService::orderPurchaseListItem(
                             (int) ($_POST['purchase_list_id'] ?? 0),
