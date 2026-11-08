@@ -127,7 +127,8 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
               </td>
               <td><?= View::escape((string) ($pli['suggested_label'] ?? '')) ?></td>
               <td>
-                <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-inline-form"<?= $ru !== '' ? ' data-order-url="' . View::escape($ru) . '" onsubmit="var u=this.getAttribute(\'data-order-url\'); if(u){window.open(u,\'_blank\',\'noopener\');}"' : '' ?>>
+                <?php $amazonCanOrder = AmazonBusinessOrderService::canOrderItem($pli); ?>
+                <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-inline-form">
                   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                   <input type="hidden" name="list" value="ordered">
                   <input type="hidden" name="purchase_list_id" value="<?= (int) ($pli['id'] ?? 0) ?>">
@@ -135,7 +136,10 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                     <span class="dg-visually-hidden">Bestellmenge</span>
                     <input type="text" name="suggested_qty" inputmode="decimal" value="<?= View::escape($qtyDisplay) ?>" style="width:5.5rem" title="<?= View::escape($orderTitle) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
                   </label>
-                  <button type="submit" name="purchase_list_ordered" value="1" class="dg-button dg-button--small" title="<?= View::escape($orderTitle) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>Bestellen</button>
+                  <button type="submit" name="purchase_list_ordered" value="1" class="dg-button dg-button--small" title="<?= View::escape($orderTitle) ?>"<?= !$dbConnected ? ' disabled' : '' ?><?= $ru !== '' ? ' data-order-url="' . View::escape($ru) . '" onclick="var u=this.getAttribute(\'data-order-url\'); if(u){window.open(u,\'_blank\',\'noopener\');}"' : '' ?>>Bestellen</button>
+                  <?php if ($amazonCanOrder) : ?>
+                    <button type="submit" name="purchase_list_amazon_order" value="1" class="dg-button dg-button--small dg-button--secondary" title="Über Amazon Business Ordering API bestellen (ASIN der bevorzugten Einkaufsquelle)"<?= !$dbConnected ? ' disabled' : '' ?>>Bei Amazon Business bestellen</button>
+                  <?php endif; ?>
                 </form>
               </td>
               <td><?= View::escape((string) ($pli['reason_label'] ?? '')) ?></td>
