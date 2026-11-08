@@ -59,7 +59,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [~] PA2a–i ✅ | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
-| PA4 | Instanz-Vorbereitung (A4) | [~] PA4a/b/f/g ✅ · PA4c–e/h/i offen | 🔴 |
+| PA4 | Instanz-Vorbereitung (A4) | [~] PA4a–c/f/g ✅ · PA4d–e/h/i offen | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
 
@@ -145,7 +145,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 |----|---------|-------|--------|
 | PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [x] 2026-11-08 Code-Sync ✅ · `database.local.php`+`app.local.php` (Secrets `IQ_CRM_DB_*`) ✅ · Schema via `php83 bin/run-migrations.php` (169 Tabellen / 153 Migrationen bis `155_cash_tse_deferred.sql`) · `/install.php` offen für PA4b–d |
 | PA4b | Firmendaten GmbH in Einstellungen (Steuernr., USt-IdNr., FA, Bilanz, SKR) | 🔴 | [x] 2026-11-08 Instanz-DB: GmbH · Bilanz · SKR04 · USt-Id/Steuernr./FA Bad Kissingen (BuFö 9205) · HRB Schweinfurt · Quelle Impressum+JA2024-Protokoll |
-| PA4c | Flags: Photovoltaik §12 Abs. 3 + §13b Bauleistung | 🔴 | [ ] |
+| PA4c | Flags: Photovoltaik §12 Abs. 3 + §13b Bauleistung | 🔴 | [x] 2026-11-08 Instanz-DB: `tax_special_cases.photovoltaik` + `reverse_charge_13b` enabled (KU aus); PA4b-Stammdaten unverändert |
 | PA4d | ≥3 Benutzer + Rechte | 🔴 | [ ] |
 | PA4e | Nummernkreise, Bank, Briefpapier/Logo | 🔴 | [ ] |
 | PA4f | Migrationskonzept Lexoffice → DG (Kontakte/Artikel/Belege/Bank) als Doc-Checkliste | 🟢 | [x] 2026-11-08 → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) |
@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. **PA4c** Flags PV §12 Abs. 3 + §13b · dann **PA4d–e/h** · **PA4i**  
+1. **PA4d** ≥3 Benutzer + Rechte · dann **PA4e/h** · **PA4i**  
 2. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA4c laut docs/PHASE-A-REST-PLAN.md. Flags Photovoltaik §12 Abs. 3 + §13b Bauleistung in Firmeneinstellungen. Kein Tenant-Hardcode.`
+`Nur Mini-ID PA4d laut docs/PHASE-A-REST-PLAN.md. ≥3 Benutzer + Rechte auf office.iqstrom.com (Installer oder Einstellungen). Kein Tenant-Hardcode.`
 
 ---
 
