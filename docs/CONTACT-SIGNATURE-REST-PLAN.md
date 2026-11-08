@@ -135,9 +135,6 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES1c | `UserSignatureStore` (Name final): `listForContact`, `activeForUser`, `appendNew` (schließt alte) · **keine** `delete`-Methode | 🟡 | [x] 2026-11-08 `src/User/UserSignatureStore.php` + Autoload |
 | ES1d | Selftest: append → alte `valid_to` gesetzt · zweite aktiv · delete-API fehlt/wirft | 🟡 | [x] 2026-11-08 `bin/user-signature-selftest.php` |
 
-**Prompt ES2a:**  
-`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Historie-Tabelle Kontakt. Katalog. Kein Canvas/Mail.`
-
 ### ES2 — Kontakt-UI (Historie + Upload)
 
 | ID | Aufgabe | Token | Status |
