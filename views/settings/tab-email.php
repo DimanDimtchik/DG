@@ -206,7 +206,7 @@ $hasStoredPass = ($mailConfig['smtp_password'] ?? '') !== '';
 
 
 
-<form class="dg-form dg-panel dg-mail-test-form" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>" style="margin-top:24px" autocomplete="off">
+<form class="dg-form dg-panel dg-mail-test-form dg-mt-5" method="post" action="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>" autocomplete="off">
 
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 
@@ -274,7 +274,7 @@ $hasStoredPass = ($mailConfig['smtp_password'] ?? '') !== '';
 
 <?php if ($mailRecent !== []) : ?>
 
-  <section class="dg-panel" style="margin-top:24px">
+  <section class="dg-panel dg-mt-5">
 
     <h3>Letzte ausgehende E-Mails</h3>
 
@@ -377,7 +377,7 @@ $hasStoredPass = ($mailConfig['smtp_password'] ?? '') !== '';
 $mailAddressConfig = $mailAddressConfig ?? MailAddressSettings::forForm();
 $kasConfigured = KasSettings::isConfigured();
 ?>
-<section class="dg-panel" style="margin-top:24px" id="dg-mail-address-settings">
+<section class="dg-panel dg-mt-5" id="dg-mail-address-settings">
   <h3>Mitarbeiter-E-Mail-Adressen (Formel)</h3>
   <p class="dg-lead">
     Beim Anlegen von Mitarbeitern/Administratoren kann automatisch ein Postfach erzeugt werden.
@@ -480,7 +480,7 @@ $kasConfigured = KasSettings::isConfigured();
     </div>
   </form>
 
-  <p class="dg-lead" style="margin-top:12px">
+  <p class="dg-lead dg-mt-3">
     KAS-API: <?= $kasConfigured ? '<span class="dg-badge dg-badge--ok">konfiguriert</span>' : '<span class="dg-badge">nicht konfiguriert</span> (<code>config/kas.local.php</code>)' ?>
   </p>
 </section>
