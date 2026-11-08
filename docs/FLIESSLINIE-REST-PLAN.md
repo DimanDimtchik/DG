@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL3c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest blocked/starved laut Regeln. Kein UI.`
+`Nur Mini-ID FL4a laut docs/FLIESSLINIE-REST-PLAN.md. Engpass aus Kapazitätsprofilen. Kein UI.`
 
 ---
 
@@ -158,7 +158,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
 | FL1 | Linie + Stationen (Stammdaten) | [x] FL1a–d ✅ | 🟡 |
 | FL2 | Puffer zwischen Stationen | [x] FL2a–c ✅ | 🟡 |
-| FL3 | Blocking / Starving-Engine (Offline) | [~] FL3a–b ✅ | 🟡 |
+| FL3 | Blocking / Starving-Engine (Offline) | [x] FL3a–c ✅ | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
 | FL6 | Störung / Wartung propagiert | [ ] | 🟡 |
@@ -200,7 +200,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|---------|-------|--------|
 | FL3a | Doc: Zustandsregeln Blocking/Starving/Linienstopp ( Pseudocode in Plan oder `docs/FLIESSLINIE-REGELN.md` ) | 🟢 | [x] 2026-11-08 [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) |
 | FL3b | Service: aus Stationen + Pufferständen Status je Station berechnen | 🟡 | [x] 2026-11-08 `ProductionLineStatusService` · Autoload |
-| FL3c | Selftest: Puffer voll → Vorgänger blocked; Puffer leer → Nachfolger starved | 🟡 | [ ] |
+| FL3c | Selftest: Puffer voll → Vorgänger blocked; Puffer leer → Nachfolger starved | 🟡 | [x] 2026-11-08 `bin/production-line-status-selftest.php` |
 
 **Prompt FL3b:**  
 `Nur Mini-ID FL3b laut docs/FLIESSLINIE-REST-PLAN.md. Nur Status-Service. Kein UI. Kein PLC.`
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL3c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest Puffer voll→blocked, leer→starved. Kein UI.`
+`Nur Mini-ID FL4a laut docs/FLIESSLINIE-REST-PLAN.md. Engpass aus Kapazitätsprofilen der Linien-Stationen. Kein UI.`
 
 ---
 
@@ -299,4 +299,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-line-buffers-migration-selftest.php` | FL2a Vertrags-Selftest |
 | `bin/production-line-buffers-store-selftest.php` | FL2c Puffer voll/leer Selftest |
 | `src/Recipe/ProductionLineStatusService.php` | FL3b Offline-Status |
+| `bin/production-line-status-selftest.php` | FL3c blocked/starved Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine |
