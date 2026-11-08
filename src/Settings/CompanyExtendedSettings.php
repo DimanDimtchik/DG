@@ -87,7 +87,7 @@ final class CompanyExtendedSettings
                 ],
                 'photovoltaik' => [
                     'enabled' => false,
-                    'hint_text' => 'Die Lieferung und Installation der Photovoltaikanlage ist umsatzsteuerbefreit nach § 12 Abs. 3 UStG i. V. m. § 3g UStG.',
+                    'hint_text' => 'Umsatzsteuersatz 0 % nach § 12 Abs. 3 UStG für die Lieferung und Installation der Photovoltaikanlage.',
                 ],
                 'reverse_charge_13b' => [
                     'enabled' => false,

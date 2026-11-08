@@ -28,9 +28,9 @@ final class VoucherDocumentLegalClause
             ],
             self::PHOTOVOLTAIC_12_3 => [
                 'label' => 'Photovoltaik § 12 Abs. 3 UStG',
-                'hint' => 'Steuerbefreite Lieferung/Installation von Photovoltaikanlagen (§ 3g UStG).',
+                'hint' => 'Nullsteuersatz für begünstigte Lieferung/Installation von Photovoltaikanlagen.',
                 'group' => 'Steuerbefreiung',
-                'text' => 'Die Lieferung und Installation der Photovoltaikanlage ist umsatzsteuerbefreit nach § 12 Abs. 3 UStG i. V. m. § 3g UStG.',
+                'text' => 'Umsatzsteuersatz 0 % nach § 12 Abs. 3 UStG für die Lieferung und Installation der Photovoltaikanlage.',
             ],
             self::TAX_EXEMPT_4 => [
                 'label' => 'Steuerfreie Leistung § 4 UStG',

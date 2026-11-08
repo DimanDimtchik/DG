@@ -40,7 +40,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 |-------|--------|
 | A1 GoBD-Kern (Revision/Storno/ARAP/Kontohinweise) | ✅ Code |
 | A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ❌ manuell / teilweise Code |
-| A1 PV-Automatik Klausel bei 0 %-Zeilen | ❌ Code offen |
+| A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | ❌ Ops |
 | A4 Kunden-Instanz vorbereiten | [~] Domain/TLS · Rest offen |
@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
-| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [ ] | 🟢🟡🔴 |
+| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [ ] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] | 🔴 |
@@ -84,7 +84,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | PA1a | Checkliste §14 UStG Druck/PDF je Dokumentart abarbeiten · Ergebnis in [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) | 🔴 | [ ] |
 | PA1b | Stichprobe gemischte Steuersätze 19/7/0 auf einem Beleg (manuell + kurze Notiz im Stichproben-Doc) | 🔴 | [ ] |
 | PA1c | §19 / §13b / PV §12 Abs. 3 Klauseln am Druck gegen Firma-Flags prüfen (Checkliste) | 🔴 | [ ] |
-| PA1d | **Code:** PV-Automatik — bei Firma-Flag Photovoltaik + 0 %-Zeilen Klausel §12 Abs. 3 automatisch (wie §19); nur betroffene Beleg-/Klausel-Dateien | 🟡 | [ ] |
+| PA1d | **Code:** PV-Automatik — bei Firma-Flag Photovoltaik + 0 %-Zeilen Klausel §12 Abs. 3 automatisch (wie §19); nur betroffene Beleg-/Klausel-Dateien | 🟡 | [x] 2026-11-08 |
 | PA1e | A1-Haken in `IQ-STROM-HETZNER-TODO.md` nachziehen | 🟢 | [ ] |
 
 **Prompt PA1a:**  
@@ -187,17 +187,16 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. **PA1d** (Code PV-Automatik) wenn Druck-Klauseln sonst hängen  
-2. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-3. **PA5a** / **PA5b** (kleiner Code/Doc)  
-4. **PA3a/c/e** Docs + Minify  
-5. **PA4f/g** Migrations-/Parallel-Docs  
-6. Rest **PA4** / **PA3b/d** / **PA2** Mensch  
-7. Phase B erst wenn A1–A3 weitgehend grün  
+1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
+2. **PA5a** / **PA5b** (kleiner Code/Doc)  
+3. **PA3a/c/e** Docs + Minify  
+4. **PA4f/g** Migrations-/Parallel-Docs  
+5. Rest **PA4** / **PA3b/d** / **PA2** Mensch · **PA1e** wenn A1 Druck-Stichproben grün  
+6. Phase B erst wenn A1–A3 weitgehend grün  
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA1d laut docs/PHASE-A-REST-PLAN.md. PV-Klausel-Automatik bei 0%-Zeilen. Nur genannte Beleg-/Klausel-Dateien. Kein Refactor. php -l.`  
-*(Oder PA5b Doc / PA3c Minify wenn lieber 🟢.)*
+`Nur Mini-ID PA5b laut docs/PHASE-A-REST-PLAN.md. ZUGFeRD-Entscheidung nur Doc. Kein Factur-X-Code.`  
+*(Oder PA3c Minify / PA5a GmbH-UI.)*
 
 ---
 

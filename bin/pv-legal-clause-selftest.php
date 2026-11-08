@@ -58,4 +58,15 @@ assertCase(
     'Header-Fallback mit 0-%-Steuersatz triggert PV-Hinweis'
 );
 
+$catalog = VoucherDocumentLegalClause::catalog();
+$catalogText = (string) ($catalog[VoucherDocumentLegalClause::PHOTOVOLTAIC_12_3]['text'] ?? '');
+assertCase(
+    str_contains($catalogText, '§ 12 Abs. 3') && str_contains($catalogText, '0 %'),
+    'PV-Katalogtext nennt Nullsteuersatz § 12 Abs. 3'
+);
+assertCase(
+    !str_contains(mb_strtolower($catalogText), 'umsatzsteuerbefreit'),
+    'PV-Katalogtext spricht nicht von Steuerbefreiung'
+);
+
 echo "Fertig.\n";
