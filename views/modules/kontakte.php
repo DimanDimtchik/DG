@@ -117,11 +117,11 @@ $roleLabels = [
             <option value="update_all">Aktualisieren — Felder überschreiben</option>
           </select>
         </label>
-        <label class="dg-contact-import__check">
+        <label class="dg-contact-import__check dg-field dg-field--checkbox">
           <input type="checkbox" name="force_role" value="1" checked>
           <span>Rolle aus Auswahl für alle Zeilen erzwingen (Spalte Rolle ignorieren)</span>
         </label>
-        <label class="dg-contact-import__check">
+        <label class="dg-contact-import__check dg-field dg-field--checkbox">
           <input type="checkbox" name="create_calendar" value="1">
           <span>Mitarbeiter zusätzlich als Kalender-Ressource anlegen</span>
         </label>
@@ -151,11 +151,11 @@ $roleLabels = [
           <span>Export-Datei</span>
           <input type="file" name="contact_export_file" accept="application/json,.json" required>
         </label>
-        <label class="dg-contact-import__check">
+        <label class="dg-contact-import__check dg-field dg-field--checkbox">
           <input type="checkbox" name="overwrite_fields" value="1">
           <span>Bestehende Felder überschreiben (sonst nur leere Felder füllen)</span>
         </label>
-        <label class="dg-contact-import__check">
+        <label class="dg-contact-import__check dg-field dg-field--checkbox">
           <input type="checkbox" name="confirm_warnings" value="1">
           <span>Warnungen bestätigen (Selbst-Import, Flag aus, Paket &gt; 90 Tage)</span>
         </label>
