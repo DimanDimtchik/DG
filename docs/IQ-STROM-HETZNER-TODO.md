@@ -70,7 +70,7 @@
 
 - [x] **Soll-/Ist-Versteuerung** inkl. FA-Bescheid, UStVA nach Zahlung, Verrechnungskonto — [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md)
 - [x] **GoBD-Prüferexport** + Verfahrensdoku-Vorlage — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)
-- [ ] GmbH-Hinweise: Jahresabschluss-UI nicht als „EÜR ohne Kanzlei“ positionieren, wenn `company_type` = GmbH / Gewinnermittlung = Bilanz
+- [x] GmbH-Hinweise: Jahresabschluss-UI nicht als „EÜR ohne Kanzlei“ bei GmbH/Bilanz — ✅ 2026-11-08 PA5a (`views/modules/buchhaltung-jahresabschluss.php`)
 - [x] ZUGFeRD-Ausgang: Entscheidung dokumentiert — PDF + XRechnung-XML bewusst behalten; Factur-X-Einbettung = D2  
   → [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) (PA5b ✅ 2026-11-08)
 - [ ] E-Rechnung §13b: prüfen, ob XRechnung-XML Reverse-Charge korrekt setzt (BT-Felder); sonst Fix vor Produktivversand

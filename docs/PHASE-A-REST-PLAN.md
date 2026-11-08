@@ -44,7 +44,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | ❌ Ops |
 | A4 Kunden-Instanz vorbereiten | [~] Domain/TLS · Rest offen |
-| A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD-Entscheidung ✅ · GmbH-UI / §13b-XML offen |
+| A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML offen |
 | A6 Telefon CTI | [~] manuell |
 | A6 Multi-Firma Feinschliff | nur falls nötig |
 | A6 ERP Maschinenblock + Gemeinkosten + Wissen | ✅ M0–M5 + ERP-Rest E1/E2 |
@@ -60,7 +60,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [~] PA3c ✅ | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] | 🔴 |
-| PA5 | Kleine FiBu-Fixes (A5 Rest) | [~] PA5b ✅ | 🟢🟡 |
+| PA5 | Kleine FiBu-Fixes (A5 Rest) | [~] PA5a/b ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
 
 ---
@@ -162,7 +162,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA5a | GmbH-Hinweise: Jahresabschluss-UI nicht als „EÜR ohne Kanzlei“ wenn Bilanz/GmbH — nur betroffene View(s) | 🟡 | [ ] |
+| PA5a | GmbH-Hinweise: Jahresabschluss-UI nicht als „EÜR ohne Kanzlei“ wenn Bilanz/GmbH — nur betroffene View(s) | 🟡 | [x] 2026-11-08 `buchhaltung-jahresabschluss.php` |
 | PA5b | ZUGFeRD-Ausgang: Entscheidung dokumentieren (PDF+XRechnung ok bis Frist; Ticket Factur-X) | 🟢 | [x] 2026-11-08 → [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) |
 | PA5c | E-Rechnung §13b: XRechnung Reverse-Charge BT-Felder prüfen; nur Fix wenn klar defekt | 🟡 | [ ] |
 | PA5d | A5-Haken in IQ-STROM-TODO | 🟢 | [ ] |
@@ -188,15 +188,15 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 ## Empfohlene Free-Plan-Reihenfolge
 
 1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-2. **PA5a** (GmbH-UI) · **PA5c** (§13b-XML)  
+2. **PA5c** (§13b-XML)  
 3. **PA3a/e** Docs (Minify PA3c ✅)  
 4. **PA4f/g** Migrations-/Parallel-Docs  
 5. Rest **PA4** / **PA3b/d** / **PA2** Mensch · **PA1e** wenn A1 Druck-Stichproben grün  
 6. Phase B erst wenn A1–A3 weitgehend grün  
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA5a laut docs/PHASE-A-REST-PLAN.md. GmbH/Bilanz-Hinweis Jahresabschluss-UI. Nur genannte View(s). Katalog. Kein Refactor.`  
-*(Oder PA3a Shared-Core-Doc / PA5c §13b-XML.)*
+`Nur Mini-ID PA5c laut docs/PHASE-A-REST-PLAN.md. E-Rechnung §13b XRechnung Reverse-Charge BT-Felder prüfen; nur Fix wenn klar defekt. php -l.`  
+*(Oder PA3a Shared-Core-Doc.)*
 
 ---
 

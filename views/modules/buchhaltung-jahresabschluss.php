@@ -25,6 +25,12 @@ $summary = $closeSummary ?? ['done' => 0, 'total' => 0, 'errors' => 0, 'warnings
 $canClose = (bool) ($canCloseYear ?? false);
 $diy = (bool) ($isDiyMode ?? false);
 $isAdmin = (bool) ($isAdmin ?? false);
+$companyExt = CompanyExtendedSettings::config();
+$companyType = strtolower(trim((string) ($companyExt['company_type'] ?? '')));
+$gewinnermittlung = strtolower(trim((string) ($companyExt['gewinnermittlung'] ?? '')));
+$bilanzCompanyTypes = ['gmbh', 'gmbh_igr', 'gmbh_co_kg', 'ug', 'ug_igr', 'ltd', 'eg'];
+$isBilanzFirm = $gewinnermittlung === 'bilanz' || in_array($companyType, $bilanzCompanyTypes, true);
+$showEuerExport = $diy && !$isBilanzFirm;
 $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
 $baseUrl = '/app?page=buchhaltung-jahresabschluss';
 ?>
@@ -36,21 +42,41 @@ $baseUrl = '/app?page=buchhaltung-jahresabschluss';
       <h1 class="dg-page-title">Jahresabschluss</h1>
       <p class="dg-lead">
         Geschäftsjahr sperren und Saldenvortrag der Bestandskonten ins Folgejahr übertragen.
-        <?php if ($diy) : ?>
-          <strong>DIY-Assistent</strong> — auch ohne Steuerberater.
+        <?php if ($isBilanzFirm) : ?>
+          Für <strong>Bilanz / Kapitalgesellschaft</strong> gilt dieser Assistent als operative Jahressperre —
+          nicht als Ersatz für E-Bilanz, KSt oder GewSt.
+        <?php elseif ($diy) : ?>
+          <strong>DIY-Assistent</strong> — auch ohne Steuerberater (EÜR).
         <?php endif; ?>
       </p>
     </div>
     <div class="dg-page-header__actions">
       <a class="dg-button" href="/app?page=buchhaltung-kontenuebersicht&amp;year=<?= (int) $year ?>">Kontenübersicht</a>
       <a class="dg-button" href="/app?page=buchhaltung-ustva&amp;year=<?= (int) $year ?>">UStVA</a>
-      <?php if ($diy) : ?>
+      <?php if ($showEuerExport) : ?>
         <a class="dg-button" href="/app?page=buchhaltung-ustva&amp;year=<?= (int) $year ?>&amp;download=euer">EÜR-CSV</a>
       <?php endif; ?>
     </div>
   </header>
 
-  <?php if ($diy && $dbConnected) : ?>
+  <?php if ($dbConnected && $isBilanzFirm) : ?>
+    <div class="dg-panel dg-panel--notice">
+      <p>
+        Firmendaten: Gewinnermittlung <strong>Bilanz</strong>
+        <?php if ($companyType !== '') : ?>
+          / Rechtsform <strong><?= View::escape(CompanyTypes::labels()[$companyType] ?? $companyType) ?></strong>
+        <?php endif; ?>.
+        Hier prüfen Sie Checkliste, UStVA und Jahressperre/Saldenvortrag.
+        E-Bilanz, Körperschaftsteuer und Gewerbesteuer sind <strong>nicht</strong> Bestandteil dieses Assistenten —
+        dafür bitte Steuerberater oder eine spätere Ausbaustufe nutzen.
+        <?php if ($diy) : ?>
+          Optional:
+          <a href="/app?page=einstellungen&amp;tab=steuerkanzlei">Einstellungen → Steuerkanzlei</a>
+          für DATEV/Agenda-Exporte.
+        <?php endif; ?>
+      </p>
+    </div>
+  <?php elseif ($diy && $dbConnected) : ?>
     <div class="dg-panel dg-panel--notice">
       <p>
         Keine Steuerkanzlei hinterlegt? Kein Problem — prüfen Sie die Checkliste, exportieren Sie UStVA/EÜR für ELSTER
