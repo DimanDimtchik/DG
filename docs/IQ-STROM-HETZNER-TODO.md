@@ -48,13 +48,16 @@
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)
 
+> **Stand PA3f (2026-11-08):** Doc-Haken PA3a/c/e ✅ · offen **nur** Mensch/Org: Backup-Test (PA3b), AVV/TOMs (PA3d).  
+> Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) · Übersicht: [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · Deploy: [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md)
+
 - [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1  
-- [ ] **Backup/Restore-Test** + Notiz  
-  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4 · PA3b
+- [ ] **Backup/Restore-Test** + Notiz (Mensch) — PA3b  
+  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4 · Instanzdaten-Backup: [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md)
 - [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  
   → Selftest `bin/asset-css-minify-selftest.php` ✅ 2026-11-08 (PA3c) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §2
-- [ ] Hetzner-AVV / TOMs organisatorisch abstimmen (Vertrag, bevor Cutover)
+- [ ] **Hetzner-AVV / TOMs** organisatorisch abstimmen (Vertrag, bevor Cutover) — PA3d (Mensch/Org)
 - [x] Deploy-Pipeline auf neuen Host vorbereiten (rsync/SSH, ohne Cutover) — ✅ PA3e 2026-11-08  
   → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md)
 

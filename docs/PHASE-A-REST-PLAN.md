@@ -58,7 +58,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
-| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c/e ✅ | 🔴🟢 |
+| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c/e/f ✅ · b/d offen | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
@@ -127,7 +127,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [x] 2026-11-08 Selftest grün; Deploy: rsync/sftp/`deploy.bat` → `minify-dg-css.sh` |
 | PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [ ] |
 | PA3e | Deploy-Pipeline Prep (rsync/SSH) dokumentieren — **ohne** Cutover | 🟢 | [x] 2026-11-08 → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) |
-| PA3f | A3-Haken in IQ-STROM-TODO | 🟢 | [ ] |
+| PA3f | A3-Haken in IQ-STROM-TODO | 🟢 | [x] 2026-11-08 Standzeile + PA3b/d klar offen |
 
 **Prompt PA3a:**  
 `Nur Mini-ID PA3a laut docs/PHASE-A-REST-PLAN.md. Shared-Core laut VOR-HETZNER-CHECK §1. Nur Docs. Kein Cutover.`
@@ -192,8 +192,8 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 3. Phase B erst wenn A1–A3 weitgehend grün (AVV PA3d + Backup-Test PA3b noch offen)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA3f laut docs/PHASE-A-REST-PLAN.md. A3-Haken in IQ-STROM-TODO nachziehen (nur Docs).`  
-*(Oder PA3b Backup/Restore Mensch / PA3d AVV.)*
+`Nur Mini-ID PA3b laut docs/PHASE-A-REST-PLAN.md. Backup/Restore-Test + Notiz laut VOR-HETZNER-CHECK §4.`  
+*(Oder PA3d AVV/TOMs Org · manuelle PA1a/PA2a.)*
 
 ---
 
