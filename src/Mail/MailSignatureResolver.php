@@ -126,6 +126,84 @@ final class MailSignatureResolver
     }
 
     /**
+     * Aktives Unterschriftsbild des angemeldeten Users für Post (ES5a).
+     * CID-Inline — kein fremder Kontakt, kein URL-Fetch.
+     *
+     * @return array{
+     *   cid: string,
+     *   mime: string,
+     *   filename: string,
+     *   content: string,
+     *   html: string
+     * }|null
+     */
+    public static function resolveInlineImage(?User $actor): ?array
+    {
+        if ($actor === null || (int) $actor->id <= 0) {
+            return null;
+        }
+        if (
+            !class_exists('UserSignatureStore')
+            || !class_exists('MediaRepository')
+            || !class_exists('MediaStorage')
+            || !class_exists('MediaId')
+        ) {
+            return null;
+        }
+
+        $row = UserSignatureStore::activeForUser((int) $actor->id);
+        if ($row === null) {
+            return null;
+        }
+        $mediaId = (string) ($row['media_id'] ?? '');
+        if (!MediaId::isValid($mediaId)) {
+            return null;
+        }
+
+        MediaRepository::ensureTables();
+        $item = MediaRepository::find($mediaId);
+        if (!is_array($item)) {
+            return null;
+        }
+        $stored = (string) ($item['stored_name'] ?? '');
+        if ($stored === '') {
+            return null;
+        }
+        $mime = trim((string) ($item['mime_type'] ?? ''));
+        if ($mime === '') {
+            $mime = 'image/png';
+        }
+        if (!str_starts_with($mime, 'image/')) {
+            return null;
+        }
+
+        try {
+            $path = MediaStorage::absolutePath($mediaId, $stored);
+        } catch (Throwable) {
+            return null;
+        }
+        if (!is_file($path)) {
+            return null;
+        }
+        $bin = file_get_contents($path);
+        if (!is_string($bin) || $bin === '') {
+            return null;
+        }
+
+        $cid = 'dg-user-sig-' . (int) $actor->id . '@crm.local';
+        $ext = str_contains($mime, 'webp') ? 'webp' : 'png';
+
+        return [
+            'cid' => $cid,
+            'mime' => $mime,
+            'filename' => 'unterschrift.' . $ext,
+            'content' => $bin,
+            'html' => '<img src="cid:' . htmlspecialchars($cid, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                . '" alt="" width="180" style="max-width:180px;height:auto;display:block;border:0;margin:8px 0;">',
+        ];
+    }
+
+    /**
      * Methode settings examples.
      * @return array<string, mixed>
      */

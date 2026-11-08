@@ -20,7 +20,7 @@ final class MailMessage
      * @param int|null $contactId
      * @param string|null $inReplyTo
      * @param string|null $references
-     * @param list<array{filename: string, content: string, mime?: string}> $attachments
+     * @param list<array{filename: string, content: string, mime?: string, disposition?: string, cid?: string}> $attachments
      */
     public function __construct(
         public readonly string $subject,
@@ -90,8 +90,23 @@ final class MailMessage
 
         $text = $this->textBody !== '' ? $this->textBody : self::htmlToText($this->htmlBody);
         $altBoundary = 'dg_alt_' . bin2hex(random_bytes(10));
+        $relatedBoundary = 'dg_rel_' . bin2hex(random_bytes(10));
         $mixedBoundary = 'dg_mix_' . bin2hex(random_bytes(10));
-        $hasAttachments = $this->attachments !== [];
+        $inlineParts = [];
+        $fileParts = [];
+        foreach ($this->attachments as $attachment) {
+            $content = (string) ($attachment['content'] ?? '');
+            if ($content === '') {
+                continue;
+            }
+            $disposition = strtolower(trim((string) ($attachment['disposition'] ?? 'attachment')));
+            $cid = trim((string) ($attachment['cid'] ?? ''));
+            if ($disposition === 'inline' && $cid !== '') {
+                $inlineParts[] = $attachment;
+            } else {
+                $fileParts[] = $attachment;
+            }
+        }
         $date = gmdate('D, d M Y H:i:s') . ' +0000';
         $encodedSubject = self::encodeHeader($this->subject);
         $encodedFrom = self::encodeAddress($fromEmail, $fromName);
@@ -129,36 +144,71 @@ final class MailMessage
         $altBody .= chunk_split(base64_encode($this->htmlBody)) . "\r\n";
         $altBody .= "--{$altBoundary}--\r\n";
 
-        if (!$hasAttachments) {
+        $relatedBody = '';
+        if ($inlineParts !== []) {
+            $relatedBody = "--{$relatedBoundary}\r\n";
+            $relatedBody .= "Content-Type: multipart/alternative; boundary=\"{$altBoundary}\"\r\n\r\n";
+            $relatedBody .= $altBody . "\r\n";
+            foreach ($inlineParts as $attachment) {
+                $relatedBody .= self::mimeBinaryPart($attachment, true, $relatedBoundary);
+            }
+            $relatedBody .= "--{$relatedBoundary}--\r\n";
+        }
+
+        if ($inlineParts === [] && $fileParts === []) {
             $headers[] = 'Content-Type: multipart/alternative; boundary="' . $altBoundary . '"';
 
             return implode("\r\n", $headers) . "\r\n\r\n" . $altBody;
         }
 
+        if ($fileParts === []) {
+            $headers[] = 'Content-Type: multipart/related; boundary="' . $relatedBoundary . '"';
+
+            return implode("\r\n", $headers) . "\r\n\r\n" . $relatedBody;
+        }
+
         $headers[] = 'Content-Type: multipart/mixed; boundary="' . $mixedBoundary . '"';
         $body = "--{$mixedBoundary}\r\n";
-        $body .= "Content-Type: multipart/alternative; boundary=\"{$altBoundary}\"\r\n\r\n";
-        $body .= $altBody . "\r\n";
+        if ($inlineParts !== []) {
+            $body .= "Content-Type: multipart/related; boundary=\"{$relatedBoundary}\"\r\n\r\n";
+            $body .= $relatedBody . "\r\n";
+        } else {
+            $body .= "Content-Type: multipart/alternative; boundary=\"{$altBoundary}\"\r\n\r\n";
+            $body .= $altBody . "\r\n";
+        }
 
-        foreach ($this->attachments as $attachment) {
-            $filename = self::safeAttachmentName((string) ($attachment['filename'] ?? 'anhang.bin'));
-            $content = (string) ($attachment['content'] ?? '');
-            if ($content === '') {
-                continue;
-            }
-            $mime = (string) ($attachment['mime'] ?? 'application/octet-stream');
-            if ($mime === '') {
-                $mime = 'application/octet-stream';
-            }
-            $body .= "--{$mixedBoundary}\r\n";
-            $body .= 'Content-Type: ' . $mime . '; name="' . $filename . "\"\r\n";
-            $body .= "Content-Transfer-Encoding: base64\r\n";
-            $body .= 'Content-Disposition: attachment; filename="' . $filename . "\"\r\n\r\n";
-            $body .= chunk_split(base64_encode($content)) . "\r\n";
+        foreach ($fileParts as $attachment) {
+            $body .= self::mimeBinaryPart($attachment, false, $mixedBoundary);
         }
         $body .= "--{$mixedBoundary}--\r\n";
 
         return implode("\r\n", $headers) . "\r\n\r\n" . $body;
+    }
+
+    /**
+     * @param array{filename?: string, content?: string, mime?: string, cid?: string, disposition?: string} $attachment
+     */
+    private static function mimeBinaryPart(array $attachment, bool $inline, string $boundary): string
+    {
+        $filename = self::safeAttachmentName((string) ($attachment['filename'] ?? 'anhang.bin'));
+        $content = (string) ($attachment['content'] ?? '');
+        $mime = (string) ($attachment['mime'] ?? 'application/octet-stream');
+        if ($mime === '') {
+            $mime = 'application/octet-stream';
+        }
+        $part = "--{$boundary}\r\n";
+        $part .= 'Content-Type: ' . $mime . '; name="' . $filename . "\"\r\n";
+        $part .= "Content-Transfer-Encoding: base64\r\n";
+        if ($inline) {
+            $cid = trim((string) ($attachment['cid'] ?? ''));
+            $part .= 'Content-ID: <' . $cid . ">\r\n";
+            $part .= 'Content-Disposition: inline; filename="' . $filename . "\"\r\n\r\n";
+        } else {
+            $part .= 'Content-Disposition: attachment; filename="' . $filename . "\"\r\n\r\n";
+        }
+        $part .= chunk_split(base64_encode($content)) . "\r\n";
+
+        return $part;
     }
 
     /** Dateiname für MIME-Header (ASCII-sicher). */

@@ -68,6 +68,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----------|--------|
 | User-/Kontakt-Unterschriftshistorie | ✅ ES1–ES2 inkl. Smoke Dev; Canvas ES3a ✅ |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
+| Mail: optionales CID-Unterschriftsbild | ✅ ES5a (`resolveInlineImage`) |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Brief/PDF: aktives Session-Unterschriftsbild | ✅ ES4a–c (Dev-Stichprobe 1 Seite) |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
@@ -169,7 +170,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES5a | Post: optionales `<img>` aus aktiver User-Signatur (CID/URL laut Mail-Stack) | 🟡 | [ ] |
+| ES5a | Post: optionales `<img>` aus aktiver User-Signatur (CID/URL laut Mail-Stack) | 🟡 | [x] 2026-11-08 `resolveInlineImage` + CID in `MailMessage` · Selftest |
 | ES5b | Fallback Text-Signatur wenn keine aktive Bildzeile | 🟡 | [ ] |
 | ES5c | Smoke 1 Testmail Dev | 🔴 | [ ] |
 
@@ -217,7 +218,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES5a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Post: optionales img aus aktiver User-Signatur. Kein Canvas.`
+`Nur Mini-ID ES5b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Fallback Text-Signatur wenn keine aktive Bildzeile. Kein Canvas.`
 
 ---
 

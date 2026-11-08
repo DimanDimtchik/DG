@@ -47,7 +47,9 @@ final class MailService
             throw new InvalidArgumentException('Keine gültigen Empfänger.');
         }
 
-        $htmlBody = self::prepareHtmlBody($message->htmlBody, $mailbox, $actor);
+        // ES5a: optionales CID-Bild nur vom angemeldeten Actor
+        $inlineSig = MailSignatureResolver::resolveInlineImage($actor);
+        $htmlBody = self::prepareHtmlBody($message->htmlBody, $mailbox, $actor, $inlineSig);
         $textBody = self::applyPlainTextLayout($message, $mailbox, $actor);
         $preview = MailMessage::bodyPreview($htmlBody);
         $logId = MailLogRepository::createQueued(
@@ -67,6 +69,17 @@ final class MailService
         $domain = substr(strrchr($fromEmail, '@') ?: '@localhost', 1) ?: 'localhost';
         $messageId = $logId . '.' . bin2hex(random_bytes(8)) . '@' . $domain;
 
+        $attachments = $message->attachments;
+        if ($inlineSig !== null) {
+            $attachments[] = [
+                'filename' => $inlineSig['filename'],
+                'content' => $inlineSig['content'],
+                'mime' => $inlineSig['mime'],
+                'disposition' => 'inline',
+                'cid' => $inlineSig['cid'],
+            ];
+        }
+
         try {
             $outbound = new MailMessage(
                 subject: $message->subject,
@@ -81,7 +94,7 @@ final class MailService
                 contactId: $message->contactId,
                 inReplyTo: $message->inReplyTo,
                 references: $message->references,
-                attachments: $message->attachments,
+                attachments: $attachments,
             );
             $mime = $outbound->toMime($fromEmail, $fromName, $replyTo, $messageId);
             $archive = MailArchiveStorage::save($logId, $mime);
@@ -178,22 +191,29 @@ final class MailService
      * @param string $html
      * @param array|null $mailbox
      * @param User|null $actor
+     * @param array{html?: string}|null $inlineSig
      * @return string
      */
-    private static function prepareHtmlBody(string $html, ?array $mailbox = null, ?User $actor = null): string
-    {
+    private static function prepareHtmlBody(
+        string $html,
+        ?array $mailbox = null,
+        ?User $actor = null,
+        ?array $inlineSig = null
+    ): string {
         if (stripos($html, '<html') !== false) {
             return $html;
         }
 
+        $footer = EmailLayoutSettings::resolvedFooter();
         if ($mailbox !== null) {
-            $footer = EmailLayoutSettings::resolvedFooter();
             $footer['signature'] = MailSignatureResolver::resolve($mailbox, $actor);
-
-            return CalendarEmailLayout::renderPostMessage($html, $footer);
+        }
+        $imgHtml = trim((string) ($inlineSig['html'] ?? ''));
+        if ($imgHtml !== '') {
+            $footer['signature_image_html'] = $imgHtml;
         }
 
-        return CalendarEmailLayout::renderPostMessage($html, EmailLayoutSettings::resolvedFooter());
+        return CalendarEmailLayout::renderPostMessage($html, $footer);
     }
 
     /**

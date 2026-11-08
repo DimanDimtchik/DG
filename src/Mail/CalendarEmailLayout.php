@@ -180,23 +180,36 @@ final class CalendarEmailLayout
      */
     private static function renderClosingSignatureResolved(array $footer): string
     {
-        $parts = array_filter([
-            (string) ($footer['thanks_line'] ?? ''),
-            (string) ($footer['salutation'] ?? ''),
-            (string) ($footer['signature'] ?? ''),
-        ], static fn(string $line): bool => trim($line) !== '');
+        $thanks = trim((string) ($footer['thanks_line'] ?? ''));
+        $salutation = trim((string) ($footer['salutation'] ?? ''));
+        $signature = trim((string) ($footer['signature'] ?? ''));
+        // ES5a: nur vom Resolver gesetztes <img …> (cid:…) — kein freier HTML-Footer
+        $imageHtml = trim((string) ($footer['signature_image_html'] ?? ''));
+        if ($imageHtml !== '' && !preg_match('/^<img\s/i', $imageHtml)) {
+            $imageHtml = '';
+        }
 
-        if ($parts === []) {
+        if ($thanks === '' && $salutation === '' && $signature === '' && $imageHtml === '') {
             return '';
         }
 
         $textColor = self::esc((string) ($footer['signature_text_color'] ?? EmailLayoutSettings::emailTheme()['text']));
-        $html = '';
-        foreach ($parts as $line) {
-            $html .= htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . '<br>';
+        $html = '<div style="margin:24px 0 0;font-size:15px;line-height:1.75;color:' . $textColor . ';">';
+        if ($thanks !== '') {
+            $html .= '<p style="margin:0 0 4px;">' . htmlspecialchars($thanks, ENT_QUOTES, 'UTF-8') . '</p>';
         }
+        if ($salutation !== '') {
+            $html .= '<p style="margin:0 0 4px;">' . htmlspecialchars($salutation, ENT_QUOTES, 'UTF-8') . '</p>';
+        }
+        if ($imageHtml !== '') {
+            $html .= '<div style="margin:8px 0;">' . $imageHtml . '</div>';
+        }
+        if ($signature !== '') {
+            $html .= '<p style="margin:0;">' . htmlspecialchars($signature, ENT_QUOTES, 'UTF-8') . '</p>';
+        }
+        $html .= '</div>';
 
-        return '<p style="margin:24px 0 0;font-size:15px;line-height:1.75;color:' . $textColor . ';">' . rtrim($html, '<br>') . '</p>';
+        return $html;
     }
 
     /**
