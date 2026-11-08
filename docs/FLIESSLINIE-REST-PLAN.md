@@ -53,21 +53,65 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 
 ---
 
-## Speichermodell (Entscheidungsskizze — FL1 festlegen)
+## Speichermodell (**festgelegt FL1a** — 2026-11-08)
 
-**Empfehlung (vor FL1b bestätigen):**
+| Entscheidung | Festlegung |
+|--------------|------------|
+| Linie vs. Routing | **Getrennt:** `dg_recipe_routing` = Kalkulations-Arbeitsplan; Linie = physische Betriebs-Kette |
+| Tabellen-Schnitt | **FL1b:** Linie + Stationen · **FL2a:** Puffer (eigene Migration) |
+| Löschen | Linie: Soft (`is_active=0`) · Stationen: Ersatz durch `saveStations` (Rewrite) · **kein** Hard-DELETE der Linie ohne Flag · WC: `ON DELETE RESTRICT` |
+| Gleiche Maschine 2× | **Nein** — Unique `(line_id, work_center_id)` |
+| Reihenfolge | Unique `(line_id, station_order)`, lückenlos 1…n im Store erzwingen |
+| WIP-Mengen | `current_qty` nur Simulation/manuell — **keine** FiBu-/Lagerbuchung in FL1/FL2 |
+| Migration-Nummer | Bei **FL1b-Start** höchste `database/migrations/NNN_*.sql` im **Merge-Ziel** prüfen. Stand FL1a: `master` max **141**; parallel belegt **142–144** (Amazon/Wissen/Unterschrift) → FL1b voraussichtlich **`145_production_lines.sql`**, FL2a danach **146** |
 
-1. `dg_production_lines` — Linie (Name, aktiv, optional Rezept-Bezug)  
-2. `dg_production_line_stations` — `line_id`, `work_center_id`, `station_order` (1…n)  
-3. `dg_production_line_buffers` — Puffer **nach** Station *i* (vor *i+1*): `capacity_qty`, `unit`, optional `current_qty` nur für Simulation/manuelle Ist-Eingabe  
+### 1. `dg_production_lines` (FL1b)
 
-**Wechsel / Stopp-Logik (Berechnung, kein Hard-DELETE):**
+| Feld | Typ / Regel |
+|------|-------------|
+| `id` | PK INT UNSIGNED AI |
+| `name` | VARCHAR(191) NOT NULL |
+| `code` | VARCHAR(64) NOT NULL DEFAULT '' (optional Kurzcode, kein Unique-Zwang Instanz-weit zuerst) |
+| `recipe_id` | NULL → `dg_recipes(id)` **ON DELETE SET NULL** (optional Default-Rezept) |
+| `is_active` | TINYINT(1) NOT NULL DEFAULT 1 |
+| `notes` | VARCHAR(1000) NOT NULL DEFAULT '' |
+| `created_at` / `updated_at` | DATETIME |
 
-- Station *i* **blocked**, wenn Puffer nach *i* ≥ Kapazität  
-- Station *i+1* **starved**, wenn Puffer vor ihr ≤ 0 (bzw. unter Mindestmenge)  
-- Linie **gestoppt**, wenn Eingangs-Rohware fehlt **oder** alle produktiven Stationen blocked/starved/in Störung  
+Index: `idx_production_lines_active (is_active)`.
 
-Routing (`dg_recipe_routing`) bleibt Kalkulations-Arbeitsplan; Linie ist **Betriebs-Stammdatum** (eine physische Kette kann mehrere Rezepte fahren).
+### 2. `dg_production_line_stations` (FL1b)
+
+| Feld | Typ / Regel |
+|------|-------------|
+| `id` | PK |
+| `line_id` | FK → `dg_production_lines(id)` **ON DELETE CASCADE** |
+| `work_center_id` | FK → `dg_work_centers(id)` **ON DELETE RESTRICT** |
+| `station_order` | INT UNSIGNED NOT NULL (≥ 1) |
+| `label` | VARCHAR(191) NOT NULL DEFAULT '' (Anzeige; leer → WC-Name in UI) |
+| `created_at` / `updated_at` | DATETIME |
+
+Constraints: **UNIQUE** `(line_id, station_order)` · **UNIQUE** `(line_id, work_center_id)`.
+
+### 3. `dg_production_line_buffers` (FL2a — hier nur Vertrag)
+
+Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** Puffer-Datensatz.
+
+| Feld | Typ / Regel |
+|------|-------------|
+| `id` | PK |
+| `line_id` | FK → lines CASCADE (Redundanz für Queries) |
+| `after_station_id` | FK → `dg_production_line_stations(id)` **ON DELETE CASCADE** · **UNIQUE** |
+| `capacity_qty` | DECIMAL(14,4) NOT NULL · **> 0** (App-Check) |
+| `min_qty` | DECIMAL(14,4) NOT NULL DEFAULT 0 · Starving unter/gleich diesem Wert |
+| `unit` | VARCHAR(32) NOT NULL DEFAULT 'Stk' |
+| `current_qty` | DECIMAL(14,4) NOT NULL DEFAULT 0 · nur Sim/manuell |
+| `updated_at` | DATETIME |
+
+### Stopp-Logik (unverändert, Engine ab FL3)
+
+- Station *i* **blocked**, wenn Puffer nach *i*: `current_qty >= capacity_qty`  
+- Station *i+1* **starved**, wenn Puffer davor: `current_qty <= min_qty`  
+- Linie **gestoppt**, wenn Eingangs-Rohware fehlt **oder** keine Station mehr lauffähig (blocked/starved/down)
 
 ---
 
@@ -92,7 +136,7 @@ Routing (`dg_recipe_routing`) bleibt Kalkulations-Arbeitsplan; Linie ist **Betri
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL1a laut docs/FLIESSLINIE-REST-PLAN.md. Nur genannte Dateien. Katalog. Kein MES/PLC. Kein Refactor.`
+`Nur Mini-ID FL1b laut docs/FLIESSLINIE-REST-PLAN.md. Migration lines+stations laut FL1a. Kein Puffer. Kein MES/PLC. Kein Refactor.`
 
 ---
 
@@ -111,7 +155,7 @@ Routing (`dg_recipe_routing`) bleibt Kalkulations-Arbeitsplan; Linie ist **Betri
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
-| FL1 | Linie + Stationen (Stammdaten) | [ ] | 🟡 |
+| FL1 | Linie + Stationen (Stammdaten) | [~] FL1a ✅ | 🟡 |
 | FL2 | Puffer zwischen Stationen | [ ] | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
@@ -136,7 +180,7 @@ Routing (`dg_recipe_routing`) bleibt Kalkulations-Arbeitsplan; Linie ist **Betri
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL1a | Speichermodell final (Tabellen/FKs) in diesem Plan bestätigen · Migration-Nummer prüfen | 🟢 | [ ] |
+| FL1a | Speichermodell final (Tabellen/FKs) in diesem Plan bestätigen · Migration-Nummer prüfen | 🟢 | [x] 2026-11-08 Modell festgelegt · nächste frei ≈ **145** (nach 142–144) |
 | FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [ ] |
 | FL1c | Store: `listLines`, `getLineWithStations`, `saveStations` (Reihenfolge) · **kein** Hard-DELETE Historie ohne Flag | 🟡 | [ ] |
 | FL1d | Selftest: 3 Stationen speichern → Reihenfolge stabil | 🟡 | [ ] |
@@ -232,7 +276,7 @@ Routing (`dg_recipe_routing`) bleibt Kalkulations-Arbeitsplan; Linie ist **Betri
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL1a laut docs/FLIESSLINIE-REST-PLAN.md. Speichermodell final bestätigen. Keine Migration ohne Freigabe. Kein Code außer Doc.`
+`Nur Mini-ID FL1b laut docs/FLIESSLINIE-REST-PLAN.md. Migration lines+stations laut FL1a. Höchste Migrationsnummer im Merge-Ziel prüfen. Kein Puffer (FL2). Kein Store/UI.`
 
 ---
 
