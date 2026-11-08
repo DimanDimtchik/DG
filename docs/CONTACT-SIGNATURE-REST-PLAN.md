@@ -66,7 +66,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | Baustein | Stand |
 |----------|--------|
-| User-/Kontakt-Unterschriftshistorie | ✅ Schema + `UserSignatureStore` (ES1b/c); UI/Selftest offen |
+| User-/Kontakt-Unterschriftshistorie | ✅ Schema + Store + Selftest (ES1b–d); UI offen |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
@@ -106,7 +106,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
-| ES1 | Schema Historie + Accessor | [~] ES1c ✅ | 🟡 |
+| ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
 | ES2 | Kontakt-UI Tabelle + Upload | [ ] | 🟡🔴 |
 | ES3 | Canvas Web | [ ] | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
@@ -133,10 +133,10 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES1a | ~~Speichermodell entscheiden~~ → **festgelegt** (Tabelle + media_id, siehe oben) | 🟢 | [x] 2026-11-08 |
 | ES1b | Migration: Tabelle + Indizes (`user_id`, `contact_id`, `(user_id, valid_to)`) · **kein** ON DELETE CASCADE der Historie | 🟡 | [x] 2026-11-08 `144_user_signatures.sql` → `dg_user_signatures` · FK RESTRICT |
 | ES1c | `UserSignatureStore` (Name final): `listForContact`, `activeForUser`, `appendNew` (schließt alte) · **keine** `delete`-Methode | 🟡 | [x] 2026-11-08 `src/User/UserSignatureStore.php` + Autoload |
-| ES1d | Selftest: append → alte `valid_to` gesetzt · zweite aktiv · delete-API fehlt/wirft | 🟡 | [ ] |
+| ES1d | Selftest: append → alte `valid_to` gesetzt · zweite aktiv · delete-API fehlt/wirft | 🟡 | [x] 2026-11-08 `bin/user-signature-selftest.php` |
 
-**Prompt ES1d:**  
-`Nur Mini-ID ES1d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Selftest UserSignatureStore. Kein UI.`
+**Prompt ES2a:**  
+`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Historie-Tabelle Kontakt. Katalog. Kein Canvas/Mail.`
 
 ### ES2 — Kontakt-UI (Historie + Upload)
 
@@ -217,7 +217,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES1d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Selftest UserSignatureStore. Kein UI.`
+`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Historie-Tabelle Kontakt. Katalog. Kein Canvas/Mail.`
 
 ---
 
@@ -229,5 +229,6 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) | Brief |
 | `src/Mail/MailSignatureResolver.php` | Text-Signatur |
 | `src/User/UserSignatureStore.php` | Historie-Accessor (kein delete) |
+| `bin/user-signature-selftest.php` | ES1d Selftest (SQLite) |
 | `src/Media/*` | Bildspeicher |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server parallel, unabhängig |
