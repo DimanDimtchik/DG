@@ -125,7 +125,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | ID | Datei(en) | Hinweis | Token | Status |
 |----|-----------|---------|-------|--------|
 | U4a | `views/modules/kontakte.php` | Checkbox-Klasse | 🟢 | [x] 2026-11-08 |
-| U4b | `kdv-umfirmierung.php` / `kdv-provision.php` | Checkbox + wenig Spacing | 🟡 | [ ] |
+| U4b | `kdv-umfirmierung.php` / `kdv-provision.php` | Checkbox + wenig Spacing | 🟡 | [x] 2026-11-08 |
 | U4c | `rezeptur-form.php` | **viele** Inlines — nur `margin/padding/gap/flex` → Utilities; kein Logik-Umbau | 🟡 | [ ] |
 | U4d | `rezeptur-maschine-form.php` | wie U4c | 🟡 | [ ] |
 | U4e | `rezeptur-maschinen.php` | wie U4c | 🟡 | [ ] |
@@ -167,7 +167,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U1 | Scan-Fails | [x] |
 | U2 | Lohn / Firmendaten | [~] U2a+U2c ✅; U2b Sichtcheck offen |
 | U3 | Settings-Wellen | [x] |
-| U4 | Modul-Wellen | [~] U4a ✅ |
+| U4 | Modul-Wellen | [~] U4a+U4b ✅ |
 | U5 | Abschluss Guards + TODOS | [ ] |
 
 ---

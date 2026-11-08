@@ -69,14 +69,14 @@ $gateError = $provisionGateError ?? null;
     <form method="post" action="/app?page=kdv-provision&amp;id=<?= (int) $c['id'] ?>">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 
-      <div class="dg-form-grid" style="margin-bottom:16px;">
+      <div class="dg-form-grid dg-mb-4">
         <label class="dg-label">KAS-Login *
           <input class="dg-input" type="text" name="kas_login" value="<?= View::escape($c['kas_login'] ?? '') ?>" required>
         </label>
         <label class="dg-label">KAS-Passwort *
           <input class="dg-input" type="password" name="kas_pass" required>
         </label>
-        <label class="dg-label dg-label--checkbox" style="grid-column:1/-1;">
+        <label class="dg-field dg-field--checkbox dg-field--wide">
           <input type="checkbox" name="confirm_dns" value="1">
           <span>DNS-Warnung bestätigen (falls Domain bereits Records hat)</span>
         </label>

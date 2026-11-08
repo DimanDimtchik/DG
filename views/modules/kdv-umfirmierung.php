@@ -100,18 +100,18 @@ $predId = (int) ($p['id'] ?? 0);
       <h2>Optional: CRM jetzt provisionieren (MF7)</h2>
       <p class="dg-field-hint">Standard aus — kein Überraschungs-Deploy. Gates G1–G9 laut Spec; bei DNS-Records Bestätigung nötig.
         Ergebnis (Steps, Install-URL, Fehler) erscheint danach in der <strong>Nachfolger-Akte</strong>.</p>
-      <label class="dg-label dg-label--checkbox">
+      <label class="dg-field dg-field--checkbox">
         <input type="checkbox" name="provision_now" value="1"<?= !empty($form['provision_now']) ? ' checked' : '' ?>>
         <span>Nachfolger-Instanz jetzt über KAS bereitstellen</span>
       </label>
-      <div class="dg-form-grid" style="margin-top:12px;">
+      <div class="dg-form-grid dg-mt-3">
         <label class="dg-label">KAS-Login
           <input class="dg-input" type="text" name="kas_login" value="<?= View::escape((string) ($form['kas_login'] ?? $p['kas_login'] ?? '')) ?>" autocomplete="off">
         </label>
         <label class="dg-label">KAS-Passwort
           <input class="dg-input" type="password" name="kas_pass" value="" autocomplete="new-password">
         </label>
-        <label class="dg-label dg-label--checkbox" style="grid-column:1/-1;">
+        <label class="dg-field dg-field--checkbox dg-field--wide">
           <input type="checkbox" name="confirm_dns" value="1"<?= !empty($form['confirm_dns']) ? ' checked' : '' ?>>
           <span>DNS-Warnung bestätigen (Domain hat ggf. bereits Records)</span>
         </label>
