@@ -63,7 +63,7 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 | Gleiche Maschine 2× | **Nein** — Unique `(line_id, work_center_id)` |
 | Reihenfolge | Unique `(line_id, station_order)`, lückenlos 1…n im Store erzwingen |
 | WIP-Mengen | `current_qty` nur Simulation/manuell — **keine** FiBu-/Lagerbuchung in FL1/FL2 |
-| Migration-Nummer | **FL1b:** `145_production_lines.sql` (Stand 2026-11-08: parallel 142–144 belegt). FL2a: nächste freie nach Merge prüfen (**146+**). |
+| Migration-Nummer | **FL1b:** `145_production_lines.sql` · **FL2a:** `146_production_line_buffers.sql` (Stand 2026-11-08). |
 
 ### 1. `dg_production_lines` (FL1b)
 
@@ -92,7 +92,7 @@ Index: `idx_production_lines_active (is_active)`.
 
 Constraints: **UNIQUE** `(line_id, station_order)` · **UNIQUE** `(line_id, work_center_id)`.
 
-### 3. `dg_production_line_buffers` (FL2a — hier nur Vertrag)
+### 3. `dg_production_line_buffers` (**FL2a Migration** `146_production_line_buffers.sql`)
 
 Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** Puffer-Datensatz.
 
@@ -136,7 +136,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL2a laut docs/FLIESSLINIE-REST-PLAN.md. Migration Puffer laut FL1a-Vertrag. Höchste Migrationsnummer prüfen. Kein Store/UI.`
+`Nur Mini-ID FL2b laut docs/FLIESSLINIE-REST-PLAN.md. Store Puffer Kapazität>0. Kein UI. Kein MES.`
 
 ---
 
@@ -156,7 +156,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|--------|--------|-------|
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
 | FL1 | Linie + Stationen (Stammdaten) | [x] FL1a–d ✅ | 🟡 |
-| FL2 | Puffer zwischen Stationen | [ ] | 🟡 |
+| FL2 | Puffer zwischen Stationen | [~] FL2a ✅ | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
@@ -189,7 +189,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [ ] |
+| FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `146_production_line_buffers.sql` · Selftest |
 | FL2b | Store: Puffer je Lücke Station→Station; Kapazität > 0 Pflicht | 🟡 | [ ] |
 | FL2c | Selftest: Puffer voll/leer-Grenzen setzen | 🟡 | [ ] |
 
@@ -276,7 +276,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL2a laut docs/FLIESSLINIE-REST-PLAN.md. Migration dg_production_line_buffers laut FL1a. Höchste Migrationsnummer prüfen. Kein Store/UI.`
+`Nur Mini-ID FL2b laut docs/FLIESSLINIE-REST-PLAN.md. Store Puffer je Lücke Station→Station; Kapazität > 0. Kein UI.`
 
 ---
 
@@ -293,4 +293,6 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-lines-migration-selftest.php` | FL1b Vertrags-Selftest |
 | `src/Recipe/ProductionLineStore.php` | FL1c Store (kein Hard-DELETE) |
 | `bin/production-line-store-selftest.php` | FL1d SQLite Selftest |
+| `database/migrations/146_production_line_buffers.sql` | FL2a Puffer |
+| `bin/production-line-buffers-migration-selftest.php` | FL2a Vertrags-Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine |
