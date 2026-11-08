@@ -974,6 +974,14 @@ code {
   gap: var(--dg-space-3);
   min-width: 0;
 }
+/* fieldset-Browserrahmen weg — kein Inline border/padding/margin nötig */
+fieldset.dg-form-section {
+  border: 0;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+  min-inline-size: 0;
+}
 .dg-form-section > .dg-field,
 .dg-form-section > .dg-field-hint,
 .dg-form-section > .dg-form-grid,

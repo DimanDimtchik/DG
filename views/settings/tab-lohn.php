@@ -119,7 +119,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </div>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+    <fieldset class="dg-form-section">
       <legend class="dg-subsection-title">Umlagen</legend>
       <p class="dg-field-hint">Teilnahme bewusst setzen (auch „nein“). Die Sätze fließen in die Lohnberechnung.</p>
       <label class="dg-field dg-field--checkbox">
@@ -149,7 +149,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+    <fieldset class="dg-form-section">
       <legend class="dg-subsection-title">Baulohn</legend>
       <label class="dg-field dg-field--checkbox">
         <span>
@@ -159,7 +159,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+    <fieldset class="dg-form-section">
       <legend class="dg-subsection-title">FiBu-Übernahme</legend>
       <p class="dg-field-hint">
         Produktiv erst nach Kontenfreigabe mit dem Steuerberater.
@@ -188,7 +188,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </div>
     </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+    <fieldset class="dg-form-section">
       <legend class="dg-subsection-title">SEPA-Auszahlung</legend>
       <p class="dg-field-hint">
         Sammeldatei (Netto) zum Upload bei der Bank. Absenderkonto siehe oben.
@@ -202,7 +202,7 @@ $firmaUrl = SettingsRegistry::tabUrl('firmendaten');
       </label>
     </fieldset>
 
-    <fieldset class="dg-form-section" style="border:0;padding:0;margin-left:0;margin-right:0">
+    <fieldset class="dg-form-section">
       <legend class="dg-subsection-title">Lohnsteuer-Anmeldung (ELSTER)</legend>
       <p class="dg-field-hint">
         Zertifikat und Modus unter Einstellungen → ELSTER.
