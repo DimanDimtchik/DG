@@ -70,7 +70,7 @@
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)
 
-> **Stand PA3d (2026-11-08):** A3 Doc-Mini-IDs PA3a–f ✅ · Org-**Laufzettel** AVV ✅ · **Unterzeichnung** weiter Mensch (Schreibtisch, nicht vor Ort).  
+> **Stand PA3d (2026-11-08):** A3 Doc-Mini-IDs PA3a–f ✅ · **Hetzner-AVV unterzeichnet** ✅ 07.11.2026 (v1.2) · TÜV-TOM-Audit-PDF ✅ · Rest vor Cutover: Serverstandort/SSH-Keys.  
 > Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) · AVV: [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md)
 
 - [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
@@ -79,15 +79,16 @@
   → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) · Konzept: [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md)
 - [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  
   → Selftest `bin/asset-css-minify-selftest.php` ✅ 2026-11-08 (PA3c) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §2
-- [~] **Hetzner-AVV / TOMs** — Checkliste ✅ PA3d · Org-Laufzettel ✅ · **Unterzeichnung/Konto noch offen** (vor Cutover, Schreibtisch)  
-  → Jetzt: [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) → Abschnitt „Org-Laufzettel“ · danach Abschnitt D ausfüllen
+- [x] **Hetzner-AVV / TOMs** — ✅ PA3d + Org-Nachweis 2026-11-08  
+  → AVV aktiv **07.11.2026** · Version **1.2** (16.02.2026) · TÜV-Bericht 63017991-01 (19.02.2026)  
+  → PDFs **nicht in Git** · Status [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) Abschnitt D
 - [x] Deploy-Pipeline auf neuen Host vorbereiten (rsync/SSH, ohne Cutover) — ✅ PA3e 2026-11-08  
   → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md)
 
 ### A4 · IQ Strom GmbH — Instanz vorbereiten (noch Kasserver oder parallele Domain ok)
 
 > **Stand PA4i (2026-11-08):** A4 **vollständig abgehakt** — PA4a–h ✅ auf `office.iqstrom.com` · Haken-Nachzug ✅ PA4i.  
-> Offen außerhalb A4: Nutzer-Aktivierung (Links in `storage/pa4d-invite-links.txt`, keine Mail versendet) · AVV-Unterschrift (A3/Org) · Lexoffice-Import (nach Checkliste PA4f).  
+> Offen außerhalb A4: Nutzer-Aktivierung (Links in `storage/pa4d-invite-links.txt`, keine Mail versendet) · Lexoffice-Import (nach Checkliste PA4f).  
 > Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md)
 
 - [x] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`) — ✅ PA4a–h 2026-11-08  

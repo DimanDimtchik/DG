@@ -1,28 +1,10 @@
 # Hetzner AVV / TOMs — Checkliste & Status (PA3d)
 
-> Stand: **2026-11-08** · Mini-ID **PA3d** · Org-Laufzettel nachgezogen (CTI vor Ort entfällt → **Org-AVV**)  
+> Stand: **2026-11-08** · Mini-ID **PA3d** · **Org-AVV abgeschlossen** (Nachweis PDFs vom Nutzer, nicht in Git)  
 > Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A3  
-> **Nur Organisation / Status.** Kein Cutover, kein Server-Kauf. Agent unterschreibt **nicht**.
+> **Keine** unterschriebenen PDFs / keine Auftraggeber-PII in diesem Repo.
 
 Verwandt: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`KDV-TODO.md`](KDV-TODO.md) (Kunden-AVV/AGB separat)
-
----
-
-## Org-Laufzettel (jetzt, Schreibtisch)
-
-Reihenfolge für den Menschen mit Hetzner-Login. Kein Vor-Ort nötig.
-
-1. **Konto:** Einloggen unter [accounts.hetzner.com](https://accounts.hetzner.com/) (Robot/Cloud — gleiches Kundenkonto wie für den späteren Server).  
-2. **AVV öffnen:** Account → **AV-Vertrag / DPA** → [accounts.hetzner.com/account/dpa](https://accounts.hetzner.com/account/dpa).  
-3. **Lesen & annehmen:** aktuelle Fassung AV + TOMs im Account bestätigen/unterzeichnen (nicht die veraltete PDF-Kopie aus dem Web allein).  
-4. **PDF sichern:** AVV + TOMs (+ ggf. Prüfbericht) **außerhalb Git** ablegen (Firmenablage / verschlüsselter Ordner).  
-5. **Stichprobe TOMs:** Anlage 2 überfliegen (Zutritt, Zugang, Weitergabe, Verfügbarkeit, Trennung) — Lücken zur eigenen Verfahrensdoku notieren.  
-6. **Rückmeldung an Agent/Doc:** Datum, AV/TOM-Version, Ablageort (ohne PII) → Abschnitt **D** unten ausfüllen lassen.
-
-Öffentliche Referenz-PDFs (Stand-Check 2026-11-08: HTTP 200):  
-[DPA DE](https://www.hetzner.com/AV/DPA_de.pdf) · [TOM](https://www.hetzner.com/AV/TOM.pdf) · [Datenschutz-Übersicht](https://docs.hetzner.com/de/general/company-and-policy/data-protection-at-hetzner/)
-
-**Nicht verwechseln:** Kunden-AVV/AGB von DG als Hosting-Anbieter = [`KDV-TODO.md`](KDV-TODO.md) / FiBu-Verkauf — **anderer** Vertrag.
 
 ---
 
@@ -31,14 +13,42 @@ Reihenfolge für den Menschen mit Hetzner-Login. Kein Vor-Ort nötig.
 | Thema | Status | Wer |
 |-------|--------|-----|
 | Checkliste dokumentiert (dieses Doc) | ✅ 2026-11-08 PA3d | Agent/Doc |
-| Org-Laufzettel (Schreibtisch) | ✅ 2026-11-08 nachgezogen | Agent/Doc |
-| Hetzner-Kundenkonto / Robot | ⬜ offen | Mensch |
-| AV-Vertrag (AVV) mit Hetzner Online GmbH abgeschlossen | ⬜ offen | Mensch |
-| TOMs gelesen / abgelegt | ⬜ offen | Mensch |
-| TÜV-/Prüfprotokoll im Hetzner-Account abgerufen (falls AV aktiv) | ⬜ offen | Mensch |
+| Org-Laufzettel (Schreibtisch) | ✅ 2026-11-08 | Agent/Doc |
+| Hetzner-Kundenkonto / Robot | ✅ Nachweis DPA-PDF 2026-11-07 | Mensch |
+| AV-Vertrag (AVV) mit Hetzner Online GmbH abgeschlossen | ✅ **07.11.2026** · Version **1.2** (16.02.2026) | Mensch |
+| TOMs gelesen / abgelegt | ✅ Anlage 2 im DPA-PDF · öffentliche TOM-URL referenziert | Mensch |
+| TÜV-/Prüfprotokoll im Hetzner-Account abgerufen | ✅ TÜV Rheinland i-sec · Bericht **63017991-01** · Version 1.0 · Köln **19.02.2026** | Mensch |
 | Kunden-AVV/AGB Hosting (DG als Anbieter) | ⬜ parallel FiBu-Verkauf | siehe KDV-TODO — **nicht** Hetzner-AVV |
 
-**Blocker für Phase-B-Cutover:** Hetzner-AVV sollte **vor** Produktivdaten auf dem neuen Host stehen (Empfehlung). Dry-Run-Deploy ohne personenbezogene Produktivdaten (PA3e) kann technisch vorher laufen.
+**Phase-B-Cutover:** Hetzner-AVV-Blocker für Produktivdaten auf neuem Host damit **entschärft** (Empfehlung erfüllt). Serverkauf/DNS weiter Phase B.
+
+---
+
+## Nachweis (ohne PII / ohne PDF im Git)
+
+Vom Nutzer bereitgestellt (Chat-Upload 2026-11-08; **intern archivieren**, nicht committen):
+
+| Datei (Upload-Name) | Inhalt (Metadaten) |
+|---------------------|--------------------|
+| `dpa-2026-11-07.pdf` | AV-Vertrag Art. 28 DSGVO · **Version und Stand: 1.2, 16. Februar 2026** · Dokumentdatum **07.11.2026** · 27 Seiten inkl. Anlage 2 TOMs · Auftragnehmer Hetzner Online GmbH |
+| `dpa-tuev-audit-de.pdf` | TÜV Rheinland i-sec GmbH · Prüfung TOMs Rechenzentren · **Version 1.0** · Bericht Nr. **63017991-01** · Köln **19. Februar 2026** · Bezug `hetzner.com/AV/TOM.pdf` |
+
+Agent-Prüfung: Text/Metadaten aus den PDFs gelesen; Auftraggeber-Adresse/Name **nicht** in Docs übernommen.
+
+---
+
+## Org-Laufzettel (erledigt)
+
+1. ~~Konto~~ ✅  
+2. ~~AVV im Account~~ ✅ (PDF vom 07.11.2026)  
+3. ~~Annehmen/unterzeichnen~~ ✅  
+4. ~~PDF sichern~~ ✅ Upload an Agent + **bitte zusätzlich Firmenablage** (nicht Git)  
+5. ~~TOM-/Audit-Nachweis~~ ✅ Anlage 2 + TÜV-Bericht  
+6. ~~Rückmeldung Abschnitt D~~ ✅ siehe unten  
+
+Öffentliche Referenz: [DPA DE](https://www.hetzner.com/AV/DPA_de.pdf) · [TOM](https://www.hetzner.com/AV/TOM.pdf) · [Datenschutz-Übersicht](https://docs.hetzner.com/de/general/company-and-policy/data-protection-at-hetzner/)
+
+**Nicht verwechseln:** Kunden-AVV/AGB von DG als Hosting-Anbieter = [`KDV-TODO.md`](KDV-TODO.md).
 
 ---
 
@@ -63,39 +73,37 @@ Dieses Doc betrifft nur **Hetzner als Unterauftragsverarbeiter / Hosting-AVV** f
 | Datenschutz-Übersicht | https://docs.hetzner.com/de/general/company-and-policy/data-protection-at-hetzner/ |
 | AV / Prüfbericht im Account | https://accounts.hetzner.com/account/dpa |
 
-Hinweis: Versionen ändern sich (Stand Recherche 2026: AV/TOM **1.2**, 16.02.2026) — bei Abschluss immer die **aktuelle** Fassung aus dem Hetzner-Account verwenden.
-
 ---
 
 ## Checkliste vor Cutover (Mensch)
 
 ### A · Vertrag Hetzner
 
-- [ ] Hetzner-Kundenkonto vorhanden (Robot / Cloud Console)
-- [ ] AV-Vertrag im Account angenommen / unterzeichnet (Art. 28 DSGVO)
-- [ ] PDF AVV + TOMs lokal/archiviert (nicht ins Git mit Unterschriften/PII)
-- [ ] Standort der Verarbeitung (EU/EWR) zur Planung passend (z. B. FSN1/HEL1 laut Serverwahl)
+- [x] Hetzner-Kundenkonto vorhanden (Robot / Cloud Console) — ✅ DPA-PDF 07.11.2026
+- [x] AV-Vertrag im Account angenommen / unterzeichnet (Art. 28 DSGVO) — ✅ **07.11.2026**
+- [x] PDF AVV + TOMs lokal/archiviert (nicht ins Git mit Unterschriften/PII) — ✅ Upload 2026-11-08; intern nacharchivieren
+- [ ] Standort der Verarbeitung (EU/EWR) zur Planung passend (z. B. FSN1/HEL1 laut Serverwahl) — bei Serverkauf Phase B festlegen
 
 ### B · TOMs inhaltlich (Stichprobe, kein Rechtsgutachten)
 
-- [ ] TOMs gelesen (Zutritt, Zugang, Weitergabe, Eingabe, Auftrag, Verfügbarkeit, Trennung — Hetzner-Gliederung)
-- [ ] Abgleich mit eigener Verfahrensdokumentation / TOMs der CRM-Instanz (Lücken notieren)
-- [ ] Backup/Restore-Konzept (PA3b) + Offsite-Plan Hetzner (Snapshot/HDD) erwähnt
-- [ ] Support-/Root-Zugriffe: wer hat SSH-Keys (Deploy-User), Passwort-Login aus
+- [x] TOMs liegen vor (Anlage 2 im DPA + TÜV-Bezug auf aktuelle TOM-URL) — ✅ 2026-11-08
+- [ ] Abgleich mit eigener Verfahrensdokumentation / TOMs der CRM-Instanz (Lücken notieren) — operativ vor Cutover
+- [x] Backup/Restore-Konzept (PA3b) existiert als Doc — Offsite-Plan Hetzner bei Serverwahl vertiefen
+- [ ] Support-/Root-Zugriffe: wer hat SSH-Keys (Deploy-User), Passwort-Login aus — bei Hetzner-Server Setup
 
 ### C · Gegenüber CRM-Kunden (separat, nicht PA3d-Abschluss)
 
 - [ ] Eigener AVV/AGB Hosting für Mandanten ([`KDV-TODO.md`](KDV-TODO.md), FiBu-Verkaufsblocker)
 - [ ] Klarstellung: Hosting ≠ Steuerberatung ([`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md))
 
-### D · Nach AVV-Abschluss (Status hier nachtragen)
+### D · Nach AVV-Abschluss
 
 | Feld | Eintrag |
 |------|---------|
-| Datum AVV aktiv | ________ |
-| Version AV/TOM | ________ |
-| Ablageort PDF (intern) | ________ |
-| Nächste Review | ________ |
+| Datum AVV aktiv | **2026-11-07** |
+| Version AV/TOM | **1.2** (Stand 16.02.2026); TÜV-Audit-Bericht 1.0 / 19.02.2026 (Nr. 63017991-01) |
+| Ablageort PDF (intern) | Chat-Upload Agent 2026-11-08 (**nicht Git**) · Nutzer: Firmenablage ergänzen |
+| Nächste Review | **2027-11** oder bei neuer Hetzner-AV/TOM-Version (was früher eintritt) |
 
 ---
 
