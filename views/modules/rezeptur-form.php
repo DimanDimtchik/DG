@@ -139,7 +139,7 @@ $plannedPreview = ($calc !== null)
         </table>
       </div>
       <?php if (!$readOnly) : ?>
-        <button type="button" class="dg-button" id="dg-recipe-bom-add" style="margin-top:8px;">Material hinzufügen</button>
+        <button type="button" class="dg-button dg-mt-2" id="dg-recipe-bom-add">Material hinzufügen</button>
       <?php endif; ?>
     </fieldset>
 
@@ -187,7 +187,7 @@ $plannedPreview = ($calc !== null)
         </div>
       <?php endif; ?>
 
-      <div class="dg-table-wrap" style="margin-top:12px;">
+      <div class="dg-table-wrap dg-mt-3">
         <table class="dg-table">
           <thead>
             <tr>
@@ -258,7 +258,7 @@ $plannedPreview = ($calc !== null)
         </table>
       </div>
       <?php if (!$readOnly) : ?>
-        <button type="button" class="dg-button" id="dg-recipe-routing-add" style="margin-top:8px;">Schritt hinzufügen</button>
+        <button type="button" class="dg-button dg-mt-2" id="dg-recipe-routing-add">Schritt hinzufügen</button>
       <?php endif; ?>
       <?php if ($workCenters === []) : ?>
         <p class="dg-field-hint">Noch keine Maschinen — zuerst unter <a href="/app?page=rezeptur-maschinen">Maschinen &amp; Stundensatz</a> anlegen.</p>
@@ -278,13 +278,13 @@ $plannedPreview = ($calc !== null)
   </form>
 
   <aside>
-    <div class="dg-card" style="padding:16px;margin-bottom:16px;">
-      <h2 class="dg-subsection-title" style="margin-top:0;">Vorkalkulation</h2>
+    <div class="dg-card dg-mb-4" style="padding:16px;">
+      <h2 class="dg-subsection-title dg-mt-0">Vorkalkulation</h2>
       <?php if ($calc === null) : ?>
         <p class="dg-field-hint">Nach dem Speichern erscheint die Kalkulation. Speichern legt zusätzlich einen Snapshot an.</p>
       <?php else : ?>
         <?php if (!empty($calc['warnings']) && is_array($calc['warnings'])) : ?>
-          <div class="dg-flash dg-flash--warning" style="margin-bottom:10px;" id="dg-recipe-calc-warnings">
+          <div class="dg-flash dg-flash--warning dg-mb-3" id="dg-recipe-calc-warnings">
             <?php foreach ($calc['warnings'] as $w) : ?>
               <div><?= View::escape((string) $w) ?></div>
             <?php endforeach; ?>
@@ -292,17 +292,17 @@ $plannedPreview = ($calc !== null)
         <?php else : ?>
           <div id="dg-recipe-calc-warnings" hidden></div>
         <?php endif; ?>
-        <dl style="margin:0;display:grid;gap:6px;font-size:0.95rem;" id="dg-recipe-calc-dl">
-          <div style="display:flex;justify-content:space-between;gap:8px;"><dt>K<sub>mat</sub></dt><dd style="margin:0;font-weight:600;" data-calc="k_mat"><?= View::escape(RecipeCostService::formatEur((float) ($calc['k_mat'] ?? 0), 2)) ?></dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;"><dt>K<sub>fert</sub></dt><dd style="margin:0;font-weight:600;" data-calc="k_fert"><?= View::escape(RecipeCostService::formatEur((float) ($calc['k_fert'] ?? 0), 2)) ?></dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--dg-border,#ddd);padding-top:6px;"><dt>Selbstkosten</dt><dd style="margin:0;font-weight:700;" data-calc="self_cost"><?= View::escape(RecipeCostService::formatEur((float) ($calc['self_cost'] ?? 0), 2)) ?></dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;"><dt>VK (mit Marge)</dt><dd style="margin:0;font-weight:700;" data-calc="vk"><?= View::escape(RecipeCostService::formatEur((float) ($calc['vk'] ?? 0), 2)) ?></dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;"><dt>je Einheit (SK)</dt><dd style="margin:0;" data-calc="unit_self_cost"><?= View::escape(RecipeCostService::formatEur((float) ($calc['unit_self_cost'] ?? 0), 4)) ?></dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;"><dt>je Einheit (VK)</dt><dd style="margin:0;" data-calc="unit_vk"><?= View::escape(RecipeCostService::formatEur((float) ($calc['unit_vk'] ?? 0), 4)) ?></dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--dg-border,#ddd);padding-top:6px;"><dt>Δ Selbstkosten</dt><dd style="margin:0;" data-calc="delta_self_cost">0,00 €</dd></div>
-          <div style="display:flex;justify-content:space-between;gap:8px;"><dt>Δ VK</dt><dd style="margin:0;" data-calc="delta_vk">0,00 €</dd></div>
+        <dl class="dg-mt-0 dg-mb-0" style="display:grid;gap:6px;font-size:0.95rem;" id="dg-recipe-calc-dl">
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><dt>K<sub>mat</sub></dt><dd class="dg-mt-0 dg-mb-0" style="font-weight:600;" data-calc="k_mat"><?= View::escape(RecipeCostService::formatEur((float) ($calc['k_mat'] ?? 0), 2)) ?></dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><dt>K<sub>fert</sub></dt><dd class="dg-mt-0 dg-mb-0" style="font-weight:600;" data-calc="k_fert"><?= View::escape(RecipeCostService::formatEur((float) ($calc['k_fert'] ?? 0), 2)) ?></dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;border-top:1px solid var(--dg-border,#ddd);padding-top:6px;"><dt>Selbstkosten</dt><dd class="dg-mt-0 dg-mb-0" style="font-weight:700;" data-calc="self_cost"><?= View::escape(RecipeCostService::formatEur((float) ($calc['self_cost'] ?? 0), 2)) ?></dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><dt>VK (mit Marge)</dt><dd class="dg-mt-0 dg-mb-0" style="font-weight:700;" data-calc="vk"><?= View::escape(RecipeCostService::formatEur((float) ($calc['vk'] ?? 0), 2)) ?></dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><dt>je Einheit (SK)</dt><dd class="dg-mt-0 dg-mb-0" data-calc="unit_self_cost"><?= View::escape(RecipeCostService::formatEur((float) ($calc['unit_self_cost'] ?? 0), 4)) ?></dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><dt>je Einheit (VK)</dt><dd class="dg-mt-0 dg-mb-0" data-calc="unit_vk"><?= View::escape(RecipeCostService::formatEur((float) ($calc['unit_vk'] ?? 0), 4)) ?></dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;border-top:1px dashed var(--dg-border,#ddd);padding-top:6px;"><dt>Δ Selbstkosten</dt><dd class="dg-mt-0 dg-mb-0" data-calc="delta_self_cost">0,00 €</dd></div>
+          <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><dt>Δ VK</dt><dd class="dg-mt-0 dg-mb-0" data-calc="delta_vk">0,00 €</dd></div>
         </dl>
-        <div class="dg-field-hint" style="margin-top:10px;<?= empty($calc['auxiliary_lines']) ? 'display:none;' : '' ?>" id="dg-recipe-aux-hint">
+        <div class="dg-field-hint dg-mt-3" style="<?= empty($calc['auxiliary_lines']) ? 'display:none;' : '' ?>" id="dg-recipe-aux-hint">
           Zusatzmaterial in K<sub>mat</sub>:
           <span id="dg-recipe-aux-hint-body">
             <?php if (!empty($calc['auxiliary_lines']) && is_array($calc['auxiliary_lines'])) : ?>
@@ -316,7 +316,7 @@ $plannedPreview = ($calc !== null)
           $capLinesUi = is_array($calc['capacity_lines'] ?? null) ? $calc['capacity_lines'] : [];
           $capUsed = array_values(array_filter($capLinesUi, static fn ($row): bool => is_array($row) && (($row['run_source'] ?? '') === 'capacity')));
         ?>
-        <div class="dg-field-hint" style="margin-top:8px;<?= $capUsed === [] ? 'display:none;' : '' ?>" id="dg-recipe-cap-hint">
+        <div class="dg-field-hint dg-mt-2" style="<?= $capUsed === [] ? 'display:none;' : '' ?>" id="dg-recipe-cap-hint">
           Laufzeit aus Kapazität:
           <span id="dg-recipe-cap-hint-body">
             <?php foreach ($capUsed as $capLine) : ?>
@@ -329,7 +329,7 @@ $plannedPreview = ($calc !== null)
           $maintLinesUi = is_array($calc['maintenance_lines'] ?? null) ? $calc['maintenance_lines'] : [];
           $kMaintUi = (float) ($calc['k_maint_suggested'] ?? 0);
         ?>
-        <div class="dg-field-hint" style="margin-top:8px;<?= $maintLinesUi === [] ? 'display:none;' : '' ?>" id="dg-recipe-maint-hint">
+        <div class="dg-field-hint dg-mt-2" style="<?= $maintLinesUi === [] ? 'display:none;' : '' ?>" id="dg-recipe-maint-hint">
           Wartung Vorschlag (nicht in SK/VK, keine FiBu):
           <strong data-calc="k_maint_suggested"><?= View::escape(RecipeCostService::formatEur($kMaintUi, 2)) ?></strong>
           <span id="dg-recipe-maint-hint-body">
@@ -345,12 +345,12 @@ $plannedPreview = ($calc !== null)
 
       <?php if ($calc !== null && $canEdit) : ?>
         <?php $baseElec = (float) (($calc['rates']['electricity_eur_per_kwh'] ?? RecipeCostSettings::get()['electricity_eur_per_kwh'] ?? 0.3)); ?>
-        <div class="dg-card" style="padding:12px;margin-top:14px;background:color-mix(in srgb, var(--dg-primary,#336) 6%, #fff);" id="dg-recipe-whatif"
+        <div class="dg-card dg-mt-4" style="padding:12px;background:color-mix(in srgb, var(--dg-primary,#336) 6%, #fff);" id="dg-recipe-whatif"
           data-csrf="<?= View::escape(Csrf::token()) ?>"
           data-recipe-id="<?= (int) ($recipeId ?? 0) ?>"
           data-base-elec="<?= View::escape((string) $baseElec) ?>">
-          <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Was wäre wenn…</h3>
-          <p class="dg-field-hint" style="margin-top:0;">Slider ändern nur die Anzeige. „Übernehmen“ schreibt in die Formularfelder (Strom zusätzlich in die Kostensätze).</p>
+          <h3 class="dg-subsection-title dg-mb-2" style="font-size:1rem;">Was wäre wenn…</h3>
+          <p class="dg-field-hint dg-mt-0">Slider ändern nur die Anzeige. „Übernehmen“ schreibt in die Formularfelder (Strom zusätzlich in die Kostensätze).</p>
           <label class="dg-field">
             <span>Strompreis: <strong data-whatif-label="elec"><?= View::escape(number_format($baseElec, 2, ',', '.')) ?></strong> €/kWh</span>
             <input type="range" min="0.05" max="1.00" step="0.01" value="<?= View::escape((string) round($baseElec, 2)) ?>" data-whatif="elec">
@@ -363,25 +363,25 @@ $plannedPreview = ($calc !== null)
             <span>Rüstzeit: <strong data-whatif-label="setup">1,00</strong>×</span>
             <input type="range" min="0.25" max="4" step="0.05" value="1" data-whatif="setup">
           </label>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+          <div class="dg-toolbar dg-mt-2">
             <button type="button" class="dg-button" data-whatif-reset>Zurücksetzen</button>
             <button type="button" class="dg-button dg-button--primary" data-whatif-apply>Übernehmen</button>
           </div>
-          <p class="dg-field-hint" id="dg-whatif-status" style="margin-bottom:0;"></p>
+          <p class="dg-field-hint dg-mb-0" id="dg-whatif-status"></p>
         </div>
       <?php endif; ?>
 
       <?php if ($isEdit && $canEdit && $plannedPreview !== null) : ?>
-        <form method="post" action="/app?page=rezeptur-form&amp;action=edit&amp;id=<?= (int) $recipeId ?>" style="margin-top:14px;" class="dg-form" id="dg-recipe-run-form">
+        <form method="post" action="/app?page=rezeptur-form&amp;action=edit&amp;id=<?= (int) $recipeId ?>" class="dg-form dg-mt-4" id="dg-recipe-run-form">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="id" value="<?= (int) $recipeId ?>">
-          <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Produktionsdurchlauf</h3>
-          <p class="dg-field-hint" style="margin-top:0;">Speichert unveränderlichen Soll-Snapshot und Ist-Werte. Keine Buchung.</p>
-          <div style="display:grid;gap:8px;font-size:0.9rem;margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;gap:8px;"><span>Soll Menge</span><strong><?= View::escape(number_format((float) $plannedPreview['planned_qty'], 3, ',', '.')) ?></strong></div>
-            <div style="display:flex;justify-content:space-between;gap:8px;"><span>Soll Rüst (Min.)</span><strong><?= View::escape(number_format((float) $plannedPreview['planned_setup_min'], 2, ',', '.')) ?></strong></div>
-            <div style="display:flex;justify-content:space-between;gap:8px;"><span>Soll Lauf (Min.)</span><strong><?= View::escape(number_format((float) $plannedPreview['planned_run_min'], 2, ',', '.')) ?></strong></div>
-            <div style="display:flex;justify-content:space-between;gap:8px;"><span>Soll SK</span><strong><?= View::escape(RecipeCostService::formatEur((float) $plannedPreview['planned_self_cost'], 2)) ?></strong></div>
+          <h3 class="dg-subsection-title dg-mb-2" style="font-size:1rem;">Produktionsdurchlauf</h3>
+          <p class="dg-field-hint dg-mt-0">Speichert unveränderlichen Soll-Snapshot und Ist-Werte. Keine Buchung.</p>
+          <div class="dg-mb-3 dg-gap-2" style="display:grid;font-size:0.9rem;">
+            <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><span>Soll Menge</span><strong><?= View::escape(number_format((float) $plannedPreview['planned_qty'], 3, ',', '.')) ?></strong></div>
+            <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><span>Soll Rüst (Min.)</span><strong><?= View::escape(number_format((float) $plannedPreview['planned_setup_min'], 2, ',', '.')) ?></strong></div>
+            <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><span>Soll Lauf (Min.)</span><strong><?= View::escape(number_format((float) $plannedPreview['planned_run_min'], 2, ',', '.')) ?></strong></div>
+            <div class="dg-gap-2" style="display:flex;justify-content:space-between;"><span>Soll SK</span><strong><?= View::escape(RecipeCostService::formatEur((float) $plannedPreview['planned_self_cost'], 2)) ?></strong></div>
           </div>
           <label class="dg-field">
             <span>Ist Menge</span>
@@ -408,14 +408,14 @@ $plannedPreview = ($calc !== null)
           </div>
         </form>
       <?php elseif ($isEdit && $canEdit) : ?>
-        <p class="dg-field-hint" style="margin-top:14px;">Nach Speichern / Kalkulation kann ein Produktionsdurchlauf protokolliert werden.</p>
+        <p class="dg-field-hint dg-mt-4">Nach Speichern / Kalkulation kann ein Produktionsdurchlauf protokolliert werden.</p>
       <?php endif; ?>
     </div>
 
     <?php if ($snapshots !== []) : ?>
       <div class="dg-card" style="padding:16px;">
-        <h2 class="dg-subsection-title" style="margin-top:0;">Snapshots &amp; Soll/Ist</h2>
-        <ul style="margin:0;padding-left:0;list-style:none;font-size:0.9rem;">
+        <h2 class="dg-subsection-title dg-mt-0">Snapshots &amp; Soll/Ist</h2>
+        <ul class="dg-mt-0 dg-mb-0" style="padding-left:0;list-style:none;font-size:0.9rem;">
           <?php foreach ($snapshots as $snap) : ?>
             <?php
               $kind = (string) ($snap['kind'] ?? 'save');
@@ -425,7 +425,7 @@ $plannedPreview = ($calc !== null)
               $snapId = (int) ($snap['id'] ?? 0);
               $act = $actualsMap[$snapId] ?? null;
             ?>
-            <li style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--dg-border,#eee);">
+            <li class="dg-mb-3" style="padding-bottom:10px;border-bottom:1px solid var(--dg-border,#eee);">
               <div>
                 <strong><?= $kind === 'run' ? 'Lauf' : 'Speichern' ?></strong>
                 · <?= View::escape($whenLabel) ?>
@@ -465,7 +465,7 @@ $plannedPreview = ($calc !== null)
                 <?php endif; ?>
               </div>
               <?php if ($snapAuxLines !== []) : ?>
-                <div class="dg-field-hint" style="margin:4px 0 0;">
+                <div class="dg-field-hint dg-mt-1">
                   Zusatzmaterial im Snapshot:
                   <?php foreach ($snapAuxLines as $snapAuxLine) : ?>
                     <?php if (!is_array($snapAuxLine)) { continue; } ?>
@@ -475,7 +475,7 @@ $plannedPreview = ($calc !== null)
                 </div>
               <?php endif; ?>
               <?php if ($snapCapUsed > 0) : ?>
-                <div class="dg-field-hint" style="margin:4px 0 0;">
+                <div class="dg-field-hint dg-mt-1">
                   Kapazität im Snapshot:
                   <?php foreach ($snapCapLines as $snapCapLine) : ?>
                     <?php if (!is_array($snapCapLine) || (($snapCapLine['run_source'] ?? '') !== 'capacity')) { continue; } ?>
@@ -485,7 +485,7 @@ $plannedPreview = ($calc !== null)
                 </div>
               <?php endif; ?>
               <?php if ($snapMaintLines !== []) : ?>
-                <div class="dg-field-hint" style="margin:4px 0 0;">
+                <div class="dg-field-hint dg-mt-1">
                   Wartung Vorschlag im Snapshot:
                   <?php foreach ($snapMaintLines as $snapMaintLine) : ?>
                     <?php if (!is_array($snapMaintLine)) { continue; } ?>
@@ -504,7 +504,7 @@ $plannedPreview = ($calc !== null)
                       return $sign . number_format($v, $dec, ',', '.');
                   };
                 ?>
-                <div class="dg-field-hint" style="margin:6px 0;">
+                <div class="dg-field-hint dg-mt-2 dg-mb-2">
                   Soll/Ist Menge <?= View::escape(number_format((float) ($act['planned_qty'] ?? 0), 3, ',', '.')) ?>
                   → <?= View::escape(number_format((float) ($act['actual_qty'] ?? 0), 3, ',', '.')) ?>
                   (Δ <?= View::escape($fmtDelta($dQty, 3)) ?>)
@@ -515,9 +515,9 @@ $plannedPreview = ($calc !== null)
                   <?php endif; ?>
                 </div>
                 <?php if ($canEdit) : ?>
-                  <details style="margin-top:4px;">
+                  <details class="dg-mt-1">
                     <summary style="cursor:pointer;">Ist anpassen</summary>
-                    <form method="post" action="/app?page=rezeptur-form&amp;action=edit&amp;id=<?= (int) $recipeId ?>" class="dg-form" style="margin-top:8px;">
+                    <form method="post" action="/app?page=rezeptur-form&amp;action=edit&amp;id=<?= (int) $recipeId ?>" class="dg-form dg-mt-2">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="id" value="<?= (int) $recipeId ?>">
                       <input type="hidden" name="actual_id" value="<?= (int) ($act['id'] ?? 0) ?>">
