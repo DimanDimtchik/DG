@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 | **Credentials nie committen** | Nur Settings-UI / Instanz-DB |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID A4b laut docs/AMAZON-BUSINESS-REST-PLAN.md. Optional: Lieferant enthält „Amazon“ → Hinweis (kein Pflicht-Flag). Nur genannte Datei(en). Kein Refactor.`
+`Nur Mini-ID A5a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen. Nur genannte Datei(en). Kein Refactor.`
 
 **Nicht im Agent-Chat:** ganzen `index.php` umbauen, Sandbox-E2E gegen Amazon live, Rechnung-Import, Stufe-3-Cron.
 
@@ -106,7 +106,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | A4a | Feldhinweis ASIN an Einkaufsquellen-UI (wo `external_sku` gepflegt wird) | 🟢 | [x] 2026-11-08 |
-| A4b | Optional: Erkennung Lieferant enthält „Amazon“ → Hinweis (kein Pflicht-Flag) | 🟢 | [ ] |
+| A4b | Optional: Erkennung Lieferant enthält „Amazon“ → Hinweis (kein Pflicht-Flag) | 🟢 | [x] 2026-11-08 |
 
 ---
 
@@ -144,7 +144,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | A1 | Persistenz | [x] |
 | A2 | Order-Service | [x] |
 | A3 | Einkaufsliste UI | [x] A3a–A3c |
-| A4 | Artikelstamm | [~] A4a ✅; A4b offen |
+| A4 | Artikelstamm | [x] A4a–A4b |
 | A5 | Rechte / Abschluss | [ ] |
 
 ---

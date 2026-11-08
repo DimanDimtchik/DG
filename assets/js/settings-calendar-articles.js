@@ -285,9 +285,10 @@
 
     wrap.innerHTML =
       '<label class="dg-field dg-field--wide"><span>Firma / Lieferant (Kontakt)</span>' +
-      '<select name="purchase_sources[' + index + '][supplier_contact_id]">' + supplierOptionsHtml + '</select></label>' +
+      '<select name="purchase_sources[' + index + '][supplier_contact_id]" data-purchase-supplier-contact>' + supplierOptionsHtml + '</select></label>' +
       '<label class="dg-field"><span>Lieferant (Freitext, falls nicht in Kontakten)</span>' +
-      '<input type="text" name="purchase_sources[' + index + '][supplier_name]" value="' + escapeHtml(source.supplier_name || '') + '" maxlength="191"></label>' +
+      '<input type="text" name="purchase_sources[' + index + '][supplier_name]" value="' + escapeHtml(source.supplier_name || '') + '" maxlength="191" data-purchase-supplier-name></label>' +
+      '<p class="dg-field-hint dg-field--wide" data-purchase-amazon-hint hidden>Amazon erkannt: ASIN unter Lieferanten-Artikelnr. eintragen und diese Quelle als bevorzugt markieren.</p>' +
       '<label class="dg-field"><span>EK-Preis (netto)</span>' +
       '<input type="text" name="purchase_sources[' + index + '][purchase_price]" inputmode="decimal" value="' + escapeHtml(price) + '" placeholder="0,00"></label>' +
       '<label class="dg-field"><span>Währung</span>' +
@@ -312,7 +313,41 @@
         }
       });
     }
+    wireAmazonSupplierHint(wrap);
     return wrap;
+  }
+
+  function supplierTextLooksLikeAmazon(text) {
+    return /amazon/i.test(String(text || ''));
+  }
+
+  function wireAmazonSupplierHint(row) {
+    const hint = row.querySelector('[data-purchase-amazon-hint]');
+    const nameInput = row.querySelector('[data-purchase-supplier-name]');
+    const contactSelect = row.querySelector('[data-purchase-supplier-contact]');
+    if (!hint) {
+      return;
+    }
+    function refreshAmazonHint() {
+      let hit = supplierTextLooksLikeAmazon(nameInput ? nameInput.value : '');
+      if (!hit && contactSelect && contactSelect.selectedIndex >= 0) {
+        const opt = contactSelect.options[contactSelect.selectedIndex];
+        hit = supplierTextLooksLikeAmazon(opt ? opt.text : '');
+      }
+      if (hit) {
+        hint.removeAttribute('hidden');
+      } else {
+        hint.setAttribute('hidden', 'hidden');
+      }
+    }
+    if (nameInput) {
+      nameInput.addEventListener('input', refreshAmazonHint);
+      nameInput.addEventListener('change', refreshAmazonHint);
+    }
+    if (contactSelect) {
+      contactSelect.addEventListener('change', refreshAmazonHint);
+    }
+    refreshAmazonHint();
   }
 
   function reindexPurchaseSources() {
