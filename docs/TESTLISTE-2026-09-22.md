@@ -71,7 +71,7 @@
 - [x] Freitext + Klauseln Druck — ✅ PA2b
 - [x] Skonto + Mahnung — ✅ PA2b (Candidates; Versand braucht SMTP)
 - [x] Teilzahlungen / OPOS — ✅ PA2b
-- [ ] Bank Geisterumsätze (064)
+- [x] Bank Geisterumsätze (064) — ✅ PA2c 2026-11-08 Dev
 - [ ] Kichel
 - [ ] Belegdarstellung / AB-Druck Stichprobe
 - [x] §14-UStG Druckstichprobe Ausgangsbelege (Docarten) — ✅ PA1a 2026-11-08 · gemischte Sätze → PA1b

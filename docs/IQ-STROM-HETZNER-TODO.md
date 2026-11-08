@@ -40,7 +40,8 @@
 - [x] Dokumentstatus / Filter / Freitext / Klauseln / Skonto / Mahnung / Teilzahlungen / OPOS — ✅ PA2b 2026-11-08 Dev  
   → Status draft→sent→accepted/billed · Filter · Druck Freitext+§13b · Skonto-Stufen · Teilzahlung/OPOS · Mahn-Candidates (SMTP Dev aus)  
   → Fixes: `PaymentTermsService::tierForPaymentDate` (engste Stufe) · `DunningService` Spalte `email_2`
-- [ ] **Bank Geisterumsätze** erkennen + manuell ausblenden (Migration 064)
+- [x] **Bank Geisterumsätze** erkennen + manuell ausblenden (Migration 064) — ✅ PA2c 2026-11-08 Dev  
+  → `duplicate_open` + `payment_exists` erkannt · `hideGhost` → `ignored` · classify ohne Auto-Hide · `insertOrSkip` Duplikat
 - [ ] UStVA: Nullmeldung, Berichtigung, §13b-Kennziffern, ELSTER-CSV-Export
 - [ ] Jahresabschluss-Checkliste + Jahr sperren / Saldenvortrag (operativ)
 - [ ] DATEV EXTF + Beleg-ZIP Stichprobe (Berater/Mandant)

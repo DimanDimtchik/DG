@@ -106,8 +106,7 @@ Stammdaten und offene Vorgänge aus **Lexoffice** (Export CSV/Excel) in eine **D
 - [ ] Primärkonto in Firmeneinstellungen hinterlegt (IBAN)
 - [ ] Letzte 30–90 Tage CAMT/MT940 importiert (Testinstanz zuerst)
 - [ ] Duplikaterkennung verstanden (Zweitimport)
-- [ ] Geisterumsätze: ausblenden nur bewusst (Migration 064 / PA2c)
-- [ ] Keine Zuordnung „auf Verdacht“ ohne Beleg
+- [x] Geisterumsätze: ausblenden nur bewusst (Migration 064 / PA2c) — ✅ PA2c 2026-11-08 (classify ohne Auto-Hide)- [ ] Keine Zuordnung „auf Verdacht“ ohne Beleg
 
 ---
 
