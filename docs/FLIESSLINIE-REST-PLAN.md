@@ -107,11 +107,12 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `current_qty` | DECIMAL(14,4) NOT NULL DEFAULT 0 · nur Sim/manuell |
 | `updated_at` | DATETIME |
 
-### Stopp-Logik (unverändert, Engine ab FL3)
+### Stopp-Logik (verbindlich FL3a → [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md))
 
 - Station *i* **blocked**, wenn Puffer nach *i*: `current_qty >= capacity_qty`  
 - Station *i+1* **starved**, wenn Puffer davor: `current_qty <= min_qty`  
-- Linie **gestoppt**, wenn Eingangs-Rohware fehlt **oder** keine Station mehr lauffähig (blocked/starved/down)
+- Priorität Station: `down` > `blocked` > `starved` > `running`  
+- Linie: `stopped_material` (FL5) / `stopped` / `degraded` / `constrained` / `running` — Details im Regeln-Doc
 
 ---
 
@@ -136,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL3a laut docs/FLIESSLINIE-REST-PLAN.md. Zustandsregeln Blocking/Starving Doc. Kein Code außer Doc.`
+`Nur Mini-ID FL3b laut docs/FLIESSLINIE-REST-PLAN.md. Status-Service laut FLIESSLINIE-REGELN.md. Kein UI. Kein PLC.`
 
 ---
 
@@ -157,7 +158,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
 | FL1 | Linie + Stationen (Stammdaten) | [x] FL1a–d ✅ | 🟡 |
 | FL2 | Puffer zwischen Stationen | [x] FL2a–c ✅ | 🟡 |
-| FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
+| FL3 | Blocking / Starving-Engine (Offline) | [~] FL3a ✅ | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
 | FL6 | Störung / Wartung propagiert | [ ] | 🟡 |
@@ -197,7 +198,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL3a | Doc: Zustandsregeln Blocking/Starving/Linienstopp ( Pseudocode in Plan oder `docs/FLIESSLINIE-REGELN.md` ) | 🟢 | [ ] |
+| FL3a | Doc: Zustandsregeln Blocking/Starving/Linienstopp ( Pseudocode in Plan oder `docs/FLIESSLINIE-REGELN.md` ) | 🟢 | [x] 2026-11-08 [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) |
 | FL3b | Service: aus Stationen + Pufferständen Status je Station berechnen | 🟡 | [ ] |
 | FL3c | Selftest: Puffer voll → Vorgänger blocked; Puffer leer → Nachfolger starved | 🟡 | [ ] |
 
@@ -276,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL3a laut docs/FLIESSLINIE-REST-PLAN.md. Zustandsregeln Blocking/Starving/Linienstopp Doc. Kein Code außer Doc.`
+`Nur Mini-ID FL3b laut docs/FLIESSLINIE-REST-PLAN.md. Status-Service laut docs/FLIESSLINIE-REGELN.md. Kein UI. Kein PLC.`
 
 ---
 
@@ -284,6 +285,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | Datei | Rolle |
 |-------|--------|
+| [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) | FL3a Blocking/Starving Pseudocode |
 | [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md) | Kapazität, Wartung, Belegung |
 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) | ERP-Rahmen · Punkt 1b Fließlinie |
 | [`REZEPTUR-MODUL.md`](REZEPTUR-MODUL.md) | Nicht-Ziele MES |
