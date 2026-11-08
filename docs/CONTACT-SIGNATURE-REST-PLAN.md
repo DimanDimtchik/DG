@@ -66,7 +66,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | Baustein | Stand |
 |----------|--------|
-| User-/Kontakt-Unterschriftshistorie | ✅ Schema/Store/Selftest + Tabelle + Upload (ES2a/b); Hinweise/Smoke offen |
+| User-/Kontakt-Unterschriftshistorie | ✅ Schema/Store/Selftest + Tabelle + Upload + Hinweis (ES2a–c); Smoke ES2d offen |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
@@ -107,7 +107,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----|--------|--------|-------|
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
 | ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
-| ES2 | Kontakt-UI Tabelle + Upload | [~] ES2b ✅ | 🟡🔴 |
+| ES2 | Kontakt-UI Tabelle + Upload | [~] ES2c ✅ | 🟡🔴 |
 | ES3 | Canvas Web | [ ] | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [ ] | 🟡 |
@@ -141,13 +141,13 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----|---------|-------|--------|
 | ES2a | Tabelle am Kontakt: chronologisch **neueste zuerst**, Spalten Zeitraum, Quelle, Status, Vorschau | 🟡 | [x] 2026-11-08 Partial `contact-signature-history` · Detail + Bearbeiten |
 | ES2b | Aktion „Neue Unterschrift (Upload)“ → `appendNew` · **kein** Löschen-Button | 🟡 | [x] 2026-11-08 Form unter Historie · `appendFromUpload` PNG/WebP |
-| ES2c | Soft-Hinweis: kein QES / Schriftform · Historie unveränderlich | 🟢 | [ ] |
+| ES2c | Soft-Hinweis: kein QES / Schriftform · Historie unveränderlich | 🟢 | [x] 2026-11-08 `dg-flash--info` im Historie-Partial |
 | ES2d | Smoke Dev: Upload → Tabelle 2 Zeilen nach zweitem Upload | 🔴 | [ ] |
 
 **Konvention Chronologie:** neueste zuerst (`ORDER BY valid_from DESC, id DESC` / Store `listForContact`).
 
-**Prompt ES2c:**  
-`Nur Mini-ID ES2c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Soft-Hinweis kein QES/Schriftform. Katalog. Kein Upload-Refactor.`
+**Prompt ES2d:**  
+`Nur Mini-ID ES2d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Upload Historie 2 Zeilen. Kein Code außer Fix.`
 
 ### ES3 — Canvas Web
 
@@ -216,7 +216,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES2c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Soft-Hinweis kein QES/Schriftform. Katalog. Kein Upload-Refactor.`
+`Nur Mini-ID ES2d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Upload Historie 2 Zeilen. Kein Code außer Fix.`
 
 ---
 
@@ -229,7 +229,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | `src/Mail/MailSignatureResolver.php` | Text-Signatur |
 | `src/User/UserSignatureStore.php` | Historie-Accessor (kein delete) |
 | `bin/user-signature-selftest.php` | ES1d Selftest (SQLite) |
-| `views/partials/contact-signature-history.php` | ES2a/b Historie + Upload-Form |
+| `views/partials/contact-signature-history.php` | ES2a–c Historie + Upload + Soft-Hinweis |
 | `UserSignatureStore::appendFromUpload` | PNG/WebP → media + appendNew |
 | `src/Media/*` | Bildspeicher |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server parallel, unabhängig |

@@ -1,6 +1,6 @@
 <?php
 /**
- * ES2a/ES2b: Unterschriften-Historie am Kontakt (neueste zuerst) + optional Upload.
+ * ES2a–c: Unterschriften-Historie am Kontakt (neueste zuerst) + optional Upload + Soft-Hinweis.
  * Kein Löschen, kein Canvas/Mail.
  *
  * @var int|null $contactId
@@ -35,7 +35,12 @@ $formatDt = static function (string $raw): string {
 ?>
 <section class="dg-panel dg-panel--wide dg-mt-4" id="contact-signatures">
   <h2 class="dg-subsection-title">Unterschriften</h2>
-  <p class="dg-field-hint">Chronologisch, neueste zuerst. Verwendungszeitraum bleibt erhalten — Löschen ist nicht möglich.</p>
+  <div class="dg-flash dg-flash--info">
+    Das gespeicherte Bild ist eine einfache elektronische Unterschrift für Briefe und E-Mails.
+    Es ersetzt keine gesetzliche Schriftform und ist keine qualifizierte elektronische Signatur.
+    Frühere Versionen bleiben sichtbar und können nicht gelöscht werden.
+  </div>
+  <p class="dg-field-hint dg-mt-3">Chronologisch, neueste zuerst. Verwendungszeitraum bleibt erhalten.</p>
 
   <?php if ($contactSignatures === []) : ?>
     <p class="dg-lead">Noch keine Unterschriften für diesen Kontakt.</p>

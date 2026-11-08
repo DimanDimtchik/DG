@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES2c** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren · oder Unterschrift **ES2d** Smoke Dev ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES2c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Soft-Hinweis kein QES/Schriftform. Katalog. Kein Upload-Refactor.`
+`Nur Mini-ID ES2d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Upload Historie 2 Zeilen. Kein Code außer Fix.`
 
 ---
 
