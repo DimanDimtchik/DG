@@ -164,7 +164,7 @@ final class DunningService
         }
 
         $pdo = Database::pdo();
-        $sql = "SELECT v.*, c.email AS contact_email, c.email2 AS contact_email2
+        $sql = "SELECT v.*, c.email AS contact_email, c.email_2 AS contact_email2
                 FROM dg_vouchers v
                 LEFT JOIN dg_contacts c ON c.id = v.contact_id
                 WHERE v.is_draft = 0

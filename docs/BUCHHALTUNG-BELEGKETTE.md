@@ -68,15 +68,17 @@
 2. AB aus Angebot → noch keine Buchung — ✅ PA2a (+ LS Ledger 0)
 3. Abschlagsrechnung 30 % → Journal + OPOS — ✅ PA2a (357 €, Journal vorhanden)
 4. Schlussrechnung → Rest 70 %, Summe = Auftrag — ✅ PA2a (Rest 833 € = 1190−357)
-5. Gutschrift auf Rechnung → Minderung korrekt — offen (PA2b/andere)
-6. Status-Workflow: versendet → angenommen → abgerechnet — offen → **PA2b**
-7. Belegliste filtern nach Dokumentart und Status — offen → **PA2b**
-8. Rechnung: Freitext + gesetzliche Vorlagen (§ 19, Reverse Charge) auf Druck/PDF/E-Mail prüfen — teils PA1c; Rest PA2b
-9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — Zahlung buchen, Skonto automatisch — offen → **PA2b**
-10. Mahnung: Fälligkeit überschritten → manuell/automatisch (Cron), Mahngebühren auf Beleg — offen → **PA2b**
-11. Teilzahlungen: zwei Zahlungen auf eine Rechnung → OPOS „Bezahlt/Offen“, Status `partial`, Mahnung nur auf Rest — offen → **PA2b**
+5. Gutschrift auf Rechnung → Minderung korrekt — ✅ PA2b 2026-11-08 (Kundengutschrift angelegt + Journal)
+6. Status-Workflow: versendet → angenommen → abgerechnet — ✅ PA2b (Angebot sent→accepted; Rechnung sent→billed)
+7. Belegliste filtern nach Dokumentart und Status — ✅ PA2b
+8. Rechnung: Freitext + gesetzliche Vorlagen (§ 19, Reverse Charge) auf Druck/PDF/E-Mail prüfen — ✅ PA2b (Intro/Footer + §13b-Druck; §19/PV siehe PA1c)
+9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — ✅ PA2b · Fix engste Stufe · Selftest `bin/payment-terms-skonto-selftest.php`
+10. Mahnung: Fälligkeit überschritten → Candidates — ✅ PA2b · Fix `email_2` · Versand Dev ohne SMTP nicht gelaufen
+11. Teilzahlungen: zwei Zahlungen → OPOS Rest / Status `partial` — ✅ PA2b (50+50 auf 200 €, open 100)
 
 **PA2a Zusatz:** Nebenkette Angebot→AB→LS→**Rechnung** (ohne Schluss; `invoice` hat keine Folge `final_invoice`). Artifacts: `pa2a-belegkette/pa2a-report.json`.
+
+**PA2b Zusatz:** Artifacts `pa2b-smoke/pa2b-report.json` · Druck `pa2b-rechnung-druck.html`.
 
 ### Teilzahlungen (Migration 060)
 

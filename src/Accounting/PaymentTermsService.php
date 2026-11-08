@@ -133,14 +133,14 @@ final class PaymentTermsService
         }
 
         $daysBetween = self::daysBetween($voucherDate, $paymentDate);
-        $applicable = null;
+        // Erste passende Stufe (engstes Zeitfenster) — Stufen sind nach Tagen aufsteigend sortiert.
         foreach ($tiers as $tier) {
             if ($daysBetween <= (int) $tier['days']) {
-                $applicable = $tier;
+                return $tier;
             }
         }
 
-        return $applicable ?? $tiers[count($tiers) - 1];
+        return $tiers[count($tiers) - 1];
     }
 
     /**

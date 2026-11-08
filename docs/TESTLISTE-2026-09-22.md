@@ -67,10 +67,10 @@
 ## 6 · Offen von früher
 
 - [x] Belegkette Angebot→AB→…→Schluss — ✅ PA2a 2026-11-08 Dev (inkl. LS; Schluss via Abschlag)
-- [ ] Dokumentstatus / Filter
-- [ ] Freitext + Klauseln Druck
-- [ ] Skonto + Mahnung
-- [ ] Teilzahlungen / OPOS
+- [x] Dokumentstatus / Filter — ✅ PA2b 2026-11-08
+- [x] Freitext + Klauseln Druck — ✅ PA2b
+- [x] Skonto + Mahnung — ✅ PA2b (Candidates; Versand braucht SMTP)
+- [x] Teilzahlungen / OPOS — ✅ PA2b
 - [ ] Bank Geisterumsätze (064)
 - [ ] Kichel
 - [ ] Belegdarstellung / AB-Druck Stichprobe

@@ -37,7 +37,9 @@
 - [x] Belegkette Angebot → AB → LS → Rechnung → Schlussrechnung — ✅ PA2a 2026-11-08 Dev  
   → Hauptkette Angebot→AB→LS→Abschlag→Schluss (Rest 833 € nach 357 € Abschlag); Nebenkette …→Rechnung  
   → [`BUCHHALTUNG-BELEGKETTE.md`](BUCHHALTUNG-BELEGKETTE.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §6
-- [ ] Dokumentstatus / Filter / Freitext / Klauseln / Skonto / Mahnung / Teilzahlungen / OPOS
+- [x] Dokumentstatus / Filter / Freitext / Klauseln / Skonto / Mahnung / Teilzahlungen / OPOS — ✅ PA2b 2026-11-08 Dev  
+  → Status draft→sent→accepted/billed · Filter · Druck Freitext+§13b · Skonto-Stufen · Teilzahlung/OPOS · Mahn-Candidates (SMTP Dev aus)  
+  → Fixes: `PaymentTermsService::tierForPaymentDate` (engste Stufe) · `DunningService` Spalte `email_2`
 - [ ] **Bank Geisterumsätze** erkennen + manuell ausblenden (Migration 064)
 - [ ] UStVA: Nullmeldung, Berichtigung, §13b-Kennziffern, ELSTER-CSV-Export
 - [ ] Jahresabschluss-Checkliste + Jahr sperren / Saldenvortrag (operativ)
