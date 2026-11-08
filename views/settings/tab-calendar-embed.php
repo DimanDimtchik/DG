@@ -59,14 +59,14 @@ $ctaPresets = [
     </label>
   </div>
 
-  <div class="dg-panel dg-mail-signature-rules" style="margin-top:8px">
+  <div class="dg-panel dg-mail-signature-rules dg-mt-2">
     <h4 class="dg-subsection-title">Öffentliche Adresse</h4>
     <p class="dg-field-hint">Diese URL können Sie auf Ihrer Webseite verlinken oder als QR-Code verwenden.</p>
     <label class="dg-field dg-field--wide">
       <span>Link zur Buchungsseite</span>
       <input type="text" class="dg-input-copy" readonly value="<?= View::escape($publicUrl) ?>" onclick="this.select()" id="dg-booking-public-url">
     </label>
-    <p class="dg-form-actions" style="margin-top:0">
+    <p class="dg-form-actions dg-mt-0">
       <a class="dg-button" href="<?= View::escape($publicUrl) ?>" target="_blank" rel="noopener">Seite öffnen</a>
       <?php if ($isEnabled) : ?>
         <span class="dg-badge dg-badge--ok">Online-Buchung aktiv</span>
@@ -77,7 +77,7 @@ $ctaPresets = [
   </div>
 
   <?php if ($publicUrl !== '') : ?>
-  <div class="dg-panel dg-booking-qr-designer" style="margin-top:16px"
+  <div class="dg-panel dg-booking-qr-designer dg-mt-4"
        data-public-url="<?= View::escape($publicUrl) ?>"
        data-logo-url="<?= View::escape($qrLogoUrl) ?>"
        data-favicon-url="<?= View::escape($qrFaviconUrl) ?>"
@@ -128,7 +128,7 @@ $ctaPresets = [
                 <img src="<?= View::escape($qrCenterCustomUrl) ?>" alt="" width="48" height="48">
               <?php endif; ?>
             </span>
-            <label class="dg-field" style="margin-top:8px">
+            <label class="dg-field dg-mt-2">
               <span>Größe im Code</span>
               <select name="qr[center_image_size]" id="dg-qr-center-size" data-dg-qr-field>
                 <option value="tiny"<?= ($qr['center_image_size'] ?? '') === 'tiny' ? ' selected' : '' ?>>Sehr klein (~14 %)</option>
@@ -138,7 +138,7 @@ $ctaPresets = [
           </div>
 
           <div id="dg-qr-center-lucide-wrap" class="dg-booking-qr-sub"<?= $centerSource === 'lucide' ? '' : ' hidden' ?>>
-            <div class="dg-field dg-field--wide" style="margin:0">
+            <div class="dg-field dg-field--wide dg-mt-0 dg-mb-0">
               <span>Icon wählen</span>
               <?php View::partial('partials/website-menu-icon-field', [
                   'name' => 'qr[center_icon]',
@@ -215,7 +215,7 @@ $ctaPresets = [
           <label class="dg-radio"><input type="radio" name="qr[frame_preset]" value="bold"<?= ($qr['frame_preset'] ?? '') === 'bold' ? ' checked' : '' ?> data-dg-qr-preset data-dg-qr-field> Kräftig</label>
           <label class="dg-radio"><input type="radio" name="qr[frame_preset]" value="card"<?= ($qr['frame_preset'] ?? '') === 'card' ? ' checked' : '' ?> data-dg-qr-preset data-dg-qr-field> Karte</label>
           <input type="hidden" name="qr[frame_enabled]" id="dg-qr-frame-enabled" value="<?= !empty($qr['frame_enabled']) ? '1' : '0' ?>">
-          <div class="dg-form-grid" style="margin-top:8px">
+          <div class="dg-form-grid dg-mt-2">
             <label class="dg-field"><span>Rahmenfarbe</span><input type="color" name="qr[frame_color]" id="dg-qr-frame-color" value="<?= View::escape((string) $qr['frame_color']) ?>" data-dg-qr-field></label>
             <label class="dg-field"><span>Stärke (px)</span><input type="number" name="qr[frame_width]" id="dg-qr-frame-width" value="<?= (int) $qr['frame_width'] ?>" min="0" max="24" data-dg-qr-field></label>
             <label class="dg-field"><span>Radius (px)</span><input type="number" name="qr[frame_radius]" id="dg-qr-frame-radius" value="<?= (int) $qr['frame_radius'] ?>" min="0" max="80" data-dg-qr-field></label>
@@ -255,7 +255,7 @@ $ctaPresets = [
             </select>
           </label>
         </div>
-        <fieldset class="dg-form-section dg-field dg-field--wide" style="margin-top:16px">
+        <fieldset class="dg-form-section dg-field dg-field--wide dg-mt-4">
           <legend>Flyer-Text &amp; Layout</legend>
           <label class="dg-field dg-field--wide">
             <span>Überschrift (Headline)</span>

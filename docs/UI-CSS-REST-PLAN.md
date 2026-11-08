@@ -111,7 +111,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | ID | Datei | Was | Token | Status |
 |----|-------|-----|-------|--------|
 | U3a | `tab-letterhead.php` | Inline margin/padding → Utilities; Checkboxen Katalog | 🟡 | [x] 2026-11-08 |
-| U3b | `tab-calendar-embed.php` | wie U3a | 🟡 | [ ] |
+| U3b | `tab-calendar-embed.php` | wie U3a | 🟡 | [x] 2026-11-08 |
 | U3c | `tab-email.php` | wie U3a | 🟡 | [ ] |
 | U3d | `tab-notifications.php` | Checkboxen Katalog | 🟡 | [ ] |
 | U3e | `tab-steuerkanzlei.php` + `tab-chart-of-accounts.php` | Panel-Margins → `dg-mt-5` | 🟡 | [ ] |
@@ -166,7 +166,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U0 | Fundament Readonly + Utilities | [x] |
 | U1 | Scan-Fails | [x] |
 | U2 | Lohn / Firmendaten | [~] U2a+U2c ✅; U2b Sichtcheck offen |
-| U3 | Settings-Wellen | [~] U3a ✅ |
+| U3 | Settings-Wellen | [~] U3a+U3b ✅ |
 | U4 | Modul-Wellen | [ ] |
 | U5 | Abschluss Guards + TODOS | [ ] |
 
