@@ -48,13 +48,13 @@
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)
 
-> **Stand PA3f (2026-11-08):** Doc-Haken PA3a/c/e ✅ · offen **nur** Mensch/Org: Backup-Test (PA3b), AVV/TOMs (PA3d).  
-> Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) · Übersicht: [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · Deploy: [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md)
+> **Stand PA3b/f (2026-11-08):** PA3a/b/c/e/f ✅ · offen **nur** Org: AVV/TOMs (PA3d).  
+> Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) · Backup-Notiz: [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md)
 
 - [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1  
-- [ ] **Backup/Restore-Test** + Notiz (Mensch) — PA3b  
-  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4 · Instanzdaten-Backup: [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md)
+- [x] **Backup/Restore-Test** + Notiz — ✅ PA3b 2026-11-08 (Dev `ganz-om.de`, Staging-Restore, kein Live-DB-Overwrite)  
+  → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) · Konzept: [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md)
 - [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  
   → Selftest `bin/asset-css-minify-selftest.php` ✅ 2026-11-08 (PA3c) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §2
 - [ ] **Hetzner-AVV / TOMs** organisatorisch abstimmen (Vertrag, bevor Cutover) — PA3d (Mensch/Org)

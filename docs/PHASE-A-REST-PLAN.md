@@ -42,7 +42,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ❌ manuell / teilweise Code |
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
-| A3 Shared-Core / Minify / AVV / Deploy-Prep | Shared-Core ✅ · Minify ✅ · Deploy-Prep ✅ · AVV/Backup offen |
+| A3 Shared-Core / Minify / AVV / Deploy-Prep | Shared-Core ✅ · Minify ✅ · Deploy-Prep ✅ · Backup ✅ · AVV offen |
 | A4 Kunden-Instanz vorbereiten | [~] Domain/TLS · Rest offen |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
 | A6 Telefon CTI | [~] manuell |
@@ -58,7 +58,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
-| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c/e/f ✅ · b/d offen | 🔴🟢 |
+| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/b/c/e/f ✅ · d offen | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
@@ -123,7 +123,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | PA3a | Shared-Core-Ordnerplan dokumentieren/prüfen ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1) | 🟢 | [x] 2026-11-08 §1.1 Ist/Ziel |
-| PA3b | Backup/Restore-Test durchführen + Notiz ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4) | 🔴 | [ ] |
+| PA3b | Backup/Restore-Test durchführen + Notiz ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4) | 🔴 | [x] 2026-11-08 → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) |
 | PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [x] 2026-11-08 Selftest grün; Deploy: rsync/sftp/`deploy.bat` → `minify-dg-css.sh` |
 | PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [ ] |
 | PA3e | Deploy-Pipeline Prep (rsync/SSH) dokumentieren — **ohne** Cutover | 🟢 | [x] 2026-11-08 → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) |
@@ -188,12 +188,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 ## Empfohlene Free-Plan-Reihenfolge
 
 1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-2. Rest **PA4** (a–e, h Mensch) / **PA3b/d** / **PA2** · **PA1e** wenn A1 Druck-Stichproben grün  
-3. Phase B erst wenn A1–A3 weitgehend grün (AVV PA3d + Backup-Test PA3b noch offen)
+2. Rest **PA4** (a–e, h Mensch) / **PA3d** AVV / **PA2** · **PA1e** wenn A1 Druck-Stichproben grün  
+3. Phase B erst wenn A1–A3 weitgehend grün (AVV PA3d noch offen)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA3b laut docs/PHASE-A-REST-PLAN.md. Backup/Restore-Test + Notiz laut VOR-HETZNER-CHECK §4.`  
-*(Oder PA3d AVV/TOMs Org · manuelle PA1a/PA2a.)*
+`Nur Mini-ID PA3d laut docs/PHASE-A-REST-PLAN.md. Hetzner-AVV / TOMs organisatorisch — nur Checkliste/Status. Kein Cutover.`  
+*(Oder manuelle PA1a/PA2a.)*
 
 ---
 
@@ -211,3 +211,4 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) | PA4f Migrationscheckliste Kontakte/Artikel/Belege/Bank |
 | [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) | PA4g Parallelbetrieb Zeitraum + Originalbeleg |
 | [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | PA3e Deploy rsync/SSH Prep ohne Cutover |
+| [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) | PA3b Backup/Restore-Nachweis Dev |

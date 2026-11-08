@@ -75,7 +75,7 @@ Bootstrap-Idee (ohne Implementierung in PA3a): DocumentRoot zeigt auf Shared; `D
 
 1. Weiter Master → Sync wie heute; Ordnerplan ist die **Zielskizze** für Hetzner-Pipeline — Prep: [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) (PA3e ✅).
 2. Tages-Backup bereits **instanzdaten-orientiert** ([`CRON-AUTOSTART.md`](CRON-AUTOSTART.md): Dump + `storage/` + Locals, kein CRM-Code) — passt zum Shared-Core-Zielbild.
-3. Backup/Restore-**Test** = separates Mini-ID **PA3b** (nicht PA3a).
+3. Backup/Restore-**Test** ✅ PA3b 2026-11-08 (Dev `ganz-om.de`) → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md).
 4. Kein Tenant-Sondercode im Shared; keine Firmendaten hardcoden.
 
 **Abnahme PA3a:** Ordnerplan Ist/Ziel + Exclude-Liste nachvollziehbar dokumentiert. ✅ 2026-11-08
@@ -137,7 +137,7 @@ Perspektive: GoBD · UStG · Belegpflicht · Datenschutz · Handelsregister-Anga
 ## 4. Reihenfolge (Vorschlag)
 
 1. **Jetzt:** Deploy/Test Belegdarstellung + AB-Druck (läuft)
-2. **Vor Umzug:** Shared-Core-Ordnerplan ✅ PA3a · Backup/Restore-Test (PA3b)
+2. **Vor Umzug:** Shared-Core-Ordnerplan ✅ PA3a · Backup/Restore-Test ✅ PA3b → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md)
 3. **Vor Umzug:** Asset-Minify im Deploy (klein, risikoarm)
 4. **Vor Umzug:** GoBD-Stichprobe (Änderung/Storno, Beleg-PDF, USt-Aufteilung)
 5. **Beim Umzug:** Domains, DB-Restore, ELSTER/ERiC Linux
