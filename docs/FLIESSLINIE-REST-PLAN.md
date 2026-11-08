@@ -63,7 +63,7 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 | Gleiche Maschine 2× | **Nein** — Unique `(line_id, work_center_id)` |
 | Reihenfolge | Unique `(line_id, station_order)`, lückenlos 1…n im Store erzwingen |
 | WIP-Mengen | `current_qty` nur Simulation/manuell — **keine** FiBu-/Lagerbuchung in FL1/FL2 |
-| Migration-Nummer | **FL1b:** `145_production_lines.sql` · **FL2a:** `146_production_line_buffers.sql` (Stand 2026-11-08). |
+| Migration-Nummer | **FL1b:** `156_production_lines.sql` · **FL2a:** `157_production_line_buffers.sql` (Stand 2026-11-08; Nummern nach Kasse 155+). |
 
 ### 1. `dg_production_lines` (FL1b)
 
@@ -92,7 +92,7 @@ Index: `idx_production_lines_active (is_active)`.
 
 Constraints: **UNIQUE** `(line_id, station_order)` · **UNIQUE** `(line_id, work_center_id)`.
 
-### 3. `dg_production_line_buffers` (**FL2a Migration** `146_production_line_buffers.sql`)
+### 3. `dg_production_line_buffers` (**FL2a Migration** `157_production_line_buffers.sql`)
 
 Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** Puffer-Datensatz.
 
@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL7c laut docs/FLIESSLINIE-REST-PLAN.md. Smoke Dev 2-Maschinen-Linie Puffer voll. Kein MES.`
+`Nur Mini-ID FL8a laut docs/FLIESSLINIE-REST-PLAN.md. Backlog-Notiz Scrap optional. Kein MES.`
 
 ---
 
@@ -162,7 +162,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [x] FL5a–c ✅ | 🟡 |
 | FL6 | Störung / Wartung propagiert | [x] FL6a–c ✅ | 🟡 |
-| FL7 | UI Linie + Status | [~] FL7a–b ✅ | 🟡🔴 |
+| FL7 | UI Linie + Status | [x] FL7a–c ✅ | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
 | FL9 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
@@ -182,7 +182,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | FL1a | Speichermodell final (Tabellen/FKs) in diesem Plan bestätigen · Migration-Nummer prüfen | 🟢 | [x] 2026-11-08 Modell festgelegt · nächste frei ≈ **145** (nach 142–144) |
-| FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [x] 2026-11-08 `145_production_lines.sql` · Selftest |
+| FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [x] 2026-11-08 `156_production_lines.sql` · Selftest |
 | FL1c | Store: `listLines`, `getLineWithStations`, `saveStations` (Reihenfolge) · **kein** Hard-DELETE Historie ohne Flag | 🟡 | [x] 2026-11-08 `ProductionLineStore` + Autoload · Soft `deactivateLine` |
 | FL1d | Selftest: 3 Stationen speichern → Reihenfolge stabil | 🟡 | [x] 2026-11-08 `bin/production-line-store-selftest.php` SQLite |
 
@@ -190,7 +190,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `146_production_line_buffers.sql` · Selftest |
+| FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `157_production_line_buffers.sql` · Selftest |
 | FL2b | Store: Puffer je Lücke Station→Station; Kapazität > 0 Pflicht | 🟡 | [x] 2026-11-08 `listBuffers`/`saveBuffers`/`setBufferCurrentQty` · Snapshot bei Station-Rewrite |
 | FL2c | Selftest: Puffer voll/leer-Grenzen setzen | 🟡 | [x] 2026-11-08 `bin/production-line-buffers-store-selftest.php` SQLite |
 
@@ -234,7 +234,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|---------|-------|--------|
 | FL7a | Liste Linien + Detail Stationen/Puffer (`.dg-table` / `.dg-form`) unter Rezeptur/Maschinen | 🟡 | [x] 2026-11-08 `rezeptur-fliesslinien` · Guard |
 | FL7b | Statusanzeige je Station (läuft / blocked / starved / down / material) — **kurze** Endnutzer-Texte, keine Plan-Codes | 🟡 | [x] 2026-11-08 Labels + Panel Detail |
-| FL7c | Smoke Dev: 2-Maschinen-Linie, Puffer voll → Vorgänger „steht (Puffer voll)“ | 🔴 | [ ] |
+| FL7c | Smoke Dev: 2-Maschinen-Linie, Puffer voll → Vorgänger „steht (Puffer voll)“ | 🔴 | [x] 2026-11-08 `bin/production-line-fl7c-smoke.php --live` auf ganz-om.de · Migrationen 156/157 |
 
 ### FL8 — Verfeinerungen (Backlog im Plan, nicht vor FL7)
 
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL7c laut docs/FLIESSLINIE-REST-PLAN.md. Smoke Dev: 2-Maschinen-Linie, Puffer voll → Vorgänger „steht (Puffer voll)“.`
+`Nur Mini-ID FL8a laut docs/FLIESSLINIE-REST-PLAN.md` (oder FL9 wenn Backlog übersprungen).
 
 ---
 
@@ -291,11 +291,11 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | [`REZEPTUR-MODUL.md`](REZEPTUR-MODUL.md) | Nicht-Ziele MES |
 | [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | UI |
 | `dg_work_centers` / `dg_recipe_routing` | Stationen · Rezept-Routing |
-| `database/migrations/145_production_lines.sql` | FL1b Linie + Stationen |
+| `database/migrations/156_production_lines.sql` | FL1b Linie + Stationen |
 | `bin/production-lines-migration-selftest.php` | FL1b Vertrags-Selftest |
 | `src/Recipe/ProductionLineStore.php` | FL1c Store (kein Hard-DELETE) |
 | `bin/production-line-store-selftest.php` | FL1d SQLite Selftest |
-| `database/migrations/146_production_line_buffers.sql` | FL2a Puffer |
+| `database/migrations/157_production_line_buffers.sql` | FL2a Puffer |
 | `bin/production-line-buffers-migration-selftest.php` | FL2a Vertrags-Selftest |
 | `bin/production-line-buffers-store-selftest.php` | FL2c Puffer voll/leer Selftest |
 | `src/Recipe/ProductionLineStatusService.php` | FL3b Offline-Status |
@@ -310,5 +310,6 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-line-station-down-selftest.php` | FL6a Selftest |
 | `bin/production-line-down-propagation-selftest.php` | FL6b Propagation Selftest |
 | `bin/production-line-down-neighbors-selftest.php` | FL6c Nachbarn Selftest |
-| `views/modules/rezeptur-fliesslinien.php` | FL7a Liste/Detail UI |
+| `views/modules/rezeptur-fliesslinien.php` | FL7a/b Liste/Detail + Status-UI |
+| `bin/production-line-fl7c-smoke.php` | FL7c Offline + Dev `--live` |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine · FL4a Output/h |

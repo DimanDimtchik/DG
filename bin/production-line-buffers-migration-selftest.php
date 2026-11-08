@@ -17,8 +17,8 @@ function assertFl2a(bool $ok, string $msg): void
 }
 
 $root = dirname(__DIR__);
-$path = $root . '/database/migrations/146_production_line_buffers.sql';
-assertFl2a(is_file($path), '146_production_line_buffers.sql vorhanden');
+$path = $root . '/database/migrations/157_production_line_buffers.sql';
+assertFl2a(is_file($path), '157_production_line_buffers.sql vorhanden');
 
 $sql = (string) file_get_contents($path);
 assertFl2a(str_contains($sql, 'CREATE TABLE IF NOT EXISTS dg_production_line_buffers'), 'Tabelle dg_production_line_buffers');
