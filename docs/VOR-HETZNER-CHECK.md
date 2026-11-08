@@ -73,7 +73,7 @@ Bootstrap-Idee (ohne Implementierung in PA3a): DocumentRoot zeigt auf Shared; `D
 
 #### Übergangsregeln (vor Cutover)
 
-1. Weiter Master → Sync wie heute; Ordnerplan ist die **Zielskizze** für Hetzner-Pipeline (PA3e).
+1. Weiter Master → Sync wie heute; Ordnerplan ist die **Zielskizze** für Hetzner-Pipeline — Prep: [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) (PA3e ✅).
 2. Tages-Backup bereits **instanzdaten-orientiert** ([`CRON-AUTOSTART.md`](CRON-AUTOSTART.md): Dump + `storage/` + Locals, kein CRM-Code) — passt zum Shared-Core-Zielbild.
 3. Backup/Restore-**Test** = separates Mini-ID **PA3b** (nicht PA3a).
 4. Kein Tenant-Sondercode im Shared; keine Firmendaten hardcoden.

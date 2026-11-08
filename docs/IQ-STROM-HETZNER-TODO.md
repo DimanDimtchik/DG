@@ -55,7 +55,8 @@
 - [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  
   → Selftest `bin/asset-css-minify-selftest.php` ✅ 2026-11-08 (PA3c) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §2
 - [ ] Hetzner-AVV / TOMs organisatorisch abstimmen (Vertrag, bevor Cutover)
-- [ ] Deploy-Pipeline auf neuen Host vorbereiten (rsync/SSH, ohne Cutover)
+- [x] Deploy-Pipeline auf neuen Host vorbereiten (rsync/SSH, ohne Cutover) — ✅ PA3e 2026-11-08  
+  → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md)
 
 ### A4 · IQ Strom GmbH — Instanz vorbereiten (noch Kasserver oder parallele Domain ok)
 

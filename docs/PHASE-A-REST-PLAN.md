@@ -42,7 +42,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ❌ manuell / teilweise Code |
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
-| A3 Shared-Core / Minify / AVV / Deploy-Prep | Shared-Core-Plan ✅ · Minify ✅ · AVV/Backup/Deploy-Prep offen |
+| A3 Shared-Core / Minify / AVV / Deploy-Prep | Shared-Core ✅ · Minify ✅ · Deploy-Prep ✅ · AVV/Backup offen |
 | A4 Kunden-Instanz vorbereiten | [~] Domain/TLS · Rest offen |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
 | A6 Telefon CTI | [~] manuell |
@@ -58,7 +58,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
-| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c ✅ | 🔴🟢 |
+| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c/e ✅ | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
@@ -126,7 +126,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | PA3b | Backup/Restore-Test durchführen + Notiz ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4) | 🔴 | [ ] |
 | PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [x] 2026-11-08 Selftest grün; Deploy: rsync/sftp/`deploy.bat` → `minify-dg-css.sh` |
 | PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [ ] |
-| PA3e | Deploy-Pipeline Prep (rsync/SSH) dokumentieren — **ohne** Cutover | 🟢 | [ ] |
+| PA3e | Deploy-Pipeline Prep (rsync/SSH) dokumentieren — **ohne** Cutover | 🟢 | [x] 2026-11-08 → [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) |
 | PA3f | A3-Haken in IQ-STROM-TODO | 🟢 | [ ] |
 
 **Prompt PA3a:**  
@@ -188,13 +188,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 ## Empfohlene Free-Plan-Reihenfolge
 
 1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-2. **PA3e** Deploy-Prep-Doc  
-3. Rest **PA4** (a–e, h Mensch) / **PA3b/d** / **PA2** · **PA1e** wenn A1 Druck-Stichproben grün  
-4. Phase B erst wenn A1–A3 weitgehend grün  
+2. Rest **PA4** (a–e, h Mensch) / **PA3b/d** / **PA2** · **PA1e** wenn A1 Druck-Stichproben grün  
+3. Phase B erst wenn A1–A3 weitgehend grün (AVV PA3d + Backup-Test PA3b noch offen)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA3e laut docs/PHASE-A-REST-PLAN.md. Deploy-Pipeline Prep (rsync/SSH) dokumentieren — ohne Cutover. Nur Docs.`  
-*(Oder PA3b Backup/Restore Mensch.)*
+`Nur Mini-ID PA3f laut docs/PHASE-A-REST-PLAN.md. A3-Haken in IQ-STROM-TODO nachziehen (nur Docs).`  
+*(Oder PA3b Backup/Restore Mensch / PA3d AVV.)*
 
 ---
 
@@ -211,3 +210,4 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) | PA5b Entscheidung PDF+XRechnung · Factur-X = D2 |
 | [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) | PA4f Migrationscheckliste Kontakte/Artikel/Belege/Bank |
 | [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) | PA4g Parallelbetrieb Zeitraum + Originalbeleg |
+| [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | PA3e Deploy rsync/SSH Prep ohne Cutover |
