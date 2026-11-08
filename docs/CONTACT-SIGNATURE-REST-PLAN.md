@@ -69,6 +69,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | User-/Kontakt-Unterschriftshistorie | ✅ ES1–ES2 inkl. Smoke Dev; Canvas ES3a ✅ |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
+| Brief/PDF: aktives Session-Unterschriftsbild | ✅ ES4a–c (Dev-Stichprobe 1 Seite) |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
 | Medienbibliothek | ✅ |
 | Canvas / App-Signatur-API | ✅ Canvas Web + Smoke (ES3a/b); App fehlt |
@@ -162,7 +163,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----|---------|-------|--------|
 | ES4a | Dokumentenverfasser/Druck: Bild nur aus `activeForUser(session)` | 🟡 | [x] 2026-11-08 `LetterheadRenderer` + `activeImageSrcForUser` · Selftest |
 | ES4b | Kein Kontakt-Picker fremder Signaturen | 🟡 | [x] 2026-11-08 kein doc-Override · Hinweis Dokumentenverfasser · Selftest |
-| ES4c | Stichprobe PDF 1 Seite | 🔴 | [ ] |
+| ES4c | Stichprobe PDF 1 Seite | 🔴 | [x] 2026-11-08 ganz-om.de User#1 · PDF 1 Seite · canvas-Signatur eingebettet |
 
 ### ES5 — Mail
 
@@ -216,7 +217,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES4c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Stichprobe PDF 1 Seite. Kein Canvas.`
+`Nur Mini-ID ES5a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Post: optionales img aus aktiver User-Signatur. Kein Canvas.`
 
 ---
 
