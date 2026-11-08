@@ -295,7 +295,8 @@
       '<label class="dg-field dg-field--wide"><span>Bestell-URL / Shop</span>' +
       '<input type="url" name="purchase_sources[' + index + '][order_url]" value="' + escapeHtml(source.order_url || '') + '" placeholder="https://…" maxlength="500"></label>' +
       '<label class="dg-field"><span>Lieferanten-Artikelnr.</span>' +
-      '<input type="text" name="purchase_sources[' + index + '][external_sku]" value="' + escapeHtml(source.external_sku || '') + '" maxlength="100"></label>' +
+      '<input type="text" name="purchase_sources[' + index + '][external_sku]" value="' + escapeHtml(source.external_sku || '') + '" maxlength="100" placeholder="z. B. ASIN">' +
+      '<span class="dg-field-hint">Bei Amazon Business: ASIN hier eintragen (10 Zeichen).</span></label>' +
       '<label class="dg-field"><span>Notiz</span>' +
       '<input type="text" name="purchase_sources[' + index + '][note]" value="' + escapeHtml(source.note || '') + '" maxlength="500"></label>' +
       '<label class="dg-field"><span><input type="checkbox" name="purchase_sources[' + index + '][is_preferred]" value="1"' + preferredChecked + '> Bevorzugt (Nachbestellen)</span></label>' +

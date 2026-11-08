@@ -629,7 +629,7 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
       <div class="dg-field dg-field--wide" id="dg_article_purchase_fields" hidden>
         <fieldset class="dg-fieldset">
           <legend>Einkaufsquellen (Lieferant / Shop)</legend>
-          <p class="dg-field-hint">Mehrere Quellen möglich. Unter <strong>Firma / Lieferant</strong> erscheinen Kontakte mit Anrede „Firma“ bzw. Firmennamen (CRM-Rolle ist meist „Kunde“). Shop-URL ist optional — Chef kann recherchieren und manuell bestellen.</p>
+          <p class="dg-field-hint">Mehrere Quellen möglich. Unter <strong>Firma / Lieferant</strong> erscheinen Kontakte mit Anrede „Firma“ bzw. Firmennamen (CRM-Rolle ist meist „Kunde“). Shop-URL ist optional — Chef kann recherchieren und manuell bestellen. Bei Amazon Business die ASIN unter Lieferanten-Artikelnr. eintragen (bevorzugte Quelle).</p>
           <div id="dg-purchase-sources-list" class="dg-purchase-sources"></div>
           <button type="button" class="dg-button dg-button--small" id="dg-purchase-source-add"<?= !$dbConnected ? ' disabled' : '' ?>>+ Einkaufsquelle</button>
           <script type="application/json" id="dg-supplier-options"><?= $supplierOptionsJson ?></script>
