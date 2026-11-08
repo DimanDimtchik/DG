@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL8a laut docs/FLIESSLINIE-REST-PLAN.md. Backlog-Notiz Scrap optional. Kein MES.`
+`Nur Mini-ID FL9a laut docs/FLIESSLINIE-REST-PLAN.md. UI-Texte final, kein MES-Jargon.`
 
 ---
 
@@ -163,7 +163,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [x] FL5a–c ✅ | 🟡 |
 | FL6 | Störung / Wartung propagiert | [x] FL6a–c ✅ | 🟡 |
 | FL7 | UI Linie + Status | [x] FL7a–c ✅ | 🟡🔴 |
-| FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
+| FL8 | Verfeinerungen (optional) | [x] Doc FL8a–d | 🟢 |
 | FL9 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
 ---
@@ -240,10 +240,10 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL8a | Ausschuss/Nacharbeit-Schleife (Doc only zuerst) | 🟢 | [ ] |
-| FL8b | Pull/Kanban-Modus (nur produzieren wenn Puffer Platz) vs. Push | 🟢 | [ ] |
-| FL8c | Parallele Stationen / Umgehungsweg (optional, später) | 🟢 | [ ] |
-| FL8d | WIP-Mengen ↔ Lagerplatz (GoBD) — eigenes Gate, nicht still mischen | 🟢 | [ ] |
+| FL8a | Ausschuss/Nacharbeit-Schleife (Doc only zuerst) | 🟢 | [x] 2026-11-08 [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md) |
+| FL8b | Pull/Kanban-Modus (nur produzieren wenn Puffer Platz) vs. Push | 🟢 | [x] 2026-11-08 Backlog-Doc (Default bleibt Push) |
+| FL8c | Parallele Stationen / Umgehungsweg (optional, später) | 🟢 | [x] 2026-11-08 Backlog-Doc (bewusst später) |
+| FL8d | WIP-Mengen ↔ Lagerplatz (GoBD) — eigenes Gate, nicht still mischen | 🟢 | [x] 2026-11-08 Backlog-Doc (kein stilles Buchen) |
 
 ### FL9 — Abschluss
 
@@ -274,10 +274,10 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 6. **FL5a** dann **FL5c** (Material)  
 7. **FL6a–c**  
 8. **FL7a–c** Smoke  
-9. FL8 nur nach Bedarf · **FL9** Abschluss  
+9. FL8 Doc ✅ · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL8a laut docs/FLIESSLINIE-REST-PLAN.md` (oder FL9 wenn Backlog übersprungen).
+`Nur Mini-ID FL9a laut docs/FLIESSLINIE-REST-PLAN.md. UI-Texte final, kein MES-Jargon.`
 
 ---
 
@@ -286,6 +286,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | Datei | Rolle |
 |-------|--------|
 | [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) | FL3a Blocking/Starving Pseudocode |
+| [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md) | FL8a–d Ausschuss / Pull / Parallel / WIP↔Lager |
 | [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md) | Kapazität, Wartung, Belegung |
 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) | ERP-Rahmen · Punkt 1b Fließlinie |
 | [`REZEPTUR-MODUL.md`](REZEPTUR-MODUL.md) | Nicht-Ziele MES |

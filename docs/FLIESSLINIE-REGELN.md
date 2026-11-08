@@ -200,6 +200,7 @@ Ergebnis-Feld `propagation` mit `events` + `hint`.
 | Datei | Rolle |
 |-------|--------|
 | [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) | Mini-IDs |
+| [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md) | Ausschuss, Pull/Kanban, Parallel, WIP↔Lager (noch nicht im Code) |
 | `ProductionLineStore` | Stammdaten + Puffer-Ist |
 | FL3b | `ProductionLineStatusService` implementiert diese Regeln |
 | FL3c | Selftest blocked/starved |
