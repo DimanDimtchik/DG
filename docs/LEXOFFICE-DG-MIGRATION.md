@@ -24,7 +24,7 @@ Stammdaten und offene Vorgänge aus **Lexoffice** (Export CSV/Excel) in eine **D
 
 | # | Block | Warum zuerst |
 |---|--------|----------------|
-| 0 | Instanz bereit (PA4a–e) | Firma, SKR, Nummernkreise, Bank, Benutzer |
+| 0 | Instanz bereit (PA4a–i ✅ 2026-11-08) | Firma, SKR, Nummernkreise, Bank, Benutzer, TLS |
 | 1 | **Kontakte** | Belege/OPOS brauchen Personenkonten |
 | 2 | **Artikel** | Positionen auf offenen Ausgangsbelegen |
 | 3 | **Bank** (CAMT/MT940) | Offene Umsätze zuordnen |

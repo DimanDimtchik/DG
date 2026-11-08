@@ -43,7 +43,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · AVV-Unterschrift Org [~] |
-| A4 Kunden-Instanz vorbereiten | [~] PA4a–h ✅ · PA4i offen |
+| A4 Kunden-Instanz vorbereiten | ✅ PA4a–i (2026-11-08) |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
 | A6 Telefon CTI | [~] manuell |
 | A6 Multi-Firma Feinschliff | nur falls nötig |
@@ -59,7 +59,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [~] PA2a–i ✅ | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
-| PA4 | Instanz-Vorbereitung (A4) | [~] PA4a–h ✅ · PA4i offen | 🔴 |
+| PA4 | Instanz-Vorbereitung (A4) | [x] PA4a–i ✅ 2026-11-08 | 🔴🟢 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
 
@@ -143,7 +143,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [x] 2026-11-08 Code-Sync ✅ · `database.local.php`+`app.local.php` (Secrets `IQ_CRM_DB_*`) ✅ · Schema via `php83 bin/run-migrations.php` (169 Tabellen / 153 Migrationen bis `155_cash_tse_deferred.sql`) · `/install.php` offen für PA4b–d |
+| PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [x] 2026-11-08 Code-Sync ✅ · `database.local.php`+`app.local.php` (Secrets `IQ_CRM_DB_*`) ✅ · Schema via `php83 bin/run-migrations.php` (169 Tabellen / 153 Migrationen bis `155_cash_tse_deferred.sql`) · Install-Lock nach PA4d |
 | PA4b | Firmendaten GmbH in Einstellungen (Steuernr., USt-IdNr., FA, Bilanz, SKR) | 🔴 | [x] 2026-11-08 Instanz-DB: GmbH · Bilanz · SKR04 · USt-Id/Steuernr./FA Bad Kissingen (BuFö 9205) · HRB Schweinfurt · Quelle Impressum+JA2024-Protokoll |
 | PA4c | Flags: Photovoltaik §12 Abs. 3 + §13b Bauleistung | 🔴 | [x] 2026-11-08 Instanz-DB: `tax_special_cases.photovoltaik` + `reverse_charge_13b` enabled (KU aus); PA4b-Stammdaten unverändert |
 | PA4d | ≥3 Benutzer + Rechte | 🔴 | [x] 2026-11-08 Admin `a.busch@…` · Buchhaltung `buchhaltung@…` · Angebote/Vertrieb `j.benzler@…` (+ dept-vertrieb mit Buchhaltung-Modul); Aktivierungslinks `storage/pa4d-invite-links.txt` |
@@ -151,7 +151,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | PA4f | Migrationskonzept Lexoffice → DG (Kontakte/Artikel/Belege/Bank) als Doc-Checkliste | 🟢 | [x] 2026-11-08 → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) |
 | PA4g | Parallelbetrieb festlegen (Zeitraum, Originalbeleg-Regel) — Doc | 🟢 | [x] 2026-11-08 → [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) |
 | PA4h | Domain/TLS abschließen ([~] SSL) | 🔴 | [x] 2026-11-08 DNS A `85.13.136.84` · Let's Encrypt `office.iqstrom.com`(+www) bis 2027-01-30 · HTTPS `/login` 200 + HSTS · `home_url` https · HTTP ohne Force-Redirect (wie andere CRM-Hosts) |
-| PA4i | A4-Haken in IQ-STROM-TODO | 🟢 | [ ] |
+| PA4i | A4-Haken in IQ-STROM-TODO | 🟢 | [x] 2026-11-08 Standzeile A4 vollständig · PA4a–h ✅ |
 
 **Prompt PA4f:**  
 `Nur Mini-ID PA4f laut docs/PHASE-A-REST-PLAN.md. Lexoffice→DG Migrationscheckliste als Doc. Kein Produktiv-Import. Kein Tenant-Hardcode.`
@@ -187,11 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. **PA4i** A4-Haken in IQ-STROM-TODO  
-2. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
+1. **PA6a** Telefon/CTI Statusnotiz (falls jetzt) · sonst Org: **AVV-Unterschrift**  
+2. Phase B: Hardware/Hetzner laut Checkliste
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA4i laut docs/PHASE-A-REST-PLAN.md. A4-Haken in IQ-STROM-HETZNER-TODO setzen. Kein Tenant-Hardcode.`
+`Nur Mini-ID PA6a laut docs/PHASE-A-REST-PLAN.md. Telefon/CTI Fritzbox Statusnotiz. Kein Tenant-Hardcode.`  
+Oder Org: `AVV/TOM laut HETZNER-AVV-TOM-CHECKLISTE.md — nur Unterschrift/Konto, kein Code.`
 
 ---
 

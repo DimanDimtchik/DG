@@ -86,6 +86,10 @@
 
 ### A4 · IQ Strom GmbH — Instanz vorbereiten (noch Kasserver oder parallele Domain ok)
 
+> **Stand PA4i (2026-11-08):** A4 **vollständig abgehakt** — PA4a–h ✅ auf `office.iqstrom.com` · Haken-Nachzug ✅ PA4i.  
+> Offen außerhalb A4: Nutzer-Aktivierung (Links in `storage/pa4d-invite-links.txt`, keine Mail versendet) · AVV-Unterschrift (A3/Org) · Lexoffice-Import (nach Checkliste PA4f).  
+> Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md)
+
 - [x] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`) — ✅ PA4a–h 2026-11-08  
   → Code-Sync vom Kern `dg.ganz-soft.de` → Instanz (`bin/sync-crm-to-iqstrom.sh`); `index.php` MD5 = Kern; `/login` HTTPS 200; Wartung `/` 503  
   → ✅ KAS-DB + `config/database.local.php` / `app.local.php` (Secrets `IQ_CRM_DB_*`, nicht in Git) · Schema: Migrationen bis `155_*` (CLI `php83`) · Install-Lock gesetzt  
