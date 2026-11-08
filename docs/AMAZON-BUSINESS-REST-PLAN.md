@@ -46,7 +46,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 | F Rechte / CSRF / Deploy-Hinweise | 🟡 CSRF-Muster existiert; Amazon-Pfad verdrahten |
 | Amazon Developer-Zugang | 🔴 Mensch parallel (Tage–Wochen) |
 
-Migration **082** ist bereits KDV — neue Nummer z. B. **`142_purchase_list_amazon.sql`** (nächste freie nach Repo-Stand prüfen).
+Migration: **`142_purchase_list_amazon.sql`** (082 war schon KDV; Stand geprüft 2026-11-08).
 
 ---
 
@@ -59,7 +59,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | A0a | Dieser Rest-Plan + Verweis in `AMAZON-BUSINESS-STUFE2.md` / `TODOS.md` | 🟢 | [x] 2026-11-08 |
-| A0b | Nächste freie Migrationsnummer lokal prüfen (`ls database/migrations/`) | 🟢 | [ ] |
+| A0b | Nächste freie Migrationsnummer lokal prüfen (`ls database/migrations/`) | 🟢 | [x] → 142 |
 
 ---
 
@@ -67,7 +67,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| A1a | Migration `NNN_purchase_list_amazon.sql`: `external_order_id`, `external_order_channel`, optional `external_order_payload` / `external_ordered_at` | 🟢 | [ ] |
+| A1a | Migration `NNN_purchase_list_amazon.sql`: `external_order_id`, `external_order_channel`, optional `external_order_payload` / `external_ordered_at` | 🟢 | [x] 2026-11-08 `142_purchase_list_amazon.sql` |
 | A1b | `PurchaseListRepository`: Felder lesen/schreiben (nur diese Methoden) | 🟡 | [ ] |
 | A1c | `PurchaseListService::markOrdered` erweitern **oder** `markAmazonOrdered(...)` — Order-ID + Channel setzen | 🟡 | [ ] |
 
@@ -140,8 +140,8 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Thema | Status |
 |----|--------|--------|
-| A0 | Doc / Inventar | [~] A0a ✅ |
-| A1 | Persistenz | [ ] |
+| A0 | Doc / Inventar | [x] |
+| A1 | Persistenz | [~] A1a ✅; A1b/A1c offen |
 | A2 | Order-Service | [ ] |
 | A3 | Einkaufsliste UI | [ ] |
 | A4 | Artikelstamm | [ ] |

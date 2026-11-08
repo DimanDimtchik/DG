@@ -116,7 +116,7 @@ Neben „Bestellen“ / Shop-Link:
 
 ### E — Persistenz Bestellreferenz
 
-Migration z. B. `082_purchase_list_amazon.sql`:
+Migration: `142_purchase_list_amazon.sql` (082 war schon KDV):
 
 - `dg_purchase_list_items.external_order_id` VARCHAR (Amazon externalId / Order-Ref)  
 - `external_order_channel` VARCHAR (`amazon_business`)  
