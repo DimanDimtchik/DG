@@ -74,8 +74,8 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | Brief/PDF: aktives Session-Unterschriftsbild | ✅ ES4a–c (Dev-Stichprobe 1 Seite) |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
 | Medienbibliothek | ✅ |
-| Canvas / App-Signatur-API | ✅ Canvas Web + Smoke (ES3a/b); App fehlt |
-| Service-Import | ❌ fehlt |
+| Canvas / App-Signatur-API | ✅ Canvas Web + Staff-API/UI (ES3, ES6) |
+| Service-Import | 🟡 ES7a Platzhalter · Adapter ES7b offen |
 
 ---
 
@@ -115,7 +115,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [x] ES5a–c ✅ | 🟡🔴 |
 | ES6 | Mitarbeiter-App Aufnahme | [x] ES6a–b ✅ | 🟡🔴 |
-| ES7 | Import-Service Adapter | [ ] | 🟡 |
+| ES7 | Import-Service Adapter | [ ] ES7a ✅ · ES7b/c offen | 🟡 |
 | ES8 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
 ---
@@ -186,7 +186,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES7a | Doc: welche Service-API (Platzhalter-Interface `SignatureImportProvider`) | 🟢 | [ ] |
+| ES7a | Doc: welche Service-API (Platzhalter-Interface `SignatureImportProvider`) | 🟢 | [x] 2026-11-08 `SIGNATURE-IMPORT-PROVIDER.md` + Interface · Selftest |
 | ES7b | Adapter: externes Bild → media + `appendNew` · `source=import` + `source_ref` | 🟡 | [ ] |
 | ES7c | Kein Auto-Löschen lokaler Historie bei Re-Import — immer neue Version | 🟡 | [ ] |
 
@@ -219,7 +219,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES7a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Doc SignatureImportProvider Platzhalter. Kein Code-Adapter.`
+`Nur Mini-ID ES7b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Adapter externes Bild → appendNew source=import. Kein Vendor-Hardcode.`
 
 ---
 
@@ -229,7 +229,9 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |-------|--------|
 | [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | Tabelle/Form |
 | [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) | Brief |
+| [`SIGNATURE-IMPORT-PROVIDER.md`](SIGNATURE-IMPORT-PROVIDER.md) | ES7a Import-Vertrag |
 | `src/Mail/MailSignatureResolver.php` | Text-Signatur |
+| `src/User/SignatureImportProvider.php` | ES7a Interface |
 | `src/User/UserSignatureStore.php` | Historie-Accessor (kein delete) |
 | `bin/user-signature-selftest.php` | ES1d Selftest (SQLite) |
 | `views/partials/contact-signature-history.php` | Historie + Upload + Canvas + Hinweis |
