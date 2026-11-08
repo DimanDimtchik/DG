@@ -39,7 +39,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | Block | Stand |
 |-------|--------|
 | A1 GoBD-Kern (Revision/Storno/ARAP/Kontohinweise) | ✅ Code |
-| A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ❌ manuell / teilweise Code |
+| A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | §14 Docarten ✅ PA1a · gemischt PA1b · Klauseln PA1c |
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · AVV-Unterschrift Org [~] |
@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
-| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
+| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1a/d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
@@ -81,7 +81,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA1a | Checkliste §14 UStG Druck/PDF je Dokumentart abarbeiten · Ergebnis in [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) | 🔴 | [ ] |
+| PA1a | Checkliste §14 UStG Druck/PDF je Dokumentart abarbeiten · Ergebnis in [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) | 🔴 | [x] 2026-11-08 Dev `ganz-om.de` · Gutschrift-Titel-Fix |
 | PA1b | Stichprobe gemischte Steuersätze 19/7/0 auf einem Beleg (manuell + kurze Notiz im Stichproben-Doc) | 🔴 | [ ] |
 | PA1c | §19 / §13b / PV §12 Abs. 3 Klauseln am Druck gegen Firma-Flags prüfen (Checkliste) | 🔴 | [ ] |
 | PA1d | **Code:** PV-Automatik — bei Firma-Flag Photovoltaik + 0 %-Zeilen Klausel §12 Abs. 3 automatisch (wie §19); nur betroffene Beleg-/Klausel-Dateien | 🟡 | [x] 2026-11-08 |
@@ -187,13 +187,13 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-2. Rest **PA4** (a–e, h Mensch) / **PA2** · **PA1e** wenn A1 Druck-Stichproben grün  
+1. Parallel: **PA1b/c**, **PA2a…** Smoke  
+2. Rest **PA4** (a–e, h Mensch) / **PA2** · **PA1e** wenn PA1b/c grün  
 3. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA1a laut docs/PHASE-A-REST-PLAN.md. Nur Druck-Stichprobe §14 laut USTG-14-DRUCKSTICHPROBE.md. Kein Refactor.`  
-*(Oder PA2a Belegkette Smoke · PA4a Instanz-Ops.)*
+`Nur Mini-ID PA1b laut docs/PHASE-A-REST-PLAN.md. Stichprobe gemischte Steuersätze 19/7/0 laut USTG-14-DRUCKSTICHPROBE.md. Kein Refactor.`  
+*(Oder PA1c Klauseln · PA2a Belegkette.)*
 
 ---
 

@@ -107,7 +107,7 @@ Perspektive: GoBD · UStG · Belegpflicht · Datenschutz · Handelsregister-Anga
 |-------------|---------------|--------------------------|
 | Belegkette nachvollziehbar | ✅ Kette + Status | Auto-AB aus Mail noch offen |
 | Keine Buchung vor Rechnung (Angebot/AB/LS) | ✅ | — |
-| Rechnungsangaben § 14 UStG | ✅ Pflichtzeilen/Logo/Steuernr. | Stichprobe Druck je Dokumentart |
+| Rechnungsangaben § 14 UStG | ✅ Pflichtzeilen + PA1a Docarten-Stichprobe 2026-11-08 | gemischte Sätze PA1b · Klauseln PA1c |
 | Netto / USt je Satz / Brutto | ✅ Summentabelle | Test gemischte Sätze 7/19/0 |
 | § 19 Kleinunternehmer-Hinweis | ✅ Firmendaten → Steuerliche Sonderfälle | Produktiv aktivieren wenn zutreffend |
 | Skonto / Mahnung / Teilzahlung | ✅ | Smoke-Test |

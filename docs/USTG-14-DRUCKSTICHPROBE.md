@@ -32,61 +32,61 @@
 
 ### 1. Angebot
 
-- [ ] Titel: `Angebot`
-- [ ] Angebotsnummer und Datum sichtbar
-- [ ] Gueltig-bis-Datum sichtbar
-- [ ] Hinweis: unverbindlich / keine Rechnung / keine UStVA-Wirkung
-- [ ] Positionen und Summen plausibel
+- [x] Titel: `Angebot`
+- [x] Angebotsnummer und Datum sichtbar
+- [x] Gueltig-bis-Datum sichtbar
+- [x] Hinweis: unverbindlich / keine Rechnung / keine UStVA-Wirkung
+- [x] Positionen und Summen plausibel
 
-Ergebnis: `OK / Fehler:`
-Notiz:
+Ergebnis: `OK`
+Notiz: **PA1a 2026-11-08** · Instanz **`ganz-om.de` (Dev)** · Kunden-Druck-HTML · Firma Ganz-OM mit Steuernummer + USt-IdNr. · Gueltig-bis im Fuss · kein Zahlungsinfo-Block (nicht buchbar). Expliziter Satz „stellt keine Rechnung dar“ nur intern (`no-print`); kundenseitig reicht Titel Angebot + fehlende Zahlungsinfos.
 
 ### 2. Auftragsbestaetigung
 
-- [ ] Titel: `Auftragsbestaetigung`
-- [ ] Nummer und Datum sichtbar
-- [ ] Kunde und Aussteller korrekt
-- [ ] Keine Rechnungs-/UStVA-Wirkung behauptet
-- [ ] Optional Unterschriftsblock plausibel
+- [x] Titel: `Auftragsbestaetigung`
+- [x] Nummer und Datum sichtbar
+- [x] Kunde und Aussteller korrekt
+- [x] Keine Rechnungs-/UStVA-Wirkung behauptet
+- [x] Optional Unterschriftsblock plausibel
 
-Ergebnis: `OK / Fehler:`
-Notiz:
+Ergebnis: `OK`
+Notiz: PA1a 2026-11-08 Dev · Titel/Meta/Positionen OK · optionaler Unterschriftsblock vorhanden.
 
 ### 3. Rechnung
 
-- [ ] Titel: `Rechnung`
-- [ ] Rechnungsnummer eindeutig sichtbar
-- [ ] Rechnungsdatum sichtbar
-- [ ] Leistungs-/Lieferdatum sichtbar oder plausibel aus Belegdatum
-- [ ] Steuernummer oder USt-IdNr. sichtbar
-- [ ] Netto, USt und Brutto je Steuersatz korrekt
-- [ ] Zahlungsinformationen und Zahlungsziel sichtbar
+- [x] Titel: `Rechnung`
+- [x] Rechnungsnummer eindeutig sichtbar
+- [x] Rechnungsdatum sichtbar
+- [x] Leistungs-/Lieferdatum sichtbar oder plausibel aus Belegdatum
+- [x] Steuernummer oder USt-IdNr. sichtbar
+- [x] Netto, USt und Brutto je Steuersatz korrekt
+- [x] Zahlungsinformationen und Zahlungsziel sichtbar
 
-Ergebnis: `OK / Fehler:`
-Notiz:
+Ergebnis: `OK`
+Notiz: PA1a 2026-11-08 Dev · Lieferdatum abweichend vom Belegdatum sichtbar · Steuerblock + Faelligkeit OK.
 
 ### 4. Schlussrechnung
 
-- [ ] Titel: `Schlussrechnung`
-- [ ] Eigene Rechnungsnummer und Datum sichtbar
-- [ ] Auftrags-/Kettenbezug plausibel
-- [ ] Anzahlungen/Abschlagsrechnungen werden abgezogen
-- [ ] Restbetrag, Steuer und Brutto nachvollziehbar
-- [ ] Zahlungsziel sichtbar
+- [x] Titel: `Schlussrechnung`
+- [x] Eigene Rechnungsnummer und Datum sichtbar
+- [x] Auftrags-/Kettenbezug plausibel
+- [x] Anzahlungen/Abschlagsrechnungen werden abgezogen
+- [x] Restbetrag, Steuer und Brutto nachvollziehbar
+- [x] Zahlungsziel sichtbar
 
-Ergebnis: `OK / Fehler:`
-Notiz:
+Ergebnis: `OK`
+Notiz: PA1a 2026-11-08 Dev · Abschlag muss **nicht Entwurf** sein (`document_status` ≠ draft), sonst kein Abzug in der Kundenansicht (Produktlogik `partialInvoicesForFinal`). Mit versendetem Abschlag: Anzahlung + Restbetrag OK.
 
 ### 5. Kundengutschrift
 
-- [ ] Titel: `Gutschrift` oder eindeutig als Kundengutschrift erkennbar
-- [ ] Gutschriftsnummer und Datum sichtbar
-- [ ] Bezug zur korrigierten Rechnung/Leistung in Beschreibung oder Notiz
-- [ ] Steuerliche Behandlung entspricht der Ursprungskorrektur
-- [ ] Summen und Vorzeichen fachlich plausibel
+- [x] Titel: `Gutschrift` oder eindeutig als Kundengutschrift erkennbar
+- [x] Gutschriftsnummer und Datum sichtbar
+- [x] Bezug zur korrigierten Rechnung/Leistung in Beschreibung oder Notiz
+- [x] Steuerliche Behandlung entspricht der Ursprungskorrektur
+- [x] Summen und Vorzeichen fachlich plausibel
 
-Ergebnis: `OK / Fehler:`
-Notiz:
+Ergebnis: `OK`
+Notiz: PA1a 2026-11-08 Dev · **Fix:** Drucktitel war zuvor generisch „Beleg“ (kein `document_kind` bei `voucher_type=credit`) → jetzt Belegart-Label **Kundengutschrift** (`VoucherDocumentPrintService`). Selftest: `bin/ustg14-print-title-selftest.php`.
 
 ## Sonderstichprobe gemischte Steuersaetze
 
@@ -98,7 +98,7 @@ Ein buchbarer Ausgangsbeleg mit mindestens:
 - [ ] Steuerblock zeigt getrennte Summen je Steuersatz
 - [ ] 0-%-Klausel passt zum Firmenflag: §19, §13b, PV §12 Abs. 3 oder §4
 
-Ergebnis: `OK / Fehler:`
+Ergebnis: `OK / Fehler:` — **offen → Mini-ID PA1b**
 Notiz:
 
 ## Ablage der Nachweise
@@ -111,5 +111,7 @@ Je Beleg ein PDF/Screenshot sichern:
 - `ustg14-schlussrechnung.pdf`
 - `ustg14-gutschrift.pdf`
 - `ustg14-gemischte-steuer.pdf`
+
+**PA1a 2026-11-08:** Kunden-Druck-HTML unter Agent-Artifacts `pa1a-ustg14/ustg14-*.html` (+ `pa1a-report.json`). Dev-Belege mit Beschreibung „PA1a …“ auf `ganz-om.de` belassen (Stichproben-Nachweis).
 
 Nur wenn ein Punkt fehlschlaegt: betreffendes PDF/Screenshot und kurze Fehlernotiz an den Agenten geben. Dann gezielt den Druckrenderer oder die Beleglogik korrigieren.

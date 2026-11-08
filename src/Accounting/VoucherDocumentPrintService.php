@@ -114,7 +114,9 @@ final class VoucherDocumentPrintService
         $kind = (string) ($voucher['document_kind'] ?? '');
         $kindLabel = VoucherDocumentKind::label($kind);
         if ($kindLabel === '') {
-            $kindLabel = 'Beleg';
+            // Einnahmen-Kette hat document_kind; Kundengutschrift o. Ä. nur voucher_type.
+            $typeLabel = VoucherRepository::typeLabel((string) ($voucher['voucher_type'] ?? ''));
+            $kindLabel = $typeLabel !== '' ? $typeLabel : 'Beleg';
         }
 
         $number = trim((string) ($voucher['invoice_number'] ?? ''));
@@ -865,7 +867,8 @@ final class VoucherDocumentPrintService
     {
         $kindLabel = VoucherDocumentKind::label((string) ($voucher['document_kind'] ?? ''));
         if ($kindLabel === '') {
-            $kindLabel = 'Beleg';
+            $typeLabel = VoucherRepository::typeLabel((string) ($voucher['voucher_type'] ?? ''));
+            $kindLabel = $typeLabel !== '' ? $typeLabel : 'Beleg';
         }
         $number = trim((string) ($voucher['invoice_number'] ?? ''));
         $base = $kindLabel . ($number !== '' ? '_' . preg_replace('/[^A-Za-z0-9._-]+/', '_', $number) : '');

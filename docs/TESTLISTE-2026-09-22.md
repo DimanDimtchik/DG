@@ -74,7 +74,7 @@
 - [ ] Bank Geisterumsätze (064)
 - [ ] Kichel
 - [ ] Belegdarstellung / AB-Druck Stichprobe
-- [ ] §14-UStG Druckstichprobe Ausgangsbelege
+- [x] §14-UStG Druckstichprobe Ausgangsbelege (Docarten) — ✅ PA1a 2026-11-08 · gemischte Sätze → PA1b
   → [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
 
 ## 7 · Spot

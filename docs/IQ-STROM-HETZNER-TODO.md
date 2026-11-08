@@ -19,8 +19,8 @@
 - [x] **GoBD Änderungshistorie / Unveränderbarkeit** schließen  
   Ausgang: Revision/Storno; Eingang nach Buchung gesperrt; manuelle Buchung = Gegenbuchung (kein DELETE).  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §3 · [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)
-- [ ] **Stichprobe §14 UStG** je Dokumentart (Angebot, AB, Rechnung, Schluss, Gutschrift) — Druck/PDF
-  → [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
+- [x] **Stichprobe §14 UStG** je Dokumentart (Angebot, AB, Rechnung, Schluss, Gutschrift) — Druck/PDF  
+  → ✅ PA1a 2026-11-08 Dev `ganz-om.de` · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) · Gutschrift-Titel-Fix
 - [ ] **Stichprobe gemischte Steuersätze** 19 % / 7 % / 0 % auf einem Beleg
 - [ ] **§19 / §13b / PV §12 Abs. 3** Klauseln am Druck prüfen (Firma-Flags in Einstellungen)
 - [x] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Hinweis §12 Abs. 3 im Druck/PDF/E-Mail wie bei §19 (Firmenstatus, nicht Beleg-Checkbox) — ✅ `VoucherDocumentPrintService` + `bin/pv-legal-clause-selftest.php`
