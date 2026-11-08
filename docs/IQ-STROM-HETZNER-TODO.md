@@ -55,7 +55,9 @@
   → [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §0–5
 - [x] Kichel Smoke — ✅ PA2h 2026-11-08 Dev  
   → Widget+Assets · Nav-Aliase 7/7 · USt-ID/Pflichtseiten/Backup · Skonto PHP 23,80 · Protokoll record/list (`dg_kichel_log`)
-- [ ] Kommunikation Postfächer Smoke (falls noch nicht)  
+- [x] Kommunikation Postfächer Smoke (falls noch nicht) — ✅ PA2i 2026-11-08 Dev  
+  → Menü Kommunikation · Liste/Cards · Shared Lesen vs Senden · Ordner-Defaults · lokale Nachricht+Suche+Kontakt/Beleg · Compose-Validierung · Auth-Fehlertexte  
+  → Hinweis: Dev ohne echte IMAP-Postfächer; Live-Anhang/SMTP-Versand erst mit Instanz-Credentials  
   → [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md)
 - [ ] Dokumentenverfasser Smoke  
   → [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md)

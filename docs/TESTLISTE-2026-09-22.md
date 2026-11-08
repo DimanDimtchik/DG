@@ -86,9 +86,9 @@
 
 Vollständige Smoke-Liste: [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) §P6.
 
-- [ ] Master: Liste → Ordner → Nachricht → Anhang
-- [ ] Shared Lesen vs. Senden
-- [ ] Compose + CRM-Link + Suche
+- [x] Master: Liste → Ordner → Nachricht → Anhang — ✅ PA2i 2026-11-08 Dev (Liste/Ordner/lokale Nachricht; Live-IMAP-Anhang offen bis Credentials)
+- [x] Shared Lesen vs. Senden — ✅ PA2i
+- [x] Compose + CRM-Link + Suche — ✅ PA2i (Compose-Validierung + Kontakt/Beleg + `q=`)
 - [ ] Deploy Master → `sync-crm-from-master.sh` → Stichprobe ganz-soft / kontur
 
 ---

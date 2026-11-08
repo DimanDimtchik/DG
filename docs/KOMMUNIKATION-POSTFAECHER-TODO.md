@@ -81,14 +81,14 @@ Stand: **2026-10-23**
 
 #### Smoke (Master `dg.ganz-om.de`, danach Sync → `ganz-soft.de` / `kontur-cosmetics.de`)
 
-- [ ] Login + Menü **Kommunikation → E-Mail-Postfächer**
-- [ ] Postfach-Liste öffnen → ein Postfach → Ordner + Sync
-- [ ] Nachricht öffnen (HTML/Text) + Anhang-Download (.eml / Datei)
-- [ ] Shared nur Lesen: Liste ja, „Neue Nachricht“ / Antworten ohne Senderecht nein
-- [ ] Shared mit Senden: Compose + Versand → Gesendet
-- [ ] Kontakt-Vorschlag / Beleg verknüpfen (P5)
-- [ ] Suche `q=` und optional Kontakt-ID
-- [ ] Falsches IMAP-Passwort: verständlicher Fehler (+ KAS-Hinweis falls provisioniert)
+- [x] Login + Menü **Kommunikation → E-Mail-Postfächer** — ✅ PA2i 2026-11-08 Dev
+- [x] Postfach-Liste öffnen → ein Postfach → Ordner + Sync — ✅ PA2i (Defaults + Sync ohne Creds=0; Live-IMAP mit Creds offen)
+- [~] Nachricht öffnen (HTML/Text) + Anhang-Download (.eml / Datei) — ✅ PA2i lokale Nachricht/Inbox; Anhang erst mit IMAP-Credentials
+- [x] Shared nur Lesen: Liste ja, „Neue Nachricht“ / Antworten ohne Senderecht nein — ✅ PA2i (`can_send=0`)
+- [~] Shared mit Senden: Compose + Versand → Gesendet — ✅ PA2i Compose-Rechte/Validierung; Live-SMTP-Versand offen
+- [x] Kontakt-Vorschlag / Beleg verknüpfen (P5) — ✅ PA2i
+- [x] Suche `q=` und optional Kontakt-ID — ✅ PA2i
+- [x] Falsches IMAP-Passwort: verständlicher Fehler (+ KAS-Hinweis falls provisioniert) — ✅ PA2i
 - [ ] Nach Deploy Master: `sync-crm-from-master.sh` auf Instanzen; Shift+Reload; gleiche Checks stichprobenartig
 
 ---
