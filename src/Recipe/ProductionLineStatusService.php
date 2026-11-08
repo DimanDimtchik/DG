@@ -300,8 +300,8 @@ final class ProductionLineStatusService
         }
 
         $hint = $events === []
-            ? 'Keine down-Propagation.'
-            : 'Störung wirkt auf Nachbarn: Puffer davor mit Füll-Risiko, Folgestation kann stehen (kein Zulauf).';
+            ? 'Nachbarstationen nicht betroffen.'
+            : 'Störung wirkt auf Nachbarn: Puffer davor kann volllaufen, Folgestation kann stehen (kein Zulauf).';
 
         return [
             'events' => $events,
@@ -373,7 +373,7 @@ final class ProductionLineStatusService
             : ($stationLabel !== '' ? $stationLabel : ('Station ' . $bestOrder));
         $unit = $byOrder[$bestOrder]['unit'];
         $qtyFmt = rtrim(rtrim(number_format($bestQty, 4, ',', ''), '0'), ',');
-        $hint = 'Engpass: ' . $name . ' begrenzt die Linie'
+        $hint = 'Langsamste Station: ' . $name . ' begrenzt die Linie'
             . ' (geringster Output/h: ' . $qtyFmt
             . ($unit !== '' ? ' ' . $unit : '')
             . '/h).';
@@ -420,7 +420,7 @@ final class ProductionLineStatusService
                 'qty_per_hour' => 0.0,
                 'unit' => $unit,
                 'assumption' => 'zero_while_line_stopped',
-                'hint' => 'Linien-Durchsatz derzeit 0 — Linie steht (Material oder keine lauffähige Station).',
+                'hint' => 'Linienleistung derzeit 0 — Linie steht (Material fehlt oder keine Station läuft).',
             ];
         }
 
@@ -443,8 +443,8 @@ final class ProductionLineStatusService
                 'qty_per_hour' => $bnQty,
                 'unit' => $unit,
                 'assumption' => 'bottleneck_rate_if_buffers_recover',
-                'hint' => 'Grober Linien-Durchsatz ca. ' . $qtyFmt . $unitPart
-                    . '/h (Engpass), sobald Puffer Blocking/Starving auflösen — Annahme: Puffer reichen für Dauerlauf am Engpass.',
+                'hint' => 'Geschätzte Linienleistung ca. ' . $qtyFmt . $unitPart
+                    . '/h (begrenzt durch die langsamste Station), sobald volle oder leere Puffer wieder ausgeglichen sind.',
             ];
         }
 
@@ -452,8 +452,8 @@ final class ProductionLineStatusService
             'qty_per_hour' => $bnQty,
             'unit' => $unit,
             'assumption' => 'bottleneck_with_adequate_buffers',
-            'hint' => 'Grober Linien-Durchsatz ca. ' . $qtyFmt . $unitPart
-                . '/h — Minimum der Stations-Outputs (Engpass), Annahme ausreichende Puffer.',
+            'hint' => 'Geschätzte Linienleistung ca. ' . $qtyFmt . $unitPart
+                . '/h — begrenzt durch die langsamste Station; Annahme: Puffer reichen aus.',
         ];
     }
 
@@ -513,11 +513,11 @@ final class ProductionLineStatusService
     {
         return match ($status) {
             'running' => 'Linie läuft',
-            'constrained' => 'Linie gestaut',
+            'constrained' => 'Linie ungleichmäßig (Stau oder Wartezeit)',
             'degraded' => 'Linie eingeschränkt (Störung)',
             'stopped' => 'Linie steht',
             'stopped_material' => 'Linie steht (Material fehlt)',
-            default => 'Linie: Status unklar',
+            default => 'Linienstatus unklar',
         };
     }
 

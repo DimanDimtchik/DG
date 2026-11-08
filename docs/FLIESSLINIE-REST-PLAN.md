@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL9a laut docs/FLIESSLINIE-REST-PLAN.md. UI-Texte final, kein MES-Jargon.`
+Plan FL0–FL9 abgeschlossen. Optionale Umsetzung nur aus [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md).
 
 ---
 
@@ -164,7 +164,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL6 | Störung / Wartung propagiert | [x] FL6a–c ✅ | 🟡 |
 | FL7 | UI Linie + Status | [x] FL7a–c ✅ | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [x] Doc FL8a–d | 🟢 |
-| FL9 | Hinweise + Plan-Haken | [ ] | 🟢 |
+| FL9 | Hinweise + Plan-Haken | [x] FL9a–b ✅ | 🟢 |
 
 ---
 
@@ -249,8 +249,8 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL9a | UI-Texte final (Blocking/Starving verständlich, kein MES-Jargon in Labels) | 🟢 | [ ] |
-| FL9b | `TODOS.md` / Parent-Haken · Plan FL0–FL7 Status | 🟢 | [ ] |
+| FL9a | UI-Texte final (Blocking/Starving verständlich, kein MES-Jargon in Labels) | 🟢 | [x] 2026-11-08 Labels/Hints ohne Blocking/Starving-Jargon |
+| FL9b | `TODOS.md` / Parent-Haken · Plan FL0–FL9 Status | 🟢 | [x] 2026-11-08 Parent [x] · Plan geschlossen |
 
 ---
 
@@ -274,10 +274,9 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 6. **FL5a** dann **FL5c** (Material)  
 7. **FL6a–c**  
 8. **FL7a–c** Smoke  
-9. FL8 Doc ✅ · **FL9** Abschluss  
+9. FL8 Doc ✅ · **FL9** Abschluss ✅  
 
-**Nächster Chat:**  
-`Nur Mini-ID FL9a laut docs/FLIESSLINIE-REST-PLAN.md. UI-Texte final, kein MES-Jargon.`
+**Planstatus:** FL0–FL9 erledigt (2026-11-08). Weiter nur bei Bedarf aus FL8-Backlog.
 
 ---
 

@@ -44,7 +44,7 @@ foreach ($wcOptions as $wc) {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Fließlinien</h1>
-      <p class="dg-lead">Maschinenkette mit Zwischenpuffern — Planung und Status, keine Maschinensteuerung.</p>
+      <p class="dg-lead">Maschinen hintereinander mit Zwischenpuffern. Status aus Pufferständen und Störungen — keine Fernsteuerung der Maschinen.</p>
     </div>
   </header>
 
@@ -175,7 +175,7 @@ foreach ($wcOptions as $wc) {
         ?>
       <section class="dg-panel dg-mb-4">
         <h2 class="dg-subsection-title">Aktueller Status</h2>
-        <p class="dg-field-hint">Aus Pufferständen und Störungen berechnet — keine Maschinensteuerung.</p>
+        <p class="dg-field-hint">Kurz: „steht (Puffer voll)“ = Ausgang voll · „steht (kein Material vom Vorgänger)“ = Eingang leer · „außer Betrieb“ = Störung oder Wartung.</p>
         <p>
           <span class="dg-badge <?= View::escape(ProductionLineStatusService::lineStatusBadgeClass($lsCode)) ?>">
             <?= View::escape(ProductionLineStatusService::lineStatusLabel($lsCode)) ?>

@@ -35,7 +35,7 @@ $bn = $r['bottleneck'];
 assertFl4a(is_array($bn), 'Engpass erkannt');
 assertFl4a((int) $bn['station_order'] === 2, 'Engpass = Station 2 (80/h)');
 assertFl4a((float) $bn['output_qty_per_hour'] === 80.0, 'Output/h 80');
-assertFl4a(str_contains((string) $bn['hint'], 'Engpass'), 'Hinweis beginnt mit Engpass');
+assertFl4a(str_contains((string) $bn['hint'], 'Langsamste Station'), 'Hinweis nennt langsamste Station');
 assertFl4a(str_contains((string) $bn['hint'], 'Ofen'), 'Hinweis nennt Station');
 assertFl4a(str_contains((string) $bn['hint'], '80'), 'Hinweis nennt Menge');
 assertFl4a(!str_contains((string) $bn['hint'], 'FL4'), 'kein Plan-Code im Hinweis');
