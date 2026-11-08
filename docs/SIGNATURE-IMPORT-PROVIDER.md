@@ -2,7 +2,7 @@
 
 Stand: **2026-11-08** · Parent: [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md)
 
-> **Nur Spezifikation + Platzhalter.** Konkreter Adapter = **ES7b**. Kein Vendor-Hardcode im Produktkern.
+> Vertrag (ES7a) + Adapter (ES7b). Kein Vendor-Hardcode im Produktkern.
 
 ---
 
@@ -21,14 +21,16 @@ Wechsel = `UserSignatureStore::appendNew` (schließt alte `valid_to`, **kein** D
 
 ---
 
-## Platzhalter im Code
+## Code
 
 | Datei | Rolle |
 |-------|--------|
 | `src/User/SignatureImportProvider.php` | Interface (ES7a) |
-| `UserSignatureStore::SOURCES` enthält `import` | bereits seit ES1 |
+| `src/User/SignatureImportService.php` | Adapter (ES7b): Payload/Provider → media + `appendNew` |
+| `UserSignatureStore::appendFromImport` | Bytes → `source=import` + `source_ref` |
+| `UserSignatureStore::SOURCES` enthält `import` | seit ES1 |
 
-ES7b ergänzt z. B. `SignatureImportService` / konkreten Provider und ruft Store/Media auf — **nicht** in diesem Mini.
+Konkrete Vendor-Provider (OAuth/HTTP) bleiben Instanz-/Plugin-Sache — nicht im Kern.
 
 ---
 
@@ -60,12 +62,11 @@ fetchLatestForUser(userId, contactId): ?array
 
 ---
 
-## Mapping → CRM (ES7b-Vorschau)
+## Mapping → CRM (ES7b)
 
-1. `fetchLatestForUser` → Bildbytes + `external_ref`  
-2. Media anlegen (wie `appendFromAppPng` / Upload)  
-3. `UserSignatureStore::appendNew([…, 'source' => 'import', 'source_ref' => external_ref])`  
-4. Re-Import mit neuer oder gleicher `external_ref` → **immer neue Zeile**, alte schließen (ES7c)
+1. `SignatureImportService::importFromProvider` oder `importPayload`  
+2. `UserSignatureStore::appendFromImport` → Media + `appendNew` (`source=import`, `source_ref`)  
+3. Re-Import mit neuer oder gleicher `external_ref` → **immer neue Zeile**, alte schließen (ES7c)
 
 ---
 
@@ -82,6 +83,6 @@ fetchLatestForUser(userId, contactId): ?array
 
 | Mini | Inhalt |
 |------|--------|
-| **ES7a** (dieses Doc) | Vertrag + Interface-Datei |
-| **ES7b** | Adapter: Bytes → media + `appendNew` |
-| **ES7c** | Explizit: kein Auto-Löschen bei Re-Import |
+| **ES7a** | Vertrag + Interface-Datei |
+| **ES7b** (Adapter) | `SignatureImportService` + `appendFromImport` |
+| **ES7c** | Explizit: kein Auto-Löschen bei Re-Import (Verhalten bereits über `appendNew`) |

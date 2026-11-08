@@ -232,6 +232,95 @@ final class UserSignatureStore
     }
 
     /**
+     * Externer Import (ES7b): Bildbytes → Mediathek + appendNew source=import.
+     * Immer neue Historienzeile (kein Überschreiben, kein DELETE).
+     *
+     * @return int Neue Signatur-ID
+     */
+    public static function appendFromImport(
+        int $ownerUserId,
+        int $contactId,
+        string $binary,
+        string $mime,
+        string $sourceRef,
+        ?int $createdByUserId = null,
+        ?string $validFrom = null
+    ): int {
+        if ($ownerUserId <= 0) {
+            throw new InvalidArgumentException('Kein Benutzer für diese Unterschrift verknüpft.');
+        }
+        if ($contactId <= 0) {
+            throw new InvalidArgumentException('contact_id ungültig.');
+        }
+
+        $sourceRef = trim($sourceRef);
+        if ($sourceRef === '') {
+            throw new InvalidArgumentException('source_ref (externe Referenz) fehlt.');
+        }
+        if (strlen($sourceRef) > 191) {
+            $sourceRef = substr($sourceRef, 0, 191);
+        }
+
+        $mime = strtolower(trim($mime));
+        if ($mime === 'image/jpg') {
+            $mime = 'image/jpeg';
+        }
+        if (!in_array($mime, ['image/png', 'image/webp'], true)) {
+            throw new InvalidArgumentException('Import nur als PNG oder WebP.');
+        }
+
+        $len = strlen($binary);
+        if ($len < 32) {
+            throw new InvalidArgumentException('Import-Bild fehlt oder ist leer.');
+        }
+        if ($len > MediaStorage::MAX_BYTES) {
+            throw new InvalidArgumentException('Import-Bild zu groß.');
+        }
+        if ($mime === 'image/png' && !str_starts_with($binary, "\x89PNG\r\n\x1a\n")) {
+            throw new InvalidArgumentException('Inhalt ist kein gültiges PNG.');
+        }
+        if ($mime === 'image/webp' && !(str_starts_with($binary, 'RIFF') && str_contains(substr($binary, 0, 16), 'WEBP'))) {
+            throw new InvalidArgumentException('Inhalt ist kein gültiges WebP.');
+        }
+
+        MediaRepository::ensureTables();
+        self::ensureTable();
+
+        $ext = $mime === 'image/webp' ? 'webp' : 'png';
+        $mediaId = MediaId::generate();
+        $stored = MediaStorage::storeBinary($mediaId, 'original.' . $ext, $binary, $mime);
+        $stored['original_name'] = 'signature-import.' . $ext;
+        $stored['source_note'] = 'Unterschrift Import';
+        $stored['title'] = 'Unterschrift';
+        $stored['alt_text'] = 'Unterschrift';
+
+        $input = [
+            'user_id' => $ownerUserId,
+            'contact_id' => $contactId,
+            'media_id' => $mediaId,
+            'source' => 'import',
+            'source_ref' => $sourceRef,
+            'created_by_user_id' => $createdByUserId,
+        ];
+        if ($validFrom !== null && trim($validFrom) !== '') {
+            $input['valid_from'] = trim($validFrom);
+        }
+
+        try {
+            MediaRepository::insert($mediaId, $stored, $createdByUserId);
+
+            return self::appendNew($input);
+        } catch (Throwable $e) {
+            try {
+                MediaRepository::delete($mediaId);
+            } catch (Throwable) {
+                // Best effort cleanup
+            }
+            throw $e;
+        }
+    }
+
+    /**
      * Aktives Unterschriftsbild des Users für Brief/Druck (ES4a).
      * Nur session-gebundener Aufrufer — kein fremder Kontakt.
      *

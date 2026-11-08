@@ -75,7 +75,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
 | Medienbibliothek | ✅ |
 | Canvas / App-Signatur-API | ✅ Canvas Web + Staff-API/UI (ES3, ES6) |
-| Service-Import | 🟡 ES7a Platzhalter · Adapter ES7b offen |
+| Service-Import | 🟡 ES7a–b ✅ · ES7c / Vendor-Provider offen |
 
 ---
 
@@ -115,7 +115,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [x] ES5a–c ✅ | 🟡🔴 |
 | ES6 | Mitarbeiter-App Aufnahme | [x] ES6a–b ✅ | 🟡🔴 |
-| ES7 | Import-Service Adapter | [ ] ES7a ✅ · ES7b/c offen | 🟡 |
+| ES7 | Import-Service Adapter | [ ] ES7a–b ✅ · ES7c offen | 🟡 |
 | ES8 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
 ---
@@ -187,7 +187,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | ES7a | Doc: welche Service-API (Platzhalter-Interface `SignatureImportProvider`) | 🟢 | [x] 2026-11-08 `SIGNATURE-IMPORT-PROVIDER.md` + Interface · Selftest |
-| ES7b | Adapter: externes Bild → media + `appendNew` · `source=import` + `source_ref` | 🟡 | [ ] |
+| ES7b | Adapter: externes Bild → media + `appendNew` · `source=import` + `source_ref` | 🟡 | [x] 2026-11-08 `SignatureImportService` + `appendFromImport` · Selftest |
 | ES7c | Kein Auto-Löschen lokaler Historie bei Re-Import — immer neue Version | 🟡 | [ ] |
 
 ### ES8 — Abschluss
@@ -219,7 +219,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES7b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Adapter externes Bild → appendNew source=import. Kein Vendor-Hardcode.`
+`Nur Mini-ID ES7c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Kein Auto-Löschen lokaler Historie bei Re-Import. Kein Vendor.`
 
 ---
 
