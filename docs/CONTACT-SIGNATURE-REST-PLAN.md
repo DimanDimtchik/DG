@@ -24,7 +24,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 ## Speichermodell (Entscheidung — festgelegt)
 
-**Tabelle** (Name final in ES1b), konzeptionell `dg_user_signatures`:
+**Tabelle** `dg_user_signatures` (Migration `144_user_signatures.sql`):
 
 | Feld | Zweck |
 |------|--------|
@@ -106,7 +106,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
-| ES1 | Schema Historie + Accessor | [ ] | 🟡 |
+| ES1 | Schema Historie + Accessor | [~] ES1b ✅ | 🟡 |
 | ES2 | Kontakt-UI Tabelle + Upload | [ ] | 🟡🔴 |
 | ES3 | Canvas Web | [ ] | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
@@ -131,7 +131,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | ES1a | ~~Speichermodell entscheiden~~ → **festgelegt** (Tabelle + media_id, siehe oben) | 🟢 | [x] 2026-11-08 |
-| ES1b | Migration: Tabelle + Indizes (`user_id`, `contact_id`, `(user_id, valid_to)`) · **kein** ON DELETE CASCADE der Historie | 🟡 | [ ] |
+| ES1b | Migration: Tabelle + Indizes (`user_id`, `contact_id`, `(user_id, valid_to)`) · **kein** ON DELETE CASCADE der Historie | 🟡 | [x] 2026-11-08 `144_user_signatures.sql` → `dg_user_signatures` · FK RESTRICT |
 | ES1c | `UserSignatureStore` (Name final): `listForContact`, `activeForUser`, `appendNew` (schließt alte) · **keine** `delete`-Methode | 🟡 | [ ] |
 | ES1d | Selftest: append → alte `valid_to` gesetzt · zweite aktiv · delete-API fehlt/wirft | 🟡 | [ ] |
 
@@ -217,7 +217,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES1b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Migration Historie-Tabelle. Kein UI. Kein Löschen.`
+`Nur Mini-ID ES1c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. UserSignatureStore Accessor. Keine delete-Methode. Kein UI.`
 
 ---
 

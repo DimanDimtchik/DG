@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** IQ Nutzer-Aktivierung **oder** Unterschrift **ES1b** (Historie-Migration) [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md). Phase B wartet auf GEX45 ([`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md)). AVV ✅.
+**Nächste Session:** IQ Nutzer-Aktivierung **oder** Unterschrift **ES1c** (Accessor) [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md). Phase B wartet auf GEX45. AVV ✅.
 
 ---
 
@@ -81,7 +81,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Dokumentenverfasser:** Briefpapier + Editor/Export — Plan [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) (B1–B4, D1–D7 Code ✅; manuelle Smoke-UI + Sync nach Deploy)
 - [x] **Vor Hetzner AVV:** [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) — AVV **07.11.2026** v1.2 · TÜV-Audit-PDF ✅ (PDFs nicht in Git)  
 - [x] **Hetzner-Server:** **GEX45** bestellt · OS **Ubuntu 26** · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Mini-IDs [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) (Lieferung Wochen)  
-- [ ] **Kontakt-Unterschrift Brief/Mail:** tokenarm [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) — Historie/kein Löschen · nächster Schritt **ES1b**  
+- [ ] **Kontakt-Unterschrift Brief/Mail:** tokenarm [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) — ES1b Migration ✅ · nächster Schritt **ES1c**  
 - [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; SSH/Stack nach Lieferung PB1+)
 - [x] **ARAP-Prozent-Vorschlag:** Code bereits vorhanden; Jahresabschluss nutzt die resultierenden Ledger-/Folgejahresbuchungen, kein separater ARAP-Abschlussprozess
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)

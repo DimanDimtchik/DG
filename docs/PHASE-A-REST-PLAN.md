@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES1b** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren · oder Unterschrift **ES1c** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES1b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Migration Historie-Tabelle. Kein UI. Kein Löschen.`
+`Nur Mini-ID ES1c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. UserSignatureStore Accessor. Keine delete-Methode. Kein UI.`
 
 ---
 
