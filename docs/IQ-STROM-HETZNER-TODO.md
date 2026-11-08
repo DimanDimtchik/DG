@@ -53,7 +53,8 @@
 - [x] Zeiterfassung Z2–Z6 Smoke (Stempel, Schichten, Urlaub, Rückstellungen, Lohn-Export) — ✅ PA2g 2026-11-08 Dev  
   → Stempel+Aggregation+Monatsblatt+Korrektur · Schicht-Soll · Urlaub/Krankheit+Attest · Rückstellung Preview/CSV/Buchung · Lohn CSV/DATEV-Block/DATEV/Lex  
   → [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §0–5
-- [ ] Kichel Smoke
+- [x] Kichel Smoke — ✅ PA2h 2026-11-08 Dev  
+  → Widget+Assets · Nav-Aliase 7/7 · USt-ID/Pflichtseiten/Backup · Skonto PHP 23,80 · Protokoll record/list (`dg_kichel_log`)
 - [ ] Kommunikation Postfächer Smoke (falls noch nicht)  
   → [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md)
 - [ ] Dokumentenverfasser Smoke  

@@ -72,7 +72,7 @@
 - [x] Skonto + Mahnung — ✅ PA2b (Candidates; Versand braucht SMTP)
 - [x] Teilzahlungen / OPOS — ✅ PA2b
 - [x] Bank Geisterumsätze (064) — ✅ PA2c 2026-11-08 Dev
-- [ ] Kichel
+- [x] Kichel — ✅ PA2h 2026-11-08 Dev
 - [ ] Belegdarstellung / AB-Druck Stichprobe
 - [x] §14-UStG Druckstichprobe Ausgangsbelege (Docarten) — ✅ PA1a 2026-11-08 · gemischte Sätze → PA1b
   → [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
