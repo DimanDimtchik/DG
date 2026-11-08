@@ -144,11 +144,7 @@ UI-Hinweis: „Vorschlag, nicht gebucht“.
 | E1e | UI: Einstellungen Konten/Zeitraum (bei Rezeptur-Kostensätzen oder klarer Nachbar) + Anzeige €/h; Katalog-Klassen; kein FiBu-Buchen-Button | 🟡 | [ ] |
 | E1f | Kurz-Selftest `bin/machine-overhead-selftest.php` + Plan-Haken | 🟢 | [ ] |
 
-**Prompt E1b:**  
-`Nur Mini-ID E1b laut docs/ERP-REST-PLAN.md. Keine neue Migration — nur Plan-Haken E1b (SettingsStore laut E1a-Spec). Kein PHP-Service.`
-
-**Prompt E1c:**  
-`Nur Mini-ID E1c laut docs/ERP-REST-PLAN.md. Nur neue Datei src/Recipe/MachineOverheadService.php (+ Autoload). Liest FiBu/Konten + Work Centers. Keine Buchung. Kein View.`
+**E1b bestätigt (2026-11-08):** kein `*machine_overhead*.sql` unter `database/migrations/`; letzte Nummer weiterhin **142**; **143+** für E2a. Persistenz nur `SettingsStore` Key `machine_overhead` (E1a). Stub/Klassen kamen mit E1c.
 
 **Prompt E1d:**  
 `Nur Mini-ID E1d laut docs/ERP-REST-PLAN.md. Nur RecipeCostService / Snapshot-Pfad: overhead_per_machine_hour in Payload. Alte Snapshots nicht ändern. Kein UI.`
