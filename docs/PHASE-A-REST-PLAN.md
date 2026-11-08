@@ -111,7 +111,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | PA2h | Kichel Smoke | 🔴 | [x] 2026-11-08 Dev · Widget/Nav/Antworten/Protokoll/Skonto |
 | PA2i | Postfächer Smoke (falls offen) | 🔴 | [x] 2026-11-08 Dev · Menü/Liste/Rechte/Suche/Compose/Auth-Fehler (ohne Live-IMAP) |
 | PA2j | Dokumentenverfasser Smoke | 🔴 | [x] 2026-11-08 Dev · Menü/Draft/Link/Export/Finalize·Reopen·Archiv · Fix SettingsStore DDL mid-txn |
-| PA2k | A2-Haken in IQ-STROM-TODO nachziehen | 🟢 | [ ] |
+| PA2k | A2-Haken in IQ-STROM-TODO nachziehen | 🟢 | [x] 2026-11-08 Standzeile A2 vollständig · PA2a–j ✅ |
 
 **Prompt PA2a:**  
 `Nur Mini-ID PA2a laut docs/PHASE-A-REST-PLAN.md. Manuelle Belegkette laut TESTLISTE/BUCHHALTUNG-BELEGKETTE. Ergebnis in Plan abhaken. Kein Code.`
@@ -187,12 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel: **PA2k** A2-Haken · Rest **PA4** (a–e, h Mensch)  
+1. Rest **PA4** (a–e, h Mensch) · **PA4i** Haken  
 2. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA2k laut docs/PHASE-A-REST-PLAN.md. A2-Haken in IQ-STROM nachziehen. Nur Docs.`  
-*(Oder PA4a Instanz-Ops.)*
+`Nur Mini-ID PA4a laut docs/PHASE-A-REST-PLAN.md. Code-Sync + config/*.local.php an IQ-Instanz-DB. Kein Sondercode. Kein Tenant-Hardcode.`  
+*(Oder PA6a Telefon/CTI Statusnotiz.)*
 
 ---
 

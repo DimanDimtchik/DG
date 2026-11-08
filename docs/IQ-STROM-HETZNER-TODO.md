@@ -34,6 +34,10 @@
 
 ### A2 · Manuelle Tests (ganz-soft.de / Master)
 
+> **Stand PA2k (2026-11-08):** A2 **vollständig abgehakt** — PA2a–j ✅ auf Dev `ganz-om.de` · Nachzug ✅ PA2k.  
+> Live-IMAP/SMTP und Briefpapier-UI-Pixel bleiben Instanz-/Deploy-Themen (nicht A2-Blocker).  
+> Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md)
+
 - [x] Belegkette Angebot → AB → LS → Rechnung → Schlussrechnung — ✅ PA2a 2026-11-08 Dev  
   → Hauptkette Angebot→AB→LS→Abschlag→Schluss (Rest 833 € nach 357 € Abschlag); Nebenkette …→Rechnung  
   → [`BUCHHALTUNG-BELEGKETTE.md`](BUCHHALTUNG-BELEGKETTE.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §6
