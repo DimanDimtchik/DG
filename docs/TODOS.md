@@ -4,7 +4,7 @@
 
 Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** UI/CSS-Miniplan **[`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md)** U0–U5 erledigt (Guards grün). Optional: U2b Sichtcheck Firmendaten-Readonly; margin-left/Print später. Danach Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md).
+**Nächste Session:** Amazon Stufe-2 Rest tokenarm → [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) (**A1a** Migration zuerst). UI/CSS U0–U5 ✅. Optional U2b Sichtcheck. Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md).
 
 ---
 
@@ -83,7 +83,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
-- [ ] **Amazon Business Stufe 2** (halbautomatisch aus Einkaufsliste) — Plan: `AMAZON-BUSINESS-STUFE2.md` · Onboarding Business-API parallel
+- [ ] **Amazon Business Stufe 2** — Fach: [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md) · **tokenarm Rest:** [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) (A0–A5; A+B ✅, offen C–F) · Onboarding API = Mensch parallel
 - [x] **Zeiterfassung Phase 2** — Z2a–Z2e ✅
 - [x] **Zeiterfassung Phase 3 Schichten** — Z3a–Z3d ✅
 - [x] **Zeiterfassung Phase 4 Urlaub/Krankheit** — Z4a–Z4e ✅

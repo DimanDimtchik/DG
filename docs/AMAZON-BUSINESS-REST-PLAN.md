@@ -1,0 +1,157 @@
+# Amazon Business Stufe 2 — Rest (tokenarm)
+
+> **Eine Chat-Session = eine Mini-ID.** Ziel: offene Blöcke C–F ohne teuren Agent.  
+> Fachplan: [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md) · Klassen schon da: `AmazonBusinessSettings` / `Auth` / `Client`
+
+Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
+
+---
+
+## Warum tokenarm (Free-/Hobby-Plan)
+
+| Regel | Bedeutung |
+|-------|-----------|
+| **Kein Explorer-Chat** | Kein „lies ganz Lager/Index“ — nur Datei(en) der Mini-ID |
+| **Kein API-Rewrite** | Client (`placeOrder` / `orderDetails`) **nicht** neu erfinden |
+| **Kein Onboarding im Agent** | Amazon-Freigabe / SPP / Refresh-Token = **Mensch** (🟢 lokal Doc) |
+| **1 ID = 1 Commit-fähig** | Nach Schritt: kurzer Selftest / PHP-Lint der genannten Datei |
+| **Credentials nie committen** | Nur Settings-UI / Instanz-DB |
+
+**Chat-Prompt-Vorlage (kopieren):**  
+`Nur Mini-ID A3a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur genannte Datei(en). Kein Refactor. Am Ende: php -l auf geänderte Dateien nennen.`
+
+**Nicht im Agent-Chat:** ganzen `index.php` umbauen, Sandbox-E2E gegen Amazon live, Rechnung-Import, Stufe-3-Cron.
+
+---
+
+## Token-Stufen
+
+| Symbol | Wann | Typisch |
+|--------|------|---------|
+| 🟢 | **Lokal / Free** — Doc, 1 View-Hinweis, 1 Migration, Guard/Lint | Standard |
+| 🟡 | **Kurz-Agent** — 1 Service + 1 POST-Zweig, klarer Diff | Sparsam |
+| 🔴 | **Teuer** — Live-Amazon-E2E, großes UI-Review, Onboarding-Portal | Auf Free vermeiden / Mensch |
+
+---
+
+## Ist-Stand (2026-11-08)
+
+| Block | Stand |
+|-------|--------|
+| A Einstellungen UI + Store | ✅ `AmazonBusinessSettings`, Lagerstruktur → Einkauf |
+| B API-Client + Auth | ✅ Skelett `AmazonBusinessAuth` / `AmazonBusinessClient` |
+| C Artikelstamm-Hinweise | ❌ ASIN-Hinweis / Amazon-Kennzeichnung an Einkaufsquelle |
+| D Einkaufsliste-Button | ❌ POST `purchase_list_amazon_order` + UI |
+| E Persistenz Order-Ref | ❌ Migration + Speichern an Listeneintrag |
+| F Rechte / CSRF / Deploy-Hinweise | 🟡 CSRF-Muster existiert; Amazon-Pfad verdrahten |
+| Amazon Developer-Zugang | 🔴 Mensch parallel (Tage–Wochen) |
+
+Migration **082** ist bereits KDV — neue Nummer z. B. **`142_purchase_list_amazon.sql`** (nächste freie nach Repo-Stand prüfen).
+
+---
+
+## Abhackplan (Mini-IDs)
+
+Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
+
+### A0 — Doc / Inventar (🟢)
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| A0a | Dieser Rest-Plan + Verweis in `AMAZON-BUSINESS-STUFE2.md` / `TODOS.md` | 🟢 | [x] 2026-11-08 |
+| A0b | Nächste freie Migrationsnummer lokal prüfen (`ls database/migrations/`) | 🟢 | [ ] |
+
+---
+
+### A1 — Persistenz E (🟢/🟡) — **zuerst**, UI braucht Spalten
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| A1a | Migration `NNN_purchase_list_amazon.sql`: `external_order_id`, `external_order_channel`, optional `external_order_payload` / `external_ordered_at` | 🟢 | [ ] |
+| A1b | `PurchaseListRepository`: Felder lesen/schreiben (nur diese Methoden) | 🟡 | [ ] |
+| A1c | `PurchaseListService::markOrdered` erweitern **oder** `markAmazonOrdered(...)` — Order-ID + Channel setzen | 🟡 | [ ] |
+
+**Prompt A1a:**  
+`Nur Mini-ID A1a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur neue Migration unter database/migrations/. Kein PHP. Nummer vorher prüfen.`
+
+---
+
+### A2 — Order-Service (🟡) — **eine Klasse**
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| A2a | Neu: `AmazonBusinessOrderService` — ASIN aus preferred source, `placeOrder`, Fehler als klare Message | 🟡 | [ ] |
+| A2b | Autoload-Eintrag + kurzer PHP-Lint | 🟢 | [ ] |
+
+**Prompt A2a:**  
+`Nur Mini-ID A2a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur neue Datei src/Inventory/AmazonBusinessOrderService.php (+ Autoload-Zeile). Nutzt vorhandenen AmazonBusinessClient. Kein View.`
+
+---
+
+### A3 — Einkaufsliste UI D (🟡, splitten)
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| A3a | POST-Handler `purchase_list_amazon_order` in bestehendem Purchase-List-POST-Block (`index.php` — **nur der Block**, kein Refactor) | 🟡 | [ ] |
+| A3b | View Einkaufsliste: Button „Bei Amazon Business bestellen“ nur wenn ready + ASIN (`tab-calendar-articles.php` list=purchase) | 🟡 | [ ] |
+| A3c | Flash Erfolg/Fehler + Anzeige Order-ID in Liste | 🟢 | [ ] |
+
+**Prompt A3b:**  
+`Nur Mini-ID A3b laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur views/settings/tab-calendar-articles.php (Purchase-List-Abschnitt). Katalog-Buttons. Kein Refactor.`
+
+---
+
+### A4 — Artikelstamm C (🟢/🟡)
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| A4a | Feldhinweis ASIN an Einkaufsquellen-UI (wo `external_sku` gepflegt wird) | 🟢 | [ ] |
+| A4b | Optional: Erkennung Lieferant enthält „Amazon“ → Hinweis (kein Pflicht-Flag) | 🟢 | [ ] |
+
+---
+
+### A5 — Rechte / Abschluss F (🟢)
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| A5a | Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen | 🟢 | [ ] |
+| A5b | Kurz-Selftest oder manueller Checkliste-Haken in diesem Plan | 🟢 | [ ] |
+| A5c | `TODOS.md` Amazon-Zeile auf `[~]`/`[x]` je nach Live-Test | 🟢 | [ ] |
+
+---
+
+## Empfohlene Free-Plan-Reihenfolge
+
+1. **A0b + A1a** lokal (Migration)  
+2. **A1b → A1c** ein Chat  
+3. **A2a + A2b** ein Chat  
+4. **A3a** allein (index-POST — teurer Kontext → Dateiabschnitte nennen)  
+5. **A3b → A3c**  
+6. **A4a** lokal  
+7. **A5**  
+
+**Parallel Mensch (🔴):** Amazon Questionnaire / SPP / Refresh-Token — ohne das kein echter E2E; Code kann mit „nicht ready“-UI trotzdem landen.
+
+**Vermeiden auf Free:** Live-Bestellung debuggen, Client neu schreiben, Beleg-Import, Cron-Stufe-3.
+
+---
+
+## Parent-Übersicht
+
+| ID | Thema | Status |
+|----|--------|--------|
+| A0 | Doc / Inventar | [~] A0a ✅ |
+| A1 | Persistenz | [ ] |
+| A2 | Order-Service | [ ] |
+| A3 | Einkaufsliste UI | [ ] |
+| A4 | Artikelstamm | [ ] |
+| A5 | Rechte / Abschluss | [ ] |
+
+---
+
+## Nicht vergessen
+
+- Keine Secrets in Git  
+- Endnutzer-Texte: keine Plan-Codes (`A3a`) in der UI  
+- Belegpflicht bleibt — Amazon-Rechnung separat  
+- Nach UI: Katalog-Klassen / Guard wenn Views geändert  

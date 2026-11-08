@@ -1,7 +1,9 @@
 # Amazon Business — Stufe 2 (Halbautomatisch)
 
-Stand: **2026-09-17** · Master: `dg.ganz-om.de`  
+Stand: **2026-09-17** (Rest tokenarm: **2026-11-08**) · Code-Kern: `dg.ganz-soft.de`  
 Bezug: Einkaufsliste (`PurchaseListService`, Migration `081`), Einkaufsquellen (`dg_article_purchase_sources`).
+
+**Free-Plan / Rest-Umsetzung:** Mini-IDs → [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) (A0–A5; 1 Chat = 1 Mini-ID). A+B erledigt; offen C–F.
 
 ## Ziel
 
@@ -183,9 +185,7 @@ Abhängig von Amazon-Onboarding-Dauer (oft länger als der Code).
 
 ## Nächster Schritt (Umsetzung)
 
-1. Amazon-Business-Developer-Zugang beantragen (parallel).  
-2. Im Repo: Migration + `AmazonBusinessSettings` + Client-Skelett.  
-3. Button auf Einkaufsliste verdrahten.  
-4. Mit einer Test-ASIN End-to-End gegen Sandbox/Prod.
-
-Wenn die Umsetzung starten soll: zuerst Block A+B (Credentials + Client), dann UI.
+1. Amazon-Business-Developer-Zugang beantragen (**Mensch**, parallel) — siehe oben.  
+2. Repo Free-Plan: **[`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md)** — Reihenfolge A1 → A2 → A3 → A4 → A5.  
+3. A+B (Settings + Client) sind **bereits** im Code; nicht neu bauen.  
+4. Echter E2E erst nach Amazon-Freigabe + Credentials auf Dev (`ganz-om.de`).
