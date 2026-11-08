@@ -66,7 +66,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | Baustein | Stand |
 |----------|--------|
-| User-/Kontakt-Unterschriftshistorie | ✅ Schema/Store/Selftest + Tabelle + Upload + Hinweis (ES2a–c); Smoke ES2d offen |
+| User-/Kontakt-Unterschriftshistorie | ✅ ES1–ES2 inkl. Smoke Dev (2 Uploads → 2 Historienzeilen) |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
@@ -107,7 +107,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----|--------|--------|-------|
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
 | ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
-| ES2 | Kontakt-UI Tabelle + Upload | [~] ES2c ✅ | 🟡🔴 |
+| ES2 | Kontakt-UI Tabelle + Upload | [x] ES2d ✅ | 🟡🔴 |
 | ES3 | Canvas Web | [ ] | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [ ] | 🟡 |
@@ -142,12 +142,12 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES2a | Tabelle am Kontakt: chronologisch **neueste zuerst**, Spalten Zeitraum, Quelle, Status, Vorschau | 🟡 | [x] 2026-11-08 Partial `contact-signature-history` · Detail + Bearbeiten |
 | ES2b | Aktion „Neue Unterschrift (Upload)“ → `appendNew` · **kein** Löschen-Button | 🟡 | [x] 2026-11-08 Form unter Historie · `appendFromUpload` PNG/WebP |
 | ES2c | Soft-Hinweis: kein QES / Schriftform · Historie unveränderlich | 🟢 | [x] 2026-11-08 `dg-flash--info` im Historie-Partial |
-| ES2d | Smoke Dev: Upload → Tabelle 2 Zeilen nach zweitem Upload | 🔴 | [ ] |
+| ES2d | Smoke Dev: Upload → Tabelle 2 Zeilen nach zweitem Upload | 🔴 | [x] 2026-11-08 ganz-om.de Kontakt#1 · 2 Uploads → 1 aktiv + 1 beendet |
 
 **Konvention Chronologie:** neueste zuerst (`ORDER BY valid_from DESC, id DESC` / Store `listForContact`).
 
-**Prompt ES2d:**  
-`Nur Mini-ID ES2d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Upload Historie 2 Zeilen. Kein Code außer Fix.`
+**Prompt ES3a:**  
+`Nur Mini-ID ES3a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Canvas-Pad minimal → appendNew source=canvas. Katalog.`
 
 ### ES3 — Canvas Web
 
@@ -216,7 +216,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES2d laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Upload Historie 2 Zeilen. Kein Code außer Fix.`
+`Nur Mini-ID ES3a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Canvas-Pad minimal → appendNew source=canvas. Katalog.`
 
 ---
 
