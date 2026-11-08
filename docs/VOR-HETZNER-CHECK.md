@@ -121,7 +121,7 @@ Perspektive: GoBD · UStG · Belegpflicht · Datenschutz · Handelsregister-Anga
 |-------------|--------|-------|
 | Rechtstexte (Impressum, DSGVO, AGB …) | ✅ Mehrprodukt | Inhalte je Instanz prüfen |
 | Wartungsmodus + Kontakt | ✅ | — |
-| Auftragsverarbeitung / TOMs | 📄 organisatorisch | Mit Hetzner-AVV abstimmen |
+| Auftragsverarbeitung / TOMs | 📄 Checkliste ✅ PA3d · Signatur ⬜ | [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) |
 | Löschkonzepte (Mitarbeiterdaten-Cron) | ✅ teilweise | Vollständige Übersicht Retention |
 
 ### Sonstiges

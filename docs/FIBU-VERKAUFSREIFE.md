@@ -26,7 +26,7 @@ Verwandt: [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · [`FI
 | Thema | Status | Nächster Schritt |
 |-------|--------|------------------|
 | ELSTER live UStVA | CSV + Stub; Live blockiert | Hetzner + ERiC — [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) |
-| AVV / AGB Hosting | organisatorisch offen | [`KDV-TODO.md`](KDV-TODO.md) AVV/AGB; Hosting ≠ Steuerberatung |
+| AVV / AGB Hosting | organisatorisch offen | Hetzner: [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md); Kunden-AVV: [`KDV-TODO.md`](KDV-TODO.md); Hosting ≠ Steuerberatung |
 | Backup / Aufbewahrung | Storage pro Instanz | Dev-Test ✅ [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md); Fristen/Hetzner-Offsite noch Org |
 | §14 / gemischte Sätze / E-Rechnung | weitgehend | Stichproben A1; §13b XRechnung AE/BT-120/121 ✅ PA5c; ZUGFeRD-Entscheidung ✅ [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) |
 | Steuer-Update-Pfad | implizit | Changelog-Prozess bei UStG-Änderungen kommunizieren |
