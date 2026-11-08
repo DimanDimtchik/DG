@@ -59,7 +59,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c ✅ | 🔴🟢 |
-| PA4 | Instanz-Vorbereitung (A4) | [~] | 🔴 |
+| PA4 | Instanz-Vorbereitung (A4) | [~] PA4f ✅ | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
 
@@ -148,7 +148,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | PA4c | Flags: Photovoltaik §12 Abs. 3 + §13b Bauleistung | 🔴 | [ ] |
 | PA4d | ≥3 Benutzer + Rechte | 🔴 | [ ] |
 | PA4e | Nummernkreise, Bank, Briefpapier/Logo | 🔴 | [ ] |
-| PA4f | Migrationskonzept Lexoffice → DG (Kontakte/Artikel/Belege/Bank) als Doc-Checkliste | 🟢 | [ ] |
+| PA4f | Migrationskonzept Lexoffice → DG (Kontakte/Artikel/Belege/Bank) als Doc-Checkliste | 🟢 | [x] 2026-11-08 → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) |
 | PA4g | Parallelbetrieb festlegen (Zeitraum, Originalbeleg-Regel) — Doc | 🟢 | [ ] |
 | PA4h | Domain/TLS abschließen ([~] SSL) | 🔴 | [ ] |
 | PA4i | A4-Haken in IQ-STROM-TODO | 🟢 | [ ] |
@@ -188,12 +188,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 ## Empfohlene Free-Plan-Reihenfolge
 
 1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-2. **PA3e** Deploy-Prep-Doc · **PA4f/g** Migrations-/Parallel-Docs  
+2. **PA4g** Parallelbetrieb-Doc · **PA3e** Deploy-Prep-Doc  
 3. Rest **PA4** / **PA3b/d** / **PA2** Mensch · **PA1e** wenn A1 Druck-Stichproben grün  
 4. Phase B erst wenn A1–A3 weitgehend grün  
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA4f laut docs/PHASE-A-REST-PLAN.md. Lexoffice→DG Migrationscheckliste als Doc. Kein Produktiv-Import. Kein Tenant-Hardcode.`  
+`Nur Mini-ID PA4g laut docs/PHASE-A-REST-PLAN.md. Parallelbetrieb Lex+DG festlegen (Zeitraum, Originalbeleg-Regel) — nur Doc.`  
 *(Oder PA3e Deploy-Prep-Doc.)*
 
 ---
@@ -209,3 +209,4 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | A6 ERP erledigt |
 | [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) | Muster Mini-IDs |
 | [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) | PA5b Entscheidung PDF+XRechnung · Factur-X = D2 |
+| [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) | PA4f Migrationscheckliste Kontakte/Artikel/Belege/Bank |

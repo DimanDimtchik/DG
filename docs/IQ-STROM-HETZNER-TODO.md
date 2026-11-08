@@ -64,7 +64,8 @@
 - [ ] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung**
 - [ ] ≥ **3 Benutzer** + Rechte (Buchhaltung / Angebote / Admin)
 - [ ] Nummernkreise, Bankverbindung, Briefpapier/Logo
-- [ ] Migrationskonzept Lexoffice → DG: Kontakte, Artikel, offene Belege, Bank (CSV/Excel)
+- [x] Migrationskonzept Lexoffice → DG: Kontakte, Artikel, offene Belege, Bank (CSV/Excel) — Checkliste ✅ PA4f 2026-11-08  
+  → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) · Parallelbetrieb = PA4g
 - [ ] **Parallelbetrieb** festlegen: Zeitraum Lex + DG (Empfehlung 1–2 Monate), was wo Originalbeleg ist
 - [~] Domain/TLS: Subdomain + DB angelegt, SSL beantragt → [`SERVER-DOMAIN-DATENBANK.md`](SERVER-DOMAIN-DATENBANK.md) · SSH [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (`IQ_ALLINKL_*`)
 
