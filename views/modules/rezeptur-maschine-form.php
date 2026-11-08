@@ -53,7 +53,7 @@ $steps = [
       <?php endif; ?>
 
       <?php if (!$readOnly) : ?>
-        <nav class="dg-wc-wizard-steps" aria-label="Schritte" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+        <nav class="dg-wc-wizard-steps dg-toolbar dg-mb-4" aria-label="Schritte">
           <?php foreach ($steps as $num => $meta) : ?>
             <button type="button" class="dg-button<?= $num === 1 ? ' dg-button--primary' : '' ?>" data-wizard-goto="<?= (int) $num ?>" style="font-size:0.85rem;">
               <?= (int) $num ?>. <?= View::escape($meta['title']) ?>
@@ -63,7 +63,7 @@ $steps = [
       <?php endif; ?>
 
       <div class="dg-wc-wizard-panel" data-wizard-step="1" <?= $readOnly ? '' : '' ?>>
-        <h2 class="dg-subsection-title" style="margin-top:0;"><?= View::escape($steps[1]['title']) ?></h2>
+        <h2 class="dg-subsection-title dg-mt-0"><?= View::escape($steps[1]['title']) ?></h2>
         <p class="dg-field-hint"><?= View::escape($steps[1]['hint']) ?></p>
         <label class="dg-field">
           <span>Name der Maschine</span>
@@ -76,7 +76,7 @@ $steps = [
       </div>
 
       <div class="dg-wc-wizard-panel" data-wizard-step="2" <?= $readOnly ? '' : 'hidden' ?>>
-        <h2 class="dg-subsection-title" style="margin-top:0;"><?= View::escape($steps[2]['title']) ?></h2>
+        <h2 class="dg-subsection-title dg-mt-0"><?= View::escape($steps[2]['title']) ?></h2>
         <p class="dg-field-hint"><?= View::escape($steps[2]['hint']) ?></p>
         <label class="dg-field">
           <span>Kaufpreis (€)</span>
@@ -87,8 +87,8 @@ $steps = [
           <input name="life_hours" id="dg-wc-life-hours" inputmode="decimal" value="<?= View::escape((string) ($form['life_hours'] ?? '10000')) ?>" data-wc-input <?= $readOnly ? 'readonly' : '' ?>>
         </label>
         <?php if (!$readOnly) : ?>
-          <div class="dg-card" style="padding:12px;margin:8px 0 12px;background:color-mix(in srgb, var(--dg-primary, #336) 6%, #fff);">
-            <p class="dg-field-hint" style="margin:0 0 8px;">Hilfe: lieber in Jahren denken?</p>
+          <div class="dg-card dg-mt-2 dg-mb-3" style="padding:12px;background:color-mix(in srgb, var(--dg-primary, #336) 6%, #fff);">
+            <p class="dg-field-hint dg-mt-0 dg-mb-2">Hilfe: lieber in Jahren denken?</p>
             <label class="dg-field">
               <span>Nutzungsdauer in Jahren</span>
               <input type="number" min="0.5" step="0.5" id="dg-wc-life-years" value="5" inputmode="decimal">
@@ -98,13 +98,13 @@ $steps = [
               <input type="number" min="1" step="1" id="dg-wc-hours-per-year" value="2000" inputmode="decimal">
             </label>
             <button type="button" class="dg-button" id="dg-wc-apply-years">Stunden aus Jahren übernehmen</button>
-            <p class="dg-field-hint" style="margin:8px 0 0;">Beispiel: 5 Jahre × 2.000 h = 10.000 Stunden.</p>
+            <p class="dg-field-hint dg-mt-2">Beispiel: 5 Jahre × 2.000 h = 10.000 Stunden.</p>
           </div>
         <?php endif; ?>
       </div>
 
       <div class="dg-wc-wizard-panel" data-wizard-step="3" <?= $readOnly ? '' : 'hidden' ?>>
-        <h2 class="dg-subsection-title" style="margin-top:0;"><?= View::escape($steps[3]['title']) ?></h2>
+        <h2 class="dg-subsection-title dg-mt-0"><?= View::escape($steps[3]['title']) ?></h2>
         <p class="dg-field-hint"><?= View::escape($steps[3]['hint']) ?> Typenschild oft in Watt — wir rechnen intern in kW.</p>
         <label class="dg-field">
           <span>Leistung in Watt</span>
@@ -115,7 +115,7 @@ $steps = [
       </div>
 
       <div class="dg-wc-wizard-panel" data-wizard-step="4" <?= $readOnly ? '' : 'hidden' ?>>
-        <h2 class="dg-subsection-title" style="margin-top:0;"><?= View::escape($steps[4]['title']) ?></h2>
+        <h2 class="dg-subsection-title dg-mt-0"><?= View::escape($steps[4]['title']) ?></h2>
         <p class="dg-field-hint"><?= View::escape($steps[4]['hint']) ?></p>
         <label class="dg-field">
           <span>Stellfläche (Quadratmeter)</span>
@@ -133,22 +133,22 @@ $steps = [
       </div>
 
       <div class="dg-wc-wizard-panel" data-wizard-step="5" <?= $readOnly ? '' : 'hidden' ?>>
-        <h2 class="dg-subsection-title" style="margin-top:0;"><?= View::escape($steps[5]['title']) ?></h2>
+        <h2 class="dg-subsection-title dg-mt-0"><?= View::escape($steps[5]['title']) ?></h2>
         <p class="dg-field-hint"><?= View::escape($steps[5]['hint']) ?></p>
-        <dl id="dg-wc-summary" style="margin:0;display:grid;gap:8px;">
-          <div><dt style="font-size:12px;color:#666;">Name</dt><dd data-sum="name" style="margin:0;font-weight:600;">—</dd></div>
-          <div><dt style="font-size:12px;color:#666;">Kaufpreis</dt><dd data-sum="price" style="margin:0;">—</dd></div>
-          <div><dt style="font-size:12px;color:#666;">Laufzeit</dt><dd data-sum="life" style="margin:0;">—</dd></div>
-          <div><dt style="font-size:12px;color:#666;">Leistung</dt><dd data-sum="power" style="margin:0;">—</dd></div>
-          <div><dt style="font-size:12px;color:#666;">Fläche / Personal</dt><dd data-sum="space" style="margin:0;">—</dd></div>
+        <dl id="dg-wc-summary" class="dg-mt-0 dg-mb-0 dg-gap-2" style="display:grid;">
+          <div><dt style="font-size:12px;color:#666;">Name</dt><dd data-sum="name" class="dg-mt-0 dg-mb-0" style="font-weight:600;">—</dd></div>
+          <div><dt style="font-size:12px;color:#666;">Kaufpreis</dt><dd data-sum="price" class="dg-mt-0 dg-mb-0">—</dd></div>
+          <div><dt style="font-size:12px;color:#666;">Laufzeit</dt><dd data-sum="life" class="dg-mt-0 dg-mb-0">—</dd></div>
+          <div><dt style="font-size:12px;color:#666;">Leistung</dt><dd data-sum="power" class="dg-mt-0 dg-mb-0">—</dd></div>
+          <div><dt style="font-size:12px;color:#666;">Fläche / Personal</dt><dd data-sum="space" class="dg-mt-0 dg-mb-0">—</dd></div>
         </dl>
         <?php if ($readOnly) : ?>
-          <p class="dg-field-hint" style="margin-top:12px;">Nur Ansicht — keine Bearbeitung.</p>
+          <p class="dg-field-hint dg-mt-3">Nur Ansicht — keine Bearbeitung.</p>
         <?php endif; ?>
       </div>
 
       <?php if (!$readOnly) : ?>
-        <div class="dg-form-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <div class="dg-form-actions">
           <button type="button" class="dg-button" data-wizard-prev hidden>Zurück</button>
           <button type="button" class="dg-button dg-button--primary" data-wizard-next>Weiter</button>
           <button type="submit" class="dg-button dg-button--primary" name="work_center_save" value="1" data-wizard-save hidden>Maschine speichern</button>
@@ -163,15 +163,15 @@ $steps = [
       data-elec="<?= View::escape((string) $rates['electricity_eur_per_kwh']) ?>"
       data-room="<?= View::escape((string) $rates['room_eur_per_m2_h']) ?>"
       data-wage="<?= View::escape((string) $rates['wage_eur_per_h']) ?>">
-      <h2 class="dg-subsection-title" style="margin-top:0;">Ihr Stundensatz</h2>
+      <h2 class="dg-subsection-title dg-mt-0">Ihr Stundensatz</h2>
       <p class="dg-field-hint">Wird live mitgerechnet — Speichern erst am Schluss nötig.</p>
-      <dl style="margin:0;display:grid;gap:8px;">
-        <div><dt style="font-size:12px;color:#666;">Abnutzung / Stunde</dt><dd id="dg-wc-dep" style="margin:0;font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['depreciation_per_h'])) ?></dd></div>
-        <div><dt style="font-size:12px;color:#666;">Strom / Stunde</dt><dd id="dg-wc-energy" style="margin:0;font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['energy_per_h'])) ?></dd></div>
-        <div><dt style="font-size:12px;color:#666;">Raum / Stunde</dt><dd id="dg-wc-room" style="margin:0;font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['room_per_h'])) ?></dd></div>
-        <div style="border-top:1px solid var(--dg-border,#ddd);padding-top:8px;"><dt style="font-size:12px;color:#666;">Maschinenstunde</dt><dd id="dg-wc-machine" style="margin:0;font-size:1.25rem;font-weight:700;"><?= View::escape(RecipeCostService::formatEur($breakdown['machine_per_h'])) ?></dd></div>
-        <div><dt style="font-size:12px;color:#666;">Personal / Stunde</dt><dd id="dg-wc-labor" style="margin:0;font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['labor_per_h'])) ?></dd></div>
-        <div><dt style="font-size:12px;color:#666;">Maschine + Personal</dt><dd id="dg-wc-loaded" style="margin:0;font-weight:700;"><?= View::escape(RecipeCostService::formatEur($breakdown['loaded_per_h'])) ?></dd></div>
+      <dl class="dg-mt-0 dg-mb-0 dg-gap-2" style="display:grid;">
+        <div><dt style="font-size:12px;color:#666;">Abnutzung / Stunde</dt><dd id="dg-wc-dep" class="dg-mt-0 dg-mb-0" style="font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['depreciation_per_h'])) ?></dd></div>
+        <div><dt style="font-size:12px;color:#666;">Strom / Stunde</dt><dd id="dg-wc-energy" class="dg-mt-0 dg-mb-0" style="font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['energy_per_h'])) ?></dd></div>
+        <div><dt style="font-size:12px;color:#666;">Raum / Stunde</dt><dd id="dg-wc-room" class="dg-mt-0 dg-mb-0" style="font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['room_per_h'])) ?></dd></div>
+        <div style="border-top:1px solid var(--dg-border,#ddd);padding-top:8px;"><dt style="font-size:12px;color:#666;">Maschinenstunde</dt><dd id="dg-wc-machine" class="dg-mt-0 dg-mb-0" style="font-size:1.25rem;font-weight:700;"><?= View::escape(RecipeCostService::formatEur($breakdown['machine_per_h'])) ?></dd></div>
+        <div><dt style="font-size:12px;color:#666;">Personal / Stunde</dt><dd id="dg-wc-labor" class="dg-mt-0 dg-mb-0" style="font-weight:600;"><?= View::escape(RecipeCostService::formatEur($breakdown['labor_per_h'])) ?></dd></div>
+        <div><dt style="font-size:12px;color:#666;">Maschine + Personal</dt><dd id="dg-wc-loaded" class="dg-mt-0 dg-mb-0" style="font-weight:700;"><?= View::escape(RecipeCostService::formatEur($breakdown['loaded_per_h'])) ?></dd></div>
       </dl>
     </aside>
   </div>
