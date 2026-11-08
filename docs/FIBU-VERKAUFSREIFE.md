@@ -28,7 +28,7 @@ Verwandt: [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · [`FI
 | ELSTER live UStVA | CSV + Stub; Live blockiert | Hetzner + ERiC — [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) |
 | AVV / AGB Hosting | organisatorisch offen | [`KDV-TODO.md`](KDV-TODO.md) AVV/AGB; Hosting ≠ Steuerberatung |
 | Backup / Aufbewahrung | Storage pro Instanz | dokumentiertes Backup/Restore + Fristen (Hetzner) |
-| §14 / gemischte Sätze / E-Rechnung | weitgehend | Stichproben A1; §13b XRechnung; ZUGFeRD-Entscheidung |
+| §14 / gemischte Sätze / E-Rechnung | weitgehend | Stichproben A1; §13b XRechnung (PA5c); ZUGFeRD-Entscheidung ✅ [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) |
 | Steuer-Update-Pfad | implizit | Changelog-Prozess bei UStG-Änderungen kommunizieren |
 | Smoke FiBu auf Instanz | offen | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) |
 
