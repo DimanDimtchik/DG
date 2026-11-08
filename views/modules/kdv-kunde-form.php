@@ -116,16 +116,16 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
         <?php endif; ?>
       </div>
       <?php if ($isEdit && (($c['firm_slot_status'] ?? 'active') === 'active')) : ?>
-        <p style="margin-top:12px;">
+        <p class="dg-mt-3">
           <a class="dg-button" href="/app?page=kdv-umfirmierung&amp;from_id=<?= (int) ($c['id'] ?? 0) ?>">Umfirmierung starten…</a>
         </p>
-        <label class="dg-field dg-field--checkbox" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
+        <label class="dg-field dg-field--checkbox dg-mt-3">
           <input type="checkbox" name="mf_make_archive_slot" value="1">
           <span>Als <strong>Archiv-Slot</strong> setzen (Umfirmierung Vorgänger): Slot „Archiv“, Preis 0 €, Gültig bis +<?= (int) MultiFirmaPricingService::ARCHIVE_DEFAULT_MONTHS ?> Monate falls leer. Beziehung → Vorgänger.</span>
         </label>
       <?php endif; ?>
       <?php if ($orgSiblings !== []) : ?>
-        <p class="dg-field-hint" style="margin-top:0.75rem"><strong>Weitere Firmen dieser Organisation:</strong></p>
+        <p class="dg-field-hint dg-mt-3"><strong>Weitere Firmen dieser Organisation:</strong></p>
         <ul class="dg-muted">
           <?php foreach ($orgSiblings as $sib) : ?>
             <?php if ((int) ($sib['id'] ?? 0) === (int) ($c['id'] ?? 0)) {
@@ -205,7 +205,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           <input class="dg-input" type="date" name="contract_end" value="<?= View::escape($c['contract_end'] ?? '') ?>">
         </label>
       </div>
-      <label class="dg-field dg-field--checkbox" style="margin-top:10px;display:flex;gap:8px;align-items:flex-start;">
+      <label class="dg-field dg-field--checkbox dg-mt-3">
         <input type="checkbox" name="mf_apply_price" value="1"<?= !$isEdit || (float) ($c['monthly_price'] ?? 0) <= 0 ? ' checked' : '' ?>>
         <span>Beim Speichern <strong>MF2-Preis übernehmen</strong> (Listenpreis bzw. −20 % Zusatzfirma / 0 € Archiv).</span>
       </label>
@@ -306,7 +306,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
         <p class="dg-field-hint">Noch kein Provision-Lauf gespeichert.</p>
       <?php endif; ?>
       <?php if (in_array((string) ($c['status'] ?? ''), ['neu', 'dns_pending'], true)) : ?>
-        <p style="margin-top:12px;">
+        <p class="dg-mt-3">
           <a class="dg-button" href="/app?page=kdv-provision&amp;id=<?= (int) $c['id'] ?>">CRM bereitstellen…</a>
         </p>
       <?php endif; ?>
@@ -327,7 +327,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
   </form>
 
   <?php if ($isEdit): ?>
-  <div class="dg-panel" style="margin-top:24px;">
+  <div class="dg-panel dg-mt-5">
     <h2>Lizenz</h2>
     <?php if (!$licenseConfigured): ?>
       <p class="dg-alert dg-alert--warning">Lizenzserver-Token fehlt. Bitte unter KDV-Übersicht hinterlegen. Zuweisen lokal ist möglich; Sperre am Server braucht den Token.</p>
@@ -341,7 +341,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
       <p class="dg-field-hint"><?= View::escape(KdvBlockReasons::customerMessage((string) ($c['block_reason'] ?? ''), (string) ($c['block_note'] ?? ''))) ?></p>
     <?php endif; ?>
 
-    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" style="margin-top:12px;">
+    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" class="dg-form dg-mt-3">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="kdv_license_action" value="issue">
       <label class="dg-label">Gültig bis (optional)
@@ -350,7 +350,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
       <button class="dg-button dg-button--primary" type="submit" onclick="return confirm('Neuen Lizenzschlüssel am Server anlegen und zuweisen?')">Neuen Key erzeugen</button>
     </form>
 
-    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" style="margin-top:16px;">
+    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" class="dg-form dg-mt-4">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="kdv_license_action" value="assign">
       <label class="dg-label">Bestehenden Key zuweisen
@@ -360,7 +360,7 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
     </form>
 
     <?php if (($c['status'] ?? '') !== 'gesperrt'): ?>
-    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" style="margin-top:16px;border-top:1px solid #eee;padding-top:16px;">
+    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" class="dg-form dg-mt-4" style="border-top:1px solid #eee;padding-top:16px;">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="kdv_license_action" value="suspend">
       <h3>Sperren</h3>
@@ -376,17 +376,17 @@ $licenseConfigured = KdvLicenseClient::isConfigured();
           <input class="dg-input" type="text" name="block_note">
         </label>
       </div>
-      <label class="dg-field dg-field--checkbox" style="display:block;margin:8px 0;">
+      <label class="dg-field dg-field--checkbox dg-mt-2 dg-mb-2">
         <input type="checkbox" name="skip_license_suspend" value="1"> Nur Akte sperren, Lizenz am Server nicht ändern
       </label>
       <button class="dg-button dg-button--danger" type="submit" onclick="return confirm('SaaS-Kunde wirklich sperren?')">Sperren</button>
     </form>
     <?php else: ?>
-    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" style="margin-top:16px;border-top:1px solid #eee;padding-top:16px;">
+    <form method="post" action="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>" class="dg-form dg-mt-4" style="border-top:1px solid #eee;padding-top:16px;">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="kdv_license_action" value="unsuspend">
       <h3>Entsperren</h3>
-      <label class="dg-field dg-field--checkbox" style="display:block;margin:8px 0;">
+      <label class="dg-field dg-field--checkbox dg-mt-2 dg-mb-2">
         <input type="checkbox" name="skip_license_activate" value="1"> Nur Akte entsperren, Lizenz am Server nicht ändern
       </label>
       <button class="dg-button dg-button--primary" type="submit">Entsperren</button>
