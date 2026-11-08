@@ -16,6 +16,9 @@
 
 ### A1 · GoBD / Belege / FiBu-Härte (Blocker für Produktiv-FiBu)
 
+> **Stand PA1e (2026-11-08):** A1 **vollständig abgehakt** — GoBD-Kern ✅ · Druck §14/gemischt/Klauseln ✅ PA1a–c · PV-Automatik ✅ PA1d · Haken-Nachzug ✅ PA1e.  
+> Nachweis Druck: [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) · Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md)
+
 - [x] **GoBD Änderungshistorie / Unveränderbarkeit** schließen  
   Ausgang: Revision/Storno; Eingang nach Buchung gesperrt; manuelle Buchung = Gegenbuchung (kein DELETE).  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §3 · [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)
@@ -23,7 +26,7 @@
   → ✅ PA1a 2026-11-08 Dev `ganz-om.de` · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) · Gutschrift-Titel-Fix
 - [x] **Stichprobe gemischte Steuersätze** 19 % / 7 % / 0 % auf einem Beleg — ✅ PA1b 2026-11-08 Dev
 - [x] **§19 / §13b / PV §12 Abs. 3** Klauseln am Druck prüfen (Firma-Flags) — ✅ PA1c 2026-11-08 Dev · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
-- [x] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Hinweis §12 Abs. 3 im Druck/PDF/E-Mail wie bei §19 (Firmenstatus, nicht Beleg-Checkbox) — ✅ `VoucherDocumentPrintService` + `bin/pv-legal-clause-selftest.php`
+- [x] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Hinweis §12 Abs. 3 im Druck/PDF/E-Mail wie bei §19 (Firmenstatus, nicht Beleg-Checkbox) — ✅ PA1d · `VoucherDocumentPrintService` + `bin/pv-legal-clause-selftest.php`
 - [x] **ARAP:** automatischer Prozent-Vorschlag aus Liefer-/Belegdatum (Restlaufzeit) ist im Belegformular-Code vorhanden.
   Wichtig Jahresabschluss: kein zweiter ARAP-Prozess bauen — `VoucherAccrual` splittet die Belegbuchung und `LedgerPostingService` erzeugt die Auflösung zum 01.01. des Folgejahres; der Jahresabschluss sperrt/übernimmt danach nur die bestehenden Buchungen.
   → `assets/js/buchhaltung-belege.js` · `src/Accounting/VoucherAccrual.php` · `src/Accounting/LedgerPostingService.php`

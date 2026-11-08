@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
-| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1a–d ✅ · PA1e offen | 🟢🟡🔴 |
+| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
@@ -85,7 +85,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | PA1b | Stichprobe gemischte Steuersätze 19/7/0 auf einem Beleg (manuell + kurze Notiz im Stichproben-Doc) | 🔴 | [x] 2026-11-08 Dev · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) |
 | PA1c | §19 / §13b / PV §12 Abs. 3 Klauseln am Druck gegen Firma-Flags prüfen (Checkliste) | 🔴 | [x] 2026-11-08 Dev · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) |
 | PA1d | **Code:** PV-Automatik — bei Firma-Flag Photovoltaik + 0 %-Zeilen Klausel §12 Abs. 3 automatisch (wie §19); nur betroffene Beleg-/Klausel-Dateien | 🟡 | [x] 2026-11-08 |
-| PA1e | A1-Haken in `IQ-STROM-HETZNER-TODO.md` nachziehen | 🟢 | [ ] |
+| PA1e | A1-Haken in `IQ-STROM-HETZNER-TODO.md` nachziehen | 🟢 | [x] 2026-11-08 · A1-Standbanner + alle A1-Punkte [x] |
 
 **Prompt PA1a:**  
 `Nur Mini-ID PA1a laut docs/PHASE-A-REST-PLAN.md. Nur Druck-Stichprobe §14 laut USTG-14-DRUCKSTICHPROBE.md. Kein Refactor.`
@@ -187,13 +187,13 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel: **PA2a…** Smoke · **PA1e** A1-Haken  
+1. Parallel: **PA2a…** Smoke  
 2. Rest **PA4** (a–e, h Mensch) / **PA2**  
 3. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA1e laut docs/PHASE-A-REST-PLAN.md. A1-Haken in IQ-STROM-HETZNER-TODO nachziehen. Kein Code.`  
-*(Oder PA2a Belegkette.)*
+`Nur Mini-ID PA2a laut docs/PHASE-A-REST-PLAN.md. Manuelle Belegkette laut TESTLISTE/BUCHHALTUNG-BELEGKETTE. Ergebnis in Plan abhaken. Kein Code.`  
+*(Oder PA4a Instanz-Ops.)*
 
 ---
 

@@ -139,7 +139,7 @@ Perspektive: GoBD · UStG · Belegpflicht · Datenschutz · Handelsregister-Anga
 1. **Jetzt:** Deploy/Test Belegdarstellung + AB-Druck (läuft)
 2. **Vor Umzug:** Shared-Core-Ordnerplan ✅ PA3a · Backup/Restore-Test ✅ PA3b → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md)
 3. **Vor Umzug:** Asset-Minify im Deploy (klein, risikoarm)
-4. **Vor Umzug:** GoBD-Stichprobe (Änderung/Storno, Beleg-PDF, USt-Aufteilung)
+4. **Vor Umzug:** GoBD-Kern + Druck-Stichproben ✅ PA1a–e (2026-11-08); A2-Smokes weiter manuell
 5. **Beim Umzug:** Domains, DB-Restore, ELSTER/ERiC Linux
 6. **Nach Umzug:** LDAP, Auto-AB-Mail, Material-Anzahlung
 
