@@ -140,10 +140,10 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| U5a | `php bin/ui-crm-scan.php` → alle Kategorien 0 (außer bewusst Doc-Ausnahmen) | 🟢 | [~] nach U0/U1 bereits 0 — erneut nach jeder Welle |
-| U5b | `php bin/ui-form-spacing-selftest.php` grün | 🟢 | [~] nach U0/U1 grün |
-| U5c | Kurz in `TODOS.md`: UI/CSS-Rest abhaken + Verweis dieser Datei | 🟢 | [~] Verweis da; Abhaken erst nach U2–U4 |
-| U5d | Optional: `bash bin/minify-dg-css.sh` vor Deploy | 🟢 | [x] mit U0a |
+| U5a | `php bin/ui-crm-scan.php` → alle Kategorien 0 (außer bewusst Doc-Ausnahmen) | 🟢 | [x] 2026-11-08 alle 0 |
+| U5b | `php bin/ui-form-spacing-selftest.php` grün | 🟢 | [x] 2026-11-08 |
+| U5c | Kurz in `TODOS.md`: UI/CSS-Rest abhaken + Verweis dieser Datei | 🟢 | [x] 2026-11-08 |
+| U5d | Optional: `bash bin/minify-dg-css.sh` vor Deploy | 🟢 | [x] erneut U5 |
 
 ---
 
@@ -168,7 +168,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U2 | Lohn / Firmendaten | [~] U2a+U2c ✅; U2b Sichtcheck offen |
 | U3 | Settings-Wellen | [x] |
 | U4 | Modul-Wellen | [x] (margin-left/negativ/Print ausgenommen) |
-| U5 | Abschluss Guards + TODOS | [ ] |
+| U5 | Abschluss Guards + TODOS | [x] |
 
 ---
 
