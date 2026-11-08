@@ -6989,6 +6989,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $productionLineList = ProductionLineStore::listLines(false);
                 $productionLineDetail = null;
                 $productionLineBuffers = [];
+                $productionLineStatus = null;
                 $lineViewId = max(0, (int) ($_GET['id'] ?? 0));
                 if ($lineViewId > 0) {
                     $productionLineDetail = ProductionLineStore::getLineWithStations($lineViewId);
@@ -6998,6 +6999,15 @@ $legalProductsConfig = LegalProductSettings::config();
                         exit;
                     }
                     $productionLineBuffers = ProductionLineStore::listBuffers($lineViewId);
+                    $statusOpts = [];
+                    $downMerged = ProductionLineStationDownGate::mergeIntoEvaluateOptions(
+                        $productionLineDetail['stations'] ?? [],
+                        $statusOpts
+                    );
+                    $productionLineStatus = ProductionLineStatusService::evaluate(
+                        $lineViewId,
+                        $downMerged['options'] ?? []
+                    );
                 }
                 $workCenterOptions = WorkCenterRepository::listAll(true);
                 $canEdit = RoleResolver::canEdit($user);

@@ -5,6 +5,7 @@
  * @var list<array<string, mixed>> $productionLineList
  * @var array{line: array<string, mixed>, stations: list<array<string, mixed>>}|null $productionLineDetail
  * @var list<array<string, mixed>> $productionLineBuffers
+ * @var array<string, mixed>|null $productionLineStatus
  * @var list<array<string, mixed>> $workCenterOptions
  * @var bool $canEdit
  * @var bool $dbConnected
@@ -14,6 +15,7 @@
 $lines = $productionLineList ?? [];
 $detail = $productionLineDetail ?? null;
 $buffers = $productionLineBuffers ?? [];
+$lineStatusEval = $productionLineStatus ?? null;
 $wcOptions = $workCenterOptions ?? [];
 $canEdit = !empty($canEdit);
 $dbConnected = !empty($dbConnected);
@@ -23,6 +25,10 @@ $stations = is_array($detail) ? ($detail['stations'] ?? []) : [];
 $bufByOrder = [];
 foreach ($buffers as $b) {
     $bufByOrder[(int) ($b['after_station_order'] ?? 0)] = $b;
+}
+$wcNameById = [];
+foreach ($wcOptions as $wc) {
+    $wcNameById[(int) ($wc['id'] ?? 0)] = (string) ($wc['name'] ?? '');
 }
 ?>
 <div class="dg-wrap">
@@ -158,6 +164,73 @@ foreach ($buffers as $b) {
         <p><?= View::escape((string) ($line['name'] ?? '')) ?></p>
       <?php endif; ?>
     </section>
+
+    <?php if (is_array($lineStatusEval) && ($stations !== [])) :
+        $lsCode = (string) ($lineStatusEval['line_status'] ?? '');
+        $statusStations = is_array($lineStatusEval['stations'] ?? null) ? $lineStatusEval['stations'] : [];
+        $rawHint = (string) (($lineStatusEval['raw_material']['hint'] ?? '') ?: '');
+        $auxHint = (string) (($lineStatusEval['auxiliary_material']['hint'] ?? '') ?: '');
+        $bn = is_array($lineStatusEval['bottleneck'] ?? null) ? $lineStatusEval['bottleneck'] : null;
+        $tp = is_array($lineStatusEval['line_throughput'] ?? null) ? $lineStatusEval['line_throughput'] : null;
+        ?>
+      <section class="dg-panel dg-mb-4">
+        <h2 class="dg-subsection-title">Aktueller Status</h2>
+        <p class="dg-field-hint">Aus Pufferständen und Störungen berechnet — keine Maschinensteuerung.</p>
+        <p>
+          <span class="dg-badge <?= View::escape(ProductionLineStatusService::lineStatusBadgeClass($lsCode)) ?>">
+            <?= View::escape(ProductionLineStatusService::lineStatusLabel($lsCode)) ?>
+          </span>
+        </p>
+        <?php if ($rawHint !== '' && empty($lineStatusEval['raw_material']['ok'])) : ?>
+          <p class="dg-muted"><?= View::escape($rawHint) ?></p>
+        <?php endif; ?>
+        <?php if ($auxHint !== '' && empty($lineStatusEval['auxiliary_material']['ok'])) : ?>
+          <p class="dg-muted"><?= View::escape($auxHint) ?></p>
+        <?php endif; ?>
+        <div class="dg-table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Maschine</th>
+                <th>Status</th>
+                <th>Hinweise</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($statusStations as $sst) :
+                  $stCode = (string) ($sst['status'] ?? '');
+                  $wcId = (int) ($sst['work_center_id'] ?? 0);
+                  $name = $wcNameById[$wcId] ?? ((string) ($sst['label'] ?? '') !== '' ? (string) $sst['label'] : ('Maschine #' . $wcId));
+                  $hints = ProductionLineStatusService::reasonLabels(
+                      is_array($sst['reasons'] ?? null) ? $sst['reasons'] : []
+                  );
+                  if (!empty($sst['block_risk']) && !in_array('Risiko: Nachfolger außer Betrieb', $hints, true)) {
+                      $hints[] = 'Risiko: Nachfolger außer Betrieb';
+                  }
+                  ?>
+                <tr>
+                  <td><?= (int) ($sst['station_order'] ?? 0) ?></td>
+                  <td><?= View::escape($name) ?></td>
+                  <td>
+                    <span class="dg-badge <?= View::escape(ProductionLineStatusService::stationStatusBadgeClass($stCode)) ?>">
+                      <?= View::escape(ProductionLineStatusService::stationStatusLabel($stCode)) ?>
+                    </span>
+                  </td>
+                  <td class="dg-muted"><?= View::escape($hints === [] ? '—' : implode('; ', $hints)) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <?php if (is_array($bn) && trim((string) ($bn['hint'] ?? '')) !== '') : ?>
+          <p class="dg-field-hint dg-mt-3"><?= View::escape((string) $bn['hint']) ?></p>
+        <?php endif; ?>
+        <?php if (is_array($tp) && trim((string) ($tp['hint'] ?? '')) !== '') : ?>
+          <p class="dg-field-hint"><?= View::escape((string) $tp['hint']) ?></p>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
 
     <section class="dg-panel dg-mb-4">
       <h2 class="dg-subsection-title">Stationen (Reihenfolge)</h2>

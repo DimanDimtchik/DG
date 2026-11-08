@@ -496,6 +496,79 @@ final class ProductionLineStatusService
     }
 
     /**
+     * Kurze Endnutzer-Texte (UI) — keine Plan-Codes.
+     */
+    public static function stationStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'running' => 'läuft',
+            'blocked' => 'steht (Puffer voll)',
+            'starved' => 'steht (kein Material vom Vorgänger)',
+            'down' => 'außer Betrieb',
+            default => 'unbekannt',
+        };
+    }
+
+    public static function lineStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'running' => 'Linie läuft',
+            'constrained' => 'Linie gestaut',
+            'degraded' => 'Linie eingeschränkt (Störung)',
+            'stopped' => 'Linie steht',
+            'stopped_material' => 'Linie steht (Material fehlt)',
+            default => 'Linie: Status unklar',
+        };
+    }
+
+    /**
+     * @param list<string> $reasons
+     * @return list<string>
+     */
+    public static function reasonLabels(array $reasons): array
+    {
+        $map = [
+            'buffer_full' => 'Ausgangspuffer voll',
+            'buffer_empty' => 'Eingangspuffer leer',
+            'raw_material_missing' => 'Rohware am Eingang fehlt',
+            'aux_material_missing' => 'Hilfsstoff fehlt',
+            'station_down' => 'Störung oder Wartung',
+            'downstream_down_block_risk' => 'Risiko: Nachfolger außer Betrieb',
+            'upstream_down' => 'Vorgänger außer Betrieb',
+        ];
+        $out = [];
+        foreach ($reasons as $r) {
+            $key = (string) $r;
+            if ($key === '') {
+                continue;
+            }
+            $out[] = $map[$key] ?? 'Hinweis';
+        }
+
+        return $out;
+    }
+
+    public static function stationStatusBadgeClass(string $status): string
+    {
+        return match ($status) {
+            'running' => 'dg-badge--ok',
+            'blocked', 'starved' => 'dg-badge--pending',
+            'down' => 'dg-badge--error',
+            default => 'dg-badge--muted',
+        };
+    }
+
+    public static function lineStatusBadgeClass(string $status): string
+    {
+        return match ($status) {
+            'running' => 'dg-badge--ok',
+            'constrained', 'degraded' => 'dg-badge--pending',
+            'stopped', 'stopped_material' => 'dg-badge--error',
+            default => 'dg-badge--muted',
+        };
+    }
+
+    /**
      * @param list<string> $stationStatuses
      */
     private static function lineStatus(array $stationStatuses, bool $rawMaterialOk): string

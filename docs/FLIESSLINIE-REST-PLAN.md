@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL7b laut docs/FLIESSLINIE-REST-PLAN.md. Statusanzeige je Station kurze Texte. Katalog. Kein MES.`
+`Nur Mini-ID FL7c laut docs/FLIESSLINIE-REST-PLAN.md. Smoke Dev 2-Maschinen-Linie Puffer voll. Kein MES.`
 
 ---
 
@@ -162,7 +162,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [x] FL5a–c ✅ | 🟡 |
 | FL6 | Störung / Wartung propagiert | [x] FL6a–c ✅ | 🟡 |
-| FL7 | UI Linie + Status | [~] FL7a ✅ | 🟡🔴 |
+| FL7 | UI Linie + Status | [~] FL7a–b ✅ | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
 | FL9 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
@@ -233,7 +233,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | FL7a | Liste Linien + Detail Stationen/Puffer (`.dg-table` / `.dg-form`) unter Rezeptur/Maschinen | 🟡 | [x] 2026-11-08 `rezeptur-fliesslinien` · Guard |
-| FL7b | Statusanzeige je Station (läuft / blocked / starved / down / material) — **kurze** Endnutzer-Texte, keine Plan-Codes | 🟡 | [ ] |
+| FL7b | Statusanzeige je Station (läuft / blocked / starved / down / material) — **kurze** Endnutzer-Texte, keine Plan-Codes | 🟡 | [x] 2026-11-08 Labels + Panel Detail |
 | FL7c | Smoke Dev: 2-Maschinen-Linie, Puffer voll → Vorgänger „steht (Puffer voll)“ | 🔴 | [ ] |
 
 ### FL8 — Verfeinerungen (Backlog im Plan, nicht vor FL7)
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL7b laut docs/FLIESSLINIE-REST-PLAN.md. Statusanzeige je Station (kurze Texte, kein Plan-Code). Katalog.`
+`Nur Mini-ID FL7c laut docs/FLIESSLINIE-REST-PLAN.md. Smoke Dev: 2-Maschinen-Linie, Puffer voll → Vorgänger „steht (Puffer voll)“.`
 
 ---
 
