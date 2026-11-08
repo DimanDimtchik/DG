@@ -102,7 +102,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
     </form>
 
     <?php if ($canEdit) : ?>
-      <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>" class="dg-form" style="margin-top:1rem">
+      <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>" class="dg-form dg-mt-4">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
         <input type="hidden" name="run_action" value="create">
         <input type="hidden" name="month" value="<?= View::escape($month) ?>">
@@ -170,7 +170,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
         <dd><?= View::escape((string) ($run['notes'] ?? '')) ?></dd>
       </dl>
 
-      <div class="dg-toolbar" style="flex-wrap:wrap;gap:.5rem;margin:1rem 0">
+      <div class="dg-toolbar dg-mt-4 dg-mb-4">
         <?php if ($canEdit && $isDraft && !$isSuperseded) : ?>
           <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" style="display:inline">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
@@ -443,7 +443,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             </div>
           <?php endif; ?>
 
-          <details class="dg-panel" style="margin:1rem 0">
+          <details class="dg-panel dg-mt-4 dg-mb-4">
             <summary><strong>Betriebsprüfer-Stichprobe</strong></summary>
             <ol>
               <?php foreach ($fibuChecklist as $item) : ?>
@@ -490,7 +490,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
       <?php endif; ?>
 
       <?php if ($runId > 0 && $isLocked && !$isSuperseded) : ?>
-        <p class="dg-field-hint" style="margin:1rem 0">
+        <p class="dg-field-hint dg-mt-4 dg-mb-4">
           <a href="/app?page=lohn-auswertungen&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>">
             SV-Portal-Vorbereitung
           </a>
@@ -569,7 +569,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <?php endif; ?>
           <?php endif; ?>
 
-          <details class="dg-panel" style="margin:1rem 0">
+          <details class="dg-panel dg-mt-4 dg-mb-4">
             <summary><strong>Betriebsprüfer-Stichprobe SEPA</strong></summary>
             <ol>
               <?php foreach ($sepaChecklist as $item) : ?>
@@ -604,7 +604,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           <?php endif; ?>
 
           <?php if ($sepaExports !== []) : ?>
-            <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:1.25rem">Bisherige Exporte</h4>
+            <h4 class="dg-subsection-title dg-mt-5">Bisherige Exporte</h4>
             <div class="dg-table-wrap">
               <table class="dg-table dg-table--compact">
                 <thead>
