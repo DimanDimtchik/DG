@@ -68,7 +68,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | A1a | Migration `NNN_purchase_list_amazon.sql`: `external_order_id`, `external_order_channel`, optional `external_order_payload` / `external_ordered_at` | 🟢 | [x] 2026-11-08 `142_purchase_list_amazon.sql` |
-| A1b | `PurchaseListRepository`: Felder lesen/schreiben (nur diese Methoden) | 🟡 | [ ] |
+| A1b | `PurchaseListRepository`: Felder lesen/schreiben (nur diese Methoden) | 🟡 | [x] 2026-11-08 normalize + setExternalOrder |
 | A1c | `PurchaseListService::markOrdered` erweitern **oder** `markAmazonOrdered(...)` — Order-ID + Channel setzen | 🟡 | [ ] |
 
 **Prompt A1a:**  
@@ -141,7 +141,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Thema | Status |
 |----|--------|--------|
 | A0 | Doc / Inventar | [x] |
-| A1 | Persistenz | [~] A1a ✅; A1b/A1c offen |
+| A1 | Persistenz | [~] A1a+A1b ✅; A1c offen |
 | A2 | Order-Service | [ ] |
 | A3 | Einkaufsliste UI | [ ] |
 | A4 | Artikelstamm | [ ] |

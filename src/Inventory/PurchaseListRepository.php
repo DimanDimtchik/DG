@@ -13,6 +13,9 @@ final class PurchaseListRepository
     public const STATUS_ORDERED = 'ordered';
     public const STATUS_DONE = 'done';
 
+    /** Kanal für Amazon Business Stufe 2 (`external_order_channel`). */
+    public const CHANNEL_AMAZON_BUSINESS = 'amazon_business';
+
     public static function tableReady(): bool
     {
         static $ready = null;
@@ -240,6 +243,58 @@ final class PurchaseListRepository
     }
 
     /**
+     * Speichert externe Bestellreferenz (Migration 142).
+     * Payload gekürzt, ohne Secrets — nur Prüfspur.
+     */
+    public static function setExternalOrder(
+        int $id,
+        string $orderId,
+        string $channel = self::CHANNEL_AMAZON_BUSINESS,
+        ?string $payload = null,
+        ?string $orderedAt = null
+    ): bool {
+        if ($id < 1 || !Database::isConfigured() || !self::tableReady()) {
+            return false;
+        }
+        $orderId = mb_substr(trim($orderId), 0, 120);
+        $channel = mb_substr(trim($channel), 0, 40);
+        if ($orderId === '' || $channel === '') {
+            return false;
+        }
+        $payloadClean = null;
+        if ($payload !== null) {
+            $payloadClean = mb_substr(trim($payload), 0, 8000);
+            if ($payloadClean === '') {
+                $payloadClean = null;
+            }
+        }
+        $at = $orderedAt !== null && trim($orderedAt) !== ''
+            ? trim($orderedAt)
+            : date('Y-m-d H:i:s');
+        try {
+            $stmt = Database::pdo()->prepare(
+                'UPDATE dg_purchase_list_items SET
+                    external_order_id = :oid,
+                    external_order_channel = :channel,
+                    external_order_payload = :payload,
+                    external_ordered_at = :ordered_at
+                 WHERE id = :id'
+            );
+            $stmt->execute([
+                'oid' => $orderId,
+                'channel' => $channel,
+                'payload' => $payloadClean,
+                'ordered_at' => $at,
+                'id' => $id,
+            ]);
+        } catch (Throwable) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public static function listByStatus(string $status): array
@@ -343,6 +398,11 @@ final class PurchaseListRepository
             'ignored_by' => isset($row['ignored_by']) && $row['ignored_by'] !== null
                 ? (int) $row['ignored_by'] : null,
             'note' => (string) ($row['note'] ?? ''),
+            'external_order_id' => (string) ($row['external_order_id'] ?? ''),
+            'external_order_channel' => (string) ($row['external_order_channel'] ?? ''),
+            'external_order_payload' => isset($row['external_order_payload']) && $row['external_order_payload'] !== null
+                ? (string) $row['external_order_payload'] : null,
+            'external_ordered_at' => $row['external_ordered_at'] ?? null,
             'created_at' => (string) ($row['created_at'] ?? ''),
             'updated_at' => (string) ($row['updated_at'] ?? ''),
         ];
