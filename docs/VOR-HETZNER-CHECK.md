@@ -23,7 +23,7 @@ Bezug: Shared-Core-Idee · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) ·
 
 | Asset | Beobachtung | Maßnahme |
 |-------|-------------|----------|
-| `assets/css/dg.css` | Groß; App-Minify `dg.app.min.css` | ✅ `bin/minify-dg-css.sh` + `Asset::crmStylesheetUrl()` (Deploy ruft Minify auf). `dg.min.css` = Offline-Stub |
+| `assets/css/dg.css` | Groß; App-Minify `dg.app.min.css` | ✅ `bin/minify-dg-css.sh` + `Asset::crmStylesheetUrl()` (Deploy: `deploy-via-rsync.sh` / `deploy-via-sftp.sh` / `deploy.bat`). `dg.min.css` = Offline-Stub · **PA3c** Selftest `bin/asset-css-minify-selftest.php` grün 2026-11-08 |
 | Viele Einzel-JS | Seite lädt nur bedarfsweise (gut) | Beibehalten; Bundle nur wo sinnvoll (z. B. Belege) |
 | Vendor bereits `.min` | cropper, JsBarcode, … | Unverändert |
 | Kein einheitlicher Build | Manuell | Optional: `bin/minify-assets.sh` (cssnano / terser) im Deploy |

@@ -58,7 +58,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
-| PA3 | Vor-Hetzner Infra (A3) | [ ] | 🔴🟢 |
+| PA3 | Vor-Hetzner Infra (A3) | [~] PA3c ✅ | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [~] PA5b ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
@@ -124,7 +124,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 |----|---------|-------|--------|
 | PA3a | Shared-Core-Ordnerplan dokumentieren/prüfen ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1) | 🟢 | [ ] |
 | PA3b | Backup/Restore-Test durchführen + Notiz ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4) | 🔴 | [ ] |
-| PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [ ] |
+| PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [x] 2026-11-08 Selftest grün; Deploy: rsync/sftp/`deploy.bat` → `minify-dg-css.sh` |
 | PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [ ] |
 | PA3e | Deploy-Pipeline Prep (rsync/SSH) dokumentieren — **ohne** Cutover | 🟢 | [ ] |
 | PA3f | A3-Haken in IQ-STROM-TODO | 🟢 | [ ] |
@@ -189,14 +189,14 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
 2. **PA5a** (GmbH-UI) · **PA5c** (§13b-XML)  
-3. **PA3a/c/e** Docs + Minify  
+3. **PA3a/e** Docs (Minify PA3c ✅)  
 4. **PA4f/g** Migrations-/Parallel-Docs  
 5. Rest **PA4** / **PA3b/d** / **PA2** Mensch · **PA1e** wenn A1 Druck-Stichproben grün  
 6. Phase B erst wenn A1–A3 weitgehend grün  
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA3c laut docs/PHASE-A-REST-PLAN.md. Asset-Minify prüfen (ggf. bin/asset-css-minify-selftest.php). Kein Cutover.`  
-*(Oder PA5a GmbH-UI / PA5c §13b-XML.)*
+`Nur Mini-ID PA5a laut docs/PHASE-A-REST-PLAN.md. GmbH/Bilanz-Hinweis Jahresabschluss-UI. Nur genannte View(s). Katalog. Kein Refactor.`  
+*(Oder PA3a Shared-Core-Doc / PA5c §13b-XML.)*
 
 ---
 

@@ -50,7 +50,8 @@
 
 - [ ] **Shared-Core-Ordnerplan** + Backup/Restore-Test  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1 / §4
-- [ ] **Asset-Minify** im Deploy (`dg.min.css` / optional `bin/minify-assets.sh`)
+- [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  
+  → Selftest `bin/asset-css-minify-selftest.php` ✅ 2026-11-08 (PA3c) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §2
 - [ ] Hetzner-AVV / TOMs organisatorisch abstimmen (Vertrag, bevor Cutover)
 - [ ] Deploy-Pipeline auf neuen Host vorbereiten (rsync/SSH, ohne Cutover)
 
