@@ -104,6 +104,8 @@ Voraussetzung: Online-Buchung in Kalender-Einstellungen aktiv.
 | GET | `/api/mobile/staff/shifts?week=` | Wochenplan (Montag ISO) |
 | GET | `/api/mobile/staff/documents` | Akte-Liste |
 | GET | `/api/mobile/staff/documents/download?type=&file=` | Stream |
+| GET | `/api/mobile/staff/signature` | Aktive User-Unterschrift (ES6a) |
+| POST | `/api/mobile/staff/signature` | Upload PNG/WebP oder `png_base64`/`data_url` → `source=app` |
 
 ---
 

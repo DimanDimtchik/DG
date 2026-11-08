@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES6b** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren · oder Unterschrift **ES7a** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES6b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. App-UI Skizze/Minimal Unterschrift. Kein Brief.`
+`Nur Mini-ID ES7a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Doc SignatureImportProvider Platzhalter. Kein Code-Adapter.`
 
 ---
 

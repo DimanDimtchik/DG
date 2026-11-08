@@ -13,6 +13,8 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'signature_page.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const DgMitarbeiterApp());
@@ -318,7 +320,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Stempel · Schichten · Abwesenheiten · Akte',
+              'Stempel · Schichten · Abwesenheiten · Akte · Unterschrift',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1941,6 +1943,35 @@ class _ProfileTabState extends State<ProfileTab> {
           Text('${c['label'] ?? 'Mitarbeiter'}', style: theme.textTheme.headlineSmall),
           if ('${c['login'] ?? ''}'.trim().isNotEmpty)
             Text('Kennung: ${c['login']}', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Unterschrift', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Zeichnen oder PNG/WebP speichern — für Briefe und E-Mails im CRM.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 10),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => SignaturePage(client: widget.client),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.draw),
+                    label: const Text('Unterschrift aufnehmen'),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           Card(
             child: Padding(
