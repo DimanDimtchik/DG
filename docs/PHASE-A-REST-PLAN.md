@@ -187,11 +187,13 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES8b** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
+Unterschrift Brief/Mail: **ES0–ES8 ✅** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md)).
+
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES8b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. TODOS.md / Parent-Haken · Plan ES1–ES7 Status.`
+IQ-Nutzer-Aktivierung laut Instanz-Doku · oder nach GEX45: `Nur Mini-ID PB1a laut docs/PHASE-B-REST-PLAN.md.`
 
 ---
 

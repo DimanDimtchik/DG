@@ -112,11 +112,11 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
 | ES2 | Kontakt-UI Tabelle + Upload | [x] ES2d ✅ | 🟡🔴 |
 | ES3 | Canvas Web | [x] ES3b ✅ | 🟡🔴 |
-| ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
+| ES4 | Brief / Dokument (nur Session-User) | [x] ES4a–c ✅ | 🟡🔴 |
 | ES5 | Mail (nur Session-User) | [x] ES5a–c ✅ | 🟡🔴 |
 | ES6 | Mitarbeiter-App Aufnahme | [x] ES6a–b ✅ | 🟡🔴 |
 | ES7 | Import-Service Adapter | [x] ES7a–c ✅ | 🟡 |
-| ES8 | Hinweise + Plan-Haken | [ ] | 🟢 |
+| ES8 | Hinweise + Plan-Haken | [x] ES8a–b ✅ | 🟢 |
 
 ---
 
@@ -195,7 +195,9 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | ES8a | UI-Texte final (DSGVO-Zweck, kein QES, kein Löschen) | 🟢 | [x] 2026-11-08 CRM-Partial + Writer + App · Selftest |
-| ES8b | `TODOS.md` / Parent-Haken · Plan ES1–ES7 Status | 🟢 | [ ] |
+| ES8b | `TODOS.md` / Parent-Haken · Plan ES1–ES7 Status | 🟢 | [x] 2026-11-08 Parent ES0–ES8 ✅ · TODOS/PHASE-A |
+
+**Plan-Status:** ES0–ES8 vollständig (2026-11-08). Kein offener Mini-Schritt in diesem Plan.
 
 ---
 
@@ -218,8 +220,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 5. **ES6** App · **ES7** Import (kann später)  
 6. **ES8**
 
-**Nächster Chat:**  
-`Nur Mini-ID ES8b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. TODOS.md / Parent-Haken · Plan ES1–ES7 Status.`
+**Nächster Chat:** Plan abgeschlossen — weiter z. B. IQ-Nutzer-Aktivierung oder Phase B nach GEX45 ([`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a).
 
 ---
 
