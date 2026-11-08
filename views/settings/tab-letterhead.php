@@ -75,24 +75,24 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     Fehlende Pflichtangaben blockieren das Speichern <strong>nicht</strong> (Soft-Check).
   </p>
 
-  <section class="dg-panel" style="margin-bottom:16px">
+  <section class="dg-panel dg-mb-4">
     <h2 class="dg-subsection-title">Prüfstatus (B3)</h2>
     <p class="dg-field-hint">
       Rechtsform: <strong><?= View::escape((string) ($compliance['legal_form_label'] ?? '—')) ?></strong>
       · <?= View::escape((string) ($compliance['summary'] ?? '')) ?>
     </p>
     <?php if (!empty($compliance['ok'])) : ?>
-      <div class="dg-flash dg-flash--success" style="margin:0">Pflichtangaben und kritische DIN-Zonen sind in Ordnung.</div>
+      <div class="dg-flash dg-flash--success dg-mt-0 dg-mb-0">Pflichtangaben und kritische DIN-Zonen sind in Ordnung.</div>
     <?php else : ?>
-      <div class="dg-flash dg-flash--warning" style="margin:0 0 12px">
+      <div class="dg-flash dg-flash--warning dg-mb-3">
         Soft-Check: Speichern weiterhin möglich — bitte Lücken schließen, bevor Briefe produktiv gehen.
       </div>
     <?php endif; ?>
 
-    <div class="dg-form-grid" style="margin-top:12px">
+    <div class="dg-form-grid dg-mt-3">
       <div class="dg-field dg-field--wide">
         <span>Gesetzliche Pflichtangaben</span>
-        <ul class="dg-field-hint" style="margin:6px 0 0;padding-left:1.2em">
+        <ul class="dg-field-hint dg-mt-2" style="padding-left:1.2em">
           <?php foreach ($mandatoryDefs as $def) : ?>
             <?php
               $isMissing = false;
@@ -134,7 +134,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
       </div>
       <div class="dg-field dg-field--wide">
         <span>DIN-Zonen (Standardlayout)</span>
-        <ul class="dg-field-hint" style="margin:6px 0 0;padding-left:1.2em">
+        <ul class="dg-field-hint dg-mt-2" style="padding-left:1.2em">
           <?php foreach (LetterheadSettings::dinZoneDefinitions() as $zone) : ?>
             <?php $zoneOff = false; foreach ($dinOff as $z) { if (($z['path'] ?? '') === $zone['path']) { $zoneOff = true; break; } } ?>
             <li>
@@ -145,7 +145,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           <?php endforeach; ?>
         </ul>
         <?php if ($dinCriticalOff !== []) : ?>
-          <p class="dg-field-hint" style="margin-top:6px">Kritisch aus: <?= View::escape(implode(', ', array_map(static fn(array $z): string => (string) $z['label'], $dinCriticalOff))) ?></p>
+          <p class="dg-field-hint dg-mt-2">Kritisch aus: <?= View::escape(implode(', ', array_map(static fn(array $z): string => (string) $z['label'], $dinCriticalOff))) ?></p>
         <?php endif; ?>
       </div>
       <?php if ($recommendedGaps !== []) : ?>
@@ -156,7 +156,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         </div>
       <?php endif; ?>
     </div>
-    <p class="dg-form-actions" style="margin-top:12px">
+    <p class="dg-form-actions dg-mt-3">
       <button type="submit" name="letterhead_reset_din" value="1" class="dg-button"<?= $disabled ?>
         onclick="return confirm('DIN-Standardlayout und empfohlene Fuß-Schalter zurücksetzen? Logo/Links/Overrides bleiben.');">
         DIN-Standardlayout wiederherstellen
@@ -168,15 +168,15 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     <summary class="dg-subsection-title dg-collapsible-form__summary">Briefkopf &amp; Logo</summary>
     <div class="dg-collapsible-form__body">
       <div class="dg-form-grid">
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="header[show]" value="1"<?= !empty($header['show']) ? ' checked' : '' ?><?= $disabled ?>>
           Briefkopf anzeigen
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="header[show_company_name]" value="1"<?= !empty($header['show_company_name']) ? ' checked' : '' ?><?= $disabled ?>>
           Firmenname im Kopf
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="header[show_logo]" value="1"<?= !empty($header['show_logo']) ? ' checked' : '' ?><?= $disabled ?>>
           Logo anzeigen
         </label>
@@ -216,7 +216,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         <div class="dg-field dg-field--wide">
           <span>Logo aus Mediathek</span>
           <input type="hidden" name="header[logo_media_id]" id="dg-letterhead-logo-media-id" value="<?= View::escape($logoMediaId) ?>">
-          <p class="dg-form-actions" style="margin:0 0 8px">
+          <p class="dg-form-actions dg-mb-2">
             <button type="button" class="dg-button" data-dg-media-pick-open
               data-input="dg-letterhead-logo-media-id"
               data-preview="dg-letterhead-logo-preview"
@@ -246,7 +246,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     <summary class="dg-subsection-title dg-collapsible-form__summary">DIN-Zonen (Fenster, Futter, Ränder)</summary>
     <div class="dg-collapsible-form__body">
       <div class="dg-form-grid">
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="sender_line[show]" value="1"<?= !empty($sender['show']) ? ' checked' : '' ?><?= $disabled ?>>
           Absenderzeile (Futter über Anschrift)
         </label>
@@ -255,19 +255,19 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           <input type="number" name="sender_line[font_size_pt]" min="6" max="12" step="0.5"
             value="<?= View::escape((string) ($sender['font_size_pt'] ?? '8')) ?>"<?= $disabled ?>>
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="address_window[show]" value="1"<?= !empty($window['show']) ? ' checked' : '' ?><?= $disabled ?>>
           Anschriftenfenster
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="page[show_din_guides]" value="1"<?= !empty($page['show_din_guides']) ? ' checked' : '' ?><?= $disabled ?>>
           DIN-Hilfslinien in Vorschau (B4)
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="page[show_fold_marks]" value="1"<?= !empty($page['show_fold_marks'] ?? true) ? ' checked' : '' ?><?= $disabled ?>>
           Falzmarken / Knicklinien (links, Druck)
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="page[show_punch_mark]" value="1"<?= !empty($page['show_punch_mark']) ? ' checked' : '' ?><?= $disabled ?>>
           Lochmarke (Mitte links)
         </label>
@@ -279,9 +279,9 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         $pnFormat = (string) ($pageNumbers['format'] ?? 'seite_n_von_N');
         $pnPos = (string) ($pageNumbers['position'] ?? 'center');
       ?>
-      <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Seitenzahlen</h4>
+      <h4 class="dg-subsection-title dg-mt-3">Seitenzahlen</h4>
       <div class="dg-form-grid">
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="page[page_numbers][show]" value="1"<?= $pnShow ? ' checked' : '' ?><?= $disabled ?>>
           Seitenzahl anzeigen
         </label>
@@ -329,7 +329,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
   <details class="dg-collapsible-form" open>
     <summary class="dg-subsection-title dg-collapsible-form__summary">Infoblock (Ihre / Unsere Seite)</summary>
     <div class="dg-collapsible-form__body">
-      <label class="dg-checkbox dg-field" style="margin-bottom:12px">
+      <label class="dg-field dg-field--checkbox dg-mb-3">
         <input type="checkbox" name="info_block[show]" value="1"<?= !empty($info['show']) ? ' checked' : '' ?><?= $disabled ?>>
         Infoblock rechts anzeigen
       </label>
@@ -366,12 +366,12 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           </tbody>
         </table>
       </div>
-      <div class="dg-form-grid" style="margin-top:12px">
-        <label class="dg-checkbox dg-field">
+      <div class="dg-form-grid dg-mt-3">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="subject[bold]" value="1"<?= !empty($subject['bold']) ? ' checked' : '' ?><?= $disabled ?>>
           Betreff fett
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="subject[show_label]" value="1"<?= !empty($subject['show_label']) ? ' checked' : '' ?><?= $disabled ?>>
           Wort „Betreff:“ anzeigen (DIN: eher ohne)
         </label>
@@ -383,15 +383,15 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     <summary class="dg-subsection-title dg-collapsible-form__summary">Fußzeile — Pflicht &amp; empfohlen</summary>
     <div class="dg-collapsible-form__body">
       <div class="dg-form-grid">
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="footer[show]" value="1"<?= !empty($footer['show']) ? ' checked' : '' ?><?= $disabled ?>>
           Fußzeile anzeigen
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="footer[show_rule]" value="1"<?= !empty($footer['show_rule']) ? ' checked' : '' ?><?= $disabled ?>>
           Trennlinie über Fuß
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="footer[show_legal_mandatory]" value="1"<?= !empty($footer['show_legal_mandatory']) ? ' checked' : '' ?><?= $disabled ?>>
           Gesetzliche Pflichtangaben
         </label>
@@ -405,16 +405,16 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           <input type="number" name="footer[columns]" min="1" max="4" value="<?= (int) ($footer['columns'] ?? 3) ?>"<?= $disabled ?>>
         </label>
       </div>
-      <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Empfohlene Angaben</h4>
+      <h4 class="dg-subsection-title dg-mt-3">Empfohlene Angaben</h4>
       <div class="dg-form-grid">
         <?php foreach (LetterheadSettings::recommendedFooterFields() as $rec) : ?>
-          <label class="dg-checkbox dg-field">
+          <label class="dg-field dg-field--checkbox">
             <input type="checkbox" name="footer[<?= View::escape($rec['key']) ?>]" value="1"<?= !empty($footer[$rec['key']]) ? ' checked' : '' ?><?= $disabled ?>>
             <?= View::escape($rec['label']) ?>
           </label>
         <?php endforeach; ?>
       </div>
-      <p class="dg-field-hint" style="margin-top:8px">
+      <p class="dg-field-hint dg-mt-2">
         Aktuell aus Firma:
         <?= View::escape($party['legal_name'] !== '' ? $party['legal_name'] : '—') ?>
         <?php if ($party['company_type_label'] !== '') : ?> · <?= View::escape($party['company_type_label']) ?><?php endif; ?>
@@ -459,7 +459,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         </label>
         <?php endforeach; ?>
       </div>
-      <h4 class="dg-subsection-title" style="font-size:1rem;margin-top:12px">Overrides (nur wenn Firmendaten fehlen)</h4>
+      <h4 class="dg-subsection-title dg-mt-3">Overrides (nur wenn Firmendaten fehlen)</h4>
       <div class="dg-form-grid">
         <label class="dg-field"><span>Sitz</span>
           <input type="text" name="legal_overrides[seat]" value="<?= View::escape((string) ($legal['seat'] ?? '')) ?>"<?= $disabled ?>></label>
@@ -495,7 +495,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         <div class="dg-field dg-field--wide">
           <span>Hintergrundbild aus Mediathek</span>
           <input type="hidden" name="background[media_id]" id="dg-letterhead-bg-media-id" value="<?= View::escape($bgMediaId) ?>">
-          <p class="dg-form-actions" style="margin:0 0 8px">
+          <p class="dg-form-actions dg-mb-2">
             <button type="button" class="dg-button" data-dg-media-pick-open
               data-input="dg-letterhead-bg-media-id"
               data-preview="dg-letterhead-bg-preview"
@@ -526,7 +526,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
             <?php endforeach; ?>
           </select>
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="background[all_pages]" value="1"<?= !empty($bg['all_pages']) ? ' checked' : '' ?><?= $disabled ?>>
           Auf allen Seiten
         </label>
@@ -539,14 +539,14 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
     <div class="dg-collapsible-form__body">
       <p class="dg-field-hint">Zusätzlich zum Hintergrund — z.&nbsp;B. Logo oder Schriftzug als halbtransparentes Overlay.</p>
       <div class="dg-form-grid">
-        <label class="dg-checkbox dg-field dg-field--wide">
+        <label class="dg-field dg-field--checkbox dg-field--wide">
           <input type="checkbox" name="watermark[enabled]" value="1"<?= !empty($wm['enabled']) ? ' checked' : '' ?><?= $disabled ?>>
           Wasserzeichen anzeigen
         </label>
         <div class="dg-field dg-field--wide">
           <span>Bild aus Mediathek</span>
           <input type="hidden" name="watermark[media_id]" id="dg-letterhead-wm-media-id" value="<?= View::escape($wmMediaId) ?>">
-          <p class="dg-form-actions" style="margin:0 0 8px">
+          <p class="dg-form-actions dg-mb-2">
             <button type="button" class="dg-button" data-dg-media-pick-open
               data-input="dg-letterhead-wm-media-id"
               data-preview="dg-letterhead-wm-preview"
@@ -576,7 +576,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
             <?php endforeach; ?>
           </select>
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="watermark[all_pages]" value="1"<?= !empty($wm['all_pages']) ? ' checked' : '' ?><?= $disabled ?>>
           Auf allen Seiten
         </label>
@@ -604,7 +604,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
       <?php
         $previewPhrases = LetterheadSettings::resolvedPhrases($cfg);
       ?>
-      <p class="dg-field-hint" style="margin-top:8px">
+      <p class="dg-field-hint dg-mt-2">
         Vorschau:<br>
         <?= nl2br(View::escape($previewPhrases['greeting'] . "…\n" . $previewPhrases['closing']), false) ?>
       </p>
@@ -617,7 +617,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
       <p class="dg-field-hint">Welche Download-Buttons später auf der Schreibseite sichtbar sind. Mindestens PDF bleibt aktiv.</p>
       <div class="dg-form-grid">
         <?php foreach (['pdf' => 'PDF', 'txt' => 'Textdatei (.txt)', 'md' => 'Markdown (.md)', 'docx' => 'Word (.docx)'] as $key => $lbl) : ?>
-          <label class="dg-checkbox dg-field">
+          <label class="dg-field dg-field--checkbox">
             <input type="checkbox" name="export_formats[<?= View::escape($key) ?>]" value="1"<?= !empty($export[$key]) ? ' checked' : '' ?><?= $disabled ?>>
             <?= View::escape($lbl) ?>
           </label>
@@ -635,7 +635,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
 <?php
   $assist = WriterAssistSettings::config();
 ?>
-<form method="post" action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>" class="dg-form" style="margin-top:20px">
+<form method="post" action="<?= View::escape(SettingsRegistry::tabUrl('briefpapier')) ?>" class="dg-form dg-mt-5">
   <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
   <details class="dg-collapsible-form" open>
     <summary class="dg-subsection-title dg-collapsible-form__summary">Text-Assist (D4)</summary>
@@ -645,11 +645,11 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
         LanguageTool nur optional (Self-Host empfohlen) — öffentliche Cloud nur mit bewusster Freigabe.
       </p>
       <div class="dg-form-grid">
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="klartext_enabled" value="1"<?= !empty($assist['klartext_enabled']) ? ' checked' : '' ?><?= $disabled ?>>
           Klartext-Empfehlungen anbieten
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="languagetool_enabled" value="1"<?= !empty($assist['languagetool_enabled']) ? ' checked' : '' ?><?= $disabled ?>>
           LanguageTool aktiv
         </label>
@@ -661,7 +661,7 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
           <span>Sprache</span>
           <input name="languagetool_language" maxlength="10" value="<?= View::escape((string) ($assist['languagetool_language'] ?? 'de-DE')) ?>"<?= $disabled ?>>
         </label>
-        <label class="dg-checkbox dg-field">
+        <label class="dg-field dg-field--checkbox">
           <input type="checkbox" name="languagetool_allow_public_cloud" value="1"<?= !empty($assist['languagetool_allow_public_cloud']) ? ' checked' : '' ?><?= $disabled ?>>
           Öffentliche LanguageTool-Cloud erlauben (api.languagetool.org) — Datenabfluss, nicht Standard
         </label>
@@ -679,12 +679,12 @@ $mandatoryDefs = LetterheadSettings::mandatoryFieldsForType((string) ($party['co
   $previewUrlGuidesOn = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=1';
   $previewUrlGuidesOff = SettingsRegistry::tabUrl('briefpapier') . '&letterhead_preview=1&guides=0';
 ?>
-<section class="dg-panel dg-letterhead-preview" style="margin-top:20px">
+<section class="dg-panel dg-letterhead-preview dg-mt-5">
   <h2 class="dg-subsection-title">A4-Vorschau (B4)</h2>
   <p class="dg-field-hint">
     Maße in Millimetern (DIN&nbsp;A4). Nach dem Speichern neu laden. Hilfslinien folgen der Checkbox „DIN-Hilfslinien“ oben — oder hier umschalten.
   </p>
-  <p class="dg-form-actions" style="margin-bottom:12px">
+  <p class="dg-form-actions dg-mb-3">
     <a class="dg-button" href="<?= View::escape($previewUrl) ?>" target="_blank" rel="noopener">Vorschau in neuem Tab</a>
     <a class="dg-button" href="<?= View::escape($previewUrlGuidesOn) ?>" target="dg-letterhead-preview-frame">Hilfslinien an</a>
     <a class="dg-button" href="<?= View::escape($previewUrlGuidesOff) ?>" target="dg-letterhead-preview-frame">Hilfslinien aus</a>
