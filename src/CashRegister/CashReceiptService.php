@@ -297,8 +297,8 @@ final class CashReceiptService
     }
 
     /**
-     * Bon mit TSE abschließen und festschreiben (K7f / Vorbereitung K7d).
-     * Default-Provider: Mock bzw. Assignment über TseProviderFactory.
+     * Bon mit TSE abschließen und festschreiben (K7d/K7f).
+     * Default-Provider: Mock bzw. Assignment über TseProviderFactory (inkl. Fiskaly K3b).
      *
      * @return array<string, mixed> Provider-Finish-Ergebnis
      */
@@ -311,6 +311,9 @@ final class CashReceiptService
             throw new RuntimeException('Bon ist bereits mit TSE festgeschrieben.');
         }
 
+        // K9d: kein zweiter Signaturweg für denselben Beleg/Auftrag
+        CashDualSignatureGuard::assertCashReceiptMaySign($receipt);
+
         $registerId = (int) ($receipt['register_id'] ?? 0);
         $register = $registerId > 0 ? CashRegisterRepository::findById($registerId) : null;
         $clientSerial = is_array($register)
@@ -320,8 +323,8 @@ final class CashReceiptService
             $clientSerial = MockTseProvider::CLIENT_SERIAL;
         }
 
+        $assignment = null;
         if ($provider === null) {
-            $assignment = null;
             $assignmentId = (int) ($receipt['tse_assignment_id'] ?? 0);
             if ($assignmentId > 0 && class_exists('CashTseAssignmentRepository')) {
                 $assignment = CashTseAssignmentRepository::findById($assignmentId);
@@ -333,30 +336,36 @@ final class CashReceiptService
             );
         }
 
-        $gross = round((float) ($receipt['total_gross'] ?? 0), 2);
-        $input = [
-            'receipt_type' => (string) ($receipt['receipt_type'] ?? 'sale'),
-            'amount_gross' => $gross,
-            'client_serial_number' => $clientSerial,
-        ];
+        $input = self::buildTseInput($receiptId, $receipt, $clientSerial);
 
         $txId = class_exists('TseSignService')
             ? TseSignService::uuidV4()
             : self::uuidV4Fallback();
-        $start = $provider->startTransaction($txId, $input);
-        $rev = (int) ($start['revision'] ?? 1);
-        $upd = $provider->updateTransaction($txId, $rev, $input);
-        $rev = (int) ($upd['revision'] ?? $rev);
-        $fin = $provider->finishTransaction($txId, $rev, $input);
+
+        try {
+            $start = $provider->startTransaction($txId, $input);
+            $rev = (int) ($start['revision'] ?? 1);
+            $upd = $provider->updateTransaction($txId, $rev, $input);
+            $rev = (int) ($upd['revision'] ?? $rev);
+            $fin = $provider->finishTransaction($txId, $rev, $input);
+        } catch (Throwable $e) {
+            self::handleTseFailure($receiptId, $registerId, $provider, $e);
+            throw $e;
+        }
+
         if (($fin['state'] ?? '') !== 'FINISHED') {
-            throw new RuntimeException('TSE-Abschluss fehlgeschlagen (kein FINISHED).');
+            $err = new RuntimeException('TSE-Abschluss fehlgeschlagen (kein FINISHED).');
+            self::handleTseFailure($receiptId, $registerId, $provider, $err);
+            throw $err;
         }
         $qr = trim((string) ($fin['qr_code_data'] ?? ''));
         if ($qr === '') {
-            throw new RuntimeException('TSE-Abschluss ohne QR-Daten.');
+            $err = new RuntimeException('TSE-Abschluss ohne QR-Daten.');
+            self::handleTseFailure($receiptId, $registerId, $provider, $err);
+            throw $err;
         }
 
-        CashReceiptRepository::updateReceipt($receiptId, [
+        $update = [
             'status' => self::STATUS_FINALIZED,
             'finished_at' => date('Y-m-d H:i:s'),
             'tse_tx_id' => (string) ($fin['tse_tx_id'] ?? $txId),
@@ -369,21 +378,134 @@ final class CashReceiptService
             'time_start' => isset($fin['time_start']) ? (int) $fin['time_start'] : null,
             'time_end' => isset($fin['time_end']) ? (int) $fin['time_end'] : null,
             'tse_outage' => 0,
-        ]);
+        ];
+        if (CashReceiptRepository::hasDeferredPendingColumn()) {
+            $update['tse_deferred_pending'] = 0;
+        }
+        CashReceiptRepository::updateReceipt($receiptId, $update);
         CashRegisterFiBuPostingService::postForFinalizedReceipt($receiptId);
 
         return $fin;
+    }
+
+    /**
+     * TSE-Input aus Bon-Positionen und Zahlungen (K7d).
+     *
+     * @param array<string, mixed> $receipt
+     * @return array<string, mixed>
+     */
+    public static function buildTseInput(int $receiptId, array $receipt, string $clientSerial): array
+    {
+        $gross = round((float) ($receipt['total_gross'] ?? 0), 2);
+        $lines = CashReceiptRepository::listLines($receiptId);
+        $vatBuckets = [];
+        foreach ($lines as $line) {
+            $amount = abs(round((float) ($line['gross_amount'] ?? 0), 2));
+            if ($amount <= 0) {
+                continue;
+            }
+            $rate = (int) ($line['tax_rate'] ?? 19);
+            $code = class_exists('TseSignService')
+                ? TseSignService::vatRateCode($rate)
+                : 'NORMAL';
+            if (!isset($vatBuckets[$code])) {
+                $vatBuckets[$code] = 0.0;
+            }
+            $vatBuckets[$code] = round($vatBuckets[$code] + $amount, 2);
+        }
+        $vatAmounts = [];
+        foreach ($vatBuckets as $code => $amount) {
+            $vatAmounts[] = ['vat_rate_code' => $code, 'vat_rate' => $code, 'amount' => $amount];
+        }
+        if ($vatAmounts === []) {
+            $vatAmounts[] = [
+                'vat_rate_code' => 'NORMAL',
+                'vat_rate' => 'NORMAL',
+                'amount' => abs($gross),
+            ];
+        }
+
+        $paymentTypes = [];
+        if (CashPaymentRepository::tableExists()) {
+            foreach (CashPaymentRepository::listByReceipt($receiptId) as $pay) {
+                $paymentTypes[] = [
+                    'payment_method' => (string) ($pay['payment_method'] ?? 'cash'),
+                    'amount' => abs(round((float) ($pay['amount'] ?? 0), 2)),
+                    'currency' => (string) ($pay['currency'] ?? 'EUR'),
+                ];
+            }
+        }
+
+        return [
+            'receipt_type' => (string) ($receipt['receipt_type'] ?? self::TYPE_SALE),
+            'amount_gross' => $gross,
+            'client_serial_number' => $clientSerial,
+            'vat_amounts' => $vatAmounts,
+            'payment_types' => $paymentTypes,
+        ];
+    }
+
+    /**
+     * Bei TSE-Ausfall: Flag + ggf. Nachsignatur-Queue (K14a/d).
+     */
+    private static function handleTseFailure(
+        int $receiptId,
+        int $registerId,
+        TseProviderInterface $provider,
+        Throwable $e
+    ): void {
+        if ($registerId <= 0 || !class_exists('CashTseOutageService')) {
+            return;
+        }
+        try {
+            if (CashTseAssignmentRepository::findByRegisterId($registerId) !== null) {
+                CashTseOutageService::recordOutage([
+                    'register_id' => $registerId,
+                    'receipt_id' => $receiptId,
+                    'message' => 'TSE-Fehler beim Festschreiben: ' . $e->getMessage(),
+                    'details' => [
+                        'phase' => 'finalize',
+                        'provider' => $provider->getName(),
+                    ],
+                ]);
+            }
+        } catch (Throwable) {
+            // Ausfall-Protokoll darf Finish-Fehler nicht überdecken
+        }
+        if ($provider->supportsDeferredSignature() && class_exists('CashTseDeferredSignatureService')) {
+            try {
+                CashTseDeferredSignatureService::enqueue($receiptId, $e->getMessage());
+            } catch (Throwable) {
+                // Queue optional
+            }
+        }
     }
 
     /** @return array<string, mixed> */
     private static function assertReadyToFinalize(int $receiptId): array
     {
         $receipt = self::requirePayable($receiptId);
+        // Nachsignatur-Queue: Bon darf trotz deferred_pending erneut finalisiert werden
+        if (
+            ($receipt['status'] ?? '') === self::STATUS_PAYING
+            && CashReceiptRepository::hasDeferredPendingColumn()
+            && !empty($receipt['tse_deferred_pending'])
+        ) {
+            // ok — weiter
+        } elseif (($receipt['status'] ?? '') === self::STATUS_FINALIZED) {
+            throw new RuntimeException('Bon ist bereits festgeschrieben.');
+        }
+
         if (CashReceiptRepository::listLines($receiptId) === []) {
             throw new RuntimeException('Bon ohne Positionen kann nicht festgeschrieben werden.');
         }
         $gross = round((float) ($receipt['total_gross'] ?? 0), 2);
-        if ($gross <= 0) {
+        $type = (string) ($receipt['receipt_type'] ?? self::TYPE_SALE);
+        if ($type === self::TYPE_STORNO) {
+            if ($gross >= -0.009) {
+                throw new RuntimeException('Storno-Brutto muss negativ sein.');
+            }
+        } elseif ($gross <= 0) {
             throw new RuntimeException('Bon-Brutto ist 0.');
         }
         $open = self::paymentOpenAmount($receiptId);
@@ -410,13 +532,19 @@ final class CashReceiptService
     }
 
     /**
-     * Storno-Bon zum festgeschriebenen Verkauf (K13a, ohne TSE).
-     * Original bleibt unverändert; neuer Bon mit receipt_type=storno + Referenz.
+     * Storno-Bon zum festgeschriebenen Verkauf (K13a/b).
+     * Original unverändert; neuer Bon receipt_type=storno + Referenz.
+     * Mit Provider/Assignment → TSE CANCELLATION (K13b); sonst ohne TSE (Selftests).
      *
      * @return int storno receipt id
      */
-    public static function stornoFromFinalized(int $originalReceiptId, int $operatorId, string $notes = ''): int
-    {
+    public static function stornoFromFinalized(
+        int $originalReceiptId,
+        int $operatorId,
+        string $notes = '',
+        ?TseProviderInterface $provider = null,
+        bool $signWithTse = false
+    ): int {
         $original = self::requireReceipt($originalReceiptId);
         if (($original['status'] ?? '') !== self::STATUS_FINALIZED) {
             throw new RuntimeException('Nur festgeschriebene Bons können storniert werden.');
@@ -465,6 +593,8 @@ final class CashReceiptService
             $note = 'Storno zu Bon ' . $origDisplay;
         }
 
+        $useTse = $signWithTse || $provider !== null || $tseAssignmentId !== null;
+
         $stornoId = CashReceiptRepository::insertReceipt([
             'location_id' => $locationId,
             'register_id' => $registerId,
@@ -475,7 +605,7 @@ final class CashReceiptService
                 : null,
             'receipt_number' => $number['number'],
             'receipt_number_display' => $number['display'],
-            'status' => self::STATUS_FINALIZED,
+            'status' => self::STATUS_PAYING,
             'receipt_type' => self::TYPE_STORNO,
             'storno_of_receipt_id' => $originalReceiptId,
             'operator_id' => $operatorId > 0 ? $operatorId : null,
@@ -484,7 +614,7 @@ final class CashReceiptService
             'vat_summary_json' => self::negateVatSummaryJson($original['vat_summary_json'] ?? null),
             'payment_summary_json' => self::negatePaymentSummaryJson($original['payment_summary_json'] ?? null),
             'started_at' => $now,
-            'finished_at' => $now,
+            'finished_at' => null,
             'notes' => $note,
         ]);
 
@@ -530,6 +660,13 @@ final class CashReceiptService
                     GiftVoucherRepository::adjustRemaining($giftId, $payAmount);
                 }
             }
+        }
+
+        if ($useTse) {
+            // K13b: TSE finish mit receipt_type=storno → CANCELLATION
+            self::finalizeWithTse($stornoId, $provider ?? new MockTseProvider());
+        } else {
+            self::finalizeWithoutTse($stornoId);
         }
 
         return $stornoId;

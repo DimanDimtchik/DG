@@ -87,8 +87,11 @@ final class CashPrueferpaketExport
             }
         }
 
-        $dsfinvkMap = CashDsfinvkStubExport::buildFileMap();
-        // Root-README kommt vom Prüferpaket; Stub-README nicht doppelt im dsfinvk/-Ordner
+        // K17c: befüllte DSFinV-K-Dateien im Prüferpaket (Fallback Stub wenn Klasse fehlt)
+        $dsfinvkMap = class_exists('CashDsfinvkExport')
+            ? CashDsfinvkExport::buildFileMap($from, $to, $regId > 0 ? $regId : null)
+            : CashDsfinvkStubExport::buildFileMap();
+        // Root-README kommt vom Prüferpaket; DSFinV-README nicht doppelt
         unset($dsfinvkMap['README.txt']);
 
         $journalCsv = CashReceiptJournalCsvExport::buildCsv($journalRows);
@@ -137,7 +140,7 @@ final class CashPrueferpaketExport
             'company_label' => $companyLabel,
             'dsfinvk' => [
                 'spec_version' => CashDsfinvkStubExport::SPEC_VERSION,
-                'status' => 'stub',
+                'status' => class_exists('CashDsfinvkExport') ? 'filled' : 'stub',
                 'files' => $dsfinvkFilesMeta,
             ],
             'tse' => [
@@ -228,7 +231,7 @@ final class CashPrueferpaketExport
                     'meta_json' => json_encode([
                         'spec' => self::SPEC_ID,
                         'tse_status' => 'stub',
-                        'dsfinvk_status' => 'stub',
+                        'dsfinvk_status' => class_exists('CashDsfinvkExport') ? 'filled' : 'stub',
                         'files' => $pack['files'],
                     ], JSON_UNESCAPED_UNICODE),
                 ]);
@@ -242,6 +245,7 @@ final class CashPrueferpaketExport
                             'export_id' => $exportId,
                             'sha256' => $pack['sha256'],
                             'tse_status' => 'stub',
+                            'dsfinvk_status' => class_exists('CashDsfinvkExport') ? 'filled' : 'stub',
                         ], JSON_UNESCAPED_UNICODE),
                     ]);
                 }

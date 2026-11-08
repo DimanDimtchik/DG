@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Wählt den TSE-Provider (K3c).
- * mock → MockTseProvider; fiskaly → K3b (noch nicht).
+ * Wählt den TSE-Provider (K3c/K3b).
+ * mock → MockTseProvider; fiskaly → FiskalyTseProvider.
  * Nachsignatur nur bei provider.supportsDeferredSignature() (K14c); Fiskaly bis Freigabe false.
  */
 final class TseProviderFactory
@@ -30,23 +30,23 @@ final class TseProviderFactory
     }
 
     /**
-     * @param array<string, mixed>|null $context Assignment- oder Config-Kontext (für spätere Adapter)
+     * @param array<string, mixed>|null $context Assignment- oder Config-Kontext
      */
     public static function forProvider(string $name, ?array $context = null): TseProviderInterface
     {
         $name = strtolower(trim($name));
         return match ($name) {
             self::PROVIDER_MOCK, '' => new MockTseProvider(),
-            self::PROVIDER_FISKALY => throw new RuntimeException(
-                'TSE-Provider fiskaly folgt in Schritt K3b (FiskalyTseProvider). Bis dahin provider=mock nutzen.'
+            self::PROVIDER_FISKALY => new FiskalyTseProvider(
+                is_array($context) ? FiskalyTseProvider::configFromAssignment($context) : null
             ),
             default => throw new RuntimeException('Unbekannter TSE-Provider: ' . $name),
         };
     }
 
     /**
-     * Default ohne Assignment: Mock, solange kein Fiskaly-Adapter (K3b) existiert.
-     * Später: aus TseSettings / Feature-Flag ableiten.
+     * Default ohne Assignment: Mock (Dev/Selftest ohne Netz).
+     * Produktiv: Assignment provider=fiskaly setzen.
      */
     public static function defaultProviderName(): string
     {

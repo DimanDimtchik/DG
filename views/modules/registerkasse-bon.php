@@ -20,8 +20,13 @@ $receiptId = (int) ($receipt['id'] ?? 0);
 $status = (string) ($receipt['status'] ?? '');
 $isDraft = $status === 'draft';
 $isPaying = $status === 'paying';
+$isFinalized = $status === 'finalized';
+$receiptType = (string) ($receipt['receipt_type'] ?? 'sale');
+$isSale = $receiptType === 'sale';
 $canChange = $canEdit && $dbConnected && $isDraft;
 $canPay = $canEdit && $dbConnected && ($isDraft || $isPaying);
+$canStorno = $canEdit && $dbConnected && $isFinalized && $isSale
+    && empty($cashReceiptHasStorno);
 $csrf = Csrf::token();
 $statusLabels = [
     'draft' => 'Entwurf',
@@ -92,6 +97,34 @@ $defaultPayAmount = $openAmount > 0 ? number_format($openAmount, 2, ',', '') : '
       <?php endif; ?>
     </div>
   </header>
+
+  <?php if ($canStorno) : ?>
+    <div class="dg-panel">
+      <h2 class="dg-subsection-title">Storno</h2>
+      <p class="dg-field-hint">
+        Der Originalbon bleibt unverändert. Es wird ein neuer Storno-Bon mit Bezug angelegt und über die TSE abgeschlossen.
+      </p>
+      <form class="dg-form" method="post" action="<?= $bonUrl ?>">
+        <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
+        <input type="hidden" name="cash_receipt_storno" value="1">
+        <label class="dg-field">
+          <span>Bemerkung (optional)</span>
+          <input type="text" name="storno_notes" maxlength="500" placeholder="Grund / Hinweis">
+        </label>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--danger"
+                  onclick="return confirm('Bon wirklich stornieren?');">Storno erzeugen</button>
+        </div>
+      </form>
+    </div>
+  <?php elseif ($isFinalized && $isSale && !empty($cashReceiptHasStorno)) : ?>
+    <div class="dg-flash dg-flash--warning" role="status">
+      Zu diesem Bon existiert bereits ein Storno
+      <?php if (!empty($cashReceiptStornoId)) : ?>
+        — <a class="dg-button dg-button--small" href="/app?page=registerkasse-bon&amp;id=<?= (int) $cashReceiptStornoId ?>">Storno anzeigen</a>
+      <?php endif; ?>.
+    </div>
+  <?php endif; ?>
 
   <div class="dg-cash-bon__totals dg-panel" aria-live="polite">
     <div class="dg-btn-row">

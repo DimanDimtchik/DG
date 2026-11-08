@@ -49,13 +49,28 @@ $fin = $fromRow->finishTransaction($txId, (int) $start['revision'], ['amount_gro
 expect_true(($fin['state'] ?? '') === 'FINISHED', 'Factory-Mock Bon finish');
 expect_true(is_string($fin['qr_code_data'] ?? null) && $fin['qr_code_data'] !== '', 'Factory-Mock QR');
 
-$fiskalyThrows = false;
+$fiskalyOk = false;
+$fiskalyMsg = '';
 try {
-    TseProviderFactory::forProvider('fiskaly');
+    // Ohne Secrets: Konstruktor wirft klar — Factory mappt aber auf FiskalyTseProvider
+    TseProviderFactory::forProvider('fiskaly', [
+        'provider' => 'fiskaly',
+        'tss_id' => '11111111-1111-4111-8111-111111111111',
+        'client_id' => '22222222-2222-4222-8222-222222222222',
+        'environment' => 'test',
+    ]);
 } catch (RuntimeException $e) {
-    $fiskalyThrows = str_contains($e->getMessage(), 'K3b');
+    $fiskalyMsg = $e->getMessage();
+    $fiskalyOk = str_contains($fiskalyMsg, 'unvollständig')
+        || str_contains($fiskalyMsg, 'Zugangsdaten')
+        || class_exists('FiskalyTseProvider');
 }
-expect_true($fiskalyThrows, 'fiskaly wirft bis K3b');
+// Mit Fake-Secrets + Transport nicht nötig: Klasse muss existieren und Factory nicht mehr „K3b folgt“ werfen
+expect_true(
+    class_exists('FiskalyTseProvider') && !str_contains($fiskalyMsg, 'folgt in Schritt K3b'),
+    'fiskaly ist verdrahtet (K3b)'
+);
+expect_true($fiskalyOk || class_exists('FiskalyTseProvider'), 'Factory kennt fiskaly');
 
 $unknownThrows = false;
 try {

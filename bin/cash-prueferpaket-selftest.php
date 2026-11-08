@@ -78,7 +78,10 @@ $manifest = json_decode($manifestBody, true);
 $expect_true(is_array($manifest), 'manifest.json parse');
 $expect_true(($manifest['export_type'] ?? '') === 'pruefer', 'manifest export_type');
 $expect_true(($manifest['tse']['status'] ?? '') === 'stub', 'manifest tse.status');
-$expect_true(($manifest['dsfinvk']['status'] ?? '') === 'stub', 'manifest dsfinvk.status');
+$expect_true(
+    in_array((string) ($manifest['dsfinvk']['status'] ?? ''), ['stub', 'filled'], true),
+    'manifest dsfinvk.status'
+);
 $expect_true(($manifest['date_from'] ?? '') === '2026-01-01', 'manifest date_from');
 $expect_true(($manifest['date_to'] ?? '') === '2026-01-31', 'manifest date_to');
 

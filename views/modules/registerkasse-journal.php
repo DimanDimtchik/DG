@@ -121,7 +121,7 @@ $methodLabels = CashPaymentRepository::methodLabels();
     <input type="hidden" name="page" value="registerkasse-journal">
     <input type="hidden" name="export" value="dsfinvk">
     <input type="hidden" name="business_date" value="<?= View::escape($filterDate) ?>">
-    <h2 class="dg-subsection-title">DSFinV-K Struktur (Stub)</h2>
+    <h2 class="dg-subsection-title">DSFinV-K Export</h2>
     <div class="dg-form-grid">
       <label class="dg-field">
         <span>Von</span>
@@ -136,8 +136,8 @@ $methodLabels = CashPaymentRepository::methodLabels();
       </div>
     </div>
     <p class="dg-field-hint">
-      Leeres Pflichtpaket (20 CSV nur mit Kopfzeilen, index.xml, DTD) für die Prüfschnittstelle —
-      noch ohne Bon-Daten. Befüllung folgt später.
+      Pflichtpaket (20 CSV, index.xml, DTD) aus den Kassenbons des Zeitraums.
+      Ohne TSE-Signatur am Bon werden keine Signaturfelder erfunden.
     </p>
   </form>
 
@@ -172,7 +172,7 @@ $methodLabels = CashPaymentRepository::methodLabels();
       </div>
     </div>
     <p class="dg-field-hint">
-      ZIP für die Kassen-Nachschau: DSFinV-K-Struktur, TSE-Status (noch ohne Provider-TAR),
+      ZIP für die Kassen-Nachschau: DSFinV-K-Daten, TSE-Status (TAR folgt später),
       Bon-Journal und Manifest. Getrennt vom FiBu-GoBD-Export unter Steuerberater-Export.
     </p>
   </form>

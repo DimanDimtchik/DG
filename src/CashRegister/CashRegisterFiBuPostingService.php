@@ -59,8 +59,12 @@ final class CashRegisterFiBuPostingService
         if (($receipt['status'] ?? '') !== CashReceiptService::STATUS_FINALIZED) {
             throw new RuntimeException('Nur festgeschriebene Bons werden gebucht.');
         }
-        if (($receipt['receipt_type'] ?? CashReceiptService::TYPE_SALE) !== CashReceiptService::TYPE_SALE) {
-            // Storno-Gegenbuchung: K15e
+
+        $receiptType = (string) ($receipt['receipt_type'] ?? CashReceiptService::TYPE_SALE);
+        if ($receiptType === CashReceiptService::TYPE_STORNO) {
+            return self::postStornoForFinalizedReceipt($receiptId, $receipt, $userId);
+        }
+        if ($receiptType !== CashReceiptService::TYPE_SALE) {
             return null;
         }
 
@@ -94,6 +98,87 @@ final class CashRegisterFiBuPostingService
         CashJournalRepository::syncForCashReceipt($receiptId);
 
         return $batchId;
+    }
+
+    /**
+     * K15e — Storno-Gegenbuchung (Seiten tauschen) + Kassenbuch-Ausgang.
+     *
+     * @param array<string, mixed> $receipt
+     */
+    public static function postStornoForFinalizedReceipt(int $receiptId, array $receipt, ?int $userId = null): ?int
+    {
+        $originalId = (int) ($receipt['storno_of_receipt_id'] ?? 0);
+        $lines = CashReceiptRepository::listLines($receiptId);
+        $payments = CashPaymentRepository::listByReceipt($receiptId);
+        $marker = self::documentMarker($receiptId);
+        $existing = ManualLedgerService::findBatchIdBySourceMarker(self::SOURCE, $marker);
+        $batchId = $existing;
+
+        if ($batchId === null) {
+            $skr = ChartOfAccountsSettings::activeSkrType();
+            // Absolute Beträge wie Verkauf, dann Seiten tauschen
+            $absReceipt = $receipt;
+            $absReceipt['total_gross'] = abs(round((float) ($receipt['total_gross'] ?? 0), 2));
+            $absLines = [];
+            foreach ($lines as $line) {
+                $copy = $line;
+                $copy['gross_amount'] = abs(round((float) ($line['gross_amount'] ?? 0), 2));
+                $copy['quantity'] = abs(round((float) ($line['quantity'] ?? 0), 3));
+                $absLines[] = $copy;
+            }
+            $absPayments = [];
+            foreach ($payments as $pay) {
+                $copy = $pay;
+                $copy['amount'] = abs(round((float) ($pay['amount'] ?? 0), 2));
+                $absPayments[] = $copy;
+            }
+            $saleLines = self::buildJournalLines($absReceipt, $absLines, $absPayments, $skr, $marker);
+            $journalLines = [];
+            foreach ($saleLines as $jl) {
+                $side = strtolower((string) ($jl['side'] ?? ''));
+                $jl['side'] = $side === 'debit' ? 'credit' : 'debit';
+                $journalLines[] = $jl;
+            }
+            if ($journalLines !== []) {
+                $postingDate = self::postingDate($receipt);
+                $display = trim((string) ($receipt['receipt_number_display'] ?? ''));
+                if ($display === '') {
+                    $display = (string) (int) ($receipt['receipt_number'] ?? $receiptId);
+                }
+                $origLabel = $originalId > 0 ? (' zu Bon-ID ' . $originalId) : '';
+                $description = 'Registerkasse Storno ' . $display . $origLabel;
+                $batchId = ManualLedgerService::createBatch(
+                    $postingDate,
+                    $description,
+                    $journalLines,
+                    $userId,
+                    self::SOURCE
+                );
+            }
+        }
+
+        self::syncCashJournalForStorno($receiptId, $receipt);
+
+        return $batchId;
+    }
+
+    /**
+     * @param array<string, mixed> $receipt
+     */
+    /**
+     * @param array<string, mixed> $receipt
+     */
+    private static function syncCashJournalForStorno(int $receiptId, array $receipt): void
+    {
+        unset($receipt);
+        if (!class_exists('CashJournalRepository')) {
+            return;
+        }
+        try {
+            CashJournalRepository::syncForCashStornoReceipt($receiptId);
+        } catch (Throwable) {
+            // Spalte ggf. noch nicht da
+        }
     }
 
     /**

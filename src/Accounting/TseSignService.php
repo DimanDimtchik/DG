@@ -61,6 +61,10 @@ final class TseSignService
         if (!self::shouldSign($voucher, (string) ($payment['payment_method'] ?? ''))) {
             return;
         }
+        // K9d: kein zweiter Signaturweg, wenn schon Kassenbon signiert
+        if (class_exists('CashDualSignatureGuard')) {
+            CashDualSignatureGuard::assertVoucherCashPaymentMaySign($voucherId);
+        }
         if (!TseSettings::isReady()) {
             throw new InvalidArgumentException(
                 'TSE ist eingeschaltet, aber Zugangsdaten fehlen. Bitte unter Einstellungen → TSE prüfen.'

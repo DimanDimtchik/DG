@@ -247,6 +247,75 @@ final class CashJournalRepository
         ]);
     }
 
+    /** K15e — Bar-Storno als Kassenbuch-Ausgang. */
+    public static function syncForCashStornoReceipt(int $receiptId): void
+    {
+        if (!Database::isConfigured() || $receiptId < 1) {
+            return;
+        }
+        if (!CashReceiptRepository::tableExists() || !CashPaymentRepository::tableExists()) {
+            return;
+        }
+        MigrationRunner::runPending();
+        if (!self::hasCashReceiptColumn()) {
+            return;
+        }
+
+        $pdo = Database::pdo();
+        $pdo->prepare('DELETE FROM dg_cash_journal WHERE cash_receipt_id = :id')
+            ->execute(['id' => $receiptId]);
+
+        $receipt = CashReceiptRepository::findById($receiptId);
+        if ($receipt === null) {
+            return;
+        }
+        if (($receipt['status'] ?? '') !== CashReceiptService::STATUS_FINALIZED) {
+            return;
+        }
+        if (($receipt['receipt_type'] ?? '') !== CashReceiptService::TYPE_STORNO) {
+            return;
+        }
+
+        $cashAmount = 0.0;
+        foreach (CashPaymentRepository::listByReceipt($receiptId) as $pay) {
+            if (strtolower(trim((string) ($pay['payment_method'] ?? ''))) !== 'cash') {
+                continue;
+            }
+            $cashAmount = round($cashAmount + abs((float) ($pay['amount'] ?? 0)), 2);
+        }
+        if ($cashAmount <= 0) {
+            return;
+        }
+
+        $skr = ChartOfAccountsSettings::activeSkrType();
+        $cashAccount = CashRegisterFiBuSettings::accountForMethod('cash', $skr);
+        $entryDate = self::receiptEntryDate($receipt);
+        $display = trim((string) ($receipt['receipt_number_display'] ?? ''));
+        if ($display === '') {
+            $display = (string) (int) ($receipt['receipt_number'] ?? $receiptId);
+        }
+        $desc = 'Registerkasse Storno ' . $display . ' · Bar';
+
+        $pdo->prepare(
+            'INSERT INTO dg_cash_journal
+                (entry_date, voucher_id, cash_receipt_id, account_number, side, amount, description)
+             VALUES
+                (:entry_date, NULL, :cash_receipt_id, :account_number, :side, :amount, :description)'
+        )->execute([
+            'entry_date' => $entryDate,
+            'cash_receipt_id' => $receiptId,
+            'account_number' => $cashAccount,
+            'side' => 'out',
+            'amount' => $cashAmount,
+            'description' => mb_substr($desc, 0, 500),
+        ]);
+    }
+
+    public static function hasCashReceiptColumnPublic(): bool
+    {
+        return self::hasCashReceiptColumn();
+    }
+
     private static function hasCashReceiptColumn(): bool
     {
         if (!Database::isConfigured()) {

@@ -371,6 +371,7 @@ final class MigrationRunner
             '153_cash_journal_receipt.sql' => self::columnExists($pdo, 'dg_cash_journal', 'cash_receipt_id'),
             '154_cash_ers_melde.sql' => self::tableExists($pdo, 'dg_cash_ers_taxpayer')
                 && self::tableExists($pdo, 'dg_cash_ers_clients'),
+            '155_cash_tse_deferred.sql' => self::columnExists($pdo, 'dg_cash_receipts', 'tse_deferred_pending'),
             default => false,
         };
     }
@@ -536,6 +537,7 @@ final class MigrationRunner
             '152_cash_tse_outage.sql' => true,
             '153_cash_journal_receipt.sql' => true,
             '154_cash_ers_melde.sql' => true,
+            '155_cash_tse_deferred.sql' => true,
         ];
     }
 

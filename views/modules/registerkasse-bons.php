@@ -76,6 +76,13 @@ $statusLabels = [
           </select>
           <small class="dg-field-hint">Nur Kassen mit offener Sitzung.</small>
         </label>
+        <label class="dg-field">
+          <span>Aus Beleg / Auftrag (optional)</span>
+          <input type="number" name="voucher_id" min="1" step="1" inputmode="numeric"
+                 placeholder="Beleg-ID"
+                 value="">
+          <small class="dg-field-hint">Wenn gesetzt: Positionen aus dem Ausgangsbeleg übernehmen (gleiche Kassen-Pipeline).</small>
+        </label>
       </div>
       <div class="dg-form-actions">
         <button type="submit" class="dg-button dg-button--primary">Bon starten</button>

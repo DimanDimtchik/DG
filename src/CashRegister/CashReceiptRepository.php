@@ -13,6 +13,26 @@ final class CashReceiptRepository
             && CashRegisterTable::tableExists(self::LINES);
     }
 
+    /** K14d — Spalte tse_deferred_pending nach Migration 155. */
+    public static function hasDeferredPendingColumn(): bool
+    {
+        if (!self::tableExists() || !Database::isConfigured()) {
+            return false;
+        }
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        try {
+            $stmt = Database::pdo()->query("SHOW COLUMNS FROM dg_cash_receipts LIKE 'tse_deferred_pending'");
+            $cached = $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Throwable) {
+            $cached = false;
+        }
+
+        return $cached;
+    }
+
     /** @return array<string, mixed>|null */
     public static function findById(int $id): ?array
     {

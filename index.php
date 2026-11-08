@@ -3122,8 +3122,19 @@ switch ($path) {
             }
             try {
                 $startRegId = max(0, (int) ($_POST['register_id'] ?? 0));
-                $receiptId = CashReceiptService::startDraft($startRegId, (int) $user->id);
-                Flash::set('success', 'Bon als Entwurf gestartet.');
+                $fromVoucherId = max(0, (int) ($_POST['voucher_id'] ?? 0));
+                if ($fromVoucherId > 0) {
+                    // K9c: Auftrag/Rechnung → Bon
+                    $receiptId = CashVoucherToReceiptService::createDraftFromVoucher(
+                        $fromVoucherId,
+                        $startRegId,
+                        (int) $user->id
+                    );
+                    Flash::set('success', 'Bon aus Beleg erzeugt — bitte Zahlung erfassen und festschreiben.');
+                } else {
+                    $receiptId = CashReceiptService::startDraft($startRegId, (int) $user->id);
+                    Flash::set('success', 'Bon als Entwurf gestartet.');
+                }
                 header('Location: /app?page=registerkasse-bon&id=' . $receiptId, true, 302);
                 exit;
             } catch (Throwable $e) {
@@ -3133,7 +3144,7 @@ switch ($path) {
             }
         }
 
-        // POST: Registerkasse Bon-Positionen (K7b) / Zahlungen (K7c) / Festschreiben (K8d, ohne TSE bis K7d)
+        // POST: Registerkasse Bon-Positionen (K7b) / Zahlungen (K7c) / Festschreiben (K7d)
         if (
             $page === 'registerkasse-bon'
             && $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -3144,6 +3155,7 @@ switch ($path) {
                 || isset($_POST['cash_receipt_payment_add'])
                 || isset($_POST['cash_receipt_payment_delete'])
                 || isset($_POST['cash_receipt_finalize'])
+                || isset($_POST['cash_receipt_storno'])
             )
             && MenuRegistry::canAccess($user, 'registerkasse-bon')
         ) {
@@ -3163,7 +3175,18 @@ switch ($path) {
                 if ($lineReceiptId <= 0) {
                     throw new RuntimeException('Bon fehlt.');
                 }
-                if (isset($_POST['cash_receipt_finalize'])) {
+                if (isset($_POST['cash_receipt_storno'])) {
+                    $stornoId = CashReceiptService::stornoFromFinalized(
+                        $lineReceiptId,
+                        (int) ($user->id ?? 0),
+                        trim((string) ($_POST['storno_notes'] ?? '')),
+                        null,
+                        true
+                    );
+                    Flash::set('success', 'Storno-Bon erzeugt und TSE-signiert.');
+                    header('Location: /app?page=registerkasse-bon&id=' . $stornoId, true, 302);
+                    exit;
+                } elseif (isset($_POST['cash_receipt_finalize'])) {
                     CashReceiptService::finalizeWithTse($lineReceiptId);
                     Flash::set('success', 'Bon festgeschrieben und TSE-signiert.');
                 } elseif (isset($_POST['cash_receipt_payment_delete'])) {
@@ -9357,10 +9380,12 @@ switch ($path) {
                         );
                     }
                     if ($exportKind === 'dsfinvk') {
-                        CashDsfinvkStubExport::downloadAndExit(
+                        // K17c: befüllter Export; Stub bleibt für Selftests/Struktur
+                        CashDsfinvkExport::downloadAndExit(
                             $cashJournalDateFrom,
                             $cashJournalDateTo,
-                            (int) ($user->id ?? 0)
+                            (int) ($user->id ?? 0),
+                            $cashJournalRegisterId > 0 ? $cashJournalRegisterId : null
                         );
                     }
                     if ($exportKind === 'pruefer') {
@@ -9468,6 +9493,9 @@ switch ($path) {
                     }
                 }
             }
+            $cashReceiptStorno = CashReceiptRepository::findStornoOf($cashReceiptId);
+            $cashReceiptHasStorno = $cashReceiptStorno !== null;
+            $cashReceiptStornoId = $cashReceiptHasStorno ? (int) ($cashReceiptStorno['id'] ?? 0) : 0;
             $contentTemplate = 'modules/registerkasse-bon';
             $title = 'Bon';
             $currentPage = 'registerkasse-bons';

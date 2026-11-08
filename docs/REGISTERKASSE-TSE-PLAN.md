@@ -3,7 +3,7 @@
 > Token-armer, abhakbarer Plan. **Eine Chat-Session = eine Mini-ID.**
 > Ziel: Ladenkasse, mobile Kasse und Barverkauf aus Auftrag/Rechnung mit TSE, GoBD, DSFinV-K und FiBu-Anbindung.
 
-Stand: **2026-11-07** · Detail K0: [`REGISTERKASSE-TSE-K0-FISKALY.md`](REGISTERKASSE-TSE-K0-FISKALY.md)
+Stand: **2026-11-08** · Detail K0: [`REGISTERKASSE-TSE-K0-FISKALY.md`](REGISTERKASSE-TSE-K0-FISKALY.md)
 
 ---
 
@@ -113,7 +113,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | K3a | `TseProviderInterface` PHP (leer + Signaturen) | 🟡 | [x] `TseProviderInterface.php` |
-| K3b | `FiskalyTseProvider` aus bestehendem `TseSignDeClient` ausdünnen/wickeln | 🔴 | [ ] |
+| K3b | `FiskalyTseProvider` aus bestehendem `TseSignDeClient` ausdünnen/wickeln | 🔴 | [x] `FiskalyTseProvider` + Factory + `bin/fiskaly-tse-provider-selftest.php` |
 | K3c | Provider-Factory: Auswahl mock|fiskaly (Setting/Kasse) | 🟡 | [x] `TseProviderFactory` |
 | K3d | Selftest Factory + Mock-Pfad | 🟡 | [x] `bin/tse-provider-factory-selftest.php` |
 
@@ -159,7 +159,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | K7a | Bon starten (Draft, register_id, operator) | 🟡 | [x] `CashReceiptService::startDraft` |
 | K7b | Position hinzufügen/ändern nur solange Draft | 🟡 | [x] add/update/removeLine |
 | K7c | Zahlung erfassen → Bon „zahlend“ | 🟡 | [x] status=`paying` |
-| K7d | TSE finish + Bon festschreiben (immutable) | 🔴 | [ ] |
+| K7d | TSE finish + Bon festschreiben (immutable) | 🔴 | [x] `finalizeWithTse` VAT/Zahlarten + Fiskaly; Ausfall→K14 |
 | K7e | Bon-Druck/PDF-Stub (Pflichtfelder + Platz QR) | 🟡 | [x] HTML/PDF + QR-Platz |
 | K7f | Selftest: Draft→Position→Mock-TSE→fest | 🟡 | [x] `cash-receipt-flow-selftest` |
 
@@ -232,8 +232,8 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | K9a | Ist-Stand dokumentieren (Beleg-Barzahlung + `dg_tse_transactions`) | 🟢 | [x] siehe § K9a |
 | K9b | Beleg-Barzahlung an `cash_register` koppeln (welche Kasse) | 🟡 | [x] `cash_register_id` + UI |
-| K9c | Optional: aus Auftrag Bon erzeugen (gleiche Provider-Pipeline) | 🔴 | [ ] |
-| K9d | Doppelte Signatur vermeiden (ein Zahlungsweg = eine Tx) | 🔴 | [ ] |
+| K9c | Optional: aus Auftrag Bon erzeugen (gleiche Provider-Pipeline) | 🔴 | [x] `CashVoucherToReceiptService` + UI Beleg-ID |
+| K9d | Doppelte Signatur vermeiden (ein Zahlungsweg = eine Tx) | 🔴 | [x] `CashDualSignatureGuard` Beleg↔Bon |
 
 ---
 
@@ -289,8 +289,8 @@ Zwei getrennte Tagesabschlüsse — **nicht** mischen, **nicht** dieselbe Tabell
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| K13a | Storno-Bon mit Referenz auf Original (kein Edit) | 🔴 | [~] Datenpfad ohne TSE: `stornoFromFinalized` + `finalizeWithoutTse`; UI/TSE offen |
-| K13b | TSE cancel/finish Storno laut Provider | 🔴 | [ ] |
+| K13a | Storno-Bon mit Referenz auf Original (kein Edit) | 🔴 | [x] Datenpfad + UI Storno am Bon |
+| K13b | TSE cancel/finish Storno laut Provider | 🔴 | [x] `finalizeWithTse` mit `CANCELLATION` / Mock|Fiskaly |
 | K13c | Selftest: Original unverändert, Storno verknüpft | 🟡 | [x] `bin/cash-receipt-storno-selftest.php` |
 
 ---
@@ -302,7 +302,7 @@ Zwei getrennte Tagesabschlüsse — **nicht** mischen, **nicht** dieselbe Tabell
 | K14a | Ausfall-Flag + Audit-Log-Eintrag | 🟡 | [x] `CashTseOutageService` + Migration `152_cash_tse_outage.sql` |
 | K14b | UI-Warnung sichtbar | 🟡 | [x] Partial `cash-tse-outage-banner` auf Kassen/Bons/TSE |
 | K14c | Nachsignatur-Pfad nur wenn Anbieter erlaubt (Spec zuerst) | 🟢 | [x] Spec unten + `TseProviderInterface::supportsDeferredSignature` |
-| K14d | Implementierung Nachsignatur | 🔴 | [ ] nur wenn Capability `true` |
+| K14d | Implementierung Nachsignatur | 🔴 | [x] `CashTseDeferredSignatureService` + Migration `155` (nur Capability true) |
 
 #### K14c — Spec: Nachsignatur nur wenn Anbieter erlaubt (verbindlich)
 
@@ -368,7 +368,7 @@ Bon-Finish braucht TSE
 | K15b | Buchung Bar bei Bon-Finish | 🔴 | [x] `cash` + FiBu-Kassenbuch `syncForCashReceipt` (Migration 153) |
 | K15c | Buchung EC/Karte | 🟡 | [x] `CashRegisterFiBuPostingService` + Hook `finalizeWithoutTse` |
 | K15d | Buchung Gutschein | 🟡 | [x] `voucher` in `bookableMethods` → Soll Verbindlichkeit |
-| K15e | Storno-Buchung | 🔴 | [ ] |
+| K15e | Storno-Buchung | 🔴 | [x] `postStornoForFinalizedReceipt` + Kassenbuch-Ausgang |
 
 #### K15a — Spec: Zahlart → Konten (verbindlich)
 
@@ -412,7 +412,7 @@ Bon-Finish braucht TSE
 Bon finalized
   → je buchbarer payment-Zeile: Soll Mapping(Zahlart) / Haben Erlöse+USt (anteilig)
   → zusätzlich bei Bar: Zeile in dg_cash_journal (cash_receipt_id)
-  → Storno (K15e): Gegenbuchung — noch offen
+  → Storno (K15e): Gegenbuchung + Kassenbuch-Ausgang ✅
 ```
 
 **Nicht tun**
@@ -452,7 +452,7 @@ Bon finalized
 |----|---------|-------|--------|
 | K17a | Pflicht-Dateien/Felder als Spec-Doc | 🟢 | [x] [`docs/DSFINVK-SPEC.md`](DSFINVK-SPEC.md) (DSFinV-K 2.3, 20 CSV + Index) |
 | K17b | Export-Stub (leere/Minimal-CSV-Struktur) | 🟡 | [x] `CashDsfinvkStubExport` ZIP + Download Journal |
-| K17c | Befüllung aus cash_*-Tabellen | 🔴 | [ ] Mapping in Spec §3–4 |
+| K17c | Befüllung aus cash_*-Tabellen | 🔴 | [x] `CashDsfinvkExport` + Journal-Download + Prüferpaket |
 | K17d | Selftest: ZIP enthält erwartete Dateinamen | 🟡 | [x] `bin/cash-dsfinvk-zip-names-selftest.php` |
 
 #### K17a — Kurz
@@ -572,12 +572,12 @@ Anhang zur FiBu-Vorlage; Nutzer füllt Platzhalter. CRM-Export-Einbindung = **K2
 
 ## Empfohlene Reihenfolge (nächste Mini-Schritte)
 
-1. **K3b** FiskalyTseProvider (🔴) — dann K7d Fiskaly-Finish am Bon
-2. **K9c/d** Auftrag→Bon / Doppel-Signatur (🔴)
-3. **K13b** / **K15e** Storno TSE + FiBu
-4. *(nebenher, ohne Agent)* K0h Sales-Zeile nach HUB Go Live
+1. *(nebenher, ohne Agent)* **K0h** Sales-Zeile nach HUB Go Live
+2. **K18b** echte TSE-TAR über Provider-API — bewusst nach Produktiv-TSS
+3. **K19c** §146a-Senden — bewusst nach Hetzner/Freigabe (wie ELSTER)
 
-Erledigt bis hier u. a.: K0–K2, K3a/c/d, K4–K6, K7a–c+e+f, K8, K9a+b. Bewusst später: K7d, K3b, Rest K9c/d.
+Erledigt 2026-11-08 (rote Punkte): **K3b, K7d, K9c/d, K13a/b, K14d, K15e, K17c**.  
+Bewusst später (weiter 🔴, blockiert): **K18b, K19c**.
 
 ---
 
@@ -1162,22 +1162,22 @@ Repo: `TseTransactionRepository` (upsert, findByPaymentId, Listen für Druck).
 | K0 | Anbieterzugang | [~] K0i Preis-Hypothese da; nur noch Sales-Zeile (Go Live) |
 | K1 | Datenmodell | [x] K1a–K1k |
 | K2 | Mock-TSE | [x] K2a–K2c |
-| K3 | Provider-Interface | [~] K3a+K3c+K3d; offen nur K3b 🔴 |
+| K3 | Provider-Interface | [x] K3a–d inkl. FiskalyTseProvider |
 | K4 | Admin Filialen | [x] K4a–K4d |
 | K5 | Admin Kassen | [x] K5a–K5d |
 | K6 | Admin TSE-Zuordnung | [x] K6a–K6d |
-| K7 | Bonfluss | [~] K7a–c+e+f ✅; offen K7d 🔴 (Fiskaly-Finish) |
+| K7 | Bonfluss | [x] K7a–f inkl. Fiskaly-Finish |
 | K8 | Zahlungsarten | [x] K8a–e ✅ |
-| K9 | Barverkauf Auftrag/Rechnung | [~] K9a+K9b ✅; offen K9c/d 🔴 |
+| K9 | Barverkauf Auftrag/Rechnung | [x] K9a–d |
 | K10 | Mobile Kasse | [x] K10a–c |
 | K11 | Kassensitzung | [x] K11a–c |
 | K12 | Tagesabschluss | [x] K12a–d |
-| K13 | Storno | [~] K13c ✅ + K13a Datenpfad ohne TSE; offen K13b + UI |
-| K14 | TSE-Ausfall | [~] K14a–c ✅; offen K14d |
-| K15 | FiBu-Buchungen | [~] K15a–d ✅; offen K15e |
+| K13 | Storno | [x] K13a–c inkl. UI + TSE |
+| K14 | TSE-Ausfall | [x] K14a–d (Nachsignatur nur Mock-Capability) |
+| K15 | FiBu-Buchungen | [x] K15a–e |
 | K16 | Journale | [x] K16a–c |
-| K17 | DSFinV-K | [~] K17a+b+d ✅; offen K17c |
-| K18 | Prüferpaket / TSE-TAR | [~] K18a+c ✅; K18b später |
-| K19 | Kassenmeldung / ERS | [~] K19a+b ✅; K19c später |
+| K17 | DSFinV-K | [x] K17a–d |
+| K18 | Prüferpaket / TSE-TAR | [~] K18a+c ✅; **K18b später** 🔴 |
+| K19 | Kassenmeldung / ERS | [~] K19a+b ✅; **K19c später** 🔴 |
 | K20 | Tests | [x] K20a–e ✅ |
 | K21 | Verfahrensdoku | [x] K21a+b ✅ |
