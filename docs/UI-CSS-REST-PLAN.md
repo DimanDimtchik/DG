@@ -98,7 +98,7 @@ Keine neuen Farben erfinden — Tokens wie bestehende Form-Felder.
 |----|---------|-------|--------|
 | U2a | `views/settings/tab-lohn.php`: fieldset-Inline `border:0;padding:0…` → Klasse `.dg-form-section` ohne Style (CSS ggf. `.dg-form-section--bare` **nur wenn nötig**) | 🟡 | [x] 2026-11-08 fieldset.dg-form-section Reset |
 | U2b | Sichtcheck: Block „Aus Firmendaten“ wirkt wie Formularfelder (Readonly), Abstände wie andere Sections | 🟢 | [ ] |
-| U2c | `lohn-monatslauf` / `lohn-elster` / `lohn-auswertungen`: `style="margin…"` an Toolbar/Details → `dg-mt-*` / `dg-stack` (eine Datei = eine Session) | 🟡 | [~] monatslauf+elster ✅; auswertungen offen |
+| U2c | `lohn-monatslauf` / `lohn-elster` / `lohn-auswertungen`: `style="margin…"` an Toolbar/Details → `dg-mt-*` / `dg-stack` (eine Datei = eine Session) | 🟡 | [x] 2026-11-08 |
 
 Empfohlene Chat-Reihenfolge U2c: `U2c-monatslauf` → `U2c-elster` → `U2c-auswertungen` (je 1 Prompt).
 
@@ -165,7 +165,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 |----|--------|--------|
 | U0 | Fundament Readonly + Utilities | [x] |
 | U1 | Scan-Fails | [x] |
-| U2 | Lohn / Firmendaten | [~] U2a ✅; U2c-monatslauf+elster ✅; U2b + U2c-auswertungen offen |
+| U2 | Lohn / Firmendaten | [~] U2a+U2c ✅; U2b Sichtcheck offen |
 | U3 | Settings-Wellen | [ ] |
 | U4 | Modul-Wellen | [ ] |
 | U5 | Abschluss Guards + TODOS | [ ] |

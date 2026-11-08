@@ -95,12 +95,12 @@ $base = '/app?page=lohn-auswertungen&month=' . rawurlencode($month)
       · <a href="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>">Zum Monatslauf</a>
     </p>
 
-    <nav class="dg-toolbar" style="margin:1rem 0">
+    <nav class="dg-toolbar dg-mt-4 dg-mb-4">
       <a class="dg-button<?= $tab === 'beitrag' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($base) ?>&amp;tab=beitrag">Beitragsnachweis</a>
       <a class="dg-button<?= $tab === 'stamm' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($base) ?>&amp;tab=stamm">Stammkontrolle</a>
     </nav>
 
-    <div class="dg-toolbar" style="margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+    <div class="dg-toolbar dg-mb-4">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base) ?>&amp;tab=<?= View::escape($tab) ?>&amp;download=csv&amp;kind=<?= View::escape(PayrollSvPortalService::KIND_COMBINED) ?>">CSV kombiniert</a>
       <a class="dg-button" href="<?= View::escape($base) ?>&amp;tab=beitrag&amp;download=csv&amp;kind=<?= View::escape(PayrollSvPortalService::KIND_BEITRAG) ?>">CSV Beitragsnachweis</a>
       <a class="dg-button" href="<?= View::escape($base) ?>&amp;tab=stamm&amp;download=csv&amp;kind=<?= View::escape(PayrollSvPortalService::KIND_STAMM) ?>">CSV Stammkontrolle</a>
@@ -222,7 +222,7 @@ $base = '/app?page=lohn-auswertungen&month=' . rawurlencode($month)
       <?php endif; ?>
     <?php endif; ?>
 
-    <details class="dg-panel" style="margin:1rem 0">
+    <details class="dg-panel dg-mt-4 dg-mb-4">
       <summary><strong>Betriebsprüfer-Stichprobe</strong></summary>
       <ol>
         <?php foreach ($checklist as $item) : ?>
