@@ -69,6 +69,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | User-/Kontakt-Unterschriftshistorie | ✅ ES1–ES2 inkl. Smoke Dev; Canvas ES3a ✅ |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Mail: optionales CID-Unterschriftsbild | ✅ ES5a (`resolveInlineImage`) |
+| Mail: Text-Fallback + Dev-Testmail | ✅ ES5b/c |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Brief/PDF: aktives Session-Unterschriftsbild | ✅ ES4a–c (Dev-Stichprobe 1 Seite) |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
@@ -172,7 +173,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----|---------|-------|--------|
 | ES5a | Post: optionales `<img>` aus aktiver User-Signatur (CID/URL laut Mail-Stack) | 🟡 | [x] 2026-11-08 `resolveInlineImage` + CID in `MailMessage` · Selftest |
 | ES5b | Fallback Text-Signatur wenn keine aktive Bildzeile | 🟡 | [x] 2026-11-08 `resolveTextFallback` HTML+Plain · Selftest |
-| ES5c | Smoke 1 Testmail Dev | 🔴 | [ ] |
+| ES5c | Smoke 1 Testmail Dev | 🔴 | [x] 2026-11-08 ganz-om.de mail_log#4 → info@ · CID+Text · sent |
 
 ### ES6 — Mitarbeiter-App
 
@@ -218,7 +219,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES5c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke 1 Testmail Dev. Kein Canvas.`
+`Nur Mini-ID ES6a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. API: Upload/Canvas → appendNew source=app. Kein Brief.`
 
 ---
 
