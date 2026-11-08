@@ -48,8 +48,10 @@
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)
 
-- [ ] **Shared-Core-Ordnerplan** + Backup/Restore-Test  
-  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1 / §4
+- [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
+  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1  
+- [ ] **Backup/Restore-Test** + Notiz  
+  → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4 · PA3b
 - [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  
   → Selftest `bin/asset-css-minify-selftest.php` ✅ 2026-11-08 (PA3c) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §2
 - [ ] Hetzner-AVV / TOMs organisatorisch abstimmen (Vertrag, bevor Cutover)

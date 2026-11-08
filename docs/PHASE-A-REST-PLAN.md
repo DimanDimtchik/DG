@@ -42,7 +42,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ❌ manuell / teilweise Code |
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
-| A3 Shared-Core / Minify / AVV / Deploy-Prep | ❌ Ops |
+| A3 Shared-Core / Minify / AVV / Deploy-Prep | Shared-Core-Plan ✅ · Minify ✅ · AVV/Backup/Deploy-Prep offen |
 | A4 Kunden-Instanz vorbereiten | [~] Domain/TLS · Rest offen |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
 | A6 Telefon CTI | [~] manuell |
@@ -58,7 +58,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1d ✅ | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
-| PA3 | Vor-Hetzner Infra (A3) | [~] PA3c ✅ | 🔴🟢 |
+| PA3 | Vor-Hetzner Infra (A3) | [~] PA3a/c ✅ | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
@@ -122,7 +122,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA3a | Shared-Core-Ordnerplan dokumentieren/prüfen ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1) | 🟢 | [ ] |
+| PA3a | Shared-Core-Ordnerplan dokumentieren/prüfen ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1) | 🟢 | [x] 2026-11-08 §1.1 Ist/Ziel |
 | PA3b | Backup/Restore-Test durchführen + Notiz ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §4) | 🔴 | [ ] |
 | PA3c | Asset-Minify im Deploy verifizieren (`dg.app.min.css` / minify-Skript) | 🟢 | [x] 2026-11-08 Selftest grün; Deploy: rsync/sftp/`deploy.bat` → `minify-dg-css.sh` |
 | PA3d | Hetzner-AVV / TOMs organisatorisch (Vertrag) — nur Checkliste/Status | 🔴 | [ ] |
@@ -188,14 +188,13 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 ## Empfohlene Free-Plan-Reihenfolge
 
 1. Parallel Mensch: **PA1a–c**, **PA2a…** Smoke  
-2. **PA3a/e** Docs (Minify PA3c ✅ · PA5 ✅)  
-3. **PA4f/g** Migrations-/Parallel-Docs  
-4. Rest **PA4** / **PA3b/d** / **PA2** Mensch · **PA1e** wenn A1 Druck-Stichproben grün  
-5. Phase B erst wenn A1–A3 weitgehend grün  
+2. **PA3e** Deploy-Prep-Doc · **PA4f/g** Migrations-/Parallel-Docs  
+3. Rest **PA4** / **PA3b/d** / **PA2** Mensch · **PA1e** wenn A1 Druck-Stichproben grün  
+4. Phase B erst wenn A1–A3 weitgehend grün  
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA3a laut docs/PHASE-A-REST-PLAN.md. Shared-Core laut VOR-HETZNER-CHECK §1. Nur Docs. Kein Cutover.`  
-*(Oder PA4f Lexoffice-Migrationscheckliste.)*
+`Nur Mini-ID PA4f laut docs/PHASE-A-REST-PLAN.md. Lexoffice→DG Migrationscheckliste als Doc. Kein Produktiv-Import. Kein Tenant-Hardcode.`  
+*(Oder PA3e Deploy-Prep-Doc.)*
 
 ---
 
