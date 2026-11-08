@@ -80,14 +80,14 @@ $fmt = static fn (float $v): string => number_format($v, 2, '.', '');
       <span>Automatischen Mahnversand aktivieren</span>
     </label>
 
-    <label class="dg-field" style="margin-top: 12px;">
+    <label class="dg-field dg-mt-3">
       <span>Mahngebühren-Konto (SKR)</span>
       <input type="text" name="dunning_fee_account" maxlength="8" pattern="\d*"
              value="<?= View::escape((string) ($dunning['fee_account'] ?? '4970')) ?>"<?= !$dbConnected ? ' disabled' : '' ?>>
       <small class="dg-field-hint">z. B. 4970 Mahngebühren (SKR03)</small>
     </label>
 
-    <div class="dg-table-wrap" style="margin-top: 16px;">
+    <div class="dg-table-wrap dg-mt-4">
       <table class="dg-table" id="dg-dunning-levels-table">
         <thead>
           <tr>

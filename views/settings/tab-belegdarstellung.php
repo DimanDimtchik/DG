@@ -46,7 +46,7 @@ $kindLabels = [
     <h3 class="dg-subsection-title">Textvorlagen vor / nach Positionen</h3>
     <?php foreach ($kindLabels as $kind => $label) : ?>
       <?php $pair = is_array($texts[$kind] ?? null) ? $texts[$kind] : ['intro' => '', 'footer' => '']; ?>
-      <fieldset class="dg-fieldset" style="margin-bottom:16px;">
+      <fieldset class="dg-fieldset dg-mb-4">
         <legend><?= View::escape($label) ?></legend>
         <label class="dg-field dg-field--wide">
           <span>Text vor den Positionen</span>

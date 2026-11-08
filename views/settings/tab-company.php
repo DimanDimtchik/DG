@@ -523,7 +523,7 @@ $bankSummary = $filledBanks > 0
       <a href="<?= View::escape(SettingsRegistry::tabUrl('belegdarstellung')) ?>">Belegdarstellung</a>.
     </p>
 
-    <fieldset class="dg-fieldset" style="margin-bottom:16px;">
+    <fieldset class="dg-fieldset dg-mb-4">
       <legend>Kleinunternehmer § 19 UStG</legend>
       <label class="dg-field dg-field--checkbox">
         <input type="checkbox" name="tax_special_cases[kleinunternehmer][enabled]" value="1"
@@ -554,7 +554,7 @@ $bankSummary = $filledBanks > 0
       </label>
     </fieldset>
 
-    <fieldset class="dg-fieldset" style="margin-bottom:16px;">
+    <fieldset class="dg-fieldset dg-mb-4">
       <legend>Photovoltaik § 12 Abs. 3 UStG</legend>
       <label class="dg-field dg-field--checkbox">
         <input type="checkbox" name="tax_special_cases[photovoltaik][enabled]" value="1"
