@@ -172,7 +172,18 @@ Keine Plan-Codes in `hint`-Texten.
 | Offene Belegung `maintenance` / `blocked` (Status nicht cancelled/done, Zeitfenster enthält *jetzt*) | zugehöriges Work Center → Station `down` |
 | Gate | `ProductionLineStationDownGate` → `down_station_orders` für Evaluate |
 
-Propagation auf Pufferstände = **FL6b** (hier nur Stationsstatus).
+### FL6b — Propagation
+
+Bei Station *i* = `down` (ohne Mengen zu schreiben):
+
+| Nachbar | Wirkung |
+|---------|---------|
+| Station *i−1* (wenn `running`) | `block_risk` + Reason `downstream_down_block_risk` |
+| Puffer nach *i−1* | Flag `fill_risk_due_to_downstream_down` |
+| Station *i+1* (wenn `running`/`blocked`) | → `starved`, Reason `upstream_down` |
+| Puffer nach *i* | Flag `starve_risk_due_to_upstream_down` |
+
+Ergebnis-Feld `propagation` mit `events` + `hint`.
 
 ---
 

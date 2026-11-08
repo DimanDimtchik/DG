@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * FL3b/FL4a/FL4b: Offline-Status, Engpass, grober Linien-Durchsatz — kein PLC.
+ * FL3–FL6: Offline-Status, Engpass, Material, down-Propagation — kein PLC.
  */
 final class ProductionLineStatusService
 {
@@ -183,6 +183,12 @@ final class ProductionLineStatusService
             ];
         }
 
+        $propagation = self::applyDownPropagation($stationOut, $bufferOut);
+        $statusList = [];
+        foreach ($stationOut as $s) {
+            $statusList[] = (string) ($s['status'] ?? 'running');
+        }
+
         $lineStatus = self::lineStatus($statusList, $rawOk);
         $throughputs = is_array($options['throughputs'] ?? null) ? $options['throughputs'] : [];
         $bottleneck = self::resolveBottleneck($stationOut, $throughputs);
@@ -212,6 +218,94 @@ final class ProductionLineStatusService
             'line_throughput' => $lineThroughput,
             'raw_material' => $rawMaterial,
             'auxiliary_material' => $auxiliaryMaterial,
+            'propagation' => $propagation,
+        ];
+    }
+
+    /**
+     * FL6b: down bei i → Blocking-Risiko davor, Starving danach (Status/Flags, kein Mengen-Schreiben).
+     *
+     * @param list<array<string, mixed>> $stationOut
+     * @param list<array<string, mixed>> $bufferOut
+     * @return array{events: list<array<string, mixed>>, hint: string}
+     */
+    public static function applyDownPropagation(array &$stationOut, array &$bufferOut): array
+    {
+        $byOrder = [];
+        foreach ($stationOut as $idx => $st) {
+            $byOrder[(int) ($st['station_order'] ?? 0)] = $idx;
+        }
+        $bufIdx = [];
+        foreach ($bufferOut as $idx => $b) {
+            $bufIdx[(int) ($b['after_station_order'] ?? 0)] = $idx;
+        }
+
+        $events = [];
+        $downOrders = [];
+        foreach ($stationOut as $st) {
+            if (($st['status'] ?? '') === 'down') {
+                $downOrders[] = (int) ($st['station_order'] ?? 0);
+            }
+        }
+
+        foreach ($downOrders as $i) {
+            if ($i <= 0) {
+                continue;
+            }
+            // Puffer vor down-Station (nach i-1): Füll-Risiko → Vorgänger Blocking-Risiko
+            if ($i > 1 && isset($byOrder[$i - 1])) {
+                $pIdx = $byOrder[$i - 1];
+                if (($stationOut[$pIdx]['status'] ?? '') === 'running') {
+                    $reasons = is_array($stationOut[$pIdx]['reasons'] ?? null)
+                        ? $stationOut[$pIdx]['reasons']
+                        : [];
+                    if (!in_array('downstream_down_block_risk', $reasons, true)) {
+                        $reasons[] = 'downstream_down_block_risk';
+                    }
+                    $stationOut[$pIdx]['reasons'] = $reasons;
+                    $stationOut[$pIdx]['block_risk'] = true;
+                    $events[] = [
+                        'type' => 'block_risk',
+                        'from_down_order' => $i,
+                        'station_order' => $i - 1,
+                    ];
+                }
+                if (isset($bufIdx[$i - 1])) {
+                    $bufferOut[$bufIdx[$i - 1]]['fill_risk_due_to_downstream_down'] = true;
+                }
+            }
+            // Nachfolger: Starving wegen upstream down
+            if (isset($byOrder[$i + 1])) {
+                $sIdx = $byOrder[$i + 1];
+                $succStatus = (string) ($stationOut[$sIdx]['status'] ?? 'running');
+                if ($succStatus === 'running' || $succStatus === 'blocked') {
+                    $stationOut[$sIdx]['status'] = 'starved';
+                    $reasons = is_array($stationOut[$sIdx]['reasons'] ?? null)
+                        ? $stationOut[$sIdx]['reasons']
+                        : [];
+                    if (!in_array('upstream_down', $reasons, true)) {
+                        $reasons[] = 'upstream_down';
+                    }
+                    $stationOut[$sIdx]['reasons'] = $reasons;
+                    $events[] = [
+                        'type' => 'starve_successor',
+                        'from_down_order' => $i,
+                        'station_order' => $i + 1,
+                    ];
+                }
+                if (isset($bufIdx[$i])) {
+                    $bufferOut[$bufIdx[$i]]['starve_risk_due_to_upstream_down'] = true;
+                }
+            }
+        }
+
+        $hint = $events === []
+            ? 'Keine down-Propagation.'
+            : 'Störung wirkt auf Nachbarn: Puffer davor mit Füll-Risiko, Folgestation kann stehen (kein Zulauf).';
+
+        return [
+            'events' => $events,
+            'hint' => $hint,
         ];
     }
 
