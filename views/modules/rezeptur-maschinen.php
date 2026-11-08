@@ -282,6 +282,7 @@ $formatHelperMaterials = static function (mixed $json): string {
     <div class="dg-toolbar">
       <?php if ($canEdit && $dbConnected) : ?>
         <a class="dg-button dg-button--primary" href="/app?page=rezeptur-maschine-form&amp;action=new">Maschine hinzufügen</a>
+        <a class="dg-button" href="/app?page=rezeptur-fliesslinien">Fließlinien</a>
       <?php endif; ?>
     </div>
   </header>

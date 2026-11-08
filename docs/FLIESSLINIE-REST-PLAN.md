@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL7a laut docs/FLIESSLINIE-REST-PLAN.md. UI Liste Linien + Detail Katalog. Kein MES.`
+`Nur Mini-ID FL7b laut docs/FLIESSLINIE-REST-PLAN.md. Statusanzeige je Station kurze Texte. Katalog. Kein MES.`
 
 ---
 
@@ -162,7 +162,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [x] FL5a–c ✅ | 🟡 |
 | FL6 | Störung / Wartung propagiert | [x] FL6a–c ✅ | 🟡 |
-| FL7 | UI Linie + Status | [ ] | 🟡🔴 |
+| FL7 | UI Linie + Status | [~] FL7a ✅ | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
 | FL9 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
@@ -232,7 +232,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL7a | Liste Linien + Detail Stationen/Puffer (`.dg-table` / `.dg-form`) unter Rezeptur/Maschinen | 🟡 | [ ] |
+| FL7a | Liste Linien + Detail Stationen/Puffer (`.dg-table` / `.dg-form`) unter Rezeptur/Maschinen | 🟡 | [x] 2026-11-08 `rezeptur-fliesslinien` · Guard |
 | FL7b | Statusanzeige je Station (läuft / blocked / starved / down / material) — **kurze** Endnutzer-Texte, keine Plan-Codes | 🟡 | [ ] |
 | FL7c | Smoke Dev: 2-Maschinen-Linie, Puffer voll → Vorgänger „steht (Puffer voll)“ | 🔴 | [ ] |
 
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL7a laut docs/FLIESSLINIE-REST-PLAN.md. UI Liste Linien + Detail Stationen/Puffer Katalog. Kein MES/PLC.`
+`Nur Mini-ID FL7b laut docs/FLIESSLINIE-REST-PLAN.md. Statusanzeige je Station (kurze Texte, kein Plan-Code). Katalog.`
 
 ---
 
@@ -310,4 +310,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-line-station-down-selftest.php` | FL6a Selftest |
 | `bin/production-line-down-propagation-selftest.php` | FL6b Propagation Selftest |
 | `bin/production-line-down-neighbors-selftest.php` | FL6c Nachbarn Selftest |
+| `views/modules/rezeptur-fliesslinien.php` | FL7a Liste/Detail UI |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine · FL4a Output/h |
