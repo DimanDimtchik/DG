@@ -235,5 +235,77 @@ try {
 }
 assertEs1d($threw, 'appendFromCanvasDataUrl lehnt JPEG-Data-URL ab');
 
+assertEs1d($ref->hasMethod('activeImageSrcForUser'), 'Methode activeImageSrcForUser vorhanden (ES4a)');
+assertEs1d(UserSignatureStore::activeImageSrcForUser(0) === '', 'activeImageSrcForUser(0) leer');
+assertEs1d(UserSignatureStore::activeImageSrcForUser(999999) === '', 'activeImageSrcForUser ohne Zeile leer');
+
+if (!class_exists('MediaStorage', false)) {
+    final class MediaStorage
+    {
+        public static function publicUrl(string $mediaId, ?int $version = null): string
+        {
+            return '/app/media?id=' . rawurlencode($mediaId);
+        }
+
+        public static function absolutePath(string $mediaId, string $storedName): string
+        {
+            return sys_get_temp_dir() . '/dg-sig-selftest/' . $mediaId . '/' . $storedName;
+        }
+    }
+}
+
+$urlSrc = UserSignatureStore::activeImageSrcForUser($userId, false);
+assertEs1d(
+    str_contains($urlSrc, 'id=' . rawurlencode($mediaB)),
+    'activeImageSrcForUser liefert URL der aktiven media_id'
+);
+
+$tmpDir = sys_get_temp_dir() . '/dg-sig-selftest/' . $mediaB;
+if (!is_dir($tmpDir)) {
+    mkdir($tmpDir, 0777, true);
+}
+$pngPath = $tmpDir . '/sig-b.png';
+$pngBin = base64_decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    true
+);
+assertEs1d(is_string($pngBin) && $pngBin !== '', '1×1 PNG Fixture dekodiert');
+file_put_contents($pngPath, $pngBin);
+
+if (!class_exists('MediaRepository', false)) {
+    final class MediaRepository
+    {
+        public static function ensureTables(): void
+        {
+        }
+
+        /** @return array<string, mixed>|null */
+        public static function find(string $mediaId): ?array
+        {
+            if ($mediaId !== $GLOBALS['es4a_media_b']) {
+                return null;
+            }
+
+            return [
+                'media_id' => $mediaId,
+                'stored_name' => 'sig-b.png',
+                'mime_type' => 'image/png',
+            ];
+        }
+    }
+}
+$GLOBALS['es4a_media_b'] = $mediaB;
+
+$dataSrc = UserSignatureStore::activeImageSrcForUser($userId, true);
+assertEs1d(str_starts_with($dataSrc, 'data:image/png;base64,'), 'preferDataUri liefert data:-URI');
+assertEs1d(
+    base64_decode(substr($dataSrc, strlen('data:image/png;base64,')), true) === $pngBin,
+    'data:-URI enthält PNG-Bytes'
+);
+
+@unlink($pngPath);
+@rmdir($tmpDir);
+@rmdir(dirname($tmpDir));
+
 echo "ES1d Selftest bestanden.\n";
 exit(0);

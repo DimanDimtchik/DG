@@ -672,14 +672,35 @@ JS;
         }
         $closing = trim((string) ($doc['closing'] ?? ''));
         $signature = trim((string) ($doc['signature'] ?? ''));
+        // ES4a: Bild nur aus aktiver Signatur des Session-Users (kein Kontakt-Picker)
+        $signatureImageSrc = trim((string) ($doc['signature_image_src'] ?? ''));
+        if (
+            $signatureImageSrc === ''
+            && class_exists('AuthService')
+            && class_exists('UserSignatureStore')
+        ) {
+            $sessionUser = AuthService::user();
+            if ($sessionUser !== null && (int) ($sessionUser->id ?? 0) > 0) {
+                $signatureImageSrc = UserSignatureStore::activeImageSrcForUser(
+                    (int) $sessionUser->id,
+                    $forPdf
+                );
+            }
+        }
         // Gruß + Unterschriftsblock zusammenhalten (kein Seitenumbruch dazwischen)
-        if ($closing !== '' || $signature !== '') {
+        if ($closing !== '' || $signature !== '' || $signatureImageSrc !== '') {
             $html .= '<div class="dg-lh-closing-block">';
             if ($closing !== '') {
                 $html .= '<p class="dg-lh-closing">' . nl2br(self::e($closing), false) . '</p>';
             }
-            // DIN: nach Gruß zwei Leerzeilen Platz für Unterschrift, dann Name
-            $html .= '<div class="dg-lh-sign-gap" aria-hidden="true">&nbsp;<br>&nbsp;</div>';
+            if ($signatureImageSrc !== '') {
+                $html .= '<div class="dg-lh-sign-gap dg-lh-sign-gap--image">'
+                    . '<img class="dg-lh-signature-image" src="' . self::e($signatureImageSrc) . '" alt="">'
+                    . '</div>';
+            } else {
+                // DIN: nach Gruß zwei Leerzeilen Platz für Unterschrift, dann Name
+                $html .= '<div class="dg-lh-sign-gap" aria-hidden="true">&nbsp;<br>&nbsp;</div>';
+            }
             if ($signature !== '') {
                 $html .= '<p class="dg-lh-signature">' . nl2br(self::e($signature), false) . '</p>';
             }
@@ -1176,6 +1197,19 @@ body.dg-lh-body--pdf .dg-lh-body-content {
 body.dg-lh-body--pdf .dg-lh-closing-block {
   page-break-inside: avoid !important;
 }
+body.dg-lh-body--pdf .dg-lh-sign-gap--image {
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 2mm 0 2mm !important;
+  line-height: 0 !important;
+}
+body.dg-lh-body--pdf .dg-lh-signature-image {
+  display: block !important;
+  max-width: 55mm !important;
+  max-height: 22mm !important;
+  width: auto !important;
+  height: auto !important;
+}
 body.dg-lh-body--pdf .dg-lh-subject,
 body.dg-lh-body--pdf .dg-lh-greeting {
   page-break-inside: avoid;
@@ -1400,6 +1434,19 @@ body.dg-lh-body--pdf .dg-lh-stack { padding: 0; }
   font-size: 11pt;
   margin: 0 0 0;
   width: 100%;
+}
+.dg-lh-sign-gap--image {
+  height: auto;
+  min-height: 0;
+  margin: 2mm 0 2mm;
+  line-height: 0;
+}
+.dg-lh-signature-image {
+  display: block;
+  max-width: 55mm;
+  max-height: 22mm;
+  width: auto;
+  height: auto;
 }
 .dg-lh-signature { margin-top: 0; }
 .dg-lh-rich {

@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES4a** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren · oder Unterschrift **ES4b** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES4a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Brief/Druck nur activeForUser(session). Kein Canvas.`
+`Nur Mini-ID ES4b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Kein Kontakt-Picker fremder Signaturen. Kein Canvas.`
 
 ---
 

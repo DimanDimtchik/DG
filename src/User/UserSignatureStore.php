@@ -191,6 +191,54 @@ final class UserSignatureStore
     }
 
     /**
+     * Aktives Unterschriftsbild des Users für Brief/Druck (ES4a).
+     * Nur session-gebundener Aufrufer — kein fremder Kontakt.
+     *
+     * @return string Öffentliche URL oder data:-URI (für PDF), sonst ''
+     */
+    public static function activeImageSrcForUser(int $userId, bool $preferDataUri = false): string
+    {
+        if ($userId <= 0) {
+            return '';
+        }
+        $row = self::activeForUser($userId);
+        if ($row === null) {
+            return '';
+        }
+        $mediaId = (string) ($row['media_id'] ?? '');
+        if (!MediaId::isValid($mediaId)) {
+            return '';
+        }
+
+        if ($preferDataUri && class_exists('MediaRepository') && class_exists('MediaStorage')) {
+            MediaRepository::ensureTables();
+            $item = MediaRepository::find($mediaId);
+            if (is_array($item)) {
+                $stored = (string) ($item['stored_name'] ?? '');
+                $mime = trim((string) ($item['mime_type'] ?? ''));
+                if ($mime === '') {
+                    $mime = 'image/png';
+                }
+                if ($stored !== '') {
+                    try {
+                        $path = MediaStorage::absolutePath($mediaId, $stored);
+                        if (is_file($path)) {
+                            $bin = file_get_contents($path);
+                            if (is_string($bin) && $bin !== '') {
+                                return 'data:' . $mime . ';base64,' . base64_encode($bin);
+                            }
+                        }
+                    } catch (Throwable) {
+                        // Fallback URL
+                    }
+                }
+            }
+        }
+
+        return class_exists('MediaStorage') ? MediaStorage::publicUrl($mediaId) : '';
+    }
+
+    /**
      * data:image/png;base64,… → appendFromCanvasPng.
      */
     public static function appendFromCanvasDataUrl(

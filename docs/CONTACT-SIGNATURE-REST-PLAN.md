@@ -160,7 +160,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES4a | Dokumentenverfasser/Druck: Bild nur aus `activeForUser(session)` | 🟡 | [ ] |
+| ES4a | Dokumentenverfasser/Druck: Bild nur aus `activeForUser(session)` | 🟡 | [x] 2026-11-08 `LetterheadRenderer` + `activeImageSrcForUser` · Selftest |
 | ES4b | Kein Kontakt-Picker fremder Signaturen | 🟡 | [ ] |
 | ES4c | Stichprobe PDF 1 Seite | 🔴 | [ ] |
 
@@ -216,7 +216,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES4a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Brief/Druck nur activeForUser(session). Kein Canvas.`
+`Nur Mini-ID ES4b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Kein Kontakt-Picker fremder Signaturen. Kein Canvas.`
 
 ---
 
