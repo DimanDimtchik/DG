@@ -3292,6 +3292,7 @@ switch ($path) {
                 || isset($_POST['purchase_list_ignore'])
                 || isset($_POST['purchase_list_restore'])
                 || isset($_POST['purchase_list_ordered'])
+                || isset($_POST['purchase_list_amazon_order'])
                 || isset($_POST['purchase_list_done'])
                 || isset($_POST['purchase_list_qty'])
                 || isset($_POST['purchase_list_manual_order'])
@@ -3362,6 +3363,27 @@ switch ($path) {
                                 'success',
                                 'Als bestellt markiert. Menge ggf. unter „Nachbestellt“ korrigieren.'
                             );
+                        }
+                    } elseif (isset($_POST['purchase_list_amazon_order'])) {
+                        $orderedQty = PurchaseListService::parseQtyInput($_POST['suggested_qty'] ?? '');
+                        $amazonResult = AmazonBusinessOrderService::orderPurchaseListItem(
+                            (int) ($_POST['purchase_list_id'] ?? 0),
+                            $orderedQty
+                        );
+                        if (!empty($amazonResult['ok'])) {
+                            $ref = trim((string) ($amazonResult['external_order_id'] ?? ''));
+                            Flash::set(
+                                'success',
+                                (string) ($amazonResult['message'] ?? 'Bei Amazon Business bestellt.')
+                                . ($ref !== '' ? ' Bestellnr.: ' . $ref : '')
+                            );
+                            $redirect = '/app?page=artikel-leistungen&list=ordered';
+                        } else {
+                            Flash::set(
+                                'error',
+                                (string) ($amazonResult['message'] ?? 'Amazon-Bestellung fehlgeschlagen.')
+                            );
+                            $redirect = '/app?page=artikel-leistungen&list=purchase';
                         }
                     } elseif (isset($_POST['purchase_list_done'])) {
                         PurchaseListService::markDone((int) ($_POST['purchase_list_id'] ?? 0));

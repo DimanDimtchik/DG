@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 | **Credentials nie committen** | Nur Settings-UI / Instanz-DB |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID A3a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur genannte Datei(en). Kein Refactor. Am Ende: php -l auf geänderte Dateien nennen.`
+`Nur Mini-ID A3b laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur views/settings/tab-calendar-articles.php (Purchase-List-Abschnitt). Katalog-Buttons. Kein Refactor.`
 
 **Nicht im Agent-Chat:** ganzen `index.php` umbauen, Sandbox-E2E gegen Amazon live, Rechnung-Import, Stufe-3-Cron.
 
@@ -92,7 +92,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| A3a | POST-Handler `purchase_list_amazon_order` in bestehendem Purchase-List-POST-Block (`index.php` — **nur der Block**, kein Refactor) | 🟡 | [ ] |
+| A3a | POST-Handler `purchase_list_amazon_order` in bestehendem Purchase-List-POST-Block (`index.php` — **nur der Block**, kein Refactor) | 🟡 | [x] 2026-11-08 |
 | A3b | View Einkaufsliste: Button „Bei Amazon Business bestellen“ nur wenn ready + ASIN (`tab-calendar-articles.php` list=purchase) | 🟡 | [ ] |
 | A3c | Flash Erfolg/Fehler + Anzeige Order-ID in Liste | 🟢 | [ ] |
 
@@ -143,7 +143,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | A0 | Doc / Inventar | [x] |
 | A1 | Persistenz | [x] |
 | A2 | Order-Service | [x] |
-| A3 | Einkaufsliste UI | [ ] |
+| A3 | Einkaufsliste UI | [~] A3a ✅; A3b/A3c offen |
 | A4 | Artikelstamm | [ ] |
 | A5 | Rechte / Abschluss | [ ] |
 
