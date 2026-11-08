@@ -30,7 +30,7 @@ $dashboardTiles = MenuRegistry::dashboardTiles($user);
   <?php endif; ?>
 
   <?php if ($navMode === null && RoleResolver::isActiveEmployee($user)) : ?>
-    <div class="dg-panel dg-panel--notice" style="margin-top: 24px;">
+    <div class="dg-panel dg-panel--notice dg-mt-5">
       <h2>Keine Abteilungszuordnung</h2>
       <p>Sie sind als Mitarbeiter registriert, aber noch keiner Abteilung zugeordnet. Bitte wenden Sie sich an die Verwaltung.</p>
     </div>

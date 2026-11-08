@@ -51,7 +51,7 @@ $csrf = Csrf::token();
   <section class="dg-panel dg-panel--notice">
     <h2 class="dg-subsection-title">Geisterumsätze (<?= count($ghosts) ?>)</h2>
     <?php if ($canEdit) : ?>
-      <form method="post" action="/app?page=buchhaltung-bankabgleich" class="dg-form dg-form--inline" style="margin-bottom: 1rem;">
+      <form method="post" action="/app?page=buchhaltung-bankabgleich" class="dg-form dg-form--inline dg-mb-4">
         <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
         <button type="submit" name="bank_ghost_hide_all" value="1" class="dg-button dg-button--small">Alle ausblenden</button>
       </form>

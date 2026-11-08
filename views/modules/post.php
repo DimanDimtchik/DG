@@ -111,7 +111,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
     </div>
   <?php else : ?>
   <?php if (!$postCompose && $postMessage === null) : ?>
-  <form class="dg-panel dg-post-search" method="get" action="/app" style="margin-bottom:16px">
+  <form class="dg-panel dg-post-search dg-mb-4" method="get" action="/app">
     <input type="hidden" name="page" value="post">
     <?php if ($postMailboxFilter > 0) : ?>
       <input type="hidden" name="mailbox" value="<?= (int) $postMailboxFilter ?>">
@@ -125,7 +125,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         <span>Kontakt-ID</span>
         <input type="number" name="contact" min="1" value="<?= $postSearchContactId > 0 ? (int) $postSearchContactId : '' ?>" placeholder="optional">
       </label>
-      <div class="dg-form-actions" style="margin:0">
+      <div class="dg-form-actions dg-mt-0 dg-mb-0">
         <button type="submit" class="dg-button dg-button--primary">Suchen</button>
         <?php if ($postSearchMode) : ?>
           <a class="dg-button" href="<?= View::escape($postMailboxFilter > 0 ? $postFolderQuery($postMailboxFilter, $postFolder) : '/app?page=post') ?>">Zurücksetzen</a>
@@ -159,7 +159,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         </a>
       <?php endforeach; ?>
     </div>
-    <p class="dg-field-hint" style="margin-top:12px">Status ohne Live-Verbindung zum Mailserver (Zugangsdaten in den Einstellungen). Fremde Webmailer werden nicht eingebunden.</p>
+    <p class="dg-field-hint dg-mt-3">Status ohne Live-Verbindung zum Mailserver (Zugangsdaten in den Einstellungen). Fremde Webmailer werden nicht eingebunden.</p>
   <?php elseif ($postCompose) : ?>
     <?php View::partial('partials/back-nav', [
         'href' => $postMailboxFilter > 0
@@ -265,13 +265,13 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         </label>
         <div class="dg-field dg-field--wide">
           <span>CRM-Belege anhängen</span>
-          <label class="dg-field" style="margin:0;">
+          <label class="dg-field dg-mt-0 dg-mb-0">
             <span class="dg-field-hint">Belege des gewählten Kunden (letzte 12 Monate)</span>
             <select id="dg-post-voucher-recent" disabled>
               <option value="">Zuerst Kontakt wählen…</option>
             </select>
           </label>
-          <label class="dg-field" style="margin-top:10px;">
+          <label class="dg-field dg-mt-3">
             <span class="dg-field-hint">Ältere / andere Belege suchen</span>
             <input type="search" id="dg-post-voucher-search" placeholder="Nummer, Name, Stichwort…" autocomplete="off">
           </label>
@@ -308,7 +308,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         'href' => $postFolderQuery($postMailboxFilter > 0 ? $postMailboxFilter : (int) ($postMessage['mailbox_id'] ?? 0), $postDetailBackFolder),
         'label' => 'Zurück zu ' . $postDetailBackLabel,
     ]); ?>
-    <p class="dg-field-hint" style="margin:0 0 12px">
+    <p class="dg-field-hint dg-mt-0 dg-mb-3">
       <a href="/app?page=post">Alle Postfächer</a>
     </p>
     <article class="dg-panel dg-post-message">
@@ -389,7 +389,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         $linkedVoucher = $postLinkContext['voucher'] ?? null;
         $partyEmail = (string) ($postLinkContext['party_email'] ?? '');
       ?>
-      <section class="dg-panel dg-post-crm-links" style="margin-top:16px">
+      <section class="dg-panel dg-post-crm-links dg-mt-4">
         <h2 class="dg-subsection-title">CRM-Verknüpfung</h2>
         <p class="dg-field-hint">Kontakt und Beleg für die Belegkette — Verknüpfungen werden im Audit-Protokoll festgehalten.</p>
 
@@ -411,7 +411,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
             </form>
           <?php else : ?>
             <?php if ($suggestedContact instanceof Contact) : ?>
-              <form method="post" action="/app?page=post" class="dg-form" style="margin-bottom:12px">
+              <form method="post" action="/app?page=post" class="dg-form dg-mb-3">
                 <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                 <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
                 <input type="hidden" name="suggested_contact_id" value="<?= (int) $suggestedContact->id ?>">
@@ -442,7 +442,7 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
         </div>
 
         <?php if ($postCanLinkVoucher) : ?>
-          <div class="dg-post-crm-links__block" style="margin-top:16px">
+          <div class="dg-post-crm-links__block dg-mt-4">
             <h3 class="dg-subsection-title" style="font-size:1rem">Beleg</h3>
             <?php if (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0) : ?>
               <p>

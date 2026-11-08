@@ -73,7 +73,7 @@ $absenceType = (string) ($kioskAbsenceType ?? '');
         <input type="hidden" name="kiosk_action" value="forgot">
         <label for="ident">Login, E-Mail, Nachname oder Mitarbeiternummer</label>
         <input id="ident" name="identifier" required autocomplete="username" inputmode="email">
-        <p class="hint" style="font-size:.9rem;opacity:.85;margin:.25rem 0 .75rem">Auch nur Nachname möglich, wenn eindeutig.</p>
+        <p class="hint dg-mt-1 dg-mb-3" style="font-size:.9rem;opacity:.85">Auch nur Nachname möglich, wenn eindeutig.</p>
         <div class="actions">
           <button type="submit">PIN-Hilfe anfordern</button>
           <a class="btn secondary" href="/stempeluhr">Zurück</a>
@@ -114,7 +114,7 @@ $absenceType = (string) ($kioskAbsenceType ?? '');
         <label for="reason">Grund</label>
         <textarea id="reason" name="reason" required maxlength="500" placeholder="Kurz begründen"></textarea>
         <?php if ($absenceType === 'vacation') : ?>
-          <label class="dg-checkbox" style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
+          <label class="dg-checkbox dg-mt-3" style="display:flex;align-items:center;gap:.5rem;color:var(--k-text)">
             <input type="checkbox" name="half_day" value="1">
             Halber Tag (gleiches Von/Bis)
           </label>
@@ -122,13 +122,13 @@ $absenceType = (string) ($kioskAbsenceType ?? '');
         <?php if (TimeAbsenceEvidenceStorage::allowsEvidence($absenceType)) : ?>
           <label for="evidence">Nachweis (optional) — Foto/Scan/PDF</label>
           <input id="evidence" type="file" name="evidence[]" accept=".jpg,.jpeg,.png,.webp,.pdf,image/*,application/pdf" multiple>
-          <p class="muted" style="margin-top:.35rem">z. B. Attest fotografieren. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.</p>
+          <p class="muted dg-mt-1">z. B. Attest fotografieren. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.</p>
         <?php endif; ?>
         <?php
           $ackText = TimeAbsenceService::requestAcknowledgeText($absenceType);
         ?>
         <?php if ($ackText !== null) : ?>
-          <label class="dg-checkbox" style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.75rem;color:var(--k-text)">
+          <label class="dg-checkbox dg-mt-3" style="display:flex;align-items:flex-start;gap:.5rem;color:var(--k-text)">
             <input type="checkbox" name="acknowledge" value="1" required>
             <span><?= View::escape($ackText) ?></span>
           </label>

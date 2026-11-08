@@ -44,7 +44,7 @@ $statusOptions = LegalProductSettings::statusOptions();
     <p class="dg-lead">Schlüssel nur Kleinbuchstaben/Ziffern (z. B. <code>klarwin</code>, <code>hp-laserjet</code>).</p>
     <div id="dg-legal-product-groups">
       <?php foreach ($groups as $i => $group) : ?>
-        <div class="dg-form-grid dg-legal-product-row" style="margin-bottom:12px">
+        <div class="dg-form-grid dg-legal-product-row dg-mb-3">
           <label class="dg-field">
             <span>Schlüssel</span>
             <input name="legal_product_key[]" value="<?= View::escape((string) ($group['key'] ?? '')) ?>" placeholder="klarwin">
@@ -106,7 +106,7 @@ $statusOptions = LegalProductSettings::statusOptions();
 </form>
 
 <template id="dg-legal-product-row-template">
-  <div class="dg-form-grid dg-legal-product-row" style="margin-bottom:12px">
+  <div class="dg-form-grid dg-legal-product-row dg-mb-3">
     <label class="dg-field">
       <span>Schlüssel</span>
       <input name="legal_product_key[]" value="" placeholder="produkt-key">

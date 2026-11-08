@@ -29,7 +29,7 @@ $formId = (int) ($formRow['id'] ?? 0);
   </header>
 
   <?php if ($detail !== null) : ?>
-    <section class="dg-panel" style="margin-bottom:20px;">
+    <section class="dg-panel dg-mb-5">
       <h2>Einsendung #<?= (int) $detail['id'] ?></h2>
       <p class="dg-muted"><?= View::escape(date('d.m.Y H:i', strtotime((string) ($detail['created_at'] ?? '')) ?: 'now')) ?>
         · IP <?= View::escape((string) ($detail['ip'] ?? '')) ?></p>
@@ -64,7 +64,7 @@ $formId = (int) ($formRow['id'] ?? 0);
         </ul>
       <?php endif; ?>
       <?php if ($canEdit) : ?>
-        <form method="post" action="/app?page=website-formular-inbox&amp;id=<?= $formId ?>" style="margin-top:12px;" onsubmit="return confirm('Einsendung löschen?');">
+        <form method="post" action="/app?page=website-formular-inbox&amp;id=<?= $formId ?>" class="dg-mt-3" onsubmit="return confirm('Einsendung löschen?');">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="website_form_submission_delete" value="1">
           <input type="hidden" name="submission_id" value="<?= (int) $detail['id'] ?>">

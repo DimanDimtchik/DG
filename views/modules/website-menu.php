@@ -38,7 +38,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
     <section class="dg-panel dg-panel--nested" aria-labelledby="dg-menu-layout-heading">
       <h2 id="dg-menu-layout-heading">Darstellung</h2>
       <p class="dg-field-hint">Legen Sie fest, ob die Navigation immer horizontal, immer als mobiles Menü oder ab einer Breite umgeschaltet wird.</p>
-      <fieldset class="dg-form-section dg-field" style="border:0;padding:0;margin:0;">
+      <fieldset class="dg-form-section dg-field dg-mt-0 dg-mb-0" style="border:0;padding:0">
         <legend class="dg-sr-only">Menüdarstellung</legend>
         <?php foreach ($layoutOptions as $value => $label) : ?>
           <label class="dg-field dg-field--checkbox">
@@ -49,7 +49,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
           </label>
         <?php endforeach; ?>
       </fieldset>
-      <label class="dg-field" id="dg-menu-breakpoint-field" style="max-width:220px;margin-top:8px;">
+      <label class="dg-field dg-mt-2" id="dg-menu-breakpoint-field" style="max-width:220px">
         <span>Umschalten unter Breite (Pixel)</span>
         <input type="number" name="breakpoint" min="320" max="2000" step="1"
                value="<?= (int) $menuBreakpoint ?>"
@@ -112,7 +112,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
           </div>
 
           <div class="dg-website-menu-children" data-menu-children>
-            <p class="dg-field-hint" style="margin-top:12px;">Untermenü</p>
+            <p class="dg-field-hint dg-mt-3">Untermenü</p>
             <div data-menu-child-rows>
               <?php foreach ($children as $c => $child) : ?>
                 <div class="dg-website-menu-card dg-website-menu-card--child" data-menu-child>
@@ -177,7 +177,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
 
     <?php if (!$readOnly) : ?>
       <?php if ($suggestions !== []) : ?>
-        <section class="dg-panel dg-panel--nested" style="margin-top:1.25rem;" aria-label="Vorschläge">
+        <section class="dg-panel dg-panel--nested dg-mt-5" aria-label="Vorschläge">
           <h2>Vorschläge</h2>
           <p class="dg-field-hint">Angelegte Seiten, die noch nicht im Menü stehen. Klicken zum Übernehmen.</p>
           <div class="dg-website-menu-suggestions" id="dg-website-menu-suggestions">
@@ -190,7 +190,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
                 data-url="<?= View::escape($suggestion['url']) ?>"
               >
                 <?= View::escape($suggestion['title']) ?>
-                <span class="dg-field-hint" style="display:block;margin:0;font-weight:400;">
+                <span class="dg-field-hint dg-mt-0 dg-mb-0" style="display:block;font-weight:400">
                   <?= View::escape($suggestion['url']) ?>
                   · <?= View::escape($statusLabels[$suggestion['status']] ?? $suggestion['status']) ?>
                 </span>
@@ -199,7 +199,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
           </div>
         </section>
       <?php else : ?>
-        <p class="dg-field-hint" style="margin-top:1rem;">Alle angelegten Seiten sind bereits im Menü.</p>
+        <p class="dg-field-hint dg-mt-4">Alle angelegten Seiten sind bereits im Menü.</p>
       <?php endif; ?>
 
       <p class="dg-bank-repeater__actions">
@@ -408,7 +408,7 @@ $statusLabels = WebsitePageRepository::statusOptions();
       '<input type="checkbox" name="items[0][auth_only]" value="1"> Nur für eingeloggte Nutzer</span></label>' +
       '</div>' +
       '<div class="dg-website-menu-children" data-menu-children>' +
-      '<p class="dg-field-hint" style="margin-top:12px;">Untermenü</p>' +
+      '<p class="dg-field-hint dg-mt-3">Untermenü</p>' +
       '<div data-menu-child-rows></div>' +
       '<p class="dg-bank-repeater__actions"><button type="button" class="dg-button dg-button--small" data-menu-child-add>Unterpunkt hinzufügen</button></p>' +
       '</div>';

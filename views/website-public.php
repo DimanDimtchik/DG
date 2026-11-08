@@ -739,7 +739,7 @@ if ($wsInteractionCss !== '') :
           case 'divider':
             $dStyle = View::escape($block['style'] ?? 'solid');
             $dColor = View::escape($block['color'] ?? '#ddd');
-            echo '<hr style="border:none;border-top:2px ' . $dStyle . ' ' . $dColor . ';margin:16px 0;">';
+            echo '<hr class="dg-mt-4 dg-mb-4" style="border:none;border-top:2px ' . $dStyle . ' ' . $dColor . '">';
             break;
 
           case 'html':

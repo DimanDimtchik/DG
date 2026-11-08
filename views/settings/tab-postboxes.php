@@ -387,9 +387,7 @@ $postUiConfig = $postUiConfig ?? PostUiSettings::config();
 
           action="<?= View::escape(SettingsRegistry::tabUrl('postfaecher')) ?>"
 
-          class="dg-form"
-
-          style="margin-top:16px;padding-top:16px;border-top:1px solid var(--dg-border, #d0d5dd)"
+          class="dg-form dg-mt-4" style="padding-top:16px;border-top:1px solid var(--dg-border, #d0d5dd)"
 
           onsubmit="return confirm('Postfach „<?= View::escape((string) ($editBox['email_address'] ?? '')) ?>“ wirklich aus dem CRM löschen?\n\nMail-Verlauf bleibt erhalten (ohne Postfach-Zuordnung). Ein All-Inkl-Postfach beim Provider wird nicht gelöscht.');"
 
@@ -401,7 +399,7 @@ $postUiConfig = $postUiConfig ?? PostUiSettings::config();
 
           <button type="submit" name="postbox_delete" value="1" class="dg-button dg-button--danger">Postfach löschen</button>
 
-          <p class="dg-field-hint" style="margin-top:8px">Nur CRM-Eintrag. Provider-Postfach (All-Inkl o. Ä.) bleibt bestehen, bis Sie es dort manuell entfernen.</p>
+          <p class="dg-field-hint dg-mt-2">Nur CRM-Eintrag. Provider-Postfach (All-Inkl o. Ä.) bleibt bestehen, bis Sie es dort manuell entfernen.</p>
 
         </form>
 
@@ -479,7 +477,7 @@ $postUiConfig = $postUiConfig ?? PostUiSettings::config();
 
                       ✓ angelegt
 
-                      <form method="post" action="<?= View::escape(SettingsRegistry::tabUrl('postfaecher')) ?>" class="dg-inline-form" style="margin-top:6px">
+                      <form method="post" action="<?= View::escape(SettingsRegistry::tabUrl('postfaecher')) ?>" class="dg-inline-form dg-mt-2">
 
                         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
 

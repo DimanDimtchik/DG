@@ -51,7 +51,7 @@ $label = $contact !== null ? $contact->listLabel() : ('Kontakt #' . (int) ($rese
         <button class="allow" type="submit" name="decision" value="allow">Erlauben</button>
         <button class="block" type="submit" name="decision" value="block">Blockieren</button>
       </form>
-      <p style="color:#64748b;font-size:.9rem;margin-top:1rem;">
+      <p class="dg-mt-4" style="color:#64748b;font-size:.9rem">
         Erlauben sendet dem Mitarbeiter eine E-Mail mit Link zur neuen PIN.
       </p>
     <?php endif; ?>

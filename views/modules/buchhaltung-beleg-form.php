@@ -303,14 +303,14 @@ $paymentTermsPreview = PaymentTermsService::composeText(
     }
   ?>
   <?php if ($provenanceHint !== '') : ?>
-    <p class="dg-field-hint" style="margin-top:-8px;margin-bottom:16px;"><?= View::escape($provenanceHint) ?></p>
+    <p class="dg-field-hint dg-mb-4" style="margin-top:-8px"><?= View::escape($provenanceHint) ?></p>
   <?php endif; ?>
 
   <?php
     $voucherLinkedMails = $voucherLinkedMails ?? [];
   ?>
   <?php if ($isEdit && $voucherLinkedMails !== []) : ?>
-    <section class="dg-panel dg-voucher-linked-mails" style="margin-bottom: 20px;">
+    <section class="dg-panel dg-voucher-linked-mails dg-mb-5">
       <h2 class="dg-subsection-title">Verknüpfte E-Mails</h2>
       <p class="dg-field-hint">Ein-/Ausgänge aus dem Postfach, die an diesen Beleg gehängt sind (Belegkette / Prüfnachweis).</p>
       <div class="dg-table-wrap">
@@ -352,7 +352,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
   <?php endif; ?>
 
   <?php if ($isEdit && !$readOnly && ($voucherMailCanSend ?? false)) : ?>
-    <section class="dg-panel dg-voucher-email" id="dg-voucher-email-section" style="margin-bottom: 20px;">
+    <section class="dg-panel dg-voucher-email dg-mb-5" id="dg-voucher-email-section">
       <h2 class="dg-subsection-title">Per E-Mail senden</h2>
       <p class="dg-field-hint">Versendet das Dokument an den Kunden — als PDF-Anhang; bei Rechnungen zusätzlich XRechnung-XML (eRechnung).</p>
       <form method="post" action="/app?page=buchhaltung-beleg-form" class="dg-form">
@@ -388,7 +388,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       </form>
     </section>
   <?php elseif ($isEdit && !$readOnly && !($voucherMailConfigured ?? false) && $showDocumentKindField) : ?>
-    <div class="dg-flash dg-flash--info" style="margin-bottom: 20px;">
+    <div class="dg-flash dg-flash--info dg-mb-5">
       E-Mail-Versand: SMTP unter
       <a href="<?= View::escape(SettingsRegistry::tabUrl('email')) ?>">Einstellungen → E-Mail</a>
       konfigurieren, um Angebote und Rechnungen direkt zu versenden.
@@ -396,7 +396,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
   <?php endif; ?>
 
   <?php if ($isEdit && !$readOnly && ($voucherDunningCanSend ?? false)) : ?>
-    <section class="dg-form-section dg-voucher-dunning" style="margin-bottom: 20px;">
+    <section class="dg-form-section dg-voucher-dunning dg-mb-5">
       <h2 class="dg-subsection-title">Mahnung</h2>
       <p class="dg-field-hint">
         Nächste Stufe: <strong><?= View::escape((string) ($voucherDunningNextLabel ?? '')) ?></strong>
@@ -432,7 +432,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       ]);
     ?>
     <?php if ($revisionLocked && !$readOnly) : ?>
-      <div class="dg-flash dg-flash--warning" style="margin-bottom:1rem;">
+      <div class="dg-flash dg-flash--warning dg-mb-4">
         Dieser Beleg wurde bereits gedruckt oder versendet.
         Beim Speichern wird er <strong>automatisch storniert</strong> und Ihre Korrektur als
         <strong>neuer Entwurf</strong> angelegt (GoBD / §&nbsp;14 UStG). Zahlungen bleiben am stornierten Beleg.
@@ -610,7 +610,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </label>
       </div>
       <?php if ($isEdit && !$readOnly && $statusNextActions !== []) : ?>
-        <div class="dg-form-actions dg-voucher-status-actions" style="margin-top: 12px;">
+        <div class="dg-form-actions dg-voucher-status-actions dg-mt-3">
           <?php foreach ($statusNextActions as $nextStatus) : ?>
             <button
               type="submit"
@@ -647,7 +647,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       <input type="hidden" name="discount_manual" id="dg-voucher-discount-manual" value="0">
 
       <?php if ($showPartialPaymentsUi) : ?>
-        <div class="dg-voucher-payments" id="dg-voucher-payments-section" style="margin-top: 14px;">
+        <div class="dg-voucher-payments dg-mt-4" id="dg-voucher-payments-section">
           <h3 class="dg-subsection-title">Zahlungen / Teilzahlungen</h3>
           <p class="dg-field-hint">
             Brutto: <strong><?= View::escape((string) ($form['gross_amount'] ?? '0,00')) ?> €</strong>
@@ -694,7 +694,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           <?php endif; ?>
 
           <?php if (!$readOnly) : ?>
-            <div id="dg-voucher-payment-add-form" class="dg-voucher-payments__add" style="margin-top: 12px;">
+            <div id="dg-voucher-payment-add-form" class="dg-voucher-payments__add dg-mt-3">
               <fieldset class="dg-form-section dg-fieldset">
                 <legend>Neue Zahlung erfassen</legend>
                 <div class="dg-form-grid">
@@ -728,7 +728,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </div>
       <?php endif; ?>
 
-      <div id="dg-voucher-payment-terms-section" class="dg-voucher-payment-terms"<?= $showPaymentTerms ? '' : ' hidden' ?> style="margin-top: 14px;">
+      <div id="dg-voucher-payment-terms-section" class="dg-voucher-payment-terms dg-mt-4"<?= $showPaymentTerms ? '' : ' hidden' ?>>
         <h3 class="dg-subsection-title">Zahlungsbedingungen (Skonto-Stufen)</h3>
         <p class="dg-field-hint">Voreinstellungen aus <a href="<?= View::escape(SettingsRegistry::tabUrl('payment-terms')) ?>">Einstellungen → Zahlungsbedingungen</a>. Negative % = Skonto, positive % = Verzugszinsen.</p>
         <div class="dg-table-wrap">
@@ -760,7 +760,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
             </tbody>
           </table>
         </div>
-        <div class="dg-form-grid" style="margin-top: 12px;">
+        <div class="dg-form-grid dg-mt-3">
           <label class="dg-field">
             <span>Fälligkeitsdatum</span>
             <input type="date" name="payment_due_date" id="dg-voucher-payment-due-date" value="<?= View::escape((string) ($form['payment_due_date'] ?? '')) ?>"<?= $readOnly ? ' readonly' : '' ?>>
@@ -973,7 +973,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         $showGiftRedemptions = $showInvoiceItems
             && VoucherDocumentKind::isBookable($selectedDocumentKind, $selectedType);
       ?>
-      <div id="dg-voucher-gift-section" class="dg-voucher-gift-section"<?= $showGiftRedemptions ? '' : ' hidden' ?> style="margin-top:18px">
+      <div id="dg-voucher-gift-section" class="dg-voucher-gift-section dg-mt-5"<?= $showGiftRedemptions ? '' : ' hidden' ?>>
         <h3 class="dg-subsection-title">Gutscheine</h3>
         <p class="dg-field-hint">
           <strong>Verkauf:</strong> Mehrzweck-Gutschein verkaufen (ohne USt, Verbindlichkeit) — der Code wird beim Speichern erzeugt.
@@ -1069,7 +1069,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           </table>
         </div>
         <?php if (!$readOnly) : ?>
-          <p class="dg-form-actions" style="margin-top:8px">
+          <p class="dg-form-actions dg-mt-2">
             <button type="button" class="dg-button dg-button--small" id="dg-voucher-gift-add">Gutschein-Zeile hinzufügen</button>
           </p>
         <?php endif; ?>
@@ -1093,7 +1093,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         $showGiftRedemptions = $showInvoiceItems
             && VoucherDocumentKind::isBookable($selectedDocumentKind, $selectedType);
       ?>
-      <div id="dg-voucher-gift-section" class="dg-voucher-gift-section"<?= $showGiftRedemptions ? '' : ' hidden' ?> style="margin-top:18px">
+      <div id="dg-voucher-gift-section" class="dg-voucher-gift-section dg-mt-5"<?= $showGiftRedemptions ? '' : ' hidden' ?>>
         <h3 class="dg-subsection-title">Gutscheine einlösen</h3>
         <p class="dg-field-hint">
           Geschenkgutscheine aus der Liste wählen — der Betrag wird vom Rechnungsbetrag abgezogen (Zahlbetrag).
@@ -1165,7 +1165,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           </table>
         </div>
         <?php if (!$readOnly) : ?>
-          <p class="dg-form-actions" style="margin-top:8px">
+          <p class="dg-form-actions dg-mt-2">
             <button type="button" class="dg-button dg-button--small" id="dg-voucher-gift-add">Gutschein hinzufügen</button>
           </p>
         <?php endif; ?>
@@ -1173,7 +1173,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
       </div>
       <?php endif; ?>
 
-      <div id="dg-voucher-document-texts-footer"<?= $showDocumentPositionTexts ? '' : ' hidden' ?> style="margin-top: 12px;">
+      <div id="dg-voucher-document-texts-footer" class="dg-mt-3"<?= $showDocumentPositionTexts ? '' : ' hidden' ?>>
         <label class="dg-field dg-field--wide">
           <span>Zusätzlicher Freitext (nach den Positionen)</span>
           <textarea
@@ -1613,7 +1613,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         <small class="dg-field-hint">Nur intern — erscheint nicht auf dem Kunden-PDF.</small>
       </label>
       <?php if ($useNotesFileUpload) : ?>
-        <div class="dg-voucher-files dg-voucher-files--notes" style="margin-top: 12px;">
+        <div class="dg-voucher-files dg-voucher-files--notes dg-mt-3">
           <h3 class="dg-subsection-title">Dokumente / Zeichnungen</h3>
           <?php if (!$readOnly) : ?>
             <div class="dg-voucher-files__dropzone" id="dg-voucher-file-dropzone">

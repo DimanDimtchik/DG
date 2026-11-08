@@ -192,7 +192,7 @@ $settings = $timeTrackingSettings ?? TimeTrackingSettings::forForm();
       </select>
     </label>
     <?php if ($approverDepts !== []) : ?>
-      <p class="dg-field-hint" style="margin-top:1rem">
+      <p class="dg-field-hint dg-mt-4">
         Optional je Abteilung (überschreibt die Automatik und ggf. den globalen Freigeber nur für diese Abteilung):
       </p>
       <div class="dg-form-grid">

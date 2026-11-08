@@ -299,7 +299,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                     <?php if ($elines === []) : ?>
                       —
                     <?php else : ?>
-                      <ul style="margin:0;padding-left:1.1rem">
+                      <ul class="dg-mt-0 dg-mb-0" style="padding-left:1.1rem">
                         <?php foreach ($elines as $ln) : ?>
                           <li>
                             <?= View::escape((string) ($ln['code'] ?? '')) ?>

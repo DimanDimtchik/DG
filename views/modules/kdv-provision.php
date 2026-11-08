@@ -34,20 +34,20 @@ $gateError = $provisionGateError ?? null;
     </table>
     </div>
     <?php if (!empty($result['install_url'])): ?>
-    <div style="margin-top:16px; padding:16px; background:#f0f7ff; border:1px solid #cde; border-radius:6px;">
+    <div class="dg-mt-4" style="padding:16px;background:#f0f7ff;border:1px solid #cde;border-radius:6px">
       <strong>Install-URL:</strong>
       <a href="<?= View::escape($result['install_url']) ?>" target="_blank" rel="noopener"><?= View::escape($result['install_url']) ?></a>
     </div>
     <?php endif; ?>
     <?php if (!empty($result['mailbox_email']) && !empty($result['mailbox_password'])): ?>
-    <div style="margin-top:16px; padding:16px; background:#fff8e1; border:1px solid #f0d78c; border-radius:6px;">
+    <div class="dg-mt-4" style="padding:16px;background:#fff8e1;border:1px solid #f0d78c;border-radius:6px">
       <strong>Info-Postfach (bitte sicher notieren / an Kundin weitergeben):</strong>
-      <p style="margin:8px 0 0;">E-Mail: <code><?= View::escape((string) $result['mailbox_email']) ?></code></p>
-      <p style="margin:4px 0 0;">Passwort: <code><?= View::escape((string) $result['mailbox_password']) ?></code></p>
-      <p style="margin:8px 0 0;font-size:0.9em;color:#666;">Wurde auch in der Installations-E-Mail mitgeschickt und in der SaaS-Akte gespeichert.</p>
+      <p class="dg-mt-2 dg-mb-0">E-Mail: <code><?= View::escape((string) $result['mailbox_email']) ?></code></p>
+      <p class="dg-mt-1 dg-mb-0">Passwort: <code><?= View::escape((string) $result['mailbox_password']) ?></code></p>
+      <p class="dg-mt-2 dg-mb-0" style="font-size:0.9em;color:#666">Wurde auch in der Installations-E-Mail mitgeschickt und in der SaaS-Akte gespeichert.</p>
     </div>
     <?php endif; ?>
-    <div style="margin-top:16px;">
+    <div class="dg-mt-4">
       <a class="dg-button" href="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) $c['id'] ?>">← Zur Kundenakte (Status/Steps)</a>
       <a class="dg-button" href="/app?page=kdv-kunden">Zur Kundenliste</a>
     </div>

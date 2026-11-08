@@ -24,7 +24,7 @@ $unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
     : [];
 ?>
 <?php if ($documents !== []) : ?>
-  <section class="dg-panel dg-voucher-chain" id="dg-voucher-chain" style="margin-bottom: 20px;">
+  <section class="dg-panel dg-voucher-chain dg-mb-5" id="dg-voucher-chain">
     <header class="dg-panel__toolbar dg-panel__toolbar--lead">
       <div>
         <h2 class="dg-subsection-title">Belegkette</h2>
@@ -87,7 +87,7 @@ $unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
     </div>
 
     <?php if (is_array($depositProgress)) : ?>
-      <h3 class="dg-subsection-title" style="margin-top:1rem">Anzahlungen</h3>
+      <h3 class="dg-subsection-title dg-mt-4">Anzahlungen</h3>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">
           <thead>
@@ -122,7 +122,7 @@ $unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
         Pro erhaltener Zahlung eine Abschlagsrechnung erzeugen, dann per E-Mail versenden.
       </p>
       <?php if ($canEdit && $unabsorbedPayments !== []) : ?>
-        <div class="dg-table-wrap" style="margin-top:.75rem">
+        <div class="dg-table-wrap dg-mt-3">
           <table class="dg-table dg-table--compact">
             <thead>
               <tr>
@@ -157,7 +157,7 @@ $unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
 <?php endif; ?>
 
 <?php if (is_array($chainSummary) && ($chainSummary['partials'] ?? []) !== []) : ?>
-  <section class="dg-panel dg-voucher-chain-summary" style="margin-bottom: 20px;">
+  <section class="dg-panel dg-voucher-chain-summary dg-mb-5">
     <h2 class="dg-subsection-title">Schlussrechnung — Abschlagsabzug</h2>
     <div class="dg-table-wrap">
       <table class="dg-table">
@@ -197,7 +197,7 @@ $unabsorbedPayments = ((int) ($voucherId ?? 0) > 0)
 <?php endif; ?>
 
 <?php if ($canEdit && $voucherId > 0 && ($followUps !== [] || $canReanimate)) : ?>
-  <section class="dg-panel dg-voucher-chain-actions" style="margin-bottom: 20px;">
+  <section class="dg-panel dg-voucher-chain-actions dg-mb-5">
     <h2 class="dg-subsection-title">Folgebeleg erstellen</h2>
     <?php if ($canReanimate) : ?>
       <p class="dg-field-hint">

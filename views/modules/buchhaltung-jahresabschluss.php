@@ -103,7 +103,7 @@ $baseUrl = '/app?page=buchhaltung-jahresabschluss';
               <a href="<?= View::escape((string) $item['href']) ?>">Prüfen</a>
             <?php endif; ?>
             <?php if (!empty($item['allow_na']) && $dbConnected) : ?>
-              <form method="post" action="<?= View::escape($baseUrl) ?>" class="dg-form dg-form--inline" style="margin-top:0.35rem">
+              <form method="post" action="<?= View::escape($baseUrl) ?>" class="dg-form dg-form--inline dg-mt-1">
                 <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                 <input type="hidden" name="year" value="<?= (int) $year ?>">
                 <input type="hidden" name="checklist_item" value="<?= View::escape((string) ($item['id'] ?? '')) ?>">
@@ -111,7 +111,7 @@ $baseUrl = '/app?page=buchhaltung-jahresabschluss';
                 <button type="submit" name="fiscal_close_mark_na" value="1" class="dg-button dg-button--small">Als n. a. markieren</button>
               </form>
             <?php elseif (!empty($item['na_marked']) && $dbConnected) : ?>
-              <form method="post" action="<?= View::escape($baseUrl) ?>" style="display:inline;margin-left:0.5rem">
+              <form method="post" action="<?= View::escape($baseUrl) ?>" class="dg-toolbar__inline-form">
                 <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                 <input type="hidden" name="year" value="<?= (int) $year ?>">
                 <input type="hidden" name="checklist_item" value="<?= View::escape((string) ($item['id'] ?? '')) ?>">

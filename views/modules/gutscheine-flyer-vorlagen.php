@@ -130,7 +130,7 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
       <div class="dg-field dg-field--wide" id="dg-flyer-bg-media-wrap">
         <span>Hintergrundbild</span>
         <input type="hidden" name="layout[bg_media_id]" id="dg-flyer-bg-media-id" value="<?= View::escape($bgMediaId) ?>">
-        <p class="dg-form-actions" style="margin:0 0 8px">
+        <p class="dg-form-actions dg-mt-0 dg-mb-2">
           <button type="button" class="dg-button" data-dg-media-pick-open
             data-input="dg-flyer-bg-media-id"
             data-preview="dg-flyer-bg-preview"
@@ -173,7 +173,7 @@ if ($socialSlotCount === 0 && $offerWebsite && $companyWebsiteUrl !== '') {
       <div class="dg-field dg-field--wide">
         <span>Bildzone (optional, z.&nbsp;B. Anlass-Grafik)</span>
         <input type="hidden" name="layout[image_media_id]" id="dg-flyer-image-media-id" value="<?= View::escape($imageMediaId) ?>">
-        <p class="dg-form-actions" style="margin:0 0 8px">
+        <p class="dg-form-actions dg-mt-0 dg-mb-2">
           <button type="button" class="dg-button" data-dg-media-pick-open
             data-input="dg-flyer-image-media-id"
             data-preview="dg-flyer-image-preview"

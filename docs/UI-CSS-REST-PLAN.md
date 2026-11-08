@@ -130,7 +130,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U4d | `rezeptur-maschine-form.php` | wie U4c | 🟡 | [x] 2026-11-08 |
 | U4e | `rezeptur-maschinen.php` | wie U4c | 🟡 | [x] 2026-11-08 |
 | U4f | `kdv-dashboard.php` / `kdv-kunde-form.php` | Spacing | 🟡 | [x] 2026-11-08 |
-| U4g | Rest-Module laut `rg style="…margin` (je Datei neue Mini-ID `U4g-<slug>`) | 🟡 | [ ] |
+| U4g | Rest-Module laut `rg style="…margin` (Batch 2026-11-08, non-Print) | 🟡 | [x] 2026-11-08 — Rest: margin-left / negativ / Print bewusst offen |
 
 **Free-Plan-Tipp U4c–e:** Wenn der Agent zu viel Kontext zieht → lokal mit Suche/Ersetzen (`style="margin-top:1rem"` → `class="… dg-mt-4"`) und nur Guard im Agent.
 
@@ -167,7 +167,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U1 | Scan-Fails | [x] |
 | U2 | Lohn / Firmendaten | [~] U2a+U2c ✅; U2b Sichtcheck offen |
 | U3 | Settings-Wellen | [x] |
-| U4 | Modul-Wellen | [~] U4a–U4f ✅; U4g Rest offen |
+| U4 | Modul-Wellen | [x] (margin-left/negativ/Print ausgenommen) |
 | U5 | Abschluss Guards + TODOS | [ ] |
 
 ---

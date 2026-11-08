@@ -85,7 +85,7 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
       })();
     </script>
   <?php endif; ?>
-  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form" style="margin-bottom:1rem">
+  <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=purchase') ?>" class="dg-inline-form dg-mb-4">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <button type="submit" name="purchase_list_rebuild" value="1" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Liste aus Bestand aktualisieren</button>
   </form>
@@ -180,7 +180,7 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
     </script>
   <?php endif; ?>
 
-  <section class="dg-panel" style="margin-bottom:1.25rem">
+  <section class="dg-panel dg-mb-5">
     <h3 class="dg-subsection-title">Nachbestellung manuell eintragen</h3>
     <form method="post" action="<?= View::escape($catalogBaseUrl . '&list=ordered') ?>" class="dg-form-grid dg-form-grid--compact">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">

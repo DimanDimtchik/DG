@@ -156,7 +156,7 @@ $otOn = !empty($cfg['ot_enabled']);
         </table>
       </div>
       <?php if ($canBook) : ?>
-        <form method="post" action="/app?page=zeiterfassung-rueckstellung&amp;year=<?= (int) $year ?>" class="dg-form" style="margin-top:1rem"
+        <form method="post" action="/app?page=zeiterfassung-rueckstellung&amp;year=<?= (int) $year ?>" class="dg-form dg-mt-4"
               onsubmit="return confirm('Rückstellung wirklich in das Journal buchen?');">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="provision_action" value="book">

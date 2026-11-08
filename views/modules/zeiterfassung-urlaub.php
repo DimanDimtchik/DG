@@ -108,7 +108,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
           <textarea name="reason" rows="2" required maxlength="500" placeholder="z. B. Erholung / Familienurlaub"></textarea>
         </label>
         <label class="dg-field dg-field--checkbox" style="display:flex;gap:0.5rem;align-items:flex-start">
-          <input type="checkbox" name="acknowledge" value="1" required style="margin-top:0.25rem">
+          <input type="checkbox" name="acknowledge" value="1" required class="dg-mt-1">
           <span><?= View::escape(TimeAbsenceService::requestAcknowledgeText('vacation') ?? '') ?></span>
         </label>
         <button type="submit" class="dg-button dg-button--primary">Antrag senden</button>
@@ -198,7 +198,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
                       <input type="hidden" name="absence_id" value="<?= (int) ($row['id'] ?? 0) ?>">
                       <button type="submit" class="dg-button dg-button--small dg-button--primary">Genehmigen</button>
                     </form>
-                    <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form" style="display:inline-block;margin-top:0.35rem">
+                    <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form dg-mt-1" style="display:inline-block">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="vacation_action" value="reject">
                       <input type="hidden" name="absence_id" value="<?= (int) ($row['id'] ?? 0) ?>">
@@ -229,7 +229,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
       <?php if ($planningStats === []) : ?>
         <p class="dg-muted">Keine Mitarbeiter-Kontakte.</p>
       <?php else : ?>
-        <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form dg-form--inline" style="margin-bottom:1rem">
+        <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form dg-form--inline dg-mb-4">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="vacation_action" value="send_planning_reminder">
           <input type="hidden" name="year" value="<?= (int) $year ?>">
@@ -328,7 +328,7 @@ $staffLabel = static function (int $cid) use ($staff): string {
         </label>
       </form>
       <?php if ($entCid > 0 && $entBal !== null) : ?>
-        <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form" style="margin-top:1rem">
+        <form method="post" action="/app?page=zeiterfassung-urlaub" class="dg-form dg-mt-4">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="vacation_action" value="save_entitlement">
           <input type="hidden" name="contact_id" value="<?= $entCid ?>">

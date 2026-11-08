@@ -36,7 +36,7 @@ $apkKalender = (string) ($apkKalender ?? '');
         <a class="dg-button" href="<?= View::escape($apkKalender) ?>">Termin-App (Android)</a>
       </p>
       <p class="dg-login__hint">iOS-Download folgt (TestFlight).</p>
-      <p style="margin-top:1.5rem">
+      <p class="dg-mt-5">
         <a class="dg-button dg-button--primary" href="<?= View::escape($connectScheme) ?>">App öffnen / verbinden</a>
       </p>
       <p class="dg-login__hint" style="font-size:.85rem">

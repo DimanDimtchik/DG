@@ -46,7 +46,7 @@
     </table>
   </div>
 
-  <div class="dg-panel dg-panel--notice" style="margin-top:16px">
+  <div class="dg-panel dg-panel--notice dg-mt-4">
     <p><strong>Rollen:</strong> Administrator (alles) · Mitarbeiter (bearbeiten) · Kunde (nur Profil, Registrierung unter <a href="/register">/register</a>)</p>
   </div>
 </div>

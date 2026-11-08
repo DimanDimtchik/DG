@@ -97,7 +97,7 @@
         $retentionStatus = EmployeeData::retentionStatus($contact->employeeData);
       ?>
       <?php if ($retentionStatus['status'] !== 'open') : ?>
-        <div class="dg-retention dg-retention--<?= View::escape($retentionStatus['status']) ?>" style="margin-bottom:16px">
+        <div class="dg-retention dg-retention--<?= View::escape($retentionStatus['status']) ?> dg-mb-4">
           <p><strong>Aufbewahrung:</strong> <?= View::escape($retentionStatus['label']) ?></p>
           <?php if ($retentionUntil !== null) : ?>
             <p><strong>Löschfrist (10 Jahre nach Austritt):</strong> <?= View::escape($retentionUntil) ?></p>
@@ -329,7 +329,7 @@
             }
             $detailFields = BankAccountTypes::detailFields($account);
           ?>
-          <div class="dg-bank-card" style="margin-bottom:12px">
+          <div class="dg-bank-card dg-mb-3">
             <p class="dg-bank-card__title"><?= View::escape($title) ?></p>
             <dl class="dg-dl">
               <dt>Typ</dt>

@@ -56,7 +56,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
 
         return;
     }
-    echo '<ul class="dg-list" style="margin:0;padding-left:1.1rem">';
+    echo '<ul class="dg-list dg-mt-0 dg-mb-0" style="padding-left:1.1rem">';
     foreach ($atts as $att) {
         $aid = (int) ($att['id'] ?? 0);
         $name = (string) ($att['original_name'] ?? 'Nachweis');
@@ -115,7 +115,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
           Status zunächst „beantragt“ — HR bestätigt. JPG/PNG/WebP/PDF, max. 5 Dateien à 10&nbsp;MB.
         </p>
         <label class="dg-field dg-field--checkbox" style="display:flex;gap:0.5rem;align-items:flex-start">
-          <input type="checkbox" name="acknowledge" value="1" required style="margin-top:0.25rem">
+          <input type="checkbox" name="acknowledge" value="1" required class="dg-mt-1">
           <span><?= View::escape(TimeAbsenceService::requestAcknowledgeText('sick') ?? '') ?></span>
         </label>
         <button type="submit" class="dg-button dg-button--primary">Krankmeldung senden</button>
@@ -333,7 +333,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
                       <input type="hidden" name="absence_id" value="<?= $rowId ?>">
                       <button type="submit" class="dg-button dg-button--small dg-button--primary">Bestätigen</button>
                     </form>
-                    <form method="post" action="/app?page=zeiterfassung-abwesenheit" style="display:inline-block;margin-top:0.35rem">
+                    <form method="post" action="/app?page=zeiterfassung-abwesenheit" class="dg-mt-1" style="display:inline-block">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="absence_action" value="reject">
                       <input type="hidden" name="absence_id" value="<?= $rowId ?>">
@@ -357,7 +357,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
         Alle Typen und Status. Genehmigte Krankheit oder Sonderurlaub kürzen automatisch überlappenden Urlaub
         (Resturlaub steigt). Bei Storno/Ablehnung wird der Urlaub wiederhergestellt.
       </p>
-      <form method="get" action="/app" class="dg-form dg-form--inline" style="margin-bottom:1rem">
+      <form method="get" action="/app" class="dg-form dg-form--inline dg-mb-4">
         <input type="hidden" name="page" value="zeiterfassung-abwesenheit">
         <label class="dg-field">
           <span class="dg-field-label">Monat</span>
@@ -400,7 +400,7 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
       </form>
 
       <?php if ($hrEdit !== null) : ?>
-        <form method="post" action="/app?page=zeiterfassung-abwesenheit" class="dg-form" style="margin-bottom:1.25rem">
+        <form method="post" action="/app?page=zeiterfassung-abwesenheit" class="dg-form dg-mb-5">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="absence_action" value="hr_update">
           <input type="hidden" name="absence_id" value="<?= (int) ($hrEdit['id'] ?? 0) ?>">

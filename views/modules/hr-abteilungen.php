@@ -110,7 +110,7 @@ $renderPerson = static function (array $ma, bool $showTeamHint = true): void {
             <?php if (trim((string) ($dept['description'] ?? '')) !== '') : ?>
               <p class="dg-lead"><?= View::escape((string) $dept['description']) ?></p>
             <?php endif; ?>
-            <p class="dg-muted" style="margin:0 0 0.75rem;">
+            <p class="dg-muted dg-mt-0 dg-mb-3">
               <?php
                 $flags = [];
                 if (!empty($dept['allow_article_catalog'])) {
@@ -212,7 +212,7 @@ $renderPerson = static function (array $ma, bool $showTeamHint = true): void {
             <?php if ($without === []) : ?>
               <p class="dg-muted">Keine: alle Abteilungsmitglieder sind einem Team zugeordnet — oder die Abteilung hat keine Mitglieder.</p>
             <?php else : ?>
-              <p class="dg-muted" style="margin:0 0 0.5rem;">Der Abteilung zugeordnet, aber noch keinem Team.</p>
+              <p class="dg-muted dg-mt-0 dg-mb-2">Der Abteilung zugeordnet, aber noch keinem Team.</p>
               <ul class="dg-list">
                 <?php foreach ($without as $ma) : ?>
                   <?php $renderPerson($ma, false); ?>

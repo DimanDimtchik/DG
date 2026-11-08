@@ -42,7 +42,7 @@ $contactQs = $contactFilter > 0 ? '&amp;contact=' . $contactFilter : '';
     </div>
   <?php endif; ?>
 
-  <p class="dg-form-actions" style="margin-bottom:12px">
+  <p class="dg-form-actions dg-mb-3">
     <a class="dg-button<?= $filter === '' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser<?= $contactQs ?>">Alle</a>
     <a class="dg-button<?= $filter === 'draft' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=draft<?= $contactQs ?>">Entwürfe</a>
     <a class="dg-button<?= $filter === 'final' ? ' dg-button--primary' : '' ?>" href="/app?page=dokumentenverfasser&amp;status=final<?= $contactQs ?>">Final</a>
@@ -50,7 +50,7 @@ $contactQs = $contactFilter > 0 ? '&amp;contact=' . $contactFilter : '';
   </p>
 
   <?php if ($filterContact instanceof Contact) : ?>
-    <div class="dg-flash dg-flash--info" style="margin-bottom:12px">
+    <div class="dg-flash dg-flash--info dg-mb-3">
       Gefiltert nach Kontakt:
       <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $filterContact->id ?>"><?= View::escape($filterContact->listLabel()) ?></a>
       · <a href="/app?page=dokumentenverfasser<?= $filter !== '' ? '&amp;status=' . rawurlencode($filter) : '' ?>">Filter aufheben</a>

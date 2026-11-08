@@ -41,7 +41,7 @@ $stroke = match ($iconStyle['stroke']) {
       <div class="dg-menu-icon-grid" role="listbox" aria-label="Icon auswählen" data-menu-icon-grid></div>
       <p class="dg-field-hint dg-menu-icon-field__hint" data-menu-icon-hint hidden></p>
       <?php if (!$compact && $suggested !== '' && $value === 'auto') : ?>
-        <p class="dg-field-hint" style="margin:8px 0 0;" data-menu-icon-suggest-hint>
+        <p class="dg-field-hint dg-mt-2 dg-mb-0" data-menu-icon-suggest-hint>
           Vorschlag: <strong><?= View::escape($options[$suggested] ?? $options[WebsiteMenuIcons::canonicalId($suggested)] ?? $suggested) ?></strong>
           · <button type="button" class="dg-button dg-button--small" data-menu-icon-pick data-value="<?= View::escape($suggested) ?>" data-label="<?= View::escape($options[$suggested] ?? $options[WebsiteMenuIcons::canonicalId($suggested)] ?? $suggested) ?>">Fest übernehmen</button>
         </p>

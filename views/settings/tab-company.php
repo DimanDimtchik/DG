@@ -268,7 +268,7 @@ $bankSummary = $filledBanks > 0
             $vf = (string) ($h['valid_from'] ?? '');
             $vfLabel = $vf !== '' ? date('d.m.Y', strtotime($vf)) : '—';
           ?>
-          <li style="margin-bottom:6px;">
+          <li class="dg-mb-2">
             <strong><?= View::escape($vfLabel) ?></strong>
             · <?= View::escape((string) ($h['display_name'] ?? '')) ?>
             <?php if (($h['company_type'] ?? '') !== '') : ?>

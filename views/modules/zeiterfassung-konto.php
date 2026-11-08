@@ -93,7 +93,7 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
               <span class="dg-field-hint">JPG/PNG/WebP oder PDF — z. B. WhatsApp-Screenshot oder gespeicherte E-Mail.</span>
             </label>
           </div>
-          <p class="dg-toolbar" style="margin-top:0.75rem">
+          <p class="dg-toolbar dg-mt-3">
             <button type="submit" class="dg-button dg-button--primary">Korrektur buchen</button>
           </p>
         </form>
@@ -116,7 +116,7 @@ $staffOptions = is_array($timeKontoStaffOptions ?? null) ? $timeKontoStaffOption
               <input type="text" name="reason" required maxlength="500" minlength="5">
             </label>
           </div>
-          <p class="dg-toolbar" style="margin-top:0.75rem">
+          <p class="dg-toolbar dg-mt-3">
             <button type="submit" class="dg-button dg-button--primary">Abbau buchen</button>
           </p>
         </form>

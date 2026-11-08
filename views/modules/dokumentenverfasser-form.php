@@ -363,7 +363,7 @@ $disabled = $readOnly ? ' disabled' : '';
       </form>
 
       <?php if ($isEdit && $canEdit) : ?>
-        <section class="dg-panel dg-writer-crm-links" style="margin-top:16px">
+        <section class="dg-panel dg-writer-crm-links dg-mt-4">
           <h2 class="dg-subsection-title">CRM-Verknüpfung</h2>
           <p class="dg-field-hint">Kontakt und Beleg für die Nachvollziehbarkeit — Verknüpfungen werden auditiert (auch bei finalen Dokumenten).</p>
 
@@ -398,7 +398,7 @@ $disabled = $readOnly ? ' disabled' : '';
           </div>
 
           <?php if ($canLinkVoucher) : ?>
-            <div class="dg-writer-crm-links__block" style="margin-top:16px">
+            <div class="dg-writer-crm-links__block dg-mt-4">
               <h3 class="dg-subsection-title" style="font-size:1rem">Beleg</h3>
               <?php if (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0) : ?>
                 <p>
@@ -433,7 +433,7 @@ $disabled = $readOnly ? ' disabled' : '';
         </section>
       <?php elseif ($isEdit && !$canEdit) : ?>
         <?php if ($linkedContact instanceof Contact || (is_array($linkedVoucher) && (int) ($linkedVoucher['id'] ?? 0) > 0)) : ?>
-          <section class="dg-panel" style="margin-top:16px">
+          <section class="dg-panel dg-mt-4">
             <h2 class="dg-subsection-title">CRM-Verknüpfung</h2>
             <?php if ($linkedContact instanceof Contact) : ?>
               <p>Kontakt: <a href="/app?page=kontakte&amp;action=edit&amp;id=<?= (int) $linkedContact->id ?>"><?= View::escape($linkedContact->listLabel()) ?></a></p>
@@ -446,7 +446,7 @@ $disabled = $readOnly ? ' disabled' : '';
       <?php endif; ?>
 
       <?php if ($isEdit && $versions !== []) : ?>
-        <section class="dg-panel" style="margin-top:16px">
+        <section class="dg-panel dg-mt-4">
           <h2 class="dg-subsection-title">Versionshistorie</h2>
           <div class="dg-table-wrap">
             <table class="dg-table">
@@ -486,7 +486,7 @@ $disabled = $readOnly ? ' disabled' : '';
         ></iframe>
       </div>
       <?php if ($isEdit && $isDraft && $canEdit) : ?>
-        <p class="dg-field-hint" style="margin-top:8px">Nach „Entwurf speichern“ wird die Vorschau aktualisiert.</p>
+        <p class="dg-field-hint dg-mt-2">Nach „Entwurf speichern“ wird die Vorschau aktualisiert.</p>
       <?php endif; ?>
     </aside>
   </div>

@@ -9,7 +9,7 @@ $customFieldId = 'dg-submenu-icon-color-' . md5($namePrefix);
 $hoverCustomFieldId = 'dg-submenu-icon-hover-color-' . md5($namePrefix);
 ?>
 <div class="dg-submenu-icon-style">
-  <p class="dg-field-hint" style="margin:0 0 8px;">Icon-Darstellung (Untermenü)</p>
+  <p class="dg-field-hint dg-mt-0 dg-mb-2">Icon-Darstellung (Untermenü)</p>
   <div class="dg-form-grid dg-form-grid--compact">
     <label class="dg-field">
       <span>Sichtbarkeit</span>

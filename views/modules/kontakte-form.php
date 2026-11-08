@@ -335,7 +335,7 @@ if ($isCompanyForm && $companyEmployees === []) {
   </template>
 
   <?php if ($isEdit && !empty($canDeleteContact)) : ?>
-    <form class="dg-form dg-panel dg-panel--danger" method="post" action="/app?page=kontakte" style="margin-top:16px" onsubmit="return confirm('Kontakt wirklich löschen?');">
+    <form class="dg-form dg-panel dg-panel--danger dg-mt-4" method="post" action="/app?page=kontakte" onsubmit="return confirm('Kontakt wirklich löschen?');">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="id" value="<?= (int) $contactId ?>">
       <h2>Kontakt löschen</h2>

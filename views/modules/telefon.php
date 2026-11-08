@@ -32,7 +32,7 @@ $ctiOn = CtiSettings::isEnabled();
   </form>
 </section>
 
-<section class="dg-panel" style="margin-top:16px">
+<section class="dg-panel dg-mt-4">
   <h2 class="dg-subsection-title">Letzte Anrufe</h2>
   <?php if ($callLog === []) : ?>
     <p class="dg-muted">Noch keine Einträge.</p>
@@ -80,7 +80,7 @@ $ctiOn = CtiSettings::isEnabled();
 </section>
 
 <?php if ($isAdmin) : ?>
-<section class="dg-panel" style="margin-top:16px">
+<section class="dg-panel dg-mt-4">
   <h2 class="dg-subsection-title">CTI-Einstellungen (Admin)</h2>
   <p class="dg-field-hint">Anbieter derzeit: <strong>Fritzbox</strong> (CallMonitor). Andere Router nur mit eigener Anbindung.</p>
   <form class="dg-form" method="post" action="/app?page=telefon">
@@ -118,7 +118,7 @@ $ctiOn = CtiSettings::isEnabled();
     </div>
   </form>
   <?php if (($ctiConfig['bridge_token'] ?? '') !== '') : ?>
-    <pre class="dg-field-hint" style="white-space:pre-wrap;margin-top:12px">php bin/fritz-callmonitor-bridge.php --host=<?= View::escape((string) $ctiConfig['fritz_host']) ?> --crm=https://DIESE-DOMAIN --token=<?= View::escape((string) $ctiConfig['bridge_token']) ?></pre>
+    <pre class="dg-field-hint dg-mt-3" style="white-space:pre-wrap">php bin/fritz-callmonitor-bridge.php --host=<?= View::escape((string) $ctiConfig['fritz_host']) ?> --crm=https://DIESE-DOMAIN --token=<?= View::escape((string) $ctiConfig['bridge_token']) ?></pre>
   <?php endif; ?>
 </section>
 <?php endif; ?>

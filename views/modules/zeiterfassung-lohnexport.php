@@ -185,13 +185,13 @@ foreach ($rows as $r) {
           </table>
         </div>
         <?php if ($hasEditablePayout) : ?>
-          <p class="dg-toolbar" style="margin-top:1rem">
+          <p class="dg-toolbar dg-mt-4">
             <button type="submit" class="dg-button dg-button--primary">Auszahlung speichern</button>
             <span class="dg-muted">Danach Export starten — Abbuchung vom Konto erst beim Download.</span>
           </p>
         <?php endif; ?>
         <?php if ($hasAppliedPayout) : ?>
-          <p class="dg-flash dg-flash--info" style="margin-top:1rem">
+          <p class="dg-flash dg-flash--info dg-mt-4">
             Mindestens eine Auszahlung für diesen Monat wurde bereits beim Export vom Überstundenkonto abgebucht und ist gesperrt.
           </p>
         <?php endif; ?>

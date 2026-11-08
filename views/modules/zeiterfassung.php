@@ -170,7 +170,7 @@ $state = (string) ($status['state'] ?? 'off');
         <button type="submit" class="dg-button">PIN speichern</button>
       </form>
       <?php if ($timeClockCanTeam ?? false) : ?>
-        <p class="dg-muted" style="margin-top:.75rem"><a href="/app?page=zeiterfassung-kiosk">PIN-Anfragen &amp; PIN für Team (HR)</a></p>
+        <p class="dg-muted dg-mt-3"><a href="/app?page=zeiterfassung-kiosk">PIN-Anfragen &amp; PIN für Team (HR)</a></p>
       <?php endif; ?>
     </section>
   <?php endif; ?>

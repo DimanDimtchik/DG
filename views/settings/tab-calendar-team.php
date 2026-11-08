@@ -21,7 +21,7 @@ $csrf = Csrf::token();
 </nav>
 
 <?php if (!$dbConnected) : ?>
-  <div class="dg-flash dg-flash--warning" style="margin-top:16px">
+  <div class="dg-flash dg-flash--warning dg-mt-4">
     Zum Speichern ist eine funktionierende <a href="<?= View::escape(SettingsRegistry::tabUrl('datenbank')) ?>">Datenbankverbindung</a> erforderlich.
   </div>
 <?php endif; ?>
@@ -29,7 +29,7 @@ $csrf = Csrf::token();
 <input type="hidden" id="dg-calendar-staff-csrf" value="<?= View::escape($csrf) ?>">
 
 <?php if ($calendarTeamTab === 'bereiche') : ?>
-  <section class="dg-panel" style="margin-top:16px">
+  <section class="dg-panel dg-mt-4">
     <p class="dg-lead">Tätigkeitsbereiche für den Terminkalender. Optional mit einer CRM-Abteilung verknüpfen — dann gelten nur Mitarbeiter dieser Abteilung (CRM-Benutzer oder verknüpfter Kontakt).</p>
 
     <div class="dg-table-wrap">
@@ -107,7 +107,7 @@ $csrf = Csrf::token();
   <?php
     $calendarOrphans = $dbConnected ? CalendarStaffRepository::orphanEmployeesWithoutContact() : [];
   ?>
-  <section class="dg-panel" style="margin-top:16px">
+  <section class="dg-panel dg-mt-4">
     <p class="dg-lead">
       Kalender-Mitarbeiter sind Ressourcen für Termine/Online-Buchung und brauchen zwingend einen
       <strong>Mitarbeiter-Kontakt</strong> (Personal / Zeiterfassung). Stammdaten pflegen Sie unter Kontakte.

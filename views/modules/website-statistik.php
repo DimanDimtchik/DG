@@ -37,14 +37,14 @@ foreach ($byDay as $row) {
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php endif; ?>
 
-  <section class="dg-panel" style="margin-bottom:16px;">
+  <section class="dg-panel dg-mb-4">
     <h2>Google Analytics &amp; Tag Manager</h2>
     <?php if ($gaLinks === []) : ?>
       <p class="dg-field-hint">Noch keine Mess-ID hinterlegt.
         <a href="/app?page=website-chrome">Unter Kopf &amp; Fuß eintragen</a> — detaillierte Auswertungen (Geräte, Kampagnen, …) finden Sie dort bei Google.</p>
     <?php else : ?>
       <p class="dg-field-hint">Für Geräte, Quellen und Conversion-Pfade die Google-Oberfläche nutzen. Hier nur Aufrufzahlen aus dem CRM.</p>
-      <div class="dg-form-actions" style="margin:0;">
+      <div class="dg-form-actions dg-mt-0 dg-mb-0">
         <?php foreach ($gaLinks as $link) : ?>
           <a class="dg-button dg-button--primary" href="<?= View::escape($link['url']) ?>" target="_blank" rel="noopener">
             <?= View::escape($link['label']) ?>
@@ -55,26 +55,26 @@ foreach ($byDay as $row) {
     <?php endif; ?>
   </section>
 
-  <div class="dg-form-grid" style="margin-bottom:16px;">
+  <div class="dg-form-grid dg-mb-4">
     <div class="dg-panel">
-      <p class="dg-muted" style="margin:0;">Heute</p>
-      <p style="font-size:1.75rem;font-weight:700;margin:4px 0 0;"><?= (int) $summary['today'] ?></p>
+      <p class="dg-muted dg-mt-0 dg-mb-0">Heute</p>
+      <p class="dg-mt-1 dg-mb-0" style="font-size:1.75rem;font-weight:700"><?= (int) $summary['today'] ?></p>
     </div>
     <div class="dg-panel">
-      <p class="dg-muted" style="margin:0;">7 Tage</p>
-      <p style="font-size:1.75rem;font-weight:700;margin:4px 0 0;"><?= (int) $summary['days7'] ?></p>
+      <p class="dg-muted dg-mt-0 dg-mb-0">7 Tage</p>
+      <p class="dg-mt-1 dg-mb-0" style="font-size:1.75rem;font-weight:700"><?= (int) $summary['days7'] ?></p>
     </div>
     <div class="dg-panel">
-      <p class="dg-muted" style="margin:0;">30 Tage</p>
-      <p style="font-size:1.75rem;font-weight:700;margin:4px 0 0;"><?= (int) $summary['days30'] ?></p>
+      <p class="dg-muted dg-mt-0 dg-mb-0">30 Tage</p>
+      <p class="dg-mt-1 dg-mb-0" style="font-size:1.75rem;font-weight:700"><?= (int) $summary['days30'] ?></p>
     </div>
     <div class="dg-panel">
-      <p class="dg-muted" style="margin:0;">Gesamt (gespeichert)</p>
-      <p style="font-size:1.75rem;font-weight:700;margin:4px 0 0;"><?= (int) $summary['total'] ?></p>
+      <p class="dg-muted dg-mt-0 dg-mb-0">Gesamt (gespeichert)</p>
+      <p class="dg-mt-1 dg-mb-0" style="font-size:1.75rem;font-weight:700"><?= (int) $summary['total'] ?></p>
     </div>
   </div>
 
-  <section class="dg-panel" style="margin-bottom:16px;">
+  <section class="dg-panel dg-mb-4">
     <h2>Aufrufe der letzten <?= (int) $days ?> Tage</h2>
     <?php if ($byDay === []) : ?>
       <p class="dg-field-hint">Noch keine Daten. Sobald Besucher der Statistik zustimmen, erscheinen Aufrufe hier.</p>
@@ -137,7 +137,7 @@ foreach ($byDay as $row) {
     </section>
   </div>
 
-  <p class="dg-field-hint" style="margin-top:16px;">
+  <p class="dg-field-hint dg-mt-4">
     Gespeichert werden Pfad, Zeitpunkt und ggf. Referrer-Host — keine IP-Adressen.
     Erfassung nur bei Einwilligung „Statistik“. Vorschau-Aufrufe und Bots werden übersprungen.
   </p>

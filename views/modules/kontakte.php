@@ -166,7 +166,7 @@ $roleLabels = [
   <?php endif; ?>
 
   <?php if ($importErrors !== []) : ?>
-    <section class="dg-panel dg-panel--warning" style="margin-bottom:1rem">
+    <section class="dg-panel dg-panel--warning dg-mb-4">
       <h2 class="dg-subsection-title">Hinweise aus dem letzten Import</h2>
       <ul class="dg-list">
         <?php foreach ($importErrors as $err) : ?>

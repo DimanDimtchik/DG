@@ -80,7 +80,7 @@ $tabBase = SettingsRegistry::tabUrl('lager-struktur');
     </form>
 
     <?php $amazonBusinessForm = $amazonBusinessForm ?? AmazonBusinessSettings::forForm(); ?>
-    <h3 class="dg-subsection-title" style="margin-top:2rem">Amazon Business</h3>
+    <h3 class="dg-subsection-title dg-mt-5">Amazon Business</h3>
     <p class="dg-lead">
       Halbautomatische Bestellung aus der Einkaufsliste. Zugang und Zugangsdaten hier hinterlegen.
       Der Bestell-Button an der Einkaufsliste folgt in einem nächsten Schritt.

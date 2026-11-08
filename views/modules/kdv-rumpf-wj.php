@@ -24,7 +24,7 @@ $opts = $kdvOrgOptions ?? [];
     <p class="dg-lead">Übersicht Stichtage und Slot-Status je Organisation — informationspflichtig, ohne Konsolidierung.</p>
   </header>
 
-  <form method="get" action="/app" class="dg-form" style="margin-bottom:16px;">
+  <form method="get" action="/app" class="dg-form dg-mb-4">
     <input type="hidden" name="page" value="kdv-rumpf-wj">
     <label class="dg-label">Organisation
       <select class="dg-input" name="org_id" onchange="this.form.submit()">
@@ -49,7 +49,7 @@ $opts = $kdvOrgOptions ?? [];
           <strong><?= !empty($org['share_contacts']) ? 'gewünscht' : 'aus' ?></strong>
           (kein Cross-DB-Sync in MF4 — nur Kennzeichnung).
         </p>
-        <form method="post" action="/app?page=kdv-rumpf-wj&amp;org_id=<?= $orgId ?>" style="margin-bottom:12px;">
+        <form method="post" action="/app?page=kdv-rumpf-wj&amp;org_id=<?= $orgId ?>" class="dg-form dg-mb-3">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <label class="dg-field dg-field--checkbox" style="display:flex;gap:8px;align-items:center;">
             <input type="checkbox" name="share_contacts" value="1"<?= !empty($org['share_contacts']) ? ' checked' : '' ?>>
@@ -71,7 +71,7 @@ $opts = $kdvOrgOptions ?? [];
               $st = (string) ($pair['stichtag'] ?? '');
               $stLabel = $st !== '' ? date('d.m.Y', strtotime($st)) : '—';
             ?>
-            <li style="margin-bottom:10px;">
+            <li class="dg-mb-3">
               Stichtag <strong><?= View::escape($stLabel) ?></strong>:
               <a href="/app?page=kdv-kunden&amp;action=edit&amp;id=<?= (int) ($v['id'] ?? 0) ?>">
                 <?= View::escape((string) ($v['company_name'] ?? '')) ?></a>

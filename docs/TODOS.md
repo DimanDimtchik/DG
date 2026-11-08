@@ -51,7 +51,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 > Offene Arbeitspakete mit Checkboxen: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** Phase A.  
 > Kurz: GoBD-Historie · FiBu-Tests · IQ-Instanz · Vor-Hetzner-Check — danach Umzug, nicht vorher Live-ELSTER.
 
-- [~] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0+U1 ✅ · offen: U2 Lohn → U3 Settings → U4 Module → U5 (tokenarm / Free-Plan, 1 Chat = 1 Mini-ID)
+- [~] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U4 ✅ (Margin-Batch) · offen: U2b Sichtcheck, U5 Guards/TODOS-Abhaken; Rest margin-left/Print bewusst später
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten

@@ -57,7 +57,7 @@ $hoursDefault = SupportAccessService::DEFAULT_HOURS;
       <?php endif; ?>
 
       <?php if (!$readOnly) : ?>
-        <form method="post" action="/app?page=support-freigabe" class="dg-form-actions" style="margin-top:1rem">
+        <form method="post" action="/app?page=support-freigabe" class="dg-form-actions dg-mt-4">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <input type="hidden" name="support_access_stop" value="1">
           <button type="submit" class="dg-button dg-button--danger">Freigabe jetzt beenden</button>

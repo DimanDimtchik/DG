@@ -67,15 +67,15 @@ $statusLabel = static function (string $kind) use ($status): string {
     <?php else : ?>
       <div class="dg-form-grid" style="gap:1.25rem">
         <div class="dg-panel" style="padding:1rem">
-          <h3 class="dg-subsection-title" style="margin-top:0">CRM-Zugang</h3>
-          <p class="dg-muted" style="margin:0 0 .75rem"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_CRM)) ?></p>
+          <h3 class="dg-subsection-title dg-mt-0">CRM-Zugang</h3>
+          <p class="dg-muted dg-mt-0 dg-mb-3"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_CRM)) ?></p>
           <fieldset class="dg-form-section dg-field">
             <legend class="dg-field-label">Modus</legend>
             <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_crm_mode" value="link" checked> Link senden</span></label>
             <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_crm_mode" value="manual"> Manuell eingeben</span></label>
           </fieldset>
           <div data-staff-mode-panel="crm-link">
-            <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
+            <form method="post" action="/app?page=kontakte" class="dg-form dg-mt-2">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="id" value="<?= $cid ?>">
               <input type="hidden" name="staff_access_action" value="crm_invite">
@@ -83,7 +83,7 @@ $statusLabel = static function (string $kind) use ($status): string {
             </form>
           </div>
           <div data-staff-mode-panel="crm-manual" hidden>
-            <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
+            <form method="post" action="/app?page=kontakte" class="dg-form dg-mt-2">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="id" value="<?= $cid ?>">
               <input type="hidden" name="staff_access_action" value="crm_manual">
@@ -98,15 +98,15 @@ $statusLabel = static function (string $kind) use ($status): string {
         </div>
 
         <div class="dg-panel" style="padding:1rem">
-          <h3 class="dg-subsection-title" style="margin-top:0">Stempeluhr-PIN</h3>
-          <p class="dg-muted" style="margin:0 0 .75rem"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_PIN)) ?></p>
+          <h3 class="dg-subsection-title dg-mt-0">Stempeluhr-PIN</h3>
+          <p class="dg-muted dg-mt-0 dg-mb-3"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_PIN)) ?></p>
           <fieldset class="dg-form-section dg-field">
             <legend class="dg-field-label">Modus</legend>
             <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_pin_mode" value="link" checked> Link senden</span></label>
             <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_pin_mode" value="manual"> Manuell eingeben</span></label>
           </fieldset>
           <div data-staff-mode-panel="pin-link">
-            <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
+            <form method="post" action="/app?page=kontakte" class="dg-form dg-mt-2">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="id" value="<?= $cid ?>">
               <input type="hidden" name="staff_access_action" value="pin_invite">
@@ -114,7 +114,7 @@ $statusLabel = static function (string $kind) use ($status): string {
             </form>
           </div>
           <div data-staff-mode-panel="pin-manual" hidden>
-            <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
+            <form method="post" action="/app?page=kontakte" class="dg-form dg-mt-2">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="id" value="<?= $cid ?>">
               <input type="hidden" name="staff_access_action" value="pin_manual">
@@ -130,8 +130,8 @@ $statusLabel = static function (string $kind) use ($status): string {
         </div>
 
         <div class="dg-panel" style="padding:1rem">
-          <h3 class="dg-subsection-title" style="margin-top:0">Geschäfts-Postfach</h3>
-          <p class="dg-muted" style="margin:0 0 .75rem"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_MAILBOX)) ?></p>
+          <h3 class="dg-subsection-title dg-mt-0">Geschäfts-Postfach</h3>
+          <p class="dg-muted dg-mt-0 dg-mb-3"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_MAILBOX)) ?></p>
           <?php if (!$hasMailbox) : ?>
             <p class="dg-flash dg-flash--warning">Kein privates Postfach verknüpft — zuerst anlegen (Einstellungen → Postfächer oder Auto-Anlage).</p>
           <?php else : ?>
@@ -141,7 +141,7 @@ $statusLabel = static function (string $kind) use ($status): string {
               <label class="dg-field dg-field--checkbox"><span><input type="radio" name="staff_mailbox_mode" value="manual"> Manuell eingeben</span></label>
             </fieldset>
             <div data-staff-mode-panel="mailbox-link">
-              <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
+              <form method="post" action="/app?page=kontakte" class="dg-form dg-mt-2">
                 <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                 <input type="hidden" name="id" value="<?= $cid ?>">
                 <input type="hidden" name="staff_access_action" value="mailbox_invite">
@@ -149,7 +149,7 @@ $statusLabel = static function (string $kind) use ($status): string {
               </form>
             </div>
             <div data-staff-mode-panel="mailbox-manual" hidden>
-              <form method="post" action="/app?page=kontakte" class="dg-form" style="margin-top:.5rem">
+              <form method="post" action="/app?page=kontakte" class="dg-form dg-mt-2">
                 <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                 <input type="hidden" name="id" value="<?= $cid ?>">
                 <input type="hidden" name="staff_access_action" value="mailbox_manual">
@@ -165,8 +165,8 @@ $statusLabel = static function (string $kind) use ($status): string {
         </div>
 
         <div class="dg-panel" style="padding:1rem">
-          <h3 class="dg-subsection-title" style="margin-top:0">Mitarbeiter-App</h3>
-          <p class="dg-muted" style="margin:0 0 .75rem"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_APP)) ?></p>
+          <h3 class="dg-subsection-title dg-mt-0">Mitarbeiter-App</h3>
+          <p class="dg-muted dg-mt-0 dg-mb-3"><?= View::escape($statusLabel(StaffAccessEventRepository::KIND_APP)) ?></p>
           <form method="post" action="/app?page=kontakte" class="dg-form">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="id" value="<?= $cid ?>">

@@ -354,7 +354,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php elseif ($lagerView === 'inventur') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Inventur</h2>
-    <div class="dg-page-header__actions" style="margin-bottom:1rem;">
+    <div class="dg-page-header__actions dg-mb-4">
       <?php
         $printId = $activeInventory !== null ? (int) ($activeInventory['id'] ?? 0) : 0;
         $printBase = '/app?page=lager&view=inventur&download=inventur-print'
@@ -429,7 +429,7 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
           <button type="submit" class="dg-button">Zählung speichern</button>
         </div>
       </form>
-      <form method="post" action="/app?page=lager&amp;view=inventur" class="dg-form" style="margin-top:1rem;"
+      <form method="post" action="/app?page=lager&amp;view=inventur" class="dg-form dg-mt-4"
         onsubmit="return confirm('Inventur abschließen und Differenzen ins Lager buchen?');">
         <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
         <input type="hidden" name="inventory_close" value="1">

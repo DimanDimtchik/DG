@@ -86,7 +86,7 @@ $violations = $overtimeReminders['violations'] ?? [];
                 <tr>
                   <td colspan="5" class="dg-muted">
                     <?php foreach ($row['arbzg_warnings'] as $w) : ?>
-                      <div class="dg-flash dg-flash--warning" style="margin:0.25rem 0"><?= View::escape((string) $w) ?></div>
+                      <div class="dg-flash dg-flash--warning dg-mt-1 dg-mb-1"><?= View::escape((string) $w) ?></div>
                     <?php endforeach; ?>
                   </td>
                 </tr>

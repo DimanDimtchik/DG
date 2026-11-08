@@ -95,7 +95,7 @@ if ($voucherLabel === '' && $voucherIdVal > 0) {
       <div class="dg-field dg-field--wide">
         <span>Auftrag / Angebot / Rechnung</span>
         <input type="hidden" name="source_voucher_id" id="dg-complaint-voucher-id" value="<?= $voucherIdVal ?>">
-        <label class="dg-field" style="margin:0;">
+        <label class="dg-field dg-mt-0 dg-mb-0">
           <span class="dg-field-hint">Belege des Kunden (letzte 24 Monate)</span>
           <select id="dg-complaint-voucher-recent"<?= $readOnly ? ' disabled' : '' ?>>
             <option value=""><?= $contactIdVal > 0 ? '— Beleg wählen —' : 'Zuerst Kunde wählen …' ?></option>
