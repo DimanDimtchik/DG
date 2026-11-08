@@ -113,7 +113,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES2 | Kontakt-UI Tabelle + Upload | [x] ES2d ✅ | 🟡🔴 |
 | ES3 | Canvas Web | [x] ES3b ✅ | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
-| ES5 | Mail (nur Session-User) | [ ] | 🟡 |
+| ES5 | Mail (nur Session-User) | [x] ES5a–c ✅ | 🟡🔴 |
 | ES6 | Mitarbeiter-App Aufnahme | [ ] | 🟡🔴 |
 | ES7 | Import-Service Adapter | [ ] | 🟡 |
 | ES8 | Hinweise + Plan-Haken | [ ] | 🟢 |
