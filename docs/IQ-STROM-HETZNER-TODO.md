@@ -86,10 +86,10 @@
 
 ### A4 · IQ Strom GmbH — Instanz vorbereiten (noch Kasserver oder parallele Domain ok)
 
-- [~] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`) — ✅ PA4a 2026-11-08  
-  → Code-Sync vom Kern `dg.ganz-soft.de` → Instanz (`bin/sync-crm-to-iqstrom.sh`); `index.php` MD5 = Kern; `/login` HTTP 200; Wartung `/` 503  
-  → ✅ KAS-DB + `config/database.local.php` / `app.local.php` (Secrets `IQ_CRM_DB_*`, nicht in Git) · Schema: Migrationen bis `155_*` (CLI `php83`)  
-  → **offen:** Installer `/install.php` (Admin/User + Firmendaten = PA4b–e) · Domain/TLS = PA4h  
+- [x] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`) — ✅ PA4a–h 2026-11-08  
+  → Code-Sync vom Kern `dg.ganz-soft.de` → Instanz (`bin/sync-crm-to-iqstrom.sh`); `index.php` MD5 = Kern; `/login` HTTPS 200; Wartung `/` 503  
+  → ✅ KAS-DB + `config/database.local.php` / `app.local.php` (Secrets `IQ_CRM_DB_*`, nicht in Git) · Schema: Migrationen bis `155_*` (CLI `php83`) · Install-Lock gesetzt  
+  → ✅ Firmendaten/Flags/Benutzer/Nummern/Bank/Logo = PA4b–e · Domain/TLS = PA4h  
   → kein Sondercode / kein Tenant-Hardcode
 - [x] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt Bad Kissingen, Gewinnermittlung **Bilanz**, SKR04 — ✅ PA4b 2026-11-08 (Instanz-DB `office.iqstrom.com`; Quelle Impressum + JA2024-Protokoll)
 - [x] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung** — ✅ PA4c 2026-11-08 (`office.iqstrom.com` Firmeneinstellungen)
@@ -100,7 +100,10 @@
   → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) · Parallelbetrieb = PA4g
 - [x] **Parallelbetrieb** festlegen: Zeitraum Lex + DG (1–2 Monate), Originalbeleg-Regel — ✅ PA4g 2026-11-08  
   → [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) · Instanz trägt Stichtage ein
-- [~] Domain/TLS: Subdomain + DB angelegt, SSL beantragt → [`SERVER-DOMAIN-DATENBANK.md`](SERVER-DOMAIN-DATENBANK.md) · SSH [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (`IQ_ALLINKL_*`)
+- [x] Domain/TLS: Subdomain + DB + Let's Encrypt aktiv — ✅ PA4h 2026-11-08  
+  → DNS A `85.13.136.84` · Zertifikat CN `office.iqstrom.com` (+ `www`) bis **2027-01-30** · HTTPS `/login` 200 + HSTS · `home_url=https://office.iqstrom.com`  
+  → Hinweis: HTTP ohne Force-Redirect (wie `dg.ganz-soft.de` / `ganz-om.de`); optional später KAS „HTTPS erzwingen“  
+  → [`SERVER-DOMAIN-DATENBANK.md`](SERVER-DOMAIN-DATENBANK.md) · SSH [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (`IQ_ALLINKL_*`)
 
 ### A5 · Kleine FiBu-Fixes (jetzt sinnvoll)
 

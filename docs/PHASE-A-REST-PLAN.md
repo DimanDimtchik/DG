@@ -43,7 +43,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · AVV-Unterschrift Org [~] |
-| A4 Kunden-Instanz vorbereiten | [~] Domain/TLS · Rest offen |
+| A4 Kunden-Instanz vorbereiten | [~] PA4a–h ✅ · PA4i offen |
 | A5 Soll/Ist + Prüferexport | ✅ · ZUGFeRD ✅ · GmbH-UI ✅ · §13b-XML ✅ |
 | A6 Telefon CTI | [~] manuell |
 | A6 Multi-Firma Feinschliff | nur falls nötig |
@@ -59,7 +59,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [~] PA2a–i ✅ | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
-| PA4 | Instanz-Vorbereitung (A4) | [~] PA4a–g ✅ · PA4h/i offen | 🔴 |
+| PA4 | Instanz-Vorbereitung (A4) | [~] PA4a–h ✅ · PA4i offen | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
 | PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
 
@@ -150,7 +150,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | PA4e | Nummernkreise, Bank, Briefpapier/Logo | 🔴 | [x] 2026-11-08 Instanz-DB: Beleg-Nummern Lexoffice-kompatibel (`RE-/AN-…` ab 5000) · Giro VR-Bank Main-Rhön (Kontoauszug 5661579) · Logo+Briefpapier aus WP `logo-freigestellt.png` |
 | PA4f | Migrationskonzept Lexoffice → DG (Kontakte/Artikel/Belege/Bank) als Doc-Checkliste | 🟢 | [x] 2026-11-08 → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) |
 | PA4g | Parallelbetrieb festlegen (Zeitraum, Originalbeleg-Regel) — Doc | 🟢 | [x] 2026-11-08 → [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) |
-| PA4h | Domain/TLS abschließen ([~] SSL) | 🔴 | [ ] |
+| PA4h | Domain/TLS abschließen ([~] SSL) | 🔴 | [x] 2026-11-08 DNS A `85.13.136.84` · Let's Encrypt `office.iqstrom.com`(+www) bis 2027-01-30 · HTTPS `/login` 200 + HSTS · `home_url` https · HTTP ohne Force-Redirect (wie andere CRM-Hosts) |
 | PA4i | A4-Haken in IQ-STROM-TODO | 🟢 | [ ] |
 
 **Prompt PA4f:**  
@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. **PA4h** Domain/TLS · dann **PA4i** A4-Haken  
+1. **PA4i** A4-Haken in IQ-STROM-TODO  
 2. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA4h laut docs/PHASE-A-REST-PLAN.md. Domain/TLS für office.iqstrom.com abschließen. Kein Tenant-Hardcode.`
+`Nur Mini-ID PA4i laut docs/PHASE-A-REST-PLAN.md. A4-Haken in IQ-STROM-HETZNER-TODO setzen. Kein Tenant-Hardcode.`
 
 ---
 

@@ -56,5 +56,6 @@ Instanzen: **gleicher Code** · **eigene DB** · **eigene Instanz-Dateien** (`co
 - Kundeninstanz: eigener Code-Sync vom Kern, eigene DB, echte Daten  
 - **Code-Sync (Cloud-Agent):** `bash bin/cloud-agent-ssh-setup.sh` · `bash bin/cloud-agent-iq-ssh-setup.sh` · `bash bin/sync-crm-to-iqstrom.sh`  
   (Kern `dg.ganz-soft.de` → `/www/htdocs/w01f1176/office.iqstrom.com/`; `config/*.local.php` + `storage/` bleiben Instanz)  
-- **DB:** KAS-DB über Secrets `IQ_CRM_DB_*` → `config/database.local.php` nur auf dem Server (nicht Git). Stand PA4a 2026-11-08: Code ✅ · local.php ✅ · Schema ✅ · Installer noch offen  
+- **DB:** KAS-DB über Secrets `IQ_CRM_DB_*` → `config/database.local.php` nur auf dem Server (nicht Git). Stand PA4a 2026-11-08: Code ✅ · local.php ✅ · Schema ✅ · Install-Lock ✅  
+- **TLS (PA4h 2026-11-08):** DNS A → All-Inkl · Let's Encrypt für `office.iqstrom.com` + `www.office.iqstrom.com` (gültig bis 2027-01-30) · HTTPS `/login` 200 + HSTS · `home_url` https · HTTP ohne Force-Redirect (wie andere CRM-Hosts)  
 - ToDo: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A4  
