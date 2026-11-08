@@ -93,7 +93,7 @@
   → kein Sondercode / kein Tenant-Hardcode
 - [x] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt Bad Kissingen, Gewinnermittlung **Bilanz**, SKR04 — ✅ PA4b 2026-11-08 (Instanz-DB `office.iqstrom.com`; Quelle Impressum + JA2024-Protokoll)
 - [x] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung** — ✅ PA4c 2026-11-08 (`office.iqstrom.com` Firmeneinstellungen)
-- [ ] ≥ **3 Benutzer** + Rechte (Buchhaltung / Angebote / Admin)
+- [x] ≥ **3 Benutzer** + Rechte (Buchhaltung / Angebote / Admin) — ✅ PA4d 2026-11-08 · Aktivierungslinks auf Server `storage/pa4d-invite-links.txt`
 - [ ] Nummernkreise, Bankverbindung, Briefpapier/Logo
 - [x] Migrationskonzept Lexoffice → DG: Kontakte, Artikel, offene Belege, Bank (CSV/Excel) — Checkliste ✅ PA4f 2026-11-08  
   → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) · Parallelbetrieb = PA4g
