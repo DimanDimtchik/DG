@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/amazon-…`
 | **Credentials nie committen** | Nur Settings-UI / Instanz-DB |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID A5a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen. Nur genannte Datei(en). Kein Refactor.`
+`Nur Mini-ID A5c laut docs/AMAZON-BUSINESS-REST-PLAN.md. TODOS.md Amazon-Zeile auf [~]/[x] je nach Live-Test. Nur docs/TODOS.md. Kein Refactor.`
 
 **Nicht im Agent-Chat:** ganzen `index.php` umbauen, Sandbox-E2E gegen Amazon live, Rechnung-Import, Stufe-3-Cron.
 
@@ -115,7 +115,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | A5a | Rechte: gleicher Gate wie bestehende Purchase-List-Aktionen | 🟢 | [ ] |
-| A5b | Kurz-Selftest oder manueller Checkliste-Haken in diesem Plan | 🟢 | [ ] |
+| A5b | Kurz-Selftest oder manueller Checkliste-Haken in diesem Plan | 🟢 | [x] 2026-11-08 `bin/amazon-business-stufe2-selftest.php` |
 | A5c | `TODOS.md` Amazon-Zeile auf `[~]`/`[x]` je nach Live-Test | 🟢 | [ ] |
 
 ---
@@ -145,7 +145,28 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | A2 | Order-Service | [x] |
 | A3 | Einkaufsliste UI | [x] A3a–A3c |
 | A4 | Artikelstamm | [x] A4a–A4b |
-| A5 | Rechte / Abschluss | [ ] |
+| A5 | Rechte / Abschluss | [~] A5b ✅; A5a/A5c offen |
+
+---
+
+## Checkliste / Selftest (A5b)
+
+**Automatisch (ohne Amazon-Live):**
+
+```bash
+php bin/amazon-business-stufe2-selftest.php
+```
+
+Prüft: Migration 142 · Order-Service · Autoload · `markAmazonOrdered` · POST `purchase_list_amazon_order` im Gate `DepartmentAccess::userCanManageArticleCatalog` · Button/`canOrderItem` · Order-ID-Anzeige · ASIN-/Amazon-Hinweise.
+
+| Haken | Manuell (Mensch / Dev) | Status |
+|-------|------------------------|--------|
+| M1 | Migration 142 auf Dev gelaufen | [ ] |
+| M2 | Amazon Settings ready (Credentials) | [ ] 🔴 Onboarding |
+| M3 | Testartikel: bevorzugte Quelle + ASIN | [ ] |
+| M4 | Button nur bei ready+ASIN sichtbar | [ ] |
+| M5 | Sandbox-/Live-Bestellung ok, Order-ID unter Nachbestellt | [ ] 🔴 |
+| M6 | Rolle ohne Artikelkatalog: POST wirkungslos / kein Menü | [ ] |
 
 ---
 
