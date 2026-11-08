@@ -71,7 +71,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
 | Medienbibliothek | ✅ |
-| Canvas / App-Signatur-API | ✅ Canvas Web (ES3a); App fehlt |
+| Canvas / App-Signatur-API | ✅ Canvas Web + Smoke (ES3a/b); App fehlt |
 | Service-Import | ❌ fehlt |
 
 ---
@@ -108,7 +108,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
 | ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
 | ES2 | Kontakt-UI Tabelle + Upload | [x] ES2d ✅ | 🟡🔴 |
-| ES3 | Canvas Web | [~] ES3a ✅ | 🟡🔴 |
+| ES3 | Canvas Web | [x] ES3b ✅ | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [ ] | 🟡 |
 | ES6 | Mitarbeiter-App Aufnahme | [ ] | 🟡🔴 |
@@ -151,10 +151,10 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | ES3a | Canvas-Pad (minimal) → PNG → `appendNew` · `source=canvas` | 🟡 | [x] 2026-11-08 Pad + `appendFromCanvasDataUrl` · JS/CSS Feature |
-| ES3b | Smoke: Zeichnung erscheint als neue aktive Zeile, alte mit `valid_to` | 🔴 | [ ] |
+| ES3b | Smoke: Zeichnung erscheint als neue aktive Zeile, alte mit `valid_to` | 🔴 | [x] 2026-11-08 ganz-om.de · Canvas → source=canvas aktiv, Vorgänger closed |
 
-**Prompt ES3b:**  
-`Nur Mini-ID ES3b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Canvas → neue aktive Zeile. Kein Code außer Fix.`
+**Prompt ES4a:**  
+`Nur Mini-ID ES4a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Brief/Druck nur activeForUser(session). Kein Canvas.`
 
 ### ES4 — Brief / Dokument
 
@@ -216,7 +216,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES3b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Canvas → neue aktive Zeile. Kein Code außer Fix.`
+`Nur Mini-ID ES4a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Brief/Druck nur activeForUser(session). Kein Canvas.`
 
 ---
 
