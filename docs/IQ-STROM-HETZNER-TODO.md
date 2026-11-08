@@ -86,9 +86,10 @@
 
 ### A4 · IQ Strom GmbH — Instanz vorbereiten (noch Kasserver oder parallele Domain ok)
 
-- [~] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`) — ✅ PA4a Teil 2026-11-08  
+- [~] **CRM-Instanz IQ Strom** auf **`office.iqstrom.com`** (All-Inkl `w01f1176`) — ✅ PA4a 2026-11-08  
   → Code-Sync vom Kern `dg.ganz-soft.de` → Instanz (`bin/sync-crm-to-iqstrom.sh`); `index.php` MD5 = Kern; `/login` HTTP 200; Wartung `/` 503  
-  → **offen:** MySQL „DB Office IQ CRM“ in KAS anlegen/Zugang + `config/database.local.php` (nicht in Git) · Installer `/install.php`  
+  → ✅ KAS-DB + `config/database.local.php` / `app.local.php` (Secrets `IQ_CRM_DB_*`, nicht in Git) · Schema: Migrationen bis `155_*` (CLI `php83`)  
+  → **offen:** Installer `/install.php` (Admin/User + Firmendaten = PA4b–e) · Domain/TLS = PA4h  
   → kein Sondercode / kein Tenant-Hardcode
 - [ ] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt, Gewinnermittlung **Bilanz**, SKR wählen
 - [ ] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung**
