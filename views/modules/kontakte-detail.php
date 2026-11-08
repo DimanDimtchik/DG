@@ -400,6 +400,13 @@
     <?php endif; ?>
 
     <?php
+      View::partial('partials/contact-signature-history', [
+          'contactId' => (int) $contact->id,
+          'contactSignatures' => $contactSignatures ?? [],
+      ]);
+    ?>
+
+    <?php
       $companyEmployees = $companyEmployees ?? ($contact->isCompany()
           ? ContactCompanyLinkRepository::employeesForCompany($contact->id)
           : []);

@@ -293,6 +293,15 @@ if ($isCompanyForm && $companyEmployees === []) {
     </div>
   </form>
 
+  <?php if ($isEdit) : ?>
+    <?php
+      View::partial('partials/contact-signature-history', [
+          'contactId' => (int) $contactId,
+          'contactSignatures' => $contactSignatures ?? [],
+      ]);
+    ?>
+  <?php endif; ?>
+
   <?php if ($isEdit && !empty($showEmployeeFields)) : ?>
     <?php
       View::partial('partials/employment-contract-generate', [

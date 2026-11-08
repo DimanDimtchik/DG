@@ -8759,6 +8759,7 @@ $legalProductsConfig = LegalProductSettings::config();
                 $payrollWageAssignments = PayrollEmployeeWageAssignmentRepository::formRows(
                     PayrollEmployeeWageAssignmentRepository::forContact($contactId)
                 );
+                $contactSignatures = UserSignatureStore::listForContact($contactId);
                 $contactTeams = TeamRepository::teamsForContact($contactId);
                 $staffAccessStatus = StaffAccessInviteService::status($contactId);
                 $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
@@ -8816,6 +8817,7 @@ $legalProductsConfig = LegalProductSettings::config();
                         ));
                     }
                 }
+                $contactSignatures = UserSignatureStore::listForContact($contact->id);
             } else {
                 $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
                 $contactImportErrors = [];
@@ -11116,6 +11118,7 @@ $legalProductsConfig = LegalProductSettings::config();
         ];
         $lohnkontoStaffOptions = $lohnkontoStaffOptions ?? [];
         $payrollCrmDocuments = $payrollCrmDocuments ?? [];
+        $contactSignatures = $contactSignatures ?? [];
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -11559,6 +11562,7 @@ $legalProductsConfig = LegalProductSettings::config();
             'showEmployeeFields',
             'payrollWageAssignments',
             'payrollWageTypeOptions',
+            'contactSignatures',
             'staffAccessStatus',
             'staffAccessHasMailbox',
             'allowedContactRoles',

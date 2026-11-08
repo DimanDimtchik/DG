@@ -66,7 +66,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | Baustein | Stand |
 |----------|--------|
-| User-/Kontakt-Unterschriftshistorie | ✅ Schema + Store + Selftest (ES1b–d); UI offen |
+| User-/Kontakt-Unterschriftshistorie | ✅ Schema/Store/Selftest + Historie-Tabelle (ES2a); Upload offen |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
@@ -107,7 +107,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 |----|--------|--------|-------|
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
 | ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
-| ES2 | Kontakt-UI Tabelle + Upload | [ ] | 🟡🔴 |
+| ES2 | Kontakt-UI Tabelle + Upload | [~] ES2a ✅ | 🟡🔴 |
 | ES3 | Canvas Web | [ ] | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [ ] | 🟡 |
@@ -139,13 +139,15 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES2a | Tabelle am Kontakt: chronologisch (neueste zuerst oder älteste zuerst — **eine** Konvention Doc+UI), Spalten Zeitraum, Quelle, Vorschau | 🟡 | [ ] |
+| ES2a | Tabelle am Kontakt: chronologisch **neueste zuerst**, Spalten Zeitraum, Quelle, Status, Vorschau | 🟡 | [x] 2026-11-08 Partial `contact-signature-history` · Detail + Bearbeiten |
 | ES2b | Aktion „Neue Unterschrift (Upload)“ → `appendNew` · **kein** Löschen-Button | 🟡 | [ ] |
 | ES2c | Soft-Hinweis: kein QES / Schriftform · Historie unveränderlich | 🟢 | [ ] |
 | ES2d | Smoke Dev: Upload → Tabelle 2 Zeilen nach zweitem Upload | 🔴 | [ ] |
 
-**Prompt ES2a:**  
-`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Historie-Tabelle Kontakt. Katalog. Kein Canvas/Mail.`
+**Konvention Chronologie:** neueste zuerst (`ORDER BY valid_from DESC, id DESC` / Store `listForContact`).
+
+**Prompt ES2b:**  
+`Nur Mini-ID ES2b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Upload neue Unterschrift am Kontakt. Katalog. Kein Löschen. Kein Canvas/Mail.`
 
 ### ES3 — Canvas Web
 
@@ -214,7 +216,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Historie-Tabelle Kontakt. Katalog. Kein Canvas/Mail.`
+`Nur Mini-ID ES2b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Upload neue Unterschrift am Kontakt. Katalog. Kein Löschen. Kein Canvas/Mail.`
 
 ---
 
@@ -227,5 +229,6 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | `src/Mail/MailSignatureResolver.php` | Text-Signatur |
 | `src/User/UserSignatureStore.php` | Historie-Accessor (kein delete) |
 | `bin/user-signature-selftest.php` | ES1d Selftest (SQLite) |
+| `views/partials/contact-signature-history.php` | ES2a Historie-Tabelle |
 | `src/Media/*` | Bildspeicher |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server parallel, unabhängig |
