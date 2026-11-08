@@ -22,7 +22,7 @@
 - [x] **Stichprobe §14 UStG** je Dokumentart (Angebot, AB, Rechnung, Schluss, Gutschrift) — Druck/PDF  
   → ✅ PA1a 2026-11-08 Dev `ganz-om.de` · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) · Gutschrift-Titel-Fix
 - [x] **Stichprobe gemischte Steuersätze** 19 % / 7 % / 0 % auf einem Beleg — ✅ PA1b 2026-11-08 Dev
-- [ ] **§19 / §13b / PV §12 Abs. 3** Klauseln am Druck prüfen (Firma-Flags in Einstellungen)
+- [x] **§19 / §13b / PV §12 Abs. 3** Klauseln am Druck prüfen (Firma-Flags) — ✅ PA1c 2026-11-08 Dev · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md)
 - [x] **PV-Automatik:** bei Firma-Flag Photovoltaik und 0 %-Zeilen Hinweis §12 Abs. 3 im Druck/PDF/E-Mail wie bei §19 (Firmenstatus, nicht Beleg-Checkbox) — ✅ `VoucherDocumentPrintService` + `bin/pv-legal-clause-selftest.php`
 - [x] **ARAP:** automatischer Prozent-Vorschlag aus Liefer-/Belegdatum (Restlaufzeit) ist im Belegformular-Code vorhanden.
   Wichtig Jahresabschluss: kein zweiter ARAP-Prozess bauen — `VoucherAccrual` splittet die Belegbuchung und `LedgerPostingService` erzeugt die Auflösung zum 01.01. des Folgejahres; der Jahresabschluss sperrt/übernimmt danach nur die bestehenden Buchungen.

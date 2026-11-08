@@ -39,7 +39,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | Block | Stand |
 |-------|--------|
 | A1 GoBD-Kern (Revision/Storno/ARAP/Kontohinweise) | ✅ Code |
-| A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | §14 Docarten ✅ PA1a · gemischt ✅ PA1b · Klauseln PA1c |
+| A1 Druck-Stichproben §14 / gemischt / §19·§13b·PV | ✅ PA1a/b/c (2026-11-08) |
 | A1 PV-Automatik Klausel bei 0 %-Zeilen | ✅ Print + Firma-Flag (`e22d9d7` / PA1d) |
 | A2 Manuelle Smoke-Tests | ❌ Mensch auf Master/Dev |
 | A3 Shared-Core / Minify / AVV / Deploy-Prep | Doc ✅ PA3a–f · AVV-Unterschrift Org [~] |
@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
-| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1a/b/d ✅ | 🟢🟡🔴 |
+| PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [~] PA1a–d ✅ · PA1e offen | 🟢🟡🔴 |
 | PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
@@ -83,7 +83,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | PA1a | Checkliste §14 UStG Druck/PDF je Dokumentart abarbeiten · Ergebnis in [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) | 🔴 | [x] 2026-11-08 Dev `ganz-om.de` · Gutschrift-Titel-Fix |
 | PA1b | Stichprobe gemischte Steuersätze 19/7/0 auf einem Beleg (manuell + kurze Notiz im Stichproben-Doc) | 🔴 | [x] 2026-11-08 Dev · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) |
-| PA1c | §19 / §13b / PV §12 Abs. 3 Klauseln am Druck gegen Firma-Flags prüfen (Checkliste) | 🔴 | [ ] |
+| PA1c | §19 / §13b / PV §12 Abs. 3 Klauseln am Druck gegen Firma-Flags prüfen (Checkliste) | 🔴 | [x] 2026-11-08 Dev · [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) |
 | PA1d | **Code:** PV-Automatik — bei Firma-Flag Photovoltaik + 0 %-Zeilen Klausel §12 Abs. 3 automatisch (wie §19); nur betroffene Beleg-/Klausel-Dateien | 🟡 | [x] 2026-11-08 |
 | PA1e | A1-Haken in `IQ-STROM-HETZNER-TODO.md` nachziehen | 🟢 | [ ] |
 
@@ -187,12 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel: **PA1c**, **PA2a…** Smoke  
-2. Rest **PA4** (a–e, h Mensch) / **PA2** · **PA1e** wenn PA1c grün  
+1. Parallel: **PA2a…** Smoke · **PA1e** A1-Haken  
+2. Rest **PA4** (a–e, h Mensch) / **PA2**  
 3. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA1c laut docs/PHASE-A-REST-PLAN.md. §19 / §13b / PV-Klauseln am Druck gegen Firma-Flags prüfen. Kein Refactor.`  
+`Nur Mini-ID PA1e laut docs/PHASE-A-REST-PLAN.md. A1-Haken in IQ-STROM-HETZNER-TODO nachziehen. Kein Code.`  
 *(Oder PA2a Belegkette.)*
 
 ---

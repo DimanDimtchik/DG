@@ -99,7 +99,23 @@ Ein buchbarer Ausgangsbeleg mit mindestens:
 - [x] 0-%-Klausel passt zum Firmenflag: §19, §13b, PV §12 Abs. 3 oder §4
 
 Ergebnis: `OK`
-Notiz: **PA1b 2026-11-08** · Dev `ganz-om.de` · Rechnung Nr. 4 (Beleg-ID 22) · Positionen 119 €/19 %, 107 €/7 %, 50 €/0 % · Steuerblock: `Umsatzsteuer 0 % —` · `zzgl. 7 % USt. 7,00 €` · `zzgl. 19 % USt. 19,00 €` · Gesamt 276,00 €. Firmenflags KU/PV **aus** → keine §19-/PV-Klausel (korrekt zum Flag). Klauseln mit Flag an → Mini-ID **PA1c**. Artifact: `pa1b-ustg14/ustg14-gemischte-steuer.html`.
+Notiz: **PA1b 2026-11-08** · Dev `ganz-om.de` · Rechnung Nr. 4 (Beleg-ID 22) · Positionen 119 €/19 %, 107 €/7 %, 50 €/0 % · Steuerblock: `Umsatzsteuer 0 % —` · `zzgl. 7 % USt. 7,00 €` · `zzgl. 19 % USt. 19,00 €` · Gesamt 276,00 €. Firmenflags KU/PV **aus** → keine §19-/PV-Klausel (korrekt zum Flag). Artifact: `pa1b-ustg14/ustg14-gemischte-steuer.html`.
+
+## Klauseln gegen Firma-Flags (PA1c)
+
+Kurzmatrix Kunden-Druck (Dev `ganz-om.de`, Flags danach wieder **aus**):
+
+| Fall | Erwartung | Ergebnis |
+| --- | --- | --- |
+| KU/PV aus, auch mit 0 %-Zeile | kein §19 / kein PV | OK |
+| KU an | §19-Hinweis sichtbar | OK |
+| PV an + 0 %-Zeile | PV §12 Abs. 3 sichtbar | OK |
+| PV an, nur 19 % | kein PV-Hinweis | OK |
+| KU+PV an + 0 % | §19, kein PV (Vorrang KU) | OK |
+| §13b Bauleistung (Beleg Reverse Charge + Klausel) | §13b-Text im Druck; Suggest `reverse_charge_13b_construction` | OK |
+
+Ergebnis: `OK`
+Notiz: **PA1c 2026-11-08** · §19 und PV sind **Firmen-Auto-Hints** (`CompanyExtendedSettings`). §13b ist **Beleg-Klausel** (Vorschlag aus `reverse_charge_type`); Firmenhaken „§13b“ schaltet den Sonderfall in den Einstellungen, steuert den Drucktext nicht allein. Artifacts: `pa1c-klauseln/*.html` · `pa1c-report.json`. Beobachtung (kein Fix in PA1c): Firmen-PV-Standardtext enthält noch „umsatzsteuerbefreit“; Katalogtext (PA1d) spricht von 0 % — später redaktionell angleichen.
 
 ## Ablage der Nachweise
 
@@ -115,5 +131,7 @@ Je Beleg ein PDF/Screenshot sichern:
 **PA1a 2026-11-08:** Kunden-Druck-HTML unter Agent-Artifacts `pa1a-ustg14/ustg14-*.html` (+ `pa1a-report.json`). Dev-Belege mit Beschreibung „PA1a …“ auf `ganz-om.de` belassen (Stichproben-Nachweis).
 
 **PA1b 2026-11-08:** `pa1b-ustg14/ustg14-gemischte-steuer.html` (+ `pa1b-report.json`). Dev-Beleg Beschreibung „PA1b gemischte Steuersätze 19/7/0“.
+
+**PA1c 2026-11-08:** `pa1c-klauseln/` (Flags-off / KU / PV / §13b HTML + Report). Firmenflags nach Test wieder aus.
 
 Nur wenn ein Punkt fehlschlaegt: betreffendes PDF/Screenshot und kurze Fehlernotiz an den Agenten geben. Dann gezielt den Druckrenderer oder die Beleglogik korrigieren.
