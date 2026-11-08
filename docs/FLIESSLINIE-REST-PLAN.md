@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL6c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest down → Nachbarn. Kein UI.`
+`Nur Mini-ID FL7a laut docs/FLIESSLINIE-REST-PLAN.md. UI Liste Linien + Detail Katalog. Kein MES.`
 
 ---
 
@@ -161,7 +161,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL3 | Blocking / Starving-Engine (Offline) | [x] FL3a–c ✅ | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [x] FL5a–c ✅ | 🟡 |
-| FL6 | Störung / Wartung propagiert | [~] FL6a–b ✅ | 🟡 |
+| FL6 | Störung / Wartung propagiert | [x] FL6a–c ✅ | 🟡 |
 | FL7 | UI Linie + Status | [ ] | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
 | FL9 | Hinweise + Plan-Haken | [ ] | 🟢 |
@@ -226,7 +226,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|---------|-------|--------|
 | FL6a | Offene Wartung / manuelles Stör-Flag an Station → Station `down` | 🟡 | [x] 2026-11-08 `ProductionLineStationDownGate` · Selftest |
 | FL6b | Propagation: down bei *i* → Puffer davor füllt sich (Blocking-Risiko), danach Starving | 🟡 | [x] 2026-11-08 `applyDownPropagation` · Selftest |
-| FL6c | Selftest: eine Station down → Nachbarn laut Regel | 🟡 | [ ] |
+| FL6c | Selftest: eine Station down → Nachbarn laut Regel | 🟡 | [x] 2026-11-08 `bin/production-line-down-neighbors-selftest.php` |
 
 ### FL7 — UI (Katalog)
 
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL6c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest eine Station down → Nachbarn. Kein UI.`
+`Nur Mini-ID FL7a laut docs/FLIESSLINIE-REST-PLAN.md. UI Liste Linien + Detail Stationen/Puffer Katalog. Kein MES/PLC.`
 
 ---
 
@@ -309,4 +309,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `src/Recipe/ProductionLineStationDownGate.php` | FL6a Wartung/Stör → down |
 | `bin/production-line-station-down-selftest.php` | FL6a Selftest |
 | `bin/production-line-down-propagation-selftest.php` | FL6b Propagation Selftest |
+| `bin/production-line-down-neighbors-selftest.php` | FL6c Nachbarn Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine · FL4a Output/h |
