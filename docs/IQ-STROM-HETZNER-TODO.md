@@ -42,7 +42,9 @@
   → Fixes: `PaymentTermsService::tierForPaymentDate` (engste Stufe) · `DunningService` Spalte `email_2`
 - [x] **Bank Geisterumsätze** erkennen + manuell ausblenden (Migration 064) — ✅ PA2c 2026-11-08 Dev  
   → `duplicate_open` + `payment_exists` erkannt · `hideGhost` → `ignored` · classify ohne Auto-Hide · `insertOrSkip` Duplikat
-- [ ] UStVA: Nullmeldung, Berichtigung, §13b-Kennziffern, ELSTER-CSV-Export
+- [x] UStVA: Nullmeldung, Berichtigung, §13b-Kennziffern, ELSTER-CSV-Export — ✅ PA2d 2026-11-08 Dev  
+  → Nullmeldung leerer Monat · Berichtigung-Flag · §13b KZ 48/67 (Bau 19 %) · ELSTER-CSV (BOM + Steuernummer)  
+  → Fix: `UstvaReportService` KZ als String (PHP-int-Keys → `strnatcmp`-Crash)
 - [ ] Jahresabschluss-Checkliste + Jahr sperren / Saldenvortrag (operativ)
 - [ ] DATEV EXTF + Beleg-ZIP Stichprobe (Berater/Mandant)
 - [ ] Zeiterfassung Z2–Z6 Smoke (Stempel, Schichten, Urlaub, Rückstellungen, Lohn-Export)  

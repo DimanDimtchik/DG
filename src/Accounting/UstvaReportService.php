@@ -162,6 +162,8 @@ final class UstvaReportService
         $labels = self::kennzifferLabels();
         $positions = [];
         foreach ($agg as $kz => $values) {
+            // PHP wandelt numerische Array-Keys in int um — KZ immer als String halten.
+            $kz = (string) $kz;
             $net = round((float) ($values['net'] ?? 0), 2);
             $tax = round((float) ($values['tax'] ?? 0), 2);
             if ($net == 0.0 && $tax == 0.0) {
@@ -170,13 +172,13 @@ final class UstvaReportService
             $amount = $tax != 0.0 ? $tax : $net;
             $positions[] = [
                 'kz' => $kz,
-                'label' => $labels[$kz] ?? 'Kennziffer ' . $kz,
+                'label' => $labels[$kz] ?? ('Kennziffer ' . $kz),
                 'net' => $net,
                 'tax' => $tax,
                 'amount' => round($amount, 2),
             ];
         }
-        usort($positions, static fn (array $a, array $b): int => strnatcmp($a['kz'], $b['kz']));
+        usort($positions, static fn (array $a, array $b): int => strnatcmp((string) $a['kz'], (string) $b['kz']));
 
         $isNullmeldung = $positions === [] || ($payable == 0.0 && $outputTotal == 0.0 && $inputTotal == 0.0);
         $taxation = VatTaxationSettings::summaryForPeriod($year, $month);

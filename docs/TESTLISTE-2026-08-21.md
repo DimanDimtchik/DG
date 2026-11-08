@@ -196,9 +196,9 @@ Frische Installation oder Test-VM (`storage/.installed` entfernen):
 
 ### J4 UStVA Sonderfälle
 
-- [ ] Leerer Monat → Hinweis **Nullmeldung möglich**
-- [ ] Checkbox **Berichtigung** → gelber Hinweis
-- [ ] ELSTER-CSV Download funktioniert
+- [x] Leerer Monat → Hinweis **Nullmeldung möglich** — ✅ PA2d 2026-11-08 Dev (`is_nullmeldung` + View)
+- [x] Checkbox **Berichtigung** → gelber Hinweis — ✅ PA2d 2026-11-08 Dev (`berichtigung` Flag + View)
+- [x] ELSTER-CSV Download funktioniert — ✅ PA2d 2026-11-08 Dev (`ustva-elster-*.csv`, BOM, Kennziffern §13b)
 
 ### J5 Kassenbuch Tagesabschluss
 
