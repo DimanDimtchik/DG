@@ -32,21 +32,21 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
     <h2 class="dg-subsection-title">Schalter</h2>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--checkbox">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="linkedin_enabled" value="1"<?= !empty($form['enabled']) ? ' checked' : '' ?>>
-          <span>LinkedIn-Export aktivieren</span>
+          LinkedIn-Export aktivieren
         </span>
       </label>
       <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="linkedin_app_review_approved" value="1"<?= !empty($form['app_review_approved']) ? ' checked' : '' ?>>
-          <span>App-Review / Partner-Freigabe liegt vor (ohne Haken kein API-Publish)</span>
+          App-Review / Partner-Freigabe liegt vor (ohne Haken kein API-Publish)
         </span>
       </label>
       <label class="dg-field dg-field--checkbox">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="linkedin_auto_publish_queued" value="1"<?= !empty($form['auto_publish_queued']) ? ' checked' : '' ?>>
-          <span>Vorgemerkte Stellen beim Speichern automatisch an LinkedIn senden</span>
+          Vorgemerkte Stellen beim Speichern automatisch an LinkedIn senden
         </span>
       </label>
       <label class="dg-field">

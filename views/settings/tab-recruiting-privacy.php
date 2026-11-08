@@ -58,9 +58,9 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
     <h2 class="dg-subsection-title">Freigabe DSB / Anwalt</h2>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="recruiting_dsb_signed_off" value="1"<?= !empty($form['dsb_signed_off']) ? ' checked' : '' ?>>
-          <span>Fristen und Texte wurden mit DSB bzw. Anwalt abgestimmt</span>
+          Fristen und Texte wurden mit DSB bzw. Anwalt abgestimmt
         </span>
       </label>
       <label class="dg-field dg-field--wide">

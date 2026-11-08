@@ -115,7 +115,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U3c | `tab-email.php` | wie U3a | 🟡 | [x] 2026-11-08 |
 | U3d | `tab-notifications.php` | Checkboxen Katalog | 🟡 | [x] 2026-11-08 bereits konform (kein Diff) |
 | U3e | `tab-steuerkanzlei.php` + `tab-chart-of-accounts.php` | Panel-Margins → `dg-mt-5` | 🟡 | [x] 2026-11-08 |
-| U3f | Recruiting/Publish-Tabs (`tab-recruiting-*`, `tab-linkedin-recruiting`, `tab-tiktok-publish`) — Checkboxen | 🟡 | [ ] |
+| U3f | Recruiting/Publish-Tabs (`tab-recruiting-*`, `tab-linkedin-recruiting`, `tab-tiktok-publish`) — Checkboxen | 🟡 | [x] 2026-11-08 |
 | U3g | `tab-company.php` / `tab-belegdarstellung.php` / `tab-payment-terms.php` — fieldset-Margins | 🟡 | [ ] |
 
 ---
@@ -166,7 +166,7 @@ Nur **eine** Datei pro Chat. Prompt: `Nur Mini-ID U3 + Dateiname …`.
 | U0 | Fundament Readonly + Utilities | [x] |
 | U1 | Scan-Fails | [x] |
 | U2 | Lohn / Firmendaten | [~] U2a+U2c ✅; U2b Sichtcheck offen |
-| U3 | Settings-Wellen | [~] U3a–U3e ✅ |
+| U3 | Settings-Wellen | [~] U3a–U3f ✅ |
 | U4 | Modul-Wellen | [ ] |
 | U5 | Abschluss Guards + TODOS | [ ] |
 

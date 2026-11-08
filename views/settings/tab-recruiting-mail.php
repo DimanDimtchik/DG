@@ -33,9 +33,9 @@ $mailReady = !empty($form['mail_ready']);
     <h2 class="dg-subsection-title">HR / Personalstelle</h2>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="recruiting_send_hr_on_apply" value="1"<?= !empty($form['send_hr_on_apply']) ? ' checked' : '' ?>>
-          <span>Bei neuer Bewerbung über die Website die Personalstelle benachrichtigen</span>
+          Bei neuer Bewerbung über die Website die Personalstelle benachrichtigen
         </span>
       </label>
       <label class="dg-field dg-field--wide">
@@ -54,15 +54,15 @@ $mailReady = !empty($form['mail_ready']);
     <h2 class="dg-subsection-title">Bewerber</h2>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="recruiting_send_applicant_confirmation" value="1"<?= !empty($form['send_applicant_confirmation']) ? ' checked' : '' ?>>
-          <span>Eingangsbestätigung nach Bewerbung über die Website</span>
+          Eingangsbestätigung nach Bewerbung über die Website
         </span>
       </label>
       <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="recruiting_send_applicant_status" value="1"<?= !empty($form['send_applicant_status']) ? ' checked' : '' ?>>
-          <span>Bei Statuswechsel Gespräch, Angebot, Zusage oder Absage informieren</span>
+          Bei Statuswechsel Gespräch, Angebot, Zusage oder Absage informieren
         </span>
       </label>
     </div>

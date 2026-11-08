@@ -42,9 +42,9 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
     <h2 class="dg-subsection-title">Schalter</h2>
     <div class="dg-form-grid">
       <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="tiktok_publish_enabled" value="1"<?= !empty($form['enabled']) ? ' checked' : '' ?>>
-          <span>TikTok-Publish aktivieren</span>
+          TikTok-Publish aktivieren
         </span>
       </label>
       <label class="dg-field">
@@ -56,9 +56,9 @@ $dbConnected = (bool) ($dbConnected ?? Database::isConfigured());
         <span class="dg-field-hint">Wirksam: <?= View::escape((string) ($form['effective_mode'] ?? 'inbox')) ?></span>
       </label>
       <label class="dg-field dg-field--checkbox">
-        <span class="dg-checkbox">
+        <span>
           <input type="checkbox" name="tiktok_publish_audit_ok" value="1"<?= !empty($form['audit_ok']) ? ' checked' : '' ?>>
-          <span>Client-Audit bestanden</span>
+          Client-Audit bestanden
         </span>
         <span class="dg-field-hint">Nur setzen, wenn TikTok Direct Post freigegeben hat.</span>
       </label>
