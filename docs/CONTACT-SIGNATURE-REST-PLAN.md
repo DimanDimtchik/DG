@@ -114,7 +114,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES3 | Canvas Web | [x] ES3b ✅ | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [x] ES5a–c ✅ | 🟡🔴 |
-| ES6 | Mitarbeiter-App Aufnahme | [ ] | 🟡🔴 |
+| ES6 | Mitarbeiter-App Aufnahme | [ ] ES6a ✅ · ES6b offen | 🟡🔴 |
 | ES7 | Import-Service Adapter | [ ] | 🟡 |
 | ES8 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
@@ -179,7 +179,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES6a | API: authentifiziertes Upload/Canvas-Ergebnis → `appendNew` · `source=app` | 🟡 | [ ] |
+| ES6a | API: authentifiziertes Upload/Canvas-Ergebnis → `appendNew` · `source=app` | 🟡 | [x] 2026-11-08 `POST /api/mobile/staff/signature` · appendFromApp* · Selftest |
 | ES6b | App-UI Skizze/Minimal: aufnehmen + speichern (eigenes Mini-Paket) | 🟡🔴 | [ ] |
 
 ### ES7 — Import-Service
@@ -219,7 +219,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES6a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. API: Upload/Canvas → appendNew source=app. Kein Brief.`
+`Nur Mini-ID ES6b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. App-UI Skizze/Minimal Unterschrift. Kein Brief.`
 
 ---
 

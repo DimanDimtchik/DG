@@ -77,7 +77,7 @@ final class UserSignatureStore
     }
 
     /**
-     * Bild-Upload (PNG/WebP) → Mediathek + appendNew (source=upload). Kein Löschen.
+     * Bild-Upload (PNG/WebP) → Mediathek + appendNew (source=upload|app). Kein Löschen.
      *
      * @param array<string, mixed> $file $_FILES-Eintrag
      * @return int Neue Signatur-ID
@@ -86,13 +86,18 @@ final class UserSignatureStore
         int $ownerUserId,
         int $contactId,
         array $file,
-        ?int $createdByUserId = null
+        ?int $createdByUserId = null,
+        string $source = 'upload'
     ): int {
         if ($ownerUserId <= 0) {
             throw new InvalidArgumentException('Kein Benutzer für diese Unterschrift verknüpft.');
         }
         if ($contactId <= 0) {
             throw new InvalidArgumentException('contact_id ungültig.');
+        }
+        $source = strtolower(trim($source));
+        if (!in_array($source, ['upload', 'app'], true)) {
+            throw new InvalidArgumentException('Upload-source ungültig.');
         }
 
         $original = (string) ($file['name'] ?? '');
@@ -106,18 +111,23 @@ final class UserSignatureStore
 
         $mediaId = MediaId::generate();
         $stored = MediaStorage::storeUpload($mediaId, $file);
-        $stored['source_note'] = 'Unterschrift';
+        $stored['source_note'] = $source === 'app' ? 'Unterschrift App' : 'Unterschrift';
         $stored['title'] = 'Unterschrift';
         $stored['alt_text'] = 'Unterschrift';
 
         try {
             MediaRepository::insert($mediaId, $stored, $createdByUserId);
+            $ref = $original !== '' ? $original : '';
+            if ($source === 'app') {
+                $ref = $ref !== '' ? ('app:' . $ref) : 'app-upload';
+            }
+
             return self::appendNew([
                 'user_id' => $ownerUserId,
                 'contact_id' => $contactId,
                 'media_id' => $mediaId,
-                'source' => 'upload',
-                'source_ref' => $original !== '' ? $original : '',
+                'source' => $source,
+                'source_ref' => $ref,
                 'created_by_user_id' => $createdByUserId,
             ]);
         } catch (Throwable $e) {
@@ -131,7 +141,21 @@ final class UserSignatureStore
     }
 
     /**
-     * Canvas-PNG → Mediathek + appendNew (source=canvas). Kein Löschen.
+     * Mitarbeiter-App Upload → appendNew source=app.
+     *
+     * @param array<string, mixed> $file $_FILES-Eintrag
+     */
+    public static function appendFromAppUpload(
+        int $ownerUserId,
+        int $contactId,
+        array $file,
+        ?int $createdByUserId = null
+    ): int {
+        return self::appendFromUpload($ownerUserId, $contactId, $file, $createdByUserId, 'app');
+    }
+
+    /**
+     * Canvas-/App-PNG → Mediathek + appendNew (source=canvas|app). Kein Löschen.
      *
      * @return int Neue Signatur-ID
      */
@@ -139,13 +163,18 @@ final class UserSignatureStore
         int $ownerUserId,
         int $contactId,
         string $pngBinary,
-        ?int $createdByUserId = null
+        ?int $createdByUserId = null,
+        string $source = 'canvas'
     ): int {
         if ($ownerUserId <= 0) {
             throw new InvalidArgumentException('Kein Benutzer für diese Unterschrift verknüpft.');
         }
         if ($contactId <= 0) {
             throw new InvalidArgumentException('contact_id ungültig.');
+        }
+        $source = strtolower(trim($source));
+        if (!in_array($source, ['canvas', 'app'], true)) {
+            throw new InvalidArgumentException('PNG-source ungültig.');
         }
 
         $len = strlen($pngBinary);
@@ -164,8 +193,8 @@ final class UserSignatureStore
 
         $mediaId = MediaId::generate();
         $stored = MediaStorage::storeBinary($mediaId, 'original.png', $pngBinary, 'image/png');
-        $stored['original_name'] = 'signature-canvas.png';
-        $stored['source_note'] = 'Unterschrift Zeichenfläche';
+        $stored['original_name'] = $source === 'app' ? 'signature-app.png' : 'signature-canvas.png';
+        $stored['source_note'] = $source === 'app' ? 'Unterschrift App' : 'Unterschrift Zeichenfläche';
         $stored['title'] = 'Unterschrift';
         $stored['alt_text'] = 'Unterschrift';
 
@@ -176,8 +205,8 @@ final class UserSignatureStore
                 'user_id' => $ownerUserId,
                 'contact_id' => $contactId,
                 'media_id' => $mediaId,
-                'source' => 'canvas',
-                'source_ref' => 'canvas',
+                'source' => $source,
+                'source_ref' => $source === 'app' ? 'app' : 'canvas',
                 'created_by_user_id' => $createdByUserId,
             ]);
         } catch (Throwable $e) {
@@ -188,6 +217,18 @@ final class UserSignatureStore
             }
             throw $e;
         }
+    }
+
+    /**
+     * Mitarbeiter-App PNG-Bytes → appendNew source=app.
+     */
+    public static function appendFromAppPng(
+        int $ownerUserId,
+        int $contactId,
+        string $pngBinary,
+        ?int $createdByUserId = null
+    ): int {
+        return self::appendFromCanvasPng($ownerUserId, $contactId, $pngBinary, $createdByUserId, 'app');
     }
 
     /**
@@ -239,13 +280,14 @@ final class UserSignatureStore
     }
 
     /**
-     * data:image/png;base64,… → appendFromCanvasPng.
+     * data:image/png;base64,… → appendFromCanvasPng (oder App source=app).
      */
     public static function appendFromCanvasDataUrl(
         int $ownerUserId,
         int $contactId,
         string $dataUrl,
-        ?int $createdByUserId = null
+        ?int $createdByUserId = null,
+        string $source = 'canvas'
     ): int {
         $dataUrl = trim($dataUrl);
         if (!preg_match('#^data:image/png;base64,#i', $dataUrl)) {
@@ -257,7 +299,19 @@ final class UserSignatureStore
             throw new InvalidArgumentException('Zeichnung konnte nicht gelesen werden.');
         }
 
-        return self::appendFromCanvasPng($ownerUserId, $contactId, $binary, $createdByUserId);
+        return self::appendFromCanvasPng($ownerUserId, $contactId, $binary, $createdByUserId, $source);
+    }
+
+    /**
+     * Mitarbeiter-App data-URL → appendNew source=app.
+     */
+    public static function appendFromAppDataUrl(
+        int $ownerUserId,
+        int $contactId,
+        string $dataUrl,
+        ?int $createdByUserId = null
+    ): int {
+        return self::appendFromCanvasDataUrl($ownerUserId, $contactId, $dataUrl, $createdByUserId, 'app');
     }
 
     /**

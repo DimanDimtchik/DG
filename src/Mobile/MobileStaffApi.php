@@ -256,6 +256,15 @@ final class MobileStaffApi
             MobileApi::ok(self::documentsPayload($contactId));
         }
 
+        // ES6a: Unterschrift Upload/Canvas → appendNew source=app (nur eigener Kontakt)
+        if ($head === 'signature' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            self::saveSignature($contactId);
+        }
+
+        if ($head === 'signature' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
+            MobileApi::ok(self::signaturePayload($contactId));
+        }
+
         MobileApi::fail(404, 'Unbekannter Mitarbeiter-Endpunkt.', 'not_found');
     }
 
@@ -468,6 +477,110 @@ final class MobileStaffApi
         header('Cache-Control: private, no-store');
         readfile($abs);
         exit;
+    }
+
+    /**
+     * ES6a: aktive Signatur des verknüpften CRM-Users (Anzeige).
+     *
+     * @return array<string, mixed>
+     */
+    private static function signaturePayload(int $contactId): array
+    {
+        $ownerUserId = DepartmentRepository::resolveUserIdForContact($contactId);
+        if ($ownerUserId <= 0) {
+            return [
+                'has_crm_user' => false,
+                'active' => null,
+            ];
+        }
+        $active = UserSignatureStore::activeForUser($ownerUserId);
+        if ($active === null) {
+            return [
+                'has_crm_user' => true,
+                'user_id' => $ownerUserId,
+                'active' => null,
+            ];
+        }
+
+        return [
+            'has_crm_user' => true,
+            'user_id' => $ownerUserId,
+            'active' => [
+                'id' => (int) ($active['id'] ?? 0),
+                'media_id' => (string) ($active['media_id'] ?? ''),
+                'source' => (string) ($active['source'] ?? ''),
+                'source_ref' => (string) ($active['source_ref'] ?? ''),
+                'valid_from' => (string) ($active['valid_from'] ?? ''),
+                'preview_url' => class_exists('MediaStorage')
+                    ? MediaStorage::publicUrl((string) ($active['media_id'] ?? ''))
+                    : '',
+            ],
+        ];
+    }
+
+    /**
+     * ES6a: PNG/WebP-Upload oder PNG-Data-URL → appendNew source=app.
+     *
+     * @return never
+     */
+    private static function saveSignature(int $contactId): void
+    {
+        $ownerUserId = DepartmentRepository::resolveUserIdForContact($contactId);
+        if ($ownerUserId <= 0) {
+            MobileApi::fail(
+                400,
+                'Kein CRM-Benutzer mit diesem Kontakt verknüpft (E-Mail oder Login).',
+                'no_crm_user'
+            );
+        }
+
+        $file = null;
+        foreach (['signature_file', 'file', 'signature'] as $key) {
+            if (isset($_FILES[$key]) && is_array($_FILES[$key])) {
+                $file = $_FILES[$key];
+                break;
+            }
+        }
+
+        try {
+            if ($file !== null) {
+                $id = UserSignatureStore::appendFromAppUpload(
+                    $ownerUserId,
+                    $contactId,
+                    $file,
+                    $ownerUserId
+                );
+            } else {
+                $body = MobileApi::jsonBody();
+                $dataUrl = trim((string) ($body['data_url'] ?? $body['signature_png'] ?? ''));
+                $b64 = trim((string) ($body['png_base64'] ?? ''));
+                if ($dataUrl === '' && $b64 !== '') {
+                    $dataUrl = 'data:image/png;base64,' . $b64;
+                }
+                if ($dataUrl === '') {
+                    MobileApi::fail(
+                        400,
+                        'Unterschrift fehlt (Datei PNG/WebP oder data_url / png_base64).',
+                        'bad_request'
+                    );
+                }
+                $id = UserSignatureStore::appendFromAppDataUrl(
+                    $ownerUserId,
+                    $contactId,
+                    $dataUrl,
+                    $ownerUserId
+                );
+            }
+        } catch (InvalidArgumentException $e) {
+            MobileApi::fail(400, $e->getMessage(), 'bad_request');
+        } catch (Throwable $e) {
+            MobileApi::fail(500, 'Unterschrift konnte nicht gespeichert werden.', 'server_error');
+        }
+
+        $payload = self::signaturePayload($contactId);
+        $payload['saved_id'] = $id;
+        $payload['message'] = 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie.';
+        MobileApi::ok($payload);
     }
 
     /**
