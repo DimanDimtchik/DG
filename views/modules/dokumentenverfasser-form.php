@@ -171,6 +171,7 @@ $disabled = $readOnly ? ' disabled' : '';
             <label class="dg-field">
               <span>Unterschrift / Name</span>
               <input name="signature" maxlength="255" value="<?= View::escape((string) ($form['signature'] ?? '')) ?>" placeholder="Leer = Firmenname">
+              <span class="dg-field-hint">Bild kommt aus Ihrer aktiven Unterschrift am eigenen Kontakt — keine Auswahl fremder Signaturen.</span>
             </label>
           </div>
         </fieldset>

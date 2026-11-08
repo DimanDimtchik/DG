@@ -672,13 +672,10 @@ JS;
         }
         $closing = trim((string) ($doc['closing'] ?? ''));
         $signature = trim((string) ($doc['signature'] ?? ''));
-        // ES4a: Bild nur aus aktiver Signatur des Session-Users (kein Kontakt-Picker)
-        $signatureImageSrc = trim((string) ($doc['signature_image_src'] ?? ''));
-        if (
-            $signatureImageSrc === ''
-            && class_exists('AuthService')
-            && class_exists('UserSignatureStore')
-        ) {
+        // ES4a/ES4b: Bild ausschließlich aus aktiver Signatur des Session-Users.
+        // Kein doc-Override, kein Kontakt-Picker fremder Signaturen.
+        $signatureImageSrc = '';
+        if (class_exists('AuthService') && class_exists('UserSignatureStore')) {
             $sessionUser = AuthService::user();
             if ($sessionUser !== null && (int) ($sessionUser->id ?? 0) > 0) {
                 $signatureImageSrc = UserSignatureStore::activeImageSrcForUser(

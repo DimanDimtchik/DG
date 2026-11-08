@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * ES4a: Brief/Druck nutzt nur activeForUser(session) — kein Kontakt-Picker, kein Canvas.
+ * ES4a (+ Guard ES4b): Brief/Druck nutzt nur activeForUser(session) — kein Kontakt-Picker, kein Canvas.
  *
  * Usage: php bin/letterhead-session-signature-selftest.php
  */
@@ -41,8 +41,12 @@ assertEs4a(
     'Renderer: Signatur-Bild-CSS/Markup'
 );
 assertEs4a(
-    !preg_match('/signature.*contact.*picker|picker.*signature|fremde[rn]? Signatur/i', $rendererSrc),
-    'Renderer: kein Kontakt-Picker für fremde Signaturen'
+    !preg_match('/\$doc\[[\'"]signature_image_src[\'"]\]/', $rendererSrc),
+    'Renderer: kein doc-Override signature_image_src (ES4b)'
+);
+assertEs4a(
+    !preg_match('/<(select|option)[^>]*(signature|unterschrift)|name=["\']signature_(contact|user|media)/i', $rendererSrc),
+    'Renderer: kein Select/Input für fremde Signaturen'
 );
 assertEs4a(
     !str_contains($rendererSrc, 'appendFromCanvas') && !str_contains($rendererSrc, 'signature_pad'),
