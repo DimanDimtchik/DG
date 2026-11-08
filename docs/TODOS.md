@@ -20,7 +20,7 @@ Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** **UI/CSS-Rest** (siehe oben) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link).
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · **Fließlinie/Puffer:** tokenarm [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) (FL0 ✅ · nächster Schritt **FL1a** — nach UI/IQ-Priorität).
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 
@@ -54,6 +54,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **UI/CSS-Rest (nächste Session):** Spacing/Checkboxen/Readonly-Blöcke systematisch — `ui-crm-scan.php` + Katalog; nicht erneut nur Text-Jargon
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
+- [ ] **Fließlinie / Puffer-Kette:** Blocking/Starving/Rohware/Engpass — tokenarm [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) (FL0 ✅ · nächster **FL1a** · **kein** MES/PLC)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
@@ -182,6 +183,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` *(Code Z2–Z7 erledigt — Zeile historisch)* |
 | Baulohn-Modul (Produkt) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe C — **nach** Normal-Lohn (A), ideal nach B |
 | ERP-Erweiterung V2 | `ERP-ERWEITERUNG-LASTENHEFT-V2.md` — Maschinen-Gemeinkosten + Maschinenwissen/Akademie, nach stabiler Rezeptur/FiBu |
+| Fließlinie / Puffer | `FLIESSLINIE-REST-PLAN.md` (FL0–FL9; auf M0–M5, kein MES/PLC) |
 | Lohn SV-Direktversand (ITSG) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe B — nach Stufe A |
 
 ---
@@ -197,6 +199,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | Datei | Inhalt |
 |-------|--------|
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
+| `FLIESSLINIE-REST-PLAN.md` | Maschinen-Linie + Puffer: Blocking/Starving/Rohware (kein MES) |
 | `PC-HANDOFF.md` | PC-Deploy, Import |
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung Deploy |
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |
