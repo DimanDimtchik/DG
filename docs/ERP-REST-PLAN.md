@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | **Credentials nie committen** | Zertifikate / Portal-IDs nur Instanz |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID E1a laut docs/ERP-REST-PLAN.md. Nur genannte Datei(en). Kein Refactor. Am Ende: php -l auf geänderte PHP-Dateien.`
+`Nur Mini-ID E1b laut docs/ERP-REST-PLAN.md. Keine neue Migration — nur Plan-Haken E1b (SettingsStore laut E1a-Spec). Kein PHP-Service.`
 
 **Nicht im Agent-Chat:** Baulohn vor Standardlohn, ITSG-Versand ohne Gate, FiBu-Buchungsroboter, PostgreSQL/UUID-Schema, Amazon/UI-CSS (eigene Pläne).
 
@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | ID | Thema | Priorität | Status | Token |
 |----|--------|-----------|--------|-------|
 | E0 | Inventar / dieser Plan | — | [x] 2026-11-08 | 🟢 |
-| E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [ ] Mini-IDs unten | 🟡 |
+| E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [~] E1a ✅ Spec; ab E1b | 🟡 |
 | E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 · parallel zu E1 möglich | [ ] Mini-IDs unten | 🟡 |
 | E3 | **Lohn-Gates** (G3-Nachweis, dann LB1+) | Mensch/Pilot | [~] G3 offen | 🔴 |
 | E4 | **Zertifizierungen / Meldewege** | nach Hetzner | [ ] nicht zerlegt | 🔴 |
@@ -90,20 +90,62 @@ Nächste freie Migration bei Start prüfen (`ls database/migrations/` — Stand 
 
 Nicht buchungswirksam. Liest FiBu/Konten + Maschinenlaufzeit; schreibt Settings + Snapshot-Felder.
 
+#### Spec-Kurz (E1a) — verbindlich für E1b–E1f
+
+**Migrationsentscheidung:** **keine** SQL-Migration für E1.  
+Konfiguration analog `RecipeCostSettings` / `stock_purchase` nur in **`SettingsStore`**.  
+Nächste freie Migrationsnummer **143+** bleibt für **E2a** (`machine_knowledge_links`) — nicht für Overhead blockieren.
+
+| Feld | Wert |
+|------|------|
+| `SettingsStore`-Key | `machine_overhead` |
+| Klasse (E1c/E1e) | `MachineOverheadSettings` (+ `MachineOverheadService` für Berechnung) unter `src/Recipe/` |
+| Buchungswirkung | **keine** — nur lesen aus `dg_ledger_postings` / Work-Center-Belegung |
+
+**Settings-Payload (`machine_overhead`):**
+
+| Key | Typ | Default | Bedeutung |
+|-----|-----|---------|-----------|
+| `enabled` | bool | `false` | Aufschlag in Kalkulation nutzen |
+| `period_mode` | string | `fiscal_year` | `fiscal_year` \| `date_range` |
+| `fiscal_year` | int | aktuelles GJ | bei `fiscal_year` |
+| `date_from` / `date_to` | `Y-m-d` \| `''` | leer | bei `date_range` (beide Pflicht) |
+| `account_numbers` | `list<string>` | `[]` | SKR-Kontonummern der Gemeinkostengruppe (z. B. Raum, IT, Verwaltung) |
+| `manual_machine_hours` | float \| `null` | `null` | Fallback, wenn keine Laufzeit aus Belegung; **Pflicht-Hinweis** wenn Divisor 0 |
+| `label` | string | `''` | optionale Bezeichnung der Gruppe (UI) |
+
+**Zeitraum:**  
+- `fiscal_year` → Bewegungen des GJ (wie `LedgerRepository::accountOverview` ohne engere Periode).  
+- `date_range` → `posting_date BETWEEN date_from AND date_to` im gewählten GJ (`fiscal_year` = Jahr von `date_from`).  
+Saldenvortrag (`opening_balance`) **nicht** in die Gemeinkosten-Summe.
+
+**Konten / Kostensumme:**  
+Für jedes Konto in `account_numbers`: Perioden-Bewegung **Soll − Haben** (Aufwand üblich positiv). Summe = `total_overhead_cost` (EUR, 2 Nachkommastellen). Unbekannte Kontonummern → Warning, nicht hart abbrechen.
+
+**Maschinenlaufzeit (Divisor):**  
+1. Primär: Summe Belegungs-/Laufstunden aktiver Work Centers im gleichen Zeitraum (Maschinenblock-Buchungen; Details in E1c).  
+2. Wenn Summe &lt; 0,0005 h und `manual_machine_hours` &gt; 0 → Manualwert.  
+3. Sonst: `overhead_per_machine_hour = null`, Warning „Keine Maschinenstunden — Aufschlag nicht berechenbar“.
+
+**Formel:**  
+`overhead_per_machine_hour = total_overhead_cost / machine_hours` (auf 4 Nachkommastellen intern, Anzeige 2–4).
+
+**Snapshot (E1d — nur speichern bei neuem Snapshot, nie rückwirkend):**  
+- `inputs.overhead`: Kopie der wirksamen Settings + `total_overhead_cost`, `machine_hours`, `overhead_per_machine_hour`, `computed_at`  
+- `result.overhead_per_machine_hour` + optional `result.k_overhead_suggested` (Aufschlag × Maschinenzeit der Kalkulation)  
+UI-Hinweis: „Vorschlag, nicht gebucht“.
+
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| E1a | Spec-Kurz: Settings-Keys + Zeitraum + Kontenliste (Doc-Abschnitt oder Kommentarblock in Plan) + Migrationsnummer reservieren | 🟢 | [ ] |
-| E1b | Migration `NNN_machine_overhead_settings.sql` **oder** nur SettingsStore-Keys ohne Tabelle — Entscheidung in E1a festhalten; Spalten nur wenn nötig | 🟢 | [ ] |
-| E1c | Neu: `MachineOverheadService` (o. ä. unter `src/Recipe/`) — Summe gebuchter Kosten Kontengruppe ÷ Summe Maschinenlaufstunden aktiver Work Centers; klarer Return `overhead_per_machine_hour` | 🟡 | [ ] |
-| E1d | Autoload + Anbindung `RecipeCostService` / `snapshotPayload`: Aufschlag speichern, **alte Snapshots unverändert** | 🟡 | [ ] |
-| E1e | UI: Einstellungen Konten/Zeitraum (Rezeptur- oder Lagerstruktur-Einkauf-Nachbar) + Anzeige €/h in Kalkulation; Katalog-Klassen; kein FiBu-Buchen-Button | 🟡 | [ ] |
-| E1f | Kurz-Selftest `bin/machine-overhead-selftest.php` (Rechnung mit Fixture/Mock oder lesender Smoke) + Plan-Haken | 🟢 | [ ] |
-
-**Prompt E1a:**  
-`Nur Mini-ID E1a laut docs/ERP-REST-PLAN.md. Nur docs/ERP-REST-PLAN.md (Spec-Kurz E1: Keys, Zeitraum, Konten, Migrationsentscheidung). Kein PHP.`
+| E1a | Spec-Kurz: Settings-Keys + Zeitraum + Kontenliste + Migrationsentscheidung | 🟢 | [x] 2026-11-08 SettingsStore `machine_overhead`, **keine** Migration |
+| E1b | Plan-Abschluss E1b: bestätigen „nur SettingsStore“ (kein SQL); ggf. Stub-Klasse erst E1c — **kein** `NNN_machine_overhead_settings.sql` | 🟢 | [ ] |
+| E1c | Neu: `MachineOverheadService` (+ Settings-Klasse) unter `src/Recipe/` — Formel laut Spec; Return u. a. `overhead_per_machine_hour` | 🟡 | [ ] |
+| E1d | Anbindung `RecipeCostService` / `snapshotPayload`: Felder laut Spec; **alte Snapshots unverändert** | 🟡 | [ ] |
+| E1e | UI: Einstellungen Konten/Zeitraum (bei Rezeptur-Kostensätzen oder klarer Nachbar) + Anzeige €/h; Katalog-Klassen; kein FiBu-Buchen-Button | 🟡 | [ ] |
+| E1f | Kurz-Selftest `bin/machine-overhead-selftest.php` + Plan-Haken | 🟢 | [ ] |
 
 **Prompt E1b:**  
-`Nur Mini-ID E1b laut docs/ERP-REST-PLAN.md. Nur neue Migration unter database/migrations/ (Nummer prüfen) ODER dokumentiert „nur SettingsStore“. Kein Service.`
+`Nur Mini-ID E1b laut docs/ERP-REST-PLAN.md. Keine neue Migration — nur Plan-Haken E1b (SettingsStore laut E1a-Spec). Kein PHP-Service.`
 
 **Prompt E1c:**  
 `Nur Mini-ID E1c laut docs/ERP-REST-PLAN.md. Nur neue Datei src/Recipe/MachineOverheadService.php (+ Autoload). Liest FiBu/Konten + Work Centers. Keine Buchung. Kein View.`
