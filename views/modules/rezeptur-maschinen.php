@@ -293,8 +293,8 @@ $formatHelperMaterials = static function (mixed $json): string {
     </div>
   <?php endif; ?>
 
-  <section class="dg-card" style="margin-bottom:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Kostensätze (global)</h2>
+  <section class="dg-card dg-mb-5" style="padding:16px;">
+    <h2 class="dg-subsection-title dg-mt-0">Kostensätze (global)</h2>
     <p class="dg-field-hint">Fließen in den Stundensatz: Strom €/kWh, Raum €/m²·h, Lohn €/h je Bediener.</p>
     <?php if ($canEdit && $dbConnected) : ?>
       <form method="post" action="/app?page=rezeptur-maschinen" class="dg-form">
@@ -375,20 +375,20 @@ $formatHelperMaterials = static function (mixed $json): string {
     </table>
   </div>
 
-  <p class="dg-field-hint" style="margin-top:12px;">
+  <p class="dg-field-hint dg-mt-3">
     Formel: K<sub>masch</sub> = (Anschaffung ÷ Nutzungsdauer) + (kW × Strom) + (m² × Raum).
     „inkl. Lohn“ = K<sub>masch</sub> + Bediener × Lohn.
   </p>
 
-  <section class="dg-card" id="capacity" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Kapazitätsprofile</h2>
+  <section class="dg-card dg-mt-5" id="capacity" style="padding:16px;">
+    <h2 class="dg-subsection-title dg-mt-0">Kapazitätsprofile</h2>
     <p class="dg-field-hint">
       Erfasst nur technische Leistung: Rohstoff-Input pro Stunde, Produkt-Output pro Stunde und Ausbeute.
       Keine Belegung, keine Wartung, keine Buchung.
     </p>
 
     <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
-      <form method="post" action="/app?page=rezeptur-maschinen#capacity" class="dg-form" style="margin-bottom:16px;">
+      <form method="post" action="/app?page=rezeptur-maschinen#capacity" class="dg-form dg-mb-4">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
         <div class="dg-form-grid">
           <label class="dg-field">
@@ -493,7 +493,7 @@ $formatHelperMaterials = static function (mixed $json): string {
                 </td>
                 <td class="dg-table__actions">
                   <?php if ($canEdit && $dbConnected && $profileActive) : ?>
-                    <form method="post" action="/app?page=rezeptur-maschinen#capacity" style="display:inline;">
+                    <form method="post" action="/app?page=rezeptur-maschinen#capacity" class="dg-toolbar__inline-form">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="capacity_profile_id" value="<?= $profileId ?>">
                       <button type="submit" class="dg-button dg-button--small" name="machine_capacity_deactivate" value="1">Deaktivieren</button>
@@ -508,20 +508,20 @@ $formatHelperMaterials = static function (mixed $json): string {
     </div>
   </section>
 
-  <section class="dg-card" id="booking" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Belegungsfenster (Kalender)</h2>
+  <section class="dg-card dg-mt-5" id="booking" style="padding:16px;">
+    <h2 class="dg-subsection-title dg-mt-0">Belegungsfenster (Kalender)</h2>
     <p class="dg-field-hint">
       Wochen-/Monatsansicht plus Liste fuer geplante Produktion, Wartung und Sperrzeiten.
       Bearbeiten und Status (geplant/erledigt) sind möglich; Storno bleibt getrennt.
       Kein Drag-and-drop; Konflikt nur markieren, nicht automatisch entscheiden.
     </p>
     <?php if ($bookingConflictIds !== []) : ?>
-      <div class="dg-flash dg-flash--warning" style="margin-bottom:12px;">
+      <div class="dg-flash dg-flash--warning dg-mb-3">
         Es gibt überlappende Belegungsfenster. Betroffene Zeilen sind mit „Konflikt“ markiert.
       </div>
     <?php endif; ?>
 
-    <form method="get" action="/app#booking" class="dg-form" style="margin-bottom:16px;">
+    <form method="get" action="/app#booking" class="dg-form dg-mb-4">
       <input type="hidden" name="page" value="rezeptur-maschinen">
       <input type="hidden" name="booking_cal_mode" value="<?= View::escape($bookingCalMode) ?>">
       <input type="hidden" name="booking_cal_ym" value="<?= View::escape($bookingCalYm) ?>">
@@ -726,9 +726,9 @@ $formatHelperMaterials = static function (mixed $json): string {
       </div>
     <?php endif; ?>
 
-    <div class="dg-card" style="padding:12px;margin-bottom:16px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
-      <h3 class="dg-subsection-title" style="margin:0 0 8px;font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung</h3>
-      <p class="dg-field-hint" style="margin-top:0;">
+    <div class="dg-card dg-mb-4" style="padding:12px;background:color-mix(in srgb, var(--dg-primary,#336) 5%, #fff);">
+      <h3 class="dg-subsection-title dg-mb-2" style="font-size:1rem;">Kalkulationsgrundlage aus aktueller Belegung</h3>
+      <p class="dg-field-hint dg-mt-0">
         Nur Hinweiswerte aus der gefilterten Liste; keine FiBu-Buchung und keine automatische Umlage.
         Auslastung = belegte Stunden ÷ (Kalenderstunden im Zeitraum × Maschinenanzahl). Überlappungen können &gt;&nbsp;100 % ergeben.
         <?php if ($bookingPeriod !== null && ($bookingPeriod['source'] ?? '') === 'bookings') : ?>
@@ -766,7 +766,7 @@ $formatHelperMaterials = static function (mixed $json): string {
         <div><span class="dg-muted">Maschinenkosten Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['machine_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">inkl. Lohn Vorschlag</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['loaded_cost'], 2)) ?></strong></div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.9rem;border-top:1px dashed var(--dg-border,#ddd);margin-top:10px;padding-top:10px;">
+      <div class="dg-mt-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:0.9rem;border-top:1px dashed var(--dg-border,#ddd);padding-top:10px;">
         <div><span class="dg-muted">Kosten Produktion</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['production_machine_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">Kosten Wartung</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['maintenance_machine_cost'], 2)) ?></strong></div>
         <div><span class="dg-muted">Kosten Sperrzeit</span><br><strong><?= View::escape(RecipeCostService::formatEur($bookingSummary['blocked_machine_cost'], 2)) ?></strong></div>
@@ -782,11 +782,11 @@ $formatHelperMaterials = static function (mixed $json): string {
         $editPlan = (int) ($bookingEdit['maintenance_plan_id'] ?? 0);
         $editStatus = (string) ($bookingEdit['booking_status'] ?? 'planned');
       ?>
-      <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form" style="margin-bottom:16px;">
+      <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-form dg-mb-4">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
         <?php if ($bookingEditId > 0) : ?>
           <input type="hidden" name="booking_window_id" value="<?= $bookingEditId ?>">
-          <p class="dg-field-hint" style="margin-top:0;">Bearbeitung von Belegungsfenster #<?= $bookingEditId ?>.</p>
+          <p class="dg-field-hint dg-mt-0">Bearbeitung von Belegungsfenster #<?= $bookingEditId ?>.</p>
         <?php endif; ?>
         <div class="dg-form-grid">
           <label class="dg-field">
@@ -911,7 +911,7 @@ $formatHelperMaterials = static function (mixed $json): string {
                 <td>
                   <strong><?= View::escape((string) ($booking['title'] ?? '')) ?></strong>
                   <?php if ($hasBookingConflict) : ?>
-                    <div style="margin-top:4px;"><span class="dg-badge dg-badge--warning">Konflikt</span></div>
+                    <div class="dg-mt-1"><span class="dg-badge dg-badge--warning">Konflikt</span></div>
                   <?php endif; ?>
                 </td>
                 <td>
@@ -942,21 +942,21 @@ $formatHelperMaterials = static function (mixed $json): string {
                   <?php if ($canEdit && $dbConnected && $bookingStatus !== 'cancelled') : ?>
                     <a class="dg-button dg-button--small" href="<?= View::escape($bookingEditHref($bookingId)) ?>">Bearbeiten</a>
                     <?php if ($bookingStatus === 'planned') : ?>
-                      <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                      <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-toolbar__inline-form">
                         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                         <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
                         <input type="hidden" name="booking_status" value="done">
                         <button type="submit" class="dg-button dg-button--small" name="machine_booking_status" value="1">Erledigt</button>
                       </form>
                     <?php elseif ($bookingStatus === 'done') : ?>
-                      <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                      <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-toolbar__inline-form">
                         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                         <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
                         <input type="hidden" name="booking_status" value="planned">
                         <button type="submit" class="dg-button dg-button--small" name="machine_booking_status" value="1">Wieder geplant</button>
                       </form>
                     <?php endif; ?>
-                    <form method="post" action="/app?page=rezeptur-maschinen#booking" style="display:inline;">
+                    <form method="post" action="/app?page=rezeptur-maschinen#booking" class="dg-toolbar__inline-form">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="booking_window_id" value="<?= $bookingId ?>">
                       <button type="submit" class="dg-button dg-button--small" name="machine_booking_cancel" value="1">Stornieren</button>
@@ -971,15 +971,15 @@ $formatHelperMaterials = static function (mixed $json): string {
     </div>
   </section>
 
-  <section class="dg-card" id="maintenance" style="margin-top:20px;padding:16px;">
-    <h2 class="dg-subsection-title" style="margin-top:0;">Wartungspläne</h2>
+  <section class="dg-card dg-mt-5" id="maintenance" style="padding:16px;">
+    <h2 class="dg-subsection-title dg-mt-0">Wartungspläne</h2>
     <p class="dg-field-hint">
       Erfasst den geplanten Turnus, erwartete Ausfallzeit, Hilfsmittel und Kosten.
       Keine Wartungsprotokolle, keine Kalenderbelegung und keine FiBu-Buchung.
     </p>
 
     <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
-      <form method="post" action="/app?page=rezeptur-maschinen#maintenance" class="dg-form" style="margin-bottom:16px;">
+      <form method="post" action="/app?page=rezeptur-maschinen#maintenance" class="dg-form dg-mb-4">
         <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
         <div class="dg-form-grid">
           <label class="dg-field">
@@ -1084,7 +1084,7 @@ $formatHelperMaterials = static function (mixed $json): string {
                 </td>
                 <td class="dg-table__actions">
                   <?php if ($canEdit && $dbConnected && $planActive) : ?>
-                    <form method="post" action="/app?page=rezeptur-maschinen#maintenance" style="display:inline;">
+                    <form method="post" action="/app?page=rezeptur-maschinen#maintenance" class="dg-toolbar__inline-form">
                       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
                       <input type="hidden" name="maintenance_plan_id" value="<?= $planId ?>">
                       <button type="submit" class="dg-button dg-button--small" name="machine_maintenance_plan_deactivate" value="1">Deaktivieren</button>
@@ -1098,12 +1098,12 @@ $formatHelperMaterials = static function (mixed $json): string {
       </table>
     </div>
 
-    <div id="maintenance-log" style="margin-top:22px;border-top:1px solid var(--dg-border,#ddd);padding-top:16px;">
-      <h3 class="dg-subsection-title" style="margin-top:0;">Durchgeführte Wartung protokollieren</h3>
+    <div id="maintenance-log" class="dg-mt-5" style="border-top:1px solid var(--dg-border,#ddd);padding-top:16px;">
+      <h3 class="dg-subsection-title dg-mt-0">Durchgeführte Wartung protokollieren</h3>
       <p class="dg-field-hint">Dokumentiert Ist-Zeitpunkt, Laufstundenstand und Ist-Kosten. Keine automatische Buchung.</p>
 
       <?php if ($canEdit && $dbConnected && $centers !== []) : ?>
-        <form method="post" action="/app?page=rezeptur-maschinen#maintenance-log" class="dg-form" style="margin-bottom:16px;">
+        <form method="post" action="/app?page=rezeptur-maschinen#maintenance-log" class="dg-form dg-mb-4">
           <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
           <div class="dg-form-grid">
             <label class="dg-field">
