@@ -98,7 +98,8 @@ function lineStatus():
 | zugleich Station 1 (sofern nicht `down`/`blocked`) | Station-Status `starved`, Reason `raw_material_missing` |
 | `raw_material` im Evaluate-Ergebnis | `{ ok, hint }` — Hint ohne Plan-Codes |
 
-Lager-/BOM-Anbindung = **FL5c** (nur lesen). Bis dahin setzt der Aufrufer `raw_material_ok` manuell/Option.
+Lager-Anbindung = **FL5c** `ProductionLineMaterialStockGate` (nur lesen, `booked=false`).  
+Aufrufer kann weiterhin `raw_material_ok` manuell setzen (überschreibt Gate-Merge nicht, wenn schon gesetzt).
 
 ### FL5b — Hilfsstoff ab Station *k*
 
@@ -108,6 +109,17 @@ Lager-/BOM-Anbindung = **FL5c** (nur lesen). Bis dahin setzt der Aufrufer `raw_m
 | `auxiliary_material` im Ergebnis | `{ ok, from_station_order, hint }` |
 
 Linienstatus folgt den Stationszuständen (`constrained` wenn davor noch etwas läuft, sonst `stopped`). Rohware-Flag (`stopped_material`) hat Vorrang auf Linien-Ebene.
+
+### FL5c — Lagerbestand nur lesen
+
+| Regel | Bedeutung |
+|-------|-----------|
+| Quelle | `StockAvailabilityService::snapshot` → `available` (wenn `track_stock`) |
+| Fixture | Resolver `article_id → qty` für Selftests ohne DB |
+| Rohware | `required > available` → `raw_material_ok=false` |
+| Hilfsstoff | früheste fehlende `station_order` → `missing_aux_from_station_order` |
+| Nicht trackbar / unbekannt | **nicht** blockieren (`null`) |
+| Buchen | **verboten** in diesem Gate (`booked=false` immer) |
 
 ---
 

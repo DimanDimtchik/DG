@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL5c laut docs/FLIESSLINIE-REST-PLAN.md. Lagerbestand nur lesen für Rohware/Hilfsstoff. Kein Auto-Buchen. Kein UI.`
+`Nur Mini-ID FL6a laut docs/FLIESSLINIE-REST-PLAN.md. Stör-Flag / Wartung → Station down. Kein UI.`
 
 ---
 
@@ -160,7 +160,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL2 | Puffer zwischen Stationen | [x] FL2a–c ✅ | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [x] FL3a–c ✅ | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
-| FL5 | Materialmangel (Rohware + Hilfsstoff) | [~] FL5a–b ✅ | 🟡 |
+| FL5 | Materialmangel (Rohware + Hilfsstoff) | [x] FL5a–c ✅ | 🟡 |
 | FL6 | Störung / Wartung propagiert | [ ] | 🟡 |
 | FL7 | UI Linie + Status | [ ] | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
@@ -218,7 +218,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|---------|-------|--------|
 | FL5a | Regel: fehlende Rohware (Eingang Station 1 / BOM) → Linie `stopped_material` | 🟢 | [x] 2026-11-08 Station1 starved + `raw_material` · Selftest |
 | FL5b | Optional Hilfsstoff mitten in der Linie (Zusatzmaterial an Station *k*) → ab *k* starved/stop | 🟡 | [x] 2026-11-08 `missing_aux_from_station_order` · Selftest |
-| FL5c | Anbindung Lagerbestand **nur lesen** (kein Auto-Buchen) · Selftest mit Fixture | 🟡 | [ ] |
+| FL5c | Anbindung Lagerbestand **nur lesen** (kein Auto-Buchen) · Selftest mit Fixture | 🟡 | [x] 2026-11-08 `ProductionLineMaterialStockGate` · Fixture-Selftest |
 
 ### FL6 — Störung / Wartung
 
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL5c laut docs/FLIESSLINIE-REST-PLAN.md. Lagerbestand nur lesen Fixture. Kein Auto-Buchen. Kein UI.`
+`Nur Mini-ID FL6a laut docs/FLIESSLINIE-REST-PLAN.md. Offene Wartung / Stör-Flag → Station down. Kein UI.`
 
 ---
 
@@ -304,4 +304,6 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-line-throughput-selftest.php` | FL4b Linien-Durchsatz Selftest |
 | `bin/production-line-raw-material-selftest.php` | FL5a Rohware Selftest |
 | `bin/production-line-aux-material-selftest.php` | FL5b Hilfsstoff Selftest |
+| `src/Recipe/ProductionLineMaterialStockGate.php` | FL5c Lager nur lesen |
+| `bin/production-line-material-stock-selftest.php` | FL5c Fixture-Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine · FL4a Output/h |
