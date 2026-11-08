@@ -235,6 +235,8 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
               $ru = trim((string) ($pli['reorder_url'] ?? ''));
               $qtyDisplay = rtrim(rtrim(number_format((float) ($pli['suggested_qty'] ?? 0), 3, ',', '.'), '0'), ',');
               $note = trim((string) ($pli['note'] ?? ''));
+              $extOrderId = trim((string) ($pli['external_order_id'] ?? ''));
+              $extOrderChannel = trim((string) ($pli['external_order_channel'] ?? ''));
             ?>
             <tr>
               <td>
@@ -242,6 +244,9 @@ $supplierOptionsJson = json_encode($supplierContactOptions, $jsonEmbedFlags);
                 — <?= View::escape((string) ($pli['article_title'] ?? '')) ?>
                 <?php if ($note !== '') : ?>
                   <br><small class="dg-muted"><?= View::escape($note) ?></small>
+                <?php endif; ?>
+                <?php if ($extOrderId !== '') : ?>
+                  <br><small class="dg-muted" title="<?= View::escape($extOrderChannel !== '' ? $extOrderChannel : 'externe Bestellreferenz') ?>">Bestellnr.<?= $extOrderChannel === PurchaseListRepository::CHANNEL_AMAZON_BUSINESS ? ' Amazon Business' : '' ?>: <?= View::escape($extOrderId) ?></small>
                 <?php endif; ?>
               </td>
               <td>
