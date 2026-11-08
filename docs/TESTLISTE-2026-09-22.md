@@ -66,7 +66,7 @@
 
 ## 6 · Offen von früher
 
-- [ ] Belegkette Angebot→AB→…→Schluss
+- [x] Belegkette Angebot→AB→…→Schluss — ✅ PA2a 2026-11-08 Dev (inkl. LS; Schluss via Abschlag)
 - [ ] Dokumentstatus / Filter
 - [ ] Freitext + Klauseln Druck
 - [ ] Skonto + Mahnung

@@ -34,7 +34,8 @@
 
 ### A2 · Manuelle Tests (ganz-soft.de / Master)
 
-- [ ] Belegkette Angebot → AB → LS → Rechnung → Schlussrechnung  
+- [x] Belegkette Angebot → AB → LS → Rechnung → Schlussrechnung — ✅ PA2a 2026-11-08 Dev  
+  → Hauptkette Angebot→AB→LS→Abschlag→Schluss (Rest 833 € nach 357 € Abschlag); Nebenkette …→Rechnung  
   → [`BUCHHALTUNG-BELEGKETTE.md`](BUCHHALTUNG-BELEGKETTE.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §6
 - [ ] Dokumentstatus / Filter / Freitext / Klauseln / Skonto / Mahnung / Teilzahlungen / OPOS
 - [ ] **Bank Geisterumsätze** erkennen + manuell ausblenden (Migration 064)

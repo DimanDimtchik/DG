@@ -64,17 +64,19 @@
 
 **Druckbare Checkliste:** [`TESTLISTE-RANDFAELLE-2026-08-23.html`](TESTLISTE-RANDFAELLE-2026-08-23.html)
 
-1. Angebot anlegen → keine Buchung, keine UStVA
-2. AB aus Angebot → noch keine Buchung
-3. Abschlagsrechnung 30 % → Journal + OPOS
-4. Schlussrechnung → Rest 70 %, Summe = Auftrag
-5. Gutschrift auf Rechnung → Minderung korrekt
-6. Status-Workflow: versendet → angenommen → abgerechnet
-7. Belegliste filtern nach Dokumentart und Status
-8. Rechnung: Freitext + gesetzliche Vorlagen (§ 19, Reverse Charge) auf Druck/PDF/E-Mail prüfen
-9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — Zahlung buchen, Skonto automatisch
-10. Mahnung: Fälligkeit überschritten → manuell/automatisch (Cron), Mahngebühren auf Beleg
-11. Teilzahlungen: zwei Zahlungen auf eine Rechnung → OPOS „Bezahlt/Offen“, Status `partial`, Mahnung nur auf Rest
+1. Angebot anlegen → keine Buchung, keine UStVA — ✅ PA2a 2026-11-08 Dev (Ledger 0)
+2. AB aus Angebot → noch keine Buchung — ✅ PA2a (+ LS Ledger 0)
+3. Abschlagsrechnung 30 % → Journal + OPOS — ✅ PA2a (357 €, Journal vorhanden)
+4. Schlussrechnung → Rest 70 %, Summe = Auftrag — ✅ PA2a (Rest 833 € = 1190−357)
+5. Gutschrift auf Rechnung → Minderung korrekt — offen (PA2b/andere)
+6. Status-Workflow: versendet → angenommen → abgerechnet — offen → **PA2b**
+7. Belegliste filtern nach Dokumentart und Status — offen → **PA2b**
+8. Rechnung: Freitext + gesetzliche Vorlagen (§ 19, Reverse Charge) auf Druck/PDF/E-Mail prüfen — teils PA1c; Rest PA2b
+9. Skonto-Stufen: 7 Tage 3 %, 30 Tage netto, 90 Tage Verzug — Zahlung buchen, Skonto automatisch — offen → **PA2b**
+10. Mahnung: Fälligkeit überschritten → manuell/automatisch (Cron), Mahngebühren auf Beleg — offen → **PA2b**
+11. Teilzahlungen: zwei Zahlungen auf eine Rechnung → OPOS „Bezahlt/Offen“, Status `partial`, Mahnung nur auf Rest — offen → **PA2b**
+
+**PA2a Zusatz:** Nebenkette Angebot→AB→LS→**Rechnung** (ohne Schluss; `invoice` hat keine Folge `final_invoice`). Artifacts: `pa2a-belegkette/pa2a-report.json`.
 
 ### Teilzahlungen (Migration 060)
 

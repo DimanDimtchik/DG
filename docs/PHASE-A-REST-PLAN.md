@@ -57,7 +57,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 |----|--------|--------|-------|
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
-| PA2 | Manuelle Testliste (A2) | [ ] | 🔴 |
+| PA2 | Manuelle Testliste (A2) | [~] PA2a ✅ | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
@@ -101,7 +101,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA2a | Belegkette Angebot → AB → LS → Rechnung → Schluss | 🔴 | [ ] |
+| PA2a | Belegkette Angebot → AB → LS → Rechnung → Schluss | 🔴 | [x] 2026-11-08 Dev · Angebot→AB→LS→Abschlag→Schluss + Nebenkette→Rechnung |
 | PA2b | Dokumentstatus / Filter / Freitext / Klauseln / Skonto / Mahnung / Teilzahlungen / OPOS | 🔴 | [ ] |
 | PA2c | Bank Geisterumsätze erkennen + ausblenden | 🔴 | [ ] |
 | PA2d | UStVA: Nullmeldung, Berichtigung, §13b-KZ, ELSTER-CSV | 🔴 | [ ] |
@@ -187,12 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel: **PA2a…** Smoke  
+1. Parallel: **PA2b…** Smoke  
 2. Rest **PA4** (a–e, h Mensch) / **PA2**  
 3. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA2a laut docs/PHASE-A-REST-PLAN.md. Manuelle Belegkette laut TESTLISTE/BUCHHALTUNG-BELEGKETTE. Ergebnis in Plan abhaken. Kein Code.`  
+`Nur Mini-ID PA2b laut docs/PHASE-A-REST-PLAN.md. Dokumentstatus / Filter / Freitext / Klauseln / Skonto / Mahnung / Teilzahlungen / OPOS Smoke. Ergebnis abhaken. Kein Code.`  
 *(Oder PA4a Instanz-Ops.)*
 
 ---
