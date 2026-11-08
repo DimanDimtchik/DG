@@ -202,5 +202,21 @@ $openCount = (int) $pdo->query(
 )->fetchColumn();
 assertEs1d($openCount === 1, 'genau eine aktive Zeile pro User');
 
+$refUpload = $ref->hasMethod('appendFromUpload');
+assertEs1d($refUpload, 'Methode appendFromUpload vorhanden (ES2b)');
+$threw = false;
+try {
+    UserSignatureStore::appendFromUpload($userId, $contactId, [
+        'name' => 'sig.jpg',
+        'error' => UPLOAD_ERR_OK,
+        'size' => 10,
+        'tmp_name' => '/tmp/x',
+        'type' => 'image/jpeg',
+    ], $userId);
+} catch (InvalidArgumentException $e) {
+    $threw = str_contains($e->getMessage(), 'PNG') || str_contains($e->getMessage(), 'WebP');
+}
+assertEs1d($threw, 'appendFromUpload lehnt JPG ab');
+
 echo "ES1d Selftest bestanden.\n";
 exit(0);

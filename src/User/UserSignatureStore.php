@@ -77,6 +77,60 @@ final class UserSignatureStore
     }
 
     /**
+     * Bild-Upload (PNG/WebP) → Mediathek + appendNew (source=upload). Kein Löschen.
+     *
+     * @param array<string, mixed> $file $_FILES-Eintrag
+     * @return int Neue Signatur-ID
+     */
+    public static function appendFromUpload(
+        int $ownerUserId,
+        int $contactId,
+        array $file,
+        ?int $createdByUserId = null
+    ): int {
+        if ($ownerUserId <= 0) {
+            throw new InvalidArgumentException('Kein Benutzer für diese Unterschrift verknüpft.');
+        }
+        if ($contactId <= 0) {
+            throw new InvalidArgumentException('contact_id ungültig.');
+        }
+
+        $original = (string) ($file['name'] ?? '');
+        $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['png', 'webp'], true)) {
+            throw new InvalidArgumentException('Nur PNG- oder WebP-Dateien als Unterschrift.');
+        }
+
+        MediaRepository::ensureTables();
+        self::ensureTable();
+
+        $mediaId = MediaId::generate();
+        $stored = MediaStorage::storeUpload($mediaId, $file);
+        $stored['source_note'] = 'Unterschrift';
+        $stored['title'] = 'Unterschrift';
+        $stored['alt_text'] = 'Unterschrift';
+
+        try {
+            MediaRepository::insert($mediaId, $stored, $createdByUserId);
+            return self::appendNew([
+                'user_id' => $ownerUserId,
+                'contact_id' => $contactId,
+                'media_id' => $mediaId,
+                'source' => 'upload',
+                'source_ref' => $original !== '' ? $original : '',
+                'created_by_user_id' => $createdByUserId,
+            ]);
+        } catch (Throwable $e) {
+            try {
+                MediaRepository::delete($mediaId);
+            } catch (Throwable) {
+                // Best effort cleanup
+            }
+            throw $e;
+        }
+    }
+
+    /**
      * Schließt die aktive Signatur des Users und legt eine neue an.
      *
      * @param array{

@@ -1,13 +1,17 @@
 <?php
 /**
- * ES2a: Unterschriften-Historie am Kontakt (neueste zuerst).
- * Kein Upload (ES2b), kein Löschen.
+ * ES2a/ES2b: Unterschriften-Historie am Kontakt (neueste zuerst) + optional Upload.
+ * Kein Löschen, kein Canvas/Mail.
  *
  * @var int|null $contactId
  * @var list<array<string, mixed>>|null $contactSignatures
+ * @var bool|null $canUploadContactSignature
+ * @var bool|null $signatureOwnerMissing
  */
 $contactId = (int) ($contactId ?? 0);
 $contactSignatures = $contactSignatures ?? [];
+$canUploadContactSignature = !empty($canUploadContactSignature);
+$signatureOwnerMissing = !empty($signatureOwnerMissing);
 if ($contactId <= 0) {
     return;
 }
@@ -29,7 +33,7 @@ $formatDt = static function (string $raw): string {
     return $ts !== false ? date('d.m.Y H:i', $ts) : $raw;
 };
 ?>
-<section class="dg-panel dg-panel--wide dg-mt-4">
+<section class="dg-panel dg-panel--wide dg-mt-4" id="contact-signatures">
   <h2 class="dg-subsection-title">Unterschriften</h2>
   <p class="dg-field-hint">Chronologisch, neueste zuerst. Verwendungszeitraum bleibt erhalten — Löschen ist nicht möglich.</p>
 
@@ -82,5 +86,39 @@ $formatDt = static function (string $raw): string {
         </tbody>
       </table>
     </div>
+  <?php endif; ?>
+
+  <?php if ($canUploadContactSignature) : ?>
+    <form
+      class="dg-form dg-mt-4"
+      method="post"
+      action="/app?page=kontakte"
+      enctype="multipart/form-data"
+    >
+      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+      <input type="hidden" name="id" value="<?= (int) $contactId ?>">
+      <h3 class="dg-subsection-title">Neue Unterschrift (Upload)</h3>
+      <p class="dg-field-hint">PNG oder WebP. Die bisher aktive Unterschrift wird beendet und bleibt in der Historie.</p>
+      <div class="dg-form-grid">
+        <label class="dg-field dg-field--wide">
+          <span>Bilddatei</span>
+          <input
+            type="file"
+            name="signature_file"
+            accept=".png,.webp,image/png,image/webp"
+            required
+          >
+        </label>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" name="contact_signature_upload" value="1" class="dg-button dg-button--primary">
+          Unterschrift speichern
+        </button>
+      </div>
+    </form>
+  <?php elseif ($signatureOwnerMissing) : ?>
+    <p class="dg-field-hint dg-mt-4">
+      Upload nicht möglich: kein CRM-Benutzer ist mit diesem Kontakt verknüpft (E-Mail oder Login).
+    </p>
   <?php endif; ?>
 </section>

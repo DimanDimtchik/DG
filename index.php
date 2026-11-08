@@ -4797,6 +4797,48 @@ switch ($path) {
             exit;
         }
 
+        // POST: Unterschrift Upload (ES2b) — appendNew, kein Löschen
+        if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_signature_upload'])) {
+            if (!MenuRegistry::canAccess($user, 'kontakte') || !RoleResolver::canEdit($user)) {
+                header('Location: /app', true, 302);
+                exit;
+            }
+            if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+                Flash::set('error', 'Ungültiges Formular.');
+                header('Location: /app?page=kontakte', true, 302);
+                exit;
+            }
+            $sigContactId = (int) ($_POST['id'] ?? 0);
+            $redirectSig = $sigContactId > 0
+                ? '/app?page=kontakte&action=edit&id=' . $sigContactId . '#contact-signatures'
+                : '/app?page=kontakte';
+            try {
+                $sigContact = $sigContactId > 0 ? ContactRepository::findById($sigContactId) : null;
+                if ($sigContact === null) {
+                    throw new InvalidArgumentException('Kontakt nicht gefunden.');
+                }
+                ContactAccessResolver::assertCanEdit($user, $sigContact);
+                $ownerUserId = DepartmentRepository::resolveUserIdForContact($sigContactId);
+                if ($ownerUserId <= 0) {
+                    throw new InvalidArgumentException(
+                        'Kein CRM-Benutzer mit diesem Kontakt verknüpft (E-Mail oder Login).'
+                    );
+                }
+                $file = is_array($_FILES['signature_file'] ?? null) ? $_FILES['signature_file'] : [];
+                UserSignatureStore::appendFromUpload(
+                    $ownerUserId,
+                    $sigContactId,
+                    $file,
+                    (int) $user->id > 0 ? (int) $user->id : null
+                );
+                Flash::set('success', 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie.');
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: ' . $redirectSig, true, 302);
+            exit;
+        }
+
         // POST: Mitarbeiter-Zugangseinladungen (Link/Manuell)
         if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['staff_access_action'])) {
             if (!MenuRegistry::canAccess($user, 'kontakte')) {
@@ -8760,6 +8802,10 @@ $legalProductsConfig = LegalProductSettings::config();
                     PayrollEmployeeWageAssignmentRepository::forContact($contactId)
                 );
                 $contactSignatures = UserSignatureStore::listForContact($contactId);
+                $signatureOwnerUserId = DepartmentRepository::resolveUserIdForContact($contactId);
+                $canUploadContactSignature = $signatureOwnerUserId > 0
+                    && ContactAccessResolver::canEditContact($user, $contact);
+                $signatureOwnerMissing = $signatureOwnerUserId <= 0;
                 $contactTeams = TeamRepository::teamsForContact($contactId);
                 $staffAccessStatus = StaffAccessInviteService::status($contactId);
                 $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
@@ -11119,6 +11165,8 @@ $legalProductsConfig = LegalProductSettings::config();
         $lohnkontoStaffOptions = $lohnkontoStaffOptions ?? [];
         $payrollCrmDocuments = $payrollCrmDocuments ?? [];
         $contactSignatures = $contactSignatures ?? [];
+        $canUploadContactSignature = $canUploadContactSignature ?? false;
+        $signatureOwnerMissing = $signatureOwnerMissing ?? false;
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -11563,6 +11611,8 @@ $legalProductsConfig = LegalProductSettings::config();
             'payrollWageAssignments',
             'payrollWageTypeOptions',
             'contactSignatures',
+            'canUploadContactSignature',
+            'signatureOwnerMissing',
             'staffAccessStatus',
             'staffAccessHasMailbox',
             'allowedContactRoles',

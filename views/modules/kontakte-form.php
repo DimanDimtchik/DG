@@ -298,6 +298,8 @@ if ($isCompanyForm && $companyEmployees === []) {
       View::partial('partials/contact-signature-history', [
           'contactId' => (int) $contactId,
           'contactSignatures' => $contactSignatures ?? [],
+          'canUploadContactSignature' => !empty($canUploadContactSignature),
+          'signatureOwnerMissing' => !empty($signatureOwnerMissing),
       ]);
     ?>
   <?php endif; ?>

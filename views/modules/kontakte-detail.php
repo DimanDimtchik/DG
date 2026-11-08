@@ -403,6 +403,8 @@
       View::partial('partials/contact-signature-history', [
           'contactId' => (int) $contact->id,
           'contactSignatures' => $contactSignatures ?? [],
+          'canUploadContactSignature' => false,
+          'signatureOwnerMissing' => false,
       ]);
     ?>
 
