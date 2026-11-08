@@ -18,6 +18,8 @@
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
  * @var array<string, mixed> $machineOverheadForm
  * @var array<string, mixed> $machineOverheadPreview
+ * @var string $machineKnowledgeErrorFilter
+ * @var list<array<string, mixed>> $machineKnowledgeHits
  * @var bool $canEdit
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
@@ -117,6 +119,23 @@ $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $overheadForm = $machineOverheadForm ?? MachineOverheadSettings::forForm();
 $overheadPreview = $machineOverheadPreview ?? MachineOverheadService::compute();
+$knowledgeErrorFilter = trim((string) ($machineKnowledgeErrorFilter ?? ''));
+$knowledgeHits = $machineKnowledgeHits ?? [];
+$workCenterNameById = [];
+foreach ($centers as $wcRow) {
+    if (!is_array($wcRow)) {
+        continue;
+    }
+    $wcId = (int) ($wcRow['id'] ?? 0);
+    if ($wcId > 0) {
+        $workCenterNameById[$wcId] = (string) ($wcRow['name'] ?? ('#' . $wcId));
+    }
+}
+$knowledgeTypeLabels = [
+    MachineKnowledgeRepository::CONTENT_MANUAL_PDF => 'Handbuch (PDF)',
+    MachineKnowledgeRepository::CONTENT_ACADEMY_MODULE => 'Akademie-Video',
+    MachineKnowledgeRepository::CONTENT_EXTERNAL_URL => 'Externe URL',
+];
 $centerNames = [];
 $centerHourlyCosts = [];
 foreach ($centers as $center) {
@@ -296,6 +315,67 @@ $formatHelperMaterials = static function (mixed $json): string {
       <a href="<?= View::escape(SettingsRegistry::tabUrl('datenbank')) ?>">Einstellungen → Datenbank</a>
     </div>
   <?php endif; ?>
+
+  <section class="dg-panel dg-mb-5" id="dg-machine-knowledge-search">
+    <h2 class="dg-subsection-title dg-mt-0">Fehlercode suchen</h2>
+    <p class="dg-field-hint">
+      Schnellsuche über alle Maschinen. Akademie-Clips kurz halten (wenige Minuten), echte Screenshots, Untertitel (VTT), einfache Sprache — Pflege am jeweiligen Maschinen-Eintrag unter „Wissen & Störungen“.
+    </p>
+    <form method="get" action="/app" class="dg-form">
+      <input type="hidden" name="page" value="rezeptur-maschinen">
+      <label class="dg-field">
+        <span>Fehlercode</span>
+        <input type="text" name="knowledge_error" value="<?= View::escape($knowledgeErrorFilter) ?>" placeholder="z. B. ERR_HYDRAULIK_404"<?= !$dbConnected ? ' disabled' : '' ?>>
+      </label>
+      <div class="dg-form-actions">
+        <button type="submit" class="dg-button dg-button--small"<?= !$dbConnected ? ' disabled' : '' ?>>Suchen</button>
+        <?php if ($knowledgeErrorFilter !== '') : ?>
+          <a class="dg-button dg-button--small dg-button--secondary" href="/app?page=rezeptur-maschinen#dg-machine-knowledge-search">Zurücksetzen</a>
+        <?php endif; ?>
+      </div>
+    </form>
+    <?php if ($knowledgeErrorFilter !== '') : ?>
+      <div class="dg-table-wrap dg-mt-4">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Maschine</th>
+              <th>Titel</th>
+              <th>Art</th>
+              <th>Codes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if ($knowledgeHits === []) : ?>
+              <tr><td colspan="5" class="dg-muted">Kein aktiver Eintrag zu diesem Fehlercode.</td></tr>
+            <?php else : ?>
+              <?php foreach ($knowledgeHits as $hit) : ?>
+                <?php
+                  $hitWc = (int) ($hit['work_center_id'] ?? 0);
+                  $hitType = (string) ($hit['content_type'] ?? '');
+                  $hitCodes = is_array($hit['error_codes'] ?? null) ? $hit['error_codes'] : [];
+                ?>
+                <tr>
+                  <td><?= View::escape($hitWc > 0 ? ($workCenterNameById[$hitWc] ?? ('#' . $hitWc)) : '—') ?></td>
+                  <td><?= View::escape((string) ($hit['title'] ?? '')) ?></td>
+                  <td><?= View::escape($knowledgeTypeLabels[$hitType] ?? $hitType) ?></td>
+                  <td><?= View::escape($hitCodes === [] ? '—' : implode(', ', $hitCodes)) ?></td>
+                  <td class="dg-table__actions">
+                    <?php if ($hitWc > 0) : ?>
+                      <div class="dg-table__actions-group">
+                        <a class="dg-button dg-button--small" href="/app?page=rezeptur-maschine-form&amp;action=edit&amp;id=<?= $hitWc ?>#dg-machine-knowledge">Zur Maschine</a>
+                      </div>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </section>
 
   <section class="dg-card dg-mb-5" style="padding:16px;">
     <h2 class="dg-subsection-title dg-mt-0">Kostensätze (global)</h2>

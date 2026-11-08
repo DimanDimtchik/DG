@@ -191,7 +191,8 @@ $steps = [
       <h2 class="dg-subsection-title dg-mt-0">Wissen & Störungen</h2>
       <p class="dg-field-hint">
         Handbuch, kurzes Akademie-Video oder Link zu einer Störung.
-        PDF nur unter <code>storage/</code>. Videos kurz halten (wenige Minuten), mit Untertiteln.
+        PDF nur unter <code>storage/</code>. Akademie-Clips: kurz (wenige Minuten), echte CRM-Screens, Untertitel (VTT), einfache Sprache.
+        Zentrale Schnellsuche: <a href="/app?page=rezeptur-maschinen#dg-machine-knowledge-search">Maschinen-Übersicht</a>.
       </p>
 
       <form method="get" action="/app" class="dg-form dg-mb-4">

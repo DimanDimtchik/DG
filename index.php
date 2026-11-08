@@ -7272,6 +7272,10 @@ $legalProductsConfig = LegalProductSettings::config();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
                 $machineOverheadForm = MachineOverheadSettings::forForm();
                 $machineOverheadPreview = MachineOverheadService::compute();
+                $machineKnowledgeErrorFilter = trim((string) ($_GET['knowledge_error'] ?? ''));
+                $machineKnowledgeHits = $machineKnowledgeErrorFilter !== ''
+                    ? MachineKnowledgeRepository::searchByErrorCode($machineKnowledgeErrorFilter, null, true)
+                    : [];
                 $contentTemplate = 'modules/rezeptur-maschinen';
                 $title = 'Maschinen & Arbeitsplätze';
                 $currentPage = 'rezeptur';
