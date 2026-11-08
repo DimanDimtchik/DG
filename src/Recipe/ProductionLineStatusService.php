@@ -2,20 +2,23 @@
 declare(strict_types=1);
 
 /**
- * FL3b: Offline-Status Blocking/Starving laut docs/FLIESSLINIE-REGELN.md — kein PLC.
+ * FL3b/FL4a: Offline-Status Blocking/Starving + Engpass-Hinweis — kein PLC.
  */
 final class ProductionLineStatusService
 {
     /**
      * @param array{
      *   down_station_orders?: list<int>|array<int, bool>,
-     *   raw_material_ok?: bool
+     *   raw_material_ok?: bool,
+     *   recipe_id?: int|null,
+     *   throughputs?: list<array{station_order: int, output_qty_per_hour: float|string, unit?: string, label?: string}>
      * } $options
      * @return array{
      *   line_id: int,
      *   line_status: string,
      *   stations: list<array<string, mixed>>,
-     *   buffers: list<array<string, mixed>>
+     *   buffers: list<array<string, mixed>>,
+     *   bottleneck: array<string, mixed>|null
      * }|null
      */
     public static function evaluate(int $lineId, array $options = []): ?array
@@ -28,6 +31,16 @@ final class ProductionLineStatusService
             return null;
         }
         $buffers = ProductionLineStore::listBuffers($lineId);
+        if (!array_key_exists('recipe_id', $options)) {
+            $rid = $bundle['line']['recipe_id'] ?? null;
+            $options['recipe_id'] = $rid !== null && $rid !== '' ? (int) $rid : null;
+        }
+        if (!isset($options['throughputs'])) {
+            $options['throughputs'] = self::loadThroughputsFromProfiles(
+                $bundle['stations'],
+                isset($options['recipe_id']) ? (int) $options['recipe_id'] : null
+            );
+        }
 
         return self::evaluateFromState(
             $lineId,
@@ -44,13 +57,15 @@ final class ProductionLineStatusService
      * @param list<array<string, mixed>> $buffers listBuffers-Form oder Rohzeilen mit after_station_order
      * @param array{
      *   down_station_orders?: list<int>|array<int, bool>,
-     *   raw_material_ok?: bool
+     *   raw_material_ok?: bool,
+     *   throughputs?: list<array{station_order: int, output_qty_per_hour: float|string, unit?: string, label?: string}>
      * } $options
      * @return array{
      *   line_id: int,
      *   line_status: string,
      *   stations: list<array<string, mixed>>,
-     *   buffers: list<array<string, mixed>>
+     *   buffers: list<array<string, mixed>>,
+     *   bottleneck: array<string, mixed>|null
      * }
      */
     public static function evaluateFromState(
@@ -154,13 +169,135 @@ final class ProductionLineStatusService
         }
 
         $lineStatus = self::lineStatus($statusList, $rawOk);
+        $bottleneck = self::resolveBottleneck(
+            $stationOut,
+            is_array($options['throughputs'] ?? null) ? $options['throughputs'] : []
+        );
 
         return [
             'line_id' => $lineId,
             'line_status' => $lineStatus,
             'stations' => $stationOut,
             'buffers' => $bufferOut,
+            'bottleneck' => $bottleneck,
         ];
+    }
+
+    /**
+     * Engpass = Station mit geringstem positivem Output/h (Kapazitätsprofil).
+     *
+     * @param list<array<string, mixed>> $stationOut
+     * @param list<array{station_order?: int, output_qty_per_hour?: float|string, unit?: string, label?: string}> $throughputs
+     * @return array{
+     *   station_order: int,
+     *   station_id: int,
+     *   work_center_id: int,
+     *   output_qty_per_hour: float,
+     *   unit: string,
+     *   hint: string
+     * }|null
+     */
+    public static function resolveBottleneck(array $stationOut, array $throughputs): ?array
+    {
+        $byOrder = [];
+        foreach ($throughputs as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $order = (int) ($row['station_order'] ?? 0);
+            $qty = (float) str_replace(',', '.', (string) ($row['output_qty_per_hour'] ?? '0'));
+            if ($order <= 0 || $qty <= 0) {
+                continue;
+            }
+            $byOrder[$order] = [
+                'output_qty_per_hour' => $qty,
+                'unit' => trim((string) ($row['unit'] ?? '')),
+                'label' => trim((string) ($row['label'] ?? '')),
+            ];
+        }
+        if ($byOrder === []) {
+            return null;
+        }
+
+        $bestOrder = null;
+        $bestQty = null;
+        foreach ($byOrder as $order => $t) {
+            if ($bestQty === null || $t['output_qty_per_hour'] < $bestQty) {
+                $bestQty = $t['output_qty_per_hour'];
+                $bestOrder = $order;
+            }
+        }
+        if ($bestOrder === null || $bestQty === null) {
+            return null;
+        }
+
+        $stationId = 0;
+        $wcId = 0;
+        $stationLabel = '';
+        foreach ($stationOut as $st) {
+            if ((int) ($st['station_order'] ?? 0) === $bestOrder) {
+                $stationId = (int) ($st['station_id'] ?? 0);
+                $wcId = (int) ($st['work_center_id'] ?? 0);
+                $stationLabel = (string) ($st['label'] ?? '');
+                break;
+            }
+        }
+        $name = $byOrder[$bestOrder]['label'] !== ''
+            ? $byOrder[$bestOrder]['label']
+            : ($stationLabel !== '' ? $stationLabel : ('Station ' . $bestOrder));
+        $unit = $byOrder[$bestOrder]['unit'];
+        $qtyFmt = rtrim(rtrim(number_format($bestQty, 4, ',', ''), '0'), ',');
+        $hint = 'Engpass: ' . $name . ' begrenzt die Linie'
+            . ' (geringster Output/h: ' . $qtyFmt
+            . ($unit !== '' ? ' ' . $unit : '')
+            . '/h).';
+
+        return [
+            'station_order' => $bestOrder,
+            'station_id' => $stationId,
+            'work_center_id' => $wcId,
+            'output_qty_per_hour' => $bestQty,
+            'unit' => $unit,
+            'hint' => $hint,
+        ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $stations
+     * @return list<array{station_order: int, output_qty_per_hour: float, unit: string, label: string}>
+     */
+    private static function loadThroughputsFromProfiles(array $stations, ?int $recipeId): array
+    {
+        if (!class_exists('MachinePlanningRepository')) {
+            return [];
+        }
+        $out = [];
+        foreach ($stations as $st) {
+            $wcId = (int) ($st['work_center_id'] ?? 0);
+            $order = (int) ($st['station_order'] ?? 0);
+            if ($wcId <= 0 || $order <= 0) {
+                continue;
+            }
+            $profile = MachinePlanningRepository::findBestCapacityProfile(
+                $wcId,
+                $recipeId !== null && $recipeId > 0 ? $recipeId : null
+            );
+            if ($profile === null) {
+                continue;
+            }
+            $qty = (float) ($profile['output_qty_per_hour'] ?? 0);
+            if ($qty <= 0) {
+                continue;
+            }
+            $out[] = [
+                'station_order' => $order,
+                'output_qty_per_hour' => $qty,
+                'unit' => (string) ($profile['unit'] ?? ''),
+                'label' => (string) ($st['label'] ?? ''),
+            ];
+        }
+
+        return $out;
     }
 
     /**

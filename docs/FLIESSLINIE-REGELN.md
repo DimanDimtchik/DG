@@ -116,11 +116,21 @@ Output: {
 
 ---
 
+## Engpass (FL4a)
+
+Zusätzlich zu Blocking/Starving liefert `ProductionLineStatusService` optional `bottleneck`:
+
+- Quelle: aktives Kapazitätsprofil je Work Center (`output_qty_per_hour`)  
+- Engpass = Station mit **geringstem positivem** Output/h  
+- `hint`: kurzer Endnutzer-Text („Engpass: … begrenzt die Linie …“) — **keine** Plan-Codes  
+
+---
+
 ## Was FL3a bewusst nicht festlegt
 
 - Echtzeit-PLC / Sensorik  
 - Automatisches Ändern von `current_qty` (Simulationstakte = später optional)  
-- Engpass-Kennzahl (FL4)  
+- Linien-Durchsatz unter Puffer-Annahmen (FL4b)  
 - Lagerbuchung von WIP  
 
 ---
