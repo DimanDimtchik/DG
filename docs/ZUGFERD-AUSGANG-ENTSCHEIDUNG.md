@@ -27,7 +27,7 @@
 | `VoucherEInvoiceXmlService` | XRechnung-XML (Rechnungen / Abschlag / Schluss, nicht Entwurf) |
 | `VoucherMailAttachmentBuilder` | Mail: PDF immer; XML wenn `supports()` |
 
-§13b-/Reverse-Charge-Felder im XML = separates Mini-ID **PA5c** (nicht Teil dieser Entscheidung).
+§13b-/Reverse-Charge-Felder im XML = **PA5c ✅** (`VoucherEInvoiceXmlService`: Kategorie AE, BT-120/121).
 
 ---
 

@@ -90,6 +90,20 @@ final class VoucherEInvoiceXmlService
         $net = (float) ($voucher['net_amount'] ?? 0);
         $tax = (float) ($voucher['tax_amount'] ?? 0);
         $defaultRate = (float) ($voucher['tax_rate'] ?? 19);
+        $reverseChargeType = VoucherReverseCharge::sanitizeType((string) ($voucher['reverse_charge_type'] ?? ''));
+        $isReverseCharge = VoucherReverseCharge::isActive($reverseChargeType);
+        if ($isReverseCharge) {
+            // EN 16931 / XRechnung: Kategorie AE, Satz 0, Steuerbetrag 0 (BR-AE-*).
+            $tax = 0.0;
+            $xmlRate = 0.0;
+            $taxCategory = 'AE';
+            if (abs($net) < 0.00001 && abs($gross) > 0.00001) {
+                $net = $gross;
+            }
+        } else {
+            $xmlRate = $defaultRate;
+            $taxCategory = $defaultRate > 0 ? 'S' : 'Z';
+        }
 
         $items = VoucherRepository::itemsForVoucher((int) ($voucher['id'] ?? 0));
         $invoiceLines = '';
@@ -103,19 +117,46 @@ final class VoucherEInvoiceXmlService
                 }
                 $lineGross = (float) str_replace(',', '.', (string) ($item['gross_amount'] ?? '0'));
                 $rate = (float) ($item['tax_rate'] ?? $defaultRate);
-                $lineNet = $rate > 0 ? round($lineGross / (1 + $rate / 100), 2) : $lineGross;
-                $unitGross = (float) str_replace(',', '.', (string) ($item['unit_price_gross'] ?? '0'));
-                $unitNet = $rate > 0 ? round($unitGross / (1 + $rate / 100), 2) : $unitGross;
+                if ($isReverseCharge) {
+                    $lineNet = $lineGross;
+                    $unitGross = (float) str_replace(',', '.', (string) ($item['unit_price_gross'] ?? '0'));
+                    $unitNet = $unitGross > 0 ? $unitGross : ($qty > 0 ? round($lineGross / $qty, 2) : $lineGross);
+                    $lineRate = 0.0;
+                } else {
+                    $lineNet = $rate > 0 ? round($lineGross / (1 + $rate / 100), 2) : $lineGross;
+                    $unitGross = (float) str_replace(',', '.', (string) ($item['unit_price_gross'] ?? '0'));
+                    $unitNet = $rate > 0 ? round($unitGross / (1 + $rate / 100), 2) : $unitGross;
+                    $lineRate = $rate;
+                }
                 $title = trim((string) ($item['title'] ?? 'Position'));
                 $unit = trim((string) ($item['unit'] ?? 'Stück'));
-                $invoiceLines .= self::invoiceLineXml($lineNo, $title, $qty, $unit, $unitNet, $lineNet, $rate, $currency);
+                $invoiceLines .= self::invoiceLineXml(
+                    $lineNo,
+                    $title,
+                    $qty,
+                    $unit,
+                    $unitNet,
+                    $lineNet,
+                    $lineRate,
+                    $currency,
+                    $isReverseCharge
+                );
             }
         } else {
             $lineNo = 1;
-            $invoiceLines = self::invoiceLineXml(1, 'Leistung gemäß Beleg', 1.0, 'Stück', $net, $net, $defaultRate, $currency);
+            $invoiceLines = self::invoiceLineXml(
+                1,
+                'Leistung gemäß Beleg',
+                1.0,
+                'Stück',
+                $net,
+                $net,
+                $xmlRate,
+                $currency,
+                $isReverseCharge
+            );
         }
 
-        $taxCategory = $defaultRate > 0 ? 'S' : 'Z';
         $customizationId = 'urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0';
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
@@ -128,6 +169,9 @@ final class VoucherEInvoiceXmlService
             . '<cbc:IssueDate>' . self::e($issueDate) . '</cbc:IssueDate>'
             . '<cbc:DueDate>' . self::e($dueDate) . '</cbc:DueDate>'
             . '<cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>'
+            . ($isReverseCharge
+                ? '<cbc:Note>' . self::e('Steuerschuldnerschaft des Leistungsempfängers (§ 13b UStG / Reverse Charge).') . '</cbc:Note>'
+                : '')
             . '<cbc:DocumentCurrencyCode>' . self::e($currency) . '</cbc:DocumentCurrencyCode>'
             . '<cac:AccountingSupplierParty><cac:Party>'
             . self::partyNameXml($sellerName)
@@ -144,8 +188,8 @@ final class VoucherEInvoiceXmlService
             . '<cac:TaxTotal><cbc:TaxAmount currencyID="' . self::e($currency) . '">' . self::amt($tax) . '</cbc:TaxAmount>'
             . '<cac:TaxSubtotal><cbc:TaxableAmount currencyID="' . self::e($currency) . '">' . self::amt($net) . '</cbc:TaxableAmount>'
             . '<cbc:TaxAmount currencyID="' . self::e($currency) . '">' . self::amt($tax) . '</cbc:TaxAmount>'
-            . '<cac:TaxCategory><cbc:ID>' . self::e($taxCategory) . '</cbc:ID><cbc:Percent>' . self::amt($defaultRate) . '</cbc:Percent>'
-            . '<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:TaxCategory></cac:TaxSubtotal></cac:TaxTotal>'
+            . self::taxCategoryXml($taxCategory, $xmlRate, $isReverseCharge)
+            . '</cac:TaxSubtotal></cac:TaxTotal>'
             . '<cac:LegalMonetaryTotal>'
             . '<cbc:LineExtensionAmount currencyID="' . self::e($currency) . '">' . self::amt($net) . '</cbc:LineExtensionAmount>'
             . '<cbc:TaxExclusiveAmount currencyID="' . self::e($currency) . '">' . self::amt($net) . '</cbc:TaxExclusiveAmount>'
@@ -167,18 +211,36 @@ final class VoucherEInvoiceXmlService
         float $lineNet,
         float $rate,
         string $currency,
+        bool $reverseCharge = false,
     ): string {
-        $cat = $rate > 0 ? 'S' : 'Z';
+        $cat = $reverseCharge ? 'AE' : ($rate > 0 ? 'S' : 'Z');
+        $percent = $reverseCharge ? 0.0 : $rate;
 
         return '<cac:InvoiceLine>'
             . '<cbc:ID>' . $lineNo . '</cbc:ID>'
             . '<cbc:InvoicedQuantity unitCode="C62">' . self::amt($qty) . '</cbc:InvoicedQuantity>'
             . '<cbc:LineExtensionAmount currencyID="' . self::e($currency) . '">' . self::amt($lineNet) . '</cbc:LineExtensionAmount>'
             . '<cac:Item><cbc:Name>' . self::e($title) . '</cbc:Name>'
-            . '<cac:ClassifiedTaxCategory><cbc:ID>' . self::e($cat) . '</cbc:ID><cbc:Percent>' . self::amt($rate) . '</cbc:Percent>'
+            . '<cac:ClassifiedTaxCategory><cbc:ID>' . self::e($cat) . '</cbc:ID><cbc:Percent>' . self::amt($percent) . '</cbc:Percent>'
             . '<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:ClassifiedTaxCategory></cac:Item>'
             . '<cac:Price><cbc:PriceAmount currencyID="' . self::e($currency) . '">' . self::amt($unitNet) . '</cbc:PriceAmount></cac:Price>'
             . '</cac:InvoiceLine>';
+    }
+
+    /**
+     * BG-23 TaxCategory inkl. BT-120/BT-121 bei Reverse Charge (AE).
+     */
+    private static function taxCategoryXml(string $categoryId, float $percent, bool $reverseCharge): string
+    {
+        $xml = '<cac:TaxCategory><cbc:ID>' . self::e($categoryId) . '</cbc:ID>'
+            . '<cbc:Percent>' . self::amt($percent) . '</cbc:Percent>';
+        if ($reverseCharge) {
+            $xml .= '<cbc:TaxExemptionReasonCode>VATEX-EU-AE</cbc:TaxExemptionReasonCode>'
+                . '<cbc:TaxExemptionReason>' . self::e('Steuerschuldnerschaft des Leistungsempfängers') . '</cbc:TaxExemptionReason>';
+        }
+        $xml .= '<cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:TaxCategory>';
+
+        return $xml;
     }
 
     private static function partyNameXml(string $name): string

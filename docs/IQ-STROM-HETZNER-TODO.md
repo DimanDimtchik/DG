@@ -73,7 +73,8 @@
 - [x] GmbH-Hinweise: Jahresabschluss-UI nicht als „EÜR ohne Kanzlei“ bei GmbH/Bilanz — ✅ 2026-11-08 PA5a (`views/modules/buchhaltung-jahresabschluss.php`)
 - [x] ZUGFeRD-Ausgang: Entscheidung dokumentiert — PDF + XRechnung-XML bewusst behalten; Factur-X-Einbettung = D2  
   → [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) (PA5b ✅ 2026-11-08)
-- [ ] E-Rechnung §13b: prüfen, ob XRechnung-XML Reverse-Charge korrekt setzt (BT-Felder); sonst Fix vor Produktivversand
+- [x] E-Rechnung §13b: XRechnung Reverse-Charge → Kategorie **AE**, BT-120/121 (`VATEX-EU-AE`) — ✅ PA5c 2026-11-08  
+  → `VoucherEInvoiceXmlService` · Selftest `bin/einvoice-reverse-charge-selftest.php`
 
 ### A6 · Laufende Nebenpunkte (jetzt, niedrige Priorität neben A1–A4)
 
