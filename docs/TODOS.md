@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** ERP-Rest Mini-IDs zerlegen → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) (E1 Gemeinkosten, E2 Maschinenwissen). Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
+**Nächste Session:** ERP-Rest **E1a** → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) (Prompt im Plan). Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
 
 ---
 
@@ -54,7 +54,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U5 ✅ (2026-11-08; Guards/Scan grün) · optional später: U2b Sichtcheck, margin-left/Print
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
-- [~] **ERP-Rest (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) — E0 Inventar ✅; nächste Session Mini-IDs für **E1** Gemeinkosten / **E2** Maschinenwissen; E3–E5 🔴 Gates
+- [~] **ERP-Rest (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) — E0 ✅ zerlegt; Code ab **E1a**; E2 Wissen; E3–E5 🔴 Gates
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
