@@ -26,7 +26,7 @@ Pro Linie:
 
 1. Stationen geordnet: `station_order` 1…n  
 2. Puffer je Lücke 1…n−1: `capacity_qty`, `min_qty`, `current_qty`  
-3. Optional (später): `down[i]`, `raw_material_ok` (FL5/FL6)
+3. Optional: `down[i]` (FL6a Gate), `raw_material_ok` / Hilfsstoff (FL5)
 
 ---
 
@@ -161,6 +161,18 @@ Puffer-Annahmen für `line_throughput`:
 - `stopped` / `stopped_material` → **0**  
 
 Keine Plan-Codes in `hint`-Texten.
+
+---
+
+### FL6a — Station `down`
+
+| Quelle | Wirkung |
+|--------|---------|
+| Manuelles Stör-Flag (`manual_fault_station_orders`) | betroffene `station_order` → `down` |
+| Offene Belegung `maintenance` / `blocked` (Status nicht cancelled/done, Zeitfenster enthält *jetzt*) | zugehöriges Work Center → Station `down` |
+| Gate | `ProductionLineStationDownGate` → `down_station_orders` für Evaluate |
+
+Propagation auf Pufferstände = **FL6b** (hier nur Stationsstatus).
 
 ---
 

@@ -516,6 +516,7 @@ spl_autoload_register(static function (string $class): void {
         'ProductionLineStore' => '/src/Recipe/ProductionLineStore.php',
         'ProductionLineStatusService' => '/src/Recipe/ProductionLineStatusService.php',
         'ProductionLineMaterialStockGate' => '/src/Recipe/ProductionLineMaterialStockGate.php',
+        'ProductionLineStationDownGate' => '/src/Recipe/ProductionLineStationDownGate.php',
     ];
 
     if (!isset($map[$class])) {
