@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** ERP-Rest **E1d** → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) (Snapshot-Pfad). Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
+**Nächste Session:** ERP-Rest **E1e** → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) (UI Gemeinkosten). Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
 
 ---
 

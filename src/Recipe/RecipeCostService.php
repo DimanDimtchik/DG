@@ -439,6 +439,54 @@ final class RecipeCostService
             }
         }
 
+        // FiBu-Gemeinkosten €/Maschinenstunde — nur Vorschlag, ändert self_cost nicht (E1d).
+        $overheadPerMachineHour = null;
+        $kOverheadSuggested = 0.0;
+        $overheadInput = null;
+        $totalRoutingHours = 0.0;
+        foreach ($hoursByWc as $routingHoursSum) {
+            $totalRoutingHours += self::f($routingHoursSum);
+        }
+        if (class_exists('MachineOverheadSettings') && class_exists('MachineOverheadService')) {
+            $ohCfg = MachineOverheadSettings::get();
+            if (!empty($ohCfg['enabled'])) {
+                $oh = MachineOverheadService::compute($ohCfg);
+                $overheadPerMachineHour = $oh['overhead_per_machine_hour'];
+                if ($overheadPerMachineHour !== null && $totalRoutingHours >= 0.0005) {
+                    $kOverheadSuggested = round((float) $overheadPerMachineHour * $totalRoutingHours, 2);
+                }
+                foreach ($oh['warnings'] as $ohWarn) {
+                    $w = trim((string) $ohWarn);
+                    if ($w !== '') {
+                        $warnings[] = 'Gemeinkosten: ' . $w;
+                    }
+                }
+                $overheadInput = [
+                    'enabled' => true,
+                    'period_mode' => (string) ($ohCfg['period_mode'] ?? ''),
+                    'fiscal_year' => (int) ($ohCfg['fiscal_year'] ?? 0),
+                    'date_from' => (string) ($ohCfg['date_from'] ?? ''),
+                    'date_to' => (string) ($ohCfg['date_to'] ?? ''),
+                    'account_numbers' => $ohCfg['account_numbers'] ?? [],
+                    'manual_machine_hours' => $ohCfg['manual_machine_hours'],
+                    'label' => (string) ($ohCfg['label'] ?? ''),
+                    'total_overhead_cost' => (float) ($oh['total_overhead_cost'] ?? 0),
+                    'machine_hours' => (float) ($oh['machine_hours'] ?? 0),
+                    'machine_hours_source' => (string) ($oh['machine_hours_source'] ?? 'none'),
+                    'overhead_per_machine_hour' => $overheadPerMachineHour,
+                    'routing_hours' => round($totalRoutingHours, 4),
+                    'computed_at' => (string) ($oh['computed_at'] ?? ''),
+                ];
+            } else {
+                $overheadInput = [
+                    'enabled' => false,
+                    'overhead_per_machine_hour' => null,
+                    'routing_hours' => round($totalRoutingHours, 4),
+                    'computed_at' => '',
+                ];
+            }
+        }
+
         return [
             'rates' => $rates,
             'target_qty' => $targetQty,
@@ -449,18 +497,22 @@ final class RecipeCostService
             'capacity_lines' => $capacityLines,
             'maintenance_lines' => $maintenanceLines,
             'routing_steps' => $routeSteps,
+            'overhead' => $overheadInput,
             'k_mat' => $kMat,
             'k_fert_routing' => $kFertRouting,
             'k_fert_labor_only' => $kFertLaborOnly,
             'k_fert' => $kFert,
             'k_maint_suggested' => $kMaintSuggested,
+            'overhead_per_machine_hour' => $overheadPerMachineHour,
+            'k_overhead_suggested' => $kOverheadSuggested,
             'self_cost' => $selfCost,
             'self_cost_with_maint_suggested' => $selfCost + $kMaintSuggested,
+            'self_cost_with_overhead_suggested' => $selfCost + $kOverheadSuggested,
             'vk' => $vk,
             'unit_self_cost' => $unitSelf,
             'unit_vk' => $unitVk,
             'warnings' => $warnings,
-            'formula' => 'K_mat + K_fert; VK = Selbstkosten × (1 + Marge%); Wartung nur Vorschlag',
+            'formula' => 'K_mat + K_fert; VK = Selbstkosten × (1 + Marge%); Wartung/Gemeinkosten nur Vorschlag',
         ];
     }
 
@@ -488,6 +540,8 @@ final class RecipeCostService
                 'capacity_lines' => $calcResult['capacity_lines'] ?? [],
                 'maintenance_lines' => $calcResult['maintenance_lines'] ?? [],
                 'rates' => $calcResult['rates'] ?? RecipeCostSettings::get(),
+                // Nur bei neuen Snapshots; bestehende Payloads ohne Key bleiben gültig (E1d).
+                'overhead' => $calcResult['overhead'] ?? null,
             ],
             'result' => [
                 'k_mat' => $calcResult['k_mat'] ?? 0,
@@ -495,9 +549,13 @@ final class RecipeCostService
                 'k_fert_routing' => $calcResult['k_fert_routing'] ?? 0,
                 'k_fert_labor_only' => $calcResult['k_fert_labor_only'] ?? 0,
                 'k_maint_suggested' => $calcResult['k_maint_suggested'] ?? 0,
+                'overhead_per_machine_hour' => $calcResult['overhead_per_machine_hour'] ?? null,
+                'k_overhead_suggested' => $calcResult['k_overhead_suggested'] ?? 0,
                 'self_cost' => $calcResult['self_cost'] ?? 0,
                 'self_cost_with_maint_suggested' => $calcResult['self_cost_with_maint_suggested']
                     ?? ((float) ($calcResult['self_cost'] ?? 0) + (float) ($calcResult['k_maint_suggested'] ?? 0)),
+                'self_cost_with_overhead_suggested' => $calcResult['self_cost_with_overhead_suggested']
+                    ?? ((float) ($calcResult['self_cost'] ?? 0) + (float) ($calcResult['k_overhead_suggested'] ?? 0)),
                 'vk' => $calcResult['vk'] ?? 0,
                 'unit_self_cost' => $calcResult['unit_self_cost'] ?? 0,
                 'unit_vk' => $calcResult['unit_vk'] ?? 0,
