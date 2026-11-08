@@ -1,15 +1,18 @@
 # IQ Strom GmbH + Hetzner — Implementierungs-ToDo
 
-> **Stand:** 2026-10-27 (Lohn-Produkt: zuerst Lexware-Office-Niveau, Baulohn später)  
+> **Stand:** 2026-11-08 (Phase A tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md); Lohn: zuerst Lexware-Office-Niveau, Baulohn später)  
 > **Ziel:** DG CRM als CRM+FiBu (+ Lohn) — Einsatz u. a. **IQ Strom GmbH** (Cloud, ≥3 Nutzer remote; perspektivisch ohne Steuerberater).  
 > **Reihenfolge:** A jetzt → B Hetzner → C nach Umzug → D Lohn / Jahresblock / Rest.  
-> Detailquellen: [`TODOS.md`](TODOS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) · [`buchhaltung-todo.html`](buchhaltung-todo.html) · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) · [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
+> Detailquellen: [`TODOS.md`](TODOS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) · [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) · [`buchhaltung-todo.html`](buchhaltung-todo.html) · [`MULTI-FIRMA-KONZEPT.md`](MULTI-FIRMA-KONZEPT.md) · [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md) · [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)  
+> **Phase A tokenarm (1 Chat = 1 Mini-ID):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md)
 
 **Hinweis Behörden:** Keine Finanzamt-„Softwarefreigabe“. Extern: ELSTER-ID ✅ `34573`, Softwarezertifikat, ERiC, Hetzner-AVV. **Lohn:** ITSG erst für direkten SV-Versand aus DG (Stufe B). **Baulohn** ist Produktfeature **nach** Normal-Lohn (Stufe C), nicht an die IQ-Strom-SOKA-Jahresprüfung gekoppelt.
 
 ---
 
 ## A · Jetzt (vor Hetzner) — erledigen in diesem Zustand
+
+> **Mini-Schritte (1 Chat = 1 ID):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA1…PA6.
 
 ### A1 · GoBD / Belege / FiBu-Härte (Blocker für Produktiv-FiBu)
 
@@ -74,8 +77,8 @@
 
 - [~] **Telefon/CTI Fritzbox:** manuell aktivieren (Code da) — Linphone, CallMonitor-Bridge
 - [ ] Multi-Firma Switcher Feinschliff nur falls für IQ/Holding nötig (MB1–MB4 Code ✅)
-- [ ] **ERP-Maschinenblock früh starten:** Belegungs-/Kapazitätsplan (Rohstoff/h, Output/h), Zusatz-/Verpackungsmaterial, Wartungsturnus/-kosten; danach Gemeinkosten je Maschinenstunde als **nicht buchungswirksamer Vorschlag** + Maschinenwissen/Akademie
-  → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · M0a: [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
+- [x] **ERP-Maschinenblock** (M0–M5) + Gemeinkosten (nicht buchungswirksam) + Maschinenwissen/Akademie — Code ✅ 2026-11-08  
+  → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) E0–E2 ✅ · M0a: [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 
 ---
 
@@ -191,8 +194,8 @@ Ohne diese Punkte ersetzt DG Lex **nicht** vollständig für eine bilanzierungsp
   → [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md)
 - [ ] Amazon Business Stufe 2  
   → [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md)
-- [ ] ERP-Erweiterung: Maschinen-Gemeinkosten + Maschinenwissen/Akademie
-  → [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
+- [x] ERP-Erweiterung: Maschinen-Gemeinkosten + Maschinenwissen/Akademie (Code ✅ 2026-11-08)  
+  → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) E0–E2 · Fach: [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md)
 - [ ] Stripe Shop live  
   → [`SHOP-TODO.md`](SHOP-TODO.md)
 - [ ] Nextcloud `cloud.ganz-om.de` / IQ-Cloud  

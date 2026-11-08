@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅ ([`ERP-REST-PLAN.md`](ERP-REST-PLAN.md)); E3–E5 🔴 Gates. Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
+**Nächste Session:** Phase **A** tokenarm → [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (**PA1d** PV-Automatik oder **PA5b** ZUGFeRD-Doc). Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅; E3–E5 🔴. Amazon Live/[~] Onboarding.
 
 ---
 
@@ -12,13 +12,13 @@ Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 | Phase | Datei | Inhalt |
 |-------|--------|--------|
-| **A → D** | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) | GoBD/Tests/IQ → Hetzner → ELSTER/LDAP → **Lohn D0 A→B→C** → E-Bilanz/KSt/GewSt & Rest |
+| **A → D** | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) · A tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) | GoBD/Tests/IQ → Hetzner → ELSTER/LDAP → **Lohn D0 A→B→C** → E-Bilanz/KSt/GewSt & Rest |
 | Vor-Check | [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) | Shared Core, Minify, GoBD-Stichprobe |
 | ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 
-**Nächster Block:** Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen). UI/CSS-Rest: [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) U0–U5 ✅.
+**Nächster Block:** Phase **A** Mini-IDs in [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (nicht ERiC auf Kasserver). UI/CSS-Rest: [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) U0–U5 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link).
 
@@ -48,13 +48,13 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 
 ## Prioritäten (jetzt)
 
-> Offene Arbeitspakete mit Checkboxen: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** Phase A.  
-> Kurz: GoBD-Historie · FiBu-Tests · IQ-Instanz · Vor-Hetzner-Check — danach Umzug, nicht vorher Live-ELSTER.
+> Offene Arbeitspakete: Phase **A** Mini-IDs **[`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md)** · Fach-Checkboxen [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md).  
+> Kurz: GoBD/Druck · FiBu-Tests · IQ-Instanz · Vor-Hetzner — danach Umzug, nicht vorher Live-ELSTER.
 
 - [x] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U5 ✅ (2026-11-08; Guards/Scan grün) · optional später: U2b Sichtcheck, margin-left/Print
-- [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
+- [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0a ✅ · nächste: **PA1d** / PA5b / PA3c · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
-- [~] **ERP-Rest (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) — E0–E2 ✅ (Selftests Overhead/Wissen); E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
+- [x] **ERP-Rest E0–E2 (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) ✅ 2026-11-08 · E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
@@ -198,6 +198,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | Datei | Inhalt |
 |-------|--------|
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
+| `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
 | `PC-HANDOFF.md` | PC-Deploy, Import |
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung Deploy |
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |

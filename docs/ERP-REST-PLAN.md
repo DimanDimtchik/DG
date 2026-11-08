@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | **Credentials nie committen** | Zertifikate / Portal-IDs nur Instanz |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`ERP E1/E2 Code ✅. Nächster Block E3a: G3-Pilotnachweis laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md (Mensch). Oder Phase A in docs/IQ-STROM-HETZNER-TODO.md.`
+`ERP E1/E2 Code ✅. Nächster Block E3a: G3-Pilotnachweis laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md (Mensch). Oder Phase A Mini-ID laut docs/PHASE-A-REST-PLAN.md.`
 
 **Nicht im Agent-Chat:** Baulohn vor Standardlohn, ITSG-Versand ohne Gate, FiBu-Buchungsroboter, PostgreSQL/UUID-Schema, Amazon/UI-CSS (eigene Pläne).
 
