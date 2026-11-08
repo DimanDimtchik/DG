@@ -7295,6 +7295,19 @@ $legalProductsConfig = LegalProductSettings::config();
                     $workCenterForm = WorkCenterRepository::emptyForm();
                 }
                 $recipeCostRates = RecipeCostSettings::get();
+                $machineKnowledgeList = [];
+                $machineKnowledgeErrorFilter = trim((string) ($_GET['knowledge_error'] ?? ''));
+                if (($workCenterId ?? 0) > 0) {
+                    if ($machineKnowledgeErrorFilter !== '') {
+                        $machineKnowledgeList = MachineKnowledgeRepository::searchByErrorCode(
+                            $machineKnowledgeErrorFilter,
+                            (int) $workCenterId,
+                            false
+                        );
+                    } else {
+                        $machineKnowledgeList = MachineKnowledgeRepository::list((int) $workCenterId, false);
+                    }
+                }
                 $contentTemplate = 'modules/rezeptur-maschine-form';
                 $title = (($workCenterId ?? 0) > 0) ? 'Maschine bearbeiten' : 'Maschine hinzufügen';
                 $currentPage = 'rezeptur';

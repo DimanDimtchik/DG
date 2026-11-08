@@ -5,6 +5,8 @@
  * @var array<string, mixed> $workCenterForm
  * @var int|null $workCenterId
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
+ * @var list<array<string, mixed>> $machineKnowledgeList
+ * @var string $machineKnowledgeErrorFilter
  * @var string|null $formError
  * @var bool $canEdit
  * @var array{type: string, message: string}|null $flash
@@ -14,6 +16,14 @@ $readOnly = !($canEdit ?? false);
 $form = $workCenterForm ?? WorkCenterRepository::emptyForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
 $breakdown = RecipeCostService::breakdown($form, $rates);
+$knowledgeList = $machineKnowledgeList ?? [];
+$knowledgeErrorFilter = trim((string) ($machineKnowledgeErrorFilter ?? ''));
+$knowledgeTypes = MachineKnowledgeRepository::contentTypes();
+$typeLabels = [
+    MachineKnowledgeRepository::CONTENT_MANUAL_PDF => 'Handbuch (PDF)',
+    MachineKnowledgeRepository::CONTENT_ACADEMY_MODULE => 'Akademie-Video',
+    MachineKnowledgeRepository::CONTENT_EXTERNAL_URL => 'Externe URL',
+];
 $kw = (float) str_replace(',', '.', (string) ($form['kw'] ?? '0'));
 $wattDisplay = $kw > 0 ? rtrim(rtrim(sprintf('%.0f', $kw * 1000), '0'), '.') : '';
 if ($wattDisplay === '') {
@@ -175,6 +185,126 @@ $steps = [
       </dl>
     </aside>
   </div>
+
+  <?php if ($isEdit) : ?>
+    <section class="dg-panel dg-mt-5" id="dg-machine-knowledge">
+      <h2 class="dg-subsection-title dg-mt-0">Wissen & Störungen</h2>
+      <p class="dg-field-hint">
+        Handbuch, kurzes Akademie-Video oder Link zu einer Störung.
+        PDF nur unter <code>storage/</code>. Videos kurz halten (wenige Minuten), mit Untertiteln.
+      </p>
+
+      <form method="get" action="/app" class="dg-form dg-mb-4">
+        <input type="hidden" name="page" value="rezeptur-maschine-form">
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="id" value="<?= (int) $workCenterId ?>">
+        <label class="dg-field">
+          <span>Fehlercode suchen</span>
+          <input type="text" name="knowledge_error" value="<?= View::escape($knowledgeErrorFilter) ?>" placeholder="z. B. ERR_HYDRAULIK_404">
+        </label>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--small">Suchen</button>
+          <?php if ($knowledgeErrorFilter !== '') : ?>
+            <a class="dg-button dg-button--small dg-button--secondary" href="/app?page=rezeptur-maschine-form&amp;action=edit&amp;id=<?= (int) $workCenterId ?>#dg-machine-knowledge">Zurücksetzen</a>
+          <?php endif; ?>
+        </div>
+      </form>
+
+      <div class="dg-table-wrap dg-mb-4">
+        <table class="dg-table dg-table--compact">
+          <thead>
+            <tr>
+              <th>Titel</th>
+              <th>Art</th>
+              <th>Fehlercodes</th>
+              <th>Aktiv</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if ($knowledgeList === []) : ?>
+              <tr><td colspan="5" class="dg-muted"><?= $knowledgeErrorFilter !== '' ? 'Keine Treffer für diesen Fehlercode.' : 'Noch keine Einträge.' ?></td></tr>
+            <?php else : ?>
+              <?php foreach ($knowledgeList as $kRow) : ?>
+                <?php
+                  $kType = (string) ($kRow['content_type'] ?? '');
+                  $kCodes = is_array($kRow['error_codes'] ?? null) ? $kRow['error_codes'] : [];
+                  $kPath = trim((string) ($kRow['storage_path'] ?? ''));
+                ?>
+                <tr>
+                  <td>
+                    <?= View::escape((string) ($kRow['title'] ?? '')) ?>
+                    <?php if ($kPath !== '') : ?>
+                      <br><small class="dg-muted"><?= View::escape($kPath) ?></small>
+                    <?php endif; ?>
+                    <?php if (!empty($kRow['academy_module_id'])) : ?>
+                      <br><small class="dg-muted">Modul #<?= (int) $kRow['academy_module_id'] ?></small>
+                    <?php endif; ?>
+                  </td>
+                  <td><?= View::escape($typeLabels[$kType] ?? $kType) ?></td>
+                  <td><?= View::escape($kCodes === [] ? '—' : implode(', ', $kCodes)) ?></td>
+                  <td><?= !empty($kRow['is_active']) ? 'ja' : 'nein' ?></td>
+                  <td class="dg-table__actions">
+                    <?php if (!$readOnly && !empty($kRow['is_active'])) : ?>
+                      <div class="dg-table__actions-group">
+                        <form method="post" action="/app?page=rezeptur-maschine-form" class="dg-inline-form">
+                          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                          <input type="hidden" name="work_center_id" value="<?= (int) $workCenterId ?>">
+                          <input type="hidden" name="machine_knowledge_id" value="<?= (int) ($kRow['id'] ?? 0) ?>">
+                          <button type="submit" name="machine_knowledge_deactivate" value="1" class="dg-button dg-button--small">Deaktivieren</button>
+                        </form>
+                      </div>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <?php if (!$readOnly) : ?>
+        <h3 class="dg-subsection-title">Eintrag hinzufügen</h3>
+        <form method="post" action="/app?page=rezeptur-maschine-form" class="dg-form" id="dg-machine-knowledge-form">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="work_center_id" value="<?= (int) $workCenterId ?>">
+          <input type="hidden" name="is_active" value="1">
+          <label class="dg-field dg-field--wide">
+            <span>Titel</span>
+            <input type="text" name="title" required maxlength="191" placeholder="z. B. Hydraulik-Druckabfall">
+          </label>
+          <label class="dg-field">
+            <span>Art</span>
+            <select name="content_type" id="dg-knowledge-content-type" required>
+              <?php foreach ($knowledgeTypes as $typeKey) : ?>
+                <option value="<?= View::escape($typeKey) ?>"><?= View::escape($typeLabels[$typeKey] ?? $typeKey) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field dg-field--wide" data-knowledge-field="path">
+            <span>PDF-Pfad oder URL</span>
+            <input type="text" name="storage_path" maxlength="500" placeholder="storage/… oder https://…">
+            <span class="dg-field-hint">Handbuch: Pfad muss mit <code>storage/</code> beginnen.</span>
+          </label>
+          <label class="dg-field" data-knowledge-field="academy">
+            <span>Akademie-Modul-ID</span>
+            <input type="number" name="academy_module_id" min="1" step="1" placeholder="ID">
+          </label>
+          <label class="dg-field">
+            <span>Videolänge (Sekunden, optional)</span>
+            <input type="number" name="video_duration_seconds" min="0" step="1" placeholder="z. B. 180">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Fehlercodes (Komma getrennt)</span>
+            <input type="text" name="error_codes" placeholder="ERR_HYDRAULIK_404, E42">
+          </label>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary" name="machine_knowledge_save" value="1">Wissen speichern</button>
+          </div>
+        </form>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
 </div>
 
 <?php if (!$readOnly) : ?>
@@ -310,6 +440,26 @@ $steps = [
 
   showStep(1);
   recalc();
+})();
+</script>
+<?php endif; ?>
+
+<?php if ($isEdit && !$readOnly) : ?>
+<script>
+(function () {
+  var typeEl = document.getElementById('dg-knowledge-content-type');
+  if (!typeEl) return;
+  function syncKnowledgeFields() {
+    var t = String(typeEl.value || '');
+    document.querySelectorAll('[data-knowledge-field="path"]').forEach(function (el) {
+      el.hidden = (t === 'academy_module');
+    });
+    document.querySelectorAll('[data-knowledge-field="academy"]').forEach(function (el) {
+      el.hidden = (t !== 'academy_module');
+    });
+  }
+  typeEl.addEventListener('change', syncKnowledgeFields);
+  syncKnowledgeFields();
 })();
 </script>
 <?php endif; ?>

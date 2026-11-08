@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | **Credentials nie committen** | Zertifikate / Portal-IDs nur Instanz |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID E2d laut docs/ERP-REST-PLAN.md. Nur views/modules/rezeptur-maschine-form.php (Tab Wissen). Katalog-Klassen. Kein Refactor.`
+`Nur Mini-ID E2e laut docs/ERP-REST-PLAN.md. Fehlercode-Suche UI laut Plan. Nur genannte View. Kein Refactor.`
 
 **Nicht im Agent-Chat:** Baulohn vor Standardlohn, ITSG-Versand ohne Gate, FiBu-Buchungsroboter, PostgreSQL/UUID-Schema, Amazon/UI-CSS (eigene Pläne).
 
@@ -57,7 +57,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 |----|--------|-----------|--------|-------|
 | E0 | Inventar / dieser Plan | — | [x] 2026-11-08 | 🟢 |
 | E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [x] E1a–E1f | 🟡 |
-| E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 | [~] E2a–E2c ✅; ab E2d | 🟡 |
+| E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 | [~] E2a–E2d ✅; ab E2e | 🟡 |
 | E3 | **Lohn-Gates** (G3-Nachweis, dann LB1+) | Mensch/Pilot | [~] G3 offen | 🔴 |
 | E4 | **Zertifizierungen / Meldewege** | nach Hetzner | [ ] nicht zerlegt | 🔴 |
 | E5 | **Baulohn D0-C** | nach G3 (+ ideal B) | [ ] nicht zerlegt | 🔴 |
@@ -166,7 +166,7 @@ Schema-Skizze: Lastenheft §6 `dg_machine_knowledge_links`.
 | E2a | Migration `NNN_machine_knowledge_links.sql` (MariaDB, FKs work_center / academy_module laut Skizze) | 🟢 | [x] 2026-11-08 `143_machine_knowledge_links.sql` |
 | E2b | `MachineKnowledgeRepository` (+ Autoload): CRUD, Suche nach Fehlercode in `error_codes_json` | 🟡 | [x] 2026-11-08 |
 | E2c | POST/Handler im bestehenden Rezeptur-Maschinen-Block (`index.php` nur Zweig) — gleicher Gate wie Maschinen-CRUD | 🟡 | [x] 2026-11-08 machine_knowledge_save/deactivate |
-| E2d | UI Tab „Wissen & Störungen“ in `views/modules/rezeptur-maschine-form.php` (+ Liste/Suche); Katalog-Buttons; PDF-Pfad nur `storage/` | 🟡 | [ ] |
+| E2d | UI Tab „Wissen & Störungen“ in `views/modules/rezeptur-maschine-form.php` (+ Liste/Suche); Katalog-Buttons; PDF-Pfad nur `storage/` | 🟡 | [x] 2026-11-08 |
 | E2e | Fehlercode-Schnellsuche (Maschine oder zentrale kleine Suche) + Hinweis Akademie-Clip-Regeln (Doc/UI-Lead, keine Plan-Codes) | 🟢 | [ ] |
 | E2f | Kurz-Selftest oder Plan-Checkliste M-Wissen + `TODOS` ERP-Zeile anpassen | 🟢 | [ ] |
 
