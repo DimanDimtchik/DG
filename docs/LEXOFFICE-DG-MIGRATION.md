@@ -3,7 +3,7 @@
 > Stand: **2026-11-08** · Mini-ID **PA4f** · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A4  
 > **Nur Checkliste / Konzept.** Kein Produktiv-Import in diesem Ticket. Keine Firmendaten im Code.
 
-Verwandt: Parallelbetrieb **PA4g** · Import-Fixtures [`testdata/import-fixtures/README.md`](testdata/import-fixtures/README.md) · Bank-Demo [`demo/bankabgleich/README.md`](demo/bankabgleich/README.md)
+Verwandt: Parallelbetrieb **PA4g** → [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) · Import-Fixtures [`testdata/import-fixtures/README.md`](testdata/import-fixtures/README.md) · Bank-Demo [`demo/bankabgleich/README.md`](demo/bankabgleich/README.md)
 
 ---
 
@@ -143,7 +143,7 @@ Stammdaten und offene Vorgänge aus **Lexoffice** (Export CSV/Excel) in eine **D
 - [ ] Bank-Import läuft; 3 Umsätze probeweise zugeordnet
 - [ ] Offene-Posten-Saldo grob gleich Lexoffice (Toleranz dokumentieren)
 - [ ] Benutzer können Angebot → Rechnung in DG erzeugen (Smoke)
-- [ ] Parallelregeln (PA4g) schriftlich: Zeitraum, was wo Originalbeleg ist
+- [ ] Parallelregeln schriftlich: [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) (PA4g)
 
 ---
 
@@ -161,6 +161,7 @@ Stammdaten und offene Vorgänge aus **Lexoffice** (Export CSV/Excel) in eine **D
 | Datei | Rolle |
 |-------|--------|
 | [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) | PA4f / PA4g |
+| [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) | PA4g Zeitraum + Originalbeleg-Regel |
 | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) | A4 Migrationskonzept |
 | [`testdata/import-fixtures/README.md`](testdata/import-fixtures/README.md) | Demo-CSV inkl. sevDesk/Lexoffice-Preset |
 | [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) | E-Rechnung Ausgang (nach Umstieg) |

@@ -66,7 +66,8 @@
 - [ ] Nummernkreise, Bankverbindung, Briefpapier/Logo
 - [x] Migrationskonzept Lexoffice → DG: Kontakte, Artikel, offene Belege, Bank (CSV/Excel) — Checkliste ✅ PA4f 2026-11-08  
   → [`LEXOFFICE-DG-MIGRATION.md`](LEXOFFICE-DG-MIGRATION.md) · Parallelbetrieb = PA4g
-- [ ] **Parallelbetrieb** festlegen: Zeitraum Lex + DG (Empfehlung 1–2 Monate), was wo Originalbeleg ist
+- [x] **Parallelbetrieb** festlegen: Zeitraum Lex + DG (1–2 Monate), Originalbeleg-Regel — ✅ PA4g 2026-11-08  
+  → [`LEXOFFICE-DG-PARALLELBETRIEB.md`](LEXOFFICE-DG-PARALLELBETRIEB.md) · Instanz trägt Stichtage ein
 - [~] Domain/TLS: Subdomain + DB angelegt, SSL beantragt → [`SERVER-DOMAIN-DATENBANK.md`](SERVER-DOMAIN-DATENBANK.md) · SSH [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (`IQ_ALLINKL_*`)
 
 ### A5 · Kleine FiBu-Fixes (jetzt sinnvoll)

@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Phase **A** tokenarm → [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (**PA4g** Parallelbetrieb oder **PA3e** Deploy-Prep). PA1d ✅ · PA5a–c ✅ · PA3a/c ✅ · PA4f ✅. Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅; E3–E5 🔴. Amazon Live/[~] Onboarding.
+**Nächste Session:** Phase **A** tokenarm → [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (**PA3e** Deploy-Prep). PA1d ✅ · PA5a–c ✅ · PA3a/c ✅ · PA4f/g ✅. Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅; E3–E5 🔴. Amazon Live/[~] Onboarding.
 
 ---
 
@@ -52,7 +52,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 > Kurz: GoBD/Druck · FiBu-Tests · IQ-Instanz · Vor-Hetzner — danach Umzug, nicht vorher Live-ELSTER.
 
 - [x] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U5 ✅ (2026-11-08; Guards/Scan grün) · optional später: U2b Sichtcheck, margin-left/Print
-- [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0a ✅ · PA1d ✅ · PA5a–c ✅ · PA3a/c ✅ · PA4f ✅ · nächste: **PA4g** / PA3e · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
+- [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0a ✅ · PA1d ✅ · PA5a–c ✅ · PA3a/c ✅ · PA4f/g ✅ · nächste: **PA3e** · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [x] **ERP-Rest E0–E2 (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) ✅ 2026-11-08 · E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
@@ -201,6 +201,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
 | `ZUGFERD-AUSGANG-ENTSCHEIDUNG.md` | PA5b: PDF+XRechnung behalten; Factur-X = D2-Ticket |
 | `LEXOFFICE-DG-MIGRATION.md` | PA4f: Lexoffice→DG Checkliste (kein Produktiv-Import) |
+| `LEXOFFICE-DG-PARALLELBETRIEB.md` | PA4g: Parallelbetrieb Zeitraum + Originalbeleg-Regel |
 | `PC-HANDOFF.md` | PC-Deploy, Import |
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung Deploy |
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |
