@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | **Credentials nie committen** | Zertifikate / Portal-IDs nur Instanz |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID E1b laut docs/ERP-REST-PLAN.md. Keine neue Migration — nur Plan-Haken E1b (SettingsStore laut E1a-Spec). Kein PHP-Service.`
+`Nur Mini-ID E1d laut docs/ERP-REST-PLAN.md. Nur RecipeCostService / Snapshot-Pfad: overhead_per_machine_hour in Payload. Alte Snapshots nicht ändern. Kein UI.`
 
 **Nicht im Agent-Chat:** Baulohn vor Standardlohn, ITSG-Versand ohne Gate, FiBu-Buchungsroboter, PostgreSQL/UUID-Schema, Amazon/UI-CSS (eigene Pläne).
 
@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | ID | Thema | Priorität | Status | Token |
 |----|--------|-----------|--------|-------|
 | E0 | Inventar / dieser Plan | — | [x] 2026-11-08 | 🟢 |
-| E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [~] E1a ✅ Spec; ab E1b | 🟡 |
+| E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [~] E1a–E1c ✅; ab E1d | 🟡 |
 | E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 · parallel zu E1 möglich | [ ] Mini-IDs unten | 🟡 |
 | E3 | **Lohn-Gates** (G3-Nachweis, dann LB1+) | Mensch/Pilot | [~] G3 offen | 🔴 |
 | E4 | **Zertifizierungen / Meldewege** | nach Hetzner | [ ] nicht zerlegt | 🔴 |
@@ -138,8 +138,8 @@ UI-Hinweis: „Vorschlag, nicht gebucht“.
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | E1a | Spec-Kurz: Settings-Keys + Zeitraum + Kontenliste + Migrationsentscheidung | 🟢 | [x] 2026-11-08 SettingsStore `machine_overhead`, **keine** Migration |
-| E1b | Plan-Abschluss E1b: bestätigen „nur SettingsStore“ (kein SQL); ggf. Stub-Klasse erst E1c — **kein** `NNN_machine_overhead_settings.sql` | 🟢 | [ ] |
-| E1c | Neu: `MachineOverheadService` (+ Settings-Klasse) unter `src/Recipe/` — Formel laut Spec; Return u. a. `overhead_per_machine_hour` | 🟡 | [ ] |
+| E1b | Plan-Abschluss E1b: bestätigen „nur SettingsStore“ (kein SQL); Stub-Klasse erst E1c — **kein** `NNN_machine_overhead_settings.sql` | 🟢 | [x] 2026-11-08 bestätigt: kein SQL; 143+ frei für E2a |
+| E1c | Neu: `MachineOverheadService` (+ Settings-Klasse) unter `src/Recipe/` — Formel laut Spec; Return u. a. `overhead_per_machine_hour` | 🟡 | [x] 2026-11-08 MachineOverheadSettings + Service + Autoload |
 | E1d | Anbindung `RecipeCostService` / `snapshotPayload`: Felder laut Spec; **alte Snapshots unverändert** | 🟡 | [ ] |
 | E1e | UI: Einstellungen Konten/Zeitraum (bei Rezeptur-Kostensätzen oder klarer Nachbar) + Anzeige €/h; Katalog-Klassen; kein FiBu-Buchen-Button | 🟡 | [ ] |
 | E1f | Kurz-Selftest `bin/machine-overhead-selftest.php` + Plan-Haken | 🟢 | [ ] |
