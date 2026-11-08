@@ -63,7 +63,7 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 | Gleiche Maschine 2× | **Nein** — Unique `(line_id, work_center_id)` |
 | Reihenfolge | Unique `(line_id, station_order)`, lückenlos 1…n im Store erzwingen |
 | WIP-Mengen | `current_qty` nur Simulation/manuell — **keine** FiBu-/Lagerbuchung in FL1/FL2 |
-| Migration-Nummer | Bei **FL1b-Start** höchste `database/migrations/NNN_*.sql` im **Merge-Ziel** prüfen. Stand FL1a: `master` max **141**; parallel belegt **142–144** (Amazon/Wissen/Unterschrift) → FL1b voraussichtlich **`145_production_lines.sql`**, FL2a danach **146** |
+| Migration-Nummer | **FL1b:** `145_production_lines.sql` (Stand 2026-11-08: parallel 142–144 belegt). FL2a: nächste freie nach Merge prüfen (**146+**). |
 
 ### 1. `dg_production_lines` (FL1b)
 
@@ -136,7 +136,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL1b laut docs/FLIESSLINIE-REST-PLAN.md. Migration lines+stations laut FL1a. Kein Puffer. Kein MES/PLC. Kein Refactor.`
+`Nur Mini-ID FL1c laut docs/FLIESSLINIE-REST-PLAN.md. Store listLines/getLineWithStations/saveStations. Kein UI. Kein Puffer.`
 
 ---
 
@@ -155,7 +155,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
-| FL1 | Linie + Stationen (Stammdaten) | [~] FL1a ✅ | 🟡 |
+| FL1 | Linie + Stationen (Stammdaten) | [~] FL1a–b ✅ | 🟡 |
 | FL2 | Puffer zwischen Stationen | [ ] | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
@@ -181,7 +181,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | FL1a | Speichermodell final (Tabellen/FKs) in diesem Plan bestätigen · Migration-Nummer prüfen | 🟢 | [x] 2026-11-08 Modell festgelegt · nächste frei ≈ **145** (nach 142–144) |
-| FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [ ] |
+| FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [x] 2026-11-08 `145_production_lines.sql` · Selftest |
 | FL1c | Store: `listLines`, `getLineWithStations`, `saveStations` (Reihenfolge) · **kein** Hard-DELETE Historie ohne Flag | 🟡 | [ ] |
 | FL1d | Selftest: 3 Stationen speichern → Reihenfolge stabil | 🟡 | [ ] |
 
@@ -276,7 +276,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL1b laut docs/FLIESSLINIE-REST-PLAN.md. Migration lines+stations laut FL1a. Höchste Migrationsnummer im Merge-Ziel prüfen. Kein Puffer (FL2). Kein Store/UI.`
+`Nur Mini-ID FL1c laut docs/FLIESSLINIE-REST-PLAN.md. Store listLines/getLineWithStations/saveStations. Kein UI. Kein Puffer. Kein MES/PLC.`
 
 ---
 
@@ -289,4 +289,6 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | [`REZEPTUR-MODUL.md`](REZEPTUR-MODUL.md) | Nicht-Ziele MES |
 | [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | UI |
 | `dg_work_centers` / `dg_recipe_routing` | Stationen · Rezept-Routing |
+| `database/migrations/145_production_lines.sql` | FL1b Linie + Stationen |
+| `bin/production-lines-migration-selftest.php` | FL1b Vertrags-Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine |
