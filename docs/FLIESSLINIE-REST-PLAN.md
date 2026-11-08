@@ -136,7 +136,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL1c laut docs/FLIESSLINIE-REST-PLAN.md. Store listLines/getLineWithStations/saveStations. Kein UI. Kein Puffer.`
+`Nur Mini-ID FL1d laut docs/FLIESSLINIE-REST-PLAN.md. Selftest 3 Stationen Reihenfolge. SQLite ok. Kein UI.`
 
 ---
 
@@ -155,7 +155,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
-| FL1 | Linie + Stationen (Stammdaten) | [~] FL1a–b ✅ | 🟡 |
+| FL1 | Linie + Stationen (Stammdaten) | [~] FL1a–c ✅ | 🟡 |
 | FL2 | Puffer zwischen Stationen | [ ] | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
@@ -182,7 +182,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|---------|-------|--------|
 | FL1a | Speichermodell final (Tabellen/FKs) in diesem Plan bestätigen · Migration-Nummer prüfen | 🟢 | [x] 2026-11-08 Modell festgelegt · nächste frei ≈ **145** (nach 142–144) |
 | FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [x] 2026-11-08 `145_production_lines.sql` · Selftest |
-| FL1c | Store: `listLines`, `getLineWithStations`, `saveStations` (Reihenfolge) · **kein** Hard-DELETE Historie ohne Flag | 🟡 | [ ] |
+| FL1c | Store: `listLines`, `getLineWithStations`, `saveStations` (Reihenfolge) · **kein** Hard-DELETE Historie ohne Flag | 🟡 | [x] 2026-11-08 `ProductionLineStore` + Autoload · Soft `deactivateLine` |
 | FL1d | Selftest: 3 Stationen speichern → Reihenfolge stabil | 🟡 | [ ] |
 
 ### FL2 — Puffer
@@ -276,7 +276,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL1c laut docs/FLIESSLINIE-REST-PLAN.md. Store listLines/getLineWithStations/saveStations. Kein UI. Kein Puffer. Kein MES/PLC.`
+`Nur Mini-ID FL1d laut docs/FLIESSLINIE-REST-PLAN.md. Selftest 3 Stationen Reihenfolge stabil. SQLite ok. Kein UI. Kein Puffer.`
 
 ---
 
@@ -291,4 +291,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `dg_work_centers` / `dg_recipe_routing` | Stationen · Rezept-Routing |
 | `database/migrations/145_production_lines.sql` | FL1b Linie + Stationen |
 | `bin/production-lines-migration-selftest.php` | FL1b Vertrags-Selftest |
+| `src/Recipe/ProductionLineStore.php` | FL1c Store (kein Hard-DELETE) |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine |
