@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Phase **A** tokenarm → [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (**PA4a–e/h** IQ-Instanz · **PA4i** · AVV-Unterschrift). PA1a–e ✅ · PA2a–k ✅ · PA5a–d ✅ · PA3a–f ✅ · PA4f/g ✅. Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅; E3–E5 🔴. Amazon Live/[~] Onboarding.
+**Nächste Session:** Phase **A** tokenarm → [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (**PA4a Rest** KAS-DB/`database.local.php` · **PA4b–e/h** · **PA4i** · AVV). PA1a–e ✅ · PA2a–k ✅ · PA5a–d ✅ · PA3a–f ✅ · PA4a[~]/f/g ✅. Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅; E3–E5 🔴. Amazon Live/[~] Onboarding.
 
 ---
 
@@ -52,7 +52,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 > Kurz: GoBD/Druck · FiBu-Tests · IQ-Instanz · Vor-Hetzner — danach Umzug, nicht vorher Live-ELSTER.
 
 - [x] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U5 ✅ (2026-11-08; Guards/Scan grün) · optional später: U2b Sichtcheck, margin-left/Print
-- [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0a ✅ · PA1a–e ✅ · PA2a–k ✅ · PA5a–d ✅ · PA3a–f ✅ · PA4f/g ✅ · nächste: PA4 Ops · AVV-Signatur · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
+- [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0a ✅ · PA1a–e ✅ · PA2a–k ✅ · PA5a–d ✅ · PA3a–f ✅ · PA4a[~] Code-Sync · PA4f/g ✅ · nächste: PA4a DB-local · PA4b–e/h · AVV · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [x] **ERP-Rest E0–E2 (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) ✅ 2026-11-08 · E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten

@@ -51,15 +51,39 @@ key_path.chmod(0o600)
 PY
 chmod 600 "$KEY_FILE"
 
-cat > "$HOME/.ssh/config" <<EOF
-Host allinkl-ganzom dg.ganz-om.de
-  HostName ${HOST_NAME}
-  User ${USER_NAME}
-  IdentityFile ${KEY_FILE}
-  IdentitiesOnly yes
-  StrictHostKeyChecking accept-new
-EOF
-chmod 600 "$HOME/.ssh/config"
+# Upsert DG-Host-Block — andere Hosts (z. B. allinkl-iqstrom) nicht überschreiben.
+MARKER="# cloud-agent-ssh-setup"
+CONFIG="$HOME/.ssh/config"
+touch "$CONFIG"
+chmod 600 "$CONFIG"
+python3 - "$CONFIG" "$MARKER" "$HOST_NAME" "$USER_NAME" "$KEY_FILE" <<'PY'
+from pathlib import Path
+import re, sys
+cfg_path, marker, host, user, key = sys.argv[1:6]
+text = Path(cfg_path).read_text() if Path(cfg_path).exists() else ""
+block = (
+    f"{marker}\n"
+    f"Host allinkl-ganzom dg.ganz-om.de\n"
+    f"  HostName {host}\n"
+    f"  User {user}\n"
+    f"  IdentityFile {key}\n"
+    f"  IdentitiesOnly yes\n"
+    f"  StrictHostKeyChecking accept-new\n"
+)
+# Entferne alten Marker-Block und/oder nackten DG-Host-Block
+text = re.sub(
+    r"(?ms)^# cloud-agent-ssh-setup\nHost allinkl-ganzom[\s\S]*?(?=^# |\Z)",
+    "",
+    text,
+)
+text = re.sub(
+    r"(?ms)^Host allinkl-ganzom dg\.ganz-om\.de\n(?:^[ \t].*\n)*",
+    "",
+    text,
+)
+text = text.rstrip() + "\n\n" + block
+Path(cfg_path).write_text(text if text.endswith("\n") else text + "\n")
+PY
 
 ssh -o BatchMode=yes -o ConnectTimeout=15 allinkl-ganzom 'echo SSH_OK; hostname; pwd'
 echo "cloud-agent-ssh-setup: OK → ssh allinkl-ganzom"

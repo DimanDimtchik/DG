@@ -97,9 +97,10 @@ Fingerprint Private Key (Kontrolle): `SHA256:RoWIYpvE7HH1cQbVS7YUmSouM4pGvYv33i3
 | Prefix | KAS-Account | Domains (Auszug) | Setup-Skript |
 |--------|-------------|------------------|--------------|
 | `DG_ALLINKL_*` | `w0217246` | dg.ganz-om.de, ganz-soft.de, kontur-cosmetics.de | `bin/cloud-agent-ssh-setup.sh` |
-| `IQ_ALLINKL_*` | `w01f1176` | ma.iqstrom.com, iqstrom.com, iq-strom.de, cloud.iqstrom.com | `bin/cloud-agent-iq-ssh-setup.sh` |
+| `IQ_ALLINKL_*` | `w01f1176` | ma.iqstrom.com, iqstrom.com, iq-strom.de, cloud.iqstrom.com, **office.iqstrom.com** | `bin/cloud-agent-iq-ssh-setup.sh` |
 
-Für **CRM-Deploy** nur `DG_ALLINKL_*`. Für **IQ-Strom / Telefonbuch / ma.iqstrom.com** `IQ_ALLINKL_*` — nicht verwechseln.
+Für **CRM-Deploy** (Kern/Dev) `DG_ALLINKL_*`. Für **IQ-Strom** (CRM `office.iqstrom.com`, Telefonbuch, ma…) `IQ_ALLINKL_*` — nicht verwechseln.  
+IQ-CRM-Sync vom Kern: `bash bin/sync-crm-to-iqstrom.sh` (nach beiden SSH-Setups).
 
 
 ---

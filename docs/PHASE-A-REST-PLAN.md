@@ -143,7 +143,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [ ] |
+| PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [~] 2026-11-08 Code-Sync Kern→`office.iqstrom.com` ✅ · `database.local.php` ⬜ KAS-DB |
 | PA4b | Firmendaten GmbH in Einstellungen (Steuernr., USt-IdNr., FA, Bilanz, SKR) | 🔴 | [ ] |
 | PA4c | Flags: Photovoltaik §12 Abs. 3 + §13b Bauleistung | 🔴 | [ ] |
 | PA4d | ≥3 Benutzer + Rechte | 🔴 | [ ] |
@@ -187,12 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Rest **PA4** (a–e, h Mensch) · **PA4i** Haken  
+1. **PA4a Rest:** KAS-DB „DB Office IQ CRM“ + `database.local.php` · dann **PA4b–e/h** · **PA4i**  
 2. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA4a laut docs/PHASE-A-REST-PLAN.md. Code-Sync + config/*.local.php an IQ-Instanz-DB. Kein Sondercode. Kein Tenant-Hardcode.`  
-*(Oder PA6a Telefon/CTI Statusnotiz.)*
+`Nur Mini-ID PA4a laut docs/PHASE-A-REST-PLAN.md. Rest: database.local.php an KAS-DB „DB Office IQ CRM“. Kein Sondercode.`  
+*(Oder PA4b Firmendaten, sobald DB steht.)*
 
 ---
 

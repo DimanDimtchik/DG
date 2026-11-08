@@ -31,7 +31,7 @@ Instanzen  ganz-om.de · dg.ganz-om.de · ganz-soft.de · kontur-…
 | Nach Kern | auf Server: `bash bin/sync-crm-from-master.sh` | Instanzen vom Kern |
 
 **Secrets (Cursor / Umgebung):** `DG_ALLINKL_SSH_USER` (= `ssh-…`, nicht KAS-Login), `DG_ALLINKL_SSH_HOST`, `DG_ALLINKL_SSH_PRIVATE_KEY`.  
-IQ-Instanz: `IQ_ALLINKL_*` + `bin/cloud-agent-iq-ssh-setup.sh` (eigener Account).
+IQ-Instanz: `IQ_ALLINKL_*` + `bin/cloud-agent-iq-ssh-setup.sh` (eigener Account) · Sync Kern→Instanz: `bin/sync-crm-to-iqstrom.sh`.
 
 **Excludes (Kern↔Instanz):** Locals, `storage/`, `logs/`, Nutzerordner (`klarwin/` …) — siehe `bin/sync-crm-from-master.sh` / `deploy-via-rsync.sh`.  
 **Verboten:** Sync mit `--delete` gegen den **Account-Root**.

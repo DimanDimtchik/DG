@@ -53,5 +53,8 @@ Instanzen: **gleicher Code** · **eigene DB** · **eigene Instanz-Dateien** (`co
 ## office.iqstrom.com — IQ Strom
 
 - Hosting: IQ-All-Inkl **`w01f1176`** (`IQ_ALLINKL_*` / `bin/cloud-agent-iq-ssh-setup.sh`)  
-- Kundeninstanz: eigener Code-Sync-Pfad vom Kern, eigene DB, echte Daten  
+- Kundeninstanz: eigener Code-Sync vom Kern, eigene DB, echte Daten  
+- **Code-Sync (Cloud-Agent):** `bash bin/cloud-agent-ssh-setup.sh` · `bash bin/cloud-agent-iq-ssh-setup.sh` · `bash bin/sync-crm-to-iqstrom.sh`  
+  (Kern `dg.ganz-soft.de` → `/www/htdocs/w01f1176/office.iqstrom.com/`; `config/*.local.php` + `storage/` bleiben Instanz)  
+- **DB:** KAS-Name „DB Office IQ CRM“ → `config/database.local.php` nur auf dem Server (nicht Git). Stand PA4a 2026-11-08: Code ✅ · local.php noch offen  
 - ToDo: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A4  
