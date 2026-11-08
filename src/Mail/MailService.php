@@ -205,9 +205,8 @@ final class MailService
         }
 
         $footer = EmailLayoutSettings::resolvedFooter();
-        if ($mailbox !== null) {
-            $footer['signature'] = MailSignatureResolver::resolve($mailbox, $actor);
-        }
+        // ES5b: Text-Signatur immer setzen (Fallback ohne Bildzeile)
+        $footer['signature'] = MailSignatureResolver::resolveTextFallback($mailbox, $actor);
         $imgHtml = trim((string) ($inlineSig['html'] ?? ''));
         if ($imgHtml !== '') {
             $footer['signature_image_html'] = $imgHtml;
@@ -231,9 +230,8 @@ final class MailService
         }
 
         $footer = EmailLayoutSettings::resolvedFooter();
-        if ($mailbox !== null) {
-            $footer['signature'] = MailSignatureResolver::resolve($mailbox, $actor);
-        }
+        // ES5b: Plaintext-Closing ebenfalls mit Text-Fallback
+        $footer['signature'] = MailSignatureResolver::resolveTextFallback($mailbox, $actor);
 
         $plainClosing = CalendarEmailLayout::closingPlainText($footer);
         $opening = trim((string) ($footer['opening_greeting'] ?? ''));

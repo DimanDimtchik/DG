@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES5b** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren · oder Unterschrift **ES5c** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES5b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Fallback Text-Signatur wenn keine aktive Bildzeile. Kein Canvas.`
+`Nur Mini-ID ES5c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke 1 Testmail Dev. Kein Canvas.`
 
 ---
 

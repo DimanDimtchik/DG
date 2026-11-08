@@ -188,6 +188,7 @@ final class CalendarEmailLayout
         if ($imageHtml !== '' && !preg_match('/^<img\s/i', $imageHtml)) {
             $imageHtml = '';
         }
+        // ES5b: ohne Bild bleibt $signature (resolveTextFallback) der sichtbare Fallback
 
         if ($thanks === '' && $salutation === '' && $signature === '' && $imageHtml === '') {
             return '';

@@ -171,7 +171,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | ES5a | Post: optionales `<img>` aus aktiver User-Signatur (CID/URL laut Mail-Stack) | 🟡 | [x] 2026-11-08 `resolveInlineImage` + CID in `MailMessage` · Selftest |
-| ES5b | Fallback Text-Signatur wenn keine aktive Bildzeile | 🟡 | [ ] |
+| ES5b | Fallback Text-Signatur wenn keine aktive Bildzeile | 🟡 | [x] 2026-11-08 `resolveTextFallback` HTML+Plain · Selftest |
 | ES5c | Smoke 1 Testmail Dev | 🔴 | [ ] |
 
 ### ES6 — Mitarbeiter-App
@@ -218,7 +218,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES5b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Fallback Text-Signatur wenn keine aktive Bildzeile. Kein Canvas.`
+`Nur Mini-ID ES5c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke 1 Testmail Dev. Kein Canvas.`
 
 ---
 

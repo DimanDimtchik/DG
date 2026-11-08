@@ -23,6 +23,38 @@ final class MailSignatureResolver
     }
 
     /**
+     * ES5b: Text-Signatur für Closing — Fallback wenn keine aktive Bildzeile.
+     * Reihenfolge: resolve(mailbox/actor) → Anzeigename → Login → Firmenname → generic.
+     */
+    public static function resolveTextFallback(?array $mailbox, ?User $actor = null): string
+    {
+        $text = trim(self::resolve($mailbox, $actor));
+        if ($text !== '') {
+            return $text;
+        }
+
+        if ($actor !== null) {
+            $display = trim($actor->displayName);
+            if ($display !== '') {
+                return $display;
+            }
+            $username = trim($actor->username);
+            if ($username !== '') {
+                return $username;
+            }
+        }
+
+        if (class_exists('CompanySettings')) {
+            $company = trim(CompanySettings::displayName());
+            if ($company !== '') {
+                return $company;
+            }
+        }
+
+        return trim(self::genericSignature());
+    }
+
+    /**
      * Methode generic signature.
      * @return string
      */
