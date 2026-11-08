@@ -210,3 +210,4 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 | [`USTG-14-DRUCKSTICHPROBE.md`](USTG-14-DRUCKSTICHPROBE.md) | §14 Stichprobe |
 | [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | A6 ERP erledigt |
 | [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) | Muster Mini-IDs |
+| [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) | PA5b Entscheidung PDF+XRechnung · Factur-X = D2 |
