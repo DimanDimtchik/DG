@@ -146,6 +146,11 @@ final class ProductionLineStatusService
                         }
                     }
                 }
+                // FL5a: fehlende Rohware am Eingang → Station 1 wie starved
+                if ($status === 'running' && !$rawOk && $order === 1) {
+                    $status = 'starved';
+                    $reasons[] = 'raw_material_missing';
+                }
                 if ($status === 'running' && $order > 1) {
                     $bufIn = $bufByAfterOrder[$order - 1] ?? null;
                     if ($bufIn !== null) {
@@ -174,6 +179,12 @@ final class ProductionLineStatusService
         $throughputs = is_array($options['throughputs'] ?? null) ? $options['throughputs'] : [];
         $bottleneck = self::resolveBottleneck($stationOut, $throughputs);
         $lineThroughput = self::resolveLineThroughput($lineStatus, $bottleneck, $bufferOut);
+        $rawMaterial = [
+            'ok' => $rawOk,
+            'hint' => $rawOk
+                ? 'Rohware am Eingang ausreichend (Annahme).'
+                : 'Rohware am Linieneingang fehlt — Linie gestoppt, erste Station steht.',
+        ];
 
         return [
             'line_id' => $lineId,
@@ -182,6 +193,7 @@ final class ProductionLineStatusService
             'buffers' => $bufferOut,
             'bottleneck' => $bottleneck,
             'line_throughput' => $lineThroughput,
+            'raw_material' => $rawMaterial,
         ];
     }
 

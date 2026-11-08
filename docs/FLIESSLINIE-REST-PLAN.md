@@ -137,7 +137,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL5a laut docs/FLIESSLINIE-REST-PLAN.md. Regel Rohware fehlt → stopped_material. Kein UI.`
+`Nur Mini-ID FL5b laut docs/FLIESSLINIE-REST-PLAN.md. Hilfsstoff ab Station k. Kein UI. Oder FL5c Lager lesen.`
 
 ---
 
@@ -160,7 +160,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | FL2 | Puffer zwischen Stationen | [x] FL2a–c ✅ | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [x] FL3a–c ✅ | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [x] FL4a–b ✅ | 🟢🟡 |
-| FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
+| FL5 | Materialmangel (Rohware + Hilfsstoff) | [~] FL5a ✅ | 🟡 |
 | FL6 | Störung / Wartung propagiert | [ ] | 🟡 |
 | FL7 | UI Linie + Status | [ ] | 🟡🔴 |
 | FL8 | Verfeinerungen (optional) | [ ] | 🟢 |
@@ -216,7 +216,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL5a | Regel: fehlende Rohware (Eingang Station 1 / BOM) → Linie `stopped_material` | 🟢 | [ ] |
+| FL5a | Regel: fehlende Rohware (Eingang Station 1 / BOM) → Linie `stopped_material` | 🟢 | [x] 2026-11-08 Station1 starved + `raw_material` · Selftest |
 | FL5b | Optional Hilfsstoff mitten in der Linie (Zusatzmaterial an Station *k*) → ab *k* starved/stop | 🟡 | [ ] |
 | FL5c | Anbindung Lagerbestand **nur lesen** (kein Auto-Buchen) · Selftest mit Fixture | 🟡 | [ ] |
 
@@ -277,7 +277,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL5a laut docs/FLIESSLINIE-REST-PLAN.md. Regel Rohware fehlt → stopped_material. Kein UI.`
+`Nur Mini-ID FL5b laut docs/FLIESSLINIE-REST-PLAN.md. Optional Hilfsstoff Station k → ab k starved. Kein UI.`
 
 ---
 
@@ -302,4 +302,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-line-status-selftest.php` | FL3c blocked/starved Selftest |
 | `bin/production-line-bottleneck-selftest.php` | FL4a Engpass-Hinweis Selftest |
 | `bin/production-line-throughput-selftest.php` | FL4b Linien-Durchsatz Selftest |
+| `bin/production-line-raw-material-selftest.php` | FL5a Rohware Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine · FL4a Output/h |

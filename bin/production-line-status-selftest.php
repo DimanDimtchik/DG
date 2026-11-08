@@ -152,6 +152,7 @@ $mat = ProductionLineStatusService::evaluateFromState(7, $stations, [
     ],
 ], ['raw_material_ok' => false]);
 assertFl3c($mat['line_status'] === 'stopped_material', 'Rohware fehlt → stopped_material');
+assertFl3c($mat['stations'][0]['status'] === 'starved', 'FL5a: Station 1 starved ohne Rohware');
 
 echo "FL3c Selftest bestanden.\n";
 exit(0);

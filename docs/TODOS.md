@@ -20,7 +20,7 @@ Stand: **2026-10-30** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** **UI/CSS-Rest** (siehe oben) · danach Phase **A** in `IQ-STROM-HETZNER-TODO.md` (nicht ERiC auf Kasserver erzwingen).
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · **Fließlinie/Puffer:** tokenarm [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) · Regeln [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) (FL0–FL4 ✅ · nächster **FL5a**).
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · **Fließlinie/Puffer:** tokenarm [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) · Regeln [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) (FL0–FL5a ✅ · nächster **FL5b**/FL5c).
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 
@@ -54,7 +54,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [ ] **UI/CSS-Rest (nächste Session):** Spacing/Checkboxen/Readonly-Blöcke systematisch — `ui-crm-scan.php` + Katalog; nicht erneut nur Text-Jargon
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
-- [ ] **Fließlinie / Puffer-Kette:** Blocking/Starving/Rohware/Engpass — tokenarm [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) (FL0–FL4 ✅ · nächster **FL5a** · **kein** MES/PLC)
+- [ ] **Fließlinie / Puffer-Kette:** Blocking/Starving/Rohware/Engpass — tokenarm [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) (FL0–FL5a ✅ · nächster **FL5b**/FL5c · **kein** MES/PLC)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK

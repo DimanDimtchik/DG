@@ -90,7 +90,15 @@ function lineStatus():
     return "running"
 ```
 
-Hinweis FL5a: fehlende Rohware am Eingang setzt Linienstatus `stopped_material` und kann Station 1 wie starved behandeln (Detail in FL5).
+### FL5a — Rohware am Eingang (verbindlich)
+
+| Bedingung | Wirkung |
+|-----------|---------|
+| `raw_material_ok = false` | `line_status = stopped_material` |
+| zugleich Station 1 (sofern nicht `down`/`blocked`) | Station-Status `starved`, Reason `raw_material_missing` |
+| `raw_material` im Evaluate-Ergebnis | `{ ok, hint }` — Hint ohne Plan-Codes |
+
+Lager-/BOM-Anbindung = **FL5c** (nur lesen). Bis dahin setzt der Aufrufer `raw_material_ok` manuell/Option.
 
 ---
 
