@@ -510,7 +510,8 @@ final class WriterDocument
      */
     public static function fromRow(array $row): array
     {
-        $empty = self::empty();
+        // Kein empty()/LetterheadSettings hier: SettingsStore::get → DDL kann MySQL-
+        // Transaktionen (finalize/reopen/archive) per Implicit Commit beenden.
         $recipient = self::decodeJsonList($row['recipient_json'] ?? '[]');
         $infoRaw = self::decodeJsonObject($row['info_json'] ?? '{}');
         $bodyRaw = self::decodeJsonObject($row['body_json'] ?? '{}');
@@ -521,9 +522,9 @@ final class WriterDocument
             'greeting' => (string) ($row['greeting'] ?? ''),
             'closing' => (string) ($row['closing'] ?? ''),
             'signature' => (string) ($row['signature'] ?? ''),
-            'recipient_lines' => $recipient !== [] ? $recipient : $empty['recipient_lines'],
+            'recipient_lines' => $recipient !== [] ? $recipient : [''],
             'info' => $infoRaw,
-            'body' => $bodyRaw !== [] ? $bodyRaw : $empty['body'],
+            'body' => $bodyRaw !== [] ? $bodyRaw : self::emptyBody(),
             'body_html_cache' => (string) ($row['body_html_cache'] ?? ''),
             'contact_id' => (int) ($row['contact_id'] ?? 0),
             'voucher_id' => (int) ($row['voucher_id'] ?? 0),

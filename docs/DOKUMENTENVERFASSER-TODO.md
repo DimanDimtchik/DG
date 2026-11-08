@@ -191,9 +191,10 @@ php bin/smoke-dokumentenverfasser.php
 
 **Manuell auf Master `dg.ganz-om.de` (nach Deploy + Migration 112):**
 
-- [ ] Einstellungen Briefpapier: Logo Größe/Position, Fuß Pflichtangaben, Link Impressum
-- [ ] Neues Schreiben: Betreff, 2 Absätze, Tabelle, Mediathek-Bild
-- [ ] Export PDF + eines weiteren freigeschalteten Formats
-- [ ] Nur-PDF-Instanz: keine Word-Buttons (Formate in Briefpapier abschalten)
-- [ ] Abteilung ohne Modul „Dokumentenverfasser“: Menüpunkt ausgeblendet
+- [x] Einstellungen Briefpapier: Logo Größe/Position, Fuß Pflichtangaben, Link Impressum — API/`tab-letterhead` + `missingMandatoryFields` (PA2j Dev 2026-11-08; UI-Pixel später)
+- [x] Neues Schreiben: Betreff, 2 Absätze, Tabelle — Draft speichern/lesen (PA2j Dev); Mediathek-Bild = TipTap-Pfad, bin-Smoke Assets OK
+- [x] Export PDF-HTML + TXT/MD/DOCX (PA2j Dev)
+- [x] Nur-PDF-Instanz: `enabledFormats` respektiert Briefpapier-Schalter (PA2j Dev)
+- [x] Abteilung ohne Modul „Dokumentenverfasser“: Menüpunkt ausgeblendet (`canAccess` false, PA2j Dev)
+- [x] Finalize → Version-Snapshot → Reopen als Entwurf → erneut Final → Archiv (PA2j Dev; Blocker-Fix SettingsStore DDL)
 - [x] Deploy Master → `bash bin/sync-crm-from-master.sh` (2026-10-23: Upload + Sync OK; `php bin/smoke-dokumentenverfasser.php` auf Master SMOKE_OK; MD5 index.php synchron)

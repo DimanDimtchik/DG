@@ -59,7 +59,9 @@
   → Menü Kommunikation · Liste/Cards · Shared Lesen vs Senden · Ordner-Defaults · lokale Nachricht+Suche+Kontakt/Beleg · Compose-Validierung · Auth-Fehlertexte  
   → Hinweis: Dev ohne echte IMAP-Postfächer; Live-Anhang/SMTP-Versand erst mit Instanz-Credentials  
   → [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md)
-- [ ] Dokumentenverfasser Smoke  
+- [x] Dokumentenverfasser Smoke — ✅ PA2j 2026-11-08 Dev  
+  → Menü/Draft/Kontakt+Beleg-Link/Export TXT·MD·DOCX·PDF-HTML · Finalize/Reopen/Archiv/Versionen · `bin/smoke-dokumentenverfasser.php` SMOKE_OK  
+  → Fix: `SettingsStore::ensureTable` ohne Implicit-Commit + `WriterDocument::fromRow` ohne Letterhead mid-txn  
   → [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md)
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)

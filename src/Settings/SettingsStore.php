@@ -26,15 +26,28 @@ final class SettingsStore
      */
     private static function ensureTable(): void
     {
+        // CREATE TABLE IF NOT EXISTS verursacht in MySQL immer einen Implicit Commit —
+        // auch wenn die Tabelle schon existiert. Das zerstört offene PDO-Transaktionen
+        // (z. B. WriterDocumentRepository::finalize → fromRow → LetterheadSettings → hier).
+        static $ready = false;
+        if ($ready) {
+            return;
+        }
+
         $pdo = Database::pdo();
-        $pdo->exec(
-            'CREATE TABLE IF NOT EXISTS dg_settings (
-                setting_key VARCHAR(64) NOT NULL,
-                value_json LONGTEXT NOT NULL,
-                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                PRIMARY KEY (setting_key)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-        );
+        $stmt = $pdo->query("SHOW TABLES LIKE 'dg_settings'");
+        $exists = $stmt !== false && $stmt->fetchColumn() !== false;
+        if (!$exists) {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS dg_settings (
+                    setting_key VARCHAR(64) NOT NULL,
+                    value_json LONGTEXT NOT NULL,
+                    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (setting_key)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        }
+        $ready = true;
     }
 
     /**

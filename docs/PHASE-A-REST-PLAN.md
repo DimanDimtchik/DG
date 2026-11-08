@@ -110,7 +110,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | PA2g | Zeiterfassung Z2–Z6 Smoke | 🔴 | [x] 2026-11-08 Dev · Stempel/Schicht/Urlaub/Rückstellung/Lohn-Export |
 | PA2h | Kichel Smoke | 🔴 | [x] 2026-11-08 Dev · Widget/Nav/Antworten/Protokoll/Skonto |
 | PA2i | Postfächer Smoke (falls offen) | 🔴 | [x] 2026-11-08 Dev · Menü/Liste/Rechte/Suche/Compose/Auth-Fehler (ohne Live-IMAP) |
-| PA2j | Dokumentenverfasser Smoke | 🔴 | [ ] |
+| PA2j | Dokumentenverfasser Smoke | 🔴 | [x] 2026-11-08 Dev · Menü/Draft/Link/Export/Finalize·Reopen·Archiv · Fix SettingsStore DDL mid-txn |
 | PA2k | A2-Haken in IQ-STROM-TODO nachziehen | 🟢 | [ ] |
 
 **Prompt PA2a:**  
@@ -187,12 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel: **PA2j…** Smoke  
-2. Rest **PA4** (a–e, h Mensch) / **PA2**  
-3. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
+1. Parallel: **PA2k** A2-Haken · Rest **PA4** (a–e, h Mensch)  
+2. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA2j laut docs/PHASE-A-REST-PLAN.md. Dokumentenverfasser Smoke. Ergebnis abhaken. Kein Code.`  
+`Nur Mini-ID PA2k laut docs/PHASE-A-REST-PLAN.md. A2-Haken in IQ-STROM nachziehen. Nur Docs.`  
 *(Oder PA4a Instanz-Ops.)*
 
 ---

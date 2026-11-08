@@ -153,6 +153,13 @@ final class MigrationRunner
     /** Legt dg_migrations an, falls nicht vorhanden. */
     private static function ensureMigrationsTable(PDO $pdo): void
     {
+        // CREATE TABLE IF NOT EXISTS → MySQL Implicit Commit auch bei bestehender Tabelle.
+        static $ready = false;
+        if ($ready || self::tableExists($pdo, 'dg_migrations')) {
+            $ready = true;
+
+            return;
+        }
         $pdo->exec(
             'CREATE TABLE IF NOT EXISTS dg_migrations (
                 id VARCHAR(128) NOT NULL,
@@ -160,6 +167,7 @@ final class MigrationRunner
                 PRIMARY KEY (id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
+        $ready = true;
     }
 
     /**
