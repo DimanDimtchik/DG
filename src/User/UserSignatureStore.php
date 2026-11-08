@@ -77,6 +77,24 @@ final class UserSignatureStore
     }
 
     /**
+     * Anzahl Historienzeilen eines Users (inkl. beendete) — ES7c Guard.
+     */
+    public static function countForUser(int $userId): int
+    {
+        self::ensureTable();
+        if (!Database::isConfigured() || $userId <= 0) {
+            return 0;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM dg_user_signatures WHERE user_id = :user_id'
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Bild-Upload (PNG/WebP) → Mediathek + appendNew (source=upload|app). Kein Löschen.
      *
      * @param array<string, mixed> $file $_FILES-Eintrag
@@ -232,8 +250,8 @@ final class UserSignatureStore
     }
 
     /**
-     * Externer Import (ES7b): Bildbytes → Mediathek + appendNew source=import.
-     * Immer neue Historienzeile (kein Überschreiben, kein DELETE).
+     * Externer Import (ES7b/ES7c): Bildbytes → Mediathek + appendNew source=import.
+     * ES7c: immer neue Historienzeile; gleiche source_ref überschreibt/löscht nichts.
      *
      * @return int Neue Signatur-ID
      */

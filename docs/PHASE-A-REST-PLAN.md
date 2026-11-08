@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. IQ-Nutzer aktivieren · oder Unterschrift **ES7c** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+1. IQ-Nutzer aktivieren · oder Unterschrift **ES8a** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
 2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID ES7c laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Kein Auto-Löschen lokaler Historie bei Re-Import. Kein Vendor.`
+`Nur Mini-ID ES8a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. UI-Texte final DSGVO/kein QES/kein Löschen. Katalog.`
 
 ---
 

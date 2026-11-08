@@ -66,7 +66,8 @@ fetchLatestForUser(userId, contactId): ?array
 
 1. `SignatureImportService::importFromProvider` oder `importPayload`  
 2. `UserSignatureStore::appendFromImport` → Media + `appendNew` (`source=import`, `source_ref`)  
-3. Re-Import mit neuer oder gleicher `external_ref` → **immer neue Zeile**, alte schließen (ES7c)
+3. Re-Import mit neuer oder gleicher `external_ref` → **immer neue Zeile**, alte schließen (ES7c)  
+4. `SignatureImportService` prüft `countForUser` vorher/nachher = +1 (sonst RuntimeException)
 
 ---
 
@@ -85,4 +86,4 @@ fetchLatestForUser(userId, contactId): ?array
 |------|--------|
 | **ES7a** | Vertrag + Interface-Datei |
 | **ES7b** (Adapter) | `SignatureImportService` + `appendFromImport` |
-| **ES7c** | Explizit: kein Auto-Löschen bei Re-Import (Verhalten bereits über `appendNew`) |
+| **ES7c** | Guard: `countForUser` +1 je Import; gleiche `source_ref` löscht nichts |

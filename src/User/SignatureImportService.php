@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 /**
- * ES7b: Adapter externes Signatur-Bild → media + appendNew (source=import).
+ * ES7b/ES7c: Adapter externes Signatur-Bild → media + appendNew (source=import).
  * Kein Vendor-Hardcode — arbeitet mit SignatureImportProvider oder Roh-Payload.
+ * ES7c: Re-Import löscht keine Historie — Zeilenzahl muss steigen.
  *
  * @see docs/SIGNATURE-IMPORT-PROVIDER.md
  */
@@ -12,7 +13,7 @@ final class SignatureImportService
     /**
      * Provider abfragen und bei Treffer importieren.
      *
-     * @return array{id: int, media_id: string, source_ref: string, provider: string}|null
+     * @return array{id: int, media_id: string, source_ref: string, provider: string, history_count: int}|null
      *         null = Provider lieferte nichts Neues
      */
     public static function importFromProvider(
@@ -40,6 +41,7 @@ final class SignatureImportService
 
     /**
      * Roh-Payload (wie SignatureImportProvider::fetchLatestForUser) speichern.
+     * ES7c: Historie wächst um genau eine Zeile — kein DELETE alter Signaturen.
      *
      * @param array{
      *   external_ref?: string,
@@ -48,7 +50,7 @@ final class SignatureImportService
      *   captured_at?: string|null,
      *   display_hint?: string|null
      * } $payload
-     * @return array{id: int, media_id: string, source_ref: string}
+     * @return array{id: int, media_id: string, source_ref: string, history_count: int}
      */
     public static function importPayload(
         int $userId,
@@ -71,6 +73,8 @@ final class SignatureImportService
             throw new InvalidArgumentException('content fehlt.');
         }
 
+        $countBefore = UserSignatureStore::countForUser($userId);
+
         $id = UserSignatureStore::appendFromImport(
             $userId,
             $contactId,
@@ -81,6 +85,15 @@ final class SignatureImportService
             $captured !== '' ? $captured : null
         );
 
+        $countAfter = UserSignatureStore::countForUser($userId);
+        // ES7c: Re-Import / Import darf keine Zeile entfernen
+        if ($countAfter !== $countBefore + 1) {
+            throw new RuntimeException(
+                'Import-Historie inkonsistent (erwartet +1 Zeile, vorher '
+                . $countBefore . ', nachher ' . $countAfter . ').'
+            );
+        }
+
         $active = UserSignatureStore::activeForUser($userId);
         $mediaId = is_array($active) ? (string) ($active['media_id'] ?? '') : '';
 
@@ -88,6 +101,7 @@ final class SignatureImportService
             'id' => $id,
             'media_id' => $mediaId,
             'source_ref' => $ref,
+            'history_count' => $countAfter,
         ];
     }
 }
