@@ -80,8 +80,8 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| A2a | Neu: `AmazonBusinessOrderService` — ASIN aus preferred source, `placeOrder`, Fehler als klare Message | 🟡 | [ ] |
-| A2b | Autoload-Eintrag + kurzer PHP-Lint | 🟢 | [ ] |
+| A2a | Neu: `AmazonBusinessOrderService` — ASIN aus preferred source, `placeOrder`, Fehler als klare Message | 🟡 | [x] 2026-11-08 |
+| A2b | Autoload-Eintrag + kurzer PHP-Lint | 🟢 | [x] 2026-11-08 |
 
 **Prompt A2a:**  
 `Nur Mini-ID A2a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur neue Datei src/Inventory/AmazonBusinessOrderService.php (+ Autoload-Zeile). Nutzt vorhandenen AmazonBusinessClient. Kein View.`
@@ -142,7 +142,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|--------|--------|
 | A0 | Doc / Inventar | [x] |
 | A1 | Persistenz | [x] |
-| A2 | Order-Service | [ ] |
+| A2 | Order-Service | [x] |
 | A3 | Einkaufsliste UI | [ ] |
 | A4 | Artikelstamm | [ ] |
 | A5 | Rechte / Abschluss | [ ] |

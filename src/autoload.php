@@ -392,6 +392,7 @@ spl_autoload_register(static function (string $class): void {
         'AmazonBusinessSettings' => '/src/Settings/AmazonBusinessSettings.php',
         'AmazonBusinessAuth' => '/src/Inventory/AmazonBusinessAuth.php',
         'AmazonBusinessClient' => '/src/Inventory/AmazonBusinessClient.php',
+        'AmazonBusinessOrderService' => '/src/Inventory/AmazonBusinessOrderService.php',
         'StockPlaceService' => '/src/Inventory/StockPlaceService.php',
         'StockPositionCode' => '/src/Inventory/StockPositionCode.php',
         'StockStructureRepository' => '/src/Inventory/StockStructureRepository.php',
