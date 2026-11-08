@@ -4839,7 +4839,7 @@ switch ($path) {
                         (string) ($_POST['signature_png'] ?? ''),
                         $actorId
                     );
-                    Flash::set('success', 'Zeichnung gespeichert. Vorherige Version bleibt in der Historie.');
+                    Flash::set('success', 'Zeichnung gespeichert. Vorherige Version bleibt in der Historie (kein Löschen).');
                 } else {
                     $file = is_array($_FILES['signature_file'] ?? null) ? $_FILES['signature_file'] : [];
                     UserSignatureStore::appendFromUpload(
@@ -4848,7 +4848,7 @@ switch ($path) {
                         $file,
                         $actorId
                     );
-                    Flash::set('success', 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie.');
+                    Flash::set('success', 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie (kein Löschen).');
                 }
             } catch (Throwable $e) {
                 Flash::set('error', $e->getMessage());

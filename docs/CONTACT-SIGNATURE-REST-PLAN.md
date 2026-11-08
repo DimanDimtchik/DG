@@ -194,7 +194,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES8a | UI-Texte final (DSGVO-Zweck, kein QES, kein Löschen) | 🟢 | [ ] |
+| ES8a | UI-Texte final (DSGVO-Zweck, kein QES, kein Löschen) | 🟢 | [x] 2026-11-08 CRM-Partial + Writer + App · Selftest |
 | ES8b | `TODOS.md` / Parent-Haken · Plan ES1–ES7 Status | 🟢 | [ ] |
 
 ---
@@ -219,7 +219,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES8a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. UI-Texte final DSGVO/kein QES/kein Löschen. Katalog.`
+`Nur Mini-ID ES8b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. TODOS.md / Parent-Haken · Plan ES1–ES7 Status.`
 
 ---
 

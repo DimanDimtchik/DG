@@ -1953,7 +1953,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   Text('Unterschrift', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 6),
                   Text(
-                    'Zeichnen oder PNG/WebP speichern — für Briefe und E-Mails im CRM.',
+                    'Zeichnen oder PNG/WebP speichern — Zweck: Briefe und E-Mails im CRM (kein QES, Historie ohne Löschen).',
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 10),

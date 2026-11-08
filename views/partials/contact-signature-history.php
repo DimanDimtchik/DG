@@ -1,7 +1,7 @@
 <?php
 /**
- * ES2–ES3a: Unterschriften-Historie + Upload + Canvas-Pad + Soft-Hinweis.
- * Kein Löschen, kein Mail.
+ * Unterschriften-Historie + Upload + Canvas (ES2–ES3, Texte ES8a).
+ * Kein Löschen-Button; Zweck Brief/Mail; kein QES.
  *
  * @var int|null $contactId
  * @var list<array<string, mixed>>|null $contactSignatures
@@ -36,11 +36,11 @@ $formatDt = static function (string $raw): string {
 <section class="dg-panel dg-panel--wide dg-mt-4" id="contact-signatures">
   <h2 class="dg-subsection-title">Unterschriften</h2>
   <div class="dg-flash dg-flash--info">
-    Das gespeicherte Bild ist eine einfache elektronische Unterschrift für Briefe und E-Mails.
-    Es ersetzt keine gesetzliche Schriftform und ist keine qualifizierte elektronische Signatur.
-    Frühere Versionen bleiben sichtbar und können nicht gelöscht werden.
+    <strong>Zweck:</strong> Unterschriftsbild für Briefe und E-Mails in diesem CRM (nur für Berechtigte).
+    Es ist eine einfache elektronische Unterschrift — keine gesetzliche Schriftform und keine qualifizierte elektronische Signatur (QES).
+    Frühere Versionen bleiben in der Historie und können hier nicht gelöscht werden.
   </div>
-  <p class="dg-field-hint dg-mt-3">Chronologisch, neueste zuerst. Verwendungszeitraum bleibt erhalten.</p>
+  <p class="dg-field-hint dg-mt-3">Liste chronologisch, neueste zuerst. Verwendungszeitraum bleibt erhalten. Löschen ist nicht vorgesehen.</p>
 
   <?php if ($contactSignatures === []) : ?>
     <p class="dg-lead">Noch keine Unterschriften für diesen Kontakt.</p>
@@ -103,7 +103,7 @@ $formatDt = static function (string $raw): string {
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
       <input type="hidden" name="id" value="<?= (int) $contactId ?>">
       <h3 class="dg-subsection-title">Neue Unterschrift (Upload)</h3>
-      <p class="dg-field-hint">PNG oder WebP. Die bisher aktive Unterschrift wird beendet und bleibt in der Historie.</p>
+      <p class="dg-field-hint">PNG oder WebP. Die bisher aktive Version wird beendet und bleibt sichtbar in der Historie (kein Löschen).</p>
       <div class="dg-form-grid">
         <label class="dg-field dg-field--wide">
           <span>Bilddatei</span>
@@ -132,7 +132,7 @@ $formatDt = static function (string $raw): string {
       <input type="hidden" name="id" value="<?= (int) $contactId ?>">
       <input type="hidden" name="signature_png" value="">
       <h3 class="dg-subsection-title">Neue Unterschrift (zeichnen)</h3>
-      <p class="dg-field-hint">Mit Maus oder Finger zeichnen. Speichern legt eine neue aktive Version an.</p>
+      <p class="dg-field-hint">Mit Maus oder Finger zeichnen. Speichern legt eine neue aktive Version an; die alte bleibt in der Historie.</p>
       <div class="dg-signature-pad__wrap" data-signature-pad>
         <canvas
           class="dg-signature-pad"

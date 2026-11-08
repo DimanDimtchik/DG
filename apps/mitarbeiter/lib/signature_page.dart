@@ -191,8 +191,9 @@ class _SignaturePageState extends State<SignaturePage> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
           Text(
-            'Einfache elektronische Unterschrift für Briefe und E-Mails. '
-            'Kein Ersatz für eine qualifizierte Signatur. Vorherige Versionen bleiben in der Historie.',
+            'Zweck: Unterschriftsbild für Briefe und E-Mails im CRM. '
+            'Einfache elektronische Unterschrift — keine Schriftform und keine qualifizierte Signatur (QES). '
+            'Vorherige Versionen bleiben in der Historie und werden hier nicht gelöscht.',
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 12),

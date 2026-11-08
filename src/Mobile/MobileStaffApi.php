@@ -579,7 +579,7 @@ final class MobileStaffApi
 
         $payload = self::signaturePayload($contactId);
         $payload['saved_id'] = $id;
-        $payload['message'] = 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie.';
+        $payload['message'] = 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie (kein Löschen).';
         MobileApi::ok($payload);
     }
 
