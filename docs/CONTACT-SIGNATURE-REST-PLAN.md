@@ -1,46 +1,64 @@
-# Kontakt-Unterschrift (Brief/Mail) — tokenarm
+# User-/Kontakt-Unterschrift (Brief/Mail) — tokenarm
 
 > **Eine Chat-Session = eine Mini-ID.**  
-> Ziel: Unterschrifts**bild** am Kontakt speichern und in Brief/Mail wiederverwenden.  
-> **Kein QES**, kein Schriftform-Ersatz (§ 126a BGB) — nur einfache elektronische Signatur / Layout.
+> Ziel: Unterschrifts**bilder** mit **Historie** speichern; in Brief/Mail nur die **aktive** Signatur des **angemeldeten Users**.  
+> **Kein QES**, kein Schriftform-Ersatz (§ 126a BGB) — einfache elektronische Signatur / Layout + Nachvollziehbarkeit.
 
-Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) · Recht Kurz: unten §Recht
+Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 
 ---
 
-## Warum tokenarm
+## Fachziel (verbindlich)
 
 | Regel | Bedeutung |
 |-------|-----------|
-| **1 ID = 1 kleiner Diff** | oft 1 Datei oder Migration + 1 View |
-| **Kein QES-Anbieter** | kein Drittanbieter, keine Video-Ident |
-| **Kein Tenant-Hardcode** | Daten nur Instanz-DB/Medien |
-| **Katalog-UI** | keine Parallelwelt-CSS |
-| **Guard** | bei View-Änderung `php bin/ui-form-spacing-selftest.php` |
-
-**Chat-Prompt:**  
-`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur genannte Dateien. Katalog. Kein QES. Kein Refactor.`
-
----
-
-## Token-Stufen
-
-| Symbol | Wann |
-|--------|------|
-| 🟢 | Doc, Hinweistext, Checkliste |
-| 🟡 | Migration / kleines PHP + 1 View |
-| 🔴 | Manueller Smoke auf Dev |
+| **Eigentümer** | Unterschrift gehört zum **User** (Mitarbeiter); Anzeige/Historie am **verknüpften Kontakt** |
+| **Quellen** | (1) Bild-Upload (2) **Canvas**-Aufnahme Web (3) Aufnahme **Mitarbeiter-App** (4) **Import** aus externem Service |
+| **Mail / Dokument** | Nur Unterschrift(en) des **angemeldeten** Users — keine fremde Signatur unter fremder Session |
+| **Ändern** | Erlaubt: neue Version anlegen |
+| **Verfolgbarkeit** | Alte Version bleibt; **Verwendungszeitraum** (`gültig von` / `gültig bis`) |
+| **Darstellung** | Chronologische **Tabelle** am Kontakt |
+| **Löschen** | **Nicht möglich** (kein UI-Löschen, kein DELETE der Historie) |
 
 ---
 
-## Recht (Kurz — Produkt-Hinweis, keine Beratung)
+## Speichermodell (Entscheidung — festgelegt)
+
+**Tabelle** (Name final in ES1b), konzeptionell `dg_user_signatures`:
+
+| Feld | Zweck |
+|------|--------|
+| `id` | PK |
+| `user_id` | Eigentümer (Login) |
+| `contact_id` | Anzeige am Kontakt (Eigen-/Mitarbeiterkontakt) |
+| `media_id` | Bild in `dg_media` (PNG/WebP) |
+| `source` | `upload` \| `canvas` \| `app` \| `import` |
+| `source_ref` | optional: Import-Service-ID / externe Referenz (kein Secret) |
+| `valid_from` | Beginn Verwendungszeitraum |
+| `valid_to` | Ende; **NULL** = aktuell aktiv |
+| `created_at` / `created_by_user_id` | Anlage-Protokoll |
+
+**Wechsel der Unterschrift:**
+
+1. Aktive Zeile (`valid_to IS NULL`) → `valid_to = now()`  
+2. Neue Zeile einfügen (`valid_from = now()`, `valid_to = NULL`, neues `media_id`)  
+3. **Kein** UPDATE am Bild der alten Zeile, **kein** DELETE
+
+**Aktiv für Versand:** genau eine Zeile pro `user_id` mit `valid_to IS NULL` (oder explizit „keine“ → nur Text-Signatur).
+
+**Empfehlung Speichermedium:** Bildbytes in **`dg_media`** (wie Logo); Metadaten/Historie in der Signatur-Tabelle — nicht nur eine Spalte am Kontakt.
+
+---
+
+## Recht / Compliance (Kurz — keine Beratung)
 
 | Thema | Für dieses Feature |
 |-------|---------------------|
-| eIDAS **einfache** Signatur | Bild/Name unter Korrespondenz — ok wo **keine** Schriftform |
-| **Schriftform / QES** | **nicht** abgedeckt — Hinweis in UI |
-| DSGVO | Personenbezug; Zweck Korrespondenz; Zugriff beschränken; löschbar |
-| GoBD | Wenn auf Beleg-PDFs: wer/wann nachvollziehbar; kein stilles Überschreiben ohne Spur |
+| eIDAS **einfache** Signatur | Bild unter Korrespondenz — ok wo **keine** Schriftform |
+| **Schriftform / QES** | **nicht** abgedeckt — UI-Hinweis Pflicht |
+| **Nachvollziehbarkeit** | Historie + Zeitraum stützt GoBD-/Beweisinteresse bei Korrespondenz |
+| DSGVO | Personenbezug; Zweckbindung; Zugriff nur Berechtigte; **kein produktives Löschen** der Historie — echte Lösch-/Auskunftsbegehren = separates Verfahren (Aktenzeichen/Org), nicht Button „Löschen“ |
+| Import-Service | AV/TOMs des Anbieters prüfen; CRM speichert nur übernommene Bildmetadaten |
 
 ---
 
@@ -48,11 +66,38 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 
 | Baustein | Stand |
 |----------|--------|
-| Kontakt: Unterschriftsbild | ❌ fehlt |
+| User-/Kontakt-Unterschriftshistorie | ❌ fehlt |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
-| Belegdruck: Unterschrifts*zeilen* | ✅ AB u. a. |
-| Medienbibliothek | ✅ `MediaStorage` / `dg_media` |
+| Belegdruck: Unterschrifts*zeilen* | ✅ |
+| Medienbibliothek | ✅ |
+| Canvas / App-Signatur-API | ❌ fehlt |
+| Service-Import | ❌ fehlt |
+
+---
+
+## Warum tokenarm
+
+| Regel | Bedeutung |
+|-------|-----------|
+| **1 ID = 1 kleiner Diff** | Schema **oder** eine Quelle **oder** eine Einbindung |
+| **Kein QES-Anbieter bauen** | Import nur Adapter + gespeichertes Bild |
+| **Kein Tenant-Hardcode** | Instanz-DB only |
+| **Katalog-UI** | Tabelle/Form laut [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) |
+| **Guard** | bei Views: `php bin/ui-form-spacing-selftest.php` |
+
+**Chat-Prompt:**  
+`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur genannte Dateien. Katalog. Kein Löschen. Kein QES. Kein Refactor.`
+
+---
+
+## Token-Stufen
+
+| Symbol | Wann |
+|--------|------|
+| 🟢 | Doc, Hinweistext |
+| 🟡 | Migration / kleines PHP + 1 View |
+| 🔴 | Manueller Smoke Dev / App |
 
 ---
 
@@ -60,12 +105,15 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
-| ES0 | Plan / Rechtshinweis | [x] 2026-11-08 | 🟢 |
-| ES1 | Datenmodell speichern | [ ] | 🟡 |
-| ES2 | Kontakt-UI Upload | [ ] | 🟡🔴 |
-| ES3 | Brief / Dokumentenverfasser | [ ] | 🟡 |
-| ES4 | Mail-Einbindung | [ ] | 🟡 |
-| ES5 | Hinweise DSGVO/kein QES + Haken | [ ] | 🟢 |
+| ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
+| ES1 | Schema Historie + Accessor | [ ] | 🟡 |
+| ES2 | Kontakt-UI Tabelle + Upload | [ ] | 🟡🔴 |
+| ES3 | Canvas Web | [ ] | 🟡🔴 |
+| ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
+| ES5 | Mail (nur Session-User) | [ ] | 🟡 |
+| ES6 | Mitarbeiter-App Aufnahme | [ ] | 🟡🔴 |
+| ES7 | Import-Service Adapter | [ ] | 🟡 |
+| ES8 | Hinweise + Plan-Haken | [ ] | 🟢 |
 
 ---
 
@@ -75,82 +123,101 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES0a | Dieser Plan | 🟢 | [x] 2026-11-08 |
+| ES0a | Erster Plan (Upload-only, veraltet) | 🟢 | [x] 2026-11-08 |
+| ES0b | Zielbild: User-Eigentum, Quellen, Historie, kein Löschen | 🟢 | [x] 2026-11-08 |
 
-### ES1 — Speichern
-
-| ID | Aufgabe | Token | Status |
-|----|---------|-------|--------|
-| ES1a | Entscheidung Doc: Speichern als `media_id` am Kontakt (empfohlen) vs. Contact-File — 5–10 Zeilen in diesem Plan §Entscheidung | 🟢 | [ ] |
-| ES1b | Migration/Spalte oder Settings-Key laut ES1a (nur Schema, keine UI) | 🟡 | [ ] |
-| ES1c | PHP-Accessor `ContactSignature::…` lesen/schreiben (klein) | 🟡 | [ ] |
-
-**Prompt ES1a:** `Nur Mini-ID ES1a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Docs-Entscheidung Speichermodell. Kein Code.`
-
-### ES2 — Kontakt-UI
+### ES1 — Schema & API Kern
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES2a | Upload PNG/WebP (kein Zeichenpad in v1) in Kontakt-Bearbeiten · Katalog-Klassen | 🟡 | [ ] |
-| ES2b | Vorschau + Löschen · Soft-Hinweis „kein QES / Schriftform“ | 🟡 | [ ] |
-| ES2c | Smoke Dev: Upload sichtbar nach Reload | 🔴 | [ ] |
+| ES1a | ~~Speichermodell entscheiden~~ → **festgelegt** (Tabelle + media_id, siehe oben) | 🟢 | [x] 2026-11-08 |
+| ES1b | Migration: Tabelle + Indizes (`user_id`, `contact_id`, `(user_id, valid_to)`) · **kein** ON DELETE CASCADE der Historie | 🟡 | [ ] |
+| ES1c | `UserSignatureStore` (Name final): `listForContact`, `activeForUser`, `appendNew` (schließt alte) · **keine** `delete`-Methode | 🟡 | [ ] |
+| ES1d | Selftest: append → alte `valid_to` gesetzt · zweite aktiv · delete-API fehlt/wirft | 🟡 | [ ] |
 
-**Prompt ES2a:** `Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Upload-Feld Kontakt. Katalog. Kein Mail/Brief noch.`
+**Prompt ES1b:**  
+`Nur Mini-ID ES1b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Migration Historie-Tabelle. Kein UI. Kein Löschen.`
 
-### ES3 — Brief
-
-| ID | Aufgabe | Token | Status |
-|----|---------|-------|--------|
-| ES3a | Dokumentenverfasser/Letterhead: optionales Bild aus Kontakt des Absenders | 🟡 | [ ] |
-| ES3b | Druck/PDF-Stichprobe 1 Seite | 🔴 | [ ] |
-
-### ES4 — Mail
+### ES2 — Kontakt-UI (Historie + Upload)
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES4a | Post-Versand: optional `<img>` aus Kontakt-Signatur (CID oder URL laut bestehendem Mail-Stack) | 🟡 | [ ] |
-| ES4b | Fallback: nur Text-Signatur wenn kein Bild | 🟡 | [ ] |
-| ES4c | Smoke 1 Testmail Dev | 🔴 | [ ] |
+| ES2a | Tabelle am Kontakt: chronologisch (neueste zuerst oder älteste zuerst — **eine** Konvention Doc+UI), Spalten Zeitraum, Quelle, Vorschau | 🟡 | [ ] |
+| ES2b | Aktion „Neue Unterschrift (Upload)“ → `appendNew` · **kein** Löschen-Button | 🟡 | [ ] |
+| ES2c | Soft-Hinweis: kein QES / Schriftform · Historie unveränderlich | 🟢 | [ ] |
+| ES2d | Smoke Dev: Upload → Tabelle 2 Zeilen nach zweitem Upload | 🔴 | [ ] |
 
-### ES5 — Abschluss
+**Prompt ES2a:**  
+`Nur Mini-ID ES2a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Historie-Tabelle Kontakt. Katalog. Kein Canvas/Mail.`
+
+### ES3 — Canvas Web
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES5a | UI-Hinweis DSGVO + „ersetzt keine Schriftform“ final | 🟢 | [ ] |
-| ES5b | Kurz in `TODOS.md` / Fach-ToDo verlinken · Plan-Parent [x] | 🟢 | [ ] |
+| ES3a | Canvas-Pad (minimal) → PNG → `appendNew` · `source=canvas` | 🟡 | [ ] |
+| ES3b | Smoke: Zeichnung erscheint als neue aktive Zeile, alte mit `valid_to` | 🔴 | [ ] |
+
+### ES4 — Brief / Dokument
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| ES4a | Dokumentenverfasser/Druck: Bild nur aus `activeForUser(session)` | 🟡 | [ ] |
+| ES4b | Kein Kontakt-Picker fremder Signaturen | 🟡 | [ ] |
+| ES4c | Stichprobe PDF 1 Seite | 🔴 | [ ] |
+
+### ES5 — Mail
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| ES5a | Post: optionales `<img>` aus aktiver User-Signatur (CID/URL laut Mail-Stack) | 🟡 | [ ] |
+| ES5b | Fallback Text-Signatur wenn keine aktive Bildzeile | 🟡 | [ ] |
+| ES5c | Smoke 1 Testmail Dev | 🔴 | [ ] |
+
+### ES6 — Mitarbeiter-App
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| ES6a | API: authentifiziertes Upload/Canvas-Ergebnis → `appendNew` · `source=app` | 🟡 | [ ] |
+| ES6b | App-UI Skizze/Minimal: aufnehmen + speichern (eigenes Mini-Paket) | 🟡🔴 | [ ] |
+
+### ES7 — Import-Service
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| ES7a | Doc: welche Service-API (Platzhalter-Interface `SignatureImportProvider`) | 🟢 | [ ] |
+| ES7b | Adapter: externes Bild → media + `appendNew` · `source=import` + `source_ref` | 🟡 | [ ] |
+| ES7c | Kein Auto-Löschen lokaler Historie bei Re-Import — immer neue Version | 🟡 | [ ] |
+
+### ES8 — Abschluss
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| ES8a | UI-Texte final (DSGVO-Zweck, kein QES, kein Löschen) | 🟢 | [ ] |
+| ES8b | `TODOS.md` / Parent-Haken · Plan ES1–ES7 Status | 🟢 | [ ] |
 
 ---
 
-## Entscheidung Speichermodell (ES1a ausfüllen)
+## Nicht-Ziele (Produkt)
 
-| Option | Pro | Contra |
-|--------|-----|--------|
-| **A — `dg_media` + `signature_media_id` am Kontakt** | wie Logo/Appearance; Varianten/Rechte vorhanden | Medien-Tabelle |
-| B — Datei unter Contact-Files | nah an Kontaktakten | schwerer in Mail/Brief wiederverwenden |
-
-**Empfehlung v1:** **A**. (Haken setzen in ES1a-Chat.)
-
----
-
-## Nicht-Ziele v1
-
-- Qualifizierte Signatur / Vertrauensdiensteanbieter  
-- Tablet-Zeichenpad (später optional)  
-- Kunden-Gegenzeichnung / Workflow „Bitte hier signieren“  
-- Automatisches Einbetten in alle historischen Belege  
+- Qualifizierte Signatur (QES) / eigene Vertrauensdienste  
+- Kunden-Gegenzeichnung („Bitte hier signieren“-Workflow)  
+- Hard-DELETE / Papierkorb für Signaturzeilen  
+- Fremde User-Signatur unter meiner Session in Mail/Brief  
+- Stilles Überschreiben des gleichen `media_id` ohne neue Historienzeile  
 
 ---
 
 ## Empfohlene Reihenfolge (wenig Tokens)
 
-1. **ES1a** (nur Doc, Free)  
-2. **ES1b → ES1c** (ein Chat oder zwei)  
-3. **ES2a → ES2b** · Smoke **ES2c**  
-4. **ES3a** dann **ES4a/b** (nicht beides plus UI im selben Chat)  
-5. **ES5a/b**
+1. **ES1b → ES1c → ES1d** (Kern Historie)  
+2. **ES2a → ES2b** · Smoke **ES2d**  
+3. **ES3a** (Canvas) **oder** **ES4a** (Brief) — nicht beides im selben Chat  
+4. **ES5a/b** Mail  
+5. **ES6** App · **ES7** Import (kann später)  
+6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES1a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Docs-Entscheidung Speichermodell. Kein Code.`
+`Nur Mini-ID ES1b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Migration Historie-Tabelle. Kein UI. Kein Löschen.`
 
 ---
 
@@ -158,7 +225,8 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 
 | Datei | Rolle |
 |-------|--------|
-| [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | Forms/Buttons |
-| [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) | Briefpapier |
-| `src/Mail/MailSignatureResolver.php` | Text-Signatur heute |
-| `src/Media/*` | Medienbibliothek |
+| [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | Tabelle/Form |
+| [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) | Brief |
+| `src/Mail/MailSignatureResolver.php` | Text-Signatur |
+| `src/Media/*` | Bildspeicher |
+| [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server parallel, unabhängig |
