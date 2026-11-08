@@ -51,7 +51,7 @@
 
 - [ ] Preview + Settings + CSV
 - [ ] Bestätigung → Manual Ledger
-- [ ] Jahresabschluss-Checkliste
+- [x] Jahresabschluss-Checkliste — ✅ PA2e 2026-11-08 Dev (FiscalCloseService + close/reopen/Sperre)
 
 ## 5 · Phase 6 Lohn-Export (neu)
 
