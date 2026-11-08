@@ -16,6 +16,8 @@
  * @var string $machineBookingCalWeek
  * @var array{electricity_eur_per_kwh: string, room_eur_per_m2_h: string, wage_eur_per_h: string} $recipeCostRatesForm
  * @var array{electricity_eur_per_kwh: float, room_eur_per_m2_h: float, wage_eur_per_h: float} $recipeCostRates
+ * @var array<string, mixed> $machineOverheadForm
+ * @var array<string, mixed> $machineOverheadPreview
  * @var bool $canEdit
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
@@ -113,6 +115,8 @@ if ($bookingFilterTo !== '') {
 $bookingExportHref = '/app?' . http_build_query($bookingExportQuery);
 $ratesForm = $recipeCostRatesForm ?? RecipeCostSettings::forForm();
 $rates = $recipeCostRates ?? RecipeCostSettings::get();
+$overheadForm = $machineOverheadForm ?? MachineOverheadSettings::forForm();
+$overheadPreview = $machineOverheadPreview ?? MachineOverheadService::compute();
 $centerNames = [];
 $centerHourlyCosts = [];
 foreach ($centers as $center) {
@@ -321,6 +325,79 @@ $formatHelperMaterials = static function (mixed $json): string {
         Raum <?= View::escape(RecipeCostService::formatEur($rates['room_eur_per_m2_h'])) ?>/m²·h ·
         Lohn <?= View::escape(RecipeCostService::formatEur($rates['wage_eur_per_h'], 2)) ?>/h
       </p>
+    <?php endif; ?>
+  </section>
+
+  <section class="dg-panel dg-mb-5" id="dg-machine-overhead">
+    <h2 class="dg-subsection-title dg-mt-0">Gemeinkosten je Maschinenstunde</h2>
+    <p class="dg-field-hint">
+      Vorschlag aus FiBu-Konten ÷ Maschinenlaufzeit — <strong>nicht buchungswirksam</strong>, keine automatische Buchung.
+      Wird in der Rezeptur-Kalkulation als Aufschlag ausgewiesen, wenn aktiv.
+    </p>
+    <?php
+      $ohRate = $overheadPreview['overhead_per_machine_hour'] ?? null;
+      $ohWarnings = is_array($overheadPreview['warnings'] ?? null) ? $overheadPreview['warnings'] : [];
+    ?>
+    <p class="dg-lead">
+      Aktuell:
+      <?php if ($ohRate !== null) : ?>
+        <strong><?= View::escape(RecipeCostService::formatEur((float) $ohRate, 4)) ?>/h</strong>
+        · Kosten <?= View::escape(RecipeCostService::formatEur((float) ($overheadPreview['total_overhead_cost'] ?? 0), 2)) ?>
+        · Stunden <?= View::escape(number_format((float) ($overheadPreview['machine_hours'] ?? 0), 2, ',', '.')) ?>
+        (<?= View::escape((string) ($overheadPreview['machine_hours_source'] ?? 'none')) ?>)
+      <?php else : ?>
+        <span class="dg-muted">kein Satz berechenbar</span>
+      <?php endif; ?>
+    </p>
+    <?php if ($ohWarnings !== []) : ?>
+      <ul class="dg-muted">
+        <?php foreach ($ohWarnings as $ohWarn) : ?>
+          <li><?= View::escape((string) $ohWarn) ?></li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+    <?php if ($canEdit && $dbConnected) : ?>
+      <form method="post" action="/app?page=rezeptur-maschinen#dg-machine-overhead" class="dg-form">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <label class="dg-field">
+          <span><input type="checkbox" name="enabled" value="1"<?= !empty($overheadForm['enabled']) ? ' checked' : '' ?>> In Kalkulation nutzen</span>
+        </label>
+        <label class="dg-field">
+          <span>Bezeichnung (optional)</span>
+          <input type="text" name="label" maxlength="191" value="<?= View::escape((string) ($overheadForm['label'] ?? '')) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Zeitraum</span>
+          <select name="period_mode">
+            <option value="fiscal_year"<?= (($overheadForm['period_mode'] ?? '') === 'fiscal_year') ? ' selected' : '' ?>>Geschäftsjahr</option>
+            <option value="date_range"<?= (($overheadForm['period_mode'] ?? '') === 'date_range') ? ' selected' : '' ?>>Datumsbereich</option>
+          </select>
+        </label>
+        <label class="dg-field">
+          <span>Geschäftsjahr</span>
+          <input type="number" name="fiscal_year" min="2000" max="2100" value="<?= View::escape((string) ($overheadForm['fiscal_year'] ?? date('Y'))) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Von (bei Datumsbereich)</span>
+          <input type="date" name="date_from" value="<?= View::escape((string) ($overheadForm['date_from'] ?? '')) ?>">
+        </label>
+        <label class="dg-field">
+          <span>Bis (bei Datumsbereich)</span>
+          <input type="date" name="date_to" value="<?= View::escape((string) ($overheadForm['date_to'] ?? '')) ?>">
+        </label>
+        <label class="dg-field dg-field--wide">
+          <span>Kontonummern (Komma getrennt)</span>
+          <input type="text" name="account_numbers" value="<?= View::escape((string) ($overheadForm['account_numbers'] ?? '')) ?>" placeholder="z. B. 6300, 6400">
+          <span class="dg-field-hint">Soll − Haben im Zeitraum, ohne Saldenvortrag.</span>
+        </label>
+        <label class="dg-field">
+          <span>Maschinenstunden manuell (Fallback)</span>
+          <input type="text" name="manual_machine_hours" inputmode="decimal" value="<?= View::escape((string) ($overheadForm['manual_machine_hours'] ?? '')) ?>" placeholder="wenn keine Belegung">
+        </label>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button dg-button--primary" name="machine_overhead_save" value="1">Gemeinkosten speichern</button>
+        </div>
+      </form>
     <?php endif; ?>
   </section>
 

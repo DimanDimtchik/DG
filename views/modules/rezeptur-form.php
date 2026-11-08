@@ -341,6 +341,17 @@ $plannedPreview = ($calc !== null)
             <?php endforeach; ?>
           </span>
         </div>
+        <?php
+          $ohRateUi = $calc['overhead_per_machine_hour'] ?? null;
+          $kOhUi = (float) ($calc['k_overhead_suggested'] ?? 0);
+          $ohShow = $ohRateUi !== null || $kOhUi > 0.0005;
+        ?>
+        <div class="dg-field-hint dg-mt-2" style="<?= $ohShow ? '' : 'display:none;' ?>" id="dg-recipe-overhead-hint">
+          Gemeinkosten Vorschlag (nicht in SK/VK, keine FiBu):
+          <strong data-calc="overhead_per_machine_hour"><?= $ohRateUi !== null ? View::escape(RecipeCostService::formatEur((float) $ohRateUi, 4)) . '/h' : '—' ?></strong>
+          · Anteil
+          <strong data-calc="k_overhead_suggested"><?= View::escape(RecipeCostService::formatEur($kOhUi, 2)) ?></strong>
+        </div>
       <?php endif; ?>
 
       <?php if ($calc !== null && $canEdit) : ?>
@@ -797,6 +808,22 @@ $plannedPreview = ($calc !== null)
           maintHint.style.display = 'none';
           maintBody.innerHTML = '';
         }
+      }
+      var ohHint = document.getElementById('dg-recipe-overhead-hint');
+      if (ohHint) {
+        var ohRate = data.overhead_per_machine_hour;
+        var ohK = Number(data.k_overhead_suggested || 0);
+        var ohRateEl = ohHint.querySelector('[data-calc="overhead_per_machine_hour"]');
+        var ohKEl = ohHint.querySelector('[data-calc="k_overhead_suggested"]');
+        var ohRateFmt = (data.formatted && data.formatted.overhead_per_machine_hour)
+          ? data.formatted.overhead_per_machine_hour
+          : (ohRate == null ? '—' : (Number(ohRate).toFixed(4).replace('.', ',') + ' €/h'));
+        var ohKFmt = (data.formatted && data.formatted.k_overhead_suggested)
+          ? data.formatted.k_overhead_suggested
+          : (ohK.toFixed(2).replace('.', ',') + ' €');
+        if (ohRateEl) ohRateEl.textContent = ohRateFmt;
+        if (ohKEl) ohKEl.textContent = ohKFmt;
+        ohHint.style.display = (ohRate != null || ohK > 0.0005) ? '' : 'none';
       }
     }
     function postWhatIf() {

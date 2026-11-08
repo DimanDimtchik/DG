@@ -2958,6 +2958,27 @@ switch ($path) {
             exit;
         }
 
+        // POST: Maschinen-Gemeinkosten (E1e) — gleicher Gate wie Kostensätze; keine FiBu-Buchung
+        if (
+            $page === 'rezeptur-maschinen'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && isset($_POST['machine_overhead_save'])
+            && MenuRegistry::canAccess($user, 'rezeptur-maschinen')
+        ) {
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+            } else {
+                try {
+                    MachineOverheadSettings::saveFromPost($_POST);
+                    Flash::set('success', 'Gemeinkosten-Einstellungen gespeichert (nur Kalkulationsvorschlag).');
+                } catch (Throwable $e) {
+                    Flash::set('error', $e->getMessage());
+                }
+            }
+            header('Location: /app?page=rezeptur-maschinen#dg-machine-overhead', true, 302);
+            exit;
+        }
+
         // POST: Maschinen-Kapazitätsprofil (M1a)
         if (
             $page === 'rezeptur-maschinen'
@@ -7214,6 +7235,8 @@ $legalProductsConfig = LegalProductSettings::config();
                 }
                 $recipeCostRates = RecipeCostSettings::get();
                 $recipeCostRatesForm = RecipeCostSettings::forForm();
+                $machineOverheadForm = MachineOverheadSettings::forForm();
+                $machineOverheadPreview = MachineOverheadService::compute();
                 $contentTemplate = 'modules/rezeptur-maschinen';
                 $title = 'Maschinen & Arbeitsplätze';
                 $currentPage = 'rezeptur';

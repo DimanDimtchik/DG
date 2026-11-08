@@ -65,6 +65,8 @@ final class RecipeCostApi
         $maintenanceLines = is_array($calc['maintenance_lines'] ?? null) ? $calc['maintenance_lines'] : [];
         $routingSteps = is_array($calc['routing_steps'] ?? null) ? $calc['routing_steps'] : [];
         $kMaint = (float) ($calc['k_maint_suggested'] ?? 0);
+        $ohRate = $calc['overhead_per_machine_hour'] ?? null;
+        $kOh = (float) ($calc['k_overhead_suggested'] ?? 0);
         echo json_encode([
             'success' => true,
             'data' => [
@@ -87,6 +89,10 @@ final class RecipeCostApi
                 'maintenance_lines' => $maintenanceLines,
                 'k_maint_suggested' => $kMaint,
                 'self_cost_with_maint_suggested' => $calc['self_cost_with_maint_suggested'] ?? ((float) ($calc['self_cost'] ?? 0) + $kMaint),
+                'overhead_per_machine_hour' => $ohRate,
+                'k_overhead_suggested' => $kOh,
+                'self_cost_with_overhead_suggested' => $calc['self_cost_with_overhead_suggested']
+                    ?? ((float) ($calc['self_cost'] ?? 0) + $kOh),
                 'routing_steps' => $routingSteps,
                 'formatted' => [
                     'k_mat' => RecipeCostService::formatEur((float) ($calc['k_mat'] ?? 0), 2),
@@ -103,6 +109,10 @@ final class RecipeCostApi
                         (float) ($calc['self_cost_with_maint_suggested'] ?? ((float) ($calc['self_cost'] ?? 0) + $kMaint)),
                         2
                     ),
+                    'overhead_per_machine_hour' => $ohRate === null
+                        ? '—'
+                        : (RecipeCostService::formatEur((float) $ohRate, 4) . '/h'),
+                    'k_overhead_suggested' => RecipeCostService::formatEur($kOh, 2),
                 ],
             ],
         ], JSON_UNESCAPED_UNICODE);

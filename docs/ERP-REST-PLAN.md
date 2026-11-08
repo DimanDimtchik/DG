@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | **Credentials nie committen** | Zertifikate / Portal-IDs nur Instanz |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID E1e laut docs/ERP-REST-PLAN.md. Nur genannte View(s) + POST-Zweig wenn nötig. Katalog-Klassen. Kein Refactor. Kein automatisches Buchen.`
+`Nur Mini-ID E1f laut docs/ERP-REST-PLAN.md. Nur bin/machine-overhead-selftest.php + Plan-Haken. Kein Live-FiBu-Rewrite.`
 
 **Nicht im Agent-Chat:** Baulohn vor Standardlohn, ITSG-Versand ohne Gate, FiBu-Buchungsroboter, PostgreSQL/UUID-Schema, Amazon/UI-CSS (eigene Pläne).
 
@@ -56,7 +56,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | ID | Thema | Priorität | Status | Token |
 |----|--------|-----------|--------|-------|
 | E0 | Inventar / dieser Plan | — | [x] 2026-11-08 | 🟢 |
-| E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [~] E1a–E1d ✅; ab E1e | 🟡 |
+| E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [~] E1a–E1e ✅; ab E1f | 🟡 |
 | E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 · parallel zu E1 möglich | [ ] Mini-IDs unten | 🟡 |
 | E3 | **Lohn-Gates** (G3-Nachweis, dann LB1+) | Mensch/Pilot | [~] G3 offen | 🔴 |
 | E4 | **Zertifizierungen / Meldewege** | nach Hetzner | [ ] nicht zerlegt | 🔴 |
@@ -141,7 +141,7 @@ UI-Hinweis: „Vorschlag, nicht gebucht“.
 | E1b | Plan-Abschluss E1b: bestätigen „nur SettingsStore“ (kein SQL); Stub-Klasse erst E1c — **kein** `NNN_machine_overhead_settings.sql` | 🟢 | [x] 2026-11-08 bestätigt: kein SQL; 143+ frei für E2a |
 | E1c | Neu: `MachineOverheadService` (+ Settings-Klasse) unter `src/Recipe/` — Formel laut Spec; Return u. a. `overhead_per_machine_hour` | 🟡 | [x] 2026-11-08 MachineOverheadSettings + Service + Autoload |
 | E1d | Anbindung `RecipeCostService` / `snapshotPayload`: Felder laut Spec; **alte Snapshots unverändert** | 🟡 | [x] 2026-11-08 calculate + snapshotPayload (Vorschlag, self_cost unverändert) |
-| E1e | UI: Einstellungen Konten/Zeitraum (bei Rezeptur-Kostensätzen oder klarer Nachbar) + Anzeige €/h; Katalog-Klassen; kein FiBu-Buchen-Button | 🟡 | [ ] |
+| E1e | UI: Einstellungen Konten/Zeitraum (bei Rezeptur-Kostensätzen oder klarer Nachbar) + Anzeige €/h; Katalog-Klassen; kein FiBu-Buchen-Button | 🟡 | [x] 2026-11-08 rezeptur-maschinen + Form-Hinweis + API |
 | E1f | Kurz-Selftest `bin/machine-overhead-selftest.php` + Plan-Haken | 🟢 | [ ] |
 
 **E1b bestätigt (2026-11-08):** kein `*machine_overhead*.sql` unter `database/migrations/`; letzte Nummer weiterhin **142**; **143+** für E2a. Persistenz nur `SettingsStore` Key `machine_overhead` (E1a). Stub/Klassen kamen mit E1c.

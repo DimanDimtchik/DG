@@ -137,6 +137,35 @@ final class MachineOverheadSettings
     }
 
     /**
+     * @return array{
+     *   enabled: bool,
+     *   period_mode: string,
+     *   fiscal_year: string,
+     *   date_from: string,
+     *   date_to: string,
+     *   account_numbers: string,
+     *   manual_machine_hours: string,
+     *   label: string
+     * }
+     */
+    public static function forForm(): array
+    {
+        $cfg = self::get();
+        $manual = $cfg['manual_machine_hours'];
+
+        return [
+            'enabled' => !empty($cfg['enabled']),
+            'period_mode' => (string) $cfg['period_mode'],
+            'fiscal_year' => (string) (int) $cfg['fiscal_year'],
+            'date_from' => (string) $cfg['date_from'],
+            'date_to' => (string) $cfg['date_to'],
+            'account_numbers' => implode(', ', $cfg['account_numbers']),
+            'manual_machine_hours' => $manual === null ? '' : rtrim(rtrim(sprintf('%.4f', $manual), '0'), '.'),
+            'label' => (string) $cfg['label'],
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $post
      */
     public static function saveFromPost(array $post): void
