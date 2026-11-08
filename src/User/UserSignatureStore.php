@@ -131,6 +131,88 @@ final class UserSignatureStore
     }
 
     /**
+     * Canvas-PNG → Mediathek + appendNew (source=canvas). Kein Löschen.
+     *
+     * @return int Neue Signatur-ID
+     */
+    public static function appendFromCanvasPng(
+        int $ownerUserId,
+        int $contactId,
+        string $pngBinary,
+        ?int $createdByUserId = null
+    ): int {
+        if ($ownerUserId <= 0) {
+            throw new InvalidArgumentException('Kein Benutzer für diese Unterschrift verknüpft.');
+        }
+        if ($contactId <= 0) {
+            throw new InvalidArgumentException('contact_id ungültig.');
+        }
+
+        $len = strlen($pngBinary);
+        if ($len < 64) {
+            throw new InvalidArgumentException('Zeichnung fehlt oder ist leer.');
+        }
+        if ($len > MediaStorage::MAX_BYTES) {
+            throw new InvalidArgumentException('Zeichnung zu groß.');
+        }
+        if (!str_starts_with($pngBinary, "\x89PNG\r\n\x1a\n")) {
+            throw new InvalidArgumentException('Nur PNG von der Zeichenfläche erlaubt.');
+        }
+
+        MediaRepository::ensureTables();
+        self::ensureTable();
+
+        $mediaId = MediaId::generate();
+        $stored = MediaStorage::storeBinary($mediaId, 'original.png', $pngBinary, 'image/png');
+        $stored['original_name'] = 'signature-canvas.png';
+        $stored['source_note'] = 'Unterschrift Zeichenfläche';
+        $stored['title'] = 'Unterschrift';
+        $stored['alt_text'] = 'Unterschrift';
+
+        try {
+            MediaRepository::insert($mediaId, $stored, $createdByUserId);
+
+            return self::appendNew([
+                'user_id' => $ownerUserId,
+                'contact_id' => $contactId,
+                'media_id' => $mediaId,
+                'source' => 'canvas',
+                'source_ref' => 'canvas',
+                'created_by_user_id' => $createdByUserId,
+            ]);
+        } catch (Throwable $e) {
+            try {
+                MediaRepository::delete($mediaId);
+            } catch (Throwable) {
+                // Best effort cleanup
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * data:image/png;base64,… → appendFromCanvasPng.
+     */
+    public static function appendFromCanvasDataUrl(
+        int $ownerUserId,
+        int $contactId,
+        string $dataUrl,
+        ?int $createdByUserId = null
+    ): int {
+        $dataUrl = trim($dataUrl);
+        if (!preg_match('#^data:image/png;base64,#i', $dataUrl)) {
+            throw new InvalidArgumentException('Ungültige Zeichenflächen-Daten.');
+        }
+        $raw = substr($dataUrl, (int) strpos($dataUrl, ',') + 1);
+        $binary = base64_decode($raw, true);
+        if ($binary === false || $binary === '') {
+            throw new InvalidArgumentException('Zeichnung konnte nicht gelesen werden.');
+        }
+
+        return self::appendFromCanvasPng($ownerUserId, $contactId, $binary, $createdByUserId);
+    }
+
+    /**
      * Schließt die aktive Signatur des Users und legt eine neue an.
      *
      * @param array{

@@ -4797,8 +4797,15 @@ switch ($path) {
             exit;
         }
 
-        // POST: Unterschrift Upload (ES2b) — appendNew, kein Löschen
-        if ($page === 'kontakte' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_signature_upload'])) {
+        // POST: Unterschrift Upload (ES2b) / Canvas (ES3a) — appendNew, kein Löschen
+        if (
+            $page === 'kontakte'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['contact_signature_upload'])
+                || isset($_POST['contact_signature_canvas'])
+            )
+        ) {
             if (!MenuRegistry::canAccess($user, 'kontakte') || !RoleResolver::canEdit($user)) {
                 header('Location: /app', true, 302);
                 exit;
@@ -4824,14 +4831,25 @@ switch ($path) {
                         'Kein CRM-Benutzer mit diesem Kontakt verknüpft (E-Mail oder Login).'
                     );
                 }
-                $file = is_array($_FILES['signature_file'] ?? null) ? $_FILES['signature_file'] : [];
-                UserSignatureStore::appendFromUpload(
-                    $ownerUserId,
-                    $sigContactId,
-                    $file,
-                    (int) $user->id > 0 ? (int) $user->id : null
-                );
-                Flash::set('success', 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie.');
+                $actorId = (int) $user->id > 0 ? (int) $user->id : null;
+                if (isset($_POST['contact_signature_canvas'])) {
+                    UserSignatureStore::appendFromCanvasDataUrl(
+                        $ownerUserId,
+                        $sigContactId,
+                        (string) ($_POST['signature_png'] ?? ''),
+                        $actorId
+                    );
+                    Flash::set('success', 'Zeichnung gespeichert. Vorherige Version bleibt in der Historie.');
+                } else {
+                    $file = is_array($_FILES['signature_file'] ?? null) ? $_FILES['signature_file'] : [];
+                    UserSignatureStore::appendFromUpload(
+                        $ownerUserId,
+                        $sigContactId,
+                        $file,
+                        $actorId
+                    );
+                    Flash::set('success', 'Unterschrift gespeichert. Vorherige Version bleibt in der Historie.');
+                }
             } catch (Throwable $e) {
                 Flash::set('error', $e->getMessage());
             }

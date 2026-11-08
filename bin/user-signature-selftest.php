@@ -218,5 +218,22 @@ try {
 }
 assertEs1d($threw, 'appendFromUpload lehnt JPG ab');
 
+assertEs1d($ref->hasMethod('appendFromCanvasPng'), 'Methode appendFromCanvasPng vorhanden (ES3a)');
+assertEs1d($ref->hasMethod('appendFromCanvasDataUrl'), 'Methode appendFromCanvasDataUrl vorhanden (ES3a)');
+$threw = false;
+try {
+    UserSignatureStore::appendFromCanvasPng($userId, $contactId, 'not-a-png', $userId);
+} catch (InvalidArgumentException $e) {
+    $threw = true;
+}
+assertEs1d($threw, 'appendFromCanvasPng lehnt Nicht-PNG ab');
+$threw = false;
+try {
+    UserSignatureStore::appendFromCanvasDataUrl($userId, $contactId, 'data:image/jpeg;base64,aaaa', $userId);
+} catch (InvalidArgumentException $e) {
+    $threw = true;
+}
+assertEs1d($threw, 'appendFromCanvasDataUrl lehnt JPEG-Data-URL ab');
+
 echo "ES1d Selftest bestanden.\n";
 exit(0);

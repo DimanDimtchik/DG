@@ -66,12 +66,12 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 | Baustein | Stand |
 |----------|--------|
-| User-/Kontakt-Unterschriftshistorie | ✅ ES1–ES2 inkl. Smoke Dev (2 Uploads → 2 Historienzeilen) |
+| User-/Kontakt-Unterschriftshistorie | ✅ ES1–ES2 inkl. Smoke Dev; Canvas ES3a ✅ |
 | Mail: Text-Signatur | ✅ `MailSignatureResolver` |
 | Dokumentenverfasser: Text „Unterschrift/Name“ | ✅ |
 | Belegdruck: Unterschrifts*zeilen* | ✅ |
 | Medienbibliothek | ✅ |
-| Canvas / App-Signatur-API | ❌ fehlt |
+| Canvas / App-Signatur-API | ✅ Canvas Web (ES3a); App fehlt |
 | Service-Import | ❌ fehlt |
 
 ---
@@ -108,7 +108,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | ES0 | Plan / Zielbild | [x] 2026-11-08 | 🟢 |
 | ES1 | Schema Historie + Accessor | [x] ES1d ✅ | 🟡 |
 | ES2 | Kontakt-UI Tabelle + Upload | [x] ES2d ✅ | 🟡🔴 |
-| ES3 | Canvas Web | [ ] | 🟡🔴 |
+| ES3 | Canvas Web | [~] ES3a ✅ | 🟡🔴 |
 | ES4 | Brief / Dokument (nur Session-User) | [ ] | 🟡 |
 | ES5 | Mail (nur Session-User) | [ ] | 🟡 |
 | ES6 | Mitarbeiter-App Aufnahme | [ ] | 🟡🔴 |
@@ -146,15 +146,15 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 
 **Konvention Chronologie:** neueste zuerst (`ORDER BY valid_from DESC, id DESC` / Store `listForContact`).
 
-**Prompt ES3a:**  
-`Nur Mini-ID ES3a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Canvas-Pad minimal → appendNew source=canvas. Katalog.`
-
 ### ES3 — Canvas Web
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| ES3a | Canvas-Pad (minimal) → PNG → `appendNew` · `source=canvas` | 🟡 | [ ] |
+| ES3a | Canvas-Pad (minimal) → PNG → `appendNew` · `source=canvas` | 🟡 | [x] 2026-11-08 Pad + `appendFromCanvasDataUrl` · JS/CSS Feature |
 | ES3b | Smoke: Zeichnung erscheint als neue aktive Zeile, alte mit `valid_to` | 🔴 | [ ] |
+
+**Prompt ES3b:**  
+`Nur Mini-ID ES3b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Canvas → neue aktive Zeile. Kein Code außer Fix.`
 
 ### ES4 — Brief / Dokument
 
@@ -216,7 +216,7 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 6. **ES8**
 
 **Nächster Chat:**  
-`Nur Mini-ID ES3a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Canvas-Pad minimal → appendNew source=canvas. Katalog.`
+`Nur Mini-ID ES3b laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Smoke Dev Canvas → neue aktive Zeile. Kein Code außer Fix.`
 
 ---
 
@@ -229,7 +229,9 @@ Stand: **2026-11-08** (Zielbild nach Fachvorgabe) · Katalog: [`UI-KLASSENKATALO
 | `src/Mail/MailSignatureResolver.php` | Text-Signatur |
 | `src/User/UserSignatureStore.php` | Historie-Accessor (kein delete) |
 | `bin/user-signature-selftest.php` | ES1d Selftest (SQLite) |
-| `views/partials/contact-signature-history.php` | ES2a–c Historie + Upload + Soft-Hinweis |
+| `views/partials/contact-signature-history.php` | Historie + Upload + Canvas + Hinweis |
 | `UserSignatureStore::appendFromUpload` | PNG/WebP → media + appendNew |
+| `UserSignatureStore::appendFromCanvasDataUrl` | Canvas-PNG → media + appendNew |
+| `assets/js/contact-signature-canvas.js` | ES3a Zeichenfläche |
 | `src/Media/*` | Bildspeicher |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server parallel, unabhängig |

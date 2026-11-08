@@ -8653,3 +8653,19 @@ body.dg-login-page {
 .dg-post-closing-dialog::backdrop {
   background: rgba(0, 0, 0, 0.35);
 }
+
+/* ES3a: Unterschrift Zeichenfläche (Feature, kein Kern-Ersatz) */
+.dg-signature-pad {
+  display: block;
+  width: 100%;
+  max-width: 36rem;
+  height: 10rem;
+  border: 1px solid var(--dg-border);
+  border-radius: var(--dg-radius-sm, 4px);
+  background: var(--dg-surface, #fff);
+  touch-action: none;
+  cursor: crosshair;
+}
+.dg-signature-pad__wrap {
+  margin-top: var(--dg-space-3);
+}

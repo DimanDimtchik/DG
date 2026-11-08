@@ -1,7 +1,7 @@
 <?php
 /**
- * ES2a–c: Unterschriften-Historie am Kontakt (neueste zuerst) + optional Upload + Soft-Hinweis.
- * Kein Löschen, kein Canvas/Mail.
+ * ES2–ES3a: Unterschriften-Historie + Upload + Canvas-Pad + Soft-Hinweis.
+ * Kein Löschen, kein Mail.
  *
  * @var int|null $contactId
  * @var list<array<string, mixed>>|null $contactSignatures
@@ -121,6 +121,37 @@ $formatDt = static function (string $raw): string {
         </button>
       </div>
     </form>
+
+    <form
+      class="dg-form dg-mt-4"
+      method="post"
+      action="/app?page=kontakte"
+      data-signature-canvas-form
+    >
+      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+      <input type="hidden" name="id" value="<?= (int) $contactId ?>">
+      <input type="hidden" name="signature_png" value="">
+      <h3 class="dg-subsection-title">Neue Unterschrift (zeichnen)</h3>
+      <p class="dg-field-hint">Mit Maus oder Finger zeichnen. Speichern legt eine neue aktive Version an.</p>
+      <div class="dg-signature-pad__wrap" data-signature-pad>
+        <canvas
+          class="dg-signature-pad"
+          data-signature-canvas
+          width="560"
+          height="160"
+          aria-label="Unterschrift zeichnen"
+        ></canvas>
+        <div class="dg-btn-row dg-mt-3">
+          <button type="button" class="dg-button" data-signature-clear>Zeichenfläche leeren</button>
+        </div>
+      </div>
+      <div class="dg-form-actions">
+        <button type="submit" name="contact_signature_canvas" value="1" class="dg-button dg-button--primary">
+          Zeichnung speichern
+        </button>
+      </div>
+    </form>
+    <script src="<?= View::escape(Asset::url('/assets/js/contact-signature-canvas.js')) ?>" defer></script>
   <?php elseif ($signatureOwnerMissing) : ?>
     <p class="dg-field-hint dg-mt-4">
       Upload nicht möglich: kein CRM-Benutzer ist mit diesem Kontakt verknüpft (E-Mail oder Login).
