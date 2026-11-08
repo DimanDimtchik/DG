@@ -131,5 +131,5 @@ Output: {
 |-------|--------|
 | [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) | Mini-IDs |
 | `ProductionLineStore` | Stammdaten + Puffer-Ist |
-| FL3b | Service implementiert diese Regeln |
+| FL3b | `ProductionLineStatusService` implementiert diese Regeln |
 | FL3c | Selftest blocked/starved |
