@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * FL1c: Fließlinie Stammdaten — Linie + Stationen (kein Puffer, kein Hard-DELETE).
+ * FL1c/FL2b: Fließlinie — Linie, Stationen, Zwischenpuffer (kein Hard-DELETE der Linie).
  */
 final class ProductionLineStore
 {
@@ -164,7 +164,7 @@ final class ProductionLineStore
 
     /**
      * Stationen komplett neu setzen (Rewrite). Reihenfolge = Array-Reihenfolge → station_order 1…n.
-     * Jedes Element: work_center_id (int), optional label (string).
+     * Puffer werden nach station_order wiederhergestellt (CASCADE würde IDs sonst verlieren).
      *
      * @param list<array{work_center_id: int, label?: string}> $stations
      */
@@ -209,6 +209,8 @@ final class ProductionLineStore
         $pdo = Database::pdo();
         $pdo->beginTransaction();
         try {
+            $bufferSnap = self::snapshotBuffersByStationOrder($pdo, $lineId);
+
             $del = $pdo->prepare('DELETE FROM dg_production_line_stations WHERE line_id = :line_id');
             $del->execute(['line_id' => $lineId]);
             $ins = $pdo->prepare(
@@ -223,6 +225,8 @@ final class ProductionLineStore
                     'label' => $row['label'],
                 ]);
             }
+
+            self::restoreBuffersFromSnapshot($pdo, $lineId, $bufferSnap, count($normalized));
             $pdo->commit();
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) {
@@ -230,5 +234,256 @@ final class ProductionLineStore
             }
             throw $e;
         }
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function listBuffers(int $lineId): array
+    {
+        self::ensureReady();
+        if ($lineId <= 0 || !Database::isConfigured()) {
+            return [];
+        }
+        $stmt = Database::pdo()->prepare(
+            'SELECT b.*, s.station_order AS after_station_order
+             FROM dg_production_line_buffers b
+             INNER JOIN dg_production_line_stations s ON s.id = b.after_station_id
+             WHERE b.line_id = :line_id
+             ORDER BY s.station_order ASC, b.id ASC'
+        );
+        $stmt->execute(['line_id' => $lineId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Puffer je Lücke neu setzen (Rewrite). Key: after_station_order (1…n-1). Kapazität > 0 Pflicht.
+     *
+     * @param list<array{after_station_order: int, capacity_qty: float|string, min_qty?: float|string, unit?: string, current_qty?: float|string}> $buffers
+     */
+    public static function saveBuffers(int $lineId, array $buffers): void
+    {
+        self::ensureReady();
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht verbunden.');
+        }
+        $bundle = self::getLineWithStations($lineId);
+        if ($bundle === null) {
+            throw new InvalidArgumentException('Linie nicht gefunden.');
+        }
+        $stations = $bundle['stations'];
+        $n = count($stations);
+        if ($n < 2) {
+            throw new InvalidArgumentException('Puffer brauchen mindestens zwei Stationen.');
+        }
+        if ($buffers === []) {
+            throw new InvalidArgumentException('Mindestens einen Puffer angeben.');
+        }
+
+        $byOrder = [];
+        foreach ($stations as $st) {
+            $byOrder[(int) $st['station_order']] = (int) $st['id'];
+        }
+        $maxOrder = $n;
+        $seen = [];
+        $normalized = [];
+        foreach ($buffers as $i => $row) {
+            if (!is_array($row)) {
+                throw new InvalidArgumentException('Puffer #' . ($i + 1) . ': ungültige Daten.');
+            }
+            $order = (int) ($row['after_station_order'] ?? 0);
+            if ($order < 1 || $order >= $maxOrder) {
+                throw new InvalidArgumentException(
+                    'Puffer #' . ($i + 1) . ': after_station_order muss 1…' . ($maxOrder - 1) . ' sein (nicht nach letzter Station).'
+                );
+            }
+            if (isset($seen[$order])) {
+                throw new InvalidArgumentException('Doppelter Puffer für Station-Order ' . $order . '.');
+            }
+            $seen[$order] = true;
+            if (!isset($byOrder[$order])) {
+                throw new InvalidArgumentException('Puffer #' . ($i + 1) . ': Station-Order fehlt.');
+            }
+            $capacity = self::parseQty((string) ($row['capacity_qty'] ?? ''), 'Kapazität');
+            if ($capacity <= 0) {
+                throw new InvalidArgumentException('Kapazität muss größer als 0 sein.');
+            }
+            $minQty = self::parseQty((string) ($row['min_qty'] ?? '0'), 'Mindestmenge', true);
+            if ($minQty < 0) {
+                throw new InvalidArgumentException('Mindestmenge darf nicht negativ sein.');
+            }
+            if ($minQty > $capacity) {
+                throw new InvalidArgumentException('Mindestmenge darf die Kapazität nicht überschreiten.');
+            }
+            $current = self::parseQty((string) ($row['current_qty'] ?? '0'), 'Ist-Menge', true);
+            if ($current < 0) {
+                throw new InvalidArgumentException('Ist-Menge darf nicht negativ sein.');
+            }
+            $unit = trim((string) ($row['unit'] ?? 'Stk'));
+            if ($unit === '') {
+                $unit = 'Stk';
+            }
+            if (mb_strlen($unit) > 32) {
+                $unit = mb_substr($unit, 0, 32);
+            }
+            $normalized[] = [
+                'after_station_id' => $byOrder[$order],
+                'capacity_qty' => $capacity,
+                'min_qty' => $minQty,
+                'unit' => $unit,
+                'current_qty' => $current,
+            ];
+        }
+
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $del = $pdo->prepare('DELETE FROM dg_production_line_buffers WHERE line_id = :line_id');
+            $del->execute(['line_id' => $lineId]);
+            $ins = $pdo->prepare(
+                'INSERT INTO dg_production_line_buffers
+                    (line_id, after_station_id, capacity_qty, min_qty, unit, current_qty)
+                 VALUES
+                    (:line_id, :after_station_id, :capacity_qty, :min_qty, :unit, :current_qty)'
+            );
+            foreach ($normalized as $row) {
+                $ins->execute([
+                    'line_id' => $lineId,
+                    'after_station_id' => $row['after_station_id'],
+                    'capacity_qty' => $row['capacity_qty'],
+                    'min_qty' => $row['min_qty'],
+                    'unit' => $row['unit'],
+                    'current_qty' => $row['current_qty'],
+                ]);
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /** Nur Simulations-/manueller Ist-Stand — keine Lagerbuchung. */
+    public static function setBufferCurrentQty(int $bufferId, float|string $qty): void
+    {
+        self::ensureReady();
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht verbunden.');
+        }
+        if ($bufferId <= 0) {
+            throw new InvalidArgumentException('Puffer nicht gefunden.');
+        }
+        $current = self::parseQty((string) $qty, 'Ist-Menge', true);
+        if ($current < 0) {
+            throw new InvalidArgumentException('Ist-Menge darf nicht negativ sein.');
+        }
+        $pdo = Database::pdo();
+        $find = $pdo->prepare('SELECT id, capacity_qty FROM dg_production_line_buffers WHERE id = :id LIMIT 1');
+        $find->execute(['id' => $bufferId]);
+        $row = $find->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            throw new InvalidArgumentException('Puffer nicht gefunden.');
+        }
+        $cap = (float) $row['capacity_qty'];
+        if ($current > $cap) {
+            throw new InvalidArgumentException('Ist-Menge darf die Kapazität nicht überschreiten.');
+        }
+        $upd = $pdo->prepare(
+            'UPDATE dg_production_line_buffers SET current_qty = :current_qty WHERE id = :id'
+        );
+        $upd->execute([
+            'current_qty' => $current,
+            'id' => $bufferId,
+        ]);
+    }
+
+    /**
+     * @return list<array{after_station_order: int, capacity_qty: float, min_qty: float, unit: string, current_qty: float}>
+     */
+    private static function snapshotBuffersByStationOrder(PDO $pdo, int $lineId): array
+    {
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT s.station_order AS after_station_order,
+                        b.capacity_qty, b.min_qty, b.unit, b.current_qty
+                 FROM dg_production_line_buffers b
+                 INNER JOIN dg_production_line_stations s ON s.id = b.after_station_id
+                 WHERE b.line_id = :line_id'
+            );
+            $stmt->execute(['line_id' => $lineId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $e) {
+            // Tabelle ggf. noch nicht migriert — Stations-Rewrite trotzdem erlauben
+            return [];
+        }
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'after_station_order' => (int) $r['after_station_order'],
+                'capacity_qty' => (float) $r['capacity_qty'],
+                'min_qty' => (float) $r['min_qty'],
+                'unit' => (string) $r['unit'],
+                'current_qty' => (float) $r['current_qty'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<array{after_station_order: int, capacity_qty: float, min_qty: float, unit: string, current_qty: float}> $snap
+     */
+    private static function restoreBuffersFromSnapshot(PDO $pdo, int $lineId, array $snap, int $stationCount): void
+    {
+        if ($snap === [] || $stationCount < 2) {
+            return;
+        }
+        $st = $pdo->prepare(
+            'SELECT id, station_order FROM dg_production_line_stations WHERE line_id = :line_id'
+        );
+        $st->execute(['line_id' => $lineId]);
+        $map = [];
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $map[(int) $row['station_order']] = (int) $row['id'];
+        }
+        $ins = $pdo->prepare(
+            'INSERT INTO dg_production_line_buffers
+                (line_id, after_station_id, capacity_qty, min_qty, unit, current_qty)
+             VALUES
+                (:line_id, :after_station_id, :capacity_qty, :min_qty, :unit, :current_qty)'
+        );
+        foreach ($snap as $b) {
+            $order = (int) $b['after_station_order'];
+            if ($order < 1 || $order >= $stationCount || !isset($map[$order])) {
+                continue;
+            }
+            $ins->execute([
+                'line_id' => $lineId,
+                'after_station_id' => $map[$order],
+                'capacity_qty' => $b['capacity_qty'],
+                'min_qty' => $b['min_qty'],
+                'unit' => $b['unit'],
+                'current_qty' => $b['current_qty'],
+            ]);
+        }
+    }
+
+    private static function parseQty(string $raw, string $label, bool $allowEmptyZero = false): float
+    {
+        $raw = trim(str_replace([' ', ','], ['', '.'], $raw));
+        if ($raw === '') {
+            if ($allowEmptyZero) {
+                return 0.0;
+            }
+            throw new InvalidArgumentException($label . ': ungültige Zahl.');
+        }
+        if (!is_numeric($raw)) {
+            throw new InvalidArgumentException($label . ': ungültige Zahl.');
+        }
+
+        return (float) $raw;
     }
 }

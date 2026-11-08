@@ -136,7 +136,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL2b laut docs/FLIESSLINIE-REST-PLAN.md. Store Puffer Kapazität>0. Kein UI. Kein MES.`
+`Nur Mini-ID FL2c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest Puffer voll/leer. SQLite ok. Kein UI.`
 
 ---
 
@@ -156,7 +156,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|--------|--------|-------|
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
 | FL1 | Linie + Stationen (Stammdaten) | [x] FL1a–d ✅ | 🟡 |
-| FL2 | Puffer zwischen Stationen | [~] FL2a ✅ | 🟡 |
+| FL2 | Puffer zwischen Stationen | [~] FL2a–b ✅ | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
@@ -190,7 +190,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `146_production_line_buffers.sql` · Selftest |
-| FL2b | Store: Puffer je Lücke Station→Station; Kapazität > 0 Pflicht | 🟡 | [ ] |
+| FL2b | Store: Puffer je Lücke Station→Station; Kapazität > 0 Pflicht | 🟡 | [x] 2026-11-08 `listBuffers`/`saveBuffers`/`setBufferCurrentQty` · Snapshot bei Station-Rewrite |
 | FL2c | Selftest: Puffer voll/leer-Grenzen setzen | 🟡 | [ ] |
 
 ### FL3 — Blocking / Starving (Offline-Engine)
@@ -276,7 +276,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL2b laut docs/FLIESSLINIE-REST-PLAN.md. Store Puffer je Lücke Station→Station; Kapazität > 0. Kein UI.`
+`Nur Mini-ID FL2c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest Puffer voll/leer-Grenzen. SQLite ok. Kein UI.`
 
 ---
 
