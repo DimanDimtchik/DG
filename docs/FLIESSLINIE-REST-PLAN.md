@@ -136,7 +136,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | **Guard** | Views: `php bin/ui-form-spacing-selftest.php` |
 
 **Chat-Prompt:**  
-`Nur Mini-ID FL2c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest Puffer voll/leer. SQLite ok. Kein UI.`
+`Nur Mini-ID FL3a laut docs/FLIESSLINIE-REST-PLAN.md. Zustandsregeln Blocking/Starving Doc. Kein Code außer Doc.`
 
 ---
 
@@ -156,7 +156,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|--------|--------|-------|
 | FL0 | Plan / Zielbild / Begriffe | [x] FL0a–b ✅ | 🟢 |
 | FL1 | Linie + Stationen (Stammdaten) | [x] FL1a–d ✅ | 🟡 |
-| FL2 | Puffer zwischen Stationen | [~] FL2a–b ✅ | 🟡 |
+| FL2 | Puffer zwischen Stationen | [x] FL2a–c ✅ | 🟡 |
 | FL3 | Blocking / Starving-Engine (Offline) | [ ] | 🟡 |
 | FL4 | Engpass / Takt-Hinweis | [ ] | 🟢🟡 |
 | FL5 | Materialmangel (Rohware + Hilfsstoff) | [ ] | 🟡 |
@@ -191,7 +191,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 |----|---------|-------|--------|
 | FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `146_production_line_buffers.sql` · Selftest |
 | FL2b | Store: Puffer je Lücke Station→Station; Kapazität > 0 Pflicht | 🟡 | [x] 2026-11-08 `listBuffers`/`saveBuffers`/`setBufferCurrentQty` · Snapshot bei Station-Rewrite |
-| FL2c | Selftest: Puffer voll/leer-Grenzen setzen | 🟡 | [ ] |
+| FL2c | Selftest: Puffer voll/leer-Grenzen setzen | 🟡 | [x] 2026-11-08 `bin/production-line-buffers-store-selftest.php` SQLite |
 
 ### FL3 — Blocking / Starving (Offline-Engine)
 
@@ -276,7 +276,7 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 9. FL8 nur nach Bedarf · **FL9** Abschluss  
 
 **Nächster Chat:**  
-`Nur Mini-ID FL2c laut docs/FLIESSLINIE-REST-PLAN.md. Selftest Puffer voll/leer-Grenzen. SQLite ok. Kein UI.`
+`Nur Mini-ID FL3a laut docs/FLIESSLINIE-REST-PLAN.md. Zustandsregeln Blocking/Starving/Linienstopp Doc. Kein Code außer Doc.`
 
 ---
 
@@ -295,4 +295,5 @@ Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** P
 | `bin/production-line-store-selftest.php` | FL1d SQLite Selftest |
 | `database/migrations/146_production_line_buffers.sql` | FL2a Puffer |
 | `bin/production-line-buffers-migration-selftest.php` | FL2a Vertrags-Selftest |
+| `bin/production-line-buffers-store-selftest.php` | FL2c Puffer voll/leer Selftest |
 | `MachinePlanningRepository` | Belegung/Konflikt **pro** Maschine |
