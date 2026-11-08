@@ -21,45 +21,45 @@
 
 ## 0 · Smoke nach Deploy
 
-- [ ] Login
-- [ ] Menü Zeiterfassung sichtbar
-- [ ] Keine 500er auf Lohn-Export / Urlaub / Rückstellung / Schichten
-- [ ] Lohn-Export-Protokoll speichert Download (Migration 094)
+- [x] Login — Admin-User Dev ✅ PA2g
+- [x] Menü Zeiterfassung sichtbar — ✅ PA2g 2026-11-08
+- [x] Keine 500er auf Lohn-Export / Urlaub / Rückstellung / Schichten — ✅ PA2g Service-Smoke
+- [x] Lohn-Export-Protokoll speichert Download (Migration 094) — ✅ PA2g `export_id` CSV/DATEV/Lex
 
 ## 1 · Zeiterfassung Phase 2
 
-- [ ] Ein-/Ausstempeln + Tagesübersicht
-- [ ] Team heute
-- [ ] Monatsblatt Soll/Ist/Pause/Diff/ÜStd
-- [ ] Zeitkonto Saldo + Lots
-- [ ] Korrektur
+- [x] Ein-/Ausstempeln + Tagesübersicht — ✅ PA2g 2026-11-08 Dev
+- [x] Team heute — ✅ PA2g
+- [x] Monatsblatt Soll/Ist/Pause/Diff/ÜStd — ✅ PA2g
+- [x] Zeitkonto Saldo + Lots — ✅ PA2g API (`listOpenLots`)
+- [x] Korrektur — ✅ PA2g
 
 ## 2 · Phase 3 Schichten
 
-- [ ] Vorlagen
-- [ ] Wochenraster MA × Tag
-- [ ] Soll im Monatsblatt
+- [x] Vorlagen — ✅ PA2g (3 Vorlagen)
+- [x] Wochenraster MA × Tag — ✅ PA2g Zuordnung `upsert` (Einzel-Tag; UI-Raster analog)
+- [x] Soll im Monatsblatt — ✅ PA2g `schedule_source=shift`
 
 ## 3 · Phase 4 Urlaub / Krankheit
 
-- [ ] Anspruch
-- [ ] Antrag + Freigabe
-- [ ] Krankheit + Attest-Ref
-- [ ] Genehmigt → Soll = 0
+- [x] Anspruch — ✅ PA2g
+- [x] Antrag + Freigabe — ✅ PA2g
+- [x] Krankheit + Attest-Ref — ✅ PA2g
+- [x] Genehmigt → Soll = 0 — ✅ PA2g
 
 ## 4 · Phase 5 Rückstellungen
 
-- [ ] Preview + Settings + CSV
-- [ ] Bestätigung → Manual Ledger
+- [x] Preview + Settings + CSV — ✅ PA2g 2026-11-08 Dev
+- [x] Bestätigung → Manual Ledger — ✅ PA2g (Smoke-Jahr 2096, Konten 4120/0970; Default 6140 fehlt im Dev-Rahmen)
 - [x] Jahresabschluss-Checkliste — ✅ PA2e 2026-11-08 Dev (FiscalCloseService + close/reopen/Sperre)
 
 ## 5 · Phase 6 Lohn-Export (neu)
 
-- [ ] Vorschau Monat
-- [ ] CSV + Protokoll
-- [x] DATEV (Berater/Mandant) — ✅ PA2f 2026-11-08 Dev (FiBu EXTF/Beleg-ZIP; Lohn-Export separat Z6)
-- [ ] Ohne Settings: Blockade
-- [ ] Lexoffice
+- [x] Vorschau Monat — ✅ PA2g
+- [x] CSV + Protokoll — ✅ PA2g
+- [x] DATEV (Berater/Mandant) — ✅ PA2f FiBu + ✅ PA2g Lohn-DATEV mit Temp-Nummern
+- [x] Ohne Settings: Blockade — ✅ PA2g
+- [x] Lexoffice — ✅ PA2g
 - [ ] payroll_slip Upload in Kontaktakte
 - [ ] Rechte ohne Team
 - [ ] Kontakte: Excel/CSV-Import (ShiftBase/Mitarbeiter), optional Kalender-Link
