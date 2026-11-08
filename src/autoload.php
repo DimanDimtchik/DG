@@ -516,6 +516,7 @@ spl_autoload_register(static function (string $class): void {
         'MachinePlanningRepository' => '/src/Recipe/MachinePlanningRepository.php',
         'MachineOverheadSettings' => '/src/Recipe/MachineOverheadSettings.php',
         'MachineOverheadService' => '/src/Recipe/MachineOverheadService.php',
+        'MachineKnowledgeRepository' => '/src/Recipe/MachineKnowledgeRepository.php',
     ];
 
     if (!isset($map[$class])) {
