@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** ERP-Rest **E2f** → [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) (Selftest/TODOS Maschinenwissen). Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
+**Nächste Session:** Phase **A** → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅ ([`ERP-REST-PLAN.md`](ERP-REST-PLAN.md)); E3–E5 🔴 Gates. Amazon Live/[~] bis Onboarding. Optional U2b Sichtcheck.
 
 ---
 
@@ -54,7 +54,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U5 ✅ (2026-11-08; Guards/Scan grün) · optional später: U2b Sichtcheck, margin-left/Print
 - [ ] **Phase A** abarbeiten → [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
-- [~] **ERP-Rest (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) — E0/E1 ✅; nächste Mini-ID **E2a** Maschinenwissen; E3–E5 🔴 Gates
+- [~] **ERP-Rest (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) — E0–E2 ✅ (Selftests Overhead/Wissen); E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
 - [~] **Telefon/CTI (Fritzbox):** Code da (Migration 113, Softphone-Wahl, CallMonitor-Bridge, Popup) — manuell: CTI unter Telefon aktivieren, Linphone als IP-Telefon, Bridge im LAN starten
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
@@ -182,7 +182,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Nextcloud cloud.ganz-om.de | `CLOUD-NEXTCLOUD-RESTORE.md` |
 | Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` *(Code Z2–Z7 erledigt — Zeile historisch)* |
 | Baulohn-Modul (Produkt) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe C — **nach** Normal-Lohn (A), ideal nach B |
-| ERP-Erweiterung V2 | `ERP-REST-PLAN.md` (Inventar E0 ✅; offen E1 Gemeinkosten, E2 Wissen; E3–E5 Gates) · Fach: `ERP-ERWEITERUNG-LASTENHEFT-V2.md` |
+| ERP-Erweiterung V2 | `ERP-REST-PLAN.md` (E0–E2 ✅; E3–E5 Gates) · Fach: `ERP-ERWEITERUNG-LASTENHEFT-V2.md` |
 | Lohn SV-Direktversand (ITSG) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe B — nach Stufe A |
 
 ---

@@ -18,7 +18,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 | **Credentials nie committen** | Zertifikate / Portal-IDs nur Instanz |
 
 **Chat-Prompt-Vorlage (kopieren):**  
-`Nur Mini-ID E2f laut docs/ERP-REST-PLAN.md. Selftest und/oder TODOS/Plan-Haken. Kein Live-Upload-E2E nötig.`
+`ERP E1/E2 Code ✅. Nächster Block E3a: G3-Pilotnachweis laut docs/LOHNABRECHNUNG-IMPLEMENTIERUNG.md (Mensch). Oder Phase A in docs/IQ-STROM-HETZNER-TODO.md.`
 
 **Nicht im Agent-Chat:** Baulohn vor Standardlohn, ITSG-Versand ohne Gate, FiBu-Buchungsroboter, PostgreSQL/UUID-Schema, Amazon/UI-CSS (eigene Pläne).
 
@@ -57,7 +57,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/erp-…`
 |----|--------|-----------|--------|-------|
 | E0 | Inventar / dieser Plan | — | [x] 2026-11-08 | 🟢 |
 | E1 | **Maschinen-Gemeinkosten** (Kontengruppen → €/Maschinenstunde → Snapshot) | 1 | [x] E1a–E1f | 🟡 |
-| E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 | [~] E2a–E2e ✅; ab E2f | 🟡 |
+| E2 | **Maschinenwissen** (Tabelle + Tab Wissen/Störungen + Fehlercode-Suche) | 2 | [x] E2a–E2f | 🟡 |
 | E3 | **Lohn-Gates** (G3-Nachweis, dann LB1+) | Mensch/Pilot | [~] G3 offen | 🔴 |
 | E4 | **Zertifizierungen / Meldewege** | nach Hetzner | [ ] nicht zerlegt | 🔴 |
 | E5 | **Baulohn D0-C** | nach G3 (+ ideal B) | [ ] nicht zerlegt | 🔴 |
@@ -168,7 +168,7 @@ Schema-Skizze: Lastenheft §6 `dg_machine_knowledge_links`.
 | E2c | POST/Handler im bestehenden Rezeptur-Maschinen-Block (`index.php` nur Zweig) — gleicher Gate wie Maschinen-CRUD | 🟡 | [x] 2026-11-08 machine_knowledge_save/deactivate |
 | E2d | UI Tab „Wissen & Störungen“ in `views/modules/rezeptur-maschine-form.php` (+ Liste/Suche); Katalog-Buttons; PDF-Pfad nur `storage/` | 🟡 | [x] 2026-11-08 |
 | E2e | Fehlercode-Schnellsuche (Maschine oder zentrale kleine Suche) + Hinweis Akademie-Clip-Regeln (Doc/UI-Lead, keine Plan-Codes) | 🟢 | [x] 2026-11-08 zentrale Suche auf rezeptur-maschinen |
-| E2f | Kurz-Selftest oder Plan-Checkliste M-Wissen + `TODOS` ERP-Zeile anpassen | 🟢 | [ ] |
+| E2f | Kurz-Selftest oder Plan-Checkliste M-Wissen + `TODOS` ERP-Zeile anpassen | 🟢 | [x] 2026-11-08 `bin/machine-knowledge-selftest.php` |
 
 **Prompt E2a:**  
 `Nur Mini-ID E2a laut docs/ERP-REST-PLAN.md. Nur neue Migration database/migrations/ (Nummer prüfen). Schema wie Lastenheft §6 MariaDB. Kein PHP.`
