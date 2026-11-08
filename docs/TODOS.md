@@ -4,7 +4,7 @@
 
 Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Phase **B** (Hetzner-Hardware) oder IQ Nutzer-Aktivierung. **Hetzner-AVV ✅** 07.11.2026 v1.2. Phase A: PA1–PA5 ✅ · **PA4a–i ✅** · **PA6a ✅**. Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md). ERP E1/E2 ✅; E3–E5 🔴.
+**Nächste Session:** IQ Nutzer-Aktivierung **oder** Unterschrift Mini-ID **ES1a** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md)). Phase B wartet auf GEX45-Lieferung ([`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md)). AVV ✅.
 
 ---
 
@@ -18,7 +18,7 @@ Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 
-**Nächster Block:** Phase **A** Mini-IDs in [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) (nicht ERiC auf Kasserver). UI/CSS-Rest: [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) U0–U5 ✅.
+**Nächster Block:** Unterschrift **ES1a** [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) · Phase B erst nach GEX45-Lieferung [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md). UI/CSS U0–U5 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link).
 
@@ -80,7 +80,9 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Kommunikation / E-Mail-Postfächer (eigen):** Menü + UI — Plan [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) (P1–P6 erledigt; Smoke/Deploy laut P6-Checkliste)
 - [x] **Dokumentenverfasser:** Briefpapier + Editor/Export — Plan [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) (B1–B4, D1–D7 Code ✅; manuelle Smoke-UI + Sync nach Deploy)
 - [x] **Vor Hetzner AVV:** [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) — AVV **07.11.2026** v1.2 · TÜV-Audit-PDF ✅ (PDFs nicht in Git)  
-- [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; offen: Serverwahl/SSH bei Phase B)
+- [x] **Hetzner-Server:** **GEX45** bestellt · OS **Ubuntu 26** · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Mini-IDs [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) (Lieferung Wochen)  
+- [ ] **Kontakt-Unterschrift Brief/Mail:** tokenarm [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) — nächster Mini-Schritt **ES1a**  
+- [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; SSH/Stack nach Lieferung PB1+)
 - [x] **ARAP-Prozent-Vorschlag:** Code bereits vorhanden; Jahresabschluss nutzt die resultierenden Ledger-/Folgejahresbuchungen, kein separater ARAP-Abschlussprozess
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
@@ -200,6 +202,9 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 |-------|--------|
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
+| `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45 / Ubuntu 26 |
+| `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45 (bestellt) |
+| `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES5, kein QES) |
 | `ZUGFERD-AUSGANG-ENTSCHEIDUNG.md` | PA5b: PDF+XRechnung behalten; Factur-X = D2-Ticket |
 | `LEXOFFICE-DG-MIGRATION.md` | PA4f: Lexoffice→DG Checkliste (kein Produktiv-Import) |
 | `LEXOFFICE-DG-PARALLELBETRIEB.md` | PA4g: Parallelbetrieb Zeitraum + Originalbeleg-Regel |

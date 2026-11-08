@@ -1,7 +1,7 @@
 # ELSTER / ERiC — Todo nach Server-Umzug
 
 > **Nicht vor Umzug starten** (Kasserver: kein ERiC).  
-> Voraussetzung: Root-Server gemäß [SERVER-MIGRATION.md](./SERVER-MIGRATION.md) — Favorit **Hetzner SX65-2**.  
+> Voraussetzung: Root-Server gemäß [SERVER-MIGRATION.md](./SERVER-MIGRATION.md) — Ziel **Hetzner GEX45** (bestellt) · OS Ubuntu 26.  
 > **FiBu-Verkauf:** Live-ERiC ist Verkaufsblocker für DIY-FiBu — parallel AVV/AGB ([`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md)).
 
 ---
@@ -24,8 +24,8 @@
 
 ### Infrastruktur
 
-- [ ] Server **Hetzner SX65-2** (oder gleichwertig) produktiv
-- [ ] OS: Debian 12 oder Ubuntu 22.04 LTS, Updates, Zeitzone `Europe/Berlin`
+- [ ] Server **Hetzner GEX45** produktiv (bestellt 2026-11; Lieferung Wochen)
+- [ ] OS: **Ubuntu 26**, Updates, Zeitzone `Europe/Berlin`
 - [ ] Nutzer `deploy`, SSH-Key, Firewall (22/80/443)
 - [ ] nginx + PHP 8.2 FPM + MariaDB 10.11
 - [ ] TLS (Let’s Encrypt) für `dg.ganz-om.de`

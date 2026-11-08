@@ -187,11 +187,11 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Phase **B** vorbereiten (Hardware/Serverwahl EU) · AVV-Blocker erledigt  
-2. CTI nur wenn wieder vor Ort ([`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md)) · Nutzer-Aktivierung IQ optional
+1. IQ-Nutzer aktivieren (morgen) · oder Unterschrift **ES1a** ([`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md))  
+2. Phase B: warten auf GEX45 · dann [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) PB1a
 
 **Prompt Start (nächster Chat):**  
-`Phase B laut docs/IQ-STROM-HETZNER-TODO.md — nur Planung/Docs oder genannter Mini-Schritt. Kein Cutover ohne Freigabe. Kein Tenant-Hardcode.`
+`Nur Mini-ID ES1a laut docs/CONTACT-SIGNATURE-REST-PLAN.md. Nur Docs-Entscheidung Speichermodell. Kein Code.`
 
 ---
 

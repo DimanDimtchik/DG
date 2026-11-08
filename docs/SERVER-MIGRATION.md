@@ -1,7 +1,7 @@
 # Server-Umzug & Infrastruktur-Plan
 
-> Stand: 2026-08-21  
-> Verwandt: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md) · [CLOUD-AGENT-ACCESS.md](./CLOUD-AGENT-ACCESS.md)
+> Stand: **2026-11-08**  
+> Verwandt: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md) · [CLOUD-AGENT-ACCESS.md](./CLOUD-AGENT-ACCESS.md) · Phase B: [`IQ-STROM-HETZNER-TODO.md`](./IQ-STROM-HETZNER-TODO.md) · tokenarm: [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md)
 
 ---
 
@@ -9,11 +9,13 @@
 
 | Punkt | Stand |
 |--------|--------|
-| **Derzeitiger Server** | Kasserver / All-Inkl Shared Webhosting (`dg.ganz-om.de`) |
-| **Deploy** | `scp`/`ssh`, PHP + MariaDB, **kein Root**, **kein Docker** |
+| **Derzeitiger Server** | Kasserver / All-Inkl Shared Webhosting (`dg.ganz-soft.de` / CRM-Instanzen) |
+| **Deploy heute** | `scp`/`ssh`/`rsync`, PHP + MariaDB, **kein Root** auf All-Inkl, **kein Docker** |
 | **ELSTER-Strategie** | **ERiC direkt** (keine Middleware wie Elmar) — **erst nach Umzug** |
-| **Server-Favorit** | **Hetzner SX65-2** (Dedicated Storage, Auction/Konfiguration der SX65-Linie) |
-| **Bis Umzug** | CSV-Export + manuelle ELSTER-Eingabe (bereits implementiert) |
+| **Zielserver** | **Hetzner GEX45** — **bestellt** (2026-11) · Bereitstellung in **einigen Wochen** |
+| **OS-Ziel** | **Ubuntu 26** (x64) · Zeitzone `Europe/Berlin` |
+| **Standort** | HEL1 (laut GEX45-Produktlinie; bei Lieferung in Robot prüfen) |
+| **Bis Umzug** | CSV-Export + manuelle ELSTER-Eingabe (bereits implementiert) · CRM weiter All-Inkl |
 
 ---
 
@@ -34,63 +36,53 @@
 
 ---
 
-## Server-Favorit: Hetzner SX65-2
+## Zielserver: Hetzner GEX45 (bestellt)
 
-Produktlinie: [Hetzner SX65 Storage Server](https://www.hetzner.com/dedicated-rootserver/sx65)  
-Doku: [Hetzner SX Server Konfigurationen](https://docs.hetzner.com/robot/dedicated-server/server-lines/sx-server/)
+Produkt: [Hetzner GEX45](https://www.hetzner.com/dedicated-rootserver/gex45/) · Doku GPU-Linie: [GPU Server](https://docs.hetzner.com/robot/dedicated-server/server-lines/gpu-server/)
 
-> **Hinweis:** „SX65-2“ ist eine konkrete Robot/Auction-Konfiguration (Variante der SX65-Linie). Technische Basis entspricht der SX65-Familie; exakte Festplattenbelegung beim Bestellen prüfen.
-
-### Typische SX65-Specs (Referenz)
-
-| Komponente | SX65 (Basis) |
-|------------|----------------|
-| CPU | AMD Ryzen™ 7 3700X, 8 Kerne / 16 Threads |
-| RAM | 64 GB DDR4 ECC (Upgrade bis 128 GB, Modellabhängig) |
-| NVMe | 2× 1 TB (System / schnelle DB) |
-| SATA | bis 4× 22 TB Enterprise HDD (Backups, Belege, Archive) |
-| Netz | 1 Gbit/s, Traffic unbegrenzt (Standard-Uplink) |
-| Standorte | FSN1, HEL1 |
-| Root | ✅ voller Root-Zugriff |
+| Komponente | GEX45 (Basis / typisch GEX45-1) |
+|------------|----------------------------------|
+| CPU | Intel Core i5-13500 (14 Kerne / 20 Threads) |
+| GPU | NVIDIA RTX PRO 4000 Blackwell SFF · 24 GB GDDR7 ECC (Bonus; CRM/ERiC brauchen die GPU nicht zwingend) |
+| RAM | 64 GB DDR4 |
+| Disk | 2× 512 GB NVMe |
+| Netz | 1 Gbit/s, Traffic unbegrenzt (Standard) |
+| Standort | HEL1 |
+| Root | ✅ |
 | Docker | ✅ möglich |
 | ERiC Linux x64 | ✅ geeignet |
-| Preis grob | ab ca. 104 €/Monat + Setup (Stand 2025/26, je nach Auktion günstiger) |
+| Preis grob | ca. 214 €/Monat + Setup (Stand Produktseite; Vertrag im Robot maßgeblich) |
 
-### Warum SX65-2 als Favorit sinnvoll ist
+### Warum GEX45 für DG passt
 
-- **Viel NVMe + HDD:** CRM-Datenbank auf NVMe, Beleg-PDFs und Backups auf HDD
-- **64+ GB RAM:** Master-CRM, KDV, mehrere Kunden-Instanzen (später), ERiC, MariaDB parallel
-- **8 Kerne:** ERiC ist single-threaded pro Vorgang — Rest für PHP-FPM, Cron, Backups
-- **Dedicated:** Kein Shared-Hosting-Limit für `exec`, Daemon, ausgehende ELSTER-Verbindungen
-- **Langfristig:** Ein Server für dg.ganz-om.de + KDV + ERiC statt Kasserver + Extra-VPS
+- **Root + 64 GB RAM:** CRM-Instanzen, MariaDB, PHP-FPM, später ERiC-Worker parallel
+- **NVMe:** DB und Belege schnell; Backup-Strategie (Snapshot/off-site) separat planen — kein großes HDD-Array wie SX65
+- **GPU:** optional für AI/Rendering-Nebenprojekte; **kein** Blocker und keine Pflicht für FiBu/ELSTER
+- Früher Favorit **SX65-2** (Storage-HDD) bleibt als Referenz verworfen zugunsten der bestellten GEX45
 
 ---
 
 ## Mindestanforderungen (Merken)
 
-### Absolutes Minimum — nur ERiC-Worker (Sidecar neben Kasserver)
-
-Falls ihr **vor** dem Full-Umzug nur ELSTER ergänzen wolltet (nicht empfohlen, aber technisches Minimum):
+### Absolutes Minimum — nur ERiC-Worker (Sidecar)
 
 | Ressource | Minimum |
 |-----------|---------|
 | vCPU | 2 |
 | RAM | 2 GB |
 | Disk | 20 GB SSD |
-| OS | Debian 12 / Ubuntu 22.04 LTS x64 |
+| OS | Debian 12 / Ubuntu 24.04+ LTS x64 |
 | Netz | Ausgehend HTTPS zu ELSTER |
 
-### Empfohlen — DG + ERiC auf einem Root-Server (Zielbild)
+### Empfohlen — DG + ERiC (Zielbild = GEX45)
 
-| Ressource | Empfohlen | SX65-2 |
+| Ressource | Empfohlen | GEX45 |
 |-----------|-----------|--------|
-| vCPU / Kerne | 4+ | 8 ✅ |
-| RAM | 8–16 GB | 64 GB ✅ |
-| Disk System | 40 GB NVMe | 2× 1 TB NVMe ✅ |
-| Disk Daten | 100 GB+ | TB HDD ✅ |
-| OS | Debian 12 / Ubuntu 22.04 LTS | ✅ |
-| Docker | optional (nicht nötig für ERiC direkt) | ✅ |
-| Backup | täglich, off-site | HDD + Hetzner Snapshot |
+| vCPU / Kerne | 4+ | 14/20 ✅ |
+| RAM | 8–16 GB+ | 64 GB ✅ |
+| Disk System | 40 GB+ NVMe | 2× 512 GB ✅ |
+| OS | Ubuntu 26 (bestellt) / Debian 12 | ✅ |
+| Backup | täglich, off-site | Snapshot + off-site (kein großes HDD) |
 
 ### Software-Stack auf Zielserver (Plan)
 
@@ -98,11 +90,11 @@ Falls ihr **vor** dem Full-Umzug nur ELSTER ergänzen wolltet (nicht empfohlen, 
 |--------|--------|
 | nginx oder Apache | CRM, Shop-Reverse-Proxy |
 | PHP 8.2+ FPM | DG-Anwendung |
-| MariaDB 10.11+ | CRM-Datenbank |
-| ERiC (Linux x64) | ELSTER-Übermittlung |
-| `dg-eric-worker` (CLI/HTTP) | Wrapper um ERiC, von PHP aufgerufen |
+| MariaDB 10.11+ | CRM-Datenbank(en) |
+| ERiC (Linux x64) | ELSTER-Übermittlung (nach Cutover) |
+| `dg-eric-worker` (CLI/HTTP) | Wrapper um ERiC |
 | certbot | TLS |
-| restic/rsync | Backups auf HDD |
+| restic/rsync | Backups / off-site |
 
 ---
 
@@ -110,15 +102,15 @@ Falls ihr **vor** dem Full-Umzug nur ELSTER ergänzen wolltet (nicht empfohlen, 
 
 | Phase | Inhalt | Wann |
 |-------|--------|------|
-| **0 — Jetzt** | CSV-UStVA, Docs, Code-Vorbereitung (`ElsterSettings`, Stubs) | ✅ läuft auf Kasserver |
-| **1 — Server** | Hetzner SX65-2 bestellen, OS installieren, Hardening | Nach Bestellung |
-| **2 — Parallel** | DG auf neuem Server deployen, DNS TTL senken, Test-Domain | Vor Cutover |
-| **3 — Daten** | DB-Dump, `storage/` rsync, Cron, Mail testen | Cutover-Wochenende |
-| **4 — ERiC** | Hersteller-ID, ERiC installieren, Test-Zertifikat, UStVA Testmerker | Nach stabilem CRM |
-| **5 — Produktion ELSTER** | Echtes Zertifikat auf Server, Modus `eric`, Abgabe aus UStVA-UI | Nach erfolgreichen Tests |
-| **6 — Kasserver** | Alte Instanz read-only, dann abschalten | Wenn neu stabil |
+| **0 — Jetzt** | CSV-UStVA, Docs, Code-Vorbereitung | ✅ Kasserver |
+| **1 — Server** | GEX45 geliefert · Ubuntu 26 · Hardening · User `deploy` | Nach Bereitstellung (Wochen) |
+| **2 — Parallel** | DG probeweise deployen, Test-Domain/TTL | Vor Cutover |
+| **3 — Daten** | DB-Dump, `storage/` rsync, Cron, Mail | Cutover-Fenster |
+| **4 — ERiC** | Hersteller-ID, ERiC, Test-Zertifikat | Nach stabilem CRM |
+| **5 — Produktion ELSTER** | Echtes Zertifikat, Modus `eric` | Nach Tests |
+| **6 — Kasserver** | Alt read-only, dann abschalten | Wenn neu stabil |
 
-Details: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md)
+Tokenarme Mini-IDs: [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) · Details ERiC: [`ELSTER-ERIC-TODO.md`](./ELSTER-ERIC-TODO.md)
 
 ---
 
@@ -126,9 +118,9 @@ Details: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md)
 
 | Domain | Heute | Ziel |
 |--------|-------|------|
-| dg.ganz-om.de | Kasserver | Hetzner SX65-2 |
-| shop.ganz-soft.de | Kasserver | gleicher Server oder separat |
-| Kunden-CRMs (KDV) | Kasserver Subdirs | später: gleicher Server oder Subdomains |
+| dg.ganz-soft.de / CRM-Kern | All-Inkl | Hetzner GEX45 |
+| Dev / Kunden-Instanzen | All-Inkl | gleicher Server oder gestaffelt |
+| shop.ganz-soft.de | All-Inkl | gleicher Server oder separat |
 
 ---
 
@@ -137,19 +129,20 @@ Details: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md)
 | Datei | Zweck |
 |-------|--------|
 | `config/elster.local.php.example` | Worker-URL, Pfade, Hersteller-ID (nicht committen) |
-| `src/Settings/ElsterSettings.php` | Modus `csv` / `eric`, Vorbereitungsfelder |
-| `src/Accounting/ElsterEricClient.php` | Readiness-Check, später ERiC-Aufruf |
-| `bin/elster-readiness.php` | Diagnose auf Server |
+| `src/Settings/ElsterSettings.php` | Modus `csv` / `eric` |
+| `src/Accounting/ElsterEricClient.php` | Readiness / später ERiC |
+| `bin/elster-readiness.php` | Diagnose |
 
-Nach Umzug: `config/elster.local.php` aus Example anlegen, Tab **Einstellungen → ELSTER** ausfüllen.
+Nach Umzug: `config/elster.local.php` anlegen, Tab **Einstellungen → ELSTER** ausfüllen.
 
 ---
 
-## Checkliste „Server bestellt?“
+## Checkliste „Server bestellt / bereit?“
 
-- [ ] Hetzner Robot: SX65-2 (oder vergleichbare Config) bestellt
-- [ ] IPv4 notiert, Firewall (nur 22, 80, 443)
-- [ ] OS: Debian 12 oder Ubuntu 22.04 LTS
-- [ ] SSH-Key, kein Passwort-Login
-- [ ] MariaDB + PHP-FPM + nginx
-- [ ] `docs/ELSTER-ERIC-TODO.md` Phase 1 abarbeiten
+- [x] Hetzner Robot: **GEX45** bestellt (2026-11)
+- [ ] Server von Hetzner freigeschaltet / IPv4 notiert
+- [ ] Firewall (nur 22, 80, 443; SSH-Key)
+- [ ] OS: **Ubuntu 26** installiert · `Europe/Berlin`
+- [ ] User `deploy`, kein Passwort-Login
+- [ ] MariaDB + PHP-FPM + nginx + Let’s Encrypt
+- [ ] Mini-IDs in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten

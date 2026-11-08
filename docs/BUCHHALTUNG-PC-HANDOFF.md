@@ -133,7 +133,7 @@ Nach Deploy: **Shift+Strg+R** im Browser.
 | ERiC live (nach Server-Umzug) | `cursor/server-elster-prep-6a0c`, `docs/ELSTER-ERIC-TODO.md`, `docs/SERVER-MIGRATION.md` |
 | Install-Datenimport | `cursor/install-data-import-6a0c` (separat) |
 
-**Server-Favorit für ERiC:** Hetzner SX65-2 (Ryzen 7, 64 GB RAM) — Details in `docs/SERVER-MIGRATION.md`.
+**Zielserver für ERiC:** Hetzner **GEX45** (bestellt; Ubuntu 26) — Details in `docs/SERVER-MIGRATION.md`.
 
 ---
 

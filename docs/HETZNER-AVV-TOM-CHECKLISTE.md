@@ -82,7 +82,7 @@ Dieses Doc betrifft nur **Hetzner als Unterauftragsverarbeiter / Hosting-AVV** f
 - [x] Hetzner-Kundenkonto vorhanden (Robot / Cloud Console) — ✅ DPA-PDF 07.11.2026
 - [x] AV-Vertrag im Account angenommen / unterzeichnet (Art. 28 DSGVO) — ✅ **07.11.2026**
 - [x] PDF AVV + TOMs lokal/archiviert (nicht ins Git mit Unterschriften/PII) — ✅ Upload 2026-11-08; intern nacharchivieren
-- [ ] Standort der Verarbeitung (EU/EWR) zur Planung passend (z. B. FSN1/HEL1 laut Serverwahl) — bei Serverkauf Phase B festlegen
+- [~] Standort der Verarbeitung (EU/EWR): Ziel **HEL1** (GEX45) — bei Freischaltung in Robot bestätigen (PB1a)
 
 ### B · TOMs inhaltlich (Stichprobe, kein Rechtsgutachten)
 

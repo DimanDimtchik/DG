@@ -133,16 +133,19 @@
 
 ## B · Umzug auf Hetzner (Cutover)
 
-Voraussetzung: A1–A3 weitgehend grün.
+Voraussetzung: A1–A3 weitgehend grün · **AVV ✅**.  
+Tokenarm: [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) · Hardware: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-- [ ] Server **Hetzner SX65-2** (oder gleichwertig) bereit  
-  → [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) Phase 1
-- [ ] OS Debian 12 / Ubuntu 22.04 · `Europe/Berlin` · Firewall · User `deploy`
-- [ ] nginx + PHP 8.2 FPM + MariaDB 10.11 + Let’s Encrypt
-- [ ] CRM deployen · DB-Dump Kasserver → Import · `storage/` migrieren
+- [x] Server **Hetzner GEX45** bestellt (2026-11) — Lieferung **in einigen Wochen**  
+  → früher Favorit SX65-2 verworfen · Specs/OS in [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
+- [ ] Server freigeschaltet / IPv4 · Standort (HEL1) bestätigt — PB1a
+- [ ] OS **Ubuntu 26** · `Europe/Berlin` · Firewall · User `deploy` — PB1b/c
+- [ ] nginx + PHP 8.2+ FPM + MariaDB 10.11+ + Let’s Encrypt — PB2a
+- [ ] CRM probeweise deployen (ohne Produktiv-DNS) — PB2b/c
+- [ ] DB-Dump Kasserver → Import · `storage/` migrieren — PB4a (Freigabe)
 - [ ] Cronjobs (`cron.php`, Mitarbeiter-Purge)
-- [ ] SMTP testen · DNS Cutover · **48 h Monitoring**
-- [ ] Kasserver-Instanzen read-only / abschalten
+- [ ] SMTP testen · DNS Cutover · **48 h Monitoring** — PB4b
+- [ ] Kasserver-Instanzen read-only / abschalten — PB4c
 - [ ] `config/elster.local.php` auf Server (nicht in Git)
 - [ ] Alle Instanzen syncen inkl. **IQ Strom**-Instanz
 

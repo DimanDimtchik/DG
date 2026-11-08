@@ -46,8 +46,8 @@ Ziel: sobald der Server steht (Phase B Hardware), kann Code **probeweise** per r
 
 ### 2.1 Checkliste Prep
 
-- [ ] Hetzner-Server bestellt/erreichbar (Phase B) — **oder** Staging-VPS nur zum Pipeline-Test
-- [ ] OS Debian 12 / Ubuntu 22.04 · `Europe/Berlin` · User `deploy` (SSH-Key, kein Passwort-Login nötig)
+- [x] Hetzner-Server **GEX45** bestellt (2026-11) — erreichbar nach Lieferung (Phase B / [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md))
+- [ ] OS **Ubuntu 26** · `Europe/Berlin` · User `deploy` (SSH-Key, kein Passwort-Login)
 - [ ] Verzeichnis laut Shared-Core-Skizze angelegt, z. B. `/var/www/dg-crm/shared/` ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1)
 - [ ] SSH vom PC **und** Cloud-Agent zum Hetzner-`deploy`-User getestet (`ssh -i … deploy@…`)
 - [ ] Firewall: 22 (Admin-IP), 80/443 vorbereitet — **DNS noch nicht umstellen**
