@@ -52,8 +52,7 @@
   → Hinweis: Berater/Mandant auf Dev war leer — Smoke mit Temp-Nummern, Settings danach wieder leer
 - [x] Zeiterfassung Z2–Z6 Smoke (Stempel, Schichten, Urlaub, Rückstellungen, Lohn-Export) — ✅ PA2g 2026-11-08 Dev  
   → Stempel+Aggregation+Monatsblatt+Korrektur · Schicht-Soll · Urlaub/Krankheit+Attest · Rückstellung Preview/CSV/Buchung · Lohn CSV/DATEV-Block/DATEV/Lex  
-
-  → [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §1–5
+  → [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §0–5
 - [ ] Kichel Smoke
 - [ ] Kommunikation Postfächer Smoke (falls noch nicht)  
   → [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md)
