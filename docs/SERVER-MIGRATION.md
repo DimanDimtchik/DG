@@ -12,7 +12,8 @@
 | **Derzeitiger Server** | Kasserver / All-Inkl Shared Webhosting (`dg.ganz-om.de`) |
 | **Deploy** | `scp`/`ssh`, PHP + MariaDB, **kein Root**, **kein Docker** |
 | **ELSTER-Strategie** | **ERiC direkt** (keine Middleware wie Elmar) — **erst nach Umzug** |
-| **Server-Favorit** | **Hetzner SX65-2** (Dedicated Storage, Auction/Konfiguration der SX65-Linie) |
+| **Server-Favorit (Start)** | **Hetzner GEX45** (GPU + CRM auf einem Host; ~250 GB Start von All-Inkl) — Platten: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) |
+| **Server (Skalierung)** | **SX65** o. ä. erst bei Mandantenwachstum / voller Platte — nicht für ersten Cutover |
 | **Bis Umzug** | CSV-Export + manuelle ELSTER-Eingabe (bereits implementiert) |
 
 ---
