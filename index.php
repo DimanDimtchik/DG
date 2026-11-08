@@ -3158,6 +3158,41 @@ switch ($path) {
             }
         }
 
+        // POST: Maschinenwissen speichern/deaktivieren (E2c) — gleicher Gate wie Work-Center-CRUD
+        if (
+            $page === 'rezeptur-maschine-form'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (isset($_POST['machine_knowledge_save']) || isset($_POST['machine_knowledge_deactivate']))
+            && MenuRegistry::canAccess($user, 'rezeptur-maschine-form')
+        ) {
+            $knowledgeWcId = (int) ($_POST['work_center_id'] ?? $_POST['id'] ?? 0);
+            $knowledgeRedirect = $knowledgeWcId > 0
+                ? '/app?page=rezeptur-maschine-form&action=edit&id=' . $knowledgeWcId . '#dg-machine-knowledge'
+                : '/app?page=rezeptur-maschinen';
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: ' . $knowledgeRedirect, true, 302);
+                exit;
+            }
+            try {
+                if (isset($_POST['machine_knowledge_deactivate'])) {
+                    MachineKnowledgeRepository::deactivate((int) ($_POST['machine_knowledge_id'] ?? 0));
+                    Flash::set('success', 'Wissenseintrag deaktiviert.');
+                } else {
+                    $payload = $_POST;
+                    if ($knowledgeWcId > 0) {
+                        $payload['work_center_id'] = $knowledgeWcId;
+                    }
+                    MachineKnowledgeRepository::save($payload);
+                    Flash::set('success', 'Wissenseintrag gespeichert.');
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+            }
+            header('Location: ' . $knowledgeRedirect, true, 302);
+            exit;
+        }
+
         // POST: Einstellungen Kalender-E-Mail-Vorlagen
         if (
             $page === 'einstellungen'
