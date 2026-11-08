@@ -85,7 +85,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     <div class="dg-flash dg-flash--warning"><?= View::escape($error) ?></div>
   <?php endif; ?>
 
-  <nav class="dg-toolbar" style="margin:1rem 0">
+  <nav class="dg-toolbar dg-mt-4 dg-mb-4">
     <a class="dg-button<?= $tab === 'lsta' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($base) ?>&amp;tab=lsta">LSt-Anmeldung</a>
     <a class="dg-button<?= $tab === 'lstb' ? ' dg-button--primary' : '' ?>" href="<?= View::escape($base) ?>&amp;tab=lstb">Bescheinigung <?= $y ?></a>
   </nav>
@@ -114,7 +114,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
         </tbody>
       </table>
     </div>
-    <div class="dg-toolbar" style="margin:1rem 0;flex-wrap:wrap;gap:.5rem">
+    <div class="dg-toolbar dg-mt-4 dg-mb-4">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base) ?>&amp;tab=lsta&amp;download=csv">Kontroll-CSV</a>
       <?php if ($canTest) : ?>
         <form method="post" action="<?= View::escape($base) ?>&amp;tab=lsta" class="dg-form dg-btn-row">
@@ -150,7 +150,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
       Eligibel: <?= (int) ($lstb['eligible_count'] ?? 0) ?> ·
       Bescheinigungs-Versand folgt nach Live-Anmeldung (aktuell Vorschau + CSV).
     </p>
-    <div class="dg-toolbar" style="margin-bottom:1rem">
+    <div class="dg-toolbar dg-mb-4">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base) ?>&amp;tab=lstb&amp;download=csv">Bescheinigungs-CSV <?= $y ?></a>
     </div>
     <div class="dg-table-wrap">
@@ -174,7 +174,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     </div>
   <?php endif; ?>
 
-  <details class="dg-panel" style="margin:1rem 0">
+  <details class="dg-panel dg-mt-4 dg-mb-4">
     <summary><strong>Betriebsprüfer-Stichprobe</strong></summary>
     <ol>
       <?php foreach ($checklist as $item) : ?>
@@ -183,7 +183,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
     </ol>
   </details>
 
-  <details class="dg-panel" style="margin:1rem 0">
+  <details class="dg-panel dg-mt-4 dg-mb-4">
     <summary><strong>Checkliste vor Live-Anmeldung</strong></summary>
     <p class="dg-field-hint">
       Live-Senden bleibt gesperrt, bis alle Punkte erfüllt sind und die Freigabe
