@@ -91,7 +91,7 @@
   → ✅ KAS-DB + `config/database.local.php` / `app.local.php` (Secrets `IQ_CRM_DB_*`, nicht in Git) · Schema: Migrationen bis `155_*` (CLI `php83`)  
   → **offen:** Installer `/install.php` (Admin/User + Firmendaten = PA4b–e) · Domain/TLS = PA4h  
   → kein Sondercode / kein Tenant-Hardcode
-- [ ] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt, Gewinnermittlung **Bilanz**, SKR wählen
+- [x] Firmendaten GmbH: Steuernummer, USt-IdNr., Finanzamt Bad Kissingen, Gewinnermittlung **Bilanz**, SKR04 — ✅ PA4b 2026-11-08 (Instanz-DB `office.iqstrom.com`; Quelle Impressum + JA2024-Protokoll)
 - [ ] Steuerliche Sonderfälle aktivieren: **Photovoltaik §12 Abs. 3**, **§13b Bauleistung**
 - [ ] ≥ **3 Benutzer** + Rechte (Buchhaltung / Angebote / Admin)
 - [ ] Nummernkreise, Bankverbindung, Briefpapier/Logo
