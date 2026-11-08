@@ -61,7 +61,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [x] PA4a–i ✅ 2026-11-08 | 🔴🟢 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
-| PA6 | Nebenpunkte (A6 Rest) | [~] ERP ✅ | 🔴 |
+| PA6 | Nebenpunkte (A6 Rest) | [~] PA6a/c ✅ · PA6b deferred | 🔴 |
 
 ---
 
