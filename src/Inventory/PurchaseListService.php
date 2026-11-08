@@ -187,6 +187,34 @@ final class PurchaseListService
         return $articleId > 0 ? ArticlePurchaseSourceRepository::preferredOrderUrl($articleId) : '';
     }
 
+    /**
+     * Amazon Business: Status ordered + externe Bestellreferenz (Migration 142).
+     * Liefert die gespeicherte Order-ID bei Erfolg, sonst leer.
+     */
+    public static function markAmazonOrdered(
+        int $id,
+        string $externalOrderId,
+        ?float $orderedQty = null,
+        ?string $payload = null,
+        string $channel = PurchaseListRepository::CHANNEL_AMAZON_BUSINESS
+    ): string {
+        $externalOrderId = trim($externalOrderId);
+        if ($id < 1 || $externalOrderId === '') {
+            return '';
+        }
+        $row = PurchaseListRepository::findById($id);
+        if ($row === null) {
+            return '';
+        }
+        self::markOrdered($id, $orderedQty);
+        if (!PurchaseListRepository::setExternalOrder($id, $externalOrderId, $channel, $payload)) {
+            return '';
+        }
+        $fresh = PurchaseListRepository::findById($id);
+
+        return is_array($fresh) ? (string) ($fresh['external_order_id'] ?? '') : '';
+    }
+
     /** Nachbestellte Menge korrigieren (status=ordered oder open). */
     public static function updateQty(int $id, float $qty): bool
     {

@@ -69,7 +69,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | A1a | Migration `NNN_purchase_list_amazon.sql`: `external_order_id`, `external_order_channel`, optional `external_order_payload` / `external_ordered_at` | 🟢 | [x] 2026-11-08 `142_purchase_list_amazon.sql` |
 | A1b | `PurchaseListRepository`: Felder lesen/schreiben (nur diese Methoden) | 🟡 | [x] 2026-11-08 normalize + setExternalOrder |
-| A1c | `PurchaseListService::markOrdered` erweitern **oder** `markAmazonOrdered(...)` — Order-ID + Channel setzen | 🟡 | [ ] |
+| A1c | `PurchaseListService::markOrdered` erweitern **oder** `markAmazonOrdered(...)` — Order-ID + Channel setzen | 🟡 | [x] 2026-11-08 markAmazonOrdered |
 
 **Prompt A1a:**  
 `Nur Mini-ID A1a laut docs/AMAZON-BUSINESS-REST-PLAN.md. Nur neue Migration unter database/migrations/. Kein PHP. Nummer vorher prüfen.`
@@ -141,7 +141,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Thema | Status |
 |----|--------|--------|
 | A0 | Doc / Inventar | [x] |
-| A1 | Persistenz | [~] A1a+A1b ✅; A1c offen |
+| A1 | Persistenz | [x] |
 | A2 | Order-Service | [ ] |
 | A3 | Einkaufsliste UI | [ ] |
 | A4 | Artikelstamm | [ ] |
