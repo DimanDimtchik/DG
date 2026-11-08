@@ -57,7 +57,7 @@
 
 - [ ] Vorschau Monat
 - [ ] CSV + Protokoll
-- [ ] DATEV (Berater/Mandant)
+- [x] DATEV (Berater/Mandant) — ✅ PA2f 2026-11-08 Dev (FiBu EXTF/Beleg-ZIP; Lohn-Export separat Z6)
 - [ ] Ohne Settings: Blockade
 - [ ] Lexoffice
 - [ ] payroll_slip Upload in Kontaktakte

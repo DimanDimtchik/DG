@@ -57,7 +57,7 @@ Stand: **2026-11-08** · Branch-Empfehlung: `cursor/phase-a-…`
 |----|--------|--------|-------|
 | PA0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PA1 | GoBD / Druck / PV-Automatik (A1 Rest) | [x] PA1a–e ✅ 2026-11-08 | 🟢🟡🔴 |
-| PA2 | Manuelle Testliste (A2) | [~] PA2a–e ✅ | 🔴 |
+| PA2 | Manuelle Testliste (A2) | [~] PA2a–f ✅ | 🔴 |
 | PA3 | Vor-Hetzner Infra (A3) | [x] PA3a–f Doc ✅ · AVV-Signatur Org [~] | 🔴🟢 |
 | PA4 | Instanz-Vorbereitung (A4) | [~] PA4f/g ✅ | 🔴 |
 | PA5 | Kleine FiBu-Fixes (A5 Rest) | [x] PA5a–c ✅ | 🟢🟡 |
@@ -106,7 +106,7 @@ Je Mini-ID = ein Smoke-Block auf Dev/Master; Ergebnis kurz in diesem Plan oder T
 | PA2c | Bank Geisterumsätze erkennen + ausblenden | 🔴 | [x] 2026-11-08 Dev · Duplikat + payment_exists · manuell ignored |
 | PA2d | UStVA: Nullmeldung, Berichtigung, §13b-KZ, ELSTER-CSV | 🔴 | [x] 2026-11-08 Dev · KZ-Cast-Fix `UstvaReportService` · CSV Null + §13b 48/67 |
 | PA2e | Jahresabschluss-Checkliste + Jahr sperren / Saldenvortrag | 🔴 | [x] 2026-11-08 Dev · Checkliste 7 Punkte · close/reopen 2097 · Sperre + Vortrag |
-| PA2f | DATEV EXTF + Beleg-ZIP Stichprobe | 🔴 | [ ] |
+| PA2f | DATEV EXTF + Beleg-ZIP Stichprobe | 🔴 | [x] 2026-11-08 Dev · EXTF 700/21 · Beleg-ZIP · Steuerberater-Paket |
 | PA2g | Zeiterfassung Z2–Z6 Smoke | 🔴 | [ ] |
 | PA2h | Kichel Smoke | 🔴 | [ ] |
 | PA2i | Postfächer Smoke (falls offen) | 🔴 | [ ] |
@@ -187,12 +187,12 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 ## Empfohlene Free-Plan-Reihenfolge
 
-1. Parallel: **PA2f…** Smoke  
+1. Parallel: **PA2g…** Smoke  
 2. Rest **PA4** (a–e, h Mensch) / **PA2**  
 3. Phase B: AVV-Unterschrift laut Checkliste + Hardware (Org)
 
 **Prompt Start (nächster Chat):**  
-`Nur Mini-ID PA2f laut docs/PHASE-A-REST-PLAN.md. DATEV EXTF + Beleg-ZIP Stichprobe. Ergebnis abhaken. Kein Code.`  
+`Nur Mini-ID PA2g laut docs/PHASE-A-REST-PLAN.md. Zeiterfassung Z2–Z6 Smoke. Ergebnis abhaken. Kein Code.`  
 *(Oder PA4a Instanz-Ops.)*
 
 ---

@@ -216,7 +216,7 @@ Frische Installation oder Test-VM (`storage/.installed` entfernen):
 - [ ] CAMT.053 Import (wie bisher)
 - [ ] MT940 Import (`.sta` / `.940`)
 - [ ] Auto-Match: Beleg mit passender IBAN am Kontakt wird zugeordnet
-- [ ] Steuerberater-Export → **Komplett-Paket (ZIP)** enthält EXTF, UStVA, EÜR, SuSa, Beleg-ZIP
+- [x] Steuerberater-Export → **Komplett-Paket (ZIP)** enthält EXTF, UStVA, EÜR, SuSa, Beleg-ZIP — ✅ PA2f 2026-11-08 Dev
 
 ---
 

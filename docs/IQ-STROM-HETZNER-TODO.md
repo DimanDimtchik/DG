@@ -47,7 +47,9 @@
   → Fix: `UstvaReportService` KZ als String (PHP-int-Keys → `strnatcmp`-Crash)
 - [x] Jahresabschluss-Checkliste + Jahr sperren / Saldenvortrag (operativ) — ✅ PA2e 2026-11-08 Dev  
   → Checkliste 7 Punkte (Warnungen blockieren nicht) · n. a. Urlaubsrückstellung · closeYear 2097 + Saldenvortrag 2098 · Jahressperre Manual-Ledger · reopen + Cleanup
-- [ ] DATEV EXTF + Beleg-ZIP Stichprobe (Berater/Mandant)
+- [x] DATEV EXTF + Beleg-ZIP Stichprobe (Berater/Mandant) — ✅ PA2f 2026-11-08 Dev  
+  → EXTF 700/21 Buchungsstapel (63 Zeilen) · Beleg-ZIP (EXTF+Stammdaten+document.xml; keine Attachments auf Dev) · Steuerberater-Paket (EXTF/UStVA/EÜR/SuSa/Beleg-ZIP)  
+  → Hinweis: Berater/Mandant auf Dev war leer — Smoke mit Temp-Nummern, Settings danach wieder leer
 - [ ] Zeiterfassung Z2–Z6 Smoke (Stempel, Schichten, Urlaub, Rückstellungen, Lohn-Export)  
   → [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) §1–5
 - [ ] Kichel Smoke
