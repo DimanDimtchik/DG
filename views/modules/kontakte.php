@@ -181,12 +181,12 @@ $filterUrl = static function (string $role) use ($baseUrl, $search): string {
   <details class="dg-contact-import" open>
     <summary>Kontaktliste (<?= (int) $list['total'] ?>)</summary>
     <div class="dg-contact-import__form">
-      <nav class="dg-btn-row" aria-label="Kontaktliste filtern">
+      <nav class="dg-subtabs" aria-label="Kontaktliste filtern">
         <?php foreach ($filterChips as $chipRole => $chipLabel) : ?>
           <?php $isActive = $roleFilter === $chipRole; ?>
           <a
             href="<?= View::escape($filterUrl($chipRole)) ?>"
-            class="dg-button<?= $isActive ? ' dg-button--primary' : '' ?>"
+            class="dg-subtabs__link<?= $isActive ? ' is-active' : '' ?>"
             <?= $isActive ? 'aria-current="true"' : '' ?>
           ><?= View::escape($chipLabel) ?></a>
         <?php endforeach; ?>

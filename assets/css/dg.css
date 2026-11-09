@@ -2679,11 +2679,27 @@ body.dg-login-page {
   font-weight: 600;
 }
 
+.dg-subtabs__link:hover {
+  border-color: var(--dg-primary);
+  color: var(--dg-primary);
+}
+
 .dg-subtabs__link.is-active {
   border-color: var(--dg-primary);
-  color: var(--dg-heading);
-  background: var(--dg-surface-active);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dg-primary) 28%, transparent);
+  background: var(--dg-primary);
+  color: #fff;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--dg-primary) 28%, transparent);
+}
+
+.dg-subtabs__link.is-active:hover {
+  border-color: var(--dg-primary-hover);
+  background: var(--dg-primary-hover);
+  color: #fff;
+}
+
+.dg-contact-import__form > .dg-subtabs {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .dg-cal-warning {
