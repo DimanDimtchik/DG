@@ -12024,6 +12024,7 @@ switch ($path) {
         }
 
         $contactSearch = $contactSearch ?? '';
+        $contactRoleFilter = $contactRoleFilter ?? '';
         $contactPage = $contactPage ?? 1;
         $contactList = $contactList ?? [
             'items' => [],
@@ -12810,6 +12811,7 @@ switch ($path) {
             'crmUsers',
             'contactList',
             'contactSearch',
+            'contactRoleFilter',
             'contactPage',
             'bookingList',
             'bookingSearch',
