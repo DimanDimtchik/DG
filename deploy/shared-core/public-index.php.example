@@ -1,0 +1,28 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Instanz-Einstieg für Shared Core (nginx root = …/instances/<fqdn>/public/).
+ *
+ * Kopie nach: /var/www/dg-crm/instances/<fqdn>/public/index.php
+ * Spec: docs/SHARED-CORE-REST-PLAN.md (SC2a/SC2b)
+ *
+ * Voraussetzung später: shared/bootstrap.php respektiert DG_INSTANCE_ROOT (SC2a-Vertrag).
+ * Bis dahin Full-Tree auf All-Inkl unverändert nutzen.
+ */
+
+if (!defined('DG_INSTANCE_ROOT')) {
+    define('DG_INSTANCE_ROOT', dirname(__DIR__));
+}
+
+$sharedRoot = getenv('DG_SHARED_ROOT') ?: '/var/www/dg-crm/shared';
+$sharedIndex = rtrim(str_replace('\\', '/', $sharedRoot), '/') . '/index.php';
+
+if (!is_readable($sharedIndex)) {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo "Shared Core nicht gefunden: {$sharedIndex}\n";
+    exit(1);
+}
+
+require $sharedIndex;

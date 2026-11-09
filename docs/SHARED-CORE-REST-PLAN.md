@@ -52,8 +52,8 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | SC0 | Inventar / dieser Plan | [x] 2026-11-09 | 🟢 |
-| SC1 | Ordner + nginx Spec (Docs) | [ ] | 🟢 |
-| SC2 | Bootstrap `DG_INSTANCE_ROOT` (Repo) | [ ] | 🟡 |
+| SC1 | Ordner + nginx Spec (Docs) | [x] SC1a–c ✅ 2026-11-09 | 🟢 |
+| SC2 | Bootstrap `DG_INSTANCE_ROOT` (Repo) | [x] SC2a–c ✅ 2026-11-09 | 🟡 |
 | SC3 | Pilot-Instanz Dev auf GEX45 | [ ] | 🔴🟡 |
 | SC4 | Deploy-Pipeline → nur `shared/` | [ ] | 🟡🔴 |
 | SC5 | Weitere Instanzen umhängen | [ ] | 🔴 |
@@ -74,25 +74,19 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC1a | Zielbaum final in diesem Plan § „Zielbaum“ (shared / instances / storage) | 🟢 | [ ] |
-| SC1b | nginx-Beispiel vHost: `root …/instances/<host>/public` · PHP-FPM · Hinweis kein Shared-vHost | 🟢 | [ ] |
-| SC1c | Exclude-Liste Shared vs Instanz (Locals, storage, logs) — Abgleich Sync-Skript | 🟢 | [ ] |
-
-**Prompt SC1a:**  
-`Nur Mini-ID SC1a laut docs/SHARED-CORE-REST-PLAN.md. Zielbaum-Abschnitt ausfüllen/schärfen. Nur Docs.`
+| SC1a | Zielbaum final in diesem Plan § „Zielbaum“ (shared / instances / storage) | 🟢 | [x] 2026-11-09 |
+| SC1b | nginx-Beispiel vHost: `root …/instances/<host>/public` · PHP-FPM · Hinweis kein Shared-vHost | 🟢 | [x] 2026-11-09 |
+| SC1c | Exclude-Liste Shared vs Instanz (Locals, storage, logs) — Abgleich Sync-Skript | 🟢 | [x] 2026-11-09 |
 
 ### SC2 — Bootstrap (Repo, ohne Live-Umschalten)
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC2a | Spec: `DG_INSTANCE_ROOT` + wie `DG_ROOT` = Shared; Locals/Storage nur über Instanz | 🟢 | [ ] |
-| SC2b | `public/index.php`-Stub (Instanz) → `require shared/bootstrap.php` — Beispiel im Repo (`docs/` oder `deploy/shared-core/`) | 🟡 | [ ] |
-| SC2c | Selftest oder kurzer Guard: Shared ohne `*.local.php`; Instanz-Pfad lesbar | 🟡 | [ ] |
+| SC2a | Spec: `DG_INSTANCE_ROOT` + wie `DG_ROOT` = Shared; Locals/Storage nur über Instanz | 🟢 | [x] 2026-11-09 |
+| SC2b | `public/index.php`-Stub (Instanz) → `require shared/bootstrap.php` — Beispiel im Repo (`docs/` oder `deploy/shared-core/`) | 🟡 | [x] 2026-11-09 `deploy/shared-core/public-index.php.example` |
+| SC2c | Selftest oder kurzer Guard: Shared ohne `*.local.php`; Instanz-Pfad lesbar | 🟡 | [x] 2026-11-09 `bin/shared-core-layout-selftest.php` |
 
-**Prompt SC2a:**  
-`Nur Mini-ID SC2a laut docs/SHARED-CORE-REST-PLAN.md. Nur Spec-Abschnitt Bootstrap. Kein Live-Server.`
-
-**Gate:** SC2 Live-Nutzung erst mit SC3 auf GEX45.
+**Gate:** SC2 Live-Nutzung erst mit SC3 auf GEX45 (nach PB2).
 
 ### SC3 — Pilot Dev (nach PB2)
 
@@ -143,42 +137,247 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 ---
 
-## Zielbaum (Kurz — Detail in SC1a)
+## Zielbaum (SC1a — verbindlich)
+
+Platten: **NVMe A** = Code + Instanz-Hüllen · **NVMe B** = `crm-storage` ([`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md)).  
+Ordnername Instanz = **FQDN** (wie Storage-Ordner), z. B. `ganz-om.de` — nicht verkürzen.
 
 ```text
+# NVMe A
 /var/www/dg-crm/
-  shared/                          # Deploy-Ziel (eine Version)
-    index.php  bootstrap.php
-    src/  views/  assets/  bin/  database/  vendor/
-    config/version.php             # kein *.local.php
-  instances/
-    <host>/
-      public/index.php             # Stub → shared
-      config/*.local.php
-      logs/
-      storage → /mnt/data/crm-storage/<host>
+  shared/                              # genau eine Version — Deploy-Ziel
+    bootstrap.php
+    index.php                          # nur falls CLI/Cron Shared braucht; nginx root = Instanz-public
+    .htaccess                          # Referenz; Live-Regeln primär nginx (SC1b)
+    composer.json  composer.lock
+    vendor/
+    src/  views/  assets/  bin/  database/
+    downloads/                         # statische Kern-Downloads (falls vorhanden)
+    config/
+      version.php                      # erlaubt
+      # verboten: *.local.php, users.php, license.php, Secrets
+    # verboten: storage/  logs/  tmp-upload/  .git/
 
-/mnt/data/crm-storage/<host>/      # Belege, Uploads
+  instances/
+    ganz-om.de/                        # Dev — Pilot SC3
+      public/
+        index.php                      # Stub: DG_INSTANCE_ROOT setzen → shared/bootstrap.php (SC2)
+        # optional: robots.txt, favicon — keine PHP-App-Kopie
+      config/
+        database.local.php
+        app.local.php
+        # weitere *.local.php nach Bedarf
+      logs/                            # Instanz-Logs (nicht Shared)
+      storage -> /mnt/data/crm-storage/ganz-om.de
+    dg.ganz-om.de/
+      public/  config/  logs/
+      storage -> /mnt/data/crm-storage/dg.ganz-om.de
+    ganz-soft.de/
+      public/  config/  logs/
+      storage -> /mnt/data/crm-storage/ganz-soft.de
+    kontur-cosmetics.de/
+      public/  config/  logs/
+      storage -> /mnt/data/crm-storage/kontur-cosmetics.de
+    office.iqstrom.com/                # gleiches Layout; physisch ggf. anderer Mount — Muster gleich
+      public/  config/  logs/
+      storage -> /mnt/data/crm-storage/office.iqstrom.com
+
+# NVMe B
+/mnt/data/crm-storage/
+  ganz-om.de/                          # Belege, Uploads, Mail-Anhänge, Akademie-Medien …
+  dg.ganz-om.de/
+  ganz-soft.de/
+  kontur-cosmetics.de/
+  office.iqstrom.com/
+  …
 ```
 
-| Schicht | Ja | Nein |
-|---------|----|------|
-| **shared** | PHP-Code, Assets, Migrationen-Dateien | Secrets, Uploads, Firmendaten |
-| **instance** | Locals, logs, storage-Link, nginx public | Fork von `src/` |
-| **DB** | eine MariaDB-DB / Instanz | eine DB für alle Mandanten |
+### Schichten
+
+| Schicht | Pfad | Ja | Nein |
+|---------|------|----|------|
+| **shared** | `/var/www/dg-crm/shared` | `src/`, `views/`, `assets/`, `bin/`, `database/migrations/`, `vendor/`, `config/version.php` | `*.local.php`, Uploads, Firmendaten, Tenant-Ordner (`klarwin/` …) |
+| **instance** | `/var/www/dg-crm/instances/<fqdn>` | `public/` (nginx root), `config/*.local.php`, `logs/`, Symlink `storage` | Fork von `src/`/`views/`, zweite `vendor/`-Kopie |
+| **storage** | `/mnt/data/crm-storage/<fqdn>` | Belege, Medien, Instanz-Dateien | PHP-Code |
+| **DB** | MariaDB | **eine** DB (+ User) **pro** Instanz | eine DB für alle Mandanten |
+
+### Regeln (kurz)
+
+1. **nginx `root`** = `…/instances/<fqdn>/public` — **nie** `…/shared` (SC1b).  
+2. **`DG_ROOT`** (später SC2) = Shared-Pfad; **`DG_INSTANCE_ROOT`** = Instanz-Ordner (Locals + Storage).  
+3. Owner typisch `deploy:www-data` · Shared lesbar für FPM · Instanz-`config/` eng (keine Welt-lesbar).  
+4. Nutzerinhalt am Domain-Root (z. B. `klarwin/`) nur unter **Instanz** oder Storage — nicht in Shared.  
+5. All-Inkl bleibt Full-Tree; dieser Baum gilt **nur GEX45**.
+
+### nginx (SC1b — Beispiel, nicht live einspielen)
+
+**Verboten:** `server` mit `root /var/www/dg-crm/shared` (kein öffentlicher Shared-vHost, kein `kern.*`).
+
+**Pflicht:** ein vHost **pro Instanz-FQDN**; `root` = Instanz-`public/`. Assets unter Shared werden vom PHP-Code bzw. Alias bedient (siehe unten).
+
+Datei z. B. `/etc/nginx/sites-available/ganz-om.de` (Let’s Encrypt später per certbot):
+
+```nginx
+# Beispiel Dev — GEX45 Shared Core (SC1b)
+# PHP-FPM-Sock anpassen (php8.2-fpm / php8.3-fpm).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ganz-om.de www.ganz-om.de;
+
+    root /var/www/dg-crm/instances/ganz-om.de/public;
+    index index.php;
+
+    # Belege/Uploads nicht per URL freigeben (nur App)
+    location ^~ /storage/ {
+        deny all;
+        return 404;
+    }
+
+    # Statische Kern-Assets aus Shared (eine Kopie für alle Instanzen)
+    location ^~ /assets/ {
+        alias /var/www/dg-crm/shared/assets/;
+        access_log off;
+        expires 7d;
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        # Instanz-Wurzel für Bootstrap (SC2) — FPM pool darf das auch per env setzen
+        fastcgi_param DG_INSTANCE_ROOT /var/www/dg-crm/instances/ganz-om.de;
+        include fastcgi_params;
+    }
+
+    location ~* \.(?:bak|local\.php)$ {
+        deny all;
+    }
+}
+```
+
+| Punkt | Regel |
+|-------|--------|
+| Weitere Domains | gleiche Vorlage, `server_name` + `root` + `DG_INSTANCE_ROOT` tauschen |
+| TLS | certbot `--nginx` nach DNS; HTTP→HTTPS Redirect OK |
+| Shared | **kein** `server_name` auf `/var/www/dg-crm/shared` |
+| CLI/Cron | `cd …/shared && DG_INSTANCE_ROOT=…/instances/<fqdn> php bin/cron.php` (Detail SC2) |
+| Live-Anlegen | erst **SC3c** / PB2 — dieses Beispiel ist Spec |
+
+### Abgrenzung zu älteren Skizzen
+
+| Quelle | Abweichung → SC1a |
+|--------|-------------------|
+| VOR-HETZNER §1.1 `ganz-om/` | → FQDN `ganz-om.de/` |
+| VOR-HETZNER `public -> ../../shared` | → **eigene** `public/index.php`-Stub, nicht DocumentRoot=Shared |
+| GEX45 früher `/var/www/instances/…` | → **`/var/www/dg-crm/instances/…`** |
+
+### Exclude-Liste Shared vs Instanz (SC1c)
+
+Abgleich mit `bin/sync-crm-from-master.sh` (All-Inkl Full-Tree). Unter Shared Core **wandern** dieselben Instanzdaten **nicht mehr per Sync**, sondern liegen nur unter `instances/<fqdn>/` bzw. NVMe B.
+
+| Pfad / Muster | Heute Sync-Exclude | Shared Core | Bemerkung |
+|---------------|--------------------|-------------|-----------|
+| `config/*.local.php` | ja | **nur Instanz** `instances/<fqdn>/config/` | inkl. `database`, `app`, `mail`, `kas`, `cron`, `company`, … |
+| `config/users.php` | ja | **nur Instanz** | Secrets |
+| `config/license.php` | ja | **nur Instanz** | |
+| `config/version.php` | nein (wird kopiert) | **Shared** | erlaubt im Kern |
+| `storage/` | ja | **Symlink** → `/mnt/data/crm-storage/<fqdn>/` | nie im Shared-Baum |
+| `logs/` | ja | **nur Instanz** | |
+| `tmp-upload/` | ja | **nur Instanz** (oder unter storage) | |
+| `cursor-transfer/` | ja | nicht deployen | Ops-Müll, nicht Produkt |
+| `.git/` | ja | nicht in `shared/` auf Server | Deploy ohne `.git` |
+| `probe*.txt` / `*.bak` | ja | nicht deployen | |
+| `www/` | ja | All-Inkl-Artefakt | auf GEX45 irrelevant |
+| `wp-backup-archive/` | ja | entsorgt / nicht anlegen | |
+| `klarwin/` | ja | **nur Instanz** oder Storage | Nutzerinhalt, kein Kern |
+| `apps/` | ja | getrennt (Flutter o. ä.) | nicht in Shared-CRM-Deploy mischen |
+| `license-server/` | ja | eigener Dienst | nicht Shared-CRM |
+| `shop/` | (IQ-Sync) | getrennt | Shop bleibt eigenes Projekt |
+| `vendor/` | nein (mitkopiert) | **Shared** einmal | kein N× pro Instanz |
+| `src/` `views/` `assets/` `bin/` `database/` | nein | **Shared** | |
+| `public/` (Instanz-Stub) | n/a | **nur Instanz** | SC2b |
+
+**Deploy nach `shared/` (SC4):** nur Kern-Dateien; Excludes mindestens: `config/*.local.php`, `storage/`, `logs/`, `tmp-upload/`, `.git/`, `instances/`, Nutzerordner.
+
+**Neue Instanz (SC5a):** anlegen = `public/` + `config/*.local.php` + `logs/` + Storage-Symlink + DB — **kein** Code-Sync.
+
+**All-Inkl:** `sync-crm-from-master.sh` Excludes bleiben gültig, bis GEX45 Shared Core alle Instanzen trägt (SC7).
+
+### Bootstrap-Konstanten (SC2a — Spec, noch kein Code)
+
+Heute: `bootstrap.php` setzt `DG_ROOT = __DIR__` (voller Instanzbaum). Locals und `storage/` hängen überall an `DG_ROOT` (`Database`, `BackupService`, Media, …).
+
+**Zielvertrag Shared Core:**
+
+| Konstante | Wert | Bedeutung |
+|-----------|------|-----------|
+| `DG_ROOT` | `/var/www/dg-crm/shared` | Code, `vendor/`, `views/`, `assets/`, `bin/`, `database/migrations/`, `config/app.php`, `config/database.php` (Defaults), `config/version.php` |
+| `DG_INSTANCE_ROOT` | `/var/www/dg-crm/instances/<fqdn>` | Instanz-Hülle: `config/*.local.php`, `logs/`, Symlink `storage` |
+
+**Setzen von `DG_INSTANCE_ROOT` (Reihenfolge):**
+
+1. schon definiert (CLI: `DG_INSTANCE_ROOT=… php …`) → belassen  
+2. sonst FastCGI/nginx `DG_INSTANCE_ROOT` (SC1b)  
+3. sonst Umgebungsvariable `DG_INSTANCE_ROOT`  
+4. **fehlt** → Fail-fast mit klarer Meldung (kein stilles Zurückfallen auf Shared als Instanz)
+
+**All-Inkl / Full-Tree-Kompatibilität (Übergang):** Wenn `DG_INSTANCE_ROOT` **nicht** gesetzt und Layout = klassisch (Locals liegen unter `DG_ROOT/config/`), dann `DG_INSTANCE_ROOT := DG_ROOT`. So bleibt Kasserver lauffähig, bis SC7.
+
+**Pfad-Hilfen (Soll, Umsetzung SC2b+ / spätere Code-IDs):**
+
+| Hilfsfunktion (Name frei) | Liefert |
+|---------------------------|---------|
+| `dg_shared_path($rel)` | `DG_ROOT . '/' . $rel` — Code/Assets |
+| `dg_instance_path($rel)` | `DG_INSTANCE_ROOT . '/' . $rel` — Locals, logs |
+| `dg_storage_path($rel)` | `DG_INSTANCE_ROOT . '/storage/' . $rel` — Belege (Symlink → NVMe B) |
+
+**Muss über Instanz laufen (nicht Shared):**
+
+- alle `config/*.local.php`, `users.php`, `license.php`
+- `storage/**` (Media, Belege, Logs unter storage, State-JSON, …)
+- Instanz-`logs/` falls getrennt von storage
+
+**Darf/Shared bleiben:**
+
+- `config/app.php`, `config/database.php` (ohne Secrets), `config/version.php`
+- `src/`, `views/`, `assets/`, `bin/`, `vendor/`, Migrations-**Dateien**
+
+**Boot-Ablauf (Soll):**
+
+```text
+instances/<fqdn>/public/index.php     ← Vorlage: deploy/shared-core/public-index.php.example (SC2b)
+  → define DG_INSTANCE_ROOT = dirname(__DIR__)
+  → require /var/www/dg-crm/shared/index.php
+       → bootstrap.php: DG_ROOT = shared · DG_INSTANCE_ROOT auflösen (SC2a)
+       → vendor + src/autoload + App::boot() + Routing in shared/index.php
+```
+
+**CLI/Cron:**  
+`DG_INSTANCE_ROOT=/var/www/dg-crm/instances/<fqdn> php /var/www/dg-crm/shared/bin/cron.php`  
+(Arbeitsverzeichnis egal, solange Konstanten stimmen.)
+
+**Nicht in SC2a:** PHP-Produktion ändern, Live-Server (→ SC3).  
+**SC2b erledigt:** Stub-Vorlage `deploy/shared-core/public-index.php.example` (+ README).
 
 ---
 
 ## Empfohlene Reihenfolge
 
-1. **Jetzt (ohne Server):** SC0 ✅ → **SC1a–c** → **SC2a–c** (Repo-ready)  
-2. **Nach PB2 (Stack):** SC3 Pilot Dev  
+1. **Jetzt (ohne Server):** SC0–SC2 ✅ (Spec, Stub, Guard)  
+2. **Nach PB2 (Stack):** **SC3** Pilot Dev  
 3. **SC4** Deploy-Pipeline Shared  
 4. Cutover weiterer Domains: **SC5** (einzeln) · parallel **SC6** Backup-Docs  
 5. **SC7** Alt-Sync / Aufräumen  
 
-**Nächster Chat:**  
-`Nur Mini-ID SC1a laut docs/SHARED-CORE-REST-PLAN.md. Zielbaum schärfen. Nur Docs. Kein Cutover.`
+**Nächster Chat (nach PB2 / Server da):**  
+`Nur Mini-ID SC3a laut docs/SHARED-CORE-REST-PLAN.md. Nur Ordner anlegen. Kein DNS-Cutover.`
 
 ---
 
@@ -191,3 +390,5 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server-Lieferung / Cutover |
 | [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | heutiges Deploy (Full-Tree) |
 | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) | Roadmap A→C |
+| [`deploy/shared-core/`](../deploy/shared-core/) | Stub `public-index.php.example` (SC2b) |
+| [`bin/shared-core-layout-selftest.php`](../bin/shared-core-layout-selftest.php) | Guard Vorlagen + optional Live-Pfade (SC2c) |
