@@ -11494,6 +11494,10 @@ switch ($path) {
             $bookingId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $bookingSearch = trim((string) ($_GET['s'] ?? ''));
             $bookingPage = max(1, (int) ($_GET['paged'] ?? 1));
+            $bookingPeriodFilter = strtolower(trim((string) ($_GET['period'] ?? '')));
+            if (!in_array($bookingPeriodFilter, BookingRepository::PERIOD_FILTERS, true)) {
+                $bookingPeriodFilter = '';
+            }
 
             if ($action === 'new') {
                 if (!$canEdit) {
@@ -11534,7 +11538,7 @@ switch ($path) {
                 $title = $booking->customerName;
                 $currentPage = 'terminkalender';
             } else {
-                $bookingList = BookingRepository::paginate($bookingSearch, $bookingPage);
+                $bookingList = BookingRepository::paginate($bookingSearch, $bookingPage, $bookingPeriodFilter);
                 $contentTemplate = 'modules/terminkalender';
                 $title = 'Terminkalender';
                 $currentPage = 'terminkalender';
@@ -12034,6 +12038,7 @@ switch ($path) {
             'total_pages' => 1,
         ];
         $bookingSearch = $bookingSearch ?? '';
+        $bookingPeriodFilter = $bookingPeriodFilter ?? '';
         $bookingPage = $bookingPage ?? 1;
         $bookingList = $bookingList ?? [
             'items' => [],
@@ -12815,6 +12820,7 @@ switch ($path) {
             'contactPage',
             'bookingList',
             'bookingSearch',
+            'bookingPeriodFilter',
             'bookingPage',
             'contactId',
             'contact',

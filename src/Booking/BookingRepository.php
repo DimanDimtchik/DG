@@ -8,30 +8,31 @@ final class BookingRepository
 {
     private const PER_PAGE = 20;
 
+    /** Erlaubte Listen-Perioden (GET period=…). */
+    public const PERIOD_FILTERS = ['heute', 'woche', 'monat', 'zukunft', 'vergangen'];
+
     /**
      * Methode paginate.
      * @param string $search
      * @param int $page
+     * @param string $periodFilter heute|woche|monat|zukunft|vergangen|''
      * @return array<string, mixed>
      */
-    public static function paginate(string $search = '', int $page = 1): array
+    public static function paginate(string $search = '', int $page = 1, string $periodFilter = ''): array
     {
         $page = max(1, $page);
         $pdo = Database::pdo();
-        $where = '';
-        $params = [];
-
-        if ($search !== '') {
-            $like = '%' . $search . '%';
-            $where = 'WHERE customer_name LIKE :q0 OR customer_email LIKE :q1 OR customer_phone LIKE :q2 OR status LIKE :q3';
-            $params = ['q0' => $like, 'q1' => $like, 'q2' => $like, 'q3' => $like];
-        }
+        [$where, $params] = self::buildListWhere($search, $periodFilter);
 
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM dg_bookings ' . $where);
         $stmt->execute($params);
         $total = (int) $stmt->fetchColumn();
 
-        $sql = 'SELECT * FROM dg_bookings ' . $where . ' ORDER BY slot_datetime DESC LIMIT :limit OFFSET :offset';
+        $order = $periodFilter === 'zukunft' || $periodFilter === 'heute'
+            ? 'ORDER BY slot_datetime ASC'
+            : 'ORDER BY slot_datetime DESC';
+
+        $sql = 'SELECT * FROM dg_bookings ' . $where . ' ' . $order . ' LIMIT :limit OFFSET :offset';
         $stmt = $pdo->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue(':' . $k, $v);
@@ -52,6 +53,59 @@ final class BookingRepository
             'per_page' => self::PER_PAGE,
             'total_pages' => max(1, (int) ceil($total / self::PER_PAGE)),
         ];
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, string>}
+     */
+    private static function buildListWhere(string $search, string $periodFilter): array
+    {
+        $parts = [];
+        $params = [];
+
+        if ($search !== '') {
+            $like = '%' . $search . '%';
+            $parts[] = '(customer_name LIKE :q0 OR customer_email LIKE :q1 OR customer_phone LIKE :q2 OR status LIKE :q3)';
+            $params['q0'] = $like;
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+            $params['q3'] = $like;
+        }
+
+        $periodFilter = strtolower(trim($periodFilter));
+        if (in_array($periodFilter, self::PERIOD_FILTERS, true)) {
+            $tz = new DateTimeZone((string) App::config('timezone', 'Europe/Berlin'));
+            $now = new DateTimeImmutable('now', $tz);
+            $todayStart = $now->setTime(0, 0, 0);
+
+            if ($periodFilter === 'heute') {
+                $parts[] = 'slot_datetime >= :p_from AND slot_datetime < :p_to';
+                $params['p_from'] = $todayStart->format('Y-m-d H:i:s');
+                $params['p_to'] = $todayStart->modify('+1 day')->format('Y-m-d H:i:s');
+            } elseif ($periodFilter === 'woche') {
+                // ISO-Woche Mo–So (format N: 1=Mo … 7=So)
+                $dow = (int) $todayStart->format('N');
+                $weekStart = $todayStart->modify('-' . ($dow - 1) . ' days');
+                $parts[] = 'slot_datetime >= :p_from AND slot_datetime < :p_to';
+                $params['p_from'] = $weekStart->format('Y-m-d H:i:s');
+                $params['p_to'] = $weekStart->modify('+7 days')->format('Y-m-d H:i:s');
+            } elseif ($periodFilter === 'monat') {
+                $monthStart = $todayStart->modify('first day of this month');
+                $parts[] = 'slot_datetime >= :p_from AND slot_datetime < :p_to';
+                $params['p_from'] = $monthStart->format('Y-m-d H:i:s');
+                $params['p_to'] = $monthStart->modify('first day of next month')->format('Y-m-d H:i:s');
+            } elseif ($periodFilter === 'zukunft') {
+                $parts[] = 'slot_datetime >= :p_from';
+                $params['p_from'] = $now->format('Y-m-d H:i:s');
+            } elseif ($periodFilter === 'vergangen') {
+                $parts[] = 'slot_datetime < :p_to';
+                $params['p_to'] = $now->format('Y-m-d H:i:s');
+            }
+        }
+
+        $where = $parts === [] ? '' : 'WHERE ' . implode(' AND ', $parts);
+
+        return [$where, $params];
     }
 
     /**

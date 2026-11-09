@@ -1,10 +1,37 @@
 <?php
 /** @var array{items: list<Booking>, total: int, page: int, per_page: int, total_pages: int} $bookingList */
 /** @var string $bookingSearch */
+/** @var string $bookingPeriodFilter */
 /** @var array{type: string, message: string}|null $flash */
 $list = $bookingList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'total_pages' => 1];
 $search = $bookingSearch ?? '';
+$periodFilter = $bookingPeriodFilter ?? '';
 $baseUrl = '/app?page=terminkalender';
+$filterChips = [
+    '' => 'Alle',
+    'heute' => 'Heute',
+    'woche' => 'Diese Woche',
+    'monat' => 'Diesen Monat',
+    'zukunft' => 'Zukünftige',
+    'vergangen' => 'Vergangene',
+];
+$filterUrl = static function (string $period) use ($baseUrl, $search): string {
+    $url = $baseUrl;
+    if ($period !== '') {
+        $url .= '&period=' . rawurlencode($period);
+    }
+    if ($search !== '') {
+        $url .= '&s=' . rawurlencode($search);
+    }
+    return $url;
+};
+$pageQuery = $baseUrl;
+if ($periodFilter !== '') {
+    $pageQuery .= '&period=' . rawurlencode($periodFilter);
+}
+if ($search !== '') {
+    $pageQuery .= '&s=' . rawurlencode($search);
+}
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -23,11 +50,27 @@ $baseUrl = '/app?page=terminkalender';
 
   <form class="dg-search" method="get" action="/app">
     <input type="hidden" name="page" value="terminkalender">
+    <?php if ($periodFilter !== '') : ?>
+      <input type="hidden" name="period" value="<?= View::escape($periodFilter) ?>">
+    <?php endif; ?>
     <label class="dg-search__label" for="tk-search">Suchen</label>
     <input class="dg-search__input" type="search" id="tk-search" name="s" value="<?= View::escape($search) ?>" placeholder="Kunde, E-Mail, Status …">
     <button class="dg-button dg-button--primary" type="submit">Suchen</button>
-    <?php if ($search !== '') : ?><a class="dg-button" href="<?= View::escape($baseUrl) ?>">Zurücksetzen</a><?php endif; ?>
+    <?php if ($search !== '' || $periodFilter !== '') : ?>
+      <a class="dg-button" href="<?= View::escape($baseUrl) ?>">Zurücksetzen</a>
+    <?php endif; ?>
   </form>
+
+  <nav class="dg-subtabs" aria-label="Termine filtern">
+    <?php foreach ($filterChips as $chipPeriod => $chipLabel) : ?>
+      <?php $isActive = $periodFilter === $chipPeriod; ?>
+      <a
+        href="<?= View::escape($filterUrl($chipPeriod)) ?>"
+        class="dg-subtabs__link<?= $isActive ? ' is-active' : '' ?>"
+        <?= $isActive ? 'aria-current="true"' : '' ?>
+      ><?= View::escape($chipLabel) ?></a>
+    <?php endforeach; ?>
+  </nav>
 
   <div class="dg-table-wrap">
     <table class="dg-table">
@@ -73,11 +116,11 @@ $baseUrl = '/app?page=terminkalender';
   <?php if ($list['total_pages'] > 1) : ?>
     <nav class="dg-pagination" aria-label="Seiten">
       <?php if ($list['page'] > 1) : ?>
-        <a href="<?= View::escape($baseUrl . ($search !== '' ? '&s=' . rawurlencode($search) : '') . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
+        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
       <?php endif; ?>
       <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
       <?php if ($list['page'] < $list['total_pages']) : ?>
-        <a href="<?= View::escape($baseUrl . ($search !== '' ? '&s=' . rawurlencode($search) : '') . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
+        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
       <?php endif; ?>
     </nav>
   <?php endif; ?>
