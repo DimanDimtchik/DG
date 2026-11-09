@@ -7,6 +7,7 @@
 /** @var list<array{slug: string, label: string, icon: string, href: string}> $sidebarItems */
 /** @var array{slug: string, label: string, icon: string}|null $settingsItem */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $buchhaltungSection */
+/** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $registerkasseSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $dienstleistungenSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $hrSection */
 /** @var array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null $lohnSection */
@@ -276,6 +277,22 @@ $belegeFocus = (string) ($belegeFocus ?? '');
                 'sectionItems' => $buhaItems,
                 'sectionOpen' => $sectionHasActive($buhaItems),
                 'sectionModifier' => 'buchhaltung',
+            ]);
+        }
+
+        if (!empty($registerkasseSection)) {
+            $rkItems = $markActive(
+                $registerkasseSection['items'],
+                static function (array $item, string $page): bool {
+                    return $page === $item['slug']
+                        || str_starts_with($page, 'registerkasse-');
+                }
+            );
+            View::render('partials/sidebar-section', [
+                'sectionId' => 'registerkasse',
+                'sectionLabel' => (string) $registerkasseSection['label'],
+                'sectionItems' => $rkItems,
+                'sectionOpen' => $sectionHasActive($rkItems),
             ]);
         }
 

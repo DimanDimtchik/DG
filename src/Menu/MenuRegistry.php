@@ -606,6 +606,66 @@ final class MenuRegistry
     }
 
     /**
+     * Registerkasse (Filialen, später Kassen/TSE) — gleiche Rechte wie Buchhaltung.
+     *
+     * @return array{label: string, items: list<array{slug: string, label: string, icon: string, href: string}>}|null
+     */
+    public static function registerkasseSection(User $user): ?array
+    {
+        if (!self::canAccessBuchhaltung($user)) {
+            return null;
+        }
+
+        return [
+            'label' => 'Registerkasse',
+            'items' => [
+                [
+                    'slug' => 'registerkasse-bons',
+                    'label' => 'Bons',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-bons',
+                ],
+                [
+                    'slug' => 'registerkasse-journal',
+                    'label' => 'Bon-Journal',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-journal',
+                ],
+                [
+                    'slug' => 'registerkasse-filialen',
+                    'label' => 'Filialen',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-filialen',
+                ],
+                [
+                    'slug' => 'registerkasse-kassen',
+                    'label' => 'Kassen',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-kassen',
+                ],
+                [
+                    'slug' => 'registerkasse-tagesabschluss',
+                    'label' => 'Tagesabschluss',
+                    'icon' => 'receipt',
+                    'href' => '/app?page=registerkasse-tagesabschluss',
+                ],
+                [
+                    'slug' => 'registerkasse-tse',
+                    'label' => 'TSE-Zuordnung',
+                    'icon' => 'settings',
+                    'href' => '/app?page=registerkasse-tse',
+                ],
+                [
+                    'slug' => 'registerkasse-meldung',
+                    'label' => 'Kassenmeldung',
+                    'icon' => 'settings',
+                    'href' => '/app?page=registerkasse-meldung',
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Kurztexte für Dashboard-Kacheln (Icon + Titel + Beschreibung).
      * Ziel: 2–3 Zeilen, sachlich, überall vorhanden.
      *
@@ -654,6 +714,16 @@ final class MenuRegistry
             'buchhaltung-kontenuebersicht' => 'Kontensalden und Auszüge je Geschäftsjahr auf einen Blick.',
             'buchhaltung-opos' => 'Offene Forderungen und Verbindlichkeiten mit Personenkonten.',
             'buchhaltung-kassenbuch' => 'Bar-Ein- und Ausgänge aus Kassenbelegen dokumentieren.',
+            'registerkasse-bons' => 'Verkaufsbons starten und Entwürfe je Kasse verfolgen.',
+            'registerkasse-journal' => 'Festgeschriebene Bons unveränderbar nach Kasse und Tag einsehen.',
+            'registerkasse-filialen' => 'Betriebsstätten und Filialen für die Registerkasse verwalten.',
+            'registerkasse-kassen' => 'Kassen je Filiale mit eigener ID und Bon-Nummernkreis.',
+            'registerkasse-sitzung-oeffnen' => 'Kassensitzung öffnen — Bediener und Anfangsbestand erfassen.',
+            'registerkasse-sitzung-schliessen' => 'Kassensitzung schließen — Zählung folgt beim Tagesabschluss.',
+            'registerkasse-tagesabschluss' => 'Tagesabschluss je Kasse und Filialsumme der Kassen.',
+            'registerkasse-tse' => 'TSE-Provider, TSE-ID und Client je Kasse zuordnen.',
+            'registerkasse-meldung' => 'Meldefelder für die Kassenmitteilung speichern — noch ohne Versand.',
+            'registerkasse-meldung-form' => 'Meldefelder einer einzelnen Kasse bearbeiten.',
             'buchhaltung-manuelle-buchung' => 'Freie Journalbuchungen ohne Beleg — Soll gleich Haben.',
             'buchhaltung-auswertungen' => 'Bilanz und GuV je Geschäftsjahr für Überblick und Prüfung.',
             'buchhaltung-bankabgleich' => 'CAMT.053 importieren und Umsätze Belegen zuordnen.',
@@ -854,6 +924,19 @@ final class MenuRegistry
             }
         }
 
+        $registerkasse = self::registerkasseSection($user);
+        if ($registerkasse !== null) {
+            foreach ($registerkasse['items'] as $item) {
+                $tiles[] = [
+                    'slug' => $item['slug'],
+                    'label' => $item['label'],
+                    'icon' => $item['icon'],
+                    'href' => $item['href'],
+                    'description' => self::tileDescription($item['slug'], $descriptions),
+                ];
+            }
+        }
+
         $website = self::websiteSection($user);
         if ($website !== null) {
             foreach ($website['items'] as $item) {
@@ -930,6 +1013,20 @@ final class MenuRegistry
             || $slug === 'buchhaltung-kontenuebersicht'
             || $slug === 'buchhaltung-opos'
             || $slug === 'buchhaltung-kassenbuch'
+            || $slug === 'registerkasse-bons'
+            || $slug === 'registerkasse-bon'
+            || $slug === 'registerkasse-journal'
+            || $slug === 'registerkasse-filialen'
+            || $slug === 'registerkasse-filiale-form'
+            || $slug === 'registerkasse-kassen'
+            || $slug === 'registerkasse-kasse-form'
+            || $slug === 'registerkasse-sitzung-oeffnen'
+            || $slug === 'registerkasse-sitzung-schliessen'
+            || $slug === 'registerkasse-tagesabschluss'
+            || $slug === 'registerkasse-tse'
+            || $slug === 'registerkasse-tse-form'
+            || $slug === 'registerkasse-meldung'
+            || $slug === 'registerkasse-meldung-form'
             || $slug === 'buchhaltung-manuelle-buchung'
             || $slug === 'buchhaltung-auswertungen'
             || $slug === 'buchhaltung-bwa'

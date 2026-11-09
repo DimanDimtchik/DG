@@ -55,11 +55,23 @@ final class VoucherPaymentRepository
         $stmt->execute(['id' => $voucherId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $out = [];
+        $ids = [];
         foreach ($rows as $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $out[] = self::mapRow($row);
+            $mapped = self::mapRow($row);
+            $out[] = $mapped;
+            $ids[] = (int) $mapped['id'];
+        }
+        if ($ids !== [] && class_exists('TseTransactionRepository')) {
+            $tseMap = TseTransactionRepository::mapByPaymentIds($ids);
+            foreach ($out as $i => $mapped) {
+                $tse = $tseMap[(int) $mapped['id']] ?? null;
+                $out[$i]['tse'] = is_array($tse) ? $tse : null;
+                $out[$i]['tse_signed'] = is_array($tse)
+                    && (string) ($tse['state'] ?? '') === TseTransactionRepository::STATE_FINISHED;
+            }
         }
 
         return $out;
@@ -156,6 +168,7 @@ final class VoucherPaymentRepository
         ?int $bankTransactionId = null,
         ?int $bankTransferId = null,
         ?int $createdBy = null,
+        ?int $cashRegisterId = null,
     ): int {
         if ($voucherId < 1) {
             throw new InvalidArgumentException('Beleg nicht gefunden.');
@@ -174,6 +187,9 @@ final class VoucherPaymentRepository
             throw new InvalidArgumentException('Beleg nicht gefunden.');
         }
 
+        $method = self::sanitizeMethod($method);
+        $cashRegisterId = self::normalizeCashRegisterId($cashRegisterId, $method);
+
         $open = self::openAmount($voucher);
         if ($amount > $open + 0.02) {
             $excess = round($amount - $open, 2);
@@ -186,30 +202,82 @@ final class VoucherPaymentRepository
             );
         }
 
-        $stmt = Database::pdo()->prepare(
-            'INSERT INTO dg_voucher_payments (
-                voucher_id, amount, payment_date, payment_method, reference_text,
-                bank_transaction_id, bank_transfer_id, created_by
-            ) VALUES (
-                :voucher_id, :amount, :payment_date, :payment_method, :reference_text,
-                :bank_transaction_id, :bank_transfer_id, :created_by
-            )'
-        );
-        $stmt->execute([
+        $hasRegisterCol = self::hasCashRegisterColumn();
+        $cols = 'voucher_id, amount, payment_date, payment_method, reference_text,
+                bank_transaction_id, bank_transfer_id, created_by';
+        $vals = ':voucher_id, :amount, :payment_date, :payment_method, :reference_text,
+                :bank_transaction_id, :bank_transfer_id, :created_by';
+        $params = [
             'voucher_id' => $voucherId,
             'amount' => $amount,
             'payment_date' => $paymentDate,
-            'payment_method' => self::sanitizeMethod($method),
+            'payment_method' => $method,
             'reference_text' => $reference !== null && trim($reference) !== '' ? mb_substr(trim($reference), 0, 255) : null,
             'bank_transaction_id' => $bankTransactionId > 0 ? $bankTransactionId : null,
             'bank_transfer_id' => $bankTransferId > 0 ? $bankTransferId : null,
             'created_by' => $createdBy,
-        ]);
+        ];
+        if ($hasRegisterCol) {
+            $cols .= ', cash_register_id';
+            $vals .= ', :cash_register_id';
+            $params['cash_register_id'] = $cashRegisterId;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            'INSERT INTO dg_voucher_payments (' . $cols . ') VALUES (' . $vals . ')'
+        );
+        $stmt->execute($params);
 
         $paymentId = (int) Database::pdo()->lastInsertId();
         self::syncVoucherSettlement($voucherId);
+        self::signCashPaymentOrRollback($voucherId, $paymentId, $method);
 
         return $paymentId;
+    }
+
+    public static function hasCashRegisterColumn(): bool
+    {
+        if (!Database::isConfigured()) {
+            return false;
+        }
+        try {
+            $stmt = Database::pdo()->query("SHOW COLUMNS FROM dg_voucher_payments LIKE 'cash_register_id'");
+
+            return $stmt !== false && $stmt->fetchColumn() !== false;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Bei Bar und vorhandenen aktiven Kassen: Kasse Pflicht (K9b).
+     */
+    public static function normalizeCashRegisterId(?int $cashRegisterId, string $method): ?int
+    {
+        $method = self::sanitizeMethod($method);
+        $id = $cashRegisterId !== null && $cashRegisterId > 0 ? $cashRegisterId : null;
+        if ($method !== self::METHOD_CASH) {
+            return null;
+        }
+        if (!class_exists('CashRegisterRepository') || !CashRegisterRepository::tableExists()) {
+            return $id;
+        }
+        $registers = CashRegisterRepository::listAll(null, true);
+        if ($registers === []) {
+            return $id;
+        }
+        if ($id === null) {
+            if (count($registers) === 1) {
+                return (int) ($registers[0]['id'] ?? 0) ?: null;
+            }
+            throw new InvalidArgumentException('Bitte die Kasse für die Barzahlung wählen.');
+        }
+        foreach ($registers as $reg) {
+            if ((int) ($reg['id'] ?? 0) === $id) {
+                return $id;
+            }
+        }
+        throw new InvalidArgumentException('Gewählte Kasse ist ungültig oder inaktiv.');
     }
 
     /**
@@ -221,6 +289,12 @@ final class VoucherPaymentRepository
             throw new InvalidArgumentException('Zahlung nicht gefunden.');
         }
         MigrationRunner::runPending();
+
+        if (class_exists('TseTransactionRepository') && TseTransactionRepository::paymentIsSigned($paymentId)) {
+            throw new InvalidArgumentException(
+                'TSE-signierte Barzahlung kann nicht gelöscht werden. Dafür braucht es einen Storno-Beleg.'
+            );
+        }
 
         $stmt = Database::pdo()->prepare(
             'DELETE FROM dg_voucher_payments WHERE id = :id AND voucher_id = :voucher_id'
@@ -370,6 +444,10 @@ final class VoucherPaymentRepository
     {
         $method = self::sanitizeMethod((string) ($row['payment_method'] ?? ''));
 
+        $registerId = isset($row['cash_register_id']) && $row['cash_register_id'] !== null && $row['cash_register_id'] !== ''
+            ? (int) $row['cash_register_id']
+            : 0;
+
         return [
             'id' => (int) ($row['id'] ?? 0),
             'voucher_id' => (int) ($row['voucher_id'] ?? 0),
@@ -378,10 +456,42 @@ final class VoucherPaymentRepository
             'payment_date' => (string) ($row['payment_date'] ?? ''),
             'payment_method' => $method,
             'payment_method_label' => self::methodLabel($method),
+            'cash_register_id' => $registerId > 0 ? $registerId : null,
             'reference_text' => (string) ($row['reference_text'] ?? ''),
             'bank_transaction_id' => (int) ($row['bank_transaction_id'] ?? 0),
             'bank_transfer_id' => (int) ($row['bank_transfer_id'] ?? 0),
             'created_at' => (string) ($row['created_at'] ?? ''),
+            'tse' => null,
+            'tse_signed' => false,
         ];
+    }
+
+    private static function signCashPaymentOrRollback(int $voucherId, int $paymentId, string $method): void
+    {
+        if (!class_exists('TseSignService') || $method !== self::METHOD_CASH) {
+            return;
+        }
+        $voucher = VoucherRepository::findById($voucherId);
+        if ($voucher === null || !TseSignService::shouldSign($voucher, $method)) {
+            return;
+        }
+        try {
+            TseSignService::signCashPayment($voucherId, $paymentId);
+        } catch (Throwable $e) {
+            Database::pdo()->prepare(
+                'DELETE FROM dg_voucher_payments WHERE id = :id AND voucher_id = :voucher_id'
+            )->execute(['id' => $paymentId, 'voucher_id' => $voucherId]);
+            if (class_exists('TseTransactionRepository') && TseTransactionRepository::tableExists()) {
+                Database::pdo()->prepare(
+                    'DELETE FROM dg_tse_transactions WHERE voucher_payment_id = :id'
+                )->execute(['id' => $paymentId]);
+            }
+            self::syncVoucherSettlement($voucherId);
+            $msg = trim($e->getMessage());
+            if ($msg === '') {
+                $msg = 'TSE-Signatur fehlgeschlagen.';
+            }
+            throw new InvalidArgumentException('Barzahlung nicht gespeichert. ' . $msg, 0, $e);
+        }
     }
 }

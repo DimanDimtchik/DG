@@ -37,6 +37,16 @@ $csrf = Csrf::token();
     </div>
   </header>
 
+  <div class="dg-flash dg-flash--info">
+    Das Kassenbuch ist getrennt von der Registerkasse (Ladenkasse). Der Tagesabschluss hier zählt den
+    Kassenbuch-Bestand — nicht die Summen der Ladenkasse. Baranteile aus Registerkassen-Bons erscheinen
+    hier als Einzahlungen; alle Zahlarten der Ladenkasse stehen im Bon-Journal.
+    <span class="dg-btn-row">
+      <a class="dg-button dg-button--small" href="/app?page=registerkasse-journal">Zum Bon-Journal</a>
+      <a class="dg-button dg-button--small" href="/app?page=registerkasse-tagesabschluss">Zum Register-Tagesabschluss</a>
+    </span>
+  </div>
+
   <?php if (!$dbConnected) : ?>
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php endif; ?>
@@ -69,6 +79,7 @@ $csrf = Csrf::token();
     <p class="dg-field-hint">
       Der Soll-Bestand kommt aus dem Kassenbuch (Anfangsbestand + Ein − Aus an diesem Tag) und ist nicht änderbar.
       Den gezählten Bestand tragen Sie nach dem Nachzählen ein — die Differenz wird gespeichert.
+      Nicht verwechseln mit dem Tagesabschluss der Registerkasse.
     </p>
     <form method="post" action="/app?page=buchhaltung-kassenbuch" class="dg-form-grid dg-form-grid--compact" id="dg-cash-day-close-form">
       <input type="hidden" name="_csrf" value="<?= View::escape($csrf) ?>">
@@ -146,6 +157,7 @@ $csrf = Csrf::token();
               <th>Konto</th>
               <th>Text</th>
               <th class="dg-table__num">Betrag</th>
+              <th>TSE</th>
               <th></th>
             </tr>
           </thead>
@@ -158,8 +170,17 @@ $csrf = Csrf::token();
                 <td><?= View::escape((string) ($entry['description'] ?? '')) ?></td>
                 <td class="dg-table__num"><?= View::escape((string) ($entry['amount_display'] ?? '')) ?></td>
                 <td>
+                  <?php if (!empty($entry['tse_signed'])) : ?>
+                    <span class="dg-badge dg-badge--ok">Signiert</span>
+                  <?php else : ?>
+                    <span class="dg-muted">—</span>
+                  <?php endif; ?>
+                </td>
+                <td>
                   <?php if (!empty($entry['voucher_id'])) : ?>
-                    <a href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) $entry['voucher_id'] ?>">Beleg</a>
+                    <span class="dg-table__actions-group">
+                      <a class="dg-button dg-button--small" href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) $entry['voucher_id'] ?>">Beleg</a>
+                    </span>
                   <?php endif; ?>
                 </td>
               </tr>

@@ -84,22 +84,25 @@ final class AccountingPrintService
     color: #8a93a3;
     pointer-events: none;
   }
-  /* DIN-Faltmarken (Fensterumschlag / DL), bezogen auf Blattkante inkl. Padding */
+  /* DIN-Faltmarken (Fensterumschlag / DL): nur 1. Seite, Positionen ab Blattoberkante */
   .vd-fold-marks {
     position: absolute;
     left: 0;
     top: 0;
-    width: 0;
-    height: 100%;
+    width: 10mm;
+    height: 297mm;
+    overflow: hidden;
     pointer-events: none;
+    z-index: 6;
   }
   .vd-fold-marks::before,
   .vd-fold-marks::after {
     content: "";
     position: absolute;
     left: 0;
-    width: 6mm;
-    border-top: 0.4pt solid #8a93a3;
+    width: 7mm;
+    height: 0;
+    border-top: 0.45pt solid #8a93a3;
   }
   .vd-fold-marks::before { top: 87mm; }
   .vd-fold-marks::after { top: 192mm; }
@@ -170,6 +173,13 @@ final class AccountingPrintService
   .vd-signatures__name { margin: 1mm 0 8mm; font-size: 9pt; color: #5c6678; }
   .vd-signatures__line { border-bottom: 1px solid #1c2330; height: 14mm; margin-bottom: 1.5mm; }
   .vd-signatures__caption { font-size: 8pt; color: #5c6678; }
+  .vd-tse { margin-top: 6mm; padding: 3mm 3mm 2mm; border: 1px solid #dfe3ea; page-break-inside: avoid; }
+  .vd-tse__title { font-size: 9pt; font-weight: 700; margin: 0 0 2mm; color: #1c2330; }
+  .vd-tse__row { display: table; width: 100%; }
+  .vd-tse__qr { display: table-cell; width: 28mm; vertical-align: top; }
+  .vd-tse__qr svg { width: 26mm; height: 26mm; display: block; }
+  .vd-tse__meta { display: table-cell; vertical-align: top; padding-left: 3mm; font-size: 8pt; line-height: 1.35; color: #1c2330; }
+  .vd-tse__meta div { margin: 0 0 0.8mm; }
   .vd-page-footer {
     margin-top: 8mm;
     padding-top: 2mm;
@@ -188,11 +198,18 @@ final class AccountingPrintService
       padding: 0;
       box-shadow: none;
       background: none;
+      overflow: visible;
     }
     .vd-a4__page-mark { display: none; }
-    /* Bei @page-Rand 14 mm: Marken relativ zum bedruckbaren Bereich */
-    .vd-fold-marks::before { top: calc(87mm - 14mm); }
-    .vd-fold-marks::after { top: calc(192mm - 14mm); }
+    /* @page-Rand 14 mm: Marken-Container an die Blattkante zurückschieben */
+    .vd-fold-marks {
+      left: -14mm;
+      top: -14mm;
+      height: 297mm;
+    }
+    .vd-fold-marks::before { top: 87mm; }
+    .vd-fold-marks::after { top: 192mm; }
+    .vd-page-footer { display: none; }
   }';
         }
 
@@ -275,10 +292,10 @@ JS;
   {$printButton}
   <div class="vd-a4">
     {$body}
-    <div class="vd-page-footer">
-      <span>{$escapedCompany}</span>
-      <span>{$escapedTitle}</span>
-    </div>
+  </div>
+  <div class="vd-page-footer">
+    <span>{$escapedCompany}</span>
+    <span>{$escapedTitle}</span>
   </div>
   {$pageMarkScript}
 </body>

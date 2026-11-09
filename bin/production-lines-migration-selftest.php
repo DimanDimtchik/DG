@@ -17,8 +17,8 @@ function assertFl1b(bool $ok, string $msg): void
 }
 
 $root = dirname(__DIR__);
-$path = $root . '/database/migrations/156_production_lines.sql';
-assertFl1b(is_file($path), '156_production_lines.sql vorhanden');
+$path = $root . '/database/migrations/159_production_lines.sql';
+assertFl1b(is_file($path), '159_production_lines.sql vorhanden');
 
 $sql = (string) file_get_contents($path);
 assertFl1b(!str_contains($sql, 'dg_production_line_buffers'), 'kein Puffer (FL2)');

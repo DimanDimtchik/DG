@@ -113,6 +113,22 @@ $voucherPayments = is_array($form['payments'] ?? null) ? $form['payments'] : [];
 $voucherTotalPaid = (string) ($form['total_paid'] ?? ($form['paid_amount'] ?? '0,00'));
 $voucherOpenAmount = (string) ($form['open_amount'] ?? ($form['gross_amount'] ?? '0,00'));
 $showPartialPaymentsUi = $isEdit && empty($isDraftVoucher);
+$cashRegisterOptions = [];
+if (class_exists('CashRegisterRepository') && CashRegisterRepository::tableExists()) {
+    $cashRegisterOptions = CashRegisterRepository::listAll(null, true);
+}
+$cashRegisterLabels = [];
+foreach ($cashRegisterOptions as $regOpt) {
+    $rid = (int) ($regOpt['id'] ?? 0);
+    if ($rid <= 0) {
+        continue;
+    }
+    $lab = trim((string) ($regOpt['code'] ?? ''));
+    if (trim((string) ($regOpt['name'] ?? '')) !== '') {
+        $lab .= ($lab !== '' ? ' — ' : '') . trim((string) $regOpt['name']);
+    }
+    $cashRegisterLabels[$rid] = $lab !== '' ? $lab : '#' . $rid;
+}
 $invoiceNumberRangeType = VoucherRepository::numberRangeTypeForDocument($selectedDocumentKind, $selectedType);
 $autoInvoiceNumber = $invoiceNumberRangeType !== null;
 $invoiceNumberRangeLabel = $autoInvoiceNumber
@@ -654,6 +670,14 @@ $paymentTermsPreview = PaymentTermsService::composeText(
             · Gezahlt: <strong id="dg-voucher-total-paid"><?= View::escape($voucherTotalPaid) ?> €</strong>
             · Offen: <strong id="dg-voucher-open-amount"><?= View::escape($voucherOpenAmount) ?> €</strong>
           </p>
+          <?php if (class_exists('TseSettings') && TseSettings::isEnabled()) : ?>
+            <p class="dg-field-hint">
+              Barzahlungen auf Rechnungen werden TSE-signiert. Der Prüf-QR-Code steht auf dem Belegdruck.
+              <?php if ($cashRegisterOptions !== []) : ?>
+                Bitte die Kasse wählen — TSS/Client kommen aus der TSE-Zuordnung der Kasse, Zugangsdaten aus den Einstellungen.
+              <?php endif; ?>
+            </p>
+          <?php endif; ?>
           <?php if ($voucherPayments !== []) : ?>
             <div class="dg-table-wrap">
               <table class="dg-table">
@@ -661,27 +685,48 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                   <tr>
                     <th>Datum</th>
                     <th>Art</th>
+                    <th>Kasse</th>
                     <th class="dg-table__num">Betrag</th>
                     <th>Verwendungszweck</th>
+                    <th>TSE</th>
                     <?php if (!$readOnly) : ?><th></th><?php endif; ?>
                   </tr>
                 </thead>
                 <tbody>
                   <?php foreach ($voucherPayments as $payment) : ?>
+                    <?php
+                      $tseSigned = !empty($payment['tse_signed']);
+                      $payRegId = (int) ($payment['cash_register_id'] ?? 0);
+                      $payRegLabel = $payRegId > 0 ? ($cashRegisterLabels[$payRegId] ?? ('#' . $payRegId)) : '—';
+                    ?>
                     <tr>
                       <td><?= View::escape((string) ($payment['payment_date'] ?? '')) ?></td>
                       <td><?= View::escape((string) ($payment['payment_method_label'] ?? '')) ?></td>
+                      <td><?= View::escape($payRegLabel) ?></td>
                       <td class="dg-table__num"><?= View::escape((string) ($payment['amount_display'] ?? '')) ?> €</td>
                       <td><?= View::escape((string) ($payment['reference_text'] ?? '')) ?></td>
+                      <td>
+                        <?php if ($tseSigned) : ?>
+                          <span class="dg-badge dg-badge--ok">Signiert</span>
+                        <?php else : ?>
+                          <span class="dg-muted">—</span>
+                        <?php endif; ?>
+                      </td>
                       <?php if (!$readOnly) : ?>
                         <td>
-                          <button
-                            type="submit"
-                            class="dg-button dg-button--ghost dg-button--small"
-                            form="dg-voucher-payment-delete-<?= (int) ($payment['id'] ?? 0) ?>"
-                            aria-label="Zahlung löschen"
-                            onclick="return confirm('Zahlung wirklich entfernen?');"
-                          >×</button>
+                          <?php if ($tseSigned) : ?>
+                            <span class="dg-muted" title="TSE-signierte Barzahlung kann nicht gelöscht werden.">—</span>
+                          <?php else : ?>
+                            <span class="dg-table__actions-group">
+                              <button
+                                type="submit"
+                                class="dg-button dg-button--ghost dg-button--small"
+                                form="dg-voucher-payment-delete-<?= (int) ($payment['id'] ?? 0) ?>"
+                                aria-label="Zahlung löschen"
+                                onclick="return confirm('Zahlung wirklich entfernen?');"
+                              >×</button>
+                            </span>
+                          <?php endif; ?>
                         </td>
                       <?php endif; ?>
                     </tr>
@@ -708,12 +753,27 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                   </label>
                   <label class="dg-field">
                     <span>Zahlungsart</span>
-                    <select name="payment_new_method" form="dg-voucher-payment-add">
+                    <select name="payment_new_method" id="dg-voucher-payment-new-method" form="dg-voucher-payment-add">
                       <?php foreach (VoucherPaymentRepository::methodOptions() as $methodKey => $methodLabel) : ?>
                         <option value="<?= View::escape($methodKey) ?>"><?= View::escape($methodLabel) ?></option>
                       <?php endforeach; ?>
                     </select>
                   </label>
+                  <?php if ($cashRegisterOptions !== []) : ?>
+                    <label class="dg-field" id="dg-voucher-payment-register-field">
+                      <span>Kasse (bei Bar)</span>
+                      <select name="payment_new_cash_register_id" form="dg-voucher-payment-add">
+                        <option value="">— bitte wählen —</option>
+                        <?php foreach ($cashRegisterOptions as $regOpt) : ?>
+                          <?php $rid = (int) ($regOpt['id'] ?? 0); ?>
+                          <option value="<?= $rid ?>"<?= count($cashRegisterOptions) === 1 ? ' selected' : '' ?>>
+                            <?= View::escape($cashRegisterLabels[$rid] ?? ('#' . $rid)) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                      <small class="dg-field-hint">Pflicht bei Barzahlung.</small>
+                    </label>
+                  <?php endif; ?>
                   <label class="dg-field dg-field--wide">
                     <span>Verwendungszweck / Notiz</span>
                     <input type="text" name="payment_new_reference" form="dg-voucher-payment-add" maxlength="255" placeholder="optional">

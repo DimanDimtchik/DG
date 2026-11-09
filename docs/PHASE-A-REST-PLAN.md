@@ -143,7 +143,7 @@ Ops/Mensch. Keine Firmendaten hardcoden im CRM-Code.
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [x] 2026-11-08 Code-Sync ✅ · `database.local.php`+`app.local.php` (Secrets `IQ_CRM_DB_*`) ✅ · Schema via `php83 bin/run-migrations.php` (169 Tabellen / 153 Migrationen bis `155_cash_tse_deferred.sql`) · Install-Lock nach PA4d |
+| PA4a | Code-Sync + `config/*.local.php` an Instanz-DB (kein Sondercode) | 🔴 | [x] 2026-11-08 Code-Sync ✅ · `database.local.php`+`app.local.php` (Secrets `IQ_CRM_DB_*`) ✅ · Schema via `php83 bin/run-migrations.php` (169 Tabellen / 153 Migrationen bis `158_cash_tse_deferred.sql`) · Install-Lock nach PA4d |
 | PA4b | Firmendaten GmbH in Einstellungen (Steuernr., USt-IdNr., FA, Bilanz, SKR) | 🔴 | [x] 2026-11-08 Instanz-DB: GmbH · Bilanz · SKR04 · USt-Id/Steuernr./FA Bad Kissingen (BuFö 9205) · HRB Schweinfurt · Quelle Impressum+JA2024-Protokoll |
 | PA4c | Flags: Photovoltaik §12 Abs. 3 + §13b Bauleistung | 🔴 | [x] 2026-11-08 Instanz-DB: `tax_special_cases.photovoltaik` + `reverse_charge_13b` enabled (KU aus); PA4b-Stammdaten unverändert |
 | PA4d | ≥3 Benutzer + Rechte | 🔴 | [x] 2026-11-08 Admin `a.busch@…` · Buchhaltung `buchhaltung@…` · Angebote/Vertrieb `j.benzler@…` (+ dept-vertrieb mit Buchhaltung-Modul); Aktivierungslinks `storage/pa4d-invite-links.txt` |

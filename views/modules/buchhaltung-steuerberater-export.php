@@ -72,10 +72,23 @@ $base = '/app?page=buchhaltung-steuerberater-export&year=' . (int) $year;
     <h2 class="dg-subsection-title">GoBD-Prüferexport</h2>
     <p class="dg-field-hint">
       Maschinenlesbarer Zeitraumexport (Journal, Belegindex, Konten, USt-Versteuerung) inkl. Manifest-Hash —
-      zur Vorlage bei Betriebsprüfung. Verfahrensdokumentation: siehe Produktdoku.
+      zur Vorlage bei Betriebsprüfung. Enthält auch die Verfahrensdokumentation-Vorlagen (FiBu + Registerkasse).
     </p>
     <div class="dg-form-actions">
       <a class="dg-button dg-button--primary" href="<?= View::escape($base . '&download=gobd') ?>">GoBD-Prüferexport (ZIP)</a>
+    </div>
+  </section>
+
+  <section class="dg-panel">
+    <h2 class="dg-subsection-title">Verfahrensdokumentation</h2>
+    <p class="dg-field-hint">
+      Vorlagen zum Ausfüllen (Platzhalter Firma, Verantwortliche, Backup). Kein Versand an Behörden —
+      nur Download für Akte und Prüfung. Registerkasse-Baustein ergänzt die FiBu-Vorlage.
+    </p>
+    <div class="dg-form-actions">
+      <a class="dg-button dg-button--primary" href="<?= View::escape($base . '&download=verfahrensdoku') ?>">Beide Vorlagen (ZIP)</a>
+      <a class="dg-button" href="<?= View::escape($base . '&download=verfahrensdoku-fibu') ?>">FiBu-Vorlage</a>
+      <a class="dg-button" href="<?= View::escape($base . '&download=verfahrensdoku-kasse') ?>">Baustein Registerkasse</a>
     </div>
   </section>
 </div>

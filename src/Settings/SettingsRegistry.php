@@ -266,6 +266,23 @@ final class SettingsRegistry
                         'template' => 'elster',
                         'kichel_aliases' => ['eric', 'elster', 'hersteller-id', 'hersteller id'],
                     ],
+                    'tse' => [
+                        'label' => 'TSE / Kassensicherung',
+                        'lead' => 'Technische Sicherungseinrichtung für Barzahlungen: Signatur und Prüf-QR-Code auf dem Beleg.',
+                        'template' => 'tse',
+                        'kichel_aliases' => [
+                            'tse', 'kassensicherung', 'kassensichv', 'fiskaly', 'kassen qr', 'qr beleg',
+                            'technisch sicherheitseinrichtung',
+                        ],
+                    ],
+                    'registerkasse-fibu' => [
+                        'label' => 'Registerkasse FiBu',
+                        'lead' => 'Konten je Zahlart (Bar, EC, Karte, Gutschein) für spätere Buchungen aus der Registerkasse.',
+                        'template' => 'registerkasse-fibu',
+                        'kichel_aliases' => [
+                            'registerkasse konten', 'kasse konten', 'zahlart konto', 'bon buchung konto',
+                        ],
+                    ],
                     'payment-terms' => [
                         'label' => 'Zahlungsbedingungen & Mahnung',
                         'lead' => 'Skonto-Stufen mit Zeitvorgaben und automatischer Mahnversand mit Mahngebühren.',
@@ -394,6 +411,12 @@ final class SettingsRegistry
             }
             if (isset($_POST['tax_advisor_save'])) {
                 return 'steuerkanzlei';
+            }
+            if (isset($_POST['tse_save']) || isset($_POST['tse_ping'])) {
+                return 'tse';
+            }
+            if (isset($_POST['cash_register_fibu_save'])) {
+                return 'registerkasse-fibu';
             }
             if (isset($_POST['appearance_save'])) {
                 return 'schriften';

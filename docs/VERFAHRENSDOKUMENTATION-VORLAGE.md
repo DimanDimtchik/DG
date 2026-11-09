@@ -86,6 +86,7 @@ Hosting-Kunden: AVV mit Anbieter abschließen; TOMs dokumentieren.
 | ELSTER | CSV manuell; ERiC nach Freigabe/Server |
 | Bank | CAMT.053 / MT940 |
 | GoBD-Prüferexport | Betriebsprüfung |
+| Registerkasse / TSE / DSFinV-K | siehe Baustein [`VERFAHRENSDOKUMENTATION-REGISTERKASSE.md`](VERFAHRENSDOKUMENTATION-REGISTERKASSE.md) |
 
 ---
 

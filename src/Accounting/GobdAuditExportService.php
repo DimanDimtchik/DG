@@ -67,6 +67,12 @@ final class GobdAuditExportService
         $zip->addFromString('README.txt', $readme);
         $manifest['files'][] = ['name' => 'README.txt', 'sha256' => hash('sha256', $readme), 'rows' => 0];
 
+        if (class_exists('VerfahrensdokumentationExport')) {
+            foreach (VerfahrensdokumentationExport::appendToZip($zip) as $docMeta) {
+                $manifest['files'][] = $docMeta;
+            }
+        }
+
         $manifestJson = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if (!is_string($manifestJson)) {
             $manifestJson = '{}';
@@ -261,9 +267,10 @@ final class GobdAuditExportService
         return "DG CRM — GoBD-Prüferexport\r\n"
             . "Geschäftsjahr: {$year}\r\n"
             . "Zeitraum: {$from} bis {$to}\r\n"
-            . "Inhalt: journal.csv, belegindex.csv, konten.csv, ust_versteuerung.csv, manifest.json\r\n"
+            . "Inhalt: journal.csv, belegindex.csv, konten.csv, ust_versteuerung.csv, manifest.json,\r\n"
+            . "         verfahrensdokumentation/*.md (FiBu-Vorlage + Baustein Registerkasse/TSE)\r\n"
             . "Hinweis: Keine Finanzamt-Softwarezulassung; Export zur Nachvollziehbarkeit der Buchführung.\r\n"
-            . "Verfahrensdokumentation: docs/VERFAHRENSDOKUMENTATION-VORLAGE.md (im Produktumfang).\r\n";
+            . "Verfahrensdokumentation: Vorlagen im ZIP-Ordner verfahrensdokumentation/ ausfüllen.\r\n";
     }
 
     /**

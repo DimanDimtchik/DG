@@ -362,6 +362,24 @@ final class MigrationRunner
             '140_contract_templates.sql' => self::tableExists($pdo, 'dg_contract_templates')
                 && self::tableExists($pdo, 'dg_contract_template_blocks'),
             '141_calendar_employee_day_windows.sql' => self::tableExists($pdo, 'dg_calendar_employee_day_windows'),
+            '145_tse_transactions.sql' => self::tableExists($pdo, 'dg_tse_transactions'),
+            '146_cash_locations.sql' => self::tableExists($pdo, 'dg_cash_locations'),
+            '147_cash_registers.sql' => self::tableExists($pdo, 'dg_cash_registers'),
+            '148_cash_tse_assignments.sql' => self::tableExists($pdo, 'dg_cash_tse_assignments'),
+            '149_cash_sessions.sql' => self::tableExists($pdo, 'dg_cash_sessions'),
+            '150_cash_receipts.sql' => self::tableExists($pdo, 'dg_cash_receipts')
+                && self::tableExists($pdo, 'dg_cash_receipt_lines'),
+            '151_cash_payments.sql' => self::tableExists($pdo, 'dg_cash_payments'),
+            '152_cash_register_day_closings.sql' => self::tableExists($pdo, 'dg_cash_register_day_closings'),
+            '153_cash_audit_exports.sql' => self::tableExists($pdo, 'dg_cash_audit_log')
+                && self::tableExists($pdo, 'dg_cash_exports'),
+            '154_voucher_payment_cash_register.sql' => self::columnExists($pdo, 'dg_voucher_payments', 'cash_register_id'),
+            '155_cash_tse_outage.sql' => self::columnExists($pdo, 'dg_cash_tse_assignments', 'outage_active')
+                && self::columnExists($pdo, 'dg_cash_receipts', 'tse_outage'),
+            '156_cash_journal_receipt.sql' => self::columnExists($pdo, 'dg_cash_journal', 'cash_receipt_id'),
+            '157_cash_ers_melde.sql' => self::tableExists($pdo, 'dg_cash_ers_taxpayer')
+                && self::tableExists($pdo, 'dg_cash_ers_clients'),
+            '158_cash_tse_deferred.sql' => self::columnExists($pdo, 'dg_cash_receipts', 'tse_deferred_pending'),
             default => false,
         };
     }
@@ -514,6 +532,20 @@ final class MigrationRunner
             '139_hr_personnel_events.sql' => true,
             '140_contract_templates.sql' => true,
             '141_calendar_employee_day_windows.sql' => true,
+            '145_tse_transactions.sql' => true,
+            '146_cash_locations.sql' => true,
+            '147_cash_registers.sql' => true,
+            '148_cash_tse_assignments.sql' => true,
+            '149_cash_sessions.sql' => true,
+            '150_cash_receipts.sql' => true,
+            '151_cash_payments.sql' => true,
+            '152_cash_register_day_closings.sql' => true,
+            '153_cash_audit_exports.sql' => true,
+            '154_voucher_payment_cash_register.sql' => true,
+            '155_cash_tse_outage.sql' => true,
+            '156_cash_journal_receipt.sql' => true,
+            '157_cash_ers_melde.sql' => true,
+            '158_cash_tse_deferred.sql' => true,
         ];
     }
 

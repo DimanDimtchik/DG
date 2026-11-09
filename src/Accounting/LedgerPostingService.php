@@ -348,9 +348,19 @@ final class LedgerPostingService
         $discount = round((float) ($voucher['discount_amount'] ?? 0), 2);
         if ($discount <= 0.0) {
             $gross = round((float) ($voucher['gross_amount'] ?? 0), 2);
+            $gift = round((float) ($voucher['gift_redeemed_amount'] ?? 0), 2);
             $paid = round((float) ($voucher['paid_amount'] ?? 0), 2);
-            if ($paid > 0.0 && $paid < $gross) {
-                $discount = round($gross - $paid, 2);
+            if ($voucherId > 0) {
+                $paid = max($paid, round(VoucherPaymentRepository::totalPaid($voucherId), 2));
+            }
+            // Nicht jeden Unterschied Brutto − Zahlung als Skonto werten: z. B. Gutschein oder
+            // offene Teilzahlung erklären die Lücke ohne echten Skonto.
+            $open = VoucherPaymentRepository::openAmount($voucher, $paid);
+            if ($open <= 0.01 && $paid > 0.0) {
+                $inferred = round($gross - $paid - $gift - $discount, 2);
+                if ($inferred > 0.01) {
+                    $discount = $inferred;
+                }
             }
         }
         if ($discount <= 0.0) {

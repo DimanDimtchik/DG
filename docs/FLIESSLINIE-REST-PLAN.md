@@ -63,7 +63,7 @@ Stand: **2026-11-08** · Katalog: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md)
 | Gleiche Maschine 2× | **Nein** — Unique `(line_id, work_center_id)` |
 | Reihenfolge | Unique `(line_id, station_order)`, lückenlos 1…n im Store erzwingen |
 | WIP-Mengen | `current_qty` nur Simulation/manuell — **keine** FiBu-/Lagerbuchung in FL1/FL2 |
-| Migration-Nummer | **FL1b:** `156_production_lines.sql` · **FL2a:** `157_production_line_buffers.sql` (Stand 2026-11-08; Nummern nach Kasse 155+). |
+| Migration-Nummer | **FL1b:** `159_production_lines.sql` · **FL2a:** `160_production_line_buffers.sql` (Stand Merge 2026-11-09; nach Registerkasse `158`). |
 
 ### 1. `dg_production_lines` (FL1b)
 
@@ -92,7 +92,7 @@ Index: `idx_production_lines_active (is_active)`.
 
 Constraints: **UNIQUE** `(line_id, station_order)` · **UNIQUE** `(line_id, work_center_id)`.
 
-### 3. `dg_production_line_buffers` (**FL2a Migration** `157_production_line_buffers.sql`)
+### 3. `dg_production_line_buffers` (**FL2a Migration** `160_production_line_buffers.sql`)
 
 Puffer **nach** Station *i* (zwischen *i* und *i+1*). Letzte Station: **kein** Puffer-Datensatz.
 
@@ -182,7 +182,7 @@ Plan FL0–FL9 abgeschlossen. Optionale Umsetzung nur aus [`FLIESSLINIE-FL8-BACK
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | FL1a | Speichermodell final (Tabellen/FKs) in diesem Plan bestätigen · Migration-Nummer prüfen | 🟢 | [x] 2026-11-08 Modell festgelegt · nächste frei ≈ **145** (nach 142–144) |
-| FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [x] 2026-11-08 `156_production_lines.sql` · Selftest |
+| FL1b | Migration: `dg_production_lines` + `dg_production_line_stations` · Unique `(line_id, station_order)` · WC RESTRICT | 🟡 | [x] 2026-11-08 `159_production_lines.sql` · Selftest |
 | FL1c | Store: `listLines`, `getLineWithStations`, `saveStations` (Reihenfolge) · **kein** Hard-DELETE Historie ohne Flag | 🟡 | [x] 2026-11-08 `ProductionLineStore` + Autoload · Soft `deactivateLine` |
 | FL1d | Selftest: 3 Stationen speichern → Reihenfolge stabil | 🟡 | [x] 2026-11-08 `bin/production-line-store-selftest.php` SQLite |
 
@@ -190,7 +190,7 @@ Plan FL0–FL9 abgeschlossen. Optionale Umsetzung nur aus [`FLIESSLINIE-FL8-BACK
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `157_production_line_buffers.sql` · Selftest |
+| FL2a | Migration: `dg_production_line_buffers` nach Station (capacity, unit, optional current) | 🟡 | [x] 2026-11-08 `160_production_line_buffers.sql` · Selftest |
 | FL2b | Store: Puffer je Lücke Station→Station; Kapazität > 0 Pflicht | 🟡 | [x] 2026-11-08 `listBuffers`/`saveBuffers`/`setBufferCurrentQty` · Snapshot bei Station-Rewrite |
 | FL2c | Selftest: Puffer voll/leer-Grenzen setzen | 🟡 | [x] 2026-11-08 `bin/production-line-buffers-store-selftest.php` SQLite |
 
@@ -291,11 +291,11 @@ Plan FL0–FL9 abgeschlossen. Optionale Umsetzung nur aus [`FLIESSLINIE-FL8-BACK
 | [`REZEPTUR-MODUL.md`](REZEPTUR-MODUL.md) | Nicht-Ziele MES |
 | [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | UI |
 | `dg_work_centers` / `dg_recipe_routing` | Stationen · Rezept-Routing |
-| `database/migrations/156_production_lines.sql` | FL1b Linie + Stationen |
+| `database/migrations/159_production_lines.sql` | FL1b Linie + Stationen |
 | `bin/production-lines-migration-selftest.php` | FL1b Vertrags-Selftest |
 | `src/Recipe/ProductionLineStore.php` | FL1c Store (kein Hard-DELETE) |
 | `bin/production-line-store-selftest.php` | FL1d SQLite Selftest |
-| `database/migrations/157_production_line_buffers.sql` | FL2a Puffer |
+| `database/migrations/160_production_line_buffers.sql` | FL2a Puffer |
 | `bin/production-line-buffers-migration-selftest.php` | FL2a Vertrags-Selftest |
 | `bin/production-line-buffers-store-selftest.php` | FL2c Puffer voll/leer Selftest |
 | `src/Recipe/ProductionLineStatusService.php` | FL3b Offline-Status |

@@ -1,7 +1,10 @@
 <?php
 declare(strict_types=1);
 
-/** Kassenbuch Tagesabschluss. */
+/**
+ * FiBu-Kassenbuch Tagesabschluss (`dg_cash_day_closings`).
+ * Nicht die Registerkasse (`dg_cash_register_day_closings` / CashRegisterDayClosingService) — K12d.
+ */
 final class CashDayCloseService
 {
     /**

@@ -186,6 +186,10 @@ Erlaubt für **modulspezifische** Layouts (Kalender-Raster, Lager-Scan, Akademie
 
 **Nicht erlaubt:** `.dg-lohn-button-special`, seitenlokales `<style>`, parallele `.btn`/`.button`-Systeme.
 
+| Modul | Feature-Prefix | Beispiel |
+|-------|----------------|----------|
+| Registerkasse Bon | `.dg-cash-bon` | Sticky-Summen / Spalten ausblenden auf schmalen Screens (K10c) |
+
 ---
 
 ## 11. Checkliste vor Merge (jede UI-Änderung)
