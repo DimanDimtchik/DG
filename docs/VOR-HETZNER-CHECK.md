@@ -71,6 +71,8 @@ Ein physischer **Shared Core** (einmal Code), Instanzen nur als dünne Hüllen:
 
 Bootstrap-Idee (ohne Implementierung in PA3a): DocumentRoot zeigt auf Shared; `DG_INSTANCE_ROOT` (oder `config/instance.path`) zeigt auf den Instanzordner für Locals/Storage. Bis dahin bleibt Full-Tree-Sync gültig.
 
+**Umsetzung tokenarm (ab 2026-11-09):** [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) — Kern = `/var/www/dg-crm/shared` (kein öffentliches `kern.*`) · Mini-IDs SC0–SC7 · Live erst nach Phase-B Stack (PB2).
+
 #### Übergangsregeln (vor Cutover)
 
 1. Weiter Master → Sync wie heute; Ordnerplan ist die **Zielskizze** für Hetzner-Pipeline — Prep: [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) (PA3e ✅).

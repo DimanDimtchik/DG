@@ -75,6 +75,7 @@
 
 - [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
   → [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1  
+  → Umsetzung Mini-IDs: [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) (SC0 ✅ · SC1+ offen; Live nach PB2)  
 - [x] **Backup/Restore-Test** + Notiz — ✅ PA3b 2026-11-08 (Dev `ganz-om.de`, Staging-Restore, kein Live-DB-Overwrite)  
   → [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) · Konzept: [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md)
 - [x] **Asset-Minify** im Deploy — App: `dg.app.min.css` via `bin/minify-dg-css.sh` (rsync/sftp/`deploy.bat`); `dg.min.css` = Offline-Stub  

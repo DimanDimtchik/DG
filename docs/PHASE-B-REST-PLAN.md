@@ -101,7 +101,8 @@ Stand: **2026-11-08** · Zielserver: **GEX45** (bestellt) · OS: **Ubuntu 26** �
 
 1. Warten auf Lieferung GEX45  
 2. **PB1a–d** → **PB2a–d** → **PB3a–c**  
-3. Freigabe → **PB4** · danach **PB5** · dann Phase C (ERiC)
+3. Freigabe → **PB4** · danach **PB5** · dann Phase C (ERiC)  
+4. Parallel/nach PB2: Shared Core [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) (SC3 Pilot Dev)
 
 **Nächster Chat (erst nach Lieferung):**  
 `Nur Mini-ID PB1a laut docs/PHASE-B-REST-PLAN.md. IPv4/Standort in SERVER-MIGRATION.md. Kein Cutover.`
@@ -116,3 +117,4 @@ Stand: **2026-11-08** · Zielserver: **GEX45** (bestellt) · OS: **Ubuntu 26** �
 | [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | rsync/SSH Prep |
 | [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) | AVV ✅ |
 | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | nach Cutover |
+| [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) | nach PB2: ein Code-Baum `/var/www/dg-crm/shared` (SC3+) |

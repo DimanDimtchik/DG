@@ -2,9 +2,9 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
+Stand: **2026-11-09** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** IQ Nutzer-Aktivierung. Phase B wartet auf GEX45. AVV ✅. Unterschrift ES0–ES8 ✅.
+**Nächste Session:** IQ Nutzer-Aktivierung · Shared-Core Spec **SC1** [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) · Phase B wartet auf GEX45. AVV ✅. Unterschrift ES0–ES8 ✅.
 
 ---
 
@@ -14,11 +14,12 @@ Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 |-------|--------|--------|
 | **A → D** | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) · A tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) | GoBD/Tests/IQ → Hetzner → ELSTER/LDAP → **Lohn D0 A→B→C** → E-Bilanz/KSt/GewSt & Rest |
 | Vor-Check | [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) | Shared Core, Minify, GoBD-Stichprobe |
+| Shared Core | [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) | GEX45: `/var/www/dg-crm/shared` + Instanz-Hüllen (SC0–SC7) |
 | ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 
-**Nächster Block:** IQ-Nutzer · Phase B erst nach GEX45-Lieferung [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md). UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
+**Nächster Block:** IQ-Nutzer · Shared-Core Docs **SC1** (ohne Server) · Phase B erst nach GEX45-Lieferung [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md). UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
@@ -205,6 +206,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
 | `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45 / Ubuntu 26 |
+| `SHARED-CORE-REST-PLAN.md` | Shared Core SC0–SC7 · `/var/www/dg-crm/shared` (nach PB2) |
 | `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45 (bestellt) |
 | `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES8, kein QES) |
 | `SIGNATURE-IMPORT-PROVIDER.md` | ES7a Import-Service-Vertrag / Interface |

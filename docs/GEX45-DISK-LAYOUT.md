@@ -79,11 +79,11 @@ UUID=…  /mnt/data      ext4  noatime                     0  2
 └── archive/              # ältere PDFs von Box zurückkopiert (optional)
 ```
 
-**CRM-Code** bleibt auf NVMe A (klein, häufig deployt), z. B.:
+**CRM-Code** bleibt auf NVMe A (klein, häufig deployt). Shared-Core-Plan: [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md).
 
 ```text
-/var/www/dg-crm/                    # Code-Kern (Master) — rsync/deploy
-/var/www/instances/<hostname>/      # config/*.local.php, symlink storage
+/var/www/dg-crm/shared/             # Code-Kern (eine Version) — Deploy-Ziel
+/var/www/dg-crm/instances/<host>/   # config/*.local.php, public/, symlink storage
 ```
 
 Pro Instanz:
