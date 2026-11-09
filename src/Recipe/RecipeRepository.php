@@ -92,18 +92,38 @@ final class RecipeRepository
      */
     public static function listAll(): array
     {
+        return self::paginate(1, 'all')['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 5000): array
+    {
         self::ensureReady();
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         if (!Database::isConfigured()) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
+        $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_recipes')->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
         $sql = 'SELECT r.*,
                        (SELECT COUNT(*) FROM dg_recipe_bom b WHERE b.recipe_id = r.id) AS bom_count,
                        (SELECT COUNT(*) FROM dg_recipe_routing rt WHERE rt.recipe_id = r.id) AS routing_count
                 FROM dg_recipes r
                 ORDER BY r.updated_at DESC, r.id DESC';
-        $stmt = Database::pdo()->query($sql);
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->query($sql . ' LIMIT ' . max(1, $hardCap));
+            $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /**

@@ -40,7 +40,8 @@ $hasActiveFilters = $search !== '' || $contactId > 0 || $amountMin !== '' || $am
 $canEdit = (bool) ($canEdit ?? false);
 $fileCounts = is_array($voucherFileCounts ?? null) ? $voucherFileCounts : [];
 
-$boardUrl = static function (array $overrides = []) use ($board, $period): string {
+$perPageKey = (string) ($list['per_page_key'] ?? ListPagination::DEFAULT);
+$boardUrl = static function (array $overrides = []) use ($board, $period, $perPageKey): string {
     $base = [
         'date_from' => $period->dateFrom,
         'date_to' => $period->dateTo,
@@ -65,6 +66,7 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
         'invoice_kind' => (string) ($board['invoice_kind'] ?? ''),
         'pay' => (string) ($board['pay'] ?? ''),
         'actionable_only' => !empty($board['actionable_only']) ? '1' : '',
+        'per_page' => $perPageKey,
     ], $overrides));
 };
 ?>
@@ -250,6 +252,31 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
               · Brutto <?= View::escape(VoucherRepository::formatMoney((float) ($list['gross_sum'] ?? 0))) ?> €
             </div>
 
+            <?php
+              $belegeExtra = array_filter([
+                  'section' => $section !== '' ? $section : null,
+                  'status' => (($board['status'] ?? '') !== '') ? (string) $board['status'] : null,
+                  'invoice_kind' => (($board['invoice_kind'] ?? '') !== '') ? (string) $board['invoice_kind'] : null,
+                  'pay' => (($board['pay'] ?? '') !== '') ? (string) $board['pay'] : null,
+                  's' => $search !== '' ? $search : null,
+                  'contact_id' => $contactId > 0 ? $contactId : null,
+                  'amount_min' => $amountMin !== '' ? $amountMin : null,
+                  'amount_max' => $amountMax !== '' ? $amountMax : null,
+                  'actionable' => $actionableOnly ? '1' : null,
+                  'focus' => $isDienstleistungenFocus ? 'dienstleistungen' : null,
+                  'year' => $period->year,
+                  'month' => $period->month,
+                  'date_from' => (!$period->isFullYear() || $period->month !== null) ? $period->dateFrom : null,
+                  'date_to' => (!$period->isFullYear() || $period->month !== null) ? $period->dateTo : null,
+              ], static fn ($v) => $v !== null && $v !== '');
+              View::partial('partials/list-per-page', [
+                  'total' => (int) ($list['total'] ?? 0),
+                  'perPageKey' => $perPageKey,
+                  'listPage' => 'buchhaltung-belege',
+                  'extraQuery' => $belegeExtra,
+              ]);
+            ?>
+
             <div class="dg-table-wrap">
               <table class="dg-table dg-buchhaltung-belege__table">
                 <thead>
@@ -346,17 +373,16 @@ $boardUrl = static function (array $overrides = []) use ($board, $period): strin
               </table>
             </div>
 
-            <?php if (($list['total_pages'] ?? 1) > 1) : ?>
-              <nav class="dg-pagination" aria-label="Seiten">
-                <?php if (($list['page'] ?? 1) > 1) : ?>
-                  <a href="<?= View::escape($boardUrl(['page' => (int) $list['page'] - 1])) ?>">&laquo; Zurück</a>
-                <?php endif; ?>
-                <span>Seite <?= (int) ($list['page'] ?? 1) ?> von <?= (int) ($list['total_pages'] ?? 1) ?></span>
-                <?php if (($list['page'] ?? 1) < ($list['total_pages'] ?? 1)) : ?>
-                  <a href="<?= View::escape($boardUrl(['page' => (int) $list['page'] + 1])) ?>">Weiter &raquo;</a>
-                <?php endif; ?>
-              </nav>
-            <?php endif; ?>
+            <?php
+              View::partial('partials/list-pagination-nav', [
+                  'total' => (int) ($list['total'] ?? 0),
+                  'page' => (int) ($list['page'] ?? 1),
+                  'totalPages' => (int) ($list['total_pages'] ?? 1),
+                  'perPageKey' => $perPageKey,
+                  'listPage' => 'buchhaltung-belege',
+                  'extraQuery' => $belegeExtra,
+              ]);
+            ?>
           </div>
         <?php endif; ?>
       </section>

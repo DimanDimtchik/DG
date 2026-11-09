@@ -38,6 +38,34 @@ $academyLibraryVideos = $academyLibraryVideos ?? [];
 $academyCourseDepartmentIds = $academyCourseDepartmentIds ?? [];
 $academyModuleDepartmentIds = $academyModuleDepartmentIds ?? [];
 $academyAllVideos = $academyAllVideos ?? [];
+$academyAllVideosPaged = is_array($academyAllVideosPaged ?? null) ? $academyAllVideosPaged : null;
+if ($academyAllVideosPaged !== null && isset($academyAllVideosPaged['items'])) {
+    $academyAllVideos = $academyAllVideosPaged['items'];
+    $academyVideosTotal = (int) ($academyAllVideosPaged['total'] ?? count($academyAllVideos));
+    $academyVideosPageNum = (int) ($academyAllVideosPaged['page'] ?? 1);
+    $academyVideosTotalPages = (int) ($academyAllVideosPaged['total_pages'] ?? 1);
+    $academyVideosPerPageKey = (string) ($academyAllVideosPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $academyVideosTotal = count($academyAllVideos);
+    $academyVideosPageNum = 1;
+    $academyVideosTotalPages = 1;
+    $academyVideosPerPageKey = ListPagination::DEFAULT;
+}
+$academyAllCoursesPaged = is_array($academyAllCoursesPaged ?? null) ? $academyAllCoursesPaged : null;
+$academyAdminCoursesFlat = [];
+if ($academyAllCoursesPaged !== null && isset($academyAllCoursesPaged['items'])) {
+    $academyAdminCoursesFlat = $academyAllCoursesPaged['items'];
+    $academyCoursesTotal = (int) ($academyAllCoursesPaged['total'] ?? count($academyAdminCoursesFlat));
+    $academyCoursesPageNum = (int) ($academyAllCoursesPaged['page'] ?? 1);
+    $academyCoursesTotalPages = (int) ($academyAllCoursesPaged['total_pages'] ?? 1);
+    $academyCoursesPerPageKey = (string) ($academyAllCoursesPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $academyCoursesTotal = 0;
+    $academyCoursesPageNum = 1;
+    $academyCoursesTotalPages = 1;
+    $academyCoursesPerPageKey = ListPagination::DEFAULT;
+}
+$academyAdminListExtra = ['view' => 'admin', 'admin_tab' => $academyAdminTab];
 $academyCourseModuleIds = $academyCourseModuleIds ?? [];
 $academyAdminVideo = $academyAdminVideo ?? null;
 $academyAssignments = $academyAssignments ?? [];
@@ -430,6 +458,14 @@ $riskClass = static function (?string $level): string {
     <?php if ($academyAllVideos === []) : ?>
       <p class="dg-muted">Noch keine Videos. Neue Abteilungen erscheinen automatisch in der Auswahl oben.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $academyVideosTotal,
+            'perPageKey' => $academyVideosPerPageKey,
+            'listPage' => 'akademie',
+            'extraQuery' => array_merge($academyAdminListExtra, ['admin_tab' => 'videos']),
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">
           <thead><tr><th>Titel</th><th>Abteilung</th><th>Dauer</th><th>Status</th><th></th></tr></thead>
@@ -456,16 +492,27 @@ $riskClass = static function (?string $level): string {
                 <td><?= View::escape($deptName) ?></td>
                 <td><?= (int) ($video['duration_sec'] ?? 0) ?> s</td>
                 <td><?= View::escape($statusLabel) ?><?php if ($hasFile && trim((string) ($video['subtitle_vtt_path'] ?? '')) !== '') : ?> · VTT<?php endif; ?></td>
-                <td>
-                  <a href="/app?page=akademie&amp;view=video-vorschau&amp;module_id=<?= (int) ($video['id'] ?? 0) ?>">Ansehen</a>
-                  ·
-                  <a class="dg-button dg-button--small" href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;video_id=<?= (int) ($video['id'] ?? 0) ?>">Bearbeiten</a>
+                <td class="dg-table__actions">
+                  <div class="dg-table__actions-group">
+                    <a class="dg-button dg-button--small" href="/app?page=akademie&amp;view=video-vorschau&amp;module_id=<?= (int) ($video['id'] ?? 0) ?>">Ansehen</a>
+                    <a class="dg-button dg-button--small" href="/app?page=akademie&amp;view=admin&amp;admin_tab=videos&amp;video_id=<?= (int) ($video['id'] ?? 0) ?>">Bearbeiten</a>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $academyVideosTotal,
+            'page' => $academyVideosPageNum,
+            'totalPages' => $academyVideosTotalPages,
+            'perPageKey' => $academyVideosPerPageKey,
+            'listPage' => 'akademie',
+            'extraQuery' => array_merge($academyAdminListExtra, ['admin_tab' => 'videos']),
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 
@@ -572,8 +619,45 @@ $riskClass = static function (?string $level): string {
     <p class="dg-field-hint">Abteilungen sind optional — Kurse ohne Zuordnung stehen unter „Allgemein (alle Abteilungen)“.</p>
     <p><a class="dg-button dg-button--primary" href="/app?page=akademie&amp;view=admin&amp;course_id=0&amp;admin_tab=kurs">Neuer Kurs</a></p>
 
-    <?php if ($academyCoursesByDepartment === []) : ?>
+    <?php if ($academyCoursesByDepartment === [] && $academyAdminCoursesFlat === []) : ?>
       <p class="dg-muted">Noch keine Kurse.</p>
+    <?php elseif ($academyAdminCoursesFlat !== []) : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $academyCoursesTotal,
+            'perPageKey' => $academyCoursesPerPageKey,
+            'listPage' => 'akademie',
+            'extraQuery' => array_merge($academyAdminListExtra, ['admin_tab' => 'kurse']),
+        ]);
+      ?>
+      <div class="dg-table-wrap">
+        <table class="dg-table dg-table--compact">
+          <thead><tr><th>Kurs</th><th>Tarif</th><th>Modus</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <?php foreach ($academyAdminCoursesFlat as $course) : ?>
+              <tr>
+                <td><?= View::escape((string) ($course['title'] ?? '')) ?></td>
+                <td><?= View::escape(AcademyTier::labels()[(string) ($course['min_tier'] ?? '')] ?? '') ?></td>
+                <td><?= View::escape(AcademyAccessMode::labels()[(string) ($course['access_mode_default'] ?? '')] ?? '') ?></td>
+                <td><?= !empty($course['is_published']) ? 'veröffentlicht' : 'Entwurf' ?></td>
+                <td class="dg-table__actions">
+                  <a class="dg-button dg-button--small" href="/app?page=akademie&amp;view=admin&amp;course_id=<?= (int) ($course['id'] ?? 0) ?>">Bearbeiten</a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $academyCoursesTotal,
+            'page' => $academyCoursesPageNum,
+            'totalPages' => $academyCoursesTotalPages,
+            'perPageKey' => $academyCoursesPerPageKey,
+            'listPage' => 'akademie',
+            'extraQuery' => array_merge($academyAdminListExtra, ['admin_tab' => 'kurse']),
+        ]);
+      ?>
     <?php else : ?>
       <?php foreach ($academyCoursesByDepartment as $group) : ?>
         <?php

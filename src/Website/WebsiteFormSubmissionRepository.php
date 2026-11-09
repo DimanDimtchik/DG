@@ -34,7 +34,27 @@ final class WebsiteFormSubmissionRepository
      */
     public static function listForForm(int $formId, int $limit = 100, int $offset = 0): array
     {
+        return self::paginateForForm($formId, 1, 'all', max(1, $limit + $offset))['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginateForForm(
+        int $formId,
+        int $page = 1,
+        string $perPageKey = ListPagination::DEFAULT,
+        int $hardCap = 10000
+    ): array {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if ($formId < 1 || !Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
         WebsiteFormRepository::ensureTables();
+        $countStmt = Database::pdo()->prepare('SELECT COUNT(*) FROM dg_website_form_submissions WHERE form_id = :fid');
+        $countStmt->execute(['fid' => $formId]);
+        $total = min((int) $countStmt->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
         $stmt = Database::pdo()->prepare(
             'SELECT id, form_id, payload_json, files_json, ip, is_read, created_at
              FROM dg_website_form_submissions
@@ -43,8 +63,8 @@ final class WebsiteFormSubmissionRepository
              LIMIT :lim OFFSET :off'
         );
         $stmt->bindValue('fid', $formId, PDO::PARAM_INT);
-        $stmt->bindValue('lim', $limit, PDO::PARAM_INT);
-        $stmt->bindValue('off', $offset, PDO::PARAM_INT);
+        $stmt->bindValue('lim', $meta['show_all'] ? max(1, $hardCap) : $meta['limit'], PDO::PARAM_INT);
+        $stmt->bindValue('off', $meta['show_all'] ? 0 : $meta['offset'], PDO::PARAM_INT);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $out = [];
@@ -52,7 +72,7 @@ final class WebsiteFormSubmissionRepository
             $out[] = self::map($row);
         }
 
-        return $out;
+        return ListPagination::result($out, $total, $meta);
     }
 
     /**

@@ -9,7 +9,21 @@
  */
 $year = (int) ($manualYear ?? (int) date('Y'));
 $years = $manualYears ?? [(int) date('Y')];
-$batches = $manualBatches ?? [];
+$manualBatchesPaged = is_array($manualBatchesPaged ?? null) ? $manualBatchesPaged : null;
+if ($manualBatchesPaged !== null && isset($manualBatchesPaged['items'])) {
+    $batches = $manualBatchesPaged['items'];
+    $manualBatchTotal = (int) ($manualBatchesPaged['total'] ?? count($batches));
+    $manualBatchPageNum = (int) ($manualBatchesPaged['page'] ?? 1);
+    $manualBatchTotalPages = (int) ($manualBatchesPaged['total_pages'] ?? 1);
+    $manualBatchPerPageKey = (string) ($manualBatchesPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $batches = $manualBatches ?? [];
+    $manualBatchTotal = count($batches);
+    $manualBatchPageNum = 1;
+    $manualBatchTotalPages = 1;
+    $manualBatchPerPageKey = ListPagination::DEFAULT;
+}
+$manualExtraQuery = ['year' => $year];
 $csrf = Csrf::token();
 ?>
 <div class="dg-wrap dg-buchhaltung-manuelle-buchung">
@@ -92,6 +106,14 @@ $csrf = Csrf::token();
     <?php if ($batches === []) : ?>
       <p class="dg-muted">Keine manuellen Buchungen.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $manualBatchTotal,
+            'perPageKey' => $manualBatchPerPageKey,
+            'listPage' => 'buchhaltung-manuelle-buchung',
+            'extraQuery' => $manualExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
@@ -120,6 +142,16 @@ $csrf = Csrf::token();
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $manualBatchTotal,
+            'page' => $manualBatchPageNum,
+            'totalPages' => $manualBatchTotalPages,
+            'perPageKey' => $manualBatchPerPageKey,
+            'listPage' => 'buchhaltung-manuelle-buchung',
+            'extraQuery' => $manualExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 </div>

@@ -5,7 +5,20 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$recipes = $recipeList ?? [];
+$recipePaged = is_array($recipePaged ?? null) ? $recipePaged : null;
+if ($recipePaged !== null && isset($recipePaged['items'])) {
+    $recipes = $recipePaged['items'];
+    $recipeTotal = (int) ($recipePaged['total'] ?? count($recipes));
+    $recipePageNum = (int) ($recipePaged['page'] ?? 1);
+    $recipeTotalPages = (int) ($recipePaged['total_pages'] ?? 1);
+    $recipePerPageKey = (string) ($recipePaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $recipes = $recipeList ?? [];
+    $recipeTotal = count($recipes);
+    $recipePageNum = 1;
+    $recipeTotalPages = 1;
+    $recipePerPageKey = ListPagination::DEFAULT;
+}
 $statusLabels = RecipeRepository::statusOptions();
 ?>
 <div class="dg-wrap">
@@ -32,6 +45,14 @@ $statusLabels = RecipeRepository::statusOptions();
     </div>
   <?php endif; ?>
 
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => $recipeTotal,
+        'perPageKey' => $recipePerPageKey,
+        'listPage' => 'rezeptur',
+        'extraQuery' => [],
+    ]);
+  ?>
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
@@ -70,7 +91,9 @@ $statusLabels = RecipeRepository::statusOptions();
               <td><?= (int) ($row['routing_count'] ?? 0) ?></td>
               <td>v<?= (int) ($row['version'] ?? 1) ?></td>
               <td class="dg-table__actions">
-                <a href="/app?page=rezeptur-form&amp;action=edit&amp;id=<?= $rid ?>"><?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?></a>
+                <div class="dg-table__actions-group">
+                  <a class="dg-button dg-button--small" href="/app?page=rezeptur-form&amp;action=edit&amp;id=<?= $rid ?>"><?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?></a>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -78,4 +101,14 @@ $statusLabels = RecipeRepository::statusOptions();
       </tbody>
     </table>
   </div>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => $recipeTotal,
+        'page' => $recipePageNum,
+        'totalPages' => $recipeTotalPages,
+        'perPageKey' => $recipePerPageKey,
+        'listPage' => 'rezeptur',
+        'extraQuery' => [],
+    ]);
+  ?>
 </div>

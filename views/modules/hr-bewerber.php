@@ -4,7 +4,20 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$jobApplications = is_array($jobApplications ?? null) ? $jobApplications : [];
+$jobApplicationsPaged = is_array($jobApplicationsPaged ?? null) ? $jobApplicationsPaged : null;
+if ($jobApplicationsPaged !== null && isset($jobApplicationsPaged['items'])) {
+    $jobApplications = $jobApplicationsPaged['items'];
+    $jobAppTotal = (int) ($jobApplicationsPaged['total'] ?? count($jobApplications));
+    $jobAppPageNum = (int) ($jobApplicationsPaged['page'] ?? 1);
+    $jobAppTotalPages = (int) ($jobApplicationsPaged['total_pages'] ?? 1);
+    $jobAppPerPageKey = (string) ($jobApplicationsPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $jobApplications = is_array($jobApplications ?? null) ? $jobApplications : [];
+    $jobAppTotal = count($jobApplications);
+    $jobAppPageNum = 1;
+    $jobAppTotalPages = 1;
+    $jobAppPerPageKey = ListPagination::DEFAULT;
+}
 $statusLabels = JobApplicationRepository::statusOptions();
 ?>
 <div class="dg-wrap">
@@ -24,6 +37,14 @@ $statusLabels = JobApplicationRepository::statusOptions();
   <?php if (!$dbConnected) : ?>
     <div class="dg-flash dg-flash--warning">Datenbank nicht verbunden.</div>
   <?php else : ?>
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => $jobAppTotal,
+          'perPageKey' => $jobAppPerPageKey,
+          'listPage' => 'hr-bewerber',
+          'extraQuery' => [],
+      ]);
+    ?>
     <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -66,5 +87,15 @@ $statusLabels = JobApplicationRepository::statusOptions();
         </tbody>
       </table>
     </div>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => $jobAppTotal,
+          'page' => $jobAppPageNum,
+          'totalPages' => $jobAppTotalPages,
+          'perPageKey' => $jobAppPerPageKey,
+          'listPage' => 'hr-bewerber',
+          'extraQuery' => [],
+      ]);
+    ?>
   <?php endif; ?>
 </div>

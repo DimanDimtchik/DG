@@ -21,8 +21,39 @@ $contactId = (int) ($timeVacContactId ?? 0);
 $label = (string) ($timeVacContactLabel ?? '');
 $year = (int) ($timeVacYear ?? (int) date('Y'));
 $balance = is_array($timeVacBalance ?? null) ? $timeVacBalance : [];
-$ownList = is_array($timeVacOwnList ?? null) ? $timeVacOwnList : [];
-$pending = is_array($timeVacPending ?? null) ? $timeVacPending : [];
+$timeVacExtraQuery = ['year' => $year];
+$timeVacOwnPaged = is_array($timeVacOwnPaged ?? null) ? $timeVacOwnPaged : null;
+if ($timeVacOwnPaged !== null && isset($timeVacOwnPaged['items'])) {
+    $ownList = $timeVacOwnPaged['items'];
+    $vacOwnTotal = (int) ($timeVacOwnPaged['total'] ?? count($ownList));
+    $vacOwnPageNum = (int) ($timeVacOwnPaged['page'] ?? 1);
+    $vacOwnTotalPages = (int) ($timeVacOwnPaged['total_pages'] ?? 1);
+    $vacOwnPerPageKey = (string) ($timeVacOwnPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $ownList = is_array($timeVacOwnList ?? null) ? $timeVacOwnList : [];
+    $ownList = array_values(array_filter(
+        $ownList,
+        static fn ($r): bool => is_array($r) && (string) ($r['type'] ?? '') === 'vacation'
+    ));
+    $vacOwnTotal = count($ownList);
+    $vacOwnPageNum = 1;
+    $vacOwnTotalPages = 1;
+    $vacOwnPerPageKey = ListPagination::DEFAULT;
+}
+$timeVacPendingPaged = is_array($timeVacPendingPaged ?? null) ? $timeVacPendingPaged : null;
+if ($timeVacPendingPaged !== null && isset($timeVacPendingPaged['items'])) {
+    $pending = $timeVacPendingPaged['items'];
+    $vacPendingTotal = (int) ($timeVacPendingPaged['total'] ?? count($pending));
+    $vacPendingPageNum = (int) ($timeVacPendingPaged['page'] ?? 1);
+    $vacPendingTotalPages = (int) ($timeVacPendingPaged['total_pages'] ?? 1);
+    $vacPendingPerPageKey = (string) ($timeVacPendingPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $pending = is_array($timeVacPending ?? null) ? $timeVacPending : [];
+    $vacPendingTotal = count($pending);
+    $vacPendingPageNum = 1;
+    $vacPendingTotalPages = 1;
+    $vacPendingPerPageKey = ListPagination::DEFAULT;
+}
 $staff = is_array($timeVacStaffOptions ?? null) ? $timeVacStaffOptions : [];
 $canTeam = !empty($timeVacCanTeam);
 $canApprove = !empty($timeVacCanApprove);
@@ -120,6 +151,14 @@ $staffLabel = static function (int $cid) use ($staff): string {
       <?php if ($ownList === []) : ?>
         <p class="dg-muted">Noch keine Urlaubseinträge.</p>
       <?php else : ?>
+        <?php
+          View::partial('partials/list-per-page', [
+              'total' => $vacOwnTotal,
+              'perPageKey' => $vacOwnPerPageKey,
+              'listPage' => 'zeiterfassung-urlaub',
+              'extraQuery' => $timeVacExtraQuery,
+          ]);
+        ?>
         <div class="dg-table-wrap">
           <table class="dg-table">
             <thead>
@@ -133,9 +172,6 @@ $staffLabel = static function (int $cid) use ($staff): string {
             </thead>
             <tbody>
               <?php foreach ($ownList as $row) : ?>
-                <?php if ((string) ($row['type'] ?? '') !== 'vacation') {
-                    continue;
-                } ?>
                 <tr>
                   <td>
                     <?= View::escape((string) ($row['date_from'] ?? '')) ?>
@@ -159,6 +195,16 @@ $staffLabel = static function (int $cid) use ($staff): string {
             </tbody>
           </table>
         </div>
+        <?php
+          View::partial('partials/list-pagination-nav', [
+              'total' => $vacOwnTotal,
+              'page' => $vacOwnPageNum,
+              'totalPages' => $vacOwnTotalPages,
+              'perPageKey' => $vacOwnPerPageKey,
+              'listPage' => 'zeiterfassung-urlaub',
+              'extraQuery' => $timeVacExtraQuery,
+          ]);
+        ?>
       <?php endif; ?>
     </section>
   <?php endif; ?>
@@ -169,6 +215,14 @@ $staffLabel = static function (int $cid) use ($staff): string {
       <?php if ($pending === []) : ?>
         <p class="dg-muted">Keine offenen Urlaubsanträge.</p>
       <?php else : ?>
+        <?php
+          View::partial('partials/list-per-page', [
+              'total' => $vacPendingTotal,
+              'perPageKey' => $vacPendingPerPageKey,
+              'listPage' => 'zeiterfassung-urlaub',
+              'extraQuery' => $timeVacExtraQuery,
+          ]);
+        ?>
         <div class="dg-table-wrap">
           <table class="dg-table">
             <thead>
@@ -211,6 +265,16 @@ $staffLabel = static function (int $cid) use ($staff): string {
             </tbody>
           </table>
         </div>
+        <?php
+          View::partial('partials/list-pagination-nav', [
+              'total' => $vacPendingTotal,
+              'page' => $vacPendingPageNum,
+              'totalPages' => $vacPendingTotalPages,
+              'perPageKey' => $vacPendingPerPageKey,
+              'listPage' => 'zeiterfassung-urlaub',
+              'extraQuery' => $timeVacExtraQuery,
+          ]);
+        ?>
       <?php endif; ?>
     </section>
   <?php endif; ?>

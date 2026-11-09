@@ -1,10 +1,24 @@
 <?php
 /** @var list<array<string, mixed>> $websitePageList */
+/** @var array<string, mixed>|null $websitePagePaged */
 /** @var array<string, mixed> $websiteMaintenance */
 /** @var bool $canEdit */
 /** @var bool $dbConnected */
 /** @var array{type: string, message: string}|null $flash */
-$pages = $websitePageList ?? [];
+$websitePagePaged = is_array($websitePagePaged ?? null) ? $websitePagePaged : null;
+if ($websitePagePaged !== null && isset($websitePagePaged['items'])) {
+    $pages = $websitePagePaged['items'];
+    $websitePagesTotal = (int) ($websitePagePaged['total'] ?? count($pages));
+    $websitePagesPageNum = (int) ($websitePagePaged['page'] ?? 1);
+    $websitePagesTotalPages = (int) ($websitePagePaged['total_pages'] ?? 1);
+    $websitePagesPerPageKey = (string) ($websitePagePaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $pages = $websitePageList ?? [];
+    $websitePagesTotal = count($pages);
+    $websitePagesPageNum = 1;
+    $websitePagesTotalPages = 1;
+    $websitePagesPerPageKey = ListPagination::DEFAULT;
+}
 $legalSlugs = ['impressum', 'datenschutz', 'agb', 'widerruf'];
 $legalLabels = [
     'impressum' => 'Impressum',
@@ -38,7 +52,7 @@ if ($previewImage === '') {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Seiten</h1>
-      <p class="dg-lead">Öffentliche Website-Seiten — <?= count($pages) ?> Einträge</p>
+      <p class="dg-lead">Öffentliche Website-Seiten — <?= $websitePagesTotal ?> Einträge</p>
     </div>
     <div class="dg-toolbar">
       <?php if ($canEdit && $dbConnected) : ?>
@@ -109,11 +123,12 @@ if ($previewImage === '') {
                   </span>
                 </td>
                 <td class="dg-table__actions">
-                  <a href="<?= View::escape($legalPreviewHref) ?>" target="_blank" rel="noopener">Vorschau</a>
-                  <span class="dg-muted">·</span>
-                  <a href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($legalPage['id'] ?? 0) ?>">
-                    <?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?>
-                  </a>
+                  <div class="dg-table__actions-group">
+                    <a class="dg-button dg-button--small" href="<?= View::escape($legalPreviewHref) ?>" target="_blank" rel="noopener">Vorschau</a>
+                    <a class="dg-button dg-button--small" href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($legalPage['id'] ?? 0) ?>">
+                      <?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?>
+                    </a>
+                  </div>
                 </td>
               </tr>
             <?php else : ?>
@@ -123,7 +138,9 @@ if ($previewImage === '') {
                 <td><span class="dg-badge dg-badge--pending">Noch nicht angelegt</span></td>
                 <td class="dg-table__actions">
                   <?php if ($canEdit && $dbConnected) : ?>
-                    <a href="/app?page=website-seiten&amp;legal_ensure=<?= View::escape($legalSlug) ?>">Anlegen</a>
+                    <div class="dg-table__actions-group">
+                      <a class="dg-button dg-button--small" href="/app?page=website-seiten&amp;legal_ensure=<?= View::escape($legalSlug) ?>">Anlegen</a>
+                    </div>
                   <?php else : ?>
                     <span class="dg-muted">—</span>
                   <?php endif; ?>
@@ -206,6 +223,14 @@ if ($previewImage === '') {
     </form>
   </section>
 
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => $websitePagesTotal,
+        'perPageKey' => $websitePagesPerPageKey,
+        'listPage' => 'website-seiten',
+        'extraQuery' => [],
+    ]);
+  ?>
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
@@ -243,13 +268,14 @@ if ($previewImage === '') {
                   $slug = (string) ($pageRow['slug'] ?? '');
                   $previewHref = $slug !== '' ? '/vorschau/' . rawurlencode($slug) : '';
                 ?>
-                <?php if ($previewHref !== '') : ?>
-                  <a href="<?= View::escape($previewHref) ?>" target="_blank" rel="noopener">Vorschau</a>
-                  <span class="dg-muted">·</span>
-                <?php endif; ?>
-                <a href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($pageRow['id'] ?? 0) ?>">
-                  <?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?>
-                </a>
+                <div class="dg-table__actions-group">
+                  <?php if ($previewHref !== '') : ?>
+                    <a class="dg-button dg-button--small" href="<?= View::escape($previewHref) ?>" target="_blank" rel="noopener">Vorschau</a>
+                  <?php endif; ?>
+                  <a class="dg-button dg-button--small" href="/app?page=website-seite-form&amp;action=edit&amp;id=<?= (int) ($pageRow['id'] ?? 0) ?>">
+                    <?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?>
+                  </a>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -257,4 +283,14 @@ if ($previewImage === '') {
       </tbody>
     </table>
   </div>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => $websitePagesTotal,
+        'page' => $websitePagesPageNum,
+        'totalPages' => $websitePagesTotalPages,
+        'perPageKey' => $websitePagesPerPageKey,
+        'listPage' => 'website-seiten',
+        'extraQuery' => [],
+    ]);
+  ?>
 </div>

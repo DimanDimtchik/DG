@@ -38,13 +38,34 @@ final class KdvCustomerRepository
     /** @return list<array<string, mixed>> */
     public static function list(): array
     {
-        if (!Database::isConfigured()) return [];
-        MigrationRunner::runPending();
+        return self::paginate(1, 'all')['items'];
+    }
 
-        $stmt = Database::pdo()->query(
-            'SELECT * FROM dg_kdv_customers ORDER BY company_name ASC'
-        );
-        return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 10000): array
+    {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if (!Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        MigrationRunner::runPending();
+        $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_kdv_customers')->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+        $sql = 'SELECT * FROM dg_kdv_customers ORDER BY company_name ASC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->query($sql . ' LIMIT ' . max(1, $hardCap));
+            $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /** @return array<string, mixed>|null */

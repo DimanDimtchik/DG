@@ -28,12 +28,6 @@ $statusLabels = WriterDocument::statusOptions();
 $filter = (string) ($writerStatusFilter ?? '');
 $contactFilter = (int) ($writerContactFilter ?? 0);
 $filterContact = $writerFilterContact ?? null;
-$sizeOptions = [
-    '10' => '10',
-    '50' => '50',
-    '100' => '100',
-    'all' => 'Alle',
-];
 $writerListUrl = static function (?string $status = null, ?int $contact = null, ?string $size = null, ?int $paged = null) use ($filter, $contactFilter, $perPageKey): string {
     $params = ['page' => 'dokumentenverfasser'];
     $statusVal = $status ?? $filter;
@@ -92,25 +86,18 @@ $writerListUrl = static function (?string $status = null, ?int $contact = null, 
     </div>
   <?php endif; ?>
 
-  <?php if ((int) $list['total'] > 0) : ?>
-    <form class="dg-form dg-btn-row" method="get" action="/app" aria-label="Einträge pro Seite">
-      <input type="hidden" name="page" value="dokumentenverfasser">
-      <?php if ($filter !== '') : ?>
-        <input type="hidden" name="status" value="<?= View::escape($filter) ?>">
-      <?php endif; ?>
-      <?php if ($contactFilter > 0) : ?>
-        <input type="hidden" name="contact" value="<?= $contactFilter ?>">
-      <?php endif; ?>
-      <label class="dg-field">
-        <span>Anzeigen</span>
-        <select name="per_page" onchange="this.form.submit()">
-          <?php foreach ($sizeOptions as $sizeKey => $sizeLabel) : ?>
-            <option value="<?= View::escape($sizeKey) ?>"<?= $perPageKey === $sizeKey ? ' selected' : '' ?>><?= View::escape($sizeLabel) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-    </form>
-  <?php endif; ?>
+  <?php
+    $writerExtra = array_filter([
+        'status' => $filter !== '' ? $filter : null,
+        'contact' => $contactFilter > 0 ? $contactFilter : null,
+    ], static fn ($v) => $v !== null && $v !== '');
+    View::partial('partials/list-per-page', [
+        'total' => (int) $list['total'],
+        'perPageKey' => $perPageKey,
+        'listPage' => 'dokumentenverfasser',
+        'extraQuery' => $writerExtra,
+    ]);
+  ?>
 
   <div class="dg-table-wrap">
     <table class="dg-table">
@@ -179,15 +166,14 @@ $writerListUrl = static function (?string $status = null, ?int $contact = null, 
     </table>
   </div>
 
-  <?php if ((int) $list['total_pages'] > 1) : ?>
-    <nav class="dg-pagination" aria-label="Seiten">
-      <?php if ((int) $list['page'] > 1) : ?>
-        <a href="<?= View::escape($writerListUrl(null, null, null, (int) $list['page'] - 1)) ?>">&laquo; Zurück</a>
-      <?php endif; ?>
-      <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
-      <?php if ((int) $list['page'] < (int) $list['total_pages']) : ?>
-        <a href="<?= View::escape($writerListUrl(null, null, null, (int) $list['page'] + 1)) ?>">Weiter &raquo;</a>
-      <?php endif; ?>
-    </nav>
-  <?php endif; ?>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => (int) $list['total'],
+        'page' => (int) $list['page'],
+        'totalPages' => (int) $list['total_pages'],
+        'perPageKey' => $perPageKey,
+        'listPage' => 'dokumentenverfasser',
+        'extraQuery' => $writerExtra,
+    ]);
+  ?>
 </div>

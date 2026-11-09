@@ -6,53 +6,52 @@ declare(strict_types=1);
  */
 final class BookingRepository
 {
-    private const PER_PAGE = 20;
-
     /** Erlaubte Listen-Perioden (GET period=…). */
     public const PERIOD_FILTERS = ['heute', 'woche', 'monat', 'zukunft', 'vergangen'];
 
     /**
-     * Methode paginate.
-     * @param string $search
-     * @param int $page
      * @param string $periodFilter heute|woche|monat|zukunft|vergangen|''
-     * @return array<string, mixed>
+     * @return array{items: list<Booking>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
      */
-    public static function paginate(string $search = '', int $page = 1, string $periodFilter = ''): array
-    {
-        $page = max(1, $page);
+    public static function paginate(
+        string $search = '',
+        int $page = 1,
+        string $periodFilter = '',
+        string $perPageKey = ListPagination::DEFAULT
+    ): array {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         $pdo = Database::pdo();
         [$where, $params] = self::buildListWhere($search, $periodFilter);
 
         $stmt = $pdo->prepare('SELECT COUNT(*) FROM dg_bookings ' . $where);
         $stmt->execute($params);
         $total = (int) $stmt->fetchColumn();
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
 
         $order = $periodFilter === 'zukunft' || $periodFilter === 'heute'
             ? 'ORDER BY slot_datetime ASC'
             : 'ORDER BY slot_datetime DESC';
 
-        $sql = 'SELECT * FROM dg_bookings ' . $where . ' ' . $order . ' LIMIT :limit OFFSET :offset';
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $k => $v) {
-            $stmt->bindValue(':' . $k, $v);
+        $sql = 'SELECT * FROM dg_bookings ' . $where . ' ' . $order;
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+        } else {
+            $stmt = $pdo->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            foreach ($params as $k => $v) {
+                $stmt->bindValue(':' . $k, $v);
+            }
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
         }
-        $stmt->bindValue(':limit', self::PER_PAGE, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', ($page - 1) * self::PER_PAGE, PDO::PARAM_INT);
-        $stmt->execute();
 
         $items = [];
         while ($row = $stmt->fetch()) {
             $items[] = self::map($row);
         }
 
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => self::PER_PAGE,
-            'total_pages' => max(1, (int) ceil($total / self::PER_PAGE)),
-        ];
+        return ListPagination::result($items, $total, $meta);
     }
 
     /**

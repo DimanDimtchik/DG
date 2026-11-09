@@ -5,7 +5,20 @@
 /** @var string $telefonDial */
 
 $ctiConfig = $ctiConfig ?? CtiSettings::config();
-$callLog = $callLog ?? [];
+$callLogList = is_array($callLogList ?? null) ? $callLogList : null;
+if ($callLogList !== null && isset($callLogList['items'])) {
+    $callLog = $callLogList['items'];
+    $callLogTotal = (int) ($callLogList['total'] ?? count($callLog));
+    $callLogPageNum = (int) ($callLogList['page'] ?? 1);
+    $callLogTotalPages = (int) ($callLogList['total_pages'] ?? 1);
+    $callLogPerPageKey = (string) ($callLogList['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $callLog = $callLog ?? [];
+    $callLogTotal = count($callLog);
+    $callLogPageNum = 1;
+    $callLogTotalPages = 1;
+    $callLogPerPageKey = ListPagination::DEFAULT;
+}
 $telefonDial = $telefonDial ?? '';
 $isAdmin = class_exists('RoleResolver') && RoleResolver::isAdmin($user);
 $ctiOn = CtiSettings::isEnabled();
@@ -42,9 +55,17 @@ $ctiOn = CtiSettings::isEnabled();
     <details class="dg-form-accordion">
       <summary>Letzte Anrufe</summary>
       <div class="dg-form-accordion__body">
-        <?php if ($callLog === []) : ?>
+        <?php if ($callLogTotal === 0) : ?>
           <p class="dg-muted">Noch keine Einträge.</p>
         <?php else : ?>
+          <?php
+            View::partial('partials/list-per-page', [
+                'total' => $callLogTotal,
+                'perPageKey' => $callLogPerPageKey,
+                'listPage' => 'telefon',
+                'extraQuery' => [],
+            ]);
+          ?>
           <div class="dg-table-wrap">
             <table class="dg-table">
               <thead>
@@ -84,6 +105,16 @@ $ctiOn = CtiSettings::isEnabled();
               </tbody>
             </table>
           </div>
+          <?php
+            View::partial('partials/list-pagination-nav', [
+                'total' => $callLogTotal,
+                'page' => $callLogPageNum,
+                'totalPages' => $callLogTotalPages,
+                'perPageKey' => $callLogPerPageKey,
+                'listPage' => 'telefon',
+                'extraQuery' => [],
+            ]);
+          ?>
         <?php endif; ?>
       </div>
     </details>

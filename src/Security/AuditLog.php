@@ -50,6 +50,40 @@ final class AuditLog
             return [];
         }
 
+        try {
+            $pdo = Database::pdo();
+            $stmt = $pdo->prepare(
+                'SELECT a.*, u.username
+                 FROM dg_audit_log a
+                 LEFT JOIN dg_users u ON u.id = a.user_id
+                 ORDER BY a.created_at DESC
+                 LIMIT :lim OFFSET :off'
+            );
+            $stmt->bindValue('lim', $limit, PDO::PARAM_INT);
+            $stmt->bindValue('off', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 10000): array
+    {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if (!Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        try {
+            $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_audit_log')->fetchColumn(), max(1, $hardCap));
+        } catch (Throwable) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
         $pdo = Database::pdo();
         $stmt = $pdo->prepare(
             'SELECT a.*, u.username
@@ -58,10 +92,11 @@ final class AuditLog
              ORDER BY a.created_at DESC
              LIMIT :lim OFFSET :off'
         );
-        $stmt->bindValue('lim', $limit, PDO::PARAM_INT);
-        $stmt->bindValue('off', $offset, PDO::PARAM_INT);
+        $stmt->bindValue('lim', $meta['show_all'] ? max(1, $hardCap) : $meta['limit'], PDO::PARAM_INT);
+        $stmt->bindValue('off', $meta['show_all'] ? 0 : $meta['offset'], PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return ListPagination::result($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [], $total, $meta);
     }
 
     /**

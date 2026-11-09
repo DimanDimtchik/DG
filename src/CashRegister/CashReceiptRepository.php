@@ -192,27 +192,54 @@ final class CashReceiptRepository
      */
     public static function listRecent(int $limit = 50, ?int $registerId = null): array
     {
+        return self::paginateRecent(1, 'all', $registerId, max(1, min(200, $limit)))['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginateRecent(
+        int $page = 1,
+        string $perPageKey = ListPagination::DEFAULT,
+        ?int $registerId = null,
+        int $hardCap = 10000
+    ): array {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         if (!self::tableExists()) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
-        $limit = max(1, min(200, $limit));
+        $params = [];
+        $where = '';
+        if ($registerId !== null && $registerId > 0) {
+            $where = ' WHERE r.register_id = :rid';
+            $params['rid'] = $registerId;
+        }
+        $countSql = 'SELECT COUNT(*) FROM dg_cash_receipts r' . $where;
+        $countStmt = $params === []
+            ? Database::pdo()->query($countSql)
+            : Database::pdo()->prepare($countSql);
+        if ($countStmt === false) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        if ($params !== []) {
+            $countStmt->execute($params);
+        }
+        $total = min((int) $countStmt->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
         $sql = 'SELECT r.*,
                        reg.code AS register_code, reg.name AS register_name,
                        l.code AS location_code, l.name AS location_name
                 FROM dg_cash_receipts r
                 LEFT JOIN dg_cash_registers reg ON reg.id = r.register_id
-                LEFT JOIN dg_cash_locations l ON l.id = r.location_id';
-        $params = [];
-        if ($registerId !== null && $registerId > 0) {
-            $sql .= ' WHERE r.register_id = :rid';
-            $params['rid'] = $registerId;
-        }
-        $sql .= ' ORDER BY r.id DESC LIMIT ' . $limit;
+                LEFT JOIN dg_cash_locations l ON l.id = r.location_id'
+            . $where
+            . ' ORDER BY r.id DESC LIMIT ' . ($meta['show_all'] ? max(1, $hardCap) : $meta['limit'])
+            . ($meta['show_all'] ? '' : (' OFFSET ' . $meta['offset']));
         $stmt = $params === []
             ? Database::pdo()->query($sql)
             : Database::pdo()->prepare($sql);
         if ($stmt === false) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
         if ($params !== []) {
             $stmt->execute($params);
@@ -222,7 +249,7 @@ final class CashReceiptRepository
             $rows[] = $row;
         }
 
-        return $rows;
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /**
@@ -235,10 +262,47 @@ final class CashReceiptRepository
         ?string $businessDate = null,
         int $limit = 200
     ): array {
+        return self::paginateJournal(1, 'all', $registerId, $businessDate, max(1, min(500, $limit)))['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginateJournal(
+        int $page = 1,
+        string $perPageKey = ListPagination::DEFAULT,
+        ?int $registerId = null,
+        ?string $businessDate = null,
+        int $hardCap = 10000
+    ): array {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         if (!self::tableExists()) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
-        $limit = max(1, min(500, $limit));
+        $where = ' WHERE r.status = \'finalized\'';
+        $params = [];
+        if ($registerId !== null && $registerId > 0) {
+            $where .= ' AND r.register_id = :rid';
+            $params['rid'] = $registerId;
+        }
+        $date = trim((string) $businessDate);
+        if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1) {
+            $where .= ' AND s.business_date = :bd';
+            $params['bd'] = $date;
+        }
+        $countSql = 'SELECT COUNT(*) FROM dg_cash_receipts r
+                LEFT JOIN dg_cash_sessions s ON s.id = r.session_id' . $where;
+        $countStmt = $params === []
+            ? Database::pdo()->query($countSql)
+            : Database::pdo()->prepare($countSql);
+        if ($countStmt === false) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        if ($params !== []) {
+            $countStmt->execute($params);
+        }
+        $total = min((int) $countStmt->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
         $sql = 'SELECT r.*,
                        reg.code AS register_code, reg.name AS register_name,
                        l.code AS location_code, l.name AS location_name,
@@ -246,24 +310,16 @@ final class CashReceiptRepository
                 FROM dg_cash_receipts r
                 LEFT JOIN dg_cash_registers reg ON reg.id = r.register_id
                 LEFT JOIN dg_cash_locations l ON l.id = r.location_id
-                LEFT JOIN dg_cash_sessions s ON s.id = r.session_id
-                WHERE r.status = \'finalized\'';
-        $params = [];
-        if ($registerId !== null && $registerId > 0) {
-            $sql .= ' AND r.register_id = :rid';
-            $params['rid'] = $registerId;
-        }
-        $date = trim((string) $businessDate);
-        if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1) {
-            $sql .= ' AND s.business_date = :bd';
-            $params['bd'] = $date;
-        }
-        $sql .= ' ORDER BY s.business_date DESC, r.finished_at DESC, r.id DESC LIMIT ' . $limit;
+                LEFT JOIN dg_cash_sessions s ON s.id = r.session_id'
+            . $where
+            . ' ORDER BY s.business_date DESC, r.finished_at DESC, r.id DESC LIMIT '
+            . ($meta['show_all'] ? max(1, $hardCap) : $meta['limit'])
+            . ($meta['show_all'] ? '' : (' OFFSET ' . $meta['offset']));
         $stmt = $params === []
             ? Database::pdo()->query($sql)
             : Database::pdo()->prepare($sql);
         if ($stmt === false) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
         if ($params !== []) {
             $stmt->execute($params);
@@ -273,7 +329,7 @@ final class CashReceiptRepository
             $rows[] = $row;
         }
 
-        return $rows;
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /**

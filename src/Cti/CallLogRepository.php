@@ -14,21 +14,38 @@ final class CallLogRepository
     /** @return list<array<string, mixed>> */
     public static function recent(int $limit = 50): array
     {
+        return self::paginate(1, 'all', $limit)['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 2000): array
+    {
         self::ensureReady();
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         if (!Database::isConfigured()) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
-        $limit = max(1, min(200, $limit));
-        $stmt = Database::pdo()->prepare(
-            'SELECT c.*, ct.display_name AS contact_name
+        $total = (int) Database::pdo()->query('SELECT COUNT(*) FROM dg_call_log')->fetchColumn();
+        $total = min($total, max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+        $sql = 'SELECT c.*, ct.display_name AS contact_name
              FROM dg_call_log c
              LEFT JOIN dg_contacts ct ON ct.id = c.contact_id
-             ORDER BY c.started_at DESC, c.id DESC
-             LIMIT ' . $limit
-        );
-        $stmt->execute();
+             ORDER BY c.started_at DESC, c.id DESC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->query($sql . ' LIMIT ' . max(1, $hardCap));
+            $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /** @return list<array<string, mixed>> */

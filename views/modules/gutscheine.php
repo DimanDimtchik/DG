@@ -5,7 +5,20 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$rows = $giftVoucherList ?? [];
+$giftVoucherPaged = is_array($giftVoucherPaged ?? null) ? $giftVoucherPaged : null;
+if ($giftVoucherPaged !== null && isset($giftVoucherPaged['items'])) {
+    $rows = $giftVoucherPaged['items'];
+    $giftTotal = (int) ($giftVoucherPaged['total'] ?? count($rows));
+    $giftPageNum = (int) ($giftVoucherPaged['page'] ?? 1);
+    $giftTotalPages = (int) ($giftVoucherPaged['total_pages'] ?? 1);
+    $giftPerPageKey = (string) ($giftVoucherPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $rows = $giftVoucherList ?? [];
+    $giftTotal = count($rows);
+    $giftPageNum = 1;
+    $giftTotalPages = 1;
+    $giftPerPageKey = ListPagination::DEFAULT;
+}
 $typeLabels = GiftVoucherRepository::typeOptions();
 $statusLabels = GiftVoucherRepository::statusOptions();
 ?>
@@ -33,6 +46,14 @@ $statusLabels = GiftVoucherRepository::statusOptions();
     </div>
   <?php endif; ?>
 
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => $giftTotal,
+        'perPageKey' => $giftPerPageKey,
+        'listPage' => 'gutscheine',
+        'extraQuery' => [],
+    ]);
+  ?>
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
@@ -79,4 +100,14 @@ $statusLabels = GiftVoucherRepository::statusOptions();
       </tbody>
     </table>
   </div>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => $giftTotal,
+        'page' => $giftPageNum,
+        'totalPages' => $giftTotalPages,
+        'perPageKey' => $giftPerPageKey,
+        'listPage' => 'gutscheine',
+        'extraQuery' => [],
+    ]);
+  ?>
 </div>

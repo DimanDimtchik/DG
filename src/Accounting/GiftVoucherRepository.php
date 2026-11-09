@@ -109,10 +109,6 @@ final class GiftVoucherRepository
      */
     public static function listAll(int|string|null $statusOrLimit = null, int $limit = 200): array
     {
-        self::ensureTables();
-        if (!Database::isConfigured()) {
-            return [];
-        }
         $status = null;
         if (is_int($statusOrLimit)) {
             $limit = $statusOrLimit;
@@ -121,21 +117,53 @@ final class GiftVoucherRepository
         }
         $limit = max(1, min(500, $limit));
 
-        $sql = 'SELECT * FROM dg_gift_vouchers';
+        return self::paginate(1, 'all', $status, $limit)['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(
+        int $page = 1,
+        string $perPageKey = ListPagination::DEFAULT,
+        ?string $status = null,
+        int $hardCap = 5000
+    ): array {
+        self::ensureTables();
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if (!Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        $status = $status !== null && trim($status) !== '' ? trim($status) : null;
         $params = [];
+        $where = '';
         if ($status !== null) {
-            $sql .= ' WHERE status = :status';
+            $where = ' WHERE status = :status';
             $params['status'] = $status;
         }
-        $sql .= ' ORDER BY created_at DESC, id DESC LIMIT ' . $limit;
-        $stmt = Database::pdo()->prepare($sql);
-        $stmt->execute($params);
+        $countStmt = Database::pdo()->prepare('SELECT COUNT(*) FROM dg_gift_vouchers' . $where);
+        $countStmt->execute($params);
+        $total = min((int) $countStmt->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+        $sql = 'SELECT * FROM dg_gift_vouchers' . $where . ' ORDER BY created_at DESC, id DESC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT ' . max(1, $hardCap));
+            $stmt->execute($params);
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            foreach ($params as $k => $v) {
+                $stmt->bindValue(':' . ltrim((string) $k, ':'), $v);
+            }
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+        }
         $out = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $out[] = self::normalizeRow($row);
         }
 
-        return $out;
+        return ListPagination::result($out, $total, $meta);
     }
 
     /**

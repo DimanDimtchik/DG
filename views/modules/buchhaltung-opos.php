@@ -9,7 +9,24 @@
 $direction = (string) ($oposDirection ?? '');
 $search = (string) ($oposSearch ?? '');
 $data = $oposData ?? ['items' => [], 'totals' => ['receivable' => 0.0, 'payable' => 0.0]];
-$items = $data['items'] ?? [];
+$oposPaged = is_array($oposPaged ?? null) ? $oposPaged : null;
+if ($oposPaged !== null && isset($oposPaged['items'])) {
+    $items = $oposPaged['items'];
+    $oposTotal = (int) ($oposPaged['total'] ?? count($items));
+    $oposPageNum = (int) ($oposPaged['page'] ?? 1);
+    $oposTotalPages = (int) ($oposPaged['total_pages'] ?? 1);
+    $oposPerPageKey = (string) ($oposPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $items = $data['items'] ?? [];
+    $oposTotal = count($items);
+    $oposPageNum = 1;
+    $oposTotalPages = 1;
+    $oposPerPageKey = ListPagination::DEFAULT;
+}
+$oposExtraQuery = [
+    'direction' => $direction !== '' ? $direction : null,
+    's' => $search !== '' ? $search : null,
+];
 $totals = $data['totals'] ?? ['receivable' => 0.0, 'payable' => 0.0];
 $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
 ?>
@@ -60,6 +77,14 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
     <?php if ($items === []) : ?>
       <p class="dg-muted">Keine offenen Posten gefunden.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $oposTotal,
+            'perPageKey' => $oposPerPageKey,
+            'listPage' => 'buchhaltung-opos',
+            'extraQuery' => $oposExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
@@ -104,14 +129,26 @@ $fmt = static fn (float $v): string => number_format($v, 2, ',', '.');
                 <td class="dg-table__num"><?= $fmt((float) ($item['paid_amount'] ?? 0)) ?> €</td>
                 <td class="dg-table__num"><strong><?= $fmt((float) ($item['open_amount'] ?? 0)) ?> €</strong></td>
                 <td><?= (int) ($item['dunning_level'] ?? 0) > 0 ? (int) $item['dunning_level'] : '—' ?></td>
-                <td>
-                  <a href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) ($item['voucher_id'] ?? 0) ?>">Beleg</a>
+                <td class="dg-table__actions">
+                  <div class="dg-table__actions-group">
+                    <a class="dg-button dg-button--small" href="/app?page=buchhaltung-beleg-form&action=edit&id=<?= (int) ($item['voucher_id'] ?? 0) ?>">Beleg</a>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $oposTotal,
+            'page' => $oposPageNum,
+            'totalPages' => $oposTotalPages,
+            'perPageKey' => $oposPerPageKey,
+            'listPage' => 'buchhaltung-opos',
+            'extraQuery' => $oposExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 </div>

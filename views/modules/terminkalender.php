@@ -3,10 +3,15 @@
 /** @var string $bookingSearch */
 /** @var string $bookingPeriodFilter */
 /** @var array{type: string, message: string}|null $flash */
-$list = $bookingList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'total_pages' => 1];
+$list = $bookingList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'total_pages' => 1, 'per_page_key' => ListPagination::DEFAULT];
 $search = $bookingSearch ?? '';
 $periodFilter = $bookingPeriodFilter ?? '';
+$perPageKey = (string) ($list['per_page_key'] ?? ListPagination::DEFAULT);
 $baseUrl = '/app?page=terminkalender';
+$listExtraQuery = array_filter([
+    's' => $search !== '' ? $search : null,
+    'period' => $periodFilter !== '' ? $periodFilter : null,
+], static fn ($v) => $v !== null && $v !== '');
 $filterChips = [
     '' => 'Alle',
     'heute' => 'Heute',
@@ -15,7 +20,7 @@ $filterChips = [
     'zukunft' => 'Zukünftige',
     'vergangen' => 'Vergangene',
 ];
-$filterUrl = static function (string $period) use ($baseUrl, $search): string {
+$filterUrl = static function (string $period) use ($baseUrl, $search, $perPageKey): string {
     $url = $baseUrl;
     if ($period !== '') {
         $url .= '&period=' . rawurlencode($period);
@@ -23,15 +28,9 @@ $filterUrl = static function (string $period) use ($baseUrl, $search): string {
     if ($search !== '') {
         $url .= '&s=' . rawurlencode($search);
     }
+    $url .= '&per_page=' . rawurlencode($perPageKey);
     return $url;
 };
-$pageQuery = $baseUrl;
-if ($periodFilter !== '') {
-    $pageQuery .= '&period=' . rawurlencode($periodFilter);
-}
-if ($search !== '') {
-    $pageQuery .= '&s=' . rawurlencode($search);
-}
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -71,6 +70,15 @@ if ($search !== '') {
       ><?= View::escape($chipLabel) ?></a>
     <?php endforeach; ?>
   </nav>
+
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => (int) $list['total'],
+        'perPageKey' => $perPageKey,
+        'listPage' => 'terminkalender',
+        'extraQuery' => $listExtraQuery,
+    ]);
+  ?>
 
   <div class="dg-table-wrap">
     <table class="dg-table">
@@ -113,15 +121,14 @@ if ($search !== '') {
     </table>
   </div>
 
-  <?php if ($list['total_pages'] > 1) : ?>
-    <nav class="dg-pagination" aria-label="Seiten">
-      <?php if ($list['page'] > 1) : ?>
-        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
-      <?php endif; ?>
-      <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
-      <?php if ($list['page'] < $list['total_pages']) : ?>
-        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
-      <?php endif; ?>
-    </nav>
-  <?php endif; ?>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => (int) $list['total'],
+        'page' => (int) $list['page'],
+        'totalPages' => (int) $list['total_pages'],
+        'perPageKey' => $perPageKey,
+        'listPage' => 'terminkalender',
+        'extraQuery' => $listExtraQuery,
+    ]);
+  ?>
 </div>

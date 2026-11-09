@@ -5,9 +5,23 @@
 /** @var bool $canEdit */
 /** @var array{type: string, message: string}|null $flash */
 $formRow = $websiteForm ?? null;
-$subs = $websiteFormSubmissions ?? [];
+$websiteFormSubmissionsPaged = is_array($websiteFormSubmissionsPaged ?? null) ? $websiteFormSubmissionsPaged : null;
+if ($websiteFormSubmissionsPaged !== null && isset($websiteFormSubmissionsPaged['items'])) {
+    $subs = $websiteFormSubmissionsPaged['items'];
+    $inboxTotal = (int) ($websiteFormSubmissionsPaged['total'] ?? count($subs));
+    $inboxPageNum = (int) ($websiteFormSubmissionsPaged['page'] ?? 1);
+    $inboxTotalPages = (int) ($websiteFormSubmissionsPaged['total_pages'] ?? 1);
+    $inboxPerPageKey = (string) ($websiteFormSubmissionsPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $subs = $websiteFormSubmissions ?? [];
+    $inboxTotal = count($subs);
+    $inboxPageNum = 1;
+    $inboxTotalPages = 1;
+    $inboxPerPageKey = ListPagination::DEFAULT;
+}
 $detail = $websiteFormSubmission ?? null;
 $formId = (int) ($formRow['id'] ?? 0);
+$inboxExtraQuery = ['id' => $formId];
 ?>
 <div class="dg-wrap">
   <?php
@@ -21,7 +35,7 @@ $formId = (int) ($formRow['id'] ?? 0);
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">Eingänge: <?= View::escape((string) ($formRow['title'] ?? 'Formular')) ?></h1>
-      <p class="dg-lead"><?= count($subs) ?> Einträge</p>
+      <p class="dg-lead"><?= $inboxTotal ?> Einträge</p>
     </div>
     <div class="dg-toolbar">
       <a class="dg-button" href="/app?page=website-formular-form&amp;action=edit&amp;id=<?= $formId ?>">Formular bearbeiten</a>
@@ -75,6 +89,14 @@ $formId = (int) ($formRow['id'] ?? 0);
     </section>
   <?php endif; ?>
 
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => $inboxTotal,
+        'perPageKey' => $inboxPerPageKey,
+        'listPage' => 'website-formular-inbox',
+        'extraQuery' => $inboxExtraQuery,
+    ]);
+  ?>
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
@@ -117,4 +139,14 @@ $formId = (int) ($formRow['id'] ?? 0);
       </tbody>
     </table>
   </div>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => $inboxTotal,
+        'page' => $inboxPageNum,
+        'totalPages' => $inboxTotalPages,
+        'perPageKey' => $inboxPerPageKey,
+        'listPage' => 'website-formular-inbox',
+        'extraQuery' => $inboxExtraQuery,
+    ]);
+  ?>
 </div>

@@ -15,8 +15,34 @@
  * @var list<array<string, mixed>> $stockShelves
  * @var array{type: string, message: string}|null $flash
  */
-$stockItems = $stockItems ?? [];
-$stockMovements = $stockMovements ?? [];
+$stockList = is_array($stockList ?? null) ? $stockList : null;
+if ($stockList !== null && isset($stockList['items'])) {
+    $stockItems = $stockList['items'];
+    $stockTotal = (int) ($stockList['total'] ?? count($stockItems));
+    $stockPageNum = (int) ($stockList['page'] ?? 1);
+    $stockTotalPages = (int) ($stockList['total_pages'] ?? 1);
+    $stockPerPageKey = (string) ($stockList['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $stockItems = $stockItems ?? [];
+    $stockTotal = count($stockItems);
+    $stockPageNum = 1;
+    $stockTotalPages = 1;
+    $stockPerPageKey = ListPagination::DEFAULT;
+}
+$stockMovementList = is_array($stockMovementList ?? null) ? $stockMovementList : null;
+if ($stockMovementList !== null && isset($stockMovementList['items'])) {
+    $stockMovements = $stockMovementList['items'];
+    $movTotal = (int) ($stockMovementList['total'] ?? count($stockMovements));
+    $movPageNum = (int) ($stockMovementList['page'] ?? 1);
+    $movTotalPages = (int) ($stockMovementList['total_pages'] ?? 1);
+    $movPerPageKey = (string) ($stockMovementList['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $stockMovements = $stockMovements ?? [];
+    $movTotal = count($stockMovements);
+    $movPageNum = 1;
+    $movTotalPages = 1;
+    $movPerPageKey = ListPagination::DEFAULT;
+}
 $stockInventories = $stockInventories ?? [];
 $stockOutboundVouchers = $stockOutboundVouchers ?? [];
 $stockPlaces = $stockPlaces ?? [];
@@ -26,6 +52,7 @@ $stockShelves = $stockShelves ?? [];
 $activeInventory = $activeInventory ?? null;
 $activeInventoryLines = $activeInventoryLines ?? [];
 $lagerView = $lagerView ?? 'overview';
+$lagerExtraQuery = ['view' => $lagerView];
 $csrf = Csrf::token();
 $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', '.'), '0'), ',');
 ?>
@@ -67,10 +94,18 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php if ($lagerView === 'overview') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Artikel mit Lagerführung</h2>
-    <?php if ($stockItems === []) : ?>
+    <?php if ($stockTotal === 0) : ?>
       <p class="dg-muted">Noch keine Artikel mit Lagerführung.</p>
       <p><a class="dg-button dg-button--primary" href="/app?page=artikel-leistungen&amp;kind=product&amp;focus=stock">Artikel anlegen — Lager führen</a></p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $stockTotal,
+            'perPageKey' => $stockPerPageKey,
+            'listPage' => 'lager',
+            'extraQuery' => $lagerExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">
           <thead>
@@ -132,6 +167,16 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $stockTotal,
+            'page' => $stockPageNum,
+            'totalPages' => $stockTotalPages,
+            'perPageKey' => $stockPerPageKey,
+            'listPage' => 'lager',
+            'extraQuery' => $lagerExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 
@@ -327,9 +372,17 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
   <?php elseif ($lagerView === 'bewegungen') : ?>
   <section class="dg-panel">
     <h2 class="dg-subsection-title">Letzte Bewegungen</h2>
-    <?php if ($stockMovements === []) : ?>
+    <?php if ($movTotal === 0) : ?>
       <p class="dg-muted">Noch keine Lagerbewegungen.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $movTotal,
+            'perPageKey' => $movPerPageKey,
+            'listPage' => 'lager',
+            'extraQuery' => $lagerExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table dg-table--compact">
           <thead>
@@ -348,6 +401,16 @@ $fmtQty = static fn (float $v): string => rtrim(rtrim(number_format($v, 3, ',', 
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $movTotal,
+            'page' => $movPageNum,
+            'totalPages' => $movTotalPages,
+            'perPageKey' => $movPerPageKey,
+            'listPage' => 'lager',
+            'extraQuery' => $lagerExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 

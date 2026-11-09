@@ -7,15 +7,20 @@
 /** @var list<string> $contactImportErrors */
 $search = $contactSearch ?? '';
 $roleFilter = $contactRoleFilter ?? '';
-$list = $contactList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'total_pages' => 1];
+$list = $contactList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'total_pages' => 1, 'per_page_key' => ListPagination::DEFAULT];
+$perPageKey = (string) ($list['per_page_key'] ?? ListPagination::DEFAULT);
 $importErrors = is_array($contactImportErrors ?? null) ? $contactImportErrors : [];
 $baseUrl = '/app?page=kontakte';
+$listExtraQuery = array_filter([
+    's' => $search !== '' ? $search : null,
+    'role' => $roleFilter !== '' ? $roleFilter : null,
+], static fn ($v) => $v !== null && $v !== '');
 $filterChips = [
     '' => 'Alle',
     'kunde' => 'Aktive Kunden',
     'mitarbeiter' => 'Mitarbeiter',
 ];
-$filterUrl = static function (string $role) use ($baseUrl, $search): string {
+$filterUrl = static function (string $role) use ($baseUrl, $search, $perPageKey): string {
     $url = $baseUrl;
     if ($role !== '') {
         $url .= '&role=' . rawurlencode($role);
@@ -23,6 +28,7 @@ $filterUrl = static function (string $role) use ($baseUrl, $search): string {
     if ($search !== '') {
         $url .= '&s=' . rawurlencode($search);
     }
+    $url .= '&per_page=' . rawurlencode($perPageKey);
     return $url;
 };
 ?>
@@ -191,6 +197,14 @@ $filterUrl = static function (string $role) use ($baseUrl, $search): string {
           ><?= View::escape($chipLabel) ?></a>
         <?php endforeach; ?>
       </nav>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => (int) $list['total'],
+            'perPageKey' => $perPageKey,
+            'listPage' => 'kontakte',
+            'extraQuery' => $listExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
@@ -232,26 +246,16 @@ $filterUrl = static function (string $role) use ($baseUrl, $search): string {
         </table>
       </div>
 
-      <?php if ($list['total_pages'] > 1) : ?>
-        <?php
-          $pageQuery = $baseUrl;
-          if ($search !== '') {
-              $pageQuery .= '&s=' . rawurlencode($search);
-          }
-          if ($roleFilter !== '') {
-              $pageQuery .= '&role=' . rawurlencode($roleFilter);
-          }
-        ?>
-        <nav class="dg-pagination" aria-label="Seiten">
-          <?php if ($list['page'] > 1) : ?>
-            <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
-          <?php endif; ?>
-          <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
-          <?php if ($list['page'] < $list['total_pages']) : ?>
-            <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
-          <?php endif; ?>
-        </nav>
-      <?php endif; ?>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => (int) $list['total'],
+            'page' => (int) $list['page'],
+            'totalPages' => (int) $list['total_pages'],
+            'perPageKey' => $perPageKey,
+            'listPage' => 'kontakte',
+            'extraQuery' => $listExtraQuery,
+        ]);
+      ?>
     </div>
   </details>
 </div>

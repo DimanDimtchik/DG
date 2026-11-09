@@ -22,18 +22,67 @@
  */
 $ownCid = (int) ($timeAbsContactId ?? 0);
 $ownLabel = (string) ($timeAbsContactLabel ?? '');
-$ownList = is_array($timeAbsOwnList ?? null) ? $timeAbsOwnList : [];
-$pending = is_array($timeAbsPending ?? null) ? $timeAbsPending : [];
-$staff = is_array($timeAbsStaffOptions ?? null) ? $timeAbsStaffOptions : [];
-$canTeam = !empty($timeAbsCanTeam);
-$canApprove = !empty($timeAbsCanApprove);
-$hrCanEdit = !empty($timeAbsHrCanEdit);
-$hrList = is_array($timeAbsHrList ?? null) ? $timeAbsHrList : [];
-$hrEdit = is_array($timeAbsHrEdit ?? null) ? $timeAbsHrEdit : null;
 $hrFilterContact = (int) ($timeAbsHrFilterContact ?? 0);
 $hrFilterType = (string) ($timeAbsHrFilterType ?? '');
 $hrFilterStatus = (string) ($timeAbsHrFilterStatus ?? '');
 $ym = (string) ($timeAbsYearMonth ?? date('Y-m'));
+$timeAbsExtraQuery = [
+    'month' => $ym,
+    'hr_contact' => $hrFilterContact > 0 ? $hrFilterContact : null,
+    'hr_type' => $hrFilterType !== '' ? $hrFilterType : null,
+    'hr_status' => $hrFilterStatus !== '' ? $hrFilterStatus : null,
+];
+$timeAbsOwnPaged = is_array($timeAbsOwnPaged ?? null) ? $timeAbsOwnPaged : null;
+if ($timeAbsOwnPaged !== null && isset($timeAbsOwnPaged['items'])) {
+    $ownNonVac = $timeAbsOwnPaged['items'];
+    $absOwnTotal = (int) ($timeAbsOwnPaged['total'] ?? count($ownNonVac));
+    $absOwnPageNum = (int) ($timeAbsOwnPaged['page'] ?? 1);
+    $absOwnTotalPages = (int) ($timeAbsOwnPaged['total_pages'] ?? 1);
+    $absOwnPerPageKey = (string) ($timeAbsOwnPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $ownList = is_array($timeAbsOwnList ?? null) ? $timeAbsOwnList : [];
+    $ownNonVac = array_values(array_filter(
+        $ownList,
+        static fn ($r): bool => is_array($r) && (string) ($r['type'] ?? '') !== 'vacation'
+    ));
+    $absOwnTotal = count($ownNonVac);
+    $absOwnPageNum = 1;
+    $absOwnTotalPages = 1;
+    $absOwnPerPageKey = ListPagination::DEFAULT;
+}
+$timeAbsPendingPaged = is_array($timeAbsPendingPaged ?? null) ? $timeAbsPendingPaged : null;
+if ($timeAbsPendingPaged !== null && isset($timeAbsPendingPaged['items'])) {
+    $pending = $timeAbsPendingPaged['items'];
+    $absPendingTotal = (int) ($timeAbsPendingPaged['total'] ?? count($pending));
+    $absPendingPageNum = (int) ($timeAbsPendingPaged['page'] ?? 1);
+    $absPendingTotalPages = (int) ($timeAbsPendingPaged['total_pages'] ?? 1);
+    $absPendingPerPageKey = (string) ($timeAbsPendingPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $pending = is_array($timeAbsPending ?? null) ? $timeAbsPending : [];
+    $absPendingTotal = count($pending);
+    $absPendingPageNum = 1;
+    $absPendingTotalPages = 1;
+    $absPendingPerPageKey = ListPagination::DEFAULT;
+}
+$timeAbsHrPaged = is_array($timeAbsHrPaged ?? null) ? $timeAbsHrPaged : null;
+if ($timeAbsHrPaged !== null && isset($timeAbsHrPaged['items'])) {
+    $hrList = $timeAbsHrPaged['items'];
+    $absHrTotal = (int) ($timeAbsHrPaged['total'] ?? count($hrList));
+    $absHrPageNum = (int) ($timeAbsHrPaged['page'] ?? 1);
+    $absHrTotalPages = (int) ($timeAbsHrPaged['total_pages'] ?? 1);
+    $absHrPerPageKey = (string) ($timeAbsHrPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $hrList = is_array($timeAbsHrList ?? null) ? $timeAbsHrList : [];
+    $absHrTotal = count($hrList);
+    $absHrPageNum = 1;
+    $absHrTotalPages = 1;
+    $absHrPerPageKey = ListPagination::DEFAULT;
+}
+$staff = is_array($timeAbsStaffOptions ?? null) ? $timeAbsStaffOptions : [];
+$canTeam = !empty($timeAbsCanTeam);
+$canApprove = !empty($timeAbsCanApprove);
+$hrCanEdit = !empty($timeAbsHrCanEdit);
+$hrEdit = is_array($timeAbsHrEdit ?? null) ? $timeAbsHrEdit : null;
 $cal = is_array($timeAbsCalendar ?? null) ? $timeAbsCalendar : null;
 $attMap = is_array($timeAbsAttachments ?? null) ? $timeAbsAttachments : [];
 $prev = (new DateTimeImmutable($ym . '-01'))->modify('-1 month')->format('Y-m');
@@ -124,15 +173,17 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
 
     <section class="dg-panel">
       <h2 class="dg-subsection-title">Meine Abwesenheiten (ohne Urlaub)</h2>
-      <?php
-      $ownNonVac = array_values(array_filter(
-          $ownList,
-          static fn ($r): bool => is_array($r) && (string) ($r['type'] ?? '') !== 'vacation'
-      ));
-      ?>
       <?php if ($ownNonVac === []) : ?>
         <p class="dg-muted">Keine Einträge.</p>
       <?php else : ?>
+        <?php
+          View::partial('partials/list-per-page', [
+              'total' => $absOwnTotal,
+              'perPageKey' => $absOwnPerPageKey,
+              'listPage' => 'zeiterfassung-abwesenheit',
+              'extraQuery' => $timeAbsExtraQuery,
+          ]);
+        ?>
         <div class="dg-table-wrap">
           <table class="dg-table">
             <thead>
@@ -182,6 +233,16 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
             </tbody>
           </table>
         </div>
+        <?php
+          View::partial('partials/list-pagination-nav', [
+              'total' => $absOwnTotal,
+              'page' => $absOwnPageNum,
+              'totalPages' => $absOwnTotalPages,
+              'perPageKey' => $absOwnPerPageKey,
+              'listPage' => 'zeiterfassung-abwesenheit',
+              'extraQuery' => $timeAbsExtraQuery,
+          ]);
+        ?>
       <?php endif; ?>
     </section>
   <?php else : ?>
@@ -288,6 +349,14 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
       <?php if ($pending === []) : ?>
         <p class="dg-muted">Keine offenen Meldungen.</p>
       <?php else : ?>
+        <?php
+          View::partial('partials/list-per-page', [
+              'total' => $absPendingTotal,
+              'perPageKey' => $absPendingPerPageKey,
+              'listPage' => 'zeiterfassung-abwesenheit',
+              'extraQuery' => $timeAbsExtraQuery,
+          ]);
+        ?>
         <div class="dg-table-wrap">
           <table class="dg-table">
             <thead>
@@ -346,6 +415,16 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
             </tbody>
           </table>
         </div>
+        <?php
+          View::partial('partials/list-pagination-nav', [
+              'total' => $absPendingTotal,
+              'page' => $absPendingPageNum,
+              'totalPages' => $absPendingTotalPages,
+              'perPageKey' => $absPendingPerPageKey,
+              'listPage' => 'zeiterfassung-abwesenheit',
+              'extraQuery' => $timeAbsExtraQuery,
+          ]);
+        ?>
       <?php endif; ?>
     </section>
   <?php endif; ?>
@@ -453,6 +532,14 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
       <?php if ($hrList === []) : ?>
         <p class="dg-muted">Keine Einträge für diesen Filter.</p>
       <?php else : ?>
+        <?php
+          View::partial('partials/list-per-page', [
+              'total' => $absHrTotal,
+              'perPageKey' => $absHrPerPageKey,
+              'listPage' => 'zeiterfassung-abwesenheit',
+              'extraQuery' => $timeAbsExtraQuery,
+          ]);
+        ?>
         <div class="dg-table-wrap">
           <table class="dg-table">
             <thead>
@@ -492,6 +579,16 @@ $renderAtts = static function (int $absenceId) use ($attMap): void {
             </tbody>
           </table>
         </div>
+        <?php
+          View::partial('partials/list-pagination-nav', [
+              'total' => $absHrTotal,
+              'page' => $absHrPageNum,
+              'totalPages' => $absHrTotalPages,
+              'perPageKey' => $absHrPerPageKey,
+              'listPage' => 'zeiterfassung-abwesenheit',
+              'extraQuery' => $timeAbsExtraQuery,
+          ]);
+        ?>
       <?php endif; ?>
     </section>
   <?php endif; ?>

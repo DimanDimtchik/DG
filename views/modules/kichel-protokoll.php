@@ -1,7 +1,20 @@
 <?php
 /** @var list<array<string, mixed>> $kichelLogRows */
 /** @var array{type: string, message: string}|null $flash */
-$rows = $kichelLogRows ?? [];
+$kichelLogPaged = is_array($kichelLogPaged ?? null) ? $kichelLogPaged : null;
+if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
+    $rows = $kichelLogPaged['items'];
+    $kichelTotal = (int) ($kichelLogPaged['total'] ?? count($rows));
+    $kichelPageNum = (int) ($kichelLogPaged['page'] ?? 1);
+    $kichelTotalPages = (int) ($kichelLogPaged['total_pages'] ?? 1);
+    $kichelPerPageKey = (string) ($kichelLogPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $rows = $kichelLogRows ?? [];
+    $kichelTotal = count($rows);
+    $kichelPageNum = 1;
+    $kichelTotalPages = 1;
+    $kichelPerPageKey = ListPagination::DEFAULT;
+}
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -19,6 +32,14 @@ $rows = $kichelLogRows ?? [];
     </div>
   <?php else : ?>
     <div class="dg-panel">
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $kichelTotal,
+            'perPageKey' => $kichelPerPageKey,
+            'listPage' => 'kichel-protokoll',
+            'extraQuery' => [],
+        ]);
+      ?>
       <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -49,6 +70,16 @@ $rows = $kichelLogRows ?? [];
         </tbody>
       </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $kichelTotal,
+            'page' => $kichelPageNum,
+            'totalPages' => $kichelTotalPages,
+            'perPageKey' => $kichelPerPageKey,
+            'listPage' => 'kichel-protokoll',
+            'extraQuery' => [],
+        ]);
+      ?>
     </div>
   <?php endif; ?>
 </div>

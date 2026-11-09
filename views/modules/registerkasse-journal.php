@@ -11,12 +11,31 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$rows = $cashJournalReceipts ?? [];
+$cashJournalReceiptsPaged = is_array($cashJournalReceiptsPaged ?? null) ? $cashJournalReceiptsPaged : null;
+if ($cashJournalReceiptsPaged !== null && isset($cashJournalReceiptsPaged['items'])) {
+    $rows = $cashJournalReceiptsPaged['items'];
+    $journalTotal = (int) ($cashJournalReceiptsPaged['total'] ?? count($rows));
+    $journalPageNum = (int) ($cashJournalReceiptsPaged['page'] ?? 1);
+    $journalTotalPages = (int) ($cashJournalReceiptsPaged['total_pages'] ?? 1);
+    $journalPerPageKey = (string) ($cashJournalReceiptsPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $rows = $cashJournalReceipts ?? [];
+    $journalTotal = count($rows);
+    $journalPageNum = 1;
+    $journalTotalPages = 1;
+    $journalPerPageKey = ListPagination::DEFAULT;
+}
 $registers = $cashRegisterOptions ?? [];
 $filterReg = (int) ($cashJournalRegisterId ?? 0);
 $filterDate = (string) ($cashJournalDate ?? date('Y-m-d'));
 $dateFrom = (string) ($cashJournalDateFrom ?? $filterDate);
 $dateTo = (string) ($cashJournalDateTo ?? $filterDate);
+$journalExtraQuery = [
+    'register_id' => $filterReg > 0 ? $filterReg : null,
+    'business_date' => $filterDate,
+    'date_from' => $dateFrom,
+    'date_to' => $dateTo,
+];
 $typeLabels = [
     'sale' => 'Verkauf',
     'storno' => 'Storno',
@@ -178,6 +197,14 @@ $methodLabels = CashPaymentRepository::methodLabels();
   </form>
 
   <div class="dg-panel">
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => $journalTotal,
+          'perPageKey' => $journalPerPageKey,
+          'listPage' => 'registerkasse-journal',
+          'extraQuery' => $journalExtraQuery,
+      ]);
+    ?>
     <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -252,5 +279,15 @@ $methodLabels = CashPaymentRepository::methodLabels();
         </tbody>
       </table>
     </div>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => $journalTotal,
+          'page' => $journalPageNum,
+          'totalPages' => $journalTotalPages,
+          'perPageKey' => $journalPerPageKey,
+          'listPage' => 'registerkasse-journal',
+          'extraQuery' => $journalExtraQuery,
+      ]);
+    ?>
   </div>
 </div>

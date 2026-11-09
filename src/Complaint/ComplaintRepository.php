@@ -53,16 +53,35 @@ final class ComplaintRepository
      */
     public static function listAll(int $limit = 200): array
     {
-        self::ensureReady();
-        if (!Database::isConfigured()) {
-            return [];
-        }
-        $stmt = Database::pdo()->query(
-            'SELECT * FROM dg_complaints ORDER BY id DESC LIMIT ' . max(1, min(500, $limit))
-        );
-        $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        return self::paginate(1, 'all', max(1, min(500, $limit)))['items'];
+    }
 
-        return is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 5000): array
+    {
+        self::ensureReady();
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if (!Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_complaints')->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+        $sql = 'SELECT * FROM dg_complaints ORDER BY id DESC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->query($sql . ' LIMIT ' . max(1, $hardCap));
+            $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+        $items = is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
+
+        return ListPagination::result($items, $total, $meta);
     }
 
     /**

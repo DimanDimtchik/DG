@@ -31,19 +31,36 @@ final class StockMovementRepository
      */
     public static function recent(int $limit = 30): array
     {
-        if (!Database::isConfigured()) {
-            return [];
-        }
+        return self::paginate(1, 'all', max(1, min(200, $limit)))['items'];
+    }
 
-        $stmt = Database::pdo()->query(
-            'SELECT m.*, a.article_number, a.title, a.unit
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 5000): array
+    {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if (!Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_stock_movements')->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+        $sql = 'SELECT m.*, a.article_number, a.title, a.unit
              FROM dg_stock_movements m
              INNER JOIN dg_calendar_articles a ON a.id = m.article_id
-             ORDER BY m.movement_date DESC, m.id DESC
-             LIMIT ' . max(1, min(200, $limit))
-        );
+             ORDER BY m.movement_date DESC, m.id DESC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->query($sql . ' LIMIT ' . max(1, $hardCap));
+            $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /** @return list<array<string, mixed>> */

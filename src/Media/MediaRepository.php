@@ -56,9 +56,10 @@ final class MediaRepository
         );
     }
 
-    /** Erlaubte Listengrößen (GET per_page=…). */
+    /** @deprecated use ListPagination::OPTIONS */
     public const PER_PAGE_OPTIONS = ['10', '50', '100', 'all'];
 
+    /** @deprecated use ListPagination::DEFAULT */
     public const DEFAULT_PER_PAGE = '10';
 
     /**
@@ -76,26 +77,15 @@ final class MediaRepository
      *
      * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
      */
-    public static function paginateWithUsage(int $page = 1, string $perPageKey = self::DEFAULT_PER_PAGE): array
+    public static function paginateWithUsage(int $page = 1, string $perPageKey = ListPagination::DEFAULT): array
     {
         self::ensureTables();
-        $page = max(1, $page);
-        $perPageKey = strtolower(trim($perPageKey));
-        if (!in_array($perPageKey, self::PER_PAGE_OPTIONS, true)) {
-            $perPageKey = self::DEFAULT_PER_PAGE;
-        }
-
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         $pdo = Database::pdo();
         $total = (int) $pdo->query(
             "SELECT COUNT(*) FROM dg_media WHERE status = 'active'"
         )->fetchColumn();
-
-        $showAll = $perPageKey === 'all';
-        $perPage = $showAll ? max(1, $total) : (int) $perPageKey;
-        $totalPages = $showAll ? 1 : max(1, (int) ceil($total / max(1, $perPage)));
-        if ($page > $totalPages) {
-            $page = $totalPages;
-        }
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
 
         $sql = 'SELECT m.*,
                 (SELECT COUNT(*) FROM dg_media_usage u WHERE u.media_id = m.media_id AND u.used_until IS NULL) AS active_usage_count,
@@ -105,12 +95,12 @@ final class MediaRepository
              WHERE m.status = \'active\'
              ORDER BY m.uploaded_at DESC';
 
-        if ($showAll || $total === 0) {
+        if ($meta['show_all'] || $total === 0) {
             $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } else {
             $stmt = $pdo->prepare($sql . ' LIMIT :limit OFFSET :offset');
-            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         }
@@ -123,14 +113,7 @@ final class MediaRepository
             $items[] = $row;
         }
 
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $showAll ? $total : $perPage,
-            'total_pages' => $totalPages,
-            'per_page_key' => $perPageKey,
-        ];
+        return ListPagination::result($items, $total, $meta);
     }
 
     /**

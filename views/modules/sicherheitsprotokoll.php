@@ -1,5 +1,20 @@
 <?php
 /** @var list<array<string, mixed>> $auditEntries */
+/** @var array<string, mixed>|null $auditEntriesPaged */
+$auditEntriesPaged = is_array($auditEntriesPaged ?? null) ? $auditEntriesPaged : null;
+if ($auditEntriesPaged !== null && isset($auditEntriesPaged['items'])) {
+    $auditEntries = $auditEntriesPaged['items'];
+    $auditTotal = (int) ($auditEntriesPaged['total'] ?? count($auditEntries));
+    $auditPageNum = (int) ($auditEntriesPaged['page'] ?? 1);
+    $auditTotalPages = (int) ($auditEntriesPaged['total_pages'] ?? 1);
+    $auditPerPageKey = (string) ($auditEntriesPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $auditEntries = $auditEntries ?? [];
+    $auditTotal = count($auditEntries);
+    $auditPageNum = 1;
+    $auditTotalPages = 1;
+    $auditPerPageKey = ListPagination::DEFAULT;
+}
 ?>
 
 <div class="dg-panel">
@@ -11,6 +26,14 @@
   <?php if (empty($auditEntries)) : ?>
     <p class="dg-empty">Noch keine Einträge vorhanden.</p>
   <?php else : ?>
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => $auditTotal,
+          'perPageKey' => $auditPerPageKey,
+          'listPage' => 'sicherheitsprotokoll',
+          'extraQuery' => [],
+      ]);
+    ?>
     <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -54,5 +77,15 @@
         </tbody>
       </table>
     </div>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => $auditTotal,
+          'page' => $auditPageNum,
+          'totalPages' => $auditTotalPages,
+          'perPageKey' => $auditPerPageKey,
+          'listPage' => 'sicherheitsprotokoll',
+          'extraQuery' => [],
+      ]);
+    ?>
   <?php endif; ?>
 </div>

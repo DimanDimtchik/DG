@@ -5,7 +5,20 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$rows = $complaintList ?? [];
+$complaintPaged = is_array($complaintPaged ?? null) ? $complaintPaged : null;
+if ($complaintPaged !== null && isset($complaintPaged['items'])) {
+    $rows = $complaintPaged['items'];
+    $complaintTotal = (int) ($complaintPaged['total'] ?? count($rows));
+    $complaintPageNum = (int) ($complaintPaged['page'] ?? 1);
+    $complaintTotalPages = (int) ($complaintPaged['total_pages'] ?? 1);
+    $complaintPerPageKey = (string) ($complaintPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $rows = $complaintList ?? [];
+    $complaintTotal = count($rows);
+    $complaintPageNum = 1;
+    $complaintTotalPages = 1;
+    $complaintPerPageKey = ListPagination::DEFAULT;
+}
 $statusLabels = ComplaintRepository::statusOptions();
 $faultLabels = ComplaintRepository::faultOptions();
 ?>
@@ -24,6 +37,14 @@ $faultLabels = ComplaintRepository::faultOptions();
     </div>
   </header>
 
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => $complaintTotal,
+        'perPageKey' => $complaintPerPageKey,
+        'listPage' => 'reklamation',
+        'extraQuery' => [],
+    ]);
+  ?>
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
@@ -53,7 +74,9 @@ $faultLabels = ComplaintRepository::faultOptions();
               <td><?= View::escape($faultLabels[$fault] ?? $fault) ?></td>
               <td><?= View::escape((string) ($row['contact_name'] ?? '—')) ?></td>
               <td class="dg-table__actions">
-                <a href="/app?page=reklamation-form&amp;action=edit&amp;id=<?= $cid ?>"><?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?></a>
+                <div class="dg-table__actions-group">
+                  <a class="dg-button dg-button--small" href="/app?page=reklamation-form&amp;action=edit&amp;id=<?= $cid ?>"><?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?></a>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -61,4 +84,14 @@ $faultLabels = ComplaintRepository::faultOptions();
       </tbody>
     </table>
   </div>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => $complaintTotal,
+        'page' => $complaintPageNum,
+        'totalPages' => $complaintTotalPages,
+        'perPageKey' => $complaintPerPageKey,
+        'listPage' => 'reklamation',
+        'extraQuery' => [],
+    ]);
+  ?>
 </div>

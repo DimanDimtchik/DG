@@ -8,7 +8,16 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$videoAssets = is_array($videoAssets ?? null) ? $videoAssets : [];
+$videoList = is_array($videoList ?? null) ? $videoList : null;
+if ($videoList === null || !isset($videoList['items'])) {
+    $flat = is_array($videoAssets ?? null) ? $videoAssets : [];
+    $videoList = ListPagination::paginateArray($flat, 1, 'all');
+}
+$videoAssets = $videoList['items'];
+$videoTotal = (int) ($videoList['total'] ?? count($videoAssets));
+$videoPageNum = (int) ($videoList['page'] ?? 1);
+$videoTotalPages = (int) ($videoList['total_pages'] ?? 1);
+$videoPerPageKey = (string) ($videoList['per_page_key'] ?? ListPagination::DEFAULT);
 $youtubeConnected = !empty($youtubeConnected);
 $linkedinConnected = !empty($linkedinConnected);
 $instagramConnected = !empty($instagramConnected);
@@ -63,6 +72,14 @@ $anyPlatform = $youtubeConnected || $linkedinConnected || $instagramConnected ||
       </form>
     </section>
 
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => $videoTotal,
+          'perPageKey' => $videoPerPageKey,
+          'listPage' => 'videos',
+          'extraQuery' => [],
+      ]);
+    ?>
     <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -96,5 +113,15 @@ $anyPlatform = $youtubeConnected || $linkedinConnected || $instagramConnected ||
         </tbody>
       </table>
     </div>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => $videoTotal,
+          'page' => $videoPageNum,
+          'totalPages' => $videoTotalPages,
+          'perPageKey' => $videoPerPageKey,
+          'listPage' => 'videos',
+          'extraQuery' => [],
+      ]);
+    ?>
   <?php endif; ?>
 </div>

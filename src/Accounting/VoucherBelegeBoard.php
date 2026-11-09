@@ -265,6 +265,11 @@ final class VoucherBelegeBoard
             $pay
         ));
         $listFilters['page'] = max(1, (int) ($input['page'] ?? 1));
+        $listFilters['per_page_key'] = ListPagination::parsePerPageKey(
+            isset($input['per_page_key']) ? (string) $input['per_page_key'] : (
+                isset($input['per_page']) ? (string) $input['per_page'] : ListPagination::DEFAULT
+            )
+        );
         $list = VoucherRepository::list($listFilters);
 
         $amountMin = isset($input['amount_min']) && $input['amount_min'] !== '' && $input['amount_min'] !== null

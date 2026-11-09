@@ -109,13 +109,22 @@ final class JobApplicationRepository
      */
     public static function listAll(int $limit = 200): array
     {
+        return self::paginate(1, 'all', max(1, min(500, $limit)))['items'];
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 10000): array
+    {
         self::ensureReady();
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         if (!Database::isConfigured() || !self::tableReady()) {
-            return [];
+            return ListPagination::emptyResult($perPageKey);
         }
-        $limit = max(1, min(500, $limit));
-        $stmt = Database::pdo()->query(
-            'SELECT a.*,
+        $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_job_applications')->fetchColumn(), max(1, $hardCap));
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+        $sql = 'SELECT a.*,
                     ap.email AS applicant_email,
                     ap.first_name AS applicant_first_name,
                     ap.last_name AS applicant_last_name,
@@ -125,12 +134,23 @@ final class JobApplicationRepository
              FROM dg_job_applications a
              INNER JOIN dg_applicants ap ON ap.id = a.applicant_id
              INNER JOIN dg_job_postings p ON p.id = a.job_posting_id
-             ORDER BY a.updated_at DESC
-             LIMIT ' . $limit
-        );
-        $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+             ORDER BY a.updated_at DESC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->query($sql . ' LIMIT ' . max(1, $hardCap));
+            $rows = $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
 
-        return is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
+        return ListPagination::result(
+            is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [],
+            $total,
+            $meta
+        );
     }
 
     /**

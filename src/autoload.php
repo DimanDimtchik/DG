@@ -15,6 +15,7 @@ spl_autoload_register(static function (string $class): void {
         'SignatureImportService' => '/src/User/SignatureImportService.php',
         'RoleResolver' => '/src/User/RoleResolver.php',
         'MenuRegistry' => '/src/Menu/MenuRegistry.php',
+        'ListPagination' => '/src/Ui/ListPagination.php',
         'SettingsRegistry' => '/src/Settings/SettingsRegistry.php',
         'SettingsStore' => '/src/Settings/SettingsStore.php',
         'CompanySettings' => '/src/Settings/CompanySettings.php',

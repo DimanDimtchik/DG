@@ -11,7 +11,21 @@
  */
 $preview = is_array($timeProvisionPreview ?? null) ? $timeProvisionPreview : [];
 $year = (int) ($timeProvisionYear ?? ($preview['year'] ?? date('Y')));
-$rows = is_array($preview['rows'] ?? null) ? $preview['rows'] : [];
+$timeProvisionRowsPaged = is_array($timeProvisionRowsPaged ?? null) ? $timeProvisionRowsPaged : null;
+if ($timeProvisionRowsPaged !== null && isset($timeProvisionRowsPaged['items'])) {
+    $rows = $timeProvisionRowsPaged['items'];
+    $provRowsTotal = (int) ($timeProvisionRowsPaged['total'] ?? count($rows));
+    $provRowsPageNum = (int) ($timeProvisionRowsPaged['page'] ?? 1);
+    $provRowsTotalPages = (int) ($timeProvisionRowsPaged['total_pages'] ?? 1);
+    $provRowsPerPageKey = (string) ($timeProvisionRowsPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $rows = is_array($preview['rows'] ?? null) ? $preview['rows'] : [];
+    $provRowsTotal = count($rows);
+    $provRowsPageNum = 1;
+    $provRowsTotalPages = 1;
+    $provRowsPerPageKey = ListPagination::DEFAULT;
+}
+$provExtraQuery = ['year' => $year];
 $totals = is_array($preview['totals'] ?? null) ? $preview['totals'] : [];
 $cfg = is_array($preview['config'] ?? null) ? $preview['config'] : [];
 $warnings = is_array($preview['warnings'] ?? null) ? $preview['warnings'] : [];
@@ -71,6 +85,14 @@ $otOn = !empty($cfg['ot_enabled']);
     <?php if ($rows === []) : ?>
       <p class="dg-muted">Keine Mitarbeiter-Kontakte.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $provRowsTotal,
+            'perPageKey' => $provRowsPerPageKey,
+            'listPage' => 'zeiterfassung-rueckstellung',
+            'extraQuery' => $provExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
@@ -114,6 +136,16 @@ $otOn = !empty($cfg['ot_enabled']);
           </tfoot>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $provRowsTotal,
+            'page' => $provRowsPageNum,
+            'totalPages' => $provRowsTotalPages,
+            'perPageKey' => $provRowsPerPageKey,
+            'listPage' => 'zeiterfassung-rueckstellung',
+            'extraQuery' => $provExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 

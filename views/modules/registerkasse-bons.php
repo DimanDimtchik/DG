@@ -10,10 +10,24 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$rows = $cashReceipts ?? [];
+$cashReceiptsPaged = is_array($cashReceiptsPaged ?? null) ? $cashReceiptsPaged : null;
+if ($cashReceiptsPaged !== null && isset($cashReceiptsPaged['items'])) {
+    $rows = $cashReceiptsPaged['items'];
+    $bonsTotal = (int) ($cashReceiptsPaged['total'] ?? count($rows));
+    $bonsPageNum = (int) ($cashReceiptsPaged['page'] ?? 1);
+    $bonsTotalPages = (int) ($cashReceiptsPaged['total_pages'] ?? 1);
+    $bonsPerPageKey = (string) ($cashReceiptsPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $rows = $cashReceipts ?? [];
+    $bonsTotal = count($rows);
+    $bonsPageNum = 1;
+    $bonsTotalPages = 1;
+    $bonsPerPageKey = ListPagination::DEFAULT;
+}
 $registers = $cashRegisterOptions ?? [];
 $openRegisters = $cashOpenRegisterOptions ?? [];
 $filterReg = (int) ($cashReceiptRegisterId ?? 0);
+$bonsExtraQuery = ['register_id' => $filterReg > 0 ? $filterReg : null];
 $csrf = Csrf::token();
 $statusLabels = [
     'draft' => 'Entwurf',
@@ -122,6 +136,14 @@ $statusLabels = [
   </form>
 
   <div class="dg-panel">
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => $bonsTotal,
+          'perPageKey' => $bonsPerPageKey,
+          'listPage' => 'registerkasse-bons',
+          'extraQuery' => $bonsExtraQuery,
+      ]);
+    ?>
     <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -176,5 +198,15 @@ $statusLabels = [
         </tbody>
       </table>
     </div>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => $bonsTotal,
+          'page' => $bonsPageNum,
+          'totalPages' => $bonsTotalPages,
+          'perPageKey' => $bonsPerPageKey,
+          'listPage' => 'registerkasse-bons',
+          'extraQuery' => $bonsExtraQuery,
+      ]);
+    ?>
   </div>
 </div>

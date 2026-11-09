@@ -15,7 +15,21 @@
 $period = $cashPeriod ?? AccountingPeriodFilter::fromRequest([]);
 $year = (int) ($cashYear ?? $period->year);
 $years = $cashYears ?? [(int) date('Y')];
-$entries = $cashEntries ?? [];
+$cashEntriesPaged = is_array($cashEntriesPaged ?? null) ? $cashEntriesPaged : null;
+if ($cashEntriesPaged !== null && isset($cashEntriesPaged['items'])) {
+    $entries = $cashEntriesPaged['items'];
+    $cashEntTotal = (int) ($cashEntriesPaged['total'] ?? count($entries));
+    $cashEntPageNum = (int) ($cashEntriesPaged['page'] ?? 1);
+    $cashEntTotalPages = (int) ($cashEntriesPaged['total_pages'] ?? 1);
+    $cashEntPerPageKey = (string) ($cashEntriesPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $entries = $cashEntries ?? [];
+    $cashEntTotal = count($entries);
+    $cashEntPageNum = 1;
+    $cashEntTotalPages = 1;
+    $cashEntPerPageKey = ListPagination::DEFAULT;
+}
+$cashEntExtraQuery = $period->queryParams();
 $totals = $cashTotals ?? ['in' => 0.0, 'out' => 0.0, 'balance' => 0.0];
 $closings = $cashClosings ?? [];
 $closeDate = (string) ($cashCloseDate ?? date('Y-m-d'));
@@ -148,6 +162,14 @@ $csrf = Csrf::token();
     <?php if ($entries === []) : ?>
       <p class="dg-muted">Keine Kassenbuch-Einträge für <?= View::escape($period->label) ?>.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $cashEntTotal,
+            'perPageKey' => $cashEntPerPageKey,
+            'listPage' => 'buchhaltung-kassenbuch',
+            'extraQuery' => $cashEntExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
@@ -188,6 +210,16 @@ $csrf = Csrf::token();
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $cashEntTotal,
+            'page' => $cashEntPageNum,
+            'totalPages' => $cashEntTotalPages,
+            'perPageKey' => $cashEntPerPageKey,
+            'listPage' => 'buchhaltung-kassenbuch',
+            'extraQuery' => $cashEntExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 </div>

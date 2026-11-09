@@ -1,6 +1,19 @@
 <?php
 /** @var list<array<string, mixed>> $customers */
-$customers = $customers ?? [];
+$customersPaged = is_array($customersPaged ?? null) ? $customersPaged : null;
+if ($customersPaged !== null && isset($customersPaged['items'])) {
+    $customers = $customersPaged['items'];
+    $kdvTotal = (int) ($customersPaged['total'] ?? count($customers));
+    $kdvPageNum = (int) ($customersPaged['page'] ?? 1);
+    $kdvTotalPages = (int) ($customersPaged['total_pages'] ?? 1);
+    $kdvPerPageKey = (string) ($customersPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $customers = $customers ?? [];
+    $kdvTotal = count($customers);
+    $kdvPageNum = 1;
+    $kdvTotalPages = 1;
+    $kdvPerPageKey = ListPagination::DEFAULT;
+}
 $multiFirma = KdvCustomerRepository::multiFirmaColumnsReady();
 $orgNameById = [];
 if ($multiFirma) {
@@ -16,7 +29,7 @@ if ($multiFirma) {
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
       <h1 class="dg-page-title">SaaS-Kunden</h1>
-      <p class="dg-lead"><?= count($customers) ?> CRM-Instanzen (Ihre Hosting-Kunden – nicht CRM-Kontakte)</p>
+      <p class="dg-lead"><?= $kdvTotal ?> CRM-Instanzen (Ihre Hosting-Kunden – nicht CRM-Kontakte)</p>
     </div>
     <div class="dg-toolbar">
       <?php if ($multiFirma) : ?>
@@ -28,6 +41,14 @@ if ($multiFirma) {
 
   <?php if (!empty($customers)): ?>
   <div class="dg-panel">
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => $kdvTotal,
+          'perPageKey' => $kdvPerPageKey,
+          'listPage' => 'kdv-kunden',
+          'extraQuery' => [],
+      ]);
+    ?>
     <div class="dg-table-wrap">
       <table class="dg-table">
         <thead>
@@ -89,6 +110,16 @@ if ($multiFirma) {
         </tbody>
       </table>
     </div>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => $kdvTotal,
+          'page' => $kdvPageNum,
+          'totalPages' => $kdvTotalPages,
+          'perPageKey' => $kdvPerPageKey,
+          'listPage' => 'kdv-kunden',
+          'extraQuery' => [],
+      ]);
+    ?>
   </div>
   <?php else: ?>
   <div class="dg-panel" style="text-align:center; padding:40px;">

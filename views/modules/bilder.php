@@ -17,15 +17,7 @@ if (isset($mediaList['items']) && is_array($mediaList['items'])) {
     ];
 }
 $items = $list['items'];
-$perPageKey = (string) ($list['per_page_key'] ?? MediaRepository::DEFAULT_PER_PAGE);
-$baseUrl = '/app?page=bilder';
-$sizeOptions = [
-    '10' => '10',
-    '50' => '50',
-    '100' => '100',
-    'all' => 'Alle',
-];
-$pageQuery = $baseUrl . '&per_page=' . rawurlencode($perPageKey);
+$perPageKey = (string) ($list['per_page_key'] ?? ListPagination::DEFAULT);
 ?>
 <div class="dg-wrap dg-media-library">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -46,17 +38,14 @@ $pageQuery = $baseUrl . '&per_page=' . rawurlencode($perPageKey);
       <p>Noch keine Dateien. Klicken Sie auf <strong>Hochladen</strong>, um das erste Bild anzulegen.</p>
     </div>
   <?php else : ?>
-    <form class="dg-form dg-btn-row" method="get" action="/app" aria-label="Einträge pro Seite">
-      <input type="hidden" name="page" value="bilder">
-      <label class="dg-field">
-        <span>Anzeigen</span>
-        <select name="per_page" onchange="this.form.submit()">
-          <?php foreach ($sizeOptions as $sizeKey => $sizeLabel) : ?>
-            <option value="<?= View::escape($sizeKey) ?>"<?= $perPageKey === $sizeKey ? ' selected' : '' ?>><?= View::escape($sizeLabel) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-    </form>
+    <?php
+      View::partial('partials/list-per-page', [
+          'total' => (int) $list['total'],
+          'perPageKey' => $perPageKey,
+          'listPage' => 'bilder',
+          'extraQuery' => [],
+      ]);
+    ?>
 
     <div class="dg-table-wrap">
       <table class="dg-table dg-table--compact dg-media-table">
@@ -133,16 +122,15 @@ $pageQuery = $baseUrl . '&per_page=' . rawurlencode($perPageKey);
       </table>
     </div>
 
-    <?php if ((int) $list['total_pages'] > 1) : ?>
-      <nav class="dg-pagination" aria-label="Seiten">
-        <?php if ((int) $list['page'] > 1) : ?>
-          <a href="<?= View::escape($pageQuery . '&paged=' . ((int) $list['page'] - 1)) ?>">&laquo; Zurück</a>
-        <?php endif; ?>
-        <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
-        <?php if ((int) $list['page'] < (int) $list['total_pages']) : ?>
-          <a href="<?= View::escape($pageQuery . '&paged=' . ((int) $list['page'] + 1)) ?>">Weiter &raquo;</a>
-        <?php endif; ?>
-      </nav>
-    <?php endif; ?>
+    <?php
+      View::partial('partials/list-pagination-nav', [
+          'total' => (int) $list['total'],
+          'page' => (int) $list['page'],
+          'totalPages' => (int) $list['total_pages'],
+          'perPageKey' => $perPageKey,
+          'listPage' => 'bilder',
+          'extraQuery' => [],
+      ]);
+    ?>
   <?php endif; ?>
 </div>

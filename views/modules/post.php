@@ -36,6 +36,7 @@ $postPageNum = max(1, (int) ($postPageNum ?? 1));
 $postPageCount = max(1, (int) ($postPageCount ?? 1));
 $postPageLimit = max(1, (int) ($postPageLimit ?? PostUiSettings::messagesPerPage()));
 $postTotalCount = max(0, (int) ($postTotalCount ?? 0));
+$postPerPageKey = ListPagination::parsePerPageKey($postPerPageKey ?? (string) $postPageLimit);
 $postSearchQuery = $postSearchQuery ?? '';
 $postSearchContactId = $postSearchContactId ?? 0;
 $postSearchMode = $postSearchMode ?? false;
@@ -66,13 +67,13 @@ $postCanLinkVoucher = MenuRegistry::canAccess($user, 'buchhaltung-belege')
 
 /** @var bool $postImapAsync */
 $postImapAsync = $postImapAsync ?? false;
-$postFolderQuery = static function (int $mailboxId, string $folderPath, int $pageNum = 1) use ($postSearchQuery, $postSearchContactId): string {
-    $params = ['page' => 'post', 'folder' => $folderPath];
+$postFolderQuery = static function (int $mailboxId, string $folderPath, int $pageNum = 1) use ($postSearchQuery, $postSearchContactId, $postPerPageKey): string {
+    $params = ['page' => 'post', 'folder' => $folderPath, 'per_page' => $postPerPageKey];
     if ($mailboxId > 0) {
         $params['mailbox'] = (string) $mailboxId;
     }
     if ($pageNum > 1) {
-        $params['p'] = (string) $pageNum;
+        $params['paged'] = (string) $pageNum;
     }
     if ($postSearchQuery !== '') {
         $params['q'] = $postSearchQuery;
@@ -610,17 +611,28 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
           </table>
         </div>
 
-        <?php if ($postPageCount > 1) : ?>
-          <nav class="dg-pagination" aria-label="Seiten">
-            <?php if ($postPageNum > 1) : ?>
-              <a href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum - 1)) ?>">&laquo; Zurück</a>
-            <?php endif; ?>
-            <span>Seite <?= (int) $postPageNum ?> von <?= (int) $postPageCount ?></span>
-            <?php if ($postPageNum < $postPageCount) : ?>
-              <a href="<?= View::escape($postFolderQuery($postMailboxFilter, $postFolder, $postPageNum + 1)) ?>">Weiter &raquo;</a>
-            <?php endif; ?>
-          </nav>
-        <?php endif; ?>
+        <?php
+          $postExtra = array_filter([
+              'mailbox' => $postMailboxFilter > 0 ? $postMailboxFilter : null,
+              'folder' => $postFolder !== '' ? $postFolder : null,
+              'q' => $postSearchQuery !== '' ? $postSearchQuery : null,
+              'contact' => $postSearchContactId > 0 ? $postSearchContactId : null,
+          ], static fn ($v) => $v !== null && $v !== '');
+          View::partial('partials/list-per-page', [
+              'total' => (int) $postTotalCount,
+              'perPageKey' => $postPerPageKey,
+              'listPage' => 'post',
+              'extraQuery' => $postExtra,
+          ]);
+          View::partial('partials/list-pagination-nav', [
+              'total' => (int) $postTotalCount,
+              'page' => (int) $postPageNum,
+              'totalPages' => (int) $postPageCount,
+              'perPageKey' => $postPerPageKey,
+              'listPage' => 'post',
+              'extraQuery' => $postExtra,
+          ]);
+        ?>
 
         <?php if ($postMailboxFilter > 0 && !$postSearchMode) : ?>
           <script src="<?= View::escape(Asset::url('/assets/js/post-sync.js')) ?>" defer></script>

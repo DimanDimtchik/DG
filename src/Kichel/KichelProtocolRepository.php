@@ -41,9 +41,7 @@ final class KichelProtocolRepository
         if (!Database::isConfigured()) {
             return [];
         }
-
         MigrationRunner::runPending();
-
         try {
             $stmt = Database::pdo()->prepare(
                 'SELECT k.*, u.username, u.display_name
@@ -59,6 +57,36 @@ final class KichelProtocolRepository
             return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (Throwable) {
             return [];
+        }
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 10000): array
+    {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
+        if (!Database::isConfigured()) {
+            return ListPagination::emptyResult($perPageKey);
+        }
+        MigrationRunner::runPending();
+        try {
+            $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_kichel_log')->fetchColumn(), max(1, $hardCap));
+            $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
+            $stmt = Database::pdo()->prepare(
+                'SELECT k.*, u.username, u.display_name
+                 FROM dg_kichel_log k
+                 LEFT JOIN dg_users u ON u.id = k.user_id
+                 ORDER BY k.created_at DESC
+                 LIMIT :lim OFFSET :off'
+            );
+            $stmt->bindValue('lim', $meta['show_all'] ? max(1, $hardCap) : $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue('off', $meta['show_all'] ? 0 : $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
+
+            return ListPagination::result($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [], $total, $meta);
+        } catch (Throwable) {
+            return ListPagination::emptyResult($perPageKey);
         }
     }
 }

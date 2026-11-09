@@ -6,7 +6,7 @@ declare(strict_types=1);
  */
 final class VoucherRepository
 {
-    private const PER_PAGE = 25;
+    private const PER_PAGE = 25; // Fallback wenn weder per_page_key noch per_page gesetzt
 
     /**
      * voucherTypeOptions.
@@ -58,20 +58,32 @@ final class VoucherRepository
     public static function list(array $filters = []): array
     {
         if (!Database::isConfigured()) {
-            return [
-                'items' => [],
-                'total' => 0,
-                'page' => 1,
-                'per_page' => self::PER_PAGE,
-                'total_pages' => 1,
-                'gross_sum' => 0.0,
-            ];
+            $empty = ListPagination::emptyResult(
+                isset($filters['per_page_key']) ? (string) $filters['per_page_key'] : ListPagination::DEFAULT
+            );
+            $empty['gross_sum'] = 0.0;
+
+            return $empty;
         }
 
         MigrationRunner::runPending();
 
         $page = max(1, (int) ($filters['page'] ?? 1));
-        $perPage = max(1, min(100, (int) ($filters['per_page'] ?? self::PER_PAGE)));
+        $perPageKey = isset($filters['per_page_key'])
+            ? ListPagination::parsePerPageKey((string) $filters['per_page_key'])
+            : null;
+        if ($perPageKey === null && isset($filters['per_page'])) {
+            $rawPer = (string) $filters['per_page'];
+            $perPageKey = ListPagination::parsePerPageKey($rawPer === 'all' ? 'all' : (string) max(1, (int) $rawPer));
+            if (!in_array((string) (int) $rawPer, ListPagination::OPTIONS, true) && $rawPer !== 'all') {
+                // Legacy numeric sizes (e.g. 25) → next Media key
+                $n = max(1, (int) $rawPer);
+                $perPageKey = $n <= 10 ? '10' : ($n <= 50 ? '50' : ($n <= 100 ? '100' : 'all'));
+            }
+        }
+        if ($perPageKey === null) {
+            $perPageKey = ListPagination::DEFAULT;
+        }
         $year = isset($filters['year']) && (int) $filters['year'] > 0 ? (int) $filters['year'] : null;
         $type = self::sanitizeVoucherTypeFilter((string) ($filters['type'] ?? ''));
         $documentKind = VoucherDocumentKind::sanitize((string) ($filters['document_kind'] ?? ''));
@@ -275,34 +287,35 @@ final class VoucherRepository
         $sumStmt->execute($params);
         $grossSum = round((float) $sumStmt->fetchColumn(), 2);
 
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
         $sql = 'SELECT v.*, c.display_name AS contact_display_name, c.company_name AS contact_company_name
             FROM dg_vouchers v
             LEFT JOIN dg_contacts c ON c.id = v.contact_id
             ' . $whereSql . '
-            ORDER BY v.voucher_date DESC, v.id DESC
-            LIMIT :limit OFFSET :offset';
+            ORDER BY v.voucher_date DESC, v.id DESC';
 
-        $stmt = Database::pdo()->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = Database::pdo()->prepare($sql);
+            $stmt->execute($params);
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            foreach ($params as $key => $value) {
+                $stmt->bindValue(':' . $key, $value);
+            }
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
         }
-        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
-        $stmt->execute();
 
         $items = [];
         while ($row = $stmt->fetch()) {
             $items[] = self::enrichRow($row);
         }
 
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage,
-            'total_pages' => max(1, (int) ceil($total / $perPage)),
-            'gross_sum' => $grossSum,
-        ];
+        $out = ListPagination::result($items, $total, $meta);
+        $out['gross_sum'] = $grossSum;
+
+        return $out;
     }
 
     /**

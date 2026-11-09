@@ -10,9 +10,10 @@ declare(strict_types=1);
  */
 final class WriterDocumentRepository
 {
-    /** Erlaubte Listengrößen (GET per_page=…). */
+    /** @deprecated use ListPagination::OPTIONS */
     public const PER_PAGE_OPTIONS = ['10', '50', '100', 'all'];
 
+    /** @deprecated use ListPagination::DEFAULT */
     public const DEFAULT_PER_PAGE = '10';
 
     public static function ensureReady(): void
@@ -68,35 +69,19 @@ final class WriterDocumentRepository
      */
     public static function paginate(
         int $page = 1,
-        string $perPageKey = self::DEFAULT_PER_PAGE,
+        string $perPageKey = ListPagination::DEFAULT,
         ?string $status = null,
         ?int $contactId = null
     ): array {
         self::ensureReady();
-        $page = max(1, $page);
-        $perPageKey = strtolower(trim($perPageKey));
-        if (!in_array($perPageKey, self::PER_PAGE_OPTIONS, true)) {
-            $perPageKey = self::DEFAULT_PER_PAGE;
-        }
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
 
         if (!Database::isConfigured()) {
-            return [
-                'items' => [],
-                'total' => 0,
-                'page' => 1,
-                'per_page' => 10,
-                'total_pages' => 1,
-                'per_page_key' => $perPageKey,
-            ];
+            return ListPagination::emptyResult($perPageKey);
         }
 
         $total = self::countFiltered($status, $contactId);
-        $showAll = $perPageKey === 'all';
-        $perPage = $showAll ? max(1, $total) : (int) $perPageKey;
-        $totalPages = $showAll ? 1 : max(1, (int) ceil($total / max(1, $perPage)));
-        if ($page > $totalPages) {
-            $page = $totalPages;
-        }
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
 
         [$whereSql, $params] = self::listWhere($status, $contactId);
         $sql = 'SELECT d.id, d.status, d.version, d.title, d.subject, d.contact_id, d.voucher_id,
@@ -107,7 +92,7 @@ final class WriterDocumentRepository
             . $whereSql
             . ' ORDER BY d.updated_at DESC, d.id DESC';
 
-        if ($showAll || $total === 0) {
+        if ($meta['show_all'] || $total === 0) {
             $stmt = Database::pdo()->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -116,20 +101,13 @@ final class WriterDocumentRepository
             foreach ($params as $key => $value) {
                 $stmt->bindValue(':' . $key, $value);
             }
-            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         }
 
-        return [
-            'items' => $rows,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $showAll ? $total : $perPage,
-            'total_pages' => $totalPages,
-            'per_page_key' => $perPageKey,
-        ];
+        return ListPagination::result($rows, $total, $meta);
     }
 
     /**

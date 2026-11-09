@@ -7650,7 +7650,12 @@ switch ($path) {
                 $stockItem['has_purchase_source'] = $preferred !== null;
             }
             unset($stockItem);
-            $stockMovements = StockMovementRepository::recent(50);
+            $lagerListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $lagerPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $stockList = ListPagination::paginateArray($stockItems, $lagerListPage, $lagerPerPage);
+            $stockItems = $stockList['items'];
+            $stockMovementList = StockMovementRepository::paginate($lagerListPage, $lagerPerPage);
+            $stockMovements = $stockMovementList['items'];
             $openInventories = StockInventoryService::openInventories();
             $activeInventory = $openInventories[0] ?? null;
             $activeInventoryLines = $activeInventory !== null
@@ -8063,7 +8068,10 @@ switch ($path) {
                 $title = (($workCenterId ?? 0) > 0) ? 'Maschine bearbeiten' : 'Maschine hinzufügen';
                 $currentPage = 'rezeptur';
             } else {
-                $recipeList = RecipeRepository::listAll();
+                $recipePage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $recipePerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $recipePaged = RecipeRepository::paginate($recipePage, $recipePerPage);
+                $recipeList = $recipePaged['items'];
                 $contentTemplate = 'modules/rezeptur';
                 $title = 'Rezeptur';
                 $currentPage = 'rezeptur';
@@ -8239,6 +8247,17 @@ switch ($path) {
             $academyAllVideos = ($canManageAcademy && $academyAdminTab === 'videos')
                 ? AcademyRepository::allVideos()
                 : [];
+            $academyListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $academyListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $academyAllVideosPaged = null;
+            $academyAllCoursesPaged = null;
+            if ($canManageAcademy && $academyView === 'admin' && $academyAdminTab === 'videos') {
+                $academyAllVideosPaged = ListPagination::paginateArray($academyAllVideos, $academyListPage, $academyListPerPage);
+                $academyAllVideos = $academyAllVideosPaged['items'];
+            }
+            if ($canManageAcademy && $academyView === 'admin' && $academyAdminTab === 'kurse') {
+                $academyAllCoursesPaged = ListPagination::paginateArray($academyAllCourses, $academyListPage, $academyListPerPage);
+            }
             $contentTemplate = 'modules/akademie';
             $title = 'Akademie';
             $currentPage = 'akademie';
@@ -8356,7 +8375,10 @@ switch ($path) {
             exit;
         } elseif ($page === 'hr-bewerber' && MenuRegistry::canAccess($user, 'hr-bewerber')) {
             MigrationRunner::runPending();
-            $jobApplications = JobApplicationRepository::listAll();
+            $jobAppListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $jobAppListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $jobApplicationsPaged = JobApplicationRepository::paginate($jobAppListPage, $jobAppListPerPage);
+            $jobApplications = $jobApplicationsPaged['items'];
             $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/hr-bewerber';
             $title = 'Bewerber';
@@ -8417,7 +8439,10 @@ switch ($path) {
         } elseif ($page === 'videos' && MenuRegistry::canAccess($user, 'videos')) {
             MigrationRunner::runPending();
             VideoPublishQueueService::runIfDue();
-            $videoAssets = VideoAssetRepository::listAll();
+            $videoPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $videoPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $videoList = VideoAssetRepository::paginate($videoPage, $videoPerPage);
+            $videoAssets = $videoList['items'];
             $youtubeConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_YOUTUBE);
             $linkedinConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_LINKEDIN);
             $instagramConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_INSTAGRAM);
@@ -8629,6 +8654,7 @@ switch ($path) {
         } elseif ($page === 'buchhaltung-belege' && MenuRegistry::canAccess($user, 'buchhaltung-belege')) {
             $voucherSearch = trim((string) ($_GET['s'] ?? ''));
             $voucherPage = max(1, (int) ($_GET['paged'] ?? 1));
+            $voucherPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
             $voucherPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
             $voucherYear = $voucherPeriod->year;
 
@@ -8682,6 +8708,7 @@ switch ($path) {
                 'invoice_kind' => (string) ($_GET['invoice_kind'] ?? ''),
                 'pay' => (string) ($_GET['pay'] ?? ''),
                 'page' => $voucherPage,
+                'per_page_key' => $voucherPerPage,
                 'actionable_only' => (string) ($_GET['actionable'] ?? ''),
                 'focus' => $belegeFocus,
             ]);
@@ -8735,7 +8762,10 @@ switch ($path) {
                 $title = $giftFormMode === 'view' ? 'Gutschein' : 'Gutschein ausstellen';
                 $currentPage = 'gutscheine';
             } else {
-                $giftVoucherList = GiftVoucherRepository::listAll();
+                $giftPage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $giftPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $giftVoucherPaged = GiftVoucherRepository::paginate($giftPage, $giftPerPage);
+                $giftVoucherList = $giftVoucherPaged['items'];
                 $contentTemplate = 'modules/gutscheine';
                 $title = 'Gutscheine';
                 $currentPage = 'gutscheine';
@@ -8832,7 +8862,10 @@ switch ($path) {
                 $title = ($complaintId ?? 0) > 0 ? 'Reklamation bearbeiten' : 'Neue Reklamation';
                 $currentPage = 'reklamation';
             } else {
-                $complaintList = ComplaintRepository::listAll();
+                $complaintPage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $complaintPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $complaintPaged = ComplaintRepository::paginate($complaintPage, $complaintPerPage);
+                $complaintList = $complaintPaged['items'];
                 $contentTemplate = 'modules/reklamation';
                 $title = 'Reklamation';
                 $currentPage = 'reklamation';
@@ -9237,6 +9270,10 @@ switch ($path) {
                 'direction' => $oposDirection,
                 'search' => $oposSearch,
             ]);
+            $oposListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $oposListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $oposPaged = ListPagination::paginateArray($oposData['items'], $oposListPage, $oposListPerPage);
+            $oposData['items'] = $oposPaged['items'];
             $contentTemplate = 'modules/buchhaltung-opos';
             $title = 'Offene Posten';
             $currentPage = 'buchhaltung-opos';
@@ -9316,6 +9353,10 @@ switch ($path) {
             $manualYear = max(2000, (int) ($_GET['year'] ?? (int) date('Y')));
             $manualYears = LedgerRepository::availableYears();
             $manualBatches = ManualLedgerService::listBatches($manualYear);
+            $manualListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $manualListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $manualBatchesPaged = ListPagination::paginateArray($manualBatches, $manualListPage, $manualListPerPage);
+            $manualBatches = $manualBatchesPaged['items'];
             $contentTemplate = 'modules/buchhaltung-manuelle-buchung';
             $title = 'Manuelle Buchungen';
             $currentPage = 'buchhaltung-manuelle-buchung';
@@ -9385,6 +9426,12 @@ switch ($path) {
             $bankTransactionsOpen = $bankTxClassified['open'];
             $bankTransactionsGhosts = $bankTxClassified['ghosts'];
             $bankTransactionsMatched = BankTransactionRepository::list('matched');
+            $bankListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $bankListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $bankTransactionsOpenPaged = ListPagination::paginateArray($bankTransactionsOpen, $bankListPage, $bankListPerPage);
+            $bankTransactionsOpen = $bankTransactionsOpenPaged['items'];
+            $bankTransactionsMatchedPaged = ListPagination::paginateArray($bankTransactionsMatched, $bankListPage, $bankListPerPage);
+            $bankTransactionsMatched = $bankTransactionsMatchedPaged['items'];
             $contentTemplate = 'modules/buchhaltung-bankabgleich';
             $title = 'Bankabgleich';
             $currentPage = 'buchhaltung-bankabgleich';
@@ -9395,7 +9442,7 @@ switch ($path) {
             $cashPeriod = AccountingPeriodFilter::fromRequest($_GET, (int) date('Y'));
             $cashYear = $cashPeriod->year;
             $cashYears = LedgerRepository::availableYears();
-            $cashEntries = CashJournalRepository::listForPeriod($cashPeriod);
+            $cashEntriesAll = CashJournalRepository::listForPeriod($cashPeriod);
             $cashTotals = CashJournalRepository::totalsForPeriod($cashPeriod);
             $cashClosings = CashDayCloseService::listClosings($cashYear);
             $cashCloseDate = trim((string) ($_GET['close_date'] ?? date('Y-m-d')));
@@ -9403,13 +9450,17 @@ switch ($path) {
             $download = trim((string) ($_GET['download'] ?? ''));
             if ($download === 'print' && Database::isConfigured()) {
                 $html = AccountingPrintService::render('kassenbuch', [
-                    'entries' => $cashEntries,
+                    'entries' => $cashEntriesAll,
                     'totals' => $cashTotals,
                     'periodLabel' => $cashPeriod->label,
                 ], 'Kassenbuch ' . $cashPeriod->label);
                 AccountingPrintService::send('Kassenbuch_' . $cashYear . '.html', $html);
                 exit;
             }
+            $cashListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $cashListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $cashEntriesPaged = ListPagination::paginateArray($cashEntriesAll, $cashListPage, $cashListPerPage);
+            $cashEntries = $cashEntriesPaged['items'];
             $contentTemplate = 'modules/buchhaltung-kassenbuch';
             $title = 'Kassenbuch';
             $currentPage = 'buchhaltung-kassenbuch';
@@ -9634,9 +9685,16 @@ switch ($path) {
                     }
                 }
             }
-            $cashReceipts = Database::isConfigured()
-                ? CashReceiptRepository::listRecent(50, $cashReceiptRegisterId > 0 ? $cashReceiptRegisterId : null)
-                : [];
+            $bonsListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $bonsListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $cashReceiptsPaged = Database::isConfigured()
+                ? CashReceiptRepository::paginateRecent(
+                    $bonsListPage,
+                    $bonsListPerPage,
+                    $cashReceiptRegisterId > 0 ? $cashReceiptRegisterId : null
+                )
+                : ListPagination::emptyResult($bonsListPerPage);
+            $cashReceipts = $cashReceiptsPaged['items'];
             $cashTseOutages = Database::isConfigured() ? CashTseOutageService::listActiveOutages() : [];
             $contentTemplate = 'modules/registerkasse-bons';
             $title = 'Bons';
@@ -9702,13 +9760,17 @@ switch ($path) {
             $cashRegisterOptions = Database::isConfigured()
                 ? CashRegisterRepository::listAll(null, false)
                 : [];
-            $cashJournalReceipts = Database::isConfigured()
-                ? CashReceiptRepository::listJournal(
+            $journalListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $journalListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $cashJournalReceiptsPaged = Database::isConfigured()
+                ? CashReceiptRepository::paginateJournal(
+                    $journalListPage,
+                    $journalListPerPage,
                     $cashJournalRegisterId > 0 ? $cashJournalRegisterId : null,
-                    $cashJournalDate !== '' ? $cashJournalDate : null,
-                    200
+                    $cashJournalDate !== '' ? $cashJournalDate : null
                 )
-                : [];
+                : ListPagination::emptyResult($journalListPerPage);
+            $cashJournalReceipts = $cashJournalReceiptsPaged['items'];
             $contentTemplate = 'modules/registerkasse-journal';
             $title = 'Bon-Journal';
             $currentPage = 'registerkasse-journal';
@@ -9877,7 +9939,10 @@ switch ($path) {
                 header('Location: /app', true, 302);
                 exit;
             }
-            $auditEntries = AuditLog::recent(200);
+            $auditListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $auditListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $auditEntriesPaged = AuditLog::paginate($auditListPage, $auditListPerPage);
+            $auditEntries = $auditEntriesPaged['items'];
             $contentTemplate = 'modules/sicherheitsprotokoll';
             $title = 'Sicherheitsprotokoll';
             $currentPage = 'einstellungen';
@@ -9885,6 +9950,7 @@ switch ($path) {
             $contactId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $contactSearch = trim((string) ($_GET['s'] ?? ''));
             $contactPage = max(1, (int) ($_GET['paged'] ?? 1));
+            $contactPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
             $contactRoleFilter = strtolower(trim((string) ($_GET['role'] ?? '')));
             if (!in_array($contactRoleFilter, ['mitarbeiter', 'kunde', 'lieferant'], true)) {
                 $contactRoleFilter = '';
@@ -10030,7 +10096,7 @@ switch ($path) {
                 $contactSignatures = UserSignatureStore::listForContact($contact->id);
                 $contactAkte = ContactAkteService::build($user, $contact);
             } else {
-                $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
+                $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter, $contactPerPage);
                 $contactImportErrors = [];
                 if (isset($_SESSION['dg_contact_import_errors']) && is_array($_SESSION['dg_contact_import_errors'])) {
                     $contactImportErrors = $_SESSION['dg_contact_import_errors'];
@@ -10073,7 +10139,10 @@ switch ($path) {
                         exit;
                     }
                 }
-                $websitePageList = WebsitePageRepository::list();
+                $websiteListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $websiteListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $websitePagePaged = ListPagination::paginateArray(WebsitePageRepository::list(), $websiteListPage, $websiteListPerPage);
+                $websitePageList = $websitePagePaged['items'];
                 $websiteMaintenance = WebsiteMaintenanceSettings::config();
                 $contentTemplate = 'modules/website-seiten';
                 $title = 'Seiten';
@@ -10148,7 +10217,10 @@ switch ($path) {
                         exit;
                     }
                 }
-                $websiteFormList = WebsiteFormRepository::list();
+                $websiteFormListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $websiteFormListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $websiteFormPaged = ListPagination::paginateArray(WebsiteFormRepository::list(), $websiteFormListPage, $websiteFormListPerPage);
+                $websiteFormList = $websiteFormPaged['items'];
                 $contentTemplate = 'modules/website-formulare';
                 $title = 'Formulare';
                 $currentPage = 'website-formulare';
@@ -10224,7 +10296,14 @@ switch ($path) {
                         $websiteFormSubmission = null;
                     }
                 }
-                $websiteFormSubmissions = WebsiteFormSubmissionRepository::listForForm($websiteFormId);
+                $inboxListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $inboxListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $websiteFormSubmissionsPaged = WebsiteFormSubmissionRepository::paginateForForm(
+                    $websiteFormId,
+                    $inboxListPage,
+                    $inboxListPerPage
+                );
+                $websiteFormSubmissions = $websiteFormSubmissionsPaged['items'];
                 $contentTemplate = 'modules/website-formular-inbox';
                 $title = 'Formulareingänge';
                 $currentPage = 'website-formular-inbox';
@@ -10269,7 +10348,10 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'kichel-protokoll' && RoleResolver::isAdmin($user)) {
-            $kichelLogRows = KichelProtocolRepository::recent(200);
+            $kichelListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $kichelListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $kichelLogPaged = KichelProtocolRepository::paginate($kichelListPage, $kichelListPerPage);
+            $kichelLogRows = $kichelLogPaged['items'];
             $contentTemplate = 'modules/kichel-protokoll';
             $title = 'Kichel-Protokoll';
             $currentPage = 'kichel-protokoll';
@@ -10518,7 +10600,10 @@ switch ($path) {
                 $title = $action === 'edit' ? 'SaaS-Kunde bearbeiten' : 'Neuer SaaS-Kunde';
                 $currentPage = 'kdv-kunden';
             } else {
-                $customers = KdvCustomerRepository::list();
+                $kdvListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+                $kdvListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+                $customersPaged = KdvCustomerRepository::paginate($kdvListPage, $kdvListPerPage);
+                $customers = $customersPaged['items'];
                 $contentTemplate = 'modules/kdv-kunden';
                 $title = 'SaaS-Kunden';
                 $currentPage = 'kdv-kunden';
@@ -10637,6 +10722,14 @@ switch ($path) {
                 ? VacationPlanningReminderService::statsForYear($timeVacYear)
                 : [];
             $timeVacPlanningThreshold = VacationPlanningReminderService::thresholdPercent();
+            $timeVacListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $timeVacListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $timeVacOwnForPage = array_values(array_filter(
+                $timeVacOwnList,
+                static fn (array $r): bool => (string) ($r['type'] ?? '') === 'vacation'
+            ));
+            $timeVacOwnPaged = ListPagination::paginateArray($timeVacOwnForPage, $timeVacListPage, $timeVacListPerPage);
+            $timeVacPendingPaged = ListPagination::paginateArray($timeVacPending, $timeVacListPage, $timeVacListPerPage);
             $contentTemplate = 'modules/zeiterfassung-urlaub';
             $title = 'Urlaub';
             $currentPage = 'zeiterfassung';
@@ -10741,6 +10834,15 @@ switch ($path) {
                 }
             }
             $timeAbsAttachments = TimeAbsenceEvidenceStorage::mapForAbsences($absIdsForAtt);
+            $timeAbsListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $timeAbsListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $timeAbsOwnForPage = array_values(array_filter(
+                $timeAbsOwnList,
+                static fn (array $r): bool => (string) ($r['type'] ?? '') !== 'vacation'
+            ));
+            $timeAbsOwnPaged = ListPagination::paginateArray($timeAbsOwnForPage, $timeAbsListPage, $timeAbsListPerPage);
+            $timeAbsPendingPaged = ListPagination::paginateArray($timeAbsPending, $timeAbsListPage, $timeAbsListPerPage);
+            $timeAbsHrPaged = ListPagination::paginateArray($timeAbsHrList, $timeAbsListPage, $timeAbsListPerPage);
             $contentTemplate = 'modules/zeiterfassung-abwesenheit';
             $title = 'Abwesenheit';
             $currentPage = 'zeiterfassung';
@@ -10767,6 +10869,11 @@ switch ($path) {
                 echo $csv;
                 exit;
             }
+            $timeProvListPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $timeProvListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $timeProvisionRows = is_array($timeProvisionPreview['rows'] ?? null) ? $timeProvisionPreview['rows'] : [];
+            $timeProvisionRowsPaged = ListPagination::paginateArray($timeProvisionRows, $timeProvListPage, $timeProvListPerPage);
+            $timeProvisionPreview['rows'] = $timeProvisionRowsPaged['items'];
             $contentTemplate = 'modules/zeiterfassung-rueckstellung';
             $title = 'Rückstellungen';
             $currentPage = 'zeiterfassung';
@@ -11505,6 +11612,7 @@ switch ($path) {
             $bookingId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
             $bookingSearch = trim((string) ($_GET['s'] ?? ''));
             $bookingPage = max(1, (int) ($_GET['paged'] ?? 1));
+            $bookingPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
             $bookingPeriodFilter = strtolower(trim((string) ($_GET['period'] ?? '')));
             if (!in_array($bookingPeriodFilter, BookingRepository::PERIOD_FILTERS, true)) {
                 $bookingPeriodFilter = '';
@@ -11549,7 +11657,7 @@ switch ($path) {
                 $title = $booking->customerName;
                 $currentPage = 'terminkalender';
             } else {
-                $bookingList = BookingRepository::paginate($bookingSearch, $bookingPage, $bookingPeriodFilter);
+                $bookingList = BookingRepository::paginate($bookingSearch, $bookingPage, $bookingPeriodFilter, $bookingPerPage);
                 $contentTemplate = 'modules/terminkalender';
                 $title = 'Terminkalender';
                 $currentPage = 'terminkalender';
@@ -11845,9 +11953,13 @@ switch ($path) {
                 }
             } elseif (!$postCompose && !$postListMode) {
                 $filter = $postMailboxFilter > 0 ? $postMailboxFilter : null;
-                $postPageLimit = PostUiSettings::messagesPerPage();
-                $postPageNum = max(1, (int) ($_GET['p'] ?? 1));
-                $postPageOffset = ($postPageNum - 1) * $postPageLimit;
+                $postPerPageKey = isset($_GET['per_page'])
+                    ? ListPagination::parsePerPageKey((string) $_GET['per_page'])
+                    : ListPagination::parsePerPageKey((string) max(1, (int) PostUiSettings::messagesPerPage()));
+                $postPageNum = max(1, (int) ($_GET['paged'] ?? $_GET['p'] ?? 1));
+                // Limit vor Count: bei „all“ großzügig; nach Count ggf. neu setzen
+                $postPageLimit = $postPerPageKey === 'all' ? 50000 : (int) ListPagination::sliceMeta(1, 1, $postPerPageKey)['limit'];
+                $postPageOffset = $postPerPageKey === 'all' ? 0 : (($postPageNum - 1) * $postPageLimit);
                 $postTotalCount = 0;
                 if ($postSearchMode) {
                     // Eine Seite + „hat mehr“; Gesamtsumme nicht exakt nötig für Suche
@@ -11928,7 +12040,10 @@ switch ($path) {
             }
             CallLogRepository::ensureReady();
             $ctiConfig = CtiSettings::config();
-            $callLog = CallLogRepository::recent(50);
+            $callLogPage = ListPagination::parsePage($_GET['paged'] ?? null);
+            $callLogPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
+            $callLogList = CallLogRepository::paginate($callLogPage, $callLogPerPage);
+            $callLog = $callLogList['items'];
             $telefonDial = trim((string) ($_GET['dial'] ?? ''));
             $contentTemplate = 'modules/telefon';
             $title = 'Telefon';
@@ -12148,6 +12263,7 @@ switch ($path) {
         $postPageNum = $postPageNum ?? 1;
         $postPageCount = $postPageCount ?? 1;
         $postPageLimit = $postPageLimit ?? PostUiSettings::messagesPerPage();
+        $postPerPageKey = $postPerPageKey ?? ListPagination::parsePerPageKey((string) $postPageLimit);
         $postTotalCount = $postTotalCount ?? 0;
         $postUiConfig = $postUiConfig ?? PostUiSettings::config();
         $postSendableMailboxes = $postSendableMailboxes ?? [];
@@ -12507,8 +12623,45 @@ switch ($path) {
         $academyCourseDepartmentIds = $academyCourseDepartmentIds ?? [];
         $academyModuleDepartmentIds = $academyModuleDepartmentIds ?? [];
         $stockItems = $stockItems ?? [];
+        $stockList = $stockList ?? null;
         $stockMovements = $stockMovements ?? [];
+        $stockMovementList = $stockMovementList ?? null;
         $stockInventories = $stockInventories ?? [];
+        $giftVoucherPaged = $giftVoucherPaged ?? null;
+        $complaintPaged = $complaintPaged ?? null;
+        $recipePaged = $recipePaged ?? null;
+        $websitePagePaged = $websitePagePaged ?? null;
+        $websiteFormPaged = $websiteFormPaged ?? null;
+        $websiteFormSubmissionsPaged = $websiteFormSubmissionsPaged ?? null;
+        $cashReceiptsPaged = $cashReceiptsPaged ?? null;
+        $cashJournalReceiptsPaged = $cashJournalReceiptsPaged ?? null;
+        $oposPaged = $oposPaged ?? null;
+        $cashEntriesPaged = $cashEntriesPaged ?? null;
+        $bankTransactionsOpenPaged = $bankTransactionsOpenPaged ?? null;
+        $bankTransactionsMatchedPaged = $bankTransactionsMatchedPaged ?? null;
+        $manualBatchesPaged = $manualBatchesPaged ?? null;
+        $auditEntriesPaged = $auditEntriesPaged ?? null;
+        $kichelLogPaged = $kichelLogPaged ?? null;
+        $jobApplicationsPaged = $jobApplicationsPaged ?? null;
+        $customersPaged = $customersPaged ?? null;
+        $timeVacOwnPaged = $timeVacOwnPaged ?? null;
+        $timeVacPendingPaged = $timeVacPendingPaged ?? null;
+        $timeAbsOwnPaged = $timeAbsOwnPaged ?? null;
+        $timeAbsPendingPaged = $timeAbsPendingPaged ?? null;
+        $timeAbsHrPaged = $timeAbsHrPaged ?? null;
+        $timeProvisionRowsPaged = $timeProvisionRowsPaged ?? null;
+        $academyAllVideosPaged = $academyAllVideosPaged ?? null;
+        $academyAllCoursesPaged = $academyAllCoursesPaged ?? null;
+        $jobApplications = $jobApplications ?? [];
+        $auditEntries = $auditEntries ?? [];
+        $kichelLogRows = $kichelLogRows ?? [];
+        $callLogList = $callLogList ?? null;
+        $videoList = $videoList ?? null;
+        $videoAssets = $videoAssets ?? [];
+        $youtubeConnected = $youtubeConnected ?? false;
+        $linkedinConnected = $linkedinConnected ?? false;
+        $instagramConnected = $instagramConnected ?? false;
+        $tiktokConnected = $tiktokConnected ?? false;
         $stockOutboundVouchers = $stockOutboundVouchers ?? [];
         $activeInventory = $activeInventory ?? null;
         $activeInventoryLines = $activeInventoryLines ?? [];
@@ -12665,6 +12818,7 @@ switch ($path) {
             'postPageNum',
             'postPageCount',
             'postPageLimit',
+            'postPerPageKey',
             'postTotalCount',
             'postSendableMailboxes',
             'postFolder',
@@ -12680,7 +12834,20 @@ switch ($path) {
             'postUiConfig',
             'ctiConfig',
             'callLog',
+            'callLogList',
             'telefonDial',
+            'videoList',
+            'videoAssets',
+            'youtubeConnected',
+            'linkedinConnected',
+            'instagramConnected',
+            'tiktokConnected',
+            'videoAsset',
+            'publishJobs',
+            'latestYoutubePost',
+            'latestLinkedinPost',
+            'latestInstagramPost',
+            'latestTiktokPost',
             'voucherLinkedMails',
             'smtpTestReport',
             'appearanceConfig',
@@ -12745,7 +12912,9 @@ switch ($path) {
             'academyCourseDepartmentIds',
             'academyModuleDepartmentIds',
             'stockItems',
+            'stockList',
             'stockMovements',
+            'stockMovementList',
             'stockInventories',
             'stockOutboundVouchers',
             'activeInventory',
@@ -13080,6 +13249,7 @@ switch ($path) {
             'writerContactFilter',
             'writerFilterContact',
             'giftVoucherList',
+            'giftVoucherPaged',
             'giftVoucherForm',
             'giftVoucherId',
             'giftFormMode',
@@ -13094,12 +13264,39 @@ switch ($path) {
             'companyName',
             'companyLogoUrl',
             'complaintList',
+            'complaintPaged',
             'complaintForm',
             'complaintId',
             'complaintEvents',
             'complaintAttachments',
             'complaintContactLabel',
             'complaintVoucherLabel',
+            'recipePaged',
+            'websitePagePaged',
+            'websiteFormPaged',
+            'websiteFormSubmissionsPaged',
+            'cashReceiptsPaged',
+            'cashJournalReceiptsPaged',
+            'oposPaged',
+            'cashEntriesPaged',
+            'bankTransactionsOpenPaged',
+            'bankTransactionsMatchedPaged',
+            'manualBatchesPaged',
+            'auditEntriesPaged',
+            'kichelLogPaged',
+            'jobApplicationsPaged',
+            'jobApplications',
+            'auditEntries',
+            'kichelLogRows',
+            'customersPaged',
+            'timeVacOwnPaged',
+            'timeVacPendingPaged',
+            'timeAbsOwnPaged',
+            'timeAbsPendingPaged',
+            'timeAbsHrPaged',
+            'timeProvisionRowsPaged',
+            'academyAllVideosPaged',
+            'academyAllCoursesPaged',
         ));
         break;
 

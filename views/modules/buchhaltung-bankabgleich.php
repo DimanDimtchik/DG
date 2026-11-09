@@ -7,9 +7,36 @@
  * @var bool $dbConnected
  * @var array{type: string, message: string}|null $flash
  */
-$open = $bankTransactionsOpen ?? [];
+$bankTransactionsOpenPaged = is_array($bankTransactionsOpenPaged ?? null) ? $bankTransactionsOpenPaged : null;
+if ($bankTransactionsOpenPaged !== null && isset($bankTransactionsOpenPaged['items'])) {
+    $open = $bankTransactionsOpenPaged['items'];
+    $bankOpenTotal = (int) ($bankTransactionsOpenPaged['total'] ?? count($open));
+    $bankOpenPageNum = (int) ($bankTransactionsOpenPaged['page'] ?? 1);
+    $bankOpenTotalPages = (int) ($bankTransactionsOpenPaged['total_pages'] ?? 1);
+    $bankOpenPerPageKey = (string) ($bankTransactionsOpenPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $open = $bankTransactionsOpen ?? [];
+    $bankOpenTotal = count($open);
+    $bankOpenPageNum = 1;
+    $bankOpenTotalPages = 1;
+    $bankOpenPerPageKey = ListPagination::DEFAULT;
+}
+$bankTransactionsMatchedPaged = is_array($bankTransactionsMatchedPaged ?? null) ? $bankTransactionsMatchedPaged : null;
+if ($bankTransactionsMatchedPaged !== null && isset($bankTransactionsMatchedPaged['items'])) {
+    $matched = $bankTransactionsMatchedPaged['items'];
+    $bankMatchedTotal = (int) ($bankTransactionsMatchedPaged['total'] ?? count($matched));
+    $bankMatchedPageNum = (int) ($bankTransactionsMatchedPaged['page'] ?? 1);
+    $bankMatchedTotalPages = (int) ($bankTransactionsMatchedPaged['total_pages'] ?? 1);
+    $bankMatchedPerPageKey = (string) ($bankTransactionsMatchedPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $matched = $bankTransactionsMatched ?? [];
+    $bankMatchedTotal = count($matched);
+    $bankMatchedPageNum = 1;
+    $bankMatchedTotalPages = 1;
+    $bankMatchedPerPageKey = ListPagination::DEFAULT;
+}
 $ghosts = $bankTransactionsGhosts ?? [];
-$matched = $bankTransactionsMatched ?? [];
+$bankExtraQuery = [];
 $csrf = Csrf::token();
 ?>
 <div class="dg-wrap dg-buchhaltung-bankabgleich">
@@ -103,10 +130,18 @@ $csrf = Csrf::token();
   <?php endif; ?>
 
   <section class="dg-panel">
-    <h2 class="dg-subsection-title">Offene Umsätze (<?= count($open) ?>)</h2>
+    <h2 class="dg-subsection-title">Offene Umsätze (<?= $bankOpenTotal ?>)</h2>
     <?php if ($open === []) : ?>
       <p class="dg-muted">Keine offenen Bankumsätze<?= $ghosts !== [] ? ' (ohne Geisterumsätze)' : '' ?>.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $bankOpenTotal,
+            'perPageKey' => $bankOpenPerPageKey,
+            'listPage' => 'buchhaltung-bankabgleich',
+            'extraQuery' => $bankExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
@@ -146,14 +181,32 @@ $csrf = Csrf::token();
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $bankOpenTotal,
+            'page' => $bankOpenPageNum,
+            'totalPages' => $bankOpenTotalPages,
+            'perPageKey' => $bankOpenPerPageKey,
+            'listPage' => 'buchhaltung-bankabgleich',
+            'extraQuery' => $bankExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 
   <section class="dg-panel">
-    <h2 class="dg-subsection-title">Zugeordnet (<?= count($matched) ?>)</h2>
+    <h2 class="dg-subsection-title">Zugeordnet (<?= $bankMatchedTotal ?>)</h2>
     <?php if ($matched === []) : ?>
       <p class="dg-muted">Noch keine Zuordnungen.</p>
     <?php else : ?>
+      <?php
+        View::partial('partials/list-per-page', [
+            'total' => $bankMatchedTotal,
+            'perPageKey' => $bankMatchedPerPageKey,
+            'listPage' => 'buchhaltung-bankabgleich',
+            'extraQuery' => $bankExtraQuery,
+        ]);
+      ?>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead><tr><th>Datum</th><th>Betrag</th><th>Beleg</th></tr></thead>
@@ -174,6 +227,16 @@ $csrf = Csrf::token();
           </tbody>
         </table>
       </div>
+      <?php
+        View::partial('partials/list-pagination-nav', [
+            'total' => $bankMatchedTotal,
+            'page' => $bankMatchedPageNum,
+            'totalPages' => $bankMatchedTotalPages,
+            'perPageKey' => $bankMatchedPerPageKey,
+            'listPage' => 'buchhaltung-bankabgleich',
+            'extraQuery' => $bankExtraQuery,
+        ]);
+      ?>
     <?php endif; ?>
   </section>
 </div>

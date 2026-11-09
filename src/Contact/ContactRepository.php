@@ -6,8 +6,6 @@ declare(strict_types=1);
  */
 final class ContactRepository
 {
-    private const PER_PAGE = 20;
-
     private static bool $retentionPurgedOnLastFind = false;
 
     /**
@@ -29,11 +27,14 @@ final class ContactRepository
      * @param User|null $viewer
      * @return array{
      */
-    public static function paginate(string $search = '', int $page = 1, ?User $viewer = null, string $roleFilter = ''): array
-    {
-        $page = max(1, $page);
-        $perPage = self::PER_PAGE;
-        $offset = ($page - 1) * $perPage;
+    public static function paginate(
+        string $search = '',
+        int $page = 1,
+        ?User $viewer = null,
+        string $roleFilter = '',
+        string $perPageKey = ListPagination::DEFAULT
+    ): array {
+        $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         [$where, $params] = self::buildSearchWhere($search, $viewer, $roleFilter);
         $pdo = Database::pdo();
 
@@ -41,15 +42,21 @@ final class ContactRepository
         $stmt = $pdo->prepare($countSql);
         $stmt->execute($params);
         $total = (int) $stmt->fetchColumn();
+        $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
 
-        $sql = 'SELECT * FROM dg_contacts ' . $where . ' ORDER BY display_name ASC, company_name ASC LIMIT :limit OFFSET :offset';
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
+        $sql = 'SELECT * FROM dg_contacts ' . $where . ' ORDER BY display_name ASC, company_name ASC';
+        if ($meta['show_all'] || $total === 0) {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+        } else {
+            $stmt = $pdo->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            foreach ($params as $key => $value) {
+                $stmt->bindValue(':' . $key, $value);
+            }
+            $stmt->bindValue(':limit', $meta['limit'], PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $meta['offset'], PDO::PARAM_INT);
+            $stmt->execute();
         }
-        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
 
         $items = [];
         while ($row = $stmt->fetch()) {
@@ -62,15 +69,7 @@ final class ContactRepository
             $items[] = self::map($row);
         }
 
-        $totalPages = max(1, (int) ceil($total / $perPage));
-
-        return [
-            'items' => $items,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage,
-            'total_pages' => $totalPages,
-        ];
+        return ListPagination::result($items, $total, $meta);
     }
 
     /**

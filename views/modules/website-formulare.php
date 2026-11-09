@@ -1,9 +1,23 @@
 <?php
 /** @var list<array<string, mixed>> $websiteFormList */
+/** @var array<string, mixed>|null $websiteFormPaged */
 /** @var bool $canEdit */
 /** @var bool $dbConnected */
 /** @var array{type: string, message: string}|null $flash */
-$forms = $websiteFormList ?? [];
+$websiteFormPaged = is_array($websiteFormPaged ?? null) ? $websiteFormPaged : null;
+if ($websiteFormPaged !== null && isset($websiteFormPaged['items'])) {
+    $forms = $websiteFormPaged['items'];
+    $formListTotal = (int) ($websiteFormPaged['total'] ?? count($forms));
+    $formListPageNum = (int) ($websiteFormPaged['page'] ?? 1);
+    $formListTotalPages = (int) ($websiteFormPaged['total_pages'] ?? 1);
+    $formListPerPageKey = (string) ($websiteFormPaged['per_page_key'] ?? ListPagination::DEFAULT);
+} else {
+    $forms = $websiteFormList ?? [];
+    $formListTotal = count($forms);
+    $formListPageNum = 1;
+    $formListTotalPages = 1;
+    $formListPerPageKey = ListPagination::DEFAULT;
+}
 $statusLabels = WebsiteFormRepository::statusOptions();
 ?>
 <div class="dg-wrap">
@@ -28,6 +42,14 @@ $statusLabels = WebsiteFormRepository::statusOptions();
     </div>
   <?php endif; ?>
 
+  <?php
+    View::partial('partials/list-per-page', [
+        'total' => $formListTotal,
+        'perPageKey' => $formListPerPageKey,
+        'listPage' => 'website-formulare',
+        'extraQuery' => [],
+    ]);
+  ?>
   <div class="dg-table-wrap">
     <table class="dg-table">
       <thead>
@@ -69,9 +91,10 @@ $statusLabels = WebsiteFormRepository::statusOptions();
               </td>
               <td><?= View::escape($updatedLabel) ?></td>
               <td class="dg-table__actions">
-                <a href="/app?page=website-formular-form&amp;action=edit&amp;id=<?= $fid ?>"><?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?></a>
-                ·
-                <a href="/app?page=website-formular-inbox&amp;id=<?= $fid ?>">Eingänge</a>
+                <div class="dg-table__actions-group">
+                  <a class="dg-button dg-button--small" href="/app?page=website-formular-form&amp;action=edit&amp;id=<?= $fid ?>"><?= $canEdit ? 'Bearbeiten' : 'Anzeigen' ?></a>
+                  <a class="dg-button dg-button--small" href="/app?page=website-formular-inbox&amp;id=<?= $fid ?>">Eingänge</a>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -79,4 +102,14 @@ $statusLabels = WebsiteFormRepository::statusOptions();
       </tbody>
     </table>
   </div>
+  <?php
+    View::partial('partials/list-pagination-nav', [
+        'total' => $formListTotal,
+        'page' => $formListPageNum,
+        'totalPages' => $formListTotalPages,
+        'perPageKey' => $formListPerPageKey,
+        'listPage' => 'website-formulare',
+        'extraQuery' => [],
+    ]);
+  ?>
 </div>
