@@ -1,7 +1,8 @@
 # GEX45 — Plattenlayout (2× 512 GB NVMe)
 
-> Stand: **2026-11-08**  
-> Hardware laut Hetzner: **keine** NVMe-/RAM-Upgrades am GEX45 → [GPU-Server-Doku](https://docs.hetzner.com/robot/dedicated-server/server-lines/gpu-server/)  
+> Stand: **2026-11-09**  
+> Hardware: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort **Finnland, HEL1** · OS **Ubuntu 26.04 LTS**  
+> Laut Hetzner: **keine** NVMe-/RAM-Upgrades am GEX45 → [GPU-Server-Doku](https://docs.hetzner.com/robot/dedicated-server/server-lines/gpu-server/)  
 > Speicher-Wachstum: **Hetzner-Backup/Storage Box** · später optional **SX65**  
 > Verwandt: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · [`GEX45` Produktseite](https://www.hetzner.com/dedicated-rootserver/gex45/)
 

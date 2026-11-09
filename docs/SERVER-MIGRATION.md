@@ -1,6 +1,6 @@
 # Server-Umzug & Infrastruktur-Plan
 
-> Stand: **2026-11-08**  
+> Stand: **2026-11-09**  
 > Verwandt: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md) · [CLOUD-AGENT-ACCESS.md](./CLOUD-AGENT-ACCESS.md) · Phase B: [`IQ-STROM-HETZNER-TODO.md`](./IQ-STROM-HETZNER-TODO.md) · tokenarm: [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md)
 
 ---
@@ -12,9 +12,10 @@
 | **Derzeitiger Server** | Kasserver / All-Inkl Shared Webhosting (`dg.ganz-soft.de` / CRM-Instanzen) |
 | **Deploy heute** | `scp`/`ssh`/`rsync`, PHP + MariaDB, **kein Root** auf All-Inkl, **kein Docker** |
 | **ELSTER-Strategie** | **ERiC direkt** (keine Middleware wie Elmar) — **erst nach Umzug** |
-| **Zielserver** | **Hetzner GEX45** — **bestellt** (2026-11) · Bereitstellung in **einigen Wochen** · Platten: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) |
-| **OS-Ziel** | **Ubuntu 26** (x64) · Zeitzone `Europe/Berlin` |
-| **Standort** | HEL1 (laut GEX45-Produktlinie; bei Lieferung in Robot prüfen) |
+| **Zielserver** | **Hetzner GEX45-1** — **bestellt** · Bestellnr. **B20261107-3544202** (2026-11-07) · Bereitstellung in **einigen Wochen** · Platten: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) |
+| **OS-Ziel** | **Ubuntu 26.04 LTS** (x64) · Zeitzone `Europe/Berlin` |
+| **Standort** | **Finnland, HEL1** (Bestellung bestätigt) · Hetzner-Support für HEL1 **nur Englisch** |
+| **Netz** | **1× Primäre IPv4** (bestellt) · IPv6 bei Freischaltung in Robot prüfen (PB1a) |
 | **Skalierung** | **SX65** o. ä. erst bei Mandantenwachstum / voller Platte — nicht für ersten Cutover |
 | **Bis Umzug** | CSV-Export + manuelle ELSTER-Eingabe (bereits implementiert) · CRM weiter All-Inkl |
 
@@ -37,18 +38,30 @@
 
 ---
 
-## Zielserver: Hetzner GEX45 (bestellt)
+## Zielserver: Hetzner GEX45-1 (bestellt)
 
 Produkt: [Hetzner GEX45](https://www.hetzner.com/dedicated-rootserver/gex45/) · Doku GPU-Linie: [GPU Server](https://docs.hetzner.com/robot/dedicated-server/server-lines/gpu-server/)
 
-| Komponente | GEX45 (Basis / typisch GEX45-1) |
+### Bestellung (Robot / Auftragsbestätigung)
+
+| Feld | Wert |
+|------|------|
+| Bestellnummer | **B20261107-3544202** |
+| Produkt | **1× Dedicated GPU-Server GEX45-1** |
+| Standort | **Finnland, HEL1** |
+| OS (Base) | **Ubuntu 26.04 LTS** |
+| Netz | **1× Primäre IPv4** |
+| Support-Hinweis | Für Finnland HEL1 nur **englischer** Hetzner-Support |
+| Status | bestellt 2026-11-07 · noch nicht freigeschaltet (PB1) |
+
+| Komponente | GEX45-1 (laut Produktlinie / Bestellung) |
 |------------|----------------------------------|
 | CPU | Intel Core i5-13500 (14 Kerne / 20 Threads) |
 | GPU | NVIDIA RTX PRO 4000 Blackwell SFF · 24 GB GDDR7 ECC (Bonus; CRM/ERiC brauchen die GPU nicht zwingend) |
 | RAM | 64 GB DDR4 |
 | Disk | 2× 512 GB NVMe |
-| Netz | 1 Gbit/s, Traffic unbegrenzt (Standard) |
-| Standort | HEL1 |
+| Netz | 1 Gbit/s, Traffic unbegrenzt (Standard) · **1× Primäre IPv4** bestellt |
+| Standort | Finnland, **HEL1** (EU/EWR) |
 | Root | ✅ |
 | Docker | ✅ möglich |
 | ERiC Linux x64 | ✅ geeignet |
@@ -82,7 +95,7 @@ Produkt: [Hetzner GEX45](https://www.hetzner.com/dedicated-rootserver/gex45/) ·
 | vCPU / Kerne | 4+ | 14/20 ✅ |
 | RAM | 8–16 GB+ | 64 GB ✅ |
 | Disk System | 40 GB+ NVMe | 2× 512 GB ✅ |
-| OS | Ubuntu 26 (bestellt) / Debian 12 | ✅ |
+| OS | Ubuntu 26.04 LTS (bestellt) / Debian 12 | ✅ |
 | Backup | täglich, off-site | Snapshot + off-site (kein großes HDD) |
 
 ### Software-Stack auf Zielserver (Plan)
@@ -104,7 +117,7 @@ Produkt: [Hetzner GEX45](https://www.hetzner.com/dedicated-rootserver/gex45/) ·
 | Phase | Inhalt | Wann |
 |-------|--------|------|
 | **0 — Jetzt** | CSV-UStVA, Docs, Code-Vorbereitung | ✅ Kasserver |
-| **1 — Server** | GEX45 geliefert · Ubuntu 26 · Hardening · User `deploy` | Nach Bereitstellung (Wochen) |
+| **1 — Server** | GEX45-1 geliefert · Ubuntu 26.04 LTS · Hardening · User `deploy` | Nach Bereitstellung (Wochen) |
 | **2 — Parallel** | DG probeweise deployen, Test-Domain/TTL | Vor Cutover |
 | **3 — Daten** | DB-Dump, `storage/` rsync, Cron, Mail | Cutover-Fenster |
 | **4 — ERiC** | Hersteller-ID, ERiC, Test-Zertifikat | Nach stabilem CRM |
@@ -140,10 +153,10 @@ Nach Umzug: `config/elster.local.php` anlegen, Tab **Einstellungen → ELSTER** 
 
 ## Checkliste „Server bestellt / bereit?“
 
-- [x] Hetzner Robot: **GEX45** bestellt (2026-11)
-- [ ] Server von Hetzner freigeschaltet / IPv4 notiert
+- [x] Hetzner Robot: **GEX45-1** bestellt — **B20261107-3544202** (2026-11-07) · Standort Finnland HEL1 · Ubuntu 26.04 LTS · 1× IPv4
+- [ ] Server von Hetzner freigeschaltet / Primäre IPv4 notiert (PB1a)
 - [ ] Firewall (nur 22, 80, 443; SSH-Key)
-- [ ] OS: **Ubuntu 26** installiert · `Europe/Berlin`
+- [ ] OS: **Ubuntu 26.04 LTS** installiert · `Europe/Berlin`
 - [ ] User `deploy`, kein Passwort-Login
 - [ ] MariaDB + PHP-FPM + nginx + Let’s Encrypt
 - [ ] Mini-IDs in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten

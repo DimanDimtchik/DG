@@ -82,7 +82,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Kommunikation / E-Mail-Postfächer (eigen):** Menü + UI — Plan [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) (P1–P6 erledigt; Smoke/Deploy laut P6-Checkliste)
 - [x] **Dokumentenverfasser:** Briefpapier + Editor/Export — Plan [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) (B1–B4, D1–D7 Code ✅; manuelle Smoke-UI + Sync nach Deploy)
 - [x] **Vor Hetzner AVV:** [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) — AVV **07.11.2026** v1.2 · TÜV-Audit-PDF ✅ (PDFs nicht in Git)  
-- [x] **Hetzner-Server:** **GEX45** bestellt · OS **Ubuntu 26** · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Mini-IDs [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) (Lieferung Wochen)  
+- [x] **Hetzner-Server:** **GEX45-1** bestellt (**B20261107-3544202**) · Finnland **HEL1** · OS **Ubuntu 26.04 LTS** · 1× IPv4 · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Mini-IDs [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) (Lieferung Wochen)  
 - [x] **Kontakt-Unterschrift Brief/Mail:** tokenarm [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) — **ES0–ES8 ✅** 2026-11-08 (Historie, Canvas, Brief, Mail, App, Import, UI-Texte; kein QES, kein Löschen)  
 - [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; SSH/Stack nach Lieferung PB1+)
 - [x] **ARAP-Prozent-Vorschlag:** Code bereits vorhanden; Jahresabschluss nutzt die resultierenden Ledger-/Folgejahresbuchungen, kein separater ARAP-Abschlussprozess
@@ -205,9 +205,9 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 |-------|--------|
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
-| `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45 / Ubuntu 26 |
+| `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45-1 / Ubuntu 26.04 LTS / HEL1 |
 | `SHARED-CORE-REST-PLAN.md` | Shared Core SC0–SC7 · `/var/www/dg-crm/shared` (nach PB2) |
-| `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45 (bestellt) |
+| `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45-1 · B20261107-3544202 (bestellt) |
 | `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES8, kein QES) |
 | `SIGNATURE-IMPORT-PROVIDER.md` | ES7a Import-Service-Vertrag / Interface |
 | `ZUGFERD-AUSGANG-ENTSCHEIDUNG.md` | PA5b: PDF+XRechnung behalten; Factur-X = D2-Ticket |

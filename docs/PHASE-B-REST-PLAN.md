@@ -3,7 +3,7 @@
 > **Eine Chat-Session = eine Mini-ID.**  
 > Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) §B · Hardware: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-Stand: **2026-11-08** · Zielserver: **GEX45** (bestellt) · OS: **Ubuntu 26** · Lieferung: **einige Wochen**
+Stand: **2026-11-09** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · Netz: **1× Primäre IPv4** · Lieferung: **einige Wochen**
 
 ---
 
@@ -52,13 +52,14 @@ Stand: **2026-11-08** · Zielserver: **GEX45** (bestellt) · OS: **Ubuntu 26** �
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | PB0a | Dieser Plan + Serverdaten GEX45/Ubuntu 26 in `SERVER-MIGRATION.md` | 🟢 | [x] 2026-11-08 |
+| PB0b | Bestellung abgeglichen: GEX45-1 · B20261107-3544202 · Finnland HEL1 · Ubuntu 26.04 LTS · 1× IPv4 | 🟢 | [x] 2026-11-09 |
 
 ### PB1 — Lieferung & Basis (erst wenn Server live)
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PB1a | Robot: IPv4/IPv6, Standort HEL1 bestätigen · Notiz in `SERVER-MIGRATION.md` (ohne Secrets) | 🔴 | [ ] |
-| PB1b | Ubuntu 26 installiert · `timedatectl` Berlin · Updates | 🔴 | [ ] |
+| PB1a | Robot: freigeschaltete **Primäre IPv4** (+ ggf. IPv6) notieren · Standort HEL1 bereits per Bestellung bestätigt · Notiz in `SERVER-MIGRATION.md` (ohne Secrets) | 🔴 | [ ] |
+| PB1b | Ubuntu **26.04 LTS** installiert · `timedatectl` Berlin · Updates | 🔴 | [ ] |
 | PB1c | Firewall 22/80/443 · SSH-Key User `deploy` · Passwort-Login aus | 🔴 | [ ] |
 | PB1d | Statusnotiz „Basis grün“ in IQ-STROM §B | 🟢 | [ ] |
 
@@ -99,13 +100,15 @@ Stand: **2026-11-08** · Zielserver: **GEX45** (bestellt) · OS: **Ubuntu 26** �
 
 ## Empfohlene Reihenfolge
 
-1. Warten auf Lieferung GEX45  
+1. Warten auf Lieferung **GEX45-1** (B20261107-3544202, HEL1)  
 2. **PB1a–d** → **PB2a–d** → **PB3a–c**  
 3. Freigabe → **PB4** · danach **PB5** · dann Phase C (ERiC)  
 4. Parallel/nach PB2: Shared Core [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) (SC3 Pilot Dev)
 
+**Hinweis Ops:** Hetzner-Support für Finnland HEL1 nur **Englisch**.
+
 **Nächster Chat (erst nach Lieferung):**  
-`Nur Mini-ID PB1a laut docs/PHASE-B-REST-PLAN.md. IPv4/Standort in SERVER-MIGRATION.md. Kein Cutover.`
+`Nur Mini-ID PB1a laut docs/PHASE-B-REST-PLAN.md. Primäre IPv4 in SERVER-MIGRATION.md. Kein Cutover.`
 
 ---
 
@@ -113,7 +116,7 @@ Stand: **2026-11-08** · Zielserver: **GEX45** (bestellt) · OS: **Ubuntu 26** �
 
 | Datei | Rolle |
 |-------|--------|
-| [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) | Hardware GEX45 |
+| [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) | Hardware GEX45-1 · Bestellung B20261107-3544202 |
 | [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | rsync/SSH Prep |
 | [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) | AVV ✅ |
 | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | nach Cutover |
