@@ -176,65 +176,70 @@ $roleLabels = [
     </section>
   <?php endif; ?>
 
-  <div class="dg-table-wrap">
-    <table class="dg-table">
-      <thead>
-        <tr>
-          <th>Benutzername</th>
-          <th>Anzeigename</th>
-          <th>Firmenname</th>
-          <th>Kundennummer</th>
-          <th>E-Mail</th>
-          <th>Rolle</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if ($list['items'] === []) : ?>
-          <tr>
-            <td colspan="7" class="dg-table__empty">Keine Kontakte gefunden.</td>
-          </tr>
-        <?php else : ?>
-          <?php foreach ($list['items'] as $contact) : ?>
+  <details class="dg-contact-import" open>
+    <summary>Kontaktliste (<?= (int) $list['total'] ?>)</summary>
+    <div class="dg-contact-import__form">
+      <div class="dg-table-wrap">
+        <table class="dg-table">
+          <thead>
             <tr>
-              <td><strong><?= View::escape($contact->login) ?></strong></td>
-              <td><?= View::escape($contact->listLabel()) ?></td>
-              <td><?= View::escape($contact->companyName) ?></td>
-              <td><?= View::escape($contact->customerNumber) ?></td>
-              <td><?= ContactChannelLink::emailHtml($contact->email) ?></td>
-              <td><?= View::escape($contact->roleLabel()) ?></td>
-              <td class="dg-table__actions">
-                <?php if (ContactAccessResolver::canEditContact($user, $contact)) : ?>
-                  <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=edit&amp;id=<?= $contact->id ?>">Bearbeiten</a>
-                <?php else : ?>
-                  <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=view&amp;id=<?= $contact->id ?>">Anzeigen</a>
-                <?php endif; ?>
-              </td>
+              <th>Benutzername</th>
+              <th>Anzeigename</th>
+              <th>Firmenname</th>
+              <th>Kundennummer</th>
+              <th>E-Mail</th>
+              <th>Rolle</th>
+              <th></th>
             </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </div>
+          </thead>
+          <tbody>
+            <?php if ($list['items'] === []) : ?>
+              <tr>
+                <td colspan="7" class="dg-table__empty">Keine Kontakte gefunden.</td>
+              </tr>
+            <?php else : ?>
+              <?php foreach ($list['items'] as $contact) : ?>
+                <tr>
+                  <td><strong><?= View::escape($contact->login) ?></strong></td>
+                  <td><?= View::escape($contact->listLabel()) ?></td>
+                  <td><?= View::escape($contact->companyName) ?></td>
+                  <td><?= View::escape($contact->customerNumber) ?></td>
+                  <td><?= ContactChannelLink::emailHtml($contact->email) ?></td>
+                  <td><?= View::escape($contact->roleLabel()) ?></td>
+                  <td class="dg-table__actions">
+                    <?php if (ContactAccessResolver::canEditContact($user, $contact)) : ?>
+                      <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=edit&amp;id=<?= $contact->id ?>">Bearbeiten</a>
+                    <?php else : ?>
+                      <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=view&amp;id=<?= $contact->id ?>">Anzeigen</a>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
 
-  <?php if ($list['total_pages'] > 1) : ?>
-    <?php
-      $pageQuery = $baseUrl;
-      if ($search !== '') {
-          $pageQuery .= '&s=' . rawurlencode($search);
-      }
-      if ($roleFilter !== '') {
-          $pageQuery .= '&role=' . rawurlencode($roleFilter);
-      }
-    ?>
-    <nav class="dg-pagination" aria-label="Seiten">
-      <?php if ($list['page'] > 1) : ?>
-        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
+      <?php if ($list['total_pages'] > 1) : ?>
+        <?php
+          $pageQuery = $baseUrl;
+          if ($search !== '') {
+              $pageQuery .= '&s=' . rawurlencode($search);
+          }
+          if ($roleFilter !== '') {
+              $pageQuery .= '&role=' . rawurlencode($roleFilter);
+          }
+        ?>
+        <nav class="dg-pagination" aria-label="Seiten">
+          <?php if ($list['page'] > 1) : ?>
+            <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] - 1)) ?>">&laquo; Zurück</a>
+          <?php endif; ?>
+          <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
+          <?php if ($list['page'] < $list['total_pages']) : ?>
+            <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
+          <?php endif; ?>
+        </nav>
       <?php endif; ?>
-      <span>Seite <?= (int) $list['page'] ?> von <?= (int) $list['total_pages'] ?></span>
-      <?php if ($list['page'] < $list['total_pages']) : ?>
-        <a href="<?= View::escape($pageQuery . '&paged=' . ($list['page'] + 1)) ?>">Weiter &raquo;</a>
-      <?php endif; ?>
-    </nav>
-  <?php endif; ?>
+    </div>
+  </details>
 </div>

@@ -757,6 +757,10 @@ code {
   max-width: 40rem;
 }
 
+.dg-contact-import__form:has(.dg-table-wrap) {
+  max-width: none;
+}
+
 .dg-contact-import__file,
 .dg-contact-import__check {
   display: flex;
