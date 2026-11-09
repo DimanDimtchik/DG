@@ -56,6 +56,11 @@ final class MediaRepository
         );
     }
 
+    /** Erlaubte Listengrößen (GET per_page=…). */
+    public const PER_PAGE_OPTIONS = ['10', '50', '100', 'all'];
+
+    public const DEFAULT_PER_PAGE = '10';
+
     /**
      * Active media rows with nested usage lists and public URLs.
      *
@@ -63,28 +68,69 @@ final class MediaRepository
      */
     public static function listWithUsage(): array
     {
-        self::ensureTables();
-        $pdo = Database::pdo();
+        return self::paginateWithUsage(1, 'all')['items'];
+    }
 
-        $rows = $pdo->query(
-            'SELECT m.*,
+    /**
+     * Paginated media list for the admin table.
+     *
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginateWithUsage(int $page = 1, string $perPageKey = self::DEFAULT_PER_PAGE): array
+    {
+        self::ensureTables();
+        $page = max(1, $page);
+        $perPageKey = strtolower(trim($perPageKey));
+        if (!in_array($perPageKey, self::PER_PAGE_OPTIONS, true)) {
+            $perPageKey = self::DEFAULT_PER_PAGE;
+        }
+
+        $pdo = Database::pdo();
+        $total = (int) $pdo->query(
+            "SELECT COUNT(*) FROM dg_media WHERE status = 'active'"
+        )->fetchColumn();
+
+        $showAll = $perPageKey === 'all';
+        $perPage = $showAll ? max(1, $total) : (int) $perPageKey;
+        $totalPages = $showAll ? 1 : max(1, (int) ceil($total / max(1, $perPage)));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        $sql = 'SELECT m.*,
                 (SELECT COUNT(*) FROM dg_media_usage u WHERE u.media_id = m.media_id AND u.used_until IS NULL) AS active_usage_count,
                 (SELECT MIN(u.used_from) FROM dg_media_usage u WHERE u.media_id = m.media_id) AS usage_from,
                 (SELECT MAX(COALESCE(u.used_until, u.last_seen_at)) FROM dg_media_usage u WHERE u.media_id = m.media_id) AS usage_until
              FROM dg_media m
              WHERE m.status = \'active\'
-             ORDER BY m.uploaded_at DESC'
-        )->fetchAll(PDO::FETCH_ASSOC);
+             ORDER BY m.uploaded_at DESC';
 
-        $out = [];
+        if ($showAll || $total === 0) {
+            $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } else {
+            $stmt = $pdo->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+
+        $items = [];
         foreach ($rows as $row) {
             $mediaId = (string) $row['media_id'];
             $row['usages'] = self::usageForMedia($mediaId);
             $row['url'] = MediaStorage::publicUrlForItem($row);
-            $out[] = $row;
+            $items[] = $row;
         }
 
-        return $out;
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $showAll ? $total : $perPage,
+            'total_pages' => $totalPages,
+            'per_page_key' => $perPageKey,
+        ];
     }
 
     /**

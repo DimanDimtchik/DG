@@ -10575,7 +10575,12 @@ switch ($path) {
                 $title = 'Bild bearbeiten';
                 $currentPage = 'bilder';
             } else {
-                $mediaList = MediaRepository::listWithUsage();
+                $mediaPage = max(1, (int) ($_GET['paged'] ?? 1));
+                $mediaPerPage = strtolower(trim((string) ($_GET['per_page'] ?? MediaRepository::DEFAULT_PER_PAGE)));
+                if (!in_array($mediaPerPage, MediaRepository::PER_PAGE_OPTIONS, true)) {
+                    $mediaPerPage = MediaRepository::DEFAULT_PER_PAGE;
+                }
+                $mediaList = MediaRepository::paginateWithUsage($mediaPage, $mediaPerPage);
                 $contentTemplate = 'modules/bilder';
                 $title = 'Media';
                 $currentPage = 'bilder';
@@ -12098,7 +12103,14 @@ switch ($path) {
         $calendarEmbedConfig = $calendarEmbedConfig ?? CalendarEmbedSettings::forForm();
         $bookingArticleOptions = $bookingArticleOptions ?? CalendarArticleRepository::bookingOptions();
         $bookingEmployeeOptions = $bookingEmployeeOptions ?? CalendarStaffRepository::bookingEmployeeOptions();
-        $mediaList = $mediaList ?? [];
+        $mediaList = $mediaList ?? [
+            'items' => [],
+            'total' => 0,
+            'page' => 1,
+            'per_page' => 10,
+            'total_pages' => 1,
+            'per_page_key' => MediaRepository::DEFAULT_PER_PAGE,
+        ];
         $mediaItem = $mediaItem ?? null;
         $mediaIsNew = $mediaIsNew ?? false;
         $mailAddressConfig = $mailAddressConfig ?? MailAddressSettings::forForm();
