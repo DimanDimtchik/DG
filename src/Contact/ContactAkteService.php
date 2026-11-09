@@ -40,7 +40,7 @@ final class ContactAkteService
 
         $documents = [];
         if ($canVouchers && Database::isConfigured()) {
-            $list = VoucherRepository::paginate([
+            $list = VoucherRepository::list([
                 'contact_id' => $contactId,
                 'page' => 1,
                 'per_page' => self::LIMIT,
