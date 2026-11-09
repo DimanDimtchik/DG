@@ -10,11 +10,21 @@ $roleFilter = $contactRoleFilter ?? '';
 $list = $contactList ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'total_pages' => 1];
 $importErrors = is_array($contactImportErrors ?? null) ? $contactImportErrors : [];
 $baseUrl = '/app?page=kontakte';
-$roleLabels = [
+$filterChips = [
+    '' => 'Alle',
+    'kunde' => 'Aktive Kunden',
     'mitarbeiter' => 'Mitarbeiter',
-    'kunde' => 'Kunden',
-    'lieferant' => 'Lieferanten',
 ];
+$filterUrl = static function (string $role) use ($baseUrl, $search): string {
+    $url = $baseUrl;
+    if ($role !== '') {
+        $url .= '&role=' . rawurlencode($role);
+    }
+    if ($search !== '') {
+        $url .= '&s=' . rawurlencode($search);
+    }
+    return $url;
+};
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -43,14 +53,6 @@ $roleLabels = [
       <?php endif; ?>
     </div>
   </header>
-
-  <?php if ($roleFilter !== '' && isset($roleLabels[$roleFilter])) : ?>
-  <p class="dg-panel dg-panel--notice">
-    Gefiltert: <strong><?= View::escape($roleLabels[$roleFilter]) ?></strong>
-    — öffnen Sie einen Eintrag über <em>Bearbeiten</em>.
-    <a href="<?= View::escape($baseUrl) ?>">Filter aufheben</a>
-  </p>
-  <?php endif; ?>
 
   <form class="dg-search" method="get" action="/app">
     <input type="hidden" name="page" value="kontakte">
@@ -179,6 +181,16 @@ $roleLabels = [
   <details class="dg-contact-import" open>
     <summary>Kontaktliste (<?= (int) $list['total'] ?>)</summary>
     <div class="dg-contact-import__form">
+      <nav class="dg-btn-row" aria-label="Kontaktliste filtern">
+        <?php foreach ($filterChips as $chipRole => $chipLabel) : ?>
+          <?php $isActive = $roleFilter === $chipRole; ?>
+          <a
+            href="<?= View::escape($filterUrl($chipRole)) ?>"
+            class="dg-button<?= $isActive ? ' dg-button--primary' : '' ?>"
+            <?= $isActive ? 'aria-current="true"' : '' ?>
+          ><?= View::escape($chipLabel) ?></a>
+        <?php endforeach; ?>
+      </nav>
       <div class="dg-table-wrap">
         <table class="dg-table">
           <thead>
