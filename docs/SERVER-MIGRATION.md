@@ -12,9 +12,10 @@
 | **Derzeitiger Server** | Kasserver / All-Inkl Shared Webhosting (`dg.ganz-soft.de` / CRM-Instanzen) |
 | **Deploy heute** | `scp`/`ssh`/`rsync`, PHP + MariaDB, **kein Root** auf All-Inkl, **kein Docker** |
 | **ELSTER-Strategie** | **ERiC direkt** (keine Middleware wie Elmar) — **erst nach Umzug** |
-| **Zielserver** | **Hetzner GEX45** — **bestellt** (2026-11) · Bereitstellung in **einigen Wochen** |
+| **Zielserver** | **Hetzner GEX45** — **bestellt** (2026-11) · Bereitstellung in **einigen Wochen** · Platten: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) |
 | **OS-Ziel** | **Ubuntu 26** (x64) · Zeitzone `Europe/Berlin` |
 | **Standort** | HEL1 (laut GEX45-Produktlinie; bei Lieferung in Robot prüfen) |
+| **Skalierung** | **SX65** o. ä. erst bei Mandantenwachstum / voller Platte — nicht für ersten Cutover |
 | **Bis Umzug** | CSV-Export + manuelle ELSTER-Eingabe (bereits implementiert) · CRM weiter All-Inkl |
 
 ---
