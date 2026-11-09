@@ -811,10 +811,32 @@ code {
   background: color-mix(in srgb, var(--dg-danger, #a33) 5%, transparent);
 }
 
+.dg-contact-form-panel:has(.dg-form-accordion),
 .dg-form.dg-panel:has(> .dg-form-accordion) {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.dg-contact-form-panel > .dg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dg-contact-form-panel > .dg-form-actions {
+  margin-top: var(--dg-space-3);
+  padding-top: var(--dg-space-3);
+  border-top: 1px solid var(--dg-border-accent, #ddd);
+}
+
+.dg-contact-form-panel > .dg-form-accordion {
+  margin-top: 0;
 }
 
 .dg-employee-section:has(> .dg-form-accordion) {
@@ -822,10 +844,6 @@ code {
   flex-direction: column;
   gap: 0;
   margin: 0 0 var(--dg-space-3);
-}
-
-.dg-form + .dg-form-accordion {
-  margin-top: var(--dg-space-4);
 }
 
 .dg-contact-import__form {

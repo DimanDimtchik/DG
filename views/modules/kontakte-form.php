@@ -56,7 +56,8 @@ $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
     <div class="dg-flash dg-flash--error"><?= View::escape($formError) ?></div>
   <?php endif; ?>
 
-  <form class="dg-form dg-panel" method="post" action="/app?page=kontakte" enctype="multipart/form-data">
+  <div class="dg-panel dg-contact-form-panel">
+  <form id="dg-contact-main-form" class="dg-form" method="post" action="/app?page=kontakte" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
     <?php if (!empty($kontakteReturnTo ?? '')) : ?>
       <input type="hidden" name="return_to" value="<?= View::escape($kontakteReturnTo) ?>">
@@ -345,10 +346,6 @@ $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
       </div>
     </details>
 
-    <div class="dg-form-actions">
-      <button type="submit" name="contact_save" value="1" class="dg-button dg-button--primary">Speichern</button>
-      <a class="dg-button" href="<?= View::escape($kontakteBackHref) ?>">Abbrechen</a>
-    </div>
   </form>
 
   <?php if ($isEdit) : ?>
@@ -449,4 +446,10 @@ $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
       </div>
     </details>
   <?php endif; ?>
+
+  <div class="dg-form-actions">
+    <button type="submit" form="dg-contact-main-form" name="contact_save" value="1" class="dg-button dg-button--primary">Speichern</button>
+    <a class="dg-button" href="<?= View::escape($kontakteBackHref) ?>">Abbrechen</a>
+  </div>
+  </div>
 </div>
