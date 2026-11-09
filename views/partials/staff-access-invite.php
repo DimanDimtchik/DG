@@ -14,6 +14,7 @@ if (empty($showEmployeeFields)) {
 $cid = (int) ($contactId ?? 0);
 $status = is_array($staffAccessStatus ?? null) ? $staffAccessStatus : [];
 $hasMailbox = !empty($staffAccessHasMailbox);
+$inAccordion = !empty($inAccordion);
 $dsgvo = StaffAccessInviteService::DSGVO_HINT;
 
 $statusLabel = static function (string $kind) use ($status): string {
@@ -28,7 +29,9 @@ $statusLabel = static function (string $kind) use ($status): string {
 };
 ?>
 <section class="dg-form-section" id="staff-access-invite">
-  <h2 class="dg-subsection-title">Zugänge &amp; Zeiterfassung</h2>
+  <?php if (!$inAccordion) : ?>
+    <h2 class="dg-subsection-title">Zugänge &amp; Zeiterfassung</h2>
+  <?php endif; ?>
   <p class="dg-field-hint">
     Getrennte Einladungen: Mitarbeiter vergeben Passwort/PIN selbst per Link — oder Sie tragen manuell ein (dann DSGVO-Bestätigung).
     Keine Geheimnisse in der E-Mail.

@@ -21,6 +21,8 @@ $isCompanyForm = ($form['salutation'] ?? '') === 'Firma';
 if ($isCompanyForm && $companyEmployees === []) {
     $companyEmployees = [ContactCompanyLinkRepository::emptyEmployeeRow()];
 }
+$payrollWageAssignments = $payrollWageAssignments ?? [];
+$payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', ['flash' => $flash ?? null]); ?>
@@ -61,31 +63,48 @@ if ($isCompanyForm && $companyEmployees === []) {
     <?php endif; ?>
     <?php if ($isEdit) : ?><input type="hidden" name="id" value="<?= (int) $contactId ?>"><?php endif; ?>
 
-    <h2>Stamm</h2>
-    <div class="dg-form-grid">
-      <label class="dg-field"><span>Benutzername *</span><input name="login" value="<?= View::escape($form['login']) ?>" required></label>
-      <label class="dg-field">
-        <span>Anrede</span>
-        <select name="salutation" id="contact_salutation" data-salutation-select>
-          <?php foreach (['', 'Herr', 'Frau', 'Divers', 'Firma', 'Team'] as $opt) : ?>
-            <option value="<?= View::escape($opt) ?>"<?= $form['salutation'] === $opt ? ' selected' : '' ?>><?= $opt !== '' ? View::escape($opt) : '—' ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-      <label class="dg-field"><span>Vorname</span><input name="first_name" value="<?= View::escape($form['first_name']) ?>"></label>
-      <label class="dg-field"><span>Nachname</span><input name="last_name" value="<?= View::escape($form['last_name']) ?>"></label>
-      <label class="dg-field"><span>Anzeigename</span><input name="display_name" value="<?= View::escape($form['display_name']) ?>"></label>
-      <label class="dg-field"><span>Firmenname</span><input name="company_name" value="<?= View::escape($form['company_name']) ?>"></label>
-      <label class="dg-field dg-field--wide">
-        <span>Rolle</span>
-        <select name="contact_role" id="contact_role" required data-role-select>
-          <?php foreach ($allowedContactRoles as $val => $lbl) : ?>
-            <option value="<?= View::escape($val) ?>"<?= $selectedRole === $val ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
-          <?php endforeach; ?>
-        </select>
-        <span class="dg-field-hint">Mitarbeiterdaten (Krankenkasse, SV-Nummer, Dokumente …) erscheinen nur bei Rolle <strong>Mitarbeiter</strong> oder <strong>Administrator</strong>.</span>
-      </label>
-    </div>
+    <details class="dg-form-accordion" open>
+      <summary>Stamm</summary>
+      <div class="dg-form-accordion__body">
+        <div class="dg-form-grid">
+          <label class="dg-field"><span>Benutzername *</span><input name="login" value="<?= View::escape($form['login']) ?>" required></label>
+          <label class="dg-field">
+            <span>Anrede</span>
+            <select name="salutation" id="contact_salutation" data-salutation-select>
+              <?php foreach (['', 'Herr', 'Frau', 'Divers', 'Firma', 'Team'] as $opt) : ?>
+                <option value="<?= View::escape($opt) ?>"<?= $form['salutation'] === $opt ? ' selected' : '' ?>><?= $opt !== '' ? View::escape($opt) : '—' ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field"><span>Vorname</span><input name="first_name" value="<?= View::escape($form['first_name']) ?>"></label>
+          <label class="dg-field"><span>Nachname</span><input name="last_name" value="<?= View::escape($form['last_name']) ?>"></label>
+          <label class="dg-field"><span>Anzeigename</span><input name="display_name" value="<?= View::escape($form['display_name']) ?>"></label>
+          <label class="dg-field"><span>Firmenname</span><input name="company_name" value="<?= View::escape($form['company_name']) ?>"></label>
+          <label class="dg-field dg-field--wide">
+            <span>Rolle</span>
+            <select name="contact_role" id="contact_role" required data-role-select>
+              <?php foreach ($allowedContactRoles as $val => $lbl) : ?>
+                <option value="<?= View::escape($val) ?>"<?= $selectedRole === $val ? ' selected' : '' ?>><?= View::escape($lbl) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <span class="dg-field-hint">Mitarbeiterdaten (Krankenkasse, SV-Nummer, Dokumente …) erscheinen nur bei Rolle <strong>Mitarbeiter</strong> oder <strong>Administrator</strong>.</span>
+          </label>
+        </div>
+        <?php
+          View::partial('partials/employee-data-form', [
+              'employeeData' => $employeeData,
+              'employeeFiles' => $employeeFiles,
+              'contactId' => $contactId,
+              'showEmployeeFields' => $showEmployeeFields,
+              'canEdit' => $canEdit ?? false,
+              'bankAccounts' => $bankAccounts,
+              'payrollWageAssignments' => $payrollWageAssignments,
+              'payrollWageTypeOptions' => $payrollWageTypeOptions,
+              'employeeRenderMode' => 'personal',
+          ]);
+        ?>
+      </div>
+    </details>
 
     <?php
       $contactTeams = is_array($contactTeams ?? null) ? $contactTeams : [];
@@ -94,198 +113,237 @@ if ($isCompanyForm && $companyEmployees === []) {
       }
     ?>
     <?php if ($contactTeams !== []) : ?>
-      <section class="dg-panel dg-panel--nested">
-        <h2>Teams</h2>
-        <p class="dg-lead">Automatisch verknüpft über HR → Team. Bearbeitung im Team-Formular.</p>
-        <ul class="dg-list">
-          <?php foreach ($contactTeams as $ct) : ?>
-            <li>
-              <a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($ct['id'] ?? 0) ?>"><?= View::escape((string) ($ct['name'] ?? '')) ?></a>
-              <span class="dg-muted">
-                · <?= View::escape((string) ($ct['department_name'] ?? '')) ?>
-                · <?= View::escape((string) ($ct['member_role_label'] ?? '')) ?>
-              </span>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      </section>
+      <details class="dg-form-accordion">
+        <summary>Teams</summary>
+        <div class="dg-form-accordion__body">
+          <p class="dg-lead">Automatisch verknüpft über HR → Team. Bearbeitung im Team-Formular.</p>
+          <ul class="dg-list">
+            <?php foreach ($contactTeams as $ct) : ?>
+              <li>
+                <a href="/app?page=hr-team-form&amp;action=edit&amp;id=<?= (int) ($ct['id'] ?? 0) ?>"><?= View::escape((string) ($ct['name'] ?? '')) ?></a>
+                <span class="dg-muted">
+                  · <?= View::escape((string) ($ct['department_name'] ?? '')) ?>
+                  · <?= View::escape((string) ($ct['member_role_label'] ?? '')) ?>
+                </span>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      </details>
     <?php endif; ?>
 
-    <section class="dg-panel dg-panel--nested" data-company-section<?= !$isCompanyForm ? ' hidden' : '' ?>>
-      <h2>Mitarbeiter der Firma</h2>
-      <p class="dg-lead">Verknüpfen Sie bestehende Personen-Kontakte mit dieser Firma — inkl. Zuständigkeit und Erreichbarkeit bei der Firma.</p>
-      <div id="dg-company-employee-repeater" class="dg-company-employee-repeater">
-        <?php foreach ($companyEmployees as $employeeIndex => $employee) : ?>
-          <?php View::partial('partials/contact-company-employee-card', [
-              'i' => $employeeIndex,
-              'employee' => $employee,
-              'personContactOptions' => $personContactOptions,
-          ]); ?>
-        <?php endforeach; ?>
+    <details class="dg-form-accordion" data-company-section<?= !$isCompanyForm ? ' hidden' : '' ?>>
+      <summary>Arbeitgeber / Firma</summary>
+      <div class="dg-form-accordion__body">
+        <p class="dg-lead">Verknüpfen Sie bestehende Personen-Kontakte mit dieser Firma — inkl. Zuständigkeit und Erreichbarkeit bei der Firma.</p>
+        <div id="dg-company-employee-repeater" class="dg-company-employee-repeater">
+          <?php foreach ($companyEmployees as $employeeIndex => $employee) : ?>
+            <?php View::partial('partials/contact-company-employee-card', [
+                'i' => $employeeIndex,
+                'employee' => $employee,
+                'personContactOptions' => $personContactOptions,
+            ]); ?>
+          <?php endforeach; ?>
+        </div>
+        <p class="dg-form-actions dg-form-actions--inline">
+          <button type="button" class="dg-button" data-company-employee-add>+ Mitarbeiter verknüpfen</button>
+        </p>
       </div>
-      <p class="dg-form-actions dg-form-actions--inline">
-        <button type="button" class="dg-button" data-company-employee-add>+ Mitarbeiter verknüpfen</button>
-      </p>
-    </section>
+    </details>
 
-    <section class="dg-panel dg-panel--nested" data-person-employer-section<?= $isCompanyForm ? ' hidden' : '' ?>>
-      <h2>Arbeitgeber / Firma</h2>
-      <p class="dg-lead">Optional: Person mit einer Firmen-Kontaktverknüpfen, bei der diese Person tätig ist.</p>
-      <div class="dg-form-grid">
-        <label class="dg-field dg-field--wide">
-          <span>Firma aus Kontakten</span>
-          <select name="employer_company_id" data-employer-company>
-            <option value="0">— keine Verknüpfung —</option>
-            <?php foreach ($companyContactOptions as $option) : ?>
-              <option
-                value="<?= (int) $option['id'] ?>"
-                <?= (int) ($employerForm['employer_company_id'] ?? 0) === (int) $option['id'] ? ' selected' : '' ?>
-              ><?= View::escape((string) $option['label']) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Zuständigkeitsbereich</span>
-          <input name="employer_responsibility" value="<?= View::escape((string) ($employerForm['employer_responsibility'] ?? '')) ?>" placeholder="z. B. Steuerberatung, Lohnbuchhaltung">
-        </label>
-        <label class="dg-field">
-          <span>E-Mail (dienstlich)</span>
-          <input type="email" name="employer_work_email" value="<?= View::escape((string) ($employerForm['employer_work_email'] ?? '')) ?>">
-        </label>
-        <label class="dg-field">
-          <span>Telefon (dienstlich)</span>
-          <input name="employer_work_phone" value="<?= View::escape((string) ($employerForm['employer_work_phone'] ?? '')) ?>">
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Erreichbarkeit / Öffnungszeiten</span>
-          <input name="employer_availability" value="<?= View::escape((string) ($employerForm['employer_availability'] ?? '')) ?>" placeholder="z. B. Mo–Fr 8–16 Uhr">
-        </label>
+    <details class="dg-form-accordion" data-person-employer-section<?= $isCompanyForm ? ' hidden' : '' ?>>
+      <summary>Arbeitgeber / Firma</summary>
+      <div class="dg-form-accordion__body">
+        <p class="dg-lead">Optional: Person mit einer Firmen-Kontaktverknüpfen, bei der diese Person tätig ist.</p>
+        <div class="dg-form-grid">
+          <label class="dg-field dg-field--wide">
+            <span>Firma aus Kontakten</span>
+            <select name="employer_company_id" data-employer-company>
+              <option value="0">— keine Verknüpfung —</option>
+              <?php foreach ($companyContactOptions as $option) : ?>
+                <option
+                  value="<?= (int) $option['id'] ?>"
+                  <?= (int) ($employerForm['employer_company_id'] ?? 0) === (int) $option['id'] ? ' selected' : '' ?>
+                ><?= View::escape((string) $option['label']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Zuständigkeitsbereich</span>
+            <input name="employer_responsibility" value="<?= View::escape((string) ($employerForm['employer_responsibility'] ?? '')) ?>" placeholder="z. B. Steuerberatung, Lohnbuchhaltung">
+          </label>
+          <label class="dg-field">
+            <span>E-Mail (dienstlich)</span>
+            <input type="email" name="employer_work_email" value="<?= View::escape((string) ($employerForm['employer_work_email'] ?? '')) ?>">
+          </label>
+          <label class="dg-field">
+            <span>Telefon (dienstlich)</span>
+            <input name="employer_work_phone" value="<?= View::escape((string) ($employerForm['employer_work_phone'] ?? '')) ?>">
+          </label>
+          <label class="dg-field dg-field--wide">
+            <span>Erreichbarkeit / Öffnungszeiten</span>
+            <input name="employer_availability" value="<?= View::escape((string) ($employerForm['employer_availability'] ?? '')) ?>" placeholder="z. B. Mo–Fr 8–16 Uhr">
+          </label>
+        </div>
       </div>
-    </section>
+    </details>
 
-    <h2>Kunde / Lieferant</h2>
-    <div class="dg-form-grid" data-customer-section>
-      <label class="dg-field"><span>Kundennummer</span><input name="customer_number" value="<?= View::escape($form['customer_number']) ?>" placeholder="intern, Nummernkreis"></label>
-      <label class="dg-field"><span>Lieferantennummer</span><input name="supplier_number" value="<?= View::escape($form['supplier_number']) ?>" placeholder="intern, Nummernkreis"></label>
-      <label class="dg-field dg-field--wide" data-supplier-customer-number>
-        <span>Kundennummer beim Lieferanten</span>
-        <input name="supplier_customer_number" value="<?= View::escape($form['supplier_customer_number'] ?? '') ?>" placeholder="Ihre Kontonummer beim Lieferanten (z. B. von Rechnungen)">
-      </label>
-      <label class="dg-field"><span>Steuernummer</span><input name="tax_number" value="<?= View::escape($form['tax_number']) ?>"></label>
-      <label class="dg-field"><span>USt-IdNr.</span><input name="vat_id" value="<?= View::escape($form['vat_id']) ?>"></label>
-      <label class="dg-field"><span>Handelsregister</span><input name="commercial_register" value="<?= View::escape($form['commercial_register'] ?? '') ?>" placeholder="z. B. Amtsgericht Stuttgart HRA 590261"></label>
-      <label class="dg-field"><span>WEEE-Registrierungsnr.</span><input name="weee_registration" value="<?= View::escape($form['weee_registration'] ?? '') ?>" placeholder="z. B. DE 69804700"></label>
-    </div>
+    <details class="dg-form-accordion">
+      <summary>Kunde / Lieferant</summary>
+      <div class="dg-form-accordion__body">
+        <div class="dg-form-grid" data-customer-section>
+          <label class="dg-field"><span>Kundennummer</span><input name="customer_number" value="<?= View::escape($form['customer_number']) ?>" placeholder="intern, Nummernkreis"></label>
+          <label class="dg-field"><span>Lieferantennummer</span><input name="supplier_number" value="<?= View::escape($form['supplier_number']) ?>" placeholder="intern, Nummernkreis"></label>
+          <label class="dg-field dg-field--wide" data-supplier-customer-number>
+            <span>Kundennummer beim Lieferanten</span>
+            <input name="supplier_customer_number" value="<?= View::escape($form['supplier_customer_number'] ?? '') ?>" placeholder="Ihre Kontonummer beim Lieferanten (z. B. von Rechnungen)">
+          </label>
+          <label class="dg-field"><span>Steuernummer</span><input name="tax_number" value="<?= View::escape($form['tax_number']) ?>"></label>
+          <label class="dg-field"><span>USt-IdNr.</span><input name="vat_id" value="<?= View::escape($form['vat_id']) ?>"></label>
+          <label class="dg-field"><span>Handelsregister</span><input name="commercial_register" value="<?= View::escape($form['commercial_register'] ?? '') ?>" placeholder="z. B. Amtsgericht Stuttgart HRA 590261"></label>
+          <label class="dg-field"><span>WEEE-Registrierungsnr.</span><input name="weee_registration" value="<?= View::escape($form['weee_registration'] ?? '') ?>" placeholder="z. B. DE 69804700"></label>
+        </div>
+      </div>
+    </details>
 
-    <h2>Kommunikation</h2>
-    <div class="dg-form-grid">
-      <label class="dg-field"><span>E-Mail</span><input type="email" name="email" data-email-assist="1" autocomplete="email" value="<?= View::escape($form['email']) ?>" placeholder="name@firma.de">
-        <?php if (trim((string) ($form['email_existence_status'] ?? '')) !== '' && ($form['email_existence_status'] ?? '') !== 'unknown') : ?>
-          <small class="dg-field-hint">
-            DNS-Prüfung: <?= View::escape((string) $form['email_existence_status']) ?>
-            <?php if (trim((string) ($form['email_existence_detail'] ?? '')) !== '') : ?>
-              – <?= View::escape((string) $form['email_existence_detail']) ?>
+    <details class="dg-form-accordion">
+      <summary>Kommunikation</summary>
+      <div class="dg-form-accordion__body">
+        <div class="dg-form-grid">
+          <label class="dg-field"><span>E-Mail</span><input type="email" name="email" data-email-assist="1" autocomplete="email" value="<?= View::escape($form['email']) ?>" placeholder="name@firma.de">
+            <?php if (trim((string) ($form['email_existence_status'] ?? '')) !== '' && ($form['email_existence_status'] ?? '') !== 'unknown') : ?>
+              <small class="dg-field-hint">
+                DNS-Prüfung: <?= View::escape((string) $form['email_existence_status']) ?>
+                <?php if (trim((string) ($form['email_existence_detail'] ?? '')) !== '') : ?>
+                  – <?= View::escape((string) $form['email_existence_detail']) ?>
+                <?php endif; ?>
+                <?php if (trim((string) ($form['email_existence_checked_at'] ?? '')) !== '') : ?>
+                  (<?= View::escape((string) $form['email_existence_checked_at']) ?>)
+                <?php endif; ?>
+              </small>
+            <?php else : ?>
+              <small class="dg-field-hint">Bei Kunden wird die Domain per DNS (MX/A) geprüft und das Ergebnis gespeichert (erneut nach 90 Tagen oder bei E-Mail-Änderung).</small>
             <?php endif; ?>
-            <?php if (trim((string) ($form['email_existence_checked_at'] ?? '')) !== '') : ?>
-              (<?= View::escape((string) $form['email_existence_checked_at']) ?>)
-            <?php endif; ?>
-          </small>
-        <?php else : ?>
-          <small class="dg-field-hint">Bei Kunden wird die Domain per DNS (MX/A) geprüft und das Ergebnis gespeichert (erneut nach 90 Tagen oder bei E-Mail-Änderung).</small>
-        <?php endif; ?>
-      </label>
-      <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" data-email-assist="1" autocomplete="email" value="<?= View::escape($form['email_2']) ?>" placeholder="name@firma.de"></label>
-      <label class="dg-field"><span>Telefon 1</span><input type="tel" name="phone_1" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($form['phone_1']) ?>" placeholder="0171 1234567"></label>
-      <label class="dg-field"><span>Telefon 2</span><input type="tel" name="phone_2" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($form['phone_2']) ?>" placeholder="+49 30 123456"></label>
-      <label class="dg-field dg-field--wide"><span>Website</span><input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="website" value="<?= View::escape($form['website']) ?>" placeholder="ganz-om.de"></label>
-      <label class="dg-field dg-field--wide">
-        <span>Bemerkung (intern)</span>
-        <textarea name="contact_note" rows="3" placeholder="z. B. Geräte-IP: 192.168.1.42 (OpenStage, Drucker …)"><?= View::escape($form['contact_note'] ?? '') ?></textarea>
-        <small class="dg-field-hint">Nur im CRM — wird nicht an LDAP/OpenStage übertragen. Suche findet Einträge auch anhand der Bemerkung.</small>
-      </label>
-      <?php if (ContactRepository::originFirmNoteColumnReady()) : ?>
-        <label class="dg-field dg-field--wide">
-          <span>Herkunft Firma (Multi-Firma)</span>
-          <input name="origin_firm_note" maxlength="191" value="<?= View::escape($form['origin_firm_note'] ?? '') ?>" placeholder="z. B. übernommen aus Vorgänger GmbH">
-          <small class="dg-field-hint">Nur Hinweis — kein automatischer Sync zwischen Instanzen.</small>
-        </label>
-      <?php endif; ?>
-      <?php if (!$isEdit) : ?>
-        <?php
-          $mailAddressConfig = MailAddressSettings::config();
-          $autoMailEnabled = !empty($mailAddressConfig['auto_on_contact_create']);
-          $autoMailDefault = $autoMailEnabled && CrmRole::hasEmployeeProfile($selectedRole);
-          $kasConfiguredForForm = KasSettings::isConfigured();
-        ?>
-        <label class="dg-field dg-field--checkbox dg-field--wide" data-auto-mailbox-row>
-          <span>
-            <input type="checkbox" name="auto_create_mailbox" value="1" id="contact_auto_create_mailbox" data-auto-enabled="<?= $autoMailEnabled ? '1' : '0' ?>"<?= $autoMailDefault ? ' checked' : '' ?>>
-            E-Mail-Adresse / privates Postfach automatisch anlegen
-          </span>
-          <small class="dg-field-hint">Nur für Rolle Mitarbeiter oder Administrator. Formel unter Einstellungen → E-Mail. Geprüft werden E-Mail, E-Mail 2 und E-Mail (dienstlich) beim Arbeitgeber. Weicht eine Adresse ab oder ist bereits vergeben, wird keine neue Adresse angelegt.<?php if (!$kasConfiguredForForm) : ?> <strong>Hinweis:</strong> KAS-API (<code>config/kas.local.php</code>) ist nicht konfiguriert — ohne KAS wird kein Postfach bei All-Inkl erzeugt.<?php endif; ?></small>
-        </label>
-      <?php endif; ?>
-    </div>
+          </label>
+          <label class="dg-field"><span>E-Mail 2</span><input type="email" name="email_2" data-email-assist="1" autocomplete="email" value="<?= View::escape($form['email_2']) ?>" placeholder="name@firma.de"></label>
+          <label class="dg-field"><span>Telefon 1</span><input type="tel" name="phone_1" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($form['phone_1']) ?>" placeholder="0171 1234567"></label>
+          <label class="dg-field"><span>Telefon 2</span><input type="tel" name="phone_2" data-phone-assist="1" autocomplete="tel" inputmode="tel" value="<?= View::escape($form['phone_2']) ?>" placeholder="+49 30 123456"></label>
+          <label class="dg-field dg-field--wide"><span>Website</span><input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="website" value="<?= View::escape($form['website']) ?>" placeholder="ganz-om.de"></label>
+          <label class="dg-field dg-field--wide">
+            <span>Bemerkung (intern)</span>
+            <textarea name="contact_note" rows="3" placeholder="z. B. Geräte-IP: 192.168.1.42 (OpenStage, Drucker …)"><?= View::escape($form['contact_note'] ?? '') ?></textarea>
+            <small class="dg-field-hint">Nur im CRM — wird nicht an LDAP/OpenStage übertragen. Suche findet Einträge auch anhand der Bemerkung.</small>
+          </label>
+          <?php if (!$isEdit) : ?>
+            <?php
+              $mailAddressConfig = MailAddressSettings::config();
+              $autoMailEnabled = !empty($mailAddressConfig['auto_on_contact_create']);
+              $autoMailDefault = $autoMailEnabled && CrmRole::hasEmployeeProfile($selectedRole);
+              $kasConfiguredForForm = KasSettings::isConfigured();
+            ?>
+            <label class="dg-field dg-field--checkbox dg-field--wide" data-auto-mailbox-row>
+              <span>
+                <input type="checkbox" name="auto_create_mailbox" value="1" id="contact_auto_create_mailbox" data-auto-enabled="<?= $autoMailEnabled ? '1' : '0' ?>"<?= $autoMailDefault ? ' checked' : '' ?>>
+                E-Mail-Adresse / privates Postfach automatisch anlegen
+              </span>
+              <small class="dg-field-hint">Nur für Rolle Mitarbeiter oder Administrator. Formel unter Einstellungen → E-Mail. Geprüft werden E-Mail, E-Mail 2 und E-Mail (dienstlich) beim Arbeitgeber. Weicht eine Adresse ab oder ist bereits vergeben, wird keine neue Adresse angelegt.<?php if (!$kasConfiguredForForm) : ?> <strong>Hinweis:</strong> KAS-API (<code>config/kas.local.php</code>) ist nicht konfiguriert — ohne KAS wird kein Postfach bei All-Inkl erzeugt.<?php endif; ?></small>
+            </label>
+          <?php endif; ?>
+        </div>
+      </div>
+    </details>
 
-    <h2>Adresse</h2>
-    <div class="dg-form-grid">
-      <label class="dg-field"><span>Straße</span><input name="address1_street" value="<?= View::escape($form['address1_street']) ?>"></label>
-      <label class="dg-field"><span>Zusatz</span><input name="address1_extra" value="<?= View::escape($form['address1_extra']) ?>"></label>
-      <label class="dg-field"><span>Ort</span><input name="address1_city" value="<?= View::escape($form['address1_city']) ?>"></label>
-      <label class="dg-field"><span>PLZ</span><input name="address1_postal" value="<?= View::escape($form['address1_postal']) ?>"></label>
-      <label class="dg-field"><span>Land</span><input name="address1_country" value="<?= View::escape($form['address1_country']) ?>" maxlength="2"></label>
-    </div>
+    <?php if (ContactRepository::originFirmNoteColumnReady()) : ?>
+      <details class="dg-form-accordion">
+        <summary>Multifirma</summary>
+        <div class="dg-form-accordion__body">
+          <div class="dg-form-grid">
+            <label class="dg-field dg-field--wide">
+              <span>Herkunft Firma (Multi-Firma)</span>
+              <input name="origin_firm_note" maxlength="191" value="<?= View::escape($form['origin_firm_note'] ?? '') ?>" placeholder="z. B. übernommen aus Vorgänger GmbH">
+              <small class="dg-field-hint">Nur Hinweis — kein automatischer Sync zwischen Instanzen.</small>
+            </label>
+          </div>
+        </div>
+      </details>
+    <?php endif; ?>
+
+    <details class="dg-form-accordion">
+      <summary>Adresse</summary>
+      <div class="dg-form-accordion__body">
+        <div class="dg-form-grid">
+          <label class="dg-field"><span>Straße</span><input name="address1_street" value="<?= View::escape($form['address1_street']) ?>"></label>
+          <label class="dg-field"><span>Zusatz</span><input name="address1_extra" value="<?= View::escape($form['address1_extra']) ?>"></label>
+          <label class="dg-field"><span>Ort</span><input name="address1_city" value="<?= View::escape($form['address1_city']) ?>"></label>
+          <label class="dg-field"><span>PLZ</span><input name="address1_postal" value="<?= View::escape($form['address1_postal']) ?>"></label>
+          <label class="dg-field"><span>Land</span><input name="address1_country" value="<?= View::escape($form['address1_country']) ?>" maxlength="2"></label>
+        </div>
+      </div>
+    </details>
+
+    <details class="dg-form-accordion">
+      <summary>Bankverbindung</summary>
+      <div class="dg-form-accordion__body">
+        <p class="dg-lead">Mehrere Girokonten, Kreditkarten und Zahlungsdienste möglich. Kreditkartennummer nur zur Erkennung — gespeichert wird die Maske; IBAN der Karte für SEPA/Dokumente.</p>
+        <div id="dg-bank-repeater" class="dg-bank-repeater">
+          <?php foreach ($bankAccounts as $i => $account) : ?>
+            <?php View::partial('partials/bank-account-card', compact('i', 'account', 'bankTypes')); ?>
+          <?php endforeach; ?>
+        </div>
+        <p class="dg-bank-repeater__actions">
+          <button type="button" class="dg-button" data-bank-add>+ Konto / Zahlungsdienst hinzufügen</button>
+        </p>
+      </div>
+    </details>
 
     <?php
-      $payrollWageAssignments = $payrollWageAssignments ?? [];
-      $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
-      View::partial('partials/employee-data-form', compact(
-          'employeeData',
-          'employeeFiles',
-          'contactId',
-          'showEmployeeFields',
-          'canEdit',
-          'bankAccounts',
-          'payrollWageAssignments',
-          'payrollWageTypeOptions'
-      ));
+      View::partial('partials/employee-data-form', [
+          'employeeData' => $employeeData,
+          'employeeFiles' => $employeeFiles,
+          'contactId' => $contactId,
+          'showEmployeeFields' => $showEmployeeFields,
+          'canEdit' => $canEdit ?? false,
+          'bankAccounts' => $bankAccounts,
+          'payrollWageAssignments' => $payrollWageAssignments,
+          'payrollWageTypeOptions' => $payrollWageTypeOptions,
+          'employeeRenderMode' => 'rest',
+      ]);
     ?>
 
     <?php if (!$isEdit && !empty($showEmployeeFields)) : ?>
-      <?php
-        $staffAccessStatus = [];
-        $staffAccessHasMailbox = false;
-        View::partial('partials/staff-access-invite', [
-            'contactId' => null,
-            'showEmployeeFields' => true,
-            'isEdit' => false,
-            'staffAccessStatus' => $staffAccessStatus,
-            'staffAccessHasMailbox' => $staffAccessHasMailbox,
-        ]);
-      ?>
+      <details class="dg-form-accordion">
+        <summary>Zugänge &amp; Zeiterfassung</summary>
+        <div class="dg-form-accordion__body">
+          <?php
+            $staffAccessStatus = [];
+            $staffAccessHasMailbox = false;
+            View::partial('partials/staff-access-invite', [
+                'contactId' => null,
+                'showEmployeeFields' => true,
+                'isEdit' => false,
+                'staffAccessStatus' => $staffAccessStatus,
+                'staffAccessHasMailbox' => $staffAccessHasMailbox,
+                'inAccordion' => true,
+            ]);
+          ?>
+        </div>
+      </details>
     <?php endif; ?>
 
-    <h2>Bankverbindung</h2>
-    <p class="dg-lead">Mehrere Girokonten, Kreditkarten und Zahlungsdienste möglich. Kreditkartennummer nur zur Erkennung — gespeichert wird die Maske; IBAN der Karte für SEPA/Dokumente.</p>
-    <div id="dg-bank-repeater" class="dg-bank-repeater">
-      <?php foreach ($bankAccounts as $i => $account) : ?>
-        <?php View::partial('partials/bank-account-card', compact('i', 'account', 'bankTypes')); ?>
-      <?php endforeach; ?>
-    </div>
-    <p class="dg-bank-repeater__actions">
-      <button type="button" class="dg-button" data-bank-add>+ Konto / Zahlungsdienst hinzufügen</button>
-    </p>
-
-    <h2>Soziale Medien</h2>
-    <p class="dg-lead">Profile in sozialen Netzwerken (Website steht unter Kommunikation).</p>
-    <div class="dg-form-grid">
-      <?php foreach ($socialFields as $fieldKey => $fieldLabel) : ?>
-        <label class="dg-field dg-field--wide">
-          <span><?= View::escape($fieldLabel) ?></span>
-          <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="<?= View::escape($fieldKey) ?>" value="<?= View::escape($form[$fieldKey] ?? '') ?>" placeholder="https://">
-        </label>
-      <?php endforeach; ?>
-    </div>
+    <details class="dg-form-accordion">
+      <summary>Soziale Medien</summary>
+      <div class="dg-form-accordion__body">
+        <p class="dg-lead">Profile in sozialen Netzwerken (Website steht unter Kommunikation).</p>
+        <div class="dg-form-grid">
+          <?php foreach ($socialFields as $fieldKey => $fieldLabel) : ?>
+            <label class="dg-field dg-field--wide">
+              <span><?= View::escape($fieldLabel) ?></span>
+              <input type="text" inputmode="url" autocomplete="url" data-website-url="1" name="<?= View::escape($fieldKey) ?>" value="<?= View::escape($form[$fieldKey] ?? '') ?>" placeholder="https://">
+            </label>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </details>
 
     <div class="dg-form-actions">
       <button type="submit" name="contact_save" value="1" class="dg-button dg-button--primary">Speichern</button>
@@ -294,47 +352,71 @@ if ($isCompanyForm && $companyEmployees === []) {
   </form>
 
   <?php if ($isEdit) : ?>
-    <?php
-      View::partial('partials/contact-signature-history', [
-          'contactId' => (int) $contactId,
-          'contactSignatures' => $contactSignatures ?? [],
-          'canUploadContactSignature' => !empty($canUploadContactSignature),
-          'signatureOwnerMissing' => !empty($signatureOwnerMissing),
-      ]);
-    ?>
+    <details class="dg-form-accordion">
+      <summary>Unterschriften</summary>
+      <div class="dg-form-accordion__body">
+        <?php
+          View::partial('partials/contact-signature-history', [
+              'contactId' => (int) $contactId,
+              'contactSignatures' => $contactSignatures ?? [],
+              'canUploadContactSignature' => !empty($canUploadContactSignature),
+              'signatureOwnerMissing' => !empty($signatureOwnerMissing),
+              'inAccordion' => true,
+          ]);
+        ?>
+      </div>
+    </details>
   <?php endif; ?>
 
   <?php if ($isEdit && !empty($showEmployeeFields)) : ?>
-    <?php
-      View::partial('partials/employment-contract-generate', [
-          'contactId' => (int) $contactId,
-          'employeeData' => $employeeData ?? EmployeeData::empty(),
-          'employeeFiles' => $employeeFiles ?? ContactFileStorage::emptyFiles(),
-          'showEmployeeFields' => true,
-          'canEdit' => !empty($canEdit),
-          'employmentContractContact' => isset($contact) && $contact instanceof Contact ? $contact : null,
-      ]);
-      View::partial('partials/hr-personnel-events', [
-          'contactId' => (int) $contactId,
-          'employeeData' => $employeeData ?? EmployeeData::empty(),
-          'showEmployeeFields' => true,
-          'canEdit' => !empty($canEdit),
-          'hrPersonnelContact' => isset($contact) && $contact instanceof Contact ? $contact : null,
-      ]);
-    ?>
-    <div class="dg-panel">
-      <?php
-        $staffAccessStatus = $staffAccessStatus ?? StaffAccessInviteService::status((int) $contactId);
-        $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;
-        View::partial('partials/staff-access-invite', [
-            'contactId' => (int) $contactId,
-            'showEmployeeFields' => true,
-            'isEdit' => true,
-            'staffAccessStatus' => $staffAccessStatus,
-            'staffAccessHasMailbox' => $staffAccessHasMailbox,
-        ]);
-      ?>
-    </div>
+    <details class="dg-form-accordion">
+      <summary>Arbeitsvertrag erzeugen</summary>
+      <div class="dg-form-accordion__body">
+        <?php
+          View::partial('partials/employment-contract-generate', [
+              'contactId' => (int) $contactId,
+              'employeeData' => $employeeData ?? EmployeeData::empty(),
+              'employeeFiles' => $employeeFiles ?? ContactFileStorage::emptyFiles(),
+              'showEmployeeFields' => true,
+              'canEdit' => !empty($canEdit),
+              'employmentContractContact' => isset($contact) && $contact instanceof Contact ? $contact : null,
+              'inAccordion' => true,
+          ]);
+        ?>
+      </div>
+    </details>
+    <details class="dg-form-accordion">
+      <summary>Personalvorgänge (Abmahnung / Kündigung)</summary>
+      <div class="dg-form-accordion__body">
+        <?php
+          View::partial('partials/hr-personnel-events', [
+              'contactId' => (int) $contactId,
+              'employeeData' => $employeeData ?? EmployeeData::empty(),
+              'showEmployeeFields' => true,
+              'canEdit' => !empty($canEdit),
+              'hrPersonnelContact' => isset($contact) && $contact instanceof Contact ? $contact : null,
+              'inAccordion' => true,
+          ]);
+        ?>
+      </div>
+    </details>
+    <details class="dg-form-accordion">
+      <summary>Zugänge &amp; Zeiterfassung</summary>
+      <div class="dg-form-accordion__body">
+        <?php
+          $staffAccessStatus = $staffAccessStatus ?? StaffAccessInviteService::status((int) $contactId);
+          $staffAccessHasMailbox = $staffAccessHasMailbox ?? false;
+          View::partial('partials/staff-access-invite', [
+              'contactId' => (int) $contactId,
+              'showEmployeeFields' => true,
+              'isEdit' => true,
+              'staffAccessStatus' => $staffAccessStatus,
+              'staffAccessHasMailbox' => $staffAccessHasMailbox,
+              'inAccordion' => true,
+          ]);
+        ?>
+      </div>
+    </details>
   <?php endif; ?>
 
   <template id="dg-company-employee-card-template">
@@ -346,16 +428,25 @@ if ($isCompanyForm && $companyEmployees === []) {
   </template>
 
   <?php if ($isEdit) : ?>
-    <?php View::partial('partials/contact-akte', ['contactAkte' => $contactAkte ?? null]); ?>
+    <?php View::partial('partials/contact-akte', [
+        'contactAkte' => $contactAkte ?? null,
+        'inAccordion' => true,
+    ]); ?>
   <?php endif; ?>
 
   <?php if ($isEdit && !empty($canDeleteContact)) : ?>
-    <form class="dg-form dg-panel dg-panel--danger dg-mt-4" method="post" action="/app?page=kontakte" onsubmit="return confirm('Kontakt wirklich löschen?');">
-      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-      <input type="hidden" name="id" value="<?= (int) $contactId ?>">
-      <h2>Kontakt löschen</h2>
-      <p class="dg-lead">Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
-      <button type="submit" name="contact_delete" value="1" class="dg-button dg-button--danger">Kontakt löschen</button>
-    </form>
+    <details class="dg-form-accordion dg-form-accordion--danger">
+      <summary>Kontakt löschen</summary>
+      <div class="dg-form-accordion__body">
+        <form class="dg-form" method="post" action="/app?page=kontakte" onsubmit="return confirm('Kontakt wirklich löschen?');">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="id" value="<?= (int) $contactId ?>">
+          <p class="dg-lead">Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
+          <div class="dg-form-actions">
+            <button type="submit" name="contact_delete" value="1" class="dg-button dg-button--danger">Kontakt löschen</button>
+          </div>
+        </form>
+      </div>
+    </details>
   <?php endif; ?>
 </div>

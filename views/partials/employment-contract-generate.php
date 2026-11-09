@@ -9,6 +9,7 @@ $employeeData = $employeeData ?? EmployeeData::empty();
 $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
 $showEmployeeFields = !empty($showEmployeeFields);
 $canEdit = !empty($canEdit);
+$inAccordion = !empty($inAccordion);
 if ($contactId <= 0 || !$showEmployeeFields || !$canEdit) {
     return;
 }
@@ -31,8 +32,10 @@ $existingContract = is_array($employeeFiles['employment_contract'] ?? null)
 $hasExistingContract = !empty($existingContract['path']);
 $existingContractName = trim((string) ($existingContract['original_name'] ?? 'Arbeitsvertrag.pdf'));
 ?>
-<form class="dg-form dg-panel" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
-  <h2>Arbeitsvertrag erzeugen</h2>
+<form class="dg-form<?= $inAccordion ? '' : ' dg-panel' ?>" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
+  <?php if (!$inAccordion) : ?>
+    <h2>Arbeitsvertrag erzeugen</h2>
+  <?php endif; ?>
   <p class="dg-lead">Erzeugt ein PDF aus Stammdaten und Firmenangaben und legt es als Dokument „Arbeitsvertrag“ ab (auch unter Mitarbeiterdaten → Dokumente). Ein vorhandener Vertrag wird ersetzt. Bitte vor Unterzeichnung prüfen.</p>
   <?php if ($hasExistingContract) : ?>
     <div class="dg-flash dg-flash--info" role="status">

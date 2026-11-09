@@ -7,6 +7,7 @@
 /** @var list<array<string, string>> $bankAccounts */
 /** @var list<array<string, mixed>> $payrollWageAssignments */
 /** @var list<array<string, mixed>> $payrollWageTypeOptions */
+/** @var string $employeeRenderMode personal|rest|all */
 $employeeData = $employeeData ?? EmployeeData::empty();
 $employeeFiles = $employeeFiles ?? ContactFileStorage::emptyFiles();
 $showEmployeeFields = $showEmployeeFields ?? false;
@@ -14,6 +15,10 @@ $canEdit = $canEdit ?? false;
 $bankAccounts = $bankAccounts ?? [];
 $payrollWageAssignments = $payrollWageAssignments ?? [];
 $payrollWageTypeOptions = $payrollWageTypeOptions ?? [];
+$employeeRenderMode = (string) ($employeeRenderMode ?? 'all');
+if (!in_array($employeeRenderMode, ['personal', 'rest', 'all'], true)) {
+    $employeeRenderMode = 'all';
+}
 $authUser = class_exists('AuthService') ? AuthService::user() : null;
 $canViewPayroll = $authUser instanceof User && PayrollEmployeeAccess::canView($authUser);
 $canEditPayroll = $canEdit && $authUser instanceof User && PayrollEmployeeAccess::canEdit($authUser);
@@ -37,7 +42,53 @@ $filingOfficeHints = [
 ];
 $disabilitySupplementaryOptions = EmployeeData::disabilitySupplementaryOptions();
 $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice();
-?><div
+$kkFieldKeys = [
+    'health_insurance',
+    'health_insurance_number',
+    'health_insurance_website',
+    'health_insurance_appointment_url',
+];
+
+$renderSectionFields = static function (string $sectionKey, array $sectionFields) use (
+    $employeeData,
+    $showEmployeeFields,
+    $canEditPayroll,
+    $bankAccounts,
+    $disabilitySupplementaryOptions
+): void {
+    if ($sectionFields === []) {
+        return;
+    }
+    echo '<div class="dg-form-grid">';
+    View::partial('partials/employee-data-field-inputs', compact(
+        'sectionKey',
+        'sectionFields',
+        'employeeData',
+        'showEmployeeFields',
+        'canEditPayroll',
+        'bankAccounts',
+        'disabilitySupplementaryOptions'
+    ));
+    echo '</div>';
+};
+
+if ($employeeRenderMode === 'personal') {
+    $personalFields = $grouped['personal'] ?? [];
+    ?>
+<div
+  class="dg-employee-section"
+  data-employee-section<?= $showEmployeeFields ? '' : ' hidden' ?>
+>
+  <?php if ($personalFields !== []) : ?>
+    <p class="dg-lead">Persönliche Angaben für Mitarbeiterrollen.</p>
+    <?php $renderSectionFields('personal', $personalFields); ?>
+  <?php endif; ?>
+</div>
+    <?php
+    return;
+}
+?>
+<div
   class="dg-employee-section"
   data-employee-section<?= $showEmployeeFields ? '' : ' hidden' ?>
   data-filing-hints="<?= View::escape(json_encode($filingOfficeHints, JSON_UNESCAPED_UNICODE)) ?>"
@@ -46,22 +97,172 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
   data-sv-known-person="<?= View::escape(json_encode(EmployeeData::knownDefaultPersonGroupKeys(), JSON_UNESCAPED_UNICODE)) ?>"
   data-sv-known-contrib="<?= View::escape(json_encode(EmployeeData::knownDefaultContributionGroupKeys(), JSON_UNESCAPED_UNICODE)) ?>"
 >
-  <h2>Mitarbeiterdaten</h2>
-  <p class="dg-lead">Vertrauliche Personalinformationen — nur für Rolle Mitarbeiter oder Administrator. Speicherdauer: 10 Jahre nach Austritt.</p>
-  <?php if (($contactId ?? 0) > 0) : ?>
-    <?php View::partial('partials/employee-document-list', compact('employeeFiles', 'contactId')); ?>
-  <?php endif; ?>
+  <details class="dg-form-accordion">
+    <summary>Mitarbeiterdaten</summary>
+    <div class="dg-form-accordion__body">
+      <p class="dg-lead">Vertrauliche Personalinformationen — nur für Rolle Mitarbeiter oder Administrator. Speicherdauer: 10 Jahre nach Austritt.</p>
+      <?php if (($contactId ?? 0) > 0) : ?>
+        <?php View::partial('partials/employee-document-list', compact('employeeFiles', 'contactId')); ?>
+      <?php endif; ?>
+    </div>
+  </details>
 
-  <?php foreach ($grouped as $sectionKey => $sectionFields) : ?>
-    <?php if ($sectionKey === 'payroll' && !$canViewPayroll) : ?>
-      <?php continue; ?>
-    <?php endif; ?>
-    <h3><?= View::escape($sections[$sectionKey] ?? $sectionKey) ?></h3>
-    <?php if ($sectionKey === 'payroll') : ?>
+  <?php
+    $svDone = false;
+    $contractDone = false;
+    foreach ($grouped as $sectionKey => $sectionFields) :
+        if ($sectionKey === 'personal' && $employeeRenderMode === 'rest') {
+            continue;
+        }
+        if ($sectionKey === 'payroll' && !$canViewPayroll) {
+            continue;
+        }
+        if (in_array($sectionKey, ['social', 'health', 'disability'], true)) {
+            if ($svDone) {
+                continue;
+            }
+            $svDone = true;
+            $socialFields = $grouped['social'] ?? [];
+            $healthFields = $grouped['health'] ?? [];
+            $disabilityFields = $grouped['disability'] ?? [];
+            $kkFields = [];
+            $healthOnlyFields = [];
+            foreach ($healthFields as $hk => $hm) {
+                if (in_array($hk, $kkFieldKeys, true)) {
+                    $kkFields[$hk] = $hm;
+                } else {
+                    $healthOnlyFields[$hk] = $hm;
+                }
+            }
+            ?>
+  <details class="dg-form-accordion">
+    <summary>Sozialversicherung</summary>
+    <div class="dg-form-accordion__body">
+      <details class="dg-form-accordion dg-form-accordion--nested">
+        <summary>Krankenkasse</summary>
+        <div class="dg-form-accordion__body">
+          <p class="dg-lead">
+            <strong>Krankenkasse / Krankenversicherung</strong> (GKV oder PKV) und die
+            <strong>Versichertennummer</strong> von der Versichertenkarte — mit Vorschlägen beim Tippen des Versicherernamens.
+          </p>
+          <?php $renderSectionFields('health', $kkFields); ?>
+        </div>
+      </details>
+
+      <details class="dg-form-accordion dg-form-accordion--nested">
+        <summary>Deutsche Rentenversicherung</summary>
+        <div class="dg-form-accordion__body">
+          <p class="dg-lead">
+            Die <strong>Sozialversicherungsnummer</strong> ist eine einheitliche Nummer für alle Zweige.
+            Fehlt sie, Status <strong>„Noch nicht vorhanden“</strong> oder <strong>„Beantragt“</strong> wählen,
+            <strong>Meldestelle</strong> festlegen — die Anmeldung läuft dort (nicht direkt bei der DRV).
+            Den Namen der Krankenkasse erfassen Sie unter <strong>Krankenkasse</strong>.
+          </p>
+          <p class="dg-lead dg-filing-hint" data-filing-hint hidden></p>
+          <div class="dg-social-guide" data-social-guide hidden>
+            <p class="dg-social-guide__title"><strong>SV-Nummer beantragen — Vorgehen:</strong></p>
+            <ol class="dg-social-guide__steps" data-social-guide-steps></ol>
+          </div>
+          <?php if (($contactId ?? 0) > 0 && $hasSvDraft) : ?>
+            <div class="dg-sv-draft">
+              <p><strong>Anmeldungs-Entwurf:</strong> <?= View::escape(SocialSecurityRegistrationDraft::draftStatusLabel($svDraftStatus)) ?></p>
+              <?php if ($svDraftAt !== '') : ?>
+                <?php
+                  try {
+                      $draftLabel = (new DateTimeImmutable($svDraftAt))->format('d.m.Y H:i');
+                  } catch (Throwable) {
+                      $draftLabel = $svDraftAt;
+                  }
+                ?>
+                <p class="dg-lead">Zuletzt vorbereitet: <?= View::escape($draftLabel) ?> — nur im CRM, <strong>nicht versendet</strong>.</p>
+              <?php endif; ?>
+              <p class="dg-lead">
+                <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=sv-draft&amp;id=<?= (int) $contactId ?>">Entwurf als JSON herunterladen</a>
+              </p>
+            </div>
+          <?php endif; ?>
+          <?php if ($canEdit && ($contactId ?? 0) > 0) : ?>
+            <div class="dg-sv-draft-actions">
+              <button type="submit" name="prepare_sv_registration" value="1" class="dg-button">
+                Anmeldung vorbereiten (nicht absenden)
+              </button>
+              <p class="dg-lead">Speichert die aktuellen Angaben und erstellt einen DEÜV-Anmeldungs-Entwurf im CRM. Es erfolgt <strong>keine</strong> Übermittlung an Krankenkasse oder Knappschaft.</p>
+            </div>
+          <?php endif; ?>
+          <?php $renderSectionFields('social', $socialFields); ?>
+        </div>
+      </details>
+
+      <details class="dg-form-accordion dg-form-accordion--nested">
+        <summary>Behinderung</summary>
+        <div class="dg-form-accordion__body">
+          <p class="dg-lead">
+            <strong>Grad der Behinderung</strong> und <strong>Zusatzbuchstaben</strong> wie auf dem Schwerbehindertenausweis.
+            Bei chronischen Krankheiten, Arbeitsunfällen o. Ä. können zusätzlich <strong>ärztliche Atteste</strong> hochgeladen werden.
+          </p>
+          <?php $renderSectionFields('disability', $disabilityFields); ?>
+          <div class="dg-form-grid">
+            <?php foreach (EmployeeData::disabilityDocumentTypes() as $docType => $docLabel) : ?>
+              <label class="dg-field dg-field--wide">
+                <span><?= View::escape($docLabel) ?> (Upload)</span>
+                <input type="file" name="employee_files[<?= View::escape($docType) ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+              </label>
+            <?php endforeach; ?>
+            <label class="dg-field dg-field--wide">
+              <span>Ärztliche Atteste (Upload)</span>
+              <p class="dg-lead">Chronische Krankheiten, Arbeitsunfall, Arbeitsunfähigkeit u. Ä. — mehrere Dateien möglich.</p>
+              <input type="file" name="employee_files[medical_certificates][]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <details class="dg-form-accordion dg-form-accordion--nested">
+        <summary>Gesundheitsdaten</summary>
+        <div class="dg-form-accordion__body">
+          <?php $renderSectionFields('health', $healthOnlyFields); ?>
+        </div>
+      </details>
+    </div>
+  </details>
+            <?php
+            continue;
+        }
+
+        if ($sectionKey === 'employment' || $sectionKey === 'contract') {
+            if ($contractDone) {
+                continue;
+            }
+            $contractDone = true;
+            $employmentFields = $grouped['employment'] ?? [];
+            $contractFields = $grouped['contract'] ?? [];
+            ?>
+  <details class="dg-form-accordion">
+    <summary>Beschäftigungsdaten</summary>
+    <div class="dg-form-accordion__body">
+      <?php if ($employmentFields !== []) : ?>
+        <h3 class="dg-subsection-title">Beschäftigung</h3>
+        <?php $renderSectionFields('employment', $employmentFields); ?>
+      <?php endif; ?>
+      <?php if ($contractFields !== []) : ?>
+        <h3 class="dg-subsection-title">Arbeitsvertragsdaten</h3>
+        <?php $renderSectionFields('contract', $contractFields); ?>
+      <?php endif; ?>
+    </div>
+  </details>
+            <?php
+            continue;
+        }
+
+        if ($sectionKey === 'payroll') {
+            ?>
+  <details class="dg-form-accordion">
+    <summary>Lohnabrechnung</summary>
+    <div class="dg-form-accordion__body">
       <p class="dg-lead">
         Stammdaten für die <strong>eigene Lohnabrechnung</strong>. Steuerklasse manuell — ELStAM folgt später.
-        SV-Meldestelle und Krankenkassenname bleiben unter Sozialversicherung bzw. Gesundheitsdaten.
-        Lohnarten-Zuordnung unten (Festgehalt/Stundenlohn); Freitext „Lohn / Gehalt“ unter Arbeitsvertrag ist nur Hinweis.
+        SV-Meldestelle und Krankenkassenname bleiben unter Sozialversicherung.
+        Lohnarten-Zuordnung im eigenen Abschnitt; Freitext „Lohn / Gehalt“ unter Beschäftigungsdaten ist nur Hinweis.
         Kein Monatslauf in diesem Block.
       </p>
       <?php if (!$canEditPayroll) : ?>
@@ -77,505 +278,83 @@ $socialApplicationSteps = EmployeeData::socialSecurityApplicationStepsByOffice()
           </ul>
         </div>
       <?php endif; ?>
-    <?php endif; ?>
-    <?php if ($sectionKey === 'social') : ?>
-      <p class="dg-lead">
-        Die <strong>Sozialversicherungsnummer</strong> ist eine einheitliche Nummer für alle Zweige.
-        Fehlt sie, Status <strong>„Noch nicht vorhanden“</strong> oder <strong>„Beantragt“</strong> wählen,
-        <strong>Meldestelle</strong> festlegen — die Anmeldung läuft dort (nicht direkt bei der DRV).
-        Den Namen der Krankenkasse erfassen Sie unter <strong>Gesundheitsdaten</strong>.
-      </p>
-      <p class="dg-lead dg-filing-hint" data-filing-hint hidden></p>
-      <div class="dg-social-guide" data-social-guide hidden>
-        <p class="dg-social-guide__title"><strong>SV-Nummer beantragen — Vorgehen:</strong></p>
-        <ol class="dg-social-guide__steps" data-social-guide-steps></ol>
-      </div>
-      <?php if (($contactId ?? 0) > 0 && $hasSvDraft) : ?>
-        <div class="dg-sv-draft">
-          <p><strong>Anmeldungs-Entwurf:</strong> <?= View::escape(SocialSecurityRegistrationDraft::draftStatusLabel($svDraftStatus)) ?></p>
-          <?php if ($svDraftAt !== '') : ?>
-            <?php
-              try {
-                  $draftLabel = (new DateTimeImmutable($svDraftAt))->format('d.m.Y H:i');
-              } catch (Throwable) {
-                  $draftLabel = $svDraftAt;
-              }
-            ?>
-            <p class="dg-lead">Zuletzt vorbereitet: <?= View::escape($draftLabel) ?> — nur im CRM, <strong>nicht versendet</strong>.</p>
-          <?php endif; ?>
-          <p class="dg-lead">
-            <a class="dg-button dg-button--small" href="/app?page=kontakte&amp;action=sv-draft&amp;id=<?= (int) $contactId ?>">Entwurf als JSON herunterladen</a>
-          </p>
-        </div>
-      <?php endif; ?>
-      <?php if ($canEdit && ($contactId ?? 0) > 0) : ?>
-        <div class="dg-sv-draft-actions">
-          <button type="submit" name="prepare_sv_registration" value="1" class="dg-button">
-            Anmeldung vorbereiten (nicht absenden)
-          </button>
-          <p class="dg-lead">Speichert die aktuellen Angaben und erstellt einen DEÜV-Anmeldungs-Entwurf im CRM. Es erfolgt <strong>keine</strong> Übermittlung an Krankenkasse oder Knappschaft.</p>
-        </div>
-      <?php endif; ?>
-    <?php endif; ?>
-    <?php if ($sectionKey === 'health') : ?>
-      <p class="dg-lead">
-        <strong>Krankenkasse / Krankenversicherung</strong> (GKV oder PKV) und die
-        <strong>Versichertennummer</strong> von der Versichertenkarte — mit Vorschlägen beim Tippen des Versicherernamens.
-      </p>
-    <?php endif; ?>
-    <?php if ($sectionKey === 'disability') : ?>
-      <p class="dg-lead">
-        <strong>Grad der Behinderung</strong> und <strong>Zusatzbuchstaben</strong> wie auf dem Schwerbehindertenausweis.
-        Bei chronischen Krankheiten, Arbeitsunfällen o. Ä. können zusätzlich <strong>ärztliche Atteste</strong> hochgeladen werden.
-      </p>
-    <?php endif; ?>
-    <div class="dg-form-grid">
-      <?php foreach ($sectionFields as $key => $meta) : ?>
-        <?php
-          $name = 'employee[' . $key . ']';
-          $value = $employeeData[$key] ?? '';
-          $required = !empty($meta['required']) && $showEmployeeFields;
-          if ($key === 'social_security_number' && ($employeeData['social_security_status'] ?? 'pending') !== 'received') {
-              $required = false;
-          }
-          $selectOptions = $meta['type'] === 'select' ? EmployeeData::selectOptions($key) : [];
-          $payrollReadonly = $sectionKey === 'payroll' && !$canEditPayroll;
-          $roAttr = $payrollReadonly ? ' disabled' : '';
-        ?>
-        <?php if ($sectionKey === 'payroll' && $key === 'payroll_payout_bank_index') : ?>
-          <label class="dg-field dg-field--wide">
-            <span><?= View::escape($meta['label']) ?></span>
-            <select name="<?= View::escape($name) ?>"<?= $roAttr ?>>
-              <?php if ($bankAccounts === []) : ?>
-                <option value="0">Kein Bankkonto — bitte oben unter Bankverbindung anlegen</option>
-              <?php else : ?>
-                <?php foreach ($bankAccounts as $bi => $account) : ?>
-                  <?php
-                    $iban = trim((string) ($account['iban'] ?? ''));
-                    $blabel = trim((string) ($account['label'] ?? ''));
-                    $holder = trim((string) ($account['account_holder'] ?? ''));
-                    $opt = implode(' · ', array_filter([$blabel !== '' ? $blabel : null, $holder !== '' ? $holder : null, $iban !== '' ? $iban : 'ohne IBAN']));
-                  ?>
-                  <option value="<?= (int) $bi ?>"<?= (string) (int) $value === (string) (int) $bi ? ' selected' : '' ?>><?= View::escape($opt) ?></option>
-                <?php endforeach; ?>
-              <?php endif; ?>
-            </select>
-            <small class="dg-field-hint">Konten aus dem Block Bankverbindung dieses Kontakts.</small>
-          </label>
-        <?php elseif ($sectionKey === 'payroll' && $key === 'child_allowances') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?></span>
-            <input type="number" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>" min="0" max="99" step="0.5" placeholder="0 oder 0,5 …"<?= $roAttr ?>>
-          </label>
-        <?php elseif ($sectionKey === 'payroll' && $key === 'annual_earnings_estimate_eur') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?></span>
-            <input type="number" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>" min="0" step="0.01" placeholder="z. B. 22000"<?= $roAttr ?>>
-          </label>
-        <?php elseif ($sectionKey === 'payroll' && $key === 'sv_exempt') : ?>
-          <label class="dg-field dg-field--checkbox">
-            <span>
-              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?><?= $roAttr ?>>
-              <?= View::escape($meta['label']) ?>
-            </span>
-          </label>
-          <p class="dg-field-hint dg-field--wide">Nur wirksam mit Flag „Beherrschender Geschäftsführer“ — sonst beim Speichern verworfen.</p>
-        <?php elseif ($meta['type'] === 'textarea') : ?>
-          <label class="dg-field dg-field--wide">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <textarea name="<?= View::escape($name) ?>" rows="3"<?= $required ? ' required data-employee-required' : '' ?><?= $roAttr ?>><?= View::escape($value) ?></textarea>
-          </label>
-        <?php elseif ($meta['type'] === 'select' && $selectOptions !== []) : ?>
-          <label class="dg-field<?= $key === 'social_filing_office' ? ' dg-field--wide' : '' ?>">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <select
-              name="<?= View::escape($name) ?>"
-              <?php if ($key === 'social_security_status') : ?>data-social-status<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
-              <?php if ($key === 'social_filing_office') : ?>data-social-filing-office<?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
-              <?php if ($key === 'gender') : ?><?= $required ? ' required data-employee-required' : '' ?><?php endif; ?>
-              <?php if ($key === 'payroll_employment_type') : ?>data-payroll-employment-type<?php endif; ?>
-              <?= $roAttr ?>
-            >
-              <?php foreach ($selectOptions as $optVal => $optLabel) : ?>
-                <option value="<?= View::escape((string) $optVal) ?>"<?= (string) $value === (string) $optVal ? ' selected' : '' ?>><?= View::escape($optLabel) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-        <?php elseif ($key === 'social_security_number') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="text"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              data-social-sv-number
-              placeholder="12-stellig, z. B. 12 123456 M 123"
-              <?= $required ? ' required data-employee-required' : '' ?>
-            >
-          </label>
-        <?php elseif ($key === 'health_insurance') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="text"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              data-health-insurer-name
-              autocomplete="off"
-              <?= $required ? ' required data-employee-required' : '' ?>
-            >
-            <div class="dg-health-insurer-suggest dg-bank-suggest" hidden></div>
-          </label>
-        <?php elseif ($key === 'health_insurance_number') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="text"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              placeholder="10-stellige Nummer von der Versichertenkarte"
-              <?= $required ? ' required data-employee-required' : '' ?>
-            >
-          </label>
-        <?php elseif ($key === 'disability_degree') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="number"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              min="0"
-              max="100"
-              step="1"
-              inputmode="numeric"
-              placeholder="z. B. 50"
-              <?= $required ? ' required data-employee-required' : '' ?>
-            >
-          </label>
-        <?php elseif ($key === 'disability_supplementary_codes') : ?>
-          <label class="dg-field dg-field--wide">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="text"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              data-disability-supplementary
-              autocomplete="off"
-              placeholder="z. B. G, H, Bl — mehrere durch Komma trennen"
-              <?= $required ? ' required data-employee-required' : '' ?>
-            >
-            <div
-              class="dg-disability-supplementary-suggest"
-              data-disability-options="<?= View::escape(json_encode($disabilitySupplementaryOptions, JSON_UNESCAPED_UNICODE)) ?>"
-            ></div>
-          </label>
-        <?php elseif ($meta['type'] === 'checkbox') : ?>
-          <label class="dg-field dg-field--checkbox">
-            <span>
-              <input type="checkbox" name="<?= View::escape($name) ?>" value="1"<?= $value === '1' ? ' checked' : '' ?><?= $roAttr ?>>
-              <?= View::escape($meta['label']) ?>
-            </span>
-          </label>
-        <?php elseif ($meta['type'] === 'number') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="number"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              min="0"
-              max="960"
-              step="1"
-              placeholder="z. B. 480 (= 8 h)"
-              <?= $required ? ' required data-employee-required' : '' ?>
-              <?= $roAttr ?>
-            >
-          </label>
-        <?php elseif ($key === 'health_insurance_website') : ?>
-          <label class="dg-field dg-field--wide">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="url"
-              inputmode="url"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              data-health-insurer-website
-              placeholder="https://…"
-              <?= $required ? ' required data-employee-required' : '' ?>
-              <?= $roAttr ?>
-            >
-          </label>
-        <?php elseif ($key === 'health_insurance_appointment_url') : ?>
-          <label class="dg-field dg-field--wide">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="url"
-              inputmode="url"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              data-health-insurer-appointment
-              placeholder="https://…"
-              <?= $required ? ' required data-employee-required' : '' ?>
-              <?= $roAttr ?>
-            >
-          </label>
-        <?php elseif ($key === 'person_group_key' || $key === 'contribution_group_key') : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="text"
-              inputmode="numeric"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              <?php if ($key === 'person_group_key') : ?>data-person-group-key maxlength="3" placeholder="z. B. 101"<?php endif; ?>
-              <?php if ($key === 'contribution_group_key') : ?>data-contribution-group-key maxlength="8" placeholder="z. B. 1111"<?php endif; ?>
-              <?= $required ? ' required data-employee-required' : '' ?>
-              <?= $roAttr ?>
-            >
-            <?php if ($key === 'person_group_key') : ?>
-              <small class="dg-field-hint" data-sv-group-hint>Wird aus der Beschäftigungsart (Lohn) vorgeschlagen, wenn leer oder Standardwert.</small>
-            <?php else : ?>
-              <small class="dg-field-hint">Vier Stellen KV·RV·AV·PV — Vorschlag aus Beschäftigungsart, jederzeit änderbar.</small>
-            <?php endif; ?>
-          </label>
-        <?php elseif ($key === 'training_video_url') : ?>
-          <?php
-            $trainingLinkOptions = class_exists('AcademyRepository')
-              ? AcademyRepository::trainingLinkOptions()
-              : [];
-            $trainingCourses = [];
-            $trainingVideos = [];
-            foreach ($trainingLinkOptions as $opt) {
-                if (($opt['kind'] ?? '') === 'course') {
-                    $trainingCourses[] = $opt;
-                } else {
-                    $trainingVideos[] = $opt;
-                }
-            }
-          ?>
-          <label class="dg-field dg-field--wide" data-training-video-field>
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input
-              type="url"
-              inputmode="url"
-              name="<?= View::escape($name) ?>"
-              value="<?= View::escape($value) ?>"
-              data-training-video-url
-              placeholder="https://…"
-              <?= $required ? ' required data-employee-required' : '' ?>
-              <?= $roAttr ?>
-            >
-            <?php if ($trainingLinkOptions !== []) : ?>
-              <select data-training-video-pick<?= $roAttr !== '' ? ' disabled' : '' ?> aria-label="Aus Akademie wählen">
-                <option value="">— Kurs oder Video aus Akademie wählen —</option>
-                <?php if ($trainingCourses !== []) : ?>
-                  <optgroup label="Kurse">
-                    <?php foreach ($trainingCourses as $opt) : ?>
-                      <option value="<?= View::escape((string) $opt['url']) ?>"<?= $value === (string) $opt['url'] ? ' selected' : '' ?>>
-                        <?= View::escape((string) $opt['label']) ?>
-                      </option>
-                    <?php endforeach; ?>
-                  </optgroup>
-                <?php endif; ?>
-                <?php if ($trainingVideos !== []) : ?>
-                  <optgroup label="Videos">
-                    <?php foreach ($trainingVideos as $opt) : ?>
-                      <option value="<?= View::escape((string) $opt['url']) ?>"<?= $value === (string) $opt['url'] ? ' selected' : '' ?>>
-                        <?= View::escape((string) $opt['label']) ?>
-                      </option>
-                    <?php endforeach; ?>
-                  </optgroup>
-                <?php endif; ?>
-              </select>
-              <small class="dg-field-hint">Auswahl übernimmt den Link. Externe URLs bleiben manuell möglich.</small>
-            <?php else : ?>
-              <small class="dg-field-hint">Noch keine veröffentlichten Akademie-Kurse oder Videos — Link manuell eintragen oder unter Akademie anlegen.</small>
-            <?php endif; ?>
-          </label>
-        <?php else : ?>
-          <label class="dg-field">
-            <span><?= View::escape($meta['label']) ?><?= $required ? ' *' : '' ?></span>
-            <input type="<?= View::escape($meta['type']) ?>" name="<?= View::escape($name) ?>" value="<?= View::escape($value) ?>"<?= $required ? ' required data-employee-required' : '' ?><?= $roAttr ?>>
-          </label>
-        <?php endif; ?>
-      <?php endforeach; ?>
+      <?php $renderSectionFields('payroll', $sectionFields); ?>
     </div>
-    <?php if ($sectionKey === 'payroll') : ?>
-      <?php if ($canEditPayroll) : ?>
-        <input type="hidden" name="payroll_wage_assignments_sync" value="1">
-      <?php endif; ?>
-      <h4 class="dg-subsection-title">Lohnarten-Zuordnung</h4>
-      <p class="dg-lead">
-        Stamm: monatliches Festgehalt, Stundenlohnsatz o. Ä. Priorität steuert die Reihenfolge im späteren Lauf.
-        Leere Zeilen und „Entfernen“ löschen die Zuordnung beim Speichern.
-      </p>
-      <?php
-        $assignRows = $payrollWageAssignments !== []
-            ? $payrollWageAssignments
-            : PayrollEmployeeWageAssignmentRepository::formRows([]);
-        $activeWageOptions = [];
-        $inactiveWageOptions = [];
-        foreach ($payrollWageTypeOptions as $wt) {
-            if (!is_array($wt)) {
-                continue;
-            }
-            if ((int) ($wt['is_active'] ?? 0) === 1) {
-                $activeWageOptions[] = $wt;
-            } else {
-                $inactiveWageOptions[] = $wt;
-            }
+  </details>
+  <details class="dg-form-accordion">
+    <summary>Lohnarten-Zuordnung</summary>
+    <div class="dg-form-accordion__body">
+      <?php View::partial('partials/employee-data-wage-assignments', compact(
+          'canEditPayroll',
+          'payrollWageAssignments',
+          'payrollWageTypeOptions'
+      )); ?>
+    </div>
+  </details>
+            <?php
+            continue;
         }
-      ?>
-      <div class="dg-table-wrap">
-        <table class="dg-table dg-table--compact">
-          <thead>
-            <tr>
-              <th>Lohnart</th>
-              <th>Betrag / Satz</th>
-              <th>Gültig ab</th>
-              <th>Gültig bis</th>
-              <th>Prio</th>
-              <th>Notiz</th>
-              <?php if ($canEditPayroll) : ?>
-                <th></th>
-              <?php endif; ?>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($assignRows as $ai => $arow) : ?>
-              <?php
-                $aId = (int) ($arow['id'] ?? 0);
-                $aWageId = (int) ($arow['wage_type_id'] ?? 0);
-                $aAmount = isset($arow['amount_display']) && (string) $arow['amount_display'] !== ''
-                    ? (string) $arow['amount_display']
-                    : (string) ($arow['amount'] ?? '');
-                $aFrom = (string) ($arow['valid_from'] ?? '');
-                $aTo = (string) ($arow['valid_to'] ?? '');
-                $aPrio = (int) ($arow['priority'] ?? 0);
-                $aNotes = (string) ($arow['notes'] ?? '');
-                $aDelete = !empty($arow['delete']);
-                $roAssign = $canEditPayroll ? '' : ' disabled';
-              ?>
-              <tr>
-                <td>
-                  <?php if ($aId > 0) : ?>
-                    <input type="hidden" name="payroll_wage_assignments[<?= (int) $ai ?>][id]" value="<?= $aId ?>">
-                  <?php endif; ?>
-                  <select name="payroll_wage_assignments[<?= (int) $ai ?>][wage_type_id]"<?= $roAssign ?>>
-                    <option value="0">— wählen —</option>
-                    <?php foreach ($activeWageOptions as $wt) : ?>
-                      <option value="<?= (int) ($wt['id'] ?? 0) ?>"<?= $aWageId === (int) ($wt['id'] ?? 0) ? ' selected' : '' ?>>
-                        <?= View::escape(trim((string) ($wt['label'] ?? '')) !== '' ? (string) $wt['label'] : 'Lohnart') ?>
-                      </option>
-                    <?php endforeach; ?>
-                    <?php if ($aWageId > 0) : ?>
-                      <?php foreach ($inactiveWageOptions as $wt) : ?>
-                        <?php if ($aWageId === (int) ($wt['id'] ?? 0)) : ?>
-                          <option value="<?= $aWageId ?>" selected>
-                            <?= View::escape((trim((string) ($wt['label'] ?? '')) !== '' ? (string) $wt['label'] : 'Lohnart') . ' (inaktiv)') ?>
-                          </option>
-                        <?php endif; ?>
-                      <?php endforeach; ?>
-                    <?php endif; ?>
-                  </select>
-                </td>
-                <td>
-                  <input type="text" name="payroll_wage_assignments[<?= (int) $ai ?>][amount]"
-                         value="<?= View::escape($aAmount) ?>" placeholder="z. B. 2.500,00"<?= $roAssign ?>>
-                </td>
-                <td>
-                  <input type="date" name="payroll_wage_assignments[<?= (int) $ai ?>][valid_from]"
-                         value="<?= View::escape($aFrom) ?>"<?= $roAssign ?>>
-                </td>
-                <td>
-                  <input type="date" name="payroll_wage_assignments[<?= (int) $ai ?>][valid_to]"
-                         value="<?= View::escape($aTo) ?>"<?= $roAssign ?>>
-                </td>
-                <td>
-                  <input type="number" name="payroll_wage_assignments[<?= (int) $ai ?>][priority]"
-                         value="<?= $aPrio ?>" step="1" style="width:4.5rem"<?= $roAssign ?>>
-                </td>
-                <td>
-                  <input type="text" name="payroll_wage_assignments[<?= (int) $ai ?>][notes]"
-                         value="<?= View::escape($aNotes) ?>" maxlength="500"<?= $roAssign ?>>
-                </td>
-                <?php if ($canEditPayroll) : ?>
-                  <td>
-                    <?php if ($aId > 0 || $aWageId > 0) : ?>
-                      <label class="dg-field dg-field--checkbox">
-                        <input type="checkbox" name="payroll_wage_assignments[<?= (int) $ai ?>][delete]" value="1"<?= $aDelete ? ' checked' : '' ?>>
-                        Entfernen
-                      </label>
-                    <?php endif; ?>
-                  </td>
-                <?php endif; ?>
-              </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <?php if ($activeWageOptions === [] && $canEditPayroll) : ?>
-        <p class="dg-field-hint">
-          Keine aktiven Lohnarten — zuerst unter
-          <a href="/app?page=lohn-lohnarten">Lohnarten</a> anlegen oder aktivieren.
-        </p>
-      <?php endif; ?>
-    <?php endif; ?>
-    <?php if ($sectionKey === 'disability') : ?>
+
+        if ($employeeRenderMode === 'all' && $sectionKey === 'personal') {
+            $title = $sections[$sectionKey] ?? $sectionKey;
+        } else {
+            $title = $sections[$sectionKey] ?? $sectionKey;
+        }
+        ?>
+  <details class="dg-form-accordion">
+    <summary><?= View::escape($title) ?></summary>
+    <div class="dg-form-accordion__body">
+      <?php $renderSectionFields($sectionKey, $sectionFields); ?>
+    </div>
+  </details>
+    <?php endforeach; ?>
+
+  <details class="dg-form-accordion">
+    <summary><?= View::escape($sections['documents'] ?? 'Dokumente') ?></summary>
+    <div class="dg-form-accordion__body">
+      <p class="dg-lead">PDF, JPG, PNG oder WEBP — max. 10 MB pro Datei.</p>
       <div class="dg-form-grid">
-        <?php foreach (EmployeeData::disabilityDocumentTypes() as $docType => $docLabel) : ?>
+        <?php foreach (EmployeeData::documentTypes() as $docType => $docLabel) : ?>
           <label class="dg-field dg-field--wide">
-            <span><?= View::escape($docLabel) ?> (Upload)</span>
+            <span><?= View::escape($docLabel) ?></span>
             <input type="file" name="employee_files[<?= View::escape($docType) ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
           </label>
         <?php endforeach; ?>
         <label class="dg-field dg-field--wide">
-          <span>Ärztliche Atteste (Upload)</span>
-          <p class="dg-lead">Chronische Krankheiten, Arbeitsunfall, Arbeitsunfähigkeit u. Ä. — mehrere Dateien möglich.</p>
-          <input type="file" name="employee_files[medical_certificates][]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+          <span>Externe Lohn-PDFs / payroll_slip (Upload)</span>
+          <p class="dg-lead">
+            Vom Steuerberater/Lohnbüro erhaltene PDF ablegen (Monat im Dateinamen empfohlen).
+            Parallel erzeugt das CRM eigene Final-PDFs nach Sperre des Monatslaufs —
+            siehe <a href="/app?page=lohn-lohnkonto">Lohnkonto</a> und Kontaktansicht „CRM-Abrechnungen“.
+            Mehrere Dateien möglich; fremde Uploads werden nicht automatisch gelöscht.
+          </p>
+          <input type="file" name="employee_files[payroll_slip][]" multiple accept=".pdf,application/pdf">
         </label>
       </div>
-    <?php endif; ?>
-  <?php endforeach; ?>
+    </div>
+  </details>
 
-  <h3><?= View::escape($sections['documents']) ?></h3>
-  <p class="dg-lead">PDF, JPG, PNG oder WEBP — max. 10 MB pro Datei.</p>
-  <div class="dg-form-grid">
-    <?php foreach (EmployeeData::documentTypes() as $docType => $docLabel) : ?>
-      <label class="dg-field dg-field--wide">
-        <span><?= View::escape($docLabel) ?></span>
-        <input type="file" name="employee_files[<?= View::escape($docType) ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
-      </label>
-    <?php endforeach; ?>
-    <label class="dg-field dg-field--wide">
-      <span>Externe Lohn-PDFs / payroll_slip (Upload)</span>
-      <p class="dg-lead">
-        Vom Steuerberater/Lohnbüro erhaltene PDF ablegen (Monat im Dateinamen empfohlen).
-        Parallel erzeugt das CRM eigene Final-PDFs nach Sperre des Monatslaufs —
-        siehe <a href="/app?page=lohn-lohnkonto">Lohnkonto</a> und Kontaktansicht „CRM-Abrechnungen“.
-        Mehrere Dateien möglich; fremde Uploads werden nicht automatisch gelöscht.
-      </p>
-      <input type="file" name="employee_files[payroll_slip][]" multiple accept=".pdf,application/pdf">
-    </label>
-  </div>
-
-  <h3><?= View::escape($sections['retention']) ?></h3>
-  <div class="dg-retention dg-retention--<?= View::escape($retentionStatus['status']) ?>">
-    <p class="dg-lead">
-      Nach dem <strong>Austritt</strong> werden Mitarbeiterdaten noch <strong>10 Jahre</strong> aufbewahrt.
-      Danach werden <strong>nur</strong> die Mitarbeiter-spezifischen Felder und Dokumente automatisch entfernt;
-      Name, Adresse, Kontakt und Kundendaten bleiben erhalten. Die Rolle wird dann auf <strong>Kunde</strong> gesetzt.
-      Die Bereinigung erfolgt automatisch in den ersten zwei Januarwochen (<?= View::escape(EmployeeRetentionService::purgeWindowLabel()) ?>),
-      sobald ein Administrator oder Mitarbeiter das CRM nutzt (einmal pro Login-Sitzung).
-    </p>
-    <p><strong>Status:</strong> <?= View::escape($retentionStatus['label']) ?></p>
-    <?php if ($retentionUntil !== null) : ?>
-      <p><strong>Löschfrist:</strong> <?= View::escape($retentionUntil) ?></p>
-    <?php elseif (trim($employeeData['exit_date'] ?? '') === '') : ?>
-      <p>Bitte <strong>Austritt</strong> erfassen, sobald die Beschäftigung endet.</p>
-    <?php endif; ?>
-    <?php if ($retentionStatus['status'] === 'expired') : ?>
-      <p class="dg-retention__warn">Löschfrist abgelaufen — in den ersten zwei Januarwochen (<?= View::escape(EmployeeRetentionService::purgeWindowLabel()) ?>) werden Mitarbeiterdaten beim CRM-Aufruf entfernt und die Rolle auf Kunde gesetzt.</p>
-    <?php endif; ?>
-  </div>
+  <details class="dg-form-accordion">
+    <summary><?= View::escape($sections['retention'] ?? 'Speicherdauer') ?></summary>
+    <div class="dg-form-accordion__body">
+      <div class="dg-retention dg-retention--<?= View::escape($retentionStatus['status']) ?>">
+        <p class="dg-lead">
+          Nach dem <strong>Austritt</strong> werden Mitarbeiterdaten noch <strong>10 Jahre</strong> aufbewahrt.
+          Danach werden <strong>nur</strong> die Mitarbeiter-spezifischen Felder und Dokumente automatisch entfernt;
+          Name, Adresse, Kontakt und Kundendaten bleiben erhalten. Die Rolle wird dann auf <strong>Kunde</strong> gesetzt.
+          Die Bereinigung erfolgt automatisch in den ersten zwei Januarwochen (<?= View::escape(EmployeeRetentionService::purgeWindowLabel()) ?>),
+          sobald ein Administrator oder Mitarbeiter das CRM nutzt (einmal pro Login-Sitzung).
+        </p>
+        <p><strong>Status:</strong> <?= View::escape($retentionStatus['label']) ?></p>
+        <?php if ($retentionUntil !== null) : ?>
+          <p><strong>Löschfrist:</strong> <?= View::escape($retentionUntil) ?></p>
+        <?php elseif (trim($employeeData['exit_date'] ?? '') === '') : ?>
+          <p>Bitte <strong>Austritt</strong> erfassen, sobald die Beschäftigung endet.</p>
+        <?php endif; ?>
+        <?php if ($retentionStatus['status'] === 'expired') : ?>
+          <p class="dg-retention__warn">Löschfrist abgelaufen — in den ersten zwei Januarwochen (<?= View::escape(EmployeeRetentionService::purgeWindowLabel()) ?>) werden Mitarbeiterdaten beim CRM-Aufruf entfernt und die Rolle auf Kunde gesetzt.</p>
+        <?php endif; ?>
+      </div>
+    </div>
+  </details>
 </div>

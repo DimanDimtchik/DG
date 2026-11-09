@@ -4,10 +4,12 @@
 /** @var bool $showEmployeeFields */
 /** @var bool $canEdit */
 /** @var Contact|null $hrPersonnelContact */
+/** @var bool $inAccordion */
 $contactId = (int) ($contactId ?? 0);
 $employeeData = $employeeData ?? EmployeeData::empty();
 $showEmployeeFields = !empty($showEmployeeFields);
 $canEdit = !empty($canEdit);
+$inAccordion = !empty($inAccordion);
 if ($contactId <= 0 || !$showEmployeeFields) {
     return;
 }
@@ -21,8 +23,10 @@ $deadline = $deadlineContact instanceof Contact
     ? HrPersonnelDeadlineHelper::hintsForContact($deadlineContact)
     : ['ok' => false, 'lines' => [], 'disclaimer' => ''];
 ?>
-<section class="dg-panel">
-  <h2>Personalvorgänge (Abmahnung / Kündigung)</h2>
+<section class="<?= $inAccordion ? 'dg-stack' : 'dg-panel' ?>">
+  <?php if (!$inAccordion) : ?>
+    <h2>Personalvorgänge (Abmahnung / Kündigung)</h2>
+  <?php endif; ?>
   <p class="dg-lead">Akte am Mitarbeiter. PDF-Entwürfe mit Briefpapier — Zugang und Rechtswirkung prüfen. Kein Ersatz für Rechtsberatung.</p>
 
   <?php if ($events === []) : ?>
@@ -84,160 +88,178 @@ $deadline = $deadlineContact instanceof Contact
   <?php endif; ?>
 
   <?php if ($canEdit) : ?>
-    <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>" enctype="multipart/form-data">
-      <h3>Aktennotiz / Scan hochladen</h3>
-      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-      <input type="hidden" name="id" value="<?= $contactId ?>">
-      <input type="hidden" name="hr_personnel_add_note" value="1">
-      <div class="dg-form-grid">
-        <label class="dg-field">
-          <span>Datum</span>
-          <input type="date" name="event_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
-        </label>
-        <label class="dg-field">
-          <span>Ablage</span>
-          <select name="file_doc_type">
-            <option value="written_warnings">Bei Abmahnungen</option>
-            <option value="termination_letters">Bei Kündigungen</option>
-          </select>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Titel</span>
-          <input type="text" name="title" maxlength="255" placeholder="z. B. Scan Abmahnung">
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Kurztext</span>
-          <textarea name="summary" rows="2"></textarea>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Datei (PDF/Bild, optional)</span>
-          <input type="file" name="hr_event_file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
-        </label>
+    <details class="dg-form-accordion dg-form-accordion--nested">
+      <summary>Aktennotiz / Scan</summary>
+      <div class="dg-form-accordion__body">
+        <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="id" value="<?= $contactId ?>">
+          <input type="hidden" name="hr_personnel_add_note" value="1">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span>Datum</span>
+              <input type="date" name="event_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+            </label>
+            <label class="dg-field">
+              <span>Ablage</span>
+              <select name="file_doc_type">
+                <option value="written_warnings">Bei Abmahnungen</option>
+                <option value="termination_letters">Bei Kündigungen</option>
+              </select>
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Titel</span>
+              <input type="text" name="title" maxlength="255" placeholder="z. B. Scan Abmahnung">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Kurztext</span>
+              <textarea name="summary" rows="2"></textarea>
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Datei (PDF/Bild, optional)</span>
+              <input type="file" name="hr_event_file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+            </label>
+          </div>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary">Notiz speichern</button>
+          </div>
+        </form>
       </div>
-      <div class="dg-form-actions">
-        <button type="submit" class="dg-button dg-button--primary">Notiz speichern</button>
-      </div>
-    </form>
+    </details>
 
-    <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
-      <h3>Abmahnung erzeugen</h3>
-      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-      <input type="hidden" name="id" value="<?= $contactId ?>">
-      <input type="hidden" name="hr_personnel_generate_warning" value="1">
-      <div class="dg-form-grid">
-        <label class="dg-field">
-          <span>Datum</span>
-          <input type="date" name="event_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Titel</span>
-          <input type="text" name="title" value="Abmahnung" maxlength="255">
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Sachverhalt</span>
-          <textarea name="facts_text" rows="4" required></textarea>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Erwartung (optional)</span>
-          <textarea name="expectation_text" rows="2" placeholder="Leer = Standardtext"></textarea>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Androhung (optional)</span>
-          <textarea name="threat_text" rows="2" placeholder="Leer = Standardtext"></textarea>
-        </label>
+    <details class="dg-form-accordion dg-form-accordion--nested">
+      <summary>Abmahnung</summary>
+      <div class="dg-form-accordion__body">
+        <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="id" value="<?= $contactId ?>">
+          <input type="hidden" name="hr_personnel_generate_warning" value="1">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span>Datum</span>
+              <input type="date" name="event_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Titel</span>
+              <input type="text" name="title" value="Abmahnung" maxlength="255">
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Sachverhalt</span>
+              <textarea name="facts_text" rows="4" required></textarea>
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Erwartung (optional)</span>
+              <textarea name="expectation_text" rows="2" placeholder="Leer = Standardtext"></textarea>
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Androhung (optional)</span>
+              <textarea name="threat_text" rows="2" placeholder="Leer = Standardtext"></textarea>
+            </label>
+          </div>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary">Abmahnung als PDF</button>
+          </div>
+        </form>
       </div>
-      <div class="dg-form-actions">
-        <button type="submit" class="dg-button dg-button--primary">Abmahnung als PDF</button>
-      </div>
-    </form>
+    </details>
 
-    <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
-      <h3>Kündigung / Aufhebung erzeugen</h3>
-      <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-      <input type="hidden" name="id" value="<?= $contactId ?>">
-      <input type="hidden" name="hr_personnel_generate_termination" value="1">
-      <div class="dg-form-grid">
-        <label class="dg-field">
-          <span>Art</span>
-          <select name="event_type">
-            <option value="<?= View::escape(HrPersonnelEventRepository::TYPE_TERM_ORDINARY) ?>">Ordentliche Kündigung</option>
-            <option value="<?= View::escape(HrPersonnelEventRepository::TYPE_TERM_SUMMARY) ?>">Fristlose Kündigung</option>
-            <option value="<?= View::escape(HrPersonnelEventRepository::TYPE_TERM_AGREEMENT) ?>">Aufhebungsvertrag</option>
-          </select>
-        </label>
-        <label class="dg-field">
-          <span>Schreiben vom</span>
-          <input type="date" name="event_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
-        </label>
-        <label class="dg-field">
-          <span>Beendigung zum</span>
-          <input type="date" name="end_date" required>
-        </label>
-        <label class="dg-field dg-field--wide">
-          <span>Begründung / Hinweise</span>
-          <textarea name="facts_text" rows="3" placeholder="Bei fristloser Kündigung Pflicht"></textarea>
-        </label>
+    <details class="dg-form-accordion dg-form-accordion--nested">
+      <summary>Kündigung</summary>
+      <div class="dg-form-accordion__body">
+        <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
+          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+          <input type="hidden" name="id" value="<?= $contactId ?>">
+          <input type="hidden" name="hr_personnel_generate_termination" value="1">
+          <div class="dg-form-grid">
+            <label class="dg-field">
+              <span>Art</span>
+              <select name="event_type">
+                <option value="<?= View::escape(HrPersonnelEventRepository::TYPE_TERM_ORDINARY) ?>">Ordentliche Kündigung</option>
+                <option value="<?= View::escape(HrPersonnelEventRepository::TYPE_TERM_SUMMARY) ?>">Fristlose Kündigung</option>
+                <option value="<?= View::escape(HrPersonnelEventRepository::TYPE_TERM_AGREEMENT) ?>">Aufhebungsvertrag</option>
+              </select>
+            </label>
+            <label class="dg-field">
+              <span>Schreiben vom</span>
+              <input type="date" name="event_date" value="<?= View::escape(date('Y-m-d')) ?>" required>
+            </label>
+            <label class="dg-field">
+              <span>Beendigung zum</span>
+              <input type="date" name="end_date" required>
+            </label>
+            <label class="dg-field dg-field--wide">
+              <span>Begründung / Hinweise</span>
+              <textarea name="facts_text" rows="3" placeholder="Bei fristloser Kündigung Pflicht"></textarea>
+            </label>
+          </div>
+          <label class="dg-field dg-field--checkbox dg-field--wide">
+            <span><input type="checkbox" name="set_exit_date" value="1"> Austrittsdatum im Mitarbeiterdatensatz auf „Beendigung zum“ setzen</span>
+          </label>
+          <p class="dg-field-hint">Nach Austritt: Lohnlauf und SV-Abmeldung prüfen.</p>
+          <div class="dg-form-actions">
+            <button type="submit" class="dg-button dg-button--primary">Schreiben als PDF</button>
+          </div>
+        </form>
       </div>
-      <label class="dg-field dg-field--checkbox dg-field--wide">
-        <span><input type="checkbox" name="set_exit_date" value="1"> Austrittsdatum im Mitarbeiterdatensatz auf „Beendigung zum“ setzen</span>
-      </label>
-      <p class="dg-field-hint">Nach Austritt: Lohnlauf und SV-Abmeldung prüfen.</p>
-      <div class="dg-form-actions">
-        <button type="submit" class="dg-button dg-button--primary">Schreiben als PDF</button>
-      </div>
-    </form>
+    </details>
 
     <?php if ($events !== []) : ?>
-      <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
-        <h3>Zugang dokumentieren</h3>
-        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-        <input type="hidden" name="id" value="<?= $contactId ?>">
-        <input type="hidden" name="hr_personnel_update_delivery" value="1">
-        <div class="dg-form-grid">
-          <label class="dg-field">
-            <span>Vorgang</span>
-            <select name="event_id" required>
-              <?php foreach ($events as $ev) : ?>
-                <option value="<?= (int) $ev['id'] ?>">
-                  <?= View::escape(EmploymentContractContext::formatDateDe((string) $ev['event_date']) . ' — ' . ($typeLabels[(string) $ev['event_type']] ?? '') . ' — ' . (string) $ev['title']) ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-          <label class="dg-field">
-            <span>Zugangsdatum</span>
-            <input type="date" name="delivery_date" value="<?= View::escape(date('Y-m-d')) ?>">
-          </label>
-          <label class="dg-field">
-            <span>Kanal</span>
-            <select name="delivery_channel">
-              <option value="">—</option>
-              <?php foreach ($channelLabels as $ck => $cl) : ?>
-                <option value="<?= View::escape($ck) ?>"><?= View::escape($cl) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-          <label class="dg-field dg-field--wide">
-            <span>Aktennotiz Zugang</span>
-            <textarea name="delivery_note" rows="2"></textarea>
-          </label>
+      <details class="dg-form-accordion dg-form-accordion--nested">
+        <summary>Zugang dokumentieren</summary>
+        <div class="dg-form-accordion__body">
+          <form class="dg-form" method="post" action="/app?page=kontakte&amp;action=edit&amp;id=<?= $contactId ?>">
+            <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+            <input type="hidden" name="id" value="<?= $contactId ?>">
+            <input type="hidden" name="hr_personnel_update_delivery" value="1">
+            <div class="dg-form-grid">
+              <label class="dg-field">
+                <span>Vorgang</span>
+                <select name="event_id" required>
+                  <?php foreach ($events as $ev) : ?>
+                    <option value="<?= (int) $ev['id'] ?>">
+                      <?= View::escape(EmploymentContractContext::formatDateDe((string) $ev['event_date']) . ' — ' . ($typeLabels[(string) $ev['event_type']] ?? '') . ' — ' . (string) $ev['title']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
+              <label class="dg-field">
+                <span>Zugangsdatum</span>
+                <input type="date" name="delivery_date" value="<?= View::escape(date('Y-m-d')) ?>">
+              </label>
+              <label class="dg-field">
+                <span>Kanal</span>
+                <select name="delivery_channel">
+                  <option value="">—</option>
+                  <?php foreach ($channelLabels as $ck => $cl) : ?>
+                    <option value="<?= View::escape($ck) ?>"><?= View::escape($cl) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
+              <label class="dg-field dg-field--wide">
+                <span>Aktennotiz Zugang</span>
+                <textarea name="delivery_note" rows="2"></textarea>
+              </label>
+            </div>
+            <div class="dg-form-actions">
+              <button type="submit" class="dg-button dg-button--primary">Zugang speichern</button>
+            </div>
+          </form>
         </div>
-        <div class="dg-form-actions">
-          <button type="submit" class="dg-button dg-button--primary">Zugang speichern</button>
-        </div>
-      </form>
+      </details>
     <?php endif; ?>
   <?php endif; ?>
 
-  <div class="dg-stack">
-    <h3>Fristenhilfe</h3>
-    <p class="dg-field-hint"><?= View::escape((string) ($deadline['disclaimer'] ?? '')) ?></p>
-    <?php if (!empty($deadline['lines']) && is_array($deadline['lines'])) : ?>
-      <ul>
-        <?php foreach ($deadline['lines'] as $line) : ?>
-          <li><?= View::escape((string) $line) ?></li>
-        <?php endforeach; ?>
-      </ul>
-    <?php endif; ?>
-  </div>
+  <details class="dg-form-accordion dg-form-accordion--nested">
+    <summary>Fristenhilfe</summary>
+    <div class="dg-form-accordion__body">
+      <p class="dg-field-hint"><?= View::escape((string) ($deadline['disclaimer'] ?? '')) ?></p>
+      <?php if (!empty($deadline['lines']) && is_array($deadline['lines'])) : ?>
+        <ul>
+          <?php foreach ($deadline['lines'] as $line) : ?>
+            <li><?= View::escape((string) $line) ?></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </div>
+  </details>
 </section>

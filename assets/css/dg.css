@@ -749,6 +749,85 @@ code {
   font-size: 14px;
 }
 
+/* Kontaktformular: Abschnitte als Accordion */
+.dg-form-accordion {
+  margin: 0 0 var(--dg-space-3);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--dg-primary, #336) 18%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--dg-primary, #336) 4%, transparent);
+}
+
+.dg-form-accordion > summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  font-size: 15px;
+  padding: var(--dg-space-3);
+  user-select: none;
+}
+
+.dg-form-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dg-form-accordion > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 1.1em;
+  color: var(--dg-primary, #336);
+  transition: transform 0.12s ease;
+}
+
+.dg-form-accordion[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.dg-form-accordion__body {
+  padding: 0 var(--dg-space-3) var(--dg-space-3);
+}
+
+.dg-form-accordion__body > .dg-lead:first-child,
+.dg-form-accordion__body > .dg-form-grid:first-child,
+.dg-form-accordion__body > .dg-panel:first-child,
+.dg-form-accordion__body > .dg-form:first-child,
+.dg-form-accordion__body > .dg-form-section:first-child,
+.dg-form-accordion__body > section:first-child {
+  margin-top: 0;
+}
+
+.dg-form-accordion--nested {
+  margin-top: var(--dg-space-2);
+  background: color-mix(in srgb, var(--dg-primary, #336) 2%, #fff);
+}
+
+.dg-form-accordion--nested > summary {
+  font-size: 14px;
+  padding: var(--dg-space-2) var(--dg-space-3);
+}
+
+.dg-form-accordion--danger {
+  border-color: color-mix(in srgb, var(--dg-danger, #a33) 35%, transparent);
+  background: color-mix(in srgb, var(--dg-danger, #a33) 5%, transparent);
+}
+
+.dg-form.dg-panel:has(> .dg-form-accordion) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dg-employee-section:has(> .dg-form-accordion) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 0 var(--dg-space-3);
+}
+
+.dg-form + .dg-form-accordion {
+  margin-top: var(--dg-space-4);
+}
+
 .dg-contact-import__form {
   display: flex;
   flex-direction: column;

@@ -12,6 +12,7 @@ $contactId = (int) ($contactId ?? 0);
 $contactSignatures = $contactSignatures ?? [];
 $canUploadContactSignature = !empty($canUploadContactSignature);
 $signatureOwnerMissing = !empty($signatureOwnerMissing);
+$inAccordion = !empty($inAccordion);
 if ($contactId <= 0) {
     return;
 }
@@ -33,8 +34,10 @@ $formatDt = static function (string $raw): string {
     return $ts !== false ? date('d.m.Y H:i', $ts) : $raw;
 };
 ?>
-<section class="dg-panel dg-panel--wide dg-mt-4" id="contact-signatures">
-  <h2 class="dg-subsection-title">Unterschriften</h2>
+<section class="<?= $inAccordion ? 'dg-stack' : 'dg-panel dg-panel--wide dg-mt-4' ?>" id="contact-signatures">
+  <?php if (!$inAccordion) : ?>
+    <h2 class="dg-subsection-title">Unterschriften</h2>
+  <?php endif; ?>
   <div class="dg-flash dg-flash--info">
     <strong>Zweck:</strong> Unterschriftsbild für Briefe und E-Mails in diesem CRM (nur für Berechtigte).
     Es ist eine einfache elektronische Unterschrift — keine gesetzliche Schriftform und keine qualifizierte elektronische Signatur (QES).

@@ -352,18 +352,20 @@ const employeeRoles = ['dg_eigenmitarbeiter', 'administrator'];
 
 function syncEmployeeSection() {
   const select = document.querySelector('[data-role-select]');
-  const section = document.querySelector('[data-employee-section]');
-  if (!select || !section) {
+  const sections = document.querySelectorAll('[data-employee-section]');
+  if (!select || sections.length === 0) {
     return;
   }
   const show = employeeRoles.includes(select.value);
-  section.hidden = !show;
-  section.querySelectorAll('[data-employee-required]').forEach((field) => {
-    if (show) {
-      field.setAttribute('required', 'required');
-    } else {
-      field.removeAttribute('required');
-    }
+  sections.forEach((section) => {
+    section.hidden = !show;
+    section.querySelectorAll('[data-employee-required]').forEach((field) => {
+      if (show) {
+        field.setAttribute('required', 'required');
+      } else {
+        field.removeAttribute('required');
+      }
+    });
   });
 }
 
@@ -386,7 +388,8 @@ document.addEventListener('input', (event) => {
 });
 
 function syncSocialInsuranceFields() {
-  const section = document.querySelector('[data-employee-section]');
+  const section = document.querySelector('[data-employee-section][data-filing-hints]')
+    || document.querySelector('[data-employee-section]');
   if (!section) {
     return;
   }
