@@ -12014,14 +12014,26 @@ switch ($path) {
                 if ($writerContactFilter < 1) {
                     $writerContactFilter = 0;
                 }
+                $writerPage = max(1, (int) ($_GET['paged'] ?? 1));
+                $writerPerPage = strtolower(trim((string) ($_GET['per_page'] ?? WriterDocumentRepository::DEFAULT_PER_PAGE)));
+                if (!in_array($writerPerPage, WriterDocumentRepository::PER_PAGE_OPTIONS, true)) {
+                    $writerPerPage = WriterDocumentRepository::DEFAULT_PER_PAGE;
+                }
                 $writerDocumentList = $dbConnected
-                    ? WriterDocumentRepository::listRecent(
-                        100,
-                        0,
+                    ? WriterDocumentRepository::paginate(
+                        $writerPage,
+                        $writerPerPage,
                         $writerStatusFilter !== '' ? $writerStatusFilter : null,
                         $writerContactFilter > 0 ? $writerContactFilter : null
                     )
-                    : [];
+                    : [
+                        'items' => [],
+                        'total' => 0,
+                        'page' => 1,
+                        'per_page' => 10,
+                        'total_pages' => 1,
+                        'per_page_key' => $writerPerPage,
+                    ];
                 $writerFilterContact = $writerContactFilter > 0
                     ? ContactRepository::findById($writerContactFilter)
                     : null;
@@ -12542,7 +12554,14 @@ switch ($path) {
         $writerExportFormats = $writerExportFormats ?? null;
         $writerLinkContext = $writerLinkContext ?? null;
         $writerCanLinkVoucher = $writerCanLinkVoucher ?? false;
-        $writerDocumentList = $writerDocumentList ?? [];
+        $writerDocumentList = $writerDocumentList ?? [
+            'items' => [],
+            'total' => 0,
+            'page' => 1,
+            'per_page' => 10,
+            'total_pages' => 1,
+            'per_page_key' => WriterDocumentRepository::DEFAULT_PER_PAGE,
+        ];
         $writerStatusFilter = $writerStatusFilter ?? '';
         $writerContactFilter = $writerContactFilter ?? 0;
         $writerFilterContact = $writerFilterContact ?? null;

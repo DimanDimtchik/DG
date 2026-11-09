@@ -10,12 +10,126 @@ declare(strict_types=1);
  */
 final class WriterDocumentRepository
 {
+    /** Erlaubte Listengrößen (GET per_page=…). */
+    public const PER_PAGE_OPTIONS = ['10', '50', '100', 'all'];
+
+    public const DEFAULT_PER_PAGE = '10';
+
     public static function ensureReady(): void
     {
         if (!Database::isConfigured()) {
             return;
         }
         MigrationRunner::runPending();
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private static function listWhere(?string $status, ?int $contactId): array
+    {
+        $where = [];
+        $params = [];
+        if ($status !== null && $status !== '') {
+            $where[] = 'd.status = :status';
+            $params['status'] = WriterDocument::normalizeStatus($status);
+        }
+        if ($contactId !== null && $contactId > 0) {
+            $where[] = 'd.contact_id = :contact_id';
+            $params['contact_id'] = $contactId;
+        }
+
+        return [
+            $where !== [] ? (' WHERE ' . implode(' AND ', $where)) : '',
+            $params,
+        ];
+    }
+
+    public static function countFiltered(?string $status = null, ?int $contactId = null): int
+    {
+        self::ensureReady();
+        if (!Database::isConfigured()) {
+            return 0;
+        }
+
+        [$whereSql, $params] = self::listWhere($status, $contactId);
+        $stmt = Database::pdo()->prepare(
+            'SELECT COUNT(*) FROM dg_writer_documents d' . $whereSql
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Paginated list for the Dokumentenverfasser table (Media-like per_page).
+     *
+     * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
+     */
+    public static function paginate(
+        int $page = 1,
+        string $perPageKey = self::DEFAULT_PER_PAGE,
+        ?string $status = null,
+        ?int $contactId = null
+    ): array {
+        self::ensureReady();
+        $page = max(1, $page);
+        $perPageKey = strtolower(trim($perPageKey));
+        if (!in_array($perPageKey, self::PER_PAGE_OPTIONS, true)) {
+            $perPageKey = self::DEFAULT_PER_PAGE;
+        }
+
+        if (!Database::isConfigured()) {
+            return [
+                'items' => [],
+                'total' => 0,
+                'page' => 1,
+                'per_page' => 10,
+                'total_pages' => 1,
+                'per_page_key' => $perPageKey,
+            ];
+        }
+
+        $total = self::countFiltered($status, $contactId);
+        $showAll = $perPageKey === 'all';
+        $perPage = $showAll ? max(1, $total) : (int) $perPageKey;
+        $totalPages = $showAll ? 1 : max(1, (int) ceil($total / max(1, $perPage)));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+
+        [$whereSql, $params] = self::listWhere($status, $contactId);
+        $sql = 'SELECT d.id, d.status, d.version, d.title, d.subject, d.contact_id, d.voucher_id,
+                       d.created_by, d.updated_by, d.finalized_at, d.created_at, d.updated_at,
+                       u.username AS updated_by_username, u.display_name AS updated_by_display_name
+                FROM dg_writer_documents d
+                LEFT JOIN dg_users u ON u.id = d.updated_by'
+            . $whereSql
+            . ' ORDER BY d.updated_at DESC, d.id DESC';
+
+        if ($showAll || $total === 0) {
+            $stmt = Database::pdo()->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } else {
+            $stmt = Database::pdo()->prepare($sql . ' LIMIT :limit OFFSET :offset');
+            foreach ($params as $key => $value) {
+                $stmt->bindValue(':' . $key, $value);
+            }
+            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+
+        return [
+            'items' => $rows,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $showAll ? $total : $perPage,
+            'total_pages' => $totalPages,
+            'per_page_key' => $perPageKey,
+        ];
     }
 
     /**
@@ -30,25 +144,14 @@ final class WriterDocumentRepository
 
         $limit = max(1, min(200, $limit));
         $offset = max(0, $offset);
+        [$whereSql, $params] = self::listWhere($status, $contactId);
         $sql = 'SELECT d.id, d.status, d.version, d.title, d.subject, d.contact_id, d.voucher_id,
                        d.created_by, d.updated_by, d.finalized_at, d.created_at, d.updated_at,
                        u.username AS updated_by_username, u.display_name AS updated_by_display_name
                 FROM dg_writer_documents d
-                LEFT JOIN dg_users u ON u.id = d.updated_by';
-        $params = [];
-        $where = [];
-        if ($status !== null && $status !== '') {
-            $where[] = 'd.status = :status';
-            $params['status'] = WriterDocument::normalizeStatus($status);
-        }
-        if ($contactId !== null && $contactId > 0) {
-            $where[] = 'd.contact_id = :contact_id';
-            $params['contact_id'] = $contactId;
-        }
-        if ($where !== []) {
-            $sql .= ' WHERE ' . implode(' AND ', $where);
-        }
-        $sql .= ' ORDER BY d.updated_at DESC, d.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset;
+                LEFT JOIN dg_users u ON u.id = d.updated_by'
+            . $whereSql
+            . ' ORDER BY d.updated_at DESC, d.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset;
 
         $stmt = Database::pdo()->prepare($sql);
         $stmt->execute($params);
