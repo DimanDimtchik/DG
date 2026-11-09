@@ -2104,9 +2104,11 @@ switch ($path) {
                     Flash::set('success', 'Kontaktverknüpfung entfernt.');
                 } elseif (isset($_POST['writer_link_contact'])) {
                     $ref = trim((string) ($_POST['contact_ref'] ?? ''));
-                    $contact = PostMailLinkService::resolveContactRef($ref);
+                    $contact = PostMailLinkService::resolveContactRef($ref, $user);
                     if ($contact === null) {
-                        throw new InvalidArgumentException('Kontakt nicht gefunden (ID oder E-Mail).');
+                        throw new InvalidArgumentException(
+                            'Kontakt nicht gefunden. Bitte aus der Vorschlagsliste wählen oder ID/E-Mail eingeben.'
+                        );
                     }
                     WriterDocumentLinkService::linkContact($user, $linkDocId, $contact->id, true);
                     Flash::set('success', 'Kontakt verknüpft.');
@@ -5148,9 +5150,11 @@ switch ($path) {
                     if ($ref === '' && !empty($_POST['suggested_contact_id'])) {
                         $ref = (string) (int) $_POST['suggested_contact_id'];
                     }
-                    $contact = PostMailLinkService::resolveContactRef($ref);
+                    $contact = PostMailLinkService::resolveContactRef($ref, $user);
                     if ($contact === null) {
-                        throw new InvalidArgumentException('Kontakt nicht gefunden (ID oder E-Mail).');
+                        throw new InvalidArgumentException(
+                            'Kontakt nicht gefunden. Bitte aus der Vorschlagsliste wählen oder ID/E-Mail eingeben.'
+                        );
                     }
                     PostMailLinkService::linkContact($user, $mailId, $contact->id);
                     Flash::set('success', 'Kontakt verknüpft.');

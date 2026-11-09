@@ -123,9 +123,9 @@ final class PostMailLinkService
     }
 
     /**
-     * Kontakt aus ID oder E-Mail-Adresse auflösen.
+     * Kontakt aus ID, E-Mail oder eindeutigem Namens-/Firmen-Treffer auflösen.
      */
-    public static function resolveContactRef(string $ref): ?Contact
+    public static function resolveContactRef(string $ref, ?User $viewer = null): ?Contact
     {
         $ref = trim($ref);
         if ($ref === '') {
@@ -135,12 +135,19 @@ final class PostMailLinkService
             return ContactRepository::findById((int) $ref);
         }
         $email = EmailNormalizer::normalize($ref);
-        if ($email === '' || !EmailNormalizer::isValidSyntax($email)) {
-            return null;
-        }
-        $id = MailLogRepository::guessContactId($email);
+        if ($email !== '' && EmailNormalizer::isValidSyntax($email)) {
+            $id = MailLogRepository::guessContactId($email);
 
-        return $id !== null ? ContactRepository::findById($id) : ContactRepository::findByEmailMatch($email);
+            return $id !== null ? ContactRepository::findById($id) : ContactRepository::findByEmailMatch($email);
+        }
+
+        // Name / Firma: nur bei genau einem Treffer automatisch verknüpfen.
+        $hits = ContactRepository::searchPicker($ref, 5, $viewer);
+        if (count($hits) === 1) {
+            return $hits[0];
+        }
+
+        return null;
     }
 
     /**

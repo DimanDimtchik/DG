@@ -427,17 +427,30 @@ $postFolderQuery = static function (int $mailboxId, string $folderPath, int $pag
             <?php elseif ($partyEmail !== '') : ?>
               <p class="dg-field-hint">Kein Kontakt zu <?= View::escape($partyEmail) ?> — manuell verknüpfen oder in Kontakten anlegen.</p>
             <?php endif; ?>
-            <form method="post" action="/app?page=post" class="dg-form">
+            <form method="post" action="/app?page=post" class="dg-form" id="dg-post-link-contact-form">
               <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
               <input type="hidden" name="mail_id" value="<?= (int) $postMessage['id'] ?>">
-              <label class="dg-field dg-field--wide">
-                <span>Kontakt-ID oder E-Mail</span>
-                <input type="text" name="contact_ref" value="<?= View::escape($partyEmail) ?>" placeholder="123 oder name@firma.de" required>
-              </label>
+              <input type="hidden" name="contact_ref" id="dg-post-link-contact-ref" value="">
+              <div class="dg-field dg-field--wide">
+                <span>Kontakt suchen</span>
+                <input
+                  type="search"
+                  id="dg-post-link-contact-search"
+                  placeholder="Name, Firma, E-Mail oder ID…"
+                  autocomplete="off"
+                  value=""
+                >
+                <div id="dg-post-link-contact-results" class="dg-voucher-contact-results" hidden></div>
+                <span class="dg-field-hint">Tippen und Treffer anklicken — oder ID/E-Mail direkt eingeben und verknüpfen.</span>
+              </div>
               <div class="dg-form-actions">
-                <button type="submit" name="post_link_contact" value="1" class="dg-button">Kontakt verknüpfen</button>
+                <button type="submit" name="post_link_contact" value="1" class="dg-button dg-button--primary">Kontakt verknüpfen</button>
               </div>
             </form>
+            <script>
+              window.dgPostLinkContact = { api: '/api/post-compose' };
+            </script>
+            <script src="<?= View::escape(Asset::url('/assets/js/post-link-contact.js')) ?>" defer></script>
           <?php endif; ?>
         </div>
 
