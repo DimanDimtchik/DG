@@ -296,6 +296,88 @@ final class MailLogRepository
         }, $rows));
     }
 
+    /**
+     * Kontakt-Akte: verknüpfte Mails und Treffer über Kontakt-E-Mails (ein-/ausgehend).
+     *
+     * @param list<int> $mailboxIds Sichtbare Postfächer des Users
+     * @return list<array<string, mixed>>
+     */
+    public static function listForContact(int $contactId, array $mailboxIds, int $limit = 50): array
+    {
+        $contactId = max(0, $contactId);
+        $mailboxIds = array_values(array_filter(array_map('intval', $mailboxIds), static fn (int $id): bool => $id > 0));
+        $limit = max(1, min(100, $limit));
+        if ($contactId < 1 || $mailboxIds === [] || !Database::isConfigured()) {
+            return [];
+        }
+
+        MigrationRunner::runPending();
+
+        $emails = [];
+        $contact = ContactRepository::findById($contactId);
+        if ($contact !== null) {
+            foreach ([$contact->email, $contact->email2] as $raw) {
+                $norm = EmailNormalizer::normalize((string) $raw);
+                if ($norm !== '' && EmailNormalizer::isValidSyntax($norm)) {
+                    $emails[$norm] = true;
+                }
+            }
+        }
+        $emailList = array_keys($emails);
+
+        $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+        $hasVoucher = self::hasColumn('voucher_id');
+        $sql = 'SELECT id, mailbox_id, direction, status, is_read, received_at, sent_at, created_at,
+                       from_address, from_name, to_addresses, subject, body_preview, contact_id, storage_path'
+            . ($hasVoucher ? ', voucher_id' : '')
+            . " FROM dg_mail_log
+                WHERE mailbox_id IN ({$placeholders})
+                  AND (
+                    (direction = 'in' AND status = 'received')
+                    OR (direction = 'out' AND status IN ('sent', 'queued'))
+                  )";
+        $params = $mailboxIds;
+
+        $orParts = ['contact_id = ?'];
+        $params[] = $contactId;
+        foreach ($emailList as $email) {
+            $like = '%' . self::escapeLike($email) . '%';
+            $orParts[] = '(LOWER(TRIM(from_address)) = ? OR to_addresses LIKE ? ESCAPE \'\\\\\')';
+            $params[] = $email;
+            $params[] = $like;
+        }
+        $sql .= ' AND (' . implode(' OR ', $orParts) . ')';
+        $sql .= ' ORDER BY COALESCE(received_at, sent_at, created_at) DESC, id DESC LIMIT ?';
+        $params[] = $limit;
+
+        $stmt = Database::pdo()->prepare($sql);
+        foreach ($params as $i => $value) {
+            $stmt->bindValue($i + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!is_array($rows) || $rows === []) {
+            return [];
+        }
+
+        return self::enrichPartyLabels(array_map(static function (array $row) use ($contactId): array {
+            $partyAddress = (string) ($row['from_address'] ?? '');
+            if (($row['direction'] ?? '') === 'out') {
+                $to = json_decode((string) ($row['to_addresses'] ?? '[]'), true);
+                $toFirst = is_array($to) && $to !== [] ? (string) $to[0] : '';
+                $partyAddress = $toFirst !== '' ? $toFirst : $partyAddress;
+                $row['party_address'] = $partyAddress;
+            } else {
+                $row['party_address'] = $partyAddress;
+            }
+            $row['activity_at'] = (string) ($row['received_at'] ?? $row['sent_at'] ?? $row['created_at'] ?? '');
+            $row['linked'] = (int) ($row['contact_id'] ?? 0) === $contactId;
+            $row['source'] = 'contact_akte';
+
+            return $row;
+        }, $rows));
+    }
+
     private static function escapeLike(string $value): string
     {
         return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);

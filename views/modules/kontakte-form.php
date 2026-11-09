@@ -345,6 +345,10 @@ if ($isCompanyForm && $companyEmployees === []) {
     ]); ?>
   </template>
 
+  <?php if ($isEdit) : ?>
+    <?php View::partial('partials/contact-akte', ['contactAkte' => $contactAkte ?? null]); ?>
+  <?php endif; ?>
+
   <?php if ($isEdit && !empty($canDeleteContact)) : ?>
     <form class="dg-form dg-panel dg-panel--danger dg-mt-4" method="post" action="/app?page=kontakte" onsubmit="return confirm('Kontakt wirklich löschen?');">
       <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">

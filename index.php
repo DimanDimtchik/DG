@@ -9974,6 +9974,7 @@ switch ($path) {
                 $uidForMb = MailboxMemberResolver::findUserIdForContact($contact);
                 $staffAccessHasMailbox = ($uidForMb !== null && MailboxRepository::findPrivateForUser($uidForMb) !== null)
                     || MailboxRepository::findPrivateForContact($contactId) !== null;
+                $contactAkte = ContactAkteService::build($user, $contact);
             } elseif ($contactId > 0) {
                 $contact = ContactRepository::findById($contactId);
                 if (ContactRepository::consumeRetentionPurged()) {
@@ -10027,6 +10028,7 @@ switch ($path) {
                     }
                 }
                 $contactSignatures = UserSignatureStore::listForContact($contact->id);
+                $contactAkte = ContactAkteService::build($user, $contact);
             } else {
                 $contactList = ContactRepository::paginate($contactSearch, $contactPage, $user, $contactRoleFilter);
                 $contactImportErrors = [];
@@ -12379,6 +12381,7 @@ switch ($path) {
         $contactSignatures = $contactSignatures ?? [];
         $canUploadContactSignature = $canUploadContactSignature ?? false;
         $signatureOwnerMissing = $signatureOwnerMissing ?? false;
+        $contactAkte = $contactAkte ?? null;
         $timeShiftTemplateEdit = $timeShiftTemplateEdit ?? null;
         $timeShiftWeekMonday = $timeShiftWeekMonday ?? date('Y-m-d');
         $timeShiftWeekDates = $timeShiftWeekDates ?? [];
@@ -12862,6 +12865,7 @@ switch ($path) {
             'signatureOwnerMissing',
             'staffAccessStatus',
             'staffAccessHasMailbox',
+            'contactAkte',
             'allowedContactRoles',
             'canDeleteContact',
             'companyEmployees',

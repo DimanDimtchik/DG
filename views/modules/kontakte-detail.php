@@ -474,4 +474,6 @@
       </section>
     <?php endif; ?>
   </div>
+
+  <?php View::partial('partials/contact-akte', ['contactAkte' => $contactAkte ?? null]); ?>
 </div>

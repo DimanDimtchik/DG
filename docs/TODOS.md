@@ -84,6 +84,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Vor Hetzner AVV:** [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) — AVV **07.11.2026** v1.2 · TÜV-Audit-PDF ✅ (PDFs nicht in Git)  
 - [x] **Hetzner-Server:** **GEX45-1** bestellt (**B20261107-3544202**) · Finnland **HEL1** · OS **Ubuntu 26.04 LTS** · 1× IPv4 · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Mini-IDs [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) (Lieferung Wochen)  
 - [x] **Kontakt-Unterschrift Brief/Mail:** tokenarm [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) — **ES0–ES8 ✅** 2026-11-08 (Historie, Canvas, Brief, Mail, App, Import, UI-Texte; kein QES, kein Löschen)  
+- [x] **Kontakt-Akte (Mails + Dokumente am Kontakt):** Mini-IDs **KA0–KA7 ✅** — unten am Kontakt chronologisch Mails (verknüpft + E-Mail-Treffer) und Dokumente (Belege + Verfasser + HR); `ContactAkteService` + Partial `contact-akte`  
 - [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; SSH/Stack nach Lieferung PB1+)
 - [x] **ARAP-Prozent-Vorschlag:** Code bereits vorhanden; Jahresabschluss nutzt die resultierenden Ledger-/Folgejahresbuchungen, kein separater ARAP-Abschlussprozess
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
@@ -209,6 +210,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `SHARED-CORE-REST-PLAN.md` | Shared Core SC0–SC7 · `/var/www/dg-crm/shared` (nach PB2) |
 | `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45-1 · B20261107-3544202 (bestellt) |
 | `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES8, kein QES) |
+| Kontakt-Akte KA0–KA7 | Mails+Dokumente am Kontakt (Cursor-Plan `kontakt-akte_mails_docs`) |
 | `SIGNATURE-IMPORT-PROVIDER.md` | ES7a Import-Service-Vertrag / Interface |
 | `ZUGFERD-AUSGANG-ENTSCHEIDUNG.md` | PA5b: PDF+XRechnung behalten; Factur-X = D2-Ticket |
 | `LEXOFFICE-DG-MIGRATION.md` | PA4f: Lexoffice→DG Checkliste (kein Produktiv-Import) |

@@ -56,6 +56,7 @@ spl_autoload_register(static function (string $class): void {
         'CtiApi' => '/src/Cti/CtiApi.php',
         'ContactCompanyLinkRepository' => '/src/Contact/ContactCompanyLinkRepository.php',
         'ContactAccessResolver' => '/src/Contact/ContactAccessResolver.php',
+        'ContactAkteService' => '/src/Contact/ContactAkteService.php',
         'BankAccountTypes' => '/src/Contact/BankAccountTypes.php',
         'CardNumberHelper' => '/src/Contact/CardNumberHelper.php',
         'BankDirectory' => '/src/Contact/BankDirectory.php',
