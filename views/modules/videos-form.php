@@ -127,7 +127,7 @@ $defaultTitle = pathinfo((string) ($asset['original_name'] ?? 'Video'), PATHINFO
     <?php
       View::partial('partials/back-nav', [
           'href' => '/app?page=videos',
-          'label' => 'Zurück zu Videos',
+          'label' => 'Zurück zu Social-Video',
       ]);
     ?>
     <h1 class="dg-page-title"><?= View::escape((string) ($asset['original_name'] ?? 'Video')) ?></h1>

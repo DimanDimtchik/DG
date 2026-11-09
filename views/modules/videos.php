@@ -21,8 +21,8 @@ $anyPlatform = $youtubeConnected || $linkedinConnected || $instagramConnected ||
 
   <header class="dg-page-header dg-page-header--toolbar">
     <div>
-      <h1 class="dg-page-title">Videos</h1>
-      <p class="dg-lead">Videos speichern und auf YouTube, LinkedIn, Instagram oder TikTok veröffentlichen (max. 100 MB).</p>
+      <h1 class="dg-page-title">Social-Video</h1>
+      <p class="dg-lead">Clips speichern und auf YouTube, LinkedIn, Instagram oder TikTok veröffentlichen (max. 100 MB).</p>
     </div>
     <div class="dg-page-header__actions">
       <a class="dg-button" href="<?= View::escape(SettingsRegistry::tabUrl('youtube-publish')) ?>">YouTube</a>
@@ -76,7 +76,7 @@ $anyPlatform = $youtubeConnected || $linkedinConnected || $instagramConnected ||
         </thead>
         <tbody>
           <?php if ($videoAssets === []) : ?>
-            <tr><td colspan="5" class="dg-table__empty">Noch keine Videos.</td></tr>
+            <tr><td colspan="5" class="dg-table__empty">Noch keine Social-Videos.</td></tr>
           <?php else : ?>
             <?php foreach ($videoAssets as $row) : ?>
               <?php $id = (int) ($row['id'] ?? 0); ?>

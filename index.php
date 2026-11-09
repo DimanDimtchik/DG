@@ -8424,7 +8424,7 @@ switch ($path) {
             $tiktokConnected = OAuthConnectionRepository::isConnected(OAuthConnectionRepository::PLATFORM_TIKTOK);
             $dbConnected = Database::isConfigured();
             $contentTemplate = 'modules/videos';
-            $title = 'Videos';
+            $title = 'Social-Video';
             $currentPage = 'videos';
         } elseif ($page === 'videos') {
             header('Location: /app', true, 302);

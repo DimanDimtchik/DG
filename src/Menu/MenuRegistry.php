@@ -353,7 +353,7 @@ final class MenuRegistry
         if (RoleResolver::canEdit($user)) {
             $items[] = [
                 'slug' => 'videos',
-                'label' => 'Videos',
+                'label' => 'Social-Video',
                 'icon' => 'document',
                 'href' => '/app?page=videos',
             ];
@@ -695,7 +695,7 @@ final class MenuRegistry
             'post' => 'E-Mail-Postfächer im CRM: Eingang lesen und Nachrichten versenden.',
             'telefon' => 'Click-to-Call, Anrufliste und Popup bei eingehenden Anrufen.',
             'dokumentenverfasser' => 'Briefe und Texte mit Briefpapier — Entwurf, Finalisierung und Export.',
-            'videos' => 'Videos speichern und auf YouTube veröffentlichen.',
+            'videos' => 'Social-Videos speichern und auf YouTube, LinkedIn, Instagram oder TikTok veröffentlichen.',
             'artikel-leistungen' => 'Artikel- und Leistungskatalog — Basis für Angebote, Belege und Lager.',
             'dienstleistungen-auftraege' => 'Angebote und Aufträge für Dienstleistungen erfassen und verfolgen.',
             'lager' => 'Bestände, Orte und Bewegungen — von Wareneingang bis Inventur.',
