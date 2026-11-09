@@ -520,6 +520,10 @@ spl_autoload_register(static function (string $class): void {
         'MachineOverheadSettings' => '/src/Recipe/MachineOverheadSettings.php',
         'MachineOverheadService' => '/src/Recipe/MachineOverheadService.php',
         'MachineKnowledgeRepository' => '/src/Recipe/MachineKnowledgeRepository.php',
+        'ProductionLineStore' => '/src/Recipe/ProductionLineStore.php',
+        'ProductionLineStatusService' => '/src/Recipe/ProductionLineStatusService.php',
+        'ProductionLineMaterialStockGate' => '/src/Recipe/ProductionLineMaterialStockGate.php',
+        'ProductionLineStationDownGate' => '/src/Recipe/ProductionLineStationDownGate.php',
     ];
 
     if (!isset($map[$class])) {

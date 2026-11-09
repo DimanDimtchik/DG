@@ -274,6 +274,7 @@ CREATE TABLE dg_machine_knowledge_links (
 | Priorität | Paket | Wann |
 |-----------|-------|------|
 | 1 | Maschinen-Belegungsplan: Kapazitaet, Output/h, Zusatzstoffe, Wartung | jetzt als frueher Maschinenblock |
+| 1b | Fließlinie / Puffer-Kette (Blocking, Starving, Rohware) | eigener Plan [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) · nach M0–M5 |
 | 2 | Maschinen-Gemeinkosten aus FiBu als **nicht buchungswirksamer Kalkulationsvorschlag** | nach Kapazitaets-/Wartungsgrundlage |
 | 3 | Maschinenwissen mit Akademie-Verlinkung | jetzt/parallel möglich, klein umsetzbar |
 | 4 | Lohn D0-A sauber spezifizieren | nach A/B/C-Fibu- und Hetzner-Basis |

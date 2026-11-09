@@ -1011,7 +1011,8 @@ final class MenuRegistry
         }
 
         if ($slug === 'rezeptur' || $slug === 'rezeptur-form'
-            || $slug === 'rezeptur-maschinen' || $slug === 'rezeptur-maschine-form') {
+            || $slug === 'rezeptur-maschinen' || $slug === 'rezeptur-maschine-form'
+            || $slug === 'rezeptur-fliesslinien') {
             return self::isRezepturEnabled()
                 && DepartmentAccess::userCanManageArticleCatalog($user)
                 && RoleResolver::canEdit($user);

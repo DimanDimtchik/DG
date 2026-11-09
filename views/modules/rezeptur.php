@@ -20,6 +20,7 @@ $statusLabels = RecipeRepository::statusOptions();
       <?php if ($canEdit && $dbConnected) : ?>
         <a class="dg-button dg-button--primary" href="/app?page=rezeptur-form&amp;action=new">Neues Rezept</a>
         <a class="dg-button" href="/app?page=rezeptur-maschinen">Maschinen &amp; Stundensatz</a>
+        <a class="dg-button" href="/app?page=rezeptur-fliesslinien">Fließlinien</a>
       <?php endif; ?>
     </div>
   </header>

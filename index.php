@@ -3117,6 +3117,99 @@ switch ($path) {
             exit;
         }
 
+        // POST: Fließlinie speichern / Stationen / Puffer (FL7a)
+        if (
+            $page === 'rezeptur-fliesslinien'
+            && $_SERVER['REQUEST_METHOD'] === 'POST'
+            && (
+                isset($_POST['production_line_save'])
+                || isset($_POST['production_line_stations_save'])
+                || isset($_POST['production_line_buffers_save'])
+            )
+            && MenuRegistry::canAccess($user, 'rezeptur-fliesslinien')
+        ) {
+            $lineIdPost = (int) ($_POST['id'] ?? 0);
+            if (!Csrf::verify($_POST['_csrf'] ?? null) || !RoleResolver::canEdit($user)) {
+                Flash::set('error', 'Keine Berechtigung bzw. ungültiges Formular.');
+                header('Location: /app?page=rezeptur-fliesslinien' . ($lineIdPost > 0 ? '&id=' . $lineIdPost : ''), true, 302);
+                exit;
+            }
+            try {
+                ProductionLineStore::ensureReady();
+                if (isset($_POST['production_line_save'])) {
+                    $savedId = ProductionLineStore::saveLine([
+                        'name' => (string) ($_POST['name'] ?? ''),
+                        'code' => (string) ($_POST['code'] ?? ''),
+                        'notes' => (string) ($_POST['notes'] ?? ''),
+                        'is_active' => !empty($_POST['is_active']) || $lineIdPost <= 0,
+                        'recipe_id' => $_POST['recipe_id'] ?? null,
+                    ], $lineIdPost > 0 ? $lineIdPost : null);
+                    Flash::set('success', 'Linie gespeichert.');
+                    header('Location: /app?page=rezeptur-fliesslinien&id=' . $savedId, true, 302);
+                    exit;
+                }
+                if (isset($_POST['production_line_stations_save'])) {
+                    if ($lineIdPost <= 0) {
+                        throw new InvalidArgumentException('Linie fehlt.');
+                    }
+                    $wcIds = $_POST['work_center_id'] ?? [];
+                    $labels = $_POST['station_label'] ?? [];
+                    if (!is_array($wcIds)) {
+                        $wcIds = [];
+                    }
+                    if (!is_array($labels)) {
+                        $labels = [];
+                    }
+                    $stationPayload = [];
+                    foreach ($wcIds as $i => $wcRaw) {
+                        $wc = (int) $wcRaw;
+                        if ($wc <= 0) {
+                            continue;
+                        }
+                        $stationPayload[] = [
+                            'work_center_id' => $wc,
+                            'label' => (string) ($labels[$i] ?? ''),
+                        ];
+                    }
+                    ProductionLineStore::saveStations($lineIdPost, $stationPayload);
+                    Flash::set('success', 'Stationen gespeichert.');
+                    header('Location: /app?page=rezeptur-fliesslinien&id=' . $lineIdPost, true, 302);
+                    exit;
+                }
+                if (isset($_POST['production_line_buffers_save'])) {
+                    if ($lineIdPost <= 0) {
+                        throw new InvalidArgumentException('Linie fehlt.');
+                    }
+                    $orders = $_POST['after_station_order'] ?? [];
+                    $caps = $_POST['capacity_qty'] ?? [];
+                    $mins = $_POST['min_qty'] ?? [];
+                    $curs = $_POST['current_qty'] ?? [];
+                    $units = $_POST['unit'] ?? [];
+                    if (!is_array($orders)) {
+                        $orders = [];
+                    }
+                    $bufPayload = [];
+                    foreach ($orders as $i => $ordRaw) {
+                        $bufPayload[] = [
+                            'after_station_order' => (int) $ordRaw,
+                            'capacity_qty' => (string) ($caps[$i] ?? '0'),
+                            'min_qty' => (string) ($mins[$i] ?? '0'),
+                            'current_qty' => (string) ($curs[$i] ?? '0'),
+                            'unit' => (string) ($units[$i] ?? 'Stk'),
+                        ];
+                    }
+                    ProductionLineStore::saveBuffers($lineIdPost, $bufPayload);
+                    Flash::set('success', 'Puffer gespeichert.');
+                    header('Location: /app?page=rezeptur-fliesslinien&id=' . $lineIdPost, true, 302);
+                    exit;
+                }
+            } catch (Throwable $e) {
+                Flash::set('error', $e->getMessage());
+                header('Location: /app?page=rezeptur-fliesslinien' . ($lineIdPost > 0 ? '&id=' . $lineIdPost : ''), true, 302);
+                exit;
+            }
+        }
+
         // POST: Work Center speichern/löschen (R2)
         if (
             $page === 'rezeptur-maschine-form'
@@ -7024,12 +7117,44 @@ $legalProductsConfig = LegalProductSettings::config();
                 || $page === 'rezeptur-form'
                 || $page === 'rezeptur-maschinen'
                 || $page === 'rezeptur-maschine-form'
+                || $page === 'rezeptur-fliesslinien'
             )
             && MenuRegistry::canAccess($user, $page)
         ) {
             RecipeRepository::ensureReady();
             WorkCenterRepository::ensureReady();
-            if ($page === 'rezeptur-form') {
+            if ($page === 'rezeptur-fliesslinien') {
+                ProductionLineStore::ensureReady();
+                $productionLineList = ProductionLineStore::listLines(false);
+                $productionLineDetail = null;
+                $productionLineBuffers = [];
+                $productionLineStatus = null;
+                $lineViewId = max(0, (int) ($_GET['id'] ?? 0));
+                if ($lineViewId > 0) {
+                    $productionLineDetail = ProductionLineStore::getLineWithStations($lineViewId);
+                    if ($productionLineDetail === null) {
+                        Flash::set('error', 'Linie nicht gefunden.');
+                        header('Location: /app?page=rezeptur-fliesslinien', true, 302);
+                        exit;
+                    }
+                    $productionLineBuffers = ProductionLineStore::listBuffers($lineViewId);
+                    $statusOpts = [];
+                    $downMerged = ProductionLineStationDownGate::mergeIntoEvaluateOptions(
+                        $productionLineDetail['stations'] ?? [],
+                        $statusOpts
+                    );
+                    $productionLineStatus = ProductionLineStatusService::evaluate(
+                        $lineViewId,
+                        $downMerged['options'] ?? []
+                    );
+                }
+                $workCenterOptions = WorkCenterRepository::listAll(true);
+                $canEdit = RoleResolver::canEdit($user);
+                $dbConnected = Database::isConfigured();
+                $contentTemplate = 'modules/rezeptur-fliesslinien';
+                $title = 'Fließlinien';
+                $currentPage = 'rezeptur';
+            } elseif ($page === 'rezeptur-form') {
                 if (empty($formError)) {
                     $recipeId = (int) ($_GET['id'] ?? 0);
                     $action = (string) ($_GET['action'] ?? ($recipeId > 0 ? 'edit' : 'new'));
@@ -7386,6 +7511,7 @@ $legalProductsConfig = LegalProductSettings::config();
             || $page === 'rezeptur-form'
             || $page === 'rezeptur-maschinen'
             || $page === 'rezeptur-maschine-form'
+            || $page === 'rezeptur-fliesslinien'
         ) {
             header('Location: /app', true, 302);
             exit;

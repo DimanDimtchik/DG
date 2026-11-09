@@ -187,3 +187,5 @@ M0b ist fertig, wenn:
 2. Kalender-/Zeitplanung fuer Produktions- und Wartungsfenster
 
 M0a/M0b decken zuerst **Kapazitaet/Leistung und Wartung** ab. Der Kalender folgt als eigener kleiner Block, sobald die Stammdaten stehen.
+
+**Folge-Thema (eigenes Mini-ID-Paket):** verkettete Maschinen mit Zwischenpuffern (Blocking/Starving, Rohware-Stopp, Engpass) — **nicht** Teil von M0–M5 → [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md).

@@ -20,7 +20,7 @@ Stand: **2026-11-08** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** IQ-Nutzer · Phase B erst nach GEX45-Lieferung [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md). UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link).
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md).
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 
@@ -55,6 +55,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0–PA5 ✅ · **PA4a–i ✅** · **PA6a ✅** · **Hetzner-AVV ✅** · PA6b deferred · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [x] **ERP-Rest E0–E2 (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) ✅ 2026-11-08 · E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
+- [x] **Fließlinie / Puffer-Kette** (FL0–FL9, 2026-11-08) — Offline-Status Blocking/Starving/Rohware/Engpass, UI + Dev-Smoke; kein MES/PLC · [`FLIESSLINIE-REST-PLAN.md`](FLIESSLINIE-REST-PLAN.md) · Regeln [`FLIESSLINIE-REGELN.md`](FLIESSLINIE-REGELN.md) · optional [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md)
 - [~] **Telefon/CTI (Fritzbox):** Code ✅ · Statusnotiz ✅ PA6a → [`CTI-FRITZBOX-STATUS.md`](CTI-FRITZBOX-STATUS.md) · **Aktivierung Org/LAN** (CTI in CRM noch aus)
 - [x] Master auf Server deployen + Instanzen syncen (2026-09-03)
 - [x] Lizenzserver repariert; kontur/Master `/login` OK
@@ -186,6 +187,7 @@ Basis: [`TESTLISTE-2026-08-21.md`](TESTLISTE-2026-08-21.md) Abschnitt K
 | Zeiterfassung Ph.3–6 (nach Z2) | `ZEITERFASSUNG-PLAN.md` *(Code Z2–Z7 erledigt — Zeile historisch)* |
 | Baulohn-Modul (Produkt) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe C — **nach** Normal-Lohn (A), ideal nach B |
 | ERP-Erweiterung V2 | `ERP-REST-PLAN.md` (E0–E2 ✅; E3–E5 Gates) · Fach: `ERP-ERWEITERUNG-LASTENHEFT-V2.md` |
+| Fließlinie / Puffer | `FLIESSLINIE-REST-PLAN.md` (FL0–FL9; auf M0–M5, kein MES/PLC) |
 | Lohn SV-Direktversand (ITSG) | `IQ-STROM-HETZNER-TODO.md` § D0 Stufe B — nach Stufe A |
 
 ---
@@ -212,6 +214,8 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `DEPLOY-PIPELINE-PREP.md` | PA3e: Deploy rsync/SSH Prep ohne Cutover |
 | `BACKUP-RESTORE-TEST.md` | PA3b: Backup/Restore-Nachweis (Dev) |
 | `HETZNER-AVV-TOM-CHECKLISTE.md` | PA3d: Hetzner AVV/TOM Checkliste (Signatur Org) |
+| `FLIESSLINIE-REST-PLAN.md` | Maschinen-Linie + Puffer: Blocking/Starving/Rohware (kein MES) |
+| `FLIESSLINIE-REGELN.md` | FL3a Zustandsregeln Blocking/Starving/Linienstopp |
 | `PC-HANDOFF.md` | PC-Deploy, Import |
 | `BUCHHALTUNG-PC-HANDOFF.md` | Buchhaltung Deploy |
 | `CLOUD-AGENT-ACCESS.md` | Secrets, rsync-Deploy |
