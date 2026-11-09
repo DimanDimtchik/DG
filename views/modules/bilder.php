@@ -19,15 +19,12 @@ if (isset($mediaList['items']) && is_array($mediaList['items'])) {
 $items = $list['items'];
 $perPageKey = (string) ($list['per_page_key'] ?? MediaRepository::DEFAULT_PER_PAGE);
 $baseUrl = '/app?page=bilder';
-$sizeChips = [
+$sizeOptions = [
     '10' => '10',
     '50' => '50',
     '100' => '100',
     'all' => 'Alle',
 ];
-$sizeUrl = static function (string $key) use ($baseUrl): string {
-    return $baseUrl . '&per_page=' . rawurlencode($key);
-};
 $pageQuery = $baseUrl . '&per_page=' . rawurlencode($perPageKey);
 ?>
 <div class="dg-wrap dg-media-library">
@@ -49,17 +46,17 @@ $pageQuery = $baseUrl . '&per_page=' . rawurlencode($perPageKey);
       <p>Noch keine Dateien. Klicken Sie auf <strong>Hochladen</strong>, um das erste Bild anzulegen.</p>
     </div>
   <?php else : ?>
-    <nav class="dg-subtabs" aria-label="Einträge pro Seite">
-      <span class="dg-subtabs__group-label">Anzeigen</span>
-      <?php foreach ($sizeChips as $sizeKey => $sizeLabel) : ?>
-        <?php $isActive = $perPageKey === $sizeKey; ?>
-        <a
-          href="<?= View::escape($sizeUrl($sizeKey)) ?>"
-          class="dg-subtabs__link<?= $isActive ? ' is-active' : '' ?>"
-          <?= $isActive ? 'aria-current="true"' : '' ?>
-        ><?= View::escape($sizeLabel) ?></a>
-      <?php endforeach; ?>
-    </nav>
+    <form class="dg-form dg-btn-row" method="get" action="/app" aria-label="Einträge pro Seite">
+      <input type="hidden" name="page" value="bilder">
+      <label class="dg-field">
+        <span>Anzeigen</span>
+        <select name="per_page" onchange="this.form.submit()">
+          <?php foreach ($sizeOptions as $sizeKey => $sizeLabel) : ?>
+            <option value="<?= View::escape($sizeKey) ?>"<?= $perPageKey === $sizeKey ? ' selected' : '' ?>><?= View::escape($sizeLabel) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+    </form>
 
     <div class="dg-table-wrap">
       <table class="dg-table dg-table--compact dg-media-table">
