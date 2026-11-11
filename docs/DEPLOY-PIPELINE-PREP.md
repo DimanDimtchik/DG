@@ -47,11 +47,11 @@ Ziel: sobald der Server steht (Phase B Hardware), kann Code **probeweise** per r
 ### 2.1 Checkliste Prep
 
 - [x] Hetzner-Server **GEX45** bestellt (2026-11) — erreichbar nach Lieferung (Phase B / [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md))
-- [ ] OS **Ubuntu 26** · `Europe/Berlin` · User `deploy` (SSH-Key, kein Passwort-Login)
-- [ ] Verzeichnis laut Shared-Core-Skizze angelegt, z. B. `/var/www/dg-crm/shared/` ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1)
-- [ ] SSH vom PC **und** Cloud-Agent zum Hetzner-`deploy`-User getestet (`ssh -i … deploy@…`)
-- [ ] Firewall: 22 (Admin-IP), 80/443 vorbereitet — **DNS noch nicht umstellen**
-- [ ] rsync-Dry-Run skizziert (Befehl unten) — einmal gegen leeres `shared/`
+- [x] OS **Ubuntu 26** · `Europe/Berlin` · User `deploy` (SSH-Key, kein Passwort-Login)
+- [x] Verzeichnis laut Shared-Core-Skizze angelegt, z. B. `/var/www/dg-crm/shared/` ([`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1)
+- [x] SSH vom PC **und** Cloud-Agent zum Hetzner-`deploy`-User getestet (`ssh -i … deploy@…`)
+- [x] Firewall: 22/80/443 — **DNS noch nicht umstellen**
+- [x] Probe 2026-11-11: `tar`→`deploy@2.29.242.28:/var/www/dg-crm/shared/` (~3697 Dateien; lokal kein rsync)
 - [ ] DocumentRoot/nginx **noch nicht** produktiv auf Kunden-Domains zeigen (optional: interne Staging-URL / Hosts-Eintrag)
 - [ ] Locals/Secrets **nicht** aus All-Inkl ungefragt kopieren; auf Hetzner eigene `*.local.php`-Vorlagen bereithalten
 - [ ] AVV/TOMs organisatorisch (PA3d) — parallel, nicht Blocker für Dry-Run
