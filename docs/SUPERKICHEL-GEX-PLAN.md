@@ -72,7 +72,7 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | **SKC0a** | Produkt-Skizze Widget vs. Super-Kichel | [x] 2026-11-11 · [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | 🟢 |
 | **SKA0-12v** | Inventar-Fazit **vorläufig** (ohne SSH) | [x] 2026-11-11 · [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | 🟢 |
 | SKA0 | Bestandsaufnahme GEX45 (SKA0-1 … SKA0-12) | [ ] | 🔴🟢 |
-| SKB0 | Entscheidung: was wird wirklich installiert | [ ] | 🟢 |
+| **SKB0** | Entscheidung: was wird wirklich installiert | [x] 2026-11-11 · [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md) | 🟢 |
 | SKB1 | Härten / binden (Ollama localhost, UFW) — nur nach Freigabe | [ ] | 🔴 |
 | SKB2 | Fehlende Komponenten installieren — **einzeln** je Kind-ID | [ ] | 🔴 |
 | SKC0 | CRM-Anbindung Dev `ganz-om.de` (`kichel.local.php`, Smoke) | [ ] | 🔴🟡 |
@@ -104,17 +104,16 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 
 ---
 
-## 5. Zielbild-Komponenten (nur nach SKB0-Freigabe)
+## 5. Zielbild-Komponenten — **SKB0 ✅**
 
-| Komponente | Nutzen für Super-Kichel / Ops | Default nach Inventar |
-|------------|-------------------------------|------------------------|
-| **Ollama** | Formulierung Kichel | **Nutzen/härten**, nicht neu erfinden |
-| **Docker** | saubere Isolation SearXNG/OpenHands/… | nur wenn SKA0-7 fehlt und SKB0 es fordert |
-| **SearXNG** | optionale Web-Recherche für Assistent | nur bei Bedarf; nie öffentlich ohne Auth |
-| **Playwright** | Akademie/UI-Smoke, keine Fachlogik | oft Dev/CI; auf GEX nur wenn begründet |
-| **OpenHands** | Coding-Agent auf dem Server | **bewusst optional** — oft Konflikt mit Cloud-Agent-Workflow |
-| **Forgejo** | eigener Git auf dem Server | **bewusst optional** — GitHub bleibt Produkt-Repo |
-| **ComfyUI** | Bild/Video-Nebenlinie | laut Disk-Layout; **nicht** Blocker für Kichel |
+Kanonsich: [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md).
+
+| Komponente | SKB0-Entscheidung |
+|------------|-------------------|
+| **Ollama** | **Nutzen/härten** (SKB1), nicht neu installieren |
+| **Docker / SearXNG / Playwright / Comfy** | **Jetzt nein** |
+| **OpenHands / Forgejo** | **Nein** (bewusst) |
+| **GPU-Treiber** | nur prüfen (SKA0-8), Install nur mit Freigabe |
 
 PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.**
 
@@ -122,12 +121,14 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.**
 
 ## 6. Empfohlene Reihenfolge
 
-1. **SKA0-1** … **SKA0-12** (eine ID pro Freigabe)  
-2. **SKB0** Entscheidungstabelle abhaken  
-3. **SKB1** Härten (mind. Ollama → localhost + UFW), bevor CRM darauf zeigt  
-4. **SKB2-*** nur freigegebene Installs  
-5. **SKC0** Dev `ganz-om.de`: `config/kichel.local.php` → GEX-Ollama (SSH-Tunnel oder localhost-Proxy laut Freigabe) + Smoke  
-6. **SKD0** Docs (`KICHEL-PHASE2`, TODOS, Disk-Layout)
+1. **SKB0 ✅** · parallel/nach SSH: **SKA0-1…12** (Bestätigung)  
+2. **SKB1** Härten (Ollama → localhost + UFW) — eigene Freigabe  
+3. **SKC0** Dev `ganz-om.de` → Ollama  
+4. **SKB2-*** nur wenn SKB0-Tabelle später auf „ja“ geändert wird  
+5. **SKD0** Docs-Nachzug  
+
+**Nächster Server-Schritt (Freigabe):**  
+`Nur Mini-ID SKB1 laut docs/SUPERKICHEL-GEX-PLAN.md.`
 
 **Nicht** parallel zu einer offenen `PB*`-Serverarbeit dieselben Dienste umbauen, ohne das in der Freigabe zu sagen.
 
@@ -155,6 +156,7 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 | [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | PHP vs. Ollama |
 | [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | **SKC0a** Abgrenzung Widget vs. Seite |
 | [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | **SKA0-12v** Inventar ohne SSH |
+| [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md) | **SKB0** Install ja/nein |
 | [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) | NVMe, `OLLAMA_MODELS` |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | CRM-Umzug PB* |
 | [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) | All-Inkl §1 · **Hetzner GEX §1b** |
@@ -170,3 +172,4 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 | 2026-11-11 | **SK0b** ✅ — Hetzner-Cursor-Secrets in `CLOUD-AGENT-ACCESS.md` §1b |
 | 2026-11-11 | **SKC0a** ✅ — Produkt-Skizze `SUPERKICHEL-PRODUKT-SKIZZE.md` |
 | 2026-11-11 | **SKA0-12v** ✅ — vorläufiges Inventar `SUPERKICHEL-INVENTAR-VORLAEUFIG.md` |
+| 2026-11-11 | **SKB0** ✅ — Entscheidung `SUPERKICHEL-SKB0-ENTSCHEIDUNG.md` |

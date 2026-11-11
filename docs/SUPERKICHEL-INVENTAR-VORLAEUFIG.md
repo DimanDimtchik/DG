@@ -55,16 +55,9 @@ Stand Probe: **2026-11-11** (erneuert abends)
 
 ---
 
-## 4. Vorschlag für spätere SKB0 (noch keine Freigabe)
+## 4. SKB0 — entschieden
 
-| Priorität | Maßnahme | Warum |
-|-----------|----------|--------|
-| 1 | **SKB1** Ollama auf localhost + UFW | öffentlich erreichbar |
-| 2 | Ollama für Super-Kichel **nutzen** (nicht neu installieren) | schon da + passende Modelle |
-| 3 | Docker nur wenn SearXNG/OpenHands wirklich gewollt | SKA0-7 zuerst |
-| 4 | OpenHands / Forgejo | **bewusst später / oft entbehrlich** (Cloud-Agent + GitHub) |
-| 5 | SearXNG / Playwright | nur nach klarem Super-Kichel-Bedarf |
-| 6 | CRM↔Ollama Dev | **SKC0** nach Härten; Seite laut [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) |
+Siehe [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md) (**SKB0 ✅** 2026-11-11): Ollama härten/nutzen · Docker/SearXNG/Playwright/Comfy/OpenHands/Forgejo jetzt **nein**.
 
 ---
 
