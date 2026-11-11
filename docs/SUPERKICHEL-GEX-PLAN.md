@@ -68,6 +68,7 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | SK0 | Dieser Plan + Regeln | [x] 2026-11-11 | 🟢 |
+| **SK0b** | Hetzner-Cursor-Secrets in [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) §1b | [x] 2026-11-11 | 🟢 |
 | SKA0 | Bestandsaufnahme GEX45 (SKA0-1 … SKA0-12) | [ ] | 🔴🟢 |
 | SKB0 | Entscheidung: was wird wirklich installiert | [ ] | 🟢 |
 | SKB1 | Härten / binden (Ollama localhost, UFW) — nur nach Freigabe | [ ] | 🔴 |
@@ -138,6 +139,8 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.**
 
 ## 7. Secrets / Zugang (Ops)
 
+Kanonsich: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) **§1b** (SK0b).
+
 | Secret / Zugang | Rolle |
 |-----------------|--------|
 | `Hetzner_user` | `deploy` |
@@ -145,7 +148,7 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.**
 | `Hetzner_Private_Key` | **muss** OpenSSH-**Private**-Key sein (nicht Public) |
 | Robot | Rescue / vKVM bei Schlüsselverlust |
 
-Public-Key-Comment Referenz: `hetzner-gex45-cursor-agent`.
+Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/jX329gWUORfjlsR1yX0srjhnU5i5z4R2Sh8`.
 
 ---
 
@@ -156,7 +159,7 @@ Public-Key-Comment Referenz: `hetzner-gex45-cursor-agent`.
 | [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | PHP vs. Ollama |
 | [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) | NVMe, `OLLAMA_MODELS` |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | CRM-Umzug PB* |
-| [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) | All-Inkl SSH; Hetzner-Secrets separat |
+| [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) | All-Inkl §1 · **Hetzner GEX §1b** |
 | [`TODOS.md`](TODOS.md) | Einstiegsliste |
 
 ---
@@ -166,3 +169,4 @@ Public-Key-Comment Referenz: `hetzner-gex45-cursor-agent`.
 | Datum | Inhalt |
 |-------|--------|
 | 2026-11-11 | Erstfassung: Workflow + SKA0-1…12 + Zielbild Super-Kichel / `ganz-om.de` / GEX |
+| 2026-11-11 | **SK0b** ✅ — Hetzner-Cursor-Secrets in `CLOUD-AGENT-ACCESS.md` §1b |

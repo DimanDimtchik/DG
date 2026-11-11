@@ -1,10 +1,10 @@
 # Cloud-Agent / Cursor Browser — Zugänge (DG CRM)
 
-Stand: 2026-08-30
+Stand: 2026-11-11
 
-> **Konsolidierter Stand:** [`docs/HANDOFF.md`](HANDOFF.md) · Agent-Rolle: [`AGENTS.md`](../AGENTS.md)
+> **Konsolidierter Stand:** [`docs/HANDOFF.md`](HANDOFF.md) · Agent-Rolle: [`AGENTS.md`](../AGENTS.md) · Super-Kichel/GEX: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md)
 
-> **Kein Passwort-SSH.** All-Inkl akzeptiert den Key `id_ed25519_ganzom`. Ein „veraltetes Passwort“ ist normal — der Browser-Agent braucht den **Private Key** als Cursor-Secret.
+> **Kein Passwort-SSH.** All-Inkl akzeptiert den Key `id_ed25519_ganzom`. Ein „veraltetes Passwort“ ist normal — der Browser-Agent braucht den **Private Key** als Cursor-Secret. Hetzner GEX45: ebenfalls nur Key (`deploy`), siehe **§1b**.
 
 ---
 
@@ -102,6 +102,59 @@ Fingerprint Private Key (Kontrolle): `SHA256:RoWIYpvE7HH1cQbVS7YUmSouM4pGvYv33i3
 Für **CRM-Deploy** (Kern/Dev) `DG_ALLINKL_*`. Für **IQ-Strom** (CRM `office.iqstrom.com`, Telefonbuch, ma…) `IQ_ALLINKL_*` — nicht verwechseln.  
 IQ-CRM-Sync vom Kern: `bash bin/sync-crm-to-iqstrom.sh` (nach beiden SSH-Setups).
 
+---
+
+## 1b. Hetzner GEX45 — Cursor SSH (SK0b)
+
+Zielserver **GEX45-1** (Phase B / Super-Kichel). SSH-User **`deploy`**, Passwort-Login aus (PB1c). Secrets getrennt von `DG_ALLINKL_*` / `IQ_ALLINKL_*`.
+
+### Runtime Secrets (Cursor Dashboard)
+
+| Name | Wert | Hinweis |
+|------|------|---------|
+| `Hetzner_user` | `deploy` | SSH-Login auf dem GEX |
+| `Hetrzner_Host` | Primäre IPv4 des GEX | **Tippfehler im Secret-Namen** (`Hetrzner` statt `Hetzner`) — so belassen, bis umbenannt und alle Agents angepasst |
+| `Hetzner_Private_Key` | Inhalt der **Private**-Key-Datei (inkl. `BEGIN OPENSSH PRIVATE KEY` … `END`) | **Nicht** die `.pub`-Zeile |
+
+Optional später: Secret in `Hetzner_Host` umbenennen und Agent-Skripte nachziehen — nicht Teil von SK0b.
+
+### Welcher Key?
+
+Am Server autorisiert (Comment): **`hetzner-gex45-cursor-agent`**.
+
+Public-Key-Fingerprint zur Kontrolle (zugehörige **`.pub`**, nicht den Private Key posten):
+
+`SHA256:v1atqLF/jX329gWUORfjlsR1yX0srjhnU5i5z4R2Sh8` · ED25519 · Comment `hetzner-gex45-cursor-agent`
+
+**Passenden Private Key auf dem PC finden** (PowerShell):
+
+```powershell
+Get-ChildItem $env:USERPROFILE\.ssh\*.pub | ForEach-Object { ssh-keygen -l -f $_.FullName }
+```
+
+Treffer mit obigem Fingerprint/Comment → Datei **ohne** `.pub` ist der Private Key. Inhalt als Secret `Hetzner_Private_Key` setzen (kompletter PEM-Block). Danach **neuen** Cloud-Agent starten (alte Runs behalten alte Secret-Werte).
+
+### Häufiger Fehler (2026-11-11)
+
+| Symptom | Ursache | Lösung |
+|---------|---------|--------|
+| `Permission denied (publickey)` trotz gesetztem `Hetzner_Private_Key` | Im Secret liegt die **Public**-Key-Zeile (`ssh-ed25519 …`) | Secret durch echten **Private** Key ersetzen |
+| Key startet mit `ssh-ed25519` | Das ist immer Public | Private beginnt mit `-----BEGIN OPENSSH PRIVATE KEY-----` |
+| SSH vom PC ok, Cloud nicht | Anderer Key / Secret noch Public | Fingerprint der `.pub` mit Tabelle oben abgleichen |
+
+### Ohne Private Key (Notfall)
+
+[robot.hetzner.com](https://robot.hetzner.com) → Server GEX45-1 → **Rescue** (neues Root-Passwort nur im Rescue) oder **vKVM**. Details: Hetzner Docs Rescue / vKVM. Danach `authorized_keys` für `deploy` prüfen bzw. Secret korrigieren. **Kein** Passwort/Passphrase in Chats posten.
+
+### Smoke nach Fix
+
+```bash
+# erwartet: SSH_OK / whoami=deploy (Host aus Secret, Key aus Secret)
+ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519_hetzner_gex \
+  "${Hetzner_user}@${Hetrzner_Host}" 'echo SSH_OK; whoami; hostname'
+```
+
+(Key-Datei lokal aus dem Secret materialisieren — Inhalt nie committen.) Plan-Kontext: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) Gate SSH.
 
 ---
 
