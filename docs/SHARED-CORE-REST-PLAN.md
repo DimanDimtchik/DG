@@ -396,9 +396,9 @@ instances/<fqdn>/public/index.php     ← Vorlage: deploy/shared-core/public-ind
 
 ## Empfohlene Reihenfolge
 
-1. **Jetzt (ohne Server):** SC0–SC2 ✅ · **SC6a** ✅ (Backup-Matrix) · SC4a/SC5a Docs parallel  
+1. **Jetzt (ohne Server):** SC0–SC2 ✅ · **SC6a+b ✅** · SC4a/SC5a Docs parallel  
 2. **Nach PB2 (Stack):** **SC3** Pilot Dev  
-3. **SC4** Deploy-Pipeline Shared · **SC6b** Verweise CRON/Disk-Layout  
+3. **SC4** Deploy-Pipeline Shared (Skript SC4b)  
 4. Cutover weiterer Domains: **SC5** (einzeln)  
 5. **SC7** Alt-Sync / Aufräumen  
 
