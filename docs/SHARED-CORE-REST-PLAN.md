@@ -56,7 +56,7 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 | SC2 | Bootstrap `DG_INSTANCE_ROOT` (Repo) | [x] SC2a–c ✅ 2026-11-09 | 🟡 |
 | SC3 | Pilot-Instanz Dev auf GEX45 | [ ] | 🔴🟡 |
 | SC4 | Deploy-Pipeline → nur `shared/` | [ ] | 🟡🔴 |
-| SC5 | Weitere Instanzen umhängen | [ ] | 🔴 |
+| SC5 | Weitere Instanzen umhängen | [~] SC5a ✅ 2026-11-11 · SC5b–c offen | 🔴🟢 |
 | SC6 | Backup-Doku an Shared-Core | [ ] | 🟢 |
 | SC7 | Full-Tree-Sync abschalten / Nachzug | [ ] | 🟢🟡 |
 
@@ -114,11 +114,43 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC5a | Checkliste „neue Instanz“: Ordner, Locals, DB-User, Storage-Symlink, vHost, TLS | 🟢 | [ ] |
+| SC5a | Checkliste „neue Instanz“: Ordner, Locals, DB-User, Storage-Symlink, vHost, TLS | 🟢 | [x] 2026-11-11 · § unten |
 | SC5b | `dg.ganz-om.de` / `ganz-soft.de` / `kontur` umhängen (einzeln, mit Freigabe) | 🔴 | [ ] |
 | SC5c | `office.iqstrom.com` gleiches Muster (eigener Account-Pfad egal, gleiches Layout) | 🔴 | [ ] |
 
 **Regel:** eine Instanz pro Chat/Freigabe — kein Massen-Umbau.
+
+#### SC5a — Checkliste neue Instanz (GEX Shared Core, nur Docs)
+
+Platzhalter: `<fqdn>` = Domain der Instanz (z. B. `ganz-om.de`). **Kein** Code in Shared kopieren — Shared einmal deployen (SC4). Live-Ausführen = SC5b/c mit Freigabe.
+
+| # | Schritt | Soll | Nicht |
+|---|---------|------|--------|
+| 1 | **Ordner Instanz** | `/var/www/dg-crm/instances/<fqdn>/` mit `public/`, `config/`, `logs/` · Owner typisch `deploy:www-data` | PHP-App/`src`/`vendor` in die Hülle legen |
+| 2 | **Public-Stub** | `public/index.php` aus `deploy/shared-core/public-index.php.example` · setzt `DG_INSTANCE_ROOT` → Shared-Bootstrap | Full-Tree `index.php` aus All-Inkl spiegeln |
+| 3 | **Locals** | Mind. `config/database.local.php` · `config/app.local.php` · weitere `*.local.php` nach Bedarf · Rechte eng (nicht weltlesbar) | Locals in `/var/www/dg-crm/shared/config/` · Secrets in Git |
+| 4 | **DB** | **Eigene** MariaDB-Datenbank + User **nur** für diese Instanz · Zugangsdaten nur in `database.local.php` | Eine DB für mehrere FQDNs · fremde Instanz-DB |
+| 5 | **Schema** | Migrationen/`runPending` gegen **diese** DB (Shared-`bin/`, mit `DG_INSTANCE_ROOT`) | Schema von anderer Instanz „mitbenutzen“ |
+| 6 | **Storage-Ordner** | `/mnt/data/crm-storage/<fqdn>/` anlegen (NVMe B) | Storage unter Shared oder unter `instances/…/storage` als echte Kopie |
+| 7 | **Storage-Symlink** | `instances/<fqdn>/storage` → `/mnt/data/crm-storage/<fqdn>` | Relativer Pfad ohne Mount · Shared-`storage/` |
+| 8 | **nginx vHost** | Ein `server` pro FQDN · `root …/instances/<fqdn>/public` · PHP-FPM (SC1b-Beispiel) | `root …/shared` · ein vHost für alle Instanzen |
+| 9 | **TLS** | certbot/Let’s Encrypt für `<fqdn>` (nach DNS oder Staging-Host) | Zertifikat einer anderen Domain wiederverwenden ohne SAN |
+| 10 | **DNS / Cutover** | Erst nach Freigabe (PB4 / SC5b) · bis dahin All-Inkl oder Hosts-Datei | DNS umstellen „zum Testen“ ohne Rollback-Plan |
+| 11 | **Smoke** | HTTPS `/login` · Session · eine geschützte App-Seite | Nur Default-nginx-Seite als „fertig“ werten |
+| 12 | **Wartung / Kontakt** | Öffentliche Website: Wartungsmodus laut Produktregel · Kontakt aus CRM (keine Hardcodes) | Firmendaten anderer Instanz kopieren |
+
+**Kurzbefehle (Skizze — nicht SC5a-Abnahme):**
+
+```bash
+FQDN=ganz-om.de   # Beispiel
+sudo mkdir -p /var/www/dg-crm/instances/$FQDN/{public,config,logs}
+sudo mkdir -p /mnt/data/crm-storage/$FQDN
+sudo ln -sfn /mnt/data/crm-storage/$FQDN /var/www/dg-crm/instances/$FQDN/storage
+# public/index.php aus deploy/shared-core/public-index.php.example
+# config/*.local.php anlegen · DB+User · nginx+certbot · Smoke /login
+```
+
+**Abnahme SC5a:** Checkliste #1–12 im Plan · Verweis Stub/Zielbaum · **ohne** Live-Ordner und **ohne** DNS.
 
 ### SC6 — Backup
 
@@ -306,7 +338,7 @@ Abgleich mit `bin/sync-crm-from-master.sh` (All-Inkl Full-Tree). Unter Shared Co
 
 **Deploy nach `shared/` (SC4):** nur Kern-Dateien; Excludes mindestens: `config/*.local.php`, `storage/`, `logs/`, `tmp-upload/`, `.git/`, `instances/`, Nutzerordner.
 
-**Neue Instanz (SC5a):** anlegen = `public/` + `config/*.local.php` + `logs/` + Storage-Symlink + DB — **kein** Code-Sync.
+**Neue Instanz:** Checkliste **SC5a** (oben) — `public/` + Locals + `logs/` + Storage-Symlink + eigene DB — **kein** Code-Sync in die Hülle.
 
 **All-Inkl:** `sync-crm-from-master.sh` Excludes bleiben gültig, bis GEX45 Shared Core alle Instanzen trägt (SC7).
 
@@ -370,14 +402,15 @@ instances/<fqdn>/public/index.php     ← Vorlage: deploy/shared-core/public-ind
 
 ## Empfohlene Reihenfolge
 
-1. **Jetzt (ohne Server):** SC0–SC2 ✅ (Spec, Stub, Guard)  
-2. **Nach PB2 (Stack):** **SC3** Pilot Dev  
-3. **SC4** Deploy-Pipeline Shared  
-4. Cutover weiterer Domains: **SC5** (einzeln) · parallel **SC6** Backup-Docs  
+1. **Jetzt (ohne Server):** SC0–SC2 ✅ · **SC5a** ✅ (Instanz-Checkliste) · SC4a/SC6a Docs parallel  
+2. **Nach PB2 (Stack):** **SC3** Pilot Dev (SC3b Storage-Symlink …)  
+3. **SC4** Deploy-Pipeline Shared (Skript SC4b)  
+4. Cutover weiterer Domains: **SC5b/c** (einzeln) · parallel **SC6** Backup-Docs  
 5. **SC7** Alt-Sync / Aufräumen  
 
-**Nächster Chat (nach PB2 / Server da):**  
-`Nur Mini-ID SC3a laut docs/SHARED-CORE-REST-PLAN.md. Nur Ordner anlegen. Kein DNS-Cutover.`
+**Nächster Chat (Doc):**  
+`Nur Mini-ID SC6a laut docs/SHARED-CORE-REST-PLAN.md. Nur Docs.`  
+**Server:** `Nur Mini-ID SC3b …` / `SC5b …` (Freigabe je Host).
 
 ---
 
