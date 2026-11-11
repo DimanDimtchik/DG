@@ -92,7 +92,7 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC3a | Ordner `shared/` + `instances/ganz-om.de/` auf GEX45 anlegen (Rechte `deploy`) | 🔴 | [ ] |
+| SC3a | Ordner `shared/` + `instances/ganz-om.de/` auf GEX45 anlegen (Rechte `deploy`) | 🔴 | [x] 2026-11-11 shared schon PB2b · Hülle public/config/logs + index-Stub |
 | SC3b | Storage-Symlink → `/mnt/data/crm-storage/ganz-om.de` | 🔴 | [ ] |
 | SC3c | nginx Dev-vHost auf Instanz-`public/` · Smoke `/login` | 🔴 | [ ] |
 | SC3d | Statusnotiz Pilot OK in IQ-STROM / diesem Plan | 🟢 | [ ] |
