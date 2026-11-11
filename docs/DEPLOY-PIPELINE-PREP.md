@@ -1,6 +1,7 @@
 # Deploy-Pipeline Prep (PA3e) — rsync/SSH, ohne Cutover
 
-> Stand: **2026-11-08** · Mini-ID **PA3e** · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A3  
+> Stand: **2026-11-11** · Mini-ID **PA3e** · Nachzug **SC4a** (Shared-Ziel GEX)  
+> Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) A3 · Shared: [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md)  
 > **Nur Dokumentation / Checkliste.** Kein DNS-Cutover, kein DB-Umzug, kein Produktiv-Traffic auf Hetzner.
 
 Verwandt: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) · [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1 Shared-Core · [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · [`PC-HANDOFF.md`](PC-HANDOFF.md)
@@ -56,23 +57,32 @@ Ziel: sobald der Server steht (Phase B Hardware), kann Code **probeweise** per r
 - [ ] Locals/Secrets **nicht** aus All-Inkl ungefragt kopieren; auf Hetzner eigene `*.local.php`-Vorlagen bereithalten
 - [ ] AVV/TOMs organisatorisch (PA3d) — parallel, nicht Blocker für Dry-Run
 
-### 2.2 Geplanter Deploy-Befehl (Skizze — noch nicht Cutover)
+### 2.2 Deploy-Ziel GEX Shared (**SC4a** ✅)
 
-Lokal/Agent nach SSH-Setup zum Hetzner-Host:
+| | All-Inkl | GEX45 |
+|--|----------|--------|
+| **Pfad** | Code-Kern Full-Tree | **`/var/www/dg-crm/shared/`** |
+| **User** | `DG_ALLINKL_SSH_USER` | `deploy` (`Hetzner_user`) |
+| **Skript heute** | `deploy-via-rsync.sh` / `deploy.bat` | noch Skizze — **SC4b** |
+| **Nach Deploy** | `sync-crm-from-master.sh` | Instanz-Hüllen unverändert (Locals/Storage eigenen Pfad) |
+
+Kanonsiche Tabelle + Excludes + PC/Cloud-Beispiele: [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) § SC4a.  
+Secrets Hetzner: `Hetzner_user` / `Hetrzner_Host` / `Hetzner_Private_Key` — siehe [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) (nicht den All-Inkl-Key für GEX annehmen).
 
 ```bash
-# Beispiel — Host/Pfad erst nach Server-Anlage setzen; DNS unverändert
+# Skizze Cloud — Dry-Run; Live-Skript = SC4b
 rsync -az --delete --dry-run \
   --exclude 'config/*.local.php' \
   --exclude 'storage/' \
   --exclude 'logs/' \
   --exclude '.git/' \
-  -e "ssh -i ~/.ssh/id_ed25519_ganzom -o BatchMode=yes" \
-  ./ deploy@HETZNER_HOST:/var/www/dg-crm/shared/
+  --exclude 'klarwin/' \
+  -e "ssh -i ~/.ssh/id_ed25519_hetzner_gex -o BatchMode=yes -o IdentitiesOnly=yes" \
+  ./ "${Hetzner_user}@${Hetrzner_Host}:/var/www/dg-crm/shared/"
 ```
 
-Nach erfolgreichem Dry-Run: gleicher Befehl ohne `--dry-run` nur auf **Staging-/shared**-Pfad.  
-Instanz-Hüllen (`instances/…/config`, `storage`) leer anlegen — **keine** Produktiv-DB importieren in PA3e.
+Nach erfolgreichem Dry-Run: gleicher Befehl ohne `--dry-run` nur auf **`…/shared/`**.  
+Instanz-Hüllen (`instances/…/config`, `storage`) **nicht** mit Shared-rsync — **keine** Produktiv-DB in PA3e/SC4a.
 
 ### 2.3 Was absichtlich **nicht** in PA3e liegt
 

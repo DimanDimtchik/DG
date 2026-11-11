@@ -55,7 +55,7 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 | SC1 | Ordner + nginx Spec (Docs) | [x] SC1a–c ✅ 2026-11-09 | 🟢 |
 | SC2 | Bootstrap `DG_INSTANCE_ROOT` (Repo) | [x] SC2a–c ✅ 2026-11-09 | 🟡 |
 | SC3 | Pilot-Instanz Dev auf GEX45 | [ ] | 🔴🟡 |
-| SC4 | Deploy-Pipeline → nur `shared/` | [ ] | 🟡🔴 |
+| SC4 | Deploy-Pipeline → nur `shared/` | [~] SC4a ✅ 2026-11-11 · SC4b–c offen | 🟡🔴 |
 | SC5 | Weitere Instanzen umhängen | [ ] | 🔴 |
 | SC6 | Backup-Doku an Shared-Core | [ ] | 🟢 |
 | SC7 | Full-Tree-Sync abschalten / Nachzug | [ ] | 🟢🟡 |
@@ -106,9 +106,63 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC4a | Deploy-Ziel dokumentieren: rsync/scp → `/var/www/dg-crm/shared` (PC + Cloud) | 🟢 | [ ] |
+| SC4a | Deploy-Ziel dokumentieren: rsync/scp → `/var/www/dg-crm/shared` (PC + Cloud) | 🟢 | [x] 2026-11-11 · § unten |
 | SC4b | Skript oder `deploy.ps1`-Pfad anpassen / Parallel-Skript `deploy-shared-core` (ohne All-Inkl brechen) | 🟡 | [ ] |
 | SC4c | Kurztest: Datei in Shared sichtbar für Pilot-Instanz | 🔴 | [ ] |
+
+#### SC4a — Deploy-Ziel Shared (verbindlich, nur Docs)
+
+Zwei Pipelines parallel bis Cutover — **All-Inkl Full-Tree bleibt**, GEX bekommt nur den Shared-Baum.
+
+| Pipeline | Zielpfad | Wer | Heute |
+|----------|----------|-----|--------|
+| **All-Inkl (Kern)** | Account-Pfad Code-Kern (`dg.ganz-soft.de` / historisch `dg.ganz-om.de`) | `deploy.bat` / `deploy.ps1` · `bin/deploy-via-rsync.sh` · `bin/deploy-via-sftp.sh` | **Produktiv-Deploy** · danach `sync-crm-from-master.sh` |
+| **GEX45 Shared Core** | **`/var/www/dg-crm/shared/`** | User **`deploy`** · Cursor-Secrets `Hetzner_user` / `Hetrzner_Host` / `Hetzner_Private_Key` ([`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)) | Probe/Staging · **kein** DNS-Cutover |
+
+**Regel:** Auf GEX landet Code **nur** in `shared/`. nginx-`root` bleibt `…/instances/<fqdn>/public` (SC1b). Instanz-Locals, `storage/`, `logs/` **nie** per Shared-Deploy überschreiben.
+
+**Excludes (Shared-Deploy, Mindestliste):**
+
+```text
+config/*.local.php
+storage/
+logs/
+.git/
+tmp-upload/   # falls lokal vorhanden
+klarwin/      # Nutzerinhalt — nie in Shared
+```
+
+**Cloud-Agent (Skizze — Dry-Run zuerst; Live-Skript = SC4b):**
+
+```bash
+# Voraussetzung: Hetzner SSH OK (deploy@Hetrzner_Host)
+# Repo-Root = Arbeitsverzeichnis; minify wie All-Inkl vorher optional
+
+rsync -az --delete --dry-run \
+  --exclude 'config/*.local.php' \
+  --exclude 'storage/' \
+  --exclude 'logs/' \
+  --exclude '.git/' \
+  --exclude 'klarwin/' \
+  -e "ssh -i ~/.ssh/id_ed25519_hetzner_gex -o BatchMode=yes -o IdentitiesOnly=yes" \
+  ./ "${Hetzner_user}@${Hetrzner_Host}:/var/www/dg-crm/shared/"
+```
+
+Ohne `--dry-run` erst nach Freigabe / erfolgreichem Dry-Run. Alternativ wie PB2b: `tar` der relevanten Bäume und `scp` nach `…/shared/` (wenn `rsync` lokal fehlt).
+
+**PC (Skizze — Dry-Run zuerst; `deploy.ps1` anpassen = SC4b):**
+
+```powershell
+# Beispiel — Host aus SSH-Config Host hetzner-gex45; Pfad fest Shared
+rsync -az --delete --dry-run `
+  --exclude 'config/*.local.php' --exclude 'storage/' --exclude 'logs/' --exclude '.git/' `
+  -e "ssh -F $env:USERPROFILE\.ssh\config" `
+  ./ hetzner-gex45:/var/www/dg-crm/shared/
+```
+
+**Abnahme SC4a:** Tabelle All-Inkl vs. GEX-Zielpfad · Excludes · PC+Cloud-Beispiel · Verweis Secrets — **ohne** Skript-Umbau (SC4b) und **ohne** Live-rsync-Pflicht.
+
+**Ist-Probe (Dokumentation, nicht SC4c):** 2026-11-11 `tar`→`deploy@…:/var/www/dg-crm/shared/` (~3697 Dateien) — [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) §2.1.
 
 ### SC5 — Weitere Instanzen
 
@@ -370,14 +424,15 @@ instances/<fqdn>/public/index.php     ← Vorlage: deploy/shared-core/public-ind
 
 ## Empfohlene Reihenfolge
 
-1. **Jetzt (ohne Server):** SC0–SC2 ✅ (Spec, Stub, Guard)  
-2. **Nach PB2 (Stack):** **SC3** Pilot Dev  
-3. **SC4** Deploy-Pipeline Shared  
+1. **Jetzt (ohne Server):** SC0–SC2 ✅ · **SC4a** ✅ (Deploy-Ziel Docs)  
+2. **Nach PB2 (Stack):** **SC3** Pilot Dev (SC3a Ordner ✅ · SC3b–d offen)  
+3. **SC4b–c** Skript + Sichttest Shared  
 4. Cutover weiterer Domains: **SC5** (einzeln) · parallel **SC6** Backup-Docs  
 5. **SC7** Alt-Sync / Aufräumen  
 
-**Nächster Chat (nach PB2 / Server da):**  
-`Nur Mini-ID SC3a laut docs/SHARED-CORE-REST-PLAN.md. Nur Ordner anlegen. Kein DNS-Cutover.`
+**Nächster Chat (Doc):**  
+`Nur Mini-ID SC6a laut docs/SHARED-CORE-REST-PLAN.md. Nur Docs.`  
+**Oder Server (SSH):** `Nur Mini-ID SC3b …` / `SC4b …`
 
 ---
 
@@ -388,7 +443,7 @@ instances/<fqdn>/public/index.php     ← Vorlage: deploy/shared-core/public-ind
 | [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md) §1.1 | Erste Shared-Core-Skizze |
 | [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) | NVMe A Code · NVMe B Storage |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | Server-Lieferung / Cutover |
-| [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | heutiges Deploy (Full-Tree) |
+| [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | All-Inkl Full-Tree + Hetzner-Probe · **SC4a** Ziel Shared |
 | [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) | Roadmap A→C |
 | [`deploy/shared-core/`](../deploy/shared-core/) | Stub `public-index.php.example` (SC2b) |
 | [`bin/shared-core-layout-selftest.php`](../bin/shared-core-layout-selftest.php) | Guard Vorlagen + optional Live-Pfade (SC2c) |
