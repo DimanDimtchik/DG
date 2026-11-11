@@ -39,7 +39,7 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 | PB0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PB1 | Server da / Basis-OS | [x] 2026-11-11 | 🟢 |
 | PB2 | Stack + Deploy-Probe | [ ] | 🔴🟢 |
-| PB3 | Cutover-Vorbereitung | [ ] | 🟢🔴 |
+| PB3 | Cutover-Vorbereitung | [x] PB3a–c ✅ 2026-11-11 | 🟢 |
 | PB4 | Cutover + 48 h | [ ] | 🔴 |
 | PB5 | Nachzug Docs/Haken | [ ] | 🟢 |
 
@@ -78,9 +78,54 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PB3a | Cutover-Checkliste: Domains, TTL, Dump-Reihenfolge, Rollback | 🟢 | [ ] |
-| PB3b | Backup/off-site Ziel auf GEX45 skizzieren (kein HDD wie SX65) | 🟢 | [ ] |
-| PB3c | SMTP/Mail-Plan nach Cutover (kurz) | 🟢 | [ ] |
+| PB3a | Cutover-Checkliste: Domains, TTL, Dump-Reihenfolge, Rollback | 🟢 | [x] 2026-11-11 · § unten |
+| PB3b | Backup/off-site Ziel auf GEX45 skizzieren (kein HDD wie SX65) | 🟢 | [x] 2026-11-11 · § unten |
+| PB3c | SMTP/Mail-Plan nach Cutover (kurz) | 🟢 | [x] 2026-11-11 · § unten |
+
+#### PB3a — Cutover-Checkliste (nur Docs, kein Cutover)
+
+**Voraussetzungen:** PB2 Stack grün (vHost/TLS/`/login`) · Shared-Core Pilot ideal (SC3) · Freigabe für **PB4** ausdrücklich.
+
+| # | Thema | Soll vor PB4 |
+|---|--------|----------------|
+| 1 | **Domain-Liste** | Pro Cutover-Welle festlegen welche FQDNs umziehen (CRM: z. B. `ganz-om.de` zuerst Dev; dann `dg.ganz-soft.de` Kern nur Code bzw. Shared; Firmen/Kunden einzeln). Quelle: [`SERVER-DOMAIN-DATENBANK.md`](SERVER-DOMAIN-DATENBANK.md). Shop/Nextcloud/Kasse **nicht** stillschweigend mitziehen. |
+| 2 | **TTL** | DNS-TTL der betroffenen Records **mind. 24–48 h vorher** auf niedrig (z. B. 300–600 s) setzen · nach stabilem Cutover wieder anheben |
+| 3 | **Dump-Reihenfolge** | Pro Instanz: (a) App kurz wartungs-/schreibarm halten · (b) **DB-Dump** · (c) `storage/` / `crm-storage/<fqdn>` rsync · (d) Locals `*.local.php` · (e) Smoke auf GEX mit **Hosts-Datei oder Staging-Name** vor öffentlichem DNS |
+| 4 | **Shared vs. Instanz** | Code nur nach `/var/www/dg-crm/shared/` · Daten nur Instanz/DB/Storage ([`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md)) |
+| 5 | **Rollback** | All-Inkl DNS/Origin **nicht** löschen bis 48 h grün · bei Fehler: DNS zurück auf All-Inkl · GEX-Instanz read-only lassen · letzter Dump+Storage vom Cutover-Fenster aufbewahren |
+| 6 | **Monitoring 48 h** | `/login`, eine Beleg-/Kontaktseite, Mail-Abruf wenn IMAP, Cron/Autostart, Platte `df`, Fehlerlogs nginx/PHP |
+| 7 | **IQ separat** | `office.iqstrom.com` (Account `w01f1176`) eigene Welle / eigene Freigabe — nicht im gleichen Schritt wie `w0217246` erzwingen |
+
+**Abnahme PB3a:** Checkliste im Plan · **kein** DNS- und **kein** Dump-Lauf.
+
+#### PB3b — Backup / off-site auf GEX45 (Skizze)
+
+Kein SX65-HDD für den ersten Cutover. Zielbild:
+
+| Schicht | Lokal GEX | Off-site |
+|---------|-----------|----------|
+| DB | Dump/`mariadb-backup` → `/mnt/data/backup-staging` | **restic** (oder gleichwertig) → **Hetzner Storage Box** / Backup-Space |
+| `crm-storage/<fqdn>` | NVMe B | restic/rsync inkrementell dieselbe Box |
+| Locals | mit Instanz-Backup | in Off-site-Snapshot enthalten |
+| Shared-Code | Git + Deploy | optional selten; nicht Tagespflicht |
+| Zertifikate ELSTER | getrennt verschlüsselt | nie ungeschützt in Git |
+
+Details Matrix: [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) SC6 / [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md).  
+**Vor PB4:** mind. eine Restore-Probe (DB + eine `storage/`) dokumentieren ([`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) / PA3b-Muster).
+
+**Abnahme PB3b:** Off-site = Box/restic skizziert · SX65 explizit **nicht** nötig für Cutover · **kein** Box-Vertragspflicht-Nachweis in dieser ID.
+
+#### PB3c — SMTP / Mail nach Cutover (kurz)
+
+| Thema | Plan |
+|-------|------|
+| **SMTP-Versand** | Weiter **Hoster-SMTP der jeweiligen Mailbox** (kein eigenes Relay auf GEX als Muss) — CRM `MailService` / Postfächer wie bisher ([`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md)) |
+| **IMAP** | Unverändert gegen Mail-Provider; nach DNS prüfen Auth/Firewall GEX → Provider |
+| **DNS Mail** | MX/SPF/DKIM der **Maildomain** nur ändern wenn Mail wirklich mitzieht — CRM-A-Record-Cutover ≠ MX-Cutover |
+| **Locals** | `mail.local.php` / Postfach-Secrets **pro Instanz** neu prüfen · nicht von fremder Instanz kopieren |
+| **Smoke nach Cutover** | Eine Testmail senden + IMAP-Sync einer Shared/Privat-Box |
+
+**Abnahme PB3c:** Kurzplan im Doc · **kein** Server-SMTP installieren.
 
 ### PB4 — Cutover (nur mit ausdrücklicher Freigabe)
 
@@ -100,15 +145,16 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 ## Empfohlene Reihenfolge
 
-1. Warten auf Lieferung **GEX45-1** (B20261107-3544202, HEL1)  
-2. **PB1a–d** → **PB2a–d** → **PB3a–c**  
+1. Lieferung **GEX45-1** · **PB1 ✅** · **PB2** Stack zu Ende (PB2c2–c4)  
+2. **PB3a–c ✅** (Cutover-Prep Docs)  
 3. Freigabe → **PB4** · danach **PB5** · dann Phase C (ERiC)  
-4. Parallel/nach PB2: Shared Core [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) (SC3 Pilot Dev)
+4. Parallel: Shared Core [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) (SC3b+)
 
 **Hinweis Ops:** Hetzner-Support für Finnland HEL1 nur **Englisch**.
 
-**Nächster Chat (erst nach Lieferung):**  
-`Nur Mini-ID PB1a laut docs/PHASE-B-REST-PLAN.md. Primäre IPv4 in SERVER-MIGRATION.md. Kein Cutover.`
+**Nächster Chat (Server):**  
+`Nur Mini-ID PB2c2 laut docs/PHASE-B-REST-PLAN.md.`  
+**Cutover erst mit:** `Nur Mini-ID PB4a … Freigabe erteilt.`
 
 ---
 
