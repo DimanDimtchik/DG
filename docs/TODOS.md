@@ -18,8 +18,9 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
+| Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) | Inventar SKA0-1…12 · Zielbild Ollama/Docker/… · Dev `ganz-om.de` — **kein** Install ohne Freigabe |
 
-**Nächster Block:** IQ-Nutzer · Shared-Core Docs **SC1** (ohne Server) · Phase B erst nach GEX45-Lieferung [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md). UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
+**Nächster Block:** IQ-Nutzer · Shared-Core Docs **SC1** (ohne Server) · Phase B [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) **PB2c2**. Parallel (Freigabe): Super-Kichel **SKA0-1** laut [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md). UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
@@ -207,6 +208,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
 | `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45-1 / Ubuntu 26.04 LTS / HEL1 |
+| `SUPERKICHEL-GEX-PLAN.md` | Super-Kichel: SKA0-Inventar GEX45 · Zielbild KI-Stack · Dev `ganz-om.de` |
 | `SHARED-CORE-REST-PLAN.md` | Shared Core SC0–SC7 · `/var/www/dg-crm/shared` (nach PB2) |
 | `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45-1 · B20261107-3544202 (bestellt) |
 | `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES8, kein QES) |
