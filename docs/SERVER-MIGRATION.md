@@ -160,3 +160,4 @@ Nach Umzug: `config/elster.local.php` anlegen, Tab **Einstellungen → ELSTER** 
 - [x] User `deploy`, kein Passwort-SSH (PermitRootLogin prohibit-password)
 - [x] MariaDB + PHP-FPM + nginx installiert (PB2a Teil 2026-11-11) · Let’s Encrypt / vHost noch offen
 - [ ] Mini-IDs ab PB2b in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten
+- [ ] **Ollama Absicherung:** nach Testphase Port 11434 nicht öffentlich lassen (aktuell Cursor-Override über `2.29.242.28:11434`; Ziel: localhost + Tunnel/Proxy)

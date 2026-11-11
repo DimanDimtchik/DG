@@ -4,7 +4,11 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** **PB2c2** nginx-vHost HTTP · dann PB2c3 DB/`/login`. **PB2c1 ✅** (`instances/ganz-om.de`). AVV ✅.
+**Nächste Session:** **PB2c4** TLS (Domain) · SC2 Locals nur Instanz · Login-User prüfen. **PB2c1–c3 ✅**. AVV ✅.
+
+**Ops-Merkposten (GEX45 Ollama):** Cursor Override → `http://2.29.242.28:11434/v1` · Modelle `qwen2.5-coder:14b` / `llama3.1:8b` · **nach stabilem Alltag:** Port **11434** absichern (nicht dauerhaft `ufw allow Anywhere`; Ollama wieder `127.0.0.1` + Tunnel/Proxy/Token). VL-Modell nur bei Screenshot/Agent-Bildern.
+
+**Weg A (Desktop-Agent):** Mini-IDs **KA0–KA6** → [`KI-AGENT-WEG-A-PLAN.md`](KI-AGENT-WEG-A-PLAN.md). Ohne A bleiben Qwen/Llama als Chat nutzbar; Web-Agent erst ab KA1/KA2.
 
 ---
 
