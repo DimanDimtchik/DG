@@ -69,7 +69,7 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PB2a | nginx + PHP 8.2+ FPM + MariaDB 10.11+ + certbot (Test-Domain oder IP) | 🔴 | [ ] |
+| PB2a | nginx + PHP 8.2+ FPM + MariaDB 10.11+ + certbot (Test-Domain oder IP) | 🔴 | [~] 2026-11-11 Pakete+Ordner+sudo ✅ (PHP 8.5.4 · nginx · MariaDB · certbot Paket) · vHost/TLS/Probe offen |
 | PB2b | Deploy-Pipeline Probe laut [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) (ohne Produktiv-DNS) | 🔴 | [ ] |
 | PB2c | Leere/Test-Instanz erreichbar HTTPS · Smoke `/login` | 🔴 | [ ] |
 | PB2d | Doc-Haken PB2 in IQ-STROM | 🟢 | [ ] |

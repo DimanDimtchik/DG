@@ -158,5 +158,5 @@ Nach Umzug: `config/elster.local.php` anlegen, Tab **Einstellungen → ELSTER** 
 - [x] Firewall UFW 22/80/443 · SSH-Key User `deploy` · Passwort-Login aus (PB1c)
 - [x] OS: **Ubuntu 26.04 LTS** · `Europe/Berlin` · Updates · Reboot ok (PB1b)
 - [x] User `deploy`, kein Passwort-SSH (PermitRootLogin prohibit-password)
-- [ ] MariaDB + PHP-FPM + nginx + Let’s Encrypt
-- [ ] Mini-IDs ab PB2 in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten
+- [x] MariaDB + PHP-FPM + nginx installiert (PB2a Teil 2026-11-11) · Let’s Encrypt / vHost noch offen
+- [ ] Mini-IDs ab PB2b in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten

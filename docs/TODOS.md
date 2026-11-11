@@ -4,7 +4,7 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Phase B **PB2** (nginx/PHP/MariaDB/certbot) · IQ Nutzer-Aktivierung · Shared-Core Spec **SC1**. **Hetzner PB1 ✅** (IPs in [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)). AVV ✅. Unterschrift ES0–ES8 ✅.
+**Nächste Session:** Phase B **PB2b** (rsync-Probe) · vHost/TLS · IQ Nutzer · SC1. **PB1 ✅** · **PB2a Pakete ✅** (vHost/TLS offen). AVV ✅.
 
 ---
 

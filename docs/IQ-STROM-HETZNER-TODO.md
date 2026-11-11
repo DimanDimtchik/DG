@@ -142,7 +142,7 @@ Tokenarm: [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) · Hardware: [`SERVER-M
 - [x] **Basis grün (PB1)** 2026-11-11 — IPv4 `2.29.242.28` · IPv6 `2a01:4f9:3120:23ae::2` · Ubuntu 26.04 · Berlin · UFW 22/80/443 · SSH-Key User `deploy` · Passwort-SSH aus · Reboot ok (ohne Secrets in Git)
 - [x] Server freigeschaltet / Primäre IPv4 notiert (Standort HEL1 per Bestellung bestätigt) — PB1a
 - [x] OS **Ubuntu 26.04 LTS** · `Europe/Berlin` · Firewall · User `deploy` — PB1b/c
-- [ ] nginx + PHP 8.2+ FPM + MariaDB 10.11+ + Let’s Encrypt — PB2a
+- [~] nginx + PHP 8.5 FPM + MariaDB + certbot-Paket ✅ 2026-11-11 · vHost/Let’s Encrypt/Probe noch offen — PB2a
 - [ ] CRM probeweise deployen (ohne Produktiv-DNS) — PB2b/c
 - [ ] DB-Dump Kasserver → Import · `storage/` migrieren — PB4a (Freigabe)
 - [ ] Cronjobs (`cron.php`, Mitarbeiter-Purge)
