@@ -56,3 +56,5 @@ Zahlungserinnerung = **Stufe 1** in den Mahnstufen (Einstellungen → Zahlungsbe
 ## Hinweis Tages-Backup
 
 Das Tages-Backup ist bewusst ein **Instanzdaten-Backup** für das Shared-Core-Zielbild: Datenbank-Dump, `storage/` ohne `storage/backups/` und `storage/cache/`, sowie alle `config/*.local.php`. Allgemeiner CRM-Code (`src/`, `views/`, `assets/` usw.) wird nicht pro Kundeninstanz gesichert, sondern kommt aus Git/Deploy.
+
+**GEX / Shared Core:** Häufigkeiten und Schichten (Shared selten · Locals/DB/`crm-storage/<fqdn>` oft · Restore-Reihenfolge) → Backup-Matrix **SC6a** in [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) § SC6. Platten/off-site-Skizze: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) · Nachweis: [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md).

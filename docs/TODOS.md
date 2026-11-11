@@ -19,7 +19,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 
-**Nächster Block:** IQ-Nutzer · Shared-Core **SC6a ✅** (Backup-Matrix) · weiter SC6b/SC4a · Phase B [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) **PB2c2**. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
+**Nächster Block:** IQ-Nutzer · Shared-Core **SC6a+b ✅** · weiter SC7a/SC4a · Phase B [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) **PB2c2**. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 

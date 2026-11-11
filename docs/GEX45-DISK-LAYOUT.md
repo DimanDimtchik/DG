@@ -139,8 +139,13 @@ Große Checkpoint-Sammlungen: primär **Backup/Box**, bei Bedarf syncen.
 | Was | Wo | Backup |
 |-----|-----|--------|
 | DB-Daten | `/var/lib/mysql` (NVMe A) | täglich `mariadb-backup` oder `mysqldump` → `/mnt/data/backup-staging` → **restic zur Box** |
-| `storage/` | `/mnt/data/crm-storage` | restic/rsync (inkrementell) |
+| `storage/` | `/mnt/data/crm-storage/<fqdn>/` | restic/rsync (inkrementell) · **pro Instanz** |
+| Locals | `…/instances/<fqdn>/config/*.local.php` | mit Instanz-Tagesbackup (CRM `BackupService`) |
+| Shared-Code | `/var/www/dg-crm/shared/` | **selten** — Quelle Git/Deploy, nicht Tagesdump |
 | ELSTER-Zertifikate | `storage/...` oder `config/` | **getrennt**, verschlüsselt, nicht in Git |
+
+**Matrix (verbindlich):** [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) § SC6 / **SC6a** — Shared selten · Locals + DB + `crm-storage/<fqdn>` oft · Restore-Priorität.  
+App-Autostart-Backup: [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md) · Restore-Notiz: [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md).
 
 Vor DNS-Cutover: **Restore-Probe** (DB + eine Instanz `storage/`) dokumentieren — [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md).
 
