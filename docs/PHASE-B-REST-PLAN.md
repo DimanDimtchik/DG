@@ -3,7 +3,7 @@
 > **Eine Chat-Session = eine Mini-ID.**  
 > Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) §B · Hardware: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** · **PB1 ✅**
+Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · IPv4 **`[REDACTED]`** · IPv6 **`2a01:4f9:3120:23ae::2`** · **PB1 ✅** · **PB3a–c ✅**
 
 ---
 
@@ -58,7 +58,7 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PB1a | Robot: freigeschaltete **Primäre IPv4** (+ ggf. IPv6) notieren · Standort HEL1 bereits per Bestellung bestätigt · Notiz in `SERVER-MIGRATION.md` (ohne Secrets) | 🔴 | [x] 2026-11-11 · `2.29.242.28` / `2a01:4f9:3120:23ae::2` |
+| PB1a | Robot: freigeschaltete **Primäre IPv4** (+ ggf. IPv6) notieren · Standort HEL1 bereits per Bestellung bestätigt · Notiz in `SERVER-MIGRATION.md` (ohne Secrets) | 🔴 | [x] 2026-11-11 · `[REDACTED]` / `2a01:4f9:3120:23ae::2` |
 | PB1b | Ubuntu **26.04 LTS** installiert · `timedatectl` Berlin · Updates | 🔴 | [x] 2026-11-11 |
 | PB1c | Firewall 22/80/443 · SSH-Key User `deploy` · Passwort-Login aus | 🔴 | [x] 2026-11-11 |
 | PB1d | Statusnotiz „Basis grün“ in IQ-STROM §B | 🟢 | [x] 2026-11-11 |
