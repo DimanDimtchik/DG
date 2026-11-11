@@ -70,6 +70,7 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | SK0 | Dieser Plan + Regeln | [x] 2026-11-11 | 🟢 |
 | **SK0b** | Hetzner-Cursor-Secrets in [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) §1b | [x] 2026-11-11 | 🟢 |
 | **SKC0a** | Produkt-Skizze Widget vs. Super-Kichel | [x] 2026-11-11 · [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | 🟢 |
+| **SKA0-12v** | Inventar-Fazit **vorläufig** (ohne SSH) | [x] 2026-11-11 · [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | 🟢 |
 | SKA0 | Bestandsaufnahme GEX45 (SKA0-1 … SKA0-12) | [ ] | 🔴🟢 |
 | SKB0 | Entscheidung: was wird wirklich installiert | [ ] | 🟢 |
 | SKB1 | Härten / binden (Ollama localhost, UFW) — nur nach Freigabe | [ ] | 🔴 |
@@ -96,16 +97,10 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | **SKA0-9** | **Ollama**: Binary/Service, Version, Bind-Adresse, Modelle | Ist (bekannt: läuft öffentlich — verifizieren) | 🔴🟢 | [ ] |
 | **SKA0-10** | Zielbild-Kandidaten: OpenHands, SearXNG, Forgejo, Playwright, Comfy — installiert/laufend? | je Komponente: fehlt / da / nur Zielbild | 🔴 | [ ] |
 | **SKA0-11** | Pfade `/var/www/dg-crm`, `/mnt/data` (shared, instances, ollama) | Baum-Kurznotiz | 🔴 | [ ] |
-| **SKA0-12** | **Inventar-Fazit**: Tabelle „vorhanden / fehlt / unsicher / bewusst später“ + Vorschlag SKB0 | Freigabe-Vorlage für Install | 🟢 | [ ] |
+| **SKA0-12** | **Inventar-Fazit** live (nach SKA0-1…11): vorhanden / fehlt / unsicher / später + SKB0 | ersetzt bzw. bestätigt 12v | 🟢 | [ ] |
+| **SKA0-12v** | Gleiches Fazit **nur** Außenprobe+Docs | [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | 🟢 | [x] 2026-11-11 |
 
-**Vorläufige Außenprobe (2026-11-11, ohne SSH — nicht Abnahme):**
-
-| Komponente | Probe |
-|------------|--------|
-| nginx :80 | Default-Seite Ubuntu |
-| Ollama :11434 | `0.40.16`, Modelle `qwen2.5-coder:32b`, `qwen2.5-coder:14b`, `llama3.1:8b` — **öffentlich erreichbar** |
-| OpenHands / SearXNG / Forgejo / Docker-API | typische Ports zu |
-| Playwright | nicht als Netzdienst prüfbar |
+**Kurz Außenprobe** (Detail → 12v-Doc; **nicht** SKA0-12-Abnahme): nginx `1.28.3` · Ollama `0.40.16` + 3 Modelle **öffentlich** `:11434` · Docker-API/OpenHands/SearXNG/Forgejo-typische Ports zu.
 
 ---
 
@@ -159,6 +154,7 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 |-------|--------|
 | [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | PHP vs. Ollama |
 | [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | **SKC0a** Abgrenzung Widget vs. Seite |
+| [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | **SKA0-12v** Inventar ohne SSH |
 | [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) | NVMe, `OLLAMA_MODELS` |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | CRM-Umzug PB* |
 | [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) | All-Inkl §1 · **Hetzner GEX §1b** |
@@ -173,3 +169,4 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 | 2026-11-11 | Erstfassung: Workflow + SKA0-1…12 + Zielbild Super-Kichel / `ganz-om.de` / GEX |
 | 2026-11-11 | **SK0b** ✅ — Hetzner-Cursor-Secrets in `CLOUD-AGENT-ACCESS.md` §1b |
 | 2026-11-11 | **SKC0a** ✅ — Produkt-Skizze `SUPERKICHEL-PRODUKT-SKIZZE.md` |
+| 2026-11-11 | **SKA0-12v** ✅ — vorläufiges Inventar `SUPERKICHEL-INVENTAR-VORLAEUFIG.md` |
