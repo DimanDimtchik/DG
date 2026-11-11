@@ -209,6 +209,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
 | `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45-1 / Ubuntu 26.04 LTS / HEL1 |
 | `SUPERKICHEL-GEX-PLAN.md` | Super-Kichel: SKA0-Inventar GEX45 · Zielbild KI-Stack · Dev `ganz-om.de` |
+| `SUPERKICHEL-PRODUKT-SKIZZE.md` | **SKC0a** Widget-Kichel vs. Super-Kichel-Seite (Scope) |
 | `SHARED-CORE-REST-PLAN.md` | Shared Core SC0–SC7 · `/var/www/dg-crm/shared` (nach PB2) |
 | `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45-1 · B20261107-3544202 (bestellt) |
 | `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES8, kein QES) |

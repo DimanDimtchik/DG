@@ -15,7 +15,7 @@ Stand: **2026-11-11** · Server: **GEX45-1** · HEL1 · Ubuntu 26.04 LTS (PB1 �
 |---------|-----|--------|
 | **Kichel (CRM)** | Instanz-DB + PHP (`src/Kichel/…`) | Regeln, Beträge, Navigation, Protokoll — **GoBD-/Fachlogik bleibt PHP** |
 | **Ollama** | GEX45, ideal nur `127.0.0.1:11434` | Nur Formulierung (`KichelOllamaClient::phrase`) |
-| **Dev-Oberfläche** | **`ganz-om.de`** (später ggf. Route/Feature „Super-Kichel“) | Testen & Freigabe vor anderen Instanzen |
+| **Dev-Oberfläche** | **`ganz-om.de`**, eingeloggt · Seite `/app?page=superkihel` | Skizze: [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) (SKC0a) |
 | **Ops-Hilfen (Zielbild)** | nur nach Freigabe, oft Docker | z. B. SearXNG (Recherche), Playwright (UI-Checks/Akademie), OpenHands/Forgejo nur wenn wirklich nötig |
 
 **Kein Tenant im Produktcode:** keine Kundenfirma als Default; Firmendaten nur aus Instanz-Settings/DB. Hosts nur in Ops-Docs.
@@ -69,6 +69,7 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 |----|--------|--------|-------|
 | SK0 | Dieser Plan + Regeln | [x] 2026-11-11 | 🟢 |
 | **SK0b** | Hetzner-Cursor-Secrets in [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) §1b | [x] 2026-11-11 | 🟢 |
+| **SKC0a** | Produkt-Skizze Widget vs. Super-Kichel | [x] 2026-11-11 · [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | 🟢 |
 | SKA0 | Bestandsaufnahme GEX45 (SKA0-1 … SKA0-12) | [ ] | 🔴🟢 |
 | SKB0 | Entscheidung: was wird wirklich installiert | [ ] | 🟢 |
 | SKB1 | Härten / binden (Ollama localhost, UFW) — nur nach Freigabe | [ ] | 🔴 |
@@ -157,6 +158,7 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 | Datei | Rolle |
 |-------|--------|
 | [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | PHP vs. Ollama |
+| [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | **SKC0a** Abgrenzung Widget vs. Seite |
 | [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) | NVMe, `OLLAMA_MODELS` |
 | [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) | CRM-Umzug PB* |
 | [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) | All-Inkl §1 · **Hetzner GEX §1b** |
@@ -170,3 +172,4 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 |-------|--------|
 | 2026-11-11 | Erstfassung: Workflow + SKA0-1…12 + Zielbild Super-Kichel / `ganz-om.de` / GEX |
 | 2026-11-11 | **SK0b** ✅ — Hetzner-Cursor-Secrets in `CLOUD-AGENT-ACCESS.md` §1b |
+| 2026-11-11 | **SKC0a** ✅ — Produkt-Skizze `SUPERKICHEL-PRODUKT-SKIZZE.md` |
