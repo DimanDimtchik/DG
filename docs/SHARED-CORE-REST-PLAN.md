@@ -57,7 +57,7 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 | SC3 | Pilot-Instanz Dev auf GEX45 | [ ] | 🔴🟡 |
 | SC4 | Deploy-Pipeline → nur `shared/` | [ ] | 🟡🔴 |
 | SC5 | Weitere Instanzen umhängen | [ ] | 🔴 |
-| SC6 | Backup-Doku an Shared-Core | [ ] | 🟢 |
+| SC6 | Backup-Doku an Shared-Core | [~] SC6a ✅ 2026-11-11 · SC6b offen | 🟢 |
 | SC7 | Full-Tree-Sync abschalten / Nachzug | [ ] | 🟢🟡 |
 
 ---
@@ -124,8 +124,33 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC6a | Backup-Matrix: Shared (selten) · Locals · DB/Instanz · `crm-storage/<host>` (oft) | 🟢 | [ ] |
+| SC6a | Backup-Matrix: Shared (selten) · Locals · DB/Instanz · `crm-storage/<host>` (oft) | 🟢 | [x] 2026-11-11 · § unten |
 | SC6b | Verweis in `CRON-AUTOSTART.md` / `GEX45-DISK-LAYOUT.md` nachziehen | 🟢 | [ ] |
+
+#### SC6a — Backup-Matrix (Shared Core / GEX, nur Docs)
+
+Ziel: **Instanzdaten** sichern, nicht den PHP-Kern pro Kunde. Passt zu [`CRON-AUTOSTART.md`](CRON-AUTOSTART.md) (Tages-Backup) und [`BACKUP-RESTORE-TEST.md`](BACKUP-RESTORE-TEST.md) (PA3b). Off-site-Ziel (restic/Box) skizziert in [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) — Querverweise nachziehen = **SC6b**.
+
+| Was | Pfad (GEX) | Häufigkeit | Wie / Hinweis |
+|-----|------------|------------|----------------|
+| **Shared (Code)** | `/var/www/dg-crm/shared/` | **selten** | Quelle der Wahrheit = **Git** + Deploy (SC4). Backup nur optional (Disaster: leerer Shared) — **kein** Tages-Dump des Kerns pro Instanz |
+| **Locals** | `…/instances/<fqdn>/config/*.local.php` (+ `users.php`/`license.php` falls dort) | **mit Instanz** (täglich) | Im CRM-`BackupService` / Tageslauf enthalten · Secrets · eng Rechte · **nicht** in Git |
+| **DB pro Instanz** | MariaDB-Datenbank der Instanz | **täglich** | `mysqldump` / `mariadb-backup` · Staging z. B. `/mnt/data/backup-staging` → off-site · **eine DB ≠ alle Mandanten** |
+| **crm-storage** | `/mnt/data/crm-storage/<fqdn>/` | **oft** (täglich / inkrementell) | Belege, Uploads, Medien · restic/rsync · Symlink von `instances/…/storage` · ohne `storage/backups/` und `storage/cache/` im App-Backup wo schon so spezifiziert |
+| **Instanz-logs** | `…/instances/<fqdn>/logs/` | nach Bedarf | kurzlebiger · Retention separat · nicht Ersatz für DB/Storage |
+| **ELSTER/Zertifikate** | unter Storage oder Locals | **getrennt** | verschlüsselt off-site · nie ungeschützt in Git ([`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md)) |
+| **Ollama/Comfy-Modelle** | `/mnt/data/ollama` · `/mnt/data/comfy` | **selten / bewusst** | groß · aus Git-Deploy der Modelle oder selektiv · **nicht** im CRM-Instanz-Tagesbackup |
+
+**Priorität Restore (kurz):**
+
+1. DB der betroffenen Instanz  
+2. `crm-storage/<fqdn>/`  
+3. Locals (`*.local.php`)  
+4. Shared nur wenn der Code-Baum fehlt (sonst Git/Deploy)  
+
+**All-Inkl bis Cutover:** weiter Full-Tree + bestehendes Instanzdaten-Backup; Matrix gilt **verbindlich für GEX Shared Core**. Kein Live-Cron in SC6a.
+
+**Abnahme SC6a:** Matrix-Tabelle + Restore-Priorität im Plan · ohne Job-Einrichtung (Cron-Verweise = SC6b).
 
 ### SC7 — Altwege abschalten
 
@@ -370,14 +395,15 @@ instances/<fqdn>/public/index.php     ← Vorlage: deploy/shared-core/public-ind
 
 ## Empfohlene Reihenfolge
 
-1. **Jetzt (ohne Server):** SC0–SC2 ✅ (Spec, Stub, Guard)  
+1. **Jetzt (ohne Server):** SC0–SC2 ✅ · **SC6a** ✅ (Backup-Matrix) · SC4a/SC5a Docs parallel  
 2. **Nach PB2 (Stack):** **SC3** Pilot Dev  
-3. **SC4** Deploy-Pipeline Shared  
-4. Cutover weiterer Domains: **SC5** (einzeln) · parallel **SC6** Backup-Docs  
+3. **SC4** Deploy-Pipeline Shared · **SC6b** Verweise CRON/Disk-Layout  
+4. Cutover weiterer Domains: **SC5** (einzeln)  
 5. **SC7** Alt-Sync / Aufräumen  
 
-**Nächster Chat (nach PB2 / Server da):**  
-`Nur Mini-ID SC3a laut docs/SHARED-CORE-REST-PLAN.md. Nur Ordner anlegen. Kein DNS-Cutover.`
+**Nächster Chat (Doc):**  
+`Nur Mini-ID SC6b laut docs/SHARED-CORE-REST-PLAN.md. Nur Docs.`  
+**Server:** `Nur Mini-ID SC3b …` (Freigabe).
 
 ---
 
