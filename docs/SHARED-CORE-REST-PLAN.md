@@ -58,7 +58,7 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 | SC4 | Deploy-Pipeline → nur `shared/` | [ ] | 🟡🔴 |
 | SC5 | Weitere Instanzen umhängen | [ ] | 🔴 |
 | SC6 | Backup-Doku an Shared-Core | [ ] | 🟢 |
-| SC7 | Full-Tree-Sync abschalten / Nachzug | [ ] | 🟢🟡 |
+| SC7 | Full-Tree-Sync abschalten / Nachzug | [~] SC7a ✅ 2026-11-11 · SC7b–c offen | 🟢🟡 |
 
 ---
 
@@ -131,9 +131,19 @@ Stand: **2026-11-09** · Entscheidung: Kern = `/var/www/dg-crm/shared` (**kein**
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| SC7a | `sync-crm-from-master.sh`: Status „GEX45 Shared Core = obsolet / All-Inkl only“ dokumentieren | 🟢 | [ ] |
+| SC7a | `sync-crm-from-master.sh`: Status „GEX45 Shared Core = obsolet / All-Inkl only“ dokumentieren | 🟢 | [x] 2026-11-11 |
 | SC7b | Nach allen Instanzen: Full-Tree-Kopien auf GEX45 entfernen (Freigabe) | 🔴 | [ ] |
 | SC7c | Parent-Haken SC0–SC7 + TODOS/IQ-STROM Nachzug | 🟢 | [ ] |
+
+#### SC7a — Sync-Skript nur All-Inkl
+
+| Ort | Status |
+|-----|--------|
+| [`bin/sync-crm-from-master.sh`](../bin/sync-crm-from-master.sh) Kopfkommentar | **All-Inkl only** · auf **GEX45 Shared Core obsolet** |
+| GEX Deploy | nur `…/shared/` (SC4) · Instanz-Hüllen per SC5-Checkliste, nicht per diesem Sync |
+| All-Inkl | weiter Kern → Instanzen mit diesem Skript bis Domains umgezogen sind |
+
+**Abnahme SC7a:** Kommentar im Skript + Kurznotiz hier · **kein** Löschen von GEX-Bäumen (SC7b) · **kein** Verhalten ändern.
 
 ---
 
@@ -308,7 +318,7 @@ Abgleich mit `bin/sync-crm-from-master.sh` (All-Inkl Full-Tree). Unter Shared Co
 
 **Neue Instanz (SC5a):** anlegen = `public/` + `config/*.local.php` + `logs/` + Storage-Symlink + DB — **kein** Code-Sync.
 
-**All-Inkl:** `sync-crm-from-master.sh` Excludes bleiben gültig, bis GEX45 Shared Core alle Instanzen trägt (SC7).
+**All-Inkl:** `sync-crm-from-master.sh` Excludes bleiben gültig, bis GEX45 Shared Core alle Instanzen trägt (**SC7b**). Skript-Status: **All-Inkl only / auf GEX obsolet** (**SC7a** ✅).
 
 ### Bootstrap-Konstanten (SC2a — Spec, noch kein Code)
 

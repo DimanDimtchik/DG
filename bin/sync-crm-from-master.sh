@@ -1,5 +1,12 @@
 #!/bin/bash
-# Sync CRM code FROM code-core (dg.ganz-soft.de) TO CRM instances.
+# Sync CRM code FROM code-core (dg.ganz-soft.de) TO CRM instances on All-Inkl.
+#
+# Scope (SC7a / Shared Core):
+#   - ALL-INKL ONLY — Full-Tree-Kopien unter /www/htdocs/w0217246/…
+#   - GEX45 Shared Core: dieses Skript ist OBSOLET dort.
+#     GEX-Deploy = nur /var/www/dg-crm/shared/ (siehe docs/SHARED-CORE-REST-PLAN.md SC4).
+#     Instanz-Hüllen auf GEX werden nicht per sync-crm-from-master befüllt.
+#
 # Preserves each instance's local config and storage.
 # NEVER use --delete against the account root (would wipe sibling domains).
 # Tenant folders at domain root (e.g. klarwin/) are user content — never delete.
