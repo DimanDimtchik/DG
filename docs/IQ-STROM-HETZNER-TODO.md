@@ -70,7 +70,7 @@
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)
 
-> **Stand PA3d (2026-11-08):** A3 Doc-Mini-IDs PA3a–f ✅ · **Hetzner-AVV unterzeichnet** ✅ 07.11.2026 (v1.2) · TÜV-TOM-Audit-PDF ✅ · Standort **Finnland HEL1** per Bestellung bestätigt (2026-11-09) · Rest vor Cutover: Freischaltung/IPv4/SSH-Keys (PB1).  
+> **Stand PA3d (2026-11-08):** A3 Doc-Mini-IDs PA3a–f ✅ · **Hetzner-AVV unterzeichnet** ✅ 07.11.2026 (v1.2) · TÜV-TOM-Audit-PDF ✅ · Standort **Finnland HEL1** · **PB1 Basis grün** 2026-11-11 · weiter PB2 Stack.  
 > Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) · AVV: [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md)
 
 - [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
@@ -137,10 +137,11 @@
 Voraussetzung: A1–A3 weitgehend grün · **AVV ✅**.  
 Tokenarm: [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) · Hardware: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-- [x] Server **Hetzner GEX45-1** bestellt — Bestellnr. **B20261107-3544202** (2026-11-07) · Standort **Finnland, HEL1** · OS **Ubuntu 26.04 LTS** · **1× Primäre IPv4** · Lieferung **in einigen Wochen**  
+- [x] Server **Hetzner GEX45-1** bestellt — Bestellnr. **B20261107-3544202** (2026-11-07) · Standort **Finnland, HEL1** · OS **Ubuntu 26.04 LTS** · **1× Primäre IPv4**  
   → früher Favorit SX65-2 verworfen · Specs in [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Support HEL1 nur Englisch
-- [ ] Server freigeschaltet / Primäre IPv4 notiert (Standort HEL1 per Bestellung bestätigt) — PB1a
-- [ ] OS **Ubuntu 26.04 LTS** · `Europe/Berlin` · Firewall · User `deploy` — PB1b/c
+- [x] **Basis grün (PB1)** 2026-11-11 — IPv4 `2.29.242.28` · IPv6 `2a01:4f9:3120:23ae::2` · Ubuntu 26.04 · Berlin · UFW 22/80/443 · SSH-Key User `deploy` · Passwort-SSH aus · Reboot ok (ohne Secrets in Git)
+- [x] Server freigeschaltet / Primäre IPv4 notiert (Standort HEL1 per Bestellung bestätigt) — PB1a
+- [x] OS **Ubuntu 26.04 LTS** · `Europe/Berlin` · Firewall · User `deploy` — PB1b/c
 - [ ] nginx + PHP 8.2+ FPM + MariaDB 10.11+ + Let’s Encrypt — PB2a
 - [ ] CRM probeweise deployen (ohne Produktiv-DNS) — PB2b/c
 - [ ] DB-Dump Kasserver → Import · `storage/` migrieren — PB4a (Freigabe)

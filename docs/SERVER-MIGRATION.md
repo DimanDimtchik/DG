@@ -1,6 +1,6 @@
 # Server-Umzug & Infrastruktur-Plan
 
-> Stand: **2026-11-09**  
+> Stand: **2026-11-11**  
 > Verwandt: [ELSTER-ERIC-TODO.md](./ELSTER-ERIC-TODO.md) · [CLOUD-AGENT-ACCESS.md](./CLOUD-AGENT-ACCESS.md) · Phase B: [`IQ-STROM-HETZNER-TODO.md`](./IQ-STROM-HETZNER-TODO.md) · tokenarm: [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md)
 
 ---
@@ -12,10 +12,10 @@
 | **Derzeitiger Server** | Kasserver / All-Inkl Shared Webhosting (`dg.ganz-soft.de` / CRM-Instanzen) |
 | **Deploy heute** | `scp`/`ssh`/`rsync`, PHP + MariaDB, **kein Root** auf All-Inkl, **kein Docker** |
 | **ELSTER-Strategie** | **ERiC direkt** (keine Middleware wie Elmar) — **erst nach Umzug** |
-| **Zielserver** | **Hetzner GEX45-1** — **bestellt** · Bestellnr. **B20261107-3544202** (2026-11-07) · Bereitstellung in **einigen Wochen** · Platten: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) |
+| **Zielserver** | **Hetzner GEX45-1** — **live** · Bestellnr. **B20261107-3544202** (2026-11-07) · Basis-OS PB1 ✅ 2026-11-11 · Platten: [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) |
 | **OS-Ziel** | **Ubuntu 26.04 LTS** (x64) · Zeitzone `Europe/Berlin` |
 | **Standort** | **Finnland, HEL1** (Bestellung bestätigt) · Hetzner-Support für HEL1 **nur Englisch** |
-| **Netz** | **1× Primäre IPv4** (bestellt) · IPv6 bei Freischaltung in Robot prüfen (PB1a) |
+| **Netz** | Primäre IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** (ohne Secrets; SSH lokal `Host hetzner-gex45`) |
 | **Skalierung** | **SX65** o. ä. erst bei Mandantenwachstum / voller Platte — nicht für ersten Cutover |
 | **Bis Umzug** | CSV-Export + manuelle ELSTER-Eingabe (bereits implementiert) · CRM weiter All-Inkl |
 
@@ -50,9 +50,9 @@ Produkt: [Hetzner GEX45](https://www.hetzner.com/dedicated-rootserver/gex45/) ·
 | Produkt | **1× Dedicated GPU-Server GEX45-1** |
 | Standort | **Finnland, HEL1** |
 | OS (Base) | **Ubuntu 26.04 LTS** |
-| Netz | **1× Primäre IPv4** |
+| Netz | IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** |
 | Support-Hinweis | Für Finnland HEL1 nur **englischer** Hetzner-Support |
-| Status | bestellt 2026-11-07 · noch nicht freigeschaltet (PB1) |
+| Status | bestellt 2026-11-07 · freigeschaltet / Basis-OS **PB1 ✅** 2026-11-11 |
 
 | Komponente | GEX45-1 (laut Produktlinie / Bestellung) |
 |------------|----------------------------------|
@@ -154,9 +154,9 @@ Nach Umzug: `config/elster.local.php` anlegen, Tab **Einstellungen → ELSTER** 
 ## Checkliste „Server bestellt / bereit?“
 
 - [x] Hetzner Robot: **GEX45-1** bestellt — **B20261107-3544202** (2026-11-07) · Standort Finnland HEL1 · Ubuntu 26.04 LTS · 1× IPv4
-- [ ] Server von Hetzner freigeschaltet / Primäre IPv4 notiert (PB1a)
-- [ ] Firewall (nur 22, 80, 443; SSH-Key)
-- [ ] OS: **Ubuntu 26.04 LTS** installiert · `Europe/Berlin`
-- [ ] User `deploy`, kein Passwort-Login
+- [x] Server freigeschaltet / IPs notiert (PB1a) — IPv4 `2.29.242.28` · IPv6 `2a01:4f9:3120:23ae::2` (2026-11-11)
+- [x] Firewall UFW 22/80/443 · SSH-Key User `deploy` · Passwort-Login aus (PB1c)
+- [x] OS: **Ubuntu 26.04 LTS** · `Europe/Berlin` · Updates · Reboot ok (PB1b)
+- [x] User `deploy`, kein Passwort-SSH (PermitRootLogin prohibit-password)
 - [ ] MariaDB + PHP-FPM + nginx + Let’s Encrypt
-- [ ] Mini-IDs in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten
+- [ ] Mini-IDs ab PB2 in [`PHASE-B-REST-PLAN.md`](./PHASE-B-REST-PLAN.md) abarbeiten

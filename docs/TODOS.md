@@ -2,9 +2,9 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-11-09** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
+Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** IQ Nutzer-Aktivierung · Shared-Core Spec **SC1** [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md) · Phase B wartet auf GEX45. AVV ✅. Unterschrift ES0–ES8 ✅.
+**Nächste Session:** Phase B **PB2** (nginx/PHP/MariaDB/certbot) · IQ Nutzer-Aktivierung · Shared-Core Spec **SC1**. **Hetzner PB1 ✅** (IPs in [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)). AVV ✅. Unterschrift ES0–ES8 ✅.
 
 ---
 
@@ -82,10 +82,10 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Kommunikation / E-Mail-Postfächer (eigen):** Menü + UI — Plan [`KOMMUNIKATION-POSTFAECHER-TODO.md`](KOMMUNIKATION-POSTFAECHER-TODO.md) (P1–P6 erledigt; Smoke/Deploy laut P6-Checkliste)
 - [x] **Dokumentenverfasser:** Briefpapier + Editor/Export — Plan [`DOKUMENTENVERFASSER-TODO.md`](DOKUMENTENVERFASSER-TODO.md) (B1–B4, D1–D7 Code ✅; manuelle Smoke-UI + Sync nach Deploy)
 - [x] **Vor Hetzner AVV:** [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) — AVV **07.11.2026** v1.2 · TÜV-Audit-PDF ✅ (PDFs nicht in Git)  
-- [x] **Hetzner-Server:** **GEX45-1** bestellt (**B20261107-3544202**) · Finnland **HEL1** · OS **Ubuntu 26.04 LTS** · 1× IPv4 · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · Mini-IDs [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) (Lieferung Wochen)  
+- [x] **Hetzner-Server:** **GEX45-1** bestellt (**B20261107-3544202**) · Finnland **HEL1** · OS **Ubuntu 26.04 LTS** · **PB1 ✅** 2026-11-11 (IPv4 `2.29.242.28` · IPv6 da · deploy/SSH-Key/UFW) · Docs [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) · weiter [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) **PB2**  
 - [x] **Kontakt-Unterschrift Brief/Mail:** tokenarm [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) — **ES0–ES8 ✅** 2026-11-08 (Historie, Canvas, Brief, Mail, App, Import, UI-Texte; kein QES, kein Löschen)  
 - [x] **Kontakt-Akte (Mails + Dokumente am Kontakt):** Mini-IDs **KA0–KA7 ✅** — unten am Kontakt chronologisch Mails (verknüpft + E-Mail-Treffer) und Dokumente (Belege + Verfasser + HR); `ContactAkteService` + Partial `contact-akte`  
-- [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; SSH/Stack nach Lieferung PB1+)
+- [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; PB1 Basis ✅; Stack = PB2+)
 - [x] **ARAP-Prozent-Vorschlag:** Code bereits vorhanden; Jahresabschluss nutzt die resultierenden Ledger-/Folgejahresbuchungen, kein separater ARAP-Abschlussprozess
 - [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
