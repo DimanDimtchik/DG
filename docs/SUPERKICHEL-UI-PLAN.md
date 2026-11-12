@@ -29,17 +29,21 @@ Eingeloggte Vollseite für längere Hilfe-Sitzungen: Verlauf, Eingabe, klare Akt
 | **SKU1c** | Leere View: `.dg-page-header` / Titel / `.dg-panel` Platzhalter | [x] 2026-11-12 · Guard OK | 🟢 |
 | **SKU1d** | Smoke Dev + Kurznotiz im Plan | [x] 2026-11-12 · siehe §8 | 🟢 |
 | **SKU2** | Menü-Eintrag „Super-Kichel“ (sinnvolle Gruppe) | [x] 2026-11-12 · Navigation/Staff · §9 | 🟢 |
-| **SKU3** | Chat-Layout: Verlauf + Eingabe + Senden (nur UI, Mock/leer ok) | Katalog · Guard grün · mobil lesbar | 🟡 | [ ] |
+| **SKU3** | Chat-Layout (Mock, kein API) — Kind-IDs unten | SKU3a–d ✅ | 🟢 | [x] 2026-11-12 |
+| **SKU3a** | Ist: Widget-Markup / `kichel.js` / `kichel.css` (nur lesen) | [x] 2026-11-12 · siehe §11 | 🟢 |
+| **SKU3b** | Verlauf-Bereich + Begrüßung (statisch, kein JS/API) | [x] 2026-11-12 · §12 | 🟢 |
+| **SKU3c** | Form: Textarea + Senden (ohne API; Submit no-op/Mock ok) | [x] 2026-11-12 · §13 | 🟢 |
+| **SKU3d** | Guard + Kurznotiz (Dev/mobil) | [x] 2026-11-12 · §14 | 🟢 |
 | **SKU4** | Anbindung `POST /api/kichel` · Antwort in Verlauf | Smoke: Frage → Antwort wie Widget | 🔴🟡 | [ ] |
 | **SKU5** | UX-Feinschliff: Laden/Fehler · Link aus Widget-Panel zur Seite | Klartext · kein Jargon | 🟡 | [ ] |
 | **SKU6** | Docs/Haken + optional Guard/Scan-Notiz | Plan abgehakt · `TODOS` | 🟢 | [ ] |
 
-**Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → SKU3 → SKU4 → SKU5 → SKU6.
+**Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → **SKU3a→d** → SKU4 → SKU5 → SKU6.
 
 **Chat-Prompt:**
 
 ```text
-Nur Mini-ID SKU1a laut docs/SUPERKICHEL-UI-PLAN.md.
+Nur Mini-ID SKU3a laut docs/SUPERKICHEL-UI-PLAN.md.
 Untersuche zuerst den Ist-Zustand. Ändere noch nichts.
 Nenne betroffene Dateien/Pfade, geplante Änderungen, Risiken und Prüfungen.
 Warte auf ausdrückliche Freigabe.
@@ -106,7 +110,7 @@ Wiederverwenden wo sinnvoll: bestehende `assets/js/kichel.js` / API-Payload. Kei
 | Protokoll-Route | `index.php`: `$page === 'kichel-protokoll' && RoleResolver::isAdmin` |
 | **Lücke** | `kichel-protokoll` **fehlt** in `MenuRegistry::canAccess` → Gate redirected vermutlich vor dem Admin-Zweig (Widget-Link „Protokoll“) |
 
-**SKU1–2 ✅** (§5–9) · **Nächste ID:** **SKU3** (Chat-Layout, Freigabe).
+**SKU1–3 ✅** · **Nächste ID:** **SKU4** (API-Anbindung, Freigabe).
 
 ---
 
@@ -147,7 +151,62 @@ Staff-HTML nicht aus Agent-Browser (lokale `hosts`: `ganz-om.de` → GEX `2.29.2
 
 Dashboard-Kachel kommt über `dashboardTiles` ← `sidebarItems` automatisch. Keine neuen CSS-Klassen.
 
-**Nächste ID:** **SKU3**.
+---
+
+## 10. SKU3 — Zerlegung (2026-11-12, nur Plan)
+
+| Kind | Scope | Nicht |
+|------|--------|-------|
+| **SKU3a** | Ist Widget: `views/partials/kichel-widget.php` · `assets/js/kichel.js` · `assets/css/kichel.css` · Klassen `dg-kichel-*` | kein Code |
+| **SKU3b** | In `views/modules/superkihel.php`: Verlauf/Begrüßung (statisch); Feature-Klasse nur wenn Katalog-Kern nicht reicht | kein Fetch |
+| **SKU3c** | `.dg-form` + Textarea + Senden in `.dg-form-actions`; Submit ohne API (no-op) | kein `POST /api/kichel` → **SKU4** |
+| **SKU3d** | Guard + Kurznotiz | Menü-Link Widget→Seite → **SKU5** |
+
+Optional Admin-Link „Hilfe-Protokoll“ im Header: erst wenn `kichel-protokoll` in `canAccess` (Lücke §5) — sonst **SKU5**/eigene Mini-ID.
+
+---
+
+## 11. SKU3a — Ist Widget (2026-11-12, nur lesen)
+
+| Datei | Rolle |
+|-------|--------|
+| `views/partials/kichel-widget.php` | FAB + Panel; lädt `kichel.css` + `kichel.js`; `window.dgKichel` = `{ apiUrl, csrf, chatVersion }` |
+| `assets/js/kichel.js` | Panel-Toggle, Chips, sessionStorage-Verlauf, `POST /api/kichel` (FormData `_csrf`+`query`), Rendern von Msg/Links/Follow-up |
+| `assets/css/kichel.css` | Feature-Styles `dg-kichel-*` (nicht in `dg.css`) |
+| `views/layout/app.php` | bindet Widget-Partial ein |
+| `views/modules/superkihel.php` | nur Katalog-Gerüst, **kein** Chat-Markup |
+
+**DOM / data-Attribute (Widget):** `data-kichel-fab|panel|close|body|messages|form|input|chip|protokoll|feedback`
+
+**Msg-Klassen:** `.dg-kichel-msg` + `--bot` / `--user` · Container `.dg-kichel-messages` · Form `.dg-kichel-form` (eigene Buttons, **kein** `.dg-form`)
+
+**Für SKU3b/c (Seite):**
+
+1. Katalog-Kern auf der Seite: `.dg-panel` + `.dg-form` / `.dg-field` / `.dg-form-actions` / `.dg-button--primary`  
+2. Msg-Bubble-Optik: bestehende `.dg-kichel-msg*` aus `kichel.css` wiederverwenden (kein Duplikat in `dg.css`)  
+3. **Nicht** ganzes `kichel.js` auf die Seite laden (FAB/Panel-Pflicht) — API-Anbindung = **SKU4**  
+4. Chips optional später; SKU3b nur Begrüßung + leerer/statischer Thread  
+5. Admin-Protokoll-Link im Widget: nackter `<a>` — Seite später `.dg-button` (Katalog); `canAccess`-Lücke Protokoll unberührt
+
+---
+
+## 12. SKU3b — Verlauf statisch (2026-11-12)
+
+`views/modules/superkihel.php`: in `.dg-panel` → `.dg-kichel-messages` + eine `.dg-kichel-msg--bot` Begrüßung. Styles über bestehendes `kichel.css` (Widget im Layout). Kein Form/JS/API. Guard ✅.
+
+---
+
+## 13. SKU3c — Form Mock (2026-11-12)
+
+Unter dem Verlauf: `.dg-form` · `.dg-field` Textarea (`query`, max 500) · `.dg-form-actions` + `.dg-button--primary` „Senden“ · `onsubmit="return false;"` (kein API). Guard ✅.
+
+---
+
+## 14. SKU3d — Guard / Smoke (2026-11-12)
+
+**Ist:** Guard `ui-form-spacing-selftest.php` ✅ · Dev-View enthält Verlauf+Form · unauth → 302 `/login`. Mobil/Staff-UI manuell (lokale hosts→GEX). SKU3 Mock komplett — API = **SKU4**.
+
+**Nächste ID:** **SKU4**.
 
 ---
 
@@ -162,3 +221,8 @@ Dashboard-Kachel kommt über `dashboardTiles` ← `sidebarItems` automatisch. Ke
 | 2026-11-12 | **SKU1c ✅** Katalog-Gerüst · Guard grün |
 | 2026-11-12 | **SKU1d ✅** Dev-Smoke unauth 302 · Dateien auf Dev |
 | 2026-11-12 | **SKU2 ✅** Menü Navigation/Staff · Kachel/Aliase |
+| 2026-11-12 | **SKU3** in **SKU3a–d** zerlegt (Ist / Verlauf / Form / Guard) |
+| 2026-11-12 | **SKU3a ✅** Widget-Ist · Empfehlung Katalog+Msg-Klassen |
+| 2026-11-12 | **SKU3b ✅** Statischer Verlauf + Begrüßung |
+| 2026-11-12 | **SKU3c ✅** Form Textarea+Senden (no-op) |
+| 2026-11-12 | **SKU3d ✅** Guard+Dev-Smoke · SKU3 fertig |
