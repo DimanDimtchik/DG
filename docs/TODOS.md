@@ -4,7 +4,7 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** **PB2d** IQ-STROM-Haken · oder **SC2** Locals nur Instanz · Login-User prüfen. **PB2c ✅** (`https://crm-gex.ganz-soft.de/login`). AVV ✅.
+**Nächste Session:** **SC2** Locals nur Instanz · Login-User prüfen · oder **PB4a** nur mit ausdrücklicher Freigabe. **PB1–PB3 ✅**. AVV ✅.
 
 **Ops-Merkposten (GEX45 Ollama):** **SKB1 ✅** — Ollama nur `127.0.0.1:11434`, UFW 11434 zu. Cursor: SSH-Tunnel + Override **`http://127.0.0.1:11434/v1`**. **SKC1 ✅** CRM-Proxy HTTPS **`llm.ganz-soft.de`** (Path-Token nicht in Git). Modelle `qwen2.5-coder:14b` / `32b` / `llama3.1:8b`. Details: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md).
 
@@ -24,7 +24,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 | Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) | **SKB1–2/SKC0 ✅** · UI **SKU0–8 ✅** · **SKC1a–d ✅** · **SKD0 ✅** |
 
-**Nächster Block:** Phase-B **PB2d** oder Shared-Core **SC2** laut [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) / [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md). Probe HTTPS ✅ `crm-gex.ganz-soft.de`. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
+**Nächster Block:** Shared-Core **SC2** laut [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md). Phase-B Prep **PB3 ✅** (Cutover/Backup/Mail-Docs). Cutover erst **PB4** mit Freigabe. Probe HTTPS ✅. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 

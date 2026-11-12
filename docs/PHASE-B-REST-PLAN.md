@@ -3,7 +3,7 @@
 > **Eine Chat-Session = eine Mini-ID.**  
 > Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) §B · Hardware: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** · **PB1 ✅** · **PB2c ✅** (Probe HTTPS `crm-gex.ganz-soft.de`)
+Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** · **PB1–PB3 ✅**
 
 ---
 
@@ -38,8 +38,8 @@ Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 |----|--------|--------|-------|
 | PB0 | Inventar / dieser Plan | [x] 2026-11-08 | 🟢 |
 | PB1 | Server da / Basis-OS | [x] 2026-11-11 | 🟢 |
-| PB2 | Stack + Deploy-Probe | [ ] | 🔴🟢 |
-| PB3 | Cutover-Vorbereitung | [ ] | 🟢🔴 |
+| PB2 | Stack + Deploy-Probe | [x] 2026-11-12 | 🔴🟢 |
+| PB3 | Cutover-Vorbereitung | [x] 2026-11-12 | 🟢 |
 | PB4 | Cutover + 48 h | [ ] | 🔴 |
 | PB5 | Nachzug Docs/Haken | [ ] | 🟢 |
 
@@ -69,14 +69,14 @@ Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PB2a | nginx + PHP 8.2+ FPM + MariaDB 10.11+ + certbot (Test-Domain oder IP) | 🔴 | [~] 2026-11-11 Pakete+Ordner+sudo ✅ (PHP 8.5.4 · nginx · MariaDB · certbot Paket) · vHost/TLS/Probe offen |
+| PB2a | nginx + PHP 8.2+ FPM + MariaDB 10.11+ + certbot (Test-Domain oder IP) | 🔴 | [x] 2026-11-12 · Pakete 2026-11-11 · vHost/LE mit PB2c |
 | PB2b | Deploy-Pipeline Probe laut [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) (ohne Produktiv-DNS) | 🔴 | [x] 2026-11-11 tar→`/var/www/dg-crm/shared` (~3697 Dateien; kein rsync lokal; ohne DNS) |
 | PB2c | Leere/Test-Instanz erreichbar HTTPS · Smoke `/login` | 🔴 | [x] 2026-11-12 · PB2c1–c4 ✅ · Probe `https://crm-gex.ganz-soft.de/login` |
 | **PB2c4a** | Ist: CRM-vHost nur :80 · DNS `ganz-om.de`→All-Inkl · kein CRM-Cert — **nur lesen** | 🟢 | [x] 2026-11-12 · siehe § PB2c4 |
 | **PB2c4b** | Hostname `crm-gex.ganz-soft.de` · KAS A → GEX `2.29.242.28` | 🔴 | [x] 2026-11-12 · Auth-NS A=GEX |
 | **PB2c4c** | nginx `server_name` + certbot LE für Probe-Host | 🔴 | [x] 2026-11-12 · LE bis 2027-02-10 |
 | **PB2c4d** | Smoke HTTPS `/login` · Docs/Haken · PB2c abschließen | 🔴🟡 | [x] 2026-11-12 |
-| PB2d | Doc-Haken PB2 in IQ-STROM | 🟢 | [ ] |
+| PB2d | Doc-Haken PB2 in IQ-STROM / SERVER-MIGRATION | 🟢 | [x] 2026-11-12 |
 
 > **Abgrenzung:** Ollama-Proxy-TLS = **SKC1** (`llm.ganz-soft.de`) — fertig. **PB2c4** = HTTPS für **CRM-Probe**-vHost — kein Cutover `ganz-om.de` (**PB4**).
 
@@ -125,15 +125,15 @@ Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 | Certs live | `crm-gex.ganz-soft.de` · `llm.ganz-soft.de` |
 | **Nicht** | Cutover `ganz-om.de` (**PB4**) · SC2 Locals · Login-User-Inhalt |
 
-**PB2c ✅.** Offen in PB2: **PB2d** (IQ-STROM Doc-Haken) · parallel SC2.
+**PB2 ✅** (a–d). Parallel/weiter: Shared-Core **SC2** · **PB3** Cutover-Prep · Cutover **PB4**.
 
 ### PB3 — Cutover-Vorbereitung (Docs + Termine)
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| PB3a | Cutover-Checkliste: Domains, TTL, Dump-Reihenfolge, Rollback | 🟢 | [ ] |
-| PB3b | Backup/off-site Ziel auf GEX45 skizzieren (kein HDD wie SX65) | 🟢 | [ ] |
-| PB3c | SMTP/Mail-Plan nach Cutover (kurz) | 🟢 | [ ] |
+| PB3a | Cutover-Checkliste: Domains, TTL, Dump-Reihenfolge, Rollback | 🟢 | [x] 2026-11-12 · [`PB3A-CUTOVER-CHECKLISTE.md`](PB3A-CUTOVER-CHECKLISTE.md) |
+| PB3b | Backup/off-site Ziel auf GEX45 skizzieren (kein HDD wie SX65) | 🟢 | [x] 2026-11-12 · [`PB3B-BACKUP-OFFSITE.md`](PB3B-BACKUP-OFFSITE.md) |
+| PB3c | SMTP/Mail-Plan nach Cutover (kurz) | 🟢 | [x] 2026-11-12 · [`PB3C-SMTP-MAIL-PLAN.md`](PB3C-SMTP-MAIL-PLAN.md) |
 
 ### PB4 — Cutover (nur mit ausdrücklicher Freigabe)
 
@@ -160,7 +160,7 @@ Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 **Hinweis Ops:** Hetzner-Support für Finnland HEL1 nur **Englisch**.
 
-**Nächste Freigabe:** **PB2d** (IQ-STROM Doc-Haken) oder Shared-Core **SC2** · kein Cutover (**PB4**).
+**PB3 ✅.** **Nächste Freigabe:** Shared-Core **SC2** · oder ausdrückliche **PB4a**-Freigabe (erster Host) · kein stiller Cutover.
 
 ---
 
@@ -169,6 +169,9 @@ Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 | Datei | Rolle |
 |-------|--------|
 | [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md) | Hardware GEX45-1 · Bestellung B20261107-3544202 |
+| [`PB3A-CUTOVER-CHECKLISTE.md`](PB3A-CUTOVER-CHECKLISTE.md) | **PB3a** Domains/TTL/Dump/Rollback |
+| [`PB3B-BACKUP-OFFSITE.md`](PB3B-BACKUP-OFFSITE.md) | **PB3b** Storage Box + restic-Skizze |
+| [`PB3C-SMTP-MAIL-PLAN.md`](PB3C-SMTP-MAIL-PLAN.md) | **PB3c** MX bleibt All-Inkl · SMTP extern |
 | [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) | rsync/SSH Prep |
 | [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md) | AVV ✅ |
 | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | nach Cutover |

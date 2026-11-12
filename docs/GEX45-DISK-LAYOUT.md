@@ -142,6 +142,8 @@ Große Checkpoint-Sammlungen: primär **Backup/Box**, bei Bedarf syncen.
 | `storage/` | `/mnt/data/crm-storage` | restic/rsync (inkrementell) |
 | ELSTER-Zertifikate | `storage/...` oder `config/` | **getrennt**, verschlüsselt, nicht in Git |
 
+**Off-site-Skizze (PB3b ✅):** [`PB3B-BACKUP-OFFSITE.md`](PB3B-BACKUP-OFFSITE.md) — Storage Box + restic; Box-Bestellung/Install eigene Freigabe.
+
 Vor DNS-Cutover: **Restore-Probe** (DB + eine Instanz `storage/`) dokumentieren — [`VOR-HETZNER-CHECK.md`](VOR-HETZNER-CHECK.md).
 
 ---

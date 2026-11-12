@@ -70,7 +70,7 @@
 
 ### A3 · Vor-Hetzner Infrastruktur (ohne ERiC)
 
-> **Stand PA3d (2026-11-08):** A3 Doc-Mini-IDs PA3a–f ✅ · **Hetzner-AVV unterzeichnet** ✅ 07.11.2026 (v1.2) · TÜV-TOM-Audit-PDF ✅ · Standort **Finnland HEL1** · **PB1 Basis grün** 2026-11-11 · weiter PB2 Stack.  
+> **Stand PA3d (2026-11-08):** A3 Doc-Mini-IDs PA3a–f ✅ · **Hetzner-AVV unterzeichnet** ✅ 07.11.2026 (v1.2) · TÜV-TOM-Audit-PDF ✅ · Standort **Finnland HEL1** · **PB1–PB3 ✅** 2026-11-12 · weiter SC2 · Cutover **PB4** (Freigabe).  
 > Tokenarm: [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) · AVV: [`HETZNER-AVV-TOM-CHECKLISTE.md`](HETZNER-AVV-TOM-CHECKLISTE.md)
 
 - [x] **Shared-Core-Ordnerplan** dokumentiert (Ist Full-Tree-Sync · Ziel Shared+Instanz) — ✅ PA3a 2026-11-08  
@@ -142,8 +142,8 @@ Tokenarm: [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) · Hardware: [`SERVER-M
 - [x] **Basis grün (PB1)** 2026-11-11 — IPv4 `2.29.242.28` · IPv6 `2a01:4f9:3120:23ae::2` · Ubuntu 26.04 · Berlin · UFW 22/80/443 · SSH-Key User `deploy` · Passwort-SSH aus · Reboot ok (ohne Secrets in Git)
 - [x] Server freigeschaltet / Primäre IPv4 notiert (Standort HEL1 per Bestellung bestätigt) — PB1a
 - [x] OS **Ubuntu 26.04 LTS** · `Europe/Berlin` · Firewall · User `deploy` — PB1b/c
-- [~] nginx + PHP 8.5 FPM + MariaDB + certbot ✅ · Probe-HTTPS **`crm-gex.ganz-soft.de`** `/login` 200 (**PB2c ✅** 2026-11-12) · Doc-Haken **PB2d** · Cutover weiter **PB4** — PB2a/c
-- [ ] CRM probeweise deployen (ohne Produktiv-DNS) — PB2b/c
+- [x] **PB2 Stack + Probe ✅** 2026-11-12 — nginx/PHP 8.5 FPM/MariaDB/certbot · shared Deploy · Probe-HTTPS **`https://crm-gex.ganz-soft.de/login`** 200 · Ollama-Proxy getrennt **`llm.ganz-soft.de`** (SKC1) · kein Produktiv-DNS-Cutover (**PB4**)
+- [x] CRM probeweise auf GEX (ohne Produktiv-DNS) — PB2b/c ✅
 - [ ] DB-Dump Kasserver → Import · `storage/` migrieren — PB4a (Freigabe)
 - [ ] Cronjobs (`cron.php`, Mitarbeiter-Purge)
 - [ ] SMTP testen · DNS Cutover · **48 h Monitoring** — PB4b
