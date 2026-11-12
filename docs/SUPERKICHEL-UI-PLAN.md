@@ -34,16 +34,20 @@ Eingeloggte Vollseite für längere Hilfe-Sitzungen: Verlauf, Eingabe, klare Akt
 | **SKU3b** | Verlauf-Bereich + Begrüßung (statisch, kein JS/API) | [x] 2026-11-12 · §12 | 🟢 |
 | **SKU3c** | Form: Textarea + Senden (ohne API; Submit no-op/Mock ok) | [x] 2026-11-12 · §13 | 🟢 |
 | **SKU3d** | Guard + Kurznotiz (Dev/mobil) | [x] 2026-11-12 · §14 | 🟢 |
-| **SKU4** | Anbindung `POST /api/kichel` · Antwort in Verlauf | Smoke: Frage → Antwort wie Widget | 🔴🟡 | [ ] |
+| **SKU4** | Anbindung `POST /api/kichel` — Kind-IDs unten | SKU4a–d ✅ | 🟢 | [x] 2026-11-12 |
+| **SKU4a** | Ist: API-Vertrag `KichelApi` + Widget-Fetch (nur lesen) | [x] 2026-11-12 · siehe §16 | 🟢 |
+| **SKU4b** | Seiten-JS: Submit → User-Msg + Fetch + Bot-Text (ohne Links-Extras) | [x] 2026-11-12 · §17 | 🟢 |
+| **SKU4c** | Antwort-Extras: page/action-Links + Follow-up wie Widget | [x] 2026-11-12 · §18 | 🟢 |
+| **SKU4d** | Smoke Dev + Kurznotiz | [x] 2026-11-12 · §19 | 🟢 |
 | **SKU5** | UX-Feinschliff: Laden/Fehler · Link aus Widget-Panel zur Seite | Klartext · kein Jargon | 🟡 | [ ] |
 | **SKU6** | Docs/Haken + optional Guard/Scan-Notiz | Plan abgehakt · `TODOS` | 🟢 | [ ] |
 
-**Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → **SKU3a→d** → SKU4 → SKU5 → SKU6.
+**Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → **SKU3a→d** → **SKU4a→d** → SKU5 → SKU6.
 
 **Chat-Prompt:**
 
 ```text
-Nur Mini-ID SKU3a laut docs/SUPERKICHEL-UI-PLAN.md.
+Nur Mini-ID SKU4a laut docs/SUPERKICHEL-UI-PLAN.md.
 Untersuche zuerst den Ist-Zustand. Ändere noch nichts.
 Nenne betroffene Dateien/Pfade, geplante Änderungen, Risiken und Prüfungen.
 Warte auf ausdrückliche Freigabe.
@@ -110,7 +114,7 @@ Wiederverwenden wo sinnvoll: bestehende `assets/js/kichel.js` / API-Payload. Kei
 | Protokoll-Route | `index.php`: `$page === 'kichel-protokoll' && RoleResolver::isAdmin` |
 | **Lücke** | `kichel-protokoll` **fehlt** in `MenuRegistry::canAccess` → Gate redirected vermutlich vor dem Admin-Zweig (Widget-Link „Protokoll“) |
 
-**SKU1–3 ✅** · **Nächste ID:** **SKU4** (API-Anbindung, Freigabe).
+**SKU1–4 ✅** · **Nächste ID:** **SKU5** (UX, Freigabe).
 
 ---
 
@@ -206,7 +210,63 @@ Unter dem Verlauf: `.dg-form` · `.dg-field` Textarea (`query`, max 500) · `.dg
 
 **Ist:** Guard `ui-form-spacing-selftest.php` ✅ · Dev-View enthält Verlauf+Form · unauth → 302 `/login`. Mobil/Staff-UI manuell (lokale hosts→GEX). SKU3 Mock komplett — API = **SKU4**.
 
-**Nächste ID:** **SKU4**.
+---
+
+## 15. SKU4 — Zerlegung (2026-11-12, nur Plan)
+
+| Kind | Scope | Nicht |
+|------|--------|-------|
+| **SKU4a** | Ist: `KichelApi` Request/Response · Widget-`fetch` in `kichel.js` · CSRF | kein Code |
+| **SKU4b** | Eigenes Seiten-JS (nicht ganzes Widget-JS): `onsubmit` weg → FormData `_csrf`+`query` → User-/Bot-Bubble Text | Laden/Fehler-Politur → **SKU5** |
+| **SKU4c** | `page_links` / `action_links` / `follow_up` wie Widget-Render | Chips, sessionStorage-Panel |
+| **SKU4d** | Smoke Dev (Staff-Frage) + Kurznotiz | Widget→Seite-Link → **SKU5** |
+
+**Technik-Hinweis:** `window.dgKichel` kommt schon vom Widget-Partial im Layout — CSRF/apiUrl wiederverwendbar. Eigenes Script z. B. `assets/js/superkihel.js` an View hängen; FAB-Logik nicht mitladen.
+
+---
+
+## 16. SKU4a — Ist API (2026-11-12, nur lesen)
+
+| | |
+|--|--|
+| Route | `index.php` `case '/api/kichel'` → `KichelApi::handle()` |
+| Auth | Staff (`RoleResolver::isStaff`) · sonst 403 JSON |
+| Method/CSRF | nur **POST** · `Csrf::verify($_POST['_csrf'])` · sonst 403 |
+| Body | FormData/POST: `_csrf`, `query` (trim) |
+| Fachlogik | `KichelAssistant::answer($user, $query)` · Protokoll `KichelProtocolRepository::record` |
+| Erfolg | `{ success: true, data: <result> }` |
+| Fehler | `{ success: false, message: "…" }` |
+
+**`data` (üblich):** `answer` (string) · `follow_up` (string) · `action_links` (`[{label, href}]`) · optional `page_links` · oft `presentation` / `kind`
+
+**Widget-Fetch (`kichel.js`):** `window.dgKichel.{apiUrl, csrf}` · FormData → `fetch` same-origin · bei Erfolg: Bot-`answer`, dann `page_links` / `action_links` / `follow_up` · Loading-Text „Einen Moment …“
+
+**Für SKU4b:** View: `onsubmit` entfernen · CSRF aus `dgKichel` (oder Hidden-Feld) · neues `assets/js/superkihel.js` · nur User-Bubble + Bot-`data.answer` (Extras = SKU4c). Guard beachten: keine nackten Aktionslinks ohne `.dg-button`.
+
+---
+
+## 17. SKU4b — Fetch + Antworttext (2026-11-12)
+
+| Datei | Änderung |
+|-------|----------|
+| `assets/js/superkihel.js` | neu: Submit → User-Msg · `POST /api/kichel` · Bot-`answer` (keine Links/Follow-up) |
+| `views/modules/superkihel.php` | no-op-`onsubmit` weg · Script-Tag · Begrüßung angepasst |
+
+CSRF/`apiUrl` aus `window.dgKichel` (Widget im Layout). Guard ✅.
+
+---
+
+## 18. SKU4c — Links / Follow-up (2026-11-12)
+
+`assets/js/superkihel.js`: nach `answer` → `page_links` / `action_links` / `follow_up` (Klassen wie Widget `dg-kichel-*`). Feedback Ja/Nein lokal. Labels/Hrefs escaped. Guard ✅.
+
+---
+
+## 19. SKU4d — Smoke (2026-11-12)
+
+**Ist:** Guard ✅ · Dev: `superkihel.js` + View-Script · unauth Seite → 302 `/login` · JS-Asset 200 · API ohne Session → 403. Staff-Frage im Browser manuell: `/app?page=superkihel`.
+
+**Nächste ID:** **SKU5**.
 
 ---
 
@@ -226,3 +286,8 @@ Unter dem Verlauf: `.dg-form` · `.dg-field` Textarea (`query`, max 500) · `.dg
 | 2026-11-12 | **SKU3b ✅** Statischer Verlauf + Begrüßung |
 | 2026-11-12 | **SKU3c ✅** Form Textarea+Senden (no-op) |
 | 2026-11-12 | **SKU3d ✅** Guard+Dev-Smoke · SKU3 fertig |
+| 2026-11-12 | **SKU4** in **SKU4a–d** zerlegt (Ist / Fetch-Text / Extras / Smoke) |
+| 2026-11-12 | **SKU4a ✅** API-Vertrag + Widget-Fetch dokumentiert |
+| 2026-11-12 | **SKU4b ✅** Seiten-Fetch + Antworttext |
+| 2026-11-12 | **SKU4c ✅** page/action-Links + Follow-up |
+| 2026-11-12 | **SKU4d ✅** Smoke · SKU4 fertig |
