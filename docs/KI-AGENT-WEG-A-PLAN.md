@@ -2,7 +2,7 @@
 
 > Stand: **2026-11-11** · Ziel: Du programmierst/recherchierst agentisch ohne Cursor-Auto-Volumen.  
 > **Nicht** Kichel/Tablet (das ist Weg B).  
-> Server: Ollama `http://2.29.242.28:11434` · Modelle `qwen2.5-coder:14b`, `llama3.1:8b`.
+> Server: Ollama nur localhost am GEX · vom PC per SSH-Tunnel → `http://127.0.0.1:11434/v1` (SKB1d) · Modelle `qwen2.5-coder:14b`, `llama3.1:8b`.
 
 ---
 
@@ -23,7 +23,7 @@
 | ID | Aufgabe | Geschätzt | Status |
 |----|---------|-----------|--------|
 | **KA0** | Entscheidung: **Cline** (nicht Roo; Roo optional später) · Doc-Haken hier | 🟢 0,5 h | [x] 2026-11-11 |
-| **KA1** | Plugin installieren · Base URL `http://2.29.242.28:11434/v1` · Modell `qwen2.5-coder:14b` · API-Key beliebig · Smoke „Hallo“ | 🔴 0,5–1 Tag | [ ] |
+| **KA1** | Plugin installieren · Tunnel + Base URL `http://127.0.0.1:11434/v1` · Modell `qwen2.5-coder:14b` · API-Key beliebig · Smoke „Hallo“ | 🔴 0,5–1 Tag | [ ] |
 | **KA2** | Websuche: Brave **oder** Tavily API-Key im Plugin · Test: „Suche X, 5 Bulletpoints“ | 🔴 0,5–1 Tag | [ ] |
 | **KA3** | Repo-Smoke im DG-Clone: kleine Doc-Datei anlegen lassen (ohne Auto) | 🔴 0,5 Tag | [ ] |
 | **KA4** | Laptop gleiche Config · Firewall/URL ok · Kurztest | 🔴 0,5 Tag | [ ] |

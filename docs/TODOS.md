@@ -6,7 +6,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächste Session:** **PB2c4** TLS (Domain) · SC2 Locals nur Instanz · Login-User prüfen. **PB2c1–c3 ✅**. AVV ✅.
 
-**Ops-Merkposten (GEX45 Ollama):** Cursor Override → `http://2.29.242.28:11434/v1` · Modelle `qwen2.5-coder:14b` / `llama3.1:8b` · **nach stabilem Alltag:** Port **11434** absichern (nicht dauerhaft `ufw allow Anywhere`; Ollama wieder `127.0.0.1` + Tunnel/Proxy/Token). VL-Modell nur bei Screenshot/Agent-Bildern.
+**Ops-Merkposten (GEX45 Ollama):** **SKB1 ✅** — Ollama nur `127.0.0.1:11434`, UFW 11434 zu. Cursor: SSH-Tunnel + Override **`http://127.0.0.1:11434/v1`** (Key `id_ed25519_hetzner_agent`) · Modelle `qwen2.5-coder:14b` / `32b` / `llama3.1:8b`. Details: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) §8 SKB1d. VL nur bei Screenshot/Agent-Bildern.
 
 **Weg A (Desktop-Agent):** Mini-IDs **KA0–KA6** → [`KI-AGENT-WEG-A-PLAN.md`](KI-AGENT-WEG-A-PLAN.md). Ohne A bleiben Qwen/Llama als Chat nutzbar; Web-Agent erst ab KA1/KA2.
 

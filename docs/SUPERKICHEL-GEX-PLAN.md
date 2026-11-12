@@ -73,13 +73,17 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | **SKA0-12v** | Inventar-Fazit **vorläufig** (ohne SSH) | [x] 2026-11-11 · [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | 🟢 |
 | SKA0 | Bestandsaufnahme GEX45 (SKA0-1 … SKA0-12) | [ ] | 🔴🟢 |
 | **SKB0** | Entscheidung: was wird wirklich installiert | [x] 2026-11-11 · Nachtrag 2026-11-12 · [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md) | 🟢 |
-| SKB1 | Härten / binden (Ollama localhost, UFW) — nur nach Freigabe | [ ] | 🔴 |
-| SKB2 | Installationen — **einzeln** Kind-IDs unten | [ ] | 🔴 |
-| **SKB2a** | Docker (Engine/Compose) | [ ] | 🔴 |
-| **SKB2b** | SearXNG (nach SKB2a) | [ ] | 🔴 |
-| **SKB2c** | Playwright | [ ] | 🔴 |
-| **SKB2d** | OpenHands (nach SKB2a) | [ ] | 🔴 |
-| **SKB2e** | ComfyUI | [ ] | 🔴 |
+| SKB1 | Härten Ollama — Kind-IDs SKB1a–d | [x] 2026-11-12 | 🔴 |
+| **SKB1a** | Ist: Ollama-Bindung, systemd/Env, UFW/11434 — **nur lesen** | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB1b** | Ollama auf `127.0.0.1:11434` binden | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB1c** | UFW: 11434 von außen zu | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB1d** | Nachweis + Cursor-Zugang (Tunnel o. Ä.) | [x] 2026-11-12 · siehe §8 | 🔴 |
+| SKB2 | Installationen — **einzeln** Kind-IDs unten | [x] 2026-11-12 (a–e) | 🔴 |
+| **SKB2a** | Docker (Engine/Compose) | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB2b** | SearXNG (nach SKB2a) | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB2c** | Playwright | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB2d** | OpenHands (nach SKB2a) | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKB2e** | ComfyUI | [x] 2026-11-12 · siehe §8 | 🔴 |
 | SKC0 | CRM-Anbindung Dev `ganz-om.de` (`kichel.local.php`, Smoke) | [ ] | 🔴🟡 |
 | SKD0 | Docs/Haken nachziehen | [ ] | 🟢 |
 
@@ -160,7 +164,117 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 
 ---
 
-## 8. Verweise
+## 8. SKB1a — Ist Ollama/UFW (2026-11-12, nur lesen)
+
+SSH: `deploy` + Key `id_ed25519_hetzner_agent` (Fingerprint Docs §7). Host-Alias `hetzner-gex45` nutzt aktuell **anderen** Key → `Permission denied`; Agent-Key OK.
+
+| Punkt | Ist |
+|-------|-----|
+| Version | Ollama **0.40.16** · `/usr/local/bin/ollama` |
+| systemd | `active/running` · Unit `/etc/systemd/system/ollama.service` |
+| Bind | Drop-in `ollama.service.d/override.conf`: **`OLLAMA_HOST=0.0.0.0:11434`** |
+| Listen | `*:11434` (alle Interfaces) |
+| UFW | **aktiv** · **11434/tcp ALLOW Anywhere** (+ v6) · daneben 22/80/443 |
+| API lokal | `127.0.0.1:11434` OK |
+| API außen | `http://2.29.242.28:11434` OK (öffentlich) |
+| Modelle | `qwen2.5-coder:32b`, `qwen2.5-coder:14b`, `llama3.1:8b` |
+
+**Risiko (vor SKB1b):** Ollama weltweit erreichbar (kein Auth).  
+
+### SKB1b — umgesetzt 2026-11-12
+
+| Punkt | Nachher |
+|-------|---------|
+| Drop-in | `OLLAMA_HOST=127.0.0.1:11434` in `override.conf` |
+| Listen | nur `127.0.0.1:11434` |
+| Lokal | API OK (`0.40.16`) |
+| Außen `2.29.242.28:11434` | **Verbindung fehlgeschlagen** (Bind) |
+| UFW 11434 ALLOW | **entfernt** (v4+v6) — SKB1c ✅ |
+| Cursor-Override öffentlich | **tot** bis **SKB1d** (Tunnel) |
+
+### SKB1c — umgesetzt 2026-11-12
+
+| Punkt | Nachher |
+|-------|---------|
+| UFW | nur noch 22 / 80 / 443 (inkl. v6) |
+| 11434 ALLOW | gelöscht |
+| Ollama lokal | weiterhin OK auf `127.0.0.1:11434` |
+
+### SKB1d — umgesetzt 2026-11-12
+
+Zugang vom PC (ohne öffentliche 11434):
+
+```powershell
+ssh -o IdentitiesOnly=yes -i $env:USERPROFILE\.ssh\id_ed25519_hetzner_agent -N -L 11434:127.0.0.1:11434 deploy@2.29.242.28
+```
+
+Fenster offen lassen. Cursor Override Base URL: **`http://127.0.0.1:11434/v1`** · Modell z. B. `qwen2.5-coder:14b` · Key beliebig (`ollama`).
+
+**Nachweis:** Tunnel-Smoke → `http://127.0.0.1:11434/api/version` = `0.40.16`.  
+SSH-Config-Alias `hetzner-gex45` zeigt noch auf anderen Key — für Tunnel den **Agent-Key** nutzen (oder Alias anpassen, eigene Mini-ID).
+
+**SKB1 gesamt ✅** (a–d).
+
+### SKB2a — umgesetzt 2026-11-12
+
+| Punkt | Ist |
+|-------|-----|
+| Pakete | `docker.io` **29.1.3** · `docker-compose-v2` **2.40.3** (Ubuntu repos) |
+| Dienst | `docker` **active/enabled** · Socket nur lokal (`/var/run/docker.sock`) |
+| Smoke | `sudo docker run --rm hello-world` OK |
+| Gruppe | `deploy` in `docker` (neue SSH-Session → ggf. ohne sudo) |
+| UFW | unverändert (22/80/443) · **kein** Docker-TCP-API außen |
+| CRM | unberührt (nativ) |
+
+### SKB2b — umgesetzt 2026-11-12
+
+| Punkt | Ist |
+|-------|-----|
+| Pfad | `/opt/searxng/stack` (offizielles Compose aus searxng/searxng `container/`) |
+| Container | `searxng-core` + `searxng-valkey` · `restart: always` |
+| Bind | **`127.0.0.1:8080`** (`SEARXNG_HOST`) · außen zu |
+| Smoke | UI/Suche lokal HTTP 200 · Suche liefert Treffer |
+| JSON-API | in `settings.yml` `formats: html, json` gesetzt — Abnahme JSON ggf. nachziehen |
+| Browser vom PC | Tunnel z. B. `-L 8080:127.0.0.1:8080` zusätzlich zum Ollama-Tunnel |
+
+### SKB2c — umgesetzt 2026-11-12
+
+| Punkt | Ist |
+|-------|-----|
+| Pfad | `/opt/playwright/venv` (Python 3.14 venv) |
+| Paket | Playwright **1.65.1** |
+| Browser | Chromium (Playwright cache unter `~deploy/.cache/ms-playwright/`) |
+| Smoke | headless → `example.com` Titel **Example Domain** |
+| Nutzung | `/opt/playwright/venv/bin/python` · CLI `/opt/playwright/venv/bin/playwright` |
+
+### SKB2d — umgesetzt 2026-11-12
+
+| Punkt | Ist |
+|-------|-----|
+| Image | `docker.openhands.dev/openhands/openhands:1.8` · Container `openhands-app` · `restart unless-stopped` |
+| Netz | **`--network host`** (erreicht Ollama `127.0.0.1:11434` ohne Öffnen von 11434) |
+| UI | Host Port **3000** · UFW default-deny → von außen Timeout · lokal 200 |
+| Daten | `/home/deploy/.openhands` · Helper `/opt/openhands/run-openhands.sh` |
+| PC-Zugang | Tunnel `-L 3000:127.0.0.1:3000` → Browser `http://127.0.0.1:3000` |
+| LLM in UI | Advanced: Base URL `http://127.0.0.1:11434/v1` · Model `openai/qwen2.5-coder:14b` (oder `:32b`) · Key beliebig |
+
+Hinweis: OpenHands will großen Context; ggf. später `OLLAMA_CONTEXT_LENGTH` (eigene Freigabe). Tool-Qualität lokal ≠ Cloud.
+
+### SKB2e — umgesetzt 2026-11-12
+
+| Punkt | Ist |
+|-------|-----|
+| Pfad | `/opt/comfy/ComfyUI` (+ venv) · später Modelle ggf. nach `/mnt/data/comfy` (Disk-Layout noch ohne Mount) |
+| Torch | **2.15.0+cu132** · CUDA **True** · GPU RTX PRO 4000 Blackwell |
+| Dienst | `comfyui.service` · `127.0.0.1:8188` · enable+active |
+| Smoke | lokal HTTP 200 · außen nicht erreichbar |
+| PC | Tunnel `-L 8188:127.0.0.1:8188` → `http://127.0.0.1:8188` |
+
+**SKB2 gesamt ✅** (a–e). Nächste Linie laut Plan: **SKC0** Dev `ganz-om.de` → Ollama (eigene Freigabe).
+
+---
+
+## 9. Verweise
 
 | Datei | Rolle |
 |-------|--------|
@@ -185,3 +299,12 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 | 2026-11-11 | **SKA0-12v** ✅ — vorläufiges Inventar `SUPERKICHEL-INVENTAR-VORLAEUFIG.md` |
 | 2026-11-11 | **SKB0** ✅ — Entscheidung `SUPERKICHEL-SKB0-ENTSCHEIDUNG.md` |
 | 2026-11-12 | **SKB0-Nachtrag** — Docker/SearXNG/Playwright/OpenHands/Comfy = ja (SKB2a–e); Forgejo nein; Cloud-Docs auf master |
+| 2026-11-12 | **SKB1a–d** Mini-IDs · **SKB1a ✅** Ist Ollama öffentlich `0.0.0.0` + UFW 11434 open (§8) |
+| 2026-11-12 | **SKB1b ✅** Bind `127.0.0.1:11434` — außen tot; UFW-Regel noch da (SKB1c) |
+| 2026-11-12 | **SKB1c ✅** UFW 11434 ALLOW entfernt (v4+v6) |
+| 2026-11-12 | **SKB1d ✅** SSH-Tunnel + Cursor `127.0.0.1:11434/v1` · SKB1 abgeschlossen |
+| 2026-11-12 | **SKB2a ✅** docker.io + compose-v2 · hello-world OK · kein API-Port außen |
+| 2026-11-12 | **SKB2b ✅** SearXNG Compose unter `/opt/searxng/stack` · nur `127.0.0.1:8080` |
+| 2026-11-12 | **SKB2c ✅** Playwright 1.65.1 + Chromium unter `/opt/playwright` · Smoke OK |
+| 2026-11-12 | **SKB2d ✅** OpenHands 1.8 host-network · UI :3000 lokal · LLM→Ollama localhost |
+| 2026-11-12 | **SKB2e ✅** ComfyUI 0.45 · Torch CUDA · systemd `127.0.0.1:8188` · SKB2 fertig |

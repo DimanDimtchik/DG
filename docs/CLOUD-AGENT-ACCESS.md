@@ -156,6 +156,16 @@ ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519_hetzner_gex \
 
 (Key-Datei lokal aus dem Secret materialisieren — Inhalt nie committen.) Plan-Kontext: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) Gate SSH.
 
+### Ollama vom PC (SKB1d, nach Härten)
+
+Ollama lauscht nur auf **`127.0.0.1:11434`** am GEX; Port 11434 ist in der UFW **zu**. Vom PC:
+
+```powershell
+ssh -o IdentitiesOnly=yes -i $env:USERPROFILE\.ssh\id_ed25519_hetzner_agent -N -L 11434:127.0.0.1:11434 deploy@2.29.242.28
+```
+
+Cursor Override: Base URL **`http://127.0.0.1:11434/v1`**. Lokal am PC: Datei oft `id_ed25519_hetzner_agent` (Fingerprint `SHA256:v1atqLF/…`, Comment `hetzner-gex45-cursor-agent`).
+
 ---
 
 ## 2. GitHub Secrets (Backup, CI)
