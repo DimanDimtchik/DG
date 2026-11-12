@@ -20,9 +20,19 @@
   var scrollBody = document.querySelector('[data-kichel-body]');
   var messages = document.querySelector('[data-kichel-messages]');
   var protokollLink = document.querySelector('[data-kichel-protokoll]');
+  var superLink = document.querySelector('[data-kichel-super]');
 
   if (!fab || !panel || !form || !input || !scrollBody || !messages) {
     return;
+  }
+
+  function markCloseAfterNavigate() {
+    try {
+      sessionStorage.setItem(STORAGE_MESSAGES, messages.innerHTML);
+      sessionStorage.setItem(STORAGE_CLOSE_NEXT, '1');
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   function scrollToBottom() {
@@ -103,14 +113,10 @@
   }
 
   if (protokollLink) {
-    protokollLink.addEventListener('click', function () {
-      try {
-        sessionStorage.setItem(STORAGE_MESSAGES, messages.innerHTML);
-        sessionStorage.setItem(STORAGE_CLOSE_NEXT, '1');
-      } catch (e) {
-        /* ignore */
-      }
-    });
+    protokollLink.addEventListener('click', markCloseAfterNavigate);
+  }
+  if (superLink) {
+    superLink.addEventListener('click', markCloseAfterNavigate);
   }
 
   messages.addEventListener('click', function (ev) {

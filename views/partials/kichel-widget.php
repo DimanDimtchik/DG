@@ -22,9 +22,12 @@ $kichelIconClass = str_ends_with($kichelIconPath, '.jpg') || str_ends_with($kich
       <strong>Kichel</strong>
       <span>Schnelle Hilfe im CRM</span>
     </div>
-    <?php if ($kichelIsAdmin) : ?>
-      <span class="dg-kichel-panel__admin"><a href="/app?page=kichel-protokoll" data-kichel-protokoll>Protokoll</a></span>
-    <?php endif; ?>
+    <span class="dg-kichel-panel__admin">
+      <a class="dg-kichel-action" href="/app?page=superkihel" data-kichel-super>Super-Kichel</a>
+      <?php if ($kichelIsAdmin) : ?>
+        <a href="/app?page=kichel-protokoll" data-kichel-protokoll>Protokoll</a>
+      <?php endif; ?>
+    </span>
     <button type="button" class="dg-kichel-panel__close" data-kichel-close aria-label="Schließen">&times;</button>
   </div>
   <div class="dg-kichel-panel__body" data-kichel-body>

@@ -39,15 +39,19 @@ Eingeloggte Vollseite für längere Hilfe-Sitzungen: Verlauf, Eingabe, klare Akt
 | **SKU4b** | Seiten-JS: Submit → User-Msg + Fetch + Bot-Text (ohne Links-Extras) | [x] 2026-11-12 · §17 | 🟢 |
 | **SKU4c** | Antwort-Extras: page/action-Links + Follow-up wie Widget | [x] 2026-11-12 · §18 | 🟢 |
 | **SKU4d** | Smoke Dev + Kurznotiz | [x] 2026-11-12 · §19 | 🟢 |
-| **SKU5** | UX-Feinschliff: Laden/Fehler · Link aus Widget-Panel zur Seite | Klartext · kein Jargon | 🟡 | [ ] |
+| **SKU5** | UX-Feinschliff — Kind-IDs unten | SKU5a–d ✅ | 🟢 | [x] 2026-11-12 |
+| **SKU5a** | Ist: Laden/Fehler-Seite + Widget-Kopf (nur lesen) | [x] 2026-11-12 · siehe §21 | 🟢 |
+| **SKU5b** | Seite: Laden/Fehler klarer (Button-Sperre, Texte) | [x] 2026-11-12 · §22 | 🟢 |
+| **SKU5c** | Widget-Link „Super-Kichel“ → `/app?page=superkihel` | [x] 2026-11-12 · §23 | 🟢 |
+| **SKU5d** | Smoke Dev + Kurznotiz | [x] 2026-11-12 · §24 | 🟢 |
 | **SKU6** | Docs/Haken + optional Guard/Scan-Notiz | Plan abgehakt · `TODOS` | 🟢 | [ ] |
 
-**Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → **SKU3a→d** → **SKU4a→d** → SKU5 → SKU6.
+**Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → **SKU3a→d** → **SKU4a→d** → **SKU5a→d** → SKU6.
 
 **Chat-Prompt:**
 
 ```text
-Nur Mini-ID SKU4a laut docs/SUPERKICHEL-UI-PLAN.md.
+Nur Mini-ID SKU5a laut docs/SUPERKICHEL-UI-PLAN.md.
 Untersuche zuerst den Ist-Zustand. Ändere noch nichts.
 Nenne betroffene Dateien/Pfade, geplante Änderungen, Risiken und Prüfungen.
 Warte auf ausdrückliche Freigabe.
@@ -114,7 +118,7 @@ Wiederverwenden wo sinnvoll: bestehende `assets/js/kichel.js` / API-Payload. Kei
 | Protokoll-Route | `index.php`: `$page === 'kichel-protokoll' && RoleResolver::isAdmin` |
 | **Lücke** | `kichel-protokoll` **fehlt** in `MenuRegistry::canAccess` → Gate redirected vermutlich vor dem Admin-Zweig (Widget-Link „Protokoll“) |
 
-**SKU1–4 ✅** · **Nächste ID:** **SKU5** (UX, Freigabe).
+**SKU1–5 ✅** · **Nächste ID:** **SKU6** (Docs-Abschluss, Freigabe).
 
 ---
 
@@ -266,7 +270,71 @@ CSRF/`apiUrl` aus `window.dgKichel` (Widget im Layout). Guard ✅.
 
 **Ist:** Guard ✅ · Dev: `superkihel.js` + View-Script · unauth Seite → 302 `/login` · JS-Asset 200 · API ohne Session → 403. Staff-Frage im Browser manuell: `/app?page=superkihel`.
 
-**Nächste ID:** **SKU5**.
+---
+
+## 20. SKU5 — Zerlegung (2026-11-12, nur Plan)
+
+| Kind | Scope | Nicht |
+|------|--------|-------|
+| **SKU5a** | Ist: `superkihel.js` Laden/Fehler · Widget-Kopf (Protokoll-Link) | kein Code |
+| **SKU5b** | Klarere Lade-/Fehlertexte auf der Seite (ggf. `aria-busy`) | Widget-JS-Rewrite |
+| **SKU5c** | Link im Widget zur Vollseite Super-Kichel (Staff) | Pretty-URL |
+| **SKU5d** | Smoke + Kurznotiz | Docs-Abschluss → **SKU6** |
+
+Optional später (nicht Pflicht SKU5): `kichel-protokoll` in `MenuRegistry::canAccess` + Header-Toolbar auf der Seite.
+
+---
+
+## 21. SKU5a — Ist UX (2026-11-12, nur lesen)
+
+### Seite (`superkihel.js` / View)
+
+| Thema | Ist |
+|-------|-----|
+| Laden | Bot-Bubble „Einen Moment …“ · Submit-Button `disabled` · Textarea bleibt editierbar |
+| API-Fehler | `json.message` oder „Fehler bei der Anfrage.“ + Follow-up Retry |
+| Netz | „Verbindungsfehler — bitte erneut versuchen.“ + Follow-up |
+| Nicht-JSON | `res.json()` wirft → landet im `catch` (Verbindungstext, ungenau) |
+| a11y | kein `aria-busy` / keine Lade-Kennzeichnung am Form |
+
+### Widget-Kopf (`kichel-widget.php`)
+
+| | |
+|--|--|
+| Admin | nackter Link „Protokoll“ → `kichel-protokoll` (canAccess-Lücke §5) |
+| Staff | **kein** Link zur Vollseite Super-Kichel |
+| CSS | `.dg-kichel-panel__admin a` (Feature, kein `.dg-button`) |
+
+### Für SKU5b/c
+
+1. **SKU5b:** Textarea+Form während Fetch sperren · `aria-busy` · ggf. Lade-/Fehlertexte schärfen · JSON-Parse getrennt behandeln  
+2. **SKU5c:** im Widget-Kopf Link „Super-Kichel“ → `/app?page=superkihel` (Staff); Katalog: eher `.dg-kichel-action` oder klarer Textlink in bestehendem Admin-Slot — Guard: keine nackten Aktionslinks in Views-Scan beachten  
+
+---
+
+## 22. SKU5b — Laden/Fehler Seite (2026-11-12)
+
+`superkihel.js`: `setBusy` sperrt Textarea+Senden · `aria-busy` am Form · Lade-Text „Antwort wird vorbereitet …“ · JSON-Parse getrennt · klarere Fehlertexte · Doppel-Submit geblockt. Guard ✅ · Dev aktualisiert.
+
+---
+
+## 23. SKU5c — Widget-Link (2026-11-12)
+
+| Datei | Änderung |
+|-------|----------|
+| `kichel-widget.php` | Staff: Link „Super-Kichel“ (`.dg-kichel-action`) → `/app?page=superkihel` |
+| `kichel.css` | Admin-Leiste Flex/Gap · kompakter Action-Link |
+| `kichel.js` | Panel nach Navigation schließen (wie Protokoll) |
+
+Guard ✅ · Dev aktualisiert.
+
+---
+
+## 24. SKU5d — Smoke (2026-11-12)
+
+**Ist:** Guard ✅ · Dev: Widget-Link `data-kichel-super` · `setBusy` in `superkihel.js` · CSS Admin-Flex · Assets `kichel.css`/`kichel.js`/`superkihel.js` HTTP 200 · unauth Seite → 302 `/login`. Staff manuell: FAB → „Super-Kichel“ → Vollseite.
+
+**Nächste ID:** **SKU6**.
 
 ---
 
@@ -291,3 +359,8 @@ CSRF/`apiUrl` aus `window.dgKichel` (Widget im Layout). Guard ✅.
 | 2026-11-12 | **SKU4b ✅** Seiten-Fetch + Antworttext |
 | 2026-11-12 | **SKU4c ✅** page/action-Links + Follow-up |
 | 2026-11-12 | **SKU4d ✅** Smoke · SKU4 fertig |
+| 2026-11-12 | **SKU5** in **SKU5a–d** zerlegt (Ist / Laden / Widget-Link / Smoke) |
+| 2026-11-12 | **SKU5a ✅** UX-Ist Seite+Widget-Kopf |
+| 2026-11-12 | **SKU5b ✅** Busy/Fehlertexte Seite |
+| 2026-11-12 | **SKU5c ✅** Widget-Link zur Vollseite |
+| 2026-11-12 | **SKU5d ✅** Smoke · SKU5 fertig |

@@ -10,6 +10,9 @@
     return;
   }
 
+  var submitBtn = form.querySelector('button[type="submit"]');
+  var busy = false;
+
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -17,6 +20,15 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function setBusy(isBusy) {
+    busy = !!isBusy;
+    form.setAttribute('aria-busy', busy ? 'true' : 'false');
+    input.disabled = busy;
+    if (submitBtn) {
+      submitBtn.disabled = busy;
+    }
   }
 
   function appendMessage(text, role) {
@@ -97,6 +109,10 @@
     appendHtmlSection('dg-kichel-followup', html);
   }
 
+  function showRetryPrompt() {
+    renderFollowUp('Soll ich es noch einmal versuchen?');
+  }
+
   messages.addEventListener('click', function (ev) {
     var feedbackBtn = ev.target.closest('[data-superkihel-feedback]');
     if (!feedbackBtn) {
@@ -113,13 +129,17 @@
     if (feedbackBtn.getAttribute('data-superkihel-feedback') === 'yes') {
       appendMessage('Freut mich! Bei weiteren Fragen einfach melden.', 'bot');
     } else {
-      appendMessage('Alles klar — formuliere die Frage gerne noch einmal.', 'bot');
+      appendMessage('Alles klar — formulieren Sie die Frage gerne noch einmal.', 'bot');
       input.focus();
     }
   });
 
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
+    if (busy) {
+      return;
+    }
+
     var query = (input.value || '').trim();
     if (!query) {
       return;
@@ -127,13 +147,9 @@
 
     appendMessage(query, 'user');
     input.value = '';
+    setBusy(true);
 
-    var submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-    }
-
-    var loading = appendMessage('Einen Moment …', 'bot');
+    var loading = appendMessage('Antwort wird vorbereitet …', 'bot');
 
     var fd = new FormData();
     fd.append('_csrf', cfg.csrf);
@@ -141,16 +157,34 @@
 
     fetch(cfg.apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
       .then(function (res) {
-        return res.json();
+        return res.text().then(function (raw) {
+          var json = null;
+          if (raw) {
+            try {
+              json = JSON.parse(raw);
+            } catch (e) {
+              json = null;
+            }
+          }
+          return { ok: res.ok, status: res.status, json: json };
+        });
       })
-      .then(function (json) {
+      .then(function (result) {
         loading.remove();
-        if (!json.success) {
-          appendMessage(json.message || 'Fehler bei der Anfrage.', 'bot');
-          renderFollowUp('Soll ich es noch einmal versuchen?');
+        if (!result.json) {
+          appendMessage('Die Antwort war unverständlich. Bitte versuchen Sie es erneut.', 'bot');
+          showRetryPrompt();
           return;
         }
-        var data = json.data || {};
+        if (!result.json.success) {
+          appendMessage(
+            result.json.message || 'Die Anfrage konnte nicht beantwortet werden.',
+            'bot'
+          );
+          showRetryPrompt();
+          return;
+        }
+        var data = result.json.data || {};
         appendMessage(data.answer || 'Keine Antwort.', 'bot');
         renderPageLinks(data.page_links || []);
         renderActionLinks(data.action_links || []);
@@ -158,13 +192,11 @@
       })
       .catch(function () {
         loading.remove();
-        appendMessage('Verbindungsfehler — bitte erneut versuchen.', 'bot');
-        renderFollowUp('Soll ich es noch einmal versuchen?');
+        appendMessage('Keine Verbindung zum Server. Bitte prüfen Sie das Netz und versuchen Sie es erneut.', 'bot');
+        showRetryPrompt();
       })
       .finally(function () {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-        }
+        setBusy(false);
         input.focus();
       });
   });

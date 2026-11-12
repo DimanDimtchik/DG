@@ -143,7 +143,7 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.** CRM bleibt nati
 3. **SKD0** Docs-Feinschliff / oder Super-Kichel-**UI**-Mini-IDs (Seite `superkihel`)  
 4. TLS für Ollama-Proxy mit **PB2c4** (statt HTTP:80)  
 
-**Nächste Freigabe (UI):** [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) — **SKU5** (SKU0–4 ✅).
+**Nächste Freigabe (UI):** [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) — **SKU6** (SKU0–5 ✅).
 
 **Nicht** parallel zu einer offenen `PB*`-Serverarbeit dieselben Dienste umbauen, ohne das in der Freigabe zu sagen.
 

@@ -16,7 +16,7 @@
       <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Schreiben Sie Ihre Frage unten und senden Sie ab.</div>
     </div>
 
-    <form class="dg-form" data-superkihel-form method="post" action="">
+    <form class="dg-form" data-superkihel-form method="post" action="" aria-busy="false">
       <div class="dg-field">
         <label for="superkihel-query">Ihre Frage</label>
         <textarea id="superkihel-query" name="query" rows="3" maxlength="500" placeholder="Frage stellen …" autocomplete="off"></textarea>

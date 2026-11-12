@@ -294,17 +294,25 @@
   font-size: 0.85rem;
 }
 
-.dg-kichel-panel__admin {
+.dg-kichel-panel__head > .dg-kichel-panel__admin {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin-left: auto;
   flex-shrink: 0;
   font-size: 0.7rem;
+}
+
+.dg-kichel-panel__admin .dg-kichel-action {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
 }
 
 .dg-kichel-messages {
   min-height: 0;
 }
 
-.dg-kichel-panel__admin a {
+.dg-kichel-panel__admin a:not(.dg-kichel-action) {
   color: var(--dg-text-muted);
 }
 
