@@ -168,6 +168,16 @@ Cursor Override: Base URL **`http://127.0.0.1:11434/v1`**. Lokal am PC: Datei of
 
 **CRM → Ollama (SKC1 ✅):** Dev nutzt HTTPS-Hostname **`llm.ganz-soft.de`** (path-secret Proxy, LE-Cert). Hostname/IP öffentlich ok; **Path-Token und volle Base-URL nie** in Git/Chat. Cursor-Tunnel oben bleibt der PC-Zugang zu `:11434/v1`.
 
+### OpenHands vom PC (SKP0 / SKB2d)
+
+OpenHands-UI nur lokal auf GEX **`:3000`** (UFW zu). Vom PC parallel zum Ollama-Tunnel:
+
+```powershell
+ssh -o IdentitiesOnly=yes -i $env:USERPROFILE\.ssh\id_ed25519_hetzner_agent -N -L 3000:127.0.0.1:3000 -L 11434:127.0.0.1:11434 deploy@2.29.242.28
+```
+
+Browser: `http://127.0.0.1:3000` · Einstieg auch über Dev **`/superkihel`** → „Agent öffnen“. LLM in OpenHands: Base `http://127.0.0.1:11434/v1`, Modell z. B. `openai/qwen2.5-coder:14b`. Plan: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md).
+
 ---
 
 ## 2. GitHub Secrets (Backup, CI)

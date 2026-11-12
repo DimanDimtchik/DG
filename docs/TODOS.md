@@ -4,11 +4,11 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** **SC2** Locals nur Instanz · Login-User prüfen · oder **PB4a** nur mit ausdrücklicher Freigabe. **PB1–PB3 ✅**. AVV ✅.
+**Nächste Session:** Super-Kichel **SKP1d**/ **SKP1e** (Smoke bzw. Button → `https://agent.ganz-soft.de`). **SKP0 ✅** · **SKP1a–c ✅**. Phase-B Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
 
-**Ops-Merkposten (GEX45 Ollama):** **SKB1 ✅** — Ollama nur `127.0.0.1:11434`, UFW 11434 zu. Cursor: SSH-Tunnel + Override **`http://127.0.0.1:11434/v1`**. **SKC1 ✅** CRM-Proxy HTTPS **`llm.ganz-soft.de`** (Path-Token nicht in Git). Modelle `qwen2.5-coder:14b` / `32b` / `llama3.1:8b`. Details: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md).
+**Ops-Merkposten (GEX45):** Ollama **SKB1 ✅** + CRM-Proxy **SKC1 ✅** (`llm.ganz-soft.de`). OpenHands **SKP0 ✅**: Tunnel `-L 3000` + `-L 11434` · `/superkihel` → Agent. Details: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) · [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md).
 
-**Weg A (Desktop-Agent):** Mini-IDs **KA0–KA6** → [`KI-AGENT-WEG-A-PLAN.md`](KI-AGENT-WEG-A-PLAN.md). Ohne A bleiben Qwen/Llama als Chat nutzbar; Web-Agent erst ab KA1/KA2.
+**Weg A (Desktop-Agent):** optional **KA0–KA6** → [`KI-AGENT-WEG-A-PLAN.md`](KI-AGENT-WEG-A-PLAN.md). Primär jetzt Super-Kichel + OpenHands (SKP0).
 
 ---
 
@@ -22,9 +22,9 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
-| Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) | **SKB1–2/SKC0 ✅** · UI **SKU0–8 ✅** · **SKC1a–d ✅** · **SKD0 ✅** |
+| Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · Agent: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) | **SKU/SKC/SKD/SKP0 ✅** · **SKP1a–c ✅** (`https://agent.ganz-soft.de`) · nächste **SKP1d/e** |
 
-**Nächster Block:** Shared-Core **SC2** laut [`SHARED-CORE-REST-PLAN.md`](SHARED-CORE-REST-PLAN.md). Phase-B Prep **PB3 ✅** (Cutover/Backup/Mail-Docs). Cutover erst **PB4** mit Freigabe. Probe HTTPS ✅. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
+**Nächster Block:** **SKP1e** empfohlen (CRM-Button auf HTTPS-Agent) · oder **SKP1d** Feinschliff. Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 

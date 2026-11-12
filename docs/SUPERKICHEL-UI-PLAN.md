@@ -341,7 +341,7 @@ Guard ✅ · Dev aktualisiert.
 
 **Geliefert:** Staff-Seite `/app?page=superkihel` · Menü · API wie Widget · UX Busy/Fehler · Widget-Link zur Vollseite.
 
-**Außerhalb SKU (Stand):** TLS Ollama-Proxy **SKC1 ✅** · Docs **SKD0 ✅** · CRM-Probe-HTTPS **PB2c ✅** (`crm-gex…`) · GEX-Cutover weiter **PB4**.
+**Außerhalb SKU (Stand):** TLS Ollama **SKC1 ✅** · Docs **SKD0 ✅** · CRM-Probe **PB2c ✅** · Programmieren **SKP0 ✅** (OpenHands-Link) · Cutover **PB4** geparkt.
 
 ---
 

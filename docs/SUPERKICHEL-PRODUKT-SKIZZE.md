@@ -69,7 +69,8 @@ Stand: **2026-11-11** · Dev-Ziel: **`ganz-om.de`** (eingeloggt) · Host heute: 
 | Pretty-URL `/superkihel` vs. nur `page=superkihel` | **SKU8 ✅** — `/superkihel` primär |
 | Eigenes Menü-Item „Super-Kichel“ | offen |
 | Gemeinsames vs. separates Protokoll | offen |
-| SearXNG o. Ä. als Werkzeug hinter der Seite | erst nach SKB0 |
+| SearXNG o. Ä. als Werkzeug hinter der Seite | SKB2 ✅ · Einbindung später |
+| Agentisches Programmieren (Cursor-ähnlich) | **SKP0 ✅** — [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md): `/superkihel` → OpenHands (Tunnel); SKP1/2 optional |
 
 ---
 
