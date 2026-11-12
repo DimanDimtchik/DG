@@ -4,7 +4,7 @@
 > Scope: [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) (SKC0a) · Server/Ollama: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) · Form: [`UI-FORM-REGELN.md`](UI-FORM-REGELN.md)  
 > Guard: `php bin/ui-form-spacing-selftest.php`
 
-Stand: **2026-11-12** · Dev: **`ganz-om.de`** · Seite: `/app?page=superkihel` · Label UI: **Super-Kichel** (keine Plan-Codes in Endnutzer-Texten)
+Stand: **2026-11-12** · Dev: **`ganz-om.de`** · Seite: **`/superkihel`** (intern `/app?page=superkihel`) · Label UI: **Super-Kichel** (keine Plan-Codes in Endnutzer-Texten)
 
 **Voraussetzungen:** SKC0a ✅ · SKB1–2 ✅ · SKC0 ✅ (Ollama auf Dev). Widget bleibt.
 
@@ -44,17 +44,16 @@ Eingeloggte Vollseite für längere Hilfe-Sitzungen: Verlauf, Eingabe, klare Akt
 | **SKU5b** | Seite: Laden/Fehler klarer (Button-Sperre, Texte) | [x] 2026-11-12 · §22 | 🟢 |
 | **SKU5c** | Widget-Link „Super-Kichel“ → `/app?page=superkihel` | [x] 2026-11-12 · §23 | 🟢 |
 | **SKU5d** | Smoke Dev + Kurznotiz | [x] 2026-11-12 · §24 | 🟢 |
-| **SKU6** | Docs/Haken + optional Guard/Scan-Notiz | Plan abgehakt · `TODOS` | 🟢 | [ ] |
+| **SKU6** | Docs/Haken + optional Guard/Scan-Notiz | [x] 2026-11-12 · §25 · UI-Plan fertig | 🟢 |
+| **SKU7** | `kichel-protokoll` canAccess + Header-Link Admin | [x] 2026-11-12 · §26 | 🟢 |
+| **SKU8** | Pretty-URL `/superkihel` | [x] 2026-11-12 · §27 | 🟢 |
 
 **Reihenfolge:** SKU0 → **SKU1a→d** → SKU2 → **SKU3a→d** → **SKU4a→d** → **SKU5a→d** → SKU6.
 
 **Chat-Prompt:**
 
 ```text
-Nur Mini-ID SKU5a laut docs/SUPERKICHEL-UI-PLAN.md.
-Untersuche zuerst den Ist-Zustand. Ändere noch nichts.
-Nenne betroffene Dateien/Pfade, geplante Änderungen, Risiken und Prüfungen.
-Warte auf ausdrückliche Freigabe.
+(UI-Plan SKU0–6 abgeschlossen — neue Mini-IDs nur bei Folgearbeit.)
 ```
 
 ---
@@ -83,10 +82,10 @@ Wiederverwenden wo sinnvoll: bestehende `assets/js/kichel.js` / API-Payload. Kei
 | Thema | In SKU*? | Später |
 |-------|----------|--------|
 | FAB-Widget | unverändert | — |
-| Pretty-URL `/superkihel` | nein | eigene ID |
+| Pretty-URL `/superkihel` | **SKU8 ✅** | — |
 | SearXNG/OpenHands in UI | nein | nach Bedarf |
 | Eigenes Protokoll | nein | Entscheidung offen |
-| TLS Ollama-Proxy | nein | **PB2c4** |
+| TLS Ollama-Proxy | nein | **SKC1 ✅** (GEX-Plan, `llm.ganz-soft.de`) |
 
 ---
 
@@ -118,7 +117,7 @@ Wiederverwenden wo sinnvoll: bestehende `assets/js/kichel.js` / API-Payload. Kei
 | Protokoll-Route | `index.php`: `$page === 'kichel-protokoll' && RoleResolver::isAdmin` |
 | **Lücke** | `kichel-protokoll` **fehlt** in `MenuRegistry::canAccess` → Gate redirected vermutlich vor dem Admin-Zweig (Widget-Link „Protokoll“) |
 
-**SKU1–5 ✅** · **Nächste ID:** **SKU6** (Docs-Abschluss, Freigabe).
+**SKU0–8 ✅** — inkl. Pretty-URL (2026-11-12).
 
 ---
 
@@ -334,7 +333,41 @@ Guard ✅ · Dev aktualisiert.
 
 **Ist:** Guard ✅ · Dev: Widget-Link `data-kichel-super` · `setBusy` in `superkihel.js` · CSS Admin-Flex · Assets `kichel.css`/`kichel.js`/`superkihel.js` HTTP 200 · unauth Seite → 302 `/login`. Staff manuell: FAB → „Super-Kichel“ → Vollseite.
 
-**Nächste ID:** **SKU6**.
+---
+
+## 25. SKU6 — Docs-Abschluss (2026-11-12)
+
+**UI-Plan SKU0–6 ✅.** Guard `ui-form-spacing-selftest.php` ✅ · `ui-crm-scan.php`: keine nackten Aktionslinks / kein Plan-Jargon in Views (unrelated Checkbox-Hinweise in anderen Modulen bleiben).
+
+**Geliefert:** Staff-Seite `/app?page=superkihel` · Menü · API wie Widget · UX Busy/Fehler · Widget-Link zur Vollseite.
+
+**Außerhalb SKU (Stand):** TLS Ollama-Proxy **SKC1 ✅** · Docs **SKD0 ✅** · CRM-Probe-HTTPS **PB2c ✅** (`crm-gex…`) · GEX-Cutover weiter **PB4**.
+
+---
+
+## 26. SKU7 — Protokoll canAccess + Header (2026-11-12)
+
+| Datei | Änderung |
+|-------|----------|
+| `MenuRegistry::canAccess` | `kichel-protokoll` → `isAdmin` (schließt Lücke §5) |
+| `index.php` | Zweig nutzt `MenuRegistry::canAccess` |
+| `views/modules/superkihel.php` | Admin: Toolbar „Hilfe-Protokoll“ (`.dg-button`) |
+
+Guard ✅ · Dev aktualisiert. Widget-Link „Protokoll“ funktioniert damit wieder über das Gate.
+
+---
+
+## 27. SKU8 — Pretty-URL `/superkihel` (2026-11-12)
+
+**Konflikt:** Auf Dev existierte private CMS-Seite `dg_website_pages` id=15 Slug `superkihel` („Super Kihel“) → bei Login hätte die Website den CRM-Pfad geschluckt. Slug auf Dev umbenannt zu `superkihel-cms-alt` (privat).
+
+| Datei | Änderung |
+|-------|----------|
+| `index.php` | `/superkihel` → Staff-Check → intern `$path=/app` + `page=superkihel` · unauth → `/login` |
+| `MenuRegistry` | Menü-`href` `/superkihel` |
+| `kichel-widget.php` | Link → `/superkihel` |
+
+`/app?page=superkihel` bleibt gültig. Guard ✅ · unauth Smoke: 302 `/login`.
 
 ---
 
@@ -364,3 +397,6 @@ Guard ✅ · Dev aktualisiert.
 | 2026-11-12 | **SKU5b ✅** Busy/Fehlertexte Seite |
 | 2026-11-12 | **SKU5c ✅** Widget-Link zur Vollseite |
 | 2026-11-12 | **SKU5d ✅** Smoke · SKU5 fertig |
+| 2026-11-12 | **SKU6 ✅** Docs/Guard-Notiz · UI-Plan fertig |
+| 2026-11-12 | **SKU7 ✅** Protokoll canAccess + Header-Link |
+| 2026-11-12 | **SKU8 ✅** Pretty-URL `/superkihel` · CMS-Slug-Konflikt Dev |

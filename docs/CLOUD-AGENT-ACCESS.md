@@ -166,6 +166,8 @@ ssh -o IdentitiesOnly=yes -i $env:USERPROFILE\.ssh\id_ed25519_hetzner_agent -N -
 
 Cursor Override: Base URL **`http://127.0.0.1:11434/v1`**. Lokal am PC: Datei oft `id_ed25519_hetzner_agent` (Fingerprint `SHA256:v1atqLF/…`, Comment `hetzner-gex45-cursor-agent`).
 
+**CRM → Ollama (SKC1 ✅):** Dev nutzt HTTPS-Hostname **`llm.ganz-soft.de`** (path-secret Proxy, LE-Cert). Hostname/IP öffentlich ok; **Path-Token und volle Base-URL nie** in Git/Chat. Cursor-Tunnel oben bleibt der PC-Zugang zu `:11434/v1`.
+
 ---
 
 ## 2. GitHub Secrets (Backup, CI)

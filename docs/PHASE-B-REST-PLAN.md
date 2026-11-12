@@ -3,7 +3,7 @@
 > **Eine Chat-Session = eine Mini-ID.**  
 > Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) §B · Hardware: [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** · **PB1 ✅**
+Stand: **2026-11-12** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202**) · Standort: **Finnland, HEL1** · OS: **Ubuntu 26.04 LTS** · IPv4 **`2.29.242.28`** · IPv6 **`2a01:4f9:3120:23ae::2`** · **PB1 ✅** · **PB2c ✅** (Probe HTTPS `crm-gex.ganz-soft.de`)
 
 ---
 
@@ -71,8 +71,61 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 |----|---------|-------|--------|
 | PB2a | nginx + PHP 8.2+ FPM + MariaDB 10.11+ + certbot (Test-Domain oder IP) | 🔴 | [~] 2026-11-11 Pakete+Ordner+sudo ✅ (PHP 8.5.4 · nginx · MariaDB · certbot Paket) · vHost/TLS/Probe offen |
 | PB2b | Deploy-Pipeline Probe laut [`DEPLOY-PIPELINE-PREP.md`](DEPLOY-PIPELINE-PREP.md) (ohne Produktiv-DNS) | 🔴 | [x] 2026-11-11 tar→`/var/www/dg-crm/shared` (~3697 Dateien; kein rsync lokal; ohne DNS) |
-| PB2c | Leere/Test-Instanz erreichbar HTTPS · Smoke `/login` | 🔴 | [~] PB2c1–c3 ✅ 2026-11-11 · DB `dg_ganz_om` + Migrations · `/login` 200 HTTP · Locals transitional in `shared/config` (SC2-Wiring fehlt) · PB2c4 TLS offen |
+| PB2c | Leere/Test-Instanz erreichbar HTTPS · Smoke `/login` | 🔴 | [x] 2026-11-12 · PB2c1–c4 ✅ · Probe `https://crm-gex.ganz-soft.de/login` |
+| **PB2c4a** | Ist: CRM-vHost nur :80 · DNS `ganz-om.de`→All-Inkl · kein CRM-Cert — **nur lesen** | 🟢 | [x] 2026-11-12 · siehe § PB2c4 |
+| **PB2c4b** | Hostname `crm-gex.ganz-soft.de` · KAS A → GEX `2.29.242.28` | 🔴 | [x] 2026-11-12 · Auth-NS A=GEX |
+| **PB2c4c** | nginx `server_name` + certbot LE für Probe-Host | 🔴 | [x] 2026-11-12 · LE bis 2027-02-10 |
+| **PB2c4d** | Smoke HTTPS `/login` · Docs/Haken · PB2c abschließen | 🔴🟡 | [x] 2026-11-12 |
 | PB2d | Doc-Haken PB2 in IQ-STROM | 🟢 | [ ] |
+
+> **Abgrenzung:** Ollama-Proxy-TLS = **SKC1** (`llm.ganz-soft.de`) — fertig. **PB2c4** = HTTPS für **CRM-Probe**-vHost — kein Cutover `ganz-om.de` (**PB4**).
+
+### PB2c4 — Zerlegung CRM-Probe HTTPS (2026-11-12)
+
+**Warum eigener Hostname:** Öffentliches DNS `ganz-om.de` / `www` → All-Inkl. LE HTTP-01 auf GEX für diesen Namen trifft All-Inkl. Probe-Host analog SKC1: **`crm-gex.ganz-soft.de`**.
+
+#### PB2c4a — Ist (2026-11-12, nur lesen) ✅
+
+| Punkt | Befund |
+|-------|--------|
+| **Ports GEX** | `:80` + `:443` (443 nur durch **`llm.ganz-soft.de`**, SKC1) |
+| **CRM-vHost** | `sites-enabled/ganz-om.de` · `listen 80` only · `server_name ganz-om.de www.ganz-om.de` · root `instances/ganz-om.de/public` |
+| **CRM-Cert** | **kein** `/etc/letsencrypt/live/ganz-om.de` · live nur `llm.ganz-soft.de` |
+| **Smoke** | `Host: ganz-om.de` HTTP `/login` → **200** · HTTPS gleicher Host → **404** (kein CRM-SSL-Server) |
+| **DNS öffentlich** | `ganz-om.de` / `www` → **85.13.168.110** (All-Inkl) · `crm-gex.ganz-soft.de` noch Catch-all/CNAME All-Inkl (kein A→GEX) |
+| **Instanz** | `instances/ganz-om.de` da · `config/database.local.php` · **kein** `app.local.php` in Instanz/shared (SC2-Wiring weiter offen) |
+| **Nicht** | Certbot · DNS ändern · Cutover (**PB4**) · Ollama-vHost |
+
+**Folge:** **PB2c4b** — KAS A `crm-gex` → `2.29.242.28` (Apex/`*` unverändert).
+
+#### PB2c4b — DNS (2026-11-12) ✅
+
+| Punkt | Stand |
+|-------|--------|
+| **KAS** | A `crm-gex` → `2.29.242.28` (neben `llm`; Apex All-Inkl) |
+| **Auth-NS** | `ns5`/`ns6.kasserver.com` → **2.29.242.28** |
+| **Nicht** | Cutover `ganz-om.de` |
+
+#### PB2c4c — Cert (2026-11-12) ✅
+
+| Punkt | Stand |
+|-------|--------|
+| **nginx** | `server_name` … `crm-gex.ganz-soft.de` am CRM-vHost |
+| **Cert** | LE `crm-gex.ganz-soft.de` · bis **2027-02-10** · Auto-Renew · getrennt von `llm…` |
+| **Vorab-Smoke** | `https://crm-gex.ganz-soft.de/login` → **200** + Anmeldeformular (formal **PB2c4d**) |
+
+#### PB2c4d — Smoke + Haken (2026-11-12) ✅
+
+| Check | Ergebnis |
+|-------|----------|
+| DNS Auth | `crm-gex.ganz-soft.de` → `2.29.242.28` |
+| HTTPS `/login` | **200** · TLS verify OK · Formular (Passwort + „Anmelden“) |
+| HTTPS `/` | **302** → `/login` |
+| HTTP `/login` | **301** → HTTPS |
+| Certs live | `crm-gex.ganz-soft.de` · `llm.ganz-soft.de` |
+| **Nicht** | Cutover `ganz-om.de` (**PB4**) · SC2 Locals · Login-User-Inhalt |
+
+**PB2c ✅.** Offen in PB2: **PB2d** (IQ-STROM Doc-Haken) · parallel SC2.
 
 ### PB3 — Cutover-Vorbereitung (Docs + Termine)
 
@@ -107,8 +160,7 @@ Stand: **2026-11-11** · Zielserver: **GEX45-1** (Bestellnr. **B20261107-3544202
 
 **Hinweis Ops:** Hetzner-Support für Finnland HEL1 nur **Englisch**.
 
-**Nächster Chat (erst nach Lieferung):**  
-`Nur Mini-ID PB1a laut docs/PHASE-B-REST-PLAN.md. Primäre IPv4 in SERVER-MIGRATION.md. Kein Cutover.`
+**Nächste Freigabe:** **PB2d** (IQ-STROM Doc-Haken) oder Shared-Core **SC2** · kein Cutover (**PB4**).
 
 ---
 

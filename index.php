@@ -611,6 +611,21 @@ if ($path === '/stempeluhr' || str_starts_with($path, '/stempeluhr/')) {
     exit;
 }
 
+// Super-Kichel Pretty-URL — vor Website-Slug (CMS-Seite gleichen Slugs nicht nehmen)
+if ($path === '/superkihel') {
+    $superkihelUser = AuthService::user();
+    if (!$superkihelUser) {
+        header('Location: /login', true, 302);
+        exit;
+    }
+    if (!MenuRegistry::canAccess($superkihelUser, 'superkihel')) {
+        header('Location: ' . RoleResolver::homePath($superkihelUser), true, 302);
+        exit;
+    }
+    $_GET['page'] = 'superkihel';
+    $path = '/app';
+}
+
 switch ($path) {
     case '/':
         if (AuthService::check()) {
@@ -10347,7 +10362,7 @@ switch ($path) {
         } elseif ($page === 'website-seiten' || $page === 'website-seite-form' || $page === 'website-formulare' || $page === 'website-formular-form' || $page === 'website-formular-inbox' || $page === 'website-statistik' || $page === 'website-menu' || $page === 'website-chrome' || $page === 'website-design') {
             header('Location: /app', true, 302);
             exit;
-        } elseif ($page === 'kichel-protokoll' && RoleResolver::isAdmin($user)) {
+        } elseif ($page === 'kichel-protokoll' && MenuRegistry::canAccess($user, 'kichel-protokoll')) {
             $kichelListPage = ListPagination::parsePage($_GET['paged'] ?? null);
             $kichelListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
             $kichelLogPaged = KichelProtocolRepository::paginate($kichelListPage, $kichelListPerPage);

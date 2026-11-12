@@ -9,7 +9,7 @@ final class MenuRegistry
     /**
      * Hauptmodule für die Seitenleiste „Navigation“ (ohne Dashboard/Einstellungen/Sektionen).
      *
-     * @return list<array{slug: string, label: string, icon: string}>
+     * @return list<array{slug: string, label: string, icon: string, href?: string}>
      */
     public static function modules(User $user): array
     {
@@ -28,7 +28,12 @@ final class MenuRegistry
         }
         // „Post“ / E-Mail-Postfächer → kommunikationSection()
         if (RoleResolver::isStaff($user)) {
-            $items[] = ['slug' => 'superkihel', 'label' => 'Super-Kichel', 'icon' => 'document'];
+            $items[] = [
+                'slug' => 'superkihel',
+                'label' => 'Super-Kichel',
+                'icon' => 'document',
+                'href' => '/superkihel',
+            ];
         }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
@@ -297,7 +302,7 @@ final class MenuRegistry
                 'slug' => $module['slug'],
                 'label' => $module['label'],
                 'icon' => $module['icon'],
-                'href' => '/app?page=' . $module['slug'],
+                'href' => (string) ($module['href'] ?? ('/app?page=' . $module['slug'])),
             ];
         }
 
@@ -1009,6 +1014,10 @@ final class MenuRegistry
         }
 
         if ($slug === 'bilder') {
+            return RoleResolver::isAdmin($user);
+        }
+
+        if ($slug === 'kichel-protokoll') {
             return RoleResolver::isAdmin($user);
         }
 

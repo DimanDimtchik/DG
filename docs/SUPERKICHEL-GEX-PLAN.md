@@ -89,7 +89,14 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | **SKC0c** | Weg All-Inkl→GEX-Ollama klären + Config setzen | [x] 2026-11-12 · siehe §8 | 🔴 |
 | **SKC0d** | Smoke Kichel/Super-Kichel mit Ollama auf Dev | [x] 2026-11-12 · siehe §8 | 🔴 |
 | **SKC0e** | Docs/Haken nachziehen | [x] 2026-11-12 | 🟢 |
-| SKD0 | Docs/Haken nachziehen | [ ] | 🟢 |
+| **SKD0** | Docs/Haken nachziehen (nach SKC1) | [x] 2026-11-12 · siehe §9 | 🟢 |
+| **SKC1** | TLS für Ollama-Proxy (HTTPS) — Kind-IDs a–d | SKC1a–d | ✅ |
+| **SKC1a** | Ist: nginx:80 Proxy · kein :443 · Domain-DNS-Konflikt — **nur lesen** | §9 | ✅ | [x] |
+| **SKC1b** | Hostname `llm.ganz-soft.de` + DNS A → GEX `2.29.242.28` | DNS greift | ✅ | [x] |
+| **SKC1c** | certbot + nginx `listen 443 ssl` · Proxy nur HTTPS | curl HTTPS version OK | ✅ | [x] |
+| **SKC1d** | Dev `kichel.local.php` URL auf HTTPS · Smoke · Docs | Phrase/API OK · Haken | ✅ | [x] |
+
+> **Hinweis ID:** Phase-B-**PB2c4** = TLS für **CRM-Probe-Instanz** auf GEX. Ollama-Proxy-TLS = **SKC1** (hier), nicht denselben PB2c4-Schritt vermischen.
 
 ---
 
@@ -138,12 +145,11 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.** CRM bleibt nati
 
 ## 6. Empfohlene Reihenfolge
 
-1. **SKB0 ✅** · **SKB1 ✅** · **SKB2a–e ✅** · **SKC0 ✅** (2026-11-12)  
+1. **SKB0 ✅** · **SKB1 ✅** · **SKB2a–e ✅** · **SKC0 ✅** · **SKU0–8 ✅** · **SKC1a–d ✅** · **SKD0 ✅** (2026-11-12)  
 2. optional **SKA0-1…12** Live-Inventar (Bestätigung)  
-3. **SKD0** Docs-Feinschliff / oder Super-Kichel-**UI**-Mini-IDs (Seite `superkihel`)  
-4. TLS für Ollama-Proxy mit **PB2c4** (statt HTTP:80)  
+3. CRM-Probe-HTTPS = **PB2c4** (Phase B, getrennt von Ollama-TLS)  
 
-**Nächste Freigabe (UI):** [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) — **SKU6** (SKU0–5 ✅).
+**Stand:** UI + Ollama-HTTPS-Proxy + Docs-Haken fertig. Phase-B **PB2c ✅** (CRM-Probe HTTPS `crm-gex.ganz-soft.de`) — getrennt von SKC1 `llm…`.
 
 **Nicht** parallel zu einer offenen `PB*`-Serverarbeit dieselben Dienste umbauen, ohne das in der Freigabe zu sagen.
 
@@ -286,8 +292,8 @@ Pfad: `/www/htdocs/w0217246/ganz-om.de`
 
 ### SKC0c — umgesetzt 2026-11-12
 
-**Entscheidung Weg:** All-Inkl PHP → **HTTP nginx Reverse-Proxy auf GEX:80** → `127.0.0.1:11434`.  
-11434 bleibt zu. SSH outbound All-Inkl→GEX: kein Key. HTTPS:443 auf GEX noch nicht (PB2c4).
+**Entscheidung Weg:** All-Inkl PHP → nginx Reverse-Proxy auf GEX → `127.0.0.1:11434`.  
+11434 bleibt zu. SSH outbound All-Inkl→GEX: kein Key. **Nachzug SKC1 ✅:** Proxy unter HTTPS `llm.ganz-soft.de` (CRM-Probe-HTTPS weiter **PB2c4**).
 
 | Punkt | Ist |
 |-------|-----|
@@ -311,11 +317,75 @@ CLI-Smoke auf Dev `/www/htdocs/w0217246/ganz-om.de`:
 
 Docs nachgezogen: Plan-Haken SKC0b–e · `TODOS.md` · `KICHEL-PHASE2.md` (Ops-Hinweis Proxy, ohne Secret).
 
-**SKC0 gesamt ✅** (a Skizze · b–e Anbindung Dev). Offen später: Super-Kichel-**Seite** UI · TLS für Proxy (PB2c4) · SKD0.
+**SKC0 gesamt ✅** (a Skizze · b–e Anbindung Dev). **SKU0–8 ✅**. **SKC1a–d ✅**. **SKD0 ✅**. Offen: Phase-B **PB2c4** · optional SKA0 Live-Inventar.
 
 ---
 
-## 9. Verweise
+## 9. SKC1 — Zerlegung TLS Ollama-Proxy (2026-11-12)
+
+**Warum zerlegen (nicht sofort ausführen):** Öffentliches DNS `ganz-om.de` zeigt auf **All-Inkl**, nicht GEX. Let's Encrypt HTTP-01 für `ganz-om.de` würde All-Inkl treffen → **eigenen Hostnamen** mit A-Record → `2.29.242.28` nötig.
+
+| Kind | Scope | Nicht | Status |
+|------|--------|-------|--------|
+| **SKC1a** | Ist Proxy/Ports/DNS dokumentieren | kein Cert | ✅ |
+| **SKC1b** | Hostname + DNS A → GEX | Cert erst danach | ✅ |
+| **SKC1c** | certbot + 443 + optional HTTP→HTTPS nur Proxy-Pfad | CRM-Cutover | ✅ |
+| **SKC1d** | `kichel.local.php` HTTPS-URL · Smoke Dev · Docs | Token in Git | ✅ |
+
+### SKC1a — Ist (2026-11-12, nur lesen)
+
+| Punkt | Befund |
+|-------|--------|
+| **Ports GEX** | `:80` öffentlich · **kein** `:443`-Listener · UFW erlaubt 80+443 |
+| **Ollama** | `127.0.0.1:11434` (`OLLAMA_HOST`) · nginx+ollama active |
+| **Proxy** | `snippets/ollama-proxy.conf` → `127.0.0.1:11434/` · Path-Secret unter `/opt/ollama-proxy/` |
+| **Wo eingebunden** | nur **default_server** (`server_name _`) — **nicht** im CRM-vHost `ganz-om.de` |
+| **Erreichbarkeit** | `Host`/IP default → Proxy **200** + `models` · `Host: ganz-om.de` gleicher Pfad → **404** (CRM-vHost ohne Snippet) |
+| **CRM-URL-Datei** | `scheme=http` · `host=2.29.242.28` · Path-Token ja (Länge ok, Wert nicht in Docs) |
+| **Dev `kichel.local.php`** | `ollama_enabled=1` · `http` · Host `2.29.242.28` · Path-Token ja · Modell `qwen2.5-coder:14b` |
+| **DNS öffentlich** | `ganz-om.de` / `dg.ganz-soft.de` / `ganz-soft.de` → **85.13.168.110** (All-Inkl) · **nicht** GEX `2.29.242.28` |
+| **Certbot** | 4.0.0 installiert · **kein** `/etc/letsencrypt/live` |
+
+### SKC1b — Hostname + DNS (2026-11-12) ✅
+
+| Punkt | Stand |
+|-------|--------|
+| **Hostname** | `llm.ganz-soft.de` |
+| **KAS** | A `llm` → `2.29.242.28` (Apex A + `*` CNAME unverändert) |
+| **Verify** | öffentliche Resolver (z. B. 8.8.8.8) → **2.29.242.28** · lokaler Cache kann kurz All-Inkl zeigen |
+| **Nicht** | Certbot / `:443` / `kichel.local.php` (SKC1c/d) |
+
+### SKC1c — TLS Proxy (2026-11-12) ✅
+
+| Punkt | Stand |
+|-------|--------|
+| **vHost** | `llm.ganz-soft.de` · nur Proxy-Snippet · Root **404** (kein CRM) |
+| **Snippet** | `proxy_set_header Host 127.0.0.1:11434` — fremder Host → Ollama **403** |
+| **Cert** | Let's Encrypt `llm.ganz-soft.de` · live bis **2027-02-10** · Auto-Renew |
+| **Ports** | `:443` + `:80` (HTTP→HTTPS Redirect) |
+| **Smoke** | `https://…/api/tags` → **200** + models · Root HTTPS **404** |
+| **Nicht** | Dev `kichel.local.php` noch HTTP+IP (**SKC1d**) |
+
+### SKC1d — Dev HTTPS-URL (2026-11-12) ✅
+
+| Punkt | Stand |
+|-------|--------|
+| **GEX** | `/opt/ollama-proxy/crm-base-url` → `https://llm.ganz-soft.de/…` (Path-Token unverändert) |
+| **Dev** | `config/kichel.local.php` · `ollama_url` HTTPS Host `llm.ganz-soft.de` · enabled · Model `qwen2.5-coder:14b` |
+| **Smoke** | von All-Inkl: `/api/version` **200** `0.40.16` · `KichelOllamaClient::phrase` OK (~3 s, enthält 98) |
+| **Git** | kein Token/URL-Secret committen |
+
+**SKC1 Block ✅.**
+
+### SKD0 — Docs/Haken (2026-11-12) ✅
+
+Nachgezogen ohne Secrets: GEX-Plan-Haken · [`TODOS.md`](TODOS.md) · [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) (HTTPS `llm.ganz-soft.de`) · [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md) §1b Hinweis CRM-Proxy · UI-/Produkt-Pläne (SKC1 nicht mehr „offen“).
+
+**Nächste ID (Phase B):** **PB2c4** (CRM-Probe-HTTPS) — getrennt.
+
+---
+
+## 10. Verweise
 
 | Datei | Rolle |
 |-------|--------|
@@ -344,6 +414,13 @@ Docs nachgezogen: Plan-Haken SKC0b–e · `TODOS.md` · `KICHEL-PHASE2.md` (Ops-
 | 2026-11-12 | **SKB1b ✅** Bind `127.0.0.1:11434` — außen tot; UFW-Regel noch da (SKB1c) |
 | 2026-11-12 | **SKB1c ✅** UFW 11434 ALLOW entfernt (v4+v6) |
 | 2026-11-12 | **SKB1d ✅** SSH-Tunnel + Cursor `127.0.0.1:11434/v1` · SKB1 abgeschlossen |
+| 2026-11-12 | **SKC1** TLS-Proxy in **a–d** zerlegt · getrennt von Phase-B PB2c4 |
+| 2026-11-12 | **SKC1a ✅** Ist: :80 Proxy nur default_server · kein :443 · DNS Domains→All-Inkl · Dev HTTP+IP |
+| 2026-11-12 | **SKC1b** nachgeholt: Hostname `llm.ganz-soft.de` · Ist-A noch All-Inkl · KAS A→GEX offen |
+| 2026-11-12 | **SKC1b ✅** KAS A `llm` → `2.29.242.28` · public DNS OK |
+| 2026-11-12 | **SKC1c ✅** vHost + LE HTTPS `llm.ganz-soft.de` · Host-Header-Fix · tags 200 |
+| 2026-11-12 | **SKC1d ✅** Dev+crm-base → HTTPS `llm.ganz-soft.de` · version/phrase Smoke OK · SKC1 fertig |
+| 2026-11-12 | **SKD0 ✅** Docs/Haken nach SKC1 (PHASE2, CLOUD-AGENT, UI/Produkt, TODOS) |
 | 2026-11-12 | **SKB2a ✅** docker.io + compose-v2 · hello-world OK · kein API-Port außen |
 | 2026-11-12 | **SKB2b ✅** SearXNG Compose unter `/opt/searxng/stack` · nur `127.0.0.1:8080` |
 | 2026-11-12 | **SKB2c ✅** Playwright 1.65.1 + Chromium unter `/opt/playwright` · Smoke OK |

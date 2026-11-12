@@ -23,12 +23,12 @@ Stand: **2026-11-11** · Dev-Ziel: **`ganz-om.de`** (eingeloggt) · Host heute: 
 
 | Punkt | Soll (Skizze) |
 |-------|----------------|
-| **UI** | Eigene **Vollseite** im eingeloggten CRM — Nutzerpfad heute: `/app?page=superkihel` (Pretty-URL `/superkihel` optional später) |
+| **UI** | Eigene **Vollseite** im eingeloggten CRM — Nutzerpfad: **`/superkihel`** (intern `/app?page=superkihel`) |
 | **Sichtbarkeit** | **Nur eingeloggte** Mitarbeiter/Admins (wie Kichel-API) — öffentlich nie |
 | **Zweck** | Längere Sitzungen: mehr Kontext, Verlauf auf der Seite, ggf. erweiterte Werkzeuge — **nicht** Ersatz für das FAB-Widget |
 | **Fachregel** | Unverändert Phase 2: **Beträge/Steuer/Buchung = PHP**; LLM (Ollama auf GEX) nur Text/Formulierung bzw. freigegebene Hilfen |
 | **Instanz** | Zuerst **Dev `ganz-om.de`**; kein Tenant-Hardcode; keine Produktiv-Instanz ohne Freigabe |
-| **Backend-KI** | GEX Ollama · Anbindung Dev **SKC0 ✅** (`kichel.local.php` + nginx path-secret Proxy) |
+| **Backend-KI** | GEX Ollama · Anbindung Dev **SKC0+SKC1 ✅** (`kichel.local.php` + HTTPS path-secret Proxy `llm.ganz-soft.de`) |
 
 **Arbeitsname in der URL:** `superkihel` (Ist auf Dev). Produktname in UI-Texten: **Super-Kichel** (lesbar). Keine Plan-Codes (`SKC0a` …) in Endnutzer-Texten.
 
@@ -57,8 +57,8 @@ Stand: **2026-11-11** · Dev-Ziel: **`ganz-om.de`** (eingeloggt) · Host heute: 
 ## 4. Abhängigkeiten (Reihenfolge)
 
 1. **SKC0a** (diese Skizze) ✅  
-2. **SKB0/SKB1/SKB2** ✅ · **SKC0** CRM↔Ollama Dev ✅  
-3. UI-Ausbau der Seite `superkihel` = **eigene Mini-IDs** (nicht SKC0) — Katalog/`dg.css`
+2. **SKB0/SKB1/SKB2** ✅ · **SKC0** CRM↔Ollama Dev ✅ · **SKC1** HTTPS-Proxy ✅ · **SKD0** Docs ✅  
+3. UI-Ausbau der Seite `superkihel` = **SKU0–8 ✅** — Katalog/`dg.css`
 
 ---
 
@@ -66,7 +66,7 @@ Stand: **2026-11-11** · Dev-Ziel: **`ganz-om.de`** (eingeloggt) · Host heute: 
 
 | Thema | Status |
 |-------|--------|
-| Pretty-URL `/superkihel` vs. nur `page=superkihel` | offen |
+| Pretty-URL `/superkihel` vs. nur `page=superkihel` | **SKU8 ✅** — `/superkihel` primär |
 | Eigenes Menü-Item „Super-Kichel“ | offen |
 | Gemeinsames vs. separates Protokoll | offen |
 | SearXNG o. Ä. als Werkzeug hinter der Seite | erst nach SKB0 |
