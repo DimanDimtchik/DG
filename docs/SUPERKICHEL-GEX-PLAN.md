@@ -5,7 +5,7 @@
 > Produktlinie: **Kichel** im CRM · Dev-Zielinstanz **`ganz-om.de`** · KI-Backend auf **GEX45-1**.  
 > Verwandt: [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) · [`GEX45-DISK-LAYOUT.md`](GEX45-DISK-LAYOUT.md) · [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md) · [`SERVER-MIGRATION.md`](SERVER-MIGRATION.md)
 
-Stand: **2026-11-11** · Server: **GEX45-1** · HEL1 · Ubuntu 26.04 LTS (PB1 ✅) · CRM-Stack PB2 teilweise
+Stand: **2026-11-12** · Server: **GEX45-1** · HEL1 · Ubuntu 26.04 LTS (PB1 ✅) · CRM-Stack PB2 teilweise
 
 ---
 
@@ -16,7 +16,7 @@ Stand: **2026-11-11** · Server: **GEX45-1** · HEL1 · Ubuntu 26.04 LTS (PB1 �
 | **Kichel (CRM)** | Instanz-DB + PHP (`src/Kichel/…`) | Regeln, Beträge, Navigation, Protokoll — **GoBD-/Fachlogik bleibt PHP** |
 | **Ollama** | GEX45, ideal nur `127.0.0.1:11434` | Nur Formulierung (`KichelOllamaClient::phrase`) |
 | **Dev-Oberfläche** | **`ganz-om.de`**, eingeloggt · Seite `/app?page=superkihel` | Skizze: [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) (SKC0a) |
-| **Ops-Hilfen (Zielbild)** | nur nach Freigabe, oft Docker | z. B. SearXNG (Recherche), Playwright (UI-Checks/Akademie), OpenHands/Forgejo nur wenn wirklich nötig |
+| **Ops-Hilfen** | nach Freigabe je Mini-ID, oft Docker | SearXNG, Playwright, OpenHands, Comfy — Kriterien: kostenlos/legal/ohne Anmeldung/ohne Limits · Forgejo **nein** |
 
 **Kein Tenant im Produktcode:** keine Kundenfirma als Default; Firmendaten nur aus Instanz-Settings/DB. Hosts nur in Ops-Docs.
 
@@ -72,9 +72,14 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | **SKC0a** | Produkt-Skizze Widget vs. Super-Kichel | [x] 2026-11-11 · [`SUPERKICHEL-PRODUKT-SKIZZE.md`](SUPERKICHEL-PRODUKT-SKIZZE.md) | 🟢 |
 | **SKA0-12v** | Inventar-Fazit **vorläufig** (ohne SSH) | [x] 2026-11-11 · [`SUPERKICHEL-INVENTAR-VORLAEUFIG.md`](SUPERKICHEL-INVENTAR-VORLAEUFIG.md) | 🟢 |
 | SKA0 | Bestandsaufnahme GEX45 (SKA0-1 … SKA0-12) | [ ] | 🔴🟢 |
-| **SKB0** | Entscheidung: was wird wirklich installiert | [x] 2026-11-11 · [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md) | 🟢 |
+| **SKB0** | Entscheidung: was wird wirklich installiert | [x] 2026-11-11 · Nachtrag 2026-11-12 · [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md) | 🟢 |
 | SKB1 | Härten / binden (Ollama localhost, UFW) — nur nach Freigabe | [ ] | 🔴 |
-| SKB2 | Fehlende Komponenten installieren — **einzeln** je Kind-ID | [ ] | 🔴 |
+| SKB2 | Installationen — **einzeln** Kind-IDs unten | [ ] | 🔴 |
+| **SKB2a** | Docker (Engine/Compose) | [ ] | 🔴 |
+| **SKB2b** | SearXNG (nach SKB2a) | [ ] | 🔴 |
+| **SKB2c** | Playwright | [ ] | 🔴 |
+| **SKB2d** | OpenHands (nach SKB2a) | [ ] | 🔴 |
+| **SKB2e** | ComfyUI | [ ] | 🔴 |
 | SKC0 | CRM-Anbindung Dev `ganz-om.de` (`kichel.local.php`, Smoke) | [ ] | 🔴🟡 |
 | SKD0 | Docs/Haken nachziehen | [ ] | 🟢 |
 
@@ -104,31 +109,37 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 
 ---
 
-## 5. Zielbild-Komponenten — **SKB0 ✅**
+## 5. Zielbild-Komponenten — **SKB0 ✅** (Nachtrag 2026-11-12)
 
 Kanonsich: [`SUPERKICHEL-SKB0-ENTSCHEIDUNG.md`](SUPERKICHEL-SKB0-ENTSCHEIDUNG.md).
 
 | Komponente | SKB0-Entscheidung |
 |------------|-------------------|
 | **Ollama** | **Nutzen/härten** (SKB1), nicht neu installieren |
-| **Docker / SearXNG / Playwright / Comfy** | **Jetzt nein** |
-| **OpenHands / Forgejo** | **Nein** (bewusst) |
+| **Docker** | **Ja** → **SKB2a** |
+| **SearXNG** | **Ja** → **SKB2b** |
+| **Playwright** | **Ja** → **SKB2c** |
+| **OpenHands** | **Ja** → **SKB2d** |
+| **ComfyUI** | **Ja** → **SKB2e** |
+| **Forgejo** | **Nein** |
 | **GPU-Treiber** | nur prüfen (SKA0-8), Install nur mit Freigabe |
 
-PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.**
+PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.** CRM bleibt nativ.
 
 ---
 
 ## 6. Empfohlene Reihenfolge
 
-1. **SKB0 ✅** · parallel/nach SSH: **SKA0-1…12** (Bestätigung)  
+1. **SKB0 ✅** (Nachtrag) · SSH-Secret ok · optional **SKA0-1…12** bestätigen  
 2. **SKB1** Härten (Ollama → localhost + UFW) — eigene Freigabe  
-3. **SKC0** Dev `ganz-om.de` → Ollama  
-4. **SKB2-*** nur wenn SKB0-Tabelle später auf „ja“ geändert wird  
+3. **SKB2a** Docker → **SKB2b** SearXNG → **SKB2c** Playwright → **SKB2d** OpenHands → **SKB2e** Comfy — **jeweils eigene Freigabe**  
+4. **SKC0** Dev `ganz-om.de` → Ollama  
 5. **SKD0** Docs-Nachzug  
 
-**Nächster Server-Schritt (Freigabe):**  
-`Nur Mini-ID SKB1 laut docs/SUPERKICHEL-GEX-PLAN.md.`
+**Nächster Doc-/Plan-Schritt erledigt:** SKB0-Nachtrag.  
+**Nächster Server-Schritt (nur nach Freigabe einer ID):** z. B.  
+`Nur Mini-ID SKB1 laut docs/SUPERKICHEL-GEX-PLAN.md.`  
+oder später `Nur Mini-ID SKB2a …`
 
 **Nicht** parallel zu einer offenen `PB*`-Serverarbeit dieselben Dienste umbauen, ohne das in der Freigabe zu sagen.
 
@@ -173,3 +184,4 @@ Public-Key-Comment: `hetzner-gex45-cursor-agent` · Fingerprint `SHA256:v1atqLF/
 | 2026-11-11 | **SKC0a** ✅ — Produkt-Skizze `SUPERKICHEL-PRODUKT-SKIZZE.md` |
 | 2026-11-11 | **SKA0-12v** ✅ — vorläufiges Inventar `SUPERKICHEL-INVENTAR-VORLAEUFIG.md` |
 | 2026-11-11 | **SKB0** ✅ — Entscheidung `SUPERKICHEL-SKB0-ENTSCHEIDUNG.md` |
+| 2026-11-12 | **SKB0-Nachtrag** — Docker/SearXNG/Playwright/OpenHands/Comfy = ja (SKB2a–e); Forgejo nein; Cloud-Docs auf master |
