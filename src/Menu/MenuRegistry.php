@@ -1005,6 +1005,10 @@ final class MenuRegistry
             return RoleResolver::isAdmin($user);
         }
 
+        if ($slug === 'superkihel') {
+            return RoleResolver::isStaff($user);
+        }
+
         if (
             $slug === 'buchhaltung-konten'
             || $slug === 'buchhaltung-belege'

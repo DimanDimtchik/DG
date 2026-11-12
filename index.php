@@ -10355,6 +10355,10 @@ switch ($path) {
             $contentTemplate = 'modules/kichel-protokoll';
             $title = 'Kichel-Protokoll';
             $currentPage = 'kichel-protokoll';
+        } elseif ($page === 'superkihel' && RoleResolver::isStaff($user)) {
+            $contentTemplate = 'modules/superkihel';
+            $title = 'Super-Kichel';
+            $currentPage = 'superkihel';
         } elseif ($page === 'support-freigabe' && MenuRegistry::canAccess($user, 'support-freigabe')) {
             $supportGrant = SupportAccessService::activeGrant();
             $contentTemplate = 'modules/support-freigabe';
