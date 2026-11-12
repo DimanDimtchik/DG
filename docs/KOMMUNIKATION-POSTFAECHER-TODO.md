@@ -93,6 +93,10 @@ Stand: **2026-10-23**
 
 ---
 
+## Weiter (Ausbau nach P1–P6)
+
+Original-Plan OfficeCRM E-Mail-Modul (A1–L1, 106 Mini-Schritte): [`EMAILMODUL-ENTWICKLUNGSPLAN.md`](EMAILMODUL-ENTWICKLUNGSPLAN.md).
+
 ## Explizit nicht
 
 - Roundcube / andere Webmail-Suites im CRM-Code oder als Pflicht-iframe  

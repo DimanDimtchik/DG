@@ -21,7 +21,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** IQ-Nutzer · Shared-Core Docs **SC1** (ohne Server) · Phase B erst nach GEX45-Lieferung [`PHASE-B-REST-PLAN.md`](PHASE-B-REST-PLAN.md). UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
+**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**. · E-Mail-Modul Ausbau A1–L1 — [`EMAILMODUL-ENTWICKLUNGSPLAN.md`](EMAILMODUL-ENTWICKLUNGSPLAN.md) (Reihenfolge im Git; **106 Mini-Schritte noch aus Excel nachliefern**).
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 
@@ -229,6 +229,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `LDAP-INTEGRATION.md` | LDAP-Vorbereitung |
 | `LAGER-WIRTSCHAFT.md` | Lager |
 | `KOMMUNIKATION-POSTFAECHER-TODO.md` | Kommunikation: Postfächer P1–P6 (eigene UI) |
+| `EMAILMODUL-ENTWICKLUNGSPLAN.md` | E-Mail-Modul Ausbau: A1–L1 (Original Excel; 106 Mini-Schritte nachliefern) |
 | `DOKUMENTENVERFASSER-TODO.md` | Dokumentenverfasser: Briefpapier + Editor (B/D) |
 | `USTG-14-DRUCKSTICHPROBE.md` | Manuelle §14-UStG Druck-/PDF-Stichprobe für Ausgangsbelege |
 | `LOHNABRECHNUNG-ERWEITERUNG.md` | Acrobat-Plan zur CRM-Erweiterung Lohnabrechnung: Normal-Lohn, ITSG, Baulohn |
