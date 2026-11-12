@@ -28,10 +28,11 @@ Nutzerfrage
 
 ## Ollama-Anbindung
 
-- Entwicklung: Laptop `http://127.0.0.1:11434` (z. B. `llama3.1:8b`)
-- Server: optional Hetzner, Modell 7B–13B empfohlen
+- Entwicklung Laptop: `http://127.0.0.1:11434` (z. B. via SSH-Tunnel zum GEX, SKB1d)
+- **Dev-CRM `ganz-om.de` (All-Inkl, SKC0 ✅):** `config/kichel.local.php` mit `ollama_enabled=true` · URL = **nginx path-secret Proxy** auf GEX:80 → Ollama `127.0.0.1:11434` (Port 11434 bleibt zu). Token/Base-URL nur Server-lokal unter `/opt/ollama-proxy/` — **nicht** committen.
 - Konfiguration: `config/kichel.local.php` (Beispiel: `config/kichel.local.php.example`)
 - Modus `ollama_enabled = false` → Phase 1 wie bisher (regelbasiert)
+- Plan: [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) SKC0b–e
 
 ## Getestete Modelle (Laptop)
 

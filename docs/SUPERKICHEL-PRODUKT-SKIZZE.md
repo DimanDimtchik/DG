@@ -28,7 +28,7 @@ Stand: **2026-11-11** · Dev-Ziel: **`ganz-om.de`** (eingeloggt) · Host heute: 
 | **Zweck** | Längere Sitzungen: mehr Kontext, Verlauf auf der Seite, ggf. erweiterte Werkzeuge — **nicht** Ersatz für das FAB-Widget |
 | **Fachregel** | Unverändert Phase 2: **Beträge/Steuer/Buchung = PHP**; LLM (Ollama auf GEX) nur Text/Formulierung bzw. freigegebene Hilfen |
 | **Instanz** | Zuerst **Dev `ganz-om.de`**; kein Tenant-Hardcode; keine Produktiv-Instanz ohne Freigabe |
-| **Backend-KI** | GEX Ollama (nach Härten localhost); Anbindung später **SKC0** via `config/kichel.local.php` / ggf. eigene Super-Kichel-Config — **nicht** in SKC0a |
+| **Backend-KI** | GEX Ollama · Anbindung Dev **SKC0 ✅** (`kichel.local.php` + nginx path-secret Proxy) |
 
 **Arbeitsname in der URL:** `superkihel` (Ist auf Dev). Produktname in UI-Texten: **Super-Kichel** (lesbar). Keine Plan-Codes (`SKC0a` …) in Endnutzer-Texten.
 
@@ -57,9 +57,8 @@ Stand: **2026-11-11** · Dev-Ziel: **`ganz-om.de`** (eingeloggt) · Host heute: 
 ## 4. Abhängigkeiten (Reihenfolge)
 
 1. **SKC0a** (diese Skizze) ✅  
-2. Server-Inventar **SKA0** + Entscheidung **SKB0** / Härten **SKB1** (SSH)  
-3. **SKC0** CRM↔Ollama auf Dev  
-4. UI-Ausbau der Seite `superkihel` = **eigene Mini-IDs** (nicht SKC0a) — Katalog/`dg.css`
+2. **SKB0/SKB1/SKB2** ✅ · **SKC0** CRM↔Ollama Dev ✅  
+3. UI-Ausbau der Seite `superkihel` = **eigene Mini-IDs** (nicht SKC0) — Katalog/`dg.css`
 
 ---
 

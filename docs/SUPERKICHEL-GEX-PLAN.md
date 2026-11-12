@@ -84,7 +84,11 @@ Nach Freigabe denselben Prompt mit „Freigabe erteilt — nur diese ID umsetzen
 | **SKB2c** | Playwright | [x] 2026-11-12 · siehe §8 | 🔴 |
 | **SKB2d** | OpenHands (nach SKB2a) | [x] 2026-11-12 · siehe §8 | 🔴 |
 | **SKB2e** | ComfyUI | [x] 2026-11-12 · siehe §8 | 🔴 |
-| SKC0 | CRM-Anbindung Dev `ganz-om.de` (`kichel.local.php`, Smoke) | [ ] | 🔴🟡 |
+| SKC0 | CRM↔Ollama Dev — Kind-IDs SKC0b–e (SKC0a ✅ Skizze) | [x] 2026-11-12 | 🔴🟡 |
+| **SKC0b** | Ist Dev: `kichel.local.php` / Ollama-URL — **nur lesen** | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKC0c** | Weg All-Inkl→GEX-Ollama klären + Config setzen | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKC0d** | Smoke Kichel/Super-Kichel mit Ollama auf Dev | [x] 2026-11-12 · siehe §8 | 🔴 |
+| **SKC0e** | Docs/Haken nachziehen | [x] 2026-11-12 | 🟢 |
 | SKD0 | Docs/Haken nachziehen | [ ] | 🟢 |
 
 ---
@@ -134,16 +138,12 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.** CRM bleibt nati
 
 ## 6. Empfohlene Reihenfolge
 
-1. **SKB0 ✅** (Nachtrag) · SSH-Secret ok · optional **SKA0-1…12** bestätigen  
-2. **SKB1** Härten (Ollama → localhost + UFW) — eigene Freigabe  
-3. **SKB2a** Docker → **SKB2b** SearXNG → **SKB2c** Playwright → **SKB2d** OpenHands → **SKB2e** Comfy — **jeweils eigene Freigabe**  
-4. **SKC0** Dev `ganz-om.de` → Ollama  
-5. **SKD0** Docs-Nachzug  
+1. **SKB0 ✅** · **SKB1 ✅** · **SKB2a–e ✅** · **SKC0 ✅** (2026-11-12)  
+2. optional **SKA0-1…12** Live-Inventar (Bestätigung)  
+3. **SKD0** Docs-Feinschliff / oder Super-Kichel-**UI**-Mini-IDs (Seite `superkihel`)  
+4. TLS für Ollama-Proxy mit **PB2c4** (statt HTTP:80)  
 
-**Nächster Doc-/Plan-Schritt erledigt:** SKB0-Nachtrag.  
-**Nächster Server-Schritt (nur nach Freigabe einer ID):** z. B.  
-`Nur Mini-ID SKB1 laut docs/SUPERKICHEL-GEX-PLAN.md.`  
-oder später `Nur Mini-ID SKB2a …`
+**Nächste Freigabe (Beispiel):** Super-Kichel-UI-Plan anlegen · oder `Nur Mini-ID SKD0 laut docs/SUPERKICHEL-GEX-PLAN.md.`
 
 **Nicht** parallel zu einer offenen `PB*`-Serverarbeit dieselben Dienste umbauen, ohne das in der Freigabe zu sagen.
 
@@ -270,7 +270,48 @@ Hinweis: OpenHands will großen Context; ggf. später `OLLAMA_CONTEXT_LENGTH` (e
 | Smoke | lokal HTTP 200 · außen nicht erreichbar |
 | PC | Tunnel `-L 8188:127.0.0.1:8188` → `http://127.0.0.1:8188` |
 
-**SKB2 gesamt ✅** (a–e). Nächste Linie laut Plan: **SKC0** Dev `ganz-om.de` → Ollama (eigene Freigabe).
+**SKB2 gesamt ✅** (a–e).
+
+### SKC0b — Ist Dev Ollama-Config (2026-11-12, nur lesen)
+
+Pfad: `/www/htdocs/w0217246/ganz-om.de`
+
+| Punkt | Ist |
+|-------|-----|
+| `config/kichel.local.php` | **fehlt** |
+| `kichel.local.php.example` | da · `ollama_enabled=false` · URL `http://127.0.0.1:11434` · Model `llama3.1:8b` |
+| Code | `src/Kichel/KichelOllamaClient.php` vorhanden |
+| Ollama vom All-Inkl-Host | `127.0.0.1:11434` nein · `2.29.242.28:11434` Timeout (SKB1 — erwartet) |
+| Folge | **SKC0c** muss Weg All-Inkl→GEX-Ollama lösen (nicht nur Config-Datei kopieren) |
+
+### SKC0c — umgesetzt 2026-11-12
+
+**Entscheidung Weg:** All-Inkl PHP → **HTTP nginx Reverse-Proxy auf GEX:80** → `127.0.0.1:11434`.  
+11434 bleibt zu. SSH outbound All-Inkl→GEX: kein Key. HTTPS:443 auf GEX noch nicht (PB2c4).
+
+| Punkt | Ist |
+|-------|-----|
+| Proxy | nginx `snippets/ollama-proxy.conf` · Secret-**Pfad** (Token in `/opt/ollama-proxy/path-token`, Base-URL `/opt/ollama-proxy/crm-base-url`) |
+| Dev-Config | `/www/htdocs/w0217246/ganz-om.de/config/kichel.local.php` · `ollama_enabled=true` · Model `qwen2.5-coder:14b` · timeout 120 |
+| Smoke | von All-Inkl PHP: `…/api/version` → **200** `0.40.16` |
+| Git | **kein** Token/URL-Secret committen |
+
+### SKC0d — umgesetzt 2026-11-12
+
+CLI-Smoke auf Dev `/www/htdocs/w0217246/ganz-om.de`:
+
+| Check | Ergebnis |
+|-------|----------|
+| `KichelOllamaClient::isEnabled()` | true |
+| `phrase()` über Proxy→GEX | OK (~4 s) · Text zurück |
+| `KichelAssistant::answer` Skonto-Frage | OK (~1,6 s) · Antwort mit 2,00 / 98,00 |
+| Seite `superkihel` | **noch kein Code** auf Dev (nur Skizze SKC0a) — Smoke = Widget/Kichel-Pfad |
+
+### SKC0e — umgesetzt 2026-11-12
+
+Docs nachgezogen: Plan-Haken SKC0b–e · `TODOS.md` · `KICHEL-PHASE2.md` (Ops-Hinweis Proxy, ohne Secret).
+
+**SKC0 gesamt ✅** (a Skizze · b–e Anbindung Dev). Offen später: Super-Kichel-**Seite** UI · TLS für Proxy (PB2c4) · SKD0.
 
 ---
 
@@ -308,3 +349,7 @@ Hinweis: OpenHands will großen Context; ggf. später `OLLAMA_CONTEXT_LENGTH` (e
 | 2026-11-12 | **SKB2c ✅** Playwright 1.65.1 + Chromium unter `/opt/playwright` · Smoke OK |
 | 2026-11-12 | **SKB2d ✅** OpenHands 1.8 host-network · UI :3000 lokal · LLM→Ollama localhost |
 | 2026-11-12 | **SKB2e ✅** ComfyUI 0.45 · Torch CUDA · systemd `127.0.0.1:8188` · SKB2 fertig |
+| 2026-11-12 | **SKC0b–e** Mini-IDs · **SKC0b ✅** Dev ohne `kichel.local.php` · GEX-Ollama von All-Inkl unerreichbar |
+| 2026-11-12 | **SKC0c ✅** nginx path-secret Proxy :80 → Ollama · `kichel.local.php` auf Dev · Smoke 200 |
+| 2026-11-12 | **SKC0d ✅** phrase+Assistant Skonto auf Dev OK · Super-Kichel-Seite noch nicht im Code |
+| 2026-11-12 | **SKC0e ✅** Docs/Haken · SKC0 Block abgeschlossen |
