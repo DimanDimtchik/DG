@@ -27,6 +27,9 @@ final class MenuRegistry
             $items[] = ['slug' => 'terminkalender', 'label' => 'Terminkalender', 'icon' => 'calendar'];
         }
         // „Post“ / E-Mail-Postfächer → kommunikationSection()
+        if (RoleResolver::isStaff($user)) {
+            $items[] = ['slug' => 'superkihel', 'label' => 'Super-Kichel', 'icon' => 'document'];
+        }
         if (RoleResolver::isAdmin($user)) {
             $items[] = ['slug' => 'support-freigabe', 'label' => 'Support-Freigabe', 'icon' => 'settings'];
         }
@@ -733,6 +736,7 @@ final class MenuRegistry
             'buchhaltung-anschaffungsrechner' => 'Barkauf, Leasing, Rate und Miete mit AfA- und Steuerorientierung vergleichen.',
             'buchhaltung-bwa' => 'Betriebswirtschaftliche Auswertung — Monatsüberblick fürs Management.',
             'buchhaltung-susa' => 'Summen- und Saldenliste kompakt für Prüfung und Steuerberater.',
+            'superkihel' => 'Längere Hilfe-Sitzungen mit dem CRM-Helfer — Verlauf und Eingabe auf einer Seite.',
             'support-freigabe' => 'Zeitlich begrenzter CRM-Zugang für Ganz Soft, optional mit Zuschauen.',
             'support-zuschauen' => 'Bildschirm des Kunden während einer aktiven Support-Freigabe mitverfolgen.',
             'kdv-dashboard' => 'Übersicht über SaaS-Kunden und Lizenzstatus von Ganz Soft.',
@@ -829,6 +833,9 @@ final class MenuRegistry
             ],
             'kdv-kunden' => [
                 'saas kunden', 'mandanten', 'firmenswitch', 'umfirmierung', 'sso firma',
+            ],
+            'superkihel' => [
+                'super kichel', 'superkichel', 'hilfe seite', 'kichel seite', 'crm helfer seite',
             ],
             'support-freigabe' => [
                 'support freigabe', 'fernwartung', 'zugang ganz soft',

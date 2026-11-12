@@ -28,7 +28,7 @@ Eingeloggte Vollseite für längere Hilfe-Sitzungen: Verlauf, Eingabe, klare Akt
 | **SKU1b** | Route `page=superkihel` + Staff-only (kein View-Inhalt) | [x] 2026-11-12 · siehe §6 | 🟢 |
 | **SKU1c** | Leere View: `.dg-page-header` / Titel / `.dg-panel` Platzhalter | [x] 2026-11-12 · Guard OK | 🟢 |
 | **SKU1d** | Smoke Dev + Kurznotiz im Plan | [x] 2026-11-12 · siehe §8 | 🟢 |
-| **SKU2** | Menü-Eintrag „Super-Kichel“ (sinnvolle Gruppe) | Link sichtbar für Staff · Katalog-Klassen | 🟡 | [ ] |
+| **SKU2** | Menü-Eintrag „Super-Kichel“ (sinnvolle Gruppe) | [x] 2026-11-12 · Navigation/Staff · §9 | 🟢 |
 | **SKU3** | Chat-Layout: Verlauf + Eingabe + Senden (nur UI, Mock/leer ok) | Katalog · Guard grün · mobil lesbar | 🟡 | [ ] |
 | **SKU4** | Anbindung `POST /api/kichel` · Antwort in Verlauf | Smoke: Frage → Antwort wie Widget | 🔴🟡 | [ ] |
 | **SKU5** | UX-Feinschliff: Laden/Fehler · Link aus Widget-Panel zur Seite | Klartext · kein Jargon | 🟡 | [ ] |
@@ -106,7 +106,7 @@ Wiederverwenden wo sinnvoll: bestehende `assets/js/kichel.js` / API-Payload. Kei
 | Protokoll-Route | `index.php`: `$page === 'kichel-protokoll' && RoleResolver::isAdmin` |
 | **Lücke** | `kichel-protokoll` **fehlt** in `MenuRegistry::canAccess` → Gate redirected vermutlich vor dem Admin-Zweig (Widget-Link „Protokoll“) |
 
-**SKU1 ✅** (§5–8) · **Nächste ID:** **SKU2** (Menü, Freigabe).
+**SKU1–2 ✅** (§5–9) · **Nächste ID:** **SKU3** (Chat-Layout, Freigabe).
 
 ---
 
@@ -136,7 +136,18 @@ Guard: `php bin/ui-form-spacing-selftest.php` ✅ · kein Chat/Form/Menü.
 **Ist:** Auf `ganz-om.de` (All-Inkl) liegen Route/View; unauth `GET /app?page=superkihel` → **302 `/login`**; `php -l` View+MenuRegistry OK.  
 Staff-HTML nicht aus Agent-Browser (lokale `hosts`: `ganz-om.de` → GEX `2.29.242.28`, HTTPS refused) — manuell eingeloggt prüfen: Titel „Super-Kichel“ + Platzhalter-Panel.
 
-**Nächste ID:** **SKU2**.
+---
+
+## 9. SKU2 — Menü (2026-11-12)
+
+| Datei | Änderung |
+|-------|----------|
+| `MenuRegistry::modules` | Staff: Eintrag „Super-Kichel“ → `/app?page=superkihel` (Gruppe Navigation, neben Support) |
+| `moduleDescriptions` / `kichelAliases` | Kachel-Text + Suchaliase |
+
+Dashboard-Kachel kommt über `dashboardTiles` ← `sidebarItems` automatisch. Keine neuen CSS-Klassen.
+
+**Nächste ID:** **SKU3**.
 
 ---
 
@@ -150,3 +161,4 @@ Staff-HTML nicht aus Agent-Browser (lokale `hosts`: `ganz-om.de` → GEX `2.29.2
 | 2026-11-12 | **SKU1b ✅** Route+Staff `superkihel` · Stub-View |
 | 2026-11-12 | **SKU1c ✅** Katalog-Gerüst · Guard grün |
 | 2026-11-12 | **SKU1d ✅** Dev-Smoke unauth 302 · Dateien auf Dev |
+| 2026-11-12 | **SKU2 ✅** Menü Navigation/Staff · Kachel/Aliase |

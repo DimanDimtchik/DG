@@ -22,9 +22,9 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | ELSTER | [`ELSTER-ERIC-TODO.md`](ELSTER-ERIC-TODO.md) | Phases nach Umzug |
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
-| Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) | **SKB1–2/SKC0 ✅** · UI **SKU0/SKU1 ✅** · nächste Freigabe **SKU2** |
+| Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) | **SKB1–2/SKC0 ✅** · UI **SKU0–2 ✅** · nächste Freigabe **SKU3** |
 
-**Nächster Block:** Super-Kichel-UI **SKU2** (Menü) laut [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · parallel Phase B/TLS möglich. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
+**Nächster Block:** Super-Kichel-UI **SKU3** (Chat-Layout) laut [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · parallel Phase B/TLS möglich. UI/CSS U0–U5 ✅ · Unterschrift ES0–ES8 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
