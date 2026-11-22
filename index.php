@@ -27,7 +27,7 @@ if (preg_match('#^/media/training/([a-z0-9_-]+)/([a-z0-9_.-]+\.mp4)$#', $path, $
 }
 
 // App-APKs unter /downloads/ — Datei fehlt: klare Meldung (existierende Dateien liefert Apache direkt)
-if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter)\.apk$#', $path, $apkMatch)) {
+if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter|dg-control)\.apk$#', $path, $apkMatch)) {
     $apkFile = DG_ROOT . '/downloads/' . $apkMatch[1] . '.apk';
     if (is_file($apkFile) && is_readable($apkFile)) {
         header('Content-Type: application/vnd.android.package-archive');
@@ -44,6 +44,31 @@ if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter)\.apk$#', $path, $apkMa
         . '<p>Die Installationsdatei liegt noch nicht auf dem Server. Bitte wenden Sie sich an Ihre Firma oder versuchen Sie es später erneut.</p>'
         . '<p><a href="/apps">Zurück zur App-Download-Seite</a></p>'
         . '</body></html>';
+    exit;
+}
+
+// DG Control Admin-App: Download-/Update-Seite
+if ($path === '/dg-controll' || $path === '/dg-controll/') {
+    $apkRel = 'downloads/dg-control.apk';
+    $apkFile = DG_ROOT . '/' . $apkRel;
+    $hasApk = is_file($apkFile) && is_readable($apkFile);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: private, max-age=0');
+    echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        . '<title>DG Control – App</title>'
+        . '<style>body{font-family:system-ui,sans-serif;max-width:28rem;margin:3rem auto;padding:0 1.25rem;color:#0b1a2e}'
+        . 'a.btn{display:inline-block;margin-top:1rem;padding:.85rem 1.25rem;background:#1B3A4B;color:#fff;text-decoration:none;border-radius:8px;font-weight:600}</style>'
+        . '</head><body><h1>DG Control</h1>'
+        . '<p>Android-App für Server-Monitoring (Update = neu installieren / überschreiben).</p>';
+    if ($hasApk) {
+        echo '<a class="btn" href="/' . htmlspecialchars($apkRel, ENT_QUOTES, 'UTF-8') . '">APK herunterladen / aktualisieren</a>';
+    } else {
+        echo '<p><strong>APK noch nicht auf diesem Server hinterlegt.</strong> '
+            . 'Bitte <code>downloads/dg-control.apk</code> ablegen oder von '
+            . '<a href="https://agent.ganz-soft.de/dg-controll/DG-Control.apk">agent.ganz-soft.de</a> laden.</p>';
+    }
+    echo '</body></html>';
     exit;
 }
 

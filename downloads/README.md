@@ -6,8 +6,9 @@ Hier die gebauten Flutter-APKs ablegen (Dateinamen fest):
 |-------|-----|
 | `dg-kalender.apk` | Termin-App (Kunden) |
 | `dg-mitarbeiter.apk` | Mitarbeiter-App |
+| `dg-control.apk` | DG Control Admin (GEX / Server-Monitoring) |
 
-Öffentliche Seite: `/apps` (bei Installation bzw. Migration angelegt).
+Öffentliche Seiten: `/apps` (Kalender/Mitarbeiter) · `/dg-controll` (DG Control).
 
 Build-Beispiel:
 
