@@ -47,39 +47,11 @@ if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter|dg-control)\.apk$#', $p
     exit;
 }
 
-// DG Control Admin-App: Download-/Update-Seite
-// Wichtig: vor Website-Fallback — eingeloggte Nutzer würden sonst bei unbekannter
-// Slug-URL (z. B. /DG-Control) nach /app umgeleitet (index.php default-Zweig).
+// DG Control: /DG-Control und /dg-control (ein L) → bestehende Website-Seite /dg-controll.
+// Ohne diese Early-Route: eingeloggte Nutzer landen im Website-404-Fallback auf /app.
 $dgControlPath = strtolower(rtrim($path, '/'));
-if (
-    $dgControlPath === '/dg-control'
-    || $dgControlPath === '/dg-controll'
-) {
-    $apkRel = 'downloads/dg-control.apk';
-    $apkFile = DG_ROOT . '/' . $apkRel;
-    $hasApk = is_file($apkFile) && is_readable($apkFile);
-    // Kanonische URL ohne doppeltes L / Großschreibung
-    if ($path !== '/dg-control' && $path !== '/dg-control/') {
-        header('Location: /dg-control', true, 301);
-        exit;
-    }
-    header('Content-Type: text/html; charset=utf-8');
-    header('Cache-Control: private, max-age=0');
-    echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
-        . '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        . '<title>DG Control – App</title>'
-        . '<style>body{font-family:system-ui,sans-serif;max-width:28rem;margin:3rem auto;padding:0 1.25rem;color:#0b1a2e}'
-        . 'a.btn{display:inline-block;margin-top:1rem;padding:.85rem 1.25rem;background:#1B3A4B;color:#fff;text-decoration:none;border-radius:8px;font-weight:600}</style>'
-        . '</head><body><h1>DG Control</h1>'
-        . '<p>Android-App für Server-Monitoring (Update = neu installieren / überschreiben).</p>';
-    if ($hasApk) {
-        echo '<a class="btn" href="/' . htmlspecialchars($apkRel, ENT_QUOTES, 'UTF-8') . '">APK herunterladen / aktualisieren</a>';
-    } else {
-        echo '<p><strong>APK noch nicht auf diesem Server hinterlegt.</strong> '
-            . 'Bitte <code>downloads/dg-control.apk</code> ablegen oder von '
-            . '<a href="https://agent.ganz-soft.de/dg-controll/DG-Control.apk">agent.ganz-soft.de</a> laden.</p>';
-    }
-    echo '</body></html>';
+if ($dgControlPath === '/dg-control') {
+    header('Location: /dg-controll', true, 301);
     exit;
 }
 
