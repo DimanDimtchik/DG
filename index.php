@@ -48,10 +48,21 @@ if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter|dg-control)\.apk$#', $p
 }
 
 // DG Control Admin-App: Download-/Update-Seite
-if ($path === '/dg-controll' || $path === '/dg-controll/') {
+// Wichtig: vor Website-Fallback — eingeloggte Nutzer würden sonst bei unbekannter
+// Slug-URL (z. B. /DG-Control) nach /app umgeleitet (index.php default-Zweig).
+$dgControlPath = strtolower(rtrim($path, '/'));
+if (
+    $dgControlPath === '/dg-control'
+    || $dgControlPath === '/dg-controll'
+) {
     $apkRel = 'downloads/dg-control.apk';
     $apkFile = DG_ROOT . '/' . $apkRel;
     $hasApk = is_file($apkFile) && is_readable($apkFile);
+    // Kanonische URL ohne doppeltes L / Großschreibung
+    if ($path !== '/dg-control' && $path !== '/dg-control/') {
+        header('Location: /dg-control', true, 301);
+        exit;
+    }
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: private, max-age=0');
     echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
