@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–8a ✅** · **KR8b** Dev-UI-Checkliste · als Nächstes **KR9** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen · als Nächstes **KL0** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -86,7 +86,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [x] 2026-11-27 |
 | **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [x] 2026-11-27 · a ✅ · b Checkliste (Dev-UI offen) |
-| **KR9** | Docs-Haken / Abnahmekriterien „RAG stabil“ | 🟢 | [ ] |
+| **KR9** | Docs-Haken / Abnahmekriterien „RAG stabil“ | 🟢 | [x] 2026-11-27 · §3.10 |
 
 **Empfohlene Reihenfolge:** KR0 ✅ → KR1 → KR2 → KR3 → KR4 → KR5 → KR6 → KR7 → KR8 → KR9.  
 Danach erst **KL** (Gesetze) oder Feinschliff KR.
@@ -384,17 +384,31 @@ Fragen wie KR8a (mind. 3 gut + 2 unklar) in **Widget** und einmal **Super-Kichel
 
 ---
 
-### 3.10 KR9 — „RAG stabil“ (Gate vor Training)
+### 3.10 KR9 — „RAG stabil“ (Gate vor Training) ✅ 2026-11-27
 
 RAG gilt als **stabil**, wenn:
 
-1. KR2–KR8 erledigt und auf Dev nachgewiesen  
-2. Unklare Fragen → kein erfundenes Recht  
-3. Mindestens Stichproben: Skonto/Nav/Firma-Feld + 1 Steuer-Kurztext mit Quelle  
-4. Protokoll zeigt, **welche** Fakten genutzt wurden  
-5. Bewusste Entscheidung dokumentiert: „RAG-Gate offen für KL / später KT“
+| # | Kriterium | Nachweis 2026-11-27 |
+|---|-----------|---------------------|
+| 1 | KR2–KR8 erledigt | KR2–KR8a ✅ · Suite `php bin/kichel-rag-suite-selftest.php` → **SUITE ALL OK** |
+| 2 | Unklare Fragen → kein erfundenes Recht | Smoke: Nonsense/vage ohne Fantasie-§ |
+| 3 | Stichproben Skonto / Nav·Firma / Steuerkurztext | `money:skonto` · `topic:ust-id`/Firmendaten · `tax:tax-u19` / `tax-ist-soll` |
+| 4 | Protokoll zeigt Fakten | `sources` + `rag_used` in API · `metaFromResponseJson` · Protokoll-Spalten RAG/Quellen (KR6) |
+| 5 | Bewusste Freigabe | **dieser Abschnitt** |
 
-**KR9 = Doc-Haken + Freigabe-Satz — kein Training starten ohne KR9.**
+**Rest (nicht Gate-Blocker für KL-Planung):**
+
+- KR8b Dev-Browser (`ganz-om.de`): Widget/Super-Kichel + Ollama an/aus — Checkliste §3.9, Haken dort setzen wenn gelaufen.
+- Live-Deploy der KR2–KR8-Stände auf Dev/Kern nach üblichem Sync — vor Kunden-Nutzung.
+
+#### Freigabe-Satz (verbindlich)
+
+> **RAG-Gate KR9 ist offen (2026-11-27).**  
+> Erlaubt: Phase **KL** (Rechtskorpus-Index) vorbereiten/starten.  
+> **Nicht** ohne neues Gate: Fine-Tuning (**KT**) oder volles Gesetzestraining (**KP**).  
+> KT/KP erst nach bewusster Qualitäts-/Haftungsentscheidung und idealerweise nach erledigter Dev-UI-Smoke (KR8b).
+
+**KR9 = Doc-Haken + Freigabe-Satz — Training (KT/KP) startet nicht ohne erneute Freigabe.**
 
 ---
 
@@ -530,8 +544,9 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR9** (RAG-Gate) — Doc-Freigabe nach KR8a ✅; Dev-Browser-Haken (KR8b) ideal vorher setzen.  
-Kein Gesetzes-Vollimport, kein Fine-Tuning ohne Gate.
+**KL0** (Rechtskorpus-Quellenentscheid) — nach Freigabe.  
+Optional parallel: KR8b Dev-Browser-Haken.  
+**Kein** KT/KP ohne neues Gate.
 
 ---
 
@@ -548,3 +563,4 @@ Kein Gesetzes-Vollimport, kein Fine-Tuning ohne Gate.
 | 2026-11-27 | **KR6 ✅** `sources[]` UI · Protokoll RAG/Refs ohne Migration |
 | 2026-11-27 | **KR7 ✅** eine Hilfe-Pipeline Widget=Super-Kichel · Selftest |
 | 2026-11-27 | **KR8a ✅** Smoke+Suite Selftests · **KR8b** Dev-UI-Checkliste offen |
+| 2026-11-27 | **KR9 ✅** RAG-Gate offen für **KL** · KT/KP gesperrt bis neuer Freigabe |
