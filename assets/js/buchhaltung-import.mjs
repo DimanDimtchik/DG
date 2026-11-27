@@ -1005,16 +1005,22 @@ function applySuggestion() {
       contactSearch.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    if (s.grossAmount) {
+    const extractLines = Array.isArray(s.extract?.lines) && s.extract.lines.length
+      ? s.extract.lines
+      : (Array.isArray(s.lines) ? s.lines : []);
+    const formApi = window.dgVoucherFormApi;
+    let lineApply = { mode: 'none', count: 0, summaryLines: [] };
+    if (extractLines.length && formApi && typeof formApi.applyOcrExtractLines === 'function') {
+      lineApply = formApi.applyOcrExtractLines(extractLines) || lineApply;
+    } else if (s.grossAmount) {
       const grossInput = document.querySelector('.dg-voucher-split-gross');
       if (grossInput) setFieldValue(grossInput, formatMoneyDe(s.grossAmount));
-    }
-
-    if (s.taxPercent) {
-      const rate = normalizeTaxRate(s.taxPercent);
-      document.querySelectorAll('.dg-voucher-split-tax, select[name*="[tax_rate]"]').forEach((taxField) => {
-        if (taxField.tagName === 'SELECT') setFieldValue(taxField, rate);
-      });
+      if (s.taxPercent) {
+        const rate = normalizeTaxRate(s.taxPercent);
+        document.querySelectorAll('.dg-voucher-split-tax, select[name*="[tax_rate]"]').forEach((taxField) => {
+          if (taxField.tagName === 'SELECT') setFieldValue(taxField, rate);
+        });
+      }
     }
 
     const notes = document.querySelector('textarea[name="notes"]');
@@ -1034,21 +1040,35 @@ function applySuggestion() {
       if (s.street) parts.push('Straße: ' + s.street);
       if (s.postal || s.city) parts.push('Ort: ' + [s.postal, s.city].filter(Boolean).join(' '));
       if (s.phone) parts.push('Telefon: ' + s.phone);
+      const chunks = [];
       if (parts.length) {
-        const addition = 'Aus Beleg erkannt — ' + parts.join(', ');
+        chunks.push('Aus Beleg erkannt — ' + parts.join(', '));
+      }
+      if (lineApply.summaryLines && lineApply.summaryLines.length) {
+        chunks.push('Positionen aus Beleg:\n' + lineApply.summaryLines.join('\n'));
+      }
+      if (chunks.length) {
+        const addition = chunks.join('\n');
         notes.value = notes.value ? notes.value + '\n' + addition : addition;
         notes.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
 
     let statusMsg = 'Vorschläge übernommen. Bitte Kontakt aus der Liste bestätigen und Beleg speichern.';
+    if (lineApply.count > 0 && lineApply.mode === 'items') {
+      statusMsg = `Vorschläge übernommen: ${lineApply.count} Positionen in die Rechnungspositionen übernommen. Katalogzuordnung später prüfen, dann speichern.`;
+    } else if (lineApply.count > 0 && lineApply.mode === 'splits') {
+      statusMsg = `Vorschläge übernommen: ${lineApply.count} Positionen als Buchungszeilen übernommen. Konten bitte wählen und speichern.`;
+    } else if (extractLines.length && lineApply.count === 0) {
+      statusMsg = 'Kopfdaten übernommen. Positionen ohne Betrag wurden übersprungen — bitte manuell ergänzen.';
+    }
     try {
       const updated = await patchContactMasterData(s);
       if (updated && updated.length > 0) {
-        statusMsg = `Vorschläge übernommen. Beim Kontakt ergänzt: ${updated.join(', ')}.`;
+        statusMsg += ` Beim Kontakt ergänzt: ${updated.join(', ')}.`;
       }
     } catch (error) {
-      statusMsg = 'Vorschläge übernommen, aber Kontakt-Stammdaten konnten nicht gespeichert werden: '
+      statusMsg += ' Kontakt-Stammdaten konnten nicht gespeichert werden: '
         + (error.message || String(error));
     }
 

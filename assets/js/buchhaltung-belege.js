@@ -3130,6 +3130,207 @@
     reindexGiftRows();
   });
 
+  /**
+   * BO4b — OCR-/Extrakt-Positionen in Form schreiben (User-Klick Apply).
+   * Erlös → items[]; Ausgabe → Split-Zeilen (Konto leer) + Summary für Notizen.
+   *
+   * @param {Array<Object>} rawLines BO2 extract.lines
+   * @return {{mode: string, count: number, summaryLines: string[]}}
+   */
+  function applyOcrExtractLines(rawLines) {
+    var normalized = normalizeOcrExtractLines(rawLines);
+    if (normalized.length === 0) {
+      return { mode: 'none', count: 0, summaryLines: [] };
+    }
+    if (readOnly) {
+      return { mode: 'readonly', count: 0, summaryLines: [] };
+    }
+    if (usesIncomeItems()) {
+      return fillInvoiceItemsFromOcr(normalized);
+    }
+    return fillBookingSplitsFromOcr(normalized);
+  }
+
+  function normalizeOcrExtractLines(rawLines) {
+    if (!Array.isArray(rawLines)) {
+      return [];
+    }
+    var out = [];
+    rawLines.forEach(function (line) {
+      if (!line || typeof line !== 'object') {
+        return;
+      }
+      var title = String(line.title || line.description || '').trim();
+      if (!title) {
+        return;
+      }
+      var taxRate = parseInt(String(line.tax_percent != null ? line.tax_percent : (line.tax_rate != null ? line.tax_rate : 19)), 10);
+      if ([0, 7, 19].indexOf(taxRate) === -1) {
+        taxRate = 19;
+      }
+      var qty = parseAmount(line.quantity != null ? line.quantity : '1');
+      if (!qty || qty <= 0) {
+        qty = 1;
+      }
+      var kind = String(line.catalog_kind || 'service').toLowerCase();
+      if (kind !== 'product' && kind !== 'service') {
+        kind = 'service';
+      }
+      var unit = String(line.unit || 'Stück').trim() || 'Stück';
+      var gross = parseAmount(line.line_gross != null ? line.line_gross : '');
+      var net = parseAmount(line.line_net != null ? line.line_net : '');
+      if (!gross && net) {
+        gross = Math.round(net * (1 + taxRate / 100) * 100) / 100;
+      }
+      var unitNet = parseAmount(line.unit_price_net != null ? line.unit_price_net : '');
+      var unitGross = parseAmount(line.unit_price_gross != null ? line.unit_price_gross : '');
+      if (!unitGross && unitNet) {
+        unitGross = Math.round(unitNet * (1 + taxRate / 100) * 100) / 100;
+      }
+      if (!gross && unitGross) {
+        gross = Math.round(qty * unitGross * 100) / 100;
+      }
+      if (!unitGross && gross && qty) {
+        unitGross = Math.round((gross / qty) * 100) / 100;
+      }
+      if (!gross) {
+        return;
+      }
+      out.push({
+        title: title,
+        catalog_kind: kind,
+        quantity: qty,
+        unit: unit,
+        unit_price_gross: unitGross || gross,
+        gross_amount: gross,
+        tax_rate: taxRate,
+        sku: String(line.sku || '').trim(),
+      });
+    });
+    return out;
+  }
+
+  function ocrLineSummary(line) {
+    var kindLabel = line.catalog_kind === 'product' ? 'Artikel' : 'Leistung';
+    var qty = formatAmount(line.quantity).replace(/,00$/, '');
+    return kindLabel + ': ' + line.title
+      + ' · ' + qty + ' ' + line.unit
+      + ' · ' + formatAmount(line.gross_amount) + ' €'
+      + ' · ' + line.tax_rate + ' %';
+  }
+
+  function fillInvoiceItemsFromOcr(lines) {
+    if (!invoiceItemsBody || !invoiceItemRowTemplate) {
+      return { mode: 'none', count: 0, summaryLines: [] };
+    }
+    invoiceItemsBody.innerHTML = '';
+    lines.forEach(function (line) {
+      addInvoiceItemRow();
+      var row = invoiceItemsBody.querySelector('.dg-voucher-items__row:last-child');
+      if (!row) {
+        return;
+      }
+      var queryField = row.querySelector('.dg-voucher-items-article-query');
+      var idField = row.querySelector('.dg-voucher-items-article-id');
+      var kindField = row.querySelector('.dg-voucher-items-catalog-kind');
+      var numberField = row.querySelector('.dg-voucher-items-article-number');
+      var titleField = row.querySelector('.dg-voucher-items-title');
+      var taxTypeField = row.querySelector('.dg-voucher-items-tax-type');
+      var qtyField = row.querySelector('.dg-voucher-items-quantity');
+      var unitField = row.querySelector('.dg-voucher-items-unit');
+      var priceField = row.querySelector('.dg-voucher-items-unit-price');
+      var taxField = row.querySelector('.dg-voucher-items-tax');
+      var grossField = row.querySelector('.dg-voucher-items-gross');
+      if (idField) {
+        idField.value = '';
+      }
+      if (kindField) {
+        kindField.value = line.catalog_kind;
+      }
+      if (numberField) {
+        numberField.value = line.sku || '';
+      }
+      if (titleField) {
+        titleField.value = line.title;
+      }
+      if (queryField) {
+        var kindLabel = line.catalog_kind === 'product' ? 'Artikel' : 'Leistung';
+        queryField.value = (line.sku ? line.sku + ' — ' : '') + line.title + ' (' + kindLabel + ', aus Beleg)';
+      }
+      if (qtyField) {
+        qtyField.value = formatAmount(line.quantity).replace(/,00$/, '') || '1';
+      }
+      if (unitField) {
+        unitField.value = line.unit;
+      }
+      if (priceField) {
+        priceField.value = formatAmount(line.unit_price_gross);
+      }
+      if (grossField) {
+        grossField.value = formatAmount(line.gross_amount);
+      }
+      if (taxField) {
+        taxField.value = String(line.tax_rate);
+      }
+      if (taxTypeField) {
+        taxTypeField.value = line.tax_rate === 7 ? 'ust7' : (line.tax_rate === 0 ? 'ust0' : 'ust19');
+      }
+      updateInvoiceItemLineTotal(row, true);
+    });
+    ensureTrailingInvoiceItemRow();
+    reindexInvoiceItems();
+    syncInvoiceItemsSum();
+    syncBookingFromItems();
+    return {
+      mode: 'items',
+      count: lines.length,
+      summaryLines: lines.map(ocrLineSummary),
+    };
+  }
+
+  function fillBookingSplitsFromOcr(lines) {
+    if (!bookingBody || !bookingRowTemplate) {
+      return { mode: 'none', count: 0, summaryLines: [] };
+    }
+    bookingBody.innerHTML = '';
+    lines.forEach(function (line) {
+      addBookingRow();
+      var row = bookingBody.querySelector('.dg-voucher-split__row:last-child');
+      if (!row) {
+        return;
+      }
+      var grossField = row.querySelector('.dg-voucher-split-gross');
+      var taxField = row.querySelector('select[name*="[tax_rate]"], .dg-voucher-split-tax');
+      var accountField = row.querySelector('.dg-voucher-split-account');
+      var queryField = row.querySelector('.dg-voucher-split-account-query');
+      if (grossField) {
+        grossField.value = formatAmount(line.gross_amount);
+      }
+      if (taxField) {
+        taxField.value = String(line.tax_rate);
+      }
+      if (accountField) {
+        accountField.value = '';
+      }
+      if (queryField) {
+        queryField.value = '';
+        queryField.placeholder = line.title.slice(0, 80);
+      }
+    });
+    reindexBookingRows();
+    onBookingInput();
+    var desc = document.querySelector('#dg-voucher-form input[name="description"], textarea[name="description"]');
+    if (desc && !String(desc.value || '').trim()) {
+      desc.value = lines.map(function (line) { return line.title; }).join('; ').slice(0, 500);
+      desc.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    return {
+      mode: 'splits',
+      count: lines.length,
+      summaryLines: lines.map(ocrLineSummary),
+    };
+  }
+
   window.dgVoucherFormApi = {
     addBookingRow: addBookingRow,
     addInvoiceItemRow: addInvoiceItemRow,
@@ -3141,5 +3342,6 @@
     onBookingInput: onBookingInput,
     syncIncomeMode: syncIncomeMode,
     syncInvoiceNumberField: syncInvoiceNumberField,
+    applyOcrExtractLines: applyOcrExtractLines,
   };
 })();

@@ -79,7 +79,7 @@ Datei (PDF/Bild/XML)
 | **BO1** | Rohpipeline Client härten | [~] BO1b–c ✅ · BO1d offen | 🟡🔴 |
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
-| **BO4** | FiBu-UI Positionen übernehmen | [~] BO4a ✅ | 🟢🟡 |
+| **BO4** | FiBu-UI Positionen übernehmen | [~] BO4a–b ✅ | 🟢🟡 |
 | **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
 
@@ -157,7 +157,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **BO4a** | Ist: wie Belegformular Split-/Positionszeilen speichert (`buchhaltung-belege.js` / Form-Felder) — nur lesen | 🟢 | [x] 2026-11-27 · §12 |
-| **BO4b** | „Vorschläge übernehmen“ füllt **Belegpositionen** (Titel, Menge, Einzel/Gesamt, Steuersatz, Art Artikel/Leistung) | 🟡 | [ ] |
+| **BO4b** | „Vorschläge übernehmen“ füllt **Belegpositionen** (Titel, Menge, Einzel/Gesamt, Steuersatz, Art Artikel/Leistung) | 🟢 | [x] 2026-11-27 · `applyOcrExtractLines` |
 | **BO4c** | Kopfdaten-Apply unverändert nutzbar; Konflikte/leere Zeilen klar in Status | 🟡 | [ ] |
 | **BO4d** | Guard + Smoke Dev (1 E-Rechnung mit Zeilen) | 🔴 | [ ] |
 
@@ -241,18 +241,22 @@ Bei Items-Modus: Split oft read-derived; Hinweis „Wird aus den Rechnungspositi
 2. Sonst → `parseLineRows` aus POST `lines[]` → `replaceLines` (`dg_voucher_lines`).  
 3. Journal/Lager erst über bestehende Posting-/Stock-Services nach gültigem Speichern — **nicht** aus OCR-Apply.
 
-### OCR-Apply heute (`buchhaltung-import.mjs` → `applySuggestion`)
+### OCR-Apply (`buchhaltung-import.mjs` → `applySuggestion`, Stand BO4b)
 
 | Feld | Verhalten |
 |------|-----------|
 | Kopf | Rechnungsnr., Datum, Lieferant, Kontakt-Suche, Notizen (IBAN/USt …) |
-| Split | **nur erste** `.dg-voucher-split-gross` + USt-Selects |
-| Rechnungspositionen `items[]` | **nicht** befüllt |
-| Extrakt-`lines[]` (BO2) | nur Anzeige im Vorschlagspanel / `suggestion.lines` — **kein** Form-Write |
+| Extrakt-`lines[]` mit Betrag | `dgVoucherFormApi.applyOcrExtractLines` |
+| Ausgabe | eine Split-Zeile je Position (Brutto/USt, Konto leer); Summary in Notizen |
+| Erlös | `items[]` je Position (Titel/`catalog_kind`/Menge/…); `article_id` leer |
+| Ohne Positionsbeträge | Fallback: erste Split-Brutto + USt wie früher |
 
-**Folge für BO4b:** Lieferantenbelege brauchen einen Apply-Pfad in die **Ausgabe-UI**. Optionen (Entscheidung in BO4b, nicht hier bauen): (A) mehrere Split-Zeilen aus Extrakt (Konto manuell/leer, Brutto/Steuer aus Zeile) + Titel in Notizen; (B) sichtbare Positionsvorschau-Tabelle am Ausgabe-Beleg (noch nicht vorhanden) die später BO5 an Katalog hängt; (C) bei Erlös-Belegen zusätzlich `items[]` füllen. Zielbild Plan §0 will Artikel+DL — für Ausgabe ist das **nicht** die bestehende Items-Section.
+**Entscheidung BO4b (umgesetzt):**  
+- **Ausgabe:** Extrakt-`lines` → **eine Split-Zeile je Position** (Brutto/USt; **Konto leer**); Titel/Art/Menge in Notizen + Buchungstext.  
+- **Erlös:** Extrakt → **`items[]`** (Titel, `catalog_kind`, Menge, Einheit, Einzel/Summe brutto, USt; `article_id` leer → BO5).  
+- Ohne Positionsbeträge: Fallback Kopf + 1. Split wie bisher. Kein Auto-Konto, kein Katalog-Write.
 
-**Verweise:** `views/modules/buchhaltung-beleg-form.php` · `assets/js/buchhaltung-belege.js` · `assets/js/buchhaltung-import.mjs` · `VoucherIncomePositions` · `VoucherRepository::replaceItems` / `replaceLines`
+**Verweise:** `views/modules/buchhaltung-beleg-form.php` · `assets/js/buchhaltung-belege.js` (`applyOcrExtractLines`) · `assets/js/buchhaltung-import.mjs` · `VoucherIncomePositions` · `VoucherRepository::replaceItems` / `replaceLines`
 
 ---
 
@@ -450,3 +454,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO3d ✅** Client `enrichWithAssistenz` → `voucher_extract` nach OCR/Text; E-Rechnung-Zeilen überspringen |
 | 2026-11-27 | **BO3e ✅** Fixture `invoice-ocr-sample.txt` + GoBD-Scan (kein stilles Buchen/Lager/Auto-Apply) · `beleg-ocr-bo3e-gobd-selftest.php` · BO3-Block fertig |
 | 2026-11-27 | **BO4a ✅** Ist Split/`items` vs. OCR-Apply §12 — Ausgabe nur `lines[]`; Items nur Erlös; Apply füllt keine Positionen |
+| 2026-11-27 | **BO4b ✅** Apply → `applyOcrExtractLines` (Ausgabe=Splits, Erlös=items, Konto/Artikel leer) |
