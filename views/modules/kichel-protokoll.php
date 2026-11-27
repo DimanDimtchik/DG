@@ -49,7 +49,7 @@ $buildProtokollUrl = static function (array $extra = []) use ($kichelQualityFilt
   <header class="dg-page-header">
     <div>
       <h1 class="dg-page-title">Kichel-Protokoll</h1>
-      <p class="dg-lead">Letzte Anfragen an den CRM-Helfer — schlecht markieren und in die Hilfe-Wissensbasis der Instanz übernehmen.</p>
+      <p class="dg-lead">Letzte Anfragen an den CRM-Helfer — schlecht markieren und in die Hilfe-Wissensbasis der Instanz übernehmen. Hier sehen Sie die vollständigen Details; Mitarbeitende erhalten in der Hilfe nur Antwort und verständliche Quellen.</p>
     </div>
   </header>
 

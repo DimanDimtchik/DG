@@ -61,7 +61,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–5 ✅** · KR8b ✅ |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
-| **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | **KH0–1 ✅** · KH2–3 geplant |
+| **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | **KH0–2 ✅** · KH3 geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
 | **F — Gesetzestraining** | **KP0–KP4** | Continued Pretraining / schweres Norm-Training | später, beschrieben |
 | **G — Pflege** | **KU0–KU2** | Update-Zyklus Normen, Re-Index, Re-Train-Trigger | laufend nach B/E |
@@ -574,7 +574,7 @@ Nach `--apply` mit Download: `KichelStatuteIndex::reset()`. Snapshot ist Instanz
 - [x] `removed` wenn Snapshot-Gesetz fehlt  
 - [x] `--force` reimportiert  
 
-**Nächste Mini-ID:** **KL5** ✅ · KR8b ✅ · **KH0–1** ✅ → optional KH2.
+**Nächste Mini-ID:** **KL5** ✅ · KR8b ✅ · **KH0–2** ✅ → optional KH3.
 
 ### 4.6 KL5 — Pilot Urteile (RII / BFH) ✅ 2026-11-27
 
@@ -602,7 +602,7 @@ Nach `--apply` mit Download: `KichelStatuteIndex::reset()`. Snapshot ist Instanz
 - [x] Retriever → `type=caselaw`  
 - [x] KR3-Retriever-Selftest weiter grün  
 
-**Nächste Mini-ID:** **KR8b** ✅ · **KH0–1** ✅ → optional KH2–3. **KT/KP** weiter gesperrt.
+**Nächste Mini-ID:** **KR8b** ✅ · **KH0–2** ✅ → optional KH3. **KT/KP** weiter gesperrt.
 
 ---
 
@@ -625,7 +625,7 @@ Parser **ersetzt nicht** die Suche. Er verbessert nur die Query.
 |----|--------|
 | **KH0** ✅ | Nutzungs-/Hinweistext: „Unterstützung, keine Rechtsberatung; Quelle prüfen“ — `KichelDisclaimer` · Partial Widget+Super · Selftest |
 | **KH1** ✅ | Admin: schlecht markieren / Warteschlange / Instanz-Overrides · Nutzer-Feedback „Nein“ → bad · Migration 161 · Selftest |
-| **KH2** | Rollen: was Mitarbeiter vs. nur Admin sehen (z. B. Roh-Fakten) |
+| **KH2** ✅ | Rollen: Mitarbeiter ohne `rag_facts`/`rank_meta`/Quellen-Refs/Rechen-Rohdaten · Admin volle API · Protokoll ungefiltert · `KichelRoleView` · Selftest |
 | **KH3** | Abgleich GoBD-Ton: keine Buchungsvorschläge „einfach so buchen“ ohne CRM-Regel |
 
 ---
@@ -719,7 +719,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KH0–1 ✅.** Nächste optional **KH2–3**. Phase B (KL) + KR8b fertig.  
+**KH0–2 ✅.** Nächste optional **KH3** (GoBD-Ton). Phase B (KL) + KR8b fertig.  
 **Kein** KT/KP ohne neues Gate.
 
 ---
@@ -747,3 +747,4 @@ KR0 ✅
 | 2026-11-27 | **KL5 ✅** RII BFH-Pilot · Themenfilter · Caselaw-Index · Retriever |
 | 2026-11-27 | **KH0 ✅** Hinweistext Widget+Super · `KichelDisclaimer` · Selftest |
 | 2026-11-27 | **KH1 ✅** Qualität markieren · Overrides · Feedback-API · Migration 161 |
+| 2026-11-27 | **KH2 ✅** Rollenfilter API · `KichelRoleView` · Selftest |

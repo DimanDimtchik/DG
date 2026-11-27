@@ -45,19 +45,22 @@ final class KichelApi
         $query = trim((string) ($_POST['query'] ?? ''));
         $result = KichelAssistant::answer($user, $query);
 
+        // Protokoll = volle Antwort (inkl. Roh-Fakten); Client sieht rollenabhängig (KH2).
         $logId = KichelProtocolRepository::record(
             $user->id,
             $query,
             (string) ($result['answer'] ?? ''),
             $result
         );
+
+        $data = KichelRoleView::forUser($user, $result);
         if ($logId !== null) {
-            $result['log_id'] = $logId;
+            $data['log_id'] = $logId;
         }
 
         echo json_encode([
             'success' => true,
-            'data' => $result,
+            'data' => $data,
         ], JSON_UNESCAPED_UNICODE);
     }
 }

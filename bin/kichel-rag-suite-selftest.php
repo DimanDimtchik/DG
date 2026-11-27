@@ -24,6 +24,7 @@ $scripts = [
     'kichel-rii-import-selftest.php',
     'kichel-disclaimer-selftest.php',
     'kichel-quality-selftest.php',
+    'kichel-role-view-selftest.php',
 ];
 
 $failed = 0;
