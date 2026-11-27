@@ -673,6 +673,7 @@ class _HomePageState extends State<HomePage> {
   int _tab = 0;
   List<dynamic> _bookings = [];
   List<dynamic> _articles = [];
+  List<Map<String, dynamic>> _staff = [];
   String? _bookingsError;
   String? _catalogError;
   bool _loading = true;
@@ -700,7 +701,9 @@ class _HomePageState extends State<HomePage> {
 
   Map<String, dynamic>? _dataMap(Map<String, dynamic> res) {
     final d = res['data'];
-    return d is Map<String, dynamic> ? d : null;
+    if (d is Map<String, dynamic>) return d;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return null;
   }
 
   Future<void> _reload() async {
@@ -715,9 +718,14 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       final bData = _dataMap(b);
       final cData = _dataMap(c);
+      final staffRaw = (cData?['staff'] as List?) ?? const [];
       setState(() {
         _bookings = (bData?['bookings'] as List?) ?? [];
         _articles = (cData?['articles'] as List?) ?? [];
+        _staff = staffRaw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
         _bookingsError = apiIsOk(b)
             ? null
             : apiUserMessage(b, fallback: 'Termine konnten nicht geladen werden.');
@@ -753,7 +761,11 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openBooking(Map<String, dynamic> a) async {
     final booked = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => BookSlotPage(client: widget.client, article: a),
+        builder: (_) => BookSlotPage(
+          client: widget.client,
+          article: a,
+          staff: _staff,
+        ),
       ),
     );
     if (!mounted) return;
@@ -942,10 +954,11 @@ class _HomePageState extends State<HomePage> {
       return EmptyState(icon: Icons.cloud_off_rounded, title: 'Buchen nicht möglich', detail: _catalogError!);
     }
     if (_articles.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.spa_rounded,
         title: 'Keine buchbaren Leistungen',
-        detail: 'Im CRM: Online-Buchung aktivieren und Leistungen anlegen.',
+        detail: _catalogError ??
+            'Im CRM Online-Buchung einschalten und Leistungen freigeben.',
       );
     }
     return ListView.separated(
@@ -1083,10 +1096,16 @@ class _StatusChip extends StatelessWidget {
 
 /// Terminwahl: Datum + Slot wählen, erst nach Bestätigung buchen.
 class BookSlotPage extends StatefulWidget {
-  const BookSlotPage({super.key, required this.client, required this.article});
+  const BookSlotPage({
+    super.key,
+    required this.client,
+    required this.article,
+    this.staff = const [],
+  });
 
   final ApiClient client;
   final Map<String, dynamic> article;
+  final List<Map<String, dynamic>> staff;
 
   @override
   State<BookSlotPage> createState() => _BookSlotPageState();
@@ -1098,17 +1117,35 @@ class _BookSlotPageState extends State<BookSlotPage> {
   String? _error;
   bool _loadingSlots = true;
   bool _bookingBusy = false;
+  int? _employeeId;
 
   @override
   void initState() {
     super.initState();
-    _selectedDay = DateTime.now().add(const Duration(days: 1));
+    final now = DateTime.now();
+    _selectedDay = DateTime(now.year, now.month, now.day);
+    if (widget.staff.length == 1) {
+      _employeeId = int.tryParse('${widget.staff.first['id'] ?? ''}');
+    }
     _loadSlots();
   }
 
   Map<String, dynamic>? _dataMap(Map<String, dynamic> res) {
     final d = res['data'];
-    return d is Map<String, dynamic> ? d : null;
+    if (d is Map<String, dynamic>) return d;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return null;
+  }
+
+  Map<String, String> _slotQuery() {
+    final q = <String, String>{
+      'article_id': '${widget.article['id']}',
+      'date': ymd(_selectedDay),
+    };
+    if (_employeeId != null && _employeeId! > 0) {
+      q['employee_id'] = '$_employeeId';
+    }
+    return q;
   }
 
   Future<void> _loadSlots() async {
@@ -1118,10 +1155,7 @@ class _BookSlotPageState extends State<BookSlotPage> {
       _slots = [];
     });
     try {
-      final res = await widget.client.get('/api/mobile/customer/slots', {
-        'article_id': '${widget.article['id']}',
-        'date': ymd(_selectedDay),
-      });
+      final res = await widget.client.get('/api/mobile/customer/slots', _slotQuery());
       if (!mounted) return;
       if (!apiIsOk(res)) {
         setState(() {
@@ -1146,7 +1180,24 @@ class _BookSlotPageState extends State<BookSlotPage> {
 
   Future<void> _confirmAndBook(String slot) async {
     if (_bookingBusy) return;
+    final articleId = int.tryParse('${widget.article['id'] ?? ''}') ?? 0;
+    if (articleId < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Leistung ungültig. Bitte Katalog neu laden.')),
+      );
+      return;
+    }
     final title = '${widget.article['title']}';
+    String? staffName;
+    if (_employeeId != null) {
+      for (final s in widget.staff) {
+        if (int.tryParse('${s['id'] ?? ''}') == _employeeId) {
+          final n = '${s['name'] ?? ''}'.trim();
+          if (n.isNotEmpty) staffName = n;
+          break;
+        }
+      }
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1158,6 +1209,10 @@ class _BookSlotPageState extends State<BookSlotPage> {
             Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 8),
             Text(formatSlotFull(slot)),
+            if (staffName != null && staffName.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text('Bei: $staffName', style: TextStyle(color: Colors.grey.shade700)),
+            ],
             const SizedBox(height: 14),
             Text(
               'Erst nach „Jetzt buchen“ wird der Termin angelegt.',
@@ -1179,24 +1234,31 @@ class _BookSlotPageState extends State<BookSlotPage> {
 
     setState(() => _bookingBusy = true);
     try {
-      final book = await widget.client.post('/api/mobile/customer/bookings', {
-        'article_id': widget.article['id'],
+      final body = <String, dynamic>{
+        'article_id': articleId,
         'slot_datetime': slot,
-      });
+        if (_employeeId != null && _employeeId! > 0) 'employee_id': _employeeId,
+      };
+      final book = await widget.client.post('/api/mobile/customer/bookings', body);
       if (!mounted) return;
       if (apiIsOk(book)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Termin gebucht: ${formatSlotFull(slot)}')),
-        );
+        final booking = _dataMap(book)?['booking'];
+        final code = booking is Map ? '${booking['booking_code'] ?? ''}'.trim() : '';
+        final msg = code.isNotEmpty
+            ? 'Termin gebucht ($code): ${formatSlotFull(slot)}'
+            : 'Termin gebucht: ${formatSlotFull(slot)}';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         Navigator.of(context).pop(true);
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(apiUserMessage(book, fallback: 'Buchung fehlgeschlagen.'))),
       );
+      await _loadSlots();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiUserMessage(e))));
+      await _loadSlots();
     } finally {
       if (mounted) setState(() => _bookingBusy = false);
     }
@@ -1254,6 +1316,36 @@ class _BookSlotPageState extends State<BookSlotPage> {
               ),
             ),
           ),
+          if (widget.staff.length > 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: DropdownButtonFormField<int?>(
+                value: _employeeId,
+                decoration: const InputDecoration(
+                  labelText: 'Mitarbeiter (optional)',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('Beliebig'),
+                  ),
+                  ...widget.staff.map((s) {
+                    final id = int.tryParse('${s['id'] ?? ''}');
+                    return DropdownMenuItem<int?>(
+                      value: id,
+                      child: Text('${s['name'] ?? 'Mitarbeiter'}'),
+                    );
+                  }),
+                ],
+                onChanged: _bookingBusy
+                    ? null
+                    : (v) {
+                        setState(() => _employeeId = v);
+                        _loadSlots();
+                      },
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
