@@ -45,36 +45,30 @@ $assert(str_contains($import, 'kein Wareneingang'), 'status mentions no stock mo
 $assert(str_contains($view, 'Neuanlage ohne Lagerbuchung') || str_contains($view, 'ohne Lagerbuchung'), 'view hint no stock');
 $assert(!preg_match('/BO5c|Gate G3|Stufe C/', $view), 'no plan codes in view');
 
-// createFromExtractLine without DB must throw clearly
-$threw = false;
-try {
-    VoucherArticleMatchService::createFromExtractLine(['title' => 'x', 'catalog_kind' => 'product']);
-} catch (Throwable $e) {
-    $threw = true;
-    $assert(
-        str_contains($e->getMessage(), 'Datenbank') || str_contains($e->getMessage(), 'konfiguriert'),
-        'offline create fails without DB',
-        $e->getMessage()
-    );
-}
-$assert($threw, 'create throws without database');
-
-$emptyTitle = false;
-try {
-    // Force past DB check by only validating title — if DB missing, still title check may not run first
-    // Reflect: method checks DB first. Call with empty title after ensuring message path via InvalidArgument when DB on.
-} catch (Throwable) {
-}
-// Title validation: unit-test the empty title path via reflection only if DB configured
-if (Database::isConfigured()) {
+// Offline: create must fail without DB. Online: never create real rows — only empty-title validation.
+if (!Database::isConfigured()) {
+    $threw = false;
+    try {
+        VoucherArticleMatchService::createFromExtractLine(['title' => 'x', 'catalog_kind' => 'product']);
+    } catch (Throwable $e) {
+        $threw = true;
+        $assert(
+            str_contains($e->getMessage(), 'Datenbank') || str_contains($e->getMessage(), 'konfiguriert'),
+            'offline create fails without DB',
+            $e->getMessage()
+        );
+    }
+    $assert($threw, 'create throws without database');
+    $assert(true, 'skip empty-title DB test (no database)');
+} else {
+    $assert(true, 'skip create-without-DB (database configured)');
+    $emptyTitle = false;
     try {
         VoucherArticleMatchService::createFromExtractLine(['title' => '  ', 'catalog_kind' => 'service']);
     } catch (InvalidArgumentException $e) {
         $emptyTitle = str_contains($e->getMessage(), 'Bezeichnung');
     }
     $assert($emptyTitle, 'empty title rejected when DB on');
-} else {
-    $assert(true, 'skip empty-title DB test (no database)');
 }
 
 if ($failed > 0) {
