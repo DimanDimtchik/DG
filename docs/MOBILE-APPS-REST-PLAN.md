@@ -32,7 +32,7 @@
 | **Kein Deploy außer „deploy“** | PHP-API nur bei Bedarf; Flutter-Builds separat |
 
 **Chat-Prompt-Vorlage:**  
-`Nur Mini-ID MA2d laut docs/MOBILE-APPS-REST-PLAN.md. Nur Kalender-App. Kein Mitarbeiter. Kein Refactor.`
+`Nur Mini-ID MA3a laut docs/MOBILE-APPS-REST-PLAN.md. Nur Mitarbeiter-App. Kein Kalender. Kein Refactor.`
 
 ---
 
@@ -121,7 +121,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA2b** | Katalog → Slot wählen → Buchen (Happy Path) | 🟡 | [x] 2026-11-27 · Staff-Filter + Dev-E2E + Selftest |
 | **MA2c** | Meine Termine: Liste + Storno + Umbuchen | 🟡 | [x] 2026-11-27 · Umbuchen via BookSlotPage · Dev-E2E + Selftest |
 | **MA2d** | Randfälle: Buchung aus, Slot weg, Session abgelaufen | 🟡 | [x] 2026-11-27 · Codes + UI + Dev-E2E + Selftest |
-| **MA2e** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
+| **MA2e** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [x] 2026-11-27 · Flutter analyze/test + Web-UI Chrome · §8 |
 
 **Prompt MA2d:**  
 `Nur Mini-ID MA2d laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/kalender. Randfälle Buchung/Slot/Session. Kein Mitarbeiter.`
@@ -255,7 +255,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Slot `employee_id` optional | ✅ MA2b (Dropdown wenn >1 Staff) |
 | Randfälle Buchung/Slot/Session | ✅ MA2d |
 | Stempel/Abwesenheit Härte | **MA3b–e** |
-| Smoke Geräte | **MA2e** / **MA3f** |
+| Smoke Geräte | ✅ MA2e (Web/Chrome + API-Kette; Android-Emulator optional) · **MA3f** |
 
 ### 7.1 MA0c — Wo kommt die CRM-Basis-URL her? (2026-11-27)
 
@@ -288,7 +288,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | MA2b | 2026-11-27 | Dev API `ganz-om.de` | Online-Buchung an · Katalog→Slot→Buchen→Storno ✅ · Staff-Filter UI |
 | MA2c | 2026-11-27 | Dev API `ganz-om.de` | Liste→Umbuchen→Storno ✅ · Selftest `mobile-kalender-reschedule-selftest.php` |
 | MA2d | 2026-11-27 | Dev API `ganz-om.de` | Session/Slot-Konflikt/Buchung-aus ✅ · `mobile-kalender-edge-selftest.php` |
-| MA2e | | | |
+| MA2e | 2026-11-27 | Flutter Web/Chrome `127.0.0.1:7357` (kein Android-SDK im Cloud-Agent) | analyze+widget-test ✅ · UI Bootstrap→Login ✅ · Dev-API-Kette Register/me/Katalog ✅ · CORS Web↔API bewusst ungeprüft (nativ) · `bash bin/mobile-kalender-smoke.sh` |
 | MA3f | | | |
 
 ---
@@ -313,6 +313,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-kalender-booking-selftest.php` | Guard MA2b |
 | `bin/mobile-kalender-reschedule-selftest.php` | Guard MA2c |
 | `bin/mobile-kalender-edge-selftest.php` | Guard MA2d |
+| `bin/mobile-kalender-smoke.sh` | MA2e Flutter analyze + test |
+| `bin/mobile-kalender-smoke-selftest.php` | Guard MA2e |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -334,5 +336,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA2b ✅** BookSlotPage Staff/`employee_id` · Buchungscode · Dev Katalog→Slot→Buchen |
 | 2026-11-27 | **MA2c ✅** Meine Termine Liste · Umbuchen (`/reschedule`) · Storno · `mobile-kalender-reschedule-selftest.php` |
 | 2026-11-27 | **MA2d ✅** Randfälle `booking_disabled`/`slot_unavailable`/Session · Kalender-UI · `mobile-kalender-edge-selftest.php` |
+| 2026-11-27 | **MA2e ✅** Kalender Smoke: Flutter analyze/test · Web/Chrome Bootstrap→Login · §8 · `mobile-kalender-smoke.sh` · MA2-Block fertig |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
