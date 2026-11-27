@@ -556,6 +556,7 @@ spl_autoload_register(static function (string $class): void {
         'KichelGiiXmlParser' => '/src/Kichel/KichelGiiXmlParser.php',
         'KichelGiiImporter' => '/src/Kichel/KichelGiiImporter.php',
         'KichelStatuteIndex' => '/src/Kichel/KichelStatuteIndex.php',
+        'KichelGiiUpdater' => '/src/Kichel/KichelGiiUpdater.php',
         'RecipeRepository' => '/src/Recipe/RecipeRepository.php',
         'WorkCenterRepository' => '/src/Recipe/WorkCenterRepository.php',
         'RecipeCostSettings' => '/src/Recipe/RecipeCostSettings.php',

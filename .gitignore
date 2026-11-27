@@ -40,6 +40,7 @@ secrets/
 # Kichel GII-Import (KL1+) — Instanz-Korpus, nicht committen
 storage/kichel/gii/*.jsonl
 storage/kichel/gii/*.manifest.json
+storage/kichel/gii/toc-snapshot.json
 
 # Flutter
 apps/**/.dart_tool/

@@ -57,6 +57,7 @@ Nutzerfrage
 | `src/Kichel/KichelGiiXmlParser.php` | KL1: GII-XML → §/Abs.-Chunks (`statute`) |
 | `src/Kichel/KichelStatuteIndex.php` | KL2: JSONL-Volltext-Index |
 | `src/Kichel/KichelRetriever.php` | KR3 + **KL3:** Statute-Kandidaten aus Index |
+| `src/Kichel/KichelGiiUpdater.php` | KL4: TOC-Snapshot/Diff → gezielter Re-Import |
 | `src/Kichel/data/tax-shorttexts.php` | KR4c: eigene Steuer-Kurztexte (ohne Verlagskommentar) |
 | `src/Kichel/KichelRanker.php` | KR5: Score-Minimum, Top-K, Leerfall-Hinweis |
 | `src/Kichel/KichelAssistant.php` | Orchestrierung |

@@ -59,7 +59,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
-| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–3 ✅** · als Nächstes **KL4** |
+| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–4 ✅** · als Nächstes **KL5** (geparkt) / optional KR8b |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
@@ -422,8 +422,8 @@ RAG gilt als **stabil**, wenn:
 | **KL1** | Import-Pipeline: TOC → AO/UStG/EStG (+ ggf. HGB) → Chunks | [x] 2026-11-27 · §4.2 |
 | **KL2** | Speicher Index (Volltext zuerst) | [x] 2026-11-27 · §4.3 |
 | **KL3** | Retriever → `type=statute` | [x] 2026-11-27 · §4.4 |
-| **KL4** | Update-Job TOC-Diff | [ ] |
-| **KL5** | Pilot Urteile (später, eng) | [ ] geparkt bis nach KL1–3 |
+| **KL4** | Update-Job TOC-Diff | [x] 2026-11-27 · §4.5 |
+| **KL5** | Pilot Urteile (später, eng) | [ ] geparkt |
 
 ### 4.1 KL0 — Quellenentscheid ✅ 2026-11-27
 
@@ -546,7 +546,35 @@ Kein Massenimport aller Bundesgesetze in KL1.
 - [x] USt-ID-Frage bleibt CRM-Navigation (kein Fantasy-Top-§)  
 - [x] KR3-Retriever-Selftest weiter grün  
 
-**Nächste Mini-ID:** **KL4** (Update-Job TOC-Diff).
+**Nächste Mini-ID:** **KL4** ✅ → **KL5** geparkt / optional KR8b.
+
+### 4.5 KL4 — TOC-Diff Update ✅ 2026-11-27
+
+| Teil | Inhalt | Status |
+|------|--------|--------|
+| **KL4a** | Snapshot `toc-snapshot.json` (Slug/Titel/Link-Fingerprint) · Diff added/changed/removed | [x] |
+| **KL4b** | `--check` / `--apply` / `--force` / `--dry-run` · nur geänderte Whitelist neu laden | [x] |
+| **KL4c** | Selftest offline + Suite-Haken | [x] |
+
+| Datei | Rolle |
+|-------|--------|
+| `src/Kichel/KichelGiiUpdater.php` | Snapshot, Diff, Apply |
+| `bin/kichel-gii-update.php` | CLI |
+| `bin/kichel-gii-update-selftest.php` | Abnahme |
+
+Nach `--apply` mit Download: `KichelStatuteIndex::reset()`. Snapshot ist Instanz-Datei (gitignore).
+
+**Hinweis:** TOC-Diff erkennt Titel/Link-Änderungen der Whitelist-Einträge — nicht stillschweigende XML-Inhalte bei gleichem TOC-Eintrag (`--force` als Fallback).
+
+#### Abnahme KL4
+
+- [x] Erster Lauf → alle Whitelist `added`  
+- [x] Gleicher TOC → `to_import=[]`  
+- [x] Titeländerung UStG → nur UStG  
+- [x] `removed` wenn Snapshot-Gesetz fehlt  
+- [x] `--force` reimportiert  
+
+**Nächste Mini-ID:** **KL5** (Urteile, geparkt) oder Produkt-Feinschliff KR8b/KH.
 
 ---
 
@@ -663,8 +691,8 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KL4** (Update-Job: TOC-Diff → geänderte Whitelist-Gesetze neu importieren).  
-Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
+**KL5** geparkt (Urteile RII) · optional **KR8b** Dev-UI · **KH0** Hinweistext.  
+**Kein** KT/KP ohne neues Gate.
 
 ---
 
@@ -686,3 +714,4 @@ Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 | 2026-11-27 | **KL1 ✅** GII-Import Whitelist · XML→§/Abs.-Chunks · JSONL `storage/kichel/gii/` · Selftest |
 | 2026-11-27 | **KL2 ✅** `KichelStatuteIndex` Volltext über JSONL · Selftest · noch ohne Retriever |
 | 2026-11-27 | **KL3 ✅** Retriever ← Statute-Index · `type=statute` in facts/sources · Suite |
+| 2026-11-27 | **KL4 ✅** TOC-Diff Update · Snapshot · CLI check/apply/force · Selftest |
