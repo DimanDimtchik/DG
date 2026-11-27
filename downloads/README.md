@@ -1,5 +1,7 @@
 # App-Downloads (Android APK)
 
+> Store-AAB / iOS-Archive: Checkliste [`docs/MOBILE-APPS-RELEASE-CHECKLIST.md`](../docs/MOBILE-APPS-RELEASE-CHECKLIST.md) (MA5c).
+
 Hier die gebauten Flutter-APKs ablegen (Dateinamen fest):
 
 | Datei | App |

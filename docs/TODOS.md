@@ -25,7 +25,7 @@ Stand: **2026-11-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · Agent: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) | **SKU/SKC/SKD/SKP0 ✅** · **SKP1a–e ✅** |
 | Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** · KI1–3/KT/KP gesperrt |
 
-**Nächster Block:** **Mobile Apps** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) (MA0–MA4 ✅ · MA5a–b ✅ · weiter **MA5c** Release-Checkliste) · optional SKP2 geparkt · Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
+**Nächster Block:** **Mobile Apps** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) (MA0–MA4 ✅ · MA5a–c ✅ · **MA5d** nur nach Auftrag · weiter **MA6a**) · optional SKP2 geparkt · Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
