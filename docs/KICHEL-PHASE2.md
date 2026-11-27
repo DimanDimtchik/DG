@@ -1,7 +1,8 @@
 # Kichel Phase 2 — Ollama & Regeln
 
 Stand: 2026-09-13 · Branch `cursor/kichel-assistant-1dc6`  
-Server-/Inventar-Plan (GEX45, Super-Kichel, Mini-IDs): [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md)
+Server-/Inventar-Plan (GEX45, Super-Kichel, Mini-IDs): [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md)  
+RAG → später Training (Microschritte): [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md)
 
 ## Verbindliche Architektur
 
