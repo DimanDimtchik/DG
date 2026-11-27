@@ -67,7 +67,7 @@ App speichert: baseUrl + bearerToken (+ refresh-Flow)
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | **MA0** | Inventar / Ist / Docs | [x] MA0a–d ✅ | 🟢 |
-| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [~] MA1a–b ✅ | 🟢🟡 |
+| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [~] MA1a–c ✅ | 🟢🟡 |
 | **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
 | **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
 | **MA4** | Härte / Guards / API-Smoke | [ ] | 🟢🟡 |
@@ -106,7 +106,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | **MA1a** | Fehlerformat vereinheitlichen: `ok`/`error`/`code` in beiden Apps anzeigen (menschliche Meldung) | 🟡 | [x] 2026-11-27 · `api_message.dart` + Selftest |
 | **MA1b** | Token: Speichern, Logout, Refresh bei 401 — gemeinsames Muster (je App-Datei ok, Logik gleich) | 🟡 | [x] 2026-11-27 · `api_auth.dart` + Selftest |
-| **MA1c** | Basis-URL: Validierung + Speichern + optional QR-Scan (wenn Plugin schon da) | 🟡 | [ ] |
+| **MA1c** | Basis-URL: Validierung + Speichern + optional QR-Scan (wenn Plugin schon da) | 🟡 | [x] 2026-11-27 · `api_base_url.dart` (kein QR-Plugin → Link einfügen) |
 | **MA1d** | Kurz: Netzwerk-Fehler / Offline-Hinweis (kein Offline-Modus) | 🟢 | [ ] |
 
 **Nicht in MA1:** neue API-Endpunkte · Store-Assets · Push.
@@ -203,9 +203,9 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Logout | ✅ `POST …/auth/logout` | ✅ | ✅ |
 | Token Refresh | ✅ `POST …/auth/refresh` | ✅ MA1b bei 401 (+ Retry) | ✅ MA1b bei 401 (+ Retry, inkl. Binary) |
 | Session `me` | ✅ `GET …/auth/me` | ❌ | ❌ |
-| Basis-URL manuell speichern | — (App) | ✅ BootstrapPage | ✅ BootstrapPage |
-| Deep-Link / Connect | HTML `/app-connect` + Scheme | ❌ kein Scheme-Listener | ✅ `dg-mitarbeiter?base=` (app_links) |
-| QR-Scan in der App | — | ❌ | ❌ (URL tippen oder Deep-Link) |
+| Basis-URL manuell speichern | — (App) | ✅ MA1c `resolveCrmBaseUrl` + Prefs | ✅ MA1c + Deep-Link |
+| Deep-Link / Connect | HTML `/app-connect` + Scheme | 🟡 Link/`base=` einfügen (kein Scheme-Listener) | ✅ `dg-mitarbeiter://…?base=` (app_links) |
+| QR-Scan in der App | — | ❌ kein Plugin · Link von Connect-Seite einfügen | ❌ kein Plugin · Link/Deep-Link |
 
 ### Kalender (Kunden)
 
@@ -295,8 +295,10 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `apps/mitarbeiter/` | Flutter MA |
 | `apps/*/lib/api_message.dart` | MA1a Fehlerformat (byte-identisch) |
 | `apps/*/lib/api_auth.dart` | MA1b Token/401-Refresh (byte-identisch) |
+| `apps/*/lib/api_base_url.dart` | MA1c Basis-URL resolve/save (byte-identisch) |
 | `bin/mobile-api-message-selftest.php` | Guard MA1a |
 | `bin/mobile-api-auth-selftest.php` | Guard MA1b |
+| `bin/mobile-api-base-url-selftest.php` | Guard MA1c |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -312,5 +314,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA0c ✅** §7.1 CRM-Basis-URL: `/app-connect`, App-Einladung · Buchungs-QR ≠ App-Connect |
 | 2026-11-27 | **MA0d ✅** CRM-Download `apps` → `app-download` · `/apps` frei für Website · Migration 162 |
 | 2026-11-27 | **MA1b ✅** `api_auth.dart` Token speichern/Logout · 401→Refresh→Retry · Session-Expired → Login |
+| 2026-11-27 | **MA1c ✅** `api_base_url.dart` resolve/save · Connect-Link/`base=` · kein QR-Plugin (Hinweis UI) |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

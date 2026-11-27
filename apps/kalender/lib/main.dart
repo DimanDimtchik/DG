@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_auth.dart';
+import 'api_base_url.dart';
 import 'api_message.dart';
 
 const Color _brandTeal = Color(0xFF0F766E);
@@ -15,23 +16,6 @@ const Locale _localeDe = Locale('de', 'DE');
 
 void main() {
   runApp(const DgKalenderApp());
-}
-
-/// CRM-Basis-URL normalisieren (https:// ergänzen, Slash am Ende entfernen).
-String normalizeBaseUrl(String raw) {
-  var u = raw.trim();
-  if (u.isEmpty) {
-    throw ArgumentError('CRM-Adresse fehlt.');
-  }
-  if (!u.contains('://')) {
-    u = 'https://$u';
-  }
-  u = u.replaceAll(RegExp(r'/+$'), '');
-  final parsed = Uri.tryParse(u);
-  if (parsed == null || !parsed.hasScheme || parsed.host.isEmpty) {
-    throw ArgumentError('Ungültige CRM-Adresse. Beispiel: https://dg.ganz-om.de');
-  }
-  return u;
 }
 
 String formatSlotTime(String slot) {
@@ -381,18 +365,8 @@ class _BootstrapPageState extends State<BootstrapPage> {
   }
 
   Future<void> _load() async {
-    final p = await SharedPreferences.getInstance();
-    var saved = p.getString(mobileBaseUrlPrefsKey) ?? '';
+    final saved = await mobileLoadBaseUrl() ?? '';
     _token = await mobileLoadToken();
-    if (saved.isNotEmpty) {
-      try {
-        saved = normalizeBaseUrl(saved);
-        await p.setString(mobileBaseUrlPrefsKey, saved);
-      } catch (_) {
-        saved = '';
-        await p.remove(mobileBaseUrlPrefsKey);
-      }
-    }
     _url.text = saved;
     setState(() => _loading = false);
     if (saved.isNotEmpty && _token != null && _token!.isNotEmpty) {
@@ -407,10 +381,10 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
   Future<void> _saveUrl() async {
     try {
-      final normalized = normalizeBaseUrl(_url.text);
-      final p = await SharedPreferences.getInstance();
-      await p.setString(mobileBaseUrlPrefsKey, normalized);
+      final normalized = resolveCrmBaseUrl(_url.text);
+      await mobileSaveBaseUrl(normalized);
       if (!mounted) return;
+      setState(() => _url.text = normalized);
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => LoginPage(baseUrl: normalized),
@@ -451,14 +425,18 @@ class _BootstrapPageState extends State<BootstrapPage> {
                 TextField(
                   controller: _url,
                   decoration: const InputDecoration(
-                    hintText: 'https://dg.ganz-om.de',
+                    labelText: 'CRM-Adresse oder Verbindungs-Link',
+                    hintText: 'https://firma.example',
                     prefixIcon: Icon(Icons.language_rounded),
                   ),
                   keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _saveUrl(),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Ohne Slash am Ende. Beispiel: https://dg.ganz-om.de',
+                  'Adresse der Firma eingeben oder den Link von der Seite „App verbinden“ '
+                  'einfügen. Kamera-QR-Scan folgt später (noch kein Scanner-Plugin).',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF64748B),
                       ),
@@ -515,8 +493,7 @@ class _LoginPageState extends State<LoginPage> {
       }
       final data = res['data'] as Map<String, dynamic>;
       final token = data['token'] as String;
-      final p = await SharedPreferences.getInstance();
-      await p.setString(mobileBaseUrlPrefsKey, client.baseUrl);
+      await mobileSaveBaseUrl(client.baseUrl);
       await mobileSaveToken(token);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(

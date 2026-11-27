@@ -14,6 +14,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_auth.dart';
+import 'api_base_url.dart';
 import 'api_message.dart';
 import 'signature_page.dart';
 
@@ -74,22 +75,6 @@ DateTime? parseFlexibleDate(String raw) {
 
 String toApiDate(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-String normalizeBaseUrl(String raw) {
-  var u = raw.trim();
-  if (u.isEmpty) {
-    throw ArgumentError('CRM-Adresse fehlt.');
-  }
-  if (!u.contains('://')) {
-    u = 'https://$u';
-  }
-  u = u.replaceAll(RegExp(r'/+$'), '');
-  final parsed = Uri.tryParse(u);
-  if (parsed == null || !parsed.hasScheme || parsed.host.isEmpty) {
-    throw ArgumentError('Ungültige CRM-Adresse. Beispiel: https://dg.ganz-om.de');
-  }
-  return u;
-}
 
 class DgMitarbeiterApp extends StatelessWidget {
   const DgMitarbeiterApp({super.key});
@@ -312,12 +297,9 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
   Future<void> _applyDeepLink(Uri uri) async {
     if (uri.scheme != 'dg-mitarbeiter') return;
-    final baseRaw = uri.queryParameters['base'] ?? '';
-    if (baseRaw.isEmpty) return;
     try {
-      final normalized = normalizeBaseUrl(baseRaw);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(mobileBaseUrlPrefsKey, normalized);
+      final normalized = resolveCrmBaseUrl(uri.toString());
+      await mobileSaveBaseUrl(normalized);
       if (!mounted) return;
       setState(() => _url.text = normalized);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -329,19 +311,26 @@ class _BootstrapPageState extends State<BootstrapPage> {
     } catch (_) {}
   }
 
-  Future<void> _load() async {
-    final p = await SharedPreferences.getInstance();
-    var saved = p.getString(mobileBaseUrlPrefsKey) ?? '';
-    final token = await mobileLoadToken();
-    if (saved.isNotEmpty) {
-      try {
-        saved = normalizeBaseUrl(saved);
-        await p.setString(mobileBaseUrlPrefsKey, saved);
-      } catch (_) {
-        saved = '';
-        await p.remove(mobileBaseUrlPrefsKey);
-      }
+  Future<void> _submitUrl() async {
+    try {
+      final normalized = resolveCrmBaseUrl(_url.text);
+      await mobileSaveBaseUrl(normalized);
+      if (!mounted) return;
+      setState(() => _url.text = normalized);
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => LoginPage(baseUrl: normalized)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiUserMessage(e))),
+      );
     }
+  }
+
+  Future<void> _load() async {
+    final saved = await mobileLoadBaseUrl() ?? '';
+    final token = await mobileLoadToken();
     _url.text = saved;
     setState(() => _loading = false);
     if (saved.isNotEmpty && token != null && token.isNotEmpty) {
@@ -400,29 +389,26 @@ class _BootstrapPageState extends State<BootstrapPage> {
             TextField(
               controller: _url,
               decoration: const InputDecoration(
-                labelText: 'CRM-Adresse',
-                hintText: 'https://dg.ganz-om.de',
+                labelText: 'CRM-Adresse oder Verbindungs-Link',
+                hintText: 'https://firma.example',
                 border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submitUrl(),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Adresse der Firma eingeben, Link von „App verbinden“ einfügen '
+              'oder den Deep-Link aus der Einladung nutzen. '
+              'Kamera-QR-Scan folgt später (noch kein Scanner-Plugin).',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF64748B),
+                  ),
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () async {
-                try {
-                  final normalized = normalizeBaseUrl(_url.text);
-                  final p = await SharedPreferences.getInstance();
-                  await p.setString(mobileBaseUrlPrefsKey, normalized);
-                  if (!context.mounted) return;
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => LoginPage(baseUrl: normalized)),
-                  );
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(apiUserMessage(e))),
-                  );
-                }
-              },
+              onPressed: _submitUrl,
               child: const Text('Weiter'),
             ),
           ],
@@ -461,8 +447,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
       final token = (res['data'] as Map)['token'] as String;
-      final p = await SharedPreferences.getInstance();
-      await p.setString(mobileBaseUrlPrefsKey, client.baseUrl);
+      await mobileSaveBaseUrl(client.baseUrl);
       await mobileSaveToken(token);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
