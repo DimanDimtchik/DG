@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_auth.dart';
 import 'api_message.dart';
 import 'signature_page.dart';
 
@@ -114,9 +115,12 @@ class DgMitarbeiterApp extends StatelessWidget {
 }
 
 class ApiClient {
-  ApiClient(String baseUrl, {this.token}) : baseUrl = normalizeBaseUrl(baseUrl);
+  ApiClient(String baseUrl, {this.token, this.onSessionExpired})
+      : baseUrl = normalizeBaseUrl(baseUrl);
   final String baseUrl;
   String? token;
+  VoidCallback? onSessionExpired;
+  Future<bool>? _refreshLock;
 
   Uri _u(String path, [Map<String, String>? q]) {
     final base = Uri.parse(baseUrl);
@@ -127,28 +131,80 @@ class ApiClient {
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
+        if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
-  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
-    final res = await http.post(_u(path), headers: _headers, body: jsonEncode(body));
-    return apiParseJsonBody(res.bodyBytes);
+  Future<void> _handleSessionExpired() async {
+    token = null;
+    await mobileClearToken();
+    final cb = onSessionExpired;
+    if (cb != null) {
+      cb();
+    }
   }
 
-  Future<Map<String, dynamic>> get(String path, [Map<String, String>? q]) async {
-    final res = await http.get(_u(path, q), headers: {
-      if (token != null) 'Authorization': 'Bearer $token',
-    });
-    return apiParseJsonBody(res.bodyBytes);
+  Future<http.Response> _refreshRequest(String bearer) {
+    return http.post(
+      _u('/api/mobile/auth/refresh'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $bearer',
+      },
+      body: '{}',
+    );
+  }
+
+  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) {
+    return mobileJsonWithRefresh(
+      path: path,
+      getToken: () => token,
+      setToken: (t) async => token = t,
+      onSessionExpired: _handleSessionExpired,
+      send: () => http.post(_u(path), headers: _headers, body: jsonEncode(body)),
+      sendRefresh: _refreshRequest,
+      getRefreshLock: () => _refreshLock,
+      setRefreshLock: (f) => _refreshLock = f,
+    );
+  }
+
+  Future<Map<String, dynamic>> get(String path, [Map<String, String>? q]) {
+    return mobileJsonWithRefresh(
+      path: path,
+      getToken: () => token,
+      setToken: (t) async => token = t,
+      onSessionExpired: _handleSessionExpired,
+      send: () => http.get(_u(path, q), headers: {
+        if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
+      }),
+      sendRefresh: _refreshRequest,
+      getRefreshLock: () => _refreshLock,
+      setRefreshLock: (f) => _refreshLock = f,
+    );
   }
 
   Future<({List<int> bytes, String? filename, String? mime})> getBinary(
     String path, [
     Map<String, String>? q,
   ]) async {
-    final res = await http.get(_u(path, q), headers: {
-      if (token != null) 'Authorization': 'Bearer $token',
-    });
+    Future<http.Response> once() => http.get(_u(path, q), headers: {
+          if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
+        });
+
+    var res = await once();
+    if (res.statusCode == 401 && !apiIsAuthPath(path)) {
+      final ok = await mobileTryRefreshToken(
+        getToken: () => token,
+        setToken: (t) async => token = t,
+        sendRefresh: _refreshRequest,
+        getRefreshLock: () => _refreshLock,
+        setRefreshLock: (f) => _refreshLock = f,
+      );
+      if (!ok) {
+        await _handleSessionExpired();
+        throw Exception('Sitzung abgelaufen. Bitte erneut anmelden.');
+      }
+      res = await once();
+    }
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw Exception('Download fehlgeschlagen (${res.statusCode}).');
     }
@@ -167,39 +223,52 @@ class ApiClient {
     required String fileField,
     required String filePath,
     String? filename,
-  }) async {
-    final req = http.MultipartRequest('POST', _u(path));
-    if (token != null) {
-      req.headers['Authorization'] = 'Bearer $token';
+  }) {
+    Future<http.Response> once() async {
+      final req = http.MultipartRequest('POST', _u(path));
+      if (token != null && token!.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+      req.fields.addAll(fields);
+      final name = filename ?? p.basename(filePath);
+      final ext = p.extension(name).toLowerCase().replaceFirst('.', '');
+      MediaType? mime;
+      switch (ext) {
+        case 'pdf':
+          mime = MediaType('application', 'pdf');
+          break;
+        case 'png':
+          mime = MediaType('image', 'png');
+          break;
+        case 'jpg':
+        case 'jpeg':
+          mime = MediaType('image', 'jpeg');
+          break;
+        case 'webp':
+          mime = MediaType('image', 'webp');
+          break;
+      }
+      req.files.add(await http.MultipartFile.fromPath(
+        fileField,
+        filePath,
+        filename: name,
+        contentType: mime,
+      ));
+      final streamed = await req.send();
+      final body = await streamed.stream.toBytes();
+      return http.Response.bytes(body, streamed.statusCode, headers: streamed.headers);
     }
-    req.fields.addAll(fields);
-    final name = filename ?? p.basename(filePath);
-    final ext = p.extension(name).toLowerCase().replaceFirst('.', '');
-    MediaType? mime;
-    switch (ext) {
-      case 'pdf':
-        mime = MediaType('application', 'pdf');
-        break;
-      case 'png':
-        mime = MediaType('image', 'png');
-        break;
-      case 'jpg':
-      case 'jpeg':
-        mime = MediaType('image', 'jpeg');
-        break;
-      case 'webp':
-        mime = MediaType('image', 'webp');
-        break;
-    }
-    req.files.add(await http.MultipartFile.fromPath(
-      fileField,
-      filePath,
-      filename: name,
-      contentType: mime,
-    ));
-    final streamed = await req.send();
-    final body = await streamed.stream.toBytes();
-    return apiParseJsonBody(body);
+
+    return mobileJsonWithRefresh(
+      path: path,
+      getToken: () => token,
+      setToken: (t) async => token = t,
+      onSessionExpired: _handleSessionExpired,
+      send: once,
+      sendRefresh: _refreshRequest,
+      getRefreshLock: () => _refreshLock,
+      setRefreshLock: (f) => _refreshLock = f,
+    );
   }
 }
 
@@ -248,7 +317,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
     try {
       final normalized = normalizeBaseUrl(baseRaw);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('base_url', normalized);
+      await prefs.setString(mobileBaseUrlPrefsKey, normalized);
       if (!mounted) return;
       setState(() => _url.text = normalized);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -262,15 +331,15 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    var saved = p.getString('base_url') ?? '';
-    final token = p.getString('token');
+    var saved = p.getString(mobileBaseUrlPrefsKey) ?? '';
+    final token = await mobileLoadToken();
     if (saved.isNotEmpty) {
       try {
         saved = normalizeBaseUrl(saved);
-        await p.setString('base_url', saved);
+        await p.setString(mobileBaseUrlPrefsKey, saved);
       } catch (_) {
         saved = '';
-        await p.remove('base_url');
+        await p.remove(mobileBaseUrlPrefsKey);
       }
     }
     _url.text = saved;
@@ -342,7 +411,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                 try {
                   final normalized = normalizeBaseUrl(_url.text);
                   final p = await SharedPreferences.getInstance();
-                  await p.setString('base_url', normalized);
+                  await p.setString(mobileBaseUrlPrefsKey, normalized);
                   if (!context.mounted) return;
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => LoginPage(baseUrl: normalized)),
@@ -393,8 +462,8 @@ class _LoginPageState extends State<LoginPage> {
       }
       final token = (res['data'] as Map)['token'] as String;
       final p = await SharedPreferences.getInstance();
-      await p.setString('base_url', client.baseUrl);
-      await p.setString('token', token);
+      await p.setString(mobileBaseUrlPrefsKey, client.baseUrl);
+      await mobileSaveToken(token);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
@@ -447,12 +516,31 @@ class ShellPage extends StatefulWidget {
 class _ShellPageState extends State<ShellPage> {
   int _tab = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    widget.client.onSessionExpired = _onSessionExpired;
+  }
+
+  void _onSessionExpired() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sitzung abgelaufen. Bitte erneut anmelden.')),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => LoginPage(baseUrl: widget.client.baseUrl)),
+        (_) => false,
+      );
+    });
+  }
+
   Future<void> _logout() async {
     try {
       await widget.client.post('/api/mobile/auth/logout', {});
     } catch (_) {}
-    final p = await SharedPreferences.getInstance();
-    await p.remove('token');
+    widget.client.token = null;
+    await mobileClearToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const BootstrapPage()),

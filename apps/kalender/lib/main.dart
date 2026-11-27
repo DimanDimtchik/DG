@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_auth.dart';
 import 'api_message.dart';
 
 const Color _brandTeal = Color(0xFF0F766E);
@@ -159,10 +160,13 @@ class DgKalenderApp extends StatelessWidget {
 }
 
 class ApiClient {
-  ApiClient(String baseUrl, {this.token}) : baseUrl = normalizeBaseUrl(baseUrl);
+  ApiClient(String baseUrl, {this.token, this.onSessionExpired})
+      : baseUrl = normalizeBaseUrl(baseUrl);
 
   final String baseUrl;
   String? token;
+  VoidCallback? onSessionExpired;
+  Future<bool>? _refreshLock;
 
   Uri _u(String path, [Map<String, String>? q]) {
     final base = Uri.parse(baseUrl);
@@ -171,24 +175,58 @@ class ApiClient {
     return uri.replace(queryParameters: q);
   }
 
-  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
-    final res = await http.post(
-      _u(path),
-      headers: {
+  Map<String, String> _jsonHeaders() => {
         'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(body),
-    );
-    return apiParseJsonBody(res.bodyBytes);
+        if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
+      };
+
+  Future<void> _handleSessionExpired() async {
+    token = null;
+    await mobileClearToken();
+    final cb = onSessionExpired;
+    if (cb != null) {
+      cb();
+    }
   }
 
-  Future<Map<String, dynamic>> get(String path, [Map<String, String>? q]) async {
-    final res = await http.get(
-      _u(path, q),
-      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) {
+    return mobileJsonWithRefresh(
+      path: path,
+      getToken: () => token,
+      setToken: (t) async => token = t,
+      onSessionExpired: _handleSessionExpired,
+      send: () => http.post(_u(path), headers: _jsonHeaders(), body: jsonEncode(body)),
+      sendRefresh: (bearer) => http.post(
+        _u('/api/mobile/auth/refresh'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $bearer',
+        },
+        body: '{}',
+      ),
+      getRefreshLock: () => _refreshLock,
+      setRefreshLock: (f) => _refreshLock = f,
     );
-    return apiParseJsonBody(res.bodyBytes);
+  }
+
+  Future<Map<String, dynamic>> get(String path, [Map<String, String>? q]) {
+    return mobileJsonWithRefresh(
+      path: path,
+      getToken: () => token,
+      setToken: (t) async => token = t,
+      onSessionExpired: _handleSessionExpired,
+      send: () => http.get(_u(path, q), headers: _jsonHeaders()),
+      sendRefresh: (bearer) => http.post(
+        _u('/api/mobile/auth/refresh'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $bearer',
+        },
+        body: '{}',
+      ),
+      getRefreshLock: () => _refreshLock,
+      setRefreshLock: (f) => _refreshLock = f,
+    );
   }
 }
 
@@ -344,15 +382,15 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    var saved = p.getString('base_url') ?? '';
-    _token = p.getString('token');
+    var saved = p.getString(mobileBaseUrlPrefsKey) ?? '';
+    _token = await mobileLoadToken();
     if (saved.isNotEmpty) {
       try {
         saved = normalizeBaseUrl(saved);
-        await p.setString('base_url', saved);
+        await p.setString(mobileBaseUrlPrefsKey, saved);
       } catch (_) {
         saved = '';
-        await p.remove('base_url');
+        await p.remove(mobileBaseUrlPrefsKey);
       }
     }
     _url.text = saved;
@@ -371,7 +409,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
     try {
       final normalized = normalizeBaseUrl(_url.text);
       final p = await SharedPreferences.getInstance();
-      await p.setString('base_url', normalized);
+      await p.setString(mobileBaseUrlPrefsKey, normalized);
       if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -478,8 +516,8 @@ class _LoginPageState extends State<LoginPage> {
       final data = res['data'] as Map<String, dynamic>;
       final token = data['token'] as String;
       final p = await SharedPreferences.getInstance();
-      await p.setString('base_url', client.baseUrl);
-      await p.setString('token', token);
+      await p.setString(mobileBaseUrlPrefsKey, client.baseUrl);
+      await mobileSaveToken(token);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
@@ -595,7 +633,21 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    widget.client.onSessionExpired = _onSessionExpired;
     _reload();
+  }
+
+  void _onSessionExpired() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sitzung abgelaufen. Bitte erneut anmelden.')),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => LoginPage(baseUrl: widget.client.baseUrl)),
+        (_) => false,
+      );
+    });
   }
 
   Map<String, dynamic>? _dataMap(Map<String, dynamic> res) {
@@ -641,8 +693,8 @@ class _HomePageState extends State<HomePage> {
     try {
       await widget.client.post('/api/mobile/auth/logout', {});
     } catch (_) {}
-    final p = await SharedPreferences.getInstance();
-    await p.remove('token');
+    widget.client.token = null;
+    await mobileClearToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const BootstrapPage()),

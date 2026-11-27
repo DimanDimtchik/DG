@@ -67,7 +67,7 @@ App speichert: baseUrl + bearerToken (+ refresh-Flow)
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | **MA0** | Inventar / Ist / Docs | [x] MA0a–d ✅ | 🟢 |
-| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [~] MA1a ✅ | 🟢🟡 |
+| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [~] MA1a–b ✅ | 🟢🟡 |
 | **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
 | **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
 | **MA4** | Härte / Guards / API-Smoke | [ ] | 🟢🟡 |
@@ -105,7 +105,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **MA1a** | Fehlerformat vereinheitlichen: `ok`/`error`/`code` in beiden Apps anzeigen (menschliche Meldung) | 🟡 | [x] 2026-11-27 · `api_message.dart` + Selftest |
-| **MA1b** | Token: Speichern, Logout, Refresh bei 401 — gemeinsames Muster (je App-Datei ok, Logik gleich) | 🟡 | [ ] |
+| **MA1b** | Token: Speichern, Logout, Refresh bei 401 — gemeinsames Muster (je App-Datei ok, Logik gleich) | 🟡 | [x] 2026-11-27 · `api_auth.dart` + Selftest |
 | **MA1c** | Basis-URL: Validierung + Speichern + optional QR-Scan (wenn Plugin schon da) | 🟡 | [ ] |
 | **MA1d** | Kurz: Netzwerk-Fehler / Offline-Hinweis (kein Offline-Modus) | 🟢 | [ ] |
 
@@ -201,7 +201,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Customer Register/Login | ✅ `POST …/auth/customer/*` | ✅ LoginPage (Toggle Register) | — |
 | Staff Login (Kennung+PIN) | ✅ `POST …/auth/staff/login` | — | ✅ LoginPage |
 | Logout | ✅ `POST …/auth/logout` | ✅ | ✅ |
-| Token Refresh | ✅ `POST …/auth/refresh` | ❌ nicht aufgerufen | ❌ nicht aufgerufen |
+| Token Refresh | ✅ `POST …/auth/refresh` | ✅ MA1b bei 401 (+ Retry) | ✅ MA1b bei 401 (+ Retry, inkl. Binary) |
 | Session `me` | ✅ `GET …/auth/me` | ❌ | ❌ |
 | Basis-URL manuell speichern | — (App) | ✅ BootstrapPage | ✅ BootstrapPage |
 | Deep-Link / Connect | HTML `/app-connect` + Scheme | ❌ kein Scheme-Listener | ✅ `dg-mitarbeiter?base=` (app_links) |
@@ -236,7 +236,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Fähigkeit | API | Apps |
 |-----------|-----|------|
 | Push | ❌ (M1d später) | ❌ |
-| HTTP 401 → Refresh → Retry | API da | ❌ beide ApiClients ohne Auto-Refresh |
+| HTTP 401 → Refresh → Retry | API da | ✅ MA1b `api_auth.dart` (identisch) |
 | Fehlerformat `ok`/`error`/`code` | ✅ `MobileApi::fail` | ✅ MA1a `api_message.dart` (identisch beide Apps) |
 | Offline-Hinweis | — | 🟡 Fehlertexte bei Netz/API, kein eigener Offline-Modus → **MA1d** |
 
@@ -294,7 +294,9 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `apps/kalender/` | Flutter Kunden |
 | `apps/mitarbeiter/` | Flutter MA |
 | `apps/*/lib/api_message.dart` | MA1a Fehlerformat (byte-identisch) |
+| `apps/*/lib/api_auth.dart` | MA1b Token/401-Refresh (byte-identisch) |
 | `bin/mobile-api-message-selftest.php` | Guard MA1a |
+| `bin/mobile-api-auth-selftest.php` | Guard MA1b |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -309,5 +311,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA0b ✅** Ist-Matrix §7 API vs. Flutter (Lücken → MA1–MA3) |
 | 2026-11-27 | **MA0c ✅** §7.1 CRM-Basis-URL: `/app-connect`, App-Einladung · Buchungs-QR ≠ App-Connect |
 | 2026-11-27 | **MA0d ✅** CRM-Download `apps` → `app-download` · `/apps` frei für Website · Migration 162 |
+| 2026-11-27 | **MA1b ✅** `api_auth.dart` Token speichern/Logout · 401→Refresh→Retry · Session-Expired → Login |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
