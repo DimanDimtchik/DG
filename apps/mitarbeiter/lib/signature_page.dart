@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import 'api_message.dart';
 import 'main.dart' show ApiClient;
 
 /// ES6b: Minimal-UI Unterschrift aufnehmen + speichern (source=app).
@@ -42,9 +43,9 @@ class _SignaturePageState extends State<SignaturePage> {
     try {
       final res = await widget.client.get('/api/mobile/staff/signature');
       if (!mounted) return;
-      if (res['ok'] != true) {
+      if (!apiIsOk(res)) {
         setState(() {
-          _error = res['error']?.toString() ?? 'Unterschrift nicht ladbar';
+          _error = apiUserMessage(res, fallback: 'Unterschrift nicht ladbar.');
           _busy = false;
         });
         return;
@@ -61,7 +62,7 @@ class _SignaturePageState extends State<SignaturePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiUserMessage(e);
         _busy = false;
       });
     }
@@ -93,9 +94,9 @@ class _SignaturePageState extends State<SignaturePage> {
         'png_base64': base64Encode(png),
       });
       if (!mounted) return;
-      if (res['ok'] != true) {
+      if (!apiIsOk(res)) {
         setState(() {
-          _error = res['error']?.toString() ?? 'Speichern fehlgeschlagen';
+          _error = apiUserMessage(res, fallback: 'Speichern fehlgeschlagen.');
           _busy = false;
         });
         return;
@@ -113,7 +114,7 @@ class _SignaturePageState extends State<SignaturePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiUserMessage(e);
         _busy = false;
       });
     }
@@ -148,9 +149,9 @@ class _SignaturePageState extends State<SignaturePage> {
         filename: file.name,
       );
       if (!mounted) return;
-      if (res['ok'] != true) {
+      if (!apiIsOk(res)) {
         setState(() {
-          _error = res['error']?.toString() ?? 'Upload fehlgeschlagen';
+          _error = apiUserMessage(res, fallback: 'Upload fehlgeschlagen.');
           _busy = false;
         });
         return;
@@ -168,7 +169,7 @@ class _SignaturePageState extends State<SignaturePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiUserMessage(e);
         _busy = false;
       });
     }

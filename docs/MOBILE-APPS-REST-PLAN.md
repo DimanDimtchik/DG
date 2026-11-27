@@ -67,7 +67,7 @@ App speichert: baseUrl + bearerToken (+ refresh-Flow)
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | **MA0** | Inventar / Ist / Docs | [x] MA0a–c ✅ | 🟢 |
-| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [ ] | 🟢🟡 |
+| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [~] MA1a ✅ | 🟢🟡 |
 | **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
 | **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
 | **MA4** | Härte / Guards / API-Smoke | [ ] | 🟢🟡 |
@@ -100,7 +100,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **MA1a** | Fehlerformat vereinheitlichen: `ok`/`error`/`code` in beiden Apps anzeigen (menschliche Meldung) | 🟡 | [ ] |
+| **MA1a** | Fehlerformat vereinheitlichen: `ok`/`error`/`code` in beiden Apps anzeigen (menschliche Meldung) | 🟡 | [x] 2026-11-27 · `api_message.dart` + Selftest |
 | **MA1b** | Token: Speichern, Logout, Refresh bei 401 — gemeinsames Muster (je App-Datei ok, Logik gleich) | 🟡 | [ ] |
 | **MA1c** | Basis-URL: Validierung + Speichern + optional QR-Scan (wenn Plugin schon da) | 🟡 | [ ] |
 | **MA1d** | Kurz: Netzwerk-Fehler / Offline-Hinweis (kein Offline-Modus) | 🟢 | [ ] |
@@ -233,7 +233,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 |-----------|-----|------|
 | Push | ❌ (M1d später) | ❌ |
 | HTTP 401 → Refresh → Retry | API da | ❌ beide ApiClients ohne Auto-Refresh |
-| Offline-Hinweis | — | 🟡 Fehlertexte bei Netz/API, kein eigener Offline-Modus |
+| Fehlerformat `ok`/`error`/`code` | ✅ `MobileApi::fail` | ✅ MA1a `api_message.dart` (identisch beide Apps) |
+| Offline-Hinweis | — | 🟡 Fehlertexte bei Netz/API, kein eigener Offline-Modus → **MA1d** |
 
 ### Folge für Mini-IDs
 
@@ -286,6 +287,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `src/Mobile/` | PHP API |
 | `apps/kalender/` | Flutter Kunden |
 | `apps/mitarbeiter/` | Flutter MA |
+| `apps/*/lib/api_message.dart` | MA1a Fehlerformat (byte-identisch) |
+| `bin/mobile-api-message-selftest.php` | Guard MA1a |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
 ---
@@ -298,3 +301,4 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA0a ✅** Verweise Spec/TODOS/IQ-STROM |
 | 2026-11-27 | **MA0b ✅** Ist-Matrix §7 API vs. Flutter (Lücken → MA1–MA3) |
 | 2026-11-27 | **MA0c ✅** §7.1 CRM-Basis-URL: `/app-connect`, `/apps`, App-Einladung · Buchungs-QR ≠ App-Connect · MA0-Block fertig |
+| 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |

@@ -5,6 +5,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_message.dart';
+
 const Color _brandTeal = Color(0xFF0F766E);
 const Color _brandTealDark = Color(0xFF115E59);
 const Color _surfaceMist = Color(0xFFF3F7F6);
@@ -178,7 +180,7 @@ class ApiClient {
       },
       body: jsonEncode(body),
     );
-    return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return apiParseJsonBody(res.bodyBytes);
   }
 
   Future<Map<String, dynamic>> get(String path, [Map<String, String>? q]) async {
@@ -186,7 +188,7 @@ class ApiClient {
       _u(path, q),
       headers: {if (token != null) 'Authorization': 'Bearer $token'},
     );
-    return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return apiParseJsonBody(res.bodyBytes);
   }
 }
 
@@ -379,7 +381,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Invalid argument(s): ', ''))),
+        SnackBar(content: Text(apiUserMessage(e))),
       );
     }
   }
@@ -469,8 +471,8 @@ class _LoginPageState extends State<LoginPage> {
         if (_register) 'name': _name.text.trim(),
       };
       final res = await client.post(path, body);
-      if (res['ok'] != true) {
-        setState(() => _error = (res['error'] ?? 'Fehler').toString());
+      if (!apiIsOk(res)) {
+        setState(() => _error = apiUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.'));
         return;
       }
       final data = res['data'] as Map<String, dynamic>;
@@ -486,7 +488,7 @@ class _LoginPageState extends State<LoginPage> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Invalid argument(s): ', ''));
+      setState(() => _error = apiUserMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -616,18 +618,20 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _bookings = (bData?['bookings'] as List?) ?? [];
         _articles = (cData?['articles'] as List?) ?? [];
-        _bookingsError =
-            b['ok'] == true ? null : (b['error'] ?? 'Termine konnten nicht geladen werden.').toString();
-        _catalogError = c['ok'] == true
+        _bookingsError = apiIsOk(b)
             ? null
-            : (c['error'] ?? 'Katalog konnte nicht geladen werden.').toString();
+            : apiUserMessage(b, fallback: 'Termine konnten nicht geladen werden.');
+        _catalogError = apiIsOk(c)
+            ? null
+            : apiUserMessage(c, fallback: 'Katalog konnte nicht geladen werden.');
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _bookingsError = e.toString();
-        _catalogError = e.toString();
+        final msg = apiUserMessage(e);
+        _bookingsError = msg;
+        _catalogError = msg;
         _loading = false;
       });
     }
@@ -712,19 +716,19 @@ class _HomePageState extends State<HomePage> {
     try {
       final res = await widget.client.post('/api/mobile/customer/bookings/$id/cancel', {});
       if (!mounted) return;
-      if (res['ok'] == true) {
+      if (apiIsOk(res)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Termin storniert.')),
         );
         await _reload();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text((res['error'] ?? 'Storno fehlgeschlagen').toString())),
+          SnackBar(content: Text(apiUserMessage(res, fallback: 'Storno fehlgeschlagen.'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiUserMessage(e))));
     } finally {
       if (mounted) setState(() => _cancellingId = null);
     }
@@ -1019,9 +1023,9 @@ class _BookSlotPageState extends State<BookSlotPage> {
         'date': ymd(_selectedDay),
       });
       if (!mounted) return;
-      if (res['ok'] != true) {
+      if (!apiIsOk(res)) {
         setState(() {
-          _error = (res['error'] ?? 'Zeiten nicht ladbar').toString();
+          _error = apiUserMessage(res, fallback: 'Zeiten nicht ladbar.');
           _loadingSlots = false;
         });
         return;
@@ -1034,7 +1038,7 @@ class _BookSlotPageState extends State<BookSlotPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiUserMessage(e);
         _loadingSlots = false;
       });
     }
@@ -1080,7 +1084,7 @@ class _BookSlotPageState extends State<BookSlotPage> {
         'slot_datetime': slot,
       });
       if (!mounted) return;
-      if (book['ok'] == true) {
+      if (apiIsOk(book)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Termin gebucht: ${formatSlotFull(slot)}')),
         );
@@ -1088,11 +1092,11 @@ class _BookSlotPageState extends State<BookSlotPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text((book['error'] ?? 'Buchung fehlgeschlagen').toString())),
+        SnackBar(content: Text(apiUserMessage(book, fallback: 'Buchung fehlgeschlagen.'))),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiUserMessage(e))));
     } finally {
       if (mounted) setState(() => _bookingBusy = false);
     }

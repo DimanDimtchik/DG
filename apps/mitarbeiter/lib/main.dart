@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_message.dart';
 import 'signature_page.dart';
 
 void main() {
@@ -131,14 +132,14 @@ class ApiClient {
 
   Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
     final res = await http.post(_u(path), headers: _headers, body: jsonEncode(body));
-    return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return apiParseJsonBody(res.bodyBytes);
   }
 
   Future<Map<String, dynamic>> get(String path, [Map<String, String>? q]) async {
     final res = await http.get(_u(path, q), headers: {
       if (token != null) 'Authorization': 'Bearer $token',
     });
-    return jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    return apiParseJsonBody(res.bodyBytes);
   }
 
   Future<({List<int> bytes, String? filename, String? mime})> getBinary(
@@ -198,7 +199,7 @@ class ApiClient {
     ));
     final streamed = await req.send();
     final body = await streamed.stream.toBytes();
-    return jsonDecode(utf8.decode(body)) as Map<String, dynamic>;
+    return apiParseJsonBody(body);
   }
 }
 
@@ -349,11 +350,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        e.toString().replaceFirst('Invalid argument(s): ', ''),
-                      ),
-                    ),
+                    SnackBar(content: Text(apiUserMessage(e))),
                   );
                 }
               },
@@ -390,8 +387,8 @@ class _LoginPageState extends State<LoginPage> {
         'identifier': _id.text.trim(),
         'pin': _pin.text.trim(),
       });
-      if (res['ok'] != true) {
-        setState(() => _error = (res['error'] ?? 'Fehler').toString());
+      if (!apiIsOk(res)) {
+        setState(() => _error = apiUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.'));
         return;
       }
       final token = (res['data'] as Map)['token'] as String;
@@ -406,7 +403,7 @@ class _LoginPageState extends State<LoginPage> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Invalid argument(s): ', ''));
+      setState(() => _error = apiUserMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -531,11 +528,11 @@ class _ClockTabState extends State<ClockTab> {
     final res = await widget.client.get('/api/mobile/staff/clock');
     if (!mounted) return;
     setState(() {
-      if (res['ok'] == true) {
+      if (apiIsOk(res)) {
         _data = res['data'] as Map<String, dynamic>;
         _error = null;
       } else if (!silent) {
-        _error = res['error']?.toString();
+        _error = apiUserMessage(res, fallback: 'Stempelstatus nicht ladbar.');
       }
     });
   }
@@ -543,10 +540,12 @@ class _ClockTabState extends State<ClockTab> {
   Future<void> _event(String type) async {
     final res = await widget.client.post('/api/mobile/staff/clock', {'event_type': type});
     if (!mounted) return;
-    if (res['ok'] == true) {
+    if (apiIsOk(res)) {
       setState(() => _data = res['data'] as Map<String, dynamic>);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${res['error']}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiUserMessage(res, fallback: 'Stempel fehlgeschlagen.'))),
+      );
     }
   }
 
@@ -924,17 +923,37 @@ class KontoTab extends StatefulWidget {
 
 class _KontoTabState extends State<KontoTab> {
   Map<String, dynamic>? _data;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
     widget.client.get('/api/mobile/staff/konto').then((res) {
-      if (res['ok'] == true) setState(() => _data = res['data'] as Map<String, dynamic>);
+      if (!mounted) return;
+      setState(() {
+        if (apiIsOk(res)) {
+          _data = res['data'] as Map<String, dynamic>;
+          _error = null;
+        } else {
+          _error = apiUserMessage(res, fallback: 'Zeitkonto nicht ladbar.');
+        }
+      });
+    }).catchError((Object e) {
+      if (!mounted) return;
+      setState(() => _error = apiUserMessage(e));
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null && _data == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, textAlign: TextAlign.center),
+        ),
+      );
+    }
     if (_data == null) return const Center(child: CircularProgressIndicator());
     final lots = (_data!['lots'] as List?) ?? [];
     return ListView(
@@ -1008,10 +1027,10 @@ class _AbsencesTabState extends State<AbsencesTab> {
     if (!mounted) return;
     setState(() {
       _loading = false;
-      if (res['ok'] == true) {
+      if (apiIsOk(res)) {
         _data = Map<String, dynamic>.from(res['data'] as Map? ?? {});
       } else {
-        _error = res['error']?.toString() ?? 'Abwesenheiten nicht ladbar';
+        _error = apiUserMessage(res, fallback: 'Abwesenheiten nicht ladbar.');
       }
     });
   }
@@ -1172,7 +1191,7 @@ class _AbsencesTabState extends State<AbsencesTab> {
       }
       if (!mounted) return;
       setState(() => _submitting = false);
-      if (res['ok'] == true) {
+      if (apiIsOk(res)) {
         final msg = (res['data'] is Map)
             ? ((res['data'] as Map)['message']?.toString() ?? 'Antrag gestellt.')
             : 'Antrag gestellt.';
@@ -1190,13 +1209,13 @@ class _AbsencesTabState extends State<AbsencesTab> {
         await _load();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${res['error'] ?? 'Antrag fehlgeschlagen'}')),
+          SnackBar(content: Text(apiUserMessage(res, fallback: 'Antrag fehlgeschlagen.'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiUserMessage(e))));
     }
   }
 
@@ -1593,19 +1612,45 @@ class ShiftsTab extends StatefulWidget {
 
 class _ShiftsTabState extends State<ShiftsTab> {
   List<dynamic> _shifts = [];
+  String? _error;
+  bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
     widget.client.get('/api/mobile/staff/shifts').then((res) {
-      if (res['ok'] == true) {
-        setState(() => _shifts = (res['data']?['shifts'] as List?) ?? []);
-      }
+      if (!mounted) return;
+      setState(() {
+        _loaded = true;
+        if (apiIsOk(res)) {
+          _shifts = (res['data']?['shifts'] as List?) ?? [];
+          _error = null;
+        } else {
+          _error = apiUserMessage(res, fallback: 'Schichten nicht ladbar.');
+        }
+      });
+    }).catchError((Object e) {
+      if (!mounted) return;
+      setState(() {
+        _loaded = true;
+        _error = apiUserMessage(e);
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, textAlign: TextAlign.center),
+        ),
+      );
+    }
     if (_shifts.isEmpty) {
       return const Center(child: Text('Keine Schichten diese Woche.'));
     }
@@ -1650,7 +1695,7 @@ class _DocsTabState extends State<DocsTab> {
     if (!mounted) return;
     setState(() {
       _loading = false;
-      if (res['ok'] == true) {
+      if (apiIsOk(res)) {
         final data = res['data'] as Map? ?? {};
         _slots = (data['slots'] as List?) ?? const [];
         if (_slots.isEmpty) {
@@ -1669,7 +1714,7 @@ class _DocsTabState extends State<DocsTab> {
               .toList();
         }
       } else {
-        _error = res['error']?.toString() ?? 'Akte nicht ladbar';
+        _error = apiUserMessage(res, fallback: 'Akte nicht ladbar.');
       }
     });
   }
@@ -1700,7 +1745,7 @@ class _DocsTabState extends State<DocsTab> {
     );
     if (!mounted) return;
     setState(() => _busyType = null);
-    if (res['ok'] == true) {
+    if (apiIsOk(res)) {
       final data = res['data'] as Map? ?? {};
       setState(() => _slots = (data['slots'] as List?) ?? _slots);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1708,7 +1753,7 @@ class _DocsTabState extends State<DocsTab> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${res['error'] ?? 'Upload fehlgeschlagen'}')),
+        SnackBar(content: Text(apiUserMessage(res, fallback: 'Upload fehlgeschlagen.'))),
       );
     }
   }
@@ -1740,7 +1785,7 @@ class _DocsTabState extends State<DocsTab> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiUserMessage(e))));
     }
   }
 
@@ -1876,11 +1921,11 @@ class _ProfileTabState extends State<ProfileTab> {
     final res = await widget.client.get('/api/mobile/staff/profile');
     if (!mounted) return;
     setState(() {
-      if (res['ok'] == true) {
+      if (apiIsOk(res)) {
         _data = res['data'] as Map<String, dynamic>;
         _error = null;
       } else {
-        _error = res['error']?.toString() ?? 'Profil nicht ladbar';
+        _error = apiUserMessage(res, fallback: 'Profil nicht ladbar.');
       }
     });
   }
