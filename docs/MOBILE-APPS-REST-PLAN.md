@@ -152,9 +152,6 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA4b** | Flutter: `flutter analyze` / Widget-Tests Mindeststand je App | 🟡 | [x] 2026-11-27 · analyze+Tests beide Apps · `mobile-flutter-minstand.sh` |
 | **MA4c** | Rate-Limit / ungültiges Token: UI zeigt verständliche Meldung | 🟢 | [x] 2026-11-27 · rate_limited Mapping + apiAuthUserMessage · Selftest |
 
-**Prompt MA5a:**  
-`Nur Mini-ID MA5a laut docs/MOBILE-APPS-REST-PLAN.md. App-ID / Anzeigename / Icons prüfen. Kein Store-Upload.`
-
 ---
 
 ### MA5 — Store-Vorbereitung (noch kein Upload)
