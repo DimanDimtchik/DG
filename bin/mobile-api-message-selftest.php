@@ -37,6 +37,7 @@ assertMa1a(str_contains($helper, 'apiParseJsonBody('), 'apiParseJsonBody');
 assertMa1a(str_contains($helper, 'apiCodeMessage('), 'apiCodeMessage');
 assertMa1a(str_contains($helper, "'unauthorized'"), 'code unauthorized gemappt');
 assertMa1a(str_contains($helper, "'invalid_credentials'"), 'code invalid_credentials gemappt');
+assertMa1a(str_contains($helper, "'no_crm_user'"), 'code no_crm_user gemappt');
 assertMa1a(str_contains($helper, 'bad_response'), 'code bad_response');
 
 $kalMainSrc = (string) file_get_contents($kalMain);

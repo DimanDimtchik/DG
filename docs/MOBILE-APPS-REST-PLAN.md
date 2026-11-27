@@ -139,11 +139,11 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA3b** | Stempel: Ein/Aus/Pause + Tagesstatus | 🟡 | [x] 2026-11-27 · ClockTab Härte · source=mobile · Dev-E2E |
 | **MA3c** | Abwesenheit beantragen + Liste; Schichten Woche | 🟡 | [x] 2026-11-27 · Absences/Shifts Härte · Dev-E2E |
 | **MA3d** | Profil + Konto-Saldo; Akte-Liste/Download wenn API da | 🟡 | [x] 2026-11-27 · Profil/Konto/Akte Härte · Dev-E2E |
-| **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [ ] |
+| **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [x] 2026-11-27 · no_crm_user/Pad/Retry · Dev-E2E + Selftest |
 | **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
 
-**Prompt MA3e:**  
-`Nur Mini-ID MA3e laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Unterschrift Härte. Kein Kalender.`
+**Prompt MA3f:**  
+`Nur Mini-ID MA3f laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Smoke Emulator/Gerät + Kurznotiz §8. Kein Kalender.`
 
 ---
 
@@ -256,7 +256,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Randfälle Buchung/Slot/Session | ✅ MA2d |
 | Stempel Härte | ✅ MA3b |
 | Abwesenheit/Schichten | ✅ MA3c |
-| Profil/Konto/Akte | ✅ MA3d · Unterschrift **MA3e** |
+| Profil/Konto/Akte | ✅ MA3d |
+| Unterschrift Härte | ✅ MA3e (`signature_page` + `no_crm_user`) |
 | Smoke Geräte | ✅ MA2e (Web/Chrome + API-Kette; Android-Emulator optional) · **MA3f** |
 
 ### 7.1 MA0c — Wo kommt die CRM-Basis-URL her? (2026-11-27)
@@ -295,6 +296,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | MA3b | 2026-11-27 | Dev API `ganz-om.de` | Ein→Pause→Ende→Aus ✅ · source=mobile/App · `mobile-mitarbeiter-clock-selftest.php` |
 | MA3c | 2026-11-27 | Dev API `ganz-om.de` | Urlaub beantragen+Liste ✅ · shifts week= ✅ · `mobile-mitarbeiter-absences-shifts-selftest.php` |
 | MA3d | 2026-11-27 | Dev API `ganz-om.de` | Profil/Konto/Akte ✅ · `mobile-mitarbeiter-profile-konto-docs-selftest.php` |
+| MA3e | 2026-11-27 | Dev API `ganz-om.de` | no_crm_user GET/POST · bad_request leer · png_base64 source=app ✅ · `mobile-mitarbeiter-signature-selftest.php` |
 | MA3f | | | |
 
 ---
@@ -351,5 +353,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA3b ✅** Stempel ClockTab · SOURCE_MOBILE/App-Label · Busy/Aus-Bestätigung · Dev Ein/Pause/Aus |
 | 2026-11-27 | **MA3c ✅** AbsencesTab Validierung · ShiftsTab Wochen-Nav · Dev Antrag/Liste/shifts |
 | 2026-11-27 | **MA3d ✅** ProfileTab/KontoTab/DocsTab Härte · Dev Profil/Konto/Akte |
+| 2026-11-27 | **MA3e ✅** SignaturePage Härte · no_crm_user · Dev-E2E · `mobile-mitarbeiter-signature-selftest.php` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

@@ -31,6 +31,9 @@ assertEs6b(str_contains($pageSrc, 'png_base64'), 'Zeichnung als png_base64');
 assertEs6b(str_contains($pageSrc, 'signature_file'), 'Upload-Feld signature_file');
 assertEs6b(str_contains($pageSrc, 'Zeichnung speichern'), 'Speichern-Button Text');
 assertEs6b(str_contains($pageSrc, 'PNG/WebP'), 'Upload-Hinweis PNG/WebP');
+assertEs6b(str_contains($pageSrc, 'no_crm_user'), 'MA3e no_crm_user');
+assertEs6b(str_contains($pageSrc, 'Bitte zuerst unterschreiben'), 'MA3e leeres Pad');
+assertEs6b(str_contains($pageSrc, 'Erneut laden'), 'MA3e Retry');
 assertEs6b(
     str_contains($pageSrc, 'qualifizierte Signatur') || str_contains($pageSrc, 'einfache elektronische'),
     'Soft-Hinweis kein QES'

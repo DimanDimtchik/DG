@@ -63,6 +63,8 @@ String? apiCodeMessage(String code) {
       return 'Online-Terminbuchung ist derzeit ausgeschaltet.';
     case 'slot_unavailable':
       return 'Dieser Termin ist nicht mehr frei. Bitte eine andere Zeit wählen.';
+    case 'no_crm_user':
+      return 'Kein CRM-Benutzer mit Ihrem Kontakt verknüpft. Bitte Personal/HR melden.';
     case 'not_found':
       return 'Eintrag nicht gefunden.';
     case 'bad_request':
