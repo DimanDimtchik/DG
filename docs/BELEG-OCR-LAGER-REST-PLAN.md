@@ -78,7 +78,7 @@ Datei (PDF/Bild/XML)
 | **BO0** | Inventar / Zielbild / Doc-Sync | [x] BO0a–c ✅ | 🟢 |
 | **BO1** | Rohpipeline Client härten | [~] BO1b–c ✅ · BO1d offen | 🟡🔴 |
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
-| **BO3** | Kichel-Strukturierung | [~] BO3a ✅ | 🟡🔴 |
+| **BO3** | Kichel-Strukturierung | [~] BO3a–b ✅ | 🟡🔴 |
 | **BO4** | FiBu-UI Positionen übernehmen | [ ] | 🟡 |
 | **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
@@ -137,7 +137,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **BO3a** | Ist: wie Ollama/Kichel von CRM erreichbar (`llm…`, `kichel.local.php`) — nur lesen/Doc | 🟢 | [x] 2026-11-27 · §10 |
-| **BO3b** | Spec API: `action=voucher_extract` (o. Ä.) — Input Rohtext (+ Meta), Output BO2-JSON; **kein** Chat-Ersatz | 🟢 | [ ] |
+| **BO3b** | Spec API: `action=voucher_extract` (o. Ä.) — Input Rohtext (+ Meta), Output BO2-JSON; **kein** Chat-Ersatz | 🟢 | [x] 2026-11-27 · §11 |
 | **BO3c** | PHP: Extrakt-Service — Prompt „nur strukturieren“, PHP-Abgleich Brutto/Netto/MwSt, Fehler → soft fail | 🟡 | [ ] |
 | **BO3d** | Client: nach OCR/Textlayer optional Kichel-Extrakt aufrufen; UI zeigt „geordnet durch Assistenz“ ohne Plan-Codes | 🟡 | [ ] |
 | **BO3e** | Smoke Dev + GoBD: keine Auto-Buchung; Selftest mit Fixture-Text | 🔴🟡 | [ ] |
@@ -148,7 +148,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 - Intent-LLM (KI1–3) bleibt geparkt — dies ist **Extrakt**, nicht Chat-Intent.
 
 **Prompt BO3c:**  
-`Nur Mini-ID BO3c laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Kichel voucher_extract Service laut §7. Kein stilles Buchen. php -l.`
+`Nur Mini-ID BO3c laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Implementierung laut §11 Spec. Kein stilles Buchen. php -l.`
 
 ---
 
@@ -226,6 +226,82 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 **Folge für BO3b/c:** Extrakt-Service soll denselben `kichel.local.php`-/Proxy-Weg nutzen (wenn enabled), eigenes Prompt „nur strukturieren → BO2-JSON“, Soft-Fail wenn Ollama aus/Fehler → Regex-Hints (BO2c) bleiben Fallback. Kein Secret in Responses/Logs.
 
 **Verweise:** [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) · [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) § SKC0/SKC1 · `config/kichel.local.php.example`
+
+---
+
+## 11. BO3b — Spec API `voucher_extract` (verbindlich für BO3c+)
+
+> **Kein Code in BO3b.** Umsetzung = **BO3c**. Kein Chat, kein `/api/kichel`, kein stilles Buchen/Lager.
+
+### Endpoint
+
+| Punkt | Festlegung |
+|-------|------------|
+| **URL** | `POST /api/voucher?action=voucher_extract` |
+| **Handler** | neuer Zweig in `VoucherApi` (wie `file_upload`) — **nicht** `KichelApi` |
+| **Auth** | eingeloggt + `MenuRegistry::canAccess(…, 'buchhaltung-belege')` + `RoleResolver::canEdit` (wie Upload) |
+| **CSRF** | Pflicht: `_csrf` (Form-POST oder Header-äquivalent wie bestehende Beleg-API) |
+| **Content-Type** | `application/x-www-form-urlencoded` oder `multipart/form-data` (kein JSON-Body Pflicht; Felder wie Upload) |
+| **Antwort** | `Content-Type: application/json` |
+
+### Request-Felder
+
+| Feld | Pflicht | Bedeutung |
+|------|---------|-----------|
+| `_csrf` | ja | CSRF |
+| `raw_text` | ja | OCR-/Textlayer-/Hinweis-Rohtext (UTF-8) |
+| `source` | nein | `ocr` \| `pdf_text` \| `einvoice_xml` \| `mixed` — Default `pdf_text` |
+| `voucher_id` | nein | >0 nur Meta/Audit; Extrakt speichert **nicht** still in den Beleg |
+| `hint_extract` | nein | optionales JSON-String des Client-BO2-Extrakts (BO2c Hints) — Server darf mergen/prüfen |
+| `file_name` | nein | Originalname nur für Prompt-Kontext |
+
+**Limits (BO3c):** `raw_text` max. **100 000** Zeichen; bei Überschreitung `400` + klare Message. Leerer Text nach Trim → `400`.
+
+### Response (Erfolg)
+
+```json
+{
+  "success": true,
+  "data": {
+    "extract": { /* BO2-Schema §7, source oft \"kichel\" oder soft \"pdf_text\"/\"ocr\" */ },
+    "meta": {
+      "ollama_used": false,
+      "soft_fail": false,
+      "soft_fail_reason": "",
+      "model": ""
+    }
+  }
+}
+```
+
+| Punkt | Regel |
+|-------|--------|
+| `extract` | Immer BO2-`schema_version: 1`; `lines[]` wie §7 |
+| `ollama_used` | `true` nur wenn Modellantwort geparst und übernommen |
+| Soft-Fail | Ollama aus / Timeout / ungültiges JSON / GoBD-Filter → **HTTP 200**, `soft_fail=true`, Extrakt = validierte Hints oder leere `lines` + `warnings` — **kein** 500 für „Modell sagt nichts“ |
+| Hard-Fail | CSRF/Rechte/leerer Text/Limit → 4xx wie andere Voucher-API |
+
+### Server-Verhalten (Soll für BO3c)
+
+1. Hints parsen/normalisieren (`hint_extract` oder Regex aus `raw_text` — wiederverwendbar aus BO2-Logik wo möglich).  
+2. Wenn `KichelOllamaClient::isEnabled()`: Prompt „nur strukturieren → **nur** BO2-JSON“, Input = Rohtext + optionale Hints; **keine** Buchungsratschläge.  
+3. PHP: JSON extrahieren → gegen §7 validieren → `amount_check` (Zeilensummen vs. Kopf); Konflikte → `warnings`, Beträge nicht „schönrechnen“ ohne Hinweis.  
+4. Zahlen: Modellvorschlag vs. Hints — bei Widerspruch Hint/PHP-Abgleich bevorzugen oder beides in `warnings`.  
+5. **Nicht:** Beleg speichern, Journal, Lager, Kontakt patchen, Chat-Protokoll als Hilfe-Turn.
+
+### Abgrenzung
+
+| Thema | Hier? |
+|-------|--------|
+| `POST /api/kichel` Hilfe-Chat | **nein** |
+| Intent-LLM (KI1–3) | **nein** (geparkt) |
+| Client Apply Positionen | **BO4** |
+| Lager Match/Neuanlage | **BO5** |
+| UI-Aufruf nach OCR | **BO3d** |
+
+### Client-Erwartung (BO3d, nicht BO3b)
+
+Nach Textlayer/OCR (und wenn keine vollständigen E-Rechnung-Zeilen): optional `fetch` dieses Endpoints; Status ohne Plan-Codes („Assistenz ordnet den Text…“ / bei Soft-Fail Hints behalten).
 
 ---
 
@@ -319,3 +395,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO2c ✅** Text/OCR-Hints → BO2-Schema ohne LLM · XML-Vorrang · Selftest |
 | 2026-11-27 | **BO2d ✅** Fixture-XML CII/UBL unter testdata · Schema-Selftest · BO2 Block fertig |
 | 2026-11-27 | **BO3a ✅** Ist Ollama/Kichel §10 (`kichel.local.php` · `llm.ganz-soft.de` · kein Beleg-Extrakt noch) |
+| 2026-11-27 | **BO3b ✅** Spec `POST /api/voucher?action=voucher_extract` §11 (kein Chat, Soft-Fail, BO2-JSON) |
