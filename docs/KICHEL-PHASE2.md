@@ -54,6 +54,7 @@ Nutzerfrage
 | `src/Kichel/KichelRetriever.php` | KR3: eine Abrufkette (Pflichtpfade → Suche → Budget → Fakten) |
 | `src/Kichel/KichelCorpus.php` | KR4: Chunks Knowledge/Nav/Media + Steuerkurztexte |
 | `src/Kichel/data/tax-shorttexts.php` | KR4c: eigene Steuer-Kurztexte (ohne Verlagskommentar) |
+| `src/Kichel/KichelRanker.php` | KR5: Score-Minimum, Top-K, Leerfall-Hinweis |
 | `src/Kichel/KichelAssistant.php` | Orchestrierung |
 | `MenuRegistry::kichelAliases()` | Such-Aliase Menü/Module (Quelle der Wahrheit) |
 | `SettingsRegistry` → `kichel_aliases` | Such-Aliase je Einstellungs-Tab |

@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–4 ✅** · als Nächstes **KR5** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–5 ✅** · als Nächstes **KR6** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -82,7 +82,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR2** | Fakten-Objekt + Prompt-Vertrag (`phrase` nur aus Fakten) | 🟡 | [x] 2026-11-27 · a–c ✅ |
 | **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [x] 2026-11-27 · a–d ✅ |
 | **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [x] 2026-11-27 · a–c ✅ |
-| **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [ ] · Kinder a–b |
+| **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [ ] · Kinder a–b |
 | **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [ ] |
 | **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [ ] · Kinder a–b |
@@ -296,12 +296,21 @@ Quelle Tax: Label **CRM-Steuerkurztext**, Ref `tax:{id}`, Body inkl. Normhinweis
 
 ---
 
-### 3.6 KR5 — Ranking & Leerfall
+### 3.6 KR5 — Ranking & Leerfall ✅ 2026-11-27
 
-| Kind | Aufgabe | Abnahme |
-|------|---------|---------|
-| **KR5a** | Score-Schwellen: unter Minimum → „nicht gefunden“ + Formulierhilfe | keine Halluzinations-Fakten |
-| **KR5b** | Mehrere gute Treffer: Liste oder Top-K an `phrase`, nicht widersprüchlich mischen ohne Kennzeichnung | nachvollziehbar |
+| Kind | Aufgabe | Abnahme | Status |
+|------|---------|---------|--------|
+| **KR5a** | Score-Minimum → Leerfall + Formulierhilfe | `KichelRanker::MIN_ACCEPT_SCORE=5` · `notFoundMessage` | [x] |
+| **KR5b** | Top-K + relative Floor; Mehrfach nummeriert | `TOP_K=4` · `RELATIVE_FLOOR=0.5` · `multiFactBaseAnswer` | [x] |
+
+#### Verhalten
+
+- Nach Rohsuche: `KichelRanker::select` → bei Top &lt; 5: `path=empty`, **keine** Fakten an phrase.
+- Relative Schwelle: Score &lt; max(5, floor(top×0.5)) verworfen.
+- Mehrere Treffer: nummerierte Basis „bitte getrennt lesen“ + eine Quellenliste.
+- Response-Feld `rank_meta` (`top_score`, `kept`, `rejected`, `reason`).
+
+**Selftest:** `php bin/kichel-ranker-selftest.php` → ALL OK.
 
 ---
 
@@ -475,7 +484,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR5** (Ranking / Leerfall) — Start **KR5a**.  
+**KR6** (Quellenzeile UI + Protokoll) — Start **KR6a**.  
 Kein Gesetzes-Vollimport, kein Fine-Tuning.
 
 ---
@@ -489,3 +498,4 @@ Kein Gesetzes-Vollimport, kein Fine-Tuning.
 | 2026-11-27 | **KR2 ✅** `KichelRagFact` + Prompt-Vertrag + Fallback/`compose` · Money angebunden · Selftest |
 | 2026-11-27 | **KR3 ✅** `KichelRetriever` · Pflichtpfade · Budget · `rag_enabled` · Assistant compose |
 | 2026-11-27 | **KR4 ✅** `KichelCorpus` · Tax-Kurztexte · einheitliche Chunks |
+| 2026-11-27 | **KR5 ✅** `KichelRanker` · Leerfall · Top-K · nummerierte Mehrfachtreffer |

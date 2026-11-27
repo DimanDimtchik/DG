@@ -210,6 +210,9 @@ final class KichelRagFact
         $facts = self::normalizeList($facts);
         $base = trim((string) $baseAnswer);
         if ($base !== '') {
+            if (str_contains($base, 'Quelle:')) {
+                return $base;
+            }
             $sources = self::sourceLines($facts);
             if ($sources === []) {
                 return $base;

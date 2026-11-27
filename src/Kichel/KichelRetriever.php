@@ -9,8 +9,8 @@ final class KichelRetriever
     public const DEFAULT_MAX_FACTS = 5;
     public const DEFAULT_MAX_CHARS = 4000;
 
-    private const MULTI_MIN_SCORE = 3;
-    private const MULTI_MAX = 5;
+    /** Vor-Ranking: max. Rohkandidaten (Feinfilter = KichelRanker). */
+    private const MULTI_MAX = 8;
 
     /**
      * @return array{
@@ -31,7 +31,8 @@ final class KichelRetriever
      *     href: string|null,
      *     confidence: float,
      *     numbers: array<string, float|int>
-     *   }>
+     *   }>,
+     *   rank_meta: array{top_score: int, kept: int, rejected: int, reason: string}
      * }
      */
     public static function retrieve(User $user, string $query): array
@@ -53,6 +54,12 @@ final class KichelRetriever
             'money' => null,
             'candidates' => [],
             'facts' => [],
+            'rank_meta' => [
+                'top_score' => 0,
+                'kept' => 0,
+                'rejected' => 0,
+                'reason' => 'none',
+            ],
         ];
 
         if ($query === '') {
@@ -107,17 +114,28 @@ final class KichelRetriever
             ]);
         }
 
+        // KR5 — Ranking / Leerfall (keine schwachen Treffer an phrase)
+        $ranked = KichelRanker::select($candidates);
+        $candidates = $ranked['candidates'];
         if ($candidates === []) {
-            return $empty;
+            return array_merge($empty, [
+                'rank_meta' => $ranked['meta'],
+            ]);
         }
 
         $facts = self::applyBudget(KichelCorpus::factsFromCandidates($candidates));
+        if ($facts === []) {
+            return array_merge($empty, [
+                'rank_meta' => array_merge($ranked['meta'], ['reason' => 'no_facts']),
+            ]);
+        }
 
         return array_merge($empty, [
             'path' => 'candidates',
             'money' => $moneyAnswer,
             'candidates' => $candidates,
             'facts' => $facts,
+            'rank_meta' => $ranked['meta'],
         ]);
     }
 
@@ -380,7 +398,8 @@ final class KichelRetriever
         $out = [];
         $seen = [];
         foreach ($raw as $row) {
-            if ((int) $row['score'] < self::MULTI_MIN_SCORE) {
+            // Feine Schwelle setzt KichelRanker::select (KR5); hier nur Dedup + Cap.
+            if ((int) $row['score'] < 1) {
                 continue;
             }
             $key = (string) $row['dedupe'];

@@ -545,6 +545,7 @@ spl_autoload_register(static function (string $class): void {
         'KichelRagFact' => '/src/Kichel/KichelRagFact.php',
         'KichelRetriever' => '/src/Kichel/KichelRetriever.php',
         'KichelCorpus' => '/src/Kichel/KichelCorpus.php',
+        'KichelRanker' => '/src/Kichel/KichelRanker.php',
         'KichelProtocolRepository' => '/src/Kichel/KichelProtocolRepository.php',
         'KichelLegalPages' => '/src/Kichel/KichelLegalPages.php',
         'KichelLedgerAccounts' => '/src/Kichel/KichelLedgerAccounts.php',

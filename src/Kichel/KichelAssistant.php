@@ -24,53 +24,73 @@ final class KichelAssistant
             'legal' => self::wrapLegal(is_array($hit['legal'] ?? null) ? $hit['legal'] : []),
             'ledger' => self::wrapSimple(is_array($hit['ledger'] ?? null) ? $hit['ledger'] : [], 'ledger_account'),
             'money' => self::wrapMoney($query, is_array($hit['money'] ?? null) ? $hit['money'] : [], $hit['facts'] ?? []),
-            'candidates' => self::wrapCandidates($query, $hit['candidates'] ?? [], $hit['facts'] ?? []),
-            default => self::emptyResponse(
-                'Dazu habe ich nichts Passendes im CRM gefunden. Formuliere die Frage mit einem Menüpunkt '
-                . '(z. B. „Belege“, „Firmendaten“, „Support-Freigabe“) oder einem Stichwort wie „USt-ID“ oder „Logo“.'
+            'candidates' => self::wrapCandidates(
+                $query,
+                $hit['candidates'] ?? [],
+                $hit['facts'] ?? [],
+                is_array($hit['rank_meta'] ?? null) ? $hit['rank_meta'] : []
             ),
+            default => self::emptyResponse(KichelRanker::notFoundMessage()),
         };
     }
 
     /**
      * @param list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string}> $candidates
      * @param list<array<string, mixed>> $facts
+     * @param array<string, mixed> $rankMeta
      * @return array<string, mixed>
      */
-    private static function wrapCandidates(string $query, array $candidates, array $facts): array
+    private static function wrapCandidates(string $query, array $candidates, array $facts, array $rankMeta = []): array
     {
-        if ($candidates === []) {
-            return self::emptyResponse(
-                'Dazu habe ich nichts Passendes im CRM gefunden. Formuliere die Frage mit einem Menüpunkt '
-                . '(z. B. „Belege“, „Firmendaten“, „Support-Freigabe“) oder einem Stichwort wie „USt-ID“ oder „Logo“.'
-            );
+        if ($candidates === [] || $facts === []) {
+            $response = self::emptyResponse(KichelRanker::notFoundMessage());
+            if ($rankMeta !== []) {
+                $response['rank_meta'] = $rankMeta;
+            }
+
+            return $response;
         }
 
-        if (KichelRetriever::isRagEnabled() && $facts !== []) {
-            return self::wrapRag($query, $candidates, $facts);
+        if (KichelRetriever::isRagEnabled()) {
+            return self::wrapRag($query, $candidates, $facts, $rankMeta);
         }
 
         if (count($candidates) === 1) {
-            return self::wrapSingleCandidate($candidates[0]);
+            $one = self::wrapSingleCandidate($candidates[0]);
+            if ($rankMeta !== []) {
+                $one['rank_meta'] = $rankMeta;
+            }
+
+            return $one;
         }
 
-        return self::wrapMultiCandidates($candidates);
+        $multi = self::wrapMultiCandidates($candidates);
+        if ($rankMeta !== []) {
+            $multi['rank_meta'] = $rankMeta;
+        }
+
+        return $multi;
     }
 
     /**
      * @param list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string}> $candidates
      * @param list<array<string, mixed>> $facts
+     * @param array<string, mixed> $rankMeta
      * @return array<string, mixed>
      */
-    private static function wrapRag(string $query, array $candidates, array $facts): array
+    private static function wrapRag(string $query, array $candidates, array $facts, array $rankMeta = []): array
     {
-        $answer = KichelOllamaClient::compose($query, $facts, null);
+        // KR5b — bei mehreren Treffern nummerierte Basis (keine unmarkierte Vermischung)
+        $base = count($facts) > 1
+            ? KichelRanker::multiFactBaseAnswer($facts)
+            : null;
+        $answer = KichelOllamaClient::compose($query, $facts, $base);
         $actionLinks = self::actionLinksFromCandidates($candidates);
         $kind = count($candidates) === 1
             ? (string) ($candidates[0]['kind'] ?? 'topic')
             : 'multi_match';
 
-        return [
+        $out = [
             'presentation' => 'simple',
             'kind' => $kind,
             'answer' => $answer,
@@ -79,6 +99,11 @@ final class KichelAssistant
             'rag_facts' => $facts,
             'rag_used' => true,
         ];
+        if ($rankMeta !== []) {
+            $out['rank_meta'] = $rankMeta;
+        }
+
+        return $out;
     }
 
     /**
