@@ -85,7 +85,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [x] 2026-11-27 |
-| **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [x] 2026-11-27 · a ✅ · b Checkliste (Dev-UI offen) |
+| **KR8** | Selftests + Dev-Smoke | 🟢 | [x] 2026-11-27 · a ✅ · b ✅ Dev-Browser `ganz-om.de` |
 | **KR9** | Docs-Haken / Abnahmekriterien „RAG stabil“ | 🟢 | [x] 2026-11-27 · §3.10 |
 
 **Empfohlene Reihenfolge:** KR0 ✅ → KR1 → KR2 → KR3 → KR4 → KR5 → KR6 → KR7 → KR8 → KR9.  
@@ -357,7 +357,7 @@ window.dgKichel.apiUrl = /api/kichel
 | Kind | Aufgabe | Abnahme | Status |
 |------|---------|---------|--------|
 | **KR8a** | Selftest CLI: feste Fragen → Quellen-IDs / kein Fantasie-§ | `bin/kichel-rag-smoke-selftest.php` · Suite `bin/kichel-rag-suite-selftest.php` | [x] SUITE ALL OK |
-| **KR8b** | Manuell Dev: 3 gut / 2 unklar; Ollama an/aus | Checkliste unten | [~] Inhalt lokal via Smoke ✅ · **Dev-Browser offen** |
+| **KR8b** | Manuell Dev: 3 gut / 2 unklar; Ollama an/aus | Checkliste unten | [x] 2026-11-27 · Dev-Browser `ganz-om.de` |
 
 #### KR8a — feste Fragen (CLI)
 
@@ -375,12 +375,12 @@ window.dgKichel.apiUrl = /api/kichel
 
 Fragen wie KR8a (mind. 3 gut + 2 unklar) in **Widget** und einmal **Super-Kichel**:
 
-- [ ] Ollama **aus** (`ollama_enabled=false` oder Proxy tot): Antworten + Quellen-Block sichtbar
-- [ ] Ollama **an**: Formulierung ok, Zahlen/§ unverändert, Quellen bleiben
-- [ ] Nonsense → „nichts Passendes“, keine erfundenen Normen
-- [ ] Protokoll: RAG-Spalte + Quellen-Refs nach einer Frage
+- [x] Ollama **aus** (`ollama_enabled=false`): USt-ID → Fallback + Quellen (`topic:ust-id`) sichtbar
+- [x] Ollama **an**: USt-ID / Kleinunternehmer / Skonto 970 € / Ist-Versteuerung · Quellen bleiben
+- [x] Nonsense → „nichts Passendes“, keine erfundenen Normen
+- [x] Protokoll: Spalten RAG + Quellen (ja/`topic:ust-id` · nein/— bei Nonsense)
 
-**Lokal bereits:** Smoke mit `ollama_enabled=false` (dieser Host). Dev-UI-Haken bei Freigabe / vor **KR9**.
+**Dev-UI 2026-11-27:** Widget + Super-Kichel auf `ganz-om.de` · Ollama danach wieder an.
 
 ---
 
@@ -398,8 +398,8 @@ RAG gilt als **stabil**, wenn:
 
 **Rest (nicht Gate-Blocker für KL-Planung):**
 
-- KR8b Dev-Browser (`ganz-om.de`): Widget/Super-Kichel + Ollama an/aus — Checkliste §3.9, Haken dort setzen wenn gelaufen.
-- Live-Deploy der KR2–KR8-Stände auf Dev/Kern nach üblichem Sync — vor Kunden-Nutzung.
+- ~~KR8b Dev-Browser~~ ✅ 2026-11-27  
+- Live-Deploy KR/KL-Stände: Kern+Sync 2026-11-27 erledigt.
 
 #### Freigabe-Satz (verbindlich)
 
@@ -719,7 +719,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-Optional **KR8b** Dev-UI · **KH0** Hinweistext. Phase B (KL) Pilot fertig.  
+Optional **KH0** Hinweistext. Phase B (KL) + KR8b fertig.  
 **Kein** KT/KP ohne neues Gate.
 
 ---
@@ -737,6 +737,7 @@ Optional **KR8b** Dev-UI · **KH0** Hinweistext. Phase B (KL) Pilot fertig.
 | 2026-11-27 | **KR6 ✅** `sources[]` UI · Protokoll RAG/Refs ohne Migration |
 | 2026-11-27 | **KR7 ✅** eine Hilfe-Pipeline Widget=Super-Kichel · Selftest |
 | 2026-11-27 | **KR8a ✅** Smoke+Suite Selftests · **KR8b** Dev-UI-Checkliste offen |
+| 2026-11-27 | **KR8b ✅** Dev-Browser Widget+Super-Kichel · Ollama an/aus · Protokoll RAG/Quellen |
 | 2026-11-27 | **KR9 ✅** RAG-Gate offen für **KL** · KT/KP gesperrt bis neuer Freigabe |
 | 2026-11-27 | **KL0 ✅** Quellenentscheid: GII primär · Bund-API optional · Pilot AO/UStG/EStG |
 | 2026-11-27 | **KL1 ✅** GII-Import Whitelist · XML→§/Abs.-Chunks · JSONL `storage/kichel/gii/` · Selftest |
