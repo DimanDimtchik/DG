@@ -1,6 +1,6 @@
 # Lager- und Warenwirtschaft (Stufe A + B + C Teil)
 
-Stand: **2026-09-17** · Migrationen **065–069**, **079–081**
+Stand: **2026-11-27** · Migrationen **065–069**, **079–081** · Beleg-OCR→Lager: [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) (BO5)
 
 ## Umgesetzt
 
@@ -70,6 +70,22 @@ php bin/stock-selftest.php
 
 Manuell: Lager → Wareneingang/Warenausgang, Strichcode scannen, Lieferschein verknüpfen.
 
+## Beleg-OCR → Lager (Pipeline + Grenzen)
+
+Eingangsbeleg im Formular (OCR/E-Rechnung/Kichel): Positionen können dem Katalog zugeordnet oder neu angelegt werden; optional EK-Quelle; Wareneingang nur als **Vorschlag nach Klick**. Microplan: [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) · Import-Ist: [`IMPORT-BELEGE-TODO.md`](IMPORT-BELEGE-TODO.md).
+
+| Pfad | Mechanik | Bestätigung |
+|------|----------|-------------|
+| **A) Beleg-Sync** | Speichern → `StockMovementService::syncForVoucher` | Beleg speichern (Items mit `article_id`, product+`track_stock`, kein Draft) |
+| **B) Manuell / OCR** | `StockReceiptIssueService` (`processReceipt`) · UI Lager oder Beleg-Panel „Wareneingang buchen“ | **Expliziter Klick**; OCR nutzt **nur B**, nicht still A |
+
+**Grenzen (GoBD):**
+
+- Keine Auto-Lagerbewegung aus OCR/Apply/Kichel
+- Neuanlage aus Beleg: `track_stock` aus → Zeile erscheint im WE-Vorschlag unter „Übersprungen“, bis Lagerführung im Stamm aktiv
+- Ausgabe-Belege schreiben FiBu oft nur als Splits (kein `items[]`) — Path A greift dann nicht; Path B braucht Zuordnung + gespeicherten Beleg
+- Doppelter WE am selben Beleg: geblockt, wenn bereits `receipt`/`purchase`-Bewegung existiert
+
 ## Technik
 
 | Komponente | Pfad |
@@ -84,4 +100,5 @@ Manuell: Lager → Wareneingang/Warenausgang, Strichcode scannen, Lieferschein v
 | Scan-API | `src/Inventory/StockScanApi.php` → `/api/stock-scan` |
 | Etiketten | `src/Inventory/StockLabelService.php`, `StockLabelPrintService.php` |
 | UI | `views/modules/lager.php`, `views/settings/tab-lager-struktur.php` |
-| Beleg-Hook | `VoucherRepository::save()` / `delete()` |
+| Beleg-Hook | `VoucherRepository::save()` / `delete()` → Path A |
+| OCR-WE (Path B) | `StockReceiptIssueService::proposalFromExtractLines` / `bookExtractProposal` · `VoucherApi` `stock_receipt*` |

@@ -20,7 +20,7 @@
 
 **Abgrenzung Lexware:** Lexware Office ignoriert oft Rechnungspositionen beim Beleg-Einlesen. DG soll Positionen **mitnehmen** und an Katalog/Lager anbinden.
 
-**Ist heute (2026-11-27):** Client-OCR + optional Kichel-Extrakt (BO3) für **FiBu-Kopf-Vorschläge**; Extrakt-Positionen im Panel sichtbar. Apply schreibt noch **keine** Form-Positionen (nur Kopf + 1. Split) — siehe §12. **Kein** Lager-Anschluss (→ BO5).
+**Ist (2026-11-27, nach BO6):** Client-OCR + optional Kichel-Extrakt → Apply Kopf/Positionen → Katalog Match/Neuanlage/EK → WE-Vorschlag nach Klick. GoBD: kein stilles Buchen/Lager. Rest: BO1d Dev-Smoke · UI-Smoke nach Deploy.
 
 ---
 
@@ -81,7 +81,7 @@ Datei (PDF/Bild/XML)
 | **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
 | **BO4** | FiBu-UI Positionen übernehmen | [x] BO4a–d ✅ | 🟢🟡 |
 | **BO5** | Lager-Anbindung | [x] BO5a–f ✅ | 🟡🔴 |
-| **BO6** | Docs/Haken Abschluss | [~] BO6a ✅ · BO6b offen | 🟢 |
+| **BO6** | Docs/Haken Abschluss | [x] BO6a–b ✅ | 🟢 |
 
 ---
 
@@ -195,7 +195,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **BO6a** | `IQ-STROM` D2 OCR-Haken / Standzeile · `TODOS.md` · dieser Plan Parent-Haken | 🟢 | [x] 2026-11-27 |
-| **BO6b** | Kurz in `LAGER-WIRTSCHAFT.md` / `IMPORT-BELEGE-TODO.md`: Pipeline + Grenzen | 🟢 | [ ] |
+| **BO6b** | Kurz in `LAGER-WIRTSCHAFT.md` / `IMPORT-BELEGE-TODO.md`: Pipeline + Grenzen | 🟢 | [x] 2026-11-27 |
 
 ---
 
@@ -539,3 +539,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO5e ✅** WE-Vorschlag + Klick (`stock_receipt_preview` / `stock_receipt` → `processReceipt`, kein syncForVoucher) |
 | 2026-11-27 | **BO5f ✅** Smoke Match+Neuanlage+EK+WE · §14 · Selftest inkl. BO5b–e · BO5-Block fertig |
 | 2026-11-27 | **BO6a ✅** IQ-STROM D2 Haken · `TODOS.md` Stand · Parent BO6 [~] |
+| 2026-11-27 | **BO6b ✅** Pipeline+Grenzen in `IMPORT-BELEGE-TODO.md` + `LAGER-WIRTSCHAFT.md` · BO6-Block fertig |
